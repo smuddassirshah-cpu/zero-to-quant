@@ -18,7 +18,7 @@
       "tags": [
         "requirements-change"
       ],
-      "prose": "A small desk records its trades. Prices are whole £. In `contests` l16 you upsolved after the clock. Here the interviewer adds rules while it runs. First the simplest question.",
+      "prose": "A small desk records its trades. Prices are whole £. After a contest you upsolve the problems you missed. Here the interviewer adds rules while it runs. First the simplest question.",
       "canvas": {
         "kind": "table",
         "params": {
@@ -369,9 +369,15 @@
             "call": "L.position('ABC')",
             "expect": "60",
             "compare": "equal"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 1, 10); L.trade('ABC', 1, 14)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[2, 12.0, 0]",
+            "compare": "isclose"
           }
         ],
-        "how": "Check runs 7 hidden tests. They include the stage 1 test with no price and an oversell."
+        "how": "Check runs 8 hidden tests. They include the stage 1 test with no price, an oversell and a buy of one share."
       },
       "hints": [
         {
@@ -439,22 +445,22 @@
         "options": [
           {
             "id": "a",
-            "text": "It fails: the old call passes no price, so Python raises `TypeError`.",
+            "text": "It fails: no price is passed, so Python raises `TypeError`.",
             "correct": true
           },
           {
             "id": "b",
-            "text": "It passes: Python reads a missing argument as 0.",
+            "text": "It passes: Python reads a missing argument as 0, by default.",
             "why": "You assumed a missing argument becomes 0. Without a default, Python raises `TypeError`."
           },
           {
             "id": "c",
-            "text": "It passes: old tests do not see new arguments.",
+            "text": "It passes: old tests do not see any new arguments at all.",
             "why": "Old calls are exactly what a new required argument breaks."
           },
           {
             "id": "d",
-            "text": "It passes, with a price of `None`.",
+            "text": "It passes, with the missing price filled in as `None`.",
             "why": "Python does not fill in `None`. A missing argument with no default is an error."
           }
         ],
@@ -608,7 +614,7 @@
         "kind": "code",
         "language": "python",
         "starter": "class Ledger:\n    def __init__(self, method='average'):\n        self.method = method\n        self.pos, self.avg, self.pnl = {}, {}, {}\n\n    def trade(self, symbol, qty, price=0):\n        held = self.pos.get(symbol, 0)\n        if held + qty < 0:\n            raise ValueError('cannot sell more than held')\n        if qty > 0:\n            total = held * self.avg.get(symbol, 0.0) + qty * price\n            self.avg[symbol] = total / (held + qty)\n        else:\n            self.pnl[symbol] = self.pnl.get(symbol, 0) + (-qty) * (price - self.avg[symbol])\n        self.pos[symbol] = held + qty\n        if self.pos[symbol] == 0:\n            self.avg[symbol] = 0.0\n\n    def position(self, symbol):\n        return self.pos.get(symbol, 0)\n\n    def avg_cost(self, symbol):\n        return self.avg.get(symbol, 0.0)\n\n    def realised(self, symbol):\n        return self.pnl.get(symbol, 0)\n",
-        "solution": "from collections import deque\n\n\nclass Ledger:\n    def __init__(self, method='average'):\n        self.method = method\n        self.lots, self.pnl = {}, {}  # symbol -> deque of [qty, price]\n        self.pos, self.avg = {}, {}\n\n    def trade(self, symbol, qty, price=0):\n        held = self.pos.get(symbol, 0)\n        if held + qty < 0:\n            raise ValueError('cannot sell more than held')\n        lots = self.lots.setdefault(symbol, deque())\n        if qty > 0:\n            total = held * self.avg.get(symbol, 0.0) + qty * price\n            self.avg[symbol] = total / (held + qty)\n            lots.append([qty, price])\n        else:\n            left = -qty\n            if self.method == 'fifo':\n                gain = 0\n                while left:\n                    take = min(left, lots[0][0])\n                    gain += take * (price - lots[0][1])\n                    lots[0][0] -= take\n                    left -= take\n                    if lots[0][0] == 0:\n                        lots.popleft()\n            else:\n                gain = left * (price - self.avg[symbol])\n                while left:\n                    take = min(left, lots[0][0])\n                    lots[0][0] -= take\n                    left -= take\n                    if lots[0][0] == 0:\n                        lots.popleft()\n            self.pnl[symbol] = self.pnl.get(symbol, 0) + gain\n        self.pos[symbol] = held + qty\n        if self.pos[symbol] == 0:\n            self.avg[symbol] = 0.0\n        elif self.method == 'fifo':\n            self.avg[symbol] = sum(q * p for q, p in lots) / sum(q for q, p in lots)\n\n    def position(self, symbol):\n        return self.pos.get(symbol, 0)\n\n    def avg_cost(self, symbol):\n        return self.avg.get(symbol, 0.0)\n\n    def realised(self, symbol):\n        return self.pnl.get(symbol, 0)\n",
+        "solution": "from collections import deque\n\n\nclass Ledger:\n    def __init__(self, method='average'):\n        self.method = method\n        self.lots, self.pnl = {}, {}  # symbol -> deque of [qty, price]\n        self.pos, self.avg = {}, {}\n\n    def trade(self, symbol, qty, price=0):\n        held = self.pos.get(symbol, 0)\n        if held + qty < 0:\n            raise ValueError('cannot sell more than held')\n        lots = self.lots.setdefault(symbol, deque())\n        if qty > 0:\n            total = held * self.avg.get(symbol, 0.0) + qty * price\n            self.avg[symbol] = total / (held + qty)\n            lots.append([qty, price])\n        else:\n            left = -qty\n            if self.method == 'fifo':\n                gain = 0\n                while left:\n                    take = min(left, lots[0][0])\n                    gain += take * (price - lots[0][1])\n                    lots[0][0] -= take\n                    left -= take\n                    if lots[0][0] == 0:\n                        lots.popleft()\n            else:\n                gain = left * (price - self.avg[symbol])\n            self.pnl[symbol] = self.pnl.get(symbol, 0) + gain\n        self.pos[symbol] = held + qty\n        if self.pos[symbol] == 0:\n            self.avg[symbol] = 0.0\n        elif self.method == 'fifo':\n            self.avg[symbol] = sum(q * p for q, p in lots) / sum(q for q, p in lots)\n\n    def position(self, symbol):\n        return self.pos.get(symbol, 0)\n\n    def avg_cost(self, symbol):\n        return self.avg.get(symbol, 0.0)\n\n    def realised(self, symbol):\n        return self.pnl.get(symbol, 0)\n",
         "examples": [
           {
             "setup": "L = Ledger(); L.trade('ABC', 100, 10); L.trade('ABC', 100, 12); L.trade('ABC', -150, 13)",
@@ -689,9 +695,15 @@
             "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
             "expect": "[3, 20.0, -6]",
             "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 1, 10); L.trade('ABC', 1, 14)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[2, 12.0, 0]",
+            "compare": "isclose"
           }
         ],
-        "how": "Check runs 11 hidden tests: the stage 1 and 2 tests first, then four FIFO cases."
+        "how": "Check runs 12 hidden tests. They are the stage 1 and 2 tests, a buy of one share, then four FIFO cases."
       },
       "hints": [
         {
@@ -773,17 +785,17 @@
         "options": [
           {
             "id": "a",
-            "text": "Keep a deque of signed lots. Average cost and FIFO both read from it.",
+            "text": "Keep a deque of signed lots, read by every rule.",
             "correct": true
           },
           {
             "id": "b",
-            "text": "Keep only a running average. It is the least state.",
+            "text": "Keep only a running average, which is the least state.",
             "why": "You counted state, not changes. An average cannot say which lot a sale used."
           },
           {
             "id": "c",
-            "text": "Rebuild one list per symbol on every call.",
+            "text": "Rebuild a fresh list per symbol on every call.",
             "why": "You made each call slower and still need new rules. A deque already has the oldest lot first."
           },
           {
@@ -929,7 +941,7 @@
         "options": [
           {
             "id": "a",
-            "text": "Sales take the oldest lot, so I store lots, and old tests run first.",
+            "text": "Sales take the oldest lot, so I keep lots and rerun old tests.",
             "correct": true
           },
           {
@@ -1125,7 +1137,8 @@
       },
       "explain": {
         "text": "Signed quantities add: $30 - 12 + 5 - 8 = 15$ shares."
-      }
+      },
+      "pace": 60
     },
     {
       "id": "q-average",
@@ -1159,7 +1172,8 @@
       },
       "explain": {
         "text": "The cost is $40 \\times 9 + 60 \\times 14 = 1{,}200$ for 100 shares. That is £12 a share."
-      }
+      },
+      "pace": 60
     },
     {
       "id": "q-fifo-lot",
@@ -1198,7 +1212,8 @@
       },
       "explain": {
         "text": "The first 10 shares cost £8, and the sale of 5 comes entirely out of that lot. It realises $5 \\times (12 - 8) = 20$."
-      }
+      },
+      "pace": 90
     },
     {
       "id": "q-old-call",
@@ -1245,7 +1260,8 @@
       },
       "explain": {
         "text": "Only a default makes the new argument optional, so old calls with two arguments stay valid."
-      }
+      },
+      "pace": 60
     }
   ]
 }

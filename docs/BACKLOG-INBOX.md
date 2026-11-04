@@ -1025,3 +1025,7 @@ Raised later (exam topic-3.5):
 - Validator, `table` widget: a cell's `wrong: [{ id, text }]` is graded and returns its id as the key (engine pass 7), but `validate.mjs` registers only `r{i}c{j}` keys, so a `byKey` line for a custom wrong id is an error. Workaround: `byKey` on the cell keys `r0c1` and so on, one line per cell.
 - Playthrough: it runs each code widget's `solution` but never the starter, so "the starter fails" cannot be confirmed in the tool. Workaround: a Pyodide script for Python, and `g++` with sanitisers for C++, kept in `docs/briefs/exam-3.5-scripts/`. A `--starters` check would help.
 - `code` editor: long lines (starter comments, 60 or more characters) scroll sideways inside the editor at 390 px and at 1280 px beside the question map. Workaround: starter comments kept short. Soft wrap for comments would help.
+
+Raised by the coding-int fix pass (topic 3.5):
+- Player: no per-screen language skip, so a learner who does not write C++ cannot skip a `ladder` C++ screen in l1, l4, l10, l11, l16 or l17. A `optional` or `language` flag on a screen would do.
+- `orderbook` canvas: labels shrink with the SVG at 390 px (about 7 px in `coding-int` l10 screens[1]). A `labelSize` or `minWidth` parameter under 480 px would fix it.

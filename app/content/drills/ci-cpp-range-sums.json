@@ -14,13 +14,13 @@
   ],
   "difficulty": 3,
   "pace": 900,
-  "brief": "`grid` is a table of whole numbers with `R` rows and `C` columns. Each query `{r1, c1, r2, c2}` asks for the sum of the cells from row `r1` to row `r2` and from column `c1` to column `c2`, all included, counting from 0. Write `rectangle_sums(grid, queries)`, which returns the sums as a `std::vector<long long>`, one per query, in order.",
+  "brief": "`grid` is a table of whole numbers with `R` rows and `C` columns. Each query `{r1, c1, r2, c2}` asks for the sum of one rectangle of cells. It runs from row `r1` to row `r2` and from column `c1` to column `c2`. All four are included and count from 0. Write `rectangle_sums(grid, queries)`, which returns the sums as a `std::vector<long long>`, one per query, in order.",
   "constraints": [
     "$1 \\le R, C \\le 1{,}000$, each cell between -10,000 and 10,000, and up to 20,000 queries.",
     "$O(RC + q)$ time is the target. Summing each rectangle afresh is too slow.",
     "A sum can reach $10^{10}$, so use `long long`. Each test has a 5-second limit."
   ],
-  "hint": "Build a table with a leading row and column of zeros, where entry `(i, j)` holds the sum of the block from the top-left corner to row `i - 1` and column `j - 1`. A rectangle is the big block, minus the strip above, minus the strip to the left, plus the corner taken off twice.",
+  "hint": "Build a table with a leading row and column of zeros. Entry `(i, j)` holds the sum of the block from the top-left corner to row `i - 1` and column `j - 1`. A rectangle is the big block, minus the strip above and the strip to the left. Then add the corner back, which was taken off twice.",
   "starter": "#include <vector>\n\nstd::vector<long long> rectangle_sums(std::vector<std::vector<int>> grid, std::vector<std::vector<int>> queries) {\n    // your code here\n    return {};\n}\n",
   "examples": [
     {
@@ -495,8 +495,8 @@
   "how": "Submit runs 10 hidden tests. Each answer must equal the expected value.",
   "solution": "#include <vector>\n\nstd::vector<long long> rectangle_sums(std::vector<std::vector<int>> grid, std::vector<std::vector<int>> queries) {\n    size_t rows = grid.size(), cols = grid[0].size();\n    std::vector<std::vector<long long>> p(rows + 1, std::vector<long long>(cols + 1, 0));\n    for (size_t i = 0; i < rows; ++i)\n        for (size_t j = 0; j < cols; ++j)\n            p[i + 1][j + 1] = p[i][j + 1] + p[i + 1][j] - p[i][j] + grid[i][j];\n    std::vector<long long> out;\n    for (const auto& q : queries)\n        out.push_back(p[q[2] + 1][q[3] + 1] - p[q[0]][q[3] + 1] - p[q[2] + 1][q[1]] + p[q[0]][q[1]]);\n    return out;\n}\n",
   "notes": [
-    "`p[i][j]` holds the sum of the first `i` rows and first `j` columns, so row 0 and column 0 are zeros.",
-    "The block up to row `r2` and column `c2`, minus the strip above and the strip to the left, plus the corner removed twice, is the rectangle.",
+    "`p[i][j]` holds the sum of the first `i` rows and first `j` columns. So row 0 and column 0 are zeros.",
+    "Take the block up to row `r2` and column `c2`. Subtract the strip above and the strip to the left. Add back the corner removed twice.",
     "One pass over the grid and four lookups per query, so the work is $O(RC + q)$."
   ]
 }
