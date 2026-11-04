@@ -47,3 +47,22 @@ I searched every JSON file in `app/content/` (courses, exams, bank, drills) for 
 Note, not a mismatch: tests 10 and 11 of `oa-remove-digits` use `== "..."` expressions with expected `True`, so a wrong answer shows only `False`. The brief chose this for size. It is acceptable as the results panel names the test.
 
 The drill library lists the pool (the brief records this as an inbox bullet), so a learner may meet a problem in `#drill` before the mock draws it. No fix needed here.
+
+## Fix pass
+
+Source of truth is `docs/briefs/mocks-scripts/oa_code.py` (tests, statements) and `oa_code_build.py` (examples, constraints). Both were edited, rerun (`ALL AGREE: 8 problems`, voice clean), and the six drill files regenerate with only the changes below (the baseline run reproduced all eight files byte for byte first). `docs/briefs/mocks.md` section `## mock-oa-code` now embeds the new `oa_code_section.md` tables and says 11 to 14 tests. New test numbers are given as they now stand; later tests moved down by the number added.
+
+1. `oa-min-jumps`: fixed. Added test 12 `min_jumps([200000] * 200000)` expecting `1` (closed form). The forward-relaxation table now fails it by time. `how` says 12.
+2. `oa-decodings` tests: fixed. Added test 9 `count_decodings("2020")` expecting `1` and test 10 `count_decodings("260")` expecting `0`, both checked against the exhaustive method. The solution without pair 20 fails test 9. The old large tests are now 11 to 14. `how` says 14.
+3. `oa-critical-path` loops: fixed. Added test 10 `critical_path_length(4, [[0, 1], [2, 3], [3, 2]], [1, 1, 1, 1])` and test 11 `critical_path_length(3, [[0, 1], [1, 2], [2, 1]], [1, 1, 1])`, both `-1`. The self-loop-or-no-source solution fails both. Old large tests are now 12 to 14. `how` says 14.
+4. `oa-product-windows` k <= 0: fixed. Added test 9 `count_products_below([3, 4], 0)` and test 10 `count_products_below([3, 4], -5)`, both `0`. The solution guarded only for `k == 1` without a bound check raises on both. Old large tests are now 11 and 12. `how` says 12.
+5. `oa-merge-cost` insort: fixed. Added test 11 `min_merge_cost(list(range(1, 200001)))` expecting `347128407168` (two-queue method, recomputed). `pop(0)` plus `insort` takes 8.9 s in CPython and 24 s in Pyodide on it (5.6 s in Pyodide already on test 10), against a 5 s limit. The reference takes 0.23 s in CPython and 0.26 s in Pyodide. `how` says 11.
+6. `oa-remove-digits` single `if`: fixed, with a different case from the one proposed. I recomputed `smallest_after_removing("1432219", 3)`: it gives `'1219'` and so does the single-`if` solution, so it cannot separate them. Added test 10 `smallest_after_removing("2561", 2)` expecting `'21'` (the top two digits both pop at the `1`; single `if` gives `'25'`). Old large tests are now 11 to 13. `how` says 13.
+7. `oa-decodings` brief: fixed. Added "A code never starts with 0, so 06 is not a letter."
+8. `oa-critical-path` brief and constraints: fixed. Brief now adds "Each duration is a whole number of at least 0. A pair `[a, a]` is a loop." The constraint now says up to 100,000 pairs, which the largest test uses, instead of adding a 200,000-pair test.
+9. `oa-product-windows` example sentence: fixed. Now "For `nums = [5]` and `k = 6` the one block has product 5, so the answer is 1." (under 20 words).
+10. `oa-critical-path` `examples[0].note`: fixed. Split into "Task 0 takes 3. Then task 2 takes 4 and task 3 takes 1. So the longest chain is 3 + 4 + 1 = 8."
+
+Changed tests (all `compare: "equal"`): `oa-min-jumps` 12; `oa-merge-cost` 11; `oa-remove-digits` 10; `oa-decodings` 9 and 10; `oa-critical-path` 10 and 11; `oa-product-windows` 9 and 10. No existing expected value changed, so no graded answer changed. No test is over the 15 cap (largest is 14).
+
+Checks. `node tools/validate.mjs`: 0 errors. `playthrough --drills --local-cdn`: all passed, all eight `oa` drills pass every test with the model solution and the starter fails. `--exam mock-oa-code` passes with and without `--mobile`. Checker mutants (`wmut.py`, `wmut2.py` in the scratchpad folder, 3 s limit): every wrong solution named above now fails (insort at tests 10 and 11 in CPython by time; forward-relaxation table at 12; no-20 at 9; self-loop-only at 10 and 11; unguarded k at 9 and 10; single `if` at 10). Five mutants still pass everything, and each is correct or equivalent (guarded `k` loop, no empty-list special case, one modulus at the end, deduped edges with matching in-degrees, strip-before-truncate), as the review found.
