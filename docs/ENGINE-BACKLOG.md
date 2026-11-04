@@ -1337,3 +1337,15 @@ Status block (engine pass 3.2):
 - 501 (P32-expr-exp): done.
 - 502 (P32-expr-callhead): done.
 - 503 (P32-expr-int): done.
+
+### Engine pass viewports (4 Nov): `docs/reports/engine-viewports.md`
+Source: user request to test the real devices (iPhone 17 Pro Max 440 x 956; iPad Pro 13-inch 1032 x 1376 and 1376 x 1032).
+
+504. Done (VP-phone): `--mobile` in `app/tools/playthrough.mjs` runs at 440 x 956 instead of 390 x 844 in every place it is used (shots, drills, gating, Prepare for, routes); screenshot suffix `-440`; messages name the width used.
+505. Done (VP-narrow): `--narrow` keeps the old 390 x 844 pass (suffix `-390`) and implies the extra pass on its own.
+506. Done (VP-tablet): `--tablet` adds 1032 x 1376 and 1376 x 1032 passes with the same wider-than-window checks (suffixes `-1032`, `-1376`); every pass sets width and height through one `setVp` helper, so the old fixed 844 height is gone.
+
+Status block (engine pass viewports):
+- 504 (VP-phone): done.
+- 505 (VP-narrow): done.
+- 506 (VP-tablet): done.
