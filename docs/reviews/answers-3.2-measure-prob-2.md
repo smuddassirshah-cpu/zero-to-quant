@@ -149,3 +149,42 @@ Notes
 - No literal backslash-n in any prose field; no exclamation marks; no em-dashes or en-dashes.
 - Fresh numbers: `r-simple`, `r-layer`, `r-heavy`, `r-tail`, `r-div`, `r-dom`, `r-cheb`, `h-tranche`, `h-sp`, `h-modes` and `h-geom` share no number or answer with a lesson. The repeats are items 9 to 13 and 22.
 - Longform rubric (`h-long`): seven points of 1, 2, 1, 2, 1, 2 and 1 make 10; each is checkable; the model answer is correct (Fatou twice with the finite cancel, Lipschitz bound $e^{-rT}M$ with $E[Y] = 1$, the digital's spike of height $1/h$, and the likelihood-ratio remedy), except the constant in part 3 (item 15).
+
+## Fix pass
+
+All 24 findings fixed, none disputed. Every changed number was recomputed twice by independent routes (closed form and finite difference of the price, plus the lognormal-density route for the digital delta; NumPy reruns for the seed values). Validator 0 errors; playthrough of the four lessons, `review-2` and `homework-2` passes with and without `--mobile` (Pyodide, local CDN); voice scan 0 and 0. The `h-code` solution passes 9 of 9 tests and its example in CPython, the starter 0 of 9 and 0 of 1, and a `ddof=0` variant fails 2 (the two standard-error tests).
+
+1. Error, l7 s1 option d: fixed. Option d is now the false "unbounded means no finite mean"; its `why` and `byKey.d` rewritten; the explanation notes that `E[X_n] = 1` is the symptom.
+2. Error, l7 s9 `big`: fixed. The feedback now says "You scaled by 100" (94 = 100 x 0.94); value 94 kept.
+3. Warning, r-div explanation: fixed, now `\ln 20 / \ln(1.07/1.02) = 62.6`.
+4. Warning, l5 s9 explain: fixed, 0.0540.
+5. Warning, l7 s3 order: fixed, `same` [[p3, p4]], prose says the two cancelling lines may swap. Also note 20 (p1 now ends "so also $|X| \le Y$ almost surely").
+6. Warning, l6 s3 order: fixed by the main route. `m1` merged into `m6` and dropped; lines m2 to m6, `same` [[m4, m5]]; prose and step hint reworded. Verified `m6` no longer says "line one".
+7. Warning, h-order: fixed. `f3` and `f4` merged into `f34`; answer f1, f2, f34, f5; `same` [[f2, f34]].
+8. Warning, standard-error convention: fixed. `h-code` question and l7 s8 prompt state `ddof=1`; tests kept (the `ddof=0` form fails the two SE tests, as intended).
+9. Warning, r-which: fixed. Now $X_n = 3n\mathbf 1_{\{U<1/n\}}$, mean 3; options b and d `why` and the correct feedback updated; key unchanged.
+10. Warning, r-delta: fixed. Fresh digital S0 = 100, K = 105, r = 3%, sigma = 25%, T = 0.5, exact delta 0.021380 = 0.0214 (closed form, finite difference 0.0213798, density route 0.0213798). Option d now quotes 0.0214; the quotient in the explanation is discounted.
+11. Warning, r-mode: fixed. Now $X_n = 2n\mathbf 1_{\{U<1/n^2\}}$ with $E[X_n^2] = 4$ in option b, feedback and explanation; key unchanged.
+12. Warning, h-fatou: fixed. Spike $3n\mathbf 1_{\{U<1/n\}}$: part 1 key 0 (`wrong` `one` now 3), part 2 key 3, part 3 "$0 < 3$".
+13. Warning, h-code numbers: fixed. Examples and tests moved to S0 = 100, K = 105, r = 0.03, sigma = 0.25, T = 0.5, n = 100000, seed 21: digital 0.021320863378961503 (SE 0.00010402382624449808), call 0.45659000268962846 (SE 0.003819911396832423); exact 0.021379762050349284 and 0.45907764450186667 (the 3-SE tests hold, 0.57 and 0.65 SE); strike-115 digital test (n = 200000, seed 13) 0.0161998 against exact 0.0162189; call-SE test now "> 0.0035"; explanation "0.0038 against 0.0018"; feedback "near 0.0214". Pathwise call SE for these inputs 0.0018307 (second route).
+14. Warning, key lengths: fixed for all 10 (ratios now 0.56 to 1.46: r-delta 1.41, q-const 0.60, h-nu 1.39, r-which 1.37, h-fatou 0.56, l6 s6 1.44, l7 s7 1.21, l6 s5 0.87, q-hyp 1.18, l8 s8 0.67). Reasons moved into `feedback.correct` or kept in the explanation. `r-mode` is now 1.46 and l6 s4 1.48, within limit.
+15. Warning, discounted quotient: fixed. l7 s5 prose "discounted quotient ... $e^{-rT}/h$", caption and explanation "tends to 0.0188"; `h-long` model part 3 and rubric point 6 use $e^{-rT}/h$ and "mean stays near $e^{-rT}c' = 0.0188$".
+16. Note, h-tranche explain: fixed, $8(0.28650 - 0.04394)$.
+17. Note, l7 s7 canvas: fixed, line at y = 5 labelled "Y = 5", axis to 5.5.
+18. Note, l8 summary ideas[1]: fixed ("and mean square does by Chebyshev"). Idea 0 also split (note 23).
+19. Note, l8 s5: fixed, `same` [[c1, c2]], prose and step hint updated.
+20. Note, l7 s3 `p1`: fixed (with item 5).
+21. Note, h-modes: fixed, `byKey` lines added for `r0c1`, `r1c1`, `r2c1`, `r3c1`, `r3c2`.
+22. Note, h-nu part 1: fixed. n = 24: key 0.96, `wrong` `five` 0.04 ("You gave $1 - 0.96$"), question, label, accept and explanation updated.
+23. Note, 20-word sentences: fixed in l6 s2, l7 s4, l7 s8, l7 s9, l8 s9, l8 s10, l8 summary ideas[0] and `h-geom`; voice scan reports 0 over 20 words.
+24. Note, l7 s4 attribution: fixed, "$\Phi(0.35) = 0.6368$ and $\Phi(0.15) = 0.5596$".
+
+### Changed keys
+
+20 widgets changed a key, tolerance, options, numbers, order groups or `wrong` values:
+
+- `l6-monotone-convergence` s3 order (line `m1` removed, answer m2 to m6, `same` m4/m5), s5 option a text, s6 option a text.
+- `l7-dominated-convergence` s1 option d text and `why`; s3 order (`same` p3/p4, `p1` text); s7 option a text; quiz `q-hyp` option a text. (s9 `big`: feedback text only, value 94 unchanged.)
+- `l8-modes-of-convergence` s5 order (`same` c1/c2); s8 option a text; quiz `q-const` option a text.
+- `review-2` `r-which` (spike 3n: option a text, b and d `why`); `r-delta` (option a and d text, exact delta 0.0214); `r-mode` (2n spike, E[X^2] = 4 in b `why`).
+- `homework-2` `h-fatou` part 1 (`wrong` `one` 1 to 3), part 2 (answer 1 to 3), part 3 (option a text); `h-order` (lines f3 and f4 merged into f34, answer, `same`); `h-nu` part 1 (answer 0.95 to 0.96, `wrong` `five` 0.05 to 0.04), part 3 (option a text); `h-code` (all examples and tests).
