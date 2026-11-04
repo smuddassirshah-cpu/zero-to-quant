@@ -50,3 +50,9 @@ garch hw1 [1] 20/sqrt(52) = 2.7735, with wrong 20/sqrt(252) = 1.2599 and 20/52 =
 ## Counts
 
 Rechecked: ito 6, measure-prob 9, pdes 6 option texts, exam 4, per cent 46: 71 widgets. Mismatches 2: homework-4 `h-stopping` `same` (worst for a learner: a correct-looking order is accepted that uses an unproved step, and the positional "line 2" breaks) and garch homework-2 `h-year-later` (a correct typed answer 28.28 is rejected).
+
+## Orchestrator fixes
+
+- garch homework-2 h-year-later: `answer` 0.2834 to 0.2828 and accept text to $0.995^{252} = 0.2828$ (0.995^252 = 0.282759, recomputed); tol 0.0005 now admits 28.28 and 28.3.
+- ito homework-4 h-stopping: `same` [[o2, o3]] removed and "may swap" sentence deleted (o3 needs tau finite from o2; o4 cites line 2 by position). Only o1, o2, o3, o4 is accepted.
+- Validator 0 errors; `--set ito/homework-4` and `--set garch/homework-2` pass.
