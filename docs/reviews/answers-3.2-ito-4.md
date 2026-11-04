@@ -225,3 +225,7 @@ Disputes:
 - Note 32 (hidden-test coincidences): upheld. Hidden test values are never shown as items, and the l16 seed-11 run recaps l10 and l11 by design.
 
 New mismatch (one), exact fix: in `app/content/courses/ito/homework-4.json` line 388, h-exit-drift part 1 widget, change `"answer": 0.8611,` to `"answer": 0.9046,`. The fix pass reported this key as changed but the edit did not land; the validator and playthrough cannot see it because the accept text, feedback and explain all already say 0.9046.
+
+## Orchestrator fix
+
+- h-exit-drift part 1 `answer` changed from 0.8611 to 0.9046 (line 388), the one mismatch the recheck found; recomputed independently by the orchestrator: k = 2(0.2)/0.49, P = (1 - e^{2.5k})/(e^{-1.5k} - e^{2.5k}) = 0.9046. Validator 0 errors; `--set ito/homework-4` passes.
