@@ -142,3 +142,58 @@ My value is the one I computed; "ok" means the key, every wrong value and the qu
 | homework-4 | items[5] h-moments, part 2 | 21.3333 (wrong 8, 64) | $64/3 = 21.33333$ | ok |
 | homework-4 | items[5] h-moments, part 3 | 0.5 (wrong 1, 0.3333) | $\int_0^1 t\,dt$ | ok |
 | homework-4 | items[6] h-derivation | longform, `pace` 300, rubric 2, 2, 2, 1, 1, 1, 1 | points sum to 10; model answer algebra checked (book $-(V_t + \tfrac12\sigma^2S^2V_{SS})dt = r(-V + SV_S)dt$; forward residual 0); the five-minute split 1, 2, 1, 1 matches the rubric | ok |
+
+## Fix pass
+
+Files: the seven level 4 files only. Every new number was computed twice (closed form and a second route: quadrature or a finite-difference boundary-value solve) and grepped against `courses`, `exams` and `bank`. Scripts in `.../scratchpad/fix-ito4/`. Validator 0 errors; playthrough of all seven files passes plain and with `--mobile --tablet`; screenshots of l13 screens 2 to 4, l15 screen 3 and l16 screen 4 checked at 440 and 1032; voice scan 0 and 0 for level 4 files. No code widget changed, so no code solution or starter changed.
+
+1. Error, l14 s7: fixed. `generic`, `r0c1` and `correct` now use the exponent 2 (6.3891/7.0212 = 0.9100; the review's 7.0210 is 7.0212 on recomputation).
+2. Error, homework-4 h-stopping: fixed. `same` and the "may swap" sentence deleted; only o1, o2, o3, o4 is accepted.
+3. Warning, l15 quiz[3] `one`: fixed. Value 2.6667 (tolerance kept at the widget's 0.01), line names the $t^2$ slip.
+4. Warning, homework-4 h-hermite part 2 `half`: fixed (line as proposed).
+5. Warning, l14 s4 `flipped`: fixed (0.3348 recomputed).
+6. Warning, l14 s4 explain: fixed (slope $ab/(a+b) = 2/3$).
+7. Warning, l15 s6 `drop-cross`: fixed.
+8. Warning, l14 s9 `swapped`: fixed.
+9. Warning, homework-4 h-exit-report explain: fixed, shortened to three sentences.
+10. Warning, review-4 r-dig110: fixed. $S_0 = 60$, $K = 64$, $r = 4\%$, $\sigma = 30\%$, $T = 2$: 0.3972 (quadrature agrees), wrong 0.4303 and 0.5522.
+11. Warning, review-4 r-sqrt: fixed. $S_0 = 100$, $r = 4\%$, $\sigma = 30\%$, $T = 2$: 9.3941 (quadrature agrees), wrong 9.6079 and 10.1765. The l16 test value remains only in hidden tests.
+12. Warning, l16 s4: fixed. $S_0 = 80$, $r = 4\%$, $\sigma = 25\%$, $T = 1.5$: 7,463.68, wrong 6,795.75, 7,925.20, 6,400.
+13. Warning, l16 s0, s1: disputed. The brief (`docs/briefs/ito.md`, l16) fixes the shared option (S = K = 100, r = 5%, sigma = 20%, T = 1) with digital 0.5323 and forward 4.8771 "match them exactly"; a lesson may reuse it (DECISIONS). The 0.6578 slip value is fixed to 0.6577 (note 23).
+14. Warning, l17 s6: disputed on the same ground. The brief fixes this check at the shared option (Theta -6.4140, rS Delta 3.1842, 3.7524, 0.5225), and l17 s8 says "at the shared option". The duplicate in `homework-3` is outside this level.
+15. Warning, l13 repeats: fixed. s2 row now $e^{4W_t - 8t}$ (bars label too, drift 0, "yes"); s4 now $a = 5$, $c = -12.5$ (wrong 12.5, -2.5, -25); s3 reframed to ask the constant $c$ in $W_t^4 - 6tW_t^2 + c\,t^2$ (key 3, wrong 6 and 1.5), so the quartic is no longer a repeat of `homework-2`.
+16. Note, l14 s8: fixed. Prose and explain say the long-run gap is about 0.03 and that quartering the step halves it.
+17. Note, l14 s9 explain: fixed ("about fifteen pence").
+18. Note, review-4 `timed`: fixed, 720 seconds.
+19. Note, order free pairs: fixed. l14 s1 question says "Finish the chance before the time"; l15 s1 `same` is [[b1, b2], [b3, b4]].
+20. Note, l13 s2 unreachable cell lines: fixed differently. The proposed `byKey` ids are rejected by the validator ("the widget cannot return the key"; table `byKey` takes cell keys only), so the table `wrong` entries on cells r0c1 and r3c1 were removed. A wrong 3, 1 or 48 now returns the cell key and shows the existing lines, which name those slips. Engine gap: table `wrong` ids cannot carry `byKey` lines (reported to `docs/BACKLOG-INBOX.md`).
+21. Note, l13 s5 `drift-only`: fixed.
+22. Note, l13 s8 explain: fixed, $10^{-7}$.
+23. Note, l16 s0 `real-drift`: fixed, 0.6577.
+24. Note, l16 s8 correct: fixed, 1.5 standard errors.
+25. Note, l16 s9 explain: fixed, £48.77.
+26. Note, l17 q-put: fixed ("from unrounded terms, -0.6720 from the rounded ones").
+27. Note, l17 s8 canvas row: fixed ($r = 4\%$, $T = 0.5$ added).
+28. Note, rounded terms: fixed. "from unrounded values" added to l14 s5 `r1c1`, l14 s7 `correct` and homework-4 h-exit-drift part 2 (`accept`).
+29. Note, homework-4 h-exit-drift: fixed with $\sigma = 0.7$: $k = 0.8163$, $P = 0.9046$ (finite-difference solve 0.9042 at a grid offset), $E[\tau] = 5.5924$, driftless 7.6531, $E[X_\tau] = 1.1185$; `no-drift` 0.625, `no-sigma` 0.792 and 3.75 stay.
+30. Note, l15 s3: fixed with $T = 2.5$: 5.2083, `isometry-dt` 3.125, `whole` 2.5. Canvas, hints, feedback, explain and the summary trap updated ($T^3/3$, not $T^2/2$); the explain now says the variance exceeds the endpoint's because $T > \sqrt3$.
+31. Note, review-4 r-expconst: fixed. $e^{1.5W_t + ct}$: -1.125, wrong 1.125, -0.75 (added `no-square`), -2.25.
+32. Note, hidden-test coincidences (l17 s7 forward, l16 test 6 seed 11 run): disputed. Test values inside code widgets are not shown as items, and the l16 seed-11 run recaps l10 and l11 by design; l17 s7 is a forward check for the lesson's own PDE and uses fresh inputs from `l16`'s hidden test only in its third value.
+
+### Changed keys
+
+- `l13-martingale-or-not` screens[2] table: row 2 label $e^{4W_t - 8t}$ (key unchanged 0, "yes"); `wrong` removed on cells r0c1 and r3c1.
+- `l13-martingale-or-not` screens[3] numeric: key 6 to 3; `wrong` 12 to 6 (id `no-two`), 3 to 1.5.
+- `l13-martingale-or-not` screens[4] numeric: key -4.5 to -12.5; `wrong` 4.5 to 12.5, -1.5 to -2.5, -9 to -25.
+- `l14-hitting-and-exit` screens[1] order: prompt only (no key change).
+- `l15-moments-quickly` screens[1] order: `same` [[b1, b2], [b3, b4]].
+- `l15-moments-quickly` screens[3] numeric: key 0.3333 to 5.2083; `wrong` 0.5 to 3.125, 1 to 2.5.
+- `l15-moments-quickly` quiz[3] `q-ito`: `wrong` `one` 1 to 2.6667.
+- `l16-pricing-in-a-minute` screens[0]: `wrong` `real-drift` 0.6578 to 0.6577.
+- `l16-pricing-in-a-minute` screens[4] numeric: key 10941.74 to 7463.68; `wrong` 10512.71 to 6795.75, 11502.74 to 7925.2, 10000 to 6400.
+- `review-4` r-expconst: key -2 to -1.125; `wrong` 2 to 1.125, -4 to -2.25, added -0.75.
+- `review-4` r-dig110: key 0.3539 to 0.3972; `wrong` 0.372 to 0.4303, 0.4277 to 0.5522.
+- `review-4` r-sqrt: key 9.7045 to 9.3941; `wrong` 9.7531 to 9.6079, 10.202 to 10.1765.
+- `homework-4` h-stopping order: `same` removed.
+- `homework-4` h-exit-drift part 1: key 0.8611 to 0.9046 (no-drift, no-sigma unchanged); part 2: key 4.7214 to 5.5924, `wrong` `driftless` 5.8594 to 7.6531.
+- `homework-4` h-hermite part 2: feedback only (values unchanged).
