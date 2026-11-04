@@ -10,6 +10,7 @@
   let curriculum = null;          // curriculum.json as loaded
   const courseDocs = {};          // course id -> course.json (or null when it failed to load)
   let manifest = null;            // Set of paths relative to content/, or null when there is no manifest
+  const samples = new Set();      // the manifest's sample files ("sample": true), hidden from every list
   const cache = new Map();        // path -> Promise<object|null>
   const known = new Map();        // path -> true (found) | false (missing)
   let drillIndex = null;
@@ -144,9 +145,9 @@
   const examWritten = (id) => (manifest ? manifest.has(`exams/${id}.json`) : null);
   const exam = (id) => load(`exams/${id}.json`);
   /* The mock assessments written (exams/mock-*.json in the manifest), sorted by id; empty while there is no manifest */
-  const mocks = () => (manifest ? [...manifest].filter(f => /^exams\/mock-[^/]+\.json$/.test(f)).map(f => f.slice(6, -5)).sort() : []);
+  const mocks = () => (manifest ? [...manifest].filter(f => /^exams\/mock-[^/]+\.json$/.test(f) && !samples.has(f)).map(f => f.slice(6, -5)).sort() : []);
   /* The interview question bank (content/bank/<family>.json, ENGINE-BACKLOG 456): file ids from the manifest, sorted; none without one */
-  const bankIds = () => (manifest ? [...manifest].filter(f => /^bank\/[^/]+\.json$/.test(f)).map(f => f.slice(5, -5)).sort() : []);
+  const bankIds = () => (manifest ? [...manifest].filter(f => /^bank\/[^/]+\.json$/.test(f) && !samples.has(f)).map(f => f.slice(5, -5)).sort() : []);
   const bank = (id) => load(`bank/${id}.json`);
   /* ENGINE-BACKLOG 469 (E14): data files for Python code items. map is { "bare-name.csv": "content/data/<path>" }; resolves to
      { "bare-name.csv": "<text>" }. Each path is fetched once and cached; a file that cannot be read rejects with a plain message. */
@@ -162,10 +163,15 @@
   const drill = (id) => load(`drills/${id}.json`);
   /* The listed drills, each row with what the drill file says (language, pattern, tags, pace) from the manifest, so a
      filter never fetches 100 files. A file's own value wins over the index row. */
-  const drills = () => (drillIndex || []).map(r => { const m = drillMeta[r && r.id]; return m ? { ...r, ...m } : r; });
+  const drills = () => (drillIndex || []).filter(d => !samples.has(`drills/${typeof d === 'string' ? d : d && d.id}.json`)).map(r => { const m = drillMeta[r && r.id]; return m ? { ...r, ...m } : r; });
   /* Fixed drill sessions (content/drills/sessions/<id>.json, item 472): ids from the manifest, sorted; none without one */
   const drillSessionIds = () => (manifest ? [...manifest].filter(f => /^drills\/sessions\/[^/]+\.json$/.test(f)).map(f => f.slice(15, -5)).sort() : []);
   const drillSession = (id) => load(`drills/sessions/${id}.json`);
+  /* Samples (ENGINE-BACKLOG 467, 468): a file with a top-level "sample": true is listed under `samples` in the manifest. It loads
+     by its route or id as any file does, but mocks(), bankIds(), drills(), the bank deck and every count leave it out. */
+  const isSample = (path) => samples.has(path);
+  /* The manifest's files under a folder prefix ("bank/", "drills/"), sorted; samples only when asked (a sample exam drawing from sample files) */
+  const fileList = (prefix, { sample = false } = {}) => (manifest ? [...manifest].filter(f => f.startsWith(prefix) && f.endsWith('.json') && !f.slice(prefix.length).includes('/') && (sample || !samples.has(f))).sort() : []);
 
   /* ---------- Prep paths (content/prep.json, ENGINE-BACKLOG 455, docs/AUTHORING.md section 10) ----------
      Which lessons prepare for which assessment. Paths never unlock or gate anything; they only label lessons and list
@@ -229,7 +235,7 @@
       getJSON('drills/index.json', { optional: true }).catch(e => { console.error(e); return null; }),
     ]);
     curriculum = cur;
-    if (man && Array.isArray(man.files)) { manifest = new Set(man.files); manifest.forEach(f => known.set(f, true)); }
+    if (man && Array.isArray(man.files)) { manifest = new Set(man.files); manifest.forEach(f => known.set(f, true)); (Array.isArray(man.samples) ? man.samples : []).forEach(f => samples.add(f)); }
     if (man && man.drills && typeof man.drills === 'object') drillMeta = man.drills;
     drillIndex = Array.isArray(di) ? di : [];
     /* prep.json is requested only when the manifest lists it (or there is no manifest), so no 404 reaches the console */
@@ -247,7 +253,7 @@
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
     stages, allStages, stage, topic, topicPassed, courseTestedOut, resumeStands, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
-    lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills, dataFiles, drillSessionIds, drillSession,
+    lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills, dataFiles, drillSessionIds, drillSession, isSample, fileList,
     prep, prepPaths, prepPath, prepRefLessons, prepSteps, prepFor, prepForCourse, prepDetail, prepChip, prepMonth, prepStageLabel: (s) => STAGE_LABEL[s] || s,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */
     probe: (cid) => Promise.all(courseLessons(cid).map(x => load(`courses/${cid}/${x.id}.json`).catch(() => null))).then(() => courseLessons(cid)),

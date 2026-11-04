@@ -1088,6 +1088,7 @@ const checkItem = (file, where, it, ctx) => {
   if (typeof it.prose === 'string' && it.prose.trim() && typeof (it.prompt || (isObj(it.widget) && it.widget.kind === 'longform' && it.widget.prompt)) === 'string' && String(it.prompt || it.widget.prompt).trim()) warn(file, where, 'this item has both prose and prompt: prose replaces prompt on screen, so the prompt is never shown (merge them into one)');
   if (ctx.skillsRequired && (!Array.isArray(it.skills) || !it.skills.length)) err(file, `${where}.skills`, 'name at least one skill');
   (it.skills || []).forEach(s => { if (ctx.skills && !ctx.skills.has(s)) err(file, `${where}.skills`, `unknown skill "${s}"`); });
+  if (it.parts !== undefined) return checkParts(file, where, it, ctx);
   if (it.kind === 'longform' || (it.widget && it.widget.kind === 'longform')) {
     if (!ctx.allowLongform) err(file, where, 'longform items belong in homework and exams');
     checkLongform(file, where, it.kind === 'longform' ? it : it.widget);
@@ -1102,6 +1103,76 @@ const checkItem = (file, where, it, ctx) => {
   checkExplain(file, `${where}.explain`, it.explain, { required: true });
   if (ctx.warnInteractive && (CANVAS_BOUND.has(it.widget.kind) || (it.canvas && (it.canvas.controls || []).length))) warn(file, where, 'a quiz item with an interactive canvas: concreteness should have faded by the quiz');
   return it.widget.kind;
+};
+
+
+/* An item with parts (ENGINE-BACKLOG 467, docs/AUTHORING.md section 5): parts: [{ question, widget, feedback, explain?, prose?, canvas?,
+   difficulty?, id? }], 2 to 6, each of any widget kind except longform, opened in turn once the one before is checked. The item
+   carries its own id, difficulty, skills, tags and pace, and optionally a title, prose, canvas and question as the stem. Not on a
+   quiz item. A code part's tests are cumulative (the earlier code parts' tests run too), so the merged list is held to 15. */
+const PART_KEYS = ['id', 'prose', 'canvas', 'question', 'widget', 'feedback', 'explain', 'difficulty'];
+const checkParts = (file, where, it, ctx) => {
+  if (ctx.label === 'quiz') err(file, `${where}.parts`, 'parts is not allowed on a quiz item (a quiz item is one question with one attempt); use a review, homework, exam or bank item');
+  if (!Array.isArray(it.parts) || it.parts.length < 2 || it.parts.length > 6) { err(file, `${where}.parts`, 'parts is a list of 2 to 6 parts (a one-part item is an ordinary item)'); return 'parts'; }
+  if (it.widget !== undefined || it.kind !== undefined || it.prompt !== undefined) err(file, `${where}.widget`, 'an item with parts has no widget of its own: each part carries its widget (put the shared setup in prose, canvas and question)');
+  if (it.feedback !== undefined) err(file, `${where}.feedback`, 'an item with parts has no feedback of its own: each part carries feedback');
+  checkCanvas(file, `${where}.canvas`, it.canvas);
+  checkText(file, `${where}.prose`, it.prose); checkText(file, `${where}.question`, it.question);
+  if (it.explain != null) checkExplain(file, `${where}.explain`, it.explain);
+  else if (!it.parts.some(p => isObj(p) && p.explain)) warn(file, `${where}.explain`, 'an explanation (explain.text) is expected on the item or on its parts');
+  it.parts.forEach((p, k) => {
+    const at = `${where}.parts[${k}]`;
+    if (!isObj(p)) { err(file, at, 'a part is an object { question, widget, feedback }'); return; }
+    if (p.kind === 'paper' || p.kind === 'check') err(file, `${at}.kind`, 'this is a stage exam part (paper or check); an item\'s parts are { question, widget, feedback }');
+    Object.keys(p).forEach(f => { if (!PART_KEYS.includes(f)) err(file, `${at}.${f}`, `unknown part field "${f}" (allowed: ${PART_KEYS.join(', ')})`); });
+    if (p.id != null && !KEBAB.test(String(p.id))) err(file, `${at}.id`, 'a part id is kebab-case');
+    if (p.difficulty != null) checkDifficulty(file, `${at}.difficulty`, p.difficulty, 1, 5, 'part');
+    checkCanvas(file, `${at}.canvas`, p.canvas);
+    checkText(file, `${at}.prose`, p.prose); checkText(file, `${at}.question`, p.question);
+    if (!p.question) err(file, `${at}.question`, 'required field missing: each part asks its own question');
+    if (!isObj(p.widget)) { err(file, `${at}.widget`, 'required field missing'); return; }
+    if (p.widget.kind === 'longform') err(file, `${at}.widget`, 'a part cannot be longform: the learner marks a written answer, which a follow-up cannot wait for');
+    if (ctx.label === 'bank' && p.widget.kind === 'code') err(file, `${at}.widget`, 'a code part cannot run in the bank deck');
+    const keys = checkWidget(file, `${at}.widget`, p.widget, p.canvas, { question: p.question, allowLongform: false });
+    checkFeedback(file, `${at}.feedback`, p.feedback, keys);
+    checkExplain(file, `${at}.explain`, p.explain);
+    if (p.widget.cumulative !== undefined) {
+      if (p.widget.kind !== 'code') err(file, `${at}.widget.cumulative`, 'cumulative applies to a code part only');
+      else if (typeof p.widget.cumulative !== 'boolean') err(file, `${at}.widget.cumulative`, 'cumulative is true or false (true by default: earlier code parts\' tests run too)');
+    }
+    if (p.widget.kind === 'code' && p.widget.cumulative !== false) {
+      const merged = [];
+      it.parts.slice(0, k + 1).forEach(q => { const w = isObj(q) && q.widget; if (w && w.kind === 'code' && (w.language || 'python') === (p.widget.language || 'python')) (Array.isArray(w.tests) ? w.tests : []).forEach(t => { const j = JSON.stringify(t); if (!merged.includes(j)) merged.push(j); }); });
+      if (merged.length > 15) err(file, `${at}.widget.tests`, `the cumulative tests of this part come to ${merged.length} (at most 15): trim an earlier part's tests or set cumulative: false`);
+    }
+  });
+  return 'parts';
+};
+
+/* Drawn items (ENGINE-BACKLOG 468, docs/AUTHORING.md section 5): draw: [{ from, tags?, difficulty?, n }] on a mock or stage-exam paper.
+   The entries are checked here; whether "from" names real files and has enough matching items is checked once every bank and drill
+   file has been read (verifyDraws). */
+const DRAW_KEYS = ['from', 'tags', 'difficulty', 'n'];
+const drawRefs = [];
+const checkDraw = (file, where, draw, { sample = false } = {}) => {
+  if (draw === undefined) return 0;
+  if (!Array.isArray(draw) || !draw.length) { err(file, where, 'draw is a non-empty list of { "from": "bank/<file>", "tags": [...], "difficulty": [low, high], "n": 3 }'); return 0; }
+  let total = 0;
+  draw.forEach((d, i) => {
+    const at = `${where}[${i}]`;
+    if (!isObj(d)) { err(file, at, 'a draw entry is an object { from, tags, difficulty, n }'); return; }
+    Object.keys(d).forEach(f => { if (!DRAW_KEYS.includes(f)) err(file, `${at}.${f}`, `unknown draw field "${f}" (allowed: ${DRAW_KEYS.join(', ')})`); });
+    if (typeof d.from !== 'string' || !/^(bank|drills)\/(\*|[a-z0-9]+(-[a-z0-9]+)*)$/.test(d.from)) err(file, `${at}.from`, 'from is "bank/<file>" (a bank file, "bank/<prefix>" for <prefix>-1, <prefix>-2 and so on, or "bank/*") or "drills/<pack>" (a pack name, a drill id or "drills/*")');
+    if (!Number.isInteger(d.n) || d.n < 1 || d.n > 40) err(file, `${at}.n`, 'n is a whole number of items, 1 to 40');
+    checkTags(file, `${at}.tags`, d.tags);
+    if (d.difficulty !== undefined) {
+      const ok = (v) => Number.isInteger(v) && v >= 1 && v <= 5;
+      if (!(ok(d.difficulty) || (Array.isArray(d.difficulty) && d.difficulty.length === 2 && d.difficulty.every(ok) && d.difficulty[0] <= d.difficulty[1]))) err(file, `${at}.difficulty`, 'difficulty is one whole number 1 to 5, or [low, high]');
+    }
+    if (Number.isInteger(d.n) && d.n > 0) total += d.n;
+    drawRefs.push({ file, at, d, sample });
+  });
+  return total;
 };
 
 /* ---------- Lesson (rules 1 to 9 and the warnings) ---------- */
@@ -1247,7 +1318,8 @@ const SCORING_KEYS = ['right', 'wrong', 'blank'];
 const checkPaperRules = (file, where, p, { needPass = false } = {}) => {
   if (p.minutes != null && !(typeof p.minutes === 'number' && p.minutes > 0)) err(file, `${where}.minutes`, 'minutes is a number above 0');
   if (p.pass != null && !(typeof p.pass === 'number' && p.pass > 0 && p.pass <= 1)) err(file, `${where}.pass`, 'pass is a share between 0 and 1');
-  let max = (Array.isArray(p.items) ? p.items : []).reduce((a, it) => a + (it && it.generator ? Math.max(1, Math.round(+it.n || 1)) : 1), 0);
+  let max = (Array.isArray(p.items) ? p.items : []).reduce((a, it) => a + (it && it.generator ? Math.max(1, Math.round(+it.n || 1)) : 1), 0)
+    + (Array.isArray(p.draw) ? p.draw.reduce((a, d) => a + (isObj(d) && Number.isInteger(d.n) && d.n > 0 ? d.n : 0), 0) : 0);   // drawn items (ENGINE-BACKLOG 468)
   if (p.scoring != null) {
     if (!isObj(p.scoring)) err(file, `${where}.scoring`, 'scoring is { right, wrong, blank } (numbers)');
     else {
@@ -1326,8 +1398,9 @@ const checkMock = (file, id, doc, cur) => {
   const ictx = { lo: 1, hi: 5, label: 'mock', skills: allSkills, skillsRequired: false, needDifficulty: false, allowLongform: true };
   const paperOf = (p, where) => {
     checkPaperRules(file, where, p, { needPass: true });
-    if (!Array.isArray(p.items) || !p.items.length) err(file, `${where}.items`, 'a paper needs at least one item');
+    if ((!Array.isArray(p.items) || !p.items.length) && !(Array.isArray(p.draw) && p.draw.length)) err(file, `${where}.items`, 'a paper needs at least one item (or a draw)');
     checkPaperItems(file, `${where}.items`, p.items, ictx);
+    checkDraw(file, where ? `${where}.draw` : 'draw', p.draw, { sample: doc.sample === true });
     const seen = new Set();
     (p.items || []).forEach((it, j) => { if (isObj(it) && it.id) { if (seen.has(it.id)) err(file, `${where}.items[${j}].id`, `duplicate id "${it.id}"`); seen.add(it.id); } });
   };
@@ -1357,6 +1430,7 @@ const checkExam = (file, id, doc, cur) => {
     const examSkills = new Set(Object.keys(doc.skills || {}));
     examSkills.forEach(s => { if (!topicSkills.has(s)) err(file, 'skills', `"${s}" is not a skill of a course in topic ${doc.topic}`); });
     topicSkills.forEach(s => { if (!examSkills.has(s)) err(file, 'skills', `topic skill "${s}" is not covered by the exam`); });
+    if (doc.draw !== undefined) err(file, 'draw', 'draw belongs in mock and stage exams: a topic exam must cover its skills with items it names');
     const items = Array.isArray(doc.items) ? doc.items : [];
     if (items.length < 20 || items.length > 30) err(file, 'items', `20 to 30 items (found ${items.length})`);
     checkPaperItems(file, 'items', items, { lo: 2, hi: 5, label: 'exam', skills: examSkills, skillsRequired: true, allowLongform: true, generators: false });
@@ -1379,7 +1453,8 @@ const checkExam = (file, id, doc, cur) => {
         const items = Array.isArray(p.items) ? p.items : [];
         checkPaperItems(file, `parts[${i}].items`, items, { lo: 2, hi: 5, label: 'exam', skills: allSkills, skillsRequired: true, allowLongform: true });
         checkPaperRules(file, `parts[${i}]`, p, { needPass: true });
-        if (items.length >= 10 && !items.some(it => it && it.generator !== undefined)) checkRamp(file, `parts[${i}].items`, items);
+        checkDraw(file, `parts[${i}].draw`, p.draw, { sample: doc.sample === true });
+        if (items.length >= 10 && !p.draw && !items.some(it => it && it.generator !== undefined)) checkRamp(file, `parts[${i}].items`, items);
       }
     });
   }
@@ -1412,6 +1487,7 @@ const checkDrill = (file, id, d, cur) => {
     if (d.fn != null) warn(file, 'fn', 'fn is for Python drills; a C++ test names the function in its own call');
     if (Array.isArray(d.examples) && d.examples.length < 1) err(file, 'examples', 'at least 1 example');
   }
+  if (d.pack !== undefined && (typeof d.pack !== 'string' || !KEBAB.test(d.pack))) err(file, 'pack', 'pack is a kebab-case name: the group a mock paper draws from ("drills/<pack>")');   // ENGINE-BACKLOG 468
 };
 
 /* Drill sessions: content/drills/sessions/<id>.json = { id, name, drills: [two ids], minutes (10 to 180, default 60), brief, sample } */
@@ -1472,6 +1548,17 @@ const curDoc = readJSON(curFile);
 if (curDoc.missing) err(curFile, '', 'curriculum.json is missing');
 const C = curDoc.data || { stages: [], courses: {}, tracks: {} };
 const cur = { topics: new Map(), stages: new Set(), courseDocs: {}, courseTopic: {} };
+/* Samples (ENGINE-BACKLOG 467, 468): a top-level "sample": true marks a lesson, review, homework, exam, bank or drill file as an engine
+   sample. It is listed under `samples` in the manifest, left out of every learner-facing list and count, and may sit in a course
+   folder without being on the course map. Only `true` is allowed (leave the field out for real content). */
+const samples = [];
+const noteSample = (file, relPath, data) => {
+  if (!isObj(data) || data.sample === undefined) return false;
+  if (data.sample !== true) { err(file, 'sample', 'sample is true, or the field is left out'); return false; }
+  samples.push(relPath);
+  return true;
+};
+const bankData = new Map(), drillData = new Map();
 
 /* Curriculum */
 if (!Array.isArray(C.stages)) err(curFile, 'stages', 'must be an array');
@@ -1568,6 +1655,7 @@ Object.keys(C.courses || {}).forEach(cid => {
       const lf = path.join(dir, `${l}.json`), lr = readJSON(lf);
       if (lr.missing) { unwritten.push(l); return; }
       written.push(l); manifest.push(`courses/${cid}/${l}.json`);
+      if (noteSample(lf, `courses/${cid}/${l}.json`, lr.data)) err(lf, 'sample', 'a sample file cannot be on a course map: leave it out of course.json');
       if (lr.data) guard(lf, () => checkLesson(lf, cid, l, lr.data, D).forEach(s => usedSkills.add(s)));
     });
     [['review', `review-${i + 1}`], ['homework', `homework-${i + 1}`]].forEach(([kind, expect]) => {
@@ -1576,10 +1664,18 @@ Object.keys(C.courses || {}).forEach(cid => {
       const sf = path.join(dir, `${id}.json`), sr = readJSON(sf);
       if (sr.missing) { if (kind === 'review') reviewsMissing++; else homeworkMissing++; return; }
       manifest.push(`courses/${cid}/${id}.json`);
+      if (noteSample(sf, `courses/${cid}/${id}.json`, sr.data)) err(sf, 'sample', 'a sample file cannot be on a course map: leave it out of course.json');
       if (sr.data) guard(sf, () => checkSet(sf, kind, cid, id, i + 1, sr.data, D));
     });
   });
-  listJSON(dir).forEach(f => { if (!referenced.has(f)) err(path.join(dir, f), '', 'file is not referenced by course.json'); });
+  listJSON(dir).forEach(f => {
+    if (referenced.has(f)) return;
+    const uf = path.join(dir, f), ur = readJSON(uf), uid = f.replace(/\.json$/, '');
+    if (!(ur.data && ur.data.sample === true)) { if (!ur.bad) err(uf, '', 'file is not referenced by course.json (an engine sample says "sample": true at the top)'); return; }
+    /* a sample lesson, review or homework in a course folder: checked like the real thing, kept off the map and out of every count */
+    noteSample(uf, `courses/${cid}/${f}`, ur.data); manifest.push(`courses/${cid}/${f}`);
+    guard(uf, () => { if (/^review-/.test(uid)) checkSet(uf, 'review', cid, uid, ur.data.level, ur.data, D); else if (/^homework-/.test(uid)) checkSet(uf, 'homework', cid, uid, ur.data.level, ur.data, D); else checkLesson(uf, cid, uid, ur.data, D); });
+  });
   if (!unwritten.length) skills.forEach(s => { if (!usedSkills.has(s)) err(file, `skills.${s}`, 'no lesson uses this skill'); });
   if (unwritten.length || reviewsMissing || homeworkMissing) {
     warn(file, '', `not yet written: ${unwritten.length} of ${lessonTotal} lessons, ${reviewsMissing} of ${levels.length} reviews, ${homeworkMissing} of ${levels.length} homework`);
@@ -1593,7 +1689,7 @@ listJSON(examDir).forEach(f => {
   const id = f.replace(/\.json$/, ''), file = path.join(examDir, f);
   if (!/^(topic-\d+\.\d+|stage-\d+|mock-[a-z0-9]+(-[a-z0-9]+)*)$/.test(id)) { err(file, '', 'exam files are topic-<topic>.json, stage-<n>.json or mock-<id>.json'); return; }
   const r = readJSON(file); if (!r.data) return;
-  manifest.push(`exams/${f}`);
+  manifest.push(`exams/${f}`); noteSample(file, `exams/${f}`, r.data);
   guard(file, () => checkExam(file, id, r.data, cur));
 });
 
@@ -1603,7 +1699,7 @@ listJSON(bankDir).forEach(f => {
   const id = f.replace(/\.json$/, ''), file = path.join(bankDir, f);
   if (!KEBAB.test(id)) { err(file, '', 'bank files are <family>.json, kebab-case'); return; }
   const r = readJSON(file); if (!r.data) return;
-  manifest.push(`bank/${f}`);
+  manifest.push(`bank/${f}`); noteSample(file, `bank/${f}`, r.data); bankData.set(id, r.data);
   guard(file, () => checkBank(file, id, r.data, cur));
 });
 
@@ -1724,7 +1820,7 @@ const drillIds = new Set(listJSON(drillDir).filter(f => f !== 'index.json').map(
 listJSON(drillDir).filter(f => f !== 'index.json').forEach(f => {
   const id = f.replace(/\.json$/, ''), file = path.join(drillDir, f);
   const r = readJSON(file); if (!r.data) return;
-  manifest.push(`drills/${f}`);
+  manifest.push(`drills/${f}`); const isSample = noteSample(file, `drills/${f}`, r.data); drillData.set(id, r.data);
   guard(file, () => checkDrill(file, id, r.data, cur));
   const D = r.data, meta = {};
   if (D && typeof D === 'object') {
@@ -1735,7 +1831,7 @@ listJSON(drillDir).filter(f => f !== 'index.json').forEach(f => {
     if (D.sample === true) meta.sample = true;
     if (Object.keys(meta).length) drillMeta[id] = meta;
   }
-  if (!listed.has(id) && !(D && D.sample === true)) warn(file, '', 'drill is not listed in drills/index.json');
+  if (!listed.has(id) && !isSample) warn(file, '', 'drill is not listed in drills/index.json');
   listed.delete(id);
 });
 listed.forEach(id => err(idxFile, '', `drill "${id}" is listed but drills/${id}.json does not exist`));
@@ -1745,6 +1841,35 @@ listJSON(path.join(drillDir, 'sessions')).forEach(f => {
   manifest.push(`drills/sessions/${f}`);
   guard(file, () => checkDrillSession(file, id, r.data, drillIds));
 });
+
+
+/* Draw sources (ENGINE-BACKLOG 468): every `from` must name files, and enough items must match the tags and difficulty. A sample exam may
+   draw from sample files too; any other exam draws from real files only (the engine reads the same rule). */
+const drillTags = (d) => { const t = Array.isArray(d.tags) ? d.tags : []; return t.length ? t : [d.pattern, ...(Array.isArray(d.patterns) ? d.patterns : [d.patterns]), d.pack, d.id].filter(x => typeof x === 'string').slice(0, 1); };
+const verifyDraws = () => {
+  drawRefs.forEach(({ file, at, d, sample }) => {
+    if (typeof d.from !== 'string' || !/^(bank|drills)\//.test(d.from)) return;   // a malformed "from" is reported where it is written
+    const [kind, name] = d.from.split('/'), want = Array.isArray(d.tags) ? d.tags : [];
+    const band = Array.isArray(d.difficulty) ? d.difficulty : Number.isInteger(d.difficulty) ? [d.difficulty, d.difficulty] : null;
+    const keep = (tags, diff) => (!want.length || (Array.isArray(tags) && tags.some(t => want.includes(t)))) && (!band || (diff >= band[0] && diff <= band[1]));
+    let files = 0, items = 0;
+    if (kind === 'bank') {
+      bankData.forEach((doc, id) => {
+        if (!(name === '*' || id === name || id.startsWith(name + '-')) || (doc.sample === true && !sample)) return;
+        files++; (Array.isArray(doc.items) ? doc.items : []).forEach(it => { if (isObj(it) && keep(it.tags, it.difficulty)) items++; });
+      });
+    } else if (kind === 'drills') {
+      drillData.forEach((doc, id) => {
+        if (!(name === '*' || doc.pack === name || doc.id === name || String(doc.id).startsWith(name + '-')) || (doc.sample === true && !sample)) return;
+        files++; if (keep(drillTags(doc), doc.difficulty)) items++;
+      });
+    }
+    if (!files) err(file, `${at}.from`, `"${d.from}" matches no ${kind === 'bank' ? 'bank file' : 'drill'}${sample ? '' : ' (sample files are drawn only by a sample exam)'}`);
+    else if (items < d.n) err(file, `${at}.n`, `draws ${d.n} but only ${items} item${items === 1 ? '' : 's'} in ${d.from} match the tags and difficulty`);
+    else if (items < 2 * d.n) warn(file, `${at}.n`, `only ${items} items match for a draw of ${d.n}: a resit repeats items (aim for at least twice n)`);
+  });
+};
+guard(path.join(CONTENT, 'exams'), verifyDraws);
 
 /* Warm-up settings */
 const wu = readJSON(path.join(CONTENT, 'warmup.json'));
@@ -1772,7 +1897,7 @@ if (SUMMARY) {
 
 if (!errors.length && WRITE_MANIFEST) {
   const mf = path.join(CONTENT, 'manifest.json');
-  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content.', files: manifest.sort(), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
+  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }
