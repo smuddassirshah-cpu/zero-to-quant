@@ -197,3 +197,31 @@ Files: the seven level 4 files only. Every new number was computed twice (closed
 - `homework-4` h-stopping order: `same` removed.
 - `homework-4` h-exit-drift part 1: key 0.8611 to 0.9046 (no-drift, no-sigma unchanged); part 2: key 4.7214 to 5.5924, `wrong` `driftless` 5.8594 to 7.6531.
 - `homework-4` h-hermite part 2: feedback only (values unchanged).
+
+## Recheck
+
+Commit 506f63d confirmed in `git log`. Values recomputed independently (closed form plus quadrature or a finite-difference solve; scratch `.../scratchpad/rc-ito4/c.py`). Content not edited.
+
+- l13 s2 table: row 2 `e^{4W-8t}` drift -8f + 8f = 0, "yes". OK. Cells r0c1 (3, 1) and r3c1 (48) now fall to the cell key; the existing r0c1 and r3c1 lines name each slip. OK.
+- l13 s3: drift (2c - 6)t, c = 3. OK. `no-two` 6 (takes f_t = ct, c - 6 = 0) and `half-twice` 1.5 (2c = 3) match their lines. OK.
+- l13 s4: c = -25/2 = -12.5. OK. Wrong 12.5 (sign), -2.5 (a/2 not a^2/2), -25 (no half) match. OK.
+- l15 s3: 2.5^3/3 = 5.2083 (quadrature agrees). OK. `isometry-dt` 3.125 = int t dt on [0, 2.5], `whole` 2.5. OK.
+- l15 quiz[3] `one`: int_0^2 t^2 dt = 2.6667, matches the $t^2$ slip. OK (note: 2.6667 is also the key of an earlier l15 screen, line 252, and of review-1; as a wrong value it is harmless).
+- l16 s4: 6400e^{0.15375} = 7,463.68 (7,463.6755). OK. Wrong 6,795.75 (forward squared, discounted), 7,925.20 (undiscounted), 6,400 (S0 squared) match; e^{sigma^2 T} = 1.0983 and 6,795.75 to 7,463.68 consistent. OK.
+- l16 s0 `real-drift` 0.6577: e^{-0.05} x Phi(0.5) = 0.951229 x 0.691462 = 0.6577. OK.
+- review-4 r-expconst: -1.5^2/2 = -1.125. OK. Wrong 1.125, -0.75 (a/2), -2.25 (no half) match. OK.
+- review-4 r-dig110: d2 = -0.17569, Phi = 0.43027, x e^{-0.08} = 0.3972 (quadrature agrees). OK. Wrong 0.4303 (undiscounted), 0.5522 (e^{-rT} Phi(d1), d1 = 0.2486, Phi = 0.5982) match. OK.
+- review-4 r-sqrt: 10e^{-0.0625} = 9.3941 (quadrature agrees). OK. Wrong 9.6079 (root of forward, discounted), 10.1765 (undiscounted) match. OK.
+- homework-4 h-stopping: `same` gone. Line 2 must precede line 3 (finite tau for the limit) and line 4 uses P and "line 2", so only o1, o2, o3, o4 is valid. OK.
+- homework-4 h-exit-drift part 1: P = 0.9046 (finite-difference 0.90462). **MISMATCH**: the widget `answer` is still 0.8611 (homework-4.json line 388), so the correct 0.9046 would be marked wrong. `no-drift` 0.625 and `no-sigma` 0.792 verified.
+- homework-4 h-exit-drift part 2: E[X_tau] = 1.11848, E[tau] = 5.5924 (finite-difference 5.5924). OK. `driftless` ab/sigma^2 = 7.6531, `no-sigma` 3.75. OK.
+- homework-4 h-hermite part 2 `half`: (3/2)a + 2b = 0 gives 7.5, the wrong value; line matches. OK.
+
+Novelty: grep of `courses`, `exams`, `bank` (outside these seven files) finds no repeat of 5.2083, 7463.68, 6795.75, 7925.2, 0.3972, 9.3941, 10.1765, 5.5924, 7.6531, 1.1185. Hits for 0.4303, 0.5522, 0.9046 are table data in `taylor/l9` and `ito/l5`, not items; 9.6079 hits only as 9.6079e-05 in `opt-dash/homework-1`; 12.5, 3.125, 1.125, 0.8163 hit only unrelated items. No `e^{4W`, `e^{5W}` or `e^{1.5W}` repeats. OK.
+
+Disputes:
+- l16 s0, s1 (shared option 0.5323, 4.8771): upheld. The brief fixes this option for l16 and "match them exactly"; reuse in a lesson is allowed.
+- l17 s6 (Theta -6.4140, Delta 3.1842, 3.7524, 0.5225): upheld. The brief fixes the check at the shared option and l17 s8 says "at the shared option".
+- Note 32 (hidden-test coincidences): upheld. Hidden test values are never shown as items, and the l16 seed-11 run recaps l10 and l11 by design.
+
+New mismatch (one), exact fix: in `app/content/courses/ito/homework-4.json` line 388, h-exit-drift part 1 widget, change `"answer": 0.8611,` to `"answer": 0.9046,`. The fix pass reported this key as changed but the edit did not land; the validator and playthrough cannot see it because the accept text, feedback and explain all already say 0.9046.
