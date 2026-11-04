@@ -1,0 +1,1332 @@
+{
+  "id": "homework-1",
+  "course": "systems",
+  "level": 1,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h1-ladder-follow-ups",
+      "difficulty": 3,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "latency-ladder"
+      ],
+      "pace": 360,
+      "prose": "An interviewer keeps extending one question. Use the round figures: DRAM 100 ns, NVMe 100 µs, London to New York 60 ms.",
+      "question": "Four follow-ups on the latency ladder.",
+      "parts": [
+        {
+          "question": "How many main-memory reads take as long as one NVMe read?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1000,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "reads",
+            "accept": "1,000: 100 µs / 100 ns.",
+            "wrong": [
+              {
+                "id": "ten",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "hundred",
+                "value": 100,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "1,000 reads.",
+            "generic": "Not quite right. Put both in nanoseconds.",
+            "byKey": {
+              "ten": "Divide, do not count rungs: 100,000 / 100.",
+              "hundred": "100 is DRAM against L1."
+            }
+          },
+          "explain": {
+            "text": "100 µs is 100,000 ns, and $100{,}000 / 100 = 1{,}000$."
+          }
+        },
+        {
+          "question": "How many main-memory reads take as long as one London to New York round trip?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 600000,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "reads",
+            "accept": "600,000: 60 ms / 100 ns.",
+            "wrong": [
+              {
+                "id": "sixty",
+                "value": 60000,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "six",
+                "value": 6000000,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "600,000 reads.",
+            "generic": "Not quite right. 60 ms is 60,000,000 ns.",
+            "byKey": {
+              "sixty": "Check the zeros: 60,000,000 / 100 is 600,000.",
+              "six": "Check the zeros: 60,000,000 / 100 is 600,000."
+            }
+          },
+          "explain": {
+            "text": "60 ms is $6 \\times 10^7$ ns, and $6 \\times 10^7 / 100 = 600{,}000$."
+          }
+        },
+        {
+          "question": "A handler makes 3 main-memory reads a message, and one NVMe read per 1,000 messages. What is the average cost a message, in ns?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 400,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "ns",
+            "accept": "400: 300 + 100,000 / 1,000.",
+            "wrong": [
+              {
+                "id": "nvme",
+                "value": 100300,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "dram",
+                "value": 300,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "400 ns a message.",
+            "generic": "Not quite right. Share the NVMe read over 1,000 messages.",
+            "byKey": {
+              "nvme": "The NVMe read happens once per 1,000 messages, not every message.",
+              "dram": "Add the NVMe share: 100 ns a message."
+            }
+          },
+          "explain": {
+            "text": "$3 \\times 100 = 300$ ns from memory, plus $100{,}000 / 1{,}000 = 100$ ns from the drive: 400 ns."
+          }
+        },
+        {
+          "question": "As a fraction, what is the NVMe share of that cost compared with the DRAM share?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "a",
+                "text": "One third",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "Three times",
+                "why": "You divided the DRAM share by the NVMe share."
+              },
+              {
+                "id": "c",
+                "text": "One thousandth",
+                "why": "You compared one read with one read, not the shares per message."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "One third: 100 ns against 300 ns.",
+            "generic": "Not quite right. Compare 100 ns with 300 ns."
+          },
+          "explain": {
+            "text": "The rare slow read adds 100 ns a message; the three fast reads add 300 ns. A rare slow access can still cost as much as the common ones."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h1-cache-sim",
+      "difficulty": 4,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "cache-lines"
+      ],
+      "pace": 1500,
+      "title": "A cache simulator",
+      "prose": "Turn this level's hand counts into code. A cache has `num_lines` lines of 64 bytes, in sets of `ways` lines. Byte address `a` is in line `a / 64`, which lives in set `(a / 64) % (num_lines / ways)`. A full set drops its least recently used line.",
+      "question": "Write `count_misses`: start empty and return the number of misses.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <vector>\n\n// A cache of num_lines lines of 64 bytes, in sets of `ways` lines each (num_lines is a multiple of ways).\n// The line holding byte address a is a / 64 and it lives in set (a / 64) % (num_lines / ways).\n// A full set drops its least recently used line. Start empty. Return the number of misses.\nint count_misses(int num_lines, int ways, const std::vector<int>& addresses) {\n    int misses = 0;\n    for (int a : addresses) {\n        (void)a;\n        ++misses;     // TODO: an access whose line is already in its set is a hit\n    }\n    return misses;\n}\n",
+        "solution": "#include <list>\n#include <vector>\n\nint count_misses(int num_lines, int ways, const std::vector<int>& addresses) {\n    int sets = num_lines / ways;\n    std::vector<std::list<int>> cache(sets);      // front = most recently used\n    int misses = 0;\n    for (int a : addresses) {\n        int line = a / 64;\n        std::list<int>& set = cache[line % sets];\n        bool hit = false;\n        for (auto it = set.begin(); it != set.end(); ++it) {\n            if (*it == line) { set.erase(it); hit = true; break; }\n        }\n        if (!hit) {\n            ++misses;\n            if (static_cast<int>(set.size()) == ways) set.pop_back();\n        }\n        set.push_front(line);\n    }\n    return misses;\n}\n",
+        "examples": [
+          {
+            "call": "count_misses",
+            "args": [
+              4,
+              1,
+              [
+                0,
+                256,
+                8,
+                264,
+                16,
+                272,
+                24,
+                280,
+                32,
+                288,
+                40,
+                296,
+                48,
+                304,
+                56,
+                312
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              4,
+              2,
+              [
+                0,
+                256,
+                8,
+                264,
+                16,
+                272,
+                24,
+                280,
+                32,
+                288,
+                40,
+                296,
+                48,
+                304,
+                56,
+                312
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 2,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "count_misses",
+            "args": [
+              4,
+              1,
+              [
+                0,
+                256,
+                8,
+                264,
+                16,
+                272,
+                24,
+                280,
+                32,
+                288,
+                40,
+                296,
+                48,
+                304,
+                56,
+                312
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              4,
+              2,
+              [
+                0,
+                256,
+                8,
+                264,
+                16,
+                272,
+                24,
+                280,
+                32,
+                288,
+                40,
+                296,
+                48,
+                304,
+                56,
+                312
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              4,
+              1,
+              [
+                0,
+                320,
+                8,
+                328,
+                16,
+                336,
+                24,
+                344,
+                32,
+                352,
+                40,
+                360,
+                48,
+                368,
+                56,
+                376
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              4,
+              4,
+              [
+                0,
+                8,
+                16,
+                24,
+                32,
+                40,
+                48,
+                56,
+                64,
+                72,
+                80,
+                88,
+                96,
+                104,
+                112,
+                120,
+                128,
+                136,
+                144,
+                152,
+                160,
+                168,
+                176,
+                184,
+                192,
+                200,
+                208,
+                216,
+                224,
+                232,
+                240,
+                248,
+                256,
+                264,
+                272,
+                280,
+                288,
+                296,
+                304,
+                312,
+                320,
+                328,
+                336,
+                344,
+                352,
+                360,
+                368,
+                376,
+                384,
+                392,
+                400,
+                408,
+                416,
+                424,
+                432,
+                440,
+                448,
+                456,
+                464,
+                472,
+                480,
+                488,
+                496,
+                504
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 8,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              4,
+              4,
+              [
+                0,
+                64,
+                128,
+                192,
+                256,
+                320,
+                384,
+                448,
+                8,
+                72,
+                136,
+                200,
+                264,
+                328,
+                392,
+                456,
+                16,
+                80,
+                144,
+                208,
+                272,
+                336,
+                400,
+                464,
+                24,
+                88,
+                152,
+                216,
+                280,
+                344,
+                408,
+                472,
+                32,
+                96,
+                160,
+                224,
+                288,
+                352,
+                416,
+                480,
+                40,
+                104,
+                168,
+                232,
+                296,
+                360,
+                424,
+                488,
+                48,
+                112,
+                176,
+                240,
+                304,
+                368,
+                432,
+                496,
+                56,
+                120,
+                184,
+                248,
+                312,
+                376,
+                440,
+                504
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 64,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              8,
+              8,
+              [
+                0,
+                64,
+                128,
+                192,
+                256,
+                320,
+                384,
+                448,
+                8,
+                72,
+                136,
+                200,
+                264,
+                328,
+                392,
+                456,
+                16,
+                80,
+                144,
+                208,
+                272,
+                336,
+                400,
+                464,
+                24,
+                88,
+                152,
+                216,
+                280,
+                344,
+                408,
+                472,
+                32,
+                96,
+                160,
+                224,
+                288,
+                352,
+                416,
+                480,
+                40,
+                104,
+                168,
+                232,
+                296,
+                360,
+                424,
+                488,
+                48,
+                112,
+                176,
+                240,
+                304,
+                368,
+                432,
+                496,
+                56,
+                120,
+                184,
+                248,
+                312,
+                376,
+                440,
+                504
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 8,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              512,
+              8,
+              [
+                0,
+                16,
+                32,
+                48,
+                64,
+                80,
+                96,
+                112,
+                128,
+                144,
+                160,
+                176,
+                192,
+                208,
+                224,
+                240,
+                256,
+                272,
+                288,
+                304,
+                320,
+                336,
+                352,
+                368,
+                384,
+                400,
+                416,
+                432,
+                448,
+                464,
+                480,
+                496
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 8,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              512,
+              8,
+              [
+                0,
+                24,
+                48,
+                72,
+                96,
+                120,
+                144,
+                168,
+                192,
+                216,
+                240,
+                264,
+                288,
+                312,
+                336,
+                360,
+                384,
+                408,
+                432,
+                456,
+                480,
+                504,
+                528,
+                552,
+                576,
+                600,
+                624,
+                648,
+                672,
+                696,
+                720,
+                744
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 12,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              4,
+              4,
+              []
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "count_misses",
+            "args": [
+              2,
+              2,
+              [
+                0,
+                64,
+                128,
+                0,
+                64,
+                128
+              ]
+            ],
+            "types": [
+              "int",
+              "int",
+              "std::vector<int>"
+            ],
+            "expect": 6,
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Ten hidden tests. They include the l2 clash, an 8 × 8 matrix both ways and strides 2 and 3. Also an empty list and a set one line too small."
+      },
+      "feedback": {
+        "correct": "That's it. Find the set, look for the line, and keep the set in recency order.",
+        "generic": "Not quite right. Read the first failing test and trace it by hand."
+      },
+      "explain": {
+        "text": "Keep each set as a list with the most recent line at the front. A hit moves its line to the front. A miss puts the new line there and, in a full set, drops the back one, the least recently used."
+      }
+    },
+    {
+      "id": "h1-a-i-aloud",
+      "difficulty": 4,
+      "skills": [
+        "sy-memory",
+        "sy-os"
+      ],
+      "tags": [
+        "latency-ladder"
+      ],
+      "pace": 300,
+      "kind": "longform",
+      "title": "From a[i] to a register",
+      "prompt": "Say aloud, in two minutes, what happens from `a[i]` in your code to the value arriving in a register. Time yourself, and use this level's round figures. Then open the model answer and tick the rubric.",
+      "model": "**1. The address is virtual.** `a[i]` becomes the address of `a` plus `8 * i` for a double. That address is virtual: a page number and a 12-bit offset into a 4 KiB page.\n\n**2. Translation.** The core looks the page up in the TLB. A hit costs almost nothing. A miss walks the four-level page table: up to four memory reads, about 400 ns if none is cached.\n\n**3. Cache lines.** With the physical address, the core asks for the 64-byte line that holds it. Eight doubles share a line, so a loop in order misses once per eight reads.\n\n**4. The levels.** L1 answers in about 1 ns, L2 in about 4 ns and L3 in about 20 ns. If all three miss, main memory answers in about 100 ns. The line is copied in, evicting the least recently used line of its set.\n\n**5. The slow cases.** If the page has no frame yet, the access faults. A minor fault costs about 1 µs. One that reads from an SSD costs about 100 µs, and from a spinning disk about 10 ms.\n\n**6. Why it matters.** The same `a[i]` can cost 1 ns or 100 µs: five powers of ten. So layout and access order decide speed: keep hot data small, contiguous and in the order you walk it.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Says the address is virtual and is translated to a physical one through the page table"
+        },
+        {
+          "points": 2,
+          "text": "Names the TLB: a hit is nearly free, a miss walks up to four levels, about 400 ns"
+        },
+        {
+          "points": 2,
+          "text": "Says memory moves in 64-byte lines, so neighbouring data arrives together"
+        },
+        {
+          "points": 2,
+          "text": "Gives L1, L2, L3 and DRAM with round figures of 1, 4, 20 and 100 ns"
+        },
+        {
+          "points": 1,
+          "text": "Mentions a page fault or a miss to disk, with its cost"
+        },
+        {
+          "points": 1,
+          "text": "Closes with why layout and access order matter"
+        }
+      ]
+    },
+    {
+      "id": "h1-matrix",
+      "difficulty": 4,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "loop-order"
+      ],
+      "pace": 420,
+      "prose": "A 1,000 × 1,000 matrix of doubles is stored row by row. The L1 cache is 32 KiB: 512 lines in 64 sets of 8 ways. Count only L1 misses, at 100 ns each.",
+      "question": "Five follow-ups on loop order.",
+      "parts": [
+        {
+          "question": "How many misses does the row-by-row sum make?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 125000,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "misses",
+            "accept": "125,000: 8 doubles a line.",
+            "wrong": [
+              {
+                "id": "all",
+                "value": 1000000,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "rows",
+                "value": 1000,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "125,000 misses.",
+            "generic": "Not quite right. Each line serves 8 reads.",
+            "byKey": {
+              "all": "Row by row, 7 of every 8 reads hit.",
+              "rows": "1,000 is the number of rows. Each row spans 125 lines."
+            }
+          },
+          "explain": {
+            "text": "A million doubles at 8 a line is 125,000 lines, each missed once."
+          }
+        },
+        {
+          "question": "How many misses does the column-by-column sum make?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1000000,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "misses",
+            "accept": "1,000,000: every read misses.",
+            "wrong": [
+              {
+                "id": "rows",
+                "value": 125000,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "cols",
+                "value": 1000,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "1,000,000: every read misses.",
+            "generic": "Not quite right. Can a line survive until the walk returns to it?",
+            "byKey": {
+              "rows": "That is the row order. A column touches 1,000 lines, more than the cache holds.",
+              "cols": "1,000 is the number of columns."
+            }
+          },
+          "explain": {
+            "text": "One column touches 1,000 different lines, and the cache holds 512. By the time the walk returns, each line is gone."
+          }
+        },
+        {
+          "question": "At 100 ns a miss, how long does the row order take, in ms?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 12.5,
+            "tol": {
+              "abs": 0.01
+            },
+            "unit": "ms",
+            "accept": "12.5: 125,000 × 100 ns.",
+            "wrong": [
+              {
+                "id": "col",
+                "value": 100,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "micro",
+                "value": 12500,
+                "tol": {
+                  "abs": 1
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "12.5 ms.",
+            "generic": "Not quite right. Multiply misses by 100 ns.",
+            "byKey": {
+              "col": "100 ms is the column order.",
+              "micro": "12,500 is in microseconds."
+            }
+          },
+          "explain": {
+            "text": "$125{,}000 \\times 100$ ns is 12.5 ms."
+          }
+        },
+        {
+          "question": "And the column order, in ms?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 100,
+            "tol": {
+              "abs": 0.01
+            },
+            "unit": "ms",
+            "accept": "100: 1,000,000 × 100 ns.",
+            "wrong": [
+              {
+                "id": "row",
+                "value": 12.5,
+                "tol": {
+                  "abs": 0.01
+                }
+              },
+              {
+                "id": "sec",
+                "value": 0.1,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "100 ms, eight times the row order.",
+            "generic": "Not quite right. Multiply a million misses by 100 ns.",
+            "byKey": {
+              "row": "12.5 ms is the row order.",
+              "sec": "0.1 is in seconds. The question asks for ms."
+            }
+          },
+          "explain": {
+            "text": "$10^6 \\times 100$ ns is 100 ms, eight times the row order."
+          }
+        },
+        {
+          "question": "For a 64 × 64 matrix, how many misses does the column order make?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 512,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "misses",
+            "accept": "512: the matrix fits, so each line misses once.",
+            "wrong": [
+              {
+                "id": "all",
+                "value": 4096,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "rows",
+                "value": 64,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "512, the same as by rows.",
+            "generic": "Not quite right. Does a 64 × 64 matrix fit in 32 KiB?",
+            "byKey": {
+              "all": "4,096 would need lines to leave. 32 KiB holds the whole matrix.",
+              "rows": "64 is the number of rows."
+            }
+          },
+          "explain": {
+            "text": "64 × 64 × 8 bytes is 32 KiB, exactly the cache: 512 lines, 8 in each set. Nothing is evicted, so both orders miss 512 times."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h1-layout",
+      "difficulty": 4,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "struct-size"
+      ],
+      "pace": 240,
+      "prose": "```cpp\nstruct P { uint8_t a; uint64_t b;\n           uint8_t c; uint16_t d; };\n```\n\nSorted largest first, the order is `b`, `d`, `a`, `c`.",
+      "question": "Fill in every offset and both sizes.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Declared",
+          "Offset",
+          "Largest first",
+          "Offset"
+        ],
+        "rows": [
+          [
+            "`a` (1)",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "`b` (8)",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`b` (8)",
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "`d` (2)",
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`c` (1)",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "`a` (1)",
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`d` (2)",
+            {
+              "edit": true,
+              "answer": 18,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "`c` (1)",
+            {
+              "edit": true,
+              "answer": 11,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "sizeof",
+            {
+              "edit": true,
+              "answer": 24,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "sizeof",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Declared: 0, 8, 16, 18 and 24. Sorted: 0, 8, 10, 11 and 16.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r1c1": "`b` is 8 bytes, so it waits for offset 8.",
+          "r3c1": "`c` ends at 17, and `d` needs a multiple of 2: 18.",
+          "r4c1": "`d` ends at 20, which rounds up to a multiple of 8: 24.",
+          "r2c3": "`d` ends at 10, so `a` sits there.",
+          "r4c3": "`c` ends at 12, which rounds up to a multiple of 8: 16."
+        }
+      },
+      "explain": {
+        "text": "Declared, `a` wastes 7 bytes before `b` and the tail wastes 4: 24 bytes. Sorted, the small fields pack after `b` and only the tail pads: 16 bytes. A third smaller, from moving two fields."
+      }
+    },
+    {
+      "id": "h1-tlb",
+      "difficulty": 5,
+      "skills": [
+        "sy-memory",
+        "sy-os"
+      ],
+      "tags": [
+        "tlb"
+      ],
+      "pace": 480,
+      "prose": "A handler reads a 256 MiB table at random. Each read costs 100 ns. On a TLB miss it also pays a 30 ns walk; take that as given. The TLB holds 64 entries.",
+      "question": "Four follow-ups on page size.",
+      "parts": [
+        {
+          "question": "With 4 KiB pages, what is the TLB hit rate?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.0009765625,
+            "tol": {
+              "abs": 3e-05
+            },
+            "unit": "%",
+            "accept": "0.098%: 64 of 65,536 pages.",
+            "wrong": [
+              {
+                "id": "small",
+                "value": 0.0039,
+                "tol": {
+                  "abs": 0.0001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "About 0.098%.",
+            "generic": "Not quite right. Count the pages in 256 MiB first.",
+            "byKey": {
+              "small": "0.39% is a 64 MiB table. This one is four times bigger."
+            }
+          },
+          "explain": {
+            "text": "$2^{28} / 2^{12} = 65{,}536$ pages, and 64 of them fit: $64 / 65{,}536 \\approx 0.098\\%$."
+          }
+        },
+        {
+          "question": "What is the average cost of a read, in ns?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 129.97,
+            "tol": {
+              "abs": 0.01
+            },
+            "unit": "ns",
+            "accept": "129.97: 100 + 0.999 × 30.",
+            "wrong": [
+              {
+                "id": "walk",
+                "value": 130,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "hit",
+                "value": 100,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "129.97 ns.",
+            "generic": "Not quite right. Add the walk, weighted by the miss rate.",
+            "byKey": {
+              "walk": "130 charges every read the walk. 0.098% of reads hit.",
+              "hit": "100 ns ignores the walk."
+            }
+          },
+          "explain": {
+            "text": "$100 + (1 - 64 / 65{,}536) \\times 30 = 129.97$ ns. Almost every read pays the walk."
+          }
+        },
+        {
+          "question": "With 2 MiB pages, what is the average cost of a read, in ns?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 115,
+            "tol": {
+              "abs": 0.01
+            },
+            "unit": "ns",
+            "accept": "115: half the reads hit.",
+            "wrong": [
+              {
+                "id": "all",
+                "value": 100,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "none",
+                "value": 130,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "115 ns.",
+            "generic": "Not quite right. 256 MiB is 128 huge pages.",
+            "byKey": {
+              "all": "64 entries hold only half of the 128 huge pages.",
+              "none": "Half the pages are in the TLB now."
+            }
+          },
+          "explain": {
+            "text": "256 MiB is 128 pages of 2 MiB; 64 fit, so the hit rate is 50%. The cost is $100 + 0.5 \\times 30 = 115$ ns."
+          }
+        },
+        {
+          "question": "How much faster is that than with 4 KiB pages, as a percentage of the 4 KiB cost?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1152,
+            "tol": {
+              "abs": 0.0006
+            },
+            "unit": "%",
+            "accept": "11.5%: 14.97 / 129.97.",
+            "wrong": [
+              {
+                "id": "walk",
+                "value": 0.15,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "other",
+                "value": 0.1302,
+                "tol": {
+                  "abs": 0.0006
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "About 11.5% faster.",
+            "generic": "Not quite right. Divide the saving by the 4 KiB cost.",
+            "byKey": {
+              "walk": "15% is the 15 ns walk saving over a 100 ns read. Divide by 129.97.",
+              "other": "13% divides by the new cost, 115. Divide by the old one."
+            }
+          },
+          "explain": {
+            "text": "The saving is $129.97 - 115 = 14.97$ ns, and $14.97 / 129.97 \\approx 11.5\\%$. Changing the page size changed no code."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h1-branchless",
+      "difficulty": 3,
+      "skills": [
+        "sy-memory",
+        "sy-latency"
+      ],
+      "tags": [
+        "mispredict-cost"
+      ],
+      "pace": 120,
+      "prose": "A handler branches on `if (type == 'A')`. Types arrive in random order: 70% adds, 15% cancels, 15% trades. Each message has a 5 µs budget, and a wrong guess costs 5 ns.",
+      "question": "Should you rewrite the branch branchless?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "No: it costs about 1.5 ns of 5,000 ns, 0.03%. Measure first.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Yes: branches on random data are always worth removing",
+            "why": "Only if they matter. 1.5 ns is 0.03% of the budget."
+          },
+          {
+            "id": "c",
+            "text": "Yes: it is wrong half the time",
+            "why": "The best guess, 'add', is wrong 30% of the time, not half."
+          },
+          {
+            "id": "d",
+            "text": "No: branches are free",
+            "why": "A wrong guess costs about 5 ns. Here it is wrong 30% of the time."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "No. The branch is not where the time goes.",
+        "generic": "Not quite right. Work out its cost first.",
+        "byKey": {
+          "c": "Guessing 'add' every time is right 70% of the time."
+        }
+      },
+      "explain": {
+        "text": "Wrong 30% of the time at 5 ns is 1.5 ns a message: 0.03% of 5 µs. A rewrite would risk bugs for nothing. Measure where the time goes before you optimise."
+      }
+    }
+  ]
+}

@@ -1,0 +1,498 @@
+{
+  "id": "review-1",
+  "course": "systems",
+  "level": 1,
+  "items": [
+    {
+      "id": "r1-ladder",
+      "difficulty": 2,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "latency-ladder"
+      ],
+      "pace": 45,
+      "prose": "Use the round figures of this level.",
+      "question": "Order these from fastest to slowest.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "reg",
+            "text": "Read a register"
+          },
+          {
+            "id": "l2",
+            "text": "Read from the L2 cache"
+          },
+          {
+            "id": "dram",
+            "text": "Read from main memory"
+          },
+          {
+            "id": "nvme",
+            "text": "A random NVMe read"
+          },
+          {
+            "id": "dc",
+            "text": "A round trip inside one data centre"
+          },
+          {
+            "id": "seek",
+            "text": "A disk seek"
+          }
+        ],
+        "answer": [
+          "reg",
+          "l2",
+          "dram",
+          "nvme",
+          "dc",
+          "seek"
+        ]
+      },
+      "feedback": {
+        "correct": "0.3 ns, 4 ns, 100 ns, 100 µs, 500 µs, 10 ms.",
+        "generic": "Not quite right. Recall each round figure, then sort them.",
+        "byKey": {
+          "dc": "A round trip in one data centre is 500 µs: slower than NVMe, faster than a seek.",
+          "nvme": "An NVMe read is 100 µs, five times faster than a data-centre round trip."
+        }
+      },
+      "explain": {
+        "text": "Register 0.3 ns, L2 4 ns, DRAM 100 ns and NVMe 100 µs. Then a data-centre round trip at 500 µs and a disk seek at 10 ms. The network inside a building still beats a spinning disk."
+      }
+    },
+    {
+      "id": "r1-budget",
+      "difficulty": 2,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "time-budget"
+      ],
+      "pace": 40,
+      "prose": "A handler has a 5 µs budget per message. It makes one main-memory read.",
+      "question": "What percentage of the budget does that read use?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.02,
+        "tol": {
+          "abs": 0.0005
+        },
+        "unit": "%",
+        "accept": "2%: 100 ns of 5,000 ns.",
+        "wrong": [
+          {
+            "id": "l1",
+            "value": 0.0002,
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "id": "tenth",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2% of the budget.",
+        "generic": "Not quite right. Divide 100 ns by 5,000 ns.",
+        "byKey": {
+          "l1": "0.02% is an L1 read of 1 ns.",
+          "tenth": "20% would be 1,000 ns. A main-memory read is 100 ns."
+        }
+      },
+      "explain": {
+        "text": "$100 / 5{,}000 = 0.02$, which is 2%. Fifty such reads would use the whole budget."
+      }
+    },
+    {
+      "id": "r1-stride",
+      "difficulty": 3,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "cache-lines"
+      ],
+      "pace": 60,
+      "prose": "A loop reads every third double of a 96-double array. The cache is cold and large, with 64-byte lines.",
+      "question": "How many reads miss?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "misses",
+        "accept": "12: 32 reads touch all 12 lines.",
+        "wrong": [
+          {
+            "id": "each",
+            "value": 32,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "third",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "12 misses out of 32 reads.",
+        "generic": "Not quite right. Count the lines the reads touch.",
+        "byKey": {
+          "each": "Not every read misses: some share a line with the read before.",
+          "third": "A stride of 3 is shorter than a line, so it touches every line."
+        }
+      },
+      "explain": {
+        "text": "96 doubles fill 12 lines. A stride of 3 is under 8, so every line is touched once: 12 misses in 32 reads."
+      }
+    },
+    {
+      "id": "r1-loop-order",
+      "difficulty": 2,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "loop-order"
+      ],
+      "pace": 40,
+      "prose": "A 1,000 × 1,000 matrix of doubles is stored row by row: 8 MB, far bigger than the caches.",
+      "question": "Which loop nest sums it fastest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Row index outer, column index inner",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Column index outer, row index inner",
+            "why": "That jumps 8,000 bytes per read, so every read misses."
+          },
+          {
+            "id": "c",
+            "text": "Either: the cache makes them equal",
+            "why": "Only when the matrix fits in the cache. 8 MB does not."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Row outer: the inner loop walks memory in order.",
+        "generic": "Not quite right. Which order reads neighbours in memory?"
+      },
+      "explain": {
+        "text": "Row by row, each 64-byte line serves 8 reads. Column by column, each read lands on a new line. The inner loop should walk the contiguous index."
+      }
+    },
+    {
+      "id": "r1-page-table",
+      "difficulty": 3,
+      "skills": [
+        "sy-memory",
+        "sy-os"
+      ],
+      "tags": [
+        "page-table"
+      ],
+      "pace": 60,
+      "prose": "Virtual address 0x3B10 is 15,120 in decimal.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Page",
+            "Frame"
+          ],
+          "rows": [
+            [
+              "0",
+              "5"
+            ],
+            [
+              "1",
+              "2"
+            ],
+            [
+              "2",
+              "none"
+            ],
+            [
+              "3",
+              "8"
+            ]
+          ],
+          "align": [
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "Pages are 4,096 bytes."
+        }
+      },
+      "question": "What is its physical address?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 35600,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a decimal address",
+        "accept": "35,600 (0x8B10): frame 8, offset 2,832.",
+        "wrong": [
+          {
+            "id": "frame",
+            "value": 32768,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "same",
+            "value": 15120,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "frame2",
+            "value": 11024,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "35,600, which is 0x8B10.",
+        "generic": "Not quite right. Split 15,120 into page and offset.",
+        "byKey": {
+          "frame": "32,768 is the start of frame 8. Add the offset 2,832.",
+          "same": "The address must go through the table.",
+          "frame2": "Frame 2 belongs to page 1. 15,120 is in page 3."
+        }
+      },
+      "explain": {
+        "text": "$15{,}120 = 3 \\times 4{,}096 + 2{,}832$: page 3, offset 2,832. Frame 8 gives $32{,}768 + 2{,}832 = 35{,}600$. In hex the offset 0xB10 survives untouched."
+      }
+    },
+    {
+      "id": "r1-faults",
+      "difficulty": 3,
+      "skills": [
+        "sy-memory",
+        "sy-os"
+      ],
+      "tags": [
+        "page-fault"
+      ],
+      "pace": 60,
+      "prose": "A program first touches 2 GiB with 4 KiB pages. Each minor fault costs about 1 µs.",
+      "question": "How many ms do the faults take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 524.288,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "ms",
+        "accept": "524.288: 524,288 faults.",
+        "wrong": [
+          {
+            "id": "pages",
+            "value": 524288,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "decimal",
+            "value": 488.28,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 524 ms.",
+        "generic": "Not quite right. Count the pages first.",
+        "byKey": {
+          "pages": "524,288 is the number of faults. Each takes 1 µs.",
+          "decimal": "A GiB is $2^{30}$ bytes, not $10^9$."
+        }
+      },
+      "explain": {
+        "text": "$2^{31} / 2^{12} = 524{,}288$ pages, and 524,288 µs is 524.288 ms. Touching the memory at start-up keeps that out of the session."
+      }
+    },
+    {
+      "id": "r1-struct",
+      "difficulty": 3,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "struct-size"
+      ],
+      "pace": 60,
+      "prose": "`struct { uint8_t a; uint16_t b; uint8_t c; uint32_t d; uint8_t e; }` is 16 bytes as declared.",
+      "question": "What is its size with the fields sorted largest first?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "bytes",
+        "accept": "12: offsets 0, 4, 6, 7, 8, end 9, round to 12.",
+        "wrong": [
+          {
+            "id": "asis",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sum",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "12 bytes.",
+        "generic": "Not quite right. Lay out `d`, `b`, then the three single bytes.",
+        "byKey": {
+          "asis": "16 is the declared order.",
+          "sum": "9 is where the data ends. Round up to the 4-byte alignment."
+        }
+      },
+      "explain": {
+        "text": "`d` at 0, `b` at 4, then `a`, `c`, `e` at 6, 7 and 8. The data ends at 9, which rounds up to 12."
+      }
+    },
+    {
+      "id": "r1-predictor",
+      "difficulty": 3,
+      "skills": [
+        "sy-memory",
+        "sy-latency"
+      ],
+      "tags": [
+        "branch-predictor"
+      ],
+      "pace": 60,
+      "prose": "A two-bit counter starts at 1. It guesses taken at 2 or 3, and moves up on T and down on N.",
+      "question": "How many wrong guesses on `TTTN` repeated four times?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "wrong",
+        "accept": "5: the first T and the four N.",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "onebit",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "5 wrong guesses.",
+        "generic": "Not quite right. Track the counter through the first loop.",
+        "byKey": {
+          "four": "Count the first T too: at c = 1 the guess is N.",
+          "onebit": "8 is a one-bit predictor's count, wrong twice per loop exit."
+        }
+      },
+      "explain": {
+        "text": "The first T is wrong, then each N is wrong once. One N only drops the counter from 3 to 2, so the next T is right. That is 1 + 4 = 5."
+      }
+    },
+    {
+      "id": "r1-straddle",
+      "difficulty": 4,
+      "skills": [
+        "sy-memory"
+      ],
+      "tags": [
+        "cache-line-straddle"
+      ],
+      "pace": 45,
+      "prose": "An array of 24-byte structs starts on a 64-byte line boundary.",
+      "question": "How many of the first 8 structs cross a line boundary?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "structs",
+        "accept": "2: structs 2 and 5.",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2: structs 2 and 5.",
+        "generic": "Not quite right. Write each struct's first and last byte.",
+        "byKey": {
+          "none": "64 is not a multiple of 24, so some must cross.",
+          "three": "Struct 7 runs from byte 168 to 191, inside one line."
+        }
+      },
+      "explain": {
+        "text": "Struct 2 runs from byte 48 to 71 and struct 5 from 120 to 143; both cross. The 8 structs fill 192 bytes, exactly 3 lines, so the pattern repeats. A 32-byte struct never crosses."
+      }
+    }
+  ]
+}
