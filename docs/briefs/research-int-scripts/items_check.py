@@ -20,7 +20,7 @@ for name, (a, b, c), valid in [("0.9,0.9,0.7", (.9, .9, .7), True), ("0.9,0.9,0.
     two(f"R1.4 triple ({name}) valid={valid}: det by formula vs eigvalsh", float(hand), float(corr_ok(R)))
     two(f"   states {valid}", float(corr_ok(R)), float(valid)); print(f"       det {det3(a, b, c):.4f}")
 two("R1.5 (n+1)/n * 8.1 with n=9", 10/9*8.1, 9.0, 1e-12); two("   second route: 8.1/0.9", 8.1/(9/10), 9.0, 1e-12)
-for n in (5, 10):
+for n in (10, 15, 20):
     k = n-1; mse = lambda d: (2*k+(k-d)**2)/d**2
     qm = lambda d: float(__import__("scipy").integrate.quad(lambda s: (s/d-1)**2*stats.chi2.pdf(s, k), 0, np.inf)[0])
     best_hand = min(range(1, 3*n), key=mse); best_quad = min(range(1, 3*n), key=qm); two(f"R1.6/H1.3 best divisor n={n}", best_hand, best_quad); two(f"   equals n+1", best_hand, n+1)
@@ -112,4 +112,12 @@ two("l3 transfer: 10/9 * 6.3 = 7.0", 10/9*6.3, 6.3/0.9, 1e-12); two("   equals 7
 two("l5 transfer: share of variance in top eigenvalue 2.2/5", 2.2/5, float(np.linalg.eigvalsh(0.7*np.eye(5)+0.3*np.ones((5, 5)))[-1]/5), 1e-12)
 two("l2 transfer: 0.6, 0.8 -> high end 0.96", 0.48+math.sqrt(.64*.36), 0.96, 1e-12)
 two("l10 transfer: lag-1 t-stat on file 3.93", 3.9277, 3.9277, 1e-4)
+# H1.3 tests (fix pass): mse_divisor and best_divisor values for n = 10, 15, 20 by exact fractions
+from fractions import Fraction as _F
+for n, d, want in [(10, 9, 0.2222222222), (10, 10, 0.19), (10, 11, 0.1818181818), (20, 19, 0.1052631579), (20, 20, 0.0975), (20, 21, 0.0952380952), (15, 16, 0.125)]:
+    two(f"H1.3 mse_divisor({n},{d}) exact fraction", float((_F(2*(n-1))+(n-1-d)**2)/_F(d*d)), want, 5e-11)
+two("H1.3 best_divisor(20)", min(range(1, 60), key=lambda d: (2*19+(19-d)**2)/d**2), 21); two("H1.3 best_divisor(15)", min(range(1, 45), key=lambda d: (2*14+(14-d)**2)/d**2), 16)
+# l4 hook: normal-curve p and exact binomial p for 60 heads in 100; l1 duplicated-data p-values
+two("l4 hook z = 2, normal two-sided p", 2*0.5*math.erfc(2/math.sqrt(2)), float(2*stats.norm.sf(2)), 1e-12); two("l4 exact binomial two-sided p for 60 of 100", float(sum(math.comb(100, k) for k in list(range(0, 41))+list(range(60, 101)))/2**100), float(stats.binom.sf(59, 100, .5)*2), 1e-12)
+two("l1 p-value at t 4.962, 8 df (about 0.0011)", round(float(2*stats.t.sf(4.962, 8)), 4), 0.0011, 1e-9); two("l1 p-value at t 7.443, 18 df (6.7e-7)", round(float(2*stats.t.sf(7.443, 18))*1e7, 1), 6.7, 1e-9)
 done()

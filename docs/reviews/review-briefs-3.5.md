@@ -59,6 +59,41 @@ Verified correct (no action): all Level 1 closed forms (slopes 1.6 and 0.4, r² 
 33. note | Plan (b) text | The plan's note says L4 uses "seeded generators in the brief until E14 allows data files"; the brief takes E14, which matches (f) and (g). Record it in the report as an intentional departure.
 34. note | Repetition | Beyond finding 1: l4 overlaps `testing` l9 and l10 (Bonferroni, Šidák, BH) but with new numbers and the interview form; l9 overlaps `eigen` l11 on the 2.2 share (different numbers); l7, l8, l6 cite their stat-learning and ensembles lessons and use new numbers. Acceptable.
 
+### Fix pass (research-int)
+1. fixed: l3 cites `estimation` l4-bias-against-variance by id; H1.3 now n = 10, 15, 20 (mse 0.1052631579, 0.0952380952, 0.125; best divisor 21 and 16), no n = 5; exact fractions and quadrature agree.
+2. fixed: "about 0.001 to under 0.000001" (0.0011 and 6.7e-7 recomputed).
+3. fixed: l4 hook asks z = 2, then normal-curve p 0.0455 with `wrong` 0.0569 and a byKey line (0.0455 and 0.0569 recomputed by erfc and binomial sums).
+4. fixed: R1.1 tags `two-regressions` first, `regression-two-slopes` dropped.
+5. fixed: l2 hook grades the point, with a playthrough check (0.285 passes, 0.2 fails).
+6. fixed: boosting screen uses `curves` with ternary expressions, not `state.lines`.
+7. fixed: construction of the importance figures stated (`l2_ml.py` lines 111 to 115; script prints 0.467, 0.469, 0.032, 0.032 and 0.373, 0.387, 0.003, -0.003); edge reworded as the two noise columns tie.
+8. fixed: seeds and set-up for every seeded Level 2 number added as a convention bullet, with "paste the arrays".
+9. fixed: l10 hook asks for the formula value at r = 0.05 and captions the draw's own r and t.
+10. fixed: l9 hook is a `bars` of 0.08, 0.02, 0.02.
+11. fixed: l10 transfer says "a signal you can find in sample" (true coefficient 0.06).
+12. fixed: l14 (5), R3.9 and H3.4(d) now say standard error 2.39 (normal equations and statsmodels agree), 6.66 is 0.98 errors below 9, collinearity widens the error; VIF 2.40 is the pair value, 2.43 full model; graded answer of H3.4(d) changed.
+13. fixed: l12 states the 994-row mask (0.1261, 0.0285, 0.0303, 0.6086; own-sample 0.1235, 0.0316, 0.6072 recomputed).
+14. fixed: l13 and H3.3 say all 200 test rows, first forecast from row 399 (1.207112 and 1.2128 without; AR(1) 1.1574 without).
+15. fixed: l13 teaching reworded; in-sample t on the 748 pairs is 4.02 (R2 0.021), OOS R2 -0.0091 with se about 0.02 (delta method and bootstrap agree). Reader's "R2 0.0015" not reproducible, so not quoted.
+16. fixed: prelude for cleaning and split, screen count (11, no derive) stated.
+17. fixed: intercept 115.77 and band B -26.40 (115.77498, -26.40499), tolerance 0.01.
+18. fixed: bootstrap scheme stated (`default_rng(99).integers(0, 99, (5000, 99))` reproduces 24.87 to 34.22 and 4486.9 to 8445.0); prose says about £25k to £34k, numeric tol 0.15; H3.6 rubric loosened.
+19. kept: 125 at 2.5 is correct for xs (0, 10), ys (100, 200) (100 + (200 - 100)/(10 - 0) x 2.5 = 125); the reader read the pairs as points. Wording now says xs and ys explicitly; author's script unchanged.
+20. fixed: "inf in numpy, NaN on some builds, never 0.5" (numerator 3.0, denominator 0.0); drill return type `std::vector<double>` {slope, intercept} with `isclose`.
+21. fixed: R4.4 key guarded with `if len(g) > 2 else np.nan` (13 rows, 12 numeric, Wick NaN; unguarded Wick 0.3; 4 negatives).
+22. fixed: L4 agent writes six drill files and six `index.json` rows, `course` and `skills` given, pattern names provisional; inbox bullet added.
+23. fixed: `minutes: 15` everywhere, real time in first prose, count `pace`.
+24. fixed: 15 blank prices leave 297, one repeated second has a blank, 11 pairs merge to 286.
+25. fixed: heading reworded, workarounds named.
+26. fixed: E11 row "L1, L2, L3".
+27. fixed: files `bank/research-1` to `-4`, L4 example draw numeric and choice only; inbox bullet added.
+28. fixed: unopened parts count as missed (brief and inbox).
+29. fixed: scripts cited at `docs/briefs/research-int-scripts/`. Note: its `run.sh` still hardcodes the scratchpad paths; not changed.
+30. fixed: derive "where a derivation exists".
+31, 32, 34. kept: reader says no change needed.
+33. fixed: departure from plan (b) recorded in course context.
+Scripts: items_check, l3_open_case, l4_data_tasks, stable_slope updated in `docs/briefs/research-int-scripts/`; all eight scripts end ALL AGREE. Inbox: three bullets appended.
+
 ## systems
 
 Tally: 4 errors, 10 warnings, 6 notes. Nothing in the numbers is wrong; the errors are in the code-problem specs and in review items that cannot be graded as written.

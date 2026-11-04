@@ -140,4 +140,9 @@ two("l20 bootstrap draws identical (vectorised vs loop)", float(np.abs(v1-v2).ma
 print("       n", len(h), " mean price", round(h.price_k.mean(), 3), " baseline RMSE (in-sample sd, ddof 0)", round(float(np.sqrt((err**2).mean())), 3), " boot 95% [", round(float(np.percentile(v1, 2.5)), 3), round(float(np.percentile(v1, 97.5)), 3), "]")
 two("l20 rerun with same seed is identical", float(np.abs(boot_vec(err)-v1).max()), 0.0, 0.0)
 two("l20 different seed differs", float(np.abs(boot_vec(err, seed=1)-v1).max() > 0), 1.0)
+# fix pass: the keyed expression with a guard returns 13 rows, 12 numeric and Wick NaN
+_g = tt.groupby("town").apply(lambda g: np.polyfit(g.day, g.temp_c, 1)[0] if len(g) > 2 else np.nan, include_groups=False)
+two("l17 guarded groupby: rows", len(_g), 13); two("   numeric slopes", int(_g.notna().sum()), 12); two("   Wick is NaN", float(np.isnan(_g["Wick"])), 1.0)
+_u = tt.groupby("town").apply(lambda g: np.polyfit(g.day, g.temp_c, 1)[0], include_groups=False); two("l17 unguarded Wick slope 0.3", round(float(_u["Wick"]), 4), 0.3)
+two("l17 negative slopes among the 12 full towns", int((_g.dropna() < 0).sum()), 4)
 done()

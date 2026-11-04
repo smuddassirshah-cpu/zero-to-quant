@@ -118,4 +118,25 @@ diff = err_base-err_lin; bd = diff[idx].mean(1); dl, dh = np.percentile(bd, [2.5
 print(f"     per-row squared-error gain over baseline: mean {diff.mean():.1f} bootstrap 95% [{dl:.1f}, {dh:.1f}]  t {dn:.2f}")
 two("l15 improvement CI lower above zero (bootstrap)", float(dl > 0), 1.0); two("l15 paired t above 2", float(dn > 2), 1.0)
 print("     out-of-sample R2 vs mean baseline:", round(1-err_lin.sum()/err_base.sum(), 4))
+# ---------- fix pass additions ----------
+# bedrooms: standard error by the normal equations and by statsmodels; collinearity inflates the error, it does not bias the estimate
+Xs = np.c_[np.ones(len(tr)), tr[feats].to_numpy(float)]; yv = tr.price_k.to_numpy(); Pinv = np.linalg.inv(Xs.T@Xs); bs_ = Pinv@Xs.T@yv; res_ = yv-Xs@bs_; s2_ = float(res_@res_)/(len(tr)-Xs.shape[1])
+se_hand = math.sqrt(s2_*Pinv[2, 2]); two("l14 bedrooms standard error, normal equations vs statsmodels", se_hand, float(smf.bse["bedrooms"]), 1e-9); two("   stated 2.39", round(se_hand, 2), 2.39)
+two("l14 bedrooms: (6.66 - 9)/se is about -0.98 (within one error of 9)", round((float(bs_[2])-9)/se_hand, 2), -0.98)
+Xf = sm.add_constant(tr[feats].astype(float)).to_numpy(); two("l14 VIF for bedrooms in the full model (2.43), statsmodels vs 1/(1-R2) of bedrooms on the others", round(variance_inflation_factor(Xf, 2), 2), round(1/(1-sm.OLS(Xf[:, 2], np.delete(Xf, 2, 1)).fit().rsquared), 2))
+two("l14 intercept to 2 dp (115.77)", round(float(lr.intercept_), 2), 115.77); two("l14 band B to 2 dp (-26.40)", round(float(lr.coef_[5]), 2), -26.40)
+# l12: the common sample of 994 rows
+ff = fut.copy(); ff["y"] = ff.ret.shift(-1); ff["mean5"] = ff.ret.rolling(5).mean(); ff["c3"] = ff.ret.rolling(3, center=True).mean()
+dd = ff.dropna(subset=["y", "ret", "mean5", "c3"]); two("l12 common sample rows", len(dd), 994)
+two("l12 corr(y, today's return) on 994 rows (0.1261) by numpy vs pandas", round(float(np.corrcoef(dd.y, dd.ret)[0, 1]), 4), round(float(dd.y.corr(dd.ret)), 4)); two("   stated 0.1261", round(float(dd.y.corr(dd.ret)), 4), 0.1261)
+two("l12 own-sample corr of ret with next ret (998 rows, 0.1235)", round(float(ff.dropna(subset=["y", "ret"]).y.corr(ff.dropna(subset=["y", "ret"]).ret)), 4), 0.1235)
+# l13 spread: the first test row is forecast from the last training row (399)
+sp_ = pd.read_csv("data/spread-daily.csv").spread_bp.to_numpy(); two("l13 persistence with row 399 as the first forecast (200 test rows)", round(float(((sp_[400:]-sp_[399:-1])**2).mean()), 6), 1.207112)
+two("l13 persistence without it (199 rows) is 1.2128, not the key", round(float(((sp_[401:]-sp_[400:-1])**2).mean()), 4), 1.2128)
+# l13 futures: in-sample t on the 749-row fit (748 pairs) and the standard error of the out-of-sample R2 against zero
+ftr_, fte_ = rets[:749], rets[749:]; xa_, xb_ = ftr_[:-1], ftr_[1:]; bbf_ = np.polyfit(xa_, xb_, 1); fit_in = sm.OLS(xb_, sm.add_constant(xa_)).fit(); rin = float(np.corrcoef(xa_, xb_)[0, 1])
+two("l13 in-sample t on 748 pairs (4.02), statsmodels vs r*sqrt(n-2)/sqrt(1-r^2)", round(float(fit_in.tvalues[1]), 2), round(rin*math.sqrt(746)/math.sqrt(1-rin*rin), 2)); two("   stated 4.02", round(float(fit_in.tvalues[1]), 2), 4.02)
+two("l13 in-sample R2 on 748 pairs (0.0212)", round(float(fit_in.rsquared), 4), round(rin**2, 4)); 
+zz_ = fte_**2-(fte_-np.polyval(bbf_, np.r_[ftr_[-1], fte_[:-1]]))**2
+two("l13 oos R2 standard error about 0.020 (delta method vs bootstrap)", round(float(zz_.std(ddof=1)/math.sqrt(len(zz_))/(fte_**2).mean()), 3), round(float(np.std([(zz_[i].mean()) for i in np.random.default_rng(0).integers(0, len(zz_), (4000, len(zz_)))])/(fte_**2).mean()), 3), 0.002)
 done()
