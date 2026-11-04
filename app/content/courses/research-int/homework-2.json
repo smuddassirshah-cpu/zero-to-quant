@@ -1,0 +1,618 @@
+{
+  "id": "homework-2",
+  "course": "research-int",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h2-lasso-parts",
+      "difficulty": 5,
+      "skills": [
+        "rq-ml"
+      ],
+      "tags": [
+        "ridge-lasso"
+      ],
+      "pace": 360,
+      "question": "An interviewer works through the lasso with you.",
+      "parts": [
+        {
+          "prose": "Uncorrelated standardised columns, least squares $b = (3.5, -0.8, 1.9)$, $\\lambda = 1$.",
+          "question": "What is the lasso coefficient on the third column?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.9,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "a number",
+            "accept": "Any form equal to 0.9",
+            "wrong": [
+              {
+                "id": "ols",
+                "value": 1.9,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "ridge",
+                "value": 0.95,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$1.9 - 1 = 0.9$.",
+            "generic": "Not quite. Subtract $\\lambda$ from the size.",
+            "byKey": {
+              "ols": "That is before the penalty.",
+              "ridge": "You divided by 2, which is ridge."
+            }
+          },
+          "explain": {
+            "text": "Soft thresholding gives (2.5, 0, 0.9): the middle coefficient is clipped to zero."
+          }
+        },
+        {
+          "prose": "Now you have 200 signals in correlated groups, and you want stable weights within each group.",
+          "question": "Select all that apply. Which penalties share weight across a correlated group instead of picking one?",
+          "widget": {
+            "kind": "multi",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "ridge",
+                "text": "Ridge",
+                "correct": true
+              },
+              {
+                "id": "enet",
+                "text": "Elastic net",
+                "correct": true
+              },
+              {
+                "id": "lasso",
+                "text": "Lasso",
+                "why": "The lasso picks one member of a group by chance."
+              },
+              {
+                "id": "subset",
+                "text": "Best subset (an L0 limit)",
+                "why": "Best subset also keeps one member and drops its near copies."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "Ridge and the elastic net share; the lasso picks.",
+            "generic": "Not quite. Ask which penalties prefer an even split."
+          },
+          "explain": {
+            "text": "Any squared part in the penalty makes an even split cheaper, so ridge and the elastic net share weight. The elastic net also gives zeros."
+          }
+        },
+        {
+          "prose": "Two identical columns carry a total effect of 2.",
+          "question": "What is the L1 penalty $|\\beta_1| + |\\beta_2|$ of the split (2, 0)?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "a number",
+            "accept": "Any form equal to 2",
+            "wrong": [
+              {
+                "id": "l2",
+                "value": 4,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "2, the same as for (1, 1).",
+            "generic": "Not quite. Add the sizes.",
+            "byKey": {
+              "l2": "That is the L2 penalty, $2^2$."
+            }
+          },
+          "explain": {
+            "text": "Both (2, 0) and (1, 1) cost 2 under L1, so the lasso is indifferent between them. Ridge charges 4 against 2 and splits."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h2-soft-derive",
+      "difficulty": 4,
+      "skills": [
+        "rq-ml"
+      ],
+      "tags": [
+        "soft-threshold"
+      ],
+      "pace": 240,
+      "prose": "Derive the lasso solution for one coefficient: minimise $\\tfrac12(b - \\beta)^2 + \\lambda|\\beta|$ with $\\lambda > 0$.",
+      "question": "Put the lines in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "For $\\beta > 0$, $|\\beta| = \\beta$, so the loss is $\\tfrac12(b - \\beta)^2 + \\lambda\\beta$."
+          },
+          {
+            "id": "b",
+            "text": "Differentiate and set to zero: $-(b - \\beta) + \\lambda = 0$."
+          },
+          {
+            "id": "c",
+            "text": "So $\\beta = b - \\lambda$, which is positive only when $b > \\lambda$."
+          },
+          {
+            "id": "d",
+            "text": "If $b \\le \\lambda$, the slope just above 0 is $\\lambda - b \\ge 0$, so the loss rises from 0 and $\\beta = 0$."
+          },
+          {
+            "id": "e",
+            "text": "$\\beta < 0$ mirrors this, so $\\beta = \\text{sign}(b)\\max(|b| - \\lambda, 0)$."
+          },
+          {
+            "id": "x",
+            "text": "Set the derivative of $|\\beta|$ to zero to find the kink.",
+            "why": "$|\\beta|$ has slope $\\pm 1$, never 0, and no derivative at 0. The kink is what lets the answer stop at 0."
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ],
+        "distractors": [
+          "x"
+        ]
+      },
+      "feedback": {
+        "correct": "Solve on each side, check the kink, combine.",
+        "generic": "Not quite. Take $\\beta > 0$, solve, check when that fails, then mirror.",
+        "byKey": {
+          "x": "You looked for a zero slope of $|\\beta|$. It has none; the case analysis does the work.",
+          "left-out": "You left out a step the derivation needs."
+        }
+      },
+      "explain": {
+        "text": "On each side the loss is a smooth quadratic, giving $b \\mp \\lambda$. When that would cross zero, the kink holds $\\beta$ at 0. Together that is the soft threshold."
+      }
+    },
+    {
+      "id": "h2-boost-code",
+      "difficulty": 4,
+      "skills": [
+        "rq-ml"
+      ],
+      "tags": [
+        "boosting-rounds"
+      ],
+      "pace": 900,
+      "prose": "Write gradient boosting with squared loss, by hand, for one fixed split. Start every prediction at the mean of `y`. Each round, compute residuals, take their mean on each side of `split`, and add `lr` times it.",
+      "question": "Write `boost(x, y, split, lr, rounds)`, returning the list of predictions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def boost(x, y, split, lr, rounds):\n    \"\"\"Predictions after `rounds` rounds of one-split\n    boosting from the mean. Each round fits the mean\n    residual on each side of `split` (x <= split, and\n    x > split) and adds lr times it.\"\"\"\n    pred = []\n    # Your code here\n    return pred\n",
+        "solution": "def boost(x, y, split, lr, rounds):\n    n = len(y)\n    pred = [sum(y) / n] * n\n    left = [xi <= split for xi in x]\n    for _ in range(rounds):\n        res = [yi - pi for yi, pi in zip(y, pred)]\n        rl = [r for r, l in zip(res, left) if l]\n        rr = [r for r, l in zip(res, left) if not l]\n        ml = sum(rl) / len(rl) if rl else 0.0\n        mr = sum(rr) / len(rr) if rr else 0.0\n        pred = [p + lr * (ml if l else mr)\n                for p, l in zip(pred, left)]\n    return pred\n",
+        "examples": [
+          {
+            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 0.4, 1)",
+            "expect": "[3, 3, 5, 5]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 0.4, 0)",
+            "expect": "[4, 4, 4, 4]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 0.4, 1)",
+            "expect": "[3, 3, 5, 5]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 0.4, 2)",
+            "expect": "[2.4, 2.4, 5.6, 5.6]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 1.0, 1)",
+            "expect": "[1.5, 1.5, 6.5, 6.5]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([1, 2, 3], [10, 20, 60], 2.5, 0.5, 2)",
+            "expect": "[18.75, 18.75, 52.5]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([4, 1, 3, 2], [7, 1, 6, 2], 2.5, 0.4, 2)",
+            "expect": "[5.6, 2.4, 5.6, 2.4]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests, each compared element by element with math.isclose (relative 1e-9). Every expected list was checked against scikit-learn's GradientBoostingRegressor."
+      },
+      "feedback": {
+        "correct": "Each round fixes a share of what is left.",
+        "generic": "Some tests failed. Start from the mean, and recompute residuals inside each round."
+      },
+      "explain": {
+        "text": "Round 1 on the four points gives 3, 3, 5, 5 and round 2 gives 2.4, 2.4, 5.6, 5.6. With learning rate 1 one round jumps to the side means, 1.5 and 6.5."
+      }
+    },
+    {
+      "id": "h2-bv-longform",
+      "difficulty": 5,
+      "skills": [
+        "rq-ml"
+      ],
+      "tags": [
+        "bias-variance"
+      ],
+      "pace": 600,
+      "kind": "longform",
+      "prompt": "Explain the bias-variance trade-off with a picture and a finance example, as you would say it in an interview. Aim for a minute of speech.",
+      "model": "**The split.** Expected squared error on new data is bias squared plus variance plus noise. Bias is how far the average fit sits from the truth. Variance is how much the fit moves between samples. Noise is what no model can remove.\n\n**The picture.** Draw error against model flexibility. Training error falls all the way. Test error falls, then rises: a U. Bias falls with flexibility, variance rises, and the bottom of the U is the balance.\n\n**A finance example.** A fund's alpha is estimated from four years: true alpha 4%, standard error 4%. Reporting the raw estimate has error 16 (%²). Reporting half of it adds bias² of 4 but cuts the variance to 4. The error halves to 8.\n\n**What I would do.** Get more data where I can, since it lowers variance. Shrink estimates towards a sensible prior. Choose flexibility by validation in time order, never by training error.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Names the three terms: bias squared, variance, noise"
+        },
+        {
+          "points": 2,
+          "text": "Describes the picture: test error U-shaped against flexibility, training error falling"
+        },
+        {
+          "points": 3,
+          "text": "Gives a finance example with a number: the shrunk alpha whose error drops from 16 to 8, say"
+        },
+        {
+          "points": 2,
+          "text": "Says what to do: more data, shrinkage, validation in time order"
+        },
+        {
+          "points": 1,
+          "text": "Keeps it to a spoken length, about a minute"
+        }
+      ]
+    },
+    {
+      "id": "h2-pca-table",
+      "difficulty": 4,
+      "skills": [
+        "rq-ml",
+        "rq-linalg"
+      ],
+      "tags": [
+        "pca-share"
+      ],
+      "pace": 240,
+      "prose": "Two assets have volatilities 30% and 10% and correlation 0.4, so their covariance is 0.012.",
+      "question": "Fill in the table.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "larger eigenvalue of the covariance",
+            {
+              "edit": true,
+              "answer": 0.0918,
+              "tol": {
+                "abs": 0.0001
+              }
+            }
+          ],
+          [
+            "smaller eigenvalue",
+            {
+              "edit": true,
+              "answer": 0.0082,
+              "tol": {
+                "abs": 0.0001
+              }
+            }
+          ],
+          [
+            "share of the first component",
+            {
+              "edit": true,
+              "answer": 0.9176,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "share on the correlation matrix",
+            {
+              "edit": true,
+              "answer": 0.7,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "0.0918 and 0.0082, share 91.76%; 70% on correlations.",
+        "generic": "Not quite. Use the trace 0.10 and determinant $0.0009 - 0.000144$."
+      },
+      "explain": {
+        "text": "Trace 0.10 and determinant 0.000756 give $\\lambda = (0.10 \\pm \\sqrt{0.01 - 0.003024})/2$: 0.091761 and 0.008239. On correlations the share is $(1 + 0.4)/2 = 0.70$."
+      }
+    },
+    {
+      "id": "h2-pca-parts",
+      "difficulty": 5,
+      "skills": [
+        "rq-ml",
+        "rq-linalg"
+      ],
+      "tags": [
+        "pca-signal-small-component"
+      ],
+      "pace": 360,
+      "prose": "Two standardised features $x_1$ and $x_2$ correlate at 0.95. The target is $y = x_1 - x_2$.",
+      "question": "Three follow-ups.",
+      "parts": [
+        {
+          "question": "What share of the features' variance does the first component carry?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.975,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "a share",
+            "accept": "Any form equal to 0.975",
+            "wrong": [
+              {
+                "id": "rho",
+                "value": 0.95,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$(1 + 0.95)/2 = 0.975$.",
+            "generic": "Not quite. The eigenvalues are $1 \\pm 0.95$.",
+            "byKey": {
+              "rho": "That is the correlation. The share is $(1 + \\rho)/2$."
+            }
+          },
+          "explain": {
+            "text": "The correlation matrix has eigenvalues 1.95 and 0.05, so the first component carries 97.5%."
+          }
+        },
+        {
+          "question": "What is the $R^2$ of $y$ on the first component alone?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0,
+            "tol": {
+              "abs": 0.0005
+            },
+            "placeholder": "a number",
+            "accept": "Any form equal to 0",
+            "wrong": [
+              {
+                "id": "share",
+                "value": 0.975,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "one",
+                "value": 1,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "0: $y$ does not move along the first component.",
+            "generic": "Not quite. Along the first component $x_1$ and $x_2$ move together.",
+            "byKey": {
+              "share": "That is the variance share of the features, not of $y$.",
+              "one": "That is the second component's $R^2$."
+            }
+          },
+          "explain": {
+            "text": "The first component is $(x_1 + x_2)/\\sqrt{2}$, uncorrelated with $x_1 - x_2$ for equal variances. So its $R^2$ for $y$ is 0."
+          }
+        },
+        {
+          "question": "Which component would you keep to predict $y$?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "second",
+                "text": "The second, with 2.5% of the variance",
+                "correct": true
+              },
+              {
+                "id": "first",
+                "text": "The first, with 97.5%",
+                "why": "It explains the features, not the target: $R^2 = 0$."
+              },
+              {
+                "id": "neither",
+                "text": "Neither: PCA cannot help",
+                "why": "The second component is exactly $y/\\sqrt{2}$, so it predicts perfectly."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The small component holds the signal.",
+            "generic": "Not quite. Keep what predicts $y$."
+          },
+          "explain": {
+            "text": "The second component is $(x_1 - x_2)/\\sqrt{2}$, with $R^2 = 1$ for $y$. Ranking by variance would have dropped it."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h2-oob",
+      "difficulty": 4,
+      "skills": [
+        "rq-ml"
+      ],
+      "tags": [
+        "oob"
+      ],
+      "pace": 120,
+      "prose": "A forest of 200 trees is fitted on 50 rows, each tree on a bootstrap sample of 50.",
+      "question": "For how many trees, on average, is a given row out of bag?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 72.83,
+        "tol": {
+          "abs": 0.05
+        },
+        "placeholder": "trees",
+        "accept": "Any form equal to 72.83 ± 0.05",
+        "wrong": [
+          {
+            "id": "share",
+            "value": 126.4,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "e",
+            "value": 73.58,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$200 \\times 0.98^{50} = 72.83$.",
+        "generic": "Not quite. Multiply 200 by the chance a row is missed by all 50 draws.",
+        "byKey": {
+          "share": "You used the in-bag share, 0.632. Out of bag is $0.98^{50} = 0.364$.",
+          "e": "You used $1/e$. With $n = 50$ the exact share is $0.98^{50} = 0.3642$."
+        }
+      },
+      "explain": {
+        "text": "Each draw misses the row with chance 0.98, so all 50 miss with chance $0.98^{50} = 0.3642$. Over 200 trees that is 72.83."
+      }
+    },
+    {
+      "id": "h2-lag-code",
+      "difficulty": 5,
+      "skills": [
+        "rq-ml"
+      ],
+      "tags": [
+        "weak-signal"
+      ],
+      "pace": 900,
+      "prose": "`futures-daily.csv` holds 1,000 daily closes of an index future. Do not use a rolling or centred window: pair each return with the one $k$ days before.",
+      "question": "Write `lag_corr(k)` and `lag_t(k)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "futures-daily.csv": "content/data/futures-daily.csv"
+        },
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef lag_corr(k):\n    \"\"\"Correlation of the daily log return with the\n    return k days earlier, from futures-daily.csv.\"\"\"\n    return 0.0\n\ndef lag_t(k):\n    \"\"\"Its t statistic r*sqrt(n-2)/sqrt(1-r**2),\n    with n the number of pairs.\"\"\"\n    return 0.0\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef _returns():\n    df = pd.read_csv('futures-daily.csv')\n    return np.log(df['close']).diff().dropna()\n\ndef lag_corr(k):\n    r = _returns()\n    return float(r.corr(r.shift(k)))\n\ndef lag_t(k):\n    n = len(_returns()) - k\n    c = lag_corr(k)\n    return float(c * np.sqrt(n - 2) / np.sqrt(1 - c * c))\n",
+        "examples": [
+          {
+            "call": "round(lag_corr(1), 4)",
+            "expect": "0.1235",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "lag_corr(1)",
+            "expect": "0.1235027",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "lag_t(1)",
+            "expect": "3.92775",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "call": "lag_corr(2)",
+            "expect": "0.0181764",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "lag_corr(5)",
+            "expect": "0.0059420",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "lag_t(5)",
+            "expect": "0.187154",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "call": "'rolling' not in __learner_source__ and 'center' not in __learner_source__",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on futures-daily.csv. Correlations must be within 1e-6 and t statistics within 1e-4. One test checks for a rolling or centred window."
+      },
+      "feedback": {
+        "correct": "Lag 1: 0.1235 and $t = 3.928$ on 998 pairs. Lags 2 and 5 are near zero.",
+        "generic": "Some tests failed. Use log returns, `shift(k)`, and $n$ = the number of pairs."
+      },
+      "explain": {
+        "text": "There are 999 log returns, so lag $k$ has $999 - k$ pairs. Lag 1 gives $t = 3.93$, lag 2 gives 0.57 and lag 5 gives 0.19."
+      }
+    }
+  ]
+}
