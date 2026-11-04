@@ -1,0 +1,1346 @@
+{
+ "id": "l8-simulating-the-rules",
+ "course": "coding-int",
+ "title": "Simulating the rules",
+ "minutes": 14,
+ "objectives": [
+  "Turn a long rule statement into a correct simulation, as online assessments often ask."
+ ],
+ "skills": [
+  "ci-strings",
+  "ci-timed"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Read it, then trace it",
+   "tags": [
+    "simulation-rules"
+   ],
+   "prose": "Online assessments often state a long rule and ask you to simulate it. This is one, with prices in whole pence. Trace it by hand on six days before writing any code.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "The statement",
+     "lines": [
+      "A bot trades one unit of one stock. Prices are whole pence.",
+      "It starts flat. Day 0 never trades.",
+      "While flat on day i >= 1, it buys at that day's price",
+      "  when the price is below the previous day's price.",
+      "While long, it checks three rules on each later day, in order:",
+      "  1. Sell if 100 * p >= 105 * entry (at least 5% up).",
+      "  2. Sell if 100 * p <= 97 * entry (at least 3% down).",
+      "  3. Sell if i - bought == 3 (held exactly 3 days).",
+      "A bot that sells on day i does not buy on day i.",
+      "If it still holds at the end, it sells at the last price.",
+      "Return [total profit in pence, number of trades].",
+      "",
+      "prices = [100, 98, 99, 100, 104, 110]"
+     ],
+     "wrap": true,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "What total profit, in pence, does the bot make on these six days?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Profit",
+    "accept": "6: buy at 98 on day 1, sell at 104 on day 4",
+    "unit": "pence",
+    "wrong": [
+     {
+      "id": "held",
+      "value": 12
+     },
+     {
+      "id": "day0",
+      "value": 10
+     },
+     {
+      "id": "none",
+      "value": 0
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "On which day is the price first below the day before?"
+    },
+    {
+     "rung": "point",
+     "text": "Day 1 buys at 98. Now test each later day against $105 \\times 98 = 10{,}290$ and $97 \\times 98 = 9{,}506$.",
+     "highlight": [
+      "l6",
+      "l7"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Day 4: $100 \\times 104 = 10{,}400 \\ge 10{,}290$, so it sells at 104. Profit $104 - 98 = 6$. Day 5 does not buy."
+    }
+   ],
+   "feedback": {
+    "correct": "Buy at 98 on day 1, sell at 104 on day 4: 6 pence.",
+    "generic": "Not quite right. Trace one day at a time and check the rules in order.",
+    "byKey": {
+     "held": "You held to the last price, 110. Rule 1 fires first on day 4, at 104.",
+     "day0": "You bought on day 0. Day 0 never trades; the first buy is day 1 at 98.",
+     "none": "You found no trade. Day 1's 98 is below day 0's 100, so the bot buys."
+    }
+   },
+   "explain": {
+    "text": "Day 1 buys at 98 because 98 is below 100. Day 4 is the first day with $100p \\ge 105 \\times 98$, so it sells at 104. Day 5 is flat and 110 is not a fall, so the result is `[6, 1]`.",
+    "canvas": {
+     "tone": {
+      "l6": "ok"
+     },
+     "caption": "Rule 1 fires on day 4"
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "One day at a time",
+   "tags": [
+    "simulation-rules"
+   ],
+   "prose": "Step through the days with the slider. The caption shows each check the bot makes. Then fill in the position at each close: 1 when long, 0 when flat.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      98,
+      99,
+      100,
+      104,
+      110
+     ]
+    },
+    "state": {
+     "pointers": [
+      {
+       "id": "day",
+       "at": 0,
+       "label": "day"
+      }
+     ],
+     "params": {
+      "d": 0
+     },
+     "caption": "Day 0: never trades. Flat."
+    },
+    "controls": [
+     {
+      "bind": "d",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "start": 0,
+      "label": "Day"
+     }
+    ],
+    "derive": {
+     "day.at": "d",
+     "caption": "{{[\"Day 0: never trades. Flat.\", \"Day 1: 98 is below 100, so buy at 98. Long.\", \"Day 2: 9,900 is under 10,290 and over 9,506; held 1 day. Long.\", \"Day 3: 10,000 is under 10,290 and over 9,506; held 2 days. Long.\", \"Day 4: 10,400 is at least 10,290, so sell at 104. Flat.\", \"Day 5: flat, and 110 is not below 104. Flat.\"][d]}}"
+    }
+   },
+   "question": "Fill in the position at the close of each day.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Day",
+     "Price",
+     "Position at the close"
+    ],
+    "rows": [
+     [
+      "0",
+      "100",
+      "0"
+     ],
+     [
+      "1",
+      "98",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "2",
+      "99",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "3",
+      "100",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "4",
+      "104",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "5",
+      "110",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The bot is long from the day it buys to the day it sells."
+    },
+    {
+     "rung": "point",
+     "text": "It buys on day 1 and sells on day 4.",
+     "highlight": [
+      "c1",
+      "c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Days 1, 2 and 3 close long (1). Days 4 and 5 close flat (0)."
+    }
+   ],
+   "feedback": {
+    "correct": "Long at the close of days 1 to 3, flat on days 4 and 5.",
+    "generic": "Not quite right. Step the slider to each day and read the caption.",
+    "byKey": {
+     "r1c2": "Day 1 buys at 98, so the bot is long at the close.",
+     "r4c2": "Day 4 sells at 104, so the bot is flat at the close.",
+     "r5c2": "Day 5 is flat: 110 is not below 104, so it does not buy."
+    }
+   },
+   "explain": {
+    "text": "The state between days is three values: long or flat, the entry price and the buy day. Each day is one event that may change them. That is all the simulation has to remember.",
+    "canvas": {
+     "params": {
+      "d": 4
+     },
+     "caption": "Day 4: 10,400 is at least 10,290, so sell at 104. Flat."
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two rules at once",
+   "tags": [
+    "edge-order"
+   ],
+   "prose": "Now the prices are `[100, 98, 99, 100, 103]`. The bot buys at 98 on day 1. On day 4, $100 \\times 103 = 10{,}300 \\ge 10{,}290$, and the bot has held for exactly 3 days.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      98,
+      99,
+      100,
+      103
+     ]
+    },
+    "state": {
+     "caption": "Day 4: rule 1 and rule 3 are both true",
+     "pointers": [
+      {
+       "id": "buy",
+       "at": 1,
+       "label": "buy"
+      },
+      {
+       "id": "now",
+       "at": 4,
+       "label": "day 4"
+      }
+     ]
+    }
+   },
+   "question": "Which rule sells the bot on day 4?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Rule 1, the take profit, because the rules are checked in order",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Rule 3, the time rule, because 3 days have passed",
+      "why": "Rule 3 is true too, but the statement checks rule 1 first, and only one sale happens."
+     },
+     {
+      "id": "c",
+      "text": "Both: it sells twice",
+      "why": "The bot holds one unit. The first rule that fires sells it, and the others are not checked."
+     },
+     {
+      "id": "d",
+      "text": "Neither: two true rules cancel out",
+      "why": "Rules do not cancel. The first true rule in order sells the bot."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the statement: in what order are the rules checked?"
+    },
+    {
+     "rung": "point",
+     "text": "Rule 1 is checked first, and it is true.",
+     "highlight": [
+      "c4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The first true rule wins. Rule 1 is true, so it sells; rule 3 is never reached."
+    }
+   ],
+   "feedback": {
+    "correct": "Rule 1 fires first. The price is the same, but the reason is take profit.",
+    "generic": "Not quite right. The statement fixes the order of the checks.",
+    "byKey": {
+     "b": "You picked the rule you noticed first. The statement checks rule 1 before rule 3.",
+     "c": "You sold twice. One unit can be sold once, by the first rule that fires.",
+     "d": "You let the rules cancel. In order, the first true one sells."
+    }
+   },
+   "explain": {
+    "text": "Here both rules sell at 103, so the profit is the same. A log of reasons, or a rule that sells at a different price, would differ. Write the checks in the order the statement gives, as one `if ... or ... or ...`.",
+    "canvas": {
+     "highlight": [
+      "c4"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Counting days held",
+   "tags": [
+    "edge-order"
+   ],
+   "prose": "Rule 3 reads `i - bought == 3`. Here the bot buys at 99 on day 2, and neither price rule fires afterwards.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      101,
+      99,
+      99,
+      100,
+      100,
+      101
+     ]
+    },
+    "state": {
+     "caption": "Buy on day 2 at 99",
+     "pointers": [
+      {
+       "id": "buy",
+       "at": 2,
+       "label": "bought"
+      }
+     ]
+    }
+   },
+   "question": "On which day does rule 3 sell the bot?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Day",
+    "accept": "Day 5, since $5 - 2 = 3$",
+    "wrong": [
+     {
+      "id": "early",
+      "value": 4
+     },
+     {
+      "id": "late",
+      "value": 6
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Rule 3 needs `i - bought` to equal 3."
+    },
+    {
+     "rung": "point",
+     "text": "`bought` is 2.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$i - 2 = 3$ gives $i = 5$."
+    }
+   ],
+   "feedback": {
+    "correct": "Day 5: $5 - 2 = 3$.",
+    "generic": "Not quite right. Solve `i - bought == 3` with `bought = 2`.",
+    "byKey": {
+     "early": "You counted the buy day as the first day held. `i - bought` is 2 on day 4.",
+     "late": "You waited for more than 3 days. The rule is `== 3`, so it fires on day 5."
+    }
+   },
+   "explain": {
+    "text": "Days held is `i - bought`, which is 1 on day 3, 2 on day 4 and 3 on day 5. So rule 3 sells at 100 on day 5. Writing `> 3` instead would sell a day late.",
+    "canvas": {
+     "highlight": [
+      "c5"
+     ],
+     "pointers": [
+      {
+       "id": "buy",
+       "at": 2,
+       "label": "bought"
+      },
+      {
+       "id": "sell",
+       "at": 5,
+       "label": "sell"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Write the simulation",
+   "tags": [
+    "simulation-rules"
+   ],
+   "pace": 840,
+   "prose": "Keep three variables of state: `long_`, `entry` and `bought`. Each day, a flat bot may buy and a long bot checks the rules in order. An `if ... else` on `long_` stops a bot from buying on the day it sold.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "The statement",
+     "lines": [
+      "A bot trades one unit of one stock. Prices are whole pence.",
+      "It starts flat. Day 0 never trades.",
+      "While flat on day i >= 1, it buys at that day's price",
+      "  when the price is below the previous day's price.",
+      "While long, it checks three rules on each later day, in order:",
+      "  1. Sell if 100 * p >= 105 * entry (at least 5% up).",
+      "  2. Sell if 100 * p <= 97 * entry (at least 3% down).",
+      "  3. Sell if i - bought == 3 (held exactly 3 days).",
+      "A bot that sells on day i does not buy on day i.",
+      "If it still holds at the end, it sells at the last price.",
+      "Return [total profit in pence, number of trades]."
+     ],
+     "wrap": true,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Write `run_strategy(prices)`: apply the statement and return `[profit, trades]`. `prices` may be empty.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def run_strategy(prices):\n    # The last price minus the first. Replace with the rules.\n    return [prices[-1] - prices[0], 1]\n",
+    "solution": "def run_strategy(prices):\n    pnl = trades = 0\n    long_, entry, bought = False, 0, 0\n    for i, p in enumerate(prices):\n        if not long_:\n            if i >= 1 and p < prices[i - 1]:\n                long_, entry, bought = True, p, i\n        else:\n            if (100 * p >= 105 * entry or 100 * p <= 97 * entry\n                    or i - bought == 3):\n                pnl += p - entry\n                trades += 1\n                long_ = False\n    if long_:\n        pnl += prices[-1] - entry\n        trades += 1\n    return [pnl, trades]\n",
+    "examples": [
+     {
+      "call": "run_strategy([100, 98, 99, 100, 104, 110])",
+      "expect": "[6, 1]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_strategy([100, 100, 100])",
+      "expect": "[0, 0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "run_strategy([100, 98, 99, 100, 104, 110])",
+      "expect": "[6, 1]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_strategy([100, 100, 100])",
+      "expect": "[0, 0]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_strategy([100, 99, 98, 97, 96, 95, 94, 93])",
+      "expect": "[-5, 2]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_strategy([100, 99, 105, 104, 103, 102])",
+      "expect": "[4, 2]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_strategy([100, 95, 100, 106, 90, 89, 95, 99])",
+      "expect": "[10, 2]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_strategy([50])",
+      "expect": "[0, 0]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_strategy([100, 101, 99, 100, 101])",
+      "expect": "[2, 1]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_strategy([100, 96, 92, 93, 99, 98, 97, 96])",
+      "expect": "[-6, 2]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_strategy([])",
+      "expect": "[0, 0]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 9 hidden tests, including a list of one price and an empty list. Results are compared with `==`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What must the bot remember from one day to the next?"
+    },
+    {
+     "rung": "point",
+     "text": "Whether it is long, the entry price and the buy day.",
+     "highlight": [
+      "l3",
+      "l5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Loop with `enumerate`. If flat, buy when `i >= 1` and `p < prices[i - 1]`. Else sell on any of the three rules. After the loop, sell a holding at `prices[-1]`."
+    }
+   ],
+   "feedback": {
+    "correct": "State, one event per day, the checks in order, and the end rule.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is the hook. Buy at 98 on day 1 and sell at 104 on day 4.",
+     "test-2": "Test 2 never falls, so the bot never trades: `[0, 0]`.",
+     "test-3": "Test 3 falls every day. Buy 99, sell 96 on day 4, buy 95 on day 5, sell 93 at the end: `[-5, 2]`.",
+     "test-6": "Test 6 has one price. Day 0 never trades, so the answer is `[0, 0]`.",
+     "test-9": "Test 9 is an empty list. Only read `prices[-1]` when the bot still holds."
+    }
+   },
+   "explain": {
+    "text": "The `else` branch means a bot that sells today waits until tomorrow to buy. The end rule runs only when `long_` is still true, so an empty list never reads `prices[-1]`. Integer arithmetic keeps the 5% and 3% tests exact.",
+    "canvas": {
+     "tone": {
+      "l9": "ok",
+      "l10": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Selling and buying on one day",
+   "tags": [
+    "edge-order"
+   ],
+   "prose": "Prices `[100, 95, 90, 85]`. The bot buys at 95 on day 1. On day 2, $9{,}000 \\le 97 \\times 95 = 9{,}215$, so the stop sells at 90. Day 2's price is also below day 1's.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      100,
+      95,
+      90,
+      85
+     ]
+    },
+    "state": {
+     "caption": "Day 2: the stop fires, and 90 is below 95",
+     "pointers": [
+      {
+       "id": "buy",
+       "at": 1,
+       "label": "buy"
+      },
+      {
+       "id": "stop",
+       "at": 2,
+       "label": "stop"
+      }
+     ]
+    }
+   },
+   "question": "What does `run_strategy([100, 95, 90, 85])` return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`[-5, 2]`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`[-10, 3]`",
+      "why": "You let the bot buy at 90 on the day it sold. The statement forbids that, so it waits until day 3.",
+      "canvas": {
+       "highlight": [
+        "c2"
+       ]
+      }
+     },
+     {
+      "id": "c",
+      "text": "`[-5, 1]`",
+      "why": "You stopped after the first sale. Day 3's 85 is below 90, so the bot buys again and sells at the end."
+     },
+     {
+      "id": "d",
+      "text": "`[-15, 1]`",
+      "why": "You held from 100 to 85. Day 0 never trades, and the stop sells on day 2."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does the statement say about the day the bot sells?"
+    },
+    {
+     "rung": "point",
+     "text": "On day 2 the bot sells, so it may not buy on day 2.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Day 3: flat, and 85 is below 90, so it buys at 85 and sells at the end at 85. Total $-5 + 0$, two trades."
+    }
+   ],
+   "feedback": {
+    "correct": "Stop at 90 on day 2, buy 85 on day 3, sell 85 at the end: `[-5, 2]`.",
+    "generic": "Not quite right. Trace day 2 and day 3 again with the same-day rule.",
+    "byKey": {
+     "b": "You let the bot buy on the day it sold. Then it buys 90, is stopped at 85 on day 3, and buys again.",
+     "c": "You forgot the buy on day 3. A flat bot buys whenever the price falls, after the day of a sale.",
+     "d": "You bought on day 0 and held. Day 0 never trades."
+    }
+   },
+   "explain": {
+    "text": "With the same-day buy, day 2 buys 90, day 3 stops at 85 and buys 85 again: `[-10, 3]`. The statement forbids the buy on day 2, so day 3 buys 85 and the end sells it for 0. The `else` on `long_` is what enforces it.",
+    "canvas": {
+     "pointers": [
+      {
+       "id": "buy",
+       "at": 1,
+       "label": "buy"
+      },
+      {
+       "id": "stop",
+       "at": 2,
+       "label": "stop"
+      },
+      {
+       "id": "buy2",
+       "at": 3,
+       "label": "buy, end"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "How to read a long statement",
+   "tags": [
+    "simulation-rules"
+   ],
+   "prose": "Every simulation question has the same three parts.\n\n```python\nstate = ...            # what is remembered between steps\nfor event in events:   # what arrives each step\n    state = step(state, event)  # checks in the stated order\nfinish(state)          # the end-of-data rule\n```",
+   "question": "Put the steps of reading a long statement in order. Leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "r1",
+      "text": "Read the whole statement once without coding"
+     },
+     {
+      "id": "r2",
+      "text": "List the state: long or flat, entry price, buy day"
+     },
+     {
+      "id": "r3",
+      "text": "List the events: one price per day"
+     },
+     {
+      "id": "r4",
+      "text": "Write the checks in the stated order, with the same-day and end rules"
+     },
+     {
+      "id": "r5",
+      "text": "Trace a short list by hand and write down the expected result"
+     },
+     {
+      "id": "r6",
+      "text": "Code one step per event, then run it on your trace"
+     },
+     {
+      "id": "d1",
+      "text": "Code rule 1 while reading the rest of the statement",
+      "why": "Rules later in the statement change earlier ones, such as the same-day rule. Read it all first."
+     }
+    ],
+    "answer": [
+     "r1",
+     "r2",
+     "r3",
+     "r4",
+     "r5",
+     "r6"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What do you need before you can write the checks?"
+    },
+    {
+     "rung": "point",
+     "text": "The state and the events come before the order of checks."
+    },
+    {
+     "rung": "step",
+     "text": "Read, state, events, order, hand trace, then code. Leave out coding while reading."
+    }
+   ],
+   "feedback": {
+    "correct": "Read, state, events, order, trace, code.",
+    "generic": "Not quite right. Each step needs the one before it.",
+    "byKey": {
+     "d1": "You started coding while reading. The same-day rule, near the end, changes how rule 1's sale behaves.",
+     "left-out": "Every step but one belongs. Only coding while reading is wrong."
+    }
+   },
+   "explain": {
+    "text": "The state and events fix the shape of the loop. The order of checks and the edge rules fill in its body. A hand trace gives you expected values before any code exists."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Prices from a file",
+   "tags": [
+    "file-read"
+   ],
+   "pace": 600,
+   "prose": "The assessment now gives the prices as a CSV file with columns `day` and `price_pence`. Three files sit in the working directory. Open the Data files panel to see them. `run_strategy` is done; write only the reader.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "ticks-3.csv",
+     "lines": [
+      "day,price_pence",
+      "0,10000",
+      "1,9900",
+      "2,10600"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `load_prices(path)`: return the `price_pence` column as a list of `int`, in file order.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import csv\n\n\ndef load_prices(path):\n    # Read the price_pence column of the CSV at path.\n    return []\n\n\ndef strategy_from_file(path):\n    return run_strategy(load_prices(path))\n\n\n# run_strategy is finished: leave it as it is.\ndef run_strategy(prices):\n    pnl = trades = 0\n    long_, entry, bought = False, 0, 0\n    for i, p in enumerate(prices):\n        if not long_:\n            if i >= 1 and p < prices[i - 1]:\n                long_, entry, bought = True, p, i\n        else:\n            if (100 * p >= 105 * entry or 100 * p <= 97 * entry\n                    or i - bought == 3):\n                pnl += p - entry\n                trades += 1\n                long_ = False\n    if long_:\n        pnl += prices[-1] - entry\n        trades += 1\n    return [pnl, trades]\n",
+    "solution": "import csv\n\n\ndef load_prices(path):\n    with open(path) as f:\n        return [int(row['price_pence']) for row in csv.DictReader(f)]\n\n\ndef strategy_from_file(path):\n    return run_strategy(load_prices(path))\n\n\n# run_strategy is finished: leave it as it is.\ndef run_strategy(prices):\n    pnl = trades = 0\n    long_, entry, bought = False, 0, 0\n    for i, p in enumerate(prices):\n        if not long_:\n            if i >= 1 and p < prices[i - 1]:\n                long_, entry, bought = True, p, i\n        else:\n            if (100 * p >= 105 * entry or 100 * p <= 97 * entry\n                    or i - bought == 3):\n                pnl += p - entry\n                trades += 1\n                long_ = False\n    if long_:\n        pnl += prices[-1] - entry\n        trades += 1\n    return [pnl, trades]\n",
+    "examples": [
+     {
+      "call": "strategy_from_file('ticks-3.csv')",
+      "expect": "[700, 1]",
+      "compare": "equal"
+     },
+     {
+      "call": "strategy_from_file('ticks-header-only.csv')",
+      "expect": "[0, 0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "strategy_from_file('ticks-40.csv')",
+      "expect": "[249, 8]",
+      "compare": "equal"
+     },
+     {
+      "call": "strategy_from_file('ticks-3.csv')",
+      "expect": "[700, 1]",
+      "compare": "equal"
+     },
+     {
+      "call": "strategy_from_file('ticks-header-only.csv')",
+      "expect": "[0, 0]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 3 hidden tests, one per file: 40 days, 3 days, and a header with no rows.",
+    "data": {
+     "ticks-40.csv": "content/data/coding-int/ticks-40.csv",
+     "ticks-3.csv": "content/data/coding-int/ticks-3.csv",
+     "ticks-header-only.csv": "content/data/coding-int/ticks-header-only.csv"
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which module reads a CSV with a header row?"
+    },
+    {
+     "rung": "point",
+     "text": "`csv.DictReader` gives each row as a dictionary keyed by the header.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`with open(path) as f: return [int(row['price_pence']) for row in csv.DictReader(f)]`."
+    }
+   ],
+   "feedback": {
+    "correct": "The reader turns each row into an `int` and keeps the order.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 reads `ticks-40.csv`. Skip the header and convert each price with `int`.",
+     "test-2": "Test 2 reads `ticks-3.csv`: prices 10,000, 9,900 and 10,600, so the result is `[700, 1]`."
+    }
+   },
+   "explain": {
+    "text": "`DictReader` uses the first line as the keys, so the header is never a price. A file with only the header gives `[]`, and `run_strategy([])` returns `[0, 0]`. On `ticks-3.csv` the bot buys 9,900 on day 1 and sells 10,600 on day 2.",
+    "canvas": {
+     "caption": "$1{,}060{,}000 \\ge 105 \\times 9{,}900 = 1{,}039{,}500$, so day 2 sells"
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 2,
+   "title": "Before you code, ask",
+   "tags": [
+    "edge-order"
+   ],
+   "prose": "A desk analyst writes three versions of the time rule for a bot. You can ask one question before coding.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Three specs",
+     "lines": [
+      "A: It sells after three days.",
+      "B: It sells on the third day after the buy day.",
+      "C: It sells on day i when i - bought == 3."
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which spec is ambiguous, and what do you ask?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "A: ask whether it sells on day `bought + 3` or on the first day after that",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "B: ask whether the buy day counts as day 1",
+      "why": "B counts days after the buy day, so day `bought + 3`. That is the same as C."
+     },
+     {
+      "id": "c",
+      "text": "C: ask what `bought` means",
+      "why": "C names the variable and the test exactly. It is the clearest of the three."
+     },
+     {
+      "id": "d",
+      "text": "None: all three say the same thing",
+      "why": "A can be read as `== 3` or as `> 3`. Those sell on different days."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which spec could be coded in two ways?"
+    },
+    {
+     "rung": "point",
+     "text": "\"After three days\" could mean once three days have passed, or later than that.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A could be `== 3` or `> 3`. Ask which day it sells on."
+    }
+   ],
+   "feedback": {
+    "correct": "A could mean `== 3` or `> 3`; the question settles the day.",
+    "generic": "Not quite right. Look for a spec that two programmers could code differently.",
+    "byKey": {
+     "b": "You doubted B. Counting days after the buy day gives `bought + 3`, the same as C.",
+     "c": "You doubted C. It states the test in code, so it has one reading.",
+     "d": "You read A one way only. \"After three days\" can also mean the fourth day."
+    }
+   },
+   "explain": {
+    "text": "A can be coded as `i - bought == 3` or `i - bought > 3`, which sell a day apart. B and C both mean day `bought + 3`. One question before coding saves a rewrite after a failing test.",
+    "canvas": {
+     "tone": {
+      "l1": "err"
+     }
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A week on the desk",
+   "tags": [
+    "simulation-rules"
+   ],
+   "prose": "The desk runs the bot on last week's closes, in pence: `[250, 240, 245, 252, 249, 247, 236, 240]`. On day 3, $100 \\times 252 = 25{,}200$, exactly $105 \\times 240$.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      250,
+      240,
+      245,
+      252,
+      249,
+      247,
+      236,
+      240
+     ]
+    },
+    "state": {
+     "caption": "Eight closing prices, days 0 to 7"
+    }
+   },
+   "question": "What total profit, in pence, does the bot make?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Profit",
+    "accept": "−1: $+12$ on the first trade and $-13$ on the second",
+    "unit": "pence",
+    "wrong": [
+     {
+      "id": "sameday",
+      "value": 3
+     },
+     {
+      "id": "strict",
+      "value": -2
+     },
+     {
+      "id": "first",
+      "value": 12
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Buy on day 1. Does day 3 reach the take profit?"
+    },
+    {
+     "rung": "point",
+     "text": "\"At least 5%\" includes equality, so day 3 sells at 252.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Buy 240, sell 252: $+12$. Day 4 buys 249; day 6 stops at 236 ($23{,}600 \\le 24{,}153$): $-13$. Total $-1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$+12 - 13 = -1$ pence over two trades.",
+    "generic": "Not quite right. Trace each day and check the rules in order.",
+    "byKey": {
+     "sameday": "You let the bot buy 236 on day 6, the day it sold. It must wait, and day 7 is not a fall.",
+     "strict": "You needed more than 5%. The rule is `>=`, so 252 against 240 sells on day 3.",
+     "first": "You stopped after the first trade. Day 4's 249 is below 252, so the bot buys again."
+    }
+   },
+   "explain": {
+    "text": "Day 3 sells at exactly 5% up, for $+12$. Day 4 buys 249, and day 6's 236 is at least 3% down, for $-13$. Day 7 cannot buy: 240 is not below 236.",
+    "canvas": {
+     "pointers": [
+      {
+       "id": "b1",
+       "at": 1,
+       "label": "buy"
+      },
+      {
+       "id": "s1",
+       "at": 3,
+       "label": "sell"
+      },
+      {
+       "id": "b2",
+       "at": 4,
+       "label": "buy"
+      },
+      {
+       "id": "s2",
+       "at": 6,
+       "label": "stop"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 2,
+   "title": "Tests before code",
+   "tags": [
+    "simulation-rules"
+   ],
+   "prose": "You have 40 minutes for this question in an assessment. The hidden tests are not shown, only their number. `contests/l15-debugging-under-time` showed how slow it is to debug without an expected answer.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "The statement",
+     "lines": [
+      "A bot trades one unit of one stock. Prices are whole pence.",
+      "It starts flat. Day 0 never trades.",
+      "While flat on day i >= 1, it buys at that day's price",
+      "  when the price is below the previous day's price.",
+      "While long, it checks three rules on each later day, in order:",
+      "  1. Sell if 100 * p >= 105 * entry (at least 5% up).",
+      "  2. Sell if 100 * p <= 97 * entry (at least 3% down).",
+      "  3. Sell if i - bought == 3 (held exactly 3 days).",
+      "A bot that sells on day i does not buy on day i.",
+      "If it still holds at the end, it sells at the last price.",
+      "Return [total profit in pence, number of trades]."
+     ],
+     "wrap": true,
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "What do you do first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Write two short hand traces with their expected results, one with a same-day sale",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Code the rules, then run them on the 40-day file",
+      "why": "You would get 249 and have no way to know it is right. A hand trace gives an answer to compare against."
+     },
+     {
+      "id": "c",
+      "text": "Submit the starter to see which tests fail",
+      "why": "The starter fails every test, which tells you nothing about the rules."
+     },
+     {
+      "id": "d",
+      "text": "Code all three rules as separate functions first",
+      "why": "Structure does not catch a wrong order of checks. A trace with known results does."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How will you know your output is right?"
+    },
+    {
+     "rung": "point",
+     "text": "You need expected values you worked out without the code.",
+     "highlight": [
+      "l9"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Two hand traces: one simple, and one where a rule fires on a day with a fall, such as `[100, 95, 90, 85]`."
+    }
+   ],
+   "feedback": {
+    "correct": "Two traces with known answers catch most rule-order mistakes.",
+    "generic": "Not quite right. You need a way to tell a right answer from a wrong one.",
+    "byKey": {
+     "b": "You trusted the big file. Its answer means nothing until a small case is known to be right.",
+     "c": "You used the starter as a test. It fails everything, so it shows nothing.",
+     "d": "You started on structure. A wrong order of checks still passes a structure review."
+    }
+   },
+   "explain": {
+    "text": "A hand trace is a test with a known answer. The trap list `[100, 95, 90, 85]` catches the same-day buy, and the hook list checks the take profit. Run both before the hidden tests."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "List the state, the events and the order of checks before writing code.",
+   "Edge rules decide the answer. Watch day 0, a same-day sale and buy, an exact threshold and the last day.",
+   "Hand-trace two short inputs first, so the hidden tests have something to be compared against."
+  ],
+  "formula": {
+   "name": "A simulation",
+   "tex": "\\text{state}_{i+1} = \\text{step}(\\text{state}_i, \\text{event}_i)",
+   "note": "One function applies one event; the checks inside follow the statement's order."
+  },
+  "trap": "Letting the bot buy on the day it sold turns `[-5, 2]` into `[-10, 3]` on `[100, 95, 90, 85]`."
+ },
+ "quiz": [
+  {
+   "id": "q-order",
+   "difficulty": 2,
+   "tags": [
+    "edge-order"
+   ],
+   "question": "The bot bought at 200 on day 2. On day 5 the price is 194. Which rule sells it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Rule 2, the stop: $19{,}400 \\le 97 \\times 200$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Rule 3, the time rule",
+      "why": "Rule 3 is true too, but rule 2 comes first in the order and is true."
+     },
+     {
+      "id": "c",
+      "text": "None: 194 is exactly 3% down, not more",
+      "why": "\"At most 3% below\" includes 3% exactly: $19{,}400 \\le 19{,}400$."
+     },
+     {
+      "id": "d",
+      "text": "Rule 1, the take profit",
+      "why": "194 is below the entry, so rule 1 is false."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Rule 2 is the first true rule in order.",
+    "generic": "Not quite right. Check the rules in order, with equality."
+   },
+   "explain": {
+    "text": "Rule 1 is false. Rule 2 holds with equality, $19{,}400 \\le 19{,}400$, so it sells before rule 3 is checked."
+   }
+  },
+  {
+   "id": "q-sameday",
+   "difficulty": 2,
+   "tags": [
+    "edge-order"
+   ],
+   "question": "The bot sells on day 4 at 95, and 95 is below day 3's price. What does it do next on day 4?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Nothing: a bot that sells on a day does not buy that day",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "It buys at 95",
+      "why": "You let the bot buy on the day it sold. The statement forbids it."
+     },
+     {
+      "id": "c",
+      "text": "It buys on day 4 only if 95 is a new low",
+      "why": "No such rule exists. The same-day rule forbids any buy on day 4."
+     },
+     {
+      "id": "d",
+      "text": "It sells again",
+      "why": "It holds one unit, which is already sold."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "It waits until day 5 at the earliest.",
+    "generic": "Not quite right. Read the same-day rule again."
+   },
+   "explain": {
+    "text": "The statement says a bot that sells on day `i` does not buy on day `i`. The `else` on `long_` enforces it."
+   }
+  },
+  {
+   "id": "q-header",
+   "difficulty": 2,
+   "tags": [
+    "file-read"
+   ],
+   "question": "`strategy_from_file` reads a file with the header and no rows. What does it return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`[0, 0]`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "It raises `IndexError`",
+      "why": "`prices[-1]` is read only when the bot still holds, and with no prices it never buys."
+     },
+     {
+      "id": "c",
+      "text": "`[0, 1]`",
+      "why": "No trade happened, so the count is 0."
+     },
+     {
+      "id": "d",
+      "text": "It raises `KeyError` for `price_pence`",
+      "why": "The header is there, so the key exists. There are just no rows."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "No prices, no trades: `[0, 0]`.",
+    "generic": "Not quite right. Follow an empty list through `run_strategy`."
+   },
+   "explain": {
+    "text": "`DictReader` yields no rows, so `load_prices` returns `[]`. The loop never runs and the end rule is skipped. The result is `[0, 0]`."
+   }
+  },
+  {
+   "id": "q-trace",
+   "difficulty": 3,
+   "tags": [
+    "simulation-rules"
+   ],
+   "question": "What total profit, in pence, does the bot make on `[100, 97, 99, 102, 101]`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Profit",
+    "accept": "5: buy 97 and sell 102 on day 3, then buy 101 and sell it at 101",
+    "unit": "pence",
+    "wrong": [
+     {
+      "id": "held",
+      "value": 4
+     },
+     {
+      "id": "one",
+      "value": 2
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$+5$ on the first trade and 0 on the second.",
+    "generic": "Not quite right. Trace each day and check the rules in order.",
+    "byKey": {
+     "held": "You held 97 to the end, at 101. Day 3's 102 is at least 5% up: $10{,}200 \\ge 10{,}185$.",
+     "one": "You bought at 100 on day 0. Day 0 never trades."
+    }
+   },
+   "explain": {
+    "text": "Day 1 buys 97. Day 3's $10{,}200 \\ge 105 \\times 97 = 10{,}185$ sells for $+5$. Day 4 buys 101, which the end sells at 101."
+   }
+  }
+ ]
+}

@@ -1,0 +1,2072 @@
+{
+ "id": "l10-matching-engine",
+ "course": "coding-int",
+ "title": "A matching engine",
+ "minutes": 15,
+ "objectives": [
+  "Simulate price-time priority matching of limit and market orders."
+ ],
+ "skills": [
+  "ci-strings",
+  "ci-design"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Inside a price level",
+   "tags": [
+    "price-levels"
+   ],
+   "prose": "In `ds/l18-order-book-heaps` you kept a book in heaps. An exchange keeps a queue at each price instead. Prices are in whole pence. The ask level at 100 holds 7: order #1 for 3, then #2 for 4.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "orderbook",
+     "params": {
+      "asks": [
+       [
+        100,
+        7,
+        "#1 #2"
+       ],
+       [
+        101,
+        6,
+        "#4"
+       ]
+      ],
+      "bids": [
+       [
+        99,
+        5,
+        "#3"
+       ]
+      ],
+      "depth": 2
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       {
+        "v": 3,
+        "label": "#1"
+       },
+       {
+        "v": 4,
+        "label": "#2"
+       }
+      ],
+      "mode": "queue"
+     },
+     "state": {
+      "caption": "The queue inside the ask level at 100"
+     }
+    }
+   },
+   "question": "A buy limit order for 5 at 100 arrives. How many remain at the ask level of 100 afterwards?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Remaining",
+    "accept": "2: #1's 3 and 2 of #2's 4 trade",
+    "wrong": [
+     {
+      "id": "none",
+      "value": 0
+     },
+     {
+      "id": "seven",
+      "value": 7
+     },
+     {
+      "id": "first",
+      "value": 4
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The buy takes from the front of the queue."
+    },
+    {
+     "rung": "point",
+     "text": "#1 is first in the queue, with 3.",
+     "highlight": [
+      "right:c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "#1 trades 3 and #2 trades 2. That leaves $7 - 5 = 2$, all of it #2."
+    }
+   ],
+   "feedback": {
+    "correct": "$7 - 5 = 2$ remain, all of them order #2.",
+    "generic": "Not quite right. The buy for 5 takes from the level until it is filled.",
+    "byKey": {
+     "none": "You emptied the level. The buy is for 5, and the level holds 7.",
+     "seven": "You left the level untouched. A buy at 100 crosses an ask at 100.",
+     "first": "You took the 5 from #2 first. #1 arrived first, so it trades first."
+    }
+   },
+   "explain": {
+    "text": "The book shows one total per price. The queue inside it decides who trades: #1 first, then #2. After the buy, #2 rests with 2 at the front.",
+    "canvas": {
+     "right": {
+      "cells": [
+       {
+        "v": 2,
+        "label": "#2"
+       }
+      ],
+      "caption": "After the buy: #2 has 2 left"
+     },
+     "left": {
+      "asks": {
+       "100": 2
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Walk the level",
+   "tags": [
+    "price-levels"
+   ],
+   "prose": "Move the slider to send a buy of that size into the book. The book shows what fills at each price and what is left over. The level at 100 is #1 for 3, then #2 for 4.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "asks": [
+      [
+       100,
+       7,
+       "#1 #2"
+      ],
+      [
+       101,
+       6,
+       "#4"
+      ]
+     ],
+     "bids": [
+      [
+       99,
+       5,
+       "#3"
+      ]
+     ],
+     "depth": 2
+    },
+    "state": {
+     "order": {
+      "side": "buy",
+      "size": 1
+     }
+    },
+    "controls": [
+     {
+      "bind": "order.size",
+      "min": 1,
+      "max": 12,
+      "step": 1,
+      "start": 1,
+      "label": "Buy size"
+     }
+    ]
+   },
+   "question": "With a buy of 5, how many of order #2's 4 are left?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Left of #2",
+    "accept": "2: #1 fills 3 first, then #2 fills 2",
+    "wrong": [
+     {
+      "id": "four",
+      "value": 4
+     },
+     {
+      "id": "zero",
+      "value": 0
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set the slider to 5."
+    },
+    {
+     "rung": "point",
+     "text": "The first 3 come from #1.",
+     "highlight": [
+      "ask0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$5 - 3 = 2$ come from #2, so $4 - 2 = 2$ are left."
+    }
+   ],
+   "feedback": {
+    "correct": "#1 gives 3 and #2 gives 2, so #2 keeps 2.",
+    "generic": "Not quite right. Fill #1 first, then #2.",
+    "byKey": {
+     "four": "You filled the buy from #1 alone. #1 has only 3.",
+     "zero": "You took all of #2. The buy needs only 2 of it after #1's 3."
+    }
+   },
+   "explain": {
+    "text": "Inside one price, orders trade in the order they arrived. At 8 or more the buy reaches 101, the next level. At 13 or more the book's 13 are not enough, and a market order would drop the rest.",
+    "canvas": {
+     "order": {
+      "side": "buy",
+      "size": 5
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Trades from a stream",
+   "tags": [
+    "book-events"
+   ],
+   "prose": "Events arrive one at a time. `[0, 1, 1, 101, 4]` is order 1, a sell limit of 4 at 101. Order 2 sells 6 at 102. Then order 3 buys 7 at 102. A trade is `[taker, maker, price, qty]`.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "asks": [
+      [
+       101,
+       4,
+       "#1"
+      ],
+      [
+       102,
+       6,
+       "#2"
+      ]
+     ],
+     "bids": [],
+     "depth": 2
+    },
+    "state": {}
+   },
+   "question": "Fill in the two trades that order 3 makes.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Taker",
+     "Maker",
+     "Price",
+     "Quantity"
+    ],
+    "rows": [
+     [
+      "3",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 101,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 4,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "3",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 102,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A buy takes the lowest ask first."
+    },
+    {
+     "rung": "point",
+     "text": "The best ask is order 1's 4 at 101.",
+     "highlight": [
+      "ask0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Order 3 takes all 4 of order 1 at 101, then 3 of order 2 at 102. It is filled, and order 2 keeps 3."
+    }
+   ],
+   "feedback": {
+    "correct": "`[3, 1, 101, 4]` then `[3, 2, 102, 3]`.",
+    "generic": "Not quite right. Take the best ask first, at its own price.",
+    "byKey": {
+     "r0c1": "The first trade is with order 1, the best ask.",
+     "r0c2": "The first trade is at 101, the price of the resting order.",
+     "r1c2": "The second trade is at 102, order 2's price.",
+     "r1c3": "Order 3 needs $7 - 4 = 3$ more after order 1."
+    }
+   },
+   "explain": {
+    "text": "The buy works up from the best ask: 4 at 101, then 3 at 102. It is filled in full, so nothing of it rests. Order 2 keeps 3 at 102.",
+    "canvas": {
+     "asks": {
+      "101": null,
+      "102": 3
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Whose price",
+   "tags": [
+    "book-events"
+   ],
+   "prose": "In that stream, order 3 was willing to pay up to 102. Its first trade was with order 1, which was resting at 101.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "asks": [
+      [
+       101,
+       4,
+       "#1"
+      ],
+      [
+       102,
+       6,
+       "#2"
+      ]
+     ],
+     "bids": [],
+     "depth": 2
+    },
+    "state": {
+     "highlight": [
+      "ask0"
+     ]
+    }
+   },
+   "question": "At what price does order 3 buy from order 1?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "101, the resting order's price",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "102, the incoming order's limit",
+      "why": "You used the taker's limit. The maker's resting price sets the trade price, so the buyer gains a penny."
+     },
+     {
+      "id": "c",
+      "text": "101.5, the middle of the two",
+      "why": "Exchanges do not split the difference. The trade is at the resting price."
+     },
+     {
+      "id": "d",
+      "text": "102, the last price traded",
+      "why": "The last trade has no part in it. Each fill is at its maker's price."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which order was in the book first?"
+    },
+    {
+     "rung": "point",
+     "text": "Order 1 rested at 101 before order 3 arrived.",
+     "highlight": [
+      "ask0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The maker's price is the trade price: 101."
+    }
+   ],
+   "feedback": {
+    "correct": "The maker's price, 101.",
+    "generic": "Not quite right. The order that was resting sets the price.",
+    "byKey": {
+     "b": "You used the incoming limit. A limit is the worst price accepted, not the price paid.",
+     "c": "You split the difference. The fill is at the resting price.",
+     "d": "You used the last trade. Each fill is at its own maker's price."
+    }
+   },
+   "explain": {
+    "text": "A limit is the worst price the taker accepts. The resting order set its price first, so the trade happens there. Here order 3 pays 101 for 4, then 102 for 3.",
+    "canvas": {
+     "highlight": [
+      "ask0"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Market orders",
+   "tags": [
+    "book-events"
+   ],
+   "prose": "A market order has no price. It trades until it is filled or the other side is empty, and the rest is dropped. Stream: a bid of 10 at 99, then a market sell of 4, then a market sell of 20.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "asks": [],
+     "bids": [
+      [
+       99,
+       10,
+       "#1"
+      ]
+     ],
+     "depth": 2
+    },
+    "state": {}
+   },
+   "question": "How many shares trade in total?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Traded",
+    "accept": "10: 4, then the 6 that were left; the other 14 are dropped",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 24
+     },
+     {
+      "id": "first",
+      "value": 4
+     },
+     {
+      "id": "rest",
+      "value": 20
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many does the first market sell take?"
+    },
+    {
+     "rung": "point",
+     "text": "It takes 4 of the 10, leaving 6.",
+     "highlight": [
+      "bid0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The second takes the last 6. The book is then empty, so its other 14 are dropped. $4 + 6 = 10$."
+    }
+   ],
+   "feedback": {
+    "correct": "$4 + 6 = 10$ traded; 14 dropped; the bid side ends empty.",
+    "generic": "Not quite right. A market order can trade only what the book holds.",
+    "byKey": {
+     "all": "You filled both market orders in full. The book held only 10.",
+     "first": "You stopped after the first market order. The second takes the 6 that are left.",
+     "rest": "You counted the second market order's size. It finds only 6 to trade."
+    }
+   },
+   "explain": {
+    "text": "The first sell takes 4 at 99 and the second takes the 6 left. Nothing rests from a market order, so its other 14 vanish. `levels(events, 0)` is then `[]`.",
+    "canvas": {
+     "bids": {
+      "99": null
+     },
+     "caption": "After both: the bid side is empty"
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Amending up",
+   "tags": [
+    "amend-priority"
+   ],
+   "prose": "Two sells of 5 rest at 101: order 1 first, then order 2. Order 1 is amended from 5 to 8 with `[3, 1, 8]`. Then a buy of 6 at 101 arrives as order 3.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "orderbook",
+     "params": {
+      "asks": [
+       [
+        101,
+        10,
+        "#1 #2"
+       ]
+      ],
+      "bids": [],
+      "depth": 1
+     },
+     "state": {}
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       {
+        "v": 5,
+        "label": "#1"
+       },
+       {
+        "v": 5,
+        "label": "#2"
+       }
+      ],
+      "mode": "queue"
+     },
+     "state": {
+      "caption": "The queue at 101 before the amend"
+     }
+    }
+   },
+   "question": "Which trades does order 3 make?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Order 2 trades 5, then order 1 trades 1",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Order 1 trades 6",
+      "why": "You let the larger order keep its place. An amend up joins the back of the level.",
+      "canvas": {
+       "left": {
+        "asks": [
+         [
+          101,
+          13,
+          "#1 #2"
+         ]
+        ]
+       },
+       "right": {
+        "cells": [
+         {
+          "v": 8,
+          "label": "#1"
+         },
+         {
+          "v": 5,
+          "label": "#2"
+         }
+        ]
+       }
+      }
+     },
+     {
+      "id": "c",
+      "text": "Order 1 trades 5, then order 2 trades 1",
+      "why": "You ignored the amend. Order 1 is now 8, and it moved behind order 2."
+     },
+     {
+      "id": "d",
+      "text": "Order 2 trades 6",
+      "why": "Order 2 has only 5. The last 1 comes from order 1, now at the back."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does an amend up do to an order's place?"
+    },
+    {
+     "rung": "point",
+     "text": "A larger quantity loses its place and joins the back of the same level.",
+     "highlight": [
+      "right:c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The queue becomes #2 (5), then #1 (8). The buy of 6 takes 5 from #2 and 1 from #1."
+    }
+   ],
+   "feedback": {
+    "correct": "`[3, 2, 101, 5]` then `[3, 1, 101, 1]`.",
+    "generic": "Not quite right. Re-order the queue after the amend, then fill the buy.",
+    "byKey": {
+     "b": "You let the larger order keep its place. An amend up joins the back, behind order 2.",
+     "c": "You kept the old queue. The amend moved order 1 behind order 2.",
+     "d": "You took 6 from order 2, which has only 5."
+    }
+   },
+   "explain": {
+    "text": "Amending up would let an order jump the queue with more size, so it loses its place. The queue becomes #2 then #1, and the buy takes 5 and 1. An amend down would have kept its place.",
+    "canvas": {
+     "left": {
+      "asks": [
+       [
+        101,
+        13,
+        "#2 #1"
+       ]
+      ]
+     },
+     "right": {
+      "cells": [
+       {
+        "v": 5,
+        "label": "#2"
+       },
+       {
+        "v": 8,
+        "label": "#1"
+       }
+      ],
+      "caption": "After the amend: #2 first, then #1"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Write the engine",
+   "tags": [
+    "book-events"
+   ],
+   "pace": 900,
+   "prose": "Keep one dictionary per side from price to a `deque` of `[id, qty]`, and a dictionary from id to `(side, price)`. A limit order trades against the best opposite levels it crosses, then rests what is left. A market order never rests.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Event format (prices in whole pence)",
+     "lines": [
+      "[0, id, side, price, qty]   limit order (side 0 buy, 1 sell)",
+      "[1, id, side, qty]          market order",
+      "[2, id]                     cancel (ignored if id does not rest)",
+      "[3, id, new_qty]            amend (ignored if id does not rest)",
+      "  smaller keeps its place; equal changes nothing;",
+      "  larger goes to the back of the same level",
+      "Every new_qty is at least 1. Ids are unique.",
+      "trade = [taker_id, maker_id, price, qty]"
+     ],
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Write `run_book(events)`, the trades in order, and `levels(events, side)`, the resting levels of one side as `[price, total_qty]`, best first.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def run_book(events):\n    # Return the trades as [taker_id, maker_id, price, qty].\n    return []\n\n\ndef levels(events, side):\n    # Return the resting levels of one side as [price, total_qty], best first.\n    return []\n",
+    "solution": "from collections import deque\n\n\ndef _simulate(events):\n    books = {0: {}, 1: {}}   # side -> price -> deque of [id, qty]\n    where = {}               # id -> (side, price)\n    trades = []\n\n    def match(taker, side, qty, limit):\n        opp = books[1 - side]\n        while qty > 0 and opp:\n            best = min(opp) if side == 0 else max(opp)\n            if limit is not None and (\n                    (side == 0 and best > limit) or (side == 1 and best < limit)):\n                break\n            queue = opp[best]\n            while qty > 0 and queue:\n                maker = queue[0]\n                fill = min(qty, maker[1])\n                trades.append([taker, maker[0], best, fill])\n                qty -= fill\n                maker[1] -= fill\n                if maker[1] == 0:\n                    queue.popleft()\n                    del where[maker[0]]\n            if not queue:\n                del opp[best]\n        return qty\n\n    for ev in events:\n        kind = ev[0]\n        if kind == 0:                       # limit order\n            _, oid, side, price, qty = ev\n            rest = match(oid, side, qty, price)\n            if rest > 0:\n                books[side].setdefault(price, deque()).append([oid, rest])\n                where[oid] = (side, price)\n        elif kind == 1:                     # market order\n            _, oid, side, qty = ev\n            match(oid, side, qty, None)\n        elif kind == 2:                     # cancel\n            oid = ev[1]\n            if oid in where:\n                side, price = where.pop(oid)\n                queue = books[side][price]\n                for k, o in enumerate(queue):\n                    if o[0] == oid:\n                        del queue[k]\n                        break\n                if not queue:\n                    del books[side][price]\n        else:                               # amend\n            _, oid, new_qty = ev\n            if oid in where:\n                side, price = where[oid]\n                queue = books[side][price]\n                for k, o in enumerate(queue):\n                    if o[0] == oid:\n                        if new_qty < o[1]:\n                            o[1] = new_qty\n                        elif new_qty > o[1]:\n                            del queue[k]\n                            queue.append([oid, new_qty])\n                        break\n    return trades, books\n\n\ndef run_book(events):\n    return _simulate(events)[0]\n\n\ndef levels(events, side):\n    book = _simulate(events)[1][side]\n    prices = sorted(book, reverse=(side == 0))\n    return [[p, sum(o[1] for o in book[p])] for p in prices]\n",
+    "examples": [
+     {
+      "call": "run_book([[0, 1, 0, 100, 5], [0, 2, 1, 101, 5], [0, 3, 1, 100, 3]])",
+      "expect": "[[3, 1, 100, 3]]",
+      "compare": "equal"
+     },
+     {
+      "call": "levels([[0, 1, 0, 100, 5], [0, 2, 1, 101, 5], [0, 3, 1, 100, 3]], 1)",
+      "expect": "[[101, 5]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "run_book([[0, 1, 0, 100, 5], [0, 2, 1, 101, 5], [0, 3, 1, 100, 3]])",
+      "expect": "[[3, 1, 100, 3]]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_book([[0, 1, 1, 101, 4], [0, 2, 1, 102, 6], [0, 3, 0, 102, 7]])",
+      "expect": "[[3, 1, 101, 4], [3, 2, 102, 3]]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_book([[0, 1, 1, 100, 3], [0, 2, 1, 100, 4], [0, 3, 0, 100, 5]])",
+      "expect": "[[3, 1, 100, 3], [3, 2, 100, 2]]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_book([[0, 1, 0, 99, 10], [1, 2, 1, 4], [1, 3, 1, 20]])",
+      "expect": "[[2, 1, 99, 4], [3, 1, 99, 6]]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_book([[0, 1, 0, 100, 5], [2, 1], [0, 2, 1, 100, 5]])",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_book([[0, 1, 1, 101, 5], [0, 2, 1, 101, 5], [3, 1, 3], [0, 3, 0, 101, 6]])",
+      "expect": "[[3, 1, 101, 3], [3, 2, 101, 3]]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_book([[0, 1, 1, 101, 5], [0, 2, 1, 101, 5], [3, 1, 8], [0, 3, 0, 101, 6]])",
+      "expect": "[[3, 2, 101, 5], [3, 1, 101, 1]]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_book([[0, 1, 0, 100, 2], [0, 2, 0, 99, 3], [0, 3, 1, 99, 4], [0, 4, 1, 100, 1]])",
+      "expect": "[[3, 1, 100, 2], [3, 2, 99, 2]]",
+      "compare": "equal"
+     },
+     {
+      "call": "levels([[0, 1, 0, 100, 5], [0, 2, 1, 101, 5], [0, 3, 1, 100, 3]], 1)",
+      "expect": "[[101, 5]]",
+      "compare": "equal"
+     },
+     {
+      "call": "levels([[0, 1, 0, 100, 2], [0, 2, 0, 99, 3], [0, 3, 1, 99, 4], [0, 4, 1, 100, 1]], 0)",
+      "expect": "[[99, 1]]",
+      "compare": "equal"
+     },
+     {
+      "call": "levels([[0, 1, 0, 100, 2], [0, 2, 0, 99, 3], [0, 3, 1, 99, 4], [0, 4, 1, 100, 1]], 1)",
+      "expect": "[[100, 1]]",
+      "compare": "equal"
+     },
+     {
+      "call": "levels([[0, 1, 0, 99, 10], [1, 2, 1, 4], [1, 3, 1, 20]], 0)",
+      "expect": "[]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 12 hidden tests: eight on `run_book` (limit, market, cancel, amend down and up) and four on `levels`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write one `_simulate(events)` that returns the trades and the books; both functions call it."
+    },
+    {
+     "rung": "point",
+     "text": "A buy's best opposite level is `min(asks)`; a sell's is `max(bids)`.",
+     "highlight": [
+      "l1",
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "In `match`, loop while there is quantity and an opposite level that crosses. Fill from `queue[0]` at the level's price, pop filled makers, delete empty levels. Rest a limit remainder at the back of its level."
+    }
+   ],
+   "feedback": {
+    "correct": "Price levels of FIFO queues, with an id map for cancel and amend.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1: order 3 sells 3 at 100 against the bid of 5 at 100. The trade is `[3, 1, 100, 3]`.",
+     "test-2": "Test 2 walks two ask levels, 101 then 102, each at the maker's price.",
+     "test-3": "Test 3 has two orders at one price. The earlier one trades first.",
+     "test-4": "Test 4 has market orders. They trade what the book holds and drop the rest.",
+     "test-5": "Test 5 cancels order 1 before order 2 arrives, so nothing trades.",
+     "test-6": "Test 6 amends order 1 down to 3. It keeps its place, so it trades 3 first.",
+     "test-7": "Test 7 amends order 1 up to 8. It moves behind order 2.",
+     "test-9": "Test 9 asks for the ask side. Total each level's quantities, best price first.",
+     "test-10": "Test 10 asks for the bid side. Bids are best first, so highest price first."
+    }
+   },
+   "explain": {
+    "text": "Each level is a FIFO queue, so time priority is the queue order. The id map finds a resting order for cancel and amend without scanning every level. `levels` totals each queue and sorts by price, highest first for bids.",
+    "canvas": {
+     "tone": {
+      "l5": "ok",
+      "l6": "ok"
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The same engine in C++",
+   "tags": [
+    "book-events"
+   ],
+   "pace": 900,
+   "prose": "Now in C++, with the same twelve tests. `std::map<int, std::deque<Resting>>` keeps each side sorted, so the best ask is `asks.begin()` and the best bid `bids.rbegin()`. An `std::unordered_map` finds a resting id.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Event format (prices in whole pence)",
+     "lines": [
+      "[0, id, side, price, qty]   limit order (side 0 buy, 1 sell)",
+      "[1, id, side, qty]          market order",
+      "[2, id]                     cancel (ignored if id does not rest)",
+      "[3, id, new_qty]            amend (ignored if id does not rest)",
+      "  smaller keeps its place; equal changes nothing;",
+      "  larger goes to the back of the same level",
+      "Every new_qty is at least 1. Ids are unique.",
+      "trade = [taker_id, maker_id, price, qty]"
+     ],
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Write `run_book` and `levels` in C++, with the signatures in the starter.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "starter": "#include <vector>\n#include <map>\n#include <deque>\n#include <unordered_map>\n#include <algorithm>\n\n// Return the trades as {taker_id, maker_id, price, qty}.\nstd::vector<std::vector<int>> run_book(std::vector<std::vector<int>> events) {\n    return {};\n}\n\n// Return the resting levels of one side as {price, total_qty}, best first.\nstd::vector<std::vector<int>> levels(std::vector<std::vector<int>> events, int side) {\n    return {};\n}\n",
+    "solution": "#include <vector>\n#include <map>\n#include <deque>\n#include <unordered_map>\n#include <algorithm>\n\nstruct Resting { int id; int qty; };\n\nstruct Engine {\n    std::map<int, std::deque<Resting>> bids, asks;\n    std::unordered_map<int, std::pair<int, int>> where;  // id -> (side, price)\n    std::vector<std::vector<int>> trades;\n\n    std::map<int, std::deque<Resting>>& book(int side) { return side == 0 ? bids : asks; }\n\n    int match(int taker, int side, int qty, bool has_limit, int limit) {\n        while (qty > 0) {\n            if (side == 0 ? asks.empty() : bids.empty()) break;\n            int best = side == 0 ? asks.begin()->first : bids.rbegin()->first;\n            if (has_limit && ((side == 0 && best > limit) || (side == 1 && best < limit))) break;\n            auto& queue = side == 0 ? asks[best] : bids[best];\n            while (qty > 0 && !queue.empty()) {\n                Resting& m = queue.front();\n                int fill = std::min(qty, m.qty);\n                trades.push_back({taker, m.id, best, fill});\n                qty -= fill;\n                m.qty -= fill;\n                if (m.qty == 0) { where.erase(m.id); queue.pop_front(); }\n            }\n            if (queue.empty()) { if (side == 0) asks.erase(best); else bids.erase(best); }\n        }\n        return qty;\n    }\n\n    void apply(const std::vector<int>& ev) {\n        if (ev[0] == 0) {\n            int rest = match(ev[1], ev[2], ev[4], true, ev[3]);\n            if (rest > 0) { book(ev[2])[ev[3]].push_back({ev[1], rest}); where[ev[1]] = {ev[2], ev[3]}; }\n        } else if (ev[0] == 1) {\n            match(ev[1], ev[2], ev[3], false, 0);\n        } else if (ev[0] == 2) {\n            auto it = where.find(ev[1]);\n            if (it == where.end()) return;\n            auto& q = book(it->second.first)[it->second.second];\n            q.erase(std::find_if(q.begin(), q.end(), [&](const Resting& r) { return r.id == ev[1]; }));\n            if (q.empty()) book(it->second.first).erase(it->second.second);\n            where.erase(it);\n        } else {\n            auto it = where.find(ev[1]);\n            if (it == where.end()) return;\n            auto& q = book(it->second.first)[it->second.second];\n            auto pos = std::find_if(q.begin(), q.end(), [&](const Resting& r) { return r.id == ev[1]; });\n            if (ev[2] < pos->qty) pos->qty = ev[2];\n            else if (ev[2] > pos->qty) { q.erase(pos); q.push_back({ev[1], ev[2]}); }\n        }\n    }\n};\n\nstd::vector<std::vector<int>> run_book(std::vector<std::vector<int>> events) {\n    Engine e;\n    for (const auto& ev : events) e.apply(ev);\n    return e.trades;\n}\n\nstd::vector<std::vector<int>> levels(std::vector<std::vector<int>> events, int side) {\n    Engine e;\n    for (const auto& ev : events) e.apply(ev);\n    std::vector<std::vector<int>> out;\n    auto add = [&](int price, const std::deque<Resting>& q) {\n        int t = 0;\n        for (const auto& r : q) t += r.qty;\n        out.push_back({price, t});\n    };\n    if (side == 0) for (auto it = e.bids.rbegin(); it != e.bids.rend(); ++it) add(it->first, it->second);\n    else for (const auto& kv : e.asks) add(kv.first, kv.second);\n    return out;\n}\n",
+    "examples": [
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         100,
+         5
+        ],
+        [
+         0,
+         2,
+         1,
+         101,
+         5
+        ],
+        [
+         0,
+         3,
+         1,
+         100,
+         3
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [
+       [
+        3,
+        1,
+        100,
+        3
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "levels",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         100,
+         5
+        ],
+        [
+         0,
+         2,
+         1,
+         101,
+         5
+        ],
+        [
+         0,
+         3,
+         1,
+         100,
+         3
+        ]
+       ],
+       1
+      ],
+      "types": [
+       "std::vector<std::vector<int>>",
+       "int"
+      ],
+      "expect": [
+       [
+        101,
+        5
+       ]
+      ],
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         100,
+         5
+        ],
+        [
+         0,
+         2,
+         1,
+         101,
+         5
+        ],
+        [
+         0,
+         3,
+         1,
+         100,
+         3
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [
+       [
+        3,
+        1,
+        100,
+        3
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         1,
+         101,
+         4
+        ],
+        [
+         0,
+         2,
+         1,
+         102,
+         6
+        ],
+        [
+         0,
+         3,
+         0,
+         102,
+         7
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [
+       [
+        3,
+        1,
+        101,
+        4
+       ],
+       [
+        3,
+        2,
+        102,
+        3
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         1,
+         100,
+         3
+        ],
+        [
+         0,
+         2,
+         1,
+         100,
+         4
+        ],
+        [
+         0,
+         3,
+         0,
+         100,
+         5
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [
+       [
+        3,
+        1,
+        100,
+        3
+       ],
+       [
+        3,
+        2,
+        100,
+        2
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         99,
+         10
+        ],
+        [
+         1,
+         2,
+         1,
+         4
+        ],
+        [
+         1,
+         3,
+         1,
+         20
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [
+       [
+        2,
+        1,
+        99,
+        4
+       ],
+       [
+        3,
+        1,
+        99,
+        6
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         100,
+         5
+        ],
+        [
+         2,
+         1
+        ],
+        [
+         0,
+         2,
+         1,
+         100,
+         5
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [],
+      "compare": "equal"
+     },
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         1,
+         101,
+         5
+        ],
+        [
+         0,
+         2,
+         1,
+         101,
+         5
+        ],
+        [
+         3,
+         1,
+         3
+        ],
+        [
+         0,
+         3,
+         0,
+         101,
+         6
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [
+       [
+        3,
+        1,
+        101,
+        3
+       ],
+       [
+        3,
+        2,
+        101,
+        3
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         1,
+         101,
+         5
+        ],
+        [
+         0,
+         2,
+         1,
+         101,
+         5
+        ],
+        [
+         3,
+         1,
+         8
+        ],
+        [
+         0,
+         3,
+         0,
+         101,
+         6
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [
+       [
+        3,
+        2,
+        101,
+        5
+       ],
+       [
+        3,
+        1,
+        101,
+        1
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         100,
+         2
+        ],
+        [
+         0,
+         2,
+         0,
+         99,
+         3
+        ],
+        [
+         0,
+         3,
+         1,
+         99,
+         4
+        ],
+        [
+         0,
+         4,
+         1,
+         100,
+         1
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [
+       [
+        3,
+        1,
+        100,
+        2
+       ],
+       [
+        3,
+        2,
+        99,
+        2
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "levels",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         100,
+         5
+        ],
+        [
+         0,
+         2,
+         1,
+         101,
+         5
+        ],
+        [
+         0,
+         3,
+         1,
+         100,
+         3
+        ]
+       ],
+       1
+      ],
+      "types": [
+       "std::vector<std::vector<int>>",
+       "int"
+      ],
+      "expect": [
+       [
+        101,
+        5
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "levels",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         100,
+         2
+        ],
+        [
+         0,
+         2,
+         0,
+         99,
+         3
+        ],
+        [
+         0,
+         3,
+         1,
+         99,
+         4
+        ],
+        [
+         0,
+         4,
+         1,
+         100,
+         1
+        ]
+       ],
+       0
+      ],
+      "types": [
+       "std::vector<std::vector<int>>",
+       "int"
+      ],
+      "expect": [
+       [
+        99,
+        1
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "levels",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         100,
+         2
+        ],
+        [
+         0,
+         2,
+         0,
+         99,
+         3
+        ],
+        [
+         0,
+         3,
+         1,
+         99,
+         4
+        ],
+        [
+         0,
+         4,
+         1,
+         100,
+         1
+        ]
+       ],
+       1
+      ],
+      "types": [
+       "std::vector<std::vector<int>>",
+       "int"
+      ],
+      "expect": [
+       [
+        100,
+        1
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "levels",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         99,
+         10
+        ],
+        [
+         1,
+         2,
+         1,
+         4
+        ],
+        [
+         1,
+         3,
+         1,
+         20
+        ]
+       ],
+       0
+      ],
+      "types": [
+       "std::vector<std::vector<int>>",
+       "int"
+      ],
+      "expect": [],
+      "compare": "equal"
+     }
+    ],
+    "how": "Check compiles your code once and runs the same 12 hidden tests as the Python screen. Each case gets 5 s."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put the state in one `struct Engine` with an `apply(event)` method."
+    },
+    {
+     "rung": "point",
+     "text": "A `Resting& m = queue.front()` lets you change the front order's quantity in place.",
+     "highlight": [
+      "l1",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Mirror the Python: `match` loops over the best opposite level, fills from the front, erases filled makers and empty levels. Cancel and amend use `where` and `std::find_if` on the queue."
+    }
+   ],
+   "feedback": {
+    "correct": "The same engine, with sorted maps doing the best-price search.",
+    "generic": "Not quite right. Check the first failing test, or the compiler's message.",
+    "byKey": {
+     "test-1": "Test 1: order 3 sells 3 at 100 against the bid of 5 at 100. The trade is `{3, 1, 100, 3}`.",
+     "test-6": "Test 6 amends order 1 down to 3. Change the quantity in place; do not move it.",
+     "test-7": "Test 7 amends order 1 up to 8. Erase it and `push_back` it at the same price.",
+     "test-10": "Test 10 asks for bids, best first. Walk `bids` from `rbegin()` to `rend()`."
+    }
+   },
+   "explain": {
+    "text": "`std::map` keeps prices sorted, so the best level is at one end in $O(\\log n)$ per insert. `std::deque` gives cheap pops at the front and pushes at the back. Erasing a whole level when its queue empties keeps `begin()` honest."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The matching loop",
+   "tags": [
+    "book-events"
+   ],
+   "prose": "One loop matches every taker.\n\n```python\nwhile qty > 0 and opp:\n    best = min(opp) if buy else max(opp)\n    if not crosses(best, limit):\n        break\n    qty = fill_front(opp, best, qty)  # maker's price\n```",
+   "question": "Put one limit buy's handling in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "m1",
+      "text": "Find the best ask level"
+     },
+     {
+      "id": "m2",
+      "text": "Stop if the best ask is above the buy's limit"
+     },
+     {
+      "id": "m3",
+      "text": "Fill against the order at the front of that level, at the level's price"
+     },
+     {
+      "id": "m4",
+      "text": "Remove a filled maker, and the level once it is empty"
+     },
+     {
+      "id": "m5",
+      "text": "Repeat until the buy is filled or no ask crosses"
+     },
+     {
+      "id": "m6",
+      "text": "Rest what is left at the back of the buy's own level"
+     },
+     {
+      "id": "d1",
+      "text": "Fill at the buy's limit price",
+      "why": "The resting order set its price first. The trade is at the maker's price."
+     }
+    ],
+    "answer": [
+     "m1",
+     "m2",
+     "m3",
+     "m4",
+     "m5",
+     "m6"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What must be checked before any fill?"
+    },
+    {
+     "rung": "point",
+     "text": "Whether the best ask crosses the buy's limit."
+    },
+    {
+     "rung": "step",
+     "text": "Find best, stop if it does not cross, fill from the front, tidy up, repeat, then rest the remainder. Leave out filling at the limit."
+    }
+   ],
+   "feedback": {
+    "correct": "Find, check, fill, tidy, repeat, rest.",
+    "generic": "Not quite right. A fill needs a crossing level, and the remainder rests last.",
+    "byKey": {
+     "d1": "You filled at the taker's limit. Each fill is at the resting order's price.",
+     "left-out": "Every line but one belongs. Only filling at the limit is wrong."
+    }
+   },
+   "explain": {
+    "text": "The check comes before each fill, so a limit never trades through its price. The remainder rests only after matching ends. A market order runs the same loop with no limit and drops the remainder."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Heaps or price levels",
+   "tags": [
+    "price-levels"
+   ],
+   "prose": "In `ds/l18-order-book-heaps` the book was two heaps with lazy deletion. A cancelled order stayed in its heap, marked dead, until it reached the top. Here each side is a map from price to a queue.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Event format (prices in whole pence)",
+     "lines": [
+      "[0, id, side, price, qty]   limit order (side 0 buy, 1 sell)",
+      "[1, id, side, qty]          market order",
+      "[2, id]                     cancel (ignored if id does not rest)",
+      "[3, id, new_qty]            amend (ignored if id does not rest)",
+      "  smaller keeps its place; equal changes nothing;",
+      "  larger goes to the back of the same level",
+      "Every new_qty is at least 1. Ids are unique.",
+      "trade = [taker_id, maker_id, price, qty]"
+     ],
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Price-level queues make cancel and amend simple; finding the best price is $O(\\log n)$ only with a sorted map",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Heaps make amend simpler, because they reorder themselves",
+      "why": "A heap cannot move one order to the back of its price. An amend up needs a real queue per level."
+     },
+     {
+      "id": "c",
+      "text": "A plain dict of price to queue finds the best price in $O(1)$",
+      "why": "A plain dict is unordered, so `min(asks)` scans every level. A sorted map keeps it $O(\\log n)$."
+     },
+     {
+      "id": "d",
+      "text": "Both need a full scan to cancel an order by id",
+      "why": "The id map gives the order's side and price at once. Only one level's queue is searched."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does an amend up need that a heap cannot give?"
+    },
+    {
+     "rung": "point",
+     "text": "It needs the order moved to the back of its own price, behind others at that price.",
+     "highlight": [
+      "l5",
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Queues per level make cancel and amend local. Best price needs a sorted structure; a plain dict scans."
+    }
+   ],
+   "feedback": {
+    "correct": "Queues make the edits local; a sorted map finds the best price fast.",
+    "generic": "Not quite right. Think about an amend up and about finding the best price.",
+    "byKey": {
+     "b": "You trusted the heap to reorder. It orders by price and time, but cannot move one order behind its equals on request.",
+     "c": "You assumed a dict is sorted. `min` over its keys scans every level.",
+     "d": "You forgot the id map. It points straight at the level."
+    }
+   },
+   "explain": {
+    "text": "The Python reference used `min(opp)`, a scan over the levels, which is fine for a test. The C++ `std::map` finds the best level at one end, in $O(\\log n)$ per change. Lazy deletion trades a simple cancel for dead entries left in the heap."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The book after a sweep",
+   "tags": [
+    "book-events"
+   ],
+   "prose": "Four limit orders arrive, priced in pence. Order 1 buys 2 at 100 and order 2 buys 3 at 99. Order 3 sells 4 at 99, then order 4 sells 1 at 100.",
+   "canvas": {
+    "kind": "orderbook",
+    "params": {
+     "asks": [],
+     "bids": [
+      [
+       100,
+       2,
+       "#1"
+      ],
+      [
+       99,
+       3,
+       "#2"
+      ]
+     ],
+     "depth": 2
+    },
+    "state": {
+     "caption": "After orders 1 and 2"
+    }
+   },
+   "question": "After all four orders, fill in the best bid, the best ask and the total quantity traded.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Your answer"
+    ],
+    "rows": [
+     [
+      "Best bid (pence)",
+      {
+       "edit": true,
+       "answer": 99,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "Best ask (pence)",
+      {
+       "edit": true,
+       "answer": 100,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "Total traded",
+      {
+       "edit": true,
+       "answer": 4,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Order 3 sells 4 at 99. Which bids does it reach?"
+    },
+    {
+     "rung": "point",
+     "text": "It takes 2 at 100 first, then 2 of the 3 at 99.",
+     "highlight": [
+      "bid0",
+      "bid1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "1 is left bid at 99. Order 4 sells at 100, above the best bid, so it rests: best ask 100. Traded $2 + 2 = 4$."
+    }
+   ],
+   "feedback": {
+    "correct": "Best bid 99, best ask 100, a spread of 1 penny; 4 traded.",
+    "generic": "Not quite right. Fill order 3 from the best bid down, then place order 4.",
+    "byKey": {
+     "r0c1": "Check the best bid. Order 2 keeps 1 at 99 after order 3.",
+     "r1c1": "Check the best ask. Order 4 at 100 does not cross 99, so it rests.",
+     "r2c1": "Check the total. Order 3 trades 2 at 100 and 2 at 99."
+    }
+   },
+   "explain": {
+    "text": "Order 3 trades 2 at 100 and 2 at 99, at each maker's price. Order 4 rests at 100 because the best bid is 99. The spread is $100 - 99 = 1$ penny.",
+    "canvas": {
+     "bids": {
+      "100": null,
+      "99": 1
+     },
+     "asks": {
+      "100": 1
+     },
+     "caption": "After all four: 99 bid, 100 offered"
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "What the interviewer adds next",
+   "tags": [
+    "amend-priority"
+   ],
+   "prose": "A live round goes on: \"Now add self-trade prevention.\" Then immediate-or-cancel orders. Then a time stamp on every amend. Some changes touch one rule; some add a field to every resting order.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Event format (prices in whole pence)",
+     "lines": [
+      "[0, id, side, price, qty]   limit order (side 0 buy, 1 sell)",
+      "[1, id, side, qty]          market order",
+      "[2, id]                     cancel (ignored if id does not rest)",
+      "[3, id, new_qty]            amend (ignored if id does not rest)",
+      "  smaller keeps its place; equal changes nothing;",
+      "  larger goes to the back of the same level",
+      "Every new_qty is at least 1. Ids are unique.",
+      "trade = [taker_id, maker_id, price, qty]"
+     ],
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Which change needs no new field on a resting order?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Immediate-or-cancel: after matching, drop the remainder instead of resting it",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Self-trade prevention",
+      "why": "To skip a maker with the taker's owner, each resting order must store its owner. That is a new field."
+     },
+     {
+      "id": "c",
+      "text": "A time stamp on every amend",
+      "why": "Each resting order must store its time. That changes the data structure."
+     },
+     {
+      "id": "d",
+      "text": "None: every change needs a new field",
+      "why": "Immediate-or-cancel changes only what happens to the remainder, one line after `match`."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does each change need to know about a resting order?"
+    },
+    {
+     "rung": "point",
+     "text": "Immediate-or-cancel is about the incoming order only.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "IOC replaces \"rest what is left\" with \"drop what is left\". The other two need an owner or a time on each resting order."
+    }
+   ],
+   "feedback": {
+    "correct": "IOC changes one line after `match`; the others add a field.",
+    "generic": "Not quite right. Ask which change needs stored facts about the makers.",
+    "byKey": {
+     "b": "You missed the owner. The loop must compare taker and maker owners, so each maker stores one.",
+     "c": "You missed the stored time. Each resting order must carry it.",
+     "d": "You missed IOC. It is a market order's rule applied to a limit order."
+    }
+   },
+   "explain": {
+    "text": "IOC is a limit order that never rests, so only the line after `match` changes. Self-trade prevention compares owners inside the loop, and needs the owner stored. Time stamps need a time stored on each resting order."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Keep a FIFO queue per price level and a sorted map from price to queue per side. A map from id finds where an order rests.",
+   "A limit order trades with each level it crosses, oldest first, at the resting price. A limit rests its remainder; a market order drops it.",
+   "An amend down keeps its place, and an amend up joins the back of its level. A cancel of an id that does not rest is ignored."
+  ],
+  "formula": {
+   "name": "Trade price",
+   "tex": "\\text{price} = \\text{maker's resting price}",
+   "note": "The taker's limit is the worst price it accepts, not the price it pays."
+  },
+  "trap": "Letting an amended-up order keep its place lets it jump the queue with more size."
+ },
+ "quiz": [
+  {
+   "id": "q-price",
+   "difficulty": 2,
+   "tags": [
+    "book-events"
+   ],
+   "question": "A sell limit for 5 rests at 99. A buy limit for 5 at 101 arrives. At what price do they trade?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 99,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Price",
+    "accept": "99, the resting order's price",
+    "unit": "pence",
+    "wrong": [
+     {
+      "id": "taker",
+      "value": 101
+     },
+     {
+      "id": "mid",
+      "value": 100
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The maker's price, 99.",
+    "generic": "Not quite right. Which order was resting?",
+    "byKey": {
+     "taker": "You used the buyer's limit. The resting sell sets the price.",
+     "mid": "You split the difference. The fill is at the resting price."
+    }
+   },
+   "explain": {
+    "text": "The sell rested first at 99. The buy accepts up to 101, so it crosses and pays the maker's 99."
+   }
+  },
+  {
+   "id": "q-market",
+   "difficulty": 2,
+   "tags": [
+    "book-events"
+   ],
+   "question": "A market buy of 10 meets asks of 3 at 100 and 4 at 101, and nothing else. How many are dropped?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Dropped",
+    "accept": "3: it trades 7 and drops the rest",
+    "wrong": [
+     {
+      "id": "traded",
+      "value": 7
+     },
+     {
+      "id": "all",
+      "value": 10
+     },
+     {
+      "id": "none",
+      "value": 0
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$10 - 7 = 3$ are dropped.",
+    "generic": "Not quite right. A market order trades what the book has.",
+    "byKey": {
+     "traded": "7 is what trades. The question asks for what is dropped.",
+     "all": "You dropped everything. The book has 7 to trade.",
+     "none": "You let it rest. A market order never rests."
+    }
+   },
+   "explain": {
+    "text": "It takes 3 at 100 and 4 at 101, which empties the ask side. The other 3 have nothing to trade against and are dropped."
+   }
+  },
+  {
+   "id": "q-cancel",
+   "difficulty": 2,
+   "tags": [
+    "book-events"
+   ],
+   "question": "Events: `[0, 1, 1, 100, 5]`, `[2, 1]`, `[2, 1]`, `[0, 2, 0, 100, 5]`. What does `levels(events, 0)` return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`[[100, 5]]`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`[]`",
+      "why": "You let order 2 trade. Order 1 was cancelled, so order 2 finds no ask and rests."
+     },
+     {
+      "id": "c",
+      "text": "An error: order 1 is cancelled twice",
+      "why": "A cancel of an id that does not rest is ignored."
+     },
+     {
+      "id": "d",
+      "text": "`[[100, 10]]`",
+      "why": "Order 1 was a sell, and it is gone. Only order 2's 5 rest on the bid side."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Order 2 rests alone: `[[100, 5]]`.",
+    "generic": "Not quite right. Follow each event in turn."
+   },
+   "explain": {
+    "text": "The first cancel removes order 1. The second finds nothing and is ignored. Order 2 then finds no ask, so its 5 rest at 100."
+   }
+  },
+  {
+   "id": "q-amend",
+   "difficulty": 3,
+   "tags": [
+    "amend-priority"
+   ],
+   "question": "Order 1 is first in its queue with 5. It is amended to 3, and later to 6. Where is it now?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "At the back of its level",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Still at the front",
+      "why": "The first amend kept its place, but the second was up, from 3 to 6. Up loses the place."
+     },
+     {
+      "id": "c",
+      "text": "At the back of a new level",
+      "why": "An amend changes quantity, not price. It stays at the same level."
+     },
+     {
+      "id": "d",
+      "text": "Removed from the book",
+      "why": "An amend is not a cancel. The order rests with 6."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The amend from 3 to 6 sent it to the back.",
+    "generic": "Not quite right. Apply the two amends in turn."
+   },
+   "explain": {
+    "text": "5 to 3 is down, so it kept its place. 3 to 6 is up, so it joined the back of the same level. Comparing with the original 5 does not matter; only the last quantity does."
+   }
+  }
+ ]
+}
