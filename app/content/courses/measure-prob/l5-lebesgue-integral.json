@@ -1,0 +1,1272 @@
+{
+  "id": "l5-lebesgue-integral",
+  "course": "measure-prob",
+  "title": "The Lebesgue integral",
+  "minutes": 15,
+  "objectives": [
+    "Build expectation as a Lebesgue integral from simple functions."
+  ],
+  "skills": [
+    "mt-integral"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Slicing the range",
+      "prose": "Topic 3.2 is optional: it serves desk quant and derivatives pricing roles. Pick $U$ uniformly from $[0, 1]$ and let $X = U^2$. We cut the values into bands of height $\\tfrac12$: $\\varphi_1 = \\lfloor 2X \\rfloor / 2$, which is $\\tfrac12$ where $U \\ge 0.707$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1.08
+          ],
+          "height": 280,
+          "xLabel": "$U$",
+          "yLabel": "value",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^2",
+              "label": "$X = U^2$",
+              "labelSide": "above"
+            },
+            {
+              "id": "phi",
+              "expr": "floor(2^n * x^2) / 2^n",
+              "label": "$\\varphi_n$",
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "n": 1
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v1",
+              "x": 0.7071,
+              "label": "0.707"
+            }
+          ]
+        }
+      },
+      "question": "What is $E[\\varphi_1]$? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1464,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "$\\tfrac12 \\cdot P(U \\ge 1/\\sqrt2) = \\tfrac12(1 - 0.7071) \\approx 0.1464$",
+        "label": "$E[\\varphi_1]$",
+        "wrong": [
+          {
+            "id": "level",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "chance",
+            "value": 0.2929,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "third",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The function $\\varphi_1$ takes two values. Weight each by its chance."
+        },
+        {
+          "rung": "point",
+          "text": "It is 0 on $[0, 0.707)$ and $\\tfrac12$ on $[0.707, 1]$.",
+          "highlight": [
+            "phi"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$P(U \\ge 0.7071) = 0.2929$, so $E[\\varphi_1] = \\tfrac12 \\times 0.2929$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.1464: the value $\\tfrac12$ times its chance, 0.2929.",
+        "generic": "Not quite right. Multiply each value of $\\varphi_1$ by the chance that it takes it.",
+        "byKey": {
+          "level": "You gave the top value $\\tfrac12$. It happens only on part of the interval, so weight it by its chance.",
+          "chance": "You gave $P(U \\ge 0.707)$. Multiply it by the value $\\tfrac12$ the function takes there.",
+          "third": "You gave the exact mean of $U^2$. The two-band function sits below $X$, so its mean is smaller."
+        }
+      },
+      "explain": {
+        "text": "$\\varphi_1$ equals $\\tfrac12$ exactly when $2U^2 \\ge 1$, that is $U \\ge 1/\\sqrt2$. That has chance $1 - 0.7071 = 0.2929$, so $E[\\varphi_1] = \\tfrac12 \\times 0.2929 = 0.1464$.",
+        "canvas": {
+          "highlight": [
+            "phi"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "More bands",
+      "prose": "Slide $n$. Each $\\varphi_n$ has $2^n$ bands of height $2^{-n}$ and never rises above $X$. The caption gives $E[\\varphi_n]$ exactly.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1.08
+          ],
+          "height": 280,
+          "xLabel": "$U$",
+          "yLabel": "value",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^2",
+              "label": "$X = U^2$",
+              "labelSide": "above"
+            },
+            {
+              "id": "phi",
+              "expr": "floor(2^n * x^2) / 2^n",
+              "label": "$\\varphi_n$",
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "n": 1
+          }
+        },
+        "state": {},
+        "controls": [
+          {
+            "bind": "n",
+            "min": 1,
+            "max": 6,
+            "step": 1,
+            "label": "$n$",
+            "start": 1
+          }
+        ],
+        "derive": {
+          "caption": "$n = {{n}}$: $E[\\varphi_n] = {{fixed(sum(0, pow(2, n) - 1, \"k / 2^n * (sqrt((k + 1) / 2^n) - sqrt(k / 2^n))\", \"n\", n), 4)}}$, and $\\tfrac13 = 0.3333$."
+        }
+      },
+      "question": "What number does $E[\\varphi_n]$ rise towards? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3333,
+        "tol": {
+          "abs": 0.002
+        },
+        "accept": "$\\tfrac13$: the gap to it roughly halves with each step",
+        "label": "Limit",
+        "wrong": [
+          {
+            "id": "read",
+            "value": 0.3259,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the gap between the caption and $0.3333$ as $n$ grows."
+        },
+        {
+          "rung": "point",
+          "text": "The gaps are 0.187, 0.102, 0.054, 0.028, 0.0145, 0.0074.",
+          "highlight": [
+            "phi"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each gap is about half the one before, so the means close in on $\\tfrac13 = E[U^2]$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac13$. The bands hug $X$ more closely at every step, and the means rise to its mean.",
+        "generic": "Not quite right. Look at where the caption values are heading, not where they are now.",
+        "byKey": {
+          "read": "That is $E[\\varphi_6]$. The means keep rising with $n$.",
+          "half": "You gave the largest value of $X$ halved. The means settle well below that."
+        }
+      },
+      "explain": {
+        "text": "$E[\\varphi_n]$ is 0.1464, 0.2317, 0.2794, 0.3052, 0.3188, 0.3259 for $n = 1$ to 6. The shortfall from $\\tfrac13$ halves each time, so the limit is $\\tfrac13 = \\int_0^1 u^2\\,du$."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Simple functions and the integral",
+      "prose": "A **simple function** takes finitely many values: $\\varphi = \\sum_k a_k \\mathbf{1}_{A_k}$, with $E[\\varphi] = \\sum_k a_k P(A_k)$. For $X \\ge 0$ the **Lebesgue integral** is $E[X] = \\sup\\{E[\\varphi] : 0 \\le \\varphi \\le X,\\ \\varphi \\text{ simple}\\}$. In general $E[X] = E[X^+] - E[X^-]$, unless both are infinite.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            1.08
+          ],
+          "height": 280,
+          "xLabel": "$U$",
+          "yLabel": "value",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^2",
+              "label": "$X = U^2$",
+              "labelSide": "above"
+            },
+            {
+              "id": "phi",
+              "expr": "floor(2^n * x^2) / 2^n",
+              "label": "$\\varphi_n$",
+              "labelSide": "below"
+            }
+          ],
+          "params": {
+            "n": 3
+          }
+        },
+        "state": {}
+      },
+      "question": "Our $\\varphi_n$ are simple. Over which functions does the supremum run?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Simple functions that lie below $X$.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Strips of the domain $[0, 1]$, as in a Riemann sum.",
+            "why": "You described a Riemann sum, which cuts the domain. The Lebesgue integral cuts the range into bands."
+          },
+          {
+            "id": "c",
+            "text": "Simple functions that lie above $X$.",
+            "why": "You took upper approximations. The supremum needs functions below $X$, which push the integral up from underneath."
+          },
+          {
+            "id": "d",
+            "text": "Every function below $X$.",
+            "why": "You included functions with no integral yet. Only simple functions have an integral by definition, so the supremum runs over those."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at where each $\\varphi_n$ sits relative to the curve."
+        },
+        {
+          "rung": "point",
+          "text": "Every $\\varphi_n$ lies on or below $X$.",
+          "highlight": [
+            "phi"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The definition takes the best simple function from below."
+        }
+      ],
+      "feedback": {
+        "correct": "The supremum of $E[\\varphi]$ over simple $\\varphi \\le X$. The $\\varphi_n$ are a sequence that reaches it.",
+        "generic": "Not quite right. The integral is built from simple functions that stay under $X$."
+      },
+      "explain": {
+        "text": "A simple function has a finite sum for its integral. $E[X]$ is the best value reachable from below, and $\\varphi_n$ gets there for $X = U^2$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A payoff is simple",
+      "prose": "A bet pays £0, £5 or £20 with chances 0.5, 0.3 and 0.2. It takes three values, so it is simple.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "£0",
+            "£5",
+            "£20"
+          ],
+          "yLabel": "Chance",
+          "showValues": true,
+          "yMax": 0.6,
+          "decimals": 1,
+          "xLabel": "Payoff"
+        },
+        "state": {
+          "values": {
+            "£0": 0.5,
+            "£5": 0.3,
+            "£20": 0.2
+          }
+        }
+      },
+      "question": "What is its expected payoff, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.5,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "$0 \\times 0.5 + 5 \\times 0.3 + 20 \\times 0.2 = 5.50$",
+        "unit": "£",
+        "label": "Expected payoff",
+        "wrong": [
+          {
+            "id": "avg",
+            "value": 8.33,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "sum",
+            "value": 25,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "nozero",
+            "value": 11,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply each value by its chance, then add."
+        },
+        {
+          "rung": "point",
+          "text": "The three terms are 0, 1.5 and 4.",
+          "highlight": [
+            "x£5",
+            "x£20"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0 + 1.5 + 4 = 5.5$."
+        }
+      ],
+      "feedback": {
+        "correct": "£5.50: the simple-function sum $\\sum_k a_k P(A_k)$.",
+        "generic": "Not quite right. Weight each payoff by its chance.",
+        "byKey": {
+          "avg": "You averaged the three payoffs and ignored the chances.",
+          "sum": "You added the payoffs. Each one counts only with its chance.",
+          "nozero": "You dropped the £0 outcome but also weighted £5 and £20 by 1 and 0.5. Use the chances 0.3 and 0.2."
+        }
+      },
+      "explain": {
+        "text": "The sum is $0 \\times 0.5 + 5 \\times 0.3 + 20 \\times 0.2 = 5.5$. Each value is weighted by the chance of its set."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Edge case: zero except on a null set",
+      "prose": "The Dirichlet function $\\mathbf{1}_{\\mathbb{Q}}$ is 1 on the rationals and 0 elsewhere in $[0, 1]$. Its Riemann sums never agree, so it has no Riemann integral (analysis l20). Under a uniform $U$ the rationals have chance 0 (level 1).",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "Rational",
+            "Irrational"
+          ],
+          "yLabel": "Chance",
+          "showValues": true,
+          "yMax": 1.2,
+          "decimals": 0
+        },
+        "state": {
+          "values": {
+            "Rational": 0,
+            "Irrational": 1
+          }
+        }
+      },
+      "question": "What is $E[\\mathbf{1}_{\\mathbb{Q}}(U)]$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "0, because it is simple and $1 \\cdot P(\\mathbb{Q}) + 0 \\cdot P(\\mathbb{Q}^c) = 0$.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "1, because the rationals are dense in $[0, 1]$.",
+            "why": "You counted density as size. The rationals are dense but countable, so their chance is 0."
+          },
+          {
+            "id": "c",
+            "text": "$\\tfrac12$, halfway between the lower and upper Riemann sums.",
+            "why": "You averaged two Riemann sums that never meet. The Lebesgue integral weights values by chance."
+          },
+          {
+            "id": "d",
+            "text": "It does not exist, as for the Riemann integral.",
+            "why": "You carried the Riemann failure over. Every simple function has an integral."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the function as $1 \\cdot \\mathbf{1}_A + 0 \\cdot \\mathbf{1}_{A^c}$ with $A = \\mathbb{Q}$."
+        },
+        {
+          "rung": "point",
+          "text": "The only value with weight is 1, and its set is $\\mathbb{Q}$.",
+          "highlight": [
+            "xRational"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$P(\\mathbb{Q}) = 0$ by level 1, so the sum is 0."
+        }
+      ],
+      "feedback": {
+        "correct": "0. A variable that is 0 except on a null set has integral 0, so variables equal almost surely have equal means.",
+        "generic": "Not quite right. Use the chance of each value's set, not the size of the set.",
+        "byKey": {
+          "b": "Dense does not mean large. The rationals have chance 0.",
+          "c": "The two Riemann sums are 0 and 1. The integral uses chances instead."
+        }
+      },
+      "explain": {
+        "text": "$\\mathbf{1}_{\\mathbb{Q}}$ is simple, so $E = 1 \\cdot P(\\mathbb{Q}) = 0$. Changing a variable on a null set never changes its mean."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The layer-cake formula",
+      "prose": "For $X \\ge 0$, $E[X] = \\int_0^\\infty P(X > t)\\,dt$: the range is cut into layers, and each layer counts its chance. For $X = U^2$, $P(X > t) = P(U > \\sqrt t) = 1 - \\sqrt t$ on $[0, 1]$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1.1
+          ],
+          "y": [
+            0,
+            1.1
+          ],
+          "height": 260,
+          "xLabel": "$t$",
+          "yLabel": "chance",
+          "functions": [
+            {
+              "id": "S",
+              "expr": "1 - sqrt(x)",
+              "label": "$P(X > t)$",
+              "domain": [
+                0,
+                1
+              ]
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "S",
+            "from": 0,
+            "to": 1
+          }
+        }
+      },
+      "question": "What is the area under the curve? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3333,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "$\\int_0^1 (1 - \\sqrt t)\\,dt = 1 - \\tfrac23 = \\tfrac13$",
+        "label": "Area",
+        "wrong": [
+          {
+            "id": "tri",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "rootarea",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Integrate $1$ and $\\sqrt t$ separately from 0 to 1."
+        },
+        {
+          "rung": "point",
+          "text": "$\\int_0^1 \\sqrt t\\,dt = \\tfrac23$.",
+          "highlight": [
+            "S"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 - \\tfrac23 = \\tfrac13$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac13$, the same value the bands $\\varphi_n$ reached from below.",
+        "generic": "Not quite right. Subtract the area under $\\sqrt t$ from the unit square.",
+        "byKey": {
+          "tri": "You treated the curve as a straight line from 1 to 0. It is bent, so the area is smaller.",
+          "rootarea": "You found the area under $\\sqrt t$. The curve is $1 - \\sqrt t$."
+        }
+      },
+      "explain": {
+        "text": "$\\int_0^1 (1 - \\sqrt t)\\,dt = 1 - \\tfrac23 = \\tfrac13$. Slicing the range into layers gives the same mean as slicing it into bands.",
+        "canvas": {
+          "highlight": [
+            "S"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A payout with no ceiling",
+      "prose": "A game pays $X = 2^K$, where $K$ is the number of tosses up to the first head, so $P(K = k) = 2^{-k}$. We cap the payout at $2^m$. The bars show the capped mean for $m = 1$ to 5.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "yLabel": "$E[\\min(X, 2^m)]$",
+          "showValues": true,
+          "yMax": 7,
+          "decimals": 0,
+          "xLabel": "Cap exponent m"
+        },
+        "state": {
+          "values": {
+            "1": 2,
+            "2": 3,
+            "3": 4,
+            "4": 5,
+            "5": 6
+          }
+        }
+      },
+      "question": "What is $E[\\min(X, 2^m)]$ for $m = 10$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "$m$ terms equal to 1, plus $2^m \\cdot P(K > m) = 1$, gives $m + 1$",
+        "label": "Capped mean",
+        "wrong": [
+          {
+            "id": "terms",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "cap",
+            "value": 1024,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each toss count $k \\le m$ adds $2^k \\cdot 2^{-k}$."
+        },
+        {
+          "rung": "point",
+          "text": "That is 1 per term. Past $m$, the payout is capped at $2^m$ with chance $2^{-m}$.",
+          "highlight": [
+            "x5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10 \\times 1 + 2^{10} \\times 2^{-10} = 11$."
+        }
+      ],
+      "feedback": {
+        "correct": "11. In general $E[\\min(X, 2^m)] = m + 1$.",
+        "generic": "Not quite right. Add one term for each $k \\le m$, then the capped tail.",
+        "byKey": {
+          "terms": "You counted the ten terms and left out the capped tail. It adds $2^{10} \\times 2^{-10} = 1$.",
+          "cap": "You gave the cap itself. The chance of reaching it is only $2^{-10}$."
+        }
+      },
+      "explain": {
+        "text": "Each $k \\le m$ contributes $2^k \\cdot 2^{-k} = 1$, and the cap adds $2^m P(K > m) = 1$. So the capped mean is $m + 1$, which has no upper bound as $m$ grows."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Does every random variable have a mean?",
+      "prose": "The capped means $m + 1$ keep growing. A colleague says the chances $2^{-k}$ shrink fast, so $E[X]$ must be a finite number.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "yLabel": "$E[\\min(X, 2^m)]$",
+          "showValues": true,
+          "yMax": 7,
+          "decimals": 0,
+          "xLabel": "Cap exponent m"
+        },
+        "state": {
+          "values": {
+            "1": 2,
+            "2": 3,
+            "3": 4,
+            "4": 5,
+            "5": 6
+          }
+        }
+      },
+      "question": "What is $E[X]$ for the full game?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$\\infty$: the capped means rise without bound.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Finite, because the chances $2^{-k}$ shrink.",
+            "why": "You trusted the shrinking chances. The payouts $2^k$ grow just as fast, so every term is 1."
+          },
+          {
+            "id": "c",
+            "text": "Undefined: no mean exists.",
+            "why": "You treated an infinite mean as missing. For $X \\ge 0$ the integral is always defined, possibly $\\infty$."
+          },
+          {
+            "id": "d",
+            "text": "11, the value at $m = 10$.",
+            "why": "You stopped at one cap. The integral is the supremum over all caps."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ask what the supremum of $m + 1$ over all $m$ is."
+        },
+        {
+          "rung": "point",
+          "text": "The sequence $m + 1$ has no upper bound.",
+          "highlight": [
+            "x5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$E[X] = \\sup_m (m + 1) = \\infty$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\infty$. Every $X \\ge 0$ has a mean in $[0, \\infty]$, and this one is infinite.",
+        "generic": "Not quite right. The mean is the supremum of the capped means.",
+        "byKey": {
+          "b": "The terms are all 1, so shrinking chances alone do not help.",
+          "c": "A non-negative variable always has an integral, possibly infinite."
+        }
+      },
+      "explain": {
+        "text": "$E[X] = \\sup_m E[\\min(X, 2^m)] = \\sup_m (m + 1) = \\infty$. A non-negative variable always has a mean, but it may be infinite."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Monotonicity passes to the supremum",
+      "prose": "For simple functions, $\\varphi \\le \\psi$ gives $E[\\varphi] \\le E[\\psi]$ by finite arithmetic. We want $X \\le Y$ to give $E[X] \\le E[Y]$.",
+      "question": "Why does $X \\le Y$ imply $E[X] \\le E[Y]$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Every simple $\\varphi \\le X$ is also $\\le Y$, so $E[Y]$ takes a supremum over a larger set.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "At each outcome $X(\\omega) \\le Y(\\omega)$, and the integral adds up the outcomes.",
+            "why": "You summed over outcomes. There are uncountably many, and the integral is not a sum over points."
+          },
+          {
+            "id": "c",
+            "text": "Because $P$ is monotone on events.",
+            "why": "You used monotonicity of $P$. It is the starting point for simple functions, but $X$ and $Y$ need the supremum argument."
+          },
+          {
+            "id": "d",
+            "text": "It holds only when $X$ and $Y$ are simple.",
+            "why": "You limited it to simple functions. The supremum carries it to every non-negative variable."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two sets of simple functions the suprema run over."
+        },
+        {
+          "rung": "point",
+          "text": "A simple function below $X$ is also below $Y$."
+        },
+        {
+          "rung": "step",
+          "text": "A supremum over a larger set cannot be smaller."
+        }
+      ],
+      "feedback": {
+        "correct": "The set for $E[Y]$ contains the set for $E[X]$. Linearity passes to the limit in the same way, using level sets.",
+        "generic": "Not quite right. Compare the two families of simple functions."
+      },
+      "explain": {
+        "text": "If $\\varphi \\le X \\le Y$, then $\\varphi$ is a simple function below $Y$ too. So the supremum for $Y$ is over at least as many functions, and $E[X] \\le E[Y]$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The integral in code",
+      "prose": "Write `dyadic_mean(n)`, the mean of $\\varphi_n$ for $X = U^2$: band $k$ is $\\tfrac{k}{2^n}$ with chance $\\sqrt{(k+1)/2^n} - \\sqrt{k/2^n}$. Then write `simple_mean(values, probs)`, the exact mean of a simple function, with `Fraction`s.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> dyadic_mean(3)",
+            "0.27937",
+            ">>> 1/3 - dyadic_mean(6)",
+            "0.0074",
+            ">>> simple_mean([0, 5, 20], [Fraction(1, 2), Fraction(3, 10), Fraction(1, 5)])",
+            "Fraction(11, 2)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\nimport math\n\ndef dyadic_mean(n):\n    \"\"\"E[phi_n] for X = U^2, where phi_n = floor(2^n X) / 2^n.\"\"\"\n    ...\n\ndef simple_mean(values, probs):\n    \"\"\"Exact mean of a simple function: values[k] taken with chance probs[k] (Fractions).\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\nimport math\n\ndef dyadic_mean(n):\n    \"\"\"E[phi_n] for X = U^2, where phi_n = floor(2^n X) / 2^n.\"\"\"\n    N = 2 ** n\n    return sum(k / N * (math.sqrt((k + 1) / N) - math.sqrt(k / N)) for k in range(N))\n\ndef simple_mean(values, probs):\n    \"\"\"Exact mean of a simple function: values[k] taken with chance probs[k] (Fractions).\"\"\"\n    return sum((a * p for a, p in zip(values, probs)), Fraction(0))\n",
+        "examples": [
+          {
+            "call": "dyadic_mean(3)",
+            "expect": "0.27937",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-05
+            }
+          },
+          {
+            "call": "simple_mean([0, 5, 20], [Fraction(1, 2), Fraction(3, 10), Fraction(1, 5)])",
+            "expect": "Fraction(11, 2)",
+            "compare": "fraction"
+          }
+        ],
+        "tests": [
+          {
+            "call": "dyadic_mean(1)",
+            "expect": "0.1464466094067262",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "dyadic_mean(2)",
+            "expect": "0.23171695375725346",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "dyadic_mean(3)",
+            "expect": "0.27936977837554566",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "dyadic_mean(6)",
+            "expect": "0.3259166886214931",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "dyadic_mean(10)",
+            "expect": "0.33285135653101583",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "dyadic_mean(0)",
+            "expect": "0.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "all(dyadic_mean(n + 1) > dyadic_mean(n) for n in range(10)) and 1 / 3 - dyadic_mean(8) < 0.002",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "simple_mean([0, 5, 20], [Fraction(1, 2), Fraction(3, 10), Fraction(1, 5)])",
+            "expect": "Fraction(11, 2)",
+            "compare": "fraction"
+          },
+          {
+            "call": "simple_mean(range(1, 7), [Fraction(1, 6)] * 6)",
+            "expect": "Fraction(7, 2)",
+            "compare": "fraction"
+          },
+          {
+            "call": "simple_mean([2, 2, 3], [Fraction(1, 4), Fraction(1, 4), Fraction(1, 2)])",
+            "expect": "Fraction(5, 2)",
+            "compare": "fraction"
+          },
+          {
+            "call": "simple_mean([100, 0], [Fraction(0), Fraction(1)])",
+            "expect": "Fraction(0)",
+            "compare": "fraction"
+          }
+        ],
+        "how": "Check runs 11 hidden tests. The dyadic means are compared to 9 decimal places, and the simple means are exact fractions.",
+        "prelude": "from fractions import Fraction\nimport math\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Band $k$ has value $k/2^n$ and chance $\\sqrt{(k+1)/N} - \\sqrt{k/N}$ with $N = 2^n$."
+        },
+        {
+          "rung": "point",
+          "text": "Sum the value times the chance over $k$ from 0 to $N - 1$.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`simple_mean` is `sum(a * p ...)` with a start value of `Fraction(0)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Right. The simple means rise to $\\tfrac13$, and the gap roughly halves each step.",
+        "generic": "Not quite right. Weight each band's value by the chance of its band."
+      },
+      "explain": {
+        "text": "`dyadic_mean` is the simple-function sum $\\sum_k a_k P(A_k)$ for the band sets. The gap to $\\tfrac13$ is 0.0539 at $n = 3$ and 0.0074 at $n = 6$."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A tranche loss",
+      "prose": "A credit portfolio's loss $L$ is exponential with mean £10m, so $P(L > t) = e^{-t/10}$. A senior tranche pays out the loss above £20m: $(L - 20)^+ = \\int_{20}^\\infty \\mathbf{1}_{\\{L > t\\}}\\,dt$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            60
+          ],
+          "y": [
+            0,
+            1.05
+          ],
+          "height": 260,
+          "xLabel": "Loss threshold $t$ (£m)",
+          "yLabel": "chance",
+          "functions": [
+            {
+              "id": "S",
+              "expr": "exp(-x / 10)",
+              "label": "$P(L > t)$"
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "S",
+            "from": 20,
+            "to": 60
+          },
+          "vlines": [
+            {
+              "id": "att",
+              "x": 20,
+              "label": "£20m"
+            }
+          ]
+        }
+      },
+      "question": "What is the tranche's expected loss, $E[(L - 20)^+]$, in £m? Give 4 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.3534,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "$\\int_{20}^\\infty e^{-t/10}\\,dt = 10e^{-2} \\approx 1.3534$",
+        "unit": "£m",
+        "label": "Expected tranche loss",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 10,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "noscale",
+            "value": 0.1353,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "twenty",
+            "value": 2.7067,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Integrate the tail chance from 20 upwards."
+        },
+        {
+          "rung": "point",
+          "text": "$\\int_{20}^\\infty e^{-t/10}\\,dt = 10\\,e^{-20/10}$.",
+          "highlight": [
+            "S"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10e^{-2} = 10 \\times 0.1353 = 1.353$."
+        }
+      ],
+      "feedback": {
+        "correct": "£1.3534m. The layer-cake formula turns a payoff above a strike into an area under the tail.",
+        "generic": "Not quite right. Integrate $P(L > t)$ from $t = 20$ to infinity.",
+        "byKey": {
+          "mean": "You gave the mean loss of the whole portfolio. The tranche pays only above £20m.",
+          "noscale": "You gave $e^{-2}$, the chance of passing £20m. Multiply by the scale 10.",
+          "twenty": "You multiplied by 20. The area under $e^{-t/10}$ from 20 has scale 10."
+        }
+      },
+      "explain": {
+        "text": "$E[(L-20)^+] = \\int_{20}^\\infty P(L > t)\\,dt = 10e^{-2} = 1.3534$. Desks price tranches this way: the expected loss is the area under the tail beyond the attachment point.",
+        "canvas": {
+          "highlight": [
+            "S"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A simple function has $E[\\varphi] = \\sum_k a_k P(A_k)$. For $X \\ge 0$, $E[X]$ is the supremum of $E[\\varphi]$ over simple $\\varphi \\le X$.",
+      "The integral slices the range, not the domain, so a function that is 0 except on a null set has integral 0.",
+      "A non-negative variable always has a mean, possibly $\\infty$, and $E[X] = \\int_0^\\infty P(X > t)\\,dt$."
+    ],
+    "formula": {
+      "name": "Layer-cake formula",
+      "tex": "E[X] = \\int_0^\\infty P(X > t)\\,dt",
+      "note": "Further reading: Williams, Probability with Martingales, chapter 5, and Shreve II, section 1.4."
+    },
+    "trap": "Shrinking chances do not guarantee a finite mean: the payout can grow as fast."
+  },
+  "quiz": [
+    {
+      "id": "q-bet",
+      "difficulty": 2,
+      "prose": "A bet pays £0 with chance 0.6, £10 with chance 0.3 and £100 with chance 0.1.",
+      "question": "What is its expected payoff, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 13,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "$0 \\times 0.6 + 10 \\times 0.3 + 100 \\times 0.1 = 13$",
+        "unit": "£",
+        "label": "Expected payoff",
+        "wrong": [
+          {
+            "id": "avg",
+            "value": 36.67,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "big",
+            "value": 110,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£13: each value weighted by its chance.",
+        "generic": "Not quite right. Weight each payoff by its chance.",
+        "byKey": {
+          "avg": "You averaged the three payoffs and ignored the chances.",
+          "big": "You added the payoffs. Each counts with its chance only."
+        }
+      },
+      "explain": {
+        "text": "$0.3 \\times 10 + 0.1 \\times 100 = 3 + 10 = 13$."
+      },
+      "tags": [
+        "simple-function"
+      ]
+    },
+    {
+      "id": "q-tail",
+      "difficulty": 3,
+      "prose": "A loss $X \\ge 0$ has $P(X > t) = (1 + t)^{-3}$ for $t \\ge 0$.",
+      "question": "What is $E[X]$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "$\\int_0^\\infty (1 + t)^{-3}\\,dt = \\tfrac12$",
+        "label": "$E[X]$",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "third",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac12$ by the layer-cake formula.",
+        "generic": "Not quite right. Integrate the tail chance from 0 to infinity.",
+        "byKey": {
+          "one": "You integrated $(1 + t)^{-2}$. The exponent is $-3$, which gives a factor $\\tfrac12$.",
+          "third": "You divided by 3 and forgot the extra factor of the exponent: the antiderivative is $-\\tfrac12(1+t)^{-2}$."
+        }
+      },
+      "explain": {
+        "text": "$\\int_0^\\infty (1 + t)^{-3}\\,dt = \\left[-\\tfrac12(1 + t)^{-2}\\right]_0^\\infty = \\tfrac12$."
+      },
+      "tags": [
+        "layer-cake"
+      ]
+    },
+    {
+      "id": "q-heavy",
+      "difficulty": 3,
+      "prose": "A payout $X \\ge 0$ has $P(X > t) = \\dfrac{1}{1 + t}$ for $t \\ge 0$.",
+      "question": "What is $E[X]$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$\\infty$, because $\\int_0^\\infty \\tfrac{dt}{1 + t}$ diverges.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "1, because the tail chance starts at 1.",
+            "why": "You read off the value of the tail at $t = 0$. The mean is the area under the tail."
+          },
+          {
+            "id": "c",
+            "text": "$\\tfrac12$, because the tail halves by $t = 1$.",
+            "why": "You used one point of the curve. The area needs the whole tail, and it is not finite."
+          },
+          {
+            "id": "d",
+            "text": "It has no mean.",
+            "why": "You treated infinity as missing. A non-negative variable has mean $\\infty$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$\\int_0^\\infty (1 + t)^{-1}\\,dt = \\infty$, so $E[X] = \\infty$.",
+        "generic": "Not quite right. Integrate the tail chance over all $t \\ge 0$."
+      },
+      "explain": {
+        "text": "The tail $\\tfrac{1}{1 + t}$ falls too slowly: its integral is $\\ln(1 + t)$, which grows without bound."
+      },
+      "tags": [
+        "layer-cake"
+      ]
+    },
+    {
+      "id": "q-null",
+      "difficulty": 2,
+      "prose": "$Y = X$ except on an event of chance 0, and $E[X] = 3$.",
+      "question": "What is $E[Y]$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "3: variables equal almost surely have equal means",
+        "label": "$E[Y]$",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "3. A null set contributes nothing to an integral.",
+        "generic": "Not quite right. A set of chance 0 cannot change a mean.",
+        "byKey": {
+          "zero": "You treated the changed outcomes as if they cancelled everything. They have chance 0, so they change nothing."
+        }
+      },
+      "explain": {
+        "text": "$Y - X$ is 0 except on a null set, so $E[Y - X] = 0$ and $E[Y] = E[X] = 3$."
+      },
+      "tags": [
+        "null-set"
+      ]
+    }
+  ]
+}
