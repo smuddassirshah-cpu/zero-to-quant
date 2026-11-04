@@ -148,6 +148,31 @@ Format: `n. [severity] location | what is wrong | fix`.
 
 20. [note] Size and usability | The level sections are self-contained and the appendices agree with them: counts, tags, test counts and "starter fails N" match line for line apart from the four errors above. The one trap for an author is that the Level 4 intro says "copy starters and tests from 'Code problems' exactly", which findings 1 and 2 make impossible for two problems. A level author who follows the brief to the letter would hit the validator. Fixing 1 to 3 removes it.
 
+### Fix pass (systems)
+
+1. fixed: P-struct-size now 15 tests (dropped `best_size({})`, which the starter passed); prose and Checked line say 15 and 10 failing; verified g++ and clang++, c++17 and c++20, `-O1 -fno-exceptions`.
+2. fixed: P-wire test 3 and P-ring test 9 written out in full (24 bytes; 47 entries, recomputed with a deque model and `struct.pack`); the generator no longer truncates.
+3. fixed: Level 3 item 3, Level 4 items 4 and 6 are now two-row `table` items with one `numeric` cell each; L3 item 3 reads 50, 50 and 60 bytes (160 = 6 x 24 + 16, answers 6 and 16) so the two cells differ.
+4. fixed: E13 requirement stated in the shared "E items" paragraph and the Level 2 intro (level 2 author must not start until the engine pass meets it); appended to `docs/BACKLOG-INBOX.md`.
+5. fixed: per-lesson skills rule added to the Tags paragraph, with the review-1 coverage check (items 5 and 6 carry `sy-os`, item 8 `sy-latency`).
+6. fixed: l2 hook is the l10 recap; worked 1 is LRU eviction (96 reads 4 misses, 120 reads 15 misses), worked 3 is sets and ways (4, 4, 3, 3); trap and drill use them; matrix example kept only as the 64 by 64 edge, the loop-order transfer and the review and homework items. Numbers checked twice (OrderedDict and timestamp models).
+7. fixed: same E13 requirement (steps, blocked lanes, wait and notify, `values.outcomes`, 3 lanes of 4 steps), plus the plain U7 count 34,650 (12! / (4!)^3); inbox appended.
+8. fixed: E11 requirement (any widget kind per part) added to the brief and inbox; hw-1 item 2, hw-2 items 2, 3, 6 and hw-4 items 2, 4 relabelled `parts` with their part kinds.
+9. fixed: P-format-price starter drops the sign and the padding, so 5 of 9 fail on text whatever the optimiser does (6 with the allocation test); prelude keeps the last block in a `volatile` pointer (all four COUNT preludes); elision caveat stated; Unresolved (3) reworded. Not run in the app's clang 21 checker (not available here).
+10. fixed: P-cache-sim starter counts every access a miss (6 of 10 fail); P-lock-cycle starter checks shared locks only (6 of 12); P-find-gaps keeps its in-order starter and gains 4 out-of-order tests, drops 2 passing ones (7 of 13).
+11. fixed: D-lru and D-token-bucket postludes start with their own includes; compiled with only the app's header set under g++ -std=c++20 (syntax check).
+12. fixed: l16 worked 2 no longer promises a hidden wrap test; a `console` listing is used and the 4-byte `size_t` is stated.
+13. fixed: review-2 item 7 says "if the steps run one at a time in some order (no store buffer)"; the (0, 0) point stays in homework item 6.
+14. fixed: Number checks points to `docs/briefs/systems-scripts/` (and maps `systems/levelN` paths); l5 states the LCG (seed 12345, 1103515245, 12345, mod 2^31, bit 16) giving 5,064 and 2; desk-run figures marked as quoted, not recomputed.
+15. kept (note, nothing wrong): numbers agree.
+16. kept (note, nothing wrong): all 11 E13 uses agree.
+17. fixed (cheap part): added the sentence on splitting "setup; call" strings into `setup`, `call` and JSON `expect`; the rest is a confirmation.
+18. kept (note, nothing wrong): structure and coverage confirmed.
+19. fixed: drill `pace` written as 1500, 900 and 600 seconds (and the session line in seconds); build_appendix.py updated to match.
+20. fixed through 1 to 3: the "copy exactly" instruction now holds; appendix_cpp.md regenerated and matches the brief's Code problems section line for line.
+
+Also updated in `docs/briefs/systems-scripts/cpp/`: problems_l1 to l4, problems_drills, build_appendix.py, appendix_cpp.md, summary.json (build_md.py run: ALL PROBLEMS OK, reference passes and starter fails on both g++ and clang++, c++17 and c++20).
+
 ## coding-int
 
 Tally: 7 errors, 13 warnings, 13 notes (34 findings).

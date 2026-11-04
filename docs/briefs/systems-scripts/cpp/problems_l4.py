@@ -4,7 +4,8 @@ def il(l): return "{"+", ".join(map(str,l))+"}"
 COUNT='''#include <cstdlib>
 #include <new>
 static int g_allocs = 0;   // counts every call to operator new
-void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); return p; }
+static void* volatile g_last = nullptr;   // the last block, kept so the call stays visible
+void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); g_last = p; return p; }
 void operator delete(void* p) noexcept { std::free(p); }
 void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 '''
@@ -79,10 +80,9 @@ int format_price(char* out, int pence) {
     std::vector<char> digits;                 // allocates
     bool negative = pence < 0;
     long long a = negative ? -(long long)pence : pence;
+    (void)negative;
     do { digits.push_back(static_cast<char>('0' + a % 10)); a /= 10; } while (a > 0);
-    while (digits.size() < 3) digits.push_back('0');
-    int n = 0;
-    if (negative) out[n++] = '-';
+    int n = 0;      // TODO: the '-' sign, and pence below 10 need a leading '0'
     for (int i = static_cast<int>(digits.size()) - 1; i >= 0; --i) {
         out[n++] = digits[i];
         if (i == 2) out[n++] = '.';

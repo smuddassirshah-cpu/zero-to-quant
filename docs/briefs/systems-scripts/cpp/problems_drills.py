@@ -21,7 +21,10 @@ def lru(cap,ops):
 lc=[(2,["p 1 10","p 2 20","g 1","p 3 30","g 2","g 3","g 1"]),(1,["p 1 5","p 2 6","g 1","g 2"]),(2,["p 1 1","p 2 2","p 1 9","p 3 3","g 1","g 2","g 3"]),(3,["g 7"]),(2,["p 1 1","p 2 2","g 1","g 1","p 3 3","g 2","g 1"]),(0,["p 1 1","g 1"]),
     (3,["p 1 1","p 2 2","p 3 3","p 4 4","g 1","g 2","g 3","g 4","p 5 5","g 2","g 3","g 4","g 5"])]
 P_LRU=dict(id="lru_cache",name="drill sy-lru-cache: least recently used cache",
- postlude='''
+ postlude='''#include <cstdio>
+#include <string>
+#include <vector>
+
 // hidden driver: "p k v" puts, "g k" gets; the result lists every get (value or -1)
 std::vector<int> drive(int capacity, const std::vector<std::string>& ops) {
     LRU cache(capacity);
@@ -100,7 +103,8 @@ def bucket(rate,burst,times):
     return out
 bc=[(1000,3,[0,0,0,0]),(1000,3,[0,0,0,0,1_000_000,1_000_000]),(1000,1,[0,500_000,1_000_000,1_500_000,2_000_000]),(2,2,[0,0,0,250_000_000,500_000_000,1_000_000_000]),(10,5,[0,1_000_000_000,1_000_000_001]),(1_000_000_000,2,[0,0,0,1,2,3]),(100,3,[10**12,10**12,10**12,10**12])]
 P_TB=dict(id="token_bucket",name="drill sy-token-bucket: a rate limiter",
- postlude='''
+ postlude='''#include <vector>
+
 std::vector<int> drive(long long rate, long long burst, const std::vector<long long>& times) {
     TokenBucket b(rate, burst);
     std::vector<int> out;

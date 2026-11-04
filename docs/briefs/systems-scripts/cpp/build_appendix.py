@@ -6,10 +6,11 @@ def res(pid):
     sol=all(v==0 for r in rows for k,v in r[3].items() if k.startswith("solution"))
     starts=sorted({v for r in rows for k,v in r[3].items() if k.startswith("starter")})
     return len(rows[0][0:3]) and rows[0][2], starts
+FMTNOTE=": five on the text (no sign, no padding) whatever the optimiser does, and the `g_allocs` test only if the compiler keeps the `std::vector` allocation"
 def fence(code,lang="cpp"): return "```%s\n%s\n```"%(lang,code.rstrip("\n"))
 def exp(v):
     s=json.dumps(v) if not isinstance(v,bool) else ("true" if v else "false")
-    return s if len(s)<90 else s[:87]+"..."
+    return s   # every expected value is written out in full
 META=[
  ("P-translate","l3-virtual-memory","a `code` screen after the worked examples, difficulty 2",a.P_TR),
  ("P-struct-size","l4-object-layout","a `code` screen after the layout table, difficulty 3",a.P_SZ),
@@ -26,9 +27,9 @@ META=[
  ("P-percentile","l17-measuring-latency","a `code` screen, difficulty 3",d.P_PCT),
  ("P-latency-hist","homework-4","the homework `code` item, difficulty 4",d.P_HIST),
  ("P-handler","l18-feed-handler","the capstone `code` screen, difficulty 4 (the lesson's last task screen)",e.P_H),
- ("D-lru","drill sy-lru-cache (E8)","a drill, pattern `cache`, difficulty 3, pace 25 minutes",f.P_LRU),
- ("D-token-bucket","drill sy-token-bucket (E8)","a drill, pattern `rate-limiter`, difficulty 2, pace 15 minutes",f.P_TB),
- ("D-bits","drill sy-bits (E8)","a drill, pattern `bits`, difficulty 2, pace 10 minutes",f.P_BITS),
+ ("D-lru","drill sy-lru-cache (E8)","a drill, pattern `cache`, difficulty 3, pace 1500 seconds",f.P_LRU),
+ ("D-token-bucket","drill sy-token-bucket (E8)","a drill, pattern `rate-limiter`, difficulty 2, pace 900 seconds",f.P_TB),
+ ("D-bits","drill sy-bits (E8)","a drill, pattern `bits`, difficulty 2, pace 600 seconds",f.P_BITS),
 ]
 out=[]
 for tag,where,role,P in META:
@@ -45,6 +46,6 @@ for tag,where,role,P in META:
         s=(t.get("setup","")+" " if t.get("setup") else "")
         out.append(f"- `{(s+t['call']).strip()}` expects `{exp(t['expect'])}`")
     out.append("")
-    out.append(f"Checked by `cpp/build_md.py`: the solution passes all {n} tests and the starter fails {starter_fail[0]} of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.\n")
+    out.append(f"Checked by `cpp/build_md.py`: the solution passes all {n} tests and the starter fails {starter_fail[0]} of them{FMTNOTE if P["id"]=="format_price" else ""}, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.\n")
 open("appendix_cpp.md","w").write("\n".join(out))
 print(len("\n".join(out)),"bytes")

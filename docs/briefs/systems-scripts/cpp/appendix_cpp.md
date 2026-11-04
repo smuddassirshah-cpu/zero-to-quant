@@ -47,7 +47,7 @@ Checked by `cpp/build_md.py`: the solution passes all 10 tests and the starter f
 
 ### P-struct-size: l4-object-layout: struct size
 
-Where: `l4-object-layout`, a `code` screen after the layout table, difficulty 3. Widget `code`, `language: "cpp"`, 16 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
+Where: `l4-object-layout`, a `code` screen after the layout table, difficulty 3. Widget `code`, `language: "cpp"`, 15 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
 
 Starter (the learner sees this; it compiles and fails the tests):
 
@@ -99,7 +99,6 @@ Hidden tests (`setup` then `call` and its `expect`):
 - `struct_size({1,4,1,4,2,4,4,4})` expects `32`
 - `best_size({1,4,1,4,2,4,4,4})` expects `24`
 - `struct_size({})` expects `0`
-- `best_size({})` expects `0`
 - `struct_size({1})` expects `1`
 - `best_size({1})` expects `1`
 - `struct_size({2,1})` expects `4`
@@ -111,7 +110,7 @@ Hidden tests (`setup` then `call` and its `expect`):
 - `struct_size({1,2,4,8,1,2,4,8})` expects `32`
 - `best_size({1,2,4,8,1,2,4,8})` expects `32`
 
-Checked by `cpp/build_md.py`: the solution passes all 16 tests and the starter fails 10 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
+Checked by `cpp/build_md.py`: the solution passes all 15 tests and the starter fails 10 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
 
 ### P-mispredicts: l5-branches: two-bit predictor
 
@@ -183,11 +182,9 @@ Starter (the learner sees this; it compiles and fails the tests):
 // A full set drops its least recently used line. Start empty. Return the number of misses.
 int count_misses(int num_lines, int ways, const std::vector<int>& addresses) {
     int misses = 0;
-    std::vector<int> last_line(num_lines / ways, -1);     // one line per set: ignores the ways
     for (int a : addresses) {
-        int line = a / 64;
-        int set = line % (num_lines / ways);
-        if (last_line[set] != line) { ++misses; last_line[set] = line; }
+        (void)a;
+        ++misses;     // TODO: an access whose line is already in its set is a hit
     }
     return misses;
 }
@@ -233,7 +230,7 @@ Hidden tests (`setup` then `call` and its `expect`):
 - `count_misses(4, 4, {})` expects `0`
 - `count_misses(2, 2, {0, 64, 128, 0, 64, 128})` expects `6`
 
-Checked by `cpp/build_md.py`: the solution passes all 10 tests and the starter fails 2 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
+Checked by `cpp/build_md.py`: the solution passes all 10 tests and the starter fails 6 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
 
 ### P-final-counts: l7-data-races: count every outcome
 
@@ -329,12 +326,11 @@ Starter (the learner sees this; it compiles and fails the tests):
 // Each string is one thread: the locks it takes, in order, each held while it takes the next ("AB" takes A, then B).
 // Return true if the lock-order graph (an edge from each held lock to each lock taken after it) has a cycle.
 bool has_lock_cycle(const std::vector<std::string>& threads) {
-    // Only spots two threads taking the same pair in opposite orders.
-    for (const auto& s : threads)
-        for (const auto& t : threads)
-            for (size_t i = 0; i + 1 < s.size(); ++i)
-                for (size_t j = 0; j + 1 < t.size(); ++j)
-                    if (s[i] == t[j + 1] && s[i + 1] == t[j]) return true;
+    // Only checks whether two threads share a lock, which is not the same as a cycle.
+    for (size_t a = 0; a < threads.size(); ++a)
+        for (size_t b = a + 1; b < threads.size(); ++b)
+            for (char c : threads[a])
+                if (threads[b].find(c) != std::string::npos) return true;
     return false;
 }
 ```
@@ -386,7 +382,7 @@ Hidden tests (`setup` then `call` and its `expect`):
 - `has_lock_cycle({"ABC", "BCD", "ACD"})` expects `false`
 - `has_lock_cycle({"AC", "BD", "CB"})` expects `false`
 
-Checked by `cpp/build_md.py`: the solution passes all 12 tests and the starter fails 2 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
+Checked by `cpp/build_md.py`: the solution passes all 12 tests and the starter fails 6 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
 
 ### P-blocked-counts: homework-2: bounded buffer
 
@@ -446,7 +442,7 @@ Checked by `cpp/build_md.py`: the solution passes all 7 tests and the starter fa
 
 ### P-find-gaps: l13-tcp-and-udp: find the missing sequence numbers
 
-Where: `l13-tcp-and-udp`, a `code` screen, difficulty 3. Widget `code`, `language: "cpp"`, 11 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
+Where: `l13-tcp-and-udp`, a `code` screen, difficulty 3. Widget `code`, `language: "cpp"`, 13 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
 
 Starter (the learner sees this; it compiles and fails the tests):
 
@@ -487,7 +483,6 @@ std::vector<int> find_gaps(const std::vector<int>& seqs) {
 
 Hidden tests (`setup` then `call` and its `expect`):
 
-- `find_gaps({1, 2, 3})` expects `[]`
 - `find_gaps({1, 2, 4, 5})` expects `[3]`
 - `find_gaps({1, 3, 2})` expects `[]`
 - `find_gaps({2, 3})` expects `[1]`
@@ -497,9 +492,12 @@ Hidden tests (`setup` then `call` and its `expect`):
 - `find_gaps({3, 1, 2, 6, 5})` expects `[4]`
 - `find_gaps({1, 2, 3, 7, 8, 10})` expects `[4, 5, 6, 9]`
 - `find_gaps({5, 4, 3, 2, 1})` expects `[]`
-- `find_gaps({1})` expects `[]`
+- `find_gaps({2, 1, 4, 3, 6})` expects `[5]`
+- `find_gaps({4, 2, 3})` expects `[1]`
+- `find_gaps({1, 4, 2, 3})` expects `[]`
+- `find_gaps({3, 3, 1})` expects `[2]`
 
-Checked by `cpp/build_md.py`: the solution passes all 11 tests and the starter fails 3 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
+Checked by `cpp/build_md.py`: the solution passes all 13 tests and the starter fails 7 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
 
 ### P-wire: l14-messages-on-the-wire: encode and decode
 
@@ -593,7 +591,7 @@ Hidden tests (`setup` then `call` and its `expect`):
 
 - `Msg m{65, 66, 258, 70000u, 123456789u, 100u, 10275, 36000000u}; encode(m)` expects `[65, 66, 1, 2, 0, 1, 17, 112, 7, 91, 205, 21, 0, 0, 0, 100, 0, 0, 40, 35, 2, 37, 81, 0]`
 - `Msg m{88, 83, 1, 1u, 2u, 0u, -25, 0u}; encode(m)` expects `[88, 83, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 255, 255, 255, 231, 0, 0, 0, 0]`
-- `Msg m{84, 66, 65535, 4294967295u, 4294967295u, 4294967295u, 2147483647, 86399999u}; encode(m)` expects `[84, 66, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127, 255...`
+- `Msg m{84, 66, 65535, 4294967295u, 4294967295u, 4294967295u, 2147483647, 86399999u}; encode(m)` expects `[84, 66, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127, 255, 255, 255, 5, 38, 91, 255]`
 - `Msg m{65, 83, 0, 0u, 0u, 1u, (-2147483647 - 1), 1u}; encode(m)` expects `[65, 83, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 128, 0, 0, 0, 0, 0, 0, 1]`
 - `decode(std::vector<int>{65, 66, 1, 2, 0, 1, 17, 112, 7, 91, 205, 21, 0, 0, 0, 100, 0, 0, 40, 35, 2, 37, 81, 0}).instrument` expects `258`
 - `decode(std::vector<int>{65, 66, 1, 2, 0, 1, 17, 112, 7, 91, 205, 21, 0, 0, 0, 100, 0, 0, 40, 35, 2, 37, 81, 0}).price` expects `10275`
@@ -616,7 +614,8 @@ Hidden `prelude`:
 #include <cstdlib>
 #include <new>
 static int g_allocs = 0;   // counts every call to operator new
-void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); return p; }
+static void* volatile g_last = nullptr;   // the last block, kept so the call stays visible
+void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); g_last = p; return p; }
 void operator delete(void* p) noexcept { std::free(p); }
 void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 ```
@@ -697,7 +696,8 @@ Hidden `prelude`:
 #include <cstdlib>
 #include <new>
 static int g_allocs = 0;   // counts every call to operator new
-void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); return p; }
+static void* volatile g_last = nullptr;   // the last block, kept so the call stays visible
+void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); g_last = p; return p; }
 void operator delete(void* p) noexcept { std::free(p); }
 void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 ```
@@ -714,10 +714,9 @@ int format_price(char* out, int pence) {
     std::vector<char> digits;                 // allocates
     bool negative = pence < 0;
     long long a = negative ? -(long long)pence : pence;
+    (void)negative;
     do { digits.push_back(static_cast<char>('0' + a % 10)); a /= 10; } while (a > 0);
-    while (digits.size() < 3) digits.push_back('0');
-    int n = 0;
-    if (negative) out[n++] = '-';
+    int n = 0;      // TODO: the '-' sign, and pence below 10 need a leading '0'
     for (int i = static_cast<int>(digits.size()) - 1; i >= 0; --i) {
         out[n++] = digits[i];
         if (i == 2) out[n++] = '.';
@@ -760,7 +759,7 @@ Hidden tests (`setup` then `call` and its `expect`):
 - `char buf[32]; int n = format_price(buf, 99); std::string(buf, n)` expects `"0.99"`
 - `char buf[32]; g_allocs = 0; format_price(buf, 10275); format_price(buf, -25); g_allocs` expects `0`
 
-Checked by `cpp/build_md.py`: the solution passes all 9 tests and the starter fails 1 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
+Checked by `cpp/build_md.py`: the solution passes all 9 tests and the starter fails 6 of them: five on the text (no sign, no padding) whatever the optimiser does, and the `g_allocs` test only if the compiler keeps the `std::vector` allocation, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
 
 ### P-ring: l16-ring-buffer: a single-producer ring
 
@@ -849,7 +848,7 @@ Hidden tests (`setup` then `call` and its `expect`):
 - `drive(4, {1, 2, 3, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 0, 0, 0, 0})` expects `[1, 1, 1, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 6, 7, 8, -1]`
 - `drive(2, {1, 2, 3, 0, 3, 0, 0, 0})` expects `[1, 1, 0, 1, 1, 2, 3, -1]`
 - `drive(4, {1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 10, 0})` expects `[1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1, 10]`
-- `drive(4, {1, 2, 3, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 16, 0, 17, 0, 18, 0, 19, 0, 20, 0, 21, 0, 22, 0, 23, 0, 0, 0, 0, 0})` expects `[1, 1, 1, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1, 10, 1, 11, 1, 12, 1,...`
+- `drive(4, {1, 2, 3, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 16, 0, 17, 0, 18, 0, 19, 0, 20, 0, 21, 0, 22, 0, 23, 0, 0, 0, 0, 0})` expects `[1, 1, 1, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1, 10, 1, 11, 1, 12, 1, 13, 1, 14, 1, 15, 1, 16, 1, 17, 1, 18, 1, 19, 1, 20, 21, 22, 23, -1]`
 - `Ring r(8); (long long)((const char*)&r.tail_ - (const char*)&r.head_) >= 64` expects `true`
 
 Checked by `cpp/build_md.py`: the solution passes all 10 tests and the starter fails 7 of them, with g++ 13.3 and clang++ 18.1, `-std=c++17` and `-std=c++20`, `-O1 -fno-exceptions`; the solution is also clean under `-fsanitize=undefined` (and address where no `operator new` is replaced). Expected values come from an independent Python model in the same file.
@@ -928,7 +927,8 @@ Hidden `prelude`:
 #include <cstdlib>
 #include <new>
 static int g_allocs = 0;   // counts every call to operator new
-void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); return p; }
+static void* volatile g_last = nullptr;   // the last block, kept so the call stays visible
+void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); g_last = p; return p; }
 void operator delete(void* p) noexcept { std::free(p); }
 void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 ```
@@ -1014,7 +1014,8 @@ Hidden `prelude`:
 #include <cstdlib>
 #include <new>
 static int g_allocs = 0;   // counts every call to operator new
-void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); return p; }
+static void* volatile g_last = nullptr;   // the last block, kept so the call stays visible
+void* operator new(std::size_t n) { ++g_allocs; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); g_last = p; return p; }
 void operator delete(void* p) noexcept { std::free(p); }
 void operator delete(void* p, std::size_t) noexcept { std::free(p); }
 
@@ -1164,11 +1165,14 @@ Checked by `cpp/build_md.py`: the solution passes all 14 tests and the starter f
 
 ### D-lru: drill sy-lru-cache: least recently used cache
 
-Where: `drill sy-lru-cache (E8)`, a drill, pattern `cache`, difficulty 3, pace 25 minutes. Widget `code`, `language: "cpp"`, 7 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
+Where: `drill sy-lru-cache (E8)`, a drill, pattern `cache`, difficulty 3, pace 1500 seconds. Widget `code`, `language: "cpp"`, 7 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
 
 Hidden `postlude`:
 
 ```cpp
+#include <cstdio>
+#include <string>
+#include <vector>
 
 // hidden driver: "p k v" puts, "g k" gets; the result lists every get (value or -1)
 std::vector<int> drive(int capacity, const std::vector<std::string>& ops) {
@@ -1260,11 +1264,12 @@ Checked by `cpp/build_md.py`: the solution passes all 7 tests and the starter fa
 
 ### D-token-bucket: drill sy-token-bucket: a rate limiter
 
-Where: `drill sy-token-bucket (E8)`, a drill, pattern `rate-limiter`, difficulty 2, pace 15 minutes. Widget `code`, `language: "cpp"`, 7 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
+Where: `drill sy-token-bucket (E8)`, a drill, pattern `rate-limiter`, difficulty 2, pace 900 seconds. Widget `code`, `language: "cpp"`, 7 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
 
 Hidden `postlude`:
 
 ```cpp
+#include <vector>
 
 std::vector<int> drive(long long rate, long long burst, const std::vector<long long>& times) {
     TokenBucket b(rate, burst);
@@ -1331,7 +1336,7 @@ Checked by `cpp/build_md.py`: the solution passes all 7 tests and the starter fa
 
 ### D-bits: drill sy-bits: powers of two and byte order
 
-Where: `drill sy-bits (E8)`, a drill, pattern `bits`, difficulty 2, pace 10 minutes. Widget `code`, `language: "cpp"`, 15 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
+Where: `drill sy-bits (E8)`, a drill, pattern `bits`, difficulty 2, pace 600 seconds. Widget `code`, `language: "cpp"`, 15 hidden tests (function mode, `compare: "equal"` unless a number is a double). Checked below.
 
 Starter (the learner sees this; it compiles and fails the tests):
 

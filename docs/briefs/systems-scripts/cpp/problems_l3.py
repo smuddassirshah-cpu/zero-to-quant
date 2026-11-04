@@ -4,7 +4,7 @@ from harness import run
 def gaps(seqs):
     return sorted(set(range(1,max(seqs)+1))-set(seqs)) if seqs else []
 def il(l): return "{"+", ".join(map(str,l))+"}"
-cases=[[1,2,3],[1,2,4,5],[1,3,2],[2,3],[1,5],[1,2,2,4,4],[],[3,1,2,6,5],[1,2,3,7,8,10],[5,4,3,2,1],[1]]
+cases=[[1,2,4,5],[1,3,2],[2,3],[1,5],[1,2,2,4,4],[],[3,1,2,6,5],[1,2,3,7,8,10],[5,4,3,2,1],[2,1,4,3,6],[4,2,3],[1,4,2,3],[3,3,1]]
 P_GAP=dict(id="find_gaps",name="l13-tcp-and-udp: find the missing sequence numbers",
  starter='''#include <vector>
 

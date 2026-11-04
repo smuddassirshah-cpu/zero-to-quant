@@ -98,12 +98,11 @@ P_CY=dict(id="has_lock_cycle",name="l8-locks-and-deadlock: lock-order cycle",
 // Each string is one thread: the locks it takes, in order, each held while it takes the next ("AB" takes A, then B).
 // Return true if the lock-order graph (an edge from each held lock to each lock taken after it) has a cycle.
 bool has_lock_cycle(const std::vector<std::string>& threads) {
-    // Only spots two threads taking the same pair in opposite orders.
-    for (const auto& s : threads)
-        for (const auto& t : threads)
-            for (size_t i = 0; i + 1 < s.size(); ++i)
-                for (size_t j = 0; j + 1 < t.size(); ++j)
-                    if (s[i] == t[j + 1] && s[i + 1] == t[j]) return true;
+    // Only checks whether two threads share a lock, which is not the same as a cycle.
+    for (size_t a = 0; a < threads.size(); ++a)
+        for (size_t b = a + 1; b < threads.size(); ++b)
+            for (char c : threads[a])
+                if (threads[b].find(c) != std::string::npos) return true;
     return false;
 }
 ''',

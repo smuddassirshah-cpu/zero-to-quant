@@ -76,7 +76,7 @@ int best_size(const std::vector<int>& sizes) {
     return struct_size(sorted);
 }
 ''',
- tests=[t for l in cases for t in ss(l)])
+ tests=[t for l in cases for t in ss(l)][:5]+[t for l in cases for t in ss(l)][6:])
 P_BR=dict(id="mispredicts", name="l5-branches: two-bit predictor",
  starter='''#include <string>
 
@@ -145,11 +145,9 @@ P_CACHE=dict(id="count_misses",name="homework-1: a cache simulator",
 // A full set drops its least recently used line. Start empty. Return the number of misses.
 int count_misses(int num_lines, int ways, const std::vector<int>& addresses) {
     int misses = 0;
-    std::vector<int> last_line(num_lines / ways, -1);     // one line per set: ignores the ways
     for (int a : addresses) {
-        int line = a / 64;
-        int set = line % (num_lines / ways);
-        if (last_line[set] != line) { ++misses; last_line[set] = line; }
+        (void)a;
+        ++misses;     // TODO: an access whose line is already in its set is a hit
     }
     return misses;
 }
