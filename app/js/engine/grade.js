@@ -8,7 +8,7 @@
      normExpr(s)                   normalised typed expression for the fallback comparison
      loadScript(url, ms)           lazy script loader with a timeout; one promise per url
      maths()                       Promise<{ mathlive: bool, ce: ComputeEngine|null }> for the expression widget, 6 s budget
-     exprEqual(ce, a, b)           symbolic equivalence after simplify, with a 6-point numeric second opinion; real and
+     exprEqual(ce, a, b, { functions })  symbolic equivalence after simplify, with a 6-point numeric second opinion; real and
                                    imaginary parts both compared when an i appears; vectors and matrices entry by entry
      exprShape(ce, s)              undefined (no parse), null (one value) or { n, r, c, vec } for a vector or matrix
      exprShapeLine(ce, ans, input) the "wrong size" feedback line for a vector or matrix answer, else null
@@ -161,10 +161,37 @@
     }
     return out + t.slice(pos);
   };
-  const prep = (s, cx) => {
+  /* P32-expr-exp: \exp, \operatorname{exp} and \mathrm{exp} (what MathLive's "exp" shortcut types) with a bracketed
+     argument ((..), \left(..\right), {..}) or one token (a letter, number or \command) become (\exponentialE^{(arg)}).
+     The engine reads \exp(x) as the tuple ["Tuple", "Exp", "x"]. */
+  const unexp = (t) => {
+    const re = /\\(?:operatorname|mathrm)\{exp\}|\\exp(?![A-Za-z])/;
+    for (let guard = 0; guard < 40; guard++) {
+      const m = re.exec(t); if (!m) break;
+      const at = m.index + m[0].length, rest = t.slice(at);
+      const o = /^\s*(?:\\left\s*)?(\(|\{|\[)/.exec(rest);
+      let arg, end;
+      if (o) {
+        const g = matching(t, at + o[0].length); if (!g) break;
+        arg = t.slice(at + o[0].length, g.end - 1).replace(/\\right\s*\\?$/, ''); end = g.end;
+      } else {
+        const k = /^\s*(\\[A-Za-z]+|[A-Za-z0-9.])/.exec(rest); if (!k) break;
+        arg = k[1]; end = at + k[0].length;
+      }
+      t = t.slice(0, m.index) + `\\left(\\exponentialE^{(${arg})}\\right)` + t.slice(end);
+    }
+    return t;
+  };
+  /* P32-expr-callhead: a lone Latin or Greek letter (optional subscript or superscript) directly before ( or \left(
+     is a product, not a call, unless the screen lists it in `functions`. Compute Engine would read it as a function and
+     keep the symbol a function for the rest of the page. */
+  const GREEK = 'alpha|beta|gamma|delta|varepsilon|epsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|rho|varrho|sigma|varsigma|tau|upsilon|phi|varphi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega';
+  const CALLHEAD = new RegExp(`(?<![A-Za-z\\\\])([A-Za-z]|\\\\(?:${GREEK})(?![A-Za-z]))((?:_(?:[A-Za-z0-9]|\\{[^{}]*\\}))?(?:\\^(?:[A-Za-z0-9]|\\{[^{}]*\\}))?)(\\s*)(?=\\\\left\\s*\\(|\\()`, 'g');
+  const uncall = (t, fns) => t.replace(CALLHEAD, (m, b, sc, sp) => ((fns || []).includes(b) || (fns || []).includes(b.replace(/^\\/, '')) ? m : `${b}${sc}\\cdot `));
+  const prep = (s, cx, fns) => {
     let t = normI(s).replace(/(?:\\left\s*)?\\langle\s*/g, '(').replace(/(?:\\right\s*)?\\rangle/g, ')').replace(/\\epsilon(?![A-Za-z])|[εϵ]/g, '\\varepsilon')
       .replace(/(?<![A-Za-z\\])(?<!\\(?:mathbb|mathcal|mathrm|mathbf|mathit|mathsf|text|operatorname)\{)([ND])(?![A-Za-z])/g, '\\mathrm{$1}');
-    t = unbinom(minmax(t));
+    t = uncall(unexp(unbinom(minmax(t))), fns);
     if (cx) t = t.replace(/(?<![A-Za-z\\])(?<!_)(?<!_\{)i/g, '\\iota ').replace(/\\bar\s*\{/g, '\\overline{');
     return t;
   };
@@ -236,15 +263,15 @@
     return { items: list.map(x => ce.box(x)), vec: r === 1 || c === 1, n: list.length, r, c };
   };
   const sameShape = (p, q) => p.vec && q.vec ? p.n === q.n : !p.vec && !q.vec && p.r === q.r && p.c === q.c;
-  const parseLatex = (ce, s) => { const cx = hasImag(s); const E = ce.parse(prep(s, cx)); return E.isValid === false ? undefined : E; };
+  const parseLatex = (ce, s, fns) => { const cx = hasImag(s); const E = ce.parse(prep(s, cx, fns)); return E.isValid === false ? undefined : E; };
   /* exprShape: undefined when the input does not parse, null for one value, else { n, r, c, vec } */
-  const exprShape = (ce, s) => {
-    try { const E = parseLatex(ce, s); if (!E) return undefined; const it = itemsOf(ce, E); return it ? { n: it.n, r: it.r, c: it.c, vec: it.vec } : null; } catch { return undefined; }
+  const exprShape = (ce, s, fns) => {
+    try { const E = parseLatex(ce, s, fns); if (!E) return undefined; const it = itemsOf(ce, E); return it ? { n: it.n, r: it.r, c: it.c, vec: it.vec } : null; } catch { return undefined; }
   };
   const shapeWord = (p) => p.vec ? `${p.n} component${p.n === 1 ? '' : 's'}` : `${p.r} rows and ${p.c} columns`;
   /* The feedback line when the learner's vector or matrix has the wrong shape (key "length"), else null */
-  const exprShapeLine = (ce, answer, input) => {
-    const want = exprShape(ce, answer), got = exprShape(ce, input);
+  const exprShapeLine = (ce, answer, input, fns) => {
+    const want = exprShape(ce, answer, fns), got = exprShape(ce, input, fns);
     if (got === undefined || want === undefined || (!want && !got)) return null;
     if (want && got && sameShape(want, got)) return null;
     if (want && !got) return `That is a single value. The answer has ${shapeWord(want)}.`;
@@ -284,12 +311,24 @@
   };
   /* Item 429: real and imaginary parts are both compared at every seeded point. Item 433: a vector or matrix answer is
      compared entry by entry (the same shape is required), each entry by the same seeded-point method. */
-  const exprEqual = (ce, a, b) => {
+  /* P32-expr-callhead: every comparison runs in its own scope, so a symbol the engine declares while parsing (a function
+     after f(x)) cannot change what it means on the next screen. */
+  const scoped = (ce, fn) => {
+    let pushed = false;
+    try { if (ce.pushScope) { ce.pushScope(); pushed = true; } } catch { pushed = false; }
+    try { return fn(); } finally { if (pushed) { try { ce.popScope(); } catch { /* none */ } } }
+  };
+  /* withParsed(ce, s, functions, fn): fn(parsedExpression) in a scope, on the same prepared text the comparison reads */
+  const withParsed = (ce, s, fns, fn) => scoped(ce, () => fn(ce.parse(prep(s, hasImag(s), fns))));
+  const exprEqual = (ce, a, b, opts) => {
     if (!ce || a == null || b == null || a === '' || b === '') return false;
+    return scoped(ce, () => exprEqualIn(ce, a, b, opts && opts.functions));
+  };
+  const exprEqualIn = (ce, a, b, fns) => {
     let A, B;
     const counting = /!|\\[dt]?binom|\\choose/.test(String(a) + String(b)); // factorials only evaluate at whole numbers
     const cx = hasImag(a) || hasImag(b);
-    try { A = ce.parse(prep(a, cx)); B = ce.parse(prep(b, cx)); } catch { return false; }
+    try { A = ce.parse(prep(a, cx, fns)); B = ce.parse(prep(b, cx, fns)); } catch { return false; }
     if (A.isValid === false || B.isValid === false) return false;
     let IA = null, IB = null;
     try { IA = itemsOf(ce, A); IB = itemsOf(ce, B); } catch { IA = IB = null; }
@@ -299,10 +338,13 @@
 
   /* Item 200: equal up to an added constant (antiderivatives). Symbols in the learner's answer that the target lacks
      (C, c, K) are set to 0, and the difference must be the same number at every sample point. */
-  const exprEqualUpToConstant = (ce, a, b) => {
+  const exprEqualUpToConstant = (ce, a, b, opts) => {
     if (!ce || a == null || b == null || a === '' || b === '') return false;
+    return scoped(ce, () => upToConstantIn(ce, a, b, opts && opts.functions));
+  };
+  const upToConstantIn = (ce, a, b, fns) => {
     let A, B;
-    try { A = ce.parse(prep(a)); B = ce.parse(prep(b)); } catch { return false; }
+    try { A = ce.parse(prep(a, undefined, fns)); B = ce.parse(prep(b, undefined, fns)); } catch { return false; }
     if (A.isValid === false || B.isValid === false) return false;
     let va = [], vb = [];
     try { va = [...(A.unknowns || [])]; vb = [...(B.unknowns || [])]; } catch { /* none */ }
@@ -506,5 +548,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, exprEqual, exprShape, exprShapeLine, exprEqualUpToConstant, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, exprShape, exprShapeLine, exprEqualUpToConstant, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();
