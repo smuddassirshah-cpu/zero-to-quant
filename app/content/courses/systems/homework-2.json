@@ -14,19 +14,34 @@
         "race-outcomes"
       ],
       "pace": 420,
-      "prose": "A position of 500 is shared. One thread books a fill of +100 and another a sale of 300. Each update is load, add, store, as in the lesson. Step the lanes if you like.",
+      "prose": "A position of 800 is shared. The fill thread books two fills of +100, one after the other. The sale thread books a sale of 300. Each update is load, add, store, as in the lesson. Step the lanes if you like.",
       "question": "Four follow-ups.",
       "canvas": {
         "kind": "interleave",
         "params": {
           "vars": {
-            "pos": 500
+            "pos": 800
           },
           "lanes": [
             {
               "id": "a",
               "label": "Fill thread",
               "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "pos"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 100
+                },
+                {
+                  "op": "store",
+                  "var": "pos",
+                  "reg": "r"
+                },
                 {
                   "op": "load",
                   "reg": "r",
@@ -74,25 +89,25 @@
       },
       "parts": [
         {
-          "question": "How many interleavings of the six steps are there?",
+          "question": "How many interleavings of the nine steps are there?",
           "widget": {
             "kind": "numeric",
-            "answer": 20,
+            "answer": 84,
             "tol": {
               "abs": 0
             },
-            "accept": "20: $\\binom{6}{3}$.",
+            "accept": "84: $\\binom{9}{3}$.",
             "wrong": [
               {
-                "id": "six",
-                "value": 6,
+                "id": "twenty",
+                "value": 20,
                 "tol": {
                   "abs": 0
                 }
               },
               {
                 "id": "fact",
-                "value": 720,
+                "value": 362880,
                 "tol": {
                   "abs": 0
                 }
@@ -100,15 +115,15 @@
             ]
           },
           "feedback": {
-            "correct": "20.",
-            "generic": "Not quite right. Choose the three places of the fill thread.",
+            "correct": "84.",
+            "generic": "Not quite right. Choose the three places of the sale thread.",
             "byKey": {
-              "six": "6 is $3!$. Choose 3 places of 6.",
-              "fact": "720 orders all six steps freely, but each lane's order is fixed."
+              "twenty": "20 is the count for two lanes of three steps. The fill thread has six.",
+              "fact": "362,880 orders all nine steps freely, but each lane's order is fixed."
             }
           },
           "explain": {
-            "text": "$\\binom{6}{3} = 20$: pick which three of the six places are the fill thread's."
+            "text": "$\\binom{9}{3} = 84$: pick which three of the nine places are the sale thread's."
           }
         },
         {
@@ -118,13 +133,8 @@
             "layout": "stack",
             "options": [
               {
-                "id": "v200",
-                "text": "200",
-                "correct": true
-              },
-              {
-                "id": "v300",
-                "text": "300",
+                "id": "v500",
+                "text": "500",
                 "correct": true
               },
               {
@@ -133,39 +143,49 @@
                 "correct": true
               },
               {
-                "id": "v500",
-                "text": "500",
-                "why": "Both stores run, and each writes a changed value."
+                "id": "v700",
+                "text": "700",
+                "correct": true
               },
               {
-                "id": "v800",
-                "text": "800",
+                "id": "v1000",
+                "text": "1,000",
+                "correct": true
+              },
+              {
+                "id": "v400",
+                "text": "400",
+                "why": "The sale's load sees 800 or more, so it stores at least 500."
+              },
+              {
+                "id": "v1300",
+                "text": "1,300",
                 "why": "You treated the sale as a buy: it subtracts 300."
               }
             ],
             "shuffle": true
           },
           "feedback": {
-            "correct": "200, 300 and 600.",
-            "generic": "Not quite right. Which store wins when both loads read 500?",
+            "correct": "500, 600, 700 and 1,000.",
+            "generic": "Not quite right. Which store wins, and what did its load see?",
             "byKey": {
-              "v500": "Every store writes 500 changed by 100 or 300.",
-              "v800": "The sale subtracts 300."
+              "v400": "The sale stores at least $800 - 300 = 500$.",
+              "v1300": "The sale subtracts 300."
             }
           },
           "explain": {
-            "text": "If both load 500, the last store wins: 600 or 200. Run serially, both apply: 300. Nothing else can be written."
+            "text": "Run with no overlap, all three updates apply: 700. When the sale overlaps a fill, one side's store wipes the other's. A lost sale gives 1,000; one lost fill gives 600, and two give 500."
           }
         },
         {
-          "question": "In how many interleavings does the position end at 600, so the sale is lost?",
+          "question": "In how many interleavings is no update lost, so the position ends at 700?",
           "widget": {
             "kind": "numeric",
-            "answer": 9,
+            "answer": 3,
             "tol": {
               "abs": 0
             },
-            "accept": "9.",
+            "accept": "3.",
             "wrong": [
               {
                 "id": "two",
@@ -175,8 +195,8 @@
                 }
               },
               {
-                "id": "ten",
-                "value": 10,
+                "id": "four",
+                "value": 4,
                 "tol": {
                   "abs": 0
                 }
@@ -184,37 +204,37 @@
             ]
           },
           "feedback": {
-            "correct": "9 of 20.",
-            "generic": "Not quite right. The sale is lost when its store comes last after both loads.",
+            "correct": "3 of 84.",
+            "generic": "Not quite right. Where can the sale's three steps sit without splitting a fill?",
             "byKey": {
-              "two": "2 is the count that ends at 300.",
-              "ten": "Take out the 2 serial orders first: $(20 - 2)/2 = 9$."
+              "two": "You counted only the two serial orders. The sale can also run whole between the two fills.",
+              "four": "The fill thread's two updates leave three gaps: before, between and after."
             }
           },
           "explain": {
-            "text": "18 orders lose an update, and by symmetry half lose the sale: 9. The other 9 end at 200 and 2 at 300. The canvas counts the same."
+            "text": "No update is lost only when each update runs whole. The sale then sits before, between or after the two fills: 3 orders. The canvas counts 3 of 84 too."
           }
         },
         {
           "question": "Each update becomes one atomic add. What is the final position now?",
           "widget": {
             "kind": "numeric",
-            "answer": 300,
+            "answer": 700,
             "tol": {
               "abs": 0
             },
-            "accept": "Always 300.",
+            "accept": "Always 700.",
             "wrong": [
               {
-                "id": "six",
-                "value": 600,
+                "id": "salelost",
+                "value": 1000,
                 "tol": {
                   "abs": 0
                 }
               },
               {
-                "id": "two",
-                "value": 200,
+                "id": "filllost",
+                "value": 500,
                 "tol": {
                   "abs": 0
                 }
@@ -222,15 +242,15 @@
             ]
           },
           "feedback": {
-            "correct": "Always 300.",
+            "correct": "Always 700.",
             "generic": "Not quite right. Can an atomic add be lost?",
             "byKey": {
-              "six": "An atomic add cannot be overwritten by a stale store.",
-              "two": "Both atomic adds land."
+              "salelost": "An atomic add cannot be overwritten by a stale store.",
+              "filllost": "Both atomic fills land too."
             }
           },
           "explain": {
-            "text": "Each atomic add is one step, so both always apply: $500 + 100 - 300 = 300$. There are 2 schedules and both end at 300."
+            "text": "Each atomic add is one step, so all three always apply: $800 + 100 + 100 - 300 = 700$. There are 3 schedules and all end at 700."
           }
         }
       ]
@@ -310,15 +330,15 @@
             "call": "blocked_counts",
             "args": [
               1,
-              "PPCCPC"
+              "CPPPCC"
             ],
             "types": [
               "int",
               "std::string"
             ],
             "expect": [
-              1,
-              1,
+              2,
+              2,
               0
             ],
             "compare": "equal"
@@ -378,7 +398,7 @@
             "call": "blocked_counts",
             "args": [
               2,
-              "PPPPCC"
+              "PPCPPPC"
             ],
             "types": [
               "int",
@@ -387,7 +407,7 @@
             "expect": [
               2,
               0,
-              0
+              1
             ],
             "compare": "equal"
           }
@@ -412,7 +432,7 @@
         "lock-order"
       ],
       "pace": 360,
-      "prose": "`transfer(from, to, amount)` locks `from`, then `to`. One call moves money from account A to B while another moves money from B to A.",
+      "prose": "`transfer(from, to, amount)` locks `from`, checks its balance, then locks `to`. One call moves money from account A to B while another moves money from B to A.",
       "question": "Four follow-ups.",
       "canvas": {
         "kind": "console",
@@ -421,6 +441,7 @@
             "void transfer(Account& from,",
             "    Account& to, long amount) {",
             "  std::lock_guard g1(from.m);",
+            "  if (from.balance < amount) return;",
             "  std::lock_guard g2(to.m);",
             "  from.balance -= amount;",
             "  to.balance += amount;",
@@ -446,6 +467,11 @@
                 "id": "no",
                 "text": "No: two locks cannot form a cycle",
                 "why": "Two edges in opposite directions are a cycle of two."
+              },
+              {
+                "id": "third",
+                "text": "Only if a third call joins in",
+                "why": "Two edges in opposite directions already close a cycle."
               }
             ],
             "shuffle": true
@@ -459,18 +485,18 @@
           }
         },
         {
-          "question": "Each lane is lock, lock, unlock, unlock. How many of the 6 legal schedules deadlock?",
+          "question": "Each call has the funds. Model each lane as lock, check, lock, unlock, unlock. How many of the 12 legal schedules deadlock?",
           "widget": {
             "kind": "numeric",
-            "answer": 2,
+            "answer": 6,
             "tol": {
               "abs": 0
             },
-            "accept": "2.",
+            "accept": "6.",
             "wrong": [
               {
-                "id": "four",
-                "value": 4,
+                "id": "two",
+                "value": 2,
                 "tol": {
                   "abs": 0
                 }
@@ -478,14 +504,14 @@
             ]
           },
           "feedback": {
-            "correct": "2 of 6.",
-            "generic": "Not quite right. When does each lane hold its first lock?",
+            "correct": "6 of 12.",
+            "generic": "Not quite right. When has each lane taken its first lock and checked?",
             "byKey": {
-              "four": "4 is the count that finish."
+              "two": "2 is the count for lock, lock, unlock, unlock. The checks give the four first steps more orders."
             }
           },
           "explain": {
-            "text": "Deadlock needs both first locks taken before either second lock: two orders. The other 4 finish."
+            "text": "Deadlock needs both lanes past their first lock and check, before either second lock. Those four steps interleave in $\\binom{4}{2} = 6$ ways. The other 6 schedules finish."
           }
         },
         {
@@ -503,6 +529,11 @@
                 "id": "yes",
                 "text": "Yes: the calls still share both locks",
                 "why": "Sharing locks in one order is safe; only opposite orders make a cycle."
+              },
+              {
+                "id": "twocalls",
+                "text": "No, but only while just two calls run",
+                "why": "A fixed order has no cycle however many calls run."
               }
             ],
             "shuffle": true
@@ -681,7 +712,7 @@
         "litmus"
       ],
       "pace": 420,
-      "prose": "The store-buffering test. Thread A sets `x = 1`, then reads `y` into `r1`. Thread B sets `y = 1`, then reads `x` into `r2`. Both start at 0.",
+      "prose": "A variation on the store-buffering test. Thread A sets `x = 2`, then reads `y` into `r1`. Thread B sets `y = 3`, then reads `x` into `r2`. Both start at 0.",
       "question": "Four follow-ups.",
       "canvas": {
         "kind": "interleave",
@@ -709,7 +740,7 @@
                 {
                   "op": "store",
                   "var": "x",
-                  "value": 1
+                  "value": 2
                 },
                 {
                   "op": "load",
@@ -725,7 +756,7 @@
                 {
                   "op": "store",
                   "var": "y",
-                  "value": 1
+                  "value": 3
                 },
                 {
                   "op": "load",
@@ -746,34 +777,39 @@
             "layout": "stack",
             "options": [
               {
-                "id": "p01",
-                "text": "(0, 1)",
+                "id": "p02",
+                "text": "(0, 2)",
                 "correct": true
               },
               {
-                "id": "p10",
-                "text": "(1, 0)",
+                "id": "p30",
+                "text": "(3, 0)",
                 "correct": true
               },
               {
-                "id": "p11",
-                "text": "(1, 1)",
+                "id": "p32",
+                "text": "(3, 2)",
                 "correct": true
               },
               {
                 "id": "p00",
                 "text": "(0, 0)",
-                "why": "Each lane stores before it loads, so the last load sees a 1."
+                "why": "Each lane stores before it loads, so the last load sees the other lane's store."
+              },
+              {
+                "id": "p23",
+                "text": "(2, 3)",
+                "why": "`r1` reads `y`, which only B writes, so it is 0 or 3."
               }
             ],
             "shuffle": true
           },
           "feedback": {
-            "correct": "Three pairs: (0, 1), (1, 0) and (1, 1).",
+            "correct": "Three pairs: (0, 2), (3, 0) and (3, 2).",
             "generic": "Not quite right. Can both loads come first?"
           },
           "explain": {
-            "text": "The last load always follows the other lane's store, so one register is 1. That leaves three pairs."
+            "text": "The last load always follows the other lane's store, so one register is not 0. `r1` can only be 0 or 3, and `r2` only 0 or 2. That leaves three pairs."
           }
         },
         {
@@ -784,17 +820,17 @@
             "options": [
               {
                 "id": "yes",
-                "text": "Yes: each store can wait in its core's store buffer while the loads read memory",
+                "text": "Yes: both stores can sit in store buffers",
                 "correct": true
               },
               {
                 "id": "no",
-                "text": "No: no interleaving gives it",
+                "text": "No: no interleaving of the steps gives it",
                 "why": "Real cores do not run one step at a time; a buffered store is not yet visible."
               },
               {
                 "id": "x86",
-                "text": "Only on Arm, never on x86",
+                "text": "Yes, but only on Arm, never on x86",
                 "why": "x86 also lets a later load pass an earlier buffered store."
               }
             ],
@@ -809,15 +845,22 @@
           }
         },
         {
-          "question": "If the 6 one-at-a-time schedules were equally likely, what is the chance of (1, 1)? Give 3 decimal places.",
+          "question": "If the 6 one-at-a-time schedules were equally likely, what is the chance of (0, 2)? Give 3 decimal places.",
           "widget": {
             "kind": "numeric",
-            "answer": 0.667,
+            "answer": 0.167,
             "tol": {
               "abs": 0.001
             },
-            "accept": "0.667: 4 of 6.",
+            "accept": "0.167: 1 of 6.",
             "wrong": [
+              {
+                "id": "quarter",
+                "value": 0.25,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
               {
                 "id": "third",
                 "value": 0.333,
@@ -826,8 +869,8 @@
                 }
               },
               {
-                "id": "half",
-                "value": 0.5,
+                "id": "most",
+                "value": 0.667,
                 "tol": {
                   "abs": 0.001
                 }
@@ -835,47 +878,48 @@
             ]
           },
           "feedback": {
-            "correct": "$4/6 = 0.667$.",
-            "generic": "Not quite right. Count the schedules that give (1, 1).",
+            "correct": "$1/6 = 0.167$.",
+            "generic": "Not quite right. Count the schedules that give (0, 2).",
             "byKey": {
-              "third": "That is the chance of (0, 1) or (1, 0) together.",
-              "half": "Four of the six give (1, 1), not three."
+              "quarter": "The four pairs are not equally likely, and (0, 0) never occurs.",
+              "third": "That is the chance of (0, 2) or (3, 0) together.",
+              "most": "That is the chance of (3, 2)."
             }
           },
           "explain": {
-            "text": "Both stores first (2 orders), then both loads (2 orders): 4 schedules. $4/6 = 0.667$."
+            "text": "(0, 2) needs A to finish before B starts: a, a, b, b only. That is 1 of 6, so $1/6 = 0.167$."
           }
         },
         {
-          "question": "Which memory order on all four accesses forbids (0, 0)?",
+          "question": "Now the stores use `release` and the loads use `acquire`. On a real multicore machine, can (0, 0) occur?",
           "widget": {
             "kind": "choice",
             "layout": "stack",
             "options": [
               {
-                "id": "sc",
-                "text": "`seq_cst`",
+                "id": "yes",
+                "text": "Yes: a release store may pass a later acquire load",
                 "correct": true
               },
               {
-                "id": "ra",
-                "text": "`release` on the stores, `acquire` on the loads",
-                "why": "Release and acquire do not stop a store passing a later load to another variable."
+                "id": "no",
+                "text": "No: release and acquire forbid every reordering",
+                "why": "They keep earlier writes before the store and later reads after the load. A store may still pass a later load."
               },
               {
-                "id": "rel",
-                "text": "`relaxed`",
-                "why": "`relaxed` is what allows it."
+                "id": "compiler",
+                "text": "Yes, but only if the compiler reorders the two lines",
+                "why": "The store buffer alone gives (0, 0), with no help from the compiler."
               }
             ],
             "shuffle": true
           },
           "feedback": {
-            "correct": "`seq_cst`.",
-            "generic": "Not quite right. Which order gives one total order of all four?"
+            "correct": "Yes. Of the orders on the four accesses, only `seq_cst` rules it out.",
+            "generic": "Not quite right. Which reordering do release and acquire allow?"
           },
           "explain": {
-            "text": "`seq_cst` puts all four accesses in one order that every thread agrees on, so (0, 0) cannot happen. Release and acquire are not enough here. On x86 the `seq_cst` store becomes an exchange."
+            "text": "A release store keeps earlier writes before it, and an acquire load keeps later reads after it. Neither stops a store passing a later load to another variable. Of the orders on the four accesses, only `seq_cst` forbids (0, 0)."
           }
         }
       ]
@@ -896,7 +940,7 @@
         "kind": "numeric",
         "answer": 480,
         "tol": {
-          "abs": 0
+          "rel": 0.001
         },
         "unit": "times",
         "accept": "480: 0.24 s against 0.5 ms.",

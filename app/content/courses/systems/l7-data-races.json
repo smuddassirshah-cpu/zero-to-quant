@@ -213,22 +213,22 @@
         "options": [
           {
             "id": "serial",
-            "text": "Only when one lane runs all three steps before the other loads",
+            "text": "When one lane stores before the other loads",
             "correct": true
           },
           {
             "id": "afirst",
-            "text": "Whenever lane A starts first",
+            "text": "Whenever lane A takes the very first step",
             "why": "A first, then b1 before a3, still loses an update."
           },
           {
             "id": "never",
-            "text": "Never",
+            "text": "Never: two lanes always lose an update",
             "why": "Run a, a, a, b, b, b: that ends at 2."
           },
           {
             "id": "storeslast",
-            "text": "Whenever both stores come last",
+            "text": "Whenever the two stores are the last two steps",
             "why": "If both stores come last, both loads came first and read 0."
           }
         ],
@@ -744,23 +744,23 @@
         "options": [
           {
             "id": "ub",
-            "text": "No: the instruction still reads, adds and writes, and a race is undefined behaviour anyway",
+            "text": "No: one instruction still reads, then writes",
             "correct": true
           },
           {
             "id": "yes",
-            "text": "Yes: one instruction cannot be split",
+            "text": "Yes: a single instruction cannot be split in two",
             "why": "You trusted the instruction count. Without `lock`, another core can write between its read and its write."
           },
           {
             "id": "x86",
-            "text": "Yes on x86, no on other machines",
+            "text": "Yes on x86, but not on Arm or other machines",
             "why": "Two x86 cores can also interleave `add [x], 1`, and C++ does not promise the instruction anyway."
           },
           {
             "id": "opt",
-            "text": "Only at `-O0`",
-            "why": "At `-O0` it is three instructions; at `-O2` it is one, and it still races."
+            "text": "No at `-O0`, but yes at `-O2`, as one instruction",
+            "why": "At `-O2` it is one instruction, and it still races."
           }
         ],
         "shuffle": true
@@ -822,15 +822,20 @@
           "wrap": true
         }
       },
-      "question": "What may the compiler do to the loop at `-O1`?",
+      "question": "What does clang, this app's compiler, do to the loop at `-O1`?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
-            "id": "once",
-            "text": "Read `done` once and spin forever",
+            "id": "gone",
+            "text": "Delete the loop, so `spin` returns at once",
             "correct": true
+          },
+          {
+            "id": "once",
+            "text": "Read `done` once, then spin forever",
+            "why": "That is what GCC does at `-O1`. Clang also assumes a loop with no side effects ends, so it deletes it."
           },
           {
             "id": "each",
@@ -841,11 +846,6 @@
             "id": "crash",
             "text": "Stop the program with an error",
             "why": "A data race is not checked at run time. It is undefined behaviour, silently."
-          },
-          {
-            "id": "slow",
-            "text": "Only make the loop slower",
-            "why": "The compiler may hoist the read out of the loop, so it never sees the change."
           }
         ],
         "shuffle": true
@@ -864,20 +864,20 @@
         },
         {
           "rung": "step",
-          "text": "It can load `done` once, before the loop."
+          "text": "Then the loop has no side effects, and C++ lets the compiler assume such a loop ends."
         }
       ],
       "feedback": {
-        "correct": "It may hoist the load and spin forever.",
+        "correct": "It deletes the loop, so `spin` returns whether `done` is set or not.",
         "generic": "Not quite right. What may the compiler assume about a plain `bool`?",
         "byKey": {
           "each": "Reading every time is what `std::atomic<bool>` promises. A plain `bool` does not.",
           "crash": "Nothing checks for races at run time. The program just misbehaves.",
-          "slow": "Worse: the loop may never see the write at all."
+          "once": "GCC does that. Clang goes further and deletes a loop with no side effects."
         }
       },
       "explain": {
-        "text": "A data race is undefined behaviour, so the compiler may assume none happens. Then `done` cannot change inside the loop, and one load before it is enough. `std::atomic<bool> done` makes the loop read it each time."
+        "text": "A data race is undefined behaviour, so the compiler assumes `done` cannot change inside the loop. C++ also lets it assume a loop with no side effects ends, so clang deletes the loop. `std::atomic<bool> done` makes the loop read it each time."
       }
     },
     {
@@ -885,24 +885,24 @@
       "difficulty": 2,
       "title": "The method",
       "prose": "A **data race**: two threads touch one variable, at least one writes, and nothing orders them. To see what can happen, list every interleaving. Lanes of $n_1$ and $n_2$ steps have\n\n$$\\binom{n_1 + n_2}{n_1} = \\frac{(n_1 + n_2)!}{n_1!\\, n_2!}$$\n\ninterleavings, and with $k$ lanes the factorial of the total over each lane's factorial.",
-      "question": "Which of these is a data race?",
+      "question": "No lock is held in any of these. Which is a data race?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "race",
-            "text": "One thread writes a plain `int` while another reads it, with no lock",
+            "text": "One thread writes a plain `int` as another reads it",
             "correct": true
           },
           {
             "id": "const",
-            "text": "Two threads read a `const` global",
+            "text": "Two threads read a `const` global at the same time",
             "why": "Nobody writes, so there is nothing to race."
           },
           {
             "id": "tls",
-            "text": "Two threads each write their own `thread_local`",
+            "text": "Two threads each write their own `thread_local` copy",
             "why": "Each thread has its own copy, so they never touch one variable."
           },
           {
@@ -1336,22 +1336,22 @@
         "options": [
           {
             "id": "fix",
-            "text": "Make each update one atomic add, or hold a mutex across load, add and store",
+            "text": "An atomic add, or one mutex over all three steps",
             "correct": true
           },
           {
             "id": "volatile",
-            "text": "Declare the position `volatile int`",
+            "text": "Declare the position as a `volatile int`",
             "why": "`volatile` stops some compiler tricks, but the three steps can still interleave."
           },
           {
             "id": "priority",
-            "text": "Give the fill thread a higher priority",
+            "text": "Run the fill thread at a higher priority than the sale",
             "why": "Priority changes which orders are likely, not which are possible."
           },
           {
             "id": "sleep",
-            "text": "Sleep 1 ms between the load and the store",
+            "text": "Sleep for 1 ms between each load and its store",
             "why": "A sleep widens the gap, so the race gets more likely, not less."
           }
         ],
@@ -1429,17 +1429,17 @@
         "options": [
           {
             "id": "no",
-            "text": "No: the losing orders exist even if the test never hit one",
+            "text": "No: the losing orders can still happen",
             "correct": true
           },
           {
             "id": "yes",
-            "text": "Yes: 1,000 runs is plenty",
+            "text": "Yes: 1,000 clean runs is plenty of evidence",
             "why": "18 of the 20 orders lose an update. The test just never produced them."
           },
           {
             "id": "sometimes",
-            "text": "Yes, on this machine only",
+            "text": "No, except on the machine that ran it",
             "why": "The race is in the code, on every machine."
           }
         ],

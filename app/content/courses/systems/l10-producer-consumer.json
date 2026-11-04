@@ -321,7 +321,7 @@
         "options": [
           {
             "id": "no",
-            "text": "No: the producer cannot push between the check and the wait",
+            "text": "No: no push can fall between the check and the wait",
             "correct": true
           },
           {
@@ -333,6 +333,11 @@
             "id": "lock",
             "text": "Yes, because the wait holds `m` and blocks the producer",
             "why": "The wait lets go of `m` as it sleeps, so the producer gets in."
+          },
+          {
+            "id": "notify",
+            "text": "No: `notify` now waits until the consumer sleeps",
+            "why": "A notify never waits. Holding `m` is what keeps the push out of the gap."
           }
         ],
         "shuffle": true
@@ -360,7 +365,8 @@
         "generic": "Not quite right. Step c1, c2 and try the producer.",
         "byKey": {
           "yes": "The push needs `m`, so it cannot fall between the check and the wait.",
-          "lock": "The wait releases `m` as the consumer sleeps."
+          "lock": "The wait releases `m` as the consumer sleeps.",
+          "notify": "`notify` returns at once. The lock, not the notify, closes the gap."
         }
       },
       "explain": {
@@ -723,12 +729,12 @@
         "options": [
           {
             "id": "sleep",
-            "text": "It wakes, sees an empty queue, and waits again: asleep forever",
+            "text": "It finds the queue empty and waits again forever",
             "correct": true
           },
           {
             "id": "exit",
-            "text": "It wakes and exits, because it was notified",
+            "text": "It wakes and exits, because it has been notified",
             "why": "Waking only re-runs the `while` check, which never looks at `done`."
           },
           {
@@ -1008,7 +1014,7 @@
         "options": [
           {
             "id": "gap",
-            "text": "The push and notify can land between the check and the wait",
+            "text": "The push and notify can fall between check and wait",
             "correct": true
           },
           {
@@ -1018,7 +1024,7 @@
           },
           {
             "id": "cv",
-            "text": "Condition variables lose notifies at random",
+            "text": "Condition variables sometimes lose a notify at random",
             "why": "A notify is lost only when nobody is waiting yet."
           }
         ],
@@ -1085,17 +1091,17 @@
         "options": [
           {
             "id": "both",
-            "text": "A thread can wake with no item: another consumer took it, or the wake was spurious",
+            "text": "It can wake with no item, so it checks again",
             "correct": true
           },
           {
             "id": "speed",
-            "text": "`while` is faster than `if`",
+            "text": "`while` makes the wait return faster than `if`",
             "why": "Speed is not the point; the re-check is."
           },
           {
             "id": "lock",
-            "text": "`while` holds the lock longer",
+            "text": "`while` keeps the lock held for longer than `if`",
             "why": "Both forms hold the lock the same way."
           },
           {

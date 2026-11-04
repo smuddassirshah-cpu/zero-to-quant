@@ -13,44 +13,51 @@
         "thread-shared-state"
       ],
       "pace": 60,
-      "prose": "Two threads run code that uses these four names.",
+      "prose": "Two threads both call `work()`, which uses these five names.",
       "question": "Which are shared by both threads? Select all that apply.",
       "widget": {
         "kind": "multi",
         "layout": "stack",
         "options": [
           {
-            "id": "hits",
-            "text": "`static std::atomic<int> hits;`",
+            "id": "visits",
+            "text": "A `static int visits` declared inside `work`",
             "correct": true
           },
           {
-            "id": "m",
-            "text": "`std::mutex m;` at file scope",
+            "id": "cache",
+            "text": "The heap block that the global pointer `cache` points to",
             "correct": true
           },
           {
-            "id": "n",
-            "text": "A local `int n` captured by reference in a lambda both threads run",
-            "correct": true
-          },
-          {
-            "id": "scratch",
-            "text": "`thread_local std::vector<int> scratch;`",
+            "id": "depth",
+            "text": "`thread_local int depth;` at file scope",
             "why": "`thread_local` gives each thread its own copy."
+          },
+          {
+            "id": "i",
+            "text": "The loop counter `i` declared inside `work`",
+            "why": "Each call of `work` has its own `i` on its own stack."
+          },
+          {
+            "id": "buf",
+            "text": "A plain local `char buf[64]` inside `work`",
+            "why": "A plain local lives on the calling thread's stack."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "`hits`, `m` and `n`.",
+        "correct": "`visits` and the block that `cache` points to.",
         "generic": "Not quite right. Which exist once, or are reached through a reference?",
         "byKey": {
-          "scratch": "`thread_local` makes one copy per thread."
+          "depth": "`thread_local` makes one copy per thread.",
+          "i": "A loop counter is a local, so each thread has its own.",
+          "buf": "Each call gets its own `buf` on its own stack."
         }
       },
       "explain": {
-        "text": "A `static` and a file-scope mutex exist once per process. A reference capture shares the local it names. `thread_local` is the one name here that each thread owns."
+        "text": "A `static` local exists once per process, and every thread can follow a global pointer to the heap. Plain locals such as `i` and `buf` live on each thread's own stack. `thread_local` gives each thread its own `depth`."
       }
     },
     {
@@ -112,7 +119,7 @@
         "race-outcomes"
       ],
       "pace": 45,
-      "prose": "Two lanes each run load `x`, add 1, store `x`, from `x = 0`.",
+      "prose": "`x` is a `std::atomic<int>` at 0. Thread A loads it, adds 1 and stores it back, in three steps. Thread B calls `x.fetch_add(1)` twice.",
       "canvas": {
         "kind": "interleave",
         "params": {
@@ -146,19 +153,14 @@
               "label": "Thread B",
               "steps": [
                 {
-                  "op": "load",
-                  "reg": "r",
-                  "var": "x"
-                },
-                {
-                  "op": "add",
-                  "reg": "r",
+                  "op": "fetch-add",
+                  "var": "x",
                   "by": 1
                 },
                 {
-                  "op": "store",
+                  "op": "fetch-add",
                   "var": "x",
-                  "reg": "r"
+                  "by": 1
                 }
               ]
             }
@@ -166,25 +168,25 @@
         },
         "state": {}
       },
-      "question": "How many of the 20 interleavings end with `x` at 2?",
+      "question": "How many of the 10 interleavings end with `x` at 3?",
       "widget": {
         "kind": "numeric",
-        "answer": 2,
+        "answer": 3,
         "tol": {
           "abs": 0
         },
-        "accept": "2: the two serial orders.",
+        "accept": "3: both of B's adds fall outside A's load-to-store gap.",
         "wrong": [
           {
-            "id": "most",
-            "value": 18,
+            "id": "two",
+            "value": 2,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "half",
-            "value": 10,
+            "id": "four",
+            "value": 4,
             "tol": {
               "abs": 0
             }
@@ -192,15 +194,15 @@
         ]
       },
       "feedback": {
-        "correct": "2 of 20.",
-        "generic": "Not quite right. When does neither update get lost?",
+        "correct": "3 of 10.",
+        "generic": "Not quite right. Which of B's adds survive A's store?",
         "byKey": {
-          "most": "18 is the count that ends at 1.",
-          "half": "The orders are not split evenly."
+          "two": "You counted only the two serial orders. B can also add once before A loads and once after A stores.",
+          "four": "4 is the count that ends at 2, with one of B's adds lost."
         }
       },
       "explain": {
-        "text": "`x` ends at 2 only when one lane runs whole before the other loads. That is a, a, a, b, b, b or the reverse. The other 18 lose an update."
+        "text": "A's store writes what A loaded plus 1, wiping any add made in between. `x` ends at 3 only when neither of B's adds falls between A's load and store. That leaves both adds before A, one either side, or both after: 3 of 10."
       }
     },
     {
@@ -213,7 +215,7 @@
         "race-outcomes"
       ],
       "pace": 45,
-      "prose": "Three lanes each run load `x`, add 1, store `x`, from `x = 0`.",
+      "prose": "Three lanes each run load `x`, add, store `x`, from `x = 0`. Lane A adds 1, lane B adds 2 and lane C adds 4.",
       "question": "Which finals can happen? Select all that apply.",
       "widget": {
         "kind": "multi",
@@ -225,38 +227,43 @@
             "correct": true
           },
           {
-            "id": "v2",
-            "text": "2",
-            "correct": true
-          },
-          {
             "id": "v3",
             "text": "3",
             "correct": true
           },
           {
-            "id": "v0",
-            "text": "0",
-            "why": "Every store writes a load plus 1."
+            "id": "v5",
+            "text": "5",
+            "correct": true
           },
           {
-            "id": "v4",
-            "text": "4",
-            "why": "Three adds of 1 reach 3 at most."
+            "id": "v7",
+            "text": "7",
+            "correct": true
+          },
+          {
+            "id": "v0",
+            "text": "0",
+            "why": "Every store writes a load plus at least 1."
+          },
+          {
+            "id": "v8",
+            "text": "8",
+            "why": "The three adds total 7, so no store can write more."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "1, 2 and 3.",
-        "generic": "Not quite right. Find the least and the most a store can write.",
+        "correct": "1, 3, 5 and 7.",
+        "generic": "Not quite right. Which adds can the last store carry?",
         "byKey": {
           "v0": "Each store writes at least 1.",
-          "v4": "Only three increments run."
+          "v8": "$1 + 2 + 4 = 7$ is the most."
         }
       },
       "explain": {
-        "text": "All three loads can read 0, giving 1; one lost update gives 2, and serial orders give 3. Of the 1,680 interleavings, 1,404 end at 1, 270 at 2 and 6 at 3. Nothing gives 0 or 4."
+        "text": "The last store writes its load plus its own add. Its load may have seen any mix of the other adds, so 1 to 7 can all happen. Only the 6 orders that run each lane whole keep all three adds and reach 7."
       }
     },
     {
@@ -269,7 +276,7 @@
         "lock-order"
       ],
       "pace": 60,
-      "prose": "Three threads take locks in the orders AB, BC and CA, each holding the first while taking the second.",
+      "prose": "Threads P, Q and R take locks in the orders ABC, CD and DA. Each holds what it has while it takes the next.",
       "question": "Can they deadlock, and what is the fix?",
       "widget": {
         "kind": "choice",
@@ -277,13 +284,13 @@
         "options": [
           {
             "id": "yes",
-            "text": "Yes: A to B to C to A is a cycle; reverse one thread's order",
+            "text": "Yes: A to B to C to D to A; reverse one thread",
             "correct": true
           },
           {
             "id": "no",
-            "text": "No: no two threads take the same pair",
-            "why": "A cycle can run through three threads; follow the edges."
+            "text": "No: no two threads take the same pair of locks",
+            "why": "A cycle can run through three threads and four locks; follow the edges."
           },
           {
             "id": "scoped",
@@ -293,17 +300,17 @@
           {
             "id": "two",
             "text": "Only if two of them start at once",
-            "why": "All three must hold their first lock, but that can happen."
+            "why": "All three must each hold a lock at once, and that can happen."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "Yes. Reverse one thread, so every thread takes A, B, C in order.",
+        "correct": "Yes. Reverse one thread: R taking A then D gives the order A, B, C, D.",
         "generic": "Not quite right. Draw an edge for each thread."
       },
       "explain": {
-        "text": "The edges A to B, B to C and C to A form a ring of waits. If the third thread takes A then C, every edge follows A, B, C. Of the 168 schedules of the ring, 6 deadlock; after the fix none do."
+        "text": "The edges A to B, B to C, C to D and D to A form a ring of waits. If R takes A then D, every edge follows A, B, C, D. Of the 480 schedules of the ring, 12 deadlock; after that fix all 270 finish."
       }
     },
     {
@@ -316,7 +323,7 @@
         "deadlock-conditions"
       ],
       "pace": 45,
-      "prose": "T1 takes lock A then B; T2 takes B then A. A lane cannot step while the lock it wants is held.",
+      "prose": "T1 takes lock A then B. T2 first reads `x`, then takes B then A. A lane cannot step while the lock it wants is held.",
       "canvas": {
         "kind": "interleave",
         "params": {
@@ -355,6 +362,11 @@
               "short": "T2",
               "steps": [
                 {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
                   "op": "lock",
                   "lock": "B"
                 },
@@ -372,29 +384,32 @@
                 }
               ]
             }
-          ]
+          ],
+          "vars": {
+            "x": 0
+          }
         },
         "state": {}
       },
-      "question": "How many of the 6 legal schedules deadlock?",
+      "question": "How many of the 14 legal schedules deadlock?",
       "widget": {
         "kind": "numeric",
-        "answer": 2,
+        "answer": 3,
         "tol": {
           "abs": 0
         },
-        "accept": "2: each lane takes its first lock, in either order.",
+        "accept": "3: T1's first lock can come before, between or after T2's first two steps.",
         "wrong": [
           {
-            "id": "four",
-            "value": 4,
+            "id": "eleven",
+            "value": 11,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "one",
-            "value": 1,
+            "id": "two",
+            "value": 2,
             "tol": {
               "abs": 0
             }
@@ -402,15 +417,15 @@
         ]
       },
       "feedback": {
-        "correct": "2 of 6.",
-        "generic": "Not quite right. When do both lanes hold one lock each?",
+        "correct": "3 of 14.",
+        "generic": "Not quite right. When does each lane hold its first lock?",
         "byKey": {
-          "four": "4 is the count that finish.",
-          "one": "Either lane can take its first lock first: two ways."
+          "eleven": "11 is the count that finish.",
+          "two": "2 is the count without T2's read. The read gives T1's first lock three places."
         }
       },
       "explain": {
-        "text": "Both lanes stick only when both first locks are taken before either second lock. That happens in two orders. The other four schedules finish."
+        "text": "Both lanes stick when T1 holds A and T2 holds B, before either second lock. T1's one step can sit before, between or after T2's read and lock: 3 orders. The other 11 schedules finish."
       }
     },
     {
@@ -423,12 +438,17 @@
         "litmus"
       ],
       "pace": 60,
-      "prose": "Thread A sets `x = 1`, then reads `y` into `r1`. Thread B sets `y = 1`, then reads `x` into `r2`. Both start at 0. Suppose the four steps run one at a time, in some order, with no store buffer.",
+      "prose": "The load-buffering test. Thread A reads `x` into `r1`, then sets `y = 1`. Thread B reads `y` into `r2`, then sets `x = 1`. Both start at 0. Suppose the four steps run one at a time, in some order.",
       "question": "Which pairs (r1, r2) can occur? Select all that apply.",
       "widget": {
         "kind": "multi",
         "layout": "stack",
         "options": [
+          {
+            "id": "p00",
+            "text": "(0, 0)",
+            "correct": true
+          },
           {
             "id": "p01",
             "text": "(0, 1)",
@@ -442,25 +462,20 @@
           {
             "id": "p11",
             "text": "(1, 1)",
-            "correct": true
-          },
-          {
-            "id": "p00",
-            "text": "(0, 0)",
-            "why": "Each lane stores before it loads, so the later load always sees a 1."
+            "why": "Each lane loads before it stores, so the first load always reads 0."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "(0, 1), (1, 0) and (1, 1).",
-        "generic": "Not quite right. Can both loads come before both stores?",
+        "correct": "(0, 0), (0, 1) and (1, 0).",
+        "generic": "Not quite right. Can both loads see the other lane's store?",
         "byKey": {
-          "p00": "Each lane's store comes first in its own lane, so the last load sees a 1."
+          "p11": "The first step of any order is a load, and it reads 0."
         }
       },
       "explain": {
-        "text": "Whichever load runs last, the other lane's store has run before it. So at least one register is 1. Real cores with `relaxed` atomics can still give (0, 0), because a store can wait in a buffer."
+        "text": "The first step of any order is a load, so at least one register is 0. That rules out (1, 1) and leaves the other three. With `relaxed` atomics, C++ still allows (1, 1): each lane's two accesses touch different variables."
       }
     },
     {
@@ -481,22 +496,22 @@
         "options": [
           {
             "id": "gap",
-            "text": "The check and the wait were not under one lock, and the notify came in between",
+            "text": "The notify fell in the gap between check and wait",
             "correct": true
           },
           {
             "id": "spur",
-            "text": "A spurious wakeup",
+            "text": "A spurious wakeup confused the condition variable",
             "why": "A spurious wakeup ends a wait early; it never makes one endless."
           },
           {
             "id": "full",
-            "text": "The queue was full",
+            "text": "The queue was full, so the consumer was stuck",
             "why": "A full queue blocks the producer, not the consumer."
           },
           {
             "id": "one",
-            "text": "`notify_one` was used instead of `notify_all`",
+            "text": "`notify_one` was called where `notify_all` was needed",
             "why": "There is only one consumer, so either wakes it, if it is waiting."
           }
         ],
