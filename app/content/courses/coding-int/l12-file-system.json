@@ -1,0 +1,1183 @@
+{
+  "id": "l12-file-system",
+  "course": "coding-int",
+  "title": "An in-memory file system",
+  "minutes": 14,
+  "objectives": [
+    "Design classes for a small file system with paths, folders and files."
+  ],
+  "skills": [
+    "ci-design"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "What does ls list",
+      "tags": [
+        "file-system"
+      ],
+      "prose": "A file system is a tree: folders hold names, files hold text. You built trees in `ds` l14 and walked them in l16. Here the root is `/`, and `/a/b/c` holds a file `d.txt`.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "a",
+              "children": [
+                {
+                  "id": "b",
+                  "label": "b",
+                  "children": [
+                    {
+                      "id": "c",
+                      "label": "c",
+                      "children": [
+                        {
+                          "id": "d",
+                          "label": "d.txt"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "/"
+        },
+        "state": {}
+      },
+      "question": "Tap the names that `ls('/a')` lists.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "a-b"
+        ],
+        "countWord": "names",
+        "wrong": [
+          {
+            "id": "deep",
+            "set": [
+              "a-b",
+              "a-b-c",
+              "a-b-c-d"
+            ]
+          },
+          {
+            "id": "self",
+            "set": [
+              "a"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does `ls` look inside the folders it lists?"
+        },
+        {
+          "rung": "point",
+          "text": "It lists only what sits directly inside `a`.",
+          "highlight": [
+            "a-b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only `b` is a direct child of `a`. The names `c` and `d.txt` belong deeper down."
+        }
+      ],
+      "feedback": {
+        "correct": "Only `b` sits directly inside `a`.",
+        "generic": "Not quite right. List only the direct children.",
+        "byKey": {
+          "deep": "You listed everything below `a`. `ls` shows only the names directly inside.",
+          "self": "You tapped `a` itself. `ls('/a')` lists what is inside it."
+        }
+      },
+      "explain": {
+        "text": "`ls` lists the direct children of a folder and goes no deeper. The names `c` and `d.txt` are children of `b` and `c`.",
+        "canvas": {
+          "shade": [
+            "a-b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Making every folder",
+      "tags": [
+        "path-tree"
+      ],
+      "prose": "On an empty file system, call `mkdir('/a/b/c')`. Slide through what it creates, one name at a time.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "a",
+              "children": [
+                {
+                  "id": "b",
+                  "label": "b",
+                  "children": [
+                    {
+                      "id": "c",
+                      "label": "c"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "/"
+        },
+        "state": {
+          "dim": [
+            "a"
+          ],
+          "caption": "Empty: only the root exists"
+        },
+        "controls": [
+          {
+            "bind": "made",
+            "label": "Names created",
+            "frames": [
+              {
+                "dim": [
+                  "a"
+                ],
+                "caption": "Empty: only the root exists"
+              },
+              {
+                "dim": [
+                  "a-b"
+                ],
+                "caption": "mkdir creates a"
+              },
+              {
+                "dim": [
+                  "a-b-c"
+                ],
+                "caption": "mkdir creates a, b"
+              },
+              {
+                "dim": [],
+                "caption": "mkdir creates a, b and c"
+              }
+            ],
+            "frameLabels": [
+              "none",
+              "a",
+              "a, b",
+              "a, b, c"
+            ],
+            "start": 0
+          }
+        ]
+      },
+      "question": "How many folders exist afterwards, not counting the root?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Folders",
+        "accept": "3: a, b and c",
+        "wrong": [
+          {
+            "id": "last",
+            "value": 1
+          },
+          {
+            "id": "root",
+            "value": 4
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does `mkdir` need the parents to exist first?"
+        },
+        {
+          "rung": "point",
+          "text": "It makes each missing folder on the way.",
+          "highlight": [
+            "a",
+            "a-b",
+            "a-b-c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The path has three names, and none existed, so three folders are made."
+        }
+      ],
+      "feedback": {
+        "correct": "Three: `a`, `b` and `c`.",
+        "generic": "Not quite right. Count every name on the path that was missing.",
+        "byKey": {
+          "last": "You counted only `c`. `mkdir` also creates the missing parents.",
+          "root": "You counted the root. It was there already."
+        }
+      },
+      "explain": {
+        "text": "`mkdir` here works like `mkdir -p`: it creates each missing folder along the path. One call on an empty system makes three folders."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "ls of a file",
+      "tags": [
+        "file-system"
+      ],
+      "prose": "The file `/a/b/c/d.txt` holds `hello`. A folder lists the sorted names inside it. A file is a different case.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "a",
+              "children": [
+                {
+                  "id": "b",
+                  "label": "b",
+                  "children": [
+                    {
+                      "id": "c",
+                      "label": "c",
+                      "children": [
+                        {
+                          "id": "d",
+                          "label": "d.txt"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "/"
+        },
+        "state": {
+          "shade": [
+            "a-b-c-d"
+          ]
+        }
+      },
+      "question": "What does `ls('/a/b/c/d.txt')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`['d.txt']`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[]`",
+            "why": "You listed the file's children. A file has none, but `ls` of a file names the file."
+          },
+          {
+            "id": "c",
+            "text": "`'hello'`",
+            "why": "That is what `read` returns, the content."
+          },
+          {
+            "id": "d",
+            "text": "`['/a/b/c/d.txt']`",
+            "why": "You returned the full path. `ls` returns the name only."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What would a shell print for `ls` of a file?"
+        },
+        {
+          "rung": "point",
+          "text": "The file's own name.",
+          "highlight": [
+            "a-b-c-d"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A file has no children, so `ls` returns a one-element list holding its name."
+        }
+      ],
+      "feedback": {
+        "correct": "A one-element list with the file's name.",
+        "generic": "Not quite right. `ls` of a file is a special case.",
+        "byKey": {
+          "b": "A file has no children, so the folder rule gives nothing. The file case returns its own name.",
+          "c": "Content belongs to `read`. `ls` returns names.",
+          "d": "The name is the last part of the path only."
+        }
+      },
+      "explain": {
+        "text": "A folder lists its children and a file lists itself. The name is the last piece of the path, here `d.txt`."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Write creates and appends",
+      "tags": [
+        "file-system"
+      ],
+      "prose": "Nothing exists yet. Then `write('/n/x.txt', 'hello')` runs, and after it `write('/n/x.txt', ' world')`.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "n",
+              "label": "n",
+              "children": [
+                {
+                  "id": "x",
+                  "label": "x.txt"
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "/"
+        },
+        "state": {}
+      },
+      "question": "What does `read('/n/x.txt')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`'hello world'`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`' world'`",
+            "why": "You replaced the content. `write` appends."
+          },
+          {
+            "id": "c",
+            "text": "`'hello'`",
+            "why": "You stopped at the first write. The second one appends."
+          },
+          {
+            "id": "d",
+            "text": "An error, because `/n` does not exist",
+            "why": "You expected a failure. `write` creates missing folders, like `mkdir -p`."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does `write` need the folder to exist?"
+        },
+        {
+          "rung": "point",
+          "text": "No: it creates the folders and the file.",
+          "highlight": [
+            "n-x"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The first write makes `/n` and `x.txt` with `hello`. The second appends, giving `hello world`."
+        }
+      ],
+      "feedback": {
+        "correct": "`write` creates what is missing and appends.",
+        "generic": "Not quite right. Follow the two writes in order.",
+        "byKey": {
+          "b": "That would be an overwrite. This `write` adds to the end.",
+          "c": "The second write is not lost. It adds to the same file.",
+          "d": "Folders are created on the way, so there is no error."
+        }
+      },
+      "explain": {
+        "text": "The first write creates `/n`, then `x.txt` with `hello`. The second write finds the file and appends, so the content is `hello world`."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Four methods",
+      "tags": [
+        "file-system"
+      ],
+      "pace": 840,
+      "prose": "Use one `Node` class. It holds a dict of children and a `content`, which is `None` for a folder. A file's content is its text. One helper walks a path name by name and can create what is missing.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "FileSystem, paths start with /",
+          "lines": [
+            "mkdir(path): make every missing folder. No error if it exists.",
+            "write(path, text): make missing folders and the file, then append text.",
+            "read(path): the content of a file.",
+            "ls(path): a folder gives its sorted names. A file gives [its name].",
+            "Hidden driver run_fs(ops): rows ('mkdir', path), ('write', path, text), ('ls', path) and ('read', path)."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Write `FileSystem` with `mkdir`, `write`, `read` and `ls`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class FileSystem:\n    def __init__(self):\n        self.files = {}\n\n    def mkdir(self, path):\n        pass\n\n    def write(self, path, text):\n        self.files[path] = text\n\n    def read(self, path):\n        return self.files[path]\n\n    def ls(self, path):\n        return []\n\n    def size(self, path):\n        return 0\n",
+        "solution": "class _Node:\n    def __init__(self):\n        self.children = {}\n        self.content = None  # None for a folder, a string for a file\n\n\nclass FileSystem:\n    def __init__(self):\n        self.root = _Node()\n\n    def _walk(self, path, create=False):\n        node = self.root\n        for name in path.split('/'):\n            if not name:\n                continue\n            if name not in node.children:\n                if not create:\n                    return None\n                node.children[name] = _Node()\n            node = node.children[name]\n        return node\n\n    def mkdir(self, path):\n        self._walk(path, create=True)\n\n    def write(self, path, text):\n        node = self._walk(path, create=True)\n        node.content = (node.content or '') + text\n\n    def read(self, path):\n        return self._walk(path).content\n\n    def ls(self, path):\n        node = self._walk(path)\n        if node.content is not None:\n            return [path.rstrip('/').split('/')[-1]]\n        return sorted(node.children)\n",
+        "examples": [
+          {
+            "call": "run_fs([('mkdir', '/a/b/c'), ('ls', '/'), ('ls', '/a'), ('write', '/a/b/c/d.txt', 'hello'), ('ls', '/a/b/c'), ('ls', '/a/b/c/d.txt'), ('write', '/a/b/c/d.txt', ' world'), ('read', '/a/b/c/d.txt')])",
+            "expect": "[['a'], ['b'], ['d.txt'], ['d.txt'], 'hello world']",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('write', '/x.txt', 'abc'), ('ls', '/'), ('read', '/x.txt')])",
+            "expect": "[['x.txt'], 'abc']",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_fs([('mkdir', '/a/b/c'), ('ls', '/'), ('ls', '/a'), ('write', '/a/b/c/d.txt', 'hello'), ('ls', '/a/b/c'), ('ls', '/a/b/c/d.txt'), ('write', '/a/b/c/d.txt', ' world'), ('read', '/a/b/c/d.txt')])",
+            "expect": "[['a'], ['b'], ['d.txt'], ['d.txt'], 'hello world']",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('write', '/x.txt', 'abc'), ('ls', '/'), ('read', '/x.txt')])",
+            "expect": "[['x.txt'], 'abc']",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('ls', '/')])",
+            "expect": "[[]]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('mkdir', '/a/b'), ('mkdir', '/a/b'), ('write', '/a/z.txt', 'q'), ('ls', '/a')])",
+            "expect": "[['b', 'z.txt']]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('mkdir', '/b'), ('mkdir', '/a'), ('write', '/c.txt', '1'), ('mkdir', '/a/z'), ('ls', '/')])",
+            "expect": "[['a', 'b', 'c.txt']]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests. They cover nested folders, the root, a repeated `mkdir` and sorted names.",
+        "postlude": "def run_fs(ops):\n    fs = FileSystem()\n    out = []\n    for op in ops:\n        if op[0] == 'mkdir': fs.mkdir(op[1])\n        elif op[0] == 'write': fs.write(op[1], op[2])\n        elif op[0] == 'ls': out.append(fs.ls(op[1]))\n        elif op[0] == 'read': out.append(fs.read(op[1]))\n        else: out.append(fs.size(op[1]))\n    return out\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which method do all four share?"
+        },
+        {
+          "rung": "point",
+          "text": "A walk down the path, one name at a time.",
+          "highlight": [
+            "l1",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Write `_walk(path, create)`. `mkdir` and `write` pass `create=True`. `ls` returns sorted children, or the file's name."
+        }
+      ],
+      "feedback": {
+        "correct": "One walker, and four short methods on top of it.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 makes three folders in one call, then writes and appends to a file.",
+          "test-2": "Test 2 writes a file directly in the root.",
+          "test-3": "Test 3 lists an empty root. Return an empty list.",
+          "test-4": "Test 4 makes the same folder twice. The second call does nothing.",
+          "test-5": "Test 5 lists folders and files together, sorted by name."
+        }
+      },
+      "explain": {
+        "text": "The walker keeps `mkdir`, `write`, `read` and `ls` to a few lines each. `write` appends with `(node.content or '') + text`, so a new file starts empty. `ls` checks `content` to tell a file from a folder."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The empty name",
+      "tags": [
+        "path-tree"
+      ],
+      "prose": "A walker loops over `path.split('/')` and looks each name up among the children. It does not skip empty names.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "split on a slash",
+          "lines": [
+            "'/'.split('/')      ->  ['', '']",
+            "'/a'.split('/')     ->  ['', 'a']",
+            "'/a/b'.split('/')   ->  ['', 'a', 'b']",
+            "'/a/'.split('/')    ->  ['', 'a', '']"
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "What happens on `ls('/')`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "It looks for a child named `''`, finds none and fails.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "It stays at the root, because an empty name is no step.",
+            "why": "You skipped the empty names in your head. This walker looks them up."
+          },
+          {
+            "id": "c",
+            "text": "It returns the root's children, since `/` is the root.",
+            "why": "That needs a special case for `/`. A plain walk has none."
+          },
+          {
+            "id": "d",
+            "text": "It makes a folder called `/` under the root.",
+            "why": "`split` already cut at the slash. The names are two empty strings, not `/`."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `'/'.split('/')` return?"
+        },
+        {
+          "rung": "point",
+          "text": "Two empty strings.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The loop looks up `''` as a child name. The root has no such child."
+        }
+      ],
+      "feedback": {
+        "correct": "`''` is looked up as a child name, and there is none.",
+        "generic": "Not quite right. Split first, then follow what the loop does.",
+        "byKey": {
+          "b": "The walker in the question has no skip, so it does look up the empty name.",
+          "c": "The loop has no `/` case. It treats every name alike.",
+          "d": "No `/` name exists after the split. Only empty strings remain."
+        }
+      },
+      "explain": {
+        "text": "Splitting at a slash leaves an empty name before it, and after a trailing one. A walker that looks those up searches for a child called `''`. Skipping empty names makes `/a`, `/a/` and `//a` walk the same way."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A folder's size",
+      "tags": [
+        "recursive-size"
+      ],
+      "prose": "Files `/logs/a.txt` (`abcd`), `/logs/old/b.txt` (`xy`) and `/logs/c.txt` (`abcdef`). The size of a folder is the total of every file below it.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "nodes": [
+            {
+              "id": "logs",
+              "label": "logs",
+              "children": [
+                {
+                  "id": "a",
+                  "label": "a.txt (4)"
+                },
+                {
+                  "id": "old",
+                  "label": "old",
+                  "children": [
+                    {
+                      "id": "b",
+                      "label": "b.txt (2)"
+                    }
+                  ]
+                },
+                {
+                  "id": "c",
+                  "label": "c.txt (6)"
+                }
+              ]
+            }
+          ],
+          "orient": "tb",
+          "rootLabel": "/",
+          "label": "Characters in each file"
+        },
+        "state": {}
+      },
+      "question": "What is `size('/logs')`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Characters",
+        "accept": "12: 4 + 2 + 6",
+        "wrong": [
+          {
+            "id": "shallow",
+            "value": 10
+          },
+          {
+            "id": "count",
+            "value": 3
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does `old` count?"
+        },
+        {
+          "rung": "point",
+          "text": "Everything below `logs` counts, at any depth.",
+          "highlight": [
+            "logs-a",
+            "logs-old-b",
+            "logs-c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add every file: $4 + 2 + 6 = 12$."
+        }
+      ],
+      "feedback": {
+        "correct": "$4 + 2 + 6 = 12$. For `/logs/old` alone it is 2.",
+        "generic": "Not quite right. Add the length of every file under the folder.",
+        "byKey": {
+          "shallow": "You skipped the files inside `old`. A folder's size includes its subfolders.",
+          "count": "You counted the files. The size adds their lengths."
+        }
+      },
+      "explain": {
+        "text": "`a.txt` has 4 characters, `c.txt` has 6, and `old` holds `b.txt` with 2. A folder's size is the sum over its children, so `size('/logs')` is $4 + 2 + 6 = 12$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Add size",
+      "tags": [
+        "recursive-size"
+      ],
+      "pace": 480,
+      "prose": "Extend the class. The starter is the finished stage from the last problem, with `size` as a stub. A file's size is its length; a folder's is the total of its children.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "size(path)",
+          "lines": [
+            "File: the number of characters in its content.",
+            "Folder: the total of every file below it.",
+            "size('/') is the whole file system."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Write `size(path)`, recursively.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class _Node:\n    def __init__(self):\n        self.children = {}\n        self.content = None  # None for a folder, a string for a file\n\n\nclass FileSystem:\n    def __init__(self):\n        self.root = _Node()\n\n    def _walk(self, path, create=False):\n        node = self.root\n        for name in path.split('/'):\n            if not name:\n                continue\n            if name not in node.children:\n                if not create:\n                    return None\n                node.children[name] = _Node()\n            node = node.children[name]\n        return node\n\n    def mkdir(self, path):\n        self._walk(path, create=True)\n\n    def write(self, path, text):\n        node = self._walk(path, create=True)\n        node.content = (node.content or '') + text\n\n    def read(self, path):\n        return self._walk(path).content\n\n    def ls(self, path):\n        node = self._walk(path)\n        if node.content is not None:\n            return [path.rstrip('/').split('/')[-1]]\n        return sorted(node.children)\n\n    def size(self, path):\n        return 0\n",
+        "solution": "class _Node:\n    def __init__(self):\n        self.children = {}\n        self.content = None  # None for a folder, a string for a file\n\n\nclass FileSystem:\n    def __init__(self):\n        self.root = _Node()\n\n    def _walk(self, path, create=False):\n        node = self.root\n        for name in path.split('/'):\n            if not name:\n                continue\n            if name not in node.children:\n                if not create:\n                    return None\n                node.children[name] = _Node()\n            node = node.children[name]\n        return node\n\n    def mkdir(self, path):\n        self._walk(path, create=True)\n\n    def write(self, path, text):\n        node = self._walk(path, create=True)\n        node.content = (node.content or '') + text\n\n    def read(self, path):\n        return self._walk(path).content\n\n    def ls(self, path):\n        node = self._walk(path)\n        if node.content is not None:\n            return [path.rstrip('/').split('/')[-1]]\n        return sorted(node.children)\n\n    def size(self, path):\n        node = self._walk(path)\n\n        def total(n):\n            if n.content is not None:\n                return len(n.content)\n            return sum(total(c) for c in n.children.values())\n\n        return total(node)\n",
+        "examples": [
+          {
+            "call": "run_fs([('write', '/docs/n/a.txt', '12345'), ('write', '/docs/n/b.txt', '678'), ('write', '/docs/c.txt', '9'), ('size', '/docs'), ('size', '/docs/n'), ('size', '/docs/c.txt'), ('size', '/'), ('ls', '/docs')])",
+            "expect": "[9, 8, 1, 9, ['c.txt', 'n']]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_fs([('mkdir', '/a/b/c'), ('ls', '/'), ('ls', '/a'), ('write', '/a/b/c/d.txt', 'hello'), ('ls', '/a/b/c'), ('ls', '/a/b/c/d.txt'), ('write', '/a/b/c/d.txt', ' world'), ('read', '/a/b/c/d.txt')])",
+            "expect": "[['a'], ['b'], ['d.txt'], ['d.txt'], 'hello world']",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('write', '/x.txt', 'abc'), ('ls', '/'), ('read', '/x.txt')])",
+            "expect": "[['x.txt'], 'abc']",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('ls', '/')])",
+            "expect": "[[]]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('mkdir', '/a/b'), ('mkdir', '/a/b'), ('write', '/a/z.txt', 'q'), ('ls', '/a')])",
+            "expect": "[['b', 'z.txt']]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('write', '/docs/n/a.txt', '12345'), ('write', '/docs/n/b.txt', '678'), ('write', '/docs/c.txt', '9'), ('size', '/docs'), ('size', '/docs/n'), ('size', '/docs/c.txt'), ('size', '/'), ('ls', '/docs')])",
+            "expect": "[9, 8, 1, 9, ['c.txt', 'n']]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_fs([('mkdir', '/b'), ('mkdir', '/a'), ('write', '/c.txt', '1'), ('mkdir', '/a/z'), ('ls', '/')])",
+            "expect": "[['a', 'b', 'c.txt']]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. Five are from the last problem. One asks for the size of a folder, a file and the root.",
+        "postlude": "def run_fs(ops):\n    fs = FileSystem()\n    out = []\n    for op in ops:\n        if op[0] == 'mkdir': fs.mkdir(op[1])\n        elif op[0] == 'write': fs.write(op[1], op[2])\n        elif op[0] == 'ls': out.append(fs.ls(op[1]))\n        elif op[0] == 'read': out.append(fs.read(op[1]))\n        else: out.append(fs.size(op[1]))\n    return out\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the size of a file?"
+        },
+        {
+          "rung": "point",
+          "text": "The length of its content.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Write a helper `total(node)`: a file returns `len(node.content)`, a folder returns the sum over its children."
+        }
+      ],
+      "feedback": {
+        "correct": "A file is its length. A folder is the sum of its children.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-5": "Test 5 asks for the size of `/docs`, `/docs/n`, a file and the root."
+        }
+      },
+      "explain": {
+        "text": "A file's size ends the recursion, and a folder adds up its children's sizes. The root is a folder too, so `size('/')` totals every file. Old tests still pass because nothing else changed."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The walk",
+      "tags": [
+        "path-tree"
+      ],
+      "prose": "Every method reuses one helper.\n\n```python\nnode = self.root\nfor name in path.split('/'):\n    if not name:\n        continue                  # skip empty names\n    if name not in node.children:\n        if not create: return None\n        node.children[name] = _Node()\n    node = node.children[name]\nreturn node\n```",
+      "question": "Put the walk in order. Leave out the line that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "w1",
+            "text": "Start at the root node"
+          },
+          {
+            "id": "w2",
+            "text": "Split the path on `/`"
+          },
+          {
+            "id": "w3",
+            "text": "Skip every empty name"
+          },
+          {
+            "id": "w4",
+            "text": "Look the name up among the node's children"
+          },
+          {
+            "id": "w5",
+            "text": "If it is missing, create it or stop, as the method needs"
+          },
+          {
+            "id": "w6",
+            "text": "Step into the child and go on to the next name"
+          },
+          {
+            "id": "w7",
+            "text": "Return the node where the path ends"
+          },
+          {
+            "id": "d1",
+            "text": "Look the whole path up as one key in a flat dict",
+            "why": "A flat dict cannot list a folder without scanning every key. The walk costs one step per name."
+          }
+        ],
+        "answer": [
+          "w1",
+          "w2",
+          "w3",
+          "w4",
+          "w5",
+          "w6",
+          "w7"
+        ],
+        "distractors": [
+          "d1"
+        ],
+        "same": [
+          [
+            "w1",
+            "w2"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must you know before you look a name up?"
+        },
+        {
+          "rung": "point",
+          "text": "You must have a name, so split first and skip the empty ones."
+        },
+        {
+          "rung": "step",
+          "text": "Start and split, skip empty names, look up, create or stop, step in, repeat, return the node."
+        }
+      ],
+      "feedback": {
+        "correct": "Split, skip empties, look up, create or stop, step in, return.",
+        "generic": "Not quite right. Each step needs the one before it.",
+        "byKey": {
+          "d1": "You looked up the whole path as one key. A flat dict cannot answer `ls` without scanning every key.",
+          "left-out": "Seven lines belong. Only the flat dict does not."
+        }
+      },
+      "explain": {
+        "text": "The walk is the whole design. `mkdir` and `write` call it with `create=True`, `read` and `ls` without. Each public method is a few lines on top of it."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The next question",
+      "tags": [
+        "file-system"
+      ],
+      "prose": "The interviewer asks for more, one feature at a time. Most are one new method on the class you have. Exactly one of these needs the nodes to remember something new.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Ask",
+            "What changes"
+          ],
+          "rows": [
+            [
+              "rm(path)",
+              "?"
+            ],
+            [
+              "find(name)",
+              "?"
+            ],
+            [
+              "read-only files",
+              "?"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which one needs a new field on `Node`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Add read-only flags to files",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Add `rm(path)` to delete a path",
+            "why": "You added a field. `rm` removes a name from the parent's children, so it is a method."
+          },
+          {
+            "id": "c",
+            "text": "Add `find(name)` to search by name",
+            "why": "You added a field. `find` walks the tree as `size` does, so it is a method."
+          },
+          {
+            "id": "d",
+            "text": "Add `exists(path)` to test a path",
+            "why": "You added a field. `exists` is the walk returning a node or `None`, so it is a method."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which feature needs a node to store something new?"
+        },
+        {
+          "rung": "point",
+          "text": "A flag belongs to each file, so each node must hold it.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`rm`, `find` and `exists` use the children dicts that already exist. A flag needs a field."
+        }
+      ],
+      "feedback": {
+        "correct": "A flag lives on each node, so it is a new field.",
+        "generic": "Not quite right. Ask which one needs a node to remember something.",
+        "byKey": {
+          "b": "Removing a name needs no new data. The parent already holds its children.",
+          "c": "Searching needs no new data. A recursive walk finds the name.",
+          "d": "Existence needs no new data. The walk already returns `None` for a missing path."
+        }
+      },
+      "explain": {
+        "text": "A read-only flag belongs to each file, so every node needs a field, and `write` must check it. The other three only read or change the dict of children. Say which kind of change it is before you code."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "One `Node` class holds a dict of children and a `content` that is `None` for a folder. A file is a node with text.",
+      "A helper walks a path one name at a time, skipping empty names and creating what is missing when asked. Each method is a few lines on top of it.",
+      "A recursive size adds the lengths of every file below a node. A new ask is either one new method or a new field on `Node`."
+    ],
+    "formula": {
+      "name": "Size of a folder",
+      "tex": "\\text{size}(n) = \\sum_{c \\in \\text{children}(n)} \\text{size}(c)",
+      "note": "A file's size is the length of its content."
+    },
+    "trap": "A walker that does not skip empty names looks for a child called an empty string."
+  },
+  "quiz": [
+    {
+      "id": "q-split",
+      "difficulty": 2,
+      "tags": [
+        "path-tree"
+      ],
+      "question": "What does `'/a//b'.split('/')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`['', 'a', '', 'b']`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`['a', 'b']`",
+            "why": "You assumed `split` drops empty parts. It keeps every one."
+          },
+          {
+            "id": "c",
+            "text": "`['', 'a', 'b']`",
+            "why": "You merged the double slash. It leaves an empty name between `a` and `b`."
+          },
+          {
+            "id": "d",
+            "text": "`['/a', '/b']`",
+            "why": "`split` removes the slash. It does not keep it."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Four parts: one before each slash.",
+        "generic": "Not quite right. Cut at every slash.",
+        "byKey": {
+          "b": "Empty parts stay, so a walker has to skip them.",
+          "c": "Two slashes in a row leave an empty name between them.",
+          "d": "The slash is the cut, so it is gone from the parts."
+        }
+      },
+      "explain": {
+        "text": "Each of the three slashes ends a part. The parts are an empty name, `a`, another empty name and `b`."
+      }
+    },
+    {
+      "id": "q-ls-file",
+      "difficulty": 2,
+      "tags": [
+        "file-system"
+      ],
+      "question": "After `write('/m/p.txt', 'q')`, what does `ls('/m/p.txt')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`['p.txt']`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[]`",
+            "why": "You listed the file's children. `ls` of a file returns its name."
+          },
+          {
+            "id": "c",
+            "text": "`['q']`",
+            "why": "That is the content. `ls` returns names."
+          },
+          {
+            "id": "d",
+            "text": "`['m']`",
+            "why": "That is the parent folder. `ls` of a file names the file itself."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`ls` of a file is a list with its name.",
+        "generic": "Not quite right. A file lists itself.",
+        "byKey": {
+          "b": "A file has no children, but the rule for a file is to return its own name.",
+          "c": "Content is for `read`.",
+          "d": "The parent is not part of the result."
+        }
+      },
+      "explain": {
+        "text": "A file lists itself: a one-element list with its name, `p.txt`."
+      }
+    },
+    {
+      "id": "q-mkdir-twice",
+      "difficulty": 3,
+      "tags": [
+        "path-tree"
+      ],
+      "question": "Run `mkdir('/p/q')`, then `write('/p/q/r.txt', 'hi')`, then `mkdir('/p/q')` again. What does `ls('/p/q')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`['r.txt']`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[]`",
+            "why": "You thought the second `mkdir` empties the folder. It does nothing."
+          },
+          {
+            "id": "c",
+            "text": "`['q']`",
+            "why": "You listed the folder's own name. `ls` lists what is inside."
+          },
+          {
+            "id": "d",
+            "text": "`['r.txt', 'r.txt']`",
+            "why": "A name is a dict key. A repeated call cannot make a second copy."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The second `mkdir` changes nothing.",
+        "generic": "Not quite right. What does `mkdir` do for a folder that exists?",
+        "byKey": {
+          "b": "An existing folder is left as it is, with its files.",
+          "c": "That is the folder's own name, not its contents.",
+          "d": "Children live in a dict, so names are unique."
+        }
+      },
+      "explain": {
+        "text": "`mkdir` creates only what is missing. The folder and its file already exist, so the list is `['r.txt']`."
+      }
+    },
+    {
+      "id": "q-size",
+      "difficulty": 3,
+      "tags": [
+        "recursive-size"
+      ],
+      "question": "Files `/s/a` (7 characters), `/s/t/b` (3) and `/s/t/c` (10). What is `size('/s/t')`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 13,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Characters",
+        "accept": "13: 3 + 10",
+        "wrong": [
+          {
+            "id": "whole",
+            "value": 20
+          },
+          {
+            "id": "one",
+            "value": 10
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$3 + 10 = 13$.",
+        "generic": "Not quite right. Add only the files below `/s/t`.",
+        "byKey": {
+          "whole": "You totalled `/s`. The question asks for the subfolder `/s/t`.",
+          "one": "You took only `c`. Both files in `t` count."
+        }
+      },
+      "explain": {
+        "text": "Only `b` and `c` sit under `/s/t`. Their lengths add to $3 + 10 = 13$. File `a` is in the parent."
+      }
+    }
+  ]
+}

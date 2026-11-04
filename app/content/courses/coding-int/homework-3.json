@@ -1,0 +1,548 @@
+{
+  "id": "homework-3",
+  "course": "coding-int",
+  "level": 3,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h3-ledger-follow-ups",
+      "difficulty": 4,
+      "skills": [
+        "ci-design",
+        "ci-timed"
+      ],
+      "tags": [
+        "fifo-lots"
+      ],
+      "prose": "An interviewer sets a ledger and then follows up. A desk trades one symbol. It buys 10 at £50, sells 4 at £55, buys 10 at £40 and sells 12 at £45.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Quantity",
+            "Price"
+          ],
+          "rows": [
+            [
+              "1",
+              "buy 10",
+              "£50"
+            ],
+            [
+              "2",
+              "sell 4",
+              "£55"
+            ],
+            [
+              "3",
+              "buy 10",
+              "£40"
+            ],
+            [
+              "4",
+              "sell 12",
+              "£45"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "parts": [
+        {
+          "question": "What is the realised profit by average cost, in £?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 35,
+            "tol": {
+              "abs": 0
+            },
+            "label": "£",
+            "accept": "35: 20 from the first sale and 15 from the second",
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "fifo",
+                "value": 20
+              },
+              {
+                "id": "second",
+                "value": 15
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$20 + 15 = £35$.",
+            "generic": "Not quite right. After the second buy the average is £43.75.",
+            "byKey": {
+              "fifo": "That is the FIFO profit. Average cost uses £43.75 for the second sale.",
+              "second": "You counted only the second sale. The first sale realised £20."
+            }
+          },
+          "explain": {
+            "text": "The first sale realises $4 \\times (55 - 50) = 20$. The buy of 10 at £40 brings 16 shares to an average of $(6 \\times 50 + 10 \\times 40) / 16 = 43.75$. The second sale realises $12 \\times (45 - 43.75) = 15$."
+          }
+        },
+        {
+          "question": "What is the realised profit by FIFO, in £?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 20,
+            "tol": {
+              "abs": 0
+            },
+            "label": "£",
+            "accept": "20: 20 on the first sale, -30 and +30 on the second",
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "avg",
+                "value": 35
+              },
+              {
+                "id": "skip",
+                "value": 50
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$20 - 30 + 30 = £20$.",
+            "generic": "Not quite right. The second sale uses the six shares left at £50, then six at £40.",
+            "byKey": {
+              "avg": "That is the average-cost profit. FIFO uses each lot's own price.",
+              "skip": "You left out the loss on the six £50 shares. They sell first, at £45."
+            }
+          },
+          "explain": {
+            "text": "The first sale uses the £50 lot and realises $4 \\times 5 = 20$. The second takes 6 shares at £50, realising $6 \\times (45 - 50) = -30$, then 6 at £40, realising $6 \\times 5 = 30$. The total is 20."
+          }
+        },
+        {
+          "question": "How much more is the average-cost profit than the FIFO profit, in £?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 15,
+            "tol": {
+              "abs": 0
+            },
+            "label": "£",
+            "accept": "15: 35 minus 20",
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "flip",
+                "value": -15
+              },
+              {
+                "id": "sum",
+                "value": 55
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$35 - 20 = £15$.",
+            "generic": "Not quite right. Subtract the FIFO profit from the average-cost profit.",
+            "byKey": {
+              "flip": "You subtracted the other way. The average-cost profit is the larger.",
+              "sum": "You added the two profits. The question asks for the difference."
+            }
+          },
+          "explain": {
+            "text": "Average cost realises 35 and FIFO realises 20, so the gap is 15. The methods split the same cash gain differently between sales. Total profit once all shares are sold is the same."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h3-lfu",
+      "difficulty": 5,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "cache-lfu"
+      ],
+      "pace": 900,
+      "prose": "As `LRUCache`, but when full drop the entry used the fewest times. Ties go to the least recently used of those. A get or put of an existing key counts as a use, and a new key starts with one use. Capacity 0 stores nothing.",
+      "question": "Write `LFUCache(capacity)` with `get(key)` and `put(key, value)`, both in constant time.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class LFUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.data = {}\n\n    def get(self, key):\n        return self.data.get(key, -1)\n\n    def put(self, key, value):\n        self.data[key] = value\n",
+        "solution": "from collections import defaultdict, OrderedDict\n\n\nclass LFUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.vals, self.freq = {}, {}\n        self.buckets = defaultdict(OrderedDict)  # freq -> keys, oldest first\n        self.min_freq = 0\n\n    def _touch(self, key):\n        f = self.freq[key]\n        del self.buckets[f][key]\n        if not self.buckets[f]:\n            del self.buckets[f]\n            if self.min_freq == f:\n                self.min_freq += 1\n        self.freq[key] = f + 1\n        self.buckets[f + 1][key] = None\n\n    def get(self, key):\n        if key not in self.vals:\n            return -1\n        self._touch(key)\n        return self.vals[key]\n\n    def put(self, key, value):\n        if self.capacity == 0:\n            return\n        if key in self.vals:\n            self.vals[key] = value\n            self._touch(key)\n            return\n        if len(self.vals) == self.capacity:\n            victim, _ = self.buckets[self.min_freq].popitem(last=False)\n            if not self.buckets[self.min_freq]:\n                del self.buckets[self.min_freq]\n            del self.vals[victim], self.freq[victim]\n        self.vals[key], self.freq[key] = value, 1\n        self.buckets[1][key] = None\n        self.min_freq = 1\n",
+        "examples": [
+          {
+            "call": "run_lfu(0, [[0, 0, 0], [1, 0]])",
+            "expect": "[-1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lfu(2, [[0, 1, 1], [0, 2, 2], [0, 3, 3], [1, 1], [1, 2], [1, 3]])",
+            "expect": "[-1, 2, 3]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_lfu(2, [[0, 5, 50], [0, 6, 60], [1, 5], [0, 7, 70], [1, 6], [1, 7], [0, 8, 80], [1, 5], [1, 7], [1, 8]])",
+            "expect": "[50, -1, 70, -1, 70, 80]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lfu(0, [[0, 0, 0], [1, 0]])",
+            "expect": "[-1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lfu(2, [[0, 1, 1], [0, 2, 2], [0, 3, 3], [1, 1], [1, 2], [1, 3]])",
+            "expect": "[-1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lfu(2, [[0, 5, 5], [0, 6, 6], [1, 5], [1, 5], [0, 7, 7], [1, 6], [1, 7], [1, 5]])",
+            "expect": "[5, 5, -1, 7, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lfu(3, [[0, 1, 1], [0, 2, 2], [0, 3, 3], [1, 1], [1, 2], [0, 4, 4], [1, 3], [1, 1], [1, 2], [1, 4]])",
+            "expect": "[1, 2, -1, 1, 2, 4]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lfu(1, [[0, 1, 1], [0, 1, 9], [1, 1], [0, 2, 2], [1, 1], [1, 2]])",
+            "expect": "[9, -1, 2]",
+            "compare": "equal"
+          },
+          {
+            "setup": "ops = [[0, i, i] for i in range(50000)] + [[1, i] for i in range(49000, 50000)]",
+            "call": "sum(run_lfu(1000, ops))",
+            "expect": "49499500",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, including capacity 0, an update that counts as a use, a tie and 50,000 puts.",
+        "postlude": "def run_lfu(cap, ops):\n    c = LFUCache(cap)\n    out = []\n    for op in ops:\n        if op[0] == 0:\n            c.put(op[1], op[2])\n        else:\n            out.append(c.get(op[1]))\n    return out\n"
+      },
+      "feedback": {
+        "correct": "Buckets of keys by use count, and the lowest count tracked.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: the put of 7 evicts key 6, used once. The put of 8 evicts key 5, the older of two keys used twice.",
+          "test-2": "Test 2 has capacity 0. Nothing is stored.",
+          "test-3": "Test 3 ties on one use each. The least recently used goes first.",
+          "test-4": "Test 4: key 6 has one use and key 5 has three, so the put of 7 evicts key 6.",
+          "test-5": "Test 5 mixes counts of 1 and 2 on a full cache of 3.",
+          "test-6": "Test 6: a put of a stored key updates it and counts as a use.",
+          "test-7": "Test 7 has 50,000 puts. Every call must be constant time."
+        }
+      },
+      "explain": {
+        "text": "Keep a dict of values and a dict of counts. Each count has an ordered dict of keys, oldest use first, and the lowest count is tracked. A touch moves a key up a bucket, and the victim is the first key of the lowest one."
+      }
+    },
+    {
+      "id": "h3-hit-counter",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "hit-counter"
+      ],
+      "pace": 600,
+      "prose": "`hit(t)` records a hit at whole second `t`. `count(t)` returns the hits at times greater than `t - 300` and at most `t`. Calls come in non-decreasing time.",
+      "question": "Write `HitCounter` with `hit(t)` and `count(t)`, using a fixed amount of memory.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class HitCounter:\n    def __init__(self):\n        self.hits = []\n\n    def hit(self, t):\n        self.hits.append(t)\n\n    def count(self, t):\n        return len(self.hits)\n",
+        "solution": "class HitCounter:\n    def __init__(self):\n        self.times = [0] * 300\n        self.counts = [0] * 300\n\n    def hit(self, t):\n        i = t % 300\n        if self.times[i] != t:\n            self.times[i], self.counts[i] = t, 0\n        self.counts[i] += 1\n\n    def count(self, t):\n        return sum(c for s, c in zip(self.times, self.counts) if t - 300 < s <= t)\n",
+        "examples": [
+          {
+            "call": "run_hits([[0, 1], [0, 2], [0, 3], [1, 4], [0, 300], [1, 300], [1, 301], [1, 302], [1, 303]])",
+            "expect": "[3, 4, 3, 2, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_hits([[1, 1]])",
+            "expect": "[0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_hits([[0, 1], [0, 2], [0, 3], [1, 4], [0, 300], [1, 300], [1, 301], [1, 302], [1, 303]])",
+            "expect": "[3, 4, 3, 2, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_hits([[1, 1]])",
+            "expect": "[0]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_hits([[0, 1], [0, 1], [1, 1], [1, 300], [1, 301]])",
+            "expect": "[2, 2, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_hits([[0, 5], [0, 305], [1, 305], [1, 604], [1, 605]])",
+            "expect": "[1, 1, 0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "ops = [[0, t] for t in range(0, 100000, 2)] + [[1, 99999]]",
+            "call": "run_hits(ops)",
+            "expect": "[150]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 5 hidden tests: a window edge, an empty counter, repeated times and 50,000 hits.",
+        "postlude": "def run_hits(ops):\n    h = HitCounter()\n    out = []\n    for op in ops:\n        if op[0] == 0:\n            h.hit(op[1])\n        else:\n            out.append(h.count(op[1]))\n    return out\n"
+      },
+      "feedback": {
+        "correct": "A ring of 300 slots, each stamped with its second.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 slides the window: the hits at 1, 2 and 3 leave at 301, 302 and 303.",
+          "test-2": "Test 2 counts on an empty counter. Return 0.",
+          "test-3": "Test 3 has two hits in one second, then the window moves past them.",
+          "test-4": "Test 4 reuses a slot: the hits at 5 and 305 share index 5.",
+          "test-5": "Test 5 has 50,000 hits. A list of every hit is the slow, large answer."
+        }
+      },
+      "explain": {
+        "text": "Slot `t % 300` holds the second it was last used for and its count. A hit in a new second resets the slot. A count adds the slots whose second lies in $(t - 300, t]$."
+      }
+    },
+    {
+      "id": "h3-rate-limit-aloud",
+      "difficulty": 4,
+      "skills": [
+        "ci-design",
+        "ci-timed"
+      ],
+      "tags": [
+        "rate-limit-window"
+      ],
+      "question": "Say aloud how you would design a per-client rate limit for an exchange gateway.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Say this aloud, timing yourself to three minutes, then write the main points. Design a per-client rate limit for an exchange gateway. Compare a fixed window, a sliding log and a token bucket on accuracy, memory and bursts. Use a limit of 100 a minute, with 100 requests at second 59 and 100 at second 60.",
+        "model": "**Three designs.** A fixed window keeps one counter per client per minute and resets it at each boundary. A sliding log keeps the time of each accepted request in a deque and counts those in the last minute. A token bucket keeps a token count and a last time. It refills at a steady rate and spends one token per request.\n\n**Accuracy at a boundary.** The limit is 100 a minute. A fixed window admits 100 at second 59 and 100 more at second 60. That is 200 in two seconds. The sliding log admits the first 100 and refuses the rest. All of them are still inside the last minute.\n\n**Memory.** The fixed window stores one number per client. The token bucket stores two. The sliding log stores a time for every accepted request, up to 100 per client. A million clients can then hold 100 million times.\n\n**Bursts.** A bucket of capacity 100 allows a burst of 100 at once. Then it refills at $100/60$ a second, so the average stays bounded. The log never allows more than the limit in any window.\n\n**Choice.** For a hard cap that can be audited, I would use the sliding log and free idle clients. If bursts are fine and memory matters, I would use the token bucket. A fixed window suits only a rough guard, where an error of twice the limit is acceptable.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "States the three designs and what each stores"
+          },
+          {
+            "points": 2,
+            "text": "Gives the boundary burst with numbers: 200 against 100"
+          },
+          {
+            "points": 2,
+            "text": "Compares memory per design, including the log's cost per request"
+          },
+          {
+            "points": 2,
+            "text": "Explains the bucket's burst up to capacity and its steady average"
+          },
+          {
+            "points": 2,
+            "text": "Makes a justified choice for a hard-cap gateway"
+          }
+        ]
+      }
+    },
+    {
+      "id": "h3-boundary",
+      "difficulty": 4,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "rate-limit-window"
+      ],
+      "prose": "The limit is 100 requests per minute. A fixed one-minute counter resets at each minute boundary. 100 requests arrive at second 59, and 100 more at second 60.",
+      "question": "How many requests does the fixed counter admit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 200,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Requests",
+        "accept": "200: 100 in each block. A sliding log admits 100",
+        "wrong": [
+          {
+            "id": "sliding",
+            "value": 100
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "200: each block has its own count of 100.",
+        "generic": "Not quite right. The counter resets at second 60.",
+        "byKey": {
+          "sliding": "That is the sliding log's answer. The fixed counter resets at second 60 and admits both groups."
+        }
+      },
+      "explain": {
+        "text": "Second 59 is in the first minute and second 60 starts the second. Each minute has its own count, so both groups of 100 pass. A sliding log would still see the first 100 at second 60 and refuse the rest."
+      }
+    },
+    {
+      "id": "h3-get-steps",
+      "difficulty": 4,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "lru-cache"
+      ],
+      "question": "Put the steps of `get(key)` in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Look up the key in the dict, and return -1 if it is absent"
+          },
+          {
+            "id": "s2",
+            "text": "Unlink the node from its neighbours"
+          },
+          {
+            "id": "s3",
+            "text": "Push the same node to the front"
+          },
+          {
+            "id": "s4",
+            "text": "Return the node's value"
+          },
+          {
+            "id": "d1",
+            "text": "Delete the node and create a new one at the front",
+            "why": "The dict entry would still point at the dead node. The next `get` would find a node that is no longer in the list."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Look up, unlink, push to the front, return.",
+        "generic": "Not quite right. A node must be found, then moved.",
+        "byKey": {
+          "d1": "You replaced the node. The dict still points at the old one.",
+          "left-out": "Four steps belong. Only the replacement is wrong."
+        }
+      },
+      "explain": {
+        "text": "The dict finds the node, and the move is an unlink plus a push, with no new node. The same node stays in the dict, so the pointers stay true."
+      }
+    },
+    {
+      "id": "h3-constant-time",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "lru-cache"
+      ],
+      "question": "Which of these are $O(1)$ with a dict of nodes and a doubly linked list? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "get",
+            "text": "`get` of a stored key",
+            "correct": true
+          },
+          {
+            "id": "put",
+            "text": "`put` of a new key on a full cache",
+            "correct": true
+          },
+          {
+            "id": "del",
+            "text": "Delete a key",
+            "correct": true
+          },
+          {
+            "id": "list",
+            "text": "List every key, most recent first",
+            "why": "You counted the walk as constant. Listing $n$ keys touches $n$ nodes."
+          },
+          {
+            "id": "median",
+            "text": "Find the median key",
+            "why": "Keys are not kept in sorted order, so a median needs a sort or a selection."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Get, put and delete use a lookup plus a few pointer changes.",
+        "generic": "Not quite right. Count the steps each one takes.",
+        "byKey": {
+          "list": "Listing visits every node, so it is $O(n)$.",
+          "median": "Finding a median is $O(n)$ at best here, or $O(n \\log n)$ by sorting."
+        }
+      },
+      "explain": {
+        "text": "A dict lookup, an unlink and a push are each constant. Listing every key or finding a median must look at all $n$ entries, so they are linear or worse."
+      }
+    },
+    {
+      "id": "h3-lfu-trace",
+      "difficulty": 5,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "cache-lfu"
+      ],
+      "prose": "An LFU cache has capacity 2, each value equal to its key. Ties go to the least recently used. Operations: put 1, put 2, get 1, put 3, get 2. Then get 3, put 4, get 1, get 3, get 4.",
+      "question": "What is the sum of the get results? A miss returns -1.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Sum",
+        "accept": "9: the gets return 1, -1, 3, -1, 3, 4",
+        "wrong": [
+          {
+            "id": "tie",
+            "value": 8
+          },
+          {
+            "id": "zero",
+            "value": 11
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - 1 + 3 - 1 + 3 + 4 = 9$.",
+        "generic": "Not quite right. Keep a use count for each key and evict the lowest.",
+        "byKey": {
+          "tie": "You broke the tie towards the most recent. The tie goes to the least recently used.",
+          "zero": "You counted each miss as 0. A miss returns -1."
+        }
+      },
+      "explain": {
+        "text": "After get 1 key 1 has 2 uses and key 2 has 1, so put 3 evicts key 2. After get 3 the keys 1 and 3 both have 2 uses, so put 4 evicts the older, key 1. The gets are 1, -1, 3, -1, 3, 4."
+      }
+    }
+  ]
+}

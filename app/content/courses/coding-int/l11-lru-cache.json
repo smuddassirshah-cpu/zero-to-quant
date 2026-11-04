@@ -1,0 +1,1622 @@
+{
+  "id": "l11-lru-cache",
+  "course": "coding-int",
+  "title": "A least recently used cache",
+  "minutes": 14,
+  "objectives": [
+    "Combine a hash map and a linked list for constant-time get and put."
+  ],
+  "skills": [
+    "ci-design"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which node moves?",
+      "tags": [
+        "lru-cache"
+      ],
+      "prose": "A cache holds keys 2, 5 and 9, most recently used first. You built this in `ds` homework 3. New here: the interview version, written from memory, in C++ and with expiry. A missing key returns -1 before any of the steps below.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            5,
+            9
+          ],
+          "mode": "linked"
+        },
+        "state": {
+          "caption": "Most recently used first: 2, 5, 9"
+        }
+      },
+      "question": "Put the steps of `get(9)` in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "g1",
+            "text": "Look up key 9 in the dict to find its node"
+          },
+          {
+            "id": "g2",
+            "text": "Unlink the node from its neighbours"
+          },
+          {
+            "id": "g3",
+            "text": "Push the node to the front of the list"
+          },
+          {
+            "id": "g4",
+            "text": "Return the node's value"
+          }
+        ],
+        "answer": [
+          "g1",
+          "g2",
+          "g3",
+          "g4"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must happen before a node can be moved?"
+        },
+        {
+          "rung": "point",
+          "text": "The dict finds the node. The list then moves it.",
+          "highlight": [
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Look up, unlink, push to the front, then return the value."
+        }
+      ],
+      "feedback": {
+        "correct": "Look up, unlink, push to the front, return.",
+        "generic": "Not quite right. A node must be found before it can be moved.",
+        "byKey": {
+          "g1": "The lookup comes first. Nothing else can start until the node is found.",
+          "g2": "Unlinking comes second. The node must leave the list before it joins the front.",
+          "g3": "Pushing to the front comes third, after the unlink and before the return."
+        }
+      },
+      "explain": {
+        "text": "The dict finds the node in one step. The list then moves it: unlink, then push to the front. After `get(9)` the order is 9, 2, 5.",
+        "canvas": {
+          "cells": [
+            9,
+            2,
+            5
+          ],
+          "caption": "After get(9): most recent first"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Unlinking a node",
+      "tags": [
+        "lru-cache"
+      ],
+      "prose": "In a doubly linked list every node has a `prev` and a `next`. Slide through the assignments that remove the node holding 5. The sentinels `head` and `tail` are never removed.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "head",
+            2,
+            5,
+            9,
+            "tail"
+          ],
+          "mode": "linked"
+        },
+        "state": {
+          "highlight": [
+            "c2"
+          ],
+          "caption": "Before: head, 2, 5, 9, tail. Unlink the 5"
+        },
+        "controls": [
+          {
+            "bind": "unlink",
+            "label": "Assignments done",
+            "frames": [
+              {
+                "cells": [
+                  "head",
+                  2,
+                  5,
+                  9,
+                  "tail"
+                ],
+                "highlight": [
+                  "c2"
+                ],
+                "caption": "Before: head, 2, 5, 9, tail. Unlink the 5"
+              },
+              {
+                "cells": [
+                  "head",
+                  2,
+                  5,
+                  9,
+                  "tail"
+                ],
+                "highlight": [
+                  "c2"
+                ],
+                "caption": "After `node.prev.next = node.next`: walking forward skips 5, but 9 still points back at 5"
+              },
+              {
+                "cells": [
+                  "head",
+                  2,
+                  9,
+                  "tail"
+                ],
+                "highlight": [],
+                "caption": "After `node.next.prev = node.prev` too: both directions skip 5"
+              }
+            ],
+            "frameLabels": [
+              "none",
+              "one",
+              "both"
+            ],
+            "start": 0
+          }
+        ]
+      },
+      "question": "Which pair of assignments unlinks `node`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`node.prev.next = node.next` and `node.next.prev = node.prev`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`node.prev.next = node.next` and `node.next = node.prev`",
+            "why": "You fixed the forward link. The next node's `prev` still points at the removed node."
+          },
+          {
+            "id": "c",
+            "text": "`node.next.prev = node.prev` and `node.prev = node.next`",
+            "why": "You fixed the backward link. The previous node's `next` still points at the removed node."
+          },
+          {
+            "id": "d",
+            "text": "`node.prev = None` and `node.next = None`",
+            "why": "You cleared the node's own pointers. Its neighbours still point at it."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the pointers that aim at the node."
+        },
+        {
+          "rung": "point",
+          "text": "Two neighbours point at it: one forward, one backward.",
+          "highlight": [
+            "c1",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Redirect the previous node's `next`, then the next node's `prev`."
+        }
+      ],
+      "feedback": {
+        "correct": "One assignment for each neighbour that pointed at the node.",
+        "generic": "Not quite right. Every pointer that aimed at the node must be redirected.",
+        "byKey": {
+          "b": "You rewired the node's own `next` instead of the next node's `prev`.",
+          "c": "You rewired the node's own `prev` instead of the previous node's `next`.",
+          "d": "Clearing the node's own pointers leaves both neighbours still aiming at it."
+        }
+      },
+      "explain": {
+        "text": "Two neighbours point at the node, so two assignments are needed. After both, nothing points at it. Sentinels make this work even for the first and last real node.",
+        "canvas": {
+          "cells": [
+            "head",
+            2,
+            9,
+            "tail"
+          ],
+          "caption": "Both neighbours now skip the node"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "From memory",
+      "tags": [
+        "lru-cache"
+      ],
+      "pace": 480,
+      "prose": "Write the cache of `ds` homework 3 without looking back. An interviewer often bans the library class, so use a dict and your own nodes. Sentinels at both ends remove the empty-list cases.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "LRUCache(capacity), all calls in O(1)",
+          "lines": [
+            "get(key): the value, or -1. Counts as a use.",
+            "put(key, value): insert or update. Counts as a use.",
+            "Full cache: a put of a new key first drops the least recently used.",
+            "No OrderedDict: use your own dict and nodes.",
+            "Hidden driver run_lru(cap, ops): rows [0, key, value] are puts and [1, key] are gets. It returns the get results."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Write `LRUCache` with `get` and `put`, both in constant time.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class LRUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.data = {}\n\n    def get(self, key):\n        return self.data.get(key, -1)\n\n    def put(self, key, value):\n        self.data[key] = value\n",
+        "solution": "class _Node:\n    def __init__(self, key=0, value=0):\n        self.key, self.value = key, value\n        self.prev = self.next = None\n\n\nclass LRUCache:\n    def __init__(self, capacity):\n        self.capacity = capacity\n        self.map = {}\n        self.head, self.tail = _Node(), _Node()  # sentinels: head.next is the most recent\n        self.head.next, self.tail.prev = self.tail, self.head\n\n    def _unlink(self, node):\n        node.prev.next, node.next.prev = node.next, node.prev\n\n    def _push_front(self, node):\n        node.prev, node.next = self.head, self.head.next\n        self.head.next.prev = node\n        self.head.next = node\n\n    def get(self, key):\n        node = self.map.get(key)\n        if node is None:\n            return -1\n        self._unlink(node)\n        self._push_front(node)\n        return node.value\n\n    def put(self, key, value):\n        node = self.map.get(key)\n        if node is not None:\n            node.value = value\n            self._unlink(node)\n            self._push_front(node)\n            return\n        if len(self.map) == self.capacity:\n            last = self.tail.prev\n            self._unlink(last)\n            del self.map[last.key]\n        node = _Node(key, value)\n        self.map[key] = node\n        self._push_front(node)\n",
+        "examples": [
+          {
+            "call": "run_lru(2, [[0, 5, 50], [0, 6, 60], [1, 5], [0, 7, 70], [1, 6], [0, 8, 80], [1, 5], [1, 7], [1, 8]])",
+            "expect": "[50, -1, -1, 70, 80]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru(1, [[0, 2, 1], [1, 2], [0, 3, 2], [1, 2], [1, 3]])",
+            "expect": "[1, -1, 2]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_lru(2, [[0, 5, 50], [0, 6, 60], [1, 5], [0, 7, 70], [1, 6], [0, 8, 80], [1, 5], [1, 7], [1, 8]])",
+            "expect": "[50, -1, -1, 70, 80]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru(1, [[0, 2, 1], [1, 2], [0, 3, 2], [1, 2], [1, 3]])",
+            "expect": "[1, -1, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru(2, [[0, 2, 1], [0, 2, 2], [1, 2], [0, 1, 1], [0, 4, 1], [1, 2]])",
+            "expect": "[2, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru(3, [[0, 7, 10], [0, 8, 20], [0, 9, 30], [1, 7], [0, 6, 40], [1, 8], [1, 7], [1, 9], [1, 6]])",
+            "expect": "[10, -1, 10, 30, 40]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru(2, [[1, 9]])",
+            "expect": "[-1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru(2, [[0, 1, 1], [0, 2, 2], [0, 1, 5], [0, 3, 3], [1, 1], [1, 2], [1, 3]])",
+            "expect": "[5, -1, 3]",
+            "compare": "equal"
+          },
+          {
+            "setup": "ops = [[0, i, i] for i in range(100000)] + [[1, i] for i in range(99000, 100000)] + [[1, 0]]",
+            "call": "sum(run_lru(1000, ops))",
+            "expect": "99499499",
+            "compare": "equal"
+          },
+          {
+            "call": "'OrderedDict' not in __learner_source__",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: traces, a capacity of 1, an update and an absent key. One has 100,000 puts. One checks that the source avoids `OrderedDict`.",
+        "postlude": "def run_lru(cap, ops):\n    c = LRUCache(cap)\n    out = []\n    for op in ops:\n        if op[0] == 0:\n            c.put(op[1], op[2])\n        else:\n            out.append(c.get(op[1]))\n    return out\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which two structures does every call need?"
+        },
+        {
+          "rung": "point",
+          "text": "A dict finds the node. A list with sentinels orders the nodes by use.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Write `_unlink` and `_push_front`. `get` and `put` call both. When full, remove `tail.prev` and its dict key."
+        }
+      ],
+      "feedback": {
+        "correct": "A dict of nodes and a doubly linked list with sentinels.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: the get of key 5 makes it recent, so the put of 7 evicts key 6.",
+          "test-2": "Test 2 has capacity 1: each put of a new key evicts the old one.",
+          "test-3": "Test 3 puts key 2 twice. The second put updates the value and evicts nothing.",
+          "test-4": "Test 4 has capacity 3. The get of key 1 saves it, so key 2 goes.",
+          "test-5": "Test 5 gets a key that was never put. Return -1.",
+          "test-6": "Test 6 updates key 1, which makes key 2 the least recently used.",
+          "test-7": "Test 7 has 100,000 puts. A call slower than constant time is too slow.",
+          "test-8": "Test 8 checks that the source does not use the library class."
+        }
+      },
+      "explain": {
+        "text": "Each call finds its node in the dict, then moves it with two small helpers. The sentinels mean the list is never empty, so unlinking needs no special case. At capacity, `tail.prev` is the least recently used."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Capacity one",
+      "tags": [
+        "lru-cache"
+      ],
+      "prose": "Capacity 1. The operations run in this order, as listed.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Capacity 1",
+          "lines": [
+            "put(2, 1)",
+            "get(2)",
+            "put(3, 2)",
+            "get(2)",
+            "get(3)"
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "How many of the three gets miss?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Misses",
+        "accept": "1: only the second get",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0
+          },
+          {
+            "id": "two",
+            "value": 2
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does a put of a new key do when the cache is full?"
+        },
+        {
+          "rung": "point",
+          "text": "Put 3 evicts key 2.",
+          "highlight": [
+            "l4",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Get 2 hits. Then put 3 removes key 2, so the next get 2 misses. Get 3 hits."
+        }
+      ],
+      "feedback": {
+        "correct": "The gets return 1, -1 and 2: one miss.",
+        "generic": "Not quite right. Trace what the cache holds after each put.",
+        "byKey": {
+          "none": "You kept key 2 alive. With capacity 1, put 3 pushes it out.",
+          "two": "You counted get 3 as a miss. Key 3 was the last put, so it is there."
+        }
+      },
+      "explain": {
+        "text": "With capacity 1 every new key evicts the old one. Get 2 hits, then put 3 evicts key 2, so get 2 misses and get 3 returns 2."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The same cache in C++",
+      "tags": [
+        "lru-cache"
+      ],
+      "pace": 480,
+      "prose": "A `std::list` node never moves in memory, so an iterator to it stays valid while other nodes move or go. `splice` moves a node to the front in constant time. The map holds one iterator per key.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "LRUCache in C++",
+          "lines": [
+            "explicit LRUCache(int capacity);",
+            "int get(int key);  // -1 if absent",
+            "void put(int key, int value);",
+            "Hidden drivers run_lru and big_lru_sum. The big test has 100,000 puts, 1,000 gets, then a get of key 0."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Write `LRUCache` in C++ with the same behaviour.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <list>\n#include <unordered_map>\n#include <utility>\n#include <vector>\nclass LRUCache {\npublic:\n    explicit LRUCache(int capacity) : capacity_(capacity) {}\n    int get(int key) {\n        auto it = data_.find(key);\n        return it == data_.end() ? -1 : it->second;\n    }\n    void put(int key, int value) { data_[key] = value; }\nprivate:\n    int capacity_;\n    std::unordered_map<int, int> data_;\n};\n",
+        "solution": "#include <list>\n#include <unordered_map>\n#include <utility>\n#include <vector>\nclass LRUCache {\npublic:\n    explicit LRUCache(int capacity) : capacity_(capacity) {}\n    int get(int key) {\n        auto it = index_.find(key);\n        if (it == index_.end()) return -1;\n        items_.splice(items_.begin(), items_, it->second);\n        return it->second->second;\n    }\n    void put(int key, int value) {\n        auto it = index_.find(key);\n        if (it != index_.end()) {\n            it->second->second = value;\n            items_.splice(items_.begin(), items_, it->second);\n            return;\n        }\n        if ((int)items_.size() == capacity_) {\n            index_.erase(items_.back().first);\n            items_.pop_back();\n        }\n        items_.emplace_front(key, value);\n        index_[key] = items_.begin();\n    }\nprivate:\n    int capacity_;\n    std::list<std::pair<int, int>> items_;\n    std::unordered_map<int, std::list<std::pair<int, int>>::iterator> index_;\n};\n",
+        "examples": [
+          {
+            "call": "run_lru",
+            "args": [
+              2,
+              [
+                [
+                  0,
+                  5,
+                  50
+                ],
+                [
+                  0,
+                  6,
+                  60
+                ],
+                [
+                  1,
+                  5
+                ],
+                [
+                  0,
+                  7,
+                  70
+                ],
+                [
+                  1,
+                  6
+                ],
+                [
+                  0,
+                  8,
+                  80
+                ],
+                [
+                  1,
+                  5
+                ],
+                [
+                  1,
+                  7
+                ],
+                [
+                  1,
+                  8
+                ]
+              ]
+            ],
+            "types": [
+              "int",
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              50,
+              -1,
+              -1,
+              70,
+              80
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru",
+            "args": [
+              1,
+              [
+                [
+                  0,
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  3,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  3
+                ]
+              ]
+            ],
+            "types": [
+              "int",
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              1,
+              -1,
+              2
+            ],
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_lru",
+            "args": [
+              2,
+              [
+                [
+                  0,
+                  5,
+                  50
+                ],
+                [
+                  0,
+                  6,
+                  60
+                ],
+                [
+                  1,
+                  5
+                ],
+                [
+                  0,
+                  7,
+                  70
+                ],
+                [
+                  1,
+                  6
+                ],
+                [
+                  0,
+                  8,
+                  80
+                ],
+                [
+                  1,
+                  5
+                ],
+                [
+                  1,
+                  7
+                ],
+                [
+                  1,
+                  8
+                ]
+              ]
+            ],
+            "types": [
+              "int",
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              50,
+              -1,
+              -1,
+              70,
+              80
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru",
+            "args": [
+              1,
+              [
+                [
+                  0,
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  3,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  3
+                ]
+              ]
+            ],
+            "types": [
+              "int",
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              1,
+              -1,
+              2
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru",
+            "args": [
+              2,
+              [
+                [
+                  0,
+                  2,
+                  1
+                ],
+                [
+                  0,
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  4,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ]
+              ]
+            ],
+            "types": [
+              "int",
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              2,
+              -1
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru",
+            "args": [
+              3,
+              [
+                [
+                  0,
+                  7,
+                  10
+                ],
+                [
+                  0,
+                  8,
+                  20
+                ],
+                [
+                  0,
+                  9,
+                  30
+                ],
+                [
+                  1,
+                  7
+                ],
+                [
+                  0,
+                  6,
+                  40
+                ],
+                [
+                  1,
+                  8
+                ],
+                [
+                  1,
+                  7
+                ],
+                [
+                  1,
+                  9
+                ],
+                [
+                  1,
+                  6
+                ]
+              ]
+            ],
+            "types": [
+              "int",
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              10,
+              -1,
+              10,
+              30,
+              40
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru",
+            "args": [
+              2,
+              [
+                [
+                  1,
+                  9
+                ]
+              ]
+            ],
+            "types": [
+              "int",
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              -1
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "run_lru",
+            "args": [
+              2,
+              [
+                [
+                  0,
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  2,
+                  2
+                ],
+                [
+                  0,
+                  1,
+                  5
+                ],
+                [
+                  0,
+                  3,
+                  3
+                ],
+                [
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  3
+                ]
+              ]
+            ],
+            "types": [
+              "int",
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              5,
+              -1,
+              3
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "big_lru_sum",
+            "args": [
+              100000,
+              1000
+            ],
+            "expect": 99499499,
+            "compare": "equal"
+          }
+        ],
+        "how": "Check compiles your code once and runs the same 7 hidden tests as the Python screen, without the source check. Each case gets 5 s.",
+        "postlude": "std::vector<int> run_lru(int cap, std::vector<std::vector<int>> ops) {\n    LRUCache c(cap);\n    std::vector<int> out;\n    for (const auto& op : ops) {\n        if (op[0] == 0) c.put(op[1], op[2]);\n        else out.push_back(c.get(op[1]));\n    }\n    return out;\n}\n\nlong long big_lru_sum(int n, int cap) {\n    LRUCache c(cap);\n    for (int i = 0; i < n; ++i) c.put(i, i);\n    long long total = 0;\n    for (int i = n - 1000; i < n; ++i) total += c.get(i);\n    total += c.get(0);\n    return total;\n}\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which standard containers match the dict and the linked list?"
+        },
+        {
+          "rung": "point",
+          "text": "`std::list` for the order and `std::unordered_map` from key to list iterator.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Move a hit with `items_.splice(items_.begin(), items_, it->second)`. When full, erase `items_.back()` from both."
+        }
+      ],
+      "feedback": {
+        "correct": "A list of pairs and a map of iterators; splice moves in constant time.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: the get of key 5 makes it recent, so the put of 7 evicts key 6.",
+          "test-2": "Test 2 has capacity 1: each put of a new key evicts the old one.",
+          "test-3": "Test 3 puts key 2 twice. The second put updates the value and evicts nothing.",
+          "test-6": "Test 6 updates key 1, which makes key 2 the least recently used.",
+          "test-7": "Test 7 has 100,000 puts. Every call must be constant time."
+        }
+      },
+      "explain": {
+        "text": "`splice` relinks a node without copying it, and the iterators in the map stay valid. Each call is one hash lookup plus a constant number of relinks. A `vector` would shift every element on each move."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Put on a stored key",
+      "tags": [
+        "lru-cache"
+      ],
+      "prose": "Capacity 2. The operations are put 1 (value 10), put 2 (value 20), then put 2 again with value 21. The cache is full.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            1,
+            2
+          ],
+          "mode": "linked"
+        },
+        "state": {
+          "caption": "Full: most recent first is 2, then 1"
+        }
+      },
+      "question": "What do `get(1)` and `get(2)` return afterwards?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`10` and `21`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`-1` and `21`",
+            "why": "You evicted first. Key 2 was already stored, so the put needed no room."
+          },
+          {
+            "id": "c",
+            "text": "`10` and `20`",
+            "why": "You kept the old value. A put of a stored key replaces it."
+          },
+          {
+            "id": "d",
+            "text": "`10` and `-1`",
+            "why": "You evicted key 2. The put only updates it and moves it to the front."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is key 2 new when it arrives the second time?"
+        },
+        {
+          "rung": "point",
+          "text": "A stored key needs no room.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Update the value of key 2 and move it to the front. Nothing is evicted, so key 1 stays."
+        }
+      ],
+      "feedback": {
+        "correct": "`10` and `21`: the put updated key 2 and evicted nothing.",
+        "generic": "Not quite right. Ask whether the put needs room at all.",
+        "byKey": {
+          "b": "You evicted first, on a full cache. That dropped key 1 for no reason.",
+          "c": "You ignored the new value. A put of a stored key is an update.",
+          "d": "You dropped the key being put. An update never evicts."
+        }
+      },
+      "explain": {
+        "text": "Key 2 is already stored, so the put only updates its value and moves it to the front. Evicting first would have dropped key 1, a live key. Look the key up before you check the size.",
+        "canvas": {
+          "cells": [
+            2,
+            1
+          ],
+          "caption": "After the update: 2 (value 21), then 1"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Entries that expire",
+      "tags": [
+        "cache-ttl"
+      ],
+      "pace": 720,
+      "prose": "Extend the cache. Each entry also dies `ttl` seconds after its last use. Store the time of last use in the node, and purge before every call.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "TTLCache(capacity, ttl)",
+          "lines": [
+            "get(key, now): the value or -1. A use refreshes the entry.",
+            "put(key, value, now): insert or update. Also a use.",
+            "now is in whole seconds and never goes back.",
+            "Last used ttl or more seconds ago: expired.",
+            "An expired entry returns -1 and takes no room.",
+            "New key on a full cache: drop the least recently used.",
+            "Hidden driver run_ttl(cap, ttl, ops): rows [0, key, value, now] are puts and [1, key, now] are gets."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Write `TTLCache` with `get(key, now)` and `put(key, value, now)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class TTLCache:\n    def __init__(self, capacity, ttl):\n        self.capacity, self.ttl = capacity, ttl\n        self.data = {}\n\n    def get(self, key, now):\n        return self.data.get(key, -1)\n\n    def put(self, key, value, now):\n        self.data[key] = value\n",
+        "solution": "class _Node:\n    def __init__(self, key=0, value=0, touched=0):\n        self.key, self.value, self.touched = key, value, touched\n        self.prev = self.next = None\n\n\nclass TTLCache:\n    def __init__(self, capacity, ttl):\n        self.capacity, self.ttl = capacity, ttl\n        self.map = {}\n        self.head, self.tail = _Node(), _Node()\n        self.head.next, self.tail.prev = self.tail, self.head\n\n    def _unlink(self, node):\n        node.prev.next, node.next.prev = node.next, node.prev\n\n    def _push_front(self, node):\n        node.prev, node.next = self.head, self.head.next\n        self.head.next.prev = node\n        self.head.next = node\n\n    def _purge(self, now):\n        # the tail holds the oldest use, so the expired entries are a suffix\n        while self.tail.prev is not self.head and now - self.tail.prev.touched >= self.ttl:\n            last = self.tail.prev\n            self._unlink(last)\n            del self.map[last.key]\n\n    def get(self, key, now):\n        self._purge(now)\n        node = self.map.get(key)\n        if node is None:\n            return -1\n        node.touched = now\n        self._unlink(node)\n        self._push_front(node)\n        return node.value\n\n    def put(self, key, value, now):\n        self._purge(now)\n        node = self.map.get(key)\n        if node is not None:\n            node.value, node.touched = value, now\n            self._unlink(node)\n            self._push_front(node)\n            return\n        if len(self.map) == self.capacity:\n            last = self.tail.prev\n            self._unlink(last)\n            del self.map[last.key]\n        node = _Node(key, value, now)\n        self.map[key] = node\n        self._push_front(node)\n",
+        "examples": [
+          {
+            "call": "run_ttl(2, 5, [[0, 1, 10, 0], [0, 2, 20, 1], [1, 1, 4], [1, 2, 6], [1, 1, 8]])",
+            "expect": "[10, -1, 10]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_ttl(2, 5, [[0, 1, 10, 0], [1, 1, 5]])",
+            "expect": "[-1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_ttl(2, 5, [[0, 1, 10, 0], [0, 2, 20, 1], [1, 1, 4], [1, 2, 6], [1, 1, 8]])",
+            "expect": "[10, -1, 10]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_ttl(2, 5, [[0, 1, 10, 0], [1, 1, 5]])",
+            "expect": "[-1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_ttl(2, 5, [[0, 1, 10, 0], [1, 1, 4], [1, 1, 8], [1, 1, 13], [1, 1, 14]])",
+            "expect": "[10, 10, -1, -1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_ttl(2, 10, [[0, 1, 1, 0], [0, 2, 2, 1], [0, 3, 3, 2], [1, 1, 3], [1, 2, 3], [1, 3, 3]])",
+            "expect": "[-1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_ttl(2, 3, [[0, 1, 1, 0], [0, 2, 2, 2], [0, 3, 3, 3], [1, 1, 3], [1, 2, 3], [1, 3, 3]])",
+            "expect": "[-1, 2, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_ttl(3, 4, [[0, 1, 1, 0], [0, 2, 2, 1], [0, 3, 3, 2], [1, 1, 3], [0, 4, 4, 3], [1, 2, 3], [1, 1, 3], [1, 4, 4], [1, 3, 5]])",
+            "expect": "[1, -1, 1, 4, 3]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. They cover a refresh, an age equal to the ttl, an expiry that frees room and an eviction.",
+        "postlude": "def run_ttl(cap, ttl, ops):\n    c = TTLCache(cap, ttl)\n    out = []\n    for op in ops:\n        if op[0] == 0:\n            c.put(op[1], op[2], op[3])\n        else:\n            out.append(c.get(op[1], op[2]))\n    return out\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which end of the list holds the oldest use?"
+        },
+        {
+          "rung": "point",
+          "text": "The tail does, so the expired entries sit at the tail.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Before each call, unlink `tail.prev` while `now - touched >= ttl`. A hit sets `touched = now` and moves the node to the front."
+        }
+      ],
+      "feedback": {
+        "correct": "A recency list also orders the entries by expiry.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: key 1 is used at 4, so it lives on. Key 2, last used at 1, is 5 old at time 6.",
+          "test-2": "Test 2: an age equal to the ttl counts as expired.",
+          "test-3": "Test 3: each get refreshes key 1, until 5 seconds pass without a use.",
+          "test-4": "Test 4: the put of key 3 at time 2 finds the cache full and drops key 1. It was the least recently used.",
+          "test-5": "Test 5: at time 3 key 1 is 3 old, so it has expired and takes no room.",
+          "test-6": "Test 6 mixes a refresh, an eviction and an expiry."
+        }
+      },
+      "explain": {
+        "text": "A use moves a node to the front and stamps it with the current time. So times of last use fall from head to tail. Expired entries are the last nodes, and purging stops at the first live one."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Why only the tail",
+      "tags": [
+        "cache-ttl"
+      ],
+      "prose": "Times of last use, most recent first, are 9, 7 and 4. With `ttl = 5` at time 12, keys 1 and 2 have expired.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            {
+              "v": 3,
+              "label": "t=9"
+            },
+            {
+              "v": 1,
+              "label": "t=7"
+            },
+            {
+              "v": 2,
+              "label": "t=4"
+            }
+          ],
+          "mode": "linked"
+        },
+        "state": {
+          "caption": "Key and time of last use, most recent first"
+        }
+      },
+      "question": "Why can `_purge` look only at the tail and stop at the first live entry?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Last-use times never rise from tail to head, so the old ones are at the tail.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Expired entries always have the smallest keys.",
+            "why": "You sorted by key. The list is ordered by use, not by key."
+          },
+          {
+            "id": "c",
+            "text": "A dict keeps entries in time order, so the oldest are first.",
+            "why": "A get does not reorder a dict. It cannot say which entries are old."
+          },
+          {
+            "id": "d",
+            "text": "Only one entry can expire at a time.",
+            "why": "Several entries can pass their time together. All of them sit at the tail."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does a use put a node?"
+        },
+        {
+          "rung": "point",
+          "text": "At the front, with the newest time.",
+          "highlight": [
+            "c0",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Every use stamps the newest time at the front. So times can only fall as you walk to the tail."
+        }
+      ],
+      "feedback": {
+        "correct": "Recency order is expiry order.",
+        "generic": "Not quite right. Ask where each use puts its node.",
+        "byKey": {
+          "b": "Keys are not ordered here. Only the time of last use is.",
+          "c": "A dict cannot be your clock. Only the list order says who was used last.",
+          "d": "Two or more entries can expire in one purge. They are the last nodes."
+        }
+      },
+      "explain": {
+        "text": "Every use moves a node to the front with the newest time. So the times fall from head to tail, and everything past the first live entry is older still. The expired entries form a suffix.",
+        "canvas": {
+          "cells": [
+            {
+              "v": 3,
+              "label": "t=9"
+            },
+            {
+              "v": 1,
+              "label": "t=7"
+            }
+          ],
+          "caption": "At time 12 with ttl 5: keys 1 and 2 purged"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The shape of put",
+      "tags": [
+        "lru-cache"
+      ],
+      "prose": "Both caches share one `put`.\n\n```python\nnode = self.map.get(key)\nif node:                      # stored: update, move to front\n    ...\n    return\nif len(self.map) == self.capacity:\n    evict(self.tail.prev)     # then add the new node\n```",
+      "question": "Put the steps of `put` in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "p1",
+            "text": "Look the key up in the dict"
+          },
+          {
+            "id": "p2",
+            "text": "If it is stored, update the value, move the node to the front and stop"
+          },
+          {
+            "id": "p3",
+            "text": "If the cache is full, unlink the node before the tail and delete its key"
+          },
+          {
+            "id": "p4",
+            "text": "Make a node, add it to the dict and push it to the front"
+          },
+          {
+            "id": "d1",
+            "text": "If the cache is full, evict first, then look the key up",
+            "why": "Evicting first drops a live key when the put was only an update."
+          }
+        ],
+        "answer": [
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must you know before deciding to evict?"
+        },
+        {
+          "rung": "point",
+          "text": "Whether the key is already stored."
+        },
+        {
+          "rung": "step",
+          "text": "Look up, handle a stored key and stop, evict if full, then insert the new node."
+        }
+      ],
+      "feedback": {
+        "correct": "Look up, update and stop, evict, insert.",
+        "generic": "Not quite right. A stored key must be handled before any eviction.",
+        "byKey": {
+          "d1": "You evicted before looking up. An update needs no room.",
+          "left-out": "Four lines belong. Only evicting first is wrong."
+        }
+      },
+      "explain": {
+        "text": "The lookup comes first, because it decides whether the put is an update. Eviction only happens for a new key on a full cache. The TTL version adds a purge before the lookup and nothing else."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A scan through the cache",
+      "tags": [
+        "cache-lfu"
+      ],
+      "prose": "A pricing service caches 1,000 symbol prices. Fifty hot symbols are read all day. Each night a scan reads 5,000 cold symbols once each, in order.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Keys",
+            "How they are read"
+          ],
+          "rows": [
+            [
+              "50 hot symbols",
+              "all day, often"
+            ],
+            [
+              "5,000 cold symbols",
+              "once each, in a nightly scan"
+            ],
+            [
+              "Cache size",
+              "1,000 entries"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Under LRU, what happens to the hot symbols during the scan?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "They are evicted, because the new cold reads are all more recent.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "They stay, because they were read most often.",
+            "why": "You counted reads. LRU only looks at when each key was last used."
+          },
+          {
+            "id": "c",
+            "text": "They stay, because the cold symbols are evicted first.",
+            "why": "You treated cold keys as low priority. LRU cannot tell; each new read is the most recent."
+          },
+          {
+            "id": "d",
+            "text": "The cache fills up and the scan fails.",
+            "why": "A full cache evicts to make room. It never refuses a put."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does LRU use to choose a victim?"
+        },
+        {
+          "rung": "point",
+          "text": "Only the time of last use.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each cold read is newer than every hot read. Once the cache is full, the hot symbols are the oldest and go."
+        }
+      ],
+      "feedback": {
+        "correct": "A scan flushes the hot keys. LFU counts uses, so it keeps them.",
+        "generic": "Not quite right. LRU never looks at how many times a key was read.",
+        "byKey": {
+          "b": "LRU has no read counts. Hot only means used often, which it does not record.",
+          "c": "Nothing marks a key as cold. The newest read always survives longest.",
+          "d": "A put on a full cache evicts. It does not fail."
+        }
+      },
+      "explain": {
+        "text": "LRU orders by recency alone, so a scan of new keys makes every hot key the oldest. LFU keeps a count per key and evicts the lowest, so a key read once loses to a hot key. Homework 3 builds an LFU cache."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A hundred thousand puts",
+      "tags": [
+        "lru-cache"
+      ],
+      "prose": "A cache of 1,000 entries receives puts of keys 0 to 99,999 in order, each value equal to its key. Then it is asked for keys 99,000 to 99,999 in order, and last for key 0. A miss returns -1.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Step",
+            "Count"
+          ],
+          "rows": [
+            [
+              "Puts",
+              "100,000"
+            ],
+            [
+              "Capacity",
+              "1,000"
+            ],
+            [
+              "Gets of the newest keys",
+              "1,000"
+            ],
+            [
+              "Get of key 0",
+              "1"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the sum of the 1,001 results?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 99499499,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Sum",
+        "accept": "99,499,499: 99,499,500 for the hits, minus 1 for the miss",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 99499500
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which keys are still in the cache after the puts?"
+        },
+        {
+          "rung": "point",
+          "text": "The last 1,000 keys, 99,000 to 99,999.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The sum of 99,000 to 99,999 is $1{,}000 \\times 99{,}499.5 = 99{,}499{,}500$. Key 0 was evicted long ago: add -1."
+        }
+      ],
+      "feedback": {
+        "correct": "$99{,}499{,}500 - 1 = 99{,}499{,}499$.",
+        "generic": "Not quite right. Find which keys survive 100,000 puts into 1,000 slots.",
+        "byKey": {
+          "zero": "You gave the miss a value of 0. A miss returns -1."
+        }
+      },
+      "explain": {
+        "text": "Only the 1,000 newest keys survive, 99,000 to 99,999, and the gets in that order evict nothing. Their sum is $1{,}000 \\times (99{,}000 + 99{,}999) / 2 = 99{,}499{,}500$. Key 0 misses, so subtract 1."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A dict finds a key's node in one step. A doubly linked list with sentinels orders nodes by use, most recent at the head.",
+      "Every get and put moves its node to the front. A put of a stored key updates it and never evicts.",
+      "When entries also expire, the order of use is the order of expiry. A purge only ever looks at the tail."
+    ],
+    "formula": {
+      "name": "Cost of a call",
+      "tex": "\\text{get, put} = O(1)",
+      "note": "One hash lookup plus a fixed number of pointer changes."
+    },
+    "trap": "Evicting before looking the key up drops a live key when the put was only an update."
+  },
+  "quiz": [
+    {
+      "id": "q-evict",
+      "difficulty": 2,
+      "tags": [
+        "lru-cache"
+      ],
+      "question": "Capacity 2. Put 7 (value 70), put 9 (value 90), get 7, then put 4 (value 40). Which key is evicted?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Key 9",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Key 7",
+            "why": "You evicted the oldest put. The get of 7 made it recent."
+          },
+          {
+            "id": "c",
+            "text": "Key 4",
+            "why": "The new key is inserted, not evicted."
+          },
+          {
+            "id": "d",
+            "text": "None: the cache has room",
+            "why": "Two keys fill a cache of 2. The third needs room."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Key 9: after the get the order is 7, 9.",
+        "generic": "Not quite right. Write the order after each call.",
+        "byKey": {
+          "b": "The get of 7 moved it to the front, so key 9 is the least recent.",
+          "c": "The put adds key 4. Something else must leave.",
+          "d": "Capacity 2 means two entries at most."
+        }
+      },
+      "explain": {
+        "text": "After put 7 and put 9 the order is 9, 7. The get of 7 makes it 7, 9. The put of 4 drops the last one, key 9."
+      }
+    },
+    {
+      "id": "q-pointer",
+      "difficulty": 2,
+      "tags": [
+        "lru-cache"
+      ],
+      "question": "After `node.prev.next = node.next`, which assignment finishes unlinking `node`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`node.next.prev = node.prev`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`node.prev.prev = node.next`",
+            "why": "That changes the previous node's own `prev`, which is the wrong link."
+          },
+          {
+            "id": "c",
+            "text": "`node.next.next = node.prev`",
+            "why": "That points the next node's `next` backwards."
+          },
+          {
+            "id": "d",
+            "text": "`node.next = node.prev`",
+            "why": "That changes the node's own pointer. Its neighbours do not follow it."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The next node's `prev` must skip the node.",
+        "generic": "Not quite right. Which neighbour still points back at `node`?",
+        "byKey": {
+          "b": "The wrong node is rewired. The next node's `prev` still aims at `node`.",
+          "c": "That reverses a forward link and breaks the list.",
+          "d": "A node's own pointers do not matter once its neighbours skip it."
+        }
+      },
+      "explain": {
+        "text": "The first assignment made the previous node skip `node`. The next node's `prev` still points at it, so `node.next.prev = node.prev` finishes the job."
+      }
+    },
+    {
+      "id": "q-update",
+      "difficulty": 3,
+      "tags": [
+        "lru-cache"
+      ],
+      "question": "Capacity 1. Put 4 (value 8), put 4 (value 9), then get 4. What does the get return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 9,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Result",
+        "accept": "9: the second put updated the value",
+        "wrong": [
+          {
+            "id": "old",
+            "value": 8
+          },
+          {
+            "id": "miss",
+            "value": -1
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The second put replaced the value with 9.",
+        "generic": "Not quite right. A put of a stored key is an update.",
+        "byKey": {
+          "old": "You kept the first value. The second put replaces it.",
+          "miss": "You evicted key 4. An update needs no room, so it stays."
+        }
+      },
+      "explain": {
+        "text": "Key 4 is already stored, so the second put changes its value to 9 and evicts nothing. The get then finds it."
+      }
+    },
+    {
+      "id": "q-expiry",
+      "difficulty": 3,
+      "tags": [
+        "cache-ttl"
+      ],
+      "question": "With `ttl = 4`, a key is put at time 3 and read at time 6. If never used again, at what time does it expire?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Time",
+        "accept": "10: the read at 6 refreshed it, and 6 + 4 = 10",
+        "wrong": [
+          {
+            "id": "put",
+            "value": 7
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The read at 6 restarted the clock: $6 + 4 = 10$.",
+        "generic": "Not quite right. A use restarts the clock.",
+        "byKey": {
+          "put": "You counted from the put. The read at 6 refreshed the entry."
+        }
+      },
+      "explain": {
+        "text": "Expiry is `ttl` seconds after the last use, and a read is a use. The last use is at 6, so the entry expires at $6 + 4 = 10$."
+      }
+    }
+  ]
+}

@@ -1,0 +1,464 @@
+{
+  "id": "review-3",
+  "course": "coding-int",
+  "level": 3,
+  "items": [
+    {
+      "id": "r3-lru-sum",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "lru-cache"
+      ],
+      "prose": "Capacity 3, each value equal to its key. Operations: put 2, put 4, put 6, get 2, put 8. Then get 4, get 6, put 10, get 2, get 8.",
+      "question": "What is the sum of the get results? A miss returns -1.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 14,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Sum",
+        "accept": "14: the gets return 2, -1, 6, -1, 8",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 16
+          },
+          {
+            "id": "never",
+            "value": 22
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$2 - 1 + 6 - 1 + 8 = 14$.",
+        "generic": "Not quite right. Write the order after every call.",
+        "byKey": {
+          "zero": "You counted each miss as 0. A miss returns -1.",
+          "never": "You never evicted. Capacity 3 forces out the least recently used on puts 8 and 10."
+        }
+      },
+      "explain": {
+        "text": "After put 8 the order is 8, 2, 6, so key 4 is gone. After put 10 it is 10, 6, 8, so key 2 is gone. The gets are 2, -1, 6, -1, 8, which sum to 14."
+      }
+    },
+    {
+      "id": "r3-lru-evicted",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "lru-cache"
+      ],
+      "question": "Capacity 3. Put 12, 15 and 11, then get 12, then put 14. Which key was evicted?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Key 15",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Key 12",
+            "why": "You evicted the oldest put. The get of 12 made it recent."
+          },
+          {
+            "id": "c",
+            "text": "Key 11",
+            "why": "You evicted the newest put. LRU drops the oldest use."
+          },
+          {
+            "id": "d",
+            "text": "Key 14",
+            "why": "Key 14 is the new key. It goes in, not out."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The order was 11, 15, 12, then 12, 11, 15: key 15 was last.",
+        "generic": "Not quite right. Write the order after each call.",
+        "byKey": {
+          "b": "The get refreshed key 12, so it is the most recent.",
+          "c": "Key 11 is the second most recent after the get.",
+          "d": "The put adds key 14. Something else leaves."
+        }
+      },
+      "explain": {
+        "text": "After the puts the order is 11, 15, 12. The get of 12 makes it 12, 11, 15. The put of 14 drops the last, key 15."
+      }
+    },
+    {
+      "id": "r3-ttl-misses",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "cache-ttl"
+      ],
+      "prose": "A TTL cache with capacity 2 and `ttl` 3. Key 1 is put at time 0. Then it is read at times 2, 5, 6 and 9.",
+      "question": "How many of the gets return -1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Misses",
+        "accept": "3: the gets at 5, 6 and 9",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1
+          },
+          {
+            "id": "none",
+            "value": 0
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The get at 2 hits and refreshes. The gets at 5, 6 and 9 miss.",
+        "generic": "Not quite right. Find each entry's age at each get.",
+        "byKey": {
+          "one": "You let the entry live at age 3. An age equal to the `ttl` has expired, so the get at 5 already misses.",
+          "none": "You never expired anything. The entry is gone once its age reaches the `ttl`."
+        }
+      },
+      "explain": {
+        "text": "The get at 2 has age 2, so it hits and refreshes the entry to time 2. At 5 the age is 3, which equals the `ttl`, so the entry is gone. The gets at 6 and 9 find nothing."
+      }
+    },
+    {
+      "id": "r3-fs-size",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "recursive-size"
+      ],
+      "prose": "Files: `/var/a/one.txt` holds `123456`, `/var/a/two.txt` holds `12345678901`, and `/var/b.txt` holds `1234`.",
+      "question": "What is `size('/var')`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Characters",
+        "accept": "21: 6 + 11 + 4",
+        "wrong": [
+          {
+            "id": "sub",
+            "value": 17
+          },
+          {
+            "id": "shallow",
+            "value": 4
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$6 + 11 + 4 = 21$.",
+        "generic": "Not quite right. Add every file under `/var`, at any depth.",
+        "byKey": {
+          "sub": "You totalled `/var/a` only. `/var/b.txt` sits directly in `/var`.",
+          "shallow": "You counted only the file directly in `/var`. The subfolder counts too."
+        }
+      },
+      "explain": {
+        "text": "The folder `/var/a` holds files of 6 and 11 characters, so its size is 17. The file `/var/b.txt` adds 4. The total is 21."
+      }
+    },
+    {
+      "id": "r3-fs-ls",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "file-system"
+      ],
+      "prose": "Calls in order: `mkdir('/y')`, `mkdir('/x')`, `write('/m.txt', '9')`, `write('/y/k.txt', '9')`.",
+      "question": "What does `ls('/')` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`['m.txt', 'x', 'y']`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`['y', 'x', 'm.txt']`",
+            "why": "You listed in creation order, reversed. `ls` returns sorted names."
+          },
+          {
+            "id": "c",
+            "text": "`['x', 'y']`",
+            "why": "You listed folders only. Files and folders are listed together."
+          },
+          {
+            "id": "d",
+            "text": "`['m.txt', 'x', 'y', 'k.txt']`",
+            "why": "You went one level too deep. `k.txt` is inside `y`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Sorted: files and folders together, direct children only.",
+        "generic": "Not quite right. List the direct children, sorted.",
+        "byKey": {
+          "b": "Creation order is not the rule. Sort the names.",
+          "c": "A file in the root is a child of the root.",
+          "d": "`ls` is not recursive."
+        }
+      },
+      "explain": {
+        "text": "The root's children are `y`, `x` and `m.txt`. Sorted, they read `m.txt`, `x`, `y`. The file `k.txt` is inside `y`, so it is not listed."
+      }
+    },
+    {
+      "id": "r3-fifo",
+      "difficulty": 3,
+      "skills": [
+        "ci-design",
+        "ci-timed"
+      ],
+      "tags": [
+        "fifo-lots"
+      ],
+      "prose": "A desk buys 200 shares at £20, buys 100 at £23, then sells 250 at £25.",
+      "question": "Under FIFO, what does the sale realise, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1100,
+        "tol": {
+          "abs": 0
+        },
+        "label": "£",
+        "accept": "1,100: 200 x 5 + 50 x 2",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "average",
+            "value": 1000
+          },
+          {
+            "id": "newest",
+            "value": 950
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$200 \\times 5 + 50 \\times 2 = £1{,}100$.",
+        "generic": "Not quite right. Sell the oldest lot first.",
+        "byKey": {
+          "average": "You used the average cost of £21. FIFO uses each lot's own price.",
+          "newest": "You sold from the £23 lot first. FIFO starts with the oldest shares."
+        }
+      },
+      "explain": {
+        "text": "The sale of 250 takes all 200 shares at £20, then 50 at £23. That realises $200 \\times (25 - 20) + 50 \\times (25 - 23) = 1{,}100$. The average cost of £21 would give 1,000."
+      }
+    },
+    {
+      "id": "r3-default-arg",
+      "difficulty": 3,
+      "skills": [
+        "ci-design",
+        "ci-timed"
+      ],
+      "tags": [
+        "requirements-change"
+      ],
+      "question": "Why does `trade(symbol, qty, price=0)` keep the stage 1 tests passing?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Old calls pass two arguments, and the default fills the third.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Python ignores extra arguments.",
+            "why": "You mixed up extra and missing. Python raises an error for extra arguments."
+          },
+          {
+            "id": "c",
+            "text": "The old tests are not run again.",
+            "why": "They are run again. That is how a break would show."
+          },
+          {
+            "id": "d",
+            "text": "A `price` argument is optional in every language.",
+            "why": "An argument is optional only when the signature gives it a default."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The default makes the new argument optional.",
+        "generic": "Not quite right. Count the arguments in the old call.",
+        "byKey": {
+          "b": "The old call has too few arguments, not too many.",
+          "c": "Running the old tests is the check.",
+          "d": "Optional arguments exist only with a default value."
+        }
+      },
+      "explain": {
+        "text": "The old call passes two arguments. With `price=0` the third is optional, so Python fills it in. Without the default the call raises `TypeError`."
+      }
+    },
+    {
+      "id": "r3-window-accept",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "rate-limit-log"
+      ],
+      "prose": "One user, limit 2, window 5. Requests arrive at times 0, 1, 2, 5, 6 and 7. A refused request is not recorded.",
+      "question": "How many requests are accepted?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Accepted",
+        "accept": "4: the requests at 0, 1, 5 and 6",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3
+          },
+          {
+            "id": "two",
+            "value": 2
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "T, T, F, T, T, F: four accepted.",
+        "generic": "Not quite right. Drop old times before each decision.",
+        "byKey": {
+          "three": "You kept the time 0 alive at 5. The cut-off is 0, and 0 is not above 0.",
+          "two": "You recorded the refused request at 2, so the log stayed full."
+        }
+      },
+      "explain": {
+        "text": "The times 0 and 1 are accepted and 2 is refused. At 5 the time 0 has left, so 5 is accepted. At 6 the time 1 has left, so 6 is accepted, and 7 meets a full log."
+      }
+    },
+    {
+      "id": "r3-bucket-accept",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "token-bucket"
+      ],
+      "prose": "A token bucket has capacity 4 and rate 2. Requests arrive at times 0, 0, 0, 0, 0, 1, 1, 1, 2 and 9.",
+      "question": "How many requests are accepted?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Accepted",
+        "accept": "8: four at time 0, two at 1, one at 2 and one at 9",
+        "wrong": [
+          {
+            "id": "noRefill",
+            "value": 4
+          },
+          {
+            "id": "all",
+            "value": 10
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$4 + 2 + 1 + 1 = 8$.",
+        "generic": "Not quite right. Add the refill before each time's requests.",
+        "byKey": {
+          "noRefill": "You gave the bucket no refill. It adds 2 tokens a second.",
+          "all": "You accepted every request. The fifth at time 0 and the third at time 1 meet an empty bucket."
+        }
+      },
+      "explain": {
+        "text": "Time 0 spends all 4 tokens and refuses the fifth request. Time 1 adds 2 tokens, so 2 pass and the third is refused. Time 2 adds 2 and one passes, and by time 9 the bucket is full again."
+      }
+    },
+    {
+      "id": "r3-ring",
+      "difficulty": 3,
+      "skills": [
+        "ci-design"
+      ],
+      "tags": [
+        "rate-limit-window"
+      ],
+      "prose": "A hit counter only needs the last 300 seconds. It keeps a ring of 300 buckets, one per second.",
+      "question": "What does the ring cost as traffic grows?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A constant 300 slots, however many hits arrive",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Memory that grows with the number of hits",
+            "why": "You stored every hit. The ring stores one count per second slot."
+          },
+          {
+            "id": "c",
+            "text": "Memory that grows with the seconds since the start",
+            "why": "Slots are reused as time wraps round, so old seconds are overwritten."
+          },
+          {
+            "id": "d",
+            "text": "Memory that grows with the busiest second",
+            "why": "A slot holds one number, whether it counts 1 hit or 1,000."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The ring never grows: 300 slots of two numbers.",
+        "generic": "Not quite right. Count the slots, not the hits.",
+        "byKey": {
+          "b": "A busy second adds to one counter. It adds no slot.",
+          "c": "The index `t % 300` reuses slots.",
+          "d": "A counter stores one number whatever its size."
+        }
+      },
+      "explain": {
+        "text": "A ring of 300 slots keeps one count per second of the last 300 seconds. A new second overwrites the slot of the second 300 earlier. So memory is fixed."
+      }
+    }
+  ]
+}
