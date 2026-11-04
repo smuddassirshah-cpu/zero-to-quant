@@ -179,3 +179,20 @@ Choice options (text rewritten, key meaning unchanged):
 - `l4-measurable-functions` s2
 - `review-1` `r-borel`
 - `homework-1` h-cantor part 3 (new question, options and key)
+
+## Recheck
+
+Method: brute force in CPython (walk paths, dice cells), closed forms, and the engine's `r{row}c{col}` zero-based cell ids and `same` handling. Code run under `python3 -I` in the scratchpad folder `rc-mp1`. Validator 0 errors.
+
+- `l3` s0 table, byKey ids: n = 1 to 4 give 1/2, 1/2, 5/8, 5/8 (all 2^n paths enumerated). `r0c1`, `r1c1`, `r2c1`, `r3c1` now name n = 1, 2, 3, 4 and each text matches its row (5 of 8 paths, 10 of 16 paths). OK.
+- `homework-1` h-var part 3, `pos` -3646 (tol 1): 0.75 + 0.25(1 - e^{-x/20000}) = 0.70 gives e^{-x/20000} = 1.2, x = -20000 ln 1.2 = -3646.43. Text matches the slip. Answer 0 unchanged. OK.
+- `l3` quiz `q-union`, `indep` 1.9850: 1 - 0.995^4 = 0.019850499 and the inclusion-exclusion sum agree, 1.98505 % rounds to 1.9850; no 1.9851 remains in the course. OK.
+- `l4` s8 code, test 8 `equal`: solution 12/12 (10 tests + 2 examples); the natural `sum(...)` without `Fraction(0)` also 12/12; starter 0/12. OK.
+- `homework-1` h-order `same` [o3, o4]: o4 needs only o1, o2 and finiteness, o5 needs both, so both orders are valid; no other line can move (o1, o2 precede both; o5 last). OK.
+- `review-1` r-dice `six` 0.1667: products at least 24 are 6 cells (6/36), dropping the two product-20 cells (4,5) and (5,4); key 8/36 = 0.2222 (8 cells; products over 24 would be 4 cells, so the old text was wrong and the new text is right). OK.
+- `review-1` r-which option c `why`: the complement of {1} is {2,3,4}, unlisted; {1,2} unlisted. Both claims true. OK.
+- `l1` s1 `tiny` 0.001: half-width 0.0004 gives chance 2 x 0.0004 = 0.0008, below 0.001. OK.
+- `homework-1` h-cantor part 3 (new): key (E countable, stage by stage) is correct; distractor b is false (1/4 = 0.0202..._3 is in the Cantor set and is not an end point), distractor c is false (each stage adds finitely many). No number appears in it, and no other measure-prob file asks about the end-point set; `l1` q-cantor option c only mentions end points as a wrong reason for "countable". Parts 1 and 2 (stage 18, 262,144) were already fresh. OK. See note below.
+- Nine rebalanced choice keys (`l1` s5, `q-cantor`, `q-vitali`; `l2` s6, s9, `q-irr`; `l3` s8; `l4` s2; `r-borel`): each key is still the single correct option, and each lengthened distractor is still false and keeps a matching `why` (for example {3} is finite so in the family, N is the complement of the empty set, the Vitali set is not Borel). No distractor became correct. OK.
+
+New mismatches: none that affect a key. One note: the h-cantor part 3 explanation says "Stage n has 2^n intervals, so at most 2^{n+1} end points". Those are the end points of the remaining intervals, a superset of E (the removed intervals' end points, 2^n at stage n). The conclusion holds. Optional wording fix: "Stage $n$ removes $2^{n-1}$ intervals, so it adds $2^n$ end points."
