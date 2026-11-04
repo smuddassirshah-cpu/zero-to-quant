@@ -1,0 +1,1766 @@
+{
+ "id": "l11-feynman-kac",
+ "course": "pdes",
+ "title": "Expectations solve equations",
+ "minutes": 15,
+ "objectives": [
+  "Use Feynman-Kac to write a pricing equation's solution as an expectation, and check it by simulation",
+  "Choose the drift and discounting a pricing simulation must use"
+ ],
+ "skills": [
+  "pe-fk"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A call's price is an average, so we can simulate it. Each path is $\\ln S$ for the share, with drift $r - \\tfrac12\\sigma^2$. The lower panel shows the running mean of $e^{-rT}\\max(S_T - 100, 0)$ as paths accumulate. A batch of 2,000 has a standard error of about £0.33. Press New paths a few times.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 3
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 230,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    },
+    "derive": {
+     "caption": "Mean of {{values.paths}} discounted payoffs: £{{fixed(values.stoppedPay, 2)}}, standard error £{{fixed(values.stoppedPaySE, 2)}}"
+    },
+    "controls": [
+     {
+      "reseed": true,
+      "label": "New paths"
+     }
+    ]
+   },
+   "question": "What does the running mean do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "settle",
+      "text": "It settles within a few standard errors of £10.45, the formula's price",
+      "correct": true
+     },
+     {
+      "id": "exact",
+      "text": "It settles on £10.4506 exactly, every batch",
+      "why": "Each batch of 2,000 has sampling error of about £0.33. The mean lands near the price, not on it."
+     },
+     {
+      "id": "wander",
+      "text": "It keeps wandering with no limit",
+      "why": "Its wobble shrinks like $1/\\sqrt{n}$, so the line flattens as paths accumulate."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the running-mean panel as the paths build up, then press New paths."
+    },
+    {
+     "rung": "point",
+     "text": "The dashed line marks the starting value of the mean panel. Look at where the new batches end.",
+     "highlight": [
+      "stopped-pay"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Several batches land on both sides of £10.45, each within about two standard errors."
+    }
+   ],
+   "feedback": {
+    "correct": "Each batch lands within a few standard errors of £10.4506, on both sides.",
+    "generic": "Not quite right. Press New paths several times and compare where the running means end."
+   },
+   "explain": {
+    "text": "The average of discounted payoffs is the price of the call, with a sampling error that shrinks as $1/\\sqrt{n}$. For 2,000 paths the error is £0.33, so a batch can be £0.7 away. The exact value it converges to is £10.4506."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Feynman-Kac starts with the heat equation. The function $u(x, t) = E[f(x + W_t)]$, with $W_t$ a Brownian motion, solves $u_t = \\tfrac12u_{xx}$. Take $f(x) = x^2$, so $u(x, t) = E[(x + W_t)^2]$, with $E[W_t] = 0$ and $E[W_t^2] = t$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      0,
+      12
+     ],
+     "height": 250,
+     "xLabel": "$x$",
+     "yLabel": "$u(x, t)$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2",
+       "label": "$f(x) = x^2$",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u",
+       "expr": "x^2+t",
+       "label": "$u(x, t)$",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "t": 0.5
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 1,
+       "y": 1.5,
+       "on": "u",
+       "label": "$x = 1$"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "label": "Time $t$",
+      "start": 0.5,
+      "decimals": 1
+     }
+    ]
+   },
+   "question": "What is $u(1, 0.5)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "1.5: $x^2 + t = 1 + 0.5$.",
+    "label": "$u(1, 0.5)$",
+    "placeholder": "for example 1",
+    "wrong": [
+     {
+      "id": "no-noise",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "t-only",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Expand $(x + W_t)^2 = x^2 + 2xW_t + W_t^2$ and take the mean."
+    },
+    {
+     "rung": "point",
+     "text": "The solid curve is $u$. It lifts by $t$ everywhere.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$E[(1 + W_{0.5})^2] = 1 + 0 + 0.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "$u(x, t) = x^2 + t$, which is 1.5 at $x = 1$ and $t = 0.5$.",
+    "generic": "Not quite right. Expand the square and use $E[W_t] = 0$ and $E[W_t^2] = t$.",
+    "byKey": {
+     "no-noise": "1 is $f(1)$, the start. You left out the average of $W_t^2$, which is $t$.",
+     "t-only": "0.5 is the noise term alone. The start value $x^2 = 1$ is still there."
+    }
+   },
+   "explain": {
+    "text": "By substitution, $u_t = 1$ and $\\tfrac12u_{xx} = \\tfrac12 \\times 2 = 1$, so $x^2 + t$ solves the equation. A simulation of 100,000 draws from `default_rng(5)` gives 1.5001, standard error 0.0050. The average over noise solves the PDE."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Now a general process $dX = \\mu(X)\\,dt + \\sigma(X)\\,dW$ and a rate $r$. We claim $V(t, x) = E\\left[e^{-r(T-t)}h(X_T)\\mid X_t = x\\right]$ solves $V_t + \\mu V_x + \\tfrac12\\sigma^2V_{xx} - rV = 0$. Leave out the two flawed lines.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 3
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 240,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    }
+   },
+   "question": "Put the lines of the argument in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "f1",
+      "text": "Let $M_s = e^{-rs}V(s, X_s)$, the discounted value of the claim along a path."
+     },
+     {
+      "id": "f2",
+      "text": "Itô's lemma (`ito` lesson 6): $dM = e^{-rs}\\left(V_t + \\mu V_x + \\tfrac12\\sigma^2V_{xx} - rV\\right)ds + e^{-rs}\\sigma V_x\\,dW$."
+     },
+     {
+      "id": "f3",
+      "text": "If $V$ solves the equation, the $ds$ term is 0, so $M$ has no drift and is a martingale."
+     },
+     {
+      "id": "f4",
+      "text": "A martingale keeps its mean: $M_t = E[M_T \\mid X_t]$."
+     },
+     {
+      "id": "f5",
+      "text": "Put $M_T = e^{-rT}h(X_T)$ and divide by $e^{-rt}$: this is the formula for $V(t, x)$."
+     },
+     {
+      "id": "d1",
+      "text": "Use the real-world drift of the share for $\\mu$ whatever the equation says.",
+      "why": "The equation fixes $\\mu$. In Black-Scholes the hedge removed the real drift, so $\\mu = rS$."
+     },
+     {
+      "id": "d2",
+      "text": "Drop $\\tfrac12\\sigma^2V_{xx}$ as second order.",
+      "why": "Itô's lemma keeps it, because $(dW)^2 = dt$ is first order in time."
+     }
+    ],
+    "answer": [
+     "f1",
+     "f2",
+     "f3",
+     "f4",
+     "f5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build a discounted process, find its drift, and set that drift to 0."
+    },
+    {
+     "rung": "point",
+     "text": "A martingale has no $ds$ term. That term is the equation.",
+     "highlight": [
+      "stopped-pay"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Order: define $M$, apply Itô, require a martingale, use constant mean, read off $V$."
+    }
+   ],
+   "feedback": {
+    "correct": "The equation says $M$ is a martingale, and the formula is that martingale's constant mean.",
+    "generic": "Not quite right. Each line should follow from the line before it."
+   },
+   "explain": {
+    "text": "The drift of $M$ is the left side of the equation, times $e^{-rs}$. Setting it to 0 makes $M$ a martingale, so its mean at $T$ equals its value now. Discounting by $e^{-r(T-t)}$ is the $-rV$ term."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 3,
+   "prose": "Feynman-Kac: if $dX = \\mu(X)\\,dt + \\sigma(X)\\,dW$, then $V(t, x) = E\\left[e^{-r(T-t)}h(X_T)\\mid X_t = x\\right]$ solves $V_t + \\mu V_x + \\tfrac12\\sigma^2V_{xx} - rV = 0$ with $V(T, x) = h(x)$. The walk you simulated is the case $X = S$.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 3
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 240,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    }
+   },
+   "question": "For the call, what are $\\mu(S)$ and $\\sigma(S)$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bs",
+      "text": "$\\mu(S) = rS$ and $\\sigma(S) = \\sigma S$",
+      "correct": true
+     },
+     {
+      "id": "real",
+      "text": "$\\mu(S) = 0.12S$ and $\\sigma(S) = \\sigma S$",
+      "why": "That is the real-world drift. The Black-Scholes equation holds $rS$, because the hedge removed $\\mu$."
+     },
+     {
+      "id": "const",
+      "text": "$\\mu(S) = r$ and $\\sigma(S) = \\sigma$",
+      "why": "Both are proportional to $S$: the share moves in percentages, so its drift and volatility scale with $S$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Match $V_t + \\mu V_x + \\tfrac12\\sigma^2V_{xx} - rV$ to $V_t + rSV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV$."
+    },
+    {
+     "rung": "point",
+     "text": "The walk's drift per step is $(r - \\tfrac12\\sigma^2)\\Delta t$ in $\\ln S$.",
+     "highlight": [
+      "path0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The $V_S$ coefficient is $rS$ and the $V_{SS}$ coefficient is $\\tfrac12(\\sigma S)^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mu = rS$ and $\\sigma(S) = \\sigma S$ give exactly the Black-Scholes equation.",
+    "generic": "Not quite right. Compare the coefficients of $V_S$ and $V_{SS}$ with those of Black-Scholes."
+   },
+   "explain": {
+    "text": "Feynman-Kac with $\\mu = rS$ and $\\sigma(S) = \\sigma S$ says $V = e^{-rT}E[(S_T - K)^+]$, which is what the simulation averaged. The heat equation is the case $\\mu = 0$, $\\sigma = 1$, $r = 0$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "On 100,000 seeded draws the average is £10.4534, with standard error £0.0465 (the same draws as `ito` lesson 11). The standard error scales as $1/\\sqrt{n}$. The canvas uses 2,000 paths.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 3
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 230,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    },
+    "derive": {
+     "caption": "Mean of {{values.paths}} discounted payoffs: £{{fixed(values.stoppedPay, 2)}}, standard error £{{fixed(values.stoppedPaySE, 2)}}"
+    },
+    "controls": [
+     {
+      "reseed": true,
+      "label": "New paths"
+     }
+    ]
+   },
+   "question": "What standard error does a batch of 2,000 have, in £? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.33,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£0.33: $0.0465 \\times \\sqrt{50}$.",
+    "label": "Standard error",
+    "unit": "£",
+    "placeholder": "for example 0.5",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 2.33,
+      "tol": {
+       "abs": 0.03
+      }
+     },
+     {
+      "id": "inverse",
+      "value": 0.0066,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "There are 50 times fewer paths. How does the error change?"
+    },
+    {
+     "rung": "point",
+     "text": "The caption's standard error should agree with your answer.",
+     "highlight": [
+      "stopped-pay"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{100{,}000/2{,}000} = \\sqrt{50} = 7.07$, so multiply $0.0465$ by 7.07."
+    }
+   ],
+   "feedback": {
+    "correct": "The standard error is $0.0465 \\times 7.07 = \\text{£}0.33$.",
+    "generic": "Not quite right. Error scales with $1/\\sqrt{n}$, so work out the ratio of the paths first.",
+    "byKey": {
+     "linear": "£2.33 multiplies by 50. Error scales with $\\sqrt{n}$, so with fewer paths it grows by $\\sqrt{50} = 7.07$.",
+     "inverse": "£0.0066 divides by $\\sqrt{50}$. Fewer paths make the error larger, so multiply."
+    }
+   },
+   "explain": {
+    "text": "With 50 times fewer paths the error is $\\sqrt{50} = 7.07$ times larger, which is £0.33. The 100,000-draw average, £10.4534, is within 0.06 standard errors of the formula's £10.4506. A batch of 2,000 is within a few tenths of a pound."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A junior simulates with the share's real drift, 12% a year, but still discounts at $r = 5\\%$. On 100,000 draws she gets £15.5343 and calls the model rich. Pick the drift for the walk.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 3
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 230,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    },
+    "derive": {
+     "caption": "Mean of {{values.paths}} discounted payoffs: £{{fixed(values.stoppedPay, 2)}}, standard error £{{fixed(values.stoppedPaySE, 2)}}"
+    },
+    "controls": [
+     {
+      "reseed": true,
+      "label": "New paths"
+     }
+    ]
+   },
+   "question": "Which drift should the simulation use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rn",
+      "text": "The rate $r$, because the hedge removes the real drift and the equation holds $rS$",
+      "correct": true
+     },
+     {
+      "id": "real",
+      "text": "The real drift of 12%, because that is how the share behaves",
+      "why": "The Black-Scholes equation has no $\\mu$. Using 12% on the same draws gives £15.5343 (exactly £15.5261), 49% too high.",
+      "canvas": {
+       "params": {
+        "mu": 0.002
+       }
+      }
+     },
+     {
+      "id": "zero",
+      "text": "No drift at all, since pricing is about volatility",
+      "why": "With no drift the forward is £100 in a year. It costs £100e^{0.05} = £105.13, so the model would offer an arbitrage."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which drift appears in the equation we are solving?"
+    },
+    {
+     "rung": "point",
+     "text": "The drift per step in $\\ln S$ is $(\\mu - \\tfrac12\\sigma^2)\\Delta t$.",
+     "highlight": [
+      "path0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The equation is $V_t + rSV_S + \\dots$, so the drift is $r$."
+    }
+   ],
+   "feedback": {
+    "correct": "Simulate with drift $r$ and discount at $r$: that is the equation Feynman-Kac solves.",
+    "generic": "Not quite right. Look at the coefficient of $V_S$ in the equation.",
+    "byKey": {
+     "real": "You chose the real drift. The hedge removed it, so it is not in the equation, and the price comes out £5 too high.",
+     "zero": "You chose no drift. The equation holds $rS$, so the forward would be priced below its true £105.13."
+    }
+   },
+   "explain": {
+    "text": "Feynman-Kac uses the drift in the equation, which is $rS$. The real drift cancelled when the book was hedged (`ito` lesson 9). With 12% the expected payoff is £15.5261, and discounting at 5% does not fix it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "A second slip is to average the payoffs and forget the discount. The simulation with drift $r$ is right, but the factor $e^{-rT}$ is missing. On the same 100,000 draws the average payoff is £10.9893.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 3
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 230,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    },
+    "derive": {
+     "caption": "Mean of {{values.paths}} discounted payoffs: £{{fixed(values.stoppedPay, 2)}}, standard error £{{fixed(values.stoppedPaySE, 2)}}"
+    },
+    "controls": [
+     {
+      "reseed": true,
+      "label": "New paths"
+     }
+    ]
+   },
+   "question": "What does the undiscounted average converge to, in £? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.9864,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "£10.9864: $10.4506 \\times e^{0.05}$.",
+    "label": "Value",
+    "unit": "£",
+    "placeholder": "for example 11",
+    "wrong": [
+     {
+      "id": "price",
+      "value": 10.4506,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Undiscounted means the price multiplied back up by $e^{rT}$."
+    },
+    {
+     "rung": "point",
+     "text": "The overlay is already discounted. Without the factor, each payoff is larger by $e^{0.05}$.",
+     "highlight": [
+      "ov-pay"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$10.4506 \\times e^{0.05} = 10.4506 \\times 1.051271$."
+    }
+   ],
+   "feedback": {
+    "correct": "It converges to £10.9864, and the sample gives £10.9893.",
+    "generic": "Not quite right. Multiply the price by $e^{rT}$.",
+    "byKey": {
+     "price": "£10.4506 is the discounted value. The undiscounted average is larger by $e^{rT} = 1.0513$."
+    }
+   },
+   "explain": {
+    "text": "$10.4506 \\times 1.051271 = 10.9864$. The sample, £10.9893, is within 0.0029 of that. Discounting by $e^{-r(T-t)}$ is the killing term $-rV$ in the equation."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "The discount rate may be random. A zero-coupon bond pays £1 at $T = 5$, and the rate follows $dr = \\kappa(\\theta - r)\\,dt + \\sigma\\,dW$ with $\\kappa = 0.5$, $\\theta = 4\\%$, $r_0 = 6\\%$, $\\sigma = 1\\%$. Then $P = E\\left[e^{-\\int_0^T r\\,dt}\\right]$. The chart is a seeded run: `default_rng(21)`, 20,000 paths, standard error 0.000171.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "rm",
+       "label": "Running mean",
+       "values": [
+        0.789602,
+        0.78992,
+        0.791349,
+        0.790984,
+        0.790344,
+        0.790432,
+        0.789977,
+        0.790246,
+        0.790238,
+        0.789874,
+        0.789861,
+        0.790092,
+        0.78986,
+        0.789952,
+        0.789846,
+        0.789703,
+        0.789512,
+        0.78952,
+        0.789749,
+        0.789648,
+        0.789562,
+        0.789587,
+        0.789569,
+        0.78936,
+        0.789378,
+        0.789266,
+        0.789328,
+        0.789468,
+        0.789585,
+        0.78957,
+        0.789721,
+        0.789799,
+        0.789809,
+        0.789807,
+        0.789767,
+        0.789789,
+        0.789693,
+        0.789633,
+        0.78962,
+        0.789603,
+        0.789605,
+        0.789486,
+        0.789525,
+        0.789528,
+        0.789518,
+        0.789607,
+        0.789578,
+        0.789645,
+        0.789567,
+        0.789582,
+        0.7896,
+        0.789568,
+        0.789561,
+        0.789611,
+        0.789627,
+        0.789605,
+        0.789614,
+        0.789689,
+        0.789648,
+        0.789607,
+        0.789621,
+        0.789659,
+        0.789665,
+        0.789622,
+        0.789627,
+        0.789653,
+        0.789611,
+        0.78958,
+        0.789563,
+        0.789556,
+        0.7896,
+        0.789584,
+        0.789654,
+        0.789599,
+        0.789582,
+        0.789564,
+        0.789456,
+        0.78946,
+        0.789491,
+        0.789505,
+        0.789549,
+        0.789512,
+        0.789529,
+        0.78949,
+        0.789495,
+        0.789531,
+        0.789533,
+        0.789592,
+        0.789606,
+        0.789578,
+        0.789557,
+        0.789535,
+        0.789546,
+        0.789569,
+        0.78957,
+        0.789559,
+        0.789589,
+        0.789626,
+        0.789639,
+        0.78964,
+        0.789595,
+        0.789625,
+        0.789596,
+        0.789615,
+        0.789654,
+        0.78965,
+        0.789689,
+        0.78969,
+        0.789697,
+        0.789685,
+        0.789658,
+        0.789653,
+        0.789645,
+        0.789615,
+        0.789614,
+        0.7896,
+        0.789627,
+        0.789617,
+        0.78962,
+        0.789614,
+        0.789602,
+        0.78961,
+        0.789622,
+        0.789639,
+        0.789645,
+        0.789613,
+        0.789596,
+        0.789607,
+        0.789609,
+        0.789629,
+        0.789621,
+        0.789611,
+        0.78957,
+        0.789598,
+        0.789566,
+        0.789567,
+        0.789578,
+        0.789571,
+        0.789562,
+        0.78954,
+        0.789549,
+        0.789543,
+        0.789554,
+        0.789566,
+        0.789582,
+        0.789583,
+        0.789588,
+        0.789584,
+        0.789542,
+        0.78954,
+        0.789556,
+        0.789554,
+        0.789553,
+        0.789558,
+        0.789543,
+        0.789539,
+        0.789564,
+        0.789551,
+        0.789528,
+        0.789512,
+        0.789524,
+        0.789545,
+        0.789538,
+        0.78954,
+        0.78954,
+        0.789549,
+        0.789535,
+        0.789528,
+        0.789521,
+        0.789495,
+        0.789498,
+        0.7895,
+        0.789486,
+        0.789491,
+        0.789479,
+        0.789475,
+        0.789476,
+        0.78949,
+        0.789471,
+        0.789474,
+        0.789454,
+        0.789468,
+        0.789466,
+        0.789463,
+        0.789458,
+        0.789467,
+        0.789476,
+        0.789467,
+        0.789462,
+        0.789441,
+        0.789426,
+        0.789443,
+        0.789445,
+        0.789448,
+        0.789449,
+        0.789472,
+        0.789492,
+        0.789494,
+        0.789507,
+        0.78953
+       ]
+      }
+     ],
+     "x": "index",
+     "xValues": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900,
+      1000,
+      1100,
+      1200,
+      1300,
+      1400,
+      1500,
+      1600,
+      1700,
+      1800,
+      1900,
+      2000,
+      2100,
+      2200,
+      2300,
+      2400,
+      2500,
+      2600,
+      2700,
+      2800,
+      2900,
+      3000,
+      3100,
+      3200,
+      3300,
+      3400,
+      3500,
+      3600,
+      3700,
+      3800,
+      3900,
+      4000,
+      4100,
+      4200,
+      4300,
+      4400,
+      4500,
+      4600,
+      4700,
+      4800,
+      4900,
+      5000,
+      5100,
+      5200,
+      5300,
+      5400,
+      5500,
+      5600,
+      5700,
+      5800,
+      5900,
+      6000,
+      6100,
+      6200,
+      6300,
+      6400,
+      6500,
+      6600,
+      6700,
+      6800,
+      6900,
+      7000,
+      7100,
+      7200,
+      7300,
+      7400,
+      7500,
+      7600,
+      7700,
+      7800,
+      7900,
+      8000,
+      8100,
+      8200,
+      8300,
+      8400,
+      8500,
+      8600,
+      8700,
+      8800,
+      8900,
+      9000,
+      9100,
+      9200,
+      9300,
+      9400,
+      9500,
+      9600,
+      9700,
+      9800,
+      9900,
+      10000,
+      10100,
+      10200,
+      10300,
+      10400,
+      10500,
+      10600,
+      10700,
+      10800,
+      10900,
+      11000,
+      11100,
+      11200,
+      11300,
+      11400,
+      11500,
+      11600,
+      11700,
+      11800,
+      11900,
+      12000,
+      12100,
+      12200,
+      12300,
+      12400,
+      12500,
+      12600,
+      12700,
+      12800,
+      12900,
+      13000,
+      13100,
+      13200,
+      13300,
+      13400,
+      13500,
+      13600,
+      13700,
+      13800,
+      13900,
+      14000,
+      14100,
+      14200,
+      14300,
+      14400,
+      14500,
+      14600,
+      14700,
+      14800,
+      14900,
+      15000,
+      15100,
+      15200,
+      15300,
+      15400,
+      15500,
+      15600,
+      15700,
+      15800,
+      15900,
+      16000,
+      16100,
+      16200,
+      16300,
+      16400,
+      16500,
+      16600,
+      16700,
+      16800,
+      16900,
+      17000,
+      17100,
+      17200,
+      17300,
+      17400,
+      17500,
+      17600,
+      17700,
+      17800,
+      17900,
+      18000,
+      18100,
+      18200,
+      18300,
+      18400,
+      18500,
+      18600,
+      18700,
+      18800,
+      18900,
+      19000,
+      19100,
+      19200,
+      19300,
+      19400,
+      19500,
+      19600,
+      19700,
+      19800,
+      19900,
+      20000
+     ],
+     "xScale": "log",
+     "y": [
+      0.7885,
+      0.7905
+     ],
+     "height": 270,
+     "decimals": 4,
+     "xLabel": "Paths (log scale)",
+     "yLabel": "Bond price",
+     "hlines": [
+      {
+       "id": "closed",
+       "y": 0.789581,
+       "label": "closed form 0.789581",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "nonoise",
+       "y": 0.789215,
+       "label": "no noise 0.789215",
+       "dashed": true,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many standard errors below the closed form is the no-noise price 0.789215?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.1,
+    "tol": {
+     "abs": 0.1
+    },
+    "accept": "2.1: $(0.789581 - 0.789215)/0.000171 = 2.14$.",
+    "label": "Standard errors",
+    "placeholder": "for example 1",
+    "wrong": [
+     {
+      "id": "mc-gap",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Take the gap between the two reference lines and divide by 0.000171."
+    },
+    {
+     "rung": "point",
+     "text": "The dashed lines are the closed form and the price with the noise switched off.",
+     "highlight": [
+      "closed",
+      "nonoise"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.789581 - 0.789215 = 0.000366$, and $0.000366/0.000171 = 2.14$."
+    }
+   ],
+   "feedback": {
+    "correct": "The no-noise price is 2.1 standard errors low, so the randomness of $r$ matters.",
+    "generic": "Not quite right. Divide the gap between the two dashed lines by the standard error.",
+    "byKey": {
+     "mc-gap": "0.3 is the simulation's own gap to the closed form, $0.000051/0.000171$. The question compares the no-noise line."
+    }
+   },
+   "explain": {
+    "text": "The closed form is 0.789581, a Crank-Nicolson solve of the PDE gives 0.789581, and the simulation gives 0.789530. The no-noise price, with a deterministic rate path, is 0.789215. The expectation of $e^{-X}$ exceeds $e^{-E[X]}$, so noise raises the price."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Edge case: $\\sigma = 0$. The expectation is a single path, $S_T = 100e^{0.05}$, and the PDE becomes the ODE $V_t + rSV_S - rV = 0$ along it (`odes` level 1). Price the call with $S = K = 100$, $r = 5\\%$ and one year to go.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 3
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 240,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    }
+   },
+   "question": "What is the call worth, in £? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.8771,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "£4.8771: $e^{-0.05}(105.1271 - 100)$, or $100 - 100e^{-0.05}$.",
+    "label": "Value",
+    "unit": "£",
+    "placeholder": "for example 5",
+    "wrong": [
+     {
+      "id": "undisc",
+      "value": 5.1271,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "vol",
+      "value": 10.4506,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With no noise $S_T = 100e^{rT}$ for sure."
+    },
+    {
+     "rung": "point",
+     "text": "One path, so there is nothing to average. Discount its payoff.",
+     "highlight": [
+      "path0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e^{-0.05} \\times (105.1271 - 100) = 0.951229 \\times 5.1271$."
+    }
+   ],
+   "feedback": {
+    "correct": "£4.8771, the value of a forward, as in `ito` lesson 9.",
+    "generic": "Not quite right. Find the one payoff and discount it.",
+    "byKey": {
+     "undisc": "5.1271 is the payoff at expiry. It arrives in a year, so discount by $e^{-0.05}$.",
+     "vol": "10.4506 is the price with $\\sigma = 20\\%$. Here there is no volatility, so no option value beyond the forward."
+    }
+   },
+   "explain": {
+    "text": "The payoff is $100e^{0.05} - 100 = 5.1271$ for certain, and discounting gives 4.8771. This is $S - Ke^{-rT}$, the forward's value. Volatility adds £5.5735 on top."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Three pricers by simulation. `mc_price` takes any payoff, with one exact log step. `heat_mc` averages $f(x + W_t)$. `vasicek_bond_mc` steps the rate exactly and integrates it by the trapezium rule. `CALL` and `DIGITAL` are loaded.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 3
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 200,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    }
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nCALL = lambda ST: np.maximum(ST - 100, 0)\nDIGITAL = lambda ST: (ST > 100) * 1.0\n",
+    "starter": "import math\nimport numpy as np\n\ndef mc_price(payoff, S0, r, sigma, T, n, seed):\n    \"\"\"(price, standard error). One exact log step: drift r - sigma^2/2.\"\"\"\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal(n)\n    ...\n\ndef heat_mc(f, x, t, n, seed):\n    \"\"\"(E f(x + W_t), standard error), with w = rng.standard_normal(n) * sqrt(t).\"\"\"\n    ...\n\ndef vasicek_bond_mc(r0, kappa, theta, sigma, T, steps, paths, seed):\n    \"\"\"(price, standard error). Exact OU steps, trapezium integral of r.\"\"\"\n    rng = np.random.default_rng(seed)\n    dt = T / steps\n    e = math.exp(-kappa * dt)\n    sd = sigma * math.sqrt((1 - e * e) / (2 * kappa))\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef mc_price(payoff, S0, r, sigma, T, n, seed):\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal(n)\n    ST = S0 * np.exp((r - 0.5 * sigma ** 2) * T + sigma * math.sqrt(T) * z)\n    v = math.exp(-r * T) * payoff(ST)\n    return float(v.mean()), float(v.std(ddof=1) / math.sqrt(n))\n\ndef heat_mc(f, x, t, n, seed):\n    rng = np.random.default_rng(seed)\n    w = rng.standard_normal(n) * math.sqrt(t)\n    v = f(x + w)\n    return float(v.mean()), float(v.std(ddof=1) / math.sqrt(n))\n\ndef vasicek_bond_mc(r0, kappa, theta, sigma, T, steps, paths, seed):\n    rng = np.random.default_rng(seed)\n    dt = T / steps\n    e = math.exp(-kappa * dt)\n    sd = sigma * math.sqrt((1 - e * e) / (2 * kappa))\n    r = np.full(paths, r0)\n    integral = np.zeros(paths)\n    for _ in range(steps):\n        r_next = theta + (r - theta) * e + sd * rng.standard_normal(paths)\n        integral += 0.5 * (r + r_next) * dt\n        r = r_next\n    v = np.exp(-integral)\n    return float(v.mean()), float(v.std(ddof=1) / math.sqrt(paths))\n",
+    "examples": [
+     {
+      "call": "list(heat_mc(lambda y: y ** 2, 1, 0.5, 100000, 5))",
+      "expect": "[1.500125868, 0.005003376]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(mc_price(CALL, 100, 0.05, 0.2, 1, 100000, 11))",
+      "expect": "[10.453354512, 0.046461812]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "list(mc_price(DIGITAL, 100, 0.05, 0.2, 1, 100000, 11))",
+      "expect": "[0.531975056, 0.001493436]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "list(heat_mc(lambda y: y ** 2, 1, 0.5, 100000, 5))",
+      "expect": "[1.500125868, 0.005003376]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "list(heat_mc(lambda y: y ** 3, 1, 0.5, 100000, 5))",
+      "expect": "[2.501606655, 0.012430746]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "vasicek_bond_mc(0.06, 0.5, 0.04, 0.0, 5, 500, 1000, 21)[0]",
+      "expect": "0.789215",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "call": "abs(vasicek_bond_mc(0.06, 0.5, 0.04, 0.01, 5, 500, 20000, 21)[0] - 0.789581) < 4 * 0.000171",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "0.00015 < vasicek_bond_mc(0.06, 0.5, 0.04, 0.01, 5, 500, 20000, 21)[1] < 0.00019",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. NumPy loads on the first run. Draw exactly as the docstrings say, so seeded results match to $10^{-6}$. The Vasicek test allows four standard errors."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$S_T = S_0e^{(r - \\sigma^2/2)T + \\sigma\\sqrt{T}z}$, discounted by $e^{-rT}$. Standard error is $s/\\sqrt{n}$ with `ddof=1`."
+    },
+    {
+     "rung": "point",
+     "text": "For the bond, step the rate, add the trapezium $\\tfrac12(r + r_{\\text{next}})\\Delta t$, then take the mean of $e^{-\\text{integral}}$.",
+     "highlight": [
+      "path0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each step: `r_next = theta + (r - theta) * e + sd * rng.standard_normal(paths)`."
+    }
+   ],
+   "feedback": {
+    "correct": "All three match the seeded values, and the bond lands within four standard errors of 0.789581.",
+    "generic": "Not quite right. Check the drift $r - \\sigma^2/2$, the discount, and the order of the random draws."
+   },
+   "explain": {
+    "text": "The call on seed 11 gives 10.453355 with standard error 0.046462. The $x^2$ start gives 1.5001, matching $x^2 + t$. With $\\sigma = 0$ the bond is 0.789215, the no-noise price."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A desk prices a ten-asset basket option. A PDE grid with 100 points per asset has $100^{10}$ nodes. Feynman-Kac says a simulation gives the same price, with error falling like $1/\\sqrt{n}$ in any dimension. Desks solve in one or two dimensions and simulate in many (`numerics` lessons 15 and 17).",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 3
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 200,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    }
+   },
+   "question": "How many nodes does the grid have? Give the power of 10.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 20,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "$10^{20}$: $100^{10} = (10^2)^{10}$.",
+    "label": "Power of 10",
+    "placeholder": "for example 5",
+    "wrong": [
+     {
+      "id": "ten",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one-asset",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Nodes multiply across assets: $100 \\times 100 \\times \\dots$"
+    },
+    {
+     "rung": "point",
+     "text": "$100 = 10^2$.",
+     "highlight": [
+      "path0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(10^2)^{10} = 10^{20}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$10^{20}$ nodes, impossible to store, while 100,000 paths are easy.",
+    "generic": "Not quite right. Raise 100 to the tenth power and count the zeros.",
+    "byKey": {
+     "ten": "10 is the number of assets. Each asset multiplies the node count by 100.",
+     "one-asset": "2 is the power for one asset, $100 = 10^2$. Ten assets give ten times that."
+    }
+   },
+   "explain": {
+    "text": "$100^{10} = 10^{20}$ nodes, which no machine can hold. A simulation's error depends on $n$, not on the dimension. Feynman-Kac says the two methods price the same claim."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Feynman-Kac: $V(t, x) = E\\left[e^{-r(T-t)}h(X_T)\\mid X_t = x\\right]$ solves $V_t + \\mu V_x + \\tfrac12\\sigma^2V_{xx} - rV = 0$, because $e^{-rs}V(s, X_s)$ has no drift.",
+   "For the call, simulate with drift $r$ and discount at $r$: £10.4534 with standard error 0.0465 on 100,000 draws. The real drift gives £15.53, and no discount £10.99.",
+   "A random rate goes inside the expectation: the Vasicek bond is 0.789581. Simulation scales to many assets, where a grid has $10^{20}$ nodes."
+  ],
+  "formula": {
+   "name": "Feynman-Kac",
+   "tex": "V(t, x) = E\\left[e^{-r(T-t)}h(X_T)\\mid X_t = x\\right]",
+   "note": "For Black-Scholes, $\\mu = rS$ and $\\sigma(S) = \\sigma S$."
+  },
+  "trap": "Use the drift in the equation, $rS$, not the real drift. The hedge removed $\\mu$."
+ },
+ "quiz": [
+  {
+   "id": "q-cube",
+   "difficulty": 3,
+   "prose": "The function $u(x, t) = E[(x + W_t)^3]$ solves $u_t = \\tfrac12u_{xx}$. Here $E[W_t^3] = 0$ and $E[W_t^2] = t$.",
+   "question": "What is $u(1, 0.5)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "2.5: $x^3 + 3xt = 1 + 1.5$.",
+    "label": "$u(1, 0.5)$",
+    "placeholder": "for example 2",
+    "wrong": [
+     {
+      "id": "no-noise",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "cross",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$E[(1 + W)^3] = 1 + 3E[W] + 3E[W^2] + E[W^3] = 1 + 1.5 = 2.5$.",
+    "generic": "Not quite right. Expand $(x + W)^3$ and average each term.",
+    "byKey": {
+     "no-noise": "1 is $f(1)$, with the noise left out. The term $3xW^2$ averages to $3xt$.",
+     "cross": "1.5 is the noise term alone. You dropped $x^3 = 1$."
+    }
+   },
+   "explain": {
+    "text": "$u = x^3 + 3xt$. Check: $u_t = 3x$ and $\\tfrac12u_{xx} = \\tfrac12 \\times 6x = 3x$. A simulation of 100,000 draws gives 2.5016, standard error 0.0124."
+   }
+  },
+  {
+   "id": "q-digital",
+   "difficulty": 3,
+   "prose": "A digital call pays £1 if $S_T > 110$. With $r = 5\\%$, $\\sigma = 20\\%$, $S = 100$ and $T = 1$, $d_2 = -0.3266$ and $\\Phi(d_2) = 0.3720$.",
+   "question": "What is its price, in £? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.354,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "£0.354: $e^{-0.05} \\times 0.3720$.",
+    "label": "Price",
+    "unit": "£",
+    "placeholder": "for example 0.4",
+    "wrong": [
+     {
+      "id": "undisc",
+      "value": 0.372,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.951229 \\times 0.3720 = 0.354$.",
+    "generic": "Not quite right. Feynman-Kac discounts the chance of exercise.",
+    "byKey": {
+     "undisc": "0.372 is the chance of exercise. The £1 arrives in a year, so discount by $e^{-0.05}$."
+    }
+   },
+   "explain": {
+    "text": "The price is $e^{-rT}\\Phi(d_2) = 0.9512 \\times 0.3720 = 0.3539$. For the strike of 100 the same sum gives £0.5323."
+   }
+  },
+  {
+   "id": "q-drift",
+   "difficulty": 3,
+   "prose": "A simulation prices a call by averaging $e^{-rT}(S_T - K)^+$ with $S_T$ drawn using the share's real drift $\\mu = 12\\%$.",
+   "question": "What does it estimate?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "wrong",
+      "text": "Not the Black-Scholes price: it is too high, about £15.53 for our option",
+      "correct": true
+     },
+     {
+      "id": "bs",
+      "text": "The Black-Scholes price, with a larger standard error",
+      "why": "The mean changes, not just the spread. The average payoff rises because the share drifts up faster."
+     },
+     {
+      "id": "fair",
+      "text": "The fair price, since the real drift is the true one",
+      "why": "The hedge removes $\\mu$, so the price does not depend on it. Pricing uses $r$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The estimate is biased high: about £15.53 against £10.45.",
+    "generic": "Not quite right. Which drift does the equation contain?"
+   },
+   "explain": {
+    "text": "With drift 12% the expected payoff is £15.5261 after discounting at 5%. The price of a hedged option cannot depend on the real drift. So the simulation must use $r$."
+   }
+  },
+  {
+   "id": "q-sigma0",
+   "difficulty": 3,
+   "prose": "With $\\sigma = 0$ the Feynman-Kac expectation has a single path. The pricing PDE becomes $V_t + rSV_S - rV = 0$.",
+   "question": "What kind of equation is that, along the path?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ode",
+      "text": "An ordinary differential equation: only first derivatives remain",
+      "correct": true
+     },
+     {
+      "id": "heat",
+      "text": "Still a heat equation, with $D = 0$",
+      "why": "With $D = 0$ the equation has no second derivative at all, and heat has nothing to spread."
+     },
+     {
+      "id": "ill",
+      "text": "Ill-posed, because there is no diffusion",
+      "why": "It is a first-order transport equation, which is well-posed forwards along the path."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Without $\\sigma$ the second-derivative term vanishes, leaving an ordinary differential equation along the path.",
+    "generic": "Not quite right. Count the derivatives that are left."
+   },
+   "explain": {
+    "text": "The path is $S_t = S_0e^{rt}$, and $V$ obeys $dV/dt = rV$ along it. That is the forward's value $S - Ke^{-rT}$. Adding noise adds the $\\tfrac12\\sigma^2V_{SS}$ term."
+   }
+  }
+ ]
+}

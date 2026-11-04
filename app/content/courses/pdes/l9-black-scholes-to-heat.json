@@ -1,0 +1,1373 @@
+{
+ "id": "l9-black-scholes-to-heat",
+ "course": "pdes",
+ "title": "Turning Black-Scholes into the heat equation",
+ "minutes": 15,
+ "objectives": [
+  "Change variables to turn the Black-Scholes equation into the heat equation",
+  "Read off $k$, $\\alpha$ and $\\beta$ and price a call from a heat solution"
+ ],
+ "skills": [
+  "pe-bs"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "This course serves derivatives pricing and desk quant roles. A learner on the trading or research track may skip it. Our option is $S = K = \\text{£}100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$. Slide $t$ and watch $V(S, t)$ meet the payoff.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      0,
+      45
+     ],
+     "height": 260,
+     "xLabel": "Share price $S$ (£)",
+     "yLabel": "Option value $V$ (£)",
+     "functions": [
+      {
+       "id": "v",
+       "expr": "x*Phi((ln(x/K)+(r+s^2/2)*(T-tc))/(s*sqrt(T-tc)))-K*exp(-r*(T-tc))*Phi((ln(x/K)+(r-s^2/2)*(T-tc))/(s*sqrt(T-tc)))",
+       "label": "$V(S, t)$"
+      },
+      {
+       "id": "pay",
+       "expr": "max(x-K,0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "payoff",
+       "labelSide": "below"
+      }
+     ],
+     "params": {
+      "K": 100,
+      "r": 0.05,
+      "s": 0.2,
+      "T": 1,
+      "tc": 0
+     }
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "tc",
+      "min": 0,
+      "max": 0.98,
+      "step": 0.02,
+      "label": "Time $t$ (years)",
+      "start": 0,
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "We know the payoff at expiry. Which way must the Black-Scholes equation be solved?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "back",
+      "text": "Backwards from expiry, because the known data sit at $t = T$",
+      "correct": true
+     },
+     {
+      "id": "fwd",
+      "text": "Forwards from today, as the heat equation runs",
+      "why": "Today's value is the unknown. The only data we hold is the payoff at $t = T$."
+     },
+     {
+      "id": "either",
+      "text": "Either way: the equation does not care",
+      "why": "Run the heat equation backwards from a kinked start and it blows up (lesson 3). Direction matters."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide $t$ towards 1 and see which end of the time axis holds a known curve."
+    },
+    {
+     "rung": "point",
+     "text": "The dashed payoff is the curve we know.",
+     "highlight": [
+      "pay"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Data at $t = T$ means we solve from $T$ back to today. The heat equation wants data at the start of time."
+    }
+   ],
+   "feedback": {
+    "correct": "The payoff is a terminal condition, so we solve backwards from $T$.",
+    "generic": "Not quite right. Ask where the known curve sits on the time axis."
+   },
+   "explain": {
+    "text": "The payoff fixes $V$ at $t = T$, so the price at $t < T$ is found by stepping backwards. A heat equation runs forwards from a start. To use it we must turn time round, so that expiry becomes the start.",
+    "canvas": {
+     "params": {
+      "tc": 0.9
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "The equation is $V_t + \\tfrac12\\sigma^2S^2V_{SS} + rSV_S - rV = 0$ (derived in `ito` lesson 9). Put $\\tau = c(T - t)$, so $V_t = -cV_\\tau$. The second-derivative term then reads $\\dfrac{\\sigma^2}{2c}S^2V_{SS}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      0,
+      45
+     ],
+     "height": 260,
+     "xLabel": "Share price $S$ (£)",
+     "yLabel": "Option value $V$ (£)",
+     "functions": [
+      {
+       "id": "v",
+       "expr": "x*Phi((ln(x/K)+(r+s^2/2)*(T-tc))/(s*sqrt(T-tc)))-K*exp(-r*(T-tc))*Phi((ln(x/K)+(r-s^2/2)*(T-tc))/(s*sqrt(T-tc)))",
+       "label": "$V(S, t)$"
+      },
+      {
+       "id": "pay",
+       "expr": "max(x-K,0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "payoff",
+       "labelSide": "below"
+      }
+     ],
+     "params": {
+      "K": 100,
+      "r": 0.05,
+      "s": 0.2,
+      "T": 1,
+      "tc": 0.5
+     }
+    },
+    "state": {}
+   },
+   "question": "Choose $c$ so that this coefficient is 1. What is $\\tau$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{\\sigma^2(T-t)}{2}",
+    "accept": [
+     "\\frac{1}{2}\\sigma^2(T-t)",
+     "\\sigma^2(T-t)/2",
+     "0.5\\sigma^2(T-t)"
+    ],
+    "label": "$\\tau$",
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "forward",
+      "tex": "\\frac{\\sigma^2t}{2}"
+     },
+     {
+      "id": "no-half",
+      "tex": "\\sigma^2(T-t)"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "We need $\\dfrac{\\sigma^2}{2c} = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "At expiry $t = T$, so $\\tau$ should be 0 there.",
+     "highlight": [
+      "pay"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$c = \\tfrac12\\sigma^2$, so $\\tau = \\tfrac12\\sigma^2(T - t)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tau = \\tfrac12\\sigma^2(T - t)$: time to expiry, counted in units of variance.",
+    "generic": "Not quite right. Set $\\sigma^2/(2c) = 1$, then write $c(T - t)$.",
+    "byKey": {
+     "forward": "You kept $t$ in place of $T - t$. Then $V_t = +cV_\\tau$, and the equation runs backwards in $\\tau$ (lesson 3).",
+     "no-half": "You took $c = \\sigma^2$. Then the coefficient is $\\tfrac12$, not 1."
+    }
+   },
+   "explain": {
+    "text": "With $c = \\tfrac12\\sigma^2$ the coefficient is 1, and expiry is $\\tau = 0$, so the payoff becomes a start value. Today, with $T = 1$ and $\\sigma = 0.2$, is $\\tau = 0.02$. So $\\tau$ runs from 0 to 0.02.",
+    "canvas": {
+     "params": {
+      "tc": 0
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Next, take out $S$. Put $x = \\ln(S/K)$ and $V = Kv(x, \\tau)$. We need $SV_S$ and $S^2V_{SS}$ in terms of $v$. Leave out the two lines that go wrong.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      0,
+      45
+     ],
+     "height": 260,
+     "xLabel": "Share price $S$ (£)",
+     "yLabel": "Option value $V$ (£)",
+     "functions": [
+      {
+       "id": "v",
+       "expr": "x*Phi((ln(x/K)+(r+s^2/2)*(T-tc))/(s*sqrt(T-tc)))-K*exp(-r*(T-tc))*Phi((ln(x/K)+(r-s^2/2)*(T-tc))/(s*sqrt(T-tc)))",
+       "label": "$V(S, t)$"
+      },
+      {
+       "id": "pay",
+       "expr": "max(x-K,0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "payoff",
+       "labelSide": "below"
+      }
+     ],
+     "params": {
+      "K": 100,
+      "r": 0.05,
+      "s": 0.2,
+      "T": 1,
+      "tc": 0.5
+     }
+    },
+    "state": {}
+   },
+   "question": "Put the lines of the chain rule in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "c1",
+      "text": "$x = \\ln(S/K)$, so $\\dfrac{\\partial x}{\\partial S} = \\dfrac1S$ (derivative of the logarithm)."
+     },
+     {
+      "id": "c2",
+      "text": "Chain rule: $V_S = Kv_x\\cdot\\dfrac1S$, so $SV_S = Kv_x$."
+     },
+     {
+      "id": "c3",
+      "text": "Product rule on $V_S = \\dfrac{K}{S}v_x$: $V_{SS} = -\\dfrac{K}{S^2}v_x + \\dfrac{K}{S^2}v_{xx}$, because both $\\dfrac1S$ and $v_x$ change with $S$."
+     },
+     {
+      "id": "c4",
+      "text": "Multiply by $S^2$: $S^2V_{SS} = K(v_{xx} - v_x)$."
+     },
+     {
+      "id": "d1",
+      "text": "$V_{SS} = \\dfrac{K}{S^2}v_{xx}$, treating $\\dfrac1S$ as a constant when we differentiate again.",
+      "why": "You differentiated $v_x$ and left $\\dfrac1S$ alone. It depends on $S$ too, and that adds the term $-v_x$."
+     },
+     {
+      "id": "d2",
+      "text": "$V_{SS} = Kv_{xx}$, since $x$ is only a relabelling of $S$.",
+      "why": "You skipped the factor $\\dfrac1S$ that each derivative in $S$ brings, so the result has the wrong size."
+     }
+    ],
+    "answer": [
+     "c1",
+     "c2",
+     "c3",
+     "c4"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Differentiate $V = Kv(x, \\tau)$ once in $S$, then again."
+    },
+    {
+     "rung": "point",
+     "text": "The second derivative differentiates a product of $\\dfrac{1}{S}$ and $v_x$.",
+     "highlight": [
+      "v"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Order: the derivative of $x$, the first chain rule, the product rule, then multiply by $S^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$SV_S = Kv_x$ and $S^2V_{SS} = K(v_{xx} - v_x)$.",
+    "generic": "Not quite right. Each line should follow from the line before it."
+   },
+   "explain": {
+    "text": "Each $S$-derivative brings a factor $\\dfrac1S$, and the second also differentiates that factor. This is the chain rule of `multivar` lesson 4 used twice. The extra term is $-v_x$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Substitute $SV_S = Kv_x$ and $V = Kv$ into the equation, and divide through by $\\tfrac12\\sigma^2K$. The terms $rSV_S$ and $-rV$ become $\\dfrac{2r}{\\sigma^2}$ times $v_x$ and times $-v$. Call that constant $k$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      0,
+      45
+     ],
+     "height": 260,
+     "xLabel": "Share price $S$ (£)",
+     "yLabel": "Option value $V$ (£)",
+     "functions": [
+      {
+       "id": "v",
+       "expr": "x*Phi((ln(x/K)+(r+s^2/2)*(T-tc))/(s*sqrt(T-tc)))-K*exp(-r*(T-tc))*Phi((ln(x/K)+(r-s^2/2)*(T-tc))/(s*sqrt(T-tc)))",
+       "label": "$V(S, t)$"
+      },
+      {
+       "id": "pay",
+       "expr": "max(x-K,0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "payoff",
+       "labelSide": "below"
+      }
+     ],
+     "params": {
+      "K": 100,
+      "r": 0.05,
+      "s": 0.2,
+      "T": 1,
+      "tc": 0.5
+     }
+    },
+    "state": {}
+   },
+   "question": "Write $k$ in terms of $r$ and $\\sigma$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{2r}{\\sigma^2}",
+    "accept": [
+     "\\frac{r}{\\sigma^2/2}",
+     "2r/\\sigma^2",
+     "2r\\sigma^{-2}"
+    ],
+    "label": "$k$",
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "no-two",
+      "tex": "\\frac{r}{\\sigma^2}"
+     },
+     {
+      "id": "inverted",
+      "tex": "\\frac{\\sigma^2}{2r}"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Dividing $r$ by $\\tfrac12\\sigma^2$ gives $\\dfrac{r}{\\sigma^2/2}$."
+    },
+    {
+     "rung": "point",
+     "text": "The factor $\\tfrac12$ moves up as a 2.",
+     "highlight": [
+      "v"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$k = \\dfrac{r}{\\tfrac12\\sigma^2} = \\dfrac{2r}{\\sigma^2}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$k = 2r/\\sigma^2$, which is 2.5 for our option.",
+    "generic": "Not quite right. Divide $r$ by $\\tfrac12\\sigma^2$.",
+    "byKey": {
+     "no-two": "You divided $r$ by $\\sigma^2$. The divisor is $\\tfrac12\\sigma^2$, so a factor 2 comes up.",
+     "inverted": "You inverted the fraction. We divide $r$ by $\\tfrac12\\sigma^2$, not the other way round."
+    }
+   },
+   "explain": {
+    "text": "The ratio $2r/\\sigma^2 = 0.10/0.04 = 2.5$ compares interest with variance, and it is the only place $r$ enters. So the equation is $v_\\tau = v_{xx} - v_x + k\\,v_x - k\\,v$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A student collects the $v_x$ terms. She writes $v_\\tau = v_{xx} + k\\,v_x - k\\,v$, because $rSV_S$ gives $k\\,v_x$ and she forgets nothing else. Use $k = 2.5$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      0,
+      45
+     ],
+     "height": 260,
+     "xLabel": "Share price $S$ (£)",
+     "yLabel": "Option value $V$ (£)",
+     "functions": [
+      {
+       "id": "v",
+       "expr": "x*Phi((ln(x/K)+(r+s^2/2)*(T-tc))/(s*sqrt(T-tc)))-K*exp(-r*(T-tc))*Phi((ln(x/K)+(r-s^2/2)*(T-tc))/(s*sqrt(T-tc)))",
+       "label": "$V(S, t)$"
+      },
+      {
+       "id": "pay",
+       "expr": "max(x-K,0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "payoff",
+       "labelSide": "below"
+      }
+     ],
+     "params": {
+      "K": 100,
+      "r": 0.05,
+      "s": 0.2,
+      "T": 1,
+      "tc": 0.5
+     }
+    },
+    "state": {}
+   },
+   "question": "What is the true coefficient of $v_x$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "1.5: $k - 1 = 2.5 - 1$.",
+    "label": "Coefficient",
+    "placeholder": "for example 1",
+    "wrong": [
+     {
+      "id": "dropped",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "only-chain",
+      "value": -1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$S^2V_{SS}$ also gives a $v_x$ term. What is its sign?"
+    },
+    {
+     "rung": "point",
+     "text": "From the chain rule: $S^2V_{SS} = K(v_{xx} - v_x)$.",
+     "highlight": [
+      "v"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The two $v_x$ terms are $-1$ and $+k$, so the coefficient is $k - 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "The coefficient is $k - 1 = 1.5$.",
+    "generic": "Not quite right. Add the $v_x$ from $S^2V_{SS}$ to the one from $rSV_S$.",
+    "byKey": {
+     "dropped": "2.5 keeps only the $rSV_S$ term. You dropped the $-v_x$ in $S^2V_{SS}$, so your equation keeps too much drift.",
+     "only-chain": "$-1$ is the term from $S^2V_{SS}$ alone. You left out the $+k\\,v_x$ from $rSV_S$."
+    }
+   },
+   "explain": {
+    "text": "Two terms feed $v_x$: $-1$ from the product rule and $+k$ from $rSV_S$. Their sum is $k - 1 = 1.5$, and the coefficient of $v$ is $-k = -2.5$. So $v_\\tau = v_{xx} + (k - 1)v_x - kv$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Now remove $v_x$ and $v$. Put $v = e^{\\alpha x + \\beta\\tau}u$. Then $v_x \\to \\alpha u + u_x$ and $v_{xx} \\to \\alpha^2u + 2\\alpha u_x + u_{xx}$, with a common factor $e^{\\alpha x+\\beta\\tau}$. The $u_x$ terms are $2\\alpha u_x + (k - 1)u_x$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.6,
+      0.6
+     ],
+     "y": [
+      0,
+      1.4
+     ],
+     "height": 270,
+     "xLabel": "$x = \\ln(S/K)$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "exp(1.75*x+3.0625*tau)*Phi((x+3.5*tau)/sqrt(2*tau))-exp(0.75*x+0.5625*tau)*Phi((x+1.5*tau)/sqrt(2*tau))",
+       "label": "$u(x, \\tau)$",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "$u(x, 0)$",
+       "labelSide": "below",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      }
+     ],
+     "params": {
+      "tau": 0.02
+     }
+    },
+    "state": {}
+   },
+   "question": "Choose $\\alpha$ to cancel them. What is $\\alpha$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "-\\frac{k-1}{2}",
+    "accept": [
+     "\\frac{1-k}{2}",
+     "(1-k)/2",
+     "-(k-1)/2"
+    ],
+    "label": "$\\alpha$",
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "sign",
+      "tex": "\\frac{k-1}{2}"
+     },
+     {
+      "id": "no-half",
+      "tex": "1-k"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set $2\\alpha + (k - 1) = 0$."
+    },
+    {
+     "rung": "point",
+     "text": "The $u_x$ terms are the only ones with a single $x$-derivative.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2\\alpha = -(k - 1)$, so $\\alpha = -\\dfrac{k-1}{2}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\alpha = -\\dfrac{k-1}{2}$, which is $-0.75$ for $k = 2.5$.",
+    "generic": "Not quite right. Solve $2\\alpha + (k - 1) = 0$.",
+    "byKey": {
+     "sign": "You solved $2\\alpha = k - 1$. The cancelling condition is $2\\alpha + (k - 1) = 0$, so $\\alpha$ is minus that.",
+     "no-half": "You solved $\\alpha = -(k - 1)$. The term is $2\\alpha$, so divide by 2."
+    }
+   },
+   "explain": {
+    "text": "The $u_x$ terms cancel when $2\\alpha = -(k - 1)$. For $k = 2.5$ that is $\\alpha = -0.75$. The remaining $u$ terms fix $\\beta$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "The $u$ terms are what remains. Matching them gives $\\beta = \\alpha^2 + (k - 1)\\alpha - k$. Use your value of $\\alpha$ and simplify, so that $\\beta$ depends on $k$ alone.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.6,
+      0.6
+     ],
+     "y": [
+      0,
+      1.4
+     ],
+     "height": 270,
+     "xLabel": "$x = \\ln(S/K)$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "exp(1.75*x+3.0625*tau)*Phi((x+3.5*tau)/sqrt(2*tau))-exp(0.75*x+0.5625*tau)*Phi((x+1.5*tau)/sqrt(2*tau))",
+       "label": "$u(x, \\tau)$",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "$u(x, 0)$",
+       "labelSide": "below",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      }
+     ],
+     "params": {
+      "tau": 0.02
+     }
+    },
+    "state": {}
+   },
+   "question": "What is $\\beta$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "-\\frac{(k+1)^2}{4}",
+    "accept": [
+     "-(k+1)^2/4",
+     "-\\frac{(k+1)^{2}}{4}",
+     "-\\frac{k^2+2k+1}{4}"
+    ],
+    "label": "$\\beta$",
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "no-k",
+      "tex": "-\\frac{(k-1)^2}{4}"
+     },
+     {
+      "id": "sign",
+      "tex": "\\frac{(k+1)^2}{4}"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With $\\alpha = -\\tfrac{k-1}{2}$: $(k-1)\\alpha = -2\\alpha^2$."
+    },
+    {
+     "rung": "point",
+     "text": "So $\\beta = -\\alpha^2 - k$, with $\\alpha^2 = \\tfrac{(k-1)^2}{4}$.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-\\tfrac{(k-1)^2}{4} - k = -\\tfrac{k^2 - 2k + 1 + 4k}{4} = -\\tfrac{(k+1)^2}{4}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\beta = -\\dfrac{(k+1)^2}{4}$, which is $-3.0625$ for $k = 2.5$.",
+    "generic": "Not quite right. Replace $(k - 1)\\alpha$ by $-2\\alpha^2$, then combine with $-k$.",
+    "byKey": {
+     "no-k": "You stopped at $-\\alpha^2$. The $-k$ term is still there, and $-\\tfrac{(k-1)^2}{4} - k = -\\tfrac{(k+1)^2}{4}$.",
+     "sign": "You lost the minus sign. Both $-\\alpha^2$ and $-k$ are negative, so $\\beta < 0$."
+    }
+   },
+   "explain": {
+    "text": "The cancelling condition gives $\\beta = \\alpha^2 - 2\\alpha^2 - k = -\\alpha^2 - k$. Then $-\\tfrac{(k-1)^2}{4} - k = -\\tfrac{(k+1)^2}{4}$. For $k = 2.5$ this is $-3.0625$, and `u` obeys $u_\\tau = u_{xx}$."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 3,
+   "prose": "We have $V(S, t) = Ke^{\\alpha x + \\beta\\tau}\\,u(x, \\tau)$ with $u_\\tau = u_{xx}$. The start is $u(x, 0) = e^{-\\alpha x}\\max(e^x - 1, 0) = \\max(e^{1.75x} - e^{0.75x}, 0)$. The dot reads $u(0, \\tau)$. Slide $\\tau$ to 0.02.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.6,
+      0.6
+     ],
+     "y": [
+      0,
+      1.4
+     ],
+     "height": 270,
+     "xLabel": "$x = \\ln(S/K)$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "exp(1.75*x+3.0625*tau)*Phi((x+3.5*tau)/sqrt(2*tau))-exp(0.75*x+0.5625*tau)*Phi((x+1.5*tau)/sqrt(2*tau))",
+       "label": "$u(x, \\tau)$",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "$u(x, 0)$",
+       "labelSide": "below",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      }
+     ],
+     "params": {
+      "tau": 0.003
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 0,
+       "y": 0.1111,
+       "on": "u",
+       "label": "u(0) = {y:.4f}"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "tau",
+      "min": 0.001,
+      "max": 0.02,
+      "step": 0.001,
+      "label": "$\\tau$",
+      "start": 0.003,
+      "decimals": 3
+     }
+    ]
+   },
+   "question": "At $\\tau = 0.02$ and $x = 0$, what is the price of our option, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.4506,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "£10.4506: $100e^{-3.0625 \\times 0.02} \\times 0.1111$.",
+    "label": "Price",
+    "unit": "£",
+    "placeholder": "for example 10",
+    "wrong": [
+     {
+      "id": "no-factor",
+      "value": 11.1107,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "wrong-sign",
+      "value": 11.8125,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At $x = 0$, $e^{\\alpha x} = 1$. Only $e^{\\beta\\tau}$ is left."
+    },
+    {
+     "rung": "point",
+     "text": "The dot shows $u(0, 0.02) = 0.1111$.",
+     "highlight": [
+      "p"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$V = 100\\,e^{-3.0625 \\times 0.02} \\times 0.111107 = 100 \\times 0.940588 \\times 0.111107$."
+    }
+   ],
+   "feedback": {
+    "correct": "$V = \\text{£}10.4506$, the number from `trees` lesson 10.",
+    "generic": "Not quite right. Multiply $K = 100$, $e^{\\beta\\tau}$ and the dot's value.",
+    "byKey": {
+     "no-factor": "11.1107 is $K\\,u$. You left out the factor $e^{\\beta\\tau} = e^{-0.06125}$.",
+     "wrong-sign": "11.8125 uses $e^{+0.06125}$. Since $\\beta$ is negative, the factor is below 1."
+    }
+   },
+   "explain": {
+    "text": "$e^{\\beta\\tau} = e^{-0.06125} = 0.940588$, and $100 \\times 0.940588 \\times 0.111107 = 10.4506$. A start value of the heat equation, run for $\\tau = 0.02$, is the call price. The next lesson finds $u$ exactly.",
+    "canvas": {
+     "params": {
+      "tau": 0.02
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Edge case: $r = 0$, so $k = 0$, $\\alpha = \\tfrac12$, $\\beta = -\\tfrac14$, and $u$ depends only on $x$ and $\\tau$. Option A has $\\sigma = 20\\%$ for a year and costs £7.9656 at $S = K = 100$. Option B has $\\sigma = 40\\%$ for three months.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.6,
+      0.6
+     ],
+     "y": [
+      0,
+      1.4
+     ],
+     "height": 270,
+     "xLabel": "$x = \\ln(S/K)$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "exp(1.75*x+3.0625*tau)*Phi((x+3.5*tau)/sqrt(2*tau))-exp(0.75*x+0.5625*tau)*Phi((x+1.5*tau)/sqrt(2*tau))",
+       "label": "$u(x, \\tau)$",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "$u(x, 0)$",
+       "labelSide": "below",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      }
+     ],
+     "params": {
+      "tau": 0.02
+     }
+    },
+    "state": {}
+   },
+   "question": "What does B cost, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7.9656,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "£7.9656: both have $\\tau = 0.02$, so the same $u$ and the same price.",
+    "label": "Price",
+    "unit": "£",
+    "placeholder": "for example 8",
+    "wrong": [
+     {
+      "id": "double",
+      "value": 15.9311,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "half",
+      "value": 3.9828,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out $\\tau = \\tfrac12\\sigma^2T$ for each option."
+    },
+    {
+     "rung": "point",
+     "text": "With $r = 0$ the price is $100\\,e^{\\beta\\tau}$ times $u$, and both depend on $\\tau$ and $x$ alone.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A: $\\tfrac12 \\times 0.04 \\times 1 = 0.02$. B: $\\tfrac12 \\times 0.16 \\times 0.25 = 0.02$. Same $\\tau$, same price."
+    }
+   ],
+   "feedback": {
+    "correct": "B costs £7.9656 too, since $\\tau$ is 0.02 for both.",
+    "generic": "Not quite right. Compare the two values of $\\tau$ before pricing.",
+    "byKey": {
+     "double": "15.9311 doubles A's price for the doubled volatility. Volatility and time enter only through $\\sigma^2T$.",
+     "half": "3.9828 halves A's price for the shorter time. Three months with four times the variance rate gives the same $\\sigma^2T$."
+    }
+   },
+   "explain": {
+    "text": "Both options have $\\sigma^2T = 0.04$, so $\\tau = 0.02$ and the same price. With $r = 0$ it is $100(2\\Phi(0.1) - 1) = 7.9656$. Only the total variance $\\sigma^2T$ matters."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Three small functions carry the whole recipe. `heat_params` returns $(k, \\alpha, \\beta)$. `to_heat` returns $(x, \\tau)$. `price_from_u` turns a value of $u$ back into a price.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.6,
+      0.6
+     ],
+     "y": [
+      0,
+      1.4
+     ],
+     "height": 220,
+     "xLabel": "$x = \\ln(S/K)$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "exp(1.75*x+3.0625*tau)*Phi((x+3.5*tau)/sqrt(2*tau))-exp(0.75*x+0.5625*tau)*Phi((x+1.5*tau)/sqrt(2*tau))",
+       "label": "$u(x, \\tau)$",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "$u(x, 0)$",
+       "labelSide": "below",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      }
+     ],
+     "params": {
+      "tau": 0.02
+     }
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef heat_params(r, sigma):\n    \"\"\"Return (k, alpha, beta).\"\"\"\n    ...\n\ndef to_heat(S, t, K, sigma, T):\n    \"\"\"Return (x, tau): log moneyness and variance time.\"\"\"\n    ...\n\ndef price_from_u(u, S, K, r, sigma, t, T):\n    \"\"\"V = K * exp(alpha * x + beta * tau) * u.\"\"\"\n    ...\n",
+    "solution": "import math\n\ndef heat_params(r, sigma):\n    \"\"\"Return (k, alpha, beta).\"\"\"\n    k = 2 * r / sigma ** 2\n    return k, -(k - 1) / 2, -(k + 1) ** 2 / 4\n\ndef to_heat(S, t, K, sigma, T):\n    \"\"\"Return (x, tau): log moneyness and variance time.\"\"\"\n    return math.log(S / K), 0.5 * sigma ** 2 * (T - t)\n\ndef price_from_u(u, S, K, r, sigma, t, T):\n    \"\"\"V = K * exp(alpha * x + beta * tau) * u.\"\"\"\n    k, alpha, beta = heat_params(r, sigma)\n    x, tau = to_heat(S, t, K, sigma, T)\n    return K * math.exp(alpha * x + beta * tau) * u\n",
+    "examples": [
+     {
+      "call": "list(heat_params(0.05, 0.2))",
+      "expect": "[2.5, -0.75, -3.0625]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(heat_params(0.05, 0.2))",
+      "expect": "[2.5, -0.75, -3.0625]",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(heat_params(0, 0.2))",
+      "expect": "[0.0, 0.5, -0.25]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "list(heat_params(0.03, 0.25))",
+      "expect": "[0.96, 0.02, -0.9604]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "list(to_heat(100, 0, 100, 0.2, 1))",
+      "expect": "[0.0, 0.02]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "list(to_heat(110, 0.5, 100, 0.2, 1))",
+      "expect": "[0.09531017980432493, 0.01]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "price_from_u(0.11110691257, 100, 100, 0.05, 0.2, 0, 1)",
+      "expect": "10.450584",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "price_from_u(0.25, 120, 100, 0.03, 0.25, 0.2, 1.0)",
+      "expect": "24.496059",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. Each result is accepted within a small tolerance, and `price_from_u` within $10^{-6}$."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$k = 2r/\\sigma^2$, $\\alpha = -\\tfrac{k-1}{2}$ and $\\beta = -\\tfrac{(k+1)^2}{4}$."
+    },
+    {
+     "rung": "point",
+     "text": "`to_heat` uses $x = \\ln(S/K)$ and $\\tau = \\tfrac12\\sigma^2(T - t)$.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`price_from_u` calls the other two, then returns $K e^{\\alpha x + \\beta\\tau}u$."
+    }
+   ],
+   "feedback": {
+    "correct": "All three functions agree with the hand work: $u = 0.111107$ prices our call at £10.4506.",
+    "generic": "Not quite right. Check $\\beta$ and the factor $\\tfrac12$ in $\\tau$."
+   },
+   "explain": {
+    "text": "At $r = 0$ the function returns $k = 0$, $\\alpha = 0.5$, $\\beta = -0.25$, as in the edge case. The check $u = 0.111107$ gives 10.450584. So the three changes of variable are now code."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A desk quotes options on one share at $S = K$, with $r = 0$. It quotes volatility against log moneyness and total variance $\\sigma^2T$. In those coordinates every vanilla option solves one heat equation. Our base option is $\\sigma = 20\\%$ for one year.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.6,
+      0.6
+     ],
+     "y": [
+      0,
+      1.4
+     ],
+     "height": 220,
+     "xLabel": "$x = \\ln(S/K)$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "exp(1.75*x+3.0625*tau)*Phi((x+3.5*tau)/sqrt(2*tau))-exp(0.75*x+0.5625*tau)*Phi((x+1.5*tau)/sqrt(2*tau))",
+       "label": "$u(x, \\tau)$",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "dashed": true,
+       "colour": 2,
+       "label": "$u(x, 0)$",
+       "labelSide": "below",
+       "domain": [
+        -0.6,
+        0.6
+       ]
+      }
+     ],
+     "params": {
+      "tau": 0.02
+     }
+    },
+    "state": {}
+   },
+   "question": "Select all that apply: which quotes have the same price as the base option?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "$\\sigma = 40\\%$ for three months",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$\\sigma = 10\\%$ for four years",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "$\\sigma = 40\\%$ for six months",
+      "why": "Its total variance is $0.16 \\times 0.5 = 0.08$, twice the base. The price is higher."
+     },
+     {
+      "id": "d",
+      "text": "$\\sigma = 20\\%$ for six months",
+      "why": "Its total variance is $0.04 \\times 0.5 = 0.02$, half the base. The price is lower."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute $\\sigma^2T$ for each quote."
+    },
+    {
+     "rung": "point",
+     "text": "The base option has $\\sigma^2T = 0.04$ and $\\tau = 0.02$.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Same $\\sigma^2T$ means same $\\tau$, same $x$ and the same price when $r = 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "A and B have $\\sigma^2T = 0.04$, like the base option.",
+    "generic": "Not quite right. Only quotes with $\\sigma^2T = 0.04$ match."
+   },
+   "explain": {
+    "text": "The base has $\\sigma^2T = 0.04$. A has $0.16 \\times 0.25 = 0.04$ and B has $0.01 \\times 4 = 0.04$. C and D have 0.08 and 0.02, so a desk compares tenors by total variance."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Three changes of variable remove three obstacles. $\\tau = \\tfrac12\\sigma^2(T - t)$ turns the expiry condition into a start. $x = \\ln(S/K)$ removes $S$ from the coefficients.",
+   "With $k = 2r/\\sigma^2$ the equation is $v_\\tau = v_{xx} + (k - 1)v_x - kv$. Then $v = e^{\\alpha x + \\beta\\tau}u$ leaves $u_\\tau = u_{xx}$.",
+   "For our option $k = 2.5$, $\\alpha = -0.75$ and $\\beta = -3.0625$. The price is £10.4506 when $u(0, 0.02) = 0.111107$."
+  ],
+  "formula": {
+   "name": "Black-Scholes to the heat equation",
+   "tex": "V = Ke^{\\alpha x + \\beta\\tau}u,\\quad \\alpha = -\\tfrac{k-1}{2},\\ \\beta = -\\tfrac{(k+1)^2}{4}",
+   "note": "With $x = \\ln(S/K)$, $\\tau = \\tfrac12\\sigma^2(T - t)$, $k = 2r/\\sigma^2$, and $u_\\tau = u_{xx}$."
+  },
+  "trap": "The chain rule for $S^2V_{SS}$ gives $K(v_{xx} - v_x)$. Dropping the $-v_x$ leaves $k$ in place of $k - 1$ as the drift."
+ },
+ "quiz": [
+  {
+   "id": "q-tau",
+   "difficulty": 2,
+   "prose": "A two-year option has $\\sigma = 30\\%$. We transform with $\\tau = \\tfrac12\\sigma^2(T - t)$.",
+   "question": "What is $\\tau$ today, at $t = 0$? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.09,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "0.090: $\\tfrac12 \\times 0.09 \\times 2$.",
+    "label": "$\\tau$",
+    "placeholder": "for example 0.05",
+    "wrong": [
+     {
+      "id": "no-half",
+      "value": 0.18,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one-year",
+      "value": 0.045,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tau = \\tfrac12 \\times 0.09 \\times 2 = 0.09$.",
+    "generic": "Not quite right. Square the volatility, multiply by $T$, then halve.",
+    "byKey": {
+     "no-half": "0.18 is $\\sigma^2T$. The variable $\\tau$ is half of that.",
+     "one-year": "0.045 uses $T = 1$. The option runs for two years."
+    }
+   },
+   "explain": {
+    "text": "$\\sigma^2 = 0.09$ and $T - t = 2$, so $\\tau = \\tfrac12 \\times 0.09 \\times 2 = 0.09$. The heat equation then runs from $\\tau = 0$ to 0.09."
+   }
+  },
+  {
+   "id": "q-coeff",
+   "difficulty": 3,
+   "prose": "An option has $r = 3\\%$ and $\\sigma = 25\\%$. The transformed equation is $v_\\tau = v_{xx} + (k - 1)v_x - kv$.",
+   "question": "What is the coefficient of $v_x$? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.04,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "$-0.04$: $k = 0.06/0.0625 = 0.96$, so $k - 1 = -0.04$.",
+    "label": "Coefficient",
+    "placeholder": "for example 1",
+    "wrong": [
+     {
+      "id": "dropped",
+      "value": 0.96,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "k-plus",
+      "value": 1.96,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$k = 0.96$, so $k - 1 = -0.04$.",
+    "generic": "Not quite right. Compute $k = 2r/\\sigma^2$ first, then subtract 1.",
+    "byKey": {
+     "dropped": "0.96 is $k$. You dropped the $-1$ from $S^2V_{SS}$.",
+     "k-plus": "1.96 is $k + 1$. The $v_x$ term from $S^2V_{SS}$ is $-v_x$, so subtract."
+    }
+   },
+   "explain": {
+    "text": "$k = 2 \\times 0.03/0.0625 = 0.96$. The coefficient is $k - 1 = -0.04$, a small drift because $r$ is near $\\tfrac12\\sigma^2$. Then $\\alpha = 0.02$."
+   }
+  },
+  {
+   "id": "q-beta",
+   "difficulty": 3,
+   "prose": "For $r = 3\\%$ and $\\sigma = 25\\%$, $k = 0.96$. We write $v = e^{\\alpha x + \\beta\\tau}u$.",
+   "question": "What is $\\beta$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.9604,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "$-0.9604$: $-(0.96 + 1)^2/4 = -3.8416/4$.",
+    "label": "$\\beta$",
+    "placeholder": "for example -1",
+    "wrong": [
+     {
+      "id": "no-k",
+      "value": -0.0004,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "half-k",
+      "value": -0.2304,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\beta = -(1.96)^2/4 = -0.9604$.",
+    "generic": "Not quite right. Use $\\beta = -\\tfrac{(k+1)^2}{4}$.",
+    "byKey": {
+     "no-k": "$-0.0004$ is $-\\tfrac{(k-1)^2}{4}$. You dropped the $-k$ term.",
+     "half-k": "$-0.2304$ is $-k^2/4$. The bracket is $k + 1$, not $k$."
+    }
+   },
+   "explain": {
+    "text": "$(k + 1)^2 = 3.8416$, so $\\beta = -0.9604$. Also $\\alpha = -(0.96 - 1)/2 = 0.02$."
+   }
+  },
+  {
+   "id": "q-backward",
+   "difficulty": 3,
+   "prose": "A student keeps $t$ and sets $\\tau = \\tfrac12\\sigma^2t$. The equation she gets is $u_\\tau = -u_{xx}$.",
+   "question": "What is wrong with it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ill",
+      "text": "It is the backward heat equation, which is unstable and has no stable solution",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: the sign only changes which way heat flows",
+      "why": "A negative sign makes every mode grow like $e^{k^2\\tau}$ (lesson 3), so tiny errors explode."
+     },
+     {
+      "id": "drift",
+      "text": "It still has a drift term",
+      "why": "The sign of $\\tau$ does not bring back a drift. The problem is the sign of $u_{xx}$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Counting time forwards from today makes the diffusion term negative.",
+    "generic": "Not quite right. Look at the sign of $u_{xx}$."
+   },
+   "explain": {
+    "text": "With $\\tau$ running the wrong way the diffusion term changes sign. Heat then runs backwards, which lesson 3 showed is ill-posed. Using time to expiry, $T - t$, keeps the equation forward."
+   }
+  }
+ ]
+}
