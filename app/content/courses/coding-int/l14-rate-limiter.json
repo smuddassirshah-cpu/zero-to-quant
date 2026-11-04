@@ -1,0 +1,1192 @@
+{
+  "id": "l14-rate-limiter",
+  "course": "coding-int",
+  "title": "Counting events in a time window",
+  "minutes": 13,
+  "objectives": [
+    "Design a sliding-window counter and a rate limiter for timestamped events."
+  ],
+  "skills": [
+    "ci-design"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which requests get in",
+      "tags": [
+        "rate-limit-log"
+      ],
+      "prose": "You wrote a one-client limiter in `ds` l11. A request at time $t$ counts the accepted times greater than $t - w$. Here the limit is 2 and the window is 10. New here: many clients, and a bucket.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            5,
+            6
+          ],
+          "mode": "queue"
+        },
+        "state": {
+          "caption": "Accepted times. Limit 2, window 10"
+        }
+      },
+      "question": "Three separate requests arrive, at 14, at 15 and at 16, each judged against this log. Which are accepted?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The ones at 15 and 16",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Only the one at 16",
+            "why": "You kept the time 5 in the window at 15. The cut-off is 5, and 5 is not above 5."
+          },
+          {
+            "id": "c",
+            "text": "All three",
+            "why": "You ignored the log. At 14 both times count, and the limit is 2."
+          },
+          {
+            "id": "d",
+            "text": "None of them",
+            "why": "You never forgot an old time. The window slides, so entries leave it."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the cut-off for each request?"
+        },
+        {
+          "rung": "point",
+          "text": "It is $t - 10$: the cut-off is 4 at 14, 5 at 15 and 6 at 16.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Count the logged times above the cut-off. At 14 that is 2. At 15 it is 1. At 16 it is 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Only 14 is refused: at 15 and 16 the log has room.",
+        "generic": "Not quite right. Compare each logged time with the cut-off $t - 10$.",
+        "byKey": {
+          "b": "At 15 the time 5 is not above the cut-off 5, so only 6 counts.",
+          "c": "At 14 the times 5 and 6 are both above 4, so the log is full.",
+          "d": "At 15 the time 5 has left the window, so there is room."
+        }
+      },
+      "explain": {
+        "text": "A time counts only if it is greater than $t - 10$. At 14 the cut-off is 4, so both entries count and the request is refused. At 15 only 6 counts and at 16 none do.",
+        "canvas": {
+          "cells": [
+            6
+          ],
+          "caption": "At 15 only the time 6 is inside the window"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The window slides",
+      "tags": [
+        "rate-limit-log"
+      ],
+      "prose": "Slide the time forward and watch which logged times are still inside the window of 10.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            5,
+            6
+          ],
+          "mode": "queue"
+        },
+        "state": {
+          "caption": "t = 13: the window holds times above 3. Both count"
+        },
+        "controls": [
+          {
+            "bind": "now",
+            "label": "Time",
+            "frames": [
+              {
+                "cells": [
+                  5,
+                  6
+                ],
+                "caption": "t = 13: the window holds times above 3. Both count"
+              },
+              {
+                "cells": [
+                  5,
+                  6
+                ],
+                "caption": "t = 14: above 4. Both count"
+              },
+              {
+                "cells": [
+                  6
+                ],
+                "caption": "t = 15: above 5. The time 5 has left"
+              },
+              {
+                "cells": [],
+                "caption": "t = 16: above 6. The time 6 has left"
+              },
+              {
+                "cells": [],
+                "caption": "t = 17: above 7. Nothing is left"
+              }
+            ],
+            "frameLabels": [
+              "13",
+              "14",
+              "15",
+              "16",
+              "17"
+            ],
+            "start": 0
+          }
+        ]
+      },
+      "question": "At what time does the logged time 6 stop counting?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Time",
+        "accept": "16: at 16 the cut-off is 6, and 6 is not above 6",
+        "wrong": [
+          {
+            "id": "late",
+            "value": 17
+          },
+          {
+            "id": "early",
+            "value": 15
+          },
+          {
+            "id": "own",
+            "value": 6
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When is the cut-off equal to 6?"
+        },
+        {
+          "rung": "point",
+          "text": "The cut-off is $t - 10$.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $t = 16$ the cut-off is 6. The time 6 is not above it, so it no longer counts."
+        }
+      ],
+      "feedback": {
+        "correct": "At 16: the cut-off is 6, and the log needs times above it.",
+        "generic": "Not quite right. Find the first $t$ with $t - 10 \\ge 6$.",
+        "byKey": {
+          "late": "You waited one second too long. At 16 the cut-off is already 6.",
+          "early": "At 15 the cut-off is 5. That drops the time 5, not 6.",
+          "own": "6 is the time of the entry. Ask when it leaves."
+        }
+      },
+      "explain": {
+        "text": "An entry at time $s$ counts while $s > t - 10$. It leaves when $t - 10 \\ge s$, that is when $t \\ge s + 10$. For $s = 6$ that is $t = 16$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A run of requests",
+      "tags": [
+        "rate-limit-log"
+      ],
+      "prose": "Limit 2, window 3. Requests arrive at times 0, 1, 2, 3, 4 and 5, and a refused request is not recorded.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            0,
+            1
+          ],
+          "mode": "queue"
+        },
+        "state": {
+          "caption": "Accepted times so far. Limit 2, window 3"
+        }
+      },
+      "question": "How many are accepted?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Accepted",
+        "accept": "4: the requests at 0, 1, 3 and 4",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2
+          },
+          {
+            "id": "three",
+            "value": 3
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When does the time 0 leave the window?"
+        },
+        {
+          "rung": "point",
+          "text": "At $t = 3$: the cut-off is 0 and 0 is not above 0.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0 yes, 1 yes, 2 no, 3 yes (0 has left), 4 yes (1 has left), 5 no."
+        }
+      ],
+      "feedback": {
+        "correct": "Accepted at 0, 1, 3 and 4: four.",
+        "generic": "Not quite right. Drop old times before each decision.",
+        "byKey": {
+          "two": "You stopped when the log filled. At 3 the time 0 has left, so there is room.",
+          "three": "You missed the request at 4. By then the time 1 has left."
+        }
+      },
+      "explain": {
+        "text": "The log holds 0 and 1 until the request at 3, when 0 leaves. Then 3 is accepted, and 1 leaves before 4. The requests at 2 and 5 meet a full log."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Many clients",
+      "tags": [
+        "rate-limit-log"
+      ],
+      "pace": 600,
+      "prose": "Extend the single-client log of `ds` l11: keep one deque of accepted times for each user, in a dict. Drop the old times from the left before you count.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "RateLimiter(limit, window)",
+          "lines": [
+            "allow(user, t): True if the request is accepted.",
+            "t never goes back. Count the accepted requests of this user at times greater than t - window.",
+            "Accepted when that count is below limit.",
+            "A refused request is not recorded.",
+            "Hidden driver run_limiter(limit, window, calls): rows [user, t]. It returns the accept flags."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Write `RateLimiter(limit, window)` with `allow(user, t)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class RateLimiter:\n    def __init__(self, limit, window):\n        self.limit, self.window = limit, window\n        self.count = {}\n\n    def allow(self, user, t):\n        self.count[user] = self.count.get(user, 0) + 1\n        return self.count[user] <= self.limit\n",
+        "solution": "from collections import deque\n\n\nclass RateLimiter:\n    def __init__(self, limit, window):\n        self.limit, self.window = limit, window\n        self.log = {}\n\n    def allow(self, user, t):\n        q = self.log.setdefault(user, deque())\n        while q and q[0] <= t - self.window:\n            q.popleft()\n        if len(q) < self.limit:\n            q.append(t)\n            return True\n        return False\n",
+        "examples": [
+          {
+            "call": "run_limiter(3, 10, [['a', 1], ['a', 2], ['a', 3], ['a', 4], ['a', 10], ['a', 11], ['a', 12]])",
+            "expect": "[True, True, True, False, False, True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_limiter(2, 5, [['a', 0], ['b', 0], ['a', 1], ['a', 2], ['b', 2], ['a', 5], ['a', 6]])",
+            "expect": "[True, True, True, False, True, True, True]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_limiter(3, 10, [['a', 1], ['a', 2], ['a', 3], ['a', 4], ['a', 10], ['a', 11], ['a', 12]])",
+            "expect": "[True, True, True, False, False, True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_limiter(2, 5, [['a', 0], ['b', 0], ['a', 1], ['a', 2], ['b', 2], ['a', 5], ['a', 6]])",
+            "expect": "[True, True, True, False, True, True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_limiter(1, 1, [['a', 0], ['a', 0], ['a', 1], ['a', 1], ['a', 2]])",
+            "expect": "[True, False, True, False, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_limiter(2, 3, [['a', 0], ['a', 1], ['a', 2], ['a', 3], ['a', 4], ['a', 5]])",
+            "expect": "[True, True, False, True, True, False]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_limiter(3, 60, [['a', 0], ['a', 10], ['a', 20], ['a', 30], ['a', 40], ['a', 50], ['a', 60], ['a', 70], ['a', 80], ['a', 90], ['a', 100], ['a', 110], ['a', 120]])",
+            "expect": "[True, True, True, False, False, False, True, True, True, False, False, False, True]",
+            "compare": "equal"
+          },
+          {
+            "setup": "calls = [['a', t // 3] for t in range(60000)]",
+            "call": "sum(run_limiter(5, 100, calls))",
+            "expect": "1000",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: the edge of the window, two users, a window of 1 and 60,000 requests.",
+        "postlude": "def run_limiter(limit, window, calls):\n    r = RateLimiter(limit, window)\n    return [r.allow(u, t) for u, t in calls]\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does each user need?"
+        },
+        {
+          "rung": "point",
+          "text": "A deque of the times of their accepted requests.",
+          "highlight": [
+            "l1",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Pop from the left while `q[0] <= t - window`. Accept and append only if `len(q) < limit`."
+        }
+      ],
+      "feedback": {
+        "correct": "A dict of deques, trimmed on every call.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: at time 10 the times 1, 2 and 3 are all above 0, so the request is refused.",
+          "test-2": "Test 2 has two users. Each user has their own log.",
+          "test-3": "Test 3 has window 1: a request at 1 forgets one at 0.",
+          "test-4": "Test 4 has limit 2, window 3: the request at 3 forgets the one at 0.",
+          "test-5": "Test 5 refuses three in a row, then admits three more as the old ones age out.",
+          "test-6": "Test 6 has 60,000 requests. Trimming from the left must cost constant time."
+        }
+      },
+      "explain": {
+        "text": "Each call pops the old times, then compares the length with the limit. Each time is added once and removed once, so a call costs constant time on average. A refused request leaves the log alone."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Refused requests",
+      "tags": [
+        "rate-limit-log"
+      ],
+      "prose": "Limit 2, window 10. A client sends requests at 0, 1, 5, 10 and 11. One learner appends each time to the log before checking the count.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            0,
+            1
+          ],
+          "mode": "queue"
+        },
+        "state": {
+          "caption": "Log before the request at 5"
+        }
+      },
+      "question": "Which requests does a correct limiter accept?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "0, 1, 10 and 11",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "0 and 1 only",
+            "why": "You recorded the refused request at 5. It stays in the log and still counts at 10 and 11."
+          },
+          {
+            "id": "c",
+            "text": "0, 1 and 10",
+            "why": "You kept the time 1 in the window at 11. The cut-off is 1, and 1 is not above 1."
+          },
+          {
+            "id": "d",
+            "text": "All five",
+            "why": "The request at 5 meets a full log of two. It is refused."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is the request at 5 accepted?"
+        },
+        {
+          "rung": "point",
+          "text": "No: the log holds 0 and 1, and the limit is 2.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Refused, so it is not recorded. At 10 the time 0 has left, so there is room. At 11 the time 1 has left."
+        }
+      ],
+      "feedback": {
+        "correct": "T, T, F, T, T: a refused request leaves no mark.",
+        "generic": "Not quite right. Decide each request before recording anything.",
+        "byKey": {
+          "b": "That is the learner's bug: a refused time sits in the log and locks the client out.",
+          "c": "At 11 the cut-off is 1, so the time 1 has left and there is room.",
+          "d": "The limit is 2. The third request in the window is refused."
+        }
+      },
+      "explain": {
+        "text": "The request at 5 is refused and not recorded. At 10 the time 0 has left, so 10 is accepted, and at 11 the time 1 has left. Recording refused requests would keep a client locked out for as long as it keeps trying.",
+        "canvas": {
+          "cells": [
+            10,
+            11
+          ],
+          "caption": "Correct log after 11: the times 10 and 11"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A block boundary",
+      "tags": [
+        "rate-limit-window"
+      ],
+      "prose": "A fixed counter allows 40 requests in each 30-second block and resets at each block start. 40 requests arrive at second 29, and 40 more at second 30.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Second",
+            "Requests",
+            "Block"
+          ],
+          "rows": [
+            [
+              "29",
+              "40",
+              "first"
+            ],
+            [
+              "30",
+              "40",
+              "second"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many does the fixed counter admit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 80,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Requests",
+        "accept": "80: 40 in each block. A sliding log would admit 40",
+        "wrong": [
+          {
+            "id": "sliding",
+            "value": 40
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which block is each request in?"
+        },
+        {
+          "rung": "point",
+          "text": "Second 29 ends the first block. Second 30 starts the second.",
+          "highlight": [
+            "r0c2",
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each block has its own count of 40, so both groups pass: 80 in two seconds."
+        }
+      ],
+      "feedback": {
+        "correct": "80 in two seconds, double the limit. A sliding log admits 40.",
+        "generic": "Not quite right. The counter resets at second 30.",
+        "byKey": {
+          "sliding": "That is the sliding log's answer. A fixed counter resets at the block boundary and admits both groups."
+        }
+      },
+      "explain": {
+        "text": "The two groups sit in different blocks, so each meets a fresh count and all 80 pass. A sliding log at second 30 still sees the 40 from second 29, so it admits only 40."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A bucket of tokens",
+      "tags": [
+        "token-bucket"
+      ],
+      "pace": 720,
+      "prose": "A token bucket allows a burst of up to `capacity`, then a steady `rate` a second. It stores two numbers, the tokens and the time of the last request, and never a list.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "TokenBucket(capacity, rate)",
+          "lines": [
+            "allow(t): True if the request is accepted.",
+            "The bucket starts full at time 0.",
+            "Each whole second adds rate tokens, never above capacity.",
+            "First add the tokens for the time since the last request. Then spend 1 token if there is one, else refuse.",
+            "Hidden driver run_bucket(capacity, rate, times) returns the accept flags."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Write `TokenBucket(capacity, rate)` with `allow(t)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class TokenBucket:\n    def __init__(self, capacity, rate):\n        self.capacity, self.rate = capacity, rate\n        self.used = 0\n\n    def allow(self, t):\n        self.used += 1\n        return self.used <= self.capacity\n",
+        "solution": "class TokenBucket:\n    def __init__(self, capacity, rate):\n        self.capacity, self.rate = capacity, rate\n        self.tokens, self.last = capacity, 0\n\n    def allow(self, t):\n        self.tokens = min(self.capacity, self.tokens + (t - self.last) * self.rate)\n        self.last = t\n        if self.tokens >= 1:\n            self.tokens -= 1\n            return True\n        return False\n",
+        "examples": [
+          {
+            "call": "run_bucket(3, 1, [0, 0, 0, 0, 1, 1, 2, 10])",
+            "expect": "[True, True, True, False, True, False, True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_bucket(2, 2, [0, 0, 0, 1, 1, 1])",
+            "expect": "[True, True, False, True, True, False]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_bucket(3, 1, [0, 0, 0, 0, 1, 1, 2, 10])",
+            "expect": "[True, True, True, False, True, False, True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_bucket(2, 2, [0, 0, 0, 1, 1, 1])",
+            "expect": "[True, True, False, True, True, False]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_bucket(1, 0, [0, 5, 10])",
+            "expect": "[True, False, False]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_bucket(5, 1, [0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3])",
+            "expect": "[True, True, True, True, True, False, True, True, True, False, False]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_bucket(2, 1, [0, 0, 0, 2, 2, 2, 2])",
+            "expect": "[True, True, False, True, True, False, False]",
+            "compare": "equal"
+          },
+          {
+            "setup": "ts = [t // 4 for t in range(200000)]",
+            "call": "sum(run_bucket(10, 1, ts))",
+            "expect": "50009",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests: a refill, a rate of 0, a pause and 200,000 requests.",
+        "postlude": "def run_bucket(capacity, rate, times):\n    b = TokenBucket(capacity, rate)\n    return [b.allow(t) for t in times]\n"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the bucket remember?"
+        },
+        {
+          "rung": "point",
+          "text": "How many tokens it has, and when it last looked.",
+          "highlight": [
+            "l1",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "On a request at $t$: `tokens = min(capacity, tokens + (t - last) * rate)`. Set `last = t`. Spend one token if there is one."
+        }
+      ],
+      "feedback": {
+        "correct": "Two numbers: tokens and last time.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1: four requests at time 0 drain a bucket of 3. One token is back at each of times 1 and 2.",
+          "test-2": "Test 2: capacity 2, rate 2: two tokens at time 0, two more at time 1.",
+          "test-3": "Test 3 has a rate of 0. Nothing ever refills.",
+          "test-4": "Test 4: after 3 seconds only 3 tokens are back.",
+          "test-5": "Test 5: two seconds add 2 tokens, not 1.",
+          "test-6": "Test 6 has 200,000 requests. Each call must be constant time."
+        }
+      },
+      "explain": {
+        "text": "The bucket refills lazily: each request adds the tokens for the time that has passed, capped at the capacity. Spending a token is one subtraction. Memory stays at two numbers however many requests arrive."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Bursts and refills",
+      "tags": [
+        "token-bucket"
+      ],
+      "prose": "A bucket holds 2 tokens and refills 2 a second. Three requests arrive at time 0, then three at time 1.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Capacity 2, rate 2",
+          "lines": [
+            "time 0:  3 requests",
+            "time 1:  3 requests"
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "How many requests are accepted?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Accepted",
+        "accept": "4: two at time 0 and two at time 1",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2
+          },
+          {
+            "id": "three",
+            "value": 3
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many tokens are there at time 0, and at time 1?"
+        },
+        {
+          "rung": "point",
+          "text": "Two tokens at 0. By time 1 the bucket is full again.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Time 0: two accepted, one refused. Time 1: two new tokens, so two accepted and one refused."
+        }
+      ],
+      "feedback": {
+        "correct": "2 + 2 = 4 accepted.",
+        "generic": "Not quite right. Add the refill before the requests at time 1.",
+        "byKey": {
+          "two": "You gave no refill. Two tokens return in the second from 0 to 1.",
+          "three": "You gave only one refill token at time 1. The rate is 2 a second."
+        }
+      },
+      "explain": {
+        "text": "The bucket starts full with 2 tokens, so two requests at time 0 pass and the third is refused. By time 1 two tokens have returned, so two more pass. Then the bucket is empty again."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Log and bucket",
+      "tags": [
+        "rate-limit-log"
+      ],
+      "prose": "Two shapes, one idea: forget what is old.\n\n```python\n# sliding log\nwhile q and q[0] <= t - window:\n    q.popleft()\nif len(q) < limit: q.append(t)\n\n# token bucket\ntokens = min(capacity, tokens + (t - last) * rate)\n```",
+      "question": "Put the steps of the sliding log's `allow` in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a1",
+            "text": "Take the user's deque, or make an empty one"
+          },
+          {
+            "id": "a2",
+            "text": "Drop times at or before `t - window` from the left"
+          },
+          {
+            "id": "a3",
+            "text": "If fewer than `limit` remain, append `t` and accept"
+          },
+          {
+            "id": "a4",
+            "text": "Otherwise refuse and leave the log alone"
+          },
+          {
+            "id": "d1",
+            "text": "Append `t`, then count the times inside the window",
+            "why": "A refused request would sit in the log and count against the client's next requests."
+          }
+        ],
+        "answer": [
+          "a1",
+          "a2",
+          "a3",
+          "a4"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must happen before you count?"
+        },
+        {
+          "rung": "point",
+          "text": "The old times must be dropped."
+        },
+        {
+          "rung": "step",
+          "text": "Get the log, drop the old times, test the count, then accept with a record or refuse without one."
+        }
+      ],
+      "feedback": {
+        "correct": "Drop the old, then test, then record only if accepted.",
+        "generic": "Not quite right. Count only after old times are gone.",
+        "byKey": {
+          "d1": "You recorded before deciding. A refused request must leave no mark.",
+          "left-out": "Four steps belong. Only record-first is wrong."
+        }
+      },
+      "explain": {
+        "text": "The log forgets old times from the left, then compares the count with the limit. The bucket forgets by adding tokens for the time passed. Both decide first and record only an accepted request."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A million clients",
+      "tags": [
+        "rate-limit-log"
+      ],
+      "prose": "A gateway serves a million clients. Each sends one request and never returns. The limiter keeps a deque for every client it has ever seen.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Clients",
+            "Requests each",
+            "Entries kept"
+          ],
+          "rows": [
+            [
+              "1,000,000",
+              "1",
+              "1,000,000"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What do you change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Delete an entry when its deque empties, and sweep idle clients.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Keep every client for ever, so that no request history is lost.",
+            "why": "You let memory grow with every client ever seen. An old client's log is useless."
+          },
+          {
+            "id": "c",
+            "text": "Raise `limit` so that fewer deques are needed overall.",
+            "why": "The limit does not change how many clients there are."
+          },
+          {
+            "id": "d",
+            "text": "Use one shared deque for all clients to save the memory.",
+            "why": "One log would count a client's requests against everyone else."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does an idle client's entry hold?"
+        },
+        {
+          "rung": "point",
+          "text": "Times that have left the window, so nothing useful.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Drop an entry once its deque is empty. A timer sweep catches clients that never call again."
+        }
+      ],
+      "feedback": {
+        "correct": "Free the entries that hold nothing live.",
+        "generic": "Not quite right. Ask what memory is wasted.",
+        "byKey": {
+          "b": "History older than the window never matters again.",
+          "c": "The number of deques is the number of clients, not the limit.",
+          "d": "A shared log breaks the limit for each client."
+        }
+      },
+      "explain": {
+        "text": "Once every time in a deque has left the window, the entry carries no information. Deleting it frees memory for the next client. A sweep matters because a client that never returns is never visited."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Which limiter",
+      "tags": [
+        "rate-limit-window"
+      ],
+      "prose": "Match each need to a limiter. (a) A hard cap of 100 a minute at an exchange gateway. (b) Bursts allowed, but a steady average. (c) A cheap counter that may be a little off.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Limiter",
+            "Memory",
+            "Bursts"
+          ],
+          "rows": [
+            [
+              "Sliding log",
+              "a time per request",
+              "none above the limit"
+            ],
+            [
+              "Token bucket",
+              "two numbers",
+              "up to capacity"
+            ],
+            [
+              "Fixed window",
+              "one counter",
+              "twice at a boundary"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which match is right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "(a) sliding log, (b) token bucket, (c) fixed window",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "(a) fixed window, (b) sliding log, (c) token bucket",
+            "why": "You gave the hard cap to the fixed window. Around a boundary it lets twice the limit through."
+          },
+          {
+            "id": "c",
+            "text": "(a) token bucket, (b) fixed window, (c) sliding log",
+            "why": "You gave the hard cap to a bucket, which allows a burst up to its capacity. The log stores every request, so it is not cheap."
+          },
+          {
+            "id": "d",
+            "text": "(a) sliding log, (b) fixed window, (c) token bucket",
+            "why": "You gave bursts to the fixed window. A bucket is built for them."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which limiter never exceeds the limit in any window?"
+        },
+        {
+          "rung": "point",
+          "text": "The sliding log. It stores a time for each accepted request.",
+          "highlight": [
+            "r0",
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bucket allows bursts and bounds the average. The fixed window is a single counter with boundary error."
+        }
+      ],
+      "feedback": {
+        "correct": "Log for the hard cap, bucket for bursts, fixed window for cheap.",
+        "generic": "Not quite right. Match accuracy, burst and memory to each need.",
+        "byKey": {
+          "b": "Fixed windows are cheap but inexact at a boundary.",
+          "c": "A bucket is not a hard cap, and the log is the dearest in memory.",
+          "d": "A fixed window gives bursts only by accident, at a boundary."
+        }
+      },
+      "explain": {
+        "text": "A sliding log is exact but stores a time per request. A token bucket stores two numbers and allows a burst up to its capacity. A fixed window is the cheapest, and it can admit twice the limit around a boundary."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A sliding log keeps each client's accepted times in a deque. It drops those at or before $t - w$ and accepts if fewer than the limit remain.",
+      "A refused request is never recorded. A client's entry can be freed once its deque is empty.",
+      "A token bucket stores a token count and a last time. It adds tokens for the time passed and spends one per request."
+    ],
+    "formula": {
+      "name": "Tokens at time t",
+      "tex": "\\text{tokens} = \\min\\bigl(C,\\ \\text{tokens} + r\\,(t - t_{\\text{last}})\\bigr)",
+      "note": "C is the capacity and r the rate per second."
+    },
+    "trap": "Recording a refused request keeps a client locked out for as long as it keeps trying."
+  },
+  "quiz": [
+    {
+      "id": "q-edge",
+      "difficulty": 2,
+      "tags": [
+        "rate-limit-log"
+      ],
+      "question": "Limit 1, window 4. One request was accepted at time 6. A request arrives at time 10. Is it accepted?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Yes, because 6 is not above 10 - 4 = 6",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "No, because 10 - 6 = 4 is inside the window",
+            "why": "You counted the time 6 as inside. The window holds times greater than 6."
+          },
+          {
+            "id": "c",
+            "text": "No, because the limit is 1 and one is logged",
+            "why": "You forgot to drop old times first. The time 6 has left."
+          },
+          {
+            "id": "d",
+            "text": "Yes, because the limit is 4",
+            "why": "The limit is 1. The 4 is the window."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The time 6 is not above the cut-off 6, so the log is empty.",
+        "generic": "Not quite right. Compare 6 with the cut-off $10 - 4$.",
+        "byKey": {
+          "b": "The cut-off is 6, and 6 is not greater than 6.",
+          "c": "The entry at 6 has already left the window.",
+          "d": "Limit and window are different numbers."
+        }
+      },
+      "explain": {
+        "text": "The cut-off is $10 - 4 = 6$. Only times above 6 count, and 6 is not above 6. The log is empty, so the request is accepted."
+      }
+    },
+    {
+      "id": "q-refused",
+      "difficulty": 3,
+      "tags": [
+        "rate-limit-log"
+      ],
+      "question": "Limit 1, window 5. Requests arrive at 0 (accepted), 2 (refused) and 5. Is the request at 5 accepted?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Yes: the refused request at 2 left no mark",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "No: the request at 2 is still inside the window",
+            "why": "You recorded a refused request. Only accepted requests go in the log."
+          },
+          {
+            "id": "c",
+            "text": "No: the request at 0 is still inside the window",
+            "why": "At 5 the cut-off is 0, and 0 is not above 0."
+          },
+          {
+            "id": "d",
+            "text": "Yes: a window of 5 allows 5 requests",
+            "why": "The limit is 1. The 5 is the window."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The log holds only the time 0, which leaves at 5.",
+        "generic": "Not quite right. Which times are in the log?",
+        "byKey": {
+          "b": "A refused request is not recorded, so there is no 2 in the log.",
+          "c": "The cut-off is 0, so the time 0 has left.",
+          "d": "Limit and window are different numbers."
+        }
+      },
+      "explain": {
+        "text": "Only the accepted time 0 is logged. At 5 the cut-off is 0, so 0 has left and the log is empty. The request is accepted."
+      }
+    },
+    {
+      "id": "q-bucket",
+      "difficulty": 3,
+      "tags": [
+        "token-bucket"
+      ],
+      "question": "A bucket has capacity 5 and rate 1 token a second. It was emptied at time 0. How many tokens does a request at time 3 find?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Tokens",
+        "accept": "3: one token a second for three seconds",
+        "wrong": [
+          {
+            "id": "full",
+            "value": 5
+          },
+          {
+            "id": "one",
+            "value": 1
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Three seconds at 1 a second: 3 tokens.",
+        "generic": "Not quite right. Add the tokens for the time passed.",
+        "byKey": {
+          "full": "You refilled to capacity. The rate adds only 1 a second, and 3 is below 5.",
+          "one": "You added one second. Three seconds have passed."
+        }
+      },
+      "explain": {
+        "text": "The bucket was empty at time 0. Each second adds 1 token, so after 3 seconds it holds $\\min(5, 0 + 3 \\times 1) = 3$."
+      }
+    },
+    {
+      "id": "q-choose",
+      "difficulty": 3,
+      "tags": [
+        "rate-limit-window"
+      ],
+      "question": "Which limiter stores one time for every accepted request?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The sliding log",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The token bucket",
+            "why": "You thought it stores each request. It stores a token count and one time."
+          },
+          {
+            "id": "c",
+            "text": "The fixed window",
+            "why": "You thought it stores each request. It stores one count per block."
+          },
+          {
+            "id": "d",
+            "text": "All three",
+            "why": "Only the log keeps a time for each request."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Only the sliding log keeps a time per request.",
+        "generic": "Not quite right. Think about what each one stores.",
+        "byKey": {
+          "b": "A bucket keeps two numbers.",
+          "c": "A fixed window keeps one counter.",
+          "d": "Two of the three keep a fixed amount."
+        }
+      },
+      "explain": {
+        "text": "The log's deque grows with the accepted requests in the window. The bucket and the fixed window keep a fixed amount of data."
+      }
+    }
+  ]
+}

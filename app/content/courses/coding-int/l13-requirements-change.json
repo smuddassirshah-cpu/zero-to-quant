@@ -1,0 +1,1251 @@
+{
+  "id": "l13-requirements-change",
+  "course": "coding-int",
+  "title": "When the requirements change",
+  "minutes": 15,
+  "objectives": [
+    "Extend working code when the interviewer adds a requirement part-way."
+  ],
+  "skills": [
+    "ci-design",
+    "ci-timed"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A desk ledger",
+      "tags": [
+        "requirements-change"
+      ],
+      "prose": "A small desk records its trades. Prices are whole £. In `contests` l16 you upsolved after the clock. Here the interviewer adds rules while it runs. First the simplest question.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Quantity",
+            "Price"
+          ],
+          "rows": [
+            [
+              "1",
+              "buy 100",
+              "£10"
+            ],
+            [
+              "2",
+              "buy 100",
+              "£12"
+            ],
+            [
+              "3",
+              "sell 150",
+              "£13"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the position after the three trades?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 50,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Shares",
+        "accept": "50: 100 + 100 - 150",
+        "unit": "shares",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 350
+          },
+          {
+            "id": "sold",
+            "value": 150
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which trades add to the position, and which take away?"
+        },
+        {
+          "rung": "point",
+          "text": "Buys add and sales subtract.",
+          "highlight": [
+            "r0c1",
+            "r1c1",
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100 + 100 - 150 = 50$."
+        }
+      ],
+      "feedback": {
+        "correct": "$100 + 100 - 150 = 50$ shares.",
+        "generic": "Not quite right. Buys add to the position and sales subtract.",
+        "byKey": {
+          "all": "You added the sale as if it were a buy. A sale takes shares away.",
+          "sold": "You gave the quantity of the sale. The position is what is left after it."
+        }
+      },
+      "explain": {
+        "text": "Signed quantities add up: buys are positive and sales negative. $100 + 100 - 150 = 50$ shares remain."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Stage 1: positions",
+      "tags": [
+        "requirements-change"
+      ],
+      "pace": 300,
+      "prose": "Start small. The ledger keeps one running position per symbol. Write it so that adding a rule later is easy.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Stage 1: Ledger()",
+          "lines": [
+            "trade(symbol, qty): qty is signed, positive for a buy.",
+            "position(symbol): shares held, 0 if never traded."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Write `Ledger` with `trade(symbol, qty)` and `position(symbol)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class Ledger:\n    def __init__(self):\n        pass\n\n    def trade(self, symbol, qty):\n        pass\n\n    def position(self, symbol):\n        return 0\n",
+        "solution": "class Ledger:\n    def __init__(self):\n        self.pos = {}\n\n    def trade(self, symbol, qty):\n        self.pos[symbol] = self.pos.get(symbol, 0) + qty\n\n    def position(self, symbol):\n        return self.pos.get(symbol, 0)\n",
+        "examples": [
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100); L.trade('ABC', -40)",
+            "call": "L.position('ABC')",
+            "expect": "60",
+            "compare": "equal"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 5); L.trade('XYZ', 7); L.trade('ABC', 3)",
+            "call": "[L.position('ABC'), L.position('XYZ'), L.position('NONE')]",
+            "expect": "[8, 7, 0]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100); L.trade('ABC', -40)",
+            "call": "L.position('ABC')",
+            "expect": "60",
+            "compare": "equal"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 5); L.trade('XYZ', 7); L.trade('ABC', 3)",
+            "call": "[L.position('ABC'), L.position('XYZ'), L.position('NONE')]",
+            "expect": "[8, 7, 0]",
+            "compare": "equal"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 10); L.trade('ABC', -10)",
+            "call": "L.position('ABC')",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 3 hidden tests: a buy then a sale, two symbols and a symbol never traded."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the ledger need to remember?"
+        },
+        {
+          "rung": "point",
+          "text": "One number per symbol.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Keep a dict from symbol to position. `trade` adds `qty`, `position` reads it with a default of 0."
+        }
+      ],
+      "feedback": {
+        "correct": "A dict of positions is all stage 1 needs.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 buys 100 and sells 40, so 60 remain.",
+          "test-2": "Test 2 has two symbols and one never traded. A symbol never traded has position 0.",
+          "test-3": "Test 3 sells everything: the position is 0."
+        }
+      },
+      "explain": {
+        "text": "A dict from symbol to position is the whole state. `.get(symbol, 0)` handles a symbol never traded."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Average cost",
+      "tags": [
+        "average-cost"
+      ],
+      "prose": "Now the desk wants profit. By average cost, the two buys cost £11 a share: $(100 \\times 10 + 100 \\times 12) / 200 = 11$. A sale realises quantity times (price minus average cost).",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Quantity",
+            "Price"
+          ],
+          "rows": [
+            [
+              "1",
+              "buy 100",
+              "£10"
+            ],
+            [
+              "2",
+              "buy 100",
+              "£12"
+            ],
+            [
+              "3",
+              "sell 150",
+              "£13"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Average cost after the two buys: £11"
+        }
+      },
+      "question": "What does the sale of 150 at £13 realise, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 300,
+        "tol": {
+          "abs": 0
+        },
+        "label": "£",
+        "accept": "300: 150 x (13 - 11)",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "first",
+            "value": 450
+          },
+          {
+            "id": "last",
+            "value": 150
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which price do you subtract?"
+        },
+        {
+          "rung": "point",
+          "text": "The average cost, £11, not one of the buy prices.",
+          "highlight": [
+            "r2c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$150 \\times (13 - 11) = 300$."
+        }
+      ],
+      "feedback": {
+        "correct": "$150 \\times (13 - 11) = £300$.",
+        "generic": "Not quite right. Subtract the average cost from the sale price, then multiply by the quantity sold.",
+        "byKey": {
+          "first": "You used the first buy, £10. The cost is the average of both buys, £11.",
+          "last": "You used the last buy, £12. The cost is the average of both buys, £11."
+        }
+      },
+      "explain": {
+        "text": "The average cost of the 200 shares is £11. Each of the 150 sold realises $13 - 11 = 2$, so the total is £300."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Stage 2: average cost",
+      "tags": [
+        "average-cost"
+      ],
+      "pace": 600,
+      "prose": "The interviewer adds prices. The starter is stage 1 with the new signatures stubbed. Keep the old call valid: the stage 1 test is the last hidden test.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Stage 2: more on Ledger",
+          "lines": [
+            "trade(symbol, qty, price=0): old calls must still work.",
+            "avg_cost(symbol): average price of the shares held, 0.0 if none.",
+            "realised(symbol): profit from sales so far.",
+            "A sale realises qty * (price - average cost).",
+            "Selling more than held raises ValueError."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Add `avg_cost` and `realised` to `Ledger`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class Ledger:\n    def __init__(self):\n        self.pos = {}\n\n    def trade(self, symbol, qty, price=0):\n        self.pos[symbol] = self.pos.get(symbol, 0) + qty\n\n    def position(self, symbol):\n        return self.pos.get(symbol, 0)\n\n    def avg_cost(self, symbol):\n        return 0.0\n\n    def realised(self, symbol):\n        return 0\n",
+        "solution": "class Ledger:\n    def __init__(self):\n        self.pos, self.avg, self.pnl = {}, {}, {}\n\n    def trade(self, symbol, qty, price=0):\n        held = self.pos.get(symbol, 0)\n        if held + qty < 0:\n            raise ValueError('cannot sell more than held')\n        if qty > 0:\n            total = held * self.avg.get(symbol, 0.0) + qty * price\n            self.avg[symbol] = total / (held + qty)\n        else:\n            self.pnl[symbol] = self.pnl.get(symbol, 0) + (-qty) * (price - self.avg[symbol])\n        self.pos[symbol] = held + qty\n        if self.pos[symbol] == 0:\n            self.avg[symbol] = 0.0\n\n    def position(self, symbol):\n        return self.pos.get(symbol, 0)\n\n    def avg_cost(self, symbol):\n        return self.avg.get(symbol, 0.0)\n\n    def realised(self, symbol):\n        return self.pnl.get(symbol, 0)\n",
+        "examples": [
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100, 10); L.trade('ABC', 100, 12); L.trade('ABC', -150, 13)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[50, 11.0, 300.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 10, 50); L.trade('ABC', -10, 55)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[0, 0.0, 50.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100, 10); L.trade('ABC', 100, 12); L.trade('ABC', -150, 13)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[50, 11.0, 300.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 10, 50); L.trade('ABC', -10, 55)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[0, 0.0, 50.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100, 10); L.trade('ABC', 200, 13)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[300, 12.0, 0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100, 10); L.trade('ABC', -40, 12); L.trade('ABC', 60, 11)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[120, 10.5, 80.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 5, 10); L.trade('ABC', -5, 8); L.trade('ABC', 5, 20); L.trade('ABC', -2, 22)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[3, 20.0, -6.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 10, 5)",
+            "call": "L.trade('ABC', -11, 6)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100); L.trade('ABC', -40)",
+            "call": "L.position('ABC')",
+            "expect": "60",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. They include the stage 1 test with no price and an oversell."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must be stored besides the position?"
+        },
+        {
+          "rung": "point",
+          "text": "The average cost, and the profit made so far.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "On a buy, the new average is $(\\text{held} \\times \\text{avg} + qty \\times price) / (\\text{held} + qty)$. On a sale, add $qty \\times (price - avg)$ to the profit."
+        }
+      ],
+      "feedback": {
+        "correct": "Position, average cost and profit per symbol; the default keeps old calls working.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is the hook: 50 held, average £11, realised £300.",
+          "test-2": "Test 2 sells everything: position 0, and the average goes back to 0.0.",
+          "test-3": "Test 3 only buys. Realised stays 0 and the average is £12.",
+          "test-4": "Test 4 buys again after a part sale: 120 shares at £10.5 on average.",
+          "test-5": "Test 5 sells out and buys again, so the average restarts at £20.",
+          "test-6": "Test 6 sells 11 of 10 held. Raise `ValueError`.",
+          "test-7": "Test 7 is the stage 1 test. `trade` must still work without a price."
+        }
+      },
+      "explain": {
+        "text": "A buy updates the average by weighting old and new shares. A sale leaves the average alone and adds its profit. The default `price=0` keeps stage 1 calls valid."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The required argument",
+      "tags": [
+        "requirements-change"
+      ],
+      "prose": "The interviewer says trades now carry a price. You change the signature to `trade(self, symbol, qty, price)` and run the stage 1 test, which calls `L.trade('ABC', 100)`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Two signatures",
+          "lines": [
+            "Required argument, which breaks old calls:",
+            "  def trade(self, symbol, qty, price)",
+            "With a default, old calls still work:",
+            "  def trade(self, symbol, qty, price=0)",
+            "Old call: L.trade('ABC', 100)"
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "What happens to that test?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "It fails: the old call passes no price, so Python raises `TypeError`.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "It passes: Python reads a missing argument as 0.",
+            "why": "You assumed a missing argument becomes 0. Without a default, Python raises `TypeError`."
+          },
+          {
+            "id": "c",
+            "text": "It passes: old tests do not see new arguments.",
+            "why": "Old calls are exactly what a new required argument breaks."
+          },
+          {
+            "id": "d",
+            "text": "It passes, with a price of `None`.",
+            "why": "Python does not fill in `None`. A missing argument with no default is an error."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many arguments does the old call pass?"
+        },
+        {
+          "rung": "point",
+          "text": "Two. The new signature asks for three.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Give the new argument a default, `price=0`, and the old call is valid again."
+        }
+      ],
+      "feedback": {
+        "correct": "A required new argument breaks every old call.",
+        "generic": "Not quite right. Count the arguments the old call passes.",
+        "byKey": {
+          "b": "Python has no automatic 0. It raises `TypeError` for the missing argument.",
+          "c": "That is the trap. New required arguments break old callers.",
+          "d": "No default is filled in. The call raises."
+        }
+      },
+      "explain": {
+        "text": "A new required argument breaks every old call. A default value, `price=0`, keeps old calls valid and says what they meant. Running the old test first shows the break at once."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "First in, first out",
+      "tags": [
+        "fifo-lots"
+      ],
+      "prose": "The interviewer asks for FIFO: a sale uses the oldest shares first. On the same three trades, the sale of 150 takes the whole £10 lot. It then takes 50 shares of the £12 lot.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Quantity",
+            "Price"
+          ],
+          "rows": [
+            [
+              "1",
+              "buy 100",
+              "£10"
+            ],
+            [
+              "2",
+              "buy 100",
+              "£12"
+            ],
+            [
+              "3",
+              "sell 150",
+              "£13"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Lots: 100 at £10, then 100 at £12"
+        }
+      },
+      "question": "What does the sale realise under FIFO, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 350,
+        "tol": {
+          "abs": 0
+        },
+        "label": "£",
+        "accept": "350: 100 x 3 + 50 x 1",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "average",
+            "value": 300
+          },
+          {
+            "id": "newest",
+            "value": 150
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which lots does the sale use, and at what prices?"
+        },
+        {
+          "rung": "point",
+          "text": "100 shares at £10, then 50 at £12.",
+          "highlight": [
+            "r0c2",
+            "r1c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100 \\times (13 - 10) + 50 \\times (13 - 12) = 300 + 50 = 350$."
+        }
+      ],
+      "feedback": {
+        "correct": "$300 + 50 = £350$. The £12 lot keeps 50 shares, so `avg_cost` is £12.",
+        "generic": "Not quite right. Split the sale across the lots, oldest first.",
+        "byKey": {
+          "average": "You used the average cost. FIFO uses the price of each lot sold.",
+          "newest": "You sold only from the newest lot. FIFO takes the oldest shares first."
+        }
+      },
+      "explain": {
+        "text": "The sale takes all 100 shares of the £10 lot and 50 of the £12 lot. That realises $100 \\times 3 + 50 \\times 1 = 350$. The 50 shares left cost £12 each."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Stage 3: FIFO lots",
+      "tags": [
+        "fifo-lots"
+      ],
+      "pace": 840,
+      "prose": "Add a method choice. Keep a deque of lots, `[qty, price]`, oldest first. The starter is stage 2 with the new argument stubbed, and the hidden tests include every earlier one.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Stage 3: Ledger(method)",
+          "lines": [
+            "Ledger(method='average' or 'fifo'): the default is 'average'.",
+            "fifo: a sale uses the oldest lots first.",
+            "fifo: avg_cost is the average of the lots still held.",
+            "The stage 1 and stage 2 tests must still pass."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Add `method='fifo'` to `Ledger`, and keep the older tests passing.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class Ledger:\n    def __init__(self, method='average'):\n        self.method = method\n        self.pos, self.avg, self.pnl = {}, {}, {}\n\n    def trade(self, symbol, qty, price=0):\n        held = self.pos.get(symbol, 0)\n        if held + qty < 0:\n            raise ValueError('cannot sell more than held')\n        if qty > 0:\n            total = held * self.avg.get(symbol, 0.0) + qty * price\n            self.avg[symbol] = total / (held + qty)\n        else:\n            self.pnl[symbol] = self.pnl.get(symbol, 0) + (-qty) * (price - self.avg[symbol])\n        self.pos[symbol] = held + qty\n        if self.pos[symbol] == 0:\n            self.avg[symbol] = 0.0\n\n    def position(self, symbol):\n        return self.pos.get(symbol, 0)\n\n    def avg_cost(self, symbol):\n        return self.avg.get(symbol, 0.0)\n\n    def realised(self, symbol):\n        return self.pnl.get(symbol, 0)\n",
+        "solution": "from collections import deque\n\n\nclass Ledger:\n    def __init__(self, method='average'):\n        self.method = method\n        self.lots, self.pnl = {}, {}  # symbol -> deque of [qty, price]\n        self.pos, self.avg = {}, {}\n\n    def trade(self, symbol, qty, price=0):\n        held = self.pos.get(symbol, 0)\n        if held + qty < 0:\n            raise ValueError('cannot sell more than held')\n        lots = self.lots.setdefault(symbol, deque())\n        if qty > 0:\n            total = held * self.avg.get(symbol, 0.0) + qty * price\n            self.avg[symbol] = total / (held + qty)\n            lots.append([qty, price])\n        else:\n            left = -qty\n            if self.method == 'fifo':\n                gain = 0\n                while left:\n                    take = min(left, lots[0][0])\n                    gain += take * (price - lots[0][1])\n                    lots[0][0] -= take\n                    left -= take\n                    if lots[0][0] == 0:\n                        lots.popleft()\n            else:\n                gain = left * (price - self.avg[symbol])\n                while left:\n                    take = min(left, lots[0][0])\n                    lots[0][0] -= take\n                    left -= take\n                    if lots[0][0] == 0:\n                        lots.popleft()\n            self.pnl[symbol] = self.pnl.get(symbol, 0) + gain\n        self.pos[symbol] = held + qty\n        if self.pos[symbol] == 0:\n            self.avg[symbol] = 0.0\n        elif self.method == 'fifo':\n            self.avg[symbol] = sum(q * p for q, p in lots) / sum(q for q, p in lots)\n\n    def position(self, symbol):\n        return self.pos.get(symbol, 0)\n\n    def avg_cost(self, symbol):\n        return self.avg.get(symbol, 0.0)\n\n    def realised(self, symbol):\n        return self.pnl.get(symbol, 0)\n",
+        "examples": [
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100, 10); L.trade('ABC', 100, 12); L.trade('ABC', -150, 13)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[50, 11.0, 300.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(method='fifo'); L.trade('ABC', 100, 10); L.trade('ABC', 100, 12); L.trade('ABC', -150, 13)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[50, 12.0, 350]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100, 10); L.trade('ABC', 100, 12); L.trade('ABC', -150, 13)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[50, 11.0, 300.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 10, 50); L.trade('ABC', -10, 55)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[0, 0.0, 50.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100, 10); L.trade('ABC', 200, 13)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[300, 12.0, 0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100, 10); L.trade('ABC', -40, 12); L.trade('ABC', 60, 11)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[120, 10.5, 80.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 5, 10); L.trade('ABC', -5, 8); L.trade('ABC', 5, 20); L.trade('ABC', -2, 22)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[3, 20.0, -6.0]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 10, 5)",
+            "call": "L.trade('ABC', -11, 6)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "setup": "L = Ledger(); L.trade('ABC', 100); L.trade('ABC', -40)",
+            "call": "L.position('ABC')",
+            "expect": "60",
+            "compare": "equal"
+          },
+          {
+            "setup": "L = Ledger(method='fifo'); L.trade('ABC', 100, 10); L.trade('ABC', 100, 12); L.trade('ABC', -150, 13)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[50, 12.0, 350]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(method='fifo'); L.trade('ABC', 100, 10); L.trade('ABC', 200, 13); L.trade('ABC', -250, 14)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[50, 13.0, 550]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(method='fifo'); L.trade('ABC', 10, 50); L.trade('ABC', -4, 55); L.trade('ABC', 10, 40); L.trade('ABC', -12, 45)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[4, 40.0, 20]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "L = Ledger(method='fifo'); L.trade('ABC', 5, 10); L.trade('ABC', -5, 8); L.trade('ABC', 5, 20); L.trade('ABC', -2, 22)",
+            "call": "[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]",
+            "expect": "[3, 20.0, -6]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: the stage 1 and 2 tests first, then four FIFO cases."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where do the old tests stand if you only add the new case?"
+        },
+        {
+          "rung": "point",
+          "text": "They still run first. Add lots beside the old state, so nothing old changes.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Append `[qty, price]` on a buy. For FIFO, take from `lots[0]` until the sale is filled, adding `take * (price - lot price)`."
+        }
+      ],
+      "feedback": {
+        "correct": "A deque of lots serves FIFO, and the averages still work.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is stage 2 behaviour: average cost still works without `method`.",
+          "test-6": "Test 6 still needs the `ValueError` on an oversell.",
+          "test-7": "Test 7 is the stage 1 call with no price.",
+          "test-8": "Test 8 is the FIFO hook: realised 350, and 50 shares left at £12.",
+          "test-9": "Test 9 sells 250: the whole £10 lot and 150 of the £13 lot.",
+          "test-10": "Test 10 sells across lots twice. FIFO realises 20.",
+          "test-11": "Test 11 sells out, then buys again. The old lots are gone."
+        }
+      },
+      "explain": {
+        "text": "Lots are kept in a deque, oldest first. A FIFO sale takes from the front, popping a lot when it is empty. The average method still uses its running average, so old tests pass."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Which design absorbs the next change",
+      "tags": [
+        "requirements-change"
+      ],
+      "prose": "The interviewer's next ask is short selling. A sale may take the position below 0, and a later buy covers it. Two designs are open.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Quantity",
+            "Price"
+          ],
+          "rows": [
+            [
+              "1",
+              "buy 100",
+              "£10"
+            ],
+            [
+              "2",
+              "buy 100",
+              "£12"
+            ],
+            [
+              "3",
+              "sell 150",
+              "£13"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Lots remember what an average forgets"
+        }
+      },
+      "question": "Which design needs the fewest changes?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Keep a deque of signed lots. Average cost and FIFO both read from it.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Keep only a running average. It is the least state.",
+            "why": "You counted state, not changes. An average cannot say which lot a sale used."
+          },
+          {
+            "id": "c",
+            "text": "Rebuild one list per symbol on every call.",
+            "why": "You made each call slower and still need new rules. A deque already has the oldest lot first."
+          },
+          {
+            "id": "d",
+            "text": "Copy the class and add short selling to the copy.",
+            "why": "You duplicated the rules. Two copies must change together, so bugs double."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does each design remember about past trades?"
+        },
+        {
+          "rung": "point",
+          "text": "Lots keep every purchase. An average keeps only a blend.",
+          "highlight": [
+            "r0",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Both FIFO and a short position need to know which lot, or which side, a trade met."
+        }
+      ],
+      "feedback": {
+        "correct": "Lots keep what every rule needs.",
+        "generic": "Not quite right. Ask what each design can still answer after a new rule.",
+        "byKey": {
+          "b": "A running average loses the lots, so FIFO and shorts would force a rewrite.",
+          "c": "Rebuilding costs time on every call and adds no new information.",
+          "d": "A copy doubles every future change."
+        }
+      },
+      "explain": {
+        "text": "A deque of lots keeps the order and the price of every purchase. Average cost, FIFO and a short position are all read from it. A running average throws that information away."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Absorbing a change",
+      "tags": [
+        "requirements-change"
+      ],
+      "prose": "The same moves worked in all three stages.\n\n```python\ndef trade(self, symbol, qty, price=0):  # old calls still valid\n    ...\nLedger(method='fifo')                   # new behaviour behind a name\n```",
+      "question": "Put the steps in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "c1",
+            "text": "Read the new requirement aloud and say what it adds"
+          },
+          {
+            "id": "c2",
+            "text": "Give any new argument a default, so old calls stay valid"
+          },
+          {
+            "id": "c3",
+            "text": "Put the new behaviour behind a name or an option"
+          },
+          {
+            "id": "c4",
+            "text": "Run the old tests: they must still pass"
+          },
+          {
+            "id": "c5",
+            "text": "Write a test for the new behaviour and run it"
+          },
+          {
+            "id": "d1",
+            "text": "Rewrite the old method for the new rule and edit the old tests to match",
+            "why": "Editing old tests hides a break. They are the proof that nothing else changed."
+          }
+        ],
+        "answer": [
+          "c1",
+          "c2",
+          "c3",
+          "c4",
+          "c5"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What comes first when a requirement arrives?"
+        },
+        {
+          "rung": "point",
+          "text": "Say what changes, before you write anything."
+        },
+        {
+          "rung": "step",
+          "text": "Read it aloud, keep old calls valid, add the behaviour, run old tests, then test the new case."
+        }
+      ],
+      "feedback": {
+        "correct": "Read, keep old calls valid, add, run old tests, test the new.",
+        "generic": "Not quite right. Old tests are your safety net, so they run before the new ones.",
+        "byKey": {
+          "d1": "You edited the old tests to fit. That hides what the change broke.",
+          "left-out": "Five steps belong. Only rewriting the old tests is wrong."
+        }
+      },
+      "explain": {
+        "text": "Say what the change adds, keep old calls valid, and put the new behaviour behind a name. Run the old tests before the new ones, so a break shows at once."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The first minute",
+      "tags": [
+        "requirements-change"
+      ],
+      "prose": "Ten minutes remain. The interviewer says: sales must now use the oldest shares first. Your stage 2 ledger works.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Ten minutes left",
+          "lines": [
+            "Stage 2 ledger: working.",
+            "New ask: FIFO.",
+            "Old tests: stage 1 and stage 2."
+          ],
+          "compact": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "What do you say in the first minute?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Sales take the oldest lot, so I store lots, and old tests run first.",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "I will start typing now, so I do not lose any time.",
+            "why": "Silence hides your reading. The interviewer scores what you notice, not how fast you type."
+          },
+          {
+            "id": "c",
+            "text": "I would rewrite the whole ledger around lots from scratch.",
+            "why": "A rewrite spends the minutes and drops the old tests, your proof that nothing broke."
+          },
+          {
+            "id": "d",
+            "text": "That needs more time than we have left, so I would skip it.",
+            "why": "You treated the change as a blocker. Saying what it adds is the test."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the interviewer want to hear?"
+        },
+        {
+          "rung": "point",
+          "text": "What the change adds, what stays the same and what it costs.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Name the new data (lots), the promise (old calls and tests) and the order of work."
+        }
+      ],
+      "feedback": {
+        "correct": "Name the change, the promise and the order of work.",
+        "generic": "Not quite right. Say what changes before you type.",
+        "byKey": {
+          "b": "Typing without a word hides your plan, and a wrong plan costs the minutes.",
+          "c": "Extending keeps the old tests as proof. A rewrite throws them away.",
+          "d": "Declining the change costs the marks. Extend it and name the cost."
+        }
+      },
+      "explain": {
+        "text": "Interviewers score how you handle the change: you read it, keep old behaviour, name the cost, and extend. The cost here is storing lots instead of one average. Say it aloud before you code."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Two methods, one desk",
+      "tags": [
+        "fifo-lots"
+      ],
+      "prose": "A desk trades: buy 20 at £30, sell 5 at £34, buy 10 at £36, sell 15 at £33. The risk team asks how the two methods differ.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Trade",
+            "Quantity",
+            "Price"
+          ],
+          "rows": [
+            [
+              "1",
+              "buy 20",
+              "£30"
+            ],
+            [
+              "2",
+              "sell 5",
+              "£34"
+            ],
+            [
+              "3",
+              "buy 10",
+              "£36"
+            ],
+            [
+              "4",
+              "sell 15",
+              "£33"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "How much more does FIFO realise than average cost, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 36,
+        "tol": {
+          "abs": 0
+        },
+        "label": "£",
+        "accept": "36: FIFO realises 65 and average cost realises 29",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "fifo",
+            "value": 65
+          },
+          {
+            "id": "avg",
+            "value": 29
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out each method separately."
+        },
+        {
+          "rung": "point",
+          "text": "FIFO: the first sale uses £30 shares. The second sale uses the rest of that lot.",
+          "highlight": [
+            "r0",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "FIFO: $5 \\times 4 + 15 \\times 3 = 65$. Average: $5 \\times 4 + 15 \\times (33 - 32.4) = 20 + 9 = 29$. The difference is 36."
+        }
+      ],
+      "feedback": {
+        "correct": "$65 - 29 = £36$.",
+        "generic": "Not quite right. Find both realised profits, then subtract.",
+        "byKey": {
+          "fifo": "You gave the FIFO profit. The question asks for how much more it is than the average-cost profit.",
+          "avg": "You gave the average-cost profit. Subtract it from the FIFO profit."
+        }
+      },
+      "explain": {
+        "text": "FIFO sells the £30 shares both times: $5 \\times 4 + 15 \\times 3 = 65$. By average cost the second sale faces an average of £32.4, so it realises 9 and the total is 29. The methods differ by £36."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "When a requirement arrives, say what it adds, then extend the working code instead of rewriting it.",
+      "Give a new argument a default so old calls stay valid. Put new behaviour behind a name or an option.",
+      "Run the old tests first. Then test the new behaviour. Lots in a deque can serve average cost and FIFO alike."
+    ],
+    "formula": {
+      "name": "Average cost",
+      "tex": "\\bar{c} = \\dfrac{h\\,\\bar{c}_{\\text{old}} + q\\,p}{h + q}",
+      "note": "h shares held, q bought at price p."
+    },
+    "trap": "A new required argument breaks every old call."
+  },
+  "quiz": [
+    {
+      "id": "q-position",
+      "difficulty": 2,
+      "tags": [
+        "requirements-change"
+      ],
+      "question": "Trades in one symbol: +30, -12, +5, -8. What is the position?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Shares",
+        "accept": "15: 30 - 12 + 5 - 8",
+        "unit": "shares",
+        "wrong": [
+          {
+            "id": "sizes",
+            "value": 55
+          },
+          {
+            "id": "flip",
+            "value": -15
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$30 - 12 + 5 - 8 = 15$.",
+        "generic": "Not quite right. Buys add and sales subtract.",
+        "byKey": {
+          "sizes": "You added every size. Sales are negative.",
+          "flip": "You flipped the sign. Positive trades are buys, so the position is positive."
+        }
+      },
+      "explain": {
+        "text": "Signed quantities add: $30 - 12 + 5 - 8 = 15$ shares."
+      }
+    },
+    {
+      "id": "q-average",
+      "difficulty": 2,
+      "tags": [
+        "average-cost"
+      ],
+      "question": "Buy 40 at £9, then buy 60 at £14. What is the average cost per share, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "label": "£",
+        "accept": "12: (360 + 840) / 100",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 11.5
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$(40 \\times 9 + 60 \\times 14) / 100 = 12$.",
+        "generic": "Not quite right. Weight each price by its quantity.",
+        "byKey": {
+          "mean": "You averaged the two prices. The larger buy counts for more."
+        }
+      },
+      "explain": {
+        "text": "The cost is $40 \\times 9 + 60 \\times 14 = 1{,}200$ for 100 shares. That is £12 a share."
+      }
+    },
+    {
+      "id": "q-fifo-lot",
+      "difficulty": 3,
+      "tags": [
+        "fifo-lots"
+      ],
+      "question": "Buy 10 at £8, buy 10 at £11, then sell 5 at £12 under FIFO. What does the sale realise, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0
+        },
+        "label": "£",
+        "accept": "20: 5 x (12 - 8)",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "newest",
+            "value": 5
+          },
+          {
+            "id": "average",
+            "value": 12.5
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The oldest lot is £8: $5 \\times (12 - 8) = 20$.",
+        "generic": "Not quite right. FIFO sells the oldest lot first.",
+        "byKey": {
+          "newest": "You used the £11 lot. FIFO uses the oldest, £8.",
+          "average": "You used the average cost of £9.50. FIFO uses the price of the lot sold."
+        }
+      },
+      "explain": {
+        "text": "The first 10 shares cost £8, and the sale of 5 comes entirely out of that lot. It realises $5 \\times (12 - 8) = 20$."
+      }
+    },
+    {
+      "id": "q-old-call",
+      "difficulty": 2,
+      "tags": [
+        "requirements-change"
+      ],
+      "question": "Which signature keeps the old call `trade('ABC', 5)` valid once a price is added?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`trade(self, symbol, qty, price=0)`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`trade(self, symbol, qty, price)`",
+            "why": "A required `price` makes the old call fail with `TypeError`."
+          },
+          {
+            "id": "c",
+            "text": "`trade(self, price, symbol, qty)`",
+            "why": "Moving `price` first changes the meaning of every old argument."
+          },
+          {
+            "id": "d",
+            "text": "`trade(self, symbol, qty, *, price)`",
+            "why": "A required keyword argument still breaks the old call."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A default fills the missing argument.",
+        "generic": "Not quite right. The old call passes two arguments.",
+        "byKey": {
+          "b": "No default, so the old call raises.",
+          "c": "The old arguments would land in the wrong places.",
+          "d": "The keyword is required, so the old call still fails."
+        }
+      },
+      "explain": {
+        "text": "Only a default makes the new argument optional, so old calls with two arguments stay valid."
+      }
+    }
+  ]
+}
