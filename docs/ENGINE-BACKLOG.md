@@ -1366,3 +1366,12 @@ Status block (engine pass devices CSS):
 - 510 (side tab): done.
 - 511 (set Check button): done.
 
+### Engine pass devices 2 (4 Nov): `docs/reports/engine-layout-devices.md`
+Source: faults left by the devices CSS pass.
+
+512. Done (drill passes): `--drill <id> --tablet` (and any run with two or more viewport passes) threw `ZQDrill is not defined` from the second pass. Not an app fault and not a resize: the first pass solved the drill, the record persists, and a solved C++ drill reopens on Continue (`submit()` leaves the page when the code equals the verified code). The second pass set the same model solution, so its Submit navigated to the drill list and the test hook went with the page. `drillOne` in `tools/playthrough.mjs` now deletes the drill's record and per-drill state before opening it, so each pass starts unsolved.
+513. Done (tall plane): `css/screens/lesson.css` caps a `plane` canvas at `max(300px, 46vh)` in landscape from 768px up when the author set no `canvas.maxHeight`; the picture scales down, centred, so the question stays in view.
+
+Status block (engine pass devices 2):
+- 512 (drill passes): done.
+- 513 (tall plane): done.
