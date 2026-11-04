@@ -19,13 +19,13 @@
    "widget": {
     "kind": "code",
     "language": "python",
-    "prelude": "import math\nimport numpy as np\n\ndef heat_params(r, sigma):\n    k = 2 * r / sigma ** 2\n    return k, -(k - 1) / 2, -(k + 1) ** 2 / 4\n\ndef thomas(lo, di, up, rhs):\n    lo, di, up, rhs = [list(map(float, v)) for v in (lo, di, up, rhs)]\n    n = len(rhs)\n    cp = [0.0] * n\n    dp = [0.0] * n\n    cp[0] = up[0] / di[0]\n    dp[0] = rhs[0] / di[0]\n    for i in range(1, n):\n        m = di[i] - lo[i] * cp[i - 1]\n        cp[i] = up[i] / m\n        dp[i] = (rhs[i] - lo[i] * dp[i - 1]) / m\n    out = [0.0] * n\n    out[-1] = dp[-1]\n    for i in range(n - 2, -1, -1):\n        out[i] = dp[i] - cp[i] * out[i + 1]\n    return np.array(out)\n\ndef cn_solve(u, tau_end, nt, h, left, right):\n    \"\"\"Crank-Nicolson steps for u_tau = u_xx. left(tau) and right(tau) give the edge values.\"\"\"\n    n = len(u) - 2\n    dt = tau_end / nt\n    lam = dt / h ** 2\n    tau = 0.0\n    u = u.copy()\n    for _ in range(nt):\n        rhs = u[1:-1] + 0.5 * lam * (u[:-2] - 2 * u[1:-1] + u[2:])\n        l1, r1 = left(tau + dt), right(tau + dt)\n        rhs[0] += 0.5 * lam * l1\n        rhs[-1] += 0.5 * lam * r1\n        lo = np.full(n, -0.5 * lam)\n        di = np.full(n, 1 + lam)\n        up = np.full(n, -0.5 * lam)\n        u[1:-1] = thomas(lo, di, up, rhs)\n        u[0], u[-1] = l1, r1\n        tau += dt\n    return u\n\ndef bs_put(S, K, r, sigma, T):\n    Phi = lambda z: 0.5 * (1 + math.erf(z / math.sqrt(2)))\n    d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))\n    d2 = d1 - sigma * math.sqrt(T)\n    return K * math.exp(-r * T) * Phi(-d2) - S * Phi(-d1)\n",
+    "prelude": "import math\nimport numpy as np\n\ndef heat_params(r, sigma):\n    k = 2 * r / sigma ** 2\n    return k, -(k - 1) / 2, -(k + 1) ** 2 / 4\n\ndef thomas(lo, di, up, rhs):\n    lo, di, up, rhs = [list(map(float, v)) for v in (lo, di, up, rhs)]\n    n = len(rhs)\n    cp = [0.0] * n\n    dp = [0.0] * n\n    cp[0] = up[0] / di[0]\n    dp[0] = rhs[0] / di[0]\n    for i in range(1, n):\n        m = di[i] - lo[i] * cp[i - 1]\n        cp[i] = up[i] / m\n        dp[i] = (rhs[i] - lo[i] * dp[i - 1]) / m\n    out = [0.0] * n\n    out[-1] = dp[-1]\n    for i in range(n - 2, -1, -1):\n        out[i] = dp[i] - cp[i] * out[i + 1]\n    return np.array(out)\n\ndef cn_solve(u, tau_end, nt, h, left, right):\n    \"\"\"Crank-Nicolson steps for u_tau = u_xx. left(tau) and right(tau) give the edge values.\"\"\"\n    n = len(u) - 2\n    dt = tau_end / nt\n    lam = dt / h ** 2\n    tau = 0.0\n    u = u.copy()\n    for _ in range(nt):\n        rhs = u[1:-1] + 0.5 * lam * (u[:-2] - 2 * u[1:-1] + u[2:])\n        l1, r1 = left(tau + dt), right(tau + dt)\n        rhs[0] += 0.5 * lam * l1\n        rhs[-1] += 0.5 * lam * r1\n        lo = np.full(n, -0.5 * lam)\n        di = np.full(n, 1 + lam)\n        up = np.full(n, -0.5 * lam)\n        u[1:-1] = thomas(lo, di, up, rhs)\n        u[0], u[-1] = l1, r1\n        tau += dt\n    return u\n",
     "starter": "import math\nimport numpy as np\n\ndef price_put_4dp(S, K, r, sigma, T, L=1.0):\n    \"\"\"Put by Crank-Nicolson in heat variables, S equal to K.\n    Solve on 200 and 400 intervals (nt = nx // 5), extrapolate,\n    and return (price, nx used).\"\"\"\n    k, alpha, beta = heat_params(r, sigma)\n    a1, a2 = (k + 1) / 2, (k - 1) / 2\n    tau_end = 0.5 * sigma ** 2 * T\n\n    def solve(nx):\n        x = np.linspace(-L, L, nx + 1)\n        u0 = ...                      # the put's start: max(exp(a2 x) - exp(a1 x), 0)\n        left = lambda tau: ...        # u at x = -L: exp(a2 (-L) + a2^2 tau) - exp(a1 (-L) + a1^2 tau)\n        right = lambda tau: 0.0       # a put is worthless for large S\n        u = cn_solve(u0, tau_end, nx // 5, x[1] - x[0], left, right)\n        return ...                    # K exp(beta tau_end) u at the middle node\n\n    ...\n",
     "solution": "import math\nimport numpy as np\n\ndef price_put_4dp(S, K, r, sigma, T, L=1.0):\n    k, alpha, beta = heat_params(r, sigma)\n    a1, a2 = (k + 1) / 2, (k - 1) / 2\n    tau_end = 0.5 * sigma ** 2 * T\n\n    def solve(nx):\n        x = np.linspace(-L, L, nx + 1)\n        u0 = np.maximum(np.exp(a2 * x) - np.exp(a1 * x), 0.0)\n        left = lambda tau: math.exp(-a2 * L + a2 ** 2 * tau) - math.exp(-a1 * L + a1 ** 2 * tau)\n        right = lambda tau: 0.0\n        u = cn_solve(u0, tau_end, nx // 5, x[1] - x[0], left, right)\n        return K * math.exp(beta * tau_end) * float(u[nx // 2])\n\n    coarse, fine = solve(200), solve(400)\n    return fine + (fine - coarse) / 3, 400\n",
     "examples": [
      {
-      "call": "bs_put(100, 100, 0.05, 0.2, 1)",
-      "expect": "5.573526022",
+      "call": "round(price_put_4dp(100, 100, 0.06, 0.2, 0.75)[0], 2)",
+      "expect": "4.78",
       "compare": "isclose",
       "tol": {
        "abs": 1e-09
@@ -34,39 +34,39 @@
     ],
     "tests": [
      {
-      "call": "abs(price_put_4dp(100, 100, 0.05, 0.2, 1)[0] - 5.5735) < 5e-5",
+      "call": "abs(price_put_4dp(100, 100, 0.06, 0.2, 0.75)[0] - 4.7752) < 5e-5",
       "expect": "True",
       "compare": "equal"
      },
      {
-      "call": "abs(price_put_4dp(100, 100, 0.05, 0.2, 1)[0] - bs_put(100, 100, 0.05, 0.2, 1)) < 5e-5",
+      "call": "abs(price_put_4dp(120, 120, 0.04, 0.2, 0.75)[0] - 6.507626) < 5e-5",
       "expect": "True",
       "compare": "equal"
      },
      {
-      "call": "abs(price_put_4dp(120, 120, 0.04, 0.2, 0.75)[0] - bs_put(120, 120, 0.04, 0.2, 0.75)) < 5e-5",
+      "call": "abs(price_put_4dp(90, 90, 0.05, 0.25, 0.4)[0] - 4.768697) < 5e-5",
       "expect": "True",
       "compare": "equal"
      },
      {
-      "call": "price_put_4dp(100, 100, 0.05, 0.2, 1)[1] % 2 == 0",
+      "call": "price_put_4dp(100, 100, 0.06, 0.2, 0.75)[1] % 2 == 0",
       "expect": "True",
       "compare": "equal"
      },
      {
-      "call": "price_put_4dp(100, 100, 0.05, 0.2, 1)[0] > 5.5",
+      "call": "price_put_4dp(100, 100, 0.06, 0.2, 0.75)[0] > 4.7",
       "expect": "True",
       "compare": "equal"
      }
     ],
-    "how": "Submit runs 5 hidden tests. NumPy loads on the first run. `heat_params`, `cn_solve` and `bs_put` are provided. The price must be within $5 \\times 10^{-5}$ of the formula, and the grid must be even."
+    "how": "Submit runs 5 hidden tests. NumPy loads on the first run. `heat_params` and `cn_solve` are provided. The price must be within $5 \\times 10^{-5}$ of the formula for $\\sigma^2T$ up to 0.05, and the grid must be even."
    },
    "feedback": {
-    "correct": "The put matches the formula to $5 \\times 10^{-5}$ for two options, with the strike on a node.",
+    "correct": "The put matches the formula to $5 \\times 10^{-5}$ for three options, with the strike on a node.",
     "generic": "Not quite right. Check the put's start, the left edge and the Richardson step."
    },
    "explain": {
-    "text": "For $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$ the Crank-Nicolson puts are £5.5714 (200 intervals) and £5.5730 (400), and Richardson gives £5.5735209 against £5.5735260. A second option gives £6.5076263 against £6.5076262."
+    "text": "For $S = K = 100$, $r = 6\\%$, $\\sigma = 20\\%$, $T = 0.75$ the puts are £4.7727 (200 intervals) and £4.7746 (400). Richardson gives £4.7752000 against £4.7751999. A second option gives £6.5076263 against £6.5076262."
    }
   },
   {
@@ -124,6 +124,12 @@
     "distractors": [
      "d1",
      "d2"
+    ],
+    "same": [
+     [
+      "c1",
+      "c2"
+     ]
     ]
    },
    "feedback": {
@@ -131,7 +137,7 @@
     "generic": "Not quite right. Each line should follow from the line before it."
    },
    "explain": {
-    "text": "Each change removes one obstacle: the direction of time, the $S$ in the coefficients, then the $v_x$ and $v$ terms. For our option $k = 2.5$, $\\alpha = -0.75$ and $\\beta = -3.0625$."
+    "text": "Each change removes one obstacle: the direction of time, the $S$ in the coefficients, then the $v_x$ and $v$ terms. For $r = 2\\%$ and $\\sigma = 25\\%$, $k = 0.64$, $\\alpha = 0.18$ and $\\beta = -0.6724$."
    }
   },
   {
@@ -143,28 +149,28 @@
    "tags": [
     "total-variance"
    ],
-   "prose": "With $r = 0$ and $S = K$, an option with $\\sigma = 20\\%$ and $T = 1$ is worth £7.9656. Another option on the same share has $T = 2.25$ years.",
+   "prose": "With $r = 0$ and $S = K$, an option with $\\sigma = 16\\%$ and $T = 1$ is worth £6.3763. Another option on the same share has $T = 2.25$ years.",
    "question": "What volatility, in %, gives it the same price? Give 2 decimal places.",
    "widget": {
     "kind": "numeric",
-    "answer": 13.33,
+    "answer": 10.67,
     "tol": {
      "abs": 0.02
     },
-    "accept": "13.33%: $\\sigma^2 \\times 2.25 = 0.04$, so $\\sigma = 0.1333$.",
+    "accept": "10.67%: $\\sigma^2 \\times 2.25 = 0.0256$, so $\\sigma = 0.1067$.",
     "label": "Volatility (%)",
     "placeholder": "for example 15",
     "wrong": [
      {
       "id": "inverse",
-      "value": 30,
+      "value": 24,
       "tol": {
        "abs": 0.1
       }
      },
      {
       "id": "time",
-      "value": 8.89,
+      "value": 7.11,
       "tol": {
        "abs": 0.02
       }
@@ -172,15 +178,15 @@
     ]
    },
    "feedback": {
-    "correct": "$\\sigma = \\sqrt{0.04/2.25} = 0.1333$.",
-    "generic": "Not quite right. Keep the total variance $\\sigma^2T = 0.04$.",
+    "correct": "$\\sigma = \\sqrt{0.0256/2.25} = 0.1067$.",
+    "generic": "Not quite right. Keep the total variance $\\sigma^2T = 0.0256$.",
     "byKey": {
-     "inverse": "30% multiplies by 2.25. Volatility enters through $\\sigma^2T$, so it divides by $\\sqrt{2.25} = 1.5$.",
-     "time": "8.89% divides by 2.25. You need $\\sigma^2$ divided by 2.25, so $\\sigma$ divided by 1.5."
+     "inverse": "24% multiplies 16% by 1.5. Volatility enters through $\\sigma^2T$, so 2.25 times the time divides it by $\\sqrt{2.25} = 1.5$.",
+     "time": "7.11% divides by 2.25. You need $\\sigma^2$ divided by 2.25, so $\\sigma$ divided by 1.5."
     }
    },
    "explain": {
-    "text": "With $r = 0$ the price depends on $\\sigma^2T$ and $x$ alone. $0.04/2.25 = 0.01778$, so $\\sigma = 13.33\\%$."
+    "text": "With $r = 0$ the price depends on $\\sigma^2T$ and $x$ alone. $0.0256/2.25 = 0.011378$, so $\\sigma = 10.67\\%$."
    }
   },
   {
@@ -192,7 +198,7 @@
    "tags": [
     "feynman-kac-drift"
    ],
-   "prose": "Four simulations price our call (£10.4506) from 100,000 seeded paths. Each draws $S_T = 100e^{(m - 0.02) + 0.2z}$ and averages the payoff $(S_T - 100)^+$ times a factor.",
+   "prose": "Five simulations price our call (£10.4506) from 100,000 seeded paths. Each draws $S_T = 100e^{(m - 0.02) + 0.2z}$ and averages the payoff $(S_T - 100)^+$ times a factor.",
    "question": "Select all that apply: which converge to £10.4506?",
    "widget": {
     "kind": "multi",
@@ -200,28 +206,28 @@
     "options": [
      {
       "id": "ok",
-      "text": "$m = 5\\%$, factor $e^{-0.05}$",
+      "text": "$m = 5\\%$, factor $e^{-0.05}$, plain draws",
       "correct": true
      },
      {
       "id": "anti",
-      "text": "$m = 5\\%$, factor $e^{-0.05}$, with antithetic pairs $\\pm z$",
+      "text": "$m = 5\\%$, factor $e^{-0.05}$, antithetic $\\pm z$",
       "correct": true
      },
      {
       "id": "real",
-      "text": "$m = 12\\%$, factor $e^{-0.05}$",
-      "why": "The real drift lifts the expected payoff: £15.5261, not £10.4506."
+      "text": "$m = 9\\%$, factor $e^{-0.05}$, plain draws",
+      "why": "The real drift lifts the expected payoff: £13.1997, not £10.4506."
      },
      {
       "id": "nodisc",
-      "text": "$m = 5\\%$, no factor",
-      "why": "Without the discount the limit is $10.4506e^{0.05} = 10.9864$."
+      "text": "$m = 5\\%$, factor $e^{-0.06}$, plain draws",
+      "why": "Discounting at the wrong rate leaves the limit at £10.3466, not £10.4506."
      },
      {
       "id": "real-disc",
-      "text": "$m = 12\\%$, factor $e^{-0.12}$",
-      "why": "Discounting at the real drift does not remove it from the payoff. The limit is about £14.48, not £10.4506."
+      "text": "$m = 9\\%$, factor $e^{-0.09}$, plain draws",
+      "why": "Discounting at the real drift does not remove it from the payoff. The limit is £12.6821, not £10.4506."
      }
     ],
     "shuffle": true
@@ -231,7 +237,7 @@
     "generic": "Not quite right. Both the drift and the discount must be $r$."
    },
    "explain": {
-    "text": "The antithetic pairs change the variance only, since $z$ and $-z$ have the same law. The real drift gives £15.5261, no discount £10.9864, and $m = 12\\%$ with $e^{-0.12}$ gives £14.48."
+    "text": "The antithetic pairs change the variance only, since $z$ and $-z$ have the same law. The real drift gives £13.1997, the wrong discount £10.3466, and $m = 9\\%$ with $e^{-0.09}$ gives £12.6821."
    }
   },
   {
@@ -280,7 +286,7 @@
     }
    },
    "explain": {
-    "text": "$B = (1 - e^{-2.4})/0.8 = 1.1366$ and $A = -0.0929$. A Crank-Nicolson solve of the PDE gives 0.880706, as does the closed form. A seeded simulation gives 0.880800, standard error 0.000043."
+    "text": "$B = (1 - e^{-2.4})/0.8 = 1.1366$ and $A = -0.0929$. A Crank-Nicolson solve of the PDE gives 0.880706, as does the closed form. A seeded simulation (`default_rng(7)`, 300 steps, 200,000 paths) gives 0.880800, standard error 0.000043."
    }
   },
   {
@@ -321,7 +327,7 @@
     }
    },
    "explain": {
-    "text": "$\\lambda = (0.02/12)/0.0025 = 0.6667$, which exceeds $\\tfrac12$. The mode grows 446 times, with alternating sign. A start with rounding error $10^{-3}$ at that mode would reach about 0.4."
+    "text": "$\\lambda = (0.02/12)/0.0025 = 0.6667$, which exceeds $\\tfrac12$. The mode grows 446 times, with alternating sign. A start with rounding error $10^{-3}$ at that mode would reach about 0.45."
    }
   },
   {
@@ -370,7 +376,7 @@
     }
    },
    "explain": {
-    "text": "The errors are $6.535 \\times 10^{-4}$, $1.635 \\times 10^{-4}$ and $4.10 \\times 10^{-5}$ on 400, 800 and 1,600 intervals. Richardson on 200 and 400 intervals reaches $2 \\times 10^{-7}$ at a quarter of the cost."
+    "text": "The errors are $6.535 \\times 10^{-4}$, $1.635 \\times 10^{-4}$ and $4.10 \\times 10^{-5}$ on 400, 800 and 1,600 intervals. Richardson on 200 and 400 intervals reaches $2 \\times 10^{-7}$ for 40,000 node-steps. The 1,600 grid costs 512,000 and reaches only $4.1 \\times 10^{-5}$."
    }
   },
   {
@@ -386,8 +392,8 @@
     "validation-note"
    ],
    "title": "The jagged gamma",
-   "prompt": "A colleague's Crank-Nicolson pricer uses 400 intervals and 4 time steps on $[-1, 1]$ in heat variables. For our option it returns £10.0085, and its gamma 'looks jumpy near the strike'. She concludes the closed form (£10.4506) must be wrong. Write a reply. Explain the amplification factor near $-1$ and give the fix. Give the refinement sequence and Richardson. Say what four-decimal agreement means, then write the sentence for the validation note.",
-   "model": "**1. The closed form is not wrong.** A call's gamma $\\varphi(d_1)/(S\\sigma\\sqrt{T})$ is positive everywhere. The pricer's second differences go negative beside the strike, down to $-0.216$. That is a symptom of the scheme.\n\n**2. The amplification factor.** Crank-Nicolson multiplies a mode by $g = \\dfrac{1 - 2\\lambda s^2}{1 + 2\\lambda s^2}$. Here $\\Delta x = 0.005$ and $\\Delta\\tau = 0.005$, so $\\lambda = 200$ and the top mode has $g = -0.9950$. The scheme is stable ($|g| < 1$). But the kink's high modes lose only 0.5% a step and flip sign each step.\n\n**3. The fix.** Rannacher's start replaces the first step by two implicit half steps. Their factor $1/(1 + 4\\lambda s^2)$ is near 0. Crank-Nicolson then continues. On 400 by 4 it gives £10.4492 and every second difference is positive. More steps also help, but 1,600 intervals with 50 steps are still £0.0308 off.\n\n**4. The refinement sequence.** Take $n_t = n_x/5$. The prices on 100, 200, 400, 800 and 1,600 intervals are 10.4427214, 10.4486123, 10.4500869, 10.4504574 and 10.4505511. The formula gives 10.4505836. The error falls by about 4 each halving, so the scheme is second order. Richardson, $V_h + (V_h - V_{2h})/3$, on 100 and 200 intervals gives 10.4505760, an error of $7.6 \\times 10^{-6}$.\n\n**5. Four decimals.** It means $|V_{\\text{FD}} - V| < 5 \\times 10^{-5}$, shown on a halving sequence until two results and the formula agree. Only the 1,600 grid passes among the plain grids.\n\n**6. The note.** 'The pricer matches the closed form for the standard call to $5 \\times 10^{-5}$. The check ran on a halving sequence from 100 to 1,600 intervals (second order, ratios 3.9 to 4.0). The strike is a node, the far boundary is $x = \\pm1$, and large steps use Rannacher's start.'",
+   "prompt": "A colleague's Crank-Nicolson pricer uses 400 intervals and 4 time steps on $[-1, 1]$ in heat variables. For an option with $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$ and $T = 0.5$ it returns £6.5728, and its gamma 'looks jumpy near the strike'. She concludes the closed form (£6.8887) must be wrong. Write a reply. Explain the amplification factor near $-1$ and give the fix. Give the refinement sequence and Richardson. Say what four-decimal agreement means, then write the sentence for the validation note.",
+   "model": "**1. The closed form is not wrong.** A call's gamma $\\varphi(d_1)/(S\\sigma\\sqrt{T})$ is positive everywhere. The pricer's second differences go negative beside the strike, down to $-0.277$. That is a symptom of the scheme.\n\n**2. The amplification factor.** Crank-Nicolson multiplies a mode by $g = \\dfrac{1 - 2\\lambda s^2}{1 + 2\\lambda s^2}$. Here $\\Delta x = 0.005$ and $\\Delta\\tau = 0.0025$, so $\\lambda = 100$ and the top mode has $g = -0.9900$. The scheme is stable ($|g| < 1$). But the kink's high modes lose only 1% a step and flip sign each step.\n\n**3. The fix.** Rannacher's start replaces the first step by two implicit half steps. Their factor $1/(1 + 4\\lambda s^2)$ is near 0. Crank-Nicolson then continues. On 400 by 4 it gives £6.8837, £0.0050 below the formula, and the second differences near the strike are positive. More steps also help, but 1,600 intervals with 50 steps are still £0.0185 off.\n\n**4. The refinement sequence.** Take $n_t = n_x/5$. The prices on 100, 200, 400, 800 and 1,600 intervals are 6.8760493, 6.8855674, 6.8879388, 6.8885312 and 6.8886792. The formula gives 6.8887286, so the errors are $1.27 \\times 10^{-2}$, $3.16 \\times 10^{-3}$, $7.90 \\times 10^{-4}$, $1.97 \\times 10^{-4}$ and $4.93 \\times 10^{-5}$ below it. The error falls by about 4 each halving, so the scheme is second order. Richardson, $V_h + (V_h - V_{2h})/3$, on 100 and 200 intervals gives 6.8887402, which is $1.2 \\times 10^{-5}$ above the formula.\n\n**5. Four decimals.** It means $|V_{\\text{FD}} - V| < 5 \\times 10^{-5}$, shown on a halving sequence until two results and the formula agree. Only the 1,600 grid passes among the plain grids, at $4.93 \\times 10^{-5}$.\n\n**6. The note.** 'The pricer matches the closed form for the standard call to $5 \\times 10^{-5}$. The check ran on a halving sequence from 100 to 1,600 intervals (second order, ratios 4.0). The strike is a node, the far boundary is $x = \\pm1$, and large steps use Rannacher's start.'",
    "rubric": [
     {
      "points": 2,
@@ -395,15 +401,15 @@
     },
     {
      "points": 2,
-     "text": "Gives $\\lambda = 200$ and a top-mode factor of about $-0.9950$, stable but barely damped and sign-flipping at the kink."
+     "text": "Gives $\\lambda = 100$ and a top-mode factor of about $-0.9900$, stable but barely damped and sign-flipping at the kink."
     },
     {
      "points": 2,
-     "text": "Names Rannacher's start (two implicit half steps) and its effect: £10.4492, with positive gamma."
+     "text": "Names Rannacher's start (two implicit half steps) and its effect: £6.8837, with positive gamma."
     },
     {
      "points": 2,
-     "text": "Gives the refinement sequence with errors falling by about 4 per halving, and Richardson from two cheap grids (£10.4505760)."
+     "text": "Gives the refinement sequence, with errors falling by about 4 per halving. Gives Richardson from two cheap grids (£6.8887402, just above the formula)."
     },
     {
      "points": 2,

@@ -175,3 +175,59 @@ Numeric rows give the key and tolerance, then my value and my value for each nam
 ## Commands to reproduce
 
 Run from the scratchpad folder `ac-pdes3` (needs `pip install --target pylib scipy sympy mpmath numpy`): `python3 calc1.py` (closed forms and kernel integrals), `python3 vasicek.py`, `python3 fd.py`, `python3 fd2.py`, `python3 fd3.py`, `python3 simp.py`, `node walk.cjs`, `python3 mc.py`, `python3 code_check.py` (all code widgets; or `l12a l12b h3` for one), `node expr.cjs`, `python3 scan.py`, `python3 reuse.py`, `python3 order.py`, `python3 alt.py`, `python3 alt2.py`, `python3 fix_nums.py`, `python3 fix2.py`, `python3 lamfloat.py`, `python3 hvas2.py`, `python3 dense.py`.
+
+## Fix pass
+
+Every corrected number was recomputed by two routes (scratchpad `fix-pdes3/nums*.py`: closed form and SciPy `quad`; banded and dense-LU finite-difference solvers; seeded NumPy). No finding was disputed.
+
+1. Fixed. `h-r0-sigma` `inverse` now reads "24% multiplies 16% by 1.5" (see 9).
+2. Fixed. l10 screen 4: hint kept, `accept` gives £17.66 (£17.67 from rounded values), explain says 87.54 - 69.87 = 17.67 with the exact £17.6630 (87.5330 - 69.8700).
+3. Fixed. l12 screen 7 `same`: £0.0188 in all against £0.0079, interpolation alone about £0.017 (0.01729 recomputed).
+4. Fixed. `h-chain` has `same: [["c1","c2"]]`.
+5. Fixed. l10 slider `tol` 0.05; the slider grades `|v - 2| <= tol + 1e-9`, step 0.1, so only 2.0 passes (1.9 reads 10.0962, 2.1 reads 10.8018).
+6. Fixed. The prompt and docstring state `np.linspace(-L, L, nx + 1)` (h = 2L/nx) and the guard `lam > 0.5 + 1e-9`; the solution uses 1e-9. Run in CPython with both `h = x[1] - x[0]` and `h = 2 * L / nx`: 9 of 9 tests either way; starter 0 of 9.
+7. Fixed. (a) "for total variance up to 0.05" in the prose and docstring. (b) `bs_call` removed from the l12 screen 9 prelude and `bs_put` from `h-put-4dp`; tests compare literals (7.760257, 10.054162; homework 4.7752, 6.507626, 4.768697, each with 5e-5, Richardson errors 1.8e-7, 4e-8, 2.7e-8, 4e-8, 4.2e-7). The homework option is now r = 6%, sigma = 20%, T = 0.75 (put 4.7751999 by formula and by kernel), so the lesson option is gone from the item as well.
+8. Fixed. `r-agree` question and `unknown` option reworded; key unchanged.
+9. Fixed. `h-r0-sigma`: sigma = 16%, call £6.3763 (6.376274 by closed form and quadrature); answer 10.67 (abs 0.02); `inverse` 24, `time` 7.11.
+10. Fixed. `h-drift-sim`: m = 9% gives £13.1997; wrong discount e^-0.06 gives £10.3466; m = 9% with e^-0.09 gives £12.6821. Prose said four simulations for five options; now five. Option texts lengthened to similar size (also fixes 16 here).
+11. Fixed. `h-chain` explain uses r = 2%, sigma = 25%: k = 0.64, alpha = 0.18, beta = -0.6724. `h-put-4dp` literal replaced (see 7).
+12. Fixed. `r-decay`: L = 4, k = 3, D = 0.5: 2.7758; `no-square` 1.1781; `no-d` 5.5517; e^-2.7758 = 0.0623.
+13. Fixed. `h-colleague` option S = K = 100, r = 5%, sigma = 20%, T = 0.5: formula 6.8887286, 400 by 4 gives 6.5728 (0.3160 low), lambda = 100, g = -0.9900, second differences down to -0.277 (both solvers), Rannacher 6.8837, sequence 6.8760493, 6.8855674, 6.8879388, 6.8885312, 6.8886792 (errors 1.27e-2 to 4.93e-5), Richardson 100/200 6.8887402, 1,600 by 50 is £0.0185 off. Rubric weights unchanged. Dense solver checked 100 to 800 intervals; the 1,600 value agrees with the answer check's independent run.
+14. Fixed. l12 screen 8 explain: S-grid solve gives £10.4500, £0.0006 below the formula (6.1e-4 recomputed), with no claim of four-decimal agreement.
+15. Fixed. l12 screen 9 explain: off the node extrapolation can fail; at S = 110 it lands £0.0012 below the formula (-1.22e-3 recomputed).
+16. Fixed. l9 `q-backward`, l11 screen 0 and `q-sigma0`, l12 screen 6, `q-rannacher` and screen 10, `h-drift-sim` options lengthened or shortened as suggested (kink key lost "(lambda = 200)", which moved into the explain).
+17. Fixed. `h-sequence` explain: 40,000 against 512,000 node-steps (ratio 0.078).
+18. Fixed. l9 screen 7 `accept` uses 0.111107.
+19. Fixed. l10 screen 2 explain: 0.67706 - 0.56595 = 0.11111.
+20. Fixed. l10 screen 9 `accept`, hint and explain use 0.559618 and 0.53232 (2661.62).
+21. Fixed. l12 screen 1 hint uses lambda = 0.52083 (2.0828); explain says about 2,100 (2,077 exact).
+22. Fixed. l12 screen 3 hint: "496.6 to 496.7, depending on rounding".
+23. Fixed. `r-drift` `accept` uses 0.951229, 108.3287, 0.691462, 61.7911 (12.4745).
+24. Fixed. `r-sd` explain: "the trap of lesson 10".
+25. Fixed. Direction in words: l12 screen 4 ("below the formula"), screen 7 ("above", "below"), `r-rich` ("below it"), `h-colleague` ("above the formula"). Screen 3 keeps formula minus price.
+26. Fixed. `default_rng(21)`, 500 steps, 20,000 paths (l11 screen 7); `default_rng(7)`, 300 steps, 200,000 paths (`h-vasicek`); `default_rng(11)` (`r-drift`).
+27. Fixed. "for this option" in l12 screen 3 explain, `q-order` explain and `accept`.
+28. Fixed. `h-explicit` explain: about 0.45.
+29. No defect; no edit. The scan found nothing to change.
+
+Also split five sentences over 20 words that the edits created; voice scan is 0 and 0.
+
+### Changed keys
+
+- l9 `q-backward` (options text)
+- l10 screen 5 slider (`tol` 0.1 to 0.05)
+- l11 screen 0 (options text)
+- l11 `q-sigma0` (options text)
+- l12 screen 6 (options text)
+- l12 screen 9 (hidden tests 4 and 5 now literals, prelude without `bs_call`, solution guard 1e-9)
+- l12 screen 10 (options text)
+- l12 `q-rannacher` (options text)
+- review-3 `r-agree` (question, `unknown` option)
+- review-3 `r-decay` (key 2.7758, `wrong` 1.1781 and 5.5517)
+- homework-3 `h-put-4dp` (example, all five tests, option numbers, prelude without `bs_put`)
+- homework-3 `h-chain` (`same` group c1, c2)
+- homework-3 `h-r0-sigma` (key 10.67, `wrong` 24 and 7.11)
+- homework-3 `h-drift-sim` (options text and numbers)
+- homework-3 `h-colleague` (prompt, model and rubric numbers)
+
+Results: validator 0 errors; playthrough of l9 to l12, review-3 and homework-3 passes plain and with `--mobile --tablet`; voice scan 0 and 0.
