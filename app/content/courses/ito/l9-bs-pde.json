@@ -1,0 +1,1066 @@
+{
+ "id": "l9-bs-pde",
+ "course": "ito",
+ "title": "The Black-Scholes equation",
+ "minutes": 14,
+ "objectives": [
+  "Derive the Black-Scholes equation by hedging away the noise."
+ ],
+ "skills": [
+  "it-pricing"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "You sold one call (our option: $S = K = \\text{£}100$, $r = 5\\%$, $\\sigma = 20\\%$, one year) and hold $\\Delta$ shares against it. The curve is the book's change in value as the share moves from £100. Topic 3.2 is optional: strats and desk quant interviews at banks ask it, trading firms rarely.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      90,
+      110
+     ],
+     "y": [
+      -6,
+      6
+     ],
+     "grid": true,
+     "height": 280,
+     "xLabel": "Share price $S$ (£)",
+     "yLabel": "Change in book (£)",
+     "xStep": 5,
+     "functions": [
+      {
+       "id": "book",
+       "expr": "d*(x-100)-((x*Phi((ln(x/100)+0.07)/0.2)-100*exp(-0.05)*Phi((ln(x/100)+0.03)/0.2))-10.4506)"
+      }
+     ],
+     "params": {
+      "d": 0.3
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "now",
+       "x": 100,
+       "y": 0,
+       "tap": false
+      }
+     ]
+    }
+   },
+   "question": "Slide $\\Delta$ until a small move in the share leaves the book's value unchanged at £100.",
+   "widget": {
+    "kind": "slider",
+    "min": 0,
+    "max": 1,
+    "step": 0.01,
+    "start": 0.3,
+    "bind": "d",
+    "unitLabel": "shares per call",
+    "answer": 0.6368,
+    "tol": 0.03,
+    "label": "Shares held per call sold",
+    "wrong": [
+     {
+      "id": "one",
+      "from": 0.9,
+      "to": 1.0
+     },
+     {
+      "id": "half",
+      "from": 0.4,
+      "to": 0.52
+     },
+     {
+      "id": "none",
+      "from": 0.0,
+      "to": 0.1
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the curve at the dot as you slide."
+    },
+    {
+     "rung": "point",
+     "text": "The curve is level where the shares cancel the call's slope.",
+     "highlight": [
+      "book"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$\\Delta = 0.6368$ makes the curve flat at £100: it is the slope of the call's value curve.",
+    "generic": "Not quite right. Look for the setting where the curve is level at the dot.",
+    "byKey": {
+     "one": "You held one whole share per call. The call moves less than the share, so the book now rises with the share.",
+     "half": "Half a share was the tree's hedge for one step. Our option has a different slope at £100.",
+     "none": "With no shares the book is the short call alone, and it loses when the share rises."
+    }
+   },
+   "explain": {
+    "text": "The book is flat at $\\Delta = 0.6368$, the call's slope (delta) at £100. Away from £100 it bends down: the hedge cancels small moves, not large ones.",
+    "canvas": {
+     "params": {
+      "d": 0.6368
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Take the call at $S = 100$ with $\\Delta = 0.6368$, $\\Gamma = 0.018762$, $V = 10.4506$ and $\\Theta = -6.4140$ a year. Work out three terms, then add all four: $\\Theta + rS\\Delta + \\tfrac12\\sigma^2S^2\\Gamma - rV$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "theta",
+       "label": "Θ"
+      },
+      {
+       "id": "rSD",
+       "label": "rSΔ"
+      },
+      {
+       "id": "gam",
+       "label": "½σ²S²Γ"
+      },
+      {
+       "id": "rV",
+       "label": "rV (taken off)"
+      }
+     ],
+     "yLabel": "£ a year",
+     "showValues": true,
+     "decimals": 4,
+     "height": 240
+    },
+    "state": {
+     "values": {
+      "theta": -6.414,
+      "rSD": 0,
+      "gam": 0,
+      "rV": 0
+     }
+    }
+   },
+   "question": "Fill in each term, and the sum, to 4 decimal places.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Term",
+     "Value (£ a year)"
+    ],
+    "rows": [
+     [
+      "$\\Theta$",
+      "-6.4140"
+     ],
+     [
+      "$rS\\Delta$",
+      {
+       "edit": true,
+       "answer": 3.1842,
+       "tol": {
+        "abs": 0.0005
+       },
+       "bind": "values.rSD",
+       "wrong": [
+        {
+         "id": "forgot-r",
+         "value": 63.6831,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$\\tfrac12\\sigma^2S^2\\Gamma$",
+      {
+       "edit": true,
+       "answer": 3.7524,
+       "tol": {
+        "abs": 0.0005
+       },
+       "bind": "values.gam",
+       "wrong": [
+        {
+         "id": "forgot-half",
+         "value": 7.5048,
+         "tol": {
+          "abs": 0.001
+         }
+        },
+        {
+         "id": "sigma-not-squared",
+         "value": 37.524,
+         "tol": {
+          "abs": 0.01
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$rV$",
+      {
+       "edit": true,
+       "answer": 0.5225,
+       "tol": {
+        "abs": 0.0005
+       },
+       "bind": "values.rV"
+      }
+     ],
+     [
+      "$\\Theta + rS\\Delta + \\tfrac12\\sigma^2S^2\\Gamma - rV$",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$r = 0.05$, so $rS\\Delta$ is $5\\Delta$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tfrac12\\sigma^2S^2 = 0.5 \\times 0.04 \\times 10{,}000 = 200$.",
+     "highlight": [
+      "rSD",
+      "gam"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then $200 \\times 0.018762 = 3.7524$."
+    }
+   ],
+   "feedback": {
+    "correct": "$3.1842 + 3.7524 - 0.5225 - 6.4140 = 0$: the four terms cancel.",
+    "generic": "Not quite right. Use $r = 0.05$, $\\sigma = 0.2$, $S = 100$, and subtract $rV$.",
+    "byKey": {
+     "r1c1": "$rS\\Delta = 0.05 \\times 100 \\times 0.6368 = 3.1842$. You may have left out $r$.",
+     "r2c1": "$\\tfrac12 \\times 0.04 \\times 10{,}000 \\times 0.018762 = 3.7524$. Check the half and $\\sigma^2 = 0.04$.",
+     "r3c1": "$rV = 0.05 \\times 10.4506 = 0.5225$.",
+     "r4c1": "Add $-6.4140$, $3.1842$ and $3.7524$, then subtract $0.5225$. The total is 0."
+    }
+   },
+   "explain": {
+    "text": "The four terms sum to zero. That is not luck for this option: it is an equation the call's value satisfies at every $S$ and $t$. Next we find why."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "prose": "Why do those four terms cancel? Build the argument for any $V(t, S)$. Each line carries its reason. Leave out the two flawed lines.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "Let $V(t, S)$ be the call's value, with $dS = \\mu S\\,dt + \\sigma S\\,dW$ and $(dW)^2 = dt$."
+     },
+     {
+      "id": "d2",
+      "text": "Itô's lemma: $dV = (V_t + \\mu SV_S + \\tfrac12\\sigma^2S^2V_{SS})\\,dt + \\sigma SV_S\\,dW$, because $(dS)^2 = \\sigma^2S^2\\,dt$."
+     },
+     {
+      "id": "d3",
+      "text": "Sell one call and hold $\\Delta$ shares: $\\Pi = -V + \\Delta S$, so $d\\Pi = -dV + \\Delta\\,dS$ (we hold $\\Delta$ fixed for the step)."
+     },
+     {
+      "id": "d4",
+      "text": "Substitute: $d\\Pi = (-V_t - \\mu SV_S - \\tfrac12\\sigma^2S^2V_{SS} + \\Delta\\mu S)\\,dt + (\\Delta - V_S)\\,\\sigma S\\,dW$."
+     },
+     {
+      "id": "d5",
+      "text": "Choose $\\Delta = V_S$: the $dW$ term and the $\\mu$ terms cancel, leaving $d\\Pi = -(V_t + \\tfrac12\\sigma^2S^2V_{SS})\\,dt$."
+     },
+     {
+      "id": "d6",
+      "text": "The book has no noise, so no arbitrage makes it earn cash: $d\\Pi = r\\Pi\\,dt = r(-V + SV_S)\\,dt$."
+     },
+     {
+      "id": "d7",
+      "text": "Equate the two $dt$ coefficients and collect terms: $V_t + rSV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV = 0$."
+     },
+     {
+      "id": "x1",
+      "text": "Hold $V_S$ shares and keep $\\mu$: the hedged book earns $\\mu\\Pi\\,dt$, as shares do on average.",
+      "why": "A book with no noise is riskless, whatever it holds. Cash earns $r$, so the book earns $r$."
+     },
+     {
+      "id": "x2",
+      "text": "Drop $\\tfrac12\\sigma^2S^2V_{SS}$ in line 2, since $(dW)^2$ is far too small to count.",
+      "why": "$(dW)^2 = dt$ is the same size as $dt$. The term stays: it is the whole gamma effect."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4",
+     "d5",
+     "d6",
+     "d7"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with the model and the lemma, then build the book."
+    },
+    {
+     "rung": "point",
+     "text": "The noise cancels at $\\Delta = V_S$. Only then can we say riskless."
+    },
+    {
+     "rung": "step",
+     "text": "The last line equates $-(V_t + \\tfrac12\\sigma^2S^2V_{SS})$ with $r(-V + SV_S)$."
+    }
+   ],
+   "feedback": {
+    "correct": "That is the Black-Scholes equation: the share's drift $\\mu$ is gone, and so is the noise.",
+    "generic": "Not quite right. Write $V$ and $S$, apply the lemma, form the book, then cancel the noise.",
+    "byKey": {
+     "x1": "You let the hedged book earn the share's drift. It has no noise left, so it must earn $r$.",
+     "x2": "You dropped the Itô term, as in ordinary calculus. Here it is the term that stops the book being flat.",
+     "left-out": "A line of the derivation is in the Left out list. Only the two flawed lines belong there."
+    }
+   },
+   "explain": {
+    "text": "Equating $-(V_t + \\tfrac12\\sigma^2S^2V_{SS}) = r(-V + SV_S)$ gives the equation, with $\\mu$ nowhere in it. At $S = 100$ it is the four terms you just added."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "The hedged book $\\Pi = -V + S\\Delta$ is worth £53.2325 at $S = 100$. A junior says: \"It is hedged, so it earns nothing.\" Another says: \"It holds shares, so it earns the share's $\\mu = 12\\%$.\"",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Item",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Call value $V$",
+       "£10.4506"
+      ],
+      [
+       "Shares $S\\Delta$",
+       "£63.6831"
+      ],
+      [
+       "Book $\\Pi = -V + S\\Delta$",
+       "£53.2325"
+      ],
+      [
+       "$r$ and $\\mu$",
+       "5% and 12%"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the equation say the book earns per year, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.6616,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "$r\\Pi = 0.05 \\times 53.2325 = 2.6616$. Time passing, $-\\Theta - \\tfrac12\\sigma^2S^2\\Gamma = 6.4140 - 3.7524$, gives the same.",
+    "label": "Earnings",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "mu",
+      "value": 6.3879,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "delta",
+      "value": 3.1842,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The book is riskless. Which rate does a riskless holding earn?"
+    },
+    {
+     "rung": "point",
+     "text": "Multiply $r = 0.05$ by $\\Pi = 53.2325$.",
+     "highlight": [
+      "r2c1"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$0.05 \\times 53.2325 = 2.6616$: a riskless book earns the risk-free rate.",
+    "generic": "Not quite right. The book has no noise, so it earns $r$ on its value $\\Pi$.",
+    "byKey": {
+     "zero": "You assumed a hedge removes profit as well as risk. A riskless book still earns interest on its value.",
+     "mu": "You used 12% on £53.2325. The hedge removed the share's noise and its drift together.",
+     "delta": "3.1842 is $rS\\Delta$, the interest on the shares alone. The book also owes the short call, worth £10.4506."
+    }
+   },
+   "explain": {
+    "text": "The book earns $r\\Pi = \\text{£}2.6616$ a year. The equation says time and gamma pay the same: $6.4140 - 3.7524$. Noise is gone, but interest remains, at $r$ and not $\\mu$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Edge case. A forward contract on the share has value $V = S - Ke^{-r(T-t)}$. At $S = 100$, $K = 100$, $r = 5\\%$ and one year to go, $V = 4.8771$. It is linear in $S$, so $V_{SS} = 0$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Term",
+      "Forward at $S = 100$"
+     ],
+     "rows": [
+      [
+       "$V_t$",
+       "−4.7561"
+      ],
+      [
+       "$rSV_S$",
+       "5"
+      ],
+      [
+       "$\\tfrac12\\sigma^2S^2V_{SS}$",
+       "?"
+      ],
+      [
+       "$-rV$",
+       "−0.2439"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Check the equation with $\\sigma = 40\\%$. What is $V_t + rSV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "$-4.7561 + 5 + 0 - 0.2439 = 0$, whatever $\\sigma$ is.",
+    "label": "Residual",
+    "wrong": [
+     {
+      "id": "sigma-term",
+      "value": 8,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$V_{SS} = 0$ for a straight line in $S$."
+    },
+    {
+     "rung": "point",
+     "text": "$V_t = -rKe^{-rT} = -4.7561$ and $V_S = 1$.",
+     "highlight": [
+      "r2c1"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The residual is 0: the forward obeys the equation, and $\\sigma$ never enters because $V_{SS} = 0$.",
+    "generic": "Not quite right. Add $V_t = -4.7561$, $rSV_S = 5$, the second-derivative term, and subtract $rV$.",
+    "byKey": {
+     "sigma-term": "You used $\\tfrac12\\sigma^2S^2$ as if $V_{SS}$ were not zero. A straight line has no curvature, so that term vanishes."
+    }
+   },
+   "explain": {
+    "text": "The terms are $-4.7561 + 5 + 0 - 0.2439 = 0$. The forward needs no volatility: no curvature, no hedging error, no $\\sigma$. Options differ because $V_{SS} \\neq 0$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The equation in code",
+   "prose": "`bs_call`, `norm_cdf` and `norm_pdf` are loaded. Write `greeks`, with $\\Gamma = \\varphi(d_1)/(S\\sigma\\sqrt T)$ and $\\Theta = -\\dfrac{S\\varphi(d_1)\\sigma}{2\\sqrt T} - rKe^{-rT}\\Phi(d_2)$. Then `pde_residual`: $V_t = -\\partial V/\\partial T$, by central differences in $S$ (step $h$) and in $T$ (step `dt`).",
+   "question": "Complete `greeks` and `pde_residual`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def greeks(S, K, r, sigma, T):\n    \"\"\"Return (delta, gamma, theta) of the call, theta per year.\"\"\"\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    ...\n\ndef pde_residual(S, K, r, sigma, T, h=0.01, dt=0.0001):\n    \"\"\"V_t + r S V_S + 1/2 sigma^2 S^2 V_SS - r V by central differences.\"\"\"\n    ...\n",
+    "solution": "def greeks(S, K, r, sigma, T):\n    \"\"\"Return (delta, gamma, theta) of the call, theta per year.\"\"\"\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    delta = norm_cdf(d1)\n    gamma = norm_pdf(d1) / (S * sigma * sqrt(T))\n    theta = -S * norm_pdf(d1) * sigma / (2 * sqrt(T)) - r * K * exp(-r * T) * norm_cdf(d2)\n    return delta, gamma, theta\n\ndef pde_residual(S, K, r, sigma, T, h=0.01, dt=0.0001):\n    \"\"\"V_t + r S V_S + 1/2 sigma^2 S^2 V_SS - r V by central differences.\"\"\"\n    v0 = bs_call(S, K, r, sigma, T)\n    up = bs_call(S + h, K, r, sigma, T)\n    down = bs_call(S - h, K, r, sigma, T)\n    v_s = (up - down) / (2 * h)\n    v_ss = (up - 2 * v0 + down) / h ** 2\n    v_t = -(bs_call(S, K, r, sigma, T + dt) - bs_call(S, K, r, sigma, T - dt)) / (2 * dt)\n    return v_t + r * S * v_s + 0.5 * sigma ** 2 * S ** 2 * v_ss - r * v0\n",
+    "examples": [
+     {
+      "call": "[round(v, 4) for v in greeks(100, 100, 0.05, 0.2, 1)]",
+      "expect": "[0.6368, 0.0188, -6.414]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "abs(pde_residual(100, 100, 0.05, 0.2, 1)) < 1e-4",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(v, 4) for v in greeks(100, 100, 0.05, 0.2, 1)]",
+      "expect": "[0.6368, 0.0188, -6.414]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 6) for v in greeks(100, 100, 0.05, 0.2, 1)]",
+      "expect": "[0.636831, 0.018762, -6.414028]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 2e-06
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in greeks(110, 100, 0.03, 0.25, 0.5)]",
+      "expect": "[0.7619, 0.0159, -8.0992]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in greeks(90, 100, 0.05, 0.3, 2)]",
+      "expect": "[0.5791, 0.0102, -5.593]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "abs(pde_residual(100, 100, 0.05, 0.2, 1)) < 1e-4",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(pde_residual(110, 100, 0.03, 0.25, 0.5)) < 1e-4",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(pde_residual(50, 48, 0.04, 0.3, 0.25)) < 1e-4",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "pde_residual(100, 100, 0.05, 0.2, 1, 1.0, 0.01)",
+      "expect": "-0.0009387607",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "pde_residual(110, 100, 0.03, 0.25, 0.5, 1.0, 0.01)",
+      "expect": "-0.0006341363",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "abs(pde_residual(100, 100, 0.05, 0.2, 1, 0.01, 0.0001)) > 0",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 10 hidden tests: the three Greeks at four settings, the residual below $10^{-4}$ at three settings, and the residual to eight places at a coarse step.",
+    "prelude": "from math import erf, exp, log, sqrt, pi\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef norm_pdf(z):\n    return exp(-z * z / 2) / sqrt(2 * pi)\n\ndef bs_call(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    return S * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d2)\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\Phi(d_1)$ is `norm_cdf(d1)` and $\\varphi(d_1)$ is `norm_pdf(d1)`."
+    },
+    {
+     "rung": "point",
+     "text": "In `pde_residual`, $V_t = -(V(T + dt) - V(T - dt))/(2\\,dt)$, because $T$ is the time left."
+    },
+    {
+     "rung": "step",
+     "text": "$V_{SS} \\approx (V(S + h) - 2V(S) + V(S - h))/h^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "At $S = 100$ the residual is $-1.0 \\times 10^{-7}$, so the numbers satisfy the equation to rounding.",
+    "generic": "Not quite right. Check the examples: delta 0.6368, gamma 0.0188 and theta $-6.4140$."
+   },
+   "explain": {
+    "text": "The Greeks come out as 0.6368, 0.018762 and $-6.4140$. The residual at $h = 0.01$ and $dt = 10^{-4}$ is $-1.0154 \\times 10^{-7}$: finite differences leave a little error. A pricer that missed the equation would leave a residual of order 1."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "For a book hedged with $\\Delta = V_S$, rearrange the equation: $$\\tfrac12\\sigma^2S^2\\Gamma + \\Theta = r(V - S\\Delta).$$ At $S = 100$: $3.7524 - 6.4140 = -2.6616 = 0.05 \\times (10.4506 - 63.6831)$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "gam",
+       "label": "½σ²S²Γ"
+      },
+      {
+       "id": "theta",
+       "label": "Θ"
+      },
+      {
+       "id": "net",
+       "label": "sum = r(V − SΔ)"
+      }
+     ],
+     "yLabel": "£ a year",
+     "showValues": true,
+     "decimals": 4,
+     "height": 240
+    },
+    "state": {
+     "values": {
+      "gam": 3.7524,
+      "theta": -6.414,
+      "net": -2.6616
+     }
+    }
+   },
+   "question": "With $r = 0$, what does the equation say about a delta-hedged long option?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "pay",
+      "text": "Gamma gains exactly pay the theta bill when the share moves as the volatility $\\sigma$ says",
+      "correct": true
+     },
+     {
+      "id": "free",
+      "text": "Gamma and theta are unrelated, so owning gamma is free",
+      "why": "You read the two terms as independent. The equation ties them: one is the price of the other."
+     },
+     {
+      "id": "always",
+      "text": "Gamma always exceeds theta, so a long option always profits",
+      "why": "You expected a free profit. In the equation the two cancel, so on average there is none."
+     },
+     {
+      "id": "zero",
+      "text": "Theta is zero for a hedged book",
+      "why": "Hedging removes delta risk, not time decay. Theta is still $-\\tfrac12\\sigma^2S^2\\Gamma$ when $r = 0$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "With $r = 0$ the right-hand side is 0."
+    },
+    {
+     "rung": "point",
+     "text": "Then $\\tfrac12\\sigma^2S^2\\Gamma$ and $\\Theta$ have equal size and opposite sign."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac12\\sigma^2S^2\\Gamma = -\\Theta$: a long option pays theta and earns it back from moves of the size $\\sigma$ implies.",
+    "generic": "Not quite right. Set $r = 0$ in the equation and read the two terms against each other."
+   },
+   "explain": {
+    "text": "With $r = 0$, $\\tfrac12\\sigma^2S^2\\Gamma = -\\Theta$. This is why \"long gamma pays theta\": the bill is exactly covered if the share moves as much as $\\sigma$ says. Moves bigger than that make a profit, smaller ones a loss."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A market maker is long 1,000 of our calls, delta-hedged by being short 636.83 shares. \"I am long gamma, so I pay theta.\" Per call and per day (252 a year): theta is $-0.025452$ and the interest earned on the short sale is $+0.010562$. Gamma is 0.018762.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Per 1,000 calls, one day",
+      "£"
+     ],
+     "rows": [
+      [
+       "Theta",
+       "−25.452"
+      ],
+      [
+       "Interest on the short sale",
+       "+10.562"
+      ],
+      [
+       "Gamma on a move $\\delta S$",
+       "$\\tfrac12 \\times 18.762 \\times \\delta S^2$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "The share moves £2 in the day. What is the book's P&L in £, gamma plus theta plus interest?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 22.63,
+    "tol": {
+     "abs": 0.05
+    },
+    "accept": "Gamma: $\\tfrac12 \\times 0.018762 \\times 2^2 \\times 1000 = 37.524$. Theta: $-25.452$. Interest: $+10.562$. Total $22.634$.",
+    "label": "P&L",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "no-interest",
+      "value": 12.07,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "no-theta",
+      "value": 48.09,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "no-half",
+      "value": 60.16,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Gamma P&L is $\\tfrac12 \\times 0.018762 \\times 4$ per call."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply by 1,000 calls: £37.524.",
+     "highlight": [
+      "r0c1",
+      "r1c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then add $-25.452 + 10.562$."
+    }
+   ],
+   "feedback": {
+    "correct": "$37.524 - 25.452 + 10.562 = 22.634$: a £2 move is well above the daily move implied by $\\sigma$, so gamma wins.",
+    "generic": "Not quite right. Gamma P&L is $\\tfrac12\\Gamma(\\delta S)^2$ per call. Add theta and interest, then multiply by 1,000.",
+    "byKey": {
+     "no-interest": "You left out the interest on the short sale, £10.56. The equation's $rS\\Delta - rV$ term is that interest.",
+     "no-theta": "You counted the gamma gain and the interest but not the time decay she pays each day.",
+     "no-half": "You used $\\Gamma(\\delta S)^2$. The second-order term is $\\tfrac12\\Gamma(\\delta S)^2$."
+    }
+   },
+   "explain": {
+    "text": "The day breaks even when the share moves $\\sigma S/\\sqrt{252} = \\text{£}1.26$, because $\\tfrac12\\Gamma \\times 1.26^2 \\times 1000 = 14.89 = 25.45 - 10.56$. A £2 move beats that and earns £22.63. A quiet day of £0.50 would lose about £10.",
+    "canvas": {}
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "An interviewer says: \"Derive the Black-Scholes equation in five minutes, and justify each step.\" You plan the answer before you speak. The plan is five moves, and a sixth is a trap.",
+   "question": "Put the plan in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "p1",
+      "text": "Model and lemma: $dS = \\mu S\\,dt + \\sigma S\\,dW$, then Itô's lemma for $V(t, S)$ with $(dW)^2 = dt$."
+     },
+     {
+      "id": "p2",
+      "text": "Hedge: sell one option and hold $\\Delta = V_S$ shares, so the $dW$ and $\\mu$ terms cancel."
+     },
+     {
+      "id": "p3",
+      "text": "No arbitrage: the noiseless book must earn $r\\Pi\\,dt$, not $\\mu\\Pi\\,dt$."
+     },
+     {
+      "id": "p4",
+      "text": "Equate the coefficients and state $V_t + rSV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV = 0$, with $\\mu$ gone."
+     },
+     {
+      "id": "p5",
+      "text": "Check: a forward $V = S - Ke^{-r(T-t)}$ solves it, and the call's four terms sum to 0 at $S = 100$."
+     },
+     {
+      "id": "px",
+      "text": "Open with the Black-Scholes formula and differentiate it to show it satisfies the equation.",
+      "why": "That checks a known answer. It does not derive the equation, and the interviewer asked for the route from the hedge."
+     }
+    ],
+    "answer": [
+     "p1",
+     "p2",
+     "p3",
+     "p4",
+     "p5"
+    ],
+    "distractors": [
+     "px"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The plan follows the order of the derivation you just built."
+    },
+    {
+     "rung": "point",
+     "text": "The check comes last, after the equation is stated."
+    }
+   ],
+   "feedback": {
+    "correct": "That is the five-minute plan: model and lemma, hedge, no arbitrage, equation, check.",
+    "generic": "Not quite right. Start from the model, hedge, then argue riskless, then state the equation, then check.",
+    "byKey": {
+     "px": "You started from the answer. A derivation starts from the model and ends at the equation.",
+     "left-out": "A move of the plan is in the Left out list. Only the opening with the formula belongs there."
+    }
+   },
+   "explain": {
+    "text": "Now say it aloud: answer the homework item \"derivation\" in five minutes, then mark yourself against its rubric. Shreve, Stochastic Calculus for Finance II, chapter 4, gives the full derivation for reference."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Hold $\\Delta = V_S$ shares against one short option and the noise cancels, and so does $\\mu$.",
+   "A book with no noise must earn $r$, so $V_t + rSV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV = 0$.",
+   "The terms read as a balance: $\\tfrac12\\sigma^2S^2\\Gamma + \\Theta = r(V - S\\Delta)$. Long gamma pays theta."
+  ],
+  "formula": {
+   "name": "Black-Scholes equation",
+   "tex": "V_t + rSV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV = 0",
+   "note": "The share's drift $\\mu$ does not appear. A forward solves it with $V_{SS} = 0$."
+  },
+  "trap": "A hedged book is riskless, not free: it earns $r$, not $0$ and not $\\mu$."
+ },
+ "quiz": [
+  {
+   "id": "q-vt",
+   "difficulty": 2,
+   "prose": "A claim has $V = 5$ at $S = 50$, with $V_S = 0.6$ and $V_{SS} = 0.02$. Take $r = 4\\%$ and $\\sigma = 30\\%$.",
+   "question": "What must $V_t$ be for the equation to hold?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3.25,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "$V_t = rV - rSV_S - \\tfrac12\\sigma^2S^2V_{SS} = 0.2 - 1.2 - 2.25 = -3.25$.",
+    "label": "V_t",
+    "wrong": [
+     {
+      "id": "no-gamma",
+      "value": -1.0,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "flipped",
+      "value": 3.25,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.2 - 1.2 - 2.25 = -3.25$.",
+    "generic": "Not quite right. Move $rSV_S$ and the gamma term to the right-hand side.",
+    "byKey": {
+     "no-gamma": "You left out $\\tfrac12\\sigma^2S^2V_{SS} = 2.25$: the ordinary chain rule again.",
+     "flipped": "You kept the signs of the left-hand side. Moving terms across changes their signs."
+    }
+   },
+   "explain": {
+    "text": "The gamma term is $\\tfrac12 \\times 0.09 \\times 2500 \\times 0.02 = 2.25$. With $rSV_S = 1.2$ and $rV = 0.2$, we get $V_t = -3.25$."
+   }
+  },
+  {
+   "id": "q-mu",
+   "difficulty": 2,
+   "question": "Which input does the Black-Scholes equation not contain?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mu",
+      "text": "The share's expected return $\\mu$",
+      "correct": true
+     },
+     {
+      "id": "sigma",
+      "text": "The volatility $\\sigma$",
+      "why": "You looked past $\\tfrac12\\sigma^2S^2V_{SS}$. Volatility enters through the gamma term."
+     },
+     {
+      "id": "r",
+      "text": "The interest rate $r$",
+      "why": "You missed $rSV_S$ and $rV$. The rate enters twice."
+     },
+     {
+      "id": "s",
+      "text": "The share price $S$",
+      "why": "$S$ is in every coefficient and in $V(t, S)$ itself."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$\\mu$ cancelled when we chose $\\Delta = V_S$.",
+    "generic": "Not quite right. Read the four terms and find the symbol that is missing."
+   },
+   "explain": {
+    "text": "The hedge removes the share's drift along with its noise. Two investors who disagree about $\\mu$ agree on the option's price."
+   }
+  },
+  {
+   "id": "q-hedge",
+   "difficulty": 2,
+   "prose": "A desk is short 500 of our calls. Delta is 0.6368.",
+   "question": "How many shares does it hold to be delta-hedged?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 318.4,
+    "tol": {
+     "abs": 0.1
+    },
+    "accept": "$500 \\times 0.6368 = 318.4$ shares: $\\Delta = V_S$ per call.",
+    "label": "Shares",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 500,
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "id": "half",
+      "value": 250,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$500 \\times 0.6368 = 318.4$.",
+    "generic": "Not quite right. Multiply the number of calls by delta.",
+    "byKey": {
+     "one": "You held one share per call. That over-hedges: the call moves 0.6368 for each £1.",
+     "half": "You used half a share per call, the one-step tree hedge. Today's delta is 0.6368."
+    }
+   },
+   "explain": {
+    "text": "Each call moves £0.6368 for a £1 move in the share, so 500 calls need 318.4 shares. The hedge changes as the share moves."
+   }
+  },
+  {
+   "id": "q-put",
+   "difficulty": 3,
+   "prose": "The put at $S = K = 100$ has $V = 5.5735$, $\\Delta = -0.3632$ and $\\Gamma = 0.018762$. Take $r = 5\\%$ and $\\sigma = 20\\%$.",
+   "question": "What is the put's theta $\\Theta$ from the equation, per year?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1.6579,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "$\\Theta = rV - rS\\Delta - \\tfrac12\\sigma^2S^2\\Gamma = 0.2787 + 1.8158 - 3.7524 = -1.6579$.",
+    "label": "Theta",
+    "wrong": [
+     {
+      "id": "call",
+      "value": -6.414,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "no-delta",
+      "value": -3.4737,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.2787 + 1.8158 - 3.7524 = -1.6579$: the put decays more slowly than the call.",
+    "generic": "Not quite right. Solve the equation for $\\Theta$ with the put's $V$ and $\\Delta$.",
+    "byKey": {
+     "call": "You gave the call's theta. The put has its own $V$ and $\\Delta$, and the same equation.",
+     "no-delta": "You dropped $-rS\\Delta$. For a put $\\Delta$ is negative, so that term adds $+1.8158$."
+    }
+   },
+   "explain": {
+    "text": "The equation holds for every option on the share, puts included. The put's negative delta turns $-rS\\Delta$ into $+1.8158$."
+   }
+  }
+ ]
+}
