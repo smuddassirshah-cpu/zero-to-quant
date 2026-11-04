@@ -205,3 +205,44 @@ Keys that changed in value (graded answers): `r-weight`, `h-girsanov-ratio`, `h-
 ### Checks after the pass
 
 `node tools/validate.mjs`: 0 errors. Playthrough with `--local-cdn`, desktop (with `--shots --why`) and `--mobile`, all green: `ito/l9-bs-pde`, `l10-changing-measure`, `l11-prices-as-expectations`, `l12-barrier-option` (13, 13, 14 and 15 checks, quiz 4/4 each), `ito/review-3` (10 of 10) and `ito/homework-3` (7 of 7, 36 of 36 marks). The Pyodide runs include every changed code solution; the `h-barrier-report` starter returns `None` and fails its tests. Screenshots of l9 `screens[1]` and `[7]`, l10 `screens[4]` (390 px), l12 `screens[8]` and homework item 5 read correctly. `docs/reviews/voice-scan.py` with `VOICE_BASE` on the ito folder: 0 sentences over 20 words and 0 explanations over three sentences in the level 3 files (the two long sentences it still lists are in `homework-1` and `l2`).
+
+## Recheck
+
+Independent recomputation in CPython 3 with NumPy 2.5 and SciPy 1.18 (scratch folder `rc-ito3`; my own scripts `a.py`, `num.py`, `sim.py`, `code.py`, `allcode.py`, `choice.py`). Barrier route of my own: backward induction on the log-price with a cell-integrated Gaussian kernel (252 monitoring steps), converging at order h squared: B = 90 gives 8.92021, 8.91544, 8.91425, 8.91395 at cell widths 0.002 to 0.00025, limit 8.9139 (it needs a domain wide enough: a 1.2 log-unit cap biased the B = 85 case by 0.006, a 2.0 cap did not); B = 85 gives 10.7761, 10.7711, 10.7698, limit 10.7694 against the shifted 10.7695. Continuous 8.66547, shifted 8.91392, so the discrete-minus-continuous gap is 0.24845, £248.4 per 1,000 (£248.38 from the exact sum). All changed values agree. Verdict per widget (OK means my value equals the key and every named slip):
+
+- l9 `screens[1]` table: OK. Terms 3.1842, 3.7524, 0.5225, sum 0 (to 1e-15); slips 63.6831, 7.5048, 18.762 each named correctly in `r1c1` and `r2c1`; cells still grade (no `wrong` left).
+- l9 `screens[2]` order, `same` `[d2,d3]`: OK. Both depend only on d1.
+- l9 `screens[4]` numeric: OK. Residual 0 (forward: V_t -4.75615, rSV_S 5, -rV -0.24385); slip 0.5 x 0.16 x 10,000 = 800, tol 1 clear of 0.
+- l9 `screens[6]` choice: OK on content (net 3.7524 - 6.4140 = -2.6616 = 0.05 x (10.4506 - 63.6831) = -2.66162). Key is 68 characters against 59: still the longest, ratio 1.15 (was 1.54); acceptable.
+- l9 `screens[7]` (finding 8 and 9, not in the list but changed): OK. 37.524 - 25.452 + 10.562 = 22.634; slips 12.07, 48.09, 60.16; break-even move 1.26 and 14.89; £0.50 day -12.545.
+- l10 `screens[2]` order, `same` `[c2,c3]`: OK. The 10.6% in `x1` is 0.12 - 0.2 x 0.07.
+- l10 `screens[4]` table: OK. 0.6628, 1.3348, 0.9988; slips 0.7047 (`r0c1`) and, for row 2, w = +1 gives 0.6628 and no w term 0.9406, both stated correctly in `r1c1`; cells grade.
+- l10 `screens[5]` choice: OK, key 73 characters, not the longest.
+- l10 `screens[8]` choice: OK. £15.526 (closed form and my own quadrature of the P-density), stated £15.53; £14.48 when discounted at 12% (l11) also matches.
+- l10 `quiz[0]` `half`: OK. e^-0.06125 = 0.9406; `theta` 0.6628.
+- l11 `screens[0]` choice: OK. Key 65 against 63.
+- l11 `screens[2]` table: OK. 0.4661/sqrt(10) = 0.14739 (key 0.1474), 0.4661/10 = 0.04661; slips 0.0466 and 0.0047 named correctly in `r1c1` and `r2c1`; cells grade.
+- l11 `screens[4]` choice: OK on content (15.526, 14.476, 10.986). Key 71 against 64, ratio 1.11; acceptable.
+- l11 `screens[5]` CRR "even n": OK. My own tree: -0.0200, -0.0100, -0.0040, -0.0020 at 100, 200, 500, 1,000 steps; +0.0177 at 99, +0.0087 at 201, +0.0035 at 501; 101 steps 10.4680. "Below at even n, odd counts overshoot" is now true; `screens[8]` explain also fixed. Seed 11 runs reproduce 10.4534 (0.0465) and 10.4590 (0.0232), so 0.06 and 0.36 standard errors hold.
+- l11 `screens[6]` order wording: OK. Prompt now fixes e3 before e4; Phi(0.15) = 0.5596, 63.68 - 95.12 x 0.5596 = 10.4506.
+- l12 `screens[2]` table: OK. 1.01842, 0.30849; slip 1.5826 named correctly in `r0c1`.
+- l12 `screens[4]` choice and `noise` text: OK. Barrier price 8.9139 (exact daily sum 8.91385 +- 0.0001, closed form 8.91392); "settles near £8.91" correct. Key 86 against 82.
+- l12 `screens[7]` table: OK. Seed 12, 20,000 paths: vanilla 10.41276 (0.10385), knock-out 8.85105, parity 1.56172, so 1.5617 with 1.5618 from the rounded prices; 47.2% alive; slip 10.4128 + 8.8510 = 19.2638 named in `r2c1`.
+- l12 `screens[8]` table and `explain`: OK. Shift 0.0073401, barrier 89.3418, knock-out 8.9139; gap to simulation 0.0629 ("within 0.07", 0.6 standard errors); 400,000 paths on seed 12 give 8.9208 (0.0232), "8.92 (0.023)"; slip 0.1165 named in `r0c1`; "continuous £0.25 low" (0.248).
+- l12 `screens[10]` numeric and `explain`: OK. £248.4 (248.45 unrounded, inside tol 1); `sim` slip 185.5 (se of that run about £103, "about £100"); the note is £248 cheap per 1,000.
+- l12 `screens[1]` and `quiz[0]`: OK. Gap 0.0071 against se 0.0065 is 1.1 se. `quiz[0]` key 64 against 52, ratio 1.23: slightly long, minor.
+- l12 `summary` and `screens[4]`, `[8]`, `[10]`: all state 8.9139 and £248; no stale 8.86, £200 or "five pence" remains anywhere in `app/content`.
+- review-3 `r-weight`: OK. theta 0.3, e^0.255 = 1.29046 (key 1.2905), `no-correction` e^0.3 = 1.34986 (1.3499), `sign` e^-0.345 = 0.70822 (0.7082); not repeated elsewhere in the ito course.
+- review-3 `r-power`: OK. 10^4 e^0.22 = 12,460.77.
+- review-3 `r-parity`: OK, `fewer` 55, not the longest.
+- homework-3 `h-replicate` order, `same` `[a2,a3]`: OK.
+- homework-3 `h-barrier-report`: OK. Seeds 5, 9, 21 reproduced by my own log-space loop: 10.7510 (0.1292, z -0.1429), 10.9272 (0.1302, 1.2113), 10.8022 (0.1295, 0.2526); continuous 10.58282, shifted 10.76948; parity gap 0. Solution passes 5 of 5, starter 0 of 5. Numbers new to the course.
+- homework-3 `h-girsanov-ratio`: OK. P(A) 0.441866, Q(A) 0.349659, ratio 0.791325 (key 0.7913); wrongs 0.3497, 0.4419, 1; new to the course.
+- homework-3 `h-antithetic`: OK. Plain 10.1066 (0.061749), antithetic 10.0898 (0.037211); (0.061749/0.037211)^2 x 100,000 = 275,363 and 2n/(1 + rho) with rho = -0.26880 gives 273,524, both inside 275,000 +- 5,000; `no-square` 165,860 (key 165,900, tol 2,000); saving 1.4 times. Wrongs 100,000 and 200,000 are clear of the key.
+- homework-3 `h-touch-shift` and `h-derivation` (wording): OK.
+
+Code, all changed and unchanged code items in the six files run in CPython: every solution passes its tests (l10 s7 10 of 10, l11 s3 7 of 7, s8 8 of 8, l12 s1 6 of 6, s6 7 of 7, s9 8 of 8, h-barrier-report 5 of 5; two items that call helpers from a shared prelude, l9 `screens[5]` and homework `items[2]`, were not runnable in my bare harness and are unchanged), and every starter fails (0 passes) except l12 `screens[9]`.
+
+Note 27: accepted. The `screens[9]` starter passes one of its 8 tests (B = S0 returns 0.0 before the `...`) and fails the other 7, so it fails the item overall; the review's "other nine" and the fix pass's "ten" are miscounts for this item (it has 8 tests). No change needed; if wanted, correct the count in the fix-pass wording only.
+
+New mismatches: none that change a key, a slip or a stated number. Two cosmetic items, no fix required: the fix pass's quoted key lengths (66 against 59 and so on) were counted on rendered text; on the JSON text the keys of l9 `screens[6]` (68 against 59) and l12 `quiz[0]` (64 against 52) are still the longest option by 15% and 23%. If the strict "not longest" reading is wanted, trim l12 `quiz[0]` `path` to "It keeps paths that touched 90 and recovered" (45) and l9 `screens[6]` `pay` to "Gamma gains pay the theta bill when moves match $\sigma$" (56).
