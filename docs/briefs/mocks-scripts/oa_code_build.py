@@ -25,7 +25,7 @@ SIG = {p["id"]: p["sig"] for p in oa_code.P}
 X = {
  "oa-product-windows": dict(
   returns="a whole number",
-  words="For `nums = [5]` and `k = 6` the only block is `[5]`, its product 5 is below 6, so the answer is 1.",
+  words="For `nums = [5]` and `k = 6` the one block has product 5, so the answer is 1.",
   cons=["$0 \\le n \\le 200{,}000$ entries, each a positive whole number.", "$O(n)$ time is the target. Checking every block is too slow.",
         "All tests share a 5-second time limit."],
   hint="Slide a window and keep its product. When the product reaches `k`, shrink from the left. Each right end adds one block per window start.",
@@ -103,10 +103,10 @@ X = {
  "oa-critical-path": dict(
   returns="a whole number",
   words="For three tasks that must run in a loop, no order works, so the answer is -1.",
-  cons=["$0 \\le n \\le 100{,}000$ tasks and up to $200{,}000$ pairs.", "$O(n + m)$ time is the target, with $m$ pairs. A recursive search runs out of stack.",
+  cons=["$0 \\le n \\le 100{,}000$ tasks and up to $100{,}000$ pairs.", "$O(n + m)$ time is the target, with $m$ pairs. A recursive search runs out of stack.",
         "All tests share a 5-second time limit."],
   hint="Process tasks in an order where every task comes after the ones it waits for. A task starts when its last prerequisite finishes.",
-  enotes=["Task 0 takes 3. Then task 2 takes 4 and task 3 takes 1, so the longest chain is 3 + 4 + 1 = 8.",
+  enotes=["Task 0 takes 3. Then task 2 takes 4 and task 3 takes 1. So the longest chain is 3 + 4 + 1 = 8.",
           "The three tasks wait on each other in a loop, so none can start."],
   notes=["`start[v]` is the latest finish time among the tasks that must come before `v`.",
          "A task joins the queue when its last prerequisite is done, so a loop never joins it.",

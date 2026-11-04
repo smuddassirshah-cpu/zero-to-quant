@@ -2,7 +2,7 @@
 
 Statement. `nums` holds positive whole numbers. Count the non-empty blocks of neighbouring entries whose product is below `k`. Equal blocks at different places count separately. `k` may be 1 or less, and `nums` may be empty.
 
-Signature `count_products_below(nums, k)`. Starter (fails 7 of 10):
+Signature `count_products_below(nums, k)`. Starter (fails 7 of 12):
 
 ```python
 def count_products_below(nums, k):
@@ -25,7 +25,7 @@ def count_products_below(nums, k):
     return count
 ```
 
-Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: checking every block is 2 x 10^10 steps on test 9.
+Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: checking every block is 2 x 10^10 steps on test 11.
 
 | # | Call | Expected | Second value from |
 | --- | --- | --- | --- |
@@ -37,10 +37,12 @@ Hidden tests, all `compare: "equal"`. Each small test is checked against an exha
 | 6 | `count_products_below([7, 8], 1)` | `0` | exhaustive method |
 | 7 | `count_products_below([2, 3, 4], 100)` | `6` | exhaustive method |
 | 8 | `count_products_below([6, 2, 9, 1, 3], 30)` | `11` | exhaustive method |
-| 9 | `count_products_below([1] * 200000, 2)` | `20000100000` | closed form |
-| 10 | `count_products_below([2] * 200000, 3)` | `200000` | closed form |
+| 9 | `count_products_below([3, 4], 0)` | `0` | exhaustive method |
+| 10 | `count_products_below([3, 4], -5)` | `0` | exhaustive method |
+| 11 | `count_products_below([1] * 200000, 2)` | `20000100000` | closed form |
+| 12 | `count_products_below([2] * 200000, 3)` | `200000` | closed form |
 
-Examples (visible): tests 1 and 4. Largest reference run 0.020 s in CPython. 4000 seeded random cases agree with the exhaustive method.
+Examples (visible): tests 1 and 4. Largest reference run 0.035 s in CPython. 4000 seeded random cases agree with the exhaustive method.
 
 #### `oa-rain-water`: Water held between bars (difficulty 3, pattern `two-pointers`, tag `water-trapped`, pace 1200 s)
 
@@ -87,13 +89,13 @@ Hidden tests, all `compare: "equal"`. Each small test is checked against an exha
 | 10 | `trapped_water(list(range(100000)) + list(range(100000, 0, -1)))` | `0` | closed form |
 | 11 | `trapped_water([3, 1] * 100000)` | `199998` | closed form |
 
-Examples (visible): tests 1 and 5. Largest reference run 0.025 s in CPython. 4000 seeded random cases agree with the exhaustive method.
+Examples (visible): tests 1 and 5. Largest reference run 0.030 s in CPython. 4000 seeded random cases agree with the exhaustive method.
 
 #### `oa-min-jumps`: Fewest jumps (difficulty 3, pattern `greedy`, tag `jump-count`, pace 1200 s)
 
 Statement. `nums[i]` is the longest jump you can make from position `i`, and you may jump any shorter distance. Start at position 0. Return the fewest jumps that reach the last position, or -1 if you cannot. A list of one or no entries needs 0 jumps.
 
-Signature `min_jumps(nums)`. Starter (fails 9 of 11):
+Signature `min_jumps(nums)`. Starter (fails 10 of 12):
 
 ```python
 def min_jumps(nums):
@@ -135,14 +137,15 @@ Hidden tests, all `compare: "equal"`. Each small test is checked against an exha
 | 9 | `min_jumps([1] * 200000)` | `199999` | closed form |
 | 10 | `min_jumps([200000] + [1] * 199999)` | `1` | closed form |
 | 11 | `min_jumps([2] * 200000)` | `100000` | closed form |
+| 12 | `min_jumps([200000] * 200000)` | `1` | closed form |
 
-Examples (visible): tests 1 and 5. Largest reference run 0.020 s in CPython. 4000 seeded random cases agree with the exhaustive method.
+Examples (visible): tests 1 and 5. Largest reference run 0.022 s in CPython. 4000 seeded random cases agree with the exhaustive method.
 
 #### `oa-merge-cost`: Cheapest way to join sticks (difficulty 3, pattern `heaps-tries`, tag `merge-cost`, pace 1200 s)
 
 Statement. You have sticks with the given lengths. Joining two sticks costs the sum of their lengths and gives one longer stick. Return the least total cost to join them all into one. Zero or one stick costs nothing.
 
-Signature `min_merge_cost(sticks)`. Starter (fails 8 of 10):
+Signature `min_merge_cost(sticks)`. Starter (fails 9 of 11):
 
 ```python
 def min_merge_cost(sticks):
@@ -163,7 +166,7 @@ def min_merge_cost(sticks):
     return cost
 ```
 
-Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: searching for the two shortest sticks by scanning is 10^10 steps on test 10.
+Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: searching for the two shortest sticks by scanning is 10^10 steps on test 10. Keeping a sorted list with `insort` takes several seconds on test 11.
 
 | # | Call | Expected | Second value from |
 | --- | --- | --- | --- |
@@ -177,14 +180,15 @@ Hidden tests, all `compare: "equal"`. Each small test is checked against an exha
 | 8 | `min_merge_cost([1] * 131072)` | `2228224` | closed form |
 | 9 | `min_merge_cost([2] * 65536)` | `2097152` | closed form |
 | 10 | `min_merge_cost(list(range(1, 100001)))` | `81782502640` | two-queue method |
+| 11 | `min_merge_cost(list(range(1, 200001)))` | `347128407168` | two-queue method |
 
-Examples (visible): tests 1 and 4. Largest reference run 0.066 s in CPython. 4000 seeded random cases agree with the exhaustive method and with the second algorithm.
+Examples (visible): tests 1 and 4. Largest reference run 0.152 s in CPython. 4000 seeded random cases agree with the exhaustive method and with the second algorithm.
 
 #### `oa-remove-digits`: Smallest number after removing digits (difficulty 4, pattern `stacks-queues`, tag `digit-removal`, pace 1800 s)
 
 Statement. `digits` is a string of the characters 0 to 9. Remove exactly `k` characters, keeping the order of the rest, so the number left is as small as possible. Return it as a string with no leading zeros. Return "0" if nothing is left, or only zeros.
 
-Signature `smallest_after_removing(digits, k)`. Starter (fails 12 of 12):
+Signature `smallest_after_removing(digits, k)`. Starter (fails 13 of 13):
 
 ```python
 def smallest_after_removing(digits, k):
@@ -206,7 +210,7 @@ def smallest_after_removing(digits, k):
     return "".join(stack).lstrip("0") or "0"
 ```
 
-Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: trying every set of digits is hopeless on tests 10 and 11. Removing one digit at a time with a scan is 10^10 steps.
+Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: trying every set of digits is hopeless on tests 11 and 12. Removing one digit at a time with a scan is 10^10 steps.
 
 | # | Call | Expected | Second value from |
 | --- | --- | --- | --- |
@@ -219,11 +223,12 @@ Hidden tests, all `compare: "equal"`. Each small test is checked against an exha
 | 7 | `smallest_after_removing("112", 1)` | `'11'` | exhaustive method |
 | 8 | `smallest_after_removing("7654321", 3)` | `'4321'` | exhaustive method |
 | 9 | `smallest_after_removing("30200", 1)` | `'200'` | exhaustive method |
-| 10 | `smallest_after_removing("9" * 100000 + "1" * 100000, 100000) == "1" * 100000` | `True` | closed form |
-| 11 | `smallest_after_removing("1" * 150000 + "2" * 50000, 50000) == "1" * 150000` | `True` | closed form |
-| 12 | `smallest_after_removing("5" * 200000, 200000)` | `'0'` | closed form |
+| 10 | `smallest_after_removing("2561", 2)` | `'21'` | exhaustive method |
+| 11 | `smallest_after_removing("9" * 100000 + "1" * 100000, 100000) == "1" * 100000` | `True` | closed form |
+| 12 | `smallest_after_removing("1" * 150000 + "2" * 50000, 50000) == "1" * 150000` | `True` | closed form |
+| 13 | `smallest_after_removing("5" * 200000, 200000)` | `'0'` | closed form |
 
-Examples (visible): tests 1 and 4. Largest reference run 0.013 s in CPython. 4000 seeded random cases agree with the exhaustive method.
+Examples (visible): tests 1 and 4. Largest reference run 0.011 s in CPython. 4000 seeded random cases agree with the exhaustive method.
 
 #### `oa-rising-run`: Longest rising subsequence (difficulty 4, pattern `binary-search`, tag `rising-subsequence`, pace 1800 s)
 
@@ -266,13 +271,13 @@ Hidden tests, all `compare: "equal"`. Each small test is checked against an exha
 | 10 | `longest_rising(list(range(200000, 0, -1)))` | `1` | closed form |
 | 11 | `longest_rising([i % 1000 for i in range(200000)])` | `1000` | closed form |
 
-Examples (visible): tests 1 and 7. Largest reference run 0.041 s in CPython. 4000 seeded random cases agree with the exhaustive method and with the second algorithm.
+Examples (visible): tests 1 and 7. Largest reference run 0.039 s in CPython. 4000 seeded random cases agree with the exhaustive method and with the second algorithm.
 
 #### `oa-decodings`: Ways to decode a message (difficulty 4, pattern `dp`, tag `digit-decodings`, pace 1800 s)
 
-Statement. A message of letters was coded as digits. A is 1, B is 2 and so on up to Z as 26. `s` is the digit string. Return how many different messages it could be, modulo 1,000,000,007. A string that cannot be decoded gives 0, and the empty string gives 1.
+Statement. A message of letters was coded as digits. A is 1, B is 2 and so on up to Z as 26. A code never starts with 0, so 06 is not a letter. `s` is the digit string. Return how many different messages it could be, modulo 1,000,000,007. A string that cannot be decoded gives 0, and the empty string gives 1.
 
-Signature `count_decodings(s)`. Starter (fails 9 of 12):
+Signature `count_decodings(s)`. Starter (fails 10 of 14):
 
 ```python
 def count_decodings(s):
@@ -294,7 +299,7 @@ def count_decodings(s):
     return prev1
 ```
 
-Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: listing every decoding takes over 10^40 steps on test 9. A recursion without a table never ends.
+Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: listing every decoding takes over 10^40 steps on test 11. A recursion without a table never ends.
 
 | # | Call | Expected | Second value from |
 | --- | --- | --- | --- |
@@ -306,18 +311,20 @@ Hidden tests, all `compare: "equal"`. Each small test is checked against an exha
 | 6 | `count_decodings("11106")` | `2` | exhaustive method |
 | 7 | `count_decodings("1212")` | `5` | exhaustive method |
 | 8 | `count_decodings("301")` | `0` | exhaustive method |
-| 9 | `count_decodings("1" * 200000)` | `835799900` | Fibonacci by fast doubling |
-| 10 | `count_decodings("27" * 100000)` | `1` | Fibonacci by fast doubling |
-| 11 | `count_decodings("10" * 100000)` | `1` | Fibonacci by fast doubling |
-| 12 | `count_decodings("1" * 100000 + "0" + "9" * 5)` | `911435502` | Fibonacci by fast doubling |
+| 9 | `count_decodings("2020")` | `1` | exhaustive method |
+| 10 | `count_decodings("260")` | `0` | exhaustive method |
+| 11 | `count_decodings("1" * 200000)` | `835799900` | Fibonacci by fast doubling |
+| 12 | `count_decodings("27" * 100000)` | `1` | Fibonacci by fast doubling |
+| 13 | `count_decodings("10" * 100000)` | `1` | Fibonacci by fast doubling |
+| 14 | `count_decodings("1" * 100000 + "0" + "9" * 5)` | `911435502` | Fibonacci by fast doubling |
 
-Examples (visible): tests 1 and 4. Largest reference run 0.065 s in CPython. 4000 seeded random cases agree with the exhaustive method.
+Examples (visible): tests 1 and 4. Largest reference run 0.042 s in CPython. 4000 seeded random cases agree with the exhaustive method.
 
 #### `oa-critical-path`: Time to finish all tasks (difficulty 4, pattern `graphs`, tag `critical-path`, pace 1800 s)
 
-Statement. There are `n` tasks numbered 0 to `n - 1`, and `durations[i]` is the time task `i` takes. Each pair `[a, b]` in `edges` means task `a` must finish before task `b` starts. Any number of tasks may run at once. Return the least time to finish every task, or -1 if the pairs form a loop.
+Statement. There are `n` tasks numbered 0 to `n - 1`, and `durations[i]` is the time task `i` takes. Each pair `[a, b]` in `edges` means task `a` must finish before task `b` starts. Any number of tasks may run at once. Each duration is a whole number of at least 0. A pair `[a, a]` is a loop. Return the least time to finish every task, or -1 if the pairs form a loop.
 
-Signature `critical_path_length(n, edges, durations)`. Starter (fails 11 of 12):
+Signature `critical_path_length(n, edges, durations)`. Starter (fails 13 of 14):
 
 ```python
 def critical_path_length(n, edges, durations):
@@ -350,7 +357,7 @@ def critical_path_length(n, edges, durations):
     return max((start[i] + durations[i] for i in range(n)), default=0)
 ```
 
-Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: a recursive search runs out of stack on test 10. Re-walking every path is exponential.
+Hidden tests, all `compare: "equal"`. Each small test is checked against an exhaustive or second method. Each large test is checked against the value in the last column. Slow code: a recursive search runs out of stack on test 12. Re-walking every path is exponential.
 
 | # | Call | Expected | Second value from |
 | --- | --- | --- | --- |
@@ -363,8 +370,10 @@ Hidden tests, all `compare: "equal"`. Each small test is checked against an exha
 | 7 | `critical_path_length(1, [], [7])` | `7` | exhaustive method |
 | 8 | `critical_path_length(3, [[0, 1]], [4, 5, 6])` | `9` | exhaustive method |
 | 9 | `critical_path_length(3, [[1, 1]], [1, 1, 1])` | `-1` | exhaustive method |
-| 10 | `critical_path_length(100000, [[i, i + 1] for i in range(99999)], [1] * 100000)` | `100000` | closed form |
-| 11 | `critical_path_length(100001, [[i, 100000] for i in range(100000)], [2] * 100000 + [3])` | `5` | closed form |
-| 12 | `critical_path_length(100000, [[i, i + 1] for i in range(99999)] + [[99999, 0]], [1] * 100000)` | `-1` | closed form |
+| 10 | `critical_path_length(4, [[0, 1], [2, 3], [3, 2]], [1, 1, 1, 1])` | `-1` | exhaustive method |
+| 11 | `critical_path_length(3, [[0, 1], [1, 2], [2, 1]], [1, 1, 1])` | `-1` | exhaustive method |
+| 12 | `critical_path_length(100000, [[i, i + 1] for i in range(99999)], [1] * 100000)` | `100000` | closed form |
+| 13 | `critical_path_length(100001, [[i, 100000] for i in range(100000)], [2] * 100000 + [3])` | `5` | closed form |
+| 14 | `critical_path_length(100000, [[i, i + 1] for i in range(99999)] + [[99999, 0]], [1] * 100000)` | `-1` | closed form |
 
-Examples (visible): tests 1 and 4. Largest reference run 0.111 s in CPython. 4000 seeded random cases agree with the exhaustive method.
+Examples (visible): tests 1 and 4. Largest reference run 0.077 s in CPython. 4000 seeded random cases agree with the exhaustive method.
