@@ -138,3 +138,44 @@ Notes
 - Canvas data: cover intervals `c1` to `c10` are centred on the listed rationals with half-width $\varepsilon / 2^{k+1}$; Cantor frames give 1, 2, 4, 8, 16 intervals and total lengths 1, 0.6667, 0.4444, 0.2963, 0.1975; the plotted $F_X$ steps equal the 12 exact levels; the loss curve and 0.95 line match 10000 ln 2.
 - Review and homework numbers are fresh: none of 0.02 with six terms, 1 % over 30 years, stage 6 and stage 18, 0.85 with £8,000, 0.75 with £20,000, 5 desks at 0.8 % or the product of two dice appears in the lessons. A word-boundary search of every other course, exam and bank file finds no copy of these answers (only the same walk quantity noted in item 15).
 - Longform rubric (`h-long`): six points of 2, 2, 2, 2, 1 and 1 make 10; each is checkable; the model answer is correct (the union bound on the tail, a convergent series, continuity from above with $P(B_1) \le 1$, and about 0.01005 from day 100 on).
+
+## Fix pass
+
+Each correction recomputed before writing. Validator 0 errors; playthrough of l1 to l4, review-1 and homework-1 passes with and without `--mobile`; voice scan 0 and 0. Longest key to longest distractor is now at most 1.41.
+
+1. Error 1: fixed. `l3` s0 byKey keys shifted to `r1c1`, `r2c1`, plus new `r3c1` (10 of 16 paths, 5/8).
+2. Error 2: fixed. `review-1` `r-which` option c `why` now names the unlisted complement $\{2, 3, 4\}$ and the union $\{1, 2\}$.
+3. Error 3: fixed. `r-dice` `six` text now says the 0.1667 slip drops the two product-20 cells (6/36 = 0.1667; 8 cells = 0.2222). Value unchanged.
+4. Warning 4: fixed. `l4` s8 test 8 compare is now `equal`.
+5. Warning 5: fixed. `h-order` accepts o3 and o4 in either order (`same`).
+6. Warning 6: fixed. `h-var` part 3 `pos` is now -3646 (tol 1): -20000 ln 1.2 = -3646.4, and ln 1.2 = ln 6 - ln 5 = 0.18232 agrees. Text updated.
+7. Warning 7: fixed. `q-union` `indep` and explanation now 1.9850: 1 - 0.995^4 = 0.0198505, and 4(0.005) - 6(0.005)^2 + 4(0.005)^3 - 0.005^4 = 0.0198505.
+8. Warning 8: fixed. `l1` s1 `tiny` text: half-width 0.0004 has chance 0.0008.
+9. Warning 9: fixed. `h-cantor` part 3 now asks whether the set $E$ of end points of removed intervals is countable. Key: yes, stage by stage. Stage 1 has 4 end points and stage 2 has 8, matching $2^{n+1}$.
+10. Warning 10: fixed. All nine keys trimmed and distractors lengthened; meaning of each key kept.
+11. Warning 11: skipped (engine item P32-expr-exp is fixing the grader; `h-expr` unchanged).
+12. Note 12: fixed. `l1` s3 explanation says countable subadditivity.
+13. Note 13: fixed. `l2` s7 prose now reads $n = 4, 8, 16$.
+14. Note 14: skipped, no change needed.
+15. Note 15: skipped, optional strictness; no number repeats.
+16. Note 16: skipped, the prompt already asks for a `Fraction`.
+17. Note 17: skipped, optional.
+
+Disputed: none.
+
+### Changed keys
+
+Numeric `wrong` values or tolerances changed:
+- `homework-1` h-var part 3, wrong `pos`: 5000 to -3646 (tol 1).
+- `l3-measures` quiz `q-union`, wrong `indep`: 1.9851 to 1.9850.
+- Code compare mode changed: `l4-measurable-functions` s8 test 8 (`fraction` to `equal`).
+- Order key: `homework-1` h-order (added `same` o3/o4).
+- Table byKey ids: `l3-measures` s0 (`r1c1`, `r2c1`, `r3c1`).
+
+Choice options (text rewritten, key meaning unchanged):
+- `l1-why-measure` s5, quiz `q-cantor`, quiz `q-vitali`
+- `l2-sigma-algebras` s6, s9, quiz `q-irr`
+- `l3-measures` s8
+- `l4-measurable-functions` s2
+- `review-1` `r-borel`
+- `homework-1` h-cantor part 3 (new question, options and key)
