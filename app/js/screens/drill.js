@@ -125,12 +125,8 @@ if not callable(globals().get(${py(P.fn)})):
       topic: topic ? `${topic.id} ${topic.name}` : (C.topic || ''),
       brief: d.brief || '', definition: d.definition || '', cons: d.constraints || [], hint: d.hint || '',
       how: d.how || '', rule: RULES[main].rule, accept: RULES[main].accept, where: d.where || '',
-<<<<<<< HEAD
-      starter: d.starter || '', reference: d.solution || '', notes: d.notes || [], prelude: d.prelude || '', data: d.data && typeof d.data === 'object' ? d.data : null, returns: d.returns || 'a value of the right type',
-=======
       language: 'python', pattern: d.pattern || '', pace: d.pace || 0,
-      starter: d.starter || '', reference: d.solution || '', notes: d.notes || [], prelude: d.prelude || '', returns: d.returns || 'a value of the right type',
->>>>>>> worktree-agent-a82f79100c695cc7c
+      starter: d.starter || '', reference: d.solution || '', notes: d.notes || [], prelude: d.prelude || '', data: d.data && typeof d.data === 'object' ? d.data : null, returns: d.returns || 'a value of the right type',
       examples: (d.examples || []).map((x, i) => ({ ...x, name: x.name || `Example ${i + 1}` })),
       hidden: (d.tests || []).map((x, i) => ({ ...x, name: x.name || `Test ${i + 1}` })),
     };
