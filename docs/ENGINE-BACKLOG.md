@@ -1331,7 +1331,9 @@ Source: `docs/reviews/review-briefs-3.2.md` "[Must] engine requirements". Both i
 
 501. Done (P32-expr-exp): `prep()` in `js/engine/grade.js` rewrites `\exp`, `\operatorname{exp}` and `\mathrm{exp}` with a bracketed argument (`(..)`, `\left(..\right)`, `{..}`) or one token into `\left(\exponentialE^{(arg)}\right)`, so every comparison (`exprEqual`, `exprEqualUpToConstant`, `exprShape`, the `form` check, exam items) reads `\exp(x)` as `e^{x}` in both directions. The validator warns when an authored `answer` or `accept` contains `\exp`.
 502. Done (P32-expr-callhead): `prep()` inserts `\cdot` between a lone Latin or Greek letter (optional subscript or superscript) and an immediately following `(` or `\left(`, so `r(1-x)` is a product, unless the letter is in the new optional `functions: ["f"]` of the `expression` widget (the validator checks its shape). Every comparison and the `form` check also run inside `ce.pushScope()` and `popScope()` (`scoped`, new `ZQ.grade.withParsed`), so a symbol the engine declares while parsing (a function after `f(x)`) is a plain symbol again on the next screen.
+503. Done (P32-expr-int): optional `integers: ["k"]` on the `expression` widget (and so exam and bank items). `scalarEqual` and the up-to-constant check in `js/engine/grade.js` sample each listed symbol at six distinct seeded whole numbers from 1 to 9 (own generator per symbol, so draws for other symbols and expressions without `integers` are unchanged); other symbols keep 0.3 to 3, and the usual relative tolerance 1e-9 absorbs the rounding in `\cos(k\pi)`. Validator: error on a malformed `integers`; warning when an `answer` or `accept` has `(-1)^k` or `(-1)^{k..}` and the symbol is not listed.
 
 Status block (engine pass 3.2):
 - 501 (P32-expr-exp): done.
 - 502 (P32-expr-callhead): done.
+- 503 (P32-expr-int): done.
