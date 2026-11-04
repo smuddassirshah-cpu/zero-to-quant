@@ -1,0 +1,1018 @@
+{
+  "id": "l15-likelihood-ratios",
+  "course": "measure-prob",
+  "title": "Likelihood ratios as changes of measure",
+  "minutes": 15,
+  "objectives": [
+    "Use a likelihood ratio for importance sampling of a rare loss."
+  ],
+  "skills": [
+    "mt-change"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A rare loss",
+      "prose": "A desk's daily loss $X$, in £m, is standard normal. The curve is its density and the tail beyond £4m is shaded. A plain Monte Carlo run draws 10,000 days.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4,
+            8
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "height": 250,
+          "grid": true,
+          "xLabel": "Loss $x$ (£m)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "normpdf(x,0,1)",
+              "label": "$\\varphi(x)$",
+              "labelAt": -1.4
+            }
+          ],
+          "params": {
+            "theta": 0
+          }
+        },
+        "state": {
+          "area": {
+            "id": "T",
+            "f": "P",
+            "from": 4,
+            "to": 8,
+            "colour": 2
+          }
+        },
+        "derive": {
+          "caption": "Tail beyond £4m: {{fixed(0.5*erfc(4/sqrt(2))*100000, 3)}} per 100,000 days"
+        }
+      },
+      "question": "On average, how many of those 10,000 draws land above £4m?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3167,
+        "tol": {
+          "abs": 0.01
+        },
+        "accept": "0.317: 3.167 per 100,000 days, so a tenth of that",
+        "label": "Days above £4m",
+        "wrong": [
+          {
+            "id": "per100k",
+            "value": 3.167,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The caption gives the tail chance per 100,000 days."
+        },
+        {
+          "rung": "point",
+          "text": "10,000 days is one tenth of 100,000 days.",
+          "highlight": [
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A tenth of 3.167 is 0.3167."
+        }
+      ],
+      "feedback": {
+        "correct": "0.32 days. A loss beyond £4m happens 3.167 times in 100,000 days. So 10,000 draws expect about a third of a day.",
+        "generic": "Not quite right. Scale the per-100,000 figure down to 10,000 days.",
+        "byKey": {
+          "per100k": "You gave the figure for 100,000 days. 10,000 days is a tenth of that."
+        }
+      },
+      "explain": {
+        "text": "The tail chance is $1 - \\Phi(4) = 3.167 \\times 10^{-5}$, which is 3.167 per 100,000 days. Ten thousand draws expect $0.3167$ such days. On seed 21 a plain run sees none, so it would report a chance of 0."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "Sampling where the losses are",
+      "prose": "Draw from a normal centred at $\\theta$ instead, so more draws land in the tail. The caption gives how noisy each draw makes the estimate, as a relative error per draw.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4,
+            8
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "height": 250,
+          "grid": true,
+          "xLabel": "Loss $x$ (£m)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "normpdf(x,0,1)",
+              "label": "$\\varphi(x)$",
+              "labelAt": -1.4
+            },
+            {
+              "id": "Q",
+              "expr": "normpdf(x,theta,1)",
+              "label": "$\\varphi(x - \\theta)$",
+              "colour": 3,
+              "dashed": true,
+              "labelAt": 3.4
+            }
+          ],
+          "params": {
+            "theta": 0
+          }
+        },
+        "state": {
+          "area": {
+            "id": "T",
+            "f": "Q",
+            "from": 4,
+            "to": 8,
+            "colour": 3
+          },
+          "params": {
+            "theta": 0
+          }
+        },
+        "derive": {
+          "caption": "$\\theta$ = {{fixed(theta, 1)}}: relative error per draw {{fixed(sqrt(exp(pow(theta,2))*0.5*erfc((4+theta)/sqrt(2)) - pow(0.5*erfc(4/sqrt(2)),2))/(0.5*erfc(4/sqrt(2))), 2)}}"
+        }
+      },
+      "question": "Slide $\\theta$ to where the relative error per draw is smallest.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 6,
+        "step": 0.1,
+        "start": 0,
+        "bind": "theta",
+        "answer": 4.1,
+        "tol": 0.5,
+        "label": "$\\theta$",
+        "wrong": [
+          {
+            "id": "far-left",
+            "from": 0,
+            "to": 2.5
+          },
+          {
+            "id": "far-right",
+            "from": 5.5,
+            "to": 6
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try $\\theta = 0$, then 2, then 4, and read the caption each time."
+        },
+        {
+          "rung": "point",
+          "text": "At $\\theta = 0$ the error is 177.7. Does it fall all the way to 6?",
+          "highlight": [
+            "Q"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It falls to about 2.1 near $\\theta = 4$ and then rises again."
+        }
+      ],
+      "feedback": {
+        "correct": "Near $\\theta = 4.1$ the error is 2.11 per draw, down from 177.7. Sampling at the edge of the tail is best.",
+        "generic": "Not quite right. Find the lowest relative error in the caption.",
+        "byKey": {
+          "far-left": "You left $\\theta$ small. Draws rarely reach 4, so the estimate is noisy: 7.26 at $\\theta = 2$.",
+          "far-right": "You went far beyond the tail. Draws overshoot 4 and the weights vary wildly: 5.63 at $\\theta = 6$."
+        }
+      },
+      "explain": {
+        "text": "The relative error per draw is 177.7 at $\\theta = 0$ and 7.26 at 2. It falls to 2.12 at 4, then rises to 2.66 at 5, with its minimum 2.115 near $\\theta = 4.12$. Sample at the edge of the tail, not far past it.",
+        "canvas": {
+          "params": {
+            "theta": 4.1
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A likelihood ratio is a derivative",
+      "prose": "Estimation lesson 5 compared coins by the chance each gave to H, H, T. Let $P$ be the fair coin and $Q$ the coin with $p = 0.6$. On this sequence, $\\tfrac{dP}{dQ}$ is the ratio of the two chances.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0,
+            0.17
+          ],
+          "height": 230,
+          "grid": true,
+          "xLabel": "$p$",
+          "yLabel": "Chance of H, H, T",
+          "functions": [
+            {
+              "id": "L",
+              "expr": "x*x*(1-x)",
+              "label": "$p^2(1-p)$",
+              "labelAt": 0.85
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "fair",
+              "x": 0.5,
+              "y": 0.125,
+              "label": "$p = 0.5$"
+            },
+            {
+              "id": "bent",
+              "x": 0.6,
+              "y": 0.144,
+              "label": "$p = 0.6$",
+              "labelPos": "ne"
+            }
+          ]
+        }
+      },
+      "question": "Find $P(\\text{HHT}) / Q(\\text{HHT})$.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8681,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "125/144 = 0.8681",
+        "label": "$\\tfrac{dP}{dQ}$",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 1.152,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "diff",
+            "value": 0.019,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read both chances off the curve: 0.125 and 0.144."
+        },
+        {
+          "rung": "point",
+          "text": "$P$ is the fair coin, so its chance goes on top.",
+          "highlight": [
+            "fair",
+            "bent"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.125 / 0.144$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{0.125}{0.144} = \\tfrac{125}{144} = 0.8681$. The 0.6 coin gives this sequence more chance, so the ratio is below 1.",
+        "generic": "Not quite right. Divide the fair coin's chance by the biased coin's.",
+        "byKey": {
+          "inverted": "You put $Q$ on top. $\\tfrac{dP}{dQ}$ has the measure we want, $P$, in the numerator.",
+          "diff": "You subtracted the two chances. A change of measure is a ratio."
+        }
+      },
+      "explain": {
+        "text": "With $\\tfrac{dP}{dQ}$ the fair coin's chance goes on top: $0.5^3 / (0.6 \\cdot 0.6 \\cdot 0.4) = \\tfrac{125}{144} = 0.8681$. It is the Radon-Nikodym derivative of $P$ with respect to $Q$ on the three-toss space. A likelihood ratio and a weight are the same thing."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Importance sampling",
+      "prose": "**Importance sampling** draws from $Q$ and weights each draw by the likelihood ratio $\\tfrac{dP}{dQ}$, so that $E_P[f] = E_Q\\!\\left[f\\,\\tfrac{dP}{dQ}\\right]$. It is lesson 14 with the roles swapped. Here $P = N(0, 1)$ and $Q = N(\\theta, 1)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -4,
+            8
+          ],
+          "y": [
+            0,
+            0.45
+          ],
+          "height": 250,
+          "grid": true,
+          "xLabel": "Loss $x$ (£m)",
+          "yLabel": "Density",
+          "functions": [
+            {
+              "id": "P",
+              "expr": "normpdf(x,0,1)",
+              "label": "$\\varphi(x)$",
+              "labelAt": -1.4
+            },
+            {
+              "id": "Q",
+              "expr": "normpdf(x,theta,1)",
+              "label": "$\\varphi(x - \\theta)$",
+              "colour": 3,
+              "dashed": true,
+              "labelAt": 3.4
+            }
+          ],
+          "params": {
+            "theta": 0
+          }
+        },
+        "state": {
+          "area": {
+            "id": "T",
+            "f": "Q",
+            "from": 4,
+            "to": 8,
+            "colour": 3
+          },
+          "params": {
+            "theta": 4
+          }
+        },
+        "derive": {
+          "caption": "$\\theta$ = {{fixed(theta, 1)}}"
+        }
+      },
+      "question": "Which identity is importance sampling for $E_P[f]$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$E_P[f] = E_Q\\left[f \\cdot \\tfrac{dP}{dQ}\\right]$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$E_P[f] = E_Q[f]$",
+            "why": "You dropped the weight. That is the average under $Q$: here about half the draws land beyond 4."
+          },
+          {
+            "id": "c",
+            "text": "$E_P[f] = E_Q\\left[f \\cdot \\tfrac{dQ}{dP}\\right]$",
+            "why": "You used the weight the wrong way up. Draws come from $Q$, so we convert to $P$ with $\\tfrac{dP}{dQ}$."
+          },
+          {
+            "id": "d",
+            "text": "$E_P[f] = E_Q[f]\\,E_Q\\left[\\tfrac{dP}{dQ}\\right]$",
+            "why": "You multiplied two averages. The mean weight is 1, so this is option b in disguise."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "We sample from $Q$ but want an average under $P$."
+        },
+        {
+          "rung": "point",
+          "text": "Lesson 14 says $E_Q[X] = E_P[ZX]$ with $Z = \\tfrac{dQ}{dP}$."
+        },
+        {
+          "rung": "step",
+          "text": "Swap the roles: $E_P[f] = E_Q[f \\cdot \\tfrac{dP}{dQ}]$."
+        }
+      ],
+      "feedback": {
+        "correct": "Weight each $Q$-draw by $\\tfrac{dP}{dQ}$ and the average is under $P$.",
+        "generic": "Not quite right. Swap the roles in $E_Q[X] = E_P[ZX]$.",
+        "byKey": {
+          "b": "The unweighted average is $E_Q[f]$, not $E_P[f]$.",
+          "c": "$\\tfrac{dQ}{dP}$ converts averages under $P$ to $Q$, the wrong direction here.",
+          "d": "Since $E_Q[\\tfrac{dP}{dQ}] = 1$, option d is $E_Q[f]$ again."
+        }
+      },
+      "explain": {
+        "text": "Lesson 14 says $E_Q[X] = E_P[ZX]$ with $Z = \\tfrac{dQ}{dP}$. Swap $P$ and $Q$: $E_P[f] = E_Q[f\\,\\tfrac{dP}{dQ}]$, so each draw from $Q$ carries the weight $\\tfrac{dP}{dQ}$. The weight is a likelihood ratio, as in the last screen."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The weight for two normals",
+      "prose": "For $P = N(0, 1)$ and $Q = N(\\theta, 1)$, divide the densities: the constants $\\tfrac{1}{\\sqrt{2\\pi}}$ cancel and $\\tfrac{\\varphi(x)}{\\varphi(x - \\theta)} = \\exp\\left(-\\tfrac{x^2}{2} + \\tfrac{(x - \\theta)^2}{2}\\right)$. Expand the square and cancel $x^2$.",
+      "question": "Write the weight $\\tfrac{dP}{dQ}(x)$.",
+      "widget": {
+        "kind": "expression",
+        "answer": "e^{-\\theta x+\\theta^2/2}",
+        "accept": [
+          "e^{-\\theta x+\\frac{\\theta^2}{2}}",
+          "e^{\\theta^2/2-\\theta x}",
+          "e^{-\\theta x}e^{\\theta^2/2}"
+        ],
+        "wrong": [
+          {
+            "id": "inverted",
+            "tex": "e^{\\theta x-\\theta^2/2}"
+          },
+          {
+            "id": "nocorrection",
+            "tex": "e^{-\\theta x}"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The exponent is $\\tfrac{(x-\\theta)^2 - x^2}{2}$."
+        },
+        {
+          "rung": "point",
+          "text": "$(x - \\theta)^2 = x^2 - 2\\theta x + \\theta^2$."
+        },
+        {
+          "rung": "step",
+          "text": "Half of $-2\\theta x + \\theta^2$ is $-\\theta x + \\tfrac{\\theta^2}{2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{dP}{dQ}(x) = e^{-\\theta x + \\theta^2/2}$: small for draws far in the tail, large near the middle.",
+        "generic": "Not quite right. Expand $(x - \\theta)^2$ and halve the difference from $x^2$.",
+        "byKey": {
+          "inverted": "You wrote the lesson 14 weight $\\tfrac{dQ}{dP}$. For draws from $Q$ we need its reciprocal.",
+          "nocorrection": "You dropped $\\theta^2/2$. Then the weights would not average 1 under $Q$."
+        }
+      },
+      "explain": {
+        "text": "$-\\tfrac{x^2}{2} + \\tfrac{x^2 - 2\\theta x + \\theta^2}{2} = -\\theta x + \\tfrac{\\theta^2}{2}$. So $\\tfrac{dP}{dQ}(x) = e^{-\\theta x + \\theta^2/2}$, the reciprocal of lesson 14's weight. At $x = \\theta$ it is $e^{-\\theta^2/2}$: at $\\theta = 4$, $e^{-8} = 0.000335$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "How good is one run?",
+      "prose": "On seed 21, with $\\theta = 4$ and 10,000 draws, the estimate is $3.185 \\times 10^{-5}$. Its standard error is $6.73 \\times 10^{-7}$. A plain run of the same size saw no loss day.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> is_tail(4, 4, 10000, 21)",
+            "(3.185e-05, 6.73e-07)",
+            "exact tail: 3.167e-05"
+          ],
+          "title": "One run"
+        },
+        "state": {}
+      },
+      "question": "What is the standard error as a percentage of the estimate?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.1,
+        "tol": {
+          "abs": 0.1
+        },
+        "accept": "2.1%: 6.73e-7 / 3.185e-5",
+        "label": "%",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 47.3,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "perdraw",
+            "value": 212.4,
+            "tol": {
+              "abs": 3
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the standard error by the estimate."
+        },
+        {
+          "rung": "point",
+          "text": "$6.73 \\times 10^{-7} \\div 3.185 \\times 10^{-5}$.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then multiply by 100 for a percentage."
+        }
+      ],
+      "feedback": {
+        "correct": "2.1%. The estimate is good to two parts in a hundred. A plain run of the same size has a relative error of 178%.",
+        "generic": "Not quite right. Standard error over estimate, times 100.",
+        "byKey": {
+          "inverted": "You divided the estimate by its standard error. That ratio, 47, says how many standard errors it sits from zero.",
+          "perdraw": "You gave the per-draw error 2.12 as if it were a percentage. Divided by $\\sqrt{10{,}000} = 100$, it is 2.1%."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac{6.73 \\times 10^{-7}}{3.185 \\times 10^{-5}} = 0.0211$, so 2.1%. This matches the caption: relative error per draw 2.12 over $\\sqrt{10{,}000} = 100$. A plain run has per-draw error 177.7, so 1.78 or 178% at the same size."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Counting the shifted draws",
+      "prose": "A junior counts the draws above 4 and reports their share. On seed 21, 4,994 of the 10,000 shifted draws land above 4, and their weights $e^{-4x + 8}$ add up to 0.3185.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "draws above 4:  4,994 of 10,000",
+            "their weights add up to  0.3185"
+          ],
+          "title": "Seed 21, theta = 4"
+        },
+        "state": {}
+      },
+      "question": "What chance of a loss above £4m does the sampler estimate, per 100,000 days?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.185,
+        "tol": {
+          "abs": 0.02
+        },
+        "accept": "3.185: 0.3185 / 10,000, times 100,000",
+        "label": "Per 100,000 days",
+        "wrong": [
+          {
+            "id": "share",
+            "value": 49940,
+            "tol": {
+              "abs": 1000
+            }
+          },
+          {
+            "id": "nodiv",
+            "value": 0.3185,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each draw above 4 counts for its weight, not for 1."
+        },
+        {
+          "rung": "point",
+          "text": "The estimate is the sum of weights divided by the 10,000 draws.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then express it per 100,000 days: multiply by 100,000."
+        }
+      ],
+      "feedback": {
+        "correct": "3.185 per 100,000 days: the weighted sum over the number of draws, against the exact 3.167.",
+        "generic": "Not quite right. Divide the sum of weights by the number of draws, then scale to 100,000 days.",
+        "byKey": {
+          "share": "You reported the share of draws above 4, 0.4994, which is 49,940 per 100,000. It estimates $Q(X > 4)$, a chance under the shifted density.",
+          "nodiv": "You gave the sum of weights. The estimate is the mean weight, so divide by 10,000 draws first."
+        }
+      },
+      "explain": {
+        "text": "The weighted estimate is $0.3185 / 10{,}000 = 3.185 \\times 10^{-5}$, which is 3.185 per 100,000 days. The share 0.4994 estimates $Q(X > 4) = \\tfrac12$. Inverting the weight to $e^{+4x - 8}$ would give about $4 \\times 10^{11}$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "An importance sampler",
+      "prose": "Write `is_tail(a, theta, n, seed)`: draw `x = default_rng(seed).standard_normal(n) + theta`, weight by $e^{-\\theta x + \\theta^2/2}$ where $x > a$, and return the mean weight and its standard error (`ddof=1`). Then `best_theta(a)` by golden-section search.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> is_tail(4, 4, 10000, 21)",
+            "(3.184972646057774e-05, 6.729730145004383e-07)",
+            ">>> best_theta(4)",
+            "4.1197"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import math\nimport numpy as np\n\ndef is_tail(a, theta, n, seed):\n    \"\"\"Estimate P(X > a) for X ~ N(0, 1) by importance sampling.\n    Draw x = default_rng(seed).standard_normal(n) + theta, weight by dP/dQ.\n    Return (estimate, standard_error), with the standard deviation taken with ddof=1.\"\"\"\n    ...\n\ndef best_theta(a):\n    \"\"\"The theta that minimises exp(theta^2) * Phibar(a + theta), by golden-section search.\n    Use math.erfc for the normal tail: Phibar(y) = 0.5 * math.erfc(y / math.sqrt(2)).\"\"\"\n    ...\n",
+        "solution": "import math\nimport numpy as np\n\ndef is_tail(a, theta, n, seed):\n    \"\"\"Estimate P(X > a) for X ~ N(0, 1) by importance sampling.\n    Draw x = default_rng(seed).standard_normal(n) + theta, weight by dP/dQ.\n    Return (estimate, standard_error), with the standard deviation taken with ddof=1.\"\"\"\n    rng = np.random.default_rng(seed)\n    x = rng.standard_normal(n) + theta\n    w = np.exp(-theta * x + theta * theta / 2) * (x > a)\n    return float(w.mean()), float(w.std(ddof=1) / math.sqrt(n))\n\ndef best_theta(a):\n    \"\"\"The theta that minimises exp(theta^2) * Phibar(a + theta), by golden-section search.\n    Use math.erfc for the normal tail: Phibar(y) = 0.5 * math.erfc(y / math.sqrt(2)).\"\"\"\n    def g(t):\n        return math.exp(t * t) * 0.5 * math.erfc((a + t) / math.sqrt(2))\n    lo, hi = 0.0, 2.0 * a\n    r = (math.sqrt(5) - 1) / 2\n    c, d = hi - r * (hi - lo), lo + r * (hi - lo)\n    for _ in range(100):\n        if g(c) < g(d):\n            hi = d\n        else:\n            lo = c\n        c, d = hi - r * (hi - lo), lo + r * (hi - lo)\n    return (lo + hi) / 2\n",
+        "prelude": "import math\nimport numpy as np\ndef tail(a):\n    return 0.5 * math.erfc(a / math.sqrt(2))\n",
+        "examples": [
+          {
+            "call": "is_tail(4, 4, 10000, 21)[0]",
+            "expect": "3.184972646057774e-05",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "call": "best_theta(3)",
+            "expect": "3.1548",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "is_tail(4, 4, 10000, 21)[0]",
+            "expect": "3.184972646057774e-05",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "call": "is_tail(4, 4, 10000, 21)[1]",
+            "expect": "6.729730145004383e-07",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "call": "is_tail(1.5, 0, 20000, 3)[0]",
+            "expect": "float((np.random.default_rng(3).standard_normal(20000) > 1.5).mean())",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "is_tail(2, 2.2, 5000, 8)[0]",
+            "expect": "0.022735909434736756",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-06
+            }
+          },
+          {
+            "call": "abs(is_tail(3, 3, 20000, 5)[0] - tail(3)) < 3 * is_tail(3, 3, 20000, 5)[1]",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "best_theta(3)",
+            "expect": "3.1548",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "call": "best_theta(4)",
+            "expect": "4.1197",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "call": "best_theta(5)",
+            "expect": "5.0972",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "call": "best_theta(2)",
+            "expect": "2.2159",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "how": "Check runs 9 hidden tests. The first run that imports NumPy loads it, which takes a few seconds; the clock does not count that. The standard error uses `ddof=1`."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The weight is `np.exp(-theta * x + theta**2 / 2)`, kept only where `x > a`."
+        },
+        {
+          "rung": "point",
+          "text": "The estimate is the mean of the weighted indicator; the standard error is its `std(ddof=1)` over `sqrt(n)`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Golden-section: shrink `[0, 2a]`, keeping the side with the lower value of $e^{\\theta^2}\\bar\\Phi(a + \\theta)$."
+        }
+      ],
+      "feedback": {
+        "correct": "All 9 tests pass. Seed 21 gives 3.185 per 100,000 days with standard error 0.067. The best shifts are 3.15, 4.12 and 5.10 for thresholds 3, 4 and 5.",
+        "generic": "Not quite right. Check the sign in the weight and use `ddof=1` for the standard error."
+      },
+      "explain": {
+        "text": "At $\\theta = 0$ every weight is 1 and `is_tail` is plain Monte Carlo. The standard error is the sample standard deviation of the weighted indicators over $\\sqrt n$. `best_theta` minimises the second moment of the weight, so it minimises the variance."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "How many draws for the risk report",
+      "prose": "A desk wants the chance of losing more than £3m, which is 0.00135 or one day in 741. The table gives the relative error per draw, for plain sampling and for importance sampling at the best shift, $\\theta = 3.15$. The error shrinks like $1/\\sqrt n$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Method",
+            "Relative error per draw"
+          ],
+          "rows": [
+            [
+              "Plain Monte Carlo",
+              "27.2"
+            ],
+            [
+              "Importance sampling, $\\theta = 3.15$",
+              "1.826"
+            ]
+          ],
+          "align": [
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many importance-sampling draws give a 10% relative error?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 333,
+        "tol": {
+          "abs": 4
+        },
+        "accept": "333 = (1.826 / 0.1)^2",
+        "label": "Draws",
+        "wrong": [
+          {
+            "id": "plain",
+            "value": 73980,
+            "tol": {
+              "abs": 300
+            }
+          },
+          {
+            "id": "unsquared",
+            "value": 18.3,
+            "tol": {
+              "abs": 0.3
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Error per draw over $\\sqrt n$ should equal 0.10."
+        },
+        {
+          "rung": "point",
+          "text": "So $\\sqrt n = 1.826 / 0.10$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Square it."
+        }
+      ],
+      "feedback": {
+        "correct": "About 333 draws, against 73,980 for plain sampling: 222 times fewer.",
+        "generic": "Not quite right. Solve $1.826/\\sqrt n = 0.10$ for $n$.",
+        "byKey": {
+          "plain": "You used the plain row, 27.2, which needs 73,980 draws. The importance row is the one with $\\theta = 3.15$.",
+          "unsquared": "You stopped at $\\sqrt n$. Square it to get the number of draws."
+        }
+      },
+      "explain": {
+        "text": "Importance sampling needs $n = (1.826/0.10)^2 = 333$ draws against $(27.2/0.10)^2 = 73{,}980$ for plain sampling. The same identity prices under $Q$ by sampling under $P$: ito lesson 10's reweighted call, £10.4692 with standard error £0.0305. Choose $\\theta$ near the loss threshold, then check that the mean weight is close to 1."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A £4m loss is 3.167 per 100,000 days under $N(0, 1)$, so 10,000 plain draws expect 0.32 of them. Plain Monte Carlo reports zero and a relative error of 178%.",
+      "Importance sampling draws from $Q = N(\\theta, 1)$ and weights by $\\tfrac{dP}{dQ} = e^{-\\theta x + \\theta^2/2}$, so $E_P[f] = E_Q[f\\,\\tfrac{dP}{dQ}]$. A likelihood ratio is a Radon-Nikodym derivative.",
+      "Best $\\theta$ sits near the threshold: 4.12 for $a = 4$. On seed 21 it gives 3.185 per 100,000 days with a 2.1% standard error. $\\theta = 0$ is plain Monte Carlo."
+    ],
+    "formula": {
+      "name": "Importance sampling",
+      "tex": "E_P[f] = E_Q\\!\\left[f\\,\\dfrac{dP}{dQ}\\right], \\quad \\dfrac{dP}{dQ}(x) = e^{-\\theta x + \\theta^2/2}",
+      "note": "Further reading: Shreve, Stochastic Calculus for Finance II, chapter 1.6 (change of measure)."
+    },
+    "trap": "Counting the shifted draws above 4 without weights estimates $Q(X > 4) = \\tfrac12$, not the loss chance."
+  },
+  "quiz": [
+    {
+      "id": "q-plain",
+      "difficulty": 2,
+      "prose": "A desk's loss is standard normal in £m. The chance of losing more than £3m is $0.00135$.",
+      "question": "How many days above £3m does a plain run of 10,000 draws expect?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 13.5,
+        "tol": {
+          "abs": 0.1
+        },
+        "accept": "13.5 = 10,000 x 0.00135",
+        "label": "Days",
+        "wrong": [
+          {
+            "id": "per100k",
+            "value": 135,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "13.5 days: 10,000 times 0.00135.",
+        "generic": "Not quite right. Multiply the chance by the number of draws.",
+        "byKey": {
+          "per100k": "You used 100,000 days. The run has 10,000 draws."
+        }
+      },
+      "explain": {
+        "text": "$10{,}000 \\times 0.00135 = 13.5$. A plain run sees about 13 or 14 such days, so its relative error is near $1/\\sqrt{13.5} = 27\\%$."
+      }
+    },
+    {
+      "id": "q-weight",
+      "difficulty": 3,
+      "prose": "We sample from $Q = N(2, 1)$ to estimate a tail of $P = N(0, 1)$. A draw lands at $x = 3$.",
+      "question": "What weight $e^{-\\theta x + \\theta^2/2}$ does it carry?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0183,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "e^{-4} = 0.0183",
+        "label": "Weight",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 54.6,
+            "tol": {
+              "abs": 0.2
+            }
+          },
+          {
+            "id": "nocorrection",
+            "value": 0.00248,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$e^{-6 + 2} = e^{-4} = 0.0183$.",
+        "generic": "Not quite right. Put $\\theta = 2$ and $x = 3$ into $-\\theta x + \\theta^2/2$.",
+        "byKey": {
+          "inverted": "You used $e^{+4}$. The weight shrinks draws far out in the tail, so it is below 1 here.",
+          "nocorrection": "You dropped $\\theta^2/2 = 2$. The exponent is $-6 + 2 = -4$."
+        }
+      },
+      "explain": {
+        "text": "$-\\theta x + \\tfrac{\\theta^2}{2} = -6 + 2 = -4$, and $e^{-4} = 0.0183$. A draw at 3 is common under $Q$ and rare under $P$, so it counts for little."
+      }
+    },
+    {
+      "id": "q-edge",
+      "difficulty": 2,
+      "prose": "The shift is $\\theta = 0$, so $Q = P$.",
+      "question": "What is the weight of every draw?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "1: e^0 = 1",
+        "label": "Weight",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1: with $\\theta = 0$ the sampler is plain Monte Carlo.",
+        "generic": "Not quite right. Put $\\theta = 0$ in $e^{-\\theta x + \\theta^2/2}$.",
+        "byKey": {
+          "zero": "You gave 0. The exponent is 0, and $e^0 = 1$."
+        }
+      },
+      "explain": {
+        "text": "$e^{-0 \\cdot x + 0} = 1$ for every $x$, so the estimate is the plain share of draws above $a$. This is the case $\\tfrac{dP}{dP} = 1$."
+      }
+    },
+    {
+      "id": "q-inverted",
+      "difficulty": 3,
+      "prose": "A desk's importance sampler reports a £4m tail chance of $4 \\times 10^{11}$ per 100,000 days.",
+      "question": "What went wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The weight was inverted: $e^{+\\theta x - \\theta^2/2}$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Too few draws were used",
+            "why": "You blamed the sample size. Noise would change the estimate by a few percent, not by a factor of $10^{11}$."
+          },
+          {
+            "id": "c",
+            "text": "$\\theta$ was too small",
+            "why": "You blamed the shift. A small $\\theta$ finds no tail draws and reports a number near 0."
+          },
+          {
+            "id": "d",
+            "text": "The sum of weights was not divided by $n$",
+            "why": "You blamed the division. Without it the correct weights would give 0.3185, not a huge number."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The inverted weight is large in the tail, where $e^{-\\theta x + \\theta^2/2}$ should be tiny.",
+        "generic": "Not quite right. Think about which error could make the answer enormous."
+      },
+      "explain": {
+        "text": "The weight must shrink tail draws, because $Q$ over-samples them. With $e^{+4x - 8}$ the tail draws carry huge weights and the estimate explodes to about $4 \\times 10^{11}$."
+      }
+    }
+  ]
+}
