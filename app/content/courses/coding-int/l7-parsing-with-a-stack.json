@@ -1,0 +1,1818 @@
+{
+ "id": "l7-parsing-with-a-stack",
+ "course": "coding-int",
+ "title": "Parsing with a stack",
+ "minutes": 14,
+ "objectives": [
+  "Evaluate and decode nested expressions with a stack."
+ ],
+ "skills": [
+  "ci-strings"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Two stacks",
+   "tags": [
+    "expression-parse"
+   ],
+   "prose": "In `ds/l9-last-in-first-out` you evaluated postfix with one stack. Ordinary infix needs two: one for numbers and one for operators. Here `4+3*2` has been read to the end, and nothing has been applied yet.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "4",
+       "3",
+       "2"
+      ],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [
+       "4",
+       "3",
+       "2"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 2,
+        "label": "top"
+       }
+      ],
+      "caption": "Numbers, bottom to top"
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "+",
+       "*"
+      ],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [
+       "+",
+       "*"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 1,
+        "label": "top"
+       }
+      ],
+      "caption": "Operators, bottom to top"
+     }
+    },
+    "state": {
+     "caption": "Every token of `4+3*2` pushed"
+    }
+   },
+   "question": "What is the value of `4+3*2`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Value",
+    "accept": "10: $3 \\times 2$ first, then $4 + 6$",
+    "wrong": [
+     {
+      "id": "ltr",
+      "value": 14
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which operator binds tighter?"
+    },
+    {
+     "rung": "point",
+     "text": "`*` sits on top of the operator stack. It comes off first.",
+     "highlight": [
+      "right:c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Apply `*` to 3 and 2, giving 6. Then apply `+` to 4 and 6."
+    }
+   ],
+   "feedback": {
+    "correct": "$3 \\times 2 = 6$, then $4 + 6 = 10$.",
+    "generic": "Not quite right. Multiplication comes before addition.",
+    "byKey": {
+     "ltr": "You worked left to right: $4 + 3 = 7$, then $7 \\times 2$. `*` binds tighter, so it goes first."
+    }
+   },
+   "explain": {
+    "text": "`*` binds tighter than `+`, so it waits on top and comes off first. The stacks turn `4+3*2` into $4 + (3 \\times 2) = 10$. Reading left to right gives 14, which is wrong.",
+    "canvas": {
+     "left": {
+      "cells": [
+       "4",
+       "6"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 1,
+        "label": "top"
+       }
+      ],
+      "caption": "Numbers, bottom to top"
+     },
+     "right": {
+      "cells": [
+       "+"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 0,
+        "label": "top"
+       }
+      ],
+      "caption": "Operators, bottom to top"
+     },
+     "caption": "After `*`: 3 and 2 became 6"
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Run the parser",
+   "tags": [
+    "expression-parse"
+   ],
+   "prose": "Step through `4+3*2` one token at a time. A number goes on its stack. An operator first applies any waiting operator that binds at least as tightly. At the end, apply what is left.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "array",
+     "params": {
+      "cells": [],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [],
+      "pointers": [],
+      "caption": "Numbers: empty"
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [],
+      "pointers": [],
+      "caption": "Operators: empty"
+     }
+    },
+    "state": {
+     "caption": "Nothing read yet"
+    }
+   },
+   "question": "Run the parser to the end of `4+3*2`.",
+   "widget": {
+    "kind": "manipulate",
+    "start": "s0",
+    "target": "s7",
+    "states": {
+     "s0": {
+      "tex": "\\text{To read: } \\texttt{4+3*2}",
+      "canvas": {
+       "left": {
+        "cells": [],
+        "pointers": [],
+        "caption": "Numbers: empty"
+       },
+       "right": {
+        "cells": [],
+        "pointers": [],
+        "caption": "Operators: empty"
+       },
+       "caption": "Nothing read yet"
+      },
+      "ops": [
+       {
+        "label": "Push 4",
+        "to": "s1"
+       }
+      ]
+     },
+     "s1": {
+      "tex": "\\text{To read: } \\texttt{+3*2}",
+      "canvas": {
+       "left": {
+        "cells": [
+         "4"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 0,
+          "label": "top"
+         }
+        ],
+        "caption": "Numbers, bottom to top"
+       },
+       "right": {
+        "cells": [],
+        "pointers": [],
+        "caption": "Operators: empty"
+       },
+       "caption": "4 pushed"
+      },
+      "ops": [
+       {
+        "label": "Push +",
+        "to": "s2"
+       }
+      ]
+     },
+     "s2": {
+      "tex": "\\text{To read: } \\texttt{3*2}",
+      "canvas": {
+       "left": {
+        "cells": [
+         "4"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 0,
+          "label": "top"
+         }
+        ],
+        "caption": "Numbers, bottom to top"
+       },
+       "right": {
+        "cells": [
+         "+"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 0,
+          "label": "top"
+         }
+        ],
+        "caption": "Operators, bottom to top"
+       },
+       "caption": "Nothing waits, so `+` goes on"
+      },
+      "ops": [
+       {
+        "label": "Push 3",
+        "to": "s3"
+       }
+      ]
+     },
+     "s3": {
+      "tex": "\\text{To read: } \\texttt{*2}",
+      "canvas": {
+       "left": {
+        "cells": [
+         "4",
+         "3"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 1,
+          "label": "top"
+         }
+        ],
+        "caption": "Numbers, bottom to top"
+       },
+       "right": {
+        "cells": [
+         "+"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 0,
+          "label": "top"
+         }
+        ],
+        "caption": "Operators, bottom to top"
+       },
+       "caption": "Next comes `*`"
+      },
+      "ops": [
+       {
+        "label": "Apply + first",
+        "reject": true,
+        "why": "`+` binds less tightly than `*`, so it waits. Only operators that bind at least as tightly as `*` come off."
+       },
+       {
+        "label": "Push *",
+        "to": "s4"
+       }
+      ]
+     },
+     "s4": {
+      "tex": "\\text{To read: } \\texttt{2}",
+      "canvas": {
+       "left": {
+        "cells": [
+         "4",
+         "3"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 1,
+          "label": "top"
+         }
+        ],
+        "caption": "Numbers, bottom to top"
+       },
+       "right": {
+        "cells": [
+         "+",
+         "*"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 1,
+          "label": "top"
+         }
+        ],
+        "caption": "Operators, bottom to top"
+       },
+       "caption": "`*` waits on top of `+`"
+      },
+      "ops": [
+       {
+        "label": "Push 2",
+        "to": "s5"
+       }
+      ]
+     },
+     "s5": {
+      "tex": "\\text{Input read. Apply what is left.}",
+      "canvas": {
+       "left": {
+        "cells": [
+         "4",
+         "3",
+         "2"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 2,
+          "label": "top"
+         }
+        ],
+        "caption": "Numbers, bottom to top"
+       },
+       "right": {
+        "cells": [
+         "+",
+         "*"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 1,
+          "label": "top"
+         }
+        ],
+        "caption": "Operators, bottom to top"
+       },
+       "caption": "End of input"
+      },
+      "ops": [
+       {
+        "label": "Apply +",
+        "reject": true,
+        "why": "Only the top of a stack comes off. `*` is on top, so it goes first."
+       },
+       {
+        "label": "Apply *: pop 2 and 3, push 6",
+        "to": "s6"
+       }
+      ]
+     },
+     "s6": {
+      "tex": "3 \\times 2 = 6",
+      "canvas": {
+       "left": {
+        "cells": [
+         "4",
+         "6"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 1,
+          "label": "top"
+         }
+        ],
+        "caption": "Numbers, bottom to top"
+       },
+       "right": {
+        "cells": [
+         "+"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 0,
+          "label": "top"
+         }
+        ],
+        "caption": "Operators, bottom to top"
+       },
+       "caption": "`*` applied"
+      },
+      "ops": [
+       {
+        "label": "Apply +: pop 6 and 4, push 10",
+        "to": "s7"
+       }
+      ]
+     },
+     "s7": {
+      "tex": "4 + 6 = 10",
+      "canvas": {
+       "left": {
+        "cells": [
+         "10"
+        ],
+        "pointers": [
+         {
+          "id": "top",
+          "at": 0,
+          "label": "top"
+         }
+        ],
+        "caption": "Numbers, bottom to top"
+       },
+       "right": {
+        "cells": [],
+        "pointers": [],
+        "caption": "Operators: empty"
+       },
+       "caption": "One number left: the value"
+      }
+     }
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Push numbers as they come. When does an operator wait?"
+    },
+    {
+     "rung": "point",
+     "text": "When `*` arrives, `+` is on top. `+` binds less tightly, so it stays.",
+     "highlight": [
+      "right:c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Push 4, push `+`, push 3, push `*`, push 2. Then apply `*` and then `+`."
+    }
+   ],
+   "feedback": {
+    "correct": "The stacks ended with one number, 10.",
+    "generic": "Not quite right. An operator comes off only from the top, and only when the incoming one binds no more tightly."
+   },
+   "explain": {
+    "text": "The applies came out as `*` then `+`. That is the postfix form `4 3 2 * +`, which you evaluated in `ds/l9-last-in-first-out`. The operator stack turns infix into that order as it reads.",
+    "canvas": {
+     "left": {
+      "cells": [
+       "10"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 0,
+        "label": "top"
+       }
+      ],
+      "caption": "Numbers, bottom to top"
+     },
+     "right": {
+      "cells": [],
+      "pointers": [],
+      "caption": "Operators: empty"
+     },
+     "caption": "`4 3 2 * +` is 10"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Equal ranks",
+   "tags": [
+    "expression-parse"
+   ],
+   "prose": "Now `10-2-3`. The parser has read `10-2`, and the second `-` arrives. Both minus signs have the same rank.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "10",
+       "2"
+      ],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [
+       "10",
+       "2"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 1,
+        "label": "top"
+       }
+      ],
+      "caption": "Numbers, bottom to top"
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "-"
+      ],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [
+       "-"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 0,
+        "label": "top"
+       }
+      ],
+      "caption": "Operators, bottom to top"
+     }
+    },
+    "state": {
+     "caption": "The second `-` is next"
+    }
+   },
+   "question": "What should the parser do before it pushes the second `-`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Apply the waiting `-` first, giving 8, so the result is 5",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Push it on top and apply both at the end, giving 11",
+      "why": "You let the later minus go first: $10 - (2 - 3) = 11$. Equal ranks apply left to right, so the waiting one comes off."
+     },
+     {
+      "id": "c",
+      "text": "Either order: subtraction gives the same answer",
+      "why": "Subtraction is not associative. $(10 - 2) - 3 = 5$ but $10 - (2 - 3) = 11$."
+     },
+     {
+      "id": "d",
+      "text": "Apply both now, before reading 3",
+      "why": "The second `-` has no right operand yet. Only the waiting one can be applied."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is $(10 - 2) - 3$ the same as $10 - (2 - 3)$?"
+    },
+    {
+     "rung": "point",
+     "text": "The waiting `-` is on top of the operator stack.",
+     "highlight": [
+      "right:c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Use `>=`: pop while the top binds at least as tightly. So the waiting `-` comes off and 8 is pushed."
+    }
+   ],
+   "feedback": {
+    "correct": "The waiting `-` comes off first: $(10 - 2) - 3 = 5$.",
+    "generic": "Not quite right. Equal ranks are applied left to right.",
+    "byKey": {
+     "b": "You let the later minus go first. That computes $10 - (2 - 3) = 11$.",
+     "c": "You treated subtraction like addition. Moving the brackets changes a difference.",
+     "d": "You tried to apply the incoming `-`, which has no right operand yet."
+    }
+   },
+   "explain": {
+    "text": "The loop pops while the top binds at least as tightly, with `>=`. With `>` the second minus would wait and give 11. Left to right for equal ranks is the convention the tests expect.",
+    "canvas": {
+     "left": {
+      "cells": [
+       "8"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 0,
+        "label": "top"
+       }
+      ],
+      "caption": "Numbers, bottom to top"
+     },
+     "right": {
+      "cells": [
+       "-"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 0,
+        "label": "top"
+       }
+      ],
+      "caption": "Operators, bottom to top"
+     },
+     "caption": "After the first `-`: 8, then `-` goes on"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Brackets",
+   "tags": [
+    "expression-parse"
+   ],
+   "prose": "A `(` goes on the operator stack and stops the popping. A `)` applies operators back to its `(` and then drops it. Run `2*(5+5*2)/3+(6/2+8)` on paper. Division here gives whole numbers.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "2",
+       "5",
+       "5"
+      ],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [
+       "2",
+       "5",
+       "5"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 2,
+        "label": "top"
+       }
+      ],
+      "caption": "Numbers, bottom to top"
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "*",
+       "(",
+       "+"
+      ],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [
+       "*",
+       "(",
+       "+"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 2,
+        "label": "top"
+       }
+      ],
+      "caption": "Operators, bottom to top"
+     }
+    },
+    "state": {
+     "caption": "After reading `2*(5+5`"
+    }
+   },
+   "question": "Fill in the value and the largest number of entries the operator stack ever holds, brackets included.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Your answer"
+    ],
+    "rows": [
+     [
+      "Value",
+      {
+       "edit": true,
+       "answer": 21,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "Peak size of the operator stack",
+      {
+       "edit": true,
+       "answer": 4,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Evaluate each bracket first, then the rest."
+    },
+    {
+     "rung": "point",
+     "text": "When the inner `*` arrives, the stack holds `*`, `(` and `+`. `+` binds less tightly, so `*` goes on top.",
+     "highlight": [
+      "right:c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2 \\times 15 / 3 = 10$ and $6 / 2 + 8 = 11$, so 21. The stack peaks at `* ( + *`, four entries."
+    }
+   ],
+   "feedback": {
+    "correct": "21, and the stack peaks at four entries: `* ( + *`.",
+    "generic": "Not quite right. Work the brackets first, and count `(` as an entry.",
+    "byKey": {
+     "r0c1": "Check the value. The first bracket is 15, so $2 \\times 15 / 3 = 10$; the second is $3 + 8 = 11$.",
+     "r1c1": "Check the peak. After `2*(5+5`, the next `*` lands on `* ( +`, making four entries."
+    }
+   },
+   "explain": {
+    "text": "The stack peaks at `* ( + *` just before the second 2 arrives. `)` then applies `*` and `+` back to the bracket, leaving 15. The value is $10 + 11 = 21$.",
+    "canvas": {
+     "left": {
+      "cells": [
+       "2",
+       "5",
+       "5"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 2,
+        "label": "top"
+       }
+      ],
+      "caption": "Numbers, bottom to top"
+     },
+     "right": {
+      "cells": [
+       "*",
+       "(",
+       "+",
+       "*"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 3,
+        "label": "top"
+       }
+      ],
+      "caption": "Operators, bottom to top"
+     },
+     "caption": "The peak: four entries"
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Toward zero",
+   "tags": [
+    "integer-division"
+   ],
+   "prose": "The assessment says: \"`/` is whole-number division that truncates toward zero.\" Python's `//` is close, but not the same.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> 7 // 2",
+      "3",
+      ">>> -7 // 2",
+      "-4"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Under the statement's rule, what is `-7/2`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Value",
+    "accept": "−3: $-3.5$ truncated toward zero",
+    "wrong": [
+     {
+      "id": "floor",
+      "value": -4
+     },
+     {
+      "id": "exact",
+      "value": -3.5
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out $-7 / 2$ exactly first."
+    },
+    {
+     "rung": "point",
+     "text": "`//` rounds down, toward minus infinity.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-7/2 = -3.5$. Toward zero means drop the fraction: $-3$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-3.5$ truncated toward zero is $-3$.",
+    "generic": "Not quite right. Truncating toward zero drops the fraction.",
+    "byKey": {
+     "floor": "You used floor division. `//` rounds $-3.5$ down to $-4$; the statement truncates toward zero, to $-3$.",
+     "exact": "That is true division. The statement asks for a whole number, truncated toward zero."
+    }
+   },
+   "explain": {
+    "text": "`//` floors: it gives −4 for −7 // 2. Truncating toward zero gives −3, which is `int(-7 / 2)` in Python and plain `/` on `int` in C++. Write it as `abs(a) // abs(b)` with the sign put back.",
+    "canvas": {
+     "tone": {
+      "l4": "err"
+     },
+     "caption": "`-7 // 2` floors to −4; the statement wants −3"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Write the calculator",
+   "tags": [
+    "expression-parse"
+   ],
+   "pace": 840,
+   "prose": "A `-` is unary when an operand is expected: at the start, after `(` and after another operator. Push it as `'u'` with the highest rank and do not pop before it, so `-(2+3)*4` and `2*-3` work.",
+   "canvas": {
+    "kind": "pair",
+    "stack": true,
+    "left": {
+     "kind": "array",
+     "params": {
+      "cells": [],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [],
+      "pointers": [],
+      "caption": "Numbers: empty"
+     }
+    },
+    "right": {
+     "kind": "array",
+     "params": {
+      "cells": [
+       "u",
+       "("
+      ],
+      "cellWidth": 44,
+      "height": 110,
+      "capacity": 4
+     },
+     "state": {
+      "cells": [
+       "u",
+       "("
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 1,
+        "label": "top"
+       }
+      ],
+      "caption": "Operators, bottom to top"
+     }
+    },
+    "state": {
+     "caption": "`-(2+3)*4` after `-(`: the minus went on as unary `u`"
+    }
+   },
+   "question": "Write `calculate(s)`: `s` holds whole numbers, `+ - * /`, spaces and brackets, and `-` may be unary. `/` truncates toward zero. Return an `int`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def calculate(s):\n    # eval with // passes most tests. Find the two it fails,\n    # then replace it with two stacks.\n    return int(eval(s.replace('/', '//')))\n",
+    "solution": "def calculate(s):\n    prec = {'+': 1, '-': 1, '*': 2, '/': 2, 'u': 3}\n    nums, ops = [], []\n\n    def apply():\n        op = ops.pop()\n        if op == 'u':\n            nums.append(-nums.pop())\n            return\n        b, a = nums.pop(), nums.pop()\n        if op == '+':\n            nums.append(a + b)\n        elif op == '-':\n            nums.append(a - b)\n        elif op == '*':\n            nums.append(a * b)\n        else:\n            q = abs(a) // abs(b)\n            nums.append(q if (a < 0) == (b < 0) else -q)\n\n    i, expect_operand = 0, True\n    while i < len(s):\n        c = s[i]\n        if c == ' ':\n            i += 1\n        elif c.isdigit():\n            j = i\n            while j < len(s) and s[j].isdigit():\n                j += 1\n            nums.append(int(s[i:j]))\n            i, expect_operand = j, False\n        elif c == '(':\n            ops.append(c)\n            i, expect_operand = i + 1, True\n        elif c == ')':\n            while ops[-1] != '(':\n                apply()\n            ops.pop()\n            i, expect_operand = i + 1, False\n        else:\n            if c == '-' and expect_operand:\n                c = 'u'\n            if c != 'u':\n                while ops and ops[-1] != '(' and prec[ops[-1]] >= prec[c]:\n                    apply()\n            ops.append(c)\n            i, expect_operand = i + 1, True\n    while ops:\n        apply()\n    return nums[0]\n",
+    "examples": [
+     {
+      "call": "calculate('4+3*2')",
+      "expect": "10",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('-(2+3)*4')",
+      "expect": "-20",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "calculate('4+3*2')",
+      "expect": "10",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate(' 7/2 ')",
+      "expect": "3",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('(2+(6+3+1)-4)+(5+9)')",
+      "expect": "22",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('-(2+3)*4')",
+      "expect": "-20",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('14-3/2')",
+      "expect": "13",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('-7/2')",
+      "expect": "-3",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('(-7)/2')",
+      "expect": "-3",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('2*(5+5*2)/3+(6/2+8)')",
+      "expect": "21",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('1-(-2)')",
+      "expect": "3",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('2*-3')",
+      "expect": "-6",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('10-2-3')",
+      "expect": "5",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('100/10/5')",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('42')",
+      "expect": "42",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('-(-(5))')",
+      "expect": "5",
+      "compare": "equal"
+     },
+     {
+      "call": "calculate('8/3*3')",
+      "expect": "6",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 15 hidden tests. The `eval` starter passes 13 of them, which is most of the marks. The two it fails are the reason for the stacks."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Run the starter. Which tests fail?"
+    },
+    {
+     "rung": "point",
+     "text": "Tests 6 and 7 divide a negative number.",
+     "highlight": [
+      "right:c0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Keep `nums` and `ops`. Before pushing a binary operator, apply while the top is not `(` and binds at least as tightly. For `/`, compute `abs(a) // abs(b)` and restore the sign."
+    }
+   ],
+   "feedback": {
+    "correct": "Two stacks, a unary minus and truncating division pass all 15.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-2": "Test 2 has spaces around the numbers. Skip a space and move on.",
+     "test-4": "Test 4 starts with a unary minus. A `-` where an operand is expected negates what follows.",
+     "test-6": "Test 6 is `-7/2`. You used floor division, which gives −4; the statement truncates toward zero, to −3.",
+     "test-7": "Test 7 is `(-7)/2`. You used floor division, which gives −4; truncate toward zero instead.",
+     "test-9": "Test 9 is `1-(-2)`. After `(`, a `-` is unary.",
+     "test-10": "Test 10 is `2*-3`. After an operator, a `-` is unary.",
+     "test-11": "Test 11 is `10-2-3`. Pop with `>=`, so equal ranks go left to right.",
+     "test-14": "Test 14 nests two unary minuses. Do not pop anything before pushing `'u'`."
+    }
+   },
+   "explain": {
+    "text": "`expect_operand` tells a unary minus from a binary one. Unary `'u'` has the highest rank, and nothing is popped before it, so `--5` stacks two of them. Truncating division is `abs(a) // abs(b)` with the sign restored.",
+    "canvas": {
+     "left": {
+      "cells": [
+       "-5"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 0,
+        "label": "top"
+       }
+      ],
+      "caption": "Numbers, bottom to top"
+     },
+     "right": {
+      "cells": [
+       "*"
+      ],
+      "pointers": [
+       {
+        "id": "top",
+        "at": 0,
+        "label": "top"
+       }
+      ],
+      "caption": "Operators, bottom to top"
+     },
+     "caption": "At `*`: `u` came off and negated 5, then `*` went on"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Nested repeats",
+   "tags": [
+    "decode-nested"
+   ],
+   "prose": "A second parsing question: `k[text]` means `text` repeated `k` times, and brackets nest. On `[` the decoder pushes the text built so far and the count, then starts afresh. On `]` it pops them back.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "('', 2)",
+      "('b', 3)"
+     ],
+     "mode": "stack",
+     "capacity": 3,
+     "topLabel": "top"
+    },
+    "state": {
+     "caption": "The stack just after the second `[` of `2[b3[a]]`"
+    }
+   },
+   "question": "How long is each decoded string?",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Input",
+     "Decoded length"
+    ],
+    "rows": [
+     [
+      "`2[b3[a]]`",
+      {
+       "edit": true,
+       "answer": 8,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "`3[xy]2[z]w`",
+      {
+       "edit": true,
+       "answer": 9,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Decode the innermost bracket first."
+    },
+    {
+     "rung": "point",
+     "text": "`3[a]` is `aaa`, so `b3[a]` is `baaa`.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`2[b3[a]]` is `baaabaaa`, 8 letters. `3[xy]2[z]w` is `xyxyxy` + `zz` + `w`, 9 letters."
+    }
+   ],
+   "feedback": {
+    "correct": "`baaabaaa` has 8 letters and `xyxyxyzzw` has 9.",
+    "generic": "Not quite right. Decode from the inside out.",
+    "byKey": {
+     "r0c1": "Check `2[b3[a]]`. The inner part `b3[a]` is `baaa`, 4 letters, repeated twice.",
+     "r1c1": "Check `3[xy]2[z]w`. That is 6 letters, then 2, then the plain `w`."
+    }
+   },
+   "explain": {
+    "text": "On `]` the decoder pops `('b', 3)` and makes `'b' + 'aaa'`. The next `]` pops `('', 2)` and repeats `baaa` twice. Lengths multiply inward: $2 \\times (1 + 3) = 8$.",
+    "canvas": {
+     "cells": [
+      "('', 2)"
+     ],
+     "caption": "After the first `]`: `cur` is `baaa`"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Write the decoder",
+   "tags": [
+    "decode-nested"
+   ],
+   "pace": 600,
+   "prose": "A count may have several digits, as in `12[xy]`. Build it as you read: `count = count * 10 + int(ch)`. Keep the current text as a list of pieces and join it once.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "('', 2)",
+      "('b', 3)"
+     ],
+     "mode": "stack",
+     "capacity": 3,
+     "topLabel": "top"
+    },
+    "state": {
+     "caption": "Each entry is the text before a `[` and its count"
+    }
+   },
+   "question": "Write `decode_string(s)`: expand every `k[text]`, with nesting and counts of several digits.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def decode_string(s):\n    # Returns s unchanged. Decode it with a stack.\n    return s\n",
+    "solution": "def decode_string(s):\n    stack = []\n    count, cur = 0, []\n    for ch in s:\n        if ch.isdigit():\n            count = count * 10 + int(ch)\n        elif ch == '[':\n            stack.append((cur, count))\n            cur, count = [], 0\n        elif ch == ']':\n            prev, k = stack.pop()\n            prev.append(''.join(cur) * k)\n            cur = prev\n        else:\n            cur.append(ch)\n    return ''.join(cur)\n",
+    "examples": [
+     {
+      "call": "decode_string('3[a]2[bc]')",
+      "expect": "'aaabcbc'",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('2[b3[a]]')",
+      "expect": "'baaabaaa'",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "decode_string('3[a]2[bc]')",
+      "expect": "'aaabcbc'",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('2[b3[a]]')",
+      "expect": "'baaabaaa'",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('3[xy]2[z]w')",
+      "expect": "'xyxyxyzzw'",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('abc')",
+      "expect": "'abc'",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('10[a]')",
+      "expect": "'aaaaaaaaaa'",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('')",
+      "expect": "''",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('2[2[2[a]]]')",
+      "expect": "'aaaaaaaa'",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('a2[b]c')",
+      "expect": "'abbc'",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('1[]')",
+      "expect": "''",
+      "compare": "equal"
+     },
+     {
+      "call": "decode_string('12[xy]')",
+      "expect": "'xyxyxyxyxyxyxyxyxyxyxyxy'",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 10 hidden tests, including an empty input, a count of 10 and an empty bracket `1[]`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What must you remember when a `[` opens?"
+    },
+    {
+     "rung": "point",
+     "text": "The text before the `[` and the count that goes with it.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "On `[` push `(cur, count)` and reset both. On `]` pop `(prev, k)`, append `''.join(cur) * k` to `prev`, and make `prev` current."
+    }
+   ],
+   "feedback": {
+    "correct": "The stack holds one `(text, count)` pair per open bracket.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is `3[a]2[bc]`. Each `k[...]` repeats its text `k` times.",
+     "test-2": "Test 2 nests: `2[b3[a]]`. Push the text so far on `[` and append to it on `]`.",
+     "test-5": "Test 5 is `10[a]`. Build the count digit by digit: `count * 10 + int(ch)`.",
+     "test-9": "Test 9 is `1[]`, an empty bracket. Repeating an empty text gives `''`.",
+     "test-10": "Test 10 is `12[xy]`. A count of 12 arrives as two digits."
+    }
+   },
+   "explain": {
+    "text": "Each `[` saves where you were, and each `]` resumes it with the repeat appended. The stack is as deep as the nesting. Joining a list of pieces avoids quadratic string building.",
+    "canvas": {
+     "caption": "`('b', 3)` comes off first, at the inner `]`"
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 3,
+   "title": "The pattern",
+   "tags": [
+    "decode-nested"
+   ],
+   "prose": "Both parsers keep a stack of what is waiting.\n\n```python\n# evaluate: apply while the top binds at least as tightly\nwhile ops and ops[-1] != '(' and prec[ops[-1]] >= prec[c]:\n    apply()\n# decode: save on '[', resume on ']'\nstack.append((cur, count))\nprev, k = stack.pop()\n```",
+   "question": "Put the decoder's steps for `2[b3[a]]` in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Read `2`: `count = 2`"
+     },
+     {
+      "id": "s2",
+      "text": "Read `[`: push `('', 2)`, then reset `cur` and `count`"
+     },
+     {
+      "id": "s3",
+      "text": "Read `b`: `cur` is `'b'`"
+     },
+     {
+      "id": "s4",
+      "text": "Read `3` and `[`: push `('b', 3)` and reset"
+     },
+     {
+      "id": "s5",
+      "text": "Read `a`: `cur` is `'a'`"
+     },
+     {
+      "id": "s6",
+      "text": "Read `]`: pop `('b', 3)`, so `cur` is `'baaa'`"
+     },
+     {
+      "id": "s7",
+      "text": "Read `]`: pop `('', 2)`, so `cur` is `'baaabaaa'`"
+     },
+     {
+      "id": "d1",
+      "text": "Read `2`: push the character `'2'` onto the stack",
+      "why": "A count of 12 would arrive as `'1'` and `'2'`, two entries. Build the number in `count` instead."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6",
+     "s7"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Follow the input left to right."
+    },
+    {
+     "rung": "point",
+     "text": "Digits build `count`; they are never pushed on their own."
+    },
+    {
+     "rung": "step",
+     "text": "2, `[`, `b`, `3[`, `a`, `]`, `]`. Leave out the push of `'2'`."
+    }
+   ],
+   "feedback": {
+    "correct": "Seven steps, one per part of the input.",
+    "generic": "Not quite right. Follow the input from left to right.",
+    "byKey": {
+     "d1": "You pushed the digit as a character. A count of 12 would split into 1 and 2.",
+     "left-out": "Every step but one belongs. Only the push of `'2'` is wrong."
+    }
+   },
+   "explain": {
+    "text": "Each `[` pushes one pair and each `]` pops one. The inner `]` finishes `baaa` before the outer one repeats it. Digits only ever build `count`."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A formula in a config file",
+   "tags": [
+    "expression-parse"
+   ],
+   "prose": "A risk system reads limits from a text file, written as formulas with brackets and minus signs. A colleague suggests `eval` on each line. Anyone who can edit the file can then type any Python.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "limits.cfg",
+     "lines": [
+      "max_loss = -(2*350+100)/3",
+      "vega_cap = 40*(12-5)",
+      "delta_cap = __import__('os').getcwd()"
+     ]
+    },
+    "state": {
+     "tone": {
+      "l3": "err"
+     }
+    }
+   },
+   "question": "Which parser should the desk allow, and why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The stack parser: it accepts only numbers, operators and brackets, while `eval` runs any code in the file",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`eval`: it is shorter and already understands brackets",
+      "why": "Short is not safe. Line 3 would run code, and `eval` floors `-800/3` with `//` instead of truncating."
+     },
+     {
+      "id": "c",
+      "text": "`eval` with `/` replaced by `//`",
+      "why": "That changes the division and nothing else. Line 3 still runs, and `//` floors negatives."
+     },
+     {
+      "id": "d",
+      "text": "Either: they give the same numbers",
+      "why": "They differ on negative division, and only one of them runs arbitrary code."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does line 3 do under `eval`?"
+    },
+    {
+     "rung": "point",
+     "text": "It imports a module and calls a function.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The stack parser rejects any character that is not a digit, an operator, a bracket or a space. `eval` runs whatever it is given."
+    }
+   ],
+   "feedback": {
+    "correct": "The stack parser reads arithmetic and nothing else.",
+    "generic": "Not quite right. Think about what a hostile line in the file could do.",
+    "byKey": {
+     "b": "You chose the shorter code. `eval` would run line 3, and it floors negative division.",
+     "c": "You fixed the division sign only. Line 3 still runs as code.",
+     "d": "You compared only the answers. `eval` also runs arbitrary code from the file."
+    }
+   },
+   "explain": {
+    "text": "`eval` executes the text, so a line in a config file can delete files or leak data. The stack parser accepts digits, `+ - * /`, brackets and spaces, and nothing else. It also truncates as the statement asks.",
+    "canvas": {
+     "tone": {
+      "l3": "err"
+     },
+     "caption": "Line 3 runs code under `eval`"
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Small input, large output",
+   "tags": [
+    "decode-nested"
+   ],
+   "prose": "An exchange's test feed compresses repeated messages as `k[...]`. A message of 10 characters can expand a long way. The decoder's stack holds one entry per open bracket.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "('', 9)",
+      "('', 9)",
+      "('', 9)"
+     ],
+     "mode": "stack",
+     "capacity": 4,
+     "topLabel": "top"
+    },
+    "state": {
+     "caption": "The deepest point of `9[9[9[a]]]`: three entries"
+    }
+   },
+   "question": "How many letters does `9[9[9[a]]]` decode to?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 729,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Letters",
+    "accept": "729, which is $9^3$",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 27
+     },
+     {
+      "id": "two",
+      "value": 81
+     },
+     {
+      "id": "depth",
+      "value": 3
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Decode the innermost bracket first."
+    },
+    {
+     "rung": "point",
+     "text": "`9[a]` is 9 letters. The next bracket repeats those 9 letters 9 times.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$9 \\times 9 \\times 9 = 729$."
+    }
+   ],
+   "feedback": {
+    "correct": "$9^3 = 729$ letters from a 10-character input.",
+    "generic": "Not quite right. Each bracket multiplies the length inside it.",
+    "byKey": {
+     "sum": "You added the counts. Each bracket repeats everything inside it, so the counts multiply.",
+     "two": "That is $9^2$. There are three brackets, so multiply by 9 three times.",
+     "depth": "3 is the depth of the stack. The question asks for the length of the output."
+    }
+   },
+   "explain": {
+    "text": "Each level repeats the one inside it 9 times, so the length is $9^3 = 729$. The stack never holds more than 3 entries. Time is $O(\\text{output})$, while the stack is $O(\\text{depth})$.",
+    "canvas": {
+     "caption": "Output 729 letters; stack 3 entries"
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Infix needs two stacks. Before pushing an operator, apply every waiting one that binds at least as tightly; `)` applies back to its `(`.",
+   "A `-` where an operand is expected is unary. Division that truncates toward zero is not Python's `//` for negatives.",
+   "To decode `k[text]`, push the text so far and the count on `[`. Pop them on `]` and append the repeat."
+  ],
+  "formula": {
+   "name": "Truncating division",
+   "tex": "a \\,/\\, b = \\operatorname{sign}(a b)\\,\\left\\lfloor |a| / |b| \\right\\rfloor",
+   "note": "`-7 // 2` is −4 in Python; truncating gives −3."
+  },
+  "trap": "`//` floors, so `-7 // 2` is −4. A statement that truncates toward zero wants −3."
+ },
+ "quiz": [
+  {
+   "id": "q-equal",
+   "difficulty": 2,
+   "tags": [
+    "expression-parse"
+   ],
+   "question": "Under the stack rule, what is `12/2*3`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 18,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Value",
+    "accept": "18: $(12 / 2) \\times 3$",
+    "wrong": [
+     {
+      "id": "rtl",
+      "value": 2
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$12 / 2 = 6$, then $6 \\times 3 = 18$.",
+    "generic": "Not quite right. `/` and `*` have the same rank.",
+    "byKey": {
+     "rtl": "You applied `*` first: $12 / (2 \\times 3)$. Equal ranks go left to right."
+    }
+   },
+   "explain": {
+    "text": "`/` and `*` have equal rank, so `>=` pops the waiting `/` before `*` goes on. That gives $(12 / 2) \\times 3 = 18$."
+   }
+  },
+  {
+   "id": "q-trunc",
+   "difficulty": 2,
+   "tags": [
+    "integer-division"
+   ],
+   "question": "Division truncates toward zero. What is `-8/3`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -2,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Value",
+    "accept": "−2: $-2.67$ truncated toward zero",
+    "wrong": [
+     {
+      "id": "floor",
+      "value": -3
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-2.67$ truncates to $-2$.",
+    "generic": "Not quite right. Drop the fraction; do not round down.",
+    "byKey": {
+     "floor": "You used floor division. `-8 // 3` is −3, but truncating toward zero gives −2."
+    }
+   },
+   "explain": {
+    "text": "$-8 / 3 \\approx -2.67$. Truncating toward zero drops the fraction, giving −2. `//` would floor it to −3."
+   }
+  },
+  {
+   "id": "q-decode-len",
+   "difficulty": 3,
+   "tags": [
+    "decode-nested"
+   ],
+   "question": "How many letters does `3[a2[b]]` decode to?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Letters",
+    "accept": "9: `abbabbabb`",
+    "wrong": [
+     {
+      "id": "add",
+      "value": 6
+     },
+     {
+      "id": "flat",
+      "value": 7
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`a2[b]` is `abb`, and three of those make 9 letters.",
+    "generic": "Not quite right. Decode the inner bracket first.",
+    "byKey": {
+     "add": "You added the counts. `a2[b]` is 3 letters, repeated 3 times.",
+     "flat": "You repeated only the `b`s. The outer 3 repeats `abb`, the whole inner text."
+    }
+   },
+   "explain": {
+    "text": "`2[b]` is `bb`, so `a2[b]` is `abb`. Three copies make `abbabbabb`, 9 letters."
+   }
+  },
+  {
+   "id": "q-depth",
+   "difficulty": 3,
+   "tags": [
+    "decode-nested"
+   ],
+   "question": "Decoding `2[a3[b4[c]]]`, what is the most entries the stack ever holds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Entries",
+    "accept": "3: one per open bracket",
+    "wrong": [
+     {
+      "id": "digits",
+      "value": 4
+     },
+     {
+      "id": "count",
+      "value": 2
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Three brackets are open at once, so three entries.",
+    "generic": "Not quite right. Count the brackets open at the deepest point.",
+    "byKey": {
+     "digits": "You counted something extra. The stack holds one pair per open `[`, and three are open at most.",
+     "count": "At the `c` three brackets are open, not two."
+    }
+   },
+   "explain": {
+    "text": "Each `[` pushes one pair and each `]` pops one. At the `c`, three brackets are open. So the stack peaks at 3 entries."
+   }
+  },
+  {
+   "id": "q-push",
+   "difficulty": 2,
+   "tags": [
+    "decode-nested"
+   ],
+   "question": "What does the decoder push when it reads `[`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "The text built so far and the count before the bracket",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "The count only",
+      "why": "Without the text so far, `a2[b]` would lose the `a` when the bracket closes."
+     },
+     {
+      "id": "c",
+      "text": "The character `[`",
+      "why": "Pushing the bracket itself, as in a bracket check, keeps neither the text nor the count."
+     },
+     {
+      "id": "d",
+      "text": "Each digit of the count as a character",
+      "why": "A count of 12 would split into 1 and 2. Build the number in `count`."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The pair `(cur, count)`: where to resume and how many times to repeat.",
+    "generic": "Not quite right. What does `]` need to finish the job?"
+   },
+   "explain": {
+    "text": "On `]` the decoder needs the text to append to and the repeat count. So `[` pushes both, as one pair."
+   }
+  }
+ ]
+}

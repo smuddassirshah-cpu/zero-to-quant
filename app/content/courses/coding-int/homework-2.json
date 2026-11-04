@@ -1,0 +1,521 @@
+{
+ "id": "homework-2",
+ "course": "coding-int",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h2-simplify-path",
+   "difficulty": 3,
+   "skills": [
+    "ci-strings"
+   ],
+   "tags": [
+    "path-stack"
+   ],
+   "pace": 600,
+   "prose": "A deployment script receives absolute Unix paths. `.` means here and `..` means up one folder; the root stays the root. Repeated slashes count as one. A name such as `...` is an ordinary name.",
+   "question": "Write `simplify_path(path)`: the shortest equivalent path, with no trailing slash. The root is `/`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def simplify_path(path):\n    # Returns the path unchanged. Simplify it with a stack.\n    return path\n",
+    "solution": "def simplify_path(path):\n    stack = []\n    for part in path.split('/'):\n        if part == '..':\n            if stack:\n                stack.pop()\n        elif part and part != '.':\n            stack.append(part)\n    return '/' + '/'.join(stack)\n",
+    "examples": [
+     {
+      "call": "simplify_path('/home/')",
+      "expect": "'/home'",
+      "compare": "equal"
+     },
+     {
+      "call": "simplify_path('/../')",
+      "expect": "'/'",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "simplify_path('/home/')",
+      "expect": "'/home'",
+      "compare": "equal"
+     },
+     {
+      "call": "simplify_path('/home//foo/')",
+      "expect": "'/home/foo'",
+      "compare": "equal"
+     },
+     {
+      "call": "simplify_path('/usr//lib/./../bin/')",
+      "expect": "'/usr/bin'",
+      "compare": "equal"
+     },
+     {
+      "call": "simplify_path('/../')",
+      "expect": "'/'",
+      "compare": "equal"
+     },
+     {
+      "call": "simplify_path('/.../a/..')",
+      "expect": "'/...'",
+      "compare": "equal"
+     },
+     {
+      "call": "simplify_path('/a/b/c')",
+      "expect": "'/a/b/c'",
+      "compare": "equal"
+     },
+     {
+      "call": "simplify_path('/')",
+      "expect": "'/'",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 7 hidden tests, including `..` at the root, repeated slashes and a folder named `...`."
+   },
+   "feedback": {
+    "correct": "Split on `/`, keep a stack of names, pop on `..`.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 has a trailing slash. Drop the empty part it leaves.",
+     "test-3": "Test 3 has `.` and `..`. Skip `.`, and pop on `..`.",
+     "test-4": "Test 4 is `/../`. `..` at the root does nothing.",
+     "test-5": "Test 5 has a folder named `...`. Only `.` and `..` are special."
+    }
+   },
+   "explain": {
+    "text": "Splitting on `/` turns repeated slashes into empty parts, which are skipped. `..` pops a name when there is one. Joining the stack after a single `/` gives the root as `/`."
+   }
+  },
+  {
+   "id": "h2-life-step",
+   "difficulty": 4,
+   "skills": [
+    "ci-strings"
+   ],
+   "tags": [
+    "game-of-life"
+   ],
+   "pace": 900,
+   "prose": "`board` is a rectangle of 0 and 1. A live cell with 2 or 3 live neighbours, of its 8, lives on. A dead cell with exactly 3 becomes live. Every other cell is dead next step. Cells beyond the border do not exist.",
+   "question": "Write `life_step(board)`: return the board after one step. Count neighbours on the old board.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def life_step(board):\n    # Returns a copy. Apply one step of the rules.\n    return [row[:] for row in board]\n",
+    "solution": "def life_step(board):\n    rows, cols = len(board), len(board[0])\n\n    def live_neighbours(r, c):\n        n = 0\n        for dr in (-1, 0, 1):\n            for dc in (-1, 0, 1):\n                if (dr or dc) and 0 <= r + dr < rows and 0 <= c + dc < cols:\n                    n += board[r + dr][c + dc]\n        return n\n\n    out = []\n    for r in range(rows):\n        row = []\n        for c in range(cols):\n            n = live_neighbours(r, c)\n            row.append(1 if n == 3 or (board[r][c] and n == 2) else 0)\n        out.append(row)\n    return out\n",
+    "examples": [
+     {
+      "call": "life_step([[0, 1, 0], [0, 1, 0], [0, 1, 0]])",
+      "expect": "[[0, 0, 0], [1, 1, 1], [0, 0, 0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "life_step([[1, 1], [1, 1]])",
+      "expect": "[[1, 1], [1, 1]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "life_step([[0, 1, 0], [0, 1, 0], [0, 1, 0]])",
+      "expect": "[[0, 0, 0], [1, 1, 1], [0, 0, 0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "life_step([[1, 1], [1, 1]])",
+      "expect": "[[1, 1], [1, 1]]",
+      "compare": "equal"
+     },
+     {
+      "call": "life_step([[0, 0, 0], [0, 0, 0]])",
+      "expect": "[[0, 0, 0], [0, 0, 0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "life_step([[1, 0], [0, 0]])",
+      "expect": "[[0, 0], [0, 0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "life_step([[1, 1, 0], [0, 1, 0], [0, 1, 1], [0, 0, 0]])",
+      "expect": "[[1, 1, 0], [0, 0, 0], [0, 1, 1], [0, 0, 0]]",
+      "compare": "equal"
+     },
+     {
+      "call": "life_step([[1, 1, 1]])",
+      "expect": "[[0, 1, 0]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "b = [[(r * 7 + c * 3) % 5 % 2 for c in range(100)] for r in range(100)]",
+      "call": "sum(map(sum, life_step(b)))",
+      "expect": "4079",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 7 hidden tests, including a single row and a single live cell. The last sums the live cells of a 100 by 100 board."
+   },
+   "feedback": {
+    "correct": "Count on the old board, write a new one.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is a blinker: the vertical line becomes horizontal.",
+     "test-4": "Test 4 is one live cell. It has no neighbours, so it dies.",
+     "test-5": "Test 5: if you update cells in place, later cells see new values. Build a new board.",
+     "test-6": "Test 6 is a single row. Cells beyond the border do not exist; do not wrap round."
+    }
+   },
+   "explain": {
+    "text": "Each cell's next value depends only on the old board, so build a new one. Bounds checks stand in for the missing cells beyond the border. The time is $O(8rc)$."
+   }
+  },
+  {
+   "id": "h2-longest-valid",
+   "difficulty": 5,
+   "skills": [
+    "ci-strings"
+   ],
+   "tags": [
+    "longest-valid-brackets"
+   ],
+   "pace": 900,
+   "prose": "`s` holds only `(` and `)`. A valid run is well formed and contiguous: `(()())` is one, `())(` is not. The last test has 100,000 characters.",
+   "question": "Write `longest_valid_parentheses(s)`: the length of the longest valid run.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def longest_valid_parentheses(s):\n    # Counts '()' pairs. Find the longest valid run instead.\n    return s.count('()') * 2\n",
+    "solution": "def longest_valid_parentheses(s):\n    stack = [-1]\n    best = 0\n    for i, ch in enumerate(s):\n        if ch == '(':\n            stack.append(i)\n        else:\n            stack.pop()\n            if not stack:\n                stack.append(i)\n            else:\n                best = max(best, i - stack[-1])\n    return best\n",
+    "examples": [
+     {
+      "call": "longest_valid_parentheses('(()')",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_valid_parentheses(')(()())(')",
+      "expect": "6",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "longest_valid_parentheses('(()')",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_valid_parentheses(')(()())(')",
+      "expect": "6",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_valid_parentheses('')",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_valid_parentheses('()(())')",
+      "expect": "6",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_valid_parentheses('(()(((()')",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_valid_parentheses('()(()')",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_valid_parentheses(')(')",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_valid_parentheses('((()))')",
+      "expect": "6",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_valid_parentheses('())((())')",
+      "expect": "4",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = '(' * 50000 + ')' * 50000",
+      "call": "longest_valid_parentheses(s)",
+      "expect": "100000",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 10 hidden tests. The last is 50,000 `(` then 50,000 `)`, so a cubic check runs out of time."
+   },
+   "feedback": {
+    "correct": "A stack of indices with a base of −1 measures each valid run as it closes.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-2": "Test 2 is `)(()())(`. A stray `)` resets the base; the run between is 6.",
+     "test-4": "Test 4 is `()(())`: two valid parts next to each other make one run of 6.",
+     "test-5": "Test 5 has unmatched `(`s. Only the last `()` is valid: 2.",
+     "test-10": "Test 10 has 100,000 characters. Use one pass with a stack, not a check of every substring."
+    }
+   },
+   "explain": {
+    "text": "The stack holds the index just before the current run, starting with −1. A `)` pops; if the stack empties it becomes the new base, else `i - stack[-1]` is the run's length. Each index is pushed and popped once: $O(n)$."
+   }
+  },
+  {
+   "id": "h2-say-the-statement",
+   "difficulty": 4,
+   "skills": [
+    "ci-strings",
+    "ci-timed"
+   ],
+   "tags": [
+    "simulation-rules"
+   ],
+   "question": "Say aloud how you read the bot's statement, on `[100, 99, 99, 99, 98, 97]`.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "Say this aloud, timing yourself to three minutes, then write the main points. Explain how you read the statement of `l8-simulating-the-rules`. Cover the state, the events, the order of checks and the end rule. Then hand-trace the bot on `[100, 99, 99, 99, 98, 97]` and give the result.",
+    "model": "**State.** Three values carry from day to day: long or flat, the entry price and the buy day.\n\n**Events.** One event per day: that day's price, with its index $i$.\n\n**Order of checks.** A flat bot on day $i \\ge 1$ buys when the price is below the day before. A long bot checks, in this order: take profit ($100p \\ge 105 \\cdot \\text{entry}$), stop ($100p \\le 97 \\cdot \\text{entry}$), then time ($i - \\text{bought} = 3$). The first true rule sells. A bot that sells on day $i$ does not buy on day $i$.\n\n**End of data.** A bot still long after the last day sells at the last price, and that counts as a trade.\n\n**Trace.** Day 0 never trades. Day 1: 99 is below 100, so buy at 99. Days 2 and 3 are 99: $9{,}900$ is below $10{,}395$ and above $9{,}603$. The bot has held 1, then 2 days. Day 4 is 98: no price rule fires ($9{,}800 > 9{,}603$), but $4 - 1 = 3$, so the time rule sells at 98 for $-1$. The bot may not buy on day 4, even though 98 is below 99. Day 5 is 97, below 98, so it buys at 97. The data ends, so it sells at 97 for 0.\n\n**Result.** `[-1, 2]`.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Names the state: long or flat, entry price, buy day"
+     },
+     {
+      "points": 2,
+      "text": "Names the events: one price per day, with day 0 never trading"
+     },
+     {
+      "points": 2,
+      "text": "Gives the order of checks, take profit then stop then time, and the same-day rule"
+     },
+     {
+      "points": 2,
+      "text": "Traces it: buys 99 on day 1, sells 98 on day 4, buys 97 on day 5"
+     },
+     {
+      "points": 2,
+      "text": "States the end-of-data rule and the result `[-1, 2]`"
+     }
+    ]
+   }
+  },
+  {
+   "id": "h2-spiral-big",
+   "difficulty": 4,
+   "skills": [
+    "ci-strings"
+   ],
+   "tags": [
+    "matrix-spiral"
+   ],
+   "prose": "A matrix has 250 rows and 400 columns, filled row by row from 0. Row $r$, column $c$ holds $400r + c$.",
+   "question": "What is the last entry of its clockwise spiral?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 50124,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Last entry",
+    "accept": "50,124: row 125, column 124",
+    "wrong": [
+     {
+      "id": "rowmajor",
+      "value": 99999
+     },
+     {
+      "id": "swap",
+      "value": 49725
+     },
+     {
+      "id": "short",
+      "value": 50125
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The last lap is a 2 by 152 block, ending at row 125, column 124: 50,124.",
+    "generic": "Not quite right. Find what is left after 124 laps, then where its lap ends.",
+    "byKey": {
+     "rowmajor": "99,999 is last in row order. The spiral ends near the middle.",
+     "swap": "You ended on row 124. The last lap comes back along row 125.",
+     "short": "You stopped one cell short on the way back along row 125. The lap ends at column 124."
+    }
+   },
+   "explain": {
+    "text": "Each lap removes two rows and two columns. After 124 laps rows 124 to 125 and columns 124 to 275 remain, a 2 by 152 block. Its lap runs along row 124, down to row 125, then back along row 125 to column 124: $400 \\times 125 + 124 = 50{,}124$."
+   }
+  },
+  {
+   "id": "h2-decode-order",
+   "difficulty": 4,
+   "skills": [
+    "ci-strings"
+   ],
+   "tags": [
+    "decode-nested"
+   ],
+   "question": "Put the decoder's rules in the order a single loop over `s` applies them. Leave out the rule that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a1",
+      "text": "On a digit, build the count: `count = count * 10 + int(ch)`"
+     },
+     {
+      "id": "a2",
+      "text": "On `[`, push the text so far and the count, then start both afresh"
+     },
+     {
+      "id": "a3",
+      "text": "On `]`, pop `(prev, k)`, repeat the current text `k` times and append it to `prev`"
+     },
+     {
+      "id": "a4",
+      "text": "On a letter, append it to the current text"
+     },
+     {
+      "id": "a5",
+      "text": "After the loop, return the current text joined"
+     },
+     {
+      "id": "d1",
+      "text": "On a digit, push it onto the stack as a character",
+      "why": "A count of 12 would split into 1 and 2. Build the number in `count` instead."
+     }
+    ],
+    "answer": [
+     "a1",
+     "a2",
+     "a3",
+     "a4",
+     "a5"
+    ],
+    "same": [
+     [
+      "a1",
+      "a2",
+      "a3",
+      "a4"
+     ]
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "feedback": {
+    "correct": "Four cases inside the loop, in any order, and the return after it.",
+    "generic": "Not quite right. The four cases can come in any order, but the return comes last.",
+    "byKey": {
+     "d1": "You pushed the digit as a character. A count of 12 would arrive as two entries.",
+     "left-out": "Every rule but one belongs. Only pushing digits is wrong."
+    }
+   },
+   "explain": {
+    "text": "Each character falls into exactly one case, so the four cases can be checked in any order. The return comes after the loop. Digits build `count`, so `12[x]` repeats 12 times."
+   }
+  },
+  {
+   "id": "h2-engine-total",
+   "difficulty": 4,
+   "skills": [
+    "ci-strings",
+    "ci-design"
+   ],
+   "tags": [
+    "book-events"
+   ],
+   "prose": "Events, in the format of `l10-matching-engine`: `[[0, 1, 1, 102, 3], [0, 2, 1, 101, 2], [0, 3, 0, 101, 4], [0, 4, 0, 100, 5], [1, 5, 1, 6]]`.",
+   "question": "What quantity trades in total?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Total traded",
+    "accept": "8: trades of 2, 2 and 4",
+    "wrong": [
+     {
+      "id": "cap",
+      "value": 9
+     },
+     {
+      "id": "nomarket",
+      "value": 2
+     },
+     {
+      "id": "market",
+      "value": 6
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "`[3, 2, 101, 2]`, `[5, 3, 101, 2]`, `[5, 4, 100, 4]`: 8 in all.",
+    "generic": "Not quite right. Run each event against the book in turn.",
+    "byKey": {
+     "cap": "You let order 3 buy at 102, above its limit of 101. It takes only order 2's 2 at 101.",
+     "nomarket": "You stopped before the market order. It sells 6 into the bids.",
+     "market": "You counted only the market sell. Order 3 first traded 2 with order 2."
+    }
+   },
+   "explain": {
+    "text": "Order 3 buys 2 from order 2 at 101 and rests 2 at 101. The market sell takes those 2 at 101, then 4 of order 4's 5 at 100. That is $2 + 2 + 4 = 8$; 1 rests bid at 100 and 3 offered at 102."
+   }
+  },
+  {
+   "id": "h2-time-rule",
+   "difficulty": 3,
+   "skills": [
+    "ci-strings",
+    "ci-timed"
+   ],
+   "tags": [
+    "edge-order"
+   ],
+   "question": "For prices `[95, 98, 97, 99, 96, 95, 101, 100, 97]`, which result does the bot give with the time rule written correctly, `i - bought == 3`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`[-5, 2]`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`[1, 2]`",
+      "why": "That is the rule written `> 3`: it sells a day late, at 101 instead of 95."
+     },
+     {
+      "id": "c",
+      "text": "`[2, 3]`",
+      "why": "That is the rule written `== 2`: it sells a day early, at 96."
+     },
+     {
+      "id": "d",
+      "text": "`[0, 1]`",
+      "why": "That is the bot with no time rule: it holds 97 until it reaches 101."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Buy 97 on day 2 and sell 95 on day 5. Buy 100 on day 7 and stop out at 97 on day 8.",
+    "generic": "Not quite right. Trace with `i - bought == 3` and the rules in order."
+   },
+   "explain": {
+    "text": "Day 2 buys 97 and day 5, three days on, sells at 95 for $-2$. Day 7 buys 100, and day 8's 97 hits the stop, $9{,}700 \\le 9{,}700$, for $-3$. Total `[-5, 2]`."
+   }
+  }
+ ]
+}

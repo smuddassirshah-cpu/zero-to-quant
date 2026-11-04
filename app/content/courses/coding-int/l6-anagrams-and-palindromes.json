@@ -1,0 +1,1345 @@
+{
+ "id": "l6-anagrams-and-palindromes",
+ "course": "coding-int",
+ "title": "Anagrams and palindromes",
+ "minutes": 13,
+ "objectives": [
+  "Solve string questions with counts, two pointers and expanding centres."
+ ],
+ "skills": [
+  "ci-strings"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Windows of three",
+   "tags": [
+    "anagram-window"
+   ],
+   "prose": "You already test two words for anagrams by counting letters (`ds/l4-frequencies`). Here the counts slide along a longer string. The shaded window holds 3 letters.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "d",
+      "c",
+      "a",
+      "b",
+      "b",
+      "a",
+      "c",
+      "b",
+      "e",
+      "d"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       0,
+       2
+      ],
+      "label": "width 3"
+     },
+     "caption": "`s = 'dcabbacbed'`, indices 0 to 9"
+    }
+   },
+   "question": "Tap the start of every window of width 3 that is an anagram of `abc`.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "c1",
+     "c4",
+     "c5"
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read each run of three letters. Does it hold one `a`, one `b` and one `c`?"
+    },
+    {
+     "rung": "point",
+     "text": "Start at index 1: `cab`.",
+     "highlight": [
+      "c1",
+      "c2",
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The windows are `dca`, `cab`, `abb`, `bba`, `bac`, `acb`, `cbe` and `bed`. Tap the starts of `cab`, `bac` and `acb`."
+    }
+   ],
+   "feedback": {
+    "correct": "Windows 1, 4 and 5 are `cab`, `bac` and `acb`.",
+    "generic": "Not quite right. Each window you tap must hold exactly one `a`, one `b` and one `c`.",
+    "byKey": {
+     "c0": "Window 0 is `dca`. It has a `d` and no `b`.",
+     "c2": "Window 2 is `abb`: two `b`s and no `c`.",
+     "c3": "Window 3 is `bba`: two `b`s and no `c`.",
+     "c6": "Window 6 is `cbe`. It has an `e` and no `a`.",
+     "c7": "Window 7 is `bed`. It has no `a` and no `c`.",
+     "c8": "A window starting at 8 needs indices 8 to 10. The string ends at index 9.",
+     "c9": "A window starting at 9 runs off the end of the string."
+    }
+   },
+   "explain": {
+    "text": "Windows 1, 4 and 5 each hold one `a`, one `b` and one `c`. Neighbouring windows share two letters. At each step one letter leaves and one joins.",
+    "canvas": {
+     "done": [
+      1,
+      4,
+      5
+     ],
+     "caption": "Anagrams of `abc` start at 1, 4 and 5"
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Slide the window",
+   "tags": [
+    "anagram-window"
+   ],
+   "prose": "Move the window with the slider. The caption keeps the letter counts of the window. Watch which letter leaves and which joins at each step.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "d",
+      "c",
+      "a",
+      "b",
+      "b",
+      "a",
+      "c",
+      "b",
+      "e",
+      "d"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       0,
+       2
+      ]
+     },
+     "params": {
+      "s": 0
+     },
+     "caption": ""
+    },
+    "controls": [
+     {
+      "bind": "s",
+      "min": 0,
+      "max": 7,
+      "step": 1,
+      "start": 0,
+      "label": "Window start"
+     }
+    ],
+    "derive": {
+     "highlight.range": "[s, s + 2]",
+     "caption": "Start {{s}}: {{[\"dca\", \"cab\", \"abb\", \"bba\", \"bac\", \"acb\", \"cbe\", \"bed\"][s]}}, counts {{[\"a 1, c 1, d 1\", \"a 1, b 1, c 1\", \"a 1, b 2\", \"a 1, b 2\", \"a 1, b 1, c 1\", \"a 1, b 1, c 1\", \"b 1, c 1, e 1\", \"b 1, d 1, e 1\"][s]}}"
+    }
+   },
+   "question": "How many windows of width 3 does `dcabbacbed` have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Windows",
+    "accept": "8: starts 0 to 7, which is $10 - 3 + 1$",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 10
+     },
+     {
+      "id": "minus",
+      "value": 7
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide to the last window that still fits."
+    },
+    {
+     "rung": "point",
+     "text": "The last window starts at index 7 and ends at 9.",
+     "highlight": [
+      "c7",
+      "c8",
+      "c9"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Starts run from 0 to 7. That is 8 windows."
+    }
+   ],
+   "feedback": {
+    "correct": "Starts 0 to 7 give 8 windows.",
+    "generic": "Not quite right. Count the starts from 0 to the last start that still fits.",
+    "byKey": {
+     "all": "You counted every index as a start. Starts 8 and 9 run off the end.",
+     "minus": "You took $10 - 3$. Starts run from 0 to 7, which is one more."
+    }
+   },
+   "explain": {
+    "text": "A window of width 3 can start at 0 and at most at $10 - 3 = 7$. That is $10 - 3 + 1 = 8$ starts. In general a string of $n$ letters has $n - w + 1$ windows of width $w$.",
+    "canvas": {
+     "params": {
+      "s": 7
+     },
+     "highlight": {
+      "range": [
+       7,
+       9
+      ]
+     },
+     "caption": "The last window starts at 7"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "At assessment size",
+   "tags": [
+    "anagram-window"
+   ],
+   "prose": "An assessment sets $n = 100{,}000$ letters and a window of $w = 1{,}000$. One plan sorts every window and compares it with `sorted(p)`. The other keeps counts: one letter joins and one leaves per step.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "d",
+      "c",
+      "a",
+      "b",
+      "b",
+      "a",
+      "c",
+      "b",
+      "e",
+      "d"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       7,
+       9
+      ],
+      "label": "last window"
+     },
+     "pointers": [
+      {
+       "id": "last",
+       "at": 7,
+       "label": "n − w"
+      }
+     ],
+     "caption": "With $n = 10$ and $w = 3$ the last start is $n - w = 7$"
+    }
+   },
+   "question": "How many windows does the sorting plan sort?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 99001,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Windows",
+    "accept": "99,001, which is $100{,}000 - 1{,}000 + 1$",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 100000
+     },
+     {
+      "id": "minus",
+      "value": 99000
+     },
+     {
+      "id": "blocks",
+      "value": 100
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use what the slider showed: $n - w + 1$."
+    },
+    {
+     "rung": "point",
+     "text": "The last start is $n - w$, and the first is 0.",
+     "highlight": [
+      "last"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$100{,}000 - 1{,}000 + 1 = 99{,}001$."
+    }
+   ],
+   "feedback": {
+    "correct": "99,001 windows, each a sort of 1,000 letters.",
+    "generic": "Not quite right. Count the starts from 0 to $n - w$.",
+    "byKey": {
+     "all": "You counted every letter as a start. The last 999 starts run off the end.",
+     "minus": "You took $n - w$. Starts run from 0 to $n - w$, which is one more.",
+     "blocks": "You cut the string into separate blocks. Windows overlap: every start is a new window."
+    }
+   },
+   "explain": {
+    "text": "The sorting plan sorts 99,001 windows of 1,000 letters, about $10^8$ letter moves before the log factor. The counting plan does 100,000 joins and 99,000 drops. Comparing two count dictionaries costs at most the alphabet size.",
+    "canvas": {
+     "caption": "Windows overlap, so each start is a new window"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Write the window",
+   "tags": [
+    "anagram-window"
+   ],
+   "pace": 600,
+   "prose": "Write it with counts, as the slider did. Keep a dictionary for the window and one for `p`. The last test has 100,000 letters, so do not rebuild the counts for each window.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "d",
+      "c",
+      "a",
+      "b",
+      "b",
+      "a",
+      "c",
+      "b",
+      "e",
+      "d"
+     ]
+    },
+    "state": {
+     "done": [
+      1,
+      4,
+      5
+     ],
+     "highlight": {
+      "range": [
+       1,
+       3
+      ]
+     },
+     "caption": "`find_anagrams('dcabbacbed', 'abc')` returns `[1, 4, 5]`"
+    }
+   },
+   "question": "Write `find_anagrams(s, p)`: return the start index of every window of `s` that is an anagram of `p`, in increasing order.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def find_anagrams(s, p):\n    # Finds exact copies of p. Make it find anagrams.\n    return [i for i in range(len(s)) if s[i:i + len(p)] == p]\n",
+    "solution": "def find_anagrams(s, p):\n    need = {}\n    for ch in p:\n        need[ch] = need.get(ch, 0) + 1\n    have = {}\n    out = []\n    for i, ch in enumerate(s):\n        have[ch] = have.get(ch, 0) + 1\n        if i >= len(p):\n            old = s[i - len(p)]\n            have[old] -= 1\n            if have[old] == 0:\n                del have[old]\n        if have == need:\n            out.append(i - len(p) + 1)\n    return out\n",
+    "examples": [
+     {
+      "call": "find_anagrams('dcabbacbed', 'abc')",
+      "expect": "[1, 4, 5]",
+      "compare": "equal"
+     },
+     {
+      "call": "find_anagrams('aaaa', 'aa')",
+      "expect": "[0, 1, 2]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "find_anagrams('dcabbacbed', 'abc')",
+      "expect": "[1, 4, 5]",
+      "compare": "equal"
+     },
+     {
+      "call": "find_anagrams('babcab', 'bab')",
+      "expect": "[0]",
+      "compare": "equal"
+     },
+     {
+      "call": "find_anagrams('aaaa', 'aa')",
+      "expect": "[0, 1, 2]",
+      "compare": "equal"
+     },
+     {
+      "call": "find_anagrams('abc', 'abcd')",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "find_anagrams('', 'a')",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "find_anagrams('baa', 'aa')",
+      "expect": "[1]",
+      "compare": "equal"
+     },
+     {
+      "call": "find_anagrams('xyzzyx', 'zy')",
+      "expect": "[1, 3]",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = 'ab' * 50000",
+      "call": "len(find_anagrams(s, 'ba' * 500))",
+      "expect": "99001",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 8 hidden tests, including an empty `s`, a `p` longer than `s` and a string of 100,000 letters. Results are compared with `==`."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the letter that joins. Which letter leaves, and when?"
+    },
+    {
+     "rung": "point",
+     "text": "Once `i >= len(p)`, the letter `s[i - len(p)]` leaves the window.",
+     "highlight": [
+      "c0",
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Count `need` from `p`. In the loop add `s[i]` to `have`; once `i >= len(p)` take one off `s[i - len(p)]` and delete it at 0. When `have == need`, append `i - len(p) + 1`."
+    }
+   ],
+   "feedback": {
+    "correct": "One join and one drop per letter: the window costs $O(1)$ a step.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 wants anagrams, not copies: `cab` at index 1 counts.",
+     "test-4": "Test 4 has `p` longer than `s`, so no window fits and the answer is `[]`.",
+     "test-6": "Test 6 is `'baa'` with `'aa'`. Delete a letter from `have` when its count reaches 0, or `{'a': 2, 'b': 0}` never equals `{'a': 2}`.",
+     "test-7": "Test 7 wants `zy` and `yz`, at 1 and 3. Compare counts, not text.",
+     "test-8": "Test 8 has 100,000 letters. Update the counts by one letter per step instead of recounting each window."
+    }
+   },
+   "explain": {
+    "text": "`have` changes by one letter per step, so each step is $O(1)$ and the scan is $O(n)$. Deleting a letter at count 0 keeps `have == need` exact. The first full window is ready at `i = len(p) - 1`.",
+    "canvas": {
+     "highlight": {
+      "range": [
+       0,
+       2
+      ]
+     },
+     "caption": "At `i = 2` the first window `dca` is full"
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Where palindromes grow from",
+   "tags": [
+    "palindrome-centres"
+   ],
+   "prose": "A palindrome reads the same both ways. You checked one from both ends in `ds/l5-both-ends`. To find one inside a string, grow it outwards from its middle. The middle of `aba` is a letter. The middle of `abba` is a gap.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      {
+       "v": "a",
+       "label": "s[0]"
+      },
+      {
+       "v": "·",
+       "label": "gap"
+      },
+      {
+       "v": "b",
+       "label": "s[1]"
+      },
+      {
+       "v": "·",
+       "label": "gap"
+      },
+      {
+       "v": "b",
+       "label": "s[2]"
+      },
+      {
+       "v": "·",
+       "label": "gap"
+      },
+      {
+       "v": "a",
+       "label": "s[3]"
+      }
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       3,
+       3
+      ],
+      "label": "centre of abba"
+     },
+     "caption": "`abba` has 4 letters and 3 gaps: 7 centres"
+    }
+   },
+   "question": "How many centres has a string of 7 letters?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 13,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Centres",
+    "accept": "13: 7 letters and 6 gaps, $2n - 1$",
+    "wrong": [
+     {
+      "id": "letters",
+      "value": 7
+     },
+     {
+      "id": "gaps",
+      "value": 6
+     },
+     {
+      "id": "double",
+      "value": 14
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the letters, then the gaps between neighbours."
+    },
+    {
+     "rung": "point",
+     "text": "In `abba` the gaps sit between letters 0 and 1, 1 and 2, 2 and 3.",
+     "highlight": [
+      "c1",
+      "c3",
+      "c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "7 letters have 6 gaps between them. $7 + 6 = 13$."
+    }
+   ],
+   "feedback": {
+    "correct": "7 letters and 6 gaps make 13 centres.",
+    "generic": "Not quite right. Count every letter and every gap between two letters.",
+    "byKey": {
+     "letters": "You counted the letters only. Even palindromes such as `abba` grow from a gap.",
+     "gaps": "You counted the gaps only. Odd palindromes such as `aba` grow from a letter.",
+     "double": "You counted a gap after the last letter. Gaps sit only between two letters."
+    }
+   },
+   "explain": {
+    "text": "$n$ letters have $n - 1$ gaps, so there are $2n - 1$ centres. For 7 letters that is 13. Number them $c = 0$ to $2n - 2$: even $c$ is a letter, odd $c$ a gap.",
+    "canvas": {
+     "highlight": {
+      "ranges": [
+       [
+        1,
+        1
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        5,
+        5
+       ]
+      ]
+     },
+     "caption": "Odd positions are gaps, even positions letters"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Grow from every centre",
+   "tags": [
+    "palindrome-centres"
+   ],
+   "pace": 600,
+   "prose": "Centre `c` starts at `lo, hi = c // 2, c // 2 + c % 2`, so even `c` is a letter and odd `c` a gap. Widen while both ends match, then compare the length with the best so far.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      "c",
+      "a",
+      "b",
+      "b",
+      "a",
+      "d"
+     ]
+    },
+    "state": {
+     "highlight": {
+      "range": [
+       1,
+       4
+      ],
+      "label": "abba"
+     },
+     "caption": "`abba` grows from the gap between the two `b`s"
+    }
+   },
+   "question": "Write `longest_palindrome(s)`: the longest palindromic substring, the first one on a tie, and `''` for an empty input.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def longest_palindrome(s):\n    # Returns the first letter. Grow palindromes from every centre.\n    return s[:1]\n",
+    "solution": "def longest_palindrome(s):\n    best = (0, 0)\n    for c in range(2 * len(s) - 1):\n        lo, hi = c // 2, c // 2 + c % 2\n        while lo >= 0 and hi < len(s) and s[lo] == s[hi]:\n            lo -= 1\n            hi += 1\n        if hi - lo - 1 > best[1] - best[0]:\n            best = (lo + 1, hi)\n    return s[best[0]:best[1]]\n",
+    "examples": [
+     {
+      "call": "longest_palindrome('cabbad')",
+      "expect": "'abba'",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_palindrome('abcd')",
+      "expect": "'a'",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "longest_palindrome('cabbad')",
+      "expect": "'abba'",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_palindrome('cbbd')",
+      "expect": "'bb'",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_palindrome('a')",
+      "expect": "'a'",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_palindrome('')",
+      "expect": "''",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_palindrome('abacdfgdcaba')",
+      "expect": "'aba'",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_palindrome('stressedesserts')",
+      "expect": "'stressedesserts'",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_palindrome('abcd')",
+      "expect": "'a'",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_palindrome('aaaa')",
+      "expect": "'aaaa'",
+      "compare": "equal"
+     },
+     {
+      "call": "longest_palindrome('racecarxyz')",
+      "expect": "'racecar'",
+      "compare": "equal"
+     },
+     {
+      "setup": "s = 'a' * 3000",
+      "call": "len(longest_palindrome(s))",
+      "expect": "3000",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 10 hidden tests, including the empty string and a tie, where the first wins. The last is `'a' * 3000`, where every centre widens fully.",
+    "budget": 10000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Loop `c` over all `2 * len(s) - 1` centres."
+    },
+    {
+     "rung": "point",
+     "text": "After the `while` loop, the palindrome is `s[lo + 1:hi]`.",
+     "highlight": [
+      "c2",
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Keep `best = (0, 0)`. For each `c`, widen while `lo >= 0 and hi < len(s) and s[lo] == s[hi]`. If `hi - lo - 1` beats `best[1] - best[0]`, set `best = (lo + 1, hi)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Every centre widens until its ends differ.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is `cabbad`. The answer `abba` grows from the gap between the `b`s.",
+     "test-2": "Test 2 is `cbbd`, whose answer `bb` has a gap at its centre. Expand from gaps as well as letters.",
+     "test-4": "Test 4 is the empty string. `range(2 * 0 - 1)` is empty, so `best` must start as `(0, 0)`.",
+     "test-5": "Test 5 has two `aba`s. Replace the best only when the new one is strictly longer, so the first stays.",
+     "test-10": "Test 10 is `'a' * 3000`. Record indices, not slices, inside the loop, and stop each centre as soon as its ends differ."
+    }
+   },
+   "explain": {
+    "text": "Each centre widens until its ends differ or it hits an edge. Keeping indices and slicing once at the end avoids copying strings in the loop. A strict `>` keeps the first of two equal lengths.",
+    "canvas": {
+     "highlight": {
+      "range": [
+       1,
+       4
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Letters only",
+   "tags": [
+    "palindrome-centres"
+   ],
+   "prose": "A first attempt grows from every letter.\n\n```python\ndef longest_palindrome(s):\n    best = ''\n    for c in range(len(s)):\n        lo = hi = c\n        while lo >= 0 and hi < len(s) and s[lo] == s[hi]:\n            lo -= 1\n            hi += 1\n        if hi - lo - 1 > len(best):\n            best = s[lo + 1:hi]\n    return best\n```\n\nIt returns `'c'` for `cbbd`. The right answer is `'bb'`.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      {
+       "v": "c",
+       "label": "s[0]"
+      },
+      {
+       "v": "·",
+       "label": "gap"
+      },
+      {
+       "v": "b",
+       "label": "s[1]"
+      },
+      {
+       "v": "·",
+       "label": "gap"
+      },
+      {
+       "v": "b",
+       "label": "s[2]"
+      },
+      {
+       "v": "·",
+       "label": "gap"
+      },
+      {
+       "v": "d",
+       "label": "s[3]"
+      }
+     ]
+    },
+    "state": {
+     "caption": "`cbbd` drawn with its gaps: centres 0 to 6"
+    }
+   },
+   "question": "Which centre would have found `'bb'`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Centre 3, the gap between the two `b`s",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Centre 2, the first `b`",
+      "why": "You started at the first `b`. Its neighbours `c` and `b` differ, so it stops at length 1.",
+      "canvas": {
+       "highlight": [
+        "c2"
+       ]
+      }
+     },
+     {
+      "id": "c",
+      "text": "Centre 4, the second `b`",
+      "why": "You started at the second `b`. Its neighbours `b` and `d` differ, so it stops at length 1.",
+      "canvas": {
+       "highlight": [
+        "c4"
+       ]
+      }
+     },
+     {
+      "id": "d",
+      "text": "None: `bb` has no middle letter, so no centre finds it",
+      "why": "You looked for a middle letter. An even palindrome has a gap at its middle, and a gap is a centre too."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What sits at the middle of `bb`?"
+    },
+    {
+     "rung": "point",
+     "text": "Look between the two `b`s.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`bb` has no middle letter. Its middle is the gap at centre 3, which `range(len(s))` never tries."
+    }
+   ],
+   "feedback": {
+    "correct": "The gap at centre 3 grows to `bb`, and the loop never tries it.",
+    "generic": "Not quite right. Find the middle of `bb` on the drawing.",
+    "byKey": {
+     "b": "You picked the first `b`. Growing from it compares `c` with `b`, which differ at once.",
+     "c": "You picked the second `b`. Growing from it compares `b` with `d`, which differ at once.",
+     "d": "You assumed every palindrome has a middle letter. `bb` grows from the gap between its letters."
+    }
+   },
+   "explain": {
+    "text": "The loop tries the 4 letters and none of the 3 gaps. Here every letter stops at length 1, so it returns the first, `'c'`. Looping `c` over `range(2 * len(s) - 1)` adds the gaps.",
+    "canvas": {
+     "highlight": [
+      "c3"
+     ],
+     "caption": "Centre 3 is the gap the loop never tries"
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The two patterns",
+   "tags": [
+    "palindrome-centres"
+   ],
+   "prose": "Both halves of the lesson are one loop each.\n\n```python\n# window of counts: one joins, one leaves\nhave[s[i]] = have.get(s[i], 0) + 1\nif i >= w:\n    drop(s[i - w])\n# centres: 2n - 1 of them\nlo, hi = c // 2, c // 2 + c % 2\n```",
+   "question": "Put the centre expansion in order. Leave out the line that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Loop `c` over `range(2 * len(s) - 1)`"
+     },
+     {
+      "id": "o2",
+      "text": "Set `lo, hi = c // 2, c // 2 + c % 2`"
+     },
+     {
+      "id": "o3",
+      "text": "While `lo >= 0`, `hi < len(s)` and `s[lo] == s[hi]`, move `lo` left and `hi` right"
+     },
+     {
+      "id": "o4",
+      "text": "If `hi - lo - 1` beats the best length, record `(lo + 1, hi)`"
+     },
+     {
+      "id": "o5",
+      "text": "After the loop, return the slice of the best span"
+     },
+     {
+      "id": "d1",
+      "text": "Set `lo = hi = c` for every centre",
+      "why": "That starts every centre on a letter. `cbbd` would return `'c'`, as in the trap."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which line chooses the centre, and which grows it?"
+    },
+    {
+     "rung": "point",
+     "text": "The start line must give a gap for odd `c`."
+    },
+    {
+     "rung": "step",
+     "text": "Loop, set `lo` and `hi`, widen, record, return. Leave out `lo = hi = c`."
+    }
+   ],
+   "feedback": {
+    "correct": "Choose the centre, widen, record, then return.",
+    "generic": "Not quite right. The loop chooses a centre, sets its two ends, widens, and records.",
+    "byKey": {
+     "d1": "You used `lo = hi = c`. That never starts on a gap, so even palindromes are missed.",
+     "left-out": "Every line but one belongs. Only the letters-only start is wrong."
+    }
+   },
+   "explain": {
+    "text": "`c // 2` and `c % 2` turn one counter into a letter or a gap. The `while` widens until the ends differ or an edge is reached. The loop records indices and slices once at the end."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Rearranged into a palindrome",
+   "tags": [
+    "palindrome-permutation"
+   ],
+   "prose": "A bank's online assessment asks which product codes can be rearranged into a palindrome. Order does not matter, only the letters. Letters pair up across the middle of a palindrome.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Code",
+      "Letters"
+     ],
+     "rows": [
+      [
+       "`carerac`",
+       "7"
+      ],
+      [
+       "`abcabc`",
+       "6"
+      ],
+      [
+       "`aabbccd`",
+       "7"
+      ],
+      [
+       "`abcd`",
+       "4"
+      ],
+      [
+       "`aabbcd`",
+       "6"
+      ]
+     ],
+     "align": [
+      "left",
+      "right"
+     ]
+    },
+    "state": {
+     "caption": "Five codes from the assessment"
+    }
+   },
+   "question": "Which codes can be rearranged into a palindrome? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "a",
+      "text": "`carerac`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`abcabc`",
+      "correct": true
+     },
+     {
+      "id": "c",
+      "text": "`aabbccd`",
+      "correct": true
+     },
+     {
+      "id": "d",
+      "text": "`abcd`",
+      "why": "You need pairs. `abcd` has four letters that appear once, and only one can sit in the middle."
+     },
+     {
+      "id": "e",
+      "text": "`aabbcd`",
+      "why": "`c` and `d` appear once each. Only one unpaired letter can sit in the middle."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count each letter of each code."
+    },
+    {
+     "rung": "point",
+     "text": "In `aabbcd`, which letters have no partner?",
+     "highlight": [
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A palindrome allows at most one letter with an odd count. Pick the codes with zero or one."
+    }
+   ],
+   "feedback": {
+    "correct": "`carerac`, `abcabc` and `aabbccd` have at most one odd count.",
+    "generic": "Not quite right. Count how many letters of each code appear an odd number of times.",
+    "byKey": {
+     "d": "You picked `abcd`. All four letters are single, and only one can take the middle.",
+     "e": "You picked `aabbcd`. Both `c` and `d` are single, and only one can take the middle."
+    }
+   },
+   "explain": {
+    "text": "Each letter needs a partner on the other side, except one letter in the middle. So a code works when at most one letter has an odd count. `carerac` has one (`e`), `abcabc` none and `aabbccd` one (`d`).",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1,
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Count them all",
+   "tags": [
+    "palindrome-centres"
+   ],
+   "prose": "A live round asks for the number of palindromic substrings instead of the longest. Each step a centre widens finds one more. Count by centres, then check by listing every substring.",
+   "canvas": {
+    "kind": "array",
+    "params": {
+     "cells": [
+      {
+       "v": "a",
+       "label": "s[0]"
+      },
+      {
+       "v": "·",
+       "label": "gap"
+      },
+      {
+       "v": "b",
+       "label": "s[1]"
+      },
+      {
+       "v": "·",
+       "label": "gap"
+      },
+      {
+       "v": "b",
+       "label": "s[2]"
+      },
+      {
+       "v": "·",
+       "label": "gap"
+      },
+      {
+       "v": "a",
+       "label": "s[3]"
+      }
+     ]
+    },
+    "state": {
+     "caption": "`abba`: 7 centres"
+    }
+   },
+   "question": "How many palindromic substrings does each string have? Count each position separately.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "String",
+     "Palindromic substrings"
+    ],
+    "rows": [
+     [
+      "`abba`",
+      {
+       "edit": true,
+       "answer": 6,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "`aaa`",
+      {
+       "edit": true,
+       "answer": 6,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Every single letter is a palindrome. Which longer ones are there?"
+    },
+    {
+     "rung": "point",
+     "text": "In `abba` the gap between the `b`s grows twice: `bb`, then `abba`.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`abba`: 4 letters, `bb` and `abba`, so 6. `aaa`: 3 letters, `aa` twice and `aaa`, so 6."
+    }
+   ],
+   "feedback": {
+    "correct": "Both strings have 6.",
+    "generic": "Not quite right. List every substring and keep the ones that read the same both ways.",
+    "byKey": {
+     "r0c1": "Check `abba` again. The letters give 4, and the middle gap grows twice: `bb`, then `abba`.",
+     "r1c1": "Check `aaa` again. Count positions, not different strings: `aa` at index 0 and at index 1 are two."
+    }
+   },
+   "explain": {
+    "text": "In `abba` the letters give 4 and the middle gap gives `bb` and `abba`. In `aaa` the letters give 3, the two gaps give `aa` twice and the middle letter grows to `aaa`. Counting one per widening step is the same loop as the longest palindrome.",
+    "canvas": {
+     "highlight": {
+      "range": [
+       3,
+       3
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A window of width $w$ moves by one join and one drop. Its counts cost $O(1)$ a step, so the scan is $O(n)$.",
+   "A string of $n$ letters has $2n - 1$ centres: $n$ letters and $n - 1$ gaps. Every palindrome grows from one of them.",
+   "A string can be rearranged into a palindrome when at most one letter has an odd count."
+  ],
+  "formula": {
+   "name": "Centres of a string",
+   "tex": "n + (n - 1) = 2n - 1",
+   "note": "Centre `c` starts at `lo, hi = c // 2, c // 2 + c % 2`."
+  },
+  "trap": "Growing only from letters misses every even palindrome, such as `bb` in `cbbd`."
+ },
+ "quiz": [
+  {
+   "id": "q-windows",
+   "difficulty": 2,
+   "tags": [
+    "anagram-window"
+   ],
+   "question": "How many windows of width 4 does a string of 12 letters have?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9,
+    "tol": {
+     "abs": 0
+    },
+    "label": "Windows",
+    "accept": "9, which is $12 - 4 + 1$",
+    "wrong": [
+     {
+      "id": "minus",
+      "value": 8
+     },
+     {
+      "id": "all",
+      "value": 12
+     },
+     {
+      "id": "blocks",
+      "value": 3
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$12 - 4 + 1 = 9$.",
+    "generic": "Not quite right. Count the starts from 0 to $n - w$.",
+    "byKey": {
+     "minus": "You took $12 - 4$. Starts run from 0 to 8, which is 9.",
+     "all": "You counted every letter as a start. The last three run off the end.",
+     "blocks": "You cut the string into separate blocks of 4. Windows overlap."
+    }
+   },
+   "explain": {
+    "text": "Starts run from 0 to $12 - 4 = 8$. That is 9 windows."
+   }
+  },
+  {
+   "id": "q-gaps",
+   "difficulty": 2,
+   "tags": [
+    "palindrome-centres"
+   ],
+   "question": "A string has 7 letters and 13 centres. How many of the centres are gaps?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "6",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "7",
+      "why": "You counted the letters. Gaps sit between two neighbouring letters, one fewer."
+     },
+     {
+      "id": "c",
+      "text": "13",
+      "why": "13 is every centre, letters and gaps together."
+     },
+     {
+      "id": "d",
+      "text": "8",
+      "why": "You counted a gap before the first letter and after the last. Gaps sit only between letters."
+     }
+    ],
+    "shuffle": false
+   },
+   "feedback": {
+    "correct": "7 letters have 6 gaps between them.",
+    "generic": "Not quite right. Count the spaces between neighbouring letters."
+   },
+   "explain": {
+    "text": "Seven letters have six gaps between them. $7 + 6 = 13$ centres in all."
+   }
+  },
+  {
+   "id": "q-perm",
+   "difficulty": 3,
+   "tags": [
+    "palindrome-permutation"
+   ],
+   "question": "Which string can be rearranged into a palindrome?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "`ttaccoa`",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "`abcabd`",
+      "why": "`c` and `d` appear once each. Only one unpaired letter can sit in the middle."
+     },
+     {
+      "id": "c",
+      "text": "`aabbcde`",
+      "why": "`c`, `d` and `e` are single. Only one can take the middle."
+     },
+     {
+      "id": "d",
+      "text": "`abcdab`",
+      "why": "You checked the length. `c` and `d` are single, so two letters lack a partner."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`ttaccoa` has one odd letter, `o`: `tacocat`.",
+    "generic": "Not quite right. Count the letters with an odd count in each string."
+   },
+   "explain": {
+    "text": "`ttaccoa` has `t`, `a` and `c` twice and `o` once. One odd count is allowed, in the middle: `tacocat`."
+   }
+  },
+  {
+   "id": "q-worst",
+   "difficulty": 3,
+   "tags": [
+    "palindrome-centres"
+   ],
+   "question": "Centre expansion runs on `'a' * n`. How does its running time grow with `n`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "options": [
+     {
+      "id": "a",
+      "text": "$O(n^2)$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$O(n)$",
+      "why": "You assumed each centre stops at once. On `aaaa...` every centre widens to an edge, up to $n/2$ steps."
+     },
+     {
+      "id": "c",
+      "text": "$O(n \\log n)$",
+      "why": "Nothing halves here. Each of $2n - 1$ centres widens up to $n/2$ steps."
+     },
+     {
+      "id": "d",
+      "text": "$O(n^3)$",
+      "why": "You counted a slice copy per step. The loop moves two indices and slices once at the end."
+     }
+    ],
+    "shuffle": false
+   },
+   "feedback": {
+    "correct": "About $n^2/2$ widening steps in all.",
+    "generic": "Not quite right. How far does each centre widen when every letter is the same?"
+   },
+   "explain": {
+    "text": "Every centre widens until it reaches an edge. The steps sum to about $n^2/2$, so the time is $O(n^2)$. That is why the lesson's last test uses only 3,000 letters."
+   }
+  }
+ ]
+}
