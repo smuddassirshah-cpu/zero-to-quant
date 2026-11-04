@@ -1,0 +1,93 @@
+{
+  "id": "rq-clean-frame-py",
+  "name": "Clean a messy orders frame",
+  "course": "research-int",
+  "skills": [
+    "rq-data"
+  ],
+  "difficulty": 3,
+  "pattern": "data-cleaning",
+  "pace": 900,
+  "tags": [
+    "data-cleaning"
+  ],
+  "fn": "clean_frame",
+  "returns": "a pandas DataFrame",
+  "brief": "A frame of orders has `order_id`, `symbol`, `qty` (text, some with commas) and `price`. Write `clean_frame(df)`. It returns a cleaned copy: symbols stripped and in upper case, quantities as whole numbers, one row per order id (the first), and only prices above zero.\n\nThe frame `FRAME` (six rows) is ready to try. This is the l19 task in small: run it against the clock.",
+  "definition": "Clean in a fixed order: the text first (strip, upper case, remove commas), then repeated ids, then prices that are missing, zero or negative. Return a copy and leave the input frame as it was.",
+  "constraints": [
+    "Do not change the input frame.",
+    "NumPy and pandas are available.",
+    "All tests share a 5-second limit."
+  ],
+  "hint": "`str.strip().str.upper()` for the symbol, `str.replace(',', '').astype(int)` for the quantity, then `drop_duplicates('order_id')` and a mask `price.notna() & (price > 0)`.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nFRAME = pd.DataFrame({'order_id': [1, 2, 3, 3, 4, 5], 'symbol': [' alpha ', 'ALPHA', 'bravo', 'BRAVO', 'Bravo', ' ALPHA'],\n                      'qty': ['1,200', '300', '500', '500', '2,500', '100'], 'price': [10.0, -999.0, 20.0, 20.0, None, 11.0]})\n\ndef vwap(df, symbol):\n    d = df[df['symbol'] == symbol]\n    return float((d['price'] * d['qty']).sum() / d['qty'].sum())\n",
+  "starter": "import numpy as np\nimport pandas as pd\n\ndef clean_frame(df):\n    \"\"\"Cleaned copy of df: symbol stripped and upper case, qty as whole\n    numbers, one row per order_id (the first), only prices above zero.\"\"\"\n    out = df.copy()\n    # Your code here\n    return out\n",
+  "solution": "import numpy as np\nimport pandas as pd\n\ndef clean_frame(df):\n    out = df.copy()\n    out['symbol'] = out['symbol'].str.strip().str.upper()\n    out['qty'] = out['qty'].str.replace(',', '').astype(int)\n    out = out.drop_duplicates('order_id')\n    out = out[out['price'].notna() & (out['price'] > 0)]\n    return out.reset_index(drop=True)\n",
+  "examples": [
+    {
+      "call": "len(clean_frame(FRAME))",
+      "expect": "3",
+      "compare": "equal",
+      "note": "Ids 1, 3 and 5 survive. Id 2 has a price of -999, id 4 has none, and id 3 repeats."
+    },
+    {
+      "call": "round(vwap(clean_frame(FRAME), 'ALPHA'), 4)",
+      "expect": "10.0769",
+      "compare": "isclose",
+      "note": "ALPHA has 1,200 at 10.0 and 100 at 11.0: 13,100 over 1,300."
+    }
+  ],
+  "tests": [
+    {
+      "name": "Rows left",
+      "call": "len(clean_frame(FRAME))",
+      "expect": "3",
+      "compare": "equal",
+      "why": "One row per id, minus the -999 and the blank price."
+    },
+    {
+      "name": "Order ids",
+      "call": "clean_frame(FRAME)['order_id'].tolist()",
+      "expect": "[1, 3, 5]",
+      "compare": "equal",
+      "why": "Keep the first of a repeated id and leave the order as it was."
+    },
+    {
+      "name": "Symbols",
+      "call": "sorted(clean_frame(FRAME)['symbol'].unique())",
+      "expect": "['ALPHA', 'BRAVO']",
+      "compare": "equal",
+      "why": "Strip and upper-case, so ' alpha ' and 'ALPHA' are one symbol."
+    },
+    {
+      "name": "Whole-number quantities",
+      "call": "int(clean_frame(FRAME)['qty'].sum())",
+      "expect": "1800",
+      "compare": "equal",
+      "why": "The commas go: 1,200 + 500 + 100."
+    },
+    {
+      "name": "VWAP of ALPHA",
+      "call": "vwap(clean_frame(FRAME), 'ALPHA')",
+      "expect": "10.076923076923077",
+      "compare": "isclose",
+      "why": "13,100 over 1,300. The -999 row must be gone."
+    },
+    {
+      "name": "A price of zero",
+      "call": "len(clean_frame(pd.DataFrame({'order_id': [1, 2], 'symbol': ['a', 'b'], 'qty': ['10', '20'], 'price': [0.0, 5.0]})))",
+      "expect": "1",
+      "compare": "equal",
+      "why": "A price of zero is as impossible as -999."
+    },
+    {
+      "name": "Input unchanged",
+      "call": "(clean_frame(FRAME), [len(FRAME), FRAME['symbol'].iloc[0], FRAME['qty'].iloc[0]])[1]",
+      "expect": "[6, ' alpha ', '1,200']",
+      "compare": "equal",
+      "why": "Work on a copy: the caller's frame keeps its commas and spaces."
+    }
+  ],
+  "how": "Submit runs 7 hidden tests. Each answer is accepted when `math.isclose(actual, expected, rel_tol=1e-9)` for numbers, or equal for lists and counts."
+}

@@ -1,0 +1,142 @@
+{
+  "id": "rq-interp-py",
+  "name": "A linear interpolator",
+  "course": "research-int",
+  "skills": [
+    "rq-data"
+  ],
+  "difficulty": 3,
+  "pattern": "interpolation",
+  "pace": 900,
+  "tags": [
+    "interpolation"
+  ],
+  "fn": "interp",
+  "returns": "a float",
+  "brief": "A price series has gaps and arrives in any order. Write `interp(xs, ys, x)`. It returns the straight-line value at `x` between the two nearest known points.\n\nA missing `y` is `None` or NaN. Drop it before you interpolate.",
+  "definition": "Sort the points by $x$ and average the $y$ values that share an $x$. For $x_0 \\le x \\le x_1$, the neighbours either side of $x$, return\n\n$$y = y_0 + (y_1 - y_0)\\dfrac{x - x_0}{x_1 - x_0}$$\n\nBelow the smallest $x$ or above the largest, return the nearest end value. If no point is left, raise `ValueError`.",
+  "constraints": [
+    "Find the bracketing pair by bisection, not by scanning every pair.",
+    "Standard library only.",
+    "All tests share a 5-second limit."
+  ],
+  "hint": "Build a dict from $x$ to a list of $y$ values, skipping missing ones. Sort its keys, then use `bisect.bisect_right`.",
+  "starter": "def interp(xs, ys, x):\n    \"\"\"Linear interpolation of (xs, ys) at x. Missing y is None or NaN.\n    Repeated x are averaged; the ends hold; no point raises ValueError.\"\"\"\n    # Your code here\n    return 0.0\n",
+  "solution": "def interp(xs, ys, x):\n    import bisect\n    pts = {}\n    for a, b in zip(xs, ys):\n        if b is None or b != b:\n            continue\n        pts.setdefault(a, []).append(b)\n    if not pts:\n        raise ValueError('no points')\n    ks = sorted(pts)\n    vs = [sum(pts[k]) / len(pts[k]) for k in ks]\n    if x <= ks[0]:\n        return vs[0]\n    if x >= ks[-1]:\n        return vs[-1]\n    j = bisect.bisect_right(ks, x)\n    x0, x1, y0, y1 = ks[j - 1], ks[j], vs[j - 1], vs[j]\n    return y0 + (y1 - y0) * (x - x0) / (x1 - x0)\n",
+  "examples": [
+    {
+      "call": "interp([0, 10], [100, 200], 2.5)",
+      "expect": "125.0",
+      "compare": "isclose",
+      "note": "A quarter of the way across, so a quarter of the rise of 100."
+    },
+    {
+      "call": "interp([3, 1, 2], [30, 10, 25], 2.5)",
+      "expect": "27.5",
+      "compare": "isclose",
+      "note": "Sorted, 2.5 sits halfway between (2, 25) and (3, 30)."
+    },
+    {
+      "call": "interp([0, 1, 4], [100, None, 112], 1)",
+      "expect": "103.0",
+      "compare": "isclose",
+      "note": "The missing value is dropped, then time 1 is a quarter of the way across."
+    }
+  ],
+  "tests": [
+    {
+      "name": "Two points",
+      "call": "interp([0, 10], [100, 200], 2.5)",
+      "expect": "125.0",
+      "compare": "isclose",
+      "why": "A quarter of the way from 100 to 200 is 125."
+    },
+    {
+      "name": "Unsorted input",
+      "call": "interp([3, 1, 2], [30, 10, 25], 2.5)",
+      "expect": "27.5",
+      "compare": "isclose",
+      "why": "Sort by x before you look for the bracket."
+    },
+    {
+      "name": "Inside the data",
+      "call": "interp([3, 1, 2], [30, 10, 25], 1.2)",
+      "expect": "13.0",
+      "compare": "isclose",
+      "why": "Between (1, 10) and (2, 25), 0.2 of the way."
+    },
+    {
+      "name": "Below the smallest x",
+      "call": "interp([3, 1, 2], [30, 10, 25], 0)",
+      "expect": "10.0",
+      "compare": "isclose",
+      "why": "Hold the first value; do not extrapolate."
+    },
+    {
+      "name": "Above the largest x",
+      "call": "interp([3, 1, 2], [30, 10, 25], 5)",
+      "expect": "30.0",
+      "compare": "isclose",
+      "why": "Hold the last value; do not extrapolate."
+    },
+    {
+      "name": "An exact point",
+      "call": "interp([1, 2, 3], [4.0, 9.0, 16.0], 2)",
+      "expect": "9.0",
+      "compare": "isclose",
+      "why": "At a known x the answer is its y."
+    },
+    {
+      "name": "Repeated x, at the repeat",
+      "call": "interp([1, 1, 2], [10, 20, 30], 1)",
+      "expect": "15.0",
+      "compare": "isclose",
+      "why": "The two readings at x = 1 average to 15."
+    },
+    {
+      "name": "Repeated x, between",
+      "call": "interp([1, 1, 2], [10, 20, 30], 1.5)",
+      "expect": "22.5",
+      "compare": "isclose",
+      "why": "Average the repeats first, then go halfway to 30."
+    },
+    {
+      "name": "A missing y on uneven times",
+      "call": "interp([0, 1, 4], [100, None, 112], 1)",
+      "expect": "103.0",
+      "compare": "isclose",
+      "why": "Drop the missing y; by position it would be 106."
+    },
+    {
+      "name": "A NaN y",
+      "call": "interp([0, 1, 2], [5.0, 7.0, float('nan')], 1.5)",
+      "expect": "7.0",
+      "compare": "isclose",
+      "why": "A NaN is missing too. One point is left beyond 1, so the end value holds."
+    },
+    {
+      "name": "One point",
+      "call": "interp([5], [42], 9)",
+      "expect": "42.0",
+      "compare": "isclose",
+      "why": "One point is both ends, so its value holds everywhere."
+    },
+    {
+      "name": "A missing y at the left end",
+      "call": "interp([0, 1, 2], [None, 10, 20], 0.5)",
+      "expect": "10.0",
+      "compare": "isclose",
+      "why": "Drop the missing y. Below the smallest remaining x, hold the first value."
+    },
+    {
+      "name": "Long input, sampled",
+      "call": "interp(list(range(100000)), [2 * i for i in range(100000)], 54321.5)",
+      "expect": "108643.0",
+      "compare": "isclose",
+      "why": "Bisect rather than scan: 100,000 points must not take 100,000 steps.",
+      "show": "interp(range(100000), [2 * i ...], 54321.5)",
+      "note": "100,000 points on the line y = 2x."
+    }
+  ],
+  "how": "Submit runs 13 hidden tests. Each answer is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`."
+}

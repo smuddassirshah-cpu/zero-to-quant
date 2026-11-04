@@ -1,0 +1,598 @@
+{
+  "id": "homework-4",
+  "course": "research-int",
+  "level": 4,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h4-value-at",
+      "difficulty": 4,
+      "skills": [
+        "rq-data"
+      ],
+      "tags": [
+        "interpolation"
+      ],
+      "pace": 600,
+      "prose": "`ticks-gaps.csv` has quotes with blank prices and repeated seconds. Write one function that cleans and interpolates.",
+      "question": "Write `value_at(t, path='ticks-gaps.csv')`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "ticks-gaps.csv": "content/data/ticks-gaps.csv"
+        },
+        "starter": "import bisect\nimport numpy as np\nimport pandas as pd\n\ndef value_at(t, path='ticks-gaps.csv'):\n    \"\"\"Clean the quotes (drop blank prices, average repeated seconds,\n    sort) and return the linearly interpolated price at second t.\n    Before the first time or after the last, hold the end price.\"\"\"\n    # Your code here\n    return 0.0\n",
+        "solution": "import bisect\nimport numpy as np\nimport pandas as pd\n\ndef value_at(t, path='ticks-gaps.csv'):\n    df = pd.read_csv(path).dropna(subset=['price'])\n    df = df.groupby('t_sec', as_index=False)['price'].mean().sort_values('t_sec')\n    return float(np.interp(t, df['t_sec'], df['price']))\n",
+        "examples": [
+          {
+            "call": "value_at(0) == value_at(7)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "value_at(3333)",
+            "expect": "100.28438461538461",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "value_at(16000)",
+            "expect": "101.34113043478261",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "value_at(20000)",
+            "expect": "101.6523970856102",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "call": "value_at(0) == value_at(7) and value_at(7) > 99",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "value_at(99999) == value_at(23258) and value_at(23258) != value_at(0)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "open('tiny.csv', 'w').write('t_sec,price\\n30,9.0\\n10,5.0\\n10,7.0\\n20,\\n')",
+            "call": "value_at(20, 'tiny.csv')",
+            "expect": "7.5",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "setup": "open('tiny.csv', 'w').write('t_sec,price\\n30,9.0\\n10,5.0\\n10,7.0\\n20,\\n')",
+            "call": "[value_at(10, 'tiny.csv'), value_at(25, 'tiny.csv')]",
+            "expect": "[6.0, 8.25]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          }
+        ],
+        "how": "Check runs 7 hidden tests. Three check interior times (relative 1e-9). Two check the held ends. Two use a small file with a repeated second, a blank price and unsorted rows."
+      },
+      "feedback": {
+        "correct": "Interior values, held ends and the small file all match.",
+        "generic": "Some tests failed. Drop blanks, average repeated seconds, sort, interpolate, hold the ends."
+      },
+      "explain": {
+        "text": "Cleaning leaves 286 times. Past the ends the nearest price is held. So second 0 reads the same as the first time, second 7."
+      }
+    },
+    {
+      "id": "h4-town-slopes",
+      "difficulty": 4,
+      "skills": [
+        "rq-data"
+      ],
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 600,
+      "prose": "`towns-temp.csv` has daily temperatures for 13 towns. Return a table of fits, one row per town.",
+      "question": "Write `town_slopes(path='towns-temp.csv')`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "towns-temp.csv": "content/data/towns-temp.csv"
+        },
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef town_slopes(path='towns-temp.csv'):\n    \"\"\"Return a frame indexed by town with columns slope, intercept, r2\n    and n, from a least-squares line of temp_c on day for each town.\n    A town with fewer than 3 rows gets NaN in the first three.\"\"\"\n    # Your code here\n    return pd.DataFrame()\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef town_slopes(path='towns-temp.csv'):\n    df = pd.read_csv(path)\n    def one(g):\n        n = len(g)\n        if n < 3:\n            return pd.Series({'slope': np.nan, 'intercept': np.nan, 'r2': np.nan, 'n': n})\n        c = np.cov(g['day'], g['temp_c'])\n        b = c[0, 1] / c[0, 0]\n        a = g['temp_c'].mean() - b * g['day'].mean()\n        r2 = c[0, 1] ** 2 / (c[0, 0] * c[1, 1])\n        return pd.Series({'slope': b, 'intercept': a, 'r2': r2, 'n': n})\n    return df.groupby('town').apply(one, include_groups=False)\n",
+        "examples": [
+          {
+            "setup": "t = town_slopes()",
+            "call": "len(t)",
+            "expect": "13",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "t = town_slopes()",
+            "call": "[len(t), list(t.columns)]",
+            "expect": "[13, ['slope', 'intercept', 'r2', 'n']]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t = town_slopes()",
+            "call": "[float(t.loc['Bath', 'slope']), float(t.loc['Hove', 'slope'])]",
+            "expect": "[-0.02366960696069607, 0.030037563756375632]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "t = town_slopes()",
+            "call": "float(t.loc['Ince', 'intercept'])",
+            "expect": "12.238139393939395",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "t = town_slopes()",
+            "call": "[float(t.loc['Kelso', 'r2']), float(t.loc['Cork', 'r2'])]",
+            "expect": "[0.7432052373453604, 0.05585972419431069]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "t = town_slopes()",
+            "call": "[bool(np.isnan(t.loc['Wick', 'slope'])), bool(np.isnan(t.loc['Wick', 'r2'])), int(t.loc['Wick', 'n'])]",
+            "expect": "[True, True, 2]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t = town_slopes()",
+            "call": "[int(t.loc['Ayr', 'n']), int(t['n'].sum())]",
+            "expect": "[100, 1202]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. They cover the shape, the column names, slopes for Bath and Hove, and the Ince intercept. They also check $R^2$ for Kelso and Cork, Wick as NaN with n = 2, and the row counts. Fits are within 1e-6."
+      },
+      "feedback": {
+        "correct": "One row per town, with Wick guarded.",
+        "generic": "Some tests failed. Four columns, 13 rows, NaN for a town with fewer than 3 rows."
+      },
+      "explain": {
+        "text": "Each town gets a line from cov over var, its intercept and its $R^2$. Wick's two rows give NaN but keep n = 2, so the table still says why."
+      }
+    },
+    {
+      "id": "h4-online-ols",
+      "difficulty": 5,
+      "skills": [
+        "rq-data",
+        "rq-linalg"
+      ],
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 900,
+      "prose": "Write the class that keeps $(X^TX)^{-1}$ and updates it as rows arrive and leave. A solution that refits after every row is too slow for the last test.",
+      "question": "Write `OnlineOLS(p)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\nclass OnlineOLS:\n    \"\"\"Least squares kept as P = (X'X)^-1 and the coefficients b.\n    A design row x has p entries (a leading 1 for the intercept).\n    Start from P = 1e8 * I, a tiny ridge, so no special first rows.\"\"\"\n\n    def __init__(self, p):\n        # Your code here\n        pass\n\n    def add(self, x, y):\n        # Sherman-Morrison: P -= (Px)(Px)' / (1 + x'Px); b += P x (y - x'b)\n        pass\n\n    def remove(self, x, y):\n        # The reverse: P += (Px)(Px)' / (1 - x'Px); b -= P x (y - x'b)\n        pass\n\n    def coef(self):\n        \"\"\"Return the coefficients as a numpy array of length p.\"\"\"\n        return np.zeros(1)\n",
+        "solution": "import numpy as np\n\nclass OnlineOLS:\n    def __init__(self, p):\n        self.P = np.eye(p) * 1e8\n        self.b = np.zeros(p)\n\n    def add(self, x, y):\n        x = np.asarray(x, float)\n        Px = self.P @ x\n        self.P = self.P - np.outer(Px, Px) / (1.0 + x @ Px)\n        self.b = self.b + (self.P @ x) * (y - x @ self.b)\n\n    def remove(self, x, y):\n        x = np.asarray(x, float)\n        Px = self.P @ x\n        self.P = self.P + np.outer(Px, Px) / (1.0 - x @ Px)\n        self.b = self.b - (self.P @ x) * (y - x @ self.b)\n\n    def coef(self):\n        return self.b.copy()\n",
+        "examples": [
+          {
+            "setup": "m = OnlineOLS(2); [m.add([1, x], y) for x, y in [(1, 4), (2, 6), (3, 9), (4, 10)]]",
+            "call": "[round(float(v), 4) for v in m.coef()]",
+            "expect": "[2.0, 2.1]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "m = OnlineOLS(2); [m.add([1, x], y) for x, y in [(1, 4), (2, 6), (3, 9), (4, 10)]]",
+            "call": "m.coef()",
+            "expect": "[2.0, 2.1]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "m = OnlineOLS(2); [m.add([1, x], y) for x, y in [(1, 4), (2, 6), (3, 9), (4, 10)]]; m.add([1, 5], 14)",
+            "call": "m.coef()",
+            "expect": "[1.4, 2.4]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "m = OnlineOLS(2); [m.add([1, x], y) for x, y in [(1, 4), (2, 6), (3, 9), (4, 10)]]; m.add([1, 5], 14); m.remove([1, 2], 6)",
+            "call": "m.coef()",
+            "expect": "[1.542857142857143, 2.3714285714285714]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "rng = np.random.default_rng(11); X = np.c_[np.ones(200), rng.normal(size=(200, 2))]; y = X @ [1.0, 2.0, -1.0] + rng.normal(size=200); m = OnlineOLS(3); [m.add(X[i], y[i]) for i in range(200)]",
+            "call": "float(max(abs(m.coef() - np.linalg.lstsq(X, y, rcond=None)[0]))) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "rng = np.random.default_rng(11); X = np.c_[np.ones(200), rng.normal(size=(200, 2))]; y = X @ [1.0, 2.0, -1.0] + rng.normal(size=200); m = OnlineOLS(3); [m.add(X[i], y[i]) for i in range(200)]; [m.remove(X[i], y[i]) for i in range(50)]",
+            "call": "float(max(abs(m.coef() - np.linalg.lstsq(X[50:], y[50:], rcond=None)[0]))) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "rng = np.random.default_rng(3); X = np.c_[np.ones(20000), rng.normal(size=(20000, 2))]; y = X @ [1.0, 2.0, -1.0] + rng.normal(size=20000); m = OnlineOLS(3)",
+            "call": "float(max(abs([[m.add(X[i], y[i]), m.coef()] for i in range(20000)][-1][1] - np.linalg.lstsq(X, y, rcond=None)[0]))) < 1e-6",
+            "expect": "True",
+            "compare": "equal",
+            "budget": 2000
+          }
+        ],
+        "how": "Check runs 6 hidden tests. They cover a four-row sequence, adding a row and removing a row (within 1e-6). Two compare 200 seeded rows, then 50 removals, with `np.linalg.lstsq`. The last reads the coefficients after each of 20,000 rows inside the time limit.",
+        "budget": 1000
+      },
+      "feedback": {
+        "correct": "Exact against a refit, and fast.",
+        "generic": "Some tests failed. Keep P and b, update both on every add and remove, and never refit."
+      },
+      "explain": {
+        "text": "Each add and remove touches $p^2$ numbers, so 20,000 rows cost about the same as 20,000 small matrix products. A refit after every row would read each earlier row again."
+      }
+    },
+    {
+      "id": "h4-writeup-longform",
+      "difficulty": 5,
+      "skills": [
+        "rq-case"
+      ],
+      "tags": [
+        "take-home-writeup"
+      ],
+      "pace": 600,
+      "kind": "longform",
+      "prompt": "Write the summary and limits section of a take-home, in under 150 words. The task: how does an order's slippage depend on its size? Facts: the fills file has 900 rows. 24 repeated order ids, 18 blank prices and 7 prices of -999 were removed. No row was in two groups. Slippage in basis points regressed on $\\ln(\\text{qty}/100)$: slope 0.95, standard error 0.12, intercept 0.30. The data are one day, three symbols. The script uses seed 7 and pandas 2.2.3.",
+      "model": "**Summary.** I asked how an order's slippage depends on its size. From 900 rows I removed 24 repeated ids, 18 blank prices and 7 prices of -999, leaving 851.\n\n**Result.** Slippage rises by 0.95 basis points per unit of $\\ln(\\text{qty}/100)$, with standard error 0.12. So the 95% interval is 0.71 to 1.19. A 5,000-share order is expected to cost $0.30 + 0.95 \\ln 50 = 4.02$ basis points.\n\n**Limits.** The data cover one day and three symbols, so the slope may not hold in other markets. A straight line in $\\ln$ size is assumed, and there is no market-impact model.\n\n**Rerun.** Seed 7, pandas 2.2.3, one command from a clean folder prints every number above.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "States the question and the cleaning with counts: 900 rows, 24, 18 and 7 removed, 851 left"
+        },
+        {
+          "points": 2,
+          "text": "Gives the result with its interval: slope 0.95, standard error 0.12, interval about 0.71 to 1.19"
+        },
+        {
+          "points": 2,
+          "text": "Gives a worked prediction: a 5,000-share order at about 4.02 basis points"
+        },
+        {
+          "points": 2,
+          "text": "Names two limits, such as one day, three symbols, an assumed log-linear form or no market impact"
+        },
+        {
+          "points": 2,
+          "text": "Says how to rerun: seed 7, pandas 2.2.3 and one command, in under 150 words"
+        }
+      ]
+    },
+    {
+      "id": "h4-vwap-table",
+      "difficulty": 4,
+      "skills": [
+        "rq-data"
+      ],
+      "tags": [
+        "vwap"
+      ],
+      "pace": 240,
+      "prose": "A cleaned fills frame holds six rows for two symbols.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "symbol",
+            "shares",
+            "price"
+          ],
+          "rows": [
+            [
+              "X",
+              "300",
+              "20.10"
+            ],
+            [
+              "X",
+              "500",
+              "20.30"
+            ],
+            [
+              "X",
+              "200",
+              "19.90"
+            ],
+            [
+              "Z",
+              "100",
+              "55.00"
+            ],
+            [
+              "Z",
+              "400",
+              "55.50"
+            ],
+            [
+              "Z",
+              "300",
+              "54.90"
+            ]
+          ],
+          "align": "right"
+        },
+        "state": {}
+      },
+      "question": "Fill in the total shares and the VWAP for each symbol.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "symbol",
+          "fills",
+          "total shares",
+          "VWAP"
+        ],
+        "rows": [
+          [
+            "X",
+            "3",
+            {
+              "edit": true,
+              "answer": 1000,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 20.16,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "Z",
+            "3",
+            {
+              "edit": true,
+              "answer": 800,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 55.2125,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "X: 1,000 shares at 20.16. Z: 800 shares at 55.2125.",
+        "generic": "Not quite. Add the shares, then divide the sum of price times shares by that total."
+      },
+      "explain": {
+        "text": "For X, $(6{,}030 + 10{,}150 + 3{,}980)/1{,}000 = 20.16$. For Z, $(5{,}500 + 22{,}200 + 16{,}470)/800 = 55.2125$."
+      }
+    },
+    {
+      "id": "h4-clean-orders",
+      "difficulty": 4,
+      "skills": [
+        "rq-data"
+      ],
+      "tags": [
+        "data-cleaning"
+      ],
+      "pace": 600,
+      "prose": "Write the cleaner as a function of a frame, so it can be tested on small cases. The frame `RAW` is `orders-messy.csv` read with text quantities, and `TINY` is a seven-row case.",
+      "question": "Write `clean_orders(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "orders-messy.csv": "content/data/orders-messy.csv"
+        },
+        "prelude": "import numpy as np\nimport pandas as pd\n\nTINY = pd.DataFrame({'order_id': [1, 2, 3, 3, 4, 5, 6], 'symbol': [' x ', 'Y', 'x', 'X', 'y', 'Y', 'x'], 'side': ['B', 'S', 'B', 'B', 'S', 'B', 'S'],\n                     'qty': ['1,000', '200', '300', '300', '4,500', '50', '700'], 'price': [10.0, 5.0, 0.0, 0.0, np.nan, -999.0, 12.0], 'mid': [10.0, 5.0, 10.0, 10.0, 5.0, 5.0, 12.0]})\nRAW = pd.read_csv('orders-messy.csv', dtype={'qty': str})\n",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef clean_orders(df):\n    \"\"\"df has order_id, symbol, side, qty (text, some with commas), price,\n    mid. Return a cleaned copy: symbol stripped and upper case, qty as\n    whole numbers, one row per order_id (the first), and only prices\n    above zero. The input frame must not change.\"\"\"\n    out = df.copy()\n    # Your code here\n    return out\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef clean_orders(df):\n    out = df.copy()\n    out['symbol'] = out['symbol'].str.strip().str.upper()\n    out['qty'] = out['qty'].str.replace(',', '').astype(int)\n    out = out.drop_duplicates('order_id')\n    out = out[out['price'].notna() & (out['price'] > 0)]\n    return out.reset_index(drop=True)\n",
+        "examples": [
+          {
+            "call": "len(clean_orders(TINY))",
+            "expect": "3",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "int((clean_orders(RAW)['side'] == 'B').sum())",
+            "expect": "271",
+            "compare": "equal"
+          },
+          {
+            "call": "int(clean_orders(RAW)['qty'].median())",
+            "expect": "2300",
+            "compare": "equal"
+          },
+          {
+            "call": "round(float((clean_orders(RAW)['price'] * clean_orders(RAW)['qty']).sum()), 1)",
+            "expect": "78732175.8",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "call": "[len(clean_orders(TINY)), int(clean_orders(TINY)['qty'].sum()), sorted(clean_orders(TINY)['symbol'].unique())]",
+            "expect": "[3, 1900, ['X', 'Y']]",
+            "compare": "equal"
+          },
+          {
+            "call": "bool(clean_orders(RAW)['price'].min() > 0) and bool(clean_orders(RAW)['order_id'].is_unique)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "(clean_orders(TINY), [len(TINY), TINY['symbol'].iloc[0], TINY['qty'].iloc[0]])[1]",
+            "expect": "[7, ' x ', '1,000']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. They check the buy count, median quantity and total value on the file. They check the seven-row case: a price of zero, a NaN, a -999 and a repeat. They also check unique ids, a positive minimum price and an unchanged input frame."
+      },
+      "feedback": {
+        "correct": "The cleaner works on the file and on the small case.",
+        "generic": "Some tests failed. Text first, then ids, then prices above zero, on a copy."
+      },
+      "explain": {
+        "text": "The seven-row case drops a repeat, a price of zero, a NaN and a -999, leaving three rows. The input frame keeps its commas and spaces."
+      }
+    },
+    {
+      "id": "h4-normal-equations",
+      "difficulty": 4,
+      "skills": [
+        "rq-data",
+        "rq-linalg"
+      ],
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 240,
+      "prose": "The slope in terms of sums comes from the two normal equations of a straight-line fit.",
+      "question": "Put the lines in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "Minimising $\\sum (y - a - bx)^2$ and setting both derivatives to zero gives $na + b\\sum x = \\sum y$ and $a\\sum x + b\\sum xx = \\sum xy$."
+          },
+          {
+            "id": "b",
+            "text": "Eliminate $a$: multiply the first equation by $\\sum x$, the second by $n$, and subtract."
+          },
+          {
+            "id": "c",
+            "text": "That leaves $b\\,(n\\sum xx - (\\sum x)^2) = n\\sum xy - \\sum x\\sum y$."
+          },
+          {
+            "id": "d",
+            "text": "Divide: $b = \\dfrac{n\\sum xy - \\sum x\\sum y}{n\\sum xx - (\\sum x)^2}$."
+          },
+          {
+            "id": "x",
+            "text": "Divide $\\sum xy$ by $\\sum xx$ to get the slope.",
+            "why": "That is the slope of a line through the origin. It ignores the intercept and the means."
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "distractors": [
+          "x"
+        ]
+      },
+      "feedback": {
+        "correct": "The slope in sums.",
+        "generic": "Not quite. Normal equations, eliminate the intercept, divide.",
+        "byKey": {
+          "x": "You divided the two sums directly, which fits a line through the origin.",
+          "left-out": "You left out a step the derivation needs."
+        }
+      },
+      "explain": {
+        "text": "Eliminating the intercept leaves one equation in the slope. Each sum can be updated by one addition, which is why a row can arrive or leave cheaply."
+      }
+    },
+    {
+      "id": "h4-se-fifty",
+      "difficulty": 3,
+      "skills": [
+        "rq-data"
+      ],
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "A town has 50 days of readings with noise of 2.0 degrees. The days are 1 to 50, so $S_{xx} = 50 \\times 2{,}499 / 12 = 10{,}412.5$.",
+      "question": "What is the standard error of its slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0196,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 0.0196, or 0.0196 ± 5e-05",
+        "wrong": [
+          {
+            "id": "sd",
+            "value": 0.2828,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "n",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.0196: 2.0 over the square root of 10,412.5.",
+        "generic": "Not quite. Divide the noise by the square root of $S_{xx}$.",
+        "byKey": {
+          "sd": "You divided by the square root of 50 days. A slope depends on the spread of the days.",
+          "n": "You divided by 50 days."
+        }
+      },
+      "explain": {
+        "text": "$\\sqrt{10{,}412.5} = 102.04$, so the standard error is $2.0 / 102.04 = 0.0196$."
+      }
+    }
+  ]
+}

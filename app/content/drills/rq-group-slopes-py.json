@@ -1,0 +1,100 @@
+{
+  "id": "rq-group-slopes-py",
+  "name": "A slope for every group",
+  "course": "research-int",
+  "skills": [
+    "rq-data"
+  ],
+  "difficulty": 3,
+  "pattern": "group-regression",
+  "pace": 900,
+  "tags": [
+    "group-regression"
+  ],
+  "fn": "group_slopes",
+  "returns": "a pandas Series indexed by group",
+  "brief": "A frame has a group label `g` and two columns `x` and `y`. Write `group_slopes(df)`. It returns the least-squares slope of `y` on `x` for each group, as a Series indexed by `g`.\n\nA group with fewer than 3 rows has no usable slope: give it NaN. The frame `DF` (six rows, groups `u` and `v`) is ready for you to try.",
+  "definition": "For one group, the slope is $\\hat\\beta = \\dfrac{\\sum (x - \\bar x)(y - \\bar y)}{\\sum (x - \\bar x)^2}$. A group of one or two rows would fit exactly, so its slope is not evidence: return NaN.",
+  "constraints": [
+    "Use `groupby`, not a Python loop over every row.",
+    "NumPy and pandas are available.",
+    "All tests share a 5-second limit."
+  ],
+  "hint": "`df.groupby('g').apply(f, include_groups=False)` hands `f` one group at a time. Inside it, return `np.nan` when `len(g) < 3`, else `np.polyfit(g['x'], g['y'], 1)[0]`.",
+  "prelude": "import numpy as np\nimport pandas as pd\n\nDF = pd.DataFrame({'g': ['u', 'u', 'u', 'u', 'v', 'v'], 'x': [1, 2, 3, 4, 1, 2], 'y': [2.0, 3.0, 5.0, 4.0, 9.0, 7.0]})\n",
+  "starter": "import numpy as np\nimport pandas as pd\n\ndef group_slopes(df):\n    \"\"\"Series of least-squares slopes of y on x, indexed by g.\n    A group with fewer than 3 rows gets NaN.\"\"\"\n    # Your code here\n    return pd.Series(dtype=float)\n",
+  "solution": "import numpy as np\nimport pandas as pd\n\ndef group_slopes(df):\n    def one(g):\n        if len(g) < 3:\n            return np.nan\n        return np.polyfit(g['x'], g['y'], 1)[0]\n    return df.groupby('g').apply(one, include_groups=False)\n",
+  "examples": [
+    {
+      "call": "round(float(group_slopes(DF)['u']), 4)",
+      "expect": "0.8",
+      "compare": "isclose",
+      "note": "Group u has four rows with slope 0.8."
+    },
+    {
+      "call": "bool(np.isnan(group_slopes(DF)['v']))",
+      "expect": "True",
+      "compare": "equal",
+      "note": "Group v has two rows, so its slope is NaN."
+    }
+  ],
+  "tests": [
+    {
+      "name": "Group labels",
+      "call": "list(group_slopes(DF).index)",
+      "expect": "['u', 'v']",
+      "compare": "equal",
+      "why": "One entry per group, in sorted order."
+    },
+    {
+      "name": "A full group",
+      "call": "float(group_slopes(DF)['u'])",
+      "expect": "0.8",
+      "compare": "isclose",
+      "why": "The centred products add to 4 and the squared x distances to 5."
+    },
+    {
+      "name": "A small group",
+      "call": "bool(np.isnan(group_slopes(DF)['v']))",
+      "expect": "True",
+      "compare": "equal",
+      "why": "Two rows fit any line exactly. Return NaN."
+    },
+    {
+      "name": "A scaled y",
+      "call": "float(group_slopes(DF.assign(y=DF['y'] * 2))['u'])",
+      "expect": "1.6",
+      "compare": "isclose",
+      "why": "Doubling y doubles the slope."
+    },
+    {
+      "name": "A shifted x",
+      "call": "float(group_slopes(DF.assign(x=DF['x'] + 100))['u'])",
+      "expect": "0.8",
+      "compare": "isclose",
+      "why": "Shifting x moves the intercept, not the slope."
+    },
+    {
+      "name": "Three groups",
+      "call": "group_slopes(pd.DataFrame({'g': ['a'] * 3 + ['b'] * 4 + ['c'], 'x': [1, 2, 3, 1, 2, 3, 4, 1], 'y': [1.0, 2.0, 4.0, 4.0, 3.0, 2.0, 1.0, 5.0]})).round(6).tolist()[:2]",
+      "expect": "[1.5, -1.0]",
+      "compare": "isclose",
+      "why": "Groups a and b are fitted; c has one row."
+    },
+    {
+      "name": "A single row",
+      "call": "bool(np.isnan(group_slopes(pd.DataFrame({'g': ['a'], 'x': [1], 'y': [2.0]}))['a']))",
+      "expect": "True",
+      "compare": "equal",
+      "why": "One row has no slope."
+    },
+    {
+      "name": "Many groups",
+      "call": "group_slopes(pd.DataFrame({'g': [i // 4 for i in range(4000)], 'x': [i % 4 for i in range(4000)], 'y': [float(i % 4) * (1 + (i // 4) % 3) for i in range(4000)]})).round(6).tolist()[:3]",
+      "expect": "[1.0, 2.0, 3.0]",
+      "compare": "isclose",
+      "why": "A thousand groups, with slopes cycling through 1, 2 and 3."
+    }
+  ],
+  "how": "Submit runs 8 hidden tests. Each answer is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`; a missing slope is tested with `np.isnan`."
+}

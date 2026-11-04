@@ -1,0 +1,1070 @@
+{
+  "id": "l17-regression-by-group",
+  "course": "research-int",
+  "title": "A regression for every group",
+  "minutes": 15,
+  "objectives": [
+    "Fit one regression per group in pandas and collect the coefficients."
+  ],
+  "skills": [
+    "rq-data"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "One slope by hand",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "About two and a half minutes a question; say your reasoning aloud first. Four days of temperature in three towns. Find Reed's slope in degrees per day.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "day",
+            "Reed",
+            "Marsh",
+            "Plain"
+          ],
+          "rows": [
+            [
+              "1",
+              "10",
+              "12",
+              "9"
+            ],
+            [
+              "2",
+              "11",
+              "11",
+              "10"
+            ],
+            [
+              "3",
+              "11",
+              "11",
+              "10"
+            ],
+            [
+              "4",
+              "13",
+              "10",
+              "9"
+            ]
+          ],
+          "align": "right"
+        },
+        "state": {}
+      },
+      "question": "What is Reed's least-squares slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 0.9, or 0.9 ± 0.0005",
+        "wrong": [
+          {
+            "id": "ends",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The days average 2.5. Centre both columns."
+        },
+        {
+          "rung": "point",
+          "text": "Add up (day minus 2.5) times (temperature minus 11.25), and divide by the squared day distances, which sum to 5.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$4.5 / 5 = 0.9$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.9 degrees a day. Marsh would be -0.6 and Plain 0.",
+        "generic": "Not quite. Centre the days, multiply by the centred temperatures, and divide by 5.",
+        "byKey": {
+          "ends": "You used last minus first over three days. That ignores the two middle days."
+        }
+      },
+      "explain": {
+        "text": "The centred products add to 4.5 and the squared day distances to 5, so the slope is 0.9. Marsh's slope is $-3/5 = -0.6$.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A slope for every town",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 600,
+      "prose": "About ten minutes with the code. `towns-temp.csv` has 1,202 daily readings for 13 towns. Return one slope per town, with NaN for a town that has fewer than 3 rows.",
+      "question": "Write `slope_by_town(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "towns-temp.csv": "content/data/towns-temp.csv"
+        },
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef slope_by_town(df):\n    \"\"\"df has town, day and temp_c. Return a Series indexed by\n    town: the least-squares slope of temp_c on day, per day.\n    A town with fewer than 3 rows gets NaN.\"\"\"\n    # Your code here\n    return pd.Series(dtype=float)\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef slope_by_town(df):\n    def one(g):\n        if len(g) < 3:\n            return np.nan\n        return np.polyfit(g['day'], g['temp_c'], 1)[0]\n    return df.groupby('town').apply(one, include_groups=False)\n",
+        "examples": [
+          {
+            "setup": "s = slope_by_town(pd.read_csv('towns-temp.csv'))",
+            "call": "len(s)",
+            "expect": "13",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "s = slope_by_town(pd.read_csv('towns-temp.csv'))",
+            "call": "len(s)",
+            "expect": "13",
+            "compare": "equal"
+          },
+          {
+            "setup": "s = slope_by_town(pd.read_csv('towns-temp.csv'))",
+            "call": "[float(s['Ayr']), float(s['Leith'])]",
+            "expect": "[-0.04100864086408641, 0.0997918391839184]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "s = slope_by_town(pd.read_csv('towns-temp.csv'))",
+            "call": "s.drop('Wick').round(3).tolist()",
+            "expect": "[-0.041, -0.024, -0.013, -0.0, 0.009, 0.028, 0.032, 0.03, 0.058, 0.072, 0.088, 0.1]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "s = slope_by_town(pd.read_csv('towns-temp.csv'))",
+            "call": "bool(np.isnan(s['Wick']))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = slope_by_town(pd.DataFrame({'town': ['a'] * 3 + ['b'] * 2, 'day': [1, 2, 3, 1, 2], 'temp_c': [1.0, 2.0, 4.0, 5.0, 9.0]}))",
+            "call": "[round(float(t2['a']), 6), bool(np.isnan(t2['b']))]",
+            "expect": "[1.5, True]",
+            "compare": "equal"
+          },
+          {
+            "setup": "t2 = slope_by_town(pd.DataFrame({'town': ['a'] * 3 + ['b'] * 2, 'day': [1, 2, 3, 1, 2], 'temp_c': [1.0, 2.0, 4.0, 5.0, 9.0]}))",
+            "call": "list(t2.index)",
+            "expect": "['a', 'b']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. They check 13 towns, Ayr and Leith (within 1e-6), and the twelve full slopes to three places. They also check Wick as NaN, and a small frame with a three-row and a two-row group."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Split by town, then fit each piece. `groupby('town').apply(f)` hands `f` one town at a time."
+        },
+        {
+          "rung": "point",
+          "text": "Inside `f`, return `np.nan` when `len(g) < 3`, else `np.polyfit(g['day'], g['temp_c'], 1)[0]`."
+        },
+        {
+          "rung": "step",
+          "text": "Pass `include_groups=False` to `apply`, so the town column is not in `g`."
+        }
+      ],
+      "feedback": {
+        "correct": "13 towns, 12 numbers and one NaN.",
+        "generic": "Some tests failed. One slope per town, NaN for a group of fewer than 3 rows."
+      },
+      "explain": {
+        "text": "The function splits by town, fits a line to each and gathers the slopes into one Series. The guard turns Wick's two rows into NaN instead of a slope."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Read the table",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "The twelve towns with full data give these slopes in degrees per day.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "town",
+            "slope",
+            "town",
+            "slope"
+          ],
+          "rows": [
+            [
+              "Ayr",
+              "-0.0410",
+              "Goole",
+              "0.0325"
+            ],
+            [
+              "Bath",
+              "-0.0237",
+              "Hove",
+              "0.0300"
+            ],
+            [
+              "Cork",
+              "-0.0128",
+              "Ince",
+              "0.0582"
+            ],
+            [
+              "Deal",
+              "-0.0005",
+              "Jarrow",
+              "0.0723"
+            ],
+            [
+              "Elgin",
+              "0.0088",
+              "Kelso",
+              "0.0878"
+            ],
+            [
+              "Fife",
+              "0.0276",
+              "Leith",
+              "0.0998"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "left",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many of the twelve towns have a negative slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 4",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "warm",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A negative bar hangs below the baseline."
+        },
+        {
+          "rung": "point",
+          "text": "Ayr, Bath and Cork are clear. Look at Deal."
+        },
+        {
+          "rung": "step",
+          "text": "Deal's slope is -0.0005: tiny, but negative."
+        }
+      ],
+      "feedback": {
+        "correct": "Four: Ayr, Bath, Cork and Deal.",
+        "generic": "Not quite. Count every bar below zero, however short.",
+        "byKey": {
+          "three": "You skipped Deal. Its slope is -0.0005, which is negative though close to zero.",
+          "warm": "You counted the warming towns. The question asks for the cooling ones."
+        }
+      },
+      "explain": {
+        "text": "Four slopes are below zero. Whether Deal is really cooling is a different question, about standard errors.",
+        "canvas": {
+          "highlight": {
+            "cells": [
+              "r0c1",
+              "r1c1",
+              "r2c1",
+              "r3c1"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "How sure is one slope",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "Each day carries noise of 1.5 degrees, and a town has 100 days, so $S_{xx} = \\sum (x - \\bar x)^2 = 83{,}325$.",
+      "question": "What is the standard error of a town's slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0052,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 0.0052, or 0.0052 ± 5e-05",
+        "wrong": [
+          {
+            "id": "sd",
+            "value": 0.15,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "n",
+            "value": 0.015,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The standard error is the noise divided by the square root of the spread of the days."
+        },
+        {
+          "rung": "point",
+          "text": "$\\sigma / \\sqrt{S_{xx}}$ with $\\sigma = 1.5$."
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{83{,}325} = 288.6$, and $1.5 / 288.6 = 0.0052$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.0052. Deal and Elgin sit within two of these of zero.",
+        "generic": "Not quite. Divide 1.5 by the square root of 83,325.",
+        "byKey": {
+          "sd": "You divided by 10, the square root of 100 days. A slope also depends on how spread out the days are.",
+          "n": "You divided by 100. The square root of $S_{xx}$ is the right divisor."
+        }
+      },
+      "explain": {
+        "text": "The standard error is 0.0052, so two of them are 0.0104. Deal (-0.0005) and Elgin (0.0088) are inside that, and the other ten are outside."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Three ways to one slope",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "Cov over var, `np.polyfit` and statsmodels give the same slope for every town, to ten decimals. The $R^2$ runs from 0.0001 at Deal to 0.8023 at Leith.",
+      "question": "Why do three different routes agree?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "same",
+            "text": "All three solve the same least-squares problem",
+            "correct": true
+          },
+          {
+            "id": "lib",
+            "text": "They all call the same library routine underneath",
+            "why": "You assumed one code path. They are separate code that agrees because the maths is the same."
+          },
+          {
+            "id": "clean",
+            "text": "The data are too clean for them to differ",
+            "why": "They agree on messy data too, up to rounding."
+          },
+          {
+            "id": "round",
+            "text": "Rounding hides the difference between them",
+            "why": "The agreement is at ten decimals, so rounding hides nothing."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each route minimises the same sum of squared errors."
+        },
+        {
+          "rung": "point",
+          "text": "Cov over var is the closed form of that minimum."
+        },
+        {
+          "rung": "step",
+          "text": "polyfit and statsmodels reach it by linear algebra."
+        }
+      ],
+      "feedback": {
+        "correct": "One problem, one answer, three routes.",
+        "generic": "Not quite. What do the three methods have in common?",
+        "byKey": {
+          "lib": "You assumed a shared library.",
+          "clean": "You blamed the data.",
+          "round": "You blamed rounding."
+        }
+      },
+      "explain": {
+        "text": "Least squares has one minimiser. Cov over var is its closed form, so a quick formula is a fair check on a library call."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "The steepest slope",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "Without a guard, Wick's two readings give a slope of 0.3 per day. A colleague says Wick warms fastest, three times Leith.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "Jarrow",
+              "label": "Jarrow"
+            },
+            {
+              "id": "Kelso",
+              "label": "Kelso"
+            },
+            {
+              "id": "Leith",
+              "label": "Leith"
+            },
+            {
+              "id": "Wick",
+              "label": "Wick"
+            }
+          ],
+          "yLabel": "slope (degrees per day)",
+          "showValues": true,
+          "decimals": 3,
+          "yMin": 0,
+          "yMax": 0.35,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "Jarrow": 0.072,
+            "Kelso": 0.088,
+            "Leith": 0.1,
+            "Wick": 0.3
+          }
+        }
+      },
+      "question": "What do you say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two",
+            "text": "Two rows fit any line exactly, so Wick's slope carries no evidence",
+            "correct": true
+          },
+          {
+            "id": "big",
+            "text": "Wick warms fastest, so it is the biggest effect",
+            "why": "You ranked by size alone. A slope with no standard error is not evidence."
+          },
+          {
+            "id": "bug",
+            "text": "polyfit is wrong for small groups, so I would switch to another method",
+            "why": "The arithmetic is right: two points make a line. The meaning is the problem."
+          },
+          {
+            "id": "scale",
+            "text": "Divide Wick's slope by 100 to match the others",
+            "why": "You invented a rescaling. Every slope is already per day."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ask how many days stand behind each slope."
+        },
+        {
+          "rung": "point",
+          "text": "Wick has 2 rows; the others have 100."
+        },
+        {
+          "rung": "step",
+          "text": "With two points the line has no spare day to measure noise."
+        }
+      ],
+      "feedback": {
+        "correct": "Two rows give a line and no evidence.",
+        "generic": "Not quite. Look at how many rows each slope rests on.",
+        "byKey": {
+          "big": "You trusted the size of the slope. Check n and the standard error first.",
+          "bug": "You blamed the method. The fit is exact; the evidence is missing.",
+          "scale": "You rescaled by hand."
+        }
+      },
+      "explain": {
+        "text": "A slope is evidence only with spare days to measure noise. Wick has none, so the guard returns NaN rather than a number that looks steepest.",
+        "canvas": {
+          "highlight": [
+            "Wick"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A town with one day",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "A town has a single row. Cov over var needs the variance of the days, which is undefined for one day.",
+      "question": "What should the per-group function return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nan",
+            "text": "NaN, and I report how many towns were skipped",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "0, because one point is flat",
+            "why": "You called one point flat. It shows no direction at all."
+          },
+          {
+            "id": "level",
+            "text": "The temperature itself, as the slope",
+            "why": "You returned a level, not a rate."
+          },
+          {
+            "id": "drop",
+            "text": "Nothing: drop the town and do not mention it",
+            "why": "You dropped it silently. The table would hide which towns are missing."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Can one day show a direction?"
+        },
+        {
+          "rung": "point",
+          "text": "A slope needs at least two different days, and a check on noise needs three."
+        },
+        {
+          "rung": "step",
+          "text": "Return NaN and count the skips."
+        }
+      ],
+      "feedback": {
+        "correct": "NaN, with the skips counted.",
+        "generic": "Not quite. One day cannot give a slope.",
+        "byKey": {
+          "zero": "You returned zero.",
+          "level": "You returned a temperature.",
+          "drop": "You dropped the town silently."
+        }
+      },
+      "explain": {
+        "text": "A single row has no slope. Return NaN, so the town stays in the table, and say how many were skipped."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Where 0.0052 comes from",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "A slope is a weighted sum of the $y$ values. Each $y$ has noise variance $\\sigma^2$, independent of the others.",
+      "question": "Put the lines in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "The slope is $\\hat\\beta = \\dfrac{\\sum (x - \\bar x)\\,y}{S_{xx}}$, a sum of the $y$ values with weights $(x - \\bar x)/S_{xx}$."
+          },
+          {
+            "id": "b",
+            "text": "The $y$ values are independent with variance $\\sigma^2$, so $\\text{Var}(\\hat\\beta) = \\sigma^2 \\dfrac{\\sum (x - \\bar x)^2}{S_{xx}^2}$."
+          },
+          {
+            "id": "c",
+            "text": "The sum on top is $S_{xx}$, so $\\text{Var}(\\hat\\beta) = \\sigma^2 / S_{xx}$."
+          },
+          {
+            "id": "d",
+            "text": "For days 1 to 100, $S_{xx} = 100 \\times 9{,}999 / 12 = 83{,}325$, so the standard error is $1.5 / \\sqrt{83{,}325} = 0.0052$."
+          },
+          {
+            "id": "x",
+            "text": "Each $y$ has variance $\\sigma^2$, so the slope has variance $\\sigma^2 / n$.",
+            "why": "That is the variance of a mean. A slope also depends on how spread out the days are."
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "distractors": [
+          "x"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the slope as a weighted sum."
+        },
+        {
+          "rung": "point",
+          "text": "Independent terms add their variances, each weight squared."
+        },
+        {
+          "rung": "step",
+          "text": "The squared weights add to $1/S_{xx}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\text{SE} = \\sigma / \\sqrt{S_{xx}}$.",
+        "generic": "Not quite. Weighted sum, add variances, simplify.",
+        "byKey": {
+          "x": "You gave the variance of a mean. A slope needs the spread of the days too.",
+          "left-out": "You left out a step the derivation needs."
+        }
+      },
+      "explain": {
+        "text": "The standard error is $\\sigma / \\sqrt{S_{xx}}$. Spreading the days wider shrinks it, which is why longer samples pin slopes down."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Say it aloud",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "In one breath: split by group, fit each with $\\widehat\\beta = \\text{cov}(x, y) / \\text{var}(x)$, guard groups under 3 rows, then combine.",
+      "question": "Which answer would you say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "split",
+            "text": "I split by group, fit with cov over var, guard small groups, combine.",
+            "correct": true
+          },
+          {
+            "id": "pool",
+            "text": "I fit one line to every row and report that one slope for each group.",
+            "why": "You pooled the groups. They have different slopes."
+          },
+          {
+            "id": "loop",
+            "text": "I loop over the rows, refit after each, and keep the last fit.",
+            "why": "You kept only the last fit and refitted needlessly."
+          },
+          {
+            "id": "eye",
+            "text": "I fit every group and drop the ones that look odd by eye.",
+            "why": "You dropped groups by eye. Use a stated rule such as three rows."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The answer should name the split and the guard."
+        },
+        {
+          "rung": "point",
+          "text": "Look for combine at the end."
+        },
+        {
+          "rung": "step",
+          "text": "Only one answer has all three."
+        }
+      ],
+      "feedback": {
+        "correct": "Split, fit, guard, combine.",
+        "generic": "Not quite. Choose the answer that splits, guards and combines.",
+        "byKey": {
+          "pool": "You pooled.",
+          "loop": "You refitted row by row.",
+          "eye": "You dropped by eye."
+        }
+      },
+      "explain": {
+        "text": "Say split, fit, guard, combine. The guard is a stated rule, so a reader can see what was skipped."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A beta per stock",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "A desk fits a beta per stock over a rolling 250-day window: a group-by again. One stock has return-market covariance 0.000234 and market variance 0.000180.",
+      "question": "What is its beta?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.3,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 1.3, or 1.3 ± 0.0005",
+        "wrong": [
+          {
+            "id": "inv",
+            "value": 0.7692,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Beta is the slope of the stock's return on the market's."
+        },
+        {
+          "rung": "point",
+          "text": "Covariance over market variance."
+        },
+        {
+          "rung": "step",
+          "text": "$0.000234 / 0.000180 = 1.3$."
+        }
+      ],
+      "feedback": {
+        "correct": "1.3: the stock moves 1.3 times the market.",
+        "generic": "Not quite. Covariance divided by the market's variance.",
+        "byKey": {
+          "inv": "You divided the other way, variance over covariance."
+        }
+      },
+      "explain": {
+        "text": "Beta is cov over var, the slope formula again. A rolling beta is that slope for every window."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The follow-up",
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "The interviewer asks: \"Make it fast for 5,000 groups.\"",
+      "question": "What do you answer?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "vec",
+            "text": "Use groupby sums and vectorised cov over var, not a Python loop",
+            "correct": true
+          },
+          {
+            "id": "loop",
+            "text": "Loop over the group names and call polyfit on each of the 5,000",
+            "why": "You kept a Python loop that copies a slice of the frame 5,000 times."
+          },
+          {
+            "id": "sm",
+            "text": "Run statsmodels in each group so the answers are exact",
+            "why": "You made it slower. The slope is identical."
+          },
+          {
+            "id": "sample",
+            "text": "Fit 100 groups and assume the rest are similar",
+            "why": "You dropped groups without saying so."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does the time go?"
+        },
+        {
+          "rung": "point",
+          "text": "Each pass of a Python loop filters the frame."
+        },
+        {
+          "rung": "step",
+          "text": "Sums by group do all groups in one pass."
+        }
+      ],
+      "feedback": {
+        "correct": "Sums by group, vectorised.",
+        "generic": "Not quite. Remove the per-group Python work.",
+        "byKey": {
+          "loop": "You kept the loop.",
+          "sm": "You chose a slower exact route.",
+          "sample": "You dropped groups."
+        }
+      },
+      "explain": {
+        "text": "Compute $\\sum x$, $\\sum y$, $\\sum xy$, $\\sum x^2$ and $n$ per group with `groupby`, then the slopes in one vector expression."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Split by group, fit each with cov over var or polyfit, and gather the slopes into one frame.",
+      "Guard small groups: fewer than 3 rows gives NaN, so a two-point line cannot look like the steepest.",
+      "A slope is evidence only with its standard error, sigma over the square root of S_xx."
+    ],
+    "formula": {
+      "name": "Slope and its standard error",
+      "tex": "\\hat\\beta = \\dfrac{\\sum (x-\\bar x)(y-\\bar y)}{S_{xx}}, \\quad \\text{SE} = \\dfrac{\\sigma}{\\sqrt{S_{xx}}}",
+      "note": "$S_{xx} = \\sum (x - \\bar x)^2$; for days 1 to $n$ it is $n(n^2 - 1)/12$."
+    },
+    "trap": "The steepest slope in a table may rest on two rows."
+  },
+  "quiz": [
+    {
+      "id": "q17-hand",
+      "difficulty": 2,
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "One group has four days: $(1, 5)$, $(2, 5)$, $(3, 8)$ and $(4, 6)$.",
+      "question": "What is its least-squares slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 0.6, or 0.6 ± 0.001",
+        "wrong": [
+          {
+            "id": "ends",
+            "value": 0.3333,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.6: centred products 3, over 5.",
+        "generic": "Not quite. Centre the days at 2.5 and the temperatures at 6.",
+        "byKey": {
+          "ends": "You used last minus first over three days. The middle days matter."
+        }
+      },
+      "explain": {
+        "text": "The centred products add to 3 and the squared day distances to 5, so the slope is 0.6."
+      }
+    },
+    {
+      "id": "q17-se",
+      "difficulty": 3,
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "A town has 100 days with noise of 3.0 degrees, and $S_{xx} = 83{,}325$.",
+      "question": "What is the standard error of its slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0104,
+        "tol": {
+          "abs": 5e-05
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 0.0104, or 0.0104 ± 5e-05",
+        "wrong": [
+          {
+            "id": "old",
+            "value": 0.0052,
+            "tol": {
+              "abs": 5e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.0104: double the noise, double the error.",
+        "generic": "Not quite. Divide 3.0 by the square root of 83,325.",
+        "byKey": {
+          "old": "You kept the earlier noise of 1.5. Here it is 3.0."
+        }
+      },
+      "explain": {
+        "text": "$3.0 / 288.6 = 0.0104$, twice the earlier 0.0052."
+      }
+    },
+    {
+      "id": "q17-apply",
+      "difficulty": 3,
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "`df.groupby('town').apply(f, include_groups=False)`, where `f` returns one number for each town.",
+      "question": "What comes back?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ser",
+            "text": "A Series with one value per town",
+            "correct": true
+          },
+          {
+            "id": "rows",
+            "text": "A frame with one row for every input row",
+            "why": "You expected one result per input row. `apply` gives one per group."
+          },
+          {
+            "id": "one",
+            "text": "One number for the whole frame",
+            "why": "You expected a single total. The result keeps one value per group."
+          },
+          {
+            "id": "dict",
+            "text": "A dictionary of town frames",
+            "why": "You described `dict(list(groupby))`, not the result of `apply`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "One value per town, indexed by town.",
+        "generic": "Not quite. `apply` gives one result per group.",
+        "byKey": {
+          "rows": "That is `transform`, not `apply`.",
+          "one": "That would be an aggregate over the whole frame.",
+          "dict": "That is a different call."
+        }
+      },
+      "explain": {
+        "text": "Each group yields one number, so the result is a Series indexed by the group key."
+      }
+    },
+    {
+      "id": "q17-two-rows",
+      "difficulty": 3,
+      "tags": [
+        "group-regression"
+      ],
+      "pace": 150,
+      "prose": "A two-row group fits a straight line through both points.",
+      "question": "What is the $R^2$ of that fit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 1",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1: the line passes through both points.",
+        "generic": "Not quite. A line through both points leaves no error.",
+        "byKey": {
+          "half": "You split the difference. The residuals are exactly zero.",
+          "zero": "You read no spare days as no fit. The fit is perfect, which is the problem."
+        }
+      },
+      "explain": {
+        "text": "Two points leave zero residual, so $R^2 = 1$. That perfect fit says nothing about the slope."
+      }
+    }
+  ]
+}
