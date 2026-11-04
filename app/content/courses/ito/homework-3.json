@@ -1,0 +1,436 @@
+{
+ "id": "homework-3",
+ "course": "ito",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-replicate",
+   "difficulty": 4,
+   "skills": [
+    "it-pricing"
+   ],
+   "title": "The equation by replication",
+   "prose": "A second derivation of the Black-Scholes equation: replicate the claim instead of hedging it. Each line carries its reason. Leave out the two flawed lines.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a1",
+      "text": "We replicate a claim $V(t, S)$ with $\\Delta$ shares and cash $B$, so $V = \\Delta S + B$ and the cash grows at $dB = rB\\,dt$."
+     },
+     {
+      "id": "a2",
+      "text": "The strategy is self-financing, so $dV = \\Delta\\,dS + r(V$ ${}- \\Delta S)\\,dt$: value changes only through the share and interest."
+     },
+     {
+      "id": "a3",
+      "text": "Itô's lemma for the claim: $dV = (V_t + \\mu SV_S$ ${}+ \\tfrac12\\sigma^2S^2V_{SS})\\,dt$ ${}+ \\sigma SV_S\\,dW$."
+     },
+     {
+      "id": "a4",
+      "text": "Match the $dW$ terms: $\\sigma SV_S = \\Delta\\sigma S$, so $\\Delta = V_S$."
+     },
+     {
+      "id": "a5",
+      "text": "Match the $dt$ terms with $\\Delta = V_S$: $V_t + \\mu SV_S$ ${}+ \\tfrac12\\sigma^2S^2V_{SS}$ ${}= \\mu SV_S + r(V - SV_S)$, so $\\mu$ cancels."
+     },
+     {
+      "id": "a6",
+      "text": "Collect the terms: $V_t + rSV_S$ ${}+ \\tfrac12\\sigma^2S^2V_{SS}$ ${}- rV = 0$."
+     },
+     {
+      "id": "x1",
+      "text": "Match only the $dt$ terms, since $dW$ has mean zero and can be ignored.",
+      "why": "Unmatched noise means the strategy does not replicate the claim. The $dW$ terms fix $\\Delta$."
+     },
+     {
+      "id": "x2",
+      "text": "Choose $\\Delta$ to depend on $\\mu$ so that the $dt$ terms match.",
+      "why": "Matching $dW$ already fixes $\\Delta = V_S$. There is no freedom left, and $\\mu$ cancels by itself."
+     }
+    ],
+    "answer": [
+     "a1",
+     "a2",
+     "a3",
+     "a4",
+     "a5",
+     "a6"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "feedback": {
+    "correct": "Replication gives the same equation as the delta hedge: $\\Delta = V_S$ and $\\mu$ cancels.",
+    "generic": "Not quite right. State the strategy, write its change, then compare with Itô term by term.",
+    "byKey": {
+     "x1": "You ignored the noise. Matching it is what fixes the number of shares.",
+     "x2": "You let $\\Delta$ chase $\\mu$. Once the noise is matched, nothing is left to choose.",
+     "left-out": "A line of the derivation is in the Left out list. Only the two flawed lines belong there."
+    }
+   },
+   "explain": {
+    "text": "Hedging a sold claim and replicating a bought claim are the same argument with opposite signs. Both give $\\Delta = V_S$ and the same equation."
+   },
+   "tags": [
+    "bs-pde"
+   ]
+  },
+  {
+   "id": "h-barrier-report",
+   "difficulty": 5,
+   "skills": [
+    "it-pricing"
+   ],
+   "title": "A barrier report",
+   "prose": "One report for a desk: the same down-and-out call priced four ways (barrier 90, daily closes, seed passed in).",
+   "question": "Complete `barrier_report`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef barrier_report(seed):\n    \"\"\"[continuous, mc, mc_se, bgk, z, parity_gap] for the down-and-out call\n    S0=K=100, B=90, r=5%, sigma=20%, T=1, 252 steps, 20000 paths.\n\n    continuous: closed form, continuous monitoring (lesson 12)\n    mc, mc_se:  daily-monitored simulation and its standard error\n    bgk:        closed form at the shifted barrier B*exp(-0.5826*sigma*sqrt(dt))\n    z:          (mc - bgk) / mc_se\n    parity_gap: mean knock-in + mean knock-out - mean vanilla, on the same paths\n    \"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef barrier_report(seed):\n    \"\"\"[continuous, mc, mc_se, bgk, z, parity_gap] for the down-and-out call\n    S0=K=100, B=90, r=5%, sigma=20%, T=1, 252 steps, 20000 paths.\"\"\"\n    S0, K, B, r, sigma, T, steps, paths = 100, 100, 90, 0.05, 0.2, 1, 252, 20000\n    dt = T / steps\n\n    def vanilla():\n        d1 = (log(S0 / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n        return S0 * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d1 - sigma * sqrt(T))\n\n    def knock_in(b):\n        lam = (r + sigma ** 2 / 2) / sigma ** 2\n        y = log(b ** 2 / (S0 * K)) / (sigma * sqrt(T)) + lam * sigma * sqrt(T)\n        return (S0 * (b / S0) ** (2 * lam) * norm_cdf(y)\n                - K * exp(-r * T) * (b / S0) ** (2 * lam - 2) * norm_cdf(y - sigma * sqrt(T)))\n\n    continuous = vanilla() - knock_in(B)\n    bgk = vanilla() - knock_in(B * exp(-0.5826 * sigma * sqrt(dt)))\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal((paths, steps))\n    S = S0 * np.exp(np.cumsum((r - sigma ** 2 / 2) * dt + sigma * sqrt(dt) * z, axis=1))\n    hit = S.min(axis=1) <= B\n    pay = exp(-r * T) * np.maximum(S[:, -1] - K, 0)\n    out = pay * ~hit\n    inn = pay * hit\n    mc = float(np.mean(out))\n    se = float(np.std(out, ddof=1) / sqrt(paths))\n    gap = float(np.mean(inn) + np.mean(out) - np.mean(pay))\n    return [continuous, mc, se, bgk, (mc - bgk) / se, gap]\n",
+    "examples": [
+     {
+      "call": "[round(v, 4) for v in barrier_report(12)]",
+      "expect": "[8.6655, 8.851, 0.1034, 8.9139, -0.6081, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(v, 4) for v in barrier_report(12)]",
+      "expect": "[8.6655, 8.851, 0.1034, 8.9139, -0.6081, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in barrier_report(3)]",
+      "expect": "[8.6655, 8.8282, 0.1029, 8.9139, -0.8336, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in barrier_report(7)]",
+      "expect": "[8.6655, 8.8483, 0.1024, 8.9139, -0.6406, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "abs(barrier_report(12)[5]) < 1e-9",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "barrier_report(12)[3] > barrier_report(12)[0]",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on seeds 12, 3 and 7. They check the six numbers, the parity gap and the price order.",
+    "budget": 15000
+   },
+   "feedback": {
+    "correct": "On seed 12: continuous 8.6655, simulated 8.8510 (0.1034), shifted 8.9139, $z = -0.61$, parity gap 0.",
+    "generic": "Not quite right. Check the example: the shifted price is 8.9139 and $z$ is $-0.6081$."
+   },
+   "explain": {
+    "text": "The simulation sits 0.61 standard errors below the shifted formula, so the two agree for the daily contract. The continuous formula is 1.8 standard errors below the simulation, and the gap is the monitoring effect. The parity gap is 0 up to rounding because every path is either knocked in or out."
+   },
+   "tags": [
+    "barrier"
+   ]
+  },
+  {
+   "id": "h-pde-check",
+   "difficulty": 4,
+   "skills": [
+    "it-pricing"
+   ],
+   "title": "A PDE checker",
+   "prose": "`bs_call` and `bs_put` are loaded, both `(S, K, r, sigma, T)`. Write a checker for any value function `price(S, T)`. Compute the residual $V_t + rSV_S$ ${}+ \\tfrac12\\sigma^2S^2V_{SS}$ ${}- rV$ by central differences. Use step `h` in $S$ and `dt` in $T$, with $V_t = -\\partial V/\\partial T$.",
+   "question": "Complete `pde_check`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def pde_check(price, spots, r, sigma, T, tol, h=0.01, dt=0.0001):\n    \"\"\"price(S, T) is a value function of share price and time left.\n    Return one True or False per spot: is the Black-Scholes residual below tol?\"\"\"\n    ...\n",
+    "solution": "def pde_check(price, spots, r, sigma, T, tol, h=0.01, dt=0.0001):\n    \"\"\"price(S, T) is a value function of share price and time left.\n    Return one True or False per spot: is the Black-Scholes residual below tol?\"\"\"\n    out = []\n    for S in spots:\n        v0 = price(S, T)\n        up = price(S + h, T)\n        down = price(S - h, T)\n        v_s = (up - down) / (2 * h)\n        v_ss = (up - 2 * v0 + down) / h ** 2\n        v_t = -(price(S, T + dt) - price(S, T - dt)) / (2 * dt)\n        res = v_t + r * S * v_s + 0.5 * sigma ** 2 * S ** 2 * v_ss - r * v0\n        out.append(abs(res) < tol)\n    return out\n",
+    "examples": [
+     {
+      "call": "pde_check(lambda S, T: bs_call(S, 100, 0.05, 0.2, T), [80, 100, 120], 0.05, 0.2, 1, 1e-4)",
+      "expect": "[True, True, True]",
+      "compare": "equal"
+     },
+     {
+      "call": "pde_check(lambda S, T: max(S - 100, 0), [80, 100, 120], 0.05, 0.2, 1, 1e-4)",
+      "expect": "[True, False, False]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "pde_check(lambda S, T: bs_call(S, 100, 0.05, 0.2, T), [80, 100, 120], 0.05, 0.2, 1, 1e-4)",
+      "expect": "[True, True, True]",
+      "compare": "equal"
+     },
+     {
+      "call": "pde_check(lambda S, T: bs_put(S, 100, 0.05, 0.2, T), [80, 100, 120], 0.05, 0.2, 1, 1e-4)",
+      "expect": "[True, True, True]",
+      "compare": "equal"
+     },
+     {
+      "call": "pde_check(lambda S, T: bs_call(S, 100, 0.05, 0.3, T), [80, 100, 120], 0.05, 0.2, 1, 1e-4)",
+      "expect": "[False, False, False]",
+      "compare": "equal"
+     },
+     {
+      "call": "pde_check(lambda S, T: max(S - 100, 0), [80, 100, 120], 0.05, 0.2, 1, 1e-4)",
+      "expect": "[True, False, False]",
+      "compare": "equal"
+     },
+     {
+      "call": "pde_check(lambda S, T: S - 100 * exp(-0.05 * T), [90, 110], 0.05, 0.4, 0.5, 1e-4)",
+      "expect": "[True, True]",
+      "compare": "equal"
+     },
+     {
+      "call": "pde_check(lambda S, T: bs_call(S, 100, 0.05, 0.2, T), [100], 0.05, 0.2, 1, 1e-9)",
+      "expect": "[False]",
+      "compare": "equal"
+     },
+     {
+      "call": "pde_check(lambda S, T: bs_call(S, 100, 0.05, 0.2, T), [], 0.05, 0.2, 1, 1e-4)",
+      "expect": "[]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. A call, a put and a forward pass. A wrong volatility fails. The payoff passes only where it is zero. A tight tolerance fails, and an empty list gives an empty list.",
+    "prelude": "from math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_call(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d1 - sigma * sqrt(T))\n\ndef bs_put(S, K, r, sigma, T):\n    return bs_call(S, K, r, sigma, T) - S + K * exp(-r * T)\n"
+   },
+   "feedback": {
+    "correct": "The call, the put and the forward satisfy the equation. The payoff does so only at spots where its value is zero.",
+    "generic": "Not quite right. Check the examples: the call passes at every spot and the payoff fails at 100 and 120."
+   },
+   "explain": {
+    "text": "A value function must obey the equation with the model's own $\\sigma$: the call priced at 30% fails at 20%. The payoff at expiry passes only at $S = 80$, where its value is 0. At 100 $V_{SS}$ is a spike, and at 120 $rSV_S - rV = 5$."
+   },
+   "tags": [
+    "bs-pde"
+   ]
+  },
+  {
+   "id": "h-girsanov-ratio",
+   "difficulty": 5,
+   "skills": [
+    "it-martingale",
+    "it-pricing"
+   ],
+   "title": "Weights on the exercise event",
+   "prose": "A share has $\\mu = 12\\%$, $r = 5\\%$, $\\sigma = 20\\%$, $S_0 = 100$ and $T = 1$. Let $A$ be the event $S_1 > 100$. Under $P$, $P(A) = \\Phi(0.5) = 0.691462$. Under $Q$, $Q(A) = \\Phi(0.15) = 0.559618$.",
+   "question": "What is the average weight $Z_1$ over the $P$-paths that finish above £100? Use $E_P[Z_1\\mathbf 1_A] = Q(A)$ and give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8093,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\text{average} = Q(A)/P(A) = 0.559618/0.691462 = 0.8093$.",
+    "label": "Average weight",
+    "wrong": [
+     {
+      "id": "q",
+      "value": 0.5596,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "p",
+      "value": 0.6915,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.5596/0.6915 = 0.8093$: paths above the strike weigh less than 1 on average.",
+    "generic": "Not quite right. $Q(A) = E_P[Z\\mathbf 1_A]$, so divide by $P(A)$ to average over $A$.",
+    "byKey": {
+     "q": "You gave $Q(A)$, the weighted total. To average, divide by the $P$-chance of the event.",
+     "p": "You gave $P(A)$, the unweighted chance. The question asks for the average weight.",
+     "one": "You assumed weights average 1 on every event. They average 1 over all paths, not over $A$."
+    }
+   },
+   "explain": {
+    "text": "High paths are weighted down: the average weight on the exercise event is 0.8093, so $Q(A) = 0.8093 \\times P(A)$. This is why the risk-neutral price of a call is below the real-world average of its payoff."
+   },
+   "tags": [
+    "girsanov"
+   ]
+  },
+  {
+   "id": "h-antithetic",
+   "difficulty": 4,
+   "skills": [
+    "it-pricing"
+   ],
+   "title": "What antithetic pairs buy",
+   "prose": "On seed 11, 100,000 plain draws give a standard error of 0.0465. Antithetic pairs on the same draws (200,000 payoff evaluations) give 0.0232.",
+   "question": "How many plain draws give the standard error 0.0232 that antithetic pairs reached on 100,000 draws of $z$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 400000,
+    "tol": {
+     "abs": 5000
+    },
+    "accept": "$(0.0465/0.0232)^2 \\times 100{,}000 \\approx 4.0 \\times 100{,}000 = 400{,}000$.",
+    "label": "Draws",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 100000,
+      "tol": {
+       "abs": 500
+      }
+     },
+     {
+      "id": "double",
+      "value": 200000,
+      "tol": {
+       "abs": 2000
+      }
+     },
+     {
+      "id": "sixteen",
+      "value": 1600000,
+      "tol": {
+       "abs": 20000
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Halving the error needs four times the draws: about 400,000.",
+    "generic": "Not quite right. The error falls like $1/\\sqrt n$, so halving it needs how many times the draws?",
+    "byKey": {
+     "same": "You gave the antithetic count. The plain run on 100,000 draws has error 0.0465.",
+     "double": "You doubled the draws. That cuts the error by only $\\sqrt 2$.",
+     "sixteen": "You squared twice. Halving the error needs $2^2 = 4$ times the draws."
+    }
+   },
+   "explain": {
+    "text": "The antithetic estimate is worth about 400,000 plain draws, for 200,000 payoff evaluations: a saving of about two. It works because a call's payoff is monotone in $z$, so $z$ and $-z$ are negatively correlated."
+   },
+   "tags": [
+    "monte-carlo"
+   ]
+  },
+  {
+   "id": "h-touch-shift",
+   "difficulty": 4,
+   "skills": [
+    "it-pricing"
+   ],
+   "prose": "Driftless Brownian motion over one year is sampled at 500 equal steps.",
+   "question": "What is the corrected chance that a 500-step walk touches 1.2? The shifted level is $1.2 + 0.5826/\\sqrt{500}$ ${}= 1.2261$, and $\\Phi(1.2261) = 0.88991$.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2202,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "$2(1 - 0.88991) = 0.2202$, against $2(1 - \\Phi(1.2)) = 0.2301$ for continuous monitoring.",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "continuous",
+      "value": 0.2301,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one-tail",
+      "value": 0.1101,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2(1 - 0.88991) = 0.2202$.",
+    "generic": "Not quite right. Double the upper tail at the shifted level.",
+    "byKey": {
+     "continuous": "You used the unshifted level 1.2. A discrete walk touches less often.",
+     "one-tail": "You forgot the doubling from reflection."
+    }
+   },
+   "explain": {
+    "text": "The shifted level 1.2261 lowers the touch chance from 0.2301 to 0.2202. With more steps the correction shrinks like $1/\\sqrt n$."
+   },
+   "tags": [
+    "barrier"
+   ]
+  },
+  {
+   "id": "h-derivation",
+   "difficulty": 5,
+   "skills": [
+    "it-pricing",
+    "it-martingale"
+   ],
+   "kind": "longform",
+   "title": "Derivation",
+   "pace": 300,
+   "tags": [
+    "derivation-aloud"
+   ],
+   "prompt": "This is the five-minute spoken derivation from lesson 9. Answer aloud, with a watch, in about five minutes. Then write your answer, open the model answer and mark yourself against the rubric. Derive the Black-Scholes equation from the delta hedge. Then explain the risk-neutral price of the call. Cover the hedge, the equation, the change of drift, the expectation, and the one assumption that fails most.",
+   "model": "**1. Model and lemma.** The share follows $dS = \\mu S\\,dt + \\sigma S\\,dW$ and $(dW)^2 = dt$. For a claim $V(t, S)$, Itô's lemma gives $dV = (V_t + \\mu SV_S + \\tfrac12\\sigma^2S^2V_{SS})\\,dt + \\sigma SV_S\\,dW$. The second-order term survives because $(dS)^2 = \\sigma^2S^2\\,dt$.\n\n**2. Hedge.** Sell one claim and hold $\\Delta$ shares: $\\Pi = -V + \\Delta S$, so $d\\Pi = -dV + \\Delta\\,dS$. Choose $\\Delta = V_S$. The $dW$ terms cancel, and so do the $\\mu$ terms, leaving $d\\Pi = -(V_t + \\tfrac12\\sigma^2S^2V_{SS})\\,dt$.\n\n**3. No arbitrage and the equation.** The book has no noise, so it must earn cash: $d\\Pi = r\\Pi\\,dt = r(-V + SV_S)\\,dt$. Equating the two gives $$V_t + rSV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV = 0.$$ The drift $\\mu$ is gone. Check at $S = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$: $\\Theta = -6.4140$, $rS\\Delta = 3.1842$, $\\tfrac12\\sigma^2S^2\\Gamma = 3.7524$ and $rV = 0.5225$ add to 0.\n\n**4. Change of drift and the risk-neutral price.** Because $\\mu$ cancelled, we may price in a world where the share drifts at $r$. With $\\theta = (\\mu - r)/\\sigma$ ($0.35$ for $\\mu = 12\\%$) and $\\tilde W_t = W_t + \\theta t$, $dS = rS\\,dt + \\sigma S\\,d\\tilde W$. Reweighting the paths by $Z_T = e^{-\\theta W_T - \\theta^2T/2}$ gives a measure $Q$ under which $e^{-rt}S_t$ is a martingale. So $V_0 = e^{-rT}E_Q[h(S_T)]$, which for the call is $S_0\\Phi(d_1) - Ke^{-rT}\\Phi(d_2) = \\text{£}10.4506$. A simulation of 100,000 draws gives 10.4534 with standard error 0.0465.\n\n**5. The assumption that fails most.** Constant volatility. Desks quote a different $\\sigma$ for each strike and expiry. Hedging with realised variance above $\\sigma^2$ loses about vega times the gap. Our call has vega £0.3752 per volatility point. Continuous hedging and no jumps also fail, so a barrier option's delta can jump near the barrier.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States the model $dS = \\mu S\\,dt + \\sigma S\\,dW$ and Itô's lemma for $V(t, S)$, with the second-order term from $(dW)^2 = dt$."
+    },
+    {
+     "points": 2,
+     "text": "Builds the hedged book $-V + \\Delta S$ and chooses $\\Delta = V_S$, so that the $dW$ terms and the $\\mu$ terms cancel."
+    },
+    {
+     "points": 2,
+     "text": "Argues that a noiseless book must earn $r$ (no arbitrage) and states $V_t + rSV_S$ ${}+ \\tfrac12\\sigma^2S^2V_{SS}$ ${}- rV = 0$, saying that $\\mu$ has gone."
+    },
+    {
+     "points": 2,
+     "text": "Explains the change of drift: $\\theta = (\\mu - r)/\\sigma$ and a measure $Q$ with drift $r$. States the price $V_0 = e^{-rT}E_Q[h(S_T)]$ with a number such as £10.45."
+    },
+    {
+     "points": 2,
+     "text": "Names the assumption that fails most, such as constant volatility. Gives a consequence with a number, such as vega £0.3752 per point."
+    }
+   ]
+  }
+ ]
+}

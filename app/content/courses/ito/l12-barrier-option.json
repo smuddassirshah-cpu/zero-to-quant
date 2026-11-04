@@ -1,0 +1,1370 @@
+{
+ "id": "l12-barrier-option",
+ "course": "ito",
+ "title": "Pricing a barrier option by simulation",
+ "minutes": 15,
+ "objectives": [
+  "Price a barrier option by Monte Carlo and check it against the reflection principle."
+ ],
+ "skills": [
+  "it-pricing"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "A knock-out option dies if the price ever touches a barrier. First the simplest case: driftless Brownian motion $W$ over one year, with a barrier at 1. By reflection, a path that touches 1 and falls back matches a path that ends above 1. Take $\\Phi(1) = 0.841345$.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "mu": 0,
+     "sigma": 0.1,
+     "steps": 100,
+     "paths": 200,
+     "drawn": 30,
+     "start": 0,
+     "barriers": [
+      null,
+      1
+     ],
+     "sim": {
+      "seed": 3
+     },
+     "height": 250,
+     "y": [
+      -2.5,
+      2.5
+     ],
+     "yLabel": "$W_t$",
+     "xLabel": "Time (one year)"
+    },
+    "state": {
+     "showHits": true
+    }
+   },
+   "question": "What is the chance that $W$ touches 1 at some time in the year?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3173,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$P(\\max W \\ge 1) = 2P(W_1 \\ge 1) = 2(1 - 0.841345) = 0.3173$.",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "one-tail",
+      "value": 0.1587,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "inside",
+      "value": 0.6827,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "cdf",
+      "value": 0.8413,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The reflection trick pairs touching paths with paths ending above."
+    },
+    {
+     "rung": "point",
+     "text": "$P(W_1 \\ge 1) = 1 - \\Phi(1)$.",
+     "highlight": [
+      "barrier-up"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$2(1 - 0.841345) = 0.3173$: touching is twice as likely as ending above.",
+    "generic": "Not quite right. Count paths that end above 1 and the paths that touched and fell back.",
+    "byKey": {
+     "one-tail": "You gave $P(W_1 \\ge 1) = 0.1587$, paths that end above 1. Paths that touch and fall back are as many again.",
+     "inside": "You gave $P(|W_1| < 1)$. The question is about touching 1, and only the top barrier matters.",
+     "cdf": "You gave $\\Phi(1)$, the chance of ending below 1. Touching needs the upper tail, doubled."
+    }
+   },
+   "explain": {
+    "text": "Reflection gives $P(\\max_{t \\le 1} W_t \\ge 1)$ ${}= 2(1 - \\Phi(1)) = 0.3173$. The canvas count is a little lower, because a path can touch between its steps."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Touching by simulation",
+   "prose": "Check the reflection answer by simulation. Draw `z` with shape `(paths, n_steps)`. Build $W$ as the running sum of `z * sqrt(1 / n_steps)`. Return the share of paths whose maximum reaches `a`. The shape matters: the same seed with shape `(n_steps, paths)` gives different numbers.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "mu": 0,
+     "sigma": 0.1,
+     "steps": 100,
+     "paths": 200,
+     "drawn": 20,
+     "start": 0,
+     "barriers": [
+      null,
+      1
+     ],
+     "sim": {
+      "seed": 3
+     },
+     "height": 250,
+     "y": [
+      -2.5,
+      2.5
+     ],
+     "yLabel": "$W_t$",
+     "xLabel": "Time (one year)"
+    },
+    "state": {
+     "showHits": true
+    }
+   },
+   "question": "Complete `touch_prob_mc`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef touch_prob_mc(a, n_steps, paths, seed):\n    \"\"\"Share of paths whose maximum reaches a, with n_steps steps over [0, 1].\"\"\"\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal((paths, n_steps))  # one row per path\n    ...\n",
+    "solution": "import numpy as np\n\ndef touch_prob_mc(a, n_steps, paths, seed):\n    \"\"\"Share of paths whose maximum reaches a, with n_steps steps over [0, 1].\"\"\"\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal((paths, n_steps))  # one row per path\n    W = np.cumsum(z * np.sqrt(1 / n_steps), axis=1)\n    return float(np.mean(W.max(axis=1) >= a))\n",
+    "examples": [
+     {
+      "call": "touch_prob_mc(1, 1000, 5000, 13)",
+      "expect": "0.3102",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "touch_prob_mc(1, 100, 5000, 13)",
+      "expect": "0.2852",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "touch_prob_mc(1, 1000, 5000, 13)",
+      "expect": "0.3102",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "touch_prob_mc(1, 100, 5000, 13)",
+      "expect": "0.2852",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "touch_prob_mc(1, 10, 5000, 13)",
+      "expect": "0.2496",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "touch_prob_mc(2, 100, 5000, 13)",
+      "expect": "0.0418",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "touch_prob_mc(1, 400, 10000, 4)",
+      "expect": "0.3072",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "touch_prob_mc(0.5, 50, 4000, 9)",
+      "expect": "0.56175",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "how": "Check runs 6 hidden tests on seeds 13, 4 and 9 with 10 to 1,000 steps. Each answer is an exact fraction of paths.",
+    "budget": 20000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.cumsum(..., axis=1)` runs along each row."
+    },
+    {
+     "rung": "point",
+     "text": "A path touches `a` when the maximum of its row is at least `a`.",
+     "highlight": [
+      "barrier-up"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "With 1,000 steps and 5,000 paths on seed 13, 0.3102 touch 1: close to 0.3173, but below it.",
+    "generic": "Not quite right. Check the examples: 1,000 steps give 0.3102 and 100 steps give 0.2852."
+   },
+   "explain": {
+    "text": "More steps push the estimate towards 0.3173: 10 steps give 0.2496, 100 give 0.2852, 1,000 give 0.3102. Always below, because a discrete path can cross the barrier and come back between two steps. The standard error of 0.3102 on 5,000 paths is 0.0065, so the gap of 0.0071 is real but small."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Discrete monitoring misses touches. Broadie, Glasserman and Kou found a shift. A walk of $n$ steps acts like a continuous one with the barrier moved out by $0.5826\\,\\sigma\\sqrt{\\Delta t}$. Here $\\sigma\\sqrt{\\Delta t}$ ${}= 1/\\sqrt{1000}$ and $\\Phi(1.0184) = 0.84576$.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "mu": 0,
+     "sigma": 0.05,
+     "steps": 400,
+     "paths": 200,
+     "drawn": 20,
+     "start": 0,
+     "barriers": [
+      null,
+      1.0184
+     ],
+     "sim": {
+      "seed": 3
+     },
+     "height": 250,
+     "y": [
+      -2.5,
+      2.5
+     ],
+     "yLabel": "$W_t$",
+     "xLabel": "Time (one year)"
+    },
+    "state": {
+     "showHits": true
+    }
+   },
+   "question": "Fill in the shifted barrier and the corrected touch chance for 1,000 steps.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Shifted barrier $1 + 0.5826/\\sqrt{1000}$",
+      {
+       "edit": true,
+       "answer": 1.0184,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "no-root",
+         "value": 1.5826,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "Corrected chance $2(1 - \\Phi(1.0184))$",
+      {
+       "edit": true,
+       "answer": 0.3085,
+       "tol": {
+        "abs": 0.0006
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sqrt{1000} = 31.62$."
+    },
+    {
+     "rung": "point",
+     "text": "$0.5826/31.62 = 0.0184$.",
+     "highlight": [
+      "barrier-up"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The barrier moves to 1.0184 and the chance falls to 0.3085, inside the simulation's 0.3102 $\\pm$ 0.0065.",
+    "generic": "Not quite right. Add $0.5826/\\sqrt{1000} = 0.0184$ to 1, then double the upper tail.",
+    "byKey": {
+     "r0c1": "Row 1: $\\sqrt{1000} = 31.62$, so $0.5826/31.62 = 0.0184$ and the barrier is 1.0184.",
+     "r1c1": "Row 2: $2(1 - 0.84576) = 0.3085$."
+    }
+   },
+   "explain": {
+    "text": "The corrected chance is 0.3085, against 0.3173 for continuous monitoring and 0.3102 simulated with 1,000 steps. The shift is the cost of looking only at the steps. It is the same trick we will use for the option's barrier."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Now the option: a down-and-out call, barrier $B = 90$, strike 100, $S_0 = 100$, $r = 5\\%$, $\\sigma = 20\\%$, one year, monitored continuously. Reflection with drift gives the down-and-in call $$c_{di} = S(B/S)^{2\\lambda}\\Phi(y) - Ke^{-rT}(B/S)^{2\\lambda - 2}\\Phi(y - \\sigma\\sqrt T),$$ with $\\lambda$ ${}= \\frac{r + \\sigma^2/2}{\\sigma^2}$ and $y$ ${}= \\frac{\\ln(B^2/SK)}{\\sigma\\sqrt T}$ ${}+ \\lambda\\sigma\\sqrt T$.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "mu": 0.02,
+     "sigma": 1.26,
+     "steps": 252,
+     "paths": 40,
+     "start": 100,
+     "barriers": [
+      90,
+      null
+     ],
+     "sim": {
+      "seed": 12
+     },
+     "height": 250,
+     "y": [
+      70,
+      135
+     ],
+     "yLabel": "Share price (£)",
+     "xLabel": "Trading day"
+    },
+    "state": {
+     "showHits": true,
+     "stopAtBarrier": true
+    }
+   },
+   "question": "Fill in $\\lambda$, $y$, $(B/S)^{2\\lambda}$, $c_{di}$ and $c_{do} = c - c_{di}$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$\\lambda$",
+      {
+       "edit": true,
+       "answer": 1.75,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "$y$",
+      {
+       "edit": true,
+       "answer": -0.7036,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$(B/S)^{2\\lambda} = 0.9^{3.5}$",
+      {
+       "edit": true,
+       "answer": 0.6916,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "$c_{di}$ (give $\\Phi(y) = 0.240839$, $\\Phi(y - 0.2) = 0.183102$, $0.9^{1.5} = 0.853815$)",
+      {
+       "edit": true,
+       "answer": 1.7851,
+       "tol": {
+        "abs": 0.006
+       }
+      }
+     ],
+     [
+      "$c_{do} = 10.4506 - c_{di}$",
+      {
+       "edit": true,
+       "answer": 8.6655,
+       "tol": {
+        "abs": 0.006
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\ln(0.81) = -0.2107$."
+    },
+    {
+     "rung": "point",
+     "text": "$c_{di}$ ${}= 100 \\times 0.6916 \\times 0.2408$ ${}- 95.1229 \\times 0.8538 \\times 0.1831$.",
+     "highlight": [
+      "barrier-down"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The two terms are about 16.66 and 14.87."
+    }
+   ],
+   "feedback": {
+    "correct": "$c_{di} = 1.7851$ and $c_{do} = 8.6655$: the barrier takes £1.79 off the vanilla £10.45.",
+    "generic": "Not quite right. $\\lambda = 0.07/0.04$, and $y$ uses $\\ln(8100/10000)$.",
+    "byKey": {
+     "r0c1": "Row 1: $\\lambda = (0.05 + 0.02)/0.04$ ${}= 1.75$.",
+     "r1c1": "Row 2: $\\ln(0.81)/0.2$ ${}+ 1.75 \\times 0.2 = -1.0536$ ${}+ 0.35 = -0.7036$.",
+     "r2c1": "Row 3: $0.9^{3.5} = 0.6916$.",
+     "r3c1": "Row 4: $100 \\times 0.6916 \\times 0.2408$ ${}- 95.1229 \\times 0.8538 \\times 0.1831$ ${}= 16.656 - 14.871 = 1.785$.",
+     "r4c1": "Row 5: $10.4506 - 1.7851 = 8.6655$."
+    }
+   },
+   "explain": {
+    "text": "A knock-out plus the matching knock-in is the vanilla: $c_{di} + c_{do} = c$, so $c_{do} = 10.4506 - 1.7851$ ${}= 8.6655$. More than half the paths touch £90 in a year here, and those paths are the lost value. This is the price for continuous monitoring."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "A simulation with daily closes (252 steps, 20,000 paths, seed 12) gives £8.8510, standard error £0.1034. The continuous formula says £8.6655. A colleague says: \"the simulation is wrong, fix it to match the formula\".",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Monitoring",
+      "Price (£), 20,000 paths"
+     ],
+     "rows": [
+      [
+       "Monthly (12)",
+       "9.5712"
+      ],
+      [
+       "Weekly (52)",
+       "9.0885"
+      ],
+      [
+       "Daily (252)",
+       "8.8510"
+      ],
+      [
+       "Continuous (formula)",
+       "8.6655"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the right reading of the gap?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "monitoring",
+      "text": "Daily closes miss touches between them, so fewer paths die and the daily price is higher. It is a feature, not an error.",
+      "correct": true
+     },
+     {
+      "id": "bug",
+      "text": "The code has a bug, since a correct simulation lands on £8.6655 whatever the steps",
+      "why": "You read the gap as a model error. A simulation prices the contract it simulates, and this contract has daily monitoring."
+     },
+     {
+      "id": "noise",
+      "text": "It is noise: with enough paths the price falls to £8.6655",
+      "why": "More paths shrink the error 0.1034, but the price settles near £8.86, not £8.67. The monitoring gap stays."
+     },
+     {
+      "id": "lower",
+      "text": "A barrier checked daily is easier to hit, so the daily price should be lower",
+      "why": "Checking fewer dates can only miss touches. A path that dips to £89 mid-day and recovers survives, so more paths pay."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Can a path touch £90 between two daily closes?"
+    },
+    {
+     "rung": "point",
+     "text": "Those paths are alive in the daily contract and dead in the continuous one.",
+     "highlight": [
+      "r2c1"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The contract and the formula differ: daily monitoring is milder than continuous monitoring.",
+    "generic": "Not quite right. Ask whether checking only at the close can catch every touch.",
+    "byKey": {
+     "bug": "You treated the formula as the target. The formula prices a different contract, with continuous monitoring.",
+     "noise": "You called a systematic gap noise. The simulated price converges to about £8.86, not to £8.67.",
+     "lower": "You had the direction reversed. Missing touches means fewer knock-outs and a higher price."
+    }
+   },
+   "explain": {
+    "text": "Monitoring monthly (12 dates) gives £9.5712, weekly £9.0885, daily £8.8510: the price falls towards the continuous £8.6655 as dates multiply. The gap is the product's feature, so the right question is which contract is being sold."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Edge case. A down-and-out call has its barrier at the starting price, $B = 100 = S_0$, with strike 100. A simulation that tests closes from day 1 lets some paths survive. On 2,000 paths it prices the option at £1.19.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "mu": 0.02,
+     "sigma": 1.26,
+     "steps": 252,
+     "paths": 40,
+     "start": 100,
+     "barriers": [
+      100,
+      null
+     ],
+     "sim": {
+      "seed": 12
+     },
+     "height": 250,
+     "y": [
+      70,
+      135
+     ],
+     "yLabel": "Share price (£)",
+     "xLabel": "Trading day"
+    },
+    "state": {
+     "showHits": true,
+     "stopAtBarrier": true
+    }
+   },
+   "question": "What is the option's price, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "The share starts at the barrier, so the option is knocked out at once: price 0.",
+    "label": "Price",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "vanilla",
+      "value": 10.4506,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "naive",
+      "value": 1.1907,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare $S_0$ and $B$."
+    },
+    {
+     "rung": "point",
+     "text": "A touch at time 0 counts as a touch.",
+     "highlight": [
+      "barrier-down"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The price is 0: the option is dead on arrival, because the barrier is already touched at time 0.",
+    "generic": "Not quite right. Where does the share start, relative to the barrier?",
+    "byKey": {
+     "vanilla": "You ignored the barrier. A knock-out at the starting price never lives.",
+     "naive": "You trusted the simulation. It skipped the check at time 0, which is the first touch."
+    }
+   },
+   "explain": {
+    "text": "Any barrier at or above the start kills the option at time 0, so the price is 0. A pricer should test $B \\ge S_0$ first, and return 0 without simulating."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A knock-out pricer",
+   "prose": "Write `down_and_out_mc`. Return `(0.0, 0.0)` at once if $B \\ge S_0$. Otherwise draw `z` of shape `(paths, steps)`. Build $S$ from log steps $(r - \\sigma^2/2)\\Delta t$ ${}+ \\sigma\\sqrt{\\Delta t}\\,z$. Keep paths whose minimum stays above $B$. Discount $(S_T - K)^+$ on the survivors.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "mu": 0.02,
+     "sigma": 1.26,
+     "steps": 252,
+     "paths": 40,
+     "start": 100,
+     "barriers": [
+      90,
+      null
+     ],
+     "sim": {
+      "seed": 12
+     },
+     "height": 250,
+     "y": [
+      70,
+      135
+     ],
+     "yLabel": "Share price (£)",
+     "xLabel": "Trading day"
+    },
+    "state": {
+     "showHits": true,
+     "stopAtBarrier": true
+    }
+   },
+   "question": "Complete `down_and_out_mc`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom math import exp, sqrt\n\ndef down_and_out_mc(S0, K, B, r, sigma, T, steps, paths, seed):\n    \"\"\"Down-and-out call: (price, standard error), barrier checked at each step.\"\"\"\n    rng = np.random.default_rng(seed)\n    dt = T / steps\n    z = rng.standard_normal((paths, steps))  # one row per path\n    ...\n",
+    "solution": "import numpy as np\nfrom math import exp, sqrt\n\ndef down_and_out_mc(S0, K, B, r, sigma, T, steps, paths, seed):\n    \"\"\"Down-and-out call: (price, standard error), barrier checked at each step.\"\"\"\n    if B >= S0:\n        return 0.0, 0.0\n    rng = np.random.default_rng(seed)\n    dt = T / steps\n    z = rng.standard_normal((paths, steps))  # one row per path\n    log_steps = (r - sigma ** 2 / 2) * dt + sigma * sqrt(dt) * z\n    S = S0 * np.exp(np.cumsum(log_steps, axis=1))\n    alive = S.min(axis=1) > B\n    x = exp(-r * T) * np.maximum(S[:, -1] - K, 0) * alive\n    return float(np.mean(x)), float(np.std(x, ddof=1) / sqrt(paths))\n",
+    "examples": [
+     {
+      "call": "[round(v, 4) for v in down_and_out_mc(100, 100, 90, 0.05, 0.2, 1, 252, 20000, 12)]",
+      "expect": "[8.851, 0.1034]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in down_and_out_mc(100, 100, 100, 0.05, 0.2, 1, 252, 2000, 12)]",
+      "expect": "[0.0, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(v, 4) for v in down_and_out_mc(100, 100, 90, 0.05, 0.2, 1, 252, 20000, 12)]",
+      "expect": "[8.851, 0.1034]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in down_and_out_mc(100, 100, 90, 0.05, 0.2, 1, 12, 20000, 12)]",
+      "expect": "[9.5712, 0.1048]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in down_and_out_mc(100, 100, 90, 0.05, 0.2, 1, 52, 20000, 12)]",
+      "expect": "[9.0885, 0.1044]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in down_and_out_mc(100, 100, 100, 0.05, 0.2, 1, 252, 2000, 12)]",
+      "expect": "[0.0, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in down_and_out_mc(100, 100, 105, 0.05, 0.2, 1, 252, 2000, 12)]",
+      "expect": "[0.0, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in down_and_out_mc(120, 100, 90, 0.03, 0.25, 2, 100, 10000, 3)]",
+      "expect": "[29.2942, 0.3903]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in down_and_out_mc(100, 100, 80, 0.05, 0.2, 1, 252, 10000, 5)]",
+      "expect": "[10.3775, 0.1477]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ],
+    "how": "Check runs 7 hidden tests. Three check daily, weekly and monthly monitoring. Two check dead-on-arrival barriers. Two check other options.",
+    "budget": 20000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`np.cumsum(log_steps, axis=1)` gives the log price path; `np.exp` and `S0 *` turn it into prices."
+    },
+    {
+     "rung": "point",
+     "text": "`alive = S.min(axis=1) > B` keeps the paths that never reached the barrier.",
+     "highlight": [
+      "barrier-down"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Multiply the discounted payoff by `alive`, then average."
+    }
+   ],
+   "feedback": {
+    "correct": "Daily monitoring gives £8.8510 (standard error 0.1034), above the continuous £8.6655.",
+    "generic": "Not quite right. Check the examples: daily steps give 8.8510 and a barrier at the start gives 0."
+   },
+   "explain": {
+    "text": "On seed 12 the price is £8.8510 (standard error £0.1034), and the vanilla on the same paths is £10.4128. The gap above £8.6655 is 1.8 standard errors, but monitoring explains it: monthly gives £9.5712 and weekly £9.0885. A barrier at the start price returns 0."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Every path either touches the barrier or does not. So a knock-out and its knock-in add to the vanilla, path by path. On the same 20,000 daily paths the vanilla call is worth £10.4128 and the knock-out £8.8510.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Item",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Continuous vanilla (formula)",
+       "10.4506"
+      ],
+      [
+       "Same-path vanilla, 20,000 paths",
+       "10.4128 $\\pm$ 0.1039"
+      ],
+      [
+       "Paths that stayed above 90",
+       "47%"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the daily knock-in by parity, then compare it with the continuous one.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Price (£)",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Vanilla, same paths",
+      "10.4128"
+     ],
+     [
+      "Down-and-out, daily",
+      "8.8510"
+     ],
+     [
+      "Down-and-in, daily (parity)",
+      {
+       "edit": true,
+       "answer": 1.5617,
+       "tol": {
+        "abs": 0.0006
+       },
+       "wrong": [
+        {
+         "id": "sum",
+         "value": 19.2638,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "Down-and-in, continuous formula",
+      "1.7851"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "In-out parity: knock-in plus knock-out equals vanilla."
+    },
+    {
+     "rung": "point",
+     "text": "Subtract the knock-out from the vanilla.",
+     "highlight": [
+      "r2c1"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$10.4128 - 8.8510 = 1.5618$: the daily knock-in is below the continuous 1.7851, since daily checks catch fewer touches.",
+    "generic": "Not quite right. Knock-in plus knock-out equals the vanilla.",
+    "byKey": {
+     "r2c1": "Row 3: in plus out equals vanilla, so subtract: $10.4128 - 8.8510 = 1.5618$. Adding them would overshoot the vanilla."
+    }
+   },
+   "explain": {
+    "text": "The knock-in is £1.5617, below the continuous £1.7851 by what the knock-out gains. Parity holds path by path. This check catches bugs: a barrier test applied to the wrong paths breaks it."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "The shift from earlier works for the option. Daily monitoring has $\\Delta t = 1/252$, so the barrier moves down to $B e^{-0.5826\\sigma\\sqrt{\\Delta t}}$, further from the share. The continuous closed form at that barrier gives $c_{di} = 1.5367$.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "mu": 0.02,
+     "sigma": 1.26,
+     "steps": 252,
+     "paths": 40,
+     "start": 100,
+     "barriers": [
+      90,
+      null
+     ],
+     "sim": {
+      "seed": 12
+     },
+     "height": 250,
+     "y": [
+      70,
+      135
+     ],
+     "yLabel": "Share price (£)",
+     "xLabel": "Trading day"
+    },
+    "state": {
+     "showHits": true,
+     "stopAtBarrier": true
+    }
+   },
+   "question": "Fill in the shift, the effective barrier, and the daily knock-out price $c - c_{di}$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Shift $0.5826\\,\\sigma\\sqrt{\\Delta t}$",
+      {
+       "edit": true,
+       "answer": 0.0073,
+       "tol": {
+        "abs": 0.0002
+       },
+       "wrong": [
+        {
+         "id": "no-root",
+         "value": 0.1165,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "Effective barrier $90e^{-\\text{shift}}$",
+      {
+       "edit": true,
+       "answer": 89.3418,
+       "tol": {
+        "abs": 0.002
+       }
+      }
+     ],
+     [
+      "Daily knock-out $10.4506 - 1.5367$",
+      {
+       "edit": true,
+       "answer": 8.9139,
+       "tol": {
+        "abs": 0.0006
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sqrt{252} = 15.87$, so $\\sigma\\sqrt{\\Delta t} = 0.0126$."
+    },
+    {
+     "rung": "point",
+     "text": "The shift is $0.5826 \\times 0.0126 = 0.00734$.",
+     "highlight": [
+      "barrier-down"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e^{-0.00734} = 0.99269$."
+    }
+   ],
+   "feedback": {
+    "correct": "The barrier moves from 90 to 89.3418 and the daily knock-out is £8.9139, within 0.06 of the simulated 8.8510.",
+    "generic": "Not quite right. $\\sigma\\sqrt{\\Delta t}$ ${}= 0.2/\\sqrt{252} = 0.0126$; multiply by 0.5826.",
+    "byKey": {
+     "r0c1": "Row 1: $0.5826 \\times 0.0126 = 0.00734$.",
+     "r1c1": "Row 2: $90 \\times e^{-0.00734}$ ${}= 89.3418$.",
+     "r2c1": "Row 3: $10.4506 - 1.5367 = 8.9139$."
+    }
+   },
+   "explain": {
+    "text": "The corrected price £8.9139 sits 0.063 above the simulation, 0.6 of its standard error: the two agree. A 400,000-path run gives £8.863 (standard error 0.023), so the shift is good to about five pence. The continuous £8.6655 is about £0.20 too low for a daily contract."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The formula and the shift",
+   "prose": "`norm_cdf` is given, and so is the vanilla part of `down_and_out_formula`. Finish it: the knock-in $c_{di}$ from the formula on screen 4, and the knock-out as vanilla minus knock-in. Then write `bgk_barrier(B, sigma, dt)`, the shifted barrier $Be^{-0.5826\\sigma\\sqrt{dt}}$.",
+   "question": "Complete `down_and_out_formula` and `bgk_barrier`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef down_and_out_formula(S0, K, B, r, sigma, T):\n    \"\"\"Continuously monitored down-and-out call, for B <= K.\"\"\"\n    if B >= S0:\n        return 0.0\n    d1 = (log(S0 / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    vanilla = S0 * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d1 - sigma * sqrt(T))\n    ...\n\ndef bgk_barrier(B, sigma, dt):\n    \"\"\"Barrier moved away from the share for discrete monitoring.\"\"\"\n    ...\n",
+    "solution": "from math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef down_and_out_formula(S0, K, B, r, sigma, T):\n    \"\"\"Continuously monitored down-and-out call, for B <= K.\"\"\"\n    if B >= S0:\n        return 0.0\n    d1 = (log(S0 / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    vanilla = S0 * norm_cdf(d1) - K * exp(-r * T) * norm_cdf(d1 - sigma * sqrt(T))\n    lam = (r + sigma ** 2 / 2) / sigma ** 2\n    y = log(B ** 2 / (S0 * K)) / (sigma * sqrt(T)) + lam * sigma * sqrt(T)\n    c_in = (S0 * (B / S0) ** (2 * lam) * norm_cdf(y)\n            - K * exp(-r * T) * (B / S0) ** (2 * lam - 2) * norm_cdf(y - sigma * sqrt(T)))\n    return vanilla - c_in\n\ndef bgk_barrier(B, sigma, dt):\n    \"\"\"Barrier moved away from the share for discrete monitoring.\"\"\"\n    return B * exp(-0.5826 * sigma * sqrt(dt))\n",
+    "examples": [
+     {
+      "call": "round(down_and_out_formula(100, 100, 90, 0.05, 0.2, 1), 4)",
+      "expect": "8.6655",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "round(bgk_barrier(90, 0.2, 1 / 252), 4)",
+      "expect": "89.3418",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(down_and_out_formula(100, 100, 90, 0.05, 0.2, 1), 4)",
+      "expect": "8.6655",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "round(down_and_out_formula(100, 100, 80, 0.05, 0.2, 1), 4)",
+      "expect": "10.3513",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "round(down_and_out_formula(120, 100, 90, 0.03, 0.25, 2), 4)",
+      "expect": "28.6554",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "round(down_and_out_formula(100, 100, 95, 0.0, 0.3, 0.5), 4)",
+      "expect": "4.155",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "down_and_out_formula(100, 100, 100, 0.05, 0.2, 1)",
+      "expect": "0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "round(bgk_barrier(90, 0.2, 1 / 252), 4)",
+      "expect": "89.3418",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "round(bgk_barrier(80, 0.25, 1 / 52), 4)",
+      "expect": "78.4004",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "round(down_and_out_formula(100, 100, bgk_barrier(90, 0.2, 1 / 252), 0.05, 0.2, 1), 4)",
+      "expect": "8.9139",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ],
+    "how": "Check runs 8 hidden tests. Five check the closed form. Two check the shifted barrier. One checks the daily price of 8.9139."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\lambda = (r$ ${}+ \\sigma^2/2)/\\sigma^2$ and $y$ ${}= \\ln(B^2/(S_0K))/(\\sigma\\sqrt T)$ ${}+ \\lambda\\sigma\\sqrt T$."
+    },
+    {
+     "rung": "point",
+     "text": "$c_{di}$ ${}= S_0(B/S_0)^{2\\lambda}\\Phi(y)$ ${}- Ke^{-rT}(B/S_0)^{2\\lambda - 2}\\Phi(y$ ${}- \\sigma\\sqrt T)$."
+    }
+   ],
+   "feedback": {
+    "correct": "The formula gives 8.6655, the shifted barrier 89.3418, and together they give the daily price 8.9139.",
+    "generic": "Not quite right. Check the examples: 8.6655 and 89.3418."
+   },
+   "explain": {
+    "text": "The closed form gives £8.6655 for the continuous contract. Feeding it the shifted barrier gives £8.9139 for the daily contract, inside one standard error (0.1034) of the daily simulation. So the formula and the simulation agree once each prices the same contract."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A bank sells a structured note with our down-and-out call payoff. The barrier is 90% of the start and the strike 100%, checked at the daily close. The desk marks 1,000 notes at the continuous formula, £8.6655 each. The daily-monitored price, using the shifted barrier, is £8.9139.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Price per note (£)",
+      "Value"
+     ],
+     "rows": [
+      [
+       "Continuous formula",
+       "8.6655"
+      ],
+      [
+       "Daily, shifted barrier",
+       "8.9139"
+      ],
+      [
+       "Daily simulation",
+       "8.8510 $\\pm$ 0.1034"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "By how many £ does the continuous price undercharge for 1,000 notes?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 248.4,
+    "tol": {
+     "abs": 1
+    },
+    "accept": "$(8.9139 - 8.6655) \\times 1000 = 248.4$.",
+    "label": "Undercharge",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "sim",
+      "value": 185.5,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "price",
+      "value": 8913.9,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract 8.6655 from 8.9139."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply by 1,000.",
+     "highlight": [
+      "r1c1"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$0.2484 \\times 1000$ ${}= \\text{£}248.40$: the desk would sell the note about £248 too cheap.",
+    "generic": "Not quite right. Take the difference of the two prices and scale by 1,000.",
+    "byKey": {
+     "sim": "You used the simulated 8.8510. The question asks for the gap to the shifted price, 8.9139.",
+     "price": "You gave 1,000 times the daily price. The question asks for the gap against the continuous price.",
+     "zero": "You treated the two prices as equal. Daily monitoring makes the note dearer than the continuous formula says."
+    }
+   },
+   "explain": {
+    "text": "The right price follows the contract: use the shifted formula or a daily simulation with its standard error. At 1,000 notes the continuous price is £248 too low, or £200 by a long simulation."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A touch of a level has chance $2(1 - \\Phi(a))$ for driftless Brownian motion, by reflection. A discrete walk misses touches and lands lower: 0.3102 against 0.3173.",
+   "A down-and-out call costs £8.6655 monitored continuously. Monitored daily it costs about £8.86, and the shifted barrier gives £8.9139. Knock-in plus knock-out is the vanilla, path by path.",
+   "Broadie, Glasserman and Kou: move the barrier away by $0.5826\\sigma\\sqrt{\\Delta t}$ to price discrete monitoring in the continuous formula. A barrier at or above the start is worth 0."
+  ],
+  "formula": {
+   "name": "Shifted barrier",
+   "tex": "B^* = B\\,e^{-0.5826\\,\\sigma\\sqrt{\\Delta t}}",
+   "note": "For a down barrier: 90 becomes 89.3418 at daily monitoring. Use $B^*$ in the continuous formula."
+  },
+  "trap": "A gap between a daily simulation and a continuous formula is the contract, not a bug. Price the contract sold."
+ },
+ "quiz": [
+  {
+   "id": "q-path",
+   "difficulty": 2,
+   "prose": "A junior writes a down-and-out pricer that kills a path only if its final price is at or below 90.",
+   "question": "What does this code get wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "path",
+      "text": "It keeps paths that dipped to 90 and recovered, but those must be dead",
+      "correct": true
+     },
+     {
+      "id": "final",
+      "text": "Nothing: a path that ends above 90 never touched it",
+      "why": "You assumed the end price tells you the path. A path can fall to 85 in March and finish at 110."
+     },
+     {
+      "id": "below",
+      "text": "It should kill a path if the final price is above 90",
+      "why": "You flipped the direction. The down-and-out call dies when the price falls to the barrier."
+     },
+     {
+      "id": "step",
+      "text": "It should test only the first step",
+      "why": "You tested one date. The barrier must be tested at every monitoring date."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The barrier is about the whole path, so test the minimum over the monitoring dates.",
+    "generic": "Not quite right. Ask what a path that fell to 85 and recovered should pay.",
+    "byKey": {
+     "final": "You trusted the final price. The check must cover the whole path.",
+     "below": "You flipped the barrier condition. A down barrier kills on falling to it.",
+     "step": "You checked one date. Every monitoring date can trigger the knock-out."
+    }
+   },
+   "explain": {
+    "text": "Test `S.min(axis=1) > B`. Checking only the end overprices the knock-out and breaks in-out parity."
+   }
+  },
+  {
+   "id": "q-parity",
+   "difficulty": 2,
+   "prose": "A down-and-in call is worth £2.10 and the vanilla call £9.40.",
+   "question": "What is the matching down-and-out call worth, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7.3,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "In plus out equals vanilla: $9.40 - 2.10 = 7.30$.",
+    "label": "Price",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "sum",
+      "value": 11.5,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "in",
+      "value": 2.1,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$9.40 - 2.10 = 7.30$.",
+    "generic": "Not quite right. A knock-in and a knock-out together are the vanilla.",
+    "byKey": {
+     "sum": "You added the two. Parity says in plus out equals the vanilla.",
+     "in": "You gave the knock-in. The question asks for the knock-out."
+    }
+   },
+   "explain": {
+    "text": "Each path either touches or not, so exactly one option pays on it. The two prices sum to the vanilla."
+   }
+  },
+  {
+   "id": "q-shift",
+   "difficulty": 3,
+   "prose": "A weekly-monitored down barrier sits at 80 with $\\sigma = 25\\%$, so $\\Delta t = 1/52$.",
+   "question": "What is the shifted barrier $80e^{-0.5826\\sigma\\sqrt{\\Delta t}}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 78.4,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "$0.5826 \\times 0.25 \\times 0.13868 = 0.0202$ and $80e^{-0.0202} = 78.40$.",
+    "label": "Barrier",
+    "wrong": [
+     {
+      "id": "up",
+      "value": 81.63,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "no-root",
+      "value": 69.16,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$80e^{-0.0202} = 78.40$.",
+    "generic": "Not quite right. $\\sqrt{1/52} = 0.1387$; the shift is small and moves the barrier down.",
+    "byKey": {
+     "up": "You moved the barrier towards the share. Discrete monitoring needs it moved away.",
+     "no-root": "You left out $\\sqrt{\\Delta t}$. The shift is 0.0202, not 0.1457."
+    }
+   },
+   "explain": {
+    "text": "The exponent is $-0.5826 \\times 0.25 \\times 0.1387$ ${}= -0.0202$, so the barrier moves from 80 to 78.40, further below the share."
+   }
+  },
+  {
+   "id": "q-touch",
+   "difficulty": 3,
+   "prose": "Driftless Brownian motion over one year. Take $\\Phi(2) = 0.97725$.",
+   "question": "What is the chance it touches 2 at some time?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0455,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$2(1 - 0.97725) = 0.0455$.",
+    "label": "Chance",
+    "wrong": [
+     {
+      "id": "one-tail",
+      "value": 0.0228,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "inside",
+      "value": 0.9545,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2(1 - 0.97725) = 0.0455$.",
+    "generic": "Not quite right. Reflection doubles the upper tail.",
+    "byKey": {
+     "one-tail": "You gave the chance of ending above 2. Touching is twice as likely.",
+     "inside": "You gave the chance of staying within $\\pm 2$ at the end. The question is about touching the top."
+    }
+   },
+   "explain": {
+    "text": "Paths that touch 2 either end above it (chance 0.0228) or fall back (chance 0.0228 again). The total is 0.0455."
+   }
+  }
+ ]
+}
