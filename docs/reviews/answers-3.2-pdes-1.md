@@ -182,3 +182,22 @@ Disputed: none. Deferred: none.
 - `l4-boundary-conditions.json` screen 0 slider: control range max 3 to 6.
 - `l4-boundary-conditions.json` `q-energy`: answer 0.0695 to 0.06946, tol.abs 5e-05 to 6e-05.
 - Option text only (keys unchanged): l1 screens 6 and 10, l2 `q-even`, l3 screen 9, l4 screens 6 and 7.
+
+## Recheck
+
+Rechecked independently (scratchpad `rc-pdes1`: erf and series for closed forms, loop for the scheme, CPython with NumPy for the tests). Commit e69ff99 confirmed in history.
+
+- `h-far-boundary`: 300 - 120e^{-0.03} = 183.5465 (direct exponential). 180 = undiscounted, 300 = payoff only. Correct, wrongs match their slips, no repeat in the course.
+- `h-unstable`: loop from [0, 1, 0, 0, 0] with lambda 0.6 gives -0.24 (step 1 [0, -0.2, 0.6, 0, 0]); lambda 0.4 gives 0.16; one step gives 0.6. Correct. The 0.16 also appears as an unrelated variance in `h-colleague` only.
+- `h-profile`: solution passes all 6 hidden tests plus the example (step 0.07865, 0.361837, 0.638163, 0.855578 equal Phi(x/sqrt 2); bump 0.41369, 0.152188 equal e^{-x^2/3}/sqrt 3). Starter fails all 6 (returns None or raises). Correct.
+- `h-wellposed`: insulated heat, transport and Black-Scholes from expiry are well-posed; sign-flipped heat (growth e^{k^2 pi^2 t}) and midpoint data are not. Key set right, no distractor correct, key not longest. Correct.
+- `r-step-neg`: Phi(-1/sqrt 2) = 0.239750; wrong-side 0.760250; no-scale Phi(-1) = 0.158655; zero 0. Correct. 0.7602 and 0.2398 appear nowhere else in pdes.
+- `r-back`: e^8 = 2980.96 gives 2981; e^-8 = 3.3546e-4 sits within 1% of 0.000335 (0.14%); `forwards` tol rel 0.01 fine. Correct.
+- `q-back` (l3): e^9 = 8103.08; e^-9 = 1.2341e-4 within 0.33% of 0.000123. Correct.
+- l3 screen 7: e^10 = 22026.47; e^-10 = 4.54e-5 matches 4.54e-05 within tol. Correct.
+- `q-energy`: 0.5e^{-0.2 pi^2} = 0.0694556; key 0.06946 diff 4e-6; the accept text 0.0695 diff 4.4e-5 is inside tol 6e-05; no-half 0.1389 = 0.138911. Correct.
+- l3 screen 0 slider: peak = 1/sqrt(4 pi t) = 0.141047 at t = 4, tol 0.15 fine; `double-t` range 1.7 to 2.4 (t = 2 gives 0.1995) matches the named slip and misses the key. Correct.
+- l4 screen 0 slider: series gives 35.205 at t = 6 (reads 35.2) and 35.558 at t = 5 (outside tol 0.5), so only the end of the slider reads inside the key. Matches the prompt (long-run middle) and the key 35. Correct.
+- Choice items (l1 screens 6 and 10, l2 `q-even`, l3 screen 9, l4 screens 6 and 7): meaning kept, no distractor correct (sigma depending on S keeps Black-Scholes linear). Correct.
+
+No mismatches in any key. One nit, no fix needed: the key is the longest option by 4 to 5 characters in l1 screen 6 (67 against 62) and l4 screen 6 (60 against 56). If wanted, l1 screen 6 key "Linear: $S$ only weights the terms, and $V$ never multiplies itself" could lose "the" from option 3 or gain a word in option 2; the gap is too small to be a visible tell.
