@@ -503,7 +503,7 @@ const main = async () => {
        because the full play above has already submitted it. */
     const partsHomeworkChecks = async (st) => {
       const doc = readJSON(path.join(CONTENT, 'courses', ...st.id.split('/')) + '.json');
-      const k = (doc.items || []).findIndex(it => Array.isArray(it.parts) && it.parts.length >= 3 && !it.parts.some(p => p.widget.kind === 'code'));
+      const k = (doc.items || []).findIndex(it => Array.isArray(it.parts) && it.parts.length >= 3 && !it.parts.some(p => ((p && p.widget) || {}).kind === 'code'));
       if (k < 0) return;
       where = '#' + st.route;
       const fails = [], t0 = Date.now(), item = doc.items[k], N = item.parts.length;
@@ -512,22 +512,31 @@ const main = async () => {
         await page.evaluate((s) => { const d = JSON.parse(ZQ.state.export()); delete d.homework[s.id]; ZQ.state.import(JSON.stringify(d)); ZQ.store.set('hw.result.' + s.id, null); ZQ.store.set('hw.draft.' + s.id, null); }, st);
         await reopen(st.route);
         await page.evaluate(() => ZQ.test.continue());   // the intro
+        /* the parts item may sit anywhere: answer the items before it as an ordinary play does, then its parts */
+        for (let g = 0; g < 60 && (await page.evaluate(() => ZQ.test.current())).screenIndex !== k; g++) {   // one pass a part or an item
+          const py = await waitPython(); if (py) { fails.push(py); break; }
+          await page.evaluate(() => ZQ.test.answerCorrect());
+          const r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { pending: !!r.pending } : null; });
+          if (r && r.pending) { await page.evaluate(() => ZQ.test.answerCorrect()); await page.evaluate(async () => { await ZQ.test.check(); }); }
+          await page.evaluate(() => ZQ.test.continue());
+        }
         for (let p = 0; p < N - 1; p++) {
           await page.evaluate(() => ZQ.test.answerCorrect());
           await page.evaluate(() => ZQ.test.continue());   // opens the next part
         }
         const mid = await page.evaluate(() => ZQ.test.current());
-        if (mid.part !== N - 1 || mid.screenIndex !== 0) fails.push(`the item should show its last part (screen ${mid.screenIndex}, part ${mid.part})`);
+        if (mid.part !== N - 1 || mid.screenIndex !== k) fails.push(`the item should show its last part (screen ${mid.screenIndex}, part ${mid.part}, item ${k})`);
         /* the draft keeps the open parts and the answers */
         await reopen(st.route);
         await page.evaluate(() => ZQ.test.continue());
-        const kept = await page.evaluate(() => { const v = ZQHomework.handles()[0].value(); return { open: v && v.open, answered: v && v.parts.filter(x => x != null && x !== '' && !(Array.isArray(x) && !x.length)).length }; });
+        await page.evaluate((i) => ZQHomework.go(i), k);
+        const kept = await page.evaluate((i) => { const v = ZQHomework.handles()[i].value(); return { open: v && v.open, answered: v && v.parts.filter(x => x != null && x !== '' && !(Array.isArray(x) && !x.length)).length }; }, k);
         if (kept.open !== N || kept.answered !== N - 1) fails.push(`the draft kept ${kept.open} open parts and ${kept.answered} answers, expected ${N} and ${N - 1}`);
-        let guard = 0;
+        let guard = 0, left = false;
         while (++guard < 80) {
           const c = await page.evaluate(() => ZQ.test.current());
           if (c.kind === 'done') break;
-          if (c.kind === 'item' && c.screenIndex === 0) { await page.evaluate(() => ZQHomework.go(1)); continue; }   // leave the last part of item 1 unanswered
+          if (c.kind === 'item' && c.screenIndex === k && !left) { left = true; await page.evaluate((v) => ZQHomework.go(v), k + 1 < doc.items.length ? k + 1 : 'review'); continue; }   // leave the last part of the parts item unanswered
           if (c.kind === 'item') {
             const py = await waitPython(); if (py) { fails.push(py); break; }
             await page.evaluate(() => ZQ.test.answerCorrect());
@@ -546,7 +555,7 @@ const main = async () => {
           if (!Array.isArray(x.parts) || x.parts.filter(q => q.ok).length !== N - 1) fails.push(`item ${k + 1}: the stored parts are ${JSON.stringify(x.parts)}`);
           if (out.score !== out.items - 1) fails.push(`homework scored ${out.score} of ${out.items} right, expected ${out.items - 1} (the item with an unanswered part is not right)`);
         }
-        const row = await page.evaluate(() => (document.querySelector('.hw-res-r .hw-rl-t .secondary') || {}).textContent || '');
+        const row = await page.evaluate((i) => { const r = document.querySelectorAll('.hw-res-r')[i]; return ((r && r.querySelector('.hw-rl-t .secondary')) || {}).textContent || ''; }, k);
         if (!new RegExp(`${N - 1} of ${N} parts right`).test(row)) fails.push(`the summary row says "${row}", expected "${N - 1} of ${N} parts right"`);
         console.log(`${fails.length ? 'FAIL' : 'ok  '} ${st.id} (parts checks)  open parts kept in the draft, part credit in the marks, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
@@ -653,7 +662,7 @@ const main = async () => {
           const id = f.replace(/\.json$/, ''), d = readJSON(path.join(dir, f));
           if (d.sample === true && doc.sample !== true) continue;
           if (kind === 'bank') { if (!(name === '*' || id === name || id.startsWith(name + '-'))) continue; (d.items || []).forEach(it => { if (keep(it.tags, it.difficulty)) out.push({ uid: `bank/${id}/${it.id}`, family: it.tags[0] }); }); }
-          else if (name === '*' || d.pack === name || d.id === name) { const t = Array.isArray(d.tags) && d.tags.length ? d.tags : [d.pattern || d.pack || d.id]; if (keep(t, d.difficulty)) out.push({ uid: `drills/${id}`, family: t[0] }); }
+          else if (name === '*' || d.pack === name || d.id === name || String(d.id).startsWith(name + '-')) { const tg = Array.isArray(d.tags) ? d.tags : [], t = [...tg, ...(d.pattern && !tg.includes(d.pattern) ? [d.pattern] : [])]; if (!t.length) t.push(d.pack || d.id); if (keep(t, d.difficulty)) out.push({ uid: `drills/${id}`, family: t[0] }); }
         }
         return out;
       };
@@ -664,7 +673,9 @@ const main = async () => {
           await page.waitForFunction(() => window.ZQExam && ZQExam.handles().length, null, { timeout: opt.timeout });
           return page.evaluate(() => ZQExam.handles().map(h => (h && h.item && h.item.drawn ? h.item.drawn.uid : null)).filter(Boolean));
         };
-        const want = entries.reduce((a, e) => a + Math.min(e.n, poolOf(e).length), 0);
+        /* the entries of an exam share one used set (the engine's draw): an item an earlier entry could claim is not counted again */
+        const claimed = new Set();
+        const want = entries.reduce((a, e) => { const free = poolOf(e).filter(x => !claimed.has(x.uid)).slice(0, e.n); free.forEach(x => claimed.add(x.uid)); return a + free.length; }, 0);
         const a = await grab(777), b = await grab(777);
         if (a.length !== want) fails.push(`${a.length} items drawn, ${want} expected from the draw entries`);
         if (new Set(a).size !== a.length) fails.push(`an item was drawn twice in one attempt: ${a.join(', ')}`);
@@ -868,7 +879,8 @@ const main = async () => {
        walked to the 30-day box so the deck holds only the file's items (the schedule is cleared before each file). Reports pass or fail per item. */
     const bankPlay = async (ids) => {
       const dir = path.join(CONTENT, 'bank');
-      const names = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => /^[a-z0-9-]+\.json$/.test(f) && readJSON(path.join(dir, f)).sample !== true).map(f => f.replace(/\.json$/, '')).sort() : [];   // sample files are never dealt
+      const all = fs.existsSync(dir) ? fs.readdirSync(dir).filter(f => /^[a-z0-9-]+\.json$/.test(f)).map(f => f.replace(/\.json$/, '')).sort() : [];
+      const names = all.filter(n => readJSON(path.join(dir, n + '.json')).sample !== true);   // sample files are never dealt
       const want = ids.includes('all') ? names : ids;
       for (const id of want) if (!names.includes(id)) die(`--bank ${id}: no such file in content/bank (${names.join(', ')})`);
       let tot = 0, bad = 0;
@@ -905,7 +917,14 @@ const main = async () => {
                   if (!(await page.evaluate(() => ZQ.test.answerCorrect()))) note(uid, 'answerCorrect had nothing to answer');
                   if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) note(uid, 'the page is wider than the window');
                   let r = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
-                  if (it.widget.kind === 'longform') {
+                  /* an item with parts: part k+1 opens on continue once part k is checked; the item is right when every part is */
+                  for (let q = 1; it.parts && q < it.parts.length; q++) {
+                    await page.evaluate(() => ZQ.test.continue());
+                    await page.evaluate(() => ZQ.test.answerCorrect());
+                    const rq = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
+                    r = { ok: !!(r && r.ok && rq && rq.ok) };
+                  }
+                  if (((it.widget || (it.parts && it.parts[0].widget) || {}).kind) === 'longform') {
                     await page.evaluate(() => { [...document.querySelectorAll('input[type=checkbox]')].filter(n => n.offsetParent && !n.checked).forEach(b => b.click()); });
                     const r2 = await page.evaluate(() => ZQ.test.check().then(r => r && { ok: !!r.ok }));
                     const last = await page.evaluate(() => { const x = ZQ.test.results(); return x.length ? !!x[x.length - 1].ok : false; });

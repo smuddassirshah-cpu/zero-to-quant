@@ -75,3 +75,26 @@ Behaviour kept: sample drills are not listed (`content.js` 166, `drill.js` 362) 
 ## Counts
 
 Errors 3, warnings 8, notes 5 (16 findings). All eight [Must] criteria are met; the errors are in the playthrough tool (1, 2) and the homework rule (3).
+
+## Fix pass
+
+Backlog items 474 to 480 in `docs/ENGINE-BACKLOG.md`. 15 findings fixed, 1 kept as it is (14), plus the playthrough gap from `docs/BACKLOG-INBOX.md` (systems L1 and research-int L1, `partsHomeworkChecks`). Verified from `app/` with `--local-cdn`: `validate.mjs` 0 errors; `--exams`, `--bank all`, `--drills`, `--routes-only`, `--set systems/homework-1 --set research-int/homework-1 --set research-int/review-1` all passed, as did the sample mocks, `py-found/review-sample-parts` and both sample homeworks. Regression samples kept: `exams/mock-sample-draw-prefix.json` (finding 1), `courses/py-found/homework-sample-parts-late.json` (finding 3 and the inbox gap), `sd-parts` in `bank/sample-draw.json`. Before and after: finding 1 failed the playthrough before the sample existed in the fixed form (the review's reproduction); finding 3 reproduced with the old validator ("homework in a programming course needs at least one code item"), 0 errors now; finding 2 played through a scratch non-sample bank file (7 of 7, deleted); the inbox gap failed ("the item should show its last part (screen 3, part 0)") and now passes; an overlapping-entries scratch mock gives the new error (deleted).
+
+1. Fixed (474). `poolOf` matches the id prefix `<pack>-`.
+2. Fixed (475). `--bank` answers every part; the kind comes from the first part when there is no widget; line 506 guarded. `sd-parts` added to the sample bank. Note: a sample bank file is never dealt by the deck, so the deck path was tested with a scratch real-named file, not a committed one.
+3. Fixed (476). Part widget kinds count toward the homework rule; `homework-sample-parts-late` is the regression file.
+4. Fixed (477). Drill item tags are `tags` then `pattern`, in `mock.js`, `validate.mjs` and the playthrough; AUTHORING Sources says so.
+5. Fixed (478). An earlier `cumulative: false` part starts a fresh merge, in the engine and the validator's count; AUTHORING says it, and that only `tests` merge.
+6. Fixed by documentation (477), the review's first option: a drawn drill is graded by the code widget, not the drill harness. No engine change, so no drill behaviour moves under the content agents.
+7. Fixed (474, 477). The playthrough counts with a shared `used` set. The validator errors when an exam's entries sum to more than the different items their pools hold. The engine already drew only unused items, so there was nothing to fill from; it keeps the console warning.
+8. Fixed (480), the review's first option: AUTHORING says the seed fixes the draw only before the learner's first attempt.
+9. Fixed (480). Sources bullet names the id prefix, as the Drill bullet does.
+10. Fixed (480). The AUTHORING `interleave` row lists the op fields and the `wait` rule (frees its lock, does not retake it).
+11. Fixed (480). The sample list is complete; `validate.mjs` runs `noteSample` on session files, so `samples` now lists `drills/sessions/sample-session.json` (19 hidden in `--routes-only`, from 16 plus this, the late homework and the prefix mock).
+12. Fixed (480). (a) The backlog lines 467 to 472 were already "Done" and 467 already says never quiz (the merge had fixed it); (b) the E3 clause is replaced; (c) the KNOWN_ISSUES line is removed.
+13. Not changed (480, documented). Part `id` stays allowed and is documented as accepted with no effect: removing it would break any content file that already carries one, and the content agents are mid-level.
+14. Not changed. The nine extra pattern slugs stay; the main session confirms.
+15. Fixed (480). A real session naming a sample drill is an error.
+16. Fixed (480). The scoring bullet states the negative-marking effect.
+
+Behaviour change that touches documented fields: only finding 5 (a sequence with `cumulative: false` before a later cumulative part now merges from that part) and finding 4 (an extra tag on a drawn drill); both stated in AUTHORING.

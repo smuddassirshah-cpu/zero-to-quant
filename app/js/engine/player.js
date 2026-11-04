@@ -1122,7 +1122,9 @@
       const w = parts[k].widget;
       if (!w || w.kind !== 'code' || w.cumulative === false) return w;
       const tests = [];
-      parts.slice(0, k).forEach(q => { const v = q.widget; if (v && v.kind === 'code' && (v.language || 'python') === (w.language || 'python')) (v.tests || []).forEach(t => { if (!tests.some(u => sameTest(u, t))) tests.push(t); }); });
+      let from = 0;   // an earlier code part with cumulative: false starts a fresh merge: nothing before it is run
+      parts.slice(0, k).forEach((q, j) => { const v = q.widget; if (v && v.kind === 'code' && v.cumulative === false && (v.language || 'python') === (w.language || 'python')) from = j; });
+      parts.slice(from, k).forEach(q => { const v = q.widget; if (v && v.kind === 'code' && (v.language || 'python') === (w.language || 'python')) (v.tests || []).forEach(t => { if (!tests.some(u => sameTest(u, t))) tests.push(t); }); });
       (w.tests || []).forEach(t => { if (!tests.some(u => sameTest(u, t))) tests.push(t); });
       return Object.assign({}, w, { tests });
     };
