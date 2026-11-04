@@ -970,3 +970,9 @@ Raised later (systems L2, 4 Nov):
 Raised later (systems level 3):
 - Playthrough `partsHomeworkChecks` counts a `table` part as answered even when no cell is filled (the draft keeps an array of empty strings), so a parts item whose last part is a `table` fails with "kept 4 open parts and 4 answers, expected 4 and 3". Wanted: count a part as answered only when a cell has text. Workaround: homework-3 item 1 ends with a `numeric` part.
 - `frames` control on an `array` canvas (l14 byte order) shows only the current frame's label at the right end of the slider, with no chip for the other frame, so two frames read as a one-sided slider. Wanted: label both ends, or let the `options` chips drive `frames`. Workaround: the prose names both orders and the question asks about the second.
+
+Raised later (exam mock-oa-code):
+- `code` item in an exam: needs a share-of-tests credit (partial marks by passed hidden tests). A reported platform scores by test group, which l15 and l17 teach as a planning rule. Workaround: one problem is right only when every test passes, and the description says so.
+- `draw` from `drills/<pack>`: needs a `language` filter, so a mixed Python and C++ pack can feed a Python-only mock. Workaround: the `oa` pack is all Python.
+- Drill library: `drills/oa` is listed on `#drill`, so a learner may meet a pool problem there before the mock. No workaround; the description says the pool is in the library.
+- `draw` unseen-first is applied inside one family only, and the families here are one drill each, so a resit may draw a problem seen last time while others are unseen. Needs unseen-first across the whole pool when families are singletons.
