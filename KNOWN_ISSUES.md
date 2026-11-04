@@ -89,3 +89,9 @@ Session E (4 Nov 2026)
 - Five bank ids describe older numbers after the answer-check fix pass and stay unchanged (progress keys on them): `semicircle-seven-points` (nine points), `cycle-following-two-hundred-boxes` (100 prisoners), `waiting-for-hh-three-losing-days` (four days), `fair-from-biased-quarter-coin` (coin 1/5), `hats-mod-k-six-prisoners` (family `hats-simultaneous`).
 - The interview results list shows one identical question line for all 30 behavioural items (engine, inbox "Bank second read (4 Nov)").
 - Behavioural rubric lines that judge delivery (pace, tone) stay compound until spoken mode (E10).
+
+Topic 3.5 briefs (4 Nov)
+- Brief code was checked natively (g++ 13.3, clang++ 18.1, CPython), not in YoWASP clang 21 or Pyodide. Level agents must run every starter and solution in the app once. coding-int's slow-but-correct starters fail by time only natively (about 6.5 s and 10.7 s at the brief's n); confirm in the browser.
+- The six research-int CSVs are not yet in `app/content/data/`; the L2 author generates them from `docs/briefs/research-int-scripts/gen_data.py` (run it before the other scripts there, which read `./data`).
+- `docs/briefs/systems-scripts/cpp/problems_l4*.py` and `appendix_cpp.md` predate `allocCheck`; the brief is the source for P-pool, P-format-price, P-latency-hist and P-handler (`systems-scripts/alloc/README.md`).
+- The clone is shallow, so git ahead and behind counts against other branches are unreliable; compare trees instead.
