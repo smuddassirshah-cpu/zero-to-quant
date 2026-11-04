@@ -834,7 +834,7 @@ Screens (10):
 
 Quiz (4): window counts; centres for `n = 7`; palindromic permutation; the worst case of centre expansion on `aaaa...` (quadratic).
 
-**Problem 6.1** `find_anagrams(s, p)`; Python; difficulty 3. Statement: "Return the start index of every window of `s` that is an anagram of `p`, in increasing order." Reference, starter (finds exact copies of `p`, not anagrams; fails 4 of 8), tests (the last has 100,000 letters and `p` of 1,000):
+**Problem 6.1** `find_anagrams(s, p)`; Python; difficulty 3. Statement: "Return the start index of every window of `s` that is an anagram of `p`, in increasing order." Reference, starter (finds exact copies of `p`, not anagrams; fails 3 of 8: rows 1, 7 and 8), tests (the last has 100,000 letters and `p` of 1,000):
 
 ```python
 def find_anagrams(s, p):
@@ -1565,7 +1565,7 @@ def life_step(board):
 | 6 | `life_step([[1, 1, 1]])` | `[[0, 1, 0]]` |
 | 7 | `b = [[(r * 7 + c * 3) % 5 % 2 for c in range(100)] for r in range(100)]; sum(map(sum, life_step(b)))` | `4079` |
 
-**Problem H2.3** `longest_valid_parentheses(s)`; Python; difficulty 5. Statement: "`s` holds `(` and `)`. Return the length of the longest valid (well-formed, contiguous) bracket substring." Reference (a stack of indices with a base of -1), starter (twice the number of `()` pairs; fails 5 of 10), tests (the last is `(` repeated 50,000 times then `)` 50,000 times, answer 100,000, which stops a cubic checker):
+**Problem H2.3** `longest_valid_parentheses(s)`; Python; difficulty 5. Statement: "`s` holds `(` and `)`. Return the length of the longest valid (well-formed, contiguous) bracket substring." Reference (a stack of indices with a base of -1), starter (twice the number of `()` pairs; fails 6 of 10: rows 2, 4, 5, 6, 8 and 10), tests (the last is `(` repeated 50,000 times then `)` 50,000 times, answer 100,000, which stops a cubic checker):
 
 ```python
 def longest_valid_parentheses(s):
@@ -2547,7 +2547,8 @@ def best_plan(problems, budget):
 | 10 | `import random; random.seed(1); ps = []
 for _ in range(60):
     fm = random.randint(5, 40); fp = random.randint(10, 100)
-    ps.append([fp, fm, random.randint(1, fp), random.randint(2, fm)]); best_plan(ps, 600)` | `2724` |
+    ps.append([fp, fm, random.randint(1, fp), random.randint(2, fm)])
+best_plan(ps, 600)` | `2724` |
 
 The lesson example (`P1` to `P3` at 62) is not in the table; its numbers come from `numbers_check4.py`: best 115 (by the program and by listing 27 choices), greedy 100, and at 60 minutes best 102 and greedy 100.
 
@@ -3091,7 +3092,7 @@ The numbers are in `numbers_check.py`, `numbers_check3.py` and `numbers_check4.p
 | 5 | l19 | `numeric` | 4 | A leaderboard with 100,000 players answers 2,000 `top(10)` queries; sorting every score each time visits how many scores, and how many times more than a maintained top 10 that touches 10 entries per query? | 200,000,000 visits; 10,000 times more (`100,000 / 10`) |
 | 6 | l15 | `order` | 4 | The first five minutes of an assessment: read every statement; note constraints and points; estimate full and partial minutes; choose full, partial or skip by points per minute and the budget; start the surest problem. Distractors: "start with the hardest problem" and "write code for the first problem before reading the others", each with a `why`. |
 | 7 | l15 | `numeric` | 4 | The lesson's problems (below, in l15) with a budget of 60: best points. | 102 (and the greedy by points per minute gives 100) |
-| 8 | l16 | `choice` | 4 | For `longest_zero_sum_subarray`, a learner's tests so far are `[]`, `[7]`, `[0]` and `[2, -2]`. Which test is the one most worth adding? | `[6, -2, 1, 1, 7, -3, -4, 5]` (a zero-sum stretch in the middle that is neither a prefix nor the whole list; the answer is 6). Distractors: `[2, -2, 2, -2]` (the alternating case again), `[0, 0]` (zeros again), `[1, 2]` (no zero-sum stretch again). |
+| 8 | l16 | `choice` | 4 | For `longest_zero_sum_subarray`, a learner's tests so far are `[]`, `[7]`, `[0]` and `[2, -2]`. Which test is the one most worth adding? | `[5, 3, -1, -2, 4, 7]` (a zero-sum stretch in the middle that is neither a prefix nor the whole list; the answer is 3). Distractors: `[2, -2, 2, -2, 2, -2]` (the alternating case again), `[0, 0, 0, 0, 0, 0]` (zeros again), `[1, 2, 3, 4, 5, 6]` (no zero-sum stretch again). |
 
 Item 7 uses the lesson's problem set P1 `(40, 20, 12, 6)`, P2 `(60, 35, 25, 12)`, P3 `(90, 50, 30, 18)` at budget 60; the lesson itself uses budget 62 (and states 100 and 115), so the homework number 102 is new. Computed twice in `numbers_check4.py`.
 

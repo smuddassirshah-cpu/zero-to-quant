@@ -42,3 +42,14 @@ No numeric mismatch was found in any other changed item.
 - coding-int, 16.1 trap: "lengths from 0 to 10 about one list in twelve is empty" is 1 in 11 for uniform lengths. Harmless. Random lists of length 5 to 50 miss `m2` in 100 of 100 trials of 1,000 lists, as stated.
 - coding-int, claimed `fails n of m` counts that match: 3.1 (9 of 11), 4.1 (2 of 7), 4.2, 5.1, 5.2 (5 of 8), 7.1 (2 of 15), 14.2, H1.1 to H1.4, H2.1, H2.2, H3.1, H3.2, 11.1 C++ (6 of 7), 1.1 C++ (6 of 10), 10.1 C++ (10 of 12), calendar stages (4 of 6, 7 of 8, 11 of 13).
 - Row 7 of Problem 5.1 (`single_number(xs)`, 54321) was not in the oracle; it is the XOR of every value and equals 54321 by construction.
+
+## Fix pass
+
+- coding-int 6.1 starter count: fixed. Header now reads "fails 3 of 8: rows 1, 7 and 8" (exact-copy starter run against the table, and a Counter-based brute force).
+- coding-int H2.3 starter count: fixed. Header now reads "fails 6 of 10: rows 2, 4, 5, 6, 8 and 10" (starter run against the table, and a brute-force longest-valid-substring check).
+- systems homework-4 item 2(e): fixed. Now a `choice` between pool alone (36,000), ring alone (6,144) and both (42,144) against 32,768 bytes; key is the ring alone, feedback gives the 3,232 and 9,376 byte overshoots (Python and g++ both give 36,000, 6,144, 42,144).
+- coding-int 15.1 row 10: fixed. `best_plan(ps, 600)` is dedented onto its own line after the loop; value 2724 reconfirmed by DP and by memoised recursion.
+- research-int l14 (H3.4 d) key length: fixed. Key shortened to about 15 words; three wrong options of 12 to 16 words now listed. The l14 lesson text names no choice options, so only the homework twin carries them.
+- research-int R4.4: fixed. Distractors lengthened to code-sized expressions; key unchanged.
+- coding-int review-4 item 8: fixed. Key is now `[5, 3, -1, -2, 4, 7]` (answer 3, checked by brute force and prefix-sum map) and all distractors are six values (`[2, -2, 2, -2, 2, -2]`, `[0, 0, 0, 0, 0, 0]`, `[1, 2, 3, 4, 5, 6]`).
+- Kept: l17 screen 7 and systems `parts` option lengths (no change requested; not listed in the brief).
