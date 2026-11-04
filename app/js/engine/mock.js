@@ -105,7 +105,9 @@
     const w = { kind: 'code' };
     CODE_FIELDS.forEach(k => { if (d[k] !== undefined) w[k] = d[k]; });
     if (d.prelude !== undefined) { if ((d.language || 'python') === 'python') w.postlude = [d.prelude, d.postlude].filter(Boolean).join('\n'); else w.prelude = d.prelude; }
-    return { id: `drill-${d.id}`, difficulty: d.difficulty || 3, skills: d.skills || [], tags: asList(d.tags).length ? asList(d.tags) : asList(d.pattern || d.patterns || d.pack || d.id).slice(0, 1),
+    /* tags first (the family is the first tag), then the pattern, so a draw can filter by pattern; mirrored by drillTags in tools/validate.mjs */
+    const tags = asList(d.tags), pat = asList(d.pattern || d.patterns).slice(0, 1), all = [...tags, ...pat.filter(x => !tags.includes(x))];
+    return { id: `drill-${d.id}`, difficulty: d.difficulty || 3, skills: d.skills || [], tags: all.length ? all : asList(d.pack || d.id).slice(0, 1),
       ...(d.pace ? { pace: d.pace } : {}), prose: d.brief, question: d.name, widget: w,
       feedback: { correct: 'Every hidden test passes.', generic: 'A hidden test failed. Run the examples, then check the edge cases.' },
       explain: { text: Array.isArray(d.notes) && d.notes.length ? d.notes.join(' ') : 'The model solution is on the drill page.' } };

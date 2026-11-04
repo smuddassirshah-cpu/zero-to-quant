@@ -1152,7 +1152,8 @@ const checkParts = (file, where, it, ctx) => {
     }
     if (p.widget.kind === 'code' && p.widget.cumulative !== false) {
       const merged = [];
-      it.parts.slice(0, k + 1).forEach(q => { const w = isObj(q) && q.widget; if (w && w.kind === 'code' && (w.language || 'python') === (p.widget.language || 'python')) (Array.isArray(w.tests) ? w.tests : []).forEach(t => { const j = JSON.stringify(t); if (!merged.includes(j)) merged.push(j); }); });
+      const from = it.parts.slice(0, k).reduce((a, q, j) => (isObj(q) && isObj(q.widget) && q.widget.kind === 'code' && q.widget.cumulative === false && (q.widget.language || 'python') === (p.widget.language || 'python') ? j : a), 0);   // an earlier part with cumulative: false starts a fresh merge
+      it.parts.slice(from, k + 1).forEach(q => { const w = isObj(q) && q.widget; if (w && w.kind === 'code' && (w.language || 'python') === (p.widget.language || 'python')) (Array.isArray(w.tests) ? w.tests : []).forEach(t => { const j = JSON.stringify(t); if (!merged.includes(j)) merged.push(j); }); });
       if (merged.length > 15) err(file, `${at}.widget.tests`, `the cumulative tests of this part come to ${merged.length} (at most 15): trim an earlier part's tests or set cumulative: false`);
     }
   });
@@ -1304,7 +1305,9 @@ const checkSet = (file, kind, courseId, id, level, doc, course) => {
     if (!items.some(it => it && it.difficulty === 5)) err(file, 'items', 'homework needs at least one item at difficulty 5');
     if (!kinds.includes('longform')) err(file, 'items', 'homework needs at least one longform item');
     const track = course.track;
-    const hasCode = kinds.includes('code'), hasDerive = kinds.includes('order') || kinds.includes('expression');
+    /* an item with parts reports 'parts': its parts' widget kinds count as the item's kinds (code and expression often sit in follow-up parts) */
+    const partKinds = items.flatMap(it => (it && Array.isArray(it.parts) ? it.parts.map(q => (isObj(q) && isObj(q.widget) ? q.widget.kind : null)) : []));
+    const hasCode = kinds.includes('code') || partKinds.includes('code'), hasDerive = [...kinds, ...partKinds].some(k => k === 'order' || k === 'expression');
     if (track === 'code' && !hasCode) err(file, 'items', 'homework in a programming course needs at least one code item');
     else if (track === 'maths' && !hasDerive) err(file, 'items', 'homework in a maths course needs at least one order or expression item');
     else if (!hasCode && !hasDerive) err(file, 'items', 'homework needs at least one code, order or expression item');
@@ -1508,7 +1511,10 @@ const checkDrillSession = (file, id, d, drillIds) => {
   if (!Array.isArray(d.drills) || d.drills.length !== 2) err(file, 'drills', 'drills is a list of exactly two drill ids');
   else {
     if (d.drills[0] === d.drills[1]) err(file, 'drills', 'the two drills must differ');
-    d.drills.forEach((x, i) => { if (!drillIds.has(x)) err(file, `drills[${i}]`, `drill "${x}" does not exist in content/drills`); });
+    d.drills.forEach((x, i) => {
+      if (!drillIds.has(x)) err(file, `drills[${i}]`, `drill "${x}" does not exist in content/drills`);
+      else if (d.sample !== true && drillData.get(x) && drillData.get(x).sample === true) err(file, `drills[${i}]`, `drill "${x}" is a sample drill, which the drill list hides: a real session cannot name it (mark the session "sample": true)`);
+    });
   }
   if (d.minutes != null && !(Number.isInteger(d.minutes) && d.minutes >= 10 && d.minutes <= 180)) err(file, 'minutes', 'minutes is a whole number from 10 to 180 (default 60)');
   if (d.sample !== undefined && typeof d.sample !== 'boolean') err(file, 'sample', 'sample is true or false');
@@ -1848,36 +1854,49 @@ listed.forEach(id => err(idxFile, '', `drill "${id}" is listed but drills/${id}.
 listJSON(path.join(drillDir, 'sessions')).forEach(f => {
   const id = f.replace(/\.json$/, ''), file = path.join(drillDir, 'sessions', f);
   const r = readJSON(file); if (!r.data) return;
-  manifest.push(`drills/sessions/${f}`);
+  manifest.push(`drills/sessions/${f}`); noteSample(file, `drills/sessions/${f}`, r.data);
   guard(file, () => checkDrillSession(file, id, r.data, drillIds));
 });
 
 
 /* Draw sources (ENGINE-BACKLOG 468): every `from` must name files, and enough items must match the tags and difficulty. A sample exam may
    draw from sample files too; any other exam draws from real files only (the engine reads the same rule). */
-const drillTags = (d) => { const t = Array.isArray(d.tags) ? d.tags : []; return t.length ? t : [d.pattern, ...(Array.isArray(d.patterns) ? d.patterns : [d.patterns]), d.pack, d.id].filter(x => typeof x === 'string').slice(0, 1); };
+/* mirrors drillItem in js/engine/mock.js: the drill's tags, then its pattern (so a draw can filter by pattern and the family stays the first tag) */
+const drillTags = (d) => {
+  const t = (Array.isArray(d.tags) ? d.tags : []).filter(x => typeof x === 'string');
+  const pat = [d.pattern, ...(Array.isArray(d.patterns) ? d.patterns : [d.patterns])].filter(x => typeof x === 'string').slice(0, 1);
+  const all = [...t, ...pat.filter(x => !t.includes(x))];
+  return all.length ? all : [d.pack, d.id].filter(x => typeof x === 'string').slice(0, 1);
+};
 const verifyDraws = () => {
+  const papers = new Map();   // exam file -> { pool: Set of uids matched by any entry, sum of n }: the entries of an exam share one `used` set (mock.js), so overlapping pools cannot be drawn twice
   drawRefs.forEach(({ file, at, d, sample }) => {
     if (typeof d.from !== 'string' || !/^(bank|drills)\//.test(d.from)) return;   // a malformed "from" is reported where it is written
     const [kind, name] = d.from.split('/'), want = Array.isArray(d.tags) ? d.tags : [];
     const band = Array.isArray(d.difficulty) ? d.difficulty : Number.isInteger(d.difficulty) ? [d.difficulty, d.difficulty] : null;
     const keep = (tags, diff) => (!want.length || (Array.isArray(tags) && tags.some(t => want.includes(t)))) && (!band || (diff >= band[0] && diff <= band[1]));
     let files = 0, items = 0;
+    const uids = [];
     if (kind === 'bank') {
       bankData.forEach((doc, id) => {
         if (!(name === '*' || id === name || id.startsWith(name + '-')) || (doc.sample === true && !sample)) return;
-        files++; (Array.isArray(doc.items) ? doc.items : []).forEach(it => { if (isObj(it) && keep(it.tags, it.difficulty)) items++; });
+        files++; (Array.isArray(doc.items) ? doc.items : []).forEach(it => { if (isObj(it) && keep(it.tags, it.difficulty)) { items++; uids.push(`bank/${id}/${it.id}`); } });
       });
     } else if (kind === 'drills') {
       drillData.forEach((doc, id) => {
         if (!(name === '*' || doc.pack === name || doc.id === name || String(doc.id).startsWith(name + '-')) || (doc.sample === true && !sample)) return;
-        files++; if (keep(drillTags(doc), doc.difficulty)) items++;
+        files++; if (keep(drillTags(doc), doc.difficulty)) { items++; uids.push(`drills/${id}`); }
       });
     }
     if (!files) err(file, `${at}.from`, `"${d.from}" matches no ${kind === 'bank' ? 'bank file' : 'drill'}${sample ? '' : ' (sample files are drawn only by a sample exam)'}`);
     else if (items < d.n) err(file, `${at}.n`, `draws ${d.n} but only ${items} item${items === 1 ? '' : 's'} in ${d.from} match the tags and difficulty`);
-    else if (items < 2 * d.n) warn(file, `${at}.n`, `only ${items} items match for a draw of ${d.n}: a resit repeats items (aim for at least twice n)`);
+    else {
+      const key = file, P = papers.get(key) || { pool: new Set(), n: 0, file, at: 'draw', entries: 0 };
+      uids.forEach(u => P.pool.add(u)); P.n += Number.isInteger(d.n) ? d.n : 0; P.entries++; papers.set(key, P);
+    }
+    if (files && items >= d.n && items < 2 * d.n) warn(file, `${at}.n`, `only ${items} items match for a draw of ${d.n}: a resit repeats items (aim for at least twice n)`);
   });
+  papers.forEach(P => { if (P.entries > 1 && P.n > P.pool.size) err(P.file, P.at, `the entries draw ${P.n} items in all but their pools hold only ${P.pool.size} different items between them (an item is drawn once an exam): the later entries come up short`); });
 };
 guard(path.join(CONTENT, 'exams'), verifyDraws);
 

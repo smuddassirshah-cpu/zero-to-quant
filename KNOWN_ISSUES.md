@@ -69,7 +69,6 @@ Session A (3 Nov 2026)
 - `voice-scan.py` with a relative `VOICE_BASE` scanned 0 files and reported a pass until 3 Nov (fixed: it resolves the path and exits on an empty folder). The topic 3.3 voice debt (mental-pressure, puzzles, mm-games) was cleared on 6 Nov: all five courses scan 0 and 0.
 - Second read pending for limits L5, multivar L5 and eigen L4 (written after their topics' reads); markov L5 has no topic-1.5 exam items; 25 levels are covered by the exam only through skills shared with earlier levels (list in `docs/reports/stage-status-2026-11-03.md`).
 - `carry` values are lost if a lesson is reopened part-way; the `trade` widget cannot quote one side at a limit, run limit 0, hedge or take liquidity, or open with a carried position (engine pass D follow-ups 2 to 5).
-- Engine samples `exams/mock-sample.json`, `exams/mock-trade-sample.json` are probably visible to the learner (not checked); remove or hide them when the real mocks and bank land.
 - The `file-finder` agent may not write `.md` reports; the main session saved the stage status report from its scratchpad output.
 
 Session C (5 Nov 2026)
