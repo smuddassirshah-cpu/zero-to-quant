@@ -88,3 +88,7 @@ with open(OUT, 'w') as f:
     json.dump(exam, f, ensure_ascii=False, indent=2)
     f.write('\n')
 print('wrote', OUT)
+
+import second_read_patch
+second_read_patch.apply(OUT)
+print('patched', OUT)

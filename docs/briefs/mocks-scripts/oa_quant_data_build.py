@@ -494,7 +494,7 @@ def paper2(ex, tj):
         code_item("d2-rolling-beta", 4, ["rq-data", "rq-stats"], "hedge-ratio", 1500, "A rolling hedge ratio",
                   "`qd-pair.csv` has daily returns for an asset and the market. Three asset returns were typed as whole percents. A return with size above 0.25 in either column is a data error: drop that row. Then write `windowed_betas(window)`. It returns one least-squares slope of `asset` on `mkt` per window of `window` neighbouring remaining rows. Use date order and full windows only.",
                   "qd-pair.csv", T2_STARTER, ex["t2"], t2,
-                  "There are 9 hidden tests. Each slope is accepted within a relative 1e-9. The last test has a data error in the market column, so it fails a check of the asset column alone.", T2_SOL,
+                  "There are 9 hidden tests. Each slope is accepted within a relative 1e-9. The last test has a data error in the market column. A check of the asset column alone fails it.", T2_SOL,
                   fb("All nine tests pass: the errors are gone and every window is a full one.", "A hidden test failed. Check both columns for data errors, then count the full windows."),
                   {"text": "A return of 0.31 is a whole percent typed in, so drop the row before windowing. The 517 rows left give 458 windows of 60. Keeping the errors gives 461 windows and a different sum."}),
         code_item("d3-out-of-sample", 5, ["rq-data", "rq-ml", "rq-case"], "out-of-sample", 1800, "An honest out-of-sample score",
