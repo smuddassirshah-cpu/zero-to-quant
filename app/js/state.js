@@ -46,7 +46,7 @@
     hours: [],
     streak: { current: 0, best: 0, lastDay: null, restDays: 0, restEarnedAt: 0, days: {}, count: { day: null, problems: 0 } },
     flags: { setupDone: false, streakGoal: null },
-    prereq: { met: {}, testouts: {}, opened: {}, grandfathered: false },   // prerequisite gating (ENGINE-BACKLOG 481): levels recorded met, test-out attempts, levels opened early
+    prereq: { met: {}, testouts: {}, opened: {}, started: {}, grandfathered: false },   // prerequisite gating (ENGINE-BACKLOG 481): levels recorded met, test-out attempts, levels opened early
   });
   const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
   /* Fill anything missing from a loaded or imported document with the defaults, one level deep, keeping unknown keys */
@@ -386,7 +386,7 @@
   };
 
   /* ---------- Prerequisite gating records (ENGINE-BACKLOG 481; rules in js/prereq.js). Nothing here is ever removed. ---------- */
-  const prq = () => { const p = doc.prereq; ['met', 'testouts', 'opened'].forEach(k => { if (!isObj(p[k])) p[k] = {}; }); return p; };
+  const prq = () => { const p = doc.prereq; ['met', 'testouts', 'opened', 'started'].forEach(k => { if (!isObj(p[k])) p[k] = {}; }); return p; };
   const prereqMet = (keys, how = 'met') => {
     const p = prq(), t = now();
     (Array.isArray(keys) ? keys : [keys]).forEach(k => { if (!p.met[k]) p.met[k] = { at: t, how }; });
@@ -394,14 +394,17 @@
     return p.met;
   };
   /* A test-out attempt for a level key "course/L<n>": { at, score, items, passed, missed: [item ids], tries } */
-  const prereqTestout = ({ key, score = 0, items = 0, passed = false, missed = [] } = {}) => {
+  const prereqTestout = ({ key, score = 0, items = 0, passed = false, missed = [], seen = [] } = {}) => {
     const p = prq(), prev = p.testouts[key];
-    p.testouts[key] = { at: now(), score, items, passed: !!passed || !!(prev && prev.passed), missed, tries: ((prev && prev.tries) || 0) + 1 };
+    const was = prev && Array.isArray(prev.seen) ? prev.seen : [];
+    p.testouts[key] = { at: now(), score, items, passed: !!passed || !!(prev && prev.passed), missed, seen: [...new Set(was.concat(seen))], tries: ((prev && prev.tries) || 0) + 1 };
     if (passed && !p.met[key]) p.met[key] = { at: now(), how: 'testout' };
     changed('prereq');
     return p.testouts[key];
   };
   const prereqOpened = (key) => { const p = prq(); if (!p.opened[key]) { p.opened[key] = now(); changed('prereq'); } return p.opened[key]; };
+  /* Levels the learner has started (a finished lesson): kept open, never counted as met */
+  const prereqStarted = (keys) => { const p = prq(), t = now(); let n = 0; (Array.isArray(keys) ? keys : [keys]).forEach(k => { if (!p.started[k]) { p.started[k] = t; n++; } }); if (n) changed('prereq'); return n; };
   const prereqGrandfathered = (keys) => { const p = prq(); const t = now(); keys.forEach(k => { if (!p.met[k]) p.met[k] = { at: t, how: 'finished' }; }); p.grandfathered = true; changed('prereq'); };
 
   const notebookAdd = (card = {}) => {
@@ -594,7 +597,7 @@
     hours: ns('hours', { log: logHours, list: () => doc.hours.slice() }),
     lessonPosition: { set: positionSet, get: positionGet },
     lesson: (course, lesson) => doc.lessons[lessonId(course, lesson)] || null,
-    prereq: ns('prereq', { mark: prereqMet, testout: prereqTestout, open: prereqOpened, grandfather: prereqGrandfathered, get: () => prq() }),
+    prereq: ns('prereq', { mark: prereqMet, testout: prereqTestout, open: prereqOpened, start: prereqStarted, grandfather: prereqGrandfathered, get: () => prq() }),
     screenGraded, lessonFinished, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult, bankResult,
     summary, weeklySplit,
     export: exportDoc, import: importDoc, reset, flush,

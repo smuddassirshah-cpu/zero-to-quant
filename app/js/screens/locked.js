@@ -19,10 +19,10 @@
       const bits = [`${nd.lessonsDone} of ${nd.lessonsWritten} lessons finished`];
       if (nd.lessonsWritten < nd.lessonsTotal) bits.push(`${nd.lessonsTotal - nd.lessonsWritten} not yet written`);
       bits.push(nd.reviewWritten ? 'review not passed' : 'no review written yet');
-      st = bits.join(', ');
+      st = nd.lessonsWritten === 0 && !nd.reviewWritten ? 'not yet written' : bits.join(', ');
     }
     const t = nd.testOut;
-    const to = nd.kind === 'lesson' ? '' : t.can ? `<button type="button" class="btn secondary lk-testout" data-testout="${esc(nd.course)}/${nd.n}">Test out</button>`
+    const to = nd.kind === 'lesson' ? '' : nd.lessonsWritten === 0 && !t.written ? `<span class="t-caption muted lk-wait">Not yet written: this opens when it is written</span>` : t.can ? `<button type="button" class="btn secondary lk-testout" data-testout="${esc(nd.course)}/${nd.n}">Test out</button>`
       : t.nextAt ? `<span class="t-caption muted lk-wait">Test out again in ${hoursLeft(t.nextAt)}</span>`
       : `<span class="t-caption muted lk-wait">Finish its lessons to unlock it</span>`;
     const title = nd.kind === 'lesson' ? `Lesson: ${nd.name}` : `Level ${nd.n}${nd.levelName ? ': ' + nd.levelName : ''}`;

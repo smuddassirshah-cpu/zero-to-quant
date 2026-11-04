@@ -288,7 +288,7 @@ const main = async () => {
     const unlockRoute = async (route) => {
       const m = /^(?:lesson|review|homework)\/([^/]+)\/([^/]+)/.exec(route);
       if (m) return page.evaluate(([c, i]) => (window.ZQ && ZQ.prereq ? ZQ.prereq.unlock(c, i) : 0), [m[1], m[2]]);
-      const e = /^exam\/(mock-[^/?]+)/.exec(route);
+      const e = /^exam\/([^/?]+)/.exec(route);
       if (e) {
         const f = path.join(CONTENT, 'exams', e[1] + '.json'), refs = fs.existsSync(f) ? readJSON(f).requires : null;
         if (Array.isArray(refs) && refs.length) return page.evaluate((r) => ZQ.prereq.unlockRefs(r), refs);
@@ -1330,7 +1330,118 @@ const main = async () => {
         }, [lc, doneL]);
         if (!old.ok || !old.met || !old.grand) fails.push(`an old save with ${lc} level 1 finished was not grandfathered (${JSON.stringify(old)})`);
         else if (!old.unlocked && !readJSON(path.join(CONTENT, 'courses', lc, 'course.json')).levels.find(l => l.n === 2).requires) fails.push(`${lc} level 2 should be open for an old save that finished level 1`);
-        console.log(`${fails.length ? 'FAIL' : 'ok  '} gating  Stage 0 open, ${locked3} locked with its card${opt.mobile ? ' at 1280 and 390 px' : ''}, Strict, Open anyway, test-out, old save, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+        /* 7. Engine pass E fix pass (ENGINE-BACKLOG 491 to 498) */
+        /* 7a. The Refresh chip shows above a lesson's first screen whatever its kind (not only a title screen) */
+        const chipCand = (() => {
+          for (const st of cur.stages) for (const t of st.topics) for (const c of t.courses || []) {
+            const cf = path.join(CONTENT, 'courses', c, 'course.json'); if (!fs.existsSync(cf)) continue;
+            const lvs = readJSON(cf).levels || [];
+            for (const [i, lv] of lvs.entries()) {
+              if (i === 0 && !Array.isArray(lv.requires)) continue;
+              const refs = Array.isArray(lv.requires) ? lv.requires : [`${c}/L${lvs[i - 1].n}`];
+              for (const r of refs) {
+                const m = /^([^/]+)\/L(\d+)$/.exec(r); if (!m) continue;
+                const rf = path.join(CONTENT, 'courses', m[1], 'course.json'); if (!fs.existsSync(rf)) continue;
+                const rl = (readJSON(rf).levels || []).find(x => x.n === +m[2]);
+                if (!rl || !rl.review || !fs.existsSync(path.join(CONTENT, 'courses', m[1], rl.review + '.json'))) continue;
+                for (const l of lv.lessons || []) {
+                  const lf = path.join(CONTENT, 'courses', c, l + '.json'); if (!fs.existsSync(lf)) continue;
+                  const first = ((readJSON(lf).screens || [])[0] || {}).type;
+                  if (first && first !== 'title') return { c, l, ref: `${m[1]}/L${m[2]}`, first };
+                }
+              }
+            }
+          }
+          return null;
+        })();
+        if (!chipCand) console.log('     gating: no lesson with a non-title first screen and a reviewed prerequisite; the Refresh chip check is skipped');
+        else {
+          const old = Date.now() - 31 * 86400000;
+          await importDoc({ prereq: { met: { [chipCand.ref]: { at: old, how: 'testout' } }, testouts: {}, opened: {}, grandfathered: true } });
+          await evalOnly(([c, l]) => ZQ.prereq.unlock(c, l), [chipCand.c, chipCand.l]);
+          for (const w of widths) {
+            if (w !== 1280) { await page.setViewportSize({ width: w, height: 844 }); await page.waitForTimeout(300); }
+            await route(`lesson/${chipCand.c}/${chipCand.l}`);
+            const ch = await evalOnly(() => { const a = document.querySelector('.lsn .rf-chip'); return { chip: !!a, href: a ? a.getAttribute('href') : '', wide: document.documentElement.scrollWidth > window.innerWidth + 1 }; });
+            if (!ch.chip) fails.push(`${chipCand.c}/${chipCand.l} (first screen "${chipCand.first}") at ${w} px: no Refresh chip after ${chipCand.ref} was met 31 days ago`);
+            else if (!/^#review\//.test(ch.href)) fails.push(`the Refresh chip links to ${ch.href}`);
+            if (ch.wide) fails.push(`${chipCand.c}/${chipCand.l} at ${w} px: the Refresh chip made the page wider than the window`);
+            if (w !== 1280) { await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(150); }
+          }
+          const lk = await evalOnly((ref) => { const c = ref.split('/')[0], n = +ref.split('/L')[1]; const lv = ZQ.content.course(c).levels.find(x => x.n === n); return { review: lv.review, locked: ZQ.prereq.itemLocked(c, lv.review) }; }, chipCand.ref);
+          if (lk.locked) fails.push(`the Refresh link target ${chipCand.ref} ${lk.review} is locked`);
+        }
+        /* 7b. A level that is met is open as a place to work even when its own references are unmet */
+        await importDoc();
+        const mt = await evalOnly(() => {
+          const L = ZQ.content.allCourses().flatMap(c => (c.levels || []).map(lv => ({ c: c.id, lv }))).find(({ c, lv }) => lv.review && ZQ.content.exists(c, lv.review) !== false && (lv.lessons || []).some(id => ZQ.content.exists(c, id) !== false) && ZQ.prereq.levelLocked(c, lv.n));
+          return L ? { c: L.c, n: L.lv.n, review: L.lv.review, hw: L.lv.homework || '', lessons: L.lv.lessons } : null;
+        });
+        if (!mt) console.log('     gating: no locked level with a written review on a fresh profile; the met-level checks are skipped');
+        else {
+          await evalOnly((m) => ZQ.state.prereq.testout({ key: `${m.c}/L${m.n}`, score: 6, items: 6, passed: true, missed: [] }), mt);
+          const r = await evalOnly((m) => ({ met: ZQ.prereq.levelMet(m.c, m.n), level: ZQ.prereq.levelLocked(m.c, m.n), review: ZQ.prereq.itemLocked(m.c, m.review), hw: m.hw ? ZQ.prereq.itemLocked(m.c, m.hw) : false, lessons: m.lessons.filter(id => ZQ.content.exists(m.c, id) !== false && ZQ.prereq.lessonLocked(m.c, id)) }), mt);
+          if (!r.met || r.level || r.review || r.hw || r.lessons.length) fails.push(`${mt.c}/L${mt.n} tested out but not open: ${JSON.stringify(r)}`);
+          await route(`review/${mt.c}/${mt.review}`);
+          if (await evalOnly(() => !!document.querySelector('.lk'))) fails.push(`#review/${mt.c}/${mt.review}: a level that is met showed the locked card`);
+          await importDoc();
+        }
+        /* 7c. A started level (one lesson finished) keeps its other lessons open, and does not count as met */
+        const sl = await evalOnly(() => {
+          const L = ZQ.content.allCourses().flatMap(c => (c.levels || []).map(lv => ({ c: c.id, lv }))).find(({ c, lv }) => (lv.lessons || []).filter(id => ZQ.content.exists(c, id) !== false).length >= 2 && ZQ.prereq.levelLocked(c, lv.n));
+          return L ? { c: L.c, n: L.lv.n, ids: L.lv.lessons.filter(id => ZQ.content.exists(L.c, id) !== false) } : null;
+        });
+        if (!sl) console.log('     gating: no locked level with two written lessons; the started-level check is skipped');
+        else {
+          const sr = await evalOnly((m) => {
+            const d = JSON.parse(ZQ.state.export());
+            d.lessons = { [`${m.c}/${m.ids[0]}`]: { attempts: 1, done: true, firstTry: null, xp: 0, bestQuiz: null, mastered: false, perfect: false, completedAt: Date.now(), secondsSpent: 0, position: null, positionAt: null } };
+            d.prereq = { met: {}, testouts: {}, opened: {}, grandfathered: true }; d.reviews = {}; d.exams = {};
+            ZQ.state.import(d); ZQ.prereq.sync();
+            return { open: m.ids.map(id => !ZQ.prereq.lessonLocked(m.c, id)), met: ZQ.prereq.levelMet(m.c, m.n), started: !!ZQ.state.prereq.get().started[`${m.c}/L${m.n}`] };
+          }, sl);
+          if (!sr.started || !sr.open.every(Boolean) || sr.met) fails.push(`${sl.c}/L${sl.n}: a level with one finished lesson should stay open and not count as met (${JSON.stringify(sr)})`);
+          await importDoc();
+        }
+        /* 7d. Direct and indirect grouping does not depend on list order; the card's closure equals one computed here from course.json */
+        const ord = await evalOnly(([c, l]) => {
+          const m = ZQ.prereq.missingFor(c, l), d = m.direct[0], e = d && d.refs.map(r => ZQ.prereq.missingRefs([r]).direct[0]).find(Boolean);
+          if (!d || !e) return null;
+          const a = ZQ.prereq.missingRefs([d.ref, e.ref]), b = ZQ.prereq.missingRefs([e.ref, d.ref]);
+          return { a: a.direct.map(n => n.ref).sort(), b: b.direct.map(n => n.ref).sort(), want: [d.ref, e.ref].sort() };
+        }, [lc, ll]);
+        if (ord && (JSON.stringify(ord.a) !== JSON.stringify(ord.want) || JSON.stringify(ord.b) !== JSON.stringify(ord.want))) fails.push(`missingRefs groups by list order: ${JSON.stringify(ord)}`);
+        {
+          const closure = new Set(), cache = {}, courseDoc = (c) => (cache[c] = cache[c] || readJSON(path.join(CONTENT, 'courses', c, 'course.json')));
+          const refsOfLevel = (c, n) => { const lvs = courseDoc(c).levels, lv = lvs.find(x => x.n === n), i = lvs.indexOf(lv); return Array.isArray(lv.requires) ? lv.requires : i > 0 ? [`${c}/L${lvs[i - 1].n}`] : []; };
+          const walk = (refs) => refs.forEach(r => {
+            const m = /^([^/]+)\/(.+)$/.exec(r), c = m[1];
+            const n = /^L\d+$/.test(m[2]) ? +m[2].slice(1) : courseDoc(c).levels.find(x => (x.lessons || []).includes(m[2])).n;
+            const k = `${c}/L${n}`;
+            if (closure.has(k)) return;
+            closure.add(k); walk(refsOfLevel(c, n));
+          });
+          const lcd = courseDoc(lc), llv = lcd.levels.find(x => (x.lessons || []).includes(ll));
+          walk((lcd.lessonRequires && lcd.lessonRequires[ll]) || refsOfLevel(lc, llv.n));
+          const got = await evalOnly(([c, l]) => { const m = ZQ.prereq.missingFor(c, l); return m.direct.concat(m.indirect).map(n => `${n.course}/L${n.n}`); }, [lc, ll]);
+          if (JSON.stringify([...closure].sort()) !== JSON.stringify([...new Set(got)].sort())) fails.push(`${locked3}: the card lists ${new Set(got).size} levels, the closure computed from course.json has ${closure.size}`);
+        }
+        /* 7e. A test-out remembers the items it showed, across attempts */
+        const sn = await evalOnly(() => { const k = 'gating-probe/L1'; ZQ.state.prereq.testout({ key: k, score: 0, items: 2, passed: false, seen: ['a', 'b'] }); ZQ.state.prereq.testout({ key: k, score: 0, items: 2, passed: false, seen: ['b', 'c'] }); return ZQ.state.prereq.get().testouts[k].seen; });
+        if (JSON.stringify(sn) !== JSON.stringify(['a', 'b', 'c'])) fails.push(`a test-out should remember the items shown on every attempt (got ${JSON.stringify(sn)})`);
+        await importDoc();
+        /* 7f. A top-level requires on any exam file (here a stand-in topic exam) shows the locked card */
+        await evalOnly(([c, l]) => {
+          const ref = ZQ.prereq.missingFor(c, l).direct[0].ref, real = ZQ.content.exam;
+          window.__realExam = real;
+          ZQ.content.exam = (id) => (id === 'topic-gating-probe' ? Promise.resolve({ id, name: 'Gating probe', requires: [ref], items: [] }) : real.call(ZQ.content, id));
+        }, [lc, ll]);
+        await route('exam/topic-gating-probe');
+        const ex = await evalOnly(() => ({ card: !!document.querySelector('.lk'), title: (document.querySelector('.lk h1') || {}).textContent || '' }));
+        await evalOnly(() => { ZQ.content.exam = window.__realExam; delete window.__realExam; });
+        if (!ex.card || !/is locked/.test(ex.title)) fails.push(`#exam/topic-gating-probe: an exam file with requires should show the locked card (card ${ex.card}, title "${ex.title}")`);
+        await importDoc();
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} gating  Stage 0 open, ${locked3} locked with its card${opt.mobile ? ' at 1280 and 390 px' : ''}, Strict, Open anyway, test-out, old save, Refresh chip, met level open, started level, exam requires, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
         fails.push('threw: ' + String(e.message || e).split('\n')[0]);
         console.log('FAIL gating  threw');
