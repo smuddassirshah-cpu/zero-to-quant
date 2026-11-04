@@ -1,0 +1,580 @@
+{
+  "id": "mock-interleave-sample",
+  "name": "Sample interleaving canvas",
+  "style": "developer",
+  "sample": true,
+  "models": "An engine sample of the interleave canvas: a lost update, a deadlock, an asleep-forever wait, conditional steps and outcome counts.",
+  "description": "A small sample for checking the interleave canvas on an exam screen. It is not a real assessment.",
+  "minutes": 12,
+  "scoring": {
+    "right": 2,
+    "wrong": 0,
+    "blank": 0
+  },
+  "pass": 0.5,
+  "items": [
+    {
+      "id": "lost-update",
+      "difficulty": 2,
+      "title": "A lost update",
+      "prose": "Two lanes each add 1 to the shared `x`, as a load, an add and a store. Tap a lane's Step button to run its next step.",
+      "question": "Step the lanes in any order so that `x` ends at 1. Tap the two steps that read the old value.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "x is {{values.x}} after {{values.steps}} of 6 steps. {{values.ending == 'complete' ? 'Finished.' : ''}}"
+        }
+      },
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "a1",
+          "b1"
+        ],
+        "countWord": "steps marked",
+        "wrong": [
+          {
+            "id": "stores",
+            "set": [
+              "a3",
+              "b3"
+            ]
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Both loads read 0, so both stores write 1.",
+        "generic": "Which two steps read `x` before either lane has stored?"
+      },
+      "explain": {
+        "text": "If both lanes load before either stores, each adds 1 to 0. The second store overwrites the first, so `x` ends at 1.",
+        "canvas": {
+          "schedule": [
+            "a",
+            "b",
+            "a",
+            "b",
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "id": "deadlock",
+      "difficulty": 3,
+      "title": "Two locks, opposite orders",
+      "prose": "T1 takes A then B. T2 takes B then A. Each has taken its first lock, and the lane that waits is shown as blocked.",
+      "question": "Of the 6 schedules, how many end in deadlock?",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "lanes": [
+            {
+              "id": "t1",
+              "label": "T1",
+              "short": "T1",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "A"
+                },
+                {
+                  "op": "lock",
+                  "lock": "B"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "B"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "A"
+                }
+              ]
+            },
+            {
+              "id": "t2",
+              "label": "T2",
+              "short": "T2",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "B"
+                },
+                {
+                  "op": "lock",
+                  "lock": "A"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "A"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "B"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "schedule": [
+            "t1",
+            "t2"
+          ]
+        }
+      },
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "Exactly 2"
+      },
+      "feedback": {
+        "correct": "A lane must take its first lock before the other's second step, so T1 then T2 or T2 then T1 locks both.",
+        "generic": "Which two first steps leave each lane holding the lock the other wants?"
+      },
+      "explain": {
+        "text": "T1 then T2 as the first two steps deadlocks, and so does T2 then T1. The other 4 schedules let one lane finish first."
+      }
+    },
+    {
+      "id": "asleep-forever",
+      "difficulty": 3,
+      "title": "The notify nobody hears",
+      "prose": "The consumer checks whether the queue is empty, then waits if it was. The producer pushes, then notifies.",
+      "question": "Find the order in which the consumer sleeps forever. Tap the notify that nobody hears.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "q": 0
+          },
+          "outcome": [],
+          "endings": {
+            "complete": "awake",
+            "asleep": "asleep forever"
+          },
+          "lanes": [
+            {
+              "id": "c",
+              "label": "Consumer",
+              "steps": [
+                {
+                  "op": "set",
+                  "reg": "e",
+                  "value": "q == 0",
+                  "text": "check: queue empty?"
+                },
+                {
+                  "op": "wait",
+                  "if": "e"
+                }
+              ]
+            },
+            {
+              "id": "p",
+              "label": "Producer",
+              "steps": [
+                {
+                  "op": "fetch-add",
+                  "var": "q",
+                  "by": 1,
+                  "text": "push"
+                },
+                {
+                  "op": "notify"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "p2"
+        ],
+        "max": 1,
+        "countWord": "marked"
+      },
+      "feedback": {
+        "correct": "The notify runs while the consumer is still awake, so nothing wakes it later.",
+        "generic": "A wait is only woken by a notify that comes after it."
+      },
+      "explain": {
+        "text": "The order c1, p1, p2, c2 checks first, notifies, and only then waits. The notify came too early, so the consumer sleeps forever.",
+        "canvas": {
+          "schedule": [
+            "c",
+            "p",
+            "p",
+            "c"
+          ]
+        }
+      }
+    },
+    {
+      "id": "check-then-act",
+      "difficulty": 3,
+      "title": "Check, then act",
+      "prose": "Two withdrawals of £80 from a balance of £100. Each lane checks, then acts only if its check passed.",
+      "question": "How many of the 6 schedules pay out £160?",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "bal": 100,
+            "cash": 0
+          },
+          "outcome": [
+            "bal",
+            "cash"
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Withdrawal A",
+              "steps": [
+                {
+                  "ops": [
+                    {
+                      "op": "load",
+                      "reg": "r",
+                      "var": "bal"
+                    },
+                    {
+                      "op": "set",
+                      "reg": "ok",
+                      "value": "r >= 80"
+                    }
+                  ],
+                  "text": "check: balance at least 80"
+                },
+                {
+                  "ops": [
+                    {
+                      "op": "store",
+                      "var": "bal",
+                      "value": "r - 80",
+                      "if": "ok"
+                    },
+                    {
+                      "op": "fetch-add",
+                      "var": "cash",
+                      "by": 80,
+                      "if": "ok"
+                    }
+                  ],
+                  "text": "if ok: store r - 80, cash out 80"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Withdrawal B",
+              "steps": [
+                {
+                  "ops": [
+                    {
+                      "op": "load",
+                      "reg": "r",
+                      "var": "bal"
+                    },
+                    {
+                      "op": "set",
+                      "reg": "ok",
+                      "value": "r >= 80"
+                    }
+                  ],
+                  "text": "check: balance at least 80"
+                },
+                {
+                  "ops": [
+                    {
+                      "op": "store",
+                      "var": "bal",
+                      "value": "r - 80",
+                      "if": "ok"
+                    },
+                    {
+                      "op": "fetch-add",
+                      "var": "cash",
+                      "by": 80,
+                      "if": "ok"
+                    }
+                  ],
+                  "text": "if ok: store r - 80, cash out 80"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "schedule": [
+            "a",
+            "b",
+            "a",
+            "b"
+          ]
+        }
+      },
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "Exactly 4"
+      },
+      "feedback": {
+        "correct": "Both checks pass whenever both lanes check before either acts.",
+        "generic": "When do both checks see £100?"
+      },
+      "explain": {
+        "text": "Both lanes pass their check when both check first, which is 4 of the 6 orders. Then £160 is paid from an account of £100."
+      }
+    },
+    {
+      "id": "outcomes-table",
+      "difficulty": 3,
+      "title": "Every outcome",
+      "prose": "Three lanes of load, add and store make 1,680 interleavings. The table lists each final value with its count.",
+      "question": "How many of the schedules end with `x` at 3?",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "c",
+              "label": "Thread C",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "outcomes": true
+        },
+        "derive": {
+          "caption": "{{values.outcomes['x=3']}} of {{values.schedules}} schedules end at 3."
+        }
+      },
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "Exactly 6"
+      },
+      "feedback": {
+        "correct": "Only the 6 serial orders reach 3.",
+        "generic": "Read the row for `x=3`."
+      },
+      "explain": {
+        "text": "A lane is only sure to see the others' work when it runs after them. That is the 6 orders of the three lanes, 3 factorial."
+      }
+    },
+    {
+      "id": "outcomes-found",
+      "difficulty": 3,
+      "title": "Find the outcomes",
+      "prose": "A stores `x` then reads `y`. B stores `y` then reads `x`. Step the lanes through different orders and watch the outcomes you find.",
+      "question": "How many of the 6 schedules end with both reads at 1?",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0,
+            "y": 0
+          },
+          "notation": "assign",
+          "outcome": [
+            {
+              "label": "r1",
+              "of": "a.r1"
+            },
+            {
+              "label": "r2",
+              "of": "b.r2"
+            }
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "x",
+                  "value": 1
+                },
+                {
+                  "op": "load",
+                  "reg": "r1",
+                  "var": "y"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "y",
+                  "value": 1
+                },
+                {
+                  "op": "load",
+                  "reg": "r2",
+                  "var": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "outcomes": "found"
+        },
+        "derive": {
+          "caption": "{{values.reached}} outcomes found so far."
+        }
+      },
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "accept": "Exactly 4"
+      },
+      "feedback": {
+        "correct": "Four orders store both before either read.",
+        "generic": "Count the orders where both stores come before both loads, or one load comes after the other lane's store."
+      },
+      "explain": {
+        "text": "(1, 1) happens in 4 orders. (0, 1) and (1, 0) happen in 1 order each. (0, 0) never happens when the steps run one at a time."
+      }
+    }
+  ]
+}

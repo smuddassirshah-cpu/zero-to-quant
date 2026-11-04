@@ -30,6 +30,7 @@
     "orderbook": {"params": {"bids": [[99.98, 300], [99.97, 500], [99.96, 200]], "asks": [[100.0, 200], [100.01, 400], [100.02, 300]]}, "state": {"order": {"side": "buy", "size": 750}}},
     "complex-map": {"params": {"f": "z^2", "x": [-2, 2], "y": [-2, 2], "wx": [-4, 4], "wy": [-4, 4], "grid": "cartesian", "unitCircle": true, "zLabel": "z-plane", "wLabel": "$w = z^2$"}, "state": {"points": [{"id": "p1", "x": 1, "y": 0.5, "label": "$z$", "drag": true}]}},
     "space": {"params":{"x":[-4,4],"y":[-4,4],"z":[-4,4],"equal":true,"camera":{"az":-55,"el":24},"vectors":[{"id":"u","v":[3,0,1],"label":"$\\mathbf{u}$"},{"id":"v","v":[0,3,2],"label":"$\\mathbf{v}$"},{"id":"n","v":[-1,-2,3],"label":"$\\mathbf{n}$","colour":4}],"planes":[{"id":"cs","span":["u","v"],"label":"column space"}],"points":[{"id":"b","p":[-2,3,3],"label":"$\\mathbf{b}$","drop":true}]},"state":{}},
+    "interleave": {"params": {"vars": {"x": 0}, "lanes": [{"id": "a", "label": "Thread A", "steps": [{"op": "load", "reg": "r", "var": "x"}, {"op": "add", "reg": "r", "by": 1}, {"op": "store", "var": "x", "reg": "r"}]}, {"id": "b", "label": "Thread B", "steps": [{"op": "load", "reg": "r", "var": "x"}, {"op": "add", "reg": "r", "by": 1}, {"op": "store", "var": "x", "reg": "r"}]}]}, "state": {"schedule": ["a", "b"], "outcomes": true}}
   };
   const CANVAS_ABOUT = {
     grid: 'Cell grid: sample spaces, two-dice tables, area models', tree: 'Probability and decision trees', venn: 'Two or three set Venn diagrams',
@@ -39,7 +40,7 @@
     scatter: 'Points, a fitted line and residuals', series: 'Time series with markers and shaded drawdowns', walk: 'Random walks and price paths',
     matrix: 'Matrices with highlighted rows, columns and pivots', vectors: '2D vectors, sums and projections', graph: 'Nodes and edges, Markov chains',
     array: 'Array cells with index labels and pointers', payoff: 'Option payoff and P&L against the underlying', orderbook: 'Bid and ask ladder with a market order',
-    'complex-map': 'A z-plane beside the image of its grid under f(z)', space: 'Rotatable 3D view: vectors, curves, surfaces, planes and fields',
+    'complex-map': 'A z-plane beside the image of its grid under f(z)', space: 'Rotatable 3D view: vectors, curves, surfaces, planes and fields', interleave: 'Threads as lanes of steps over shared state: step them, blocked lanes, outcome counts',
   };
 
   /* One item per widget kind (docs/AUTHORING.md 3). Canvas-bound kinds carry their canvas. */
@@ -157,6 +158,18 @@
     { name: 'console (pytest run)', about: 'Monospace lines that keep their indentation; ids l1, l2, ...; one line shaded, a prompt line muted', spec: { kind: 'console',
       params: { title: 'Terminal', lines: ['$ pytest -q', '..F.                                     [100%]', 'FAILED test_returns.py::test_flat - assert 0.01 == 0.0', '    def test_flat():', '>       assert daily_return(100, 101) == 0.0', 'E       assert 0.01 == 0.0', '1 failed, 3 passed in 0.12s'] },
       state: { shade: { fail: ['l6'] }, tone: { l3: 'err', l7: 'muted' }, caption: 'The `E` line shows **what** the assert compared' } } },
+    { name: 'interleave (deadlock)', about: 'Two locks in opposite orders: after T1 and T2 each take their first lock, both lanes are blocked and the schedule ends in deadlock. Reset and step to see the 4 that finish.', spec: { kind: 'interleave',
+      params: { lanes: [{ id: 't1', label: 'T1', short: 'T1', steps: [{ op: 'lock', lock: 'A' }, { op: 'lock', lock: 'B' }, { op: 'unlock', lock: 'B' }, { op: 'unlock', lock: 'A' }] }, { id: 't2', label: 'T2', short: 'T2', steps: [{ op: 'lock', lock: 'B' }, { op: 'lock', lock: 'A' }, { op: 'unlock', lock: 'A' }, { op: 'unlock', lock: 'B' }] }] },
+      state: { schedule: ['t1', 't2'], outcomes: true }, derive: { caption: '{{values.deadlock}} of {{values.schedules}} schedules deadlock.' } } },
+    { name: 'interleave (asleep forever)', about: 'A wait sleeps until a notify that comes after it: the order c, p, p, c leaves the consumer asleep forever; outcome labels come from params.endings', spec: { kind: 'interleave',
+      params: { vars: { q: 0 }, outcome: [], endings: { complete: 'awake', asleep: 'asleep forever' }, lanes: [{ id: 'c', label: 'Consumer', steps: [{ op: 'set', reg: 'e', value: 'q == 0', text: 'check: queue empty?' }, { op: 'wait', if: 'e' }] }, { id: 'p', label: 'Producer', steps: [{ op: 'fetch-add', var: 'q', by: 1, text: 'push' }, { op: 'notify' }] }] },
+      state: { schedule: ['c', 'p', 'p', 'c'], outcomes: true } } },
+    { name: 'interleave (conditional steps)', about: 'Two withdrawals of 80 from 100: a step with if: acts only when its check passed; values.outcomes counts (bal, cash) over the 6 schedules', spec: { kind: 'interleave',
+      params: { vars: { bal: 100, cash: 0 }, outcome: ['bal', 'cash'], lanes: ['a', 'b'].map(id => ({ id, label: 'Withdrawal ' + id.toUpperCase(), steps: [{ ops: [{ op: 'load', reg: 'r', var: 'bal' }, { op: 'set', reg: 'ok', value: 'r >= 80' }], text: 'check: balance at least 80' }, { ops: [{ op: 'store', var: 'bal', value: 'r - 80', if: 'ok' }, { op: 'fetch-add', var: 'cash', by: 80, if: 'ok' }], text: 'if ok: store r - 80, cash out 80' }] })) },
+      state: { schedule: ['a', 'b', 'a', 'b'], outcomes: true } } },
+    { name: 'interleave (three lanes, tap to mark)', about: 'Three lanes of load, add, store: 1,680 schedules in one cached enumeration; tap mode marks steps (ids a1 to c3)', spec: { kind: 'interleave',
+      params: { vars: { x: 0 }, lanes: ['a', 'b', 'c'].map(id => ({ id, label: 'Thread ' + id.toUpperCase(), steps: [{ op: 'load', reg: 'r', var: 'x' }, { op: 'add', reg: 'r', by: 1 }, { op: 'store', var: 'x', reg: 'r' }] })) },
+      state: { outcomes: true }, derive: { caption: '{{values.outcomes["x=3"]}} of {{values.schedules}} schedules end at 3.' } } },
     { name: 'graph (lanes and pills)', about: 'Lanes behind the graph, pill nodes sized to their labels, a dashed node for a fetched commit', spec: { kind: 'graph',
       params: { height: 260, directed: true, lanes: [{ y: 0.15, label: 'origin' }, { y: 0.85, label: 'local' }],
         nodes: [{ id: 'a', label: 'a1f', x: 0.1, y: 0.85 }, { id: 'b', label: 'b2e', x: 0.35, y: 0.85 }, { id: 'c', label: 'c3d', x: 0.6, y: 0.15, dashed: true }, { id: 'm', label: 'main', x: 0.9, y: 0.85, shape: 'pill' }],
