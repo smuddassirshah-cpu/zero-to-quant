@@ -1,19 +1,18 @@
-Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only. User (4 Nov): this session is long, so do the whole of engine pass C plus first levels, not one task.
+Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only; if the local branch ref is behind origin, check out origin's commit (the clone is shallow; compare trees, never reset away local work without a backup branch).
 
-Task: PLAN 2a item 5, engine pass C parts 1 and 2, then topic 3.5 levels that need nothing else.
+Task: PLAN 2a item 5, the remaining topic 3.5 levels, plus the mock-oa-code brief. Engine pass C is done (items 467 to 480, documented in `docs/AUTHORING.md`: `parts`, `data`, `draw`, C++ drills and sessions, `allocCheck`, `interleave`, `"sample": true`); levels L1 and L2 of coding-int, research-int and systems are written, answer-checked and fixed.
 
-Requirements: interview-plan section (f) (E3, E8, E11, E13, E14); `docs/BACKLOG-INBOX.md` "Raised later (brief ... / fix pass ... / topic 3.5 briefs, engine requirements, 4 Nov)"; field shapes in the three briefs' engine sections. Number into `docs/ENGINE-BACKLOG.md` from 467 first.
+Wave 1, parallel content-author agents (Sonnet, `isolation: "worktree"`, one level each; merge each branch, grep every file for conflict markers, re-validate):
+- research-int L3 (uses `parts`, `data`; the six CSVs are in `app/content/data/`)
+- systems L3 (uses `parts`, `data` for `feed.hex`)
+- coding-int L3 (uses `parts`)
+- a brief writer: `exams/mock-oa-code` section in `docs/briefs/mocks.md` (draws coding tasks from `drills/<pack>` per AUTHORING `draw`; coding-int l15 links to it)
+Wave 2: research-int L4 and systems L4 (drills, `allocCheck`); then mock-oa-code itself, then coding-int L4 (needs the mock file).
 
-Wave 1, parallel (engine-dev agents, Sonnet, `isolation: "worktree"`, distinct files; merge each, re-validate):
-- A: E11 `parts` with C-parts-credit, C-parts-mixed, C-parts-code; then E3 `draw` with C-draw-code.
-- B: E14 `data` with C-data-cap; then C-alloc-check (C++ harness).
-- C: E13 `interleave` canvas with E13-blocked-lanes and the systems brief requirements.
-- D: E8 drill library (C++, stopwatch, filters, sessions) with C-drill-patterns.
-- E (content-author): coding-int L1 (uses no pass C item).
-Each engine agent: validator checks, a sample under `content/` used by no course, playthrough support, `docs/AUTHORING.md` and canvas README sections, report `docs/reports/engine-pass-c-<letter>.md`.
+Authors write the drill files their brief section names (vocabulary: AUTHORING section 5).
 
-Wave 2, after A and B merge: content-authors for research-int L1, systems L1, coding-int L2. Then research-int L2 (writes the six CSVs from `docs/briefs/research-int-scripts/gen_data.py`), systems L2 (needs C), as limits allow.
+Close: an answer-check agent per level (fresh-numbers rule: DECISIONS "Fresh numbers in reviews and homework") and a fix agent; full split playthrough (four lesson shards from the manifest, then `--sets`, `--exams`, `--bank all`, `--drills`, `--routes-only`) with and without `--mobile`, `--local-cdn <scratchpad>/pkgs` (build it first with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`); PLAN ticks per level; state files; NEXT_PROMPT.
 
-Close: answer check of every new key; a second reader on the engine reports; local CDN built (`bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`); split playthrough runs (KNOWN_ISSUES) green with and without `--mobile`; PLAN ticks per part and level.
+Files likely touched: `app/content/courses/{research-int,systems,coding-int}/`, `app/content/drills/`, `app/content/data/systems/`, `docs/briefs/mocks.md`, `docs/reports/`, `docs/reviews/answers-*.md`, `docs/BACKLOG-INBOX.md`.
 
-Acceptance: validate 0 errors; samples and new levels green; `--sets`, `--exams`, `--bank all`, `--routes-only` green; AUTHORING documents `parts`, `data`, `draw`, C++ drills, `allocCheck`, `interleave`. Next: remaining topic 3.5 levels, mock-oa-code brief.
+Acceptance: validate 0 errors; each new level green with and without `--mobile`; answer checks clean after fixes; full split runs green. Next after that: mock-superday-research, mock-oa-quant-data, topic-3.5 exam, second reads of the three courses.

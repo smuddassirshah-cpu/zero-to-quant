@@ -91,6 +91,15 @@ Session E (4 Nov 2026)
 
 Topic 3.5 briefs (4 Nov)
 - Brief code was checked natively (g++ 13.3, clang++ 18.1, CPython), not in YoWASP clang 21 or Pyodide. Level agents must run every starter and solution in the app once. coding-int's slow-but-correct starters fail by time only natively (about 6.5 s and 10.7 s at the brief's n); confirm in the browser.
-- The six research-int CSVs are not yet in `app/content/data/`; the L2 author generates them from `docs/briefs/research-int-scripts/gen_data.py` (run it before the other scripts there, which read `./data`).
 - `docs/briefs/systems-scripts/cpp/problems_l4*.py` and `appendix_cpp.md` predate `allocCheck`; the brief is the source for P-pool, P-format-price, P-latency-hist and P-handler (`systems-scripts/alloc/README.md`).
 - The clone is shallow, so git ahead and behind counts against other branches are unreliable; compare trees instead.
+
+
+Engine pass C and first topic 3.5 levels (4 Nov)
+- `interleave` (471): a `wait` does not re-take its lock on waking, `notify` wakes every sleeper, and there is no store buffer. systems l9 and l10 word their claims to match ("if steps run one at a time"; the real `wait` re-takes the lock); the (0, 0) store-buffering result is taught from a listing.
+- `allocCheck` (470) compiles with `-fno-builtin` because clang 21 at `-O1` deleted a visible `new`/`delete` pair, and skips the precompiled header, so a Check on such an item is a few seconds slower.
+- `isclose` and `equal` in Python `code` still do not compare a pandas DataFrame or treat NaN as equal to NaN; the research-int brief works round it (`tolist()`, `np.isnan`). Levels 3 and 4 should confirm they need nothing more.
+- The homework `parts` item sits first in systems homework-1 and homework-2, research-int homework-1 and homework-2, because the old playthrough check needed it there (fixed in 479); the order is harmless and was left.
+- 432 validator warnings, about 35 new: mostly "a point hint usually highlights the canvas" in research-int l1 and l4, and ladder canvas-kind warnings in research-int L2. Clear them in the topic 3.5 second read.
+- Drill pattern vocabulary has 21 slugs (472 added nine for packs 2 to 8 beyond the 12 the briefs named); drill packs are id prefixes (`ci-`, `rq-`, `sy-`) or an optional `pack` field (473).
+- `stale-local-backup` is a local-only branch holding the container's out-of-date copy of amazing-wright from session start; it has nothing unique and is not pushed.
