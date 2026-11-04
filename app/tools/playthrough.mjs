@@ -14,13 +14,18 @@
      node app/tools/playthrough.mjs --lesson conditional/l3-shrinking     one lesson (add --routes for the routes too)
      node app/tools/playthrough.mjs --bank probability-1   every item of one bank file (repeatable, or --bank all): dealt, answered right from its key, pass or fail per item
      node app/tools/playthrough.mjs --drill sample-cpp-row-sums   one drill (repeatable; --drills for every file in content/drills): the starter fails, the model
-                                                           solution passes every hidden test, the stopwatch is read and recorded (add --mobile for 390 px)
+                                                           solution passes every hidden test, the stopwatch is read and recorded (add --mobile, --narrow or --tablet to repeat it at those sizes)
      node app/tools/playthrough.mjs --session              the sample drill session: both drills, minutes per drill, result, carry, expiry (--drills includes it)
      node app/tools/playthrough.mjs --routes-only          only the routes, then the interview bank deck (due and new items, the 3-day box,
                                                            a miss, prerequisites, an old save, the pace line) and one exam sat with a
                                                            skewed Date.now so per-item seconds and the pace line are checked
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
-     node app/tools/playthrough.mjs --shots out --mobile   also a 390 px wide screenshot of each (name-390.png)
+     node app/tools/playthrough.mjs --shots out --mobile   also a 440 x 956 screenshot of each (name-440.png): the user's phone, iPhone 17 Pro Max
+     node app/tools/playthrough.mjs --narrow               the old 390 x 844 pass (name-390.png), the stricter width; combine with --mobile
+     node app/tools/playthrough.mjs --tablet               1032 x 1376 and 1376 x 1032 passes (name-1032.png, name-1376.png): iPad Pro 13-inch,
+                                                           portrait and landscape. Every width gets the same "page is wider than the window"
+                                                           checks. --mobile --tablet runs desktop (1280 x 860), phone and both tablet orientations.
+                                                           The passes resize the window; touch is NOT emulated (no hasTouch or isMobile)
      node app/tools/playthrough.mjs --shots out --why      also each lesson task's (and set item's) Explanation sheet after the right
                                                            answer (name-why.png), and after a wrong one where the
                                                            tool can make one (a choice distractor, a numeric answer
@@ -78,13 +83,15 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { mobile: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, sessionRun: false, all: false };
+const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, sessionRun: false, all: false };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
   else if (a === '--shots') opt.shots = path.resolve(next());
   else if (a === '--local-cdn') { const v = argv[i + 1]; if (v && !v.startsWith('--')) { opt.localCdn = path.resolve(v); i++; } else opt.localCdn = process.env.ZQ_LOCAL_CDN ? path.resolve(process.env.ZQ_LOCAL_CDN) : die('--local-cdn needs a directory (or set ZQ_LOCAL_CDN)'); }
   else if (a === '--mobile') opt.mobile = true;
+  else if (a === '--narrow') opt.narrow = true;
+  else if (a === '--tablet') opt.tablet = true;
   else if (a === '--why') opt.why = true;
   else if (a === '--routes') opt.routes = true;
   else if (a === '--no-routes') opt.routes = false;
@@ -102,6 +109,17 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--help' || a === '-h') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('*/')[0].replace(/^#!.*\n\/\* ?/, '')); process.exit(0); }
   else die(`unknown argument ${a} (try --help)`);
 }
+
+/* items 504-506: the extra viewport passes. Desktop is 1280 x 860; --mobile adds the user's phone (iPhone 17 Pro Max, 440 x 956),
+   --narrow adds the old 390 x 844 pass, --tablet adds the user's iPad Pro 13-inch (1032 x 1376 portrait, 1376 x 1032 landscape).
+   Resizing sets the width and height of every pass; it does not emulate touch. */
+const DESKTOP = { w: 1280, h: 860 };
+const EXTRA = [];
+if (opt.mobile) EXTRA.push({ w: 440, h: 956 });
+if (opt.narrow) EXTRA.push({ w: 390, h: 844 });
+if (opt.tablet) EXTRA.push({ w: 1032, h: 1376 }, { w: 1376, h: 1032 });
+const ANY_EXTRA = EXTRA.length > 0;
+let curVp = DESKTOP;
 const onlySets = !opt.all && (opt.sets || opt.exams);
 if (opt.all) { opt.sets = true; opt.exams = true; }
 if (onlySets && !opt.lessons.length) opt.lessonsOn = false;
@@ -217,6 +235,7 @@ const main = async () => {
       await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ status: 200, body: '', headers: { 'content-type': 'text/css' } }));
     }
     const page = await ctx.newPage();
+    const setVp = async (v, settle = 300) => { curVp = v; await page.setViewportSize({ width: v.w, height: v.h }); await page.waitForTimeout(settle); };
     const hostOf = (u) => { try { return new URL(u).hostname; } catch { return ''; } };
     page.on('console', (m) => {
       if (m.type() !== 'error') return;
@@ -228,7 +247,7 @@ const main = async () => {
     page.on('requestfailed', (r) => { if (!IGNORE_HOSTS.test(hostOf(r.url()))) consoleErrors.push({ where, text: `request failed: ${r.url()} (${r.failure() && r.failure().errorText})` }); });
     page.on('response', (r) => { if (r.status() >= 400 && r.url().startsWith(base)) consoleErrors.push({ where, text: `HTTP ${r.status()} ${r.url().slice(base.length)}` }); });
 
-    /* items 199, 205: --mobile adds a 390 px wide copy of every screenshot (the viewport narrows, then returns) */
+    /* items 199, 205, 504: --mobile, --narrow and --tablet add a copy of every screenshot per extra viewport (name-440, -390, -1032, -1376; the viewport resizes, then returns) */
     /* inbox (backtest 1): a failing code screen names its first failing test (or the error) in the failure line */
     const codeWhy = async () => { try { return await page.evaluate(() => { const n = document.querySelector('.wd-res > .wd-res-err, .wd-res-row.bad'); return n ? ' (' + n.textContent.replace(/\s+/g, ' ').trim().slice(0, 240) + ')' : ''; }); } catch { return ''; } };
     const shot = async (name) => {
@@ -238,7 +257,7 @@ const main = async () => {
       await page.waitForTimeout(420);
       try { await page.waitForFunction(() => (!window.ZQ || !ZQ.canvas || !ZQ.canvas.busy || ZQ.canvas.busy() === 0) && !document.getAnimations().some((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations !== Infinity), null, { timeout: 3000, polling: 50 }); } catch { /* still moving: shoot anyway */ }
       await page.screenshot({ path: file('') });
-      if (opt.mobile) { await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(350); await page.screenshot({ path: file('-390') }); await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(150); }
+      if (ANY_EXTRA) { for (const v of EXTRA) { await setVp(v, 350); await page.screenshot({ path: file('-' + v.w) }); if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) console.log(`note  ${name} at ${v.w} x ${v.h}: the page is wider than the window`); } await setVp(DESKTOP, 150); }
     };
     const whyShot = async (name) => { if (!opt.why || !opt.shots) return; if (await page.evaluate(() => !!(ZQ.test.why && ZQ.test.why()))) { await page.waitForTimeout(450); await shot(name); await page.evaluate(() => ZQ.test.closeWhy()); await page.waitForTimeout(250); } };
     const go = async (hash) => {
@@ -987,7 +1006,7 @@ const main = async () => {
     /* ---------- Drill library (ENGINE-BACKLOG 472): --drill <id>, --drills, --session ----------
        Each drill is opened at #drill/<id>: the starter (touched, so it can be submitted) must fail, the model solution must
        pass every hidden test and verify the drill, the stopwatch must read and be recorded with the result (Date.now is
-       moved on 130 s while the drill is open; no real minutes are waited), and with --mobile the whole run is at 390 px
+       moved on 130 s while the drill is open; no real minutes are waited), and with --mobile, --narrow or --tablet the whole run repeats at each of those sizes
        with no sideways scroll. --session sits the sample session (content/drills/sessions/sample-session.json): both
        drills with their model solutions, minutes per drill from a moved clock, the result screen, what a lesson reads as
        {{carry.session.*}}, a session whose clock is moved to zero, and one that survives leaving the page. */
@@ -1016,7 +1035,7 @@ const main = async () => {
         await page.waitForFunction(() => window.ZQDrill, null, { timeout: opt.timeout });
         const bad = await drillReady(cpp);
         if (bad) { mine.push(bad); throw new Error(bad); }
-        if (opt.mobile && await wide()) mine.push('the page is wider than the 390 px window');
+        if (ANY_EXTRA && await wide()) mine.push(`the page is wider than the ${curVp.w} px window`);
         const pill0 = await page.evaluate(() => { const t = document.querySelector('.drl-sw-t'); return t ? t.textContent : null; });
         if (!pill0 || !/^\d+:\d\d$/.test(pill0)) mine.push(`the stopwatch pill is missing or unreadable (${pill0})`);
         await shot('drill-' + id);
@@ -1043,7 +1062,7 @@ const main = async () => {
         const m = /^(\d+):(\d\d)$/.exec(info.pill || '');
         if (!m || +m[1] * 60 + +m[2] < 129) mine.push(`the stopwatch pill shows ${info.pill}`);
         await shot('drill-' + id + '-verified');
-        if (opt.mobile && await wide()) mine.push('after the run the page is wider than the 390 px window');
+        if (ANY_EXTRA && await wide()) mine.push(`after the run the page is wider than the ${curVp.w} px window`);
         console.log(`${mine.length ? 'FAIL' : 'ok  '} --drill ${id}  ${cpp ? 'C++' : 'Python'}, ${ref.passed} of ${ref.total} tests with the model solution, starter fails: ${!st.ok}`);
       } catch (e) { if (!mine.length) mine.push('threw ' + String(e.message || e).split('\n')[0]); console.log(`FAIL --drill ${id}  ${mine[0]}`); }
       mine.forEach(x => failures.push(`drill ${id}: ${x}`));
@@ -1065,7 +1084,7 @@ const main = async () => {
         await page.waitForSelector('[data-start]', { timeout: opt.timeout });
         const picks = await page.evaluate(() => [...document.querySelectorAll('.drls-pick .t-label')].map(x => x.textContent));
         if (picks.length !== 2 || picks[0] !== files[0].name || picks[1] !== files[1].name) bad(`the setup shows ${JSON.stringify(picks)}, the file lists ${JSON.stringify(files.map(f => f.name))}`);
-        if (opt.mobile && await wide()) bad('the setup page is wider than the 390 px window');
+        if (ANY_EXTRA && await wide()) bad(`the setup page is wider than the ${curVp.w} px window`);
         await shot('session-setup');
         await page.click('[data-start]');
         await page.waitForFunction(() => window.ZQSession && ZQSession.state && ZQSession.state().ids, null, { timeout: opt.timeout });
@@ -1080,7 +1099,7 @@ const main = async () => {
           await page.waitForFunction((id) => window.ZQDrill && ZQDrill.problem() === id, sdoc.drills[i], { timeout: opt.timeout });
           const rd = await drillReady(files[i].language === 'cpp');
           if (rd) { bad(rd); return; }
-          if (i === 0 && opt.mobile && await wide()) bad('the session page is wider than the 390 px window');
+          if (i === 0 && ANY_EXTRA && await wide()) bad(`the session page is wider than the ${curVp.w} px window`);
           if (i === 0) await shot('session-running');
           const sw = await page.evaluate(() => !!document.querySelector('.drl-sw'));
           if (sw) bad('a session drill shows its own stopwatch beside the session clock');
@@ -1102,7 +1121,7 @@ const main = async () => {
         if (usedMin < 25 || usedMin > 34) bad(`the result summary reads "${res.sum}"`);
         const last = res.rec[res.rec.length - 1];
         if (!last || last.drills.length !== 2 || last.drills[0].id !== sdoc.drills[0] || !last.drills.every(d => d.ok && d.total > 0 && d.passed === d.total) || last.minutes !== 60) bad(`the state holds ${JSON.stringify(last)}`);
-        if (opt.mobile && await wide()) bad('the result page is wider than the 390 px window');
+        if (ANY_EXTRA && await wide()) bad(`the result page is wider than the ${curVp.w} px window`);
         await shot('session-result');
         const carry = await page.evaluate(() => { ZQ.player.carryReset(); return ZQ.carry.session; });
         if (!carry || !(carry.minutes1 >= 10 && carry.minutes1 < 14.5) || !(carry.minutes2 >= 15 && carry.minutes2 < 19.5) || carry.solved !== 2 || carry.passed1 !== carry.total1 || !carry.total2) bad(`a lesson would read carry.session = ${JSON.stringify(carry)}`);
@@ -1145,7 +1164,7 @@ const main = async () => {
         if (await count() !== meta.filter(d => d.language === 'cpp' && (d.difficulty || 2) >= +clamp.min && (d.difficulty || 2) <= +clamp.max).length) fails.push('the language filter C++ lists the wrong drills');
         const msg = await page.evaluate(() => /No drill matches/.test(document.querySelector('.drl-l-groups').textContent));
         if (!msg && await count() === 0) fails.push('an empty filter result gives no message');
-        if (opt.mobile && await wide()) fails.push('the filtered list is wider than the window');
+        if (ANY_EXTRA && await wide()) fails.push(`the filtered list is wider than the ${curVp.w} px window`);
         await shot('route-drill-filtered');
         const logic = await page.evaluate(() => {
           const L = ZQ.drillLib, list = [{ id: 'a', pattern: 'bits', difficulty: 2 }, { id: 'b', pattern: 'intervals', difficulty: 4, language: 'cpp' }, { id: 'c', pattern: 'intervals', difficulty: 3 }];
@@ -1159,7 +1178,7 @@ const main = async () => {
         await page.waitForSelector('[data-start]', { timeout: opt.timeout });
         const n = await page.evaluate(() => document.querySelectorAll('.drls-pick').length);
         if (n !== 2) fails.push(`the session setup picks ${n} drills`);
-        if (opt.mobile && await wide()) fails.push('the session setup is wider than the window');
+        if (ANY_EXTRA && await wide()) fails.push(`the session setup is wider than the ${curVp.w} px window`);
         await shot('route-drill-session');
         await go('drill/sample-cpp-row-sums');
         await page.waitForFunction(() => window.ZQDrill, null, { timeout: opt.timeout });
@@ -1172,11 +1191,13 @@ const main = async () => {
     if (drillPhase) {
       const ids = opt.drillsAll ? drillIdsAll() : opt.drillIds;
       for (const id of ids) if (!drillIdsAll().includes(id)) die(`--drill ${id}: no such file in content/drills`);
-      if (opt.mobile) { await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(300); }
-      for (const id of ids) await drillOne(id);
-      if (opt.sessionRun || opt.drillsAll) await sessionPlay();
-      await unskewClock();
-      if (opt.mobile) { await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(200); }
+      for (const v of ANY_EXTRA ? EXTRA : [DESKTOP]) {
+        if (ANY_EXTRA) await setVp(v);
+        for (const id of ids) await drillOne(id);
+        if (opt.sessionRun || opt.drillsAll) await sessionPlay();
+        await unskewClock();
+      }
+      if (ANY_EXTRA) await setVp(DESKTOP, 200);
     }
     /* Engine samples ("sample": true) load by route but appear in no learner-facing list or count (ENGINE-BACKLOG 467, 468) */
     const sampleChecks = async () => {
@@ -1228,7 +1249,7 @@ const main = async () => {
       const open0 = firstOf(0, 1), locked3 = firstOf(3, 2) || firstOf(2, 2);
       if (!open0 || !locked3) { console.log('skip gating  no written Stage 0 level 1 lesson or Stage 2 or 3 level 2 lesson to check'); return; }
       const [oc, ol] = open0.split('/'), [lc, ll] = locked3.split('/');
-      const widths = opt.mobile ? [1280, 390] : [1280];
+      const widths = [DESKTOP, ...EXTRA];
       let saved = null;
       const evalOnly = (fn, arg) => page.evaluate(fn, arg);
       const importDoc = (patch) => page.evaluate((p) => {
@@ -1248,8 +1269,9 @@ const main = async () => {
         let st = await evalOnly(([c, l]) => ({ locked: ZQ.prereq.lessonLocked(c, l), card: !!document.querySelector('.lk'), lesson: !!document.querySelector('.lsn') }), [oc, ol]);
         if (st.locked || st.card || !st.lesson) fails.push(`${open0}: a Stage 0 first lesson should open on a fresh profile (locked ${st.locked}, card ${st.card}, lesson ${st.lesson})`);
         /* 2. Stage 3 lesson: locked, correct card */
-        for (const w of widths) {
-          if (w !== 1280) { await page.setViewportSize({ width: w, height: 844 }); await page.waitForTimeout(300); }
+        for (const wv of widths) {
+          const w = wv.w;
+          if (wv !== DESKTOP) await setVp(wv);
           await route(`lesson/${lc}/${ll}`);
           const c = await evalOnly(([c, l]) => {
             const m = ZQ.prereq.missingFor(c, l), q = (s) => [...document.querySelectorAll(s)];
@@ -1276,7 +1298,7 @@ const main = async () => {
           if (c.openBtn || !c.strictNote) fails.push(`${locked3}: Strict mode should hide "Open anyway" and say why`);
           if (c.wide) fails.push(`${locked3} at ${w} px: the locked card is wider than the window`);
           if (w === 1280) await shot('gate-locked-card');
-          if (w !== 1280) { await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(150); }
+          if (wv !== DESKTOP) await setVp(DESKTOP, 150);
         }
         /* 3. The course map draws the lock; Today names a locked course for a learner who started at Stage 3 */
         await route(`course/${lc}`);
@@ -1365,14 +1387,15 @@ const main = async () => {
           const old = Date.now() - 31 * 86400000;
           await importDoc({ prereq: { met: { [chipCand.ref]: { at: old, how: 'testout' } }, testouts: {}, opened: {}, grandfathered: true } });
           await evalOnly(([c, l]) => ZQ.prereq.unlock(c, l), [chipCand.c, chipCand.l]);
-          for (const w of widths) {
-            if (w !== 1280) { await page.setViewportSize({ width: w, height: 844 }); await page.waitForTimeout(300); }
+          for (const wv of widths) {
+          const w = wv.w;
+            if (wv !== DESKTOP) await setVp(wv);
             await route(`lesson/${chipCand.c}/${chipCand.l}`);
             const ch = await evalOnly(() => { const a = document.querySelector('.lsn .rf-chip'); return { chip: !!a, href: a ? a.getAttribute('href') : '', wide: document.documentElement.scrollWidth > window.innerWidth + 1 }; });
             if (!ch.chip) fails.push(`${chipCand.c}/${chipCand.l} (first screen "${chipCand.first}") at ${w} px: no Refresh chip after ${chipCand.ref} was met 31 days ago`);
             else if (!/^#review\//.test(ch.href)) fails.push(`the Refresh chip links to ${ch.href}`);
             if (ch.wide) fails.push(`${chipCand.c}/${chipCand.l} at ${w} px: the Refresh chip made the page wider than the window`);
-            if (w !== 1280) { await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(150); }
+            if (wv !== DESKTOP) await setVp(DESKTOP, 150);
           }
           const lk = await evalOnly((ref) => { const c = ref.split('/')[0], n = +ref.split('/L')[1]; const lv = ZQ.content.course(c).levels.find(x => x.n === n); return { review: lv.review, locked: ZQ.prereq.itemLocked(c, lv.review) }; }, chipCand.ref);
           if (lk.locked) fails.push(`the Refresh link target ${chipCand.ref} ${lk.review} is locked`);
@@ -1447,7 +1470,7 @@ const main = async () => {
         await evalOnly(() => { ZQ.content.exam = window.__realExam; delete window.__realExam; });
         if (!ex.card || !/is locked/.test(ex.title)) fails.push(`#exam/topic-gating-probe: an exam file with requires should show the locked card (card ${ex.card}, title "${ex.title}")`);
         await importDoc();
-        console.log(`${fails.length ? 'FAIL' : 'ok  '} gating  Stage 0 open, ${locked3} locked with its card${opt.mobile ? ' at 1280 and 390 px' : ''}, Strict, Open anyway, test-out, old save, Refresh chip, met level open, started level, exam requires, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} gating  Stage 0 open, ${locked3} locked with its card${ANY_EXTRA ? ' at ' + [DESKTOP, ...EXTRA].map(v => v.w).join(', ') + ' px' : ''}, Strict, Open anyway, test-out, old save, Refresh chip, met level open, started level, exam requires, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
         fails.push('threw: ' + String(e.message || e).split('\n')[0]);
         console.log('FAIL gating  threw');
@@ -1476,16 +1499,17 @@ const main = async () => {
           const blank = await page.evaluate(() => { const a = document.querySelector('#app'); return !a || a.innerText.trim().length < 20 || /This screen failed to render/.test(a.innerText); });
           if (blank) failures.push(`#${r}: the screen is empty or failed to render`);
           if (/^prepare(\/|$)/.test(r)) {
-            /* Prepare for: the chosen path lists every step, and nothing spills sideways (also at 390 px with --mobile) */
+            /* Prepare for: the chosen path lists every step, and nothing spills sideways (also at every --mobile, --narrow and --tablet width) */
             const pid = r.split('/')[1] || (['general', 'stage', 'firm'].map(k => prepPaths.find(p => p.kind === k)).find(Boolean) || {}).id, want = ((prepPaths.find(p => p.id === pid) || {}).steps || []).length;
             const probe = () => page.evaluate(() => ({ steps: document.querySelectorAll('.pp-step').length, wide: document.documentElement.scrollWidth > window.innerWidth + 1, bad: document.querySelectorAll('.pp-step a[href="#course/undefined"]').length }));
-            for (const w of opt.mobile ? [1280, 390] : [1280]) {
-              if (w !== 1280) { await page.setViewportSize({ width: w, height: 844 }); await page.waitForTimeout(300); }
+            for (const wv of [DESKTOP, ...EXTRA]) {
+              const w = wv.w;
+              if (wv !== DESKTOP) await setVp(wv);
               const got = await probe();
               if (got.steps !== want) failures.push(`#${r} at ${w} px: ${got.steps} steps drawn, ${want} in prep.json`);
               if (got.wide) failures.push(`#${r} at ${w} px: the page is wider than the window`);
               if (got.bad) failures.push(`#${r}: a step links to an unknown course`);
-              if (w !== 1280) { await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(150); }
+              if (wv !== DESKTOP) await setVp(DESKTOP, 150);
             }
           }
           await shot('route-' + r);

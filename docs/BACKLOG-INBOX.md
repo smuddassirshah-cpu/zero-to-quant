@@ -1062,3 +1062,7 @@ Raised later (topic 3.2 levels, 4 Nov), ito level 3:
 - [Could] `walk` has no geometric model: `model: "normal"` adds arithmetic increments, so l12's price paths (start £100, step sd 1.26, drift 0.02) are not lognormal and could go negative; the knock-out pictures are illustrative only. Wanted: `model: "gbm"` with `mu` and `sigma` of the log steps.
 - [Could] `distribution` `lognormal` takes the log-scale `mu`, so a slider cannot move the drift directly (the author converts: ln S0 + (m - sigma^2/2)T). l10's hook uses a `plane` with `normpdf(ln(x/100), m - 0.02, 0.2)/x` and a slider on m; a `drift` parameter (with `S0`, `T`) on the family would let the brief's `distribution` pair take the control.
 - [Could] `series` `sim` runs the engine's own stream, so the running-mean pictures of l10 (seed 14) and l11 (seed 11), which must match the NumPy numbers in the prose and the code tests, are precomputed lists of 40 log-spaced points written by the generator. Wanted: a `sim` option that reads a NumPy-compatible stream, or a helper that thins a long list onto log-spaced indices.
+
+Raised later (engine viewports):
+
+- [Could] Real touch pass: playthrough resizes the window only. A true touch pass needs a second browser context per device with `viewport`, `deviceScaleFactor`, `isMobile: true` and `hasTouch: true` (and an iOS user agent), `page.tap()` instead of click, no hover, and a visual viewport check for the iOS address bar and keyboard; drag widgets would need touch events.
