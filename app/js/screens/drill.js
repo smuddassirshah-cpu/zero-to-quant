@@ -27,6 +27,7 @@
   const lib = () => ZQ.drillLib || {}; // js/screens/drill-lib.js: patterns, filters, stopwatch, C++ drills, sessions (item 472)
   const LIMIT_MS = 5000;
   const LOAD_LIMIT_MS = 60000;
+  const PKG_MS = 120000;
   const MARK = '\u001eZQ';
   const WORDS = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   const num = (n) => (n < WORDS.length ? WORDS[n] : String(n));
@@ -307,6 +308,12 @@ if not callable(globals().get(${py(P.fn)})):
         if (m.type === 'fail') { unavailable(m.message); return; }
         if (!run || m.id !== run.id) return;
         if (m.type === 'event') { let d = null; try { d = JSON.parse(m.data); } catch { return; } run.onEvent(d); }
+        else if (m.type === 'pkgs') { // ENGINE-BACKLOG 500: package loading is kept out of the run's limit (2 minutes of its own), as in the lesson widget
+          const r = run;
+          clearTimeout(r.timer);
+          if (m.phase === 'end') r.timer = setTimeout(() => { end({ timeout: true }); start(true); }, LIMIT_MS);
+          else r.timer = setTimeout(() => { end({ timeout: true }); start(true); }, PKG_MS);
+        }
         else if (m.type === 'crash') run.crash = m.message;
         else if (m.type === 'end') { const crash = run.crash; end({ crash }); set('ready'); if (crash) start(true); }
       };
