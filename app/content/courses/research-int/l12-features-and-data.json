@@ -1,0 +1,1099 @@
+{
+ "id": "l12-features-and-data",
+ "course": "research-int",
+ "title": "Features and data",
+ "minutes": 15,
+ "objectives": [
+  "Propose features and data sources, and name the leakage each could bring."
+ ],
+ "skills": [
+  "rq-case"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which features know too much",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "About two and a half minutes a question; say your reasoning aloud first. The label is tomorrow’s return. You decide at the close of day $t$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Feature",
+      "Built from"
+     ],
+     "tap": "rows",
+     "align": [
+      "left",
+      "left"
+     ],
+     "rows": [
+      [
+       "Centred three-day mean of returns",
+       "days $t-1$, $t$ and $t+1$"
+      ],
+      [
+       "Tomorrow's opening gap",
+       "tomorrow's open minus today's close"
+      ],
+      [
+       "Z-score of a return",
+       "mean and sd of the whole sample"
+      ],
+      [
+       "Today's return",
+       "close on day $t$ and day $t-1$"
+      ],
+      [
+       "Today's volume",
+       "volume on day $t$"
+      ]
+     ]
+    }
+   },
+   "question": "Tap every feature that leaks.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r0",
+     "r1",
+     "r2"
+    ],
+    "wrong": [
+     {
+      "id": "missed-z",
+      "set": [
+       "r0",
+       "r1"
+      ]
+     },
+     {
+      "id": "today",
+      "set": [
+       "r0",
+       "r1",
+       "r2",
+       "r3"
+      ]
+     }
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask of each row: is it known at the close of day $t$?"
+    },
+    {
+     "rung": "point",
+     "text": "Look for $t+1$, the future, or a whole-sample statistic.",
+     "highlight": [
+      "r0",
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The first three use something not known at the close."
+    }
+   ],
+   "feedback": {
+    "correct": "Three leak: the centred mean, tomorrow’s gap and the whole-sample z-score.",
+    "generic": "Not quite. A feature leaks when it needs something after the close of day $t$.",
+    "byKey": {
+     "missed-z": "You missed the z-score. A mean and sd from the whole sample include days that have not happened yet.",
+     "today": "Today’s return is known at the close, so it is safe.",
+     "r3": "Today’s return is known at the close.",
+     "r4": "Today’s volume is known at the close."
+    }
+   },
+   "explain": {
+    "text": "The centred mean contains tomorrow’s return, and the gap is tomorrow’s. A whole-sample z-score uses days not yet seen. Today’s return and volume are known at the close.",
+    "canvas": {
+     "highlight": [
+      "r0",
+      "r1",
+      "r2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Rolling, then shifted",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "Six daily returns, in %. A rolling three-day mean ending on day $t$ uses days $t-2$ to $t$. `shift(1)` moves each value one row down.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Day",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ],
+     "rows": [
+      [
+       "Return (%)",
+       "1.0",
+       "-0.5",
+       "0.2",
+       "0.8",
+       "-0.3",
+       "0.4"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right",
+      "right",
+      "right",
+      "right",
+      "right"
+     ]
+    }
+   },
+   "question": "Fill in the table.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Three-day mean ending on day 6",
+      {
+       "edit": true,
+       "answer": 0.3,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "The same mean, shifted, on day 6",
+      {
+       "edit": true,
+       "answer": 0.2333,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "First day the shifted mean exists",
+      {
+       "edit": true,
+       "answer": 4,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The unshifted mean on day 6 uses days 4, 5 and 6."
+    },
+    {
+     "rung": "point",
+     "text": "Shifted, day 6 holds the mean that ended on day 5.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Day 6 shifted is the mean of days 3, 4 and 5. The first rolling value is on day 3, so the shifted one starts on day 4."
+    }
+   ],
+   "feedback": {
+    "correct": "0.3, 0.2333 and day 4.",
+    "generic": "Not quite. Average three values, then move the result down one day."
+   },
+   "explain": {
+    "text": "Without the shift, day 6 uses day 6’s own return. With it, day 6 holds what you knew at the close of day 5.",
+    "canvas": {
+     "highlight": [
+      "r0"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Four features, one label",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 600,
+   "prose": "About ten minutes with the code. Write `feature_corrs(path)`. It builds four features and correlates each with tomorrow’s log return, on the rows where all exist.",
+   "question": "Write `feature_corrs(path)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "data": {
+     "futures-daily.csv": "content/data/futures-daily.csv"
+    },
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef feature_corrs(path):\n    \"\"\"Correlation of four features with y, the next log return.\n    Keys: 'ret', 'mean5', 'logvol', 'centred3'.\n    mean5 ends today; centred3 is centred on today.\n    Use only rows where y and every feature exist.\"\"\"\n    df = pd.read_csv(path)\n    # Your code here\n    return {}\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef feature_corrs(path):\n    df = pd.read_csv(path)\n    df['ret'] = np.log(df['close']).diff()\n    df['y'] = df['ret'].shift(-1)\n    df['mean5'] = df['ret'].rolling(5).mean()\n    df['centred3'] = df['ret'].rolling(3, center=True).mean()\n    df['logvol'] = np.log(df['volume'])\n    d = df.dropna(subset=['y', 'ret', 'mean5', 'centred3'])\n    return {c: float(d[c].corr(d['y'])) for c in ['ret', 'mean5', 'logvol', 'centred3']}\n",
+    "examples": [
+     {
+      "setup": "open('tiny.csv', 'w').write('date,close,volume\\n' + ''.join(f'd{i},{c},{v}\\n' for i, (c, v) in enumerate(zip([100, 102, 101, 104, 103, 107, 105, 108, 110, 109, 113, 112], [1000, 1100, 900, 1300, 1200, 1500, 1100, 1400, 1700, 1600, 2000, 1800]))))",
+      "call": "round(feature_corrs('tiny.csv')['ret'], 4)",
+      "expect": "-0.8231",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "feature_corrs('futures-daily.csv')['ret']",
+      "expect": "0.126083",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "feature_corrs('futures-daily.csv')['mean5']",
+      "expect": "0.0285335",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "feature_corrs('futures-daily.csv')['logvol']",
+      "expect": "0.0303372",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "feature_corrs('futures-daily.csv')['centred3']",
+      "expect": "0.6086035",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "open('tiny.csv', 'w').write('date,close,volume\\n' + ''.join(f'd{i},{c},{v}\\n' for i, (c, v) in enumerate(zip([100, 102, 101, 104, 103, 107, 105, 108, 110, 109, 113, 112], [1000, 1100, 900, 1300, 1200, 1500, 1100, 1400, 1700, 1600, 2000, 1800]))))",
+      "call": "[feature_corrs('tiny.csv')[k] for k in ('ret', 'mean5', 'logvol', 'centred3')]",
+      "expect": "[-0.8230710139959321, -0.44114985645770866, -0.529172653444366, 0.7981286387830613]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "how": "Check runs 5 hidden tests. Four check each correlation on the futures file (within 1e-6). One checks all four on a twelve-row file (relative 1e-9). Every correlation uses the same rows."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build `y` with `shift(-1)` on the log return."
+    },
+    {
+     "rung": "point",
+     "text": "`rolling(3, center=True)` looks one day ahead. Drop rows missing any of `y`, `ret`, `mean5`, `centred3`."
+    },
+    {
+     "rung": "step",
+     "text": "Then `d[c].corr(d['y'])` for each feature."
+    }
+   ],
+   "feedback": {
+    "correct": "0.1261, 0.0285, 0.0303 and 0.6086 on 994 rows.",
+    "generic": "Some tests failed. Use log returns, one shared set of rows, and `center=True` for the centred mean."
+   },
+   "explain": {
+    "text": "Today’s return correlates 0.126 with tomorrow’s, the five-day mean 0.029 and log volume 0.030. The centred mean reaches 0.609 because it contains the label."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Where a leak hides",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "Your model decides at the close for tomorrow’s return. A data vendor supplies the fields. Some arrive later than they claim.",
+   "question": "Select all that apply. Which can leak the future?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "restate",
+      "text": "Earnings restated months later, kept under the original date",
+      "correct": true
+     },
+     {
+      "id": "members",
+      "text": "Today’s index members applied to every past year",
+      "correct": true
+     },
+     {
+      "id": "stamp",
+      "text": "A second asset’s close stamped hours after your decision",
+      "correct": true
+     },
+     {
+      "id": "fill",
+      "text": "A volume figure the vendor fills in the next evening",
+      "correct": true
+     },
+     {
+      "id": "yvol",
+      "text": "Yesterday’s volume figure, read at today’s close for tomorrow’s label",
+      "why": "It is known before the decision, so it is safe."
+     },
+     {
+      "id": "today",
+      "text": "Today’s close price, read at today’s close for a next-day label",
+      "why": "It is known at the decision time. The label is tomorrow’s return."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For each field, ask when it really became known."
+    },
+    {
+     "rung": "point",
+     "text": "Restated, back-filled and late-stamped fields carry later knowledge."
+    },
+    {
+     "rung": "step",
+     "text": "Four of the six arrive after the decision or use later facts."
+    }
+   ],
+   "feedback": {
+    "correct": "Restated figures, today’s members, late stamps and next-evening fills all leak.",
+    "generic": "Not quite. Check each field against the time you decide.",
+    "byKey": {
+     "yvol": "Yesterday’s volume is known at the decision, so it does not leak.",
+     "today": "Today’s close is known at the decision, so it does not leak."
+    }
+   },
+   "explain": {
+    "text": "Restatement, survivorship, late timestamps and back-filled fields are the usual routes. Each one hands the model something that was not yet known on the day."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "A high correlation",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "The code gave these four correlations with tomorrow’s return. The centred three-day mean stands far above the rest.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "ret",
+       "label": "today’s return"
+      },
+      {
+       "id": "mean5",
+       "label": "five-day mean"
+      },
+      {
+       "id": "vol",
+       "label": "log volume"
+      },
+      {
+       "id": "c3",
+       "label": "centred mean"
+      }
+     ],
+     "yLabel": "correlation with tomorrow’s return",
+     "showValues": true,
+     "decimals": 3,
+     "yMin": 0,
+     "yMax": 0.7,
+     "height": 240
+    },
+    "state": {
+     "values": {
+      "ret": 0.126,
+      "mean5": 0.029,
+      "vol": 0.03,
+      "c3": 0.609
+     }
+    }
+   },
+   "question": "What does its 0.609 tell you?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "leak",
+      "text": "It contains tomorrow’s return, so it cannot exist at decision time",
+      "correct": true
+     },
+     {
+      "id": "best",
+      "text": "It is the best feature, so I would build the whole model on it",
+      "why": "You ranked features by correlation. A leaking feature scores well and cannot be used."
+     },
+     {
+      "id": "neighbour",
+      "text": "Returns are predictable from their neighbours in time",
+      "why": "The 0.609 comes from the label sitting inside the average, not from any pattern."
+     },
+     {
+      "id": "r2",
+      "text": "It explains 61% of the variance, so the model is clearly strong",
+      "why": "You squared the wrong thing. R² is 0.37 here, and it is built on the answer."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write out which days the centred mean averages."
+    },
+    {
+     "rung": "point",
+     "text": "Days $t-1$, $t$ and $t+1$: one of them is the label.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A feature containing the label correlates well and is unusable."
+    }
+   ],
+   "feedback": {
+    "correct": "A leak. Correlation is a symptom, not a test.",
+    "generic": "Not quite. Ask which days the feature averages.",
+    "byKey": {
+     "best": "You ranked by correlation. The feature scores well because it holds the answer.",
+     "neighbour": "You read a pattern into it. The label is inside the average.",
+     "r2": "You squared the wrong thing. R² is 0.37 and it is built on the answer."
+    }
+   },
+   "explain": {
+    "text": "The centred mean has one term in three equal to the label. The honest features sit near 0.03, which is what a weak real signal looks like.",
+    "canvas": {
+     "highlight": [
+      "c3"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Statistics from the future",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "A feature is a value minus its mean. The five values are 2, 4, 6, 8 and 20. On day 3 the value is 6. The line shows the mean of all five.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "v",
+       "label": "value",
+       "values": [
+        2,
+        4,
+        6,
+        8,
+        20
+       ]
+      }
+     ],
+     "x": "index",
+     "indexFrom": 1,
+     "y": [
+      0,
+      22
+     ],
+     "height": 210,
+     "hlines": [
+      {
+       "id": "full",
+       "y": 8,
+       "label": "mean of all five, 8"
+      }
+     ]
+    }
+   },
+   "question": "What is the day-3 value minus the mean of the days known by day 3?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "accept": "2",
+    "wrong": [
+     {
+      "id": "full",
+      "value": -2,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "raw",
+      "value": 6,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Days 1 to 3 are the only days known on day 3."
+    },
+    {
+     "rung": "point",
+     "text": "Their mean is $(2 + 4 + 6)/3$."
+    },
+    {
+     "rung": "step",
+     "text": "The mean is 4, so $6 - 4 = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "2. Use the mean of what you knew.",
+    "generic": "Not quite. Average only days 1 to 3, then subtract.",
+    "byKey": {
+     "full": "You subtracted the full-sample mean of 8. That mean includes the jump on day 5.",
+     "raw": "You did not subtract a mean at all."
+    }
+   },
+   "explain": {
+    "text": "The full-sample mean of 8 contains the jump on day 5. On day 3 you only knew 2, 4 and 6, so the honest mean is 4.",
+    "canvas": {
+     "hlines": [
+      {
+       "id": "sofar",
+       "y": 4,
+       "label": "mean so far, 4",
+       "dashed": true
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Say it aloud",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "A feature leaks when $t_{\\text{known}} > t_{\\text{decide}}$: it was known after the moment you decide. For a next-day label, $t_{\\text{decide}}$ is the close of day $t$. Say that test in one sentence.",
+   "question": "Which sentence would you say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "time",
+      "text": "For each feature I note when it is known: after my decision means a leak.",
+      "correct": true
+     },
+     {
+      "id": "corr",
+      "text": "I drop any feature whose correlation with the label looks very high.",
+      "why": "You tested the symptom. A leak can be small, and an honest feature can correlate well."
+     },
+     {
+      "id": "roll",
+      "text": "I avoid rolling windows, since they look at other days of data.",
+      "why": "A window that ends at the decision time is safe. The end of the window is what matters."
+     },
+     {
+      "id": "split",
+      "text": "I fit only on the training period, so nothing can leak at all.",
+      "why": "That is the split. A feature can still use later data inside the training rows."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look for a test that names two times."
+    },
+    {
+     "rung": "point",
+     "text": "Leaks are about when something is known."
+    },
+    {
+     "rung": "step",
+     "text": "Only one option compares the time known with the time decided."
+    }
+   ],
+   "feedback": {
+    "correct": "Known time against decision time, feature by feature.",
+    "generic": "Not quite. Pick the sentence that names two times.",
+    "byKey": {
+     "corr": "You used correlation. It is a symptom, not the test.",
+     "roll": "You banned a safe tool. Window ends matter.",
+     "split": "You described the split, not the feature."
+    }
+   },
+   "explain": {
+    "text": "Write the time each feature becomes known and the time you decide. Anything known later is a leak, however well it scores."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Why 0.577",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "Daily returns are independent with variance $\\sigma^2$. The label is $y = r_{t+1}$. A feature is the centred mean $m = (r_t + r_{t+1} + r_{t+2})/3$.",
+   "question": "Put the lines in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Only $r_{t+1}$ is shared, so $\\text{Cov}(m, y) = \\sigma^2/3$."
+     },
+     {
+      "id": "b",
+      "text": "Three independent terms divided by 3 give $\\text{Var}(m) = 3\\sigma^2/9 = \\sigma^2/3$."
+     },
+     {
+      "id": "c",
+      "text": "The correlation is $\\text{Cov}(m, y)$ over $\\sqrt{\\text{Var}(m)\\,\\text{Var}(y)}$, which is $\\dfrac{\\sigma^2/3}{\\sqrt{\\sigma^2/3}\\,\\sigma}$."
+     },
+     {
+      "id": "d",
+      "text": "That simplifies to $1/\\sqrt{3} = 0.5774$."
+     },
+     {
+      "id": "x",
+      "text": "One term in three is the label, so the correlation is $1/3$.",
+      "why": "That is the covariance share. Dividing by both spreads gives $1/\\sqrt{3}$."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with what $m$ and $y$ share."
+    },
+    {
+     "rung": "point",
+     "text": "Covariance counts the shared term; variance counts all three."
+    },
+    {
+     "rung": "step",
+     "text": "Divide the covariance by both spreads."
+    }
+   ],
+   "feedback": {
+    "correct": "0.5774, close to the 0.6086 in the file.",
+    "generic": "Not quite. Covariance, variance, then the ratio.",
+    "byKey": {
+     "x": "You gave the share of the label inside the mean. A correlation divides by both spreads.",
+     "left-out": "You left out a step the derivation needs."
+    }
+   },
+   "explain": {
+    "text": "The mean of $w$ independent returns, one of them the label, correlates $1/\\sqrt{w}$ with it. The file gives 0.609 against 0.577 for pure noise."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Four vendor fields",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "You decide at 16:35 for tomorrow’s return. A vendor offers four daily fields. One is safe.",
+   "question": "Which field can feed the model?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "close",
+      "text": "The official close, published at 16:31",
+      "correct": true
+     },
+     {
+      "id": "consensus",
+      "text": "A consensus forecast revised at 20:00 and stamped 16:00",
+      "why": "It is stamped before it was known. At 16:35 you cannot have it."
+     },
+     {
+      "id": "vwap",
+      "text": "The volume-weighted price of the day, delivered at 18:00",
+      "why": "It arrives after the decision."
+     },
+     {
+      "id": "members",
+      "text": "The index membership list as it stands today",
+      "why": "It applies today’s members to the past, which is survivorship."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each time stamp with 16:35."
+    },
+    {
+     "rung": "point",
+     "text": "A safe field is published before the decision."
+    },
+    {
+     "rung": "step",
+     "text": "Only the official close is out by 16:31."
+    }
+   ],
+   "feedback": {
+    "correct": "The official close, out at 16:31.",
+    "generic": "Not quite. Check publication time against 16:35.",
+    "byKey": {
+     "consensus": "You trusted the stamp. The revision came at 20:00.",
+     "vwap": "You used a field that arrives at 18:00.",
+     "members": "You used today’s members for past days."
+    }
+   },
+   "explain": {
+    "text": "Judge a field by when it was actually available, not by the date printed on it. Vendors stamp the day a value refers to, not the day it arrived."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "The interviewer asks: \"How would you check there is no leak?\" Put your steps in order. Leave out the one you would not use.",
+   "question": "Order the checks.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "List when each feature becomes known and when the label is set."
+     },
+     {
+      "id": "b",
+      "text": "Shift or drop any feature known after the decision time."
+     },
+     {
+      "id": "c",
+      "text": "Score on a later period never used, and watch for a collapse."
+     },
+     {
+      "id": "d",
+      "text": "Shuffle the label: a score above zero means the pipeline leaks."
+     },
+     {
+      "id": "x",
+      "text": "Keep any feature whose backtest correlation is high.",
+      "why": "High correlation is where leaks hide. It is not a check."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Audit first, then fix, then test."
+    },
+    {
+     "rung": "point",
+     "text": "A leak shows as a score that collapses later."
+    },
+    {
+     "rung": "step",
+     "text": "List, shift, score later, shuffle."
+    }
+   ],
+   "feedback": {
+    "correct": "List, shift, score later, shuffle the label.",
+    "generic": "Not quite. Audit the times, fix them, then test.",
+    "byKey": {
+     "x": "You kept the features that look best. Leaks look best.",
+     "left-out": "You left out one of the four checks."
+    }
+   },
+   "explain": {
+    "text": "The audit is a list of times. The tests are a later period and a shuffled label: a leak survives neither."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "For every feature, write when it is known and when you decide. Known later means a leak.",
+   "A feature that contains the label correlates well and cannot be used: correlation is a symptom, not a test.",
+   "Rolling windows are safe when they end at the decision time, which `shift(1)` enforces."
+  ],
+  "formula": {
+   "name": "The leak test",
+   "tex": "t_{\\text{known}} > t_{\\text{decide}} \\;\\Rightarrow\\; \\text{leak}",
+   "note": "A mean of $w$ independent returns that contains the label correlates $1/\\sqrt{w}$ with it."
+  },
+  "trap": "A high correlation with the label is not a sign of a good feature."
+ },
+ "quiz": [
+  {
+   "id": "q-safe-average",
+   "difficulty": 2,
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "The label is tomorrow’s return. You decide at the close.",
+   "question": "Which feature is safe?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "trail",
+      "text": "The ten-day average of returns ending today",
+      "correct": true
+     },
+     {
+      "id": "centred",
+      "text": "The ten-day average of returns centred on today",
+      "why": "You chose a window that reaches five days into the future."
+     },
+     {
+      "id": "next5",
+      "text": "The average return over the next five days",
+      "why": "You chose the future itself."
+     },
+     {
+      "id": "gap",
+      "text": "Tomorrow’s open against today’s close",
+      "why": "You chose a quantity that is set after the decision."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A trailing window ends at the decision time.",
+    "generic": "Not quite. Pick the one that stops today.",
+    "byKey": {
+     "centred": "Half of that window is in the future.",
+     "next5": "That is the future.",
+     "gap": "That is set tomorrow."
+    }
+   },
+   "explain": {
+    "text": "A window that ends today uses only what is known at the close."
+   }
+  },
+  {
+   "id": "q-shifted-two",
+   "difficulty": 2,
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "Returns on days 1 to 5 are 0.5, 0.1, −0.3, 0.7 and 0.2 (%). A two-day rolling mean is shifted by one day.",
+   "question": "What is the shifted mean held on day 5?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 0.2, or 0.2 ± 0.0005",
+    "wrong": [
+     {
+      "id": "unshifted",
+      "value": 0.45,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.2, the mean of days 3 and 4.",
+    "generic": "Not quite. Day 5 holds the mean that ended on day 4.",
+    "byKey": {
+     "unshifted": "You averaged days 4 and 5. That uses day 5’s own return."
+    }
+   },
+   "explain": {
+    "text": "The unshifted mean on day 5 is 0.45, which includes day 5. The shifted value is $(-0.3 + 0.7)/2 = 0.2$."
+   }
+  },
+  {
+   "id": "q-half-label",
+   "difficulty": 3,
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "Returns are independent. A feature is the average of today’s return and tomorrow’s. The label is tomorrow’s return.",
+   "question": "What is the correlation between the feature and the label?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7071,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 0.7071, or 0.7071 ± 0.0005",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "quarter",
+      "value": 0.3536,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/\\sqrt{2} = 0.7071$.",
+    "generic": "Not quite. Two terms, one of them the label.",
+    "byKey": {
+     "half": "You gave the share of the label in the mean. Correlation is its root.",
+     "quarter": "You halved again. Divide by both spreads instead."
+    }
+   },
+   "explain": {
+    "text": "The mean of two independent returns, one of them the label, correlates $1/\\sqrt{2}$ with it."
+   }
+  },
+  {
+   "id": "q-zscore-fix",
+   "difficulty": 3,
+   "tags": [
+    "feature-leakage",
+    "shift-rolling"
+   ],
+   "pace": 150,
+   "prose": "A feature is today’s return as a z-score, using the mean and sd of the whole year.",
+   "question": "How do you fix it?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "expand",
+      "text": "Use the mean and sd of the days up to today only",
+      "correct": true
+     },
+     {
+      "id": "shuffle",
+      "text": "Shuffle the rows before standardising",
+      "why": "You mixed future days into the past. That makes it worse."
+     },
+     {
+      "id": "drop",
+      "text": "Drop the feature, since any z-score leaks",
+      "why": "A z-score from past days is safe."
+     },
+     {
+      "id": "year",
+      "text": "Use the full year but split train and test first",
+      "why": "The statistics still come from days after the decision."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "An expanding or trailing window.",
+    "generic": "Not quite. The statistics must come from days up to today.",
+    "byKey": {
+     "shuffle": "Shuffling adds future days.",
+     "drop": "You banned a safe feature.",
+     "year": "The splitting does not change which days the statistics use."
+    }
+   },
+   "explain": {
+    "text": "Compute the mean and sd from days up to the decision day, then standardise."
+   }
+  }
+ ]
+}
