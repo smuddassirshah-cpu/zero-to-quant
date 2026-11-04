@@ -1,0 +1,1155 @@
+{
+  "id": "l10-producer-consumer",
+  "course": "systems",
+  "title": "A producer and a consumer",
+  "minutes": 14,
+  "objectives": [
+    "Pass work between threads with a queue and a condition variable."
+  ],
+  "skills": [
+    "sy-concurrency"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A wake-up nobody hears",
+      "tags": [
+        "lost-wakeup"
+      ],
+      "prose": "A consumer thread checks whether the queue is empty, and if it was, waits to be woken. A producer pushes an item, then calls notify, which wakes any thread that is waiting. A notify that comes before the wait wakes nobody.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "q": 0
+          },
+          "outcome": [],
+          "endings": {
+            "complete": "awake",
+            "asleep": "asleep forever"
+          },
+          "lanes": [
+            {
+              "id": "c",
+              "label": "Consumer",
+              "steps": [
+                {
+                  "op": "set",
+                  "reg": "e",
+                  "value": "q == 0",
+                  "text": "check: is the queue empty?"
+                },
+                {
+                  "op": "wait",
+                  "if": "e",
+                  "text": "if it was empty: wait"
+                }
+              ]
+            },
+            {
+              "id": "p",
+              "label": "Producer",
+              "steps": [
+                {
+                  "op": "fetch-add",
+                  "var": "q",
+                  "by": 1,
+                  "text": "push an item"
+                },
+                {
+                  "op": "notify",
+                  "text": "notify"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "{{values.ending == 'asleep' ? 'The consumer sleeps forever, with an item in the queue.' : (values.done ? 'The consumer is awake.' : 'Queue holds ' + values.q + '.')}}"
+        }
+      },
+      "question": "Find the order in which the consumer sleeps forever. Then tap the notify nobody hears.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "p2"
+        ],
+        "countWord": "steps marked",
+        "wrong": [
+          {
+            "id": "push",
+            "set": [
+              "p1"
+            ]
+          },
+          {
+            "id": "wait",
+            "set": [
+              "c2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The consumer must see an empty queue, then wait too late."
+        },
+        {
+          "rung": "point",
+          "text": "Check first, then let the producer run both its steps.",
+          "highlight": [
+            "c1",
+            "p2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Order c1, p1, p2, c2. The notify p2 lands before the wait."
+        }
+      ],
+      "feedback": {
+        "correct": "p2: it ran before the consumer was waiting.",
+        "generic": "Not quite right. Step c1, p1, p2, c2 and look at the notify.",
+        "byKey": {
+          "push": "The push is fine. The item is there; nobody tells the consumer.",
+          "wait": "The wait is the victim. Mark the notify that came too early."
+        }
+      },
+      "explain": {
+        "text": "The consumer saw an empty queue, then the producer pushed and notified before the consumer waited. The notify woke nobody, so the consumer sleeps with an item in the queue. This is a **lost wakeup**.",
+        "canvas": {
+          "schedule": [
+            "c",
+            "p",
+            "p",
+            "c"
+          ],
+          "highlight": [
+            "p2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "How often",
+      "prose": "Each lane has two steps, so there are 6 orders. Try them; Undo and Reset take you back. The box lists the endings you have reached.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "q": 0
+          },
+          "outcome": [],
+          "endings": {
+            "complete": "awake",
+            "asleep": "asleep forever"
+          },
+          "lanes": [
+            {
+              "id": "c",
+              "label": "Consumer",
+              "steps": [
+                {
+                  "op": "set",
+                  "reg": "e",
+                  "value": "q == 0",
+                  "text": "check: is the queue empty?"
+                },
+                {
+                  "op": "wait",
+                  "if": "e",
+                  "text": "if it was empty: wait"
+                }
+              ]
+            },
+            {
+              "id": "p",
+              "label": "Producer",
+              "steps": [
+                {
+                  "op": "fetch-add",
+                  "var": "q",
+                  "by": 1,
+                  "text": "push an item"
+                },
+                {
+                  "op": "notify",
+                  "text": "notify"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "outcomes": "found"
+        },
+        "derive": {
+          "caption": "{{values.ending == 'asleep' ? 'The consumer sleeps forever, with an item in the queue.' : (values.done ? 'The consumer is awake.' : 'Queue holds ' + values.q + '.')}}"
+        }
+      },
+      "question": "In how many of the 6 orders does the consumer end awake?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "5: all but c1, p1, p2, c2.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Only one order loses the wakeup."
+        }
+      ],
+      "feedback": {
+        "correct": "5 of 6.",
+        "generic": "Not quite right. Count the orders that lose the notify.",
+        "byKey": {
+          "one": "1 is the count that ends asleep.",
+          "all": "c1, p1, p2, c2 ends asleep."
+        }
+      },
+      "explain": {
+        "text": "Five orders end awake and one sleeps forever. One in six is rare enough to pass every test and still hang a live system. The bug is the gap between the check and the wait.",
+        "canvas": {
+          "outcomes": true
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Check and wait under one lock",
+      "tags": [
+        "condition-variable"
+      ],
+      "prose": "The fix: the consumer locks `m`, checks, and waits; the wait lets go of `m` as it falls asleep. The producer pushes under `m` too. This is a **condition variable**. The real `wait` also takes `m` back before it returns; the canvas leaves that step out.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "q": 0
+          },
+          "locks": [
+            "m"
+          ],
+          "outcome": [],
+          "endings": {
+            "complete": "awake",
+            "asleep": "asleep forever"
+          },
+          "lanes": [
+            {
+              "id": "c",
+              "label": "Consumer",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "m"
+                },
+                {
+                  "op": "set",
+                  "reg": "e",
+                  "value": "q == 0",
+                  "text": "check: is the queue empty?"
+                },
+                {
+                  "op": "wait",
+                  "if": "e",
+                  "lock": "m",
+                  "text": "if it was empty: wait (lets go of m)"
+                }
+              ]
+            },
+            {
+              "id": "p",
+              "label": "Producer",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "m"
+                },
+                {
+                  "op": "fetch-add",
+                  "var": "q",
+                  "by": 1,
+                  "text": "push an item"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "m"
+                },
+                {
+                  "op": "notify",
+                  "text": "notify"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "{{values.ending == 'asleep' ? 'The consumer sleeps forever, with an item in the queue.' : (values.done ? 'The consumer is awake.' : 'Queue holds ' + values.q + '.')}}"
+        }
+      },
+      "question": "Can the consumer sleep forever now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the producer cannot push between the check and the wait",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes, in the same order as before",
+            "why": "The producer's push needs `m`, which the consumer holds from its check until it sleeps."
+          },
+          {
+            "id": "lock",
+            "text": "Yes, because the wait holds `m` and blocks the producer",
+            "why": "The wait lets go of `m` as it sleeps, so the producer gets in."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try c1, c2, then lane P."
+        },
+        {
+          "rung": "point",
+          "text": "After c1, the producer is blocked until the consumer sleeps.",
+          "highlight": [
+            "p1",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The canvas counts 5 schedules and none asleep."
+        }
+      ],
+      "feedback": {
+        "correct": "No. All 5 schedules end awake.",
+        "generic": "Not quite right. Step c1, c2 and try the producer.",
+        "byKey": {
+          "yes": "The push needs `m`, so it cannot fall between the check and the wait.",
+          "lock": "The wait releases `m` as the consumer sleeps."
+        }
+      },
+      "explain": {
+        "text": "Holding `m` from the check to the sleep means a push lands before the check or after the sleep. The canvas finds 5 schedules, none asleep. On the canvas, `notify` wakes every sleeper, as `notify_all` does.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "c",
+            "c",
+            "c",
+            "p",
+            "p",
+            "p",
+            "p"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "If or while",
+      "tags": [
+        "spurious-wakeup",
+        "condition-variable"
+      ],
+      "prose": "Two consumers wait; one item arrives and the producer calls `notify_all`. Both wake. The first pops the item; the second must check again. A thread can also wake with no notify at all: a **spurious wakeup**.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "consumer 1 and consumer 2 both wait",
+            "producer: push one item, notify_all",
+            "both wake; consumer 1 pops the item",
+            "consumer 2: an empty queue"
+          ],
+          "title": "Two consumers, one item",
+          "wrap": true
+        }
+      },
+      "question": "Put a correct consumer's lines in order. Leave out the lines that do not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "`std::unique_lock<std::mutex> lk(m);`"
+          },
+          {
+            "id": "s2",
+            "text": "`while (q.empty()) cv.wait(lk);`"
+          },
+          {
+            "id": "s3",
+            "text": "`int item = q.front(); q.pop();`"
+          },
+          {
+            "id": "s4",
+            "text": "`lk.unlock();`"
+          },
+          {
+            "id": "d1",
+            "text": "`if (q.empty()) cv.wait(lk);`",
+            "why": "With `if`, the second consumer pops an empty queue after waking."
+          },
+          {
+            "id": "d2",
+            "text": "`lk.unlock(); cv.wait(lk);`",
+            "why": "You let go of `m` before the wait: the lost wakeup comes back, and `wait` needs the lock held."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Lock first, unlock last."
+        },
+        {
+          "rung": "point",
+          "text": "The check must be repeated after every wake-up.",
+          "highlight": [
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Lock, `while` empty wait, pop, unlock."
+        }
+      ],
+      "feedback": {
+        "correct": "Lock, while empty wait, pop, unlock.",
+        "generic": "Not quite right. Read the first marked line.",
+        "byKey": {
+          "left-out": "Every one of the four kept lines is needed."
+        }
+      },
+      "explain": {
+        "text": "After any wake-up the queue may be empty again, so the check is a `while`. The wait must hold the lock it is given, which it releases while asleep. Many learners write `if`; it passes tests until two consumers share a queue.",
+        "canvas": {
+          "tone": {
+            "l3": "err",
+            "l4": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A bounded queue",
+      "tags": [
+        "bounded-queue"
+      ],
+      "prose": "A bounded queue holds at most a fixed number of items. A push on a full queue blocks the producer, and a pop on an empty queue blocks the consumer. Here the events run in order on one thread, so a blocked event is skipped and counted.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "",
+            ""
+          ],
+          "mode": "queue"
+        },
+        "state": {
+          "caption": "A queue of capacity 2, empty at the start."
+        }
+      },
+      "question": "Fill in the tallies for each run.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Run",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "Capacity 2, PCCPPP: blocked pushes",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Capacity 2, PCCPPP: blocked pops",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Capacity 2, PCCPPP: items left",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Capacity 3, PPPCCCC: blocked pushes",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Capacity 3, PPPCCCC: blocked pops",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Capacity 3, PPPCCCC: items left",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Track the count of items after each event."
+        },
+        {
+          "rung": "point",
+          "text": "Capacity 2, PCCPPP: 1, 0, blocked, 1, 2, blocked.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1, 1, 2; then 0, 1, 0."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 1, 2 and 0, 1, 0.",
+        "generic": "Not quite right. Check the first marked cell.",
+        "byKey": {
+          "r0c1": "The sixth event finds the queue full at 2.",
+          "r1c1": "The third event finds the queue empty.",
+          "r2c1": "Two pushes after the blocked pop fill it: 2 left.",
+          "r3c1": "Three pushes fit in capacity 3.",
+          "r4c1": "The seventh event pops an empty queue.",
+          "r5c1": "Three in, three out."
+        }
+      },
+      "explain": {
+        "text": "A full queue stops the producer; an empty one stops the consumer. With threads, each blocked event would wait on its own condition variable instead of being skipped. The capacity bounds the memory and slows a fast producer to the consumer's pace.",
+        "canvas": {
+          "cells": [
+            "1",
+            "2"
+          ],
+          "caption": "Full: the next push blocks."
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Polling instead",
+      "tags": [
+        "condition-variable"
+      ],
+      "prose": "A colleague drops the condition variable. The consumer checks the queue; if it is empty, it calls `sleep_for(1ms)` and checks again.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "while (true) {",
+            "  if (!q.empty()) { take(); continue; }",
+            "  std::this_thread::sleep_for(1ms);",
+            "}"
+          ],
+          "title": "A polling consumer",
+          "wrap": true
+        }
+      },
+      "question": "How long can an item now sit in the queue before the consumer sees it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ms",
+            "text": "Up to 1 ms, half that on average",
+            "correct": true
+          },
+          {
+            "id": "us",
+            "text": "About 5 µs, as with a condition variable",
+            "why": "A wake-up is 5 µs. Polling adds up to the whole 1 ms sleep."
+          },
+          {
+            "id": "zero",
+            "text": "No time: the next check sees it at once",
+            "why": "The next check is up to 1 ms away."
+          },
+          {
+            "id": "forever",
+            "text": "Forever, as in the lost wakeup",
+            "why": "Polling never sleeps forever; it is just late."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When does the consumer next look?"
+        },
+        {
+          "rung": "point",
+          "text": "An item can arrive just after a check.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It waits up to the full 1 ms, 0.5 ms on average."
+        }
+      ],
+      "feedback": {
+        "correct": "Up to 1 ms, 0.5 ms on average.",
+        "generic": "Not quite right. When is the next check?",
+        "byKey": {
+          "us": "That is a condition variable's wake-up. Polling waits for the next check.",
+          "zero": "The consumer is asleep between checks.",
+          "forever": "Polling cannot lose a wakeup; it trades the bug for delay."
+        }
+      },
+      "explain": {
+        "text": "An item that lands just after a check waits the whole millisecond. On average that is 0.5 ms, the time of 5,000 main-memory reads. Polling avoids the lost wakeup by being slow.",
+        "canvas": {
+          "tone": {
+            "l3": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Shutting down",
+      "tags": [
+        "condition-variable",
+        "lost-wakeup"
+      ],
+      "prose": "At shutdown the producer sets `done = true` and calls `notify_all`. The consumer waits with `while (q.empty()) cv.wait(lk);` and the queue is empty.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "std::unique_lock<std::mutex> lk(m);",
+            "while (q.empty()) cv.wait(lk);",
+            "int item = q.front(); q.pop();",
+            "// the loop never tests done"
+          ],
+          "title": "consumer.cpp",
+          "wrap": true
+        }
+      },
+      "question": "What happens to the consumer?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sleep",
+            "text": "It wakes, sees an empty queue, and waits again: asleep forever",
+            "correct": true
+          },
+          {
+            "id": "exit",
+            "text": "It wakes and exits, because it was notified",
+            "why": "Waking only re-runs the `while` check, which never looks at `done`."
+          },
+          {
+            "id": "pop",
+            "text": "It pops an empty queue",
+            "why": "The `while` stops it popping; it waits again instead."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: `notify_all` ends every wait for good",
+            "why": "A notify ends one wait; the loop starts another."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the `while` check after waking?"
+        },
+        {
+          "rung": "point",
+          "text": "It tests only `q.empty()`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The predicate must be `q.empty() && !done`, then return when `done`."
+        }
+      ],
+      "feedback": {
+        "correct": "It sleeps forever: the predicate never tests `done`.",
+        "generic": "Not quite right. Run the `while` check after the wake-up.",
+        "byKey": {
+          "exit": "The notify only ends the current wait.",
+          "pop": "The `while` keeps it from popping.",
+          "fine": "The loop waits again after every notify."
+        }
+      },
+      "explain": {
+        "text": "The wait's condition must include every reason to wake: an item or shutdown. Write `while (q.empty() && !done) cv.wait(lk);` and return if the queue is still empty. Otherwise shutdown hangs on the last consumer.",
+        "canvas": {
+          "tone": {
+            "l2": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "The consumer sleeps exactly when\n\n$$\\text{queue empty} \\wedge \\neg\\,\\text{done},$$\n\nchecked under the mutex, in a `while`, by `cv.wait`. The producer changes the queue under the same mutex, then notifies.\n\n```cpp\n{ std::lock_guard<std::mutex> g(m); q.push(item); }\ncv.notify_one();\n```",
+      "question": "Where must the producer push the item?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "under",
+            "text": "Under the same mutex the consumer checks with",
+            "correct": true
+          },
+          {
+            "id": "after",
+            "text": "After notifying",
+            "why": "Then the consumer can wake to an empty queue and sleep again."
+          },
+          {
+            "id": "anywhere",
+            "text": "Anywhere, since the notify wakes the consumer",
+            "why": "Without the mutex, the push can fall between the check and the wait."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Under the same mutex, then notify.",
+        "generic": "Not quite right. What closes the gap between check and wait?",
+        "byKey": {
+          "after": "Push first, then notify, or the wake-up finds nothing.",
+          "anywhere": "The mutex is what stops the push landing in the gap."
+        }
+      },
+      "explain": {
+        "text": "The mutex makes the check and the sleep one step for the producer. The notify may come after the unlock, which saves the woken thread a wait for `m`. The `while` re-checks after every wake-up."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: queues and waits",
+      "tags": [
+        "bounded-queue"
+      ],
+      "pace": 450,
+      "prose": "Drill: about ninety seconds each. Say the reasoning aloud first. Queue events run in order; a blocked event is skipped and counted. Round figures: a wake from sleep costs 5 µs and a spin check 0.1 µs.",
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "Capacity 2, PPPPCC: blocked pushes",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Capacity 1, PPCCPC: blocked pops",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Capacity 1, PPCCPC: items left",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "A 5 µs wake is how many 0.1 µs spins",
+            {
+              "edit": true,
+              "answer": 50,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Share of an 8-core machine one spinning consumer holds",
+            {
+              "edit": true,
+              "answer": 0.125,
+              "tol": {
+                "abs": 0.0005
+              },
+              "unit": "%"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Track the item count after each event."
+        },
+        {
+          "rung": "point",
+          "text": "Capacity 1, PPCCPC: 1, blocked, 0, blocked, 1, 0."
+        },
+        {
+          "rung": "step",
+          "text": "2, 1, 0, 50 and 12.5%."
+        }
+      ],
+      "feedback": {
+        "correct": "2, 1, 0, 50 and 12.5%.",
+        "generic": "Not quite right. Check the first marked cell.",
+        "byKey": {
+          "r0c1": "The third and fourth pushes find the queue full.",
+          "r1c1": "The fourth event pops an empty queue.",
+          "r2c1": "The last pop empties it.",
+          "r3c1": "$5 / 0.1 = 50$.",
+          "r4c1": "One core of eight: $1/8 = 12.5\\%$."
+        }
+      },
+      "explain": {
+        "text": "The tallies follow the item count. A spin is 50 times quicker to notice an item than a wake from sleep. It costs a whole core while it waits, one eighth of this machine."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: why spin",
+      "tags": [
+        "condition-variable"
+      ],
+      "prose": "The interviewer asks why a market data thread spins instead of waiting on a condition variable. It handles 200,000 messages a second, a budget of 5 µs each (level 1). A wake from sleep costs 5 µs.",
+      "question": "If every message paid one wake from sleep, what share of the thread's time would go on waking?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.0,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "%",
+        "accept": "100%: $200{,}000 \\times 5\\ \\mu s = 1$ s each second.",
+        "wrong": [
+          {
+            "id": "tenth",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "tiny",
+            "value": 0.01,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the rate by the wake cost."
+        },
+        {
+          "rung": "point",
+          "text": "$200{,}000 \\times 5\\ \\mu s$."
+        },
+        {
+          "rung": "step",
+          "text": "1 s of every second: 100%."
+        }
+      ],
+      "feedback": {
+        "correct": "100%: the wake alone eats the whole budget.",
+        "generic": "Not quite right. $200{,}000 \\times 5 \\times 10^{-6}$.",
+        "byKey": {
+          "tenth": "You slipped a power of ten: $2 \\times 10^5 \\times 5 \\times 10^{-6} = 1$.",
+          "tiny": "You slipped two powers of ten."
+        }
+      },
+      "explain": {
+        "text": "A 5 µs wake is the whole per-message budget, so a sleeping consumer could not keep up. Hot threads spin on the queue instead, burning one core to notice items in about 0.1 µs. Many systems spin for a while, then sleep, to save power when it is quiet."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A notify that comes before the wait wakes nobody: the lost wakeup, 1 order in 6.",
+      "Check and wait under one mutex, in a `while`, with a predicate that also tests shutdown.",
+      "A wake from sleep costs about 5 µs, so hot threads spin; polling just adds delay."
+    ],
+    "formula": {
+      "name": "Consumer loop",
+      "tex": "\\text{lock};\\ \\text{while}(\\text{empty} \\wedge \\neg\\text{done})\\ \\text{wait};\\ \\text{pop};\\ \\text{unlock}",
+      "note": "The wait releases the lock while asleep."
+    },
+    "trap": "Writing `if` instead of `while`: a wake-up does not mean an item is there."
+  },
+  "quiz": [
+    {
+      "id": "q-cause",
+      "difficulty": 2,
+      "tags": [
+        "lost-wakeup"
+      ],
+      "pace": 40,
+      "prose": "A consumer checks `q.empty()`, then calls `cv.wait(lk)`, but takes the lock only for the wait.",
+      "question": "Why can it sleep forever?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "gap",
+            "text": "The push and notify can land between the check and the wait",
+            "correct": true
+          },
+          {
+            "id": "spur",
+            "text": "A spurious wakeup ends the wait too early",
+            "why": "A spurious wakeup ends a wait; it does not cause an endless one."
+          },
+          {
+            "id": "cv",
+            "text": "Condition variables lose notifies at random",
+            "why": "A notify is lost only when nobody is waiting yet."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The notify lands in the gap and wakes nobody.",
+        "generic": "Not quite right. What can run between the check and the wait?"
+      },
+      "explain": {
+        "text": "Without the lock across both, the producer can push and notify after the check. The consumer then waits for a notify that has already happened. Lock across the check and the wait."
+      }
+    },
+    {
+      "id": "q-poll",
+      "difficulty": 2,
+      "tags": [
+        "condition-variable"
+      ],
+      "pace": 30,
+      "prose": "A consumer polls the queue every 2 ms, sleeping between checks. Items arrive at random times.",
+      "question": "On average, how long does an item wait to be seen, in ms?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "ms",
+        "accept": "1 ms: half the polling period.",
+        "wrong": [
+          {
+            "id": "whole",
+            "value": 2,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1 ms on average.",
+        "generic": "Not quite right. An item lands at a random point in the 2 ms gap.",
+        "byKey": {
+          "whole": "2 ms is the worst case. On average an item lands halfway through."
+        }
+      },
+      "explain": {
+        "text": "An item lands at a random point between two checks. On average it waits half the period, 1 ms. A condition variable would wake the consumer in about 5 µs."
+      }
+    },
+    {
+      "id": "q-while",
+      "difficulty": 3,
+      "tags": [
+        "spurious-wakeup"
+      ],
+      "pace": 40,
+      "prose": "A consumer waits with `while (q.empty()) cv.wait(lk);` rather than `if`.",
+      "question": "Why `while`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "both",
+            "text": "A thread can wake with no item: another consumer took it, or the wake was spurious",
+            "correct": true
+          },
+          {
+            "id": "speed",
+            "text": "`while` is faster than `if`",
+            "why": "Speed is not the point; the re-check is."
+          },
+          {
+            "id": "lock",
+            "text": "`while` holds the lock longer",
+            "why": "Both forms hold the lock the same way."
+          },
+          {
+            "id": "compile",
+            "text": "`cv.wait` cannot compile inside an `if`",
+            "why": "It compiles; it is just wrong."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Waking does not mean an item is there.",
+        "generic": "Not quite right. What may be true when `wait` returns?"
+      },
+      "explain": {
+        "text": "`wait` can return with the queue empty: another consumer got there first, or the wake was spurious. The `while` checks again before popping. `cv.wait(lk, pred)` writes the same loop for you."
+      }
+    },
+    {
+      "id": "q-bound",
+      "difficulty": 2,
+      "tags": [
+        "bounded-queue"
+      ],
+      "pace": 30,
+      "prose": "A bounded queue of capacity 3 sees the events PPPPC in order. A push on a full queue is skipped and counted.",
+      "question": "How many pushes were blocked?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1: the fourth push.",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1, the fourth push.",
+        "generic": "Not quite right. Count the items after each event.",
+        "byKey": {
+          "none": "The fourth push finds three items already there."
+        }
+      },
+      "explain": {
+        "text": "Three pushes fill the queue. The fourth finds it full and is blocked. The pop then leaves 2 items."
+      }
+    }
+  ]
+}

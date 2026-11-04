@@ -1,0 +1,933 @@
+{
+  "id": "homework-2",
+  "course": "systems",
+  "level": 2,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h2-position",
+      "difficulty": 4,
+      "skills": [
+        "sy-concurrency"
+      ],
+      "tags": [
+        "race-outcomes"
+      ],
+      "pace": 420,
+      "prose": "A position of 500 is shared. One thread books a fill of +100 and another a sale of 300. Each update is load, add, store, as in the lesson. Step the lanes if you like.",
+      "question": "Four follow-ups.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "pos": 500
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Fill thread",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "pos"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 100
+                },
+                {
+                  "op": "store",
+                  "var": "pos",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Sale thread",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "pos"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": -300
+                },
+                {
+                  "op": "store",
+                  "var": "pos",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "Position {{values.pos}}."
+        }
+      },
+      "parts": [
+        {
+          "question": "How many interleavings of the six steps are there?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 20,
+            "tol": {
+              "abs": 0
+            },
+            "accept": "20: $\\binom{6}{3}$.",
+            "wrong": [
+              {
+                "id": "six",
+                "value": 6,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "fact",
+                "value": 720,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "20.",
+            "generic": "Not quite right. Choose the three places of the fill thread.",
+            "byKey": {
+              "six": "6 is $3!$. Choose 3 places of 6.",
+              "fact": "720 orders all six steps freely, but each lane's order is fixed."
+            }
+          },
+          "explain": {
+            "text": "$\\binom{6}{3} = 20$: pick which three of the six places are the fill thread's."
+          }
+        },
+        {
+          "question": "Which final positions can happen? Select all that apply.",
+          "widget": {
+            "kind": "multi",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "v200",
+                "text": "200",
+                "correct": true
+              },
+              {
+                "id": "v300",
+                "text": "300",
+                "correct": true
+              },
+              {
+                "id": "v600",
+                "text": "600",
+                "correct": true
+              },
+              {
+                "id": "v500",
+                "text": "500",
+                "why": "Both stores run, and each writes a changed value."
+              },
+              {
+                "id": "v800",
+                "text": "800",
+                "why": "You treated the sale as a buy: it subtracts 300."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "200, 300 and 600.",
+            "generic": "Not quite right. Which store wins when both loads read 500?",
+            "byKey": {
+              "v500": "Every store writes 500 changed by 100 or 300.",
+              "v800": "The sale subtracts 300."
+            }
+          },
+          "explain": {
+            "text": "If both load 500, the last store wins: 600 or 200. Run serially, both apply: 300. Nothing else can be written."
+          }
+        },
+        {
+          "question": "In how many interleavings does the position end at 600, so the sale is lost?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 9,
+            "tol": {
+              "abs": 0
+            },
+            "accept": "9.",
+            "wrong": [
+              {
+                "id": "two",
+                "value": 2,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "ten",
+                "value": 10,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "9 of 20.",
+            "generic": "Not quite right. The sale is lost when its store comes last after both loads.",
+            "byKey": {
+              "two": "2 is the count that ends at 300.",
+              "ten": "Take out the 2 serial orders first: $(20 - 2)/2 = 9$."
+            }
+          },
+          "explain": {
+            "text": "18 orders lose an update, and by symmetry half lose the sale: 9. The other 9 end at 200 and 2 at 300. The canvas counts the same."
+          }
+        },
+        {
+          "question": "Each update becomes one atomic add. What is the final position now?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 300,
+            "tol": {
+              "abs": 0
+            },
+            "accept": "Always 300.",
+            "wrong": [
+              {
+                "id": "six",
+                "value": 600,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "two",
+                "value": 200,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Always 300.",
+            "generic": "Not quite right. Can an atomic add be lost?",
+            "byKey": {
+              "six": "An atomic add cannot be overwritten by a stale store.",
+              "two": "Both atomic adds land."
+            }
+          },
+          "explain": {
+            "text": "Each atomic add is one step, so both always apply: $500 + 100 - 300 = 300$. There are 2 schedules and both end at 300."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h2-blocked",
+      "difficulty": 3,
+      "skills": [
+        "sy-concurrency"
+      ],
+      "tags": [
+        "bounded-queue"
+      ],
+      "pace": 900,
+      "prose": "A bounded queue holds at most `capacity` items. Model a run on one thread: each event either pushes (`P`) or pops (`C`). An event that would block is skipped and counted.",
+      "question": "Fix `blocked_counts` so it returns {blocked pushes, blocked pops, items left}.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <string>\n#include <vector>\n\n// A queue holds at most `capacity` items. The events run in order on one thread:\n// 'P' pushes an item, 'C' pops one. A push on a full queue and a pop on an empty queue each\n// would block, so skip the event and count it. Return {blocked pushes, blocked pops, items left}.\nstd::vector<int> blocked_counts(int capacity, const std::string& events) {\n    int items = 0, blocked_push = 0, blocked_pop = 0;\n    for (char e : events) {\n        if (e == 'P') ++items;\n        else --items;\n    }\n    return {blocked_push, blocked_pop, items};\n}\n",
+        "solution": "#include <string>\n#include <vector>\n\nstd::vector<int> blocked_counts(int capacity, const std::string& events) {\n    int items = 0, blocked_push = 0, blocked_pop = 0;\n    for (char e : events) {\n        if (e == 'P') {\n            if (items == capacity) ++blocked_push;\n            else ++items;\n        } else {\n            if (items == 0) ++blocked_pop;\n            else --items;\n        }\n    }\n    return {blocked_push, blocked_pop, items};\n}\n",
+        "examples": [
+          {
+            "call": "blocked_counts",
+            "args": [
+              2,
+              "PPPCCC"
+            ],
+            "types": [
+              "int",
+              "std::string"
+            ],
+            "expect": [
+              1,
+              1,
+              0
+            ],
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "blocked_counts",
+            "args": [
+              2,
+              "PPPCCC"
+            ],
+            "types": [
+              "int",
+              "std::string"
+            ],
+            "expect": [
+              1,
+              1,
+              0
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "blocked_counts",
+            "args": [
+              2,
+              "CCPP"
+            ],
+            "types": [
+              "int",
+              "std::string"
+            ],
+            "expect": [
+              0,
+              2,
+              2
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "blocked_counts",
+            "args": [
+              1,
+              "PPCCPC"
+            ],
+            "types": [
+              "int",
+              "std::string"
+            ],
+            "expect": [
+              1,
+              1,
+              0
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "blocked_counts",
+            "args": [
+              3,
+              "PPPPPPCCC"
+            ],
+            "types": [
+              "int",
+              "std::string"
+            ],
+            "expect": [
+              3,
+              0,
+              0
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "blocked_counts",
+            "args": [
+              4,
+              ""
+            ],
+            "types": [
+              "int",
+              "std::string"
+            ],
+            "expect": [
+              0,
+              0,
+              0
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "blocked_counts",
+            "args": [
+              2,
+              "PCPCPC"
+            ],
+            "types": [
+              "int",
+              "std::string"
+            ],
+            "expect": [
+              0,
+              0,
+              0
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "blocked_counts",
+            "args": [
+              2,
+              "PPPPCC"
+            ],
+            "types": [
+              "int",
+              "std::string"
+            ],
+            "expect": [
+              2,
+              0,
+              0
+            ],
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Seven hidden tests, including an empty run, a capacity of 1 and runs that fill or empty the queue."
+      },
+      "feedback": {
+        "correct": "That's it. A push on a full queue and a pop on an empty one are both counted, and skipped.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The starter never checks the bounds, so the count runs past the capacity and below zero. A push checks for full, a pop checks for empty, and a blocked event leaves the count alone. With threads, each check would be a condition-variable wait."
+      }
+    },
+    {
+      "id": "h2-transfer-deadlock",
+      "difficulty": 4,
+      "skills": [
+        "sy-concurrency"
+      ],
+      "tags": [
+        "lock-order"
+      ],
+      "pace": 360,
+      "prose": "`transfer(from, to, amount)` locks `from`, then `to`. One call moves money from account A to B while another moves money from B to A.",
+      "question": "Four follow-ups.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "void transfer(Account& from,",
+            "    Account& to, long amount) {",
+            "  std::lock_guard g1(from.m);",
+            "  std::lock_guard g2(to.m);",
+            "  from.balance -= amount;",
+            "  to.balance += amount;",
+            "}"
+          ],
+          "title": "transfer.cpp",
+          "wrap": true
+        }
+      },
+      "parts": [
+        {
+          "question": "The two calls take locks as {AB, BA}. Does the lock-order graph have a cycle?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "yes",
+                "text": "Yes: A to B and B to A",
+                "correct": true
+              },
+              {
+                "id": "no",
+                "text": "No: two locks cannot form a cycle",
+                "why": "Two edges in opposite directions are a cycle of two."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "Yes, a cycle of two.",
+            "generic": "Not quite right. Draw both edges."
+          },
+          "explain": {
+            "text": "The first call holds A while taking B; the second holds B while taking A. The edges point both ways, so they form a cycle."
+          }
+        },
+        {
+          "question": "Each lane is lock, lock, unlock, unlock. How many of the 6 legal schedules deadlock?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2,
+            "tol": {
+              "abs": 0
+            },
+            "accept": "2.",
+            "wrong": [
+              {
+                "id": "four",
+                "value": 4,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "2 of 6.",
+            "generic": "Not quite right. When does each lane hold its first lock?",
+            "byKey": {
+              "four": "4 is the count that finish."
+            }
+          },
+          "explain": {
+            "text": "Deadlock needs both first locks taken before either second lock: two orders. The other 4 finish."
+          }
+        },
+        {
+          "question": "The fix locks the lower account id first. Both calls now take {AB, AB}. Is there a cycle?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "no",
+                "text": "No: every edge goes from A to B",
+                "correct": true
+              },
+              {
+                "id": "yes",
+                "text": "Yes: the calls still share both locks",
+                "why": "Sharing locks in one order is safe; only opposite orders make a cycle."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "No cycle.",
+            "generic": "Not quite right. Draw the edges for {AB, AB}."
+          },
+          "explain": {
+            "text": "Both calls hold A while taking B, so the only edge is A to B. One call waits for the other and then runs. No cycle, no deadlock."
+          }
+        },
+        {
+          "question": "Which standard-library lock takes both mutexes at once, avoiding deadlock whatever the order of its arguments?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "scoped",
+                "text": "`std::scoped_lock`",
+                "correct": true
+              },
+              {
+                "id": "guard",
+                "text": "`std::lock_guard`",
+                "why": "`lock_guard` takes one mutex."
+              },
+              {
+                "id": "unique",
+                "text": "`std::unique_lock`",
+                "why": "`unique_lock` manages one mutex."
+              },
+              {
+                "id": "rec",
+                "text": "`std::recursive_mutex`",
+                "why": "That lets one thread re-lock its own mutex; it does not order two."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "`std::scoped_lock lk(from.m, to.m);`",
+            "generic": "Not quite right. Which one takes several mutexes?"
+          },
+          "explain": {
+            "text": "`std::scoped_lock` locks all its mutexes with a deadlock-avoiding algorithm. The argument order no longer matters. It also unlocks them when it goes out of scope."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h2-lost-wakeup-aloud",
+      "difficulty": 5,
+      "skills": [
+        "sy-concurrency"
+      ],
+      "tags": [
+        "lost-wakeup"
+      ],
+      "pace": 420,
+      "kind": "longform",
+      "title": "The lost wakeup, aloud",
+      "prompt": "Say aloud, in three minutes, what a lost wakeup is and how a consumer loop avoids it. Time yourself, and use this level's round figures. Then open the model answer and tick the rubric.",
+      "model": "**1. The failing order.** The consumer checks the queue and sees it empty. Before it waits, the producer pushes and notifies. The notify wakes nobody, because nobody is waiting yet. Then the consumer waits, with an item in the queue, forever. Of the 6 orders of check, wait, push and notify, exactly one does this: check, push, notify, wait.\n\n**2. Why the lock fixes it.** The consumer holds the mutex from its check until it sleeps; `wait` releases it only as the thread sleeps. The producer pushes under the same mutex, so its push lands before the check or after the sleep, never between. Then a notify always finds the consumer either awake or waiting.\n\n**3. Why `while`.** `wait` can return with the queue empty: another consumer took the item, or the wake-up was spurious. So the check is a loop, `while (q.empty() && !done) cv.wait(lk);`, re-tested after every wake-up.\n\n**4. Shutdown.** The predicate also tests `done`. The producer sets it under the mutex and calls `notify_all`, and each consumer returns once the queue is empty.\n\n**5. Costs.** A wake from sleep costs about 5 µs. Polling with a 1 ms sleep leaves an item waiting 0.5 ms on average, 100 times worse. Spinning notices an item in about 0.1 µs but burns a whole core. Hot paths spin; quiet ones wait on the condition variable.",
+      "rubric": [
+        {
+          "points": 3,
+          "text": "Gives the failing order: check, push, notify, then wait, with the notify heard by nobody"
+        },
+        {
+          "points": 2,
+          "text": "Explains that one mutex held across the check and the wait, and taken for the push, closes the gap"
+        },
+        {
+          "points": 2,
+          "text": "Says the check is a `while`, because of spurious wakeups or another consumer taking the item"
+        },
+        {
+          "points": 1,
+          "text": "Covers shutdown: the predicate tests `done` and the producer notifies all"
+        },
+        {
+          "points": 2,
+          "text": "Compares costs: about 5 µs to wake, 0.5 ms average for 1 ms polling, a whole core to spin"
+        }
+      ]
+    },
+    {
+      "id": "h2-consumer-order",
+      "difficulty": 4,
+      "skills": [
+        "sy-concurrency"
+      ],
+      "tags": [
+        "condition-variable"
+      ],
+      "pace": 300,
+      "prose": "A consumer takes orders from a queue until shutdown. `done` is set under `m` by the producer, which then calls `notify_all`.",
+      "question": "Put a correct consumer's lines in order. Leave out the lines that do not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "`std::unique_lock<std::mutex> lk(m);`"
+          },
+          {
+            "id": "s2",
+            "text": "`while (q.empty() && !done) cv.wait(lk);`"
+          },
+          {
+            "id": "s3",
+            "text": "`if (q.empty()) return;   // done, and nothing left`"
+          },
+          {
+            "id": "s4",
+            "text": "`Order o = q.front(); q.pop();`"
+          },
+          {
+            "id": "s5",
+            "text": "`lk.unlock();`"
+          },
+          {
+            "id": "s6",
+            "text": "`handle(o);   // outside the lock`"
+          },
+          {
+            "id": "d1",
+            "text": "`if (q.empty() && !done) cv.wait(lk);`",
+            "why": "With `if`, a consumer that wakes to an empty queue goes on to pop it."
+          },
+          {
+            "id": "d2",
+            "text": "`while (q.empty()) cv.wait(lk);`",
+            "why": "This never tests `done`, so the last consumer sleeps forever at shutdown."
+          },
+          {
+            "id": "d3",
+            "text": "`lk.unlock(); cv.wait(lk);`",
+            "why": "Releasing the lock before the wait brings back the lost wakeup."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "distractors": [
+          "d1",
+          "d2",
+          "d3"
+        ]
+      },
+      "feedback": {
+        "correct": "Lock, wait in a `while`, return if done, pop, unlock, handle.",
+        "generic": "Not quite right. Read the first marked line.",
+        "byKey": {
+          "left-out": "Every one of the six kept lines is needed."
+        }
+      },
+      "explain": {
+        "text": "The wait repeats until there is an item or shutdown, under the lock. A consumer that finds the queue still empty after the wait has been told to stop. Handling the order after the unlock keeps the critical section short."
+      }
+    },
+    {
+      "id": "h2-store-buffering",
+      "difficulty": 5,
+      "skills": [
+        "sy-concurrency"
+      ],
+      "tags": [
+        "litmus"
+      ],
+      "pace": 420,
+      "prose": "The store-buffering test. Thread A sets `x = 1`, then reads `y` into `r1`. Thread B sets `y = 1`, then reads `x` into `r2`. Both start at 0.",
+      "question": "Four follow-ups.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0,
+            "y": 0
+          },
+          "notation": "assign",
+          "outcome": [
+            {
+              "label": "r1",
+              "of": "a.r1"
+            },
+            {
+              "label": "r2",
+              "of": "b.r2"
+            }
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "x",
+                  "value": 1
+                },
+                {
+                  "op": "load",
+                  "reg": "r1",
+                  "var": "y"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "y",
+                  "value": 1
+                },
+                {
+                  "op": "load",
+                  "reg": "r2",
+                  "var": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "parts": [
+        {
+          "question": "If the four steps run one at a time, which pairs (r1, r2) occur? Select all that apply.",
+          "widget": {
+            "kind": "multi",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "p01",
+                "text": "(0, 1)",
+                "correct": true
+              },
+              {
+                "id": "p10",
+                "text": "(1, 0)",
+                "correct": true
+              },
+              {
+                "id": "p11",
+                "text": "(1, 1)",
+                "correct": true
+              },
+              {
+                "id": "p00",
+                "text": "(0, 0)",
+                "why": "Each lane stores before it loads, so the last load sees a 1."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "Three pairs: (0, 1), (1, 0) and (1, 1).",
+            "generic": "Not quite right. Can both loads come first?"
+          },
+          "explain": {
+            "text": "The last load always follows the other lane's store, so one register is 1. That leaves three pairs."
+          }
+        },
+        {
+          "question": "With `memory_order_relaxed` on all four accesses, on a real multicore machine, can (0, 0) occur?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "yes",
+                "text": "Yes: each store can wait in its core's store buffer while the loads read memory",
+                "correct": true
+              },
+              {
+                "id": "no",
+                "text": "No: no interleaving gives it",
+                "why": "Real cores do not run one step at a time; a buffered store is not yet visible."
+              },
+              {
+                "id": "x86",
+                "text": "Only on Arm, never on x86",
+                "why": "x86 also lets a later load pass an earlier buffered store."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "Yes, through the store buffers.",
+            "generic": "Not quite right. When does memory see a buffered store?"
+          },
+          "explain": {
+            "text": "Both stores can sit in buffers while both loads read 0 from memory. `relaxed` allows that reordering. It is the classic weak-memory result."
+          }
+        },
+        {
+          "question": "If the 6 one-at-a-time schedules were equally likely, what is the chance of (1, 1)? Give 3 decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.667,
+            "tol": {
+              "abs": 0.001
+            },
+            "accept": "0.667: 4 of 6.",
+            "wrong": [
+              {
+                "id": "third",
+                "value": 0.333,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "half",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.001
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$4/6 = 0.667$.",
+            "generic": "Not quite right. Count the schedules that give (1, 1).",
+            "byKey": {
+              "third": "That is the chance of (0, 1) or (1, 0) together.",
+              "half": "Four of the six give (1, 1), not three."
+            }
+          },
+          "explain": {
+            "text": "Both stores first (2 orders), then both loads (2 orders): 4 schedules. $4/6 = 0.667$."
+          }
+        },
+        {
+          "question": "Which memory order on all four accesses forbids (0, 0)?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "sc",
+                "text": "`seq_cst`",
+                "correct": true
+              },
+              {
+                "id": "ra",
+                "text": "`release` on the stores, `acquire` on the loads",
+                "why": "Release and acquire do not stop a store passing a later load to another variable."
+              },
+              {
+                "id": "rel",
+                "text": "`relaxed`",
+                "why": "`relaxed` is what allows it."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "`seq_cst`.",
+            "generic": "Not quite right. Which order gives one total order of all four?"
+          },
+          "explain": {
+            "text": "`seq_cst` puts all four accesses in one order that every thread agrees on, so (0, 0) cannot happen. Release and acquire are not enough here. On x86 the `seq_cst` store becomes an exchange."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h2-counter",
+      "difficulty": 3,
+      "skills": [
+        "sy-concurrency"
+      ],
+      "tags": [
+        "atomic-counter"
+      ],
+      "pace": 120,
+      "prose": "Eight threads each add 1 to a counter 500,000 times. Round figures: an atomic add whose line moves between cores costs 60 ns, one at a time. A plain add in L1 costs 1 ns.",
+      "question": "Per-thread counters merged at the end are how many times faster than one shared atomic?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 480,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "times",
+        "accept": "480: 0.24 s against 0.5 ms.",
+        "wrong": [
+          {
+            "id": "sixty",
+            "value": 60,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "eight",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "480 times faster.",
+        "generic": "Not quite right. Time each plan.",
+        "byKey": {
+          "sixty": "60 compares one add with one add. The per-thread adds also run in parallel on eight cores.",
+          "eight": "Eight is the thread count. The cost per add differs too."
+        }
+      },
+      "explain": {
+        "text": "One atomic: $8 \\times 500{,}000 \\times 60$ ns $= 0.24$ s in a row. Per-thread: $500{,}000 \\times 1$ ns $= 0.5$ ms, all eight in parallel. $0.24 / 0.0005 = 480$."
+      }
+    }
+  ]
+}

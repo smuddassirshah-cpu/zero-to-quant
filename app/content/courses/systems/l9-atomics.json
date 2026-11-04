@@ -1,0 +1,1449 @@
+{
+  "id": "l9-atomics",
+  "course": "systems",
+  "title": "Atomics and memory order",
+  "minutes": 14,
+  "objectives": [
+    "Use an atomic counter and say what each memory order guarantees."
+  ],
+  "skills": [
+    "sy-concurrency"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "One indivisible step",
+      "tags": [
+        "atomic-counter"
+      ],
+      "prose": "`x` is now a `std::atomic<int>`, and each thread calls `x.fetch_add(1)`. An **atomic** operation is one indivisible step: the load, add and store happen together. Step the two lanes.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "fetch-add",
+                  "var": "x",
+                  "by": 1,
+                  "text": "x.fetch_add(1)"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "fetch-add",
+                  "var": "x",
+                  "by": 1,
+                  "text": "x.fetch_add(1)"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "x is {{values.x}}."
+        }
+      },
+      "question": "Can an update be lost now?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: there are only 2 schedules, and both end at 2",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes, when both lanes load 0",
+            "why": "A `fetch_add` has no separate load: nothing can run between its read and its write."
+          },
+          {
+            "id": "some",
+            "text": "Only with three or more threads",
+            "why": "Each `fetch_add` is still one step, so every lane's add lands."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many steps does each lane have now?"
+        },
+        {
+          "rung": "point",
+          "text": "One step a lane: two lanes give $2!$ orders.",
+          "highlight": [
+            "a1",
+            "b1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Both orders end at 2."
+        }
+      ],
+      "feedback": {
+        "correct": "No. Two schedules, both ending at 2.",
+        "generic": "Not quite right. Count the steps in each lane.",
+        "byKey": {
+          "yes": "There is no separate load for another lane to slip between.",
+          "some": "With three lanes, all $3! = 6$ schedules end at 3."
+        }
+      },
+      "explain": {
+        "text": "One step a lane leaves two orders, and each adds 1 to whatever the other left. Three lanes give $3! = 6$ schedules, all ending at 3. The hardware makes the read and write one step, with a `lock` prefix on x86.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "b",
+            "a"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Two stores, two loads",
+      "prose": "Thread A sets `x = 1`, then reads `y` into `r1`. Thread B sets `y = 1`, then reads `x` into `r2`. Both start at 0. A tiny program like this, run to see which results occur, is a **litmus test**. Step it in several orders.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0,
+            "y": 0
+          },
+          "notation": "assign",
+          "outcome": [
+            {
+              "label": "r1",
+              "of": "a.r1"
+            },
+            {
+              "label": "r2",
+              "of": "b.r2"
+            }
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "x",
+                  "value": 1
+                },
+                {
+                  "op": "load",
+                  "reg": "r1",
+                  "var": "y"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "y",
+                  "value": 1
+                },
+                {
+                  "op": "load",
+                  "reg": "r2",
+                  "var": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "outcomes": "found"
+        },
+        "derive": {
+          "caption": "{{values.done ? 'Finished: r1 = ' + values.regs.a.r1 + ', r2 = ' + values.regs.b.r2 + '.' : 'Step both lanes to the end.'}}"
+        }
+      },
+      "question": "Which pairs (r1, r2) can you reach? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "p01",
+            "text": "(0, 1)",
+            "correct": true
+          },
+          {
+            "id": "p10",
+            "text": "(1, 0)",
+            "correct": true
+          },
+          {
+            "id": "p11",
+            "text": "(1, 1)",
+            "correct": true
+          },
+          {
+            "id": "p00",
+            "text": "(0, 0)",
+            "why": "Both loads would have to run before both stores, but each lane stores before it loads."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "(0, 1), (1, 0) and (1, 1).",
+        "generic": "Not quite right. Try every way to order the first two steps.",
+        "byKey": {
+          "p00": "For (0, 0) both loads must come first, but each lane's store comes before its own load."
+        }
+      },
+      "explain": {
+        "text": "Whichever load runs last, the other lane's store has already run, so at least one register is 1. The 6 orders give (0, 1) once, (1, 0) once and (1, 1) four times. When steps run one at a time, (0, 0) never happens.",
+        "canvas": {
+          "outcomes": true
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What hardware does",
+      "tags": [
+        "litmus",
+        "memory-order"
+      ],
+      "prose": "Real cores do not run one step at a time. A store waits in the core's **store buffer** before memory sees it, while the core runs on. The canvas cannot show that: its steps happen one at a time. The listing shows one such run.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "A: x = 1    (in A's buffer)",
+            "B: y = 1    (in B's buffer)",
+            "A: r1 = y   (memory: y is 0)",
+            "B: r2 = x   (memory: x is 0)",
+            "buffers drain: x = 1, y = 1"
+          ],
+          "title": "One run on real hardware",
+          "numbers": true,
+          "wrap": true
+        }
+      },
+      "question": "With `std::memory_order_relaxed` on all four accesses, this is allowed. What pair results?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "p00",
+            "text": "(0, 0)",
+            "correct": true
+          },
+          {
+            "id": "p11",
+            "text": "(1, 1)",
+            "why": "Each load read memory before the buffers drained, so neither saw a 1."
+          },
+          {
+            "id": "p01",
+            "text": "(0, 1)",
+            "why": "B's load of `x` also ran before A's store reached memory."
+          },
+          {
+            "id": "none",
+            "text": "None: this run cannot happen",
+            "why": "x86, Arm and others all have store buffers, and `relaxed` permits this order."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What value is in memory when each load runs?"
+        },
+        {
+          "rung": "point",
+          "text": "Both stores are still in the buffers at lines 3 and 4.",
+          "highlight": [
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Both loads read 0."
+        }
+      ],
+      "feedback": {
+        "correct": "(0, 0): the result no interleaving gives.",
+        "generic": "Not quite right. Read what each load finds in memory.",
+        "byKey": {
+          "p11": "Neither store had reached memory when the loads ran.",
+          "p01": "B's load ran before A's buffer drained, so it read 0.",
+          "none": "Store buffers are on almost every core, and `relaxed` lets them reorder like this."
+        }
+      },
+      "explain": {
+        "text": "Both stores sat in buffers while both loads read memory, so both read 0. A **memory order** says which such reorderings are allowed around an atomic. With the default `seq_cst`, (0, 0) is forbidden; with `relaxed`, it can happen.",
+        "canvas": {
+          "tone": {
+            "l3": "err",
+            "l4": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Publish, then flag",
+      "tags": [
+        "litmus"
+      ],
+      "prose": "A writer fills `data`, then sets `ready = 1`. A reader loads `ready` into `r1`, then `data` into `r2`. Step the lanes in several orders.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "data": 0,
+            "ready": 0
+          },
+          "notation": "assign",
+          "outcome": [
+            {
+              "label": "r1",
+              "of": "b.r1"
+            },
+            {
+              "label": "r2",
+              "of": "b.r2"
+            }
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Writer",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "data",
+                  "value": 42
+                },
+                {
+                  "op": "store",
+                  "var": "ready",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Reader",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r1",
+                  "var": "ready"
+                },
+                {
+                  "op": "load",
+                  "reg": "r2",
+                  "var": "data"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "{{values.done ? 'Reader saw ready = ' + values.regs.b.r1 + ', data = ' + values.regs.b.r2 + '.' : 'Step both lanes to the end.'}}"
+        }
+      },
+      "question": "If steps run one at a time, which pairs (r1, r2) can occur? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "(0, 0)",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "(0, 42)",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "(1, 42)",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "(1, 0)",
+            "why": "If the reader sees `ready = 1`, the writer's first store has already run."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Can the reader see `ready = 1` but old `data`?"
+        },
+        {
+          "rung": "point",
+          "text": "`ready = 1` comes after `data = 42` in the writer's lane.",
+          "highlight": [
+            "a1",
+            "a2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "(1, 0) is impossible; the other three happen."
+        }
+      ],
+      "feedback": {
+        "correct": "(0, 0), (0, 42) and (1, 42).",
+        "generic": "Not quite right. Step a, a, b, b and b, b, a, a.",
+        "byKey": {
+          "d": "Seeing `ready = 1` means a2 ran, so a1 ran before it."
+        }
+      },
+      "explain": {
+        "text": "A reader that sees the flag also sees the data, because the writer wrote the data first. The canvas counts (0, 0) once, (0, 42) four times and (1, 42) once. Real hardware keeps this promise only with the right memory order.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "a",
+            "a",
+            "b",
+            "b"
+          ],
+          "highlight": [
+            "b1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The flag first",
+      "tags": [
+        "litmus"
+      ],
+      "prose": "Now the writer sets `ready = 1` before `data = 42`. That is what a compiler or a core may do to the original under `relaxed`.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "data": 0,
+            "ready": 0
+          },
+          "notation": "assign",
+          "outcome": [
+            {
+              "label": "r1",
+              "of": "b.r1"
+            },
+            {
+              "label": "r2",
+              "of": "b.r2"
+            }
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Writer",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "ready",
+                  "value": 1
+                },
+                {
+                  "op": "store",
+                  "var": "data",
+                  "value": 42
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Reader",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r1",
+                  "var": "ready"
+                },
+                {
+                  "op": "load",
+                  "reg": "r2",
+                  "var": "data"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "{{values.done ? 'Reader saw ready = ' + values.regs.b.r1 + ', data = ' + values.regs.b.r2 + '.' : 'Step both lanes to the end.'}}"
+        }
+      },
+      "question": "How many of the 6 schedules give (1, 0): the flag seen, the data not?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1: a1, b1, b2, a2.",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The reader must run both loads between the writer's two stores."
+        },
+        {
+          "rung": "point",
+          "text": "a1, then b1 and b2, then a2.",
+          "highlight": [
+            "b1",
+            "b2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only one order does that."
+        }
+      ],
+      "feedback": {
+        "correct": "1 of 6.",
+        "generic": "Not quite right. Find the orders where both reader loads sit between a1 and a2.",
+        "byKey": {
+          "none": "Try a1, b1, b2, a2.",
+          "two": "Both reader steps must fit between the two writer steps: one way."
+        }
+      },
+      "explain": {
+        "text": "With the flag first, a reader can see `ready = 1` and old `data`, 1 schedule in 6. A `release` store of `ready` forbids moving the data store after it. An `acquire` load forbids moving the data load before it.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "a",
+            "b",
+            "b",
+            "a"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What an atomic costs",
+      "tags": [
+        "atomic-counter"
+      ],
+      "prose": "Round figures, stated as assumptions: an uncontended atomic add costs 5 ns. One whose cache line moves between cores costs 60 ns. A plain add in L1 costs 1 ns. Four threads each add 1,000,000 times.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "hits.fetch_add(1);   // atomic<long>",
+            "uncontended atomic add: 5 ns",
+            "line moves between cores: 60 ns",
+            "plain add in L1: 1 ns"
+          ],
+          "title": "One counter, four threads",
+          "wrap": true
+        }
+      },
+      "question": "Fill in each time.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Counter",
+          "Time"
+        ],
+        "rows": [
+          [
+            "One atomic, uncontended (s)",
+            {
+              "edit": true,
+              "answer": 0.02,
+              "tol": {
+                "abs": 0.0001
+              }
+            }
+          ],
+          [
+            "One atomic, line moving every add (s)",
+            {
+              "edit": true,
+              "answer": 0.24,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "A plain counter per thread: work in all (ms)",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "4,000,000 adds in every case."
+        },
+        {
+          "rung": "point",
+          "text": "$4 \\times 10^6 \\times 60$ ns $= 0.24$ s.",
+          "highlight": [
+            "l2",
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.02 s, 0.24 s and 4 ms (1 ms on each of four cores)."
+        }
+      ],
+      "feedback": {
+        "correct": "0.02 s, 0.24 s and 4 ms.",
+        "generic": "Not quite right. Check the first marked cell.",
+        "byKey": {
+          "r0c1": "$4 \\times 10^6 \\times 5$ ns.",
+          "r1c1": "$4 \\times 10^6 \\times 60$ ns.",
+          "r2c1": "$4 \\times 10^6 \\times 1$ ns is 4 ms of work."
+        }
+      },
+      "explain": {
+        "text": "A contended atomic is 12 times the uncontended one, because the line moves on every add. Per-thread counters do 4 ms of work in all, 1 ms on each core in parallel, then merge. Shard any hot counter.",
+        "canvas": {
+          "tone": {
+            "l3": "err",
+            "l4": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "An atomic flag, checked",
+      "tags": [
+        "atomic-counter",
+        "lock-free"
+      ],
+      "prose": "`flag` is a `std::atomic<int>`. Each thread runs `if (flag.load() == 0) flag.store(1);` and then enters a section meant for one thread. Each call is atomic.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "flag": 0,
+            "inside": 0
+          },
+          "outcome": [
+            "inside"
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "set",
+                  "reg": "e",
+                  "value": "flag == 0",
+                  "text": "if (flag.load() == 0)"
+                },
+                {
+                  "ops": [
+                    {
+                      "op": "store",
+                      "var": "flag",
+                      "value": 1,
+                      "if": "e"
+                    },
+                    {
+                      "op": "fetch-add",
+                      "var": "inside",
+                      "by": 1,
+                      "if": "e"
+                    }
+                  ],
+                  "text": "flag.store(1); enter"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "set",
+                  "reg": "e",
+                  "value": "flag == 0",
+                  "text": "if (flag.load() == 0)"
+                },
+                {
+                  "ops": [
+                    {
+                      "op": "store",
+                      "var": "flag",
+                      "value": 1,
+                      "if": "e"
+                    },
+                    {
+                      "op": "fetch-add",
+                      "var": "inside",
+                      "by": 1,
+                      "if": "e"
+                    }
+                  ],
+                  "text": "flag.store(1); enter"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "Threads inside: {{values.inside}}."
+        }
+      },
+      "question": "Is it safe?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: both threads can see 0 before either stores 1",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: every access is atomic",
+            "why": "Each access is atomic, but the check and the store are two steps."
+          },
+          {
+            "id": "relaxed",
+            "text": "Only if the orders are `relaxed`",
+            "why": "The order does not help: the gap between the check and the store is the bug."
+          },
+          {
+            "id": "x86",
+            "text": "Yes on x86",
+            "why": "Two x86 cores can still both load 0 before either stores."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Step a1, then b1."
+        },
+        {
+          "rung": "point",
+          "text": "Both checks read 0, so both lanes enter.",
+          "highlight": [
+            "a1",
+            "b1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Both enter in 4 of the 6 schedules."
+        }
+      ],
+      "feedback": {
+        "correct": "No. It is check-then-act again: both enter in 4 of 6.",
+        "generic": "Not quite right. Step a1 then b1.",
+        "byKey": {
+          "yes": "Atomic steps do not make a two-step check and act indivisible.",
+          "relaxed": "No memory order joins two operations into one.",
+          "x86": "x86 runs these two atomics separately too."
+        }
+      },
+      "explain": {
+        "text": "Each access is atomic, yet another thread can run between them. Both enter in 4 of the 6 schedules. One read-modify-write closes the gap: `compare_exchange_strong(expected, 1)` stores only if `flag` is still 0.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "a",
+            "b",
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Atomic, but two steps",
+      "tags": [
+        "atomic-counter"
+      ],
+      "prose": "`x` is a `std::atomic<int>`. One version writes `x++`, which is one atomic add. This version writes `x = x + 1`, which is an atomic load, then an atomic store.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "ops": [
+                    {
+                      "op": "load",
+                      "reg": "r",
+                      "var": "x"
+                    },
+                    {
+                      "op": "add",
+                      "reg": "r",
+                      "by": 1
+                    }
+                  ],
+                  "text": "r = x.load() + 1"
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r",
+                  "text": "x.store(r)"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "ops": [
+                    {
+                      "op": "load",
+                      "reg": "r",
+                      "var": "x"
+                    },
+                    {
+                      "op": "add",
+                      "reg": "r",
+                      "by": 1
+                    }
+                  ],
+                  "text": "r = x.load() + 1"
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r",
+                  "text": "x.store(r)"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "x is {{values.x}}."
+        }
+      },
+      "question": "Of the 6 schedules, how many end with `x` at 1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4: both loads before either store.",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The update is lost when both loads come before both stores."
+        },
+        {
+          "rung": "point",
+          "text": "The first two steps are a1 and b1, in either order.",
+          "highlight": [
+            "a1",
+            "b1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2 \\times 2 = 4$ schedules."
+        }
+      ],
+      "feedback": {
+        "correct": "4 of 6 lose an update.",
+        "generic": "Not quite right. When do both loads read 0?",
+        "byKey": {
+          "zero": "The steps are atomic but separate, so a lost update is still possible.",
+          "two": "2 is the count that ends at 2."
+        }
+      },
+      "explain": {
+        "text": "Atomic loads and stores do not make the pair one step. Both loads read 0 in 4 of the 6 schedules. Write `x++` or `x.fetch_add(1)`, which is one atomic read-modify-write.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "a",
+            "b",
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The memory orders",
+      "prose": "Each atomic operation takes a memory order, from weakest to strongest:\n\n$$\\text{relaxed} \\;<\\; \\text{release and acquire} \\;<\\; \\text{seq\\_cst}$$\n\n| order | promise |\n|---|---|\n| `relaxed` | the operation is atomic, nothing more |\n| `release` store, `acquire` load | writes before the release are seen after the acquire |\n| `seq_cst` (default) | one order of all such operations for every thread |",
+      "question": "Which order promises only that the operation is indivisible?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rel",
+            "text": "`memory_order_relaxed`",
+            "correct": true
+          },
+          {
+            "id": "acq",
+            "text": "`memory_order_acquire`",
+            "why": "`acquire` also orders later reads after the load."
+          },
+          {
+            "id": "sc",
+            "text": "`memory_order_seq_cst`",
+            "why": "`seq_cst` adds one global order on top."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`relaxed`: atomic, nothing more.",
+        "generic": "Not quite right. Which is the weakest?",
+        "byKey": {
+          "acq": "`acquire` is the receiving half of a hand-off, which is more than atomicity.",
+          "sc": "`seq_cst` is the strongest order."
+        }
+      },
+      "explain": {
+        "text": "`relaxed` is enough for a counter that only needs its total. A hand-off of data needs release on the flag store and acquire on its load. `seq_cst` is the default and forbids the (0, 0) of the litmus test."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: the litmus test",
+      "tags": [
+        "litmus"
+      ],
+      "pace": 450,
+      "prose": "Drill: about ninety seconds each. Say the reasoning aloud first. The canvas holds the store-buffering test from the explore screen; step it as you like.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0,
+            "y": 0
+          },
+          "notation": "assign",
+          "outcome": [
+            {
+              "label": "r1",
+              "of": "a.r1"
+            },
+            {
+              "label": "r2",
+              "of": "b.r2"
+            }
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "x",
+                  "value": 1
+                },
+                {
+                  "op": "load",
+                  "reg": "r1",
+                  "var": "y"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "store",
+                  "var": "y",
+                  "value": 1
+                },
+                {
+                  "op": "load",
+                  "reg": "r2",
+                  "var": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "{{values.done ? 'Finished: r1 = ' + values.regs.a.r1 + ', r2 = ' + values.regs.b.r2 + '.' : 'Step both lanes to the end.'}}"
+        }
+      },
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "Schedules giving (0, 1)",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Schedules giving (1, 0)",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Schedules giving (1, 1)",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Chance of (1, 1) if the 6 are equally likely (3 dp)",
+            {
+              "edit": true,
+              "answer": 0.667,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "The memory order that forbids (0, 0)",
+            {
+              "edit": true,
+              "answer": "seq_cst",
+              "accept": [
+                "memory_order_seq_cst",
+                "seq cst",
+                "seq-cst"
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "(0, 1) needs A to finish before B starts."
+        },
+        {
+          "rung": "point",
+          "text": "(1, 1) is every order where both stores come before both loads.",
+          "highlight": [
+            "a1",
+            "b1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1, 1, 4, $4/6 = 0.667$, `seq_cst`."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 1, 4, 0.667 and `seq_cst`.",
+        "generic": "Not quite right. Check the first marked cell.",
+        "byKey": {
+          "r0c1": "Only a, a, b, b: A reads `y` before B stores it.",
+          "r1c1": "Only b, b, a, a.",
+          "r2c1": "Both stores first, in 2 orders, then both loads, in 2 orders: 4.",
+          "r3c1": "$4/6 = 0.667$.",
+          "r4c1": "Only `seq_cst` on all four accesses rules out the store-buffer result."
+        }
+      },
+      "explain": {
+        "text": "Two orders run one lane whole; the other four put both stores first. So (1, 1) has 4 of 6. `seq_cst` on all four accesses is the only order that forbids (0, 0)."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: hand an order over",
+      "tags": [
+        "memory-order"
+      ],
+      "prose": "A producer thread writes an order into a slot, then sets an atomic `ready`. A consumer spins on `ready`, then sends the order. On x86 a `seq_cst` store compiles to an exchange of about 20 cycles. A `release` store is a plain move of about 1.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "// producer",
+            "slot = make_order();   // plain write",
+            "ready.store(1, release);",
+            "// consumer",
+            "while (!ready.load(acquire)) { }",
+            "send(slot);   // the whole order"
+          ],
+          "title": "A hand-off",
+          "wrap": true
+        },
+        "state": {
+          "caption": "`release` and `acquire` stand for `std::memory_order_release` and `std::memory_order_acquire`."
+        }
+      },
+      "question": "Which orders publish the order safely at the least cost?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ra",
+            "text": "`release` on the store of `ready`, `acquire` on its load",
+            "correct": true
+          },
+          {
+            "id": "relaxed",
+            "text": "`relaxed` on both",
+            "why": "The consumer could see `ready = 1` and a half-written order, the (1, 0) case."
+          },
+          {
+            "id": "sc",
+            "text": "`seq_cst` on both",
+            "why": "Safe, but the store costs an exchange of about 20 cycles where a release store is a plain move."
+          },
+          {
+            "id": "swap",
+            "text": "`acquire` on the store, `release` on the load",
+            "why": "These belong the other way round: a store releases, a load acquires."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must the consumer see once it sees `ready = 1`?"
+        },
+        {
+          "rung": "point",
+          "text": "Every write before the flag: that is release and acquire.",
+          "highlight": [
+            "l3",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Release store, acquire load: safe, and a plain move on x86."
+        }
+      ],
+      "feedback": {
+        "correct": "Release on the store, acquire on the load.",
+        "generic": "Not quite right. Which pair is the hand-off?",
+        "byKey": {
+          "relaxed": "`relaxed` allows the (1, 0) result: flag seen, data not.",
+          "sc": "Correct but dearer than needed on the store side.",
+          "swap": "A store cannot acquire and a load cannot release."
+        }
+      },
+      "explain": {
+        "text": "A release store of `ready` makes every earlier write visible to a thread that acquire-loads it. That is all the hand-off needs. One-producer, one-consumer queues on a desk use exactly this pair (level 4).",
+        "canvas": {
+          "shade": {
+            "good": [
+              "l3",
+              "l5"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "An atomic operation is one indivisible step; `fetch_add` cannot lose an update, but a check and a store still can.",
+      "If steps run one at a time, the store-buffering test never gives (0, 0); real cores with `relaxed` can.",
+      "Release on a store and acquire on its load hand data over; `seq_cst` adds one global order."
+    ],
+    "formula": {
+      "name": "Hand-off",
+      "tex": "\\text{write data} \\to \\text{release store} \\to \\text{acquire load} \\to \\text{read data}",
+      "note": "The reader sees every write made before the release."
+    },
+    "trap": "Thinking an atomic check followed by an atomic store is safe: the gap between them is a race."
+  },
+  "quiz": [
+    {
+      "id": "q-cost",
+      "difficulty": 2,
+      "tags": [
+        "atomic-counter"
+      ],
+      "pace": 40,
+      "prose": "Two threads each add 1,000,000 times to one `std::atomic<long>`. Every add moves the cache line between cores, at 60 ns.",
+      "question": "How many milliseconds do the 2,000,000 adds take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 120,
+        "tol": {
+          "abs": 0.1
+        },
+        "unit": "ms",
+        "accept": "120 ms.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 60,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "micro",
+            "value": 0.12,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "120 ms.",
+        "generic": "Not quite right. $2 \\times 10^6 \\times 60$ ns.",
+        "byKey": {
+          "one": "That is one thread's million. Both threads' adds are serialised on the line.",
+          "micro": "You divided by a thousand too many."
+        }
+      },
+      "explain": {
+        "text": "$2 \\times 10^6 \\times 60$ ns $= 0.12$ s. The adds are serialised because only one core can own the line. Two per-thread counters would take 1 ms each, in parallel."
+      }
+    },
+    {
+      "id": "q-final",
+      "difficulty": 2,
+      "tags": [
+        "atomic-counter"
+      ],
+      "pace": 30,
+      "prose": "Two threads each run `counter++` 1,000 times on a `std::atomic<int> counter` that starts at 0.",
+      "question": "What is the final value?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "Always 2,000.",
+        "wrong": [
+          {
+            "id": "less",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Always 2,000.",
+        "generic": "Not quite right. Can an atomic increment be lost?",
+        "byKey": {
+          "less": "An atomic `++` is one step, so no increment is lost."
+        }
+      },
+      "explain": {
+        "text": "`++` on a `std::atomic<int>` is one atomic read-modify-write. No order of the 2,000 steps loses one. The plain `int` version could end anywhere from 2 to 2,000."
+      }
+    },
+    {
+      "id": "q-relaxed",
+      "difficulty": 3,
+      "tags": [
+        "memory-order"
+      ],
+      "pace": 40,
+      "prose": "A request counter is a `std::atomic<long>`. Only its total is read, at the end.",
+      "question": "Which memory order is enough for the increments?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "rel",
+            "text": "`relaxed`: only atomicity is needed",
+            "correct": true
+          },
+          {
+            "id": "sc",
+            "text": "`seq_cst`: anything weaker can lose counts",
+            "why": "No memory order loses an atomic add. Orders only govern other memory."
+          },
+          {
+            "id": "ra",
+            "text": "`acquire` and `release`",
+            "why": "Nothing is handed over between threads; there is no data to publish."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`relaxed` is enough for a pure counter.",
+        "generic": "Not quite right. What does the counter need besides atomicity?"
+      },
+      "explain": {
+        "text": "Every atomic add lands whatever its order. The order only controls how other memory is seen around it. A counter read once at the end needs nothing more than `relaxed`."
+      }
+    },
+    {
+      "id": "q-lockfree",
+      "difficulty": 3,
+      "tags": [
+        "lock-free"
+      ],
+      "pace": 40,
+      "prose": "A queue is called **lock-free**.",
+      "question": "What does that promise?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "prog",
+            "text": "Some thread always makes progress, even if another is paused mid-operation",
+            "correct": true
+          },
+          {
+            "id": "fast",
+            "text": "Every operation is faster than with a mutex",
+            "why": "Lock-free code can be slower; the promise is about progress."
+          },
+          {
+            "id": "none",
+            "text": "No atomic instructions are used",
+            "why": "Lock-free code is built from atomics such as `compare_exchange`."
+          },
+          {
+            "id": "wait",
+            "text": "No thread ever retries",
+            "why": "A lock-free loop may retry; it only promises some thread succeeds."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Progress for some thread, whatever the others do.",
+        "generic": "Not quite right. What can a paused lock holder do to a mutex?"
+      },
+      "explain": {
+        "text": "With a mutex, a thread paused while holding it stops everyone. Lock-free code has no such holder, so some thread always gets through. It is a progress promise, not a speed promise."
+      }
+    }
+  ]
+}
