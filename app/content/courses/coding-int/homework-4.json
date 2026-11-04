@@ -1,0 +1,777 @@
+{
+  "id": "homework-4",
+  "course": "coding-int",
+  "level": 4,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h4-leaderboard",
+      "difficulty": 4,
+      "skills": [
+        "ci-timed",
+        "ci-design"
+      ],
+      "tags": [
+        "live-round",
+        "follow-up-layering"
+      ],
+      "prose": "An interviewer sets a leaderboard and then follows up. `add_score(player, delta)` adds to a player's score. `top(k)` returns the sum of the `k` highest scores. The driver `run_board` is hidden, with rows `[0, player, delta]`, `[1, k]` and `[2, player]`.",
+      "parts": [
+        {
+          "question": "Write `Leaderboard` with `add_score` and `top`.",
+          "difficulty": 3,
+          "widget": {
+            "kind": "code",
+            "language": "python",
+            "starter": "class Leaderboard:\n    def __init__(self):\n        self.scores = {}\n\n    def add_score(self, player, delta):\n        self.scores[player] = self.scores.get(player, 0) + delta\n\n    def top(self, k):\n        return 0\n",
+            "solution": "class Leaderboard:\n    def __init__(self):\n        self.scores = {}\n\n    def add_score(self, player, delta):\n        self.scores[player] = self.scores.get(player, 0) + delta\n\n    def top(self, k):\n        return sum(sorted(self.scores.values(), reverse=True)[:k])\n",
+            "examples": [
+              {
+                "call": "run_board([[0, 1, 5], [0, 1, 7], [1, 1]])",
+                "expect": "[12]",
+                "compare": "equal"
+              },
+              {
+                "call": "run_board([[1, 2]])",
+                "expect": "[0]",
+                "compare": "equal"
+              }
+            ],
+            "tests": [
+              {
+                "call": "run_board([[0, 1, 73], [0, 2, 56], [0, 3, 39], [0, 4, 51], [0, 5, 4], [1, 1], [0, 2, 51], [1, 2]])",
+                "expect": "[73, 180]",
+                "compare": "equal"
+              },
+              {
+                "call": "run_board([[0, 1, 5], [0, 1, 7], [1, 1], [1, 3]])",
+                "expect": "[12, 12]",
+                "compare": "equal"
+              },
+              {
+                "call": "run_board([[1, 2]])",
+                "expect": "[0]",
+                "compare": "equal"
+              },
+              {
+                "call": "run_board([[0, 1, 10], [0, 2, 20], [0, 3, 30], [1, 2], [1, 2], [1, 5]])",
+                "expect": "[50, 50, 60]",
+                "compare": "equal"
+              }
+            ],
+            "how": "Check runs 4 hidden tests: a score that changes, an empty board, and a `top` larger than the board.",
+            "postlude": "def run_board(ops):\n    b = Leaderboard()\n    out = []\n    for op in ops:\n        if op[0] == 0: b.add_score(op[1], op[2])\n        elif op[0] == 1: out.append(b.top(op[1]))\n        else: b.reset(op[1])\n    return out\n"
+          },
+          "feedback": {
+            "correct": "A dict of scores, sorted when `top` is asked.",
+            "generic": "Not quite right. Check the first failing test.",
+            "byKey": {
+              "test-1": "Test 1: player 2 gains 51, so the top two are 73 and 107.",
+              "test-2": "Test 2: player 1 adds 5 and 7, so the score is 12.",
+              "test-3": "Test 3: an empty board sums to 0.",
+              "test-4": "Test 4: with 3 players, `top(5)` sums all three."
+            }
+          },
+          "explain": {
+            "text": "Keep one score per player in a dict. `top(k)` sorts the scores from the largest and sums the first `k`. A `k` larger than the board just sums everyone."
+          }
+        },
+        {
+          "question": "The interviewer says there are 100,000 players and 2,000 `top(10)` calls. What do you change?",
+          "difficulty": 4,
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "a",
+                "text": "Keep a structure of the 10 best scores, updated on each score change",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "Sort once at the start and never update",
+                "why": "You sorted once. Scores change, so the order goes stale."
+              },
+              {
+                "id": "c",
+                "text": "Use a list of pairs instead of a dict",
+                "why": "You changed the container. Sorting a list every time costs the same."
+              },
+              {
+                "id": "d",
+                "text": "Recompute `top` only on the first call",
+                "why": "You cached the first answer. Later calls would return old totals."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "Maintain the top 10, so a query touches 10 entries.",
+            "generic": "Not quite right. Ask what each query costs now.",
+            "byKey": {
+              "b": "A sort done once is out of date after the next score change.",
+              "c": "A list sorted on every call costs as much as a dict sorted on every call.",
+              "d": "A cached total goes wrong as soon as a score changes."
+            }
+          },
+          "explain": {
+            "text": "Sorting 100,000 scores for each of 2,000 queries visits 200,000,000 scores. A maintained top 10 touches 10 entries a query. Update it on each score change instead."
+          }
+        },
+        {
+          "question": "Now add `reset(player)`, which sets a player's score to zero and removes the player from the board.",
+          "difficulty": 5,
+          "widget": {
+            "kind": "code",
+            "language": "python",
+            "starter": "class Leaderboard:\n    def __init__(self):\n        self.scores = {}\n\n    def add_score(self, player, delta):\n        self.scores[player] = self.scores.get(player, 0) + delta\n\n    def top(self, k):\n        return sum(sorted(self.scores.values(), reverse=True)[:k])\n\n    def reset(self, player):\n        pass\n",
+            "solution": "class Leaderboard:\n    def __init__(self):\n        self.scores = {}\n\n    def add_score(self, player, delta):\n        self.scores[player] = self.scores.get(player, 0) + delta\n\n    def top(self, k):\n        return sum(sorted(self.scores.values(), reverse=True)[:k])\n\n    def reset(self, player):\n        self.scores.pop(player, None)\n",
+            "examples": [
+              {
+                "call": "run_board([[0, 1, 10], [0, 2, 20], [2, 2], [1, 2]])",
+                "expect": "[10]",
+                "compare": "equal"
+              },
+              {
+                "call": "run_board([[1, 2]])",
+                "expect": "[0]",
+                "compare": "equal"
+              }
+            ],
+            "tests": [
+              {
+                "call": "run_board([[0, 1, 73], [0, 2, 56], [0, 3, 39], [0, 4, 51], [0, 5, 4], [1, 1], [2, 1], [2, 2], [0, 2, 51], [1, 2]])",
+                "expect": "[73, 102]",
+                "compare": "equal"
+              },
+              {
+                "call": "run_board([[0, 1, 10], [0, 2, 20], [0, 3, 30], [1, 2], [2, 3], [1, 2], [1, 5]])",
+                "expect": "[50, 30, 30]",
+                "compare": "equal"
+              },
+              {
+                "call": "run_board([[0, 1, 10], [2, 1], [0, 1, 4], [1, 1]])",
+                "expect": "[4]",
+                "compare": "equal"
+              },
+              {
+                "call": "run_board([[2, 9], [0, 1, 6], [1, 1], [1, 3]])",
+                "expect": "[6, 6]",
+                "compare": "equal"
+              }
+            ],
+            "how": "Check runs this part's tests and part 1's tests again. A reset player leaves the board.",
+            "postlude": "def run_board(ops):\n    b = Leaderboard()\n    out = []\n    for op in ops:\n        if op[0] == 0: b.add_score(op[1], op[2])\n        elif op[0] == 1: out.append(b.top(op[1]))\n        else: b.reset(op[1])\n    return out\n"
+          },
+          "feedback": {
+            "correct": "Pop the player from the dict.",
+            "generic": "Not quite right. Check the first failing test.",
+            "byKey": {
+              "test-1": "Test 1 is from part 1: `top` must still sum the highest scores.",
+              "test-2": "Test 2 did not match. Trace it by hand.",
+              "test-3": "Test 3 did not match. Trace it by hand.",
+              "test-4": "Test 4 did not match. Trace it by hand.",
+              "test-5": "Test 5: after players 1 and 2 are reset, `top(2)` reads the players that remain.",
+              "test-6": "Test 6: a reset player leaves the board, so the later `top` calls sum fewer players.",
+              "test-7": "Test 7: a reset player who scores again starts from zero.",
+              "test-8": "Test 8: resetting a player who is not there changes nothing."
+            }
+          },
+          "explain": {
+            "text": "`reset` removes the player's entry, so the next `top` cannot see the old score. A later `add_score` then starts from zero. Resetting a player who is not there changes nothing."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h4-calendar-follow-ups",
+      "difficulty": 4,
+      "skills": [
+        "ci-timed",
+        "ci-design"
+      ],
+      "tags": [
+        "calendar-booking",
+        "follow-up-layering"
+      ],
+      "prose": "A calendar takes 1,200 bookings, one at a time. Each `book` scans the whole list of earlier bookings, and an accepted booking is added to the list.",
+      "parts": [
+        {
+          "question": "In all, how many booking comparisons does the scan make?",
+          "difficulty": 3,
+          "widget": {
+            "kind": "numeric",
+            "answer": 719400,
+            "tol": {
+              "abs": 0
+            },
+            "label": "Comparisons",
+            "accept": "719,400: 0 + 1 + ... + 1,199",
+            "wrong": [
+              {
+                "id": "square",
+                "value": 1440000
+              },
+              {
+                "id": "once",
+                "value": 1200
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$0 + 1 + \\dots + 1{,}199 = 719{,}400$.",
+            "generic": "Not quite right. The first booking scans none and the last scans 1,199.",
+            "byKey": {
+              "square": "You multiplied 1,200 by 1,200. The list starts empty and grows.",
+              "once": "You counted one scan. Each booking scans all earlier ones."
+            }
+          },
+          "explain": {
+            "text": "Booking number $i$ compares with the $i$ bookings before it. The total is $0 + 1 + \\dots + 1{,}199 = 1{,}200 \\times 1{,}199 / 2 = 719{,}400$."
+          }
+        },
+        {
+          "question": "Thousands of bookings arrive every second. What do you do for `k = 1`?",
+          "difficulty": 4,
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "a",
+                "text": "Keep the starts and ends sorted and check the neighbours with `bisect`",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "Scan faster by writing the loop in a lower-level language",
+                "why": "You kept the scan. It is still linear in the bookings so far."
+              },
+              {
+                "id": "c",
+                "text": "Cache only the last booking",
+                "why": "You cached one booking. An earlier booking can still overlap a new one."
+              },
+              {
+                "id": "d",
+                "text": "Sort the whole list on every `book`",
+                "why": "You sorted every time. That costs more than the scan."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "A sorted list with `bisect` checks two neighbours.",
+            "generic": "Not quite right. Ask which bookings can overlap a new one.",
+            "byKey": {
+              "b": "A faster scan is still a scan.",
+              "c": "Only the neighbours in sorted order matter, not the latest booking.",
+              "d": "Sorting is more work than scanning."
+            }
+          },
+          "explain": {
+            "text": "Accepted bookings never overlap, so sorted order is time order. A new booking can only clash with its left and right neighbours. `bisect` finds them in $O(\\log n)$."
+          }
+        },
+        {
+          "question": "A binary search over 1,000,000 bookings needs how many comparisons at most, rounded up to a whole number?",
+          "difficulty": 4,
+          "widget": {
+            "kind": "numeric",
+            "answer": 20,
+            "tol": {
+              "abs": 0
+            },
+            "label": "Comparisons",
+            "accept": "20: the ceiling of log base 2 of 1,000,000",
+            "wrong": [
+              {
+                "id": "half",
+                "value": 500000
+              },
+              {
+                "id": "nineteen",
+                "value": 19
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$2^{19} = 524{,}288$ is below $10^6$ and $2^{20} = 1{,}048{,}576$ is above, so 20.",
+            "generic": "Not quite right. Each comparison halves the range.",
+            "byKey": {
+              "half": "You halved once. Each comparison halves the range again.",
+              "nineteen": "$2^{19}$ is 524,288, which is below a million. You need 20."
+            }
+          },
+          "explain": {
+            "text": "Each comparison halves the range, so $n$ bookings need $\\lceil \\log_2 n \\rceil$ comparisons. Here $2^{19} = 524{,}288 < 10^6 < 2^{20} = 1{,}048{,}576$, so the answer is 20."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h4-zero-sum-cpp",
+      "difficulty": 4,
+      "skills": [
+        "ci-timed"
+      ],
+      "tags": [
+        "hash-first-seen"
+      ],
+      "pace": 1200,
+      "prose": "Return the length of the longest contiguous stretch of `nums` that sums to 0, or 0 if there is none. Values may be negative or zero. This code is correct but slow. It passes the small groups. Make the large group pass, in C++, as in l17.",
+      "question": "Write a fast `longest_zero_sum_subarray` in C++.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <vector>\n#include <algorithm>\nint longest_zero_sum_subarray(std::vector<int> nums) {\n    // correct but slow: it tries every start and every end\n    int best = 0;\n    for (size_t i = 0; i < nums.size(); ++i) {\n        long long total = 0;\n        for (size_t j = i; j < nums.size(); ++j) {\n            total += nums[j];\n            if (total == 0) best = std::max(best, (int)(j - i + 1));\n        }\n    }\n    return best;\n}\n",
+        "solution": "#include <vector>\n#include <unordered_map>\n#include <algorithm>\nint longest_zero_sum_subarray(std::vector<int> nums) {\n    std::unordered_map<long long, int> first;\n    first[0] = -1;\n    long long total = 0;\n    int best = 0;\n    for (int i = 0; i < (int)nums.size(); ++i) {\n        total += nums[i];\n        auto it = first.find(total);\n        if (it != first.end()) best = std::max(best, i - it->second);\n        else first[total] = i;\n    }\n    return best;\n}\n",
+        "examples": [
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                9,
+                -9
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                4,
+                5,
+                6
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                3,
+                -1,
+                -2,
+                5
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 3,
+            "compare": "equal"
+          },
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                9,
+                -9
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              []
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                8
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                0,
+                0
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                4,
+                5,
+                6
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                -2,
+                1,
+                1,
+                -4,
+                4
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 5,
+            "compare": "equal"
+          },
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                7,
+                -7,
+                3
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "call": "longest_zero_sum_subarray",
+            "args": [
+              [
+                2,
+                4,
+                -6,
+                1,
+                -1,
+                5
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 5,
+            "compare": "equal"
+          },
+          {
+            "call": "[&]{ std::vector<int> v; for (int i = 0; i < 150000; ++i) { v.push_back(2); v.push_back(-2); } return longest_zero_sum_subarray(v); }()",
+            "expect": 300000,
+            "compare": "equal"
+          },
+          {
+            "call": "[&]{ std::vector<int> v; for (int i = 0; i < 120000; ++i) { v.push_back(3); v.push_back(1); v.push_back(-4); } v.push_back(6); return longest_zero_sum_subarray(v); }()",
+            "expect": 360000,
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: nine small ones and two of about 300,000 numbers. The starter is correct but slow."
+      },
+      "feedback": {
+        "correct": "A map from each prefix sum to its first index.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 did not match. Trace it by hand.",
+          "test-2": "Test 2 did not match. Trace it by hand.",
+          "test-3": "Test 3: an empty list has no stretch.",
+          "test-4": "Test 4 did not match. Trace it by hand.",
+          "test-5": "Test 5: two zeros are a stretch of 2.",
+          "test-6": "Test 6 did not match. Trace it by hand.",
+          "test-7": "Test 7: the stretch of 5 starts at the second number.",
+          "test-8": "Test 8 did not match. Trace it by hand.",
+          "test-9": "Test 9 did not match. Trace it by hand.",
+          "test-10": "Test 10: 300,000 numbers, and the whole list sums to zero.",
+          "test-11": "Test 11: the last number spoils the whole list but not the rest."
+        }
+      },
+      "explain": {
+        "text": "Store the first index of each prefix sum, starting with 0 at index -1. A repeat marks a stretch that sums to zero, and the first sighting makes it longest. Use `long long` for the running total."
+      }
+    },
+    {
+      "id": "h4-aloud",
+      "difficulty": 5,
+      "skills": [
+        "ci-timed"
+      ],
+      "tags": [
+        "narration"
+      ],
+      "question": "Say aloud how you would open a live round on `count_subarrays_divisible_by_k`.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Say this aloud, timing yourself to six minutes, then write the main points. The problem is `count_subarrays_divisible_by_k`. Restate it and give an example. Name the brute force and its cost. Give the prefix-remainder idea, write the plan as comments and state the complexity. Use `[7, -2, 9, 4, -5, 6]` with `k = 5`.",
+        "model": "**Restate.** Count the non-empty contiguous subarrays whose sum is divisible by `k`.\n\n**Example.** For `[7, -2, 9, 4, -5, 6]` and `k = 5` the answer is 3. The prefix sums are 0, 7, 5, 14, 18, 13 and 19. Their remainders are 0, 2, 0, 4, 3, 3 and 4. Three pairs of prefixes share a remainder.\n\n**Brute force.** Try every start and every end: $n(n + 1)/2$ subarrays. At $n = 300{,}000$ that is 45,000,150,000 steps, far too slow for a 5-second limit.\n\n**Idea.** Two prefix sums with the same remainder differ by a multiple of `k`. So the stretch between them is divisible. Count, in a dict, the earlier prefixes with each remainder, starting with `{0: 1}`. Add that count at each step. In C++ fix a negative remainder with `((total + x) % k + k) % k`.\n\n**Plan, as comments.** `# seen[r] = earlier prefixes with remainder r`, `# for each x: update remainder, add seen[r], then count it`, `# O(n) time, O(k) memory`.\n\n**Complexity.** Linear time, and memory proportional to the number of distinct remainders, at most `k`.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "Restates the problem and gives an example with its answer, 3"
+          },
+          {
+            "points": 2,
+            "text": "Names the brute force and its cost, 45,000,150,000 steps at 300,000"
+          },
+          {
+            "points": 2,
+            "text": "Gives the prefix-remainder idea: equal remainders bound a divisible subarray"
+          },
+          {
+            "points": 2,
+            "text": "States the plan before the code, including the dict started at {0: 1}"
+          },
+          {
+            "points": 2,
+            "text": "States linear time and memory by remainders, and the C++ negative remainder"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your answer with the model and tick the rubric.",
+        "generic": "Mark your answer against the rubric."
+      },
+      "explain": {
+        "text": "A good opening restates the problem and gives an example. It names the slow way with its cost, and states the idea before any code."
+      }
+    },
+    {
+      "id": "h4-leaderboard-cost",
+      "difficulty": 4,
+      "skills": [
+        "ci-timed",
+        "ci-design"
+      ],
+      "tags": [
+        "complexity-read"
+      ],
+      "question": "A leaderboard has 80,000 players and answers 1,500 `top(5)` queries. Sorting every score for each query visits how many scores in all?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 120000000,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Scores",
+        "accept": "120,000,000: 80,000 times 1,500",
+        "wrong": [
+          {
+            "id": "top",
+            "value": 7500
+          },
+          {
+            "id": "once",
+            "value": 80000
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$80{,}000 \\times 1{,}500 = 120{,}000{,}000$ scores.",
+        "generic": "Not quite right. Each query sorts all 80,000 scores.",
+        "byKey": {
+          "top": "You counted the entries a maintained top 5 would touch. Sorting touches every score.",
+          "once": "You counted one query. There are 1,500 of them."
+        }
+      },
+      "explain": {
+        "text": "Each query sorts all 80,000 scores, so 1,500 queries visit $80{,}000 \\times 1{,}500 = 120{,}000{,}000$. A maintained top 5 touches 5 entries a query, 7,500 in all. That is 16,000 times fewer."
+      }
+    },
+    {
+      "id": "h4-first-minutes",
+      "difficulty": 4,
+      "skills": [
+        "ci-timed"
+      ],
+      "tags": [
+        "oa-triage"
+      ],
+      "question": "Put the first five minutes of an assessment in order. Leave out the steps that do not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "o1",
+            "text": "Read every statement to the end"
+          },
+          {
+            "id": "o2",
+            "text": "Note the limits and the points of each group"
+          },
+          {
+            "id": "o3",
+            "text": "Estimate the full and partial minutes of each problem"
+          },
+          {
+            "id": "o4",
+            "text": "Choose full, partial or skip by points per minute and the budget"
+          },
+          {
+            "id": "o5",
+            "text": "Start the surest problem"
+          },
+          {
+            "id": "d1",
+            "text": "Start with the hardest problem, because it pays most",
+            "why": "You started with the hardest. Its rate may be the lowest, and a long problem can use the whole budget."
+          },
+          {
+            "id": "d2",
+            "text": "Write code for the first problem before reading the others",
+            "why": "You coded before reading. A later problem may pay better per minute."
+          }
+        ],
+        "answer": [
+          "o1",
+          "o2",
+          "o3",
+          "o4",
+          "o5"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "feedback": {
+        "correct": "Read, note, estimate, choose, then start.",
+        "generic": "Not quite right. Choosing needs the estimates.",
+        "byKey": {
+          "d1": "The hardest problem is not always the best use of the minutes.",
+          "d2": "You must read every statement before you choose.",
+          "left-out": "Five steps belong. The two starts that skip the plan do not."
+        }
+      },
+      "explain": {
+        "text": "Reading and noting give the limits and points. Estimates give the minutes, and the choice follows from points per minute. Only then do you start."
+      }
+    },
+    {
+      "id": "h4-plan",
+      "difficulty": 4,
+      "skills": [
+        "ci-timed"
+      ],
+      "tags": [
+        "timed-plan"
+      ],
+      "question": "Problems are `(28, 16, 9, 5)`, `(54, 32, 21, 11)` and `(80, 46, 26, 14)`: full points, full minutes, partial points, partial minutes. The budget is 58 minutes. What is the most a plan can earn?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 101,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Points",
+        "accept": "101: the third in full and the second in part",
+        "wrong": [
+          {
+            "id": "greedy",
+            "value": 82
+          },
+          {
+            "id": "over",
+            "value": 110
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$80 + 21 = 101$ in 57 minutes.",
+        "generic": "Not quite right. Try the largest problem in full first.",
+        "byKey": {
+          "greedy": "That is the plan with full marks only, by rate. A partial of the second earns 19 more.",
+          "over": "You added the first partial too. The three need 62 minutes, over 58."
+        }
+      },
+      "explain": {
+        "text": "The third in full takes 46 minutes and leaves 12, enough for the partial of the second at 11. That is 57 minutes and $80 + 21 = 101$ points. Full marks only, by rate, earns 82."
+      }
+    },
+    {
+      "id": "h4-next-test",
+      "difficulty": 4,
+      "skills": [
+        "ci-timed"
+      ],
+      "tags": [
+        "edge-case-list"
+      ],
+      "question": "For `longest_zero_sum_subarray`, your tests so far are `[]`, `[7]`, `[0]` and `[2, -2]`. Which test is most worth adding?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[5, 3, -1, -2, 4, 7]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[2, -2, 2, -2, 2, -2]`",
+            "why": "You chose the alternating case again. `[2, -2]` already tests a stretch at the start."
+          },
+          {
+            "id": "c",
+            "text": "`[0, 0, 0, 0, 0, 0]`",
+            "why": "You chose zeros again. `[0]` already tests a single zero."
+          },
+          {
+            "id": "d",
+            "text": "`[1, 2, 3, 4, 5, 6]`",
+            "why": "You chose the no-stretch case again. `[7]` already tests it."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The middle stretch is neither a prefix nor the whole list, and the answer is 3.",
+        "generic": "Not quite right. Choose a case your tests do not cover.",
+        "byKey": {
+          "b": "A stretch at the start is already tested by `[2, -2]`.",
+          "c": "A zero is already tested by `[0]`.",
+          "d": "A list with no stretch is already tested by `[7]`."
+        }
+      },
+      "explain": {
+        "text": "Your tests cover empty, one number, a zero and a stretch at the start. A stretch in the middle, `3, -1, -2`, is the shape they miss. A solution that only checks prefixes would fail it."
+      }
+    }
+  ]
+}
