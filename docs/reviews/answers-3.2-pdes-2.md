@@ -167,3 +167,46 @@ Numeric rows give the key and tolerance, then my value and my value for each nam
 ## Commands to reproduce
 
 Run from the scratchpad folder `ac-pdes2` (needs `pip install --target pylib scipy sympy mpmath numpy`): `python3 calc.py`, `python3 calc2.py`, `python3 calc3.py`, `python3 code_check.py`, `node expr.cjs`, `node expr2.cjs`, `python3 scan.py`, `python3 scan2.py`, `python3 reuse.py`.
+
+## Fix pass
+
+Every new number was computed twice (closed form against SciPy quadrature, a 2,001-term series, the method of images or a matrix exponential) in the scratchpad `fix-pdes2`. Validator: 0 errors. Playthrough of l5, l6, l7, l8 (lessons), review-2 and homework-2 (sets), with and without `--mobile` and `--local-cdn`: all passed. Voice scan 0 and 0. No new key or slip value appears in a lesson of the course (grep found none).
+
+1. Fixed. l6 s4 `no-signs` value 1.9523 (4/pi x 1.53333 = 1.952301; second route 1.2732395 + 0.4244132 + 0.2546479).
+2. Fixed by engine item 503 (P32-expr-int): `"integers": ["k"]` added to l6 s3, no `accept` forms added, key unchanged. Other expression widgets in level 2 (l5 s5 `(k pi/L)^2`, l6 s7 `i/2`, l7 s4 `1/N`, l8 s4 `h^2/(2D)`) hold no `(-1)^k` or parity term, so none needs it.
+3. Fixed. `h-colleague-terms` model has real newlines (rewritten, see 7).
+4. Fixed by the rewrite in 7: with start 80, 37.4719 and 37.4677 both round to 37.47, so "right to two places" is true.
+5. Fixed. l8 s10 explain: first term 4/pi e^-1.2337 = 0.37078, k = 3 term -6 x 10^-6 (-6.39e-6), P = 0.370777.
+6. Fixed. `h-centre-nonzero`: ends 10 and 70, start 100. b_1 = 76.3944, b_3 = 25.4648 (quadrature agrees), u = 40 + 28.1039 - 0.0031 = 68.1008 (quad series 68.100777, matrix exponential 68.100772); slips 68.1039, 68.1071, 40; explicit scheme, 200 intervals, lambda 0.4: 68.0994.
+7. Fixed. `h-colleague-terms`: start 80 (not 60, because 60 would repeat `h-centre-nonzero`'s 28.1039 at t = 1). Reports 92.17 and 37.47. Values: k = 3 term -13.80, partial 78.36, k = 5 adds 1.67, full 79.9289 (series, quadrature coefficients and images agree), four terms 79.9256 (within 0.0034), k = 11 term 5.1e-5, t = 1 full 37.4677, k = 3 term -0.0042. Rubric updated.
+8. Fixed. `r-linearity`: start 40, t = 0.3: 36.5943 (0.4 x 91.4857, exact 36.594277), slips 37.7296 and 91.4857.
+9. Fixed. `r-kernel-peak`: D = 0.25, t = 3: 0.3257 (1/sqrt(3 pi)), slips 0.5642 and 0.1061.
+10. Fixed. `r-lambda-len4`: L = 3: 4.3865, slips 2.0944 and 13.1595.
+11. Fixed. `r-b4`: integral 3: 0.9549, slips 0.4775 and 3.
+12. Fixed. `h-heat-rod` tests: PARAB coefficients [1.03205, 0, 0.038224]; heat CONST at pi/3, t 0.2 = 90.13026 (series 90.130265, images agree) and at pi/4, t 0.3 = 68.70398; MODES at pi/6, t 0.25 = 1.2736004. Now 8 hidden tests; the `how` line and explain updated.
+13. Fixed. `r-parseval` `no-factor` 0.1028 (pi^2/6/16 = 0.102808), tolerance 0.0006, new text.
+14. Fixed. l8 s8 prose and both docstrings say `rod_explicit` raises `ValueError` if `lam > 0.5`; starter still fails.
+15. Fixed. l8 s1 `same: [m1, m2]`.
+16. Fixed. l5 s4, l8 `q-blow`, `q-max` key texts and distractors reworked; key lengths now within 1.5 times the longest distractor.
+17. Fixed. Wording changed in l8 s4 (question, explain, `no-half`), s5 `lam05`, `q-dt`, and `r-stable-step`. Keys unchanged.
+18. Fixed. Every test calling `.tolist()` now wraps the call in `np.asarray(...)` (l5 6, l6 3, l8 1, homework 8).
+19. Fixed. "with lambda = 0.4" added in l8 s2 and `h-centre-nonzero`.
+20. Fixed. l7 `q-smooth` "of the three".
+21. Fixed. l8 s3 "-40.528 x 0.20611 = -8.3532".
+22. Fixed. l6 s8 "to within 0.00001".
+23. Fixed. l8 s10 `daily` value 40.3, tolerance 0.4, text "about the frequency from daily monitoring, 0.40".
+24. Fixed. `h-corridor-wide`: 0.8567 in the generic line, explain and `no-amp`; `d-sigma-sq` value 22.95.
+25. Fixed. l7 s5 `same: [p1, p2, p3]`: p3 only restates `b_k` for the line and p4 needs all three, so any order of the three is valid.
+26. Fixed. `h-gibbs-true` made fresh (jump from -3 to 3, peak 3.537 = 3 x 1.178980, overshoot 0.537) and distractors lengthened. l8 s9: short distractor lengthened.
+27. Fixed. `r-decay-ratio` now modes 3 and 6, D 0.5, t 0.3: 0.0174 (e^-4.05 = 0.017422), slips 0.6376 and 0.0045. Items 501 and 502 need no change here.
+
+Counts: fixed 27 (item 2 by engine item 503), disputed 0, left 0.
+
+### Changed keys
+
+- l6-fourier-series.json: screens[3] expression (added `integers: ["k"]`, key unchanged); screens[4] `no-signs` value.
+- l7-when-fourier-converges.json: screens[5] order (`same` group p1, p2, p3).
+- l8-heat-on-a-rod.json: screens[1] order (`same` m1, m2); screens[10] `daily` value and tolerance; screens[9] option text of `same`; `q-blow` and `q-max` option texts.
+- l5-separation-of-variables.json: screens[4] option text of `cancel`.
+- review-2.json: r-lambda-len4 (answer, `no-square`, `one-L`), r-decay-ratio (answer, `k-gap`, `alone`), r-b4 (answer, `two-pi`, `raw`), r-parseval (`no-factor` value and tolerance), r-linearity (answer, `one-term`, `same`), r-kernel-peak (answer, `t1`, `no-root`).
+- homework-2.json: h-heat-rod (hidden test expectations), h-centre-nonzero (answer, `one-term`, `sign`, `steady`), h-gibbs-true (option texts), h-corridor-wide (`d-sigma-sq`), h-colleague-terms (model, prompt, rubric).
