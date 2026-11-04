@@ -60,12 +60,12 @@ The npm tarball (`https://registry.npmjs.org/@yowasp/clang/-/clang-21.1.4-3.tgz`
 
 ## Moving around: locked lessons
 
-A lesson, level review or homework opens only when the levels it relies on are met (`requires` in each `course.json`; a later level with none relies on the level before it). A level is met when you pass its review, pass its topic exam or the stage test, or test out of it. Opening a lesson does not count, and nothing you have unlocked locks again.
+A lesson, level review or homework opens only when the levels it relies on are met (`requires` in each `course.json`; a later level with none relies on the level before it). A level is met when you pass its review, pass its topic exam or the stage test, or test out of it. Opening a lesson does not count, and nothing you have unlocked locks again. A level you have met, or started by finishing a lesson, stays open for its other lessons and its review.
 
 - The course map draws a locked node with a lock. Tap it, or open its link (`#lesson/<course>/<lesson>`), to see the locked card: what is missing, grouped Stage, Topic, Course, then level or lesson, each with a count. Direct prerequisites come first; the rest sit in one collapsed line per stage. "Start here" opens the earliest missing lesson whose own prerequisites are met.
 - Each missing level offers "Test out" (`#testout/<course>/<level>`): up to 6 items from that level's review, passed at the review's pass share. A miss lists the lessons to revisit and waits 24 hours.
 - You, Settings, Study plan, "Strict prerequisites" (on by default): on hides "Open anyway"; off shows it, and You counts the levels opened early.
-- Today and Learn pick only unlocked lessons. Prepare marks a blocked step with a lock and its first missing prerequisite. A met prerequisite you have not reviewed for 30 days shows a "Refresh" chip on the lesson's start screen.
+- Today and Learn pick only unlocked lessons. Prepare marks a blocked step with a lock and its first missing prerequisite. A met prerequisite you have not reviewed for 30 days shows a "Refresh" chip above the lesson's first screen.
 - Saves from before gating are grandfathered once: every level whose lessons were all finished counts as met.
 - Authors: `docs/AUTHORING.md` section 11. The playthrough marks a target's prerequisites met before it plays (`ZQ.prereq.unlock`).
 

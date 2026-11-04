@@ -672,7 +672,7 @@
   function mountTestout(root, Z, cid, n) {
     const P = ZQ.prereq, lv = levelOf(cid, n), key = P ? P.keyOfLevel(cid, +n) : `${cid}/L${n}`;
     const c = course(cid);
-    let need = 1, bySkill = {};
+    let need = 1, bySkill = {}, shownIds = [];
     const hashOf = (str) => { let h = 2166136261; for (const ch of String(str)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
     const rngOf = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
     const cfg = {
@@ -692,19 +692,22 @@
         const D = await C().review(cid, lv.review);
         const all = D && Array.isArray(D.items) ? D.items : [];
         const pass = Number(D && D.pass) > 0 && Number(D.pass) <= 1 ? Number(D.pass) : P.PASS;
-        const rng = rngOf(hashOf(`${key}/${t.tries}`));
-        const picked = all.map((it, i) => ({ it, i, k: rng() })).sort((a, b) => a.k - b.k).slice(0, P.TESTOUT_N).sort((a, b) => a.i - b.i).map(o => o.it);
-        need = Math.max(1, Math.ceil(picked.length * pass - 1e-9));
+        /* seeded by attempt; items shown on an earlier attempt come last, so a retake is a new paper while the review has enough items */
+        const rng = rngOf(hashOf(`${key}/${t.tries}`)), seenBefore = new Set(t.seen), idOf = (it, i) => it.id || 'q' + i;
+        const picked = all.map((it, i) => ({ it, i, old: seenBefore.has(idOf(it, i)) ? 1 : 0, k: rng() })).sort((a, b) => a.old - b.old || a.k - b.k).slice(0, P.TESTOUT_N).sort((a, b) => a.i - b.i);
+        shownIds = picked.map(o => idOf(o.it, o.i));
+        const pickedItems = picked.map(o => o.it);
+        need = Math.max(1, Math.ceil(pickedItems.length * pass - 1e-9));
         /* lessons by skill, for the links on a miss */
         await Promise.all((lv.lessons || []).filter(id => C().exists(cid, id) !== false).map(id => C().lesson(cid, id).then(L => { (L && L.skills || []).forEach(sk => { if (!bySkill[sk]) bySkill[sk] = { id, title: L.title || id }; }); }).catch(() => null)));
-        return picked.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: lv.review, item: it.id || 'q' + i }, source: `Item ${i + 1}` }));
+        return pickedItems.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: lv.review, item: it.id || 'q' + i }, source: `Item ${i + 1}` }));
       },
       record: (items, res) => {
         const ok = items.map((it, j) => !!(res[j] && res[j].ok));
         const right = ok.filter(Boolean).length, passed = right >= need;
         const missed = items.filter((it, j) => !ok[j]);
         const where = (it) => (it.skills || []).map(sk => bySkill[sk]).find(Boolean) || ((lv.lessons || [])[0] ? { id: lv.lessons[0], title: 'the first lesson' } : null);
-        S().prereq.testout({ key, score: right, items: items.length, passed, missed: missed.map(it => it.id).filter(Boolean) });
+        S().prereq.testout({ key, score: right, items: items.length, passed, missed: missed.map(it => it.id).filter(Boolean), seen: shownIds });
         const links = [...new Map(missed.map(where).filter(Boolean).map(l => [l.id, l])).values()].map(l => `<a href="#lesson/${Z.esc(cid)}/${Z.esc(l.id)}">${Z.esc(l.title)}</a>`);
         return { badges: [[`${right} of ${items.length}`, 'right'], [need, 'needed to pass']],
           lines: items.map((it, j) => (ok[j] ? '' : (where(it) ? `Revisit ${where(it).title}` : ''))),

@@ -11,7 +11,7 @@ Conclusion: gate at the level grain on demonstrated mastery, with test-out and (
 
 ## 1. Data
 - `course.json`: each level may carry `requires: ["<course>/L<n>", "<course>/<lesson-id>", ...]`. A level reference means the whole level; a lesson reference is for the few cases where one lesson is enough. Same-course references are allowed (`"markov/L2"`). The first level of a course with no `requires` is open; a later level with no `requires` implicitly requires the previous level of its own course.
-- A lesson may override with `requires` in its `course.json` lesson map entry only when it needs less or more than its level (rare; the content pass justifies each one in its report).
+- (As built: the override is a top-level `lessonRequires: { "<lesson-id>": [refs] }` map, because map entries are strings; see DECISIONS.) A lesson may override with `requires` in its `course.json` lesson map entry only when it needs less or more than its level (rare; the content pass justifies each one in its report).
 - Topics and stages carry no `requires`; their order comes from the levels inside them.
 - Lesson ids are never renamed, so progress data and references stay valid.
 

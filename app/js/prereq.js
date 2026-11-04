@@ -10,10 +10,12 @@
 
    Met. A level is met when: its review has a passed attempt (state.reviews[...].passed), its topic exam is passed, the
    stage exit test of its stage is passed, a test-out passed, it was recorded met (grandfathering, test hook), or it has
-   no written review and every written lesson is finished. A lesson reference is met when that lesson is done and its quiz
-   mastered, or its level is met. Opening a lesson never counts. A met level stays met: sync() records every level found
-   met in state.prereq.met, so nothing that was unlocked locks again. Lessons already done, and reviews or levels opened
-   early, are never locked either. */
+   no review written and every lesson on its map is written and finished. A lesson reference is met when that lesson is
+   done and its quiz mastered, or its level is met. Opening a lesson never counts. A met level stays met: sync() records
+   every level found met in state.prereq.met, so nothing that was unlocked locks again. A met level is also open as a place
+   to work (its lessons, review and homework), even when its own references are unmet: it was met by mastery shown. Lessons
+   already done, reviews or levels opened early, and levels the learner has started (a finished lesson, state.prereq.started,
+   not counted as met for dependants) are never locked either. */
 (function () {
   'use strict';
   const DAY = 86400000;
@@ -24,7 +26,7 @@
 
   const C = () => window.ZQ.content;
   const S = () => window.ZQ.state;
-  const rec = () => { try { return S().prereq.get(); } catch { return { met: {}, testouts: {}, opened: {} }; } };
+  const rec = () => { try { return S().prereq.get(); } catch { return { met: {}, testouts: {}, opened: {}, started: {} }; } };
   const keyOfLevel = (cid, n) => `${cid}/L${n}`;
   const strict = () => { try { return S().settings.strictPrereqs !== false; } catch { return true; } };
 
@@ -78,16 +80,15 @@
   };
   const lessonRec = (cid, id) => { try { return S().lessons[`${cid}/${id}`] || null; } catch { return null; } };
   const lessonDone = (cid, id) => { const r = lessonRec(cid, id); return !!(r && r.done); };
+  /* every lesson on the map is written and finished (a half-written level never counts as complete) */
+  const fullyFinished = (cid, lv) => { const all = lv.lessons || [], ws = writtenLessons(cid, lv); return all.length > 0 && ws.length === all.length && ws.every(id => lessonDone(cid, id)); };
   /* met by something other than a record in state.prereq.met */
   const derivedMet = (cid, lv) => {
     if (reviewPassed(cid, lv)) return true;
     const co = doc(cid);
     if (co && co.topic && C().topicPassed(co.topic)) return true;
     if (co && co.stage != null && examPassed('stage-' + co.stage)) return true;
-    if (!lv.review || C().exists(cid, lv.review) === false) {
-      const ws = writtenLessons(cid, lv);
-      return ws.length > 0 && ws.every(id => lessonDone(cid, id));
-    }
+    if (!lv.review || C().exists(cid, lv.review) === false) return fullyFinished(cid, lv);
     return false;
   };
   const levelMet = (cid, n) => {
@@ -110,11 +111,16 @@
 
   /* ---------- Locked ---------- */
   const openedEarly = (cid, n) => !!rec().opened[keyOfLevel(cid, n)];
-  const levelLocked = (cid, n) => !openedEarly(cid, n) && levelRefs(cid, n).some(r => !refMet(r));
+  const startedLevel = (cid, n) => !!(rec().started || {})[keyOfLevel(cid, n)];
+  /* A level that is met, opened early or started is open as a place to work, whatever its own references say */
+  const levelLocked = (cid, n) => !openedEarly(cid, n) && !startedLevel(cid, n) && !levelMet(cid, n) && levelRefs(cid, n).some(r => !refMet(r));
   const lessonLocked = (cid, lid) => {
     if (lessonDone(cid, lid)) return false;
     const lv = levelHolding(cid, lid);
-    if (lv && openedEarly(cid, lv.n)) return false;
+    if (lv && (openedEarly(cid, lv.n) || startedLevel(cid, lv.n))) return false;
+    const d = doc(cid) || {};
+    const own = !!(d.lessonRequires && Array.isArray(d.lessonRequires[lid]));
+    if (lv && !own && levelMet(cid, lv.n)) return false;
     return lessonRefs(cid, lid).some(r => !refMet(r));
   };
   /* A lesson, review or homework id of a course map */
@@ -142,7 +148,7 @@
     const key = keyOfLevel(cid, lv.n), t = rec().testouts[key];
     const written = !!lv.review && C().exists(cid, lv.review) !== false;
     const nextAt = t && !t.passed ? t.at + RETAKE_H * 3600e3 : 0;
-    return { can: written && !(nextAt > Date.now()), written, nextAt: nextAt > Date.now() ? nextAt : 0, tries: t ? t.tries || 0 : 0, missed: t && !t.passed ? t.missed || [] : [] };
+    return { can: written && !(nextAt > Date.now()), written, nextAt: nextAt > Date.now() ? nextAt : 0, tries: t ? t.tries || 0 : 0, missed: t && !t.passed ? t.missed || [] : [], seen: t && Array.isArray(t.seen) ? t.seen : [] };
   };
   const nodeOf = (ref) => {
     const p = parse(ref);
@@ -179,19 +185,19 @@
   const missingRefs = (refs) => {
     const seen = new Set(), direct = [], indirect = [];
     const nodeKey = (nd) => (nd.kind === 'lesson' ? nd.ref : keyOfLevel(nd.course, nd.n));
-    const walk = (rs, depth) => {
-      rs.forEach(r => {
-        if (refMet(r)) return;
-        const nd = nodeOf(r);
-        if (!nd) return;
-        const k = nodeKey(nd);
-        if (seen.has(k)) return;
-        seen.add(k);
-        (depth ? indirect : direct).push(nd);
-        walk(nd.refs, depth + 1);
-      });
+    /* two passes, so that direct and indirect do not depend on list order: every unmet listed reference is direct first */
+    const add = (r, into) => {
+      if (refMet(r)) return null;
+      const nd = nodeOf(r);
+      if (!nd) return null;
+      const k = nodeKey(nd);
+      if (seen.has(k)) return null;
+      seen.add(k); into.push(nd);
+      return nd;
     };
-    walk(refs, 0);
+    const walk = (nd) => nd.refs.forEach(r => { const x = add(r, indirect); if (x) walk(x); });
+    refs.forEach(r => add(r, direct));
+    direct.slice().forEach(walk);
     const byOrd = (a, b) => a.ord - b.ord;
     direct.sort(byOrd); indirect.sort(byOrd);
     const all = direct.concat(indirect).sort(byOrd);
@@ -231,9 +237,12 @@
     try {
       const p = rec();
       if (!p.grandfathered) {
-        const keys = allLevels().filter(({ course, lv }) => { const ws = writtenLessons(course, lv); return ws.length > 0 && ws.every(id => lessonDone(course, id)); }).map(({ course, lv }) => keyOfLevel(course, lv.n));
+        const keys = allLevels().filter(({ course, lv }) => fullyFinished(course, lv)).map(({ course, lv }) => keyOfLevel(course, lv.n));
         S().prereq.grandfather(keys);
       }
+      /* a level with a finished lesson is work in progress: its remaining lessons, review and homework stay open (never counted as met) */
+      const begun = allLevels().filter(({ course, lv }) => !(p.started || {})[keyOfLevel(course, lv.n)] && (lv.lessons || []).some(id => lessonDone(course, id))).map(({ course, lv }) => keyOfLevel(course, lv.n));
+      if (begun.length) S().prereq.start(begun);
       const fresh = allLevels().filter(({ course, lv }) => !p.met[keyOfLevel(course, lv.n)] && derivedMet(course, lv)).map(({ course, lv }) => keyOfLevel(course, lv.n));
       if (fresh.length) S().prereq.mark(fresh, 'derived');
     } catch (e) { console.error(e); }
@@ -256,7 +265,7 @@
   };
 
   const api = {
-    strict, parse, levelRefs, lessonRefs, examRefs, examLocked, levelMet, lessonMet, refMet, levelLocked, lessonLocked, itemLocked, courseLocked, openedEarly,
+    strict, parse, levelRefs, lessonRefs, examRefs, examLocked, levelMet, lessonMet, refMet, levelLocked, lessonLocked, itemLocked, courseLocked, openedEarly, startedLevel,
     missingFor, missingForLevel, missingRefs, nodeOf, launchOf, testOutFacts, refreshFor, sync, unlock, unlockRefs, levelHolding, keyOfLevel,
     openedCount: () => Object.keys(rec().opened).length,
     PASS, TESTOUT_N, RETAKE_H, REFRESH_D,

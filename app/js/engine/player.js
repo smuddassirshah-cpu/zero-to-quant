@@ -642,16 +642,12 @@
     const ctxFor = (key, mode) => ({ mode, key, into, pointEl, rng: rngFrom(hash(course + '/' + lessonId + '/' + key)), draftKey: `${course}/${lessonId}/${key}` });
     const titleStep = (spec) => {
       const meta = info.level && info.n ? `Level ${info.level} · Lesson ${info.n}` : (info.name || 'Lesson');
-      /* Prerequisite gating (ENGINE-BACKLOG 489): a met prerequisite not reviewed for 30 days offers a Refresh link; it never relocks */
-      let refresh = [];
-      try { refresh = Z.prereq ? Z.prereq.refreshFor(course, lessonId) : []; } catch (e) { console.error(e); }
       const el = h(`<section class="lsn-step lsn-title">
         <div class="lsn-title-art" data-track="${Z.esc(info.track)}">${window.ZQArt ? window.ZQArt(info.art, { label: 'Course art' }) : ''}</div>
         <div class="t-overline lsn-over">${Z.esc(meta)}${info.strand && window.ZQ.content.strandBadge ? ` ${window.ZQ.content.strandBadge(info.strand, info.strandNote)}` : ''}</div>
         <h1 class="t-lesson-title">${G().inline(spec.title || LSN.title)}</h1>
         ${G().prose(spec.prose || '')}
         <p class="t-caption lsn-meta">${icon('clock', 'xs')} About ${LSN.minutes || 12} minutes${quizSpec.length ? `, then a ${quizSpec.length}-question quiz` : ''}</p>
-        ${refresh.length ? `<p class="lsn-refresh">${refresh.map(r => `<a class="rf-chip" href="#review/${Z.esc(r.course)}/${Z.esc(r.review)}" title="You have not reviewed it for ${r.days >= 999 ? 'a while' : r.days + ' days'}">${icon('replay', 'xs')}Refresh ${Z.esc(r.name)}</a>`).join(' ')}</p>` : ''}
       </section>`);
       return { el, kind: 'read', type: 'title', spec, ready: () => false, dirty: () => false, destroy() {} };
     };
@@ -677,11 +673,19 @@
       }
       return { el, kind: 'read', type: 'summary', ready: () => false, dirty: () => false, destroy() {} };
     };
+    /* Prerequisite gating (ENGINE-BACKLOG 489, 491): a met prerequisite not reviewed for 30 days offers a Refresh link above the
+       lesson's first screen, whatever its kind; it never relocks */
+    const refreshStrip = () => {
+      let refresh = [];
+      try { refresh = Z.prereq ? Z.prereq.refreshFor(course, lessonId) : []; } catch (e) { console.error(e); }
+      return refresh.length ? h(`<p class="lsn-refresh">${refresh.map(r => `<a class="rf-chip" href="#review/${Z.esc(r.course)}/${Z.esc(r.review)}" title="You have not reviewed it for ${r.days >= 999 ? 'a while' : r.days + ' days'}">${icon('replay', 'xs')}Refresh ${Z.esc(r.name)}</a>`).join(' ')}</p>`) : null;
+    };
     const lessonFactory = (i) => () => {
       if (i === SUMMARY) return summaryStep();
       const spec = screens[i];
-      if (spec.type === 'title') return titleStep(spec);
-      return buildScreen(spec, ctxFor('s' + i, 'lesson'));
+      const made = spec.type === 'title' ? titleStep(spec) : buildScreen(spec, ctxFor('s' + i, 'lesson'));
+      if (i === 0 && made && made.el) { const strip = refreshStrip(); if (strip) made.el.prepend(strip); }
+      return made;
     };
     const enterLesson = (i) => { S.phase = 'lesson'; S.i = i; setProgress(); return enterStep(lessonFactory(i)); };
     const quizHead = () => `<div class="lsn-qhead"><span class="t-overline">Lesson quiz</span><span class="dots" aria-hidden="true">${quizSpec.map((_, j) => `<i class="${S.quiz[j] === 'ok' ? 'ok' : S.quiz[j] === 'bad' ? 'bad' : j === S.q ? 'cur' : ''}"></i>`).join('')}</span><span class="t-caption lsn-qof">Question ${S.q + 1} of ${quizSpec.length} · No hints, one try</span></div>`;

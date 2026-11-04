@@ -406,6 +406,7 @@
         return `<button class="btn track block" type="button" data-go="course/${esc(cid)}">See level ${info.lv.n}</button>`;
       }
       if (info.isCurrent) return `<button class="btn track block" type="button" data-launch="${esc(info.next.id)}">${resume ? 'Continue lesson' : anyDone ? 'Continue course' : 'Start'}</button>`;
+      if (Z.prereq && Z.prereq.lessonLocked(cid, info.next.id)) return `<button class="btn track block" type="button" data-go="course/${esc(cid)}">See what is missing for level ${info.lv.n}</button>`;
       return `<button class="btn track block" type="button" data-go="course/${esc(cid)}">${info.done ? 'Continue' : 'Start'} level ${info.lv.n}</button>`;
     };
     const metaLine = (info) => {

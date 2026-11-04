@@ -70,4 +70,29 @@ Format: numbered; each finding is an error (a brief requirement not met, or a le
 
 ## 4. Fix pass
 
-(Left for the fix agent: append `## Fix pass` here.)
+
+
+## Fix pass
+
+Backlog items 491 to 498. Verified from `app/`: `validate.mjs` 0 errors; `--routes-only` with and without `--mobile` all passed, with the gating check extended (7a to 7f; the chip check was shown to fail with the fix switched off); smoke runs of a lesson (`research-int/l11-framing-the-question`, `number-sense/l10-repeated-multiplication`), a set, an exam, `--bank all` and `--drills` passed. Validator rules tried on a scratch copy of `content/` (self reference, own lesson, unknown ref on a topic exam, topic exam warning).
+
+| # | Verdict | Change |
+| --- | --- | --- |
+| 1 | fixed (491) | The Refresh strip is prepended to step 0 in `lessonFactory` (`player.js`), whatever the first screen; `titleStep` no longer draws it. Routes check at 1280 and 390 px. |
+| 2 | fixed (492) | `levelLocked` and `lessonLocked` return false for a met level (lessons with their own `lessonRequires` entry excepted); review and homework follow through `itemLocked`. Routes check after a test-out, including `#review` showing no card. |
+| 3 | fixed in the engine (495), content left | `exam.js` honours a top-level `requires` on any exam id; the validator accepts it on topic exams and stage tests with a warning; playthrough unlocks it before `--exam`. AUTHORING 11 asks a content pass to add the lists to the mocks. Not derived from the items: the papers draw from many levels and the smallest set is a mapping judgement. |
+| 4 | fixed (493) | `state.prereq.started`, set by `sync()` for any level with a finished lesson, keeps its remaining lessons, review and homework open and is not met for dependants. Decision: the brief's "never locks" covers work in progress, since the learner was let in before gating. Grandfathering to met now needs every lesson written and finished. |
+| 5 | fixed (494) | Two-pass `missingRefs`: every unmet listed reference is direct, then their references are indirect. |
+| 6 | fixed (496) | The test-out record keeps `seen`; a retake draws unseen items first. A 6-item review still repeats (documented: give required levels 12 or more review items). The validator range was not changed. |
+| 7 | fixed (497) | No review: met only when every lesson on the map is written and finished (`fullyFinished`). |
+| 8 | skipped | No action needed; the measurement says no caching. |
+| 9 | (a) fixed (498), (b) skipped | (a) error for a level naming its own lesson. (b) A per-lesson edge would need a lesson-grain graph in the cycle check for a case no real file has; documented in AUTHORING 11 instead. |
+| 10 | fixed (498) | "Not yet written: this opens when it is written", Test out hidden, row text shortened. |
+| 11 | fixed (498) | DECISIONS bullet with the differences, and a one-line correction in the brief's section 1. |
+| 12 | fixed (498), with a correction | For a level other than the current one the button goes to the course map, not the card; the label now reads "See what is missing for level n" when its next lesson is locked. |
+| 13 | fixed (498) | The gating check also compares the card's levels with a closure computed in Node from `course.json` (it matched for the Stage 3 lesson). |
+| 14 | skipped | One stage test exists and covers its stage; a `covers` list is speculative until a stage test is split. |
+| 15 | skipped | Agreed with the note: no trusted clock, leave it. |
+| 16 | skipped | A mapping matter for the content second reader, not an engine defect. |
+
+Counts: 13 findings fixed (1 to 7, 9a, 10 to 13), 5 skipped (8, 9b, 14, 15, 16).

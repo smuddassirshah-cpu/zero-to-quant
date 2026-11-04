@@ -1903,7 +1903,7 @@ guard(courseDir, () => {
         node = `${c}/L${lv.n}`; lessonRef = rest;
         if (!(writtenByCourse.get(c) || new Set()).has(rest)) warn(file, w, `lesson "${rest}" is not written yet: the dependent stays locked until it is written`);
       }
-      if (fromNode && node === fromNode && !lessonRef) { err(file, w, 'a level cannot require itself'); return; }
+      if (fromNode && node === fromNode && (!lessonRef || !/^lessonRequires/.test(at))) { err(file, w, lessonRef ? `a level cannot require its own lesson "${lessonRef}" (the level locks the lesson)` : 'a level cannot require itself'); return; }
       if (fromCid) {
         const sf = stageOf(fromCid), st = stageOf(c);
         if (st > sf) err(file, w, `"${r}" is in Stage ${st}, later than this course's Stage ${sf}: a reference never points to a later stage`);
@@ -1951,12 +1951,12 @@ guard(courseDir, () => {
     stack.pop(); state.set(n, 2);
   };
   [...edges.keys()].sort().forEach(n => { if (!state.get(n)) visit(n); });
-  /* A mock may name requires; nothing else outside a course map does */
+  /* An exam file (mock, topic exam or stage test) may name requires at its top level; the engine honours it on any of them */
   listJSON(path.join(CONTENT, 'exams')).forEach(f => {
     const ef = path.join(CONTENT, 'exams', f), er = readJSON(ef);
     if (!er.data || er.data.requires === undefined) return;
-    if (!/^mock-/.test(f)) err(ef, 'requires', 'only a mock exam may name requires (a topic exam or stage test is what lets a learner test out)');
-    else checkRefs(ef, 'requires', er.data.requires, null, null);
+    if (!/^mock-/.test(f)) warn(ef, 'requires', 'a topic exam or stage test is how a learner tests out; locking it behind requires removes that way round');
+    checkRefs(ef, 'requires', er.data.requires, null, null);
   });
 });
 
