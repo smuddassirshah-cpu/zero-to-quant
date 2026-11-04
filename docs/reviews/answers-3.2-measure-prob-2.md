@@ -188,3 +188,35 @@ All 24 findings fixed, none disputed. Every changed number was recomputed twice 
 - `l8-modes-of-convergence` s5 order (`same` c1/c2); s8 option a text; quiz `q-const` option a text.
 - `review-2` `r-which` (spike 3n: option a text, b and d `why`); `r-delta` (option a and d text, exact delta 0.0214); `r-mode` (2n spike, E[X^2] = 4 in b `why`).
 - `homework-2` `h-fatou` part 1 (`wrong` `one` 1 to 3), part 2 (answer 1 to 3), part 3 (option a text); `h-order` (lines f3 and f4 merged into f34, answer, `same`); `h-nu` part 1 (answer 0.95 to 0.96, `wrong` `five` 0.05 to 0.04), part 3 (option a text); `h-code` (all examples and tests).
+
+## Recheck
+
+Commit 31f7b21 is in the history. All 20 changed widgets recomputed independently (closed forms in Python with `statistics.NormalDist`, a central finite difference, NumPy reruns, and a script that checks option counts and key-to-distractor length ratios). `h-code` run in CPython (solution 9 of 9 tests and its example, starter 0 of 9 and 0 of 1, `ddof=0` variant 7 of 9, failing only the two SE tests) and in Pyodide 0.27.7 via `playthrough.mjs --set measure-prob/homework-2 --local-cdn` (all passed, marked 9 of 9, 41 of 41 marks). Two stale phrases found; no key or value is wrong.
+
+- l6 s3 order: m2, m3, m4/m5 (either order), m6; both m4 and m5 need only m2 and m3, m6 needs both. No other order is valid. Verdict: ok.
+- l6 s5 option a / l6 s6 option a: a alone correct, ratios 0.87 and 1.44, meaning kept ($E[X]=\infty$; $E[X_n]=\tfrac1n\int_0^1 du/u$ diverges). Verdict: ok.
+- l7 s1: only a is correct (sup about 1/U, mean infinite); d "unbounded has no finite mean" is false, b and c false; ratio 0.56. Verdict: ok.
+- l7 s3 order: p1, p2, then p3/p4 either way, p5; p4 only needs p2. Verdict: ok.
+- l7 s7 option a: ok (bound 5, $E[5]=5$), only a correct, canvas line y = 5 inside axis 5.5. Verdict: ok.
+- l7 s9 `big`: 0.94 x 100 = 94 (value 94, text "scaled by 100"); also 0.083/0.088 = 0.943, 0.018762/0.000088 = 213. Verdict: ok.
+- l7 q-hyp: only a correct (one integrable Y above all $|X_n|$), ratio 1.18. Verdict: ok.
+- l8 s5 order: c1/c2 either order, c3, c4, c5; c2 does not use c1. Verdict: ok.
+- l8 s8 option a: $|X_n-Z|=2|Z|$ never shrinks; 2(1 - 0.691462) = 0.6171; ratio 0.67. Verdict: ok.
+- l8 q-const: only a correct (constant limit, distribution implies probability), ratio 0.60. Verdict: ok.
+- r-which: $E[X_n]=3$, sup about $3/U$ not integrable, neither theorem applies, key a only; ratio 1.37; b and d `why` consistent. Verdict: ok.
+- r-delta: exact delta 0.0213798 (closed form 0.02137976, finite difference 0.02137976, d2 = -0.27954); option d quotes 0.0214; only a correct; ratio 1.41. Verdict: ok.
+- r-mode: $E[X_n^2]=4n^2/n^2=4$, $P(X_n\ne0)=1/n^2$; a.s. and in probability, not mean square: key a; ratio 1.46. Verdict: ok.
+- h-fatou p1: value 0 (`wrong` `one` 3 is the mean of $X_n$, matching its text). Verdict: ok.
+- h-fatou p2: value 3 (3n x 1/n). Verdict: ok.
+- h-fatou p3: key a "0 < 3" correct, ratio 0.56, only a correct. Verdict: ok on key; stale text in option b `why` (below).
+- h-nu p1: 24/25 = 0.96 (`wrong` `five` 0.04 = 1 - 0.96; 1 = the limit of the means). Verdict: ok on values; stale text in `byKey.one` (below).
+- h-nu p3: only a correct ($\sup_n nU^n$ about $1/(e\delta)$, mean infinite), ratio 1.39. Verdict: ok.
+- h-order: f1, then f2/f34 either order, then f5; both f2 and f34 need only f1; no other order valid. Verdict: ok.
+- h-code: tests recomputed. Digital seed 21 0.021320863378961503 (SE 0.00010402382624449808), call 0.45659000268962846 (SE 0.003819911396832423), exact 0.021379762050349284 and 0.45907764450186667 (0.57 and 0.65 SE, within 3), strike 115: 0.0161998 vs exact 0.01621892246124238 (0.26 SE), call SE 0.00382 > 0.0035, pathwise call SE 0.0018307. All equal the file. Numbers (S0 100, K 105, r 3%, sigma 25%, T 0.5) appear nowhere else in the course. Verdict: ok.
+- Remaining small items (r-div 62.6 = ln 20 / ln(1.07/1.02) and year 63 correct, year 62 gives 56.91; l5 s9 gaps 0.0540 and 0.0074; h-tranche 8(0.28650 - 0.04394) = 1.9405; l7 s4 $\Phi(0.35)=0.6368$, $\Phi(0.15)=0.5596$; l7 s5 area 0.018762 and $e^{-rT}c'=0.0188$; h-modes `byKey` lines on the five new cells match the keyed answers): ok.
+
+New mismatches (both text only, keys unaffected):
+1. `homework-2.json` h-nu part 1, `feedback.byKey.one`: "We want the value at $n = 19$." Fix: replace `$n = 19$` with `$n = 24$`.
+2. `homework-2.json` h-fatou part 3, option b `why`: "You read $0 < 1$ as a failure." Fix: replace `$0 < 1$` with `$0 < 3$`.
+
+Observation, no fix needed: `r-which` and `h-fatou` both use the spike $3n\mathbf 1_{\{U<1/n\}}$ (review and homework, not a lesson); no lesson repeats it.
