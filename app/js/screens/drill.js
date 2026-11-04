@@ -24,6 +24,7 @@
 (function () {
   'use strict';
 
+  const lib = () => ZQ.drillLib || {}; // js/screens/drill-lib.js: patterns, filters, stopwatch, C++ drills, sessions (item 472)
   const LIMIT_MS = 5000;
   const LOAD_LIMIT_MS = 60000;
   const MARK = '\u001eZQ';
@@ -124,7 +125,12 @@ if not callable(globals().get(${py(P.fn)})):
       topic: topic ? `${topic.id} ${topic.name}` : (C.topic || ''),
       brief: d.brief || '', definition: d.definition || '', cons: d.constraints || [], hint: d.hint || '',
       how: d.how || '', rule: RULES[main].rule, accept: RULES[main].accept, where: d.where || '',
+<<<<<<< HEAD
       starter: d.starter || '', reference: d.solution || '', notes: d.notes || [], prelude: d.prelude || '', data: d.data && typeof d.data === 'object' ? d.data : null, returns: d.returns || 'a value of the right type',
+=======
+      language: 'python', pattern: d.pattern || '', pace: d.pace || 0,
+      starter: d.starter || '', reference: d.solution || '', notes: d.notes || [], prelude: d.prelude || '', returns: d.returns || 'a value of the right type',
+>>>>>>> worktree-agent-a82f79100c695cc7c
       examples: (d.examples || []).map((x, i) => ({ ...x, name: x.name || `Example ${i + 1}` })),
       hidden: (d.tests || []).map((x, i) => ({ ...x, name: x.name || `Test ${i + 1}` })),
     };
@@ -357,7 +363,7 @@ if not callable(globals().get(${py(P.fn)})):
   function listView(root, Z, missing) {
     const { esc, icon: I } = Z;
     const St = store(Z);
-    const all = Z.content.drills();
+    const all = Z.content.drills().filter(d => !d.sample); // a sample drill is for the authors, never listed
     const groups = [];
     all.forEach(d => {
       let g = groups.find(x => x.course === d.course);
@@ -365,9 +371,10 @@ if not callable(globals().get(${py(P.fn)})):
       g.items.push(d);
     });
     const verified = all.filter(d => { const r = record(Z, d.id); return r && r.verified; }).length;
+    const lb = lib(), F = lb.filters ? lb.filters(Z) : null; // item 472: pattern, difficulty and language filters
     const status = (d) => {
       const r = record(Z, d.id);
-      if (r && r.verified) return `<span class="chip correct drl-l-chip">${I('check', 'xs')}Verified</span>`;
+      if (r && r.verified) return `<span class="chip correct drl-l-chip">${I('check', 'xs')}Verified${r.best != null ? ' · ' + lb.clock(r.best) : ''}</span>`;
       const draft = St.code(d.id);
       return draft ? '<span class="chip soft drl-l-chip">Draft saved</span>' : '<span class="t-caption drl-l-new">Not started</span>';
     };
@@ -382,25 +389,41 @@ if not callable(globals().get(${py(P.fn)})):
           <div class="drl-l-head">
             <p class="t-overline muted">Build</p>
             <h1 class="t-course-title">Code drills</h1>
-            <p class="t-body secondary">Write one function and prove it with hidden tests. Python runs in this browser, and your draft is saved as you type. Time spent here counts toward your build hours.</p>
+            <p class="t-body secondary">Write one function and prove it with hidden tests. Python and C++ run in this browser, and your draft is saved as you type. Time spent here counts toward your build hours.</p>
             <p class="t-caption muted tnum">${verified} of ${all.length} verified</p>
           </div>
           ${missing ? `<p class="drl-l-miss t-body" role="status">${I('flag', 'sm')}<span>There is no drill called “${esc(missing)}”. Pick one below.</span></p>` : ''}
-          ${all.length ? groups.map(g => `<section class="drl-l-g" data-track="${esc(g.track)}" aria-labelledby="drl-l-${esc(g.course)}">
+          ${F && all.length ? `<div class="drl-l-tools">${lb.filterBarHTML(Z, F, all, 'drl-l')}<a class="btn secondary drl-l-sess" href="#drill/session">${I('timer', 'sm')}Start a 60-minute session</a></div>` : ''}
+          <div class="drl-l-groups" aria-live="polite"></div>
+        </main>
+      </div>`;
+    const paintGroups = () => {
+      const shown = F ? lb.filterList(all, F) : all;
+      const gs = [];
+      shown.forEach(d => {
+        let g = gs.find(x => x.course === d.course);
+        if (!g) { const c = Z.content.course(d.course) || {}; g = { course: d.course, name: c.name || d.course, topic: c.topic || '', track: c.track || 'code', items: [] }; gs.push(g); }
+        g.items.push(d);
+      });
+      root.querySelector('.drl-l-groups').innerHTML = !all.length ? '<p class="t-body secondary">No drills are written yet.</p>'
+        : !shown.length ? '<p class="t-body secondary" role="status">No drill matches these filters. Widen the pattern, difficulty or language.</p>'
+        : gs.map(g => `<section class="drl-l-g" data-track="${esc(g.track)}" aria-labelledby="drl-l-${esc(g.course)}">
               <h2 class="drl-l-gh" id="drl-l-${esc(g.course)}">${g.topic ? `<span class="drl-l-tag">${esc(g.topic)}</span>` : ''}<span class="t-h2">${esc(g.name)}</span></h2>
               <ul class="drl-l-list">${g.items.map(d => `<li><a class="drl-l-item" href="#drill/${esc(d.id)}">
                 <span class="drl-l-ic" aria-hidden="true">${I('terminal', 'sm')}</span>
-                <span class="drl-l-t"><span class="t-label">${esc(d.name)}</span>${dots(d.difficulty || 2)}</span>
+                <span class="drl-l-t"><span class="t-label">${esc(d.name)}</span>${dots(d.difficulty || 2)}${lb.langName ? `<span class="t-caption muted drl-l-m">${esc(lb.langName(lb.langOf(d)))}${d.pattern ? ' · ' + esc(lb.patternName(d.pattern)) : ''}${d.pace ? ' · ' + esc(lb.paceText(d.pace)) : ''}</span>` : ''}</span>
                 ${status(d)}${I('chevronR', 'sm drl-l-chev')}</a></li>`).join('')}</ul>
-            </section>`).join('') : '<p class="t-body secondary">No drills are written yet.</p>'}
-        </main>
-      </div>`;
+            </section>`).join('');
+    };
+    paintGroups();
+    const bar = root.querySelector('.drlf');
+    if (bar) lb.bindFilters(Z, bar, F, paintGroups);
     root.querySelector('.drl-close').addEventListener('click', () => Z.go(cameFrom && !/^drill/.test(cameFrom) ? cameFrom : 'today'));
     return null;
   }
 
   /* ---------- #drill/<id> ---------- */
-  function mount(root, Z, P) {
+  function mount(root, Z, P, opts = {}) {
     const esc = Z.esc, I = Z.icon;
     const St = store(Z);
     const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
@@ -418,7 +441,7 @@ if not callable(globals().get(${py(P.fn)})):
       done: !!(rec0 && rec0.verified), verCode: rec0 && rec0.verified ? rec0.code : null, verified: false, dirtySinceVerify: false, retry: false,
       verdict: null, run: null, announcedReady: false, compare: false,
     };
-    S.verified = S.done && S.verCode === initial; // a verified solution reopens on Continue
+    S.verified = S.done && S.verCode === initial && !opts.session; // a verified solution reopens on Continue (in a session Submit always grades)
     const persist = () => St.setState(id, { failed: S.failed, revealed: S.revealed, ran: S.ran });
 
     /* Time on the drill goes to the build block: logged on a pass and when leaving */
@@ -427,6 +450,14 @@ if not callable(globals().get(${py(P.fn)})):
       const minutes = Math.min(180, (Date.now() - since) / 60000);
       since = Date.now();
       try { if (Z.state && minutes >= 0.05) Z.state.hours.log({ block: 'build', minutes, source: 'drill:' + id }); } catch (e) { console.error(e); }
+    };
+
+    /* Engine pass C, item 472: the stopwatch (a session's own clock replaces it) and what a submit records with its reading */
+    const sw = opts.session || !lib().Stopwatch ? null : lib().Stopwatch(true);
+    const secs = () => (opts.seconds ? opts.seconds() : sw ? sw.seconds() : 0);
+    const recordRun = (passed, total, ok) => {
+      try { if (Z.state && Z.state.drills.time) Z.state.drills.time(id, { seconds: secs(), passed, total, ok }); } catch (e) { console.error(e); }
+      if (opts.onResult) opts.onResult({ passed, total, ok });
     };
 
     const timers = new Set();
@@ -468,15 +499,16 @@ if not callable(globals().get(${py(P.fn)})):
     const L = Z.state ? Z.state.summary() : { todayQualified: false };
 
     root.innerHTML = `
-    <div class="drl" data-track="${esc(P.track)}" data-tab="brief">
+    <div class="drl${opts.session ? ' drl-in-session' : ''}" data-track="${esc(P.track)}" data-tab="brief">
       <div class="drl-wash" aria-hidden="true"></div>
       <header class="drl-top">
-        <button type="button" class="icon-btn drl-close" aria-label="Close the drill. Your code is saved.">${I('close')}</button>
+        <button type="button" class="icon-btn drl-close" aria-label="Close the drill. Your code is saved."${opts.session ? ' hidden' : ''}>${I('close')}</button>
         <div class="drl-ttl">
           <span class="drl-glyph" aria-hidden="true">${I('terminal', 'sm')}</span>
           <span class="drl-ttl-t"><span class="drl-ttl-a">${esc(P.title)}</span><span class="t-caption drl-ttl-b">Code drill · ${esc(P.course)}</span></span>
         </div>
         <div class="drl-stats">
+          <span class="drlc-sw-host"></span>
           <span class="drl-bolt" role="img" aria-label="${L.todayQualified ? 'Streak extended today' : 'Streak not yet extended today'}">${Z.bolt(L.todayQualified)}</span>
         </div>
       </header>
@@ -499,7 +531,10 @@ if not callable(globals().get(${py(P.fn)})):
               <h1 class="t-lesson-title drl-h">${esc(P.title)}</h1>
               <div class="drl-meta">
                 <span class="chip track">${I('terminal', 'xs')}${esc(P.course)}</span>
+                <span class="chip soft">Python</span>
+                ${P.pattern && lib().patternName ? `<span class="chip soft">${esc(lib().patternName(P.pattern))}</span>` : ''}
                 <span class="chip soft">${I('timer', 'xs')}5 s limit</span>
+                ${P.pace && lib().paceText ? `<span class="chip soft">${I('clock', 'xs')}${esc(lib().paceText(P.pace))}</span>` : ''}
                 <span class="chip soft drl-meta-d">${dots(P.difficulty)}<span>Difficulty ${P.difficulty}</span></span>
                 <span class="chip correct drl-meta-v"${S.done ? '' : ' hidden'}>${I('check', 'xs')}Verified</span>
               </div>
@@ -834,11 +869,14 @@ if not callable(globals().get(${py(P.fn)})):
         const repeat = S.done, rev = S.revealed;
         S.verified = true; S.done = true; S.verCode = R.code; S.dirtySinceVerify = ed.value !== R.code;
         try { if (Z.state) Z.state.drills.verified(id, R.code); } catch (e) { console.error(e); }
+        recordRun(n, n, true);
+        if (pill) pill.paint();
         logTime();
         St.setCode(id, R.code);
         $('.drl-meta-v').hidden = false;
         const msIn = R.ms != null ? ' in ' + fmtMs(R.ms) : '';
-        const note = repeat ? 'Verified again.' : rev ? 'Verified. You opened the model solution first, so compare it with your own before you move on.' : 'Added to your drill record on You.';
+        const tm = lib().spoken ? ` Stopwatch: ${lib().spoken(secs())}${P.pace ? (secs() <= P.pace ? ', inside the pace of ' : ', the pace is ') + lib().spoken(P.pace) : ''}.` : '';
+        const note = (repeat ? 'Verified again.' : rev ? 'Verified. You opened the model solution first, so compare it with your own before you move on.' : 'Added to your drill record on You.') + tm;
         sum.innerHTML = `<div class="${rev ? 'drl-match' : 'drl-ver'}">
             <div class="drl-ver-top"><span class="chip ${rev ? 'drl-match-chip' : 'correct drl-ver-chip'}">${I(rev ? 'bulb' : 'check', 'xs')}Verified</span></div>
             <p class="t-h2 drl-ver-h">All ${n} tests passed${msIn}.</p>
@@ -851,7 +889,7 @@ if not callable(globals().get(${py(P.fn)})):
         say(`Verified. All ${n} tests passed.`);
         Z.emit('drill:verified', { id, revealed: rev });
       } else if (R.mode === 'submit') {
-        if (R.loaded && !R.loadErr) S.failed += 1; // code that never ran is not an attempt
+        if (R.loaded && !R.loadErr) { S.failed += 1; recordRun(passed, n, false); } // code that never ran is not an attempt
         S.retry = true;
         persist();
         const head = R.loadErr ? 'Your code did not run' : timeout ? 'Stopped at 5 seconds' : crash ? 'Python stopped' : 'Not quite right';
@@ -998,7 +1036,7 @@ if not callable(globals().get(${py(P.fn)})):
     syncSound();
 
     /* ---------- Leaving ---------- */
-    const leave = () => { St.setCode(id, ed.value); Z.go(back); };
+    const leave = () => { St.setCode(id, ed.value); if (opts.onClose) opts.onClose(); else Z.go(back); };
     $('.drl-close').addEventListener('click', leave);
     runBtn.addEventListener('click', () => { if (runBtn.classList.contains('is-help')) openHint(); else go('examples'); });
     subBtn.addEventListener('click', () => {
@@ -1010,14 +1048,17 @@ if not callable(globals().get(${py(P.fn)})):
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.target !== ed.el) { e.preventDefault(); go(e.shiftKey ? 'submit' : 'examples'); }
     });
 
-    window.ZQDrill = {
+    const hook = window.ZQDrill = {
       setCode: (s) => ed.set(String(s)), code: () => ed.value, run: () => go('examples'), submit: () => go('submit'),
       status: () => pyr.status, tab: (t) => setTab(t), reference: () => P.reference, problem: () => id,
+      language: 'python', seconds: () => secs(), pace: () => P.pace || null,
       verified: () => S.verified, results: () => (S.run ? { mode: S.run.mode, res: S.run.res.map(r => ({ status: r.status, actual: r.actual })) } : null),
       compare: (on = true) => { S.compare = !!on; paintModel(); },
     };
 
     paintButtons(); paintPy(); paintIdle();
+    const pill = sw ? lib().stopwatchPill(Z, sw, P.pace) : null;
+    if (pill) $('.drlc-sw-host').append(pill.el);
     pyr.start();
 
     return () => {
@@ -1029,21 +1070,26 @@ if not callable(globals().get(${py(P.fn)})):
       mq.removeEventListener('change', applyRoles);
       if (typeof offSettings === 'function') offSettings();
       pyr.kill();
-      if (window.ZQDrill) delete window.ZQDrill;
+      if (pill) pill.destroy();
+      if (window.ZQDrill === hook) delete window.ZQDrill; // a late cleanup must not remove a newer drill's hook
     };
   }
+
+  /* A drill file in a host element (the session screen): Python here, C++ through drill-lib.js */
+  ZQ.drillMount = (host, Z, d, opts) => mount(host, Z, adapt(d, Z), opts || {});
 
   ZQ.screen({
     id: 'drill', title: 'Code drills', group: 'Build', shell: false,
     render(root, Z, params) {
       const id = params && params[0];
       if (!id) return listView(root, Z, null);
+      if (id === 'session' && lib().session) return lib().session(root, Z, params.slice(1)); // item 472: two drills, one clock
       let inner = null, dead = false;
       root.innerHTML = `<div class="drl-l"><main class="drl-l-main"><p class="t-body secondary drl-l-wait">Loading the drill…</p></main></div>`;
       Promise.resolve(Z.content.drill(id)).then((d) => {
         if (dead) return;
         if (!d) { listView(root, Z, id); return; }
-        inner = mount(root, Z, adapt(d, Z));
+        inner = d.language === 'cpp' && lib().mountCpp ? lib().mountCpp(root, Z, d, { back: leaveTarget() }) : mount(root, Z, adapt(d, Z));
         Z.mathify(root);
       }).catch((e) => { console.error(e); if (!dead) listView(root, Z, id); });
       return () => { dead = true; if (inner) inner(); };

@@ -93,7 +93,8 @@ const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
 /* item 304: the C++ code widget (docs/AUTHORING.md section 3, C++). Function mode: call (a C++ expression, or a
    function name with args as JSON values and optional types), expect as a JSON value. Script mode (a stdout case,
    stdin, argv, or a raises case without call): the program's own main runs once per case. */
-const CPP_TYPES = ['int', 'long long', 'double', 'bool', 'std::string', 'std::vector<int>', 'std::vector<double>', 'std::vector<std::string>', 'std::vector<std::vector<double>>'];
+const CPP_TYPES = ['int', 'long long', 'double', 'bool', 'std::string', 'std::vector<int>', 'std::vector<double>', 'std::vector<std::string>', 'std::vector<std::vector<double>>',
+  'std::vector<long long>', 'std::vector<std::vector<int>>', 'std::vector<std::vector<long long>>']; // the last three: item 472 (nested integer vectors, long long)
 /* engine pass (item 430): a std::complex result is expected as { re, im } (alone, or inside a list) */
 const cppComplex = (v) => !!v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 2 && Number.isFinite(v.re) && Number.isFinite(v.im);
 const cppExpect = (v) => cppValue(v) || cppComplex(v) || (Array.isArray(v) && v.every(cppExpect));
@@ -201,6 +202,14 @@ const cppCodeWidget = (file, where, w) => {
 };
 const req = (file, where, obj, fields) => fields.forEach(f => { if (obj == null || obj[f] === undefined || obj[f] === null || obj[f] === '') err(file, where ? `${where}.${f}` : f, 'required field missing'); });
 
+/* Drill pattern vocabulary (item 472): the PATTERNS array in js/screens/drill-lib.js, the one list the app and the validator share */
+const DRILL_PATTERNS = (() => {
+  try {
+    const src = fs.readFileSync(path.join(APP, 'js', 'screens', 'drill-lib.js'), 'utf8');
+    const m = /const PATTERNS = (\[[\s\S]*?\]);\n/.exec(src);
+    return JSON.parse(m[1]).map(x => x[0]);
+  } catch { return []; }
+})();
 /* Art kinds from js/art.js, so course art always draws */
 const ART = (() => {
   try { const src = fs.readFileSync(path.join(APP, 'js', 'art.js'), 'utf8'); const body = src.slice(src.indexOf('const art = {')); return new Set([...body.matchAll(/^\s{4}([a-z]+): \(\)/gm)].map(m => m[1])); } catch { return null; }
@@ -1165,7 +1174,7 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
   const carried = new Set();
   screens.forEach((s, i) => {
     if (!isObj(s)) return;
-    [...JSON.stringify(s).matchAll(/\{\{\s*carry\.([A-Za-z][A-Za-z0-9]*)/g)].forEach(m => { if (!carried.has(m[1])) err(file, `screens[${i}]`, `{{carry.${m[1]}}} reads a value no earlier screen stores (give an earlier widget carry: "${m[1]}")`); });
+    [...JSON.stringify(s).matchAll(/\{\{\s*carry\.([A-Za-z][A-Za-z0-9]*)/g)].forEach(m => { if (!carried.has(m[1]) && m[1] !== 'session') err(file, `screens[${i}]`, `{{carry.${m[1]}}} reads a value no earlier screen stores (give an earlier widget carry: "${m[1]}")`); });
     if (isObj(s.widget) && typeof s.widget.carry === 'string') carried.add(s.widget.carry);
   });
   if (titles > 1) err(file, 'screens', 'at most one title screen');
@@ -1389,6 +1398,35 @@ const checkDrill = (file, id, d, cur) => {
   checkText(file, 'name', d.name); checkText(file, 'brief', d.brief); checkText(file, 'how', d.how);
   checkTags(file, 'tags', d.tags); checkPace(file, 'pace', d.pace);
   dataFiles(file, '', d); // item 469: data files, as on a lesson code widget
+  /* engine pass C, item 472 (E8, C-drill-patterns): language, pattern, sample; a C++ drill is checked as a C++ code widget */
+  if (['index', 'session', 'sessions'].includes(id)) err(file, 'id', `"${id}" is reserved (the drill list and the session route)`);
+  if (d.language != null && !['python', 'cpp'].includes(d.language)) err(file, 'language', 'language is "python" (the default) or "cpp"');
+  if (d.pattern !== undefined) {
+    if (typeof d.pattern !== 'string' || !DRILL_PATTERNS.includes(d.pattern)) err(file, 'pattern', `pattern ${JSON.stringify(d.pattern)} is not in the vocabulary: ${DRILL_PATTERNS.join(', ')} (js/screens/drill-lib.js, docs/AUTHORING.md section 5)`);
+  }
+  if (d.sample !== undefined && typeof d.sample !== 'boolean') err(file, 'sample', 'sample is true or false: a sample drill is for authors and is never listed');
+  if (d.language === 'cpp') {
+    if (typeof d.starter === 'string' && !/\S/.test(d.starter)) err(file, 'starter', 'the starter is empty');
+    if (Array.isArray(d.tests) && d.tests.length) cppCodeWidget(file, '', { ...d, kind: 'code', language: 'cpp' });
+    if (typeof d.solution !== 'string') err(file, 'solution', 'a C++ drill needs its model solution, a string of C++');
+    if (d.fn != null) warn(file, 'fn', 'fn is for Python drills; a C++ test names the function in its own call');
+    if (Array.isArray(d.examples) && d.examples.length < 1) err(file, 'examples', 'at least 1 example');
+  }
+};
+
+/* Drill sessions: content/drills/sessions/<id>.json = { id, name, drills: [two ids], minutes (10 to 180, default 60), brief, sample } */
+const checkDrillSession = (file, id, d, drillIds) => {
+  req(file, '', d, ['id', 'name', 'drills']);
+  if (d.id !== id) err(file, 'id', `id "${d.id}" must match the file name "${id}"`);
+  checkText(file, 'name', d.name); if (d.brief != null) checkText(file, 'brief', d.brief);
+  if (!Array.isArray(d.drills) || d.drills.length !== 2) err(file, 'drills', 'drills is a list of exactly two drill ids');
+  else {
+    if (d.drills[0] === d.drills[1]) err(file, 'drills', 'the two drills must differ');
+    d.drills.forEach((x, i) => { if (!drillIds.has(x)) err(file, `drills[${i}]`, `drill "${x}" does not exist in content/drills`); });
+  }
+  if (d.minutes != null && !(Number.isInteger(d.minutes) && d.minutes >= 10 && d.minutes <= 180)) err(file, 'minutes', 'minutes is a whole number from 10 to 180 (default 60)');
+  if (d.sample !== undefined && typeof d.sample !== 'boolean') err(file, 'sample', 'sample is true or false');
+  Object.keys(d).forEach(k => { if (!['id', 'name', 'drills', 'minutes', 'brief', 'sample'].includes(k)) warn(file, k, `unknown field "${k}" in a session file`); });
 };
 
 /* ---------- Interview bank: content/bank/<family>.json (ENGINE-BACKLOG 456, docs/AUTHORING.md section 5) ---------- */
@@ -1681,15 +1719,32 @@ const listed = new Set();
 if (idx.missing) warn(idxFile, '', 'drills/index.json is missing; the drill list will be empty');
 else if (idx.data && !Array.isArray(idx.data)) err(idxFile, '', 'index.json is an array of drill ids or { id, ... } entries');
 else (idx.data || []).forEach((e, i) => { const id = typeof e === 'string' ? e : e && e.id; if (!id) err(idxFile, `[${i}]`, 'entry needs an id'); else listed.add(id); });
+const drillMeta = {}; // item 472: language, pattern, pace, tags and sample of each drill file, for manifest.drills
+const drillIds = new Set(listJSON(drillDir).filter(f => f !== 'index.json').map(f => f.replace(/\.json$/, '')));
 listJSON(drillDir).filter(f => f !== 'index.json').forEach(f => {
   const id = f.replace(/\.json$/, ''), file = path.join(drillDir, f);
   const r = readJSON(file); if (!r.data) return;
   manifest.push(`drills/${f}`);
   guard(file, () => checkDrill(file, id, r.data, cur));
-  if (!listed.has(id) && !(isObj(r.data) && r.data.sample === true)) warn(file, '', 'drill is not listed in drills/index.json');
+  const D = r.data, meta = {};
+  if (D && typeof D === 'object') {
+    if (D.language === 'cpp') meta.language = 'cpp';
+    if (typeof D.pattern === 'string') meta.pattern = D.pattern;
+    if (typeof D.pace === 'number') meta.pace = D.pace;
+    if (Array.isArray(D.tags)) meta.tags = D.tags;
+    if (D.sample === true) meta.sample = true;
+    if (Object.keys(meta).length) drillMeta[id] = meta;
+  }
+  if (!listed.has(id) && !(D && D.sample === true)) warn(file, '', 'drill is not listed in drills/index.json');
   listed.delete(id);
 });
 listed.forEach(id => err(idxFile, '', `drill "${id}" is listed but drills/${id}.json does not exist`));
+listJSON(path.join(drillDir, 'sessions')).forEach(f => {
+  const id = f.replace(/\.json$/, ''), file = path.join(drillDir, 'sessions', f);
+  const r = readJSON(file); if (!r.data) return;
+  manifest.push(`drills/sessions/${f}`);
+  guard(file, () => checkDrillSession(file, id, r.data, drillIds));
+});
 
 /* Warm-up settings */
 const wu = readJSON(path.join(CONTENT, 'warmup.json'));
@@ -1717,7 +1772,7 @@ if (SUMMARY) {
 
 if (!errors.length && WRITE_MANIFEST) {
   const mf = path.join(CONTENT, 'manifest.json');
-  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content.', files: manifest.sort() }, null, 2) + '\n';
+  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content.', files: manifest.sort(), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }
