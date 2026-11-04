@@ -95,20 +95,20 @@
           }
         },
         {
-          "prose": "Two identical columns carry a total effect of 2.",
-          "question": "What is the L1 penalty $|\\beta_1| + |\\beta_2|$ of the split (2, 0)?",
+          "prose": "Two identical columns carry a total effect of 4.",
+          "question": "What is the L1 penalty $|\\beta_1| + |\\beta_2|$ of the split (4, 0)?",
           "widget": {
             "kind": "numeric",
-            "answer": 2,
+            "answer": 4,
             "tol": {
               "abs": 0.0005
             },
             "placeholder": "a number",
-            "accept": "Any form equal to 2",
+            "accept": "Any form equal to 4",
             "wrong": [
               {
                 "id": "l2",
-                "value": 4,
+                "value": 16,
                 "tol": {
                   "abs": 0.0005
                 }
@@ -116,14 +116,14 @@
             ]
           },
           "feedback": {
-            "correct": "2, the same as for (1, 1).",
+            "correct": "4, the same as for (2, 2).",
             "generic": "Not quite. Add the sizes.",
             "byKey": {
-              "l2": "That is the L2 penalty, $2^2$."
+              "l2": "That is the L2 penalty, $4^2$."
             }
           },
           "explain": {
-            "text": "Both (2, 0) and (1, 1) cost 2 under L1, so the lasso is indifferent between them. Ridge charges 4 against 2 and splits."
+            "text": "Both (4, 0) and (2, 2) cost 4 under L1, so the lasso is indifferent between them. Ridge charges 16 against 8 and splits."
           }
         }
       ]
@@ -207,55 +207,75 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "def boost(x, y, split, lr, rounds):\n    \"\"\"Predictions after `rounds` rounds of one-split\n    boosting from the mean. Each round fits the mean\n    residual on each side of `split` (x <= split, and\n    x > split) and adds lr times it.\"\"\"\n    pred = []\n    # Your code here\n    return pred\n",
+        "starter": "def boost(x, y, split, lr, rounds):\n    \"\"\"Predictions after `rounds` rounds of one-split\n    boosting from the mean. Each round fits the mean\n    residual on each side of `split` (x <= split, so x equal\n    to split goes left, and x > split) and adds lr times it.\"\"\"\n    pred = []\n    # Your code here\n    return pred\n",
         "solution": "def boost(x, y, split, lr, rounds):\n    n = len(y)\n    pred = [sum(y) / n] * n\n    left = [xi <= split for xi in x]\n    for _ in range(rounds):\n        res = [yi - pi for yi, pi in zip(y, pred)]\n        rl = [r for r, l in zip(res, left) if l]\n        rr = [r for r, l in zip(res, left) if not l]\n        ml = sum(rl) / len(rl) if rl else 0.0\n        mr = sum(rr) / len(rr) if rr else 0.0\n        pred = [p + lr * (ml if l else mr)\n                for p, l in zip(pred, left)]\n    return pred\n",
         "examples": [
           {
-            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 0.4, 1)",
-            "expect": "[3, 3, 5, 5]",
+            "call": "boost([1, 2, 3, 4, 5], [2, 3, 4, 10, 12], 3.5, 0.5, 1)",
+            "expect": "[4.6, 4.6, 4.6, 8.6, 8.6]",
             "compare": "isclose"
           }
         ],
         "tests": [
           {
-            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 0.4, 0)",
-            "expect": "[4, 4, 4, 4]",
+            "call": "boost([1, 2, 3, 4, 5], [2, 3, 4, 10, 12], 3.5, 0.5, 0)",
+            "expect": "[6.2, 6.2, 6.2, 6.2, 6.2]",
             "compare": "isclose"
           },
           {
-            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 0.4, 1)",
-            "expect": "[3, 3, 5, 5]",
+            "call": "boost([1, 2, 3, 4, 5], [2, 3, 4, 10, 12], 3.5, 0.5, 1)",
+            "expect": "[4.6, 4.6, 4.6, 8.6, 8.6]",
             "compare": "isclose"
           },
           {
-            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 0.4, 2)",
-            "expect": "[2.4, 2.4, 5.6, 5.6]",
+            "call": "boost([1, 2, 3, 4, 5], [2, 3, 4, 10, 12], 3.5, 0.5, 2)",
+            "expect": "[3.8, 3.8, 3.8, 9.8, 9.8]",
             "compare": "isclose"
           },
           {
-            "call": "boost([1, 2, 3, 4], [1, 2, 6, 7], 2.5, 1.0, 1)",
-            "expect": "[1.5, 1.5, 6.5, 6.5]",
+            "call": "boost([1, 2, 3, 4, 5], [2, 3, 4, 10, 12], 3.5, 1.0, 1)",
+            "expect": "[3.0, 3.0, 3.0, 11.0, 11.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([1, 2, 3, 4, 5], [2, 3, 4, 10, 12], 3.5, 0.25, 3)",
+            "expect": "[4.35, 4.35, 4.35, 8.975, 8.975]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([5, 2, 4, 1, 3], [12, 3, 10, 2, 4], 3.5, 0.5, 2)",
+            "expect": "[9.8, 3.8, 9.8, 3.8, 3.8]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([1, 2, 3, 4, 5], [2, 3, 4, 10, 12], 3, 0.5, 2)",
+            "expect": "[3.8, 3.8, 3.8, 9.8, 9.8]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([1, 2, 3, 4, 5], [2, 3, 4, 10, 12], 0, 0.5, 2)",
+            "expect": "[6.2, 6.2, 6.2, 6.2, 6.2]",
+            "compare": "isclose"
+          },
+          {
+            "call": "boost([1, 2, 3, 4, 5], [2, 3, 4, 10, 12], 9, 0.5, 2)",
+            "expect": "[6.2, 6.2, 6.2, 6.2, 6.2]",
             "compare": "isclose"
           },
           {
             "call": "boost([1, 2, 3], [10, 20, 60], 2.5, 0.5, 2)",
             "expect": "[18.75, 18.75, 52.5]",
             "compare": "isclose"
-          },
-          {
-            "call": "boost([4, 1, 3, 2], [7, 1, 6, 2], 2.5, 0.4, 2)",
-            "expect": "[5.6, 2.4, 5.6, 2.4]",
-            "compare": "isclose"
           }
         ],
-        "how": "Check runs 6 hidden tests, each compared element by element with math.isclose (relative 1e-9). Every expected list was checked against scikit-learn's GradientBoostingRegressor."
+        "how": "Check runs 10 hidden tests, each compared element by element with math.isclose (relative 1e-9). The expected lists were computed twice; the one- and two-round ones also match scikit-learn's GradientBoostingRegressor."
       },
       "feedback": {
         "correct": "Each round fixes a share of what is left.",
         "generic": "Some tests failed. Start from the mean, and recompute residuals inside each round."
       },
       "explain": {
-        "text": "Round 1 on the four points gives 3, 3, 5, 5 and round 2 gives 2.4, 2.4, 5.6, 5.6. With learning rate 1 one round jumps to the side means, 1.5 and 6.5."
+        "text": "Round 1 on the five points gives 4.6, 4.6, 4.6, 8.6, 8.6 and round 2 gives 3.8 and 9.8. With learning rate 1 one round jumps to the side means, 3 and 11."
       }
     },
     {
@@ -270,7 +290,7 @@
       "pace": 600,
       "kind": "longform",
       "prompt": "Explain the bias-variance trade-off with a picture and a finance example, as you would say it in an interview. Aim for a minute of speech.",
-      "model": "**The split.** Expected squared error on new data is bias squared plus variance plus noise. Bias is how far the average fit sits from the truth. Variance is how much the fit moves between samples. Noise is what no model can remove.\n\n**The picture.** Draw error against model flexibility. Training error falls all the way. Test error falls, then rises: a U. Bias falls with flexibility, variance rises, and the bottom of the U is the balance.\n\n**A finance example.** A fund's alpha is estimated from four years: true alpha 4%, standard error 4%. Reporting the raw estimate has error 16 (%²). Reporting half of it adds bias² of 4 but cuts the variance to 4. The error halves to 8.\n\n**What I would do.** Get more data where I can, since it lowers variance. Shrink estimates towards a sensible prior. Choose flexibility by validation in time order, never by training error.",
+      "model": "**The split.** Expected squared error on new data is bias squared plus variance plus noise. Bias is how far the average fit sits from the truth. Variance is how much the fit moves between samples. Noise is what no model can remove.\n\n**The picture.** Draw error against model flexibility. Training error falls all the way. Test error falls, then rises: a U. Bias falls with flexibility, variance rises, and the bottom of the U is the balance.\n\n**A finance example.** A fund's alpha is estimated from four years: true alpha 3%, standard error 3%. Reporting the raw estimate has error 9 (%²). Reporting half of it adds bias² of 2.25 but cuts the variance to 2.25. The error halves to 4.5.\n\n**What I would do.** Get more data where I can, since it lowers variance. Shrink estimates towards a sensible prior. Choose flexibility by validation in time order, never by training error.",
       "rubric": [
         {
           "points": 2,
@@ -282,7 +302,7 @@
         },
         {
           "points": 3,
-          "text": "Gives a finance example with a number: the shrunk alpha whose error drops from 16 to 8, say"
+          "text": "Gives a finance example with a number: the shrunk alpha whose error drops from 9 to 4.5, say"
         },
         {
           "points": 2,
@@ -375,23 +395,23 @@
         "pca-signal-small-component"
       ],
       "pace": 360,
-      "prose": "Two standardised features $x_1$ and $x_2$ correlate at 0.95. The target is $y = x_1 - x_2$.",
+      "prose": "Two standardised features $x_1$ and $x_2$ correlate at 0.9. The target is $y = x_1 - x_2$.",
       "question": "Three follow-ups.",
       "parts": [
         {
           "question": "What share of the features' variance does the first component carry?",
           "widget": {
             "kind": "numeric",
-            "answer": 0.975,
+            "answer": 0.95,
             "tol": {
               "abs": 0.0005
             },
             "placeholder": "a share",
-            "accept": "Any form equal to 0.975",
+            "accept": "Any form equal to 0.95",
             "wrong": [
               {
                 "id": "rho",
-                "value": 0.95,
+                "value": 0.9,
                 "tol": {
                   "abs": 0.0005
                 }
@@ -399,14 +419,14 @@
             ]
           },
           "feedback": {
-            "correct": "$(1 + 0.95)/2 = 0.975$.",
-            "generic": "Not quite. The eigenvalues are $1 \\pm 0.95$.",
+            "correct": "$(1 + 0.9)/2 = 0.95$.",
+            "generic": "Not quite. The eigenvalues are $1 \\pm 0.9$.",
             "byKey": {
               "rho": "That is the correlation. The share is $(1 + \\rho)/2$."
             }
           },
           "explain": {
-            "text": "The correlation matrix has eigenvalues 1.95 and 0.05, so the first component carries 97.5%."
+            "text": "The correlation matrix has eigenvalues 1.9 and 0.1, so the first component carries 95%."
           }
         },
         {
@@ -422,7 +442,7 @@
             "wrong": [
               {
                 "id": "share",
-                "value": 0.975,
+                "value": 0.95,
                 "tol": {
                   "abs": 0.0005
                 }
@@ -456,12 +476,12 @@
             "options": [
               {
                 "id": "second",
-                "text": "The second, with 2.5% of the variance",
+                "text": "The second, with 5% of the variance",
                 "correct": true
               },
               {
                 "id": "first",
-                "text": "The first, with 97.5% of the variance",
+                "text": "The first, with 95% of the variance",
                 "why": "It explains the features, not the target: $R^2 = 0$."
               },
               {

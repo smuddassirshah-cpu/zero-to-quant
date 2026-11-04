@@ -62,8 +62,8 @@
             }
           },
           {
-            "call": "longest_gap('rates-gaps.csv')",
-            "expect": "14",
+            "call": "[longest_gap('rates-gaps.csv'), type(longest_gap('rates-gaps.csv')).__name__]",
+            "expect": "[14, 'int']",
             "compare": "equal"
           },
           {
@@ -86,12 +86,12 @@
           },
           {
             "setup": "open('tiny-rates.csv', 'w').write('minute,rate\\n20,2.0\\n0,1.0\\n10,NA\\n40,4.0\\n')",
-            "call": "[len(regrid('tiny-rates.csv', 100)), longest_gap('tiny-rates.csv')]",
-            "expect": "[1, 20]",
+            "call": "[len(regrid('tiny-rates.csv', 100)), longest_gap('tiny-rates.csv'), type(longest_gap('tiny-rates.csv')).__name__]",
+            "expect": "[1, 20, 'int']",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests. Three use the 30-minute grid: its shape, its end minutes and three of its rates (relative 1e-9). One checks the one-minute grid and one the longest gap. Three use a four-row file with an NA and unsorted rows: grids of 15, 20 and 100 minutes, and its gap."
+        "how": "Check runs 8 hidden tests. Three use the 30-minute grid: its shape, its end minutes and three of its rates (relative 1e-9). One checks the one-minute grid and one the longest gap. Three use a four-row file with an NA and unsorted rows. They check grids of 15, 20 and 100 minutes, and its gap."
       },
       "feedback": {
         "correct": "The grid, the interpolated rates and the longest gap all match.",
@@ -188,13 +188,28 @@
             "call": "[bool(np.isnan(trend_table('tiny-lakes.csv').loc['W', 'slope'])), int(trend_table('tiny-lakes.csv').loc['W', 'n']), trending('tiny-lakes.csv')]",
             "expect": "[True, 4, []]",
             "compare": "equal"
+          },
+          {
+            "setup": "open('tiny-lakes2.csv', 'w').write('lake,year,level_m\\nP,1,9.7\\nP,2,9.9\\nP,3,9.6\\nP,4,10.3\\nP,5,10.4\\nQ,1,9.9\\nQ,2,9.9\\nQ,3,9.7\\nQ,4,9.5\\nQ,5,9.5\\nZ,1,9.5\\nZ,2,10.3\\nZ,3,10.2\\nZ,4,10.2\\nZ,5,10.4\\nW,1,5.0\\nW,2,5.1\\nW,3,5.2\\nW,4,5.3\\n')",
+            "call": "trending('tiny-lakes2.csv')",
+            "expect": "['Q', 'P']",
+            "compare": "equal"
+          },
+          {
+            "setup": "open('tiny-lakes2.csv', 'w').write('lake,year,level_m\\nP,1,9.7\\nP,2,9.9\\nP,3,9.6\\nP,4,10.3\\nP,5,10.4\\nQ,1,9.9\\nQ,2,9.9\\nQ,3,9.7\\nQ,4,9.5\\nQ,5,9.5\\nZ,1,9.5\\nZ,2,10.3\\nZ,3,10.2\\nZ,4,10.2\\nZ,5,10.4\\nW,1,5.0\\nW,2,5.1\\nW,3,5.2\\nW,4,5.3\\n')",
+            "call": "[float(trend_table('tiny-lakes2.csv').loc[k, 't']) for k in ('P', 'Q', 'Z')]",
+            "expect": "[2.2983926330486217, -5.196152422706632, 1.9896995023342166]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
           }
         ],
-        "how": "Check runs 8 hidden tests. They cover the shape and column names, the slopes of Ard, Gill and Isla, the standard errors of Dee and Fyne, and $t$ for Bala, Hawes and Ard (within 1e-6). They check Tarn as NaN with n = 4 and the ordered list of clear trends. Two use a nine-row file: a five-year lake that is fitted and a four-year lake that is not."
+        "how": "Check runs 10 hidden tests, with numbers within 1e-6. They cover the shape and column names, and the slopes of Ard, Gill and Isla. They also cover the standard errors of Dee and Fyne, and $t$ for Bala, Hawes and Ard. They check Tarn as NaN with n = 4 and the ordered list of clear trends. Two use a nine-row file: a five-year lake that is fitted and a four-year lake that is not. Two more use three lakes with $t$ near the threshold: 2.30, -5.20 and 1.99."
       },
       "feedback": {
         "correct": "One row per lake, with Tarn guarded and the clear trends in order.",
-        "generic": "Some tests failed. Four columns, 10 rows, NaN for a lake with fewer than 5 years, and the list ordered by size of t."
+        "generic": "Some tests failed. Four columns and 10 rows. NaN for a lake with fewer than 5 years, and the list ordered by size of t."
       },
       "explain": {
         "text": "The standard error of each slope is $\\sqrt{s^2/S_{xx}}$ with $s^2$ from the residuals on $n - 2$ degrees of freedom. Six lakes have $|t| > 2$, and Ard leads with $t = -9.28$. Tarn keeps n = 4 but has no slope."
@@ -498,16 +513,21 @@
             "call": "(clean_fills(TINY), [len(TINY), TINY['side'].iloc[0], TINY['qty'].iloc[0], TINY['price'].iloc[0]])[1]",
             "expect": "[7, ' Buy ', '1k', '£10.00']",
             "compare": "equal"
+          },
+          {
+            "call": "clean_fills(pd.DataFrame({'fill_id': ['20', '9', '10', '10', '11', '11', '12'], 'time': ['09:00:00', '11:00:00', '10:00:00', '10:00:09', '10:30:00', '10:30:30', '10:31:00'], 'side': ['buy', 'SELL', ' buy', ' buy', 'sell', 'sell', 'buy'], 'qty': ['5', '2k', '7', '7', '4', '4', '1k'], 'price': ['£1.00', '2.50', '3.00', '3.25', '4.00', '4.00', '£6.00'], 'status': ['FILLED', 'FILLED', 'CANCELLED', 'FILLED', 'FILLED', 'CANCELLED', 'CANCELLED']})).values.tolist()",
+            "expect": "[[9, 39600, -1, 2000, 2.5], [10, 36009, 1, 7, 3.25], [20, 32400, 1, 5, 1.0]]",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 7 hidden tests. On the file they check the row count and buys, the quantity total, the signed value of the fills and the total of the times. On the seven-row case they check the exact frame: a correction, a cancellation and a quantity of 2k. They also check the columns, the types, unique sorted ids and an unchanged input frame."
+        "how": "Check runs 8 hidden tests. On the file they check the row count and buys, and the quantity total. They also check the signed value of the fills and the total of the times. On the seven-row case they check the exact frame: a correction, a cancellation and a quantity of 2k. They also check the columns, the types, unique sorted ids and an unchanged input frame. A second small case has an id cancelled and then filled again, and ids out of time order."
       },
       "feedback": {
         "correct": "The cleaner works on the file and on the small case.",
         "generic": "Some tests failed. Clean the text, keep the last row of each id, then drop the cancelled ones, on a copy."
       },
       "explain": {
-        "text": "A correction is a later row, so the last row of each id wins, and a CANCELLED last row removes the order. That leaves 370 of the 380 ids. The input frame keeps its text."
+        "text": "The last row of each id wins, as a correction is a later row. A CANCELLED last row removes the order, leaving 370 of the 380 ids. The input frame keeps its text."
       }
     },
     {
