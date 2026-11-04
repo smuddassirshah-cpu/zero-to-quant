@@ -1384,3 +1384,12 @@ Source: `docs/reviews/review-pdes.md`, worst finding (`pdes/l2-heat-equation` sc
 
 Status block (engine pass 3.2, D):
 - 514 (P32-expr-D): done.
+
+## Validator pass (per cent keys)
+
+Source: `docs/reviews/pct-keys-scan.txt` (37 numeric widgets with `unit: "%"` stored the per cent, not the fraction).
+
+515. Done (per cent keys): `tools/validate.mjs` (numeric case) errors when `unit: "%"` has a key or `wrong` value above 1 in absolute value and `accept` shows that number followed by `%`, and warns for any other such key unless the widget has `"over100": true`. `tools/playthrough.mjs` (`pctWidgets`) also types, for each such widget in a lesson, answer x 100 with and without `%` plus the single per cent figure in `accept`, and fails the lesson if any is not graded right. Documented in `docs/AUTHORING.md` section 3 (numeric).
+
+Status block (validator pass, per cent keys):
+- 515 (per cent keys): done.

@@ -118,7 +118,9 @@ Same as `choice`, several `correct`. The question line must say "Select all that
   "wrong": [ { "id": "whole", "value": 0.0278, "tol": { "abs": 0.001 } }, { "id": "double", "value": 0.3333, "tol": { "abs": 0.001 } } ] }
 ```
 
-`tol` is `{ "abs": x }` or `{ "rel": r }`. Integers use `{ "abs": 0 }`. `unit` may be `%`, `£`, `$`, or a word; with `%` the learner types 16.7 and the engine compares 0.167. `accept` is shown after grading. Each `wrong` entry id is a `byKey` key.
+`tol` is `{ "abs": x }` or `{ "rel": r }`. Integers use `{ "abs": 0 }`. `unit` may be `%`, `£`, `$`, or a word; with `%` the learner types 16.7 and the engine compares 0.167, so **the key is the fraction** (0.167, never 16.7). `accept` is shown after grading.
+
+Validator (item 515), for `unit: "%"` on any numeric widget (lessons, quizzes, sets, exam items and parts, bank, drills) and on its `wrong` values: an error when the key's absolute value is above 1 and `accept` shows that same number followed by a per cent sign (key 15.87 with accept "15.87%"); a warning for any other key above 1, which may be a real figure over 100% (1.25 for 125%). Add `"over100": true` to the widget to silence the warning; it never silences the error. The playthrough also types the key as a learner would (answer x 100 with and without a % sign, and the single per cent figure in `accept`) and expects every form right. Each `wrong` entry id is a `byKey` key.
 
 ### `expression`
 
