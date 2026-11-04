@@ -1349,3 +1349,20 @@ Status block (engine pass viewports):
 - 504 (VP-phone): done.
 - 505 (VP-narrow): done.
 - 506 (VP-tablet): done.
+
+### Engine pass devices CSS (4 Nov): `docs/reports/engine-layout-devices.md`
+Source: user request after the viewport pass (iPhone 17 Pro Max 440 x 956; iPad Pro 13-inch 1032 x 1376 and 1376 x 1032); faults found by items 504 to 506.
+
+507. Done (wider column): `--col` (`css/tokens.css`) is 780px from 768px up (540px below). The lesson, set, review, homework, exam and warm-up columns and every canvas (`.cv { max-width: var(--col) }`) follow it. Prose (`.t-prose`) and Markdown tables inside the column stop at 70ch; canvases, tables, widgets and code use the full width. The lesson verdict chip no longer sits in the left gutter at 1200px and up (the gutter is 250px); it stays above the buttons at every width from 768px. The homework model answer no longer breaks out of the column by 110px. Onboarding and the drill brief keep 540px.
+508. Done (code editor): the editor already scrolled sideways inside its own box, but nothing said so, so long lines looked clipped. `code.js` and `cpp-grade.js` set `has-more` on `.wd-ed` while text runs past the right edge (also on resize); `css/widgets.css` draws a 28px fade there. On a phone the lesson, homework and exam scroll areas end 56px lower and use `scroll-padding-bottom: 88px`, so the last editor line and the run output scroll clear of the Check bar.
+509. Done (exam result at 440): not a truncation. The result reveals in stages on timers (count-up 900 ms, tiles to 2.1 s) and the playthrough shot waited only for CSS animations, so a shot taken during the reveal showed the score and stamp alone (the 1280 shot read 21 of 30 mid count). `shot()` in `tools/playthrough.mjs` now also waits for `.exm-res.final` (at most 4 s).
+510. Done (side tab): the screens navigator (`.proto`, `js/core.js protoNav`) sat at `top: 50%` on the left edge. It now anchors to the bottom-left corner (16px above the bottom edge, safe area respected); on a phone it is a 14 x 32px tab 4px above the bottom, clear of the lesson hint button.
+511. Done (set Check button): in a set page (review, practice, redo; `.lsn-set-foot`) the button group is left-aligned with the item's content from 768px up instead of centred.
+
+Status block (engine pass devices CSS):
+- 507 (wider column): done.
+- 508 (code editor, room under the Check bar): done.
+- 509 (exam result at 440): done (timing in the playthrough, not a layout fault).
+- 510 (side tab): done.
+- 511 (set Check button): done.
+
