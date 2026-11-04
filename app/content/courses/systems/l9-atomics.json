@@ -63,17 +63,17 @@
         "options": [
           {
             "id": "no",
-            "text": "No: there are only 2 schedules, and both end at 2",
+            "text": "No: both schedules end at 2",
             "correct": true
           },
           {
             "id": "yes",
-            "text": "Yes, when both lanes load 0",
+            "text": "Yes, when both lanes happen to load 0 first",
             "why": "A `fetch_add` has no separate load: nothing can run between its read and its write."
           },
           {
             "id": "some",
-            "text": "Only with three or more threads",
+            "text": "No, unless three or more threads add",
             "why": "Each `fetch_add` is still one step, so every lane's add lands."
           }
         ],
@@ -768,22 +768,22 @@
         "options": [
           {
             "id": "no",
-            "text": "No: both threads can see 0 before either stores 1",
+            "text": "No: both can see 0 before either stores 1",
             "correct": true
           },
           {
             "id": "yes",
-            "text": "Yes: every access is atomic",
+            "text": "Yes: every load and store here is atomic",
             "why": "Each access is atomic, but the check and the store are two steps."
           },
           {
             "id": "relaxed",
-            "text": "Only if the orders are `relaxed`",
-            "why": "The order does not help: the gap between the check and the store is the bug."
+            "text": "No, unless every access is `seq_cst`",
+            "why": "No order helps: the gap between the check and the store is the bug."
           },
           {
             "id": "x86",
-            "text": "Yes on x86",
+            "text": "Yes on x86, where stores are not reordered",
             "why": "Two x86 cores can still both load 0 before either stores."
           }
         ],
@@ -1164,11 +1164,11 @@
           "r1c1": "Only b, b, a, a.",
           "r2c1": "Both stores first, in 2 orders, then both loads, in 2 orders: 4.",
           "r3c1": "$4/6 = 0.667$.",
-          "r4c1": "Only `seq_cst` on all four accesses rules out the store-buffer result."
+          "r4c1": "Of the orders on the four accesses, only `seq_cst` rules out the store-buffer result."
         }
       },
       "explain": {
-        "text": "Two orders run one lane whole; the other four put both stores first. So (1, 1) has 4 of 6. `seq_cst` on all four accesses is the only order that forbids (0, 0)."
+        "text": "Two orders run one lane whole; the other four put both stores first. So (1, 1) has 4 of 6. Of the orders on the four accesses, only `seq_cst` forbids (0, 0)."
       }
     },
     {
@@ -1204,7 +1204,7 @@
         "options": [
           {
             "id": "ra",
-            "text": "`release` on the store of `ready`, `acquire` on its load",
+            "text": "`release` on the store, `acquire` on the load",
             "correct": true
           },
           {
@@ -1416,7 +1416,7 @@
         "options": [
           {
             "id": "prog",
-            "text": "Some thread always makes progress, even if another is paused mid-operation",
+            "text": "Some thread always progresses, even if one stalls",
             "correct": true
           },
           {
@@ -1426,12 +1426,12 @@
           },
           {
             "id": "none",
-            "text": "No atomic instructions are used",
+            "text": "No atomic instructions or locks are used anywhere",
             "why": "Lock-free code is built from atomics such as `compare_exchange`."
           },
           {
             "id": "wait",
-            "text": "No thread ever retries",
+            "text": "No thread ever has to retry an operation",
             "why": "A lock-free loop may retry; it only promises some thread succeeds."
           }
         ],
