@@ -1,0 +1,391 @@
+{
+ "id": "homework-1",
+ "course": "pdes",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-profile",
+   "difficulty": 5,
+   "skills": [
+    "pe-heat"
+   ],
+   "tags": [
+    "heat-kernel"
+   ],
+   "prose": "Solve the heat equation on the line for a whole grid of positions at once. For each $x$ in `xs`, integrate $\\Phi_t(x - y)u_0(y)$ over a common grid of $y$ with the trapezium rule. Use $n$ points on $[-b, b]$, where $b = \\max|x| + 10\\sqrt{2Dt}$.",
+   "question": "Complete `heat_line_profile`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef kernel(x, t, D=1):\n    return np.exp(-x ** 2 / (4 * D * t)) / np.sqrt(4 * np.pi * D * t)\n\ndef heat_line_profile(u0, xs, t, D=1.0, n=8001):\n    \"\"\"u(x, t) for every x in xs.\"\"\"\n    xs = np.asarray(xs, dtype=float)\n    ...\n",
+    "solution": "import numpy as np\n\ndef kernel(x, t, D=1):\n    return np.exp(-x ** 2 / (4 * D * t)) / np.sqrt(4 * np.pi * D * t)\n\ndef heat_line_profile(u0, xs, t, D=1.0, n=8001):\n    \"\"\"u(x, t) for every x in xs.\"\"\"\n    xs = np.asarray(xs, dtype=float)\n    b = np.abs(xs).max() + 10 * np.sqrt(2 * D * t)\n    y = np.linspace(-b, b, n)\n    h = y[1] - y[0]\n    wt = np.full(n, h)\n    wt[0] = wt[-1] = h / 2\n    K = kernel(xs[:, None] - y[None, :], t, D) * u0(y)[None, :] * wt[None, :]\n    return K.sum(axis=1)\n",
+    "prelude": "STEP = lambda y: np.where(y > 0, 1.0, np.where(y == 0, 0.5, 0.0))\nBUMP = lambda y: np.exp(-y ** 2)\n",
+    "examples": [
+     {
+      "call": "np.round(heat_line_profile(STEP, [0.0], 0.5), 6).tolist()",
+      "expect": "[0.5]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "heat_line_profile(STEP, [-1.0, 0.0, 0.5, 1.0], 0.5, 1.0)",
+      "expect": "[0.158655, 0.5, 0.691462, 0.841345]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "call": "heat_line_profile(BUMP, [0.0, 1.0], 1)",
+      "expect": "[0.447214, 0.366148]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "heat_line_profile(BUMP, [0.0], 1, 0.5)",
+      "expect": "[0.57735]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "setup": "xs = np.linspace(-12, 12, 301)\np = heat_line_profile(BUMP, xs, 1)",
+      "call": "float((p.sum() - 0.5 * p[0] - 0.5 * p[-1]) * (xs[1] - xs[0]))",
+      "expect": "1.772454",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "len(heat_line_profile(BUMP, np.linspace(-3, 3, 7), 0.5))",
+      "expect": "7",
+      "compare": "equal"
+     },
+     {
+      "setup": "xs = np.linspace(-3, 3, 7)\np = heat_line_profile(BUMP, xs, 0.5)",
+      "call": "bool(np.allclose(p, p[::-1]))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. NumPy loads on the first run, which takes a second or two. That time is not counted against the tests. `STEP` and `BUMP` are provided."
+   },
+   "feedback": {
+    "correct": "The profile matches $\\Phi$ for the step, the closed form for the bump, and keeps the total heat.",
+    "generic": "Not quite right. Check the trapezium end weights and that $y$ is the integration variable."
+   },
+   "explain": {
+    "text": "Row $i$ of the matrix is $\\Phi_t(x_i - y_j)u_0(y_j)$ times the quadrature weight, summed over $j$. The step start gives $\\Phi(x/\\sqrt{2Dt})$, the bump gives $e^{-x^2/(1+4Dt)}/\\sqrt{1+4Dt}$, and the total heat stays $\\sqrt{\\pi}$."
+   }
+  },
+  {
+   "id": "h-drift",
+   "difficulty": 4,
+   "skills": [
+    "pe-heat"
+   ],
+   "tags": [
+    "drift"
+   ],
+   "prose": "Let $u$ solve $u_t = Du_{xx}$ and put $v(x, t) = u(x - ct, t)$ for a constant $c$. We show that $v$ solves $v_t + cv_x = Dv_{xx}$. Leave out the two lines that do not belong.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Write $v(x, t) = u(x - ct, t)$, where $u$ solves $u_t = Du_{xx}$."
+     },
+     {
+      "id": "s2",
+      "text": "Chain rule in $t$: $v_t = u_t - c\\,u_x$, as $x - ct$ falls at rate $c$."
+     },
+     {
+      "id": "s3",
+      "text": "Chain rule in $x$: $v_x = u_x$ and $v_{xx} = u_{xx}$, since $x - ct$ rises at rate 1."
+     },
+     {
+      "id": "s4",
+      "text": "Add $c\\,v_x$ to $v_t$: the $u_x$ terms cancel, leaving $v_t + cv_x = u_t$."
+     },
+     {
+      "id": "s5",
+      "text": "Use the equation: $u_t = Du_{xx} = Dv_{xx}$, so $v_t + cv_x = Dv_{xx}$."
+     },
+     {
+      "id": "d1",
+      "text": "Chain rule in $t$: $v_t = u_t + c\\,u_x$, since $x - ct$ grows with $t$.",
+      "why": "$x - ct$ falls as $t$ grows, so its derivative in $t$ is $-c$ and the sign is minus."
+     },
+     {
+      "id": "d2",
+      "text": "Chain rule in $x$: $v_{xx} = u_{xx} - c$.",
+      "why": "$c$ is a constant inside $x - ct$ and never leaves it. Differentiating twice in $x$ gives $u_{xx}$ unchanged."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "same": [
+     [
+      "s2",
+      "s3"
+     ]
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Substitute, apply the chain rule in both variables, cancel, and use the equation.",
+    "generic": "Not quite right. Differentiate $v$ in $t$ and in $x$ before combining."
+   },
+   "explain": {
+    "text": "The shift $x - ct$ moves the solution right at speed $c$. That adds $-cu_x$ to $v_t$, so $v_t + cv_x$ cancels it. This is the drift term of the biased walk in lesson 2."
+   }
+  },
+  {
+   "id": "h-gauss-general",
+   "difficulty": 4,
+   "skills": [
+    "pe-heat"
+   ],
+   "prose": "The start is $u_0(x) = e^{-x^2/(2a^2)}$, a Gaussian of sd $a$. Normal densities combine by adding variances, which gives $u(0, t) = \\dfrac{a}{\\sqrt{a^2 + 2Dt}}$.",
+   "question": "With $a = 2$, $D = \\tfrac12$ and $t = 2$, what is $u(0, t)$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8165,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.8165: $2/\\sqrt{4 + 2}$.",
+    "label": "$u(0, 2)$",
+    "placeholder": "for example 0.5",
+    "wrong": [
+     {
+      "id": "no-root",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.7071,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2/\\sqrt{6} = 0.8165$.",
+    "generic": "Not quite right. Put $a = 2$ and $2Dt = 2$ into the formula.",
+    "byKey": {
+     "no-root": "0.6667 is $a^2/(a^2 + 2Dt)$. The ratio has a square root.",
+     "half": "0.7071 is the value for $a = 1$. Here $a = 2$, so the bump is wider and decays less."
+    }
+   },
+   "explain": {
+    "text": "$a^2 + 2Dt = 4 + 2 = 6$, so $u(0, 2) = 2/\\sqrt{6} = 0.8165$. A wider start loses less peak height in the same time."
+   }
+  },
+  {
+   "id": "h-wellposed",
+   "difficulty": 4,
+   "skills": [
+    "pe-heat"
+   ],
+   "tags": [
+    "well-posed"
+   ],
+   "prose": "Several problems are posed for the heat equation $u_t = Du_{xx}$ and its relatives.",
+   "question": "Select all the well-posed ones.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fwd",
+      "text": "Heat on $[0, \\pi]$ from a given $u_0$, with both ends held at fixed temperatures",
+      "correct": true
+     },
+     {
+      "id": "transport",
+      "text": "The transport equation $u_t + 2u_x = 0$ on the line, with $u(x, 0)$ given",
+      "correct": true
+     },
+     {
+      "id": "bs",
+      "text": "Black-Scholes, solved backwards from the payoff at expiry",
+      "correct": true
+     },
+     {
+      "id": "back",
+      "text": "Heat on $[0, \\pi]$ run backwards from a measured profile at $t = 1$",
+      "why": "Errors grow by $e^{k^2Dt}$ backwards, so the solution does not depend continuously on the data."
+     },
+     {
+      "id": "two",
+      "text": "Heat on $[0, \\pi]$ with the profile given at both $t = 0$ and $t = 1$",
+      "why": "Two time profiles over-determine a first-order-in-time equation. Most pairs have no solution."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Forward heat, transport and Black-Scholes from expiry are well-posed.",
+    "generic": "Not quite right. Check which direction of time is stable and how many conditions are given."
+   },
+   "explain": {
+    "text": "Each well-posed problem has one time condition, placed at the stable end, plus end conditions where there are ends. Running heat backwards, or giving two time profiles, breaks stability or existence."
+   }
+  },
+  {
+   "id": "h-unstable",
+   "difficulty": 5,
+   "skills": [
+    "pe-heat"
+   ],
+   "tags": [
+    "explicit-limit"
+   ],
+   "prose": "The explicit step $u_j \\to u_j + \\lambda(u_{j+1} - 2u_j + u_{j-1})$ with fixed zero ends starts from $u = [0, 0, 1, 0, 0]$.",
+   "question": "With $\\lambda = 0.6$, what is the middle value after two steps?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.76,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "0.76: after one step $[0, 0.6, -0.2, 0.6, 0]$, then $-0.2 + 0.6(0.6 + 0.4 + 0.6)$.",
+    "label": "Middle value",
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "stable",
+      "value": 0.36,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one-step",
+      "value": -0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Step 1: $[0, 0.6, -0.2, 0.6, 0]$. Step 2 middle: $-0.2 + 0.6 \\times 1.6 = 0.76$.",
+    "generic": "Not quite right. Apply the step twice, and keep the signs of the negative entry.",
+    "byKey": {
+     "stable": "0.36 is the value for $\\lambda = 0.4$. With 0.6 the scheme oversteps.",
+     "one-step": "$-0.2$ is the middle after one step. The question asks after two."
+    }
+   },
+   "explain": {
+    "text": "With $\\lambda = 0.6$ the middle goes negative after one step, and the pattern grows. Heat can never make a point colder than all its neighbours, so this is wrong. The limit is $\\lambda \\le \\tfrac12$."
+   }
+  },
+  {
+   "id": "h-far-boundary",
+   "difficulty": 3,
+   "skills": [
+    "pe-heat"
+   ],
+   "prose": "A call has strike £100, $r = 5\\%$, $T = 1$. A finite-difference grid stops at $S = 300$ and sets the value there from $V \\approx S - Ke^{-r(T - t)}$.",
+   "question": "What boundary value does it use at $t = 0.5$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 202.469,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "202.4690: $300 - 100e^{-0.025}$.",
+    "label": "Boundary value",
+    "unit": "£",
+    "placeholder": "a price",
+    "wrong": [
+     {
+      "id": "undiscounted",
+      "value": 200,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "payoff-only",
+      "value": 300,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$300 - 97.5310 = £202.4690$.",
+    "generic": "Not quite right. Discount the strike for $T - t = 0.5$.",
+    "byKey": {
+     "undiscounted": "200 ignores interest on the strike. Discount it for half a year.",
+     "payoff-only": "300 is the stock price alone. The call is worth less by the discounted strike."
+    }
+   },
+   "explain": {
+    "text": "With $T - t = 0.5$ the strike is worth $100e^{-0.025} = 97.5310$, so $V \\approx 300 - 97.5310 = 202.4690$. At the near boundary $S = 0$ the call is worth 0."
+   }
+  },
+  {
+   "id": "h-colleague",
+   "difficulty": 5,
+   "skills": [
+    "pe-heat"
+   ],
+   "kind": "longform",
+   "tags": [
+    "diffusion-d"
+   ],
+   "title": "The walk that does not diffuse",
+   "prompt": "A colleague simulates a log-price walk with $\\Delta x = \\Delta t$ and says it diffuses. He expects a four-year spread to be four times a one-year spread. Write a short note. Derive $D$ from the steps and say why $D$ vanishes here. Give the $\\sqrt{t}$ law with the standard deviations for $\\sigma = 20\\%$. Say how the steps should be chosen. Say what a pricing grid must assume about the direction of time.",
+   "model": "**1. The diffusion coefficient.** For a walk with steps $\\pm\\Delta x$ every $\\Delta t$, the density obeys $u(x, t + \\Delta t) = \\tfrac12u(x - \\Delta x, t) + \\tfrac12u(x + \\Delta x, t)$. Expanding to first order in time and second order in space, the first-order space terms cancel and $u_t = \\dfrac{\\Delta x^2}{2\\Delta t}u_{xx}$. So $D = \\Delta x^2/(2\\Delta t)$, where the $\\tfrac12$ comes from the Taylor term.\\n\\n**2. Why it vanishes.** With $\\Delta x = \\Delta t$ we get $D = \\Delta x/2$, which tends to 0 as the steps shrink. In the limit nothing spreads. The walk only diffuses if $\\Delta t$ shrinks like $\\Delta x^2$, so $D$ stays fixed.\\n\\n**3. The square-root law.** After time $t$ the variance is $n\\Delta x^2 = 2Dt$, so the standard deviation is $\\sqrt{2Dt}$, which grows like $\\sqrt{t}$, not $t$. For $\\sigma = 20\\%$ a year, $D = \\sigma^2/2 = 0.02$. After one year the variance is $2Dt = 0.04$ and the standard deviation is 0.2. After four years the variance is 0.16 and the standard deviation is 0.4. The four-year spread is twice the one-year spread, not four times.\\n\\n**4. Choosing the steps.** Take $\\Delta x = \\sigma\\sqrt{\\Delta t}$, so that $\\Delta x^2/(2\\Delta t) = \\sigma^2/2$. For example, $\\Delta t = 0.01$ years gives $\\Delta x = 0.02$.\\n\\n**5. Direction of time.** The heat equation is parabolic: it smooths forwards in time and is ill-posed backwards. A mode $\\sin kx$ is multiplied by $e^{-k^2Dt}$ forwards and by $e^{+k^2Dt}$ backwards. Black-Scholes has one condition, the payoff at expiry, so a grid starts at expiry and steps back to today. An explicit step needs $\\lambda = D\\Delta t/\\Delta x^2 \\le \\tfrac12$.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Derives $D = \\Delta x^2/(2\\Delta t)$ from the averaging rule and Taylor expansion, naming the $\\tfrac12$."
+    },
+    {
+     "points": 2,
+     "text": "Shows that $\\Delta x = \\Delta t$ gives $D = \\Delta x/2 \\to 0$, so nothing spreads, and says $\\Delta t$ must shrink like $\\Delta x^2$."
+    },
+    {
+     "points": 2,
+     "text": "States variance $2Dt$ and the $\\sqrt{t}$ law, so the four-year spread is twice, not four times, the one-year spread."
+    },
+    {
+     "points": 2,
+     "text": "Gives the numbers for $\\sigma = 20\\%$: $D = 0.02$, standard deviations 0.2 and 0.4, variances 0.04 and 0.16."
+    },
+    {
+     "points": 2,
+     "text": "Says the grid runs backwards from expiry because the equation is parabolic, and that running forwards is ill-posed."
+    }
+   ]
+  }
+ ]
+}
