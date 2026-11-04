@@ -90,7 +90,7 @@ def rand_ops(n, keys=5):
 for _ in range(3000):
     cap = random.randint(1, 4); ops = rand_ops(random.randint(0, 20))
     assert runlru(cap, ops) == lru_brute(cap, ops), (cap, ops)
-lops = [(2,[[0,1,1],[0,2,2],[1,1],[0,3,3],[1,2],[0,4,4],[1,1],[1,3],[1,4]]),
+lops = [(2,[[0,5,50],[0,6,60],[1,5],[0,7,70],[1,6],[0,8,80],[1,5],[1,7],[1,8]]),
         (1,[[0,2,1],[1,2],[0,3,2],[1,2],[1,3]]),
         (2,[[0,2,1],[0,2,2],[1,2],[0,1,1],[0,4,1],[1,2]]),
         (3,[[0,1,10],[0,2,20],[0,3,30],[1,1],[0,4,40],[1,2],[1,1],[1,3],[1,4]]),
@@ -364,10 +364,10 @@ ns = {}; exec(LFU_REF + LFU_POST, ns); runlfu = ns['run_lfu']
 for _ in range(4000):
     cap = random.randint(0, 4); ops = rand_ops(random.randint(0, 24))
     assert runlfu(cap, ops) == lfu_brute(cap, ops), (cap, ops)
-lfs = [(2,[[0,1,1],[0,2,2],[1,1],[0,3,3],[1,2],[1,3],[0,4,4],[1,1],[1,3],[1,4]]),
+lfs = [(2,[[0,5,50],[0,6,60],[1,5],[0,7,70],[1,6],[1,7],[0,8,80],[1,5],[1,7],[1,8]]),
        (0,[[0,0,0],[1,0]]),
        (2,[[0,1,1],[0,2,2],[0,3,3],[1,1],[1,2],[1,3]]),
-       (2,[[0,1,1],[0,2,2],[1,1],[1,1],[0,3,3],[1,2],[1,3],[1,1]]),
+       (2,[[0,5,5],[0,6,6],[1,5],[1,5],[0,7,7],[1,6],[1,7],[1,5]]),
        (3,[[0,1,1],[0,2,2],[0,3,3],[1,1],[1,2],[0,4,4],[1,3],[1,1],[1,2],[1,4]]),
        (1,[[0,1,1],[0,1,9],[1,1],[0,2,2],[1,1],[1,2]])]
 LFU_TESTS = [dict(call=f'run_lfu({c}, {o})', expect=lfu_brute(c, o)) for c, o in lfs]
@@ -708,7 +708,7 @@ for tr in [[(100,10),(100,12),(-150,13)], [(100,10),(200,13),(-250,14)], [(10,50
     p, a, r = led_brute('fifo', tr)
     S3.append(dict(setup=stage(tr, ctor="Ledger(method='fifo')"), call="[L.position('ABC'), L.avg_cost('ABC'), L.realised('ABC')]", expect=[p, a, r], compare='isclose'))
 check_py('Ledger stage 3 (all earlier tests)', LED3, LED3_START, S3)
-REP['led1'] = md_tests(S1); REP['led2'] = md_tests(S2); REP['led3'] = md_tests(S3, width=110)
+REP['led1'] = md_tests(S1); REP['led2'] = md_tests(S2); REP['led3'] = md_tests(S3, width=None)
 # fifo ex: (10,50),(-4,55),(10,40),(-12,45)
 print('fifo ex', led_brute('fifo', [(10,50),(-4,55),(10,40),(-12,45)]), led_brute('average', [(10,50),(-4,55),(10,40),(-12,45)]))
 

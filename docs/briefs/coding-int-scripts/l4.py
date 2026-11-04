@@ -173,10 +173,10 @@ struct ZqReg { ZqReg(const char* n, void (*f)()) { zq_tests().push_back({n, f});
 inline int run_tests() { int bad = 0; for (auto& t : zq_tests()) { int before = zq_fail(); t.fn(); if (zq_fail() > before) ++bad; } return bad; }
 '''
 CPP_PRELUDE = KIT + '''
-int longest_run(const std::vector<int>& xs);
+int longest_streak(const std::vector<int>& xs);
 '''
 CPP_POST = '''
-int longest_run(const std::vector<int>& xs) {
+int longest_streak(const std::vector<int>& xs) {
     int best = 0, run = 0;
 #ifdef BUG1
     for (size_t i = 0; i < xs.size(); ++i) {
@@ -221,16 +221,16 @@ int longest_run(const std::vector<int>& xs) {
 '''
 CPP_LEARNER_SOL = '''#include <vector>
 #include <algorithm>
-TEST(empty) { CHECK(longest_run({}) == 0); }
-TEST(single) { CHECK(longest_run({7}) == 1); }
-TEST(rising) { CHECK(longest_run({1, 2}) == 1); }
-TEST(run_after_break) { CHECK(longest_run({3, 1, 1}) == 2); }
-TEST(whole_list) { CHECK(longest_run({2, 2, 2}) == 3); }
-TEST(two_runs) { CHECK(longest_run({1, 1, 2, 2, 2}) == 3); }
+TEST(empty) { CHECK(longest_streak({}) == 0); }
+TEST(single) { CHECK(longest_streak({7}) == 1); }
+TEST(rising) { CHECK(longest_streak({1, 2}) == 1); }
+TEST(run_after_break) { CHECK(longest_streak({3, 1, 1}) == 2); }
+TEST(whole_list) { CHECK(longest_streak({2, 2, 2}) == 3); }
+TEST(two_runs) { CHECK(longest_streak({1, 1, 2, 2, 2}) == 3); }
 '''
 CPP_LEARNER_START = '''#include <vector>
 #include <algorithm>
-TEST(empty) { CHECK(longest_run({}) == 0); }
+TEST(empty) { CHECK(longest_streak({}) == 0); }
 '''
 def cpp_variant(learner, define=None):
     d = tempfile.mkdtemp(dir='build')
@@ -417,7 +417,7 @@ ns = {}; exec(PE_REF, ns); peref = ns['product_except_self']
 for _ in range(2000):
     nums = [random.randint(-3, 4) for _ in range(random.randint(1, 8))]
     assert peref(nums) == pe_brute(nums)
-pes = [[1,2,3,4],[-1,1,0,-3,3],[2,0,0],[0,5],[7,3],[1,1,1],[5,-2]]
+pes = [[2,3,5,7],[3,-2,0,4,-1],[2,0,0],[0,5],[7,3],[1,1,1],[5,-2]]
 PE_TESTS = [dict(call=f'product_except_self({n})', expect=pe_brute(n)) for n in pes]
 nn = 100000
 PE_TESTS.append(dict(setup='xs = [1] * 100000; xs[10] = 2; xs[500] = 3', call='sum(product_except_self(xs))', expect=6 * (nn - 2) + 5))
@@ -430,7 +430,7 @@ PE_TESTS.append(dict(call="all('/' not in line.split('#')[0] for line in __learn
 PE_TESTS.append(dict(call="sum(1 for l in __learner_source__.splitlines() if l.strip().startswith('#')) >= 3", expect=True))
 r = run_py(PE_REF, PE_TESTS); assert all(ok for ok, _ in r), r
 check_py('product_except_self', PE_REF, PE_START, PE_TESTS)
-REP['pe'] = md_tests(PE_TESTS, width=100)
+REP['pe'] = md_tests(PE_TESTS, width=None)
 
 # ---------- 4.5 calendar ----------
 CAL_A = '''
@@ -547,19 +547,25 @@ for _ in range(2000):
 # stage tests
 cA = [[[10,20],[15,25],[20,30]], [[0,5],[5,10],[3,6],[10,11],[4,5]], [[5,10],[0,5],[10,15],[0,15]], [[1,2]], []]
 CAL_T1 = [dict(call=f'run_cal(1, {[[0, s, e] for s, e in c]})', expect=cal_brute(1, [[0, s, e] for s, e in c])) for c in cA]
-CAL_T1.append(dict(setup='ops = [[0, 2 * i, 2 * i + 1] for i in range(3000)] + [[0, 0, 6000]]', call='run_cal(1, ops).count(True)', expect=3000))
-assert runcal(1, [[0,2*i,2*i+1] for i in range(3000)] + [[0,0,6000]]).count(True) == 3000
+CAL_T1.append(dict(setup='ops = [[0, 2 * i, 2 * i + 1] for i in range(60000)] + [[0, 0, 120000]]', call='run_cal(1, ops).count(True)', expect=60000))
 cB = [(2,[[0,10,20],[0,15,25],[0,20,30],[0,12,18]]), (2,[[0,10,20],[0,15,25],[0,5,15],[0,5,11]]), (3,[[0,1,5],[0,2,5],[0,3,5],[0,4,5],[0,0,2]]), (1,[[0,1,3],[0,3,5]]), (2,[[0,0,10],[0,0,10],[0,10,20],[0,5,15]])]
-CAL_T2 = list(CAL_T1) + [dict(call=f'run_cal({k}, {o})', expect=cal_brute(k, o)) for k, o in cB]
+CAL_T2 = list(CAL_T1[:3]) + [dict(call=f'run_cal({k}, {o})', expect=cal_brute(k, o)) for k, o in cB]
 cC = [(1,[[0,10,20],[1,10,20],[0,15,25],[1,15,26],[1,15,25],[0,10,12]]), (1,[[0,10,20],[0,30,40],[2,5,0],[2,10,5],[2,10,12],[2,10,35],[2,11,10]]), (2,[[0,0,10],[0,0,10],[2,5,0],[1,0,10],[2,5,0],[2,12,3]]), (1,[[2,5,7]]), (1,[[0,0,3],[0,3,6],[0,9,12],[2,3,0],[2,4,0],[1,3,6],[2,4,0]])]
 CAL_T3 = list(CAL_T2) + [dict(call=f'run_cal({k}, {o})', expect=cal_brute(k, o)) for k, o in cC]
 check_py('Calendar stage A (bisect, book only)', CAL_A + '''
 class _X: pass
-''', CAL_START, CAL_T1[:0] or [dict(call=f'run_cal(1, {[[0, s, e] for s, e in c]})', expect=cal_brute(1, [[0, s, e] for s, e in c])) for c in cA], postlude=CAL_POST.replace('c = Calendar(k)', 'c = Calendar()'))
+''', CAL_START, CAL_T1, postlude=CAL_POST.replace('c = Calendar(k)', 'c = Calendar()'))
+_slow = run_py(CAL_REF, CAL_T1, postlude=CAL_POST)
+print('stage A, linear-scan reference as a slow starter:', [ok for ok, _ in _slow], _slow[-1][1])
+assert all(ok for ok, _ in _slow[:5]) and not _slow[5][0] and 'timeout' in str(_slow[5][1])
 check_py('Calendar stage B (k)', CAL_REF, CAL_START, CAL_T2, postlude=CAL_POST)
 check_py('Calendar stage C (cancel, next_free)', CAL_REF, CAL_START, CAL_T3, postlude=CAL_POST)
-REP['cal1'] = md_tests(CAL_T1[:0] or [dict(call=f'run_cal(1, {[[0, s, e] for s, e in c]})', expect=cal_brute(1, [[0, s, e] for s, e in c])) for c in cA] + [CAL_T1[-1]])
-REP['cal2'] = md_tests(CAL_T2[len(CAL_T1):]); REP['cal3'] = md_tests(CAL_T3[len(CAL_T2):])
+REP['cal1'] = md_tests(CAL_T1)
+REP['cal2'] = md_tests(CAL_T2[3:]); REP['cal3'] = md_tests(CAL_T3[len(CAL_T2):])
+print('stage counts: A', len(CAL_T1), 'B', len(CAL_T2), 'C', len(CAL_T3))
+for nm, ts in (('A', CAL_T1), ('B', CAL_T2), ('C', CAL_T3)):
+    _r = run_py(CAL_START, ts, postlude=CAL_POST if nm != 'A' else CAL_POST.replace('c = Calendar(k)', 'c = Calendar()'))
+    print('starter fails stage', nm, sum(1 for ok, _ in _r if not ok), 'of', len(ts))
 for k, o in cB: print('calB', cal_brute(k, o))
 for k, o in cC: print('calC', cal_brute(k, o))
 
@@ -675,7 +681,7 @@ std::vector<std::string> top_k_frequent(std::vector<std::string> words, int k) {
 def tkf_brute(words, k):
     c = collections.Counter(words)
     return [w for w, _ in sorted(c.items(), key=lambda kv: (-kv[1], kv[0]))][:k]
-tkfs = [(["i","love","leetcode","i","love","coding"],2),(["the","day","is","sunny","the","the","the","sunny","is","is"],4),(["a"],1),(["b","a"],5),(["x","y","x","y","z"],2),(["q","q"],0)]
+tkfs = [(["bid","ask","mid","bid","ask","bid"],2),(["last","mid","bid","mid","last","mid","last","bid","ask","mid"],4),(["a"],1),(["b","a"],5),(["x","y","x","y","z"],2),(["q","q"],0)]
 calls = [(f'top_k_frequent(std::vector<std::string>{cpp_lit(w)}, {k})', tkf_brute(w, k)) for w, k in tkfs]
 big_words = [f'w{i % 1000:04d}' for i in range(50000)]
 calls.append(('[&]{ std::vector<std::string> ws; for (int i = 0; i < 50000; ++i) { char b[16]; std::snprintf(b, sizeof b, "w%04d", i % 1000); ws.push_back(b); } return top_k_frequent(ws, 3); }()', tkf_brute(big_words, 3)))

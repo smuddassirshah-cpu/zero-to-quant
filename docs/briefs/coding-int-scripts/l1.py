@@ -37,7 +37,7 @@ for _ in range(3000):
     for _ in range(n):
         a = random.randint(-6, 10); iv.append([a, a + random.randint(0, 5)])
     assert mref([x[:] for x in iv]) == merge_brute(iv), iv
-cases = [[[1,3],[2,6],[8,10],[15,18]], [[1,4],[4,5]], [], [[5,6]], [[8,10],[1,3],[2,6]], [[1,10],[2,3],[4,5]],
+cases = [[[2,5],[4,9],[12,14],[20,23]], [[1,4],[4,5]], [], [[5,6]], [[8,10],[1,3],[2,6]], [[1,10],[2,3],[4,5]],
          [[2,3],[4,5],[6,7]], [[-5,-2],[-3,1]], [[1,2],[1,2]], [[1,2],[3,4]]]
 MERGE_TESTS = [dict(call=f'merge_intervals({c})', expect=merge_brute(c)) for c in cases]
 check_py('merge_intervals', MERGE_REF, MERGE_START, MERGE_TESTS)
@@ -319,7 +319,7 @@ ns = {}; exec(SA_REF, ns); sref = ns['shortest_at_least']
 for _ in range(3000):
     nums = [random.randint(-4, 7) for _ in range(random.randint(0, 10))]; k = random.randint(1, 12)
     assert sref(nums, k) == sa_brute(nums, k), (nums, k)
-sas = [([1],1),([1,2],4),([2,-1,2],3),([84,-37,32,40,95],167),([1,2,3],6),([-1,-2],1),([5,-3,4],5)]
+sas = [([1],1),([1,2],4),([2,-1,2],3),([57,-21,30,45,88],150),([1,2,3],6),([-1,-2],1),([5,-3,4],5)]
 SA_TESTS = [dict(call=f'shortest_at_least({n}, {k})', expect=sa_brute(n,k)) for n,k in sas]
 SA_TESTS.append(dict(setup='xs = [1] * 100000', call='shortest_at_least(xs, 100000)', expect=100000))
 SA_TESTS.append(dict(setup='ys = [3, -2] * 50000', call='shortest_at_least(ys, 7)', expect=sref([3,-2]*50000,7)))
@@ -360,7 +360,7 @@ for _ in range(2000):
     adds = [random.randint(-9, 9) for _ in range(random.randint(1, 8))]
     if len(init) + 1 < k: continue
     assert kref(k, init, adds) == kl_brute(k, init, adds)
-kls = [(3,[4,5,8,2],[3,5,10,9,4]),(1,[],[-3,-2,-4,0,4]),(2,[0],[-1,1,-2,-4,3]),(3,[5,5,5],[5,6,1]),(4,[10,9,8],[7,100,1])]
+kls = [(3,[7,2,11,4],[6,9,3,13,5]),(1,[],[-3,-2,-4,0,4]),(2,[0],[-1,1,-2,-4,3]),(3,[5,5,5],[5,6,1]),(4,[10,9,8],[7,100,1])]
 KL_TESTS = [dict(call=f'kth_largest_stream({k}, {i}, {a})', expect=kl_brute(k,i,a)) for k,i,a in kls]
 KL_TESTS.append(dict(setup='import random; random.seed(3); xs = [random.randint(0, 10**6) for _ in range(30000)]', call='sum(kth_largest_stream(100, xs[:1000], xs[1000:]))', expect=None))
 random.seed(3); xs = [random.randint(0, 10**6) for _ in range(30000)]
@@ -475,7 +475,7 @@ def two_singles(nums):
 '''
 def ts_brute(nums):
     c = collections.Counter(nums); return sorted(k for k, v in c.items() if v == 1)
-tss = [[1,2,1,3,2,5],[-1,0],[4,4,6,9],[0,7,0,3,7,3,-8,12]]
+tss = [[8,3,5,3,7,5],[-1,0],[4,4,6,9],[0,7,0,3,7,3,-8,12]]
 TS_TESTS = [dict(call=f'two_singles({s})', expect=ts_brute(s)) for s in tss]
 check_py('two_singles', TS_REF, TS_START, TS_TESTS)
 REP['ts'] = md_tests(TS_TESTS)
@@ -487,7 +487,7 @@ NUM['merge_ex'] = (mref([x[:] for x in iv]), merge_brute(iv))
 assert NUM['merge_ex'][0] == NUM['merge_ex'][1]
 mt = [[9,12],[1,4],[3,7],[6,9],[12,15]]
 NUM['rooms_ex'] = (rref(mt), rooms_brute(mt))
-nums = [1,3,-1,-3,5,3,6,7]
+nums = [2,5,-1,-4,6,4,7,9]
 def wmax_brute(nums,k): return [max(nums[i:i+k]) for i in range(len(nums)-k+1)]
 def wmax_dq(nums,k):
     dq, out = collections.deque(), []
@@ -513,7 +513,7 @@ NUM['push_pop_n'] = (100000, 100000)
 ex = [2,-1,4,4,1,3,5,0]
 assert wmax_dq(ex,4) == wmax_brute(ex,4)
 NUM['wmax2'] = wmax_dq(ex,4)
-NUM['kth'] = kl_brute(3,[4,5,8,2],[3,5,10,9,4]); assert NUM['kth'] == kref(3,[4,5,8,2],[3,5,10,9,4])
+NUM['kth'] = kl_brute(3,[7,2,11,4],[6,9,3,13,5]); assert NUM['kth'] == kref(3,[7,2,11,4],[6,9,3,13,5])
 NUM['rm'] = rm_brute([5,15,1,3]); 
 NUM['rm2'] = rm_brute([7,3,9,1,8,2]); assert NUM['rm2'] == rmref([7,3,9,1,8,2])
 # heap sizes in two-heap median after n inserts: lo = ceil(n/2), hi = floor(n/2)
@@ -536,7 +536,7 @@ NUM['trie_cap_26_len_10_words_1000'] = 1000 * 10
 # top_completions example
 NUM['tc'] = tc_brute(['tea','ten','to','team','tear','inn','tea'], 'te', 3)
 # sa example
-NUM['sa'] = (sref([84,-37,32,40,95],167), sa_brute([84,-37,32,40,95],167))
+NUM['sa'] = (sref([57,-21,30,45,88],150), sa_brute([57,-21,30,45,88],150))
 # sweep: min rooms events
 for k,v in NUM.items(): print(k, v)
 json.dump({k: v for k, v in NUM.items()}, open('l1_numbers.json','w'), default=str)

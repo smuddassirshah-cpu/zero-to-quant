@@ -32,7 +32,7 @@ ns = {}; exec(FA_REF, ns); faref = ns['find_anagrams']
 for _ in range(3000):
     s = ''.join(random.choice('abc') for _ in range(random.randint(0, 12))); p = ''.join(random.choice('abc') for _ in range(random.randint(1, 4)))
     assert faref(s, p) == fa_brute(s, p), (s, p)
-fas = [('cbaebabacd','abc'),('abab','ab'),('aaaa','aa'),('abc','abcd'),('','a'),('baa','aa'),('xyzzyx','zy')]
+fas = [('dcabbacbed','abc'),('babcab','bab'),('aaaa','aa'),('abc','abcd'),('','a'),('baa','aa'),('xyzzyx','zy')]
 FA_TESTS = [dict(call=f'find_anagrams({s!r}, {p!r})', expect=fa_brute(s,p)) for s,p in fas]
 FA_TESTS.append(dict(setup="s = 'ab' * 50000", call="len(find_anagrams(s, 'ba' * 500))", expect=fa_brute('ab'*3000, 'ba'*500).__len__() + 0 if False else None))
 big_s = 'ab'*50000; # count of anagram starts of 'ab'*500 in s: windows of length 1000 -> 100000-1000+1
@@ -68,7 +68,7 @@ ns = {}; exec(LP_REF, ns); lpref = ns['longest_palindrome']
 for _ in range(3000):
     s = ''.join(random.choice('abc') for _ in range(random.randint(0, 12)))
     assert lpref(s) == lp_brute(s), s
-lps = ['babad','cbbd','a','','abacdfgdcaba','forgeeksskeegfor','abcd','aaaa','racecarxyz']
+lps = ['cabbad','cbbd','a','','abacdfgdcaba','stressedesserts','abcd','aaaa','racecarxyz']
 LP_TESTS = [dict(call=f'longest_palindrome({s!r})', expect=lp_brute(s)) for s in lps]
 LP_TESTS.append(dict(setup="s = 'a' * 3000", call='len(longest_palindrome(s))', expect=3000))
 check_py('longest_palindrome', LP_REF, LP_START, LP_TESTS)
@@ -97,7 +97,7 @@ NUM['pp'] = {w: pp(w) for w in ['carerac','aabbc','abcabc','abcd','aabbccd']}
 NUM['naive_window_work'] = (100000-1000+1)*1000
 NUM['window_work_fast'] = 100000
 # group anagram key counts
-NUM['fa_ex'] = fa_brute('cbaebabacd','abc')
+NUM['fa_ex'] = fa_brute('dcabbacbed','abc')
 
 # ---------- 2.2 calculate / decode_string ----------
 CALC_REF = '''
@@ -174,7 +174,7 @@ for _ in range(4000):
         continue
     assert cref(e) == exp, (e, cref(e), exp); n_ok += 1
 print('calc random cases', n_ok)
-cs = ['3+2*2',' 3/2 ','(1+(4+5+2)-3)+(6+8)','-(2+3)*4','14-3/2','-7/2','(-7)/2','2*(5+5*2)/3+(6/2+8)','1-(-2)','2*-3','10-2-3','100/10/5','42','-(-(5))','8/3*3']
+cs = ['4+3*2',' 7/2 ','(2+(6+3+1)-4)+(5+9)','-(2+3)*4','14-3/2','-7/2','(-7)/2','2*(5+5*2)/3+(6/2+8)','1-(-2)','2*-3','10-2-3','100/10/5','42','-(-(5))','8/3*3']
 CALC_TESTS = [dict(call=f'calculate({e!r})', expect=calc_brute(e)) for e in cs]
 check_py('calculate', CALC_REF, CALC_START, CALC_TESTS)
 REP['calc'] = md_tests(CALC_TESTS)
@@ -261,11 +261,11 @@ def rand_enc(d=0):
     return ''.join(parts)
 for _ in range(3000):
     e = rand_enc(); assert dref(e) == ds_brute(e), e
-dss = ['3[a]2[bc]','3[a2[c]]','2[abc]3[cd]ef','abc','10[a]','','2[2[2[a]]]','a2[b]c','1[]','12[xy]']
+dss = ['3[a]2[bc]','2[b3[a]]','3[xy]2[z]w','abc','10[a]','','2[2[2[a]]]','a2[b]c','1[]','12[xy]']
 DS_TESTS = [dict(call=f'decode_string({e!r})', expect=ds_brute(e)) for e in dss]
 check_py('decode_string', DS_REF, DS_START, DS_TESTS)
 REP['ds'] = md_tests(DS_TESTS)
-NUM['decode_lens'] = {e: len(ds_brute(e)) for e in ['3[a2[c]]','2[abc]3[cd]ef','2[2[2[a]]]','12[xy]']}
+NUM['decode_lens'] = {e: len(ds_brute(e)) for e in ['2[b3[a]]','3[xy]2[z]w','2[2[2[a]]]','12[xy]']}
 NUM['decode_big'] = len(ds_brute('9[' * 1 + '9[' + '9[' + 'a' + ']]]'))  # 729
 assert NUM['decode_big'] == 9**3
 
@@ -292,7 +292,7 @@ for _ in range(3000):
     p = '/' + '/'.join(random.choice(parts) for _ in range(random.randint(0, 7))) + random.choice(['','/'])
     p = re.sub(r'^/+', '/', p)
     assert spref(p) == sp_brute(p), p
-sps = ['/home/','/home//foo/','/a/./b/../../c/','/../','/.../a/..','/a/b/c','/']
+sps = ['/home/','/home//foo/','/usr//lib/./../bin/','/../','/.../a/..','/a/b/c','/']
 SP_TESTS = [dict(call=f'simplify_path({p!r})', expect=sp_brute(p)) for p in sps]
 check_py('simplify_path', SP_REF, SP_START, SP_TESTS)
 REP['sp'] = md_tests(SP_TESTS)
@@ -328,7 +328,7 @@ ns = {}; exec(LV_REF, ns); lvref = ns['longest_valid_parentheses']
 for _ in range(3000):
     s = ''.join(random.choice('()') for _ in range(random.randint(0, 14)))
     assert lvref(s) == lv_brute(s), s
-lvs = ['(()',')()())','','()(())','(()(((()','()(()',')(','((()))','())((())']
+lvs = ['(()',')(()())(','','()(())','(()(((()','()(()',')(','((()))','())((())']
 LV_TESTS = [dict(call=f'longest_valid_parentheses({s!r})', expect=lv_brute(s)) for s in lvs]
 LV_TESTS.append(dict(setup="s = '(' * 50000 + ')' * 50000", call='longest_valid_parentheses(s)', expect=100000))
 assert lvref('('*50000+')'*50000) == 100000
@@ -457,7 +457,7 @@ ns = {}; exec(ROT_REF, ns); rotref = ns['rotate']
 for _ in range(500):
     n = random.randint(0, 6); m = [[random.randint(0, 99) for _ in range(n)] for _ in range(n)]
     exp = rot_brute(m); mm = [r[:] for r in m]; rotref(mm); assert mm == exp
-rots = [[[1,2,3],[4,5,6],[7,8,9]],[[1,2],[3,4]],[[1]],[[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]],[]]
+rots = [[[1,2,3],[4,5,6],[7,8,9]],[[1,2],[3,4]],[[1]],[[3,8,1,6],[9,2,7,4],[5,11,10,12],[14,0,13,15]],[]]
 ROT_TESTS = [dict(setup=f'm = {m}; rotate(m)', call='m', expect=rot_brute(m)) for m in rots]
 ROT_TESTS.append(dict(setup='m = [[r * 200 + c for c in range(200)] for r in range(200)]; rotate(m)', call='m[0][:3]', expect=rot_brute([[r*200+c for c in range(200)] for r in range(200)])[0][:3]))
 check_py('rotate', ROT_REF, ROT_START, ROT_TESTS)
@@ -542,7 +542,7 @@ for _ in range(1500):
     R, C = random.randint(1, 6), random.randint(1, 6)
     b = [[random.randint(0, 1) for _ in range(C)] for _ in range(R)]
     assert lfref(b) == lf_brute(b)
-lfs = [[[0,1,0],[0,1,0],[0,1,0]],[[1,1],[1,1]],[[0,0,0],[0,0,0]],[[1,0],[0,0]],[[0,1,0],[0,0,1],[1,1,1],[0,0,0]],[[1,1,1]]]
+lfs = [[[0,1,0],[0,1,0],[0,1,0]],[[1,1],[1,1]],[[0,0,0],[0,0,0]],[[1,0],[0,0]],[[1,1,0],[0,1,0],[0,1,1],[0,0,0]],[[1,1,1]]]
 LF_TESTS = [dict(call=f'life_step({b})', expect=lf_brute(b)) for b in lfs]
 LF_TESTS.append(dict(setup='b = [[(r * 7 + c * 3) % 5 % 2 for c in range(100)] for r in range(100)]', call='sum(map(sum, life_step(b)))', expect=sum(map(sum, lf_brute([[(r*7+c*3)%5%2 for c in range(100)] for r in range(100)])))))
 check_py('life_step', LF_REF, LF_START, LF_TESTS)

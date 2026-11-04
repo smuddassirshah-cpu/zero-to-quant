@@ -58,15 +58,15 @@ def lit(x, maxlen=None):
     s = repr(x)
     return s
 
-def md_tests(tests, width=70):
+def md_tests(tests, width=None):
     lines = ['| # | Call | Expected |', '| --- | --- | --- |']
     for i, t in enumerate(tests, 1):
         call = t['call']
         if t.get('setup'):
             call = t['setup'] + '; ' + call
         e = repr(t['expect'])
-        if len(call) > width: call = call[:width - 3] + '...'
-        if len(e) > 50: e = e[:47] + '...'
+        if width and len(call) > width: call = call[:width - 3] + '...'
+        pass
         lines.append(f'| {i} | `{call}` | `{e}` |')
     return '\n'.join(lines)
 

@@ -73,7 +73,7 @@ for _ in range(3000):
         a = random.randint(-3, 14); busy.append([a, a + random.randint(1, 5)])
     s0 = random.randint(0, 5); e0 = s0 + random.randint(1, 10)
     assert fgref(busy, s0, e0) == fg_brute(busy, s0, e0), (busy, s0, e0)
-fgs = [([[9,12],[10,11],[14,15]], 9, 17), ([[0,5]], 0, 5), ([], 8, 16), ([[8,10],[10,12]], 8, 12), ([[1,3],[2,6],[8,9]], 0, 10), ([[0,20]], 5, 10), ([[3,4]], 5, 10), ([[7,9],[1,2]], 3, 8)]
+fgs = [([[9,12],[10,11],[14,15]], 9, 17), ([[0,5]], 0, 5), ([], 8, 16), ([[8,10],[10,12]], 8, 12), ([[2,4],[3,7],[9,10]], 0, 12), ([[0,20]], 5, 10), ([[3,4]], 5, 10), ([[7,9],[1,2]], 3, 8)]
 FG_TESTS = [dict(call=f'free_gaps({b}, {s}, {e})', expect=fg_brute(b, s, e)) for b, s, e in fgs]
 check_py('free_gaps', FG_REF, FG_START, FG_TESTS)
 REP['fg'] = md_tests(FG_TESTS)
@@ -98,7 +98,7 @@ def top_k_frequent(words, k):
 def tkf_brute(words, k):
     c = collections.Counter(words)
     return [w for w, _ in sorted(c.items(), key=lambda kv: (-kv[1], kv[0]))][:k]
-tkfs = [(["i","love","leetcode","i","love","coding"],2),(["the","day","is","sunny","the","the","the","sunny","is","is"],4),(["a"],1),(["b","a"],5),(["x","y","x","y","z"],2),(["q","q"],0)]
+tkfs = [(["bid","ask","mid","bid","ask","bid"],2),(["last","mid","bid","mid","last","mid","last","bid","ask","mid"],4),(["a"],1),(["b","a"],5),(["x","y","x","y","z"],2),(["q","q"],0)]
 ns = {}; exec(TK_REF, ns); tkref = ns['top_k_frequent']
 for _ in range(2000):
     ws = [random.choice('abcde') for _ in range(random.randint(0, 12))]; k = random.randint(0, 6)
@@ -171,7 +171,7 @@ for _ in range(4000):
     n = random.randint(1, 12); w = random.randint(1, n)
     nums = [random.randint(-5, 9) for _ in range(n)]
     assert wmref(nums, w) == wm_brute(nums, w) == wm_bisect(nums, w), (nums, w)
-wms = [([1,3,-1,-3,5,3,6,7],3),([1,2,3,4,2,3,1,4,2],3),([5],1),([1,4,2,3],4),([7,7,7,7],2),([2,2,2,2,2],5)]
+wms = [([2,5,-1,-4,6,4,7,9],3),([1,2,3,4,2,3,1,4,2],3),([5],1),([1,4,2,3],4),([7,7,7,7],2),([2,2,2,2,2],5)]
 WM_TESTS = [dict(call=f'window_median({n}, {w})', expect=wm_brute(n, w), compare='isclose') for n, w in wms]
 random.seed(9); big = [random.randint(0, 10**6) for _ in range(40000)]
 exp = sum(wm_bisect(big, 500)); assert abs(sum(wmref(big, 500)) - exp) < 1e-6

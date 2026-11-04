@@ -235,3 +235,42 @@ Format: `location | severity | what is wrong | fix`.
 ### Dropped, contradicted or unsupported
 
 33. interview-plan (b) "Drill packs" | note | The brief does not contradict the plan: drills and `mock-oa-code` are named as separate tasks. l17 screen 8 and l19 screen 9 send the learner to `#drill` filters and a stopwatch for drills that will not exist until packs 1 to 4 are authored; the level agent cannot test those screens before then. | Add "ship these two screens last or behind the pack authoring task".
+
+### Fix pass (coding-int)
+
+Edits are in `docs/briefs/coding-int.md` (copy in `docs/briefs/coding-int-scripts/coding-int.md`). New or changed scripts in `docs/briefs/coding-int-scripts/`: `l17_new.py`, `l5_new.py`, `l3_trap.py`, `numbers_fix.py`, `refs.py`, `harness.py` (no truncation), `l1.py` to `l4.py`, `l_extra.py`, and all `*_tests.json`. Working copies: scratchpad `fix/coding-int/`.
+
+1. fixed: all 82 truncated cells are now full (harness no longer cuts; 37 tables regenerated and spliced; no row is abbreviated); scripts path now names the repo folder.
+2. kept: note, passes.
+3. fixed: Quiz (4) lines added to l2, l4 and l5.
+4. fixed: l19 builds-on cites `coding-int` l1-merging-intervals.
+5. fixed: note added that HackerRank and CodeSignal stay out of learner text.
+6. fixed: 17.1 is now `count_subarrays_divisible_by_k` (Python and C++), 17.2 `longest_zero_sum_subarray`, H4.3 its C++ twin, none in `ds` or `contests` (checked); tag `hash-first-seen`; overlap rows added; review-4 items 6 and 7, homework items 3, 4 and 8 follow. Reference, starter and brute force (and a closed form) agree; C++ checked on 600 random cases and under c++17 and c++20.
+7. fixed: `longest_run` renamed `longest_streak` in brief and `l4.py`.
+8. fixed: overlap row corrected; 5.2 is now `hamming_total` (reference, NumPy and pairwise brute force agree, starter fails 5 of 8, a double loop times out on row 8); screen 7 updated.
+9. fixed: l3 trap is now a stale front index; buggy code returns 1, reference and brute force 3 (`l3_trap.py`); the brief says keeping equals is also correct; quiz and screen 8 updated.
+10. fixed: review-2 item 9 uses (1, 4): clockwise (4, 3), transpose (4, 1), counter-clockwise (0, 1), half turn (3, 0), checked by rotating a labelled matrix.
+11. fixed: amend quantity at least 1, capacity at least 1 (LRU statement) and `starts_with("")` true for an empty trie are now in the statements.
+12. kept: note, all keys recompute.
+13. fixed: random lists in l16 screen 5 are stated as length 5 to 50; C++ twin stated as five bugs, `m6` Python only.
+14. fixed: 7.1 starter note (13 of 15 on purpose, say so in `how`); stage A row 6 is now 60,000 bookings (the linear-scan reference times out on it, checked), large row is stage A only.
+14b. fixed: stage B has 8 tests, stage C 13 (limit 15); starter fails 4 of 6, 7 of 8, 11 of 13 (run).
+15. fixed: large cases raised to 400,000. C++ divisible-count starter over 60 s natively, `longest_zero_sum_subarray` starter 25.96 s (5 times the limit); Python starters time out at 5 s on the first large row (run); lesson prose says "correct but slow". A correctness failure was not added because the lesson teaches partial credit by a correct slow starter; wasm times are for the level agent (inbox).
+16. fixed: engine heading says pass C is not built and names what can start now; PLAN.md split deferred (inbox, `PLAN.md` not edited).
+17. fixed: code part and mock requirement marked as open engine requirements, credit rule fixed in the brief, l15 and l17 closing screens link to the mock only if the file exists.
+18. kept: note, no fix needed.
+19. fixed: l10 screens 1 and 2 use a `pair` of `orderbook` and a queue `array`, order slider bound to `order.size` (binding unverified, fallback stated, inbox).
+20. fixed: l7 screen 1 uses a `pair` of two stack `array` canvases.
+21. fixed: l1 screen 2 uses a draggable point plus a derive rule (fallback stated, inbox).
+22. kept: note, correct.
+23. fixed: `complexity-read` assigned to review-4 item 7 and homework item 5.
+24. fixed: l17 pace override stated in shared facts; review-4 `seconds` 900 (both places).
+25. fixed: review-1 item 7, review-2 items 1 and 9, review-3 items 1, 3, 4, 5, 8, 9, review-4 items 9 and 10, homework-2 items 5, 7 and 8 have new numbers (all recomputed twice, `numbers_fix.py`); H1 item 7 no longer repeats because 5.2 changed.
+26. fixed: public examples replaced in merge, kth stream, free gaps, two singles, shortest-at-least, window maximum and median, top-k frequent, anagram windows, palindromes, calculator, decode, rotate, simplify path, valid parentheses, Game of Life seed, LRU and LFU traces, product-except-self; all scripts re-run green. `/a/./b/../../c/`-style shapes remain only as generic patterns.
+27. fixed: l4 screen 8 heap sizes (after 6 values 3 and 3; after 7, 4 and 3).
+28. fixed: "level 4 homework item 5".
+29. fixed: running median stated as a screen and homework item 9.
+30. fixed: l19 screen 8 call list written out and checked.
+31. fixed: the six longest statements (bot, Game of Life, LRU, `simplify_path`, `longest_within_limit`, token bucket) rewritten in short sentences.
+32. kept: pass.
+33. fixed: ship-last note for l17 screen 8 and l19 screen 9.
