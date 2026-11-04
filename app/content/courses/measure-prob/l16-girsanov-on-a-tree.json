@@ -1,0 +1,1241 @@
+{
+  "id": "l16-girsanov-on-a-tree",
+  "course": "measure-prob",
+  "title": "Girsanov on a binomial tree",
+  "minutes": 15,
+  "objectives": [
+    "Change the up probability on a tree and track the drift it removes."
+  ],
+  "skills": [
+    "mt-change",
+    "mt-martingale"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Reweighting the paths",
+      "prose": "A walk steps up with chance 0.6 and down with 0.4. The average of $S_{20}$ settles near 4. We give each path a weight $Z_{20}$ that turns it into a path of a fair coin ($q = 0.5$).",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 20,
+          "p": 0.6,
+          "paths": 300,
+          "drawn": 30,
+          "stopAt": 20,
+          "sim": {
+            "seed": 74
+          },
+          "qn": 0.5,
+          "height": 170,
+          "yLabel": "$S_n$",
+          "xLabel": "Step $n$",
+          "overlayHeight": 52,
+          "xStep": 5,
+          "overlays": [
+            {
+              "id": "wt",
+              "expr": "(qn / p)^((n + S) / 2) * ((1 - qn) / q)^((n - S) / 2)",
+              "label": "$Z_n$",
+              "chip": "Weight",
+              "stopLabel": "$Z_{20}$"
+            },
+            {
+              "id": "wpos",
+              "expr": "S * (qn / p)^((n + S) / 2) * ((1 - qn) / q)^((n - S) / 2)",
+              "label": "$S_nZ_n$",
+              "chip": "Weighted position",
+              "stopLabel": "$S_{20}Z_{20}$"
+            }
+          ],
+          "toggles": false
+        },
+        "state": {
+          "showStopped": [
+            "walk"
+          ],
+          "overlays": false
+        },
+        "derive": {
+          "caption": "Plain average of $S_{20}$: {{fixed(values.stopped, 2)}}, close to $20 \\times 0.2 = 4$."
+        }
+      },
+      "question": "Predict where the weighted average of $S_{20}$ settles.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0.6
+        },
+        "accept": "0: a fair walk has no drift",
+        "label": "Weighted average",
+        "wrong": [
+          {
+            "id": "plain",
+            "value": 4,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The weights turn the paths into those of a different coin."
+        },
+        {
+          "rung": "point",
+          "text": "Under a fair coin the walk has mean 0 at every step.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The weighted average is the average under the new coin."
+        }
+      ],
+      "feedback": {
+        "correct": "0: weighting each path by $Z_{20}$ gives the average under a fair coin, whose walk has no drift.",
+        "generic": "Not quite right. Ask what the weights turn the walk into.",
+        "byKey": {
+          "plain": "You gave the unweighted average, 4. The weights are there to change it.",
+          "ten": "You gave the expected number of up steps, 10. The position counts ups minus downs, so the mean is 0."
+        }
+      },
+      "explain": {
+        "text": "The weighted average is $E_P[Z_{20}S_{20}] = E_Q[S_{20}]$, the mean of a fair walk after 20 steps, which is 0. The panels now show it settling near 0, while the mean weight stays near 1.",
+        "canvas": {
+          "overlays": true,
+          "showStopped": [
+            "wt",
+            "wpos"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "Moving the new coin",
+      "prose": "Move $q$ and watch the weighted position. The weights change with $q$, but the paths do not. The mean weight should stay near 1 whatever $q$ is.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 20,
+          "p": 0.6,
+          "paths": 300,
+          "drawn": 30,
+          "stopAt": 20,
+          "sim": {
+            "seed": 74
+          },
+          "qn": 0.5,
+          "height": 170,
+          "yLabel": "$S_n$",
+          "xLabel": "Step $n$",
+          "overlayHeight": 52,
+          "xStep": 5,
+          "overlays": [
+            {
+              "id": "wt",
+              "expr": "(qn / p)^((n + S) / 2) * ((1 - qn) / q)^((n - S) / 2)",
+              "label": "$Z_n$",
+              "chip": "Weight",
+              "stopLabel": "$Z_{20}$"
+            },
+            {
+              "id": "wpos",
+              "expr": "S * (qn / p)^((n + S) / 2) * ((1 - qn) / q)^((n - S) / 2)",
+              "label": "$S_nZ_n$",
+              "chip": "Weighted position",
+              "stopLabel": "$S_{20}Z_{20}$"
+            }
+          ]
+        },
+        "state": {
+          "showStopped": [
+            "wt",
+            "wpos"
+          ]
+        },
+        "derive": {
+          "caption": "Plain average of $S_{20}$: {{fixed(values.stopped, 2)}}. Mean weight: {{fixed(values.stoppedWt, 2)}}. Weighted average: {{fixed(values.stoppedWpos, 2)}}."
+        },
+        "controls": [
+          {
+            "bind": "qn",
+            "min": 0.4,
+            "max": 0.7,
+            "step": 0.05,
+            "start": 0.5,
+            "label": "New up chance $q$"
+          }
+        ]
+      },
+      "question": "Set $q = 0.7$. Where does the weighted average of $S_{20}$ settle?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 1
+        },
+        "accept": "8 = 20 x (2 x 0.7 - 1)",
+        "label": "Weighted average",
+        "wrong": [
+          {
+            "id": "plain",
+            "value": 4,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "q20",
+            "value": 14,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each step has mean $2q - 1$ under the new coin."
+        },
+        {
+          "rung": "point",
+          "text": "Over 20 steps the mean is $20(2q - 1)$.",
+          "highlight": [
+            "path0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $q = 0.7$, $2q - 1 = 0.4$."
+        }
+      ],
+      "feedback": {
+        "correct": "8: each step has mean $2(0.7) - 1 = 0.4$ under $q = 0.7$, and $20 \\times 0.4 = 8$.",
+        "generic": "Not quite right. Find the mean step under $q = 0.7$, then multiply by 20.",
+        "byKey": {
+          "plain": "You gave the unweighted average, 4. The weighted average follows $q$, not $p$.",
+          "q20": "You multiplied $q$ by 20. The mean step is $2q - 1$, because a down step counts $-1$."
+        }
+      },
+      "explain": {
+        "text": "Under $q$ a step has mean $q(+1) + (1 - q)(-1) = 2q - 1$, so $E_Q[S_{20}] = 20(2q - 1)$: $-4$, $0$, $4$ and $8$ at $q = 0.4, 0.5, 0.6, 0.7$. At $q = p = 0.6$ the weights are all 1 and the weighted average is the plain average, 4."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "One step",
+      "prose": "One step has up chance $p = \\tfrac35$ and we move to $q = \\tfrac12$. The weight on each outcome is its new chance over its old one. Together they must average 1 under $P$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "compact": true,
+          "levels": [
+            {
+              "label": "Toss 1",
+              "branches": [
+                {
+                  "id": "U",
+                  "label": "up",
+                  "p": "3/5"
+                },
+                {
+                  "id": "D",
+                  "label": "down",
+                  "p": "2/5"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in the two weights and their $P$-average.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$Z_1$ after up, $\\tfrac{q}{p}$",
+            {
+              "edit": true,
+              "answer": 0.8333,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$Z_1$ after down, $\\tfrac{1 - q}{1 - p}$",
+            {
+              "edit": true,
+              "answer": 1.25,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$E_P[Z_1]$",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the new chance of each outcome by its old chance."
+        },
+        {
+          "rung": "point",
+          "text": "Up: $\\tfrac{1/2}{3/5}$. Down: $\\tfrac{1/2}{2/5}$.",
+          "highlight": [
+            "U",
+            "D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then average: $\\tfrac35 Z_{\\text{up}} + \\tfrac25 Z_{\\text{down}}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac56$ after up, $\\tfrac54$ after down, and $E_P[Z_1] = 0.6 \\times \\tfrac56 + 0.4 \\times \\tfrac54 = 1$.",
+        "generic": "Not quite right. New chance over old chance, then weight by the old chance.",
+        "byKey": {
+          "r0c1": "Up: divide the new chance $\\tfrac12$ by the old chance $\\tfrac35$. Dividing the other way gives 1.2.",
+          "r1c1": "Down: divide the new chance $\\tfrac12$ by the old chance $\\tfrac25$. Dividing the other way gives 0.8.",
+          "r2c1": "Weight each outcome by its old chance: $0.6 \\times 0.8333 + 0.4 \\times 1.25$, which must be 1."
+        }
+      },
+      "explain": {
+        "text": "The up weight is $\\tfrac{1/2}{3/5} = \\tfrac56$ and the down weight is $\\tfrac{1/2}{2/5} = \\tfrac54$. Their $P$-average is $0.6 \\times \\tfrac56 + 0.4 \\times \\tfrac54 = 0.5 + 0.5 = 1$, as for every density."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Girsanov's theorem on a tree",
+      "prose": "With $U_n$ ups and $D_n$ downs in $n$ tosses, $Z_n = \\left(\\tfrac qp\\right)^{U_n}\\left(\\tfrac{1-q}{1-p}\\right)^{D_n}$ is $\\tfrac{dQ}{dP}$ on $\\mathcal{F}_n$. Under $Q$ a step has mean $2q - 1$, so $S_n - n(2q - 1)$ is a $Q$-martingale. Steps and paths stay; only their chances move.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "compact": true,
+          "levels": [
+            {
+              "label": "Toss 1",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "3/5"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "2/5"
+                }
+              ]
+            },
+            {
+              "label": "Toss 2",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "3/5"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "2/5"
+                }
+              ]
+            },
+            {
+              "label": "Toss 3",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "3/5"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "2/5"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "highlight": [
+            "H-H-T"
+          ]
+        }
+      },
+      "question": "With $p = \\tfrac35$ and $q = \\tfrac12$, find $Z_3$ on the path HHT.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8681,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "(5/6)^2 x 5/4 = 125/144 = 0.8681",
+        "label": "$Z_3$",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 1.152,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "miscount",
+            "value": 1.0417,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two heads and one tail: two up weights and one down weight."
+        },
+        {
+          "rung": "point",
+          "text": "Up weight $\\tfrac56$, down weight $\\tfrac54$.",
+          "highlight": [
+            "H-H-T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\left(\\tfrac56\\right)^2 \\times \\tfrac54$."
+        }
+      ],
+      "feedback": {
+        "correct": "$Z_3 = \\left(\\tfrac56\\right)^2\\tfrac54 = \\tfrac{125}{144} = 0.8681$, the likelihood ratio of lesson 15.",
+        "generic": "Not quite right. Multiply one weight per toss: two up and one down.",
+        "byKey": {
+          "inverted": "You divided $p$-chances by $q$-chances. $Z_n = \\tfrac{dQ}{dP}$ has the $Q$ chance on top.",
+          "miscount": "You used one up weight and one down weight. HHT has two heads and one tail."
+        }
+      },
+      "explain": {
+        "text": "The weight multiplies one factor per toss: $\\tfrac56 \\cdot \\tfrac56 \\cdot \\tfrac54 = \\tfrac{125}{144} = 0.8681$. It equals $\\tfrac{0.5^3}{0.6^2 \\cdot 0.4}$, the ratio of lesson 15."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The weights form a martingale",
+      "prose": "We show $Z_n$ is a $P$-martingale with mean 1. Let $z(X_{n+1})$ be the weight of toss $n + 1$, so $Z_{n+1} = Z_n\\,z(X_{n+1})$. Two lines are flawed.",
+      "question": "Put the proof in order, a reason in each line. Move the two flawed lines to Left out.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "m1",
+            "text": "$E_P[Z_{n+1} \\mid \\mathcal{F}_n] = E_P[Z_n\\,z(X_{n+1}) \\mid \\mathcal{F}_n]$, since $Z_{n+1} = Z_n\\,z(X_{n+1})$."
+          },
+          {
+            "id": "m2",
+            "text": "$= Z_n\\,E_P[z(X_{n+1}) \\mid \\mathcal{F}_n]$, taking out what is known: $Z_n$ is $\\mathcal{F}_n$-measurable."
+          },
+          {
+            "id": "m3",
+            "text": "$E_P[z(X_{n+1}) \\mid \\mathcal{F}_n] = E_P[z(X_{n+1})] = p\\cdot\\tfrac qp + (1 - p)\\cdot\\tfrac{1-q}{1-p} = 1$, because $X_{n+1}$ is independent of $\\mathcal{F}_n$."
+          },
+          {
+            "id": "m4",
+            "text": "So $E_P[Z_{n+1} \\mid \\mathcal{F}_n] = Z_n$, and $E_P[Z_n] = Z_0 = 1$. $\\blacksquare$"
+          },
+          {
+            "id": "d1",
+            "text": "$E_P[z(X_{n+1})] = \\tfrac12\\cdot\\tfrac qp + \\tfrac12\\cdot\\tfrac{1-q}{1-p}$, because the toss is fair.",
+            "why": "You gave each outcome chance $\\tfrac12$. Under $P$ the up chance is $p$, and that is what makes the sum 1."
+          },
+          {
+            "id": "d2",
+            "text": "$E_Q[z(X_{n+1})] = 1$, averaging under the new measure.",
+            "why": "You averaged under $Q$. The weight is a martingale under $P$; under $Q$ its one-step mean is not 1."
+          }
+        ],
+        "answer": [
+          "m1",
+          "m2",
+          "m3",
+          "m4"
+        ],
+        "same": [
+          [
+            "m2",
+            "m3"
+          ]
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Condition on $\\mathcal{F}_n$ and split off the known factor $Z_n$."
+        },
+        {
+          "rung": "point",
+          "text": "The one-step weight depends on the next toss only, which is independent of $\\mathcal{F}_n$."
+        },
+        {
+          "rung": "step",
+          "text": "Order: write the step, take out $Z_n$, average the weight, conclude."
+        }
+      ],
+      "feedback": {
+        "correct": "Right. The one-step weight averages $p\\cdot\\tfrac qp + (1-p)\\cdot\\tfrac{1-q}{1-p} = q + (1 - q) = 1$.",
+        "generic": "Not quite right. Write the step, take out what is known, evaluate the weight's mean under $P$, then conclude.",
+        "byKey": {
+          "d1": "You used a fair toss. The mean of the weight is taken under $P$, whose up chance is $p$.",
+          "d2": "You averaged under the new measure. The claim is about $P$.",
+          "left-out": "You left out a line the proof needs. Only the two flawed lines go to Left out."
+        }
+      },
+      "explain": {
+        "text": "The weight of one toss averages to 1 under $P$, so it drops out and $Z_n$ is a $P$-martingale. Its mean is $E_P[Z_n] = Z_0 = 1$, which is what makes $Z_n$ a density. The second line may come before the third: both need only the first."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Forecasting under Q while sampling under P",
+      "prose": "At time $n$ the weight $Z_n$ is known. We want the $Q$-forecast of a payoff $X$ settled at time $N$, using $P$-averages and the weights.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "compact": true,
+          "levels": [
+            {
+              "label": "Toss 1",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "3/5"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "2/5"
+                }
+              ]
+            },
+            {
+              "label": "Toss 2",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "3/5"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "2/5"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "values": {
+            "root": "Z = 1",
+            "H": "Z = 0.8333",
+            "T": "Z = 1.25",
+            "H-H": "Z = 0.6944",
+            "H-T": "Z = 1.0417",
+            "T-H": "Z = 1.0417",
+            "T-T": "Z = 1.5625"
+          }
+        }
+      },
+      "question": "Which formula gives $E_Q[X \\mid \\mathcal{F}_n]$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$E_Q[X \\mid \\mathcal{F}_n] = \\dfrac{E_P[Z_N X \\mid \\mathcal{F}_n]}{Z_n}$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$E_Q[X \\mid \\mathcal{F}_n] = E_P[Z_N X \\mid \\mathcal{F}_n]$",
+            "why": "You left out the division. At time $n$ the weight $Z_n$ is already known, so only the extra weight $Z_N / Z_n$ is still to come."
+          },
+          {
+            "id": "c",
+            "text": "$E_Q[X \\mid \\mathcal{F}_n] = Z_n\\,E_P[X \\mid \\mathcal{F}_n]$",
+            "why": "You scaled the $P$-forecast by $Z_n$. The future weight $Z_N / Z_n$ is correlated with $X$, so it cannot be dropped."
+          },
+          {
+            "id": "d",
+            "text": "$E_Q[X \\mid \\mathcal{F}_n] = \\dfrac{E_P[Z_n X \\mid \\mathcal{F}_n]}{Z_N}$",
+            "why": "You turned the weights round. $Z_N$ is not known at time $n$, so it cannot be a divisor outside the average."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Condition on $\\mathcal{F}_n$: the known weight $Z_n$ comes out."
+        },
+        {
+          "rung": "point",
+          "text": "What remains in the average is $Z_N / Z_n$.",
+          "highlight": [
+            "H",
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$E_Q[X \\mid \\mathcal{F}_n] = E_P\\!\\left[\\tfrac{Z_N}{Z_n}X \\mid \\mathcal{F}_n\\right]$."
+        }
+      ],
+      "feedback": {
+        "correct": "Divide by $Z_n$: $E_Q[X \\mid \\mathcal{F}_n] = E_P[Z_N X \\mid \\mathcal{F}_n]/Z_n$, Bayes' rule for conditional expectations.",
+        "generic": "Not quite right. The weight already collected, $Z_n$, must not be counted again.",
+        "byKey": {
+          "b": "Test it with $X = 1$: option b gives $Z_n$, but $E_Q[1 \\mid \\mathcal{F}_n] = 1$.",
+          "c": "Test it with $X = 1$: option c gives $Z_n$, not 1.",
+          "d": "Test it with $X = 1$: option d gives $Z_n / Z_N$, which is not 1 and is not even known at time $n$."
+        }
+      },
+      "explain": {
+        "text": "Given $\\mathcal{F}_n$, the weight over the remaining tosses is $Z_N/Z_n$, so $E_Q[X \\mid \\mathcal{F}_n] = E_P[\\tfrac{Z_N}{Z_n}X \\mid \\mathcal{F}_n] = \\tfrac{E_P[Z_N X \\mid \\mathcal{F}_n]}{Z_n}$. With $X = 1$ it gives $E_P[Z_N \\mid \\mathcal{F}_n]/Z_n = 1$, because $Z$ is a martingale."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The continuous limit",
+      "prose": "Take $n$ steps of size $\\tfrac1{\\sqrt n}$ on $[0, 1]$, with $P$-up chance $\\tfrac12\\left(1 + \\tfrac{\\theta}{\\sqrt n}\\right)$ and $Q$ fair, for $\\theta = 0.35$. The table gives the mean and variance of $\\ln Z_n$ under $P$. Let $B$ be the walk less its drift $\\theta t$, a $P$-Brownian motion in the limit.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Steps $n$",
+            "$E_P[\\ln Z_n]$",
+            "$\\mathrm{Var}_P(\\ln Z_n)$"
+          ],
+          "rows": [
+            [
+              "100",
+              "-0.06126",
+              "0.12245"
+            ],
+            [
+              "10,000",
+              "-0.06125",
+              "0.12250"
+            ],
+            [
+              "limit",
+              "$-\\tfrac{\\theta^2}{2} = -0.06125$",
+              "$\\theta^2 = 0.1225$"
+            ]
+          ],
+          "align": [
+            "left",
+            "right",
+            "right"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Write $\\tfrac{dQ}{dP}$ in the limit, as a function of $w = B_T$, $\\theta$ and $t = T$.",
+      "widget": {
+        "kind": "expression",
+        "answer": "e^{-\\theta w-\\theta^2 t/2}",
+        "accept": [
+          "e^{-\\theta w-\\frac{\\theta^2t}{2}}",
+          "e^{-\\theta w}e^{-\\theta^2 t/2}",
+          "e^{-\\theta w-\\frac{1}{2}\\theta^2 t}"
+        ],
+        "wrong": [
+          {
+            "id": "plus",
+            "tex": "e^{\\theta w-\\theta^2 t/2}"
+          },
+          {
+            "id": "nocorrection",
+            "tex": "e^{-\\theta w}"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The mean of $\\ln Z$ is $-\\tfrac{\\theta^2}{2}$ and its variance is $\\theta^2$ at $T = 1$."
+        },
+        {
+          "rung": "point",
+          "text": "A normal with variance $\\theta^2$ is $-\\theta B_1$, shifted down by $\\tfrac{\\theta^2}{2}$.",
+          "highlight": [
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Scale to time $t$: $-\\theta B_t - \\tfrac{\\theta^2 t}{2}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{dQ}{dP} = e^{-\\theta B_T - \\theta^2T/2}$. Then $B_t + \\theta t$ is a $Q$-Brownian motion: the statement of ito lesson 10.",
+        "generic": "Not quite right. Match the mean $-\\tfrac{\\theta^2}{2}$ and variance $\\theta^2$ of $\\ln Z$ with $-\\theta B_1 + c$.",
+        "byKey": {
+          "plus": "You gave $+\\theta w$. The weight is small where $B_T$ is large, because $Q$ has removed that upward drift.",
+          "nocorrection": "You dropped $-\\theta^2 T/2$. Without it $E_P[Z_T] = e^{\\theta^2T/2}$, not 1."
+        }
+      },
+      "explain": {
+        "text": "$\\ln Z_n$ has mean $-\\tfrac{\\theta^2}{2}$ and variance $\\theta^2$, which is $-\\theta B_1 - \\tfrac{\\theta^2}{2}$ with $B_1 \\sim N(0, 1)$. So $\\tfrac{dQ}{dP} = e^{-\\theta B_T - \\theta^2T/2}$, and the walk $B_t + \\theta t$ is a $Q$-Brownian motion. This is Girsanov's theorem in continuous form."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Removing the drift",
+      "prose": "A walk steps $+1$ or $-1$ with up chance 0.6, so each step has mean 0.2. A desk wants a model with no drift and wants it to be a change of measure.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "compact": true,
+          "levels": [
+            {
+              "label": "Toss 1",
+              "branches": [
+                {
+                  "id": "U",
+                  "label": "+1",
+                  "p": "3/5"
+                },
+                {
+                  "id": "D",
+                  "label": "-1",
+                  "p": "2/5"
+                }
+              ]
+            },
+            {
+              "label": "Toss 2",
+              "branches": [
+                {
+                  "id": "U",
+                  "label": "+1",
+                  "p": "3/5"
+                },
+                {
+                  "id": "D",
+                  "label": "-1",
+                  "p": "2/5"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which method is a change of measure?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Keep the steps at $\\pm 1$, move the up chance to $\\tfrac12$ and reweight each path by $Z_n$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Shrink the up step to $+\\tfrac23$, so the mean step is $0.6 \\cdot \\tfrac23 - 0.4 = 0$",
+            "why": "You changed the paths. A new step size is a different walk with another volatility, so it is not a reweighting of this one."
+          },
+          {
+            "id": "c",
+            "text": "Weight only the up moves, by $\\tfrac56$, and leave the down moves alone",
+            "why": "You left the down weight at 1. Then $E_P[Z_1] = 0.6 \\times \\tfrac56 + 0.4 = 0.9$, so the weights are not a density."
+          },
+          {
+            "id": "d",
+            "text": "Subtract $0.2n$ from every path and call the result $Q$",
+            "why": "You shifted the paths. $S_n - 0.2n$ is a $P$-martingale, but its paths differ from the walk's, and no measure was changed."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A change of measure keeps the paths and moves their chances."
+        },
+        {
+          "rung": "point",
+          "text": "A density must average 1 under the old measure.",
+          "highlight": [
+            "U",
+            "D"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only one option keeps the steps at $\\pm 1$ and a mean-1 weight."
+        }
+      ],
+      "feedback": {
+        "correct": "Girsanov keeps every path and every step size. Only the chances move, by the weight $Z_n$ with $E_P[Z_n] = 1$.",
+        "generic": "Not quite right. Check that the paths are unchanged and the weights average 1.",
+        "byKey": {
+          "b": "Shrinking the step changes the walk's volatility. Girsanov changes the drift only.",
+          "c": "A weight that averages 0.9 loses a tenth of the probability.",
+          "d": "Subtracting the drift makes a new process. It does not put new chances on the old paths."
+        }
+      },
+      "explain": {
+        "text": "A change of measure leaves the paths and the volatility alone. After 20 steps the walk still ends in $\\{-20, -18, \\dots, 20\\}$. It moves the chances, and the weight must average 1: the lopsided $\\tfrac56$-only weight averages 0.9."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Girsanov in code",
+      "prose": "Paths are strings of H and T. Write `girsanov_weight(path, p, q)`, exact with `Fraction`, and `q_mean_via_p(f, n, p, q)`, which lists all $2^n$ paths and returns $E_P[Z_n f]$.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> girsanov_weight('HHT', p, half)",
+            "Fraction(125, 144)",
+            ">>> q_mean_via_p(S, 10, p, half)",
+            "Fraction(0, 1)",
+            ">>> q_mean_via_p(runmax, 4, p, half)",
+            "Fraction(19, 16)"
+          ],
+          "title": "Expected"
+        },
+        "state": {}
+      },
+      "question": "Complete both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\nfrom itertools import product\n\ndef girsanov_weight(path, p, q):\n    \"\"\"Z_n for a path such as 'HHT': (q/p)^(number of H) * ((1-q)/(1-p))^(number of T), exact.\"\"\"\n    ...\n\ndef q_mean_via_p(f, n, p, q):\n    \"\"\"E_Q[f] = E_P[Z_n f], exactly, by listing all 2**n paths. f takes the path string.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\nfrom itertools import product\n\ndef girsanov_weight(path, p, q):\n    \"\"\"Z_n for a path such as 'HHT': (q/p)^(number of H) * ((1-q)/(1-p))^(number of T), exact.\"\"\"\n    p, q = Fraction(p), Fraction(q)\n    return (q / p) ** path.count('H') * ((1 - q) / (1 - p)) ** path.count('T')\n\ndef q_mean_via_p(f, n, p, q):\n    \"\"\"E_Q[f] = E_P[Z_n f], exactly, by listing all 2**n paths. f takes the path string.\"\"\"\n    p, q = Fraction(p), Fraction(q)\n    total = Fraction(0)\n    for w in product('HT', repeat=n):\n        path = ''.join(w)\n        chance = p ** path.count('H') * (1 - p) ** path.count('T')\n        total += chance * girsanov_weight(path, p, q) * f(path)\n    return total\n",
+        "prelude": "from fractions import Fraction\nfrom itertools import product\np = Fraction(3, 5)\nhalf = Fraction(1, 2)\nS = lambda w: w.count('H') - w.count('T')\ndef runmax(w):\n    s, m = 0, 0\n    for c in w:\n        s += 1 if c == 'H' else -1\n        m = max(m, s)\n    return m\n",
+        "examples": [
+          {
+            "call": "girsanov_weight('HHT', p, half)",
+            "expect": "Fraction(125, 144)",
+            "compare": "equal"
+          },
+          {
+            "call": "q_mean_via_p(runmax, 4, p, half)",
+            "expect": "Fraction(19, 16)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "girsanov_weight('HHT', p, half)",
+            "expect": "Fraction(125, 144)",
+            "compare": "equal"
+          },
+          {
+            "call": "girsanov_weight('', p, half)",
+            "expect": "Fraction(1)",
+            "compare": "equal"
+          },
+          {
+            "call": "girsanov_weight('TTT', p, half)",
+            "expect": "Fraction(125, 64)",
+            "compare": "equal"
+          },
+          {
+            "call": "girsanov_weight('HTH', half, half)",
+            "expect": "Fraction(1)",
+            "compare": "equal"
+          },
+          {
+            "call": "q_mean_via_p(lambda w: 1, 10, p, half)",
+            "expect": "Fraction(1)",
+            "compare": "equal"
+          },
+          {
+            "call": "q_mean_via_p(S, 10, p, half)",
+            "expect": "Fraction(0)",
+            "compare": "equal"
+          },
+          {
+            "call": "q_mean_via_p(S, 10, p, Fraction(11, 20))",
+            "expect": "Fraction(1)",
+            "compare": "equal"
+          },
+          {
+            "call": "q_mean_via_p(runmax, 4, p, half)",
+            "expect": "Fraction(19, 16)",
+            "compare": "equal"
+          },
+          {
+            "call": "q_mean_via_p(lambda w: w.count('H'), 4, p, Fraction(2, 5))",
+            "expect": "Fraction(8, 5)",
+            "compare": "equal"
+          },
+          {
+            "call": "q_mean_via_p(lambda w: 1, 3, half, Fraction(1))",
+            "expect": "Fraction(1)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests with exact fractions. `p`, `half`, `S` (the position) and `runmax` (the running maximum) are already defined."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The weight is a product with one factor per toss: count the H and the T."
+        },
+        {
+          "rung": "point",
+          "text": "Sum chance $\\times$ weight $\\times f(\\text{path})$ over `product('HT', repeat=n)`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Convert `p` and `q` with `Fraction` so every result is exact."
+        }
+      ],
+      "feedback": {
+        "correct": "All 10 tests pass. The weights average 1. $E_Q[S_{10}]$ is 0 at $q = \\tfrac12$ and 1 at $q = \\tfrac{11}{20}$, and the 4-step running maximum averages $\\tfrac{19}{16}$ under a fair coin.",
+        "generic": "Not quite right. Use `Fraction` throughout and one weight factor per toss."
+      },
+      "explain": {
+        "text": "`q_mean_via_p` is the identity $E_Q[f] = E_P[Z_n f]$ by brute force. At $q = \\tfrac12$ the walk is fair, so $E_Q[S_{10}] = 0$ and the running maximum of 4 steps averages $\\tfrac{19}{16}$. Real tools sample paths instead of listing them."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Weights and the two-step call",
+      "prose": "On the trees course's two-step tree, the real up chance is $p = 0.7$ and $q = 0.625$, with $r = 5\\%$ a step. A path has weight $(q/p)^{U}\\left(\\tfrac{1-q}{1-p}\\right)^{D}$. Enter each weight by node, then price the £100 call.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "height": 260,
+          "label": "Weights $Z_2$ at the year-2 nodes",
+          "lattice": {
+            "steps": 2,
+            "S0": 100,
+            "u": 1.2,
+            "d": 0.8,
+            "decimals": 0,
+            "money": "£",
+            "stepLabels": true
+          }
+        },
+        "state": {}
+      },
+      "question": "Fill in $Z_2$ at the three year-2 nodes and the call price.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "$Z_2$ after UU",
+            {
+              "edit": true,
+              "answer": 0.7972,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.n2_2"
+            }
+          ],
+          [
+            "$Z_2$ after UD or DU",
+            {
+              "edit": true,
+              "answer": 1.1161,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.n2_1"
+            }
+          ],
+          [
+            "$Z_2$ after DD",
+            {
+              "edit": true,
+              "answer": 1.5625,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.n2_0"
+            }
+          ],
+          [
+            "Call price $E_P[Z_2(S_2 - 100)^+]/1.05^2$",
+            {
+              "edit": true,
+              "answer": 15.59,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Up: $0.625/0.7$. Down: $0.375/0.3 = 1.25$."
+        },
+        {
+          "rung": "point",
+          "text": "UD has one of each: $0.8929 \\times 1.25$.",
+          "highlight": [
+            "n2_2",
+            "n2_1",
+            "n2_0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only UU pays £44, with $P$-chance $0.7^2 = 0.49$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.7972$, $1.1161$ and $1.5625$, and the call is £15.59, the risk-neutral price of trees lesson 5.",
+        "generic": "Not quite right. Multiply one weight per step, then average the weighted payoff under $P$ and discount twice.",
+        "byKey": {
+          "r0c1": "UU is two up steps: $(0.625/0.7)^2$.",
+          "r1c1": "UD or DU is one up step and one down step: $\\tfrac{0.625}{0.7} \\times \\tfrac{0.375}{0.3}$.",
+          "r2c1": "DD is two down steps: $(0.375/0.3)^2 = 1.25^2$.",
+          "r3c1": "Only UU pays £44. Its $P$-chance is 0.49 and its weight 0.7972. Without the weight the price is £19.56."
+        }
+      },
+      "explain": {
+        "text": "$E_P[Z_2(S_2 - 100)^+]/1.05^2 = 0.49 \\times 0.7972 \\times 44 / 1.1025 = \\text{£}15.59$. The real chance 0.7 cancels, leaving $q^2 \\times 44/1.05^2$. The weight is largest, 1.5625, where the share has fallen twice: the pricing measure moves chance towards the losing paths."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "$Z_n = \\left(\\tfrac qp\\right)^{U_n}\\left(\\tfrac{1-q}{1-p}\\right)^{D_n}$ is $\\tfrac{dQ}{dP}$ on $\\mathcal{F}_n$: a $P$-martingale with mean 1. Under $Q$, $S_n - n(2q - 1)$ is a martingale.",
+      "Only the chances change; the steps, the paths and the volatility stay. $E_Q[X \\mid \\mathcal{F}_n] = E_P[Z_N X \\mid \\mathcal{F}_n]/Z_n$ (Bayes' rule).",
+      "Steps of size $\\tfrac1{\\sqrt n}$ give $\\tfrac{dQ}{dP} = e^{-\\theta B_T - \\theta^2T/2}$ in the limit. On the two-step tree the weights are 0.7972, 1.1161 and 1.5625, and the call is £15.59."
+    ],
+    "formula": {
+      "name": "Girsanov weight",
+      "tex": "Z_n = \\left(\\dfrac qp\\right)^{U_n}\\left(\\dfrac{1-q}{1-p}\\right)^{D_n}, \\qquad E_P[Z_n] = 1",
+      "note": "Further reading: Shreve, Stochastic Calculus for Finance II, section 5.2 (Girsanov's theorem)."
+    },
+    "trap": "Shrinking the up step, or weighting only the up moves, is not a change of measure. The paths stay and the weights must average 1."
+  },
+  "quiz": [
+    {
+      "id": "q-down",
+      "difficulty": 2,
+      "prose": "A step has up chance $p = \\tfrac35$ and the up weight is $\\tfrac56$. The down weight $z$ is chosen so the weights form a density.",
+      "question": "What is $z$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.25,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "1.25: 0.6 x 5/6 + 0.4 z = 1",
+        "label": "$z$",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$z = \\tfrac54$: $0.6 \\times \\tfrac56 + 0.4z = 1$ gives $0.4z = 0.5$.",
+        "generic": "Not quite right. The weights must average 1 under $P$.",
+        "byKey": {
+          "one": "You left the down weight at 1. Then the average is $0.5 + 0.4 = 0.9$, not 1."
+        }
+      },
+      "explain": {
+        "text": "$0.6 \\times \\tfrac56 = 0.5$, so $0.4z = 0.5$ and $z = 1.25 = \\tfrac{1-q}{1-p}$ with $q = \\tfrac12$. A density must average 1."
+      }
+    },
+    {
+      "id": "q-edge",
+      "difficulty": 3,
+      "prose": "A walk has up chance $p = \\tfrac35$. We move to $q = 1$, so every step is up under $Q$.",
+      "question": "What happens to $Z_n$ on a path with at least one down move?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$Z_n = 0$: $Q$ ignores paths that $P$ allows, so $P$ and $Q$ are not equivalent",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$Z_n = 1$, as when $q = p$",
+            "why": "You treated $q = 1$ like $q = p$. The weight of a down step is $\\tfrac{1-q}{1-p} = 0$, not 1."
+          },
+          {
+            "id": "c",
+            "text": "$Z_n$ is infinite, because $1 - q = 0$ is in the numerator",
+            "why": "You put the zero in the denominator. $1 - q$ is on top, so the weight is 0."
+          },
+          {
+            "id": "d",
+            "text": "$Z_n$ is $\\tfrac53$, the up weight $\\tfrac qp$",
+            "why": "You used the up weight for every step. A path with a down move has the factor $\\tfrac{1-q}{1-p} = 0$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$Z_n = 0$ on every path with a down move, so $Q \\ll P$ holds but $P \\ll Q$ fails.",
+        "generic": "Not quite right. Evaluate $\\tfrac{1-q}{1-p}$ at $q = 1$."
+      },
+      "explain": {
+        "text": "At $q = 1$ the down weight is $\\tfrac{0}{2/5} = 0$, so only the all-up path has $Q$-chance. With $q = p$ every weight is 1 and $Q = P$. At $q = 0$ or 1 the measures are not equivalent."
+      }
+    },
+    {
+      "id": "q-drift",
+      "difficulty": 3,
+      "prose": "A walk has up chance $p = 0.6$, and we change to $q = 0.55$.",
+      "question": "Find $c$ such that $S_n - cn$ is a $Q$-martingale.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.002
+        },
+        "accept": "0.1 = 2(0.55) - 1",
+        "label": "$c$",
+        "wrong": [
+          {
+            "id": "pdrift",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.002
+            }
+          },
+          {
+            "id": "qchance",
+            "value": 0.55,
+            "tol": {
+              "abs": 0.002
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$c = 2q - 1 = 0.1$, the mean step under $Q$.",
+        "generic": "Not quite right. Use the new chance $q$, not $p$.",
+        "byKey": {
+          "pdrift": "You used the drift under $P$, $2p - 1 = 0.2$. Under $Q$ the mean step is $2q - 1$.",
+          "qchance": "You gave $q$. The mean of a $\\pm 1$ step is $2q - 1$."
+        }
+      },
+      "explain": {
+        "text": "Under $Q$ a step has mean $0.55(1) + 0.45(-1) = 0.1$. So $S_n - 0.1n$ is a $Q$-martingale, and $S_n - 0.2n$ is a $P$-martingale."
+      }
+    },
+    {
+      "id": "q-path",
+      "difficulty": 3,
+      "prose": "A walk has $p = 0.6$ and we change to $q = 0.55$. Take the path H, H, T.",
+      "question": "What is $Z_3$? Give four decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9453,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "(0.55/0.6)^2 x (0.45/0.4) = 0.9453",
+        "label": "$Z_3$",
+        "wrong": [
+          {
+            "id": "inverted",
+            "value": 1.0579,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "upsonly",
+            "value": 0.8403,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\left(\\tfrac{0.55}{0.6}\\right)^2 \\times \\tfrac{0.45}{0.4} = 0.8403 \\times 1.125 = 0.9453$.",
+        "generic": "Not quite right. Two up factors and one down factor.",
+        "byKey": {
+          "inverted": "You divided $p$ by $q$. The weight $\\tfrac{dQ}{dP}$ has the new chance on top.",
+          "upsonly": "You used the two up factors and left out the down factor 1.125."
+        }
+      },
+      "explain": {
+        "text": "The up factor is $\\tfrac{0.55}{0.6} = 0.9167$ and the down factor is $\\tfrac{0.45}{0.4} = 1.125$. The path has $0.9167^2 \\times 1.125 = 0.9453$."
+      }
+    }
+  ]
+}
