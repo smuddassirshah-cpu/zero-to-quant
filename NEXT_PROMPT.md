@@ -1,22 +1,16 @@
-Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only; if the local ref is behind origin, check out origin (back up before moving a ref).
+Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only; if the local ref is behind origin, check out origin (back up before moving a ref; the clone is shallow, so compare trees, not ahead and behind counts).
 
-Task: PLAN 2a item 6, topic 3.2: ito L2 to L4, measure-prob L1 to L4, pdes L1 to L3, exam topic-3.2, second reads and fix. Topic 3.5 and gating closed 4 Nov.
+Task: PLAN 2a item 7, appended levels: trees L4 "Options at interview" (l13 to l18) and cpp L5 "C++ questions at interview" (l19 to l23), each with review and homework; extend exams topic-1.7 and topic-1.9; second read and fix of each new level.
 
 Context not in the state files:
-- Briefs `docs/briefs/ito.md`, `measure-prob.md`, `pdes.md` predate engine passes C and E and name an old scratchpad. Give agents the current `pkgs` path. Check each brief's canvas and widget needs against `docs/AUTHORING.md` first; per DECISIONS "Topic 3.5 briefs", raise [Must] items for an engine pass, never workarounds.
-- Gating is live (AUTHORING section 11): a level needs `requires` only where its brief names more than the previous level; only a mapping agent edits `course.json`.
-- Worktree agents commit as they go; merge per DECISIONS "Parallel worktree merges".
-- Pyodide ships SciPy 1.14.1 (KNOWN_ISSUES).
+- No brief exists for either level (there is no `docs/briefs/trees.md` or `cpp.md` section; PLAN Phase 2 "Briefs" line is open). Write both briefs first from `docs/briefs/interview-plan.md`, the course maps and `docs/briefs/EXAMPLE.md`, check them against `docs/AUTHORING.md`, and raise any engine gap as a [Must] item for an engine pass, never a workaround.
+- Exam topic-1.7 is at the 30-item cap: pack trees L4 asks into multi-part items. topic-1.9 has 25 items.
+- New this session: `--mobile` is 440 px (iPhone 17 Pro Max), `--tablet` adds 1032 and 1376 (iPad Pro 13-inch); levels are accepted with and without `--mobile` and with `--tablet`. Per cent keys are fractions (validator item 515). After changing any key, grep for the old value.
+- Engine and dev agents may be barred from git by their definitions: commit their trees yourself after reviewing the diff.
+- Local CDN: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
 
-Waves (parallel Sonnet agents, `isolation: "worktree"`):
-1. Brief check and engine gaps; ito L2, measure-prob L1, pdes L1.
-2. ito L3, measure-prob L2, pdes L2.
-3. ito L4, measure-prob L3 and L4, pdes L3.
-4. Exam topic-3.2 (brief first, pattern `docs/reports/exam-3.5.md`); second reads and fix passes, voice 0 and 0.
-After each wave: an answer check per level, a fix agent, changed keys rechecked.
+Waves (Sonnet, `isolation: "worktree"`, merge per DECISIONS "Parallel worktree merges"): 1. both briefs and their check; 2. trees L4 and cpp L5; 3. exam extensions; 4. answer checks, fix, recheck; second reads and fix, voice 0 and 0.
 
-Close: local CDN (`bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`); split playthrough (four lesson shards in parallel, then `--sets`, `--exams`, `--bank all`, `--drills`, `--routes-only`) with and without `--mobile`; PLAN ticks; state files; NEXT_PROMPT.
+Close: split playthrough (four lesson shards, then `--sets`, `--exams`, `--bank all`, `--drills`, `--routes-only`) with and without `--mobile`, plus `--tablet` on the new files; PLAN ticks; state files; NEXT_PROMPT.
 
-Files: `app/content/courses/{ito,measure-prob,pdes}/`, `app/content/exams/topic-3.2.json`, `docs/reports/`, `docs/reviews/`, `app/js/` if an engine pass is needed.
-
-Acceptance: validate 0 errors; all topic 3.2 levels and exam green with and without `--mobile`; answer checks clean; voice 0 and 0; split runs green.
+Acceptance: validate 0 errors; new levels and both exams green at all widths; answer checks clean; voice 0 and 0; split runs green.
