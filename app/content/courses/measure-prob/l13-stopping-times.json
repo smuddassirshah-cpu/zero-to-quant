@@ -1,0 +1,1187 @@
+{
+  "id": "l13-stopping-times",
+  "course": "measure-prob",
+  "title": "Stopping times and optional stopping proved",
+  "minutes": 15,
+  "objectives": [
+    "Prove the optional stopping theorem under bounded stopping times."
+  ],
+  "skills": [
+    "mt-martingale"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Stopping a fair walk",
+      "prose": "A fair walk starts at 3 and stops the first time it hits 0 or 10. Here are 300 such walks, 30 drawn. The lower panel averages the stopped value $S_T$ over the first $k$ walks. Move the ends to see what it follows.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 200,
+          "p": 0.5,
+          "start": 3,
+          "paths": 300,
+          "drawn": 30,
+          "sim": {
+            "seed": 18
+          },
+          "height": 200,
+          "yLabel": "$S_n$",
+          "xLabel": "Step $n$",
+          "overlayHeight": 56,
+          "lower": 0,
+          "upper": 10,
+          "upLabel": "10",
+          "downLabel": "0"
+        },
+        "state": {
+          "stopAtBarrier": true,
+          "showHits": true,
+          "showStopped": true
+        },
+        "derive": {
+          "caption": "{{values.hitsUp}} of {{values.paths}} walks hit the top. Average of $S_T$: {{fixed(values.stopped, 2)}}."
+        },
+        "controls": [
+          {
+            "bind": "lower",
+            "min": 0,
+            "max": 2,
+            "step": 1,
+            "label": "Lower end"
+          },
+          {
+            "bind": "upper",
+            "min": 4,
+            "max": 20,
+            "step": 1,
+            "label": "Upper end"
+          }
+        ]
+      },
+      "question": "With ends 0 and 10, what does the average of $S_T$ settle near?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0.5
+        },
+        "accept": "About 3, the start value",
+        "label": "Average of $S_T$",
+        "wrong": [
+          {
+            "id": "mid",
+            "value": 5,
+            "tol": {
+              "abs": 0.3
+            }
+          },
+          {
+            "id": "top",
+            "value": 10,
+            "tol": {
+              "abs": 0.3
+            }
+          },
+          {
+            "id": "share",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the dashed line in the lower panel."
+        },
+        {
+          "rung": "point",
+          "text": "It marks the start value, and the average hugs it.",
+          "highlight": [
+            "stopped-ref"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Move an end: the average still follows the start."
+        }
+      ],
+      "feedback": {
+        "correct": "The average settles on the start, 3. Stopping did not change the mean of a fair game.",
+        "generic": "Not quite right. Read where the lower panel flattens out.",
+        "byKey": {
+          "mid": "You gave the midpoint of 0 and 10. The walk is fair, so its mean stays at the start, not at the middle.",
+          "top": "You gave the upper end. Only some walks reach 10, so the average sits well below it.",
+          "share": "You gave the share that hit 10. The panel averages the stopped value, not the share."
+        }
+      },
+      "explain": {
+        "text": "90 of the 300 walks reached 10 and the other 210 ended at 0. Yet the average of $S_T$ settled at 3.00, the start. Stopping at the ends leaves the mean of a fair game where it was, which is what we now prove.",
+        "canvas": {
+          "highlight": [
+            "stopped-walk"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Which rules are stopping times",
+      "prose": "A **stopping time** $T$ decides from the past alone: $\\{T = n\\} \\in \\mathcal{F}_n$ for every $n$. At step $n$ you must be able to say whether you stop now.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 200,
+          "p": 0.5,
+          "start": 3,
+          "paths": 300,
+          "drawn": 30,
+          "sim": {
+            "seed": 18
+          },
+          "height": 200,
+          "yLabel": "$S_n$",
+          "xLabel": "Step $n$",
+          "overlayHeight": 56,
+          "lower": 0,
+          "upper": 10,
+          "upLabel": "10",
+          "downLabel": "0"
+        },
+        "state": {
+          "stopAtBarrier": true
+        }
+      },
+      "question": "Select all that apply: which are stopping times?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The first time $S$ hits 0 or 10",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$T = 5$, always stop at step 5",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "The smaller of two stopping times",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "The first time $S \\ge 1$ after step 3",
+            "correct": true
+          },
+          {
+            "id": "e",
+            "text": "The last visit to 3 before step 50",
+            "why": "You used a time that needs the future. A visit is the last only once step 50 has passed."
+          },
+          {
+            "id": "f",
+            "text": "The step of the highest point of the first 10 steps",
+            "why": "You used the highest point. You cannot tell a step is the highest until step 10."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At step $n$, can you tell whether $T = n$ using steps up to $n$?"
+        },
+        {
+          "rung": "point",
+          "text": "Rules about the last or the highest need the whole stretch.",
+          "highlight": [
+            "barrier-up",
+            "barrier-down"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A first time of something is always decided as it happens."
+        }
+      ],
+      "feedback": {
+        "correct": "The first four are decided as they happen. A last visit and a highest point are not.",
+        "generic": "Not quite right. Ask whether the rule needs steps after $n$ to say $T = n$.",
+        "byKey": {
+          "e": "The last visit cannot be known until the time window ends.",
+          "f": "The highest point needs steps up to 10, so it looks ahead."
+        }
+      },
+      "explain": {
+        "text": "A first hit, a fixed time and the smaller of two stopping times are decided by steps up to $n$. The first time $S \\ge 1$ after step 3 is too. The last visit and the highest point need steps still to come, so they are not."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The stopped process is a martingale",
+      "prose": "Let $M$ be a martingale and $T$ a stopping time. The stopped process is $M_{T \\wedge n}$. We show it is a martingale. Two lines may swap, and one line is flawed.",
+      "question": "Put the proof in order, a reason in each line. Move the flawed line to Left out.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Let $H_k = \\mathbf{1}_{\\{T \\ge k\\}}$: hold 1 unit on step $k$ until we stop, and 0 after."
+          },
+          {
+            "id": "s2",
+            "text": "$\\{T \\ge k\\}$ is the complement of $\\{T \\le k - 1\\} \\in \\mathcal{F}_{k-1}$, so $H_k$ is predictable and bounded."
+          },
+          {
+            "id": "s3",
+            "text": "$M_{T \\wedge n} = M_0 + \\sum_{k \\le n} H_k (M_k - M_{k-1})$: the sum counts every step up to time $T$."
+          },
+          {
+            "id": "s4",
+            "text": "That is a martingale transform of $M$ by $H$, so $M_{T \\wedge n}$ is a martingale (lesson 12). $\\blacksquare$"
+          },
+          {
+            "id": "x1",
+            "text": "$H_k = \\mathbf{1}_{\\{T > k\\}}$ is predictable, since it is the same as $H_k$ but easier to write.",
+            "why": "You used $\\{T > k\\}$. It is the complement of $\\{T \\le k\\}$, decided at time $k$ and not $k - 1$, so it is not predictable."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "same": [
+          [
+            "s2",
+            "s3"
+          ]
+        ],
+        "distractors": [
+          "x1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A position must be fixed before the step it is held over."
+        },
+        {
+          "rung": "point",
+          "text": "$H_k = 1$ exactly when you have not stopped before step $k$."
+        },
+        {
+          "rung": "step",
+          "text": "Check predictable, write the sum, then call the transform."
+        }
+      ],
+      "feedback": {
+        "correct": "Right. The stopped process is gains from a predictable position, so it is fair.",
+        "generic": "Not quite right. Define the position, check it is predictable, then identify the transform.",
+        "byKey": {
+          "x1": "You used a line that places the position one step too late. $\\{T \\ge k\\}$ is the one known at time $k - 1$.",
+          "left-out": "You left out a line the proof needs. Only the flawed line goes to Left out."
+        }
+      },
+      "explain": {
+        "text": "$H_k = 1$ until we stop and 0 after. It is known at time $k - 1$ because $T \\le k - 1$ is. So $M_{T \\wedge n}$ is a martingale transform, which lesson 12 showed to be a martingale."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Optional stopping, bounded case",
+      "prose": "Now let $T \\le N$ be a stopping time. We prove $E[M_T] = E[M_0]$ from the last screen. Two lines are flawed.",
+      "question": "Put the proof in order, a reason in each line. Move the two flawed lines to Left out.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "o1",
+            "text": "Since $T \\le N$, we have $T \\wedge N = T$, so $M_T = M_{T \\wedge N}$."
+          },
+          {
+            "id": "o2",
+            "text": "$M_{T \\wedge n}$ is a martingale, so $E[M_{T \\wedge N}] = E[M_{T \\wedge 0}] = E[M_0]$."
+          },
+          {
+            "id": "o3",
+            "text": "Hence $E[M_T] = E[M_0]$: a bounded stopping time cannot change the mean of a fair game. $\\blacksquare$"
+          },
+          {
+            "id": "y1",
+            "text": "So $E[M_T] = E[M_0]$ for every stopping time, bounded or not.",
+            "why": "You dropped the bound. Without it $M_{T \\wedge n}$ need not converge to $M_T$ in mean, and the end of this lesson shows it can fail."
+          },
+          {
+            "id": "y2",
+            "text": "Since $T \\le N$, we have $M_T = M_N$.",
+            "why": "You replaced $T$ by $N$. The stopped value is $M_T$, which equals $M_N$ only on paths where $T = N$."
+          }
+        ],
+        "answer": [
+          "o1",
+          "o2",
+          "o3"
+        ],
+        "distractors": [
+          "y1",
+          "y2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the bound to turn $M_T$ into a stopped value at a fixed time."
+        },
+        {
+          "rung": "point",
+          "text": "The mean of a martingale does not move with $n$."
+        },
+        {
+          "rung": "step",
+          "text": "Order: replace $T$, use the martingale, conclude."
+        }
+      ],
+      "feedback": {
+        "correct": "Right. The bound makes $M_T$ a value of the stopped martingale, whose mean is fixed.",
+        "generic": "Not quite right. Turn $M_T$ into a stopped value at time $N$ first.",
+        "byKey": {
+          "y1": "You used a line that drops the hypothesis. The theorem is for bounded $T$.",
+          "y2": "You used a line that replaces the stopped value by the final one.",
+          "left-out": "You left out a line the proof needs. Only the two flawed lines go to Left out."
+        }
+      },
+      "explain": {
+        "text": "A bounded $T$ makes $M_T$ equal to the stopped value $M_{T \\wedge N}$. That is a martingale evaluated at time $N$, so its mean is $E[M_0]$. The constant $N$ is what lets us stop the argument at a finite time."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Unbounded times, and level 2",
+      "prose": "The exit time $T$ from $(0, 10)$ is not bounded, but it is finite almost surely and $|S_{T \\wedge n}| \\le 10$. Dominated convergence gives $E[S_T] = 3$, so $P(\\text{hit } 10) = \\tfrac{3}{10}$. Now use $S_n^2 - n$: $E[S_{T \\wedge n}^2] - E[T \\wedge n] = 9$.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 200,
+          "p": 0.5,
+          "start": 3,
+          "paths": 300,
+          "drawn": 30,
+          "sim": {
+            "seed": 18
+          },
+          "height": 200,
+          "yLabel": "$S_n$",
+          "xLabel": "Step $n$",
+          "overlayHeight": 56,
+          "lower": 0,
+          "upper": 10,
+          "upLabel": "10",
+          "downLabel": "0",
+          "overlays": [
+            {
+              "id": "sqx",
+              "expr": "x * x - n",
+              "label": "$S_n^2 - n$",
+              "chip": "S² − n",
+              "y": [
+                -100,
+                100
+              ]
+            }
+          ]
+        },
+        "state": {
+          "stopAtBarrier": true,
+          "showStopped": "sqx"
+        },
+        "derive": {
+          "caption": "{{values.hitsUp}} of {{values.paths}} hit 10."
+        }
+      },
+      "question": "Let $n \\to \\infty$. Which theorem handles which term?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Monotone for $E[T \\wedge n]$, dominated for $E[S^2_{T \\wedge n}]$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Dominated convergence for both of the terms",
+            "why": "You dominated $T \\wedge n$. It has no fixed bound, but it increases to $T$, which is monotone convergence."
+          },
+          {
+            "id": "c",
+            "text": "Monotone convergence for both of the terms",
+            "why": "You applied monotone convergence to $S^2_{T \\wedge n}$. It rises and falls, but it is bounded by 100, so dominated convergence applies."
+          },
+          {
+            "id": "d",
+            "text": "Neither: both limits are obvious from the picture",
+            "why": "You skipped the theorem. Swapping a limit and an expectation is what level 2 proves."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One term is increasing, and the other is bounded."
+        },
+        {
+          "rung": "point",
+          "text": "$T \\wedge n$ rises with $n$. $S^2_{T \\wedge n}$ stays below $10^2$.",
+          "highlight": [
+            "ov-sqx"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Increasing and non-negative is monotone. Bounded is dominated."
+        }
+      ],
+      "feedback": {
+        "correct": "$E[T \\wedge n] \\uparrow E[T]$ by monotone convergence, and $E[S^2_{T \\wedge n}] \\to E[S_T^2]$ by dominated convergence with bound 100.",
+        "generic": "Not quite right. Match increasing with monotone and bounded with dominated.",
+        "byKey": {
+          "b": "$T \\wedge n$ is increasing and unbounded, so there is nothing to dominate it.",
+          "c": "$S^2_{T \\wedge n}$ is not increasing, so monotone convergence does not apply."
+        }
+      },
+      "explain": {
+        "text": "$T \\wedge n$ increases to $T$, so monotone convergence gives $E[T \\wedge n] \\uparrow E[T]$. $S^2_{T \\wedge n} \\le 100$ and converges to $S_T^2$, so dominated convergence gives $E[S_{T \\wedge n}^2] \\to E[S_T^2]$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The expected duration",
+      "prose": "In the limit, $S_T$ is 10 with chance $\\tfrac{3}{10}$ and 0 otherwise, so $E[S_T^2] = 100 \\times \\tfrac{3}{10} = 30$. And $E[S_{T \\wedge n}^2] - E[T \\wedge n] = 9$ becomes $E[S_T^2] - E[T] = 9$.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 200,
+          "p": 0.5,
+          "start": 3,
+          "paths": 300,
+          "drawn": 30,
+          "sim": {
+            "seed": 18
+          },
+          "height": 200,
+          "yLabel": "$S_n$",
+          "xLabel": "Step $n$",
+          "overlayHeight": 56,
+          "lower": 0,
+          "upper": 10,
+          "upLabel": "10",
+          "downLabel": "0",
+          "overlays": [
+            {
+              "id": "sqx",
+              "expr": "x * x - n",
+              "label": "$S_n^2 - n$",
+              "chip": "S² − n",
+              "y": [
+                -100,
+                100
+              ]
+            }
+          ]
+        },
+        "state": {
+          "stopAtBarrier": true,
+          "showStopped": "sqx"
+        },
+        "derive": {
+          "caption": "Average of $S_T^2 - T$: {{fixed(values.stoppedSqx, 2)}}"
+        }
+      },
+      "question": "What is $E[T]$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "21: $30 - 9$, which is $3 \\times 7$",
+        "label": "$E[T]$",
+        "wrong": [
+          {
+            "id": "thirty",
+            "value": 30,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "nine",
+            "value": 9,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sum",
+            "value": 39,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Rearrange $E[S_T^2] - E[T] = 9$."
+        },
+        {
+          "rung": "point",
+          "text": "$E[T] = E[S_T^2] - 9$.",
+          "highlight": [
+            "ov-sqx"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$E[T] = 30 - 9$."
+        }
+      ],
+      "feedback": {
+        "correct": "21 steps on average, found with no equations to solve.",
+        "generic": "Not quite right. Rearrange for $E[T]$.",
+        "byKey": {
+          "thirty": "You gave $E[S_T^2]$. The 9 comes off it, because $S_n^2 - n$ started at 9.",
+          "sum": "You added 9. The identity says $E[S_T^2]$ is larger than $E[T]$ by 9.",
+          "nine": "You gave the constant on the right. $E[T] = E[S_T^2] - 9$."
+        }
+      },
+      "explain": {
+        "text": "$E[T] = E[S_T^2] - 9 = 30 - 9 = 21$. The same result comes from $k(N - k) = 3 \\times 7$. The walk lasts 21 steps on average although a few walks last much longer."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "When it fails",
+      "prose": "Start at 0 and stop at the first hit of $+1$, with no lower end. The walk reaches $+1$ sooner or later, so $S_T = 1$ always, and $E[S_T] = 1 \\ne 0 = E[S_0]$. Optional stopping fails here.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 200,
+          "p": 0.5,
+          "start": 0,
+          "paths": 300,
+          "drawn": 30,
+          "sim": {
+            "seed": 18
+          },
+          "height": 200,
+          "yLabel": "$S_n$",
+          "xLabel": "Step $n$",
+          "overlayHeight": 56,
+          "upper": 1,
+          "upLabel": "1",
+          "y": [
+            -20,
+            6
+          ]
+        },
+        "state": {
+          "stopAtBarrier": true,
+          "showHits": true
+        }
+      },
+      "question": "Which hypothesis breaks?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "No integrable variable dominates the stopped walk",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$T$ is not a stopping time",
+            "why": "You doubted the stopping time. $\\{T = n\\}$ is decided by the first $n$ steps, so it is one."
+          },
+          {
+            "id": "c",
+            "text": "$S_n$ is not a martingale",
+            "why": "You blamed the walk. It is fair, so it is a martingale; the failure is in swapping limit and mean."
+          },
+          {
+            "id": "d",
+            "text": "$T$ is infinite with positive chance, so no mean exists",
+            "why": "You assumed $T$ can be infinite. A fair walk hits $+1$ almost surely; the trouble is that $E[T] = \\infty$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which tool in the proof needs a dominating variable?"
+        },
+        {
+          "rung": "point",
+          "text": "$S_{T \\wedge n}$ can dip very deep before it reaches $+1$.",
+          "highlight": [
+            "barrier-up"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No integrable variable bounds all those dips."
+        }
+      ],
+      "feedback": {
+        "correct": "The stopped values dip without a bound, so dominated convergence does not apply.",
+        "generic": "Not quite right. Find the step in the proof that needs a dominating variable.",
+        "byKey": {
+          "b": "The rule is a first-hit time, which is a stopping time.",
+          "d": "The walk does reach $+1$; what has infinite mean is the time and the depth of the dips."
+        }
+      },
+      "explain": {
+        "text": "$T$ is finite almost surely and $S$ is a martingale, but $\\sup_n |S_{T \\wedge n}|$ has infinite mean. So $E[S_{T \\wedge n}] = 0$ cannot be carried to $E[S_T]$. Add a floor, or cap the time, and the theorem applies again."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Stopping at the top",
+      "prose": "A backtest stops each path at its highest point in the first 10 steps. The bars show the exact chances of that maximum $M$ for the fair walk from 0. A colleague says the walk is fair, so $E[S_T]$ is 0.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10"
+          ],
+          "xLabel": "Maximum $M$ of the first 10 steps",
+          "yLabel": "$P(M = m)$",
+          "showValues": true,
+          "decimals": 3,
+          "yMax": 0.3,
+          "showMean": true
+        },
+        "state": {
+          "values": {
+            "0": 0.246094,
+            "1": 0.205078,
+            "2": 0.205078,
+            "3": 0.117188,
+            "4": 0.117188,
+            "5": 0.043945,
+            "6": 0.043945,
+            "7": 0.009766,
+            "8": 0.009766,
+            "9": 0.000977,
+            "10": 0.000977
+          }
+        }
+      },
+      "question": "What is $E[S_T]$ when $T$ is the step of the maximum?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.084,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "$E[M] = \\tfrac{1067}{512} \\approx 2.084$",
+        "label": "$E[S_T]$",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "abs",
+            "value": 2.4609,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At the highest point, $S_T$ is the maximum."
+        },
+        {
+          "rung": "point",
+          "text": "So $E[S_T] = E[M]$, the mean of the bars.",
+          "highlight": [
+            "x2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bars average 2.084."
+        }
+      ],
+      "feedback": {
+        "correct": "$E[M] = 2.084$. The rule is not a stopping time, so optional stopping does not apply.",
+        "generic": "Not quite right. $S_T$ equals the maximum, so average the bars.",
+        "byKey": {
+          "zero": "You applied optional stopping. It needs a stopping time, and the step of the highest point is known only after step 10. That is look-ahead.",
+          "abs": "You gave $E|S_{10}|$, the typical size of the final value. The maximum is a different quantity.",
+          "ten": "You gave the largest possible maximum. It has chance $\\tfrac1{1024}$."
+        }
+      },
+      "explain": {
+        "text": "$S_T$ is the maximum $M$, and the bars give $E[M] = \\tfrac{1067}{512} \\approx 2.084$. Optional stopping needs $\\{T = n\\} \\in \\mathcal{F}_n$, and a highest point is known only afterwards. The reflection principle gives $P(M = m) = P(S_{10} = m) + P(S_{10} = m + 1)$.",
+        "canvas": {
+          "highlight": [
+            "x0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Stopping and looking ahead in code",
+      "prose": "Write `stopped_mean(N, rule, p)`. It enumerates all $2^N$ paths of a walk with up chance `p`. Each path stops at the first prefix where `rule` is `True`, or at $N$. Then write `max_mean(N)`, the mean of the maximum for the fair walk.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> stopped_mean(10, hit2)",
+            "0",
+            ">>> max_mean(4)",
+            "Fraction(19, 16)",
+            ">>> max_mean(10)",
+            "Fraction(1067, 512)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\nfrom itertools import product\n\ndef stopped_mean(N, rule, p=Fraction(1, 2)):\n    \"\"\"E[S_T] for a walk with up chance p. rule(prefix) is checked after each step\n    and returns True to stop. T is capped at N.\"\"\"\n    ...\n\ndef max_mean(N):\n    \"\"\"E[max(S_0, ..., S_N)] for the fair walk, as a Fraction.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\nfrom itertools import product\n\ndef stopped_mean(N, rule, p=Fraction(1, 2)):\n    \"\"\"E[S_T] for a walk with up chance p. rule(prefix) is checked after each step\n    and returns True to stop. T is capped at N.\"\"\"\n    p = Fraction(p)\n    total = Fraction(0)\n    for steps in product('HT', repeat=N):\n        prob = Fraction(1)\n        for c in steps:\n            prob *= p if c == 'H' else 1 - p\n        s = 0\n        for k, c in enumerate(steps):\n            s += 1 if c == 'H' else -1\n            if rule(''.join(steps[:k + 1])):\n                break\n        total += s * prob\n    return total\n\ndef max_mean(N):\n    \"\"\"E[max(S_0, ..., S_N)] for the fair walk, as a Fraction.\"\"\"\n    total = Fraction(0)\n    for steps in product((1, -1), repeat=N):\n        s = m = 0\n        for x in steps:\n            s += x\n            m = max(m, s)\n        total += m\n    return total / 2 ** N\n",
+        "prelude": "from fractions import Fraction\nS = lambda w: w.count('H') - w.count('T')\nhit2 = lambda w: S(w) == 2\nhit1 = lambda w: S(w) == 1\nfive = lambda w: len(w) == 5\nband = lambda w: S(w) in (1, -3)\n",
+        "examples": [
+          {
+            "call": "stopped_mean(10, hit2)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "max_mean(4)",
+            "expect": "Fraction(19, 16)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "stopped_mean(10, hit2)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "stopped_mean(10, five)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "stopped_mean(10, band)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "stopped_mean(10, five, Fraction(3, 5))",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "stopped_mean(10, hit1, Fraction(3, 5))",
+            "expect": "Fraction(6043193, 9765625)",
+            "compare": "equal"
+          },
+          {
+            "call": "stopped_mean(0, five)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "max_mean(0)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "max_mean(2)",
+            "expect": "Fraction(3, 4)",
+            "compare": "equal"
+          },
+          {
+            "call": "max_mean(4)",
+            "expect": "Fraction(19, 16)",
+            "compare": "equal"
+          },
+          {
+            "call": "max_mean(10)",
+            "expect": "Fraction(1067, 512)",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests with exact fractions, each on at most $2^{10}$ paths. The rules `hit2`, `hit1`, `five` and `band` are defined for you, and `S(w)` is the position after the prefix `w`. At up chance 0.6 the mean is not 0."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Loop over every path, adding steps and weighting by their chances."
+        },
+        {
+          "rung": "point",
+          "text": "Stop adding steps at the first prefix where `rule(prefix)` is true.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For `max_mean`, track the running maximum, starting from 0."
+        }
+      ],
+      "feedback": {
+        "correct": "All 10 tests pass. Fair stopping gives 0, a biased walk does not, and the maximum averages $\\tfrac{1067}{512}$ at $N = 10$.",
+        "generic": "Not quite right. Check the weight of each path and where you stop."
+      },
+      "explain": {
+        "text": "`stopped_mean` gives 0 for every rule on the fair walk, as optional stopping says. On a biased walk the answer is $(2p - 1)\\,E[T]$, which is not 0. `max_mean` shows what a look-ahead rule earns: a positive mean from a fair game."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Stops, targets and the daily high",
+      "prose": "A fair strategy moves in £1,000 steps from £0. She stops at a loss of £3,000 or a gain of £1,000, whichever comes first. A second backtest sells each share at the best close of 4 days, with fair £0.50 daily steps.",
+      "canvas": {
+        "kind": "walk",
+        "params": {
+          "steps": 200,
+          "p": 0.5,
+          "start": 0,
+          "paths": 300,
+          "drawn": 30,
+          "sim": {
+            "seed": 18
+          },
+          "height": 200,
+          "yLabel": "P&L (£1,000)",
+          "xLabel": "Step $n$",
+          "overlayHeight": 56,
+          "lower": -3,
+          "upper": 1,
+          "upLabel": "1",
+          "downLabel": "-3"
+        },
+        "state": {
+          "stopAtBarrier": true,
+          "showHits": true,
+          "showStopped": true
+        }
+      },
+      "question": "Fill in the three values.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Chance of hitting the £1,000 target",
+            {
+              "edit": true,
+              "answer": 0.75,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Expected number of trades",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "Profit per share the backtest reports (£)",
+            {
+              "edit": true,
+              "answer": 0.5938,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first two use optional stopping with ends $-3$ and $+1$ from 0."
+        },
+        {
+          "rung": "point",
+          "text": "Stopped mean 0 gives $P \\times 1 + (1 - P)(-3) = 0$. Then $E[T] = 3 \\times 1$.",
+          "highlight": [
+            "barrier-up",
+            "barrier-down"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The third is $\\tfrac{19}{16} \\times 0.50$, since the best close has mean $\\tfrac{19}{16}$ steps."
+        }
+      ],
+      "feedback": {
+        "correct": "A target chance of $\\tfrac34$ after 3 trades on average, with no change to the mean. The best-close backtest reports £0.59 from a fair game.",
+        "generic": "Not quite right. Use the stopped mean 0 for the first two, and $\\tfrac{19}{16}$ steps for the third.",
+        "byKey": {
+          "r0c1": "Solve $P(1) + (1 - P)(-3) = 0$. That gives $4P = 3$.",
+          "r1c1": "Use $E[T] = k(N - k)$ with distances 3 and 1: $3 \\times 1 = 3$.",
+          "r2c1": "You may have used the whole 4 steps, 2.00 in £. The maximum of 4 steps has mean $\\tfrac{19}{16}$ steps, so £0.59."
+        }
+      },
+      "explain": {
+        "text": "Her expected P&L is $\\tfrac34(1000) - \\tfrac14(3000) = 0$: stops and targets reshape a fair strategy without changing its mean. Selling at the best close is not a stopping time. It reports $\\tfrac{19}{16} \\times 0.50 \\approx$ £0.59 a share, which no live strategy can earn."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A stopping time decides from the past: $\\{T = n\\} \\in \\mathcal{F}_n$. The stopped process $M_{T \\wedge n}$ is a martingale transform, so it is a martingale.",
+      "For bounded $T$, $E[M_T] = E[M_0]$. For unbounded $T$, monotone and dominated convergence extend it: $P(\\text{hit } 10) = \\tfrac3{10}$ and $E[T] = 21$ from 3.",
+      "It fails without a dominating variable: stop at $+1$ with no floor gives $E[S_T] = 1$. A highest-point rule is not a stopping time."
+    ],
+    "formula": {
+      "name": "Optional stopping",
+      "tex": "E[M_T] = E[M_0] \\quad (T \\le N)",
+      "note": "Further reading: Williams, chapter 10 (stopping times and optional stopping); Shreve, Stochastic Calculus for Finance II, chapter 2."
+    },
+    "trap": "A rule that looks ahead, such as the highest point, is not a stopping time. Fair-game results do not apply to it."
+  },
+  "quiz": [
+    {
+      "id": "q-ruin",
+      "difficulty": 2,
+      "prose": "A fair walk starts at 4 and stops at 0 or 12.",
+      "question": "What is the chance it reaches 12?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3333,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "$\\tfrac{4}{12} = \\tfrac13$",
+        "label": "Chance",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "ruin",
+            "value": 0.6667,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "ten",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\tfrac13$: optional stopping gives $12P = 4$.",
+        "generic": "Not quite right. The mean at the stop is 4, and $S_T$ is 12 or 0.",
+        "byKey": {
+          "half": "You assumed the ends are equally likely. The mean stays at 4, which is nearer 0.",
+          "ruin": "You gave the chance of ruin. The chance of reaching 12 is the smaller one.",
+          "ten": "You used an upper end of 10. The end is 12, so $12P = 4$."
+        }
+      },
+      "explain": {
+        "text": "$E[S_T] = 4$ and $S_T$ is 12 with chance $P$, else 0. So $12P = 4$ and $P = \\tfrac13$."
+      }
+    },
+    {
+      "id": "q-time",
+      "difficulty": 3,
+      "prose": "The same walk from 4, stopped at 0 or 12.",
+      "question": "What is the expected number of steps $E[T]$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 32,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "32: $4 \\times 8$",
+        "label": "$E[T]$",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 48,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "cap",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "first",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "32. With $S_n^2 - n$: $E[T] = E[S_T^2] - 16 = 48 - 16$.",
+        "generic": "Not quite right. Use $E[T] = E[S_T^2] - S_0^2$.",
+        "byKey": {
+          "sum": "You gave $E[S_T^2] = 144 \\times \\tfrac13 = 48$. The $S_0^2 = 16$ comes off it.",
+          "first": "You may have used $4^2$. The duration is $k(N - k) = 4 \\times 8$.",
+          "cap": "You gave the upper end. The expected duration is $k(N - k)$, not an end."
+        }
+      },
+      "explain": {
+        "text": "$E[S_T^2] = 144 \\times \\tfrac13 = 48$, and $E[S_T^2] - E[T] = S_0^2 = 16$. So $E[T] = 32$, which is $k(N - k)$."
+      }
+    },
+    {
+      "id": "q-which",
+      "difficulty": 3,
+      "prose": "A trader watches a price for 20 days.",
+      "question": "Which is not a stopping time?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The last day on which the price was at its starting level",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The first day the price is 5 above its start",
+            "why": "It is decided as it happens. You can see the day it first happens."
+          },
+          {
+            "id": "c",
+            "text": "The smaller of day 8 and the first day of a loss",
+            "why": "A minimum of stopping times is a stopping time. It is decided by the history to date."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The last day at the start is known only at day 20.",
+        "generic": "Not quite right. Find the rule that needs later days to decide today."
+      },
+      "explain": {
+        "text": "The first two rules are decided by the history to date. 'The last day' needs the future to know it was the last."
+      }
+    },
+    {
+      "id": "q-fixed",
+      "difficulty": 2,
+      "prose": "Take the constant time $T = 5$ and a martingale $M$.",
+      "question": "What does optional stopping say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$E[M_5] = E[M_0]$: the fixed-time case of the theorem",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Nothing: a constant is not a stopping time",
+            "why": "You thought a stopping time must be random. $\\{T = 5\\}$ is $\\Omega$ at time 5 and empty before, which is in every $\\mathcal{F}_n$ needed."
+          },
+          {
+            "id": "c",
+            "text": "$E[M_5] = 5\\,E[M_0]$",
+            "why": "You scaled by $T$. The mean of a martingale does not grow with time."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A constant time is a stopping time, and the theorem reduces to $E[M_n] = E[M_0]$.",
+        "generic": "Not quite right. Check whether $\\{T = n\\} \\in \\mathcal{F}_n$."
+      },
+      "explain": {
+        "text": "$\\{T = 5\\}$ is empty for $n \\ne 5$ and $\\Omega$ for $n = 5$, so it is in $\\mathcal{F}_n$. The theorem then says a martingale keeps its mean, and $T = 0$ is trivial."
+      }
+    }
+  ]
+}

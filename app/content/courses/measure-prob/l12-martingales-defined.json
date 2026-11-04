@@ -1,0 +1,1290 @@
+{
+  "id": "l12-martingales-defined",
+  "course": "measure-prob",
+  "title": "Martingales defined properly",
+  "minutes": 15,
+  "objectives": [
+    "Prove a process is a martingale with respect to a filtration."
+  ],
+  "skills": [
+    "mt-martingale"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The forecaster",
+      "prose": "Three fair tosses. Let $X = 1$ if at least two are heads, else 0. After each toss, a forecaster quotes $E[X \\mid \\mathcal{F}_n]$. Type her quote at each node as a decimal.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "compact": true,
+          "levels": [
+            {
+              "label": "Toss 1",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "1/2"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Toss 2",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "1/2"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Toss 3",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "1/2"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "1/2"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "H-H-H": "X = 1",
+            "H-H-T": "X = 1",
+            "H-T-H": "X = 1",
+            "H-T-T": "X = 0",
+            "T-H-H": "X = 1",
+            "T-H-T": "X = 0",
+            "T-T-H": "X = 0",
+            "T-T-T": "X = 0"
+          }
+        },
+        "state": {}
+      },
+      "question": "Fill in $E[X \\mid \\mathcal{F}_n]$ at the root and after one and two tosses.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Node",
+          "$E[X \\mid \\mathcal{F}_n]$"
+        ],
+        "rows": [
+          [
+            "Time 0 (root)",
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.root"
+            }
+          ],
+          [
+            "After H",
+            {
+              "edit": true,
+              "answer": 0.75,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.H"
+            }
+          ],
+          [
+            "After T",
+            {
+              "edit": true,
+              "answer": 0.25,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.T"
+            }
+          ],
+          [
+            "After HH",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.H-H"
+            }
+          ],
+          [
+            "After HT",
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.H-T"
+            }
+          ],
+          [
+            "After TH",
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.T-H"
+            }
+          ],
+          [
+            "After TT",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0.001
+              },
+              "bind": "values.T-T"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At the last level the quote is $X$ itself. Work backwards."
+        },
+        {
+          "rung": "point",
+          "text": "Each quote is the average of the two below it.",
+          "highlight": [
+            "H-H",
+            "H-T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After HH both leaves are 1, after HT they are 1 and 0."
+        }
+      ],
+      "feedback": {
+        "correct": "0.5 at the root, 0.75 and 0.25 after one toss, then 1, 0.5, 0.5 and 0. Each value is the average of its two children.",
+        "generic": "Not quite right. Average the two values just to the right of each node.",
+        "byKey": {
+          "r1c1": "After H the two children are 1 and 0.5, so the quote is 0.75.",
+          "r2c1": "After T the two children are 0.5 and 0, so the quote is 0.25.",
+          "r0c1": "At the root, average 0.75 and 0.25."
+        }
+      },
+      "explain": {
+        "text": "After HH both outcomes give $X = 1$, so the quote is 1. After HT, $X$ is 1 or 0 equally, so 0.5. Then H gives $\\tfrac12(1 + 0.5) = 0.75$, and the root gives $\\tfrac12(0.75 + 0.25) = 0.5$.",
+        "canvas": {
+          "values": {
+            "root": 0.5,
+            "H": 0.75,
+            "T": 0.25,
+            "H-H": 1,
+            "H-T": 0.5,
+            "T-H": 0.5,
+            "T-T": 0
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Martingales and Doob martingales",
+      "prose": "A process $M$ is a **martingale** for $(\\mathcal{F}_n)$ when it is adapted, $E|M_n| < \\infty$ and $E[M_{n+1} \\mid \\mathcal{F}_n] = M_n$. The forecaster's quotes $E[X \\mid \\mathcal{F}_n]$ form the **Doob martingale** of $X$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "compact": true,
+          "levels": [
+            {
+              "label": "Toss 1",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "1/2"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Toss 2",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "1/2"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Toss 3",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "1/2"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "1/2"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "H-H-H": "X = 1",
+            "H-H-T": "X = 1",
+            "H-T-H": "X = 1",
+            "H-T-T": "X = 0",
+            "T-H-H": "X = 1",
+            "T-H-T": "X = 0",
+            "T-T-H": "X = 0",
+            "T-T-T": "X = 0"
+          }
+        },
+        "state": {
+          "values": {
+            "root": 0.5,
+            "H": 0.75,
+            "T": 0.25,
+            "H-H": 1,
+            "H-T": 0.5,
+            "T-H": 0.5,
+            "T-T": 0
+          }
+        }
+      },
+      "question": "Why is $E[X \\mid \\mathcal{F}_n]$ a martingale?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The tower property: later forecasts average to earlier ones",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$X$ is bounded, so every conditional expectation is a martingale",
+            "why": "You used boundedness. It gives integrability only, not the one-step average."
+          },
+          {
+            "id": "c",
+            "text": "$\\mathcal{F}_n$ grows, so the values grow",
+            "why": "You mixed up growing information with growing values. Martingale values stay level on average."
+          },
+          {
+            "id": "d",
+            "text": "$E[X]$ is a constant, so the means agree",
+            "why": "You checked the overall mean. The condition must hold given each history."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each quote averages the quotes one step later."
+        },
+        {
+          "rung": "point",
+          "text": "That is conditioning a finer forecast on coarser information.",
+          "highlight": [
+            "H",
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The tower property says exactly this."
+        }
+      ],
+      "feedback": {
+        "correct": "The tower property: averaging the later quote over the next toss returns today's.",
+        "generic": "Not quite right. Name the property that links $\\mathcal{F}_{n+1}$ to $\\mathcal{F}_n$.",
+        "byKey": {
+          "b": "Boundedness gives $E|M_n| < \\infty$. The averaging step needs the tower property.",
+          "d": "Equal means are necessary, not enough. Each node must average its own children."
+        }
+      },
+      "explain": {
+        "text": "$M_n = E[X \\mid \\mathcal{F}_n]$ is adapted by definition, and $E|M_n| \\le E|X|$. By the tower property, $E[M_{n+1} \\mid \\mathcal{F}_n] = E[X \\mid \\mathcal{F}_n] = M_n$. Every forecast of a fixed quantity is a martingale."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "A martingale built from squares",
+      "prose": "For the fair walk $S_n$, we show $S_n^2 - n$ is a martingale. Write $X_{n+1} = \\pm 1$ for the next move. Two lines are flawed.",
+      "question": "Put the proof in order, a reason in each line. Move the two flawed lines to Left out.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a1",
+            "text": "$E[S_{n+1}^2 \\mid \\mathcal{F}_n] = E[(S_n + X_{n+1})^2 \\mid \\mathcal{F}_n]$, since $S_{n+1} = S_n + X_{n+1}$."
+          },
+          {
+            "id": "a2",
+            "text": "$= S_n^2 + 2S_n E[X_{n+1} \\mid \\mathcal{F}_n] + E[X_{n+1}^2 \\mid \\mathcal{F}_n]$, taking out what is known: $S_n$ is $\\mathcal{F}_n$-measurable."
+          },
+          {
+            "id": "a3",
+            "text": "$= S_n^2 + 0 + 1$, because $X_{n+1}$ is independent of $\\mathcal{F}_n$ with mean 0 and $X_{n+1}^2 = 1$."
+          },
+          {
+            "id": "a4",
+            "text": "So $E[S_{n+1}^2 - (n + 1) \\mid \\mathcal{F}_n] = S_n^2 - n$, and the process is adapted and integrable. $\\blacksquare$"
+          },
+          {
+            "id": "d1",
+            "text": "$E[S_{n+1}^2] = E[S_n^2] + 1$, so $S_n^2 - n$ has a constant mean and is a martingale.",
+            "why": "You checked the unconditional mean. A martingale needs the average given every history."
+          },
+          {
+            "id": "d2",
+            "text": "$E[X_{n+1}^2 \\mid \\mathcal{F}_n] = 0$, because $X_{n+1}$ has mean 0.",
+            "why": "You used the mean for the square. $X_{n+1}^2$ equals 1 for sure, so its average is 1."
+          }
+        ],
+        "answer": [
+          "a1",
+          "a2",
+          "a3",
+          "a4"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Expand the square, then handle each term given $\\mathcal{F}_n$."
+        },
+        {
+          "rung": "point",
+          "text": "The cross term has the known factor $S_n$ times a mean-zero move."
+        },
+        {
+          "rung": "step",
+          "text": "Order: expand, split, evaluate, conclude."
+        }
+      ],
+      "feedback": {
+        "correct": "Right. The cross term vanishes and the square adds exactly 1, which the $-n$ removes.",
+        "generic": "Not quite right. Expand, split by what is known, then evaluate.",
+        "byKey": {
+          "d1": "You used a line about the plain mean. It does not say anything about the average given the past.",
+          "d2": "You used a line that treats a square as a mean. A square of $\\pm 1$ is 1.",
+          "left-out": "You left out a line the proof needs. Only the two flawed lines go to Left out."
+        }
+      },
+      "explain": {
+        "text": "The cross term $2S_n E[X_{n+1} \\mid \\mathcal{F}_n]$ is 0, and $E[X_{n+1}^2 \\mid \\mathcal{F}_n] = 1$. So $E[S_{n+1}^2 \\mid \\mathcal{F}_n] = S_n^2 + 1$, and subtracting $n + 1$ restores $S_n^2 - n$."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "No predictable strategy beats a fair game",
+      "prose": "Let $M$ be a martingale and $H$ a bounded predictable process. Define $G_n = \\sum_{k \\le n} H_k (M_k - M_{k-1})$. We show $G$ is a martingale. Two lines are flawed.",
+      "question": "Put the proof in order, a reason in each line. Move the two flawed lines to Left out.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "b1",
+            "text": "$G$ is adapted and integrable, because $H$ is bounded and each $H_k$, $M_k$ is $\\mathcal{F}_k$-measurable."
+          },
+          {
+            "id": "b2",
+            "text": "$E[G_{n+1} - G_n \\mid \\mathcal{F}_n] = E[H_{n+1}(M_{n+1} - M_n) \\mid \\mathcal{F}_n]$, by the definition of $G$."
+          },
+          {
+            "id": "b3",
+            "text": "$= H_{n+1}\\,E[M_{n+1} - M_n \\mid \\mathcal{F}_n]$, because $H_{n+1}$ is $\\mathcal{F}_n$-measurable, so it comes out."
+          },
+          {
+            "id": "b4",
+            "text": "$= 0$, because $M$ is a martingale. So $E[G_{n+1} \\mid \\mathcal{F}_n] = G_n$. $\\blacksquare$"
+          },
+          {
+            "id": "e1",
+            "text": "$= E[H_{n+1}]\\,E[M_{n+1} - M_n \\mid \\mathcal{F}_n]$, because the position is independent of the move.",
+            "why": "You assumed independence. $H_{n+1}$ may depend on the past: it comes out because it is known, not because it is independent."
+          },
+          {
+            "id": "e2",
+            "text": "$H_{n+1}$ is only $\\mathcal{F}_{n+1}$-measurable, but it comes out anyway.",
+            "why": "You treated the position as adapted. Then it could use the move it earns, and it would not come out."
+          }
+        ],
+        "answer": [
+          "b1",
+          "b2",
+          "b3",
+          "b4"
+        ],
+        "distractors": [
+          "e1",
+          "e2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at one step of the gains, given $\\mathcal{F}_n$."
+        },
+        {
+          "rung": "point",
+          "text": "Predictable means $H_{n+1}$ is known at time $n$."
+        },
+        {
+          "rung": "step",
+          "text": "Known factors come out, leaving the martingale difference."
+        }
+      ],
+      "feedback": {
+        "correct": "Right. A known position times a fair step has average 0, so the gains are fair.",
+        "generic": "Not quite right. Take one step of $G$ and condition on $\\mathcal{F}_n$.",
+        "byKey": {
+          "e1": "You used a line that needs independence. Predictability is enough.",
+          "e2": "You used a line that breaks predictability. It must be $\\mathcal{F}_n$-measurable to come out.",
+          "left-out": "You left out a line the proof needs. Only the two flawed lines go to Left out."
+        }
+      },
+      "explain": {
+        "text": "The gain over one step is a known position times a martingale difference, which averages to 0. So $E[G_{n+1} \\mid \\mathcal{F}_n] = G_n$. No predictable strategy beats a fair game, which answers last lesson's question."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The filtration matters",
+      "prose": "Shift the clock: let $\\mathcal{G}_n = \\mathcal{F}_{n+1}$, a filtration that knows one toss more. The walk $S_n$ is a martingale for $(\\mathcal{F}_n)$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "compact": true,
+          "levels": [
+            {
+              "label": "Toss 1",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "1/2"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Toss 2",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "1/2"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "1/2"
+                }
+              ]
+            },
+            {
+              "label": "Toss 3",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "1/2"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "1/2"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "H-H-H": "HHH",
+            "H-H-T": "HHT",
+            "H-T-H": "HTH",
+            "H-T-T": "HTT",
+            "T-H-H": "THH",
+            "T-H-T": "THT",
+            "T-T-H": "TTH",
+            "T-T-T": "TTT"
+          }
+        },
+        "state": {}
+      },
+      "question": "Is $S_n$ a martingale for $(\\mathcal{G}_n)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "No: $\\mathcal{G}_n$ already shows $S_{n+1}$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Yes: the coin is still fair",
+            "why": "You checked the coin. The test conditions on $\\mathcal{G}_n$, which already shows toss $n + 1$."
+          },
+          {
+            "id": "c",
+            "text": "Yes: it is the same process",
+            "why": "You compared the process. A martingale depends on the information it is tested against."
+          },
+          {
+            "id": "d",
+            "text": "No: $S_n$ is not adapted to $(\\mathcal{G}_n)$",
+            "why": "You doubted adaptedness. $\\mathcal{F}_n \\subset \\mathcal{G}_n$, so $S_n$ is adapted. What fails is the average."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does $\\mathcal{G}_n$ already know about toss $n + 1$?"
+        },
+        {
+          "rung": "point",
+          "text": "Everything: $S_{n+1}$ is $\\mathcal{G}_n$-measurable.",
+          "highlight": [
+            "H",
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So its conditional expectation is itself."
+        }
+      ],
+      "feedback": {
+        "correct": "Given $\\mathcal{G}_n$ the next value is known, so it is $S_{n+1}$, not $S_n$.",
+        "generic": "Not quite right. Find what $\\mathcal{G}_n$ reveals about $S_{n+1}$.",
+        "byKey": {
+          "b": "Fairness of the coin does not help once the toss is revealed.",
+          "d": "It is adapted. The failure is in the conditional average."
+        }
+      },
+      "explain": {
+        "text": "$\\mathcal{G}_n$ contains toss $n + 1$, so $S_{n+1}$ is $\\mathcal{G}_n$-measurable and $E[S_{n+1} \\mid \\mathcal{G}_n] = S_{n+1}$. That differs from $S_n$ by $\\pm 1$. Being a martingale depends on the filtration."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Subtract the drift",
+      "prose": "Now the up chance is $\\tfrac35$, so each move $X_k$ is $+1$ with chance 0.6 and $-1$ with chance 0.4. The walk $S_n$ drifts upward.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "compact": true,
+          "levels": [
+            {
+              "label": "Toss 1",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "3/5"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "2/5"
+                }
+              ]
+            },
+            {
+              "label": "Toss 2",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "3/5"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "2/5"
+                }
+              ]
+            },
+            {
+              "label": "Toss 3",
+              "branches": [
+                {
+                  "id": "H",
+                  "label": "H",
+                  "p": "3/5"
+                },
+                {
+                  "id": "T",
+                  "label": "T",
+                  "p": "2/5"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Find $c$ such that $S_n - cn$ is a martingale.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "$\\tfrac15$: $E[X_k] = 2(0.6) - 1 = 0.2$",
+        "label": "$c$",
+        "wrong": [
+          {
+            "id": "p",
+            "value": 0.6,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "q",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "two",
+            "value": 1.2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The drift is the mean of one move."
+        },
+        {
+          "rung": "point",
+          "text": "$E[X_k] = 0.6(+1) + 0.4(-1)$.",
+          "highlight": [
+            "H",
+            "T"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That mean is the amount to subtract each step."
+        }
+      ],
+      "feedback": {
+        "correct": "$c = \\tfrac15$, the mean of one move.",
+        "generic": "Not quite right. Subtract the mean of one move each step.",
+        "byKey": {
+          "p": "You gave the up chance. The drift is the mean move, $2p - 1$.",
+          "two": "You gave $2p$. The mean move also subtracts the down chance: $2p - 1$.",
+          "q": "You gave the down chance. The mean move is up minus down, $0.6 - 0.4$."
+        }
+      },
+      "explain": {
+        "text": "$E[X_k] = 0.6 - 0.4 = 0.2$. Then $E[S_{n+1} - \\tfrac{n+1}{5} \\mid \\mathcal{F}_n] = S_n + 0.2 - \\tfrac{n+1}{5} = S_n - \\tfrac{n}{5}$. Subtracting the drift makes the walk fair."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Checking one step back",
+      "prose": "Let $X_1 = \\pm 1$ fairly, and $X_2 = X_1 \\pm 1$ fairly. Then $X_3 = X_2$, except that when $X_2 = 0$ the process returns to its start: $X_3 = X_1$. A colleague checks $E[X_2 \\mid X_1] = X_1$ and $E[X_3 \\mid X_2] = X_2$.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "compact": true,
+          "levelLabels": [
+            "X₁",
+            "X₂",
+            "X₃"
+          ],
+          "nodes": [
+            {
+              "id": "p",
+              "label": "$X_1 = 1$",
+              "p": "1/2",
+              "children": [
+                {
+                  "id": "a",
+                  "label": "$X_2 = 2$",
+                  "p": "1/2",
+                  "children": [
+                    {
+                      "id": "x",
+                      "label": "$X_3 = 2$",
+                      "p": "1"
+                    }
+                  ]
+                },
+                {
+                  "id": "z",
+                  "label": "$X_2 = 0$",
+                  "p": "1/2",
+                  "children": [
+                    {
+                      "id": "x",
+                      "label": "$X_3 = 1$",
+                      "p": "1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "m",
+              "label": "$X_1 = -1$",
+              "p": "1/2",
+              "children": [
+                {
+                  "id": "z",
+                  "label": "$X_2 = 0$",
+                  "p": "1/2",
+                  "children": [
+                    {
+                      "id": "x",
+                      "label": "$X_3 = -1$",
+                      "p": "1"
+                    }
+                  ]
+                },
+                {
+                  "id": "b",
+                  "label": "$X_2 = -2$",
+                  "p": "1/2",
+                  "children": [
+                    {
+                      "id": "x",
+                      "label": "$X_3 = -2$",
+                      "p": "1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "show": "none"
+        }
+      },
+      "question": "Is $X$ a martingale for its own history?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "No: after $X_1 = 1, X_2 = 0$ the next value is 1",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Yes: both of the one-step checks hold, so it is fair",
+            "why": "You checked one step back. The history is $X_1$ and $X_2$ together, and given both the value is 1."
+          },
+          {
+            "id": "c",
+            "text": "Yes: every $X_n$ has mean 0, so it is fair",
+            "why": "You checked the plain means. A zero mean at each time does not fix the average given a history."
+          },
+          {
+            "id": "d",
+            "text": "No: $E[X_2 \\mid X_1]$ differs from $X_1$ when $X_1 = 1$",
+            "why": "That step is fine: given $X_1$ the move is $\\pm 1$ fairly, so $E[X_2 \\mid X_1] = X_1$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The filtration is generated by $X_1$ and $X_2$, not by $X_2$ alone."
+        },
+        {
+          "rung": "point",
+          "text": "Look at the branch $X_1 = 1$, $X_2 = 0$.",
+          "highlight": [
+            "p-z"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Its only child is $X_3 = 1$. The martingale needs 0."
+        }
+      ],
+      "feedback": {
+        "correct": "On the branch $X_1 = 1$, $X_2 = 0$ the next value is certainly 1, so the average is 1, not 0.",
+        "generic": "Not quite right. Condition on the whole history, both $X_1$ and $X_2$.",
+        "byKey": {
+          "b": "You conditioned on $X_2$ alone. $X_2 = 0$ mixes two histories, which have different futures.",
+          "c": "Mean 0 at each time is only a necessary condition."
+        }
+      },
+      "explain": {
+        "text": "Given $X_2 = 0$ alone, $X_3$ is $\\pm 1$ equally, so the average is 0. Given the full history $X_1 = 1, X_2 = 0$, it is 1. The condition must hold given the whole $\\mathcal{F}_n$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Martingales in code",
+      "prose": "On a coin-toss space, a process is a dict from each toss prefix to a value. A prefix is a string of H and T. Write `is_martingale(values, n, p)`, checking $p\\,v(\\text{prefix}\\,H) + (1-p)\\,v(\\text{prefix}\\,T) = v(\\text{prefix})$ exactly, and `doob(f, n, p)`.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Expected",
+          "lines": [
+            ">>> is_martingale(build(3, S), 3, half)",
+            "True",
+            ">>> is_martingale(build(3, lambda w: S(w) ** 2), 3, half)",
+            "False",
+            ">>> doob(atleast2, 3, half)['H']",
+            "Fraction(3, 4)"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from fractions import Fraction\n\ndef is_martingale(values, n, p):\n    \"\"\"values maps every toss prefix of length 0..n (a string of H and T) to a number.\"\"\"\n    ...\n\ndef doob(f, n, p):\n    \"\"\"E[f | F_k] for k = 0..n, as a dict from each prefix to a Fraction. f takes the full path.\"\"\"\n    ...\n",
+        "solution": "from fractions import Fraction\n\ndef is_martingale(values, n, p):\n    \"\"\"values maps every toss prefix of length 0..n (a string of H and T) to a number.\"\"\"\n    p = Fraction(p)\n    for prefix in values:\n        if len(prefix) < n:\n            if p * values[prefix + 'H'] + (1 - p) * values[prefix + 'T'] != values[prefix]:\n                return False\n    return True\n\ndef doob(f, n, p):\n    \"\"\"E[f | F_k] for k = 0..n, as a dict from each prefix to a Fraction. f takes the full path.\"\"\"\n    p = Fraction(p)\n    out = {}\n    def go(prefix):\n        if len(prefix) == n:\n            out[prefix] = Fraction(f(prefix))\n        else:\n            out[prefix] = p * go(prefix + 'H') + (1 - p) * go(prefix + 'T')\n        return out[prefix]\n    go('')\n    return out\n",
+        "prelude": "from fractions import Fraction\nfrom itertools import product\nhalf = Fraction(1, 2)\ndef build(n, g):\n    return {''.join(w)[:k]: g(''.join(w)[:k]) for w in product('HT', repeat=n) for k in range(n + 1)}\nS = lambda w: w.count('H') - w.count('T')\natleast2 = lambda w: 1 if w.count('H') >= 2 else 0\n",
+        "examples": [
+          {
+            "call": "is_martingale(build(3, S), 3, half)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "doob(atleast2, 3, half)['HT']",
+            "expect": "Fraction(1, 2)",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "is_martingale(build(3, S), 3, half)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "is_martingale(build(3, lambda w: S(w) ** 2 - len(w)), 3, half)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "is_martingale(build(3, lambda w: S(w) ** 2), 3, half)",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "is_martingale(build(4, lambda w: S(w) - Fraction(len(w), 5)), 4, Fraction(3, 5))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "is_martingale(build(4, S), 4, Fraction(3, 5))",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "doob(atleast2, 3, half)['']",
+            "expect": "Fraction(1, 2)",
+            "compare": "equal"
+          },
+          {
+            "call": "[doob(atleast2, 3, half)[k] for k in ('H', 'T', 'HH', 'HT', 'TT')]",
+            "expect": "[Fraction(3, 4), Fraction(1, 4), Fraction(1), Fraction(1, 2), Fraction(0)]",
+            "compare": "equal"
+          },
+          {
+            "call": "is_martingale(doob(atleast2, 3, half), 3, half)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "doob(atleast2, 3, Fraction(3, 5))['']",
+            "expect": "Fraction(81, 125)",
+            "compare": "equal"
+          },
+          {
+            "call": "sorted(len(k) for k in doob(atleast2, 3, half))",
+            "expect": "[0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests with exact fractions. `build(n, g)`, `S`, `atleast2` and `half` are already defined. `doob` returns every prefix from the empty string to length $n$."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check the one-step average at every prefix shorter than $n$."
+        },
+        {
+          "rung": "point",
+          "text": "For `doob`, recurse: the value at a prefix averages its two extensions.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At length $n$, the value is `f(prefix)`."
+        }
+      ],
+      "feedback": {
+        "correct": "All 10 tests pass. The forecaster, the square and the drift-corrected walk are martingales, and $S_n^2$ is not.",
+        "generic": "Not quite right. Compare exactly, with `Fraction`s, at every shorter prefix."
+      },
+      "explain": {
+        "text": "`is_martingale` checks the defining average at each node of the tree. `doob` builds it from the leaves upward, so it passes `is_martingale` by construction. That is the tower property in code."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A discounted price",
+      "prose": "On the trees course's tree, $S_0 = £100$, $u = 1.2$, $d = 0.8$ and $r = 5\\%$. The discounted price $S_1 / 1.05$ is £114.29 or £76.19. Under the risk-neutral chance $q = 0.625$ it averages £100. Suppose instead the real up chance is 0.7.",
+      "canvas": {
+        "kind": "tree",
+        "params": {
+          "rootLabel": "£100",
+          "levels": [
+            {
+              "label": "Day 1",
+              "branches": [
+                {
+                  "id": "u",
+                  "label": "Up",
+                  "p": "0.7"
+                },
+                {
+                  "id": "d",
+                  "label": "Down",
+                  "p": "0.3"
+                }
+              ]
+            }
+          ],
+          "leaves": {
+            "u": "£114.29",
+            "d": "£76.19"
+          }
+        },
+        "state": {}
+      },
+      "question": "What is the expected discounted price at time 1, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 102.86,
+        "tol": {
+          "abs": 0.01
+        },
+        "accept": "$0.7(114.29) + 0.3(76.19) = 102.86$",
+        "label": "Expected price (£)",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "q",
+            "value": 100,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "plain",
+            "value": 108,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "half",
+            "value": 95.24,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight the two discounted prices by 0.7 and 0.3."
+        },
+        {
+          "rung": "point",
+          "text": "$0.7 \\times 114.29 = 80.00$.",
+          "highlight": [
+            "u"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.3 \\times 76.19 = 22.86$, so the sum is 102.86.",
+          "highlight": [
+            "d"
+          ]
+        }
+      ],
+      "feedback": {
+        "correct": "£102.86: above £100, so under 0.7 the discounted price is a submartingale.",
+        "generic": "Not quite right. Use the real chances 0.7 and 0.3 on the discounted prices.",
+        "byKey": {
+          "q": "You used the risk-neutral chance. That gives £100, a martingale. The question uses 0.7.",
+          "plain": "You averaged the undiscounted prices, 108. Divide by 1.05 first.",
+          "half": "You discounted the £100 start. The time-1 prices are what get discounted."
+        }
+      },
+      "explain": {
+        "text": "Under $q = 0.625$ the average is £100: the discounted price is a martingale. Under 0.7 it is £102.86, so it rises on average: a submartingale. The discounted price of the call is the Doob martingale of its discounted payoff, which level 4 builds on."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A martingale is adapted, integrable and fair given every history: $E[M_{n+1} \\mid \\mathcal{F}_n] = M_n$. $E[X \\mid \\mathcal{F}_n]$ is one, by the tower property.",
+      "A predictable bounded position times a martingale difference averages to 0, so no predictable strategy beats a fair game. $S_n^2 - n$ is a martingale for the fair walk.",
+      "Fairness depends on the filtration and on the whole history, not on one step back or on the mean alone."
+    ],
+    "formula": {
+      "name": "Martingale",
+      "tex": "E[M_{n+1} \\mid \\mathcal{F}_n] = M_n, \\qquad E|M_n| < \\infty",
+      "note": "Further reading: Williams, chapter 10 (martingales); Shreve, Stochastic Calculus for Finance I, chapter 2."
+    },
+    "trap": "Checking $E[X_{n+1} \\mid X_n]$ is not enough. Condition on the whole history."
+  },
+  "quiz": [
+    {
+      "id": "q-const",
+      "difficulty": 2,
+      "prose": "The process $M_n = 5$ for every $n$ is constant. We test it against the definition.",
+      "question": "Is $M$ a martingale?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Yes: all three conditions hold",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "No: a martingale must be a random process",
+            "why": "You assumed randomness is required. The definition asks only for adapted, integrable and the average property."
+          },
+          {
+            "id": "c",
+            "text": "No: it never changes, so it is not a game",
+            "why": "You assumed change is required. A constant forecast of itself is trivially fair."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A constant satisfies every condition of the definition.",
+        "generic": "Not quite right. Check the three conditions."
+      },
+      "explain": {
+        "text": "A constant is adapted and integrable, and its conditional expectation is itself. Integrability, $E|M_n| < \\infty$, is part of the definition, so a process whose mean absolute value is infinite is excluded."
+      }
+    },
+    {
+      "id": "q-doob",
+      "difficulty": 2,
+      "prose": "Three fair tosses, and $X$ is the number of heads. The Doob martingale is $E[X \\mid \\mathcal{F}_n]$.",
+      "question": "What is its value after one toss shows H?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2: one head plus 1 from the two remaining tosses",
+        "label": "$E[X \\mid H]$",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 1.5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2: the head seen plus an average of 1 from the other two tosses.",
+        "generic": "Not quite right. Count the head seen, then average the rest.",
+        "byKey": {
+          "mean": "You gave the value before any toss. After H the forecast rises.",
+          "one": "You counted only the head seen. The two tosses left average 1 head.",
+          "three": "You gave the largest possible count, 3. After H the other two tosses average 1 head."
+        }
+      },
+      "explain": {
+        "text": "After H, the count is 1 plus the heads in two fair tosses, which average 1. So $E[X \\mid H] = 2$, and after T it is 1. The root value 1.5 is their average."
+      }
+    },
+    {
+      "id": "q-mean",
+      "difficulty": 3,
+      "prose": "A process has $E[M_{n+1}] = E[M_n]$ for every $n$.",
+      "question": "Does that make $M$ a martingale?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "No: the average must hold given each history",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Yes: a constant mean is the definition",
+            "why": "You used the unconditional mean. The definition conditions on $\\mathcal{F}_n$."
+          },
+          {
+            "id": "c",
+            "text": "Yes, if $M$ is also adapted",
+            "why": "You added adaptedness. Even adapted processes can have a constant mean and still drift on each history."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Constant means are necessary only. A process that flips sign each step has them and fails.",
+        "generic": "Not quite right. The definition conditions on the past."
+      },
+      "explain": {
+        "text": "A flip process $X_{n+1} = -X_n$ has mean 0 at every step, but given $X_n$ the next value is $-X_n$. The conditional average is what counts."
+      }
+    },
+    {
+      "id": "q-drift",
+      "difficulty": 3,
+      "prose": "A walk steps $+1$ with chance 0.75 and $-1$ with chance 0.25.",
+      "question": "Find $c$ such that $S_n - cn$ is a martingale.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "0.5: $2(0.75) - 1$",
+        "label": "$c$",
+        "wrong": [
+          {
+            "id": "p",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "q",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "one",
+            "value": 1.5,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$c = 0.5$, the mean of one move.",
+        "generic": "Not quite right. Subtract the mean of one move.",
+        "byKey": {
+          "p": "You gave the up chance. The mean move is $0.75 - 0.25$.",
+          "q": "You gave the down chance. The mean move is up minus down.",
+          "one": "You gave $2p = 1.5$. The mean move is $2p - 1$."
+        }
+      },
+      "explain": {
+        "text": "The mean move is $0.75(+1) + 0.25(-1) = 0.5$. Subtracting $0.5n$ leaves a fair walk."
+      }
+    }
+  ]
+}
