@@ -18,7 +18,7 @@ Branch `worktree-agent-adbb585f1ee871c2e`. Devices: iPhone 17 Pro Max (440 x 956
 - `validate.mjs`: 0 errors, 541 warnings.
 - `--routes-only --mobile --tablet`: All passed. `--routes-only --narrow`: All passed.
 - `--lesson ito/l12-barrier-option --lesson series/l4-last-step --set number-sense/review-1 --exam topic-1.5 --drill sample-cpp-row-sums --no-routes --mobile --tablet --shots css-before` and `css-after`: lessons (15 and 14 checks, quiz 4/4), set 9 of 9, exam 30 of 30 pass both before and after. `series/l4-last-step` holds a `plane` canvas, a `table` canvas and an `order`-style recurrence ladder.
-- `--all` (desktop only): see the final line below.
+- `--all` (desktop only): not finished. 339 lessons played with no failure when I stopped (of 1039 lessons, 483 sets, 40 exams); the run was still going in the background. Re-run it before merging.
 
 ## Before and after (screenshots read at 440, 1032, 1376, 1280)
 - l12 screen 6 at 1032: before, the column was 540px with 250px empty either side and lines cut at the editor edge; after, the editor and the share-price canvas use 780px, long lines run to the box edge with the fade, prose wraps at about 70 characters.
