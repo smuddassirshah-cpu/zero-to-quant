@@ -88,3 +88,79 @@ No item may reuse the numbers, answers, call texts or function names of anything
 **Voice** (binding): British English, no exclamation marks, no em-dashes, sentences under 20 words, explanations at most three sentences, £ for money. Run `VOICE_BASE=<folder holding a copy of the exam file> python3 docs/reviews/voice-scan.py`: 0 and 0.
 
 **Acceptance for the exam author** (not part of this brief's own report sections). `node tools/validate.mjs 2>&1 | tail -5` reports 0 errors, 30 items, the ramp, all 13 skills; `node tools/playthrough.mjs --exam topic-3.5 --local-cdn <pkgs>` is green, and again with `--mobile`; the exam author writes the later sections of this report after the items. They cover numbers computed twice, validation and playthrough, `prep.json`, `course.json` and the backlog.
+
+## Result (written after the items)
+
+File: `app/content/exams/topic-3.5.json` (id `topic-3.5`, 90 minutes, pass 0.7, 30 items, pace sum 5,310 s = 88.5 minutes).
+Scripts in `docs/briefs/exam-3.5-scripts/`: `build.py` (with `build_a.py`, `build_b.py`, `build_c.py`, `helpers.py`) writes the file; `check.py` and `check2.py` recompute every number; `refs.py` holds independent references for the code items; `codecheck.mjs` runs the Python widgets in Pyodide; `fresh.py` and `tagscan.py` are the freshness greps.
+
+Ramp 6, 15, 6, 3 at difficulty 2, 3, 4, 5, in that order in the file, courses interleaved. Kinds: 13 numeric, 6 choice, 3 multi, 2 order, 1 table, 1 tap-regions, 1 parts, 3 code (two Python, one C++). All 13 skills are in the `skills` map and tested: sy-memory 5; rq-linalg, rq-ml, ci-timed, sy-latency 4; rq-stats, ci-patterns, ci-strings, ci-design 3; rq-case, rq-data, sy-concurrency, sy-os 2. Every level has an item on a skill first met in it, or on one of its own lessons.
+
+### Revisions to the brief's item plan, and why
+
+Read from the written files, reports and the freshness greps:
+
+1. **File order** is by difficulty (all 2s, then 3s, 4s, 5s), not by plan number. Item numbers below are the plan's.
+2. **Item 3** (p-value): the plan's 12-signal example would have matched the mock key (0.006 against 0.004167). It uses eight signals, best p 0.011, bar 0.00625. Family `p-value-meaning` kept.
+3. **Item 5** (ridge and lasso): the feature-scale twist is `research-int` l7 "Units first" (10,000-fold rescale). New idea in the same family: the penalty raised without limit, with an unpenalised constant.
+4. **Item 8** (case steps): `homework-3` already orders target, horizon, loss, baseline and split. The case is now a weekly "beat the index" label with a five-day gap between train and test, plus two distractors.
+5. **Item 14** (order): `homework-1` has the streaming-median order and l4 has the top-k order. Replaced by the two-singles XOR method (family `two-singles-xor`, skill `ci-patterns`).
+6. **Item 20** (edge cases): `coding-int` l16 uses `longest_streak` with the same missed-last-run bug and `review-4` uses `second_largest`. New function `best_window` with a `<=` guard bug.
+7. **Item 24**: the written lessons draw padding on a `grid` canvas (ids `r1c1` to `r3c8`, offsets 0 to 23), not an `array` canvas with `c0`. Followed the lessons.
+8. **Item 30** (C++): l16's code widget is already a push and pop ring driven by `ops`. New function `newest_first(xs, capacity, k)`: an overwriting ring read back by mask, single-threaded.
+9. **Item 10**: the drill `rq-group-slopes-py` returns a Series of slopes. The exam function `costliest_desk(df, min_rows)` returns the best group's name, with a guard for small groups and one distinct size, and handles all-negative slopes.
+10. **Item 11**: skills are `rq-data`, `rq-linalg` (not `rq-case`, tested by items 8 and 9). The third part is the centred-sums stability choice. Numbers differ from l18 and the drill.
+11. **Item 19**: budget 70 minutes (l15 uses 65) and new marks. **Item 22**: a seek against a data-centre round trip (20), not in the l1 table. **Item 25**: a 192 MiB buffer (l3 uses 512 MiB). **Item 6**: matrix 7, 2, 2, 4 (a first draft's 2/3 wrong key matched an l9 key). **Item 12**: halts and a sweep, since l2 covers prefix search on symbols.
+12. Skill counts: `rq-case` is 2, not 3, because of revision 10. Nothing else moved.
+
+### Numbers computed twice
+
+`check.py` (closed form, then enumeration, brute force, exact `Fraction` or a seeded simulation), asserted:
+
+- 1: slopes 0.75 and 0.27 give r^2 = 0.2025, r = 0.45. Slips 0.2025, 0.51, 0.75.
+- 2: -0.4 +/- 0.5196, top 0.1196, floor -0.9196 (bisection on the smallest eigenvalue of the 3 by 3 matrix).
+- 3: 0.05/8 = 0.00625; chance of any p <= 0.011 in eight nulls 0.0847.
+- 4: det(2I + 3ww^T) = 77 x 8 = 616 (numpy determinant and eigenvalues 2, 2, 2, 77). Slips 600, 1232, 77.
+- 6: eigenvalues 8 and 3, share 8/11 = 0.7273 (200,000-draw simulation within 0.003). Slips 7/11, 3/11, 0.5.
+- 7: t = 0.04 x sqrt(2500) = 2 (simulated sd of r is 1/sqrt(n)); 10,000 days for 0.02; costs 4 against 5.
+- 9: persistence 3.2, fit 2.56, mean 4; cut 20% (1.5-million-step simulation within 0.03). Slips 80%, 36%, 40%.
+- 11: slopes 9/5, 11/5 after arrival, 5/2 after departure (Fraction and polyfit; sums match). Slips 2.8, 1.8, 2.125, 2.2.
+- 13: back pops 6, front pops 2 (deque run against brute-force window maxima). Slips 2, 8, 5.
+- 15: 13 (two independent evaluators); floor 11, signs dropped 37, no precedence 5.
+- 16: balances 380, 540, 600, 850, 600, 420 (two loops). Slips 270, 570, 320.
+- 17: fills D 6 at 100.0, B 5, C 8 at 100.5, one unit rests (sorted match).
+- 18: evictions R and S, final order Q, T, U, P (OrderedDict and a list).
+- 19: 82 marks in 66 minutes, the unique optimum of all 81 mixes and by knapsack; full only 75, filling the clock 80, all parts 60.
+- 20: each option checked against a correct and the planted version.
+- 22: 10,000 / 500 = 20. 23: last read at byte 23,976, line 374, 375 misses (enumeration of lines). 24: g++ sizeof and offsetof give 24 bytes, padding at 1 to 3 and 10 to 15.
+- 26: 2,000,000 x 0.3 x 14 = 8.4 million (simulated miss rate 0.3). 27: enumeration of all interleavings gives {0, 2, 6}.
+- 29: rank ceil(0.96 x 25) = 24, value 2650 (also by cumulative share); mean 420, median 207, linear 2668.
+- 10, 21, 30: model solutions against independent references (exact-slope Fraction search; a Fenwick-tree distinct count for the 100,000-call total; a plain ring reference and the C++ solution compiled with g++ under sanitisers).
+
+### Code items and starters
+
+`codecheck.mjs` (Pyodide 0.27.7): `e-active-symbols` solution 7 of 7 (slowest 0.19 s), starter passes 0 of 7, and a dict scan of all symbols on every call takes 183 s on the large test (stopped at 5 s). `e-costliest-desk` solution 7 of 7, starter passes 3 of 7 (the three tests that expect `None`). C++ (`check2.py`): solution passes 6 of 6, starter fails, and three wrong masks each fail at least one test. The playthrough also ran every solution in the app.
+
+### Freshness
+
+`fresh.py` (every content file, mock script and brief, also restricted to the three courses, mocks, bank, drills and exams) and `tagscan.py` (every other item sharing a family tag, listed and compared by eye). Hits that mattered are the revisions above. Remaining hits are shared family tags, which the brief allows, or bare numbers inside unrelated data series. No firm names.
+
+## Validation and playthrough
+
+- `node tools/validate.mjs`: 0 errors, no warning for `topic-3.5.json`. It added one line to `content/manifest.json`, kept in the commit.
+- Voice scan: 738 sentences, 0 over 20 words, 0 explanations over three sentences, no exclamation mark or em-dash.
+- Every `choice` and `multi` has `"shuffle": true`; key against longest distractor 0.90 to 1.06.
+- `playthrough.mjs --exam topic-3.5 --local-cdn <pkgs>`: 32 items (three parts), scored 30 of 30, passed. Again with `--mobile --shots --why`: passed.
+- Screenshots at 1280 and 390 px looked at (start card, tap grid, tables, order, multi with code, parts, Python and C++ editors, results). Fixes: the five-column marks table clipped at 390 px (headers shortened); long comment lines in three starters ran off the editor (shortened). At 390 px the editor still scrolls sideways for long code lines.
+
+## prep.json
+
+`content/prep.json` lists no topic exams (as for topic-3.3). Not edited.
+
+## course.json
+
+No change proposed. The exam carries no `requires`.
+
+## Backlog
+
+Three bullets under "Raised later (exam topic-3.5):" in `docs/BACKLOG-INBOX.md`.
