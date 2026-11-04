@@ -77,3 +77,44 @@ Format: file | item | severity | finding | fix.
 3. No-calculator mocks whose rubrics and numbers need a calculator (k1, k2).
 4. The `oa` pool can be practised first; say so and widen it.
 5. The superday `requires` list is the heaviest and gates on levels no item tests.
+
+## Fix pass
+
+Fix pass of 4 Nov 2026 on `mock-oa-code`, `mock-superday-research`, `mock-oa-quant-data`, `topic-3.5` and the eight `oa` drills, with `answers-2026-11-04-exam-3.5.md` and the open items of `recheck-2026-11-04-a.md`. Scripts are in `/tmp/claude-0/-home-user-zero-to-quant/024bfe09-7a97-56c3-837c-b47a15727adf/scratchpad/fix-exams-3.5/`; the repeatable changes are in `docs/briefs/exam-3.5-scripts/second_read_patch.py` (called by `build.py`, which reproduces the shipped file) and in `docs/briefs/mocks-scripts/`. Result: validator 0 errors; voice scan (20 or more words, over 3 sentences) 0 and 0 on the four files and the `oa` drills; `--exam` for all four, desktop and `--mobile`, all passed; `--drills`: all eight `oa` drills pass (model solution passes all, starter fails); `rq-clean-frame-py` and `rq-group-slopes-py` fail under `--local-cdn` and are untouched by this pass.
+
+1. Fixed: superday C1 1,350, C2 1,080, K1 1,080, K2 1,350 s (2,430 of 2,700 each); ML M5 360 and M6 300 s (1,620 of 1,800).
+2. Fixed: topic code paces cut by a quarter (360, 360, 450 s); pace sum 4,920 s = 82 of 90 minutes.
+3. Fixed: `mock-oa-code` description adds "Other reports give three or four problems in 70 to 90 minutes."
+4. Fixed by decision: `pass` stays 0.5; the description now says "You pass the paper with one problem of the two."
+5. Fixed: superday `models` is two sentences (18 and 19 words).
+6. Fixed: M6 explain second sentence is "The best split is after the second point: its residual sum of squares is 10, against 40.7 and 26." (19 words; 10, 40.7 and 26 recomputed from residuals -5, -3, 2, 6).
+7. Fixed: K1 rubric "standard error as about 1.6 points and z as about 1.5", "p well above 0.05 (about 0.15)"; K2 rubric "t as about 1.3, below 2", "an interval around 0.04 spans zero". Model answers keep 1.58, 1.45, 1.27 and -0.02 to 0.10.
+8. No change needed.
+9. Fixed: M1 `tol` abs 0.005, "Give two decimals", placeholder and accept line updated. 1.33 and 4/3 pass; 1.0 stays a named slip.
+10. Fixed: M4 `tol` abs 0.005, "Give two decimals". 0.79 and 79% pass; 0.5714 and 0.5 stay slips.
+11. Fixed: `e-first-component` `tol` abs 0.005 (0.5 points) with "Give one decimal place"; 73 and 72.7 pass, 63.6 stays a slip. `e-persistence-gain` `tol` abs 0.005; 20, 20.0 and 20% pass, 36, 40, 80 stay slips.
+12. Fixed: Q7 asks "Give one decimal place", `tol` abs 0.001 (0.1 points); new `wrong` `typed-fraction` 0.00142 ("You typed the fraction. The box takes a percentage."). sqrt(0.02016) = 0.14199 and weights 0.6, 0.4 recomputed.
+13. Fixed, with a dispute on the slip: Q3 is mean 3.0, s 10, n 25, key 1.5 (SE 10/5 = 2; 3.0 x 5/10 = 1.5). The reader's slip of 15 is wrong for these numbers: dividing by s/n = 0.4 gives 7.5, so `wrong-se` is 7.5 and `s-only` is 3.0/10 = 0.3. The circular check is now "the mean is one and a half standard errors from zero, below the 5% cut-off of about 2.06 for 24 degrees of freedom".
+14. No change needed.
+15. Fixed: each data task's `how` names the mistake a late test exposes (d1 a date-only sort, d2 an error in the market column, d3 a test-mean baseline, checked against the wrong variants in `oa_quant_data_build.py`).
+16. Fixed: `e-newest-first` (function now `latest_values`) has 7 tests: the wrapped test now has `k` 12 over 8 held, and a new test `[1..10], 4, 6` expects `[10, 9, 8, 7]`. Compiled with g++ -O1: reference 7 of 7, starter fails 6, no-cap and take-`k` variants fail tests 3 and 5, bad mask fails 5. The brief cap of 6 is raised to 7 and noted in `docs/reports/exam-3.5.md`.
+17. No change needed.
+18. Skipped, as the reader said: note only. Engine: an optional "code items must pass" flag for topic exams.
+19. Fixed (a): the description says "For a cold test, do not open the pack `oa` there first." Skipped (b), authoring four more `oa` drills or drawing from `drills/ci`: too large for a fix pass, and `drills/ci` mixes C++. Engine change needed for (b) and (c): a `language` filter on `draw` (already in the inbox) and unseen-first draws by whether the learner has solved the drill.
+20. Fixed: all eight `oa` drill `how` lines read "There are N hidden tests. Each answer must equal the expected value." The superday and data-task `how` lines that began "Submit runs" use the same form.
+21. Fixed: `oa-remove-digits` `how` adds "The last two tests compare long strings."
+22. No change needed.
+23. Fixed: superday `requires` is `["research-int/L4"]` (closure 89); `docs/reports/prereq-mapping-mocks.md` updated (the largest closure is now `mock-superday-trader`, 107).
+24 to 26. No change needed.
+27. No change needed.
+28. Skipped: a `longform` swap would drop a difficulty-3 item and change the ramp 6, 15, 6, 3; AUTHORING section 5 does not require it.
+29. Fixed: `e-sixty-five-minutes` is `e-seventy-minutes`.
+30. No change needed.
+31. Skipped: playthrough shot naming is an engine tool item (inbox).
+32. Fixed: the three starter docstrings are under 45 characters. Skipped: normal weight on a code item's stem is an engine item (inbox).
+33. No change needed.
+34. Skipped: inbox bullets exist and no file change was asked.
+
+Counts of the 34 findings: 20 fixed (1 to 7, 9 to 13, 15, 16, 20, 21, 23, 29, and the fixable parts of 19 and 32), 4 skipped whole (18, 28, 31, 34), 10 needing no change (8, 14, 17, 22, 24 to 27, 30, 33). Skipped parts: 19(b) and (c), 32 stem weight. The two recheck items (superday `models`, `m6-boosting-round`) are findings 5 and 6 and are fixed. Voice: the recheck items (superday `models` and `m6-boosting-round`) are closed; the scan at 20 or more words also caught seven further 20-word sentences in `topic-3.5.json`, now under 20.
+
+Changed keys: Q3 key 1.8 to 1.5 (slips 9.0 and 0.36 to 7.5 and 0.3). Tolerances: M1, M4, `e-first-component`, `e-persistence-gain`, Q7. New items: `e-six-looks` (key `a`; $0.05/6 \approx 0.0083$, $6 \times 0.012 = 0.072$) and `e-next-higher-steps` (order s1 to s4; checked on closes 5, 3, 4, 7 giving 3, 2, 3, none). `e-weekly-hit-case` answer is s1 to s6 with s3 and s4 interchangeable. Changed tests: `e-newest-first` (above), `e-costliest-desk` (below).

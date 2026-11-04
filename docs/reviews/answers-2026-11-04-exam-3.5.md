@@ -83,3 +83,18 @@ Notes, no fix needed:
 ## Freshness
 
 Grepped `app/content/` (courses, drills, bank, exams), `docs/briefs/` (the three course briefs, `mocks-scripts/keys.json`) and `prep.json`. The four shared mock families have different keys: mocks hold 0.7 and 0.5, $-0.1913$, 135 and 0.7945; this exam has 0.45, 0.1196, 616 and 0.7273. The other 27 items reuse no numbers or inputs. The hits that need action are mismatches 3, 4 and 5.
+
+## Fix pass
+
+Fix pass of 4 Nov 2026. Edits are in `app/content/exams/topic-3.5.json`, applied by `docs/briefs/exam-3.5-scripts/second_read_patch.py` (called by `build.py`). Scripts: `/tmp/claude-0/-home-user-zero-to-quant/024bfe09-7a97-56c3-837c-b47a15727adf/scratchpad/fix-exams-3.5/` (`t35.py`, `verify_code.py`). Validator 0 errors, `--exam topic-3.5` passed on desktop and mobile, voice 0 and 0.
+
+1. Fixed: `e-newest-first` (function `latest_values`). The wrapped test now has `k` 12 over 8 held; a new test `[1..10], 4, 6` expects `[10, 9, 8, 7]`; `how` says "Two tests use a `k` above the capacity" and "7 hidden tests". g++ -O1: reference passes 7 of 7, starter fails 6, a `min(k, count)` variant fails tests 3 and 5.
+2. Fixed: `e-costliest-desk` has an eighth test: desks p and q, sizes 1 to 4, costs 0, 9, 9, 6 and 0, 1, 7, 5, `min_rows` 4, expected `'q'`. Fitted slopes 9/5 and 21/10 as Fractions (numpy agrees); end-point slopes 2.0 and 1.667 pick `'p'`. Reference passes 8 of 8, the end-point variant fails only test 8, the starter passes tests 3 to 5 only (fails 5 of 8). `how` says one test has end points that point to the wrong desk.
+3. Fixed: `e-eight-looks` is `e-six-looks`, six signals, best $p$ 0.012. $0.05/6 \approx 0.0083$ and $6 \times 0.012 = 0.072$, so 0.012 fails both ways. Key `a` (58 characters against 60 for the longest distractor).
+4. Fixed: `e-two-singles-steps` is `e-next-higher-steps`, a stack pass for the next higher price (order s1 to s4, family `price-stack-pass`). Checked on closes 5, 3, 4, 7: answers 3, 2, 3, none.
+5. Fixed: `newest_first` is `latest_values` and `best_window` is `peak_window_total`, in prose, starter, solution, tests and options. The reader's suggested `max_window_sum` already exists in `ds` l6, so `peak_window_total` replaces it; neither new name appears elsewhere in `app/content/`.
+6. Fixed: `e-weekly-hit-case` now reads: s1 "Define the label first", s2 features and the date split with a five-day gap, s3 baseline on the training weeks, s4 fit on the training weeks, s5 compare on the test weeks, s6 report. `same` makes s3 and s4 interchangeable, so both valid orders pass; answer s1 to s6.
+7. Fixed: `e-two-statements` explain starts "If B reads 0, A writes 2 and then B writes 0, the final value is 0." (three sentences).
+8. Fixed: `e-online-slope` skills add `rq-case` (3 items again: 19, 25 and 28 in exam order).
+
+Also: `e-first-component` and `e-persistence-gain` tolerances are 0.5 points (see the review's finding 11); `e-sixty-five-minutes` is `e-seventy-minutes`; code paces are 360, 360 and 450 s.
