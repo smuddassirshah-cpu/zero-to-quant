@@ -344,12 +344,37 @@
         0
       ],
       "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        1000000000,
+        2,
+        [
+          0,
+          0,
+          0,
+          20000000000
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "compare": "equal"
     }
   ],
-  "how": "Nine hidden tests call `allow` with lists of times: bursts, refills, refused calls and a refill every 0.1 s. Others use a rate of one token a nanosecond and times of 10^12 ns. A hidden driver returns 1 for an allowed call and 0 for a refused one.",
+  "how": "Ten hidden tests call `allow` with lists of times: bursts, refills, refused calls and a refill every 0.1 s. Others use a rate of one token a nanosecond, times of 10^12 ns and a gap of 20 s. A hidden driver returns 1 for an allowed call and 0 for a refused one.",
   "notes": [
     "Update the clock on every call, even a refused one.",
     "Counting in billionths of a token keeps the arithmetic exact."
   ],
-  "solution": "// Tokens are counted in billionths of a token, so a nanosecond at `rate` per second adds exactly `rate` units.\nclass TokenBucket {\npublic:\n    TokenBucket(long long rate, long long burst)\n        : rate_(rate), cap_(burst * kUnit), units_(burst * kUnit) {}\n    bool allow(long long now_ns) {\n        units_ += (now_ns - last_) * rate_;\n        if (units_ > cap_) units_ = cap_;\n        last_ = now_ns;\n        if (units_ < kUnit) return false;\n        units_ -= kUnit;\n        return true;\n    }\nprivate:\n    static constexpr long long kUnit = 1000000000LL;\n    long long rate_, cap_, units_;\n    long long last_ = 0;\n};\n"
+  "solution": "// Tokens are counted in billionths of a token, so a nanosecond at `rate` per second adds exactly `rate` units.\nclass TokenBucket {\npublic:\n    TokenBucket(long long rate, long long burst)\n        : rate_(rate), cap_(burst * kUnit), units_(burst * kUnit) {}\n    bool allow(long long now_ns) {\n        long long gap = now_ns - last_;\n        // a long gap fills the bucket: skip the multiply, which could overflow\n        if (rate_ > 0 && gap > cap_ / rate_) units_ = cap_;\n        else units_ += gap * rate_;\n        if (units_ > cap_) units_ = cap_;\n        last_ = now_ns;\n        if (units_ < kUnit) return false;\n        units_ -= kUnit;\n        return true;\n    }\nprivate:\n    static constexpr long long kUnit = 1000000000LL;\n    long long rate_, cap_, units_;\n    long long last_ = 0;\n};\n"
 }

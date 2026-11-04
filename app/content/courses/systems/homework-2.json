@@ -598,7 +598,7 @@
       "kind": "longform",
       "title": "The lost wakeup, aloud",
       "prompt": "Say aloud, in three minutes, what a lost wakeup is and how a consumer loop avoids it. Time yourself, and use this level's round figures. Then open the model answer and tick the rubric.",
-      "model": "**1. The failing order.** The consumer checks the queue and sees it empty. Before it waits, the producer pushes and notifies. The notify wakes nobody, because nobody is waiting yet. Then the consumer waits, with an item in the queue, forever. Of the 6 orders of check, wait, push and notify, exactly one does this: check, push, notify, wait.\n\n**2. Why the lock fixes it.** The consumer holds the mutex from its check until it sleeps; `wait` releases it only as the thread sleeps. The producer pushes under the same mutex, so its push lands before the check or after the sleep, never between. Then a notify always finds the consumer either awake or waiting.\n\n**3. Why `while`.** `wait` can return with the queue empty: another consumer took the item, or the wake-up was spurious. So the check is a loop, `while (q.empty() && !done) cv.wait(lk);`, re-tested after every wake-up.\n\n**4. Shutdown.** The predicate also tests `done`. The producer sets it under the mutex and calls `notify_all`, and each consumer returns once the queue is empty.\n\n**5. Costs.** A wake from sleep costs about 5 µs. Polling with a 1 ms sleep leaves an item waiting 0.5 ms on average, 100 times worse. Spinning notices an item in about 0.1 µs but burns a whole core. Hot paths spin; quiet ones wait on the condition variable.",
+      "model": "**1. The failing order.** The consumer checks the queue and sees it empty. Before it waits, the producer pushes and notifies. The notify wakes nobody, because nobody is waiting yet. Then the consumer waits, with an item in the queue, forever. Of the 6 orders of check, wait, push and notify, exactly one does this: check, push, notify, wait.\n\n**2. Why the lock fixes it.** The consumer holds the mutex from its check until it sleeps; `wait` releases it only as the thread sleeps. The producer pushes under the same mutex. Its push lands before the check or after the sleep, never between. Then a notify always finds the consumer either awake or waiting.\n\n**3. Why `while`.** `wait` can return with the queue empty: another consumer took the item, or the wake-up was spurious. So the check is a loop, `while (q.empty() && !done) cv.wait(lk);`, re-tested after every wake-up.\n\n**4. Shutdown.** The predicate also tests `done`. The producer sets it under the mutex and calls `notify_all`, and each consumer returns once the queue is empty.\n\n**5. Costs.** A wake from sleep costs about 5 µs. Polling with a 1 ms sleep leaves an item waiting 0.5 ms on average, 100 times worse. Spinning notices an item in about 0.1 µs but burns a whole core. Hot paths spin; quiet ones wait on the condition variable.",
       "rubric": [
         {
           "points": 3,
@@ -915,11 +915,11 @@
             "shuffle": true
           },
           "feedback": {
-            "correct": "Yes. Of the orders on the four accesses, only `seq_cst` rules it out.",
+            "correct": "Yes. Of the memory orders, only `seq_cst` rules it out.",
             "generic": "Not quite right. Which reordering do release and acquire allow?"
           },
           "explain": {
-            "text": "A release store keeps earlier writes before it, and an acquire load keeps later reads after it. Neither stops a store passing a later load to another variable. Of the orders on the four accesses, only `seq_cst` forbids (0, 0)."
+            "text": "A release store keeps earlier writes before it, and an acquire load keeps later reads after it. Neither stops a store passing a later load to another variable. Of the memory orders, only `seq_cst` forbids (0, 0)."
           }
         }
       ]

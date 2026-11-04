@@ -291,7 +291,7 @@
       "tags": [
         "context-switch"
       ],
-      "prose": "A **context switch** changes which thread runs on a core. Round figure: 2 µs each. A thread woken per message pays two: one to sleep, one to wake.",
+      "prose": "A **context switch** changes which thread runs on a core. Round figure: 2 µs each. A thread woken per message pays two: one to sleep, one to wake. The scheduler adds 1 µs of its own, so a wake costs 5 µs, as in level 2.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -335,10 +335,10 @@
             }
           ],
           [
-            "Share of a core at 100,000 messages a second",
+            "Share of a core at 100,000 messages a second, with a 5 µs wake",
             {
               "edit": true,
-              "answer": 0.4,
+              "answer": 0.5,
               "tol": {
                 "abs": 0.005
               },
@@ -354,7 +354,7 @@
         },
         {
           "rung": "point",
-          "text": "$2 \\times 2\\ \\mu s = 4\\ \\mu s$ a message.",
+          "text": "$2 \\times 2\\ \\mu s = 4\\ \\mu s$ of switching, and 1 µs more makes a 5 µs wake.",
           "highlight": [
             "l2",
             "l4"
@@ -362,20 +362,20 @@
         },
         {
           "rung": "step",
-          "text": "$100{,}000 \\times 4\\ \\mu s = 0.4$ s of every second: 40%."
+          "text": "$100{,}000 \\times 5\\ \\mu s = 0.5$ s of every second: 50%."
         }
       ],
       "feedback": {
-        "correct": "2 switches, 4 µs, 40% of a core.",
+        "correct": "2 switches, 4 µs of switching, a 5 µs wake, 50% of a core.",
         "generic": "Not quite right. Check the first answer that is marked.",
         "byKey": {
           "r0c1": "One switch to sleep and one to wake.",
           "r1c1": "2 switches of 2 µs.",
-          "r2c1": "$100{,}000 \\times 4\\ \\mu s = 0.4$ s every second."
+          "r2c1": "Use the 5 µs wake, not 4 µs: $100{,}000 \\times 5\\ \\mu s = 0.5$ s every second."
         }
       },
       "explain": {
-        "text": "Two switches of 2 µs cost 4 µs a message. At 100,000 messages a second that is 0.4 s in every second, or 40% of a core.",
+        "text": "Two switches of 2 µs cost 4 µs, and the scheduler adds 1 µs: a 5 µs wake. At 100,000 messages a second that is 0.5 s in every second, or 50% of a core.",
         "canvas": {
           "tone": {
             "l2": "err",
@@ -687,7 +687,7 @@
         "context-switch"
       ],
       "pace": 450,
-      "prose": "Drill: about two minutes each. Say the reasoning aloud first. Round figures: a call 0.2 µs, a thread switch 2 µs, and a wake per message costs two switches.",
+      "prose": "Drill: about two minutes each. Say the reasoning aloud first. Round figures: a call 0.2 µs, a thread switch 2 µs, and a wake per message costs 5 µs.",
       "question": "Fill in each answer.",
       "widget": {
         "kind": "table",
@@ -737,10 +737,10 @@
             }
           ],
           [
-            "One wake per message at 250,000 a second: cores spent on switching",
+            "One wake per message at 250,000 a second: cores spent on waking",
             {
               "edit": true,
-              "answer": 1.0,
+              "answer": 1.25,
               "tol": {
                 "abs": 0.005
               }
@@ -759,22 +759,22 @@
         },
         {
           "rung": "step",
-          "text": "1,024 and 204.8 µs; 128 and 25.6 µs; $250{,}000 \\times 4\\ \\mu s = 1$ s a second."
+          "text": "1,024 and 204.8 µs; 128 and 25.6 µs; $250{,}000 \\times 5\\ \\mu s = 1.25$ s a second."
         }
       ],
       "feedback": {
-        "correct": "1,024, 204.8 µs, 128, 25.6 µs and one whole core.",
+        "correct": "1,024, 204.8 µs, 128, 25.6 µs and 1.25 cores.",
         "generic": "Not quite right. Check the first answer that is marked.",
         "byKey": {
           "r0c1": "$4{,}194{,}304 / 4{,}096$.",
           "r1c1": "1,024 calls at 0.2 µs.",
           "r2c1": "$8{,}388{,}608 / 65{,}536$.",
           "r3c1": "128 calls at 0.2 µs.",
-          "r4c1": "Two switches of 2 µs is 4 µs a message: 250,000 × 4 µs is 1 s."
+          "r4c1": "A wake costs 5 µs: 250,000 × 5 µs is 1.25 s a second."
         }
       },
       "explain": {
-        "text": "Calls are bytes over read size, and overhead is calls times 0.2 µs. At 250,000 messages a second the wake-ups alone fill a whole core. Batching and avoiding wake-ups are the two fixes."
+        "text": "Calls are bytes over read size, and overhead is calls times 0.2 µs. At 250,000 messages a second the wake-ups alone need more than a whole core. Batching and avoiding wake-ups are the two fixes."
       }
     },
     {
@@ -997,20 +997,27 @@
         "context-switch"
       ],
       "pace": 60,
-      "prose": "A thread is woken for every message, at 50,000 messages a second. A switch costs 2 µs and each message needs two.",
-      "question": "What share of a core goes on switching?",
+      "prose": "A thread is woken for every message, at 50,000 messages a second. A wake costs 5 µs.",
+      "question": "What share of a core goes on waking?",
       "widget": {
         "kind": "numeric",
-        "answer": 0.2,
+        "answer": 0.25,
         "tol": {
           "abs": 0.005
         },
         "unit": "%",
-        "accept": "20%: 50,000 × 4 µs = 0.2 s.",
+        "accept": "25%: 50,000 × 5 µs = 0.25 s.",
         "wrong": [
           {
-            "id": "half",
+            "id": "one",
             "value": 0.1,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "two",
+            "value": 0.2,
             "tol": {
               "abs": 0.005
             }
@@ -1018,14 +1025,15 @@
         ]
       },
       "feedback": {
-        "correct": "20% of a core.",
-        "generic": "Not quite right. Two switches of 2 µs make 4 µs a message.",
+        "correct": "25% of a core.",
+        "generic": "Not quite right. A wake costs 5 µs a message.",
         "byKey": {
-          "half": "You counted one switch a message. Waking and sleeping make two."
+          "one": "That is one 2 µs switch a message. A wake costs 5 µs.",
+          "two": "That is 4 µs of switching. The scheduler adds 1 µs."
         }
       },
       "explain": {
-        "text": "Two switches of 2 µs are 4 µs a message. At 50,000 a second that is 0.2 s of every second, 20% of a core."
+        "text": "A wake costs 5 µs a message. At 50,000 a second that is 0.25 s of every second, 25% of a core."
       }
     }
   ]

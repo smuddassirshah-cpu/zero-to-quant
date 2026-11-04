@@ -26,7 +26,7 @@
           },
           {
             "id": "cache",
-            "text": "The heap block that the global pointer `cache` points to",
+            "text": "The heap block behind the global `cache`",
             "correct": true
           },
           {
@@ -310,7 +310,7 @@
         "generic": "Not quite right. Draw an edge for each thread."
       },
       "explain": {
-        "text": "The edges A to B, B to C, C to D and D to A form a ring of waits. If R takes A then D, every edge follows A, B, C, D. Of the 480 schedules of the ring, 12 deadlock; after that fix all 270 finish."
+        "text": "The edges A to B, B to C, C to D and D to A form a ring. If R takes A then D, every edge follows A, B, C, D."
       }
     },
     {
@@ -536,27 +536,27 @@
         "atomic-counter"
       ],
       "pace": 45,
-      "prose": "Two counters sit on one 64-byte cache line. Each is incremented by its own thread. An add costs 60 ns when the line moves between cores. It costs 1 ns when the line stays in one core's L1.",
-      "question": "Moving one counter to its own line makes each add how many times faster?",
+      "prose": "Two counters sit on one 64-byte cache line. Each thread adds to its own counter 10 million times. An add costs 60 ns when the line moves between cores. It costs 1 ns when the line stays in one core's L1.",
+      "question": "Moving one counter to its own line saves each thread how many ms?",
       "widget": {
         "kind": "numeric",
-        "answer": 60,
+        "answer": 590,
         "tol": {
           "abs": 0
         },
-        "unit": "times",
-        "accept": "60: 60 ns against 1 ns.",
+        "unit": "ms",
+        "accept": "590: 10 million × (60 − 1) ns.",
         "wrong": [
           {
-            "id": "two",
-            "value": 2,
+            "id": "full",
+            "value": 600,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "sixtyfour",
-            "value": 64,
+            "id": "after",
+            "value": 10,
             "tol": {
               "abs": 0
             }
@@ -564,15 +564,15 @@
         ]
       },
       "feedback": {
-        "correct": "60 times.",
-        "generic": "Not quite right. Compare the two costs per add.",
+        "correct": "590 ms.",
+        "generic": "Not quite right. Subtract the new cost from the old cost, then multiply.",
         "byKey": {
-          "two": "There are two counters, but the cost is per add.",
-          "sixtyfour": "64 is the line size in bytes, not a cost."
+          "full": "600 ms is the time before. The add still costs 1 ns afterwards.",
+          "after": "10 ms is the time after. The question asks what is saved."
         }
       },
       "explain": {
-        "text": "The threads never share a counter, but they share a line, so the line moves on every add. This is false sharing. Padding each counter to its own 64-byte line drops the add from 60 ns to 1 ns."
+        "text": "The threads never share a counter, but they share a line, so the line moves on every add. This is false sharing. Each add falls from 60 ns to 1 ns, so $10^7 \\times 59$ ns is 590 ms saved."
       }
     }
   ]

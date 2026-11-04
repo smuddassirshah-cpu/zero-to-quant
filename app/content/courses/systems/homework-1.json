@@ -14,30 +14,30 @@
         "latency-ladder"
       ],
       "pace": 360,
-      "prose": "An interviewer keeps extending one question. Use the round figures: DRAM 100 ns, NVMe 100 µs, London to New York 60 ms.",
+      "prose": "An interviewer keeps extending one question. Use the round figures: L3 20 ns, DRAM 100 ns, NVMe 100 µs, London to New York 60 ms.",
       "question": "Four follow-ups on the latency ladder.",
       "parts": [
         {
-          "question": "How many main-memory reads take as long as one NVMe read?",
+          "question": "How many L3 reads take as long as one NVMe read?",
           "widget": {
             "kind": "numeric",
-            "answer": 1000,
+            "answer": 5000,
             "tol": {
               "abs": 0
             },
             "unit": "reads",
-            "accept": "1,000: 100 µs / 100 ns.",
+            "accept": "5,000: 100 µs / 20 ns.",
             "wrong": [
               {
-                "id": "ten",
-                "value": 10,
+                "id": "dram",
+                "value": 1000,
                 "tol": {
                   "abs": 0
                 }
               },
               {
-                "id": "hundred",
-                "value": 100,
+                "id": "l1",
+                "value": 100000,
                 "tol": {
                   "abs": 0
                 }
@@ -45,15 +45,15 @@
             ]
           },
           "feedback": {
-            "correct": "1,000 reads.",
+            "correct": "5,000 reads.",
             "generic": "Not quite right. Put both in nanoseconds.",
             "byKey": {
-              "ten": "Divide, do not count rungs: 100,000 / 100.",
-              "hundred": "100 is DRAM against L1."
+              "dram": "1,000 is the count of DRAM reads. An L3 read takes 20 ns, not 100.",
+              "l1": "100,000 uses 1 ns, the L1 time. An L3 read takes 20 ns."
             }
           },
           "explain": {
-            "text": "100 µs is 100,000 ns, and $100{,}000 / 100 = 1{,}000$."
+            "text": "100 µs is 100,000 ns, and $100{,}000 / 20 = 5{,}000$."
           }
         },
         {
@@ -730,7 +730,7 @@
         "generic": "Not quite right. Read the first failing test and trace it by hand."
       },
       "explain": {
-        "text": "Keep each set as a list with the most recent line at the front. A hit moves its line to the front. A miss puts the new line there and, in a full set, drops the back one, the least recently used."
+        "text": "Keep each set as a list with the most recent line at the front. A hit moves its line to the front. A miss puts the new line there, and a full set drops its back line, the least recently used."
       }
     },
     {
@@ -945,26 +945,26 @@
           }
         },
         {
-          "question": "For a 64 × 64 matrix, how many misses does the column order make?",
+          "question": "For a 32 × 64 matrix, how many misses does the column order make?",
           "widget": {
             "kind": "numeric",
-            "answer": 512,
+            "answer": 256,
             "tol": {
               "abs": 0
             },
             "unit": "misses",
-            "accept": "512: the matrix fits, so each line misses once.",
+            "accept": "256: the matrix fits, so each line misses once.",
             "wrong": [
               {
                 "id": "all",
-                "value": 4096,
+                "value": 2048,
                 "tol": {
                   "abs": 0
                 }
               },
               {
                 "id": "rows",
-                "value": 64,
+                "value": 32,
                 "tol": {
                   "abs": 0
                 }
@@ -972,15 +972,15 @@
             ]
           },
           "feedback": {
-            "correct": "512, the same as by rows.",
-            "generic": "Not quite right. Does a 64 × 64 matrix fit in 32 KiB?",
+            "correct": "256, the same as by rows.",
+            "generic": "Not quite right. Does a 32 × 64 matrix fit in 32 KiB?",
             "byKey": {
-              "all": "4,096 would need lines to leave. 32 KiB holds the whole matrix.",
-              "rows": "64 is the number of rows."
+              "all": "2,048 would need lines to leave. 32 KiB holds the whole 16 KiB matrix.",
+              "rows": "32 is the number of rows."
             }
           },
           "explain": {
-            "text": "64 × 64 × 8 bytes is 32 KiB, exactly the cache: 512 lines, 8 in each set. Nothing is evicted, so both orders miss 512 times."
+            "text": "32 × 64 × 8 bytes is 16 KiB: 256 lines, 4 in each of 64 sets, under 8 ways. Nothing is evicted, so both orders miss 256 times."
           }
         }
       ]
@@ -1288,7 +1288,7 @@
         "mispredict-cost"
       ],
       "pace": 120,
-      "prose": "A handler branches on `if (type == 'A')`. Types arrive in random order: 70% adds, 15% cancels, 15% trades. Each message has a 5 µs budget, and a wrong guess costs 5 ns.",
+      "prose": "A handler branches on `if (type == 'A')`. Types arrive in random order: 80% adds, 10% cancels, 10% trades. Each message has a 5 µs budget, and a wrong guess costs 5 ns.",
       "question": "Should you rewrite the branch branchless?",
       "widget": {
         "kind": "choice",
@@ -1296,23 +1296,23 @@
         "options": [
           {
             "id": "a",
-            "text": "No: it costs about 1.5 ns of 5,000 ns, 0.03%. Measure first.",
+            "text": "No: it costs about 1 ns of 5,000 ns, 0.02%. Measure first.",
             "correct": true
           },
           {
             "id": "b",
             "text": "Yes: branches on random data are always worth removing",
-            "why": "Only if they matter. 1.5 ns is 0.03% of the budget."
+            "why": "Only if they matter. 1 ns is 0.02% of the budget."
           },
           {
             "id": "c",
             "text": "Yes: it is wrong half the time",
-            "why": "The best guess, 'add', is wrong 30% of the time, not half."
+            "why": "The best guess, 'add', is wrong 20% of the time, not half."
           },
           {
             "id": "d",
             "text": "No: branches are free",
-            "why": "A wrong guess costs about 5 ns. Here it is wrong 30% of the time."
+            "why": "A wrong guess costs about 5 ns. Here it is wrong 20% of the time."
           }
         ],
         "shuffle": true
@@ -1321,11 +1321,11 @@
         "correct": "No. The branch is not where the time goes.",
         "generic": "Not quite right. Work out its cost first.",
         "byKey": {
-          "c": "Guessing 'add' every time is right 70% of the time."
+          "c": "Guessing 'add' every time is right 80% of the time."
         }
       },
       "explain": {
-        "text": "Wrong 30% of the time at 5 ns is 1.5 ns a message: 0.03% of 5 µs. A rewrite would risk bugs for nothing. Measure where the time goes before you optimise."
+        "text": "Wrong 20% of the time at 5 ns is 1 ns a message: 0.02% of 5 µs. A rewrite would risk bugs for nothing. Measure where the time goes before you optimise."
       }
     }
   ]
