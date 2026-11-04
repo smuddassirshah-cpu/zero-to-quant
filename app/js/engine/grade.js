@@ -190,7 +190,9 @@
   const uncall = (t, fns) => t.replace(CALLHEAD, (m, b, sc, sp) => ((fns || []).includes(b) || (fns || []).includes(b.replace(/^\\/, '')) ? m : `${b}${sc}\\cdot `));
   const prep = (s, cx, fns) => {
     let t = normI(s).replace(/(?:\\left\s*)?\\langle\s*/g, '(').replace(/(?:\\right\s*)?\\rangle/g, ')').replace(/\\epsilon(?![A-Za-z])|[εϵ]/g, '\\varepsilon')
-      .replace(/(?<![A-Za-z\\])(?<!\\(?:mathbb|mathcal|mathrm|mathbf|mathit|mathsf|text|operatorname)\{)([ND])(?![A-Za-z])/g, '\\mathrm{$1}');
+      /* P32-expr-D: D and N are products, whatever follows (Dt, 4Dx, tD, N(0,1), D(t)). The engine reads D and N as its operators
+         (D t is the tuple ["Tuple","D","t"]). A screen can keep the operator reading before a letter by listing "D" or "N" in `functions`. */
+      .replace(/(?<!\\[A-Za-z]*)(?<!\\(?:mathbb|mathcal|mathrm|mathbf|mathit|mathsf|text|operatorname)\{)([ND])(?=([A-Za-z])?)/g, (m, c, nx) => (nx && (fns || []).includes(c) ? m : `\\mathrm{${c}}`));
     t = uncall(unexp(unbinom(minmax(t))), fns);
     if (cx) t = t.replace(/(?<![A-Za-z\\])(?<!_)(?<!_\{)i/g, '\\iota ').replace(/\\bar\s*\{/g, '\\overline{');
     return t;

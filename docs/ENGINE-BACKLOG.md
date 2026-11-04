@@ -1375,3 +1375,12 @@ Source: faults left by the devices CSS pass.
 Status block (engine pass devices 2):
 - 512 (drill passes): done.
 - 513 (tall plane): done.
+
+## Engine pass 3.2 (expression grader, D)
+
+Source: `docs/reviews/review-pdes.md`, worst finding (`pdes/l2-heat-equation` screen 5).
+
+514. Done (P32-expr-D): `prep()` in `js/engine/grade.js` rewrites every capital `D` and `N` outside a command name and outside `\mathrm{..}` style groups to `\mathrm{D}` or `\mathrm{N}`, whatever follows (before it only a lone one, standing alone or before `(`, was rewritten). `4Dt`, `tD` and `\sqrt{2Dt}` are now products. A screen lists `"D"` or `"N"` in `functions` to keep the operator reading before a letter. Documented in `docs/AUTHORING.md` section 3. Report: `docs/reports/engine-pass-3.2.md`.
+
+Status block (engine pass 3.2, D):
+- 514 (P32-expr-D): done.
