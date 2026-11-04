@@ -1,18 +1,22 @@
-Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only; if the local ref is behind origin, check out origin (shallow clone; back up before moving a ref). User (4 Nov): long session; close topic 3.5 and ship prerequisite gating.
+Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only; if the local ref is behind origin, check out origin (back up before moving a ref).
 
-Task: PLAN 2a items 5 and 5a in full. Engine pass C is done; L1 and L2 of coding-int, research-int and systems are written and checked.
+Task: PLAN 2a item 6, topic 3.2: ito L2 to L4, measure-prob L1 to L4, pdes L1 to L3, exam topic-3.2, second reads and fix. Topic 3.5 and gating closed 4 Nov.
 
-Parallel agents (Sonnet, `isolation: "worktree"`, distinct files); merge each branch, grep every file for conflict markers, re-validate.
-- Wave 1: engine pass E (`docs/briefs/prereq-gating.md` sections 1 to 7, from item 481, AUTHORING section 11); research-int L3, systems L3, coding-int L3; a brief writer for mock-oa-code, mock-superday-research, mock-oa-quant-data (`docs/briefs/mocks.md`) and exam topic-3.5 (pattern `docs/reports/exam-3.3.md`).
-- Wave 2: `requires` mapping (brief section 8; `course.json` field only), second reader and fix; research-int L4, systems L4 with their drills; mock-oa-code; mock-superday-research.
-- Wave 3: coding-int L4; mock-oa-quant-data; exam topic-3.5.
-- Wave 4: second reads and fix passes for the three courses (voice 0 and 0) and engine pass E; topic 3.5 closing commit.
-- If limits allow: ito L2 (topic 3.2).
+Context not in the state files:
+- Briefs `docs/briefs/ito.md`, `measure-prob.md`, `pdes.md` predate engine passes C and E and name an old scratchpad. Give agents the current `pkgs` path. Check each brief's canvas and widget needs against `docs/AUTHORING.md` first; per DECISIONS "Topic 3.5 briefs", raise [Must] items for an engine pass, never workarounds.
+- Gating is live (AUTHORING section 11): a level needs `requires` only where its brief names more than the previous level; only a mapping agent edits `course.json`.
+- Worktree agents commit as they go; merge per DECISIONS "Parallel worktree merges".
+- Pyodide ships SciPy 1.14.1 (KNOWN_ISSUES).
 
-After each wave: an answer check per new level, mock and exam (DECISIONS "Fresh numbers in reviews and homework"), a fix agent, changed keys rechecked.
+Waves (parallel Sonnet agents, `isolation: "worktree"`):
+1. Brief check and engine gaps; ito L2, measure-prob L1, pdes L1.
+2. ito L3, measure-prob L2, pdes L2.
+3. ito L4, measure-prob L3 and L4, pdes L3.
+4. Exam topic-3.2 (brief first, pattern `docs/reports/exam-3.5.md`); second reads and fix passes, voice 0 and 0.
+After each wave: an answer check per level, a fix agent, changed keys rechecked.
 
-Close: local CDN (`bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`); split playthrough (four lesson shards, then `--sets`, `--exams`, `--bank all`, `--drills`, `--routes-only`) with and without `--mobile`; PLAN ticks; state files; NEXT_PROMPT.
+Close: local CDN (`bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`); split playthrough (four lesson shards in parallel, then `--sets`, `--exams`, `--bank all`, `--drills`, `--routes-only`) with and without `--mobile`; PLAN ticks; state files; NEXT_PROMPT.
 
-Files: `app/js/`, `app/tools/`, every `course.json`, the three course folders, `app/content/{drills,exams,data}/`, `docs/briefs/mocks.md`, `docs/AUTHORING.md`.
+Files: `app/content/courses/{ito,measure-prob,pdes}/`, `app/content/exams/topic-3.2.json`, `docs/reports/`, `docs/reviews/`, `app/js/` if an engine pass is needed.
 
-Acceptance: validate 0 errors, no `requires` cycles; a locked Stage 3 lesson shows a correct card, test-out unlocks it, Strict mode hides "Open anyway"; all topic 3.5 levels, mocks and topic-3.5 green with and without `--mobile`; answer checks clean; split runs green.
+Acceptance: validate 0 errors; all topic 3.2 levels and exam green with and without `--mobile`; answer checks clean; voice 0 and 0; split runs green.
