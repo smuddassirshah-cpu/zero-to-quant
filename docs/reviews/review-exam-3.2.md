@@ -55,3 +55,42 @@ Format: number | severity | item id | what is wrong | exact fix.
 ## What was checked and is fine
 
 The `skills` map equals the three `course.json` labels; no `requires`; 30 items (validator cap); every item has `id`, `difficulty`, `skills`, `tags` and `pace`; the title field of each item is plain or maths text; `parts` items carry a stem and per-part `feedback`; expression items carry `integers` only where `(-1)^k` is used; the table has `accept` forms `y` and `n`; the order item lists every line once across `answer` and `distractors` and each distractor has a `why`; the code item has 8 tests inside the 6 to 8 cap pattern of exam 3.5 plus one example, and the `how` sentence tells the learner what the tests hold.
+
+## Fix pass
+
+Scope: `app/content/exams/topic-3.2.json` only, by targeted edits (script in the scratchpad `fix-exam32/`). Covers the 9 findings of `docs/reviews/answers-3.2-exam.md` (A1 to A9) and the 19 of this file (R1 to R19). Each correction recomputed before writing: $E[\min(n, U^{-1/2})] = n \cdot n^{-2} + 2(1 - 1/n) = 2 - 1/n \to 2 = E[U^{-1/2}]$; $8e^{-0.36} = 5.5814$ and $8e^{1.08 - 1.44}$ agree; $ab/\sigma^2 = 2/0.81 = 2.4691$; $e^{4.875} = 130.974$, $e^{-8} = 0.000335$. After each key change the file was grepped for the old value. New number 2 (mean of the capped $U^{-1/2}$) is a bare fact, not a parameter set; `U^{-1/2}` appears nowhere else in `app/content`.
+
+- A1 / R8 Fixed: `e-variance-split` s5 and s6 now open "With the cross term gone,", so both need s3 and s4 first and the only freedom is the existing `same: [["s5", "s6"]]` swap. Order s1 s2 s5 s6 s3 s4 s7 now reads as invalid, as it should. Every valid order is accepted and no invalid one.
+- A2 / R10 Fixed: `e-swap-limits` option e is now $\min(n, U^{-1/2})$ (finite mean 2 on both sides); key a, c, e unchanged; `explain` rewritten.
+- A3 / R11 Fixed: `e-pick-martingales`, `e-swap-limits` and `e-sigma-families` feedback and explain name the options by content, no letters or "first".
+- A4 Fixed: `e-cubed-claim` `no-convexity` line uses $m$ and states $8e^{-0.36} = 5.5814$.
+- A5 / R12 Fixed: `e-exit-drift` part 2 id `driftless` renamed `standard-bm`, line rewritten (part 1 `driftless` stays: $b/(a+b)$ ignores $\sigma$). Grep shows no other use of the old id in part 2.
+- A6 / R12 Fixed: `e-moment-and-isometry` `odd-power-zero` line no longer claims the total power is odd.
+- A7 Fixed: `e-is-weight` wrong values 130.97 and 0.000335 (tolerances kept; neither meets the key 0.007635 or the other).
+- A8 Disputed (no change): `e-daily-touch` key 0.6956 against the exact walk 0.6957 is 0.0001 apart with `abs` 0.004; the reader says no change and no wrong value is near it.
+- A9 Disputed (no change): the rounded-term sums differ from the keys by one unit in the last place, inside `tol` (0.02, and the 9.19314 price within 0.0006).
+- R1, R3, R6, R7 Disputed (no change): reader notes that conclude "no change"; coverage, the thin skills and the 81.25 minute clock rechecked in the file (pace sum before the R5 edit 4,875 s).
+- R2 Disputed: the optional line for `description` cannot be written. A topic exam has no `description` field (AUTHORING section 5, topic exam shape: id, topic, name, minutes, pass, skills, items), and the validator would not read it.
+- R4 Disputed (pass mark, no change). Comparison: `topic-3.5.json` has three code items (3 marks of 30) and its review finding 18 reached the same warning; its fix pass skipped it as a house pattern, with an engine flag "code items must pass" as the only remedy. `topic-3.3.json` has no code item (its one non-auto item kind is `longform`), so it offers no precedent for a single code item. AUTHORING section 5 gives a topic exam one `pass` share of all marks; per-item weights and a section pass exist only on stage-exam papers (`parts` of `kind: "paper"`) and mock papers, with `scoring` marks equal for every item. A weight or section pass would need an engine change, which a content pass may not make. Pass stays 0.7 (21 of 30); the by-skill chart still shows `pe-fd` at 0 of 1 for a learner who skips the code task.
+- R5 Fixed: `e-moment-and-isometry` `pace` 240 to 210 (pace sum 4,845 s, 80.75 minutes).
+- R9 Fixed: `e-variance-split` d2 `why` is now "Taking out what is known leaves $E[X - Y \mid \mathcal G]$, not the plain mean, and the product stays inside $E$."
+- R13 Fixed: `e-tree-price` part 3 option d replaced as proposed (key 60 characters against 70).
+- R14, R15, R16, R17, R19 Disputed (no change): each states "no change" (intentional wide tolerance on the Gibbs limit; voice clean; every choice shuffled with a `why`; layout clean; raw tags are legible family names).
+- R18 Fixed: starter docstring line is "Explicit scheme, ends fixed at 0." and the update line is split over two lines; the starter still uses `int(T / dt_max)` and still fails. Checked at 440 px: no clipped line.
+
+Counts: 15 fixed (A1 to A7, R5, R9, R13, R18 and the shared R8, R10, R11, R12), 13 disputed or no change (A8, A9, R1 to R4, R6, R7, R14 to R17, R19). Graded answers changed: none (the key of `e-swap-limits` is still a, c, e, with a new option e).
+
+### Changed keys
+
+- `e-swap-limits` option `e` text: `\min(n, 1/U)` to `\min(n, U^{-1/2})` (still correct).
+- `e-exit-drift` part 2 `wrong` id and `byKey`: `driftless` to `standard-bm` (value 2.0 unchanged).
+- `e-is-weight` `wrong` values: `upside-down` 130.9 to 130.97; `no-half-theta-squared` 0.0003 to 0.000335.
+- `e-variance-split` lines `s5` and `s6` text; `d2` why (order key and `same` unchanged).
+- `e-cubed-claim` part 1 `byKey.no-convexity` text (value 5.5814 unchanged).
+- `e-moment-and-isometry` `pace` 240 to 210; `byKey.odd-power-zero` text.
+- `e-tree-price` part 3 option `d` text and `why`.
+- `e-explicit-code` starter text only.
+
+### Checks
+
+Validator: 0 errors, no warning for `topic-3.2`. Playthrough `--exam topic-3.2` green (37 questions, 30 of 30), and with `--mobile --tablet --why` green; shots of items 23, 25, 29 and 30 read at 440, 1032 and 1376. Voice scan: 0 lines for `topic-3.2`.
