@@ -83,7 +83,7 @@
 
     const lockNow = (v) => { if (mf) mf.readOnly = v; if (txt) txt.readOnly = v; };
     const forms = () => [spec.answer, ...(spec.accept || [])].filter(Boolean);
-    const fo = { functions: Array.isArray(spec.functions) ? spec.functions : [] }; // letters that are functions here (f(x) stays a call)
+    const fo = { functions: Array.isArray(spec.functions) ? spec.functions : [], integers: Array.isArray(spec.integers) ? spec.integers : [] }; // letters that are functions here (f(x) stays a call); integers: symbols sampled at whole numbers
     const equal = (inputLatex, inputAscii, target) => {
       if (ce && (spec.upToConstant ? G().exprEqualUpToConstant(ce, inputLatex, target, fo) : G().exprEqual(ce, inputLatex, target, fo))) return true; // item 200: + C need not be listed
       const n = G().normExpr(inputAscii || inputLatex);
