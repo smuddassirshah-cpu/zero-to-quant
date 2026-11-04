@@ -153,8 +153,10 @@ const pctWidgets = (root) => {
     if (!v || typeof v !== 'object') return;
     if (v.kind === 'numeric' && v.unit === '%' && typeof v.answer === 'number') {
       const k = Math.round(v.answer * 1e10) / 1e8, typed = [String(k), k + '%'];
-      const shown = [...String(typeof v.accept === 'string' ? v.accept : '').replace(/\\%/g, '%').matchAll(/([-−–]?\d[\d,]*(?:\.\d+)?)\s*%/g)].map(m => m[1].replace(/,/g, "").replace(/[−–]/g, "-"));
-      if (new Set(shown).size === 1) typed.push(shown[0], shown[0] + '%');
+      /* item 516: only the leading figure of the accept text (the first number, before any colon, followed by %) is typed; any other figure is skipped */
+      const head = String(typeof v.accept === 'string' ? v.accept : '').replace(/\\%/g, '%').split(':')[0];
+      const lead = head.match(/([-−–]?\d[\d,]*(?:\.\d+)?)(\s*%)?/);
+      if (lead && lead[2]) { const n = lead[1].replace(/,/g, '').replace(/[−–]/g, '-'); typed.push(n, n + '%'); }
       out.push({ at, answer: v.answer, tol: v.tol, typed });
     }
     Object.entries(v).forEach(([k, x]) => seen(x, `${at}.${k}`));
@@ -377,7 +379,7 @@ const main = async () => {
           }
           await page.evaluate(() => ZQ.test.continue());
         }
-        /* item 515: a numeric widget with unit "%" is also typed as a learner would, from the authored key (answer x 100, with and without a % sign) and from the one per cent figure its accept text shows; every form must grade right. Catches a key stored as the per cent. */
+        /* item 515: a numeric widget with unit "%" is also typed as a learner would, from the authored key (answer x 100, with and without a % sign) and from the leading per cent figure of its accept text (item 516); every form must grade right. Catches a key stored as the per cent. */
         try {
           const pcts = pctWidgets(readJSON(path.join(CONTENT, 'courses', ...id.split('/')) + '.json'));
           if (pcts.length) {

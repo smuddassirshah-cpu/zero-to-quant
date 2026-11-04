@@ -404,13 +404,16 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       /* item 515: with unit "%" the engine divides what the learner types by 100, so the key is the fraction (0.1587, not 15.87) */
       if (w.unit === '%') {
         const accText = typeof w.accept === 'string' ? w.accept : '';
-        const shown = [...accText.replace(/\\%/g, '%').matchAll(/(-?[−–]?\d[\d,]*(?:\.\d+)?)\s*(?:%|per ?cent)/gi)].map(m => Math.abs(+m[1].replace(/[−–,]/g, '').replace(/^-/, '')));
-        const pctKey = (v, f) => {
-          if (typeof v !== 'number' || !Number.isFinite(v) || Math.abs(v) <= 1) return;
-          if (shown.some(n => Math.abs(n - Math.abs(v)) < 1e-9 * Math.max(1, n))) err(file, f, `unit "%" divides the typed value by 100, so the key is the fraction: ${v} should be ${+(v / 100).toPrecision(12)} (accept shows ${v}%)`);
-          else if (w.over100 !== true) warn(file, f, `unit "%" key ${v} is above 1: the key is the fraction (1.25 for 125%); if it really is over 100%, add "over100": true`);
+        /* item 516: only the leading figure of the accept text counts (the first number, before any colon, followed by % or "per cent") */
+        const lead = accText.replace(/\\%/g, '%').split(':')[0].match(/(-?[−–]?\d[\d,]*(?:\.\d+)?)(\s*(?:%|per ?cent))?/i);
+        const shown = lead && lead[2] ? [Math.abs(+lead[1].replace(/[−–,]/g, '').replace(/^-/, ''))] : [];
+        const pctKey = (v, f, isKey) => {
+          if (typeof v !== 'number' || !Number.isFinite(v) || v === 0 || (Math.abs(v) <= 1 && !isKey)) return; // at or below 1, only the key itself (a wrong value may be a real per cent)
+          const same = shown.some(n => Math.abs(n - Math.abs(v)) < 1e-9 * Math.max(1, n));
+          if (same) err(file, f, `unit "%" divides the typed value by 100, so the key is the fraction: ${v} should be ${+(v / 100).toPrecision(12)} (accept shows ${v}%)`);
+          else if (Math.abs(v) > 1 && w.over100 !== true) warn(file, f, `unit "%" key ${v} is above 1: the key is the fraction (1.25 for 125%); if it really is over 100%, add "over100": true`);
         };
-        pctKey(w.answer, `${where}.answer`);
+        pctKey(w.answer, `${where}.answer`, true);
         (Array.isArray(w.wrong) ? w.wrong : []).forEach((x, i) => x && pctKey(x.value, `${where}.wrong[${i}].value`));
       }
       break;
