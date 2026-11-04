@@ -186,3 +186,25 @@ Changed keys (file, widget id; key, tolerance, options, numbers, order groups or
 - `l13-stopping-times` s3 order: `same` added. s4 choice: option `b` `why`.
 - `review-3` `r-event` choice: key text. `r-doob` numeric: answer 2.4 to 2.6, accept, `wrong` `mean` 2.1 to 2.4. `r-stop` multi: option texts (thresholds, option d).
 - `homework-3` `h-mart` multi: option c text. `h-code` code: example and hidden tests 1 and 2 (numbers). `h-wald` order: lines, answer, `same`, distractor `v2`.
+
+## Recheck
+
+Commit 32cd2a8 confirmed in `git log`. Each value recomputed by hand and by script (`rc-mp3/chk.py`: exact linear solve of the walk equations, CPython). Homework playthrough with the local CDN green (12 items, 8 of 8 right, 38 of 38 marks), so the `h-code` solution also passes in Pyodide.
+
+- `l9` s1 multi: keys a (first toss H) and d (all of Omega) decided, b and c undecided; meaning kept, no distractor correct, keys now shorter than b and c. OK.
+- `l9` `q-s4` `paths16`: id rename only, value 65536 = 2^16 unchanged, `byKey` renamed in step. OK.
+- `l10` s6 order: t1, t3, t4, t5, t6 with `same` [[t4, t5]]. t4 and t5 both need only A and the defining properties, so either order is valid; no other swap is. d1 and d2 truly invalid. OK.
+- `l10` s10 `slope`: 6 + 0.54(92 - 100) = 1.68, which is the positive-slope slip; distinct from 6, 12 and the key 10.32 (slope -135/250 = -0.54). OK.
+- `l11` s1 and s6 options: d and e (s1) still not adapted, d (s6) still false; meaning kept, keys not longer. OK.
+- `l13` s3 order: o1 and o2 can swap (o2 stands alone as a statement about T and N), o3 must be last; y1 and y2 invalid. OK.
+- `l13` s4 option b `why`: matches the `byKey` b text, key a unchanged. OK.
+- `review-3` `r-event`: key "first two tosses are both heads" = atom HH in F_2; b, c, d each split an atom (HTT/HTH, HHH/HHT, third toss). OK.
+- `review-3` `r-doob`: M_1 = 1 + 2(0.8) = 2.6 (key). `mean` 2.4 = 3(0.8) = M_0 matches its text; `fair` 1 + 2(0.5) = 2; `all` 3. Check 0.8(2.6) + 0.2(1.6) = 2.4. All four distinct. OK.
+- `review-3` `r-stop`: a (+4 or -4) and b are stopping times; c (day before) and d (last day below start) look ahead; keys shorter than c and d. OK.
+- `homework-3` `h-mart`: c drifts, E[S_{n+1}^2 - (n+1) | F_n] = S_n^2 - n + 2S_n/3, so not a martingale; a, b (variance 1 - 1/9 = 8/9) and d (2/3 * 1/2 + 1/3 * 2 = 1) are. OK.
+- `homework-3` `h-code`: (2, 8, 1/2) = (1/4, 12) and (5, 9, 1/2) = (5/9, 20) by closed form and by exact Gaussian solve; all 9 tests plus the example match the independent solve; solution passes 10 of 10, starter passes 0 of 10 in CPython; app playthrough green. OK.
+- `homework-3` `h-wald` order: answer w1, w3, w4, w6 with `same` [[w1, w3, w4]]; each of w1, w3, w4 is self-contained, w6 needs all three, so exactly the six orders with w6 last are valid and the engine accepts exactly those (it permutes places within a group). v1 (optional stopping on an unbounded T) and v2 (assumes |X_k| <= 1) are invalid. Prose states i.i.d., the filtration and E[T] < infinity. OK.
+- `homework-3` `h-wald` die: until a 5 or 6, p = 1/3, E[T] = 3, total 3 x 3.5 = 10.5; V = 3.5 + (2/3)V gives 10.5. OK.
+- Fresh numbers: 2.6, 1.68, 10.5, (2, 8), (5, 9) and chance 0.8 appear in no other measure-prob lesson (the 3/10 and 21 of `l13` are not reused). The 1/4 exit chance for (2, 8) also appears as an unrelated stop-and-target chance in `l13` s? (3/4 and 1/4); different context, not a repeat of a stated problem.
+
+New mismatches: none.
