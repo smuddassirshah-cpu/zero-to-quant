@@ -970,3 +970,10 @@ Raised later (systems L2, 4 Nov):
 Raised later (systems level 3):
 - Playthrough `partsHomeworkChecks` counts a `table` part as answered even when no cell is filled (the draft keeps an array of empty strings), so a parts item whose last part is a `table` fails with "kept 4 open parts and 4 answers, expected 4 and 3". Wanted: count a part as answered only when a cell has text. Workaround: homework-3 item 1 ends with a `numeric` part.
 - `frames` control on an `array` canvas (l14 byte order) shows only the current frame's label at the right end of the slider, with no chip for the other frame, so two frames read as a one-sided slider. Wanted: label both ends, or let the `options` chips drive `frames`. Workaround: the prose names both orders and the question asks about the second.
+
+Raised later (exam mock-superday-research):
+- [Should] The bank holds no statistics, machine learning or open-case families (research banks 1 to 4 are not written), so only paper 1's four probability questions are drawn; the other 14 questions repeat on a resit.
+- [Could] The validator warns "more than 4 tags" on a `draw` entry's `tags`, a rule written for item tags; a draw filter of 16 families is legitimate and the warning cannot be cleared.
+- [Could] The playthrough names exam screenshots by screen index only, so each paper overwrites the one before and only the last paper's items survive; it also takes no shot of the start card and shoots the results page mid-animation (13 of 18 and no stamp at 1280 px).
+- [Could] The exam playthrough never runs a code starter against its hidden tests, so "the starter fails" is not checked for mock code items (it is for drills); the author ran the starters in Pyodide 0.27.7 by hand.
+- [Could] A drawn bank item carries its own course skills (for example `pz-conditioning`), which appear on the results page's By skill chart under names the mock's `skills` map does not define.
