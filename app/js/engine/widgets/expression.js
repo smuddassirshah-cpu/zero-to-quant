@@ -83,8 +83,9 @@
 
     const lockNow = (v) => { if (mf) mf.readOnly = v; if (txt) txt.readOnly = v; };
     const forms = () => [spec.answer, ...(spec.accept || [])].filter(Boolean);
+    const fo = { functions: Array.isArray(spec.functions) ? spec.functions : [] }; // letters that are functions here (f(x) stays a call)
     const equal = (inputLatex, inputAscii, target) => {
-      if (ce && (spec.upToConstant ? G().exprEqualUpToConstant(ce, inputLatex, target) : G().exprEqual(ce, inputLatex, target))) return true; // item 200: + C need not be listed
+      if (ce && (spec.upToConstant ? G().exprEqualUpToConstant(ce, inputLatex, target, fo) : G().exprEqual(ce, inputLatex, target, fo))) return true; // item 200: + C need not be listed
       const n = G().normExpr(inputAscii || inputLatex);
       return !!n && (n === G().normExpr(target));
     };
@@ -98,12 +99,15 @@
     const isSumLike = (j) => head(j) === 'Add' || head(j) === 'Subtract';
     const formOk = (L) => {
       if (!spec.form || !ce) return true;
-      let e; try { e = ce.parse(L); } catch { return true; }
-      const j = e.json;
-      if (spec.form === 'expanded') return isSumLike(j) ? args(j).every(t => !hasSum(t)) : !hasSum(j);
-      if (spec.form === 'factorised') { const r = unNeg(j); return (head(r) === 'Multiply' && args(r).some(f => isSumLike(f) || (head(f) === 'Power' && isSumLike(args(f)[0])))) || (head(r) === 'Power' && isSumLike(args(r)[0])); }
-      if (spec.form === 'simplified') { try { return size(j) <= size(e.simplify().json); } catch { return true; } }
-      return true;
+      try {
+        return G().withParsed(ce, L, fo.functions, (e) => {
+          const j = e.json;
+          if (spec.form === 'expanded') return isSumLike(j) ? args(j).every(t => !hasSum(t)) : !hasSum(j);
+          if (spec.form === 'factorised') { const r = unNeg(j); return (head(r) === 'Multiply' && args(r).some(f => isSumLike(f) || (head(f) === 'Power' && isSumLike(args(f)[0])))) || (head(r) === 'Power' && isSumLike(args(r)[0])); }
+          if (spec.form === 'simplified') { try { return size(j) <= size(e.simplify().json); } catch { return true; } }
+          return true;
+        });
+      } catch { return true; }
     };
     const acceptText = () => 'Accepted: any expression equal to ' + G().inline('$' + spec.answer + '$') + (spec.accept && spec.accept.length ? ', for example ' + spec.accept.slice(0, 2).map(a => `<code class="lsn-ic">${Z.esc(a)}</code>`).join(' or ') : '') + '.';
     const showAccept = () => { acc.innerHTML = acceptText(); acc.hidden = false; };
@@ -126,7 +130,7 @@
         else if (!same) {
           const w = (spec.wrong || []).find(x => x.tex && equal(L, A, x.tex)); key = w ? w.id : null;
           /* item 433: a vector or matrix answer of the wrong size gets its own key and a line saying how many entries */
-          if (!w && ce) { const sl = G().exprShapeLine(ce, spec.answer, L); if (sl) { key = 'length'; line = sl; } }
+          if (!w && ce) { const sl = G().exprShapeLine(ce, spec.answer, L, fo.functions); if (sl) { key = 'length'; line = sl; } }
         }
         return { ok: shaped, key, line, detail: { latex: L, ascii: A, engine: ce ? 'compute-engine' : 'text', form: spec.form || null } };
       },

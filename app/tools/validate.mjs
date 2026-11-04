@@ -407,6 +407,9 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       if (!Array.isArray(w.accept) || !w.accept.length) warn(file, `${where}.accept`, 'list the accepted plain-text forms for the fallback grader');
       /* engine pass (items 433, 437): a capital N or D, \min, \max and \epsilon now grade; a vector or matrix answer has the key "length" for a wrong size */
       if (typeof w.answer === 'string' && /^\s*(\\left\s*)?[(\[][^]*,|\\begin\{[pbv]?matrix\}/.test(w.answer)) keys.add('length');
+      /* P32-expr-exp: a learner's \exp(...) is graded as e^{...}; an authored form should say e^{...} (the screen shows the answer) */
+      [['answer', w.answer], ...(Array.isArray(w.accept) ? w.accept.map((a, i) => [`accept[${i}]`, a]) : [])].forEach(([f, v]) => { if (typeof v === 'string' && /\\(?:exp|operatorname\{exp\}|mathrm\{exp\})(?![A-Za-z])/.test(v)) warn(file, `${where}.${f}`, 'write e^{...} in an authored answer: a learner\'s \\exp(...) is graded as e^{...} already'); });
+      if (w.functions != null && !(Array.isArray(w.functions) && w.functions.every(f => typeof f === 'string' && /^(?:[A-Za-z]|\\[A-Za-z]+)$/.test(f)))) err(file, `${where}.functions`, 'functions is a list of single letters or Greek commands, for example ["f", "\\sigma"]');
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       checkText(file, `${where}.answer`, `$${w.answer || ''}$`, { copy: false });
       if (w.form != null) { if (!['expanded', 'factorised', 'simplified'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised" or "simplified"'); keys.add('form'); }
