@@ -1,0 +1,1237 @@
+{
+ "id": "l4-boundary-conditions",
+ "course": "pdes",
+ "title": "Initial and boundary conditions",
+ "minutes": 14,
+ "objectives": [
+  "Pose a well-posed heat problem with initial and boundary conditions",
+  "Give the conditions Black-Scholes needs and say why it is solved backwards"
+ ],
+ "skills": [
+  "pe-heat"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A rod on $[0, \\pi]$ starts at 100 everywhere. Its left end is held at 20 and its right end at 50. Slide $t$ and watch the profile settle.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3.1416
+     ],
+     "y": [
+      0,
+      110
+     ],
+     "height": 280,
+     "xLabel": "position $x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "20+30*x/pi+sum(k,1,60,(2/pi)*(80*(1-cos(k*pi))/k+30*cos(k*pi)/k)*exp(-k^2*t)*sin(k*x))",
+       "label": ""
+      }
+     ],
+     "params": {
+      "t": 0.05
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "M",
+       "x": 1.5708,
+       "y": 0,
+       "on": "u",
+       "label": "middle: {y:.1f}"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0.05,
+      "max": 3,
+      "step": 0.05,
+      "label": "Time $t$",
+      "start": 0.05
+     }
+    ]
+   },
+   "question": "As $t$ grows, what temperature does the middle of the rod approach?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 35,
+    "tol": {
+     "abs": 0.5
+    },
+    "accept": "35: the straight line $20 + 30x/\\pi$ at $x = \\tfrac{\\pi}{2}$.",
+    "label": "Middle temperature",
+    "placeholder": "a temperature",
+    "wrong": [
+     {
+      "id": "start",
+      "value": 100,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "left",
+      "value": 20,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "right",
+      "value": 50,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the whole profile, not just the middle. What shape does it settle into?"
+    },
+    {
+     "rung": "point",
+     "text": "It settles to a straight line between the end values 20 and 50.",
+     "highlight": [
+      "M"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At the middle, a straight line from 20 to 50 gives the average of the ends."
+    }
+   ],
+   "feedback": {
+    "correct": "The profile becomes the straight line from 20 to 50, which is 35 in the middle.",
+    "generic": "Not quite right. Slide $t$ to the right and read the label at the middle.",
+    "byKey": {
+     "start": "100 is where the rod began. The held ends pull the whole rod away from it.",
+     "left": "20 is the left end only. The middle is halfway along the line.",
+     "right": "50 is the right end only. The middle is halfway along the line."
+    }
+   },
+   "explain": {
+    "text": "Heat flows until nothing changes, so $u_{xx} = 0$: a straight line between the end values. At the middle it is $20 + 30 \\times \\tfrac12 = 35$. The ends, not the start, decide the long run.",
+    "canvas": {
+     "params": {
+      "t": 3
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "A PDE alone has many solutions. The rod needs an **initial condition** (the profile at $t = 0$) and a **boundary condition** at each end. A **Dirichlet** condition fixes $u$, a **Neumann** condition fixes $u_x$, and a **Robin** condition fixes a mix of both.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Condition",
+      "What it fixes",
+      "Example"
+     ],
+     "rows": [
+      [
+       "Dirichlet",
+       "$u$",
+       "end held at 20"
+      ],
+      [
+       "Neumann",
+       "$u_x$",
+       "insulated end"
+      ],
+      [
+       "Robin",
+       "$au + bu_x$",
+       "end in air"
+      ]
+     ],
+     "align": [
+      "left",
+      "left",
+      "left"
+     ]
+    },
+    "state": {}
+   },
+   "question": "An end is perfectly insulated, so no heat crosses it. Which condition is that?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "neu",
+      "text": "Neumann: $u_x = 0$ at that end",
+      "correct": true
+     },
+     {
+      "id": "dir",
+      "text": "Dirichlet: $u = 0$ at that end",
+      "why": "That holds the end at temperature 0, which drains heat away. Insulation means no flow, not zero temperature."
+     },
+     {
+      "id": "rob",
+      "text": "Robin: $u + u_x = 0$ at that end",
+      "why": "A Robin condition lets heat leak at a rate set by $u$. Perfect insulation allows no leak."
+     },
+     {
+      "id": "none",
+      "text": "No condition: insulated ends are free",
+      "why": "A free end still needs a rule. Insulation is the rule: zero flux."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Heat flow across an end is proportional to the slope $u_x$ there."
+    },
+    {
+     "rung": "point",
+     "text": "No flow means zero slope.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Zero slope is $u_x = 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "Zero flux is zero slope: $u_x = 0$, a Neumann condition.",
+    "generic": "Not quite right. Ask which quantity is the flow of heat across the end."
+   },
+   "explain": {
+    "text": "Heat flows down the slope, so no flow means $u_x = 0$ at the end. Fixing a temperature is a different condition, Dirichlet. A real rod can mix them: that is Robin.",
+    "canvas": {
+     "highlight": [
+      "r1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Now insulate both ends of a rod on $[0, 1]$, so $u_x = 0$ at each. It starts with $u_0 = x$: 0 at the left, 1 at the right. Slide $t$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      -0.05,
+      1.05
+     ],
+     "height": 260,
+     "xLabel": "position $x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u0",
+       "expr": "x",
+       "label": "$u_0$",
+       "dashed": true
+      },
+      {
+       "id": "u",
+       "expr": "0.5-(4/pi^2)*sum(m,1,30,cos((2*m-1)*pi*x)*exp(-(2*m-1)^2*pi^2*t)/(2*m-1)^2)",
+       "label": "",
+       "colour": 2
+      }
+     ],
+     "params": {
+      "t": 0
+     }
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0,
+      "max": 0.4,
+      "step": 0.01,
+      "label": "Time $t$",
+      "start": 0
+     }
+    ]
+   },
+   "question": "What temperature does the whole rod settle at?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "0.5: the average of $x$ over $[0, 1]$.",
+    "label": "Final temperature",
+    "placeholder": "a number",
+    "wrong": [
+     {
+      "id": "right",
+      "value": 1,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "No heat can leave, so the total heat is kept."
+    },
+    {
+     "rung": "point",
+     "text": "The final level times the length equals the starting total, $\\int_0^1 x\\,dx$.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\int_0^1 x\\,dx = \\tfrac12$, over length 1."
+    }
+   ],
+   "feedback": {
+    "correct": "The rod keeps its average, 0.5.",
+    "generic": "Not quite right. With insulated ends the total heat cannot change.",
+    "byKey": {
+     "right": "1 is the right end's start. That end is insulated, not held, so it cools.",
+     "zero": "0 would need heat to leave. Insulated ends let none out."
+    }
+   },
+   "explain": {
+    "text": "Insulated ends keep the total heat, so the final level is the starting average $\\int_0^1 x\\,dx = 0.5$. Held ends would instead set the long run, as in the first screen."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Why can the rod's data only give one solution? Suppose two solutions share the same initial and end data. Leave out the two lines that do not belong.",
+   "question": "Order the energy argument for uniqueness.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "e1",
+      "text": "Let $w$ be the difference of the two solutions. Then $w_t = Dw_{xx}$, $w(x, 0) = 0$, and $w = 0$ at both ends."
+     },
+     {
+      "id": "e2",
+      "text": "Define the energy $E(t) = \\int_0^L w^2\\,dx$. Then $E \\ge 0$ and $E(0) = 0$."
+     },
+     {
+      "id": "e3",
+      "text": "Differentiate: $E' = 2\\int ww_t\\,dx = 2D\\int ww_{xx}\\,dx$, using the equation."
+     },
+     {
+      "id": "e4",
+      "text": "Integrate by parts: $\\int ww_{xx}\\,dx = [ww_x]_0^L - \\int w_x^2\\,dx$, and the bracket is 0 because $w = 0$ at both ends."
+     },
+     {
+      "id": "e5",
+      "text": "So $E' = -2D\\int w_x^2\\,dx \\le 0$: the energy never grows."
+     },
+     {
+      "id": "e6",
+      "text": "Then $0 \\le E(t) \\le E(0) = 0$, so $E = 0$, $w \\equiv 0$ and the two solutions agree."
+     },
+     {
+      "id": "d1",
+      "text": "$E' = 0$, because heat is conserved.",
+      "why": "Heat is conserved only with insulated ends. Here $w = 0$ at the ends and $E$ falls."
+     },
+     {
+      "id": "d2",
+      "text": "The boundary term $[ww_x]_0^L$ vanishes by itself.",
+      "why": "It vanishes because $w = 0$ at both ends. That is where the end data are used."
+     }
+    ],
+    "answer": [
+     "e1",
+     "e2",
+     "e3",
+     "e4",
+     "e5",
+     "e6"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start by subtracting the two solutions, then build a quantity that must be 0."
+    },
+    {
+     "rung": "point",
+     "text": "Differentiate the energy, then use the equation and integrate by parts."
+    },
+    {
+     "rung": "step",
+     "text": "The boundary term uses $w = 0$; the sign of $E'$ and $E(0) = 0$ finish it."
+    }
+   ],
+   "feedback": {
+    "correct": "Difference, energy, differentiate, integrate by parts, sign, conclude.",
+    "generic": "Not quite right. Each line should follow from the one before, with its reason."
+   },
+   "explain": {
+    "text": "The energy starts at 0 and cannot grow, and it cannot be negative, so it stays 0. The end data kill the boundary term, and the initial data set $E(0) = 0$. That is why each piece of data is needed."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Count the side conditions an equation needs. The number of time conditions equals the order in $t$, and the number of end conditions equals the order in $x$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Equation",
+      "Highest in $t$",
+      "Highest in space"
+     ],
+     "rows": [
+      [
+       "Heat",
+       "$u_t$",
+       "$u_{xx}$"
+      ],
+      [
+       "Wave",
+       "$u_{tt}$",
+       "$u_{xx}$"
+      ],
+      [
+       "Black-Scholes",
+       "$V_t$",
+       "$V_{SS}$"
+      ]
+     ],
+     "align": [
+      "left",
+      "center",
+      "center"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the table.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Equation",
+     "Time conditions",
+     "End conditions"
+    ],
+    "rows": [
+     [
+      "Heat, $u_t = Du_{xx}$",
+      "1",
+      "2"
+     ],
+     [
+      "Wave, $u_{tt} = c^2u_{xx}$",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "Black-Scholes, $V_t + \\dots + \\tfrac12\\sigma^2S^2V_{SS}$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find the highest derivative in $t$ and in the space variable."
+    },
+    {
+     "rung": "point",
+     "text": "The wave equation has $u_{tt}$: second order in time."
+    },
+    {
+     "rung": "step",
+     "text": "Black-Scholes has $V_t$ and $V_{SS}$, like heat: 1 and 2."
+    }
+   ],
+   "feedback": {
+    "correct": "Heat 1 and 2, wave 2 and 2, Black-Scholes 1 and 2.",
+    "generic": "Not quite right. Read off the order in $t$, then the order in the space variable."
+   },
+   "explain": {
+    "text": "The wave equation is second order in time, so it needs the start and the starting speed. Black-Scholes is first order in $t$ and second in $S$, so it needs one condition in time and two in $S$. The time condition for Black-Scholes sits at expiry."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "A put on a £100 strike pays $\\max(100 - S, 0)$ at expiry $T = 1$, with $r = 5\\%$. Its value at $S = 0$ is known for every $t$: the put will certainly be exercised for £100 at expiry. Slide the time to expiry.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      200
+     ],
+     "y": [
+      0,
+      100
+     ],
+     "height": 270,
+     "xLabel": "$S$ (£)",
+     "yLabel": "put value (£)",
+     "functions": [
+      {
+       "id": "pay",
+       "expr": "max(100-x,0)",
+       "label": "payoff",
+       "dashed": true,
+       "domain": [
+        0,
+        200
+       ]
+      },
+      {
+       "id": "put",
+       "expr": "100*exp(-0.05*tau)*normcdf(-(ln(x/100)+0.03*tau)/(0.2*sqrt(tau)),0,1)-x*normcdf(-(ln(x/100)+0.07*tau)/(0.2*sqrt(tau)),0,1)",
+       "label": "",
+       "colour": 2,
+       "domain": [
+        1,
+        200
+       ]
+      }
+     ],
+     "hlines": [
+      {
+       "id": "bound",
+       "y": 95.1229,
+       "label": ""
+      }
+     ],
+     "params": {
+      "tau": 1
+     }
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "tau",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "label": "Time to expiry",
+      "start": 1
+     }
+    ]
+   },
+   "question": "What is the put's value at $S = 0$ with a year to run? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 95.1229,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "95.1229: $100e^{-0.05}$, the strike discounted a year.",
+    "label": "Value",
+    "unit": "£",
+    "placeholder": "a price",
+    "wrong": [
+     {
+      "id": "undiscounted",
+      "value": 100,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At $S = 0$ the put is worth exactly the strike at expiry. What is a certain £100 in a year worth now?"
+    },
+    {
+     "rung": "point",
+     "text": "Discount at 5% for one year: multiply by $e^{-rT}$.",
+     "highlight": [
+      "bound"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$100e^{-0.05}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$100e^{-0.05} = £95.1229$.",
+    "generic": "Not quite right. A certain £100 at expiry is worth its discounted value today.",
+    "byKey": {
+     "undiscounted": "100 ignores interest. £100 in a year is worth less than £100 today.",
+     "zero": "0 is the call's value at $S = 0$. A put at $S = 0$ is a certain payment of the strike."
+    }
+   },
+   "explain": {
+    "text": "At $S = 0$ the put pays £100 for certain, so $V(0, t) = 100e^{-r(T - t)}$, which is £95.1229 at $t = 0$. A call has $V(0, t) = 0$, and for large $S$ it behaves like $S - Ke^{-r(T - t)}$. The payoff itself is the condition at $t = T$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague treats the call payoff $\\max(S - K, 0)$ as an initial condition and steps Black-Scholes forward in $t$. The chart shows how a perturbation $\\tfrac{1}{10}\\sin 10x$ is amplified if the heat equation is run that way.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      0.1
+     ],
+     "y": [
+      0,
+      2500
+     ],
+     "height": 250,
+     "xLabel": "time run the wrong way",
+     "yLabel": "error size",
+     "functions": [
+      {
+       "id": "amp",
+       "expr": "0.1*exp(100*x)",
+       "label": ""
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "e",
+       "x": 0.1,
+       "y": 2202.65,
+       "label": "2,202.65",
+       "labelPos": "nw"
+      }
+     ]
+    }
+   },
+   "question": "What is wrong with that plan?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "terminal",
+      "text": "The payoff is a terminal condition: stepping forward from it runs the equation backwards, which is ill-posed",
+      "correct": true
+     },
+     {
+      "id": "ok",
+      "text": "Nothing: any time can serve as the start",
+      "why": "For heat, only the starting end of time works. Starting from the wrong end makes errors grow."
+     },
+     {
+      "id": "kink",
+      "text": "The payoff has a kink, and kinked starts are not allowed",
+      "why": "Kinked starts are fine: heat smooths them at once, as lesson 3 showed."
+     },
+     {
+      "id": "bc",
+      "text": "The plan needs boundary conditions in $t$ as well",
+      "why": "Time has one condition, not two. The trouble is which end of time it sits at."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the time direction of the payoff with the direction in which the heat equation is stable."
+    },
+    {
+     "rung": "point",
+     "text": "The chart shows the growth when the heat equation is run the wrong way.",
+     "highlight": [
+      "amp"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Black-Scholes is solved backwards from expiry, which is forwards in the heat variable."
+    }
+   ],
+   "feedback": {
+    "correct": "The payoff sits at expiry, so we solve backwards from it.",
+    "generic": "Not quite right. Think about which end of time the payoff belongs to.",
+    "byKey": {
+     "ok": "You treated both ends of time alike. For a parabolic equation one direction is stable and the other explodes.",
+     "kink": "You blamed the kink. A smooth solution appears from a kinked start in the stable direction.",
+     "bc": "You added a second time condition. The equation has one, and it is at expiry."
+    }
+   },
+   "explain": {
+    "text": "Run the wrong way, $\\tfrac{1}{10}\\sin 10x$ grows to about 2,202.65 by $t = 0.1$, instead of shrinking to about $4.54 \\times 10^{-6}$. The payoff is a terminal condition and the equation is solved backwards from expiry. In the heat variable that is a forward problem."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "A rod starts at 100 but both ends are held at 0, so the data jump at the corners. Slide $t$ from a tiny value.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3.1416
+     ],
+     "y": [
+      -5,
+      115
+     ],
+     "height": 260,
+     "xLabel": "position $x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "sum(m,1,60,400/(pi*(2*m-1))*exp(-(2*m-1)^2*t)*sin((2*m-1)*x))",
+       "label": ""
+      }
+     ],
+     "params": {
+      "t": 0.001
+     }
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0.001,
+      "max": 0.5,
+      "step": 0.001,
+      "label": "Time $t$",
+      "start": 0.001
+     }
+    ]
+   },
+   "question": "What happens for $t > 0$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "smooth",
+      "text": "The jump is smoothed at once, and the solution is smooth for every $t > 0$",
+      "correct": true
+     },
+     {
+      "id": "none",
+      "text": "No solution exists, since the data disagree at the corners",
+      "why": "A solution does exist. It is discontinuous only at $t = 0$, at the corners."
+     },
+     {
+      "id": "jump",
+      "text": "The jump stays and slowly shrinks",
+      "why": "It does not persist. By any $t > 0$ the profile is smooth, as the heat kernel smooths a step."
+     },
+     {
+      "id": "ends",
+      "text": "The ends warm up to match the middle",
+      "why": "The ends are held at 0 for all time. The middle cools towards them."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide $t$ to 0.01 and look at the corners."
+    },
+    {
+     "rung": "point",
+     "text": "The profile near the ends is already a smooth rise.",
+     "highlight": [
+      "u"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The corner jump is smoothed at once.",
+    "generic": "Not quite right. Look at the profile at a small $t$ such as 0.01."
+   },
+   "explain": {
+    "text": "A jump in the data costs nothing for $t > 0$: the profile is smooth for every positive time. Only at $t = 0$ is there a jump. That smoothing is why parabolic problems tolerate rough starts."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "A grid step turns the heat equation into $u_j \\to u_j + \\lambda(u_{j+1} - 2u_j + u_{j-1})$. Dirichlet ends stay fixed. Neumann ends use ghost points $u_{-1} = u_1$ and $u_{n+1} = u_{n-1}$.",
+   "question": "Complete `explicit_step` and `run`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef explicit_step(u, lam, kind):\n    \"\"\"One step; kind is 'dirichlet' or 'neumann'.\"\"\"\n    u = np.asarray(u, dtype=float)\n    ...\n\ndef run(u0, lam, steps, kind):\n    \"\"\"Repeat the step. Reject lam > 0.5.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef explicit_step(u, lam, kind):\n    \"\"\"One step; kind is 'dirichlet' or 'neumann'.\"\"\"\n    u = np.asarray(u, dtype=float)\n    new = u.copy()\n    new[1:-1] = u[1:-1] + lam * (u[2:] - 2 * u[1:-1] + u[:-2])\n    if kind == 'neumann':\n        new[0] = u[0] + lam * (2 * u[1] - 2 * u[0])\n        new[-1] = u[-1] + lam * (2 * u[-2] - 2 * u[-1])\n    return new\n\ndef run(u0, lam, steps, kind):\n    \"\"\"Repeat the step. Reject lam > 0.5.\"\"\"\n    if lam > 0.5:\n        raise ValueError('lam must be at most 0.5')\n    u = np.asarray(u0, dtype=float)\n    for _ in range(steps):\n        u = explicit_step(u, lam, kind)\n    return u\n",
+    "examples": [
+     {
+      "call": "np.round(explicit_step([0, 0, 1, 0, 0], 0.4, 'dirichlet'), 6).tolist()",
+      "expect": "[0.0, 0.4, 0.2, 0.4, 0.0]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(explicit_step([0, 0, 1, 0, 0], 0.4, 'dirichlet'), 6).tolist()",
+      "expect": "[0.0, 0.4, 0.2, 0.4, 0.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "np.round(explicit_step([1, 0, 0], 0.25, 'neumann'), 6).tolist()",
+      "expect": "[0.5, 0.25, 0.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "float(explicit_step([5, 1, 1, 9], 0.3, 'dirichlet')[3])",
+      "expect": "9",
+      "compare": "isclose"
+     },
+     {
+      "setup": "u0 = np.array([20.0] + [100.0] * 49 + [50.0])",
+      "call": "round(float(run(u0, 0.4, 20000, 'dirichlet')[15]), 6)",
+      "expect": "29",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "setup": "u0 = np.linspace(0, 1, 51)",
+      "call": "float(np.abs(run(u0, 0.4, 20000, 'neumann') - 0.5).max())",
+      "expect": "0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "setup": "u0 = np.linspace(0, 1, 51)",
+      "call": "run(u0, 0.6, 1, 'dirichlet')",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, the longest with 20,000 steps. NumPy loads on the first run, which takes a second or two, and that time is not counted against the tests."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Update the interior with the slices `u[2:]`, `u[1:-1]` and `u[:-2]`."
+    },
+    {
+     "rung": "point",
+     "text": "For Neumann ends, the ghost point makes the end update $u_0 + 2\\lambda(u_1 - u_0)$."
+    },
+    {
+     "rung": "step",
+     "text": "In `run`, raise `ValueError` first if `lam > 0.5`, then loop `steps` times."
+    }
+   ],
+   "feedback": {
+    "correct": "Dirichlet reaches the line, Neumann keeps the average, and $\\lambda > \\tfrac12$ is refused.",
+    "generic": "Not quite right. Check the ends separately from the interior."
+   },
+   "explain": {
+    "text": "Dirichlet from 20 and 50 reaches the line, with 29 at $x = 0.3$. Neumann from $u_0 = x$ settles at 0.5, the average. The limit $\\lambda \\le \\tfrac12$ comes back in level 2, where we see why."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "A problem is **well-posed** (Hadamard) when a solution exists, is unique, and depends continuously on the data. Stability reads $\\|u_1 - u_2\\| \\le C\\,\\|f_1 - f_2\\|$ for data $f_1, f_2$. The heat equation with one initial condition and one condition at each end passes all three.",
+   "question": "Which problem is well-posed?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fwd",
+      "text": "Heat on $[0, \\pi]$ from a given $u_0$, with both ends held at 0",
+      "correct": true
+     },
+     {
+      "id": "back",
+      "text": "Heat on $[0, \\pi]$ run backwards from a measured final profile",
+      "why": "Small errors in the final profile grow by $e^{k^2Dt}$ going backwards. The solution does not depend continuously on the data."
+     },
+     {
+      "id": "noends",
+      "text": "Heat on $[0, \\pi]$ from $u_0$ with no end conditions",
+      "why": "Without end data many solutions fit: the ends could be held at anything."
+     },
+     {
+      "id": "both",
+      "text": "Heat on $[0, \\pi]$ with $u$ given at $t = 0$ and again at $t = 1$",
+      "why": "Giving the profile at two times over-determines it. Most pairs have no solution."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Forward from $u_0$ with end data: existence, uniqueness and stability.",
+    "generic": "Not quite right. Check existence, uniqueness and stability for each option."
+   },
+   "explain": {
+    "text": "The forward problem has all three properties. The backward problem fails stability, the problem without ends fails uniqueness, and two time conditions fail existence. Black-Scholes is well-posed backwards from expiry."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A double-barrier knock-out call has strike £100 and barriers at £80 and £130. If $S$ touches either barrier the option dies worthless. We price it on $80 \\le S \\le 130$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      150
+     ],
+     "y": [
+      -5,
+      55
+     ],
+     "height": 250,
+     "xLabel": "$S$ (£)",
+     "yLabel": "payoff (£)",
+     "functions": [
+      {
+       "id": "pay",
+       "expr": "max(x-100,0)",
+       "label": "payoff",
+       "dashed": true
+      }
+     ],
+     "vlines": [
+      {
+       "id": "b80",
+       "x": 80,
+       "label": "£80",
+       "dashed": false
+      },
+      {
+       "id": "b130",
+       "x": 130,
+       "label": "£130",
+       "dashed": false
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which end conditions does the pricing equation need?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "dir0",
+      "text": "$V(80, t) = 0$ and $V(130, t) = 0$",
+      "correct": true
+     },
+     {
+      "id": "neu",
+      "text": "$V_S = 0$ at both barriers",
+      "why": "That is an insulated end: value would stay. A knocked-out option is worth nothing."
+     },
+     {
+      "id": "payoff",
+      "text": "$V(130, t) = 130 - 100$, the payoff at the upper barrier",
+      "why": "At the barrier the option is killed, so it pays nothing even though the payoff would be £30."
+     },
+     {
+      "id": "none",
+      "text": "None: the payoff at expiry is enough",
+      "why": "Expiry gives the time condition only. The interval needs both ends."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the option worth at the moment it is knocked out?"
+    },
+    {
+     "rung": "point",
+     "text": "A dead option has value 0.",
+     "highlight": [
+      "b80",
+      "b130"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A fixed value is a Dirichlet condition, one at each barrier."
+    }
+   ],
+   "feedback": {
+    "correct": "Value 0 at both barriers: Dirichlet. The expiry payoff gives the time condition.",
+    "generic": "Not quite right. Ask what the option is worth the instant it is knocked out."
+   },
+   "explain": {
+    "text": "Both barriers fix $V = 0$, two Dirichlet conditions, and expiry gives the payoff on $[80, 130]$. An ordinary option has no barrier, so a pricer must choose a far boundary and a value there. Level 3 does that.",
+    "canvas": {
+     "highlight": [
+      "b80",
+      "b130"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A well-posed problem fixes one initial condition and one condition at each end: Dirichlet fixes $u$, Neumann fixes $u_x$, Robin mixes them.",
+   "Uniqueness follows from energy: the difference of two solutions has $E' \\le 0$ and $E(0) = 0$. Insulated ends keep the average.",
+   "Black-Scholes has one condition in time, at expiry, and two in $S$, so it is solved backwards from the payoff."
+  ],
+  "formula": {
+   "name": "Energy of the difference",
+   "tex": "E(t) = \\int_0^L w^2\\,dx, \\qquad E' = -2D\\int_0^L w_x^2\\,dx \\le 0",
+   "note": "With $w = 0$ at both ends and $E(0) = 0$, $E = 0$."
+  },
+  "trap": "The payoff is a terminal condition, not an initial one: stepping Black-Scholes forward in $t$ runs heat backwards."
+ },
+ "quiz": [
+  {
+   "id": "q-energy",
+   "difficulty": 2,
+   "prose": "On $[0, 1]$ the function $u = e^{-\\pi^2t}\\sin\\pi x$ solves $u_t = u_{xx}$ with $u = 0$ at both ends. Its energy is $E(t) = \\tfrac12e^{-2\\pi^2t}$.",
+   "question": "What is $E(0.1)$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0695,
+    "tol": {
+     "abs": 5e-05
+    },
+    "accept": "0.0695: $\\tfrac12e^{-0.2\\pi^2}$, which is 0.069456.",
+    "label": "$E(0.1)$",
+    "placeholder": "for example 0.1",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-half",
+      "value": 0.1389,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac12e^{-1.9739} = 0.0695$.",
+    "generic": "Not quite right. Put $t = 0.1$ into $\\tfrac12e^{-2\\pi^2t}$.",
+    "byKey": {
+     "half": "0.5 is $E(0)$. By $t = 0.1$ the energy has decayed.",
+     "no-half": "0.1389 is $e^{-2\\pi^2t}$ without the factor $\\tfrac12$ from $\\int\\sin^2$."
+    }
+   },
+   "explain": {
+    "text": "$2\\pi^2 \\times 0.1 = 1.9739$, so $E = \\tfrac12e^{-1.9739} = 0.0695$. The energy fell from 0.5, as $E' \\le 0$ requires."
+   }
+  },
+  {
+   "id": "q-max",
+   "difficulty": 3,
+   "prose": "A rod starts between 20 and 50, with its ends held at 20 and 50.",
+   "question": "What does the maximum principle say about $u$ at any later time and position?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "between",
+      "text": "It stays between 20 and 50",
+      "correct": true
+     },
+     {
+      "id": "hot",
+      "text": "It can exceed 50 in the middle",
+      "why": "Heat only flows down gradients. Nothing in the middle can rise above the largest of the start and the ends."
+     },
+     {
+      "id": "cold",
+      "text": "It can fall below 20 near the left end",
+      "why": "The left end is held at 20, and the start is at least 20. No point can go colder."
+     },
+     {
+      "id": "equal",
+      "text": "It equals the average of the ends everywhere",
+      "why": "That is only the long-run profile, a line. At earlier times the profile differs."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The largest and smallest values are at $t = 0$ or at the ends.",
+    "generic": "Not quite right. Where can the extreme values sit?"
+   },
+   "explain": {
+    "text": "The maximum principle: the largest value of $u$ is at $t = 0$ or on an end, and likewise the smallest. So $u$ stays between 20 and 50. It also gives uniqueness a second way."
+   }
+  },
+  {
+   "id": "q-bs-count",
+   "difficulty": 2,
+   "prose": "Black-Scholes in $(S, t)$ is first order in $t$ and second order in $S$.",
+   "question": "How many conditions does it need, in total?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "3: one at expiry and two in $S$.",
+    "label": "Conditions",
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "One time condition and two in $S$: 3.",
+    "generic": "Not quite right. Count the order in $t$ and the order in $S$.",
+    "byKey": {
+     "two": "You counted the two in $S$. The expiry payoff is a third condition.",
+     "four": "4 is for the wave equation, with two time conditions and two end conditions."
+    }
+   },
+   "explain": {
+    "text": "$V_t$ is first order, so one condition in time: the payoff at expiry. $V_{SS}$ is second order, so two in $S$. That makes 3."
+   }
+  },
+  {
+   "id": "q-put-half",
+   "difficulty": 3,
+   "prose": "The put on a £100 strike has $r = 5\\%$. Its value at $S = 0$ is $100e^{-r(T - t)}$.",
+   "question": "What is it with half a year to run? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 97.531,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "97.5310: $100e^{-0.025}$.",
+    "label": "Value",
+    "unit": "£",
+    "placeholder": "a price",
+    "wrong": [
+     {
+      "id": "year",
+      "value": 95.1229,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "strike",
+      "value": 100,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$100e^{-0.025} = £97.5310$.",
+    "generic": "Not quite right. Discount the strike for half a year.",
+    "byKey": {
+     "year": "95.1229 discounts a full year. Only half a year remains.",
+     "strike": "100 ignores interest. Discount for half a year."
+    }
+   },
+   "explain": {
+    "text": "With $T - t = 0.5$ the discount factor is $e^{-0.025} = 0.97531$, so the value is £97.5310. Less time to run means less discounting."
+   }
+  }
+ ]
+}
