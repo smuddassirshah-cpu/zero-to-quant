@@ -152,3 +152,37 @@ Notes
 - Fresh numbers: `r-die`, `r-tower`, `r-pred`, `r-gain`, `r-cube`, `r-ruin`, `r-agree`, `h-atoms`, `h-proj`, `h-gains`, `h-class` and `h-mart` share no number or answer with a lesson. The repeats are items 10 and 14.
 - Longform rubric (`h-long`): six points of 2, 1, 2, 2, 1 and 2 make 10; each is checkable; the model answer is correct in all three parts (the walk bound $E[T \wedge n] \le N^2 - k^2$, $E[T] = k(N - k)$, the failure and the remedy).
 - Markov level 5 numbers, recomputed independently: 3/10, `E[T]` = 21, 0.0852 and 0.0000458 (see Method).
+
+## Fix pass
+
+Every number below was recomputed before it was written: the slip 6 + 0.54(92 - 100) = 1.68 and 60 + 0.54(92) = 109.68; exit chance and `E[T]` for (2, 8) = 1/4 and 12, and (5, 9) = 5/9 and 20, by the closed form and by an exact Gaussian solve of the linear system; the die until a 5 or 6, `E[T]` = 3, total 3 x 3.5 = 10.5 and V = 3.5 + (4/6)V = 10.5; and the chance-0.8 Doob values 1 + 2(0.8) = 2.6, 0.8(2.6) + 0.2(1.6) = 2.4. Validator 0 errors. Playthrough (default, and `--mobile --tablet`) green for l9, l10, l11, l13, review-3 and homework-3 with the local CDN; screenshots of l10 s6, l13 s9 and homework item 7 read at 440 wide. `h-code` solution passes 10 of 10 (9 tests plus the example) and the starter 0 of 10. Voice scan 0 sentences over 20 words and 0 explanations over three sentences.
+
+1. Fixed. `slope` wrong value is now 1.68 (tol abs 0.01); the feedback text "positive slope" was already right for it.
+2. Fixed. `v2` is now "Dominated convergence applies to the sum because each $|X_k| \le 1$." with the reviewer's `why`, and `byKey.v2` names the bounded-steps line.
+3. Fixed. Prose now says independent and identically distributed, with the filtration $\sigma(X_1, \dots, X_n)$; `w4` and the explanation use $E|X_1|$.
+4. Fixed. Prose says "best price over 4 days, counting the buying price"; the hint says "the best of the buying price and four closes"; feedback and explanation say "best price". Key 0.5938 unchanged. The line "Daily steps are fair, £0.50." was split off for sentence length.
+5. Fixed. Screen 9 prose defines the call payoff $\max(M - 100, 0)$ with $M$ the running maximum from $S_0$.
+6. Fixed as the review proposes: `t2` folded into `t1`, `t2` removed, answer t1, t3, t4, t5, t6, `same` [[t4, t5]], hint updated.
+7. Fixed. `same` [[o1, o2]] added and the prose reads "Two lines may swap, and two lines are flawed."
+8. Fixed. Lines merged and renamed within the item only: `w1` now carries the old `w1` and `w2`, `w4` the old `w4` and `w5`; `w2` and `w5` removed. Answer w1, w3, w4, w6 with `same` [[w1, w3, w4]]. Exactly the valid orders are accepted: `w6` last, the three blocks in any order, each block internally in its proven order.
+9. Fixed. `how` now says the first martingale is bounded up to the stop, the second is dominated by $N + T$, and $E[T]$ is finite between two ends.
+10. Fixed, and wider than the review: the visible example and hidden test 1 both repeated the `l13` answer (3/10, 21), so both now use `exit_stats(2, 8, half)` = (1/4, 12); hidden test 2 is `exit_stats(5, 9, half)` = (5/9, 20). Biased tests unchanged; count stays 9 hidden tests.
+11. Fixed. `byKey.b` and the `why` of `b` now say the only bound on $T \wedge n$ is $T$, and $E[T] < \infty$ is what is being found.
+12. Fixed. Prose now says the picture draws 200 steps so a few walks are still below 1 (the caption "282 of 300" is canvas-generated).
+13. Fixed. Console shows `Fraction(0, 1)`.
+14. Fixed, all three. `r-event` key is "The first two tosses are both heads" (atom HH, options b to d unchanged and still false); `r-doob` chance 0.8, key 2.6, `mean` slip 2.4, `fair` 2, `all` 3; `r-stop` thresholds $\pm 4$, and option `d` now uses "below its start" (still a look-ahead rule). `h-wald` die changed to "until the first 5 or 6", total 10.5, so it no longer totals 21.
+15. Fixed, wider than the review, by lengthening distractors and shortening one key; no key changed. `h-mart` option c is "$S_n^2 - n$, the fair-walk square"; `l9` s1 key is "Something happens: all of $\Omega$" and its distractors are lengthened; `l11` s1 distractors and the `l11` s6 false statement are lengthened. Choice-item ratios were already within 1.5.
+16. Fixed. `l13` s6 explanation now reads "Add a floor, and the walk may stop at the floor instead; cap the time, and $E[S_{T \wedge N}] = 0$." (`h-long` part 3 model answer has the same loose phrase "either restores $E[S_T] = 0$"; it reads correctly as the stopped mean and is left, not a finding.)
+17. Fixed. `wrong` id `sixtyfour` renamed `paths16` in the `wrong` list and in `byKey`.
+
+Counts: 17 findings, 17 fixed, 0 disputed, 0 deferred.
+
+Changed keys (file, widget id; key, tolerance, options, numbers, order groups or `wrong` values changed):
+- `l9-information` s1 multi: option texts (keys a, d unchanged).
+- `l9-information` `q-s4` numeric: `wrong` id `sixtyfour` to `paths16` (value 65536 unchanged).
+- `l10-condexp-projection` s6 order: lines, answer (t2 removed) and `same`.
+- `l10-condexp-projection` s10 numeric: `wrong` `slope` 7.74 to 1.68.
+- `l11-filtrations` s1 multi: distractor texts. s6 multi: distractor text.
+- `l13-stopping-times` s3 order: `same` added. s4 choice: option `b` `why`.
+- `review-3` `r-event` choice: key text. `r-doob` numeric: answer 2.4 to 2.6, accept, `wrong` `mean` 2.1 to 2.4. `r-stop` multi: option texts (thresholds, option d).
+- `homework-3` `h-mart` multi: option c text. `h-code` code: example and hidden tests 1 and 2 (numbers). `h-wald` order: lines, answer, `same`, distractor `v2`.
