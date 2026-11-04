@@ -210,3 +210,44 @@ Counts: fixed 27 (item 2 by engine item 503), disputed 0, left 0.
 - l5-separation-of-variables.json: screens[4] option text of `cancel`.
 - review-2.json: r-lambda-len4 (answer, `no-square`, `one-L`), r-decay-ratio (answer, `k-gap`, `alone`), r-b4 (answer, `two-pi`, `raw`), r-parseval (`no-factor` value and tolerance), r-linearity (answer, `one-term`, `same`), r-kernel-peak (answer, `t1`, `no-root`).
 - homework-2.json: h-heat-rod (hidden test expectations), h-centre-nonzero (answer, `one-term`, `sign`, `steady`), h-gibbs-true (option texts), h-corridor-wide (`d-sigma-sq`), h-colleague-terms (model, prompt, rubric).
+
+## Recheck
+
+Fix commit 5f7d22c is in `git log` (merged via a6cd31e). Every value below was recomputed independently in the scratchpad `rc-pdes2` (SciPy quadrature, 2,000-term series, method of images, explicit finite-difference runs, Monte Carlo).
+
+### Changed widgets, my value and verdict
+
+- l6 s4 `no-signs`: 4/pi (1 + 1/3 + 1/5) = 1.95230. OK. Key 1.1035, slips 1.2732 and 0.8488 also OK.
+- l6 s3 `integers: ["k"]`: `\frac{2(1-\cos k\pi)}{k\pi}` and `\frac{2(1-\cos(k\pi))}{k\pi}` grade right; `\frac{4}{k\pi}`, `\frac{2}{k\pi}`, `\frac{4}{k^2\pi}` grade wrong; `\frac{2-2(-1)^k}{k\pi}` right. OK (harness `h-int.cjs` pointed at this worktree's `grade.js`; the plain-text `accept[0]` is for the text fallback and is not LaTeX, so it is not a grader case).
+- l5 s4 `cancel`: reasoning correct (c2 = -c1, then c1 = 0). Caption "about 134" = sinh(2 pi)/2 = 133.87. OK.
+- l7 s5 `same [p1,p2,p3]`: p1, p2, p3 are mutually independent and p4 needs all three. OK. Energy 2 pi^2/3, b_k^2 = 4/k^2, pi^2/6 = 1.644934 all OK.
+- l8 s1 `same [m1,m2]`: m1 and m2 independent, m3 needs both. OK.
+- l8 s9: t = 1 ratio (1/3)e^-8 = 0.000112 OK; t = 0.1, four terms leave 0.00423 at the centre, text 0.0042 OK.
+- l8 s10: first term 0.370784, k = 3 term -6.39e-6, P = 0.370777, £37.08 OK; `no-amp` 100e^-1.2337 = 29.12 OK; `daily`: Monte Carlo 200,000 paths at 252 steps survive 0.404, so 40.3 +- 0.4 holds (365 steps would give 0.396, but the canvas says 252 a year). OK.
+- l8 `q-blow`: N = 10, top mode 1 - 2.4 sin^2(9 pi/20) = -1.3413. OK for N = 10 (see new item 2). `q-max`: reasoning OK.
+- review-2 `r-lambda-len4`: (2 pi/3)^2 = 4.38649; slips 2.0944 and (2 pi)^2/3 = 13.1595. OK.
+- review-2 `r-decay-ratio`: e^-4.05 = 0.017422 (0.0174); slips e^-0.45 = 0.6376, e^-5.4 = 0.0045. OK.
+- review-2 `r-b4`: 3/pi = 0.95493; slips 3/(2 pi) = 0.4775, 3. OK.
+- review-2 `r-parseval`: pi^4/96 = 1.014678 (also a 100,000-term sum); `no-constant` pi^4/24 = 4.0587; `no-factor` (pi^2/6)/16 = 0.10281 (0.1028, tol 0.0006). a_0 = pi and a_k = -4/(pi k^2) confirmed by quadrature. OK.
+- review-2 `r-linearity`: series 91.48569, x 0.4 = 36.59428 (36.5943); one-term 400/pi e^-0.3 x 0.4 = 37.72956 (37.7296). OK.
+- review-2 `r-kernel-peak`: 1/sqrt(3 pi) = 0.325735; slips 1/sqrt(pi) = 0.5642, 1/(3 pi) = 0.1061. OK.
+- homework-2 `h-centre-nonzero`: b_1 = 76.39437, b_3 = 25.46479 (quadrature); u = 40 + 28.10392 - 0.00314 = 68.10078 (60-term series 68.100777); slips 68.10392, 68.10706, 40; explicit scheme (200 intervals, lambda 0.4, ceil steps) 68.09940. OK.
+- homework-2 `h-heat-rod` tests: PARAB coefficients (0 to 2) 1.032049, 0, 0.038224; CONST at pi/3, t 0.2 = 90.13026 (series and images); at pi/4, t 0.3 = 68.70398 (series and images); MODES at pi/6, t 0.25 = 1.273600; PARAB at 0.5 and 1 (L 2, D 0.5, t 0.5) = 0.393918, 0.556788; MODES t 0 = 2. All 8 expectations OK.
+- homework-2 `h-gibbs-true`: 3 x 2 Si(pi)/pi = 3.536939 (3.537), overshoot 0.537; coefficients 12/(k pi). OK.
+- homework-2 `h-corridor-wide`: D (pi/L)^2 = 0.856736; k = 1 0.540548, k = 3 -0.000190, P = 0.540358, £54.04 (full series 54.0358); `no-amp` 42.45; `d-sigma-sq` full series 22.9487 (22.95 OK). **Mismatch in its feedback, see item 1.**
+- homework-2 `h-colleague-terms`: 320/pi e^-0.1 = 92.166 (92.17); k = 3 term -13.804; partial 78.3617; k = 5 adds 1.672; full 79.92895 (series and images agree); four terms 79.92557 (gap 0.00338); k = 11 term 5.1e-5; t = 1 full 37.46770, one term 37.47189, k = 3 term -0.00419; k = 9 term at t = 0.1 is 0.0034 so "k up to 9 for 1e-3" holds. OK.
+- Fresh numbers: no changed key or slip appears in another pdes file. Cross-course repeats are small coincidences in other courses' text, not these quantities. One in-course coincidence, see item 3.
+
+### Starters against the new hidden tests (CPython with NumPy, runner `rc-pdes2/starter.py`, prelude and `setup` honoured)
+
+- l5 s8 (7 tests), l6 s8 (8), l7 s8 (7), l8 s8 (9), homework-2 h-heat-rod (8): the solution passes every test; the starter passes none (False or TypeError or AttributeError on every test, including the `raises` test of l8). OK. The l8 `rod_explicit` expectations (46.7979, 46.8254) also reproduce with the stated ceil rule.
+
+### Playthrough and screenshots
+
+`--local-cdn` playthrough of l5, l6, l7, l8 (lessons) and review-2, homework-2 (sets), with `--mobile --shots`: all ok (15 checks and quiz 4/4 each, 9 of 9, 8 of 8). Screenshots in `.../scratchpad/rc-pdes2/shots/` at 390 px and desktop. Viewed: l5 s4, l6 s3, l7 s5, l8 s1, s2, s9, s10, quiz q-blow, homework-2 items 3, 4 and 8. No overlap, no clipped option, no wrong caption (l5 s4 caption 134 correct; l8 s10 canvas caption "252 make a year" matches the 40.3 slip). At 390 px the long option lists run below the fold, as designed, and scroll.
+
+### New mismatches and fixes
+
+1. `homework-2.json` h-corridor-wide, `feedback.byKey.d-sigma-sq`: text says "£22.96" but the key value is 22.95 (true 22.9487). Change "£22.96 uses $D = \sigma^2 = 0.0625$" to "£22.95 uses ...".
+2. l8 quiz `q-blow` (and its explain): "-1.34" holds only for N = 10 (1 - 2.4 sin^2(9 pi/20)); the question does not give N, and N = 20 gives -1.37. Fix: prose "The explicit scheme with $\lambda = 0.6$ is run on the rod with $N = 10$ intervals, and ...".
+3. Minor, no key affected: 0.0042 appears in l8 s9 explain (four-term error at t = 0.1) and again in `h-colleague-terms` (k = 3 term at t = 1), two different quantities with the same digits. Optional: write the l8 s9 figure as "0.0042 at the centre" and leave the homework as is.
