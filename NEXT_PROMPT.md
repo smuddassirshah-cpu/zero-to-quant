@@ -1,4 +1,4 @@
-Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only; if the local ref is behind origin, check out origin's commit (shallow clone: compare trees; back up before moving a ref).
+Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only; if the local ref is behind origin, check out origin (shallow clone: compare trees; back up before moving a ref).
 
 Task: PLAN 2a item 5a (prerequisite gating, user request) beside item 5 (remaining topic 3.5 levels and the mock-oa-code brief). Engine pass C is done (items 467 to 480); L1 and L2 of the three courses are written and checked.
 
