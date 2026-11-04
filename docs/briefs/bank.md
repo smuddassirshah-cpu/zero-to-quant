@@ -120,8 +120,7 @@ Which course tags map to which bank group:
 | `egg-drop` | 1/0/0/0 | 1 | brainteasers 8 |
 | `egg-drop-dp` | 0/0/0/1 | 1 | brainteasers 2 |
 | `hats-line-parity` | 1/0/0/0 | 1 | brainteasers 5 |
-| `hats-mod-k` | 0/0/1/0 | 1 | brainteasers 3 |
-| `hats-simultaneous` | 0/0/0/1 | 1 | brainteasers 3 |
+| `hats-simultaneous` | 0/0/1/1 | 2 | brainteasers 3 |
 | `hourglasses` | 0/1/0/0 | 1 | brainteasers 3 |
 | `invariant-parity` | 1/0/0/0 | 1 | brainteasers 5 |
 | `invariant-product` | 0/0/0/1 | 1 | brainteasers 1 |
@@ -441,7 +440,7 @@ An idea gives the situation and the parameters. It is not the finished question 
 
 | Id | Family (first tag) | Item idea | Kind | D | Pace | Roles | Draws on |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 3b01 | `hats-mod-k` | Five prisoners with hats numbered 0 to 4 guess their own: strategy guaranteeing one right (choice). | choice | 5 | 150 | T,S | `brainteasers/l7-hat-strategies` |
+| 3b01 | `hats-simultaneous` | Five prisoners with hats numbered 0 to 4 guess their own: strategy guaranteeing one right (choice). | choice | 5 | 150 | T,S | `brainteasers/l7-hat-strategies` |
 | 3b02 | `weighing-scale` | Nine coins, one lighter, balance: fewest weighings and the first split. | choice | 2 | 75 | T,S | `brainteasers/l4-weighing-coins` |
 | 3b03 | `backward-induction` | Take-or-split pot game with three rounds: what the first player does (choice). | choice | 3 | 120 | T,R,S | `brainteasers/l6-back-from-the-end` |
 | 3b04 | `scheduling` | Four jobs of lengths 3, 5, 2 and 6 on two machines: smallest finishing time. | numeric | 3 | 120 | T,S,D | `brainteasers/l11-crossings-and-schedules` |
@@ -612,3 +611,8 @@ Run session 1 first. When it is green, run sessions 2, 3 and 4 in parallel (disj
 - Families renamed to match the tags the puzzles fix pass added: `coupon-collector` is now `every-coupon`, `derangements` is now `hats` (tables above updated). Sessions 2 to 4 use the new names.
 - Session 1 changed the numbers or twist of 16 items that matched course or exam items (list in `docs/reports/bank-1-1.md`). Later sessions grep for duplicates the same way; 3p05 already needs new numbers.
 - Behavioural rubric shape set by session 1: six lines worth 2, 2, 2, 2, 1 and 1 points.
+
+## Changes after sessions 2 to 4 (4 Nov)
+- 3b01 is family `hats-simultaneous`, not `hats-mod-k`: in the courses `hats-mod-k` tags the line game, and the simultaneous-guess twin in `brainteasers/l7` carries `hats-simultaneous` (answer check `docs/reviews/answers-2026-11-03-bank.md`).
+- 3b02 is family `weighing-heavy`, since `weighing-scale` tags the digital-scale puzzle in the courses.
+- `bank/sample.json` is removed (ENGINE-BACKLOG 466); `playthrough.mjs --bank <file>|all` plays every item in a bank file (462).

@@ -121,3 +121,43 @@ All values agree with the stored key; "ok" means key and every wrong value recom
 **market-making-4.** five face-up 325/47 = 6.9149; product 11.25; informed loss 5 trades (4.5); position limit sell 4 first; delta hedge 1,400; arbitrage buy the set at the offers for £97; edge 17/6 = 2.8333; calibration 75% against 90%, overconfident.
 
 **behavioural-2 to -4.** 25 items, none keyed. Rubrics 2, 2, 2, 2, 1, 1 on all 25; every `prompt` is distinct from the five in `behavioural-1` and from the others; no firm names.
+
+## Fix pass
+
+I recomputed every new or changed number by two methods in the scratchpad folder `answers/fix` (`check.py`): exact fractions or a closed form, then enumeration, a backward linear solve or a seeded simulation (100,000 to 4,000,000 draws). Edits are scoped to the named items (`fix.py` loads each file, changes only those fields and writes it back in its own indent). After them, no key band touches a wrong band, no two wrong bands overlap, each numeric item has wrong values on both sides of its key, and every `byKey` matches the `wrong` ids. Greps of `courses/`, `exams/` and `bank/` find no other item with any new number set. `node tools/validate.mjs`: 0 errors, 392 warnings, `manifest.json` unchanged. Voice scan on `bank/`: 0 long explanations, 0 long sentences. Playthrough `--bank all` 200 of 200, and `--routes-only` green with and without `--mobile`. No item id changed.
+
+Status: fixed 15, disputed 0, deferred 0, no change needed 2 (the rulings).
+
+### Distractor values
+
+1. `mental-4` `fraction-compare-middle-of-three` option b: fixed, "You picked the first one listed." Check: 5/7 = 0.714, 8/11 = 0.727, 13/18 = 0.722; gaps 2/7, 3/11, 5/18.
+2. Same item, option c: fixed, "You picked the middle one listed." Key 13/18 and the options unchanged.
+3. `mental-3` `estimate-product-three-factors` option c: fixed, "to 7 × 15 × 3.2 = 336, about 340. That is about 9% high." Check: 340 is 9.4% above 310.79 and 336 is 8.1% above. Option a (290, 6.7% low) unchanged.
+
+### Wording
+
+4. `market-making-3` `intervals-heads-in-100`: fixed. Prose and question now say "centred on 50"; the explanation's first sentence adds "so centre the interval on 50". Check (exact binomial): 40 to 60 holds 96.48%, 41 to 59 94.31%, while 40 to 59 holds 95.40%, so the claim is true only among centred intervals. No option changed.
+
+### Answer format and tags
+
+5. `probability-4` `given-the-total-three-dice`: fixed, the question ends "Give four decimal places or a fraction." (with the fresh numbers of finding 15).
+6. `brainteasers-3` `hats-mod-k-six-prisoners`: fixed, tags now `["hats-simultaneous"]`; id kept. `brainteasers/homework-2` item 4 not retagged, as ruled. `docs/briefs/bank.md` row 3b01 and its family table still say `hats-mod-k` (brief, outside this pass).
+
+### Duplicates
+
+7. `waiting-for-hh-three-losing-days`: fixed, four losing days in a row at 0.4. Key 1015/16 = 63.4375 (closed form $(1 + 0.4 + 0.16 + 0.064)/0.0256$, backward solve of $E_j = 1 + 0.4E_{j+1} + 0.6E_0$ with $E_4 = 0$, simulation 63.26 over 100,000 runs). Wrongs 24.375 (three days), 39.0625 ($1/0.4^4$), 10 (2.5 per loss) and 156.25 (blocks of four, $4/0.4^4$), the last added so a wrong sits above the key.
+8. `random-chords-midpoint-in-disc`: fixed, threshold 1.5. Key 7/16 = 0.4375 ($d^2 < 1 - 0.75^2$; simulation 0.4377). Wrongs 0.4601 (endpoints, $1 - 2\arcsin(0.75)/\pi$, simulated 0.4592), 0.6614 ($\sqrt7/4$), 0.5625 (complement) and 0.25 (square root dropped, $2(1 - d^2) > 1.5$), the last added so a wrong sits below.
+9. `semicircle-seven-points`: fixed, nine points. Key 9/256 ≈ 0.035 (simulation 0.0359). Options 1/256 ≈ 0.004, 9/512 ≈ 0.018 and 1/2, with the whys and explanation set to nine and eight.
+10. `every-coupon-paid-rolls`: fixed, a seven-sector spinner at £1.20 with a £30 prize. Key £8.22 ($7H_7 = 363/20 = 18.15$ by fractions and by stage sums; simulated 18.12 spins). Wrongs 21.6 (seven spins), −28.8 (49 spins), 9.42 (first spin skipped); ids renamed to `seven-spins` and `forty-nine`.
+11. `fair-from-biased-quarter-coin`: fixed, coin 1/5. Key 25/4 = 6.25 (keep chance 0.32, $E = 2 + 0.68E$; simulation 6.26). Wrongs 3.125 (rounds), 2 (one pair) and 12.5 (only HT counted), the last added so a wrong sits above. The places hint now asks for two places, as the key is exact.
+12. `net-score-eighty-questions`: fixed, 57 right, 15 wrong, 8 skipped. Key 42; accuracy 57/72 = 79.2%. Wrongs 57 (no penalty) and 34 (skips charged).
+13. `sequence-woven-two-doublings`: fixed, 3, 7, 6, 14, 12, 28, next 24. Wrongs 56 (doubled last), 40 (added last two) and 16 (difference of the last two), the last added so a wrong sits below.
+14. `cycle-following-two-hundred-boxes`: fixed, 100 prisoners opening 70 each. Key "about 65%" ($1 - (H_{100} - H_{70}) = 0.6455$; simulation 0.6430 over 100,000 shuffles). Distractors about 0% ($0.7^{100}$, the independence slip at 70%, in place of the review's $(1/2)^{100}$), about 70% and about 35%. Id kept.
+15. `given-the-total-three-dice`: fixed, total 12 and first die 4, other two a 3 and a 5. Key 2/5 = 0.4 (enumeration of all 216 rolls; simulation 0.4025 over 92,290 conditioned rolls). Wrongs 0.2 (one order), 0.0556 (2/36), 0.08 (2/25) and 0.5 (the double four left out, 2/4), the last added so a wrong sits above.
+
+### Rulings
+
+16. `2p04` and the twelve-sided die: no change needed, as ruled; `dice-ev-twelve-sided-three-rolls` left as it is.
+17. `brainteasers/homework-2` item 4: no change needed (retag rejected).
+
+Not applied: the optional `accept` form for `dice-ev-square-n-sides`, outside the listed findings. `docs/reports/bank-1-2.md` to `bank-1-4.md` still quote the old figures (24.375, 3/4, 7/64, 14.7 and £2.95, 16/3, 52, 16, 31% and 1/3).

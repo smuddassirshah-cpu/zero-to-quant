@@ -774,3 +774,6 @@ choice items seen with more than one option order: 14 of 14
 no console errors
 ALL OK
 ```
+
+## After the answer check (4 Nov)
+The fix pass in `docs/reviews/answers-2026-11-03-bank.md` changed some keys, `wrong` values and numbers quoted above; that file's `## Fix pass` section is the current record.
