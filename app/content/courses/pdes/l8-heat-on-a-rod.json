@@ -172,6 +172,12 @@
      "m3",
      "m4"
     ],
+    "same": [
+     [
+      "m1",
+      "m2"
+     ]
+    ],
     "distractors": [
      "d1",
      "d2"
@@ -318,7 +324,7 @@
     }
    },
    "explain": {
-    "text": "With $k = 2$ the bracket is $80 \\times 0 + 30 \\times 1 = 30$, so $b_2 = \\tfrac2\\pi\\cdot\\tfrac{30}{2} = 9.5493$. Also $b_1 = 260/\\pi = 82.7606$. Then $u(\\tfrac\\pi2, 1) = 65.4425$, and an explicit scheme on 200 intervals gives 65.4410.",
+    "text": "With $k = 2$ the bracket is $80 \\times 0 + 30 \\times 1 = 30$, so $b_2 = \\tfrac2\\pi\\cdot\\tfrac{30}{2} = 9.5493$. Also $b_1 = 260/\\pi = 82.7606$. Then $u(\\tfrac\\pi2, 1) = 65.4425$, and an explicit scheme on 200 intervals with $\\lambda = 0.4$ gives 65.4410.",
     "canvas": {
      "params": {
       "t": 0
@@ -427,7 +433,7 @@
     }
    ],
    "feedback": {
-    "correct": "$-40.528 \\times 0.2061 = -8.3532$. The grid sees $-8.35$ where the rod has $-9$.",
+    "correct": "$-40.528 \\times 0.20611 = -8.3532$. The grid sees $-8.35$ where the rod has $-9$.",
     "generic": "Not quite right. Evaluate $-\\dfrac{4}{\\Delta x^2}\\sin^2\\dfrac{k\\Delta x}{2}$ with $k = 3$ and $\\Delta x = \\pi/10$.",
     "byKey": {
      "exact": "$-9$ is the eigenvalue of the rod, $-k^2$. The grid's eigenvalue is a little smaller in size for $k = 3$.",
@@ -503,7 +509,7 @@
      }
     ]
    },
-   "question": "Write the largest stable time step in terms of $h = \\Delta x$ and $D$.",
+   "question": "Write the time step that keeps $\\lambda \\le \\tfrac12$, in terms of $h = \\Delta x$ and $D$.",
    "widget": {
     "kind": "expression",
     "answer": "\\frac{h^2}{2D}",
@@ -545,12 +551,12 @@
     "correct": "$1 - 4\\lambda \\ge -1$ means $\\lambda \\le \\tfrac12$, so $\\Delta t \\le h^2/(2D)$.",
     "generic": "Not quite right. Turn $\\lambda \\le \\tfrac12$, with $\\lambda = D\\Delta t/h^2$, into a bound on $\\Delta t$.",
     "byKey": {
-     "no-half": "$h^2/D$ is $\\lambda \\le 1$. The top mode's factor $1 - 4\\lambda$ must stay above $-1$, which gives $\\lambda \\le \\tfrac12$.",
+     "no-half": "$h^2/D$ is $\\lambda \\le 1$. The top mode's factor, close to $1 - 4\\lambda$, must stay above $-1$, which gives $\\lambda \\le \\tfrac12$.",
      "h-only": "You used $h$ rather than $h^2$. The step must shrink like $h^2$, the same square law as in lesson 2."
     }
    },
    "explain": {
-    "text": "The top mode has factor $1 - 4\\lambda$, which stays above $-1$ only if $\\lambda \\le \\tfrac12$. With $\\lambda = D\\Delta t/h^2$ this is $\\Delta t \\le h^2/(2D)$. Halving the space step quarters the time step.",
+    "text": "The highest mode has a factor close to $1 - 4\\lambda$, which stays above $-1$ only if $\\lambda \\le \\tfrac12$. With $\\lambda = D\\Delta t/h^2$ this is $\\Delta t \\le h^2/(2D)$. Halving the space step quarters the time step.",
     "canvas": {
      "params": {
       "lam": 0.5
@@ -690,7 +696,7 @@
     "byKey": {
      "lam04": "$-0.5608$ is the factor for $\\lambda = 0.4$. Check that you used 0.6.",
      "centre": "$-0.2$ is $1 - 2\\lambda$, the diagonal of the matrix. The factor for a whole mode includes the neighbours' terms.",
-     "lam05": "$-0.9511$ is the factor for $\\lambda = 0.5$, the edge of stability."
+     "lam05": "$-0.9511$ is the factor for $\\lambda = 0.5$, just inside the safe bound."
     }
    },
    "explain": {
@@ -944,13 +950,13 @@
   {
    "type": "problem",
    "difficulty": 3,
-   "prose": "Two ways to solve the rod, and a check that they agree. `rod_series` sums odd $k$ up to `K` for $L = \\pi$. `rod_explicit` runs the explicit scheme on $N$ intervals, taking $n = \\lceil t_{end}/(\\lambda\\Delta x^2)\\rceil$ equal steps, and returns the centre.",
+   "prose": "Two ways to solve the rod, and a check that they agree. `rod_series` sums odd $k$ up to `K` for $L = \\pi$. `rod_explicit` runs the explicit scheme on $N$ intervals, taking $n = \\lceil t_{end}/(\\lambda\\Delta x^2)\\rceil$ equal steps, and returns the centre. It raises `ValueError` if `lam` is above 0.5.",
    "question": "Complete `rod_series` and `rod_explicit`.",
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import numpy as np\n\ndef rod_series(x, t, u0=100, K=401):\n    \"\"\"Series for a rod of length pi, ends 0, start u0, D = 1.\"\"\"\n    ...\n\ndef rod_explicit(N, lam, t_end):\n    \"\"\"Centre value of the explicit scheme on N intervals.\"\"\"\n    ...\n",
-    "solution": "import numpy as np\n\ndef rod_series(x, t, u0=100, K=401):\n    \"\"\"Series for a rod of length pi, ends 0, start u0, D = 1.\"\"\"\n    x = np.asarray(x, dtype=float)\n    total = np.zeros_like(x)\n    for k in range(1, K + 1, 2):\n        total = total + 4 * u0 / (k * np.pi) * np.exp(-k * k * t) * np.sin(k * x)\n    return total\n\ndef rod_explicit(N, lam, t_end):\n    \"\"\"Centre value of the explicit scheme on N intervals.\"\"\"\n    if lam > 0.5:\n        raise ValueError('lambda above 1/2 is unstable')\n    dx = np.pi / N\n    n = int(np.ceil(t_end / (lam * dx * dx) - 1e-12))\n    mu = (t_end / n) / (dx * dx)\n    u = np.full(N + 1, 100.0)\n    u[0] = u[-1] = 0.0\n    for _ in range(n):\n        u[1:-1] = u[1:-1] + mu * (u[2:] - 2 * u[1:-1] + u[:-2])\n    return float(u[N // 2])\n",
+    "starter": "import numpy as np\n\ndef rod_series(x, t, u0=100, K=401):\n    \"\"\"Series for a rod of length pi, ends 0, start u0, D = 1.\"\"\"\n    ...\n\ndef rod_explicit(N, lam, t_end):\n    \"\"\"Centre value of the explicit scheme on N intervals.\n\n    Raise ValueError if lam > 0.5.\n    \"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef rod_series(x, t, u0=100, K=401):\n    \"\"\"Series for a rod of length pi, ends 0, start u0, D = 1.\"\"\"\n    x = np.asarray(x, dtype=float)\n    total = np.zeros_like(x)\n    for k in range(1, K + 1, 2):\n        total = total + 4 * u0 / (k * np.pi) * np.exp(-k * k * t) * np.sin(k * x)\n    return total\n\ndef rod_explicit(N, lam, t_end):\n    \"\"\"Centre value of the explicit scheme on N intervals.\n\n    Raise ValueError if lam > 0.5.\n    \"\"\"\n    if lam > 0.5:\n        raise ValueError('lambda above 1/2 is unstable')\n    dx = np.pi / N\n    n = int(np.ceil(t_end / (lam * dx * dx) - 1e-12))\n    mu = (t_end / n) / (dx * dx)\n    u = np.full(N + 1, 100.0)\n    u[0] = u[-1] = 0.0\n    for _ in range(n):\n        u[1:-1] = u[1:-1] + mu * (u[2:] - 2 * u[1:-1] + u[:-2])\n    return float(u[N // 2])\n",
     "examples": [
      {
       "call": "round(float(rod_series(np.pi / 2, 1)), 6)",
@@ -995,7 +1001,7 @@
       }
      },
      {
-      "call": "rod_series(np.array([0.0, np.pi / 2, np.pi]), 1).tolist()",
+      "call": "np.asarray(rod_series(np.array([0.0, np.pi / 2, np.pi]), 1)).tolist()",
       "expect": "[0.0, 46.834628, 0.0]",
       "compare": "isclose",
       "tol": {
@@ -1074,7 +1080,7 @@
      },
      {
       "id": "same",
-      "text": "The same number at every time",
+      "text": "The same number of terms at every time, whatever $t$ is",
       "why": "The terms shrink with $t$, so late times need fewer terms than early ones."
      }
     ]
@@ -1133,9 +1139,9 @@
     "wrong": [
      {
       "id": "daily",
-      "value": 40,
+      "value": 40.3,
       "tol": {
-       "abs": 0.1
+       "abs": 0.4
       }
      },
      {
@@ -1168,12 +1174,12 @@
     "correct": "$P = 0.3708$, so the option is worth about £37.08.",
     "generic": "Not quite right. Evaluate $\\tfrac{4}{\\pi}e^{-1.2337}$ and multiply by £100.",
     "byKey": {
-     "daily": "£40 is the frequency from daily monitoring, 0.400. Continuous monitoring catches more touches, so fewer paths survive.",
+     "daily": "£40 is about the frequency from daily monitoring, 0.40. Continuous monitoring catches more touches, so fewer paths survive.",
      "no-amp": "£29.12 is $100e^{-1.2337}$. You dropped the amplitude $4/\\pi = 1.2732$ of the first term."
     }
    },
    "explain": {
-    "text": "The first term is $1.2732 \\times 0.29116 = 0.37073$ and the $k = 3$ term is about $-10^{-6}$, so $P = 0.370777$ and the value is £37.08. The method of images gives the same. Checking prices daily misses some touches, and 20,000 daily paths survive with frequency about 0.40, above the continuous 0.3708.",
+    "text": "The first term is $\\tfrac4\\pi e^{-1.2337} = 0.37078$ and the $k = 3$ term is about $-6 \\times 10^{-6}$, so $P = 0.370777$ and the value is £37.08. The method of images gives the same. Checking prices daily misses some touches, and 20,000 daily paths survive with frequency about 0.40, above the continuous 0.3708.",
     "canvas": {
      "highlight": [
       "barrier-up"
@@ -1243,7 +1249,7 @@
    "id": "q-dt",
    "difficulty": 2,
    "prose": "A rod of length $\\pi$ is cut into $N = 10$ intervals, with $D = 1$. The explicit scheme is stable when $\\Delta t \\le h^2/(2D)$.",
-   "question": "What is the largest stable time step? Give 4 decimal places.",
+   "question": "What is the largest step the bound guarantees to be stable? Give 4 decimal places.",
    "widget": {
     "kind": "numeric",
     "answer": 0.0493,
@@ -1293,17 +1299,17 @@
     "options": [
      {
       "id": "top",
-      "text": "The highest mode is multiplied by $-1.34$ each step, so it grows and alternates in sign",
+      "text": "The top mode is multiplied by $-1.34$ a step, so it grows",
       "correct": true
      },
      {
       "id": "series",
-      "text": "Too few terms of the series were kept",
+      "text": "Too few terms of the series were kept for it to settle",
       "why": "The scheme has no series. Its error is from the step size, not from truncation."
      },
      {
       "id": "grid",
-      "text": "The grid is too fine to see the heat",
+      "text": "The grid is too fine for the heat to show in the answer",
       "why": "A fine grid is accurate. The trouble is a time step too large for it: $\\lambda > \\tfrac12$."
      }
     ]
@@ -1332,12 +1338,12 @@
      },
      {
       "id": "energy",
-      "text": "Energy decay: $\\int u^2\\,dx$ falls with time",
+      "text": "Energy decay: $\\int u^2\\,dx$ falls as time passes, but not point by point",
       "why": "Energy decay is true but says nothing about a single point being above 100. The maximum principle does."
      },
      {
       "id": "ortho",
-      "text": "Orthogonality of the sines",
+      "text": "Orthogonality of the sines, which gives the coefficients $b_k$",
       "why": "Orthogonality gives the coefficients. It does not bound the values."
      }
     ]
