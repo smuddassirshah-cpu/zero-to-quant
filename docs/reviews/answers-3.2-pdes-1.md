@@ -142,3 +142,43 @@ Numeric rows give the key and tolerance, then my value and my value for each nam
 15. **`l4-boundary-conditions.json`, `q-energy`:** key 0.0695 with `tol.abs` 5e-05 sits 4.4e-05 from the true 0.069456, so 0.0694 is refused and a hand calculation that gives 0.06945 sits on the edge. Fix: `answer` 0.06946 and `tol.abs` 0.00006, which accepts 0.0694 and 0.0695 and keeps `no-half` (0.1389) clear.
 
 16. **`homework-1.json`, `h-colleague` rubric:** the prompt asks the learner to say how the steps should be chosen ($\Delta x = \sigma\sqrt{\Delta t}$, for example 0.02 for $\Delta t = 0.01$), but no rubric line awards it; only the clause "$\Delta t$ must shrink like $\Delta x^2$" in line 2 touches it. The five lines sum to 10 and every number in the model answer is right ($D = 0.02$, standard deviations 0.2 and 0.4, variances 0.04 and 0.16, $\lambda \le \tfrac12$). Fix: reword rubric line 2 to include "and chooses $\Delta x = \sigma\sqrt{\Delta t}$".
+
+## Fix pass
+
+Every changed number was recomputed by two routes (closed form and a loop or Simpson quadrature, scratchpad `fix-pdes1`). Validator 0 errors; voice scan 0 and 0; playthrough of all four lessons, review-1 and homework-1 passes with and without `--mobile`; screenshots of l4 screen 0 (readout 35.2 at the slider end) and homework item 7 checked.
+
+1. Fixed: `h-gauss-general` `half` feedback now says 0.7071 is $2/\sqrt{8}$ ($4Dt$ for $2Dt$). Value unchanged and right.
+2. Fixed: `h-colleague` model holds real blank lines (8 literal `\n` replaced). A scan of every string in the four lessons, review-1 and homework-1 found no other literal `\n`; the only other hit is LaTeX `\ne` in review-1 r-classify, which is intended.
+3. Fixed: l3 screen 0 `half-t` renamed `double-t` (in `wrong` and `byKey`); feedback now names the doubling slip. Range 1.7 to 2.4 unchanged (t = 2 gives peak 0.1995).
+4. Fixed: l4 screen 0 slider `max` 3 to 6 and the explain canvas `t` to 6; the label reads 35.2 (35.205 computed), inside the key tolerance 0.5.
+5. Fixed: `r-step-neg` now $D = 1$, $t = 1$, $x = -1$: answer 0.2398 ($\Phi(-1/\sqrt2)$ = 0.239750 by erf and by quadrature); `wrong-side` 0.7602; `zero` 0; new `no-scale` 0.1587.
+6. Fixed: `h-far-boundary` strike £120, $r = 4\%$, $T - t = 0.75$ (t = 0.25): answer 183.5465 (300 - 116.4535, by direct and series exponential); `undiscounted` 180; `payoff-only` 300.
+7. Fixed: `h-wellposed` options replaced as proposed (insulated heat on [0, 1], sign-flipped heat, midpoint over-determined), fresh `why` lines, explain reworded.
+8. Fixed: `forwards` tol set to `{"rel": 0.01}` in l3 screen 7, l3 `q-back`, review-1 `r-back`.
+9. Fixed: l2 screen 0 `three` feedback names the "3 times 25" slip.
+10. Fixed: `h-unstable` starts from $[0, 1, 0, 0, 0]$; middle entry after two steps is -0.24 (loop and by hand); `stable` ($\lambda = 0.4$) 0.16; `one-step` 0.6. Explain reworded (value below the start minimum 0).
+11. Fixed: `h-profile` tests now use new cases: step at $[-2, -0.5, 0.5, 1.5]$ with $t = 1$ (0.07865, 0.361837, 0.638163, 0.855578, by erf and Simpson) and bump at $[1, 2]$ with $t = 0.5$ (0.41369, 0.152188). Solution passes, starter fails.
+12. Fixed: choice keys shortened as suggested and distractors adjusted to similar length in l1 screens 6 and 10, l2 `q-even`, l3 screen 9, l4 screens 6 and 7.
+13. Fixed: l3 screen 1 area `to` 8 to 30.
+14. No change needed (P32-expr-exp, as instructed).
+15. Fixed: `q-energy` answer 0.06946, `tol.abs` 6e-05 (true 0.0694556).
+16. Fixed: `h-colleague` rubric line 2 adds "and chooses $\Delta x = \sigma\sqrt{\Delta t}$"; still sums to 10.
+
+Also: one 21-word sentence in l4 screen 4's explanation was split so the voice scan reads 0 over-long sentences (pre-existing).
+
+Disputed: none. Deferred: none.
+
+### Changed keys
+
+- `homework-1.json` `h-far-boundary`: answer 202.469 to 183.5465, `undiscounted` 200 to 180, numbers in prose.
+- `homework-1.json` `h-unstable`: answer 0.76 to -0.24, `stable` 0.36 to 0.16, `one-step` -0.2 to 0.6, start vector.
+- `homework-1.json` `h-wellposed`: options `fwd`, `back`, `two` replaced (correct set unchanged).
+- `homework-1.json` `h-profile`: hidden tests 1 and 2 (calls and expected values).
+- `review-1.json` `r-step-neg`: answer 0.1587 to 0.2398, `wrong-side` 0.8413 to 0.7602, new `no-scale` 0.1587, numbers.
+- `review-1.json` `r-back`: `forwards` tol.
+- `l3-heat-kernel.json` screen 0 slider: `wrong` id `half-t` to `double-t`.
+- `l3-heat-kernel.json` screen 7: `forwards` tol.
+- `l3-heat-kernel.json` `q-back`: `forwards` tol.
+- `l4-boundary-conditions.json` screen 0 slider: control range max 3 to 6.
+- `l4-boundary-conditions.json` `q-energy`: answer 0.0695 to 0.06946, tol.abs 5e-05 to 6e-05.
+- Option text only (keys unchanged): l1 screens 6 and 10, l2 `q-even`, l3 screen 9, l4 screens 6 and 7.
