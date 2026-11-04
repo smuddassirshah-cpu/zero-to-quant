@@ -987,3 +987,9 @@ Raised later (exam mock-oa-code):
 - `draw` from `drills/<pack>`: needs a `language` filter, so a mixed Python and C++ pack can feed a Python-only mock. Workaround: the `oa` pack is all Python.
 - Drill library: `drills/oa` is listed on `#drill`, so a learner may meet a pool problem there before the mock. No workaround; the description says the pool is in the library.
 - `draw` unseen-first is applied inside one family only, and the families here are one drill each, so a resit may draw a problem seen last time while others are unseen. Needs unseen-first across the whole pool when families are singletons.
+Raised later (exam mock-superday-research):
+- [Should] The bank holds no statistics, machine learning or open-case families (research banks 1 to 4 are not written), so only paper 1's four probability questions are drawn; the other 14 questions repeat on a resit.
+- [Could] The validator warns "more than 4 tags" on a `draw` entry's `tags`, a rule written for item tags; a draw filter of 16 families is legitimate and the warning cannot be cleared.
+- [Could] The playthrough names exam screenshots by screen index only, so each paper overwrites the one before and only the last paper's items survive; it also takes no shot of the start card and shoots the results page mid-animation (13 of 18 and no stamp at 1280 px).
+- [Could] The exam playthrough never runs a code starter against its hidden tests, so "the starter fails" is not checked for mock code items (it is for drills); the author ran the starters in Pyodide 0.27.7 by hand.
+- [Could] A drawn bank item carries its own course skills (for example `pz-conditioning`), which appear on the results page's By skill chart under names the mock's `skills` map does not define.
