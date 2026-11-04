@@ -147,3 +147,41 @@ Notes
 - Fresh numbers: `r-weights`, `r-is`, `r-girs`, `r-q`, `r-ac`, `r-n`, `r-arb`, `h-expect`, `h-is`, `h-tree`, `h-tri`, `h-arb`, `h-order` and `h-code` share no keyed answer with a lesson. The repeats are items 5, 6 and 7 (and the setups in item 16).
 - Stale-value check: for every numeric widget `answer`, `accept`, `feedback.correct`, the explanation and the console or hint numbers agree (the earlier slip, an old value in `answer` against a new `accept`, does not occur).
 - No literal backslash-n in any prose field (the hits are `\ne`, `\not`); no exclamation marks; no em-dashes or en-dashes; no explanation over three sentences.
+
+## Fix pass
+
+Applied to the six level 4 files only (`l14` to `l17`, `review-4`, `homework-4`). Every changed number was recomputed twice (closed form, then path-by-path enumeration with exact fractions; scripts in the scratchpad folder `fix-mp4`). Validator: 0 errors. Playthrough (`--local-cdn`, plain and `--mobile --tablet`) passes for all six files; screenshots of the changed screens at 440, 1032 and 1376 were read. Voice scan: 0 over 20 words and 0 over three sentences, also at the stricter 19 for these six files. Code: `h-code` solution 10/10 tests and 2/2 examples, starter 0/10 and 0/2, in CPython and in Pyodide (playthrough).
+
+1. Error 1: fixed. `l17` s9 table cell is now `$8\%$` (0.7(1.2) + 0.3(0.8) - 1 = 0.08). No other text on that screen used 12%; the 12% on s5 is the continuous model and stays.
+2. Warning 2: fixed. s7 asks "Every martingale measure prices it below what number?" Key 10, `tol`, `accept` unchanged. The `equal` feedback said "not the largest"; it now reads "Others price higher, up to but never reaching £10."
+3. Warning 3: fixed. s5 key is "No $dt$ term: only ... is left" (59 characters); distractors lengthened to 44, 49 and 47 (ratio 1.20). `why` texts and explanation unchanged.
+4. Warning 4: fixed. `l15` s5 `byKey.perdraw` now says "per-draw error as a percentage, 212%" and divides by 100 to reach 2.1%. Key band left at 2.1 +/- 0.1: the coincidence that the ratio 2.12 also lands in it cannot be removed without changing the threshold or draw count, and it is the same number, so it is marked right. Disputed only the optional narrowing: 2.05 to 2.15 still holds both 2.113 and 2.12, so it gains nothing.
+5. Warning 5: fixed. `r-twostep` is now S0 = 100, u = 1.3, d = 0.7, r = 3%, p = 0.4, q = 0.55 (p = 0.4 rather than the suggested 0.45, so that p and 1 - q differ and no mixed path has weight exactly 1). Z_UU = (0.55/0.4)^2 = 1.8906; call = 0.16 x 1.8906 x 69 / 1.0609 = 19.6743, also 0.3025 x 69 / 1.0609. Slips: inverted 0.5289, real 0.16 x 69 / 1.0609 = 10.41 (10.406), one discount 20.8725 / 1.03 = 20.26. Weights checked to average 1 (0.3025 + 0.495 + 0.2025).
+6. Warning 6: fixed. `h-long` is now S0 = 100, u = 1.25, d = 0.75, r = 4%, p = 0.65: q = 0.58, step weights 0.8923 and 1.2, Z_2 = 0.7962, 1.0708, 1.44, Q-chances 0.3364, 0.4872, 0.1764, discounted prices 100; 120.19, 72.12; 144.46, 86.68, 52.01, P root 103.37, call 17.49 both ways (17.4949), p^2-only 21.97. Prompt, model and rubric updated; the prompt no longer cites "the trees course's" tree.
+7. Warning 7: fixed. `h-density` part 2 is theta = 0.4, T = 1, W = 1: e^0.32 = 1.3771; slips e^-0.48 = 0.6188 and e^0.4 = 1.4918. Question, `accept`, feedback and explanation updated.
+8. Warning 8: fixed. `h-is` part 3 explanation and `feedback.correct` say "approximately 375,800"; the `wrong` value 375836 (tol 500) stays and still contains 375,800 and 375,769.
+9. Note 9: fixed. `l15` s8 explanation reads "(27.2/0.10)^2 ≈ 74,000"; `feedback.correct` and `byKey.plain` say "about 74,000"; the `wrong` value 73980 (tol 300) still covers 73,984 and 74,000.
+10. Note 10: fixed. `l15` summary idea 3 now says "On seed 21 with θ = 4".
+11. Note 11: fixed. `l17` s1 explanation credits Harrison and Pliska for finite markets and Shreve II, section 5.4, for the Brownian version.
+12. Note 12: fixed. `h-order` prose says Q is equivalent to P so that Z_n > 0.
+13. Note 13: fixed. `l14` `q-edge` prose says "a fair die".
+14. Note 14: fixed. `l16` s4: line m3 starts "Then", the `same` group is removed (one valid order, m1 m2 m3 m4), and the explanation's last sentence is dropped.
+15. Note 15: fixed. All 18 sentences at exactly 20 words in these files (found with the voice scan at limit 19) were split or shortened: `l14` s0 explain, s9 prose; `l15` s6 prose, s8 prose and explain; `l16` s5 `byKey.d`, s7 option b `why`, s8 `feedback.correct`, s9 explain; `l17` s1 prose and explain, s3 line a2 and `feedback.correct`, s9 `feedback.correct`, quiz arb explain; `homework-4` h-arb part 2 explain and the `h-long` model Part 3. The scan also caught one new 23-word sentence in `h-order` while fixing Note 12; split.
+16. Note 16: fixed. `r-ac` is now P = (1/4, 3/4, 0), Q = (1/2, 1/4, 1/4), dP/dQ = (1/2, 3, 0) (checks: 0.5 x 0.5 + 3 x 0.25 = 1). `h-code` prelude p is 2/5 (was 3/5, the `l16` s8 prelude), the two S tests use q = 3/5 and the runmax test uses q = 1/5 so that q never equals p.
+
+### Changed keys
+
+- `review-4` `r-twostep` part 1: answer 1.44 -> 1.89 (tol 0.005 same); `accept` "(0.6/0.5)^2 = 1.44" -> "(0.55/0.4)^2 = 1.89"; `wrong` `inverted` 0.6944 -> 0.5289.
+- `review-4` `r-twostep` part 2: answer 7.27 -> 19.67 (tol 0.01 same); `accept` -> "19.67 = 0.16 x 1.8906 x 69 / 1.0609"; `wrong` `real` 5.05 -> 10.41, `onedisc` 7.41 -> 20.26. Numbers in the prose (u 1.1 -> 1.3, d 0.9 -> 0.7, r 2% -> 3%, p 0.5 -> 0.4, q 0.6 -> 0.55) and the question (1.02^2 -> 1.03^2).
+- `review-4` `r-ac` (choice, key a unchanged): P and Q numbers changed as in 16; no key or option set change.
+- `homework-4` `h-density` part 2: answer 1.1205 -> 1.3771 (tol 0.0005 same); `accept` "e^{0.11375} = 1.1205" -> "e^0.32 = 1.3771"; `wrong` `dqdp` 0.7896 -> 0.6188, `nocorrection` 1.1912 -> 1.4918; theta 0.35 -> 0.4, W 0.5 -> 1.
+- `homework-4` `h-code`: prelude p 3/5 -> 2/5. Tests and example `bayes_cond(S, 5, p, Fraction(11, 20), 'H')`, expect 7/5 -> `Fraction(3, 5)`, expect 9/5; `... 'HT')` 3/10 -> `Fraction(3, 5)`, expect 3/5; `bayes_cond(runmax, 4, p, Fraction(2, 5), 'H')` 43/25 -> `Fraction(1, 5)`, expect 32/25. The other seven tests are unchanged (their expected values do not depend on p).
+- `homework-4` `h-long` (longform): every number in prompt, model and rubric items 1, 2 and 4 (q 0.625 -> 0.58, Z_2 0.7972/1.1161/1.5625 -> 0.7962/1.0708/1.44, root 102.86 -> 103.37, call £15.59 -> £17.49, p^2-only £19.56 -> £21.97). Marks unchanged (5 x 2).
+- `homework-4` `h-is` part 3: key 386 and `wrong` `plain` 375836 unchanged; only text.
+- `l17` s5 choice: option texts changed (key a and distractors b, c, d); key still a.
+- `l17` s7 numeric: key 10, tol, `wrong` unchanged; question text only.
+- `l16` s4 order: `same` [[m2, m3]] removed; the answer order m1 m2 m3 m4 is the only accepted order.
+- `l17` s9 choice: key unchanged; table cell 12% -> 8%.
+- `l15` s5: key, tol, `wrong` unchanged; `byKey.perdraw` text only.
+
+Seen, out of scope: the `l17` s7 tree canvas title "One step, $r = 0$" renders its dollar signs literally (title field does not typeset maths); not changed here.
