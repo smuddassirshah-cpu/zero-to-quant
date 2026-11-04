@@ -78,9 +78,14 @@ Session C (5 Nov 2026)
 - The validator does not flag overlapping numeric `wrong` ranges (inbox bullet from mock-oa-sig).
 
 Session D (6 Nov 2026)
-- Bank: no playthrough flag plays one bank file (authors use a scratch Playwright loop over the deck), the validator does not catch a misspelt family tag, and every bank `pace` stays at 180 s or less because `--routes-only` expects exactly one item over pace after a 200 s answer.
+- Bank: the validator does not catch a misspelt family tag, and every bank `pace` stays at 180 s or less because `--routes-only` expects exactly one item over pace after a 200 s answer. `--bank` (462) answers right only and ignores `--mobile` (inbox).
 - `content/prep.json` lists no topic exams, so topic-3.3 is reachable from Exams only (`docs/reports/exam-3.3.md` says where it would go). Puzzles L5, mental-pressure L3 and L4 and mm-games L3 and L4 are covered in topic-3.3 only through skills shared with earlier levels.
 - game-theory poker cards draw their labels at about 8.6 px at 390 px because `.cv-svg text { font-size: 13px }` overrides the size `boxes.js` sets (engine, inbox); captions list the cards on six screens in l11 and l12.
 - mental-pressure l12's paper is seed 80 plus 31 hand-swapped distractors (fix pass, 6 Nov); re-running the L3 generator script would undo them.
 - Table cells' own `wrong[]` ids still cannot be `byKey` keys; mm-games l8 and mental-pressure l2 to l4 key on `r{i}c{j}` (inbox, several votes).
 - Dates: the container clock read 3 Nov while the state files run 3, 4, 5 and 6 Nov as session labels; `answers-2026-11-06.md` follows the labels.
+
+Session E (4 Nov 2026)
+- Five bank ids describe older numbers after the answer-check fix pass and stay unchanged (progress keys on them): `semicircle-seven-points` (nine points), `cycle-following-two-hundred-boxes` (100 prisoners), `waiting-for-hh-three-losing-days` (four days), `fair-from-biased-quarter-coin` (coin 1/5), `hats-mod-k-six-prisoners` (family `hats-simultaneous`).
+- The interview results list shows one identical question line for all 30 behavioural items (engine, inbox "Bank second read (4 Nov)").
+- Behavioural rubric lines that judge delivery (pace, tone) stay compound until spoken mode (E10).

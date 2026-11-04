@@ -1,15 +1,15 @@
 Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored").
 
-Task: PLAN.md 2a order item 4 (topic 3.3), part five, to close the topic: bank part 1 sessions 2, 3 and 4. Everything else in topic 3.3 is done.
+Task: PLAN.md 2a order item 5 (topic 3.5), part one: briefs for `research-int`, `coding-int` and `systems`, all levels. No levels are written this session. Topic 3.3 closed on 4 Nov.
 
-Steps (own scratchpad subfolder each; build `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` first; checkpoint-commit as items turn green):
-1. In parallel, three `content-author`s, one per session (50 items each), from `docs/briefs/bank.md` (binding, including "Changes after session 1": families `every-coupon` and `hats`; 3p05 needs new numbers; rubric shape 2, 2, 2, 2, 1, 1). Pattern: session 1 files `app/content/bank/*-1.json` and `docs/reports/bank-1-1.md`. Each writes only its own `bank/*-<n>.json`, `docs/reports/bank-1-<n>.md` and inbox bullets. Each greps courses, exams and bank for duplicate numbers (DECISIONS "Duplicates (6 Nov)").
-2. When all three are green, one `engine-dev`: remove `bank/sample.json` (KNOWN_ISSUES Session D), update AUTHORING and the `--routes-only` bank check, full `--routes-only` green.
-3. Answer check on the 150 new items (`docs/reviews/answers-<date>.md`, pattern `answers-2026-11-06.md`); a fixer fixes mismatches.
-4. Closing commit for topic 3.3: tick PLAN 2a item 4 and the phase 1 bank line.
+Steps (own scratchpad subfolder each; checkpoint-commit as each brief lands):
+1. In parallel, three agents (Sonnet), one brief each: `docs/briefs/research-int.md`, `coding-int.md`, `systems.md`. Sources, binding: `docs/briefs/interview-plan.md` section (b) for that course (levels, lessons, engine needs), `docs/briefs/interview-gaps.md`, the course map `app/content/courses/<course>/course.json`, `docs/LEVEL-BRIEF.md`, `docs/AUTHORING.md`. Pattern: `docs/briefs/game-theory.md` (section per level `## Level n`, lesson ids from course.json, objectives, numbers computed twice, the existing lessons each builds on, review and homework items). Each brief names the engine features its levels need (pass C: E3 exam item banks, E8 drill library, E11 follow-up parts, E14 data files; E13 concurrency canvas for systems) and gives a fallback-free plan. Never rename lesson ids.
+2. A second reader checks the three briefs against interview-plan (b), the course maps and LEVEL-BRIEF. A fixer applies the findings.
+3. From the briefs, write the engine pass C scope into PLAN.md 2a item 5 (which E items, in what order, before which levels), splitting the item if needed.
+4. Tick the phase 2 briefs line for research-int, coding-int and systems.
 
-Context: `tags` (first tag is the family) and `pace` (at most 180 s) on every bank item; `requires` only on difficulty 4 and 5; no firm names in bank items; `shuffle: true` on choices; numeric `wrong` values with a `why`, either side of the key; no playthrough flag plays one bank file, so authors use the scratch deck loop described in the brief.
+Context: firm-neutral content; UK first; trader and researcher tracks first; no audio. `playthrough.mjs --bank <file>|all` now exists (ENGINE-BACKLOG 462). The local CDN is built with `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` (only needed if a brief author checks code in Pyodide or clang).
 
-Files likely touched: `app/content/bank/`, `docs/reports/bank-1-*.md`, `docs/BACKLOG-INBOX.md`, `docs/AUTHORING.md`, `app/tools/playthrough.mjs`, state files.
+Files likely touched: `docs/briefs/research-int.md`, `coding-int.md`, `systems.md`, `docs/reviews/review-briefs-3.5.md`, `docs/BACKLOG-INBOX.md`, `PLAN.md`, state files.
 
-Acceptance, from `app/`: validate 0 errors; `--routes-only` green with and without `--mobile`; every new item played by the deck loop; `VOICE_BASE=/home/user/zero-to-quant/app/content/bank/ python3 ../docs/reviews/voice-scan.py --summary` 0 and 0; reports exist; PLAN ticks. Next after that: topic 3.5 (PLAN 2a item 5).
+Acceptance: three briefs exist, one section per course.json level, every lesson id matches its course map; every number in them is computed twice; review file with a fix pass; from `app/`, `node tools/validate.mjs 2>&1 | tail -5` still 0 errors; PLAN ticks. Next after that: engine pass C, then the topic 3.5 levels.

@@ -48,11 +48,11 @@ Rules: work topic by topic. A topic closes when every level (lessons, review, ho
 1. [done 2 Nov] Prep tags: engine pass 455, then the mapping (general and stage paths first, foundations to superday; firm paths last).
 2. [done 2 Nov] Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
 3. [done 3 Nov] Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning); plus voice passes bringing every sentence in 1.8 and 2.1 under 20 words. Fix pass 1.9 done 3 Nov.
-4. Topic 3.3 (part four done 6 Nov: bank brief and session 1, exam topic-3.3, mock-superday-trader, second reads and fix passes for all five courses, topic playthrough green; only bank sessions 2 to 4 remain; part one done 3 Nov: engine pass B, mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2; part two done 4 Nov: mocks brief `docs/briefs/mocks.md`, mock-oa-arith, puzzles L5, brainteasers L2 and L3, game-theory L1):
+4. [done 4 Nov, topic 3.3 closed: bank sessions 2 to 4, answer check and fix, whole-bank second read and fix, `bank/sample.json` removed] Topic 3.3 (part four done 6 Nov: bank brief and session 1, exam topic-3.3, mock-superday-trader, second reads and fix passes for all five courses, topic playthrough green; only bank sessions 2 to 4 remain; part one done 3 Nov: engine pass B, mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2; part two done 4 Nov: mocks brief `docs/briefs/mocks.md`, mock-oa-arith, puzzles L5, brainteasers L2 and L3, game-theory L1):
    - Briefs first: game-theory (all levels); revise the mm-games L3 and L4 sections for the E12 trading-game widget once it is built (done 3 Nov: 11 games specified, 63 runs checked in engine and Python).
    - [done 3 Nov] Engine pass B (E7 question bank with item spacing, E9 per-item timing) and engine pass D (E12 trading-game widget) before the levels that use them.
    - mental-pressure L3, L4, then mock-oa-arith; puzzles L3 to L5, then mock-oa-sig and mock-oa-trader; brainteasers L1 to L3; mm-games L2, then L3 and L4 on the E12 widget; game-theory L1 to L3.
-   - Bank part 1 (200 items) on E7 (brief `docs/briefs/bank.md` done 6 Nov; session 1 of 4 done 6 Nov).
+   - [done 4 Nov] Bank part 1 (200 items) on E7 (brief `docs/briefs/bank.md` done 6 Nov; sessions 1 to 4 done).
    - [done 6 Nov] Exam topic-3.3; mock-superday-trader; second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers, game-theory.
 5. Topic 3.5: briefs for research-int, coding-int, systems (all levels); engine pass C where levels need it; the levels; mock-oa-code, mock-superday-research, mock-oa-quant-data and the developer and strats mocks; exam topic-3.5; second reads and fixes.
 6. Topic 3.2: ito L2 to L4, measure-prob, pdes; exam topic-3.2; second read and fix.
@@ -88,7 +88,7 @@ Phase 1, trader core
 - [x] recruiting L3: Interviews and after (`docs/reports/recruiting-3.md`; 5 lessons, review-3 9 items, homework-3 9 items; 4 inbox bullets)
 - [x] Topic 0.7 closed: exam topic-0.7 (30 items, `docs/reports/exam-0.7.md`), second read and fix (`docs/reviews/review-0.7.md`: 3 errors, 17 warnings, 29 notes; 48 fixed, 1 deferred to the inbox), level 1 firm names moved to firm types, all lessons, sets and exam green
 - [x] Engine pass B: E7 question bank with item spacing, E9 per-item timing (items 456 to 458, `tags` checked; `docs/reports/engine-pass-b.md`; sample `bank/sample.json`; full run green)
-- [ ] Bank part 1 (200 items: probability, brainteasers, mental, market making, behavioural), in four sessions (brief `docs/briefs/bank.md`; session 1 done 6 Nov: 50 items in `bank/*-1.json`, `docs/reports/bank-1-1.md`)
+- [x] Bank part 1 (200 items in 20 files `bank/<family group>-<1..4>.json`; reports `docs/reports/bank-1-1.md` to `bank-1-4.md`; answer checks `docs/reviews/answers-2026-11-06.md`, `answers-2026-11-03-bank.md`; second read `docs/reviews/review-bank-1.md`; `bank/sample.json` removed)
 - [x] Exam: mock-superday-trader (`docs/reports/exam-mock-superday-trader.md`; 4 papers, 24 items, 3 `trade` games; 5 inbox bullets)
 - [x] Second readers and fix passes: puzzles, mental-pressure (6 Nov, with mm-games, brainteasers and game-theory: `docs/reviews/review-<course>.md`; 221 findings, 213 fixed; voice 0 and 0 on all five)
 
