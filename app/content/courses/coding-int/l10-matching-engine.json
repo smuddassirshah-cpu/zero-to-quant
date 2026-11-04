@@ -719,7 +719,8 @@
       "Every new_qty is at least 1. Ids are unique.",
       "trade = [taker_id, maker_id, price, qty]"
      ],
-     "compact": true
+     "compact": true,
+     "wrap": true
     },
     "state": {}
    },
@@ -783,27 +784,42 @@
       "compare": "equal"
      },
      {
-      "call": "levels([[0, 1, 0, 100, 5], [0, 2, 1, 101, 5], [0, 3, 1, 100, 3]], 1)",
-      "expect": "[[101, 5]]",
-      "compare": "equal"
-     },
-     {
-      "call": "levels([[0, 1, 0, 100, 2], [0, 2, 0, 99, 3], [0, 3, 1, 99, 4], [0, 4, 1, 100, 1]], 0)",
-      "expect": "[[99, 1]]",
-      "compare": "equal"
-     },
-     {
-      "call": "levels([[0, 1, 0, 100, 2], [0, 2, 0, 99, 3], [0, 3, 1, 99, 4], [0, 4, 1, 100, 1]], 1)",
-      "expect": "[[100, 1]]",
-      "compare": "equal"
-     },
-     {
       "call": "levels([[0, 1, 0, 99, 10], [1, 2, 1, 4], [1, 3, 1, 20]], 0)",
       "expect": "[]",
       "compare": "equal"
+     },
+     {
+      "call": "run_book([[0, 1, 1, 101, 5], [0, 2, 0, 100, 3]])",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "levels([[0, 1, 1, 101, 5], [0, 2, 0, 100, 3]], 0)",
+      "expect": "[[100, 3]]",
+      "compare": "equal"
+     },
+     {
+      "call": "levels([[0, 1, 0, 99, 2], [0, 2, 0, 101, 3], [0, 3, 0, 100, 4]], 0)",
+      "expect": "[[101, 3], [100, 4], [99, 2]]",
+      "compare": "equal"
+     },
+     {
+      "call": "levels([[0, 1, 1, 102, 2], [0, 2, 1, 100, 3], [0, 3, 1, 101, 1]], 1)",
+      "expect": "[[100, 3], [101, 1], [102, 2]]",
+      "compare": "equal"
+     },
+     {
+      "call": "levels([[0, 1, 0, 100, 2], [0, 2, 0, 100, 3], [2, 1]], 0)",
+      "expect": "[[100, 3]]",
+      "compare": "equal"
+     },
+     {
+      "call": "run_book([[0, 1, 1, 100, 3], [0, 2, 1, 100, 3], [3, 1, 3], [0, 3, 0, 100, 4]])",
+      "expect": "[[3, 1, 100, 3], [3, 2, 100, 1]]",
+      "compare": "equal"
      }
     ],
-    "how": "Check runs 12 hidden tests: eight on `run_book` (limit, market, cancel, amend down and up) and four on `levels`."
+    "how": "Check runs 15 hidden tests. Ten are on `run_book`: limit, market, cancel, amend and a buy that must not pass its limit. Five are on `levels`: order, merged orders and a cancel inside a level."
    },
    "hints": [
     {
@@ -871,7 +887,8 @@
       "Every new_qty is at least 1. Ids are unique.",
       "trade = [taker_id, maker_id, price, qty]"
      ],
-     "compact": true
+     "compact": true,
+     "wrap": true
     },
     "state": {}
    },
@@ -1333,140 +1350,6 @@
          0,
          1,
          0,
-         100,
-         5
-        ],
-        [
-         0,
-         2,
-         1,
-         101,
-         5
-        ],
-        [
-         0,
-         3,
-         1,
-         100,
-         3
-        ]
-       ],
-       1
-      ],
-      "types": [
-       "std::vector<std::vector<int>>",
-       "int"
-      ],
-      "expect": [
-       [
-        101,
-        5
-       ]
-      ],
-      "compare": "equal"
-     },
-     {
-      "call": "levels",
-      "args": [
-       [
-        [
-         0,
-         1,
-         0,
-         100,
-         2
-        ],
-        [
-         0,
-         2,
-         0,
-         99,
-         3
-        ],
-        [
-         0,
-         3,
-         1,
-         99,
-         4
-        ],
-        [
-         0,
-         4,
-         1,
-         100,
-         1
-        ]
-       ],
-       0
-      ],
-      "types": [
-       "std::vector<std::vector<int>>",
-       "int"
-      ],
-      "expect": [
-       [
-        99,
-        1
-       ]
-      ],
-      "compare": "equal"
-     },
-     {
-      "call": "levels",
-      "args": [
-       [
-        [
-         0,
-         1,
-         0,
-         100,
-         2
-        ],
-        [
-         0,
-         2,
-         0,
-         99,
-         3
-        ],
-        [
-         0,
-         3,
-         1,
-         99,
-         4
-        ],
-        [
-         0,
-         4,
-         1,
-         100,
-         1
-        ]
-       ],
-       1
-      ],
-      "types": [
-       "std::vector<std::vector<int>>",
-       "int"
-      ],
-      "expect": [
-       [
-        100,
-        1
-       ]
-      ],
-      "compare": "equal"
-     },
-     {
-      "call": "levels",
-      "args": [
-       [
-        [
-         0,
-         1,
-         0,
          99,
          10
         ],
@@ -1491,9 +1374,252 @@
       ],
       "expect": [],
       "compare": "equal"
+     },
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         1,
+         101,
+         5
+        ],
+        [
+         0,
+         2,
+         0,
+         100,
+         3
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [],
+      "compare": "equal"
+     },
+     {
+      "call": "levels",
+      "args": [
+       [
+        [
+         0,
+         1,
+         1,
+         101,
+         5
+        ],
+        [
+         0,
+         2,
+         0,
+         100,
+         3
+        ]
+       ],
+       0
+      ],
+      "types": [
+       "std::vector<std::vector<int>>",
+       "int"
+      ],
+      "expect": [
+       [
+        100,
+        3
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "levels",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         99,
+         2
+        ],
+        [
+         0,
+         2,
+         0,
+         101,
+         3
+        ],
+        [
+         0,
+         3,
+         0,
+         100,
+         4
+        ]
+       ],
+       0
+      ],
+      "types": [
+       "std::vector<std::vector<int>>",
+       "int"
+      ],
+      "expect": [
+       [
+        101,
+        3
+       ],
+       [
+        100,
+        4
+       ],
+       [
+        99,
+        2
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "levels",
+      "args": [
+       [
+        [
+         0,
+         1,
+         1,
+         102,
+         2
+        ],
+        [
+         0,
+         2,
+         1,
+         100,
+         3
+        ],
+        [
+         0,
+         3,
+         1,
+         101,
+         1
+        ]
+       ],
+       1
+      ],
+      "types": [
+       "std::vector<std::vector<int>>",
+       "int"
+      ],
+      "expect": [
+       [
+        100,
+        3
+       ],
+       [
+        101,
+        1
+       ],
+       [
+        102,
+        2
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "levels",
+      "args": [
+       [
+        [
+         0,
+         1,
+         0,
+         100,
+         2
+        ],
+        [
+         0,
+         2,
+         0,
+         100,
+         3
+        ],
+        [
+         2,
+         1
+        ]
+       ],
+       0
+      ],
+      "types": [
+       "std::vector<std::vector<int>>",
+       "int"
+      ],
+      "expect": [
+       [
+        100,
+        3
+       ]
+      ],
+      "compare": "equal"
+     },
+     {
+      "call": "run_book",
+      "args": [
+       [
+        [
+         0,
+         1,
+         1,
+         100,
+         3
+        ],
+        [
+         0,
+         2,
+         1,
+         100,
+         3
+        ],
+        [
+         3,
+         1,
+         3
+        ],
+        [
+         0,
+         3,
+         0,
+         100,
+         4
+        ]
+       ]
+      ],
+      "types": [
+       "std::vector<std::vector<int>>"
+      ],
+      "expect": [
+       [
+        3,
+        1,
+        100,
+        3
+       ],
+       [
+        3,
+        2,
+        100,
+        1
+       ]
+      ],
+      "compare": "equal"
      }
     ],
-    "how": "Check compiles your code once and runs the same 12 hidden tests as the Python screen. Each case gets 5 s."
+    "how": "Check compiles your code once and runs the same 15 hidden tests as the Python screen. Each case gets 5 s."
    },
    "hints": [
     {
@@ -1510,7 +1636,7 @@
     },
     {
      "rung": "step",
-     "text": "Mirror the Python: `match` loops over the best opposite level, fills from the front, erases filled makers and empty levels. Cancel and amend use `where` and `std::find_if` on the queue."
+     "text": "Mirror the Python. `match` loops over the best opposite level, fills from the front and erases filled makers and empty levels. Cancel and amend use `where` and `std::find_if` on the queue."
     }
    ],
    "feedback": {
@@ -2032,7 +2158,7 @@
    "tags": [
     "amend-priority"
    ],
-   "question": "Order 1 is first in its queue with 5. It is amended to 3, and later to 6. Where is it now?",
+   "question": "Order 1 is first in its queue with 5. It is amended to 3, and later to 4. Where is it now?",
    "widget": {
     "kind": "choice",
     "layout": "stack",
@@ -2045,7 +2171,7 @@
      {
       "id": "b",
       "text": "Still at the front",
-      "why": "The first amend kept its place, but the second was up, from 3 to 6. Up loses the place."
+      "why": "The first amend kept its place, but the second was up, from 3 to 4. Up loses the place."
      },
      {
       "id": "c",
@@ -2055,17 +2181,17 @@
      {
       "id": "d",
       "text": "Removed from the book",
-      "why": "An amend is not a cancel. The order rests with 6."
+      "why": "An amend is not a cancel. The order rests with 4."
      }
     ],
     "shuffle": true
    },
    "feedback": {
-    "correct": "The amend from 3 to 6 sent it to the back.",
+    "correct": "The amend from 3 to 4 sent it to the back.",
     "generic": "Not quite right. Apply the two amends in turn."
    },
    "explain": {
-    "text": "5 to 3 is down, so it kept its place. 3 to 6 is up, so it joined the back of the same level. Comparing with the original 5 does not matter; only the last quantity does."
+    "text": "5 to 3 is down, so it kept its place. 3 to 4 is up, so it joined the back of the same level. Against the original 5, 4 is down, but only the last quantity counts."
    }
   }
  ]
