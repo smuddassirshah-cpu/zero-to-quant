@@ -1,0 +1,1257 @@
+{
+  "id": "l17-measuring-latency",
+  "course": "systems",
+  "title": "Measuring latency",
+  "minutes": 14,
+  "objectives": [
+    "Measure latency percentiles and say why the mean misleads."
+  ],
+  "skills": [
+    "sy-latency"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The average request",
+      "tags": [
+        "mean-vs-p99"
+      ],
+      "prose": "A service answered 1,000 requests. 990 took 10 µs and 10 took 1,000 µs. The chart shows the count at each latency, and the line marks the mean.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            10,
+            1000
+          ],
+          "xAxis": "value",
+          "xLabel": "Latency (µs)",
+          "yLabel": "Requests",
+          "showValues": false,
+          "showMean": true,
+          "yMax": 1100,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "10": 990,
+            "1000": 10
+          }
+        }
+      },
+      "question": "Fill in the mean, and how many requests took about that long.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "Mean latency (µs)",
+            {
+              "edit": true,
+              "answer": 19.9,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ],
+          [
+            "Requests that took about 19.9 µs",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add up all the latencies and divide by 1,000."
+        },
+        {
+          "rung": "point",
+          "text": "$990 \\times 10 + 10 \\times 1{,}000 = 19{,}900$ µs in all."
+        },
+        {
+          "rung": "step",
+          "text": "19,900 / 1,000 = 19.9 µs. No bar sits at 19.9."
+        }
+      ],
+      "feedback": {
+        "correct": "The mean is 19.9 µs, and no request took that long.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "Total time is 19,900 µs over 1,000 requests.",
+          "r1c1": "Every request took 10 µs or 1,000 µs. None took 19.9."
+        }
+      },
+      "explain": {
+        "text": "The total is 19,900 µs over 1,000 requests, a mean of 19.9 µs. Not one request took that long: each took 10 or 1,000. The mean describes a request that never happened."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Slide the slow requests",
+      "tags": [
+        "percentile",
+        "mean-vs-p99"
+      ],
+      "prose": "Out of 1,000 sorted requests, the 99th percentile (p99) is the value at position 990. Slide the number of slow requests, 1,000 µs each, and watch the mean and the p99.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            10,
+            1000
+          ],
+          "xAxis": "value",
+          "xLabel": "Latency (µs)",
+          "yLabel": "Requests",
+          "showValues": false,
+          "showMean": true,
+          "yMax": 1100,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "10": 990,
+            "1000": 10
+          },
+          "params": {
+            "k": 10
+          }
+        },
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 30,
+            "step": 1,
+            "start": 10,
+            "label": "Slow requests of 1,000"
+          }
+        ],
+        "derive": {
+          "values.10": "1000 - k",
+          "values.1000": "k",
+          "caption": "{{k}} slow: mean {{fixed((10 * (1000 - k) + 1000 * k) / 1000, 2)}} µs, p99 {{k > 10 ? 1000 : 10}} µs."
+        }
+      },
+      "question": "How many slow requests first make the p99 read 1,000 µs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 11,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "11: with 11 slow requests the 990th sorted one is slow, since 1,000 - 11 = 989 fast.",
+        "wrong": [
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slow requests sort to the end, after the fast ones."
+        },
+        {
+          "rung": "point",
+          "text": "Position 990 is slow once fewer than 990 requests are fast."
+        },
+        {
+          "rung": "step",
+          "text": "$1{,}000 - k < 990$ needs $k \\ge 11$."
+        }
+      ],
+      "feedback": {
+        "correct": "11 slow requests.",
+        "generic": "Not quite right. Slide until the p99 changes.",
+        "byKey": {
+          "ten": "With 10 slow requests, 990 are fast, so position 990 is still fast.",
+          "one": "One slow request sits at position 1,000, not 990."
+        }
+      },
+      "explain": {
+        "text": "At 10 slow requests, exactly 990 are fast, so position 990 is still a fast one. The eleventh slow request pushes position 990 into the slow group. The mean barely moves, from 19.9 to 20.9."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Read the percentiles",
+      "tags": [
+        "percentile"
+      ],
+      "prose": "Sort the 1,000 requests: the 990 fast ones come first, then the 10 slow ones. The p99 is the value at position 990, and the p99.9 is the value at position 999.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            10,
+            1000
+          ],
+          "xAxis": "value",
+          "xLabel": "Latency (µs)",
+          "yLabel": "Requests",
+          "showValues": false,
+          "yMax": 1100,
+          "height": 220
+        },
+        "state": {
+          "values": {
+            "10": 990,
+            "1000": 10
+          }
+        }
+      },
+      "question": "Fill in each percentile, in µs.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "p50 of the 990 fast and 10 slow",
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "p99 of the same requests",
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "p99.9 of the same requests",
+            {
+              "edit": true,
+              "answer": 1000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "p99.9 if only 1 of the 1,000 were slow",
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the position of each percentile in the sorted list."
+        },
+        {
+          "rung": "point",
+          "text": "p50 is position 500, p99 is 990 and p99.9 is 999."
+        },
+        {
+          "rung": "step",
+          "text": "Positions 1 to 990 are fast, so 500 and 990 read 10. Position 999 is slow. With one slow, only position 1,000 is."
+        }
+      ],
+      "feedback": {
+        "correct": "10, 10, 1,000 and 10.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "Position 500 is among the fast requests.",
+          "r1c1": "Position 990 is the last fast request.",
+          "r2c1": "Position 999 is slow, since fast ones stop at 990.",
+          "r3c1": "With one slow request only the maximum shows it."
+        }
+      },
+      "explain": {
+        "text": "The p99 sits on the last fast request, so it shows 10 µs while 1% of requests took 1,000. The p99.9 reaches into the slow group. With a single slow request only the maximum would show it."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Who waited",
+      "tags": [
+        "coordinated-omission"
+      ],
+      "prose": "A test client sends one request, waits for the reply, then sends the next. Requests should go out every 100 µs. One reply took 50 ms, and requests due meanwhile waited behind it. Two reports measure 2,000 requests.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "done - sent (client waited)",
+            "  p50 40  p99 50  p99.9 248",
+            "done - intended (when due)",
+            "  p50 49  p90 38,308",
+            "  p99 48,821  p99.9 49,911",
+            "875 of 2,000 late by over 100 us"
+          ],
+          "wrap": false,
+          "title": "Two reports, one run (us)"
+        }
+      },
+      "question": "Which report shows what a request queued behind the stall felt?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "intended",
+            "text": "Done minus intended: the time since it should have gone",
+            "correct": true
+          },
+          {
+            "id": "sent",
+            "text": "Done minus sent: the time since the client actually sent it",
+            "why": "The client sent late because it was waiting. That wait is missing from this report."
+          },
+          {
+            "id": "same",
+            "text": "They are the same measure",
+            "why": "They differ by exactly the time each request waited to be sent."
+          },
+          {
+            "id": "noise",
+            "text": "Neither: one stall is just noise",
+            "why": "Delayed requests number 875 of 2,000, far more than one."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A queued request was due earlier than it was sent."
+        },
+        {
+          "rung": "point",
+          "text": "Which clock starts when the request should have gone?"
+        },
+        {
+          "rung": "step",
+          "text": "Done minus intended counts the wait. Done minus sent hides it."
+        }
+      ],
+      "feedback": {
+        "correct": "Done minus intended.",
+        "generic": "Not quite right. Which report starts the clock at the due time?",
+        "byKey": {
+          "sent": "You picked the report that starts after the wait.",
+          "same": "The gap between them is the queueing time.",
+          "noise": "875 requests were late by over 100 µs. That is not one outlier."
+        }
+      },
+      "explain": {
+        "text": "The client held back the requests due in the stall, so done minus sent shows only 50 µs at p99. Done minus intended starts at the due time and shows 48,821 µs. Waiting for each reply hides the delay: coordinated omission."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Measure it both ways",
+      "tags": [
+        "coordinated-omission",
+        "percentile"
+      ],
+      "prose": "`latencies.csv` holds the run: one row per request with its intended, sent and done times in µs. Rank is the position in the sorted list, counted from 1.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "seq,intended_us,sent_us,done_us",
+            "1000,100000,100000,150045",
+            "2,000 rows, one request every 100 us"
+          ],
+          "wrap": true,
+          "title": "latencies.csv"
+        }
+      },
+      "question": "Fix `report` so it returns both sets of percentiles and the true mean.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "latencies.csv": "content/data/systems/latencies.csv"
+        },
+        "starter": "import csv\n\ndef report(path):\n    \"\"\"Read latencies.csv (seq, intended_us, sent_us, done_us). A closed-loop client sent each request\n    when the previous reply arrived. Return nearest-rank percentiles (rank = ceil(p * n / 100)) of\n    done - sent (\"sent\") and of done - intended (\"true\"), and the mean of the true latency.\"\"\"\n    with open(path) as f:\n        rows = list(csv.DictReader(f))\n    sent = sorted(int(r[\"done_us\"]) - int(r[\"sent_us\"]) for r in rows)\n    mid = sent[len(sent) // 2]\n    return {\"p50_sent\": mid, \"p99_sent\": mid, \"p999_sent\": mid,\n            \"p50_true\": mid, \"p99_true\": mid, \"p999_true\": mid,\n            \"mean_true\": sum(sent) / len(sent)}\n",
+        "solution": "import csv\n\ndef nearest_rank(values, permille):\n    s = sorted(values)\n    rank = max(1, -(-permille * len(s) // 1000))      # ceil(permille * n / 1000) in integers\n    return s[rank - 1]\n\ndef report(path):\n    with open(path) as f:\n        rows = list(csv.DictReader(f))\n    sent = [int(r[\"done_us\"]) - int(r[\"sent_us\"]) for r in rows]\n    true = [int(r[\"done_us\"]) - int(r[\"intended_us\"]) for r in rows]\n    return {\n        \"p50_sent\": nearest_rank(sent, 500), \"p99_sent\": nearest_rank(sent, 990), \"p999_sent\": nearest_rank(sent, 999),\n        \"p50_true\": nearest_rank(true, 500), \"p99_true\": nearest_rank(true, 990), \"p999_true\": nearest_rank(true, 999),\n        \"mean_true\": sum(true) / len(true),\n    }\n",
+        "examples": [
+          {
+            "call": "report('latencies.csv')['p50_sent']",
+            "expect": "40",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "report('latencies.csv')['p50_sent']",
+            "expect": "40",
+            "compare": "equal"
+          },
+          {
+            "call": "report('latencies.csv')['p99_sent']",
+            "expect": "50",
+            "compare": "equal"
+          },
+          {
+            "call": "report('latencies.csv')['p999_sent']",
+            "expect": "248",
+            "compare": "equal"
+          },
+          {
+            "call": "report('latencies.csv')['p50_true']",
+            "expect": "49",
+            "compare": "equal"
+          },
+          {
+            "call": "report('latencies.csv')['p99_true']",
+            "expect": "48821",
+            "compare": "equal"
+          },
+          {
+            "call": "report('latencies.csv')['p999_true']",
+            "expect": "49911",
+            "compare": "equal"
+          },
+          {
+            "call": "report('latencies.csv')['mean_true']",
+            "expect": "10584.622",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "how": "Seven hidden tests read latencies.csv. Percentiles must equal the expected value, and the mean is accepted within 0.001."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute two lists: done minus sent, and done minus intended."
+        },
+        {
+          "rung": "point",
+          "text": "Sort each, and take the value at rank $\\lceil p n / 100 \\rceil$, counting from 1."
+        },
+        {
+          "rung": "step",
+          "text": "Use integers for the rank: `-(-permille * n // 1000)`. Then average the true list."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Two clocks, the same sorted ranks.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The starter reads only done minus sent, and returns the middle value for every percentile. The fix builds both lists and takes the nearest rank in each. The true list has the 50 ms stall inside it, which is why its p99 is 48,821 µs."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Quote the mean or the tail",
+      "tags": [
+        "mean-vs-p99",
+        "tail-latency"
+      ],
+      "prose": "A service has a mean of 19.9 µs and a p99.9 of 1,000 µs. A trader asks how fast it is.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            10,
+            1000
+          ],
+          "xAxis": "value",
+          "xLabel": "Latency (µs)",
+          "yLabel": "Requests",
+          "showValues": false,
+          "showMean": true,
+          "yMax": 1100,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "10": 990,
+            "1000": 10
+          }
+        }
+      },
+      "question": "Which do you quote?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "both",
+            "text": "Both, quoting the tail first",
+            "correct": true
+          },
+          {
+            "id": "mean",
+            "text": "The mean: it is the typical case",
+            "why": "No request took 19.9 µs. The mean describes none of them."
+          },
+          {
+            "id": "median",
+            "text": "The median only, since it ignores outliers",
+            "why": "The median ignores exactly the requests the trader cares about."
+          },
+          {
+            "id": "max",
+            "text": "Only the maximum, the worst case",
+            "why": "One worst value can be a fluke. The percentiles show how often it happens."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Who is hurt by a 1,000 µs reply?"
+        },
+        {
+          "rung": "point",
+          "text": "A trader loses on the slow replies, not on the average."
+        },
+        {
+          "rung": "step",
+          "text": "Give the tail first, then the mean for the throughput picture."
+        }
+      ],
+      "feedback": {
+        "correct": "Both, tail first.",
+        "generic": "Not quite right. What does the trader lose on?",
+        "byKey": {
+          "mean": "The mean of 19.9 µs hides the 1,000 µs replies.",
+          "median": "The median hides the tail, which is the risk.",
+          "max": "A maximum alone says nothing about how often."
+        }
+      },
+      "explain": {
+        "text": "The mean is a total divided by a count, and a few slow requests move it little. A trader loses on the slow ones, so quote the tail first with its percentile. The mean still helps for sizing capacity."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The rank at the edge",
+      "tags": [
+        "percentile"
+      ],
+      "prose": "Take 999 requests at 10 µs and one at 1,000 µs. The p99.9 is at position $0.999 \\times 1{,}000 = 999$. A program that computes `99.9 / 100 * 1000` in a double gets 999.0000000000001, and rounds up.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "999 at 10 us, 1 at 1,000 us",
+            "0.999 * 1000 = 999 exactly",
+            "99.9 / 100 * 1000 =",
+            "  999.0000000000001",
+            "ceil gives 1000: one rank too far"
+          ],
+          "wrap": false,
+          "title": "A float at a rank boundary"
+        }
+      },
+      "question": "What is the correct p99.9, in µs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "10 µs: position 999 holds a fast request. Rounding the float up reads position 1,000.",
+        "wrong": [
+          {
+            "id": "float",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which position is the p99.9 of 1,000 samples?"
+        },
+        {
+          "rung": "point",
+          "text": "Position 999 is the last of the 999 fast requests."
+        },
+        {
+          "rung": "step",
+          "text": "Only position 1,000 holds the slow request."
+        }
+      ],
+      "feedback": {
+        "correct": "10 µs.",
+        "generic": "Not quite right. Find the position first.",
+        "byKey": {
+          "float": "That is what the float arithmetic gives: it rounds 999.0000000000001 up to 1,000. The exact rank is 999."
+        }
+      },
+      "explain": {
+        "text": "The exact rank is 999, a 10 µs request, but the double 999.0000000000001 rounds up to 1,000. NumPy 2.0.2 with `inverted_cdf` does the same. Work in integers, or subtract 1e-9 before the `ceil`."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Nearest rank",
+      "prose": "Sort the $n$ samples. The $p$-th percentile is the sample at rank\n\n$$r = \\left\\lceil \\dfrac{p \\, n}{100} \\right\\rceil,$$\n\ncounted from 1, with rank 1 for $p = 0$. Report the tail first, and measure from the intended send time.",
+      "question": "Which rank is the p95 of 40 samples?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "r38",
+            "text": "Rank 38",
+            "correct": true
+          },
+          {
+            "id": "r39",
+            "text": "Rank 39",
+            "why": "You added one. The rank is $\\lceil 0.95 \\times 40 \\rceil = 38$, exactly."
+          },
+          {
+            "id": "r2",
+            "text": "Rank 2",
+            "why": "You used the 5% left over. The p95 counts up from the smallest."
+          },
+          {
+            "id": "r95",
+            "text": "Rank 95",
+            "why": "You used 95 as a rank. It is a percentage of the 40 samples."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Rank 38.",
+        "generic": "Not quite right. Take 95% of 40 and round up.",
+        "byKey": {
+          "r39": "$0.95 \\times 40 = 38$ exactly, so no rounding up.",
+          "r2": "The p95 is near the top, not the bottom.",
+          "r95": "95 is a percentage, not a position."
+        }
+      },
+      "explain": {
+        "text": "$0.95 \\times 40 = 38$, an exact integer, so the p95 is the 38th sorted sample. A value that is not a whole number rounds up. Rank always counts from the smallest."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write the percentile",
+      "tags": [
+        "percentile"
+      ],
+      "prose": "Now in C++. `percentile(samples, p)` takes the samples by value, so sorting inside is safe. Subtract 1e-9 before the `ceil`, so 99 × 1,000 / 100 does not round up. `mean` is given.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "sort the samples",
+            "rank = ceil(p * n / 100 - 1e-9), at least 1",
+            "return the sample at that rank"
+          ],
+          "wrap": true,
+          "title": "The method",
+          "numbers": true
+        }
+      },
+      "question": "Finish `percentile` with the nearest-rank rule.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <vector>\n\n// Nearest-rank percentile: sort the samples; the p-th percentile is the value at rank ceil(p * n / 100),\n// counting from 1 (rank 1 at p = 0). Subtract 1e-9 before ceil so 99 * 1000 / 100 does not round up.\ndouble percentile(std::vector<double> samples, double p) {\n    return samples.empty() ? 0.0 : samples.back();     // the last sample, unsorted\n}\n\ndouble mean(const std::vector<double>& samples) {\n    double total = 0.0;\n    for (double s : samples) total += s;\n    return samples.empty() ? 0.0 : total / samples.size();\n}\n",
+        "solution": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\ndouble percentile(std::vector<double> samples, double p) {\n    if (samples.empty()) return 0.0;\n    std::sort(samples.begin(), samples.end());\n    double n = static_cast<double>(samples.size());\n    long long rank = static_cast<long long>(std::ceil(p * n / 100.0 - 1e-9));\n    if (rank < 1) rank = 1;\n    if (rank > static_cast<long long>(samples.size())) rank = static_cast<long long>(samples.size());\n    return samples[rank - 1];\n}\n\ndouble mean(const std::vector<double>& samples) {\n    double total = 0.0;\n    for (double s : samples) total += s;\n    return samples.empty() ? 0.0 : total / samples.size();\n}\n",
+        "examples": [
+          {
+            "setup": "std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0);",
+            "call": "percentile(v, 99.9)",
+            "expect": 1000.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0};",
+            "call": "percentile(v, 20)",
+            "expect": 1.0,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0);",
+            "call": "percentile(v, 50)",
+            "expect": 10.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0);",
+            "call": "percentile(v, 99)",
+            "expect": 10.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0);",
+            "call": "percentile(v, 99.9)",
+            "expect": 1000.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0);",
+            "call": "percentile(v, 100)",
+            "expect": 1000.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v(989, 10.0); v.insert(v.end(), 11, 1000.0);",
+            "call": "percentile(v, 99)",
+            "expect": 1000.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v(999, 10.0); v.push_back(1000.0);",
+            "call": "percentile(v, 99.9)",
+            "expect": 10.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v(999, 10.0); v.push_back(1000.0);",
+            "call": "percentile(v, 100)",
+            "expect": 1000.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0};",
+            "call": "percentile(v, 20)",
+            "expect": 1.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0};",
+            "call": "percentile(v, 50)",
+            "expect": 3.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0};",
+            "call": "percentile(v, 80)",
+            "expect": 4.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0};",
+            "call": "percentile(v, 100)",
+            "expect": 5.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0};",
+            "call": "percentile(v, 0)",
+            "expect": 1.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0);",
+            "call": "mean(v)",
+            "expect": 19.9,
+            "compare": "isclose"
+          }
+        ],
+        "how": "Thirteen hidden tests: the 990 and 10 mix, 11 slow requests, 999 and 1, a five-sample set, p0 and p100, and the mean."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Sort a copy first."
+        },
+        {
+          "rung": "point",
+          "text": "The rank is `ceil(p * n / 100 - 1e-9)`, at least 1 and at most `n`."
+        },
+        {
+          "rung": "step",
+          "text": "Return `samples[rank - 1]` after sorting."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Sort, rank, index.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The starter returns the last sample without sorting. Sorting first, then indexing at the rank minus one, gives the nearest rank. The 1e-9 guard keeps a rank that is exactly whole from creeping up to the next one."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Timing a small thing",
+      "tags": [
+        "tail-latency"
+      ],
+      "prose": "A clock read costs about 20 ns. In this app the clock ticks in 100 µs steps, so tests use supplied samples. Timing one 10 ns call alone adds two reads to it. A batch of 1,000 calls adds two reads once.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "clock read: about 20 ns",
+            "function under test: 10 ns",
+            "one call timed alone: 2 reads",
+            "a batch of 1,000: 2 reads"
+          ],
+          "wrap": true,
+          "title": "The cost of looking",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the share of the clock, and the overhead per call in a batch.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Clock share of one timed call (%)",
+            {
+              "edit": true,
+              "answer": 80,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Clock overhead per call in a batch of 1,000 (ns)",
+            {
+              "edit": true,
+              "answer": 0.04,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two reads are 40 ns. The timed call then measures 50 ns."
+        },
+        {
+          "rung": "point",
+          "text": "In a batch the 40 ns is shared by 1,000 calls."
+        },
+        {
+          "rung": "step",
+          "text": "$40 / 50 = 80\\%$, and $40 / 1{,}000 = 0.04$ ns a call."
+        }
+      ],
+      "feedback": {
+        "correct": "80% for one call, 0.04 ns in a batch.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "Two reads cost 40 ns of the 50 ns measured.",
+          "r1c1": "40 ns spread over 1,000 calls."
+        }
+      },
+      "explain": {
+        "text": "Timed alone, the 10 ns function reads as 50 ns and the clock is 80% of it. Timed in a batch of 1,000, the two reads add 0.04 ns a call. Warm the code up first, then time batches and take the median."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: percentiles by hand",
+      "tags": [
+        "percentile"
+      ],
+      "pace": 300,
+      "prose": "Drill: about two minutes each. Say the reasoning aloud first. The five samples are 5, 1, 4, 2 and 3, in that order of arrival.",
+      "question": "Fill in each percentile.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Percentile",
+          "Value"
+        ],
+        "rows": [
+          [
+            "p20",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "p50",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "p80",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "p100",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Sort first: 1, 2, 3, 4, 5."
+        },
+        {
+          "rung": "point",
+          "text": "Rank is $\\lceil p \\times 5 / 100 \\rceil$."
+        },
+        {
+          "rung": "step",
+          "text": "p20 is rank 1, p50 is rank 3 (2.5 rounds up), p80 is rank 4, p100 is rank 5."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 3, 4 and 5.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$0.2 \\times 5 = 1$, so rank 1 of the sorted list.",
+          "r1c1": "$0.5 \\times 5 = 2.5$ rounds up to rank 3.",
+          "r2c1": "$0.8 \\times 5 = 4$, rank 4.",
+          "r3c1": "p100 is the largest, rank 5."
+        }
+      },
+      "explain": {
+        "text": "Sorted, the samples are 1, 2, 3, 4, 5. p20 is rank 1, and p50 rounds 2.5 up to rank 3. p80 is rank 4 and p100 is the maximum."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: the fleet p99",
+      "tags": [
+        "tail-latency",
+        "percentile"
+      ],
+      "prose": "The interviewer asks: two hosts report a p99 of 10 µs and 1,000 µs. What is the fleet p99? Host A served 1,000 requests, all at 10 µs. Host B served 970 at 10 µs and 30 at 1,000 µs.",
+      "question": "Fill in the p99 values, in µs.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Host B p99 alone",
+            {
+              "edit": true,
+              "answer": 1000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Average of the two hosts' p99 values",
+            {
+              "edit": true,
+              "answer": 505,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Fleet p99 from the pooled 2,000 samples",
+            {
+              "edit": true,
+              "answer": 1000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Host B has 30 slow requests of 1,000, so position 990 is slow."
+        },
+        {
+          "rung": "point",
+          "text": "Averaging two percentiles is not a percentile of anything."
+        },
+        {
+          "rung": "step",
+          "text": "Pool all 2,000 samples. Position 1,980 is among the 30 slow ones."
+        }
+      ],
+      "feedback": {
+        "correct": "1,000, 505 and 1,000.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "970 fast, so position 990 is slow: 1,000 µs.",
+          "r1c1": "$(10 + 1{,}000) / 2$ is 505, a number no request had.",
+          "r2c1": "30 slow of 2,000 is 1.5%, so position 1,980 is slow."
+        }
+      },
+      "explain": {
+        "text": "The average of two p99 values, 505 µs, is a number no request had. Pool the samples, and the fleet p99 is position 1,980 of 2,000, which is slow, so 1,000 µs. On a desk, ship the histograms, not the percentiles."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Quote percentiles with the tail first: the mean describes requests that never happened.",
+      "The p-th percentile of n sorted samples is at rank ceil(p n / 100). Work in integers at a boundary.",
+      "A client that waits for each reply hides a stall: measure from the intended send time."
+    ],
+    "formula": {
+      "name": "Nearest rank",
+      "tex": "r = \\lceil p\\,n / 100 \\rceil",
+      "note": "Sort ascending and take the sample at rank r, counting from 1."
+    },
+    "trap": "Quoting the mean, or timing from the late send."
+  },
+  "quiz": [
+    {
+      "id": "q17-rank",
+      "difficulty": 2,
+      "tags": [
+        "percentile"
+      ],
+      "pace": 45,
+      "prose": "Ten samples arrive as 3, 9, 4, 7, 5, 8, 6, 2, 10 and 1.",
+      "question": "What is the p75?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "8: sorted, rank $\\lceil 7.5 \\rceil = 8$ is the value 8.",
+        "wrong": [
+          {
+            "id": "seven",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "8.",
+        "generic": "Not quite right. Sort, then take rank $\\lceil 0.75 \\times 10 \\rceil$.",
+        "byKey": {
+          "seven": "Rank 7 holds 7. 7.5 rounds up to rank 8."
+        }
+      },
+      "explain": {
+        "text": "Sorted, the samples are 1 to 10. $0.75 \\times 10 = 7.5$, which rounds up to rank 8, the value 8."
+      }
+    },
+    {
+      "id": "q17-closed",
+      "difficulty": 2,
+      "tags": [
+        "coordinated-omission"
+      ],
+      "pace": 45,
+      "prose": "A test client sends the next request only after the previous reply. One reply takes 50 ms.",
+      "question": "What does the client's own timing record about the requests due during that stall?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "hidden",
+            "text": "Almost nothing: they were never sent on time",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "Each one as a 50 ms request, in full",
+            "why": "It did not send them, so it never timed their wait."
+          },
+          {
+            "id": "half",
+            "text": "Half of them, as slow requests",
+            "why": "Closed-loop timing records none of the waiting, not half."
+          },
+          {
+            "id": "mean",
+            "text": "Only the mean, and the tail stays clean",
+            "why": "Percentiles are unaffected too, which is the problem."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Almost nothing.",
+        "generic": "Not quite right. When does the client send the next request?",
+        "byKey": {
+          "all": "The client was blocked, so it never started those requests.",
+          "half": "There is no half. The wait goes unrecorded.",
+          "mean": "The tail stays hidden, too."
+        }
+      },
+      "explain": {
+        "text": "The client waits for the slow reply, so the requests due meanwhile are never sent on time. It times each one from its late send. The stall appears as a single slow request."
+      }
+    },
+    {
+      "id": "q17-mean",
+      "difficulty": 3,
+      "tags": [
+        "mean-vs-p99"
+      ],
+      "pace": 60,
+      "prose": "95 requests take 20 µs and 5 requests take 400 µs.",
+      "question": "What is the mean, in µs?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 39,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "µs",
+        "accept": "39 µs: (95 × 20 + 5 × 400) / 100 = 3,900 / 100.",
+        "wrong": [
+          {
+            "id": "mid",
+            "value": 210,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "39 µs.",
+        "generic": "Not quite right. Add up all the latencies, then divide by 100.",
+        "byKey": {
+          "mid": "210 is the average of 20 and 400. Weight each by its count."
+        }
+      },
+      "explain": {
+        "text": "$95 \\times 20 = 1{,}900$ and $5 \\times 400 = 2{,}000$, so the total is 3,900 µs. Divided by 100 requests that is 39 µs."
+      }
+    },
+    {
+      "id": "q17-batch",
+      "difficulty": 2,
+      "tags": [
+        "tail-latency"
+      ],
+      "pace": 45,
+      "prose": "You want the cost of a 10 ns function, and a clock read costs 20 ns.",
+      "question": "How should you time it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "batch",
+            "text": "Time a batch of many calls with two reads, after a warm-up",
+            "correct": true
+          },
+          {
+            "id": "each",
+            "text": "Read the clock around every call and add up the differences",
+            "why": "Two reads cost 40 ns, four times the function."
+          },
+          {
+            "id": "once",
+            "text": "Time one call and trust it",
+            "why": "One call includes cold caches and the clock reads."
+          },
+          {
+            "id": "sleep",
+            "text": "Sleep first so the CPU is idle",
+            "why": "An idle CPU runs slower. Warm it up instead."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A batch, after warming up.",
+        "generic": "Not quite right. What dominates a single timed call?",
+        "byKey": {
+          "each": "The reads dominate each call.",
+          "once": "A single call is too noisy.",
+          "sleep": "Idle is the slowest state."
+        }
+      },
+      "explain": {
+        "text": "The two clock reads then cost 40 ns once, shared by all the calls. A warm-up run fills the caches first."
+      }
+    }
+  ]
+}

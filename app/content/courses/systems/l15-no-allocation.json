@@ -1,0 +1,1267 @@
+{
+  "id": "l15-no-allocation",
+  "course": "systems",
+  "title": "No allocation on the hot path",
+  "minutes": 14,
+  "objectives": [
+    "Remove allocations from a hot path and write a pool allocator."
+  ],
+  "skills": [
+    "sy-latency",
+    "sy-memory"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Tap the allocations",
+      "tags": [
+        "allocation-cost"
+      ],
+      "prose": "A handler runs this function once for every market data message. An allocation asks the heap for memory. Assume a 100-character string is too long to live inside the `std::string` object itself.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "void on_message(const Msg& m) {",
+            "    std::vector<int> levels;",
+            "    levels.push_back(m.price);",
+            "    auto* ev = new Event(m);",
+            "    std::string s(100, 'x');",
+            "    std::map<int, int> book; book[m.price] = 1;",
+            "    int x = m.qty * 2;",
+            "}"
+          ],
+          "wrap": true,
+          "title": "One message",
+          "numbers": true
+        }
+      },
+      "question": "Tap every line that allocates.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l3",
+          "l4",
+          "l5",
+          "l6"
+        ],
+        "countWord": "lines"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "An allocation happens when a container grows or `new` runs."
+        },
+        {
+          "rung": "point",
+          "text": "A vector that has never held anything owns no memory yet.",
+          "highlight": [
+            "l3",
+            "l4",
+            "l5",
+            "l6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Lines 3, 4, 5 and 6 allocate. Line 6 allocates a map node."
+        }
+      ],
+      "feedback": {
+        "correct": "Four allocations a message: lines 3, 4, 5 and 6.",
+        "generic": "Not quite right. Look for `new`, growth and long strings.",
+        "byKey": {
+          "l1": "A function header allocates nothing.",
+          "l2": "You tapped an empty vector. It owns no memory until the first push.",
+          "l7": "Arithmetic on locals lives in registers and on the stack.",
+          "l8": "A closing brace allocates nothing."
+        }
+      },
+      "explain": {
+        "text": "Line 3 gives the empty vector its first block and line 4 calls `new`. Line 5 needs a block for 100 characters, and line 6 allocates a map node. That is four allocations on every message.",
+        "canvas": {
+          "highlight": [
+            "l3",
+            "l4",
+            "l5",
+            "l6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "What one allocation costs",
+      "tags": [
+        "allocation-cost"
+      ],
+      "prose": "Assume a `malloc` or `new` costs 50 ns, and the feed sends 200,000 messages a second, one every 5 µs. Slide the allocations a message makes.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Assumptions",
+          "wrap": true,
+          "lines": [
+            "one malloc or new: 50 ns",
+            "message rate: 200,000 a second",
+            "gap between messages: 5 us"
+          ]
+        },
+        "state": {
+          "params": {
+            "n": 1
+          }
+        },
+        "controls": [
+          {
+            "bind": "n",
+            "stops": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "label": "Allocations a message",
+            "start": 1
+          }
+        ],
+        "derive": {
+          "caption": "{{n}} a message: {{n * 10}} ms of every second."
+        }
+      },
+      "question": "How many milliseconds a second does each allocation a message add?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ms",
+        "accept": "10 ms: 50 ns × 200,000 = 10,000,000 ns a second.",
+        "wrong": [
+          {
+            "id": "us",
+            "value": 10000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ns",
+            "value": 50,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Cost per message first: one allocation is 50 ns."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply by 200,000 messages and change nanoseconds to milliseconds.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$50 \\times 200{,}000 = 10{,}000{,}000$ ns, which is 10 ms."
+        }
+      ],
+      "feedback": {
+        "correct": "10 ms for every allocation a message makes.",
+        "generic": "Not quite right. Multiply 50 ns by the messages a second.",
+        "byKey": {
+          "us": "10,000 is the figure in microseconds. The question asks for milliseconds.",
+          "ns": "50 ns is the cost of one call. Multiply by the 200,000 messages."
+        }
+      },
+      "explain": {
+        "text": "One allocation is 50 ns, and there are 200,000 messages a second. That is 10,000,000 ns, or 10 ms, of every second. Each extra allocation adds the same again."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Four allocations a message",
+      "tags": [
+        "allocation-cost"
+      ],
+      "prose": "The handler of the last screen makes four allocations a message. Each costs 50 ns, at 200,000 messages a second. Now and then an allocation asks the system for more memory, which takes microseconds.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "4 allocations a message",
+            "50 ns each",
+            "200,000 messages a second"
+          ],
+          "wrap": true,
+          "title": "The cost",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the cost.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Nanoseconds of allocation a message",
+            {
+              "edit": true,
+              "answer": 200,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Milliseconds of allocation a second",
+            {
+              "edit": true,
+              "answer": 40,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Share of one core (%)",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Four allocations at 50 ns each, per message."
+        },
+        {
+          "rung": "point",
+          "text": "$200 \\times 200{,}000 = 40{,}000{,}000$ ns a second."
+        },
+        {
+          "rung": "step",
+          "text": "200 ns a message, 40 ms a second, and 40 ms of 1,000 ms is 4%."
+        }
+      ],
+      "feedback": {
+        "correct": "200 ns, 40 ms, 4%.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$4 \\times 50$ ns.",
+          "r1c1": "200 ns × 200,000 messages is 40 ms.",
+          "r2c1": "40 ms out of the 1,000 ms in a second."
+        }
+      },
+      "explain": {
+        "text": "Four allocations cost 200 ns a message. At 200,000 messages that is 40 ms a second, 4% of a core. The rare slow allocation, which takes microseconds, hides inside that average."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A pool of slots",
+      "tags": [
+        "pool-allocator"
+      ],
+      "prose": "A pool keeps its slots in a fixed array, and a free list runs through the free ones: each free slot holds the number of the next free slot. `allocate` takes the head, `release` puts a slot back at the head. Here two slots were allocated, then slot 0 was released.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "2",
+            "used",
+            "3",
+            "end"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "caption": "Pool of 4. Each free slot holds the next free slot. `used` is allocated."
+        }
+      },
+      "question": "Tap the slot the next `allocate` returns.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c0"
+        ],
+        "countWord": "slots"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`allocate` always takes the head of the free list."
+        },
+        {
+          "rung": "point",
+          "text": "The head is the slot released last.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Slot 0 went back at the head, so slot 0 comes out first."
+        }
+      ],
+      "feedback": {
+        "correct": "Slot 0: the last released is the first reused.",
+        "generic": "Not quite right. Which slot does the head point at?",
+        "byKey": {
+          "c2": "Slot 2 is next after slot 0, not first. The head is slot 0.",
+          "c1": "Slot 1 is still in use. It is not on the free list.",
+          "c3": "Slot 3 is last on the list, marked end."
+        }
+      },
+      "explain": {
+        "text": "Releasing slot 0 made it the head and pointed it at slot 2. The next `allocate` pops the head, slot 0, and the head moves to slot 2. Both calls take a few instructions and touch no heap.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "head",
+              "at": 0,
+              "label": "head"
+            }
+          ],
+          "highlight": [
+            "c0"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What a pool saves",
+      "tags": [
+        "pool-allocator",
+        "allocation-cost"
+      ],
+      "prose": "A pool allocation takes 2 ns, against 50 ns for `malloc`. Suppose the handler needs 3 allocations a message, at 200,000 messages a second.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "3 allocations a message",
+            "malloc 50 ns, pool 2 ns",
+            "200,000 messages a second"
+          ],
+          "wrap": true,
+          "title": "Two allocators",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the cost of each.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "`malloc`: milliseconds a second",
+            {
+              "edit": true,
+              "answer": 30,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Pool: milliseconds a second",
+            {
+              "edit": true,
+              "answer": 1.2,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "Times less with the pool",
+            {
+              "edit": true,
+              "answer": 25,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Three allocations, 200,000 messages: 600,000 calls a second."
+        },
+        {
+          "rung": "point",
+          "text": "$600{,}000 \\times 50$ ns and $600{,}000 \\times 2$ ns."
+        },
+        {
+          "rung": "step",
+          "text": "30 ms, 1.2 ms, and $30 / 1.2 = 25$."
+        }
+      ],
+      "feedback": {
+        "correct": "30 ms, 1.2 ms and 25 times less.",
+        "generic": "Not quite right. Multiply the calls a second by each cost.",
+        "byKey": {
+          "r0c1": "600,000 calls × 50 ns = 30 ms.",
+          "r1c1": "600,000 calls × 2 ns = 1.2 ms.",
+          "r2c1": "30 divided by 1.2."
+        }
+      },
+      "explain": {
+        "text": "There are 600,000 calls a second. At 50 ns that is 30 ms, and at 2 ns it is 1.2 ms. The pool is 25 times cheaper, and its cost never varies."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Count the heap",
+      "tags": [
+        "alloc-counter",
+        "preallocate"
+      ],
+      "prose": "A test can prove a hot path never allocates. Here the checker counts every `new`: `alloc_count()` reads the count, and the tests reset it first. The starter builds the text in a `std::vector`. Write `format_price` with no heap, using a small array on the stack.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "10275 -> \"102.75\"",
+            "5 -> \"0.05\"",
+            "-25 -> \"-0.25\"",
+            "alloc_count() must stay 0"
+          ],
+          "wrap": true,
+          "title": "What format_price writes",
+          "numbers": true
+        }
+      },
+      "question": "Finish `format_price` so the allocation count stays 0.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "allocCheck": true,
+        "starter": "#include <vector>\n\n// Write a price given in pence as pounds and pence into out, for example 10275 -> \"102.75\", -25 -> \"-0.25\".\n// Put a '\\0' after the text and return its length (not counting the '\\0'). out has room for 32 characters.\n// The hot path may not use the heap.\nint format_price(char* out, int pence) {\n    std::vector<char> digits;                 // allocates\n    bool negative = pence < 0;\n    long long a = negative ? -(long long)pence : pence;\n    (void)negative;\n    do { digits.push_back(static_cast<char>('0' + a % 10)); a /= 10; } while (a > 0);\n    int n = 0;      // TODO: the '-' sign, and pence below 10 need a leading '0'\n    for (int i = static_cast<int>(digits.size()) - 1; i >= 0; --i) {\n        out[n++] = digits[i];\n        if (i == 2) out[n++] = '.';\n    }\n    out[n] = '\\0';\n    return n;\n}\n",
+        "solution": "int format_price(char* out, int pence) {\n    int n = 0;\n    long long a = pence;\n    if (a < 0) { out[n++] = '-'; a = -a; }\n    long long pounds = a / 100;\n    int pennies = static_cast<int>(a % 100);\n    char tmp[24];\n    int t = 0;\n    do { tmp[t++] = static_cast<char>('0' + pounds % 10); pounds /= 10; } while (pounds > 0);\n    while (t > 0) out[n++] = tmp[--t];\n    out[n++] = '.';\n    out[n++] = static_cast<char>('0' + pennies / 10);\n    out[n++] = static_cast<char>('0' + pennies % 10);\n    out[n] = '\\0';\n    return n;\n}\n",
+        "examples": [
+          {
+            "setup": "char buf[32]; int n = format_price(buf, 10275);",
+            "call": "std::string(buf, n)",
+            "expect": "102.75",
+            "compare": "equal",
+            "text": true
+          },
+          {
+            "setup": "char buf[32]; int n = format_price(buf, -25);",
+            "call": "std::string(buf, n)",
+            "expect": "-0.25",
+            "compare": "equal",
+            "text": true
+          }
+        ],
+        "tests": [
+          {
+            "setup": "char buf[32]; int n = format_price(buf, 10275);",
+            "call": "std::string(buf, n)",
+            "expect": "102.75",
+            "compare": "equal",
+            "text": true
+          },
+          {
+            "setup": "char buf[32]; int n = format_price(buf, 5);",
+            "call": "std::string(buf, n)",
+            "expect": "0.05",
+            "compare": "equal",
+            "text": true
+          },
+          {
+            "setup": "char buf[32]; int n = format_price(buf, 0);",
+            "call": "std::string(buf, n)",
+            "expect": "0.00",
+            "compare": "equal",
+            "text": true
+          },
+          {
+            "setup": "char buf[32]; int n = format_price(buf, -25);",
+            "call": "std::string(buf, n)",
+            "expect": "-0.25",
+            "compare": "equal",
+            "text": true
+          },
+          {
+            "setup": "char buf[32]; int n = format_price(buf, 100000);",
+            "call": "std::string(buf, n)",
+            "expect": "1000.00",
+            "compare": "equal",
+            "text": true
+          },
+          {
+            "setup": "char buf[32]; int n = format_price(buf, 1999);",
+            "call": "std::string(buf, n)",
+            "expect": "19.99",
+            "compare": "equal",
+            "text": true
+          },
+          {
+            "setup": "char buf[32]; int n = format_price(buf, -5);",
+            "call": "std::string(buf, n)",
+            "expect": "-0.05",
+            "compare": "equal",
+            "text": true
+          },
+          {
+            "setup": "char buf[32]; int n = format_price(buf, 99);",
+            "call": "std::string(buf, n)",
+            "expect": "0.99",
+            "compare": "equal",
+            "text": true
+          },
+          {
+            "setup": "char buf[32]; reset_alloc_count(); format_price(buf, 10275); format_price(buf, -25);",
+            "call": "alloc_count()",
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "how": "Nine hidden tests: the text for eight prices, and one that formats twice and reads `alloc_count()`, which must be 0. The first Check downloads the C++ compiler, about 26 MB, and takes 10 to 15 s. Later Checks take a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Digits can be built into a `char` array on the stack."
+        },
+        {
+          "rung": "point",
+          "text": "Peel digits off with `% 10` and `/ 10`, then write them back in reverse."
+        },
+        {
+          "rung": "step",
+          "text": "Write the sign, then the pounds digits, a dot, and two pence digits. Pad pence below 10 with a zero."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. A stack array costs nothing from the heap.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "A `char tmp[24]` lives on the stack, so building the digits there never calls `new`. The `alloc_count()` test would fail with the starter, which grows a vector. Pence below 10 need a leading zero, and a negative price needs a sign."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Which one allocates",
+      "tags": [
+        "allocation-cost",
+        "preallocate"
+      ],
+      "prose": "A colleague says every container allocates when it is declared, so declaring is the cost. We check four declarations and calls.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "std::vector<int> v;",
+            "v.push_back(1);",
+            "std::array<int, 8> a;",
+            "int b[8];"
+          ],
+          "wrap": true,
+          "title": "Four lines",
+          "numbers": true
+        }
+      },
+      "question": "Which of these allocates?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "push",
+            "text": "The first `v.push_back(1)`",
+            "correct": true
+          },
+          {
+            "id": "decl",
+            "text": "The declaration `std::vector<int> v;`",
+            "why": "A default vector owns no memory yet. It allocates on the first push."
+          },
+          {
+            "id": "array",
+            "text": "`std::array<int, 8> a;`",
+            "why": "The eight ints are part of the object, on the stack here. No heap call."
+          },
+          {
+            "id": "plain",
+            "text": "`int b[8];`",
+            "why": "A plain array of eight ints lives on the stack. No heap call."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which of the four has to ask for memory it does not have?"
+        },
+        {
+          "rung": "point",
+          "text": "The empty vector has no buffer. The two arrays carry their own storage."
+        },
+        {
+          "rung": "step",
+          "text": "Only the first push needs a new block, so only it calls the allocator."
+        }
+      ],
+      "feedback": {
+        "correct": "The first push: the empty vector gets its block there.",
+        "generic": "Not quite right. Which one has no memory until it is used?",
+        "byKey": {
+          "decl": "You blamed the declaration. An empty vector owns nothing yet.",
+          "array": "`std::array` holds its elements inside itself, so it never allocates.",
+          "plain": "A built-in array sits in the stack frame."
+        }
+      },
+      "explain": {
+        "text": "A default vector has no buffer, so `push_back` must ask the heap for one. A `std::array` and a plain array hold their elements in place. To avoid the cost, call `reserve` before the first message."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "When the pool runs out",
+      "tags": [
+        "pool-allocator",
+        "preallocate"
+      ],
+      "prose": "Every slot of a pool of 3 is in use, and a message needs a fourth. On the hot path the pool may not grow, and a slot released twice would corrupt the free list.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "used",
+            "used",
+            "used"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "pointers": [
+            {
+              "id": "head",
+              "at": 2,
+              "label": "head -1"
+            }
+          ],
+          "caption": "A pool of 3, all in use. The free list is empty."
+        }
+      },
+      "question": "What should `allocate` do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "minus",
+            "text": "Return -1 and let the caller decide",
+            "correct": true
+          },
+          {
+            "id": "grow",
+            "text": "Grow the pool with `new`",
+            "why": "Growing allocates on the hot path, which is the cost we removed."
+          },
+          {
+            "id": "wait",
+            "text": "Wait until another slot is released",
+            "why": "The one hot thread is the only one that releases, so it would wait for itself."
+          },
+          {
+            "id": "reuse",
+            "text": "Hand out the oldest slot again",
+            "why": "Two users would then share one slot and overwrite each other."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Think about what the pool promised not to do."
+        },
+        {
+          "rung": "point",
+          "text": "It may not allocate, and a slot cannot belong to two users."
+        },
+        {
+          "rung": "step",
+          "text": "It must report that it is full and leave the choice to the caller."
+        }
+      ],
+      "feedback": {
+        "correct": "Return -1. Size the pool for the worst case, so it stays rare.",
+        "generic": "Not quite right. The pool may not allocate or share a slot.",
+        "byKey": {
+          "grow": "You grew the pool. That calls `new` on the hot path.",
+          "wait": "With one thread there is no one to release a slot while it waits.",
+          "reuse": "You handed one slot to two users, and they would corrupt each other."
+        }
+      },
+      "explain": {
+        "text": "A full pool reports -1 and the caller decides: drop the message, or stop loudly. Size the pool for the worst case, so -1 never happens in practice. A slot released twice would link into the free list twice, so a debug build asserts on it."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Allocate first, count after",
+      "prose": "On a hot path every allocation is a cost and a risk. Allocate everything before the first message, from a pool or a fixed array, then prove it with a count. Free conference talk recordings on low-latency C++ for trading systems cover this ground.\n\n```cpp\nPool pool(1500);          // all memory taken here\nreset_alloc_count();\nrun_messages(pool);       // hot path\nassert(alloc_count() == 0);\n```",
+      "question": "Where must the memory for the hot path come from?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "before",
+            "text": "From a pool or array made up front",
+            "correct": true
+          },
+          {
+            "id": "fast",
+            "text": "From a fast allocator called on each message",
+            "why": "A fast `new` is still a call that can reach the system. The risk stays."
+          },
+          {
+            "id": "stack",
+            "text": "Always from the stack, never from a pool",
+            "why": "The stack is one source. A pool covers objects that outlive a call."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Before the first message.",
+        "generic": "Not quite right. When is allocating safe?",
+        "byKey": {
+          "fast": "Even a quick `new` has a slow case.",
+          "stack": "A pool is also fine: it takes its memory up front."
+        }
+      },
+      "explain": {
+        "text": "Take the memory once, while nothing is waiting. After that every call pops or pushes a slot. The count test then proves the hot path never touches the heap."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write the pool",
+      "tags": [
+        "pool-allocator",
+        "alloc-counter"
+      ],
+      "prose": "Now the pool itself. Slots are numbered from 0. `allocate` returns the most recently released slot, or -1 when none is free. The test at the end counts allocations over 100 rounds.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "allocate: pop the head",
+            "release(s): s becomes the head",
+            "full: return -1",
+            "alloc_count() stays 0"
+          ],
+          "wrap": true,
+          "title": "The pool contract",
+          "numbers": true
+        }
+      },
+      "question": "Finish `Pool` so no call after the constructor touches the heap.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "allocCheck": true,
+        "starter": "#include <vector>\n\n// A pool of `slots` fixed slots, numbered 0 .. slots-1.\n// allocate() returns a free slot, or -1 if none is free. release(s) makes slot s free again.\n// The most recently released slot is the next one allocated. No call may use the heap after the constructor.\nclass Pool {\npublic:\n    explicit Pool(int slots) : slots_(slots) {}\n    int allocate() { return next_++; }          // never reuses a slot\n    void release(int slot) { (void)slot; }\n    int in_use() const { return next_; }\nprivate:\n    int slots_;\n    int next_ = 0;\n};\n",
+        "solution": "#include <vector>\n\nclass Pool {\npublic:\n    explicit Pool(int slots) : next_free_(slots, -1), in_use_(0) {\n        for (int s = 0; s + 1 < slots; ++s) next_free_[s] = s + 1;   // slot s points at slot s+1\n        head_ = slots > 0 ? 0 : -1;\n    }\n    int allocate() {\n        if (head_ < 0) return -1;\n        int slot = head_;\n        head_ = next_free_[slot];\n        ++in_use_;\n        return slot;\n    }\n    void release(int slot) {\n        next_free_[slot] = head_;\n        head_ = slot;\n        --in_use_;\n    }\n    int in_use() const { return in_use_; }\nprivate:\n    std::vector<int> next_free_;   // the free list, stored inside the slots' own indices\n    int head_;\n    int in_use_;\n};\n",
+        "examples": [
+          {
+            "setup": "Pool p(3);",
+            "call": "p.allocate()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(3); int a = p.allocate(); int b = p.allocate(); p.allocate(); p.release(b);",
+            "call": "p.allocate()",
+            "expect": 1,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "Pool p(3);",
+            "call": "p.allocate()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(3); p.allocate(); p.allocate();",
+            "call": "p.allocate()",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(3); p.allocate(); p.allocate(); p.allocate();",
+            "call": "p.allocate()",
+            "expect": -1,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(3); int a = p.allocate(); int b = p.allocate(); p.allocate(); p.release(b);",
+            "call": "p.allocate()",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(3); int a = p.allocate(); int b = p.allocate(); p.release(a); p.release(b);",
+            "call": "p.allocate()",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(3); int a = p.allocate(); int b = p.allocate(); p.release(a); p.release(b); p.allocate();",
+            "call": "p.allocate()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(2); p.allocate(); p.allocate(); p.release(0); p.allocate();",
+            "call": "p.in_use()",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(2); p.allocate(); p.allocate(); p.release(0); p.release(1);",
+            "call": "p.in_use()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(0);",
+            "call": "p.allocate()",
+            "expect": -1,
+            "compare": "equal"
+          },
+          {
+            "setup": "Pool p(8); reset_alloc_count(); for (int r = 0; r < 100; ++r) { int s = p.allocate(); p.release(s); }",
+            "call": "alloc_count()",
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "how": "Ten hidden tests cover slot numbers, a full pool, release and reuse, and an empty pool. The last runs 100 allocate and release rounds, which must add 0 to `alloc_count()`."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep one number per slot: the slot that follows it in the free list."
+        },
+        {
+          "rung": "point",
+          "text": "Build the list in the constructor: slot $s$ points at $s + 1$. `head_` starts at 0."
+        },
+        {
+          "rung": "step",
+          "text": "`allocate` returns `head_` and moves it to that slot's next. `release` points the slot at `head_`, then makes it the head."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. A free list threaded through the slots.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The constructor links every slot to the next. `allocate` pops the head and `release` pushes a slot back. The last released is reused first, and all of it is index arithmetic on reserved memory."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: the pool by hand",
+      "tags": [
+        "pool-allocator"
+      ],
+      "pace": 420,
+      "prose": "Drill: about two minutes each. Say the reasoning aloud first. Slots are numbered from 0 and the free list starts in order, 0 then 1 then 2.",
+      "question": "Fill in the slot each `allocate` returns.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Sequence",
+          "Slot returned"
+        ],
+        "rows": [
+          [
+            "Pool of 3: allocate three, release 1, allocate",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Pool of 3: allocate three, release 0, release 2, allocate",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Pool of 3: allocate a fourth time with all three in use",
+            {
+              "edit": true,
+              "answer": -1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Pool of 4: allocate four, release 3, 1, 2, then allocate twice: the second",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The head of the free list is the last slot released."
+        },
+        {
+          "rung": "point",
+          "text": "Release 0 then 2 makes 2 the head, with 0 after it."
+        },
+        {
+          "rung": "step",
+          "text": "Row 4: the heads come out 2, 1, 3, so the second allocation is 1."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 2, -1 and 1.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "Only slot 1 was released, so it is the head.",
+          "r1c1": "Slot 2 was released last, so it comes first.",
+          "r2c1": "A full pool has no free slot to return.",
+          "r3c1": "Released 3, 1, 2 means the head order 2, 1, 3."
+        }
+      },
+      "explain": {
+        "text": "Each release pushes at the head, so the free list is a stack. Releasing 0 then 2 gives the order 2, 0. A full pool returns -1 and never grows."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: how big a pool",
+      "tags": [
+        "pool-allocator",
+        "preallocate"
+      ],
+      "prose": "The interviewer asks: how big a pool for 1,000 live orders? Add a safety factor of 1.5 for bursts. An order is 24 bytes in the layout of level 1, or 32 bytes with padding. A core's L1 data cache holds 32 KiB, or 32,768 bytes.",
+      "question": "Fill in the pool size.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Slots",
+            {
+              "edit": true,
+              "answer": 1500,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Bytes at 24 per slot",
+            {
+              "edit": true,
+              "answer": 36000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Bytes at 32 per slot",
+            {
+              "edit": true,
+              "answer": 48000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Saving of the 24-byte slot over the 32-byte slot (%)",
+            {
+              "edit": true,
+              "answer": 25,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the live orders by the safety factor."
+        },
+        {
+          "rung": "point",
+          "text": "Then multiply the slots by the bytes in one slot."
+        },
+        {
+          "rung": "step",
+          "text": "1,500 slots; 36,000 and 48,000 bytes; and $24 / 32$ is three quarters, so 25% less."
+        }
+      ],
+      "feedback": {
+        "correct": "1,500 slots, 36,000 and 48,000 bytes, 25% saved.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$1{,}000 \\times 1.5$.",
+          "r1c1": "$1{,}500 \\times 24$.",
+          "r2c1": "$1{,}500 \\times 32$.",
+          "r3c1": "One minus 24/32."
+        }
+      },
+      "explain": {
+        "text": "1,500 slots at 24 bytes are 36,000 bytes, about 35 KiB, and at 32 bytes 48,000, about 47 KiB. Neither fits a 32 KiB L1, but the tighter layout is 25% smaller. A desk answer states the size and then says which part of it stays hot."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A message that allocates four times at 50 ns costs 40 ms of every second at 200,000 messages a second.",
+      "A pool keeps slots in a fixed array with a free list: allocate pops, release pushes, and a full pool returns -1.",
+      "Allocate before the first message, then count: `alloc_count()` stays 0 across the hot path."
+    ],
+    "formula": {
+      "name": "The allocation bill",
+      "tex": "\\text{cost} = n_{\\text{alloc}} \\times t_{\\text{alloc}} \\times \\text{rate}",
+      "note": "4 × 50 ns × 200,000 a second = 40 ms."
+    },
+    "trap": "Thinking an empty container allocates when it is declared."
+  },
+  "quiz": [
+    {
+      "id": "q15-cost",
+      "difficulty": 2,
+      "tags": [
+        "allocation-cost"
+      ],
+      "pace": 60,
+      "prose": "A handler makes 5 allocations a message. Each costs 50 ns, and the feed sends 150,000 messages a second.",
+      "question": "How many milliseconds a second do the allocations take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 37.5,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "ms",
+        "accept": "37.5 ms: 250 ns a message × 150,000.",
+        "wrong": [
+          {
+            "id": "us",
+            "value": 37500,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "37.5 ms.",
+        "generic": "Not quite right. Work out the cost of one message, then multiply.",
+        "byKey": {
+          "us": "37,500 is microseconds. The question asks for milliseconds."
+        }
+      },
+      "explain": {
+        "text": "5 × 50 ns is 250 ns a message. At 150,000 messages that is 37,500,000 ns, or 37.5 ms, a second."
+      }
+    },
+    {
+      "id": "q15-reserve",
+      "difficulty": 2,
+      "tags": [
+        "preallocate"
+      ],
+      "pace": 45,
+      "prose": "Before the first message a program calls `v.reserve(1000)` on a `std::vector<int>`. Each message then pushes 500 values and clears the vector.",
+      "question": "Does the hot path allocate?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the memory was taken in `reserve`, and `clear` keeps it",
+            "correct": true
+          },
+          {
+            "id": "every",
+            "text": "Yes: every `push_back` allocates",
+            "why": "A push allocates only when the size passes the capacity."
+          },
+          {
+            "id": "clear",
+            "text": "Yes: `clear` frees the memory and the next push allocates again",
+            "why": "`clear` destroys the elements but keeps the capacity."
+          },
+          {
+            "id": "once",
+            "text": "Yes: once on the first message",
+            "why": "`reserve` already did that work before the first message."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "No allocation after `reserve`.",
+        "generic": "Not quite right. When does a vector ask for more memory?",
+        "byKey": {
+          "every": "A push only allocates when the capacity is used up.",
+          "clear": "`clear` keeps the capacity.",
+          "once": "The reserve call paid for that already."
+        }
+      },
+      "explain": {
+        "text": "`reserve(1000)` takes a block for 1,000 ints. Pushing 500 values stays inside it, and `clear` keeps the block for the next message."
+      }
+    },
+    {
+      "id": "q15-pool",
+      "difficulty": 3,
+      "tags": [
+        "pool-allocator"
+      ],
+      "pace": 60,
+      "prose": "A pool of 5 slots. You allocate five times, then release slot 3, then slot 0, then allocate once.",
+      "question": "Which slot does the last `allocate` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "Slot 0: it was released last, so it is the head.",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Slot 0.",
+        "generic": "Not quite right. The last released slot is the next one allocated.",
+        "byKey": {
+          "three": "Slot 3 was released first. Slot 0 went back after it, so 0 is the head."
+        }
+      },
+      "explain": {
+        "text": "Releasing 3 makes it the head. Releasing 0 then makes 0 the head, with 3 after it, so `allocate` returns 0."
+      }
+    },
+    {
+      "id": "q15-size",
+      "difficulty": 3,
+      "tags": [
+        "preallocate"
+      ],
+      "pace": 60,
+      "prose": "A pool must hold 800 live orders with a safety factor of 1.5. Each slot is 20 bytes.",
+      "question": "How many bytes is the pool?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24000,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "bytes",
+        "accept": "24,000 bytes: 1,200 slots × 20.",
+        "wrong": [
+          {
+            "id": "slots",
+            "value": 1200,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "noSafety",
+            "value": 16000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "24,000 bytes.",
+        "generic": "Not quite right. Count the slots first, then multiply by the slot size.",
+        "byKey": {
+          "slots": "1,200 is the number of slots. Multiply by 20 bytes.",
+          "noSafety": "16,000 leaves out the safety factor of 1.5."
+        }
+      },
+      "explain": {
+        "text": "800 × 1.5 is 1,200 slots. At 20 bytes each that is 24,000 bytes."
+      }
+    }
+  ]
+}

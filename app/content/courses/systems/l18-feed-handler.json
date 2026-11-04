@@ -1,0 +1,1318 @@
+{
+  "id": "l18-feed-handler",
+  "course": "systems",
+  "title": "Designing a feed handler",
+  "minutes": 14,
+  "objectives": [
+    "Design a market data handler end to end and defend each choice aloud."
+  ],
+  "skills": [
+    "sy-latency",
+    "sy-os"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Packet in, order out",
+      "tags": [
+        "feed-handler-design"
+      ],
+      "prose": "A feed handler turns packets into orders. Each message passes through the same stages, and each stage has a share of the time. Put the stages in order from packet in to order out. Leave out the steps that do not belong on this path.",
+      "question": "Order the stages.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Network card to a ring in user space"
+          },
+          {
+            "id": "s2",
+            "text": "Decode the 24-byte frame"
+          },
+          {
+            "id": "s3",
+            "text": "Check the sequence number"
+          },
+          {
+            "id": "s4",
+            "text": "Update the book"
+          },
+          {
+            "id": "s5",
+            "text": "Run the strategy"
+          },
+          {
+            "id": "s6",
+            "text": "Encode and send the order"
+          },
+          {
+            "id": "d1",
+            "text": "Write the frame to a log file",
+            "why": "A file write is a system call that can take microseconds. Log from another thread, off the hot path."
+          },
+          {
+            "id": "d2",
+            "text": "Allocate an `Event` with `new`",
+            "why": "An allocation on every message adds cost and a rare slow case. Use a pool or fixed arrays."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Data moves forward: from the wire to a decision."
+        },
+        {
+          "rung": "point",
+          "text": "The sequence check comes before the book, so a stale frame never changes it."
+        },
+        {
+          "rung": "step",
+          "text": "Ring, decode, sequence, book, strategy, send. The log and the `new` are left out."
+        }
+      ],
+      "feedback": {
+        "correct": "Ring, decode, sequence, book, strategy, send.",
+        "generic": "Not quite right. Read the first marked line.",
+        "byKey": {
+          "left-out": "Every one of the six kept lines is a stage.",
+          "s3": "Check the sequence before the book, or a stale frame would change it.",
+          "s4": "The book updates after the frame is decoded and checked."
+        }
+      },
+      "explain": {
+        "text": "The frame is decoded before anything reads its fields, and the sequence is checked before the book changes. The log write and the allocation are costs on the hot path, so they go. Each stage gets a share of a fixed time."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Where the time goes",
+      "tags": [
+        "feed-handler-design",
+        "latency-budget"
+      ],
+      "prose": "Our target is 3 µs from packet in to order out. Step along the pipeline and read each stage's share of the time, in nanoseconds. The sequence check costs almost nothing.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "nodes": [
+            {
+              "id": "nic",
+              "label": "ring",
+              "shape": "pill",
+              "x": 0.16,
+              "y": 0.22
+            },
+            {
+              "id": "dec",
+              "label": "decode",
+              "shape": "pill",
+              "x": 0.5,
+              "y": 0.22
+            },
+            {
+              "id": "seq",
+              "label": "sequence",
+              "shape": "pill",
+              "x": 0.84,
+              "y": 0.22
+            },
+            {
+              "id": "book",
+              "label": "book",
+              "shape": "pill",
+              "x": 0.84,
+              "y": 0.78
+            },
+            {
+              "id": "str",
+              "label": "strategy",
+              "shape": "pill",
+              "x": 0.5,
+              "y": 0.78
+            },
+            {
+              "id": "snd",
+              "label": "send",
+              "shape": "pill",
+              "x": 0.16,
+              "y": 0.78
+            }
+          ],
+          "edges": [
+            {
+              "from": "nic",
+              "to": "dec"
+            },
+            {
+              "from": "dec",
+              "to": "seq"
+            },
+            {
+              "from": "seq",
+              "to": "book"
+            },
+            {
+              "from": "book",
+              "to": "str"
+            },
+            {
+              "from": "str",
+              "to": "snd"
+            }
+          ],
+          "height": 230
+        },
+        "state": {
+          "current": "nic",
+          "values": {
+            "nic": "1,000 ns"
+          }
+        },
+        "controls": [
+          {
+            "bind": "frame",
+            "frames": [
+              {
+                "current": "nic",
+                "values": {
+                  "nic": "1,000 ns"
+                },
+                "caption": "Running total so far: 1,000 ns."
+              },
+              {
+                "current": "dec",
+                "values": {
+                  "nic": "1,000 ns",
+                  "dec": "200 ns"
+                },
+                "caption": "Running total so far: 1,200 ns."
+              },
+              {
+                "current": "seq",
+                "values": {
+                  "nic": "1,000 ns",
+                  "dec": "200 ns"
+                },
+                "caption": "Running total so far: 1,200 ns. The sequence check is a compare, about 0 ns here."
+              },
+              {
+                "current": "book",
+                "values": {
+                  "nic": "1,000 ns",
+                  "dec": "200 ns",
+                  "book": "300 ns"
+                },
+                "caption": "Running total so far: 1,500 ns."
+              },
+              {
+                "current": "str",
+                "values": {
+                  "nic": "1,000 ns",
+                  "dec": "200 ns",
+                  "book": "300 ns",
+                  "str": "500 ns"
+                },
+                "caption": "Running total so far: 2,000 ns."
+              },
+              {
+                "current": "snd",
+                "values": {
+                  "nic": "1,000 ns",
+                  "dec": "200 ns",
+                  "book": "300 ns",
+                  "str": "500 ns",
+                  "snd": "500 ns"
+                },
+                "caption": "All stages: 2,500 ns."
+              }
+            ],
+            "frameLabels": [
+              "card to ring",
+              "decode",
+              "sequence",
+              "book",
+              "strategy",
+              "send order"
+            ],
+            "label": "Stage"
+          }
+        ]
+      },
+      "question": "What percentage of the total does the card-to-ring stage take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "%",
+        "accept": "40%: 1,000 ns of the 2,500 ns total.",
+        "wrong": [
+          {
+            "id": "third",
+            "value": 33.3,
+            "tol": {
+              "abs": 0.1
+            }
+          },
+          {
+            "id": "frac",
+            "value": 0.4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add up the stages for the total first."
+        },
+        {
+          "rung": "point",
+          "text": "The stages are 1,000, 200, 300, 500 and 500 ns."
+        },
+        {
+          "rung": "step",
+          "text": "$1{,}000 / 2{,}500 = 0.4$, so 40%."
+        }
+      ],
+      "feedback": {
+        "correct": "40%.",
+        "generic": "Not quite right. Divide the card stage by the total of all stages.",
+        "byKey": {
+          "third": "Not a third. The total is 2,500 ns, not 3,000.",
+          "frac": "0.4 is the fraction. The unit asks for a percentage."
+        }
+      },
+      "explain": {
+        "text": "The five stages add up to 2,500 ns, and the first takes 1,000 of them: 40%. The network card to user buffer is the biggest share, which is why handlers bypass the kernel. The rest is our code, and every nanosecond there is ours to save."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A time budget",
+      "tags": [
+        "latency-budget"
+      ],
+      "prose": "The stages cost 1,000, 200, 300, 500 and 500 ns, against a 3 µs target. Allocations cost 50 ns each. A stall, such as a page fault or a context switch, can take 5 µs.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "card to ring    1,000 ns",
+            "decode            200 ns",
+            "book              300 ns",
+            "strategy          500 ns",
+            "encode and send  500 ns",
+            "target          3,000 ns"
+          ],
+          "wrap": false,
+          "title": "The budget"
+        }
+      },
+      "question": "Fill in the totals, in ns.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Case",
+          "Total or slack (ns)"
+        ],
+        "rows": [
+          [
+            "The five stages",
+            {
+              "edit": true,
+              "answer": 2500,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Slack against 3,000 ns",
+            {
+              "edit": true,
+              "answer": 500,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "With four allocations a message",
+            {
+              "edit": true,
+              "answer": 2700,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "With one 5,000 ns stall",
+            {
+              "edit": true,
+              "answer": 7500,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the stages first."
+        },
+        {
+          "rung": "point",
+          "text": "Then add 4 × 50 ns, and then the stall."
+        },
+        {
+          "rung": "step",
+          "text": "2,500; 500; 2,700; and 2,500 + 5,000 = 7,500."
+        }
+      ],
+      "feedback": {
+        "correct": "2,500, 500, 2,700 and 7,500.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "1,000 + 200 + 300 + 500 + 500.",
+          "r1c1": "3,000 minus 2,500.",
+          "r2c1": "2,500 + 4 × 50.",
+          "r3c1": "2,500 + 5,000."
+        }
+      },
+      "explain": {
+        "text": "The stages leave 500 ns of slack, and four allocations eat 200 of it. One 5 µs stall more than doubles the total, to 7,500 ns. The budget must hold for the worst message, not the average."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Arrays for the book",
+      "tags": [
+        "book-structure"
+      ],
+      "prose": "One instrument trades from £99.00 to £101.00 in steps of one penny, prices 9,900 to 10,100 in pence. Keep a quantity for each price on each side, 4 bytes each, indexed by price. Keep orders in an array indexed by id, 1,024 ids of 16 bytes each.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "prices 9,900 .. 10,100 pence",
+            "levels: bid[201], ask[201], 4 bytes each",
+            "orders: 1,024 slots of 16 bytes",
+            "no allocation after construction"
+          ],
+          "wrap": true,
+          "title": "The structures",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the sizes.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Price levels",
+            {
+              "edit": true,
+              "answer": 201,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Bytes for the levels (both sides)",
+            {
+              "edit": true,
+              "answer": 1608,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Bytes for the order table",
+            {
+              "edit": true,
+              "answer": 16384,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Whole handler: plus 40 bytes of counters and a frame buffer",
+            {
+              "edit": true,
+              "answer": 18032,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the levels from 9,900 up to 10,100, both ends included."
+        },
+        {
+          "rung": "point",
+          "text": "201 levels × 2 sides × 4 bytes, and 1,024 × 16."
+        },
+        {
+          "rung": "step",
+          "text": "201; 1,608; 16,384; and $1{,}608 + 16{,}384 + 40 = 18{,}032$."
+        }
+      ],
+      "feedback": {
+        "correct": "201 levels, 1,608 and 16,384 bytes, 18,032 in all.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$10{,}100 - 9{,}900 + 1$, counting both ends.",
+          "r1c1": "$201 \\times 2 \\times 4$.",
+          "r2c1": "$1{,}024 \\times 16$.",
+          "r3c1": "1,608 + 16,384 + 40."
+        }
+      },
+      "explain": {
+        "text": "The levels take 1,608 bytes and the order table 16,384, so the handler is 18,032 bytes. That fits a 32 KiB L1 with room to spare. Scanning 201 levels is cheap here, and a cached best price removes the scan."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Two feeds, one stream",
+      "tags": [
+        "a-b-arbitration"
+      ],
+      "prose": "The same sequence numbers arrive on feed A and feed B. The handler expects number 1 first. It applies a frame at or above the number it expects, and counts any numbers it skips as a gap. A frame below it is a duplicate and is dropped.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "1A",
+            "1B",
+            "2A",
+            "2B",
+            "4A",
+            "3B",
+            "4B",
+            "5A",
+            "5B"
+          ],
+          "showIndex": true,
+          "wrap": 5
+        },
+        "state": {
+          "caption": "Arrival order. The letter is the feed."
+        }
+      },
+      "question": "Tap the frames the handler applies.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c0",
+          "c2",
+          "c4",
+          "c7"
+        ],
+        "countWord": "frames"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Track the next number expected after each frame."
+        },
+        {
+          "rung": "point",
+          "text": "Start expecting 1. After applying 1, expect 2.",
+          "highlight": [
+            "c0",
+            "c2",
+            "c4",
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Applied: 1A, 2A, 4A (a gap of one: 3 is skipped) and 5A."
+        }
+      ],
+      "feedback": {
+        "correct": "1A, 2A, 4A and 5A, with a gap of 1.",
+        "generic": "Not quite right. Which numbers were already seen?",
+        "byKey": {
+          "c1": "1B arrives after 1A was applied, so it is a duplicate.",
+          "c3": "2B is a duplicate of 2A.",
+          "c5": "3B arrives after 4A, so 3 is below the expected 5.",
+          "c6": "4B repeats 4A.",
+          "c8": "5B repeats 5A."
+        }
+      },
+      "explain": {
+        "text": "The first copy of each number wins, so 1B and 2B are dropped. 4A arrives while 3 is expected, so the gap is 1, and 3B is then stale. A better handler would hold 4A briefly and wait for 3.",
+        "canvas": {
+          "highlight": [
+            "c0",
+            "c2",
+            "c4",
+            "c7"
+          ],
+          "caption": "Applied: 1A, 2A, 4A, 5A. Gap count: 1."
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A map for the orders",
+      "tags": [
+        "book-structure"
+      ],
+      "prose": "A colleague stores live orders in a `std::unordered_map` keyed by order id. It is fast on average, and the code is short.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "std::unordered_map<unsigned, Order> orders;",
+            "orders[id] = o;   // may allocate, may rehash",
+            "Order orders[1024];  // by id: neither"
+          ],
+          "wrap": true,
+          "title": "Two ways to hold orders",
+          "numbers": true
+        }
+      },
+      "question": "Why not use it on the hot path?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nodes",
+            "text": "It allocates nodes and rehashes at unpredictable times",
+            "correct": true
+          },
+          {
+            "id": "avg",
+            "text": "It is slow on average",
+            "why": "Its average is fine. Its worst case is the problem."
+          },
+          {
+            "id": "order",
+            "text": "It keeps the orders in sorted order, which wastes time",
+            "why": "An `unordered_map` does not sort. The trouble is allocation."
+          },
+          {
+            "id": "thread",
+            "text": "It cannot be used from one thread",
+            "why": "One thread can use it. The cost is in its allocations and rehashes."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What happens to a hash map as it fills?"
+        },
+        {
+          "rung": "point",
+          "text": "It adds nodes, and it rebuilds its table when it grows."
+        },
+        {
+          "rung": "step",
+          "text": "Both happen at a moment the data picks, so a message can take far longer."
+        }
+      ],
+      "feedback": {
+        "correct": "Nodes and rehashing: a rare, long pause.",
+        "generic": "Not quite right. What is rare and slow about a hash map?",
+        "byKey": {
+          "avg": "The average is fine. A rehash on one message is the rare slow case.",
+          "order": "Nothing is sorted. The cost is allocation and rehashing.",
+          "thread": "A single thread may use one. The pauses are the problem."
+        }
+      },
+      "explain": {
+        "text": "Every insert may allocate a node, and an insert can trigger a rehash of the whole table. Both land on one unlucky message. An array indexed by order id, or a preallocated table, has neither."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Frames in pieces",
+      "tags": [
+        "partial-frame"
+      ],
+      "prose": "A stream read can end in the middle of a frame, and one read can hold several. Frames are 24 bytes. Reads of 50, 40 and 80 bytes arrive, and the handler keeps any leftover bytes until the next read. A gap is judged only when a whole frame is decoded.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "read 1: 50 bytes",
+            "read 2: 40 bytes",
+            "read 3: 80 bytes",
+            "frame: 24 bytes, leftovers wait"
+          ],
+          "wrap": true,
+          "title": "Three reads",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the frames each read completes.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Frames completed by the 50-byte read",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Bytes waiting after it",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Frames completed by the 40-byte read",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Frames completed by the 80-byte read",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the bytes you hold by 24, and keep the remainder."
+        },
+        {
+          "rung": "point",
+          "text": "50 = 2 × 24 + 2. The 2 left over join the next read."
+        },
+        {
+          "rung": "step",
+          "text": "2 + 40 = 42 = 24 + 18, and 18 + 80 = 98 = 4 × 24 + 2."
+        }
+      ],
+      "feedback": {
+        "correct": "2, 2, 1 and 4.",
+        "generic": "Not quite right. Carry the leftover bytes into the next read.",
+        "byKey": {
+          "r0c1": "$50 = 2 \\times 24 + 2$.",
+          "r1c1": "The remainder after two whole frames.",
+          "r2c1": "The held 2 plus 40 is 42: one frame and 18 left.",
+          "r3c1": "The held 18 plus 80 is 98: four frames and 2 left."
+        }
+      },
+      "explain": {
+        "text": "The first read holds two whole frames and two stray bytes. Those join the next 40, which completes one frame and leaves 18. The last read adds four frames: seven in all, with 2 bytes waiting."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "A pipeline with a budget",
+      "prose": "A handler is a pipeline with a time budget. Give each stage a share and keep it free of allocation. Handle loss and partial reads on purpose.\n\n```cpp\nfor each byte: collect a 24-byte frame\nseq < expected: drop    seq > expected: count the gap\napply to arrays by price and by id\n```",
+      "question": "What does a sequence number above the expected one add?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "gap",
+            "text": "It counts the gap and applies the frame",
+            "correct": true
+          },
+          {
+            "id": "drop",
+            "text": "Nothing: the frame is dropped",
+            "why": "That is for a number below the expected one. A larger number is new data."
+          },
+          {
+            "id": "stop",
+            "text": "It stops the feed until the missing frame arrives",
+            "why": "Waiting stalls every later message. This policy counts and moves on."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It counts the gap and applies the frame.",
+        "generic": "Not quite right. Is a larger number old data or new?",
+        "byKey": {
+          "drop": "A larger number is newer than expected, so it is not stale.",
+          "stop": "A stall would break the budget."
+        }
+      },
+      "explain": {
+        "text": "A larger number is new data, so it is applied. The numbers skipped are counted for a later repair. A smaller number is a duplicate or a late arrival and is dropped."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Build the handler",
+      "tags": [
+        "feed-handler-design",
+        "alloc-counter"
+      ],
+      "prose": "The capstone. `frame()` and `cat()` build test frames for you. The starter keeps the book in `std::map`, applies only adds and ignores sequence numbers. The finished handler uses arrays for prices 9,900 to 10,100 and for order ids below 1,024.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "A add   X cancel   T trade",
+            "seq < expected: ignore   seq > expected: count the gap",
+            "partial frames wait for their bytes",
+            "after construction: no heap"
+          ],
+          "wrap": true,
+          "title": "The handler contract",
+          "numbers": true
+        }
+      },
+      "question": "Rewrite `Handler` so `feed` allocates nothing and handles every frame type.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "allocCheck": true,
+        "prelude": "#include <vector>\n\n// Test helpers: frame() builds one 24-byte frame, cat() joins frames.\nstd::vector<int> frame(char type, char side, unsigned seq, unsigned id, unsigned qty, int price) {\n    std::vector<int> b(24, 0);\n    auto put = [&](int at, unsigned v, int n) { for (int k = 0; k < n; ++k) b[at + k] = (v >> (8 * (n - 1 - k))) & 0xFF; };\n    b[0] = type; b[1] = side; put(2, 7, 2); put(4, seq, 4); put(8, id, 4); put(12, qty, 4); put(16, static_cast<unsigned>(price), 4); put(20, 36000000u + seq, 4);\n    return b;\n}\nstd::vector<int> cat(std::vector<std::vector<int>> parts) {\n    std::vector<int> all;\n    for (auto& p : parts) all.insert(all.end(), p.begin(), p.end());\n    return all;\n}\n",
+        "starter": "#include <map>\n#include <vector>\n\n// Frames are 24 bytes (the l14 layout, big-endian). One instrument, prices 9900..10100 pence, order ids below 1024.\n// 'A' adds an order (side B or S, price, qty), 'X' cancels the rest of order id, 'T' trades qty against order id.\n// A frame with seq < the next expected is stale: ignore it. A larger seq adds (seq - expected) to gaps().\n// Partial frames wait for their remaining bytes. After construction, feed() may not use the heap.\nclass Handler {\npublic:\n    void feed(const std::vector<int>& bytes) {\n        for (std::size_t at = 0; at + 24 <= bytes.size(); at += 24) {\n            int type = bytes[at];\n            unsigned id = (bytes[at + 8] << 24) | (bytes[at + 9] << 16) | (bytes[at + 10] << 8) | bytes[at + 11];\n            unsigned qty = (bytes[at + 12] << 24) | (bytes[at + 13] << 16) | (bytes[at + 14] << 8) | bytes[at + 15];\n            int price = (bytes[at + 16] << 24) | (bytes[at + 17] << 16) | (bytes[at + 18] << 8) | bytes[at + 19];\n            bool bid = bytes[at + 1] == 'B';\n            if (type == 'A') { (bid ? bids_ : asks_)[price] += qty; ++applied_; }\n        }\n    }\n    int best_bid() const { return bids_.empty() ? 0 : bids_.rbegin()->first; }\n    int best_ask() const { return asks_.empty() ? 0 : asks_.begin()->first; }\n    int bid_qty(int price) const { auto it = bids_.find(price); return it == bids_.end() ? 0 : static_cast<int>(it->second); }\n    int ask_qty(int price) const { auto it = asks_.find(price); return it == asks_.end() ? 0 : static_cast<int>(it->second); }\n    int gaps() const { return 0; }\n    int applied() const { return applied_; }\nprivate:\n    std::map<int, unsigned> bids_, asks_;\n    int applied_ = 0;\n};\n",
+        "solution": "#include <array>\n#include <cstdint>\n#include <vector>\n\nclass Handler {\npublic:\n    void feed(const std::vector<int>& bytes) {\n        for (int b : bytes) {\n            pending_[pending_len_++] = static_cast<std::uint8_t>(b);\n            if (pending_len_ == kFrame) { frame(); pending_len_ = 0; }\n        }\n    }\n    int best_bid() const {\n        for (int i = kLevels - 1; i >= 0; --i) if (qty_[0][i] > 0) return kMinPrice + i;\n        return 0;\n    }\n    int best_ask() const {\n        for (int i = 0; i < kLevels; ++i) if (qty_[1][i] > 0) return kMinPrice + i;\n        return 0;\n    }\n    int bid_qty(int price) const { return level(0, price); }\n    int ask_qty(int price) const { return level(1, price); }\n    int gaps() const { return gaps_; }\n    int applied() const { return applied_; }\nprivate:\n    static constexpr int kFrame = 24, kMinPrice = 9900, kLevels = 201, kOrders = 1024;\n    struct Order { int side = 0; int price = 0; unsigned qty = 0; bool live = false; };\n\n    unsigned u32(int at) const {\n        return (unsigned(pending_[at]) << 24) | (unsigned(pending_[at + 1]) << 16) | (unsigned(pending_[at + 2]) << 8) | unsigned(pending_[at + 3]);\n    }\n    int level(int side, int price) const {\n        int i = price - kMinPrice;\n        return (i >= 0 && i < kLevels) ? static_cast<int>(qty_[side][i]) : 0;\n    }\n    void frame() {\n        unsigned seq = u32(4);\n        if (seq < expected_) return;                 // stale or duplicate\n        if (seq > expected_) gaps_ += static_cast<int>(seq - expected_);\n        expected_ = seq + 1;\n        ++applied_;\n        int type = pending_[0];\n        int side = pending_[1] == 'B' ? 0 : (pending_[1] == 'S' ? 1 : -1);\n        unsigned id = u32(8), qty = u32(12);\n        int price = static_cast<int>(u32(16));\n        if (id >= kOrders) return;\n        Order& o = orders_[id];\n        if (type == 'A') {\n            int i = price - kMinPrice;\n            if (side < 0 || i < 0 || i >= kLevels || o.live) return;\n            o = Order{side, price, qty, true};\n            qty_[side][i] += qty;\n        } else if (type == 'X') {\n            if (!o.live) return;\n            qty_[o.side][o.price - kMinPrice] -= o.qty;\n            o.live = false;\n        } else if (type == 'T') {\n            if (!o.live) return;\n            unsigned done = qty < o.qty ? qty : o.qty;\n            o.qty -= done;\n            qty_[o.side][o.price - kMinPrice] -= done;\n            if (o.qty == 0) o.live = false;\n        }\n    }\n\n    std::array<std::array<unsigned, kLevels>, 2> qty_{};\n    std::array<Order, kOrders> orders_{};\n    std::array<std::uint8_t, kFrame> pending_{};\n    int pending_len_ = 0;\n    unsigned expected_ = 1;\n    int gaps_ = 0, applied_ = 0;\n};\n",
+        "examples": [
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('A', 'S', 2, 2, 50, 10010), frame('A', 'B', 3, 3, 40, 10005)}); h.feed(s);",
+            "call": "h.best_bid()",
+            "expect": 10005,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 10, 10000), frame('A', 'B', 2, 2, 10, 10001), frame('A', 'B', 5, 3, 10, 10002)}); h.feed(s);",
+            "call": "h.gaps()",
+            "expect": 2,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('A', 'S', 2, 2, 50, 10010), frame('A', 'B', 3, 3, 40, 10005)}); h.feed(s);",
+            "call": "h.best_bid()",
+            "expect": 10005,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('A', 'S', 2, 2, 50, 10010), frame('A', 'B', 3, 3, 40, 10005)}); h.feed(s);",
+            "call": "h.best_ask()",
+            "expect": 10010,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('A', 'S', 2, 2, 50, 10010), frame('A', 'B', 3, 3, 40, 10005), frame('X', 'B', 4, 3, 0, 0)}); h.feed(s);",
+            "call": "h.best_bid()",
+            "expect": 10000,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('A', 'S', 2, 2, 50, 10010), frame('A', 'B', 3, 3, 40, 10005), frame('T', 'B', 4, 1, 30, 10000)}); h.feed(s);",
+            "call": "h.bid_qty(10000)",
+            "expect": 70,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('T', 'B', 2, 1, 100, 10000)}); h.feed(s);",
+            "call": "h.best_bid()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 10, 10000), frame('A', 'B', 2, 2, 10, 10001), frame('A', 'B', 5, 3, 10, 10002)}); h.feed(s);",
+            "call": "h.gaps()",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 10, 10000), frame('A', 'B', 2, 2, 10, 10001), frame('A', 'B', 2, 3, 99, 10050)}); h.feed(s);",
+            "call": "h.applied()",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 10, 10000), frame('A', 'B', 2, 2, 10, 10001), frame('A', 'B', 4, 3, 10, 10002), frame('A', 'B', 3, 4, 500, 10050)}); h.feed(s);",
+            "call": "h.best_bid()",
+            "expect": 10002,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 3, 1, 10, 10000)}); h.feed(s);",
+            "call": "h.gaps()",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('A', 'S', 2, 2, 50, 10010), frame('A', 'B', 3, 3, 40, 10005)}); h.feed(std::vector<int>(s.begin(), s.begin() + 30)); h.feed(std::vector<int>(s.begin() + 30, s.end()));",
+            "call": "h.best_bid()",
+            "expect": 10005,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('A', 'S', 2, 2, 50, 10010), frame('A', 'B', 3, 3, 40, 10005), frame('T', 'S', 4, 2, 50, 10010)}); for (int b : s) h.feed(std::vector<int>{b});",
+            "call": "h.best_ask()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('X', 'B', 1, 9, 0, 0), frame('A', 'B', 2, 4000, 10, 10000), frame('A', 'B', 3, 5, 10, 12000), frame('A', 'B', 4, 6, 10, 9999)}); h.feed(s);",
+            "call": "h.best_bid()",
+            "expect": 9999,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('A', 'S', 2, 2, 50, 10010), frame('A', 'B', 3, 3, 40, 10005)}); reset_alloc_count(); h.feed(s);",
+            "call": "alloc_count()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Handler h; auto s = cat({frame('A', 'B', 1, 1, 100, 10000), frame('A', 'B', 2, 1, 70, 10003)}); h.feed(s);",
+            "call": "h.bid_qty(10003)",
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "how": "Fourteen hidden tests cover best bid and ask, a cancel, trades, gaps, duplicates and a late frame. Others split frames across reads, send one byte at a time and use out-of-range ids and prices. The last reads `alloc_count()` across `feed`, which must be 0."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Collect bytes until you hold 24, then decode that frame."
+        },
+        {
+          "rung": "point",
+          "text": "Check the sequence first: below `expected_` return, above it add the difference to `gaps_`."
+        },
+        {
+          "rung": "step",
+          "text": "Keep `qty_[side][price - 9900]` and `orders_[id]`. A cancel or trade subtracts from the order's level. Ignore ids of 1,024 or more."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Arrays, a sequence check and no heap.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The map allocates a node per price level, so the starter fails the count. Arrays indexed by price and id replace it, and a 24-byte buffer carries a partial frame between reads. The sequence check runs on each whole frame."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: budget and bytes",
+      "tags": [
+        "latency-budget"
+      ],
+      "pace": 480,
+      "prose": "Drill: about three minutes each. Say the reasoning aloud first. Frames are 24 bytes.",
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "Budget of 800, 150, 250, 400 and 400 ns: total (ns)",
+            {
+              "edit": true,
+              "answer": 2000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "The same with three 50 ns allocations (ns)",
+            {
+              "edit": true,
+              "answer": 2150,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "MB a second at 150,000 messages of 24 bytes",
+            {
+              "edit": true,
+              "answer": 3.6,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ],
+          [
+            "Whole frames in a 900-byte read",
+            {
+              "edit": true,
+              "answer": 37,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Bytes left over after them",
+            {
+              "edit": true,
+              "answer": 12,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the stages, then the allocations."
+        },
+        {
+          "rung": "point",
+          "text": "$150{,}000 \\times 24$ bytes, and $900 / 24 = 37.5$."
+        },
+        {
+          "rung": "step",
+          "text": "2,000; 2,150; 3,600,000 bytes is 3.6 MB; 37 frames use 888 bytes, leaving 12."
+        }
+      ],
+      "feedback": {
+        "correct": "2,000, 2,150, 3.6, 37 and 12.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "800 + 150 + 250 + 400 + 400.",
+          "r1c1": "2,000 + 3 × 50.",
+          "r2c1": "150,000 × 24 = 3,600,000 bytes.",
+          "r3c1": "$900 / 24 = 37.5$, so 37 whole frames.",
+          "r4c1": "$900 - 37 \\times 24$."
+        }
+      },
+      "explain": {
+        "text": "The stages add up to 2,000 ns, and three allocations take 150 ns more. 150,000 messages of 24 bytes is 3.6 MB a second. A 900-byte read holds 37 whole frames, 888 bytes, with 12 waiting."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: fifty instruments",
+      "tags": [
+        "book-structure",
+        "feed-handler-design"
+      ],
+      "prose": "The interviewer asks: now the handler covers 50 instruments. Each has its own copy of the 18,032-byte handler. A core's L1 data cache holds 32 KiB, or 32,768 bytes.",
+      "question": "Fill in the size.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Bytes for 50 instruments",
+            {
+              "edit": true,
+              "answer": 901600,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "KiB",
+            {
+              "edit": true,
+              "answer": 880.5,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ],
+          [
+            "32 KiB caches needed to hold it, rounded up",
+            {
+              "edit": true,
+              "answer": 28,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply 18,032 by 50."
+        },
+        {
+          "rung": "point",
+          "text": "Divide by 1,024 for KiB, and by 32,768 for caches."
+        },
+        {
+          "rung": "step",
+          "text": "901,600 bytes; 880.5 KiB; and 27.5 rounds up to 28."
+        }
+      ],
+      "feedback": {
+        "correct": "901,600 bytes, 880.5 KiB, 28 caches.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$50 \\times 18{,}032$.",
+          "r1c1": "$901{,}600 / 1{,}024$.",
+          "r2c1": "$901{,}600 / 32{,}768 = 27.5$, rounded up."
+        }
+      },
+      "explain": {
+        "text": "All 50 books take 901,600 bytes, or 880.5 KiB. That no longer fits L1, but fits a large L2. Each message touches one instrument's slice, so the hot part stays small."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A handler is a pipeline with a time budget: 2,500 ns of stages against a 3 µs target leaves 500 ns of slack.",
+      "Use arrays by price and by order id, with no allocation: 18,032 bytes fit L1, and a hash map does not belong.",
+      "A number above the expected one counts the gap. One below it is dropped, and a partial frame waits."
+    ],
+    "formula": {
+      "name": "The budget",
+      "tex": "\\sum_{\\text{stages}} t_i \\le \\text{target}",
+      "note": "Plan for the worst message: one 5 µs stall breaks a 3 µs target."
+    },
+    "trap": "Judging a handler by its average message."
+  },
+  "quiz": [
+    {
+      "id": "q18-budget",
+      "difficulty": 2,
+      "tags": [
+        "latency-budget"
+      ],
+      "pace": 45,
+      "prose": "A handler has stages of 600, 100, 200, 300 and 300 ns.",
+      "question": "What is the total, in ns?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1500,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ns",
+        "accept": "1,500 ns: 600 + 100 + 200 + 300 + 300.",
+        "wrong": [
+          {
+            "id": "nosum",
+            "value": 600,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1,500 ns.",
+        "generic": "Not quite right. Add all five stages.",
+        "byKey": {
+          "nosum": "600 is only the first stage."
+        }
+      },
+      "explain": {
+        "text": "$600 + 100 + 200 + 300 + 300 = 1{,}500$ ns, with 500 ns of slack against a 2 µs target."
+      }
+    },
+    {
+      "id": "q18-gap",
+      "difficulty": 2,
+      "tags": [
+        "a-b-arbitration"
+      ],
+      "pace": 45,
+      "prose": "The handler expects sequence number 10. A frame with number 14 arrives.",
+      "question": "How many frames does it add to the gap count?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4: numbers 10, 11, 12 and 13 were skipped.",
+        "wrong": [
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "4.",
+        "generic": "Not quite right. Count the numbers skipped.",
+        "byKey": {
+          "five": "14 itself is applied. Only 10 to 13 are missing."
+        }
+      },
+      "explain": {
+        "text": "10, 11, 12 and 13 are missing, which is $14 - 10 = 4$ frames. The handler applies 14 and expects 15 next."
+      }
+    },
+    {
+      "id": "q18-orders",
+      "difficulty": 3,
+      "tags": [
+        "book-structure"
+      ],
+      "pace": 60,
+      "prose": "Orders sit in an array indexed by id. There are 2,048 ids, and an order slot is 16 bytes.",
+      "question": "How many bytes is the order table?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 32768,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "bytes",
+        "accept": "32,768 bytes: 2,048 × 16, exactly 32 KiB.",
+        "wrong": [
+          {
+            "id": "ids",
+            "value": 2048,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "32,768 bytes.",
+        "generic": "Not quite right. Multiply the ids by the slot size.",
+        "byKey": {
+          "ids": "2,048 is the number of slots. Multiply by 16 bytes."
+        }
+      },
+      "explain": {
+        "text": "$2{,}048 \\times 16 = 32{,}768$ bytes, exactly 32 KiB, the whole of a typical L1."
+      }
+    },
+    {
+      "id": "q18-stale",
+      "difficulty": 2,
+      "tags": [
+        "a-b-arbitration"
+      ],
+      "pace": 45,
+      "prose": "The handler expects number 9. A frame numbered 7 arrives from the second feed.",
+      "question": "What does it do with it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "drop",
+            "text": "It drops the frame as a duplicate or late arrival",
+            "correct": true
+          },
+          {
+            "id": "apply",
+            "text": "It applies the frame, then counts a gap of 2",
+            "why": "A gap counts numbers above the expected one. 7 is below 9."
+          },
+          {
+            "id": "wait",
+            "text": "It holds the frame until 8 arrives",
+            "why": "Nothing is held: 7 is below the expected number, so it is already past."
+          },
+          {
+            "id": "reset",
+            "text": "It resets the expected number to 7",
+            "why": "Moving back would apply old data twice."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It drops it.",
+        "generic": "Not quite right. Is 7 above or below the expected 9?",
+        "byKey": {
+          "apply": "A gap counts skipped numbers above the expected one.",
+          "wait": "The frame is already in the past.",
+          "reset": "That would replay old updates."
+        }
+      },
+      "explain": {
+        "text": "7 is below the expected 9, so the handler has already seen that number or passed it. It drops the frame and leaves the book as it was."
+      }
+    }
+  ]
+}
