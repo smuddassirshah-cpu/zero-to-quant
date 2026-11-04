@@ -91,7 +91,7 @@ No item may reuse the numbers, answers, call texts or function names of anything
 
 ## Result (written after the items)
 
-File: `app/content/exams/topic-3.5.json` (id `topic-3.5`, 90 minutes, pass 0.7, 30 items, pace sum 5,310 s = 88.5 minutes).
+File: `app/content/exams/topic-3.5.json` (id `topic-3.5`, 90 minutes, pass 0.7, 30 items, pace sum 4,920 s = 82 minutes after the second read, which trimmed the three code paces to 360, 360 and 450 s).
 Scripts in `docs/briefs/exam-3.5-scripts/`: `build.py` (with `build_a.py`, `build_b.py`, `build_c.py`, `helpers.py`) writes the file; `check.py` and `check2.py` recompute every number; `refs.py` holds independent references for the code items; `codecheck.mjs` runs the Python widgets in Pyodide; `fresh.py` and `tagscan.py` are the freshness greps.
 
 Ramp 6, 15, 6, 3 at difficulty 2, 3, 4, 5, in that order in the file, courses interleaved. Kinds: 13 numeric, 6 choice, 3 multi, 2 order, 1 table, 1 tap-regions, 1 parts, 3 code (two Python, one C++). All 13 skills are in the `skills` map and tested: sy-memory 5; rq-linalg, rq-ml, ci-timed, sy-latency 4; rq-stats, ci-patterns, ci-strings, ci-design 3; rq-case, rq-data, sy-concurrency, sy-os 2. Every level has an item on a skill first met in it, or on one of its own lessons.
@@ -111,7 +111,7 @@ Read from the written files, reports and the freshness greps:
 9. **Item 10**: the drill `rq-group-slopes-py` returns a Series of slopes. The exam function `costliest_desk(df, min_rows)` returns the best group's name, with a guard for small groups and one distinct size, and handles all-negative slopes.
 10. **Item 11**: skills are `rq-data`, `rq-linalg` (not `rq-case`, tested by items 8 and 9). The third part is the centred-sums stability choice. Numbers differ from l18 and the drill.
 11. **Item 19**: budget 70 minutes (l15 uses 65) and new marks. **Item 22**: a seek against a data-centre round trip (20), not in the l1 table. **Item 25**: a 192 MiB buffer (l3 uses 512 MiB). **Item 6**: matrix 7, 2, 2, 4 (a first draft's 2/3 wrong key matched an l9 key). **Item 12**: halts and a sweep, since l2 covers prefix search on symbols.
-12. Skill counts: `rq-case` is 2, not 3, because of revision 10. Nothing else moved.
+12. Skill counts: `rq-case` was 2, not 3, because of revision 10. The second read added `rq-case` to item 11 (its third part is a judgement about a live system), so it is 3 again.
 
 ### Numbers computed twice
 
@@ -164,3 +164,11 @@ No change proposed. The exam carries no `requires`.
 ## Backlog
 
 Three bullets under "Raised later (exam topic-3.5):" in `docs/BACKLOG-INBOX.md`.
+
+## Second-read changes (4 Nov 2026)
+
+`docs/reviews/review-exams-3.5.md` and `docs/reviews/answers-2026-11-04-exam-3.5.md` are the sources; each fix is listed under `## Fix pass` there. `docs/briefs/exam-3.5-scripts/second_read_patch.py` holds them, and `build.py` calls it after writing the file, so the build reproduces the shipped JSON.
+- `e-eight-looks` is now `e-six-looks` (six signals, best $p$ 0.012, bar $0.05/6$, corrected $p$ 0.072). `e-two-singles-steps` is now `e-next-higher-steps` (a stack pass for the next higher price, family `price-stack-pass`), because `coding-int` homework 1 already asks the two-singles XOR method.
+- `e-window-inputs` uses `peak_window_total` and `e-newest-first` uses `latest_values`, since `best_window` and `newest_first` are functions in the `garch` and `ds` courses. `e-newest-first` has 7 tests, one over the cap above, to hold both a `k` above the capacity and a wrapped ring. `e-costliest-desk` has 8 tests, with one frame on which end-point slopes pick the wrong desk.
+- `e-weekly-hit-case` merges features and the split into one step and accepts the baseline and the fit in either order (`same`). `e-sixty-five-minutes` is now `e-seventy-minutes`.
+- The tolerances on `e-first-component` and `e-persistence-gain` are 0.5 points.

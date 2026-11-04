@@ -208,8 +208,8 @@ s4["parts"][0]["feedback"]["byKey"] = {
 
 # ---------------------------------------------------------------------------------------------- paper 2
 m1 = numeric_item("m1-ridge-shrinkage", 3, ["rq-ml"], "ridge-shrinkage", 210, "A ridge slope",
-    "One centred predictor has $S_{xx} = 50$ and $S_{xy} = 100$. Ridge minimises the squared error plus $\\lambda \\beta^2$. What is the ridge slope with $\\lambda = 25$?",
-    num(1.3333, 0.001, [("least-squares", 2.0, 0.001), ("halved", 1.0, 0.001), ("one-plus", 0.0769, 0.0005)], "1.3333 (within 0.001)", "a number"),
+    "One centred predictor has $S_{xx} = 50$ and $S_{xy} = 100$. Ridge minimises the squared error plus $\\lambda \\beta^2$. What is the ridge slope with $\\lambda = 25$? Give two decimals.",
+    num(1.3333, 0.005, [("least-squares", 2.0, 0.001), ("halved", 1.0, 0.001), ("one-plus", 0.0769, 0.0005)], "1.33 (within 0.005 of 1.3333)", "two decimals"),
     fb("The ridge slope is $S_{xy}/(S_{xx} + \\lambda)$.", "Set the derivative of the penalised sum of squares to zero.",
        {"least-squares": "You gave the least-squares slope. The penalty pulls it towards zero.",
         "halved": "You halved the slope. The shrinkage depends on $\\lambda$ against $S_{xx}$, not a fixed half.",
@@ -225,8 +225,8 @@ m2 = numeric_item("m2-lasso-threshold", 3, ["rq-ml"], "lasso-threshold", 210, "L
     "With orthonormal columns each coefficient is soft-thresholded: it moves 1 towards zero and stops at zero. That gives 2.0, 0, $-0.5$ and 0, so the sum of absolute values is 2.5. Minimising each one-variable objective on a grid gives the same.")
 
 m4 = numeric_item("m4-pca-share", 3, ["rq-ml", "rq-linalg"], "pca-share", 270, "Variance on the first component",
-    "A covariance matrix has rows $(4, 2)$ and $(2, 3)$. What share of the total variance lies on the first principal component?",
-    num(0.7945, 0.0005, [("first-variable", 0.5714, 0.001), ("equal", 0.5, 0.001)], "0.7945 (within 0.0005)", "a decimal"),
+    "A covariance matrix has rows $(4, 2)$ and $(2, 3)$. What share of the total variance lies on the first principal component? Give two decimals.",
+    num(0.7945, 0.005, [("first-variable", 0.5714, 0.001), ("equal", 0.5, 0.001)], "0.79 (within 0.005 of 0.7945)", "two decimals"),
     fb("The share is the largest eigenvalue over the trace.", "Find the eigenvalues from the trace and the determinant.",
        {"first-variable": "You gave the first variable's share, $4/7$. Principal components mix the variables.",
         "equal": "You assumed an equal split. The correlation puts most of the variance on one direction."}),
@@ -241,7 +241,7 @@ m3 = {"id": "m3-leakage", "difficulty": 4, "skills": ["rq-ml", "rq-case"], "tags
     "feedback": fb("The scaler was fitted on rows it should not have seen.", "Ask which rows each step of the pipeline was allowed to see."),
     "explain": {"text": "The mean and standard deviation used the test rows, so every training row carries a trace of the future. Fit the scaler on the training rows only, then apply it to the test rows. The time split was right and the scaling step was not."}}
 
-m5 = parts_item("m5-bias-variance", 4, ["rq-ml"], "bias-variance", 420, "Two models",
+m5 = parts_item("m5-bias-variance", 4, ["rq-ml"], "bias-variance", 360, "Two models",
     "Expected squared error is the bias squared plus the variance plus the noise variance. The noise variance is 1.0 for both models.", [
     part("Model A has bias 0.5 and variance 0.25. What is its expected squared error?",
          num(1.5, 0.005, [("unsquared", 1.75, 0.005), ("no-noise", 0.5, 0.005)], "1.5 (within 0.005)"),
@@ -263,13 +263,13 @@ m5 = parts_item("m5-bias-variance", 4, ["rq-ml"], "bias-variance", 420, "Two mod
          fb("The variance is the part to cut.", "Compare how much of the error each term holds."),
          "Model B's reducible error is 0.04 of bias and 0.64 of variance. Cut the variance: more data averages it away, and a stronger penalty trades a little bias for less variance.")])
 
-m6 = numeric_item("m6-boosting-round", 4, ["rq-ml"], "boosting-round", 360, "One boosting round",
+m6 = numeric_item("m6-boosting-round", 4, ["rq-ml"], "boosting-round", 300, "One boosting round",
     "Four training targets are 1, 3, 8 and 12, at positions 1, 2, 3 and 4. Boosting starts from their mean. One stump is fitted to the residuals, splitting the positions in two to minimise squared error. Its values are added at learning rate 0.5. What is the training mean squared error after this round?",
     num(6.5, 0.0005, [("before", 18.5, 0.005), ("full-step", 2.5, 0.0005)], "6.5 (within 0.0005)", "a number"),
     fb("Find the best split of the residuals, add half the stump, then average the squared errors.", "Start from the residuals around the mean of 6.",
        {"before": "You gave the error before any round. The stump has not been added.",
         "full-step": "You added the whole stump. The learning rate 0.5 adds only half of it."}),
-    "The mean is 6, so the residuals are $-5, -3, 2, 6$. Splitting after the second point leaves a residual sum of squares of 10, against 40.7 and 26 for the other splits. The stump adds $\\pm 2$ at rate 0.5, so the errors are $-3, -1, 0, 4$ and the mean square is $26/4 = 6.5$.")
+    "The mean is 6, so the residuals are $-5, -3, 2, 6$. The best split is after the second point: its residual sum of squares is 10, against 40.7 and 26. The stump adds $\\pm 2$ at rate 0.5, so the errors are $-3, -1, 0, 4$ and the mean square is $26/4 = 6.5$.")
 
 # ---------------------------------------------------------------------------------------------- paper 3: code
 T = {"rel": 1e-9, "abs": 1e-9}
@@ -375,16 +375,16 @@ assert run_tests(start2, tests2) == 0
 naive_src = 'def weighted_line_fit(xs, ys):\n    n = len(xs)\n    if n != len(ys) or n < 2:\n        raise ValueError\n    sx, sy = sum(xs), sum(ys)\n    sxx = sum(x * x for x in xs)\n    sxy = sum(x * y for x, y in zip(xs, ys))\n    d = n * sxx - sx * sx\n    if d == 0:\n        raise ValueError\n    s = (n * sxy - sx * sy) / d\n    return [s, (sy - s * sx) / n]\n'
 assert run_tests(naive_src, tests1) < 8 and run_tests(naive_src, [tests1[4]]) == 0
 
-c1 = parts_item("c1-fit-line", 4, ["rq-data", "rq-stats"], "fit-line-weights", 1500, "Fit a line, then change it",
+c1 = parts_item("c1-fit-line", 4, ["rq-data", "rq-stats"], "fit-line-weights", 1350, "Fit a line, then change it",
     "You write the least-squares line through some points. Then the interviewer adds a requirement.", [
     part("Write `weighted_line_fit(xs, ys)`. It returns `[slope, intercept]` of the least-squares line. Raise `ValueError` for fewer than two points, lists of different lengths, or all `xs` equal.",
          codew(start1, [(t1_calls[0], fmt(exp[t1_calls[0]])), (t1_calls[2], fmt(exp[t1_calls[2]]))], tests1,
-               "Submit runs 8 hidden tests. Answers are accepted when each number is within 1e-9, relative or absolute. One test uses very large x values.", sol1),
+               "There are 8 hidden tests. Answers are accepted when each number is within 1e-9, relative or absolute. One test uses very large x values.", sol1),
          fb("All eight tests pass, including the shifted data.", "A hidden test failed. Check the large-x test: centre the data before you sum."),
          "Centre the points on their means before summing, so the large shift cancels. The textbook sums subtract two huge, nearly equal numbers and lose every digit. An exact Fraction solve gives the same line."),
     part("The interviewer says some points are measured more precisely. Add a third argument, `weights`, one positive number per point, and fit by weighted least squares. Keep every earlier behaviour.",
          codew(start2.replace("def weighted_line_fit(xs, ys):", "def weighted_line_fit(xs, ys):"), [(t2_calls[1], fmt(exp[t2_calls[1]]))], tests2,
-               "Submit runs your part 1 tests and 5 more, 13 in all. Answers are accepted when each number is within 1e-9, relative or absolute.", sol2),
+               "There are 13 hidden tests: your part 1 tests and 5 more. Answers are accepted when each number is within 1e-9, relative or absolute.", sol2),
          fb("All thirteen tests pass.", "A hidden test failed. Use weighted means, and raise ValueError when weights and points differ in number."),
          "Replace each mean with a weighted mean, and weight each squared deviation. With equal weights the code reduces to part 1. The exact normal equations on Fractions give the same line."),
     part("A point's noise standard deviation is $\\sigma_i$. Which weights give the best fit?",
@@ -457,28 +457,28 @@ start_rs = 'def rolling_slopes(xs, ys, w):\n    """Slope of ys on xs over each f
 # the small tests pass with the solution; the starter fails all of them
 assert run_tests(sol_rs, tests_rs[:7]) == 7
 assert run_tests(start_rs, tests_rs) == 0
-c2 = {"id": "c2-rolling-slope", "difficulty": 4, "skills": ["rq-data"], "tags": ["rolling-slope"], "pace": 1200, "title": "A rolling slope",
+c2 = {"id": "c2-rolling-slope", "difficulty": 4, "skills": ["rq-data"], "tags": ["rolling-slope"], "pace": 1080, "title": "A rolling slope",
       "question": "Write `rolling_slopes(xs, ys, w)`. It returns a list: the least-squares slope of `ys` on `xs` over each window of `w` neighbouring points. Use full windows only, in order. `w` is at least 2. If every `xs` value in a window is equal, that slope is `None`. The inputs reach 200,000 points.",
       "widget": codew(start_rs, [(rs_small[0], tests_rs[0]["expect"]), (rs_small[1], tests_rs[1]["expect"])], tests_rs,
-                      "Submit runs 10 hidden tests, the last three on 200,000 points. Answers are accepted when each number is within 1e-9, relative or absolute.", sol_rs),
+                      "There are 10 hidden tests, the last three on 200,000 points. Answers are accepted when each number is within 1e-9, relative or absolute.", sol_rs),
       "feedback": fb("All ten tests pass, including the large windows.", "A hidden test failed. Recomputing each window from scratch is too slow on 200,000 points; update running sums instead."),
       "explain": {"text": "Keep running sums of $x$, $y$, $x^2$ and $xy$, add the new point and subtract the one that leaves. Each slope is then $(w S_{xy} - S_x S_y)/(w S_{xx} - S_x^2)$ in constant time. Whole-number sums stay exact, and exact Fractions on every 4,000th window agree."}}
 
 # ---------------------------------------------------------------------------------------------- paper 4: longform
 MODEL_NOTE = "*An example answer. Your own words are the real answer.*\n\n"
-case_a = {"id": "k1-open-case-framing", "difficulty": 4, "skills": ["rq-case", "rq-stats"], "tags": ["open-case-hit-rate"], "pace": 1200, "title": "Is 523 skill",
+case_a = {"id": "k1-open-case-framing", "difficulty": 4, "skills": ["rq-case", "rq-stats"], "tags": ["open-case-hit-rate"], "pace": 1080, "title": "Is 523 skill",
     "kind": "longform",
     "prompt": "Say your answer aloud first, then type it in at most 250 words.\n\nAn interviewer says: predict whether an index future rises tomorrow. You test a model on 1,000 days and it calls the direction right on 523 of them. A coin gets 500. Frame the problem, then say whether 523 is evidence of skill.",
     "model": MODEL_NOTE + "I would frame it first. The target is the sign of tomorrow's return on the future. The horizon is one day, and the loss is a wrong call. I might weight it by the size of the move.\n\nA coin gets 50%, so the baseline is 500 of 1,000. The model beats it by 2.3 points. The standard error of a hit rate is $\\sqrt{0.25/1000} = 1.58$ points, so $z$ is about 1.45. The two-sided $p$-value is about 0.15. On its own, 523 is not evidence of skill.\n\nI would add one honest limit. If I tried many models, the best of them looks better than it is. Costs matter too, and so does whether the test days came after the training days.\n\nNext I would fix the model and run it on a fresh 1,000 days. I would drop it if it does not beat 53%, about two standard errors over a coin.",
     "rubric": [{"points": 2, "text": "States the target, the horizon and the loss"}, {"points": 1, "text": "Names the coin baseline as 50%"},
-               {"points": 2, "text": "Gives the standard error of 1.58 points and $z$ of about 1.45"}, {"points": 2, "text": "Gives $p$ of about 0.15 and says 523 is not significant on its own"},
+               {"points": 2, "text": "Gives the standard error as about 1.6 points and $z$ as about 1.5"}, {"points": 2, "text": "Says $p$ is well above 0.05 (about 0.15), so 523 is not significant on its own"},
                {"points": 2, "text": "Names one honest limit, such as models tried, costs, or test days after training days"}, {"points": 1, "text": "Gives a next step with a stopping rule"}]}
-case_b = {"id": "k2-open-case-signal", "difficulty": 5, "skills": ["rq-case", "rq-stats"], "tags": ["open-case-signal"], "pace": 1500, "title": "Small but real",
+case_b = {"id": "k2-open-case-signal", "difficulty": 5, "skills": ["rq-case", "rq-stats"], "tags": ["open-case-signal"], "pace": 1350, "title": "Small but real",
     "kind": "longform",
     "prompt": "Say your answer aloud first, then type it in at most 250 words.\n\nYour signal has correlation 0.04 with next-day return over 1,000 days. A colleague says it is small but real, because the t-statistic is over one. Respond, and say what you would do next.",
     "model": MODEL_NOTE + "The signal explains $R^2 = 0.16\\%$ of the variance of next-day returns. The t-statistic is $0.04\\sqrt{998}/\\sqrt{1 - 0.0016} = 1.27$. That is above one but below 2, so it is not significant at the usual 5% level.\n\nA 95% interval for the correlation, from the Fisher transform, runs from $-0.02$ to $0.10$. It spans zero, so small but real is not yet supported.\n\nA small true correlation can still matter at scale. Whether it pays depends on costs and turnover, so I would test those early.\n\nFirst I would check the timing: the signal may use only data known before the return starts. Then I would extend the sample or test another market. If the interval still spans zero after twice the days, I would drop it.",
-    "rubric": [{"points": 1, "text": "Gives $R^2$ of 0.16%"}, {"points": 2, "text": "Gives $t$ of 1.27, below 2, so not significant"},
-               {"points": 2, "text": "Says the interval spans zero, about $-0.02$ to $0.10$"},
+    "rubric": [{"points": 1, "text": "Gives $R^2$ of 0.16%"}, {"points": 2, "text": "Gives $t$ as about 1.3, below 2, so not significant"},
+               {"points": 2, "text": "Says an interval around 0.04 spans zero, so small but real is not yet supported"},
                {"points": 2, "text": "Says a small true correlation can matter at scale, but costs and turnover decide it"},
                {"points": 1, "text": "Checks time order and leakage before trusting it"}, {"points": 2, "text": "Makes a decision and names a next test, such as a longer sample or another market"}]}
 for cs in (case_a, case_b):
@@ -491,7 +491,7 @@ DRAW = {"from": "bank/probability", "tags": ["bayes-in-a-minute", "estimating-n"
 SC = {"right": 1, "wrong": 0, "blank": 0}
 exam = {
     "id": "mock-superday-research", "name": "Research superday", "style": "research",
-    "models": "Reported, as of Nov 2026: quant research final rounds at Two Sigma, Citadel and JP Morgan: probability and statistics, machine learning, coding, and an open prediction case.",
+    "models": "Reported, as of Nov 2026: quant research final rounds at Two Sigma, Citadel and JP Morgan. They cover probability and statistics, machine learning, coding and an open prediction case.",
     "description": "This is the reported shape of a quant research final-round day, as candidates described it by Nov 2026. There are four papers, each on its own clock. They cover probability and statistics, machine learning, coding, and an open case. Real rounds are spoken, so say each answer aloud before you type it. Some questions have follow-ups that open one at a time. Four of the probability questions are drawn afresh each time you sit. No calculator and no search engine are allowed. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.",
     "skills": {"rq-stats": "Statistics questions", "rq-linalg": "Linear algebra questions", "rq-ml": "Machine learning questions", "rq-case": "The open case", "rq-data": "Data tasks"},
     "parts": [

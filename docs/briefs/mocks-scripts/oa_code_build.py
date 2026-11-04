@@ -128,7 +128,7 @@ def build_drill(did, t):
          "skills": SKILLS[did], "difficulty": t["difficulty"], "pace": t["pace"], "fn": t["fn"], "returns": x["returns"],
          "brief": brief, "constraints": x["cons"], "hint": x["hint"], "starter": t["starter"],
          "examples": exs, "tests": tests,
-         "how": f"Submit runs {n} hidden tests. Each answer must equal the expected value.",
+         "how": f"There are {n} hidden tests. Each answer must equal the expected value." + (" The last two tests compare long strings." if did == "oa-remove-digits" else ""),
          "solution": src, "notes": x["notes"]}
     return d
 
@@ -181,8 +181,10 @@ def main():
         "description": ("This is the reported format of an online coding assessment, as candidates described it by Nov 2026. "
                         "You have two algorithm problems in 60 minutes and write both in Python. The first is medium and the second is harder. "
                         "Hidden tests include large inputs, so a slow answer fails them. A problem scores only when all its hidden tests pass. "
+                        "You pass the paper with one problem of the two. "
                         "The results panel lists each test, so use it to see how far you got. "
                         "The two problems are drawn afresh from a pool each time you sit. The pool is also in the drill library. "
+                        "For a cold test, do not open the pack `oa` there first. Other reports give three or four problems in 70 to 90 minutes. "
                         "Use no search engine and no notes. Read both statements and plan your minutes first."),
         "skills": {"ci-patterns": "Further patterns", "ci-strings": "Strings and simulation", "ci-timed": "Solving under time"},
         "parts": [
