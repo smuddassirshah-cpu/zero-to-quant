@@ -13,6 +13,9 @@
      node app/tools/playthrough.mjs --exam topic-1.5       one exam (repeatable); topic-*, stage-* and mock-* all play the same way
      node app/tools/playthrough.mjs --lesson conditional/l3-shrinking     one lesson (add --routes for the routes too)
      node app/tools/playthrough.mjs --bank probability-1   every item of one bank file (repeatable, or --bank all): dealt, answered right from its key, pass or fail per item
+     node app/tools/playthrough.mjs --drill sample-cpp-row-sums   one drill (repeatable; --drills for every file in content/drills): the starter fails, the model
+                                                           solution passes every hidden test, the stopwatch is read and recorded (add --mobile for 390 px)
+     node app/tools/playthrough.mjs --session              the sample drill session: both drills, minutes per drill, result, carry, expiry (--drills includes it)
      node app/tools/playthrough.mjs --routes-only          only the routes, then the interview bank deck (due and new items, the 3-day box,
                                                            a miss, prerequisites, an old save, the pace line) and one exam sat with a
                                                            skewed Date.now so per-item seconds and the pace line are checked
@@ -68,7 +71,7 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { mobile: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], all: false };
+const opt = { mobile: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, sessionRun: false, all: false };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
@@ -85,6 +88,9 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--set') { opt.setIds.push(next()); opt.sets = true; }
   else if (a === '--exam') { opt.examIds.push(next()); opt.exams = true; }
   else if (a === '--bank') opt.bankIds.push(next());
+  else if (a === '--drill') opt.drillIds.push(next());
+  else if (a === '--drills') opt.drillsAll = true;
+  else if (a === '--session') opt.sessionRun = true;
   else if (a === '--all') opt.all = true;
   else if (a === '--help' || a === '-h') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('*/')[0].replace(/^#!.*\n\/\* ?/, '')); process.exit(0); }
   else die(`unknown argument ${a} (try --help)`);
@@ -93,7 +99,9 @@ const onlySets = !opt.all && (opt.sets || opt.exams);
 if (opt.all) { opt.sets = true; opt.exams = true; }
 if (onlySets && !opt.lessons.length) opt.lessonsOn = false;
 if (opt.bankIds.length && !opt.lessons.length && !onlySets) opt.lessonsOn = false;
-if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets && !opt.bankIds.length;
+const drillRun = opt.drillIds.length || opt.drillsAll || opt.sessionRun; // item 472
+if (drillRun && !opt.lessons.length && !onlySets) opt.lessonsOn = false;
+if (opt.routes == null) opt.routes = opt.lessons.length === 0 && !onlySets && !opt.bankIds.length && !drillRun;
 if (opt.localCdn && !fs.existsSync(opt.localCdn)) die(`--local-cdn: ${opt.localCdn} does not exist`);
 if (opt.shots) fs.mkdirSync(opt.shots, { recursive: true });
 function die(msg) { console.error('playthrough: ' + msg); process.exit(2); }
@@ -687,6 +695,201 @@ const main = async () => {
       void doc;
     };
 
+    /* ---------- Drill library (ENGINE-BACKLOG 472): --drill <id>, --drills, --session ----------
+       Each drill is opened at #drill/<id>: the starter (touched, so it can be submitted) must fail, the model solution must
+       pass every hidden test and verify the drill, the stopwatch must read and be recorded with the result (Date.now is
+       moved on 130 s while the drill is open; no real minutes are waited), and with --mobile the whole run is at 390 px
+       with no sideways scroll. --session sits the sample session (content/drills/sessions/sample-session.json): both
+       drills with their model solutions, minutes per drill from a moved clock, the result screen, what a lesson reads as
+       {{carry.session.*}}, a session whose clock is moved to zero, and one that survives leaving the page. */
+    const drillIdsAll = () => fs.readdirSync(path.join(CONTENT, 'drills')).filter(f => f.endsWith('.json') && f !== 'index.json').map(f => f.replace(/\.json$/, '')).sort();
+    const skewBy = (ms) => page.evaluate((n) => { if (!window.__zqNow) { window.__zqNow = Date.now.bind(Date); window.__zqSkew = 0; Date.now = () => window.__zqNow() + window.__zqSkew; } window.__zqSkew += n; }, ms);
+    const unskewClock = () => page.evaluate(() => { if (window.__zqNow) { Date.now = window.__zqNow; delete window.__zqNow; delete window.__zqSkew; } });
+    const wide = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    const drillReady = async (cpp) => {
+      const wait = cpp ? 300000 : 90000;
+      try { await page.waitForFunction(() => window.ZQDrill && ZQDrill.status() === 'ready', null, { timeout: Math.max(opt.timeout, wait) }); return null; }
+      catch { return `${cpp ? 'The C++ compiler' : 'Python'} did not become ready within ${wait / 1000} s`; }
+    };
+    /* submit through the hook and wait until the run has finished; resolves to { ok, passed, total } */
+    const drillSubmit = async () => {
+      await page.evaluate(() => { window.__zqSub = ZQDrill.submit(); });
+      await page.waitForFunction(() => { const r = ZQDrill.results(); return r && r.mode === 'submit' && (r.res ? r.res.every(x => !['pending', 'running'].includes(x.status)) : true); }, null, { timeout: 180000 });
+      await page.evaluate(() => window.__zqSub);
+      return page.evaluate(() => { const r = ZQDrill.results(); return r.res ? { ok: r.res.every(x => x.status === 'pass'), passed: r.res.filter(x => x.status === 'pass').length, total: r.res.length } : { ok: r.ok, passed: r.passed, total: r.total }; });
+    };
+    const drillOne = async (id) => {
+      const file = readJSON(path.join(CONTENT, 'drills', id + '.json')), cpp = file.language === 'cpp', mine = [];
+      where = '#drill/' + id;
+      const before = consoleErrors.length;
+      try {
+        await go('drill/' + id);
+        await page.waitForFunction(() => window.ZQDrill, null, { timeout: opt.timeout });
+        const bad = await drillReady(cpp);
+        if (bad) { mine.push(bad); throw new Error(bad); }
+        if (opt.mobile && await wide()) mine.push('the page is wider than the 390 px window');
+        const pill0 = await page.evaluate(() => { const t = document.querySelector('.drl-sw-t'); return t ? t.textContent : null; });
+        if (!pill0 || !/^\d+:\d\d$/.test(pill0)) mine.push(`the stopwatch pill is missing or unreadable (${pill0})`);
+        await shot('drill-' + id);
+        const lang = await page.evaluate(() => ZQDrill.language);
+        if (lang !== (cpp ? 'cpp' : 'python')) mine.push(`opened as ${lang}, the file says ${cpp ? 'cpp' : 'python'}`);
+        /* the starter, touched so Submit accepts it, must fail */
+        await page.evaluate((s) => ZQDrill.setCode(s), file.starter + (cpp ? '\n// starter check\n' : '\n# starter check\n'));
+        const st = await drillSubmit();
+        if (st.ok) mine.push('the starter passes every hidden test');
+        /* the model solution must pass every test, with the stopwatch moved on */
+        await skewBy(130000);
+        await page.evaluate((s) => ZQDrill.setCode(s), file.solution);
+        const ref = await drillSubmit();
+        if (!ref.ok) mine.push(`the model solution passes ${ref.passed} of ${ref.total} hidden tests${await codeWhy()}`);
+        const want = (file.tests || []).length;
+        if (ref.total !== want) mine.push(`${ref.total} tests ran, the file has ${want}`);
+        const info = await page.evaluate((id2) => ({ verified: ZQDrill.verified(), seconds: ZQDrill.seconds(), rec: ZQ.state.drills.get(id2), pill: (document.querySelector('.drl-sw-t') || {}).textContent, over: !!document.querySelector('.drl-sw.is-over') }), id);
+        if (!info.verified) mine.push('the drill is not marked verified after the model solution');
+        if (info.seconds < 129) mine.push(`the stopwatch read ${info.seconds} s after the clock moved 130 s`);
+        const run = info.rec && info.rec.runs && info.rec.runs[info.rec.runs.length - 1];
+        if (!run || !run.ok || run.seconds < 129 || run.total !== want) mine.push(`the record holds ${JSON.stringify(run)}; expected a passing run of ${want} tests after 129 s or more`);
+        if (!info.rec || !info.rec.verified || typeof info.rec.best !== 'number' || info.rec.best < 129) mine.push(`the record has no best time (${JSON.stringify(info.rec && { verified: info.rec.verified, best: info.rec.best })})`);
+        if (file.pace && file.pace < 125 && !info.over) mine.push('the stopwatch is not marked over a pace shorter than its reading');
+        const m = /^(\d+):(\d\d)$/.exec(info.pill || '');
+        if (!m || +m[1] * 60 + +m[2] < 129) mine.push(`the stopwatch pill shows ${info.pill}`);
+        await shot('drill-' + id + '-verified');
+        if (opt.mobile && await wide()) mine.push('after the run the page is wider than the 390 px window');
+        console.log(`${mine.length ? 'FAIL' : 'ok  '} --drill ${id}  ${cpp ? 'C++' : 'Python'}, ${ref.passed} of ${ref.total} tests with the model solution, starter fails: ${!st.ok}`);
+      } catch (e) { if (!mine.length) mine.push('threw ' + String(e.message || e).split('\n')[0]); console.log(`FAIL --drill ${id}  ${mine[0]}`); }
+      mine.forEach(x => failures.push(`drill ${id}: ${x}`));
+      if (consoleErrors.length > before) console.log(`ERR  ${where}`);
+      await page.evaluate(() => { location.hash = '#today'; });
+      await page.waitForTimeout(300);
+    };
+    const sessionPlay = async () => {
+      const SID = 'sample-session';
+      if (!fs.existsSync(path.join(CONTENT, 'drills', 'sessions', SID + '.json'))) { failures.push('session: content/drills/sessions/sample-session.json is missing'); return; }
+      const sdoc = readJSON(path.join(CONTENT, 'drills', 'sessions', SID + '.json'));
+      const files = sdoc.drills.map(i => readJSON(path.join(CONTENT, 'drills', i + '.json')));
+      const bad = (m) => { failures.push('session: ' + m); console.log('FAIL --session  ' + m); };
+      const probs = failures.length;
+      where = '#drill/session';
+      try {
+        await page.evaluate(() => { ZQ.store.set('drill.session', null); });
+        await go('drill/session/' + SID);
+        await page.waitForSelector('[data-start]', { timeout: opt.timeout });
+        const picks = await page.evaluate(() => [...document.querySelectorAll('.drls-pick .t-label')].map(x => x.textContent));
+        if (picks.length !== 2 || picks[0] !== files[0].name || picks[1] !== files[1].name) bad(`the setup shows ${JSON.stringify(picks)}, the file lists ${JSON.stringify(files.map(f => f.name))}`);
+        if (opt.mobile && await wide()) bad('the setup page is wider than the 390 px window');
+        await shot('session-setup');
+        await page.click('[data-start]');
+        await page.waitForFunction(() => window.ZQSession && ZQSession.state && ZQSession.state().ids, null, { timeout: opt.timeout });
+        const s0 = await page.evaluate(() => ZQSession.state());
+        if (s0.cur !== 0 || s0.ids.join() !== sdoc.drills.join() || s0.left > 3600 || s0.left < 3590) bad(`a fresh session reads ${JSON.stringify(s0)}`);
+        /* leaving the page keeps the clock and the session */
+        await go('today');
+        await go('drill/session');
+        await page.waitForFunction(() => window.ZQSession && ZQSession.state && ZQSession.state().ids, null, { timeout: opt.timeout });
+        for (let i = 0; i < 2; i++) {
+          if (i === 1) await page.evaluate(() => ZQSession.switchTo(1));
+          await page.waitForFunction((id) => window.ZQDrill && ZQDrill.problem() === id, sdoc.drills[i], { timeout: opt.timeout });
+          const rd = await drillReady(files[i].language === 'cpp');
+          if (rd) { bad(rd); return; }
+          if (i === 0 && opt.mobile && await wide()) bad('the session page is wider than the 390 px window');
+          if (i === 0) await shot('session-running');
+          const sw = await page.evaluate(() => !!document.querySelector('.drl-sw'));
+          if (sw) bad('a session drill shows its own stopwatch beside the session clock');
+          await skewBy(i === 0 ? 600000 : 900000);
+          await page.evaluate((s) => ZQDrill.setCode(s), files[i].solution);
+          const r = await drillSubmit();
+          if (!r.ok) bad(`drill ${i + 1} (${sdoc.drills[i]}): the model solution passes ${r.passed} of ${r.total}`);
+        }
+        const s1 = await page.evaluate(() => ZQSession.state());
+        const [a, b] = s1.per;
+        if (!(a.seconds >= 595 && a.seconds <= 900) || !(s1.left < 3600 - 1490) || !a.ok || !b.ok || a.passed !== a.total || b.passed !== b.total || !a.total || !b.total) bad(`before finishing the session reads ${JSON.stringify(s1)}`);
+        await page.evaluate(() => ZQSession.finish());
+        await page.waitForSelector('.drls-table', { timeout: opt.timeout });
+        const res = await page.evaluate(() => ({ h: document.querySelector('h1').textContent, rows: [...document.querySelectorAll('.drls-table tbody tr')].map(r => r.innerText.replace(/\s+/g, ' ')), sum: (document.querySelector('.drls-sum') || {}).textContent, rec: ZQ.state.drills.sessions(), R: ZQSession.result() }));
+        if (!/^2 of 2 drills solved$/.test(res.h)) bad(`the result says "${res.h}"`);
+        const mins = (r) => +((/(\d+) min/.exec(r) || [])[1] || 0);
+        if (res.rows.length !== 2 || !res.rows[0].includes(files[0].name) || mins(res.rows[0]) < 10 || mins(res.rows[0]) > 14 || mins(res.rows[1]) < 15 || mins(res.rows[1]) > 19 || !res.rows.every(r => /(\d+) of \1/.test(r))) bad(`the result rows read ${JSON.stringify(res.rows)}`);
+        const usedMin = +((/used (\d+) min/.exec(res.sum || '') || [])[1] || 0);
+        if (usedMin < 25 || usedMin > 34) bad(`the result summary reads "${res.sum}"`);
+        const last = res.rec[res.rec.length - 1];
+        if (!last || last.drills.length !== 2 || last.drills[0].id !== sdoc.drills[0] || !last.drills.every(d => d.ok && d.total > 0 && d.passed === d.total) || last.minutes !== 60) bad(`the state holds ${JSON.stringify(last)}`);
+        if (opt.mobile && await wide()) bad('the result page is wider than the 390 px window');
+        await shot('session-result');
+        const carry = await page.evaluate(() => { ZQ.player.carryReset(); return ZQ.carry.session; });
+        if (!carry || !(carry.minutes1 >= 10 && carry.minutes1 < 14.5) || !(carry.minutes2 >= 15 && carry.minutes2 < 19.5) || carry.solved !== 2 || carry.passed1 !== carry.total1 || !carry.total2) bad(`a lesson would read carry.session = ${JSON.stringify(carry)}`);
+        /* a session whose clock is moved to zero closes itself and keeps what was done */
+        await go('drill/session/' + SID);
+        await page.waitForSelector('[data-start]', { timeout: opt.timeout });
+        await page.click('[data-start]');
+        await page.waitForFunction(() => window.ZQSession && ZQSession.state && ZQSession.state().ids, null, { timeout: opt.timeout });
+        await page.evaluate(() => ZQSession.setRemaining(2));
+        await page.waitForSelector('.drls-table', { timeout: 15000 });
+        const out = await page.evaluate(() => ({ h: document.querySelector('h1').textContent, sum: (document.querySelector('.drls-sum') || {}).textContent, n: ZQ.state.drills.sessions().length }));
+        if (!/0 of 2 drills solved/.test(out.h) || !/the clock ran out/.test(out.sum || '')) bad(`an expired session reads "${out.h}" / "${out.sum}"`);
+        if (out.n !== res.rec.length + 1) bad(`${out.n} sessions are kept after two were sat, expected ${res.rec.length + 1}`);
+        console.log(`${failures.length > probs ? 'FAIL' : 'ok  '} --session  sample session: both model solutions, minutes per drill ${(a.seconds / 60).toFixed(1)} and ${(b.seconds / 60).toFixed(1)}, result, carry, expiry, resume`);
+      } catch (e) { bad('threw ' + String(e.message || e).split('\n')[0]); }
+      await page.evaluate(() => { ZQ.store.set('drill.session', null); location.hash = '#today'; });
+      await page.waitForTimeout(300);
+    };
+    /* the cheap checks, part of --routes-only: filters, the session setup and what the list hides */
+    const drillRouteChecks = async () => {
+      const listed = readJSON(path.join(CONTENT, 'drills', 'index.json')).map(d => d.id || d);
+      const meta = listed.map(i => readJSON(path.join(CONTENT, 'drills', i + '.json')));
+      const fails = [];
+      where = '#drill (filters)';
+      try {
+        await page.evaluate(() => ZQ.store.set('drill.filters', null));
+        await go('drill');
+        await page.waitForSelector('.drlf', { timeout: opt.timeout });
+        const count = () => page.evaluate(() => document.querySelectorAll('.drl-l-item').length);
+        if (await count() !== listed.length) fails.push(`the list shows ${await count()} drills, index.json has ${listed.length}`);
+        const hidden = await page.evaluate(() => !!document.querySelector('a[href^="#drill/sample-"]'));
+        if (hidden) fails.push('a sample drill is listed');
+        await page.selectOption('[data-f="min"]', '4');
+        const hard = meta.filter(d => (d.difficulty || 2) >= 4).length;
+        if (await count() !== hard) fails.push(`difficulty 4 to 5 lists ${await count()} drills, ${hard} qualify`);
+        await page.selectOption('[data-f="max"]', '3');
+        const clamp = await page.evaluate(() => ({ min: document.querySelector('[data-f="min"]').value, max: document.querySelector('[data-f="max"]').value }));
+        if (+clamp.min > +clamp.max) fails.push(`the difficulty range is upside down (${clamp.min} to ${clamp.max})`);
+        await page.selectOption('[data-f="language"]', 'cpp');
+        if (await count() !== meta.filter(d => d.language === 'cpp' && (d.difficulty || 2) >= +clamp.min && (d.difficulty || 2) <= +clamp.max).length) fails.push('the language filter C++ lists the wrong drills');
+        const msg = await page.evaluate(() => /No drill matches/.test(document.querySelector('.drl-l-groups').textContent));
+        if (!msg && await count() === 0) fails.push('an empty filter result gives no message');
+        if (opt.mobile && await wide()) fails.push('the filtered list is wider than the window');
+        await shot('route-drill-filtered');
+        const logic = await page.evaluate(() => {
+          const L = ZQ.drillLib, list = [{ id: 'a', pattern: 'bits', difficulty: 2 }, { id: 'b', pattern: 'intervals', difficulty: 4, language: 'cpp' }, { id: 'c', pattern: 'intervals', difficulty: 3 }];
+          const f = (o) => L.filterList(list, { pattern: '', min: 1, max: 5, language: '', ...o }).map(x => x.id).join('');
+          return [f({}), f({ pattern: 'intervals' }), f({ language: 'cpp' }), f({ language: 'python' }), f({ min: 3, max: 3 }), f({ pattern: 'intervals', min: 4 })];
+        });
+        if (logic.join('|') !== 'abc|bc|b|ac|c|b') fails.push(`filterList gave ${logic.join('|')}`);
+        await page.evaluate(() => ZQ.store.set('drill.filters', null));
+        /* the session setup: a pick of two for any filters, and the set session when named */
+        await go('drill/session/new');
+        await page.waitForSelector('[data-start]', { timeout: opt.timeout });
+        const n = await page.evaluate(() => document.querySelectorAll('.drls-pick').length);
+        if (n !== 2) fails.push(`the session setup picks ${n} drills`);
+        if (opt.mobile && await wide()) fails.push('the session setup is wider than the window');
+        await shot('route-drill-session');
+        await go('drill/sample-cpp-row-sums');
+        await page.waitForFunction(() => window.ZQDrill, null, { timeout: opt.timeout });
+        await page.evaluate(() => { location.hash = '#today'; });
+      } catch (e) { fails.push('threw ' + String(e.message || e).split('\n')[0]); }
+      fails.forEach(x => failures.push('drill library: ' + x));
+      console.log(`${fails.length ? 'FAIL' : 'ok  '} drill filters and session setup`);
+    };
+    const drillPhase = opt.drillIds.length || opt.drillsAll || opt.sessionRun;
+    if (drillPhase) {
+      const ids = opt.drillsAll ? drillIdsAll() : opt.drillIds;
+      for (const id of ids) if (!drillIdsAll().includes(id)) die(`--drill ${id}: no such file in content/drills`);
+      if (opt.mobile) { await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(300); }
+      for (const id of ids) await drillOne(id);
+      if (opt.sessionRun || opt.drillsAll) await sessionPlay();
+      await unskewClock();
+      if (opt.mobile) { await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(200); }
+    }
+
     /* Every other route once */
     if (opt.bankIds.length) await bankPlay(opt.bankIds);
     if (opt.routes) {
@@ -724,6 +927,7 @@ const main = async () => {
       }
       /* The interview bank deck and per-item timing (ENGINE-BACKLOG 456, 457), then an exam sat with a skewed clock */
       await bankChecks();
+      await drillRouteChecks();
       const paceExam = fs.existsSync(path.join(CONTENT, 'exams', 'mock-sample.json')) ? 'mock-sample' : exams.includes('topic-1.5') ? 'topic-1.5' : null;
       if (paceExam) await paceExamChecks(paceExam);
     }

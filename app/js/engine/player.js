@@ -129,7 +129,20 @@
      A later screen reads it with {{carry.name}} or {{carry.name.pnl}} (or {{carry.name|fallback}}) in any string of its
      spec, for example a canvas state or a prose line. A string that is only the placeholder becomes the number itself. */
   Z.carry = Z.carry || {};
-  const carryReset = () => { Z.carry = {}; };
+  /* Engine pass C, item 472: a lesson starts with the learner's latest drill session under the name `session`, so a later
+     screen can read {{carry.session.minutes1}} (minutes on drill 1, to one place), minutes2, passed1, total1, passed2,
+     total2 (hidden tests passed of total), solved (drills passed, 0 to 2) and minutes (all). Nothing when none was sat. */
+  const sessionCarry = () => {
+    try {
+      const all = Z.state && Z.state.drills && Z.state.drills.sessions ? Z.state.drills.sessions() : [];
+      const s = all[all.length - 1];
+      if (!s || !Array.isArray(s.drills)) return {};
+      const m = (d) => (d ? Math.round(d.seconds / 6) / 10 : 0), a = s.drills[0], b = s.drills[1];
+      return { session: { minutes1: m(a), minutes2: m(b), passed1: a ? a.passed : 0, total1: a ? a.total : 0, passed2: b ? b.passed : 0, total2: b ? b.total : 0,
+        solved: s.drills.filter(d => d.ok).length, minutes: Math.round(s.seconds / 6) / 10 } };
+    } catch { return {}; }
+  };
+  const carryReset = () => { Z.carry = sessionCarry(); };
   const carryResolve = (spec) => {
     if (!JSON.stringify(spec).includes('{{carry.')) return spec;
     const RE = /\{\{\s*carry\.([A-Za-z0-9_.]+)\s*(?:\|([^}]*))?\}\}/g;

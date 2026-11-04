@@ -13,6 +13,7 @@
   const cache = new Map();        // path -> Promise<object|null>
   const known = new Map();        // path -> true (found) | false (missing)
   let drillIndex = null;
+  let drillMeta = {};             // manifest.drills: id -> { language, pattern, pace, tags, sample } read from each drill file (engine pass C, item 472)
   let prepDoc = null;             // content/prep.json (ENGINE-BACKLOG 455), or null when there is none
 
   const deKebab = (id) => {
@@ -148,7 +149,12 @@
   const bankIds = () => (manifest ? [...manifest].filter(f => /^bank\/[^/]+\.json$/.test(f)).map(f => f.slice(5, -5)).sort() : []);
   const bank = (id) => load(`bank/${id}.json`);
   const drill = (id) => load(`drills/${id}.json`);
-  const drills = () => drillIndex || [];
+  /* The listed drills, each row with what the drill file says (language, pattern, tags, pace) from the manifest, so a
+     filter never fetches 100 files. A file's own value wins over the index row. */
+  const drills = () => (drillIndex || []).map(r => { const m = drillMeta[r && r.id]; return m ? { ...r, ...m } : r; });
+  /* Fixed drill sessions (content/drills/sessions/<id>.json, item 472): ids from the manifest, sorted; none without one */
+  const drillSessionIds = () => (manifest ? [...manifest].filter(f => /^drills\/sessions\/[^/]+\.json$/.test(f)).map(f => f.slice(15, -5)).sort() : []);
+  const drillSession = (id) => load(`drills/sessions/${id}.json`);
 
   /* ---------- Prep paths (content/prep.json, ENGINE-BACKLOG 455, docs/AUTHORING.md section 10) ----------
      Which lessons prepare for which assessment. Paths never unlock or gate anything; they only label lessons and list
@@ -213,6 +219,7 @@
     ]);
     curriculum = cur;
     if (man && Array.isArray(man.files)) { manifest = new Set(man.files); manifest.forEach(f => known.set(f, true)); }
+    if (man && man.drills && typeof man.drills === 'object') drillMeta = man.drills;
     drillIndex = Array.isArray(di) ? di : [];
     /* prep.json is requested only when the manifest lists it (or there is no manifest), so no 404 reaches the console */
     const pr = !manifest || manifest.has('prep.json') ? await getJSON('prep.json', { optional: true }).catch(e => { console.error(e); return null; }) : null;
@@ -229,7 +236,7 @@
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
     stages, allStages, stage, topic, topicPassed, courseTestedOut, resumeStands, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
-    lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills,
+    lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills, drillSessionIds, drillSession,
     prep, prepPaths, prepPath, prepRefLessons, prepSteps, prepFor, prepForCourse, prepDetail, prepChip, prepMonth, prepStageLabel: (s) => STAGE_LABEL[s] || s,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */
     probe: (cid) => Promise.all(courseLessons(cid).map(x => load(`courses/${cid}/${x.id}.json`).catch(() => null))).then(() => courseLessons(cid)),

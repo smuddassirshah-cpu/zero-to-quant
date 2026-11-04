@@ -40,7 +40,7 @@
     settings: { theme: 'system', motion: 'system', sound: false, haptics: true, streakMode: 'daily', quantOnly: false },
     xp: 0, mp: 0,
     lessons: {}, reviews: {}, homework: {}, exams: {}, skills: {},
-    redo: [], notebook: [], drills: {},
+    redo: [], notebook: [], drills: {}, drillSessions: [],
     bank: {}, timing: { families: {} },
     warmup: { history: [] },
     hours: [],
@@ -406,7 +406,7 @@
     if (code === null || code === '') {
       if (!rec) return null;
       delete rec.draft; delete rec.draftAt;
-      if (!rec.verified && !rec.code) delete doc.drills[id];
+      if (!rec.verified && !rec.code && !rec.runs) delete doc.drills[id];
     } else {
       const r = rec || (doc.drills[id] = { verified: false, code: '', at: null });
       if (r.draft === String(code)) return r.draft;
@@ -414,6 +414,29 @@
     }
     changed('drills');
     return code ?? null;
+  };
+
+  /* Drill clocks (engine pass C, item 472). time(id, { seconds, passed, total, ok, pace }) keeps the stopwatch reading of a
+     submit on the drill's record: runs (the last 20, newest last), and on a pass seconds (that run) and best (the lowest
+     passing time). Nothing here changes marks or the verified flag. A session is one finished two-drill sitting:
+     { at, name, minutes (the budget), seconds (used), drills: [{ id, seconds, passed, total, ok }] }, the last 50 kept. */
+  const drillTime = (id, r) => {
+    if (id == null || !r) return null;
+    const rec = doc.drills[id] || (doc.drills[id] = { verified: false, code: '', at: null });
+    const seconds = Math.max(0, Math.round(Number(r.seconds) || 0));
+    const run = { at: now(), seconds, passed: r.passed | 0, total: r.total | 0, ok: !!r.ok };
+    rec.runs = (Array.isArray(rec.runs) ? rec.runs : []).concat(run).slice(-20);
+    if (run.ok) { rec.seconds = seconds; rec.best = typeof rec.best === 'number' ? Math.min(rec.best, seconds) : seconds; }
+    changed('drills');
+    return run;
+  };
+  const drillSessionRecord = (s) => {
+    if (!s || !Array.isArray(s.drills)) return null;
+    const e = { at: now(), name: String(s.name || ''), minutes: Number(s.minutes) || 60, seconds: Math.max(0, Math.round(Number(s.seconds) || 0)),
+      drills: s.drills.map(d => ({ id: String(d.id), seconds: Math.max(0, Math.round(Number(d.seconds) || 0)), passed: d.passed | 0, total: d.total | 0, ok: !!d.ok })) };
+    doc.drillSessions = (Array.isArray(doc.drillSessions) ? doc.drillSessions : []).concat(e).slice(-50);
+    changed('drillSessions');
+    return e;
   };
 
   const warmupRecord = (score, seconds = 120) => {
@@ -543,7 +566,7 @@
     notebook: ns('notebook', { add: notebookAdd, list: () => doc.notebook.slice() }),
     bank: ns('bank', { entry: bankEntry, due: bankDue, result: bankResult, list: () => ({ ...doc.bank }) }),
     get timing() { return doc.timing; },
-    drills: ns('drills', { verified: drillVerified, draft: drillDraft, get: (id) => (id == null ? doc.drills : doc.drills[id] || null) }),
+    drills: ns('drills', { verified: drillVerified, draft: drillDraft, time: drillTime, session: drillSessionRecord, sessions: () => (Array.isArray(doc.drillSessions) ? doc.drillSessions.slice() : []), get: (id) => (id == null ? doc.drills : doc.drills[id] || null) }),
     warmup: ns('warmup', { record: warmupRecord, list: () => doc.warmup.history.slice() }),
     hours: ns('hours', { log: logHours, list: () => doc.hours.slice() }),
     lessonPosition: { set: positionSet, get: positionGet },
