@@ -139,9 +139,8 @@ Which course tags map to which bank group:
 | `scheduling` | 0/0/1/0 | 1 | brainteasers 2 |
 | `telescoping` | 0/0/1/0 | 1 | brainteasers 3 |
 | `trailing-zeros` | 1/0/0/0 | 1 | brainteasers 3 |
-| `weighing-heavy` | 1/0/0/0 | 1 | brainteasers 6 |
+| `weighing-heavy` | 1/0/1/0 | 2 | brainteasers 6 |
 | `weighing-heavy-or-light` | 0/0/0/1 | 1 | brainteasers 2 |
-| `weighing-scale` | 0/0/1/0 | 1 | brainteasers 2 |
 | `work-rate` | 0/1/0/0 | 1 | brainteasers 2 |
 
 **mental** (file prefix `mental-`)
@@ -441,7 +440,7 @@ An idea gives the situation and the parameters. It is not the finished question 
 | Id | Family (first tag) | Item idea | Kind | D | Pace | Roles | Draws on |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 3b01 | `hats-simultaneous` | Five prisoners with hats numbered 0 to 4 guess their own: strategy guaranteeing one right (choice). | choice | 5 | 150 | T,S | `brainteasers/l7-hat-strategies` |
-| 3b02 | `weighing-scale` | Nine coins, one lighter, balance: fewest weighings and the first split. | choice | 2 | 75 | T,S | `brainteasers/l4-weighing-coins` |
+| 3b02 | `weighing-heavy` | Nine coins, one lighter, balance: fewest weighings and the first split. | choice | 2 | 75 | T,S | `brainteasers/l4-weighing-coins` |
 | 3b03 | `backward-induction` | Take-or-split pot game with three rounds: what the first player does (choice). | choice | 3 | 120 | T,R,S | `brainteasers/l6-back-from-the-end` |
 | 3b04 | `scheduling` | Four jobs of lengths 3, 5, 2 and 6 on two machines: smallest finishing time. | numeric | 3 | 120 | T,S,D | `brainteasers/l11-crossings-and-schedules` |
 | 3b05 | `divisibility` | Smallest number divisible by 1 to 10. | numeric | 2 | 60 | T,R,S,D | `brainteasers/l13-digits-and-remainders` |
