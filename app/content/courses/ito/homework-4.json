@@ -1,0 +1,691 @@
+{
+ "id": "homework-4",
+ "course": "ito",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-stopping",
+   "difficulty": 4,
+   "skills": [
+    "it-bm",
+    "it-martingale"
+   ],
+   "title": "Optional stopping with its conditions",
+   "prose": "Derive $P(\\text{hit } a \\text{ before } -b)$ and $E[\\tau]$ for driftless Brownian motion, with the conditions that make optional stopping valid. Each line carries its reason. Leave out the two flawed lines. The last two correct lines may swap.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Let $\\tau$ be the first exit from $(-b, a)$. The stopped process $W_{t \\wedge \\tau}$ is a martingale in $[-b, a]$, so it is bounded and $E[W_{t \\wedge \\tau}] = 0$ for every $t$."
+     },
+     {
+      "id": "o2",
+      "text": "$W_t^2 - t$ stopped gives $E[W_{t \\wedge \\tau}^2]$ ${}= E[t \\wedge \\tau]$. The left side is at most $\\max(a, b)^2$, so $E[\\tau] < \\infty$ by monotone convergence, and $\\tau$ is finite."
+     },
+     {
+      "id": "o3",
+      "text": "Let $t \\to \\infty$ in line 1 (bounded convergence): $E[W_\\tau] = 0$, so $Pa - (1 - P)b = 0$ and $P = \\dfrac{b}{a + b}$."
+     },
+     {
+      "id": "o4",
+      "text": "Let $t \\to \\infty$ in line 2: $E[\\tau] = E[W_\\tau^2] = Pa^2$ ${}+ (1 - P)b^2 = ab$."
+     },
+     {
+      "id": "x1",
+      "text": "Apply $E[W_\\tau] = 0$ at the exit time directly. It holds for every stopping time, so no conditions are needed.",
+      "why": "It fails for a stopping time with infinite mean, such as the hit of a single barrier. Boundedness is the condition."
+     },
+     {
+      "id": "x2",
+      "text": "Use $E[W_\\tau^2] = 0$ too, because $W_t$ has mean 0, so $E[\\tau] = 0$.",
+      "why": "$W_t^2$ does not have mean 0. The martingale is $W_t^2 - t$, whose stopped mean gives $E[\\tau]$."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ],
+    "same": [
+     [
+      "o3",
+      "o4"
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "With the stopped martingale bounded and $E[\\tau]$ finite, optional stopping gives $P = b/(a + b)$ and $E[\\tau] = ab$.",
+    "generic": "Not quite right. Bound the stopped process first, show $E[\\tau]$ is finite, then pass to the limit.",
+    "byKey": {
+     "x1": "You skipped the conditions. Optional stopping needs a bounded stopped value or a finite mean time.",
+     "x2": "You treated $W^2$ as a martingale. Only $W^2 - t$ is one.",
+     "left-out": "A line of the derivation is in the Left out list. Only the two flawed lines belong there."
+    }
+   },
+   "explain": {
+    "text": "The conditions are the point: a bounded stopped martingale for $P$, and a finite $E[\\tau]$ for the second moment. A single barrier fails both, which is why $E[\\tau] = \\infty$ there."
+   },
+   "tags": [
+    "exit-time"
+   ],
+   "pace": 240
+  },
+  {
+   "id": "h-exit-report",
+   "difficulty": 5,
+   "skills": [
+    "it-bm",
+    "it-martingale"
+   ],
+   "title": "Exit report",
+   "prose": "A desk wants one report for a trade that exits at $+a$ or $-b$. The price moves like $X_t = \\mu t + \\sigma W_t$ with time step $\\Delta t$.",
+   "question": "Complete `exit_report`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom math import exp, sqrt\n\ndef exit_report(a, b, mu, sigma, dt, paths, seed):\n    \"\"\"Exit of X_t = mu t + sigma W_t from (-b, a), X_0 = 0.\n    Return [P_formula, E_formula, P_sim, E_sim, se_P, se_E, gap_P, gap_E]:\n    P = chance of reaching a first, E = E[tau]; formulas are exact.\n    Simulation: rng = np.random.default_rng(seed); each step draws\n    rng.standard_normal(m) for the m paths still alive, in path order;\n    a path stops at the first step k with X >= a or X <= -b, tau = k * dt.\n    se_P = sqrt(P (1 - P) / paths); se_E = std(tau, ddof=1) / sqrt(paths);\n    gap = simulated minus formula.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom math import exp, sqrt\n\ndef exit_report(a, b, mu, sigma, dt, paths, seed):\n    if mu == 0:\n        pf = b / (a + b)\n        ef = a * b / sigma ** 2\n    else:\n        k = 2 * mu / sigma ** 2\n        pf = (1 - exp(k * b)) / (exp(-k * a) - exp(k * b))\n        ef = (a * pf - b * (1 - pf)) / mu\n    rng = np.random.default_rng(seed)\n    x = np.zeros(paths)\n    alive = np.ones(paths, dtype=bool)\n    tau = np.zeros(paths)\n    up = np.zeros(paths, dtype=bool)\n    k = 0\n    while alive.any():\n        k += 1\n        idx = np.flatnonzero(alive)\n        x[idx] += mu * dt + sigma * sqrt(dt) * rng.standard_normal(idx.size)\n        hu = x[idx] >= a\n        hd = x[idx] <= -b\n        done = idx[hu | hd]\n        tau[done] = k * dt\n        up[idx[hu]] = True\n        alive[done] = False\n    ps = float(up.mean())\n    es = float(tau.mean())\n    sp = float(sqrt(ps * (1 - ps) / paths))\n    se = float(tau.std(ddof=1) / sqrt(paths))\n    return [pf, ef, ps, es, sp, se, ps - pf, es - ef]\n",
+    "examples": [
+     {
+      "call": "[round(v, 4) for v in exit_report(1.5, 1, 0.3, 1.0, 0.01, 4000, 7)]",
+      "expect": "[0.5808, 1.5065, 0.6008, 1.6599, 0.0077, 0.0214, 0.02, 0.1535]",
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(v, 4) for v in exit_report(1.5, 1, 0.3, 1.0, 0.01, 4000, 7)]",
+      "expect": "[0.5808, 1.5065, 0.6008, 1.6599, 0.0077, 0.0214, 0.02, 0.1535]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in exit_report(1.2, 0.8, 0.5, 1.0, 0.001, 3000, 3)]",
+      "expect": "[0.6369, 0.9474, 0.622, 0.9866, 0.0089, 0.0145, -0.0149, 0.0392]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in exit_report(2, 1, 0, 1.5, 0.01, 4000, 5)]",
+      "expect": "[0.3333, 0.8889, 0.3468, 1.023, 0.0075, 0.0142, 0.0134, 0.1341]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "exit_report(2, 1, 0, 1.5, 0.01, 4000, 5)[7] > 0",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(exit_report(1.2, 0.8, 0.5, 1.0, 0.001, 3000, 3)[6]) < 3 * exit_report(1.2, 0.8, 0.5, 1.0, 0.001, 3000, 3)[4]",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on seeds 7, 3 and 5. They check the eight numbers, the sign of the time gap, and the chance within three standard errors.",
+    "budget": 15000
+   },
+   "feedback": {
+    "correct": "On seed 7 the formula gives $P = 0.5808$ and $E[\\tau] = 1.5065$; the simulation gives 0.6008 and 1.6599, a time gap of 0.1535.",
+    "generic": "Not quite right. Check the example: it lists all eight numbers on seed 7."
+   },
+   "explain": {
+    "text": "The simulated exit is late because a discrete path can step across a barrier and back. The gap shrinks as $\\Delta t$ does, and the chance gap is within noise."
+   },
+   "tags": [
+    "exit-time"
+   ],
+   "pace": 900
+  },
+  {
+   "id": "h-quick-prices",
+   "difficulty": 4,
+   "skills": [
+    "it-pricing"
+   ],
+   "title": "Four quick prices",
+   "prose": "Interview habit: price four standard payoffs in under a minute each, with a check that must hold.",
+   "question": "Complete `quick_prices`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef quick_prices(S, K, r, sigma, T):\n    \"\"\"[forward value (struck at K), digital call, digital put, price of S_T squared]\n    in the risk-neutral market with rate r and volatility sigma.\"\"\"\n    ...\n",
+    "solution": "from math import erf, exp, log, sqrt\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef quick_prices(S, K, r, sigma, T):\n    d2 = (log(S / K) + (r - sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    fwd = S - K * exp(-r * T)\n    dig_c = exp(-r * T) * norm_cdf(d2)\n    dig_p = exp(-r * T) * norm_cdf(-d2)\n    power = S ** 2 * exp((r + sigma ** 2) * T)\n    return [fwd, dig_c, dig_p, power]\n",
+    "examples": [
+     {
+      "call": "[round(v, 4) for v in quick_prices(40, 38, 0.02, 0.15, 0.25)]",
+      "expect": "[2.1895, 0.7583, 0.2367, 1617.0906]",
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(v, 4) for v in quick_prices(120, 125, 0.06, 0.35, 1.5)]",
+      "expect": "[5.7586, 0.4207, 0.4932, 18934.359]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in quick_prices(40, 38, 0.02, 0.15, 0.25)]",
+      "expect": "[2.1895, 0.7583, 0.2367, 1617.0906]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "[round(v, 4) for v in quick_prices(75, 75, 0.01, 0.4, 3)]",
+      "expect": "[2.2166, 0.3696, 0.6008, 9367.263]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 6e-05
+      }
+     },
+     {
+      "call": "(lambda q: q[1] + q[2])(quick_prices(120, 125, 0.06, 0.35, 1.5))",
+      "expect": "0.9139311852712282",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "quick_prices(50, 50, 0.0, 0.3, 1.0)[3] / 2500",
+      "expect": "1.094174283705",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "how": "Submit runs 5 hidden tests at three markets. They check four prices to 4 places, the digital pair sum, and the square at zero rate."
+   },
+   "feedback": {
+    "correct": "At $S = 40$, $K = 38$, $r = 2\\%$, $\\sigma = 15\\%$, $T = 0.25$: forward 2.1895, digital call 0.7583, put 0.2367, square 1,617.0906.",
+    "generic": "Not quite right. Check the example: the digital call and put add to $e^{-rT} = 0.9950$."
+   },
+   "explain": {
+    "text": "Each answer is one line: a linear payoff needs no model, a digital needs $\\Phi(d_2)$, a square needs the mgf. The pair check $c + p = e^{-rT}$ is the habit to keep."
+   },
+   "tags": [
+    "quick-pricing"
+   ],
+   "pace": 600
+  },
+  {
+   "id": "h-hermite",
+   "difficulty": 4,
+   "skills": [
+    "it-martingale",
+    "it-calculus"
+   ],
+   "title": "A fifth-power martingale",
+   "tags": [
+    "martingale-test"
+   ],
+   "pace": 420,
+   "prose": "Find $a$ and $b$ so that $M_t = W_t^5 + a\\,tW_t^3$ ${}+ b\\,t^2W_t$ is a martingale. Its drift is $(a + 10)W_t^3 + (3a$ ${}+ 2b)\\,tW_t$.",
+   "parts": [
+    {
+     "question": "What is $a$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": -10,
+      "tol": {
+       "abs": 0.01
+      },
+      "accept": "The $W_t^3$ part of the drift is $(a + 10)W_t^3$, which vanishes at $a = -10$.",
+      "label": "a",
+      "wrong": [
+       {
+        "id": "sign",
+        "value": 10,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "half",
+        "value": -5,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$a = -10$.",
+      "generic": "Not quite right. Set the coefficient of $W_t^3$, namely $a + 10$, to zero.",
+      "byKey": {
+       "sign": "You took $a = +10$. The coefficient is $a + 10$, so $a$ must be $-10$.",
+       "half": "You halved the cube coefficient. The cube term of the drift is $\\tfrac12 \\times 20 = 10$, so $a = -10$."
+      }
+     },
+     "explain": {
+      "text": "$\\tfrac12f_{xx}$ for $x^5$ is $10x^3$, and $f_t$ for $a\\,tx^3$ is $ax^3$. They cancel at $a = -10$."
+     }
+    },
+    {
+     "question": "With $a = -10$, what is $b$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 15,
+      "tol": {
+       "abs": 0.01
+      },
+      "accept": "The $tW_t$ part is $(3a + 2b) = -30 + 2b$, which vanishes at $b = 15$.",
+      "label": "b",
+      "wrong": [
+       {
+        "id": "half",
+        "value": 7.5,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "sign",
+        "value": -15,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "no-two",
+        "value": 30,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$b = 15$: $W_t^5 - 10tW_t^3 + 15t^2W_t$ is a martingale.",
+      "generic": "Not quite right. Set $3a + 2b = 0$ with $a = -10$.",
+      "byKey": {
+       "half": "You solved $3a + b = 0$ and halved. The drift of $b\\,t^2x$ has $f_t = 2btx$, so $2b = 30$.",
+       "sign": "You took $b = -15$. Then $3a + 2b = -60$, not 0.",
+       "no-two": "You solved $3a + b = 0$, giving 30. The $t^2$ term has $f_t = 2btx$, so the equation is $3a + 2b = 0$."
+      }
+     },
+     "explain": {
+      "text": "$f_t$ of $b\\,t^2x$ is $2btx$, and $\\tfrac12f_{xx}$ of $a\\,tx^3$ is $3atx$. They cancel at $2b = -3a = 30$."
+     }
+    },
+    {
+     "question": "Drop the $t^2W_t$ term. What is the drift of $W_t^5 - 10tW_t^3$ at $t = 1$, $W_t = 1$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": -30,
+      "tol": {
+       "abs": 0.01
+      },
+      "accept": "The drift is $(3a)\\,tW_t = -30tW_t = -30$.",
+      "label": "Drift",
+      "wrong": [
+       {
+        "id": "sign",
+        "value": 30,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "zero",
+        "value": 0,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$-30$.",
+      "generic": "Not quite right. With $a = -10$ the drift is $3a\\,tW_t$.",
+      "byKey": {
+       "sign": "You gave $+30$. The coefficient $3a = -30$ is negative.",
+       "zero": "You assumed the process is a martingale. Without the $15t^2W_t$ term the $tW_t$ drift remains."
+      }
+     },
+     "explain": {
+      "text": "The missing $15t^2W_t$ term contributed $+30tW_t$ to the drift. Without it the drift is $-30tW_t$, so given a positive $W_t$ the forecast of the process falls."
+     }
+    }
+   ]
+  },
+  {
+   "id": "h-exit-drift",
+   "difficulty": 4,
+   "skills": [
+    "it-bm",
+    "it-martingale"
+   ],
+   "title": "Drift, volatility and a late exit",
+   "tags": [
+    "exit-time"
+   ],
+   "pace": 480,
+   "prose": "A price has drift 0.2 and volatility 0.8 a day. It exits at $+1.5$ or $-2.5$.",
+   "parts": [
+    {
+     "question": "What is the chance it reaches $+1.5$ first? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.8611,
+      "tol": {
+       "abs": 0.0005
+      },
+      "accept": "$k = 2\\mu/\\sigma^2 = 0.625$: $P = (1 - e^{1.5625})/(e^{-0.9375} - e^{1.5625}) = 0.8611$.",
+      "label": "P",
+      "wrong": [
+       {
+        "id": "no-drift",
+        "value": 0.625,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "no-sigma",
+        "value": 0.792,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$P = 0.8611$.",
+      "generic": "Not quite right. The exponent is $2\\mu/\\sigma^2 = 0.625$ times $a$ or $b$.",
+      "byKey": {
+       "no-drift": "You gave $b/(a + b) = 0.625$. The drift of 0.2 lifts the chance to 0.8611.",
+       "no-sigma": "You used $2\\mu = 0.4$ and no volatility. Dividing by $\\sigma^2 = 0.64$ gives 0.625."
+      }
+     },
+     "explain": {
+      "text": "With $\\mu = 0.2$ and $\\sigma^2 = 0.64$ the martingale is $e^{-0.625X_t}$. Stopping it at $+1.5$ and $-2.5$ gives $P = 0.8611$."
+     }
+    },
+    {
+     "question": "What is $E[\\tau]$ in days? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 4.7214,
+      "tol": {
+       "abs": 0.0005
+      },
+      "accept": "Wald: $E[\\tau] = (aP - b(1 - P))/\\mu = (1.2916 - 0.3473)/0.2 = 4.7214$.",
+      "label": "Days",
+      "wrong": [
+       {
+        "id": "driftless",
+        "value": 5.8594,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "no-sigma",
+        "value": 3.75,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$E[\\tau] = 4.7214$ days.",
+      "generic": "Not quite right. Use $E[X_\\tau] = \\mu E[\\tau]$ with $X_\\tau = a$ or $-b$.",
+      "byKey": {
+       "driftless": "You used $ab/\\sigma^2 = 5.8594$, the driftless formula. With drift the exit is sooner.",
+       "no-sigma": "You gave $ab = 3.75$. That ignores both the drift and the volatility."
+      }
+     },
+     "explain": {
+      "text": "$E[X_\\tau] = aP - b(1 - P)$ ${}= 0.9443$. Dividing by $\\mu = 0.2$ gives 4.7214 days."
+     }
+    },
+    {
+     "question": "A simulation with $\\Delta t = 0.01$ gives a mean exit time above 4.7214. Which is the most likely reason?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+       {
+        "id": "missed",
+        "text": "discrete paths cross a barrier between steps, so exits are seen late",
+        "correct": true
+       },
+       {
+        "id": "wald",
+        "text": "Wald's identity fails when there is drift, so the formula is off",
+        "why": "You blamed Wald. The identity holds for this stopping time. The simulation, not the formula, is off."
+       },
+       {
+        "id": "se",
+        "text": "the standard error is too small, so neither answer can be trusted",
+        "why": "You blamed noise. The gap is a bias, and it has one sign however many paths you run."
+       },
+       {
+        "id": "stop",
+        "text": "optional stopping fails with two barriers, so the formula is invalid",
+        "why": "You blamed the theorem. Two barriers keep $X$ bounded, and the theorem applies."
+       }
+      ],
+      "shuffle": true
+     },
+     "feedback": {
+      "correct": "A discrete path can step over a barrier and back, so the simulated exit comes late.",
+      "generic": "Not quite right. Ask which direction the bias points as $\\Delta t$ shrinks.",
+      "byKey": {
+       "wald": "You said Wald fails. It holds here.",
+       "se": "You called it noise. A bias keeps one sign.",
+       "stop": "You said the theorem fails. It holds with two barriers."
+      }
+     },
+     "explain": {
+      "text": "The same effect shifts the barrier by about $0.5826\\,\\sigma\\sqrt{\\Delta t}$, as in the barrier option. A smaller step shrinks the gap."
+     }
+    }
+   ]
+  },
+  {
+   "id": "h-moments",
+   "difficulty": 5,
+   "skills": [
+    "it-calculus"
+   ],
+   "title": "Moments and covariances",
+   "tags": [
+    "moments"
+   ],
+   "pace": 480,
+   "prose": "Three moment questions in a row. Split at the earlier time or use the isometry, and say the rule.",
+   "parts": [
+    {
+     "question": "What is $E[W_2^4W_3^2]$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 132,
+      "tol": {
+       "abs": 0.01
+      },
+      "accept": "$W_3 = W_2 + D$: $E[W_2^4(W_2^2 + 2W_2D + D^2)] = E[W_2^6] + E[W_2^4] = 15 \\times 8 + 3 \\times 4 = 132$.",
+      "label": "Moment",
+      "wrong": [
+       {
+        "id": "independent",
+        "value": 36,
+        "tol": {
+         "abs": 0.01
+        }
+       },
+       {
+        "id": "no-six",
+        "value": 12,
+        "tol": {
+         "abs": 0.01
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$120 + 12 = 132$.",
+      "generic": "Not quite right. Split $W_3$, expand, and use $E[W_2^6] = 15 \\times 2^3$ and $E[W_2^4] = 3 \\times 2^2$.",
+      "byKey": {
+       "independent": "You multiplied $E[W_2^4] = 12$ by $E[W_3^2] = 3$. The times share $W_2$.",
+       "no-six": "You kept $E[W_2^4]E[D^2] = 12$ and dropped $E[W_2^6] = 120$."
+      }
+     },
+     "explain": {
+      "text": "The cross term $2W_2^5D$ has mean 0. The sixth moment 120 and the fourth moment 12 add to 132."
+     }
+    },
+    {
+     "question": "What is $\\text{Var}\\big(\\int_0^4 W_t\\,dt\\big)$? Give 4 decimal places.",
+     "widget": {
+      "kind": "numeric",
+      "answer": 21.3333,
+      "tol": {
+       "abs": 0.0005
+      },
+      "accept": "$\\int_0^4 W_t\\,dt = \\int_0^4 (4 - t)\\,dW_t$, so the variance is $\\int_0^4 (4 - t)^2\\,dt = 64/3 = 21.3333$.",
+      "label": "Variance",
+      "wrong": [
+       {
+        "id": "isometry-dt",
+        "value": 8,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "cube",
+        "value": 64,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$T^3/3 = 64/3 = 21.3333$.",
+      "generic": "Not quite right. Convert to a $dW$ integral first.",
+      "byKey": {
+       "isometry-dt": "You gave $\\int_0^4 t\\,dt = 8$, the isometry on a $dt$ integral.",
+       "cube": "You gave $T^3 = 64$ and missed the $\\tfrac13$."
+      }
+     },
+     "explain": {
+      "text": "The weight on the increment at time $t$ is the time it stays in the path, $4 - t$. Squaring and integrating gives $64/3$."
+     }
+    },
+    {
+     "question": "What is $\\text{Cov}\\big(W_1, \\int_0^1 W_t\\,dt\\big)$?",
+     "widget": {
+      "kind": "numeric",
+      "answer": 0.5,
+      "tol": {
+       "abs": 0.0005
+      },
+      "accept": "$\\int_0^1 \\text{Cov}(W_1, W_t)\\,dt = \\int_0^1 t\\,dt = 0.5$.",
+      "label": "Covariance",
+      "wrong": [
+       {
+        "id": "one",
+        "value": 1,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "third",
+        "value": 0.3333,
+        "tol": {
+         "abs": 0.0005
+        }
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "$\\int_0^1 \\min(1, t)\\,dt$ ${}= \\tfrac12$.",
+      "generic": "Not quite right. Use $\\text{Cov}(W_1, W_t)$ ${}= \\min(1, t) = t$ and integrate over $t$.",
+      "byKey": {
+       "one": "You gave $\\text{Var}(W_1) = 1$. The time average is correlated with the endpoint, but not perfectly.",
+       "third": "You gave the variance of the time average, $\\tfrac13$. The covariance with $W_1$ is $\\tfrac12$."
+      }
+     },
+     "explain": {
+      "text": "Covariance passes inside the integral: $\\text{Cov}(W_1, W_t)$ ${}= \\min(1, t) = t$, and $\\int_0^1 t\\,dt = 0.5$."
+     }
+    }
+   ]
+  },
+  {
+   "id": "h-derivation",
+   "difficulty": 5,
+   "skills": [
+    "it-pricing",
+    "it-martingale"
+   ],
+   "kind": "longform",
+   "title": "Derivation",
+   "pace": 300,
+   "tags": [
+    "derivation"
+   ],
+   "prompt": "This is the five-minute spoken derivation from lesson 17. Answer aloud, with a watch, in about five minutes. Then write your answer, open the model answer and mark yourself against the rubric. Derive the Black-Scholes equation from the delta hedge, with a reason for each step. Then answer two interviewer follow-ups: where did $\\mu$ go, and what fails when volatility moves?",
+   "model": "**1. Model and lemma (about one minute).** The share follows $dS = \\mu S\\,dt + \\sigma S\\,dW$ with $(dW)^2 = dt$. For a claim $V(t, S)$, Itô's lemma gives $dV = (V_t + \\mu SV_S + \\tfrac12\\sigma^2S^2V_{SS})\\,dt + \\sigma SV_S\\,dW$. I keep the $\\tfrac12\\sigma^2S^2V_{SS}$ term because $(dS)^2 = \\sigma^2S^2\\,dt$ is the same size as $dt$.\n\n**2. Hedge (about two minutes).** Sell one claim and hold $\\Delta$ shares: $\\Pi = -V + \\Delta S$, so $d\\Pi = -dV + \\Delta\\,dS$. The $dW$ coefficient is $\\sigma S(\\Delta - V_S)$. I choose $\\Delta = V_S$, which is mine to choose at each instant, so the noise cancels and so does $\\mu$: $d\\Pi = -(V_t + \\tfrac12\\sigma^2S^2V_{SS})\\,dt$.\n\n**3. No arbitrage and the equation (about one minute).** The book has no noise. If it earned more than $r$ I would borrow cash and hold it for a sure profit. If less, I would do the reverse. So $d\\Pi = r\\Pi\\,dt = r(-V + SV_S)\\,dt$. Equating the $dt$ terms gives $$V_t + rSV_S + \\tfrac12\\sigma^2S^2V_{SS} - rV = 0.$$\n\n**4. Check and assumptions (about one minute).** A forward $V = S - Ke^{-r(T - t)}$ has $V_{SS} = 0$, $V_S = 1$ and $V_t = -rKe^{-r(T - t)}$. Then $-rKe^{-r(T - t)} + rS - rS + rKe^{-r(T - t)} = 0$. I assumed constant $\\sigma$, continuous hedging and no costs.\n\n**Follow-up 1: where did $\\mu$ go?** It appears in $dV$ as $\\mu SV_S$ and in $\\Delta\\,dS$ as $\\Delta\\mu S$, with opposite signs. With $\\Delta = V_S$ they cancel path by path, so two traders who disagree about $\\mu$ agree on the price.\n\n**Follow-up 2: what fails when volatility moves?** If $\\sigma = \\sigma(t, S)$ the same steps give the same equation with that function inside, and the hedge still works. If $\\sigma$ is itself random, the book keeps a second source of noise that shares cannot hedge. So we need another option, and the price depends on the market price of that risk. Vega, the sensitivity to $\\sigma$, becomes the quantity to hedge.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States the model $dS = \\mu S\\,dt + \\sigma S\\,dW$ and Itô's lemma for $V(t, S)$, keeping $\\tfrac12\\sigma^2S^2V_{SS}$ because $(dW)^2 = dt$."
+    },
+    {
+     "points": 2,
+     "text": "Builds the book $-V + \\Delta S$, shows the $dW$ coefficient $\\sigma S(\\Delta - V_S)$ and chooses $\\Delta = V_S$, so the noise and $\\mu$ cancel."
+    },
+    {
+     "points": 2,
+     "text": "Argues that a noiseless book must earn $r$ (an arbitrage against cash otherwise) and states $V_t + rSV_S$ ${}+ \\tfrac12\\sigma^2S^2V_{SS}$ ${}- rV = 0$."
+    },
+    {
+     "points": 1,
+     "text": "Checks the result, for example with a forward ($V_{SS} = 0$), and names the assumptions: constant $\\sigma$, continuous hedging, no costs."
+    },
+    {
+     "points": 1,
+     "text": "Answers where $\\mu$ went: it enters $dV$ and $\\Delta\\,dS$ with opposite signs and cancels at $\\Delta = V_S$."
+    },
+    {
+     "points": 1,
+     "text": "Answers what fails when volatility moves: $\\sigma(t, S)$ keeps the equation, a random $\\sigma$ needs a second hedge, and vega matters."
+    },
+    {
+     "points": 1,
+     "text": "Says each reason aloud, in order, with no silent steps. Keeps close to the five-minute plan of 1, 2, 1 and 1 minutes."
+    }
+   ]
+  }
+ ]
+}
