@@ -23,6 +23,11 @@ Authors write `canvas: { "kind", "params", "state", "controls" }` (AUTHORING.md 
 - **Shared methods** (see `_base.js` header): `mark(ids, cls, on)`, `unmark(cls?)`, `flash(ids)`, `unflash()`, `lock(on)`, `caption(text)`, `clone(host)`, `destroy()`. Drag kinds also have `points()` returning `{ id: { x, y } }` and `place(id, pos, { instant })`.
 - **Grading classes.** `is-correct`, `is-notyet`, `is-reveal` and `is-dim` go on `.cv-obj` groups through `mark()` and survive redraws. Lines inside a marked group recolour; series are never marked by the engine.
 
+
+## Column width (ENGINE-BACKLOG 507)
+
+A canvas draws into the lesson column: `--col` in `css/tokens.css`, 540px below a 768px viewport and 780px from 768px up (an iPad, a laptop). It scales to the column width; a canvas never sets its own pixel width. A tall `viewBox` gets taller on a wide column, so cap one with `canvas.maxHeight` if a widget has to stay in view beneath it. Test at 440, 1032 and 1376 (`--mobile --tablet`).
+
 ---
 
 ## plane

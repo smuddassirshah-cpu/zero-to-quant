@@ -480,7 +480,7 @@ inline int test_count() { return (int)zq_tk::all().size(); }
     const ta = host.querySelector('textarea'), code = host.querySelector('code'), gut = host.querySelector('.wd-gut-in');
     let lines = 0, cur = -1, escArmed = false;
     const lineStartOf = (v, i) => v.lastIndexOf('\n', i - 1) + 1;
-    const scroll = () => { code.style.transform = `translate(${-ta.scrollLeft}px, ${-ta.scrollTop}px)`; gut.style.transform = `translateY(${-ta.scrollTop}px)`; };
+    const scroll = () => { code.style.transform = `translate(${-ta.scrollLeft}px, ${-ta.scrollTop}px)`; gut.style.transform = `translateY(${-ta.scrollTop}px)`; host.classList.toggle('has-more', ta.scrollLeft + ta.clientWidth < ta.scrollWidth - 2); }; /* item 508: a fade on the right edge says a long line scrolls sideways */
     const mark = () => {
       const line = ta.value.slice(0, ta.selectionStart).split('\n').length - 1;
       if (line === cur) return;
@@ -549,6 +549,7 @@ inline int test_count() { return (int)zq_tk::all().size(); }
     });
     ta.addEventListener('input', () => { paint(); onInput(ta.value); });
     ta.addEventListener('scroll', scroll, { passive: true });
+    if (window.ResizeObserver) new ResizeObserver(scroll).observe(ta);
     ['keyup', 'click', 'focus', 'select'].forEach(t => ta.addEventListener(t, mark));
     ta.value = value; paint();
     return { ta, get value() { return ta.value; }, set(v) { ta.value = v; paint(); onInput(v); }, readOnly(v) { ta.readOnly = v; } };

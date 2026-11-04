@@ -253,9 +253,9 @@ const main = async () => {
     const shot = async (name) => {
       if (!opt.shots) return;
       const file = (sfx) => path.join(opt.shots, name.replace(/[^\w.-]+/g, '_') + sfx + '.png');
-      /* item 278: past the enter patch (350 ms), then until canvas tweens and CSS animations have settled (at most 3 s) */
+      /* item 278: past the enter patch (350 ms), then until canvas tweens and CSS animations have settled and an exam result page has finished its staged reveal (the `.final` class; item 509; at most 4 s) */
       await page.waitForTimeout(420);
-      try { await page.waitForFunction(() => (!window.ZQ || !ZQ.canvas || !ZQ.canvas.busy || ZQ.canvas.busy() === 0) && !document.getAnimations().some((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations !== Infinity), null, { timeout: 3000, polling: 50 }); } catch { /* still moving: shoot anyway */ }
+      try { await page.waitForFunction(() => (!window.ZQ || !ZQ.canvas || !ZQ.canvas.busy || ZQ.canvas.busy() === 0) && !document.querySelector('.exm-res:not(.final)') && !document.getAnimations().some((a) => a.playState === 'running' && a.effect && a.effect.getComputedTiming().iterations !== Infinity), null, { timeout: 4000, polling: 50 }); } catch { /* still moving: shoot anyway */ }
       await page.screenshot({ path: file('') });
       if (ANY_EXTRA) { for (const v of EXTRA) { await setVp(v, 350); await page.screenshot({ path: file('-' + v.w) }); if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) console.log(`note  ${name} at ${v.w} x ${v.h}: the page is wider than the window`); } await setVp(DESKTOP, 150); }
     };

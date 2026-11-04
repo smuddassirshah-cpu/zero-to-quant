@@ -25,6 +25,11 @@ Authoring reference for the canvas kinds built on `_base.js` by E3. The lesson s
 - Explore controls (`canvas.controls`) call `setParam(name, value)`: number-line moves the point with that id, circle accepts `angle`, area takes `split`, `split.rows`, `split.cols`, `grid`, `grid.rows`, `grid.cols` and `shade`. A control without `start` opens at the bound value's current value, read with `getParam(name)` when the canvas has it (number-line: the point's x; area: the current split, grid or fractional shade), else from the state; with `start` it opens there and applies it to the canvas. `format: "fraction"` writes the readout as a fraction (0.375 reads 3/8).
 - Created with `ctx.static` or `ctx.mode: 'static'` (the explanation modal), a canvas has no interaction and no timed fades.
 
+
+## Column width (ENGINE-BACKLOG 507)
+
+A canvas draws into the lesson column: `--col` in `css/tokens.css`, 540px below a 768px viewport and 780px from 768px up (an iPad, a laptop). It scales to the column width; a canvas never sets its own pixel width. A tall `viewBox` gets taller on a wide column, so cap one with `canvas.maxHeight` if a widget has to stay in view beneath it. Test at 440, 1032 and 1376 (`--mobile --tablet`).
+
 ---
 
 ## grid
