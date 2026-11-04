@@ -65,4 +65,55 @@ All 35 are references from an unwritten level; no written level depends on an un
 
 ## Fix pass
 
-(empty)
+Method: `docs/reports/prereq-mapping-scripts/fix-pass.mjs` edits `mapping.txt` (the source of every list), drops implied references by script, and syncs `levels[].requires` and `lessonRequires` in every `course.json` by text edit. A second script parsed each file and its HEAD version and found them equal once those two fields are removed (key order included); 21 files changed. I recomputed every closure from the final files. Validator: 0 errors, no cycles (30 requires warnings, all "no written lesson", down from 35). Routes: all passed, with and without `--mobile`.
+
+Status: errors 2 applied, 1 deferred (lesson text); warnings 4 applied, 2 partly applied, 2 disputed; notes: 1 and 2 applied, 3 to 10 agreed and left as they are, except 4 and 9 deferred (a brief line and an author question). Disputed: micro L1 (warning 2), pdes L1 to L3 (warning 5), systems pricer (warning 7), and the `limits-thm/L2` half of warning 6.
+
+### Errors
+
+1. **puzzles L2 and L3: applied.** L2 `puzzles/L1`, `conditional/L2`, `markov/L3` becomes those plus `limits-thm/L2`. L3 `puzzles/L2`, `limits-thm/L2` becomes the implicit `puzzles/L2` (list deleted). Closure of L2 32 to 44.
+2. **coding-int L1: applied.** `graphs-dp/L4`, `algo-think/L3`, `contests/L1` becomes `graphs-dp/L4`, `algo-think/L3`, `contests/L3`; the `lessonRequires` (`l5-bit-tricks`) is deleted. The brief names `contests` l11-bitmasks for the course, so the gate follows it. Closure of L1 25 to 27.
+3. **coding-int L2 (`l8` cites `contests` l15): deferred.** The fix is one sentence in a lesson, outside this pass (`course.json` only). Gate unchanged, as the review advises. For the next lesson fix agent: reword the `contests/l15-debugging-under-time` sentence in `coding-int/l8-simulating-the-rules`.
+
+### Warnings
+
+1. **brainteasers L1 and L3: applied.** L1 `counting-chance/L2`, `contests/L2` becomes `counting-chance/L2`. L3 `brainteasers/L2`, `mental/L2`, `series/L2`, `exp-log/L3` becomes `brainteasers/L2`, `mental/L3`, `series/L2`, `exp-log/L3`, `contests/L2`. The brief's "Prerequisites" line (plan: `proof` L3 to L4, `counting-chance` L2, `graphs-dp` L3) does not name `contests`; "Builds on" cites `contests` l8 only as a one-line recall, and I checked that the written L1 lessons, review and homework cite no `contests` lesson. L3 needs `contests` l5-modulo (L2) and `mental` l10 (L3). Closure of L1 28 to 7, of L3 36 to 37.
+2. **micro L1: disputed.** Kept `markets/L2`. The proposed `markets/l7-shares` with an override `["ratio/L2"]` under-gates it: `l7-shares` states the objective "value a share with the dividend discount model", and its screen uses `P = D/(r - g)`, a discounted geometric series, which needs `markets` l2 (present value) and `series/L3`. A gate on `ratio/L2` would contradict the lesson, which is the same kind of error as error 3. With `markets/L1` as the override the saving is one level only (`markets/L2` itself). `micro` l1 never names a `markets` lesson, so the real fix is content: a shares recap in `micro` l1 or splitting the DDM screen out of `l7`, then `micro/L1` could depend on `markets/L1` less. `mm-games/L1` closure 23 to 22 (from warning 3), not 14.
+3. **counting-chance L3 before `conditional/L1` and `random-vars/L1`: applied.** Both `counting-chance/L3` become `counting-chance/L2`. Added `counting-chance/L3` to `game-theory/L3` (l12-poker-hands; `game-theory/L2`, `puzzles/L4` becomes those plus it) and `mental-pressure/L4` (l10-birthday). `measure-prob/L1` keeps it. Longest chain 34 to 33.
+4. **linear-maps L2: applied.** `eigen/L4` becomes `eigen/L1` (`eigen` l3-eigenbasis is in `eigen` L1). Closure 52 to 34.
+5. **pdes L1 to L3: disputed.** The `pdes` brief says for level 1 "Prerequisites in the map: all of `odes` and `ito` level 3" (`odes/L4`, `ito/L3` in the map), and level 3 "`pdes` level 2 and `numerics` level 4". The brief is binding and the course is an optional topic, so I kept L1 `odes/L4`, `ito/L3`, L3 `pdes/L2`, `numerics/L4`. The only change is note 2's implied drop (L2 `pdes/L1`, `complex/L1` becomes the implicit `pdes/L1`). A narrower gate needs the brief owner to change that line. Closure of L1 stays about 91.
+6. **mental-pressure L4: partly applied.** `counting-chance/L3` added (see warning 3). `limits-thm/L2` kept: the lesson `l14-ranking-likelihoods` is written and uses the benchmarks, and I may not edit lessons here. The L4 author could restate the 68% and 95% figures in one screen and drop it (closure 38 to about 16). Closure of L4 38.
+7. **systems L1: partly applied.** `cpp/L4` dropped (note 1). `cpp-pricing/L3` kept: the `systems` brief lists "`cpp-pricing` level 3" as a prerequisite and builds lessons (l2 and l17 among them) on `cpp-pricing` l9 (timing), l10 (memory layout) and l11 (flags), saying it does "not repeat" them, so dropping it would contradict the brief. Closure of L1 56 to 55; 13 needs the brief owner to make `systems` teach its own timing and layout examples.
+8. **game-theory L3 and mm-games L3: applied as none.** No gate change. The level briefs should say `l12-poker-hands`-style recaps (Kelly as 2p - 1, ruin, optional stopping in two sentences each) are re-taught; logged here for the brief owner.
+
+### Notes
+
+1. **systems L1 on `cpp/L4`: applied** (see warning 7).
+2. **Implied references: applied.** Dropped by script, 15 references: `algebra/L1` `proof/L3`; `complex/L1` `exp-log/L3`; `complex/L3` `integrals/L3`; `ito/L1` `limits-thm/L3`; `markov/L5` `random-vars/L4`; `measure-prob/L2` `limits-thm/L3`; `numerics/L4` `trees/L3`; `odes/L1` `exp-log/L3`; `pdes/L2` `complex/L1`; `stat-learning/L3` `conditional/L2`; `stat-models/L1` `regression/L3`; `taylor/L2` `exp-log/L3` and `trig/L2`; `topology/L3` `taylor/L1`. With `systems/L1` `cpp/L4` that is 16; the script finds no other implied reference, so the "19" in the task counts more than the review lists. Lists that became the implicit previous level were deleted: `markov/L5`, `stat-learning/L3`, `measure-prob/L2`, `pdes/L2`, `taylor/L2`, `topology/L3`.
+3. **Mapper doubtful list: agreed, kept** (`plotting/L3`, `pytest/L3`, `eigen/L4`; the other two decided in warnings 3 and 4; `sql/L1` accepted).
+4. **Pure departures: agreed; deferred** the line for the `measure-prob` brief (teach what it leans on in `analysis` l5 and l20), as no brief is edited in this pass.
+5. **puzzles L1 on `markov/L2`: agreed, kept.**
+6. **coding-int L4 on `contests/L4`: agreed, kept** (with error 2 the extra is one level).
+7. **limits-thm L4 on `multivar/L5`: agreed, kept.**
+8. **game-theory L2: agreed, kept.**
+9. **numerics L1 on `cpp-pricing/L1`: agreed, deferred** to the author (unwritten): a Python-only cancellation example would let it go.
+10. **Research and recruiting: agreed, no change** (`recruiting` stays open).
+
+### Closure after the fix pass
+
+Levels a fresh learner must finish or test out of, the level excluded.
+
+| Level | Before | After |
+| --- | --- | --- |
+| recruiting L1 | 0 | 0 |
+| brainteasers L1 | 28 | 7 |
+| game-theory L1 | 13 | 12 |
+| puzzles L1 | 28 | 27 |
+| mm-games L1 | 23 | 22 |
+| mental-pressure L1 | 5 | 5 |
+| coding-int L1 | 25 | 27 |
+| research-int L1 | 62 | 61 |
+| systems L1 | 56 | 55 |
+| research-int L3 | 85 | 84 (82 outside the course) |
+
+Other levels: `brainteasers` L3 36 to 37, `puzzles` L2 32 to 44, `puzzles` L5 64 to 63, `coding-int` L2 35 to 37 (the L1 change adds `contests` L2 and L3 behind it), `game-theory` L3 74 to 74 (`counting-chance/L3` added back), `linear-maps` L2 52 to 34, `pdes` L1 92 to 91, `mental-pressure` L4 38 to 38. Longest chain 33 levels (`momentum-rep/L3`), largest direct list 5. The interview targets the review set are met for `brainteasers` L1 (7); `mm-games` L1 (22, target about 14) and `systems` L1 (55, about 13) are not, for the reasons in warnings 2 and 7.
