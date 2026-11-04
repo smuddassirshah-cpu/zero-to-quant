@@ -185,3 +185,25 @@ Applied to the six level 4 files only (`l14` to `l17`, `review-4`, `homework-4`)
 - `l15` s5: key, tol, `wrong` unchanged; `byKey.perdraw` text only.
 
 Seen, out of scope: the `l17` s7 tree canvas title "One step, $r = 0$" renders its dollar signs literally (title field does not typeset maths); not changed here.
+
+## Recheck
+
+Independent recomputation (exact enumeration and closed forms, CPython; scratch `rc-mp4`). Old values grepped in all six files: none survives in `answer`, `accept`, feedback or explanation. New numbers grepped across the course: none repeats a lesson answer.
+
+- `review-4` r-twostep part 1: Z_UU = (0.55/0.4)^2 = 1.8906, key 1.89 (tol 0.005), inverted (0.4/0.55)^2 = 0.5289; weights average 1 (0.3025 + 0.495 + 0.2025). OK.
+- `review-4` r-twostep part 2: S_UU = 169, payoff 69 (UD = 91, others lower); 0.16 x 1.8906 x 69 / 1.0609 = 19.674, also 0.3025 x 69 / 1.0609; slips real 10.406, one discount 20.265. All bands disjoint. OK.
+- `review-4` r-ac: P = (1/4, 3/4, 0), Q = (1/2, 1/4, 1/4); P << Q true, Q << P fails, dP/dQ = (1/2, 3, 0), mean under Q 1. Key a unique. OK.
+- `homework-4` h-density part 2: e^(0.4 - 0.08) = e^0.32 = 1.37713; dqdp e^-0.48 = 0.61878; nocorrection e^0.4 = 1.49182. OK.
+- `homework-4` h-code: CPython with the prelude, solution 10/10 tests and 2/2 examples, starter 0/10 and 0/2; all 12 expected values also match an independent direct-under-Q enumeration. Pyodide not rerun by me. OK.
+- `homework-4` h-long: q = 0.58, step weights 0.8923 and 1.2, Z_2 = 0.7962, 1.0708, 1.44, Q-chances 0.3364, 0.4872, 0.1764, E_P[Z_2] = 1; discounted prices 100; 120.19, 72.12; 144.46, 86.68, 52.01; Q-checks 120.19, 72.12, 100; P root 103.37; call 17.4949 both ways; p^2-only 21.97; rubric 5 x 2 = 10 and its numbers agree with the model. OK.
+- `homework-4` h-is part 3: 61.3^2/0.01 = 375,769, text "approximately 375,800"; 1.964^2/0.01 = 385.7, key 386; 375,836/386 = 974 ("about 970"); `wrong` 375836 (tol 500) holds. OK.
+- `l17` s5: one correct option; key 59 characters against 44, 48 and 46, ratio 1.23 (1.25 with maths markup stripped); under 1.5. OK (see note).
+- `l16` s4: `same` absent; the only valid order is m1, m2, m3, m4 (m3 opens "Then", m4 "So"); d1 and d2 false as their `why` says. OK.
+- `l17` s9: 0.7 x 1.2 + 0.3 x 0.8 - 1 = 8%, q = 0.625, price 15.59 as option c says; no 12% left on the screen. OK.
+- `l17` s7: key 10 (q_u < 1/2, so 20q_u < 10); question now asks "below what number"; equal 6.67 holds; feedback agrees. OK.
+- `l15` s5: 6.73e-7/3.185e-5 = 2.113%; per-draw error 2.124 (212.4%) at theta = 4 and 177.7 plain, so `perdraw` text "212%" is right; 2.12 stays inside the key band, as the fix pass said. OK.
+- `l15` s8, `l17` s1, `l14` q-edge, `h-order`: text-only changes read and agree (27.2^2/0.01 = 73,984 for "about 74,000"). OK.
+
+New mismatches: none. Notes only, no fix required:
+1. `r-twostep` uses q = 0.55, the same as the l16 random-walk screens (a different quantity there, up chance of a walk). No keyed answer repeats; change only if a stricter reading of "fresh numbers" is wanted (for example u = 1.35, d = 0.65, r = 3%, p = 0.4 gives q = 0.5714).
+2. l17 s5 ratio is 1.23, not the 1.20 the fix pass wrote; still inside the 1.5 limit.
