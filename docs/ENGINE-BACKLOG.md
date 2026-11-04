@@ -1391,5 +1391,8 @@ Source: `docs/reviews/pct-keys-scan.txt` (37 numeric widgets with `unit: "%"` st
 
 515. Done (per cent keys): `tools/validate.mjs` (numeric case) errors when `unit: "%"` has a key or `wrong` value above 1 in absolute value and `accept` shows that number followed by `%`, and warns for any other such key unless the widget has `"over100": true`. `tools/playthrough.mjs` (`pctWidgets`) also types, for each such widget in a lesson, answer x 100 with and without `%` plus the single per cent figure in `accept`, and fails the lesson if any is not graded right. Documented in `docs/AUTHORING.md` section 3 (numeric).
 
+516. Done (per cent leading figure): `tools/playthrough.mjs` (`pctWidgets`) and `tools/validate.mjs` (numeric case) read only the leading figure of `accept` (the first number, before any colon, followed by `%`); the extra typed form is skipped otherwise (fixes a false alarm on measure-prob l11 screens[8], "250: 1% a day for 250 days"). The validator error now also covers keys at or below 1: leading accept figure followed by `%` equal to a non-zero key (key 0.63, accept "0.630%: ...", should be 0.0063). Documented in `docs/AUTHORING.md` section 3 (numeric).
+
 Status block (validator pass, per cent keys):
 - 515 (per cent keys): done.
+- 516 (per cent leading figure): done.
