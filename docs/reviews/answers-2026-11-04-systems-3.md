@@ -169,3 +169,16 @@ F5. `homework-3.json` `h3-blocking-recv`: the order task (sleep, packet, wake, c
 - In-course repeat between lessons (outside the review and homework rule): `l14-messages-on-the-wire.json` screen 3 repeats the setting of `l11-processes.json` screen 9 (200,000 messages a second, 24 bytes, 1,472 bytes, 61 frames, 8 spare). Optional.
 - Consistency: l11 prices a wake at two switches, 4 µs; l12 screen 3 says "the 5 µs wake". Both are round figures in separate contexts. Optional: state in l12 that the 5 µs wake includes both switches and the scheduler, or reuse 4 µs.
 - Cross-course grep (other courses, exams, bank, drills): no systems-topic item (datagram, recv, big-endian, multicast, system call) exists outside the `systems` course. Number hits such as 153.6, 2,000 and 400 are in unrelated statistics or finance contexts, and no item there shares two or more numbers with a scope item. No cross-course duplicate.
+
+## Fix pass
+
+Each changed number was computed twice. Dispute: none.
+
+- M1 fixed (`homework-3` `h3-save-calls`). Version B now reads 160 KiB. Calls: 5120 KiB / 160 KiB = 32, and 5 MiB / 160 KiB = 5,242,880 / 163,840 = 32. Cost 32 x 0.2 = 6.4 µs, and 0.2 x 32 = 6.4 µs. Saving: 512 − 6.4 = 505.6, and 0.2 x (2,560 − 32) = 0.2 x 2,528 = 505.6. Old key 499.2 became 505.6; `wrong` b 12.8 became 6.4; prose, `accept`, `correct`, `byKey.b` and `explain` updated. 6.4 and 505.6 appear in no other systems µs context (l1 uses 6.4 ms only).
+- 2 to 6 fixed (voice): l11 screen 3 prose and explain, l12 screen 1 explain, l12 screen 8 prose, l14 screen 7 explain, all as proposed. New sentences are under 20 words.
+- 7 to 13 fixed (choice keys): l11 `q-shortcut` key shortened to "Reading the clock, via the shared page" (38) and the three distractors lengthened without making them true (38 to 41 characters). l13 s7 key now "Nothing: it is already held" (27 against 26, 24). l12 s4 key "Only 100 bytes were ready: read again" (37 against mean 35). l12 s5 key "It spins at 100% of a core, calling `recv`" (42 against mean 38). l12 s6 key "Parse whole frames, keep the rest" (33 against mean 32). l12 `q-copies` key "Twice: card to kernel, then to your buffer" (42 against mean 38). review-3 `r3-zero` key "Treat it as ended and close its side" (36 against mean 33). `shuffle` kept.
+- F1 applied (`r3-handshake`): round trip 40 became 36 ms, one way 18. Key 3 x 18 = 54, and 36 + 18 = 54. `udp` wrong 20 became 18; `rtt` wrong 40 became 36. Prose, `accept`, `generic` and `explain` updated.
+- F4 applied (`r3-chunks`): chunks 60, 50, 60 = 170 bytes. Carry: 60 gives 2 frames, 12 left; 62 gives 2, 14 left; 74 gives 3, 2 left. Total 7 frames, 2 left. Check: 170 = 7 x 24 + 2 = 168 + 2. Keys 6 became 7 and 16 became 2; `correct`, `byKey` r0c1 and r1c1, `explain` updated.
+- F2, F3, F5 and the other notes: left as is.
+
+Changed graded keys for recheck: `homework-3` `h3-save-calls` (answer, wrong b); `review-3` `r3-handshake` (answer, wrong udp, wrong rtt), `r3-chunks` (both table cells); choice keys with reworded text: l11 `q-shortcut`, l13 s7, l12 s4, s5, s6, `q-copies`, review-3 `r3-zero` (correct option unchanged).
