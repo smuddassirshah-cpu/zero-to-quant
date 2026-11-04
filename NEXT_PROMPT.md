@@ -1,6 +1,6 @@
 Read CLAUDE.md and the four state files; follow the SESSION PROTOCOL. Full standards apply (DECISIONS "Standards restored"). Branch `claude/amazing-wright-d4mx7i` only; if the local ref is behind origin, check out origin's commit (shallow clone: compare trees; back up before moving a ref).
 
-Task: PLAN 2a item 5a (prerequisite gating, user request) beside item 5 (remaining topic 3.5 levels and the mock-oa-code brief). Engine pass C is done (items 467 to 480 in `docs/AUTHORING.md`); coding-int, research-int and systems L1 and L2 are written and answer-checked.
+Task: PLAN 2a item 5a (prerequisite gating, user request) beside item 5 (remaining topic 3.5 levels and the mock-oa-code brief). Engine pass C is done (items 467 to 480); L1 and L2 of the three courses are written and checked.
 
 Wave 1, parallel (Sonnet, `isolation: "worktree"`, distinct files; merge each branch, grep every file for conflict markers, re-validate):
 - engine-dev: engine pass E from `docs/briefs/prereq-gating.md` sections 1 to 7 (number from 481), with a sample, routes checks and AUTHORING section 11.
