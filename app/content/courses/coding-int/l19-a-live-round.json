@@ -218,7 +218,7 @@
           "text": "They meet at the time 4.",
           "highlight": [
             "i1",
-            "i3"
+            "i2"
           ]
         },
         {
@@ -460,7 +460,7 @@
         },
         {
           "rung": "point",
-          "text": "`[4, 6)` starts inside `[2, 5)` and also inside `[5, 7)`.",
+          "text": "`[4, 6)` starts inside `[2, 5)` and overlaps `[5, 7)`.",
           "highlight": [
             "i3"
           ]
@@ -564,9 +564,14 @@
             "call": "run_cal(2, [[0, 0, 10], [0, 0, 10], [0, 10, 20], [0, 5, 15]])",
             "expect": "[True, True, True, False]",
             "compare": "equal"
+          },
+          {
+            "call": "run_cal(2, [[0, 0, 5], [0, 10, 15], [0, 3, 12]])",
+            "expect": "[True, True, True]",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests. Three repeat stage A, and five use `k` up to 3.",
+        "how": "Check runs 9 hidden tests. Four use `k = 1`, and five use `k` of 2 or 3.",
         "postlude": "def run_cal(k, ops):\n    c = Calendar(k)\n    out = []\n    for op in ops:\n        if op[0] == 0: out.append(c.book(op[1], op[2]))\n        elif op[0] == 1: out.append(c.cancel(op[1], op[2]))\n        else: out.append(c.next_free(op[1], op[2]))\n    return out\n"
       },
       "hints": [
@@ -598,7 +603,8 @@
           "test-5": "Test 5: with `k = 2`, `[5, 11)` meets two bookings at time 10.",
           "test-6": "Test 6: with `k = 3`, the fourth booking overlaps three at time 4.",
           "test-7": "Test 7 did not match. Trace it by hand.",
-          "test-8": "Test 8: with `k = 2`, `[5, 15)` meets two bookings at time 5."
+          "test-8": "Test 8: with `k = 2`, `[5, 15)` meets two bookings at time 5.",
+          "test-9": "Test 9: with `k = 2`, `[3, 12)` overlaps two bookings, but never at the same time."
         }
       },
       "explain": {
@@ -831,9 +837,19 @@
             "call": "run_cal(1, [[0, 0, 3], [0, 3, 6], [0, 9, 12], [2, 3, 0], [2, 4, 0], [1, 3, 6], [2, 4, 0]])",
             "expect": "[True, True, True, 6, 12, True, 3]",
             "compare": "equal"
+          },
+          {
+            "call": "run_cal(1, [[0, 20, 30], [0, 0, 5], [0, 10, 12], [2, 4, 0]])",
+            "expect": "[True, True, True, 5]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_cal(2, [[0, 0, 5], [0, 10, 15], [0, 3, 12], [0, 100, 110], [0, 100, 110], [1, 100, 110], [0, 100, 110], [0, 100, 110]])",
+            "expect": "[True, True, True, True, True, True, True, False]",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 13 hidden tests: stages A and B again, then `cancel` and `next_free`.",
+        "how": "Check runs 15 hidden tests: stages A and B again, then `cancel` and `next_free`.",
         "postlude": "def run_cal(k, ops):\n    c = Calendar(k)\n    out = []\n    for op in ops:\n        if op[0] == 0: out.append(c.book(op[1], op[2]))\n        elif op[0] == 1: out.append(c.cancel(op[1], op[2]))\n        else: out.append(c.next_free(op[1], op[2]))\n    return out\n"
       },
       "hints": [
@@ -870,7 +886,9 @@
           "test-10": "Test 10: a free start is the first candidate where the booking fits.",
           "test-11": "Test 11: after the cancel, the freed time is available again.",
           "test-12": "Test 12: an empty calendar gives `after` itself.",
-          "test-13": "Test 13: cancelling frees the gap that `next_free` then finds."
+          "test-13": "Test 13: cancelling frees the gap that `next_free` then finds.",
+          "test-14": "Test 14: the ends are not in booking order, so try the candidates from the earliest.",
+          "test-15": "Test 15: overlaps at different times do not add up, and `cancel` removes only one copy."
         }
       },
       "explain": {
@@ -982,7 +1000,7 @@
         "live-round"
       ],
       "pace": 120,
-      "prose": "Open `#drill`, set the pattern to `intervals` and the difficulty to 4, and pick one drill in Python or C++. The stopwatch counts up from the moment it opens, so keep the 45-minute plan.",
+      "prose": "Open `#drill`, set the pattern to `intervals` and the difficulty to 4, then pick a Python or C++ drill. The stopwatch counts up from the moment it opens, so keep the 45-minute plan.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -1179,22 +1197,22 @@
         "options": [
           {
             "id": "a",
-            "text": "A tree over the times that keeps the largest overlap per part: $O(\\log n)$",
+            "text": "A tree keeping the largest overlap per time range: $O(\\log n)$",
             "correct": true
           },
           {
             "id": "b",
-            "text": "A hash map of bookings by start: $O(1)$ lookups",
+            "text": "A hash map of bookings keyed by start time: $O(1)$ lookups",
             "why": "You chose a map with no order. It cannot tell the overlap at a time without a scan."
           },
           {
             "id": "c",
-            "text": "A heap of end times: $O(\\log n)$ per push",
+            "text": "A heap of end times, popping the earliest: $O(\\log n)$ per push",
             "why": "You chose the earliest end only. A heap cannot count the bookings at an arbitrary time."
           },
           {
             "id": "d",
-            "text": "The same list, scanned faster in a lower-level language",
+            "text": "The same list, scanned faster in a lower-level language such as C++",
             "why": "You kept the scan. A faster scan is still $O(n)$ per booking."
           }
         ],
@@ -1259,22 +1277,22 @@
         "options": [
           {
             "id": "a",
-            "text": "Yes: the end 6 is not included, so they only touch",
+            "text": "Yes: the end 6 is excluded, so they touch",
             "correct": true
           },
           {
             "id": "b",
-            "text": "No: both contain the time 6",
+            "text": "No: both of the bookings contain the time 6",
             "why": "You counted the end as included. In `[2, 6)` the last time is 5."
           },
           {
             "id": "c",
-            "text": "No: bookings may not touch",
+            "text": "No: bookings are not allowed to touch each other",
             "why": "You made touching illegal. Touching is allowed when the end is excluded."
           },
           {
             "id": "d",
-            "text": "Yes, but only if you cancel the first",
+            "text": "Yes, but only if you cancel the first one",
             "why": "You thought the first must go. They do not overlap."
           }
         ],
@@ -1414,7 +1432,7 @@
       },
       "feedback": {
         "correct": "3, 10, 3, 10 and 4 add to 30 and keep every block.",
-        "generic": "Not quite right. Check that the blocks add to 30 and none is zero.",
+        "generic": "Not quite right. Check that the blocks add to 30 and the base and follow-up have 10 each.",
         "byKey": {
           "b": "Zero blocks lose the marks those blocks earn.",
           "c": "Ten minutes of questions starve the base.",
@@ -1422,7 +1440,7 @@
         }
       },
       "explain": {
-        "text": "The blocks must add to 30 and each must be present. Only 3, 10, 3, 10 and 4 do both."
+        "text": "The blocks must add to 30, with 10 minutes each for the base and the follow-up. Only 3, 10, 3, 10 and 4 do both."
       }
     }
   ]
