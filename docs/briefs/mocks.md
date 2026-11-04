@@ -990,7 +990,7 @@ Each prompt says to say the answer aloud first, then type it in at most 250 word
 
 - `id`: `mock-oa-quant-data`. `name`: `Quantitative data assessment`. `style`: `research`.
 - `models` (under 200 characters): `Reported, as of Nov 2026: online assessments for quant research and quant finance internships at Morgan Stanley and Two Sigma: statistics and applied maths questions, then Python data tasks.`
-- `skills`: `{ "rq-stats": "Statistics questions", "rq-linalg": "Linear algebra questions", "rq-ml": "Machine learning questions", "rq-data": "Data tasks" }`.
+- `skills`: `{ "rq-stats": "Statistics questions", "rq-linalg": "Linear algebra questions", "rq-ml": "Machine learning questions", "rq-case": "Applied cases", "rq-data": "Data tasks" }` (corrected: task 3 uses `rq-case`, which the first draft left out).
 
 **Description** (plain, each sentence under 20 words):
 
@@ -1029,7 +1029,7 @@ Ramp: 2 at difficulty 2 (Q1, Q2). 5 at 3 (Q3 to Q7). 2 at 4 (Q8, Q9). 1 at 5 (Q1
 
 ### Paper 2: Python data tasks (80 min, 3 `code` items)
 
-The data is in three new files. The generator is `docs/briefs/mocks-scripts/gen_qd_data.py`. It is pure Python with a 32-bit linear congruential generator and fixed seeds. No library version changes a byte. Copy its output to `app/content/data/qd/` and the script to `app/tools/gen-qd-data.py`. Each file is read by bare name from a `data` field on the item's `code` widget: `"data": { "qd-prices.csv": "content/data/qd/qd-prices.csv" }`, and likewise for the others. All three are far under the 256 KB cap.
+The data is in three new files. The generator is `docs/briefs/mocks-scripts/gen_qd_data.py`. It is pure Python with a 32-bit linear congruential generator and fixed seeds. No library version changes a byte. Copy its output to `app/content/data/qd/`. (Corrected: a content agent may not edit `app/tools/`, so the script stays in `docs/briefs/mocks-scripts/`.) Each file is read by bare name from a `data` field on the item's `code` widget: `"data": { "qd-prices.csv": "content/data/qd/qd-prices.csv" }`, and likewise for the others. All three are far under the 256 KB cap.
 
 | File | Columns | Rows | Planted problems | Size | SHA-256 starts |
 | --- | --- | --- | --- | --- | --- |
@@ -1045,7 +1045,7 @@ Library note: the check script ran with NumPy 2.5.3 and pandas 3.0.5. Pyodide ha
 
 The tests catch four wrong versions the script builds: no repeat removal, a log return taken across tickers, `ddof=0`, and no sort.
 
-**Task 2, `qd-rolling-beta`** (difficulty 4, skills `rq-data`, `rq-stats`, tag `hedge-ratio`, `pace` 1,500). Statement: "`qd-pair.csv` has daily returns for an asset and the market. Three asset returns were typed as whole percents. A return with size above 0.25 in either column is a data error: drop that row. Then write `windowed_betas(window)`. It returns one least-squares slope of `asset` on `mkt` per window of `window` neighbouring remaining rows. Use date order and full windows only." Starter: the signature with a `...` body. A version that keeps the errors returns 461 windows, not 458, and a different sum.
+**Task 2, `qd-rolling-beta`** (difficulty 4, skills `rq-data`, `rq-stats`, tag `hedge-ratio`, `pace` 1,500). Statement: "`qd-pair.csv` has daily returns for an asset and the market. Three asset returns were typed as whole percents. A return with size above 0.25 in either column is a data error: drop that row. Then write `windowed_betas(window)`. It returns one least-squares slope of `asset` on `mkt` per window of `window` neighbouring remaining rows. Use date order and full windows only." Starter: the signature with a `...` body. A version that keeps the errors returns 461 windows, not 458, and a different sum. (Corrected: all three errors sit in `asset`, so a version that filters `asset` only passed every test. A ninth hidden test, a small file with an error in `mkt` only, now catches it.)
 
 **Task 3, `qd-out-of-sample`** (difficulty 5, skills `rq-data`, `rq-ml`, `rq-case`, tag `out-of-sample`, `pace` 1,800). Statement: "`qd-signal.csv` has two signals and the return of each day. Predict a day's return from the signals of the day before. Write `oos_scores(split)`. Row $t$ has the features of row $t - 1$ and the target `ret` of row $t$, for $t = 1$ to 799. Fit least squares with an intercept on the first `split` of these rows. Return a dict with `coef` (intercept, then the two slopes), `train_r2` and `oos_r2`. The out-of-sample score uses the remaining rows. Its baseline is the training mean of the target." Starter: the signature with a `...` body. The tests catch three wrong versions. Unlagged features give an out-of-sample $R^2$ of −0.0057 against 0.0577. The test-set mean as baseline gives 0.05765, which a tolerance of 1e-8 separates. A fit on every row gives 0.05801.
 

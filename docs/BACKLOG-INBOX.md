@@ -993,3 +993,9 @@ Raised later (exam mock-superday-research):
 - [Could] The playthrough names exam screenshots by screen index only, so each paper overwrites the one before and only the last paper's items survive; it also takes no shot of the start card and shoots the results page mid-animation (13 of 18 and no stamp at 1280 px).
 - [Could] The exam playthrough never runs a code starter against its hidden tests, so "the starter fails" is not checked for mock code items (it is for drills); the author ran the starters in Pyodide 0.27.7 by hand.
 - [Could] A drawn bank item carries its own course skills (for example `pz-conditioning`), which appear on the results page's By skill chart under names the mock's `skills` map does not define.
+
+Raised later (exam mock-oa-quant-data):
+- [Should] There are no statistics or applied-maths bank families (only probability, brain-teasers, mental maths, market making and behavioural). Paper 1 of `mock-oa-quant-data` is fixed, so a resit repeats all ten questions; bank families for statistics, linear algebra and machine learning would let it draw.
+- [Could] `draw` has no `language` filter. A mixed Python and C++ drill pack cannot feed a Python-only mock (a data task needs Python and a data file); a `language` field on the entry would fix it.
+- [Could] A code item scores per task, so a learner who passes 8 of 9 hidden tests gets no credit. A share-of-tests option with a pass mark would suit data tasks.
+- [Could] The generator `gen_qd_data.py` is meant to live at `app/tools/gen-qd-data.py`, but content agents may not edit `app/tools/`. An engine agent should copy it there if it is wanted.
