@@ -146,6 +146,22 @@ const loadPlaywright = async () => {
 
 /* ---------- What to play ---------- */
 const readJSON = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
+/* item 515: numeric widgets with unit "%" anywhere in a lesson file, with the forms a learner would type for the authored key */
+const pctWidgets = (root) => {
+  const out = [], seen = (v, at) => {
+    if (Array.isArray(v)) return v.forEach((x, i) => seen(x, `${at}[${i}]`));
+    if (!v || typeof v !== 'object') return;
+    if (v.kind === 'numeric' && v.unit === '%' && typeof v.answer === 'number') {
+      const k = Math.round(v.answer * 1e10) / 1e8, typed = [String(k), k + '%'];
+      const shown = [...String(typeof v.accept === 'string' ? v.accept : '').replace(/\\%/g, '%').matchAll(/([-−–]?\d[\d,]*(?:\.\d+)?)\s*%/g)].map(m => m[1].replace(/,/g, "").replace(/[−–]/g, "-"));
+      if (new Set(shown).size === 1) typed.push(shown[0], shown[0] + '%');
+      out.push({ at, answer: v.answer, tol: v.tol, typed });
+    }
+    Object.entries(v).forEach(([k, x]) => seen(x, `${at}.${k}`));
+  };
+  seen(root, '');
+  return out;
+};
 const writtenLessons = () => {
   const out = [];
   const cur = readJSON(path.join(CONTENT, 'curriculum.json'));
@@ -361,6 +377,21 @@ const main = async () => {
           }
           await page.evaluate(() => ZQ.test.continue());
         }
+        /* item 515: a numeric widget with unit "%" is also typed as a learner would, from the authored key (answer x 100, with and without a % sign) and from the one per cent figure its accept text shows; every form must grade right. Catches a key stored as the per cent. */
+        try {
+          const pcts = pctWidgets(readJSON(path.join(CONTENT, 'courses', ...id.split('/')) + '.json'));
+          if (pcts.length) {
+            const bad = await page.evaluate((list) => {
+              const G = ZQ.grade, out = [];
+              for (const w of list) for (const t of w.typed) {
+                const v0 = G.parseNum(t), v = t.includes('%') ? v0 : v0 / 100;
+                if (!(Number.isFinite(v) && G.within(v, +w.answer, w.tol))) out.push(`${w.at}: typing "${t}" is not graded right (key ${w.answer})`);
+              }
+              return out;
+            }, pcts);
+            bad.forEach(b => fails.push(`unit % key: ${b}`));
+          }
+        } catch (e) { fails.push('unit % check threw: ' + String(e.message || e).split('\n')[0]); }
         const fin = await page.evaluate((lid) => { const [c, l] = lid.split('/'); const r = ZQ.state.lesson(c, l); return r ? { done: r.done, quiz: r.bestQuiz } : null; }, id);
         if (!fails.length && (!fin || !fin.done)) fails.push('the completion screen was reached but the lesson is not recorded as done');
         await shot(`${id}-done`);

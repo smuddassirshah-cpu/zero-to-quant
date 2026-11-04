@@ -401,6 +401,18 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       (w.wrong || []).forEach((x, i) => { if (typeof x.value !== 'number') err(file, `${where}.wrong[${i}].value`, 'must be a number'); if (x.tol) tol(x.tol, `${where}.wrong[${i}].tol`); });
       text(w.accept, `${where}.accept`);
+      /* item 515: with unit "%" the engine divides what the learner types by 100, so the key is the fraction (0.1587, not 15.87) */
+      if (w.unit === '%') {
+        const accText = typeof w.accept === 'string' ? w.accept : '';
+        const shown = [...accText.replace(/\\%/g, '%').matchAll(/(-?[−–]?\d[\d,]*(?:\.\d+)?)\s*(?:%|per ?cent)/gi)].map(m => Math.abs(+m[1].replace(/[−–,]/g, '').replace(/^-/, '')));
+        const pctKey = (v, f) => {
+          if (typeof v !== 'number' || !Number.isFinite(v) || Math.abs(v) <= 1) return;
+          if (shown.some(n => Math.abs(n - Math.abs(v)) < 1e-9 * Math.max(1, n))) err(file, f, `unit "%" divides the typed value by 100, so the key is the fraction: ${v} should be ${+(v / 100).toPrecision(12)} (accept shows ${v}%)`);
+          else if (w.over100 !== true) warn(file, f, `unit "%" key ${v} is above 1: the key is the fraction (1.25 for 125%); if it really is over 100%, add "over100": true`);
+        };
+        pctKey(w.answer, `${where}.answer`);
+        (Array.isArray(w.wrong) ? w.wrong : []).forEach((x, i) => x && pctKey(x.value, `${where}.wrong[${i}].value`));
+      }
       break;
     case 'expression':
       if (typeof w.answer !== 'string' || !w.answer) err(file, `${where}.answer`, 'expression answer must be a TeX string');
