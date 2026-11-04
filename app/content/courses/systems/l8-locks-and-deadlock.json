@@ -1,0 +1,1609 @@
+{
+  "id": "l8-locks-and-deadlock",
+  "course": "systems",
+  "title": "Mutexes and deadlock",
+  "minutes": 15,
+  "objectives": [
+    "Protect shared data with a mutex and avoid deadlock by fixing the lock order."
+  ],
+  "skills": [
+    "sy-concurrency"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A lock around the increment",
+      "tags": [
+        "mutex-critical-section"
+      ],
+      "prose": "The same two increments as last lesson, now wrapped in a **mutex** `m`. A lane whose next step is `lock m` cannot step while the other lane holds `m`: its button greys out.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "locks": [
+            "m"
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "m"
+                },
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "m"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "m"
+                },
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "m"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "x is {{values.x}}. {{values.ending == 'complete' ? 'Both finished.' : ''}}"
+        }
+      },
+      "question": "Try to make `x` end at 1. Can you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: once one lane locks `m`, the other waits until the unlock",
+            "correct": true
+          },
+          {
+            "id": "bfirst",
+            "text": "Yes, by stepping lane B first",
+            "why": "Whichever lane locks first, the other waits for it. Both orders end at 2."
+          },
+          {
+            "id": "both",
+            "text": "Yes, if both lanes lock at the same moment",
+            "why": "`lock` is one step, and only one lane can take `m`."
+          },
+          {
+            "id": "loads",
+            "text": "Yes, by running both loads first",
+            "why": "Lane B cannot reach its load: it is stuck at `lock m`."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try a1, then lane B."
+        },
+        {
+          "rung": "point",
+          "text": "After a1, lane B's Step button is disabled.",
+          "highlight": [
+            "b1",
+            "lock-m"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only two schedules exist, one per lane that locks first. Both end at 2."
+        }
+      ],
+      "feedback": {
+        "correct": "No. The mutex makes each increment whole.",
+        "generic": "Not quite right. Step a1, then try lane B.",
+        "byKey": {
+          "bfirst": "Lane B first just swaps the roles. Lane A then waits.",
+          "both": "Taking a lock is one indivisible step. Only one lane can win it.",
+          "loads": "Lane B never reaches its load while lane A holds `m`."
+        }
+      },
+      "explain": {
+        "text": "Only one lane at a time can be between `lock m` and `unlock m`. That stretch is the **critical section**. Two schedules remain, and both end at 2.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "a",
+            "a",
+            "a",
+            "a",
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Two locks",
+      "prose": "T1 takes lock A, then B. T2 takes B, then A. Step them in different orders until both stop.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "locks": [
+            "A",
+            "B"
+          ],
+          "outcome": [],
+          "lanes": [
+            {
+              "id": "t1",
+              "label": "T1",
+              "short": "T1",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "A"
+                },
+                {
+                  "op": "lock",
+                  "lock": "B"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "B"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "A"
+                }
+              ]
+            },
+            {
+              "id": "t2",
+              "label": "T2",
+              "short": "T2",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "B"
+                },
+                {
+                  "op": "lock",
+                  "lock": "A"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "A"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "B"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "{{values.ending == 'deadlock' ? 'Deadlock: no lane can step.' : (values.ending == 'complete' ? 'Both finished.' : 'Running.')}}"
+        }
+      },
+      "question": "Step until no lane can move. Then tap the step each lane is waiting to run.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "t1-2",
+          "t2-2"
+        ],
+        "countWord": "steps marked",
+        "wrong": [
+          {
+            "id": "firsts",
+            "set": [
+              "t1-1",
+              "t2-1"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Step T1 once, then T2 once."
+        }
+      ],
+      "feedback": {
+        "correct": "Each lane waits at its second lock.",
+        "generic": "Not quite right. Step T1, then T2, and look at the next step of each.",
+        "byKey": {
+          "firsts": "Those locks were taken. The lanes are stuck on the steps after them."
+        }
+      },
+      "explain": {
+        "text": "T1 holds A and waits for B; T2 holds B and waits for A. Neither can let go, so neither moves again. That is a **deadlock**.",
+        "canvas": {
+          "schedule": [
+            "t1",
+            "t2"
+          ],
+          "highlight": [
+            "t1-2",
+            "t2-2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "How often",
+      "tags": [
+        "deadlock-conditions"
+      ],
+      "prose": "Two lanes of four steps could interleave in 70 ways. But a lane that waits on a held lock cannot step, so only 6 schedules can happen.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "locks": [
+            "A",
+            "B"
+          ],
+          "outcome": [],
+          "lanes": [
+            {
+              "id": "t1",
+              "label": "T1",
+              "short": "T1",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "A"
+                },
+                {
+                  "op": "lock",
+                  "lock": "B"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "B"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "A"
+                }
+              ]
+            },
+            {
+              "id": "t2",
+              "label": "T2",
+              "short": "T2",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "B"
+                },
+                {
+                  "op": "lock",
+                  "lock": "A"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "A"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "B"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "{{values.ending == 'deadlock' ? 'Deadlock: no lane can step.' : (values.ending == 'complete' ? 'Both finished.' : 'Running.')}}"
+        }
+      },
+      "question": "How many of the 6 schedules deadlock?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2 of 6.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "seventy",
+            "value": 70,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A deadlock needs each lane to hold its first lock."
+        },
+        {
+          "rung": "point",
+          "text": "The first two steps are t1-1 and t2-1, in either order.",
+          "highlight": [
+            "t1-1",
+            "t2-1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "2 deadlock: T1 then T2, or T2 then T1."
+        }
+      ],
+      "feedback": {
+        "correct": "2 of the 6 schedules deadlock.",
+        "generic": "Not quite right. When do both lanes hold their first lock?",
+        "byKey": {
+          "one": "Either lane can take its first lock first: two ways.",
+          "four": "4 is the count that finish.",
+          "seventy": "70 counts every order of 8 steps, but a blocked lane cannot step. Only 6 can happen."
+        }
+      },
+      "explain": {
+        "text": "Deadlock needs both first locks taken before either second lock: two ways. The canvas counts 6 legal schedules: 4 finish and 2 deadlock. All four conditions hold here: mutual exclusion, hold and wait, no pre-emption and a circular wait.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "t2",
+            "t1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A ring of three",
+      "tags": [
+        "lock-order"
+      ],
+      "prose": "Three threads: P takes A then B, Q takes B then C, R takes C then A. The canvas counts 168 legal schedules.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "locks": [
+            "A",
+            "B",
+            "C"
+          ],
+          "outcome": [],
+          "lanes": [
+            {
+              "id": "p",
+              "label": "P",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "A"
+                },
+                {
+                  "op": "lock",
+                  "lock": "B"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "B"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "A"
+                }
+              ]
+            },
+            {
+              "id": "q",
+              "label": "Q",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "B"
+                },
+                {
+                  "op": "lock",
+                  "lock": "C"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "C"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "B"
+                }
+              ]
+            },
+            {
+              "id": "r",
+              "label": "R",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "C"
+                },
+                {
+                  "op": "lock",
+                  "lock": "A"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "A"
+                },
+                {
+                  "op": "unlock",
+                  "lock": "C"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "{{values.ending == 'deadlock' ? 'Deadlock: no lane can step.' : (values.ending == 'complete' ? 'Both finished.' : 'Running.')}}"
+        }
+      },
+      "question": "How many of the 168 deadlock?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "6: the three first locks in any order, $3! = 6$.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "When is every lane stuck?"
+        },
+        {
+          "rung": "point",
+          "text": "Each lane must hold its first lock while asking for its second.",
+          "highlight": [
+            "p1",
+            "q1",
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The three first locks come first, in any order: $3!$."
+        }
+      ],
+      "feedback": {
+        "correct": "6 of 168.",
+        "generic": "Not quite right. What must happen before all three lanes are stuck?",
+        "byKey": {
+          "two": "Two lanes in a cycle give 2. Three first locks can come in $3! = 6$ orders.",
+          "three": "Count orders of the three first locks, not the lanes.",
+          "none": "Step P, Q and R once each: all three wait."
+        }
+      },
+      "explain": {
+        "text": "Each lane holds one lock and wants the next round the ring. That needs the three first locks first, in any of $3! = 6$ orders. The other 162 schedules finish.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "p",
+            "q",
+            "r"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Break the cycle",
+      "tags": [
+        "lock-order"
+      ],
+      "prose": "Draw each lock as a node. Draw an edge from X to Y when a thread holds X while taking Y. The ring is a cycle. Reverse one thread's order to break it.",
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "directed": true,
+          "tapEdges": true,
+          "nodes": [
+            {
+              "id": "A",
+              "label": "A",
+              "x": 0.5,
+              "y": 0.15
+            },
+            {
+              "id": "B",
+              "label": "B",
+              "x": 0.82,
+              "y": 0.8
+            },
+            {
+              "id": "C",
+              "label": "C",
+              "x": 0.18,
+              "y": 0.8
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "B",
+              "label": "P"
+            },
+            {
+              "from": "B",
+              "to": "C",
+              "label": "Q"
+            },
+            {
+              "from": "C",
+              "to": "A",
+              "label": "R"
+            }
+          ]
+        },
+        "state": {
+          "caption": "An edge from X to Y: some thread holds X while it takes Y."
+        }
+      },
+      "question": "R takes C then A. Tap the edge that, reversed, removes the cycle.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "e-C-A"
+        ],
+        "countWord": "edges",
+        "wrong": [
+          {
+            "id": "ab",
+            "set": [
+              "e-A-B"
+            ]
+          },
+          {
+            "id": "bc",
+            "set": [
+              "e-B-C"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which edge is R's?"
+        },
+        {
+          "rung": "point",
+          "text": "R holds C while it takes A.",
+          "highlight": [
+            "e-C-A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Tap the edge from C to A."
+        }
+      ],
+      "feedback": {
+        "correct": "R now takes A then C: edges A to B, B to C, A to C, no cycle.",
+        "generic": "Not quite right. Find R's edge.",
+        "byKey": {
+          "ab": "Reversing P's edge also breaks this cycle, but the question is about R.",
+          "bc": "That is Q's edge. Find the one from C to A."
+        }
+      },
+      "explain": {
+        "text": "With R taking A then C, every thread takes locks in the order A, B, C. Stepped as lanes, that gives 142 schedules and none deadlock. One global order for every lock removes the circular wait.",
+        "canvas": {
+          "edges": {
+            "e-C-A": null,
+            "e-A-C": {
+              "from": "A",
+              "to": "C",
+              "label": "R"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What a lock costs",
+      "tags": [
+        "mutex-critical-section"
+      ],
+      "prose": "Round figures, stated as assumptions: an uncontended lock and unlock costs 25 ns. A lock that has to sleep and be woken costs 5 µs. Four threads each do 1,000,000 locked increments.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "std::lock_guard g(m); ++x;   // each",
+            "uncontended lock and unlock: 25 ns",
+            "a lock that sleeps and wakes: 5 µs",
+            "4 threads × 1,000,000 increments"
+          ],
+          "title": "One mutex, four threads",
+          "wrap": true
+        }
+      },
+      "question": "Fill in both times.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Case",
+          "Seconds"
+        ],
+        "rows": [
+          [
+            "4,000,000 locked increments, never contended",
+            {
+              "edit": true,
+              "answer": 0.1,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "The same, if every lock had to sleep",
+            {
+              "edit": true,
+              "answer": 20,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the count by the cost."
+        },
+        {
+          "rung": "point",
+          "text": "$4{,}000{,}000 \\times 25$ ns.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.1 s and $4{,}000{,}000 \\times 5\\ \\mu s = 20$ s."
+        }
+      ],
+      "feedback": {
+        "correct": "0.1 s and 20 s: 200 times worse.",
+        "generic": "Not quite right. Check the first marked cell.",
+        "byKey": {
+          "r0c1": "$4 \\times 10^6 \\times 25 \\times 10^{-9} = 0.1$ s.",
+          "r1c1": "$4 \\times 10^6 \\times 5 \\times 10^{-6} = 20$ s."
+        }
+      },
+      "explain": {
+        "text": "Uncontended, a mutex is cheap: 0.1 s for four million. If threads collide and sleep, it is 200 times worse. Keep critical sections short so collisions are rare.",
+        "canvas": {
+          "tone": {
+            "l3": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Which can deadlock",
+      "tags": [
+        "scoped-lock"
+      ],
+      "prose": "Two functions each lock two accounts' mutexes. In version 1 they lock one by one; in version 2 they use `std::scoped_lock`. Two calls run at once with the arguments swapped.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "void v1(Account& a, Account& b) {",
+            "  std::lock_guard g1(a.m);",
+            "  std::lock_guard g2(b.m);",
+            "  /* ... */ }",
+            "void v2(Account& a, Account& b) {",
+            "  std::scoped_lock lk(a.m, b.m);",
+            "  /* ... */ }"
+          ],
+          "title": "Two versions",
+          "wrap": true
+        }
+      },
+      "question": "Which version can deadlock?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "v1",
+            "text": "Version 1",
+            "correct": true
+          },
+          {
+            "id": "v2",
+            "text": "Version 2",
+            "why": "`scoped_lock` takes both with a deadlock-avoiding algorithm, whatever the argument order."
+          },
+          {
+            "id": "both",
+            "text": "Both",
+            "why": "`scoped_lock` never holds one lock while waiting for the other."
+          },
+          {
+            "id": "neither",
+            "text": "Neither",
+            "why": "Version 1 with swapped arguments is T1 and T2 from the explore screen."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Swap the arguments in version 1. Which order does each call take?"
+        },
+        {
+          "rung": "point",
+          "text": "Call 1 takes a then b; call 2 takes b then a.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That is the two-lane cycle. `scoped_lock` avoids it."
+        }
+      ],
+      "feedback": {
+        "correct": "Version 1: swapped arguments give opposite orders.",
+        "generic": "Not quite right. Trace version 1 with `(x, y)` and `(y, x)`.",
+        "byKey": {
+          "v2": "`scoped_lock` locks both as one step that cannot deadlock, whatever order you name them.",
+          "both": "Only version 1 can hold one lock and wait for the other.",
+          "neither": "Version 1 with swapped arguments is the two-lock cycle."
+        }
+      },
+      "explain": {
+        "text": "Version 1 called as `(x, y)` and `(y, x)` takes the locks in opposite orders, the cycle from the explore screen. `std::scoped_lock` takes all its locks with a deadlock-avoiding algorithm. Use `scoped_lock` whenever one thread needs two locks at once.",
+        "canvas": {
+          "shade": {
+            "bad": [
+              "l2",
+              "l3"
+            ],
+            "good": [
+              "l6"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "One thread, one lock",
+      "tags": [
+        "deadlock-conditions"
+      ],
+      "prose": "A thread locks `m`, then calls a helper that also locks `m`. `std::mutex` is not recursive.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "locks": [
+            "m"
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "lock",
+                  "lock": "m"
+                },
+                {
+                  "op": "lock",
+                  "lock": "m",
+                  "text": "lock m (again, in a helper)"
+                },
+                {
+                  "op": "fetch-add",
+                  "var": "x",
+                  "by": 1
+                },
+                {
+                  "op": "unlock",
+                  "lock": "m"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "{{values.ending == 'deadlock' ? 'Deadlock: no lane can step.' : (values.ending == 'complete' ? 'Both finished.' : 'Running.')}}"
+        }
+      },
+      "question": "Step lane A. What happens at step a2?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "self",
+            "text": "The thread waits for a lock it holds itself: a deadlock",
+            "correct": true
+          },
+          {
+            "id": "pass",
+            "text": "It passes, since the thread already owns `m`",
+            "why": "That is `std::recursive_mutex`. A plain `std::mutex` does not count owners."
+          },
+          {
+            "id": "unlock",
+            "text": "The second lock releases the first",
+            "why": "Locking never releases anything."
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: deadlock needs two threads",
+            "why": "A cycle can have one node: an edge from A to A."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Step a1, then look at lane A's button."
+        },
+        {
+          "rung": "point",
+          "text": "a2 asks for `m`, which lane A holds.",
+          "highlight": [
+            "a2",
+            "lock-m"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No one will ever unlock it, so lane A waits forever."
+        }
+      ],
+      "feedback": {
+        "correct": "A deadlock with one thread.",
+        "generic": "Not quite right. Step a1 and try a2.",
+        "byKey": {
+          "pass": "Only `std::recursive_mutex` lets an owner lock again.",
+          "unlock": "A second lock waits; it never releases.",
+          "fine": "One thread is enough: the lock-order graph has an edge from `m` to itself."
+        }
+      },
+      "explain": {
+        "text": "Lane A waits for `m`, and only lane A could unlock it. In the lock-order graph that is an edge from `m` to `m`, a cycle of one. Lock at one level only, or pass a lock that is already held."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The rule",
+      "prose": "Deadlock needs all four of these. Remove any one and it cannot happen.\n\n```text\nmutual exclusion   one holder per lock\nhold and wait      hold one lock, ask for another\nno pre-emption     nobody takes a lock away\ncircular wait      a cycle in the lock-order graph\n```\n\nThe usual cure: every thread takes locks in one fixed order.",
+      "question": "Which condition does a fixed lock order remove?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "circ",
+            "text": "Circular wait",
+            "correct": true
+          },
+          {
+            "id": "mutex",
+            "text": "Mutual exclusion",
+            "why": "The locks still allow one holder each."
+          },
+          {
+            "id": "hold",
+            "text": "Hold and wait",
+            "why": "Threads still hold one lock while taking the next."
+          },
+          {
+            "id": "pre",
+            "text": "No pre-emption",
+            "why": "Nobody takes a lock away under a fixed order either."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Circular wait: every edge points the same way, so no cycle.",
+        "generic": "Not quite right. What does one global order do to the graph?",
+        "byKey": {
+          "mutex": "Each lock still has one holder.",
+          "hold": "Holding A while taking B is still allowed.",
+          "pre": "Locks are still never taken away."
+        }
+      },
+      "explain": {
+        "text": "If every thread takes A before B before C, every edge points down that list. A graph whose edges all point one way has no cycle. So the circular wait, and with it the deadlock, is gone."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: cycles",
+      "tags": [
+        "lock-order"
+      ],
+      "pace": 480,
+      "prose": "Drill: about two minutes each. Say the reasoning aloud first. Each string is one thread's locks in order: `AB` takes A, then B, holding A. Draw the edges and look for a cycle. Enter 1 for a cycle, 0 for none.",
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Threads",
+          "Cycle (1 or 0)"
+        ],
+        "rows": [
+          [
+            "{AB, BA}",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "{AB, BC, AC}",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "{AB, BC, CD, DA}",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "{ABC, BCD, ACD}",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write every edge first. `ABC` gives A to B, A to C and B to C."
+        },
+        {
+          "rung": "point",
+          "text": "Look for a path that returns to where it started."
+        },
+        {
+          "rung": "step",
+          "text": "1, 0, 1, 0."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 0, 1, 0.",
+        "generic": "Not quite right. Check the first marked cell.",
+        "byKey": {
+          "r0c1": "A to B and B to A: a cycle of two.",
+          "r1c1": "Every edge goes A, B, C downwards: no cycle.",
+          "r2c1": "A to B to C to D and back to A.",
+          "r3c1": "All edges follow A, B, C, D, so no cycle."
+        }
+      },
+      "explain": {
+        "text": "A cycle is a path back to its start. When every thread's string is in alphabetical order, no edge points back, so there is never a cycle. That is the fixed lock order, seen on the graph."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Find the cycle in code",
+      "tags": [
+        "lock-order"
+      ],
+      "prose": "Now as code. Each string is one thread's lock order, as in the drill. A thread holds every lock it has taken while it takes the next.",
+      "question": "Fix `has_lock_cycle` so it returns true exactly when the lock-order graph has a cycle.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <string>\n#include <vector>\n\n// Each string is one thread: the locks it takes, in order, each held while it takes the next (\"AB\" takes A, then B).\n// Return true if the lock-order graph (an edge from each held lock to each lock taken after it) has a cycle.\nbool has_lock_cycle(const std::vector<std::string>& threads) {\n    // Only checks whether two threads share a lock, which is not the same as a cycle.\n    for (size_t a = 0; a < threads.size(); ++a)\n        for (size_t b = a + 1; b < threads.size(); ++b)\n            for (char c : threads[a])\n                if (threads[b].find(c) != std::string::npos) return true;\n    return false;\n}\n",
+        "solution": "#include <string>\n#include <vector>\n\nnamespace {\nbool visit(int n, const bool edge[26][26], int state[26]) {   // 0 new, 1 on the path, 2 finished\n    state[n] = 1;\n    for (int m = 0; m < 26; ++m) {\n        if (!edge[n][m]) continue;\n        if (state[m] == 1) return true;\n        if (state[m] == 0 && visit(m, edge, state)) return true;\n    }\n    state[n] = 2;\n    return false;\n}\n}\n\nbool has_lock_cycle(const std::vector<std::string>& threads) {\n    bool edge[26][26] = {};\n    for (const auto& s : threads)\n        for (size_t i = 0; i < s.size(); ++i)\n            for (size_t j = i + 1; j < s.size(); ++j)\n                edge[s[i] - 'A'][s[j] - 'A'] = true;\n    int state[26] = {};\n    for (int n = 0; n < 26; ++n)\n        if (state[n] == 0 && visit(n, edge, state)) return true;\n    return false;\n}\n",
+        "examples": [
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AB",
+                "BA"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AB",
+                "BC",
+                "AC"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": false,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AB",
+                "BA"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AB",
+                "AB"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AB",
+                "BC",
+                "CA"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AB",
+                "BC",
+                "AC"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "A",
+                "A"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "ABC",
+                "CBA"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AB",
+                "CD"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              []
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AA"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AB",
+                "BC",
+                "CD",
+                "DA"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "ABC",
+                "BCD",
+                "ACD"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "has_lock_cycle",
+            "args": [
+              [
+                "AC",
+                "BD",
+                "CB"
+              ]
+            ],
+            "types": [
+              "std::vector<std::string>"
+            ],
+            "expect": false,
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Twelve hidden tests, including the drill's four, no threads at all, and one thread that takes A twice."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The starter flags any shared lock, but {AB, AB} shares locks and is safe."
+        },
+        {
+          "rung": "point",
+          "text": "Build the edges: for `ABC`, A to B, A to C, B to C. Then search for a cycle."
+        },
+        {
+          "rung": "step",
+          "text": "Depth-first search with three states per node: new, on the path, finished. Reaching a node on the path is a cycle."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Edges first, then a search for a path back.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "Sharing a lock is not the danger; taking locks in opposite orders is. Each string gives an edge from every lock to every later one. A depth-first search that meets a node still on its path has found a cycle, `AA` included."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: transfers",
+      "tags": [
+        "lock-order"
+      ],
+      "prose": "An interviewer shows `transfer(from, to, amount)`, which locks `from` then `to`. Two transfers in opposite directions deadlock: {AB, BA}. You fix it by locking the lower account id first, or with `std::scoped_lock`.",
+      "question": "With correct locking, A and B start at £100 each. £10 moves from A to B, while £5 moves from B to A. What does each end with?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Account",
+          "Ends with (£)"
+        ],
+        "rows": [
+          [
+            "A",
+            {
+              "edit": true,
+              "answer": 95,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "B",
+            {
+              "edit": true,
+              "answer": 105,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Locking changes when each transfer runs, not what it does."
+        },
+        {
+          "rung": "point",
+          "text": "A: $100 - 10 + 5$."
+        },
+        {
+          "rung": "step",
+          "text": "A ends at £95 and B at £105."
+        }
+      ],
+      "feedback": {
+        "correct": "£95 and £105: the total stays £200.",
+        "generic": "Not quite right. Apply both transfers.",
+        "byKey": {
+          "r0c1": "A loses 10 and gains 5.",
+          "r1c1": "B gains 10 and loses 5."
+        }
+      },
+      "explain": {
+        "text": "With one lock order the two transfers run one after the other, so both apply in full. A ends at £95, B at £105, and £200 is conserved. Lower id first is the usual rule in a payments or position system."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A mutex lets one thread at a time into a critical section; a lane that wants a held lock waits.",
+      "Deadlock needs mutual exclusion, hold and wait, no pre-emption and a circular wait.",
+      "Take every lock in one fixed order, or use `std::scoped_lock`, and the cycle cannot form."
+    ],
+    "formula": {
+      "name": "Deadlocks in a ring of $k$ threads",
+      "tex": "k! \\text{ orders of the first locks}",
+      "note": "Two threads: 2 of 6; three: 6 of 168."
+    },
+    "trap": "Thinking two threads that share locks must deadlock: only opposite orders can."
+  },
+  "quiz": [
+    {
+      "id": "q-cycle",
+      "difficulty": 2,
+      "tags": [
+        "lock-order"
+      ],
+      "pace": 45,
+      "prose": "Three threads take locks in these orders: AC, BD, CB.",
+      "question": "Can they deadlock?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the edges A to C, B to D and C to B form no cycle",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: C appears in two threads",
+            "why": "Sharing a lock is not a cycle. Follow the edges."
+          },
+          {
+            "id": "maybe",
+            "text": "Yes, if three threads start at once",
+            "why": "Without a cycle no set of threads can wait round in a ring."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "No cycle, so no deadlock.",
+        "generic": "Not quite right. Draw the three edges."
+      },
+      "explain": {
+        "text": "The edges are A to C, B to D and C to B. A path goes A, C, B, D and never returns. No cycle means no deadlock from lock order."
+      }
+    },
+    {
+      "id": "q-cost",
+      "difficulty": 2,
+      "tags": [
+        "mutex-critical-section"
+      ],
+      "pace": 40,
+      "prose": "An uncontended lock and unlock costs 25 ns.",
+      "question": "How many milliseconds do 1,000,000 uncontended locked increments take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 25,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "ms",
+        "accept": "25 ms.",
+        "wrong": [
+          {
+            "id": "micro",
+            "value": 0.025,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "sec",
+            "value": 25000,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "25 ms.",
+        "generic": "Not quite right. $10^6 \\times 25$ ns.",
+        "byKey": {
+          "micro": "You divided by a thousand too many. $25 \\times 10^6$ ns is 25 ms.",
+          "sec": "That is microseconds. 25,000 µs is 25 ms."
+        }
+      },
+      "explain": {
+        "text": "$10^6 \\times 25$ ns $= 2.5 \\times 10^7$ ns $= 25$ ms. Uncontended locks are cheap. Contention, not the lock itself, is what costs."
+      }
+    },
+    {
+      "id": "q-cond",
+      "difficulty": 2,
+      "tags": [
+        "deadlock-conditions"
+      ],
+      "pace": 30,
+      "prose": "A team makes every thread take locks in alphabetical order.",
+      "question": "Which deadlock condition does that remove?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "circ",
+            "text": "Circular wait",
+            "correct": true
+          },
+          {
+            "id": "hold",
+            "text": "Hold and wait",
+            "why": "Threads still hold A while taking B."
+          },
+          {
+            "id": "mutex",
+            "text": "Mutual exclusion",
+            "why": "Each lock still has one holder."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Circular wait.",
+        "generic": "Not quite right. What does one order do to the graph?"
+      },
+      "explain": {
+        "text": "A fixed order makes every edge point the same way. Then no cycle can form. The other three conditions still hold, but one missing is enough."
+      }
+    },
+    {
+      "id": "q-share",
+      "difficulty": 3,
+      "tags": [
+        "mutex-critical-section"
+      ],
+      "pace": 45,
+      "prose": "A handler holds one mutex for 2 µs per message, at 200,000 messages a second.",
+      "question": "What share of each second is the mutex held?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.4,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "%",
+        "accept": "40%: $2\\ \\mu s \\times 200{,}000 = 0.4$ s.",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 0.04,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "all",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "40% of the time.",
+        "generic": "Not quite right. Multiply the hold time by the rate.",
+        "byKey": {
+          "four": "You slipped a power of ten: $2 \\times 10^{-6} \\times 2 \\times 10^5 = 0.4$.",
+          "all": "0.4 of a second each second is 40%."
+        }
+      },
+      "explain": {
+        "text": "$2 \\times 10^{-6} \\times 200{,}000 = 0.4$ s of every second. A second thread wanting the same mutex will often find it held and wait. Shorter critical sections cut that share."
+      }
+    }
+  ]
+}

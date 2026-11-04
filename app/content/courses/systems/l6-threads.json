@@ -1,0 +1,1062 @@
+{
+  "id": "l6-threads",
+  "course": "systems",
+  "title": "Threads and what they share",
+  "minutes": 12,
+  "objectives": [
+    "Say what threads share and what each one owns."
+  ],
+  "skills": [
+    "sy-concurrency"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Who can reach it",
+      "tags": [
+        "thread-shared-state"
+      ],
+      "prose": "A thread is a path of execution inside a process. Two threads both run `worker` below, at the same time. Some names here mean one object that both threads see. Others give each thread its own copy.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "int total = 0;",
+            "std::vector<int> data(1000);",
+            "void worker(int id) {",
+            "    int local = 0;",
+            "    static int calls = 0;",
+            "    thread_local int mine = 0;",
+            "    int* p = new int(id);",
+            "    // ... the work ...",
+            "}"
+          ],
+          "title": "worker.cpp",
+          "numbers": true,
+          "wrap": true
+        }
+      },
+      "question": "Tap every line whose variable two threads running `worker` both reach.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l1",
+          "l2",
+          "l5"
+        ],
+        "countWord": "lines",
+        "wrong": [
+          {
+            "id": "heap",
+            "set": [
+              "l1",
+              "l2",
+              "l5",
+              "l7"
+            ]
+          },
+          {
+            "id": "tls",
+            "set": [
+              "l1",
+              "l2",
+              "l5",
+              "l6"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which of these live outside any one call of `worker`?"
+        },
+        {
+          "rung": "point",
+          "text": "A global lives once per process. So does a `static` local.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Lines 1, 2 and 5."
+        }
+      ],
+      "feedback": {
+        "correct": "Lines 1, 2 and 5: the two globals and the static.",
+        "generic": "Not quite right. Look for the variables that exist once per process.",
+        "byKey": {
+          "heap": "The block `p` points to is on the shared heap, but only this thread holds `p`. It is private unless `p` is handed over.",
+          "tls": "`thread_local` gives each thread its own copy, so line 6 is not shared.",
+          "l4": "`local` is on the stack of this call, and each thread has its own stack.",
+          "l7": "The heap is shared, but `p` is a local. Only this thread knows the address.",
+          "l6": "`thread_local` gives each thread its own copy.",
+          "l3": "Line 3 is the function itself. Code is shared, but it holds no data.",
+          "l8": "Line 8 is a comment.",
+          "l9": "Line 9 closes the function."
+        }
+      },
+      "explain": {
+        "text": "Globals and `static` locals exist once per process, so both threads reach them. `local` lives on each thread's stack and `mine` is one per thread. The heap block is reachable only through `p`, which this thread alone holds.",
+        "canvas": {
+          "shade": {
+            "shared": [
+              "l1",
+              "l2",
+              "l5"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Two threads, one total",
+      "prose": "Each thread summed its own half into a local: $1 + 2 + 3 + 4 = 10$ and $5 + 6 + 7 + 8 = 26$. Only the merge touches the shared `total`. Tap a lane's Step button to run its next step, in any order. Undo and Reset let you try again.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "total": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "total"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 10
+                },
+                {
+                  "op": "store",
+                  "var": "total",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "total"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 26
+                },
+                {
+                  "op": "store",
+                  "var": "total",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "outcomes": "found"
+        },
+        "derive": {
+          "caption": "total is {{values.total}} after {{values.steps}} of 6 steps."
+        }
+      },
+      "question": "Which final values of `total` can you reach? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "v36",
+            "text": "36",
+            "correct": true
+          },
+          {
+            "id": "v10",
+            "text": "10",
+            "correct": true
+          },
+          {
+            "id": "v26",
+            "text": "26",
+            "correct": true
+          },
+          {
+            "id": "v0",
+            "text": "0",
+            "why": "Every schedule runs both stores, so `total` is never left at 0."
+          },
+          {
+            "id": "v52",
+            "text": "52",
+            "why": "No lane adds twice. The largest final is $10 + 26$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "36, 10 and 26 can all happen.",
+        "generic": "Not quite right. Try loading in both lanes before either stores.",
+        "byKey": {
+          "v0": "Every schedule runs both stores, so `total` is never left at 0.",
+          "v52": "No lane adds twice. The largest final is $10 + 26$."
+        }
+      },
+      "explain": {
+        "text": "Of the 20 orders, 2 run one merge wholly before the other and give 36. In the other 18, both lanes load 0 and the last store wins: 10 or 26. The private halves are safe; only the shared `total` can go wrong.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "a",
+            "b",
+            "a",
+            "b",
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Private and shared steps",
+      "tags": [
+        "thread-shared-state"
+      ],
+      "prose": "A lane's register `r` is its own, like a stack variable. Only some steps reach the shared `total`.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "total": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "total"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 10
+                },
+                {
+                  "op": "store",
+                  "var": "total",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "total"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 26
+                },
+                {
+                  "op": "store",
+                  "var": "total",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap every step that reads or writes the shared `total`.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "a1",
+          "a3",
+          "b1",
+          "b3"
+        ],
+        "countWord": "steps",
+        "wrong": [
+          {
+            "id": "adds",
+            "set": [
+              "a1",
+              "a2",
+              "a3",
+              "b1",
+              "b2",
+              "b3"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which steps name `total`?"
+        },
+        {
+          "rung": "point",
+          "text": "The add changes only the lane's register.",
+          "highlight": [
+            "a2",
+            "b2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The loads a1 and b1 and the stores a3 and b3."
+        }
+      ],
+      "feedback": {
+        "correct": "The loads and the stores: a1, a3, b1, b3.",
+        "generic": "Not quite right. Mark only steps that name `total`.",
+        "byKey": {
+          "adds": "The add works on the lane's own register `r`, which no other thread sees.",
+          "a2": "a2 adds to the register `r`, which belongs to lane A alone.",
+          "b2": "b2 adds to lane B's own register."
+        }
+      },
+      "explain": {
+        "text": "Loads and stores touch shared memory; the add happens in a register that each thread owns. The trouble lives only in the steps on `total`. That is why each thread summed its half privately first.",
+        "canvas": {
+          "highlight": [
+            "a1",
+            "a3",
+            "b1",
+            "b3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A thread per message",
+      "tags": [
+        "thread-cost",
+        "stack-per-thread"
+      ],
+      "prose": "Round figures for this level, stated as assumptions: creating a thread costs 15 µs. Each thread reserves 8 MiB of address space for its stack. A handler gets 200,000 messages a second.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "while (auto msg = feed.next())",
+            "  std::thread(handle, msg).detach();",
+            "// 15 µs each, 200,000 a second",
+            "// each thread: 8 MiB of stack"
+          ],
+          "title": "One thread per message",
+          "wrap": true
+        }
+      },
+      "question": "Fill in both costs.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Plan",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "A new thread per message: cores spent creating threads",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "1,000 threads alive at once: stack address space (GiB, 1 dp)",
+            {
+              "edit": true,
+              "answer": 7.8,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the cost by the rate, then by the count."
+        },
+        {
+          "rung": "point",
+          "text": "$15\\ \\mu s \\times 200{,}000$ is the busy time per second.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "3 cores; $8 \\times 1{,}000 / 1{,}024 = 7.8$ GiB."
+        }
+      ],
+      "feedback": {
+        "correct": "3 cores, and 7.8 GiB of address space.",
+        "generic": "Not quite right. Check the first marked cell.",
+        "byKey": {
+          "r0c1": "$15 \\times 10^{-6} \\times 200{,}000 = 3$ seconds of work each second: three cores.",
+          "r1c1": "8,000 MiB divided by 1,024 is 7.8 GiB. A GiB is 1,024 MiB, not 1,000."
+        }
+      },
+      "explain": {
+        "text": "Three whole cores would do nothing but start threads. The stacks are reserved address space, touched only as they grow (level 1, virtual memory). Real handlers keep a fixed pool of threads instead.",
+        "canvas": {
+          "tone": {
+            "l3": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "How many copies",
+      "tags": [
+        "thread-shared-state"
+      ],
+      "prose": "A function counts its own calls with `static int calls = 0;` and `++calls;`. Eight threads call it.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "int count_call() {",
+            "    static int calls = 0;",
+            "    return ++calls;",
+            "}"
+          ],
+          "title": "count.cpp",
+          "wrap": true
+        }
+      },
+      "question": "How many copies of `calls` exist?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "one",
+            "text": "One, for the whole process",
+            "correct": true
+          },
+          {
+            "id": "eight",
+            "text": "Eight, one per thread",
+            "why": "That is `thread_local`. A `static` local is shared by every thread."
+          },
+          {
+            "id": "calls",
+            "text": "One per call, made fresh each time",
+            "why": "That is a plain local. `static` keeps one object for the program's life."
+          },
+          {
+            "id": "none",
+            "text": "None until a thread writes it",
+            "why": "A `static` local is set up once, on the first call, then kept."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does a `static` local live?"
+        },
+        {
+          "rung": "point",
+          "text": "It is stored with the globals, not on any stack.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One copy, shared by all eight threads."
+        }
+      ],
+      "feedback": {
+        "correct": "One copy, shared: eight threads all write the same `calls`.",
+        "generic": "Not quite right. Ask where a `static` local is stored.",
+        "byKey": {
+          "eight": "You described `thread_local`. Plain `static` is one object that every thread shares.",
+          "calls": "You described a plain local. `static` keeps one object for the whole run.",
+          "none": "It exists from the first call onwards, once."
+        }
+      },
+      "explain": {
+        "text": "A `static` local is stored with the globals, so there is one `calls` for the process. Eight threads doing `++calls` race on it (next lesson). For one copy per thread, write `thread_local int calls = 0;`.",
+        "canvas": {
+          "shade": {
+            "shared": [
+              "l2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A local, shared by accident",
+      "tags": [
+        "thread-shared-state"
+      ],
+      "prose": "`std::thread` runs a lambda on a new thread. `detach()` lets it run on after `start` returns.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "void start() {",
+            "    int n = 8;",
+            "    std::thread t([&n] { ++n; });",
+            "    t.detach();",
+            "}   // n is gone here"
+          ],
+          "title": "start.cpp",
+          "wrap": true
+        }
+      },
+      "question": "What is wrong with `start`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "gone",
+            "text": "The new thread shares `n`, and `n` may be gone when it runs",
+            "correct": true
+          },
+          {
+            "id": "copy",
+            "text": "The lambda copies `n`, so the change is lost",
+            "why": "`[&n]` captures by reference. `[n]` would copy."
+          },
+          {
+            "id": "heap",
+            "text": "Nothing: `n` lives on the heap",
+            "why": "`n` is a local on the stack of `start`."
+          },
+          {
+            "id": "compile",
+            "text": "It does not compile",
+            "why": "It compiles. The fault appears only when it runs."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does `n` live, and for how long?"
+        },
+        {
+          "rung": "point",
+          "text": "`n` is on the stack of `start`, which returns at once.",
+          "highlight": [
+            "l3",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The thread holds a reference to a dead stack variable."
+        }
+      ],
+      "feedback": {
+        "correct": "The new thread writes through a reference to a dead local.",
+        "generic": "Not quite right. How long does `n` live?",
+        "byKey": {
+          "copy": "You read `[&n]` as a copy. It is a reference, so the thread shares `start`'s own `n`.",
+          "heap": "`n` is declared in `start`, so it is on that call's stack.",
+          "compile": "The compiler accepts it. The bug is the lifetime."
+        }
+      },
+      "explain": {
+        "text": "A reference capture makes a stack variable shared with the new thread. Once `start` returns, the thread writes to memory that is gone. Capture by value, or keep the owner alive until the thread is joined.",
+        "canvas": {
+          "shade": {
+            "bad": [
+              "l3",
+              "l5"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "What threads share",
+      "prose": "Threads of one process share memory. The thread-support pages of cppreference.com are a free reference for `std::thread` and friends.\n\n$$\\text{shared} = \\{\\text{code, globals, statics, heap, open files}\\}$$\n\n$$\\text{owned} = \\{\\text{stack, registers, thread-local data}\\}$$\n\nA heap block is shared memory, but reachable only through a pointer.",
+      "question": "A `std::vector<int> v(100)` is declared inside `worker`. Where are its 100 ints?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "heap",
+            "text": "On the heap, reachable only through this thread's `v`",
+            "correct": true
+          },
+          {
+            "id": "stack",
+            "text": "On this thread's stack",
+            "why": "The vector object is on the stack; its elements are allocated on the heap."
+          },
+          {
+            "id": "shared",
+            "text": "Shared with every thread by name",
+            "why": "Another thread has no name for them unless given the address."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "On the heap, but only this thread holds the way in.",
+        "generic": "Not quite right. Where does a vector keep its elements?",
+        "byKey": {
+          "stack": "Only the vector's small header is on the stack. The elements are on the heap.",
+          "shared": "Shared memory is not the same as shared names. No other thread has `v`."
+        }
+      },
+      "explain": {
+        "text": "The vector object sits on this call's stack; its elements are on the shared heap. Another thread can reach them only if it is given the address. Sharing is about which threads hold a way in."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: shared or owned",
+      "tags": [
+        "thread-shared-state",
+        "thread-cost"
+      ],
+      "pace": 480,
+      "prose": "Drill: about two minutes each. Say the reasoning aloud first. Two threads run each snippet below. Count the names both threads reach.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "// snippet 1: f runs on two threads",
+            "static std::atomic<int> hits;",
+            "thread_local std::vector<int> scratch;",
+            "std::mutex m;",
+            "int n = 8; auto f = [&n] { ++n; };",
+            "",
+            "// snippet 2",
+            "const int kLimit = 100; // global",
+            "char buffer[64];        // global",
+            "for (int i = 0; i < kLimit; ++i) {}"
+          ],
+          "title": "Two snippets",
+          "wrap": true
+        }
+      },
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "Snippet 1: how many of `hits`, `scratch`, `m`, `n` do both threads reach?",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Snippet 2: how many of `kLimit`, `buffer`, `i` do both threads reach?",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Stacks of 64 threads at 8 MiB each (MiB)",
+            {
+              "edit": true,
+              "answer": 512,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Thread creations one core can make in a second, at 15 µs each",
+            {
+              "edit": true,
+              "answer": 66667,
+              "tol": {
+                "abs": 1
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Statics, globals and anything captured by reference are shared."
+        },
+        {
+          "rung": "point",
+          "text": "`thread_local` and a loop counter are each thread's own.",
+          "highlight": [
+            "l3",
+            "l10"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "3, 2, 512 and 66,667."
+        }
+      ],
+      "feedback": {
+        "correct": "3, 2, 512 and 66,667.",
+        "generic": "Not quite right. Check the first marked cell.",
+        "byKey": {
+          "r0c1": "`hits` and `m` are statics and `n` is captured by reference. `scratch` is `thread_local`.",
+          "r1c1": "`kLimit` and `buffer` are globals. `kLimit` is shared but read-only, so safe. Each thread has its own `i`.",
+          "r2c1": "$64 \\times 8$ MiB.",
+          "r3c1": "$1{,}000{,}000\\ \\mu s / 15\\ \\mu s = 66{,}667$."
+        }
+      },
+      "explain": {
+        "text": "A name is shared when it lives once per process or is captured by reference. Read-only shared data such as `kLimit` is safe; written shared data is where races live. The costs are why threads are made once and reused.",
+        "canvas": {
+          "shade": {
+            "shared": [
+              "l2",
+              "l4",
+              "l5",
+              "l8",
+              "l9"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: sum a million",
+      "tags": [
+        "thread-cost"
+      ],
+      "prose": "An interviewer asks you to sum a million doubles with four threads. Round figures: an atomic add whose cache line moves between cores costs 60 ns. A plain add in L1 costs 1 ns.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "// A: one shared atomic, 60 ns an add",
+            "for (double v : part) total += v;",
+            "",
+            "// B: a local sum s, 1 ns an add",
+            "for (double v : part) s += v;",
+            "// then combine four sums: 3 adds"
+          ],
+          "title": "Two plans",
+          "wrap": true
+        }
+      },
+      "question": "Plan B is how many times faster than plan A?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 240,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "times",
+        "accept": "240: 60 ms against 0.25 ms.",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sixty",
+            "value": 60,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "serial",
+            "value": 60000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Time each plan. Plan A serialises every add on one line."
+        },
+        {
+          "rung": "point",
+          "text": "Plan A: $1{,}000{,}000 \\times 60$ ns $= 60$ ms. Plan B: $250{,}000 \\times 1$ ns, in parallel.",
+          "highlight": [
+            "l2",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$60 / 0.25 = 240$."
+        }
+      ],
+      "feedback": {
+        "correct": "240 times faster: 60 ms against 0.25 ms.",
+        "generic": "Not quite right. Work out each plan's time first.",
+        "byKey": {
+          "four": "Four is the number of threads. Plan A also pays 60 ns an add, not 1 ns.",
+          "sixty": "60 is one add against one add. Plan B also splits the work four ways.",
+          "serial": "You compared plan A's 60 ms with one 1 ns add. Plan B does 250,000 adds per thread."
+        }
+      },
+      "explain": {
+        "text": "Plan A makes every add fight for one cache line, so a million adds take 60 ms in a row. Plan B keeps each running sum private, 0.25 ms in parallel, then 3 adds. Desks shard counters and sums per thread for the same reason.",
+        "canvas": {
+          "shade": {
+            "good": [
+              "l4",
+              "l5"
+            ],
+            "bad": [
+              "l2"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Threads share code, globals, statics, the heap and open files.",
+      "Each thread owns its stack, its registers and its `thread_local` variables.",
+      "Threads cost about 15 µs to make and 8 MiB of address space, so reuse them."
+    ],
+    "formula": {
+      "name": "Cost of a thread per message",
+      "tex": "\\text{cores} = \\text{rate} \\times 15\\ \\mu s",
+      "note": "200,000 a second is 3 cores."
+    },
+    "trap": "Thinking a `static` local is one per thread: it is one per process."
+  },
+  "quiz": [
+    {
+      "id": "q-tls",
+      "difficulty": 2,
+      "tags": [
+        "thread-shared-state"
+      ],
+      "pace": 30,
+      "prose": "Eight threads run a function that declares `thread_local int count = 0;`.",
+      "question": "While all eight run, how many `count` objects exist?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "8: one per thread.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Eight, one per thread.",
+        "generic": "Not quite right. What does `thread_local` mean?",
+        "byKey": {
+          "one": "One would be `static`. `thread_local` gives each thread its own."
+        }
+      },
+      "explain": {
+        "text": "`thread_local` gives each thread its own object, made when the thread first uses it. Eight threads, eight copies. `static` would give one."
+      }
+    },
+    {
+      "id": "q-cost",
+      "difficulty": 2,
+      "tags": [
+        "thread-cost"
+      ],
+      "pace": 45,
+      "prose": "A server starts a new thread per request. Creating a thread costs 15 µs, and requests arrive at 20,000 a second.",
+      "question": "What share of one core goes on creating threads?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.3,
+        "tol": {
+          "abs": 0.001
+        },
+        "unit": "%",
+        "accept": "30%: $15\\ \\mu s \\times 20{,}000 = 0.3$ s each second.",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 0.03,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "whole",
+            "value": 3,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "30% of a core.",
+        "generic": "Not quite right. Multiply the cost by the rate.",
+        "byKey": {
+          "three": "You slipped a power of ten. $15 \\times 10^{-6} \\times 20{,}000 = 0.3$.",
+          "whole": "0.3 of a second each second is 30%, not 300%."
+        }
+      },
+      "explain": {
+        "text": "$15 \\times 10^{-6}$ s $\\times 20{,}000 = 0.3$ s of every second. That is 30% of a core spent before any work is done. A pool pays the 15 µs once per thread."
+      }
+    },
+    {
+      "id": "q-own",
+      "difficulty": 2,
+      "tags": [
+        "stack-per-thread"
+      ],
+      "pace": 30,
+      "prose": "Threads of one process share most of its memory.",
+      "question": "Which of these does each thread own?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stack",
+            "text": "Its stack",
+            "correct": true
+          },
+          {
+            "id": "heap",
+            "text": "The heap",
+            "why": "Every thread allocates from the one shared heap."
+          },
+          {
+            "id": "globals",
+            "text": "The global variables",
+            "why": "Globals exist once per process."
+          },
+          {
+            "id": "files",
+            "text": "The open files",
+            "why": "File descriptors belong to the process, so every thread can use them."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Its stack, with its registers.",
+        "generic": "Not quite right. Which of these exists once per thread?"
+      },
+      "explain": {
+        "text": "Each thread gets its own stack and its own registers. The heap, the globals and the open files belong to the process. That is why locals are safe and globals need care."
+      }
+    },
+    {
+      "id": "q-heap",
+      "difficulty": 3,
+      "tags": [
+        "thread-shared-state"
+      ],
+      "pace": 40,
+      "prose": "Thread A runs `int* p = new int(5);` and keeps `p` in a local. Thread B never sees `p`.",
+      "question": "Could thread B read the 5?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "addr",
+            "text": "Yes, if it is given the address: the heap is shared",
+            "correct": true
+          },
+          {
+            "id": "never",
+            "text": "Never: memory from `new` belongs to the thread that made it",
+            "why": "The heap is shared by the whole process."
+          },
+          {
+            "id": "copy",
+            "text": "Only a copy, made when B starts",
+            "why": "Threads do not copy each other's memory."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Yes: the block is in shared memory; only the address is private.",
+        "generic": "Not quite right. Is the heap per thread or per process?"
+      },
+      "explain": {
+        "text": "Every thread allocates from one heap, so any thread can read any block. What keeps the 5 private is that only thread A holds its address. Pass `p` to B and the block is shared."
+      }
+    }
+  ]
+}

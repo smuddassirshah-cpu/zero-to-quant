@@ -1,0 +1,1580 @@
+{
+  "id": "l7-data-races",
+  "course": "systems",
+  "title": "Data races",
+  "minutes": 14,
+  "objectives": [
+    "Find a data race by stepping two threads through an interleaving."
+  ],
+  "skills": [
+    "sy-concurrency"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Two increments, one lost",
+      "tags": [
+        "lost-update"
+      ],
+      "prose": "Two threads each run `++x` on a shared `x` that starts at 0. Each `++x` is three steps: load `x` into a register, add 1, store it back. Tap a lane's Step button to run its next step.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "x is {{values.x}} after {{values.steps}} of {{values.steps + values.remaining}} steps."
+        }
+      },
+      "question": "Step the lanes so that `x` ends at 1. Then tap the two steps that read the old value.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "a1",
+          "b1"
+        ],
+        "countWord": "steps marked",
+        "wrong": [
+          {
+            "id": "stores",
+            "set": [
+              "a3",
+              "b3"
+            ]
+          },
+          {
+            "id": "adds",
+            "set": [
+              "a2",
+              "b2"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For `x` to end at 1, both lanes must start from 0."
+        },
+        {
+          "rung": "point",
+          "text": "Run a1 and b1 before either lane stores.",
+          "highlight": [
+            "a1",
+            "b1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Order a1, b1, a2, b2, a3, b3. Mark a1 and b1."
+        }
+      ],
+      "feedback": {
+        "correct": "Both loads read 0, so both stores write 1.",
+        "generic": "Not quite right. Which steps read `x` before either lane stored?",
+        "byKey": {
+          "stores": "The stores write the value. The damage was done earlier, when both lanes loaded 0.",
+          "adds": "The adds work on each lane's own register. Look for the steps that read `x`."
+        }
+      },
+      "explain": {
+        "text": "When both lanes load 0 before either stores, each computes 1. The second store overwrites the first: one increment is lost. This is a **lost update**.",
+        "canvas": {
+          "schedule": [
+            "a",
+            "b",
+            "a",
+            "b",
+            "a",
+            "b"
+          ],
+          "highlight": [
+            "a1",
+            "b1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "When does it work",
+      "prose": "Try several orders. Undo and Reset let you go back. The box below the lanes lists the finals you have reached.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "outcomes": "found"
+        },
+        "derive": {
+          "caption": "x is {{values.x}} after {{values.steps}} of {{values.steps + values.remaining}} steps."
+        }
+      },
+      "question": "When does `x` end at 2?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "serial",
+            "text": "Only when one lane runs all three steps before the other loads",
+            "correct": true
+          },
+          {
+            "id": "afirst",
+            "text": "Whenever lane A starts first",
+            "why": "A first, then b1 before a3, still loses an update."
+          },
+          {
+            "id": "never",
+            "text": "Never",
+            "why": "Run a, a, a, b, b, b: that ends at 2."
+          },
+          {
+            "id": "storeslast",
+            "text": "Whenever both stores come last",
+            "why": "If both stores come last, both loads came first and read 0."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Only a whole increment before the other loads gives 2.",
+        "generic": "Not quite right. Try a, a, a, b, b, b, then a, b, a, b, a, b.",
+        "byKey": {
+          "afirst": "Starting first is not enough. Lane B must not load until lane A has stored.",
+          "never": "Run lane A to the end, then lane B: 2.",
+          "storeslast": "Then both loads read 0, and `x` ends at 1."
+        }
+      },
+      "explain": {
+        "text": "The second lane must load after the first lane's store. That means one whole increment, then the other. Only two of the orders do that.",
+        "canvas": {
+          "schedule": [
+            "a",
+            "a",
+            "a",
+            "b",
+            "b",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Count the orders",
+      "tags": [
+        "race-outcomes"
+      ],
+      "prose": "Two threads touch `x` with nothing ordering their steps, and both write. That is a **data race**. The six steps can run in $\\binom{6}{3} = 20$ orders, called **interleavings**: choose which three places lane A takes.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "x is {{values.x}} after {{values.steps}} of {{values.steps + values.remaining}} steps."
+        }
+      },
+      "question": "How many of the 20 interleavings end with `x` at 1?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 18,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "18: every order but the two serial ones.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "half",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the ones that end at 2 first."
+        },
+        {
+          "rung": "point",
+          "text": "Only the two serial orders give 2.",
+          "highlight": [
+            "a3",
+            "b1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$20 - 2 = 18$."
+        }
+      ],
+      "feedback": {
+        "correct": "18 of 20 end at 1.",
+        "generic": "Not quite right. Only the serial orders end at 2.",
+        "byKey": {
+          "two": "2 is the count that ends at 2. The question asks for 1.",
+          "half": "The orders are not split evenly. Only 2 avoid the lost update.",
+          "all": "The two serial orders end at 2, not 1."
+        }
+      },
+      "explain": {
+        "text": "Only a, a, a, b, b, b and b, b, b, a, a, a avoid the lost update. The other 18 interleavings all lose one increment. The canvas's table counts every order.",
+        "canvas": {
+          "outcomes": true
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Three threads",
+      "tags": [
+        "race-outcomes"
+      ],
+      "prose": "Now three lanes run the same three steps. That is $9! / (3!)^3 = 1{,}680$ interleavings.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "c",
+              "label": "Thread C",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "x is {{values.x}} after {{values.steps}} of {{values.steps + values.remaining}} steps."
+        }
+      },
+      "question": "Which finals of `x` can happen? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "v1",
+            "text": "1",
+            "correct": true
+          },
+          {
+            "id": "v2",
+            "text": "2",
+            "correct": true
+          },
+          {
+            "id": "v3",
+            "text": "3",
+            "correct": true
+          },
+          {
+            "id": "v0",
+            "text": "0",
+            "why": "Every lane stores its register plus 1, so `x` is at least 1."
+          },
+          {
+            "id": "v4",
+            "text": "4",
+            "why": "Three increments of 1 can reach 3 at most."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is the smallest value any store can write?"
+        },
+        {
+          "rung": "point",
+          "text": "Each store writes a load plus 1, and loads read 0 or more.",
+          "highlight": [
+            "a3",
+            "b3",
+            "c3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1, 2 and 3 all happen; 0 and 4 cannot."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 2 and 3.",
+        "generic": "Not quite right. Find the smallest and largest value a store can write.",
+        "byKey": {
+          "v0": "Each store writes at least $0 + 1$.",
+          "v4": "Three adds of 1 from 0 cannot pass 3."
+        }
+      },
+      "explain": {
+        "text": "All three can load 0 and end at 1, or run one by one and end at 3. The canvas counts 1,404 at 1, 270 at 2 and 6 at 3. Only the $3! = 6$ serial orders lose nothing.",
+        "canvas": {
+          "outcomes": true
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Check, then act",
+      "tags": [
+        "check-then-act"
+      ],
+      "prose": "An account holds £100. Two withdrawals of £80 run at once. Each checks the balance in one step, then acts in a second. If the check passed, it stores the balance less 80 and pays out £80.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "bal": 100,
+            "cash": 0
+          },
+          "outcome": [
+            "bal",
+            "cash"
+          ],
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Withdrawal A",
+              "steps": [
+                {
+                  "ops": [
+                    {
+                      "op": "load",
+                      "reg": "r",
+                      "var": "bal"
+                    },
+                    {
+                      "op": "set",
+                      "reg": "ok",
+                      "value": "r >= 80"
+                    }
+                  ],
+                  "text": "check: load r from bal, ok if r ≥ 80"
+                },
+                {
+                  "ops": [
+                    {
+                      "op": "store",
+                      "var": "bal",
+                      "value": "r - 80",
+                      "if": "ok"
+                    },
+                    {
+                      "op": "fetch-add",
+                      "var": "cash",
+                      "by": 80,
+                      "if": "ok"
+                    }
+                  ],
+                  "text": "act: if ok, store bal = r − 80 and pay out 80"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Withdrawal B",
+              "steps": [
+                {
+                  "ops": [
+                    {
+                      "op": "load",
+                      "reg": "r",
+                      "var": "bal"
+                    },
+                    {
+                      "op": "set",
+                      "reg": "ok",
+                      "value": "r >= 80"
+                    }
+                  ],
+                  "text": "check: load r from bal, ok if r ≥ 80"
+                },
+                {
+                  "ops": [
+                    {
+                      "op": "store",
+                      "var": "bal",
+                      "value": "r - 80",
+                      "if": "ok"
+                    },
+                    {
+                      "op": "fetch-add",
+                      "var": "cash",
+                      "by": 80,
+                      "if": "ok"
+                    }
+                  ],
+                  "text": "act: if ok, store bal = r − 80 and pay out 80"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "Balance £{{values.bal}}, paid out £{{values.cash}}."
+        }
+      },
+      "question": "In how many of the 6 interleavings does £160 come out?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4: both checks before either act.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Both pay out only if both checks see £100."
+        },
+        {
+          "rung": "point",
+          "text": "Both checks come before either act.",
+          "highlight": [
+            "a1",
+            "b1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Of the 4 steps, the two checks come first: $2 \\times 2 = 4$ orders."
+        }
+      ],
+      "feedback": {
+        "correct": "4 of 6: both lanes check before either acts.",
+        "generic": "Not quite right. When do both checks see £100?",
+        "byKey": {
+          "two": "2 is the count that pays £80, one whole withdrawal then the other.",
+          "none": "Run a1, b1, a2, b2: both checks pass.",
+          "all": "When one withdrawal finishes first, the second check sees £20 and refuses."
+        }
+      },
+      "explain": {
+        "text": "When both checks see £100, both pay out: £160 leaves an account of £100. The balance still ends at £20, so a check of the balance alone misses it. This is a **check-then-act** race.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "a",
+            "b",
+            "a",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "One instruction",
+      "tags": [
+        "ub-race"
+      ],
+      "prose": "A colleague says: \"`x++` compiles to one instruction on x86, so two threads cannot interleave inside it.\" The listing shows what the compiler emits.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "-O0:     mov eax, [x]",
+            "         add eax, 1",
+            "         mov [x], eax",
+            "-O2:     add dword ptr [x], 1",
+            "atomic:  lock add dword ptr [x], 1"
+          ],
+          "title": "What x++ becomes on x86",
+          "numbers": true,
+          "wrap": true
+        }
+      },
+      "question": "Is the colleague right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ub",
+            "text": "No: the instruction still reads, adds and writes, and a race is undefined behaviour anyway",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: one instruction cannot be split",
+            "why": "You trusted the instruction count. Without `lock`, another core can write between its read and its write."
+          },
+          {
+            "id": "x86",
+            "text": "Yes on x86, no on other machines",
+            "why": "Two x86 cores can also interleave `add [x], 1`, and C++ does not promise the instruction anyway."
+          },
+          {
+            "id": "opt",
+            "text": "Only at `-O0`",
+            "why": "At `-O0` it is three instructions; at `-O2` it is one, and it still races."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the instruction do to memory?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 4 is a read, an add and a write, with no `lock` prefix.",
+          "highlight": [
+            "l4",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only line 5, with `lock`, is atomic. And C++ calls any data race undefined behaviour."
+        }
+      ],
+      "feedback": {
+        "correct": "No. The instruction is still a read, an add and a write.",
+        "generic": "Not quite right. What does `add [x], 1` do to memory?",
+        "byKey": {
+          "yes": "One instruction is not one step for memory. Another core can write between the read and the write.",
+          "x86": "x86 cores interleave a plain `add [x], 1` too. Only `lock add` is atomic.",
+          "opt": "The `-O2` form is one instruction and still races."
+        }
+      },
+      "explain": {
+        "text": "A plain `add [x], 1` reads, adds and writes, and two cores can interleave those. Only the `lock` form is atomic, which is what `std::atomic` emits. C++ also says any data race is undefined behaviour, whatever the instructions.",
+        "canvas": {
+          "tone": {
+            "l4": "err",
+            "l5": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A flag that never changes",
+      "tags": [
+        "ub-race"
+      ],
+      "prose": "A worker spins until another thread sets `done`. `done` is a plain `bool`, not an atomic.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "bool done = false;   // not atomic",
+            "void spin() { while (!done) { } }",
+            "void finish() { done = true; }"
+          ],
+          "title": "spin.cpp",
+          "wrap": true
+        }
+      },
+      "question": "What may the compiler do to the loop at `-O1`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "once",
+            "text": "Read `done` once and spin forever",
+            "correct": true
+          },
+          {
+            "id": "each",
+            "text": "Nothing: the loop reads `done` every time round",
+            "why": "With no atomic, the compiler may assume no other thread writes `done`."
+          },
+          {
+            "id": "crash",
+            "text": "Stop the program with an error",
+            "why": "A data race is not checked at run time. It is undefined behaviour, silently."
+          },
+          {
+            "id": "slow",
+            "text": "Only make the loop slower",
+            "why": "The compiler may hoist the read out of the loop, so it never sees the change."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the compiler know about other threads?"
+        },
+        {
+          "rung": "point",
+          "text": "With no atomic and no lock, it may assume `done` does not change in the loop.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It can load `done` once, before the loop."
+        }
+      ],
+      "feedback": {
+        "correct": "It may hoist the load and spin forever.",
+        "generic": "Not quite right. What may the compiler assume about a plain `bool`?",
+        "byKey": {
+          "each": "Reading every time is what `std::atomic<bool>` promises. A plain `bool` does not.",
+          "crash": "Nothing checks for races at run time. The program just misbehaves.",
+          "slow": "Worse: the loop may never see the write at all."
+        }
+      },
+      "explain": {
+        "text": "A data race is undefined behaviour, so the compiler may assume none happens. Then `done` cannot change inside the loop, and one load before it is enough. `std::atomic<bool> done` makes the loop read it each time."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The method",
+      "prose": "A **data race**: two threads touch one variable, at least one writes, and nothing orders them. To see what can happen, list every interleaving. Lanes of $n_1$ and $n_2$ steps have\n\n$$\\binom{n_1 + n_2}{n_1} = \\frac{(n_1 + n_2)!}{n_1!\\, n_2!}$$\n\ninterleavings, and with $k$ lanes the factorial of the total over each lane's factorial.",
+      "question": "Which of these is a data race?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "race",
+            "text": "One thread writes a plain `int` while another reads it, with no lock",
+            "correct": true
+          },
+          {
+            "id": "const",
+            "text": "Two threads read a `const` global",
+            "why": "Nobody writes, so there is nothing to race."
+          },
+          {
+            "id": "tls",
+            "text": "Two threads each write their own `thread_local`",
+            "why": "Each thread has its own copy, so they never touch one variable."
+          },
+          {
+            "id": "atomic",
+            "text": "Two threads call `fetch_add` on one `std::atomic<int>`",
+            "why": "Atomic operations are ordered by the hardware; they cannot race."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A write and a read of one plain variable, unordered.",
+        "generic": "Not quite right. Find one variable, two threads, a write and no ordering.",
+        "byKey": {
+          "const": "Two readers are fine; a race needs a write.",
+          "tls": "Two different variables cannot race.",
+          "atomic": "Atomics are the cure for races, not a cause."
+        }
+      },
+      "explain": {
+        "text": "A race needs one variable, two threads, at least one write and no ordering. Reads alone, separate copies and atomics each break one of those. Every other case is undefined behaviour."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: count interleavings",
+      "tags": [
+        "race-outcomes"
+      ],
+      "pace": 480,
+      "prose": "Drill: about two minutes each. Say the reasoning aloud first. Two lanes each run `++x` twice, so six steps a lane and twelve in all. The canvas holds them; its table stays hidden.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "x": 0
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Thread A",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                },
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Thread B",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                },
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "x"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 1
+                },
+                {
+                  "op": "store",
+                  "var": "x",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "x is {{values.x}} after {{values.steps}} of {{values.steps + values.remaining}} steps."
+        }
+      },
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "Interleavings of the two lanes of six steps",
+            {
+              "edit": true,
+              "answer": 924,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "How many of them end with `x` at 4",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "How many lose at least one update",
+            {
+              "edit": true,
+              "answer": 918,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Interleavings of three lanes of two steps each",
+            {
+              "edit": true,
+              "answer": 90,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the factorial rule for the counts."
+        },
+        {
+          "rung": "point",
+          "text": "$x$ ends at 4 only when the four increments run whole, one after another.",
+          "highlight": [
+            "a1",
+            "a2",
+            "a3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$12!/(6!\\,6!) = 924$; $\\binom{4}{2} = 6$; $924 - 6 = 918$; $6!/(2!)^3 = 90$."
+        }
+      ],
+      "feedback": {
+        "correct": "924, 6, 918 and 90.",
+        "generic": "Not quite right. Check the first marked cell.",
+        "byKey": {
+          "r0c1": "$12! / (6!\\,6!) = 924$.",
+          "r1c1": "Four whole increments in a row: choose which two of the four slots are lane A's, $\\binom{4}{2} = 6$.",
+          "r2c1": "Every order except the 6 that keep all four increments.",
+          "r3c1": "$6! / (2! \\times 2! \\times 2!) = 720 / 8 = 90$."
+        }
+      },
+      "explain": {
+        "text": "The counts come from the factorial rule. Nothing is lost only when every increment runs whole, so just 6 of 924 reach 4. The table shows the rest: 702 end at 2 and 216 at 3.",
+        "canvas": {
+          "outcomes": true
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Count every outcome",
+      "tags": [
+        "race-outcomes"
+      ],
+      "prose": "The canvas walked every order for you. Now write the walk. `final_counts(threads, increments)` tries every interleaving of the load, add and store steps.",
+      "question": "Fix `final_counts` so `result[v]` counts the interleavings that end with `x == v`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <vector>\n\n// threads threads each run `increments` times: load x, add 1, store x (three steps).\n// Try every interleaving of all the steps. result[v] is how many interleavings end with x == v.\nstd::vector<int> final_counts(int threads, int increments) {\n    // Wrong model: an increment is one indivisible step.\n    std::vector<int> done(threads, 0);\n    std::vector<int> result(threads * increments + 1, 0);\n    // count schedules of whole increments: every one ends with the full total\n    std::vector<int> fact(threads * increments + 1, 1);\n    for (int i = 1; i <= threads * increments; ++i) fact[i] = fact[i - 1] * i;\n    long long ways = fact[threads * increments];\n    for (int t = 0; t < threads; ++t) ways /= fact[increments];\n    result[threads * increments] = static_cast<int>(ways);\n    return result;\n}\n",
+        "solution": "#include <vector>\n\nnamespace {\nstruct Walker {\n    int threads, steps;                  // steps = 3 * increments, per thread\n    std::vector<int> pc, reg;            // next step and register of each thread\n    int x = 0;\n    std::vector<int> result;\n    void go() {\n        bool any = false;\n        for (int t = 0; t < threads; ++t) {\n            if (pc[t] == steps) continue;\n            any = true;\n            int old_x = x, old_reg = reg[t];\n            int phase = pc[t] % 3;\n            if (phase == 0) reg[t] = x;            // load\n            else if (phase == 1) reg[t] += 1;      // add\n            else x = reg[t];                       // store\n            ++pc[t];\n            go();\n            --pc[t];\n            x = old_x;\n            reg[t] = old_reg;\n        }\n        if (!any) ++result[x];\n    }\n};\n}\n\nstd::vector<int> final_counts(int threads, int increments) {\n    Walker w;\n    w.threads = threads;\n    w.steps = 3 * increments;\n    w.pc.assign(threads, 0);\n    w.reg.assign(threads, 0);\n    w.result.assign(threads * increments + 1, 0);\n    w.go();\n    return w.result;\n}\n",
+        "examples": [
+          {
+            "call": "final_counts",
+            "args": [
+              2,
+              1
+            ],
+            "expect": [
+              0,
+              18,
+              2
+            ],
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "final_counts",
+            "args": [
+              1,
+              1
+            ],
+            "expect": [
+              0,
+              1
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "final_counts",
+            "args": [
+              1,
+              3
+            ],
+            "expect": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "final_counts",
+            "args": [
+              2,
+              1
+            ],
+            "expect": [
+              0,
+              18,
+              2
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "final_counts",
+            "args": [
+              3,
+              1
+            ],
+            "expect": [
+              0,
+              1404,
+              270,
+              6
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "final_counts",
+            "args": [
+              2,
+              2
+            ],
+            "expect": [
+              0,
+              0,
+              702,
+              216,
+              6
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "final_counts",
+            "args": [
+              2,
+              3
+            ],
+            "expect": [
+              0,
+              0,
+              648,
+              30780,
+              15714,
+              1458,
+              20
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "final_counts",
+            "args": [
+              4,
+              1
+            ],
+            "expect": [
+              0,
+              291600,
+              74952,
+              3024,
+              24
+            ],
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Seven hidden tests, from one thread with one increment up to four threads (369,600 interleavings). They include the counts on the canvas: 18 and 2, then 1,404, 270 and 6, then 702, 216 and 6."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The starter treats each increment as one indivisible step."
+        },
+        {
+          "rung": "point",
+          "text": "Recurse: at each point, try every thread that has a step left, then undo it."
+        },
+        {
+          "rung": "step",
+          "text": "Keep each thread's next step and register. Phase 0 loads, 1 adds, 2 stores. Count `x` when no thread can move."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Every order walked, every final counted.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The starter assumes no update is ever lost, so every order reaches the full total. The walk tries each thread at each step and undoes it after, so it visits every interleaving once. Its counts match the canvas: 18 and 2 for two threads."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: a position",
+      "tags": [
+        "race-outcomes",
+        "lost-update"
+      ],
+      "prose": "A position of 500 shares is shared. One thread books a fill of +100 and another a sale of 300, each as load, add, store. The table counts every order: 9 end at 200, 2 at 300, 9 at 600.",
+      "canvas": {
+        "kind": "interleave",
+        "params": {
+          "vars": {
+            "pos": 500
+          },
+          "lanes": [
+            {
+              "id": "a",
+              "label": "Fill thread",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "pos"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": 100
+                },
+                {
+                  "op": "store",
+                  "var": "pos",
+                  "reg": "r"
+                }
+              ]
+            },
+            {
+              "id": "b",
+              "label": "Sale thread",
+              "steps": [
+                {
+                  "op": "load",
+                  "reg": "r",
+                  "var": "pos"
+                },
+                {
+                  "op": "add",
+                  "reg": "r",
+                  "by": -300
+                },
+                {
+                  "op": "store",
+                  "var": "pos",
+                  "reg": "r"
+                }
+              ]
+            }
+          ]
+        },
+        "state": {
+          "outcomes": true
+        },
+        "derive": {
+          "caption": "Position {{values.pos}}."
+        }
+      },
+      "question": "The interviewer asks: so which fix makes it always 300?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fix",
+            "text": "Make each update one atomic add, or hold a mutex across load, add and store",
+            "correct": true
+          },
+          {
+            "id": "volatile",
+            "text": "Declare the position `volatile int`",
+            "why": "`volatile` stops some compiler tricks, but the three steps can still interleave."
+          },
+          {
+            "id": "priority",
+            "text": "Give the fill thread a higher priority",
+            "why": "Priority changes which orders are likely, not which are possible."
+          },
+          {
+            "id": "sleep",
+            "text": "Sleep 1 ms between the load and the store",
+            "why": "A sleep widens the gap, so the race gets more likely, not less."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The bug is another thread's step between a load and its store."
+        },
+        {
+          "rung": "point",
+          "text": "Make load, add and store one indivisible step.",
+          "highlight": [
+            "a1",
+            "a3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "An atomic add (lesson 9) or a mutex (lesson 8)."
+        }
+      ],
+      "feedback": {
+        "correct": "One indivisible update: an atomic add or a mutex.",
+        "generic": "Not quite right. What lets another thread in between the load and the store?",
+        "byKey": {
+          "volatile": "`volatile` does not make three steps one.",
+          "priority": "A low-priority thread still runs, so a bad order can still happen.",
+          "sleep": "The sleep makes the window bigger."
+        }
+      },
+      "explain": {
+        "text": "At 600 the sale was lost; at 200 the fill was. Either fix makes the update one step, so every order ends at 300. A lost fill is a position break that a desk's risk checks would flag.",
+        "canvas": {
+          "outcomes": true,
+          "schedule": [
+            "a",
+            "b",
+            "a",
+            "b",
+            "b",
+            "a"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A data race is two threads on one variable, at least one writing, with nothing ordering them.",
+      "List every interleaving to find what can happen: lost updates and check-then-act both appear.",
+      "Lanes of $n_1$ and $n_2$ steps have $\\binom{n_1 + n_2}{n_1}$ interleavings; a passing test proves nothing."
+    ],
+    "formula": {
+      "name": "Interleavings",
+      "tex": "\\dfrac{(n_1 + n_2 + \\cdots + n_k)!}{n_1!\\, n_2! \\cdots n_k!}",
+      "note": "Two lanes of three steps: 20."
+    },
+    "trap": "Thinking `x++` is one step because it is one instruction."
+  },
+  "quiz": [
+    {
+      "id": "q-proof",
+      "difficulty": 2,
+      "tags": [
+        "race-outcomes"
+      ],
+      "pace": 40,
+      "prose": "A test runs two threads that each do `++x` once, 1,000 times. It always ends at 2.",
+      "question": "Does that prove there is no race?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the losing orders exist even if the test never hit one",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: 1,000 runs is plenty",
+            "why": "18 of the 20 orders lose an update. The test just never produced them."
+          },
+          {
+            "id": "sometimes",
+            "text": "Yes, on this machine only",
+            "why": "The race is in the code, on every machine."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "No. Passing tests are not a proof.",
+        "generic": "Not quite right. How many of the 20 orders end at 2?"
+      },
+      "explain": {
+        "text": "Only 2 of the 20 orders end at 2, yet timing may make those the usual ones. The other 18 still exist. A race is found by reasoning about orders, not by a test that passes."
+      }
+    },
+    {
+      "id": "q-count",
+      "difficulty": 2,
+      "tags": [
+        "race-outcomes"
+      ],
+      "pace": 40,
+      "prose": "Two lanes of 4 steps each.",
+      "question": "How many interleavings are there?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 70,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "70: $8!/(4!\\,4!)$.",
+        "wrong": [
+          {
+            "id": "sixteen",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "fact",
+            "value": 40320,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "70 interleavings.",
+        "generic": "Not quite right. Choose which 4 of the 8 places lane A takes.",
+        "byKey": {
+          "sixteen": "$4 \\times 4$ is not the count. Choose 4 places out of 8.",
+          "fact": "$8!$ counts every order of eight distinct steps. Each lane's own order is fixed."
+        }
+      },
+      "explain": {
+        "text": "Each interleaving picks 4 of the 8 places for lane A. $\\binom{8}{4} = 70$. Lane B fills the rest in its own order."
+      }
+    },
+    {
+      "id": "q-cta",
+      "difficulty": 3,
+      "tags": [
+        "check-then-act"
+      ],
+      "pace": 40,
+      "prose": "Two threads share a `std::unordered_map<int, Order>`. Each runs one of these, with no lock.",
+      "question": "Which line is a check-then-act race?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cta",
+            "text": "`if (!book.contains(id)) book[id] = order;`",
+            "correct": true
+          },
+          {
+            "id": "read",
+            "text": "`auto n = book.size();` on both threads",
+            "why": "Two reads alone are not a race (until a writer joins in)."
+          },
+          {
+            "id": "local",
+            "text": "`std::unordered_map<int, Order> mine; mine[id] = order;`",
+            "why": "Each thread's `mine` is its own local."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The check and the insert can be split by the other thread.",
+        "generic": "Not quite right. Find a check whose answer can go stale before the act."
+      },
+      "explain": {
+        "text": "Both threads can see `id` missing and both insert, so one order overwrites the other. The check and the act must be one step: hold a lock across both. A local map is never shared."
+      }
+    },
+    {
+      "id": "q-zero",
+      "difficulty": 2,
+      "tags": [
+        "race-outcomes"
+      ],
+      "pace": 30,
+      "prose": "`x` starts at 0. Two lanes each run load, add 1, store.",
+      "question": "Which final value can never happen?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "1",
+            "why": "Both loads read 0: one update lost."
+          },
+          {
+            "id": "two",
+            "text": "2",
+            "why": "One lane runs whole, then the other."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "0: every store writes at least 1.",
+        "generic": "Not quite right. What is the least any store can write?"
+      },
+      "explain": {
+        "text": "Every store writes a loaded value plus 1, and the loads read 0 or more. So `x` ends at 1 or 2, never 0. A race loses updates; it does not undo them all."
+      }
+    }
+  ]
+}
