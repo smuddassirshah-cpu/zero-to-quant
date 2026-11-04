@@ -205,3 +205,21 @@ No review or homework item repeats a lesson's numbers otherwise. Grep and `dups.
 7. `l15-presenting-a-result.json`, screen 9, option `period`: "than use" to "than the period of use".
 8. Voice: shorten the 20-word and longer sentences listed above.
 9. Key lengths: trim or balance `l15` screen 8, `l11` screens 4 and 9, `review-3` `r3-report-sentence`.
+
+## Fix pass
+
+Paths below are under `app/content/courses/research-int/`. Each number was computed twice before writing.
+
+1. FIXED `l11-framing-the-question.json` quiz `q-hit-rate`, wrong `hit`: 0.006667 (tol 5e-06) to 0.6667 (tol 0.001). Computation A: signs right on +0.4/+0.1 and -0.3/-0.1, wrong on +0.2/-0.2, so 2/3 = 0.66667. Computation B: 66.7% typed in a % box is stored as 0.667, within 0.001 of 0.6667. The correct answer (0) is unchanged.
+2. FIXED `l14-house-price-case.json` screen 9, wrong `sum`: kept the value 169.7, renamed id and byKey to `both-sd`, line now "You used the single-rent spread for both means. Divide each by $\sqrt{4}$ first." Computation A: $\sqrt{120^2 + 120^2} = \sqrt{28800} = 169.71$. Computation B: $120 \times 1.41421 = 169.71$. (Value 120 would collide with `sd`, so the review's second option was not used.)
+3. FIXED `l14` screen 2 feedback.correct: "more than halves the baseline error" to "cuts the baseline error by 45%". A: 1 - 46.86/85.05 = 0.4490. B: (85.05 - 46.86)/85.05 = 38.19/85.05 = 0.4490.
+4. FIXED `l11` screen 5 hint: "$-0.0100$" to "$-0.0101$". A: 0.09531 - 0.10536 = -0.01005 (-0.0100503 rounds to -0.0101). B: ln 0.99 = -0.0100503.
+5. FIXED `homework-3.json` `h3-baselines-code` explain: "3.8%" to "3.9%". A: 1 - 1.1482173/1.1942044 = 0.038506. B: 0.0459871/1.1942044 = 0.038509.
+6. FIXED `review-3.json` `r3-report-sentence`: 12.4, 10.0 to 14.8, 31.0 become 9.6, 7.4 to 11.8, 24.0 (grep of `app/content/` found no other item with these together). Plus or minus 2.2: A (11.8 - 7.4)/2 = 2.2. B 9.6 + 2.2 = 11.8 and 9.6 - 2.2 = 7.4. Ratio: A 9.6/24.0 = 0.40. B 24.0 x 0.4 = 9.6, cut 14.4/24.0 = 0.60. Even 11.8 is below 24.0. Prose, option text, `why` lines, feedback and explain all updated; no old figure remains (grep count 0).
+7. FIXED `l15-presenting-a-result.json` screen 9, option `period`: "than use" to "than the period of use".
+8. FIXED voice: `l11` screen 3 explain, `l11` screen 9 prose, `l13` screen 1 hints 0 and 2, `l13` summary idea 3 and trap, `l14` screen 5 and screen 10 prose, `l15` screen 9 explain, `homework-3` longform `model` paragraphs 2 and 3. All now under 20 words (sentence scan finds none of 20 or more). DISPUTED part: `h3-features-code` explain has sentences of 12, 11 and 6 words, its `how` 5, 18 and 15, its docstring under 20; I found no 23-word sentence there and left it.
+9. FIXED key lengths (key now not longest, `shuffle: true` kept): `l15` screen 8 key 48 against 55, 57, 47; `l11` screen 4 key 61 against 68, 55, 55; `l11` screen 9 key 61 against 67, 62, 56; `review-3` `r3-report-sentence` key 57 against 63, 65, 60.
+
+Notes: not changed (cosmetic or judged not defects): 1, 2, 3, 4, 5, 6. Note 7 needed nothing.
+
+Changed keys for recheck (graded values: one, `q-hit-rate` wrong `hit`, 0.006667 to 0.6667; `both-sd` id renamed; correct answers unchanged everywhere except the review item, whose key `wide` stays correct with new figures): `l11` quiz `q-hit-rate` wrong `hit`; `l11` screens 3, 4, 5, 9; `l13` screen 1 hints, summary; `l14` screens 2, 5, 9 (`both-sd`), 10; `l15` screens 8, 9; `review-3` `r3-report-sentence`; `homework-3` `h3-baselines-code` explain and `h3-report-longform` model.
