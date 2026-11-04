@@ -56,9 +56,9 @@ Rules: work topic by topic. A topic closes when every level (lessons, review, ho
    - [done 6 Nov] Exam topic-3.3; mock-superday-trader; second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers, game-theory.
 5. Topic 3.5 (part one done 4 Nov: briefs `docs/briefs/research-int.md`, `coding-int.md`, `systems.md` with check scripts in `docs/briefs/<course>-scripts/`; second read and two fix passes `docs/reviews/review-briefs-3.5.md`). Engine requirements are the E bullets and the eight `C-*` and `E13-blocked-lanes` bullets in `docs/BACKLOG-INBOX.md` ("Raised later (topic 3.5 briefs, engine requirements, 4 Nov)" and the brief and fix-pass sections above it). Each part documents its fields in `docs/AUTHORING.md` before any level uses them.
    - [done 4 Nov] Briefs for research-int, coding-int, systems (all levels); second read and fix.
-   - Engine pass C, part 1 (before any topic 3.5 level except coding-int L1): E11 follow-up parts with C-parts-credit, C-parts-mixed and C-parts-code; then E14 data files with C-data-cap. First users: research-int L1 (E11), L2 and L3 (E11, E14); coding-int L2 (E14), L3 (E11); systems L1 (E11), L3 (E14).
-   - Engine pass C, part 2: E8 drill library (C++ drills, stopwatch, filters, two-drill 60-minute sessions) with C-drill-patterns; E3 exam item banks with C-draw-code; C-alloc-check (C++ harness); E13 `interleave` canvas with E13-blocked-lanes and the requirements in `docs/briefs/systems.md`. First users: E8 research-int L4, coding-int L4, systems L4; E3 coding-int L4 and every topic 3.5 mock; C-alloc-check systems L4; E13 systems L2.
-   - Levels, parallel across courses once their engine items are built: coding-int L1 (may start during part 1), L2, L3, then L4 after `exams/mock-oa-code.json` exists (C-draw-code: l15 links to it); research-int L1 to L4 (the L2 author writes the six CSVs from `docs/briefs/research-int-scripts/gen_data.py` to `app/content/data/` and checks the SHA-256 prefixes in the brief); systems L1, then L2 to L4 after part 2.
+   - [done 4 Nov, items 467, 469; 474 to 480 fix pass; `docs/reports/engine-pass-c-a.md`, `-b.md`; review `docs/reviews/review-engine-pass-c.md`] Engine pass C, part 1 (before any topic 3.5 level except coding-int L1): E11 follow-up parts with C-parts-credit, C-parts-mixed and C-parts-code; then E14 data files with C-data-cap. First users: research-int L1 (E11), L2 and L3 (E11, E14); coding-int L2 (E14), L3 (E11); systems L1 (E11), L3 (E14).
+   - [done 4 Nov, items 468, 470 to 473; reports `engine-pass-c-a.md` to `-d.md`] Engine pass C, part 2: E8 drill library (C++ drills, stopwatch, filters, two-drill 60-minute sessions) with C-drill-patterns; E3 exam item banks with C-draw-code; C-alloc-check (C++ harness); E13 `interleave` canvas with E13-blocked-lanes and the requirements in `docs/briefs/systems.md`. First users: E8 research-int L4, coding-int L4, systems L4; E3 coding-int L4 and every topic 3.5 mock; C-alloc-check systems L4; E13 systems L2.
+   - [done 4 Nov: coding-int L1, L2; research-int L1, L2 (six CSVs written, hashes match); systems L1, L2] Levels, parallel across courses once their engine items are built: coding-int L1 (may start during part 1), L2, L3, then L4 after `exams/mock-oa-code.json` exists (C-draw-code: l15 links to it); research-int L1 to L4 (the L2 author writes the six CSVs from `docs/briefs/research-int-scripts/gen_data.py` to `app/content/data/` and checks the SHA-256 prefixes in the brief); systems L1, then L2 to L4 after part 2.
    - Mocks: mock-oa-code (brief first, after part 2; before coding-int L4), mock-superday-research, mock-oa-quant-data, then the developer and strats mocks (phase 4 exams line); exam topic-3.5; second reads and fix passes for the three courses; topic playthrough green.
 6. Topic 3.2: ito L2 to L4, measure-prob, pdes; exam topic-3.2; second read and fix.
 7. Appended levels: trees L4 (extend exam topic-1.7), cpp L5 (extend exam topic-1.9); second read of each new level.
@@ -99,16 +99,16 @@ Phase 1, trader core
 
 Phase 2, researcher core
 - [ ] Briefs: research-int (done 4 Nov), coding-int (done 4 Nov), game-theory (done 2 Nov, `docs/briefs/game-theory.md`), systems (done 4 Nov; reviews `docs/reviews/review-briefs-3.5.md`), trees L4, cpp L5 (puzzles L5, mm-games L4, mental-pressure L4, ito L4 are in their briefs)
-- [ ] research-int L1: Statistics and linear algebra questions
-- [ ] research-int L2: Machine learning questions
+- [x] research-int L1: Statistics and linear algebra questions (`docs/reports/research-int-1.md`; 5 lessons, review-1, homework-1; 6 inbox bullets)
+- [x] research-int L2: Machine learning questions (`docs/reports/research-int-2.md`; 5 lessons, review-2, homework-2, six CSVs in `content/data/`; 6 inbox bullets)
 - [ ] research-int L3: The open case
 - [ ] research-int L4: Data tasks and take-homes
-- [ ] coding-int L1: Patterns still to learn
-- [ ] coding-int L2: Strings and simulation
+- [x] coding-int L1: Patterns still to learn (`docs/reports/coding-int-1.md`; 5 lessons, review-1, homework-1; 5 inbox bullets)
+- [x] coding-int L2: Strings and simulation (`docs/reports/coding-int-2.md`; 5 lessons, review-2, homework-2, three tick CSVs; 5 inbox bullets)
 - [ ] coding-int L3: Design in code
 - [ ] coding-int L4: Under the clock
 - [ ] trees L4: Options at interview
-- [ ] Engine pass C: E3 exam item banks, E8 drill library (C++, timed), E11 follow-up parts, E14 data files, with the `C-*` requirements (two parts; scope in 2a order item 5)
+- [x] Engine pass C (4 Nov; items 467 to 480; reports `docs/reports/engine-pass-c-a.md` to `-d.md`; second read and fix pass `docs/reviews/review-engine-pass-c.md`): E3 exam item banks, E8 drill library (C++, timed), E11 follow-up parts, E14 data files, with the `C-*` requirements (two parts; scope in 2a order item 5)
 - [ ] Drill packs 1 to 4 (60 drills)
 - [ ] Exams: mock-oa-code, mock-superday-research, mock-oa-quant-data
 - [x] Second readers and fix passes for interview-critical topics: fix pass 1.9, reader and fix 1.8, then 2.1
@@ -127,7 +127,10 @@ Phase 3, trader and researcher depth
 Phase 4, developer and strats depth
 - [ ] ito L4: Stochastic calculus at interview
 - [ ] cpp L5: C++ questions at interview
-- [ ] systems L1 to L4 (one line per level when started)
+- [x] systems L1 (`docs/reports/systems-1.md`; 5 lessons, review-1, homework-1; 6 inbox bullets)
+- [x] systems L2 (`docs/reports/systems-2.md`; 5 lessons on `interleave`, review-2, homework-2; 8 inbox bullets)
+- [ ] systems L3
+- [ ] systems L4
 - [ ] Engine: E13 concurrency canvas (built in engine pass C part 2 with E13-blocked-lanes); [Could] items E15 to E19
 - [ ] Drill packs 5 to 8 (60 drills)
 - [ ] Exams: mock-oa-code-hard, mock-oa-strats, mock-superday-developer, mock-superday-strats, mock-video, topic-3.5
