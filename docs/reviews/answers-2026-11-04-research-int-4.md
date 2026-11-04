@@ -162,3 +162,72 @@ Starters fail their tests in every case except where noted (a starter may pass t
 12. `l16-interpolating.json` transfer explain: "does the sort-free bracket search for you but needs sorted times" reads as a contradiction. Fix: "searches for the bracket for you but needs the times in increasing order".
 
 `unit: "%"`: none used in these files. Em-dashes and exclamation marks: none. British English: no American spellings found. Explanations: none over three sentences.
+
+## Fix pass
+
+Fix pass of 4 November 2026 (worktree branch `worktree-agent-a8bfbfc44066489c6`). Targeted edits only; no lesson id, `course.json` or item id changed. Every changed number was computed twice (method A and B named per entry). Checks: pandas 2.2.3 and NumPy 2.2.6 from `pkgs223` through `runw.py` (with `__learner_source__` defined and the data files copied from the worktree), then the real playthrough in Pyodide 0.27.7 with `--local-cdn`.
+
+**Counts.** Fixed 12 of 12 numbered findings (1 to 12, with 7a to 7i and the two overlap notes of 8). Disputed 0. Deferred 1 part: the "bisect rather than scan" constraint of `rq-interp-py` cannot be tested (see 7f). Graded answers changed: 6 (`q19-count` two wrong values; `r4-slope-evidence` 3 to 4; `r4-add-row` 0.9 to 2.1; `r4-remove-row` 1.0 to 2.0; homework items 0, 1 and 5 replaced by new tasks with new answers).
+
+### Contradictions and slips (1 to 6)
+
+1. `q19-count` (l19): `noprice` value 888 to 875 (900 - 25 = 875, method A: repeats removed only, matches "You removed the repeats only"; method B: 900 - 12 = 888 is the other). `norepeat` value 875 to 888 (900 - 12 = 888, matches "You removed the blank prices only"). Feedback text unchanged.
+2. `q18-sums` (l18) prose: "Five points have sums $n = 3$" to "Three points have sums $n = 3$".
+3. l18 screen "Sums of squares are exact", hint 3: "rounding step of 128" to "rounding step of 512" (float64 spacing just above $2^{61}$ is $2^{61-52} = 512$; method B: `np.spacing(3e18)` = 512).
+4. `r4-slope-evidence` explain: "5.97 ... 1.64" to "5.96 ... 1.63" in the old table. The item has since been replaced (see 8), so the final explain reads "The ratios are 2.7, -0.5, 1.7, -2.3, 2.3 and 2.1", each rounded to one place so that the displayed and unrounded standard errors give the same figure.
+5. l19 screen "What a big order costs": $\ln 32 = 3.466$ to $3.4657$ in hint 2, hint 3 and explain. $0.3375 + 1.2421 \times 3.4657 = 4.6422$ (method A, by hand: 3.4657 x 0.2421 = 0.83905, so 4.30475 + 0.3375); method B with the unrounded fit, $0.337457 + 1.242071 \ln 32 = 4.64215$. Both give 4.642.
+6. l19 first screen: "nine of the 600 rows" to "eight of the 600 rows"; canvas title "orders-messy.csv, nine rows" to "orders-messy.csv, a header and eight rows" (the console holds 9 lines: 1 header and 8 data rows).
+
+### Weak tests (7)
+
+Old and new tests; the "mutants" are the wrong solutions the checker listed, run through `runw.py` (14 to 15 tests each, solution passes, starter fails).
+
+- 7a `l16` transfer (8 to 11 tests, how text updated). Added: `[price_at(c, t) for t in (2648, 6477, 17718, 22418)]` expect `[100.202, 100.238, 101.7725, 101.474]`; the same list from `price_at_np`; `price_at(c, 15650)` expect `101.39480952380953`. All rel 1e-9. Values: method A pure-Python bisection on the merged series (means of [100.189, 100.215], [100.239, 100.237], [101.778, 101.767], [101.485, 101.463]; 15650 lies 31/63 of the way from 101.383 to 101.407); method B `np.interp` on the pandas frame. Both agree. Mutants now failing: `.first()`, `.last()`, `.max()`, `.min()` (8 of 11 pass, 3 fail). `.median()` equals the mean for pairs, so it is not a wrong solution.
+- 7b `OnlineLine` (l18, 7 to 8 tests). Added `m.add(1, 2); m.add(3, 8)` expect `[-1.0, 3.0]` (slope 6/2 = 3, intercept 2 - 3 = -1; method B `np.polyfit([1, 3], [2, 8], 1)`). Mutant `n < 3` now fails.
+- 7c and 7e `load_clean` (l19, 6 to 8 tests). Added a prelude that writes `tiny-orders.csv` (7 rows: a price of 0.0, a NaN, a -999, id 2 twice with prices 5.0 then 6.0, symbols ' x ' and 'y', quantities '1,000' and '4,500') and two tests: `[len, order_id list, price list]` = `[3, [1, 2, 6], [10.0, 5.0, 12.0]]`, and `[symbols, qty]` = `[['X', 'Y', 'X'], [1000, 200, 700]]`. Mutants now failing: `price >= 0` (6 of 8 pass) and `keep='last'` (6 of 8 pass).
+- 7d and 7e homework `town_slopes` and `clean_orders`: replaced by new items (see 8), whose tests carry the guard and repeat cases. `trend_table`: a five-row lake is fitted and a four-row lake is not, so `n <= 5` and `n < 3` fail (see the table below). `clean_fills`: a repeated id whose copies differ (`keep='first'` fails).
+- 7e `rq-clean-frame-py` (7 to 8 tests): added "Repeats that differ", ids [1, 1, 2] with prices [5.0, 9.0, 4.0], expect `[5.0, 4.0]`. Mutant `keep='last'` now fails; `price >= 0` already failed on "A price of zero".
+- 7f `rq-interp-py` (13 to 14 tests, prelude added): "Every y missing", `_raises_value_error([1, 2], [None, float('nan')], 1)` expect True (the drill harness has no `raises` compare, so a prelude helper catches `ValueError`). Mutant without the check now fails. Deferred: a linear-scan solution still passes. Every call rebuilds and sorts a dict, so a scan cannot be told from bisection by timing, and the drill harness cannot read the source. The first constraint now says "The tests check results and speed, not the method", and the "Long input" `why` no longer claims to test bisection.
+- 7g `rq-group-slopes-py` (8 to 9 tests): "Groups listed out of order", groups b, b, b, a, a, a with y [1, 2, 4, 4, 3, 2], expect `[['a', 'b'], [-1.0, 1.5]]` (b: centred products 3 over 2 = 1.5; a: -2 over 2 = -1; method B `np.polyfit`). Mutant `groupby('g', sort=False)` now fails.
+- 7h `rq-online-ols-py` (7 to 8 tests, prelude helper `_run_calls`): "Coefficients after every row", 20,000 seeded rows with `coef()` called after each add, maximum error against `lstsq` at every 1,000th row below 1e-6. The model solution takes 0.19 s here; a class that stores rows and refits in `coef()` took 43.5 s (limit 5 s per test, so the engine stops it). It is stopped by the engine's limit, not by `runw.py`, which has no clock.
+
+### Duplicates (8): fresh numbers, data and tasks
+
+New data from the seeded script `docs/briefs/research-int-scripts/gen_hw4_data.py` (numpy `default_rng`, standard library; seeds 2041, 2042, 2043), written to `app/content/data/research-int/`: `rates-gaps.csv` (2.1 KB), `lakes-level.csv` (5.3 KB), `fills-messy.csv` (14.5 KB). All far below 256 KB. No number set of the new items occurs elsewhere in `app/content/` (greps of the distinctive values 381950, 52350.5, 34271, 16818536, 0.84193; shared small numbers only).
+
+- `h4-value-at` (was: value_at on `ticks-gaps.csv`, 286 times). Now `regrid(path, step)` and `longest_gap(path)` on `rates-gaps.csv`: 200 quotes, 14 written NA, 186 valid, minutes 5 to 479. Values: 30-minute grid 16 points (5, 35, ..., 455), rates at rows 0, 3, 7 = 0.8497, 0.8442, 0.8408416666666667; one-minute grid 475 points with mean 0.8419341052631579; longest gap 14 (12 if the NA rows were counted). Method A pure-Python bracket search; method B `np.interp` (mean 0.8419341052631578). Tiny file `20,2.0 / 0,1.0 / 10,NA / 40,4.0`: step 15 gives [[0, 1.0], [15, 1.75], [30, 3.0]], step 20 gives [[0, 1.0], [20, 2.0], [40, 4.0]], step 100 one row, gap 20. 8 tests (was 7). Mutants failing: interpolating by position (5 of 8 fail), grid stopping before the last minute (`+ 1` removed, 2 fail), not dropping NA (4 fail), forward fill (4 fail).
+- `h4-town-slopes` (was: slope, intercept and R-squared for 13 towns, Wick NaN). Now `trend_table(path)` and `trending(path)` on `lakes-level.csv`: 9 lakes of 40 years and Tarn with 4 years; columns slope, se, t, n; NaN below 5 rows; `trending` lists the lakes with |t| above 2, largest first. Values (method A raw sums from `csv`, method B centred sums with `numpy`, equal to 1e-9): slopes Ard -0.013390056285178205, Gill 0.01314502814258912, Isla -0.008340431519699798; se Dee 0.0018137026547917082, Fyne 0.0020575279234840245; t Bala -1.5872, Hawes 1.6806, Ard -9.2752; list [Ard, Gill, Isla, Esk, Fyne, Dee] with t = -9.28, 8.58, -4.24, 3.51, 3.37, 3.06. Tiny file: V (x 1 to 5, y 10.0, 10.2, 9.9, 10.4, 10.3) slope 0.08, se 0.06, t 1.3333 (Sxy 0.8, Sxx 10, RSS 0.108); W has 4 rows and is NaN. 8 tests (was 6). Mutants failing: `n < 3` (3 fail), `n <= 5` (1 fails), divisor `n` or `n - 1` for `n - 2` (3 fail), threshold 1.5 (1 fails), ascending order (1 fails).
+- `h4-clean-orders` (was: `clean_orders`, 570-row frame). Now `clean_fills(df)` on `fills-messy.csv` (402 rows, 380 ids, 10 final CANCELLED rows, 12 corrections, side in mixed case, qty such as '2k', price such as '£11.99'): a later row replaces an earlier one, a CANCELLED last row removes the id. Values (method A `csv` and plain Python, method B pandas, frames equal row by row): 370 rows, 193 buys, quantity total 381,950, signed value -52,350.5, seconds total 16,818,536. TINY (7 rows) leaves 4 rows: [[1, 34200, 1, 1000, 10.0], [2, 34271, -1, 250, 5.5], [4, 34380, -1, 50, 7.0], [5, 36005, 1, 2000, 9.5]]. 7 tests. Mutants failing: `keep='first'` (5 of 7 fail), dedupe before dropping cancelled in the wrong order (5 fail), no strip (4 fail), 'k' read as 00 (4 fail), time seconds dropped (2 fail).
+- `r4-slope-evidence` (reused l17's 0.0052). New table: P, Q, S, U 60 days with standard error 0.0075 and slopes 0.020, -0.004, -0.017, 0.016; R 5 days, slope 0.550, se 0.3162; T 20 days, slope 0.090, se 0.0388 (all with sigma 1: $1/\sqrt{60 \cdot 3599/12} = 0.00746$, $1/\sqrt{10} = 0.3162$, $1/\sqrt{665} = 0.0388$). Ratios 2.7, -0.5, 1.7, -2.3, 2.3, 2.1 (displayed and unrounded standard errors agree to one place). Answer 3 to 4 (P, S, T, U). `wrong`: `big` 2 to 3 (60-day groups only: P, S, U), `all` 6 unchanged. Feedback `correct`, `byKey.big` and explain updated to match.
+- `r4-add-row` (x grid 1 to 5, new point (5, 5), answer 0.9). Now sums 4, 14, 20, 54, 81 and the point (6, 10): new sums 5, 20, 30, 90, 141, slope $(705 - 600)/(450 - 400) = 2.1$. Method B centred: points (2,2), (3,4), (4,5), (5,9), (6,10), Sxy 21 over Sxx 10 = 2.1. `old` wrong 1.1 to 2.2 (before: Sxy 11 over Sxx 5 = 2.2). Answer 0.9 to 2.1.
+- `r4-remove-row` (leaving point (1, 2), answer 1.0). Now sums 5, 25, 40, 135, 215 and the point (3, 6) leaves: new sums 4, 22, 34, 126, 197, slope $(788 - 748)/(504 - 484) = 2.0$. Method B centred on the four remaining points (4,5), (5,9), (6,8), (7,12): Sxy 10 over Sxx 5 = 2.0. `kept` wrong 0.9 to 1.5 (all five points: Sxy 15 over Sxx 10). Answer 1.0 to 2.0.
+- `r4-rerun-checklist` (repeated l20's seed, paths, versions, one command). Now about repeating the cleaning: correct options `input` (a saved copy of the input, with its date or a hash), `code` (cleaning in code, never by editing the spreadsheet), `counts` (row counts printed after each step), `order` (the run order, written in one place); wrong `fresh` (the newest data downloaded on every run) and `hand` (odd rows fixed by hand). Old ids seed, rel, req, one, once, hand are replaced; `byKey` and explain rewritten.
+
+### Voice and balance (9 to 12)
+
+- 9: `rq-clean-frame-py` brief split into three sentences ("It returns a cleaned copy. Symbols are stripped and in upper case. Quantities are whole numbers. Keep one row per order id (the first), and only prices above zero."). `rq-stable-slope-cpp` brief: "..., has a zero denominator over a non-zero numerator there, so it returns inf or NaN, never 0.5." to "... there. It returns inf or NaN, never 0.5."
+- 10: `q19-dedupe` key "They differ in text, so they are not exact duplicates yet" (57) to "The text differs, so they are not exact duplicates" (50). l18 "Say it aloud" key (71) to "An update costs p squared a row; a refit costs n times p squared." (65). l20 "Which reruns match" wrong options "A different seed" (16) and "No seed set at all" (18) to "The same code, run with a different seed" (40) and "The same code, run with no seed set at all" (42).
+- 11: `q18-cost` wrong `p` (5) feedback: "You divided once too often. The $p^2$ cancels, leaving $n$." to "You divided $np^2$ by $np$, not by $p^2$. That leaves $p$." ($np^2/(np) = p = 5$.)
+- 12: l16 transfer explain: "does the sort-free bracket search for you but needs sorted times" to "searches for the bracket for you but needs the times in increasing order".
+
+### Wrong solutions, before and after
+
+| Item | Wrong solution | Before | After |
+|---|---|---|---|
+| l16 transfer | `.first()`, `.last()`, `.max()`, `.min()` for `.mean()` | pass 8 of 8 | fail 3 of 11 |
+| l18 `OnlineLine` | NaN when n < 3 | pass 7 of 7 | fails 1 of 8 |
+| l19 `load_clean` | `price >= 0`; `keep='last'` | pass 6 of 6 | fail 2 of 8 each |
+| `rq-interp-py` | no empty-input check | pass 13 of 13 | fails 1 of 14 |
+| `rq-interp-py` | linear scan | pass | still passes (deferred, not testable) |
+| `rq-group-slopes-py` | `sort=False` | pass 8 of 8 | fails 1 of 9 |
+| `rq-online-ols-py` | stores rows, refits in `coef()` | pass 7 of 7 | stopped at 5 s (43.5 s here) |
+| `rq-clean-frame-py` | `keep='last'` | pass 7 of 7 | fails 1 of 8 |
+| homework `town_slopes` | guard `n <= 3` | pass | replaced; `n <= 5` and `n < 3` fail |
+| homework `clean_orders` | `keep='last'` | pass | replaced; `keep='first'` for the new rule fails |
+
+### Verification
+
+- `node tools/validate.mjs`: 0 errors (539 warnings, all earlier ones).
+- `playthrough --lesson research-int/l16-interpolating`, `l18-updating-a-fit`, `l19-timed-data-task`, `l20-writing-a-take-home`: all pass, with and without `--mobile`.
+- `playthrough --set research-int/review-4` and `homework-4`: all pass (10 of 10; 8 of 8, 38 of 38 marks), with and without `--mobile`.
+- `playthrough --drill` for the six `rq-*` drills: all pass (14, 9, 8, 8, 9 and 7 hidden tests, starters fail), with and without `--mobile`.

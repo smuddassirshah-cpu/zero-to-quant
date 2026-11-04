@@ -16,7 +16,7 @@
   "brief": "A price series has gaps and arrives in any order. Write `interp(xs, ys, x)`. It returns the straight-line value at `x` between the two nearest known points.\n\nA missing `y` is `None` or NaN. Drop it before you interpolate.",
   "definition": "Sort the points by $x$ and average the $y$ values that share an $x$. For $x_0 \\le x \\le x_1$, the neighbours either side of $x$, return\n\n$$y = y_0 + (y_1 - y_0)\\dfrac{x - x_0}{x_1 - x_0}$$\n\nBelow the smallest $x$ or above the largest, return the nearest end value. If no point is left, raise `ValueError`.",
   "constraints": [
-    "Find the bracketing pair by bisection, not by scanning every pair.",
+    "Find the bracketing pair with `bisect`, not by scanning every pair. The tests check results and speed, not the method.",
     "Standard library only.",
     "All tests share a 5-second limit."
   ],
@@ -133,10 +133,18 @@
       "call": "interp(list(range(100000)), [2 * i for i in range(100000)], 54321.5)",
       "expect": "108643.0",
       "compare": "isclose",
-      "why": "Bisect rather than scan: 100,000 points must not take 100,000 steps.",
+      "why": "100,000 points must still finish well inside the 5-second limit.",
       "show": "interp(range(100000), [2 * i ...], 54321.5)",
       "note": "100,000 points on the line y = 2x."
+    },
+    {
+      "name": "Every y missing",
+      "call": "_raises_value_error([1, 2], [None, float('nan')], 1)",
+      "expect": "True",
+      "compare": "equal",
+      "why": "No point is left once the missing y values go, so raise ValueError."
     }
   ],
-  "how": "Submit runs 13 hidden tests. Each answer is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`."
+  "how": "Submit runs 14 hidden tests. Each answer is accepted when `math.isclose(actual, expected, rel_tol=1e-9)`.",
+  "prelude": "def _raises_value_error(xs, ys, x):\n    try:\n        interp(xs, ys, x)\n    except ValueError:\n        return True\n    except Exception:\n        return False\n    return False\n"
 }

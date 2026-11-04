@@ -22,7 +22,7 @@
     "All tests share a 5-second limit."
   ],
   "hint": "Compute `Px = P @ x` once. After updating P, the correction to b is `(P @ x) * (y - x @ b)`, with b from before the update.",
-  "prelude": "import numpy as np\n\ndef _run_seq():\n    m = OnlineOLS(2)\n    out = []\n    for x, y in [(1, 2), (2, 3), (3, 5), (4, 4)]:\n        m.add([1, x], y)\n    out.append([round(float(v), 6) for v in m.coef()])\n    m.add([1, 5], 8)\n    out.append([round(float(v), 6) for v in m.coef()])\n    m.remove([1, 1], 2)\n    out.append([round(float(v), 6) for v in m.coef()])\n    return out\n\ndef _run_random(n, removed):\n    rng = np.random.default_rng(21)\n    X = np.c_[np.ones(n), rng.normal(size=(n, 2))]\n    y = X @ np.array([1.0, 2.0, -1.0]) + rng.normal(size=n)\n    m = OnlineOLS(3)\n    for i in range(n):\n        m.add(X[i], y[i])\n    for i in range(removed):\n        m.remove(X[i], y[i])\n    ref = np.linalg.lstsq(X[removed:], y[removed:], rcond=None)[0]\n    return float(np.abs(m.coef() - ref).max())\n",
+  "prelude": "import numpy as np\n\ndef _run_seq():\n    m = OnlineOLS(2)\n    out = []\n    for x, y in [(1, 2), (2, 3), (3, 5), (4, 4)]:\n        m.add([1, x], y)\n    out.append([round(float(v), 6) for v in m.coef()])\n    m.add([1, 5], 8)\n    out.append([round(float(v), 6) for v in m.coef()])\n    m.remove([1, 1], 2)\n    out.append([round(float(v), 6) for v in m.coef()])\n    return out\n\ndef _run_random(n, removed):\n    rng = np.random.default_rng(21)\n    X = np.c_[np.ones(n), rng.normal(size=(n, 2))]\n    y = X @ np.array([1.0, 2.0, -1.0]) + rng.normal(size=n)\n    m = OnlineOLS(3)\n    for i in range(n):\n        m.add(X[i], y[i])\n    for i in range(removed):\n        m.remove(X[i], y[i])\n    ref = np.linalg.lstsq(X[removed:], y[removed:], rcond=None)[0]\n    return float(np.abs(m.coef() - ref).max())\n\ndef _run_calls(n):\n    rng = np.random.default_rng(21)\n    X = np.c_[np.ones(n), rng.normal(size=(n, 2))]\n    y = X @ np.array([1.0, 2.0, -1.0]) + rng.normal(size=n)\n    m = OnlineOLS(3)\n    worst = 0.0\n    for i in range(n):\n        m.add(X[i], y[i])\n        c = m.coef()\n        if i >= 100 and i % 1000 == 0:\n            ref = np.linalg.lstsq(X[:i + 1], y[:i + 1], rcond=None)[0]\n            worst = max(worst, float(np.abs(c - ref).max()))\n    return worst\n",
   "starter": "import numpy as np\n\nclass OnlineOLS:\n    def __init__(self, p):\n        # Your code here\n        pass\n\n    def add(self, x, y):\n        # Your code here\n        pass\n\n    def remove(self, x, y):\n        # Your code here\n        pass\n\n    def coef(self):\n        # Your code here\n        return np.zeros(1)\n",
   "solution": "import numpy as np\n\nclass OnlineOLS:\n    def __init__(self, p):\n        self.P = np.eye(p) * 1e8\n        self.b = np.zeros(p)\n\n    def add(self, x, y):\n        x = np.asarray(x, float)\n        Px = self.P @ x\n        self.P = self.P - np.outer(Px, Px) / (1.0 + x @ Px)\n        self.b = self.b + (self.P @ x) * (y - x @ self.b)\n\n    def remove(self, x, y):\n        x = np.asarray(x, float)\n        Px = self.P @ x\n        self.P = self.P + np.outer(Px, Px) / (1.0 - x @ Px)\n        self.b = self.b - (self.P @ x) * (y - x @ self.b)\n\n    def coef(self):\n        return self.b.copy()\n",
   "examples": [
@@ -88,7 +88,14 @@
       "expect": "True",
       "compare": "equal",
       "why": "5,000 updates stay accurate and fast."
+    },
+    {
+      "name": "Coefficients after every row",
+      "call": "_run_calls(20000) < 1e-6",
+      "expect": "True",
+      "compare": "equal",
+      "why": "20,000 rows, with coef called after each add. A refit from stored rows takes far longer than 5 seconds."
     }
   ],
-  "how": "Submit runs 7 hidden tests: the l18 sequence (to six places), then 200, 200 with 50 removed, and 5,000 seeded rows against `np.linalg.lstsq`."
+  "how": "Submit runs 8 hidden tests: the l18 sequence (to six places), then 200, 200 with 50 removed, and 5,000 seeded rows against `np.linalg.lstsq`. The last asks for the coefficients after each of 20,000 rows."
 }
