@@ -95,7 +95,7 @@
         "generic": "Not quite right. Read the first marked line."
       },
       "explain": {
-        "text": "The frame lands in kernel memory first: that is copy one. The wake and the scheduler follow, then copy two moves the data into your buffer. Two copies and a wake-up are why this path is slow."
+        "text": "The card writes the frame into kernel memory (DMA, no CPU copy): that is move one. The wake and the scheduler follow, then the kernel copies the data into your buffer: move two. Two moves and a wake-up are why this path is slow."
       }
     },
     {
@@ -133,7 +133,7 @@
           }
         ],
         "derive": {
-          "caption": "{{path == 0 ? 'Kernel path: two copies, one wake-up, about 10 µs.' : 'Bypass path: no kernel copy, no wake-up, about 1 µs.'}}"
+          "caption": "{{path == 0 ? 'Kernel path: two moves, one wake-up, about 10 µs.' : 'Bypass path: no kernel copy, no wake-up, about 1 µs.'}}"
         }
       },
       "question": "How many 5 µs budgets does one packet on the kernel path use?",
@@ -187,7 +187,7 @@
         }
       },
       "explain": {
-        "text": "The kernel path spends 10 µs on two copies and a wake-up, twice the 5 µs budget. The bypass path takes 1 µs, one fifth of the budget."
+        "text": "The kernel path spends 10 µs on two moves and a wake-up, twice the 5 µs budget. The bypass path takes 1 µs, one fifth of the budget."
       }
     },
     {
@@ -726,7 +726,7 @@
           {
             "id": "epoll",
             "text": "`epoll_wait` over every socket from one thread",
-            "why": "`epoll_wait` still sleeps and wakes, so the 5 µs wake is still there."
+            "why": "A blocking `epoll_wait` sleeps and wakes, so the 5 µs wake is still there."
           },
           {
             "id": "all",
@@ -766,7 +766,7 @@
   ],
   "summary": {
     "ideas": [
-      "The kernel path is two copies and a wake-up, about 10 µs; a kernel-bypass path is about 1 µs.",
+      "The kernel path is two moves and a wake-up, about 10 µs; a kernel-bypass path is about 1 µs.",
       "`read` returns between 0 and $n$ bytes. A stream has no frame boundaries, so keep the leftover for the next read.",
       "Blocking pays a 5 µs wake. Polling notices in about 0.2 µs but holds a core at 100%."
     ],
@@ -824,7 +824,7 @@
       ],
       "pace": 40,
       "prose": "A datagram arrives for a thread sleeping in `recvfrom`, on the ordinary kernel path.",
-      "question": "How many times is the data copied before `recvfrom` returns?",
+      "question": "How many times is the data moved before `recvfrom` returns?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
@@ -854,10 +854,10 @@
       },
       "feedback": {
         "correct": "Twice.",
-        "generic": "Not quite right. Count the copies on the kernel path."
+        "generic": "Not quite right. Count the moves on the kernel path."
       },
       "explain": {
-        "text": "The card writes the frame to kernel memory, and the kernel copies it into your buffer. The bypass path skips both kernel steps."
+        "text": "The card writes the frame to kernel memory by DMA, and the kernel copies it into your buffer. We count both as moves. The bypass path skips both kernel steps."
       }
     },
     {

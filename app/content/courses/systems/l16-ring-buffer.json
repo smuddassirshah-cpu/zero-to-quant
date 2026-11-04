@@ -597,7 +597,7 @@
         }
       },
       "explain": {
-        "text": "A power-of-two ring keeps its slot order across the wrap: 2, 3, 0, 1, and tail minus head stays 2. A ring of 3 puts counters 4,294,967,295 and 0 in the same slot, because $2^{32}$ leaves remainder 1. At 10 million pushes a second the wrap comes after 429.5 s, so it will happen.",
+        "text": "A power-of-two ring keeps slot order across the wrap: 2, 3, 0, 1, and tail minus head stays 2. A ring of 3 puts counters 4,294,967,295 and 0 in the same slot, because $2^{32}$ leaves remainder 1. At 10 million pushes a second the wrap comes after 429.5 s, so it will happen.",
         "canvas": {
           "lines": [
             "ring of 4: slot = tail & 3",
@@ -638,8 +638,8 @@
               "mask",
               "head",
               "tail",
-              "",
-              ""
+              "pad",
+              "pad"
             ],
             [
               "",
@@ -821,7 +821,7 @@
         }
       },
       "explain": {
-        "text": "Stealing the line costs 600 ms of every second, 60% of a core, for a queue that does nothing wrong. With `alignas(64)` each counter keeps its own line and the cost falls to 10 ms. The test in the next task compares the two addresses."
+        "text": "Stealing the line costs 600 ms of every second, 60% of a core, for a correct queue. With `alignas(64)` each counter keeps its own line and the cost falls to 10 ms. The test in the next task compares the two addresses."
       }
     },
     {
@@ -831,7 +831,7 @@
       "tags": [
         "spsc-order"
       ],
-      "prose": "Level 2 gave the memory orders: a `release` store publishes everything written before it, and an `acquire` load sees it. The producer owns `tail_` and only reads `head_`. Put the producer's push in order. Leave out the lines that do not belong.",
+      "prose": "Level 2 gave the memory orders. A `release` store publishes everything written before it, and an `acquire` load sees it. The producer owns `tail_` and only reads `head_`. Put the producer's push in order. Leave out the lines that do not belong.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -922,7 +922,7 @@
         }
       },
       "explain": {
-        "text": "The producer reads its own `tail_` relaxed, checks `head_` with `acquire`, and writes the slot. The `release` store of `tail_ + 1` publishes the slot write, so the consumer's `acquire` load of the tail sees the value. A relaxed store would not order the two."
+        "text": "The producer reads its own `tail_` relaxed, checks `head_` with `acquire`, and writes the slot. The `release` store of `tail_ + 1` publishes the slot write, so the consumer's `acquire` load of the tail sees it. A relaxed store would not order the two."
       }
     },
     {
@@ -1403,7 +1403,7 @@
         "power-of-two-mask"
       ],
       "pace": 360,
-      "prose": "Drill: about two minutes each. Say the reasoning aloud first. A push returns 1 when accepted and 0 when full, and a pop returns the value or -1 when empty.",
+      "prose": "Drill: about two minutes each. Say the reasoning aloud first. A push returns 1 when accepted and 0 when full. A pop returns the value, or -1 when empty.",
       "question": "Fill in each answer.",
       "widget": {
         "kind": "table",
@@ -1490,7 +1490,7 @@
         "ring-buffer",
         "power-of-two-mask"
       ],
-      "prose": "The interviewer asks: size the ring so a consumer stall of 1 ms loses nothing at 200,000 messages a second. A message is 24 bytes, and the capacity must be a power of two.",
+      "prose": "The interviewer asks you to size the ring. A consumer stall of 1 ms must lose nothing at 200,000 messages a second. A message is 24 bytes, and the capacity must be a power of two.",
       "question": "Fill in the sizes.",
       "widget": {
         "kind": "table",
@@ -1566,13 +1566,13 @@
         }
       },
       "explain": {
-        "text": "200 messages round up to 256 slots, 6,144 bytes, which sits in L1. A 5 ms stall at a million a second needs 5,000 messages: 8,192 slots, 192 KiB, which sits in L2. Say which stall the ring covers."
+        "text": "200 messages round up to 256 slots, 6,144 bytes, which sits in L1. A 5 ms stall at a million a second needs 5,000 messages: 8,192 slots, 192 KiB, in L2. Say which stall the ring covers."
       }
     }
   ],
   "summary": {
     "ideas": [
-      "A ring of N slots, N a power of two, has two growing counters: slot = counter & (N - 1), full when tail - head == N.",
+      "A ring of N slots, N a power of two, has two growing counters. Slot = counter & (N - 1), full when tail - head == N.",
       "Powers of two keep slot order across a 32-bit wrap. A ring of 3 puts two counters in one slot.",
       "One writer per counter needs no lock; give head and tail lines of their own with alignas(64)."
     ],

@@ -21,7 +21,7 @@
   ],
   "hint": "Keep a `std::list` of (key, value) pairs, most recent first, and an `unordered_map` from key to list iterator. `splice` moves a node to the front without allocating.",
   "starter": "#include <list>\n#include <unordered_map>\n\n// A cache of at most `capacity` keys. get(k) returns the value or -1, and counts as a use.\n// put(k, v) stores or updates k (also a use); when over capacity, drop the least recently used key.\n// Both calls take constant time on average.\nclass LRU {\npublic:\n    explicit LRU(int capacity) : capacity_(capacity) {}\n    int get(int key) {\n        auto it = values_.find(key);\n        return it == values_.end() ? -1 : it->second;      // does not count as a use yet\n    }\n    void put(int key, int value) {\n        values_[key] = value;\n        if (static_cast<int>(values_.size()) > capacity_) values_.erase(values_.begin());   // not the oldest\n    }\nprivate:\n    int capacity_;\n    std::unordered_map<int, int> values_;\n};\n",
-  "postlude": "#include <cstdio>\n#include <string>\n#include <vector>\n\n// hidden driver: \"p k v\" puts, \"g k\" gets; the result lists every get (value or -1)\nstd::vector<int> drive(int capacity, const std::vector<std::string>& ops) {\n    LRU cache(capacity);\n    std::vector<int> out;\n    for (const auto& op : ops) {\n        int k = 0, v = 0;\n        if (op[0] == 'p') { std::sscanf(op.c_str(), \"p %d %d\", &k, &v); cache.put(k, v); }\n        else { std::sscanf(op.c_str(), \"g %d\", &k); out.push_back(cache.get(k)); }\n    }\n    return out;\n}\n",
+  "postlude": "#include <cstdio>\n#include <string>\n#include <vector>\n\n// hidden driver: \"p k v\" puts, \"g k\" gets; the result lists every get (value or -1)\nstd::vector<int> drive(int capacity, const std::vector<std::string>& ops) {\n    LRU cache(capacity);\n    std::vector<int> out;\n    for (const auto& op : ops) {\n        int k = 0, v = 0;\n        if (op[0] == 'p') { std::sscanf(op.c_str(), \"p %d %d\", &k, &v); cache.put(k, v); }\n        else { std::sscanf(op.c_str(), \"g %d\", &k); out.push_back(cache.get(k)); }\n    }\n    return out;\n}\n\n// hidden driver for the speed test: puts keys 0..n-1 in turn, getting each key from cap/4 puts ago\n// (always present) and each from 2*cap puts ago (always gone); returns {correct hits, misses}\nstd::vector<int> big(int cap, int n) {\n    LRU cache(cap);\n    int hits = 0, misses = 0;\n    for (int i = 0; i < n; ++i) {\n        cache.put(i, i + 1);\n        if (i >= cap / 4 && cache.get(i - cap / 4) == i - cap / 4 + 1) ++hits;\n        if (i >= 2 * cap && cache.get(i - 2 * cap) == -1) ++misses;\n    }\n    return {hits, misses};\n}\n",
   "examples": [
     {
       "call": "drive",
@@ -251,9 +251,27 @@
         5
       ],
       "compare": "equal"
+    },
+    {
+      "call": "big",
+      "args": [
+        40000,
+        200000
+      ],
+      "types": [
+        "int",
+        "int"
+      ],
+      "expect": [
+        190000,
+        120000
+      ],
+      "compare": "equal",
+      "name": "Many operations",
+      "note": "400,000 calls on 40,000 keys: a scan through every key is too slow."
     }
   ],
-  "how": "Seven hidden tests drive the cache with puts and gets: eviction order, capacity 1 and 0, updates and many keys. A hidden driver calls `put` and `get` and compares every result of `get`.",
+  "how": "Eight hidden tests drive the cache with puts and gets: eviction order, capacities 0 and 1, updates, many keys. The last makes 400,000 calls on 40,000 keys. A hidden driver calls `put` and `get` and compares every result of `get`.",
   "notes": [
     "Move a key to the front on every `get` and every `put`.",
     "Evict from the back of the list, and erase the key from the map as well."
