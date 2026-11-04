@@ -122,3 +122,86 @@ My value is the one I computed; "ok" means the key, every wrong value and the qu
 | homework-3 | items[5] h-touch-shift | 0.2202 (wrong 0.2301, 0.1101) | 0.220178; 0.230139; 0.110089; 400,000-path walk 0.2206 (se 0.0007) | ok, note 23 |
 | homework-3 | items[6] h-derivation | longform, rubric 2+2+2+2+2 = 10 | model lines derive the equation correctly; Θ, rSΔ, gamma term, rV sum to 2e-16; vega 0.375240 per point; each rubric point is a checkable statement of the model | ok, notes 16, 25 |
 | **Total** | **72 widgets** | 64 numeric fields (34 numeric items, 30 table cells) with 87 wrong values, 2 sliders, 11 choice, 5 order, 1 expression, 9 code items (68 hidden tests), 1 longform | | 1 error, 13 warnings, 13 notes, 0 wrong keys |
+
+## Fix pass
+
+Edits are targeted, to the six level 3 files only; no id was renamed and `course.json` is untouched. Every corrected number was recomputed before it was written (scripts in the scratchpad folder `fix-ito3`: `barrier3.py`, `calc.py`, `hw.py`, `anti2.py`).
+
+Status: fixed 26, disputed 1, deferred 0 (27 items; the error and 13 warnings and 13 notes). Graded answers changed: 4 (`review-3` `r-weight`, `homework-3` `h-girsanov-ratio`, `h-antithetic` and the expected values of `h-barrier-report`). One engine limit shaped finding 7, see there.
+
+### Barrier verdict (finding 1)
+
+The checker is right and the author's 8.863 is wrong. Three independent routes, all on the lesson's contract (S0 = K = 100, B = 90, r = 5%, sigma = 20%, T = 1, 252 daily closes):
+
+- Exact daily sum, by a new transition kernel (Gaussian density at cell midpoints, cells starting at the barrier, 252 matrix-vector steps): 8.91475 at cell width 0.002, 8.91409 at 0.001, 8.91393 at 0.0005, Richardson limit 8.9139. A first attempt with cells offset by half a width from the barrier gave 8.8827 and 8.8981 (a bias of order the width); it converges to the same 8.9135 by linear extrapolation, which is how the offset was spotted.
+- Closed form at the shifted barrier 90 e^(-0.5826 sigma sqrt(dt)) = 89.3418: 8.913921. Continuous closed form 8.665472.
+- Seeded NumPy simulation with the lesson's own pricer: seed 12, 20,000 paths 8.8510 (se 0.1034, as the lesson says); seed 12, 400,000 paths 8.9208 (se 0.0232); four fresh seeds of 1,000,000 paths 8.8998, 8.9106, 8.8893 and 8.9008 (se 0.0146 each; mean 8.9001, se 0.0073, 1.9 se under 8.9139). With the checker's four 400,000-path runs (8.9208, 8.9274, 8.9494, 8.9322) the pooled mean is 8.910 (se about 0.006). No run reproduces 8.863; it is 2.5 standard errors under a 400,000-path run, and the exact sum puts it 0.051 under the truth.
+
+So the shifted-barrier price is exact to four places (8.91392 against 8.91387), the gap to the continuous price is £0.2484, and the note is £248 cheap per 1,000, not £200. The lesson now says so: l12 `screens[4]` (`noise` why and byKey: "settles near £8.91"), `screens[8]` explain (exact sum 8.9139, 400,000 paths 8.92, "good to better than a penny", continuous £0.25 low), `screens[10]` explain (£248, the 20,000-path run says £185 within its own noise of about £100) and `summary.ideas[1]` (daily £8.9139, shift finds it to better than a penny). The teaching point is kept honest: the shift is that accurate, and the 20,000-path run is a noisy estimate of it, not an independent check of the penny.
+
+### Per finding
+
+1. Fixed, as above.
+2. Fixed. l9 `screens[1]` `sigma-not-squared` slip is 0.5 x 0.2 x 10,000 x 0.018762 = 18.762 (37.524 was a different slip). The value is now in the `r2c1` line (see 7).
+3. Fixed. l9 `screens[4]` `sigma-term` is 0.5 x 0.16 x 10,000 x 1 = 800 (residual 800), tol abs 1; the line now says "You took $V_{SS} = 1$".
+4. Fixed. l10 `screens[4]` sign slip for the low path is e^(-0.35 - 0.06125) = 0.6628; 0.9406 is the no-w slip. Both numbers are named in the `r1c1` line.
+5. Fixed. l10 `quiz[0]` `half`: 0.9406 = e^(-0.06125), theta 0.35 with the w term dropped; the line now says so and that here theta is 0.
+6. Fixed. l10 `screens[8]` `same`: £15.53 (15.5263 by the closed form S0 e^((mu - r)T) Phi(0.7) - K e^(-rT) Phi(0.5), 15.5261 by quadrature).
+7. Fixed, with a deviation from the instruction. The validator accepts only cell ids as `byKey` keys for a table, and the table widget returns the matched `wrong` id as the key before the cell id, so a cell line is never shown for a slip that has its own `wrong` entry. Keying by cell id alone would have left the slips on the generic line. I therefore removed the ten table-cell `wrong` entries that had no reachable line and wrote each slip, with its number, into the cell's `r{i}c{j}` line, which now shows for every wrong entry in that cell: l9 `screens[1]` (`r1c1`, `r2c1`), l10 `screens[4]` (`r0c1`, `r1c1`), l11 `screens[2]` (`r1c1`, `r2c1`), l12 `screens[2]` (`r0c1`), `screens[7]` (`r2c1`), `screens[8]` (`r0c1`). The cost is that progress data no longer records the slip id for those cells. `docs/AUTHORING.md` says a table `byKey` line can name a cell's `wrong` id; the validator does not, which is an engine item for the backlog, not a content fix.
+8. Fixed. l9 `screens[7]`: "the book earns net interest of +0.010562 ... 5% a year on its £53.23 of net cash"; canvas row "Net interest on the book"; `no-interest` line "It is rSDelta - rV spread over the day". (Short sale alone 12.636, call carry 2.074, net 10.562 per 1,000, per day.)
+9. Fixed. l9 `screens[7]` explain: a £0.50 move gives 0.5 x 18.762 x 0.25 - 25.452 + 10.562 = -12.545, "about £12.50".
+10. Fixed. CRR (100 to 1,000 steps, my own tree): error -0.0200, -0.0100, -0.0040, -0.0020 at 100, 200, 500, 1,000 and +0.0177, +0.0087, +0.0035 at 99, 201, 501; 101 steps give 10.4680. l11 `screens[5]` canvas row ("over even $n$, below the formula") and explain, and `screens[8]` explain, no longer say "always below".
+11. Fixed. Keys shortened: l9 `screens[6]` `pay` (66 against 59), l11 `screens[4]` `drift` (70 against 64), l12 `screens[4]` `monitoring` (86 against 82), and the four near misses: l10 `screens[5]` `weights` (72 against 75), l11 `screens[0]` `settle` (66 against 63), review-3 `items[8]` `fewer` (55 against 61), l12 `quiz[0]` `path` (64 against 52).
+12. Fixed. `h-barrier-report` now prices S0 = K = 100, B = 85, r = 4%, sigma = 25% (252 steps, 20,000 paths), seeds 5, 9 and 21 (the old seeds and numbers are gone). Two routes: (a) the solution code; (b) an independent log-space simulation on the same draws, same results to four places on every seed, plus the continuous price by integrating the method-of-images density (10.58282, against the formula 10.5828) and the exact daily sum by transition matrix (10.76985 at width 0.002, 10.76953 at 0.001, against the shifted 10.7695). Values: seed 5 `[10.5828, 10.751, 0.1292, 10.7695, -0.143, 0.0]`, seed 9 `[10.5828, 10.9272, 0.1302, 10.7695, 1.2113, 0.0]`, seed 21 `[10.5828, 10.8022, 0.1295, 10.7695, 0.2526, 0.0]`. They match the check file's proposal. The docstring, example, tests, `how`, feedback and explain are updated (0.14 and 1.3 standard errors).
+13. Fixed. `h-girsanov-ratio`: mu = 9%, r = 3%, sigma = 25%, S0 = 100, A is S1 > 110. theta = 0.24, P(A) = 1 - Phi(0.14624) = 0.441866, Q(A) = 1 - Phi(0.38624) = 0.349659, ratio 0.791325; quadrature of Z over A by a 2,000,000-point grid gives 0.791324. Key 0.7913 (tol 0.0005); wrong `q` 0.3497, `p` 0.4419, `one` 1. Explain says "When mu > r".
+14. Fixed. `h-antithetic`: `mc_call(80, 85, 0.03, 0.35, 1, 100000, 17)`: plain 10.1066 (se 0.061749), antithetic 10.0898 (se 0.037211), plain draws needed (0.061749/0.037211)^2 x 100,000 = 275,363. A second route, the sample correlation of the payoffs for z and -z (-0.2688), gives 2n/(1 + rho) = 273,524, inside the tolerance. Key 275,000 (tol abs 5,000); wrong `same` 100,000, `double` 200,000, and `sixteen` is replaced by `no-square` 165,900 (the error ratio 1.66 without squaring; 1.66^4 would be 758,000). The saving is 1.4 times and the explain says why it is less than at the money.
+15. Fixed. `same` added: l9 `screens[2]` `[["d2","d3"]]`, l10 `screens[2]` `[["c2","c3"]]`, `homework-3` `h-replicate` `[["a2","a3"]]`. l11 `screens[6]` prompt now says "Do the exercise chance and the second term before the share term" (`same` cannot express e3 after e5).
+16. Fixed in the narrow sense. The model answer is a rehearsal of lessons 9 and 10 by design, so its numbers stay; the check line is now introduced as "Example check at ..." so that any consistent set is acceptable, as the rubric ("a number such as") already says.
+17. Fixed. `review-3` `r-power` `real` is now 12,460.77 = 10^4 e^(0.22) (real drift 9%; 1e4 e^(0.18 + 0.04)), no longer the l6 answer 12,214.03. The key 10,941.74 is unchanged.
+18. Fixed. l12 `screens[8]` correct line: "within 0.07" (gap 0.0629).
+19. Fixed. l11 `screens[3]` `how`: "Six check price and standard error".
+20. Fixed. l10 `screens[2]` `x1`: "a drift of 10.6%".
+21. Fixed. l12 `screens[7]` correct line: 1.5618 from the rounded prices, 1.5617 unrounded.
+22. Fixed. l12 `screens[1]` explain: the gap 0.0071 is about one standard error, so one run cannot show it.
+23. Fixed. `h-touch-shift`: "$1.22605$ and $\Phi(1.22605) = 0.88991$" (the unrounded shifted level is 1.226055, Phi 0.889911; key 0.2202 unchanged).
+24. Fixed. `h-girsanov-ratio` explain: "When mu > r".
+25. Fixed. `h-derivation` model point 5: "A seller who hedged at sigma loses about vega times (sigma_real - sigma) if realised volatility is higher." Vega 0.3752 per point is unchanged.
+26. Fixed. `review-3` `r-weight`: mu = 10%, r = 4%, sigma = 20% (theta 0.3, so it no longer repeats l10 `q-theta`'s 0.2, and the homework's 0.24). Key e^(0.3 - 0.045) = e^0.255 = 1.2905; wrong `no-correction` e^0.3 = 1.3499, `sign` e^(-0.345) = 0.7082.
+27. Disputed. The starter passes the dead-on-arrival test (B = S0 returns 0.0 before the `...`) and fails the other nine. A starter must fail the check as a whole, and a dead-on-arrival test that every starter failed would test nothing; no change.
+
+### Changed keys
+
+Every widget whose key, tolerance, options, numbers, `wrong` values or interchangeable lines changed (26 widgets; the l11 `screens[6]`, `h-touch-shift` and `h-derivation` entries are wording only):
+
+- `l9-bs-pde.json` `screens[1]` table: `wrong` removed from `r1c1` (`forgot-r` 63.6831) and `r2c1` (`forgot-half` 7.5048, `sigma-not-squared` 37.524; the corrected slip value is 18.762); answers and tolerances unchanged.
+- `l9-bs-pde.json` `screens[2]` order: `same` added `[["d2","d3"]]`.
+- `l9-bs-pde.json` `screens[4]` numeric: `wrong` `sigma-term` 8 (abs 0.01) to 800 (abs 1).
+- `l9-bs-pde.json` `screens[6]` choice: option `pay` text shortened.
+- `l10-changing-measure.json` `screens[2]` order: `same` added `[["c2","c3"]]`.
+- `l10-changing-measure.json` `screens[4]` table: `wrong` removed from `r0c1` (`no-half` 0.7047) and `r1c1` (`sign` 0.9406; the slip value is 0.6628).
+- `l10-changing-measure.json` `screens[5]` choice: option `weights` text shortened.
+- `l10-changing-measure.json` `screens[8]` choice: option `same` why, £15.54 to £15.53.
+- `l11-prices-as-expectations.json` `screens[0]` choice: option `settle` text shortened.
+- `l11-prices-as-expectations.json` `screens[2]` table: `wrong` removed from `r1c1` (`linear` 0.0466) and `r2c1` (`linear` 0.0047).
+- `l11-prices-as-expectations.json` `screens[4]` choice: option `drift` text shortened.
+- `l11-prices-as-expectations.json` `screens[6]` order: prompt wording (no key change).
+- `l12-barrier-option.json` `screens[2]` table: `wrong` removed from `r0c1` (`no-root` 1.5826).
+- `l12-barrier-option.json` `screens[4]` choice: option `monitoring` text shortened; `noise` why now says £8.91.
+- `l12-barrier-option.json` `screens[7]` table: `wrong` removed from `r2c1` (`sum` 19.2638).
+- `l12-barrier-option.json` `screens[8]` table: `wrong` removed from `r0c1` (`no-root` 0.1165).
+- `l12-barrier-option.json` `quiz[0]` choice: option `path` text shortened.
+- `review-3.json` `items[2]` `r-weight`: inputs mu 10%, r 4%, sigma 20%; answer 1.1972 to 1.2905; `wrong` `no-correction` 1.2214 to 1.3499, `sign` 0.8025 to 0.7082.
+- `review-3.json` `items[5]` `r-power`: `wrong` `real` 12,214.03 to 12,460.77.
+- `review-3.json` `items[8]` `r-parity` choice: option `fewer` text shortened.
+- `homework-3.json` `items[0]` `h-replicate` order: `same` added `[["a2","a3"]]`.
+- `homework-3.json` `items[1]` `h-barrier-report` code: contract B 85, r 4%, sigma 25%; examples and all five tests rewritten (seeds 5, 9, 21; the parity and order tests now use seed 5).
+- `homework-3.json` `items[3]` `h-girsanov-ratio`: inputs mu 9%, r 3%, sigma 25%, A is S1 > 110; answer 0.8093 to 0.7913; `wrong` `q` 0.5596 to 0.3497, `p` 0.6915 to 0.4419.
+- `homework-3.json` `items[4]` `h-antithetic`: inputs the call (80, 85, 3%, 35%) on seed 17; answer 400,000 to 275,000; `wrong` `sixteen` 1,600,000 (abs 20,000) replaced by `no-square` 165,900 (abs 2,000); `same` and `double` unchanged.
+- `homework-3.json` `items[5]` `h-touch-shift`: prompt wording only (1.22605); key and tolerance unchanged.
+- `homework-3.json` `items[6]` `h-derivation`: model wording only; rubric unchanged.
+
+Keys that changed in value (graded answers): `r-weight`, `h-girsanov-ratio`, `h-antithetic`, and the code expectations of `h-barrier-report`. Wrong values changed: 7 (`sigma-term`, `no-correction`, `sign`, `real`, `q`, `p`, `sixteen` to `no-square`); removed: 10 (finding 7).
+
+### Checks after the pass
+
+`node tools/validate.mjs`: 0 errors. Playthrough with `--local-cdn`, desktop (with `--shots --why`) and `--mobile`, all green: `ito/l9-bs-pde`, `l10-changing-measure`, `l11-prices-as-expectations`, `l12-barrier-option` (13, 13, 14 and 15 checks, quiz 4/4 each), `ito/review-3` (10 of 10) and `ito/homework-3` (7 of 7, 36 of 36 marks). The Pyodide runs include every changed code solution; the `h-barrier-report` starter returns `None` and fails its tests. Screenshots of l9 `screens[1]` and `[7]`, l10 `screens[4]` (390 px), l12 `screens[8]` and homework item 5 read correctly. `docs/reviews/voice-scan.py` with `VOICE_BASE` on the ito folder: 0 sentences over 20 words and 0 explanations over three sentences in the level 3 files (the two long sentences it still lists are in `homework-1` and `l2`).
