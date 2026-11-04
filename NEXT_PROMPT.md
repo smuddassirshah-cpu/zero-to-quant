@@ -10,6 +10,6 @@ Wave 2: the `requires` mapping agent (brief section 8; may edit `course.json` fo
 
 Close: an answer check per new level (DECISIONS "Fresh numbers in reviews and homework") and a fix agent; a second reader on engine pass E; build the local CDN (`bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`); full split playthrough (four lesson shards from the manifest, then `--sets`, `--exams`, `--bank all`, `--drills`, `--routes-only`) with and without `--mobile`; PLAN ticks; state files.
 
-Files likely touched: `app/js/` (content, learn, today, course, lesson, prepare screens), `app/tools/`, every `course.json` (wave 2), `app/content/courses/{research-int,systems,coding-int}/`, `app/content/drills/`, `docs/briefs/mocks.md`, `docs/AUTHORING.md`, reports and reviews.
+Files likely touched: `app/js/screens/`, `app/js/content.js`, `app/tools/`, every `course.json`, the three course folders, `app/content/drills/`, `docs/briefs/mocks.md`, `docs/AUTHORING.md`.
 
 Acceptance: validate 0 errors with no `requires` cycles; a fresh profile sees a correct locked card on a Stage 3 lesson, test-out unlocks it, Strict mode hides "Open anyway"; new levels green with and without `--mobile`; answer checks clean after fixes; full split runs green.
