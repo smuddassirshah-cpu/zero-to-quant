@@ -283,11 +283,24 @@ const main = async () => {
       return bad ? `${lang} could not load, so the code tests did not run (pass --local-cdn without CDN access): ${bad}` : null;
     };
 
+    /* Prerequisite gating (ENGINE-BACKLOG 490): before a lesson, review, homework or mock is played, every prerequisite of it is marked met
+       (ZQ.prereq.unlock), so the locked card never stands in the way of a playthrough */
+    const unlockRoute = async (route) => {
+      const m = /^(?:lesson|review|homework)\/([^/]+)\/([^/]+)/.exec(route);
+      if (m) return page.evaluate(([c, i]) => (window.ZQ && ZQ.prereq ? ZQ.prereq.unlock(c, i) : 0), [m[1], m[2]]);
+      const e = /^exam\/(mock-[^/?]+)/.exec(route);
+      if (e) {
+        const f = path.join(CONTENT, 'exams', e[1] + '.json'), refs = fs.existsSync(f) ? readJSON(f).requires : null;
+        if (Array.isArray(refs) && refs.length) return page.evaluate((r) => ZQ.prereq.unlockRefs(r), refs);
+      }
+      return 0;
+    };
     for (const id of lessons) {
       where = `#lesson/${id}`;
       const fails = [];
       const t0 = Date.now();
       try {
+        await unlockRoute(`lesson/${id}`);
         await go(`lesson/${id}`);
         await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
         let guard = 0, last = '', same = 0, checks = 0;
@@ -353,6 +366,7 @@ const main = async () => {
       const probed = new Set();
       try {
         await page.evaluate(() => { delete window.ZQ.test; });
+        if (!/^testout\//.test(route)) await unlockRoute(route);
         if (await page.evaluate((r) => location.hash === '#' + r, route)) await go('review');   // the same hash would not remount
         await go(route);
         await page.waitForFunction(() => window.ZQ && ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
@@ -1193,6 +1207,139 @@ const main = async () => {
       fails.forEach(f => failures.push(`samples: ${f}`));
     };
 
+
+    /* ---------- Prerequisite gating (ENGINE-BACKLOG 490): part of --routes-only ----------
+       The profile is swapped for a fresh one (and put back at the end). Checks: the first Stage 0 lesson is open; a Stage 3 lesson (a level 2 lesson
+       of a Stage 3 course, so it holds before and after the requires lists are written) is locked, with a correct card, "Start here" opening, no "Open
+       anyway" under Strict mode; outside Strict it shows and records the override; a test-out unlocks, and a failed one waits 24 hours; an old save with
+       finished lessons is grandfathered; the course map draws the lock; Today names a locked course. */
+    const gatingChecks = async () => {
+      where = '#lesson (locked)';
+      const fails = [], t0 = Date.now();
+      const cur = readJSON(path.join(CONTENT, 'curriculum.json'));
+      const firstLesson = (c, lvN) => { const cf = path.join(CONTENT, 'courses', c, 'course.json'); if (!fs.existsSync(cf)) return null; const lv = (readJSON(cf).levels || []).find(l => lvN == null || l.n === lvN); return lv ? (lv.lessons || []).find(l => fs.existsSync(path.join(CONTENT, 'courses', c, l + '.json'))) || null : null; };
+      const firstOf = (stageId, lvN) => { for (const st of cur.stages.filter(x => x.id === stageId)) for (const t of st.topics) for (const c of t.courses || []) { const l = firstLesson(c, lvN); if (l) return `${c}/${l}`; } return null; };
+      const open0 = firstOf(0, 1), locked3 = firstOf(3, 2) || firstOf(2, 2);
+      if (!open0 || !locked3) { console.log('skip gating  no written Stage 0 level 1 lesson or Stage 2 or 3 level 2 lesson to check'); return; }
+      const [oc, ol] = open0.split('/'), [lc, ll] = locked3.split('/');
+      const widths = opt.mobile ? [1280, 390] : [1280];
+      let saved = null;
+      const evalOnly = (fn, arg) => page.evaluate(fn, arg);
+      const importDoc = (patch) => page.evaluate((p) => {
+        const d = JSON.parse(ZQ.state.export());
+        d.lessons = {}; d.reviews = {}; d.homework = {}; d.exams = {}; d.redo = [];
+        d.prereq = { met: {}, testouts: {}, opened: {}, grandfathered: true };
+        d.settings.strictPrereqs = true; d.flags.setupDone = true;
+        const r = ZQ.state.import(Object.assign(d, p || {}));
+        return r && r.ok;
+      }, patch);
+      const route = async (r) => { await page.evaluate(() => { delete window.ZQ.test; }); await go('today'); await go(r); await page.waitForTimeout(500); };
+      try {
+        saved = await evalOnly(() => ZQ.state.export());
+        if (!(await importDoc())) throw new Error('could not import a fresh profile');
+        /* 1. Stage 0: open */
+        await route(`lesson/${oc}/${ol}`);
+        let st = await evalOnly(([c, l]) => ({ locked: ZQ.prereq.lessonLocked(c, l), card: !!document.querySelector('.lk'), lesson: !!document.querySelector('.lsn') }), [oc, ol]);
+        if (st.locked || st.card || !st.lesson) fails.push(`${open0}: a Stage 0 first lesson should open on a fresh profile (locked ${st.locked}, card ${st.card}, lesson ${st.lesson})`);
+        /* 2. Stage 3 lesson: locked, correct card */
+        for (const w of widths) {
+          if (w !== 1280) { await page.setViewportSize({ width: w, height: 844 }); await page.waitForTimeout(300); }
+          await route(`lesson/${lc}/${ll}`);
+          const c = await evalOnly(([c, l]) => {
+            const m = ZQ.prereq.missingFor(c, l), q = (s) => [...document.querySelectorAll(s)];
+            const direct = q('#lk-direct-h ~ details .lk-row').map(r => r.dataset.ref), indirectRows = q('.lk-more .lk-row').length;
+            const startBtn = document.querySelector('.lk-start'), start = startBtn ? startBtn.dataset.start : null;
+            const sm = start && /^lesson\/([^/]+)\/([^/]+)/.exec(start);
+            return {
+              locked: ZQ.prereq.lessonLocked(c, l), card: !!document.querySelector('.lk'), lesson: !!document.querySelector('.lsn'), title: (document.querySelector('.lk h1') || {}).textContent || '',
+              want: m.direct.map(n => n.ref).sort(), direct: direct.sort(), allUnmet: m.direct.concat(m.indirect).every(n => !ZQ.prereq.refMet(n.ref)),
+              nIndirect: m.indirect.length, indirectRows, hasMore: q('.lk-more').length, start, startOpens: sm ? !ZQ.prereq.lessonLocked(sm[1], sm[2]) : null,
+              countText: (document.querySelector('#lk-direct-h .lk-n') || {}).textContent, openBtn: !!document.querySelector('[data-open]'), strictNote: !!document.querySelector('.lk-strict'),
+              testouts: q('.lk-testout').length, wide: document.documentElement.scrollWidth > window.innerWidth + 1,
+            };
+          }, [lc, ll]);
+          if (!c.locked) fails.push(`${locked3}: not locked on a fresh profile`);
+          if (!c.card || c.lesson) fails.push(`${locked3} at ${w} px: the route should show the locked card, not the lesson`);
+          if (!/is locked/.test(c.title)) fails.push(`${locked3}: the card title is "${c.title}"`);
+          if (JSON.stringify(c.want) !== JSON.stringify(c.direct)) fails.push(`${locked3}: the card lists ${JSON.stringify(c.direct)} as direct, the rules give ${JSON.stringify(c.want)}`);
+          if (!c.allUnmet) fails.push(`${locked3}: the card lists something already met`);
+          if (c.countText !== String(c.want.length)) fails.push(`${locked3}: the direct count reads ${c.countText}, expected ${c.want.length}`);
+          if (c.nIndirect && !c.hasMore) fails.push(`${locked3}: ${c.nIndirect} indirect prerequisites but no collapsed line`);
+          if (c.hasMore && c.indirectRows !== c.nIndirect) fails.push(`${locked3}: ${c.indirectRows} indirect rows drawn, ${c.nIndirect} expected`);
+          if (!c.start) fails.push(`${locked3}: no "Start here" button`); else if (!c.startOpens) fails.push(`${locked3}: "Start here" leads to ${c.start}, which is itself locked`);
+          if (c.openBtn || !c.strictNote) fails.push(`${locked3}: Strict mode should hide "Open anyway" and say why`);
+          if (c.wide) fails.push(`${locked3} at ${w} px: the locked card is wider than the window`);
+          if (w === 1280) await shot('gate-locked-card');
+          if (w !== 1280) { await page.setViewportSize({ width: 1280, height: 860 }); await page.waitForTimeout(150); }
+        }
+        /* 3. The course map draws the lock; Today names a locked course for a learner who started at Stage 3 */
+        await route(`course/${lc}`);
+        const mp = await evalOnly(([c, l]) => ({ n: document.querySelectorAll('.zc-node.s-locked').length, id: !!document.querySelector(`.zc-node.s-locked[data-id="${l}"]`) }), [lc, ll]);
+        if (!mp.n || !mp.id) fails.push(`#course/${lc}: the locked lesson is not drawn locked (${mp.n} locked nodes)`);
+        await evalOnly((l) => { const n = document.querySelector(`.zc-node.s-locked[data-id="${l}"]`); if (n) n.scrollIntoView({ block: 'center' }); }, ll);
+        await shot('gate-course-map');
+        await importDoc({ profile: Object.assign(JSON.parse(await evalOnly(() => ZQ.state.export())).profile, { startStage: 3 }) });
+        await route('today');
+        const td = await evalOnly(() => ({ line: !!document.querySelector('.lk-line'), start: !!document.querySelector('.lk-line [data-go]') }));
+        if (!td.line && !(await evalOnly(() => ZQ.content.courses().some(c => c.stage >= 3 && ZQ.prereq.courseLocked(c.id) === false)))) fails.push('#today: a Stage 3 start with everything locked should say so');
+        else if (td.line && !td.start) fails.push('#today: the locked line has no Start here');
+        await importDoc();
+        /* 4. Outside Strict mode: Open anyway shows, opens and records the override; the count shows on You */
+        await evalOnly(() => ZQ.state.settings.set({ strictPrereqs: false }));
+        await route(`lesson/${lc}/${ll}`);
+        const ob = await evalOnly(() => ({ open: !!document.querySelector('[data-open]'), strictNote: !!document.querySelector('.lk-strict') }));
+        if (!ob.open || ob.strictNote) fails.push(`${locked3}: outside Strict mode "Open anyway" should show`);
+        else {
+          await page.click('[data-open]'); await page.waitForTimeout(700);
+          const op = await evalOnly(() => ({ lesson: !!document.querySelector('.lsn'), card: !!document.querySelector('.lk'), n: ZQ.prereq.openedCount() }));
+          if (!op.lesson || op.card || op.n !== 1) fails.push(`${locked3}: Open anyway should open the lesson and record one override (lesson ${op.lesson}, card ${op.card}, recorded ${op.n})`);
+          await route('you');
+          if (!(await evalOnly(() => /opened early/i.test(document.querySelector('#app').innerText)))) fails.push('#you: the opened-early count is not shown');
+        }
+        await importDoc();
+        await route('you');
+        const sw = await evalOnly(() => { const b = document.querySelector('#yu-strictprereqs'); return b ? b.checked : null; });
+        if (sw !== true) fails.push(`#you: the "Strict prerequisites" switch should be on by default (found ${sw})`);
+        /* 5. A failed test-out waits 24 hours; a passed one unlocks */
+        const pick = await evalOnly(([c, l]) => { const n = ZQ.prereq.missingFor(c, l).direct.find(x => x.kind === 'level' && x.testOut.can); return n ? { c: n.course, n: n.n } : null; }, [lc, ll]);
+        if (!pick) console.log('     gating: no direct prerequisite with a written review to test out of; the test-out checks are skipped');
+        else {
+          await evalOnly((p) => ZQ.state.prereq.testout({ key: `${p.c}/L${p.n}`, score: 0, items: 6, passed: false, missed: [] }), pick);
+          await route(`testout/${pick.c}/${pick.n}`);
+          const wait = await evalOnly(() => (document.querySelector('.rvs-empty') || {}).innerText || '');
+          if (!/Try again later/i.test(wait)) fails.push(`#testout/${pick.c}/${pick.n}: a failed test-out should wait 24 hours (page says "${wait.replace(/\s+/g, ' ').slice(0, 80)}")`);
+          await importDoc();
+          await playSet(`testout/${pick.c}/${pick.n}`, `testout ${pick.c}/L${pick.n}`, async () => {
+            const r = await evalOnly((p) => ({ met: ZQ.prereq.levelMet(p.c, p.n), rec: ZQ.state.prereq.get().testouts[`${p.c}/L${p.n}`] || null, still: ZQ.prereq.missingFor(p.c, p.n).count }), pick);
+            if (!r.met || !r.rec || !r.rec.passed) return { fail: `a passed test-out should mark the level met (met ${r.met}, record ${JSON.stringify(r.rec)})` };
+            return { note: `${r.rec.score} of ${r.rec.items} right, level met` };
+          });
+          const after = await evalOnly(([c, l, p]) => ZQ.prereq.missingFor(c, l).direct.some(n => n.ref === `${p.c}/L${p.n}`), [lc, ll, pick]);
+          if (after) fails.push(`${locked3}: the card still lists ${pick.c}/L${pick.n} after it was tested out`);
+          await importDoc();
+        }
+        /* 6. An old save (no prereq record, every lesson of the level before it finished) is grandfathered once */
+        const lv1 = readJSON(path.join(CONTENT, 'courses', lc, 'course.json')).levels.find(l => l.n === 1);
+        const doneL = (lv1.lessons || []).filter(l => fs.existsSync(path.join(CONTENT, 'courses', lc, l + '.json')));
+        const old = await evalOnly(([c, ls]) => {
+          const d = JSON.parse(ZQ.state.export());
+          d.lessons = {}; ls.forEach(l => { d.lessons[`${c}/${l}`] = { attempts: 1, done: true, firstTry: null, xp: 0, bestQuiz: null, mastered: false, perfect: false, completedAt: Date.now(), secondsSpent: 0, position: null, positionAt: null }; });
+          d.reviews = {}; d.exams = {}; d.homework = {}; delete d.prereq; d.flags.setupDone = true;
+          const r = ZQ.state.import(d);
+          return { ok: r && r.ok, met: !!ZQ.state.prereq.get().met[`${c}/L1`], grand: ZQ.state.prereq.get().grandfathered, unlocked: !ZQ.prereq.lessonLocked(c, (ZQ.content.courseLessons(c).find(x => x.level === 2 && x.kind === 'lesson') || {}).id) };
+        }, [lc, doneL]);
+        if (!old.ok || !old.met || !old.grand) fails.push(`an old save with ${lc} level 1 finished was not grandfathered (${JSON.stringify(old)})`);
+        else if (!old.unlocked && !readJSON(path.join(CONTENT, 'courses', lc, 'course.json')).levels.find(l => l.n === 2).requires) fails.push(`${lc} level 2 should be open for an old save that finished level 1`);
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} gating  Stage 0 open, ${locked3} locked with its card${opt.mobile ? ' at 1280 and 390 px' : ''}, Strict, Open anyway, test-out, old save, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log('FAIL gating  threw');
+      } finally {
+        if (saved) { try { await evalOnly((d) => ZQ.state.import(d), saved); } catch { /* the run ends anyway */ } }
+      }
+      fails.forEach(f => failures.push(`gating: ${f}`));
+    };
+
     /* Every other route once */
     if (opt.bankIds.length) await bankPlay(opt.bankIds);
     if (opt.routes) {
@@ -1232,6 +1379,7 @@ const main = async () => {
       await bankChecks();
       await drillRouteChecks();
       await sampleChecks();
+      await gatingChecks();
       const paceExam = fs.existsSync(path.join(CONTENT, 'exams', 'mock-sample.json')) ? 'mock-sample' : exams.includes('topic-1.5') ? 'topic-1.5' : null;
       if (paceExam) await paceExamChecks(paceExam);
     }

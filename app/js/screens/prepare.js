@@ -2,7 +2,7 @@
    Routes: #prepare (the first path) and #prepare/<path id> (a path from content/prep.json, read through ZQ.content.prep*).
    Pick General, a stage with a role, or a firm; the page lists the path's steps with done, in progress or not yet written,
    must or should, the one-line why, and links to its mocks. A firm path says "Reported formats, as of <month year>".
-   Paths never unlock or gate anything: every link goes to a course map or a mock exam that is open anyway.
+   Paths do not unlock anything, but they follow the prerequisite locks (ENGINE-BACKLOG 487): a step whose lessons are all locked shows a lock and its first missing prerequisite, and a mock that names requires shows Locked.
    Learner state is read through ZQ.state; every selector carries the pp- prefix. */
 (function () {
   'use strict';
@@ -60,24 +60,33 @@
         const l = st.lessons[0];
         return { title: l ? l.name : rest, sub: c.name };
       };
+      /* Prerequisite gating (ENGINE-BACKLOG 487): a step whose written lessons are all locked shows a lock and its first missing prerequisite */
+      const lockOf = (st) => {
+        const P = Z.prereq, w = st.lessons.filter(l => l.written === true && !done(l));
+        if (!P || !w.length || !w.every(l => P.lessonLocked(l.course, l.id))) return null;
+        const m = P.missingFor(w[0].course, w[0].id), nd = (m.start && m.start.node) || m.direct[0];
+        return nd ? { text: nd.kind === 'lesson' ? nd.name : `${nd.courseName}, level ${nd.n}`, count: m.count, first: w[0] } : { text: 'a prerequisite', count: 1, first: w[0] };
+      };
       const stepRow = (st, i) => {
-        const s = stepState(st.lessons), { title, sub } = stepTitle(st);
+        const s = stepState(st.lessons), { title, sub } = stepTitle(st), lk = lockOf(st);
         const w = st.lessons.filter(l => l.written === true), d = st.lessons.filter(done).length, nw = st.lessons.length - w.length;
         const course = C.course(st.ref.split('/')[0]) || {};
         const facts = [plural(st.lessons.length, 'lesson', 'lessons')];
         if (w.length) facts.push(`${d} done`);
         if (nw) facts.push(`${nw} not yet written`);
-        const label = `Step ${i + 1}: ${title}, ${sub}. ${st.priority === 'must' ? 'Must do' : 'Should do'}. ${STATE[s][0]}. ${facts.join(', ')}.`;
-        return `<li class="pp-step is-${s}" data-track="${esc(course.track || 'prob')}">
+        const label = `Step ${i + 1}: ${title}, ${sub}. ${st.priority === 'must' ? 'Must do' : 'Should do'}. ${STATE[s][0]}. ${lk ? `Locked, first missing: ${lk.text}. ` : ''}${facts.join(', ')}.`;
+        return `<li class="pp-step is-${s}${lk ? ' is-locked' : ''}" data-track="${esc(course.track || 'prob')}">
           <span class="pp-n tnum" aria-hidden="true">${i + 1}</span>
           <div class="pp-step-b">
             <a class="pp-step-t" href="#course/${esc(st.ref.split('/')[0])}" aria-label="${esc(label)}"><span class="pp-step-name">${esc(title)}</span><span class="pp-step-sub">${esc(sub)}</span></a>
             <div class="pp-chips">
               <span class="pp-pri is-${st.priority}">${st.priority === 'must' ? 'Must' : 'Should'}</span>
               <span class="pp-st is-${s}">${STATE[s][1]}<span>${STATE[s][0]}</span></span>
+              ${lk ? `<span class="pp-st is-locked" title="Locked until its prerequisites are met">${Z.icon('lock', 'xs')}<span>Locked</span></span>` : ''}
               ${st.track ? `<span class="pp-role">${esc(roleName(st.track))}</span>` : ''}
               <span class="pp-facts tnum">${esc(facts.join(' · '))}</span>
             </div>
+            ${lk ? `<p class="t-caption secondary pp-lock">First missing: ${esc(lk.text)}${lk.count > 1 ? ` (and ${lk.count - 1} more)` : ''}. <a href="#lesson/${esc(lk.first.course)}/${esc(lk.first.id)}">See what is missing</a></p>` : ''}
             <p class="t-body secondary pp-why">${esc(st.why)}</p>
           </div></li>`;
       };
@@ -140,7 +149,7 @@
         <header class="pp-head">
           <a class="pp-back" href="#learn">${Z.icon('chevronL', 'sm')}<span>Learn</span></a>
           <h1 class="t-h1">Prepare for</h1>
-          <p class="t-body secondary">Pick an assessment or a firm to see which lessons to study first, in order. Nothing here locks a lesson.</p>
+          <p class="t-body secondary">Pick an assessment or a firm to see which lessons to study first, in order. A step you cannot open yet shows a lock and the first thing missing.</p>
         </header>
         <div class="pp-pick-card" data-picker></div>
         <div data-panel aria-live="polite"></div>
@@ -152,7 +161,13 @@
         panelEl.innerHTML = pathHTML(current());
         /* Mock names come from the exam files, when they are written */
         panelEl.querySelectorAll('.pp-mock:not(.is-nw)').forEach(li => {
-          C.exam(li.dataset.mock).then(doc => { if (alive && doc && doc.name) { const n = li.querySelector('.pp-mock-n'); if (n) n.textContent = doc.name; } }).catch(() => { /* keep the id-based name */ });
+          C.exam(li.dataset.mock).then(doc => {
+            if (!alive || !doc) return;
+            if (doc.name) { const n = li.querySelector('.pp-mock-n'); if (n) n.textContent = doc.name; }
+            /* a mock that names requires follows the lock (ENGINE-BACKLOG 487) */
+            const P = Z.prereq, go = li.querySelector('.pp-mock-go');
+            if (P && go && P.examLocked(doc.id || li.dataset.mock, doc)) { go.innerHTML = `${Z.icon('lock', 'xs')} Locked`; li.classList.add('is-locked'); }
+          }).catch(() => { /* keep the id-based name */ });
         });
       };
       const paint = () => { pickerEl.innerHTML = picker(); paintPanel(); };

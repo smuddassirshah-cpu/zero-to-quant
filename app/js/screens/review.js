@@ -656,10 +656,10 @@
       tag: (it) => { const n = skillNames(); return (it.skills || []).map(s => n[s] || s).join(', '); },
       emptyTitle: 'Not yet written', emptyText: 'This level review has not been written yet. Use the course map to pick another item.',
       doneTitle: 'Level review done', setTitle: 'Level review',
-      load: () => C().review(cid, id).then(D => { cfg.timed = timedOf(D && D.timed); return D; }).then(D => (D && Array.isArray(D.items) ? D.items.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: id, item: it.id || 'q' + i }, source: `Item ${i + 1}` })) : [])),
+      load: () => C().review(cid, id).then(D => { cfg.timed = timedOf(D && D.timed); cfg.pass = D && Number(D.pass) > 0 && Number(D.pass) <= 1 ? Number(D.pass) : ZQ.prereq ? ZQ.prereq.PASS : 0.7; return D; }).then(D => (D && Array.isArray(D.items) ? D.items.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: id, item: it.id || 'q' + i }, source: `Item ${i + 1}` })) : [])),
       record: (items, res, seconds) => {
         const results = items.map((it, j) => res[j] ? resultRow(res[j]) : { id: it.id, ok: false, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.ref });
-        const o = S().reviewFinished({ course: cid, id, results, items: items.length, seconds }) || {};
+        const o = S().reviewFinished({ course: cid, id, results, items: items.length, seconds, pass: cfg.pass }) || {};
         const wrong = results.filter(r => !r.ok).length;
         return { badges: [[`+${o.xp || 0}`, 'XP'], [`+${o.mp || 0}`, 'mastery points'], [wrong, 'to the redo queue']],
           note: wrong ? `${plural(wrong, 'problem joins', 'problems join')} your redo queue, back in 7 days.` : 'Nothing to redo. Every problem was right first time.' };
@@ -667,13 +667,66 @@
     };
     return setPage(root, Z, cfg);
   }
+  /* Test-out (ENGINE-BACKLOG 485): up to 6 items from a level's review, seeded and shuffled, passed at the review's pass share.
+     Route #testout/<course>/<n>. A pass records the level met; a miss lists the lessons to revisit and waits 24 hours. */
+  function mountTestout(root, Z, cid, n) {
+    const P = ZQ.prereq, lv = levelOf(cid, n), key = P ? P.keyOfLevel(cid, +n) : `${cid}/L${n}`;
+    const c = course(cid);
+    let need = 1, bySkill = {};
+    const hashOf = (str) => { let h = 2166136261; for (const ch of String(str)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+    const rngOf = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+    const cfg = {
+      title: `Test out of level ${n}`, sub: `${c ? c.name : cid}${lv ? ', ' + lv.name : ''}`, over: `${c ? c.name : cid} · Level ${n} · Test out`,
+      heading: `Test out: ${lv ? lv.name : 'level ' + n}`, track: trackOf(cid), perItem: 1.5,
+      lede: 'A short check drawn from the level review. Pass it and the level counts as met, so what depends on it opens. Miss it and you can try again after 24 hours.',
+      facts: [['target', 'No hints and one try each. It does not earn mastery points or add to your redo queue.']],
+      tag: (it) => { const nm = skillNames(); return (it.skills || []).map(sk => nm[sk] || sk).join(', '); },
+      emptyTitle: 'Not available', emptyText: 'This level cannot be tested out of right now.',
+      doneTitle: 'Test-out done', setTitle: 'Test out',
+      load: async () => {
+        if (!P || !lv) { cfg.emptyText = 'This level is not in the course map.'; return []; }
+        if (P.levelMet(cid, +n)) { cfg.emptyTitle = 'Already met'; cfg.emptyText = 'This level already counts as met. There is nothing to test out of.'; return []; }
+        const t = P.testOutFacts(cid, lv);
+        if (!t.written) { cfg.emptyText = 'This level has no written review to test out with. Finish its lessons instead.'; return []; }
+        if (t.nextAt) { cfg.emptyTitle = 'Try again later'; cfg.emptyText = `You can retake this test out in ${Math.max(1, Math.ceil((t.nextAt - Date.now()) / 3600e3))} hours. Use the time to revisit the lessons you missed.`; return []; }
+        const D = await C().review(cid, lv.review);
+        const all = D && Array.isArray(D.items) ? D.items : [];
+        const pass = Number(D && D.pass) > 0 && Number(D.pass) <= 1 ? Number(D.pass) : P.PASS;
+        const rng = rngOf(hashOf(`${key}/${t.tries}`));
+        const picked = all.map((it, i) => ({ it, i, k: rng() })).sort((a, b) => a.k - b.k).slice(0, P.TESTOUT_N).sort((a, b) => a.i - b.i).map(o => o.it);
+        need = Math.max(1, Math.ceil(picked.length * pass - 1e-9));
+        /* lessons by skill, for the links on a miss */
+        await Promise.all((lv.lessons || []).filter(id => C().exists(cid, id) !== false).map(id => C().lesson(cid, id).then(L => { (L && L.skills || []).forEach(sk => { if (!bySkill[sk]) bySkill[sk] = { id, title: L.title || id }; }); }).catch(() => null)));
+        return picked.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: lv.review, item: it.id || 'q' + i }, source: `Item ${i + 1}` }));
+      },
+      record: (items, res) => {
+        const ok = items.map((it, j) => !!(res[j] && res[j].ok));
+        const right = ok.filter(Boolean).length, passed = right >= need;
+        const missed = items.filter((it, j) => !ok[j]);
+        const where = (it) => (it.skills || []).map(sk => bySkill[sk]).find(Boolean) || ((lv.lessons || [])[0] ? { id: lv.lessons[0], title: 'the first lesson' } : null);
+        S().prereq.testout({ key, score: right, items: items.length, passed, missed: missed.map(it => it.id).filter(Boolean) });
+        const links = [...new Map(missed.map(where).filter(Boolean).map(l => [l.id, l])).values()].map(l => `<a href="#lesson/${Z.esc(cid)}/${Z.esc(l.id)}">${Z.esc(l.title)}</a>`);
+        return { badges: [[`${right} of ${items.length}`, 'right'], [need, 'needed to pass']],
+          lines: items.map((it, j) => (ok[j] ? '' : (where(it) ? `Revisit ${where(it).title}` : ''))),
+          note: passed ? `Level ${n} now counts as met. What depends on it is open.`
+            : `Not passed. You can retake it after 24 hours.${links.length ? ' Revisit: ' + links.join(', ') + '.' : ''}` };
+      },
+    };
+    return setPage(root, Z, cfg);
+  }
+  ZQ.screen({ id: 'testout', title: 'Test out', group: 'Assessment', hidden: true, shell: false, render: (root, Z, params = []) => mountTestout(root, Z, params[0], params[1]) });
+
   /* Full-screen takeover for set routes that share the shell's screen id */
   const takeover = (Z) => { const app = document.getElementById('app'); app.innerHTML = ''; app.className = 'screen-set'; return app; };
 
   ZQ.screen({
     id: 'review', title: 'Review', group: 'App', shell: true, tab: 'review',
     render(root, Z, params = []) {
-      if (params.length >= 2) return mountLevelReview(takeover(Z), Z, params[0], params[1]);
+      if (params.length >= 2) {
+        const host = takeover(Z);
+        const off = Z.lockedFor && Z.lockedFor(host, params[0], params[1], `review/${params[0]}/${params[1]}`);   // prerequisite gating (ENGINE-BACKLOG 483)
+        return off || mountLevelReview(host, Z, params[0], params[1]);
+      }
       return hub(root, Z);
     },
   });
@@ -695,6 +748,8 @@
       return null;
     }
     const key = `${cid}/${id}`;
+    const lockOff = Z.lockedFor && Z.lockedFor(root, cid, id, `homework/${cid}/${id}`);   // prerequisite gating (ENGINE-BACKLOG 483)
+    if (lockOff) return lockOff;
     const c = course(cid), lv = levelOfId(cid, id) || { n: id.split('-')[1], name: '' };
     let alive = true, view = 'intro', handles = [], items = [], doc = null, t0 = Date.now();
     const rec = () => S().homework[key] || null;
