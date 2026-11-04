@@ -1172,3 +1172,12 @@ def oos_scores(split):
 3. The start card lists two papers (40 and 80 minutes, 120 in all, 13 questions) and the check.
 4. Each task's wrong versions fail at least one test (the script proves it locally; the playthrough or a scratch run in Pyodide confirms it).
 5. Report at `docs/reports/exam-mock-oa-quant-data.md`. Add inbox bullets under `Raised later (exam mock-oa-quant-data):`. One asks for statistics and applied-maths bank families. Another asks for a `language` filter on `draw`. A mixed Python and C++ pack cannot feed a Python mock.
+
+## Second-read changes to the topic 3.5 mocks (4 Nov 2026)
+
+These supersede the figures above where they differ. The generator scripts in `docs/briefs/mocks-scripts/` hold them. Details are in `docs/reviews/review-exams-3.5.md` under `## Fix pass`.
+
+- `mock-oa-code`: the description now says you pass with one problem of two, asks the learner not to open the pack `oa` first for a cold test, and says other reports give three or four problems in 70 to 90 minutes. The `how` line of every `oa` drill reads "There are N hidden tests. Each answer must equal the expected value." `oa-remove-digits` adds that the last two tests compare long strings.
+- `mock-superday-research`: `requires` is `["research-int/L4"]` only, so the prerequisite lists above are citations. `models` is two sentences. Paces: C1 1,350 s, C2 1,080 s, K1 1,080 s, K2 1,350 s, M5 360 s and M6 300 s, so the coding and case papers sum to 2,430 s of 2,700 s and the ML paper to 1,620 s of 1,800 s. M1 and M4 ask for two decimals and accept within 0.005. The K1 and K2 rubrics reward the reasoning with an approximate figure (standard error about 1.6 points, $z$ about 1.5, $t$ about 1.3), and the exact values stay in the model answers.
+- `mock-oa-quant-data`: Q3 is mean 3.0, standard deviation 10, 25 days, so $t = 1.5$ (slips 7.5 and 0.3). Q7 asks for one decimal place, accepts within 0.1 points and names the typed fraction 0.00142 as a slip. Each data task's `how` names the mistake that a late test exposes, and the starter docstrings are under 45 characters.
+
