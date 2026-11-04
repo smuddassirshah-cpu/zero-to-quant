@@ -1,0 +1,89 @@
+l15-no-allocation: a pool of slots
+   Pool p(3); p.allocate() -> 0
+   Pool p(3); p.allocate(); p.allocate(); p.allocate() -> 2
+   Pool p(3); p.allocate(); p.allocate(); p.allocate(); p.allocate() -> -1
+   Pool p(3); int a = p.allocate(); int b = p.allocate(); p.allocate(); p.release(b); p.allocate() -> 1
+   Pool p(3); int a = p.allocate(); int b = p.allocate(); p.release(a); p.release(b); p.allocate() -> 1
+   Pool p(3); int a = p.allocate(); int b = p.allocate(); p.release(a); p.release(b); p.allocate(); p.allocate() -> 0
+   Pool p(2); p.allocate(); p.allocate(); p.release(0); p.allocate(); p.in_use() -> 2
+   Pool p(2); p.allocate(); p.allocate(); p.release(0); p.release(1); p.in_use() -> 0
+   Pool p(0); p.allocate() -> -1
+   Pool p(8); g_allocs = 0; for (int r = 0; r < 100; ++r) { int s = p.allocate(); p.release(s); } g_allocs -> 0
+[pool] solution g++      0 of 10 failed   OK
+[pool] solution clang++  0 of 10 failed   OK
+[pool] starter  g++      7 of 10 failed   OK
+   starter fails e.g.: ['FAIL test 2: p.allocate()', 'FAIL test 3: p.allocate()', 'FAIL test 4: p.allocate()']
+[pool] starter  clang++  7 of 10 failed   OK
+ALL OK
+l15-no-allocation: format a price in place
+   char buf[32]; int n = format_price(buf, 10275); std::string(buf, n) -> 102.75
+   char buf[32]; int n = format_price(buf, 5); std::string(buf, n) -> 0.05
+   char buf[32]; int n = format_price(buf, 0); std::string(buf, n) -> 0.00
+   char buf[32]; int n = format_price(buf, -25); std::string(buf, n) -> -0.25
+   char buf[32]; int n = format_price(buf, 100000); std::string(buf, n) -> 1000.00
+   char buf[32]; int n = format_price(buf, 1999); std::string(buf, n) -> 19.99
+   char buf[32]; int n = format_price(buf, -5); std::string(buf, n) -> -0.05
+   char buf[32]; int n = format_price(buf, 99); std::string(buf, n) -> 0.99
+   char buf[32]; g_allocs = 0; format_price(buf, 10275); format_price(buf, -25); g_allocs -> 0
+[format_price] solution g++      0 of 9 failed   OK
+[format_price] solution clang++  0 of 9 failed   OK
+[format_price] starter  g++      1 of 9 failed   OK
+   starter fails e.g.: ['FAIL test 8: g_allocs']
+[format_price] starter  clang++  1 of 9 failed   OK
+ALL OK
+l16-ring-buffer: a single-producer ring
+    drive(4, {1, 2, 3, 4, 5, 0, 0, 0, 0, 0}) -> [1, 1, 1, 1, 0, 1, 2, 3, 4, -1]
+    drive(4, {1, 2, 3, 0, 0, 4, 5, 6, 0, 0, 0, 0}) -> [1, 1, 1, 1, 2, 1, 1, 1, 3, 4, 5, 6]
+    drive(2, {0}) -> [-1]
+    drive(1, {7, 8, 0, 9, 0, 0}) -> [1, 0, 7, 1, 9, -1]
+    drive(8, {}) -> []
+    drive(4, {1, 2, 3, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 0, 0, 0, 0}) -> [1, 1, 1, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 6, 7, 8, -1]
+    drive(2, {1, 2, 3, 0, 3, 0, 0, 0}) -> [1, 1, 0, 1, 1, 2, 3, -1]
+    drive(4, {1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 10, 0}) -> [1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1, 10]
+    drive(4, {1, 2, 3, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 0, 16, 0, 17, 0, 18, 0, 1 -> [1, 1, 1, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1, 10,
+   Ring r(8); (long long)((const char*)&r.tail_ - (const char*)&r.head_) >= 64 -> True
+[ring] solution g++      0 of 10 failed   OK
+[ring] solution clang++  0 of 10 failed   OK
+[ring] starter  g++      7 of 10 failed   OK
+   starter fails e.g.: ['FAIL test 1: drive(4, {1, 2, 3, 0, 0, 4, 5, 6, 0, 0, 0, 0})', 'FAIL test 3: drive(1, {7, 8, 0, 9, 0, 0})', 'FAIL test 5: drive(4, {1, 2, 3, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 0, 0, 0, 0})']
+[ring] starter  clang++  7 of 10 failed   OK
+ALL OK
+l17-measuring-latency: percentile and mean
+   std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0); percentile(v, 50) -> 10.0
+   std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0); percentile(v, 99) -> 10.0
+   std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0); percentile(v, 99.9) -> 1000.0
+   std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0); percentile(v, 100) -> 1000.0
+   std::vector<double> v(989, 10.0); v.insert(v.end(), 11, 1000.0); percentile(v, 99) -> 1000.0
+   std::vector<double> v(999, 10.0); v.push_back(1000.0); percentile(v, 99.9) -> 10.0
+   std::vector<double> v(999, 10.0); v.push_back(1000.0); percentile(v, 100) -> 1000.0
+   std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0}; percentile(v, 20) -> 1.0
+   std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0}; percentile(v, 50) -> 3.0
+   std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0}; percentile(v, 80) -> 4.0
+   std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0}; percentile(v, 100) -> 5.0
+   std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0}; percentile(v, 0) -> 1.0
+   std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0); mean(v) -> 19.9
+[percentile] solution g++      0 of 13 failed   OK
+[percentile] solution clang++  0 of 13 failed   OK
+[percentile] starter  g++      7 of 13 failed   OK
+   starter fails e.g.: ['FAIL test 0: percentile(v, 50)', 'FAIL test 1: percentile(v, 99)', 'FAIL test 5: percentile(v, 99.9)']
+[percentile] starter  clang++  7 of 13 failed   OK
+ALL OK
+homework-4: a fixed-bucket latency histogram
+   LatencyHist h; for (int i = 0; i < 990; ++i) h.record(10); for (int i = 0; i < 10; ++i) h.record(1000); h.percentile_upp -> 16
+   LatencyHist h; for (int i = 0; i < 990; ++i) h.record(10); for (int i = 0; i < 10; ++i) h.record(1000); h.percentile_upp -> 16
+   LatencyHist h; for (int i = 0; i < 990; ++i) h.record(10); for (int i = 0; i < 10; ++i) h.record(1000); h.percentile_upp -> 1024
+   LatencyHist h; for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1; ++i) h.record(2); for (int i = 0; i < 1;  -> 8
+   LatencyHist h; for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1; ++i) h.record(2); for (int i = 0; i < 1;  -> 16
+   LatencyHist h; for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1; ++i) h.record(2); for (int i = 0; i < 1;  -> 16
+   LatencyHist h; for (int i = 0; i < 1; ++i) h.record(0); for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1;  -> 2
+   LatencyHist h; for (int i = 0; i < 1; ++i) h.record(0); for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1;  -> 4
+   LatencyHist h; for (int i = 0; i < 5; ++i) h.record(1000000); for (int i = 0; i < 95; ++i) h.record(100); h.percentile_u -> 128
+   LatencyHist h; for (int i = 0; i < 5; ++i) h.record(1000000); for (int i = 0; i < 95; ++i) h.record(100); h.percentile_u -> 1048576
+   LatencyHist h; h.record(1000); h.record(2000); h.count() -> 2
+   LatencyHist h; g_allocs = 0; for (int i = 0; i < 1000; ++i) h.record(i * 37); g_allocs -> 0
+[latency_hist] solution g++      0 of 12 failed   OK
+[latency_hist] solution clang++  0 of 12 failed   OK
+[latency_hist] starter  g++      10 of 12 failed   OK
+   starter fails e.g.: ['FAIL test 0: h.percentile_upper(50)', 'FAIL test 1: h.percentile_upper(99)', 'FAIL test 2: h.percentile_upper(99.9)']
+[latency_hist] starter  clang++  10 of 12 failed   OK
+ALL OK
