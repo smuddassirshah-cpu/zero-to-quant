@@ -1,0 +1,1443 @@
+{
+ "id": "l10-formula-from-the-kernel",
+ "course": "pdes",
+ "title": "The Black-Scholes formula from the heat kernel",
+ "minutes": 15,
+ "objectives": [
+  "Recover the Black-Scholes formula by solving the heat equation with the heat kernel",
+  "Apply the Gaussian lemma and say what the kernel's width must be"
+ ],
+ "skills": [
+  "pe-bs",
+  "pe-heat"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "The heat equation's answer is a weighted average. The dashed curve is the kernel centred at $x_0$, with $D = 1$. The blue product is the kernel times the start $u_0$, and its area is $u(x_0, \\tau)$. Set $x_0 = 0$ and $\\tau = 0.02$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 270,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0,
+      "tau": 0.02,
+      "c": 2
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    },
+    "derive": {
+     "caption": "Heat value $u$ = {{fixed(values.A, 4)}}. Price = £{{fixed(100*exp(-0.75*xc-3.0625*tau)*values.A, 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "xc",
+      "min": -0.3,
+      "max": 0.4,
+      "step": 0.05,
+      "label": "Position $x_0$",
+      "start": 0,
+      "decimals": 2
+     },
+     {
+      "bind": "tau",
+      "min": 0.0005,
+      "max": 0.02,
+      "step": 0.0005,
+      "label": "$\\tau$",
+      "start": 0.02,
+      "decimals": 4
+     }
+    ]
+   },
+   "question": "What price does the canvas give for our call, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.4506,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "£10.4506: the area 0.1111 times $100e^{\\beta\\tau}$.",
+    "label": "Price",
+    "unit": "£",
+    "placeholder": "for example 10",
+    "wrong": [
+     {
+      "id": "area",
+      "value": 0.1111,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption after setting both sliders."
+    },
+    {
+     "rung": "point",
+     "text": "The shaded product is the integral of kernel times start.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At $x_0 = 0$ and $\\tau = 0.02$ the caption reads 10.4506."
+    }
+   ],
+   "feedback": {
+    "correct": "The shaded area is $u(0, 0.02) = 0.1111$, and it prices the call at £10.4506.",
+    "generic": "Not quite right. Set $x_0 = 0$ and $\\tau = 0.02$ and read the price line.",
+    "byKey": {
+     "area": "0.1111 is the heat value $u$, the area itself. The price multiplies it by $Ke^{\\beta\\tau}$."
+    }
+   },
+   "explain": {
+    "text": "The kernel weights the start values around $x_0$, and the area under kernel times start is the heat solution there. Multiplying by $100e^{\\alpha x_0 + \\beta\\tau}$ gives the price. This is the number of lesson 9, found by an integral.",
+    "canvas": {
+     "params": {
+      "xc": 0,
+      "tau": 0.02
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "The start is $e^{1.75y} - e^{0.75y}$ for $y > 0$, so we need $I(a) = \\displaystyle\\int_0^\\infty e^{ay}\\frac{1}{\\sqrt{4\\pi\\tau}}e^{-(x-y)^2/(4\\tau)}\\,dy$ for two values of $a$. Leave out the two lines that go wrong.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 270,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0,
+      "tau": 0.02,
+      "c": 2
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    }
+   },
+   "question": "Put the lines of the Gaussian lemma in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "l1",
+      "text": "Combine the exponents: $ay - \\dfrac{(y-x)^2}{4\\tau}$ (powers add when we multiply)."
+     },
+     {
+      "id": "l2",
+      "text": "Complete the square: $-\\dfrac{(y - x - 2a\\tau)^2}{4\\tau} + ax + a^2\\tau$ (expand it to check)."
+     },
+     {
+      "id": "l3",
+      "text": "Pull out the constant $e^{ax + a^2\\tau}$. The rest is a normal density with mean $x + 2a\\tau$ and variance $2\\tau$."
+     },
+     {
+      "id": "l4",
+      "text": "Integrate over $y > 0$: the chance of a positive value is $\\Phi\\!\\left(\\dfrac{x + 2a\\tau}{\\sqrt{2\\tau}}\\right)$, so $I(a) = e^{ax + a^2\\tau}\\,\\Phi\\!\\left(\\dfrac{x + 2a\\tau}{\\sqrt{2\\tau}}\\right)$."
+     },
+     {
+      "id": "d1",
+      "text": "Take $e^{ay}$ out of the integral as a constant.",
+      "why": "It depends on $y$, the variable we integrate over. It cannot leave the integral."
+     },
+     {
+      "id": "d2",
+      "text": "The density has variance $\\tau$, so the argument is $\\dfrac{x + 2a\\tau}{\\sqrt{\\tau}}$.",
+      "why": "The exponent is $\\dfrac{(y-m)^2}{4\\tau} = \\dfrac{(y-m)^2}{2 \\cdot 2\\tau}$, so the variance is $2\\tau$, not $\\tau$."
+     }
+    ],
+    "answer": [
+     "l1",
+     "l2",
+     "l3",
+     "l4"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Combine first, then complete the square, then recognise a normal density."
+    },
+    {
+     "rung": "point",
+     "text": "The kernel itself has variance $2\\tau$ (lesson 3, with $D = 1$).",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Order: combine, complete the square, pull out the constant, integrate over $y > 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "$I(a) = e^{ax + a^2\\tau}\\,\\Phi\\!\\left(\\dfrac{x + 2a\\tau}{\\sqrt{2\\tau}}\\right)$.",
+    "generic": "Not quite right. Each line should follow from the line before it."
+   },
+   "explain": {
+    "text": "Completing the square turns the product $e^{ay} \\times$ kernel into a shifted normal density times a constant. The shift is $2a\\tau$. Its tail above 0 is a $\\Phi$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Put $x = 0$ and $\\tau = 0.02$ in the lemma. Use $\\Phi(0.35) = 0.6368$, $\\Phi(0.15) = 0.5596$, $e^{1.75^2\\tau} = 1.0632$ and $e^{0.75^2\\tau} = 1.0113$. Fill in both rows.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 270,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0,
+      "tau": 0.02,
+      "c": 2
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    }
+   },
+   "question": "Fill in the argument and $I(a)$ for $a = 1.75$ and $a = 0.75$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "$a$",
+     "Argument $\\frac{x + 2a\\tau}{\\sqrt{2\\tau}}$",
+     "$I(a)$"
+    ],
+    "rows": [
+     [
+      "1.75",
+      {
+       "edit": true,
+       "answer": 0.35,
+       "tol": {
+        "abs": 0.002
+       }
+      },
+      {
+       "edit": true,
+       "answer": 0.6771,
+       "tol": {
+        "abs": 0.0008
+       }
+      }
+     ],
+     [
+      "0.75",
+      {
+       "edit": true,
+       "answer": 0.15,
+       "tol": {
+        "abs": 0.002
+       }
+      },
+      {
+       "edit": true,
+       "answer": 0.5659,
+       "tol": {
+        "abs": 0.0008
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The argument is $\\dfrac{2a\\tau}{\\sqrt{2\\tau}}$ at $x = 0$, and $\\sqrt{2\\tau} = 0.2$."
+    },
+    {
+     "rung": "point",
+     "text": "Then $I(a)$ is the exponential factor times $\\Phi$ of the argument.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$I(1.75) = 1.0632 \\times 0.6368$ and $I(0.75) = 1.0113 \\times 0.5596$."
+    }
+   ],
+   "feedback": {
+    "correct": "The arguments are 0.35 and 0.15, and $I$ is 0.6771 and 0.5659.",
+    "generic": "Not quite right. Divide $2a\\tau$ by $\\sqrt{2\\tau} = 0.2$, then multiply by the exponential factor.",
+    "byKey": {
+     "r0c1": "Check the argument: divide $2a\\tau$ by $\\sqrt{2\\tau} = 0.2$, not by $2\\tau$. The $\\Phi$ takes a standardised argument.",
+     "r1c1": "Check the argument: divide $2a\\tau$ by $\\sqrt{2\\tau} = 0.2$, not by $2\\tau$. The $\\Phi$ takes a standardised argument.",
+     "r0c2": "Check $I(a)$. It is $\\Phi$ of the argument times the factor $e^{a^2\\tau}$ in front. A bare $\\Phi$ leaves the factor out.",
+     "r1c2": "Check $I(a)$. It is $\\Phi$ of the argument times the factor $e^{a^2\\tau}$ in front. A bare $\\Phi$ leaves the factor out."
+    }
+   },
+   "explain": {
+    "text": "$I(1.75) - I(0.75) = 0.6771 - 0.5659 = 0.1111$, which is the heat value $u(0, 0.02)$. The arguments 0.35 and 0.15 are the $d_1$ and $d_2$ of `trees` lesson 10. Their gap is $0.2 = \\sigma\\sqrt{T}$."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Now undo the changes of variable. We have $u = I(a_1) - I(a_2)$ with $a_1 = \\tfrac{k+1}{2}$ and $a_2 = \\tfrac{k-1}{2}$. Each line names the change it undoes. Leave out the two lines that go wrong.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 270,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0,
+      "tau": 0.02,
+      "c": 2
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    }
+   },
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "t1",
+      "text": "Multiply by $Ke^{\\alpha x + \\beta\\tau}$ (undoing $v = e^{\\alpha x + \\beta\\tau}u$). The exponents combine: $\\alpha + a_1 = 1$, $\\beta + a_1^2 = 0$, $\\alpha + a_2 = 0$ and $\\beta + a_2^2 = -k$."
+     },
+     {
+      "id": "t2",
+      "text": "So $V = Ke^{x}\\,\\Phi(d_1) - Ke^{-k\\tau}\\,\\Phi(d_2)$, with the two arguments as the $\\Phi$ inputs."
+     },
+     {
+      "id": "t3",
+      "text": "Undo $x = \\ln(S/K)$: $Ke^{x} = S$."
+     },
+     {
+      "id": "t4",
+      "text": "Undo $\\tau$: $k\\tau = \\dfrac{2r}{\\sigma^2}\\cdot\\dfrac{\\sigma^2T}{2} = rT$, so $Ke^{-k\\tau} = Ke^{-rT}$."
+     },
+     {
+      "id": "t5",
+      "text": "The arguments $\\dfrac{x + 2a\\tau}{\\sqrt{2\\tau}}$ become $\\dfrac{\\ln(S/K) + (r \\pm \\tfrac12\\sigma^2)T}{\\sigma\\sqrt{T}}$, which are $d_1$ and $d_2$."
+     },
+     {
+      "id": "d1",
+      "text": "Drop $e^{\\beta\\tau}$, because it is only a constant.",
+      "why": "It multiplies every term. Without it the exponent $a_1^2\\tau$ does not cancel and the price is wrong."
+     },
+     {
+      "id": "d2",
+      "text": "Replace $k\\tau$ by $\\sigma^2T$.",
+      "why": "$k\\tau = rT$, not $\\sigma^2T$. This line loses the interest rate and the discount."
+     }
+    ],
+    "answer": [
+     "t1",
+     "t2",
+     "t3",
+     "t4",
+     "t5"
+    ],
+    "same": [
+     [
+      "t3",
+      "t4",
+      "t5"
+     ]
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First multiply by the factor, then undo $x$, $\\tau$ and the arguments one at a time."
+    },
+    {
+     "rung": "point",
+     "text": "The three undoing lines can come in any order.",
+     "highlight": [
+      "u0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Multiply, write $V$ with the two exponents, then undo $x$, $\\tau$ and the arguments."
+    }
+   ],
+   "feedback": {
+    "correct": "$V = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2)$: the Black-Scholes formula.",
+    "generic": "Not quite right. Multiply by the factor first. The undoing lines can then go in any order."
+   },
+   "explain": {
+    "text": "The exponents $\\alpha + a_1 = 1$ and $\\alpha + a_2 = 0$ turn the two pieces into $S$ and $K$, with $\\beta + a_2^2 = -k$ giving the discount. The formula comes out of one integral. No numerical method was used."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Same route, a new share price: $S = \\text{£}110$, so $x = \\ln 1.1 = 0.0953$. The arguments are $d_1 = 0.8266$ and $d_2 = 0.6266$, with $\\Phi(0.8266) = 0.7958$ and $\\Phi(0.6266) = 0.7345$. Also $Ke^{-rT} = 95.1229$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 270,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0.1,
+      "tau": 0.02,
+      "c": 2
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    }
+   },
+   "question": "What is the call worth at $S = 110$? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 17.66,
+    "tol": {
+     "abs": 0.015
+    },
+    "accept": "£17.66: $110 \\times 0.7958 - 95.1229 \\times 0.7345$.",
+    "label": "Price",
+    "unit": "£",
+    "placeholder": "for example 17",
+    "wrong": [
+     {
+      "id": "same-x",
+      "value": 10.45,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "no-disc",
+      "value": 14.08,
+      "tol": {
+       "abs": 0.03
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use $V = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2)$ with the numbers given."
+    },
+    {
+     "rung": "point",
+     "text": "The kernel is now centred at $x_0 = 0.0953$, to the right of the strike.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$110 \\times 0.7958 = 87.54$ and $95.1229 \\times 0.7345 = 69.87$."
+    }
+   ],
+   "feedback": {
+    "correct": "The call is worth about £17.66 (exactly £17.6630).",
+    "generic": "Not quite right. Compute $S\\Phi(d_1)$ and $Ke^{-rT}\\Phi(d_2)$ separately, then subtract.",
+    "byKey": {
+     "same-x": "10.45 is the price at $S = 100$. You did not move the kernel to $x_0 = 0.0953$.",
+     "no-disc": "14.08 uses $K = 100$ in place of $Ke^{-rT} = 95.1229$. The strike is discounted."
+    }
+   },
+   "explain": {
+    "text": "$87.54 - 69.87 = 17.66$, and the exact figure is £17.6630. The kernel integral at $x_0 = 0.0953$ gives the same value. Moving $S$ moves the kernel and nothing else.",
+    "canvas": {
+     "params": {
+      "xc": 0.0953
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague integrates against $\\dfrac{1}{\\sqrt{2\\pi\\tau}}e^{-(x-y)^2/(2\\tau)}$, a kernel of variance $\\tau$. The canvas uses variance $c\\tau$ for the kernel. Her kernel is $c = 1$ and it prices our call at £6.6810.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 270,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0,
+      "tau": 0.02,
+      "c": 1
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    },
+    "derive": {
+     "caption": "Heat value $u$ = {{fixed(values.A, 4)}}. Price = £{{fixed(100*exp(-0.75*xc-3.0625*tau)*values.A, 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "xc",
+      "min": -0.3,
+      "max": 0.4,
+      "step": 0.05,
+      "label": "Position $x_0$",
+      "start": 0,
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "Slide $c$ until the price matches the formula, £10.4506.",
+   "widget": {
+    "kind": "slider",
+    "min": 0.5,
+    "max": 3,
+    "step": 0.1,
+    "start": 1,
+    "bind": "c",
+    "label": "$c$",
+    "answer": 2,
+    "tol": 0.1,
+    "unitLabel": "",
+    "wrong": [
+     {
+      "id": "tau-only",
+      "from": 0.8,
+      "to": 1.2
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the price line as you slide $c$."
+    },
+    {
+     "rung": "point",
+     "text": "The kernel for $u_\\tau = u_{xx}$ is $\\Phi_\\tau(x) = \\dfrac{1}{\\sqrt{4\\pi\\tau}}e^{-x^2/(4\\tau)}$.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The exponent $x^2/(4\\tau) = x^2/(2 \\times 2\\tau)$, so the variance is $2\\tau$, and $c = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "$c = 2$: the kernel's variance is $2\\tau$, and the price is £10.4506.",
+    "generic": "Not quite right. Slide $c$ until the price line reads 10.4506.",
+    "byKey": {
+     "tau-only": "$c = 1$ is variance $\\tau$, your colleague's kernel. It is too narrow and prices at £6.6810, 36% low."
+    }
+   },
+   "explain": {
+    "text": "Lesson 3 gave variance $2Dt$, and here $D = 1$, so the variance is $2\\tau$. A kernel of variance $\\tau$ spreads the heat too little. Her price is £6.6810, against £10.4506.",
+    "canvas": {
+     "params": {
+      "c": 2
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Edge case: shrink $\\tau$ and the kernel becomes a spike, so the area should become the start value. Fix $x_0 = 0.2$ and slide $\\tau$ down to 0.0005. At $\\tau = 0.02$ the heat value is 0.3471.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 270,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0.2,
+      "tau": 0.02,
+      "c": 2
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    },
+    "derive": {
+     "caption": "Heat value $u$ = {{fixed(values.A, 4)}}. Price = £{{fixed(100*exp(-0.75*xc-3.0625*tau)*values.A, 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "tau",
+      "min": 0.0005,
+      "max": 0.02,
+      "step": 0.0005,
+      "label": "$\\tau$",
+      "start": 0.02,
+      "decimals": 4
+     }
+    ]
+   },
+   "question": "What value does $u$ approach as $\\tau \\to 0$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2572,
+    "tol": {
+     "abs": 0.004
+    },
+    "accept": "0.2572: $u_0(0.2) = e^{0.35} - e^{0.15}$.",
+    "label": "$u$",
+    "placeholder": "for example 0.3",
+    "wrong": [
+     {
+      "id": "wide",
+      "value": 0.3471,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A spike kernel picks out one value of $u_0$."
+    },
+    {
+     "rung": "point",
+     "text": "The blue curve $u_0$ is the start. Read it at $y = 0.2$.",
+     "highlight": [
+      "u0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$u_0(0.2) = e^{1.75 \\times 0.2} - e^{0.75 \\times 0.2} = 1.4191 - 1.1618$."
+    }
+   ],
+   "feedback": {
+    "correct": "$u \\to u_0(0.2) = 0.2572$: at expiry the formula returns the payoff.",
+    "generic": "Not quite right. As the kernel narrows, it samples $u_0$ at $x_0$ alone.",
+    "byKey": {
+     "wide": "0.3471 is the value at $\\tau = 0.02$, where the kernel is still wide. Keep sliding $\\tau$ down.",
+     "zero": "0 would need the start to vanish at 0.2. It does not: $u_0(0.2) > 0$."
+    }
+   },
+   "explain": {
+    "text": "At $\\tau = 0.0005$ the area is 0.2591, and the limit is $u_0(0.2) = 0.2572$. So the price tends to the payoff $100(e^{0.2} - 1) = 22.14$ at expiry. The formula respects the terminal condition.",
+    "canvas": {
+     "params": {
+      "tau": 0.0005
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 3,
+   "prose": "The route is: kernel, split the start into two exponentials, apply the lemma, undo the variables. A put starts at $u_0 = \\max(e^{0.75y} - e^{1.75y}, 0)$, nonzero for $y < 0$. The same lemma over $y < 0$ gives $Ke^{-rT}\\Phi(-d_2) - S\\Phi(-d_1)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 270,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0,
+      "tau": 0.02,
+      "c": 2
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    }
+   },
+   "question": "Check it with put-call parity, $P = C - S + Ke^{-rT}$. What is the put worth, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.5735,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "£5.5735: $10.4506 - 100 + 95.1229$.",
+    "label": "Put",
+    "unit": "£",
+    "placeholder": "for example 5",
+    "wrong": [
+     {
+      "id": "undiscounted",
+      "value": 10.4506,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use the call price £10.4506 and $S = 100$."
+    },
+    {
+     "rung": "point",
+     "text": "The put's start is the mirror image of the call's, on the left of 0.",
+     "highlight": [
+      "u0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$Ke^{-rT} = 95.1229$, so $P = 10.4506 - 100 + 95.1229$."
+    }
+   ],
+   "feedback": {
+    "correct": "The put is worth £5.5735, as in `trees` lesson 10.",
+    "generic": "Not quite right. Discount the strike before using parity.",
+    "byKey": {
+     "undiscounted": "10.4506 uses $K = 100$ undiscounted, so the put equals the call. The strike is paid at $T$ and is worth $100e^{-0.05}$ today."
+    }
+   },
+   "explain": {
+    "text": "$10.4506 - 100 + 95.1229 = 5.5735$. A kernel quadrature over $y < 0$ gives the same, to six places. One kernel prices every payoff of the form start function."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write both routes to the price. `call_via_kernel` integrates by the trapezium rule over $y \\in [0, 5]$. `bs_call` is the closed form with `math.erf`. `heat_params` from lesson 9 is loaded.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 230,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0,
+      "tau": 0.02,
+      "c": 2
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    }
+   },
+   "question": "Complete `call_via_kernel` and `bs_call`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nimport numpy as np\n\ndef heat_params(r, sigma):\n    k = 2 * r / sigma ** 2\n    return k, -(k - 1) / 2, -(k + 1) ** 2 / 4\n",
+    "starter": "import math\nimport numpy as np\n\ndef call_via_kernel(S, K, r, sigma, T, n=20001):\n    \"\"\"Trapezium rule for u(x, tau) on y in [0, 5], then back to a price.\"\"\"\n    k, alpha, beta = heat_params(r, sigma)\n    x = math.log(S / K)\n    tau = 0.5 * sigma ** 2 * T\n    y = np.linspace(0, 5, n)\n    u0 = ...      # exp(((k+1)/2) y) - exp(((k-1)/2) y)\n    kern = ...    # normal density in y, centred at x, variance 2 tau\n    ...\n\ndef bs_call(S, K, r, sigma, T):\n    \"\"\"The closed form, with math.erf for Phi.\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef call_via_kernel(S, K, r, sigma, T, n=20001):\n    k, alpha, beta = heat_params(r, sigma)\n    x = math.log(S / K)\n    tau = 0.5 * sigma ** 2 * T\n    y = np.linspace(0, 5, n)\n    u0 = np.exp((k + 1) / 2 * y) - np.exp((k - 1) / 2 * y)\n    kern = np.exp(-(x - y) ** 2 / (4 * tau)) / np.sqrt(4 * np.pi * tau)\n    f = u0 * kern\n    h = y[1] - y[0]\n    u = h * (f.sum() - 0.5 * f[0] - 0.5 * f[-1])\n    return K * math.exp(alpha * x + beta * tau) * u\n\ndef bs_call(S, K, r, sigma, T):\n    Phi = lambda z: 0.5 * (1 + math.erf(z / math.sqrt(2)))\n    d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))\n    d2 = d1 - sigma * math.sqrt(T)\n    return S * Phi(d1) - K * math.exp(-r * T) * Phi(d2)\n",
+    "examples": [
+     {
+      "call": "bs_call(100, 100, 0.05, 0.2, 1)",
+      "expect": "10.450583572",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "call_via_kernel(100, 100, 0.05, 0.2, 1)",
+      "expect": "10.450584",
+      "compare": "isclose",
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "call": "call_via_kernel(110, 100, 0.05, 0.2, 1)",
+      "expect": "17.662954",
+      "compare": "isclose",
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "call": "bs_call(100, 100, 0.05, 0.2, 1)",
+      "expect": "10.450583572",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "bs_call(110, 100, 0.05, 0.2, 1)",
+      "expect": "17.662953741",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "bs_call(100, 120, 0.03, 0.25, 0.5)",
+      "expect": "1.766906460",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "abs(call_via_kernel(100, 120, 0.03, 0.25, 0.5) - bs_call(100, 120, 0.03, 0.25, 0.5)) < 5e-5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(call_via_kernel(100, 90, 0.03, 0.25, 0.5) - bs_call(100, 90, 0.03, 0.25, 0.5)) < 5e-5",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. NumPy loads on the first run, which takes a second or two. `heat_params` from lesson 9 is provided. The kernel prices must be within $5 \\times 10^{-5}$ and `bs_call` within $10^{-9}$."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The start for $y > 0$ is $e^{\\frac{k+1}{2}y} - e^{\\frac{k-1}{2}y}$. The kernel has variance $2\\tau$."
+    },
+    {
+     "rung": "point",
+     "text": "The trapezium rule is `h * (f.sum() - 0.5 * f[0] - 0.5 * f[-1])`.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Return `K * exp(alpha * x + beta * tau) * u`, and $\\Phi(z) = \\tfrac12(1 + \\text{erf}(z/\\sqrt2))$."
+    }
+   ],
+   "feedback": {
+    "correct": "The integral and the formula agree at both prices and at a strike of 120 and of 90.",
+    "generic": "Not quite right. Check the kernel's $4\\tau$ and the factor in front of $u$."
+   },
+   "explain": {
+    "text": "The kernel integral matches the formula to $5 \\times 10^{-5}$ with 20,001 points. So the formula is the exact value of that integral. A mismatch at one strike would point to the start function or the width."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A market maker reads two numbers off the formula. $\\Phi(d_1) = 0.6368$ is the hedge. $\\Phi(d_2) = 0.5596$ is the risk-neutral chance of exercise. A client buys 500 digitals, each paying £10 if the share ends above £100 in a year. Our option's $r = 5\\%$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.8,
+      1.0
+     ],
+     "y": [
+      0,
+      2.2
+     ],
+     "height": 220,
+     "xLabel": "$y$",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "normpdf(x, xc, sqrt(c*tau))",
+       "label": "kernel",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "u0",
+       "expr": "max(exp(1.75*x)-exp(0.75*x),0)",
+       "label": "$u_0$",
+       "colour": 3,
+       "labelSide": "below"
+      },
+      {
+       "id": "g",
+       "expr": "max(0,sign(x))*normpdf(x, xc, sqrt(c*tau))*(exp(1.75*x)-exp(0.75*x))",
+       "label": "product",
+       "colour": 1
+      }
+     ],
+     "params": {
+      "xc": 0,
+      "tau": 0.02,
+      "c": 2
+     }
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 5
+     }
+    }
+   },
+   "question": "What is the fair price of the 500 digitals, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2661.6,
+    "tol": {
+     "abs": 1
+    },
+    "accept": "£2,661.62: $5000 \\times e^{-0.05} \\times 0.5596$.",
+    "label": "Price",
+    "unit": "£",
+    "placeholder": "for example 2500",
+    "wrong": [
+     {
+      "id": "no-disc",
+      "value": 2798.09,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "hedge",
+      "value": 3184.15,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The payoff in total is £5,000 if the share ends above £100."
+    },
+    {
+     "rung": "point",
+     "text": "The chance of exercise is $\\Phi(d_2)$. Discount it from $T$.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$5000 \\times 0.951229 \\times 0.5596$."
+    }
+   ],
+   "feedback": {
+    "correct": "The digitals cost about £2,661.62.",
+    "generic": "Not quite right. Multiply £5,000 by the discount factor and by $\\Phi(d_2)$.",
+    "byKey": {
+     "no-disc": "£2,798.09 is $5000\\,\\Phi(d_2)$, the expected payoff at expiry. It is paid in a year, so discount it.",
+     "hedge": "£3,184.15 uses $\\Phi(d_1)$, the hedge ratio. The chance of exercise is $\\Phi(d_2)$."
+    }
+   },
+   "explain": {
+    "text": "$e^{-0.05} \\times 0.5596 = 0.5323$ per £1 of payoff, the digital price of `ito` lesson 11. Times £5,000 is £2,661.62. Both $\\Phi(d_1)$ and $\\Phi(d_2)$ are Gaussian integrals from this lesson."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The heat solution is the kernel average of the start: $u(x, \\tau) = \\int \\frac{1}{\\sqrt{4\\pi\\tau}}e^{-(x-y)^2/(4\\tau)}u_0(y)\\,dy$. The kernel has variance $2\\tau$.",
+   "Completing the square gives $\\int_0^\\infty e^{ay}\\Phi_\\tau(x - y)\\,dy = e^{ax + a^2\\tau}\\Phi\\!\\left(\\frac{x + 2a\\tau}{\\sqrt{2\\tau}}\\right)$. The two exponentials of the call's start give $d_1$ and $d_2$.",
+   "Undoing the changes of variable gives $V = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2)$. As $\\tau \\to 0$ the kernel is a spike and the formula returns the payoff."
+  ],
+  "formula": {
+   "name": "Gaussian lemma",
+   "tex": "\\int_0^\\infty e^{ay}\\,\\Phi_\\tau(x - y)\\,dy = e^{ax + a^2\\tau}\\,\\Phi\\!\\left(\\dfrac{x + 2a\\tau}{\\sqrt{2\\tau}}\\right)",
+   "note": "Here $\\Phi_\\tau$ is the heat kernel with $D = 1$. At $x = 0$, $\\tau = 0.02$ the arguments are 0.35 and 0.15."
+  },
+  "trap": "The kernel of $u_\\tau = u_{xx}$ has variance $2\\tau$. Variance $\\tau$ prices our call at £6.6810, not £10.4506."
+ },
+ "quiz": [
+  {
+   "id": "q-arg",
+   "difficulty": 2,
+   "prose": "In the lemma, $x = 0.1$, $\\tau = 0.02$ and $a = 1.75$. The argument of $\\Phi$ is $\\dfrac{x + 2a\\tau}{\\sqrt{2\\tau}}$.",
+   "question": "What is the argument? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.85,
+    "tol": {
+     "abs": 0.006
+    },
+    "accept": "0.85: $(0.1 + 0.07)/0.2$.",
+    "label": "Argument",
+    "placeholder": "for example 1",
+    "wrong": [
+     {
+      "id": "no-shift",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.006
+      }
+     },
+     {
+      "id": "no-root",
+      "value": 4.25,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(0.1 + 0.07)/0.2 = 0.85$.",
+    "generic": "Not quite right. The numerator is $x + 2a\\tau = 0.1 + 0.07$, and $\\sqrt{2\\tau} = 0.2$.",
+    "byKey": {
+     "no-shift": "0.50 is $x/\\sqrt{2\\tau}$. You left out the shift $2a\\tau$ the exponential adds.",
+     "no-root": "You divided by $2\\tau = 0.04$. Divide by its square root, 0.2."
+    }
+   },
+   "explain": {
+    "text": "The shift is $2 \\times 1.75 \\times 0.02 = 0.07$, and $\\sqrt{0.04} = 0.2$. So the argument is $0.17/0.2 = 0.85$."
+   }
+  },
+  {
+   "id": "q-width",
+   "difficulty": 2,
+   "prose": "A heat solution with $D = 1$ at $\\tau = 0.08$ is the start averaged with a normal kernel.",
+   "question": "What is the kernel's standard deviation? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4,
+    "tol": {
+     "abs": 0.006
+    },
+    "accept": "0.40: variance $2\\tau = 0.16$.",
+    "label": "Standard deviation",
+    "placeholder": "for example 0.5",
+    "wrong": [
+     {
+      "id": "tau",
+      "value": 0.28,
+      "tol": {
+       "abs": 0.006
+      }
+     },
+     {
+      "id": "variance",
+      "value": 0.16,
+      "tol": {
+       "abs": 0.006
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The variance is $2\\tau = 0.16$, so the standard deviation is 0.4.",
+    "generic": "Not quite right. The variance is $2\\tau$. Take its square root.",
+    "byKey": {
+     "tau": "0.28 is $\\sqrt{\\tau}$. The variance is $2\\tau$, so the standard deviation is $\\sqrt{2\\tau}$.",
+     "variance": "0.16 is the variance. The question asks for its square root."
+    }
+   },
+   "explain": {
+    "text": "With $D = 1$, the variance is $2D\\tau = 0.16$. The standard deviation is $\\sqrt{0.16} = 0.4$."
+   }
+  },
+  {
+   "id": "q-put",
+   "difficulty": 3,
+   "prose": "The call at $S = 110$ is worth £17.6630 with $r = 5\\%$, $K = 100$ and $T = 1$.",
+   "question": "What is the put at $S = 110$, from parity? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.7859,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "£2.7859: $17.6630 - 110 + 95.1229$.",
+    "label": "Put",
+    "unit": "£",
+    "placeholder": "for example 3",
+    "wrong": [
+     {
+      "id": "undiscounted",
+      "value": 7.663,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$17.6630 - 110 + 95.1229 = 2.7859$.",
+    "generic": "Not quite right. Use $P = C - S + Ke^{-rT}$.",
+    "byKey": {
+     "undiscounted": "7.663 uses $K = 100$ in place of $100e^{-0.05}$. The strike is discounted."
+    }
+   },
+   "explain": {
+    "text": "$Ke^{-rT} = 95.1229$, so $P = 17.6630 - 110 + 95.1229 = 2.7859$. A put at £110 is out of the money, so it is cheap."
+   }
+  },
+  {
+   "id": "q-d2",
+   "difficulty": 3,
+   "prose": "In $V = S\\Phi(d_1) - Ke^{-rT}\\Phi(d_2)$ the second term comes from the exponential $e^{0.75y}$.",
+   "question": "What does $\\Phi(d_2)$ mean?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "exercise",
+      "text": "The risk-neutral chance that the call is exercised",
+      "correct": true
+     },
+     {
+      "id": "hedge",
+      "text": "The number of shares in the hedge",
+      "why": "That is $\\Phi(d_1)$, the delta. $\\Phi(d_2)$ is a probability."
+     },
+     {
+      "id": "real",
+      "text": "The real-world chance the share ends above the strike",
+      "why": "The model prices with the risk-neutral drift $r$, not the real drift $\\mu$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\Phi(d_2)$ is the chance of exercise under the risk-neutral measure.",
+    "generic": "Not quite right. Recall the digital call of `ito` lesson 11."
+   },
+   "explain": {
+    "text": "The digital call pays £1 if exercised and costs $e^{-rT}\\Phi(d_2) = 0.5323$. So $\\Phi(d_2) = 0.5596$ is the exercise chance, and $\\Phi(d_1)$ is the hedge."
+   }
+  }
+ ]
+}

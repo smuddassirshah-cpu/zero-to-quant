@@ -1,0 +1,2359 @@
+{
+ "id": "l12-four-decimal-pricer",
+ "course": "pdes",
+ "title": "A finite-difference pricer to four decimals",
+ "minutes": 15,
+ "objectives": [
+  "Match a Crank-Nicolson price to the closed form to four decimal places",
+  "Say why a large time step at the kink fails and how Rannacher's start and Richardson extrapolation fix it"
+ ],
+ "skills": [
+  "pe-fd",
+  "pe-bs"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "This is the exit task: price our call by finite differences to four decimals. The explicit scheme of lesson 8 solves $u_\\tau = u_{xx}$ on $[-1, 1]$ with 100 intervals, so $\\Delta x = 0.02$, and $n$ steps to $\\tau = 0.02$. The prices come back as shown. The curve is the highest mode's factor.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.3,
+      0.7
+     ],
+     "y": [
+      -1.4,
+      1.1
+     ],
+     "height": 250,
+     "xLabel": "$\\lambda = \\Delta\\tau/\\Delta x^2$",
+     "yLabel": "Top-mode factor",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "1-4*x*0.99975",
+       "label": "explicit factor"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "one",
+       "y": 1,
+       "label": "1",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "neg",
+       "y": -1,
+       "label": "-1",
+       "dashed": true,
+       "colour": 2
+      }
+     ],
+     "vlines": [
+      {
+       "id": "v110",
+       "x": 0.4545,
+       "label": "110",
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "v100",
+       "x": 0.5,
+       "label": "100",
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "v96",
+       "x": 0.5208,
+       "label": "96",
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "v90",
+       "x": 0.5556,
+       "label": "90",
+       "dashed": true,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Work out $\\lambda$ for each step count.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Steps",
+     "$\\lambda = \\Delta\\tau/\\Delta x^2$",
+     "Price (£)"
+    ],
+    "rows": [
+     [
+      "110",
+      {
+       "edit": true,
+       "answer": 0.4545,
+       "tol": {
+        "abs": 0.0006
+       }
+      },
+      "10.4480"
+     ],
+     [
+      "100",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.0006
+       }
+      },
+      "10.4298"
+     ],
+     [
+      "96",
+      {
+       "edit": true,
+       "answer": 0.5208,
+       "tol": {
+        "abs": 0.0006
+       }
+      },
+      "−31.99"
+     ],
+     [
+      "90",
+      {
+       "edit": true,
+       "answer": 0.5556,
+       "tol": {
+        "abs": 0.0006
+       }
+      },
+      "−1,446,998"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\Delta\\tau = 0.02/n$, and $\\Delta x^2 = 0.02^2 = 0.0004$."
+    },
+    {
+     "rung": "point",
+     "text": "The vertical lines mark your four values of $\\lambda$ on the factor curve.",
+     "highlight": [
+      "v110",
+      "v96"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$n = 110$: $\\lambda = 0.02/110/0.0004 = 0.4545$. In general $\\lambda = 50/n$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\lambda = 50/n$: 0.4545, 0.5, 0.5208 and 0.5556.",
+    "generic": "Not quite right. Divide $\\Delta\\tau = 0.02/n$ by $\\Delta x^2 = 0.0004$.",
+    "byKey": {
+     "r0c1": "Check $\\lambda = \\Delta\\tau/\\Delta x^2$ with $\\Delta\\tau = 0.02/n$ and $\\Delta x^2 = 0.0004$.",
+     "r1c1": "Check $\\lambda = \\Delta\\tau/\\Delta x^2$ with $\\Delta\\tau = 0.02/n$ and $\\Delta x^2 = 0.0004$.",
+     "r2c1": "Check $\\lambda = \\Delta\\tau/\\Delta x^2$ with $\\Delta\\tau = 0.02/n$ and $\\Delta x^2 = 0.0004$.",
+     "r3c1": "Check $\\lambda = \\Delta\\tau/\\Delta x^2$ with $\\Delta\\tau = 0.02/n$ and $\\Delta x^2 = 0.0004$."
+    }
+   },
+   "explain": {
+    "text": "The price is fine at $\\lambda = 0.4545$ and a little off at 0.5 (£10.4298). Past 0.5 it is wrong: £$-31.99$ at 96 steps and about £$-1.45$ million at 90. The factor curve crosses $-1$ at $\\lambda = 0.5$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "The highest mode on 100 intervals has $\\sin^2\\tfrac{99\\pi}{200} = 0.99975$, so its factor per step is $1 - 4\\lambda \\times 0.99975$. At 96 steps $\\lambda = 0.5208$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.3,
+      0.7
+     ],
+     "y": [
+      -1.4,
+      1.1
+     ],
+     "height": 250,
+     "xLabel": "$\\lambda = \\Delta\\tau/\\Delta x^2$",
+     "yLabel": "Top-mode factor",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "1-4*x*0.99975",
+       "label": "explicit factor"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "one",
+       "y": 1,
+       "label": "1",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "neg",
+       "y": -1,
+       "label": "-1",
+       "dashed": true,
+       "colour": 2
+      }
+     ],
+     "vlines": [
+      {
+       "id": "v110",
+       "x": 0.4545,
+       "label": "110",
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "v100",
+       "x": 0.5,
+       "label": "100",
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "v96",
+       "x": 0.5208,
+       "label": "96",
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "v90",
+       "x": 0.5556,
+       "label": "90",
+       "dashed": true,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the factor at 96 steps? Give 3 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1.083,
+    "tol": {
+     "abs": 0.002
+    },
+    "accept": "$-1.083$: $1 - 4 \\times 0.5208 \\times 0.99975$.",
+    "label": "Factor",
+    "placeholder": "for example 0.5",
+    "wrong": [
+     {
+      "id": "no-four",
+      "value": 0.479,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "sign",
+      "value": 1.083,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $\\lambda = 0.5208$ into $1 - 4\\lambda s^2$."
+    },
+    {
+     "rung": "point",
+     "text": "The curve passes below $-1$ once $\\lambda > 0.5$.",
+     "highlight": [
+      "neg"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$4 \\times 0.5208 \\times 0.99975 = 2.0827$, so the factor is $1 - 2.0827$."
+    }
+   ],
+   "feedback": {
+    "correct": "The factor is $-1.0828$: the top mode grows by 8% a step and flips sign.",
+    "generic": "Not quite right. Compute $4\\lambda s^2$ first, then subtract it from 1.",
+    "byKey": {
+     "no-four": "0.479 is $1 - \\lambda s^2$. The factor has $4\\lambda s^2$, which is why the limit is $\\lambda = \\tfrac12$.",
+     "sign": "1.083 has the wrong sign. $4\\lambda s^2 = 2.08 > 1$, so the factor is below $-1$."
+    }
+   },
+   "explain": {
+    "text": "Over 96 steps the top mode is multiplied by $(-1.0828)^{96} \\approx 2000$, and it flips sign each step. The price at the centre ends at £$-31.99$. At 90 steps the factor is $-1.2217$."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Crank-Nicolson (`numerics` lesson 14 for the family) averages the explicit and implicit steps. We find the factor $g$ per step for a mode, with $\\lambda = \\Delta\\tau/\\Delta x^2$ and $s = \\sin\\tfrac{k\\Delta x}{2}$. Leave out the two flawed lines.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.3,
+      0.7
+     ],
+     "y": [
+      -1.4,
+      1.1
+     ],
+     "height": 250,
+     "xLabel": "$\\lambda = \\Delta\\tau/\\Delta x^2$",
+     "yLabel": "Top-mode factor",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "1-4*x*0.99975",
+       "label": "explicit factor"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "one",
+       "y": 1,
+       "label": "1",
+       "dashed": true,
+       "colour": 2
+      },
+      {
+       "id": "neg",
+       "y": -1,
+       "label": "-1",
+       "dashed": true,
+       "colour": 2
+      }
+     ],
+     "vlines": [
+      {
+       "id": "v110",
+       "x": 0.4545,
+       "label": "110",
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "v100",
+       "x": 0.5,
+       "label": "100",
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "v96",
+       "x": 0.5208,
+       "label": "96",
+       "dashed": true,
+       "colour": 3
+      },
+      {
+       "id": "v90",
+       "x": 0.5556,
+       "label": "90",
+       "dashed": true,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "g1",
+      "text": "Average the two steps: $u^{n+1} - u^n = \\tfrac\\lambda2\\left(\\delta^2u^n + \\delta^2u^{n+1}\\right)$, with $\\delta^2u_i = u_{i-1} - 2u_i + u_{i+1}$."
+     },
+     {
+      "id": "g2",
+      "text": "A mode $\\sin kx_i$ is an eigenvector: $\\delta^2$ multiplies it by $-4s^2$."
+     },
+     {
+      "id": "g3",
+      "text": "So $g - 1 = -2\\lambda s^2(1 + g)$, where $g$ multiplies the mode each step."
+     },
+     {
+      "id": "g4",
+      "text": "Solve for $g$: $g = \\dfrac{1 - 2\\lambda s^2}{1 + 2\\lambda s^2}$."
+     },
+     {
+      "id": "g5",
+      "text": "The numerator is smaller in size than the denominator for every $\\lambda > 0$, so $|g| < 1$: stable at any step."
+     },
+     {
+      "id": "d1",
+      "text": "Forget the implicit half: $g = 1 - 2\\lambda s^2$.",
+      "why": "That is half an explicit step. It still passes $-1$ once $\\lambda s^2 > 1$. Crank-Nicolson keeps both halves, and $g$ is a ratio."
+     },
+     {
+      "id": "d2",
+      "text": "Since $|g| < 1$, the scheme is accurate at any step.",
+      "why": "Stable is not accurate. For large $\\lambda$, $g$ is near $-1$, so high modes barely decay and flip sign."
+     }
+    ],
+    "answer": [
+     "g1",
+     "g2",
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the averaged step, apply it to one mode, then solve for $g$."
+    },
+    {
+     "rung": "point",
+     "text": "With $x = 2\\lambda s^2$, $g = \\dfrac{1 - x}{1 + x}$.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Order: the averaged step, the eigenvalue $-4s^2$, the equation for $g$, its solution, the bound."
+    }
+   ],
+   "feedback": {
+    "correct": "$g = \\dfrac{1 - 2\\lambda s^2}{1 + 2\\lambda s^2}$ and $|g| < 1$ for every $\\lambda$.",
+    "generic": "Not quite right. Each line should follow from the line before it."
+   },
+   "explain": {
+    "text": "For large $\\lambda$ the factor tends to $-1$ from above, which is stable but slow to damp. At 400 intervals and 4 steps, $\\lambda = 200$ and $g = -0.9950$ for the top mode. That detail matters at a kink."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Now Crank-Nicolson on $[-1, 1]$ with $n_t = n_x/5$ steps. The closed form is £10.4505836. Fill in the errors, times $10^6$ so that they are easy to type. The plot is log against log.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      80,
+      2000
+     ],
+     "y": [
+      20,
+      10000
+     ],
+     "height": 250,
+     "xScale": "log",
+     "yScale": "log",
+     "xLabel": "Intervals",
+     "yLabel": "Error $\\times 10^6$",
+     "functions": [
+      {
+       "id": "err",
+       "points": [
+        [
+         100,
+         7862.2
+        ],
+        [
+         200,
+         1971.3
+        ],
+        [
+         400,
+         496.6
+        ],
+        [
+         800,
+         126.1
+        ],
+        [
+         1600,
+         32.5
+        ]
+       ],
+       "label": "CN error"
+      },
+      {
+       "id": "guide",
+       "expr": "7862*(100/x)^2",
+       "dashed": true,
+       "colour": 3,
+       "label": "slope -2"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "tol",
+       "y": 50,
+       "label": "limit 50 ($5 \\times 10^{-5}$)",
+       "dashed": true,
+       "colour": 2
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the error column.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Intervals",
+     "CN price (£)",
+     "Error $\\times 10^6$"
+    ],
+    "rows": [
+     [
+      "100",
+      "10.4427214",
+      "7862.2"
+     ],
+     [
+      "200",
+      "10.4486123",
+      "1971.3"
+     ],
+     [
+      "400",
+      "10.4500869",
+      {
+       "edit": true,
+       "answer": 496.6,
+       "tol": {
+        "abs": 1.0
+       }
+      }
+     ],
+     [
+      "800",
+      "10.4504574",
+      {
+       "edit": true,
+       "answer": 126.1,
+       "tol": {
+        "abs": 0.6
+       }
+      }
+     ],
+     [
+      "1,600",
+      "10.4505511",
+      {
+       "edit": true,
+       "answer": 32.5,
+       "tol": {
+        "abs": 0.4
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract each price from 10.4505836, then multiply by $10^6$."
+    },
+    {
+     "rung": "point",
+     "text": "The line on the log-log plot falls with slope $-2$.",
+     "highlight": [
+      "err"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$10.4505836 - 10.4500869 = 0.0004967$, which is 496.7 in these units."
+    }
+   ],
+   "feedback": {
+    "correct": "The errors are 496.6, 126.1 and 32.5: each is about a quarter of the one before.",
+    "generic": "Not quite right. Take formula minus price, then multiply by $10^6$.",
+    "byKey": {
+     "r2c2": "Error = formula minus CN price, times $10^6$. The formula is £10.4505836.",
+     "r3c2": "Error = formula minus CN price, times $10^6$. The formula is £10.4505836.",
+     "r4c2": "Error = formula minus CN price, times $10^6$. The formula is £10.4505836."
+    }
+   },
+   "explain": {
+    "text": "Each halving of $\\Delta x$ cuts the error by about 4 (3.99, 3.97, 3.94, 3.88), so the scheme is second order. Only the 1,600-interval grid is below $5 \\times 10^{-5}$, which is 50 in these units."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "If the error is $c\\,h^2$, then $V_h + \\dfrac{V_h - V_{2h}}{3}$ cancels $c\\,h^2$ (Richardson). Use $V_{2h} = 10.4427214$ from 100 intervals and $V_h = 10.4486123$ from 200.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      80,
+      2000
+     ],
+     "y": [
+      20,
+      10000
+     ],
+     "height": 250,
+     "xScale": "log",
+     "yScale": "log",
+     "xLabel": "Intervals",
+     "yLabel": "Error $\\times 10^6$",
+     "functions": [
+      {
+       "id": "err",
+       "points": [
+        [
+         100,
+         7862.2
+        ],
+        [
+         200,
+         1971.3
+        ],
+        [
+         400,
+         496.6
+        ],
+        [
+         800,
+         126.1
+        ],
+        [
+         1600,
+         32.5
+        ]
+       ],
+       "label": "CN error"
+      },
+      {
+       "id": "guide",
+       "expr": "7862*(100/x)^2",
+       "dashed": true,
+       "colour": 3,
+       "label": "slope -2"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "tol",
+       "y": 50,
+       "label": "limit 50 ($5 \\times 10^{-5}$)",
+       "dashed": true,
+       "colour": 2
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the extrapolated price? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.4506,
+    "tol": {
+     "abs": 6e-05
+    },
+    "accept": "£10.4506: $10.4486123 + 0.0019636 = 10.4505759$.",
+    "label": "Price",
+    "unit": "£",
+    "placeholder": "for example 10.45",
+    "wrong": [
+     {
+      "id": "no-third",
+      "value": 10.4545,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "average",
+      "value": 10.4457,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The difference $V_h - V_{2h} = 0.0058909$."
+    },
+    {
+     "rung": "point",
+     "text": "The dashed guide has slope $-2$, so the first error term is $h^2$.",
+     "highlight": [
+      "guide"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide the difference by 3, then add it to $V_h$."
+    }
+   ],
+   "feedback": {
+    "correct": "The extrapolated price is £10.4505760, an error of $-7.6 \\times 10^{-6}$.",
+    "generic": "Not quite right. Divide the difference by $2^2 - 1 = 3$ and add it to the finer price.",
+    "byKey": {
+     "no-third": "10.4545 adds the whole difference. The correction is a third of it, because the error shrinks by 4, not 2.",
+     "average": "10.4457 averages the two prices, which moves away from the answer. The correction goes in the direction of improvement."
+    }
+   },
+   "explain": {
+    "text": "Two cheap grids give an error of $7.6 \\times 10^{-6}$, better than the 1,600-interval grid's $3.25 \\times 10^{-5}$. From 200 and 400 intervals the result is £10.4505785. Extrapolation costs one more solve and removes the leading error."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 3,
+   "prose": "Four decimals means $|V_{\\text{FD}} - V| < 5 \\times 10^{-5}$ against the formula, shown on a halving sequence. A pricer reports errors of $4.97 \\times 10^{-4}$, $1.26 \\times 10^{-4}$ and $3.25 \\times 10^{-5}$ on 400, 800 and 1,600 intervals.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      80,
+      2000
+     ],
+     "y": [
+      20,
+      10000
+     ],
+     "height": 250,
+     "xScale": "log",
+     "yScale": "log",
+     "xLabel": "Intervals",
+     "yLabel": "Error $\\times 10^6$",
+     "functions": [
+      {
+       "id": "err",
+       "points": [
+        [
+         100,
+         7862.2
+        ],
+        [
+         200,
+         1971.3
+        ],
+        [
+         400,
+         496.6
+        ],
+        [
+         800,
+         126.1
+        ],
+        [
+         1600,
+         32.5
+        ]
+       ],
+       "label": "CN error"
+      },
+      {
+       "id": "guide",
+       "expr": "7862*(100/x)^2",
+       "dashed": true,
+       "colour": 3,
+       "label": "slope -2"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "tol",
+       "y": 50,
+       "label": "limit 50 ($5 \\times 10^{-5}$)",
+       "dashed": true,
+       "colour": 2
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which claim does the evidence support?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The 1,600 grid is within $5 \\times 10^{-5}$, and each halving cut the error by about 4",
+      "correct": true
+     },
+     {
+      "id": "800",
+      "text": "The 800 grid agrees to four decimals, since 10.4505 and 10.4506 differ in the last place only",
+      "why": "Its error is $1.26 \\times 10^{-4}$, above $5 \\times 10^{-5}$. Rounding to four places hides the gap."
+     },
+     {
+      "id": "one",
+      "text": "One grid within the tolerance proves the pricer is right",
+      "why": "A single agreement can be luck, or two errors cancelling. The halving sequence shows the order of convergence."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each error with $5 \\times 10^{-5}$, then look at the ratios."
+    },
+    {
+     "rung": "point",
+     "text": "Only one point lies below the dashed limit.",
+     "highlight": [
+      "tol"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1.26 \\times 10^{-4} > 5 \\times 10^{-5} > 3.25 \\times 10^{-5}$, and the ratios are about 4."
+    }
+   ],
+   "feedback": {
+    "correct": "Agreement to four decimals is a test over a halving sequence, not a single number.",
+    "generic": "Not quite right. Compare each error with $5 \\times 10^{-5}$ and look at how it falls."
+   },
+   "explain": {
+    "text": "The habit from `odes` lesson 18 is to halve the step until two results and the formula agree. Here the 1,600 grid passes and the ratios confirm second order. The strike, the far boundary and the time-stepping start belong in the note."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague's Crank-Nicolson pricer uses 400 intervals and 4 steps. It returns £10.0085, and its gamma is jagged and negative beside the strike. She decides the closed form must be wrong. The formula's gamma is positive everywhere.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      88,
+      116
+     ],
+     "y": [
+      -0.25,
+      0.08
+     ],
+     "height": 270,
+     "xLabel": "Share price $S$ (£)",
+     "yLabel": "Second difference of $V$ ($\\Gamma$)",
+     "functions": [
+      {
+       "id": "cn",
+       "points": [
+        [
+         88.25,
+         0.02403
+        ],
+        [
+         88.692,
+         0.02476
+        ],
+        [
+         89.137,
+         0.02554
+        ],
+        [
+         89.583,
+         0.02633
+        ],
+        [
+         90.032,
+         0.02713
+        ],
+        [
+         90.484,
+         0.02789
+        ],
+        [
+         90.937,
+         0.02857
+        ],
+        [
+         91.393,
+         0.02911
+        ],
+        [
+         91.851,
+         0.02942
+        ],
+        [
+         92.312,
+         0.02942
+        ],
+        [
+         92.774,
+         0.02897
+        ],
+        [
+         93.239,
+         0.02793
+        ],
+        [
+         93.707,
+         0.0261
+        ],
+        [
+         94.176,
+         0.02324
+        ],
+        [
+         94.649,
+         0.01909
+        ],
+        [
+         95.123,
+         0.01329
+        ],
+        [
+         95.6,
+         0.00543
+        ],
+        [
+         96.079,
+         -0.00499
+        ],
+        [
+         96.561,
+         -0.01854
+        ],
+        [
+         97.045,
+         -0.03595
+        ],
+        [
+         97.531,
+         -0.05804
+        ],
+        [
+         98.02,
+         -0.08581
+        ],
+        [
+         98.511,
+         -0.12041
+        ],
+        [
+         99.005,
+         -0.16322
+        ],
+        [
+         99.501,
+         -0.21585
+        ],
+        [
+         100.0,
+         1.60098
+        ],
+        [
+         100.501,
+         -0.21
+        ],
+        [
+         101.005,
+         -0.15449
+        ],
+        [
+         101.511,
+         -0.11088
+        ],
+        [
+         102.02,
+         -0.07687
+        ],
+        [
+         102.532,
+         -0.05059
+        ],
+        [
+         103.045,
+         -0.03048
+        ],
+        [
+         103.562,
+         -0.0153
+        ],
+        [
+         104.081,
+         -0.004
+        ],
+        [
+         104.603,
+         0.00424
+        ],
+        [
+         105.127,
+         0.01009
+        ],
+        [
+         105.654,
+         0.01411
+        ],
+        [
+         106.184,
+         0.01671
+        ],
+        [
+         106.716,
+         0.01825
+        ],
+        [
+         107.251,
+         0.019
+        ],
+        [
+         107.788,
+         0.01918
+        ],
+        [
+         108.329,
+         0.01895
+        ],
+        [
+         108.872,
+         0.01844
+        ],
+        [
+         109.417,
+         0.01774
+        ],
+        [
+         109.966,
+         0.01694
+        ],
+        [
+         110.517,
+         0.01609
+        ],
+        [
+         111.071,
+         0.01523
+        ],
+        [
+         111.628,
+         0.01438
+        ],
+        [
+         112.187,
+         0.01357
+        ],
+        [
+         112.75,
+         0.0128
+        ],
+        [
+         113.315,
+         0.01208
+        ],
+        [
+         113.883,
+         0.01142
+        ],
+        [
+         114.454,
+         0.01082
+        ],
+        [
+         115.027,
+         0.01026
+        ],
+        [
+         115.604,
+         0.00976
+        ]
+       ],
+       "label": "400 by 4",
+       "colour": 2
+      },
+      {
+       "id": "ran",
+       "points": [
+        [
+         88.25,
+         0.02168
+        ],
+        [
+         88.692,
+         0.02175
+        ],
+        [
+         89.137,
+         0.02182
+        ],
+        [
+         89.583,
+         0.02189
+        ],
+        [
+         90.032,
+         0.02194
+        ],
+        [
+         90.484,
+         0.02199
+        ],
+        [
+         90.937,
+         0.02204
+        ],
+        [
+         91.393,
+         0.02207
+        ],
+        [
+         91.851,
+         0.02208
+        ],
+        [
+         92.312,
+         0.02209
+        ],
+        [
+         92.774,
+         0.02207
+        ],
+        [
+         93.239,
+         0.02202
+        ],
+        [
+         93.707,
+         0.02195
+        ],
+        [
+         94.176,
+         0.02184
+        ],
+        [
+         94.649,
+         0.0217
+        ],
+        [
+         95.123,
+         0.02151
+        ],
+        [
+         95.6,
+         0.02127
+        ],
+        [
+         96.079,
+         0.02099
+        ],
+        [
+         96.561,
+         0.02065
+        ],
+        [
+         97.045,
+         0.02026
+        ],
+        [
+         97.531,
+         0.01982
+        ],
+        [
+         98.02,
+         0.01935
+        ],
+        [
+         98.511,
+         0.01886
+        ],
+        [
+         99.005,
+         0.01838
+        ],
+        [
+         99.501,
+         0.01795
+        ],
+        [
+         100.0,
+         0.01761
+        ],
+        [
+         100.501,
+         0.01746
+        ],
+        [
+         101.005,
+         0.0174
+        ],
+        [
+         101.511,
+         0.01737
+        ],
+        [
+         102.02,
+         0.01733
+        ],
+        [
+         102.532,
+         0.01727
+        ],
+        [
+         103.045,
+         0.01718
+        ],
+        [
+         103.562,
+         0.01703
+        ],
+        [
+         104.081,
+         0.01684
+        ],
+        [
+         104.603,
+         0.01661
+        ],
+        [
+         105.127,
+         0.01634
+        ],
+        [
+         105.654,
+         0.01603
+        ],
+        [
+         106.184,
+         0.0157
+        ],
+        [
+         106.716,
+         0.01535
+        ],
+        [
+         107.251,
+         0.01498
+        ],
+        [
+         107.788,
+         0.01461
+        ],
+        [
+         108.329,
+         0.01422
+        ],
+        [
+         108.872,
+         0.01384
+        ],
+        [
+         109.417,
+         0.01345
+        ],
+        [
+         109.966,
+         0.01307
+        ],
+        [
+         110.517,
+         0.01269
+        ],
+        [
+         111.071,
+         0.01232
+        ],
+        [
+         111.628,
+         0.01195
+        ],
+        [
+         112.187,
+         0.01159
+        ],
+        [
+         112.75,
+         0.01124
+        ],
+        [
+         113.315,
+         0.0109
+        ],
+        [
+         113.883,
+         0.01056
+        ],
+        [
+         114.454,
+         0.01024
+        ],
+        [
+         115.027,
+         0.00992
+        ],
+        [
+         115.604,
+         0.00961
+        ]
+       ],
+       "label": "Rannacher",
+       "colour": 1
+      },
+      {
+       "id": "exact",
+       "points": [
+        [
+         88.25,
+         0.02176
+        ],
+        [
+         88.692,
+         0.0218
+        ],
+        [
+         89.137,
+         0.02182
+        ],
+        [
+         89.583,
+         0.02183
+        ],
+        [
+         90.032,
+         0.02182
+        ],
+        [
+         90.484,
+         0.0218
+        ],
+        [
+         90.937,
+         0.02176
+        ],
+        [
+         91.393,
+         0.02172
+        ],
+        [
+         91.851,
+         0.02166
+        ],
+        [
+         92.312,
+         0.02158
+        ],
+        [
+         92.774,
+         0.02149
+        ],
+        [
+         93.239,
+         0.02139
+        ],
+        [
+         93.707,
+         0.02128
+        ],
+        [
+         94.176,
+         0.02115
+        ],
+        [
+         94.649,
+         0.02102
+        ],
+        [
+         95.123,
+         0.02087
+        ],
+        [
+         95.6,
+         0.0207
+        ],
+        [
+         96.079,
+         0.02053
+        ],
+        [
+         96.561,
+         0.02034
+        ],
+        [
+         97.045,
+         0.02015
+        ],
+        [
+         97.531,
+         0.01994
+        ],
+        [
+         98.02,
+         0.01972
+        ],
+        [
+         98.511,
+         0.0195
+        ],
+        [
+         99.005,
+         0.01926
+        ],
+        [
+         99.501,
+         0.01902
+        ],
+        [
+         100.0,
+         0.01876
+        ],
+        [
+         100.501,
+         0.0185
+        ],
+        [
+         101.005,
+         0.01823
+        ],
+        [
+         101.511,
+         0.01795
+        ],
+        [
+         102.02,
+         0.01767
+        ],
+        [
+         102.532,
+         0.01738
+        ],
+        [
+         103.045,
+         0.01708
+        ],
+        [
+         103.562,
+         0.01678
+        ],
+        [
+         104.081,
+         0.01647
+        ],
+        [
+         104.603,
+         0.01616
+        ],
+        [
+         105.127,
+         0.01585
+        ],
+        [
+         105.654,
+         0.01553
+        ],
+        [
+         106.184,
+         0.01521
+        ],
+        [
+         106.716,
+         0.01488
+        ],
+        [
+         107.251,
+         0.01456
+        ],
+        [
+         107.788,
+         0.01423
+        ],
+        [
+         108.329,
+         0.0139
+        ],
+        [
+         108.872,
+         0.01357
+        ],
+        [
+         109.417,
+         0.01324
+        ],
+        [
+         109.966,
+         0.01291
+        ],
+        [
+         110.517,
+         0.01258
+        ],
+        [
+         111.071,
+         0.01225
+        ],
+        [
+         111.628,
+         0.01192
+        ],
+        [
+         112.187,
+         0.01159
+        ],
+        [
+         112.75,
+         0.01127
+        ],
+        [
+         113.315,
+         0.01094
+        ],
+        [
+         113.883,
+         0.01062
+        ],
+        [
+         114.454,
+         0.01031
+        ],
+        [
+         115.027,
+         0.00999
+        ],
+        [
+         115.604,
+         0.00968
+        ]
+       ],
+       "label": "exact",
+       "colour": 3,
+       "dashed": true
+      }
+     ],
+     "hlines": [
+      {
+       "id": "zero",
+       "y": 0,
+       "dashed": false,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the most likely cause?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "kink",
+      "text": "The top mode's factor is $-0.9950$ ($\\lambda = 200$), so the kink's high modes flip sign and barely damp",
+      "correct": true
+     },
+     {
+      "id": "formula",
+      "text": "The closed form is wrong: a call's gamma can go negative",
+      "why": "A call's gamma is $\\varphi(d_1)/(S\\sigma\\sqrt{T})$, positive for every $S$. Negative values are a symptom of the scheme."
+     },
+     {
+      "id": "node",
+      "text": "The strike is not on the grid",
+      "why": "With 400 intervals on $[-1, 1]$ the node 200 sits at $x = 0$, so the strike is a node."
+     },
+     {
+      "id": "unstable",
+      "text": "Crank-Nicolson is unstable for large steps",
+      "why": "It is stable for every $\\lambda$, since $|g| < 1$. The trouble is $g$ near $-1$, which damps too slowly."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which factor does the kink's high modes get at $\\lambda = 200$?"
+    },
+    {
+     "rung": "point",
+     "text": "The red curve dips below 0, which a call's gamma never does.",
+     "highlight": [
+      "cn"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$g = \\dfrac{1 - 400s^2}{1 + 400s^2} \\approx -0.9950$ for the top mode."
+    }
+   ],
+   "feedback": {
+    "correct": "Large steps leave the kink's high modes undamped, and Rannacher's start fixes it.",
+    "generic": "Not quite right. Ask what the scheme does to the sharpest part of the start.",
+    "byKey": {
+     "formula": "You blamed the formula. Its gamma is positive for every $S$, so the dip is from the scheme.",
+     "node": "You blamed the grid. The strike is node 200, so interpolation is not involved.",
+     "unstable": "You called it unstable. Crank-Nicolson is stable at any step. The factor is near $-1$, which is slow decay, not growth."
+    }
+   },
+   "explain": {
+    "text": "Rannacher's start takes two implicit half steps, which damp every mode, then Crank-Nicolson. On 400 by 4 it gives £10.4492, and every gamma is positive (red against blue). The jagged price £10.0085 is wrong by 44 pence, and 1,600 intervals with 50 steps are still £0.0308 off.",
+    "canvas": {
+     "hide": [
+      "cn"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Edge case: the strike must be a grid node, so use an even number of intervals on $[-1, 1]$. With 101 intervals the code interpolates linearly at $x = 0$ and gets £10.4694. That is an error of £0.0188, against $-\\text{£}0.0079$ for 100 intervals.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      80,
+      2000
+     ],
+     "y": [
+      20,
+      10000
+     ],
+     "height": 250,
+     "xScale": "log",
+     "yScale": "log",
+     "xLabel": "Intervals",
+     "yLabel": "Error $\\times 10^6$",
+     "functions": [
+      {
+       "id": "err",
+       "points": [
+        [
+         100,
+         7862.2
+        ],
+        [
+         200,
+         1971.3
+        ],
+        [
+         400,
+         496.6
+        ],
+        [
+         800,
+         126.1
+        ],
+        [
+         1600,
+         32.5
+        ]
+       ],
+       "label": "CN error"
+      },
+      {
+       "id": "guide",
+       "expr": "7862*(100/x)^2",
+       "dashed": true,
+       "colour": 3,
+       "label": "slope -2"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "tol",
+       "y": 50,
+       "label": "limit 50 ($5 \\times 10^{-5}$)",
+       "dashed": true,
+       "colour": 2
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many times larger is the 101-interval error than the 100-interval one? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.4,
+    "tol": {
+     "abs": 0.1
+    },
+    "accept": "2.4: $0.0188/0.0079$.",
+    "label": "Ratio",
+    "placeholder": "for example 2",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 1,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "smaller",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the size of the first error by the size of the second."
+    },
+    {
+     "rung": "point",
+     "text": "Both errors lie on the same plot as the nodes.",
+     "highlight": [
+      "err"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.018829/0.007862 = 2.39$."
+    }
+   ],
+   "feedback": {
+    "correct": "The odd grid's error is about 2.4 times larger, and its sign is opposite.",
+    "generic": "Not quite right. Compare sizes: $0.0188$ against $0.0079$.",
+    "byKey": {
+     "same": "Ratio 1 would mean no extra error. The interpolation adds £0.0188 on top of a scheme that already has £0.0079.",
+     "smaller": "0.4 is the ratio the wrong way round. The 101-interval error is the larger one."
+    }
+   },
+   "explain": {
+    "text": "Linear interpolation across a cell adds $\\tfrac18h^2u_{xx}$, which is large near the strike where $u_{xx}$ peaks. Even with 201 intervals the error is £0.0048. Put the strike on a node."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write the pricer. `thomas(lo, di, up, rhs)` solves a tridiagonal system and is provided, with `heat_params` and `right_edge` (the exact $u$ at $x = L$). The left edge is 0. Each Crank-Nicolson step solves one tridiagonal system.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      80,
+      2000
+     ],
+     "y": [
+      20,
+      10000
+     ],
+     "height": 250,
+     "xScale": "log",
+     "yScale": "log",
+     "xLabel": "Intervals",
+     "yLabel": "Error $\\times 10^6$",
+     "functions": [
+      {
+       "id": "err",
+       "points": [
+        [
+         100,
+         7862.2
+        ],
+        [
+         200,
+         1971.3
+        ],
+        [
+         400,
+         496.6
+        ],
+        [
+         800,
+         126.1
+        ],
+        [
+         1600,
+         32.5
+        ]
+       ],
+       "label": "CN error"
+      },
+      {
+       "id": "guide",
+       "expr": "7862*(100/x)^2",
+       "dashed": true,
+       "colour": 3,
+       "label": "slope -2"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "tol",
+       "y": 50,
+       "label": "limit 50 ($5 \\times 10^{-5}$)",
+       "dashed": true,
+       "colour": 2
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `cn_heat_price`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nimport numpy as np\n\ndef heat_params(r, sigma):\n    k = 2 * r / sigma ** 2\n    return k, -(k - 1) / 2, -(k + 1) ** 2 / 4\n\ndef right_edge(k, L, tau):\n    \"\"\"u at x = L: the exact large-S value.\"\"\"\n    return math.exp((k + 1) * L / 2 + (k + 1) ** 2 * tau / 4) - math.exp((k - 1) * L / 2 + (k - 1) ** 2 * tau / 4)\n\ndef thomas(lo, di, up, rhs):\n    \"\"\"Solve a tridiagonal system. lo[0] and up[-1] are unused.\"\"\"\n    lo, di, up, rhs = [list(map(float, v)) for v in (lo, di, up, rhs)]\n    n = len(rhs)\n    cp = [0.0] * n\n    dp = [0.0] * n\n    cp[0] = up[0] / di[0]\n    dp[0] = rhs[0] / di[0]\n    for i in range(1, n):\n        m = di[i] - lo[i] * cp[i - 1]\n        cp[i] = up[i] / m\n        dp[i] = (rhs[i] - lo[i] * dp[i - 1]) / m\n    out = [0.0] * n\n    out[-1] = dp[-1]\n    for i in range(n - 2, -1, -1):\n        out[i] = dp[i] - cp[i] * out[i + 1]\n    return np.array(out)\n",
+    "starter": "import math\nimport numpy as np\n\ndef cn_heat_price(S, K, r, sigma, T, nx, nt, L=1.0, rannacher=False):\n    \"\"\"Call by Crank-Nicolson on u_tau = u_xx over [-L, L].\n    Interpolate u linearly at x0 = ln(S/K). rannacher=True: two\n    implicit half steps first, then nt - 1 Crank-Nicolson steps.\"\"\"\n    k, alpha, beta = heat_params(r, sigma)\n    a1, a2 = (k + 1) / 2, (k - 1) / 2\n    tau_end = 0.5 * sigma ** 2 * T\n    x = np.linspace(-L, L, nx + 1)\n    h = x[1] - x[0]\n    dt = tau_end / nt\n    u = ...   # the start: max(exp(a1 x) - exp(a2 x), 0)\n\n    def step(u, tau, dt, theta):\n        \"\"\"theta = 0.5 is Crank-Nicolson, theta = 1 is implicit.\"\"\"\n        lam = dt / h ** 2\n        # right side: explicit part plus the new right edge, then thomas(lo, di, up, rhs)\n        ...\n\n    ...\n",
+    "solution": "def cn_heat_price(S, K, r, sigma, T, nx, nt, L=1.0, rannacher=False):\n    k, alpha, beta = heat_params(r, sigma)\n    a1, a2 = (k + 1) / 2, (k - 1) / 2\n    tau_end = 0.5 * sigma ** 2 * T\n    x = np.linspace(-L, L, nx + 1)\n    h = x[1] - x[0]\n    dt = tau_end / nt\n    u = np.maximum(np.exp(a1 * x) - np.exp(a2 * x), 0.0)\n\n    def step(u, tau, dt, theta):\n        lam = dt / h ** 2\n        inner = u[1:-1]\n        rhs = inner + (1 - theta) * lam * (u[:-2] - 2 * inner + u[2:])\n        right = right_edge(k, L, tau + dt)\n        rhs[-1] += theta * lam * right\n        n = nx - 1\n        lo = np.full(n, -theta * lam)\n        di = np.full(n, 1 + 2 * theta * lam)\n        up = np.full(n, -theta * lam)\n        new = u.copy()\n        new[1:-1] = thomas(lo, di, up, rhs)\n        new[0], new[-1] = 0.0, right\n        return new\n\n    tau = 0.0\n    n_cn = nt\n    if rannacher:\n        for _ in range(2):\n            u = step(u, tau, dt / 2, 1.0)\n            tau += dt / 2\n        n_cn = nt - 1\n    for _ in range(n_cn):\n        u = step(u, tau, dt, 0.5)\n        tau += dt\n    x0 = math.log(S / K)\n    return K * math.exp(alpha * x0 + beta * tau_end) * float(np.interp(x0, x, u))\n",
+    "examples": [
+     {
+      "call": "cn_heat_price(100, 100, 0.05, 0.2, 1, 200, 40)",
+      "expect": "10.448612308",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "cn_heat_price(100, 100, 0.05, 0.2, 1, 200, 40)",
+      "expect": "10.448612308",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "cn_heat_price(100, 100, 0.05, 0.2, 1, 400, 80)",
+      "expect": "10.450086923",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "cn_heat_price(110, 100, 0.05, 0.2, 1, 400, 80)",
+      "expect": "17.662832764",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "cn_heat_price(100, 100, 0.05, 0.2, 1, 400, 4)",
+      "expect": "10.008549",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "call": "cn_heat_price(100, 100, 0.05, 0.2, 1, 400, 4, rannacher=True)",
+      "expect": "10.449247",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "call": "cn_heat_price(100, 100, 0.05, 0.2, 1, 1600, 320)",
+      "expect": "10.450551057",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      },
+      "budget": 20000
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. NumPy loads on the first run. `heat_params`, `right_edge` and `thomas` are provided. The largest test uses 1,600 intervals and 320 steps and should take a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The right side is $u_i + \\tfrac\\lambda2\\delta^2u_i$ for Crank-Nicolson, and the matrix has $1 + \\lambda$ on the diagonal and $-\\tfrac\\lambda2$ beside it."
+    },
+    {
+     "rung": "point",
+     "text": "In general: $(1-\\theta)\\lambda\\,\\delta^2u$ on the right and $\\theta\\lambda$ in the matrix. Add $\\theta\\lambda\\times$ new right edge to the last entry.",
+     "highlight": [
+      "err"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Rannacher: two steps with $\\theta = 1$ and $\\Delta\\tau/2$, then $n_t - 1$ steps with $\\theta = \\tfrac12$. Return $Ke^{\\alpha x_0 + \\beta\\tau}u(x_0)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Your pricer matches 200 by 40, 400 by 80, 1,600 by 320, and the Rannacher start.",
+    "generic": "Not quite right. Check the right edge in the last equation and the two half steps."
+   },
+   "explain": {
+    "text": "The check at 400 by 4 reproduces the colleague's £10.0085, and Rannacher gives £10.4492. A dense solver and the Thomas algorithm agree at 400 by 80 to $10^{-12}$. An independent check on an $S$ grid to £300 (600 intervals, 200 steps) gives £10.449972."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Three more tools. `richardson` removes the leading error. `price_to_4dp` returns a price within $5 \\times 10^{-5}$ of the formula, and the grid it used. Use Richardson or a fine grid, as you choose. `explicit_heat_price` refuses a step that breaks $\\lambda \\le \\tfrac12$. `cn_heat_price` and `bs_call` are loaded.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      80,
+      2000
+     ],
+     "y": [
+      20,
+      10000
+     ],
+     "height": 250,
+     "xScale": "log",
+     "yScale": "log",
+     "xLabel": "Intervals",
+     "yLabel": "Error $\\times 10^6$",
+     "functions": [
+      {
+       "id": "err",
+       "points": [
+        [
+         100,
+         7862.2
+        ],
+        [
+         200,
+         1971.3
+        ],
+        [
+         400,
+         496.6
+        ],
+        [
+         800,
+         126.1
+        ],
+        [
+         1600,
+         32.5
+        ]
+       ],
+       "label": "CN error"
+      },
+      {
+       "id": "guide",
+       "expr": "7862*(100/x)^2",
+       "dashed": true,
+       "colour": 3,
+       "label": "slope -2"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "tol",
+       "y": 50,
+       "label": "limit 50 ($5 \\times 10^{-5}$)",
+       "dashed": true,
+       "colour": 2
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nimport numpy as np\n\ndef heat_params(r, sigma):\n    k = 2 * r / sigma ** 2\n    return k, -(k - 1) / 2, -(k + 1) ** 2 / 4\n\ndef right_edge(k, L, tau):\n    \"\"\"u at x = L: the exact large-S value.\"\"\"\n    return math.exp((k + 1) * L / 2 + (k + 1) ** 2 * tau / 4) - math.exp((k - 1) * L / 2 + (k - 1) ** 2 * tau / 4)\n\ndef thomas(lo, di, up, rhs):\n    \"\"\"Solve a tridiagonal system. lo[0] and up[-1] are unused.\"\"\"\n    lo, di, up, rhs = [list(map(float, v)) for v in (lo, di, up, rhs)]\n    n = len(rhs)\n    cp = [0.0] * n\n    dp = [0.0] * n\n    cp[0] = up[0] / di[0]\n    dp[0] = rhs[0] / di[0]\n    for i in range(1, n):\n        m = di[i] - lo[i] * cp[i - 1]\n        cp[i] = up[i] / m\n        dp[i] = (rhs[i] - lo[i] * dp[i - 1]) / m\n    out = [0.0] * n\n    out[-1] = dp[-1]\n    for i in range(n - 2, -1, -1):\n        out[i] = dp[i] - cp[i] * out[i + 1]\n    return np.array(out)\n\ndef cn_heat_price(S, K, r, sigma, T, nx, nt, L=1.0, rannacher=False):\n    k, alpha, beta = heat_params(r, sigma)\n    a1, a2 = (k + 1) / 2, (k - 1) / 2\n    tau_end = 0.5 * sigma ** 2 * T\n    x = np.linspace(-L, L, nx + 1)\n    h = x[1] - x[0]\n    dt = tau_end / nt\n    u = np.maximum(np.exp(a1 * x) - np.exp(a2 * x), 0.0)\n\n    def step(u, tau, dt, theta):\n        lam = dt / h ** 2\n        inner = u[1:-1]\n        rhs = inner + (1 - theta) * lam * (u[:-2] - 2 * inner + u[2:])\n        right = right_edge(k, L, tau + dt)\n        rhs[-1] += theta * lam * right\n        n = nx - 1\n        lo = np.full(n, -theta * lam)\n        di = np.full(n, 1 + 2 * theta * lam)\n        up = np.full(n, -theta * lam)\n        new = u.copy()\n        new[1:-1] = thomas(lo, di, up, rhs)\n        new[0], new[-1] = 0.0, right\n        return new\n\n    tau = 0.0\n    n_cn = nt\n    if rannacher:\n        for _ in range(2):\n            u = step(u, tau, dt / 2, 1.0)\n            tau += dt / 2\n        n_cn = nt - 1\n    for _ in range(n_cn):\n        u = step(u, tau, dt, 0.5)\n        tau += dt\n    x0 = math.log(S / K)\n    return K * math.exp(alpha * x0 + beta * tau_end) * float(np.interp(x0, x, u))\n\ndef bs_call(S, K, r, sigma, T):\n    Phi = lambda z: 0.5 * (1 + math.erf(z / math.sqrt(2)))\n    d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))\n    return S * Phi(d1) - K * math.exp(-r * T) * Phi(d1 - sigma * math.sqrt(T))\n",
+    "starter": "def richardson(v_coarse, v_fine, p=2):\n    \"\"\"Remove the leading h**p error term from the finer result.\"\"\"\n    ...\n\ndef price_to_4dp(S, K, r, sigma, T):\n    \"\"\"S equals K, so the strike is a node. Return (price, nx used),\n    within 5e-5 of the formula, from cn_heat_price and richardson.\"\"\"\n    ...\n\ndef explicit_heat_price(S, K, r, sigma, T, nx, nt, L=1.0):\n    \"\"\"The explicit scheme. Raise ValueError when lambda > 1/2.\"\"\"\n    ...\n",
+    "solution": "def richardson(v_coarse, v_fine, p=2):\n    return v_fine + (v_fine - v_coarse) / (2 ** p - 1)\n\ndef price_to_4dp(S, K, r, sigma, T):\n    p1 = cn_heat_price(S, K, r, sigma, T, 200, 40)\n    p2 = cn_heat_price(S, K, r, sigma, T, 400, 80)\n    return richardson(p1, p2), 400\n\ndef explicit_heat_price(S, K, r, sigma, T, nx, nt, L=1.0):\n    k, alpha, beta = heat_params(r, sigma)\n    a1, a2 = (k + 1) / 2, (k - 1) / 2\n    tau_end = 0.5 * sigma ** 2 * T\n    x = np.linspace(-L, L, nx + 1)\n    h = x[1] - x[0]\n    dt = tau_end / nt\n    lam = dt / h ** 2\n    if lam > 0.5 + 1e-12:\n        raise ValueError(\"lambda %.4f is above 1/2\" % lam)\n    u = np.maximum(np.exp(a1 * x) - np.exp(a2 * x), 0.0)\n    tau = 0.0\n    for _ in range(nt):\n        tau += dt\n        new = u.copy()\n        new[1:-1] = u[1:-1] + lam * (u[:-2] - 2 * u[1:-1] + u[2:])\n        new[0], new[-1] = 0.0, right_edge(k, L, tau)\n        u = new\n    x0 = math.log(S / K)\n    return K * math.exp(alpha * x0 + beta * tau_end) * float(np.interp(x0, x, u))\n",
+    "examples": [
+     {
+      "call": "richardson(1.0, 1.5, p=1)",
+      "expect": "2.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "richardson(10.442721366623, 10.448612308175)",
+      "expect": "10.450575955359",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "richardson(1.0, 1.5, p=1)",
+      "expect": "2.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "richardson(0.0, 7.0, p=3)",
+      "expect": "8.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "abs(price_to_4dp(100, 100, 0.03, 0.25, 0.5)[0] - bs_call(100, 100, 0.03, 0.25, 0.5)) < 5e-5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(price_to_4dp(120, 120, 0.04, 0.2, 0.75)[0] - bs_call(120, 120, 0.04, 0.2, 0.75)) < 5e-5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "price_to_4dp(100, 100, 0.05, 0.2, 1)[1] % 2 == 0",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "explicit_heat_price(100, 100, 0.05, 0.2, 1, 100, 110)",
+      "expect": "10.448014224",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "explicit_heat_price(100, 100, 0.05, 0.2, 1, 100, 100)",
+      "expect": "10.429838421",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "explicit_heat_price(100, 100, 0.05, 0.2, 1, 100, 96)",
+      "compare": "raises",
+      "expect": "ValueError"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. `cn_heat_price`, `bs_call` and `heat_params` are provided. The price test allows $5 \\times 10^{-5}$ against the formula."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`richardson` is $v_{\\text{fine}} + (v_{\\text{fine}} - v_{\\text{coarse}})/(2^p - 1)$."
+    },
+    {
+     "rung": "point",
+     "text": "Run `cn_heat_price` on 200 by 40 and 400 by 80, then extrapolate.",
+     "highlight": [
+      "err"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "In the explicit scheme compute `lam = dt / h**2`, raise `ValueError` if it is above 0.5, then step the interior values."
+    }
+   ],
+   "feedback": {
+    "correct": "Richardson gives a price within $5 \\times 10^{-5}$ on two cheap grids, and the explicit scheme refuses 96 steps.",
+    "generic": "Not quite right. Check the divisor $2^p - 1$ and the test on $\\lambda$."
+   },
+   "explain": {
+    "text": "The Richardson price on 200 and 400 intervals has errors of order $10^{-6}$ at the strike node. If $S \\ne K$, interpolation adds an $h^2$ term with another constant, and extrapolation works less well. The tests use $S = K$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A validation note must say a finite-difference pricer is fit to price a barrier or an American option. Those have no closed form. Select all that the note must state.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      80,
+      2000
+     ],
+     "y": [
+      20,
+      10000
+     ],
+     "height": 250,
+     "xScale": "log",
+     "yScale": "log",
+     "xLabel": "Intervals",
+     "yLabel": "Error $\\times 10^6$",
+     "functions": [
+      {
+       "id": "err",
+       "points": [
+        [
+         100,
+         7862.2
+        ],
+        [
+         200,
+         1971.3
+        ],
+        [
+         400,
+         496.6
+        ],
+        [
+         800,
+         126.1
+        ],
+        [
+         1600,
+         32.5
+        ]
+       ],
+       "label": "CN error"
+      },
+      {
+       "id": "guide",
+       "expr": "7862*(100/x)^2",
+       "dashed": true,
+       "colour": 3,
+       "label": "slope -2"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "tol",
+       "y": 50,
+       "label": "limit 50 ($5 \\times 10^{-5}$)",
+       "dashed": true,
+       "colour": 2
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tol",
+      "text": "The tolerance, such as $5 \\times 10^{-5}$ against the closed form",
+      "correct": true
+     },
+     {
+      "id": "seq",
+      "text": "The refinement sequence and the observed order of convergence",
+      "correct": true
+     },
+     {
+      "id": "bnd",
+      "text": "The far boundary and the start of the time stepping (Rannacher or not)",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "The price on the finest grid only",
+      "why": "One grid hides the order. Reviewers need the sequence to see that errors fall as expected."
+     },
+     {
+      "id": "lang",
+      "text": "The language the pricer is written in",
+      "why": "It has no bearing on whether the numbers are right."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Think of what you did to reach four decimals."
+    },
+    {
+     "rung": "point",
+     "text": "The plot is the evidence that the order is two.",
+     "highlight": [
+      "err"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "State the tolerance, the sequence, the boundary and the time-stepping start."
+    }
+   ],
+   "feedback": {
+    "correct": "The note names the tolerance, the sequence with its order, and the boundary and start.",
+    "generic": "Not quite right. Select what a reader needs to repeat your check."
+   },
+   "explain": {
+    "text": "The pricer is trusted because it matched a closed form where one exists. The note names the tolerance, the refinement sequence, the boundary and the time-stepping start. A single fine grid does not show that."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The explicit scheme needs $\\lambda = \\Delta\\tau/\\Delta x^2 \\le \\tfrac12$. At 96 steps the top mode's factor is $-1.0828$ and the price is £$-31.99$.",
+   "Crank-Nicolson has $g = \\frac{1 - 2\\lambda s^2}{1 + 2\\lambda s^2}$, stable at any step but near $-1$ for large $\\lambda$. At a kink use Rannacher's start: two implicit half steps first.",
+   "Four decimals means $|V_{\\text{FD}} - V| < 5 \\times 10^{-5}$ over a halving sequence. Errors fall by 4 per halving, and Richardson on 100 and 200 intervals gives £10.4505760."
+  ],
+  "formula": {
+   "name": "Richardson extrapolation",
+   "tex": "V \\approx V_h + \\dfrac{V_h - V_{2h}}{2^p - 1}",
+   "note": "With second order, $p = 2$. Put the strike on a node."
+  },
+  "trap": "A jagged gamma and a price of £10.0085 come from the scheme at 400 by 4, not from the formula."
+ },
+ "quiz": [
+  {
+   "id": "q-order",
+   "difficulty": 2,
+   "prose": "Crank-Nicolson errors on 400 and 800 intervals are $496.6 \\times 10^{-6}$ and $126.1 \\times 10^{-6}$.",
+   "question": "The error falls by about $2^p$ per halving. What is $p$ to the nearest whole number?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.1
+    },
+    "accept": "2: the ratio is 3.94, close to $2^2 = 4$.",
+    "label": "Order",
+    "placeholder": "for example 1",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The ratio is $496.6/126.1 = 3.94 \\approx 2^2$.",
+    "generic": "Not quite right. Divide the two errors and compare with 2, 4 and 8.",
+    "byKey": {
+     "one": "Order 1 would halve the error. It fell by about 4, so $p = 2$."
+    }
+   },
+   "explain": {
+    "text": "The ratio $3.94$ is close to 4, so $p = 2$. Over all four halvings the ratios are 3.99, 3.97, 3.94 and 3.88."
+   }
+  },
+  {
+   "id": "q-steps",
+   "difficulty": 3,
+   "prose": "The explicit scheme on $[-1, 1]$ with 200 intervals has $\\Delta x = 0.01$, and runs to $\\tau = 0.02$.",
+   "question": "What is the fewest steps that keeps $\\lambda \\le \\tfrac12$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 400,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "400: $\\Delta\\tau \\le 0.01^2/2 = 5 \\times 10^{-5}$, and $0.02/(5 \\times 10^{-5}) = 400$.",
+    "label": "Steps",
+    "placeholder": "for example 100",
+    "wrong": [
+     {
+      "id": "linear",
+      "value": 200,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "hundred",
+      "value": 100,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\Delta\\tau \\le \\Delta x^2/2 = 5 \\times 10^{-5}$, so at least 400 steps.",
+    "generic": "Not quite right. The limit is $\\Delta\\tau \\le \\Delta x^2/2$.",
+    "byKey": {
+     "linear": "200 scales the 100-interval count 100 by 2. Halving $\\Delta x$ needs four times as many steps, since $\\Delta x^2$ falls by 4.",
+     "hundred": "100 steps keep $\\lambda$ at 0.5 for 100 intervals, not 200."
+    }
+   },
+   "explain": {
+    "text": "On 100 intervals the limit is 100 steps. Halving $\\Delta x$ quarters $\\Delta x^2$, so 200 intervals need 400 steps. That cost is why implicit schemes win."
+   }
+  },
+  {
+   "id": "q-boundary",
+   "difficulty": 3,
+   "prose": "On 200 intervals of $[-1, 1]$ with 40 steps, Crank-Nicolson gives £10.4486123. Shrinking the grid to $[-0.5, 0.5]$ at the same spacing and step gives £10.4486091.",
+   "question": "By how much does the price move, times $10^6$? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -3.2,
+    "tol": {
+     "abs": 0.15
+    },
+    "accept": "$-3.2$: $10.448609113 - 10.448612308 = -3.2 \\times 10^{-6}$.",
+    "label": "Shift $\\times 10^6$",
+    "placeholder": "for example -1",
+    "wrong": [
+     {
+      "id": "abs",
+      "value": 3.2,
+      "tol": {
+       "abs": 0.15
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$10.4486091 - 10.4486123 = -0.0000032$, which is $-3.2$ in units of $10^{-6}$.",
+    "generic": "Not quite right. Subtract the wider-grid price from the narrower one.",
+    "byKey": {
+     "abs": "3.2 has lost the sign. The narrow grid prices lower, so the shift is negative."
+    }
+   },
+   "explain": {
+    "text": "Widening to $[-1.5, 1.5]$ at the same spacing changes the price by $4 \\times 10^{-11}$, and narrowing to $\\pm0.5$ by $-3.2 \\times 10^{-6}$. Both are far below $5 \\times 10^{-5}$, so the far boundary does not limit four-decimal accuracy here."
+   }
+  },
+  {
+   "id": "q-rannacher",
+   "difficulty": 3,
+   "prose": "A Crank-Nicolson pricer with large steps shows jagged gamma at the strike.",
+   "question": "What does Rannacher's start do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "implicit",
+      "text": "It takes two implicit half steps, which damp the kink's high modes, then continues with Crank-Nicolson",
+      "correct": true
+     },
+     {
+      "id": "explicit",
+      "text": "It takes explicit half steps first, to keep the start accurate",
+      "why": "Explicit steps at large $\\lambda$ are unstable. The start needs the strongest damping, which is implicit."
+     },
+     {
+      "id": "smooth",
+      "text": "It smooths the payoff with a normal bump before pricing",
+      "why": "The payoff is left as it is. Only the first steps change, so that the kink is damped."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two implicit half steps damp the high modes of the kink, then Crank-Nicolson takes over.",
+    "generic": "Not quite right. Ask which steps damp high modes fully."
+   },
+   "explain": {
+    "text": "A fully implicit step has factor $1/(1 + 4\\lambda s^2)$, which is near 0 for large $\\lambda$, so high modes vanish. On 400 by 4 this turns £10.0085 into £10.4492."
+   }
+  }
+ ]
+}

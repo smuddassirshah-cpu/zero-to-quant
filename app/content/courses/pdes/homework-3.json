@@ -1,0 +1,415 @@
+{
+ "id": "homework-3",
+ "course": "pdes",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-put-4dp",
+   "difficulty": 5,
+   "skills": [
+    "pe-fd",
+    "pe-bs"
+   ],
+   "tags": [
+    "fd-put"
+   ],
+   "prose": "The call code of lesson 12 gets a mirror image for the put. In heat variables the put's start is $\\max(e^{a_2y} - e^{a_1y}, 0)$, with $a_1 = \\tfrac{k+1}{2}$ and $a_2 = \\tfrac{k-1}{2}$. At $x = -L$ the value is the exact small-$S$ one, and at $x = L$ it is 0. `cn_solve` takes the edge functions.",
+   "question": "Write `price_put_4dp`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nimport numpy as np\n\ndef heat_params(r, sigma):\n    k = 2 * r / sigma ** 2\n    return k, -(k - 1) / 2, -(k + 1) ** 2 / 4\n\ndef thomas(lo, di, up, rhs):\n    lo, di, up, rhs = [list(map(float, v)) for v in (lo, di, up, rhs)]\n    n = len(rhs)\n    cp = [0.0] * n\n    dp = [0.0] * n\n    cp[0] = up[0] / di[0]\n    dp[0] = rhs[0] / di[0]\n    for i in range(1, n):\n        m = di[i] - lo[i] * cp[i - 1]\n        cp[i] = up[i] / m\n        dp[i] = (rhs[i] - lo[i] * dp[i - 1]) / m\n    out = [0.0] * n\n    out[-1] = dp[-1]\n    for i in range(n - 2, -1, -1):\n        out[i] = dp[i] - cp[i] * out[i + 1]\n    return np.array(out)\n\ndef cn_solve(u, tau_end, nt, h, left, right):\n    \"\"\"Crank-Nicolson steps for u_tau = u_xx. left(tau) and right(tau) give the edge values.\"\"\"\n    n = len(u) - 2\n    dt = tau_end / nt\n    lam = dt / h ** 2\n    tau = 0.0\n    u = u.copy()\n    for _ in range(nt):\n        rhs = u[1:-1] + 0.5 * lam * (u[:-2] - 2 * u[1:-1] + u[2:])\n        l1, r1 = left(tau + dt), right(tau + dt)\n        rhs[0] += 0.5 * lam * l1\n        rhs[-1] += 0.5 * lam * r1\n        lo = np.full(n, -0.5 * lam)\n        di = np.full(n, 1 + lam)\n        up = np.full(n, -0.5 * lam)\n        u[1:-1] = thomas(lo, di, up, rhs)\n        u[0], u[-1] = l1, r1\n        tau += dt\n    return u\n\ndef bs_put(S, K, r, sigma, T):\n    Phi = lambda z: 0.5 * (1 + math.erf(z / math.sqrt(2)))\n    d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))\n    d2 = d1 - sigma * math.sqrt(T)\n    return K * math.exp(-r * T) * Phi(-d2) - S * Phi(-d1)\n",
+    "starter": "import math\nimport numpy as np\n\ndef price_put_4dp(S, K, r, sigma, T, L=1.0):\n    \"\"\"Put by Crank-Nicolson in heat variables, S equal to K.\n    Solve on 200 and 400 intervals (nt = nx // 5), extrapolate,\n    and return (price, nx used).\"\"\"\n    k, alpha, beta = heat_params(r, sigma)\n    a1, a2 = (k + 1) / 2, (k - 1) / 2\n    tau_end = 0.5 * sigma ** 2 * T\n\n    def solve(nx):\n        x = np.linspace(-L, L, nx + 1)\n        u0 = ...                      # the put's start: max(exp(a2 x) - exp(a1 x), 0)\n        left = lambda tau: ...        # u at x = -L: exp(a2 (-L) + a2^2 tau) - exp(a1 (-L) + a1^2 tau)\n        right = lambda tau: 0.0       # a put is worthless for large S\n        u = cn_solve(u0, tau_end, nx // 5, x[1] - x[0], left, right)\n        return ...                    # K exp(beta tau_end) u at the middle node\n\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef price_put_4dp(S, K, r, sigma, T, L=1.0):\n    k, alpha, beta = heat_params(r, sigma)\n    a1, a2 = (k + 1) / 2, (k - 1) / 2\n    tau_end = 0.5 * sigma ** 2 * T\n\n    def solve(nx):\n        x = np.linspace(-L, L, nx + 1)\n        u0 = np.maximum(np.exp(a2 * x) - np.exp(a1 * x), 0.0)\n        left = lambda tau: math.exp(-a2 * L + a2 ** 2 * tau) - math.exp(-a1 * L + a1 ** 2 * tau)\n        right = lambda tau: 0.0\n        u = cn_solve(u0, tau_end, nx // 5, x[1] - x[0], left, right)\n        return K * math.exp(beta * tau_end) * float(u[nx // 2])\n\n    coarse, fine = solve(200), solve(400)\n    return fine + (fine - coarse) / 3, 400\n",
+    "examples": [
+     {
+      "call": "bs_put(100, 100, 0.05, 0.2, 1)",
+      "expect": "5.573526022",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "abs(price_put_4dp(100, 100, 0.05, 0.2, 1)[0] - 5.5735) < 5e-5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(price_put_4dp(100, 100, 0.05, 0.2, 1)[0] - bs_put(100, 100, 0.05, 0.2, 1)) < 5e-5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(price_put_4dp(120, 120, 0.04, 0.2, 0.75)[0] - bs_put(120, 120, 0.04, 0.2, 0.75)) < 5e-5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "price_put_4dp(100, 100, 0.05, 0.2, 1)[1] % 2 == 0",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "price_put_4dp(100, 100, 0.05, 0.2, 1)[0] > 5.5",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. NumPy loads on the first run. `heat_params`, `cn_solve` and `bs_put` are provided. The price must be within $5 \\times 10^{-5}$ of the formula, and the grid must be even."
+   },
+   "feedback": {
+    "correct": "The put matches the formula to $5 \\times 10^{-5}$ for two options, with the strike on a node.",
+    "generic": "Not quite right. Check the put's start, the left edge and the Richardson step."
+   },
+   "explain": {
+    "text": "For $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$ the Crank-Nicolson puts are £5.5714 (200 intervals) and £5.5730 (400), and Richardson gives £5.5735209 against £5.5735260. A second option gives £6.5076263 against £6.5076262."
+   }
+  },
+  {
+   "id": "h-chain",
+   "difficulty": 4,
+   "skills": [
+    "pe-bs"
+   ],
+   "tags": [
+    "bs-derivation"
+   ],
+   "prose": "Take the equation $V_t + \\tfrac12\\sigma^2S^2V_{SS} + rSV_S - rV = 0$ to $u_\\tau = u_{xx}$. Each line carries its reason. Leave out the two flawed lines.",
+   "question": "Put the lines of the full change of variables in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "c1",
+      "text": "Put $\\tau = \\tfrac12\\sigma^2(T - t)$, so $V_t = -\\tfrac12\\sigma^2V_\\tau$ and expiry becomes the start."
+     },
+     {
+      "id": "c2",
+      "text": "Put $x = \\ln(S/K)$ and $V = Kv$. The chain rule gives $SV_S = Kv_x$ and $S^2V_{SS} = K(v_{xx} - v_x)$."
+     },
+     {
+      "id": "c3",
+      "text": "With $k = 2r/\\sigma^2$: $v_\\tau = v_{xx} + (k - 1)v_x - kv$."
+     },
+     {
+      "id": "c4",
+      "text": "Put $v = e^{\\alpha x + \\beta\\tau}u$. The $u_x$ term has coefficient $2\\alpha + k - 1$, so take $\\alpha = -\\tfrac{k-1}{2}$."
+     },
+     {
+      "id": "c5",
+      "text": "The $u$ term has coefficient $\\alpha^2 + (k-1)\\alpha - k - \\beta$, so take $\\beta = -\\tfrac{(k+1)^2}{4}$. Then $u_\\tau = u_{xx}$."
+     },
+     {
+      "id": "d1",
+      "text": "Put $\\tau = \\tfrac12\\sigma^2t$, which also gives a diffusion term.",
+      "why": "With $t$ in place of $T - t$ the diffusion term has the wrong sign, which is the ill-posed backward heat equation."
+     },
+     {
+      "id": "d2",
+      "text": "Use $S^2V_{SS} = Kv_{xx}$, because $S$ and $x$ are related by a logarithm.",
+      "why": "The factor $\\tfrac1S$ depends on $S$, so the product rule adds the term $-v_x$."
+     }
+    ],
+    "answer": [
+     "c1",
+     "c2",
+     "c3",
+     "c4",
+     "c5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Time, then log price, then the exponential factor: each step removes one obstacle.",
+    "generic": "Not quite right. Each line should follow from the line before it."
+   },
+   "explain": {
+    "text": "Each change removes one obstacle: the direction of time, the $S$ in the coefficients, then the $v_x$ and $v$ terms. For our option $k = 2.5$, $\\alpha = -0.75$ and $\\beta = -3.0625$."
+   }
+  },
+  {
+   "id": "h-r0-sigma",
+   "difficulty": 3,
+   "skills": [
+    "pe-bs"
+   ],
+   "tags": [
+    "total-variance"
+   ],
+   "prose": "With $r = 0$ and $S = K$, an option with $\\sigma = 20\\%$ and $T = 1$ is worth £7.9656. Another option on the same share has $T = 2.25$ years.",
+   "question": "What volatility, in %, gives it the same price? Give 2 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 13.33,
+    "tol": {
+     "abs": 0.02
+    },
+    "accept": "13.33%: $\\sigma^2 \\times 2.25 = 0.04$, so $\\sigma = 0.1333$.",
+    "label": "Volatility (%)",
+    "placeholder": "for example 15",
+    "wrong": [
+     {
+      "id": "inverse",
+      "value": 30,
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "id": "time",
+      "value": 8.89,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sigma = \\sqrt{0.04/2.25} = 0.1333$.",
+    "generic": "Not quite right. Keep the total variance $\\sigma^2T = 0.04$.",
+    "byKey": {
+     "inverse": "30% multiplies by 2.25. Volatility enters through $\\sigma^2T$, so it divides by $\\sqrt{2.25} = 1.5$.",
+     "time": "8.89% divides by 2.25. You need $\\sigma^2$ divided by 2.25, so $\\sigma$ divided by 1.5."
+    }
+   },
+   "explain": {
+    "text": "With $r = 0$ the price depends on $\\sigma^2T$ and $x$ alone. $0.04/2.25 = 0.01778$, so $\\sigma = 13.33\\%$."
+   }
+  },
+  {
+   "id": "h-drift-sim",
+   "difficulty": 3,
+   "skills": [
+    "pe-fk"
+   ],
+   "tags": [
+    "feynman-kac-drift"
+   ],
+   "prose": "Four simulations price our call (£10.4506) from 100,000 seeded paths. Each draws $S_T = 100e^{(m - 0.02) + 0.2z}$ and averages the payoff $(S_T - 100)^+$ times a factor.",
+   "question": "Select all that apply: which converge to £10.4506?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$m = 5\\%$, factor $e^{-0.05}$",
+      "correct": true
+     },
+     {
+      "id": "anti",
+      "text": "$m = 5\\%$, factor $e^{-0.05}$, with antithetic pairs $\\pm z$",
+      "correct": true
+     },
+     {
+      "id": "real",
+      "text": "$m = 12\\%$, factor $e^{-0.05}$",
+      "why": "The real drift lifts the expected payoff: £15.5261, not £10.4506."
+     },
+     {
+      "id": "nodisc",
+      "text": "$m = 5\\%$, no factor",
+      "why": "Without the discount the limit is $10.4506e^{0.05} = 10.9864$."
+     },
+     {
+      "id": "real-disc",
+      "text": "$m = 12\\%$, factor $e^{-0.12}$",
+      "why": "Discounting at the real drift does not remove it from the payoff. The limit is about £14.48, not £10.4506."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Only drift $r$ with discount $e^{-rT}$ works, with or without antithetic pairs.",
+    "generic": "Not quite right. Both the drift and the discount must be $r$."
+   },
+   "explain": {
+    "text": "The antithetic pairs change the variance only, since $z$ and $-z$ have the same law. The real drift gives £15.5261, no discount £10.9864, and $m = 12\\%$ with $e^{-0.12}$ gives £14.48."
+   }
+  },
+  {
+   "id": "h-vasicek",
+   "difficulty": 4,
+   "skills": [
+    "pe-fk"
+   ],
+   "tags": [
+    "vasicek-bond"
+   ],
+   "prose": "A zero-coupon bond pays £1 at $T = 3$. The short rate follows $dr = \\kappa(\\theta - r)\\,dt + \\sigma\\,dW$ with $\\kappa = 0.8$, $\\theta = 5\\%$, $r_0 = 3\\%$ and $\\sigma = 1.5\\%$. With $B = \\dfrac{1 - e^{-\\kappa T}}{\\kappa}$ and $A = \\left(\\theta - \\dfrac{\\sigma^2}{2\\kappa^2}\\right)(B - T) - \\dfrac{\\sigma^2B^2}{4\\kappa}$, the price is $e^{A - Br_0}$.",
+   "question": "What is the bond price? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8807,
+    "tol": {
+     "abs": 6e-05
+    },
+    "accept": "0.8807: $B = 1.1366$, $A = -0.0929$, so $e^{-0.1270}$.",
+    "label": "Price",
+    "placeholder": "for example 0.9",
+    "wrong": [
+     {
+      "id": "no-noise",
+      "value": 0.8805,
+      "tol": {
+       "abs": 4e-05
+      }
+     },
+     {
+      "id": "flat",
+      "value": 0.9139,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$B = 1.1366$ and $A - Br_0 = -0.1270$, so the price is 0.8807.",
+    "generic": "Not quite right. Compute $B$, then $A$, then $e^{A - Br_0}$.",
+    "byKey": {
+     "no-noise": "0.8805 is the price with the noise switched off. The random rate adds a little.",
+     "flat": "0.9139 discounts at the constant $r_0 = 3\\%$. The rate drifts up towards 5%."
+    }
+   },
+   "explain": {
+    "text": "$B = (1 - e^{-2.4})/0.8 = 1.1366$ and $A = -0.0929$. A Crank-Nicolson solve of the PDE gives 0.880706, as does the closed form. A seeded simulation gives 0.880800, standard error 0.000043."
+   }
+  },
+  {
+   "id": "h-explicit",
+   "difficulty": 4,
+   "skills": [
+    "pe-fd"
+   ],
+   "tags": [
+    "explicit-stability"
+   ],
+   "prose": "The explicit scheme runs on $[-1, 1]$ with 40 intervals ($\\Delta x = 0.05$) to $\\tau = 0.02$ in 12 steps. The top mode has $\\sin^2\\tfrac{39\\pi}{80} = 0.99846$.",
+   "question": "By what factor is the top mode multiplied over all 12 steps? Give the size.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 446,
+    "tol": {
+     "rel": 0.01
+    },
+    "accept": "446: $|1 - 4(0.6667)(0.99846)|^{12} = 1.6626^{12}$.",
+    "label": "Factor",
+    "placeholder": "for example 100",
+    "wrong": [
+     {
+      "id": "one-step",
+      "value": 1.66,
+      "tol": {
+       "rel": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\lambda = 0.6667$, the factor is $-1.6626$, and $1.6626^{12} = 446$.",
+    "generic": "Not quite right. Find $\\lambda$, then one step's factor, then raise its size to the 12th power.",
+    "byKey": {
+     "one-step": "1.66 is one step. The top mode is multiplied by it at each of the 12 steps."
+    }
+   },
+   "explain": {
+    "text": "$\\lambda = (0.02/12)/0.0025 = 0.6667$, which exceeds $\\tfrac12$. The mode grows 446 times, with alternating sign. A start with rounding error $10^{-3}$ at that mode would reach about 0.4."
+   }
+  },
+  {
+   "id": "h-sequence",
+   "difficulty": 4,
+   "skills": [
+    "pe-fd"
+   ],
+   "tags": [
+    "grid-sequence"
+   ],
+   "prose": "For $S = K = 100$, $r = 3\\%$, $\\sigma = 25\\%$, $T = 0.5$, Crank-Nicolson on 400 intervals (with $n_t = n_x/5$) has error $6.535 \\times 10^{-4}$. The scheme is second order. Grids go by halving $\\Delta x$: 400, 800, 1,600, and so on.",
+   "question": "What is the smallest grid in the sequence with error below $5 \\times 10^{-5}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1600,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "1,600: the error is $6.5 \\times 10^{-4}/16 = 4.1 \\times 10^{-5}$.",
+    "label": "Intervals",
+    "placeholder": "for example 1000",
+    "wrong": [
+     {
+      "id": "exact",
+      "value": 1446,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "eight",
+      "value": 800,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two halvings divide the error by 16, which gives $4.1 \\times 10^{-5}$.",
+    "generic": "Not quite right. Each halving divides the error by 4. Count halvings.",
+    "byKey": {
+     "exact": "1,446 is where $n^{-2}$ crosses the tolerance, but 1,446 is not in the halving sequence. The next grid is 1,600.",
+     "eight": "800 divides the error by 4 only: $1.63 \\times 10^{-4}$, above the tolerance."
+    }
+   },
+   "explain": {
+    "text": "The errors are $6.535 \\times 10^{-4}$, $1.635 \\times 10^{-4}$ and $4.10 \\times 10^{-5}$ on 400, 800 and 1,600 intervals. Richardson on 200 and 400 intervals reaches $2 \\times 10^{-7}$ at a quarter of the cost."
+   }
+  },
+  {
+   "id": "h-colleague",
+   "difficulty": 5,
+   "skills": [
+    "pe-fd",
+    "pe-bs",
+    "pe-heat"
+   ],
+   "kind": "longform",
+   "tags": [
+    "validation-note"
+   ],
+   "title": "The jagged gamma",
+   "prompt": "A colleague's Crank-Nicolson pricer uses 400 intervals and 4 time steps on $[-1, 1]$ in heat variables. For our option it returns £10.0085, and its gamma 'looks jumpy near the strike'. She concludes the closed form (£10.4506) must be wrong. Write a reply. Explain the amplification factor near $-1$ and give the fix. Give the refinement sequence and Richardson. Say what four-decimal agreement means, then write the sentence for the validation note.",
+   "model": "**1. The closed form is not wrong.** A call's gamma $\\varphi(d_1)/(S\\sigma\\sqrt{T})$ is positive everywhere. The pricer's second differences go negative beside the strike, down to $-0.216$. That is a symptom of the scheme.\n\n**2. The amplification factor.** Crank-Nicolson multiplies a mode by $g = \\dfrac{1 - 2\\lambda s^2}{1 + 2\\lambda s^2}$. Here $\\Delta x = 0.005$ and $\\Delta\\tau = 0.005$, so $\\lambda = 200$ and the top mode has $g = -0.9950$. The scheme is stable ($|g| < 1$). But the kink's high modes lose only 0.5% a step and flip sign each step.\n\n**3. The fix.** Rannacher's start replaces the first step by two implicit half steps. Their factor $1/(1 + 4\\lambda s^2)$ is near 0. Crank-Nicolson then continues. On 400 by 4 it gives £10.4492 and every second difference is positive. More steps also help, but 1,600 intervals with 50 steps are still £0.0308 off.\n\n**4. The refinement sequence.** Take $n_t = n_x/5$. The prices on 100, 200, 400, 800 and 1,600 intervals are 10.4427214, 10.4486123, 10.4500869, 10.4504574 and 10.4505511. The formula gives 10.4505836. The error falls by about 4 each halving, so the scheme is second order. Richardson, $V_h + (V_h - V_{2h})/3$, on 100 and 200 intervals gives 10.4505760, an error of $7.6 \\times 10^{-6}$.\n\n**5. Four decimals.** It means $|V_{\\text{FD}} - V| < 5 \\times 10^{-5}$, shown on a halving sequence until two results and the formula agree. Only the 1,600 grid passes among the plain grids.\n\n**6. The note.** 'The pricer matches the closed form for the standard call to $5 \\times 10^{-5}$. The check ran on a halving sequence from 100 to 1,600 intervals (second order, ratios 3.9 to 4.0). The strike is a node, the far boundary is $x = \\pm1$, and large steps use Rannacher's start.'",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the closed form is not wrong. A call's gamma is positive, so the negative values come from the scheme."
+    },
+    {
+     "points": 2,
+     "text": "Gives $\\lambda = 200$ and a top-mode factor of about $-0.9950$, stable but barely damped and sign-flipping at the kink."
+    },
+    {
+     "points": 2,
+     "text": "Names Rannacher's start (two implicit half steps) and its effect: £10.4492, with positive gamma."
+    },
+    {
+     "points": 2,
+     "text": "Gives the refinement sequence with errors falling by about 4 per halving, and Richardson from two cheap grids (£10.4505760)."
+    },
+    {
+     "points": 2,
+     "text": "States four-decimal agreement as error below $5 \\times 10^{-5}$ over a halving sequence. Writes a note naming tolerance, sequence, strike node, boundary and start."
+    }
+   ]
+  }
+ ]
+}
