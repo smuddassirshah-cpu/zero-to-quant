@@ -995,9 +995,36 @@
             "call": "max(abs(price_at(c, t) - price_at_np(c, t)) for t in range(0, 23400, 157)) < 1e-9 and price_at(c, 12000) > 100",
             "expect": "True",
             "compare": "equal"
+          },
+          {
+            "setup": "c = clean_ticks('ticks-gaps.csv')",
+            "call": "[price_at(c, t) for t in (2648, 6477, 17718, 22418)]",
+            "expect": "[100.202, 100.238, 101.7725, 101.474]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "setup": "c = clean_ticks('ticks-gaps.csv')",
+            "call": "[price_at_np(c, t) for t in (2648, 6477, 17718, 22418)]",
+            "expect": "[100.202, 100.238, 101.7725, 101.474]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "setup": "c = clean_ticks('ticks-gaps.csv')",
+            "call": "price_at(c, 15650)",
+            "expect": "101.39480952380953",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
           }
         ],
-        "how": "Check runs 8 hidden tests. They check the 286 clean rows and the columns. They check three interior prices and both ends from the bisection version (relative 1e-9). The same five come from numpy.interp, and a sweep checks the two agree."
+        "how": "Check runs 11 hidden tests. They check the 286 clean rows and the columns. They check three interior prices and both ends from the bisection version (relative 1e-9). The same five come from numpy.interp, and a sweep checks the two agree. Three more check four seconds that appear twice, where the mean differs from the first, last and largest price, and one price between a merged pair and its neighbour."
       },
       "hints": [
         {
@@ -1018,7 +1045,7 @@
         "generic": "Some tests failed. Drop blanks, average repeated seconds, sort, and hold the ends."
       },
       "explain": {
-        "text": "Dropping 15 blanks leaves 297 quotes, and averaging repeated seconds merges 11 pairs, so 286 times remain. `numpy.interp` does the sort-free bracket search for you but needs sorted times."
+        "text": "Dropping 15 blanks leaves 297 quotes, and averaging repeated seconds merges 11 pairs, so 286 times remain. `numpy.interp` searches for the bracket for you but needs the times in increasing order."
       }
     },
     {

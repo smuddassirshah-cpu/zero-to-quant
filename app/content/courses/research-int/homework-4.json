@@ -14,85 +14,91 @@
         "interpolation"
       ],
       "pace": 600,
-      "prose": "`ticks-gaps.csv` has quotes with blank prices and repeated seconds. Write one function that cleans and interpolates.",
-      "question": "Write `value_at(t, path='ticks-gaps.csv')`.",
+      "prose": "`rates-gaps.csv` has 200 quotes of a rate, with minutes since 08:00. The rows are unsorted and 14 rates are written NA. Put it on a regular grid.",
+      "question": "Write `regrid(path, step)` and `longest_gap(path)`.",
       "widget": {
         "kind": "code",
         "language": "python",
         "data": {
-          "ticks-gaps.csv": "content/data/ticks-gaps.csv"
+          "rates-gaps.csv": "content/data/research-int/rates-gaps.csv"
         },
-        "starter": "import bisect\nimport numpy as np\nimport pandas as pd\n\ndef value_at(t, path='ticks-gaps.csv'):\n    \"\"\"Clean the quotes (drop blank prices, average repeated seconds,\n    sort) and return the linearly interpolated price at second t.\n    Before the first time or after the last, hold the end price.\"\"\"\n    # Your code here\n    return 0.0\n",
-        "solution": "import bisect\nimport numpy as np\nimport pandas as pd\n\ndef value_at(t, path='ticks-gaps.csv'):\n    df = pd.read_csv(path).dropna(subset=['price'])\n    df = df.groupby('t_sec', as_index=False)['price'].mean().sort_values('t_sec')\n    return float(np.interp(t, df['t_sec'], df['price']))\n",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef regrid(path, step):\n    \"\"\"Read the quotes, drop the NA rates and sort by minute. Return a\n    frame with columns minute and rate: every step minutes from the first\n    quote to the last, by linear interpolation on minute.\"\"\"\n    # Your code here\n    return pd.DataFrame({'minute': [], 'rate': []})\n\ndef longest_gap(path):\n    \"\"\"The largest number of minutes between two neighbouring quotes\n    that have a rate, as an int.\"\"\"\n    # Your code here\n    return 0\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef _quotes(path):\n    df = pd.read_csv(path).dropna(subset=['rate'])\n    return df.sort_values('minute')\n\ndef regrid(path, step):\n    q = _quotes(path)\n    grid = np.arange(q['minute'].iloc[0], q['minute'].iloc[-1] + 1, step)\n    return pd.DataFrame({'minute': grid, 'rate': np.interp(grid, q['minute'], q['rate'])})\n\ndef longest_gap(path):\n    return int(_quotes(path)['minute'].diff().max())\n",
         "examples": [
           {
-            "call": "value_at(0) == value_at(7)",
-            "expect": "True",
+            "call": "len(regrid('rates-gaps.csv', 30))",
+            "expect": "16",
             "compare": "equal"
           }
         ],
         "tests": [
           {
-            "call": "value_at(3333)",
-            "expect": "100.28438461538461",
-            "compare": "isclose",
-            "tol": {
-              "rel": 1e-09
-            }
-          },
-          {
-            "call": "value_at(16000)",
-            "expect": "101.34113043478261",
-            "compare": "isclose",
-            "tol": {
-              "rel": 1e-09
-            }
-          },
-          {
-            "call": "value_at(20000)",
-            "expect": "101.6523970856102",
-            "compare": "isclose",
-            "tol": {
-              "rel": 1e-09
-            }
-          },
-          {
-            "call": "value_at(0) == value_at(7) and value_at(7) > 99",
-            "expect": "True",
+            "setup": "r = regrid('rates-gaps.csv', 30)",
+            "call": "[len(r), list(r.columns)]",
+            "expect": "[16, ['minute', 'rate']]",
             "compare": "equal"
           },
           {
-            "call": "value_at(99999) == value_at(23258) and value_at(23258) != value_at(0)",
-            "expect": "True",
+            "setup": "r = regrid('rates-gaps.csv', 30)",
+            "call": "[int(r['minute'].iloc[0]), int(r['minute'].iloc[-1])]",
+            "expect": "[5, 455]",
             "compare": "equal"
           },
           {
-            "setup": "open('tiny.csv', 'w').write('t_sec,price\\n30,9.0\\n10,5.0\\n10,7.0\\n20,\\n')",
-            "call": "value_at(20, 'tiny.csv')",
-            "expect": "7.5",
+            "setup": "r = regrid('rates-gaps.csv', 30)",
+            "call": "[float(r['rate'].iloc[i]) for i in (0, 3, 7)]",
+            "expect": "[0.8497, 0.8442, 0.8408416666666667]",
             "compare": "isclose",
             "tol": {
               "rel": 1e-09
             }
           },
           {
-            "setup": "open('tiny.csv', 'w').write('t_sec,price\\n30,9.0\\n10,5.0\\n10,7.0\\n20,\\n')",
-            "call": "[value_at(10, 'tiny.csv'), value_at(25, 'tiny.csv')]",
-            "expect": "[6.0, 8.25]",
+            "call": "(lambda g: [len(g), float(g['rate'].mean())])(regrid('rates-gaps.csv', 1))",
+            "expect": "[475, 0.8419341052631579]",
             "compare": "isclose",
             "tol": {
               "rel": 1e-09
             }
+          },
+          {
+            "call": "longest_gap('rates-gaps.csv')",
+            "expect": "14",
+            "compare": "equal"
+          },
+          {
+            "setup": "open('tiny-rates.csv', 'w').write('minute,rate\\n20,2.0\\n0,1.0\\n10,NA\\n40,4.0\\n')",
+            "call": "regrid('tiny-rates.csv', 15).values.tolist()",
+            "expect": "[[0, 1.0], [15, 1.75], [30, 3.0]]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "setup": "open('tiny-rates.csv', 'w').write('minute,rate\\n20,2.0\\n0,1.0\\n10,NA\\n40,4.0\\n')",
+            "call": "regrid('tiny-rates.csv', 20).values.tolist()",
+            "expect": "[[0, 1.0], [20, 2.0], [40, 4.0]]",
+            "compare": "isclose",
+            "tol": {
+              "rel": 1e-09
+            }
+          },
+          {
+            "setup": "open('tiny-rates.csv', 'w').write('minute,rate\\n20,2.0\\n0,1.0\\n10,NA\\n40,4.0\\n')",
+            "call": "[len(regrid('tiny-rates.csv', 100)), longest_gap('tiny-rates.csv')]",
+            "expect": "[1, 20]",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 7 hidden tests. Three check interior times (relative 1e-9). Two check the held ends. Two use a small file with a repeated second, a blank price and unsorted rows."
+        "how": "Check runs 8 hidden tests. Three use the 30-minute grid: its shape, its end minutes and three of its rates (relative 1e-9). One checks the one-minute grid and one the longest gap. Three use a four-row file with an NA and unsorted rows: grids of 15, 20 and 100 minutes, and its gap."
       },
       "feedback": {
-        "correct": "Interior values, held ends and the small file all match.",
-        "generic": "Some tests failed. Drop blanks, average repeated seconds, sort, interpolate, hold the ends."
+        "correct": "The grid, the interpolated rates and the longest gap all match.",
+        "generic": "Some tests failed. Drop the NA rows, sort by minute, interpolate by time, and keep the grid inside the data."
       },
       "explain": {
-        "text": "Cleaning leaves 286 times. Past the ends the nearest price is held. So second 0 reads the same as the first time, second 7."
+        "text": "Dropping 14 NA rows leaves 186 quotes, from minute 5 to minute 479, so a 30-minute grid has 16 points. The longest gap is 14 minutes. Counting the NA rows as quotes would show 12."
       }
     },
     {
@@ -105,79 +111,93 @@
         "group-regression"
       ],
       "pace": 600,
-      "prose": "`towns-temp.csv` has daily temperatures for 13 towns. Return a table of fits, one row per town.",
-      "question": "Write `town_slopes(path='towns-temp.csv')`.",
+      "prose": "`lakes-level.csv` has yearly water levels for 10 lakes. Tarn has only four years. Return a table of trends, one row per lake, and name the lakes whose trend is clear.",
+      "question": "Write `trend_table(path)` and `trending(path)`.",
       "widget": {
         "kind": "code",
         "language": "python",
         "data": {
-          "towns-temp.csv": "content/data/towns-temp.csv"
+          "lakes-level.csv": "content/data/research-int/lakes-level.csv"
         },
-        "starter": "import numpy as np\nimport pandas as pd\n\ndef town_slopes(path='towns-temp.csv'):\n    \"\"\"Return a frame indexed by town with columns slope, intercept, r2\n    and n, from a least-squares line of temp_c on day for each town.\n    A town with fewer than 3 rows gets NaN in the first three.\"\"\"\n    # Your code here\n    return pd.DataFrame()\n",
-        "solution": "import numpy as np\nimport pandas as pd\n\ndef town_slopes(path='towns-temp.csv'):\n    df = pd.read_csv(path)\n    def one(g):\n        n = len(g)\n        if n < 3:\n            return pd.Series({'slope': np.nan, 'intercept': np.nan, 'r2': np.nan, 'n': n})\n        c = np.cov(g['day'], g['temp_c'])\n        b = c[0, 1] / c[0, 0]\n        a = g['temp_c'].mean() - b * g['day'].mean()\n        r2 = c[0, 1] ** 2 / (c[0, 0] * c[1, 1])\n        return pd.Series({'slope': b, 'intercept': a, 'r2': r2, 'n': n})\n    return df.groupby('town').apply(one, include_groups=False)\n",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef trend_table(path='lakes-level.csv'):\n    \"\"\"Return a frame indexed by lake with columns slope, se, t and n,\n    from a least-squares line of level_m on year for each lake. se is\n    the standard error of the slope and t is slope / se. A lake with\n    fewer than 5 rows gets NaN in slope, se and t.\"\"\"\n    # Your code here\n    return pd.DataFrame()\n\ndef trending(path='lakes-level.csv'):\n    \"\"\"The lakes with abs(t) above 2, as a list of names, the largest\n    abs(t) first.\"\"\"\n    # Your code here\n    return []\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef trend_table(path='lakes-level.csv'):\n    df = pd.read_csv(path)\n    def one(g):\n        n = len(g)\n        if n < 5:\n            return pd.Series({'slope': np.nan, 'se': np.nan, 't': np.nan, 'n': n})\n        x = g['year'].to_numpy(float)\n        y = g['level_m'].to_numpy(float)\n        sxx = ((x - x.mean()) ** 2).sum()\n        b = ((x - x.mean()) * (y - y.mean())).sum() / sxx\n        a = y.mean() - b * x.mean()\n        s2 = ((y - a - b * x) ** 2).sum() / (n - 2)\n        se = np.sqrt(s2 / sxx)\n        return pd.Series({'slope': b, 'se': se, 't': b / se, 'n': n})\n    return df.groupby('lake').apply(one, include_groups=False)\n\ndef trending(path='lakes-level.csv'):\n    t = trend_table(path)['t'].dropna()\n    t = t[t.abs() > 2]\n    return list(t.abs().sort_values(ascending=False).index)\n",
         "examples": [
           {
-            "setup": "t = town_slopes()",
+            "setup": "t = trend_table()",
             "call": "len(t)",
-            "expect": "13",
+            "expect": "10",
             "compare": "equal"
           }
         ],
         "tests": [
           {
-            "setup": "t = town_slopes()",
+            "setup": "t = trend_table()",
             "call": "[len(t), list(t.columns)]",
-            "expect": "[13, ['slope', 'intercept', 'r2', 'n']]",
+            "expect": "[10, ['slope', 'se', 't', 'n']]",
             "compare": "equal"
           },
           {
-            "setup": "t = town_slopes()",
-            "call": "[float(t.loc['Bath', 'slope']), float(t.loc['Hove', 'slope'])]",
-            "expect": "[-0.02366960696069607, 0.030037563756375632]",
+            "setup": "t = trend_table()",
+            "call": "[float(t.loc[k, 'slope']) for k in ('Ard', 'Gill', 'Isla')]",
+            "expect": "[-0.01339005628517828, 0.013145028142589206, -0.008340431519699506]",
             "compare": "isclose",
             "tol": {
               "abs": 1e-06
             }
           },
           {
-            "setup": "t = town_slopes()",
-            "call": "float(t.loc['Ince', 'intercept'])",
-            "expect": "12.238139393939395",
+            "setup": "t = trend_table()",
+            "call": "[float(t.loc[k, 'se']) for k in ('Dee', 'Fyne')]",
+            "expect": "[0.0018137026547944807, 0.0020575279234522257]",
             "compare": "isclose",
             "tol": {
               "abs": 1e-06
             }
           },
           {
-            "setup": "t = town_slopes()",
-            "call": "[float(t.loc['Kelso', 'r2']), float(t.loc['Cork', 'r2'])]",
-            "expect": "[0.7432052373453604, 0.05585972419431069]",
+            "setup": "t = trend_table()",
+            "call": "[float(t.loc[k, 't']) for k in ('Bala', 'Hawes', 'Ard')]",
+            "expect": "[-1.587173087866116, 1.6805980806579008, -9.275246532311263]",
             "compare": "isclose",
             "tol": {
               "abs": 1e-06
             }
           },
           {
-            "setup": "t = town_slopes()",
-            "call": "[bool(np.isnan(t.loc['Wick', 'slope'])), bool(np.isnan(t.loc['Wick', 'r2'])), int(t.loc['Wick', 'n'])]",
-            "expect": "[True, True, 2]",
+            "setup": "t = trend_table()",
+            "call": "[bool(np.isnan(t.loc['Tarn', c])) for c in ('slope', 'se', 't')] + [int(t.loc['Tarn', 'n'])]",
+            "expect": "[True, True, True, 4]",
             "compare": "equal"
           },
           {
-            "setup": "t = town_slopes()",
-            "call": "[int(t.loc['Ayr', 'n']), int(t['n'].sum())]",
-            "expect": "[100, 1202]",
+            "call": "trending()",
+            "expect": "['Ard', 'Gill', 'Isla', 'Esk', 'Fyne', 'Dee']",
+            "compare": "equal"
+          },
+          {
+            "setup": "open('tiny-lakes.csv', 'w').write('lake,year,level_m\\nV,1,10.0\\nV,2,10.2\\nV,3,9.9\\nV,4,10.4\\nV,5,10.3\\nW,1,5.0\\nW,2,5.1\\nW,3,5.2\\nW,4,5.3\\n')",
+            "call": "[float(trend_table('tiny-lakes.csv').loc['V', c]) for c in ('slope', 'se', 't')]",
+            "expect": "[0.08, 0.06, 1.3333333333333333]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "open('tiny-lakes.csv', 'w').write('lake,year,level_m\\nV,1,10.0\\nV,2,10.2\\nV,3,9.9\\nV,4,10.4\\nV,5,10.3\\nW,1,5.0\\nW,2,5.1\\nW,3,5.2\\nW,4,5.3\\n')",
+            "call": "[bool(np.isnan(trend_table('tiny-lakes.csv').loc['W', 'slope'])), int(trend_table('tiny-lakes.csv').loc['W', 'n']), trending('tiny-lakes.csv')]",
+            "expect": "[True, 4, []]",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 6 hidden tests. They cover the shape, the column names, slopes for Bath and Hove, and the Ince intercept. They also check $R^2$ for Kelso and Cork, Wick as NaN with n = 2, and the row counts. Fits are within 1e-6."
+        "how": "Check runs 8 hidden tests. They cover the shape and column names, the slopes of Ard, Gill and Isla, the standard errors of Dee and Fyne, and $t$ for Bala, Hawes and Ard (within 1e-6). They check Tarn as NaN with n = 4 and the ordered list of clear trends. Two use a nine-row file: a five-year lake that is fitted and a four-year lake that is not."
       },
       "feedback": {
-        "correct": "One row per town, with Wick guarded.",
-        "generic": "Some tests failed. Four columns, 13 rows, NaN for a town with fewer than 3 rows."
+        "correct": "One row per lake, with Tarn guarded and the clear trends in order.",
+        "generic": "Some tests failed. Four columns, 10 rows, NaN for a lake with fewer than 5 years, and the list ordered by size of t."
       },
       "explain": {
-        "text": "Each town gets a line from cov over var, its intercept and its $R^2$. Wick's two rows give NaN but keep n = 2, so the table still says why."
+        "text": "The standard error of each slope is $\\sqrt{s^2/S_{xx}}$ with $s^2$ from the residuals on $n - 2$ degrees of freedom. Six lakes have $|t| > 2$, and Ard leads with $t = -9.28$. Tarn keeps n = 4 but has no slope."
       }
     },
     {
@@ -422,67 +442,72 @@
         "data-cleaning"
       ],
       "pace": 600,
-      "prose": "Write the cleaner as a function of a frame, so it can be tested on small cases. The frame `RAW` is `orders-messy.csv` read with text quantities, and `TINY` is a seven-row case.",
-      "question": "Write `clean_orders(df)`.",
+      "prose": "Write the cleaner as a function of a frame, so it can be tested on small cases. `RAW` is `fills-messy.csv` read as text, and `TINY` is a seven-row case. A later row for an id replaces the earlier one.",
+      "question": "Write `clean_fills(df)`.",
       "widget": {
         "kind": "code",
         "language": "python",
         "data": {
-          "orders-messy.csv": "content/data/orders-messy.csv"
+          "fills-messy.csv": "content/data/research-int/fills-messy.csv"
         },
-        "prelude": "import numpy as np\nimport pandas as pd\n\nTINY = pd.DataFrame({'order_id': [1, 2, 3, 3, 4, 5, 6], 'symbol': [' x ', 'Y', 'x', 'X', 'y', 'Y', 'x'], 'side': ['B', 'S', 'B', 'B', 'S', 'B', 'S'],\n                     'qty': ['1,000', '200', '300', '300', '4,500', '50', '700'], 'price': [10.0, 5.0, 0.0, 0.0, np.nan, -999.0, 12.0], 'mid': [10.0, 5.0, 10.0, 10.0, 5.0, 5.0, 12.0]})\nRAW = pd.read_csv('orders-messy.csv', dtype={'qty': str})\n",
-        "starter": "import numpy as np\nimport pandas as pd\n\ndef clean_orders(df):\n    \"\"\"df has order_id, symbol, side, qty (text, some with commas), price,\n    mid. Return a cleaned copy: symbol stripped and upper case, qty as\n    whole numbers, one row per order_id (the first), and only prices\n    above zero. The input frame must not change.\"\"\"\n    out = df.copy()\n    # Your code here\n    return out\n",
-        "solution": "import numpy as np\nimport pandas as pd\n\ndef clean_orders(df):\n    out = df.copy()\n    out['symbol'] = out['symbol'].str.strip().str.upper()\n    out['qty'] = out['qty'].str.replace(',', '').astype(int)\n    out = out.drop_duplicates('order_id')\n    out = out[out['price'].notna() & (out['price'] > 0)]\n    return out.reset_index(drop=True)\n",
+        "prelude": "import numpy as np\nimport pandas as pd\n\nTINY = pd.DataFrame({'fill_id': ['1', '2', '3', '2', '4', '3', '5'],\n                     'time': ['09:30:00', '09:31:10', '09:32:20', '09:31:11', '09:33:00', '09:32:21', '10:00:05'],\n                     'side': [' Buy ', 'SELL', 'buy', 'sell', 'Sell', 'buy', 'BUY'],\n                     'qty': ['1k', '200', '300', '250', '50', '300', '2k'],\n                     'price': ['£10.00', '5.00', '£8.00', '5.50', '£7.00', '8.00', '£9.50'],\n                     'status': ['FILLED', 'FILLED', 'FILLED', 'FILLED', 'FILLED', 'CANCELLED', 'FILLED']})\nRAW = pd.read_csv('fills-messy.csv', dtype=str)\n",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef clean_fills(df):\n    \"\"\"df has fill_id, time (HH:MM:SS), side (buy or sell in any case,\n    maybe with spaces), qty (text, '2k' means 2,000), price (text, some\n    with a pound sign) and status. Return a new frame with columns\n    fill_id, secs (since midnight), side (+1 buy, -1 sell), qty (whole\n    numbers) and price (floats), sorted by fill_id. A later row for an\n    id replaces an earlier one, and an id whose last row is CANCELLED\n    goes. The input frame must not change.\"\"\"\n    out = df.copy()\n    # Your code here\n    return out\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef clean_fills(df):\n    out = df.copy()\n    out['side'] = out['side'].str.strip().str.lower().map({'buy': 1, 'sell': -1})\n    out['qty'] = out['qty'].str.strip().str.replace('k', '000').astype(int)\n    out['price'] = out['price'].str.replace('£', '', regex=False).astype(float)\n    t = out['time'].str.split(':', expand=True).astype(int)\n    out['secs'] = t[0] * 3600 + t[1] * 60 + t[2]\n    out['fill_id'] = out['fill_id'].astype(int)\n    out = out.drop_duplicates('fill_id', keep='last')\n    out = out[out['status'] != 'CANCELLED'].sort_values('fill_id')\n    return out[['fill_id', 'secs', 'side', 'qty', 'price']].reset_index(drop=True)\n",
         "examples": [
           {
-            "call": "len(clean_orders(TINY))",
-            "expect": "3",
+            "call": "len(clean_fills(TINY))",
+            "expect": "4",
             "compare": "equal"
           }
         ],
         "tests": [
           {
-            "call": "int((clean_orders(RAW)['side'] == 'B').sum())",
-            "expect": "271",
+            "call": "[len(clean_fills(RAW)), int((clean_fills(RAW)['side'] == 1).sum())]",
+            "expect": "[370, 193]",
             "compare": "equal"
           },
           {
-            "call": "int(clean_orders(RAW)['qty'].median())",
-            "expect": "2300",
+            "call": "int(clean_fills(RAW)['qty'].sum())",
+            "expect": "381950",
             "compare": "equal"
           },
           {
-            "call": "round(float((clean_orders(RAW)['price'] * clean_orders(RAW)['qty']).sum()), 1)",
-            "expect": "78732175.8",
+            "call": "round(float((clean_fills(RAW)['side'] * clean_fills(RAW)['qty'] * clean_fills(RAW)['price']).sum()), 1)",
+            "expect": "-52350.5",
             "compare": "isclose",
             "tol": {
               "abs": 0.01
             }
           },
           {
-            "call": "[len(clean_orders(TINY)), int(clean_orders(TINY)['qty'].sum()), sorted(clean_orders(TINY)['symbol'].unique())]",
-            "expect": "[3, 1900, ['X', 'Y']]",
+            "call": "int(clean_fills(RAW)['secs'].sum())",
+            "expect": "16818536",
             "compare": "equal"
           },
           {
-            "call": "bool(clean_orders(RAW)['price'].min() > 0) and bool(clean_orders(RAW)['order_id'].is_unique)",
-            "expect": "True",
+            "call": "[len(clean_fills(TINY)), clean_fills(TINY).values.tolist()]",
+            "expect": "[4, [[1, 34200, 1, 1000, 10.0], [2, 34271, -1, 250, 5.5], [4, 34380, -1, 50, 7.0], [5, 36005, 1, 2000, 9.5]]]",
             "compare": "equal"
           },
           {
-            "call": "(clean_orders(TINY), [len(TINY), TINY['symbol'].iloc[0], TINY['qty'].iloc[0]])[1]",
-            "expect": "[7, ' x ', '1,000']",
+            "call": "(lambda c: [list(c.columns), str(c['qty'].dtype).startswith('int'), str(c['price'].dtype).startswith('float'), bool(c['fill_id'].is_unique and c['fill_id'].is_monotonic_increasing)])(clean_fills(RAW))",
+            "expect": "[['fill_id', 'secs', 'side', 'qty', 'price'], True, True, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "(clean_fills(TINY), [len(TINY), TINY['side'].iloc[0], TINY['qty'].iloc[0], TINY['price'].iloc[0]])[1]",
+            "expect": "[7, ' Buy ', '1k', '£10.00']",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 6 hidden tests. They check the buy count, median quantity and total value on the file. They check the seven-row case: a price of zero, a NaN, a -999 and a repeat. They also check unique ids, a positive minimum price and an unchanged input frame."
+        "how": "Check runs 7 hidden tests. On the file they check the row count and buys, the quantity total, the signed value of the fills and the total of the times. On the seven-row case they check the exact frame: a correction, a cancellation and a quantity of 2k. They also check the columns, the types, unique sorted ids and an unchanged input frame."
       },
       "feedback": {
         "correct": "The cleaner works on the file and on the small case.",
-        "generic": "Some tests failed. Text first, then ids, then prices above zero, on a copy."
+        "generic": "Some tests failed. Clean the text, keep the last row of each id, then drop the cancelled ones, on a copy."
       },
       "explain": {
-        "text": "The seven-row case drops a repeat, a price of zero, a NaN and a -999, leaving three rows. The input frame keeps its commas and spaces."
+        "text": "A correction is a later row, so the last row of each id wins, and a CANCELLED last row removes the order. That leaves 370 of the 380 ids. The input frame keeps its text."
       }
     },
     {
