@@ -33,10 +33,9 @@ Content pass under `docs/briefs/prereq-gating.md` sections 5 and 8. Edited field
 - `mental-pressure/L2`: paper 2 speed, fractions and Fermi items (`l1`, `l2`, `l7`; `l5`, `l6`).
 - `recruiting/L3`: `rk-behave` (c4, d1, d2) from `l8`, `l11`, `l12`, `l13`.
 
-**mock-superday-research** (closure 116, the largest): `research-int/L4`, `coding-int/L4`, `recruiting/L3`
-- `research-int/L4`: `rq-stats`, `rq-linalg`, `rq-ml`, `rq-case`, `rq-data` span L1 to L4; the brief lists l1 to l20.
-- `coding-int/L4`: paper 3 and the brief's `l17-two-in-sixty`, `l18-talking-while-coding`.
-- `recruiting/L3`: behavioural checks (`l11-stories-that-answer`, `l13-the-final-round`).
+**mock-superday-research** (closure 89): `research-int/L4`
+- `research-int/L4`: `rq-stats`, `rq-linalg`, `rq-ml`, `rq-case`, `rq-data` span L1 to L4; the brief lists l1 to l20. Paper 3 is two research data tasks (`rq-data`, taught in `research-int/L4`).
+- Dropped after the second read (4 Nov 2026): `coding-int/L4` (design, `two-in-sixty` and talking aloud, none of which the papers test) and `recruiting/L3` (held only for the self-ticked story check). The closure fell from 116 to 89.
 - The paper 1 draw (`bank/probability`, difficulty 3 to 5, 30 matching items) has no level common to the whole pool (some items name no lesson), so it adds nothing.
 
 **mock-oa-quant-data** (closure 89): `research-int/L4`
@@ -56,7 +55,7 @@ Content pass under `docs/briefs/prereq-gating.md` sections 5 and 8. Edited field
 | mock-oa-trader (+ -2, -3) | mental-pressure/L4, puzzles/L5 | 72 |
 | mock-oa-quant-data | research-int/L4 | 89 |
 | mock-superday-trader | puzzles/L5, game-theory/L3, mm-games/L3, brainteasers/L3, mental-pressure/L2, recruiting/L3 | 107 |
-| mock-superday-research | research-int/L4, coding-int/L4, recruiting/L3 | 116 |
+| mock-superday-research | research-int/L4 | 89 |
 
 Largest direct list: 6. Skipped samples: `mock-sample*`, `mock-interleave-sample`, `mock-trade-sample`.
 
