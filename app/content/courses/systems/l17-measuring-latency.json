@@ -320,7 +320,7 @@
             "done - intended (when due)",
             "  p50 49  p90 38,308",
             "  p99 48,821  p99.9 49,911",
-            "875 of 2,000 late by over 100 us"
+            "875 of 2,000 sent late"
           ],
           "wrap": false,
           "title": "Two reports, one run (us)"
@@ -374,7 +374,7 @@
         "byKey": {
           "sent": "You picked the report that starts after the wait.",
           "same": "The gap between them is the queueing time.",
-          "noise": "875 requests were late by over 100 µs. That is not one outlier."
+          "noise": "875 requests were sent late. That is not one outlier."
         }
       },
       "explain": {
@@ -456,9 +456,33 @@
             "tol": {
               "abs": 0.001
             }
+          },
+          {
+            "setup": "_n = 77; open('h77.csv', 'w').write('seq,intended_us,sent_us,done_us\\n' + ''.join(f'{i},{100*i},{100*i},{100*i + i*37 % _n + 10}\\n' for i in range(_n)))",
+            "call": "report('h77.csv')['p99_sent']",
+            "expect": "86",
+            "compare": "equal"
+          },
+          {
+            "setup": "_n = 77; open('h77.csv', 'w').write('seq,intended_us,sent_us,done_us\\n' + ''.join(f'{i},{100*i},{100*i},{100*i + i*37 % _n + 10}\\n' for i in range(_n)))",
+            "call": "report('h77.csv')['p999_sent']",
+            "expect": "86",
+            "compare": "equal"
+          },
+          {
+            "setup": "_n = 1000; open('h1000.csv', 'w').write('seq,intended_us,sent_us,done_us\\n' + ''.join(f'{i},{100*i},{100*i},{100*i + i*37 % _n + 10}\\n' for i in range(_n)))",
+            "call": "report('h1000.csv')['p999_sent']",
+            "expect": "1008",
+            "compare": "equal"
+          },
+          {
+            "setup": "_n = 78; open('h78.csv', 'w').write('seq,intended_us,sent_us,done_us\\n' + ''.join(f'{i},{100*i},{100*i},{100*i + i*37 % _n + 10}\\n' for i in range(_n)))",
+            "call": "report('h78.csv')['p50_sent']",
+            "expect": "48",
+            "compare": "equal"
           }
         ],
-        "how": "Seven hidden tests read latencies.csv. Percentiles must equal the expected value, and the mean is accepted within 0.001."
+        "how": "Eleven hidden tests: seven read latencies.csv, and four read small files of 77, 78 and 1,000 requests. Percentiles must equal the expected value, and the mean is accepted within 0.001."
       },
       "hints": [
         {
@@ -686,7 +710,7 @@
       "tags": [
         "percentile"
       ],
-      "prose": "Now in C++. `percentile(samples, p)` takes the samples by value, so sorting inside is safe. Subtract 1e-9 before the `ceil`, so 99 × 1,000 / 100 does not round up. `mean` is given.",
+      "prose": "Now in C++. `percentile(samples, p)` takes the samples by value, so sorting inside is safe. Subtract 1e-9 before the `ceil`. In doubles, 64.4 × 250 / 100 is 161.00000000000003, so an unguarded `ceil` gives rank 162, not 161. `mean` is given.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -704,7 +728,7 @@
       "widget": {
         "kind": "code",
         "language": "cpp",
-        "starter": "#include <vector>\n\n// Nearest-rank percentile: sort the samples; the p-th percentile is the value at rank ceil(p * n / 100),\n// counting from 1 (rank 1 at p = 0). Subtract 1e-9 before ceil so 99 * 1000 / 100 does not round up.\ndouble percentile(std::vector<double> samples, double p) {\n    return samples.empty() ? 0.0 : samples.back();     // the last sample, unsorted\n}\n\ndouble mean(const std::vector<double>& samples) {\n    double total = 0.0;\n    for (double s : samples) total += s;\n    return samples.empty() ? 0.0 : total / samples.size();\n}\n",
+        "starter": "#include <vector>\n\n// Nearest-rank percentile: sort the samples; the p-th percentile is the value at rank ceil(p * n / 100),\n// counting from 1 (rank 1 at p = 0). Subtract 1e-9 before ceil: in doubles 64.4 * 250 / 100 is 161.00000000000003, so ceil gives 162, not 161.\ndouble percentile(std::vector<double> samples, double p) {\n    return samples.empty() ? 0.0 : samples.back();     // the last sample, unsorted\n}\n\ndouble mean(const std::vector<double>& samples) {\n    double total = 0.0;\n    for (double s : samples) total += s;\n    return samples.empty() ? 0.0 : total / samples.size();\n}\n",
         "solution": "#include <algorithm>\n#include <cmath>\n#include <vector>\n\ndouble percentile(std::vector<double> samples, double p) {\n    if (samples.empty()) return 0.0;\n    std::sort(samples.begin(), samples.end());\n    double n = static_cast<double>(samples.size());\n    long long rank = static_cast<long long>(std::ceil(p * n / 100.0 - 1e-9));\n    if (rank < 1) rank = 1;\n    if (rank > static_cast<long long>(samples.size())) rank = static_cast<long long>(samples.size());\n    return samples[rank - 1];\n}\n\ndouble mean(const std::vector<double>& samples) {\n    double total = 0.0;\n    for (double s : samples) total += s;\n    return samples.empty() ? 0.0 : total / samples.size();\n}\n",
         "examples": [
           {
@@ -794,13 +818,25 @@
             "compare": "isclose"
           },
           {
+            "setup": "std::vector<double> v = {5.0, 1.0, 4.0, 2.0, 3.0, 7.0, 6.0};",
+            "call": "percentile(v, 30)",
+            "expect": 3.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "std::vector<double> v; for (int i = 1; i <= 250; ++i) v.push_back(i);",
+            "call": "percentile(v, 64.4)",
+            "expect": 161.0,
+            "compare": "isclose"
+          },
+          {
             "setup": "std::vector<double> v(990, 10.0); v.insert(v.end(), 10, 1000.0);",
             "call": "mean(v)",
             "expect": 19.9,
             "compare": "isclose"
           }
         ],
-        "how": "Thirteen hidden tests: the 990 and 10 mix, 11 slow requests, 999 and 1, a five-sample set, p0 and p100, and the mean."
+        "how": "Fifteen hidden tests: the 990 and 10 mix, 11 slow requests, 999 and 1, and the mean. Others use a five-sample set, a seven-sample set, 250 samples, p0 and p100."
       },
       "hints": [
         {
@@ -1142,7 +1178,7 @@
           },
           {
             "id": "half",
-            "text": "Half of them, as slow requests",
+            "text": "Half of them, recorded as slow requests in the report",
             "why": "Closed-loop timing records none of the waiting, not half."
           },
           {
