@@ -20,24 +20,24 @@
     "solution": "import numpy as np\n\ndef ito_vs_strat(seed, ns):\n    \"\"\"For each n in ns: (left sum, midpoint sum, mid - left,\n    sum of squared increments) on n steps.\"\"\"\n    N = max(ns)\n    rng = np.random.default_rng(seed)\n    dW = rng.standard_normal(N) * np.sqrt(1 / N)\n    W = np.concatenate([[0.0], np.cumsum(dW)])\n    out = []\n    for n in ns:\n        Wc = W[::N // n]\n        d = np.diff(Wc)\n        left = float(np.sum(Wc[:-1] * d))\n        mid = float(np.sum((Wc[:-1] + Wc[1:]) / 2 * d))\n        out.append((left, mid, mid - left, float(np.sum(d ** 2))))\n    return out\n",
     "examples": [
      {
-      "call": "round(ito_vs_strat(3, [16, 4096])[0][0], 6)",
-      "expect": "-0.148729",
+      "call": "round(ito_vs_strat(11, [8, 512])[0][0], 6)",
+      "expect": "0.039673",
       "compare": "isclose"
      }
     ],
     "tests": [
      {
-      "call": "[[round(x, 6) for x in row] for row in ito_vs_strat(3, [16, 256, 4096])]",
-      "expect": "[[-0.148729, 0.146693, 0.295422, 0.590845], [-0.339218, 0.146693, 0.485911, 0.971822], [-0.355507, 0.146693, 0.5022, 1.0044]]",
+      "call": "[[round(x, 6) for x in row] for row in ito_vs_strat(11, [8, 64, 512])]",
+      "expect": "[[0.039673, 0.229561, 0.189888, 0.379776], [-0.09729, 0.229561, 0.326851, 0.653702], [-0.235422, 0.229561, 0.464983, 0.929965]]",
       "compare": "isclose"
      },
      {
-      "call": "[[round(x, 6) for x in row] for row in ito_vs_strat(5, [10, 100, 1000])]",
-      "expect": "[[-0.875523, 0.001737, 0.87726, 1.754519], [-0.558286, 0.001737, 0.560023, 1.120046], [-0.492121, 0.001737, 0.493858, 0.987716]]",
+      "call": "[[round(x, 6) for x in row] for row in ito_vs_strat(12, [10, 100, 1000])]",
+      "expect": "[[-0.019788, 0.08823, 0.108018, 0.216035], [-0.360636, 0.08823, 0.448865, 0.89773], [-0.403587, 0.08823, 0.491817, 0.983634]]",
       "compare": "isclose"
      },
      {
-      "call": "[round(row[2] - row[3] / 2, 9) for row in ito_vs_strat(3, [8, 64, 512])]",
+      "call": "[round(row[2] - row[3] / 2, 9) for row in ito_vs_strat(4, [8, 64, 512])]",
       "expect": "[0.0, 0.0, 0.0]",
       "compare": "isclose"
      },
@@ -47,19 +47,19 @@
       "compare": "isclose"
      },
      {
-      "call": "round(ito_vs_strat(3, [4096])[0][0], 6)",
-      "expect": "-0.355507",
+      "call": "round(ito_vs_strat(11, [512])[0][0], 6)",
+      "expect": "-0.235422",
       "compare": "isclose"
      }
     ],
-    "how": "Submit runs 5 hidden tests, to 6 places. They use seeds 3 and 5, and check that mid minus left is half the squared sum."
+    "how": "Submit runs 5 hidden tests, to 6 places. They use seeds 11, 12 and 4, and check that mid minus left is half the squared sum."
    },
    "feedback": {
     "correct": "Left, midpoint, their gap and the squared sum, each from the same coarsened path.",
     "generic": "Not quite right. Coarsen with `W[::N // n]`, then use `np.diff`."
    },
    "explain": {
-    "text": "On seed 3 the gap mid $-$ left is 0.295422 at $n = 16$. At $n = 4{,}096$ it is 0.5022. Each is half the squared sum, 0.590845 and 1.004400."
+    "text": "On seed 11 the gap mid $-$ left is 0.189888 at $n = 8$. At $n = 512$ it is 0.464983. Each is half the squared sum, 0.379776 and 0.929965."
    },
    "tags": [
     "ito-integral"
@@ -81,20 +81,20 @@
     "solution": "def apply_ito(a, b, ft, fx, fxx, points):\n    \"\"\"For each (t, x) in points return [dt coefficient, dW coefficient]\n    of d f(t, X), where dX = a dt + b dW.\"\"\"\n    out = []\n    for t, x in points:\n        drift = ft(t, x) + a(t, x) * fx(t, x) + 0.5 * b(t, x) ** 2 * fxx(t, x)\n        out.append([drift, b(t, x) * fx(t, x)])\n    return out\n",
     "examples": [
      {
-      "call": "[[round(v, 6) for v in row] for row in apply_ito(lambda t, x: 0.08 * x, lambda t, x: 0.2 * x, lambda t, x: 0.0, lambda t, x: 2 * x, lambda t, x: 2.0, [(0, 100), (1, 50)])]",
-      "expect": "[[2000.0, 4000.0], [500.0, 1000.0]]",
+      "call": "[[round(v, 6) for v in row] for row in apply_ito(lambda t, x: 0.05 * x, lambda t, x: 0.3 * x, lambda t, x: 0.0, lambda t, x: 2 * x, lambda t, x: 2.0, [(0, 50), (1, 40)])]",
+      "expect": "[[475.0, 1500.0], [304.0, 960.0]]",
       "compare": "isclose"
      }
     ],
     "tests": [
      {
-      "call": "[[round(v, 6) for v in row] for row in apply_ito(lambda t, x: 0.08 * x, lambda t, x: 0.2 * x, lambda t, x: 0.0, lambda t, x: 2 * x, lambda t, x: 2.0, [(0, 100), (1, 50)])]",
-      "expect": "[[2000.0, 4000.0], [500.0, 1000.0]]",
+      "call": "[[round(v, 6) for v in row] for row in apply_ito(lambda t, x: 0.05 * x, lambda t, x: 0.3 * x, lambda t, x: 0.0, lambda t, x: 2 * x, lambda t, x: 2.0, [(0, 50), (1, 40)])]",
+      "expect": "[[475.0, 1500.0], [304.0, 960.0]]",
       "compare": "isclose"
      },
      {
-      "call": "[[round(v, 6) for v in row] for row in apply_ito(lambda t, x: 0.08 * x, lambda t, x: 0.2 * x, lambda t, x: 0.0, lambda t, x: 1 / x, lambda t, x: -1 / x ** 2, [(0, 100), (0.5, 20)])]",
-      "expect": "[[0.06, 0.2], [0.06, 0.2]]",
+      "call": "[[round(v, 6) for v in row] for row in apply_ito(lambda t, x: 0.05 * x, lambda t, x: 0.3 * x, lambda t, x: 0.0, lambda t, x: 1 / x, lambda t, x: -1 / x ** 2, [(0, 100), (0.5, 20)])]",
+      "expect": "[[0.005, 0.3], [0.005, 0.3]]",
       "compare": "isclose"
      },
      {
@@ -120,7 +120,7 @@
     "generic": "Not quite right. Evaluate each function at $(t, x)$ before combining."
    },
    "explain": {
-    "text": "For $S^2$ at £100 the drift is $0 + 8 \\times 200 + \\tfrac12 \\times 400 \\times 2 = 2000$ and the noise $20 \\times 200 = 4000$. For $\\ln S$ it is $0.06$ and $0.2$ at every price. For $W^3$ at $x = 2$ the drift is $\\tfrac12 \\times 12 = 6$ and the noise $3x^2 = 12$."
+    "text": "For $S^2$ at £50, with $\\mu = 0.05$ and $\\sigma = 0.3$, the drift is $0 + 2.5 \\times 100 + \\tfrac12 \\times 225 \\times 2 = 475$ and the noise $15 \\times 100 = 1500$. For $\\ln S$ it is $0.005$ and $0.3$ at every price. For $W^3$ at $x = 2$ the drift is $\\tfrac12 \\times 12 = 6$ and the noise $3x^2 = 12$."
    },
    "tags": [
     "ito-lemma"
@@ -314,7 +314,7 @@
      },
      {
       "id": "expo",
-      "text": "$e^{2W_t - 2t}$",
+      "text": "$e^{3W_t - 4.5t}$",
       "correct": true
      },
      {
@@ -345,7 +345,7 @@
     "generic": "Not quite right. Compute $f_t + \\tfrac12 f_{xx}$ for each."
    },
    "explain": {
-    "text": "For $W^4 - 6tW^2 + 3t^2$, $f_t = -6x^2 + 6t$ and $\\tfrac12f_{xx} = 6x^2 - 6t$, which cancel. For $e^{2W - 2t}$ the pieces are $-2f$ and $+2f$, and for $e^{t/2}\\cos W$ they are $\\pm\\tfrac12f$. The others have drifts $2$, $-\\tfrac12e^{W - t}$ and $6W^2 - 6t$."
+    "text": "For $W^4 - 6tW^2 + 3t^2$, $f_t = -6x^2 + 6t$ and $\\tfrac12f_{xx} = 6x^2 - 6t$, which cancel. For $e^{3W - 4.5t}$ the pieces are $-4.5f$ and $+4.5f$, and for $e^{t/2}\\cos W$ they are $\\pm\\tfrac12f$. The others have drifts $2$, $-\\tfrac12e^{W - t}$ and $6W^2 - 6t$."
    },
    "tags": [
     "martingale-check"
@@ -471,7 +471,7 @@
     },
     {
      "points": 2,
-     "text": "Uses the seeded numbers: 0.2799 against 0.2599, a gap of 0.0199, close to $\\tfrac12\\sigma^2T = 0.02$."
+     "text": "Uses the seeded numbers: 0.27986 against 0.25992, a gap of 0.0199 (or about 0.02), close to $\\tfrac12\\sigma^2T = 0.02$."
     },
     {
      "points": 2,
