@@ -1034,3 +1034,8 @@ Raised later (orchestrator, session H, 4 Nov):
 - [Should] Mock draw pools are open to practice: the eight `oa` drills behind mock-oa-code are listed in the drill library, so a learner can solve them before the mock. Options: a drill-file flag that hides a pack from the library until its mock is sat once, or a larger pool with `language` filtering and unseen-first draws by solved state (bullets above). Raised by the exam author and the topic 3.5 exams second read.
 - [Should] Playthrough: run each code widget's starter and require it to fail (every topic 3.5 author confirmed this by hand script), and run the code tests inside homework `parts` items (systems homework-4 histogram tests were not run).
 - [Done, item 500] The `rq-clean-frame-py` and `rq-group-slopes-py` failures were not a flake: the drill runner counted package loading against the 5 s limit.
+
+Raised later (topic 3.2 levels, 4 Nov), measure-prob level 1:
+- [Could] `series` control on `revealAt` reads out the 0-based index and `indexFrom` only relabels the axis, so a slider over steps n = 1 to 100 cannot show n. Wanted: an offset or `format` on the readout. Workaround: a control on `reveal` shown as a percentage (l3 screen 2).
+- [Could] `number-line` interval labels collide when rows are stacked tightly (the nested covers of l2 screen 8 and l3 screen 7 at 390 px). Wanted: label thinning per row or `labelPos: "right"` for rows above 0. Workaround: labels dropped and the rows explained in the prose.
+- [Could] `table` widget cells take decimals only for chances, so a fraction such as 5/8 in the l3 hook table is asked as 0.625. Wanted: confirmation that a typed fraction grades in a cell (not tested here). Workaround: decimals with tolerance.
