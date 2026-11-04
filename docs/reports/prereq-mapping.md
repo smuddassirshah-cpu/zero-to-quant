@@ -1,13 +1,13 @@
 # Prerequisite mapping: `requires` for every course
 
-Mapping agent for `docs/briefs/prereq-gating.md` section 8. Edited fields: `requires` on levels (172 explicit lists) and one top-level `lessonRequires` (coding-int). No other field or byte of any `course.json` changed: `check.mjs` parses each file and the HEAD version and finds them equal once those two fields are removed (key order included). Scripts and the data live in `docs/reports/prereq-mapping-scripts/`: `mapping.txt` (the single source of every list and reason below), `apply.mjs` (text insertion into each `course.json`), `check.mjs` (diff against HEAD, rules, depth, closure), `warnings.mjs`, `gen-report.mjs` (the per-course section), `dump-maps.mjs` and `candidates.mjs` (read every map and brief citation).
+Mapping agent for `docs/briefs/prereq-gating.md` section 8. Edited fields: `requires` on levels (165 explicit lists after the fix pass of `docs/reviews/review-prereq-mapping.md`; 172 before) and `lessonRequires` (none after the fix pass; one on coding-int before). No other field or byte of any `course.json` changed: the fix pass checked that each parsed file and its HEAD version are equal once those two fields are removed (key order included); `fix-pass.mjs` applies the fix-pass changes to `mapping.txt` and the files. (`check.mjs` part 1 compares with HEAD, which now holds the first mapping, so its diff line no longer applies.) Scripts and the data live in `docs/reports/prereq-mapping-scripts/`: `mapping.txt` (the single source of every list and reason below), `apply.mjs` (text insertion into each `course.json`), `check.mjs` (diff against HEAD, rules, depth, closure), `warnings.mjs`, `gen-report.mjs` (the per-course section), `dump-maps.mjs` and `candidates.mjs` (read every map and brief citation).
 
 ## Results
 
-- Validator (`app/`): **0 errors**, 467 warnings, no cycles. The mapping adds 35 warnings, all "reference to a level with no written lesson" (listed below). Nothing else new.
+- Validator (`app/`): **0 errors**, 485 warnings in this worktree, no cycles. Of those, 30 come from the mapping (35 before the fix pass), all "reference to a level with no written lesson" (listed below). Nothing else new.
 - Routes (`--routes-only --local-cdn ...`), with and without `--mobile`: all passed ("gating  Stage 0 open, puzzles/l7-cards-and-colours locked with its card ... Strict, Open anyway, test-out, old save").
-- 279 levels in 76 courses. 172 carry an explicit list; the rest are the first level of a course (open) or take the implicit previous level. Largest direct list: 5 references.
-- Longest chain: **34 levels** (counted with every level on the path, the end level included): `number-sense/L1` to `L2`, `equations/L1`, `counting/L1`, `L2`, `counting-chance/L1` to `L3`, `random-vars/L1` to `L3`, `limits-thm/L1` to `L3`, `estimation/L1` to `L3`, `testing/L1`, `regression/L2`, `L3`, `stat-learning/L1`, `L2`, `validation/L1`, `L2`, `fin-ml/L1` to `L3`, `alpha/L1` to `L4`, `momentum-rep/L1` to `L3`. It is the researcher spine (probability, statistics, machine learning, the alpha project, the replication) and is real, not padding. Each level on it is also met by passing its topic exam or stage exit test.
+- 279 levels in 76 courses. 165 carry an explicit list; the rest are the first level of a course (open) or take the implicit previous level. Largest direct list: 5 references.
+- Longest chain: **33 levels** (counted with every level on the path, the end level included; 34 before the fix pass, which moved `counting-chance/L3` off `conditional/L1` and `random-vars/L1`): `number-sense/L1` to `L2`, `equations/L1`, `counting/L1`, `L2`, `counting-chance/L1` to `L2`, `random-vars/L1` to `L3`, `limits-thm/L1` to `L3`, `estimation/L1` to `L3`, `testing/L1`, `regression/L2`, `L3`, `stat-learning/L1`, `L2`, `validation/L1`, `L2`, `fin-ml/L1` to `L3`, `alpha/L1` to `L4`, `momentum-rep/L1` to `L3`. It is the researcher spine (probability, statistics, machine learning, the alpha project, the replication) and is real, not padding. Each level on it is also met by passing its topic exam or stage exit test.
 
 ## Rules applied and where I departed from the briefs
 
@@ -17,19 +17,19 @@ Mapping agent for `docs/briefs/prereq-gating.md` section 8. Edited fields: `requ
   - `measure-prob/L1`: the plan names `analysis` (all levels). Replaced by `ito/L1` and `counting-chance/L3`. This is the most doubtful change: the lessons lean on analysis l5 and l20. Add `analysis/L5` back only if the strand rule is relaxed.
   - `complex/L1`: "topic 1.10 finished" dropped (curriculum order only).
   - `pdes/L1`: `vector-calc` dropped (divergence and curl are one cited lesson).
-  - `brainteasers/L1`: `proof` L3 to L4 dropped; the lessons cite contests invariants and modulo instead.
-- Interview courses gate only on what their briefs name: `brainteasers` (counting-chance L2, contests L2, graphs-dp L3, mental L2), `game-theory`, `puzzles`, `mm-games`, `mental-pressure`, `coding-int`, `research-int`, `systems` use the plan's prerequisite lines and the "Builds on" lines of that level. No interview course waits on a topic outside those.
+  - `brainteasers/L1`: `proof` L3 to L4 dropped; the lessons cite contests invariants and modulo instead. After the fix pass `contests` gates only `brainteasers/L3` (modulo, `contests/L2`): the written level 1 lessons, review and homework cite no `contests` lesson and teach their invariants from scratch (the brief only asks for a one-line recall).
+- Interview courses gate only on what their briefs name: `brainteasers` (counting-chance L2 for L1; graphs-dp L3 for L2; mental L3, series L2, exp-log L3 and contests L2 for L3), `game-theory`, `puzzles`, `mm-games`, `mental-pressure`, `coding-int`, `research-int`, `systems` use the plan's prerequisite lines and the "Builds on" lines of that level. No interview course waits on a topic outside those.
 - `systems/L4`: the plan also names `cpp` L5 (titles only, unwritten). Left out so a written L4 is not blocked by an unwritten level; add `cpp/L5` if wanted.
 - `topology/L3`: the plan names `numerics/L2`. Replaced by `taylor/L1` (Newton's method, written) to avoid a second unwritten reference.
 - `numerics/L1`: the plan says "Stage 1 finished including odes L4". Replaced by the four things its lessons cite (`py-found/L1`, `cpp-pricing/L1`, `regression/L3`, which carries `least-squares/L3`).
 - `recruiting`, `mental`, `terminal`, `first-python`, `number-sense` first levels stay open. `sql/L1` takes `equations/L3` (WHERE conditions are inequalities) so no Stage 1 course is open to a fresh profile.
 - Projects: `recruiting/L2` and `L3` cite finished Stage 2 projects, but only as examples, and a Stage 0 course cannot require a later stage; both keep the implicit chain.
-- One `lessonRequires`: `coding-int` `l5-bit-tricks` needs `contests/L3` (bitmasks, l11) while the rest of level 1 needs only `contests/L1` (stress testing). Without the override either the whole level waits for three contests levels or the lesson is under-gated. The list repeats the level's other two references because it replaces them.
+- No `lessonRequires` after the fix pass. The first mapping had one (`coding-int` `l5-bit-tricks` on `contests/L3`); the review showed that `l1-merging-intervals`, `review-1` and `homework-1` also need `contests/L3`, so the whole level now takes `contests/L3` (two more closure levels).
 - Same-stage later-topic references: none (the one found, `multivar/L2` to `vectors/L1`, was replaced by `counting/L3`; `multivar` lessons must teach the dot product themselves, as `counting` l9 to l13 only gives arrows and lengths).
 
 ## Warnings added (reference to a level with no written lesson in this worktree)
 
-Most are a level of a course not yet written depending on the previous level of the same unwritten course, which is unavoidable and harmless. The cross-course ones, all genuine, are `pdes/L1` on `odes/L4` and `ito/L3`, `pdes/L3` on `numerics/L4`, `numerics/L3` on `odes/L4`, `odes/L2` and `pdes/L2` on `complex/L1`, `convex/L4` on `numerics/L2`, `measure-prob/L3` on `ito/L2`, `measure-prob/L4` and `pdes/L1` on `ito/L3`, `topology/L1` on `analysis/L5`. `coding-int/L4` on `coding-int/L3` clears when the parallel coding-int agent's level 3 merges.
+Most are a level of a course not yet written depending on the previous level of the same unwritten course, which is unavoidable and harmless. The cross-course ones, all genuine, are `pdes/L1` on `odes/L4` and `ito/L3` (the brief says "all of `odes` and `ito` level 3"), `pdes/L3` on `numerics/L4`, `numerics/L3` on `odes/L4`, `odes/L2` on `complex/L1`, `convex/L4` on `numerics/L2`, `measure-prob/L3` on `ito/L2`, `measure-prob/L4` and `pdes/L1` on `ito/L3`, `topology/L1` on `analysis/L5`. The `coding-int/L4` on `coding-int/L3` warning is gone: level 3 is written.
 
 - `complex/L2` requires `complex/L1`
 - `complex/L3` requires `complex/L2`
@@ -52,25 +52,20 @@ Most are a level of a course not yet written depending on the previous level of 
 - `momentum-rep/L3` requires `momentum-rep/L2`
 - `pairs-rep/L2` requires `pairs-rep/L1`
 - `ito/L4` requires `ito/L3`
-- `measure-prob/L2` requires `measure-prob/L1`
 - `measure-prob/L3` requires `measure-prob/L2`
 - `measure-prob/L3` requires `ito/L2`
 - `measure-prob/L4` requires `measure-prob/L3`
 - `measure-prob/L4` requires `ito/L3`
 - `pdes/L1` requires `odes/L4`
 - `pdes/L1` requires `ito/L3`
-- `pdes/L2` requires `pdes/L1`
-- `pdes/L2` requires `complex/L1`
 - `pdes/L3` requires `pdes/L2`
 - `pdes/L3` requires `numerics/L4`
-- `coding-int/L4` requires `coding-int/L3`
 - `topology/L1` requires `analysis/L5`
-- `topology/L3` requires `topology/L2`
 
 
 ## Stage 3 example: `research-int/L3` (The open case)
 
-Its list is the implicit `research-int/L2`. Following the chain, a fresh profile must finish, or test out of, exactly these **85 levels** (83 outside the course; each is met by its review, its topic exam, its stage exit test or a level test-out):
+Its list is the implicit `research-int/L2`. Following the chain, a fresh profile must finish, or test out of, exactly these **84 levels** (82 outside the course; each is met by its review, its topic exam, its stage exit test or a level test-out):
 
 - Stage 0, 0.1: number-sense L1 to L3, ratio L1 to L3
 - Stage 0, 0.2: equations L1 to L4, functions L1 to L3, quadratics L1 to L2
@@ -79,7 +74,7 @@ Its list is the implicit `research-int/L2`. Following the chain, a fresh profile
 - Stage 1, 1.1: py-found L1 to L2, numpy-pandas L1 to L3
 - Stage 1, 1.3: limits L1 to L4, integrals L1 to L2
 - Stage 1, 1.4: vectors L1 to L3, elimination L1 to L3, least-squares L1 to L3, eigen L1 to L3
-- Stage 1, 1.5: counting-chance L1 to L3, conditional L1 to L2, random-vars L1 to L3, limits-thm L1 to L3
+- Stage 1, 1.5: counting-chance L1 to L2, conditional L1 to L2, random-vars L1 to L3, limits-thm L1 to L3
 - Stage 1, 1.6: estimation L1 to L3, testing L1 to L3, regression L1 to L3
 - Stage 2, 2.1: stat-learning L1 to L3, validation L1 to L3, ensembles L1 to L3, fin-ml L1 to L2
 - Stage 3, 3.5: research-int L1 to L2
@@ -89,7 +84,8 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 ## Second-reader notes
 
 - Doubtful by judgement (no brief): the Stage 0 and Stage 1 lists in the first two sections below, notably `counting-chance/L3` before `conditional/L1` and `random-vars/L1` (deep for the probability spine; `counting-chance/L2` would shorten it by one), `plotting/L3` on `exp-log/L2`, `pytest/L3` on `git/L3` and `plotting/L2`, `eigen/L4` on `taylor/L2` and `multivar/L4`.
-- `linear-maps/L2` takes `eigen/L4` (the plan's "builds on eigen l13"), which drags `taylor/L2` and `multivar/L4` behind a pure course; drop it if that is too heavy.
+- Both items above were decided in the fix pass: `counting-chance/L2` replaces `counting-chance/L3` on `conditional/L1` and `random-vars/L1` (with `counting-chance/L3` added to `game-theory/L3` and `mental-pressure/L4`), and `linear-maps/L2` now takes `eigen/L1` (`eigen` l3-eigenbasis carries the change of basis of a matrix). The others stay.
+- Fix pass summary: 15 implied references dropped (`taylor/L2` two, `markov/L5`, `complex/L1`, `complex/L3`, `odes/L1`, `stat-learning/L3`, `numerics/L4`, `stat-models/L1`, `ito/L1`, `measure-prob/L2`, `pdes/L2`, `algebra/L1`, `topology/L3`) and `cpp/L4` on `systems/L1`; seven lists deleted because they equalled the implicit one (`puzzles/L3`, `taylor/L2`, `markov/L5`, `stat-learning/L3`, `measure-prob/L2`, `pdes/L2`, `topology/L3`). Disputed and kept: `micro/L1` on `markets/L2`, `pdes/L1` on `odes/L4` and `ito/L3`, `systems/L1` on `cpp-pricing/L3`, `mental-pressure/L4` on `limits-thm/L2`. Reasons are in the Fix pass of the review file.
 
 # Per course
 
@@ -248,7 +244,7 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 ### taylor (topic 1.3): Series and Approximation
 
 - L1 Approximating with lines: `limits/L4` (tangent lines, Newton and duration use derivatives and sensitivity).
-- L2 Polynomials that hug a curve: `taylor/L1` (matching derivatives); `exp-log/L3` (the series of e^x and ln); `trig/L2` (the series of sin and cos).
+- L2 Polynomials that hug a curve: implicit, `taylor/L1`.
 - L3 Infinite series: `taylor/L2` (infinite series of the polynomials); `series/L2` (adding forever).
 
 ### eigen (topic 1.4): Eigenvalues and the SVD
@@ -278,7 +274,7 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 
 ### conditional (topic 1.5): Conditional Probability
 
-- L1 Updating on evidence: `counting-chance/L3` (conditioning shrinks sample spaces and uses the probability rules).
+- L1 Updating on evidence: `counting-chance/L2` (conditioning shrinks sample spaces and uses counting in stages and the multiplication rule).
 - L2 Bayes’ rule: implicit, `conditional/L1`.
 - L3 Independence: implicit, `conditional/L2`.
 - L4 Puzzles that fool experts: implicit, `conditional/L3`.
@@ -303,11 +299,11 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 - L2 The long run: `markov/L1` (the long run of a chain); `vectors/L3` (stationary distributions solve a linear system).
 - L3 Random walks: `markov/L2` (walks use first-step analysis); `random-vars/L3` (expectation and variance of steps).
 - L4 Reversible chains and sampling: `markov/L3` (reversible chains); `limits-thm/L4` (Gamma waits for the arrivals of the Poisson process).
-- L5 Martingales and stopping: `markov/L4` (martingales extend the chains); `random-vars/L4` (conditional expectation).
+- L5 Martingales and stopping: implicit, `markov/L4`.
 
 ### random-vars (topic 1.5): Random Variables
 
-- L1 Random variables: `counting-chance/L3` (a random variable labels outcomes).
+- L1 Random variables: `counting-chance/L2` (a random variable labels outcomes of counted experiments).
 - L2 Expectation: implicit, `random-vars/L1`.
 - L3 Spread: implicit, `random-vars/L2`.
 - L4 Two variables at once: `random-vars/L3` (joint tables); `conditional/L3` (independence of variables).
@@ -401,19 +397,19 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 ### linear-maps (topic 1.10, strand pure): Linear Maps and Proof
 
 - L1 Vector spaces: `proof/L3` (abstract vector spaces are proved); `elimination/L2` (spaces, bases and rank).
-- L2 Linear maps: `linear-maps/L1` (maps between vector spaces); `least-squares/L1` (four subspaces); `eigen/L4` (same map, new basis).
+- L2 Linear maps: `linear-maps/L1` (maps between vector spaces); `least-squares/L1` (four subspaces); `eigen/L1` (l13 changes the basis of a matrix, taught in eigen l3-eigenbasis).
 - L3 Duality and inner products: `linear-maps/L2` (duality); `least-squares/L2` (projections and inner products).
 - L4 Operators: `linear-maps/L3` (operators); `eigen/L2` (spectral theorem builds on symmetric matrices).
 
 ### complex (topic 1.11, strand quant): Complex Numbers
 
-- L1 The complex plane: `trig/L3` (Euler's formula needs identities); `exp-log/L3` (e^x); `taylor/L2` (series of e^x, sin and cos).
+- L1 The complex plane: `trig/L3` (Euler's formula needs identities); `taylor/L2` (series of e^x, sin and cos).
 - L2 Complex functions: `complex/L1` (functions of a complex variable); `multivar/L1` (partial derivatives for Cauchy-Riemann).
-- L3 Integrals and Fourier: `complex/L2` (contour integrals); `integrals/L3` (improper integrals); `limits-thm/L4` (characteristic and generating functions).
+- L3 Integrals and Fourier: `complex/L2` (contour integrals); `limits-thm/L4` (characteristic and generating functions).
 
 ### odes (topic 1.11, strand quant): Differential Equations
 
-- L1 First-order equations: `integrals/L3` (separable equations need integration techniques); `exp-log/L3` (exponential solutions).
+- L1 First-order equations: `integrals/L3` (separable equations need integration techniques).
 - L2 Second-order equations: `odes/L1` (second-order); `complex/L1` (complex roots and Euler's formula).
 - L3 Systems and stability: `odes/L2` (systems); `eigen/L4` (stability from eigenvalues and e^(At)).
 - L4 Transforms and numerical solution: `odes/L3` (transforms and numerical solution); `taylor/L3` (Taylor error of Euler and Runge-Kutta); `numpy-pandas/L1` (NumPy solvers).
@@ -443,7 +439,7 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 
 - L1 What learning means: `regression/L3` (learning generalises regression); `numpy-pandas/L3` (data handling).
 - L2 Linear models: implicit, `stat-learning/L1`.
-- L3 Classification: `stat-learning/L2` (classification extends linear models); `conditional/L2` (probabilities of classes).
+- L3 Classification: implicit, `stat-learning/L2`.
 
 ### validation (topic 2.1): Validation and Leakage
 
@@ -509,11 +505,11 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 - L1 Errors: `py-found/L1` (floating point); `cpp-pricing/L1` (doubles in C++); `regression/L3` (conditioning and collinearity).
 - L2 Equations and curves: `numerics/L1` (root finding after errors); `taylor/L1` (Newton); `algo-think/L3` (bisection is halving); `trees/L3` (implied volatility).
 - L3 Integrals and time steps: `numerics/L2` (integrals and steps); `odes/L4` (Euler and Runge-Kutta).
-- L4 One option, three ways: `numerics/L3` (three ways to price); `trees/L3` (the pricer); `opt-dash/L2` (Monte Carlo pricers).
+- L4 One option, three ways: `numerics/L3` (three ways to price); `opt-dash/L2` (Monte Carlo pricers).
 
 ### stat-models (topic 2.6, strand quant): Statistical Modelling
 
-- L1 Generalised linear models: `stat-learning/L3` (logistic models); `regression/L3` (GLMs generalise regression).
+- L1 Generalised linear models: `stat-learning/L3` (logistic models).
 - L2 Experiments: `stat-models/L1` (experiments); `testing/L3` (multiple testing and ANOVA).
 - L3 Without the assumptions: `stat-models/L2` (without the assumptions); `limits-thm/L4` (order statistics).
 - L4 Bayesian models: `stat-models/L3` (Bayesian models); `markov/L4` (MCMC is a Markov chain).
@@ -535,7 +531,7 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 
 ### ito (topic 3.2): Brownian Motion and Itô
 
-- L1 Brownian motion: `markov/L3` (walks scale to Brownian motion); `limits-thm/L3` (sums look normal); `trees/L3` (tiny steps).
+- L1 Brownian motion: `markov/L3` (walks scale to Brownian motion); `trees/L3` (tiny steps).
 - L2 Itô calculus: `ito/L1` (Itô calculus); `taylor/L2` (second-order expansion); `random-vars/L4` (conditional expectation).
 - L3 Pricing: implicit, `ito/L2`.
 - L4 Stochastic calculus at interview: `ito/L3` (interview questions on the derivation); `markov/L5` (optional stopping and reflection).
@@ -543,34 +539,34 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 ### measure-prob (topic 3.2, strand quant): Measure-Theoretic Probability
 
 - L1 Measures: `ito/L1` (the course follows Brownian motion); `counting-chance/L3` (events as sets and the axioms).
-- L2 Integration: `measure-prob/L1` (integration); `limits-thm/L3` (laws of large numbers and the CLT).
+- L2 Integration: implicit, `measure-prob/L1`.
 - L3 Information and martingales: `measure-prob/L2` (conditional expectation); `markov/L5` (martingales); `ito/L2` (fair games).
 - L4 Changing measure: `measure-prob/L3` (change of measure); `ito/L3` (risk-neutral pricing).
 
 ### pdes (topic 3.2, strand quant): Partial Differential Equations
 
 - L1 The heat equation: `odes/L4` (PDEs extend ODEs); `ito/L3` (the Black-Scholes equation).
-- L2 Separation and Fourier series: `pdes/L1` (Fourier series); `complex/L1` (Euler's formula).
+- L2 Separation and Fourier series: implicit, `pdes/L1`.
 - L3 Pricing equations: `pdes/L2` (pricing equations); `numerics/L4` (finite differences).
 
 ### brainteasers (topic 3.3): Logic and Brainteasers
 
-- L1 Invariants and counting arguments: `counting-chance/L2` (counting in stages); `contests/L2` (invariants and modulo).
+- L1 Invariants and counting arguments: `counting-chance/L2` (counting in stages).
 - L2 Strategy and logic: `brainteasers/L1` (strategy); `graphs-dp/L3` (remembering (dynamic programming)).
-- L3 Quick reasoning: `brainteasers/L2` (quick reasoning); `mental/L2` (squaring); `series/L2` (Gauss); `exp-log/L3` (doubling time and natural log).
+- L3 Quick reasoning: `brainteasers/L2` (quick reasoning); `mental/L3` (squaring and known decimals, l8 and l10); `series/L2` (Gauss); `exp-log/L3` (doubling time and natural log); `contests/L2` (modulo (l5) for digits and remainders).
 
 ### game-theory (topic 3.3): Games, Auctions and Poker
 
 - L1 Games in a table: `random-vars/L2` (fair price); `equations/L4` (simultaneous equations for mixing).
 - L2 Sequential games and auctions: `game-theory/L1` (sequential games); `graphs-dp/L4` (dice stopping); `micro/L3` (adverse selection and winner's curse); `limits/L4` (optimising a bid).
-- L3 Poker and decisions: `game-theory/L2` (poker and decisions); `puzzles/L4` (Kelly sizing and who wins).
+- L3 Poker and decisions: `game-theory/L2` (poker and decisions); `puzzles/L4` (Kelly sizing and who wins); `counting-chance/L3` (l12-poker-hands: hand counts).
 
 ### mental-pressure (topic 3.3): Mental Maths Under Pressure
 
 - L1 Speed: `mental/L3` (speed drills extend the mental drills).
 - L2 Fractions and estimates: implicit, `mental-pressure/L1`.
 - L3 Test formats: implicit, `mental-pressure/L2`.
-- L4 Assessment batteries: `mental-pressure/L3` (batteries); `conditional/L2` (natural frequencies); `limits-thm/L2` (bell curve).
+- L4 Assessment batteries: `mental-pressure/L3` (batteries); `conditional/L2` (natural frequencies); `limits-thm/L2` (bell curve); `counting-chance/L3` (l10-birthday: the birthday benchmark).
 
 ### mm-games (topic 3.3): Market-Making Games
 
@@ -582,14 +578,14 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 ### puzzles (topic 3.3): Probability Puzzles
 
 - L1 Expected value: `random-vars/L2` (expected value and indicators); `markov/L2` (waiting times by first step).
-- L2 Conditioning: `puzzles/L1` (conditioning); `conditional/L2` (Bayes in a minute); `markov/L3` (ruin in interviews).
-- L3 Continuous and geometric: `puzzles/L2` (continuous puzzles); `limits-thm/L2` (densities and areas).
+- L2 Conditioning: `puzzles/L1` (conditioning); `conditional/L2` (Bayes in a minute); `markov/L3` (ruin in interviews); `limits-thm/L2` (continuous distributions: l11-largest-of-several uses uniform draws and densities).
+- L3 Continuous and geometric: implicit, `puzzles/L2`.
 - L4 Games and betting: implicit, `puzzles/L3`.
 - L5 Puzzles firms keep asking: `puzzles/L4` (firms' favourites); `conditional/L4` (Monty Hall); `limits-thm/L4` (smallest and largest); `estimation/L1` (right target).
 
 ### algebra (topic 3.4, strand pure): Abstract Algebra
 
-- L1 Groups: `proof/L3` (groups are proved); `linear-maps/L2` (structure-preserving maps); `contests/L2` (modulo and gcd).
+- L1 Groups: `linear-maps/L2` (structure-preserving maps); `contests/L2` (modulo and gcd).
 - L2 Inside a group: implicit, `algebra/L1`.
 - L3 Maps between groups: implicit, `algebra/L2`.
 - L4 Rings and fields: implicit, `algebra/L3`.
@@ -598,12 +594,11 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 
 - L1 Metric spaces revisited: `analysis/L5` (metric spaces are revisited).
 - L2 Topological spaces: implicit, `topology/L1`.
-- L3 Compact and complete: `topology/L2` (compactness); `taylor/L1` (Newton iteration as a fixed-point example).
+- L3 Compact and complete: implicit, `topology/L2`.
 
 ### coding-int (topic 3.5): Coding Interviews
 
-- L1 Patterns still to learn: `graphs-dp/L4` (ds and graph patterns); `algo-think/L3` (sorting by hand and greedy); `contests/L1` (stress testing).
-  - override `l5-bit-tricks`: `graphs-dp/L4` (ds and graph patterns); `algo-think/L3` (sorting by hand and greedy); `contests/L3` (bitmasks).
+- L1 Patterns still to learn: `graphs-dp/L4` (ds and graph patterns); `algo-think/L3` (sorting by hand and greedy); `contests/L3` (greedy proofs (l1 cites l10) and bitmasks (l5 uses l11)).
 - L2 Strings and simulation: `coding-int/L1` (strings build on patterns); `micro/L1` (the matching engine).
 - L3 Design in code: `coding-int/L2` (design); `py-found/L3` (data with behaviour).
 - L4 Under the clock: `coding-int/L3` (under the clock); `contests/L4` (choosing which problem first and debugging under time).
@@ -617,7 +612,7 @@ Not required: markov, multivariable calculus, taylor, the finance topics, algori
 
 ### systems (topic 3.5): Systems for Developer Interviews
 
-- L1 Memory and the machine: `cpp/L4` (addresses, heap and vector); `cpp-pricing/L3` (timing, memory layout and flags).
+- L1 Memory and the machine: `cpp-pricing/L3` (timing, memory layout and flags (cpp/L4 is implied by it)).
 - L2 Concurrency: `systems/L1` (concurrency); `ds/L3` (queues for producer-consumer).
 - L3 Operating systems and networks: implicit, `systems/L2`.
 - L4 Low-latency C++: implicit, `systems/L3`.
