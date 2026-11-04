@@ -56,3 +56,19 @@ Regression: all 37 cases of items 501 and 502 re-run without `integers` (script 
 
 Checks: `node tools/validate.mjs`: 0 errors. New warnings from the `(-1)^k` rule in existing content: `content/courses/pdes/l6-fourier-series.json` screens[3] (`answer`, `accept[0]`, `accept[1]`, all `(-1)^{k}`); no other file. Not edited (content agents add `"integers": ["k"]`). `--routes-only --local-cdn`: all passed. Playthroughs with `--local-cdn`: `integrals/l9-undo-chain`, `linear-maps/l8-maps-as-matrices`, `analysis/l15-epsilon-delta`, `pdes/l6-fourier-series`: all passed.
 Files: `app/js/engine/grade.js`, `app/js/engine/widgets/expression.js`, `app/tools/validate.mjs`, `docs/AUTHORING.md`, `docs/ENGINE-BACKLOG.md`, this report.
+
+## 514 P32-expr-D
+
+Source: `docs/reviews/review-pdes.md`. Compute Engine 0.30.2 reads `D` and `N` as operators: `Dt` is `["Tuple","D","t"]`, `4Dt` is `["Tuple",4,"D","t"]`, `tD` is `["Tuple","t","D"]`, `D\cdot t` is an error. Every other capital letter before a letter is a product (checked A to Z with `t`; `G` is the Catalan constant, a number, so it still compares correctly on both sides). `d` is a product. `\partial t` is `["Tuple",["PartialDerivative"],"t"]`, `\frac{d}{dt}f` a nonsense product, `\frac{\partial}{\partial t}u` an error: derivative typing is unsupported by the grader before and after, and left alone.
+
+Change: in `prep()` the old rule (`D` or `N` not followed by a letter, not preceded by a letter or backslash) is replaced by one rule: every `D` or `N` that is not inside a command name (`\Delta`) and not the first letter of a `\mathrm{..}`, `\mathbb{..}`, `\text{..}`, `\operatorname{..}` group becomes `\mathrm{D}` or `\mathrm{N}`. `functions: ["D"]` keeps the operator reading before a letter. `prep()` feeds every comparison, so exams and banks are covered.
+
+Before (old grader, all false): `\sqrt{2Dt}` / `\sqrt{2tD}`; `\sqrt{2Dt}` / `\sqrt{2}\sqrt{D}\sqrt{t}`; `4Dt` / `4tD`; `4Dt` / `2D\cdot 2t`; `\frac{x^2}{4Dt}` / `\frac{x^2}{4tD}`; `Dx` / `xD`; `DT` / `TD`. Identical text (`Dt` / `Dt`) passed.
+After: all true; `2Dt` / `4Dt` false; `\partial t` / `t` false.
+
+Regression (Node harness, scripts `tReg2.cjs`, `tInt2.cjs`, `t2.cjs` in the scratchpad): the 37 cases of items 501 and 502 and the item 503 cases give the same results as recorded above (0 failures; the pre-existing `f(x)+1` and the two documented without-`integers` cases only).
+
+Content scan (answer and accept keys of 307 `expression` widgets, all courses, exams and banks; no content edited): only `content/courses/pdes/l2-heat-equation.json`, screen index 5 (`screens.5.widget`), keys `-\frac{1}{2t}+\frac{x^2}{4Dt^2}`, `-1/(2t)+x^2/(4Dt^2)` and `x^2/(4Dt^2)-1/(2t)`; the old grader parsed them as tuples, so only identical text passed. `mental-pressure/l11-word-problems` screen 8 has `Prm/1200` (multi-letter symbol, unaffected by this rule).
+
+Checks: `node tools/validate.mjs`: 0 errors (541 warnings). `--routes-only --local-cdn`: all passed. Playthroughs with `--local-cdn`: `pdes/l2-heat-equation`, `integrals/l9-undo-chain`, `analysis/l15-epsilon-delta`: all passed. The full `--all` run was not repeated (same reasoning as above: grader-only change).
+Files: `app/js/engine/grade.js`, `docs/AUTHORING.md`, `docs/ENGINE-BACKLOG.md`, this report. The validator needed no rule.
