@@ -44,3 +44,63 @@ Counts: 3 errors, 9 warnings, 12 notes. Voice scan: 2 hits (2 sentences over 20 
 Level 1: every key and `wrong` value (4-step and 4,096-step squared sums, $\sqrt{2m/\pi}$ length, cubes, $\Phi$ values, VaR $\times\sqrt{10}$, covariance and correlation items, the GBM mean, median, mode and loss chances, $-12$ Euler price, 0.2018 and 0.24 realised volatilities). Level 2: left, midpoint and right sums, isometry values (0.5, 1/3, 2, 39, 1), $d(S^2)$ drift 2000, $E[S^2] = 12{,}214.03$, 129.68 end price, $\Phi(-1.8) = 0.0359$, Euler gaps, martingale tables (including $W^4 - 6tW^2 + 3t^2$ and $e^{t/2}\cos W$). Level 3: Greeks (0.6368, 0.018762, $-6.4140$), residual 0, 53.2325 book, 22.63 P&L, $\theta = 0.35$ weights (0.6628, 1.3348, 1.8941), tree 10.4306 and 10.4466 and 10.4680 at 101 steps, MC 15.53 and 14.48 and 10.99 traps, $c_{di} = 1.7851$, shifted barrier 89.3418 and price 8.9139, touch chances 0.3173 and 0.3085 and 0.1243 and 0.2202, 0.7913 average weight. Level 4: exit chances and times (0.6, 6, 0.7311, 0.9242, 0.91, 1.4598, 0.4717, 0.9046, 5.5924), Hermite fifth-power constants ($-10$, 15, $-30$), moment items (132, 4, 6, 14, 5.2083, 21.3333, 0.5), digital and forward prices at three markets (0.5323, 4.8771, 0.4189, 0.3972, 2.1895), $\sqrt{S_T}$ price 9.3941, put Theta $-0.6721$ and $-1.6579$, 6.32, 78.40, 90.33. All rubrics sum to 10; every `byKey` id matches a wrong entry (the only mismatches reported by the scan are slider and drag-point `from`/`to` ranges). Order items: `same` groups are valid in l2, l6, l9, l10, l15 and homework-3; reviews and homeworks play through with 100% on their model paths. Continuity: reference path (seed 3), seeded year (seed 4, £129.6833, 0.2799 and 0.2599, 0.1994 realised), the £100 / 5% / 20% option (10.4506) and the 8% / 12% / 20% share carry unchanged from l1 to l17; $W_t^2 - t$, $e^{\theta W - \theta^2t/2}$ and $e^{-2\mu X}$ are each taught before use; Wald and Greeks are used with a one-line gloss (see note 21). Lesson shape (hook, explore, name, ladder, trap, edge case, derive, code, transfer, summary, 4-item quiz, 7 to 13 item set with a longform and a derive or code item) holds for all 17 lessons and 8 sets. Phone: no horizontal scroll at 440 in any playthrough; tablet sheets at 1032 x 1376 and 1376 x 1032 show no clipping or overlap beyond warnings 4 and 5.
 
 ## Fix pass
+
+### Fix pass (4 Nov)
+
+Status: 24 findings: 20 fixed, 2 checked and found correct with no edit (15, 16), 2 disputed with checked reasons (22, 23), 0 deferred. Targeted edits only, in `app/content/courses/ito/`; no id renamed, `course.json` untouched. Numbers touched were recomputed by two routes (scratchpad `fix-read-ito/`: `qv.py`, `gbm.py`, inline checks).
+
+1. fixed. l2 s8: option `normal` is now "Normal values: each $X_t \sim N(0, t)$" with `why` "The question gives this, and it holds. The failure is in the increments." `indep` stays the only key.
+2. fixed. review-1 r-var-sum3 `sq`: "36 is $(1 + 2 + 3)^2$, the square of the sum of the variances ..." (36 = 6^2; Var(3W_3) = 27 checked: 9 x 3).
+3. fixed. homework-1 h-fourth-cross `noKurt`: "You used $E[W_s^4] = 2s^2$ ..." ($3s^2 + s(t-s) = 2s^2 + st$; with $2s^2$ the sum is $s^2 + st$; with $s^2$ it is $st$, the `indep` value).
+4. fixed. l12 s3 display now `aligned` over two lines; at 440 nothing is clipped (screenshot read at 440, 1032, 1376).
+5. fixed. Summary formula cards: l8 `a = 0 \Rightarrow X \text{ is a martingale}` (the $dX$ form moved to the note); l10 `Z_T = e^{-\theta W_T - \theta^2T/2}` ($\theta$ and $E_P[Z_T] = 1$ moved to the note); l11 `V_0 = e^{-rT}E_Q[h(S_T)]` (call form in the note, and the note now says the two £ figures are prices, not chances). All three read whole at 440.
+6. fixed. l3 s4: `b4` folded into `b1`, `b4` removed, answer `b1, b2, b3, b5`, `same: [[b1, b2]]` added (b2 also needs only the definition of $Z$; checked that $b3$ needs both). l6 s2: `e4` merged into `e3`, answer `e1, e2, e3, e5`, `same [[e2, e3]]` kept. l6 `e1` also shortened because its long inline formula widened the whole order list at 440 (seen in the screenshot, now fits). homework-4 h-stopping: `same: [[o2, o3]]` added (o3 needs only o1; o4 needs both).
+7. fixed. l4 s6 prose restates $\mu = 8\%$ and $\sigma = 20\%$ (key $100e^{-1.14} = 31.98$ checked again).
+8. fixed. l12 s5 states the contract ("knocks out if the price is at or below the barrier at any date, including the start") and the `naive` line now says this note also tests at time 0.
+9. fixed. l16 q-cube: "Give the nearest £", key 1246077, `tol.abs` 1 on key and both wrong values (1,246,076.73 and 1,105,170.92 and 1,309,964.45 recomputed: $10^6e^{0.22}$, $10^6e^{0.10}$, $10^6e^{0.27}$).
+10. fixed. l13 s2: `accept ["y"]` and `["n"]` on the four cells.
+11. fixed. See the table below; every key above 1.2 is now 1.12 or lower.
+12. fixed. review-3 r-qmean restates $\mu = 10\%$, $r = 4\%$, $S_0 = \text{£}50$, $T = 1$ (answer $50e^{0.04} = 52.04$ unchanged).
+13. fixed. homework-1 h-why-gbm model and l2 s8 prose split. Voice scan over the whole course: 0 sentences over 20 words and 0 explanations over three sentences (7,759 scanned).
+14. fixed. l6 s7 explain: "(from the unrounded end £129.68326)". Recomputed: seed 4, 252 steps, end 129.683264 and $\ln = 0.2599249$, by $\sum$ of steps and by $0.06 + 0.2W_1$.
+15. checked, no change needed: only KaTeX `\neq` sequences exist (re-grepped). 
+16. checked, no change needed beyond warning 9 (all six answers sit in their `accept` text). 
+17. fixed. l3 s0 accept adds "(0.6640 from unrounded increments)"; recomputed from NumPy `default_rng(3)`: increments 0.55614, 0.48099, -0.26473, -0.23076, squares sum 0.663981.
+18. fixed. l4 q-flat-median question adds "Give it as a percentage."
+19. fixed. l1 s9 and review-1 r-var-horizon: "in £ million, as a number".
+20. fixed. l9 and l13 now open with the l1 wording.
+21. fixed. l14 s5: "stop the martingale $X_t - \mu t$. That gives Wald: ..."
+22. disputed. Options are an ordered scale of sizes (the reader notes "fine for an ordered scale"); shuffling would hide the scale, and one item with the key third is not a pattern across the course (key positions elsewhere are shuffled).
+23. disputed (no change): "at least 2 decimal places" with 3.7 failing matches the instruction, as the reader says.
+24. fixed. l9 s7 `no-theta`: "the time decay it pays each day".
+
+**Key-length table** (key characters / longest distractor characters, raw option text, as the reader measured; "item" is the screen or quiz id):
+
+| file | item | before | after |
+|---|---|---|---|
+| l1 | q-power | 3.17 (38/12) | 1.10 (22/20) |
+| l1 | q-var-rule | 1.71 (72/42) | 1.04 (56/54) |
+| l4 | q-step | 1.53 (92/60) | 1.12 (75/67) |
+| l9 | q-mu | 1.43 (33/23) | 1.06 (33/31) |
+| l4 | s10 (typical) | 1.32 (82/62) | 0.97 (60/62) |
+| l6 | s1 | 1.30 (70/54) | 1.06 (57/54) |
+| l2 | s1 | 1.27 (51/40) | 1.09 (47/43) |
+| l10 | s8 | 1.25 (134/107) | 0.94 (120/127) |
+| l4 | s1 (median) | 1.24 (41/33) | 0.97 (35/36) |
+| l12 | q-path | 1.23 (64/52) | 0.85 (44/52) |
+| review-1 | r-martingale | 1.22 (11/9) | 1.10 (11/10) |
+| l1 | s5 | 1.22 (50/41) | 1.02 (42/41) |
+| l7 | s6 | 1.18 (85/72) | 1.08 (78/72) |
+| l9 | s6 | 1.15 (68/59) | 0.93 (55/59) |
+
+Left as they were (under 1.2): l3 s1 1.16, l17 s9 1.13, l11 s4 1.11. The two `multi` items (homework-1 h-which-martingales, homework-2 h-which-mart) have three keys each and are outside the "choice" count of 52; their keys are the longer martingale expressions, and padding the distractors would need new `why` lines, so they are unchanged. Meaning of every key kept; no distractor made correct. Where text changed, the feedback, `why` and explain were checked: l1 q-power drops "like $n^{0.2}$" from the key (the feedback and explain keep it); review-1 `drift` is now $W_t + 2t$ with its `why` rewritten (E = $W_s + 2t$ = $(W_s + 2s) + 2(t - s)$, drifts up).
+
+**Changed keys** (graded answers; the grep for each old value found no stale use):
+- l16-pricing-in-a-minute | q-cube | answer 1246076.73 (tol 0.05) to 1246077 (tol 1); wrong values `jensen` and `no-discount` tol 0.05 to 1.
+- l3-quadratic-variation | screens[4] order | answer b1, b2, b3, b4, b5 to b1, b2, b3, b5 (b4 folded into b1); `same` [[b1, b2]] added.
+- l6-ito-lemma | screens[2] order | answer e1, e2, e3, e4, e5 to e1, e2, e3, e5 (e4 merged into e3).
+- homework-4 | h-stopping | `same` [[o2, o3]] added; answer unchanged.
+- l13-martingale-or-not | screens[2] table | `accept` y and n added; answers unchanged.
+- l2-normal-increments | screens[8] | key `indep` unchanged; the `normal` distractor is now a true statement that the question already gives.
+
+**Checks.** `node tools/validate.mjs`: 0 errors. Playthrough with `--local-cdn` of every changed file (lessons l1, l2, l3, l4, l6, l7, l8, l9, l10, l11, l12, l13, l14, l16; sets review-1, review-3, homework-1, homework-4): all passed without flags and with `--mobile --tablet --shots`; no "page wider than the window" note. Screenshots read at 440, 1032 and 1376: l12 s3 and s5, the l8, l10 and l11 summaries, l6 s2, l3 s4, l2 s8. No code item was touched, so there was no new starter or solution to run in Pyodide. Engine limit: none to record, so no inbox bullet (every clip was fixed in content).
