@@ -176,3 +176,30 @@ None.
 14. Choice keys: no key is visibly longer than its distractors, except `l12` q-ls-file (11 characters against 4, 7, 7, ratio 1.57, short code literals). `l13` s4 (1.44) and s7 (1.35) are within the 1.5 limit.
 15. h3-hit-counter: a deque of every hit passes all 5 tests, since "fixed amount of memory" cannot be tested by output. The `how` line does not claim it, so no change.
 16. The checked lessons sit in `l11` to `l14` of `coding-int` and no other course, exam, drill or bank file repeats their numbers. I grepped `app/content/` for each sum, trace and test input: `ds` `h-lru` has the same shape as hidden LRU test 4 but different keys and answers.
+
+## Fix pass
+
+Fixed 14 findings (1 to 11, notes 13 and 14), disputed 0, deferred 3 (note 12, note 15, and the O(capacity) speed-test note under mismatch 3). Every number below was computed twice, by hand and with a simulator in the scratchpad `fix/` folder.
+
+1. FIXED. LRU evict-first. Added hidden test `run_lru(2, [[0,1,10],[0,2,20],[0,2,21],[1,1],[1,2]])` expecting `[10, 21]` as Python test 9 and C++ test 8. Evict-first returns `[-1, 21]` and fails; reference passes. Counts in `how` now 9 and 8, `test-9` and `test-8` feedback added.
+2. FIXED. TTL put refresh. Added `run_ttl(2, 5, [[0,1,10,0],[0,1,11,4],[1,1,7]])` expecting `[11]` as test 7. The put at 4 stamps 4, age 3 at 7 is live. No-stamp gives age 7, `-1`, and fails. `how` says 7; `test-7` added.
+3. FIXED. Bucket cap. Added `run_bucket(2, 1, [0, 10, 10, 10])` expecting `[True, True, True, False]` as test 7. Capped: 2 tokens, spend 1 at 0, refill to min(2, 11) = 2 at 10, three spends leave 1, 0, then refuse. Uncapped gives all True and fails. `how` 7; `test-7` added. Speed-test capacities left at 1,000 or less: a constant-time check cannot be made reliable under the 5 s limit by capacity alone, deferred.
+4. FIXED. l11 s5 canvas `cells` `[1, 2]` to `[2, 1]`.
+5. FIXED. l11 s7 explain canvas cells key 3 and key 1 to key 3 only (`t=9`). At 12, ttl 5: ages 3, 5, 8, so 3 live, keys 1 and 2 purged.
+6. (Table rows 8, 9, 10, all FIXED.) 8: `review-3` r3-ttl-misses `one` stays 1; old line gave 0 (same as `none`). New slip: count only the miss at 5, giving 1. Gets: 2 hit, 5 miss, 6 miss, 9 miss is 3; slip counts 1. 9: r3-window-accept replaced by new numbers (see 11). 10: `homework-3` h3-lfu-trace `tie` 8 to 7. Gets with the tie going to the most recent: put4 evicts key 3, so gets 1, -1, 3, 1, -1, 4. Sum 1 - 1 + 3 + 1 - 1 + 4 = 7, and by running totals 0, 3, 4, 3, 7.
+7. FIXED. h3-lfu: added `run_lfu(2, [[0,1,1],[1,1],[0,2,2],[0,3,3],[1,1],[1,2],[1,3]])` expecting `[1, 1, -1, 3]` (test 8) and `run_lfu(2, [[0,1,1],[0,1,7],[0,2,2],[0,3,3],[1,1],[1,2],[1,3]])` expecting `[7, -1, 3]` (test 9). Plain LRU fails test 8 and 9; the no-count version fails test 9; reference passes both.
+11. FIXED, four repeats.
+    - Ledger now buys 8 at £60, sells 3 at £64, buys 15 at £52, sells 10 at £58. Average: 3 x 4 = 12, then 5 x 60 + 15 x 52 = 1,080 over 20 = 54 (also 60 x 1/4 + 52 x 3/4 = 54), 10 x 4 = 40, total 52. FIFO: 12, then 5 x (58 - 60) = -10 and 5 x 6 = 30, total 32 (also sold cost 300 + 260 = 560 against 580, profit 20, plus 12). Gap 20 (also leftover 10 shares cost 540 on average and 520 by FIFO). Wrong values: part 1 `fifo` 32, `second` 40; part 2 `avg` 52, `skip` 42 (12 + 30); part 3 `flip` -20, `sum` 84 (52 + 32).
+    - r3-window-accept now limit 3, window 7, times 0, 1, 2, 3, 4, 7, 8. Correct: accepts 0, 1, 2, refuses 3 and 4, at 7 the log [1, 2] accepts, at 8 [2, 7] accepts: 5. `edge` (time at the cut-off still counts) refuses 7, accepts 8: 4. `recorded` (refused times logged) accepts 0, 1, 2 only: 3. Each recomputed by simulator.
+    - h3-get-steps now orders the LFU touch (remove from bucket, raise minimum, add one, join the new bucket last), with `same` on s2 and s3 and the distractor "front of the new bucket". No lesson covers it.
+    - h3-lfu test 1 keys and values moved to 15 to 18 and 150 to 180; expect `[150, -1, 170, -1, 170, 180]`, same structure, so same trace.
+13. FIXED. Rewrote the 20-word sentences in l11 s4 (prose, `how`), l11 s9 explain, l11 s10 prose, l13 s10 explain, l14 s3 prose and `test-1`, h3-lfu prose, `how`, `test-4`, h3-rate-limit-aloud model, h3-lfu-trace explain. All at 19 words or fewer; the new `how` lines also checked.
+14. FIXED. l12 q-ls-file options now carry short labels (key 31 characters against 31, 27, 26).
+12 and 15 left as the checker advised. Mutant results are in the list below.
+
+Mutants run against the new tests (all from the checker's scripts, repointed to this worktree): FAIL now: LRU evict-first (t9), TTL put-update no stamp (t7), TB no cap (t7), LFU as plain LRU (t8, t9), LFU put no count (t9). Still pass, deferred: LRU list O(capacity), LFU O(capacity) scan, TTL no purge in put and lazy get-only (equivalent output), RL full-history list, HC deque, FS truthy content. Reference passes every test and starters fail.
+
+### Changed keys and tests for recheck
+
+- Tests added: l11 s2 test 9; l11 s4 test 8; l11 s6 test 7; l14 s6 test 7; homework-3 h3-lfu tests 8 and 9. Test changed: h3-lfu test 1 (keys and expect).
+- Keys changed: `review-3` r3-window-accept answer 4 to 5 (wrong 4 and 3); `homework-3` h3-ledger-follow-ups answers 35, 20, 15 to 52, 32, 20 (wrong values 32, 40; 52, 42; -20, 84); h3-lfu-trace wrong `tie` 8 to 7; h3-get-steps new answer order; r3-ttl-misses wrong `one` text only (value 1); l11 s5 canvas cells; l11 s7 explain canvas; l12 q-ls-file option texts (key still `a`).

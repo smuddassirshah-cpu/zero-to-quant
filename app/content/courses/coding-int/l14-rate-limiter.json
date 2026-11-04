@@ -294,7 +294,7 @@
         "rate-limit-log"
       ],
       "pace": 600,
-      "prose": "Extend the single-client log of `ds` l11: keep one deque of accepted times for each user, in a dict. Drop the old times from the left before you count.",
+      "prose": "Extend the single-client log of `ds` l11: keep one deque of accepted times per user, in a dict. Drop the old times from the left before you count.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -387,7 +387,7 @@
         "correct": "A dict of deques, trimmed on every call.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-1": "Test 1: at time 10 the times 1, 2 and 3 are all above 0, so the request is refused.",
+          "test-1": "Test 1: at time 10 the times 1, 2 and 3 all exceed 0, so the request is refused.",
           "test-2": "Test 2 has two users. Each user has their own log.",
           "test-3": "Test 3 has window 1: a request at 1 forgets one at 0.",
           "test-4": "Test 4 has limit 2, window 3: the request at 3 forgets the one at 0.",
@@ -635,9 +635,14 @@
             "call": "sum(run_bucket(10, 1, ts))",
             "expect": "50009",
             "compare": "equal"
+          },
+          {
+            "call": "run_bucket(2, 1, [0, 10, 10, 10])",
+            "expect": "[True, True, True, False]",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 6 hidden tests: a refill, a rate of 0, a pause and 200,000 requests.",
+        "how": "Check runs 7 hidden tests. They cover a refill, a rate of 0, a pause, the cap after a pause and 200,000 requests.",
         "postlude": "def run_bucket(capacity, rate, times):\n    b = TokenBucket(capacity, rate)\n    return [b.allow(t) for t in times]\n"
       },
       "hints": [
@@ -667,7 +672,8 @@
           "test-3": "Test 3 has a rate of 0. Nothing ever refills.",
           "test-4": "Test 4: after 3 seconds only 3 tokens are back.",
           "test-5": "Test 5: two seconds add 2 tokens, not 1.",
-          "test-6": "Test 6 has 200,000 requests. Each call must be constant time."
+          "test-6": "Test 6 has 200,000 requests. Each call must be constant time.",
+          "test-7": "Test 7: after a pause the bucket holds only 2 tokens, so the third request at 10 fails."
         }
       },
       "explain": {
