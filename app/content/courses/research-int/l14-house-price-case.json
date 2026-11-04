@@ -1,0 +1,3236 @@
+{
+ "id": "l14-house-price-case",
+ "course": "research-int",
+ "title": "The house price case",
+ "minutes": 15,
+ "objectives": [
+  "Work a full prediction case on a dataset, answering the interviewer's follow-ups."
+ ],
+ "skills": [
+  "rq-case"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Look before you model",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "About four minutes a step, and about 50 minutes with the code screens. The interviewer hands you 400 homes and says: \"Predict the price.\" Eight rows are shown, prices in £000. Missing ages read blank.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "area m²",
+      "beds",
+      "age",
+      "km",
+      "band",
+      "garden",
+      "price £k"
+     ],
+     "rows": [
+      [
+       "89",
+       "4",
+       "83",
+       "4.1",
+       "B",
+       "0",
+       "277.9"
+      ],
+      [
+       "124",
+       "3",
+       "73",
+       "8.6",
+       "C",
+       "0",
+       "343.4"
+      ],
+      [
+       "58",
+       "2",
+       "49",
+       "8.6",
+       "C",
+       "0",
+       "178.6"
+      ],
+      [
+       "42",
+       "2",
+       "blank",
+       "3.8",
+       "D",
+       "1",
+       "204.9"
+      ],
+      [
+       "59",
+       "3",
+       "blank",
+       "2.4",
+       "A",
+       "1",
+       "256.3"
+      ],
+      [
+       "95",
+       "2",
+       "37",
+       "4.9",
+       "B",
+       "0",
+       "319200"
+      ],
+      [
+       "84",
+       "2",
+       "blank",
+       "7.3",
+       "D",
+       "0",
+       "309.3"
+      ],
+      [
+       "50",
+       "1",
+       "71",
+       "7.5",
+       "A",
+       "0",
+       "118.5"
+      ]
+     ],
+     "align": [
+      "right",
+      "right",
+      "right",
+      "right",
+      "center",
+      "right",
+      "right"
+     ],
+     "compact": true
+    }
+   },
+   "question": "Tap every cell that needs attention.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r3c2",
+     "r4c2",
+     "r6c2",
+     "r5c6"
+    ],
+    "wrong": [
+     {
+      "id": "ages-only",
+      "set": [
+       "r3c2",
+       "r4c2",
+       "r6c2"
+      ]
+     },
+     {
+      "id": "price-only",
+      "set": [
+       "r5c6"
+      ]
+     }
+    ],
+    "countWord": "tapped"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read each column for values that cannot be right."
+    },
+    {
+     "rung": "point",
+     "text": "Three ages are blank, and one price has too many digits.",
+     "highlight": [
+      "r3c2",
+      "r4c2",
+      "r6c2",
+      "r5c6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The blanks are in the age column; the price of 319,200 is in the price column."
+    }
+   ],
+   "feedback": {
+    "correct": "Three blank ages and one price typed in pounds.",
+    "generic": "Not quite. Look for blanks and for numbers on the wrong scale.",
+    "byKey": {
+     "ages-only": "You found the blank ages. Look at the price column too: one is in pounds, not £000.",
+     "price-only": "You found the odd price. Three ages are blank too."
+    }
+   },
+   "explain": {
+    "text": "In the full file 20 ages are blank and 4 prices are typed in pounds. We fill the ages with the median and fix or drop the prices, saying so.",
+    "canvas": {
+     "highlight": {
+      "cells": [
+       "r3c2",
+       "r4c2",
+       "r6c2",
+       "r5c6"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What is your baseline",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 300,
+   "prose": "About five minutes with the code. First question: *What is your baseline?* The file is cleaned and split for you. There are 396 rows: 297 to train and 99 to test.",
+   "question": "Write `baseline_rmse()`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "data": {
+     "houses.csv": "content/data/houses.csv"
+    },
+    "prelude": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\n\n_df = pd.read_csv('houses.csv')\n_df = _df[_df['price_k'] <= 5000].copy()\n_df['age_years'] = _df['age_years'].fillna(_df['age_years'].median())\n_df = pd.get_dummies(_df, columns=['band'], drop_first=True, dtype=float)\nFEATURES = ['area_m2', 'bedrooms', 'age_years', 'distance_km', 'garden', 'band_B', 'band_C', 'band_D']\n_train, _test = train_test_split(_df, test_size=0.25, random_state=0)\nX_train, X_test = _train[FEATURES], _test[FEATURES]\ny_train, y_test = _train['price_k'], _test['price_k']\n",
+    "starter": "# Ready for you: X_train, X_test, y_train, y_test (prices in £000)\n# and FEATURES. 396 clean rows, 297 to train and 99 to test.\n\nimport numpy as np\n\ndef baseline_rmse():\n    \"\"\"RMSE on the test rows of predicting the training mean price.\"\"\"\n    # Your code here\n    return 0.0\n",
+    "solution": "import numpy as np\n\ndef baseline_rmse():\n    return float(np.sqrt(np.mean((y_test - y_train.mean()) ** 2)))\n",
+    "examples": [
+     {
+      "call": "round(baseline_rmse(), 2)",
+      "expect": "85.05",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "baseline_rmse()",
+      "expect": "85.0489",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "call": "baseline_rmse() > np.sqrt(np.mean((y_test - y_test.mean()) ** 2))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "round(baseline_rmse(), 2)",
+      "expect": "85.05",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 3 hidden tests. One checks the RMSE (within 0.005). One checks it to two places. One checks it uses the training mean, not the test mean."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Predict the same number for every test home."
+    },
+    {
+     "rung": "point",
+     "text": "That number is the training mean price."
+    },
+    {
+     "rung": "step",
+     "text": "RMSE is the root of the mean squared gap between `y_test` and it."
+    }
+   ],
+   "feedback": {
+    "correct": "£85.05k: a typical miss of the lazy forecast.",
+    "generic": "Some tests failed. Use the training mean, and score on the test rows."
+   },
+   "explain": {
+    "text": "The lazy forecast misses by £85.05k on average. Any model has to beat that."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A simple model",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 300,
+   "prose": "Second question: *A simple model?* Fit a straight line of price on area alone. Fit on the training rows and score on the test rows.",
+   "question": "Write `area_only_rmse()`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "data": {
+     "houses.csv": "content/data/houses.csv"
+    },
+    "prelude": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\n\n_df = pd.read_csv('houses.csv')\n_df = _df[_df['price_k'] <= 5000].copy()\n_df['age_years'] = _df['age_years'].fillna(_df['age_years'].median())\n_df = pd.get_dummies(_df, columns=['band'], drop_first=True, dtype=float)\nFEATURES = ['area_m2', 'bedrooms', 'age_years', 'distance_km', 'garden', 'band_B', 'band_C', 'band_D']\n_train, _test = train_test_split(_df, test_size=0.25, random_state=0)\nX_train, X_test = _train[FEATURES], _test[FEATURES]\ny_train, y_test = _train['price_k'], _test['price_k']\n",
+    "starter": "# Ready for you: X_train, X_test, y_train, y_test (prices in £000)\n# and FEATURES. 396 clean rows, 297 to train and 99 to test.\n\nimport numpy as np\nfrom sklearn.linear_model import LinearRegression\n\ndef area_only_rmse():\n    \"\"\"Test RMSE of a straight line of price on area_m2 alone.\"\"\"\n    # Your code here\n    return 0.0\n",
+    "solution": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\n\ndef area_only_rmse():\n    m = LinearRegression().fit(X_train[['area_m2']], y_train)\n    return float(np.sqrt(np.mean((y_test - m.predict(X_test[['area_m2']])) ** 2)))\n",
+    "examples": [
+     {
+      "call": "round(area_only_rmse(), 1)",
+      "expect": "46.9",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "area_only_rmse()",
+      "expect": "46.8608",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "call": "round(area_only_rmse(), 1)",
+      "expect": "46.9",
+      "compare": "equal"
+     },
+     {
+      "call": "40 < area_only_rmse() < 50",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 3 hidden tests. One checks the test RMSE of the one-feature line (within 0.005). One checks it to one place. One checks it lies between 40 and 50."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Fit on `X_train[['area_m2']]`, a one-column table."
+    },
+    {
+     "rung": "point",
+     "text": "Predict the test rows from `X_test[['area_m2']]`."
+    },
+    {
+     "rung": "step",
+     "text": "Then take the root mean squared gap to `y_test`."
+    }
+   ],
+   "feedback": {
+    "correct": "£46.86k: area alone more than halves the baseline error.",
+    "generic": "Some tests failed. Fit on training rows only and score on the test rows."
+   },
+   "explain": {
+    "text": "Area alone cuts the error from £85.05k to £46.86k. It is the first model to beat the baseline."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "All the features",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 420,
+   "prose": "Third question: *All the features?* Fit every column by least squares. Return the test RMSE and the coefficients, in the order of `FEATURES`.",
+   "question": "Write `fit_all()`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "data": {
+     "houses.csv": "content/data/houses.csv"
+    },
+    "prelude": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\n\n_df = pd.read_csv('houses.csv')\n_df = _df[_df['price_k'] <= 5000].copy()\n_df['age_years'] = _df['age_years'].fillna(_df['age_years'].median())\n_df = pd.get_dummies(_df, columns=['band'], drop_first=True, dtype=float)\nFEATURES = ['area_m2', 'bedrooms', 'age_years', 'distance_km', 'garden', 'band_B', 'band_C', 'band_D']\n_train, _test = train_test_split(_df, test_size=0.25, random_state=0)\nX_train, X_test = _train[FEATURES], _test[FEATURES]\ny_train, y_test = _train['price_k'], _test['price_k']\n",
+    "starter": "# Ready for you: X_train, X_test, y_train, y_test (prices in £000)\n# and FEATURES. 396 clean rows, 297 to train and 99 to test.\n\nimport numpy as np\nfrom sklearn.linear_model import LinearRegression\n\ndef fit_all():\n    \"\"\"Fit all FEATURES by least squares on the training rows.\n    Return (test_rmse, coefs): the RMSE and the coefficients in FEATURES order.\"\"\"\n    # Your code here\n    return 0.0, []\n",
+    "solution": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\n\ndef fit_all():\n    m = LinearRegression().fit(X_train, y_train)\n    rmse = np.sqrt(np.mean((y_test - m.predict(X_test)) ** 2))\n    return float(rmse), [float(c) for c in m.coef_]\n",
+    "examples": [
+     {
+      "call": "round(fit_all()[0], 2)",
+      "expect": "29.66",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "fit_all()[0]",
+      "expect": "29.6582",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "fit_all()[1][1]",
+      "expect": "6.6594",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "fit_all()[1][4]",
+      "expect": "17.6867",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "fit_all()[1][5]",
+      "expect": "-26.405",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ],
+    "how": "Check runs 4 hidden tests: the test RMSE and three coefficients (bedrooms, garden, band B), each within 0.01."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`LinearRegression().fit(X_train, y_train)` uses every column."
+    },
+    {
+     "rung": "point",
+     "text": "The coefficients are in `m.coef_`, in the order of the columns."
+    },
+    {
+     "rung": "step",
+     "text": "Score on `X_test`; return the RMSE and a list of the coefficients."
+    }
+   ],
+   "feedback": {
+    "correct": "£29.66k, a 65% cut from the baseline.",
+    "generic": "Some tests failed. Fit on all of `X_train` and score on `X_test`."
+   },
+   "explain": {
+    "text": "All eight features cut the error to £29.66k, 65.1% below the baseline. Per unit in £000: area 2.67, bedrooms 6.66, age −0.75, distance −5.08, garden 17.69. Bands B, C and D sit at −26.40, −39.62 and −53.91 against A."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Something more flexible",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 420,
+   "prose": "Fourth question: *A random forest?* Fit one, and a linear model of log price too. Score both in the original units.",
+   "question": "Write `forest_rmse()` and `log_rmse()`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "data": {
+     "houses.csv": "content/data/houses.csv"
+    },
+    "prelude": "import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\n\n_df = pd.read_csv('houses.csv')\n_df = _df[_df['price_k'] <= 5000].copy()\n_df['age_years'] = _df['age_years'].fillna(_df['age_years'].median())\n_df = pd.get_dummies(_df, columns=['band'], drop_first=True, dtype=float)\nFEATURES = ['area_m2', 'bedrooms', 'age_years', 'distance_km', 'garden', 'band_B', 'band_C', 'band_D']\n_train, _test = train_test_split(_df, test_size=0.25, random_state=0)\nX_train, X_test = _train[FEATURES], _test[FEATURES]\ny_train, y_test = _train['price_k'], _test['price_k']\n",
+    "starter": "# Ready for you: X_train, X_test, y_train, y_test (prices in £000)\n# and FEATURES. 396 clean rows, 297 to train and 99 to test.\n\nimport numpy as np\nfrom sklearn.ensemble import RandomForestRegressor\nfrom sklearn.linear_model import LinearRegression\n\ndef forest_rmse():\n    \"\"\"Test RMSE of a random forest: 300 trees, min_samples_leaf=3, random_state=0.\"\"\"\n    # Your code here\n    return 0.0\n\ndef log_rmse():\n    \"\"\"Test RMSE, in the original units, of a linear model fitted to log price.\"\"\"\n    # Your code here\n    return 0.0\n",
+    "solution": "import numpy as np\nfrom sklearn.ensemble import RandomForestRegressor\nfrom sklearn.linear_model import LinearRegression\n\ndef forest_rmse():\n    m = RandomForestRegressor(300, min_samples_leaf=3, random_state=0).fit(X_train, y_train)\n    return float(np.sqrt(np.mean((y_test - m.predict(X_test)) ** 2)))\n\ndef log_rmse():\n    m = LinearRegression().fit(X_train, np.log(y_train))\n    return float(np.sqrt(np.mean((y_test - np.exp(m.predict(X_test))) ** 2)))\n",
+    "examples": [
+     {
+      "call": "round(log_rmse(), 1)",
+      "expect": "33.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "forest_rmse()",
+      "expect": "40.4417",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "call": "log_rmse()",
+      "expect": "32.9514",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "round(log_rmse(), 1)",
+      "expect": "33.0",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 3 hidden tests. One checks the forest RMSE (within 0.05). One checks the log-price model (within 0.01). One checks it to one place. Convert the log predictions back with exp.",
+    "caseBudget": 40000
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The forest takes the same `X_train` and `y_train`."
+    },
+    {
+     "rung": "point",
+     "text": "For log price, fit on `np.log(y_train)` and convert predictions back with `np.exp`."
+    },
+    {
+     "rung": "step",
+     "text": "Score against `y_test`, which is not logged."
+    }
+   ],
+   "feedback": {
+    "correct": "Forest £40.44k and log-linear £32.95k: neither beats the plain linear model.",
+    "generic": "Some tests failed. Convert the log predictions back with `np.exp` before scoring."
+   },
+   "explain": {
+    "text": "The forest scores £40.44k and the log model £32.95k. Neither beats the plain linear model at £29.66k, so the simple model stays."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Why so few for a bedroom",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "Fifth question: *why is the bedrooms coefficient 6.66 when I expect more?* A lettings agent says a bedroom adds about 9. The table gives each coefficient with its standard error.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Feature",
+      "Coefficient (£000)",
+      "Std error"
+     ],
+     "rows": [
+      [
+       "intercept",
+       "115.77",
+       "8.19"
+      ],
+      [
+       "area m²",
+       "2.67",
+       "0.10"
+      ],
+      [
+       "bedrooms",
+       "6.66",
+       "2.39"
+      ],
+      [
+       "age",
+       "-0.75",
+       "0.06"
+      ],
+      [
+       "distance km",
+       "-5.08",
+       "0.62"
+      ],
+      [
+       "garden",
+       "17.69",
+       "3.29"
+      ],
+      [
+       "band B",
+       "-26.40",
+       "5.24"
+      ],
+      [
+       "band C",
+       "-39.62",
+       "5.25"
+      ],
+      [
+       "band D",
+       "-53.91",
+       "5.43"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ],
+     "compact": true
+    }
+   },
+   "question": "How many standard errors is 6.66 below 9?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.98,
+    "tol": {
+     "abs": 0.02
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 0.98, or 0.98 ± 0.02",
+    "wrong": [
+     {
+      "id": "gap",
+      "value": 2.34,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "se",
+      "value": 2.39,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "t",
+      "value": 2.79,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Take the gap between 9 and 6.66 first."
+    },
+    {
+     "rung": "point",
+     "text": "The standard error of the bedrooms coefficient is 2.39.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(9 - 6.66)/2.39 = 0.98$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.98: well inside one standard error, so 9 is consistent with the data.",
+    "generic": "Not quite. Divide the gap by the standard error of bedrooms.",
+    "byKey": {
+     "gap": "You gave the gap in £000. Divide it by the standard error.",
+     "se": "That is the standard error itself.",
+     "t": "That is 6.66 over 2.39, the distance from zero, not from 9."
+    }
+   },
+   "explain": {
+    "text": "Area and bedrooms correlate 0.7638. The pair's variance inflation is $1/(1 - 0.7638^2) = 2.40$, so errors are $\\sqrt{2.40} = 1.549$ times larger. Collinearity widens the error; it does not bias the estimate.",
+    "canvas": {
+     "highlight": [
+      "r2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "What about those four prices",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "Sixth question: *what about those four prices?* Suppose you keep them. Price on area has slope 2.81 on the 396 clean rows. The chart fits all 400.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [
+       89,
+       277.9,
+       "£000"
+      ],
+      [
+       124,
+       343.4,
+       "£000"
+      ],
+      [
+       58,
+       178.6,
+       "£000"
+      ],
+      [
+       50,
+       118.5,
+       "£000"
+      ],
+      [
+       71,
+       262.8,
+       "£000"
+      ],
+      [
+       106,
+       346.7,
+       "£000"
+      ],
+      [
+       81,
+       315.9,
+       "£000"
+      ],
+      [
+       128,
+       454.6,
+       "£000"
+      ],
+      [
+       99,
+       271.3,
+       "£000"
+      ],
+      [
+       111,
+       292.2,
+       "£000"
+      ],
+      [
+       99,
+       259.8,
+       "£000"
+      ],
+      [
+       105,
+       344.2,
+       "£000"
+      ],
+      [
+       104,
+       288.3,
+       "£000"
+      ],
+      [
+       35,
+       149.8,
+       "£000"
+      ],
+      [
+       99,
+       344.8,
+       "£000"
+      ],
+      [
+       118,
+       435.9,
+       "£000"
+      ],
+      [
+       89,
+       233.9,
+       "£000"
+      ],
+      [
+       107,
+       360.8,
+       "£000"
+      ],
+      [
+       71,
+       213.8,
+       "£000"
+      ],
+      [
+       77,
+       237.0,
+       "£000"
+      ],
+      [
+       126,
+       431.2,
+       "£000"
+      ],
+      [
+       42,
+       204.9,
+       "£000"
+      ],
+      [
+       94,
+       340.4,
+       "£000"
+      ],
+      [
+       68,
+       196.1,
+       "£000"
+      ],
+      [
+       96,
+       315.1,
+       "£000"
+      ],
+      [
+       69,
+       287.3,
+       "£000"
+      ],
+      [
+       127,
+       365.0,
+       "£000"
+      ],
+      [
+       148,
+       481.2,
+       "£000"
+      ],
+      [
+       101,
+       340.2,
+       "£000"
+      ],
+      [
+       143,
+       395.7,
+       "£000"
+      ],
+      [
+       43,
+       218.0,
+       "£000"
+      ],
+      [
+       104,
+       205.6,
+       "£000"
+      ],
+      [
+       59,
+       256.3,
+       "£000"
+      ],
+      [
+       88,
+       323.6,
+       "£000"
+      ],
+      [
+       87,
+       348.6,
+       "£000"
+      ],
+      [
+       147,
+       458.2,
+       "£000"
+      ],
+      [
+       95,
+       319200.0,
+       "typed in pounds"
+      ],
+      [
+       95,
+       280.5,
+       "£000"
+      ],
+      [
+       84,
+       309.3,
+       "£000"
+      ],
+      [
+       148,
+       461.1,
+       "£000"
+      ],
+      [
+       84,
+       244.7,
+       "£000"
+      ],
+      [
+       104,
+       289.8,
+       "£000"
+      ],
+      [
+       117,
+       424.0,
+       "£000"
+      ],
+      [
+       104,
+       322.2,
+       "£000"
+      ],
+      [
+       141,
+       415.0,
+       "£000"
+      ],
+      [
+       75,
+       184.5,
+       "£000"
+      ],
+      [
+       42,
+       220.4,
+       "£000"
+      ],
+      [
+       61,
+       215.4,
+       "£000"
+      ],
+      [
+       96,
+       275.2,
+       "£000"
+      ],
+      [
+       83,
+       222.9,
+       "£000"
+      ],
+      [
+       126,
+       402.1,
+       "£000"
+      ],
+      [
+       124,
+       450.0,
+       "£000"
+      ],
+      [
+       119,
+       427.4,
+       "£000"
+      ],
+      [
+       98,
+       244.1,
+       "£000"
+      ],
+      [
+       143,
+       370.6,
+       "£000"
+      ],
+      [
+       70,
+       171.0,
+       "£000"
+      ],
+      [
+       107,
+       299.7,
+       "£000"
+      ],
+      [
+       81,
+       286.2,
+       "£000"
+      ],
+      [
+       118,
+       363.2,
+       "£000"
+      ],
+      [
+       85,
+       281.8,
+       "£000"
+      ],
+      [
+       62,
+       164.9,
+       "£000"
+      ],
+      [
+       81,
+       276.8,
+       "£000"
+      ],
+      [
+       82,
+       292.1,
+       "£000"
+      ],
+      [
+       76,
+       271.0,
+       "£000"
+      ],
+      [
+       95,
+       291.0,
+       "£000"
+      ],
+      [
+       103,
+       345.6,
+       "£000"
+      ],
+      [
+       122,
+       399.4,
+       "£000"
+      ],
+      [
+       62,
+       186.0,
+       "£000"
+      ],
+      [
+       90,
+       271.0,
+       "£000"
+      ],
+      [
+       133,
+       430.3,
+       "£000"
+      ],
+      [
+       83,
+       287.6,
+       "£000"
+      ],
+      [
+       116,
+       379.9,
+       "£000"
+      ],
+      [
+       110,
+       379.0,
+       "£000"
+      ],
+      [
+       74,
+       313.6,
+       "£000"
+      ],
+      [
+       96,
+       314.2,
+       "£000"
+      ],
+      [
+       99,
+       304.9,
+       "£000"
+      ],
+      [
+       124,
+       397.4,
+       "£000"
+      ],
+      [
+       83,
+       189.9,
+       "£000"
+      ],
+      [
+       121,
+       350900.0,
+       "typed in pounds"
+      ],
+      [
+       84,
+       309.2,
+       "£000"
+      ],
+      [
+       135,
+       486.5,
+       "£000"
+      ],
+      [
+       83,
+       302.2,
+       "£000"
+      ],
+      [
+       86,
+       253.7,
+       "£000"
+      ],
+      [
+       62,
+       191.8,
+       "£000"
+      ],
+      [
+       98,
+       274200.0,
+       "typed in pounds"
+      ],
+      [
+       98,
+       261.5,
+       "£000"
+      ],
+      [
+       107,
+       346.5,
+       "£000"
+      ],
+      [
+       80,
+       292.7,
+       "£000"
+      ],
+      [
+       108,
+       297.3,
+       "£000"
+      ],
+      [
+       60,
+       211.8,
+       "£000"
+      ],
+      [
+       134,
+       451.1,
+       "£000"
+      ],
+      [
+       108,
+       382.2,
+       "£000"
+      ],
+      [
+       83,
+       278.7,
+       "£000"
+      ],
+      [
+       89,
+       311.9,
+       "£000"
+      ],
+      [
+       64,
+       147.7,
+       "£000"
+      ],
+      [
+       58,
+       231.0,
+       "£000"
+      ],
+      [
+       100,
+       309.2,
+       "£000"
+      ],
+      [
+       115,
+       391.8,
+       "£000"
+      ],
+      [
+       48,
+       248.1,
+       "£000"
+      ],
+      [
+       135,
+       442.3,
+       "£000"
+      ],
+      [
+       64,
+       264.2,
+       "£000"
+      ],
+      [
+       111,
+       414.8,
+       "£000"
+      ],
+      [
+       104,
+       367.3,
+       "£000"
+      ],
+      [
+       64,
+       311.5,
+       "£000"
+      ],
+      [
+       65,
+       287.5,
+       "£000"
+      ],
+      [
+       96,
+       336.8,
+       "£000"
+      ],
+      [
+       75,
+       213.0,
+       "£000"
+      ],
+      [
+       78,
+       277.6,
+       "£000"
+      ],
+      [
+       90,
+       209.8,
+       "£000"
+      ],
+      [
+       107,
+       272.5,
+       "£000"
+      ],
+      [
+       63,
+       245.6,
+       "£000"
+      ],
+      [
+       114,
+       308.4,
+       "£000"
+      ],
+      [
+       87,
+       263.1,
+       "£000"
+      ],
+      [
+       42,
+       223.0,
+       "£000"
+      ],
+      [
+       82,
+       266.0,
+       "£000"
+      ],
+      [
+       100,
+       345.3,
+       "£000"
+      ],
+      [
+       86,
+       312.1,
+       "£000"
+      ],
+      [
+       97,
+       251.9,
+       "£000"
+      ],
+      [
+       91,
+       295.8,
+       "£000"
+      ],
+      [
+       90,
+       241.7,
+       "£000"
+      ],
+      [
+       78,
+       256.4,
+       "£000"
+      ],
+      [
+       96,
+       322.1,
+       "£000"
+      ],
+      [
+       93,
+       335.7,
+       "£000"
+      ],
+      [
+       95,
+       368.7,
+       "£000"
+      ],
+      [
+       107,
+       407.7,
+       "£000"
+      ],
+      [
+       87,
+       216.0,
+       "£000"
+      ],
+      [
+       107,
+       388.7,
+       "£000"
+      ],
+      [
+       77,
+       284.2,
+       "£000"
+      ],
+      [
+       93,
+       312.3,
+       "£000"
+      ],
+      [
+       162,
+       473.2,
+       "£000"
+      ],
+      [
+       100,
+       392.1,
+       "£000"
+      ],
+      [
+       77,
+       259.5,
+       "£000"
+      ],
+      [
+       111,
+       383.6,
+       "£000"
+      ],
+      [
+       90,
+       283.3,
+       "£000"
+      ],
+      [
+       82,
+       239.4,
+       "£000"
+      ],
+      [
+       98,
+       365.9,
+       "£000"
+      ],
+      [
+       110,
+       386.7,
+       "£000"
+      ],
+      [
+       115,
+       369.0,
+       "£000"
+      ],
+      [
+       61,
+       205.6,
+       "£000"
+      ],
+      [
+       68,
+       243.3,
+       "£000"
+      ],
+      [
+       107,
+       306.9,
+       "£000"
+      ],
+      [
+       96,
+       362.7,
+       "£000"
+      ],
+      [
+       75,
+       205.1,
+       "£000"
+      ],
+      [
+       149,
+       498.0,
+       "£000"
+      ],
+      [
+       80,
+       240.5,
+       "£000"
+      ],
+      [
+       110,
+       331.4,
+       "£000"
+      ],
+      [
+       104,
+       228.3,
+       "£000"
+      ],
+      [
+       102,
+       323.9,
+       "£000"
+      ],
+      [
+       102,
+       332.0,
+       "£000"
+      ],
+      [
+       43,
+       115.5,
+       "£000"
+      ],
+      [
+       77,
+       261.1,
+       "£000"
+      ],
+      [
+       76,
+       223.2,
+       "£000"
+      ],
+      [
+       35,
+       162.9,
+       "£000"
+      ],
+      [
+       129,
+       429.5,
+       "£000"
+      ],
+      [
+       100,
+       311.9,
+       "£000"
+      ],
+      [
+       95,
+       255.1,
+       "£000"
+      ],
+      [
+       86,
+       355.6,
+       "£000"
+      ],
+      [
+       93,
+       340.6,
+       "£000"
+      ],
+      [
+       55,
+       172.3,
+       "£000"
+      ],
+      [
+       112,
+       359.5,
+       "£000"
+      ],
+      [
+       87,
+       229.0,
+       "£000"
+      ],
+      [
+       52,
+       242.5,
+       "£000"
+      ],
+      [
+       85,
+       350.1,
+       "£000"
+      ],
+      [
+       96,
+       244.4,
+       "£000"
+      ],
+      [
+       89,
+       323.1,
+       "£000"
+      ],
+      [
+       102,
+       368.4,
+       "£000"
+      ],
+      [
+       101,
+       319.5,
+       "£000"
+      ],
+      [
+       110,
+       320.6,
+       "£000"
+      ],
+      [
+       95,
+       336.0,
+       "£000"
+      ],
+      [
+       56,
+       237.7,
+       "£000"
+      ],
+      [
+       95,
+       316.5,
+       "£000"
+      ],
+      [
+       119,
+       402.9,
+       "£000"
+      ],
+      [
+       127,
+       373.1,
+       "£000"
+      ],
+      [
+       103,
+       307.6,
+       "£000"
+      ],
+      [
+       62,
+       165.5,
+       "£000"
+      ],
+      [
+       63,
+       290.1,
+       "£000"
+      ],
+      [
+       62,
+       216.7,
+       "£000"
+      ],
+      [
+       103,
+       301.7,
+       "£000"
+      ],
+      [
+       63,
+       160.0,
+       "£000"
+      ],
+      [
+       83,
+       287.1,
+       "£000"
+      ],
+      [
+       71,
+       281.0,
+       "£000"
+      ],
+      [
+       104,
+       289.4,
+       "£000"
+      ],
+      [
+       78,
+       293.0,
+       "£000"
+      ],
+      [
+       88,
+       216.6,
+       "£000"
+      ],
+      [
+       88,
+       348.1,
+       "£000"
+      ],
+      [
+       86,
+       345.3,
+       "£000"
+      ],
+      [
+       35,
+       155.4,
+       "£000"
+      ],
+      [
+       88,
+       261.9,
+       "£000"
+      ],
+      [
+       118,
+       381.7,
+       "£000"
+      ],
+      [
+       118,
+       349.0,
+       "£000"
+      ],
+      [
+       153,
+       540.1,
+       "£000"
+      ],
+      [
+       139,
+       401.1,
+       "£000"
+      ],
+      [
+       101,
+       323.7,
+       "£000"
+      ],
+      [
+       58,
+       128.4,
+       "£000"
+      ],
+      [
+       107,
+       445.5,
+       "£000"
+      ],
+      [
+       72,
+       243.2,
+       "£000"
+      ],
+      [
+       83,
+       323.3,
+       "£000"
+      ],
+      [
+       93,
+       377.3,
+       "£000"
+      ],
+      [
+       68,
+       208.8,
+       "£000"
+      ],
+      [
+       67,
+       216.8,
+       "£000"
+      ],
+      [
+       54,
+       112.5,
+       "£000"
+      ],
+      [
+       94,
+       274.5,
+       "£000"
+      ],
+      [
+       81,
+       357.0,
+       "£000"
+      ],
+      [
+       109,
+       371.0,
+       "£000"
+      ],
+      [
+       119,
+       442.3,
+       "£000"
+      ],
+      [
+       134,
+       485.8,
+       "£000"
+      ],
+      [
+       121,
+       411.8,
+       "£000"
+      ],
+      [
+       88,
+       240.1,
+       "£000"
+      ],
+      [
+       78,
+       214.1,
+       "£000"
+      ],
+      [
+       78,
+       273.3,
+       "£000"
+      ],
+      [
+       126,
+       489.5,
+       "£000"
+      ],
+      [
+       81,
+       365.6,
+       "£000"
+      ],
+      [
+       140,
+       477.2,
+       "£000"
+      ],
+      [
+       106,
+       339.9,
+       "£000"
+      ],
+      [
+       78,
+       229.5,
+       "£000"
+      ],
+      [
+       99,
+       361.2,
+       "£000"
+      ],
+      [
+       84,
+       299.6,
+       "£000"
+      ],
+      [
+       76,
+       198.5,
+       "£000"
+      ],
+      [
+       76,
+       286.9,
+       "£000"
+      ],
+      [
+       77,
+       266.6,
+       "£000"
+      ],
+      [
+       83,
+       330.1,
+       "£000"
+      ],
+      [
+       77,
+       226.6,
+       "£000"
+      ],
+      [
+       105,
+       351.4,
+       "£000"
+      ],
+      [
+       98,
+       342.4,
+       "£000"
+      ],
+      [
+       79,
+       230.8,
+       "£000"
+      ],
+      [
+       91,
+       365.5,
+       "£000"
+      ],
+      [
+       127,
+       431.8,
+       "£000"
+      ],
+      [
+       68,
+       245.5,
+       "£000"
+      ],
+      [
+       98,
+       285.3,
+       "£000"
+      ],
+      [
+       108,
+       297.1,
+       "£000"
+      ],
+      [
+       90,
+       329.2,
+       "£000"
+      ],
+      [
+       89,
+       274.6,
+       "£000"
+      ],
+      [
+       107,
+       359.8,
+       "£000"
+      ],
+      [
+       119,
+       358.0,
+       "£000"
+      ],
+      [
+       115,
+       402.3,
+       "£000"
+      ],
+      [
+       129,
+       405.5,
+       "£000"
+      ],
+      [
+       91,
+       344.2,
+       "£000"
+      ],
+      [
+       90,
+       299.7,
+       "£000"
+      ],
+      [
+       123,
+       349.9,
+       "£000"
+      ],
+      [
+       57,
+       164.1,
+       "£000"
+      ],
+      [
+       54,
+       165.1,
+       "£000"
+      ],
+      [
+       106,
+       355.7,
+       "£000"
+      ],
+      [
+       55,
+       215.1,
+       "£000"
+      ],
+      [
+       96,
+       311.6,
+       "£000"
+      ],
+      [
+       109,
+       297.7,
+       "£000"
+      ],
+      [
+       114,
+       392.0,
+       "£000"
+      ],
+      [
+       70,
+       208.9,
+       "£000"
+      ],
+      [
+       44,
+       201.1,
+       "£000"
+      ],
+      [
+       126,
+       371.5,
+       "£000"
+      ],
+      [
+       124,
+       389.5,
+       "£000"
+      ],
+      [
+       144,
+       414.9,
+       "£000"
+      ],
+      [
+       80,
+       295.8,
+       "£000"
+      ],
+      [
+       81,
+       281.5,
+       "£000"
+      ],
+      [
+       60,
+       181.2,
+       "£000"
+      ],
+      [
+       150,
+       483.0,
+       "£000"
+      ],
+      [
+       122,
+       255.5,
+       "£000"
+      ],
+      [
+       85,
+       300.1,
+       "£000"
+      ],
+      [
+       96,
+       388.9,
+       "£000"
+      ],
+      [
+       82,
+       224.0,
+       "£000"
+      ],
+      [
+       99,
+       304.3,
+       "£000"
+      ],
+      [
+       114,
+       386.8,
+       "£000"
+      ],
+      [
+       115,
+       414.1,
+       "£000"
+      ],
+      [
+       88,
+       352.0,
+       "£000"
+      ],
+      [
+       35,
+       185.4,
+       "£000"
+      ],
+      [
+       41,
+       85.5,
+       "£000"
+      ],
+      [
+       121,
+       366.0,
+       "£000"
+      ],
+      [
+       79,
+       247.8,
+       "£000"
+      ],
+      [
+       37,
+       140.9,
+       "£000"
+      ],
+      [
+       156,
+       452.6,
+       "£000"
+      ],
+      [
+       80,
+       268.1,
+       "£000"
+      ],
+      [
+       60,
+       187.7,
+       "£000"
+      ],
+      [
+       126,
+       386.1,
+       "£000"
+      ],
+      [
+       124,
+       360.8,
+       "£000"
+      ],
+      [
+       87,
+       241.0,
+       "£000"
+      ],
+      [
+       84,
+       241.7,
+       "£000"
+      ],
+      [
+       123,
+       453.8,
+       "£000"
+      ],
+      [
+       70,
+       258.3,
+       "£000"
+      ],
+      [
+       78,
+       291.0,
+       "£000"
+      ],
+      [
+       83,
+       219.2,
+       "£000"
+      ],
+      [
+       143,
+       394.4,
+       "£000"
+      ],
+      [
+       89,
+       299.4,
+       "£000"
+      ],
+      [
+       90,
+       329.9,
+       "£000"
+      ],
+      [
+       125,
+       384.0,
+       "£000"
+      ],
+      [
+       119,
+       338.0,
+       "£000"
+      ],
+      [
+       91,
+       252.8,
+       "£000"
+      ],
+      [
+       98,
+       267.8,
+       "£000"
+      ],
+      [
+       84,
+       290.1,
+       "£000"
+      ],
+      [
+       67,
+       267.9,
+       "£000"
+      ],
+      [
+       80,
+       208.6,
+       "£000"
+      ],
+      [
+       89,
+       294.7,
+       "£000"
+      ],
+      [
+       111,
+       324.4,
+       "£000"
+      ],
+      [
+       109,
+       328.1,
+       "£000"
+      ],
+      [
+       121,
+       370.5,
+       "£000"
+      ],
+      [
+       125,
+       399.1,
+       "£000"
+      ],
+      [
+       82,
+       292.8,
+       "£000"
+      ],
+      [
+       56,
+       212.6,
+       "£000"
+      ],
+      [
+       136,
+       410.4,
+       "£000"
+      ],
+      [
+       35,
+       96.9,
+       "£000"
+      ],
+      [
+       118,
+       407.9,
+       "£000"
+      ],
+      [
+       128,
+       432.1,
+       "£000"
+      ],
+      [
+       148,
+       443.2,
+       "£000"
+      ],
+      [
+       104,
+       223.8,
+       "£000"
+      ],
+      [
+       74,
+       256.8,
+       "£000"
+      ],
+      [
+       88,
+       369.4,
+       "£000"
+      ],
+      [
+       86,
+       327.7,
+       "£000"
+      ],
+      [
+       111,
+       341.7,
+       "£000"
+      ],
+      [
+       102,
+       353.3,
+       "£000"
+      ],
+      [
+       99,
+       241.4,
+       "£000"
+      ],
+      [
+       103,
+       317.1,
+       "£000"
+      ],
+      [
+       73,
+       233.3,
+       "£000"
+      ],
+      [
+       94,
+       317.6,
+       "£000"
+      ],
+      [
+       120,
+       392.7,
+       "£000"
+      ],
+      [
+       95,
+       303.1,
+       "£000"
+      ],
+      [
+       64,
+       226.7,
+       "£000"
+      ],
+      [
+       94,
+       375.7,
+       "£000"
+      ],
+      [
+       114,
+       434.9,
+       "£000"
+      ],
+      [
+       107,
+       296.5,
+       "£000"
+      ],
+      [
+       88,
+       287.0,
+       "£000"
+      ],
+      [
+       125,
+       348.0,
+       "£000"
+      ],
+      [
+       89,
+       266.0,
+       "£000"
+      ],
+      [
+       105,
+       390.0,
+       "£000"
+      ],
+      [
+       122,
+       415.5,
+       "£000"
+      ],
+      [
+       145,
+       381.7,
+       "£000"
+      ],
+      [
+       72,
+       241.3,
+       "£000"
+      ],
+      [
+       70,
+       293.2,
+       "£000"
+      ],
+      [
+       101,
+       354.2,
+       "£000"
+      ],
+      [
+       76,
+       279.4,
+       "£000"
+      ],
+      [
+       115,
+       365.1,
+       "£000"
+      ],
+      [
+       84,
+       224.5,
+       "£000"
+      ],
+      [
+       72,
+       278.1,
+       "£000"
+      ],
+      [
+       132,
+       466.6,
+       "£000"
+      ],
+      [
+       106,
+       303.8,
+       "£000"
+      ],
+      [
+       64,
+       241.5,
+       "£000"
+      ],
+      [
+       114,
+       362900.0,
+       "typed in pounds"
+      ],
+      [
+       84,
+       209.1,
+       "£000"
+      ],
+      [
+       91,
+       272.7,
+       "£000"
+      ],
+      [
+       103,
+       314.3,
+       "£000"
+      ],
+      [
+       97,
+       331.6,
+       "£000"
+      ],
+      [
+       35,
+       178.4,
+       "£000"
+      ],
+      [
+       101,
+       300.5,
+       "£000"
+      ],
+      [
+       114,
+       319.9,
+       "£000"
+      ],
+      [
+       119,
+       429.0,
+       "£000"
+      ],
+      [
+       103,
+       344.1,
+       "£000"
+      ],
+      [
+       94,
+       273.0,
+       "£000"
+      ],
+      [
+       152,
+       414.9,
+       "£000"
+      ],
+      [
+       91,
+       292.7,
+       "£000"
+      ],
+      [
+       80,
+       225.4,
+       "£000"
+      ],
+      [
+       118,
+       417.5,
+       "£000"
+      ],
+      [
+       83,
+       317.4,
+       "£000"
+      ],
+      [
+       67,
+       183.7,
+       "£000"
+      ],
+      [
+       102,
+       340.9,
+       "£000"
+      ],
+      [
+       88,
+       242.6,
+       "£000"
+      ],
+      [
+       154,
+       524.3,
+       "£000"
+      ],
+      [
+       67,
+       180.8,
+       "£000"
+      ],
+      [
+       98,
+       316.1,
+       "£000"
+      ],
+      [
+       69,
+       266.3,
+       "£000"
+      ],
+      [
+       104,
+       332.2,
+       "£000"
+      ],
+      [
+       116,
+       360.1,
+       "£000"
+      ],
+      [
+       89,
+       321.0,
+       "£000"
+      ],
+      [
+       93,
+       223.2,
+       "£000"
+      ],
+      [
+       135,
+       386.2,
+       "£000"
+      ],
+      [
+       71,
+       224.2,
+       "£000"
+      ],
+      [
+       114,
+       396.0,
+       "£000"
+      ],
+      [
+       134,
+       379.0,
+       "£000"
+      ],
+      [
+       64,
+       179.0,
+       "£000"
+      ],
+      [
+       103,
+       334.3,
+       "£000"
+      ],
+      [
+       86,
+       305.7,
+       "£000"
+      ],
+      [
+       60,
+       224.7,
+       "£000"
+      ],
+      [
+       113,
+       440.9,
+       "£000"
+      ],
+      [
+       115,
+       425.1,
+       "£000"
+      ],
+      [
+       88,
+       355.8,
+       "£000"
+      ],
+      [
+       122,
+       365.5,
+       "£000"
+      ],
+      [
+       90,
+       275.5,
+       "£000"
+      ],
+      [
+       122,
+       340.9,
+       "£000"
+      ],
+      [
+       70,
+       161.8,
+       "£000"
+      ],
+      [
+       88,
+       298.2,
+       "£000"
+      ],
+      [
+       82,
+       318.7,
+       "£000"
+      ],
+      [
+       132,
+       400.3,
+       "£000"
+      ],
+      [
+       78,
+       263.0,
+       "£000"
+      ],
+      [
+       61,
+       248.9,
+       "£000"
+      ],
+      [
+       151,
+       418.1,
+       "£000"
+      ],
+      [
+       116,
+       342.6,
+       "£000"
+      ],
+      [
+       107,
+       362.5,
+       "£000"
+      ],
+      [
+       87,
+       249.4,
+       "£000"
+      ],
+      [
+       129,
+       395.9,
+       "£000"
+      ],
+      [
+       84,
+       283.5,
+       "£000"
+      ],
+      [
+       72,
+       290.5,
+       "£000"
+      ],
+      [
+       113,
+       401.8,
+       "£000"
+      ],
+      [
+       52,
+       165.4,
+       "£000"
+      ],
+      [
+       65,
+       278.9,
+       "£000"
+      ],
+      [
+       78,
+       314.6,
+       "£000"
+      ],
+      [
+       61,
+       233.5,
+       "£000"
+      ],
+      [
+       144,
+       441.2,
+       "£000"
+      ],
+      [
+       35,
+       87.8,
+       "£000"
+      ],
+      [
+       47,
+       164.4,
+       "£000"
+      ],
+      [
+       98,
+       329.5,
+       "£000"
+      ],
+      [
+       100,
+       301.6,
+       "£000"
+      ],
+      [
+       124,
+       446.2,
+       "£000"
+      ],
+      [
+       100,
+       331.9,
+       "£000"
+      ],
+      [
+       80,
+       264.5,
+       "£000"
+      ]
+     ],
+     "x": "area m²",
+     "y": "price as typed",
+     "fit": true,
+     "fitLabel": "auto",
+     "height": 260,
+     "groups": [
+      "£000",
+      "typed in pounds"
+     ]
+    },
+    "state": {
+     "caption": "All 400 rows. Four prices were typed in pounds."
+    }
+   },
+   "question": "How many times larger is the all-rows slope, 71.70, than 2.81?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 25.5,
+    "tol": {
+     "abs": 0.3
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 25.5, or 25.5 ± 0.3",
+    "unit": "times",
+    "wrong": [
+     {
+      "id": "same",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "gap",
+      "value": 68.89,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide 71.70 by 2.81."
+    },
+    {
+     "rung": "point",
+     "text": "Four rows out of 400 drag the line.",
+     "highlight": [
+      "fit"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$71.70/2.81 = 25.5$."
+    }
+   ],
+   "feedback": {
+    "correct": "25.5 times. Four typing errors swamp the signal.",
+    "generic": "Not quite. Divide the dirty slope by the clean one.",
+    "byKey": {
+     "same": "The slopes differ a great deal. Divide them.",
+     "gap": "You subtracted. The question asks for the ratio."
+    }
+   },
+   "explain": {
+    "text": "Four rows in pounds multiply the fitted slope by 25. Dividing those four prices by 1,000 puts them back on the £000 scale.",
+    "canvas": {
+     "highlight": [
+      "fit"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "Quiet clean-up",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "Those four prices are 1,000 times too large. A colleague says: \"They are outliers. Just drop them.\"",
+   "question": "What do you do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "fix",
+      "text": "Find the factor of 1,000, divide by it, and say so",
+      "correct": true
+     },
+     {
+      "id": "drop",
+      "text": "Drop them silently: outliers only add noise to the fit",
+      "why": "You hid a change and lost four good rows that could have been fixed."
+     },
+     {
+      "id": "keep",
+      "text": "Keep them: the model averages the errors out in the end",
+      "why": "Four huge rows swamp the fit. The slope grows 25-fold."
+     },
+     {
+      "id": "cap",
+      "text": "Cap prices at the 99th percentile",
+      "why": "You turned a typing error into a believable price."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask what the four prices have in common."
+    },
+    {
+     "rung": "point",
+     "text": "Each is about 1,000 times a typical price."
+    },
+    {
+     "rung": "step",
+     "text": "That points to a unit error, which can be undone and reported."
+    }
+   ],
+   "feedback": {
+    "correct": "Fix it, and say so: the cause is known.",
+    "generic": "Not quite. Find out why they are large before you act.",
+    "byKey": {
+     "drop": "You dropped them without a word. The cause was fixable.",
+     "keep": "You kept them. They swamp the fit.",
+     "cap": "You capped them, which hides the error."
+    }
+   },
+   "explain": {
+    "text": "Look first, explain the cause, fix it, and say what you did. A silent drop leaves the reader unable to check the data."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Peeking at the test set",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "You try forest leaf sizes 1, 3, 5 and 10 on the same 99 test rows. They score £40.60k, £40.44k, £41.50k and £43.84k. You report the best.",
+   "question": "What is the £40.44k worth?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tuned",
+      "text": "Less than it looks: the test rows chose the leaf size",
+      "correct": true
+     },
+     {
+      "id": "honest",
+      "text": "It is honest: each forest was refitted from scratch",
+      "why": "Refitting does not remove a choice made after seeing the test score."
+     },
+     {
+      "id": "better",
+      "text": "It proves leaf size 3 is the best choice for forests",
+      "why": "The four scores differ by less than the noise on 99 rows."
+     },
+     {
+      "id": "train",
+      "text": "It is the training error, so ignore it",
+      "why": "It was scored on test rows, but they are no longer untouched."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask who chose the leaf size, and on what."
+    },
+    {
+     "rung": "point",
+     "text": "The choice came after seeing the test score."
+    },
+    {
+     "rung": "step",
+     "text": "A test set used to choose is no longer a test set."
+    }
+   ],
+   "feedback": {
+    "correct": "Tune on a validation split and keep the test set for the end.",
+    "generic": "Not quite. Ask which rows influenced the leaf size.",
+    "byKey": {
+     "honest": "You trusted the refit. The choice used the test score.",
+     "better": "You read one run as proof.",
+     "train": "You mislabelled it. The problem is the reuse."
+    }
+   },
+   "explain": {
+    "text": "Picking the best of four scores on the test rows makes that score optimistic. Tune on a validation split, then score the test rows once."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Rents by postcode",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "A rental model has a dummy for each postcode. Two postcodes differ by £90 a month in your data, with 4 listings each. Rents within a postcode have a standard deviation of £120.",
+   "question": "What is the standard error of the difference between the two postcode means, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 84.85,
+    "tol": {
+     "abs": 0.1
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 84.85, or 84.85 ± 0.1",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 60.0,
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "id": "sd",
+      "value": 120.0,
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "id": "sum",
+      "value": 169.7,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "One postcode mean has standard error $120/\\sqrt{4}$."
+    },
+    {
+     "rung": "point",
+     "text": "The difference of two independent means adds their variances."
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt{60^2 + 60^2} = 84.85$."
+    }
+   ],
+   "feedback": {
+    "correct": "£84.85. The £90 gap is about one standard error: not distinguished.",
+    "generic": "Not quite. Add the two variances, then take the root.",
+    "byKey": {
+     "one": "You gave one mean’s error. A difference has two.",
+     "sd": "That is the spread of a single rent.",
+     "sum": "You added the errors. Variances add, not standard errors."
+    }
+   },
+   "explain": {
+    "text": "The gap is 1.06 standard errors, so four listings each cannot separate the postcodes. Pool thin postcodes or shrink them to the average."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "The interviewer asks *how would this fail next year?* The bars show the fitted band premiums, which a market shift could move.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "A",
+       "label": "band A"
+      },
+      {
+       "id": "B",
+       "label": "band B"
+      },
+      {
+       "id": "C",
+       "label": "band C"
+      },
+      {
+       "id": "D",
+       "label": "band D"
+      }
+     ],
+     "yLabel": "fitted premium vs A (£000)",
+     "showValues": true,
+     "decimals": 1,
+     "yMin": -60,
+     "yMax": 5,
+     "height": 230
+    },
+    "state": {
+     "values": {
+      "A": 0,
+      "B": -26.4,
+      "C": -39.6,
+      "D": -53.9
+     }
+    }
+   },
+   "question": "What do you answer?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "drift",
+      "text": "Band premiums drift, so I would retest on later data and refit",
+      "correct": true
+     },
+     {
+      "id": "never",
+      "text": "It would not fail, since 99 test rows covered every case",
+      "why": "One year of 99 homes cannot cover a moving market."
+     },
+     {
+      "id": "more",
+      "text": "I would add features until the training error is zero",
+      "why": "Zero error means overfitting, and it fails sooner."
+     },
+     {
+      "id": "median",
+      "text": "I would predict the median price, which cannot drift over time",
+      "why": "The median drifts too, and it ignores the features."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Think about what is fixed inside the coefficients."
+    },
+    {
+     "rung": "point",
+     "text": "Premiums reflect this year’s market.",
+     "highlight": [
+      "xB"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A later test period shows how fast they drift."
+    }
+   ],
+   "feedback": {
+    "correct": "Drift, checked on a later period and handled by refitting.",
+    "generic": "Not quite. Ask what the coefficients assume about the future.",
+    "byKey": {
+     "never": "You treated one year as the future.",
+     "more": "You chased zero error, which is overfitting.",
+     "median": "The median drifts too."
+    }
+   },
+   "explain": {
+    "text": "Coefficients are estimates for the period fitted. Test on a later period, watch the band premiums, and refit as the market moves."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Look, clean, split, baseline, simple model, check, then flexible model, and answer each follow-up with a number.",
+   "Fix a known typing error and say so. Never drop rows silently, and never tune on the test set.",
+   "Collinearity widens the standard error of a coefficient. It does not bias the estimate."
+  ],
+  "formula": {
+   "name": "Variance inflation",
+   "tex": "\\text{VIF} = \\dfrac{1}{1 - r^2}",
+   "note": "For two features with correlation $r$. Standard errors grow by $\\sqrt{\\text{VIF}}$."
+  },
+  "trap": "Dropping outliers silently hides an error that could have been fixed and reported."
+ },
+ "quiz": [
+  {
+   "id": "q-rows",
+   "difficulty": 2,
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "A file has 650 homes, 30 blank ages and 5 prices typed in pounds. You drop the five and fill the blanks with the median.",
+   "question": "How many rows enter the model?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 645,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "645",
+    "wrong": [
+     {
+      "id": "both",
+      "value": 615,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "all",
+      "value": 650,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "650 − 5 = 645.",
+    "generic": "Not quite. Only the five bad prices are dropped; the blanks are filled.",
+    "byKey": {
+     "both": "You dropped the blank ages too. They were filled.",
+     "all": "You dropped nothing."
+    }
+   },
+   "explain": {
+    "text": "Filling the blank ages keeps those 30 rows. Only the five mistyped prices leave."
+   }
+  },
+  {
+   "id": "q-r2-from-rmse",
+   "difficulty": 3,
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "On test rows the baseline RMSE is 41.0 and the model RMSE is 16.4. Both use the same rows.",
+   "question": "What is the out-of-sample R² against the baseline?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.84,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 0.84, or 0.84 ± 0.001",
+    "wrong": [
+     {
+      "id": "cut",
+      "value": 0.6,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 0.16,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - (16.4/41.0)^2 = 0.84$.",
+    "generic": "Not quite. R² compares squared errors, so square the ratio.",
+    "byKey": {
+     "cut": "That is the cut in RMSE. R² uses squares.",
+     "ratio": "That is the share of squared error left."
+    }
+   },
+   "explain": {
+    "text": "The model keeps $(16.4/41.0)^2 = 0.16$ of the baseline’s squared error, so R² is 0.84."
+   }
+  },
+  {
+   "id": "q-inflation",
+   "difficulty": 3,
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "Two features have a correlation of 0.9.",
+   "question": "By what factor do their standard errors grow, against uncorrelated features?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.294,
+    "tol": {
+     "abs": 0.002
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 2.294, or 2.294 ± 0.002",
+    "wrong": [
+     {
+      "id": "vif",
+      "value": 5.263,
+      "tol": {
+       "abs": 0.002
+      }
+     },
+     {
+      "id": "r",
+      "value": 0.9,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sqrt{1/(1 - 0.81)} = 2.294$.",
+    "generic": "Not quite. Compute the variance inflation, then take the root.",
+    "byKey": {
+     "vif": "That is the variance inflation. Standard errors grow by its root.",
+     "r": "That is the correlation."
+    }
+   },
+   "explain": {
+    "text": "The variance inflation is $1/(1 - 0.81) = 5.263$. Standard errors grow by its root, 2.294."
+   }
+  },
+  {
+   "id": "q-dummies",
+   "difficulty": 3,
+   "tags": [
+    "house-price-case",
+    "collinear-features"
+   ],
+   "pace": 240,
+   "prose": "You turn a band column with four levels into dummy columns, and drop the first.",
+   "question": "Why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "collinear",
+      "text": "The four dummies add to a column of ones, duplicating the intercept",
+      "correct": true
+     },
+     {
+      "id": "overfit",
+      "text": "Fewer columns always means less overfitting",
+      "why": "The count is not the reason. Four dummies are perfectly collinear with the intercept."
+     },
+     {
+      "id": "worst",
+      "text": "The first band is always the worst, so it carries no information",
+      "why": "Which level is dropped is arbitrary. It only becomes the reference."
+     },
+     {
+      "id": "scale",
+      "text": "A dummy needs a reference level to sit on the same scale as area",
+      "why": "Scale is not the issue. The sum of all four is constant."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Perfect collinearity with the intercept.",
+    "generic": "Not quite. Add the four dummies together.",
+    "byKey": {
+     "overfit": "You gave a count argument.",
+     "worst": "You thought the dropped level was special.",
+     "scale": "You thought of scale."
+    }
+   },
+   "explain": {
+    "text": "The dropped band becomes the reference. The other coefficients are premiums against it."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1141 @@
+{
+ "id": "l13-baseline-first",
+ "course": "research-int",
+ "title": "A baseline first",
+ "minutes": 15,
+ "objectives": [
+  "Fit and beat a simple baseline before anything clever."
+ ],
+ "skills": [
+  "rq-case",
+  "rq-ml"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Three forecasts of a spread",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "About two and a half minutes a question. A spread keeps 0.9 of its distance from 50 each day, then gets noise of variance 1. Its long-run variance is 5.263. Three forecasts of tomorrow: the long-run mean, the AR(1) and yesterday’s value. The bars show the first two.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "mean",
+       "label": "long-run mean"
+      },
+      {
+       "id": "ar1",
+       "label": "AR(1)"
+      },
+      {
+       "id": "persist",
+       "label": "yesterday"
+      }
+     ],
+     "yLabel": "expected squared error",
+     "showValues": true,
+     "decimals": 3,
+     "showZero": false,
+     "yMin": 0,
+     "yMax": 6,
+     "height": 240
+    },
+    "state": {
+     "values": {
+      "mean": 5.263,
+      "ar1": 1,
+      "persist": 0
+     }
+    }
+   },
+   "question": "What is the expected squared error of \"tomorrow equals today\"?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.0526,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 1.0526, or 1.0526 ± 0.0005",
+    "wrong": [
+     {
+      "id": "mean",
+      "value": 5.2632,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ar1",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Tomorrow minus today is minus 0.1 times today’s distance from 50, plus the new noise."
+    },
+    {
+     "rung": "point",
+     "text": "The two parts are independent, so their variances add: $0.1^2 \\times 5.263$ plus 1.",
+     "highlight": [
+      "persist"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.0526 + 1 = 1.0526$."
+    }
+   ],
+   "feedback": {
+    "correct": "1.0526, a little worse than the AR(1) and far better than the mean.",
+    "generic": "Not quite. Variance of (minus 0.1 times the distance) plus the noise variance.",
+    "byKey": {
+     "mean": "That is the error of the long-run mean, the variance of the series.",
+     "ar1": "That is the AR(1) error. \"Tomorrow equals today\" ignores the pull to the mean, so it pays a little more."
+    }
+   },
+   "explain": {
+    "text": "Yesterday’s value is wrong by a small pull back to 50 plus fresh noise, which costs 1.0526. The mean ignores the series entirely and costs 5.263.",
+    "canvas": {
+     "values": {
+      "persist": 1.0526
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Score three forecasts",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 600,
+   "prose": "About ten minutes with the code. Write `baseline_scores(path)`: fit on the first 400 days, forecast each of the last 200 from the day before.",
+   "question": "Write `baseline_scores(path, n_fit=400)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "data": {
+     "spread-daily.csv": "content/data/spread-daily.csv"
+    },
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef baseline_scores(path, n_fit=400):\n    \"\"\"Return (persistence, mean, ar1): mean squared errors on the rows\n    after the first n_fit. Fit the mean and the AR(1) on those n_fit\n    rows only. Forecast every later row, the first from row n_fit - 1.\"\"\"\n    x = pd.read_csv(path)['spread_bp'].to_numpy(float)\n    # Your code here\n    return 0.0, 0.0, 0.0\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef baseline_scores(path, n_fit=400):\n    x = pd.read_csv(path)['spread_bp'].to_numpy(float)\n    train, prev, nxt = x[:n_fit], x[n_fit - 1:-1], x[n_fit:]\n    slope, icpt = np.polyfit(train[:-1], train[1:], 1)\n    persistence = np.mean((nxt - prev) ** 2)\n    mean_fc = np.mean((nxt - train.mean()) ** 2)\n    ar1 = np.mean((nxt - (icpt + slope * prev)) ** 2)\n    return persistence, mean_fc, ar1\n",
+    "examples": [
+     {
+      "setup": "open('tiny.csv', 'w').write('date,spread_bp\\n' + ''.join(f'd{i},{v}\\n' for i, v in enumerate([50.0, 50.4, 49.8, 50.9, 50.2, 49.5, 50.1, 50.6, 49.9, 50.3, 50.8, 49.7])))",
+      "call": "round(baseline_scores('tiny.csv', 6)[0], 4)",
+      "expect": "0.4533",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "baseline_scores('spread-daily.csv')[0]",
+      "expect": "1.207112",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "baseline_scores('spread-daily.csv')[1]",
+      "expect": "6.8195945",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "baseline_scores('spread-daily.csv')[2]",
+      "expect": "1.1532709",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "open('tiny.csv', 'w').write('date,spread_bp\\n' + ''.join(f'd{i},{v}\\n' for i, v in enumerate([50.0, 50.4, 49.8, 50.9, 50.2, 49.5, 50.1, 50.6, 49.9, 50.3, 50.8, 49.7])))",
+      "call": "list(baseline_scores('tiny.csv', 6))",
+      "expect": "[0.45333333333333203, 0.15555555555555475, 0.13724687539451944]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "how": "Check runs 4 hidden tests. Three check each score on the spread file (within 1e-6). One checks all three on a twelve-row file with n_fit = 6 (relative 1e-9). All later rows are forecast, the first from the last fitted row."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The three forecasts of day $t$ use day $t - 1$, the training mean, and a line fitted on the training pairs."
+    },
+    {
+     "rung": "point",
+     "text": "`np.polyfit(train[:-1], train[1:], 1)` fits the AR(1) line."
+    },
+    {
+     "rung": "step",
+     "text": "Slice `prev = x[n_fit - 1:-1]` and `nxt = x[n_fit:]`, so the first test day is forecast from the last training day."
+    }
+   ],
+   "feedback": {
+    "correct": "1.2071, 6.8196 and 1.1533.",
+    "generic": "Some tests failed. Forecast all test rows, the first from row n_fit - 1, and fit on the first n_fit rows only."
+   },
+   "explain": {
+    "text": "Yesterday’s value scores 1.2071, the training mean 6.8196 and the AR(1) 1.1533. The first test row is forecast from the last training row; leaving it out would give 1.2128 and 1.1574."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "How much better",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "The bars show the three test errors you just computed. The AR(1) is the best of them.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "persist",
+       "label": "yesterday"
+      },
+      {
+       "id": "mean",
+       "label": "training mean"
+      },
+      {
+       "id": "ar1",
+       "label": "AR(1)"
+      }
+     ],
+     "yLabel": "test squared error",
+     "showValues": true,
+     "decimals": 3,
+     "yMin": 0,
+     "yMax": 7.5,
+     "height": 240
+    },
+    "state": {
+     "values": {
+      "persist": 1.2071,
+      "mean": 6.8196,
+      "ar1": 1.1533
+     }
+    }
+   },
+   "question": "By what percentage is the AR(1) error below the best baseline?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0446,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 4.46, or 4.46 ± 0.05",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "diff",
+      "value": 0.000538,
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 0.9554,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The best baseline is yesterday’s value, 1.2071."
+    },
+    {
+     "rung": "point",
+     "text": "A percentage gain is one minus the ratio of the errors.",
+     "highlight": [
+      "ar1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 1.1533/1.2071 = 0.0446$."
+    }
+   ],
+   "feedback": {
+    "correct": "4.46%. A real gain, and a small one.",
+    "generic": "Not quite. One minus the ratio of the AR(1) error to the best baseline’s.",
+    "byKey": {
+     "diff": "You gave the difference in error, not a percentage of it.",
+     "ratio": "You gave the ratio. The gain is what is left of 100%."
+    }
+   },
+   "explain": {
+    "text": "Against the best baseline, 1.2071, the AR(1) cuts the error by 4.46%. Against the mean it looks huge, which is why the mean is a poor baseline to quote.",
+    "canvas": {
+     "highlight": [
+      "ar1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The same test on returns",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 600,
+   "prose": "About ten minutes with the code. Now the futures returns: fit on the first 749, test on the last 250. The zero forecast says no change at all.",
+   "question": "Write `futures_baselines(path, n_fit=749)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "data": {
+     "futures-daily.csv": "content/data/futures-daily.csv"
+    },
+    "starter": "import numpy as np\nimport pandas as pd\n\ndef futures_baselines(path, n_fit=749):\n    \"\"\"Return (zero, mean, ar1): mean squared errors of next-day log\n    return forecasts on the returns after the first n_fit, times 10,000.\n    Fit the mean and the AR(1) on the first n_fit returns only.\"\"\"\n    c = pd.read_csv(path)['close'].to_numpy(float)\n    # Your code here\n    return 0.0, 0.0, 0.0\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\ndef futures_baselines(path, n_fit=749):\n    c = pd.read_csv(path)['close'].to_numpy(float)\n    r = np.diff(np.log(c))\n    train, test = r[:n_fit], r[n_fit:]\n    prev = np.r_[train[-1], test[:-1]]\n    slope, icpt = np.polyfit(train[:-1], train[1:], 1)\n    zero = np.mean(test ** 2)\n    mean_fc = np.mean((test - train.mean()) ** 2)\n    ar1 = np.mean((test - (icpt + slope * prev)) ** 2)\n    return 1e4 * zero, 1e4 * mean_fc, 1e4 * ar1\n",
+    "examples": [
+     {
+      "call": "round(futures_baselines('futures-daily.csv')[0], 4)",
+      "expect": "1.0135",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "futures_baselines('futures-daily.csv')[0]",
+      "expect": "1.0135",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "call": "futures_baselines('futures-daily.csv')[1]",
+      "expect": "1.016667",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "call": "futures_baselines('futures-daily.csv')[2]",
+      "expect": "1.022689",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "call": "list(futures_baselines('futures-daily.csv', 500))",
+      "expect": "[1.02721, 1.027422, 1.032173]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     }
+    ],
+    "how": "Check runs 4 hidden tests. Three check each score with 749 returns fitted (within 1e-5). One checks all three with n_fit = 500. Scores are times 10,000."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Log returns first. The test returns are the last 250."
+    },
+    {
+     "rung": "point",
+     "text": "The AR(1) forecast for each test day uses the return before it; the first uses the last training return."
+    },
+    {
+     "rung": "step",
+     "text": "`np.r_[train[-1], test[:-1]]` holds those previous returns."
+    }
+   ],
+   "feedback": {
+    "correct": "1.0135, 1.0167 and 1.0227, times $10^{-4}$.",
+    "generic": "Some tests failed. Fit on the first n_fit returns only, and forecast every test return."
+   },
+   "explain": {
+    "text": "The zero forecast scores 1.0135, the training mean 1.0167 and the AR(1) 1.0227 (times $10^{-4}$). The fitted slope is 0.1458."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Out of sample against zero",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "In sample, the AR(1) slope has $t = 4.02$ on 748 pairs. The test errors are on the chart. The out-of-sample $R^2$ against a forecast is one minus the ratio of errors.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "zero",
+       "label": "zero forecast"
+      },
+      {
+       "id": "mean",
+       "label": "training mean"
+      },
+      {
+       "id": "ar1",
+       "label": "AR(1)"
+      }
+     ],
+     "yLabel": "test squared error (× 10⁻⁴)",
+     "showValues": true,
+     "decimals": 4,
+     "yMin": 0,
+     "yMax": 1.3,
+     "height": 240
+    },
+    "state": {
+     "values": {
+      "zero": 1.0135,
+      "mean": 1.0167,
+      "ar1": 1.0227
+     }
+    }
+   },
+   "question": "What is the AR(1) out-of-sample $R^2$ against the zero forecast?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.0091,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to -0.0091, or -0.0091 ± 0.0005",
+    "wrong": [
+     {
+      "id": "flip",
+      "value": 0.0091,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 1.0091,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the AR(1) error by the zero forecast’s."
+    },
+    {
+     "rung": "point",
+     "text": "1.0227 over 1.0135 is a little above 1.",
+     "highlight": [
+      "zero",
+      "ar1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 1.0227/1.0135 = -0.0091$."
+    }
+   ],
+   "feedback": {
+    "correct": "-0.0091: slightly worse than doing nothing.",
+    "generic": "Not quite. One minus the AR(1) error over the zero forecast’s error.",
+    "byKey": {
+     "flip": "You flipped the sign. The AR(1) scored worse, so $R^2$ is negative.",
+     "ratio": "You gave the ratio. $R^2$ is one minus it."
+    }
+   },
+   "explain": {
+    "text": "The AR(1) is slightly worse than a forecast of zero on 250 days. The standard error of that $R^2$ is about 0.02, so the data cannot tell the two apart.",
+    "canvas": {
+     "highlight": [
+      "zero",
+      "ar1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "It fits, so ship it",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "The AR(1) slope has $t = 4.02$ in sample and loses to the zero forecast on 250 test days. A colleague says the model fits, so ship it.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [
+      {
+       "id": "zero",
+       "label": "zero forecast"
+      },
+      {
+       "id": "mean",
+       "label": "training mean"
+      },
+      {
+       "id": "ar1",
+       "label": "AR(1)"
+      }
+     ],
+     "yLabel": "test squared error (× 10⁻⁴)",
+     "showValues": true,
+     "decimals": 4,
+     "yMin": 0,
+     "yMax": 1.3,
+     "height": 240
+    },
+    "state": {
+     "values": {
+      "zero": 1.0135,
+      "mean": 1.0167,
+      "ar1": 1.0227
+     }
+    }
+   },
+   "question": "What do you say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "notshown",
+      "text": "No gain shows on 250 days, and costs would swallow a small one",
+      "correct": true
+     },
+     {
+      "id": "ship",
+      "text": "Ship it: $t = 4.02$ in sample proves the signal is really there",
+      "why": "You read the in-sample $t$ as proof. The test days did not confirm it."
+     },
+     {
+      "id": "noise",
+      "text": "The slope is pure noise, so I would drop the whole idea now",
+      "why": "You claimed too much. 250 days is too short to show the effect either way."
+     },
+     {
+      "id": "refit",
+      "text": "Refit on the test days until it beats zero",
+      "why": "You would tune on the test set. Any win then proves nothing."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put the in-sample fit and the test score side by side."
+    },
+    {
+     "rung": "point",
+     "text": "The in-sample $t$ used the fitted days; the test days are the check.",
+     "highlight": [
+      "ar1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The check shows no gain, and a gain this small would not cover costs anyway."
+    }
+   ],
+   "feedback": {
+    "correct": "Not shown on the test days, and too small to pay for trading.",
+    "generic": "Not quite. Say what the test days show.",
+    "byKey": {
+     "ship": "You trusted the in-sample $t$. It was fitted on those days.",
+     "noise": "You overclaimed. We have not shown a gain, which is not the same as showing none.",
+     "refit": "You tuned on the test days, which spoils them."
+    }
+   },
+   "explain": {
+    "text": "The honest claim is \"not shown\", not \"it is noise\". A standard error of 0.02 on the $R^2$ leaves room for a true coefficient of 0.06.",
+    "canvas": {
+     "highlight": [
+      "zero",
+      "ar1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A baseline with the test days in it",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "A colleague fits the spread AR(1) on all 600 days. They report a test error of 1.1518 on the last 200. Your honest figure was 1.1533.",
+   "question": "What is wrong with the 1.1518?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "seen",
+      "text": "The fit saw the test days, so the score is flattered a little",
+      "correct": true
+     },
+     {
+      "id": "lower",
+      "text": "Nothing: a lower error always means the better-fitting model",
+      "why": "A lower error from a fit that saw the test days proves nothing."
+     },
+     {
+      "id": "short",
+      "text": "The test is too short to compare the two forecasts fairly",
+      "why": "Length is not the fault. The same rows were used to fit and to score."
+     },
+     {
+      "id": "fewer",
+      "text": "The model should be fitted on fewer rows than it was here",
+      "why": "The number of fitted rows is not the fault. Their overlap with the test is."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Ask which rows the line was fitted on."
+    },
+    {
+     "rung": "point",
+     "text": "The last 200 rows are in both the fit and the score."
+    },
+    {
+     "rung": "step",
+     "text": "A fit that has seen the answers scores a little better than it should."
+    }
+   ],
+   "feedback": {
+    "correct": "Flattered by test days in the fit, slightly here.",
+    "generic": "Not quite. Ask which rows fitted the line and which scored it.",
+    "byKey": {
+     "lower": "You took the lower number at face value. It was flattered.",
+     "short": "You blamed the length of the test.",
+     "fewer": "You blamed the number of fitted rows."
+    }
+   },
+   "explain": {
+    "text": "The leaked fit scores 1.1518 against the honest 1.1533. With two parameters the flattery is small; with fifty it would not be."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Say it aloud",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "Write the dumbest forecasts first: zero, the training mean, yesterday’s value. The model must satisfy $L_{\\text{model}} < (1 - m)\\,\\min L_{\\text{baseline}}$ on days it never saw, for a margin $m$ set beforehand.",
+   "question": "Which answer would you say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "base",
+      "text": "I score zero, the mean and yesterday on unseen days; the model must beat the best.",
+      "correct": true
+     },
+     {
+      "id": "fit",
+      "text": "I fit the model, check the $t$ statistics, and compare with the mean if there is time.",
+      "why": "You fitted first and compared later. The baseline sets the bar."
+     },
+     {
+      "id": "r2",
+      "text": "I report the model’s R² on all the data.",
+      "why": "You scored on fitted days, and R² alone has no baseline."
+     },
+     {
+      "id": "best",
+      "text": "I try five models and pick the one with the lowest error.",
+      "why": "You picked on the data you score. That needs a held-out check."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look for the baseline before the model."
+    },
+    {
+     "rung": "point",
+     "text": "The comparison must be on days the model never saw."
+    },
+    {
+     "rung": "step",
+     "text": "Only one answer names both."
+    }
+   ],
+   "feedback": {
+    "correct": "Baselines first, a margin, unseen days.",
+    "generic": "Not quite. Choose the answer that puts the baseline first.",
+    "byKey": {
+     "fit": "You put the model first.",
+     "r2": "You named no baseline and scored on fitted days.",
+     "best": "You chose among models on the scoring data."
+    }
+   },
+   "explain": {
+    "text": "Say the baselines, the unseen days and the margin. A model without them has nothing to be better than."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "The cost of yesterday’s value",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "An AR(1) has $x_{t+1} - \\mu = \\varphi(x_t - \\mu) + e_{t+1}$, with $\\text{Var}(e) = \\sigma^2$ and long-run variance $\\sigma^2/(1-\\varphi^2)$.",
+   "question": "Put the lines in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "The miss of \"tomorrow equals today\" is $x_{t+1} - x_t = -(1-\\varphi)(x_t - \\mu) + e_{t+1}$."
+     },
+     {
+      "id": "b",
+      "text": "The two terms are independent, so their variances add."
+     },
+     {
+      "id": "c",
+      "text": "The miss has variance $\\sigma^2\\left[\\dfrac{(1-\\varphi)^2}{1-\\varphi^2} + 1\\right]$."
+     },
+     {
+      "id": "d",
+      "text": "Since $\\dfrac{(1-\\varphi)^2}{1-\\varphi^2} = \\dfrac{1-\\varphi}{1+\\varphi}$, the total is $\\dfrac{2\\sigma^2}{1+\\varphi}$."
+     },
+     {
+      "id": "x",
+      "text": "The miss is only the new noise $e_{t+1}$, so its variance is $\\sigma^2$.",
+      "why": "That is the AR(1) forecast’s miss. Yesterday’s value forgets the pull to the mean, which adds the first term."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the miss as a pull back plus new noise."
+    },
+    {
+     "rung": "point",
+     "text": "Independent parts add their variances."
+    },
+    {
+     "rung": "step",
+     "text": "Then simplify the fraction with $1 - \\varphi^2 = (1-\\varphi)(1+\\varphi)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2\\sigma^2/(1+\\varphi)$: 1.0526 at $\\varphi = 0.9$.",
+    "generic": "Not quite. Write the miss, add variances, simplify.",
+    "byKey": {
+     "x": "You gave the AR(1) error. Yesterday’s value pays the pull-back term as well.",
+     "left-out": "You left out a step the derivation needs."
+    }
+   },
+   "explain": {
+    "text": "The AR(1) beats yesterday’s value by the factor $2/(1+\\varphi)$. At $\\varphi = 0.9$ that is 1.0526, the bar we met first."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A desk’s spread signal",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "A desk trades a spread that mean-reverts with daily $\\varphi = 0.95$ and innovation variance 1. An AR(1) has error 1. Yesterday’s value has error $2/(1 + \\varphi)$.",
+   "question": "By what percentage is the AR(1) error below yesterday’s?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.025,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 2.5, or 2.5 ± 0.05",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "onemphi",
+      "value": 0.05,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 0.975,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Yesterday’s error is $2/1.95 = 1.0256$."
+    },
+    {
+     "rung": "point",
+     "text": "The gain is one minus the ratio of the AR(1) error to it."
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 1/1.0256 = 0.025$."
+    }
+   ],
+   "feedback": {
+    "correct": "2.5%, which is $(1 - \\varphi)/2$. A strong pull gives room; a slow one does not.",
+    "generic": "Not quite. One minus the AR(1) error over yesterday’s error.",
+    "byKey": {
+     "onemphi": "You took $1 - \\varphi$. The gain is half of it.",
+     "ratio": "You gave the ratio, not the gain."
+    }
+   },
+   "explain": {
+    "text": "The gain over yesterday’s value is $(1-\\varphi)/2$. At $\\varphi = 0.95$ it is 2.5%, a gap that costs could easily close."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The follow-up",
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "The interviewer asks: \"How much better than the baseline is good enough?\"",
+   "question": "What do you answer?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "margin",
+      "text": "A margin set beforehand from costs, shown on unseen days",
+      "correct": true
+     },
+     {
+      "id": "any",
+      "text": "Any gain at all, since a gain is a gain however small",
+      "why": "A tiny gain on a short test is within noise and costs."
+     },
+     {
+      "id": "t",
+      "text": "A $t$ statistic above 2 on the data the model was fitted to",
+      "why": "That is a fit statistic. The test is out of sample."
+     },
+     {
+      "id": "colleague",
+      "text": "Whatever the colleague’s model achieved on its own test",
+      "why": "Another model is not a baseline. The comparison is with the dumbest forecast."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The margin should come from what you can earn after costs."
+    },
+    {
+     "rung": "point",
+     "text": "Fix it before scoring, so you cannot move it to fit the result."
+    },
+    {
+     "rung": "step",
+     "text": "Then demand it on unseen days."
+    }
+   ],
+   "feedback": {
+    "correct": "A margin set beforehand from costs, shown on unseen days.",
+    "generic": "Not quite. Decide the bar before you see the result.",
+    "byKey": {
+     "any": "You accepted any gain, however small.",
+     "t": "You used an in-sample statistic.",
+     "colleague": "You compared with another model."
+    }
+   },
+   "explain": {
+    "text": "Choose the margin from costs and risk before scoring. Then a model either clears it on days it never saw, or it does not."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Score zero, the training mean and yesterday’s value first, on days you did not fit.",
+   "The model must beat the best baseline by a margin set beforehand, on unseen days.",
+   "A gain that is not shown is not the same as noise, and costs may swallow a small one anyway."
+  ],
+  "formula": {
+   "name": "Persistence against the AR(1)",
+   "tex": "\\dfrac{2\\sigma^2}{1+\\varphi} \\;\\text{against}\\; \\sigma^2",
+   "note": "Expected squared error of \"tomorrow equals today\" and of the AR(1) forecast, for innovation variance $\\sigma^2$."
+  },
+  "trap": "A model that fits well in sample has shown nothing until it beats the baseline on days it never saw."
+ },
+ "quiz": [
+  {
+   "id": "q-mean-forecast",
+   "difficulty": 2,
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "A spread has $\\varphi = 0.7$ and innovation variance 1. The forecast is its long-run mean.",
+   "question": "What is its expected squared error?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.9608,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 1.9608, or 1.9608 ± 0.001",
+    "wrong": [
+     {
+      "id": "persist",
+      "value": 1.1765,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ar1",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/(1 - 0.49) = 1.9608$.",
+    "generic": "Not quite. The mean forecast pays the whole variance of the series.",
+    "byKey": {
+     "persist": "That is the error of yesterday’s value.",
+     "ar1": "That is the AR(1) error."
+    }
+   },
+   "explain": {
+    "text": "The long-run mean ignores today, so it pays the full variance, $\\sigma^2/(1-\\varphi^2)$."
+   }
+  },
+  {
+   "id": "q-return-baseline",
+   "difficulty": 2,
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "You forecast daily index returns.",
+   "question": "Which baselines do you score first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "The zero forecast and the training mean",
+      "correct": true
+     },
+     {
+      "id": "yday",
+      "text": "Yesterday’s return, and no other baseline",
+      "why": "Returns hardly persist, so this baseline is poor and flatters any model."
+     },
+     {
+      "id": "none",
+      "text": "None: the model’s R² is enough",
+      "why": "R² on fitted days has no baseline behind it."
+     },
+     {
+      "id": "big",
+      "text": "A large neural network",
+      "why": "A baseline is the dumbest comparator, not the cleverest."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Zero and the mean are the dumbest honest forecasts of a return.",
+    "generic": "Not quite. Pick the simple forecasts that need no fitting.",
+    "byKey": {
+     "yday": "You picked a poor baseline.",
+     "none": "You skipped the baseline.",
+     "big": "You picked a rival model."
+    }
+   },
+   "explain": {
+    "text": "Daily returns are close to zero on average, so zero and the training mean set a hard bar."
+   }
+  },
+  {
+   "id": "q-gain-five",
+   "difficulty": 2,
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "On unseen days, yesterday’s value has squared error 4.0 and a model has 3.8.",
+   "question": "By what percentage is the model’s error lower?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.05,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a number",
+    "accept": "Any form equal to 5, or 5 ± 0.05",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "diff",
+      "value": 0.002,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 0.95,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - 3.8/4.0 = 5\\%$.",
+    "generic": "Not quite. One minus the ratio of the two errors.",
+    "byKey": {
+     "diff": "You gave the difference, not a percentage.",
+     "ratio": "You gave the ratio."
+    }
+   },
+   "explain": {
+    "text": "The model’s error is 95% of the baseline’s, so the gain is 5%."
+   }
+  },
+  {
+   "id": "q-baseline-mean",
+   "difficulty": 3,
+   "tags": [
+    "baseline-first",
+    "persistence-baseline"
+   ],
+   "pace": 150,
+   "prose": "To score a model on the last quarter, a colleague forecasts with the mean of the whole year.",
+   "question": "What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "seen",
+      "text": "The mean saw the last quarter, so the baseline is flattered",
+      "correct": true
+     },
+     {
+      "id": "mean",
+      "text": "A mean is too weak as a baseline for any model",
+      "why": "A training mean is a fair baseline. The problem is which days it uses."
+     },
+     {
+      "id": "year",
+      "text": "A year is too short to compute a mean",
+      "why": "The length is fine. The overlap with the test is the fault."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing: a baseline is allowed to see everything in the data",
+      "why": "A baseline must use only days before the test."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The baseline saw the test days.",
+    "generic": "Not quite. Ask which days the mean used.",
+    "byKey": {
+     "mean": "You blamed the choice of a mean.",
+     "year": "You blamed the length.",
+     "nothing": "You let the baseline see the test."
+    }
+   },
+   "explain": {
+    "text": "Use only the days before the test to fix the baseline. Otherwise it is closer to the answer than it should be."
+   }
+  }
+ ]
+}
