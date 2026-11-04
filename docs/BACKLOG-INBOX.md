@@ -1029,3 +1029,8 @@ Raised later (exam topic-3.5):
 Raised by the coding-int fix pass (topic 3.5):
 - Player: no per-screen language skip, so a learner who does not write C++ cannot skip a `ladder` C++ screen in l1, l4, l10, l11, l16 or l17. A `optional` or `language` flag on a screen would do.
 - `orderbook` canvas: labels shrink with the SVG at 390 px (about 7 px in `coding-int` l10 screens[1]). A `labelSize` or `minWidth` parameter under 480 px would fix it.
+
+Raised later (orchestrator, session H, 4 Nov):
+- [Should] Mock draw pools are open to practice: the eight `oa` drills behind mock-oa-code are listed in the drill library, so a learner can solve them before the mock. Options: a drill-file flag that hides a pack from the library until its mock is sat once, or a larger pool with `language` filtering and unseen-first draws by solved state (bullets above). Raised by the exam author and the topic 3.5 exams second read.
+- [Should] Playthrough: run each code widget's starter and require it to fail (every topic 3.5 author confirmed this by hand script), and run the code tests inside homework `parts` items (systems homework-4 histogram tests were not run).
+- [Could] Playthrough flake: `rq-clean-frame-py` and `rq-group-slopes-py` failed 0 of n three times inside agent worktrees while other playthroughs ran; never on the main checkout. Possibly a shared port or Pyodide cache between parallel runs.
