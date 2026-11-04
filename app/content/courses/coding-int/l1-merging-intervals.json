@@ -1,0 +1,1833 @@
+{
+  "id": "l1-merging-intervals",
+  "course": "coding-int",
+  "title": "Merging intervals",
+  "minutes": 14,
+  "objectives": [
+    "Sort and merge intervals, and count overlaps with a sweep."
+  ],
+  "skills": [
+    "ci-patterns"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which belong together",
+      "prose": "Five bookings sit on a line. Intervals here are closed: $[1, 5]$ holds 1, 5 and everything between. Intervals that overlap, even at one point, join into one **block**.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 16,
+          "step": 1,
+          "labels": 2,
+          "tapIntervals": true
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "i1",
+              "from": 1,
+              "to": 5,
+              "row": 1,
+              "label": "[1, 5]",
+              "labelPos": "right"
+            },
+            {
+              "id": "i2",
+              "from": 2,
+              "to": 3,
+              "row": 2,
+              "label": "[2, 3]",
+              "labelPos": "right"
+            },
+            {
+              "id": "i3",
+              "from": 4,
+              "to": 8,
+              "row": 3,
+              "label": "[4, 8]",
+              "labelPos": "right"
+            },
+            {
+              "id": "i4",
+              "from": 10,
+              "to": 12,
+              "row": 4,
+              "label": "[10, 12]",
+              "labelPos": "right"
+            },
+            {
+              "id": "i5",
+              "from": 11,
+              "to": 15,
+              "row": 5,
+              "label": "[11, 15]",
+              "labelPos": "right"
+            }
+          ]
+        }
+      },
+      "question": "Tap every interval that ends up in the same block as $[1, 5]$.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "i1",
+          "i2",
+          "i3"
+        ],
+        "countWord": "intervals"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from $[1, 5]$. Which intervals touch it?"
+        },
+        {
+          "rung": "point",
+          "text": "$[4, 8]$ starts at 4, inside $[1, 5]$.",
+          "highlight": [
+            "i3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$[2, 3]$ and $[4, 8]$ overlap $[1, 5]$, so the block runs from 1 to 8. Nothing else starts by 8."
+        }
+      ],
+      "feedback": {
+        "correct": "The block is $[1, 8]$: three intervals.",
+        "generic": "Not quite right. Grow the block from $[1, 5]$ one overlap at a time.",
+        "byKey": {
+          "i4": "$[10, 12]$ starts at 10, after the block has ended at 8. The gap from 8 to 10 splits them.",
+          "i5": "$[11, 15]$ joins $[10, 12]$, not $[1, 5]$. Its block starts at 10.",
+          "i1": "You left out $[1, 5]$ itself. Every interval is in its own block.",
+          "i2": "$[2, 3]$ lies inside $[1, 5]$, so it is in the block too.",
+          "i3": "$[4, 8]$ starts at 4, inside $[1, 5]$. It overlaps, and it stretches the block to 8."
+        }
+      },
+      "explain": {
+        "text": "$[2, 3]$ sits inside $[1, 5]$, and $[4, 8]$ overlaps it and stretches the block to 8. The next start, 10, is past 8, so a new block begins. The blocks are $[1, 8]$ and $[10, 15]$.",
+        "canvas": {
+          "highlight": [
+            "i1",
+            "i2",
+            "i3"
+          ],
+          "intervals": {
+            "b1": {
+              "from": 1,
+              "to": 8,
+              "row": 6,
+              "colour": 3,
+              "label": "block [1, 8]",
+              "labelPos": "right"
+            },
+            "b2": {
+              "from": 10,
+              "to": 15,
+              "row": 6,
+              "colour": 3,
+              "label": "[10, 15]",
+              "labelPos": "right"
+            }
+          },
+          "caption": "Blocks: [1, 8] and [10, 15]"
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Slide the last one",
+      "prose": "Drag the blue point. The last interval starts there and is always 4 long. Watch when it stops joining $[10, 12]$.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 20,
+          "step": 1,
+          "labels": 2
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "i1",
+              "from": 1,
+              "to": 5,
+              "row": 1,
+              "label": "[1, 5]",
+              "labelPos": "right"
+            },
+            {
+              "id": "i2",
+              "from": 2,
+              "to": 3,
+              "row": 2,
+              "label": "[2, 3]",
+              "labelPos": "right"
+            },
+            {
+              "id": "i3",
+              "from": 4,
+              "to": 8,
+              "row": 3,
+              "label": "[4, 8]",
+              "labelPos": "right"
+            },
+            {
+              "id": "i4",
+              "from": 10,
+              "to": 12,
+              "row": 4,
+              "label": "[10, 12]",
+              "labelPos": "right"
+            },
+            {
+              "id": "i5",
+              "from": 11,
+              "to": 15,
+              "row": 5,
+              "label": "[11, 15]",
+              "labelPos": "right"
+            }
+          ],
+          "points": [
+            {
+              "id": "p",
+              "x": 11,
+              "drag": true,
+              "label": "start",
+              "labelPos": "below"
+            }
+          ],
+          "caption": "Last interval: [11, 15]"
+        },
+        "derive": {
+          "i5.from": "p.x",
+          "i5.to": "p.x + 4",
+          "i5.label": "[{{p.x}}, {{p.x + 4}}]",
+          "caption": "Last interval: [{{p.x}}, {{p.x + 4}}]. {{p.x <= 12 ? 'It joins [10, 12].' : 'A gap: it starts a new block.'}}"
+        }
+      },
+      "question": "What is the largest whole start at which the last interval still joins $[10, 12]$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "12: a start of 12 touches the end of $[10, 12]$, and closed intervals that share a point join.",
+        "label": "Largest start",
+        "wrong": [
+          {
+            "id": "gap",
+            "value": 13,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "start",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Closed intervals that share one point still join."
+        }
+      ],
+      "feedback": {
+        "correct": "At 12 the two intervals share the point 12. At 13 there is a gap.",
+        "generic": "Not quite right. Find the start where the two intervals still share a point.",
+        "byKey": {
+          "gap": "At 13 the last interval begins after $[10, 12]$ has ended. The gap from 12 to 13 splits them.",
+          "start": "11 joins, but so does a later start. Keep dragging while the intervals still share a point."
+        }
+      },
+      "explain": {
+        "text": "The last interval joins while its start is at most 12, the end of $[10, 12]$. That comparison, the next start against the block's end, is the whole test. Sorting by start makes it the only test we need.",
+        "canvas": {
+          "points": {
+            "p": {
+              "x": 12
+            }
+          },
+          "highlight": [
+            "i4",
+            "i5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Forget to sort",
+      "prose": "Here is the merge loop with the sort left out:\n\n```python\nout = []\nfor s, e in intervals:      # no sorted()\n    if out and s <= out[-1][1]:\n        out[-1][1] = max(out[-1][1], e)\n    else:\n        out.append([s, e])\n```",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 16,
+          "step": 1,
+          "labels": 2
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "a",
+              "from": 8,
+              "to": 10,
+              "row": 1,
+              "label": "[8, 10]",
+              "labelPos": "right"
+            },
+            {
+              "id": "b",
+              "from": 1,
+              "to": 3,
+              "row": 2,
+              "label": "[1, 3]",
+              "labelPos": "right"
+            },
+            {
+              "id": "c",
+              "from": 2,
+              "to": 6,
+              "row": 3,
+              "label": "[2, 6]",
+              "labelPos": "right"
+            }
+          ],
+          "caption": "Input order: [8, 10], [1, 3], [2, 6]"
+        }
+      },
+      "question": "What does it return for `[[8, 10], [1, 3], [2, 6]]`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[[8, 10]]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[[1, 6], [8, 10]]`",
+            "why": "That is the right merge, but this loop never sorts. It compares 1 with the end 10 and swallows $[1, 3]$."
+          },
+          {
+            "id": "c",
+            "text": "`[[8, 10], [1, 6]]`",
+            "why": "You tested a true overlap. The loop only asks whether the start is at most the last end, and 1 is at most 10."
+          },
+          {
+            "id": "d",
+            "text": "`[[8, 10], [1, 3], [2, 6]]`",
+            "why": "1 is at most 10, so the loop merges $[1, 3]$ into $[8, 10]$ rather than appending it."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the loop with $[8, 10]$ already in `out`."
+        },
+        {
+          "rung": "point",
+          "text": "The next start is 1, and the last end is 10.",
+          "highlight": [
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1 is at most 10, so $[1, 3]$ is merged into $[8, 10]$. The same happens to $[2, 6]$."
+        }
+      ],
+      "feedback": {
+        "correct": "Without the sort, a small start looks like an overlap with a later interval.",
+        "generic": "Not quite right. Run the loop line by line, starting with $[8, 10]$.",
+        "byKey": {
+          "b": "You merged correctly in your head. This loop never sorts, so $[8, 10]$ comes first and swallows the rest.",
+          "c": "You checked both ends. The loop checks only the start against the last end."
+        }
+      },
+      "explain": {
+        "text": "The test `s <= out[-1][1]` assumes every earlier interval started no later than this one. Only sorting by start makes that true. With the sort, the answer is `[[1, 6], [8, 10]]`.",
+        "canvas": {
+          "highlight": [
+            "a"
+          ],
+          "caption": "Sorted: [1, 3], [2, 6], [8, 10] gives [[1, 6], [8, 10]]"
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Touching ends",
+      "prose": "Closed $[1, 4]$ and $[4, 5]$ share the point 4. Meetings are booked half-open: $[0, 10)$ ends just before 10, so the room is free at 10. This is the convention from `contests` l10-greedy-proofs.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 20,
+          "step": 1,
+          "labels": 5
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "c1",
+              "from": 1,
+              "to": 4,
+              "row": 1,
+              "label": "[1, 4]",
+              "labelPos": "left"
+            },
+            {
+              "id": "c2",
+              "from": 4,
+              "to": 5,
+              "row": 2,
+              "label": "[4, 5]",
+              "labelPos": "right"
+            },
+            {
+              "id": "m1",
+              "from": 0,
+              "to": 10,
+              "open": [
+                false,
+                true
+              ],
+              "row": 3,
+              "label": "[0, 10)",
+              "labelPos": "left",
+              "colour": 2
+            },
+            {
+              "id": "m2",
+              "from": 10,
+              "to": 20,
+              "open": [
+                false,
+                true
+              ],
+              "row": 4,
+              "label": "[10, 20)",
+              "labelPos": "right",
+              "colour": 2
+            }
+          ]
+        }
+      },
+      "question": "Which pairs overlap?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$[1, 4]$ with $[4, 5]$ overlaps; the two meetings do not",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Both pairs overlap",
+            "why": "You read the meetings as closed. A meeting that ends at 10 has left the room at 10."
+          },
+          {
+            "id": "c",
+            "text": "Neither pair overlaps",
+            "why": "Closed $[1, 4]$ holds 4, and so does $[4, 5]$. They share a point, so they merge."
+          },
+          {
+            "id": "d",
+            "text": "Only the two meetings overlap",
+            "why": "You swapped the conventions. Half-open intervals that touch do not overlap; closed ones do."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which pair is closed at the shared point?"
+        },
+        {
+          "rung": "point",
+          "text": "$[0, 10)$ does not contain 10.",
+          "highlight": [
+            "m1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The closed pair shares 4 and merges to $[1, 5]$. The meetings share nothing, so both fit in one room."
+        }
+      ],
+      "feedback": {
+        "correct": "Closed ends that touch merge. Half-open ends that touch do not.",
+        "generic": "Not quite right. Ask, for each pair, whether the shared point belongs to both.",
+        "byKey": {
+          "b": "You treated $[0, 10)$ as if it held 10. The round bracket says it does not.",
+          "c": "You treated $[1, 4]$ as if it stopped before 4. The square bracket says 4 is in."
+        }
+      },
+      "explain": {
+        "text": "For closed intervals the merge test is `s <= last_end`, so equal points join. For half-open ones it is `s < last_end`, so touching ends stay apart. Read the brackets before you write the comparison.",
+        "canvas": {
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write the merge",
+      "tags": [
+        "intervals-merge"
+      ],
+      "pace": 600,
+      "prose": "Intervals `[start, end]` hold whole numbers, come in any order, and may overlap or touch. Return the merged list, sorted by start, as lists. Two intervals that share an end point merge.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 24,
+          "step": 1,
+          "labels": 4
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "t1",
+              "from": 2,
+              "to": 5,
+              "row": 1,
+              "label": "[2, 5]",
+              "labelPos": "right"
+            },
+            {
+              "id": "t2",
+              "from": 4,
+              "to": 9,
+              "row": 2,
+              "label": "[4, 9]",
+              "labelPos": "right"
+            },
+            {
+              "id": "t3",
+              "from": 12,
+              "to": 14,
+              "row": 3,
+              "label": "[12, 14]",
+              "labelPos": "right"
+            },
+            {
+              "id": "t4",
+              "from": 20,
+              "to": 23,
+              "row": 4,
+              "label": "[20, 23]",
+              "labelPos": "right"
+            }
+          ],
+          "caption": "Example 1 merges to [[2, 9], [12, 14], [20, 23]]"
+        }
+      },
+      "question": "Write `merge_intervals(intervals)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def merge_intervals(intervals):\n    # Sort by start, then merge in one pass.\n    return sorted([list(x) for x in intervals])\n",
+        "solution": "def merge_intervals(intervals):\n    out = []\n    for s, e in sorted(intervals):\n        if out and s <= out[-1][1]:\n            out[-1][1] = max(out[-1][1], e)\n        else:\n            out.append([s, e])\n    return out\n",
+        "examples": [
+          {
+            "call": "merge_intervals([[2, 5], [4, 9], [12, 14], [20, 23]])",
+            "expect": "[[2, 9], [12, 14], [20, 23]]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([[1, 4], [4, 5]])",
+            "expect": "[[1, 5]]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "merge_intervals([[2, 5], [4, 9], [12, 14], [20, 23]])",
+            "expect": "[[2, 9], [12, 14], [20, 23]]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([[1, 4], [4, 5]])",
+            "expect": "[[1, 5]]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([])",
+            "expect": "[]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([[5, 6]])",
+            "expect": "[[5, 6]]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([[8, 10], [1, 3], [2, 6]])",
+            "expect": "[[1, 6], [8, 10]]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([[1, 10], [2, 3], [4, 5]])",
+            "expect": "[[1, 10]]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([[2, 3], [4, 5], [6, 7]])",
+            "expect": "[[2, 3], [4, 5], [6, 7]]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([[-5, -2], [-3, 1]])",
+            "expect": "[[-5, 1]]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([[1, 2], [1, 2]])",
+            "expect": "[[1, 2]]",
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals([[1, 2], [3, 4]])",
+            "expect": "[[1, 2], [3, 4]]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 10 hidden tests: touching ends, an empty list, one interval and unsorted input. Others hold a long first interval, negatives and repeats. Each result must equal the expected list."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "After sorting, which interval can the next one merge with?"
+        },
+        {
+          "rung": "point",
+          "text": "Only the last interval in `out` can overlap the next one.",
+          "highlight": [
+            "t2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Loop over `sorted(intervals)`. If `out` is not empty and `s <= out[-1][1]`, set `out[-1][1] = max(out[-1][1], e)`; otherwise append `[s, e]`."
+        }
+      ],
+      "feedback": {
+        "correct": "One sort, then one pass: $O(n \\log n)$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 needs $[2, 5]$ and $[4, 9]$ joined into $[2, 9]$. Sorting alone leaves them apart.",
+          "test-2": "Test 2 touches at 4. Use `<=`, so a shared end point merges.",
+          "test-6": "Test 6 has $[2, 3]$ inside $[1, 10]$. Keep the larger end with `max`.",
+          "error": "Your code stopped with an error. Check the empty list: `out[-1]` fails until `out` holds something."
+        }
+      },
+      "explain": {
+        "text": "After the sort, a new interval can only overlap the last merged one. `max` keeps a long interval's end when a short one falls inside it. The sort costs $O(n \\log n)$ and the pass $O(n)$.",
+        "canvas": {
+          "intervals": {
+            "b1": {
+              "from": 2,
+              "to": 9,
+              "row": 5,
+              "colour": 3,
+              "label": "[2, 9]",
+              "labelPos": "right"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The same merge in C++",
+      "tags": [
+        "intervals-merge"
+      ],
+      "pace": 600,
+      "prose": "Write the same function in C++. `std::sort` on a vector of vectors orders by the first entry, then the second, as Python's `sorted` does. `out.back()` is the last merged interval.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 24,
+          "step": 1,
+          "labels": 4
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "t1",
+              "from": 2,
+              "to": 5,
+              "row": 1,
+              "label": "[2, 5]",
+              "labelPos": "right"
+            },
+            {
+              "id": "t2",
+              "from": 4,
+              "to": 9,
+              "row": 2,
+              "label": "[4, 9]",
+              "labelPos": "right"
+            },
+            {
+              "id": "t3",
+              "from": 12,
+              "to": 14,
+              "row": 3,
+              "label": "[12, 14]",
+              "labelPos": "right"
+            },
+            {
+              "id": "t4",
+              "from": 20,
+              "to": 23,
+              "row": 4,
+              "label": "[20, 23]",
+              "labelPos": "right"
+            }
+          ],
+          "caption": "The same ten tests as the Python screen"
+        }
+      },
+      "question": "Write `merge_intervals` in C++.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <vector>\n#include <algorithm>\n\nstd::vector<std::vector<int>> merge_intervals(\n        std::vector<std::vector<int>> intervals) {\n    std::sort(intervals.begin(), intervals.end());\n    // Merge in one pass here.\n    return intervals;\n}\n",
+        "solution": "#include <vector>\n#include <algorithm>\n\nstd::vector<std::vector<int>> merge_intervals(\n        std::vector<std::vector<int>> intervals) {\n    std::sort(intervals.begin(), intervals.end());\n    std::vector<std::vector<int>> out;\n    for (const auto& iv : intervals) {\n        if (!out.empty() && iv[0] <= out.back()[1])\n            out.back()[1] = std::max(out.back()[1], iv[1]);\n        else\n            out.push_back(iv);\n    }\n    return out;\n}\n",
+        "examples": [
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  2,
+                  5
+                ],
+                [
+                  4,
+                  9
+                ],
+                [
+                  12,
+                  14
+                ],
+                [
+                  20,
+                  23
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                2,
+                9
+              ],
+              [
+                12,
+                14
+              ],
+              [
+                20,
+                23
+              ]
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  1,
+                  4
+                ],
+                [
+                  4,
+                  5
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                1,
+                5
+              ]
+            ],
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  2,
+                  5
+                ],
+                [
+                  4,
+                  9
+                ],
+                [
+                  12,
+                  14
+                ],
+                [
+                  20,
+                  23
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                2,
+                9
+              ],
+              [
+                12,
+                14
+              ],
+              [
+                20,
+                23
+              ]
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  1,
+                  4
+                ],
+                [
+                  4,
+                  5
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                1,
+                5
+              ]
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              []
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  5,
+                  6
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                5,
+                6
+              ]
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  8,
+                  10
+                ],
+                [
+                  1,
+                  3
+                ],
+                [
+                  2,
+                  6
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                1,
+                6
+              ],
+              [
+                8,
+                10
+              ]
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  1,
+                  10
+                ],
+                [
+                  2,
+                  3
+                ],
+                [
+                  4,
+                  5
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                1,
+                10
+              ]
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  2,
+                  3
+                ],
+                [
+                  4,
+                  5
+                ],
+                [
+                  6,
+                  7
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                2,
+                3
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                6,
+                7
+              ]
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  -5,
+                  -2
+                ],
+                [
+                  -3,
+                  1
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                -5,
+                1
+              ]
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  1,
+                  2
+                ],
+                [
+                  1,
+                  2
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                1,
+                2
+              ]
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "merge_intervals",
+            "args": [
+              [
+                [
+                  1,
+                  2
+                ],
+                [
+                  3,
+                  4
+                ]
+              ]
+            ],
+            "types": [
+              "std::vector<std::vector<int>>"
+            ],
+            "expect": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ]
+            ],
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler, about 26 MB, and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Check runs the 10 tests of the Python screen. Each result must equal the expected list."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `out.back()[1]` hold?"
+        },
+        {
+          "rung": "point",
+          "text": "It is the end of the last merged interval.",
+          "highlight": [
+            "t2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Inside the loop: `if (!out.empty() && iv[0] <= out.back()[1]) out.back()[1] = std::max(out.back()[1], iv[1]); else out.push_back(iv);`."
+        }
+      ],
+      "feedback": {
+        "correct": "The same sort and one pass, in C++.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 needs $[2, 5]$ and $[4, 9]$ joined. The starter only sorts.",
+          "test-6": "Test 6 has $[2, 3]$ inside $[1, 10]$. Take `std::max` of the two ends.",
+          "error": "The code stopped. Check `out.back()` is only read when `out` is not empty."
+        }
+      },
+      "explain": {
+        "text": "`intervals` is taken by value, so sorting it leaves the caller's vector alone. `out.back()` returns a reference, so assigning to `out.back()[1]` changes the stored interval. Calling `out.back()` on an empty vector is undefined, so test `out.empty()` first."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "The short one inside",
+      "prose": "A learner wrote the extend line as\n\n```python\nout[-1][1] = e        # instead of max(out[-1][1], e)\n```\n\nThe input is `[[1, 10], [2, 3], [4, 5]]`, already sorted.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 12,
+          "step": 1,
+          "labels": 1
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "a",
+              "from": 1,
+              "to": 10,
+              "row": 1,
+              "label": "[1, 10]",
+              "labelPos": "right"
+            },
+            {
+              "id": "b",
+              "from": 2,
+              "to": 3,
+              "row": 2,
+              "label": "[2, 3]",
+              "labelPos": "right"
+            },
+            {
+              "id": "c",
+              "from": 4,
+              "to": 5,
+              "row": 3,
+              "label": "[4, 5]",
+              "labelPos": "right"
+            }
+          ]
+        }
+      },
+      "question": "What should `merge_intervals` return for this input?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[[1, 10]]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[[1, 3], [4, 5]]`",
+            "why": "You copied the next interval's end instead of keeping the larger. $[2, 3]$ lies inside $[1, 10]$, so the end stays 10.",
+            "canvas": {
+              "intervals": {
+                "w": {
+                  "from": 1,
+                  "to": 3,
+                  "row": 4,
+                  "colour": 4,
+                  "label": "end cut to 3",
+                  "labelPos": "right"
+                }
+              }
+            }
+          },
+          {
+            "id": "c",
+            "text": "`[[1, 5]]`",
+            "why": "You took the last interval's end as the block's end. 5 is less than 10, so the block still ends at 10."
+          },
+          {
+            "id": "d",
+            "text": "`[[1, 10], [4, 5]]`",
+            "why": "$[4, 5]$ starts at 4, inside $[1, 10]$. It merges."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is $[2, 3]$ inside $[1, 10]$?"
+        },
+        {
+          "rung": "point",
+          "text": "Every point of $[2, 3]$ and of $[4, 5]$ is in $[1, 10]$.",
+          "highlight": [
+            "a"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The block is $[1, 10]$. The buggy line would cut its end to 3 and then miss $[4, 5]$."
+        }
+      ],
+      "feedback": {
+        "correct": "Everything lies inside $[1, 10]$, so one block remains.",
+        "generic": "Not quite right. Draw the block and see which intervals fall inside it.",
+        "byKey": {
+          "b": "You copied the last end instead of keeping the larger. That cuts $[1, 10]$ to $[1, 3]$, and then $[4, 5]$ looks separate.",
+          "c": "You let the last interval set the end. A merged end only ever grows: take the larger of the two."
+        }
+      },
+      "explain": {
+        "text": "The buggy line sets the end to 3, so $[1, 3]$ ends early and $[4, 5]$ stands apart. The right line keeps $\\max(10, 3) = 10$. A merged end can only grow.",
+        "canvas": {
+          "intervals": {
+            "w": {
+              "from": 1,
+              "to": 3,
+              "row": 4,
+              "colour": 4,
+              "label": "bug: [1, 3]",
+              "labelPos": "right"
+            }
+          },
+          "highlight": [
+            "a"
+          ],
+          "caption": "Right: [[1, 10]]. With the bug: [[1, 3], [4, 5]]"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "What you wrote, as a pattern:\n\n```python\nout = []\nfor s, e in sorted(intervals):    # by start\n    if out and s <= out[-1][1]:    # overlap\n        out[-1][1] = max(out[-1][1], e)\n    else:\n        out.append([s, e])          # new block\n```",
+      "question": "Put the steps of the merge in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Sort the intervals by start"
+          },
+          {
+            "id": "s2",
+            "text": "Start the output with the first interval"
+          },
+          {
+            "id": "s3",
+            "text": "Compare the next start with the last merged end"
+          },
+          {
+            "id": "s4",
+            "text": "If the start is at most that end, extend the end with max; else append"
+          },
+          {
+            "id": "s5",
+            "text": "Return the output"
+          },
+          {
+            "id": "d1",
+            "text": "Compare the end of the new interval with the last end",
+            "why": "The ends do not decide an overlap. After the sort, a new interval overlaps when its start is at most the last end."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Sort, seed, compare, extend or append, return.",
+        "generic": "Not quite right. The sort has to come before any comparison.",
+        "byKey": {
+          "d1": "You compared the two ends. An interval with a larger end can still start after the block ends.",
+          "left-out": "Every step but one belongs. Only the step about comparing ends is wrong."
+        }
+      },
+      "explain": {
+        "text": "The sort makes the last block the only one a new interval can touch. The start-against-end test decides overlap, and `max` decides the new end. Each interval is looked at once after the sort."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Overlapping orders",
+      "tags": [
+        "intervals-sweep"
+      ],
+      "pace": 600,
+      "prose": "Each resting order in a book lives for a half-open span `[start, end)` in milliseconds. Two orders overlap if both rest at some moment. In `contests` l10 a sweep counted rooms. Here, at each start, add how many orders are already active.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 12,
+          "step": 1,
+          "labels": 1
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "o1",
+              "from": 1,
+              "to": 4,
+              "row": 1,
+              "label": "[1, 4)",
+              "labelPos": "right",
+              "open": [
+                false,
+                true
+              ]
+            },
+            {
+              "id": "o2",
+              "from": 2,
+              "to": 6,
+              "row": 2,
+              "label": "[2, 6)",
+              "labelPos": "right",
+              "open": [
+                false,
+                true
+              ]
+            },
+            {
+              "id": "o3",
+              "from": 5,
+              "to": 9,
+              "row": 3,
+              "label": "[5, 9)",
+              "labelPos": "right",
+              "open": [
+                false,
+                true
+              ]
+            },
+            {
+              "id": "o4",
+              "from": 8,
+              "to": 10,
+              "row": 4,
+              "label": "[8, 10)",
+              "labelPos": "right",
+              "open": [
+                false,
+                true
+              ]
+            }
+          ],
+          "caption": "Test 7: three overlapping pairs"
+        }
+      },
+      "question": "Write `count_overlapping_pairs(intervals)` for half-open intervals with `start < end`. Touching ends do not overlap.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def count_overlapping_pairs(intervals):\n    # Sweep the starts and ends in time order.\n    return 0\n",
+        "solution": "def count_overlapping_pairs(intervals):\n    events = []\n    for s, e in intervals:\n        events.append((s, 1))\n        events.append((e, -1))\n    events.sort()   # at equal times -1 sorts first: touching ends do not overlap\n    active = pairs = 0\n    for _, step in events:\n        if step == 1:\n            pairs += active\n        active += step\n    return pairs\n",
+        "examples": [
+          {
+            "call": "count_overlapping_pairs([[1, 5], [2, 3], [4, 8], [10, 12], [11, 15]])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_overlapping_pairs([[0, 10], [10, 20]])",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "count_overlapping_pairs([[1, 5], [2, 3], [4, 8], [10, 12], [11, 15]])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_overlapping_pairs([[0, 10], [10, 20]])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_overlapping_pairs([])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_overlapping_pairs([[1, 2]])",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "count_overlapping_pairs([[0, 5], [0, 5], [0, 5]])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_overlapping_pairs([[0, 10], [1, 2], [3, 4], [5, 6]])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "count_overlapping_pairs([[1, 4], [2, 6], [5, 9], [8, 10]])",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "iv = [[i, i + 3] for i in range(100000)]",
+            "call": "count_overlapping_pairs(iv)",
+            "expect": "199997",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests: touching ends, no orders, three equal orders, and a long order over short ones. Test 8 has 100,000 orders, so a double loop over pairs cannot finish in time."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Turn each order into two events: it starts, and it ends."
+        },
+        {
+          "rung": "point",
+          "text": "At equal times an end must come before a start.",
+          "highlight": [
+            "o2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Build `(s, 1)` and `(e, -1)` and sort them. At a start add `active` to `pairs`, then add the step to `active`."
+        }
+      ],
+      "feedback": {
+        "correct": "Each start meets every order still active: one sort, one pass.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-2": "Test 2 touches at 10. Sort the end, `(10, -1)`, before the start, `(10, 1)`; tuples do that for you.",
+          "test-5": "Test 5 has three equal orders: pairs 0 + 1 + 2 = 3. Count before you add the start to `active`.",
+          "test-8": "Test 8 timed out. A double loop makes about 5 billion checks; the sweep makes 200,000 events."
+        }
+      },
+      "explain": {
+        "text": "A pair overlaps exactly when the later start finds the earlier order still active. So the sum of `active` at every start counts each pair once. Sorting `(time, -1)` before `(time, 1)` keeps touching orders apart."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 2,
+      "title": "Run the sweep by hand",
+      "prose": "Run the sweep on the four orders of test 7. Times are in milliseconds and the spans are half-open.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 12,
+          "step": 1,
+          "labels": 1
+        },
+        "state": {
+          "intervals": [
+            {
+              "id": "o1",
+              "from": 1,
+              "to": 4,
+              "row": 1,
+              "label": "[1, 4)",
+              "labelPos": "right",
+              "open": [
+                false,
+                true
+              ]
+            },
+            {
+              "id": "o2",
+              "from": 2,
+              "to": 6,
+              "row": 2,
+              "label": "[2, 6)",
+              "labelPos": "right",
+              "open": [
+                false,
+                true
+              ]
+            },
+            {
+              "id": "o3",
+              "from": 5,
+              "to": 9,
+              "row": 3,
+              "label": "[5, 9)",
+              "labelPos": "right",
+              "open": [
+                false,
+                true
+              ]
+            },
+            {
+              "id": "o4",
+              "from": 8,
+              "to": 10,
+              "row": 4,
+              "label": "[8, 10)",
+              "labelPos": "right",
+              "open": [
+                false,
+                true
+              ]
+            }
+          ]
+        }
+      },
+      "question": "Fill in how many orders are active when each one starts, then the total.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Order",
+          "Start",
+          "End",
+          "Active when it starts"
+        ],
+        "rows": [
+          [
+            "A",
+            "1",
+            "4",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "B",
+            "2",
+            "6",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "C",
+            "5",
+            "9",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "D",
+            "8",
+            "10",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Pairs",
+            "",
+            "",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At time 5, which orders are still resting?"
+        },
+        {
+          "rung": "point",
+          "text": "A ended at 4, before C starts at 5.",
+          "highlight": [
+            "o3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Active at each start: A 0, B 1 (A), C 1 (B), D 1 (C). The total is 3."
+        }
+      ],
+      "feedback": {
+        "correct": "0 + 1 + 1 + 1 = 3 pairs: A with B, B with C, C with D.",
+        "generic": "Not quite right. At each start, count only the orders whose end is later.",
+        "byKey": {
+          "r2c3": "You kept A active when C starts. A ended at 4, before 5, so only B is active.",
+          "r3c3": "You kept B active when D starts. B ended at 6, before 8, so only C is active."
+        }
+      },
+      "explain": {
+        "text": "Each order is active from its start until just before its end. At each start we add the orders still active. The total, 3, is what test 7 expects.",
+        "canvas": {
+          "highlight": [
+            "o1",
+            "o2",
+            "o3",
+            "o4"
+          ],
+          "caption": "Pairs: A with B, B with C, C with D"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Sort by start. Then a new interval can only overlap the last merged block, so one pass merges them all.",
+      "Read the brackets: closed intervals that touch merge (`<=`); half-open ones that touch do not (`<`).",
+      "A sweep over sorted start and end events counts overlapping pairs: at each start, add the number already active."
+    ],
+    "formula": {
+      "name": "Merge step",
+      "tex": "s \\le e_{\\text{last}} \\;\\Rightarrow\\; e_{\\text{last}} \\leftarrow \\max(e_{\\text{last}}, e)",
+      "note": "Otherwise append $[s, e]$. One sort, $O(n \\log n)$, then $O(n)$."
+    },
+    "trap": "Copying the new end instead of keeping the larger one shrinks a block that has swallowed a short interval."
+  },
+  "quiz": [
+    {
+      "id": "q-blocks",
+      "difficulty": 2,
+      "tags": [
+        "intervals-merge"
+      ],
+      "prose": "Closed intervals: `[[3, 6], [1, 2], [5, 9], [11, 13], [12, 12]]`.",
+      "question": "How many blocks remain after merging?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "3: $[1, 2]$, $[3, 9]$ and $[11, 13]$.",
+        "label": "Blocks",
+        "wrong": [
+          {
+            "id": "joined-gap",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$[1, 2]$, $[3, 9]$ and $[11, 13]$.",
+        "generic": "Not quite right. Sort by start, then merge one at a time.",
+        "byKey": {
+          "joined-gap": "You joined $[1, 2]$ and $[3, 6]$. Nothing covers the stretch between 2 and 3, so they stay apart.",
+          "none": "You counted the intervals. $[5, 9]$ overlaps $[3, 6]$, and $[12, 12]$ lies inside $[11, 13]$.",
+          "four": "$[12, 12]$ is a single point inside $[11, 13]$. It merges."
+        }
+      },
+      "explain": {
+        "text": "Sorted: $[1, 2]$, $[3, 6]$, $[5, 9]$, $[11, 13]$, $[12, 12]$. $[5, 9]$ stretches $[3, 6]$ to $[3, 9]$, and $[12, 12]$ falls inside $[11, 13]$. Three blocks remain."
+      }
+    },
+    {
+      "id": "q-touch",
+      "difficulty": 2,
+      "tags": [
+        "intervals-merge"
+      ],
+      "prose": "Two closed intervals: $[2, 5]$ and $[5, 7]$.",
+      "question": "What does `merge_intervals([[2, 5], [5, 7]])` return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`[[2, 7]]`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`[[2, 5], [5, 7]]`",
+            "why": "You treated them as half-open. Closed intervals that share 5 overlap at 5."
+          },
+          {
+            "id": "c",
+            "text": "`[[5, 5]]`",
+            "why": "You returned the overlap. Merging keeps the union, from the first start to the larger end."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "They share 5, so they merge into $[2, 7]$.",
+        "generic": "Not quite right. Closed intervals that share an end point merge."
+      },
+      "explain": {
+        "text": "The test is `5 <= 5`, which holds. The end becomes $\\max(5, 7) = 7$."
+      }
+    },
+    {
+      "id": "q-sort-cost",
+      "difficulty": 3,
+      "tags": [
+        "intervals-merge"
+      ],
+      "prose": "A merge sorts one million intervals first. Sorting makes about $n \\log_2 n$ comparisons.",
+      "question": "About how many comparisons is that?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "About 20 million",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "About 1 million",
+            "why": "You counted one look per interval. A sort makes about $\\log_2 n \\approx 20$ comparisons per item."
+          },
+          {
+            "id": "c",
+            "text": "About 6 million",
+            "why": "You used $\\log_{10}$. A comparison sort halves the problem, so the log is base 2."
+          },
+          {
+            "id": "d",
+            "text": "About $10^{12}$",
+            "why": "That is $n^2$, the cost of comparing every pair. A good sort is far cheaper."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10^6 \\times \\log_2 10^6 \\approx 10^6 \\times 19.93 = 19{,}931{,}569$.",
+        "generic": "Not quite right. Multiply $n$ by $\\log_2 n$."
+      },
+      "explain": {
+        "text": "$\\log_2 10^6 = 6 \\log_2 10 \\approx 19.93$. So the sort makes about 19.9 million comparisons, and the merge pass adds one million more."
+      }
+    },
+    {
+      "id": "q-pair-checks",
+      "difficulty": 3,
+      "tags": [
+        "intervals-sweep"
+      ],
+      "prose": "To count overlapping pairs among $n = 100{,}000$ orders, a double loop checks every pair once. The sweep instead sorts and walks $2n$ events.",
+      "question": "How many pair checks does the double loop make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4999950000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4,999,950,000: $\\tfrac{100{,}000 \\times 99{,}999}{2}$.",
+        "label": "Pair checks",
+        "wrong": [
+          {
+            "id": "ordered",
+            "value": 10000000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ordered2",
+            "value": 9999900000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "events",
+            "value": 200000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\binom{100{,}000}{2} = 4{,}999{,}950{,}000$, against 200,000 events for the sweep.",
+        "generic": "Not quite right. Count each unordered pair once.",
+        "byKey": {
+          "ordered": "That is $n^2$. It counts each pair twice and pairs each order with itself.",
+          "ordered2": "That is $n(n - 1)$, each pair in both orders. Halve it.",
+          "events": "That is the sweep's event count. The question asks about the double loop."
+        }
+      },
+      "explain": {
+        "text": "The double loop checks $\\tfrac{n(n-1)}{2}$ pairs, about 5 billion here. The sweep sorts $2n = 200{,}000$ events and walks them once. That is why test 8 needs the sweep."
+      }
+    }
+  ]
+}

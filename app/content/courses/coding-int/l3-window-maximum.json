@@ -1,0 +1,1473 @@
+{
+  "id": "l3-window-maximum",
+  "course": "coding-int",
+  "title": "The maximum of a sliding window",
+  "minutes": 13,
+  "objectives": [
+    "Keep a monotonic deque to find every window's maximum in linear time."
+  ],
+  "skills": [
+    "ci-patterns"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Run the deque once more",
+      "prose": "In `ds` l11-first-in-first-out you kept a deque of indices whose values fall from front to back. Its front is the window's maximum. Here is one recap run on new numbers, with windows of $k = 3$. Below the list: the deque after index 2.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              2,
+              5,
+              -1,
+              -4,
+              6,
+              4,
+              7,
+              9
+            ]
+          },
+          "state": {
+            "highlight": {
+              "range": [
+                0,
+                2
+              ],
+              "label": "window"
+            },
+            "pointers": [
+              {
+                "id": "i",
+                "at": 2,
+                "label": "i"
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              {
+                "v": 5,
+                "label": "i1"
+              },
+              {
+                "v": -1,
+                "label": "i2"
+              }
+            ],
+            "mode": "queue",
+            "frontLabel": "front",
+            "backLabel": "back"
+          },
+          "state": {}
+        },
+        "state": {
+          "caption": "Window [2, 5, −1]: the front, 5, is the maximum"
+        }
+      },
+      "question": "Step the deque through indices 3 and 4.",
+      "widget": {
+        "kind": "manipulate",
+        "start": "s0",
+        "target": "s2",
+        "states": {
+          "s0": {
+            "tex": "i = 3:\\ x = -4",
+            "ops": [
+              {
+                "label": "Push index 3",
+                "to": "s1"
+              },
+              {
+                "label": "Pop index 2 from the back, then push 3",
+                "reject": true,
+                "why": "−1 is larger than −4. It can still be the maximum once 5 has left."
+              },
+              {
+                "label": "Drop index 1 from the front, then push 3",
+                "reject": true,
+                "why": "Index 1 is inside the window from 1 to 3. 5 is still the maximum."
+              }
+            ]
+          },
+          "s1": {
+            "tex": "i = 4:\\ x = 6",
+            "canvas": {
+              "left": {
+                "highlight": {
+                  "range": [
+                    1,
+                    3
+                  ],
+                  "label": "window"
+                },
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 3,
+                    "label": "i"
+                  }
+                ]
+              },
+              "right": {
+                "cells": [
+                  {
+                    "v": 5,
+                    "label": "i1"
+                  },
+                  {
+                    "v": -1,
+                    "label": "i2"
+                  },
+                  {
+                    "v": -4,
+                    "label": "i3"
+                  }
+                ]
+              },
+              "caption": "Window [5, −1, −4]: maximum 5"
+            },
+            "ops": [
+              {
+                "label": "Drop index 1 from the front, pop indices 3 and 2, push 4",
+                "to": "s2"
+              },
+              {
+                "label": "Push index 4",
+                "reject": true,
+                "why": "6 beats −1 and −4, which leave sooner. They can never win again."
+              },
+              {
+                "label": "Pop indices 3 and 2 from the back, push 4",
+                "reject": true,
+                "why": "Index 1 has left the window ending at 4. Drop it from the front as well."
+              }
+            ]
+          },
+          "s2": {
+            "tex": "\\text{deque} = [4]",
+            "canvas": {
+              "left": {
+                "highlight": {
+                  "range": [
+                    2,
+                    4
+                  ],
+                  "label": "window"
+                },
+                "pointers": [
+                  {
+                    "id": "i",
+                    "at": 4,
+                    "label": "i"
+                  }
+                ]
+              },
+              "right": {
+                "cells": [
+                  {
+                    "v": 6,
+                    "label": "i4"
+                  }
+                ]
+              },
+              "caption": "Window [−1, −4, 6]: maximum 6"
+            }
+          }
+        }
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which index leaves the window when $i$ reaches 4?"
+        },
+        {
+          "rung": "point",
+          "text": "The window ending at 4 runs from index 2 to 4, so index 1 is out.",
+          "highlight": [
+            "left:c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At 3, push. At 4, drop index 1 from the front, pop 3 and 2 because 6 beats them, then push 4."
+        }
+      ],
+      "feedback": {
+        "correct": "After index 4 the deque holds one index, 4: the 6 beats everything in its window.",
+        "generic": "Not quite right. Drop an expired front, pop smaller values off the back, then push."
+      },
+      "explain": {
+        "text": "At index 3, −4 is smaller than everything, so it joins at the back. At index 4, index 1 is too old and 6 beats −1 and −4. One index remains, and its value 6 is the maximum.",
+        "canvas": {
+          "right": {
+            "cells": [
+              {
+                "v": 6,
+                "label": "i4"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Every window",
+      "prose": "Carry on to the end of the list. Each window of 3 reports the value at the deque's front.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            5,
+            -1,
+            -4,
+            6,
+            4,
+            7,
+            9
+          ]
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              0,
+              2
+            ],
+            "label": "first window"
+          }
+        }
+      },
+      "question": "What do the six window maxima add up to?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 38,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "38: the maxima are 5, 5, 6, 6, 7, 9.",
+        "label": "Sum of maxima",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 28,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "five",
+            "value": 29,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "mins",
+            "value": -6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many windows of 3 fit in 8 values?"
+        },
+        {
+          "rung": "point",
+          "text": "There are $8 - 3 + 1 = 6$ windows, ending at indices 2 to 7.",
+          "highlight": [
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The maxima are 5, 5, 6, 6, 7 and 9."
+        }
+      ],
+      "feedback": {
+        "correct": "$5 + 5 + 6 + 6 + 7 + 9 = 38$.",
+        "generic": "Not quite right. Find the maximum of each window of 3, then add them.",
+        "byKey": {
+          "all": "You added the eight values. Add one maximum per window instead.",
+          "five": "You stopped one window short. The last window, [4, 7, 9], gives 9.",
+          "mins": "You added the minima. The question asks for the maxima."
+        }
+      },
+      "explain": {
+        "text": "The six windows have maxima 5, 5, 6, 6, 7 and 9. Their maxima sum to 38, by the deque or by `max` of each slice. The deque does it in one pass.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              5,
+              7
+            ],
+            "label": "last window"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A window with no fixed width",
+      "prose": "Now the window may be any length. We want the longest run of `[8, 2, 4, 7]` in which the largest value minus the smallest is at most 4.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            8,
+            2,
+            4,
+            7
+          ]
+        },
+        "state": {}
+      },
+      "question": "How long is that run, and can one max deque find it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "2, and we also need the minimum, which a max deque throws away",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "3, from [2, 4, 7]",
+            "why": "The largest there is 7 and the smallest 2: a range of 5, over the limit."
+          },
+          {
+            "id": "c",
+            "text": "2, and a max deque alone is enough",
+            "why": "A max deque drops small values, but the smallest value decides the range too."
+          },
+          {
+            "id": "d",
+            "text": "4, the whole list",
+            "why": "8 minus 2 is 6, over the limit of 4."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check each run of length 3 first."
+        },
+        {
+          "rung": "point",
+          "text": "[8, 2, 4] has range 6 and [2, 4, 7] has range 5.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No run of 3 works, and [2, 4] or [4, 7] works, so the answer is 2. Judging a range needs the minimum as well."
+        }
+      ],
+      "feedback": {
+        "correct": "The longest run is 2, and judging it needs both ends of the range.",
+        "generic": "Not quite right. A run is valid when its largest minus its smallest is at most 4.",
+        "byKey": {
+          "c": "You kept only the maximum. The range is maximum minus minimum, so the minimum must be tracked too."
+        }
+      },
+      "explain": {
+        "text": "[2, 4] and [4, 7] both have range at most 4, and no run of 3 does. To test a range we need the window's maximum and its minimum. So we keep two deques: one falling for the maximum, one rising for the minimum."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "Two deques and two pointers",
+      "prose": "Here the limit is 5. Slide `right` along the list. The max deque falls from front to back and the min deque rises. When the fronts differ by more than 5, `left` moves on.",
+      "canvas": {
+        "kind": "pair",
+        "stack": true,
+        "left": {
+          "kind": "array",
+          "params": {
+            "cells": [
+              10,
+              1,
+              2,
+              4,
+              7,
+              2
+            ]
+          },
+          "state": {
+            "pointers": [
+              {
+                "id": "L",
+                "at": 0,
+                "label": "left",
+                "below": true
+              },
+              {
+                "id": "R",
+                "at": 0,
+                "label": "right"
+              }
+            ],
+            "highlight": {
+              "range": [
+                0,
+                0
+              ]
+            }
+          }
+        },
+        "right": {
+          "kind": "table",
+          "params": {
+            "columns": [
+              "Deque",
+              "Front to back (index: value)"
+            ],
+            "rows": [
+              [
+                "max, values fall",
+                "i0: 10"
+              ],
+              [
+                "min, values rise",
+                "i0: 10"
+              ]
+            ],
+            "align": [
+              "left",
+              "left"
+            ]
+          },
+          "state": {}
+        },
+        "state": {
+          "caption": "right = 0: range 0. Length 1"
+        },
+        "controls": [
+          {
+            "bind": "right",
+            "label": "right",
+            "frames": [
+              {
+                "left": {
+                  "pointers": [
+                    {
+                      "id": "L",
+                      "at": 0,
+                      "label": "left",
+                      "below": true
+                    },
+                    {
+                      "id": "R",
+                      "at": 0,
+                      "label": "right"
+                    }
+                  ],
+                  "highlight": {
+                    "range": [
+                      0,
+                      0
+                    ]
+                  }
+                },
+                "right": {
+                  "values": {
+                    "r0c1": "i0: 10",
+                    "r1c1": "i0: 10"
+                  }
+                },
+                "caption": "right = 0: range 0. Length 1"
+              },
+              {
+                "left": {
+                  "pointers": [
+                    {
+                      "id": "L",
+                      "at": 1,
+                      "label": "left",
+                      "below": true
+                    },
+                    {
+                      "id": "R",
+                      "at": 1,
+                      "label": "right"
+                    }
+                  ],
+                  "highlight": {
+                    "range": [
+                      1,
+                      1
+                    ]
+                  }
+                },
+                "right": {
+                  "values": {
+                    "r0c1": "i1: 1",
+                    "r1c1": "i1: 1"
+                  }
+                },
+                "caption": "right = 1: 10 − 1 = 9 > 5, so left moves to 1 and 10 leaves. Length 1"
+              },
+              {
+                "left": {
+                  "pointers": [
+                    {
+                      "id": "L",
+                      "at": 1,
+                      "label": "left",
+                      "below": true
+                    },
+                    {
+                      "id": "R",
+                      "at": 2,
+                      "label": "right"
+                    }
+                  ],
+                  "highlight": {
+                    "range": [
+                      1,
+                      2
+                    ]
+                  }
+                },
+                "right": {
+                  "values": {
+                    "r0c1": "i2: 2",
+                    "r1c1": "i1: 1, i2: 2"
+                  }
+                },
+                "caption": "right = 2: range 2 − 1 = 1. Length 2"
+              },
+              {
+                "left": {
+                  "pointers": [
+                    {
+                      "id": "L",
+                      "at": 1,
+                      "label": "left",
+                      "below": true
+                    },
+                    {
+                      "id": "R",
+                      "at": 3,
+                      "label": "right"
+                    }
+                  ],
+                  "highlight": {
+                    "range": [
+                      1,
+                      3
+                    ]
+                  }
+                },
+                "right": {
+                  "values": {
+                    "r0c1": "i3: 4",
+                    "r1c1": "i1: 1, i2: 2, i3: 4"
+                  }
+                },
+                "caption": "right = 3: range 4 − 1 = 3. Length 3"
+              },
+              {
+                "left": {
+                  "pointers": [
+                    {
+                      "id": "L",
+                      "at": 2,
+                      "label": "left",
+                      "below": true
+                    },
+                    {
+                      "id": "R",
+                      "at": 4,
+                      "label": "right"
+                    }
+                  ],
+                  "highlight": {
+                    "range": [
+                      2,
+                      4
+                    ]
+                  }
+                },
+                "right": {
+                  "values": {
+                    "r0c1": "i4: 7",
+                    "r1c1": "i2: 2, i3: 4, i4: 7"
+                  }
+                },
+                "caption": "right = 4: 7 − 1 = 6 > 5, so left moves to 2. Length 3"
+              },
+              {
+                "left": {
+                  "pointers": [
+                    {
+                      "id": "L",
+                      "at": 2,
+                      "label": "left",
+                      "below": true
+                    },
+                    {
+                      "id": "R",
+                      "at": 5,
+                      "label": "right"
+                    }
+                  ],
+                  "highlight": {
+                    "range": [
+                      2,
+                      5
+                    ]
+                  }
+                },
+                "right": {
+                  "values": {
+                    "r0c1": "i4: 7, i5: 2",
+                    "r1c1": "i5: 2"
+                  }
+                },
+                "caption": "right = 5: range 7 − 2 = 5. Length 4, the best"
+              }
+            ],
+            "frameLabels": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            "start": 0
+          }
+        ]
+      },
+      "question": "When `right` reaches 4, which value leaves the front of the min deque?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The 1 at index 1",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The 10 at index 0",
+            "why": "10 left at `right = 1`, when the range first went over 5."
+          },
+          {
+            "id": "c",
+            "text": "The 7 at index 4",
+            "why": "7 has just arrived. It is in every window that ends at 4."
+          },
+          {
+            "id": "d",
+            "text": "Nothing leaves",
+            "why": "The fronts are 7 and 1, a range of 6, over the limit of 5."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide to `right = 4` and compare the two fronts."
+        }
+      ],
+      "feedback": {
+        "correct": "7 − 1 = 6 is over 5, so `left` passes index 1 and the 1 leaves.",
+        "generic": "Not quite right. Look at what the min deque loses at `right = 4`."
+      },
+      "explain": {
+        "text": "At `right = 4` the fronts are 7 and 1. `left` moves to 2, so index 1 leaves the min deque, and the front becomes 2. Now $7 - 2 = 5$ fits.",
+        "canvas": {
+          "left": {
+            "pointers": [
+              {
+                "id": "L",
+                "at": 2,
+                "label": "left",
+                "below": true
+              },
+              {
+                "id": "R",
+                "at": 4,
+                "label": "right"
+              }
+            ],
+            "highlight": {
+              "range": [
+                2,
+                4
+              ]
+            }
+          },
+          "right": {
+            "values": {
+              "r0c1": "i4: 7",
+              "r1c1": "i2: 2, i3: 4, i4: 7"
+            }
+          },
+          "caption": "7 − 2 = 5: the window fits again"
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write it",
+      "tags": [
+        "window-range"
+      ],
+      "pace": 720,
+      "prose": "Find the longest contiguous run of `nums` whose largest value minus its smallest is at most `limit`. Return its length. Return 0 for an empty list.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            10,
+            1,
+            2,
+            4,
+            7,
+            2
+          ]
+        },
+        "state": {
+          "highlight": {
+            "range": [
+              2,
+              5
+            ],
+            "label": "longest, limit 5"
+          },
+          "caption": "`longest_within_limit([10, 1, 2, 4, 7, 2], 5)` is 4"
+        }
+      },
+      "question": "Write `longest_within_limit(nums, limit)` in $O(n)$.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from collections import deque\n\ndef longest_within_limit(nums, limit):\n    # Keep a deque for the maximum and one for the minimum.\n    return 1 if nums else 0\n",
+        "solution": "from collections import deque\n\ndef longest_within_limit(nums, limit):\n    hi, lo = deque(), deque()     # indices: values fall / rise\n    left = best = 0\n    for right, x in enumerate(nums):\n        while hi and nums[hi[-1]] <= x:\n            hi.pop()\n        hi.append(right)\n        while lo and nums[lo[-1]] >= x:\n            lo.pop()\n        lo.append(right)\n        while nums[hi[0]] - nums[lo[0]] > limit:\n            left += 1\n            if hi[0] < left: hi.popleft()\n            if lo[0] < left: lo.popleft()\n        best = max(best, right - left + 1)\n    return best\n",
+        "examples": [
+          {
+            "call": "longest_within_limit([8, 2, 4, 7], 4)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_within_limit([10, 1, 2, 4, 7, 2], 5)",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "longest_within_limit([8, 2, 4, 7], 4)",
+            "expect": "2",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_within_limit([10, 1, 2, 4, 7, 2], 5)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_within_limit([4, 2, 2, 2, 4, 4, 2, 2], 0)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_within_limit([], 3)",
+            "expect": "0",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_within_limit([5], 0)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_within_limit([1, 5, 6, 7, 8, 10, 6, 5, 6], 4)",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "call": "longest_within_limit([3, 3, 3], 0)",
+            "expect": "3",
+            "compare": "equal"
+          },
+          {
+            "setup": "xs = list(range(100000))",
+            "call": "longest_within_limit(xs, 10)",
+            "expect": "11",
+            "compare": "equal"
+          },
+          {
+            "setup": "ys = [1] * 100000",
+            "call": "longest_within_limit(ys, 0)",
+            "expect": "100000",
+            "compare": "equal"
+          },
+          {
+            "setup": "zs = [i % 7 for i in range(100000)]",
+            "call": "longest_within_limit(zs, 6)",
+            "expect": "100000",
+            "compare": "equal"
+          },
+          {
+            "setup": "ws = [i % 7 for i in range(100000)]",
+            "call": "longest_within_limit(ws, 3)",
+            "expect": "4",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 11 hidden tests: equal values, an empty list, one value, and the trap's list. Tests 8 to 11 have 100,000 values each, so a double loop over runs stops at test 8."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What do you do with the two deques when `left` moves?"
+        },
+        {
+          "rung": "point",
+          "text": "A front index below `left` has left the window.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "After both pushes: `while nums[hi[0]] - nums[lo[0]] > limit:` move `left` on, and `popleft` either deque whose front is below `left`."
+        }
+      ],
+      "feedback": {
+        "correct": "Each index enters and leaves each deque at most once: $O(n)$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-1": "Test 1 is the run you judged: the answer is 2. Track both the maximum and the minimum.",
+          "test-3": "Test 3 is the trap's list. When `left` moves, drop any front index below it.",
+          "test-4": "Test 4 is an empty list. Return 0 before reading `nums[hi[0]]`.",
+          "test-8": "Test 8 timed out on 100,000 values. Keep the two deques so each step is $O(1)$ on average.",
+          "error": "Your code stopped with an error. An empty deque has no `[0]`: check the empty list first."
+        }
+      },
+      "explain": {
+        "text": "The fronts of the two deques give the window's maximum and minimum at once. `left` only moves right, and it drops fronts that fall behind it. So the whole pass is linear, like the fixed window in `ds` l10-next-greater."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Count the work",
+      "prose": "In the code you wrote, each index is pushed once onto each deque. Once popped, from the front or the back, it never returns. Take $n = 100{,}000$ values.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            10,
+            1,
+            2,
+            4,
+            7,
+            2
+          ]
+        },
+        "state": {
+          "caption": "Each index: one push and at most one pop, per deque"
+        }
+      },
+      "question": "What is the most deque operations, pushes plus pops, for both deques together?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 400000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "400,000: 100,000 pushes and at most 100,000 pops, for each of two deques.",
+        "label": "Operations at most",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 200000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "pushes",
+            "value": 100000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "square",
+            "value": 10000000000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many times can one index be pushed onto one deque?"
+        },
+        {
+          "rung": "point",
+          "text": "Once, and it can then be popped at most once.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Per deque: 100,000 pushes and at most 100,000 pops. Two deques: 400,000."
+        }
+      ],
+      "feedback": {
+        "correct": "$2 \\times (100{,}000 + 100{,}000) = 400{,}000$ at most.",
+        "generic": "Not quite right. Count pushes and pops for each deque, then double.",
+        "byKey": {
+          "one": "That is one deque. There are two: the max deque and the min deque.",
+          "pushes": "That counts pushes onto one deque only. Add the pops, and the second deque.",
+          "square": "That is $n^2$. Each index leaves a deque at most once, so the work is linear."
+        }
+      },
+      "explain": {
+        "text": "However long a popping loop runs, every pop removes an index that was pushed once. So pops never outnumber pushes. In all, at most 400,000 operations for 100,000 values."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A front that never leaves",
+      "prose": "This version shrinks the window but never touches the deques:\n\n```python\nwhile left <= right and \\\n        nums[hi[0]] - nums[lo[0]] > limit:\n    left += 1          # the deques are never touched\n```\n\nThe input is `[4, 2, 2, 2, 4, 4, 2, 2]` with `limit = 0`.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            4,
+            2,
+            2,
+            2,
+            4,
+            4,
+            2,
+            2
+          ]
+        },
+        "state": {
+          "caption": "The right answer is 3: the three 2s at indices 1 to 3"
+        }
+      },
+      "question": "What does this version return?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "1",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "3",
+            "why": "3 is the right answer, but this code never drops a front index that has left the window. Stale fronts keep the range at 2.",
+            "canvas": {
+              "highlight": [
+                "c0"
+              ]
+            }
+          },
+          {
+            "id": "c",
+            "text": "It loops forever",
+            "why": "The loop is guarded by `left <= right`, so it stops when the window is empty."
+          },
+          {
+            "id": "d",
+            "text": "2",
+            "why": "Even [4, 4] at indices 4 and 5 meets the stale 2 at index 1: a range of 2."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At `right = 1`, what are the two fronts?"
+        },
+        {
+          "rung": "point",
+          "text": "The max front is index 0, value 4, until another 4 arrives at index 4.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The 2s are judged against the stale 4, and the later 4s against the stale 2 at index 1. Every window shrinks to nothing, so it returns 1."
+        }
+      ],
+      "feedback": {
+        "correct": "The stale 4 at index 0 stays at the max front, so no window of 2s ever looks valid.",
+        "generic": "Not quite right. Follow the front of the max deque from index 0.",
+        "byKey": {
+          "b": "You never dropped a front index that had left the window, in your head as in the code. Here the front stays 4 after `left` has passed it."
+        }
+      },
+      "explain": {
+        "text": "Stale fronts, first the 4 at index 0, then the 2 at index 1, keep the range at 2. Each window reads a range of 2 and shrinks to nothing, so the best stays 1. Dropping fronts below `left` fixes it, whether pops use `<=` or `<`.",
+        "canvas": {
+          "highlight": [
+            "c0"
+          ],
+          "caption": "Buggy: 1. Right: 3"
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "What you wrote, as a pattern:\n\n```python\nfor right, x in enumerate(nums):\n    pop hi while its back <= x; push right\n    pop lo while its back >= x; push right\n    while front(hi) - front(lo) > limit:\n        left += 1; drop fronts below left\n    best = max(best, right - left + 1)\n```",
+      "question": "Put one step of the method in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Move `right` on by one"
+          },
+          {
+            "id": "s2",
+            "text": "Pop the max deque from the back while its value is at most x, then push"
+          },
+          {
+            "id": "s3",
+            "text": "Pop the min deque from the back while its value is at least x, then push"
+          },
+          {
+            "id": "s4",
+            "text": "While the fronts differ by more than the limit, move `left` and drop fronts below it"
+          },
+          {
+            "id": "s5",
+            "text": "Record `right - left + 1`"
+          },
+          {
+            "id": "d1",
+            "text": "Move `left` on without touching the deques",
+            "why": "Then a front index can sit outside the window, and the range stays too big: the trap you met."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "same": [
+          [
+            "s2",
+            "s3"
+          ]
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "feedback": {
+        "correct": "Extend right, fix both deques, shrink from the left, record.",
+        "generic": "Not quite right. Both deques take the new value before the window is judged.",
+        "byKey": {
+          "d1": "You moved `left` alone. The deques then keep an index that is no longer in the window.",
+          "left-out": "Every step but one belongs. Only moving `left` without the deques is wrong."
+        }
+      },
+      "explain": {
+        "text": "The two pushes can come in either order, since each deque is independent. The shrink step must drop stale fronts, or the range reads the wrong values. Recording happens once the window is valid."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 2,
+      "title": "A calm stretch",
+      "prose": "A signal desk wants the longest stretch of ticks in which the price stayed within 5 pence of itself. Prices are in pence. Ticks arrive all day, so the method must be linear.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            412,
+            415,
+            417,
+            414,
+            419,
+            421,
+            418,
+            416,
+            422,
+            409
+          ]
+        },
+        "state": {
+          "caption": "Ten ticks, in pence"
+        }
+      },
+      "question": "Which structure answers it in one pass?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Two monotonic deques, one for the maximum and one for the minimum",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "One monotonic deque for the maximum",
+            "why": "The maximum alone cannot tell you the range. You need the minimum too."
+          },
+          {
+            "id": "c",
+            "text": "A heap of the window's prices",
+            "why": "A heap gives one end cheaply, and removing an old price from it is slow."
+          },
+          {
+            "id": "d",
+            "text": "Sort each window and read its ends",
+            "why": "That re-sorts at every step, far from linear."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does within 5 pence of itself mean for a stretch?"
+        },
+        {
+          "rung": "point",
+          "text": "Its highest price minus its lowest is at most 5.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That is `longest_within_limit` with `limit = 5`: two deques, one pass."
+        }
+      ],
+      "feedback": {
+        "correct": "It is the same problem as `longest_within_limit` with `limit = 5`.",
+        "generic": "Not quite right. The range of a stretch needs its maximum and its minimum.",
+        "byKey": {
+          "b": "You kept only the highest price. The lowest one decides the range as much."
+        }
+      },
+      "explain": {
+        "text": "Staying within 5 pence means the highest price minus the lowest is at most 5. Two deques keep both ends of every window. Each tick is pushed and popped at most once per deque."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Find the stretch",
+      "prose": "Run the method on the ten ticks with a limit of 5 pence.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            412,
+            415,
+            417,
+            414,
+            419,
+            421,
+            418,
+            416,
+            422,
+            409
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many ticks long is the longest calm stretch?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4: 415, 417, 414, 419, or 419, 421, 418, 416.",
+        "label": "Ticks",
+        "wrong": [
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Try stretches of 5 first. Is any within 5 pence?"
+        },
+        {
+          "rung": "point",
+          "text": "[415, 417, 414, 419, 421] has range 7.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "No stretch of 5 fits, and [415, 417, 414, 419] has range 5. So the answer is 4."
+        }
+      ],
+      "feedback": {
+        "correct": "Two stretches of 4 fit, and none of 5.",
+        "generic": "Not quite right. A stretch fits when its highest minus its lowest is at most 5.",
+        "byKey": {
+          "five": "Check the range of your stretch of 5. Each one runs over 5 pence.",
+          "three": "A stretch of 4 fits: [415, 417, 414, 419] has range 5.",
+          "ten": "The whole day runs from 409 to 422, a range of 13."
+        }
+      },
+      "explain": {
+        "text": "[415, 417, 414, 419] and [419, 421, 418, 416] both have range 5. Every stretch of 5 has a range above 5. So the longest calm stretch is 4 ticks.",
+        "canvas": {
+          "highlight": {
+            "range": [
+              1,
+              4
+            ],
+            "label": "4 ticks"
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A deque of indices whose values fall from front to back keeps the window's maximum at its front.",
+      "Judge a range with two deques: a falling one for the maximum, a rising one for the minimum.",
+      "Move `left` while the fronts differ by too much, and drop any front whose index is below `left`."
+    ],
+    "formula": {
+      "name": "Range of the window",
+      "tex": "\\max - \\min = x_{\\text{hi}[0]} - x_{\\text{lo}[0]} \\le \\text{limit}",
+      "note": "Each index enters and leaves each deque at most once: $O(n)$."
+    },
+    "trap": "Moving `left` without dropping a stale front keeps a value that has left the window in the range."
+  },
+  "quiz": [
+    {
+      "id": "q-deque-after",
+      "difficulty": 2,
+      "tags": [
+        "monotonic-deque"
+      ],
+      "prose": "A max deque of indices runs over `[3, 1, 4, 1, 5, 9, 2, 6]` with windows of $k = 3$.",
+      "question": "Which indices does it hold after index 3?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Indices 2 and 3 (values 4 and 1)",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Index 2 only (value 4)",
+            "why": "1 is smaller than 4, but it arrived later. It may still win once 4 has left."
+          },
+          {
+            "id": "c",
+            "text": "Indices 1, 2 and 3",
+            "why": "Index 1 holds 1, which 4 popped off the back at index 2."
+          },
+          {
+            "id": "d",
+            "text": "Indices 0, 2 and 3",
+            "why": "Index 0 holds 3, which 4 popped at index 2. It has also left the window."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "4 popped the older 3 and 1; the new 1 waits behind it.",
+        "generic": "Not quite right. At each index, pop smaller values off the back, then push."
+      },
+      "explain": {
+        "text": "At index 2 the value 4 pops indices 1 and 0. At index 3 the value 1 is smaller than 4, so it is pushed behind it. The deque is indices 2 and 3."
+      }
+    },
+    {
+      "id": "q-front-drop",
+      "difficulty": 2,
+      "tags": [
+        "monotonic-deque"
+      ],
+      "prose": "A fixed window of $k$ values ends at index $i$. The front of the max deque is index $f$.",
+      "question": "When must the front be dropped?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "When $f \\le i - k$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "When $f < i - k$",
+            "why": "Index $i - k$ is already outside: the window runs from $i - k + 1$ to $i$."
+          },
+          {
+            "id": "c",
+            "text": "When the front value is smaller than the new value",
+            "why": "That is the rule for popping. The front leaves the window by age, whatever its value."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The window holds $i - k + 1$ to $i$, so $f \\le i - k$ is out.",
+        "generic": "Not quite right. Write down the first index inside the window."
+      },
+      "explain": {
+        "text": "A window of $k$ ending at $i$ starts at $i - k + 1$. Any index at or below $i - k$ is outside it. A stale front would report a maximum that has left."
+      }
+    },
+    {
+      "id": "q-naive-cost",
+      "difficulty": 3,
+      "tags": [
+        "monotonic-deque"
+      ],
+      "prose": "Without a deque, we take `max` of every window of 50,000 values in a list of 100,000.",
+      "question": "About how many values does that read?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "About 2.5 billion",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "About 400,000",
+            "why": "That is the deque's count of operations. Taking `max` of each window rereads it."
+          },
+          {
+            "id": "c",
+            "text": "About 10 billion",
+            "why": "That is $n^2$. There are only 50,001 windows of 50,000 values each."
+          },
+          {
+            "id": "d",
+            "text": "About 50,000",
+            "why": "That is one window. There are 50,001 of them."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$50{,}001 \\times 50{,}000 = 2{,}500{,}050{,}000$.",
+        "generic": "Not quite right. Multiply the number of windows by the values in each."
+      },
+      "explain": {
+        "text": "There are $100{,}000 - 50{,}000 + 1 = 50{,}001$ windows, and `max` reads 50,000 values in each. That is about 2.5 billion reads. The deque does at most 200,000 operations for the same answer."
+      }
+    },
+    {
+      "id": "q-new-list",
+      "difficulty": 3,
+      "tags": [
+        "window-range"
+      ],
+      "prose": "`longest_within_limit([5, 8, 6, 9, 3, 4, 4, 2], 3)`",
+      "question": "What does it return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4: [3, 4, 4, 2], whose range is 2.",
+        "label": "Length",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "five",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "[3, 4, 4, 2] has range $4 - 2 = 2$.",
+        "generic": "Not quite right. Check every run against the limit of 3.",
+        "byKey": {
+          "three": "[5, 8, 6] and [8, 6, 9] fit, but a longer run near the end fits too.",
+          "five": "No run of 5 fits. [9, 3, 4, 4, 2] has range 7."
+        }
+      },
+      "explain": {
+        "text": "[5, 8, 6] and [8, 6, 9] have range 3, and [3, 4, 4, 2] has range 2. No run of 5 fits. So the answer is 4."
+      }
+    }
+  ]
+}
