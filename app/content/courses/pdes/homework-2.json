@@ -1,0 +1,462 @@
+{
+ "id": "homework-2",
+ "course": "pdes",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-heat-rod",
+   "difficulty": 5,
+   "skills": [
+    "pe-fourier",
+    "pe-heat"
+   ],
+   "tags": [
+    "rod-series"
+   ],
+   "prose": "Solve any rod with zero ends from a Python start function. `sine_coeffs(f, N, L, M)` returns $b_1, \\ldots, b_N$ with $b_k = \\frac2L\\int_0^Lf(x)\\sin\\frac{k\\pi x}{L}\\,dx$ by the trapezium rule on $M$ intervals. `heat_rod` then gives $u(x, t)$. The start functions `CONST` (100), `MODES` ($3\\sin x + \\sin 3x$) and `PARAB` ($x(2 - x)$) are provided.",
+   "question": "Complete `sine_coeffs` and `heat_rod`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef sine_coeffs(f, N, L, M=4000):\n    \"\"\"b[0..N-1] for the sine series of f on (0, L).\"\"\"\n    x = np.linspace(0, L, M + 1)\n    ...\n\ndef heat_rod(f, x, t, L=np.pi, D=1.0, N=41, M=4000):\n    \"\"\"u(x, t) for a rod of length L, ends at 0, start f.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef sine_coeffs(f, N, L, M=4000):\n    \"\"\"b[0..N-1] for the sine series of f on (0, L).\"\"\"\n    x = np.linspace(0, L, M + 1)\n    h = L / M\n    y = f(x)\n    b = np.zeros(N)\n    for k in range(1, N + 1):\n        g = y * np.sin(k * np.pi * x / L)\n        b[k - 1] = 2 / L * h * (g.sum() - 0.5 * g[0] - 0.5 * g[-1])\n    return b\n\ndef heat_rod(f, x, t, L=np.pi, D=1.0, N=41, M=4000):\n    \"\"\"u(x, t) for a rod of length L, ends at 0, start f.\"\"\"\n    b = sine_coeffs(f, N, L, M)\n    k = np.arange(1, N + 1)\n    x = np.asarray(x, dtype=float)\n    modes = np.sin(np.outer(x, k) * np.pi / L)\n    return modes @ (b * np.exp(-D * (k * np.pi / L) ** 2 * t))\n",
+    "prelude": "import numpy as np\nCONST = lambda x: np.full_like(x, 100.0)\nMODES = lambda x: 3 * np.sin(x) + np.sin(3 * x)\nPARAB = lambda x: x * (2 - x)\n",
+    "examples": [
+     {
+      "call": "np.round(sine_coeffs(MODES, 3, np.pi), 4).tolist()",
+      "expect": "[3.0, 0.0, 1.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "sine_coeffs(MODES, 3, np.pi).tolist()",
+      "expect": "[3.0, 0.0, 1.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "call": "sine_coeffs(CONST, 3, np.pi).tolist()",
+      "expect": "[127.324, 0.0, 42.4413]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "heat_rod(CONST, np.array([np.pi / 2]), 1).tolist()",
+      "expect": "[46.834628]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "call": "heat_rod(MODES, np.array([np.pi / 2]), 0.5).tolist()",
+      "expect": "[1.808483]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-05
+      }
+     },
+     {
+      "call": "heat_rod(PARAB, np.array([0.5, 1.0]), 0.5, 2, 0.5).tolist()",
+      "expect": "[0.393918, 0.556788]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "call": "heat_rod(MODES, np.array([np.pi / 2]), 0).tolist()",
+      "expect": "[2.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "call": "bool(heat_rod(CONST, np.linspace(0, np.pi, 50), 0.1).max() <= 100)",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. NumPy loads on the first run, which takes a second or two. That time is not counted against the tests."
+   },
+   "feedback": {
+    "correct": "The coefficients and the sums match the closed forms: 46.834628, 1.808483 and the rod of length 2.",
+    "generic": "Not quite right. Check the trapezium end weights, the factor $2/L$ and the decay rate $D(k\\pi/L)^2$."
+   },
+   "explain": {
+    "text": "The trapezium rule gives each $b_k$, and the decay factor $e^{-D(k\\pi/L)^2t}$ multiplies it. The tests reproduce 46.834628 and 1.808483, and add 0.556788 for a parabola on a rod of length 2. The maximum principle holds at $t = 0.1$, which a single term would break."
+   }
+  },
+  {
+   "id": "h-no-lambda",
+   "difficulty": 4,
+   "skills": [
+    "pe-fourier"
+   ],
+   "tags": [
+    "separation-eigenvalue"
+   ],
+   "prose": "Why does a nonzero $X$ with $X'' + \\lambda X = 0$ and $X(0) = X(L) = 0$ need $\\lambda > 0$? Use an energy argument. Leave out the two lines that do not belong.",
+   "question": "Order the argument.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Suppose $X'' + \\lambda X = 0$ with $X(0) = X(L) = 0$, and $X$ is not identically 0."
+     },
+     {
+      "id": "s2",
+      "text": "Multiply by $X$ and integrate over $(0, L)$: $\\int_0^LXX''\\,dx + \\lambda\\int_0^LX^2\\,dx = 0$."
+     },
+     {
+      "id": "s3",
+      "text": "By parts, $\\int XX'' = [XX']_0^L - \\int X'^2$. The bracket is 0, because $X = 0$ at both ends."
+     },
+     {
+      "id": "s4",
+      "text": "So $\\lambda\\int X^2 = \\int X'^2$, that is $\\lambda = \\int X'^2\\big/\\int X^2 \\ge 0$."
+     },
+     {
+      "id": "s5",
+      "text": "If $\\lambda = 0$ then $X' \\equiv 0$, so $X$ is constant, and $X(0) = 0$ makes it 0. This contradicts $X \\ne 0$, so $\\lambda > 0$."
+     },
+     {
+      "id": "d1",
+      "text": "The bracket $[XX']_0^L$ is not 0, since $X'$ is large at the ends.",
+      "why": "The bracket is $X$ times $X'$. $X$ is 0 at both ends, so the product is 0 however large $X'$ is."
+     },
+     {
+      "id": "d2",
+      "text": "$\\int X'^2$ can be negative if $X$ changes sign.",
+      "why": "A square is never negative, whatever the sign of $X'$, so $\\int X'^2 \\ge 0$."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Multiply by $X$, integrate by parts, use the ends, and read off the sign of $\\lambda$.",
+    "generic": "Not quite right. Each line should follow from the line before it."
+   },
+   "explain": {
+    "text": "The ends kill the boundary term, so $\\lambda$ is a ratio of two integrals of squares. That makes $\\lambda \\ge 0$, and $\\lambda = 0$ forces $X \\equiv 0$. With insulated ends the bracket still vanishes, but $X' = 0$ allows a constant, so $\\lambda = 0$ survives."
+   }
+  },
+  {
+   "id": "h-centre-nonzero",
+   "difficulty": 4,
+   "skills": [
+    "pe-fourier",
+    "pe-heat"
+   ],
+   "tags": [
+    "nonzero-ends"
+   ],
+   "prose": "A rod of length $\\pi$ has its ends held at 20 and 50, starts at 100 inside, and $D = 1$. Then $u = 20 + \\dfrac{30x}{\\pi} + \\sum_kb_ke^{-k^2t}\\sin kx$ with $b_k = \\dfrac{2}{\\pi}\\cdot\\dfrac{80(1 - (-1)^k) + 30(-1)^k}{k}$, so $b_1 = 82.7606$ and $b_3 = 27.5869$.",
+   "question": "What is $u(\\pi/2, 1)$? Sum $k = 1$ and 3 and give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 65.4425,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "65.4425: $35 + 30.4459 - 0.0034$.",
+    "label": "$u(\\pi/2, 1)$",
+    "placeholder": "for example 60",
+    "wrong": [
+     {
+      "id": "one-term",
+      "value": 65.4459,
+      "tol": {
+       "abs": 0.0004
+      }
+     },
+     {
+      "id": "sign",
+      "value": 65.4493,
+      "tol": {
+       "abs": 0.0004
+      }
+     },
+     {
+      "id": "steady",
+      "value": 35,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$35 + 82.7606e^{-1} - 27.5869e^{-9} = 65.4425$.",
+    "generic": "Not quite right. Add the steady line at the centre, 35, and the $k = 1$ and $k = 3$ terms with the sign of $\\sin\\tfrac{3\\pi}{2}$.",
+    "byKey": {
+     "one-term": "65.4459 is the $k = 1$ term only. The $k = 3$ term still subtracts $0.0034$.",
+     "sign": "You added the $k = 3$ term. $\\sin\\tfrac{3\\pi}{2} = -1$, so it subtracts.",
+     "steady": "35 is the steady state, the line at the centre. By $t = 1$ the transient is not yet gone."
+    }
+   },
+   "explain": {
+    "text": "At $x = \\pi/2$ the line gives 35. The $k = 1$ term is $82.7606e^{-1} = 30.4459$ and the $k = 3$ term is $27.5869e^{-9}\\sin\\tfrac{3\\pi}{2} = -0.0034$. So $u = 65.4425$, and an explicit scheme on 200 intervals gives 65.4410."
+   }
+  },
+  {
+   "id": "h-gibbs-true",
+   "difficulty": 4,
+   "skills": [
+    "pe-fourier"
+   ],
+   "tags": [
+    "gibbs"
+   ],
+   "prose": "The $-1$ to $+1$ square wave has the series $\\sum_{k\\text{ odd}}\\dfrac{4}{k\\pi}\\sin kx$.",
+   "question": "Select all that apply. Which statements are true?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mid",
+      "text": "At $x = 0$ the series converges to 0, the midpoint of the jump",
+      "correct": true
+     },
+     {
+      "id": "peak",
+      "text": "The highest partial sum beside the jump tends to 1.1790, not 1",
+      "correct": true
+     },
+     {
+      "id": "slow",
+      "text": "The coefficients fall like $1/k$, so convergence away from the jump is slow",
+      "correct": true
+     },
+     {
+      "id": "uniform",
+      "text": "The series converges uniformly on $(-\\pi, \\pi)$",
+      "why": "A uniform limit of continuous partial sums would be continuous. The wave jumps, and the peaks stay near 1.179."
+     },
+     {
+      "id": "gone",
+      "text": "With enough terms the overshoot falls to 0",
+      "why": "The overshoot narrows towards the jump but keeps its height, about 8.95% of the jump."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The midpoint, the lasting overshoot and the $1/k$ decay are true.",
+    "generic": "Not quite right. Recall what the partial sums do at and beside the jump."
+   },
+   "explain": {
+    "text": "The series gives 0 at the jump and overshoots to 1.1790 beside it however many terms are kept. Coefficients $4/(k\\pi)$ fall like $1/k$. The convergence is pointwise but not uniform."
+   }
+  },
+  {
+   "id": "h-parseval-x2",
+   "difficulty": 5,
+   "skills": [
+    "pe-fourier"
+   ],
+   "tags": [
+    "parseval"
+   ],
+   "prose": "The function $f(x) = x^2$ on $(-\\pi, \\pi)$ has $a_0 = \\dfrac{2\\pi^2}{3}$ and $a_k = \\dfrac{4(-1)^k}{k^2}$, with no sine terms. Parseval gives $\\dfrac1\\pi\\int_{-\\pi}^{\\pi}f^2\\,dx = \\dfrac{a_0^2}{2} + \\sum_{k\\ge1}a_k^2$, and the left side is $\\dfrac{2\\pi^4}{5}$.",
+   "question": "What is $\\sum_{k\\ge1}\\dfrac{1}{k^4}$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.0823,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "1.0823: $\\pi^4/90$.",
+    "label": "Sum",
+    "placeholder": "for example 1",
+    "wrong": [
+     {
+      "id": "no-constant",
+      "value": 2.4352,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "no-sixteen",
+      "value": 17.3172,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$16\\sum k^{-4} = \\tfrac{2\\pi^4}{5} - \\tfrac{2\\pi^4}{9} = \\tfrac{8\\pi^4}{45}$, so the sum is $\\pi^4/90 = 1.0823$.",
+    "generic": "Not quite right. Take $a_0^2/2$ from the energy first, then divide by 16.",
+    "byKey": {
+     "no-constant": "2.4352 forgets the constant term $a_0^2/2 = \\tfrac{2\\pi^4}{9}$. The energy includes it.",
+     "no-sixteen": "17.3172 is the energy left after the constant, $\\tfrac{8\\pi^4}{45}$. The coefficients are $a_k^2 = 16/k^4$, so divide by 16."
+    }
+   },
+   "explain": {
+    "text": "The constant takes $\\tfrac{a_0^2}{2} = \\tfrac{2\\pi^4}{9}$ of the energy $\\tfrac{2\\pi^4}{5}$. The rest, $\\tfrac{8\\pi^4}{45}$, equals $16\\sum k^{-4}$. That gives Euler's value $\\pi^4/90 = 1.0823$."
+   }
+  },
+  {
+   "id": "h-step-count",
+   "difficulty": 3,
+   "skills": [
+    "pe-fourier",
+    "pe-heat"
+   ],
+   "tags": [
+    "explicit-limit"
+   ],
+   "prose": "The code `rod_explicit(100, 0.4, 1)` takes $n = \\lceil t_{end}/(\\lambda\\,\\Delta x^2)\\rceil$ equal steps on a rod of length $\\pi$ cut into 100 intervals, with $D = 1$.",
+   "question": "How many steps does it take?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2534,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "2,534: $1/(0.4 \\times (\\pi/100)^2) = 2533.03$, rounded up.",
+    "label": "Steps",
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "floor",
+      "value": 2533,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "wrong-dx",
+      "value": 25000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\Delta x = \\pi/100$, so $1/(0.4\\Delta x^2) = 2533.03$, and the ceiling is 2,534.",
+    "generic": "Not quite right. Compute $\\Delta x^2$ with $\\Delta x = \\pi/100$, then round the quotient up.",
+    "byKey": {
+     "floor": "2,533 rounds down. The steps would then stop before $t = 1$, or need $\\lambda$ just above 0.4. Rounding up keeps $\\lambda \\le 0.4$.",
+     "wrong-dx": "25,000 uses $\\Delta x = 1/100$. The rod has length $\\pi$, so $\\Delta x = \\pi/100$."
+    }
+   },
+   "explain": {
+    "text": "$\\Delta x^2 = 9.8696 \\times 10^{-4}$, so $t_{end}/(\\lambda\\Delta x^2) = 2533.03$. Rounding up gives 2,534 steps of size $t_{end}/2534$, with $\\lambda = 0.39985$. That is why the code lands exactly on $t_{end}$ and stays stable."
+   }
+  },
+  {
+   "id": "h-corridor-wide",
+   "difficulty": 4,
+   "skills": [
+    "pe-fourier",
+    "pe-heat"
+   ],
+   "tags": [
+    "corridor"
+   ],
+   "prose": "A corridor option pays £100 if a driftless log price with $\\sigma = 25\\%$ stays within $\\pm 0.3$ for a year. That is heat on a rod of length $L = 0.6$ with $D = \\sigma^2/2 = 0.03125$, starting in the middle. $P = \\sum_{k\\text{ odd}}\\tfrac{4}{k\\pi}e^{-D(k\\pi/L)^2}\\sin\\tfrac{k\\pi}{2}$.",
+   "question": "What is it worth at zero interest rates, in £? Use $k = 1$ and 3.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 54.04,
+    "tol": {
+     "abs": 0.02
+    },
+    "accept": "£54.04: $100 \\times 0.5404$.",
+    "label": "Value",
+    "unit": "£",
+    "placeholder": "for example 40",
+    "wrong": [
+     {
+      "id": "d-sigma-sq",
+      "value": 22.96,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "no-amp",
+      "value": 42.45,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$k = 1$ gives $0.54055$ and $k = 3$ gives $-0.00019$, so $P = 0.54036$ and the value is £54.04.",
+    "generic": "Not quite right. $D(\\pi/L)^2 = 0.03125 \\times 27.416 = 0.8568$. Then add the two terms and multiply by £100.",
+    "byKey": {
+     "d-sigma-sq": "£22.96 uses $D = \\sigma^2 = 0.0625$. The diffusion coefficient is $\\sigma^2/2$.",
+     "no-amp": "£42.45 is $100e^{-0.8568}$. The first term also has the amplitude $4/\\pi = 1.2732$."
+    }
+   },
+   "explain": {
+    "text": "With $D(\\pi/L)^2 = 0.8568$ the $k = 1$ term is $1.2732 \\times 0.4245 = 0.5405$. The $k = 3$ term is $-0.4244e^{-7.711} = -0.0002$, so $P = 0.5404$ and the value is £54.04. The method of images gives the same."
+   }
+  },
+  {
+   "id": "h-colleague-terms",
+   "difficulty": 5,
+   "skills": [
+    "pe-fourier",
+    "pe-heat"
+   ],
+   "kind": "longform",
+   "tags": [
+    "rod-series"
+   ],
+   "title": "The one-term colleague",
+   "prompt": "A colleague keeps one term of the rod series at every time. The rod has $L = \\pi$, $D = 1$ and both ends at 0, and starts at 100. He reports 115.21 at the centre at $t = 0.1$ and 46.84 at $t = 1$. Write a short note. Say which report is wrong, and why. Use the maximum principle, the $k^2$ decay and the size of the second term. Give the exact values. Give a rule for how many terms a stated accuracy needs.",
+   "model": "**1. The first report is wrong.** The first term is $\\dfrac{400}{\\pi}e^{-t}$, which is 115.21 at $t = 0.1$. The maximum principle says $u$ never exceeds the largest start or end value, 100. A centre above 100 cannot be a solution. A truncated series is not itself a solution of the problem, so it can break the principle.\\n\\n**2. Why: the second term.** Mode $k$ decays like $e^{-k^2t}$. At $t = 0.1$ the $k = 3$ factor is $e^{-0.9} = 0.4066$, so the $k = 3$ term is $-\\dfrac{400}{3\\pi}e^{-0.9} = -17.26$, far from small. Adding it gives 97.95, and the $k = 5$ term then adds 2.09. At $t = 1$ the factor is $e^{-9} = 0.000123$, and the $k = 3$ term is only $-0.0052$.\\n\\n**3. Exact values.** At $t = 0.1$ the series gives 99.9112, just under the start of 100. Four odd terms (to $k = 7$) are within 0.0042. At $t = 1$ the series gives 46.8346. The one-term value 46.8399 is only 0.0052 too high, so 46.84 is right to two places.\\n\\n**4. How many terms.** The term for odd $k$ has size $\\dfrac{400}{k\\pi}e^{-k^2t}$. Keep terms until this is below the accuracy $\\varepsilon$, since the next terms fall faster still. For $\\varepsilon = 10^{-3}$ at $t = 0.1$ that is $k$ up to 9, as the first dropped term, $k = 11$, is $6.4 \\times 10^{-5}$. At $t = 1$ two terms are enough. The number of terms needed falls as $t$ grows, roughly like $1/\\sqrt{t}$. At $t = 0$ no number is enough, because of the jump.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the 115.21 report is wrong because the maximum principle gives $u \\le 100$."
+    },
+    {
+     "points": 2,
+     "text": "Explains the $k^2$ decay: the $k = 3$ term is about $-17.26$ at $t = 0.1$ but only $-0.0052$ at $t = 1$."
+    },
+    {
+     "points": 2,
+     "text": "Says the 46.84 report is acceptable to two decimal places, since the true value is 46.8346."
+    },
+    {
+     "points": 2,
+     "text": "Gives the exact values 99.9112 and 46.8346, or the four-term 99.9070 within 0.0042."
+    },
+    {
+     "points": 2,
+     "text": "States a rule: keep terms until $\\tfrac{400}{k\\pi}e^{-k^2t}$ is below the accuracy. Fewer terms at larger $t$, none enough at $t = 0$."
+    }
+   ]
+  }
+ ]
+}

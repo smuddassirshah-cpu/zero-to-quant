@@ -1,0 +1,1354 @@
+{
+ "id": "l8-heat-on-a-rod",
+ "course": "pdes",
+ "title": "Heat on a rod, solved",
+ "minutes": 15,
+ "objectives": [
+  "Solve the heat equation on an interval with a Fourier series, including nonzero ends",
+  "Solve it on a grid by the method of lines and keep the explicit scheme stable"
+ ],
+ "skills": [
+  "pe-fourier",
+  "pe-heat"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A rod of length $\\pi$ starts at 100 everywhere, with both ends held at 0, and $D = 1$. The curve is $u = \\sum_{k\\text{ odd}}\\frac{400}{k\\pi}e^{-k^2t}\\sin kx$. Slide $t$ and follow the centre, the dot.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3.1416
+     ],
+     "y": [
+      0,
+      125
+     ],
+     "height": 280,
+     "xLabel": "$x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "sum(j, 1, N, 400/(pi*(2*j-1))*exp(-(2*j-1)^2*t)*sin((2*j-1)*x))",
+       "label": "$u(x, t)$",
+       "domain": [
+        0,
+        3.1416
+       ]
+      }
+     ],
+     "params": {
+      "t": 0,
+      "N": 50
+     },
+     "hlines": [
+      {
+       "id": "half",
+       "y": 50,
+       "label": "50"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "c",
+       "x": 1.5708,
+       "y": 50,
+       "on": "u",
+       "label": "{y:.4f}"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "N",
+      "stops": [
+       1,
+       3,
+       10,
+       50
+      ],
+      "label": "Odd terms $N$",
+      "start": 50
+     }
+    ]
+   },
+   "question": "At what time $t$ does the centre reach 50?",
+   "widget": {
+    "kind": "slider",
+    "min": 0,
+    "max": 2,
+    "step": 0.01,
+    "start": 0,
+    "bind": "t",
+    "label": "$t$",
+    "answer": 0.93,
+    "tol": 0.03,
+    "unitLabel": "",
+    "wrong": [
+     {
+      "id": "early",
+      "from": 0.3,
+      "to": 0.6
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The dot at $x = \\pi/2$ shows the centre temperature. Slide $t$ until it reads 50."
+    },
+    {
+     "rung": "point",
+     "text": "The dashed line marks 50.",
+     "highlight": [
+      "half"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "By then the $k = 1$ term dominates: $\\tfrac{400}{\\pi}e^{-t} = 50$."
+    }
+   ],
+   "feedback": {
+    "correct": "The centre reaches 50 at $t = 0.9345$. One term alone gives $\\ln(8/\\pi) = 0.9347$.",
+    "generic": "Not quite right. Slide $t$ and stop where the dot reads 50.",
+    "byKey": {
+     "early": "The centre is still above 60 at those times. The curve flattens as it cools, so it takes close to a whole time unit to halve."
+    }
+   },
+   "explain": {
+    "text": "Setting $\\tfrac{400}{\\pi}e^{-t} = 50$ gives $t = \\ln(8/\\pi) = 0.9347$. The exact series gives 0.9345. At the centre the first term is almost the whole answer by then.",
+    "canvas": {
+     "params": {
+      "t": 0.9345
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Three steps solve any rod with ends at 0. Separate (lesson 5), expand the start in sines (lesson 6), and give each term its own decay. Leave out the two lines that do not belong.",
+   "question": "Put the lines of the method in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "m1",
+      "text": "Separate: each $e^{-k^2t}\\sin kx$ solves $u_t = u_{xx}$ and is 0 at $x = 0$ and $x = \\pi$, so any sum of them does too."
+     },
+     {
+      "id": "m2",
+      "text": "Expand the start in sines on $(0, \\pi)$. A constant 100 extends to an odd square wave of height 100, so $100 = \\sum_{k\\text{ odd}}\\dfrac{400}{k\\pi}\\sin kx$."
+     },
+     {
+      "id": "m3",
+      "text": "Multiply each term by its own factor $e^{-k^2t}$, which is 1 at $t = 0$: $u = \\sum_{k\\text{ odd}}\\dfrac{400}{k\\pi}e^{-k^2t}\\sin kx$."
+     },
+     {
+      "id": "m4",
+      "text": "This meets the equation, the ends and the start, so by uniqueness (lesson 4) it is the solution."
+     },
+     {
+      "id": "d1",
+      "text": "Multiply the whole series by one factor $e^{-t}$, since time passes equally for every term.",
+      "why": "Each term decays at its own rate $k^2$. A single factor would shrink all the terms alike and break the equation."
+     },
+     {
+      "id": "d2",
+      "text": "Expand the start in cosines, since the start is a constant.",
+      "why": "Cosines are not 0 at the ends. Held ends at 0 need sines."
+     }
+    ],
+    "answer": [
+     "m1",
+     "m2",
+     "m3",
+     "m4"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which lines build the solution, and which one checks it?"
+    },
+    {
+     "rung": "point",
+     "text": "The ends are held at 0, and $\\sin kx$ is 0 at both ends."
+    },
+    {
+     "rung": "step",
+     "text": "Order: separate, expand the start, add the decay factors, check by uniqueness."
+    }
+   ],
+   "feedback": {
+    "correct": "Separate, expand in sines, decay each mode at its own rate, then check.",
+    "generic": "Not quite right. Each line should follow from the line before it."
+   },
+   "explain": {
+    "text": "The sines solve the equation and meet the ends, and the start fixes the coefficients. Each mode then decays at its own rate $k^2$. Uniqueness from lesson 4 says nothing else can solve the same problem."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Now hold the ends at 20 and 50, as in level 1. Subtract the steady line $20 + 30x/\\pi$, which already fits the ends. The rest has zero ends and a start of $80 - 30x/\\pi$, with $b_k = \\dfrac2\\pi\\cdot\\dfrac{80(1 - (-1)^k) + 30(-1)^k}{k}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3.1416
+     ],
+     "y": [
+      0,
+      110
+     ],
+     "height": 270,
+     "xLabel": "$x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "sum(k, 1, N, 2/pi*(80*(1-(-1)^k)+30*(-1)^k)/k*exp(-k^2*t)*sin(k*x))+20+30*x/pi",
+       "label": "$u(x, t)$",
+       "domain": [
+        0,
+        3.1416
+       ]
+      },
+      {
+       "id": "line",
+       "expr": "20+30*x/pi",
+       "dashed": true,
+       "colour": 2,
+       "label": "steady line",
+       "domain": [
+        0,
+        3.1416
+       ]
+      }
+     ],
+     "params": {
+      "t": 0,
+      "N": 50
+     }
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "t",
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "label": "Time $t$",
+      "start": 0,
+      "decimals": 2
+     }
+    ]
+   },
+   "question": "What is $b_2$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9.5493,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "9.5493: $\\tfrac2\\pi\\cdot\\tfrac{0 + 30}{2} = \\tfrac{30}{\\pi}$.",
+    "label": "$b_2$",
+    "placeholder": "for example 20",
+    "wrong": [
+     {
+      "id": "b1",
+      "value": 82.7606,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "no-k",
+      "value": 19.0986,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "neg",
+      "value": -9.5493,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For even $k$, $1 - (-1)^k = 0$ and $(-1)^k = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "The curve at $t = 0$ is the start. Its mean sits between the ends.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$b_2 = \\tfrac2\\pi\\times\\tfrac{30}{2}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$b_2 = 30/\\pi = 9.5493$.",
+    "generic": "Not quite right. Put $k = 2$ into the formula for $b_k$, and divide by $k$.",
+    "byKey": {
+     "b1": "82.7606 is $b_1$, where the factor is $160 - 30$ over $k = 1$. For $k = 2$ the first part vanishes.",
+     "no-k": "19.0986 forgets to divide by $k = 2$. The integral of $\\sin kx$ brings down $1/k$.",
+     "neg": "$(-1)^2 = +1$, so the sign is positive."
+    }
+   },
+   "explain": {
+    "text": "With $k = 2$ the bracket is $80 \\times 0 + 30 \\times 1 = 30$, so $b_2 = \\tfrac2\\pi\\cdot\\tfrac{30}{2} = 9.5493$. Also $b_1 = 260/\\pi = 82.7606$. Then $u(\\tfrac\\pi2, 1) = 65.4425$, and an explicit scheme on 200 intervals gives 65.4410.",
+    "canvas": {
+     "params": {
+      "t": 0
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Now solve it on a computer. Cut the rod into $N$ intervals of width $\\Delta x = \\pi/N$. The values at the $N - 1$ interior points obey $\\mathbf{u}' = \\mathbf{A}\\mathbf{u}$ (`odes` lesson 10). $\\mathbf{A}$ is tridiagonal $(1, -2, 1)/\\Delta x^2$, with eigenvalues $-\\dfrac{4}{\\Delta x^2}\\sin^2\\dfrac{k\\Delta x}{2}$ (`eigen` lesson 5).",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      10
+     ],
+     "y": [
+      -100,
+      2
+     ],
+     "height": 260,
+     "xLabel": "$k$",
+     "yLabel": "Eigenvalue",
+     "functions": [
+      {
+       "id": "exact",
+       "expr": "-x^2",
+       "label": "$-k^2$",
+       "colour": 2,
+       "dashed": true
+      },
+      {
+       "id": "grid",
+       "expr": "-(4*N^2/pi^2)*sin(x*pi/(2*N))^2",
+       "label": "grid",
+       "colour": 1,
+       "domain": [
+        0,
+        10
+       ]
+      }
+     ],
+     "params": {
+      "N": 10
+     }
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "N",
+      "stops": [
+       10,
+       20,
+       50,
+       100
+      ],
+      "label": "Intervals $N$",
+      "start": 10
+     }
+    ]
+   },
+   "question": "With $N = 10$, what is the eigenvalue for $k = 3$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -8.3532,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "$-8.3532$, against $-9$ for the rod itself.",
+    "label": "Eigenvalue",
+    "placeholder": "for example -9",
+    "wrong": [
+     {
+      "id": "exact",
+      "value": -9,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "no-half",
+      "value": -26.5262,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\Delta x = \\pi/10$. Evaluate $\\dfrac{4}{\\Delta x^2}\\sin^2\\dfrac{3\\Delta x}{2}$ and put a minus in front."
+    },
+    {
+     "rung": "point",
+     "text": "Move the control to $N = 10$ and compare the curves at $k = 3$.",
+     "highlight": [
+      "grid"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\dfrac{4}{0.0987} = 40.528$, and $\\sin^2(0.4712) = 0.2061$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-40.528 \\times 0.2061 = -8.3532$. The grid sees $-8.35$ where the rod has $-9$.",
+    "generic": "Not quite right. Evaluate $-\\dfrac{4}{\\Delta x^2}\\sin^2\\dfrac{k\\Delta x}{2}$ with $k = 3$ and $\\Delta x = \\pi/10$.",
+    "byKey": {
+     "exact": "$-9$ is the eigenvalue of the rod, $-k^2$. The grid's eigenvalue is a little smaller in size for $k = 3$.",
+     "no-half": "You took $\\sin^2(k\\Delta x)$ instead of $\\sin^2(k\\Delta x/2)$. The half-angle is part of the formula."
+    }
+   },
+   "explain": {
+    "text": "With $\\Delta x = \\pi/10$, $\\sin^2(0.4712) = 0.2061$ and $4/\\Delta x^2 = 40.528$, so $\\mu_3 = -8.3532$. With $N = 100$ the first three are $-0.999918$, $-3.998684$ and $-8.993340$, close to $-k^2$. A stiff solver on that system gives a centre of 46.834596 at $t = 1$, close to the series.",
+    "canvas": {
+     "params": {
+      "N": 10
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Euler's method (`odes` lesson 16) on $\\mathbf{u}' = \\mathbf{A}\\mathbf{u}$ multiplies mode $k$ by $1 - 4\\lambda\\sin^2(k\\Delta x/2)$ each step, where $\\lambda = D\\Delta t/\\Delta x^2$. This is the explicit scheme. It is stable when every factor lies between $-1$ and 1. Slide $\\lambda$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      1,
+      9
+     ],
+     "y": [
+      -1.6,
+      1.2
+     ],
+     "height": 250,
+     "xLabel": "Mode $k$",
+     "yLabel": "Factor per step",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "1-4*lam*sin(x*pi/20)^2",
+       "label": "",
+       "domain": [
+        1,
+        9
+       ]
+      }
+     ],
+     "hlines": [
+      {
+       "id": "up",
+       "y": 1,
+       "label": "1"
+      },
+      {
+       "id": "down",
+       "y": -1,
+       "label": "-1"
+      }
+     ],
+     "params": {
+      "lam": 0.4
+     }
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "lam",
+      "stops": [
+       0.2,
+       0.4,
+       0.5,
+       0.6
+      ],
+      "label": "$\\lambda$",
+      "start": 0.4
+     }
+    ]
+   },
+   "question": "Write the largest stable time step in terms of $h = \\Delta x$ and $D$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{h^2}{2D}",
+    "accept": [
+     "h^2/(2D)",
+     "\\frac{h^{2}}{2\\cdot D}"
+    ],
+    "keyboard": "algebra",
+    "label": "$\\Delta t_{\\max}$",
+    "wrong": [
+     {
+      "id": "no-half",
+      "tex": "\\frac{h^2}{D}"
+     },
+     {
+      "id": "h-only",
+      "tex": "\\frac{h}{2D}"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The top mode has $\\sin^2 \\approx 1$, so its factor is about $1 - 4\\lambda$."
+    },
+    {
+     "rung": "point",
+     "text": "The curve leaves the band between $-1$ and 1 once $\\lambda$ passes $\\tfrac12$.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 4\\lambda \\ge -1$ gives $\\lambda \\le \\tfrac12$, so $\\Delta t \\le \\dfrac{h^2}{2D}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - 4\\lambda \\ge -1$ means $\\lambda \\le \\tfrac12$, so $\\Delta t \\le h^2/(2D)$.",
+    "generic": "Not quite right. Turn $\\lambda \\le \\tfrac12$, with $\\lambda = D\\Delta t/h^2$, into a bound on $\\Delta t$.",
+    "byKey": {
+     "no-half": "$h^2/D$ is $\\lambda \\le 1$. The top mode's factor $1 - 4\\lambda$ must stay above $-1$, which gives $\\lambda \\le \\tfrac12$.",
+     "h-only": "You used $h$ rather than $h^2$. The step must shrink like $h^2$, the same square law as in lesson 2."
+    }
+   },
+   "explain": {
+    "text": "The top mode has factor $1 - 4\\lambda$, which stays above $-1$ only if $\\lambda \\le \\tfrac12$. With $\\lambda = D\\Delta t/h^2$ this is $\\Delta t \\le h^2/(2D)$. Halving the space step quarters the time step.",
+    "canvas": {
+     "params": {
+      "lam": 0.5
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "The live scheme uses the 9 interior points of $\\Delta x = \\pi/10$, all starting at 100. Each step is one multiplication by the $9\\times9$ matrix with $1 - 2\\lambda$ on the diagonal and $\\lambda$ beside it. Try $\\lambda = 0.4$ for 25 steps, then $\\lambda = 0.6$ for 20.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "series": [
+      {
+       "id": "u",
+       "label": "",
+       "values": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+       ],
+       "colour": 1
+      }
+     ],
+     "xValues": [
+      0.3142,
+      0.6283,
+      0.9425,
+      1.2566,
+      1.5708,
+      1.885,
+      2.1991,
+      2.5133,
+      2.8274
+     ],
+     "y": [
+      -150,
+      150
+     ],
+     "height": 260,
+     "xLabel": "$x$",
+     "yLabel": "$u$",
+     "decimals": 1
+    },
+    "state": {},
+    "derive": {
+     "let": {
+      "w": "vecmat([100,100,100,100,100,100,100,100,100],matpow([[1-2*lam,lam,0,0,0,0,0,0,0],[lam,1-2*lam,lam,0,0,0,0,0,0],[0,lam,1-2*lam,lam,0,0,0,0,0],[0,0,lam,1-2*lam,lam,0,0,0,0],[0,0,0,lam,1-2*lam,lam,0,0,0],[0,0,0,0,lam,1-2*lam,lam,0,0],[0,0,0,0,0,lam,1-2*lam,lam,0],[0,0,0,0,0,0,lam,1-2*lam,lam],[0,0,0,0,0,0,0,lam,1-2*lam]],n))"
+     },
+     "series.u.values": "w",
+     "caption": "Centre value = {{fixed(w[4], 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "lam",
+      "stops": [
+       0.2,
+       0.4,
+       0.5,
+       0.6
+      ],
+      "label": "$\\lambda$",
+      "start": 0.4
+     },
+     {
+      "bind": "n",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "label": "Steps $n$",
+      "start": 25
+     }
+    ]
+   },
+   "question": "At $\\lambda = 0.6$, by what factor is the top mode ($k = 9$) multiplied each step? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1.3413,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "$-1.3413$: $1 - 2.4\\sin^2\\tfrac{9\\pi}{20}$.",
+    "label": "Factor",
+    "placeholder": "for example 0.5",
+    "wrong": [
+     {
+      "id": "lam04",
+      "value": -0.5608,
+      "tol": {
+       "abs": 0.0006
+      }
+     },
+     {
+      "id": "centre",
+      "value": -0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "lam05",
+      "value": -0.9511,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Use the factor $1 - 4\\lambda\\sin^2(k\\Delta x/2)$ with $k = 9$ and $\\Delta x = \\pi/10$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sin\\dfrac{9\\pi}{20} = 0.9877$, so $\\sin^2 = 0.9755$.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 4(0.6)(0.9755) = 1 - 2.3413$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - 2.3413 = -1.3413$, beyond $-1$, so the top mode grows and alternates.",
+    "generic": "Not quite right. Put $\\lambda = 0.6$ and $k = 9$ into $1 - 4\\lambda\\sin^2(k\\pi/20)$.",
+    "byKey": {
+     "lam04": "$-0.5608$ is the factor for $\\lambda = 0.4$. Check that you used 0.6.",
+     "centre": "$-0.2$ is $1 - 2\\lambda$, the diagonal of the matrix. The factor for a whole mode includes the neighbours' terms.",
+     "lam05": "$-0.9511$ is the factor for $\\lambda = 0.5$, the edge of stability."
+    }
+   },
+   "explain": {
+    "text": "The factors are $-0.5608$, $-0.9511$ and $-1.3413$ for $\\lambda = 0.4$, 0.5 and 0.6. Only the last exceeds 1 in size: its mode grows and flips each step, reaching 1,160.98 after 20 steps. At $\\lambda = 0.4$ and 25 steps the centre is 46.5197, against 47.4487 for the series and 47.4357 for nine points exactly.",
+    "canvas": {
+     "params": {
+      "lam": 0.6,
+      "n": 20
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague keeps one term of the rod series at every time. At $t = 0.1$ the first term gives 115.2075 at the centre. Set $N = 50$ to see the full series, and compare it with the start of 100.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3.1416
+     ],
+     "y": [
+      0,
+      125
+     ],
+     "height": 280,
+     "xLabel": "$x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "sum(j, 1, N, 400/(pi*(2*j-1))*exp(-(2*j-1)^2*t)*sin((2*j-1)*x))",
+       "label": "$u(x, t)$",
+       "domain": [
+        0,
+        3.1416
+       ]
+      }
+     ],
+     "params": {
+      "t": 0.1,
+      "N": 1
+     },
+     "hlines": [
+      {
+       "id": "start",
+       "y": 100,
+       "label": "start"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "c",
+       "x": 1.5708,
+       "y": 50,
+       "on": "u",
+       "label": "{y:.4f}"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "N",
+      "stops": [
+       1,
+       2,
+       4,
+       50
+      ],
+      "label": "Odd terms $N$",
+      "start": 1
+     }
+    ]
+   },
+   "question": "What does the full series give at the centre at $t = 0.1$? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 99.9112,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "99.9112: just under the start of 100.",
+    "label": "Centre",
+    "placeholder": "for example 100",
+    "wrong": [
+     {
+      "id": "one-term",
+      "value": 115.2075,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "start",
+      "value": 100,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide $N$ up and read the dot. It should settle."
+    },
+    {
+     "rung": "point",
+     "text": "The dashed line is the start, 100. Heat cannot rise above it.",
+     "highlight": [
+      "start"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Four odd terms already give 99.9070, within 0.0042."
+    }
+   ],
+   "feedback": {
+    "correct": "The full series gives 99.9112, a hair below 100.",
+    "generic": "Not quite right. Set $N = 50$ and read the dot at the centre.",
+    "byKey": {
+     "one-term": "115.2075 is your colleague's value. It is above the start of 100, which the maximum principle forbids.",
+     "start": "100 is the start. The centre has cooled a little by $t = 0.1$, as heat leaks towards the ends."
+    }
+   },
+   "explain": {
+    "text": "At $t = 0.1$ the terms $e^{-k^2t}$ die slowly, so one term is far off. It gives 115.2075, above 100, the highest the start allows. Four odd terms give 99.9070, within 0.0042 of the true 99.9112.",
+    "canvas": {
+     "params": {
+      "N": 50
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "Edge case. At $t = 0$ the series must reproduce the start, which jumps from 0 at the end to 100 beside it. Set $t = 0$ and watch the first bump beside the end as $N$ grows. Lesson 7 gave the share of the jump.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3.1416
+     ],
+     "y": [
+      0,
+      125
+     ],
+     "height": 280,
+     "xLabel": "$x$",
+     "yLabel": "$u$",
+     "functions": [
+      {
+       "id": "u",
+       "expr": "sum(j, 1, N, 400/(pi*(2*j-1))*exp(-(2*j-1)^2*t)*sin((2*j-1)*x))",
+       "label": "$u(x, t)$",
+       "domain": [
+        0,
+        3.1416
+       ]
+      }
+     ],
+     "params": {
+      "t": 0,
+      "N": 10
+     },
+     "hlines": [
+      {
+       "id": "start",
+       "y": 100,
+       "label": "start"
+      }
+     ]
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "N",
+      "stops": [
+       10,
+       50,
+       200
+      ],
+      "label": "Odd terms $N$",
+      "start": 10
+     }
+    ]
+   },
+   "question": "The odd extension jumps by 200. What is the highest value of the partial sum beside the end, for large $N$? Give 1 decimal place.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 117.9,
+    "tol": {
+     "abs": 0.15
+    },
+    "accept": "117.9: $100 \\times 1.17898$.",
+    "label": "Peak",
+    "placeholder": "for example 105",
+    "wrong": [
+     {
+      "id": "none",
+      "value": 100,
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "id": "of-start",
+      "value": 108.9,
+      "tol": {
+       "abs": 0.2
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The series at $t = 0$ is 100 times the square wave's partial sum."
+    },
+    {
+     "rung": "point",
+     "text": "Raise $N$ and read the highest bump.",
+     "highlight": [
+      "u"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$100 \\times 1.17898 = 117.898$."
+    }
+   ],
+   "feedback": {
+    "correct": "The peak tends to $100 \\times 1.17898 = 117.9$, above the start of 100.",
+    "generic": "Not quite right. Scale Gibbs's peak 1.17898 by 100.",
+    "byKey": {
+     "none": "100 is the start. The partial sums overshoot it beside the end, as the square wave did.",
+     "of-start": "108.9 takes 8.95% of the start, 100. The share is of the jump of 200, so the overshoot is 17.9."
+    }
+   },
+   "explain": {
+    "text": "The odd extension jumps from $-100$ to 100, a jump of 200. The overshoot is $8.95\\% \\times 200 = 17.9$, so the peak is 117.9. For any $t > 0$ the factors $e^{-k^2t}$ remove it at once, and the maximum principle holds."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Two ways to solve the rod, and a check that they agree. `rod_series` sums odd $k$ up to `K` for $L = \\pi$. `rod_explicit` runs the explicit scheme on $N$ intervals, taking $n = \\lceil t_{end}/(\\lambda\\Delta x^2)\\rceil$ equal steps, and returns the centre.",
+   "question": "Complete `rod_series` and `rod_explicit`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef rod_series(x, t, u0=100, K=401):\n    \"\"\"Series for a rod of length pi, ends 0, start u0, D = 1.\"\"\"\n    ...\n\ndef rod_explicit(N, lam, t_end):\n    \"\"\"Centre value of the explicit scheme on N intervals.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef rod_series(x, t, u0=100, K=401):\n    \"\"\"Series for a rod of length pi, ends 0, start u0, D = 1.\"\"\"\n    x = np.asarray(x, dtype=float)\n    total = np.zeros_like(x)\n    for k in range(1, K + 1, 2):\n        total = total + 4 * u0 / (k * np.pi) * np.exp(-k * k * t) * np.sin(k * x)\n    return total\n\ndef rod_explicit(N, lam, t_end):\n    \"\"\"Centre value of the explicit scheme on N intervals.\"\"\"\n    if lam > 0.5:\n        raise ValueError('lambda above 1/2 is unstable')\n    dx = np.pi / N\n    n = int(np.ceil(t_end / (lam * dx * dx) - 1e-12))\n    mu = (t_end / n) / (dx * dx)\n    u = np.full(N + 1, 100.0)\n    u[0] = u[-1] = 0.0\n    for _ in range(n):\n        u[1:-1] = u[1:-1] + mu * (u[2:] - 2 * u[1:-1] + u[:-2])\n    return float(u[N // 2])\n",
+    "examples": [
+     {
+      "call": "round(float(rod_series(np.pi / 2, 1)), 6)",
+      "expect": "46.834628",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "float(rod_series(np.pi / 2, 1))",
+      "expect": "46.834628",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "float(rod_series(np.pi / 2, 0.1))",
+      "expect": "99.911187",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "float(rod_series(np.pi / 2, 0.1, K=1))",
+      "expect": "115.207478",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "float(rod_series(np.pi / 2, 1, u0=50))",
+      "expect": "23.417314",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "rod_series(np.array([0.0, np.pi / 2, np.pi]), 1).tolist()",
+      "expect": "[0.0, 46.834628, 0.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "rod_explicit(50, 0.4, 1)",
+      "expect": "46.7979",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "call": "rod_explicit(100, 0.4, 1)",
+      "expect": "46.8254",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "call": "rod_explicit(100, 0.6, 1)",
+      "compare": "raises",
+      "expect": "ValueError"
+     },
+     {
+      "call": "abs(rod_explicit(200, 0.4, 1) - float(rod_series(np.pi / 2, 1))) < 0.003",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests. NumPy loads on the first run, which takes a second or two. That time is not counted against the tests."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The series is a loop over odd $k$ from 1 to `K`, adding one term at a time."
+    },
+    {
+     "rung": "point",
+     "text": "The scheme needs $\\Delta x = \\pi/N$, a step count from the ceiling, and $\\mu = \\Delta t/\\Delta x^2$ for the update."
+    },
+    {
+     "rung": "step",
+     "text": "Raise `ValueError` first if `lam > 0.5`. Then `u[1:-1] += mu * (u[2:] - 2 * u[1:-1] + u[:-2])`, `n` times."
+    }
+   ],
+   "feedback": {
+    "correct": "The series gives 46.834628, and the scheme on 100 intervals is within 0.0092.",
+    "generic": "Not quite right. Check the odd $k$ in the series, the equal step count and the guard on `lam`."
+   },
+   "explain": {
+    "text": "The series matches 46.834628 and 99.911187 to six places, and one term gives 115.207478. The scheme on 50 and 100 intervals gives 46.7979 and 46.8254, closing on the series as the grid refines. A value of `lam` above one half raises an error instead of a wild answer."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "You have **solved the rod**: separate, expand the start in sines, and let each mode decay at its own rate. The series is exact. On a computer, cut the rod into points and step in time, with $\\lambda = D\\Delta t/\\Delta x^2 \\le \\tfrac12$. For $t > 0$ the factors $e^{-k^2t}$ cut off high modes quickly.",
+   "question": "How many terms does a stated accuracy need at time $t$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "decay",
+      "text": "Keep terms until $\\tfrac{400}{k\\pi}e^{-k^2t}$ is below the accuracy. Larger $t$ needs fewer",
+      "correct": true
+     },
+     {
+      "id": "one-over-k",
+      "text": "Keep terms until $\\tfrac{400}{k\\pi}$ is below the accuracy, as for the square wave",
+      "why": "That is the rule at $t = 0$. For $t > 0$ the factor $e^{-k^2t}$ is much smaller, so far fewer terms are needed."
+     },
+     {
+      "id": "same",
+      "text": "The same number at every time",
+      "why": "The terms shrink with $t$, so late times need fewer terms than early ones."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The size of term $k$ is $\\tfrac{400}{k\\pi}e^{-k^2t}$, so drop it once that is below the accuracy.",
+    "generic": "Not quite right. Ask how big term $k$ is at time $t$."
+   },
+   "explain": {
+    "text": "At $t = 1$ the $k = 3$ term is $0.000112$ of the first. At $t = 0.1$ it takes four terms to come within 0.0042. At $t = 0$ no number of terms is enough, because of the jump."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A corridor option pays £100 if a driftless log price with $\\sigma = 20\\%$ stays within $\\pm 0.2$ for a year. That is heat on a rod of length $L = 0.4$ with $D = 0.02$, starting in the middle, ends absorbing: $P = \\sum_{k\\text{ odd}}\\tfrac{4}{k\\pi}e^{-D(k\\pi/L)^2}\\sin\\tfrac{k\\pi}{2}$. Use the first term.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "mu": 0,
+     "sigma": 0.012599,
+     "steps": 252,
+     "paths": 300,
+     "drawn": 30,
+     "barriers": [
+      -0.2,
+      0.2
+     ],
+     "sim": {
+      "seed": 5
+     },
+     "y": [
+      -0.45,
+      0.45
+     ],
+     "height": 280,
+     "yLabel": "Log price",
+     "xLabel": "Day (252 make a year)"
+    },
+    "state": {
+     "showHits": true
+    }
+   },
+   "question": "What is the option worth at zero interest rates, in £?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 37.08,
+    "tol": {
+     "abs": 0.02
+    },
+    "accept": "£37.08: $100 \\times 0.3708$.",
+    "label": "Value",
+    "unit": "£",
+    "placeholder": "for example 30",
+    "wrong": [
+     {
+      "id": "daily",
+      "value": 40,
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "id": "no-amp",
+      "value": 29.12,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$D(\\pi/L)^2 = 0.02 \\times 61.685 = 1.2337$, and $\\sin\\tfrac\\pi2 = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "The paths that touch the barriers are the ones that do not pay.",
+     "highlight": [
+      "barrier-up"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac4\\pi e^{-1.2337} = 1.2732 \\times 0.2912 = 0.3707$."
+    }
+   ],
+   "feedback": {
+    "correct": "$P = 0.3708$, so the option is worth about £37.08.",
+    "generic": "Not quite right. Evaluate $\\tfrac{4}{\\pi}e^{-1.2337}$ and multiply by £100.",
+    "byKey": {
+     "daily": "£40 is the frequency from daily monitoring, 0.400. Continuous monitoring catches more touches, so fewer paths survive.",
+     "no-amp": "£29.12 is $100e^{-1.2337}$. You dropped the amplitude $4/\\pi = 1.2732$ of the first term."
+    }
+   },
+   "explain": {
+    "text": "The first term is $1.2732 \\times 0.29116 = 0.37073$ and the $k = 3$ term is about $-10^{-6}$, so $P = 0.370777$ and the value is £37.08. The method of images gives the same. Checking prices daily misses some touches, and 20,000 daily paths survive with frequency about 0.40, above the continuous 0.3708.",
+    "canvas": {
+     "highlight": [
+      "barrier-up"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The rod with zero ends is solved by $u = \\sum b_ke^{-D(k\\pi/L)^2t}\\sin(k\\pi x/L)$, with the $b_k$ the sine coefficients of the start. Nonzero ends: subtract the steady line first.",
+   "A grid turns the equation into $\\mathbf{u}' = \\mathbf{A}\\mathbf{u}$. Euler's method on it is the explicit scheme, stable only for $\\Delta t \\le h^2/(2D)$, that is $\\lambda \\le \\tfrac12$.",
+   "One term is accurate only once the other terms $e^{-k^2t}$ have died. At $t = 0$ the series overshoots by Gibbs's 8.95% of the jump."
+  ],
+  "formula": {
+   "name": "Heat on a rod, ends at 0",
+   "tex": "u(x, t) = \\sum_k b_k\\,e^{-D(k\\pi/L)^2t}\\sin\\dfrac{k\\pi x}{L}",
+   "note": "With $b_k = \\dfrac2L\\int_0^L u_0(x)\\sin\\dfrac{k\\pi x}{L}\\,dx$."
+  },
+  "trap": "One term is not enough at small $t$: at $t = 0.1$ it gives 115.21, above the start of 100."
+ },
+ "quiz": [
+  {
+   "id": "q-centre",
+   "difficulty": 3,
+   "prose": "A rod of length $\\pi$ starts at 100 with ends at 0 and $D = 1$. At $t = 1$ the $k = 1$ term gives 46.8399 at the centre. The $k = 3$ term is $\\dfrac{400}{3\\pi}e^{-9}\\sin\\dfrac{3\\pi}{2}$, and later terms are negligible.",
+   "question": "What is the centre value with both terms? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 46.8346,
+    "tol": {
+     "abs": 0.0006
+    },
+    "accept": "46.8346: the $k = 3$ term is $-0.0052$.",
+    "label": "Centre",
+    "placeholder": "for example 47",
+    "wrong": [
+     {
+      "id": "one-term",
+      "value": 46.8399,
+      "tol": {
+       "abs": 0.0004
+      }
+     },
+     {
+      "id": "sign",
+      "value": 46.8451,
+      "tol": {
+       "abs": 0.0004
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$46.8399 - 0.0052 = 46.8346$.",
+    "generic": "Not quite right. Evaluate the $k = 3$ term, keeping the sign of $\\sin\\tfrac{3\\pi}{2}$.",
+    "byKey": {
+     "one-term": "46.8399 is the $k = 1$ term alone. The $k = 3$ term still adds $-0.0052$.",
+     "sign": "You added the $k = 3$ term. $\\sin\\tfrac{3\\pi}{2} = -1$, so it subtracts."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{400}{3\\pi}e^{-9} = 42.4413 \\times 0.00012341 = 0.005238$, and the sine is $-1$. So the centre is $46.8399 - 0.0052 = 46.8346$. The $k = 3$ term is only 0.000112 of the first."
+   }
+  },
+  {
+   "id": "q-dt",
+   "difficulty": 2,
+   "prose": "A rod of length $\\pi$ is cut into $N = 10$ intervals, with $D = 1$. The explicit scheme is stable when $\\Delta t \\le h^2/(2D)$.",
+   "question": "What is the largest stable time step? Give 4 decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0493,
+    "tol": {
+     "abs": 0.0002
+    },
+    "accept": "0.0493: $h = \\pi/10$, so $h^2/2 = 0.098696/2$.",
+    "label": "$\\Delta t$",
+    "placeholder": "for example 0.1",
+    "wrong": [
+     {
+      "id": "no-half",
+      "value": 0.0987,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "h-only",
+      "value": 0.157,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$h = \\pi/10 = 0.31416$, so $h^2/2 = 0.0493$.",
+    "generic": "Not quite right. Find $h = L/N$ first, then $h^2/(2D)$.",
+    "byKey": {
+     "no-half": "0.0987 is $h^2$. The bound is $h^2/(2D)$, half of that.",
+     "h-only": "0.157 is $h/2$. The bound involves $h^2$."
+    }
+   },
+   "explain": {
+    "text": "$h = \\pi/10$ and $h^2 = 0.098696$, so $\\Delta t_{\\max} = 0.049348$. Halving $h$ to $\\pi/20$ cuts it to 0.012337."
+   }
+  },
+  {
+   "id": "q-blow",
+   "difficulty": 3,
+   "prose": "The explicit scheme with $\\lambda = 0.6$ is run on the rod, and the values swing between large positive and negative numbers.",
+   "question": "Why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "top",
+      "text": "The highest mode is multiplied by $-1.34$ each step, so it grows and alternates in sign",
+      "correct": true
+     },
+     {
+      "id": "series",
+      "text": "Too few terms of the series were kept",
+      "why": "The scheme has no series. Its error is from the step size, not from truncation."
+     },
+     {
+      "id": "grid",
+      "text": "The grid is too fine to see the heat",
+      "why": "A fine grid is accurate. The trouble is a time step too large for it: $\\lambda > \\tfrac12$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Its factor $1 - 4\\lambda\\sin^2(\\cdot)$ passes $-1$ when $\\lambda > \\tfrac12$.",
+    "generic": "Not quite right. Look at the factor each mode gets per step."
+   },
+   "explain": {
+    "text": "The highest mode has factor $1 - 4(0.6)(0.9755) = -1.34$. Its size grows by 34% a step and its sign flips. After 20 steps it swamps the answer."
+   }
+  },
+  {
+   "id": "q-max",
+   "difficulty": 2,
+   "prose": "A colleague's one-term answer at the centre of the 100-degree rod, at a small time, is above 100.",
+   "question": "Which principle shows the answer is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "max",
+      "text": "The maximum principle: $u$ never exceeds the largest start or end value",
+      "correct": true
+     },
+     {
+      "id": "energy",
+      "text": "Energy decay: $\\int u^2\\,dx$ falls with time",
+      "why": "Energy decay is true but says nothing about a single point being above 100. The maximum principle does."
+     },
+     {
+      "id": "ortho",
+      "text": "Orthogonality of the sines",
+      "why": "Orthogonality gives the coefficients. It does not bound the values."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Heat cannot rise above its starting maximum of 100.",
+    "generic": "Not quite right. Ask which principle bounds $u$ at a point."
+   },
+   "explain": {
+    "text": "The maximum principle says $u \\le \\max(\\text{start}, \\text{ends}) = 100$ for all $t$. A truncated series can break it, because it is not itself a solution."
+   }
+  }
+ ]
+}
