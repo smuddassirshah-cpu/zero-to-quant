@@ -274,3 +274,32 @@ Edits are in `docs/briefs/coding-int.md` (copy in `docs/briefs/coding-int-script
 31. fixed: the six longest statements (bot, Game of Life, LRU, `simplify_path`, `longest_within_limit`, token bucket) rewritten in short sentences.
 32. kept: pass.
 33. fixed: ship-last note for l17 screen 8 and l19 screen 9.
+
+## Fix pass 2: engine assumptions (all three briefs, 4 Nov)
+
+
+Checked in `app/js/engine/`, `app/js/screens/`, `app/tools/validate.mjs`, `docs/AUTHORING.md` (4 Nov, no app run). E3, E8, E11, E13 and E14 as specified are out of scope except where a brief assumed more than the spec.
+
+| Label | Brief and lesson | Status | Spec (required only) / evidence | First level that needs it |
+| --- | --- | --- | --- | --- |
+| number-line derive onto an interval | coding-int l1 screen 2 | exists | `_base.js` 504-507 (derive targets an item property by id in `intervals`), `number-line.js` 5 (keyed interval patches) | n/a |
+| slider on nested `order.size` | coding-int l10 screen 2 | exists | `orderbook.js` 146-147 (`setParam`/`getParam` via `paramPatch`, `_base.js` 819); `pair` controls bind `left:order.size` (`_base.js` 668-672) | n/a |
+| orderbook per-order labels | coding-int l10 screen 1 | redesigned | `pair` of `orderbook` and `array` in queue mode (both exist); no per-order segments needed | n/a |
+| C-parts-code | coding-int level 4 homework 1, 2 | required | E11 `parts`: a part may be a `code` widget; its hidden tests are the cumulative tests of the item up to that part; a later code part's starter may show the earlier reference | coding-int level 4 homework item 1 |
+| C-draw-code | coding-int l15, l17 closing screens (`#exam/mock-oa-code`) | required | E3 `draw` may take `drills/<pack>` (or code items in bank files) so a mock draws fresh coding problems; `exams/mock-oa-code.json` authored before l15 | coding-int l15 |
+| C-drill-patterns | coding-int l17, l19; research-int level 4 drills | required | the E8 pattern vocabulary fixed in AUTHORING section 5 and validated against drill files: `hashing`, `prefix-sums`, `windows`, `stacks-queues`, `heaps-tries`, `intervals`, `bits`, `simulation`, `interpolation`, `group-regression`, `rank-one-update`, `data-cleaning` | coding-int l17 |
+| DataFrame and NaN in `isclose` | research-int l17, l19 | redesigned | tests call scalars, `.round(6).to_numpy().tolist()` and `bool(np.isnan(x))`; `code.js` 210-212 compares lists and arrays | n/a |
+| matplotlib figure output | research-int l15, l20 | redesigned | the learner's code returns the plotted numbers (binned counts, fit), graded by tests, and a `scatter` or `bars` canvas shows the finished plot | n/a |
+| clock on a lesson screen | research-int l19 | redesigned | `pace` per code screen (6, 8, 11 min) and an E8 stopwatch drill `rq-clean-frame-py` for the timed run | n/a |
+| `n` control on `scatter` `sim` | research-int l10 | redesigned | `plane` curve of t against n (`t = r*sqrt((n-2)/(1-r^2))`) with a slider on `n` and a `derive` caption | n/a |
+| C-parts-credit | research-int R1.2 and all `parts` items | required | E11 rules in AUTHORING: item credit is the sum of part credits (equal shares); every part opens once the previous one is checked, right or wrong; unopened parts count as missed when a `timed` review locks; the validator refuses `parts` on a quiz item and the stage-exam `parts` name clash is resolved | research-int l1 (R1.2) |
+| C-data-cap | research-int, coding-int l8, systems level 3 | required | E14: the size cap (suggest 256 KB a file) in AUTHORING; `data` also allowed on drill files and exam items; hidden `tests` and `setup` read files by bare name; validator checks paths and cap | research-int l10 (transfer screen) |
+| `<mutex>`, `<atomic>`, `<thread>` `compiles` cases | systems l8, l9 | redesigned | `order` tasks and read-only listings; no `compiles` case; no code problem needs the headers | n/a |
+| C-alloc-check | systems l15, P-format-price, P-handler, homework-4 | required | C++ harness flag `allocCheck: true` giving `alloc_count()` and `reset_alloc_count()` that survive `-O1` under clang 21 and do not clash with `leakCheck` | systems l15 |
+| hex input in `numeric` | systems l3, l14, homework-3 | redesigned | addresses and bytes are given in hex in the statement; answers are decimal | n/a |
+| hardware canvases (cache, predictor) | systems l2, l5, homework-1 | redesigned | `array`, `grid`, `console` and `table` with an authored state patch per step on `ladder` screens | n/a |
+| E13-blocked-lanes | systems l8 (U5 to U7), l10 (U11) | required | `interleave`: a lane at a held lock is disabled; no steppable lane ends "deadlock"; a wait with no later notify ends "asleep"; conditional steps; `values.outcomes` with counts | systems l8 |
+| E13 weak memory (store buffer) | systems l9 (U9) | redesigned | the (0, 0) outcome is taught from a `choice` and the hardware note; the canvas enumerates interleavings only | n/a |
+| C-parts-mixed | systems hw-1 item 2, hw-2 items 2, 3, 6, hw-4 items 2, 4 | required | E11: each part may be `numeric`, `choice`, `multi` or `table` | systems level 1 homework (hw-1 item 2) |
+
+Counts: exists 2, redesigned 9, required 8 (C-parts-code, C-draw-code, C-drill-patterns, C-parts-credit, C-data-cap, C-alloc-check, E13-blocked-lanes, C-parts-mixed).
