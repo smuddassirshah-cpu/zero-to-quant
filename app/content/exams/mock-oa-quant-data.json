@@ -2,7 +2,7 @@
   "id": "mock-oa-quant-data",
   "name": "Quantitative data assessment",
   "style": "research",
-  "models": "Reported, as of Nov 2026: online assessments for quant research and quant finance internships at Morgan Stanley and Two Sigma: statistics and applied maths questions, then Python data tasks.",
+  "models": "Reported, as of Nov 2026: online tests for quant research and finance interns at Morgan Stanley and Two Sigma. Statistics and applied maths questions, then Python data tasks.",
   "description": "This is the reported format of an online quant assessment, as candidates described it by Nov 2026. It has two papers and takes 120 minutes. The first has 10 statistics and applied maths questions, and some ask you to select all that apply. The second has three Python data tasks that read CSV files. Hidden tests check each task, so run your code before you move on. Use only the standard documentation of the libraries. Use no search engine and no notes.",
   "skills": {
     "rq-stats": "Statistics questions",
@@ -85,7 +85,7 @@
           ],
           "pace": 120,
           "title": "What a p-value says",
-          "question": "A study reports $p = 0.03$ for a strategy's mean return. What does that mean?",
+          "question": "A test reports $p = 0.018$ for the average daily profit of a trading rule. What does that mean?",
           "widget": {
             "kind": "choice",
             "layout": "stack",
@@ -94,22 +94,22 @@
             "options": [
               {
                 "id": "a",
-                "text": "With a true mean of zero, results this extreme occur about 3% of the time.",
+                "text": "With a true average profit of zero, results this extreme occur about 1.8% of the time.",
                 "correct": true
               },
               {
                 "id": "b",
-                "text": "There is a 3% chance that the strategy has no edge at all, given the data.",
+                "text": "There is a 1.8% chance that the rule makes no money at all, given the data.",
                 "why": "You read the p-value as the chance of the hypothesis. It assumes the hypothesis and asks about the data."
               },
               {
                 "id": "c",
-                "text": "There is a 97% chance that the strategy has a real edge, given the data.",
+                "text": "There is a 98.2% chance that the rule makes real money, given the data.",
                 "why": "You turned the p-value into the chance an edge exists. It is not a probability of the hypothesis."
               },
               {
                 "id": "d",
-                "text": "The strategy's mean return is 3%, which is large enough to trade on.",
+                "text": "The rule's average daily profit is 1.8%, which is large enough to trade on.",
                 "why": "You read the p-value as an effect size. It says how surprising the data are, not how big the effect is."
               }
             ]
@@ -119,7 +119,7 @@
             "generic": "Say what the p-value assumes, then what it measures."
           },
           "explain": {
-            "text": "A p-value is the chance of a result at least this extreme if the true mean were zero. It is not the chance the hypothesis is true, and it gives no effect size. Here, 3% is how rare the data would be under no edge."
+            "text": "A p-value is the chance of a result at least this extreme if the true average were zero. It is not the chance the hypothesis is true, and it gives no effect size. Here, 1.8% is how rare the data would be under no edge."
           }
         },
         {
@@ -162,7 +162,11 @@
           },
           "feedback": {
             "correct": "The standard error is $5/\\sqrt{25} = 1$, so $t$ is the mean over 1.",
-            "generic": "Divide the mean by its standard error, not by the standard deviation."
+            "generic": "Divide the mean by its standard error, not by the standard deviation.",
+            "byKey": {
+              "wrong-se": "You divided by $s/n$, not $s/\\sqrt n$. The standard error is 1, not 0.2.",
+              "s-only": "You divided by $s$ alone. The mean's own spread is $s/\\sqrt n$."
+            }
           },
           "explain": {
             "text": "The standard error is $5/\\sqrt{25} = 1$, so $t = 1.8/1 = 1.8$. Check: $t^2 = n\\bar x^2/s^2 = 25 \\times 3.24/25 = 3.24$, and $\\sqrt{3.24} = 1.8$."
@@ -697,13 +701,18 @@
                 "tol": {
                   "rel": 1e-09
                 }
+              },
+              {
+                "call": "[tidy_closes()['ticker'].iloc[258], float(tidy_closes()['close'].iloc[258])]",
+                "expect": "['LAMBDA', 122.15]",
+                "compare": "equal"
               }
             ],
-            "how": "Submit runs 10 hidden tests. Counts, columns and order must match exactly. Volatilities are accepted within a relative 1e-9.",
+            "how": "Submit runs 11 hidden tests. Counts, columns and order must match exactly. Volatilities are accepted within a relative 1e-9.",
             "solution": "import numpy as np\nimport pandas as pd\n\ndef tidy_closes():\n    df = pd.read_csv(\"qd-prices.csv\")\n    df = df.drop_duplicates().dropna(subset=[\"close\"])\n    return df.sort_values([\"ticker\", \"date\"]).reset_index(drop=True)\n\n\ndef vol_by_ticker():\n    df = tidy_closes()\n    out = {}\n    for ticker, g in df.groupby(\"ticker\"):\n        r = np.log(g[\"close\"]).diff().dropna()\n        out[ticker] = float(r.std(ddof=1) * np.sqrt(252))\n    return out\n"
           },
           "feedback": {
-            "correct": "All ten tests pass: the rows are tidy and each volatility uses returns within one ticker.",
+            "correct": "All eleven tests pass: the rows are tidy and each volatility uses returns within one ticker.",
             "generic": "A hidden test failed. Open the first failed row. Check the repeats, the blanks, the order and that returns stay within a ticker."
           },
           "explain": {

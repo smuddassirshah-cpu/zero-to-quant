@@ -50,3 +50,10 @@ Method: every key recomputed in Python (NumPy, SciPy, `Fraction`s, grids, simula
 
 - The per-part starter check (starters fail) is by my own run, not the playthrough, as the inbox bullet already records.
 - Wrong keys: none.
+
+## Fix pass
+
+1. Fixed. `m6-boosting-round` `explain.text` is now three sentences. Old second and third sentences ("...residual sum of squares of 10. The other splits leave 40.7 and 26.") became "...residual sum of squares of 10, against 40.7 and 26 for the other splits." Numbers unchanged. Same edit in `docs/briefs/mocks-scripts/research_exam.py`.
+2. Note on `k1-open-case-framing` tag: left as is, as advised.
+
+Validator: 0 errors. Playthrough `--exam mock-superday-research`, with and without `--mobile`: all passed.

@@ -269,7 +269,7 @@ m6 = numeric_item("m6-boosting-round", 4, ["rq-ml"], "boosting-round", 360, "One
     fb("Find the best split of the residuals, add half the stump, then average the squared errors.", "Start from the residuals around the mean of 6.",
        {"before": "You gave the error before any round. The stump has not been added.",
         "full-step": "You added the whole stump. The learning rate 0.5 adds only half of it."}),
-    "The mean is 6, so the residuals are $-5, -3, 2, 6$. Splitting after the second point leaves a residual sum of squares of 10. The other splits leave 40.7 and 26. The stump adds $\\pm 2$ at rate 0.5, so the errors are $-3, -1, 0, 4$ and the mean square is $26/4 = 6.5$.")
+    "The mean is 6, so the residuals are $-5, -3, 2, 6$. Splitting after the second point leaves a residual sum of squares of 10, against 40.7 and 26 for the other splits. The stump adds $\\pm 2$ at rate 0.5, so the errors are $-3, -1, 0, 4$ and the mean square is $26/4 = 6.5$.")
 
 # ---------------------------------------------------------------------------------------------- paper 3: code
 T = {"rel": 1e-9, "abs": 1e-9}

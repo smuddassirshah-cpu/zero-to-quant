@@ -75,3 +75,12 @@ The data files and function names (`qd-`, `windowed_betas`, `oos_scores`, `tidy_
 2. `q3-t-statistic`, `feedback.byKey`: missing. The brief asks for a one-clause `byKey` line for each `wrong` id. Add `wrong-se`: "You divided by $s/n$, not $s/\sqrt n$. The standard error is 1, not 0.2." and `s-only`: "You divided by $s$ alone. The mean's own spread is $s/\sqrt n$." Also q2, q4 and q9 correctly have none (no `wrong` ids).
 3. `q2-p-value-meaning` (statement and option b, c): reuses the idea and number of `research-int/l4-tests-in-words` `q-p-reading` ($p = 0.03$). Fix: change the figure (for example $p = 0.04$, with options 4% and 96%, and the key "about 4% of the time") and the matching `explain`, feedback and `why` lines.
 4. Note only, `models`: one sentence of 29 words, taken verbatim from the brief. Split it at the colon if the voice rule is applied strictly.
+
+## Fix pass
+
+1. Fixed. `d1-return-table` `widget.tests` gains test 11: `[tidy_closes()['ticker'].iloc[258], float(tidy_closes()['close'].iloc[258])]` expecting `['LAMBDA', 122.15]`. The reference gives row 258 = 2025-01-02 LAMBDA 122.15 (first LAMBDA row). A date-only sort gives KAPPA 44.21 there, so it now fails. The starter returns `None` and fails. Count is 11 of 15. `how` now says 11 hidden tests, `feedback.correct` says "All eleven". Playthrough scores 13 of 13. The check ran on pandas 3.0.5, not 2.2.3: it uses only `sort_values`, `iloc` and `float`, which behave the same in 2.2.3.
+2. Fixed. `q3-t-statistic` `feedback.byKey` added. `wrong-se` (9.0 = 1.8/(5/25) = 1.8/0.2): "You divided by $s/n$, not $s/\sqrt n$. The standard error is 1, not 0.2." `s-only` (0.36 = 1.8/5): "You divided by $s$ alone. The mean's own spread is $s/\sqrt n$." Both values recomputed twice, by hand and in Python.
+3. Fixed. `q2-p-value-meaning` now uses $p = 0.018$ for a trading rule's average daily profit, options 1.8% and 98.2% (100 - 1.8 = 98.2; 1 - 0.018 = 0.982). Changed: `question`, all four option texts, `explain.text`. `feedback` and `why` lines are generic and unchanged. A grep of `app/content/` finds no other 0.018, 98.2% or 1.8% p-value item. Brief table row updated.
+4. Fixed. `models` split into two sentences (19 words and 8 words). Changed in the exam JSON, `docs/briefs/mocks.md` and `oa_quant_data_build.py`, which also carries the other edits (it generates the exam). CSVs untouched.
+
+Validator: 0 errors. Playthrough `--exam mock-oa-quant-data`, with and without `--mobile`: all passed.

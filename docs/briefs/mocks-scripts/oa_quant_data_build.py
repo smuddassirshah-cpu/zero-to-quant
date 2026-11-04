@@ -373,19 +373,21 @@ def paper1():
                             "no-root-n": r"You did not divide by $\sqrt n$. The spread of the mean is $12/6$, not 12."}),
              explain={"text": r"The standard error is $12/\sqrt{36} = 2$. The half-width is $1.96 \times 2 = 3.92$ basis points. Check: $1.96\sqrt{144/36}$ gives the same."}),
         item("q2-p-value-meaning", 2, S, "p-value-meaning", 120, "What a p-value says",
-             question="A study reports $p = 0.03$ for a strategy's mean return. What does that mean?",
+             question="A test reports $p = 0.018$ for the average daily profit of a trading rule. What does that mean?",
              widget=options("choice", [
-                 ("With a true mean of zero, results this extreme occur about 3% of the time.", None),
-                 ("There is a 3% chance that the strategy has no edge at all, given the data.", "You read the p-value as the chance of the hypothesis. It assumes the hypothesis and asks about the data."),
-                 ("There is a 97% chance that the strategy has a real edge, given the data.", "You turned the p-value into the chance an edge exists. It is not a probability of the hypothesis."),
-                 ("The strategy's mean return is 3%, which is large enough to trade on.", "You read the p-value as an effect size. It says how surprising the data are, not how big the effect is."),
+                 ("With a true average profit of zero, results this extreme occur about 1.8% of the time.", None),
+                 ("There is a 1.8% chance that the rule makes no money at all, given the data.", "You read the p-value as the chance of the hypothesis. It assumes the hypothesis and asks about the data."),
+                 ("There is a 98.2% chance that the rule makes real money, given the data.", "You turned the p-value into the chance an edge exists. It is not a probability of the hypothesis."),
+                 ("The rule's average daily profit is 1.8%, which is large enough to trade on.", "You read the p-value as an effect size. It says how surprising the data are, not how big the effect is."),
              ]),
              feedback=fb("A p-value assumes the null and asks how surprising the data are.", "Say what the p-value assumes, then what it measures."),
-             explain={"text": "A p-value is the chance of a result at least this extreme if the true mean were zero. It is not the chance the hypothesis is true, and it gives no effect size. Here, 3% is how rare the data would be under no edge."}),
+             explain={"text": "A p-value is the chance of a result at least this extreme if the true average were zero. It is not the chance the hypothesis is true, and it gives no effect size. Here, 1.8% is how rare the data would be under no edge."}),
         item("q3-t-statistic", 3, S, "t-statistic", 180, "A t-statistic",
              question="The mean excess return is 1.8 basis points a day. The sample standard deviation is 5, over 25 days, and the null mean is zero. What is the t-statistic?",
              widget=num(1.8, 0.005, [("wrong-se", 9.0, 0.005), ("s-only", 0.36, 0.005)], "1.8 (within 0.005)"),
-             feedback=fb(r"The standard error is $5/\sqrt{25} = 1$, so $t$ is the mean over 1.", "Divide the mean by its standard error, not by the standard deviation."),
+             feedback=fb(r"The standard error is $5/\sqrt{25} = 1$, so $t$ is the mean over 1.", "Divide the mean by its standard error, not by the standard deviation.",
+                         **{"wrong-se": r"You divided by $s/n$, not $s/\sqrt n$. The standard error is 1, not 0.2.",
+                            "s-only": r"You divided by $s$ alone. The mean's own spread is $s/\sqrt n$."}),
              explain={"text": r"The standard error is $5/\sqrt{25} = 1$, so $t = 1.8/1 = 1.8$. Check: $t^2 = n\bar x^2/s^2 = 25 \times 3.24/25 = 3.24$, and $\sqrt{3.24} = 1.8$."}),
         item("q4-ols-facts", 3, S, "ols-facts", 240, "What always holds in a fit",
              question="Select all that apply: which statements about least squares with an intercept always hold in the sample?",
@@ -480,12 +482,13 @@ def mk_tests(spec, cap=None):
 def paper2(ex, tj):
     t1, t2, t3 = (mk_tests(tj[k]["tests"]) for k in ("qd-returns", "qd-rolling-beta", "qd-out-of-sample"))
     t2.append(ex["t2x"])
+    t1.append({"call": "[tidy_closes()['ticker'].iloc[258], float(tidy_closes()['close'].iloc[258])]", "expect": "['LAMBDA', 122.15]", "compare": "equal"})
     return [
         code_item("d1-return-table", 3, ["rq-data"], "return-table", 1200, "A return table from messy closes",
                   "`qd-prices.csv` has one close a day for three tickers. The rows are not in date order. Some closes are blank, and some rows repeat. Write `tidy_closes()` and `vol_by_ticker()`. `tidy_closes()` returns a frame with the columns `date`, `ticker` and `close`. It drops repeated rows and blank closes, and sorts by ticker, then date. `vol_by_ticker()` returns a dict from ticker to annualised volatility. Use the sample standard deviation (`ddof=1`) of the daily log returns within each ticker, times $\\sqrt{252}$. Where a blank was dropped, the return spans two rows.",
                   "qd-prices.csv", T1_STARTER, ex["t1"], t1,
-                  "Submit runs 10 hidden tests. Counts, columns and order must match exactly. Volatilities are accepted within a relative 1e-9.", T1_SOL,
-                  fb("All ten tests pass: the rows are tidy and each volatility uses returns within one ticker.", "A hidden test failed. Open the first failed row. Check the repeats, the blanks, the order and that returns stay within a ticker."),
+                  "Submit runs 11 hidden tests. Counts, columns and order must match exactly. Volatilities are accepted within a relative 1e-9.", T1_SOL,
+                  fb("All eleven tests pass: the rows are tidy and each volatility uses returns within one ticker.", "A hidden test failed. Open the first failed row. Check the repeats, the blanks, the order and that returns stay within a ticker."),
                   {"text": "Drop the repeats and blank closes, sort by ticker and date, then take the log returns inside each ticker. A `diff` on the stacked frame gives the first row of each ticker a return from the ticker before. Check: a pure-Python pass over the file gives the same three volatilities."}),
         code_item("d2-rolling-beta", 4, ["rq-data", "rq-stats"], "hedge-ratio", 1500, "A rolling hedge ratio",
                   "`qd-pair.csv` has daily returns for an asset and the market. Three asset returns were typed as whole percents. A return with size above 0.25 in either column is a data error: drop that row. Then write `windowed_betas(window)`. It returns one least-squares slope of `asset` on `mkt` per window of `window` neighbouring remaining rows. Use date order and full windows only.",
@@ -539,7 +542,7 @@ def main():
     desc = ("This is the reported format of an online quant assessment, as candidates described it by Nov 2026. It has two papers and takes 120 minutes. "
             "The first has 10 statistics and applied maths questions, and some ask you to select all that apply. The second has three Python data tasks that read CSV files. "
             "Hidden tests check each task, so run your code before you move on. Use only the standard documentation of the libraries. Use no search engine and no notes.")
-    models = "Reported, as of Nov 2026: online assessments for quant research and quant finance internships at Morgan Stanley and Two Sigma: statistics and applied maths questions, then Python data tasks."
+    models = "Reported, as of Nov 2026: online tests for quant research and finance interns at Morgan Stanley and Two Sigma. Statistics and applied maths questions, then Python data tasks."
     assert len(models) <= 200, len(models)
     exam = {
         "id": "mock-oa-quant-data", "name": "Quantitative data assessment", "style": "research", "models": models, "description": desc,
