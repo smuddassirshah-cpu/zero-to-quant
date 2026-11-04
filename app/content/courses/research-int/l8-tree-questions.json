@@ -1,0 +1,1480 @@
+{
+  "id": "l8-tree-questions",
+  "course": "research-int",
+  "title": "Questions about trees and boosting",
+  "minutes": 15,
+  "objectives": [
+    "Answer the standard questions on splits, bagging, boosting and feature importance."
+  ],
+  "skills": [
+    "rq-ml"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Score a split",
+      "tags": [
+        "gini-split"
+      ],
+      "pace": 120,
+      "prose": "About two minutes a question; say your reasoning aloud first. A tree node holds 10 up days and 10 down days. A split sends 8 up and 2 down to the left. Gini impurity is 1 minus the sum of the squared class shares.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "L",
+              "label": "left child"
+            },
+            {
+              "id": "R",
+              "label": "right child"
+            }
+          ],
+          "groups": [
+            {
+              "id": "up",
+              "label": "up days"
+            },
+            {
+              "id": "down",
+              "label": "down days"
+            }
+          ],
+          "yLabel": "days",
+          "showValues": true,
+          "yMax": 10,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "up": {
+              "L": 8,
+              "R": 2
+            },
+            "down": {
+              "L": 2,
+              "R": 8
+            }
+          },
+          "caption": "The parent node had 10 up days and 10 down days."
+        }
+      },
+      "question": "Fill in the impurities and the gain.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Node",
+          "Gini"
+        ],
+        "rows": [
+          [
+            "parent (10, 10)",
+            {
+              "edit": true,
+              "answer": 0.5,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "left (8, 2)",
+            {
+              "edit": true,
+              "answer": 0.32,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "right (2, 8)",
+            {
+              "edit": true,
+              "answer": 0.32,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "gain: parent − weighted children",
+            {
+              "edit": true,
+              "answer": 0.18,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Shares in the parent are a half each."
+        },
+        {
+          "rung": "point",
+          "text": "Left child: $1 - 0.8^2 - 0.2^2$.",
+          "highlight": [
+            "L-up",
+            "L-down"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Parent 0.5, each child 0.32, weighted 0.32, gain 0.18."
+        }
+      ],
+      "feedback": {
+        "correct": "Parent 0.5, children 0.32, gain 0.18.",
+        "generic": "Not quite. Square each share, add, and take from 1; the gain is the drop."
+      },
+      "explain": {
+        "text": "$1 - 0.64 - 0.04 = 0.32$ for each child. Both hold half the rows, so the weighted impurity is 0.32 and the gain $0.5 - 0.32 = 0.18$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The same split in bits",
+      "tags": [
+        "gini-split"
+      ],
+      "pace": 120,
+      "prose": "Score the same split with entropy, $H = -\\sum p \\log_2 p$. The parent, half and half, has 1 bit.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "L",
+              "label": "left child"
+            },
+            {
+              "id": "R",
+              "label": "right child"
+            }
+          ],
+          "groups": [
+            {
+              "id": "up",
+              "label": "up days"
+            },
+            {
+              "id": "down",
+              "label": "down days"
+            }
+          ],
+          "yLabel": "days",
+          "showValues": true,
+          "yMax": 10,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "up": {
+              "L": 8,
+              "R": 2
+            },
+            "down": {
+              "L": 2,
+              "R": 8
+            }
+          },
+          "caption": "The parent node had 10 up days and 10 down days."
+        }
+      },
+      "question": "What is the information gain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2781,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "bits",
+        "accept": "Any form equal to 0.2781 ± 0.0005",
+        "wrong": [
+          {
+            "id": "child",
+            "value": 0.7219,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "gini",
+            "value": 0.18,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the entropy of one child first."
+        },
+        {
+          "rung": "point",
+          "text": "$H(0.8) = -0.8\\log_2 0.8 - 0.2\\log_2 0.2$.",
+          "highlight": [
+            "L-up"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Each child has 0.7219 bits, so the gain is $1 - 0.7219$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 - 0.7219 = 0.2781$ bits.",
+        "generic": "Not quite. Subtract the weighted child entropy from 1.",
+        "byKey": {
+          "child": "That is the entropy of a child. The gain is the drop from 1 bit.",
+          "gini": "That is the Gini gain. Entropy is on another scale."
+        }
+      },
+      "explain": {
+        "text": "Each child has $H(0.8) = 0.7219$ bits, so the gain is 0.2781. Gini and entropy usually rank splits the same way."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Average many trees",
+      "tags": [
+        "bagging-variance"
+      ],
+      "pace": 120,
+      "prose": "Each tree's prediction has variance $\\sigma^2 = 4$. Any two trees correlate at $\\rho$, because they see similar data. Bagging averages $B$ trees. Slide $\\rho$ to see the curve move.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            1,
+            100
+          ],
+          "y": [
+            0,
+            4.2
+          ],
+          "xLabel": "trees $B$",
+          "yLabel": "variance of the average",
+          "height": 290,
+          "grid": true,
+          "functions": [
+            {
+              "id": "v",
+              "expr": "rho*4 + (1-rho)*4/x",
+              "label": "$\\rho\\sigma^2 + (1-\\rho)\\sigma^2/B$",
+              "colour": 1,
+              "labelAt": 60
+            }
+          ],
+          "params": {
+            "rho": 0.3
+          }
+        },
+        "state": {
+          "params": {
+            "rho": 0.3
+          },
+          "hlines": [
+            {
+              "id": "floor",
+              "y": 1.2,
+              "label": "floor $\\rho\\sigma^2$"
+            }
+          ],
+          "points": [
+            {
+              "id": "p1",
+              "x": 10,
+              "y": 1.48,
+              "on": "v",
+              "label": "$B$ = {x:.0f}"
+            }
+          ]
+        },
+        "derive": {
+          "floor.y": "rho * 4",
+          "caption": "$\\sigma^2 = 4$, $\\rho$ = {{fixed(rho, 2)}}: the floor is {{fixed(rho * 4, 2)}}."
+        },
+        "controls": [
+          {
+            "bind": "rho",
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+            "label": "$\\rho$",
+            "start": 0.3,
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "With $\\rho = 0.3$, what is the variance of the average of 10 trees?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.48,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 1.48",
+        "wrong": [
+          {
+            "id": "indep",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "floor",
+            "value": 1.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the curve at $B = 10$ with $\\rho = 0.3$."
+        },
+        {
+          "rung": "point",
+          "text": "The shared part $\\rho\\sigma^2$ never averages away.",
+          "highlight": [
+            "p1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.3 \\times 4 + 0.7 \\times 4/10 = 1.2 + 0.28$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.2 + 0.28 = 1.48$.",
+        "generic": "Not quite. Add the shared part to the part that averages away.",
+        "byKey": {
+          "indep": "You divided $\\sigma^2$ by 10, as if the trees were independent. Correlated trees average less well.",
+          "floor": "That is the floor, reached only as $B$ grows without limit."
+        }
+      },
+      "explain": {
+        "text": "The average has variance $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$. With 10 trees that is 1.48; with 100 trees it is 1.228.",
+        "canvas": {
+          "points": {
+            "p1": {
+              "x": 100,
+              "y": 1.228
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The floor",
+      "tags": [
+        "bagging-variance"
+      ],
+      "pace": 120,
+      "prose": "Same trees, $\\rho = 0.3$. Keep adding trees.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            1,
+            100
+          ],
+          "y": [
+            0,
+            4.2
+          ],
+          "xLabel": "trees $B$",
+          "yLabel": "variance of the average",
+          "height": 290,
+          "grid": true,
+          "functions": [
+            {
+              "id": "v",
+              "expr": "rho*4 + (1-rho)*4/x",
+              "label": "$\\rho\\sigma^2 + (1-\\rho)\\sigma^2/B$",
+              "colour": 1,
+              "labelAt": 60
+            }
+          ],
+          "params": {
+            "rho": 0.3
+          }
+        },
+        "state": {
+          "params": {
+            "rho": 0.3
+          },
+          "hlines": [
+            {
+              "id": "floor",
+              "y": 1.2,
+              "label": "floor $\\rho\\sigma^2$"
+            }
+          ],
+          "points": [
+            {
+              "id": "p1",
+              "x": 60,
+              "y": 1.2466666666666666,
+              "on": "v",
+              "label": "$B$ = {x:.0f}"
+            }
+          ]
+        },
+        "derive": {
+          "floor.y": "rho * 4",
+          "caption": "$\\sigma^2 = 4$, $\\rho$ = {{fixed(rho, 2)}}: the floor is {{fixed(rho * 4, 2)}}."
+        },
+        "controls": [
+          {
+            "bind": "rho",
+            "min": 0,
+            "max": 1,
+            "step": 0.05,
+            "label": "$\\rho$",
+            "start": 0.3,
+            "decimals": 2
+          }
+        ]
+      },
+      "question": "What does the variance tend to as $B$ grows without limit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.2,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 1.2",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one",
+            "value": 4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which term depends on $B$?"
+        },
+        {
+          "rung": "point",
+          "text": "The second term, $(1 - \\rho)\\sigma^2/B$, goes to zero.",
+          "highlight": [
+            "floor"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "What is left is $\\rho\\sigma^2 = 0.3 \\times 4$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\rho\\sigma^2 = 1.2$.",
+        "generic": "Not quite. Let $B$ grow and see which term survives.",
+        "byKey": {
+          "zero": "That needs independent trees. Correlation leaves $\\rho\\sigma^2$ however many trees you add.",
+          "one": "That is one tree. Averaging removes the unshared part."
+        }
+      },
+      "explain": {
+        "text": "Averaging removes only the unshared part. That is why a random forest samples features at each split: it lowers $\\rho$ and so the floor.",
+        "canvas": {
+          "highlight": [
+            "floor"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Out of the bag",
+      "tags": [
+        "oob"
+      ],
+      "pace": 120,
+      "prose": "A bootstrap sample draws 100 rows from 100 with replacement. A row is out of bag if it is never drawn.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Rows $n$",
+            "Share out of bag, $(1 - 1/n)^n$"
+          ],
+          "rows": [
+            [
+              "10",
+              "0.3487"
+            ],
+            [
+              "100",
+              "?"
+            ],
+            [
+              "1,000",
+              "0.3677"
+            ],
+            [
+              "limit",
+              "$1/e = 0.3679$"
+            ]
+          ]
+        }
+      },
+      "question": "What share of the 100 rows is out of bag, on average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.366,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a share",
+        "accept": "Any form equal to 0.3660 ± 0.0005",
+        "wrong": [
+          {
+            "id": "inbag",
+            "value": 0.634,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "one",
+            "value": 0.01,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each draw misses a given row with chance $1 - 1/100$."
+        },
+        {
+          "rung": "point",
+          "text": "It must miss on all 100 draws.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.99^{100} = 0.3660$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.99^{100} = 0.3660$, close to $1/e$.",
+        "generic": "Not quite. The row must be missed on every one of the 100 draws.",
+        "byKey": {
+          "inbag": "That is the share in the bag, $1 - 0.366$.",
+          "one": "That is the chance of missing on one draw only."
+        }
+      },
+      "explain": {
+        "text": "A row is missed by all 100 draws with chance $0.99^{100} = 0.3660$. So each tree has about a third of the rows to test on: the out-of-bag error.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Boost by hand",
+      "tags": [
+        "boosting-rounds"
+      ],
+      "pace": 120,
+      "prose": "Four points: (1, 1), (2, 2), (3, 6), (4, 7). Start from the mean, 4. Each round fits a one-split stump at $x = 2.5$ to the residuals and adds 0.4 times it.",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              7
+            ]
+          ],
+          "xRange": [
+            0.5,
+            4.5
+          ],
+          "yRange": [
+            0,
+            8
+          ],
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "height": 260,
+          "xTicks": "integer"
+        },
+        "state": {
+          "curves": [
+            {
+              "id": "start",
+              "expr": "4",
+              "dashed": true,
+              "colour": 4,
+              "label": "start: the mean 4",
+              "labelAt": [
+                0.6,
+                4.3
+              ]
+            }
+          ]
+        }
+      },
+      "question": "Fill in the predictions after each round.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "",
+          "$x \\le 2$",
+          "$x \\ge 3$"
+        ],
+        "rows": [
+          [
+            "start",
+            "4",
+            "4"
+          ],
+          [
+            "round 1",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "round 2",
+            {
+              "edit": true,
+              "answer": 2.4,
+              "tol": {
+                "abs": 0.001
+              }
+            },
+            {
+              "edit": true,
+              "answer": 5.6,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Round 1 residuals are $-3, -2, 2, 3$."
+        },
+        {
+          "rung": "point",
+          "text": "The stump predicts the mean residual on each side: $-2.5$ and $2.5$.",
+          "highlight": [
+            "p0",
+            "p3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Round 1: $4 \\mp 0.4 \\times 2.5$ gives 3 and 5. Round 2 residuals average $\\mp 1.5$."
+        }
+      ],
+      "feedback": {
+        "correct": "3 and 5, then 2.4 and 5.6.",
+        "generic": "Not quite. Each round adds 0.4 times the mean residual on each side."
+      },
+      "explain": {
+        "text": "Round 1 adds $0.4 \\times (\\mp 2.5)$ to give 3 and 5. The new residuals average $\\mp 1.5$, so round 2 gives 2.4 and 5.6. Each round fixes part of what is left.",
+        "canvas": {
+          "curves": [
+            {
+              "id": "start",
+              "expr": "4",
+              "dashed": true,
+              "colour": 4
+            },
+            {
+              "id": "r1",
+              "expr": "x < 2.5 ? 3 : 5",
+              "colour": 2,
+              "dashed": true
+            },
+            {
+              "id": "r2",
+              "expr": "x < 2.5 ? 2.4 : 5.6",
+              "colour": 3,
+              "label": "round 2",
+              "labelAt": [
+                3.3,
+                6.1
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "In parallel?",
+      "tags": [
+        "boosting-rounds"
+      ],
+      "pace": 120,
+      "prose": "A candidate says: \"Boosted trees can be fitted in parallel, like bagged ones.\"",
+      "canvas": {
+        "kind": "scatter",
+        "params": {
+          "points": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              7
+            ]
+          ],
+          "xRange": [
+            0.5,
+            4.5
+          ],
+          "yRange": [
+            0,
+            8
+          ],
+          "xLabel": "$x$",
+          "yLabel": "$y$",
+          "height": 260,
+          "xTicks": "integer"
+        },
+        "state": {
+          "curves": [
+            {
+              "id": "start",
+              "expr": "4",
+              "dashed": true,
+              "colour": 4,
+              "label": "start: the mean 4",
+              "labelAt": [
+                0.6,
+                4.3
+              ]
+            },
+            {
+              "id": "r1",
+              "expr": "x < 2.5 ? 3 : 5",
+              "colour": 2,
+              "label": "round 1",
+              "labelAt": [
+                3.3,
+                4.6
+              ]
+            }
+          ]
+        }
+      },
+      "question": "Is that right?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "seq",
+            "text": "No: each boosting round fits the residuals of the rounds before, so they come one after another.",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: each tree is fitted to the same data.",
+            "why": "You treated boosting like bagging. A boosting tree is fitted to residuals, which exist only after the previous round."
+          },
+          {
+            "id": "half",
+            "text": "Yes, if the learning rate is small.",
+            "why": "The learning rate changes the step, not the order. Round 2 still needs round 1."
+          },
+          {
+            "id": "random",
+            "text": "Only with random feature sampling.",
+            "why": "Feature sampling works inside a round. It does not remove the need for the previous residuals."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does round 2 fit?"
+        },
+        {
+          "rung": "point",
+          "text": "Round 2 fits the residuals left by round 1.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So round 2 cannot start before round 1 ends."
+        }
+      ],
+      "feedback": {
+        "correct": "Boosting is sequential; bagging is parallel.",
+        "generic": "Not quite. Ask what each new boosting tree is trained on.",
+        "byKey": {
+          "yes": "That is the trap. Bagged trees share the data and are independent jobs; boosted trees chain on residuals."
+        }
+      },
+      "explain": {
+        "text": "Bagging trains trees on bootstrap samples of the same data, so they run side by side. Boosting trains each tree on the previous residuals, so it is a chain. Libraries parallelise inside one tree, not across rounds."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Who gets the credit",
+      "tags": [
+        "feature-importance"
+      ],
+      "pace": 120,
+      "prose": "A forest predicts $y = x$ plus noise. The columns are $x$, an exact copy of $x$ and two noise columns. One noise column has 500 integer values.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Column",
+            "Impurity importance",
+            "Permutation, held out"
+          ],
+          "rows": [
+            [
+              "$x$",
+              "0.467",
+              "0.373"
+            ],
+            [
+              "copy of $x$",
+              "0.469",
+              "0.387"
+            ],
+            [
+              "noise, 500 values",
+              "0.032",
+              "0.003"
+            ],
+            [
+              "noise, normal",
+              "0.032",
+              "−0.003"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Seeded: $y = x + 0.5\\varepsilon$, 1,000 rows, a forest of 200 trees fitted on 700, permutation on the other 300."
+        }
+      },
+      "question": "Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "share",
+            "text": "The two copies share the credit, about half each.",
+            "correct": true
+          },
+          {
+            "id": "noise",
+            "text": "The noise columns earn impurity importance but none on held-out permutation.",
+            "correct": true
+          },
+          {
+            "id": "less",
+            "text": "$x$ matters less than its copy.",
+            "why": "The two figures differ by noise in the fit. They carry identical information."
+          },
+          {
+            "id": "drop",
+            "text": "Dropping the copy would lose about 0.47 of the fit.",
+            "why": "The copy is redundant: $x$ alone carries the same information, so the fit barely changes."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two importance columns row by row."
+        },
+        {
+          "rung": "point",
+          "text": "Impurity importance is counted on the training rows.",
+          "highlight": [
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Copies split the credit; noise wins small training gains that do not hold out."
+        }
+      ],
+      "feedback": {
+        "correct": "Copies share; noise fools impurity importance only.",
+        "generic": "Not quite. Read the copies together and the noise rows across both columns."
+      },
+      "explain": {
+        "text": "Impurity importance credits every split, so noise picks up about 0.03 by chance on training rows. Permutation on held-out rows gives it about 0. Copies split the credit, so neither looks as important as $x$ really is."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Where the floor comes from",
+      "tags": [
+        "bagging-variance"
+      ],
+      "pace": 120,
+      "prose": "Derive the variance of the average of $B$ trees, each with variance $\\sigma^2$ and pairwise correlation $\\rho$.",
+      "question": "Put the lines in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "$\\text{Var}(\\bar{T}) = \\frac{1}{B^2}\\text{Var}(\\sum_b T_b)$, since $\\bar{T}$ is a sum over $B$."
+          },
+          {
+            "id": "b",
+            "text": "The sum has $B$ variances $\\sigma^2$ and $B(B - 1)$ covariances $\\rho\\sigma^2$."
+          },
+          {
+            "id": "c",
+            "text": "So $\\text{Var}(\\bar{T}) = \\frac{B\\sigma^2 + B(B-1)\\rho\\sigma^2}{B^2}$."
+          },
+          {
+            "id": "d",
+            "text": "Simplify: $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$."
+          },
+          {
+            "id": "x",
+            "text": "The covariances cancel because the trees are fitted separately.",
+            "why": "Fitted separately is not independent: they see overlapping data, so the covariances stay."
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "distractors": [
+          "x"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the variance of a sum."
+        },
+        {
+          "rung": "point",
+          "text": "Count the pairs: $B(B - 1)$ ordered pairs."
+        },
+        {
+          "rung": "step",
+          "text": "Divide by $B^2$ and split the $\\rho$ term."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$.",
+        "generic": "Not quite. Variance of a sum, count the terms, divide, simplify.",
+        "byKey": {
+          "x": "You dropped the covariances. Bootstrap samples overlap, so the trees are correlated.",
+          "left-out": "You left out a step the derivation needs."
+        }
+      },
+      "explain": {
+        "text": "The $B$ variances give $\\sigma^2/B$ and the $B(B-1)$ covariances give nearly $\\rho\\sigma^2$. That second piece is the floor no number of trees removes."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A signal screen",
+      "tags": [
+        "feature-importance"
+      ],
+      "pace": 120,
+      "prose": "A forest predicts next-day returns from 40 signals. Ranked by impurity importance, the top one is the stock id, a column with 500 distinct values.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Column",
+            "Impurity importance",
+            "Permutation, held out"
+          ],
+          "rows": [
+            [
+              "$x$",
+              "0.467",
+              "0.373"
+            ],
+            [
+              "copy of $x$",
+              "0.469",
+              "0.387"
+            ],
+            [
+              "noise, 500 values",
+              "0.032",
+              "0.003"
+            ],
+            [
+              "noise, normal",
+              "0.032",
+              "−0.003"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "Seeded: $y = x + 0.5\\varepsilon$, 1,000 rows, a forest of 200 trees fitted on 700, permutation on the other 300."
+        }
+      },
+      "question": "What do you do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "perm",
+            "text": "Recheck with permutation importance on a later period; a column with many values wins training splits by chance.",
+            "correct": true
+          },
+          {
+            "id": "trade",
+            "text": "Trade on the stock id, since it ranks first.",
+            "why": "Impurity importance is counted on training rows. A many-valued column can split noise very finely."
+          },
+          {
+            "id": "drop",
+            "text": "Drop every signal below the stock id.",
+            "why": "The ranking itself is the suspect, so do not prune by it."
+          },
+          {
+            "id": "more",
+            "text": "Add more trees until the ranking settles.",
+            "why": "More trees steady the ranking but keep its bias towards many-valued columns."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the 500-value noise row."
+        },
+        {
+          "rung": "point",
+          "text": "Impurity importance is earned on the training data.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Held-out permutation importance does not reward chance splits."
+        }
+      ],
+      "feedback": {
+        "correct": "Test importance out of sample before believing it.",
+        "generic": "Not quite. Ask where impurity importance is measured."
+      },
+      "explain": {
+        "text": "Many-valued columns offer many split points, so they win small training gains by chance. Permutation importance on a later period removes that bias."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The follow-up",
+      "tags": [
+        "bagging-variance"
+      ],
+      "pace": 120,
+      "prose": "The interviewer asks: \"Why does a random forest not overfit as you add trees?\"",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            1,
+            100
+          ],
+          "y": [
+            0,
+            4.2
+          ],
+          "xLabel": "trees $B$",
+          "yLabel": "variance of the average",
+          "height": 290,
+          "grid": true,
+          "functions": [
+            {
+              "id": "v",
+              "expr": "rho*4 + (1-rho)*4/x",
+              "label": "$\\rho\\sigma^2 + (1-\\rho)\\sigma^2/B$",
+              "colour": 1,
+              "labelAt": 60
+            }
+          ],
+          "params": {
+            "rho": 0.3
+          }
+        },
+        "state": {
+          "params": {
+            "rho": 0.3
+          },
+          "hlines": [
+            {
+              "id": "floor",
+              "y": 1.2,
+              "label": "floor $\\rho\\sigma^2$"
+            }
+          ],
+          "points": [
+            {
+              "id": "p1",
+              "x": 100,
+              "y": 1.228,
+              "on": "v",
+              "label": "$B$ = {x:.0f}"
+            }
+          ]
+        },
+        "derive": {
+          "floor.y": "rho * 4",
+          "caption": "$\\sigma^2 = 4$, $\\rho$ = {{fixed(rho, 2)}}: the floor is {{fixed(rho * 4, 2)}}."
+        }
+      },
+      "question": "Which answer would you give?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "good",
+            "text": "\"Adding trees only averages more draws of the same kind. The variance falls towards the floor, and the bias is set by each tree. So more trees never hurt; deep trees can.\"",
+            "correct": true
+          },
+          {
+            "id": "prune",
+            "text": "\"Because each tree is pruned.\"",
+            "why": "Forests often grow deep, unpruned trees. Overfitting comes from the trees, not from their number."
+          },
+          {
+            "id": "never",
+            "text": "\"Random forests never overfit.\"",
+            "why": "Too strong: deep trees on noisy returns can overfit. Only adding trees is safe."
+          },
+          {
+            "id": "oob",
+            "text": "\"Because the out-of-bag error stops it.\"",
+            "why": "Out-of-bag error measures the fit; it does not change it."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the curve do as $B$ grows?"
+        },
+        {
+          "rung": "point",
+          "text": "It falls and flattens at $\\rho\\sigma^2$; it never rises.",
+          "highlight": [
+            "v"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bias comes from tree depth and leaf size, not from $B$."
+        }
+      ],
+      "feedback": {
+        "correct": "More trees lower the variance towards a floor and leave the bias alone.",
+        "generic": "Not quite. Pick the answer that follows the curve."
+      },
+      "explain": {
+        "text": "The average of more trees has a variance that falls to $\\rho\\sigma^2$ and never rises. Bias depends on each tree. So the number of trees is safe; their depth is what to tune."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Gini is $1 - \\sum p^2$; a split scores the drop in weighted impurity.",
+      "Bagging $B$ trees gives variance $\\rho\\sigma^2 + (1 - \\rho)\\sigma^2/B$, with a floor at $\\rho\\sigma^2$; boosting chains trees on residuals.",
+      "Impurity importance shares credit among copies and rewards noise; check with held-out permutation importance."
+    ],
+    "formula": {
+      "name": "Variance of a bagged average",
+      "tex": "\\text{Var}(\\bar{T}) = \\rho\\sigma^2 + \\frac{(1-\\rho)\\sigma^2}{B}",
+      "note": "About $1/e \\approx 0.368$ of the rows are out of bag for each tree."
+    },
+    "trap": "Boosted trees cannot be fitted in parallel like bagged ones: each round needs the residuals of the last."
+  },
+  "quiz": [
+    {
+      "id": "q-gini-64",
+      "difficulty": 2,
+      "tags": [
+        "gini-split"
+      ],
+      "pace": 120,
+      "prose": "A node has 6 up days and 4 down days.",
+      "question": "What is its Gini impurity?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.48,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 0.48",
+        "wrong": [
+          {
+            "id": "entropy",
+            "value": 0.971,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "share",
+            "value": 0.52,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - 0.36 - 0.16 = 0.48$.",
+        "generic": "Not quite. Square each share, add, take from 1.",
+        "byKey": {
+          "entropy": "That is the entropy in bits. Gini squares the shares.",
+          "share": "That is the sum of squared shares. Take it from 1."
+        }
+      },
+      "explain": {
+        "text": "Shares 0.6 and 0.4 square to 0.36 and 0.16. One minus their sum is 0.48."
+      }
+    },
+    {
+      "id": "q-bag-20",
+      "difficulty": 2,
+      "tags": [
+        "bagging-variance"
+      ],
+      "pace": 120,
+      "prose": "Trees each have variance 1 and pairwise correlation 0.5. You average 20 of them.",
+      "question": "What is the variance of the average?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.525,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 0.525",
+        "wrong": [
+          {
+            "id": "indep",
+            "value": 0.05,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "floor",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.5 + 0.5/20 = 0.525$.",
+        "generic": "Not quite. Shared part plus the part that averages away.",
+        "byKey": {
+          "indep": "You treated the trees as independent.",
+          "floor": "That is the floor; 20 trees leave 0.025 more."
+        }
+      },
+      "explain": {
+        "text": "$\\rho\\sigma^2 = 0.5$ stays, and $(1 - \\rho)\\sigma^2/B = 0.025$ is added. The average has variance 0.525."
+      }
+    },
+    {
+      "id": "q-boost-lr1",
+      "difficulty": 3,
+      "tags": [
+        "boosting-rounds"
+      ],
+      "pace": 120,
+      "prose": "Points (1, 1), (2, 2), (3, 6), (4, 7) and a stump at 2.5. Start from the mean 4 with learning rate 1.",
+      "question": "After one round, what is the prediction for $x \\ge 3$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 6.5",
+        "wrong": [
+          {
+            "id": "lr",
+            "value": 5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "mean",
+            "value": 4,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$4 + 2.5 = 6.5$.",
+        "generic": "Not quite. Add the whole mean residual on that side.",
+        "byKey": {
+          "lr": "That uses learning rate 0.4. With 1 the whole residual mean is added.",
+          "mean": "That is the start, before any round."
+        }
+      },
+      "explain": {
+        "text": "Residuals on the right are 2 and 3, mean 2.5. With learning rate 1 the prediction becomes 6.5 in one step."
+      }
+    },
+    {
+      "id": "q-oob-share",
+      "difficulty": 2,
+      "tags": [
+        "oob"
+      ],
+      "pace": 120,
+      "prose": "Each tree of a forest is fitted to a bootstrap sample of a large data set.",
+      "question": "About what share of rows does a tree never see?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "third",
+            "text": "About 37%",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "None: every row is drawn",
+            "why": "Sampling with replacement repeats some rows and misses others."
+          },
+          {
+            "id": "half",
+            "text": "About 50%",
+            "why": "The chance of missing a row on every draw is $(1 - 1/n)^n \\approx 1/e$."
+          },
+          {
+            "id": "63",
+            "text": "About 63%",
+            "why": "That is the share it does see."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1/e \\approx 0.368$.",
+        "generic": "Not quite. A row is out of bag if all $n$ draws miss it."
+      },
+      "explain": {
+        "text": "Each draw misses a row with chance $1 - 1/n$, so all $n$ miss with chance $(1 - 1/n)^n$. That tends to $1/e$, about 37%."
+      }
+    }
+  ]
+}
