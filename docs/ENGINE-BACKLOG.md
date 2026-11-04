@@ -1283,3 +1283,12 @@ Raised later (user bug report: Today still showed 0.1 after its topic exam was p
 464. Open (inbox, four votes): `node tools/validate.mjs --dups <file>`, listing course, exam and bank items that share an item's first tag and parameters or key.
 465. Open (inbox, two votes): `choice` with `shuffle: true` in a set page seeds the shuffle from the slot, not the item, so a returning bank item shows the same option order; seed by uid and seen count.
 466. Done: removed `content/bank/sample.json`; the routes `#bank` check now reads its counts from the bank files (drawable, locked, unique uids, `bankStatus`) instead of assuming the sample (115 drawable of 200 in 20 files, 85 locked).
+
+### Engine pass C (4 Nov): scope
+Sources: `docs/briefs/interview-plan.md` section (f) (E3, E8, E11, E13, E14); `docs/BACKLOG-INBOX.md` sections "Raised later (brief research-int / systems / coding-int, 4 Nov)", "Raised later (fix pass ... brief, 4 Nov)" and "Raised later (topic 3.5 briefs, engine requirements, 4 Nov)"; field shapes in the engine sections of `docs/briefs/research-int.md`, `coding-int.md`, `systems.md`. Reports `docs/reports/engine-pass-c-<a|b|c|d>.md`.
+467. Open (E11, with C-parts-credit, C-parts-mixed, C-parts-code; agent A): `parts` on quiz, review, homework and exam items. Parts of any widget kind including `code`, opened in turn once the previous part is checked; item credit is the sum of equal part credits; unopened parts count as missed when a `timed` review locks; a code part's tests are cumulative.
+468. Open (E3, with C-draw-code; agent A): exam item banks, `draw` on mock and exam papers, fresh items per attempt, sources `bank/<family>` and `drills/<pack>` (code tasks with hidden tests).
+469. Open (E14, with C-data-cap; agent B): `data` files under `content/data/` mounted for `code` widgets, drill files and exam items; hidden `tests` and `setup` read them by bare name; cap stated in AUTHORING and checked.
+470. Open (C-alloc-check; agent B): C++ harness flag `allocCheck: true` giving `alloc_count()` and `reset_alloc_count()` that survive `-O1` under clang 21 and coexist with `leakCheck`.
+471. Open (E13, with E13-blocked-lanes and the systems brief requirements; agent C): `interleave` canvas, lanes of steps over shared state, blocked lanes, deadlock and asleep-forever endings, conditional steps, `values.outcomes`.
+472. Open (E8, with C-drill-patterns; agent D): drill library: C++ drills, stopwatch, pattern filters with a fixed vocabulary, two-drill 60-minute sessions.
