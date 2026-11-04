@@ -1,0 +1,1089 @@
+{
+  "id": "l19-timed-data-task",
+  "course": "research-int",
+  "title": "A timed data task",
+  "minutes": 15,
+  "objectives": [
+    "Clean, analyse and model a dataset inside a time limit."
+  ],
+  "skills": [
+    "rq-data",
+    "rq-case"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Spot the five problems",
+      "tags": [
+        "data-cleaning"
+      ],
+      "pace": 150,
+      "prose": "A 25-minute task: about 6 minutes to read and clean, 8 to analyse, 11 to model and write up. First, read. Here are nine of the 600 rows.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "orders-messy.csv, nine rows",
+          "lines": [
+            "order_id,symbol,side,qty,price,mid",
+            "547,ALPHA,S,1700,49.9457,49.9635",
+            "397,BRAVO,B,\"2,300\",119.9433,119.8745",
+            "322,charlie,S,3000,8.0061,8.01",
+            "222,BRAVO,B,3700,120.286,120.2294",
+            "205,ALPHA,B,300,-999.0,49.9902",
+            "310,ALPHA,B,2100,49.882,49.865",
+            "519,BRAVO,B,2700,,120.8066",
+            "547,ALPHA,S,1700,49.9457,49.9635"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the five rows with a problem, one of each kind. For the repeated id, tap the later copy.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l3",
+          "l4",
+          "l6",
+          "l8",
+          "l9"
+        ],
+        "countWord": "rows",
+        "wrong": [
+          {
+            "id": "firstcopy",
+            "set": [
+              "l2",
+              "l3",
+              "l4",
+              "l6",
+              "l8"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look for a comma in a number, odd letter case, an impossible price, a blank and a repeat."
+        },
+        {
+          "rung": "point",
+          "text": "Row 3 has a comma in the quantity, row 4 a lower-case symbol and row 6 a price of -999."
+        },
+        {
+          "rung": "step",
+          "text": "Row 8 has no price, and row 9 repeats the order id of row 2."
+        }
+      ],
+      "feedback": {
+        "correct": "Comma quantity, lower-case symbol, -999 price, blank price, repeated id.",
+        "generic": "Not quite. Find one row for each kind: comma, case, impossible price, blank, repeat.",
+        "byKey": {
+          "firstcopy": "You tapped the first copy of the repeated id. The later copy is the one to drop."
+        }
+      },
+      "explain": {
+        "text": "Five kinds: a comma in a quantity, an odd-cased symbol, a price of -999, a blank price, a repeated id.",
+        "canvas": {
+          "highlight": [
+            "l3",
+            "l4",
+            "l6",
+            "l8",
+            "l9"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Why not drop_duplicates first",
+      "tags": [
+        "data-cleaning"
+      ],
+      "pace": 150,
+      "prose": "The file has 15 rows that repeat an order id. Only 12 are exact duplicate rows, because three differ in letter case or a comma.",
+      "question": "How many repeats does `drop_duplicates()` miss if you call it before cleaning the text?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 3",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "exact",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "An exact duplicate matches in every column."
+        },
+        {
+          "rung": "point",
+          "text": "Rows that differ only in case or a comma are not exact duplicates yet."
+        },
+        {
+          "rung": "step",
+          "text": "15 repeats, less 12 exact, leaves 3."
+        }
+      ],
+      "feedback": {
+        "correct": "3: they match only after the text is cleaned.",
+        "generic": "Not quite. 15 repeated ids, of which 12 are exact copies.",
+        "byKey": {
+          "all": "You gave all the repeats. Twelve of them are exact copies and would be caught.",
+          "exact": "You gave the number it catches. The question asks for the number it misses."
+        }
+      },
+      "explain": {
+        "text": "Cleaning the text first turns those three near-copies into exact copies. Or drop by `order_id` alone, which ignores the text."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Stage one: read and clean",
+      "tags": [
+        "data-cleaning"
+      ],
+      "pace": 360,
+      "prose": "About six minutes with the code. Clean in a fixed order: the text first, then repeated ids, then bad prices.",
+      "question": "Write `load_clean(path)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "orders-messy.csv": "content/data/orders-messy.csv"
+        },
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef load_clean(path):\n    \"\"\"Read the orders file and return the cleaned frame: symbol\n    stripped and upper case, qty as a whole number (some have\n    commas), one row per order_id, and only prices above zero.\"\"\"\n    df = pd.read_csv(path, dtype={'qty': str})\n    # Your code here\n    return df\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef load_clean(path):\n    df = pd.read_csv(path, dtype={'qty': str})\n    df['symbol'] = df['symbol'].str.strip().str.upper()\n    df['qty'] = df['qty'].str.replace(',', '').astype(int)\n    df = df.drop_duplicates('order_id')\n    df = df[df['price'].notna() & (df['price'] > 0)]\n    return df.reset_index(drop=True)\n",
+        "examples": [
+          {
+            "setup": "c = load_clean('orders-messy.csv')",
+            "call": "len(c)",
+            "expect": "570",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "c = load_clean('orders-messy.csv')",
+            "call": "len(c)",
+            "expect": "570",
+            "compare": "equal"
+          },
+          {
+            "setup": "c = load_clean('orders-messy.csv')",
+            "call": "sorted(c['symbol'].unique())",
+            "expect": "['ALPHA', 'BRAVO', 'CHARLIE']",
+            "compare": "equal"
+          },
+          {
+            "setup": "c = load_clean('orders-messy.csv')",
+            "call": "c['symbol'].value_counts().sort_index().tolist()",
+            "expect": "[230, 206, 134]",
+            "compare": "equal"
+          },
+          {
+            "setup": "c = load_clean('orders-messy.csv')",
+            "call": "int(c['qty'].sum())",
+            "expect": "1203200",
+            "compare": "equal"
+          },
+          {
+            "setup": "c = load_clean('orders-messy.csv')",
+            "call": "bool(c['price'].min() > 0) and bool(c['order_id'].is_unique)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "c = load_clean('orders-messy.csv')",
+            "call": "str(c['qty'].dtype).startswith('int')",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 6 hidden tests. They check 570 rows, the three symbols and their counts (230, 206, 134), and the quantity total. They also check unique ids, a positive minimum price and whole-number quantities."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Strip and upper-case the symbol, and remove commas from the quantity text."
+        },
+        {
+          "rung": "point",
+          "text": "`drop_duplicates('order_id')` after the text is clean; keep prices that are not null and above zero."
+        },
+        {
+          "rung": "step",
+          "text": "Convert the quantity with `.astype(int)` once the commas are gone."
+        }
+      ],
+      "feedback": {
+        "correct": "570 rows: 15 repeats and 15 bad prices gone.",
+        "generic": "Some tests failed. Text first, then ids, then prices above zero."
+      },
+      "explain": {
+        "text": "From 600 rows, 15 repeated ids leave 585, and 10 blank and 5 prices of -999 leave 570. ALPHA has 230, BRAVO 206 and CHARLIE 134."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Stage two: the VWAP",
+      "tags": [
+        "vwap"
+      ],
+      "pace": 480,
+      "prose": "About eight minutes with the code. The cleaned frame from stage one is ready as `ORDERS`. A volume-weighted average price weights each price by its quantity.",
+      "question": "Write `vwap_by_symbol(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "orders-messy.csv": "content/data/orders-messy.csv"
+        },
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef _ref_clean(path):\n    df = pd.read_csv(path, dtype={'qty': str})\n    df['symbol'] = df['symbol'].str.strip().str.upper()\n    df['qty'] = df['qty'].str.replace(',', '').astype(int)\n    df = df.drop_duplicates('order_id')\n    df = df[df['price'].notna() & (df['price'] > 0)]\n    return df.reset_index(drop=True)\n\nORDERS = _ref_clean('orders-messy.csv')\n",
+        "starter": "import pandas as pd\n\ndef vwap_by_symbol(df):\n    \"\"\"df is the cleaned frame (symbol, qty, price, ...). Return a\n    Series indexed by symbol: sum(price * qty) / sum(qty).\"\"\"\n    # Your code here\n    return pd.Series(dtype=float)\n",
+        "solution": "import pandas as pd\n\ndef vwap_by_symbol(df):\n    notional = (df['price'] * df['qty']).groupby(df['symbol']).sum()\n    return notional / df.groupby('symbol')['qty'].sum()\n",
+        "examples": [
+          {
+            "setup": "v = vwap_by_symbol(ORDERS)",
+            "call": "round(float(v['CHARLIE']), 4)",
+            "expect": "8.0005",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "v = vwap_by_symbol(ORDERS)",
+            "call": "[float(v['ALPHA']), float(v['BRAVO']), float(v['CHARLIE'])]",
+            "expect": "[50.01523766806722, 120.01457495437955, 8.000460560941827]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "v = vwap_by_symbol(ORDERS)",
+            "call": "list(v.index)",
+            "expect": "['ALPHA', 'BRAVO', 'CHARLIE']",
+            "compare": "equal"
+          },
+          {
+            "setup": "v = vwap_by_symbol(pd.DataFrame({'symbol': ['x', 'x', 'y'], 'qty': [100, 300, 50], 'price': [10.0, 12.0, 5.0]}))",
+            "call": "[float(v['x']), float(v['y'])]",
+            "expect": "[11.5, 5.0]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "v = vwap_by_symbol(ORDERS)",
+            "call": "abs(float(v['ALPHA']) - float(ORDERS[ORDERS['symbol'] == 'ALPHA']['price'].mean())) > 0.0001",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. They check the three VWAPs (within 1e-6) and the index. They also check a three-row frame by hand, and that the answer is not the simple mean of prices."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Weight each price by its quantity before summing."
+        },
+        {
+          "rung": "point",
+          "text": "Add up price times qty for each symbol, then divide by the symbol's total qty."
+        },
+        {
+          "rung": "step",
+          "text": "`(df['price'] * df['qty']).groupby(df['symbol']).sum()` gives the numerators."
+        }
+      ],
+      "feedback": {
+        "correct": "ALPHA 50.0152, BRAVO 120.0146, CHARLIE 8.0005.",
+        "generic": "Some tests failed. Divide the sum of price times qty by the sum of qty, for each symbol."
+      },
+      "explain": {
+        "text": "The VWAPs are 50.0152, 120.0146 and 8.0005. Leaving in the -999 prices and the repeats would drag the ALPHA figure to 46.3874."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Stage three: the slippage model",
+      "tags": [
+        "slippage-model"
+      ],
+      "pace": 660,
+      "prose": "About eleven minutes with the code, writing included. A buyer who pays above mid loses; a seller who receives less loses. Regress that loss on the log of the order size.",
+      "question": "Write `slippage_model(df)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "data": {
+          "orders-messy.csv": "content/data/orders-messy.csv"
+        },
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef _ref_clean(path):\n    df = pd.read_csv(path, dtype={'qty': str})\n    df['symbol'] = df['symbol'].str.strip().str.upper()\n    df['qty'] = df['qty'].str.replace(',', '').astype(int)\n    df = df.drop_duplicates('order_id')\n    df = df[df['price'].notna() & (df['price'] > 0)]\n    return df.reset_index(drop=True)\n\nORDERS = _ref_clean('orders-messy.csv')\n",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef slippage_model(df):\n    \"\"\"Slippage in basis points is side * (price - mid) / mid * 10000,\n    with side +1 for 'B' and -1 for 'S'. Fit slippage on ln(qty / 100).\n    Return (slope, intercept, r2, mean_slippage) as floats.\"\"\"\n    # Your code here\n    return 0.0, 0.0, 0.0, 0.0\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef slippage_model(df):\n    side = np.where(df['side'] == 'B', 1.0, -1.0)\n    slip = side * (df['price'] - df['mid']) / df['mid'] * 1e4\n    x = np.log(df['qty'] / 100)\n    slope, icpt = np.polyfit(x, slip, 1)\n    r2 = np.corrcoef(x, slip)[0, 1] ** 2\n    return float(slope), float(icpt), float(r2), float(slip.mean())\n",
+        "examples": [
+          {
+            "call": "round(slippage_model(ORDERS)[0], 4)",
+            "expect": "1.2421",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[round(v, 6) for v in slippage_model(ORDERS)]",
+            "expect": "[1.242071, 0.337457, 0.534599, 3.795232]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "call": "slippage_model(ORDERS)[0]",
+            "expect": "1.2420712887901868",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "slippage_model(pd.DataFrame({'side': ['B', 'B', 'S', 'S', 'B'], 'qty': [100, 400, 200, 800, 1600], 'price': [10.001, 10.003, 9.998, 9.995, 10.007], 'mid': [10.0] * 5}))",
+            "expect": "[2.164042561333527, 0.6000000000000232, 0.9698275862069461, 3.6000000000001364]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "slippage_model(pd.DataFrame({'side': ['B', 'B', 'S', 'S', 'B'], 'qty': [100, 400, 200, 800, 1600], 'price': [10.001, 10.003, 9.998, 9.995, 10.007], 'mid': [10.0] * 5}))[3] > 0",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 4 hidden tests. They check slope, intercept, R squared and mean slippage on the 570 orders (within 2e-6). They also check the slope alone, and a five-row frame with both sides."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Give each row a sign: +1 for 'B', -1 for 'S'."
+        },
+        {
+          "rung": "point",
+          "text": "Slippage in basis points is the sign times (price - mid) over mid, times 10,000. Regress it on `np.log(qty / 100)`."
+        },
+        {
+          "rung": "step",
+          "text": "`np.polyfit(x, slip, 1)` returns slope then intercept; R squared is the squared correlation."
+        }
+      ],
+      "feedback": {
+        "correct": "Slope 1.2421, intercept 0.3375, $R^2$ 0.5346, mean 3.795 bp.",
+        "generic": "Some tests failed. Sign by side, scale by 10,000, and regress on ln(qty / 100)."
+      },
+      "explain": {
+        "text": "Slippage rises by 1.2421 basis points for each unit of $\\ln(\\text{qty}/100)$, with standard error 0.0486 against a planted 1.2. The $R^2$ is 0.5346 and the mean slippage 3.795 bp."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "What a big order costs",
+      "tags": [
+        "slippage-model"
+      ],
+      "pace": 150,
+      "prose": "The fit is slippage $= 0.3375 + 1.2421 \\ln(\\text{qty}/100)$ basis points.",
+      "question": "What is the expected cost of a 3,200-share order, in basis points?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.642,
+        "tol": {
+          "abs": 0.001
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 4.642, or 4.642 ± 0.001",
+        "wrong": [
+          {
+            "id": "noln",
+            "value": 40.08,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "lnq",
+            "value": 10.362,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The model takes the log of qty over 100."
+        },
+        {
+          "rung": "point",
+          "text": "3,200 over 100 is 32, and $\\ln 32 = 3.466$."
+        },
+        {
+          "rung": "step",
+          "text": "$0.3375 + 1.2421 \\times 3.466 = 4.642$."
+        }
+      ],
+      "feedback": {
+        "correct": "4.642 bp, which is 0.046% of the order's value.",
+        "generic": "Not quite. Put $\\ln(3200/100) = \\ln 32$ into the line.",
+        "byKey": {
+          "noln": "You multiplied the slope by 32. The model uses the log of 32.",
+          "lnq": "You took the log of 3,200. The model uses the log of qty over 100, which is 32."
+        }
+      },
+      "explain": {
+        "text": "$\\ln 32 = 3.466$, so the cost is $0.3375 + 1.2421 \\times 3.466 = 4.642$ basis points. The mean over all orders is 3.795."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Drop first, ask later",
+      "tags": [
+        "data-cleaning"
+      ],
+      "pace": 150,
+      "prose": "A colleague drops any row that looks odd before touching anything else. The chart counts the rows left after each of the three real steps.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "raw",
+              "label": "raw"
+            },
+            {
+              "id": "ids",
+              "label": "one per id"
+            },
+            {
+              "id": "px",
+              "label": "good prices"
+            }
+          ],
+          "yLabel": "rows",
+          "showValues": true,
+          "decimals": 0,
+          "yMin": 0,
+          "yMax": 650,
+          "height": 220
+        },
+        "state": {
+          "values": {
+            "raw": 600,
+            "ids": 585,
+            "px": 570
+          }
+        }
+      },
+      "question": "What do you say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fix",
+            "text": "Fix the text first, drop only bad rows, and count each step",
+            "correct": true
+          },
+          {
+            "id": "safe",
+            "text": "Dropping first is safest, since odd rows cannot be trusted",
+            "why": "You dropped fixable rows. A comma in 1,200 is still 1,200, so good orders vanish."
+          },
+          {
+            "id": "ids",
+            "text": "Drop the repeated ids only; the rest is harmless",
+            "why": "You left the -999 and blank prices in, which wreck a VWAP."
+          },
+          {
+            "id": "keep",
+            "text": "Keep every row and let the model cope",
+            "why": "You kept impossible prices. A regression takes them at face value."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which of these rows can be repaired?"
+        },
+        {
+          "rung": "point",
+          "text": "Commas and letter case can be fixed; -999 and blanks cannot."
+        },
+        {
+          "rung": "step",
+          "text": "Repair, then drop, and write down each count."
+        }
+      ],
+      "feedback": {
+        "correct": "Repair first, drop what cannot be repaired, count each step.",
+        "generic": "Not quite. Repair what can be repaired before dropping anything.",
+        "byKey": {
+          "safe": "You dropped before repairing, so good orders were lost.",
+          "ids": "You skipped the bad prices.",
+          "keep": "You kept impossible prices."
+        }
+      },
+      "explain": {
+        "text": "Repairing text loses nothing. Only the repeats and impossible prices go, and the counts, 600, 585 and 570, go in the write-up.",
+        "canvas": {
+          "highlight": [
+            "px"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A price of exactly zero",
+      "tags": [
+        "data-cleaning"
+      ],
+      "pace": 150,
+      "prose": "The file has none, but the next one might: a price of exactly 0, which `notna()` lets through.",
+      "question": "What do you do with it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "drop",
+            "text": "Drop it with price > 0, and report how many rows went",
+            "correct": true
+          },
+          {
+            "id": "keep",
+            "text": "Keep it: zero is a real number, so it is not missing",
+            "why": "You treated zero as a real price. It gives a slippage of about -10,000 basis points."
+          },
+          {
+            "id": "mean",
+            "text": "Replace it with that symbol's average price from the file",
+            "why": "You invented a price, and an invented price has no slippage."
+          },
+          {
+            "id": "nan",
+            "text": "Set it to NaN and let the mean skip it",
+            "why": "A NaN row still counts in the quantity totals."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is zero a price anyone could trade at?"
+        },
+        {
+          "rung": "point",
+          "text": "A zero price is as impossible as -999."
+        },
+        {
+          "rung": "step",
+          "text": "Test `price > 0`, not just `notna()`."
+        }
+      ],
+      "feedback": {
+        "correct": "Drop it: only prices above zero are real.",
+        "generic": "Not quite. A zero price is impossible here.",
+        "byKey": {
+          "keep": "You kept an impossible price.",
+          "mean": "You imputed a price.",
+          "nan": "You turned it into a hidden gap."
+        }
+      },
+      "explain": {
+        "text": "Test the rule you mean: `price > 0`. Say how many rows it removed."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The sign of slippage",
+      "tags": [
+        "slippage-model"
+      ],
+      "pace": 150,
+      "prose": "Slippage should be positive when the order does worse than the mid price, whichever side it is on.",
+      "question": "Put the lines in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "A buyer pays $p$ against a mid of $m$, so the cost per share is $p - m$."
+          },
+          {
+            "id": "b",
+            "text": "A seller receives $p$, so the cost per share is $m - p$."
+          },
+          {
+            "id": "c",
+            "text": "Both are $s\\,(p - m)$, with $s = +1$ for a buy and $s = -1$ for a sell."
+          },
+          {
+            "id": "d",
+            "text": "Divide by $m$ for a fraction and multiply by $10^4$ for basis points: $s\\,(p - m)/m \\times 10^4$."
+          },
+          {
+            "id": "x",
+            "text": "Use $p - m$ for both sides.",
+            "why": "A seller who receives less than mid would look as if they gained."
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "distractors": [
+          "x"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ask who loses when the price is above mid, and who when it is below."
+        },
+        {
+          "rung": "point",
+          "text": "A buyer loses above mid; a seller loses below."
+        },
+        {
+          "rung": "step",
+          "text": "One sign factor covers both."
+        }
+      ],
+      "feedback": {
+        "correct": "$s\\,(p - m)/m \\times 10^4$.",
+        "generic": "Not quite. Write the cost for each side, then combine with a sign.",
+        "byKey": {
+          "x": "You used one formula for both. A seller's loss has the opposite sign.",
+          "left-out": "You left out a step the derivation needs."
+        }
+      },
+      "explain": {
+        "text": "The sign makes a cost positive on both sides. A seller at 49.80 against a mid of 50.00 loses 40 basis points."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Say it aloud",
+      "tags": [
+        "data-cleaning"
+      ],
+      "pace": 150,
+      "prose": "Read, list the problems, clean in a fixed order, analyse with $\\text{VWAP} = \\sum p\\,q / \\sum q$, model, and write down what you did. For a stopwatch run, open the drill `rq-clean-frame-py`.",
+      "question": "Which answer would you say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "plan",
+            "text": "I read it, list problems, clean in order, model, and record counts.",
+            "correct": true
+          },
+          {
+            "id": "fit",
+            "text": "I fit the model straight away and fix whatever the plot shows later.",
+            "why": "You modelled first. A plot will not show a comma in a quantity."
+          },
+          {
+            "id": "drop",
+            "text": "I drop every odd row, then analyse what is left.",
+            "why": "You dropped fixable rows."
+          },
+          {
+            "id": "mind",
+            "text": "I clean it all in my head and report only the final numbers.",
+            "why": "You left no trail. A reviewer cannot check counts you did not write down."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The answer needs an order and a record."
+        },
+        {
+          "rung": "point",
+          "text": "Look for the counts being written down."
+        },
+        {
+          "rung": "step",
+          "text": "Only one answer has both."
+        }
+      ],
+      "feedback": {
+        "correct": "Read, list, clean in order, analyse, model, record.",
+        "generic": "Not quite. Choose the answer with an order and a record.",
+        "byKey": {
+          "fit": "You modelled first.",
+          "drop": "You dropped fixable rows.",
+          "mind": "You kept no record."
+        }
+      },
+      "explain": {
+        "text": "Say the order of cleaning and that you write down each count. Under time pressure, the record is what makes the answer checkable."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Fills from a desk",
+      "tags": [
+        "vwap"
+      ],
+      "pace": 150,
+      "prose": "A desk's fills file lists 2,000 shares at £31.20, 1,500 at £31.40 and 500 at £30.80. The 1,500 at £31.40 appears twice, with the same fill id.",
+      "question": "What is the VWAP once the repeat is removed, in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 31.225,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 31.225, or 31.225 ± 0.0005",
+        "wrong": [
+          {
+            "id": "dup",
+            "value": 31.2727,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "mean",
+            "value": 31.1333,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Remove the repeated fill first."
+        },
+        {
+          "rung": "point",
+          "text": "Weights are 2,000, 1,500 and 500, total 4,000."
+        },
+        {
+          "rung": "step",
+          "text": "$(62{,}400 + 47{,}100 + 15{,}400) / 4{,}000 = 31.225$."
+        }
+      ],
+      "feedback": {
+        "correct": "£31.225: the same task on a desk's fills.",
+        "generic": "Not quite. Remove the repeat, then weight each price by its shares.",
+        "byKey": {
+          "dup": "You left the repeat in. The VWAP then rises to 31.2727.",
+          "mean": "You averaged the three prices. That ignores the share counts."
+        }
+      },
+      "explain": {
+        "text": "Without the repeat the notional is £124,900 over 4,000 shares. Leaving it in would overstate the VWAP by about 4.8p."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The follow-up",
+      "tags": [
+        "slippage-model"
+      ],
+      "pace": 150,
+      "prose": "The interviewer asks: \"What would you check next?\"",
+      "question": "Select all that apply. Which checks do you name?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sym",
+            "text": "Slippage by symbol, in case one name drives the slope",
+            "correct": true
+          },
+          {
+            "id": "time",
+            "text": "Slippage by time of day, since spreads change",
+            "correct": true
+          },
+          {
+            "id": "side",
+            "text": "Slippage by side, in case buys and sells differ",
+            "correct": true
+          },
+          {
+            "id": "cubic",
+            "text": "Add cubic terms in ln qty until the R squared passes 0.9",
+            "why": "You would tune on the same data until it looks good."
+          },
+          {
+            "id": "big",
+            "text": "Drop the five largest orders as outliers",
+            "why": "You dropped data for being large, not for being wrong."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each check splits the same data a new way."
+        },
+        {
+          "rung": "point",
+          "text": "Look for the splits an order desk would care about."
+        },
+        {
+          "rung": "step",
+          "text": "Tuning until R squared rises is not a check."
+        }
+      ],
+      "feedback": {
+        "correct": "By symbol, by time of day, by side.",
+        "generic": "Not quite. Choose the splits, not the tuning.",
+        "byKey": {
+          "cubic": "You chose to tune.",
+          "big": "You dropped large orders without a reason."
+        }
+      },
+      "explain": {
+        "text": "Splitting by symbol, time and side tests whether one slope fits all. Adding terms until the fit looks good does not."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Read the file and list its problems, then clean in a fixed order: text, repeated ids, bad prices.",
+      "A VWAP weights each price by its quantity, and slippage is the signed distance from mid in basis points.",
+      "Write down what you did and every count, so a reviewer can check it."
+    ],
+    "formula": {
+      "name": "VWAP and slippage",
+      "tex": "\\text{VWAP} = \\dfrac{\\sum p\\,q}{\\sum q}, \\quad \\text{slip} = s\\,\\dfrac{p - m}{m} \\times 10^4",
+      "note": "$s = +1$ for a buy and $-1$ for a sell, $m$ the mid price."
+    },
+    "trap": "Dropping every odd row first loses good rows that a clean-up would have saved."
+  },
+  "quiz": [
+    {
+      "id": "q19-count",
+      "difficulty": 2,
+      "tags": [
+        "data-cleaning"
+      ],
+      "pace": 150,
+      "prose": "A file has 900 rows. 25 repeat an order id and 12 have no price. No row is in both groups.",
+      "question": "How many rows are left?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 863,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 863",
+        "wrong": [
+          {
+            "id": "noprice",
+            "value": 888,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "norepeat",
+            "value": 875,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "863: $900 - 25 - 12$.",
+        "generic": "Not quite. Take away both groups.",
+        "byKey": {
+          "noprice": "You removed the repeats only.",
+          "norepeat": "You removed the blank prices only."
+        }
+      },
+      "explain": {
+        "text": "Both groups go, and they do not overlap, so 863 rows remain."
+      }
+    },
+    {
+      "id": "q19-vwap",
+      "difficulty": 3,
+      "tags": [
+        "vwap"
+      ],
+      "pace": 150,
+      "prose": "Two fills: 200 shares at £10.00 and 600 at £10.40.",
+      "question": "What is the VWAP in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10.3,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 10.3, or 10.3 ± 0.0005",
+        "wrong": [
+          {
+            "id": "mean",
+            "value": 10.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£10.30: $(2{,}000 + 6{,}240)/800$.",
+        "generic": "Not quite. Weight each price by its shares.",
+        "byKey": {
+          "mean": "You averaged the two prices. The bigger fill should count three times as much."
+        }
+      },
+      "explain": {
+        "text": "The notional is £8,240 over 800 shares, which is £10.30."
+      }
+    },
+    {
+      "id": "q19-dedupe",
+      "difficulty": 3,
+      "tags": [
+        "data-cleaning"
+      ],
+      "pace": 150,
+      "prose": "One order id appears in two rows, `alpha` in one and `ALPHA ` in the other. `df.drop_duplicates()` leaves both.",
+      "question": "Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "text",
+            "text": "They differ in text, so they are not exact duplicates yet",
+            "correct": true
+          },
+          {
+            "id": "first",
+            "text": "It compares only the first column",
+            "why": "It compares every column by default."
+          },
+          {
+            "id": "next",
+            "text": "It removes only duplicates that sit next to each other",
+            "why": "It finds duplicates anywhere in the frame."
+          },
+          {
+            "id": "sort",
+            "text": "It needs the frame sorted first",
+            "why": "Sorting changes nothing about what counts as a duplicate."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Clean the text, or drop by order_id alone.",
+        "generic": "Not quite. What does \"duplicate\" compare?",
+        "byKey": {
+          "first": "It compares all columns.",
+          "next": "It looks across the whole frame.",
+          "sort": "Order does not matter."
+        }
+      },
+      "explain": {
+        "text": "An exact duplicate matches in every column. After upper-casing and stripping, the two rows would match."
+      }
+    },
+    {
+      "id": "q19-sign",
+      "difficulty": 3,
+      "tags": [
+        "slippage-model"
+      ],
+      "pace": 150,
+      "prose": "A seller sells at 49.80 when the mid is 50.00.",
+      "question": "What is the slippage in basis points, as the model defines it?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 40, or 40 ± 0.0005",
+        "wrong": [
+          {
+            "id": "flip",
+            "value": -40,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "+40 bp: $-1 \\times (49.80 - 50.00)/50 \\times 10^4$.",
+        "generic": "Not quite. A seller's sign is $-1$.",
+        "byKey": {
+          "flip": "You forgot the seller's sign. Receiving less than mid is a cost."
+        }
+      },
+      "explain": {
+        "text": "$(49.80 - 50)/50 = -0.004$, and the sell sign flips it to $+0.004$, or 40 bp."
+      }
+    }
+  ]
+}

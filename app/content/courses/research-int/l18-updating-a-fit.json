@@ -1,0 +1,1147 @@
+{
+  "id": "l18-updating-a-fit",
+  "course": "research-int",
+  "title": "Updating a fit as data arrives",
+  "minutes": 15,
+  "objectives": [
+    "Update a least-squares fit cheaply when a row arrives or leaves."
+  ],
+  "skills": [
+    "rq-data",
+    "rq-linalg"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Running sums",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "About two and a half minutes a question; say your reasoning aloud first. A straight-line fit needs only five numbers from the data. Fill them in for these four points.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "x",
+            "y"
+          ],
+          "rows": [
+            [
+              "1",
+              "2"
+            ],
+            [
+              "2",
+              "3"
+            ],
+            [
+              "3",
+              "5"
+            ],
+            [
+              "4",
+              "4"
+            ]
+          ],
+          "align": "right"
+        },
+        "state": {}
+      },
+      "question": "Fill in the running sums.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "n",
+          "sum x",
+          "sum y",
+          "sum xx",
+          "sum xy"
+        ],
+        "rows": [
+          [
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 14,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 30,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 39,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Sum the x column, then the y column."
+        },
+        {
+          "rung": "point",
+          "text": "For the last two, square each x, and multiply each x by its y, before adding."
+        },
+        {
+          "rung": "step",
+          "text": "$1 + 4 + 9 + 16 = 30$ and $2 + 6 + 15 + 16 = 39$."
+        }
+      ],
+      "feedback": {
+        "correct": "$n = 4$, 10, 14, 30 and 39.",
+        "generic": "Not quite. Square each x for the fourth sum; multiply x by y for the fifth."
+      },
+      "explain": {
+        "text": "These five numbers are all a straight-line fit ever needs. Keep them, and the points themselves can be thrown away."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The slope from the sums",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "Use the sums you just found: $n = 4$, $\\sum x = 10$, $\\sum y = 14$, $\\sum xx = 30$, $\\sum xy = 39$.",
+      "question": "What is the least-squares slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 0.8, or 0.8 ± 0.0005",
+        "wrong": [
+          {
+            "id": "ratio",
+            "value": 1.3,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The slope compares how x and y vary together with how x varies alone."
+        },
+        {
+          "rung": "point",
+          "text": "$\\dfrac{n\\sum xy - \\sum x \\sum y}{n\\sum xx - (\\sum x)^2}$."
+        },
+        {
+          "rung": "step",
+          "text": "$(156 - 140) / (120 - 100) = 0.8$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.8, and the intercept is $(14 - 0.8 \\times 10)/4 = 1.5$.",
+        "generic": "Not quite. Use $n \\sum xy - \\sum x \\sum y$ over $n \\sum xx - (\\sum x)^2$.",
+        "byKey": {
+          "ratio": "You divided $\\sum xy$ by $\\sum xx$. That skips the centring, which the other terms do."
+        }
+      },
+      "explain": {
+        "text": "The numerator is $4 \\times 39 - 10 \\times 14 = 16$ and the denominator $4 \\times 30 - 100 = 20$. The slope is 0.8, the intercept 1.5."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A row arrives",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "A fifth point, $(5, 8)$, arrives. Add its contribution to each sum. Do not touch the first four points.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "row",
+            "n",
+            "sum x",
+            "sum y",
+            "sum xx",
+            "sum xy"
+          ],
+          "rows": [
+            [
+              "before",
+              "4",
+              "10",
+              "14",
+              "30",
+              "39"
+            ],
+            [
+              "add (5, 8)",
+              "+1",
+              "+5",
+              "+8",
+              "+25",
+              "+40"
+            ],
+            [
+              "after",
+              "?",
+              "?",
+              "?",
+              "?",
+              "?"
+            ]
+          ],
+          "align": "right"
+        },
+        "state": {}
+      },
+      "question": "What is the new slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.3,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 1.3, or 1.3 ± 0.0005",
+        "wrong": [
+          {
+            "id": "old",
+            "value": 0.8,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "pt",
+            "value": 1.6,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add 1 to n, 5 to the x sum, 8 to the y sum, and so on."
+        },
+        {
+          "rung": "point",
+          "text": "The new sums are 5, 15, 22, 55 and 79."
+        },
+        {
+          "rung": "step",
+          "text": "$(5 \\times 79 - 15 \\times 22) / (5 \\times 55 - 225) = 65/50 = 1.3$."
+        }
+      ],
+      "feedback": {
+        "correct": "1.3, and the intercept falls to 0.5.",
+        "generic": "Not quite. Add the new row to every sum, then recompute the slope.",
+        "byKey": {
+          "old": "You left the sums unchanged. The new row has to go in.",
+          "pt": "You used the new point alone, 8 over 5. The slope uses all five points."
+        }
+      },
+      "explain": {
+        "text": "Five sums changed by one addition each, so the update cost nothing like a refit. The slope is 1.3 and the intercept 0.5.",
+        "canvas": {
+          "values": {
+            "r2c1": "5",
+            "r2c2": "15",
+            "r2c3": "22",
+            "r2c4": "55",
+            "r2c5": "79"
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A row leaves",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "Now the first point, $(1, 2)$, leaves. Subtract its contribution from each sum.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "row",
+            "n",
+            "sum x",
+            "sum y",
+            "sum xx",
+            "sum xy"
+          ],
+          "rows": [
+            [
+              "before",
+              "5",
+              "15",
+              "22",
+              "55",
+              "79"
+            ],
+            [
+              "remove (1, 2)",
+              "-1",
+              "-1",
+              "-2",
+              "-1",
+              "-2"
+            ],
+            [
+              "after",
+              "?",
+              "?",
+              "?",
+              "?",
+              "?"
+            ]
+          ],
+          "align": "right"
+        },
+        "state": {}
+      },
+      "question": "What is the slope after it leaves?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.4,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 1.4, or 1.4 ± 0.0005",
+        "wrong": [
+          {
+            "id": "kept",
+            "value": 1.3,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract 1 from n, 1 from the x sum, 2 from the y sum, and so on."
+        },
+        {
+          "rung": "point",
+          "text": "The sums become 4, 14, 20, 54 and 77."
+        },
+        {
+          "rung": "step",
+          "text": "$(4 \\times 77 - 14 \\times 20) / (4 \\times 54 - 196) = 28/20 = 1.4$."
+        }
+      ],
+      "feedback": {
+        "correct": "1.4, and the intercept is 0.1.",
+        "generic": "Not quite. Subtract the leaving row from every sum.",
+        "byKey": {
+          "kept": "You left the old row in. Removal means subtracting it from each sum."
+        }
+      },
+      "explain": {
+        "text": "Removal is addition run backwards. The slope is 1.4 and the intercept 0.1, the same as refitting the four remaining points.",
+        "canvas": {
+          "values": {
+            "r2c1": "4",
+            "r2c2": "14",
+            "r2c3": "20",
+            "r2c4": "54",
+            "r2c5": "77"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "With several predictors",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "With several columns we keep $P = (X^TX)^{-1}$ instead of sums. For a new design row $x = (1, 5)$, the update divides by $1 + x^T P x$.",
+      "canvas": {
+        "kind": "matrix",
+        "params": {
+          "matrices": [
+            {
+              "id": "P",
+              "rows": [
+                [
+                  1.5,
+                  -0.5
+                ],
+                [
+                  -0.5,
+                  0.2
+                ]
+              ],
+              "label": "$P = (X^T X)^{-1}$"
+            },
+            {
+              "id": "x",
+              "rows": [
+                [
+                  1
+                ],
+                [
+                  5
+                ]
+              ],
+              "label": "$x$"
+            }
+          ],
+          "ops": [
+            "and"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $1 + x^T P x$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 2.5, or 2.5 ± 0.0005",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "big",
+            "value": 27,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "First compute $Px$, a column of two numbers."
+        },
+        {
+          "rung": "point",
+          "text": "$Px = (-1, 0.5)$. Then take its dot product with $x$.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$x^TPx = -1 + 2.5 = 1.5$, so the answer is 2.5."
+        }
+      ],
+      "feedback": {
+        "correct": "2.5. The new inverse is $P - Px(Px)^T/2.5$.",
+        "generic": "Not quite. Work out $Px$ first, then $x^T$ times it, then add 1.",
+        "byKey": {
+          "one": "You gave $x^TPx$ and forgot to add 1.",
+          "big": "You used $x^T x = 26$ for $x^TPx$. The inverse $P$ sits in the middle."
+        }
+      },
+      "explain": {
+        "text": "Here $Px = (-1, 0.5)$ and $x^TPx = 1.5$, so the denominator is 2.5. The innovation $8 - x^T\\beta = 2.5$ moves $\\beta$ to $(0.5, 1.3)$, equal to a full refit."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Keep the sums in a class",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 600,
+      "prose": "About ten minutes with the code. Write a class that keeps the five sums. `add` takes a row in, `remove` lets one go, and `coef` returns `[intercept, slope]`.",
+      "question": "Write `OnlineLine`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\nclass OnlineLine:\n    \"\"\"A straight-line fit kept as running sums.\"\"\"\n\n    def __init__(self):\n        self.n = 0\n        # Your code here: the other four sums\n\n    def add(self, x, y):\n        # Your code here\n        pass\n\n    def remove(self, x, y):\n        # Your code here\n        pass\n\n    def coef(self):\n        \"\"\"[intercept, slope] as floats, or [nan, nan] with fewer\n        than 2 rows or when every x is equal.\"\"\"\n        # Your code here\n        return [0.0, 0.0]\n",
+        "solution": "import numpy as np\n\nclass OnlineLine:\n    def __init__(self):\n        self.n = 0\n        self.sx = self.sy = self.sxx = self.sxy = 0.0\n\n    def add(self, x, y):\n        self.n += 1\n        self.sx += x\n        self.sy += y\n        self.sxx += x * x\n        self.sxy += x * y\n\n    def remove(self, x, y):\n        self.n -= 1\n        self.sx -= x\n        self.sy -= y\n        self.sxx -= x * x\n        self.sxy -= x * y\n\n    def coef(self):\n        n = self.n\n        den = n * self.sxx - self.sx ** 2\n        if n < 2 or den == 0:\n            return [float('nan'), float('nan')]\n        b = (n * self.sxy - self.sx * self.sy) / den\n        return [(self.sy - b * self.sx) / n, b]\n",
+        "examples": [
+          {
+            "setup": "m = OnlineLine(); [m.add(x, y) for x, y in [(1, 2), (2, 3), (3, 5), (4, 4)]]",
+            "call": "m.coef()",
+            "expect": "[1.5, 0.8]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "m = OnlineLine(); [m.add(x, y) for x, y in [(1, 2), (2, 3), (3, 5), (4, 4)]]",
+            "call": "m.coef()",
+            "expect": "[1.5, 0.8]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "m = OnlineLine(); [m.add(x, y) for x, y in [(1, 2), (2, 3), (3, 5), (4, 4)]]; m.add(5, 8)",
+            "call": "m.coef()",
+            "expect": "[0.5, 1.3]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "m = OnlineLine(); [m.add(x, y) for x, y in [(1, 2), (2, 3), (3, 5), (4, 4)]]; m.add(5, 8); m.remove(1, 2)",
+            "call": "m.coef()",
+            "expect": "[0.1, 1.4]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "rng = np.random.default_rng(5); xs = rng.normal(size=200); ys = 2 + 3 * xs + rng.normal(size=200); m = OnlineLine(); [m.add(a, b) for a, b in zip(xs, ys)]",
+            "call": "float(max(abs(np.array(m.coef()) - np.polyfit(xs, ys, 1)[::-1]))) < 1e-9",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "rng = np.random.default_rng(5); xs = rng.normal(size=200); ys = 2 + 3 * xs + rng.normal(size=200); m = OnlineLine(); [m.add(a, b) for a, b in zip(xs, ys)]; [m.remove(a, b) for a, b in zip(xs[:50], ys[:50])]",
+            "call": "float(max(abs(np.array(m.coef()) - np.polyfit(xs[50:], ys[50:], 1)[::-1]))) < 1e-9",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "[bool(np.isnan(v)) for v in OnlineLine().coef()]",
+            "expect": "[True, True]",
+            "compare": "equal"
+          },
+          {
+            "setup": "m = OnlineLine(); m.add(3, 7); m.add(3, 9)",
+            "call": "bool(np.isnan(m.coef()[1]))",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests. They check the four-point fit, then the fit after adding (5, 8) and after removing (1, 2). Two compare 200 seeded rows with `np.polyfit`, before and after 50 removals. Two cases must give NaN."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Five attributes: n and the four sums."
+        },
+        {
+          "rung": "point",
+          "text": "`remove` is `add` with every plus turned into a minus."
+        },
+        {
+          "rung": "step",
+          "text": "The slope is $(n \\, sxy - sx \\, sy) / (n \\, sxx - sx^2)$ and the intercept is $(sy - b \\, sx)/n$."
+        }
+      ],
+      "feedback": {
+        "correct": "The class matches a refit after every add and remove.",
+        "generic": "Some tests failed. Five sums, remove as the reverse of add, and NaN when the slope is undefined."
+      },
+      "explain": {
+        "text": "Each call touches five numbers, however many rows came before. That is why a rolling fit over 250 days costs no more than one over 25."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Sums of squares are exact",
+      "tags": [
+        "numerical-stability"
+      ],
+      "pace": 150,
+      "prose": "A colleague says sums of squares are exact, so the variance from sums is safe. Take $10^9 + 1$, $10^9 + 2$ and $10^9 + 3$, and compute $(\\sum x^2 - (\\sum x)^2/n)/(n-1)$ in float64.",
+      "question": "What does the formula return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a number",
+        "accept": "0, exactly",
+        "wrong": [
+          {
+            "id": "true",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each square is about $10^{18}$, past what float64 stores exactly."
+        },
+        {
+          "rung": "point",
+          "text": "The two big terms differ by only 2, far below the rounding step of 128."
+        },
+        {
+          "rung": "step",
+          "text": "They round to the same number, so the difference is 0."
+        }
+      ],
+      "feedback": {
+        "correct": "0.0. The true variance is 1.",
+        "generic": "Not quite. The two huge terms round to the same float.",
+        "byKey": {
+          "true": "You gave the true variance. In float64 the two terms are equal after rounding, and the formula returns 0.0."
+        }
+      },
+      "explain": {
+        "text": "A float64 holds about 16 digits, and the squares need 19. The cancellation leaves nothing, so the answer is 0.0 against a true value of 1."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Remove a row that was never added",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "A bug removes the point $(7, 9)$ from an `OnlineLine` that never held it. The count stays above zero.",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "silent",
+            "text": "The sums now describe no real dataset, silently",
+            "correct": true
+          },
+          {
+            "id": "raise",
+            "text": "The code raises an error because n goes negative",
+            "why": "You expected an error. n only goes negative with many wrong removals."
+          },
+          {
+            "id": "same",
+            "text": "Nothing changes, because the row cancels itself",
+            "why": "You thought it cancels. It subtracts a point that was never there."
+          },
+          {
+            "id": "refit",
+            "text": "The fit becomes the fit without that point",
+            "why": "There was no such point to take out."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is there a row in the sums for it to cancel?"
+        },
+        {
+          "rung": "point",
+          "text": "The sums hold totals only, not the rows."
+        },
+        {
+          "rung": "step",
+          "text": "A wrong subtraction shifts every sum with no warning."
+        }
+      ],
+      "feedback": {
+        "correct": "A silent error: the sums cannot check themselves.",
+        "generic": "Not quite. The sums hold totals, not rows.",
+        "byKey": {
+          "raise": "You expected a check that does not exist.",
+          "same": "You thought the row cancels.",
+          "refit": "You imagined a row that was never in."
+        }
+      },
+      "explain": {
+        "text": "Sums cannot tell a real row from a made-up one. If removals must be checked, keep the rows, or a count of each."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Centre first",
+      "tags": [
+        "numerical-stability"
+      ],
+      "pace": 150,
+      "prose": "The fix for the trap is to subtract a constant $c$ from $x$ before summing. Then the slope is unchanged and the intercept shifts.",
+      "question": "Put the lines in order. Leave out the step that does not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "Let $u = x - c$ with $c$ near the middle of the $x$ values, so $u$ is small."
+          },
+          {
+            "id": "b",
+            "text": "Fit $y = a' + m u$. Shifting $x$ does not change its spread, so the slope $m$ is the slope against $x$."
+          },
+          {
+            "id": "c",
+            "text": "Substitute $u = x - c$: $y = (a' - mc) + m x$, so the intercept is $a = a' - mc$."
+          },
+          {
+            "id": "d",
+            "text": "For $x = 10^9 + 1, 10^9 + 2, 10^9 + 3$ and $y = 1, 3, 2$ take $c = 10^9$: $m = 0.5$, $a' = 1$, so $a = -499{,}999{,}999$."
+          },
+          {
+            "id": "x",
+            "text": "Subtract $c$ from $y$ as well, so both columns are small.",
+            "why": "That leaves the huge $x^2$ sums, where the cancellation happens."
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "distractors": [
+          "x"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Shift x to small numbers first."
+        },
+        {
+          "rung": "point",
+          "text": "A shift of x leaves the slope alone and moves the intercept."
+        },
+        {
+          "rung": "step",
+          "text": "Undo the shift in the intercept at the end."
+        }
+      ],
+      "feedback": {
+        "correct": "$a = a' - mc$, with the slope unchanged.",
+        "generic": "Not quite. Shift x, fit, then undo the shift in the intercept.",
+        "byKey": {
+          "x": "You shifted y, which leaves the troublesome $x^2$ sums alone.",
+          "left-out": "You left out a step the derivation needs."
+        }
+      },
+      "explain": {
+        "text": "Fitting on small numbers keeps every sum exact enough. The intercept comes back as $a' - mc$, here $-499{,}999{,}999$."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Say it aloud",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "A row adds to $p^2$ stored numbers. A refit reads all $n$ rows, at about $n p^2$. For $n = 10^6$ and $p = 10$ the gap is a factor of $10^6$.",
+      "question": "Which answer would you say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cheap",
+            "text": "An update touches p squared numbers; a refit touches n times p squared.",
+            "correct": true
+          },
+          {
+            "id": "approx",
+            "text": "An update is only approximate, so I would always refit to be safe.",
+            "why": "You called an exact update approximate. Sherman-Morrison equals the refit."
+          },
+          {
+            "id": "solve",
+            "text": "A refit is cheaper because solving is fast with a good library.",
+            "why": "You priced the solve and forgot the pass over n rows."
+          },
+          {
+            "id": "same",
+            "text": "Both cost the same, since each ends in one solve.",
+            "why": "You counted the last step only. The refit also reads every row."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare what each method reads."
+        },
+        {
+          "rung": "point",
+          "text": "An update reads one row; a refit reads all $n$."
+        },
+        {
+          "rung": "step",
+          "text": "Only one answer says so."
+        }
+      ],
+      "feedback": {
+        "correct": "An update costs $p^2$; a refit costs $np^2$.",
+        "generic": "Not quite. Compare what each method reads.",
+        "byKey": {
+          "approx": "You called the update approximate.",
+          "solve": "You ignored the pass over the rows.",
+          "same": "You counted one step."
+        }
+      },
+      "explain": {
+        "text": "Say cost per row: $p^2$ for the update against $n p^2$ for the refit. Exact in both cases, up to rounding."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A rolling beta",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "A desk keeps a beta over a rolling 250-day window, in percent. The window sums are $n = 250$, $\\sum x = 20$, $\\sum y = 30$, $\\sum xx = 580$, $\\sum xy = 720$. The day $(3, 4)$ enters and the oldest day, $(-2, -3)$, leaves.",
+      "question": "What is the new beta?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.24,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 1.24, or 1.24 ± 0.0005",
+        "wrong": [
+          {
+            "id": "addonly",
+            "value": 1.2419,
+            "tol": {
+              "abs": 0.0004
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the new day to the sums, subtract the old day, and keep n at 250."
+        },
+        {
+          "rung": "point",
+          "text": "The sums become 25, 37, 585 and 726."
+        },
+        {
+          "rung": "step",
+          "text": "$(250 \\times 726 - 25 \\times 37) / (250 \\times 585 - 625) = 180{,}575 / 145{,}625 = 1.24$."
+        }
+      ],
+      "feedback": {
+        "correct": "1.24, from five additions and subtractions.",
+        "generic": "Not quite. Add the entering day, subtract the leaving day, keep n at 250.",
+        "byKey": {
+          "addonly": "You added the new day but did not remove the old one, so n became 251."
+        }
+      },
+      "explain": {
+        "text": "A window slides by one add and one remove, so each day costs five additions and five subtractions. The new beta is 1.24."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The follow-up",
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "The interviewer asks: \"What changes with a forgetting factor?\"",
+      "question": "What do you answer?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "decay",
+            "text": "Old sums are multiplied by a factor below 1 before each new row",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "Nothing changes, since the update formula is exactly the same",
+            "why": "You ignored the decay. Old rows would keep full weight for ever."
+          },
+          {
+            "id": "window",
+            "text": "Old rows are removed in the order they arrived, one per day",
+            "why": "You described a fixed window, a hard cut instead of a fade."
+          },
+          {
+            "id": "newrow",
+            "text": "The new row is multiplied by the factor",
+            "why": "You decayed the new row. It is the old rows that fade."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Think of 0.99 per day."
+        },
+        {
+          "rung": "point",
+          "text": "A row from 100 days ago has weight $0.99^{100}$."
+        },
+        {
+          "rung": "step",
+          "text": "Multiply the stored sums by the factor, then add the new row."
+        }
+      ],
+      "feedback": {
+        "correct": "Multiply the old sums by the factor, then add the new row.",
+        "generic": "Not quite. Decide which rows fade.",
+        "byKey": {
+          "same": "You kept every row at full weight.",
+          "window": "You described a window.",
+          "newrow": "You faded the new row."
+        }
+      },
+      "explain": {
+        "text": "With factor $\\lambda$ the old sums are scaled by $\\lambda$ before each new row goes in. A row $k$ days old carries weight $\\lambda^k$."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A straight-line fit needs only five running sums. A row in is addition and a row out is subtraction.",
+      "With several predictors, keep the inverse of X-transpose-X. Sherman-Morrison updates it at a cost of p squared a row.",
+      "Raw sums of squares lose digits on large numbers, so centre x before summing."
+    ],
+    "formula": {
+      "name": "Slope from running sums",
+      "tex": "\\hat m = \\dfrac{n\\sum xy - \\sum x\\sum y}{n\\sum xx - \\left(\\sum x\\right)^2}",
+      "note": "Add a row to every sum to update, subtract it to downdate."
+    },
+    "trap": "Sums of squares are not exact in floating point when the numbers are large."
+  },
+  "quiz": [
+    {
+      "id": "q18-sums",
+      "difficulty": 2,
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "Five points have sums $n = 3$, $\\sum x = 6$, $\\sum y = 9$, $\\sum xx = 14$, $\\sum xy = 19$.",
+      "question": "What is the slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 0.5, or 0.5 ± 0.0005",
+        "wrong": [
+          {
+            "id": "ratio",
+            "value": 1.3571,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "0.5: $(57 - 54)/(42 - 36)$.",
+        "generic": "Not quite. $n\\sum xy - \\sum x\\sum y$ over $n\\sum xx - (\\sum x)^2$.",
+        "byKey": {
+          "ratio": "You divided $\\sum xy$ by $\\sum xx$."
+        }
+      },
+      "explain": {
+        "text": "The numerator is $3 \\times 19 - 6 \\times 9 = 3$ and the denominator $3 \\times 14 - 36 = 6$."
+      }
+    },
+    {
+      "id": "q18-add",
+      "difficulty": 2,
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "Same sums as before. The point $(4, 8)$ arrives.",
+      "question": "What is the new slope?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.7,
+        "tol": {
+          "abs": 0.0005
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 1.7, or 1.7 ± 0.0005",
+        "wrong": [
+          {
+            "id": "old",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1.7: new sums 4, 10, 17, 30 and 51.",
+        "generic": "Not quite. Add the point to all five sums first.",
+        "byKey": {
+          "old": "You left the sums unchanged."
+        }
+      },
+      "explain": {
+        "text": "The sums become $n = 4$, 10, 17, 30 and 51, so the slope is $(204 - 170)/(120 - 100) = 1.7$."
+      }
+    },
+    {
+      "id": "q18-centre",
+      "difficulty": 3,
+      "tags": [
+        "numerical-stability"
+      ],
+      "pace": 150,
+      "prose": "A fit uses $x$ values near $10^9$. The naive sums lose every digit.",
+      "question": "What is the standard cure?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "centre",
+            "text": "Centre x first, subtracting a nearby constant",
+            "correct": true
+          },
+          {
+            "id": "f32",
+            "text": "Switch to float32 because it is faster than float64",
+            "why": "You chose less precision. That loses digits sooner."
+          },
+          {
+            "id": "round",
+            "text": "Round the sums to six decimals",
+            "why": "You discarded digits you needed."
+          },
+          {
+            "id": "order",
+            "text": "Sum the squares in a different order",
+            "why": "Order changes the rounding a little, but the cancellation stays."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Centre x first.",
+        "generic": "Not quite. The trouble is big numbers that nearly cancel.",
+        "byKey": {
+          "f32": "You reduced precision.",
+          "round": "You rounded.",
+          "order": "You reordered."
+        }
+      },
+      "explain": {
+        "text": "A small, centred $x$ keeps the sums exact enough. The intercept absorbs the shift."
+      }
+    },
+    {
+      "id": "q18-cost",
+      "difficulty": 3,
+      "tags": [
+        "rank-one-update"
+      ],
+      "pace": 150,
+      "prose": "A fit has $n = 10^4$ rows and $p = 5$ columns. A refit costs about $n p^2$, an update about $p^2$.",
+      "question": "How many times cheaper is the update?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10000,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a number",
+        "accept": "Any form equal to 10000",
+        "wrong": [
+          {
+            "id": "p",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "np",
+            "value": 2000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "10,000: $np^2 / p^2 = n$.",
+        "generic": "Not quite. Divide $np^2$ by $p^2$.",
+        "byKey": {
+          "p": "You divided once too often. The $p^2$ cancels, leaving $n$.",
+          "np": "You divided n by p. Both costs carry the same $p^2$."
+        }
+      },
+      "explain": {
+        "text": "The $p^2$ cancels, so the saving is a factor of $n = 10{,}000$."
+      }
+    }
+  ]
+}

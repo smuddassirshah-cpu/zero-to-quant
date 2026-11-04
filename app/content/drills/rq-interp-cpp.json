@@ -1,0 +1,300 @@
+{
+  "id": "rq-interp-cpp",
+  "name": "A linear interpolator in C++",
+  "course": "research-int",
+  "skills": [
+    "rq-data"
+  ],
+  "difficulty": 3,
+  "language": "cpp",
+  "pattern": "interpolation",
+  "pace": 900,
+  "tags": [
+    "interpolation"
+  ],
+  "brief": "Write `double interp(std::vector<double> xs, std::vector<double> ys, double x)`. It returns the straight-line value at `x` between the two nearest known points. The points may arrive unsorted, and repeated `x` values are averaged.\n\nBelow the smallest `x` or above the largest, return the nearest end value. This is a depth option for firms that ask for C++ in a research round.",
+  "constraints": [
+    "Find the bracketing pair with `std::upper_bound`, not a scan.",
+    "There is at least one point, and `xs` and `ys` have the same length.",
+    "Every test has a 5-second limit."
+  ],
+  "hint": "Sort the pairs, merge equal x by their mean, then `std::upper_bound` gives the first x above the query. Use the pair just before it as the left end.",
+  "starter": "#include <vector>\n#include <algorithm>\n#include <utility>\n\n// Linear interpolation at x. Sort, average repeated x, hold the ends.\ndouble interp(std::vector<double> xs, std::vector<double> ys, double x) {\n    // Your code here\n    return 0.0;\n}\n",
+  "solution": "#include <vector>\n#include <algorithm>\n#include <utility>\n\ndouble interp(std::vector<double> xs, std::vector<double> ys, double x) {\n    std::vector<std::pair<double, double>> p;\n    for (size_t i = 0; i < xs.size(); ++i) p.push_back({xs[i], ys[i]});\n    std::sort(p.begin(), p.end());\n    std::vector<double> ux, uy;\n    size_t i = 0;\n    while (i < p.size()) {\n        size_t j = i;\n        double s = 0;\n        while (j < p.size() && p[j].first == p[i].first) {\n            s += p[j].second;\n            ++j;\n        }\n        ux.push_back(p[i].first);\n        uy.push_back(s / (j - i));\n        i = j;\n    }\n    if (x <= ux.front()) return uy.front();\n    if (x >= ux.back()) return uy.back();\n    size_t k = std::upper_bound(ux.begin(), ux.end(), x) - ux.begin();\n    double x0 = ux[k - 1], x1 = ux[k], y0 = uy[k - 1], y1 = uy[k];\n    return y0 + (y1 - y0) * (x - x0) / (x1 - x0);\n}\n",
+  "examples": [
+    {
+      "name": "Two points",
+      "call": "interp",
+      "args": [
+        [
+          0,
+          10
+        ],
+        [
+          100,
+          200
+        ],
+        2.5
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 125.0,
+      "compare": "isclose",
+      "why": "A quarter of the way from 100 to 200 is 125.",
+      "note": "A quarter of the way across, so a quarter of the rise of 100."
+    },
+    {
+      "name": "Unsorted input",
+      "call": "interp",
+      "args": [
+        [
+          3,
+          1,
+          2
+        ],
+        [
+          30,
+          10,
+          25
+        ],
+        2.5
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 27.5,
+      "compare": "isclose",
+      "why": "Sort by x before you look for the bracket.",
+      "note": "Sorted, 2.5 sits halfway between (2, 25) and (3, 30)."
+    }
+  ],
+  "tests": [
+    {
+      "name": "Two points",
+      "call": "interp",
+      "args": [
+        [
+          0,
+          10
+        ],
+        [
+          100,
+          200
+        ],
+        2.5
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 125.0,
+      "compare": "isclose",
+      "why": "A quarter of the way from 100 to 200 is 125."
+    },
+    {
+      "name": "Unsorted input",
+      "call": "interp",
+      "args": [
+        [
+          3,
+          1,
+          2
+        ],
+        [
+          30,
+          10,
+          25
+        ],
+        2.5
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 27.5,
+      "compare": "isclose",
+      "why": "Sort by x before you look for the bracket."
+    },
+    {
+      "name": "Inside the data",
+      "call": "interp",
+      "args": [
+        [
+          3,
+          1,
+          2
+        ],
+        [
+          30,
+          10,
+          25
+        ],
+        1.2
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 13.0,
+      "compare": "isclose",
+      "why": "Between (1, 10) and (2, 25), 0.2 of the way."
+    },
+    {
+      "name": "Below the smallest x",
+      "call": "interp",
+      "args": [
+        [
+          3,
+          1,
+          2
+        ],
+        [
+          30,
+          10,
+          25
+        ],
+        0
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 10.0,
+      "compare": "isclose",
+      "why": "Hold the first value; do not extrapolate."
+    },
+    {
+      "name": "Above the largest x",
+      "call": "interp",
+      "args": [
+        [
+          3,
+          1,
+          2
+        ],
+        [
+          30,
+          10,
+          25
+        ],
+        5
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 30.0,
+      "compare": "isclose",
+      "why": "Hold the last value; do not extrapolate."
+    },
+    {
+      "name": "Repeated x, at the repeat",
+      "call": "interp",
+      "args": [
+        [
+          1,
+          1,
+          2
+        ],
+        [
+          10,
+          20,
+          30
+        ],
+        1
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 15.0,
+      "compare": "isclose",
+      "why": "The two readings at x = 1 average to 15."
+    },
+    {
+      "name": "Repeated x, between",
+      "call": "interp",
+      "args": [
+        [
+          1,
+          1,
+          2
+        ],
+        [
+          10,
+          20,
+          30
+        ],
+        1.5
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 22.5,
+      "compare": "isclose",
+      "why": "Average the repeats first, then go halfway to 30."
+    },
+    {
+      "name": "One point",
+      "call": "interp",
+      "args": [
+        [
+          5
+        ],
+        [
+          42
+        ],
+        9
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 42.0,
+      "compare": "isclose",
+      "why": "One point is both ends, so its value holds everywhere."
+    },
+    {
+      "name": "Four points",
+      "call": "interp",
+      "args": [
+        [
+          2,
+          4,
+          6,
+          8
+        ],
+        [
+          1,
+          5,
+          2,
+          10
+        ],
+        7
+      ],
+      "types": [
+        "std::vector<double>",
+        "std::vector<double>",
+        "double"
+      ],
+      "expect": 6.0,
+      "compare": "isclose",
+      "why": "Between (6, 2) and (8, 10), halfway is 6."
+    }
+  ],
+  "how": "Submit runs 9 hidden tests. Each answer is accepted when it is within relative 1e-9 of the expected value."
+}

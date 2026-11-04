@@ -1,0 +1,94 @@
+{
+  "id": "rq-online-ols-py",
+  "name": "Least squares that updates",
+  "course": "research-int",
+  "skills": [
+    "rq-data",
+    "rq-linalg"
+  ],
+  "difficulty": 4,
+  "pattern": "rank-one-update",
+  "pace": 1500,
+  "tags": [
+    "rank-one-update"
+  ],
+  "fn": "OnlineOLS",
+  "returns": "a class",
+  "brief": "Write a class `OnlineOLS(p)` for a least-squares fit with `p` coefficients. `add(x, y)` takes a design row `x` of length `p` (a leading 1 for the intercept) and its target. `remove(x, y)` takes one back. `coef()` returns the coefficients as a NumPy array of length `p`.\n\nNever refit from stored rows: keep $P = (X^TX)^{-1}$ and update it.",
+  "definition": "Start from $P = 10^8 I$ and $b = 0$, a tiny ridge, so the first rows need no special case. To add a row, with $Px$ computed first:\n\n$$P \\leftarrow P - \\dfrac{(Px)(Px)^T}{1 + x^TPx}, \\qquad b \\leftarrow b + P x\\,(y - x^T b)$$\n\nTo remove it, use $P + (Px)(Px)^T/(1 - x^TPx)$ and subtract the correction. The coefficients are $b$.",
+  "constraints": [
+    "Each add and remove costs about $p^2$, whatever the number of earlier rows.",
+    "NumPy is available.",
+    "All tests share a 5-second limit."
+  ],
+  "hint": "Compute `Px = P @ x` once. After updating P, the correction to b is `(P @ x) * (y - x @ b)`, with b from before the update.",
+  "prelude": "import numpy as np\n\ndef _run_seq():\n    m = OnlineOLS(2)\n    out = []\n    for x, y in [(1, 2), (2, 3), (3, 5), (4, 4)]:\n        m.add([1, x], y)\n    out.append([round(float(v), 6) for v in m.coef()])\n    m.add([1, 5], 8)\n    out.append([round(float(v), 6) for v in m.coef()])\n    m.remove([1, 1], 2)\n    out.append([round(float(v), 6) for v in m.coef()])\n    return out\n\ndef _run_random(n, removed):\n    rng = np.random.default_rng(21)\n    X = np.c_[np.ones(n), rng.normal(size=(n, 2))]\n    y = X @ np.array([1.0, 2.0, -1.0]) + rng.normal(size=n)\n    m = OnlineOLS(3)\n    for i in range(n):\n        m.add(X[i], y[i])\n    for i in range(removed):\n        m.remove(X[i], y[i])\n    ref = np.linalg.lstsq(X[removed:], y[removed:], rcond=None)[0]\n    return float(np.abs(m.coef() - ref).max())\n",
+  "starter": "import numpy as np\n\nclass OnlineOLS:\n    def __init__(self, p):\n        # Your code here\n        pass\n\n    def add(self, x, y):\n        # Your code here\n        pass\n\n    def remove(self, x, y):\n        # Your code here\n        pass\n\n    def coef(self):\n        # Your code here\n        return np.zeros(1)\n",
+  "solution": "import numpy as np\n\nclass OnlineOLS:\n    def __init__(self, p):\n        self.P = np.eye(p) * 1e8\n        self.b = np.zeros(p)\n\n    def add(self, x, y):\n        x = np.asarray(x, float)\n        Px = self.P @ x\n        self.P = self.P - np.outer(Px, Px) / (1.0 + x @ Px)\n        self.b = self.b + (self.P @ x) * (y - x @ self.b)\n\n    def remove(self, x, y):\n        x = np.asarray(x, float)\n        Px = self.P @ x\n        self.P = self.P + np.outer(Px, Px) / (1.0 - x @ Px)\n        self.b = self.b - (self.P @ x) * (y - x @ self.b)\n\n    def coef(self):\n        return self.b.copy()\n",
+  "examples": [
+    {
+      "call": "[round(v, 4) for v in _run_seq()[0]]",
+      "expect": "[1.5, 0.8]",
+      "compare": "isclose",
+      "note": "Four rows: intercept 1.5, slope 0.8."
+    },
+    {
+      "call": "[round(v, 4) for v in _run_seq()[1]]",
+      "expect": "[0.5, 1.3]",
+      "compare": "isclose",
+      "note": "After adding (5, 8): intercept 0.5, slope 1.3."
+    }
+  ],
+  "tests": [
+    {
+      "name": "Four rows",
+      "call": "_run_seq()[0]",
+      "expect": "[1.5, 0.8]",
+      "compare": "isclose",
+      "why": "The four points give intercept 1.5 and slope 0.8."
+    },
+    {
+      "name": "After adding a row",
+      "call": "_run_seq()[1]",
+      "expect": "[0.5, 1.3]",
+      "compare": "isclose",
+      "why": "Adding (5, 8) moves the fit to 0.5 and 1.3."
+    },
+    {
+      "name": "After removing a row",
+      "call": "_run_seq()[2]",
+      "expect": "[0.1, 1.4]",
+      "compare": "isclose",
+      "why": "Removing (1, 2) gives 0.1 and 1.4, the fit of the last four points."
+    },
+    {
+      "name": "Shape of coef",
+      "call": "OnlineOLS(3).coef().shape == (3,)",
+      "expect": "True",
+      "compare": "equal",
+      "why": "coef returns an array of length p."
+    },
+    {
+      "name": "Two hundred rows",
+      "call": "_run_random(200, 0) < 1e-6",
+      "expect": "True",
+      "compare": "equal",
+      "why": "The update must match a full least-squares fit."
+    },
+    {
+      "name": "Rows removed",
+      "call": "_run_random(200, 50) < 1e-6",
+      "expect": "True",
+      "compare": "equal",
+      "why": "After 50 removals it must match the fit of the last 150 rows."
+    },
+    {
+      "name": "Five thousand rows",
+      "call": "_run_random(5000, 100) < 1e-6",
+      "expect": "True",
+      "compare": "equal",
+      "why": "5,000 updates stay accurate and fast."
+    }
+  ],
+  "how": "Submit runs 7 hidden tests: the l18 sequence (to six places), then 200, 200 with 50 removed, and 5,000 seeded rows against `np.linalg.lstsq`."
+}
