@@ -1031,6 +1031,8 @@ const main = async () => {
       where = '#drill/' + id;
       const before = consoleErrors.length;
       try {
+        /* item 512: every pass starts from an unsolved drill. A solved one reopens on Continue (Submit leaves the page when the code is the verified code), so a second viewport pass would leave the drill on its first Submit */
+        await page.evaluate((id2) => { delete ZQ.state.drills.get()[id2]; ZQ.store.set(`drill.${id2}.state`, null); }, id);
         await go('drill/' + id);
         await page.waitForFunction(() => window.ZQDrill, null, { timeout: opt.timeout });
         const bad = await drillReady(cpp);
@@ -1064,7 +1066,7 @@ const main = async () => {
         await shot('drill-' + id + '-verified');
         if (ANY_EXTRA && await wide()) mine.push(`after the run the page is wider than the ${curVp.w} px window`);
         console.log(`${mine.length ? 'FAIL' : 'ok  '} --drill ${id}  ${cpp ? 'C++' : 'Python'}, ${ref.passed} of ${ref.total} tests with the model solution, starter fails: ${!st.ok}`);
-      } catch (e) { if (!mine.length) mine.push('threw ' + String(e.message || e).split('\n')[0]); console.log(`FAIL --drill ${id}  ${mine[0]}`); }
+      } catch (e) { if (!mine.length) mine.push('threw ' + String(e.message || e).split('\n')[0]); console.log(`FAIL --drill ${id}  ${mine[0]}`); if (process.env.ZQDBG) console.log(e.stack, await page.evaluate(() => ({ h: location.hash, z: !!window.ZQDrill, t: document.body.innerText.slice(0, 300) }))); }
       mine.forEach(x => failures.push(`drill ${id}: ${x}`));
       if (consoleErrors.length > before) console.log(`ERR  ${where}`);
       await page.evaluate(() => { location.hash = '#today'; });
