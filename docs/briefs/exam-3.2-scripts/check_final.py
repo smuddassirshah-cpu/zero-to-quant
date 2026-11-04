@@ -328,23 +328,23 @@ eq1 = sum(Q[k - 1] * k for k in range(1, 7)); assert eq1 == Fraction(5, 2)
 chk('e-die-reweight', None, float(eqA), {'no-weight': 91 / 6, 'square-of-mean': float(eq1) ** 2})
 
 # ---------------- M11: two-step tree
-S0_, u, d, R, pp, K_ = 60, 1.25, 0.85, 1.04, 0.6, 60
-qq = (R - d) / (u - d); assert abs(qq * 75 + (1 - qq) * 51 - 60 * 1.04) < 1e-12 and abs(60 * u - 75) < 1e-12 and abs(60 * d - 51) < 1e-12 and abs(60 * R - 62.4) < 1e-12
+S0_, u, d, R, pp, K_ = 60, 1.24, 0.84, 1.05, 0.6, 60
+qq = (R - d) / (u - d); assert abs(qq * 74.4 + (1 - qq) * 50.4 - 63) < 1e-12 and abs(60 * u - 74.4) < 1e-12 and abs(60 * d - 50.4) < 1e-12 and abs(60 * R - 63) < 1e-12
 pay = {'uu': max(S0_ * u * u - K_, 0), 'ud': max(S0_ * u * d - K_, 0), 'dd': max(S0_ * d * d - K_, 0)}
-assert (round(pay['uu'], 2), round(pay['ud'], 2), pay['dd']) == (33.75, 3.75, 0)
+assert (round(pay['uu'], 3), round(pay['ud'], 3), pay['dd']) == (32.256, 2.496, 0)
 def price_with(qx, disc=True):
     v = (qx * qx * pay['uu'] + 2 * qx * (1 - qx) * pay['ud'] + (1 - qx) ** 2 * pay['dd'])
     return v / R ** 2 if disc else v
 # route B: backward induction and replicating cost
 up = (qq * pay['uu'] + (1 - qq) * pay['ud']) / R; dn = (qq * pay['ud'] + (1 - qq) * pay['dd']) / R
 bi = (qq * up + (1 - qq) * dn) / R
-Su, Sd_ = 75, 51
+Su, Sd_ = 74.4, 50.4
 delta = (up - dn) / (Su - Sd_); cash = (up - delta * Su) / R   # replicating portfolio at the root
 rep = delta * 60 + (up - delta * Su) / R
 assert abs(bi - price_with(qq)) < 1e-12 and abs(rep - bi) < 1e-9
 chk('e-tree-price', 0, qq, {'real-world-chance': pp, 'weights-swapped': (u - R) / (u - d)})
 chk('e-tree-price', 1, price_with(qq), {'real-world-weights': price_with(pp), 'no-discounting': price_with(qq, False)})
-assert abs(price_with(qq) - 8.76956) < 1e-5 and round(price_with(pp), 3) == 12.898 and round(price_with(qq, False), 3) == 9.485
+assert abs(price_with(qq) - 9.19314) < 1e-5 and round(price_with(pp), 3) == 11.619 and round(price_with(qq, False), 3) == 10.135
 print('  q^2=%.6f 2q(1-q)=%.5f' % (qq * qq, 2 * qq * (1 - qq)))
 
 # ---------------- P1: kernel peak (spectral solve on a grid)

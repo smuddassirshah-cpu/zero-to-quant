@@ -166,10 +166,10 @@ WIDE_R = [round(x, 12) for x in WIDE]
 WIDE_L = "[" + ", ".join(repr(x) for x in WIDE_R) + "]"
 
 STARTER = '''def explicit_heat(u0, D, dx, T):
-    """Run the explicit scheme on the grid values u0 (the two ends stay 0).
-    Use equal steps, as few as keep lambda = D*dt/dx**2 at most 1/2.
-    Return the final list of grid values."""
-    dt_max = dx * dx / (2 * D)      # the largest stable step
+    """Explicit scheme on u0, ends fixed at 0.
+    Fewest equal steps with lambda <= 1/2.
+    Return the final list."""
+    dt_max = dx * dx / (2 * D)
     steps = int(T / dt_max)
     dt = T / steps
     lam = D * dt / (dx * dx)

@@ -156,36 +156,36 @@ M[4] = item(
 M[11] = parts_item(
     "e-tree-price", 4, ["mt-change", "mt-martingale"], ["risk-neutral-tree"], 270,
     title="Pricing on a two-step tree",
-    prose="A share has $S_0 = 60$. Each step it multiplies by $u = 1.25$ or $d = 0.85$, and cash grows by $1 + r = 1.04$ a step. The real-world chance of an up move is $p = 0.6$. A call struck at $K = 60$ expires after two steps.",
+    prose="A share has $S_0 = 60$. Each step it multiplies by $u = 1.24$ or $d = 0.84$, and cash grows by $1 + r = 1.05$ a step. The real-world chance of an up move is $p = 0.6$. A call struck at $K = 60$ expires after two steps.",
     question="Three follow-up questions.",
     parts=[
         dict(question="What is the risk-neutral chance $q$ of an up move? Give three decimal places.",
-             widget=numeric(0.475, abs_=0.0005, placeholder="a decimal", label="q",
-                            wrong=[("real-world-chance", 0.6, 0.0005), ("weights-swapped", 0.525, 0.0005)], accept="0.475 within 0.0005"),
-             feedback=fb("$q = (1.04 - 0.85)/(1.25 - 0.85) = 0.475$.",
-                         "Choose $q$ so that the discounted share is a martingale: $q \\cdot 75 + (1 - q) \\cdot 51 = 60 \\cdot 1.04$.",
+             widget=numeric(0.525, abs_=0.0005, placeholder="a decimal", label="q",
+                            wrong=[("real-world-chance", 0.6, 0.0005), ("weights-swapped", 0.475, 0.0005)], accept="0.525 within 0.0005"),
+             feedback=fb("$q = (1.05 - 0.84)/(1.24 - 0.84) = 0.525$.",
+                         "Choose $q$ so that the discounted share is a martingale: $q \\cdot 74.4 + (1 - q) \\cdot 50.4 = 60 \\cdot 1.05$.",
                          {"real-world-chance": "You used the real-world 0.6. The pricing chance is set by $u$, $d$ and $r$ alone.",
                           "weights-swapped": "You swapped the weights, $(u - 1 - r)/(u - d)$. The up weight is $(1 + r - d)/(u - d)$."})),
         dict(question="What is the price of the call? Give three decimal places.",
-             widget=numeric(8.76956, abs_=0.0006, placeholder="a decimal", label="Price",
-                            wrong=[("real-world-weights", 12.898, 0.001), ("no-discounting", 9.485, 0.001)], accept="8.770 within 0.0006"),
-             feedback=fb("The payoffs are 33.75, 3.75 and 0. So the price is $[q^2 \\cdot 33.75 + 2q(1 - q) \\cdot 3.75]/1.04^2 = 8.770$.",
+             widget=numeric(9.19314, abs_=0.0006, placeholder="a decimal", label="Price",
+                            wrong=[("real-world-weights", 11.619, 0.001), ("no-discounting", 10.135, 0.001)], accept="9.193 within 0.0006"),
+             feedback=fb("The payoffs are 32.256, 2.496 and 0. So the price is $[q^2 \\cdot 32.256 + 2q(1 - q) \\cdot 2.496]/1.05^2 = 9.193$.",
                          "Weight the three payoffs with $q$, then discount two steps.",
                          {"real-world-weights": "You weighted with $p = 0.6$. The price uses $q$, not $p$.",
-                          "no-discounting": "You took the $Q$-mean payoff, 9.485, and did not discount two steps by $1.04^2$."})),
+                          "no-discounting": "You took the $Q$-mean payoff, 10.135, and did not discount two steps by $1.05^2$."})),
         dict(question="Why does the real-world chance 0.6 not enter the price?",
              widget=choice([
                  ("a", "The price is a replication cost, so it cannot depend on $p$.", True, None),
                  ("b", "Discounting averages the chance 0.6 away over the two steps, so $p$ cancels out.", False,
-                  "Discounting multiplies by $1.04^{-2}$, which has no link to $p$. Nothing cancels that way."),
+                  "Discounting multiplies by $1.05^{-2}$, which has no link to $p$. Nothing cancels that way."),
                  ("c", "The chance 0.6 enters only through $q$, which is why $q$ sits below 0.6.", False,
-                  "$q = 0.475$ is computed from $u$, $d$ and $r$ alone. The number 0.6 is not an input."),
+                  "$q = 0.525$ is computed from $u$, $d$ and $r$ alone. The number 0.6 is not an input."),
                  ("d", "It matters for a call, but not for a put, by put-call parity.", False,
                   "A put is priced by replication too, so $p$ matters for neither. Parity only links the two prices."),
              ]),
              feedback=fb("A replicating portfolio costs the same whatever the real-world chances. The chance $q$ makes discounted prices martingales.",
                          "Ask what the price is: the cost of a portfolio that reproduces the payoff in every state."))],
-    explain="Part a solves $q \\cdot 75 + (1 - q) \\cdot 51 = 62.4$. Part b is the $Q$-mean of the payoff, discounted. The real-world chance moves expected profit, but not the cost of replication.")
+    explain="Part a solves $q \\cdot 74.4 + (1 - q) \\cdot 50.4 = 63$. Part b is the $Q$-mean of the payoff, discounted. The real-world chance moves expected profit, but not the cost of replication.")
 
 # ---------------------------------------------------------------- M8
 M[8] = item(
