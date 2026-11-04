@@ -1,4 +1,4 @@
-# Canvases B: plane, bars, distribution, scatter, series, walk, matrix, vectors, complex-map, graph, array, payoff, orderbook, space
+# Canvases B: plane, bars, distribution, scatter, series, walk, matrix, vectors, complex-map, graph, array, payoff, orderbook, space, interleave
 
 Authors write `canvas: { "kind", "params", "state", "controls" }` (AUTHORING.md section 4). This file gives, per kind, the exact params, state keys, highlightable ids and the `change` events each one emits, with one JSON example each. It also covers the `slider` and `sketch` widgets.
 
@@ -708,6 +708,112 @@ A rotatable 3D view in plain SVG: axes, a box and grid, points, vectors, curves,
     "vectors": [{ "id": "u", "v": [3, 0, 1], "label": "$\\mathbf{u}$" }, { "id": "v", "v": [0, 3, 2], "label": "$\\mathbf{v}$" }],
     "planes": [{ "id": "cs", "span": ["u", "v"], "label": "column space" }] } }
 ```
+
+## interleave
+
+Threads as lanes of numbered steps over shared variables (item 471, E13). The learner taps a lane's **Step** button to run its next step, so any interleaving can be walked by hand. A lane whose next step is a lock another lane holds is disabled and drawn blocked; a wait sleeps until a notify that comes after it. When no lane can step the schedule ends: `complete`, `deadlock` or `asleep`. The same rules, run over every legal schedule (a memoised walk over states, cached per spec), give `values.outcomes`, so "162 of 168" is read from the canvas and never typed. HTML in the canvas wrapper, like `table`; readable at 390 px (three lanes sit side by side at about 110 px each) and in both themes.
+
+**params**
+- `lanes` (1 to 3, at most 8 steps a lane and 24 in all): `[{ "id": "a", "label": "Thread A", "short": "A", "steps": [...], "regs": { "r": 0 } }]`. `id` defaults to a, b, c; `label` to `Thread A`; `short` (on the Step button and in messages) to the id in capitals. `regs` are starting register values (a register not set reads 0).
+- `vars`: shared variables and their starting numbers, `{ "x": 0 }` (alias `shared`). Names may not be `outcomes`, `outcomeList`, `schedules`, `complete`, `deadlock`, `asleep`, `ending`, `outcome`, `done`, `steps`, `remaining`, `order`, `reached`, `reachedList` or `regs` (they are keys of `values()`).
+- `locks`: optional list of lock names. Every `lock` named in a step is found anyway; a declared list makes the validator reject a misspelt one.
+- `outcome`: what makes two finished schedules the same outcome. A list of shared variable names, `"a.r1"` (register `r1` of lane `a`) or `{ "label": "r1", "of": "a.r1" }`. Default: every shared variable in `vars` order. `[]` means "complete" is the only finished outcome (a program with nothing to read, such as a lock ordering).
+- `endings`: renames the end states in `values.outcomes`, `{ "complete": "awake", "asleep": "asleep forever" }` (keys `complete`, `deadlock`, `asleep`). A complete outcome that has values is named by them (`"x=1"`), so `endings.complete` only applies with `outcome: []`.
+- `notation`: `"words"` (default: `load r from x`, `add r 10`, `store x from r`) or `"assign"` (`r = x`, `r += 10`, `x = r`, `x = 1`). A step's own `text` overrides both.
+- `label`: accessible name of the lanes.
+
+**A step** is one numbered operation, drawn as a row `a1 load r from x`. Its id is `id` if given, else the lane id plus its number (`a1`, `a2`), or lane id, a hyphen and the number when the lane id ends in a digit (`t1-1`, `t1-2`). A step is a single op written in place, or `ops: [...]` (several ops that run as one indivisible step, with `text` to say what it is):
+
+| op | fields | does |
+|---|---|---|
+| `load` | `reg`, `var` | register = shared variable |
+| `add` | `reg`, `by` | register += `by` (a number, or an expression over registers) |
+| `store` | `var`, and `reg` (the register to store) or `value` (a number or an expression such as `"r - 80"`) | shared variable = ... |
+| `set` | `reg`, `value` | register = an expression such as `"r >= 80"` or `"q == 0"` (a comparison gives true or false) |
+| `fetch-add` | `var`, `by` (default 1), optional `reg` | atomic: shared variable += `by`, the old value into `reg` |
+| `lock`, `unlock` | `lock` | the lane is blocked while another lane (or itself) holds the lock; `unlock` frees a lock the lane holds |
+| `wait` | optional `lock` | the lane sleeps until a later `notify`; `lock` is released as it falls asleep. On waking the lane carries on with its next step and does not take the lock again (write a `lock` step if it should) |
+| `notify` | none | wakes every sleeping lane (so a notify that runs before the wait wakes nobody: the lost wakeup) |
+
+Any op may carry `if`: an expression over the lane's registers and the shared variables (`+ - * / %`, `< <= > >= == !=`, `&& || !`, `min max abs`, `true false`). The op does nothing when it is false. That is the **conditional step**: `{ "op": "store", "var": "bal", "value": "r - 80", "if": "ok" }` is "if ok: store". A lock step with `if` blocks only when the condition holds; a `wait` with `if` sleeps only then (U11: the consumer waits only if it saw an empty queue). A register shadows a shared variable of the same name.
+
+**Ends.** A schedule ends when no lane can step. `complete`: every lane ran out and none sleeps. `deadlock`: some lane is blocked on a held lock. `asleep` (shown "asleep forever"): the only lanes left are asleep. The ending text names who waits for what.
+
+**state**
+- `schedule`: the lane ids stepped so far, `["a", "b", "a"]`. This is the whole state: tapping a Step button appends to it, Undo removes the last, Reset empties it. A patch replaces it, so `explain.canvas`, `demonstrate.steps[].canvas` and `enter` can show any interleaving (`{ "schedule": ["a", "b", "a", "b", "a", "b"] }`). An entry that cannot run (a blocked, sleeping or finished lane) ends the replay there and the validator rejects it.
+- `outcomes`: `true` shows a table of every outcome with its schedule count (the current schedule's row is washed); `"found"` lists only the outcomes the learner has finished at ("Outcomes found: 2 of 3"), with no counts; `false` (default) hides it.
+- `selected`, `highlight`, `caption`: as everywhere.
+
+**ids** (tap mode, `highlight`, `mark`): every step id (`a1`, `t1-2`, or the step's own `id`); `lane-<id>`; `var-<name>` and `lock-<name>` for the shared chips. Only steps are tappable: `tap-regions` marks steps, and the Step buttons keep working in tap mode. **events:** `change` with `{ type: "step", lane, schedule, ending, outcome }` after a Step, Undo or Reset (`ending` is `running` until the schedule ends).
+
+**derive and widgets.** `values()` gives derive and captions:
+- each shared variable's current value (`values.x`), `values.ending` (`running`, `complete`, `deadlock`, `asleep`), `values.done` (1 once the schedule has ended, however it ended), `values.steps`, `values.remaining`, `values.order` (`"a1 b1 a2"`), `values.outcome` (the key of the finished outcome, else `""`), `values.regs.a.r` (a lane's register);
+- `values.outcomes`: `{ "x=1": 18, "x=2": 2 }`, read as `values.outcomes["x=1"]`; the end states appear as `complete`, `deadlock` and `asleep` (or their `endings` names). `values.outcomeList`: `[{ key, count, ending }]` (complete outcomes first, then deadlock, then asleep). `values.schedules` is the total, and `values.complete`, `values.deadlock` and `values.asleep` count schedules by how they ended (0 when none). These are `undefined` (and a rule that reads them waits) when the spec has more than 200,000 states, which the validator rejects;
+- `values.reached` and `values.reachedList`: the outcomes the learner has finished at on this canvas (kept across Reset).
+
+`tap-regions` marks steps (`answer: ["a1", "b1"]`). `numeric`, `choice` and the other widgets sit beside the canvas as usual. No widget grades the schedule itself: ask what the learner can compute from it (a count, a final value, a marked step).
+
+**methods** (the test hook, screenshots): `step(laneId)` (false when the lane cannot step), `play(["a", "b", ...])` (replaces the schedule, stops at the first entry that cannot run, returns the ending), `finish(pick?)` (steps the first enabled lane until the end, or the lane `pick(enabledIds)` returns), `undo()`, `reset()`, `enabled()` (the lane ids that can step), `ending()`, `outcomes()` (the enumeration: `{ outcomes, list, schedules, complete, deadlock, asleep }`).
+
+**Validator.** `params.lanes` (1 to 3, 8 steps a lane, 24 in all), step and lane ids unique, `op` known, required fields per op, every name in an `if`, `by` or `value` expression a shared variable or a register the lane sets, every variable in `vars`, `lock` in `locks` when `locks` is given, reserved variable names, `outcome` entries that exist, `endings` keys, `state.schedule` that replays legally (also in `enter`), `state.outcomes`, and an enumeration under 200,000 states. A warning for an `unlock` with no earlier `lock` in the lane.
+
+**Not supported (by design):** a store buffer for weak memory (the (0, 0) outcome of the store-buffering test stays a `choice`); `notify_one` (a notify wakes every sleeper); a lane that re-takes its lock on waking; more than three lanes.
+
+Worked examples, one per acceptance criterion. Every count in them is reproduced by the canvas.
+
+A lost update (U2: 20 schedules, 18 end at 1 and 2 at 2):
+
+```json
+{ "kind": "interleave",
+  "params": { "vars": { "x": 0 }, "lanes": [
+    { "id": "a", "steps": [{ "op": "load", "reg": "r", "var": "x" }, { "op": "add", "reg": "r", "by": 1 }, { "op": "store", "var": "x", "reg": "r" }] },
+    { "id": "b", "steps": [{ "op": "load", "reg": "r", "var": "x" }, { "op": "add", "reg": "r", "by": 1 }, { "op": "store", "var": "x", "reg": "r" }] }] },
+  "state": { "outcomes": true },
+  "derive": { "caption": "{{values.outcomes['x=1']}} of {{values.schedules}} end at 1." } }
+```
+
+Pair it with `{ "kind": "tap-regions", "answer": ["a1", "b1"] }` ("tap the two steps that read the old value"). Stepping a, b, a, b, a, b ends at x = 1.
+
+A deadlock (U6: complete 4, deadlock 2 of 6). The step ids are `t1-1` to `t1-4`:
+
+```json
+{ "kind": "interleave",
+  "params": { "lanes": [
+    { "id": "t1", "label": "T1", "steps": [{ "op": "lock", "lock": "A" }, { "op": "lock", "lock": "B" }, { "op": "unlock", "lock": "B" }, { "op": "unlock", "lock": "A" }] },
+    { "id": "t2", "label": "T2", "steps": [{ "op": "lock", "lock": "B" }, { "op": "lock", "lock": "A" }, { "op": "unlock", "lock": "A" }, { "op": "unlock", "lock": "B" }] }] },
+  "state": { "schedule": ["t1", "t2"], "outcomes": true } }
+```
+
+After `t1, t2` both lanes are blocked and the canvas ends "Deadlock: no lane can step. T1 waits for B (held by T2); T2 waits for A (held by T1)." `values.outcomes` is `{ "complete": 4, "deadlock": 2 }`. A ring of three lanes (A,B), (B,C), (C,A) gives `{ "complete": 162, "deadlock": 6 }` and breaking it (the third lane takes A then C) `{ "complete": 142 }`.
+
+An asleep-forever wait (U11: awake 5, asleep 1 of 6). The consumer checks, then waits only if the queue was empty; the order c, p, p, c loses the wakeup:
+
+```json
+{ "kind": "interleave",
+  "params": { "vars": { "q": 0 }, "outcome": [], "endings": { "complete": "awake", "asleep": "asleep forever" }, "lanes": [
+    { "id": "c", "label": "Consumer", "steps": [{ "op": "set", "reg": "e", "value": "q == 0", "text": "check: queue empty?" }, { "op": "wait", "if": "e" }] },
+    { "id": "p", "label": "Producer", "steps": [{ "op": "fetch-add", "var": "q", "by": 1, "text": "push" }, { "op": "notify" }] }] },
+  "state": { "schedule": ["c", "p", "p", "c"] } }
+```
+
+`values.outcomes` is `{ "awake": 5, "asleep forever": 1 }`. The fix (lock held across check and wait, `wait` with `"lock": "m"`) has 5 schedules and none asleep.
+
+A conditional step (U4: two withdrawals of 80 from 100; (bal 20, cash 80) 2 and (bal 20, cash 160) 4 of 6):
+
+```json
+{ "kind": "interleave",
+  "params": { "vars": { "bal": 100, "cash": 0 }, "outcome": ["bal", "cash"], "lanes": [
+    { "id": "a", "label": "Withdrawal A", "steps": [
+      { "ops": [{ "op": "load", "reg": "r", "var": "bal" }, { "op": "set", "reg": "ok", "value": "r >= 80" }], "text": "check: balance at least 80" },
+      { "ops": [{ "op": "store", "var": "bal", "value": "r - 80", "if": "ok" }, { "op": "fetch-add", "var": "cash", "by": 80, "if": "ok" }], "text": "if ok: store r - 80, cash out 80" }] },
+    { "id": "b", "label": "Withdrawal B", "steps": [
+      { "ops": [{ "op": "load", "reg": "r", "var": "bal" }, { "op": "set", "reg": "ok", "value": "r >= 80" }], "text": "check: balance at least 80" },
+      { "ops": [{ "op": "store", "var": "bal", "value": "r - 80", "if": "ok" }, { "op": "fetch-add", "var": "cash", "by": 80, "if": "ok" }], "text": "if ok: store r - 80, cash out 80" }] }] } }
+```
+
+Outcomes enumeration (U3: three lanes of the lost-update program, 1,680 schedules: `x=1` 1,404, `x=2` 270, `x=3` 6). `"outcomes": true` draws the table, and a caption reads it: `"{{values.outcomes['x=3']}} of {{values.schedules}} end at 3."`. Registers can be outcomes too (the store-buffering test, U9): `"outcome": [{ "label": "r1", "of": "a.r1" }, { "label": "r2", "of": "b.r2" }]` gives `{ "r1=0, r2=1": 1, "r1=1, r2=0": 1, "r1=1, r2=1": 4 }`.
+
+The gallery (`#system`) shows the canvas with a lost update, a deadlock, an asleep-forever wait, conditional steps and a three-lane enumeration. The engine sample `content/exams/mock-interleave-sample.json` (`"sample": true`, used by no course) plays all five.
 
 ## Widget: slider
 

@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 const cmap = createRequire(import.meta.url)('../js/engine/canvas/complex-map.js'); // { compile }: formula check for complex-map (item 432)
 const tradeSim = createRequire(import.meta.url)('../js/engine/widgets/trade.js'); // { norm, play, ... }: the trade widget's game, so the authored strategy is played against the benchmark (item 459)
+const interleaveEngine = createRequire(import.meta.url)('../js/engine/canvas/interleave.js'); // { check, idsOf, ... }: the interleave canvas's spec rules, schedule replay and enumeration limit (item 471)
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP = path.resolve(HERE, '..');
@@ -36,7 +37,7 @@ const warn = (file, where, msg) => problems.push({ level: 'warning', file: rel(f
 /* ---------- Vocabulary ---------- */
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const WIDGETS = new Set(['choice', 'multi', 'numeric', 'expression', 'slider', 'sliders', 'drag-point', 'place', 'tap-regions', 'order', 'table', 'manipulate', 'balance', 'sketch', 'code', 'longform', 'trade']);
-const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'complex-map', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console', 'space']);
+const CANVASES = new Set(['pair', 'grid', 'tree', 'venn', 'number-line', 'boxes', 'area', 'balance', 'circle', 'plane', 'bars', 'distribution', 'scatter', 'series', 'walk', 'matrix', 'vectors', 'complex-map', 'graph', 'array', 'payoff', 'orderbook', 'table', 'console', 'space', 'interleave']);
 const SCREEN_TYPES = new Set(['title', 'explore', 'problem', 'ladder', 'demonstrate', 'trap', 'generalise', 'derive', 'transfer']);
 const GRADED = new Set(['problem', 'ladder', 'trap', 'transfer', 'derive']);
 const CANVAS_BOUND = new Set(['tap-regions', 'drag-point', 'sketch', 'balance', 'slider', 'sliders']);
@@ -245,6 +246,7 @@ const checkSim = (file, where, sim, names) => {
 const authorMovable = (c) => {
   if (isObj(c) && c.kind === 'pair') return authorMovable(c.left) || authorMovable(c.right) || (Array.isArray(c.controls) && c.controls.length > 0);
   if (isObj(c) && c.kind === 'circle' && ((isObj(c.state) && c.state.drag === true) || (isObj(c.params) && c.params.drag === true))) return true;
+  if (isObj(c) && c.kind === 'interleave') return true; // the lanes' Step buttons are its own input (item 471)
   const st = isObj(c && c.state) ? c.state : {}, p = isObj(c && c.params) ? c.params : {};
   return (Array.isArray(st.points) && st.points.some(q => isObj(q) && q.drag === true)) || (Array.isArray(st.drag) && st.drag.length > 0) || isObj(p.sim);
 };
@@ -316,6 +318,7 @@ const regionIds = (canvas) => {
     ['points', 'vectors', 'curves', 'lines', 'surfaces', 'planes', 'fields'].forEach(k => [p[k], st[k], en[k]].forEach(L => { if (Array.isArray(L)) L.forEach(q => { if (isObj(q) && q.id != null) ids.add(String(q.id)); }); else if (isObj(L)) Object.keys(L).forEach(id => ids.add(id)); }));
     return ids.size ? ids : null;
   }
+  if (canvas.kind === 'interleave' && Array.isArray(p.lanes)) return interleaveEngine.idsOf(p); // step ids (a1, t1-2), lane-<id>, var-<name>, lock-<name> (item 471)
   if (canvas.kind === 'console' && (Array.isArray(p.lines) || typeof p.text === 'string')) { // one-based line ids
     const st = canvas.state || {}, n = Array.isArray(st.lines) ? Math.max(st.lines.length, (p.lines || String(p.text || '').replace(/\n$/, '').split('\n')).length) : (p.lines || String(p.text).replace(/\n$/, '').split('\n')).length;
     return new Set(range(1, n).map(i => `l${i}`));
@@ -905,6 +908,13 @@ const checkCanvas = (file, where, c) => {
   if (c.kind === 'number-line') listOf(S.arrows).forEach((q, i) => { if (isObj(q) && q.side != null && !['above', 'below'].includes(q.side)) err(file, `${where}.state.arrows[${i}].side`, 'side is "above" or "below"'); });
   if (c.kind === 'graph') listOf(P.nodes).forEach((q, i) => { if (isObj(q) && q.shape != null && !['circle', 'pill', 'rect', 'diamond'].includes(q.shape)) err(file, `${where}.params.nodes[${i}].shape`, 'shape is circle, pill, rect or diamond'); });
   if (['area', 'table'].includes(c.kind) && S.dim != null && !Array.isArray(S.dim)) err(file, `${where}.state.dim`, 'dim is a list of ids');
+  /* item 471: interleave, lanes of steps over shared variables; the engine checks names, locks, expressions, state.schedule and the enumeration limit */
+  if (c.kind === 'interleave') {
+    const r = interleaveEngine.check(isObj(c.params) ? c.params : null, S);
+    r.errors.forEach(x => err(file, `${where}.${x.at}`.replace(/\.$/, ''), x.msg));
+    r.warnings.forEach(x => warn(file, `${where}.${x.at}`.replace(/\.$/, ''), x.msg));
+    if (isObj(c.enter) && c.enter.schedule != null && !r.errors.length) interleaveEngine.check(c.params, { schedule: c.enter.schedule }).errors.forEach(x => err(file, `${where}.enter.${x.at.replace(/^state\./, '')}`, x.msg));
+  }
   if (c.kind === 'console' && P.lines == null && typeof P.text !== 'string') err(file, `${where}.params`, 'a console needs lines (a list of strings) or text');
   if (c.kind === 'console' && P.lines != null && !(Array.isArray(P.lines) && P.lines.every(l => typeof l === 'string'))) err(file, `${where}.params.lines`, 'lines is a list of strings, one per line');
   if (c.kind === 'table' && P.tap != null && P.tap !== 'rows') err(file, `${where}.params.tap`, 'tap is "rows" (or leave it out to tap cells)');

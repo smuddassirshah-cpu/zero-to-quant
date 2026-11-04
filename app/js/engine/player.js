@@ -176,7 +176,7 @@
     const tapHint = () => {
       const k = spec.canvas && spec.canvas.kind;
       if (!bound) return '';
-      if (w.kind === 'tap-regions') return k === 'grid' ? 'Tap a cell to shade it' : k === 'venn' ? 'Tap a region to shade it' : k === 'tree' ? 'Tap a branch to pick it' : 'Tap to select';
+      if (w.kind === 'tap-regions') return k === 'grid' ? 'Tap a cell to shade it' : k === 'venn' ? 'Tap a region to shade it' : k === 'tree' ? 'Tap a branch to pick it' : k === 'interleave' ? 'Tap a step to mark it' : 'Tap to select';
       if (w.kind === 'drag-point') return 'Drag the point';
       if (w.kind === 'sketch') return 'Drag the control points';
       if (w.kind === 'place') return w.mode === 'array' ? 'Drag the cells into order' : 'Drag the items into the containers';
@@ -184,7 +184,7 @@
     };
     /* item 122: Start over only where there is something to put back: a canvas-bound widget, a canvas with controls or a
        draggable point, or a widget whose pieces move (order, place, manipulate, table); not on choice or code screens */
-    const cvSpec = spec.canvas || {}, movable = (c) => !!(c && ((c.controls || []).length || ((c.state || {}).points || []).some(p => p && p.drag) || (c.params || {}).drag || (c.state || {}).drag));
+    const cvSpec = spec.canvas || {}, movable = (c) => !!(c && (c.kind === 'interleave' || (c.controls || []).length || ((c.state || {}).points || []).some(p => p && p.drag) || (c.params || {}).drag || (c.state || {}).drag));
     const resettable = w && (bound || movable(cvSpec) || movable(cvSpec.left) || movable(cvSpec.right) || ['order', 'place', 'manipulate', 'table'].includes(w.kind));
     const cbarHTML = (cap) => `<div class="lsn-cbar"><span class="t-caption lsn-cap">${Z.esc(cap || '')}</span>${mode === 'lesson' && resettable ? '<button type="button" class="link-btn lsn-so" disabled>Start over</button>' : ''}</div>`;
     if (bound && qLine) { const q = add(qLine); countEl = q.querySelector('.lsn-count'); }
