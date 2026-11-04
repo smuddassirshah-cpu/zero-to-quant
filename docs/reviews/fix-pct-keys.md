@@ -67,3 +67,17 @@ Hand-typed column: a real input was filled by keystrokes in a mounted widget; T 
 Fixed: 46. CHECK verdicts: every CHECK was a bug except `options/l3-payoff-minus-premium.json` screens[9] (233% stored as 2.3333, correct). The ensembles, garch daily-vol, py-found daily-return and topic-2.2 CHECK lines all asked for a per cent figure with a % unit, so their keys were bugs.
 
 Validator: 0 errors. Playthroughs (`--local-cdn`) green for all 16 changed lessons, 10 changed sets and exam topic-2.2.
+
+## Second batch (keys at or below 1)
+
+Each old value was recomputed first: 10/sqrt(252) = 0.62994, (-1.2+1.5+0.6)/3 = 0.3, 1.10 x 0.90 - 1 = -0.01, half of (ln 1.07 + ln 0.95) = 0.8183, 1% - half of 0.04^2 = 0.92%. The answer, every wrong value and every abs tol were divided by 100; accept and feedback text unchanged. A grep of the old values found no other holder in each file.
+
+| File | Widget | Old answer | New answer | Old wrong values | New wrong values | Typed results |
+|---|---|---|---|---|---|---|
+| courses/garch/l4-realised-vol.json | `.quiz[1]` | 0.63 | 0.0063 | 0.0397, 0.523 | 0.000397, 0.00523 | 0.63, 0.63%, 0.630 right; 63 wrong; 0.0397 hits 252; 0.523 hits 365 |
+| courses/numpy-pandas/l12-split-apply-combine.json | `.screens[1]` | 0.3 | 0.003 | 0.2333, 0.9, -1.2 | 0.002333, 0.009, -0.012 | 0.3, 0.3% right; 30 wrong; each old wrong hits all, sum, first |
+| courses/py-found/l16-returns-from-a-file.json | `.quiz[3]` | -1 | -0.01 | 0 | 0 | -1, -1%, unicode minus 1 right; -100 wrong; 0 hits sum |
+| courses/random-vars/l19-convex-bets.json | `.screens[11]` | 0.818 | 0.00818 | 1, 0.64, 0.18 | 0.01, 0.0064, 0.0018 | 0.818, 0.818%, 0.82 right; 81.8 wrong; each old wrong hits arith, nohalf, drag |
+| courses/random-vars/review-5.json | `.items[5]` | 0.92 | 0.0092 | 1, 0.84, 0.08 | 0.01, 0.0084, 0.0008 | 0.92, 0.92% right; 92 wrong; each old wrong hits arith, nohalf, drag |
+
+Tolerances: abs 0.001 became 1e-05, 0.005 became 5e-05, 0.01 became 0.0001; each still accepts the precision the prompt asks for. Typed checks ran the real `grade.js` with the numeric widget's parse rule (a node harness, not a browser). Validator: 0 errors. Playthroughs with `--local-cdn` green for the four lessons and set random-vars/review-5.
