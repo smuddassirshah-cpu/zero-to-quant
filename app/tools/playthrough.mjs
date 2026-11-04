@@ -1196,8 +1196,14 @@ const main = async () => {
         });
         for (const r of ['review', 'drill', 'you']) {
           await go(r);
-          const text = await page.evaluate(() => document.querySelector('#app').innerText);
-          names.forEach(n => { if (text.includes(n)) fails.push(`#${r} shows the sample "${n}"`); });
+          /* A sample leaks only as a whole entry: a line of the page text or a leaf element (card title, list item, link) equal to its name.
+             A real item whose name merely contains the sample's name ("Longest run with equal zeros and ones") is not a leak (ENGINE-BACKLOG 499). */
+          const entries = new Set(await page.evaluate(() => {
+            const root = document.querySelector('#app'), out = root.innerText.split('\n').map(x => x.trim());
+            root.querySelectorAll('*').forEach(el => { if (!el.children.length) out.push((el.textContent || '').trim()); });
+            return out.filter(Boolean);
+          }));
+          names.forEach(n => { if (entries.has(n.trim())) fails.push(`#${r} shows the sample "${n}"`); });
         }
         console.log(`${fails.length ? 'FAIL' : 'ok  '} samples  ${samples.length} hidden from mocks, bank, drills and the Review, Drill and You pages, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
