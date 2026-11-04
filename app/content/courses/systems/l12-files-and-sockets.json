@@ -1,0 +1,940 @@
+{
+  "id": "l12-files-and-sockets",
+  "course": "systems",
+  "title": "Files and sockets",
+  "minutes": 13,
+  "objectives": [
+    "Follow a read from a socket through the kernel into user space."
+  ],
+  "skills": [
+    "sy-os"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The journey of a packet",
+      "tags": [
+        "read-path",
+        "copy-count"
+      ],
+      "prose": "A thread calls `recvfrom` on a UDP socket and goes to sleep. Then a packet arrives. Put the journey in order, from the wire to the return.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "n = recvfrom(fd, buf, 1500, 0, ...);"
+          ],
+          "wrap": true,
+          "title": "The call",
+          "numbers": true
+        }
+      },
+      "question": "Put the steps in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "The network card writes the frame into memory"
+          },
+          {
+            "id": "s2",
+            "text": "The card signals the kernel"
+          },
+          {
+            "id": "s3",
+            "text": "The network stack checks the packet and finds the socket by port"
+          },
+          {
+            "id": "s4",
+            "text": "The data joins the socket's buffer and the sleeping thread is woken"
+          },
+          {
+            "id": "s5",
+            "text": "The scheduler runs that thread again"
+          },
+          {
+            "id": "s6",
+            "text": "The kernel copies the data into the thread's buffer"
+          },
+          {
+            "id": "s7",
+            "text": "`recvfrom` returns the byte count"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6",
+          "s7"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at the wire and end at the return."
+        },
+        {
+          "rung": "point",
+          "text": "The card works first, then the kernel, then the thread.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Frame, signal, stack, buffer and wake, scheduler, copy, return."
+        }
+      ],
+      "feedback": {
+        "correct": "Wire, card, stack, buffer and wake, scheduler, copy, return.",
+        "generic": "Not quite right. Read the first marked line."
+      },
+      "explain": {
+        "text": "The frame lands in kernel memory first: that is copy one. The wake and the scheduler follow, then copy two moves the data into your buffer. Two copies and a wake-up are why this path is slow."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Two paths",
+      "tags": [
+        "read-path",
+        "copy-count"
+      ],
+      "prose": "Round figures: a packet takes about 10 µs on the kernel path. On a kernel-bypass path the card writes straight into a ring in your memory, in about 1 µs. Level 1's budget was 5 µs. Switch paths.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "One packet",
+          "wrap": true,
+          "lines": [
+            "kernel path: card, kernel memory, wake, copy",
+            "bypass path: card, your ring"
+          ]
+        },
+        "state": {
+          "params": {
+            "path": 0
+          }
+        },
+        "controls": [
+          {
+            "bind": "path",
+            "options": [
+              "Kernel path",
+              "Bypass path"
+            ],
+            "label": "Path"
+          }
+        ],
+        "derive": {
+          "caption": "{{path == 0 ? 'Kernel path: two copies, one wake-up, about 10 µs.' : 'Bypass path: no kernel copy, no wake-up, about 1 µs.'}}"
+        }
+      },
+      "question": "How many 5 µs budgets does one packet on the kernel path use?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2: 10 µs is two budgets of 5 µs. The bypass path uses one fifth of one.",
+        "wrong": [
+          {
+            "id": "bypass",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the path time by the budget."
+        },
+        {
+          "rung": "point",
+          "text": "The kernel path takes 10 µs.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10 / 5 = 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "Two budgets.",
+        "generic": "Not quite right. Divide 10 µs by 5 µs.",
+        "byKey": {
+          "bypass": "0.2 is the bypass path against the budget. Switch to the kernel path.",
+          "half": "You divided the budget by the path time. Divide 10 by 5."
+        }
+      },
+      "explain": {
+        "text": "The kernel path spends 10 µs on two copies and a wake-up: twice the 5 µs budget, before any work. The bypass path takes 1 µs, one fifth of the budget."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Short reads",
+      "tags": [
+        "partial-read"
+      ],
+      "prose": "A TCP socket carries a stream of 24-byte frames, with no boundaries. A `read` returns however many bytes are ready.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "frame size: 24 bytes",
+            "read 1 returned 100 bytes",
+            "read 2 returned 1,000 bytes"
+          ],
+          "wrap": true,
+          "title": "A stream",
+          "numbers": true
+        }
+      },
+      "question": "For each read on its own, how many whole frames and how many bytes are left?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "100 bytes: whole frames",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "100 bytes: bytes left over",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "1,000 bytes: whole frames",
+            {
+              "edit": true,
+              "answer": 41,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "1,000 bytes: bytes left over",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide by the frame size 24 and keep the remainder."
+        },
+        {
+          "rung": "point",
+          "text": "$24 \\times 4 = 96$ and $24 \\times 41 = 984$.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "100 is 4 frames and 4 bytes; 1,000 is 41 frames and 16 bytes."
+        }
+      ],
+      "feedback": {
+        "correct": "4 and 4; 41 and 16.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$100 / 24 = 4$ with a remainder.",
+          "r1c1": "$100 - 4 \\times 24$.",
+          "r2c1": "$1{,}000 / 24 = 41.7$, so 41 whole frames.",
+          "r3c1": "$1{,}000 - 41 \\times 24$."
+        }
+      },
+      "explain": {
+        "text": "$100 = 4 \\times 24 + 4$ and $1{,}000 = 41 \\times 24 + 16$. The leftover bytes are the start of a frame whose end has not arrived. Keep them and add the next read."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Wait or spin",
+      "tags": [
+        "blocking-vs-polling"
+      ],
+      "prose": "A blocking `recv` sleeps and pays the 5 µs wake. A non-blocking call returns at once, so a loop can **poll**. Round figure: an empty call takes 0.2 µs.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "blocking:  n = recv(fd, buf, 1500, 0);",
+            "polling:   n = recv(fd, buf, 1500, MSG_DONTWAIT);",
+            "           // n is -1, \"would block\""
+          ],
+          "wrap": true,
+          "title": "Two ways to wait",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the cost of each way to wait.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Blocking: time to notice a packet (µs)",
+            {
+              "edit": true,
+              "answer": 5,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Polling: time to notice a packet (µs)",
+            {
+              "edit": true,
+              "answer": 0.2,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "Empty calls while a packet takes 50 µs to arrive",
+            {
+              "edit": true,
+              "answer": 250,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Share of a core a polling loop uses",
+            {
+              "edit": true,
+              "answer": 1.0,
+              "tol": {
+                "abs": 0.01
+              },
+              "unit": "%"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Blocking pays the wake; polling pays one empty call."
+        },
+        {
+          "rung": "point",
+          "text": "$50 / 0.2 = 250$ calls in 50 µs.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "5 µs, 0.2 µs, 250 calls and a whole core."
+        }
+      ],
+      "feedback": {
+        "correct": "5 µs, 0.2 µs, 250 calls, 100% of a core.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "A sleeping thread pays the 5 µs wake.",
+          "r1c1": "An empty call takes 0.2 µs.",
+          "r2c1": "$50\\ \\mu s / 0.2\\ \\mu s$.",
+          "r3c1": "A loop that never sleeps keeps its core busy all the time."
+        }
+      },
+      "explain": {
+        "text": "A blocked thread pays a 5 µs wake. A polling loop notices within about 0.2 µs. It makes 250 empty calls in 50 µs and holds its core at 100%."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "A short read",
+      "tags": [
+        "partial-read"
+      ],
+      "prose": "A handler asks for a 1,000-byte request.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "n = read(fd, buf, 1000);",
+            "// n is 100"
+          ],
+          "wrap": true,
+          "title": "One read",
+          "numbers": true
+        }
+      },
+      "question": "`read(fd, buf, 1000)` returned 100. What happened?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ready",
+            "text": "Only 100 bytes were ready: call again for the rest",
+            "correct": true
+          },
+          {
+            "id": "err",
+            "text": "An error: the other 900 bytes were lost",
+            "why": "A short read is normal. An error returns -1, and no bytes are lost."
+          },
+          {
+            "id": "closed",
+            "text": "The peer closed the connection",
+            "why": "A close returns 0, not 100."
+          },
+          {
+            "id": "wait",
+            "text": "The call waits until all 1,000 arrive",
+            "why": "Once any data is ready, `read` returns what it has."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `read` promise about the count?"
+        },
+        {
+          "rung": "point",
+          "text": "It promises between 0 and the size you asked for.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only 100 bytes were ready."
+        }
+      ],
+      "feedback": {
+        "correct": "Only 100 bytes were ready.",
+        "generic": "Not quite right. A read returns what is ready.",
+        "byKey": {
+          "err": "An error returns -1. Here 100 bytes arrived safely.",
+          "closed": "A closed connection returns 0.",
+          "wait": "The call returned already, with 100 bytes."
+        }
+      },
+      "explain": {
+        "text": "`read` returns what is ready, from 1 up to the size you asked for. The other 900 bytes are still on their way. Loop until you hold what you need."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A zero from recv",
+      "tags": [
+        "partial-read",
+        "blocking-vs-polling"
+      ],
+      "prose": "On a TCP socket, a return of 0 has one meaning. This loop treats it as no data yet.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "while (true) {",
+            "  n = recv(fd, buf, 1500, 0);",
+            "  if (n == 0) continue;  // no data yet",
+            "  handle(buf, n);",
+            "}"
+          ],
+          "wrap": true,
+          "title": "A handler loop",
+          "numbers": true
+        }
+      },
+      "question": "The peer closes the connection. What does this loop do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "spin",
+            "text": "It spins at 100% of a core, calling `recv` for ever",
+            "correct": true
+          },
+          {
+            "id": "block",
+            "text": "It blocks until the peer reconnects",
+            "why": "After a close, `recv` returns 0 at once, every time. Nothing blocks."
+          },
+          {
+            "id": "timeout",
+            "text": "It gets an error after a timeout and stops",
+            "why": "There is no timeout. The 0 comes back immediately and the loop retries."
+          },
+          {
+            "id": "left",
+            "text": "It reads the bytes left in the socket",
+            "why": "Leftover bytes come back before the 0. A 0 means nothing is left, ever."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How fast does `recv` return after a close?"
+        },
+        {
+          "rung": "point",
+          "text": "It returns 0 at once, each time.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The loop retries at once, for ever."
+        }
+      ],
+      "feedback": {
+        "correct": "It spins: 0 means closed, so it never stops.",
+        "generic": "Not quite right. Does `recv` ever block after a close?",
+        "byKey": {
+          "block": "A closed socket does not wait for anything. It returns 0 immediately.",
+          "timeout": "Nothing times out: the 0 is the answer, and the loop ignores it.",
+          "left": "The leftover bytes were read before the 0 came."
+        }
+      },
+      "explain": {
+        "text": "On a TCP socket `recv` returns 0 only when the peer has closed its end. No data yet shows as a block, or as -1 with would-block on a non-blocking socket. A loop that retries on 0 burns a core."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "What a read promises",
+      "prose": "A file, a pipe and a socket are all descriptors, read the same way. The result $r$ of `read(fd, buf, n)` obeys\n\n$$0 \\le r \\le n,$$\n\nwith 0 meaning the stream has ended. Never assume $r = n$.",
+      "question": "What should a handler do with the $r$ bytes it got?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "keep",
+            "text": "Parse the whole frames and keep the remainder",
+            "correct": true
+          },
+          {
+            "id": "drop",
+            "text": "Drop the remainder: it is corrupt",
+            "why": "The remainder is the start of a frame. The next read finishes it."
+          },
+          {
+            "id": "loop",
+            "text": "Call `read` again until $r$ equals $n$",
+            "why": "That can block for ever, because the sender may have nothing more to send."
+          },
+          {
+            "id": "error",
+            "text": "Treat $r < n$ as an error",
+            "why": "A short read is normal. Errors return -1."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Parse whole frames, keep the remainder.",
+        "generic": "Not quite right. What is the leftover?",
+        "byKey": {
+          "drop": "The leftover is half a frame, not damage.",
+          "loop": "Waiting for a full buffer can wait for ever.",
+          "error": "A short read is the usual case on a stream."
+        }
+      },
+      "explain": {
+        "text": "A stream has no frame boundaries, so each read ends wherever the network cut it. Parse every whole frame, then keep the remainder at the front of your buffer. The next read appends to it."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: carrying leftovers",
+      "tags": [
+        "partial-read"
+      ],
+      "pace": 450,
+      "prose": "Drill: about two minutes each. Say the reasoning aloud first. Frames are 24 bytes, and the bytes left after a read carry over to the next. A stream is read in chunks of 100, 50, 24, 23 and 1 bytes. Another is read in chunks of 50, 50 and 50.",
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "Chunks 100, 50, 24, 23, 1: frames parsed in all",
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Chunks 100, 50, 24, 23, 1: frames parsed from the 24-byte read",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Chunks 100, 50, 24, 23, 1: bytes left at the end",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Chunks 50, 50, 50: frames parsed in all",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Chunks 50, 50, 50: bytes left at the end",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the leftover to each new chunk before dividing by 24."
+        },
+        {
+          "rung": "point",
+          "text": "After the 100-byte read, 4 bytes are held. The 50-byte read then makes 54."
+        },
+        {
+          "rung": "step",
+          "text": "100: 4 and 4 left. +50: 2, 6 left. +24: 1, 6 left. +23: 1, 5 left. +1: 0, 6 left."
+        }
+      ],
+      "feedback": {
+        "correct": "8, 1, 6, 6 and 6.",
+        "generic": "Not quite right. Carry the leftover into the next chunk.",
+        "byKey": {
+          "r0c1": "Frames per read are 4, 2, 1, 1 and 0.",
+          "r1c1": "Six held bytes plus 24 new ones make 30: one frame.",
+          "r2c1": "All 198 bytes make 8 frames of 24 bytes (192) and 6 over.",
+          "r3c1": "150 bytes in all: 6 whole frames.",
+          "r4c1": "$150 - 6 \\times 24 = 6$."
+        }
+      },
+      "explain": {
+        "text": "198 bytes are 8 frames and 6 over; 150 bytes are 6 frames and 6 over. The split into reads decides which read parses which frame. A read can parse a frame that began in an earlier one."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: block, epoll or spin",
+      "tags": [
+        "blocking-vs-polling",
+        "read-path"
+      ],
+      "prose": "The interviewer asks: blocking `recv`, `epoll` or a busy poll, for a thread with a 5 µs budget per message?",
+      "question": "Which do you choose for the hot socket?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "spin",
+            "text": "Busy poll the hot socket on its own core",
+            "correct": true
+          },
+          {
+            "id": "block",
+            "text": "Blocking `recv`, because it is simplest",
+            "why": "Each wake costs about 5 µs, the whole budget, before any work."
+          },
+          {
+            "id": "epoll",
+            "text": "`epoll_wait` over every socket from one thread",
+            "why": "`epoll_wait` still sleeps and wakes, so the 5 µs wake is still there."
+          },
+          {
+            "id": "all",
+            "text": "Busy poll in every thread of the program",
+            "why": "Each spinning thread holds a whole core. Threads outnumber cores and starve each other."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which choice avoids the 5 µs wake?"
+        },
+        {
+          "rung": "point",
+          "text": "Only a thread that never sleeps avoids it."
+        },
+        {
+          "rung": "step",
+          "text": "Spin on the hot socket, pinned to its own core."
+        }
+      ],
+      "feedback": {
+        "correct": "Busy poll the hot socket, pinned to a core.",
+        "generic": "Not quite right. Which choice has no wake-up?",
+        "byKey": {
+          "block": "The 5 µs wake is the whole budget.",
+          "epoll": "A blocked `epoll_wait` is woken like any sleeping thread.",
+          "all": "A spinning thread costs a full core each."
+        }
+      },
+      "explain": {
+        "text": "A pinned, spinning thread notices a packet in about 0.2 µs and never pays the 5 µs wake. The price is one core at 100%, even when the feed is quiet. Use blocking calls everywhere else."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The kernel path is two copies and a wake-up, about 10 µs; a kernel-bypass path is about 1 µs.",
+      "`read` returns between 0 and $n$ bytes. A stream has no frame boundaries, so keep the leftover for the next read.",
+      "Blocking pays a 5 µs wake. Polling notices in about 0.2 µs but holds a core at 100%."
+    ],
+    "formula": {
+      "name": "What a read returns",
+      "tex": "0 \\le r \\le n",
+      "note": "Zero on a TCP socket means the peer closed."
+    },
+    "trap": "Treating a short read as an error or as the whole message."
+  },
+  "quiz": [
+    {
+      "id": "q-frames",
+      "difficulty": 2,
+      "tags": [
+        "partial-read"
+      ],
+      "pace": 40,
+      "prose": "A read returns 250 bytes of a stream of 24-byte frames. Nothing was held over from before.",
+      "question": "How many whole frames does it contain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "10 frames: $10 \\times 24 = 240$, with 10 bytes left.",
+        "wrong": [
+          {
+            "id": "round",
+            "value": 11,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "10 whole frames, 10 bytes left.",
+        "generic": "Not quite right. Divide by 24 and drop the remainder.",
+        "byKey": {
+          "round": "You rounded up. The last 10 bytes are only part of a frame."
+        }
+      },
+      "explain": {
+        "text": "$250 = 10 \\times 24 + 10$. The 10 left bytes wait for the next read."
+      }
+    },
+    {
+      "id": "q-copies",
+      "difficulty": 2,
+      "tags": [
+        "copy-count",
+        "read-path"
+      ],
+      "pace": 40,
+      "prose": "A datagram arrives for a thread sleeping in `recvfrom`, on the ordinary kernel path.",
+      "question": "How many times is the data copied before `recvfrom` returns?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "two",
+            "text": "Twice: card to kernel memory, kernel to your buffer",
+            "correct": true
+          },
+          {
+            "id": "once",
+            "text": "Once: card straight to your buffer",
+            "why": "That is the bypass path. The kernel path copies into its own memory first."
+          },
+          {
+            "id": "none",
+            "text": "Never: the kernel hands over a pointer",
+            "why": "Your buffer is yours, so the kernel copies into it."
+          },
+          {
+            "id": "three",
+            "text": "Three times: one more for the socket buffer",
+            "why": "The socket buffer holds the kernel's copy. It is not a separate copy."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Twice.",
+        "generic": "Not quite right. Count the copies on the kernel path."
+      },
+      "explain": {
+        "text": "The card writes the frame to kernel memory, and the kernel copies it into your buffer. The bypass path skips both kernel steps."
+      }
+    },
+    {
+      "id": "q-spin",
+      "difficulty": 3,
+      "tags": [
+        "blocking-vs-polling"
+      ],
+      "pace": 45,
+      "prose": "A polling loop makes empty calls that take 0.2 µs each.",
+      "question": "How many empty calls does it make in 1 ms?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "5,000: 1 ms is 1,000 µs.",
+        "wrong": [
+          {
+            "id": "us",
+            "value": 1000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "5,000 calls.",
+        "generic": "Not quite right. Convert 1 ms to microseconds first.",
+        "byKey": {
+          "us": "1,000 is the microseconds in 1 ms. Divide by 0.2."
+        }
+      },
+      "explain": {
+        "text": "1 ms is 1,000 µs, and 1,000 / 0.2 = 5,000 calls."
+      }
+    },
+    {
+      "id": "q-idle",
+      "difficulty": 2,
+      "tags": [
+        "blocking-vs-polling"
+      ],
+      "pace": 40,
+      "prose": "Two threads wait for packets. One blocks in `recv`, the other polls with `MSG_DONTWAIT`. The feed is quiet.",
+      "question": "Which thread keeps its core busy?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "poll",
+            "text": "The polling thread",
+            "correct": true
+          },
+          {
+            "id": "block",
+            "text": "The blocking thread",
+            "why": "A blocked thread sleeps and frees its core until a packet arrives."
+          },
+          {
+            "id": "both",
+            "text": "Both, equally",
+            "why": "Only a loop that never sleeps keeps a core busy."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The polling thread.",
+        "generic": "Not quite right. Which thread never sleeps?"
+      },
+      "explain": {
+        "text": "A blocked thread is off the core until a packet comes. A polling loop calls again and again, even when nothing arrives."
+      }
+    }
+  ]
+}

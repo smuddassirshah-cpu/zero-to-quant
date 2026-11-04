@@ -1,0 +1,1301 @@
+{
+  "id": "l13-tcp-and-udp",
+  "course": "systems",
+  "title": "TCP, UDP and multicast",
+  "minutes": 14,
+  "objectives": [
+    "Choose between TCP, UDP and multicast for orders and for market data."
+  ],
+  "skills": [
+    "sy-os",
+    "sy-latency"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Behind the gap",
+      "tags": [
+        "head-of-line"
+      ],
+      "prose": "Ten market data messages leave an exchange in order, and message 3 is lost on the wire. TCP hands data to the program strictly in order, and resends message 3 when it can.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            1,
+            2,
+            {
+              "v": 3,
+              "label": "lost"
+            },
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "indexFrom": 1,
+          "showIndex": true
+        },
+        "state": {
+          "caption": "Messages in send order. Message 3 never arrives."
+        }
+      },
+      "question": "Tap every message TCP holds back until message 3 is resent.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c4",
+          "c5",
+          "c6",
+          "c7",
+          "c8",
+          "c9",
+          "c10"
+        ],
+        "countWord": "messages"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which messages cannot be handed over while 3 is missing?"
+        },
+        {
+          "rung": "point",
+          "text": "TCP delivers in order, so everything after the gap waits.",
+          "highlight": [
+            "c4",
+            "c5",
+            "c6",
+            "c7",
+            "c8",
+            "c9",
+            "c10"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Messages 4 to 10, seven in all."
+        }
+      ],
+      "feedback": {
+        "correct": "Seven messages, 4 to 10.",
+        "generic": "Not quite right. Which messages come after the gap?",
+        "byKey": {
+          "c1": "Message 1 arrived before the gap, so TCP delivers it at once.",
+          "c2": "Message 2 arrived before the gap, so TCP delivers it at once.",
+          "c3": "Message 3 is the lost one. It is missing, not held. The messages behind it are held."
+        }
+      },
+      "explain": {
+        "text": "TCP delivers 1 and 2, then holds 4 to 10, seven messages, until 3 is resent. UDP would hand over every message but 3 as each arrived.",
+        "canvas": {
+          "highlight": [
+            "c4",
+            "c5",
+            "c6",
+            "c7",
+            "c8",
+            "c9",
+            "c10"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "How long is the wait",
+      "tags": [
+        "head-of-line"
+      ],
+      "prose": "At 100,000 messages a second, every millisecond of waiting queues 100 more messages behind the gap. A resend inside a data centre takes about 0.5 ms. If TCP's retransmission timer has to fire, about 200 ms. Round figures.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "One lost packet",
+          "wrap": true,
+          "lines": [
+            "feed: 100,000 messages a second",
+            "message 3 lost; the rest queue behind it"
+          ]
+        },
+        "state": {
+          "params": {
+            "repair": 0.5
+          }
+        },
+        "controls": [
+          {
+            "bind": "repair",
+            "stops": [
+              0.5,
+              5,
+              20,
+              200
+            ],
+            "label": "Repair time (ms)",
+            "start": 0.5
+          }
+        ],
+        "derive": {
+          "caption": "{{money(100000 * repair / 1000, '', 0)}} messages wait behind the gap."
+        }
+      },
+      "question": "Slide to 200 ms. How many messages wait behind the gap?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "20,000: 100,000 a second × 0.2 s. At 0.5 ms the same loss holds only 50.",
+        "wrong": [
+          {
+            "id": "slip",
+            "value": 200,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "mid",
+            "value": 2000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the rate by the wait in seconds."
+        },
+        {
+          "rung": "point",
+          "text": "200 ms is 0.2 s.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100{,}000 \\times 0.2 = 20{,}000$."
+        }
+      ],
+      "feedback": {
+        "correct": "20,000 messages.",
+        "generic": "Not quite right. Slide to 200 ms and read the caption.",
+        "byKey": {
+          "slip": "You used 200 ms as if it were 0.002 s. It is 0.2 s.",
+          "mid": "2,000 is the count for 20 ms. Slide to 200 ms."
+        }
+      },
+      "explain": {
+        "text": "A 0.5 ms repair holds 50 messages; a 200 ms timer holds 20,000. The loss is the same, but the wait is 400 times longer. This is **head-of-line blocking**."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Opening a connection",
+      "tags": [
+        "tcp-handshake"
+      ],
+      "prose": "The round trip between client and server is 60 ms, so one way takes 30 ms. TCP exchanges three packets before data counts as sent. UDP just sends.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "client sends SYN",
+            "server gets SYN, sends SYN-ACK",
+            "client gets SYN-ACK, sends ACK and the first data",
+            "server gets the first data"
+          ],
+          "wrap": true,
+          "title": "TCP opens a connection",
+          "numbers": true
+        }
+      },
+      "question": "When does TCP's first data reach the server, in milliseconds from the start?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 90,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ms",
+        "accept": "90 ms: three one-way trips of 30 ms. UDP's data arrives at 30 ms.",
+        "wrong": [
+          {
+            "id": "udp",
+            "value": 30,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "rtt",
+            "value": 60,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 120,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count the one-way trips before the data leaves."
+        },
+        {
+          "rung": "point",
+          "text": "SYN goes out, SYN-ACK comes back, then the data goes out.",
+          "highlight": [
+            "l1",
+            "l2",
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$3 \\times 30 = 90$ ms."
+        }
+      ],
+      "feedback": {
+        "correct": "90 ms.",
+        "generic": "Not quite right. Count three one-way trips of 30 ms.",
+        "byKey": {
+          "udp": "30 ms is when UDP's data arrives. TCP waits for the handshake first.",
+          "rtt": "You counted the SYN and the SYN-ACK. The data needs a third trip.",
+          "four": "The data rides with the ACK, so there is no fourth trip."
+        }
+      },
+      "explain": {
+        "text": "SYN goes out, SYN-ACK comes back, and the first data goes out with the ACK. It arrives at 90 ms. UDP's first data arrives after one trip, at 30 ms, three times sooner."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "One copy for everyone",
+      "tags": [
+        "udp-multicast"
+      ],
+      "prose": "Unicast sends each subscriber its own copy. **Multicast** sends one datagram and the network copies it to every subscriber who has joined.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "50 subscribers",
+            "1,000 messages a second",
+            "100 bytes a message"
+          ],
+          "wrap": true,
+          "title": "One feed",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the bytes a second each way.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Unicast bytes a second",
+            {
+              "edit": true,
+              "answer": 5000000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Multicast bytes a second",
+            {
+              "edit": true,
+              "answer": 100000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Times less data with multicast",
+            {
+              "edit": true,
+              "answer": 50,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Unicast sends one copy per subscriber."
+        },
+        {
+          "rung": "point",
+          "text": "$50 \\times 1{,}000 \\times 100$ bytes a second.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "5,000,000 against 100,000, a ratio of 50."
+        }
+      ],
+      "feedback": {
+        "correct": "5,000,000, 100,000 and 50 times.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$50 \\times 1{,}000 \\times 100$.",
+          "r1c1": "One copy: $1{,}000 \\times 100$.",
+          "r2c1": "$5{,}000{,}000 / 100{,}000$."
+        }
+      },
+      "explain": {
+        "text": "Unicast sends 50 × 1,000 × 100 = 5,000,000 bytes a second, 40 Mbit/s. Multicast sends 100,000, 0.8 Mbit/s, whether 5 or 500 subscribe. The saving equals the number of subscribers."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Two feeds",
+      "tags": [
+        "ab-feeds",
+        "udp-multicast"
+      ],
+      "prose": "Real feeds send every message twice, on feed A and feed B, over separate paths. The receiver keeps whichever copy arrives first. Each feed loses 1% of 1,000,000 messages, independently.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "feed A: loses 1%",
+            "feed B: loses 1%",
+            "messages: 1,000,000"
+          ],
+          "wrap": true,
+          "title": "A/B feeds",
+          "numbers": true
+        }
+      },
+      "question": "How many messages do both feeds lose?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "100: $1{,}000{,}000 \\times 0.01 \\times 0.01$. A seeded simulation gave 87, within its error of about 10.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 10000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sum",
+            "value": 20000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "tenth",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A message is gone only if both copies are."
+        },
+        {
+          "rung": "point",
+          "text": "The chance both copies are lost is $0.01 \\times 0.01$.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1{,}000{,}000 \\times 0.0001 = 100$."
+        }
+      ],
+      "feedback": {
+        "correct": "100 messages.",
+        "generic": "Not quite right. Both copies must be lost together.",
+        "byKey": {
+          "one": "10,000 is what one feed loses alone. The other feed usually has the message.",
+          "sum": "You added the two losses. A message is gone only when both feeds drop it.",
+          "tenth": "You slipped a power of ten. $0.0001 \\times 1{,}000{,}000 = 100$."
+        }
+      },
+      "explain": {
+        "text": "A message is lost for good only when both copies are lost, with chance $0.01 \\times 0.01 = 0.0001$. Of 1,000,000 that is 100, against 10,000 for one feed alone. A seeded simulation gave 87, within its random error of about 10."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Why UDP is sooner",
+      "tags": [
+        "head-of-line",
+        "tcp-handshake"
+      ],
+      "prose": "An engineer says UDP can deliver a price sooner than TCP.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "TCP: SYN, SYN-ACK, data; holds data behind a gap",
+            "UDP: data; each datagram on its own"
+          ],
+          "wrap": true,
+          "title": "What each one waits for",
+          "numbers": true
+        }
+      },
+      "question": "Why can UDP deliver a price sooner than TCP?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "wait",
+            "text": "It skips the handshake and never waits for a resend",
+            "correct": true
+          },
+          {
+            "id": "fast",
+            "text": "Its packets travel faster over the wire",
+            "why": "The wire is the same. The saving is waiting, not speed."
+          },
+          {
+            "id": "zip",
+            "text": "It compresses the payload before it sends",
+            "why": "UDP adds no compression. The payload is the same size."
+          },
+          {
+            "id": "safe",
+            "text": "It guarantees that every packet arrives",
+            "why": "UDP guarantees nothing. The receiver finds and repairs gaps itself."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does TCP do that UDP does not?"
+        },
+        {
+          "rung": "point",
+          "text": "TCP opens a connection and holds data behind a gap.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "UDP does neither, so it waits less."
+        }
+      ],
+      "feedback": {
+        "correct": "It skips the handshake and never waits for a resend.",
+        "generic": "Not quite right. Compare what each protocol waits for.",
+        "byKey": {
+          "fast": "A packet takes the same time on the same wire.",
+          "zip": "Neither protocol compresses anything.",
+          "safe": "UDP promises nothing, which is why it never waits."
+        }
+      },
+      "explain": {
+        "text": "TCP waits for a handshake before the first byte and holds later data behind any gap. UDP does neither, so each datagram goes out and arrives on its own. The price is that the receiver must find gaps itself."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Late and twice",
+      "tags": [
+        "ab-feeds"
+      ],
+      "prose": "Arrival order is not send order, and the second feed repeats messages. These sequence numbers arrived, in this order.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            2,
+            1,
+            4,
+            4,
+            5
+          ],
+          "indexFrom": 1,
+          "showIndex": true
+        },
+        "state": {
+          "caption": "Sequence numbers in arrival order."
+        }
+      },
+      "question": "How many numbers from 1 up to the largest never arrived?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1: only 3 never arrived. 1 came late and 4 came twice.",
+        "wrong": [
+          {
+            "id": "late",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which numbers from 1 to 5 are not in the row at all?"
+        },
+        {
+          "rung": "point",
+          "text": "The 1 is there, after the 2. The 4 is there twice.",
+          "highlight": [
+            "c1",
+            "c2",
+            "c3",
+            "c4",
+            "c5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only 3 is absent."
+        }
+      ],
+      "feedback": {
+        "correct": "One: the number 3.",
+        "generic": "Not quite right. A number that arrived late has still arrived.",
+        "byKey": {
+          "late": "You counted the late 1 as a gap. It arrived, only after the 2.",
+          "none": "The 3 never appears in the row, so there is one gap."
+        }
+      },
+      "explain": {
+        "text": "The 1 arrived after the 2, so it is late but not missing. The second 4 is a duplicate from the other feed and is dropped. Only 3 never arrived."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "What a gap is",
+      "prose": "A gap is a number from 1 up to the largest seen that never arrived:\n\n$$\\text{missing} = \\{1, \\dots, \\max\\} \\setminus \\text{seen}.$$\n\nKeep `seen` as a set, so order and repeats do not matter.",
+      "question": "What does the second copy of a number change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "none",
+            "text": "Nothing: the receiver already has that number",
+            "correct": true
+          },
+          {
+            "id": "count",
+            "text": "It counts as a new message",
+            "why": "Both copies carry the same sequence number, so it is one message."
+          },
+          {
+            "id": "gap",
+            "text": "It marks a gap before it",
+            "why": "A repeat fills no gap and opens none."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Nothing: it is dropped.",
+        "generic": "Not quite right. A set keeps one entry per number.",
+        "byKey": {
+          "count": "The sequence number identifies the message. Two copies are still one.",
+          "gap": "A repeat does not create a gap."
+        }
+      },
+      "explain": {
+        "text": "The set holds each number once, so a repeat changes nothing. A late number fills its place when it arrives. The gaps are whatever is still missing up to the largest number seen."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: find the gaps",
+      "tags": [
+        "ab-feeds"
+      ],
+      "pace": 360,
+      "prose": "Drill: about ninety seconds each. Say the reasoning aloud first. Each row is the sequence numbers received, in arrival order.",
+      "question": "How many numbers from 1 up to the largest are missing?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Received",
+          "Missing"
+        ],
+        "rows": [
+          [
+            "1, 2, 4, 5",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "1, 5",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "3, 1, 2, 6, 5",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "1, 2, 3, 7, 8, 10",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "List the numbers from 1 to the largest, then cross off those received."
+        },
+        {
+          "rung": "point",
+          "text": "For 1, 2, 3, 7, 8, 10 the largest is 10."
+        },
+        {
+          "rung": "step",
+          "text": "1 (the 3), 3 (2, 3 and 4), 1 (the 4), 4 (4, 5, 6 and 9)."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 3, 1 and 4.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "Only 3 is absent from 1 to 5.",
+          "r1c1": "The numbers 2, 3 and 4.",
+          "r2c1": "The largest is 6, and only 4 is absent. Arrival order does not matter.",
+          "r3c1": "The numbers 4, 5, 6 and 9."
+        }
+      },
+      "explain": {
+        "text": "List 1 up to the largest and cross off what arrived. The order of arrival never matters. The largest number sets how far to look."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Find the gaps in code",
+      "tags": [
+        "ab-feeds"
+      ],
+      "prose": "Now in code. A feed handler runs this check on every batch of messages.",
+      "question": "Fix `find_gaps` so it returns every missing number, smallest first.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <vector>\n\n// A UDP feed numbers its messages 1, 2, 3, ... Messages may arrive late or twice.\n// Given the sequence numbers in arrival order, return every number from 1 up to the largest seen\n// that has not arrived, smallest first.\nstd::vector<int> find_gaps(const std::vector<int>& seqs) {\n    std::vector<int> missing;\n    int expected = 1;\n    for (int s : seqs) {\n        while (expected < s) missing.push_back(expected++);   // a jump means a gap\n        if (s == expected) ++expected;\n    }\n    return missing;\n}\n",
+        "solution": "#include <algorithm>\n#include <vector>\n\nstd::vector<int> find_gaps(const std::vector<int>& seqs) {\n    if (seqs.empty()) return {};\n    int largest = *std::max_element(seqs.begin(), seqs.end());\n    std::vector<bool> seen(largest + 1, false);\n    for (int s : seqs) seen[s] = true;\n    std::vector<int> missing;\n    for (int n = 1; n <= largest; ++n)\n        if (!seen[n]) missing.push_back(n);\n    return missing;\n}\n",
+        "examples": [
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                1,
+                2,
+                4,
+                5
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              3
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                1,
+                3,
+                2
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [],
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                1,
+                2,
+                4,
+                5
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              3
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                1,
+                3,
+                2
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                2,
+                3
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              1
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                1,
+                5
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              2,
+              3,
+              4
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                1,
+                2,
+                2,
+                4,
+                4
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              3
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              []
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                3,
+                1,
+                2,
+                6,
+                5
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              4
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                1,
+                2,
+                3,
+                7,
+                8,
+                10
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              4,
+              5,
+              6,
+              9
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                5,
+                4,
+                3,
+                2,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                2,
+                1,
+                4,
+                3,
+                6
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              5
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                4,
+                2,
+                3
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              1
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                1,
+                4,
+                2,
+                3
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [],
+            "compare": "equal"
+          },
+          {
+            "call": "find_gaps",
+            "args": [
+              [
+                3,
+                3,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": [
+              2
+            ],
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Thirteen hidden tests, including late numbers, repeats and an empty feed."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The starter treats every jump ahead as a gap, even a number that arrives later."
+        },
+        {
+          "rung": "point",
+          "text": "With 1, 3, 2 the 3 jumps ahead, then the 2 arrives. Nothing is missing."
+        },
+        {
+          "rung": "step",
+          "text": "Mark every number seen, then list the unmarked ones from 1 up to the largest."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Mark what arrived, then list what did not.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "Comparing each number with the next expected one reports a gap when a number jumps ahead. The missing number may arrive next, though. Marking every number seen, then listing the unmarked ones up to the largest, ignores order and repeats."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: TCP_NODELAY",
+      "tags": [
+        "tcp-handshake"
+      ],
+      "prose": "The interviewer asks: orders go over TCP, a reliable ordered session. Why set `TCP_NODELAY` on that connection? A 24-byte order is a small write.",
+      "question": "What does `TCP_NODELAY` change?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "nagle",
+            "text": "It stops small writes waiting for an acknowledgement",
+            "correct": true
+          },
+          {
+            "id": "speed",
+            "text": "It makes packets travel faster over the wire",
+            "why": "The option changes when a write is sent, not the speed on the wire."
+          },
+          {
+            "id": "udp",
+            "text": "It turns the connection into UDP for orders",
+            "why": "TCP still retransmits and orders. Only the holding back of small writes stops."
+          },
+          {
+            "id": "hand",
+            "text": "It removes the handshake when connecting",
+            "why": "The handshake still happens when the connection opens."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does TCP do with a small write by default?"
+        },
+        {
+          "rung": "point",
+          "text": "A rule holds it back until earlier data is acknowledged."
+        },
+        {
+          "rung": "step",
+          "text": "The option switches that rule off."
+        }
+      ],
+      "feedback": {
+        "correct": "It stops small writes waiting for an acknowledgement.",
+        "generic": "Not quite right. Which part of sending does it change?",
+        "byKey": {
+          "speed": "Nothing on the wire gets faster.",
+          "udp": "The session stays reliable and ordered.",
+          "hand": "The handshake is a separate step."
+        }
+      },
+      "explain": {
+        "text": "By default TCP holds a small write until earlier data is acknowledged. A delayed acknowledgement can add about 40 ms on Linux. A 24-byte order should leave at once, and `TCP_NODELAY` switches the holding rule off."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "TCP holds every later message behind a lost packet: 20,000 at 100,000 a second with a 200 ms timer.",
+      "Multicast sends one datagram to every subscriber, 50 times less data than unicast to 50. With feeds A and B, 100 messages in a million are lost on both, against 10,000 on one.",
+      "Sequence numbers reveal gaps. Arrival order is not send order, and a repeat is dropped."
+    ],
+    "formula": {
+      "name": "Missing sequence numbers",
+      "tex": "\\text{missing} = \\{1, \\dots, \\max\\} \\setminus \\text{seen}",
+      "note": "seen is a set: order and repeats do not matter."
+    },
+    "trap": "Calling a number missing because it arrived late or twice."
+  },
+  "quiz": [
+    {
+      "id": "q-handshake",
+      "difficulty": 2,
+      "tags": [
+        "tcp-handshake"
+      ],
+      "pace": 45,
+      "prose": "The round trip between a client and a server is 100 ms.",
+      "question": "When does TCP's first data reach the server, in milliseconds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 150,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ms",
+        "accept": "150 ms: three one-way trips of 50 ms. UDP needs 50 ms.",
+        "wrong": [
+          {
+            "id": "udp",
+            "value": 50,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "rtt",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "150 ms.",
+        "generic": "Not quite right. Count three one-way trips of 50 ms.",
+        "byKey": {
+          "udp": "50 ms is UDP's time. TCP waits for the handshake.",
+          "rtt": "The data needs a third trip after the SYN and SYN-ACK."
+        }
+      },
+      "explain": {
+        "text": "One way is 50 ms. SYN out, SYN-ACK back and the data out make three trips, 150 ms. UDP sends at once and arrives at 50 ms."
+      }
+    },
+    {
+      "id": "q-orders",
+      "difficulty": 2,
+      "tags": [
+        "head-of-line",
+        "udp-multicast"
+      ],
+      "pace": 45,
+      "prose": "A trading firm sends orders to an exchange and receives its market data.",
+      "question": "Which pairing is usual?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "Orders on a reliable session, market data on UDP multicast",
+            "correct": true
+          },
+          {
+            "id": "swap",
+            "text": "Orders on UDP multicast, market data on one TCP stream each",
+            "why": "A lost order must be resent in order, and many subscribers make unicast TCP costly."
+          },
+          {
+            "id": "udp",
+            "text": "Both on plain UDP, with no sequence numbers at all",
+            "why": "Without sequence numbers a receiver cannot find a gap."
+          },
+          {
+            "id": "tcp",
+            "text": "Both on TCP, since it is reliable and ordered",
+            "why": "A gap in a TCP market data stream holds every later price behind it."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Orders reliable and ordered, market data multicast.",
+        "generic": "Not quite right. Which side can tolerate a gap and repair it?"
+      },
+      "explain": {
+        "text": "An order must arrive once and in order, so a reliable session fits. Market data is broadcast to many, and a receiver can repair a gap from the second feed."
+      }
+    },
+    {
+      "id": "q-gaps",
+      "difficulty": 2,
+      "tags": [
+        "ab-feeds"
+      ],
+      "pace": 40,
+      "prose": "Sequence numbers 2, 4 and 5 have arrived, in that order.",
+      "question": "How many numbers from 1 up to the largest are missing?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2: the numbers 1 and 3.",
+        "wrong": [
+          {
+            "id": "seen",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2: the numbers 1 and 3.",
+        "generic": "Not quite right. List 1 to 5 and cross off what arrived.",
+        "byKey": {
+          "seen": "3 is how many arrived. Count the absent ones."
+        }
+      },
+      "explain": {
+        "text": "The largest is 5. Of 1 to 5, the numbers 2, 4 and 5 arrived, so 1 and 3 are missing."
+      }
+    },
+    {
+      "id": "q-multicast",
+      "difficulty": 3,
+      "tags": [
+        "udp-multicast"
+      ],
+      "pace": 50,
+      "prose": "A feed sends 1,000 messages a second of 200 bytes each. Ten subscribers have joined.",
+      "question": "How many bytes a second would unicast send?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2000000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2,000,000: $10 \\times 1{,}000 \\times 200$. Multicast sends 200,000.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 200000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2,000,000 bytes a second.",
+        "generic": "Not quite right. Unicast sends one copy to each subscriber.",
+        "byKey": {
+          "one": "200,000 is one copy: the multicast figure."
+        }
+      },
+      "explain": {
+        "text": "Each of 10 subscribers gets 1,000 × 200 = 200,000 bytes a second, so unicast sends 2,000,000. Multicast sends 200,000."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1032 @@
+{
+  "id": "l11-processes",
+  "course": "systems",
+  "title": "Processes and system calls",
+  "minutes": 13,
+  "objectives": [
+    "Explain a process, a system call and a context switch, and what each costs."
+  ],
+  "skills": [
+    "sy-os"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where the program waits",
+      "tags": [
+        "syscall-cost",
+        "context-switch"
+      ],
+      "prose": "A program reads one packet and prints it. `strace -T` lists each system call and, in angle brackets, the seconds it took. This trace is abbreviated and invented in our own words, not a real log.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "socket(AF_INET, SOCK_DGRAM, 0) = 3 <0.000012>",
+            "bind(3, ...) = 0 <0.000008>",
+            "recvfrom(3, ..., 1500, 0, ...) = 24 <0.012340>",
+            "write(1, \"24 bytes\\n\", 9) = 9 <0.000010>"
+          ],
+          "wrap": true,
+          "title": "strace -T, abbreviated",
+          "numbers": true
+        }
+      },
+      "question": "Tap the call where the program waits.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l3"
+        ],
+        "countWord": "calls"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which call took far longer than the others?"
+        },
+        {
+          "rung": "point",
+          "text": "`<0.012340>` is 12.34 ms, over a thousand times the rest.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Line 3, the `recvfrom`."
+        }
+      ],
+      "feedback": {
+        "correct": "Line 3: `recvfrom` took 12.34 ms.",
+        "generic": "Not quite right. Compare the times in angle brackets.",
+        "byKey": {
+          "l1": "`socket` took 12 µs. It only makes a descriptor.",
+          "l2": "`bind` took 8 µs, about the same as `socket`.",
+          "l4": "`write` took 10 µs, the same order as `socket` and `bind`."
+        }
+      },
+      "explain": {
+        "text": "`recvfrom` took 12.34 ms because the thread slept until a packet arrived. The other calls took about 10 µs each. A call that blocks hands the core to another thread until it can finish.",
+        "canvas": {
+          "tone": {
+            "l3": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Read a megabyte",
+      "tags": [
+        "syscall-cost"
+      ],
+      "prose": "A **system call** asks the kernel to act for your program. Round figure: one call costs about 0.2 µs on a modern core. Slide the read size and watch the calls.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Reading 1 MiB",
+          "wrap": true,
+          "lines": [
+            "fd = open(\"feed.bin\");",
+            "while (bytes left)",
+            "    n = read(fd, buf, chunk);"
+          ]
+        },
+        "state": {
+          "params": {
+            "chunk": 64
+          }
+        },
+        "controls": [
+          {
+            "bind": "chunk",
+            "stops": [
+              64,
+              4096,
+              65536
+            ],
+            "label": "Bytes per read",
+            "start": 64
+          }
+        ],
+        "derive": {
+          "caption": "{{money(1048576 / chunk, '', 0)}} calls of {{money(chunk, '', 0)}} bytes: {{money(1048576 / chunk * 0.2, '', 1)}} µs of call overhead."
+        }
+      },
+      "question": "How many calls does 64 KiB per read need for the whole 1 MiB?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "16 calls: 1,048,576 / 65,536.",
+        "wrong": [
+          {
+            "id": "small",
+            "value": 16384,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "mid",
+            "value": 256,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the 1 MiB by the bytes per read."
+        },
+        {
+          "rung": "point",
+          "text": "1 MiB is 1,048,576 bytes and 64 KiB is 65,536.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1{,}048{,}576 / 65{,}536 = 16$."
+        }
+      ],
+      "feedback": {
+        "correct": "16 calls.",
+        "generic": "Not quite right. Calls are the file size over the bytes per read.",
+        "byKey": {
+          "small": "16,384 is the count for 64-byte reads. Slide to 64 KiB.",
+          "mid": "256 is the count for 4 KiB reads. Slide to 64 KiB."
+        }
+      },
+      "explain": {
+        "text": "A 64 KiB read is 1,024 times bigger than a 64-byte read, so it needs 1,024 times fewer calls. Sixteen calls cost 3.2 µs; sixteen thousand would cost 3,276.8 µs."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Count the calls",
+      "tags": [
+        "syscall-cost"
+      ],
+      "prose": "Now without the slider. The file is 1 MiB, 1,048,576 bytes, and every call costs 0.2 µs. Work from the number of calls.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "file: 1 MiB = 1,048,576 bytes",
+            "one call: 0.2 µs",
+            "read sizes: 64 B, 4 KiB, 64 KiB"
+          ],
+          "wrap": true,
+          "title": "The setup",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the calls and the overhead.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Calls with 64-byte reads",
+            {
+              "edit": true,
+              "answer": 16384,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Overhead with 64-byte reads (µs)",
+            {
+              "edit": true,
+              "answer": 3276.8,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ],
+          [
+            "Calls with 4 KiB reads",
+            {
+              "edit": true,
+              "answer": 256,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Overhead with 4 KiB reads (µs)",
+            {
+              "edit": true,
+              "answer": 51.2,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ],
+          [
+            "Times fewer calls: 64 KiB reads against 64-byte reads",
+            {
+              "edit": true,
+              "answer": 1024,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Calls are the file size over the read size."
+        },
+        {
+          "rung": "point",
+          "text": "$1{,}048{,}576 / 64 = 16{,}384$ and $1{,}048{,}576 / 4{,}096 = 256$.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "16,384 and 3,276.8 µs; 256 and 51.2 µs; 64 KiB needs 16 calls, so 1,024 times fewer."
+        }
+      ],
+      "feedback": {
+        "correct": "16,384 and 3,276.8 µs; 256 and 51.2 µs; 1,024 times.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$1{,}048{,}576 / 64$.",
+          "r1c1": "Multiply the calls by 0.2 µs.",
+          "r2c1": "$1{,}048{,}576 / 4{,}096$.",
+          "r3c1": "256 calls at 0.2 µs.",
+          "r4c1": "64 KiB reads need 16 calls: 16,384 / 16."
+        }
+      },
+      "explain": {
+        "text": "Calls fall in proportion to the read size: 16,384, then 256, then 16. The overhead is 3,276.8 µs with 64-byte reads and 51.2 µs with 4 KiB reads. Batch your reads."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A wake for every message",
+      "tags": [
+        "context-switch"
+      ],
+      "prose": "A **context switch** changes which thread runs on a core. Round figure: 2 µs each. A thread that sleeps on a socket and is woken per message pays two: one to sleep, one to wake.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "thread: recv() with nothing to read",
+            "kernel: sleep this thread, run another",
+            "a packet arrives",
+            "kernel: wake this thread, run it again"
+          ],
+          "wrap": true,
+          "title": "One blocking receive",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the cost of waking once per message.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Context switches per message",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Switch time per message (µs)",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Share of a core at 100,000 messages a second",
+            {
+              "edit": true,
+              "answer": 0.4,
+              "tol": {
+                "abs": 0.005
+              },
+              "unit": "%"
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Count one switch to sleep and one to wake."
+        },
+        {
+          "rung": "point",
+          "text": "$2 \\times 2\\ \\mu s = 4\\ \\mu s$ a message.",
+          "highlight": [
+            "l2",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100{,}000 \\times 4\\ \\mu s = 0.4$ s of every second: 40%."
+        }
+      ],
+      "feedback": {
+        "correct": "2 switches, 4 µs, 40% of a core.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "One switch to sleep and one to wake.",
+          "r1c1": "2 switches of 2 µs.",
+          "r2c1": "$100{,}000 \\times 4\\ \\mu s = 0.4$ s every second."
+        }
+      },
+      "explain": {
+        "text": "Two switches of 2 µs cost 4 µs a message. At 100,000 messages a second that is 0.4 s of every second, 40% of a core, before any real work.",
+        "canvas": {
+          "tone": {
+            "l2": "err",
+            "l4": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Process or thread",
+      "tags": [
+        "process-vs-thread",
+        "fd-table"
+      ],
+      "prose": "A **process** is a program with its own address space and its own file-descriptor table. Threads of one process share both. `fork` makes a child process that starts as a copy.\n\n```cpp\nint x = 5;\nif (fork() == 0) x = 9;   // the child\n```",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Owned by",
+            "Two threads",
+            "Two processes"
+          ],
+          "rows": [
+            [
+              "Address space",
+              "one, shared",
+              "one each"
+            ],
+            [
+              "Descriptor table",
+              "one, shared",
+              "one each"
+            ],
+            [
+              "Stack and registers",
+              "one each",
+              "one each"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "center"
+          ]
+        }
+      },
+      "question": "After `fork`, the child sets `x = 9`. What does the parent's `x` show, and why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "own",
+            "text": "Still 5: the child wrote to its own copy of the page",
+            "correct": true
+          },
+          {
+            "id": "shared",
+            "text": "9: parent and child share the variable",
+            "why": "You treated the child as a thread. A process has its own address space, so the write cannot reach the parent."
+          },
+          {
+            "id": "early",
+            "text": "5, because `fork` copies all memory before it returns",
+            "why": "Copying everything up front would be slow. The frames are shared until one side writes."
+          },
+          {
+            "id": "race",
+            "text": "Either: the two processes race on `x`",
+            "why": "A race needs shared memory. After the write the two copies are separate."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Do two processes share an address space?"
+        },
+        {
+          "rung": "point",
+          "text": "The table shows one address space for threads and one each for processes.",
+          "highlight": [
+            "r0c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The child gets its own copy of that page when it writes."
+        }
+      ],
+      "feedback": {
+        "correct": "Still 5: the write went to the child's own copy.",
+        "generic": "Not quite right. Look at the address space row of the table.",
+        "byKey": {
+          "shared": "That is how two threads behave. Two processes have separate address spaces.",
+          "early": "The frames are shared at first, and copied only on a write.",
+          "race": "There is no shared variable to race on once the child has written."
+        }
+      },
+      "explain": {
+        "text": "The child's write gives it its own copy of that one page, so the parent still sees 5. Until a write, parent and child share the same frames: this is **copy-on-write**. Two threads would have shared `x` and both seen 9."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Is a call a switch",
+      "tags": [
+        "syscall-cost",
+        "context-switch"
+      ],
+      "prose": "A colleague says every system call is a context switch, so calls cost as much as switches.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "thread A: write(fd, buf, 24)",
+            "-> kernel mode, still thread A",
+            "-> user mode, thread A carries on"
+          ],
+          "wrap": true,
+          "title": "One system call",
+          "numbers": true
+        }
+      },
+      "question": "Is a system call a context switch?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the same thread carries on, in kernel mode",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: the kernel runs, so the thread is switched out",
+            "why": "The kernel runs on your thread's behalf. No other thread was scheduled."
+          },
+          {
+            "id": "yes2",
+            "text": "Yes, and it costs about 2 µs",
+            "why": "A switch to another thread costs 2 µs. A call costs about 0.2 µs, ten times less."
+          },
+          {
+            "id": "free",
+            "text": "No, and it costs nothing at all",
+            "why": "It costs about 0.2 µs each: 16,384 of them cost about 3.3 ms."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which thread is running before and after the call?"
+        },
+        {
+          "rung": "point",
+          "text": "The same thread A writes before and after.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only its privilege level changes."
+        }
+      ],
+      "feedback": {
+        "correct": "No: one thread, two privilege levels.",
+        "generic": "Not quite right. Does any other thread run during the call?",
+        "byKey": {
+          "yes": "Nothing else was scheduled. The same thread went into the kernel and came back.",
+          "yes2": "The 2 µs is a thread switch. A call is ten times cheaper.",
+          "free": "Each call costs about 0.2 µs, and thousands of them add up."
+        }
+      },
+      "explain": {
+        "text": "A system call changes the privilege level of the same thread, so it costs about 0.2 µs. A context switch changes which thread runs and costs about 2 µs. A call that blocks, like `recvfrom` earlier, causes a switch too."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A call with no kernel entry",
+      "tags": [
+        "syscall-cost"
+      ],
+      "prose": "Some calls never enter the kernel. Linux keeps the time in a shared page, so `clock_gettime` reads it in user space in about 20 ns. Round figure.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "for (int i = 0; i < 500000; ++i)",
+            "    t = clock_gettime(CLOCK_MONOTONIC);"
+          ],
+          "wrap": true,
+          "title": "Reading the clock",
+          "numbers": true
+        }
+      },
+      "question": "How many milliseconds do 500,000 such reads take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ms",
+        "accept": "10 ms: 500,000 × 20 ns. As real system calls they would take 100 ms.",
+        "wrong": [
+          {
+            "id": "kernel",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "slip",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the count by 20 ns."
+        },
+        {
+          "rung": "point",
+          "text": "$500{,}000 \\times 20\\ \\text{ns} = 10{,}000{,}000\\ \\text{ns}$.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "10,000,000 ns is 10 ms."
+        }
+      ],
+      "feedback": {
+        "correct": "10 ms.",
+        "generic": "Not quite right. Count 20 ns for each read, not 200 ns.",
+        "byKey": {
+          "kernel": "That is 500,000 reads at 200 ns, as if each entered the kernel. This read does not.",
+          "slip": "You slipped a power of ten. 10,000,000 ns is 10 ms."
+        }
+      },
+      "explain": {
+        "text": "The shortcut costs 20 ns a read, so 500,000 reads take 10 ms. A real system call would cost about 200 ns here and 100 ms in all. Not every library call is a system call."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The cost of a call",
+      "prose": "Reading a file in pieces costs\n\n$$\\text{overhead} = \\frac{\\text{bytes}}{\\text{bytes per call}} \\times 0.2\\ \\mu s.$$\n\nRead *Beej's Guide to Network Programming* (a free guide) and the Linux manual pages for `read`, `recv` and `epoll`.",
+      "question": "Doubling the bytes per call does what to the overhead?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "half",
+            "text": "It halves the overhead",
+            "correct": true
+          },
+          {
+            "id": "same",
+            "text": "It leaves the overhead alone",
+            "why": "The bytes copied stay the same, but the number of calls does not."
+          },
+          {
+            "id": "double",
+            "text": "It doubles the overhead",
+            "why": "You multiplied by the read size. It sits under the bar, so doubling it halves the cost."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It halves the overhead.",
+        "generic": "Not quite right. The read size is the divisor.",
+        "byKey": {
+          "same": "The count of calls changes with the read size, and so does the overhead.",
+          "double": "The read size divides the bytes. A bigger read means fewer calls."
+        }
+      },
+      "explain": {
+        "text": "Overhead is calls times 0.2 µs, and calls are the bytes over the read size. A bigger read means fewer calls. The copying does not shrink, only the entries into the kernel."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: calls and switches",
+      "tags": [
+        "syscall-cost",
+        "context-switch"
+      ],
+      "pace": 450,
+      "prose": "Drill: about two minutes each. Say the reasoning aloud first. Round figures: a call 0.2 µs, a thread switch 2 µs, and a wake per message costs two switches.",
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "4 MiB in 4 KiB reads: calls",
+            {
+              "edit": true,
+              "answer": 1024,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4 MiB in 4 KiB reads: overhead (µs)",
+            {
+              "edit": true,
+              "answer": 204.8,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ],
+          [
+            "8 MiB in 64 KiB reads: calls",
+            {
+              "edit": true,
+              "answer": 128,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "8 MiB in 64 KiB reads: overhead (µs)",
+            {
+              "edit": true,
+              "answer": 25.6,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ],
+          [
+            "One wake per message at 250,000 a second: cores spent on switching",
+            {
+              "edit": true,
+              "answer": 1.0,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Calls are the size over the read size."
+        },
+        {
+          "rung": "point",
+          "text": "4 MiB is 4,194,304 bytes; 8 MiB is 8,388,608 bytes."
+        },
+        {
+          "rung": "step",
+          "text": "1,024 and 204.8 µs; 128 and 25.6 µs; $250{,}000 \\times 4\\ \\mu s = 1$ s a second."
+        }
+      ],
+      "feedback": {
+        "correct": "1,024, 204.8 µs, 128, 25.6 µs and one whole core.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$4{,}194{,}304 / 4{,}096$.",
+          "r1c1": "1,024 calls at 0.2 µs.",
+          "r2c1": "$8{,}388{,}608 / 65{,}536$.",
+          "r3c1": "128 calls at 0.2 µs.",
+          "r4c1": "Two switches of 2 µs is 4 µs a message: 250,000 × 4 µs is 1 s."
+        }
+      },
+      "explain": {
+        "text": "Calls are bytes over read size, and overhead is calls times 0.2 µs. At 250,000 messages a second the wake-ups alone fill a whole core. Batching and avoiding wake-ups are the two fixes."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: recv per message",
+      "tags": [
+        "syscall-cost"
+      ],
+      "prose": "The interviewer asks: your handler calls `recv` for every 24-byte message, at 200,000 messages a second. A datagram carries up to 1,472 bytes, which is 61 frames of 24 bytes with 8 bytes spare.",
+      "question": "What does that cost, and what does packing save?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Time spent in calls each second (ms)",
+            {
+              "edit": true,
+              "answer": 40,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Share of one core",
+            {
+              "edit": true,
+              "answer": 0.04,
+              "tol": {
+                "abs": 0.0005
+              },
+              "unit": "%"
+            }
+          ],
+          [
+            "Calls a second if each datagram holds 61 frames",
+            {
+              "edit": true,
+              "answer": 3279,
+              "tol": {
+                "abs": 1
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the rate by 0.2 µs."
+        },
+        {
+          "rung": "point",
+          "text": "$200{,}000 \\times 0.2\\ \\mu s = 40$ ms in every second."
+        },
+        {
+          "rung": "step",
+          "text": "40 ms of 1,000 ms is 4%. Then $200{,}000 / 61$, rounded up, is 3,279 calls."
+        }
+      ],
+      "feedback": {
+        "correct": "40 ms, 4% of a core, 3,279 calls a second.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$200{,}000 \\times 0.2\\ \\mu s$ is 40,000 µs.",
+          "r1c1": "40 ms in every 1,000 ms.",
+          "r2c1": "$200{,}000 / 61 = 3{,}278.7$, so 3,279 calls."
+        }
+      },
+      "explain": {
+        "text": "200,000 calls of 0.2 µs take 40 ms of every second, 4% of a core. Packing 61 frames to a datagram cuts that to 3,279 calls, about 0.07% of a core. On a desk, batching reads comes before anything cleverer."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A system call asks the kernel to act and returns to the same thread: about 0.2 µs. A context switch changes the thread: about 2 µs.",
+      "Batch your reads: a 64 KiB read needs 1,024 times fewer calls than a 64-byte read.",
+      "Threads share an address space and a descriptor table; processes do not. `fork` copies a page only when someone writes."
+    ],
+    "formula": {
+      "name": "Call overhead",
+      "tex": "\\text{overhead} = \\dfrac{\\text{bytes}}{\\text{bytes per call}} \\times 0.2\\ \\mu s",
+      "note": "Round figure for a modern core."
+    },
+    "trap": "Counting every system call as a context switch."
+  },
+  "quiz": [
+    {
+      "id": "q-overhead",
+      "difficulty": 2,
+      "tags": [
+        "syscall-cost"
+      ],
+      "pace": 40,
+      "prose": "A thread reads a 2 MiB file in 32 KiB reads. One system call costs 0.2 µs.",
+      "question": "How many microseconds of call overhead does the whole read cost?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12.8,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "µs",
+        "accept": "12.8 µs: 64 calls × 0.2 µs.",
+        "wrong": [
+          {
+            "id": "calls",
+            "value": 64,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "12.8 µs.",
+        "generic": "Not quite right. Count the calls first, then multiply by 0.2 µs.",
+        "byKey": {
+          "calls": "64 is the number of calls. Multiply by 0.2 µs."
+        }
+      },
+      "explain": {
+        "text": "2 MiB is 2,097,152 bytes, and 32 KiB is 32,768, so 64 calls. At 0.2 µs each that is 12.8 µs."
+      }
+    },
+    {
+      "id": "q-shortcut",
+      "difficulty": 2,
+      "tags": [
+        "syscall-cost"
+      ],
+      "pace": 40,
+      "prose": "A trading loop timestamps every message.",
+      "question": "Which of these does not enter the kernel?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "clock",
+            "text": "Reading the clock through the shared page",
+            "correct": true
+          },
+          {
+            "id": "write",
+            "text": "Writing 24 bytes to a socket",
+            "why": "A write is a system call: the kernel owns the socket."
+          },
+          {
+            "id": "open",
+            "text": "Opening a file",
+            "why": "Opening a file is a system call: the kernel owns the file system."
+          },
+          {
+            "id": "recv",
+            "text": "Receiving from a socket",
+            "why": "A receive is a system call, and may also block."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Only the clock shortcut stays in user space.",
+        "generic": "Not quite right. Which call reads a page the kernel keeps updated?"
+      },
+      "explain": {
+        "text": "The kernel keeps the time in a shared page, so the read needs no kernel entry. Writes, opens and receives all do."
+      }
+    },
+    {
+      "id": "q-fd",
+      "difficulty": 2,
+      "tags": [
+        "fd-table",
+        "process-vs-thread"
+      ],
+      "pace": 40,
+      "prose": "One thread of a process opens a file and receives descriptor 4.",
+      "question": "Can another thread of the same process read descriptor 4?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: the descriptor table belongs to the process",
+            "correct": true
+          },
+          {
+            "id": "no",
+            "text": "No: each thread has its own descriptor table",
+            "why": "Threads share the table. Only a separate process has its own."
+          },
+          {
+            "id": "copy",
+            "text": "Only after the first thread calls `fork`",
+            "why": "`fork` makes a new process with its own table. It is not needed to share between threads."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Yes: threads share the process's table.",
+        "generic": "Not quite right. What does a process own that its threads share?"
+      },
+      "explain": {
+        "text": "The descriptor table belongs to the process, so every thread of it sees descriptor 4. A forked child gets a copy of the table instead."
+      }
+    },
+    {
+      "id": "q-wake",
+      "difficulty": 3,
+      "tags": [
+        "context-switch"
+      ],
+      "pace": 60,
+      "prose": "A thread is woken for every message, at 50,000 messages a second. A switch costs 2 µs and each message needs two.",
+      "question": "What share of a core goes on switching?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "%",
+        "accept": "20%: 50,000 × 4 µs = 0.2 s.",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "20% of a core.",
+        "generic": "Not quite right. Two switches of 2 µs make 4 µs a message.",
+        "byKey": {
+          "half": "You counted one switch a message. Waking and sleeping make two."
+        }
+      },
+      "explain": {
+        "text": "Two switches of 2 µs are 4 µs a message. At 50,000 a second that is 0.2 s of every second, 20% of a core."
+      }
+    }
+  ]
+}

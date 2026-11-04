@@ -1,0 +1,417 @@
+{
+  "id": "review-3",
+  "course": "systems",
+  "level": 3,
+  "items": [
+    {
+      "id": "r3-overhead",
+      "difficulty": 2,
+      "skills": [
+        "sy-os"
+      ],
+      "tags": [
+        "syscall-cost"
+      ],
+      "pace": 45,
+      "prose": "A thread reads a 6 MiB file in 8 KiB reads. One system call costs 0.2 µs.",
+      "question": "How many microseconds of call overhead does the whole read cost?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 153.6,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "µs",
+        "accept": "153.6 µs: 768 calls × 0.2 µs.",
+        "wrong": [
+          {
+            "id": "calls",
+            "value": 768,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "153.6 µs.",
+        "generic": "Not quite right. Count the calls first, then multiply by 0.2 µs.",
+        "byKey": {
+          "calls": "768 is the number of calls. Multiply by 0.2 µs."
+        }
+      },
+      "explain": {
+        "text": "6 MiB is 6,291,456 bytes and 8 KiB is 8,192, so 768 calls. At 0.2 µs each that is 153.6 µs."
+      }
+    },
+    {
+      "id": "r3-switch",
+      "difficulty": 2,
+      "skills": [
+        "sy-os"
+      ],
+      "tags": [
+        "context-switch"
+      ],
+      "pace": 40,
+      "prose": "Four threads share one core.",
+      "question": "Which of these makes the kernel switch to another thread?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "block",
+            "text": "A `recv` on an empty socket, which blocks",
+            "correct": true
+          },
+          {
+            "id": "write",
+            "text": "A `write` that returns at once",
+            "why": "A call that returns at once stays on the same thread: no switch."
+          },
+          {
+            "id": "clock",
+            "text": "`clock_gettime` through the shared page",
+            "why": "That never enters the kernel at all."
+          },
+          {
+            "id": "read",
+            "text": "A `read` of 8 bytes already in memory",
+            "why": "The kernel copies the bytes and returns to the same thread."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A blocking receive.",
+        "generic": "Not quite right. Which call puts its thread to sleep?"
+      },
+      "explain": {
+        "text": "A blocking receive on an empty socket sleeps the thread, so the kernel runs another one. The other calls return to the thread that made them."
+      }
+    },
+    {
+      "id": "r3-chunks",
+      "difficulty": 3,
+      "skills": [
+        "sy-os"
+      ],
+      "tags": [
+        "partial-read"
+      ],
+      "pace": 60,
+      "prose": "A stream of 24-byte frames is read in chunks of 50, 50 and 60 bytes: 160 bytes in all. Leftover bytes carry over to the next read.",
+      "question": "Fill in the totals.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "Whole frames parsed in all",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Bytes left at the end",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "6 frames, 16 bytes left.",
+        "generic": "Not quite right. Carry the leftover into each new chunk.",
+        "byKey": {
+          "r0c1": "Each read parses 2 frames: 50, then 2 + 50, then 4 + 60.",
+          "r1c1": "$160 - 6 \\times 24 = 16$."
+        }
+      },
+      "explain": {
+        "text": "$160 = 6 \\times 24 + 16$. The reads parse 2, 2 and 2 frames, and 16 bytes wait for the next read."
+      }
+    },
+    {
+      "id": "r3-zero",
+      "difficulty": 2,
+      "skills": [
+        "sy-os"
+      ],
+      "tags": [
+        "partial-read"
+      ],
+      "pace": 40,
+      "prose": "A reader loops on a TCP connection, and its `recv` returns 0.",
+      "question": "What should the reader do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "close",
+            "text": "Treat the stream as ended and close its side",
+            "correct": true
+          },
+          {
+            "id": "retry",
+            "text": "Wait for data and call `recv` again",
+            "why": "The 0 will come back at once, every time, so the loop would spin."
+          },
+          {
+            "id": "err",
+            "text": "Report an error, since errors return 0",
+            "why": "An error returns -1. Zero is an orderly close."
+          },
+          {
+            "id": "frame",
+            "text": "Parse a frame of zero bytes",
+            "why": "A close carries no data, so there is no frame to parse."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Treat it as the end of the stream.",
+        "generic": "Not quite right. What does 0 mean on a TCP socket?"
+      },
+      "explain": {
+        "text": "On TCP, `recv` returns 0 only when the peer has closed. The reader should finish with what it has and close its own side."
+      }
+    },
+    {
+      "id": "r3-handshake",
+      "difficulty": 2,
+      "skills": [
+        "sy-os",
+        "sy-latency"
+      ],
+      "tags": [
+        "tcp-handshake"
+      ],
+      "pace": 45,
+      "prose": "The round trip between a client and a server is 40 ms.",
+      "question": "When does TCP's first data reach the server, in milliseconds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 60,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ms",
+        "accept": "60 ms: three one-way trips of 20 ms. UDP needs 20 ms.",
+        "wrong": [
+          {
+            "id": "udp",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "rtt",
+            "value": 40,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "60 ms.",
+        "generic": "Not quite right. Count three one-way trips of 20 ms.",
+        "byKey": {
+          "udp": "20 ms is UDP's time. TCP waits for the handshake first.",
+          "rtt": "The data needs a third trip after the SYN and the SYN-ACK."
+        }
+      },
+      "explain": {
+        "text": "One way is 20 ms. SYN, SYN-ACK and then the data make three trips: 60 ms. UDP sends at once and arrives at 20 ms."
+      }
+    },
+    {
+      "id": "r3-gaps",
+      "difficulty": 3,
+      "skills": [
+        "sy-os",
+        "sy-latency"
+      ],
+      "tags": [
+        "ab-feeds"
+      ],
+      "pace": 45,
+      "prose": "Sequence numbers 2, 3, 6, 9, 4 and 8 arrive, in that order.",
+      "question": "How many numbers from 1 up to the largest never arrived?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "3: the numbers 1, 5 and 7.",
+        "wrong": [
+          {
+            "id": "seen",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "3: the numbers 1, 5 and 7.",
+        "generic": "Not quite right. List 1 to 9 and cross off what arrived.",
+        "byKey": {
+          "seen": "6 is how many arrived. Count the absent ones."
+        }
+      },
+      "explain": {
+        "text": "The largest is 9. Numbers 2, 3, 4, 6, 8 and 9 arrived, so 1, 5 and 7 are missing."
+      }
+    },
+    {
+      "id": "r3-big-endian",
+      "difficulty": 2,
+      "skills": [
+        "sy-os",
+        "sy-latency"
+      ],
+      "tags": [
+        "endianness"
+      ],
+      "pace": 45,
+      "prose": "Four bytes in a big-endian field read `00 00 07 d0`.",
+      "question": "What number do they hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2,000: 0x07d0 is $7 \\times 256 + 208$.",
+        "wrong": [
+          {
+            "id": "le",
+            "value": 3490119680,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2,000.",
+        "generic": "Not quite right. The first byte is the most significant.",
+        "byKey": {
+          "le": "You read the bytes little-endian. The wire is big-endian."
+        }
+      },
+      "explain": {
+        "text": "0x07d0 is $7 \\times 256 + 208 = 2{,}000$."
+      }
+    },
+    {
+      "id": "r3-neg",
+      "difficulty": 3,
+      "skills": [
+        "sy-os",
+        "sy-latency"
+      ],
+      "tags": [
+        "fixed-point-price"
+      ],
+      "pace": 60,
+      "prose": "A price of −100 pence goes on the wire as four big-endian bytes.",
+      "question": "What is the last byte, as a decimal?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 156,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "156: $256 - 100$, which is 0x9c. The bytes are `ff ff ff 9c`.",
+        "wrong": [
+          {
+            "id": "mag",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "156.",
+        "generic": "Not quite right. Take 100 away from a multiple of 256.",
+        "byKey": {
+          "mag": "100 is the last byte of +100. The negative value is its complement."
+        }
+      },
+      "explain": {
+        "text": "−100 is $2^{32} - 100$, which ends in 256 − 100 = 156. The four bytes are `ff ff ff 9c`."
+      }
+    },
+    {
+      "id": "r3-both-lost",
+      "difficulty": 4,
+      "skills": [
+        "sy-os",
+        "sy-latency"
+      ],
+      "tags": [
+        "ab-feeds"
+      ],
+      "pace": 60,
+      "prose": "A handler takes feeds A and B. Each loses 2% of 1,000,000 messages, independently.",
+      "question": "How many messages do both feeds lose?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 400,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "400: $1{,}000{,}000 \\times 0.02 \\times 0.02$.",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 20000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sum",
+            "value": 40000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "400 messages.",
+        "generic": "Not quite right. Both copies must be lost together.",
+        "byKey": {
+          "one": "20,000 is what one feed loses alone.",
+          "sum": "You added the two losses. A message is gone only when both feeds drop it."
+        }
+      },
+      "explain": {
+        "text": "A message is lost for good only if both copies are: $0.02 \\times 0.02 = 0.0004$. Of 1,000,000 that is 400."
+      }
+    }
+  ]
+}

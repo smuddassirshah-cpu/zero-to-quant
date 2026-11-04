@@ -1,0 +1,1276 @@
+{
+  "id": "l14-messages-on-the-wire",
+  "course": "systems",
+  "title": "Messages on the wire",
+  "minutes": 14,
+  "objectives": [
+    "Encode a market data message in a fixed binary layout and parse it back."
+  ],
+  "skills": [
+    "sy-os",
+    "sy-latency"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Find the sequence number",
+      "tags": [
+        "wire-layout",
+        "endianness"
+      ],
+      "prose": "A market data frame is 24 bytes, shown here in hex, in rows of eight. The frame's sequence number is 70,000.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "41",
+            "42",
+            "01",
+            "02",
+            "00",
+            "01",
+            "11",
+            "70",
+            "07",
+            "5b",
+            "cd",
+            "15",
+            "00",
+            "00",
+            "00",
+            "64",
+            "00",
+            "00",
+            "28",
+            "23",
+            "02",
+            "25",
+            "51",
+            "00"
+          ],
+          "wrap": 8,
+          "showIndex": true
+        },
+        "state": {
+          "caption": "One 24-byte frame, offsets 0 to 23."
+        }
+      },
+      "question": "Tap the four bytes that hold it.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c4",
+          "c5",
+          "c6",
+          "c7"
+        ],
+        "countWord": "bytes"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write 70,000 in hex."
+        },
+        {
+          "rung": "point",
+          "text": "70,000 is 0x11170, or 00 01 11 70 in four bytes.",
+          "highlight": [
+            "c4",
+            "c5",
+            "c6",
+            "c7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bytes 00 01 11 70 sit at offsets 4 to 7."
+        }
+      ],
+      "feedback": {
+        "correct": "Offsets 4 to 7: 00 01 11 70.",
+        "generic": "Not quite right. 70,000 is 0x11170 in hex.",
+        "byKey": {
+          "c0": "41 is the type byte, 65 or \"A\". It is one byte.",
+          "c1": "42 is the side byte, 66 or \"B\".",
+          "c2": "01 02 is the instrument, 258. That field is two bytes.",
+          "c3": "02 closes the instrument field, 01 02, which is 258.",
+          "c8": "07 5b cd 15 is 123,456,789, the order id."
+        }
+      },
+      "explain": {
+        "text": "70,000 is 0x11170, so the four bytes are 00 01 11 70, at offsets 4 to 7. The most significant byte comes first. Every field has a fixed offset and size.",
+        "canvas": {
+          "highlight": {
+            "ranges": [
+              {
+                "range": [
+                  0,
+                  0
+                ],
+                "label": "type"
+              },
+              {
+                "range": [
+                  1,
+                  1
+                ],
+                "label": "side"
+              },
+              {
+                "range": [
+                  2,
+                  3
+                ],
+                "label": "instrument"
+              },
+              {
+                "range": [
+                  4,
+                  7
+                ],
+                "label": "sequence"
+              },
+              {
+                "range": [
+                  8,
+                  11
+                ],
+                "label": "id"
+              },
+              {
+                "range": [
+                  12,
+                  15
+                ],
+                "label": "qty"
+              },
+              {
+                "range": [
+                  16,
+                  19
+                ],
+                "label": "price"
+              },
+              {
+                "range": [
+                  20,
+                  23
+                ],
+                "label": "time"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Which end first",
+      "tags": [
+        "endianness"
+      ],
+      "prose": "The number 258 is 0x0102. **Big-endian** writes the most significant byte first, **little-endian** the least. Our wire format is big-endian, and most CPUs are little-endian. Slide between the two.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "01",
+            "02"
+          ],
+          "showIndex": true
+        },
+        "controls": [
+          {
+            "bind": "frame",
+            "frames": [
+              {
+                "cells": [
+                  "01",
+                  "02"
+                ],
+                "caption": "Big-endian, as sent on the wire: 01 02."
+              },
+              {
+                "cells": [
+                  "02",
+                  "01"
+                ],
+                "caption": "Little-endian, as this CPU stores it: 02 01."
+              }
+            ],
+            "frameLabels": [
+              "Big-endian",
+              "Little-endian"
+            ],
+            "label": "Byte order"
+          }
+        ]
+      },
+      "question": "Read the bytes `02 01` as a little-endian 2-byte number. What is it?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 258,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "258: the least significant byte comes first, so 01 02 in significance order.",
+        "wrong": [
+          {
+            "id": "be",
+            "value": 513,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "In little-endian the first byte is the least significant."
+        },
+        {
+          "rung": "point",
+          "text": "So `02 01` is $1 \\times 256 + 2$.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "256 + 2 = 258."
+        }
+      ],
+      "feedback": {
+        "correct": "258.",
+        "generic": "Not quite right. The first byte is the least significant one.",
+        "byKey": {
+          "be": "513 is the big-endian reading, $2 \\times 256 + 1$. Here the first byte is the small one."
+        }
+      },
+      "explain": {
+        "text": "A little-endian CPU stores 258 as 02 01, and the wire wants 01 02. Reading `02 01` as little-endian gives $1 \\times 256 + 2 = 258$. Copying memory to the wire would swap every field."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Prices and times",
+      "tags": [
+        "fixed-point-price"
+      ],
+      "prose": "Prices go on the wire as whole pence in a signed 4-byte integer, never as a `double`. A negative number is stored as $2^{32}$ minus its size. Times are milliseconds since midnight.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "price £102.75 -> pence",
+            "price -25 pence -> 4 bytes",
+            "time 10:00:00 -> ms since midnight"
+          ],
+          "wrap": true,
+          "title": "Three fields",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the bytes, as decimals.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "£102.75 in pence",
+            {
+              "edit": true,
+              "answer": 10275,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "10,275 as four bytes: the third byte",
+            {
+              "edit": true,
+              "answer": 40,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "10,275 as four bytes: the fourth byte",
+            {
+              "edit": true,
+              "answer": 35,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "−25 pence as four bytes: the last byte",
+            {
+              "edit": true,
+              "answer": 231,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "10:00:00 is 36,000,000 ms: the second byte",
+            {
+              "edit": true,
+              "answer": 37,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Split each number into base-256 digits."
+        },
+        {
+          "rung": "point",
+          "text": "$10{,}275 = 40 \\times 256 + 35$. And $-25$ is $2^{32} - 25$, which ends in $256 - 25$.",
+          "highlight": [
+            "l1",
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "10,275; 40 and 35; 231; and $36{,}000{,}000 = 2 \\cdot 2^{24} + 37 \\cdot 2^{16} + 81 \\cdot 256$."
+        }
+      ],
+      "feedback": {
+        "correct": "10,275; 40, 35; 231; 37.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "£102.75 is 10,275 pence.",
+          "r1c1": "$10{,}275 / 256 = 40$ remainder 35.",
+          "r2c1": "The remainder after 40 × 256 is 35.",
+          "r3c1": "$256 - 25 = 231$, which is e7 in hex.",
+          "r4c1": "36,000,000 is 02 25 51 00 in hex, and 0x25 is 37."
+        }
+      },
+      "explain": {
+        "text": "£102.75 is 10,275 pence, $40 \\times 256 + 35$, so the bytes are 00 00 28 23. −25 is $2^{32} - 25$, which ends in 256 − 25 = 231, or e7. 36,000,000 ms is 02 25 51 00."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A stream of frames",
+      "tags": [
+        "partial-frame"
+      ],
+      "prose": "A feed sends 200,000 messages a second, 24 bytes each. A UDP datagram carries up to 1,472 bytes of payload. Frames are never split across datagrams.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "200,000 messages a second",
+            "24 bytes a frame",
+            "datagram payload: 1,472 bytes"
+          ],
+          "wrap": true,
+          "title": "One feed",
+          "numbers": true
+        }
+      },
+      "question": "Fill in the load and the packing.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Bytes a second",
+            {
+              "edit": true,
+              "answer": 4800000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Megabits a second",
+            {
+              "edit": true,
+              "answer": 38.4,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ],
+          [
+            "Whole frames in one datagram",
+            {
+              "edit": true,
+              "answer": 61,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Spare bytes in that datagram",
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the rate by the frame size."
+        },
+        {
+          "rung": "point",
+          "text": "$200{,}000 \\times 24$ bytes; then $1{,}472 / 24 = 61.3$.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4,800,000 bytes, 38.4 Mbit/s, 61 frames, $1{,}472 - 61 \\times 24 = 8$ spare."
+        }
+      ],
+      "feedback": {
+        "correct": "4,800,000; 38.4; 61; 8.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$200{,}000 \\times 24$.",
+          "r1c1": "Multiply the bytes by 8 bits and divide by a million.",
+          "r2c1": "$1{,}472 / 24 = 61.3$: only whole frames fit.",
+          "r3c1": "$1{,}472 - 61 \\times 24$."
+        }
+      },
+      "explain": {
+        "text": "200,000 × 24 = 4,800,000 bytes a second, which is 38.4 Mbit/s. A datagram holds 61 whole frames, 1,464 bytes, and 8 are spare. A parser reading a stream must handle a frame cut in two."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Send the struct",
+      "tags": [
+        "wire-layout",
+        "endianness"
+      ],
+      "prose": "A colleague writes this and says the struct is 24 bytes, exactly the frame. The sequence number is 70,000, and the machine is a common little-endian CPU.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "struct Msg {",
+            "  uint8_t type, side;",
+            "  uint16_t instrument;",
+            "  uint32_t seq, id, qty;",
+            "  int32_t price;",
+            "  uint32_t time;",
+            "};  // sizeof(Msg) is 24",
+            "send(fd, &m, sizeof m, 0);"
+          ],
+          "wrap": true,
+          "title": "Sending a struct",
+          "numbers": true
+        }
+      },
+      "question": "Can you send `&m` as the frame?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: every number comes out in the CPU's byte order",
+            "correct": true
+          },
+          {
+            "id": "size",
+            "text": "Yes: the struct is 24 bytes, the frame size",
+            "why": "The size matches here, but a little-endian CPU still writes each field back to front."
+          },
+          {
+            "id": "same",
+            "text": "Yes, if both ends use the same compiler",
+            "why": "A compiler does not change the CPU's byte order, and a new field would shift the padding."
+          },
+          {
+            "id": "sock",
+            "text": "No: a socket cannot carry a struct",
+            "why": "A socket carries any bytes. The trouble is which bytes the struct holds."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What bytes does a CPU store for 70,000?"
+        },
+        {
+          "rung": "point",
+          "text": "A little-endian CPU stores the least significant byte first.",
+          "highlight": [
+            "l7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "70 11 01 00 goes out, not 00 01 11 70."
+        }
+      ],
+      "feedback": {
+        "correct": "No: the byte order is the CPU's, not the protocol's.",
+        "generic": "Not quite right. Which bytes does `&m` point at?",
+        "byKey": {
+          "size": "The size is right, but the bytes are in the wrong order.",
+          "same": "The same compiler on a little-endian CPU still reverses each field.",
+          "sock": "A socket carries any bytes you give it."
+        }
+      },
+      "explain": {
+        "text": "The sizes agree, but a little-endian CPU writes 70,000 as 70 11 01 00, not 00 01 11 70. Padding and field order are also the compiler's choices, not the protocol's. Write each field byte by byte."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The edge of a field",
+      "tags": [
+        "wire-layout",
+        "fixed-point-price"
+      ],
+      "prose": "Fields have a signedness, and the edges of it matter. The 4-byte price field holds these bytes.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "80",
+            "00",
+            "00",
+            "00"
+          ],
+          "showIndex": true
+        },
+        "state": {
+          "caption": "The price field of a frame."
+        }
+      },
+      "question": "What signed price, in pence, do `80 00 00 00` hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -2147483648,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "−2,147,483,648: the top bit set means negative in a signed field.",
+        "wrong": [
+          {
+            "id": "unsigned",
+            "value": 2147483648,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is the top bit set?"
+        },
+        {
+          "rung": "point",
+          "text": "In a signed field the top bit set means a negative number.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$-2^{31} = -2{,}147{,}483{,}648$."
+        }
+      ],
+      "feedback": {
+        "correct": "−2,147,483,648.",
+        "generic": "Not quite right. Look at the top bit of the first byte.",
+        "byKey": {
+          "unsigned": "You read it as unsigned. In a signed field the top bit set means negative.",
+          "zero": "Three zero bytes do not make zero. The first byte is 80."
+        }
+      },
+      "explain": {
+        "text": "The top bit is set, so the signed value is $-2^{31} = -2{,}147{,}483{,}648$. The same bytes in the unsigned sequence field would be +2,147,483,648. `ff ff ff ff` is 4,294,967,295 as a sequence and −1 as a price."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Read and write byte by byte",
+      "prose": "A field of $k$ bytes $b_0 \\dots b_{k-1}$, most significant first, has the value\n\n$$v = \\sum_{j=0}^{k-1} b_j \\cdot 256^{\\,k-1-j}.$$\n\n```cpp\nv = (v << 8) | byte;   // first byte first\n```",
+      "question": "In `v = (v << 8) | byte`, which byte must be read first?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "msb",
+            "text": "The most significant byte",
+            "correct": true
+          },
+          {
+            "id": "lsb",
+            "text": "The least significant byte",
+            "why": "That reads little-endian. Shifting left each time puts the first byte on top."
+          },
+          {
+            "id": "any",
+            "text": "Any: the shifts fix the order",
+            "why": "The first byte read ends up the most significant, so the order matters."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The most significant byte first.",
+        "generic": "Not quite right. The first byte read is shifted left the most times.",
+        "byKey": {
+          "lsb": "The first byte is shifted left $k-1$ times, so it must be the largest.",
+          "any": "Swap the reads and the value changes."
+        }
+      },
+      "explain": {
+        "text": "Each new byte shifts the earlier ones up by 8 bits. The first byte read is therefore the most significant, as big-endian needs. Encoding is the same loop run backwards with shifts right."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Encode and decode",
+      "tags": [
+        "wire-layout",
+        "endianness"
+      ],
+      "prose": "Now in code. `Msg` is declared for you with the same fields, as plain integers. The bytes are held in a `std::vector<int>` of 24 values from 0 to 255.",
+      "question": "Finish `encode` and `decode`, so a message survives the round trip.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "prelude": "struct Msg {\n    int type;            // 'A' add, 'X' cancel, 'T' trade\n    int side;            // 'B' or 'S'\n    int instrument;      // 0..65535\n    unsigned seq;\n    unsigned id;\n    unsigned qty;\n    int price;           // pence, may be negative\n    unsigned time;       // milliseconds since midnight\n};\n",
+        "starter": "#include <vector>\n\n// Wire layout, 24 bytes, big-endian (most significant byte first):\n//   0 type (1)   1 side (1)   2 instrument (2)   4 seq (4)\n//   8 id (4)    12 qty (4)   16 price (4, signed)  20 time (4)\nstd::vector<int> encode(const Msg& m) {\n    std::vector<int> out(24, 0);\n    out[0] = m.type;\n    out[1] = m.side;\n    // TODO: the other fields, most significant byte first\n    return out;\n}\n\nMsg decode(const std::vector<int>& b) {\n    Msg m{};\n    m.type = b[0];\n    m.side = b[1];\n    // TODO: the other fields\n    return m;\n}\n",
+        "solution": "#include <vector>\n\nnamespace {\nvoid put(std::vector<int>& out, int at, unsigned v, int bytes) {\n    for (int k = 0; k < bytes; ++k)\n        out[at + k] = (v >> (8 * (bytes - 1 - k))) & 0xFF;\n}\nunsigned get(const std::vector<int>& b, int at, int bytes) {\n    unsigned v = 0;\n    for (int k = 0; k < bytes; ++k) v = (v << 8) | static_cast<unsigned>(b[at + k] & 0xFF);\n    return v;\n}\n}\n\nstd::vector<int> encode(const Msg& m) {\n    std::vector<int> out(24, 0);\n    out[0] = m.type;\n    out[1] = m.side;\n    put(out, 2, static_cast<unsigned>(m.instrument), 2);\n    put(out, 4, m.seq, 4);\n    put(out, 8, m.id, 4);\n    put(out, 12, m.qty, 4);\n    put(out, 16, static_cast<unsigned>(m.price), 4);\n    put(out, 20, m.time, 4);\n    return out;\n}\n\nMsg decode(const std::vector<int>& b) {\n    Msg m{};\n    m.type = b[0];\n    m.side = b[1];\n    m.instrument = static_cast<int>(get(b, 2, 2));\n    m.seq = get(b, 4, 4);\n    m.id = get(b, 8, 4);\n    m.qty = get(b, 12, 4);\n    m.price = static_cast<int>(get(b, 16, 4));\n    m.time = get(b, 20, 4);\n    return m;\n}\n",
+        "examples": [
+          {
+            "setup": "Msg m{88, 83, 1, 1u, 2u, 0u, -25, 0u};",
+            "call": "encode(m)",
+            "expect": [
+              88,
+              83,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              255,
+              255,
+              255,
+              231,
+              0,
+              0,
+              0,
+              0
+            ],
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "Msg m{65, 66, 258, 70000u, 123456789u, 100u, 10275, 36000000u};",
+            "call": "encode(m)",
+            "expect": [
+              65,
+              66,
+              1,
+              2,
+              0,
+              1,
+              17,
+              112,
+              7,
+              91,
+              205,
+              21,
+              0,
+              0,
+              0,
+              100,
+              0,
+              0,
+              40,
+              35,
+              2,
+              37,
+              81,
+              0
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "Msg m{88, 83, 1, 1u, 2u, 0u, -25, 0u};",
+            "call": "encode(m)",
+            "expect": [
+              88,
+              83,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              255,
+              255,
+              255,
+              231,
+              0,
+              0,
+              0,
+              0
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "Msg m{84, 66, 65535, 4294967295u, 4294967295u, 4294967295u, 2147483647, 86399999u};",
+            "call": "encode(m)",
+            "expect": [
+              84,
+              66,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              255,
+              127,
+              255,
+              255,
+              255,
+              5,
+              38,
+              91,
+              255
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "Msg m{65, 83, 0, 0u, 0u, 1u, (-2147483647 - 1), 1u};",
+            "call": "encode(m)",
+            "expect": [
+              65,
+              83,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              128,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "compare": "equal"
+          },
+          {
+            "call": "decode(std::vector<int>{65, 66, 1, 2, 0, 1, 17, 112, 7, 91, 205, 21, 0, 0, 0, 100, 0, 0, 40, 35, 2, 37, 81, 0}).instrument",
+            "expect": 258,
+            "compare": "equal"
+          },
+          {
+            "call": "decode(std::vector<int>{65, 66, 1, 2, 0, 1, 17, 112, 7, 91, 205, 21, 0, 0, 0, 100, 0, 0, 40, 35, 2, 37, 81, 0}).price",
+            "expect": 10275,
+            "compare": "equal"
+          },
+          {
+            "call": "decode(std::vector<int>{88, 83, 0, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 255, 255, 255, 231, 0, 0, 0, 0}).price",
+            "expect": -25,
+            "compare": "equal"
+          },
+          {
+            "call": "(long long)decode(std::vector<int>{84, 66, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127, 255, 255, 255, 5, 38, 91, 255}).seq",
+            "expect": 4294967295,
+            "compare": "equal"
+          },
+          {
+            "call": "(long long)decode(std::vector<int>{84, 66, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 127, 255, 255, 255, 5, 38, 91, 255}).time",
+            "expect": 86399999,
+            "compare": "equal"
+          },
+          {
+            "call": "decode(std::vector<int>{65, 83, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 128, 0, 0, 0, 0, 0, 0, 1}).price",
+            "expect": -2147483648,
+            "compare": "equal"
+          },
+          {
+            "setup": "Msg m{65, 66, 258, 70000u, 123456789u, 100u, 10275, 36000000u}; Msg d = decode(encode(m));",
+            "call": "(long long)d.id",
+            "expect": 123456789,
+            "compare": "equal"
+          },
+          {
+            "setup": "Msg m{84, 66, 65535, 4294967295u, 4294967295u, 4294967295u, 2147483647, 86399999u}; Msg d = decode(encode(m));",
+            "call": "(long long)d.qty",
+            "expect": 4294967295,
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Twelve hidden tests, including the largest and smallest values of each field and a round trip."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write a loop that puts one number in `bytes` bytes, most significant first."
+        },
+        {
+          "rung": "point",
+          "text": "Byte $k$ of a $b$-byte field is `(v >> (8 * (b - 1 - k))) & 0xFF`."
+        },
+        {
+          "rung": "step",
+          "text": "For decode, start at 0 and for each byte do `v = (v << 8) | byte`. Cast the price to a signed `int` last."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Shifts and masks, byte by byte.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The loop `put` writes each byte of a field from the top down, and `get` rebuilds it with `(v << 8) | byte`. The price is stored as an unsigned 32-bit pattern and cast back to a signed `int`, which restores the sign. Nothing here depends on the CPU's byte order."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: read the bytes",
+      "tags": [
+        "endianness"
+      ],
+      "pace": 450,
+      "prose": "Drill: about ninety seconds each. Say the reasoning aloud first. Fields are big-endian unless a row says otherwise, and prices are signed pence.",
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "`00 00 01 00` read big-endian",
+            {
+              "edit": true,
+              "answer": 256,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`00 00 01 00` read little-endian",
+            {
+              "edit": true,
+              "answer": 65536,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`ff ff ff 38` as a signed price (pence)",
+            {
+              "edit": true,
+              "answer": -200,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`00 00 2e e0` as a price: pounds",
+            {
+              "edit": true,
+              "answer": 120,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "A 3,000-byte read: whole 24-byte frames",
+            {
+              "edit": true,
+              "answer": 125,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Place each byte at its power of 256."
+        },
+        {
+          "rung": "point",
+          "text": "In little-endian the first byte is the smallest digit."
+        },
+        {
+          "rung": "step",
+          "text": "256; 65,536; $56 - 256 = -200$; 0x2ee0 is 12,000 pence; $3{,}000 / 24 = 125$."
+        }
+      ],
+      "feedback": {
+        "correct": "256, 65,536, −200, £120 and 125.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "The 01 is in the 256s place.",
+          "r1c1": "Little-endian puts the first byte lowest, so 01 is third: 65,536.",
+          "r2c1": "The top bit is set, so subtract 256 from the last byte, 56.",
+          "r3c1": "0x2ee0 is 12,000 pence, or £120.",
+          "r4c1": "$24 \\times 125 = 3{,}000$ exactly."
+        }
+      },
+      "explain": {
+        "text": "Big-endian puts the 01 at 256 and little-endian puts it at 65,536. A top bit set means negative, so `ff ff ff 38` is 56 − 256 = −200. 3,000 bytes cut cleanly into 125 frames."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: a flags field",
+      "tags": [
+        "wire-layout",
+        "partial-frame"
+      ],
+      "prose": "The interviewer asks: we add a 2-byte `flags` field at the end of the frame. Fields keep their natural alignment in the host struct.",
+      "question": "What changes in the wire frame, the struct and the packing?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Wire frame size (bytes)",
+            {
+              "edit": true,
+              "answer": 26,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Host struct size (bytes)",
+            {
+              "edit": true,
+              "answer": 28,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Frames in a 1,472-byte datagram",
+            {
+              "edit": true,
+              "answer": 56,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Spare bytes in that datagram",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The wire adds exactly the field. The struct pads to its alignment."
+        },
+        {
+          "rung": "point",
+          "text": "The struct's largest field is 4 bytes, so its size is a multiple of 4."
+        },
+        {
+          "rung": "step",
+          "text": "24 + 2 = 26 on the wire; 28 in memory; $1{,}472 / 26 = 56.6$."
+        }
+      ],
+      "feedback": {
+        "correct": "26, 28, 56 and 16.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "24 + 2.",
+          "r1c1": "26 rounded up to a multiple of 4.",
+          "r2c1": "$1{,}472 / 26 = 56.6$, so 56 whole frames.",
+          "r3c1": "$1{,}472 - 56 \\times 26$."
+        }
+      },
+      "explain": {
+        "text": "The wire frame grows by exactly 2 bytes, to 26. The host struct pads to a multiple of 4, which is 28. A parser must step through the stream by the wire size, never by `sizeof`."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A wire format fixes every field's offset, size and byte order. Ours is 24 bytes, big-endian.",
+      "Prices are whole pence in a signed 4-byte integer: £102.75 is 10,275, bytes 00 00 28 23.",
+      "Never copy a struct onto the wire. A little-endian CPU writes 70,000 as 70 11 01 00."
+    ],
+    "formula": {
+      "name": "A big-endian field",
+      "tex": "v = \\sum_{j=0}^{k-1} b_j \\cdot 256^{\\,k-1-j}",
+      "note": "In code: v = (v << 8) | byte, first byte first."
+    },
+    "trap": "Sending the struct as it sits in memory."
+  },
+  "quiz": [
+    {
+      "id": "q-decode",
+      "difficulty": 2,
+      "tags": [
+        "endianness"
+      ],
+      "pace": 40,
+      "prose": "Four bytes in a big-endian field read `00 00 0b b8`.",
+      "question": "What number do they hold?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "3,000: 0x0bb8 is $11 \\times 256 + 184$.",
+        "wrong": [
+          {
+            "id": "le",
+            "value": 3087728640,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "3,000.",
+        "generic": "Not quite right. Read the first byte as the most significant.",
+        "byKey": {
+          "le": "You read the bytes little-endian. The wire is big-endian."
+        }
+      },
+      "explain": {
+        "text": "0x0bb8 is $11 \\times 256 + 184 = 3{,}000$. The two leading zero bytes add nothing."
+      }
+    },
+    {
+      "id": "q-negative",
+      "difficulty": 3,
+      "tags": [
+        "fixed-point-price"
+      ],
+      "pace": 60,
+      "prose": "A price of −1,000 pence goes on the wire as four big-endian bytes.",
+      "question": "What is the last byte, as a decimal?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "24: $2^{32} - 1{,}000$ ends in $256 - 232 = 24$, which is 0x18. The bytes are `ff ff fc 18`.",
+        "wrong": [
+          {
+            "id": "mag",
+            "value": 232,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "24.",
+        "generic": "Not quite right. Take 1,000 away from a multiple of 256.",
+        "byKey": {
+          "mag": "232 is the last byte of +1,000. The negative value is its complement."
+        }
+      },
+      "explain": {
+        "text": "1,000 is 3 × 256 + 232, so −1,000 ends in 256 − 232 = 24. The four bytes are `ff ff fc 18`."
+      }
+    },
+    {
+      "id": "q-double",
+      "difficulty": 2,
+      "tags": [
+        "fixed-point-price"
+      ],
+      "pace": 40,
+      "prose": "A colleague proposes sending prices as an 8-byte `double`.",
+      "question": "Why do wire formats use whole pence instead?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "exact",
+            "text": "Integers are exact; a double rounds prices such as £0.10",
+            "correct": true
+          },
+          {
+            "id": "small",
+            "text": "A double is always larger than 4 bytes, so it cannot fit",
+            "why": "Size is a choice. The real problem is that a double cannot hold 0.10 exactly."
+          },
+          {
+            "id": "neg",
+            "text": "A double cannot hold a negative price",
+            "why": "A double holds negatives fine. Its problem is rounding."
+          },
+          {
+            "id": "fast",
+            "text": "Integers travel faster over a socket",
+            "why": "The wire does not care. The gain is exactness."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Integers are exact.",
+        "generic": "Not quite right. What does a double do to 0.10?"
+      },
+      "explain": {
+        "text": "A binary double cannot hold 0.10 exactly, so two ends can disagree in the last place. Whole pence are exact integers."
+      }
+    },
+    {
+      "id": "q-frames",
+      "difficulty": 3,
+      "tags": [
+        "partial-frame"
+      ],
+      "pace": 45,
+      "prose": "A datagram holds 1,400 bytes of payload. Frames are 24 bytes and are never split.",
+      "question": "How many whole frames fit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 58,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "58 frames: $58 \\times 24 = 1{,}392$, with 8 spare.",
+        "wrong": [
+          {
+            "id": "up",
+            "value": 59,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "58 frames.",
+        "generic": "Not quite right. Divide by 24 and drop the remainder.",
+        "byKey": {
+          "up": "You rounded up. A 59th frame would need 1,416 bytes."
+        }
+      },
+      "explain": {
+        "text": "$1{,}400 / 24 = 58.3$, so 58 whole frames use 1,392 bytes, with 8 spare."
+      }
+    }
+  ]
+}
