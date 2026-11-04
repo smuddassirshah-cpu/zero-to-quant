@@ -59,3 +59,59 @@ Level 1: every key and `wrong` value, including 0.00999 and 0.0173415 (and their
 Level 2: $E[\varphi_n]$ = 0.1464, 0.2317, 0.2794, 0.3052, 0.3188, 0.3259 and gaps 0.0540 and 0.0074; $m + 1$ capped means; the £13, £5.50 and £7 bets; $10e^{-2} = 1.3534$; the tranche (0.0439, 0.2865, 1.9405, 2.292); £20.9073 for the casino; the dividend stream (£40, year 78; £60, year 63; checked at years 77 and 62); $E[1/U] = \infty$ and the spike means; $\Phi(0.35) = 0.636831$, $\Phi(0.15) = 0.559618$, $\varphi(0.15) = 0.394479$ and delta 0.018762 (with 0.0197 and 0.3945 as the named slips); the seed 7 values 0.635956 (SE 0.001822), 0.018679 (SE 0.000088) and the 0.94 and 213 standard errors; seed 21 `h-code` values (0.02132, SE 0.000104; call SE 0.0038 against pathwise 0.00183); the six-month digital delta 0.02138; the typewriter hits at 0.3 (n = 1, 2, 5, 10), 1/64 at n = 100, $2(1 - \Phi(0.5)) = 0.6171$; CRR 10.4306 and 10.4466 against 10.4506; all four modes charts.
 Level 3: the $2^k$ event counts (16, 256, 8, 65,536, 32), the market table ($E[Y \mid X]$ = $-0.8$, 0.2, 1.0; $E[Y]$ = 0.24; $E[XY]$ = 0.46; variance split 0.3904 + 1.872 = 2.2624), the regression line (slope $-0.54$, 10.32 at 92), the Doob values (0.75, 0.25, 1, 0.5, 2, 2.6, 2.4), the drift constants 0.2 and 0.5, the discounted price 102.86, the stopping results (0.3, 21, 1/3, 32, 54, 0.4, 3/4 and 3), $E[M_{10}] = \tfrac{1067}{512}$ (exact fractions) and $E[M_4] = \tfrac{19}{16}$, the mean-square errors 8/3 and 500/21, the gains 0, 4, 1, 2, 12, and the five-level `h-long` rubric (sums to 10).
 Level 4: the die weights (0.6, 1.2, 1.8; $Q(\text{even}) = 0.6$; $E_Q[\text{face}] = 4.2$ with covariance 0.7); $Z_{\text{up}} = 0.8929$, $Z_{\text{down}} = 1.25$ and the £11.90 call (trees l3); the relative errors per draw 177.689, 7.260, 2.124, 2.665, 5.635 (θ = 0, 2, 4, 5, 6), best shifts 3.155, 4.120, 5.097 and 3.600 (a = 3, 4, 5, 3.4641) with minima 1.826, 2.1145 and 1.9636, 61.3 for plain sampling, 333 and 386 draws, the seed 21 sampler (3.185e-5, SE 6.73e-7, 4,994 draws above 4); the weights 0.8681, 0.9453, 0.9183, 0.7972, 1.1161, 1.5625 and 1.89; the two-step prices (call £15.59, put £6.29, £19.56 and £16.37 as slips, 4.46 for the put with $p$), parity £9.30, £17.49 in `h-long`, £19.67 in review-4, £4.31 in `h-tree`; $q$ = 0.4667, 0.52, 1.0417, 1.1538, 1.0769; the trinomial ranges (£0 to £10, £0 to £15) and the £6 put; $\tfrac{dP}{dQ}$ = $e^{0.32}$ = 1.3771; the £10.4506 Black-Scholes value with 15.53 and 10.99 as the named slips (15.526 with $\mu = 12\%$). Continuity with ito: the course option ($S_0 = K = 100$, $r = 5\%$, $\sigma = 20\%$, $T = 1$, 10.4506, $d_1 = 0.35$, $d_2 = 0.15$), $Z_T = e^{-\theta W_T - \theta^2T/2}$ and $\tilde W = W + \theta t$ (ito l10), £10.4692 with SE £0.0305 (ito l10), and the trees numbers ($u = 1.2$, $d = 0.8$, $r = 5\%$, $q = 0.625$, 11.90 in trees l3, 15.59 in trees l5, the discounted nodes 114.29, 76.19, 130.61, 87.07, 58.05).
+
+## Fix pass
+
+Every changed number was recomputed by two routes before it was written: the per cent keys (3 x 1% = 3%, 4 x 0.5% = 2%, 5 x 0.8% = 4%, 250 x 1% = 250% = 2.5; independent values 1 - 0.99^3 = 0.029701 and by expansion 0.03 - 0.0003 + 0.000001; 1 - 0.995^4 = 0.0198505 and by expansion 4(0.005) - 6(0.005)^2 + 4(0.005)^3 - (0.005)^4; 1 - 0.992^5 = 0.039365 and by logarithm), 24/25 = 0.96, the day-50 tail (direct sum to 10^7 gives 0.0202012 plus a 10^-7 remainder, integral form 1/49.5 = 0.020202), the martingale checks for the new `r-cube` options and the BS value 15.5267 behind the `q-bs` slip. `node tools/validate.mjs`: 0 errors (540 warnings, none of them in measure-prob). Voice scan: 0 sentences over 20 words, 0 explanations over three sentences. Every changed lesson, review and homework passes `playthrough.mjs` with `--mobile --tablet --shots` and `--local-cdn` (desktop, 440, 1032, 1376); the `-440`, `-1032` and `-1376` images of l2 s1, the four formula cards, l17 s7 and l3 s5 were looked at.
+
+Status: fixed 28, partly disputed 1 (finding 26), deferred 0. One proposed option inside finding 5 is disputed (below).
+
+### Errors
+
+1. fixed. Four keys stored as fractions; `wrong` values and tolerances scaled (abs 0.00001 on a fraction is 0.001 percentage points, as before). A grep of the whole course for `"unit": "%"` finds only these four widgets. Typed by hand in Playwright (`pct.mjs` in the scratchpad, fresh profile, real input field and real Check): l3 s7 "3" right, "3%" right, "3.0" right, "300" wrong, "2.9701" wrong; l3 `q-union` "2" right, "2%" right, "200" wrong, "1.985" wrong; l11 s8 "250" right, "250%" right, "25000" wrong, "1" wrong, "125" wrong; review-1 `r-union` "4" right, "4%" right, "400" wrong, "3.9365" wrong.
+2. fixed. h-nu `byKey.one` now says $n = 24$.
+3. fixed. h-fatou option b `why` now says $0 < 3$.
+
+### Warnings
+
+4. fixed. `"shuffle": true` added to all 30 listed widgets (each checked to be a `choice` or `multi` without it first).
+5. fixed, one proposal disputed. Single-answer choices over 1.2 times the longest distractor, in visible characters (17: l1 s5 and quiz 3, l2 s6 and quiz 2, l3 s6, l6 quiz 3, l7 s7 and `q-digital`, l13 quiz 3, l16 quiz 1, l17 s9 and quiz 3, homework-2 h-nu part 3, review-2 `r-which`, `r-delta`, `r-mode`, review-3 `r-cube`) and then in raw characters (15 more: homework-3 item 0 part 3, l1 s3, l13 s4, l15 quiz 3, l17 s5, l2 s1 and s9, l3 s8, l5 s4 and quiz 2, l6 s4 and s6, review-1 `r-counting` and `r-borel`, review-2 `r-which`) are now all at or under 1.2 by both measures (script `ratio.py`). Distractors were lengthened by a clause that keeps their stated wrong reason, or the key was trimmed. `l7 q-digital` and `r-mode` use the review's texts. Disputed: the proposed `r-cube` option d `$S_n^2 - n + S_n$` is a martingale ($E[S_{n+1}^2 - (n+1) + S_{n+1} \mid \mathcal{F}_n] = S_n^2 - n + S_n$, the sum of two martingales), so it cannot be a distractor. Used `$S_n^2 + S_n$` (conditional mean $S_n^2 + S_n + 1$) with a matching `why`. Option b `$S_n^3 - 3S_n$` has conditional mean $S_n^3$ and option c `$S_n^3 - n - 3S_n$` has $S_n^3 - n - 1$, neither a martingale; their `why` texts were rewritten for the new expressions. In l8 `q-tree` the key was shortened after finding 9.
+6. fixed. l2 s1 display split in two; the four formula cards use the proposed `tex` and `note`, keeping each "Further reading" sentence in the note. All five `-440` images show the full formula and note.
+7. fixed. l17 s7 level label "One step, zero interest"; the `-440` image shows it as plain text.
+8. fixed. l7 s4 prose gives $E[M] = e^{rT}$ under the pricing measure (ito lesson 10, file `l10-changing-measure.json` exists).
+9. fixed. l8 s10 prose and explain, `q-tree` key `a`, option `d` `why`; the `q-tree` `feedback.correct` and `explain` were reworded to match ("the law matters, plus a tail check").
+10. fixed. l15 s3 prose states $P \ll Q$.
+11. fixed. l3 s5 lines c4 and c5 merged into c4, `answer` is `c1, c2, c3, c4, c6`, the `step` hint reads "series limit with partial sums".
+12. fixed. 14 `byKey` lines added (l1 1, l2 4, l3 4, l4 4, review-1 1). Two differ from the proposal because the slips cannot be derived from the text: l4 `q-expu` `two` (0.2) now says "You gave 0.2. The event is $U < e^{-2} = 0.1353$"; `half` (0.5) now says 0.5 is the chance that $X > \ln 2$ (checked: $P(U < \tfrac12) = 0.5$).
+13. fixed. l5 s4 prose now gives the lower and upper sums as 0 and 1 and drops the dead pointer.
+14. fixed. h-cantor part 3 explain counts the end points of the removed intervals ($2^n$ at stage $n$: 2 at stage 1, 4 at stage 2).
+
+### Notes
+
+15. fixed. `h-long` asks for day 50 (0.0202); prompt, model and rubric changed.
+16. fixed. l5 s6 and l8 s0 `accept` carry the key (11 and 4).
+17. fixed. "Submartingale" and the l7 Lipschitz wording replaced or explained as proposed; l7 `q-digital` `explain` ends "so its quotients are not".
+18. fixed. l16 s5 prose adds "Take $0 < q < 1$, so every $Z_n > 0$."
+19. fixed. l12 s3 `b1` folded into `b4`, `answer` is `b2, b3, b4`.
+20. fixed by rewording (l15 s2 no longer points to Estimation lesson 5); `course.json` is untouched.
+21. fixed. "Give the number only." added to l5 s10, l6 s0 and homework-2 h-tranche part 2 (with "4 decimal places" kept).
+22. fixed. l1 s6 prose states countable additivity.
+23. fixed. l2 s7 explain says length is defined on every Borel set.
+24. fixed. `q-bs` prose gives the real drift 12%; `q-incomplete` prose lists the three outcomes and its explain names the call strike. Checked: 15.53 is the discounted real-drift value, 15.5267.
+25. fixed. l6 quiz 1 prose introduces $U$.
+26. partly fixed, partly disputed. l13 s5 and s6 and l15 s5 retyped from `problem` to `ladder` (l13 and l15 now have 2). Disputed for l3, l5, l6 and l16: I retyped one screen in each and `validate.mjs` warned "a ladder screen usually reuses the previous canvas kind" every time, because the only other `problem` screens follow a screen of a different canvas kind. The retypes were reverted. Each of those lessons keeps one ladder and a clean validator.
+27. fixed. l12 s6 prose says "goes back to its first value".
+28. fixed. l8 s10 prose says "at even step counts".
+29. fixed. `byKey` lines for l10 s3 r2c1, l11 s0 r1c1 and r2c1, l11 s4 r0c1 to r2c1, l12 s0 r3c1 to r6c1, l3 s3 r2c1, l1 s0 r0c1.
+
+### Changed keys
+
+- l3-measures screens[7]: answer 3 to 0.03, tol abs 0.001 to 0.00001, wrong `indep` 2.9701 to 0.029701 (tol 0.00001).
+- l3-measures `q-union`: answer 2 to 0.02, tol 0.00001, wrong `indep` 1.985 to 0.01985 (tol 0.00001).
+- review-1 `r-union`: answer 4 to 0.04, tol 0.00001, wrong `indep` 3.9365 to 0.039365 (tol 0.00001).
+- l11-filtrations screens[8]: answer 250 to 2.5; wrong `zero` 0 (same), `one` 1 to 0.01, `half` 125 to 1.25 (tol abs 0 each).
+- l3-measures screens[5] (`order`): lines c4 and c5 merged; answer `c1,c2,c3,c4,c5,c6` to `c1,c2,c3,c4,c6`.
+- l12-martingales-defined screens[3] (`order`): line b1 folded into b4; answer `b1,b2,b3,b4` to `b2,b3,b4`.
+- homework-1 `h-long` part 2: asks for day 50, about 0.0202 (rubric text, not auto-graded).
+- review-3 `r-cube` options b, c, d replaced (key a unchanged).
+- Ids unchanged everywhere; `course.json` untouched. Needs for the orchestrator: none (finding 20 was resolved by rewording).
