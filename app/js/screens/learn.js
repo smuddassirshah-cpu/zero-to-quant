@@ -76,7 +76,7 @@
 
   /* ---------- Where the learner is (the same rule as Today and the course map) ---------- */
   const keyOf = (c, l) => `${c}/${l}`;
-  const nextLesson = (Z, cid) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !((Z.state.lessons[keyOf(cid, x.id)] || {}).done)) || null;
+  const nextLesson = (Z, cid) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !((Z.state.lessons[keyOf(cid, x.id)] || {}).done) && !(Z.prereq && Z.prereq.lessonLocked(cid, x.id))) || null;   // locked lessons are never picked (ENGINE-BACKLOG 486)
   const currentCourse = (Z, sum) => {
     const C = Z.content;
     if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume)) return sum.resume.course;

@@ -58,6 +58,17 @@ C++ code widgets (`language: "cpp"`) compile in the browser with YoWASP Clang, t
 
 The npm tarball (`https://registry.npmjs.org/@yowasp/clang/-/clang-21.1.4-3.tgz`, 26,386,607 bytes) has SHA-256 `9c082ea5cac9489966adbe381529bf13bde18646126e98b8b089d83f57fe5e27` and npm integrity `sha512-xeAA7iFvDZ/C32d/h/BDSpmxEZePnorpi+EfaORDWwJN3c9rFXHvUVoHb+alo8U8jNaxJMWBLLGecT55D/YQKA==`. For `tools/playthrough.mjs --local-cdn <dir>`, untar it into `<dir>/yowasp-clang-21.1.4-3/`. The worker replaces one slow file-write function in `bundle.js` at load (only when the text matches this version exactly), so a version bump needs a check that precompiled headers still build in seconds.
 
+## Moving around: locked lessons
+
+A lesson, level review or homework opens only when the levels it relies on are met (`requires` in each `course.json`; a later level with none relies on the level before it). A level is met when you pass its review, pass its topic exam or the stage test, or test out of it. Opening a lesson does not count, and nothing you have unlocked locks again.
+
+- The course map draws a locked node with a lock. Tap it, or open its link (`#lesson/<course>/<lesson>`), to see the locked card: what is missing, grouped Stage, Topic, Course, then level or lesson, each with a count. Direct prerequisites come first; the rest sit in one collapsed line per stage. "Start here" opens the earliest missing lesson whose own prerequisites are met.
+- Each missing level offers "Test out" (`#testout/<course>/<level>`): up to 6 items from that level's review, passed at the review's pass share. A miss lists the lessons to revisit and waits 24 hours.
+- You, Settings, Study plan, "Strict prerequisites" (on by default): on hides "Open anyway"; off shows it, and You counts the levels opened early.
+- Today and Learn pick only unlocked lessons. Prepare marks a blocked step with a lock and its first missing prerequisite. A met prerequisite you have not reviewed for 30 days shows a "Refresh" chip on the lesson's start screen.
+- Saves from before gating are grandfathered once: every level whose lessons were all finished counts as met.
+- Authors: `docs/AUTHORING.md` section 11. The playthrough marks a target's prerequisites met before it plays (`ZQ.prereq.unlock`).
+
 ## Docs
 
 - `docs/PLAN.md`: the build contract (runtime, state model, content model, engine, screens).

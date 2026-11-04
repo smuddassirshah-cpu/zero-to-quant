@@ -37,7 +37,7 @@
   const fresh = () => ({
     v: V,
     profile: { name: '', initial: '', track: 'Undecided', weeklyGoalH: 15, startStage: 0, createdAt: null },
-    settings: { theme: 'system', motion: 'system', sound: false, haptics: true, streakMode: 'daily', quantOnly: false },
+    settings: { theme: 'system', motion: 'system', sound: false, haptics: true, streakMode: 'daily', quantOnly: false, strictPrereqs: true },
     xp: 0, mp: 0,
     lessons: {}, reviews: {}, homework: {}, exams: {}, skills: {},
     redo: [], notebook: [], drills: {}, drillSessions: [],
@@ -46,6 +46,7 @@
     hours: [],
     streak: { current: 0, best: 0, lastDay: null, restDays: 0, restEarnedAt: 0, days: {}, count: { day: null, problems: 0 } },
     flags: { setupDone: false, streakGoal: null },
+    prereq: { met: {}, testouts: {}, opened: {}, grandfathered: false },   // prerequisite gating (ENGINE-BACKLOG 481): levels recorded met, test-out attempts, levels opened early
   });
   const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
   /* Fill anything missing from a loaded or imported document with the defaults, one level deep, keeping unknown keys */
@@ -53,7 +54,7 @@
     const d = fresh();
     if (!isObj(raw)) return d;
     for (const k of Object.keys(raw)) {
-      if (isObj(d[k]) && isObj(raw[k]) && ['profile', 'settings', 'streak', 'flags', 'warmup'].includes(k)) d[k] = { ...d[k], ...raw[k] };
+      if (isObj(d[k]) && isObj(raw[k]) && ['profile', 'settings', 'streak', 'flags', 'warmup', 'prereq'].includes(k)) d[k] = { ...d[k], ...raw[k] };
       else if (Array.isArray(d[k])) d[k] = Array.isArray(raw[k]) ? raw[k] : d[k];
       else if (isObj(d[k])) d[k] = isObj(raw[k]) ? raw[k] : d[k];
       else d[k] = raw[k];
@@ -252,16 +253,19 @@
     return { xp, mp, mastered, redo, qualified };
   };
 
-  const reviewFinished = ({ course, id, score = 0, items = 0, wrongItems = [], results, skills = [], seconds = 0 } = {}) => {
+  const reviewFinished = ({ course, id, score = 0, items = 0, wrongItems = [], results, skills = [], seconds = 0, pass = 0.7 } = {}) => {
     const key = `${course}/${id}`;
-    const repeat = !!doc.reviews[key];
+    const prev = doc.reviews[key];
+    const repeat = !!prev;
     const list = itemsOf({ results, wrongItems, score, skills, difficulty: 3 });
     const correct = list.filter(x => x.ok).length;
     let mp = 0;
     list.forEach(x => { const gain = x.ok && !repeat ? mpFor(x.difficulty) : 0; mp += gain; rate(x.skills, x.ok, x.difficulty, { mp: gain }); });
     const xp = repeat ? 0 : XP.quizItem * correct;
     doc.xp += xp; doc.mp += mp;
-    doc.reviews[key] = { score: correct, items: items || list.length, at: now() };
+    const total = items || list.length;
+    /* passed is sticky: a later weaker attempt never takes it away (prerequisite gating, ENGINE-BACKLOG 481) */
+    doc.reviews[key] = { score: correct, items: total, at: now(), passed: !!((prev && prev.passed) || (total > 0 && correct >= Math.ceil(total * pass - 1e-9))) };
     const redo = list.filter(x => !x.ok).map(x => redoAdd({ kind: 'quiz', ref: x.ref || { course, lesson: id, item: x.id }, skills: x.skills, difficulty: x.difficulty }));
     logSeconds('main', seconds, 'review');
     const qualified = touch();
@@ -380,6 +384,25 @@
     changed('exams');
     return { xp, mp, redo };
   };
+
+  /* ---------- Prerequisite gating records (ENGINE-BACKLOG 481; rules in js/prereq.js). Nothing here is ever removed. ---------- */
+  const prq = () => { const p = doc.prereq; ['met', 'testouts', 'opened'].forEach(k => { if (!isObj(p[k])) p[k] = {}; }); return p; };
+  const prereqMet = (keys, how = 'met') => {
+    const p = prq(), t = now();
+    (Array.isArray(keys) ? keys : [keys]).forEach(k => { if (!p.met[k]) p.met[k] = { at: t, how }; });
+    changed('prereq');
+    return p.met;
+  };
+  /* A test-out attempt for a level key "course/L<n>": { at, score, items, passed, missed: [item ids], tries } */
+  const prereqTestout = ({ key, score = 0, items = 0, passed = false, missed = [] } = {}) => {
+    const p = prq(), prev = p.testouts[key];
+    p.testouts[key] = { at: now(), score, items, passed: !!passed || !!(prev && prev.passed), missed, tries: ((prev && prev.tries) || 0) + 1 };
+    if (passed && !p.met[key]) p.met[key] = { at: now(), how: 'testout' };
+    changed('prereq');
+    return p.testouts[key];
+  };
+  const prereqOpened = (key) => { const p = prq(); if (!p.opened[key]) { p.opened[key] = now(); changed('prereq'); } return p.opened[key]; };
+  const prereqGrandfathered = (keys) => { const p = prq(); const t = now(); keys.forEach(k => { if (!p.met[k]) p.met[k] = { at: t, how: 'finished' }; }); p.grandfathered = true; changed('prereq'); };
 
   const notebookAdd = (card = {}) => {
     const dup = doc.notebook.find(c => c.course === card.course && c.lesson === card.lesson && c.name === card.name);
@@ -571,6 +594,7 @@
     hours: ns('hours', { log: logHours, list: () => doc.hours.slice() }),
     lessonPosition: { set: positionSet, get: positionGet },
     lesson: (course, lesson) => doc.lessons[lessonId(course, lesson)] || null,
+    prereq: ns('prereq', { mark: prereqMet, testout: prereqTestout, open: prereqOpened, grandfather: prereqGrandfathered, get: () => prq() }),
     screenGraded, lessonFinished, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult, bankResult,
     summary, weeklySplit,
     export: exportDoc, import: importDoc, reset, flush,

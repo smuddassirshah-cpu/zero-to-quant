@@ -3,8 +3,8 @@
    Desktop: course card on the left, 575px path column on the right. Mobile: the header stacks above the path.
    Nodes are tilted pucks on a sine serpentine with no connector lines, built from ZQ.content.courseLessons(id): each
    level's lessons, then its review, then its homework. Node states come from ZQ.state: done, mastered (quiz at 80%),
-   current (the first written lesson not done), upcoming (after it: the lock is advisory, so the card offers
-   "Jump ahead"), and not written (grey, no launch). Tapping a node opens a card anchored to the bottom of the path
+   current (the first written lesson not done and not locked), upcoming (after it: the card offers "Jump ahead"),
+   locked (prerequisites unmet, ENGINE-BACKLOG 484: a lock on the puck and a card that says what is missing), and not written (grey, no launch). Tapping a node opens a card anchored to the bottom of the path
    column (desktop) or a bottom sheet (mobile).
    Hand-offs: before leaving for a lesson the map (and Today) set window.ZQLaunch = { course, id, kind, wasDone,
    qualifiedBefore, at }. The player returns to #course/<course>; if the launched lesson is now done the map draws it
@@ -30,7 +30,7 @@
 
   /* ---------- Where the learner is (the same rule as Today and Learn) ---------- */
   const keyOf = (c, l) => `${c}/${l}`;
-  const nextLesson = (Z, cid) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !((Z.state.lessons[keyOf(cid, x.id)] || {}).done)) || null;
+  const nextLesson = (Z, cid) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !((Z.state.lessons[keyOf(cid, x.id)] || {}).done) && !(Z.prereq && Z.prereq.lessonLocked(cid, x.id))) || null;   // locked lessons are never picked (ENGINE-BACKLOG 486)
   const currentCourse = (Z, sum) => {
     const C = Z.content;
     if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume)) return sum.resume.course;
@@ -116,8 +116,11 @@
     const hrec = (e) => S.homework[keyOf(cid, e.it.id)] || null;
     const isDone = (e) => (e.it.kind === 'lesson' ? !!(lrec(e) && lrec(e).done) : e.it.kind === 'review' ? !!rrec(e) : !!(hrec(e) && hrec(e).submitted));
     const writtenOf = (e) => e.it.written !== false; // null (not known yet) is treated as written; the lesson screen copes either way
-    const curE = flat.find(e => e.it.kind === 'lesson' && writtenOf(e) && !isDone(e)) || null;
-    const statusOf = (e) => (isDone(e) ? 'done' : !writtenOf(e) ? 'nw' : e === curE ? 'current' : 'upcoming');
+    /* Prerequisite gating (ENGINE-BACKLOG 484): a node that is not done and is locked is drawn with a lock and offers no "Jump ahead" */
+    const lockedE = (e) => !isDone(e) && !!Z.prereq && Z.prereq.itemLocked(cid, e.it.id);
+    const curE = flat.find(e => e.it.kind === 'lesson' && writtenOf(e) && !isDone(e) && !lockedE(e)) || null;
+    const firstLocked = curE ? null : flat.find(e => e.it.kind === 'lesson' && writtenOf(e) && !isDone(e)) || null;
+    const statusOf = (e) => (isDone(e) ? 'done' : !writtenOf(e) ? 'nw' : lockedE(e) ? 'locked' : e === curE ? 'current' : 'upcoming');
     const mastered = (e) => e.it.kind === 'lesson' && !!(lrec(e) && lrec(e).mastered);
     const sig = () => {
       /* recomputed against the live state: a fresh closure over the same course */
@@ -127,8 +130,8 @@
         const d = e.it.kind === 'lesson' ? !!(S.lessons[k] && S.lessons[k].done) : e.it.kind === 'review' ? !!S.reviews[k] : !!(S.homework[k] && S.homework[k].submitted);
         return d ? 'done' : 'x';
       };
-      const cur = flat.find(e => e.it.kind === 'lesson' && writtenOf(e) && st(e) !== 'done');
-      return JSON.stringify([flat.map(st).join(''), flat.map(e => (e.it.kind === 'lesson' && S.lessons[keyOf(cid, e.it.id)] && S.lessons[keyOf(cid, e.it.id)].mastered ? 1 : 0)).join(''),
+      const cur = flat.find(e => e.it.kind === 'lesson' && writtenOf(e) && st(e) !== 'done' && !lockedE(e));
+      return JSON.stringify([flat.map(st).join(''), flat.map(e => (lockedE(e) ? 1 : 0)).join(''), flat.map(e => (e.it.kind === 'lesson' && S.lessons[keyOf(cid, e.it.id)] && S.lessons[keyOf(cid, e.it.id)].mastered ? 1 : 0)).join(''),
         s2.courseProgress[cid], s2.streak, s2.todayQualified, S.exams['topic-' + topic.id] || null, cur && S.lessons[keyOf(cid, cur.it.id)] && S.lessons[keyOf(cid, cur.it.id)].position ? 1 : 0,
         flat.map(e => e.it.written).join(',')]);
     };
@@ -160,7 +163,7 @@
     const ariaFor = (e, st) => {
       const it = e.it;
       const what = it.kind === 'lesson' ? `Lesson ${e.no}, ${it.name}` : it.kind === 'review' ? `Level ${e.lv.n} review` : `${it.name}, level ${e.lv.n}`;
-      const state = st === 'done' ? (mastered(e) ? 'Done, mastered' : 'Done') : st === 'current' ? 'Up next' : st === 'nw' ? 'Not yet written' : 'Not started';
+      const state = st === 'done' ? (mastered(e) ? 'Done, mastered' : 'Done') : st === 'current' ? 'Up next' : st === 'nw' ? 'Not yet written' : st === 'locked' ? 'Locked until its prerequisites are met' : 'Not started';
       return `${what}. ${state}.${prepOf(e).length ? ' Interview prep.' : ''}`;
     };
 
@@ -192,6 +195,7 @@
           <span class="zc-beam" aria-hidden="true"></span>
           ${puck(e.it.kind)}
           <span class="zc-mark" aria-hidden="true"><span>${Z.mark()}</span></span>
+          ${st === 'locked' ? `<span class="zc-lock" aria-hidden="true">${Z.icon('lock', 'sm')}</span>` : ''}
         </span>
         <span class="zc-tt"><span class="zc-title">${esc(e.it.name)}</span>${C.prepChip(prepOf(e), 'is-sm')}${st === 'nw' ? '<span class="zc-nwtag">Not yet written</span>' : ''}</span>
       </button></li>`;
@@ -213,6 +217,8 @@
     };
     const cont = curE
       ? `<button type="button" class="btn track block zc-continue" data-cont>${contLabel()}</button>`
+      : firstLocked
+        ? `<button type="button" class="btn track block zc-continue" data-cont-locked>See what is missing</button>`
       : mapOnly || written < lessonsTotal
         ? (resource && resource.url ? `<a class="btn track block zc-continue" href="${esc(resource.url)}" target="_blank" rel="noopener">Open the topic resource</a>` : '')
         : `<button type="button" class="btn track block zc-continue" data-go="review">Practise in Review</button>`;
@@ -300,6 +306,7 @@
     const actFor = (e) => {
       const it = e.it, st = statusOf(e);
       if (st === 'nw') return null;
+      if (st === 'locked') return { label: `${Z.icon('lock')}See what is missing`, cap: 'It opens when the levels it relies on are met. You can test out of one from there.' };
       if (it.kind === 'review') return { label: st === 'done' ? `${Z.icon('replay')}Redo the review` : 'Start the review' };
       if (it.kind === 'homework') {
         const h = hrec(e);
@@ -313,6 +320,7 @@
     const metaFor = (e) => {
       const it = e.it, st = statusOf(e);
       if (st === 'nw') return 'Not yet written';
+      if (st === 'locked') return 'Locked until the levels it relies on are met';
       if (it.kind === 'review') {
         const r = rrec(e);
         return r ? `Mixed problems from Level ${e.lv.n} · Last score ${r.score} of ${r.items}` : `Mixed problems from Level ${e.lv.n} · No hints, one try each`;
@@ -449,6 +457,8 @@
     });
     const contBtn = $('[data-cont]');
     if (contBtn) contBtn.addEventListener('click', () => launch(curE));
+    const lockBtn = $('[data-cont-locked]');
+    if (lockBtn) lockBtn.addEventListener('click', () => launch(firstLocked));
     const goBtn = $('.zc-continue[data-go]');
     if (goBtn) goBtn.addEventListener('click', () => Z.go(goBtn.dataset.go));
     $('.zc-back').addEventListener('click', () => Z.go('learn'));

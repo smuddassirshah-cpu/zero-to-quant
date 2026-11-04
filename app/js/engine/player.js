@@ -642,12 +642,16 @@
     const ctxFor = (key, mode) => ({ mode, key, into, pointEl, rng: rngFrom(hash(course + '/' + lessonId + '/' + key)), draftKey: `${course}/${lessonId}/${key}` });
     const titleStep = (spec) => {
       const meta = info.level && info.n ? `Level ${info.level} · Lesson ${info.n}` : (info.name || 'Lesson');
+      /* Prerequisite gating (ENGINE-BACKLOG 489): a met prerequisite not reviewed for 30 days offers a Refresh link; it never relocks */
+      let refresh = [];
+      try { refresh = Z.prereq ? Z.prereq.refreshFor(course, lessonId) : []; } catch (e) { console.error(e); }
       const el = h(`<section class="lsn-step lsn-title">
         <div class="lsn-title-art" data-track="${Z.esc(info.track)}">${window.ZQArt ? window.ZQArt(info.art, { label: 'Course art' }) : ''}</div>
         <div class="t-overline lsn-over">${Z.esc(meta)}${info.strand && window.ZQ.content.strandBadge ? ` ${window.ZQ.content.strandBadge(info.strand, info.strandNote)}` : ''}</div>
         <h1 class="t-lesson-title">${G().inline(spec.title || LSN.title)}</h1>
         ${G().prose(spec.prose || '')}
         <p class="t-caption lsn-meta">${icon('clock', 'xs')} About ${LSN.minutes || 12} minutes${quizSpec.length ? `, then a ${quizSpec.length}-question quiz` : ''}</p>
+        ${refresh.length ? `<p class="lsn-refresh">${refresh.map(r => `<a class="rf-chip" href="#review/${Z.esc(r.course)}/${Z.esc(r.review)}" title="You have not reviewed it for ${r.days >= 999 ? 'a while' : r.days + ' days'}">${icon('replay', 'xs')}Refresh ${Z.esc(r.name)}</a>`).join(' ')}</p>` : ''}
       </section>`);
       return { el, kind: 'read', type: 'title', spec, ready: () => false, dirty: () => false, destroy() {} };
     };

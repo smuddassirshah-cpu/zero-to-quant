@@ -78,6 +78,11 @@
     ZQ.content.exam(id).then((doc) => (doc && ZQ.arith ? ZQ.arith.ready.then(() => doc) : doc)).then(drawAll).then((doc) => {
       if (!alive) return;
       if (!doc) { bail('Not yet written', `The exam ${id} has not been written yet.`); return; }
+      /* Prerequisite gating (ENGINE-BACKLOG 487): a mock that names requires shows the locked card while one is unmet */
+      if (/^mock-/.test(id) && ZQ.prereq && ZQ.lockedCard && ZQ.prereq.examLocked(id, doc)) {
+        cleanups.push(ZQ.lockedCard(root, { title: `${doc.name || 'This mock'} is locked`, route: `exam/${id}`, openKey: 'exam/' + id, missing: ZQ.prereq.missingRefs(ZQ.prereq.examRefs(doc)), back: '#review' }));
+        return;
+      }
       run(doc);
     }).catch((e) => { console.error(e); if (alive) bail('The exam did not load', e.message); });
 

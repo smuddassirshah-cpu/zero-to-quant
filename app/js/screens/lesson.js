@@ -20,6 +20,8 @@
         p = last && last.course && last.lesson ? [last.course, last.lesson] : ['conditional', 'l3-shrinking'];
       }
       const [course, lesson, start] = p;
+      /* Prerequisite gating (ENGINE-BACKLOG 483): a locked lesson opens the locked card, not the lesson */
+      if (Z.lockedFor) { const off = Z.lockedFor(mount, course, lesson, `lesson/${course}/${lesson}${start ? '/' + start : ''}`); if (off) return off; }
       Z.store.set('lesson.last', { course, lesson });
       if (!Z.player) { mount.innerHTML = '<p style="padding:24px">The lesson player did not load.</p>'; return null; }
       return Z.player.mount(mount, { course, lesson, start: start || undefined });

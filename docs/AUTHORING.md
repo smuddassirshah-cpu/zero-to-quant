@@ -673,4 +673,51 @@ Which lessons prepare for which assessment lives in one file, `app/content/prep.
   - The Prepare for page lets the learner pick General, a stage with a role, or a firm. A path shows each step with Must or Should, done, in progress, not started or not yet written, its `why` line, the lesson count, then its mocks. A firm path says "Reported formats, as of <month year>" under its title, with a pointer to its source.
   - Path names are in the Today search (kind "Prepare"), so "Optiver" or "OA" finds them.
 - "Quant path only" is unchanged: it hides pure courses from Learn as before, and a step that points at a hidden course still opens its map.
+- Prerequisite locks (section 11) apply to a path: a step whose written lessons are all locked shows "Locked" and its first missing prerequisite, and a mock that names `requires` shows "Locked". Paths still unlock nothing.
 - For engine code: `ZQ.content.prep()` is `{ asOf, paths }` (empty when there is no file); `prepPath(id)`, `prepSteps(path)` (each step with `lessons: [{ course, id, level, name, written }]`), `prepRefLessons(ref)`, `prepFor(course, lesson)` and `prepForCourse(course)` (the paths a lesson or course is on), `prepDetail(paths)` (the line above) and `prepChip(paths, cls)` (the chip markup, `''` for none). The page is `js/screens/prepare.js`, styled in `css/screens/prepare.css`; the chip is `.prep-chip` in `components.css`.
+
+## 11. Prerequisites: `requires`, the met rule, test-out and Strict mode (ENGINE-BACKLOG 481 to 490)
+
+A level stays locked until the levels (or lessons) it relies on are learned. The lists live in `course.json`, nowhere else; topics and stages carry no `requires`, and lesson ids are never renamed.
+
+```json
+{ "n": 2, "name": "Bayes' rule", "lessons": ["..."], "review": "review-2", "homework": "homework-2",
+  "requires": ["conditional/L1", "counting-chance/L2", "markov/l3-never-leave"] }
+```
+
+- `requires` on a level is a list of references. `"<course>/L<n>"` means the whole level; `"<course>/<lesson-id>"` is for the few cases where one lesson is enough (a lesson listed on that course map, written or not). Any course may be named, including the same one (`"markov/L2"`). List direct prerequisites only: the engine follows the chain. Choose the smallest set the level genuinely uses.
+- Defaults: the first level of a course with no `requires` is open. A later level with no `requires` implicitly requires the previous level of its own course. `"requires": []` makes a later level open.
+- A lesson that needs less or more than its level adds `"lessonRequires": { "<lesson-id>": ["<course>/L<n>", ...] }` at the top of `course.json`. It replaces the level's list for that lesson only; the review and homework of the level keep the level's list. Rare: justify each one in the report.
+- A mock exam (`exams/mock-*.json`) may carry a top-level `requires` in the same format. The mock then shows the locked card (and a Locked mark on the Prepare for page) while one is unmet. Topic exams and stage tests never carry it: they are how a learner tests out.
+- Not named in the lists: `strand`. A Pure course never gates a Quant or interview course; interview courses (topics 0.7, 3.3, 3.5) gate only on what their briefs name.
+
+### The met rule
+
+A level reference is met when any of these holds:
+
+1. the level review (`review-<n>`) has a passed attempt (the review's `pass` share, default 0.7; a review file may carry `"pass": 0.8`; the pass is remembered and a later weaker attempt never removes it);
+2. the level's topic exam is passed (tested out);
+3. the stage exit test of the level's stage is passed;
+4. a test-out of that level was passed (below);
+5. the level was recorded met when a save from before gating was first loaded (below), or has no written review and every written lesson is finished.
+
+A lesson reference is met when that lesson is finished and its quiz mastered (80%), or its level is met. Opening a lesson never counts. A met level stays met: the engine records every level it finds met in `state.prereq.met`, so nothing that was unlocked is ever locked again, a finished lesson is never locked, and a level opened early stays open. Old saves: on the first load after gating shipped, every level whose written lessons are all finished is recorded met, once.
+
+A level is locked while any direct reference is unmet; its lessons, review and homework are locked with it. The locked card lists the unmet references and, transitively, what those need. A reference to an unwritten level can never be met (its lessons cannot be finished and it has no review to test out with), so the dependent level stays locked until it is written.
+
+### What the learner sees
+
+- Course map: a locked node carries a lock and no "Jump ahead"; its card offers "See what is missing". `#lesson/...`, `#review/...` and `#homework/...` for a locked item open the locked card instead.
+- The locked card groups Stage, then Topic, then Course, then level or lesson, each with a count ("Stage 1 > 1.5 Probability > Markov Chains: Level 1, 3 of 4 lessons finished, review not passed"). Direct prerequisites come first and are open; indirect ones collapse into one line per stage ("and 14 more in Stage 1"). "Start here" opens the earliest missing lesson whose own prerequisites are met (or its review when the lessons are done).
+- Test-out: each missing level with a written review offers "Test out" (`#testout/<course>/<n>`). Up to 6 items from `review-<n>`, seeded and shuffled (a retake draws a new set), no hints, one try each, passed at the review's pass share (5 of 6 at 0.7). A pass marks the level met. A miss lists the lessons to revisit (found by skill) and the test-out can be retaken after 24 hours. It earns no XP or mastery points and adds nothing to the redo queue. A level with no written review cannot be tested out of: its lessons must be finished.
+- Strict mode: You, Settings, Study plan, "Strict prerequisites" (`settings.strictPrereqs`, on by default). On: no "Open anyway"; test-out stays. Off: the locked card shows a secondary "Open anyway", which opens the item and records the level in `state.prereq.opened`; You shows the count as "opened early".
+- Today and Learn choose the next lesson among unlocked ones. If the lesson Today would have chosen is locked, Today says so in one line and offers "Start here". The Prepare for page marks a blocked step with a lock and its first missing prerequisite. The interview bank already gates items by their own `requires` (lessons finished); that is unchanged.
+- Refresh: a met prerequisite whose review has not been taken for 30 days shows a "Refresh" chip on the dependent lesson's start screen (a link to its review). It never relocks.
+
+### Validator rules (`tools/validate.mjs`)
+
+Errors: a reference that is not `<course>/L<n>` or `<course>/<lesson-id>`; an unknown course, level or lesson; a level that requires itself; a reference from an earlier stage to a later one; a cycle across all courses (printed as `a/L2 -> b/L1 -> a/L2`); `requires` not a list; `lessonRequires` not an object or naming a lesson not on the map; `requires` on an exam that is not a mock. Warnings: a reference to a later topic in the same stage; a reference to a level with no written lesson or a lesson not written yet (the dependent stays locked until it is written); a written level whose implicit previous level has no written lesson; a reference listed twice.
+
+### For engine code and playthroughs
+
+`ZQ.prereq` (`js/prereq.js`): `levelMet`, `lessonMet`, `refMet`, `lessonLocked`, `levelLocked`, `itemLocked`, `courseLocked`, `missingFor(course, lesson)`, `missingForLevel`, `missingRefs(refs)` (each `{ direct, indirect, start, count }`), `refreshFor`, `strict`, and the test hooks `unlock(course, id)` and `unlockRefs(refs)`, which mark every prerequisite of a lesson, review, homework or mock met. `node tools/playthrough.mjs --lesson`, `--set`, `--exam` (and `--all`) call them before playing the target; `--bank` and `--drills` are not gated by levels. `--routes-only` also checks: a fresh profile has a Stage 0 first lesson open and a Stage 3 level 2 lesson locked with a correct card and a "Start here" that opens; Strict hides "Open anyway" and the switch is on; outside Strict the override opens the lesson and counts; a test-out unlocks and a failed one waits 24 hours; an old save with a finished level is grandfathered; the course map draws the lock.

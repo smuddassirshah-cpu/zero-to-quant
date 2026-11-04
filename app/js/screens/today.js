@@ -78,14 +78,15 @@
     if (x.kind === 'review') return !!S.reviews[keyOf(cid, x.id)];
     const h = S.homework[keyOf(cid, x.id)]; return !!(h && h.submitted);
   };
-  const nextLesson = (Z, cid) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !itemDone(Z.state, cid, x)) || null;
+  /* Prerequisite gating (ENGINE-BACKLOG 486): the next lesson is the first one not done that is unlocked; anyLock reads past the locks */
+  const nextLesson = (Z, cid, anyLock) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !itemDone(Z.state, cid, x) && (anyLock || !Z.prereq || !Z.prereq.lessonLocked(cid, x.id))) || null;
   /* The resume course if a lesson is open (not one in a tested-out course left since the pass, ENGINE-BACKLOG 461); else the first course in curriculum order, from the learner's starting stage,
      that is not finished and has a written lesson still to do. null when no written lesson is left anywhere. */
-  const currentCourse = (Z, sum) => {
+  const currentCourse = (Z, sum, anyLock) => {
     const C = Z.content;
     if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume)) return sum.resume.course;
     const start = Number(Z.state.profile.startStage) || 0;
-    const open = C.courses().filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id));
+    const open = C.courses().filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id, anyLock));
     /* A course in a passed topic is skipped; it is chosen only when nothing else has a lesson left */
     const fresh = open.filter(c => !C.courseTestedOut(c.id));
     const c = fresh.find(x => x.stage >= start) || fresh[0] || open[0];
@@ -192,6 +193,9 @@
     /* ---------- Course and level state ---------- */
     const curId = currentCourse(Z, sum);
     const cid = curId || fallbackCourse(Z);
+    /* The course the learner would be on if nothing were locked: when its next lesson is locked, Today says so and offers Start here */
+    const wantId = currentCourse(Z, sum, true), wantNext = wantId && wantId !== curId ? nextLesson(Z, wantId, true) : null;
+    const wantMissing = wantNext && Z.prereq && Z.prereq.lessonLocked(wantId, wantNext.id) ? Z.prereq.missingFor(wantId, wantNext.id) : null;
     const co = cid ? C.course(cid) : null;
     const list = cid ? C.courseLessons(cid) : [];
     const lessonNo = {}; list.filter(x => x.kind === 'lesson').forEach((x, i) => { lessonNo[x.id] = i + 1; });
@@ -312,6 +316,11 @@
         <button class="btn secondary block" type="button" data-go="warmup">${Z.icon('timer', 'sm')}Start ${Math.round((WARM.seconds || 120) / 60)}-minute drill</button>
       </section>`;
 
+    if (wantMissing) {
+      const wc = C.course(wantId) || {};
+      P.lock = `<section class="lk-line" data-part="lock" aria-label="Locked course">${Z.icon('lock')}<span class="t-body">${esc(wc.name || wantId)} is locked until ${plural(wantMissing.count, 'thing', 'things')} before it ${wantMissing.count === 1 ? 'is' : 'are'} met.</span>
+        ${wantMissing.start ? `<button class="btn secondary" type="button" data-go="${esc(wantMissing.start.route)}">Start here</button>` : `<button class="btn secondary" type="button" data-go="lesson/${esc(wantId)}/${esc(wantNext.id)}">See what is missing</button>`}</section>`;
+    }
     P.jump = co ? `<section class="zt-jump" data-part="jump" data-track="${track}" aria-labelledby="zt-jump-h">
         <h2 class="t-h1" id="zt-jump-h">${anyDone || resume ? 'Jump back in' : 'Start here'}</h2>
         <div class="zt-deck"><div class="zt-deck-card" data-deck></div></div>
@@ -363,9 +372,9 @@
     const MQ_M = matchMedia('(max-width: 767px)'), MQ_LG = matchMedia('(min-width: 1024px)');
     const mode = () => (MQ_M.matches ? 'm' : MQ_LG.matches ? 'lg' : 'md');
     const ORDER = {
-      m: [['top', 'hero', 'resume', 'warm', 'due', 'exam', 'search'], []],
-      md: [['hello', 'search', 'jump', 'streak', 'due', 'warm', 'exam'], []],
-      lg: [['hello', 'search', 'streak', 'due', 'warm'], ['jump', 'exam']],
+      m: [['top', 'lock', 'hero', 'resume', 'warm', 'due', 'exam', 'search'], []],
+      md: [['hello', 'lock', 'search', 'jump', 'streak', 'due', 'warm', 'exam'], []],
+      lg: [['hello', 'lock', 'search', 'streak', 'due', 'warm'], ['jump', 'exam']],
     };
     let laid = '', arrangeRaf = 0;
     const arrange = () => {

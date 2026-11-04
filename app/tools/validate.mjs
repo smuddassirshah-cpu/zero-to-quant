@@ -1296,6 +1296,11 @@ const checkSet = (file, kind, courseId, id, level, doc, course) => {
       if (doc.timed.lockAtZero != null && typeof doc.timed.lockAtZero !== 'boolean') err(file, 'timed.lockAtZero', 'lockAtZero is true or false (false by default: the clock is a guide)');
     }
   }
+  /* pass: the share of a level review that counts as passed (default 0.7); it feeds the prerequisite rules and test-out (ENGINE-BACKLOG 481, 485) */
+  if (doc.pass != null) {
+    if (kind !== 'review') err(file, 'pass', 'pass belongs on a level review');
+    else if (typeof doc.pass !== 'number' || !(doc.pass > 0 && doc.pass <= 1)) err(file, 'pass', 'pass is a share above 0 and at most 1 (0.7 by default)');
+  }
   const items = Array.isArray(doc.items) ? doc.items : [];
   const [lo, hi, nlo, nhi] = kind === 'review' ? [2, 4, 6, 10] : [3, 5, 6, 12];
   if (items.length < nlo || items.length > nhi) err(file, 'items', `${nlo} to ${nhi} items (found ${items.length})`);
@@ -1613,6 +1618,7 @@ Object.entries(C.courses || {}).forEach(([id, c]) => {
 
 /* Courses */
 const manifest = [];
+const writtenByCourse = new Map();   // course id -> Set of written lesson ids, for the prerequisite rules
 const summary = [];
 const skillOwner = new Map();
 const courseDir = path.join(CONTENT, 'courses');
@@ -1696,6 +1702,7 @@ Object.keys(C.courses || {}).forEach(cid => {
   if (unwritten.length || reviewsMissing || homeworkMissing) {
     warn(file, '', `not yet written: ${unwritten.length} of ${lessonTotal} lessons, ${reviewsMissing} of ${levels.length} reviews, ${homeworkMissing} of ${levels.length} homework`);
   }
+  writtenByCourse.set(cid, new Set(written));
   summary.push({ cid, topic: meta.topic, lessons: lessonTotal, levels: levels.length, written: written.length, unwritten, reviews: levels.length - reviewsMissing, homework: levels.length - homeworkMissing });
 });
 
@@ -1858,6 +1865,100 @@ listJSON(path.join(drillDir, 'sessions')).forEach(f => {
   guard(file, () => checkDrillSession(file, id, r.data, drillIds));
 });
 
+/* ---------- Prerequisites (ENGINE-BACKLOG 488, docs/AUTHORING.md section 11) ----------
+   level.requires and course.json lessonRequires and a mock's requires: references "<course>/L<n>" (a whole level) or
+   "<course>/<lesson-id>". Errors: unknown course, level or lesson, a level requiring itself, a reference from an earlier stage to a later one,
+   a cycle (printed). Warnings: a reference to a later topic in the same stage, to a level or lesson that is not written yet, and a written
+   level whose implicit previous level has no written lesson. Topics and stages carry no requires. */
+guard(courseDir, () => {
+  const REF = /^([a-z0-9]+(?:-[a-z0-9]+)*)\/(L[1-9]\d*|[a-z0-9]+(?:-[a-z0-9]+)*)$/;
+  const topicIdx = new Map();
+  (C.stages || []).forEach(st => (st.topics || []).forEach((t, j) => topicIdx.set(t.id, j)));
+  const stageOf = (cid) => (cur.topics.get(cur.courseTopic[cid]) || {}).stage;
+  const levelsOf = (cid) => (Array.isArray((cur.courseDocs[cid] || {}).levels) ? cur.courseDocs[cid].levels : []);
+  const lessonLevel = (cid, l) => levelsOf(cid).find(lv => Array.isArray(lv.lessons) && lv.lessons.includes(l));
+  const writtenIn = (cid, lv) => (lv.lessons || []).filter(l => (writtenByCourse.get(cid) || new Set()).has(l));
+  const edges = new Map(), where = new Map();   // node "course/L<n>" -> Set of nodes it requires; node -> course.json path
+  const addEdge = (a, b) => { if (a === b) return; (edges.get(a) || edges.set(a, new Set()).get(a)).add(b); };
+  /* Checks a list of references and returns their level nodes. fromCid and fromNode are null for a mock. */
+  const checkRefs = (file, at, refs, fromCid, fromNode) => {
+    if (!Array.isArray(refs)) { err(file, at, 'requires is a list of "<course>/L<n>" or "<course>/<lesson-id>" strings'); return []; }
+    const out = [], seenRef = new Set();
+    refs.forEach((r, k) => {
+      const w = `${at}[${k}]`, m = typeof r === 'string' ? REF.exec(r) : null;
+      if (!m) { err(file, w, `${JSON.stringify(r)} is not "<course>/L<n>" or "<course>/<lesson-id>"`); return; }
+      if (seenRef.has(r)) { warn(file, w, `"${r}" is listed twice`); return; }
+      seenRef.add(r);
+      const [, c, rest] = m;
+      if (!C.courses || !C.courses[c] || !cur.courseDocs[c]) { err(file, w, `unknown course "${c}"`); return; }
+      let node, lv, lessonRef = null;
+      if (/^L\d+$/.test(rest)) {
+        lv = levelsOf(c).find(x => x.n === +rest.slice(1));
+        if (!lv) { err(file, w, `${c} has no level ${rest.slice(1)}`); return; }
+        node = `${c}/L${lv.n}`;
+        if (!writtenIn(c, lv).length) warn(file, w, `"${r}" has no written lesson yet: the dependent stays locked until it is written`);
+      } else {
+        lv = lessonLevel(c, rest);
+        if (!lv) { err(file, w, `${c} has no lesson "${rest}" on its course map`); return; }
+        node = `${c}/L${lv.n}`; lessonRef = rest;
+        if (!(writtenByCourse.get(c) || new Set()).has(rest)) warn(file, w, `lesson "${rest}" is not written yet: the dependent stays locked until it is written`);
+      }
+      if (fromNode && node === fromNode && !lessonRef) { err(file, w, 'a level cannot require itself'); return; }
+      if (fromCid) {
+        const sf = stageOf(fromCid), st = stageOf(c);
+        if (st > sf) err(file, w, `"${r}" is in Stage ${st}, later than this course's Stage ${sf}: a reference never points to a later stage`);
+        else if (st === sf) {
+          const tf = topicIdx.get(cur.courseTopic[fromCid]), tt = topicIdx.get(cur.courseTopic[c]);
+          if (tt > tf) warn(file, w, `"${r}" is in topic ${cur.courseTopic[c]}, later than this course's topic ${cur.courseTopic[fromCid]} in Stage ${sf}`);
+        }
+      }
+      out.push(node);
+    });
+    return out;
+  };
+  Object.keys(C.courses || {}).forEach(cid => {
+    const D = cur.courseDocs[cid]; if (!D) return;
+    const file = path.join(courseDir, cid, 'course.json');
+    where.set(cid, file);
+    const levels = levelsOf(cid);
+    levels.forEach((lv, i) => {
+      const at = `levels[${i}]`, node = `${cid}/L${lv.n}`;
+      if (lv.requires !== undefined) checkRefs(file, `${at}.requires`, lv.requires, cid, node).forEach(n => addEdge(node, n));
+      else if (i > 0) {
+        addEdge(node, `${cid}/L${levels[i - 1].n}`);
+        if (writtenIn(cid, lv).length && !writtenIn(cid, levels[i - 1]).length) warn(file, `${at}`, `written, but its implicit prerequisite level ${levels[i - 1].n} has no written lesson, so it stays locked`);
+      }
+    });
+    if (D.lessonRequires !== undefined) {
+      if (!isObj(D.lessonRequires)) err(file, 'lessonRequires', 'lessonRequires is { "<lesson-id>": ["<course>/L<n>", ...] }');
+      else Object.entries(D.lessonRequires).forEach(([l, refs]) => {
+        const lv = lessonLevel(cid, l);
+        if (!lv) { err(file, `lessonRequires.${l}`, `"${l}" is not a lesson on this course map`); return; }
+        checkRefs(file, `lessonRequires.${l}`, refs, cid, `${cid}/L${lv.n}`).forEach(n => addEdge(`${cid}/L${lv.n}`, n));
+      });
+    }
+  });
+  /* Cycles across all courses: the first one found from each unvisited node is printed */
+  const state = new Map(), stack = [], reported = new Set();
+  const visit = (n) => {
+    state.set(n, 1); stack.push(n);
+    for (const m of edges.get(n) || []) {
+      if (state.get(m) === 1) {
+        const cyc = stack.slice(stack.indexOf(m)).concat(m), key = [...new Set(cyc)].sort().join('|');
+        if (!reported.has(key)) { reported.add(key); err(where.get(m.split('/')[0]) || courseDir, 'requires', `prerequisite cycle: ${cyc.join(' -> ')}`); }
+      } else if (!state.get(m)) visit(m);
+    }
+    stack.pop(); state.set(n, 2);
+  };
+  [...edges.keys()].sort().forEach(n => { if (!state.get(n)) visit(n); });
+  /* A mock may name requires; nothing else outside a course map does */
+  listJSON(path.join(CONTENT, 'exams')).forEach(f => {
+    const ef = path.join(CONTENT, 'exams', f), er = readJSON(ef);
+    if (!er.data || er.data.requires === undefined) return;
+    if (!/^mock-/.test(f)) err(ef, 'requires', 'only a mock exam may name requires (a topic exam or stage test is what lets a learner test out)');
+    else checkRefs(ef, 'requires', er.data.requires, null, null);
+  });
+});
 
 /* Draw sources (ENGINE-BACKLOG 468): every `from` must name files, and enough items must match the tags and difficulty. A sample exam may
    draw from sample files too; any other exam draws from real files only (the engine reads the same rule). */
