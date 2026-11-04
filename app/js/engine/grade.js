@@ -278,7 +278,7 @@
     if (!want && got) return `The answer is a single value, not ${got.vec ? 'a vector' : 'a matrix'}.`;
     return `Your answer has ${shapeWord(got)}. The answer has ${shapeWord(want)}.`;
   };
-  const scalarEqual = (ce, A, B, counting, cx) => {
+  const scalarEqual = (ce, A, B, counting, cx, ints) => {
     let sym = false;
     try { sym = !!A.simplify().isEqual(B.simplify()); } catch { sym = false; }
     let vars = [];
@@ -296,7 +296,12 @@
     let seed = 20240531; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
     const draw = () => { let v; do { v = 0.3 + 2.7 * rnd(); } while (Math.abs(v - 1) < 0.08); return +v.toFixed(6); };
     const drawInt = () => 1 + Math.floor(rnd() * 12);
-    const pts = !vars.length ? [null] : counting ? Array.from({ length: 24 }, () => Object.fromEntries(vars.map(v => [v, drawInt()]))) : Array.from({ length: 6 }, () => Object.fromEntries(vars.map(v => [v, draw()])));
+    /* P32-expr-int: a symbol listed in `integers` takes six distinct whole numbers from 1 to 9 (its own fixed order, so two
+       integer symbols differ), the rest keep 0.3 to 3. Own generator: draws for other symbols are unchanged. */
+    const useInts = ints && ints.length ? vars.filter(v => ints.includes(v)) : [];
+    const orders = {};
+    useInts.forEach((v, j) => { let s2 = 1013 + 7919 * (j + 1); const r2 = () => { s2 = (s2 * 1103515245 + 12345) % 2147483648; return s2 / 2147483648; }; const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9]; for (let n = 8; n > 0; n--) { const m = Math.floor(r2() * (n + 1)); [pool[n], pool[m]] = [pool[m], pool[n]]; } orders[v] = pool; });
+    const pts = !vars.length ? [null] : counting ? Array.from({ length: 24 }, () => Object.fromEntries(vars.map(v => [v, drawInt()]))) : Array.from({ length: 6 }, (_, i) => Object.fromEntries(vars.map(v => [v, orders[v] ? orders[v][i] : draw()])));
     let checked = 0, numeric = true;
     for (const p of pts) {
       const x = val(A, p), y = val(B, p), fx = fin(x), fy = fin(y);
@@ -322,9 +327,9 @@
   const withParsed = (ce, s, fns, fn) => scoped(ce, () => fn(ce.parse(prep(s, hasImag(s), fns))));
   const exprEqual = (ce, a, b, opts) => {
     if (!ce || a == null || b == null || a === '' || b === '') return false;
-    return scoped(ce, () => exprEqualIn(ce, a, b, opts && opts.functions));
+    return scoped(ce, () => exprEqualIn(ce, a, b, opts && opts.functions, opts && opts.integers));
   };
-  const exprEqualIn = (ce, a, b, fns) => {
+  const exprEqualIn = (ce, a, b, fns, ints) => {
     let A, B;
     const counting = /!|\\[dt]?binom|\\choose/.test(String(a) + String(b)); // factorials only evaluate at whole numbers
     const cx = hasImag(a) || hasImag(b);
@@ -332,17 +337,17 @@
     if (A.isValid === false || B.isValid === false) return false;
     let IA = null, IB = null;
     try { IA = itemsOf(ce, A); IB = itemsOf(ce, B); } catch { IA = IB = null; }
-    if (IA || IB) return !!(IA && IB && sameShape(IA, IB) && IA.items.every((x, k) => scalarEqual(ce, x, IB.items[k], counting, cx)));
-    return scalarEqual(ce, A, B, counting, cx);
+    if (IA || IB) return !!(IA && IB && sameShape(IA, IB) && IA.items.every((x, k) => scalarEqual(ce, x, IB.items[k], counting, cx, ints)));
+    return scalarEqual(ce, A, B, counting, cx, ints);
   };
 
   /* Item 200: equal up to an added constant (antiderivatives). Symbols in the learner's answer that the target lacks
      (C, c, K) are set to 0, and the difference must be the same number at every sample point. */
   const exprEqualUpToConstant = (ce, a, b, opts) => {
     if (!ce || a == null || b == null || a === '' || b === '') return false;
-    return scoped(ce, () => upToConstantIn(ce, a, b, opts && opts.functions));
+    return scoped(ce, () => upToConstantIn(ce, a, b, opts && opts.functions, opts && opts.integers));
   };
-  const upToConstantIn = (ce, a, b, fns) => {
+  const upToConstantIn = (ce, a, b, fns, ints) => {
     let A, B;
     try { A = ce.parse(prep(a, undefined, fns)); B = ce.parse(prep(b, undefined, fns)); } catch { return false; }
     if (A.isValid === false || B.isValid === false) return false;
@@ -351,7 +356,7 @@
     const extra = va.filter(v => !vb.includes(v)), vars = vb;
     const num = (E, sub) => { try { const v = E.subs(sub).N(); const x = v.re ?? v.valueOf(); return typeof x === 'number' ? x : NaN; } catch { return NaN; } };
     let seed = 7919; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
-    const pts = Array.from({ length: 6 }, () => Object.fromEntries([...vars.map(v => { let x; do { x = 0.3 + 2.7 * rnd(); } while (Math.abs(x - 1) < 0.08); return [v, +x.toFixed(6)]; }), ...extra.map(v => [v, 0])]));
+    const pts = Array.from({ length: 6 }, (_, i) => Object.fromEntries([...vars.map((v, j) => { if (ints && ints.includes(v)) return [v, 1 + ((j * 4 + i * 5) % 9)]; let x; do { x = 0.3 + 2.7 * rnd(); } while (Math.abs(x - 1) < 0.08); return [v, +x.toFixed(6)]; }), ...extra.map(v => [v, 0])]));
     let d0 = null, checked = 0;
     for (const p of pts) {
       const x = num(A, p), y = num(B, p); if (!Number.isFinite(x) || !Number.isFinite(y)) { if (Number.isFinite(x) !== Number.isFinite(y)) return false; continue; }
