@@ -1,0 +1,259 @@
+{
+  "id": "sy-lru-cache",
+  "name": "LRU cache",
+  "course": "systems",
+  "skills": [
+    "sy-latency",
+    "sy-memory"
+  ],
+  "difficulty": 3,
+  "language": "cpp",
+  "pattern": "cache",
+  "pace": 1500,
+  "tags": [
+    "lru-cache"
+  ],
+  "brief": "A cache of at most `capacity` keys. `get(k)` returns the value or -1, and counts as a use. `put(k, v)` stores or updates `k`, also a use. When the cache is over capacity, drop the least recently used key. Both calls take constant time on average.",
+  "constraints": [
+    "Capacity may be 0: then nothing is stored.",
+    "A `put` of an existing key updates the value and counts as a use.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "Keep a `std::list` of (key, value) pairs, most recent first, and an `unordered_map` from key to list iterator. `splice` moves a node to the front without allocating.",
+  "starter": "#include <list>\n#include <unordered_map>\n\n// A cache of at most `capacity` keys. get(k) returns the value or -1, and counts as a use.\n// put(k, v) stores or updates k (also a use); when over capacity, drop the least recently used key.\n// Both calls take constant time on average.\nclass LRU {\npublic:\n    explicit LRU(int capacity) : capacity_(capacity) {}\n    int get(int key) {\n        auto it = values_.find(key);\n        return it == values_.end() ? -1 : it->second;      // does not count as a use yet\n    }\n    void put(int key, int value) {\n        values_[key] = value;\n        if (static_cast<int>(values_.size()) > capacity_) values_.erase(values_.begin());   // not the oldest\n    }\nprivate:\n    int capacity_;\n    std::unordered_map<int, int> values_;\n};\n",
+  "postlude": "#include <cstdio>\n#include <string>\n#include <vector>\n\n// hidden driver: \"p k v\" puts, \"g k\" gets; the result lists every get (value or -1)\nstd::vector<int> drive(int capacity, const std::vector<std::string>& ops) {\n    LRU cache(capacity);\n    std::vector<int> out;\n    for (const auto& op : ops) {\n        int k = 0, v = 0;\n        if (op[0] == 'p') { std::sscanf(op.c_str(), \"p %d %d\", &k, &v); cache.put(k, v); }\n        else { std::sscanf(op.c_str(), \"g %d\", &k); out.push_back(cache.get(k)); }\n    }\n    return out;\n}\n",
+  "examples": [
+    {
+      "call": "drive",
+      "args": [
+        2,
+        [
+          "p 1 10",
+          "p 2 20",
+          "g 1",
+          "p 3 30",
+          "g 2",
+          "g 3",
+          "g 1"
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<std::string>"
+      ],
+      "expect": [
+        10,
+        -1,
+        30,
+        10
+      ],
+      "compare": "equal",
+      "name": "A get saves a key",
+      "note": "get 1 makes key 1 recent, so adding key 3 drops key 2."
+    },
+    {
+      "call": "drive",
+      "args": [
+        1,
+        [
+          "p 1 5",
+          "p 2 6",
+          "g 1",
+          "g 2"
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<std::string>"
+      ],
+      "expect": [
+        -1,
+        6
+      ],
+      "compare": "equal",
+      "name": "Capacity one",
+      "note": "Key 2 replaces key 1."
+    }
+  ],
+  "tests": [
+    {
+      "call": "drive",
+      "args": [
+        2,
+        [
+          "p 1 10",
+          "p 2 20",
+          "g 1",
+          "p 3 30",
+          "g 2",
+          "g 3",
+          "g 1"
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<std::string>"
+      ],
+      "expect": [
+        10,
+        -1,
+        30,
+        10
+      ],
+      "compare": "equal",
+      "name": "A get saves a key",
+      "note": "get 1 makes key 1 recent, so adding key 3 drops key 2."
+    },
+    {
+      "call": "drive",
+      "args": [
+        1,
+        [
+          "p 1 5",
+          "p 2 6",
+          "g 1",
+          "g 2"
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<std::string>"
+      ],
+      "expect": [
+        -1,
+        6
+      ],
+      "compare": "equal",
+      "name": "Capacity one",
+      "note": "Key 2 replaces key 1."
+    },
+    {
+      "call": "drive",
+      "args": [
+        2,
+        [
+          "p 1 1",
+          "p 2 2",
+          "p 1 9",
+          "p 3 3",
+          "g 1",
+          "g 2",
+          "g 3"
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<std::string>"
+      ],
+      "expect": [
+        9,
+        -1,
+        3
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        3,
+        [
+          "g 7"
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<std::string>"
+      ],
+      "expect": [
+        -1
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        2,
+        [
+          "p 1 1",
+          "p 2 2",
+          "g 1",
+          "g 1",
+          "p 3 3",
+          "g 2",
+          "g 1"
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<std::string>"
+      ],
+      "expect": [
+        1,
+        1,
+        -1,
+        1
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        0,
+        [
+          "p 1 1",
+          "g 1"
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<std::string>"
+      ],
+      "expect": [
+        -1
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        3,
+        [
+          "p 1 1",
+          "p 2 2",
+          "p 3 3",
+          "p 4 4",
+          "g 1",
+          "g 2",
+          "g 3",
+          "g 4",
+          "p 5 5",
+          "g 2",
+          "g 3",
+          "g 4",
+          "g 5"
+        ]
+      ],
+      "types": [
+        "int",
+        "std::vector<std::string>"
+      ],
+      "expect": [
+        -1,
+        2,
+        3,
+        4,
+        -1,
+        3,
+        4,
+        5
+      ],
+      "compare": "equal"
+    }
+  ],
+  "how": "Seven hidden tests drive the cache with puts and gets: eviction order, capacity 1 and 0, updates and many keys. A hidden driver calls `put` and `get` and compares every result of `get`.",
+  "notes": [
+    "Move a key to the front on every `get` and every `put`.",
+    "Evict from the back of the list, and erase the key from the map as well."
+  ],
+  "solution": "#include <list>\n#include <unordered_map>\n\nclass LRU {\npublic:\n    explicit LRU(int capacity) : capacity_(capacity) {}\n    int get(int key) {\n        auto it = where_.find(key);\n        if (it == where_.end()) return -1;\n        order_.splice(order_.begin(), order_, it->second);   // move to the front: most recent\n        return it->second->second;\n    }\n    void put(int key, int value) {\n        if (capacity_ <= 0) return;\n        auto it = where_.find(key);\n        if (it != where_.end()) {\n            it->second->second = value;\n            order_.splice(order_.begin(), order_, it->second);\n            return;\n        }\n        order_.emplace_front(key, value);\n        where_[key] = order_.begin();\n        if (static_cast<int>(order_.size()) > capacity_) {\n            where_.erase(order_.back().first);\n            order_.pop_back();\n        }\n    }\nprivate:\n    int capacity_;\n    std::list<std::pair<int, int>> order_;                       // front = most recent\n    std::unordered_map<int, std::list<std::pair<int, int>>::iterator> where_;\n};\n"
+}

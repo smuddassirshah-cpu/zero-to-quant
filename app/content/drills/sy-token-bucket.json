@@ -1,0 +1,283 @@
+{
+  "id": "sy-token-bucket",
+  "name": "Token bucket",
+  "course": "systems",
+  "skills": [
+    "sy-latency"
+  ],
+  "difficulty": 2,
+  "language": "cpp",
+  "pattern": "rate-limiter",
+  "pace": 900,
+  "tags": [
+    "token-bucket"
+  ],
+  "brief": "`rate` tokens a second refill continuously, up to `burst` tokens. The bucket starts full. `allow(now_ns)` is called with non-decreasing times in nanoseconds. It returns true and spends one token if a whole token is available, else false. Use integers only: no floating point.",
+  "constraints": [
+    "Times are `long long` nanoseconds and never go backwards.",
+    "Do not use floating point: a rounding slip shows up after many calls.",
+    "Each test has a 5-second limit."
+  ],
+  "hint": "Count tokens in billionths: each elapsed nanosecond adds `rate` units, and one token is 1,000,000,000 units. Cap the total at `burst` tokens.",
+  "starter": "// rate tokens a second refill continuously, up to burst tokens. The bucket starts full.\n// allow(now_ns) is called with non-decreasing times in nanoseconds. It returns true and spends one token\n// if a whole token is available, else false. Use integers only: no floating point.\nclass TokenBucket {\npublic:\n    TokenBucket(long long rate, long long burst) : rate_(rate), burst_(burst), tokens_(burst) {}\n    bool allow(long long now_ns) {\n        (void)now_ns;\n        if (tokens_ < 1) return false;     // never refills\n        --tokens_;\n        return true;\n    }\nprivate:\n    long long rate_, burst_, tokens_;\n};\n",
+  "postlude": "#include <vector>\n\nstd::vector<int> drive(long long rate, long long burst, const std::vector<long long>& times) {\n    TokenBucket b(rate, burst);\n    std::vector<int> out;\n    for (long long t : times) out.push_back(b.allow(t) ? 1 : 0);\n    return out;\n}\n",
+  "examples": [
+    {
+      "call": "drive",
+      "args": [
+        1000,
+        3,
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "compare": "equal",
+      "name": "A burst of three",
+      "note": "The bucket starts full with 3 tokens, so a fourth call at the same instant is refused."
+    },
+    {
+      "call": "drive",
+      "args": [
+        1000,
+        3,
+        [
+          0,
+          0,
+          0,
+          0,
+          1000000,
+          1000000
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      "compare": "equal",
+      "name": "Refill",
+      "note": "At 1,000 tokens a second, one token returns every 1,000,000 ns."
+    }
+  ],
+  "tests": [
+    {
+      "call": "drive",
+      "args": [
+        1000,
+        3,
+        [
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "compare": "equal",
+      "name": "A burst of three",
+      "note": "The bucket starts full with 3 tokens, so a fourth call at the same instant is refused."
+    },
+    {
+      "call": "drive",
+      "args": [
+        1000,
+        3,
+        [
+          0,
+          0,
+          0,
+          0,
+          1000000,
+          1000000
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      "compare": "equal",
+      "name": "Refill",
+      "note": "At 1,000 tokens a second, one token returns every 1,000,000 ns."
+    },
+    {
+      "call": "drive",
+      "args": [
+        1000,
+        1,
+        [
+          0,
+          500000,
+          1000000,
+          1500000,
+          2000000
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        0,
+        1,
+        0,
+        1
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        2,
+        2,
+        [
+          0,
+          0,
+          0,
+          250000000,
+          500000000,
+          1000000000
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        0,
+        0,
+        1,
+        1
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        10,
+        5,
+        [
+          0,
+          1000000000,
+          1000000001
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        1
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        1000000000,
+        2,
+        [
+          0,
+          0,
+          0,
+          1,
+          2,
+          3
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        0,
+        1,
+        1,
+        1
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        100,
+        3,
+        [
+          1000000000000,
+          1000000000000,
+          1000000000000,
+          1000000000000
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "compare": "equal"
+    }
+  ],
+  "how": "Seven hidden tests call `allow` with lists of times: a burst, refills, a rate of one token a nanosecond and times of 10^12 ns. A hidden driver returns 1 for an allowed call and 0 for a refused one.",
+  "notes": [
+    "Update the clock on every call, even a refused one.",
+    "Counting in billionths of a token keeps the arithmetic exact."
+  ],
+  "solution": "// Tokens are counted in billionths of a token, so a nanosecond at `rate` per second adds exactly `rate` units.\nclass TokenBucket {\npublic:\n    TokenBucket(long long rate, long long burst)\n        : rate_(rate), cap_(burst * kUnit), units_(burst * kUnit) {}\n    bool allow(long long now_ns) {\n        units_ += (now_ns - last_) * rate_;\n        if (units_ > cap_) units_ = cap_;\n        last_ = now_ns;\n        if (units_ < kUnit) return false;\n        units_ -= kUnit;\n        return true;\n    }\nprivate:\n    static constexpr long long kUnit = 1000000000LL;\n    long long rate_, cap_, units_;\n    long long last_ = 0;\n};\n"
+}

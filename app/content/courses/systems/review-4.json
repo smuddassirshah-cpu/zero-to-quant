@@ -1,0 +1,448 @@
+{
+  "id": "review-4",
+  "course": "systems",
+  "level": 4,
+  "items": [
+    {
+      "id": "r4-allocating-lines",
+      "difficulty": 2,
+      "skills": [
+        "sy-latency",
+        "sy-memory"
+      ],
+      "tags": [
+        "allocation-cost"
+      ],
+      "pace": 60,
+      "prose": "A hot function starts with an empty `std::vector<double> v;` and then runs the lines below, in order.",
+      "question": "Select all that apply: which lines allocate?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "emplace",
+            "text": "`v.emplace_back(2.5);`",
+            "correct": true
+          },
+          {
+            "id": "new",
+            "text": "`auto* q = new double[3];`",
+            "correct": true
+          },
+          {
+            "id": "string",
+            "text": "`std::string s(64, 'y');`",
+            "correct": true
+          },
+          {
+            "id": "arr",
+            "text": "`double a[3] = {1.5, 2.5, 3.5};`",
+            "why": "A plain array of three doubles lives in the stack frame."
+          },
+          {
+            "id": "stdarr",
+            "text": "`std::array<double, 3> b{};`",
+            "why": "A `std::array` holds its elements inside itself, with no heap call."
+          },
+          {
+            "id": "decl",
+            "text": "`std::vector<double> w;`",
+            "why": "You counted the declaration. An empty vector owns no memory yet."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Three allocate: the first push, the `new` and the long string.",
+        "generic": "Not quite right. Look for growth, `new` and strings over the small-string size.",
+        "byKey": {
+          "arr": "A plain array sits on the stack.",
+          "stdarr": "`std::array` stores its elements in the object.",
+          "decl": "An empty vector allocates on its first push, not when declared."
+        }
+      },
+      "explain": {
+        "text": "The first `emplace_back` gives the empty vector its block, and `new` calls the allocator. 64 characters are too long for the string object itself. The arrays and the empty second vector allocate nothing."
+      }
+    },
+    {
+      "id": "r4-pool-order",
+      "difficulty": 3,
+      "skills": [
+        "sy-latency",
+        "sy-memory"
+      ],
+      "tags": [
+        "pool-allocator"
+      ],
+      "pace": 60,
+      "prose": "A pool of 4 slots starts with the free list 0, 1, 2, 3. You allocate four times, then release slot 2, then slot 3, then slot 1.",
+      "question": "Which slot does the next `allocate` return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "Slot 1: it was released last, so it is the head of the free list.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Slot 1.",
+        "generic": "Not quite right. The head of the free list is the slot released last.",
+        "byKey": {
+          "two": "Slot 2 was released first, so it sits at the back of the list.",
+          "three": "Slot 3 was released second, so it comes after slot 1."
+        }
+      },
+      "explain": {
+        "text": "Each release pushes the slot at the head. After 2, 3 and 1 the list reads 1, 3, 2, so the next `allocate` returns 1."
+      }
+    },
+    {
+      "id": "r4-alloc-bill",
+      "difficulty": 2,
+      "skills": [
+        "sy-latency",
+        "sy-memory"
+      ],
+      "tags": [
+        "allocation-cost"
+      ],
+      "pace": 45,
+      "prose": "A handler makes 3 allocations a message at 50 ns each. The feed sends 120,000 messages a second.",
+      "question": "How many milliseconds a second do the allocations take?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 18,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "ms",
+        "accept": "18 ms: 150 ns a message × 120,000 a second.",
+        "wrong": [
+          {
+            "id": "us",
+            "value": 18000,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "18 ms.",
+        "generic": "Not quite right. Find the cost of one message, then multiply.",
+        "byKey": {
+          "us": "18,000 is microseconds. The question asks for milliseconds."
+        }
+      },
+      "explain": {
+        "text": "3 × 50 ns is 150 ns a message. At 120,000 messages that is 18,000,000 ns, or 18 ms, a second."
+      }
+    },
+    {
+      "id": "r4-ring-counters",
+      "difficulty": 3,
+      "skills": [
+        "sy-latency",
+        "sy-concurrency"
+      ],
+      "tags": [
+        "power-of-two-mask"
+      ],
+      "pace": 60,
+      "prose": "A ring of 32 slots has a head counter of 70 and a tail counter of 85. Neither counter has been reset.",
+      "question": "Fill in the ring.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Items stored",
+            {
+              "edit": true,
+              "answer": 15,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Slot of the next push",
+            {
+              "edit": true,
+              "answer": 21,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "15 items, slot 21.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$85 - 70$.",
+          "r1c1": "$85 \\bmod 32 = 21$, or `85 & 31`."
+        }
+      },
+      "explain": {
+        "text": "Items stored is the tail minus the head, 15. The next push goes to $85 \\,\\&\\, 31 = 21$, since 85 is two laps of 32 plus 21."
+      }
+    },
+    {
+      "id": "r4-ring-order",
+      "difficulty": 3,
+      "skills": [
+        "sy-latency",
+        "sy-concurrency"
+      ],
+      "tags": [
+        "ring-buffer"
+      ],
+      "pace": 60,
+      "prose": "A ring of 2 starts empty. A push of 10 returns true, 20 returns true and 30 is refused. Then there is a pop, a push of 40, and pops until empty.",
+      "question": "What does the third pop return?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "40: the first pop returns 10, the second 20, and the third the 40 pushed after room appeared.",
+        "wrong": [
+          {
+            "id": "thirty",
+            "value": 30,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "ten",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "40.",
+        "generic": "Not quite right. The refused 30 never entered the ring.",
+        "byKey": {
+          "thirty": "30 was refused, so it is not in the ring.",
+          "ten": "10 is the first pop, not the third."
+        }
+      },
+      "explain": {
+        "text": "Pops come out in push order: 10, then 20, then 40. The refused 30 was never stored, and 40 went in once the first pop made room."
+      }
+    },
+    {
+      "id": "r4-mean-p99",
+      "difficulty": 3,
+      "skills": [
+        "sy-latency"
+      ],
+      "tags": [
+        "mean-vs-p99"
+      ],
+      "pace": 75,
+      "prose": "A service answered 1,000 requests: 970 took 12 µs and 30 took 500 µs.",
+      "question": "Fill in the mean and the p99.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value (µs)"
+        ],
+        "rows": [
+          [
+            "Mean",
+            {
+              "edit": true,
+              "answer": 26.64,
+              "tol": {
+                "abs": 0.005
+              }
+            }
+          ],
+          [
+            "p99 (position 990)",
+            {
+              "edit": true,
+              "answer": 500,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "A mean of 26.64 µs and a p99 of 500 µs.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "$(970 \\times 12 + 30 \\times 500) / 1{,}000 = 26{,}640 / 1{,}000$.",
+          "r1c1": "Only 970 requests are fast, so position 990 is slow."
+        }
+      },
+      "explain": {
+        "text": "The total is $970 \\times 12 + 30 \\times 500 = 26{,}640$ µs, so the mean is 26.64 µs. Fast requests fill positions 1 to 970, so position 990 holds a 500 µs one."
+      }
+    },
+    {
+      "id": "r4-p60",
+      "difficulty": 3,
+      "skills": [
+        "sy-latency"
+      ],
+      "tags": [
+        "percentile"
+      ],
+      "pace": 45,
+      "prose": "Eight samples arrive as 7, 3, 9, 1, 5, 8, 2 and 6.",
+      "question": "What is the p60, by nearest rank?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "6: sorted, rank $\\lceil 4.8 \\rceil = 5$ holds the value 6.",
+        "wrong": [
+          {
+            "id": "floor",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "rank6",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "6.",
+        "generic": "Not quite right. Sort first, then take rank $\\lceil 0.6 \\times 8 \\rceil$.",
+        "byKey": {
+          "floor": "You rounded 4.8 down to rank 4, which holds 5. Nearest rank rounds up.",
+          "rank6": "7 is rank 6. The rank is 5, since 4.8 rounds up to 5."
+        }
+      },
+      "explain": {
+        "text": "Sorted, the samples are 1, 2, 3, 5, 6, 7, 8, 9. $0.6 \\times 8 = 4.8$ rounds up to rank 5, which holds 6."
+      }
+    },
+    {
+      "id": "r4-budget",
+      "difficulty": 3,
+      "skills": [
+        "sy-latency",
+        "sy-os"
+      ],
+      "tags": [
+        "latency-budget"
+      ],
+      "pace": 60,
+      "prose": "A handler has stages of 900, 250, 400, 600 and 450 ns. It also makes six allocations a message, at 50 ns each.",
+      "question": "What is the total time, in ns?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2900,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "ns",
+        "accept": "2,900 ns: 2,600 for the stages and 300 for the allocations.",
+        "wrong": [
+          {
+            "id": "stages",
+            "value": 2600,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "2,900 ns.",
+        "generic": "Not quite right. Add the stages, then the allocations.",
+        "byKey": {
+          "stages": "2,600 is the stages alone. Add 6 × 50 ns."
+        }
+      },
+      "explain": {
+        "text": "The stages add up to 2,600 ns, and six allocations add 300 ns, for 2,900 ns."
+      }
+    },
+    {
+      "id": "r4-two-reads",
+      "difficulty": 2,
+      "skills": [
+        "sy-latency",
+        "sy-os"
+      ],
+      "tags": [
+        "partial-frame"
+      ],
+      "pace": 45,
+      "prose": "Frames are 24 bytes. A handler gets a read of 31 bytes, and then a read of 41 bytes. It keeps leftover bytes between reads.",
+      "question": "How many whole frames has it decoded after the second read?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "3: 31 + 41 = 72 bytes, which is exactly 3 frames.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "3 frames.",
+        "generic": "Not quite right. Count all the bytes received, not each read alone.",
+        "byKey": {
+          "two": "You counted 31 / 24 and 41 / 24 separately. The 7 spare bytes of the first read join the second."
+        }
+      },
+      "explain": {
+        "text": "The first read holds 1 frame and 7 spare bytes. The 7 join the 41, making 48 bytes, which is 2 frames. That is 3 in all, with nothing left over."
+      }
+    }
+  ]
+}

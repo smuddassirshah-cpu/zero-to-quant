@@ -1,0 +1,647 @@
+{
+  "id": "homework-4",
+  "course": "systems",
+  "level": 4,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h4-latency-hist",
+      "difficulty": 4,
+      "skills": [
+        "sy-latency"
+      ],
+      "tags": [
+        "percentile",
+        "alloc-counter"
+      ],
+      "pace": 900,
+      "prose": "A service records the latency of every request in nanoseconds. Keeping every sample would allocate. A histogram with a bucket for each power of two does not: a sample of `ns` goes in bucket $\\lfloor \\log_2 ns \\rfloor$.",
+      "question": "Write `record` and `percentile_upper` so `record` never touches the heap.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "allocCheck": true,
+        "starter": "#include <array>\n\n// Buckets by powers of two: a sample of ns nanoseconds goes in bucket floor(log2(max(ns, 1))), 0..39.\n// percentile_upper(p) finds the bucket holding the nearest-rank p-th percentile sample\n// (rank ceil(p * n / 100 - 1e-9), at least 1) and returns that bucket's upper bound, 2^(bucket + 1).\n// record() must not use the heap.\nclass LatencyHist {\npublic:\n    void record(long long ns) { ++total_; (void)ns; }\n    long long percentile_upper(double p) const { (void)p; return 0; }\n    int count() const { return total_; }\nprivate:\n    std::array<int, 40> buckets_{};\n    int total_ = 0;\n};\n",
+        "solution": "#include <array>\n#include <cmath>\n\nclass LatencyHist {\npublic:\n    void record(long long ns) {\n        int b = 0;\n        long long v = ns < 1 ? 1 : ns;\n        while (v > 1) { v >>= 1; ++b; }\n        if (b > 39) b = 39;\n        ++buckets_[b];\n        ++total_;\n    }\n    long long percentile_upper(double p) const {\n        if (total_ == 0) return 0;\n        long long rank = static_cast<long long>(std::ceil(p * total_ / 100.0 - 1e-9));\n        if (rank < 1) rank = 1;\n        long long seen = 0;\n        for (int b = 0; b < 40; ++b) {\n            seen += buckets_[b];\n            if (seen >= rank) return 1LL << (b + 1);\n        }\n        return 1LL << 40;\n    }\n    int count() const { return total_; }\nprivate:\n    std::array<int, 40> buckets_{};\n    int total_ = 0;\n};\n",
+        "examples": [
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 5; ++i) h.record(1000000); for (int i = 0; i < 95; ++i) h.record(100);",
+            "call": "h.percentile_upper(90)",
+            "expect": 128,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 5; ++i) h.record(1000000); for (int i = 0; i < 95; ++i) h.record(100);",
+            "call": "h.percentile_upper(99)",
+            "expect": 1048576,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 970; ++i) h.record(10); for (int i = 0; i < 30; ++i) h.record(1000);",
+            "call": "h.percentile_upper(50)",
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 970; ++i) h.record(10); for (int i = 0; i < 30; ++i) h.record(1000);",
+            "call": "h.percentile_upper(97)",
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 970; ++i) h.record(10); for (int i = 0; i < 30; ++i) h.record(1000);",
+            "call": "h.percentile_upper(98)",
+            "expect": 1024,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1; ++i) h.record(2); for (int i = 0; i < 1; ++i) h.record(3); for (int i = 0; i < 1; ++i) h.record(4); for (int i = 0; i < 1; ++i) h.record(5); for (int i = 0; i < 1; ++i) h.record(6); for (int i = 0; i < 1; ++i) h.record(7); for (int i = 0; i < 1; ++i) h.record(8); for (int i = 0; i < 1; ++i) h.record(9); for (int i = 0; i < 1; ++i) h.record(10);",
+            "call": "h.percentile_upper(50)",
+            "expect": 8,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1; ++i) h.record(2); for (int i = 0; i < 1; ++i) h.record(3); for (int i = 0; i < 1; ++i) h.record(4); for (int i = 0; i < 1; ++i) h.record(5); for (int i = 0; i < 1; ++i) h.record(6); for (int i = 0; i < 1; ++i) h.record(7); for (int i = 0; i < 1; ++i) h.record(8); for (int i = 0; i < 1; ++i) h.record(9); for (int i = 0; i < 1; ++i) h.record(10);",
+            "call": "h.percentile_upper(90)",
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1; ++i) h.record(2); for (int i = 0; i < 1; ++i) h.record(3); for (int i = 0; i < 1; ++i) h.record(4); for (int i = 0; i < 1; ++i) h.record(5); for (int i = 0; i < 1; ++i) h.record(6); for (int i = 0; i < 1; ++i) h.record(7); for (int i = 0; i < 1; ++i) h.record(8); for (int i = 0; i < 1; ++i) h.record(9); for (int i = 0; i < 1; ++i) h.record(10);",
+            "call": "h.percentile_upper(100)",
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 1; ++i) h.record(0); for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1; ++i) h.record(2); for (int i = 0; i < 1; ++i) h.record(3);",
+            "call": "h.percentile_upper(50)",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 1; ++i) h.record(0); for (int i = 0; i < 1; ++i) h.record(1); for (int i = 0; i < 1; ++i) h.record(2); for (int i = 0; i < 1; ++i) h.record(3);",
+            "call": "h.percentile_upper(100)",
+            "expect": 4,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 5; ++i) h.record(1000000); for (int i = 0; i < 95; ++i) h.record(100);",
+            "call": "h.percentile_upper(90)",
+            "expect": 128,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; for (int i = 0; i < 5; ++i) h.record(1000000); for (int i = 0; i < 95; ++i) h.record(100);",
+            "call": "h.percentile_upper(99)",
+            "expect": 1048576,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; h.record(1000); h.record(2000);",
+            "call": "h.count()",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "LatencyHist h; reset_alloc_count(); for (int i = 0; i < 1000; ++i) h.record(i * 37);",
+            "call": "alloc_count()",
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "how": "Twelve hidden tests cover a 970 and 30 mix, a ten-sample ladder, a zero sample and a wide spread. The last records 1,000 samples, which must add 0 to `alloc_count()`."
+      },
+      "feedback": {
+        "correct": "That's it. A fixed array of counts, and a walk to the rank.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "A sample of 10 ns is in bucket 3 (8 to 15) and reports the upper bound 16. The walk adds bucket counts until it reaches the nearest rank, then returns $2^{b+1}$. The array was sized at construction, so `record` makes no allocation."
+      }
+    },
+    {
+      "id": "h4-sizing",
+      "difficulty": 5,
+      "skills": [
+        "sy-latency",
+        "sy-memory",
+        "sy-concurrency"
+      ],
+      "tags": [
+        "feed-handler-design"
+      ],
+      "pace": 600,
+      "prose": "A handler keeps 2,400 live orders, with a safety factor of 1.25. An order slot is 20 bytes. A ring must absorb a 2 ms consumer stall at 150,000 messages a second. Messages are 24 bytes and the ring size is a power of two. An L1 cache holds 32,768 bytes.",
+      "parts": [
+        {
+          "question": "How many slots does the order pool need?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 3000,
+            "tol": {
+              "abs": 0
+            },
+            "accept": "3,000: 2,400 × 1.25.",
+            "wrong": [
+              {
+                "id": "raw",
+                "value": 2400,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "3,000 slots.",
+            "generic": "Not quite right. Multiply the live orders by the safety factor.",
+            "byKey": {
+              "raw": "2,400 leaves out the safety factor."
+            }
+          },
+          "explain": {
+            "text": "$2{,}400 \\times 1.25 = 3{,}000$ slots."
+          }
+        },
+        {
+          "question": "How many bytes is the pool?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 60000,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "bytes",
+            "accept": "60,000 bytes: 3,000 × 20.",
+            "wrong": [
+              {
+                "id": "slots",
+                "value": 3000,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "60,000 bytes.",
+            "generic": "Not quite right. Multiply the slots by the slot size.",
+            "byKey": {
+              "slots": "3,000 is the slot count. Multiply by 20 bytes."
+            }
+          },
+          "explain": {
+            "text": "$3{,}000 \\times 20 = 60{,}000$ bytes, about 58.6 KiB."
+          }
+        },
+        {
+          "question": "How many slots does the ring need, as a power of two?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 512,
+            "tol": {
+              "abs": 0
+            },
+            "accept": "512: 300 messages in 2 ms, rounded up to a power of two.",
+            "wrong": [
+              {
+                "id": "raw",
+                "value": 300,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "down",
+                "value": 256,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "512 slots.",
+            "generic": "Not quite right. Count the messages in the stall, then round up.",
+            "byKey": {
+              "raw": "300 is the stall in messages. The size must be a power of two.",
+              "down": "256 is too small for 300 messages."
+            }
+          },
+          "explain": {
+            "text": "150,000 a second for 2 ms is 300 messages. The next power of two is $2^9 = 512$."
+          }
+        },
+        {
+          "question": "How many bytes is the ring?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 12288,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "bytes",
+            "accept": "12,288 bytes: 512 × 24.",
+            "wrong": [
+              {
+                "id": "slots",
+                "value": 512,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "12,288 bytes.",
+            "generic": "Not quite right. Multiply the slots by 24 bytes.",
+            "byKey": {
+              "slots": "512 is the slot count. Multiply by 24 bytes."
+            }
+          },
+          "explain": {
+            "text": "$512 \\times 24 = 12{,}288$ bytes, 12 KiB."
+          }
+        },
+        {
+          "question": "Which of these fits a 32,768-byte L1 and so stays resident?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "ring",
+                "text": "The ring alone, 12,288 bytes",
+                "correct": true
+              },
+              {
+                "id": "pool",
+                "text": "The pool alone, 60,000 bytes",
+                "why": "The pool is 27,232 bytes over the limit."
+              },
+              {
+                "id": "both",
+                "text": "The pool and ring together, 72,288 bytes",
+                "why": "Together they are 39,520 bytes over the limit."
+              },
+              {
+                "id": "all",
+                "text": "All three: only the touched slots matter",
+                "why": "Only the slots in use stay hot, but the pool as a whole does not fit."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "Only the ring fits.",
+            "generic": "Not quite right. Compare each size with 32,768.",
+            "byKey": {
+              "pool": "60,000 is more than 32,768 by 27,232.",
+              "both": "12,288 + 60,000 is 72,288, which is 39,520 over.",
+              "all": "The pool is larger than L1, so it cannot stay resident."
+            }
+          },
+          "explain": {
+            "text": "The ring is 12,288 bytes and fits. The pool is 27,232 bytes over, and the pair is 39,520 over, so only the ring stays resident."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h4-handler-aloud",
+      "difficulty": 5,
+      "skills": [
+        "sy-latency",
+        "sy-memory",
+        "sy-os"
+      ],
+      "tags": [
+        "feed-handler-design"
+      ],
+      "pace": 540,
+      "kind": "longform",
+      "title": "Say it aloud: a handler",
+      "prompt": "Say aloud, in three minutes, how you would build a handler for one instrument's feed, defending each choice. Time yourself, and give a figure of your own for each point. Then open the model answer and tick the rubric.",
+      "model": "**1. The pipeline and the budget.** Packets reach a ring in user space, bypassing the kernel. Then decode the 24-byte frame and check its sequence number. Update the book, run the strategy, and encode and send the order. Take a 4 µs target. Give the card to the ring 1,200 ns, decode 250, the book 350, the strategy 600 and the send 600. That is 3,000 ns, with 1,000 ns of slack for a stall.\n\n**2. No allocation.** Every allocation is a cost of about 50 ns and a rare slow case. Take all memory before the first message, from fixed arrays and a pool. Prove it with a test. Reset the counter of `new` calls, feed a stream, and assert it is still 0.\n\n**3. Loss and two feeds.** Each frame carries a sequence number. A number below the expected one is a duplicate or a late arrival, so it is dropped. A number above it adds the skipped numbers to a gap count, and the gap is repaired from a snapshot. A partial frame waits in a small buffer for its remaining bytes, and one read may hold several frames.\n\n**4. The book.** Use an array of quantities indexed by price tick: a £4 range in pennies is 401 levels a side. Use an array of orders indexed by order id. Both are sized at start, so they fit in L1, and neither can rehash. A `std::unordered_map` allocates and rehashes at unpredictable moments.\n\n**5. Measuring.** Time from the intended send time, never from a late send after a stall, or the tail hides. Quote the p99 and p99.9 first, and the mean after. Time batches, not single calls, after a warm-up.\n\n**6. A trade-off.** Counting a gap and moving on keeps the delay low, but loses frames the other feed may hold. Holding a frame for a short time recovers some at a cost in latency. I would count and snapshot first, then tune the hold with measurements.",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "Gives the pipeline in order and a time budget with a figure for each stage"
+        },
+        {
+          "points": 2,
+          "text": "Says every allocation is avoided with a pool or fixed arrays, and how a test proves it"
+        },
+        {
+          "points": 2,
+          "text": "Handles loss: sequence numbers, duplicates from a second feed, a gap count and partial frames"
+        },
+        {
+          "points": 2,
+          "text": "Chooses arrays by price and by order id, and says why they stay in cache"
+        },
+        {
+          "points": 1,
+          "text": "Measures with percentiles from the intended send time, not the mean"
+        },
+        {
+          "points": 1,
+          "text": "Names a trade-off and says how they would decide it"
+        }
+      ]
+    },
+    {
+      "id": "h4-two-hosts",
+      "difficulty": 4,
+      "skills": [
+        "sy-latency"
+      ],
+      "tags": [
+        "tail-latency"
+      ],
+      "pace": 480,
+      "prose": "Two hosts serve a service. Host A served 1,000 requests, all at 20 µs, so its p99 is 20 µs. Host B served 960 at 20 µs and 40 at 800 µs, so its p99 is 800 µs.",
+      "parts": [
+        {
+          "question": "What is the average of the two hosts' p99 values, in µs?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 410,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "µs",
+            "accept": "410 µs: (20 + 800) / 2.",
+            "wrong": [
+              {
+                "id": "b",
+                "value": 800,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "410 µs.",
+            "generic": "Not quite right. Add the two p99 values and halve.",
+            "byKey": {
+              "b": "800 is host B's p99. The question asks for the average of both."
+            }
+          },
+          "explain": {
+            "text": "$(20 + 800) / 2 = 410$ µs. No request took 410 µs."
+          }
+        },
+        {
+          "question": "What is the p99 of all 2,000 requests pooled, in µs?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 800,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "µs",
+            "accept": "800 µs: 40 slow requests of 2,000 is 2%, so position 1,980 is slow.",
+            "wrong": [
+              {
+                "id": "avg",
+                "value": 410,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "a",
+                "value": 20,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "800 µs.",
+            "generic": "Not quite right. Position 1,980 of the pooled, sorted list is the p99.",
+            "byKey": {
+              "avg": "410 is the average of two percentiles, not a percentile of the requests.",
+              "a": "1,960 requests are fast, so position 1,980 is slow."
+            }
+          },
+          "explain": {
+            "text": "1,960 requests are at 20 µs, so positions 1,961 to 2,000 are slow. Position 1,980 is slow: 800 µs."
+          }
+        },
+        {
+          "question": "Now host B had only 15 slow requests of 1,000, at 800 µs, and 985 at 20 µs. What is the pooled p99 of the 2,000, in µs?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 20,
+            "tol": {
+              "abs": 0
+            },
+            "unit": "µs",
+            "accept": "20 µs: 15 slow of 2,000 is 0.75%, under 1%, so position 1,980 is fast.",
+            "wrong": [
+              {
+                "id": "b",
+                "value": 800,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "avg",
+                "value": 410,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "20 µs.",
+            "generic": "Not quite right. Count how many of the 2,000 are fast.",
+            "byKey": {
+              "b": "800 is host B's own p99. The pooled p99 is a different position in a bigger list.",
+              "avg": "410 averages two percentiles, which is not a percentile."
+            }
+          },
+          "explain": {
+            "text": "1,985 requests are fast, so positions 1 to 1,985 read 20 µs. Position 1,980 is fast. Host B alone still has a p99 of 800 µs."
+          }
+        },
+        {
+          "question": "Which is the honest way to report a fleet p99?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "pool",
+                "text": "Pool the samples and read the percentile",
+                "correct": true
+              },
+              {
+                "id": "avg",
+                "text": "Average the hosts' p99 values",
+                "why": "The average is a number no request had, and it moves the wrong way as hosts differ in size."
+              },
+              {
+                "id": "max",
+                "text": "Quote the larger of the hosts' p99 values",
+                "why": "It says 800 µs in the last part, but only 0.75% of requests were slow."
+              },
+              {
+                "id": "mid",
+                "text": "Take the p99 of the hosts' p50 values",
+                "why": "Medians say nothing about the tail."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "Pool the samples.",
+            "generic": "Not quite right. A percentile belongs to a set of samples.",
+            "byKey": {
+              "avg": "Averaging percentiles gives 410, which is no request.",
+              "max": "The larger p99 overstates the last case.",
+              "mid": "The tail is not in the medians."
+            }
+          },
+          "explain": {
+            "text": "A percentile belongs to one set of samples. Merge the sets, or histograms with the same buckets, and read it once."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h4-pop-order",
+      "difficulty": 4,
+      "skills": [
+        "sy-latency",
+        "sy-concurrency"
+      ],
+      "tags": [
+        "spsc-order"
+      ],
+      "pace": 360,
+      "prose": "The consumer owns `head_` and only reads `tail_`. A pop returns false when the ring is empty. Put `pop` in order, and leave out the lines that do not belong.",
+      "question": "Order the lines of `pop`.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "std::size_t h = head_.load(std::memory_order_relaxed);"
+          },
+          {
+            "id": "s2",
+            "text": "if (h == tail_.load(std::memory_order_acquire)) return false;"
+          },
+          {
+            "id": "s3",
+            "text": "out = buf_[h & (N - 1)];"
+          },
+          {
+            "id": "s4",
+            "text": "head_.store(h + 1, std::memory_order_release);"
+          },
+          {
+            "id": "s5",
+            "text": "return true;"
+          },
+          {
+            "id": "d1",
+            "text": "head_.store(h + 1, std::memory_order_relaxed);",
+            "why": "A relaxed store can become visible before the slot is read, so the producer could overwrite the slot first."
+          },
+          {
+            "id": "d2",
+            "text": "tail_.store(t + 1, std::memory_order_release);",
+            "why": "Only the producer writes `tail_`. A second writer would race with it."
+          },
+          {
+            "id": "d3",
+            "text": "if (h == tail_.load(std::memory_order_relaxed)) return false;",
+            "why": "A relaxed load does not pair with the producer's release, so the slot may not be visible yet."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "distractors": [
+          "d1",
+          "d2",
+          "d3"
+        ]
+      },
+      "feedback": {
+        "correct": "Load, check, read, release, return.",
+        "generic": "Not quite right. Read the first marked line.",
+        "byKey": {
+          "left-out": "Every one of the five kept lines is needed.",
+          "s3": "Read the slot before the head moves, or the producer may overwrite it.",
+          "s4": "Freeing the slot with `release` after the read tells the producer it may reuse it."
+        }
+      },
+      "explain": {
+        "text": "The consumer reads its own `head_` and checks `tail_` with `acquire`, which pairs with the producer's `release`. It reads the slot, then a `release` store of `head_ + 1` tells the producer the slot is free."
+      }
+    },
+    {
+      "id": "h4-stall-count",
+      "difficulty": 3,
+      "skills": [
+        "sy-latency"
+      ],
+      "tags": [
+        "coordinated-omission"
+      ],
+      "pace": 90,
+      "prose": "A test client sends one request every 250 µs and waits for each reply before sending the next. One reply takes 40 ms instead of the usual 50 µs.",
+      "question": "How many requests should have gone out during those 40 ms?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 160,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "160: 40,000 µs / 250 µs.",
+        "wrong": [
+          {
+            "id": "ms",
+            "value": 40,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "us",
+            "value": 40000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "160 requests.",
+        "generic": "Not quite right. Divide the stall by the gap between requests, in the same unit.",
+        "byKey": {
+          "ms": "40 is the stall in milliseconds. Divide it by the gap, in the same unit.",
+          "us": "40,000 is the stall in µs. Divide it by 250 µs."
+        }
+      },
+      "explain": {
+        "text": "40 ms is 40,000 µs, and one request is due every 250 µs, so 160 were due. The client sent none of them on time, so its own timing hides all 160."
+      }
+    }
+  ]
+}
