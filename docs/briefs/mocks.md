@@ -393,7 +393,7 @@ Both items: `skills: ["rk-behave"]`, draws on recruiting `l8-why-this-firm`, `l1
 **Mock fields.**
 
 - `id`: `mock-oa-code`. `name`: `Coding assessment`. `style`: `developer`.
-- `models` (under 200 characters): `Reported, as of Nov 2026: online coding assessments for quant research, software and strats roles at JP Morgan, Two Sigma and Goldman Sachs: two algorithm problems in 60 minutes, in Python.`
+- `models` (under 200 characters): `Reported, as of Nov 2026: online coding tests at JP Morgan, Two Sigma and Goldman Sachs. Two Python algorithm problems in 60 minutes, for quant, software and strats roles.` (Two sentences: the first draft was one sentence of 31 words, over the voice limit.)
 - `skills`: `{ "ci-patterns": "Further patterns", "ci-strings": "Strings and simulation", "ci-timed": "Solving under time" }`.
 
 **Description** (plain text, each sentence under 20 words, firm names stay in `models`):
@@ -798,7 +798,7 @@ Examples (visible): tests 1 and 4. Largest reference run 0.078 s in CPython. 400
 **Acceptance.**
 
 1. From `app/`: `node tools/validate.mjs 2>&1 | tail -5` reports 0 errors, with `mock-oa-code` listed and no `draw` warning.
-2. `node tools/playthrough.mjs --drill oa-pair-count --drill oa-distinct-window --drill oa-stock-span --drill oa-ship-capacity --drill oa-bounded-path --drill oa-k-trades --drill oa-balanced-run --drill oa-weighted-jobs --local-cdn <pkgs>`: every starter (touched) fails, every solution passes every hidden test, and the stopwatch is read. Again with `--mobile`.
+2. `node tools/playthrough.mjs --drill oa-product-windows --drill oa-rain-water --drill oa-min-jumps --drill oa-merge-cost --drill oa-remove-digits --drill oa-rising-run --drill oa-decodings --drill oa-critical-path --local-cdn <pkgs>`: every starter (touched) fails, every solution passes every hidden test, and the stopwatch is read. Again with `--mobile`.
 3. `node tools/playthrough.mjs --exam mock-oa-code --local-cdn <pkgs> 2>&1 | tail -30` is green and again with `--mobile`. The draw check shows one difficulty 3 and one difficulty 4 item. Two sittings in a row draw different pairs.
 4. `#exam/mock-oa-code/1` opens the start card with one paper, 60 minutes, two questions, the pass mark and both checks. The two links in l15 and l17 reach it.
 5. The voice scan (`python3 -I docs/briefs/mocks-scripts/voice.py`, then `VOICE_BASE` on the exam and drill folder as `docs/reviews/voice-scan.py` asks) reports 0 and 0.
