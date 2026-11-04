@@ -1,0 +1,1260 @@
+{
+  "id": "l5-branches",
+  "course": "systems",
+  "title": "Branches and prediction",
+  "minutes": 13,
+  "objectives": [
+    "Explain branch prediction and remove a branch from a hot loop."
+  ],
+  "skills": [
+    "sy-memory",
+    "sy-latency"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Guess before you know",
+      "prose": "A CPU guesses each branch before it knows the answer. Model the guess as a counter c from 0 to 3. It guesses taken (T) at 2 or 3. It moves up on T and down on N, stopping at 0 and 3.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "T",
+            "T",
+            "T",
+            "N",
+            "N",
+            "N"
+          ]
+        },
+        "state": {
+          "caption": "T is taken, N is not taken."
+        }
+      },
+      "question": "The counter starts at 1. Tap every step where it guesses wrong.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "c0",
+          "c3",
+          "c4"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At c = 1 the guess is N."
+        },
+        {
+          "rung": "point",
+          "text": "After the first T the counter is 2, so it guesses T.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Wrong at steps 0, 3 and 4."
+        }
+      ],
+      "feedback": {
+        "correct": "Three wrong guesses: steps 0, 3 and 4.",
+        "generic": "Not quite right. Track the counter step by step.",
+        "byKey": {
+          "c1": "After step 0 the counter is 2, so step 1 guesses T: right.",
+          "c5": "Before step 5 the counter is 1, so it guesses N: right.",
+          "c0": "At c = 1 the counter guesses N, but the branch is taken.",
+          "c4": "After one N the counter is only down to 2, so it still guesses T."
+        }
+      },
+      "explain": {
+        "text": "Before each step the counter reads 1, 2, 3, 3, 2, 1: wrong at steps 0, 3 and 4. A wrong guess throws away about 15 to 20 cycles of work; we use 5 ns. Three **mispredictions** cost 15 ns.",
+        "canvas": {
+          "cells": [
+            {
+              "v": "T",
+              "label": "c=1"
+            },
+            {
+              "v": "T",
+              "label": "c=2"
+            },
+            {
+              "v": "T",
+              "label": "c=3"
+            },
+            {
+              "v": "N",
+              "label": "c=3"
+            },
+            {
+              "v": "N",
+              "label": "c=2"
+            },
+            {
+              "v": "N",
+              "label": "c=1"
+            }
+          ],
+          "done": [
+            0,
+            3,
+            4
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A loop branch",
+      "prose": "A loop of four passes ends with an N, twice over. Step through it and watch the counter. Wrong steps turn bold.",
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "T",
+            "T",
+            "T",
+            "N",
+            "T",
+            "T",
+            "T",
+            "N"
+          ]
+        },
+        "state": {
+          "pointers": [],
+          "done": [],
+          "caption": "The counter starts at 1. Move the slider to run the first branch."
+        },
+        "controls": [
+          {
+            "frames": [
+              {
+                "pointers": [],
+                "done": [],
+                "caption": "The counter starts at 1. Move the slider to run the first branch."
+              },
+              {
+                "pointers": [
+                  {
+                    "id": "p",
+                    "at": 0,
+                    "label": "c=1"
+                  }
+                ],
+                "done": [
+                  0
+                ],
+                "caption": "Step 0: counter 1 guesses N, branch is T: wrong. Wrong so far: 1."
+              },
+              {
+                "pointers": [
+                  {
+                    "id": "p",
+                    "at": 1,
+                    "label": "c=2"
+                  }
+                ],
+                "done": [
+                  0
+                ],
+                "caption": "Step 1: counter 2 guesses T, branch is T: right. Wrong so far: 1."
+              },
+              {
+                "pointers": [
+                  {
+                    "id": "p",
+                    "at": 2,
+                    "label": "c=3"
+                  }
+                ],
+                "done": [
+                  0
+                ],
+                "caption": "Step 2: counter 3 guesses T, branch is T: right. Wrong so far: 1."
+              },
+              {
+                "pointers": [
+                  {
+                    "id": "p",
+                    "at": 3,
+                    "label": "c=3"
+                  }
+                ],
+                "done": [
+                  0,
+                  3
+                ],
+                "caption": "Step 3: counter 3 guesses T, branch is N: wrong. Wrong so far: 2."
+              },
+              {
+                "pointers": [
+                  {
+                    "id": "p",
+                    "at": 4,
+                    "label": "c=2"
+                  }
+                ],
+                "done": [
+                  0,
+                  3
+                ],
+                "caption": "Step 4: counter 2 guesses T, branch is T: right. Wrong so far: 2."
+              },
+              {
+                "pointers": [
+                  {
+                    "id": "p",
+                    "at": 5,
+                    "label": "c=3"
+                  }
+                ],
+                "done": [
+                  0,
+                  3
+                ],
+                "caption": "Step 5: counter 3 guesses T, branch is T: right. Wrong so far: 2."
+              },
+              {
+                "pointers": [
+                  {
+                    "id": "p",
+                    "at": 6,
+                    "label": "c=3"
+                  }
+                ],
+                "done": [
+                  0,
+                  3
+                ],
+                "caption": "Step 6: counter 3 guesses T, branch is T: right. Wrong so far: 2."
+              },
+              {
+                "pointers": [
+                  {
+                    "id": "p",
+                    "at": 7,
+                    "label": "c=3"
+                  }
+                ],
+                "done": [
+                  0,
+                  3,
+                  7
+                ],
+                "caption": "Step 7: counter 3 guesses T, branch is N: wrong. Wrong so far: 3."
+              }
+            ],
+            "frameLabels": [
+              "start",
+              "step 0",
+              "step 1",
+              "step 2",
+              "step 3",
+              "step 4",
+              "step 5",
+              "step 6",
+              "step 7"
+            ],
+            "label": "Step",
+            "start": 0
+          }
+        ]
+      },
+      "question": "How many wrong guesses over the 8 steps?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "wrong",
+        "accept": "3: steps 0, 3 and 7.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first T is wrong because the counter starts at 1."
+        },
+        {
+          "rung": "point",
+          "text": "Each N that ends a loop is wrong.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Steps 0, 3 and 7."
+        }
+      ],
+      "feedback": {
+        "correct": "Three: the start and the two loop exits.",
+        "generic": "Not quite right. Step through to the end and read the caption.",
+        "byKey": {
+          "two": "Count step 0 too: the counter starts at 1 and guesses N.",
+          "four": "After the N at step 3 the counter is 2, so step 4 guesses T: right."
+        }
+      },
+      "explain": {
+        "text": "Once warm, the counter misses only the N that ends each loop. One N moves it from 3 to 2, so it still guesses T next. That is why a **two-bit** counter suits loop branches.",
+        "canvas": {
+          "pointers": [
+            {
+              "id": "p",
+              "at": 7,
+              "label": "c=3"
+            }
+          ],
+          "done": [
+            0,
+            3,
+            7
+          ],
+          "caption": "Step 7: counter 3 guesses T, branch is N: wrong. Wrong so far: 3."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Random data",
+      "prose": "A loop runs `if (x >= 128)` over bytes. On random bytes the branch is taken about half the time, in no order.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Seeded run, 10,000 outcomes, about half taken",
+          "lines": [
+            "two-bit counter, outcomes in random order:  5,064 wrong (50.6%)",
+            "the same outcomes sorted, all N then all T:      2 wrong"
+          ]
+        }
+      },
+      "question": "Over 1,000,000 random bytes, at 5 ns a wrong guess, how many ms does the branch add?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.5,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "ms",
+        "accept": "2.5: $10^6 \\times 0.5 \\times 5$ ns.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "micro",
+            "value": 2500,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What fraction of guesses is wrong on random data?"
+        },
+        {
+          "rung": "point",
+          "text": "The seeded run shows about half.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$10^6 \\times 0.5 \\times 5$ ns."
+        }
+      ],
+      "feedback": {
+        "correct": "2.5 ms extra; sorted, almost nothing.",
+        "generic": "Not quite right. Multiply elements, the wrong fraction and the cost.",
+        "byKey": {
+          "all": "5 ms would mean every guess is wrong. Random data gets about half right.",
+          "micro": "2,500 is in microseconds. Divide by 1,000 for ms."
+        }
+      },
+      "explain": {
+        "text": "About half the guesses are wrong: $10^6 \\times 0.5 \\times 5$ ns is 2.5 ms. Sorted, the same bytes give 2 wrong guesses in 10,000. The order of the data, not the code, sets the cost.",
+        "canvas": {
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A mask instead of a branch",
+      "prose": "We can remove the branch. A comparison gives 1 or 0, and the minus turns that into a mask.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "The same sum, two ways",
+          "lines": [
+            "// branch",
+            "if (x >= 128) sum += x;",
+            "",
+            "// branchless",
+            "sum += x & -(x >= 128);"
+          ]
+        }
+      },
+      "question": "For x = 200, what is `-(x >= 128)`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "−1: every bit set, so the mask keeps x",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "1: so the mask keeps only the lowest bit",
+            "why": "`x >= 128` is 1, and the minus makes it −1, all bits set."
+          },
+          {
+            "id": "c",
+            "text": "0: so the sum skips x",
+            "why": "200 is at least 128, so the comparison is true."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What is `x >= 128` for x = 200?"
+        },
+        {
+          "rung": "point",
+          "text": "It is 1, and `-1` in two's complement has every bit set.",
+          "highlight": [
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`200 & -1` is 200."
+        }
+      ],
+      "feedback": {
+        "correct": "−1, so `x & -1` is x.",
+        "generic": "Not quite right. Work out the comparison, then negate it."
+      },
+      "explain": {
+        "text": "`-(x >= 128)` is −1 (all ones) or 0, so `x & mask` is x or 0. The sum is the same, with no jump to predict. The price is a negation and an AND on every element.",
+        "canvas": {
+          "highlight": [
+            "l5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "When the mask loses",
+      "prose": "Here is a desk run of both loops. The figures are quoted from one machine, not measured in this app.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "A desk run: one 2.3 GHz server core, ns per element",
+          "lines": [
+            "-O0  branch loop, unsorted      6.3",
+            "-O0  branch loop, sorted        1.5 to 1.8",
+            "-O0  mask loop, either order    2.2 to 2.5",
+            "-O1  branch loop, either order  0.53 (g++) or 0.32 (clang++)"
+          ]
+        },
+        "state": {
+          "caption": "32,768 random bytes summed 20,000 times, g++ 13.3 and clang++ 18.1. One machine, rounded to two figures."
+        }
+      },
+      "question": "When is the branchless mask loop slower than the branch?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "On sorted, predictable data",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Never",
+            "why": "The mask does extra work on every element, so it loses when the branch is well predicted."
+          },
+          {
+            "id": "c",
+            "text": "On random data",
+            "why": "Random data is where the branch is wrong half the time: 6.3 ns against 2.2 to 2.5."
+          },
+          {
+            "id": "d",
+            "text": "Always",
+            "why": "On random data the mask wins: 2.2 to 2.5 ns against 6.3."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the mask with the branch line by line."
+        },
+        {
+          "rung": "point",
+          "text": "Sorted, the branch is 1.5 to 1.8 ns.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1.5 to 1.8 beats 2.2 to 2.5."
+        }
+      ],
+      "feedback": {
+        "correct": "On sorted data: the branch is nearly free there.",
+        "generic": "Not quite right. Compare the sorted branch with the mask.",
+        "byKey": {
+          "b": "The blurt is that branchless always wins. A well predicted branch costs less than the mask's extra work."
+        }
+      },
+      "explain": {
+        "text": "Sorted, the branch costs 1.5 to 1.8 ns and the mask 2.2 to 2.5 ns, so the mask loses. On random data it wins by about 4 ns. Remove a branch only when it is hard to predict.",
+        "canvas": {
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The compiler got there first",
+      "prose": "At `-O1` the branch loop runs at the same speed sorted or not. This app compiles at `-O1` too.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "A desk run: one 2.3 GHz server core, ns per element",
+          "lines": [
+            "-O0  branch loop, unsorted      6.3",
+            "-O0  branch loop, sorted        1.5 to 1.8",
+            "-O0  mask loop, either order    2.2 to 2.5",
+            "-O1  branch loop, either order  0.53 (g++) or 0.32 (clang++)"
+          ]
+        },
+        "state": {
+          "caption": "32,768 random bytes summed 20,000 times, g++ 13.3 and clang++ 18.1. One machine, rounded to two figures.",
+          "tone": {
+            "l1": "muted",
+            "l2": "muted",
+            "l3": "muted"
+          }
+        }
+      },
+      "question": "Why does the order of the data stop mattering?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The compiler turned the branch into a conditional move",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`-O1` sorts the data first",
+            "why": "No flag changes your data. The compiler changes the code."
+          },
+          {
+            "id": "c",
+            "text": "The predictor learns random data at `-O1`",
+            "why": "The predictor is hardware, and flags cannot change it."
+          },
+          {
+            "id": "d",
+            "text": "The loop is removed as dead code",
+            "why": "The sum is used, so the loop stays."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What would make sorted and random data cost the same?"
+        },
+        {
+          "rung": "point",
+          "text": "No jump means nothing to predict.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A conditional move picks a value without jumping."
+        }
+      ],
+      "feedback": {
+        "correct": "A conditional move: there is no branch left to mispredict.",
+        "generic": "Not quite right. Ask what is left to predict."
+      },
+      "explain": {
+        "text": "At `-O1` both compilers emit a conditional move, so there is no branch to guess. That is why this lesson quotes a desk run. You cannot see the effect in this app's `-O1` build.",
+        "canvas": {
+          "highlight": [
+            "l4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Count the wrong guesses",
+      "prose": "Write the two-bit counter. The starter is a one-bit predictor: it guesses the last outcome.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "The counter by hand",
+          "lines": [
+            "TTTNNN    ->  3 wrong (the first screen)",
+            "TTTNTTTN  ->  3 wrong (the slider)",
+            "TNTNTNTN  ->  8 wrong"
+          ]
+        }
+      },
+      "question": "Fix `mispredicts` to model the two-bit counter that starts at 1.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <string>\n\n// Count the mispredictions of a two-bit saturating counter on a branch history.\n// 'T' is taken, 'N' is not taken. The counter runs 0..3, starts at 1,\n// predicts taken at 2 or 3, moves up on T and down on N, and stops at 0 and 3.\nint mispredicts(const std::string& history) {\n    int taken = 0, misses = 0;   // one bit: remember the last outcome\n    for (char c : history) {\n        int actual = (c == 'T');\n        if (taken != actual) ++misses;\n        taken = actual;\n    }\n    return misses;\n}\n",
+        "solution": "#include <string>\n\nint mispredicts(const std::string& history) {\n    int counter = 1, misses = 0;\n    for (char c : history) {\n        bool predicted_taken = counter >= 2;\n        bool actual_taken = (c == 'T');\n        if (predicted_taken != actual_taken) ++misses;\n        if (actual_taken) { if (counter < 3) ++counter; }\n        else { if (counter > 0) --counter; }\n    }\n    return misses;\n}\n",
+        "examples": [
+          {
+            "call": "mispredicts",
+            "args": [
+              "TTTNNN"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 3,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "mispredicts",
+            "args": [
+              "TTTTTTTT"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "call": "mispredicts",
+            "args": [
+              "NNNN"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "mispredicts",
+            "args": [
+              "TNTNTNTN"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 8,
+            "compare": "equal"
+          },
+          {
+            "call": "mispredicts",
+            "args": [
+              "TTNTTNTTN"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 4,
+            "compare": "equal"
+          },
+          {
+            "call": "mispredicts",
+            "args": [
+              "TTTNNN"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 3,
+            "compare": "equal"
+          },
+          {
+            "call": "mispredicts",
+            "args": [
+              "TTTTTTTNTTTTTTTNTTTTTTTN"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 4,
+            "compare": "equal"
+          },
+          {
+            "call": "mispredicts",
+            "args": [
+              ""
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "mispredicts",
+            "args": [
+              "T"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "call": "mispredicts",
+            "args": [
+              "TTNTTNTTNTTNTTNTTNTTNTTNTTNTTN"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 11,
+            "compare": "equal"
+          },
+          {
+            "call": "mispredicts",
+            "args": [
+              "NTTT"
+            ],
+            "types": [
+              "std::string"
+            ],
+            "expect": 2,
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Ten hidden tests, including an empty history, a single T, a loop branch and the alternating history."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Keep a counter from 0 to 3 instead of one bit."
+        },
+        {
+          "rung": "point",
+          "text": "The guess is taken when `counter >= 2`.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Count a miss when the guess differs. Then move the counter up on T and down on N, stopping at 0 and 3."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Guess, compare, then move the counter.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The one-bit starter flips its guess after every surprise, so a loop exit costs it two misses. The two-bit counter needs two surprises in a row to flip."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The cost of guessing",
+      "prose": "Every cost today was one product:\n\n$$\\text{extra time} = n \\times p_{\\text{wrong}} \\times 5\\text{ ns}$$\n\nRegular is not the same as predictable. `TNTN...` fools a two-bit counter every time. Real predictors keep a history and learn it.",
+      "question": "1,000,000 branches, wrong 10% of the time: how much extra time?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.5 ms",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "5 ms",
+            "why": "You charged every branch, not the 10% that are wrong."
+          },
+          {
+            "id": "c",
+            "text": "2.5 ms",
+            "why": "That is the random case, wrong 50% of the time."
+          },
+          {
+            "id": "d",
+            "text": "0.05 ms",
+            "why": "Check the zeros: $10^5$ misses at 5 ns is 0.5 ms."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many guesses are wrong?"
+        },
+        {
+          "rung": "point",
+          "text": "100,000 wrong guesses."
+        },
+        {
+          "rung": "step",
+          "text": "100,000 × 5 ns."
+        }
+      ],
+      "feedback": {
+        "correct": "0.5 ms.",
+        "generic": "Not quite right. Multiply the three factors."
+      },
+      "explain": {
+        "text": "$10^6 \\times 0.1 \\times 5$ ns is 0.5 ms. The wrong fraction is the number to measure."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: predictors",
+      "tags": [
+        "branch-predictor"
+      ],
+      "pace": 540,
+      "prose": "Drill: about 90 seconds each. Say the counter values aloud first. The 5 ns cost is a round figure: know it to a power of ten. The two-bit counter starts at 1. A one-bit predictor guesses the last outcome and starts at N.",
+      "question": "Fill in the wrong guesses.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "History",
+          "Wrong guesses"
+        ],
+        "rows": [
+          [
+            "TTTTTTTN twice",
+            {
+              "edit": true,
+              "answer": 3,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "TTN ten times",
+            {
+              "edit": true,
+              "answer": 11,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "NTTT",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "TNTNTNTN",
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "TTN three times, one-bit",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "TTN three times, two-bit",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the counter under each letter."
+        },
+        {
+          "rung": "point",
+          "text": "After warming up, TTN costs the two-bit counter one miss per N."
+        },
+        {
+          "rung": "step",
+          "text": "3, 11, 2, 8, 6 and 4."
+        }
+      ],
+      "feedback": {
+        "correct": "3, 11, 2, 8, 6 and 4.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "The first T and the two N: 3.",
+          "r1c1": "The first T, then one miss per N: 1 + 10.",
+          "r2c1": "N is right, the first T is wrong at c = 0, and the second T is wrong at c = 1.",
+          "r3c1": "The counter swings between 1 and 2 and is wrong every time.",
+          "r4c1": "One bit misses every change of outcome: 6.",
+          "r5c1": "The first T and each of the three N."
+        }
+      },
+      "explain": {
+        "text": "A two-bit counter pays once to warm up, then once per surprise. Alternation beats it every time. A one-bit predictor pays twice for every loop exit."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: a switch on the message type",
+      "tags": [
+        "mispredict-cost"
+      ],
+      "prose": "The interviewer asks whether to make the handler's switch branchless. Types arrive in random order: 70% adds, 15% cancels, 15% trades.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "A feed handler",
+          "lines": [
+            "switch (msg.type) {",
+            "  case 'A': add(msg);    break;   // 70%",
+            "  case 'X': cancel(msg); break;   // 15%",
+            "  case 'E': trade(msg);  break;   // 15%",
+            "}"
+          ]
+        }
+      },
+      "question": "The best guess is always 'add'. At 5 ns a miss, what does the switch cost per message, in ns?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.5,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "ns",
+        "accept": "1.5: wrong 30% of the time, at 5 ns.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 5,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "seventy",
+            "value": 3.5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How often is 'add' the wrong guess?"
+        },
+        {
+          "rung": "point",
+          "text": "Cancels and trades: 30%.",
+          "highlight": [
+            "l3",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "0.3 × 5 ns."
+        }
+      ],
+      "feedback": {
+        "correct": "1.5 ns a message: 0.3 ms a second at 200,000 messages.",
+        "generic": "Not quite right. Multiply the wrong fraction by 5 ns.",
+        "byKey": {
+          "all": "Only the 30% that are not adds are wrong.",
+          "half": "0.75 ns counts only one of the two other types.",
+          "seventy": "3.5 ns charges the adds, which the guess gets right."
+        }
+      },
+      "explain": {
+        "text": "The guess is wrong 30% of the time: $0.3 \\times 5 = 1.5$ ns a message. At 200,000 messages a second that is 0.3 ms a second, 0.03% of a core. Measure before you optimise: this branch is not the problem."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "The CPU guesses each branch; a wrong guess throws away 15 to 20 cycles, about 5 ns.",
+      "A two-bit counter predicts loops well and random data badly: about half wrong.",
+      "A branchless mask wins only on hard-to-predict data, and the compiler may already have done it."
+    ],
+    "formula": {
+      "name": "Cost of mispredictions",
+      "tex": "\\text{extra time} = n \\times p_{\\text{wrong}} \\times 5\\text{ ns}",
+      "note": "$10^6$ random branches: 2.5 ms."
+    },
+    "trap": "Believing branchless always wins: on sorted data the branch is nearly free."
+  },
+  "quiz": [
+    {
+      "id": "q-nnnt",
+      "difficulty": 2,
+      "tags": [
+        "branch-predictor"
+      ],
+      "pace": 40,
+      "prose": "A two-bit counter starts at 1.",
+      "question": "How many wrong guesses on `NNNT`?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "wrong",
+        "accept": "1: only the T.",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One: the final T.",
+        "generic": "Not quite right. Track the counter: 1, 0, 0, 0.",
+        "byKey": {
+          "two": "At c = 1 the guess is N, so the first N is right.",
+          "zero": "The counter is at 0 when the T comes, so it guesses N."
+        }
+      },
+      "explain": {
+        "text": "The counter goes 1, 0, 0, 0, guessing N each time. Only the final T is wrong."
+      }
+    },
+    {
+      "id": "q-ten-million",
+      "difficulty": 3,
+      "tags": [
+        "mispredict-cost"
+      ],
+      "pace": 45,
+      "prose": "A branch on random data is wrong half the time. Each wrong guess costs 5 ns.",
+      "question": "How many ms does it add over 10,000,000 elements?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 25,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "ms",
+        "accept": "25: $10^7 \\times 0.5 \\times 5$ ns.",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 50,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "micro",
+            "value": 25000,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "25 ms.",
+        "generic": "Not quite right. Multiply the three factors and convert ns to ms.",
+        "byKey": {
+          "all": "50 ms charges every element.",
+          "micro": "25,000 is in microseconds."
+        }
+      },
+      "explain": {
+        "text": "$10^7 \\times 0.5 \\times 5$ ns is $2.5 \\times 10^7$ ns, which is 25 ms."
+      }
+    },
+    {
+      "id": "q-data",
+      "difficulty": 2,
+      "tags": [
+        "data-dependent-branch"
+      ],
+      "pace": 35,
+      "prose": "The loop `if (x >= 128) sum += x;` runs at `-O0`.",
+      "question": "Which data makes it cheapest?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "The bytes sorted",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "The bytes in random order",
+            "why": "Random order is where the guess is wrong half the time."
+          },
+          {
+            "id": "c",
+            "text": "Bytes alternating above and below 128",
+            "why": "Alternation is regular, but a two-bit counter is wrong every time."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Sorted: the counter is almost never wrong.",
+        "generic": "Not quite right. Which order lets the counter settle?"
+      },
+      "explain": {
+        "text": "Sorted data is all N then all T, so the counter is wrong about twice. Alternation is the worst case for it."
+      }
+    },
+    {
+      "id": "q-flag",
+      "difficulty": 3,
+      "tags": [
+        "branchless"
+      ],
+      "pace": 35,
+      "prose": "A hot loop checks a flag that is true 99.9% of the time.",
+      "question": "Should you rewrite it branchless?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "No: it is almost always predicted, so the branch is nearly free",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Yes: branches are always slow",
+            "why": "A predicted branch costs about nothing. Only wrong guesses cost."
+          },
+          {
+            "id": "c",
+            "text": "Yes: the mask is free",
+            "why": "The mask adds work on every pass."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "No. Measure first, and keep a well predicted branch.",
+        "generic": "Not quite right. How often is the guess wrong?"
+      },
+      "explain": {
+        "text": "Wrong 0.1% of the time, the branch costs $0.001 \\times 5 = 0.005$ ns a pass. A mask would cost more than that."
+      }
+    }
+  ]
+}

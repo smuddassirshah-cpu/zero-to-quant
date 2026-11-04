@@ -1,0 +1,1978 @@
+{
+  "id": "l4-object-layout",
+  "course": "systems",
+  "title": "Alignment and object layout",
+  "minutes": 14,
+  "objectives": [
+    "Work out a struct's size and padding, and reorder its fields to shrink it."
+  ],
+  "skills": [
+    "sy-memory"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Where is the padding",
+      "prose": "`struct S { uint8_t a; double b; uint8_t c; };` takes 24 bytes. Pointers are 4 bytes in this app and 8 on a desktop, so every struct here uses fixed-width fields.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 8,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7"
+            ],
+            [
+              "8",
+              "9",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15"
+            ],
+            [
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "24 bytes, numbered by offset. Each row is 8 bytes."
+        }
+      },
+      "question": "Tap every byte that is padding.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1c2",
+          "r1c3",
+          "r1c4",
+          "r1c5",
+          "r1c6",
+          "r1c7",
+          "r1c8",
+          "r3c2",
+          "r3c3",
+          "r3c4",
+          "r3c5",
+          "r3c6",
+          "r3c7",
+          "r3c8"
+        ],
+        "countWord": "tapped"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A `double` likes to start at a multiple of 8."
+        },
+        {
+          "rung": "point",
+          "text": "So `b` sits at bytes 8 to 15.",
+          "highlight": [
+            "row2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Bytes 1 to 7 and 17 to 23 hold nothing."
+        }
+      ],
+      "feedback": {
+        "correct": "14 of 24 bytes are padding: 58%.",
+        "generic": "Not quite right. Find where `b` must start, then where the struct must end.",
+        "byKey": {
+          "r1c1": "Byte 0 holds `a`.",
+          "r2c1": "Byte 8 is where `b` starts, so it is not padding.",
+          "r3c1": "Byte 16 holds `c`.",
+          "r1c2": "Bytes 1 to 7 are skipped so `b` can start at 8.",
+          "r3c2": "Bytes 17 to 23 are padding too: the size rounds up to 24."
+        }
+      },
+      "explain": {
+        "text": "`b` must start at a multiple of 8, so bytes 1 to 7 are skipped. The size rounds up to a multiple of 8, so bytes 17 to 23 are skipped. 14 of the 24 bytes hold nothing.",
+        "canvas": {
+          "shade": {
+            "pad": [
+              "r1c2",
+              "r1c3",
+              "r1c4",
+              "r1c5",
+              "r1c6",
+              "r1c7",
+              "r1c8",
+              "r3c2",
+              "r3c3",
+              "r3c4",
+              "r3c5",
+              "r3c6",
+              "r3c7",
+              "r3c8"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Shuffle the fields",
+      "prose": "The same three fields, `a` (1 byte), `b` (8 bytes) and `c` (1 byte), in three orders. Slide through them and read each size.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 8,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ]
+        },
+        "state": {
+          "cells": {
+            "r1c1": "a",
+            "r1c2": "·",
+            "r1c3": "·",
+            "r1c4": "·",
+            "r1c5": "·",
+            "r1c6": "·",
+            "r1c7": "·",
+            "r1c8": "·",
+            "r2c1": "b",
+            "r2c2": "b",
+            "r2c3": "b",
+            "r2c4": "b",
+            "r2c5": "b",
+            "r2c6": "b",
+            "r2c7": "b",
+            "r2c8": "b",
+            "r3c1": "c",
+            "r3c2": "·",
+            "r3c3": "·",
+            "r3c4": "·",
+            "r3c5": "·",
+            "r3c6": "·",
+            "r3c7": "·",
+            "r3c8": "·"
+          },
+          "shade": {
+            "pad": {
+              "ids": [
+                "r1c2",
+                "r1c3",
+                "r1c4",
+                "r1c5",
+                "r1c6",
+                "r1c7",
+                "r1c8",
+                "r3c2",
+                "r3c3",
+                "r3c4",
+                "r3c5",
+                "r3c6",
+                "r3c7",
+                "r3c8"
+              ],
+              "colour": 5
+            },
+            "used": {
+              "ids": [
+                "r1c1",
+                "r2c1",
+                "r2c2",
+                "r2c3",
+                "r2c4",
+                "r2c5",
+                "r2c6",
+                "r2c7",
+                "r2c8",
+                "r3c1"
+              ],
+              "colour": 3
+            }
+          },
+          "dim": [],
+          "caption": "Order a, b, c: 24 bytes, 14 of them padding (·)."
+        },
+        "controls": [
+          {
+            "frames": [
+              {
+                "cells": {
+                  "r1c1": "a",
+                  "r1c2": "·",
+                  "r1c3": "·",
+                  "r1c4": "·",
+                  "r1c5": "·",
+                  "r1c6": "·",
+                  "r1c7": "·",
+                  "r1c8": "·",
+                  "r2c1": "b",
+                  "r2c2": "b",
+                  "r2c3": "b",
+                  "r2c4": "b",
+                  "r2c5": "b",
+                  "r2c6": "b",
+                  "r2c7": "b",
+                  "r2c8": "b",
+                  "r3c1": "c",
+                  "r3c2": "·",
+                  "r3c3": "·",
+                  "r3c4": "·",
+                  "r3c5": "·",
+                  "r3c6": "·",
+                  "r3c7": "·",
+                  "r3c8": "·"
+                },
+                "shade": {
+                  "pad": {
+                    "ids": [
+                      "r1c2",
+                      "r1c3",
+                      "r1c4",
+                      "r1c5",
+                      "r1c6",
+                      "r1c7",
+                      "r1c8",
+                      "r3c2",
+                      "r3c3",
+                      "r3c4",
+                      "r3c5",
+                      "r3c6",
+                      "r3c7",
+                      "r3c8"
+                    ],
+                    "colour": 5
+                  },
+                  "used": {
+                    "ids": [
+                      "r1c1",
+                      "r2c1",
+                      "r2c2",
+                      "r2c3",
+                      "r2c4",
+                      "r2c5",
+                      "r2c6",
+                      "r2c7",
+                      "r2c8",
+                      "r3c1"
+                    ],
+                    "colour": 3
+                  }
+                },
+                "dim": [],
+                "caption": "Order a, b, c: 24 bytes, 14 of them padding (·)."
+              },
+              {
+                "cells": {
+                  "r1c1": "a",
+                  "r1c2": "c",
+                  "r1c3": "·",
+                  "r1c4": "·",
+                  "r1c5": "·",
+                  "r1c6": "·",
+                  "r1c7": "·",
+                  "r1c8": "·",
+                  "r2c1": "b",
+                  "r2c2": "b",
+                  "r2c3": "b",
+                  "r2c4": "b",
+                  "r2c5": "b",
+                  "r2c6": "b",
+                  "r2c7": "b",
+                  "r2c8": "b",
+                  "r3c1": "",
+                  "r3c2": "",
+                  "r3c3": "",
+                  "r3c4": "",
+                  "r3c5": "",
+                  "r3c6": "",
+                  "r3c7": "",
+                  "r3c8": ""
+                },
+                "shade": {
+                  "pad": {
+                    "ids": [
+                      "r1c3",
+                      "r1c4",
+                      "r1c5",
+                      "r1c6",
+                      "r1c7",
+                      "r1c8"
+                    ],
+                    "colour": 5
+                  },
+                  "used": {
+                    "ids": [
+                      "r1c1",
+                      "r1c2",
+                      "r2c1",
+                      "r2c2",
+                      "r2c3",
+                      "r2c4",
+                      "r2c5",
+                      "r2c6",
+                      "r2c7",
+                      "r2c8"
+                    ],
+                    "colour": 3
+                  }
+                },
+                "dim": [
+                  "r3c1",
+                  "r3c2",
+                  "r3c3",
+                  "r3c4",
+                  "r3c5",
+                  "r3c6",
+                  "r3c7",
+                  "r3c8"
+                ],
+                "caption": "Order a, c, b: 16 bytes, 6 of them padding (·)."
+              },
+              {
+                "cells": {
+                  "r1c1": "b",
+                  "r1c2": "b",
+                  "r1c3": "b",
+                  "r1c4": "b",
+                  "r1c5": "b",
+                  "r1c6": "b",
+                  "r1c7": "b",
+                  "r1c8": "b",
+                  "r2c1": "a",
+                  "r2c2": "c",
+                  "r2c3": "·",
+                  "r2c4": "·",
+                  "r2c5": "·",
+                  "r2c6": "·",
+                  "r2c7": "·",
+                  "r2c8": "·",
+                  "r3c1": "",
+                  "r3c2": "",
+                  "r3c3": "",
+                  "r3c4": "",
+                  "r3c5": "",
+                  "r3c6": "",
+                  "r3c7": "",
+                  "r3c8": ""
+                },
+                "shade": {
+                  "pad": {
+                    "ids": [
+                      "r2c3",
+                      "r2c4",
+                      "r2c5",
+                      "r2c6",
+                      "r2c7",
+                      "r2c8"
+                    ],
+                    "colour": 5
+                  },
+                  "used": {
+                    "ids": [
+                      "r1c1",
+                      "r1c2",
+                      "r1c3",
+                      "r1c4",
+                      "r1c5",
+                      "r1c6",
+                      "r1c7",
+                      "r1c8",
+                      "r2c1",
+                      "r2c2"
+                    ],
+                    "colour": 3
+                  }
+                },
+                "dim": [
+                  "r3c1",
+                  "r3c2",
+                  "r3c3",
+                  "r3c4",
+                  "r3c5",
+                  "r3c6",
+                  "r3c7",
+                  "r3c8"
+                ],
+                "caption": "Order b, a, c: 16 bytes, 6 of them padding (·)."
+              }
+            ],
+            "frameLabels": [
+              "a, b, c",
+              "a, c, b",
+              "b, a, c"
+            ],
+            "label": "Field order",
+            "start": 0
+          }
+        ]
+      },
+      "question": "What is the smallest size you can reach?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 16,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "bytes",
+        "accept": "16: put the two 1-byte fields together.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "same",
+            "value": 24,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch where the 8-byte field lands in each order."
+        },
+        {
+          "rung": "point",
+          "text": "Order b, a, c packs `a` and `c` side by side.",
+          "highlight": [
+            "row2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Two orders reach 16 bytes."
+        }
+      ],
+      "feedback": {
+        "correct": "16 bytes, from 24, just by moving a field.",
+        "generic": "Not quite right. Slide to order b, a, c and read the caption.",
+        "byKey": {
+          "sum": "10 is the sum of the fields. The struct still rounds up to a multiple of 8.",
+          "same": "24 is the declared order. Try the other two."
+        }
+      },
+      "explain": {
+        "text": "Keeping the 1-byte fields together leaves one gap of 6 bytes instead of two gaps of 7. Field order changes the size; the fields do not.",
+        "canvas": {
+          "cells": {
+            "r1c1": "b",
+            "r1c2": "b",
+            "r1c3": "b",
+            "r1c4": "b",
+            "r1c5": "b",
+            "r1c6": "b",
+            "r1c7": "b",
+            "r1c8": "b",
+            "r2c1": "a",
+            "r2c2": "c",
+            "r2c3": "·",
+            "r2c4": "·",
+            "r2c5": "·",
+            "r2c6": "·",
+            "r2c7": "·",
+            "r2c8": "·",
+            "r3c1": "",
+            "r3c2": "",
+            "r3c3": "",
+            "r3c4": "",
+            "r3c5": "",
+            "r3c6": "",
+            "r3c7": "",
+            "r3c8": ""
+          },
+          "shade": {
+            "pad": {
+              "ids": [
+                "r2c3",
+                "r2c4",
+                "r2c5",
+                "r2c6",
+                "r2c7",
+                "r2c8"
+              ],
+              "colour": 5
+            },
+            "used": {
+              "ids": [
+                "r1c1",
+                "r1c2",
+                "r1c3",
+                "r1c4",
+                "r1c5",
+                "r1c6",
+                "r1c7",
+                "r1c8",
+                "r2c1",
+                "r2c2"
+              ],
+              "colour": 3
+            }
+          },
+          "dim": [
+            "r3c1",
+            "r3c2",
+            "r3c3",
+            "r3c4",
+            "r3c5",
+            "r3c6",
+            "r3c7",
+            "r3c8"
+          ],
+          "caption": "Order b, a, c: 16 bytes, 6 of them padding (·)."
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Offsets",
+      "prose": "Each field starts at the next multiple of its own size: its **alignment**. The bytes skipped are **padding**. The size rounds up to the largest alignment, so an array of structs stays aligned.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 8,
+          "rowHeads": false,
+          "colHeads": false,
+          "cells": [
+            [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7"
+            ],
+            [
+              "8",
+              "9",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15"
+            ],
+            [
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "23"
+            ]
+          ]
+        },
+        "state": {
+          "caption": "24 bytes, numbered by offset. Each row is 8 bytes."
+        }
+      },
+      "question": "Fill in the offsets and the size of `S`.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Field",
+          "Offset",
+          "Size"
+        ],
+        "rows": [
+          [
+            "`a` (uint8_t)",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "1"
+          ],
+          [
+            "`b` (double)",
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "8"
+          ],
+          [
+            "`c` (uint8_t)",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            },
+            "1"
+          ],
+          [
+            "whole struct",
+            "0",
+            {
+              "edit": true,
+              "answer": 24,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where is the first multiple of 8 after byte 0?"
+        },
+        {
+          "rung": "point",
+          "text": "`b` ends at byte 16, so `c` sits there.",
+          "highlight": [
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Offsets 0, 8 and 16; size 24."
+        }
+      ],
+      "feedback": {
+        "correct": "Offsets 0, 8 and 16; size 24.",
+        "generic": "Not quite right. Place each field at the next multiple of its size.",
+        "byKey": {
+          "r1c1": "A `double` aligns to 8: the first multiple of 8 after byte 1 is 8.",
+          "r2c1": "`c` follows `b`, which ends at 16.",
+          "r3c2": "17 bytes round up to a multiple of 8, the largest alignment: 24."
+        }
+      },
+      "explain": {
+        "text": "`a` at 0, `b` at 8, `c` at 16, and 17 rounds up to 24. The tail padding lets `S[1].b` start on a multiple of 8 too. Moved first, `b` gives offsets 0, 8, 9 and size 16.",
+        "canvas": {
+          "shade": {
+            "pad": [
+              "r1c2",
+              "r1c3",
+              "r1c4",
+              "r1c5",
+              "r1c6",
+              "r1c7",
+              "r1c8",
+              "r3c2",
+              "r3c3",
+              "r3c4",
+              "r3c5",
+              "r3c6",
+              "r3c7",
+              "r3c8"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "An order message",
+      "prose": "A message from an exchange, decoded into a struct. Every field is 1, 2 or 4 bytes, so the alignment is at most 4.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "An order message, as declared",
+          "lines": [
+            "struct Order {",
+            "    uint8_t  type;",
+            "    uint32_t seq;",
+            "    uint8_t  side;",
+            "    uint32_t id;",
+            "    uint16_t instrument;",
+            "    uint32_t qty;",
+            "    int32_t  price;",
+            "    uint32_t time;",
+            "};"
+          ]
+        }
+      },
+      "question": "Fill in the offsets and the size, as declared.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Field",
+          "Offset"
+        ],
+        "rows": [
+          [
+            "type",
+            "0"
+          ],
+          [
+            "seq",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "side",
+            {
+              "edit": true,
+              "answer": 8,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "id",
+            {
+              "edit": true,
+              "answer": 12,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "instrument",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "qty",
+            {
+              "edit": true,
+              "answer": 20,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "price",
+            "24"
+          ],
+          [
+            "time",
+            "28"
+          ],
+          [
+            "sizeof(Order)",
+            {
+              "edit": true,
+              "answer": 32,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`type` ends at 1, and `seq` needs a multiple of 4."
+        },
+        {
+          "rung": "point",
+          "text": "Each 1-byte or 2-byte field before a 4-byte one leaves a gap.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4, 8, 12, 16, 20; size 32."
+        }
+      ],
+      "feedback": {
+        "correct": "4, 8, 12, 16, 20, and 32 bytes in all.",
+        "generic": "Not quite right. Each 4-byte field needs an offset that is a multiple of 4.",
+        "byKey": {
+          "r1c1": "`type` ends at byte 1, and the next multiple of 4 is 4.",
+          "r2c1": "`seq` ends at 8.",
+          "r3c1": "`side` ends at 9, so `id` waits until 12.",
+          "r5c1": "`instrument` ends at 18, so `qty` waits until 20.",
+          "r8c1": "`time` ends at 32, already a multiple of 4."
+        }
+      },
+      "explain": {
+        "text": "Three small fields each sit before a 4-byte field, so each leaves a gap: 3, 3 and 2 bytes. The 24 bytes of data take 32.",
+        "canvas": {
+          "highlight": [
+            "l2",
+            "l4",
+            "l6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Largest first",
+      "prose": "Sort the fields from largest to smallest. The 4-byte fields go first, then `instrument`, then the two single bytes.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "The same fields, largest first",
+          "lines": [
+            "struct Order {",
+            "    uint32_t seq;",
+            "    uint32_t id;",
+            "    uint32_t qty;",
+            "    int32_t  price;",
+            "    uint32_t time;",
+            "    uint16_t instrument;",
+            "    uint8_t  type;",
+            "    uint8_t  side;",
+            "};"
+          ]
+        }
+      },
+      "question": "Fill in the sorted size and the memory for a million orders.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Layout",
+          "sizeof",
+          "1,000,000 orders (MB)"
+        ],
+        "rows": [
+          [
+            "As declared",
+            "32",
+            {
+              "edit": true,
+              "answer": 32,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Largest first",
+            {
+              "edit": true,
+              "answer": 24,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 24,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Five 4-byte fields fill 0 to 19."
+        },
+        {
+          "rung": "point",
+          "text": "`instrument` at 20, `type` at 22, `side` at 23.",
+          "highlight": [
+            "l2",
+            "l7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "24 bytes; 32 MB against 24 MB."
+        }
+      ],
+      "feedback": {
+        "correct": "24 bytes: 25% smaller, 24 MB instead of 32 MB.",
+        "generic": "Not quite right. Place the sorted fields one after another.",
+        "byKey": {
+          "r1c1": "Offsets 0, 4, 8, 12, 16, 20, 22 and 23 end at 24, a multiple of 4.",
+          "r0c2": "32 bytes times a million is 32 MB.",
+          "r1c2": "24 bytes times a million is 24 MB."
+        }
+      },
+      "explain": {
+        "text": "Sorted, the offsets are 0, 4, 8, 12, 16, 20, 22 and 23: 24 bytes, no padding. A million orders take 24 MB, not 32 MB: a quarter fewer cache lines to fill.",
+        "canvas": {
+          "highlight": [
+            "l7",
+            "l8",
+            "l9"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Write the size rule",
+      "prose": "Each field is aligned to its own size of 1, 2, 4 or 8 bytes. The fields arrive as a list of sizes in declaration order.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "What the functions should return",
+          "lines": [
+            "sizes {1, 8, 1}          struct_size 24   best_size 16",
+            "sizes {1, 4, 1, 4, 2, 4, 4, 4}   struct_size 32   best_size 24",
+            "sizes {2, 1}             struct_size 4    best_size 4"
+          ]
+        }
+      },
+      "question": "Fix `struct_size` and `best_size`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <vector>\n\n// sizes: the size in bytes of each field, in declaration order.\n// Each field is aligned to its own size (1, 2, 4 or 8).\nint struct_size(const std::vector<int>& sizes) {\n    int total = 0;\n    for (int s : sizes) total += s;\n    return total;\n}\n\n// The size after sorting the fields from largest to smallest.\nint best_size(const std::vector<int>& sizes) {\n    return struct_size(sizes);\n}\n",
+        "solution": "#include <algorithm>\n#include <functional>\n#include <vector>\n\nint struct_size(const std::vector<int>& sizes) {\n    int offset = 0, widest = 1;\n    for (int s : sizes) {\n        offset = (offset + s - 1) / s * s;   // round up to a multiple of s\n        offset += s;\n        widest = std::max(widest, s);\n    }\n    return (offset + widest - 1) / widest * widest;   // tail padding\n}\n\nint best_size(const std::vector<int>& sizes) {\n    std::vector<int> sorted = sizes;\n    std::sort(sorted.begin(), sorted.end(), std::greater<int>());\n    return struct_size(sorted);\n}\n",
+        "examples": [
+          {
+            "call": "struct_size",
+            "args": [
+              [
+                1,
+                8,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 24,
+            "compare": "equal"
+          },
+          {
+            "call": "best_size",
+            "args": [
+              [
+                1,
+                8,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 16,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "struct_size",
+            "args": [
+              [
+                1,
+                8,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 24,
+            "compare": "equal"
+          },
+          {
+            "call": "best_size",
+            "args": [
+              [
+                1,
+                8,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "call": "struct_size",
+            "args": [
+              [
+                1,
+                4,
+                1,
+                4,
+                2,
+                4,
+                4,
+                4
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 32,
+            "compare": "equal"
+          },
+          {
+            "call": "best_size",
+            "args": [
+              [
+                1,
+                4,
+                1,
+                4,
+                2,
+                4,
+                4,
+                4
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 24,
+            "compare": "equal"
+          },
+          {
+            "call": "struct_size",
+            "args": [
+              []
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "call": "struct_size",
+            "args": [
+              [
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "call": "best_size",
+            "args": [
+              [
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "call": "struct_size",
+            "args": [
+              [
+                2,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 4,
+            "compare": "equal"
+          },
+          {
+            "call": "best_size",
+            "args": [
+              [
+                2,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 4,
+            "compare": "equal"
+          },
+          {
+            "call": "struct_size",
+            "args": [
+              [
+                8,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "call": "best_size",
+            "args": [
+              [
+                8,
+                1
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "call": "struct_size",
+            "args": [
+              [
+                4,
+                1,
+                2,
+                1,
+                8
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 24,
+            "compare": "equal"
+          },
+          {
+            "call": "best_size",
+            "args": [
+              [
+                4,
+                1,
+                2,
+                1,
+                8
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "call": "struct_size",
+            "args": [
+              [
+                1,
+                2,
+                4,
+                8,
+                1,
+                2,
+                4,
+                8
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 32,
+            "compare": "equal"
+          },
+          {
+            "call": "best_size",
+            "args": [
+              [
+                1,
+                2,
+                4,
+                8,
+                1,
+                2,
+                4,
+                8
+              ]
+            ],
+            "types": [
+              "std::vector<int>"
+            ],
+            "expect": 32,
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Fifteen hidden tests on both functions. They include this lesson's structs, an empty struct, one field and a struct sorting cannot shrink."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The starter sums the sizes and never pads."
+        },
+        {
+          "rung": "point",
+          "text": "Round the offset up to a multiple of `s` before each field; round the end up to the widest field.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`offset = (offset + s - 1) / s * s;` then `offset += s;`, and sort a copy with `std::greater<int>()`."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Round up before each field, and once at the end.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "`(offset + s - 1) / s * s` rounds up to a multiple of `s`. The last rounding uses the widest field, which is the struct's alignment. An empty struct is 0 in this model, though C++ makes it 1."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A quick-fire size",
+      "prose": "The interviewer asks it quick-fire: `struct T { char a; double b; char c; };`.",
+      "question": "What is `sizeof(T)`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "24",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "10",
+            "why": "You summed the fields; padding is part of the size."
+          },
+          {
+            "id": "c",
+            "text": "17",
+            "why": "You placed `c` at 16 but forgot the tail padding to a multiple of 8."
+          },
+          {
+            "id": "d",
+            "text": "16",
+            "why": "16 is the size with `c` moved next to `a`. Here the order is as declared."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Where does `b` start?"
+        },
+        {
+          "rung": "point",
+          "text": "`b` starts at 8, and `c` at 16."
+        },
+        {
+          "rung": "step",
+          "text": "17 rounds up to a multiple of 8: 24."
+        }
+      ],
+      "feedback": {
+        "correct": "24, with 14 bytes of padding.",
+        "generic": "Not quite right. Place each field, then round the end up.",
+        "byKey": {
+          "b": "Adding 1 + 8 + 1 is the blurt. The `double` needs offset 8, and the end rounds to 24.",
+          "c": "17 is where the data ends. The size rounds up so the next `T` in an array starts aligned."
+        }
+      },
+      "explain": {
+        "text": "`a` at 0, `b` at 8, `c` at 16, then round 17 up to 24. Summing the fields gives 10, which is never right here. Padding is part of the size."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "When sorting saves nothing",
+      "prose": "Sorting is not magic. This struct already pairs each small field with the next.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Fields of 1, 2, 4 and 8 bytes, twice",
+          "lines": [
+            "struct A { uint8_t a; uint16_t b; uint32_t c; double d;",
+            "           uint8_t e; uint16_t f; uint32_t g; double h; };"
+          ]
+        }
+      },
+      "question": "Fill in both sizes.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Layout",
+          "sizeof"
+        ],
+        "rows": [
+          [
+            "As declared",
+            {
+              "edit": true,
+              "answer": 32,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Largest first",
+            {
+              "edit": true,
+              "answer": 32,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Place `a`, `b`, `c` and `d`: 0, 2, 4, 8."
+        },
+        {
+          "rung": "point",
+          "text": "The first half fills exactly 16 bytes with one byte of padding.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "32 both ways."
+        }
+      ],
+      "feedback": {
+        "correct": "32 both ways.",
+        "generic": "Not quite right. Lay out the first four fields and see where `d` ends.",
+        "byKey": {
+          "r0c1": "`a` 0, `b` 2, `c` 4, `d` 8 to 15, and the second half repeats from 16.",
+          "r1c1": "Sorted: two doubles, two `uint32_t`, two `uint16_t`, two bytes: 16 + 8 + 4 + 2 = 30, rounded to 32."
+        }
+      },
+      "explain": {
+        "text": "As declared, each half packs into 16 bytes with one padding byte. Sorted, 30 bytes of data round up to 32. And `struct { uint16_t; uint8_t; }` is 4, not 3: tail padding cannot be sorted away.",
+        "canvas": {
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The rule",
+      "prose": "Every layout today followed two rules. With $e$ the end of the previous field and $a$ a field's alignment:\n\n$$\\text{offset} = a \\left\\lceil \\frac{e}{a} \\right\\rceil, \\qquad \\text{size} = a_{\\max} \\left\\lceil \\frac{e_{\\text{last}}}{a_{\\max}} \\right\\rceil$$\n\nSorting largest first wastes least.",
+      "question": "What is `sizeof` of `struct { uint32_t a; uint16_t b; double c; }`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "16",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "14",
+            "why": "You summed the fields; `c` still needs an offset that is a multiple of 8."
+          },
+          {
+            "id": "c",
+            "text": "24",
+            "why": "You padded `b` to 8 bytes. `b` needs a multiple of 2, so `c` fits at 8."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Place `a` and `b` first."
+        },
+        {
+          "rung": "point",
+          "text": "They end at 6, so `c` starts at 8."
+        },
+        {
+          "rung": "step",
+          "text": "`c` ends at 16, a multiple of 8."
+        }
+      ],
+      "feedback": {
+        "correct": "16 bytes.",
+        "generic": "Not quite right. Apply the two rules field by field."
+      },
+      "explain": {
+        "text": "`a` at 0, `b` at 4, `c` at 8, ending at 16. Sixteen is a multiple of 8, so there is no tail padding."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: sizes",
+      "tags": [
+        "struct-size",
+        "padding"
+      ],
+      "pace": 360,
+      "prose": "Drill: about 90 seconds a struct. Say the offsets aloud first. Byte counts are exact; only costs in this course are round figures. Sizes are in bytes, in declaration order.",
+      "question": "Fill in each size, as declared and sorted largest first.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Field sizes",
+          "sizeof",
+          "Largest first"
+        ],
+        "rows": [
+          [
+            "1, 2, 1, 4, 1",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 12,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "1, 8, 1, 8, 1, 8",
+            {
+              "edit": true,
+              "answer": 48,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 32,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "2, 1",
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 4,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "8, 4",
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 16,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Lay each one out byte by byte."
+        },
+        {
+          "rung": "point",
+          "text": "1, 2, 1, 4, 1: offsets 0, 2, 4, 8, 12, end 13."
+        },
+        {
+          "rung": "step",
+          "text": "16 and 12; 48 and 32; 4 and 4; 16 and 16."
+        }
+      ],
+      "feedback": {
+        "correct": "16 and 12, 48 and 32, 4 and 4, 16 and 16.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "End 13 rounds up to a multiple of 4: 16.",
+          "r0c2": "4, 2, 1, 1, 1: offsets 0, 4, 6, 7, 8, end 9, so 12.",
+          "r1c1": "Each 1-byte field before a double costs 7 bytes of padding.",
+          "r1c2": "Three doubles, then three bytes: 27, rounded to 32.",
+          "r2c1": "3 bytes round up to a multiple of 2: 4.",
+          "r3c1": "12 bytes round up to a multiple of 8: 16."
+        }
+      },
+      "explain": {
+        "text": "Every answer is place, pad, round. Sorting helps when small fields sit between big ones. It cannot remove tail padding."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: on the wire and in a line",
+      "tags": [
+        "cache-line-straddle"
+      ],
+      "prose": "The interviewer asks: can I `memcpy` the 24-byte order onto the wire? No: padding and byte order differ by platform, so the bytes are written by hand. There is a second cost here too.",
+      "canvas": {
+        "kind": "grid",
+        "params": {
+          "rows": 3,
+          "cols": 8,
+          "rowHeads": [
+            "line 0",
+            "line 1",
+            "line 2"
+          ],
+          "colHeads": false,
+          "cells": [
+            [
+              "0",
+              "0",
+              "0",
+              "1",
+              "1",
+              "1",
+              "2",
+              "2"
+            ],
+            [
+              "2",
+              "3",
+              "3",
+              "3",
+              "4",
+              "4",
+              "4",
+              "5"
+            ],
+            [
+              "5",
+              "5",
+              "6",
+              "6",
+              "6",
+              "7",
+              "7",
+              "7"
+            ]
+          ]
+        },
+        "state": {
+          "shade": {
+            "even": {
+              "ids": [
+                "r1c1",
+                "r1c2",
+                "r1c3",
+                "r1c7",
+                "r1c8",
+                "r2c1",
+                "r2c5",
+                "r2c6",
+                "r2c7",
+                "r3c3",
+                "r3c4",
+                "r3c5"
+              ],
+              "colour": 3
+            },
+            "odd": {
+              "ids": [
+                "r1c4",
+                "r1c5",
+                "r1c6",
+                "r2c2",
+                "r2c3",
+                "r2c4",
+                "r2c8",
+                "r3c1",
+                "r3c2",
+                "r3c6",
+                "r3c7",
+                "r3c8"
+              ],
+              "colour": 2
+            }
+          },
+          "caption": "Each cell is 8 bytes; each number is one 24-byte struct."
+        }
+      },
+      "question": "Each row is one 64-byte line. Of the first 8 structs, how many cross a line boundary?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "structs",
+        "accept": "2: structs 2 and 5.",
+        "wrong": [
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "all",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the structs whose cells sit in two rows."
+        },
+        {
+          "rung": "point",
+          "text": "Struct 2 starts at byte 48 and ends at byte 71.",
+          "highlight": [
+            "r1c7",
+            "r1c8",
+            "r2c1",
+            "r2c8",
+            "r3c1",
+            "r3c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Structs 2 and 5."
+        }
+      ],
+      "feedback": {
+        "correct": "2 of every 8: structs 2 and 5.",
+        "generic": "Not quite right. Look for a number that appears in two rows.",
+        "byKey": {
+          "none": "64 is not a multiple of 24, so some structs must cross.",
+          "three": "Struct 7 ends at byte 191, inside line 2.",
+          "all": "Most structs sit inside one line."
+        }
+      },
+      "explain": {
+        "text": "Structs 2 and 5 each touch two lines, so reading one can cost two misses. Padded to 32 bytes, two fit in each line and none cross. And a `uint16_t` flag appended to the 24-byte struct makes it 28 bytes, not 26.",
+        "canvas": {
+          "highlight": [
+            "r1c7",
+            "r1c8",
+            "r2c1",
+            "r2c8",
+            "r3c1",
+            "r3c2"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Each field starts at the next multiple of its alignment; the skipped bytes are padding.",
+      "A struct's size rounds up to its largest alignment, so arrays of it stay aligned.",
+      "Sorting fields largest first wastes least, but cannot remove tail padding."
+    ],
+    "formula": {
+      "name": "Offset of a field",
+      "tex": "\\text{offset} = a \\left\\lceil \\dfrac{e}{a} \\right\\rceil",
+      "note": "e: where the previous field ends; a: this field's alignment."
+    },
+    "trap": "Summing the field sizes: `{char, double, char}` is 24 bytes, not 10."
+  },
+  "quiz": [
+    {
+      "id": "q-memcpy",
+      "difficulty": 2,
+      "tags": [
+        "field-order"
+      ],
+      "pace": 40,
+      "prose": "A colleague sends an order to another machine with `memcpy` of the whole struct.",
+      "question": "Is that safe?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "No: padding and byte order can differ, so write each field's bytes by hand",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Yes: a struct is just its bytes",
+            "why": "Its bytes include padding, and the other side may lay them out differently."
+          },
+          {
+            "id": "c",
+            "text": "Yes, if both machines use the same compiler",
+            "why": "A compiler version or flag change can still move fields or change byte order."
+          },
+          {
+            "id": "d",
+            "text": "Only if the struct is under 64 bytes",
+            "why": "Size is not the problem. Layout is."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "No. A wire format fixes every byte itself.",
+        "generic": "Not quite right. What must both ends agree on?"
+      },
+      "explain": {
+        "text": "Padding bytes are garbage and the byte order is the platform's. A wire format states each field's offset and byte order. Level 3 builds one."
+      }
+    },
+    {
+      "id": "q-size",
+      "difficulty": 3,
+      "tags": [
+        "struct-size"
+      ],
+      "pace": 45,
+      "prose": "`struct { uint8_t a; uint32_t b; uint16_t c; }`",
+      "question": "What is its size in bytes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "bytes",
+        "accept": "12: offsets 0, 4, 8, end 10, round to 12.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "tail",
+            "value": 10,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "12 bytes.",
+        "generic": "Not quite right. Place each field, then round the end up to 4.",
+        "byKey": {
+          "sum": "7 is the sum of the fields.",
+          "tail": "10 is where `c` ends. Round up to a multiple of 4."
+        }
+      },
+      "explain": {
+        "text": "`a` at 0, `b` at 4, `c` at 8, ending at 10. The largest alignment is 4, so the size is 12."
+      }
+    },
+    {
+      "id": "q-best",
+      "difficulty": 3,
+      "tags": [
+        "field-order"
+      ],
+      "pace": 45,
+      "prose": "The same fields: `uint8_t`, `uint32_t`, `uint16_t`.",
+      "question": "What is the size, sorted largest first?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "bytes",
+        "accept": "8: offsets 0, 4, 6, end 7, round to 8.",
+        "wrong": [
+          {
+            "id": "asis",
+            "value": 12,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sum",
+            "value": 7,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "8 bytes.",
+        "generic": "Not quite right. Lay out `uint32_t`, `uint16_t`, `uint8_t`.",
+        "byKey": {
+          "asis": "12 is the declared order.",
+          "sum": "7 is where the data ends. Round up to 4."
+        }
+      },
+      "explain": {
+        "text": "`b` at 0, `c` at 4, `a` at 6, ending at 7, rounded up to 8. Sorting saved a third."
+      }
+    },
+    {
+      "id": "q-flag",
+      "difficulty": 3,
+      "tags": [
+        "padding"
+      ],
+      "pace": 45,
+      "prose": "The sorted 24-byte order struct (largest field 4 bytes) gains a `uint16_t` flag at the end.",
+      "question": "What is its new size?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 28,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "bytes",
+        "accept": "28: 26 rounded up to a multiple of 4.",
+        "wrong": [
+          {
+            "id": "sum",
+            "value": 26,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "eight",
+            "value": 32,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "28 bytes.",
+        "generic": "Not quite right. Where does the flag end, and what is the largest alignment?",
+        "byKey": {
+          "sum": "26 is where the flag ends. Round up to a multiple of 4.",
+          "eight": "No field is 8 bytes, so round to 4, not 8."
+        }
+      },
+      "explain": {
+        "text": "The flag sits at 24 and ends at 26. The struct's alignment is 4, so it rounds up to 28."
+      }
+    }
+  ]
+}

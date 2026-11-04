@@ -1,0 +1,1425 @@
+{
+  "id": "l3-virtual-memory",
+  "course": "systems",
+  "title": "Virtual memory",
+  "minutes": 14,
+  "objectives": [
+    "Explain pages, the TLB and a page fault, and what each costs."
+  ],
+  "skills": [
+    "sy-memory",
+    "sy-os"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Translate one address",
+      "prose": "A program never sees physical memory. Its addresses are virtual: a page number, then an offset inside the page. The **page table** maps each page to a physical frame.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Page",
+            "Frame",
+            "Present"
+          ],
+          "rows": [
+            [
+              "0",
+              "7",
+              "yes"
+            ],
+            [
+              "1",
+              "none",
+              "no"
+            ],
+            [
+              "2",
+              "9",
+              "yes"
+            ]
+          ],
+          "align": [
+            "center",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "Pages and frames are 4,096 bytes."
+        }
+      },
+      "question": "Translate virtual address 0x2A7C (10,876). What is the physical address?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 39548,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a decimal address",
+        "accept": "39,548: frame 9, offset 2,684.",
+        "wrong": [
+          {
+            "id": "frame",
+            "value": 36864,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "same",
+            "value": 10876,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "offset",
+            "value": 2684,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "frame7",
+            "value": 31356,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which page holds byte 10,876?"
+        },
+        {
+          "rung": "point",
+          "text": "$10{,}876 = 2 \\times 4{,}096 + 2{,}684$, so page 2.",
+          "highlight": [
+            "r2c0",
+            "r2c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Page 2 is frame 9: $9 \\times 4{,}096 + 2{,}684$."
+        }
+      ],
+      "feedback": {
+        "correct": "39,548: frame 9, offset 2,684.",
+        "generic": "Not quite right. Split the address into page and offset first.",
+        "byKey": {
+          "frame": "36,864 is the start of frame 9. Add the offset 2,684.",
+          "same": "The virtual address has to be translated through the table.",
+          "offset": "2,684 is only the offset. Add the frame's start.",
+          "frame7": "You used frame 7, which belongs to page 0. Byte 10,876 is in page 2."
+        }
+      },
+      "explain": {
+        "text": "Page 2, offset 2,684. Page 2 lives in frame 9, so $9 \\times 4{,}096 + 2{,}684 = 39{,}548$. The offset never changes; only the page number is swapped for a frame.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A page that is not there",
+      "prose": "Slide the virtual address and watch the translation. Pages 0 and 2 have frames; page 1 has none yet.",
+      "canvas": {
+        "kind": "number-line",
+        "params": {
+          "min": 0,
+          "max": 12288,
+          "step": 1024,
+          "labels": [
+            {
+              "x": 0,
+              "text": "0"
+            },
+            {
+              "x": 4096,
+              "text": "4,096"
+            },
+            {
+              "x": 8192,
+              "text": "8,192"
+            },
+            {
+              "x": 12288,
+              "text": "12,288"
+            }
+          ],
+          "params": {
+            "frames": [
+              7,
+              -1,
+              9
+            ]
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "v",
+              "x": 10876,
+              "label": "v"
+            }
+          ],
+          "intervals": [
+            {
+              "id": "p0",
+              "from": 0,
+              "to": 4095,
+              "label": "page 0: frame 7",
+              "labelPos": "below",
+              "row": 0,
+              "colour": 3
+            },
+            {
+              "id": "p1",
+              "from": 4096,
+              "to": 8191,
+              "label": "page 1: none",
+              "labelPos": "below",
+              "row": 0,
+              "colour": 5
+            },
+            {
+              "id": "p2",
+              "from": 8192,
+              "to": 12287,
+              "label": "page 2: frame 9",
+              "labelPos": "below",
+              "row": 0,
+              "colour": 3
+            }
+          ]
+        },
+        "controls": [
+          {
+            "bind": "v",
+            "min": 0,
+            "max": 12287,
+            "step": 1,
+            "label": "Virtual address",
+            "start": 10876
+          }
+        ],
+        "derive": {
+          "caption": "{{frames[floor(v.x / 4096)] < 0 ? 'Address ' + v.x + ' is in page 1, which is not present.' : 'Address ' + v.x + ': page ' + floor(v.x / 4096) + ', offset ' + (v.x - 4096 * floor(v.x / 4096)) + ', physical ' + (frames[floor(v.x / 4096)] * 4096 + (v.x - 4096 * floor(v.x / 4096))) + '.'}}"
+        }
+      },
+      "question": "Slide to 4,096 (0x1000). What happens to a read there?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "A page fault: the kernel must supply a frame first",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "It reads frame 0",
+            "why": "Page 1 has no frame yet, so there is nothing to read."
+          },
+          {
+            "id": "c",
+            "text": "The program crashes at once",
+            "why": "A fault is not a crash. The kernel handles it and the read retries."
+          },
+          {
+            "id": "d",
+            "text": "It reads physical address 4,096",
+            "why": "Physical addresses come from the page table, never straight from the virtual one."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which page holds 4,096?"
+        },
+        {
+          "rung": "point",
+          "text": "4,096 is the first byte of page 1.",
+          "highlight": [
+            "p1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Page 1 is not present."
+        }
+      ],
+      "feedback": {
+        "correct": "A page fault.",
+        "generic": "Not quite right. Look up page 1 in the table."
+      },
+      "explain": {
+        "text": "Page 1 has no frame, so the hardware raises a **page fault**. The kernel finds a frame, fills in the table and retries the read. A minor fault costs about 1 µs; one that loads from an SSD costs about 100 µs.",
+        "canvas": {
+          "points": {
+            "v": {
+              "x": 4096
+            }
+          },
+          "highlight": [
+            "p1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Four levels",
+      "prose": "x86-64 uses 48-bit virtual addresses. The low 12 bits are the offset in a 4 KiB page. The rest are four 9-bit indexes, one per level of the page table.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "0x00007F3A1C2D5E48, the 48 bits in use",
+          "lines": [
+            "bits 47-39   011111110      level 4 index",
+            "bits 38-30   011101000      level 3 index",
+            "bits 29-21   011100001      level 2 index",
+            "bits 20-12   011010101      level 1 index",
+            "bits 11-0    111001001000   offset"
+          ]
+        }
+      },
+      "question": "Write each part in decimal.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Part",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Level 4 index",
+            {
+              "edit": true,
+              "answer": 254,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Level 3 index",
+            {
+              "edit": true,
+              "answer": 232,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Level 2 index",
+            {
+              "edit": true,
+              "answer": 225,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Level 1 index",
+            {
+              "edit": true,
+              "answer": 213,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Offset",
+            {
+              "edit": true,
+              "answer": 3656,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read each group of bits as a binary number."
+        },
+        {
+          "rung": "point",
+          "text": "011111110 is 128 + 64 + 32 + 16 + 8 + 4 + 2.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "254, 232, 225, 213 and 3,656."
+        }
+      ],
+      "feedback": {
+        "correct": "254, 232, 225, 213 and 3,656.",
+        "generic": "Not quite right. Convert each binary group on its own.",
+        "byKey": {
+          "r0c1": "011111110 is 254.",
+          "r1c1": "011101000 is 128 + 64 + 32 + 8.",
+          "r2c1": "011100001 is 128 + 64 + 32 + 1.",
+          "r3c1": "011010101 is 128 + 64 + 16 + 4 + 1.",
+          "r4c1": "The offset 0xE48 is 3,656."
+        }
+      },
+      "explain": {
+        "text": "Each index picks one entry at its level, and the offset 0xE48 is 3,656. Every level is one more memory read. A full walk can cost $4 \\times 100 = 400$ ns when none of it is cached."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The TLB",
+      "prose": "Walking four levels on every read would be slow. So the core keeps recent translations in the **TLB**, the translation lookaside buffer.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "One core",
+          "lines": [
+            "TLB: 64 entries, one page translation each",
+            "page size: 4 KiB (or 2 MiB with huge pages)",
+            "table: 64 MiB, read at random positions"
+          ]
+        }
+      },
+      "question": "Fill in the reach and the hit rate.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Reach of 64 entries at 4 KiB (KiB)",
+            {
+              "edit": true,
+              "answer": 256,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4 KiB pages in 64 MiB",
+            {
+              "edit": true,
+              "answer": 16384,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Chance a random read finds its page in the TLB (%)",
+            {
+              "edit": true,
+              "answer": 0.39,
+              "tol": {
+                "abs": 0.01
+              }
+            }
+          ],
+          [
+            "2 MiB pages in 64 MiB",
+            {
+              "edit": true,
+              "answer": 32,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Reach is entries times page size."
+        },
+        {
+          "rung": "point",
+          "text": "64 MiB is $2^{26}$ bytes and 4 KiB is $2^{12}$.",
+          "highlight": [
+            "l1",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "256 KiB; 16,384 pages; 64 / 16,384 = 0.39%; 32 huge pages."
+        }
+      ],
+      "feedback": {
+        "correct": "256 KiB, 16,384 pages, 0.39% and 32.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "64 × 4 KiB.",
+          "r1c1": "$2^{26} / 2^{12} = 2^{14}$.",
+          "r2c1": "64 of the 16,384 pages fit: 64 / 16,384 is 0.39%.",
+          "r3c1": "64 MiB / 2 MiB."
+        }
+      },
+      "explain": {
+        "text": "64 entries of 4 KiB reach 256 KiB, so random reads over 64 MiB hit only 0.39%. With 2 MiB pages the table is 32 pages, all inside a reach of 128 MiB. These are **huge pages**."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Write the translation",
+      "prose": "Now in code. `frames[p]` is page p's frame, or −1 when page p is not mapped. Pages are 4,096 bytes.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Page",
+            "Frame",
+            "Present"
+          ],
+          "rows": [
+            [
+              "0",
+              "7",
+              "yes"
+            ],
+            [
+              "1",
+              "none",
+              "no"
+            ],
+            [
+              "2",
+              "9",
+              "yes"
+            ]
+          ],
+          "align": [
+            "center",
+            "center",
+            "center"
+          ]
+        },
+        "state": {
+          "caption": "Pages and frames are 4,096 bytes."
+        }
+      },
+      "question": "Fix `translate` so it returns the physical address, or −1 for a page fault.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <vector>\n\n// frames[p] is the physical frame of virtual page p, or -1 if p is not mapped.\n// Pages are 4096 bytes. Return the physical address, or -1 for a page fault.\nlong long translate(const std::vector<int>& frames, long long vaddr) {\n    long long page = vaddr / 4096;\n    if (page >= static_cast<long long>(frames.size())) return -1;\n    return static_cast<long long>(frames[page]) * 4096;\n}\n",
+        "solution": "#include <vector>\n\nlong long translate(const std::vector<int>& frames, long long vaddr) {\n    long long page = vaddr / 4096;\n    long long offset = vaddr % 4096;\n    if (page >= static_cast<long long>(frames.size())) return -1;\n    if (frames[page] < 0) return -1;\n    return static_cast<long long>(frames[page]) * 4096 + offset;\n}\n",
+        "examples": [
+          {
+            "call": "translate",
+            "args": [
+              [
+                7,
+                -1,
+                9
+              ],
+              10876
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": 39548,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "translate",
+            "args": [
+              [
+                7,
+                -1,
+                9
+              ],
+              10876
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": 39548,
+            "compare": "equal"
+          },
+          {
+            "call": "translate",
+            "args": [
+              [
+                7,
+                -1,
+                9
+              ],
+              0
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": 28672,
+            "compare": "equal"
+          },
+          {
+            "call": "translate",
+            "args": [
+              [
+                7,
+                -1,
+                9
+              ],
+              4095
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": 32767,
+            "compare": "equal"
+          },
+          {
+            "call": "translate",
+            "args": [
+              [
+                7,
+                -1,
+                9
+              ],
+              8192
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": 36864,
+            "compare": "equal"
+          },
+          {
+            "call": "translate",
+            "args": [
+              [
+                7,
+                -1,
+                9
+              ],
+              12287
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": 40959,
+            "compare": "equal"
+          },
+          {
+            "call": "translate",
+            "args": [
+              [
+                7,
+                -1,
+                9
+              ],
+              4096
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": -1,
+            "compare": "equal"
+          },
+          {
+            "call": "translate",
+            "args": [
+              [
+                7,
+                -1,
+                9
+              ],
+              20480
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": -1,
+            "compare": "equal"
+          },
+          {
+            "call": "translate",
+            "args": [
+              [
+                3,
+                5
+              ],
+              4113
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": 20497,
+            "compare": "equal"
+          },
+          {
+            "call": "translate",
+            "args": [
+              [],
+              0
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": -1,
+            "compare": "equal"
+          },
+          {
+            "call": "translate",
+            "args": [
+              [
+                0
+              ],
+              4095
+            ],
+            "types": [
+              "std::vector<int>",
+              "long long"
+            ],
+            "expect": 4095,
+            "compare": "equal"
+          }
+        ],
+        "how": "The first Check downloads the C++ compiler (about 26 MB) and compiles in 10 to 15 s. Later Checks take 1 to 3 s. Ten hidden tests. They include the first and last byte of a page, a missing page and an empty table."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the starter forget to add?"
+        },
+        {
+          "rung": "point",
+          "text": "The offset is `vaddr % 4096`, and a frame of −1 is a fault.",
+          "highlight": [
+            "r1c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return −1 when `frames[page] < 0`; otherwise `frames[page] * 4096 + offset`."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it. Split, check, then rebuild the address.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The starter drops the offset and reads frame −1 as a real frame. A missing page must return −1 before any arithmetic. Page past the table and page not present are both faults."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "When does 1 GiB cost 262 ms",
+      "prose": "A desk program on a Linux server asks for 1 GiB and fills it. It takes about 262 ms longer than the writes alone. This app runs in WebAssembly, which has no page faults to show.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "A desk program",
+          "lines": [
+            "double* big = new double[134217728];   // 1 GiB",
+            "for (std::size_t i = 0; i < 134217728; ++i)",
+            "    big[i] = 0.0;"
+          ]
+        }
+      },
+      "question": "Where is the 262 ms spent?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "In the loop: one page fault per 4 KiB page, on first write",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "In `new`: the kernel finds 1 GiB of frames at the call",
+            "why": "The kernel only reserves addresses; frames arrive when a page is first touched."
+          },
+          {
+            "id": "c",
+            "text": "In `delete[]` at the end",
+            "why": "Freeing touches nothing, so it is cheap."
+          },
+          {
+            "id": "d",
+            "text": "In cache misses during the loop",
+            "why": "Sequential writes stream through the cache. 262 ms is 262,144 faults at 1 µs."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does `new` actually get from the kernel?"
+        },
+        {
+          "rung": "point",
+          "text": "Addresses are reserved at once; frames are not.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "1 GiB is 262,144 pages, and each first write faults."
+        }
+      ],
+      "feedback": {
+        "correct": "In the loop: 262,144 faults at about 1 µs each.",
+        "generic": "Not quite right. Ask when each page first gets a frame.",
+        "byKey": {
+          "b": "Most of the cost is not at the call. The kernel hands out frames lazily, one fault per page."
+        }
+      },
+      "explain": {
+        "text": "`new` reserves 1 GiB of virtual addresses and returns at once. The first write to each of 262,144 pages faults. At about 1 µs a fault, that is 262 ms inside the loop.",
+        "canvas": {
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Bigger than RAM",
+      "prose": "Virtual space is per process, and only touched pages need frames. A 48-bit address can name a lot of bytes.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Two processes, one virtual address",
+          "lines": [
+            "process A   virtual 0x7000  ->  frame 12",
+            "process B   virtual 0x7000  ->  frame 40"
+          ]
+        }
+      },
+      "question": "How many TiB can a 48-bit virtual address name?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 256,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "TiB",
+        "accept": "256: $2^{48} / 2^{40}$.",
+        "wrong": [
+          {
+            "id": "tb",
+            "value": 281.47,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "bits",
+            "value": 48,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "gib",
+            "value": 262144,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A TiB is $2^{40}$ bytes."
+        },
+        {
+          "rung": "point",
+          "text": "$2^{48} / 2^{40} = 2^8$.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "256 TiB."
+        }
+      ],
+      "feedback": {
+        "correct": "256 TiB, far more than any server's RAM.",
+        "generic": "Not quite right. Divide $2^{48}$ by $2^{40}$.",
+        "byKey": {
+          "tb": "281 is in decimal terabytes. A TiB is $2^{40}$ bytes.",
+          "bits": "48 is the number of bits, not the size.",
+          "gib": "262,144 is in GiB. Divide by 1,024 again."
+        }
+      },
+      "explain": {
+        "text": "$2^{48}$ bytes is 256 TiB, so the space is far bigger than RAM. Each process has its own table. Two processes can use one virtual address for different frames.",
+        "canvas": {
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Every read, in order",
+      "prose": "Put the steps of one read into order. One line does not belong.",
+      "question": "Order the steps of a read through virtual memory, and leave out the wrong one.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Split the address into a page number and an offset"
+          },
+          {
+            "id": "s2",
+            "text": "Look the page up in the TLB"
+          },
+          {
+            "id": "s3",
+            "text": "On a TLB miss, walk the page table"
+          },
+          {
+            "id": "s4",
+            "text": "If the page is not present, fault: the kernel supplies a frame and the read retries"
+          },
+          {
+            "id": "s5",
+            "text": "Form the physical address: frame × 4,096 + offset"
+          },
+          {
+            "id": "d1",
+            "text": "Ask the kernel to translate the address",
+            "why": "The hardware translates every access. The kernel only steps in on a fault."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the hardware need before it can look anything up?"
+        },
+        {
+          "rung": "point",
+          "text": "The TLB comes before the walk; the walk finds the fault."
+        },
+        {
+          "rung": "step",
+          "text": "Split, TLB, walk, fault if needed, then frame times 4,096 plus offset."
+        }
+      ],
+      "feedback": {
+        "correct": "That's it: split, TLB, walk, fault, address.",
+        "generic": "Not quite right. The cheap check comes before the expensive one.",
+        "byKey": {
+          "d1": "A system call per read would cost far more than the read. The hardware does the translation.",
+          "left-out": "Every one of the five hardware steps belongs in the order.",
+          "s3": "The walk only happens when the TLB has no entry for the page."
+        }
+      },
+      "explain": {
+        "text": "The TLB is checked first because it costs almost nothing. A miss costs a walk of up to four reads. A page that is not present costs a fault, which is far dearer."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The translation",
+      "prose": "Every translation today was the same three lines:\n\n$$p = \\left\\lfloor \\frac{v}{4{,}096} \\right\\rfloor, \\qquad o = v \\bmod 4{,}096$$\n\n$$\\text{physical} = \\text{frame}(p) \\times 4{,}096 + o$$\n\nA page with no frame is a fault.",
+      "question": "Frames [7, none, 9]. Where does virtual address 8,195 go?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "36,867",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "28,675",
+            "why": "You used frame 7, which is page 0's. 8,195 is in page 2."
+          },
+          {
+            "id": "c",
+            "text": "A page fault",
+            "why": "8,195 is in page 2, which is present. Page 1 is the missing one."
+          },
+          {
+            "id": "d",
+            "text": "8,195",
+            "why": "A virtual address must be translated; it is not the physical one."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "8,195 = 2 × 4,096 + 3."
+        },
+        {
+          "rung": "point",
+          "text": "Page 2 is frame 9."
+        },
+        {
+          "rung": "step",
+          "text": "$9 \\times 4{,}096 + 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "36,867: frame 9, offset 3.",
+        "generic": "Not quite right. Split 8,195 into page and offset."
+      },
+      "explain": {
+        "text": "$8{,}195 = 2 \\times 4{,}096 + 3$, so page 2, offset 3. Frame 9 gives $36{,}864 + 3 = 36{,}867$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Drill: pages",
+      "tags": [
+        "page-table",
+        "page-fault"
+      ],
+      "pace": 540,
+      "prose": "Drill: about 90 seconds each. Say the reasoning aloud first. Pages are 4 KiB unless stated. Fault and walk costs are round figures: know them to a power of ten, not to the digit.",
+      "question": "Fill in each answer.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "0x3B10 (15,120) with frames [5, 2, none, 8]: physical address",
+            {
+              "edit": true,
+              "answer": 35600,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "0x2000 (8,192), same table: physical address, or −1 for a fault",
+            {
+              "edit": true,
+              "answer": -1,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "4 KiB pages in 64 MiB",
+            {
+              "edit": true,
+              "answer": 16384,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Reach of a 1,536-entry TLB (MiB)",
+            {
+              "edit": true,
+              "answer": 6,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Faults on first touch of 3 GiB",
+            {
+              "edit": true,
+              "answer": 786432,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "Those faults at 1 µs each (ms)",
+            {
+              "edit": true,
+              "answer": 786.4,
+              "tol": {
+                "abs": 0.05
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Split each address by 4,096."
+        },
+        {
+          "rung": "point",
+          "text": "15,120 is page 3, offset 2,832; 8,192 is page 2."
+        },
+        {
+          "rung": "step",
+          "text": "35,600; −1; 16,384; 6; 786,432; 786.4."
+        }
+      ],
+      "feedback": {
+        "correct": "35,600, −1, 16,384, 6, 786,432 and 786.4.",
+        "generic": "Not quite right. Check the first answer that is marked.",
+        "byKey": {
+          "r0c1": "Page 3 is frame 8: $8 \\times 4{,}096 + 2{,}832$.",
+          "r1c1": "Page 2 has no frame, so it faults.",
+          "r2c1": "$2^{26} / 2^{12}$.",
+          "r3c1": "1,536 × 4 KiB is 6,144 KiB.",
+          "r4c1": "$3 \\times 2^{30} / 2^{12}$.",
+          "r5c1": "786,432 µs is 786.4 ms."
+        }
+      },
+      "explain": {
+        "text": "Each address answer is split, look up, rebuild. Each size answer is a ratio of powers of two. Say the page size aloud before you divide."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Follow-up: start-up",
+      "tags": [
+        "huge-pages"
+      ],
+      "prose": "Why does a trading process touch and lock all its memory at start-up? It moves 786 ms of faults out of the session. It also removes 1 µs stalls from the hot path.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Start-up of a trading process",
+          "lines": [
+            "map 3 GiB for books and buffers",
+            "write every page: 786,432 faults, about 786 ms",
+            "lock the pages so they stay in RAM",
+            "market opens: no page faults on the hot path"
+          ]
+        }
+      },
+      "question": "With 2 MiB huge pages, how many pages hold 3 GiB?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1536,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "pages",
+        "accept": "1,536: 3,072 MiB / 2 MiB.",
+        "wrong": [
+          {
+            "id": "small",
+            "value": 786432,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "decimal",
+            "value": 1500,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write 3 GiB in MiB."
+        },
+        {
+          "rung": "point",
+          "text": "3 GiB is 3,072 MiB.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "3,072 / 2."
+        }
+      ],
+      "feedback": {
+        "correct": "1,536 pages instead of 786,432.",
+        "generic": "Not quite right. Divide 3 GiB by 2 MiB.",
+        "byKey": {
+          "small": "786,432 is the count of 4 KiB pages.",
+          "decimal": "A GiB is 1,024 MiB, not 1,000."
+        }
+      },
+      "explain": {
+        "text": "3 GiB is 3,072 MiB, so 1,536 huge pages, 512 times fewer than 786,432. A 1,536-entry TLB holding 2 MiB entries would then cover all of it. Desks pre-fault, lock and use huge pages for this."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A virtual address is a page number and an offset; the page table swaps the page for a frame.",
+      "The TLB caches recent translations; a miss costs a walk of up to four reads, about 400 ns.",
+      "A page gets a frame when first touched: a fault of about 1 µs, or 100 µs from an SSD."
+    ],
+    "formula": {
+      "name": "Translation",
+      "tex": "\\text{physical} = \\text{frame}\\!\\left(\\left\\lfloor \\dfrac{v}{4096} \\right\\rfloor\\right) \\times 4096 + (v \\bmod 4096)",
+      "note": "No frame means a page fault."
+    },
+    "trap": "Thinking `new` pays for its memory at the call: the faults come on first touch."
+  },
+  "quiz": [
+    {
+      "id": "q-lock",
+      "difficulty": 2,
+      "tags": [
+        "page-fault"
+      ],
+      "pace": 40,
+      "prose": "A trading process writes every page of its 3 GiB heap, then locks it, before the market opens.",
+      "question": "Why?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "To take every page fault before trading, so the hot path never stalls on one",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "To use less memory",
+            "why": "Touching every page makes all of it resident at once."
+          },
+          {
+            "id": "c",
+            "text": "Because the kernel requires it",
+            "why": "The kernel would fault pages in on demand."
+          },
+          {
+            "id": "d",
+            "text": "To fill the CPU caches",
+            "why": "3 GiB is far bigger than any cache."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "To move the faults out of the session.",
+        "generic": "Not quite right. What would happen on the first touch during trading?"
+      },
+      "explain": {
+        "text": "Each first touch costs a fault of about 1 µs. Doing all 786,432 before the open keeps them off the hot path. Locking stops the kernel from taking frames back."
+      }
+    },
+    {
+      "id": "q-translate",
+      "difficulty": 3,
+      "tags": [
+        "page-table"
+      ],
+      "pace": 50,
+      "prose": "Frames [3, 6], pages of 4,096 bytes.",
+      "question": "What is the physical address of virtual 4,100?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24580,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a decimal address",
+        "accept": "24,580: frame 6, offset 4.",
+        "wrong": [
+          {
+            "id": "frame3",
+            "value": 12292,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "same",
+            "value": 4100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "24,580.",
+        "generic": "Not quite right. 4,100 is page 1, offset 4.",
+        "byKey": {
+          "frame3": "Frame 3 belongs to page 0. 4,100 is in page 1.",
+          "same": "The address has to be translated."
+        }
+      },
+      "explain": {
+        "text": "$4{,}100 = 4{,}096 + 4$: page 1, offset 4. Frame 6 gives $6 \\times 4{,}096 + 4 = 24{,}580$."
+      }
+    },
+    {
+      "id": "q-reach",
+      "difficulty": 2,
+      "tags": [
+        "tlb"
+      ],
+      "pace": 30,
+      "prose": "A TLB of 32 entries, pages of 4 KiB.",
+      "question": "What is its reach, in KiB?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 128,
+        "tol": {
+          "abs": 0
+        },
+        "unit": "KiB",
+        "accept": "128: 32 × 4 KiB.",
+        "wrong": [
+          {
+            "id": "entries",
+            "value": 32,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "bytes",
+            "value": 131072,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "128 KiB.",
+        "generic": "Not quite right. Multiply the entries by the page size.",
+        "byKey": {
+          "entries": "32 is the number of entries.",
+          "bytes": "131,072 is in bytes. The question asks for KiB."
+        }
+      },
+      "explain": {
+        "text": "$32 \\times 4$ KiB is 128 KiB. Reads spread over more than that miss the TLB."
+      }
+    },
+    {
+      "id": "q-touch",
+      "difficulty": 3,
+      "tags": [
+        "page-fault"
+      ],
+      "pace": 50,
+      "prose": "A program first touches 512 MiB with 4 KiB pages. Each minor fault costs about 1 µs.",
+      "question": "How long do the faults take, in ms?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 131.072,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "ms",
+        "accept": "131.072: 131,072 faults.",
+        "wrong": [
+          {
+            "id": "pages",
+            "value": 131072,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "decimal",
+            "value": 125,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 131 ms.",
+        "generic": "Not quite right. Count the pages first.",
+        "byKey": {
+          "pages": "131,072 is the count of faults. Each takes 1 µs.",
+          "decimal": "512 MiB is $2^{29}$ bytes, not $5.12 \\times 10^8$."
+        }
+      },
+      "explain": {
+        "text": "$2^{29} / 2^{12} = 131{,}072$ pages, and 131,072 µs is 131.072 ms."
+      }
+    }
+  ]
+}
