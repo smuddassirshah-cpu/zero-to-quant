@@ -15,7 +15,7 @@
   "brief": "`rate` tokens a second refill continuously, up to `burst` tokens. The bucket starts full. `allow(now_ns)` is called with non-decreasing times in nanoseconds. It returns true and spends one token if a whole token is available, else false. Use integers only: no floating point.",
   "constraints": [
     "Times are `long long` nanoseconds and never go backwards.",
-    "Do not use floating point: a rounding slip shows up after many calls.",
+    "Do not use floating point: ten refills of 0.1 of a token do not add up to exactly 1.",
     "Each test has a 5-second limit."
   ],
   "hint": "Count tokens in billionths: each elapsed nanosecond adds `rate` units, and one token is 1,000,000,000 units. Cap the total at `burst` tokens.",
@@ -272,9 +272,81 @@
         0
       ],
       "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        1000,
+        5,
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          500000,
+          600000
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ],
+      "compare": "equal"
+    },
+    {
+      "call": "drive",
+      "args": [
+        1,
+        1,
+        [
+          0,
+          100000000,
+          200000000,
+          300000000,
+          400000000,
+          500000000,
+          600000000,
+          700000000,
+          800000000,
+          900000000,
+          1000000000,
+          1100000000
+        ]
+      ],
+      "types": [
+        "long long",
+        "long long",
+        "std::vector<long long>"
+      ],
+      "expect": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "compare": "equal"
     }
   ],
-  "how": "Seven hidden tests call `allow` with lists of times: a burst, refills, a rate of one token a nanosecond and times of 10^12 ns. A hidden driver returns 1 for an allowed call and 0 for a refused one.",
+  "how": "Nine hidden tests call `allow` with lists of times: bursts, refills, refused calls and a refill every 0.1 s. Others use a rate of one token a nanosecond and times of 10^12 ns. A hidden driver returns 1 for an allowed call and 0 for a refused one.",
   "notes": [
     "Update the clock on every call, even a refused one.",
     "Counting in billionths of a token keeps the arithmetic exact."
