@@ -379,12 +379,12 @@ c1 = parts_item("c1-fit-line", 4, ["rq-data", "rq-stats"], "fit-line-weights", 1
     "You write the least-squares line through some points. Then the interviewer adds a requirement.", [
     part("Write `weighted_line_fit(xs, ys)`. It returns `[slope, intercept]` of the least-squares line. Raise `ValueError` for fewer than two points, lists of different lengths, or all `xs` equal.",
          codew(start1, [(t1_calls[0], fmt(exp[t1_calls[0]])), (t1_calls[2], fmt(exp[t1_calls[2]]))], tests1,
-               "Submit runs 8 hidden tests. Answers are accepted when each number is within 1e-9, relative or absolute. One test uses very large x values.", sol1),
+               "There are 8 hidden tests. Answers are accepted when each number is within 1e-9, relative or absolute. One test uses very large x values.", sol1),
          fb("All eight tests pass, including the shifted data.", "A hidden test failed. Check the large-x test: centre the data before you sum."),
          "Centre the points on their means before summing, so the large shift cancels. The textbook sums subtract two huge, nearly equal numbers and lose every digit. An exact Fraction solve gives the same line."),
     part("The interviewer says some points are measured more precisely. Add a third argument, `weights`, one positive number per point, and fit by weighted least squares. Keep every earlier behaviour.",
          codew(start2.replace("def weighted_line_fit(xs, ys):", "def weighted_line_fit(xs, ys):"), [(t2_calls[1], fmt(exp[t2_calls[1]]))], tests2,
-               "Submit runs your part 1 tests and 5 more, 13 in all. Answers are accepted when each number is within 1e-9, relative or absolute.", sol2),
+               "There are 13 hidden tests: your part 1 tests and 5 more. Answers are accepted when each number is within 1e-9, relative or absolute.", sol2),
          fb("All thirteen tests pass.", "A hidden test failed. Use weighted means, and raise ValueError when weights and points differ in number."),
          "Replace each mean with a weighted mean, and weight each squared deviation. With equal weights the code reduces to part 1. The exact normal equations on Fractions give the same line."),
     part("A point's noise standard deviation is $\\sigma_i$. Which weights give the best fit?",
@@ -460,7 +460,7 @@ assert run_tests(start_rs, tests_rs) == 0
 c2 = {"id": "c2-rolling-slope", "difficulty": 4, "skills": ["rq-data"], "tags": ["rolling-slope"], "pace": 1080, "title": "A rolling slope",
       "question": "Write `rolling_slopes(xs, ys, w)`. It returns a list: the least-squares slope of `ys` on `xs` over each window of `w` neighbouring points. Use full windows only, in order. `w` is at least 2. If every `xs` value in a window is equal, that slope is `None`. The inputs reach 200,000 points.",
       "widget": codew(start_rs, [(rs_small[0], tests_rs[0]["expect"]), (rs_small[1], tests_rs[1]["expect"])], tests_rs,
-                      "Submit runs 10 hidden tests, the last three on 200,000 points. Answers are accepted when each number is within 1e-9, relative or absolute.", sol_rs),
+                      "There are 10 hidden tests, the last three on 200,000 points. Answers are accepted when each number is within 1e-9, relative or absolute.", sol_rs),
       "feedback": fb("All ten tests pass, including the large windows.", "A hidden test failed. Recomputing each window from scratch is too slow on 200,000 points; update running sums instead."),
       "explain": {"text": "Keep running sums of $x$, $y$, $x^2$ and $xy$, add the new point and subtract the one that leaves. Each slope is then $(w S_{xy} - S_x S_y)/(w S_{xx} - S_x^2)$ in constant time. Whole-number sums stay exact, and exact Fractions on every 4,000th window agree."}}
 

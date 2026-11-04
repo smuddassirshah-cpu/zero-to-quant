@@ -134,10 +134,10 @@
           ],
           "pace": 180,
           "title": "A t-statistic",
-          "question": "The mean excess return is 1.8 basis points a day. The sample standard deviation is 5, over 25 days, and the null mean is zero. What is the t-statistic?",
+          "question": "The mean excess return is 3.0 basis points a day. The sample standard deviation is 10, over 25 days, and the null mean is zero. What is the t-statistic?",
           "widget": {
             "kind": "numeric",
-            "answer": 1.8,
+            "answer": 1.5,
             "tol": {
               "abs": 0.005
             },
@@ -146,31 +146,31 @@
             "wrong": [
               {
                 "id": "wrong-se",
-                "value": 9.0,
+                "value": 7.5,
                 "tol": {
                   "abs": 0.005
                 }
               },
               {
                 "id": "s-only",
-                "value": 0.36,
+                "value": 0.3,
                 "tol": {
                   "abs": 0.005
                 }
               }
             ],
-            "accept": "1.8 (within 0.005)"
+            "accept": "1.5 (within 0.005)"
           },
           "feedback": {
-            "correct": "The standard error is $5/\\sqrt{25} = 1$, so $t$ is the mean over 1.",
+            "correct": "The standard error is $10/\\sqrt{25} = 2$, so $t$ is the mean over 2.",
             "generic": "Divide the mean by its standard error, not by the standard deviation.",
             "byKey": {
-              "wrong-se": "You divided by $s/n$, not $s/\\sqrt n$. The standard error is 1, not 0.2.",
+              "wrong-se": "You divided by $s/n$, not $s/\\sqrt n$. The standard error is 2, not 0.4.",
               "s-only": "You divided by $s$ alone. The mean's own spread is $s/\\sqrt n$."
             }
           },
           "explain": {
-            "text": "The standard error is $5/\\sqrt{25} = 1$, so $t = 1.8/1 = 1.8$. Check: $t^2 = n\\bar x^2/s^2 = 25 \\times 3.24/25 = 3.24$, and $\\sqrt{3.24} = 1.8$."
+            "text": "The standard error is $10/\\sqrt{25} = 2$, so $t = 3.0/2 = 1.5$. Check: the mean is one and a half standard errors from zero. That is below the 5% cut-off of about 2.06 for 24 degrees of freedom."
           }
         },
         {
@@ -387,12 +387,12 @@
           ],
           "pace": 240,
           "title": "Two assets together",
-          "question": "Two assets have volatility 20% and 30% a year and correlation $-0.3$. You hold 60% in the first and 40% in the second. What is the portfolio volatility, in %?",
+          "question": "Two assets have volatility 20% and 30% a year and correlation $-0.3$. You hold 60% in the first and 40% in the second. What is the portfolio volatility, in %? Give one decimal place.",
           "widget": {
             "kind": "numeric",
             "answer": 0.142,
             "tol": {
-              "abs": 0.0005
+              "abs": 0.001
             },
             "unit": "%",
             "placeholder": "a number",
@@ -411,16 +411,24 @@
                 "tol": {
                   "abs": 0.001
                 }
-              }
+              },
+   {
+    "id": "typed-fraction",
+    "value": 0.00142,
+    "tol": {
+     "abs": 0.0001
+    }
+   }
             ],
-            "accept": "14.2% (within 0.05 points)"
+            "accept": "14.2% (within 0.1 points)"
           },
           "feedback": {
             "correct": "The variance has two squared terms and a covariance term, $w^T \\Sigma w$.",
             "generic": "Volatilities do not average. Work with variances and the covariance.",
             "byKey": {
               "weighted-vols": "You weighted the volatilities. That is correct only when the correlation is 1.",
-              "no-covariance": "You left out the covariance term. With correlation $-0.3$ it lowers the variance."
+              "no-covariance": "You left out the covariance term. With correlation $-0.3$ it lowers the variance.",
+    "typed-fraction": "You typed the fraction. The box takes a percentage."
             }
           },
           "explain": {
@@ -625,7 +633,7 @@
             "data": {
               "qd-prices.csv": "content/data/qd/qd-prices.csv"
             },
-            "starter": "import numpy as np\nimport pandas as pd\n\ndef tidy_closes():\n    \"\"\"Read qd-prices.csv. Drop repeated rows and blank closes. Sort by ticker, then date.\"\"\"\n    ...\n\n\ndef vol_by_ticker():\n    \"\"\"Annualised volatility for each ticker, as a dict.\"\"\"\n    ...\n",
+            "starter": "import numpy as np\nimport pandas as pd\n\ndef tidy_closes():\n    \"\"\"Tidy rows of qd-prices.csv.\"\"\"\n    ...\n\n\ndef vol_by_ticker():\n    \"\"\"Annualised volatility per ticker.\"\"\"\n    ...\n",
             "examples": [
               {
                 "setup": "open('qd-prices.csv', 'w').write('date,ticker,close\\n2025-01-03,AAA,11\\n2025-01-02,AAA,10\\n2025-01-02,AAA,10\\n2025-01-02,BBB,\\n2025-01-02,BBB,20\\n2025-01-03,BBB,22\\n2025-01-06,BBB,21\\n2025-01-06,AAA,12\\n')",
@@ -709,7 +717,7 @@
                 "compare": "equal"
               }
             ],
-            "how": "Submit runs 11 hidden tests. Counts, columns and order must match exactly. Volatilities are accepted within a relative 1e-9.",
+            "how": "There are 11 hidden tests. Counts, columns and order must match exactly. Volatilities are accepted within a relative 1e-9. The last test fails a sort by date alone.",
             "solution": "import numpy as np\nimport pandas as pd\n\ndef tidy_closes():\n    df = pd.read_csv(\"qd-prices.csv\")\n    df = df.drop_duplicates().dropna(subset=[\"close\"])\n    return df.sort_values([\"ticker\", \"date\"]).reset_index(drop=True)\n\n\ndef vol_by_ticker():\n    df = tidy_closes()\n    out = {}\n    for ticker, g in df.groupby(\"ticker\"):\n        r = np.log(g[\"close\"]).diff().dropna()\n        out[ticker] = float(r.std(ddof=1) * np.sqrt(252))\n    return out\n"
           },
           "feedback": {
@@ -739,7 +747,7 @@
             "data": {
               "qd-pair.csv": "content/data/qd/qd-pair.csv"
             },
-            "starter": "import numpy as np\nimport pandas as pd\n\ndef windowed_betas(window):\n    \"\"\"Least-squares slope of asset on mkt in each full window of neighbouring rows.\"\"\"\n    ...\n",
+            "starter": "import numpy as np\nimport pandas as pd\n\ndef windowed_betas(window):\n    \"\"\"Slope of asset on mkt per window.\"\"\"\n    ...\n",
             "examples": [
               {
                 "setup": "open('qd-pair.csv', 'w').write('date,asset,mkt\\n2025-01-01,0.02,0.01\\n2025-01-02,0.05,0.02\\n2025-01-03,0.31,0.03\\n2025-01-04,0.07,0.04\\n2025-01-05,0.08,0.05\\n2025-01-06,0.13,0.06\\n')",
@@ -820,7 +828,7 @@
                 }
               }
             ],
-            "how": "Submit runs 9 hidden tests. Each slope is accepted within a relative 1e-9.",
+            "how": "There are 9 hidden tests. Each slope is accepted within a relative 1e-9. The last test has a data error in the market column, so it fails a check of the asset column alone.",
             "solution": "import numpy as np\nimport pandas as pd\n\ndef windowed_betas(window):\n    df = pd.read_csv(\"qd-pair.csv\")\n    df = df[(df[\"asset\"].abs() <= 0.25) & (df[\"mkt\"].abs() <= 0.25)]\n    x = df[\"mkt\"].to_numpy()\n    y = df[\"asset\"].to_numpy()\n    out = []\n    for i in range(len(x) - window + 1):\n        xs, ys = x[i:i + window], y[i:i + window]\n        out.append(float(np.cov(xs, ys, ddof=1)[0, 1] / np.var(xs, ddof=1)))\n    return out\n"
           },
           "feedback": {
@@ -851,7 +859,7 @@
             "data": {
               "qd-signal.csv": "content/data/qd/qd-signal.csv"
             },
-            "starter": "import numpy as np\nimport pandas as pd\n\ndef oos_scores(split):\n    \"\"\"Fit on the first split rows, score on the rest. Return coef, train_r2 and oos_r2.\"\"\"\n    ...\n",
+            "starter": "import numpy as np\nimport pandas as pd\n\ndef oos_scores(split):\n    \"\"\"Fit, then score the later rows.\"\"\"\n    ...\n",
             "examples": [
               {
                 "setup": "open('qd-signal.csv', 'w').write('date,x1,x2,ret\\n2025-01-01,0.1000,0.0000,0.0000\\n2025-01-02,0.2000,0.1000,0.0600\\n2025-01-03,0.0000,0.2000,0.0850\\n2025-01-04,0.3000,0.0000,-0.0400\\n2025-01-05,0.1000,0.1000,0.1600\\n2025-01-06,0.2000,0.3000,0.0350\\n2025-01-07,0.0000,0.1000,0.0350\\n2025-01-08,0.1000,0.0000,-0.0150\\n')",
@@ -921,7 +929,7 @@
                 }
               }
             ],
-            "how": "Submit runs 7 hidden tests. Each number is accepted within a relative 1e-8.",
+            "how": "There are 7 hidden tests. Each number is accepted within a relative 1e-8. The out-of-sample tests fail a score that uses the test mean as its baseline.",
             "solution": "import numpy as np\nimport pandas as pd\n\ndef oos_scores(split):\n    df = pd.read_csv(\"qd-signal.csv\")\n    X = np.column_stack([np.ones(len(df) - 1), df[\"x1\"].to_numpy()[:-1], df[\"x2\"].to_numpy()[:-1]])\n    y = df[\"ret\"].to_numpy()[1:]\n    Xtr, ytr, Xte, yte = X[:split], y[:split], X[split:], y[split:]\n    coef, *_ = np.linalg.lstsq(Xtr, ytr, rcond=None)\n    train_r2 = 1 - np.sum((ytr - Xtr @ coef) ** 2) / np.sum((ytr - ytr.mean()) ** 2)\n    oos_r2 = 1 - np.sum((yte - Xte @ coef) ** 2) / np.sum((yte - ytr.mean()) ** 2)\n    return {\"coef\": [float(c) for c in coef], \"train_r2\": float(train_r2), \"oos_r2\": float(oos_r2)}\n"
           },
           "feedback": {

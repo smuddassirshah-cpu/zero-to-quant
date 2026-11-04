@@ -242,7 +242,7 @@ def small_examples():
 
 # ============================================================================== code text
 IMP = "import numpy as np\nimport pandas as pd\n\n"
-T1_STARTER = IMP + 'def tidy_closes():\n    """Read qd-prices.csv. Drop repeated rows and blank closes. Sort by ticker, then date."""\n    ...\n\n\ndef vol_by_ticker():\n    """Annualised volatility for each ticker, as a dict."""\n    ...\n'
+T1_STARTER = IMP + 'def tidy_closes():\n    """Tidy rows of qd-prices.csv."""\n    ...\n\n\ndef vol_by_ticker():\n    """Annualised volatility per ticker."""\n    ...\n'
 T1_SOL = IMP + '''def tidy_closes():
     df = pd.read_csv("qd-prices.csv")
     df = df.drop_duplicates().dropna(subset=["close"])
@@ -280,7 +280,7 @@ T1_WRONG = {
     "no sort": T1_SOL.replace('    return df.sort_values(["ticker", "date"]).reset_index(drop=True)', "    return df.reset_index(drop=True)"),
     "blank closes kept as zero": T1_SOL.replace('.drop_duplicates().dropna(subset=["close"])', '.drop_duplicates().fillna(0)'),
 }
-T2_STARTER = IMP + 'def windowed_betas(window):\n    """Least-squares slope of asset on mkt in each full window of neighbouring rows."""\n    ...\n'
+T2_STARTER = IMP + 'def windowed_betas(window):\n    """Slope of asset on mkt per window."""\n    ...\n'
 T2_SOL = IMP + '''def windowed_betas(window):
     df = pd.read_csv("qd-pair.csv")
     df = df[(df["asset"].abs() <= 0.25) & (df["mkt"].abs() <= 0.25)]
@@ -308,7 +308,7 @@ T2_ALTS = {
 T2_WRONG = {"keeps the errors": T2_SOL.replace('    df = df[(df["asset"].abs() <= 0.25) & (df["mkt"].abs() <= 0.25)]\n', ""),
             "drops the error in asset only": T2_SOL.replace('(df["asset"].abs() <= 0.25) & (df["mkt"].abs() <= 0.25)', '(df["asset"].abs() <= 0.25)'),
             "windows of window minus one": T2_SOL.replace("x[i:i + window], y[i:i + window]", "x[i:i + window - 1], y[i:i + window - 1]")}
-T3_STARTER = IMP + 'def oos_scores(split):\n    """Fit on the first split rows, score on the rest. Return coef, train_r2 and oos_r2."""\n    ...\n'
+T3_STARTER = IMP + 'def oos_scores(split):\n    """Fit, then score the later rows."""\n    ...\n'
 T3_SOL = IMP + '''def oos_scores(split):
     df = pd.read_csv("qd-signal.csv")
     X = np.column_stack([np.ones(len(df) - 1), df["x1"].to_numpy()[:-1], df["x2"].to_numpy()[:-1]])
@@ -383,12 +383,12 @@ def paper1():
              feedback=fb("A p-value assumes the null and asks how surprising the data are.", "Say what the p-value assumes, then what it measures."),
              explain={"text": "A p-value is the chance of a result at least this extreme if the true average were zero. It is not the chance the hypothesis is true, and it gives no effect size. Here, 1.8% is how rare the data would be under no edge."}),
         item("q3-t-statistic", 3, S, "t-statistic", 180, "A t-statistic",
-             question="The mean excess return is 1.8 basis points a day. The sample standard deviation is 5, over 25 days, and the null mean is zero. What is the t-statistic?",
-             widget=num(1.8, 0.005, [("wrong-se", 9.0, 0.005), ("s-only", 0.36, 0.005)], "1.8 (within 0.005)"),
-             feedback=fb(r"The standard error is $5/\sqrt{25} = 1$, so $t$ is the mean over 1.", "Divide the mean by its standard error, not by the standard deviation.",
-                         **{"wrong-se": r"You divided by $s/n$, not $s/\sqrt n$. The standard error is 1, not 0.2.",
+             question="The mean excess return is 3.0 basis points a day. The sample standard deviation is 10, over 25 days, and the null mean is zero. What is the t-statistic?",
+             widget=num(1.5, 0.005, [("wrong-se", 7.5, 0.005), ("s-only", 0.3, 0.005)], "1.5 (within 0.005)"),
+             feedback=fb(r"The standard error is $10/\sqrt{25} = 2$, so $t$ is the mean over 2.", "Divide the mean by its standard error, not by the standard deviation.",
+                         **{"wrong-se": r"You divided by $s/n$, not $s/\sqrt n$. The standard error is 2, not 0.4.",
                             "s-only": r"You divided by $s$ alone. The mean's own spread is $s/\sqrt n$."}),
-             explain={"text": r"The standard error is $5/\sqrt{25} = 1$, so $t = 1.8/1 = 1.8$. Check: $t^2 = n\bar x^2/s^2 = 25 \times 3.24/25 = 3.24$, and $\sqrt{3.24} = 1.8$."}),
+             explain={"text": r"The standard error is $10/\sqrt{25} = 2$, so $t = 3.0/2 = 1.5$. Check: the mean is one and a half standard errors from zero. That is below the 5% cut-off of about 2.06 for 24 degrees of freedom."}),
         item("q4-ols-facts", 3, S, "ols-facts", 240, "What always holds in a fit",
              question="Select all that apply: which statements about least squares with an intercept always hold in the sample?",
              widget=options("multi", [
@@ -426,11 +426,12 @@ def paper1():
                            "explain": {"text": r"The conditional variance is $4(1 - 0.36) = 2.56$, so the standard deviation is 1.6. Check: $\Sigma_{yy} - \Sigma_{yx}^2/\Sigma_{xx} = 4 - 12.96/9 = 2.56$."}},
                       ]))
     items.append(item("q7-portfolio-sd", 3, S, "portfolio-sd", 240, "Two assets together",
-                      question="Two assets have volatility 20% and 30% a year and correlation $-0.3$. You hold 60% in the first and 40% in the second. What is the portfolio volatility, in %?",
-                      widget=num(0.142, 0.0005, [("weighted-vols", 0.24, 0.001), ("no-covariance", 0.17, 0.001)], "14.2% (within 0.05 points)", unit="%"),
+                      question="Two assets have volatility 20% and 30% a year and correlation $-0.3$. You hold 60% in the first and 40% in the second. What is the portfolio volatility, in %? Give one decimal place.",
+                      widget=num(0.142, 0.001, [("weighted-vols", 0.24, 0.001), ("no-covariance", 0.17, 0.001), ("typed-fraction", 0.00142, 0.0001)], "14.2% (within 0.1 points)", unit="%"),
                       feedback=fb(r"The variance has two squared terms and a covariance term, $w^T \Sigma w$.", "Volatilities do not average. Work with variances and the covariance.",
                                   **{"weighted-vols": "You weighted the volatilities. That is correct only when the correlation is 1.",
-                                     "no-covariance": "You left out the covariance term. With correlation $-0.3$ it lowers the variance."}),
+                                     "no-covariance": "You left out the covariance term. With correlation $-0.3$ it lowers the variance.",
+                                     "typed-fraction": "You typed the fraction. The box takes a percentage."}),
                       explain={"text": r"The variance is $0.0144 + 0.0144 - 0.00864 = 0.02016$. Its square root is 0.1420, so the volatility is 14.2%. Check: $w^T \Sigma w$ with the covariance matrix gives the same."}))
     items.append(item("q8-min-variance-weight", 4, L, "min-variance-weight", 270, "The quietest mix",
                       question="Two assets have volatility 25% and 20% and correlation 0.3. The weights sum to 1. What weight in the 25% asset gives the minimum-variance portfolio? Give four decimals.",
@@ -487,19 +488,19 @@ def paper2(ex, tj):
         code_item("d1-return-table", 3, ["rq-data"], "return-table", 1200, "A return table from messy closes",
                   "`qd-prices.csv` has one close a day for three tickers. The rows are not in date order. Some closes are blank, and some rows repeat. Write `tidy_closes()` and `vol_by_ticker()`. `tidy_closes()` returns a frame with the columns `date`, `ticker` and `close`. It drops repeated rows and blank closes, and sorts by ticker, then date. `vol_by_ticker()` returns a dict from ticker to annualised volatility. Use the sample standard deviation (`ddof=1`) of the daily log returns within each ticker, times $\\sqrt{252}$. Where a blank was dropped, the return spans two rows.",
                   "qd-prices.csv", T1_STARTER, ex["t1"], t1,
-                  "Submit runs 11 hidden tests. Counts, columns and order must match exactly. Volatilities are accepted within a relative 1e-9.", T1_SOL,
+                  "There are 11 hidden tests. Counts, columns and order must match exactly. Volatilities are accepted within a relative 1e-9. The last test fails a sort by date alone.", T1_SOL,
                   fb("All eleven tests pass: the rows are tidy and each volatility uses returns within one ticker.", "A hidden test failed. Open the first failed row. Check the repeats, the blanks, the order and that returns stay within a ticker."),
                   {"text": "Drop the repeats and blank closes, sort by ticker and date, then take the log returns inside each ticker. A `diff` on the stacked frame gives the first row of each ticker a return from the ticker before. Check: a pure-Python pass over the file gives the same three volatilities."}),
         code_item("d2-rolling-beta", 4, ["rq-data", "rq-stats"], "hedge-ratio", 1500, "A rolling hedge ratio",
                   "`qd-pair.csv` has daily returns for an asset and the market. Three asset returns were typed as whole percents. A return with size above 0.25 in either column is a data error: drop that row. Then write `windowed_betas(window)`. It returns one least-squares slope of `asset` on `mkt` per window of `window` neighbouring remaining rows. Use date order and full windows only.",
                   "qd-pair.csv", T2_STARTER, ex["t2"], t2,
-                  "Submit runs 9 hidden tests. Each slope is accepted within a relative 1e-9.", T2_SOL,
+                  "There are 9 hidden tests. Each slope is accepted within a relative 1e-9. The last test has a data error in the market column, so it fails a check of the asset column alone.", T2_SOL,
                   fb("All nine tests pass: the errors are gone and every window is a full one.", "A hidden test failed. Check both columns for data errors, then count the full windows."),
                   {"text": "A return of 0.31 is a whole percent typed in, so drop the row before windowing. The 517 rows left give 458 windows of 60. Keeping the errors gives 461 windows and a different sum."}),
         code_item("d3-out-of-sample", 5, ["rq-data", "rq-ml", "rq-case"], "out-of-sample", 1800, "An honest out-of-sample score",
                   "`qd-signal.csv` has two signals and the return of each day. Predict a day's return from the signals of the day before. Write `oos_scores(split)`. Row $t$ has the features of row $t - 1$ and the target `ret` of row $t$, for $t = 1$ to 799. Fit least squares with an intercept on the first `split` of these rows. Return a dict with `coef` (intercept, then the two slopes), `train_r2` and `oos_r2`. The out-of-sample score uses the remaining rows. Its baseline is the training mean of the target.",
                   "qd-signal.csv", T3_STARTER, ex["t3"], t3,
-                  "Submit runs 7 hidden tests. Each number is accepted within a relative 1e-8.", T3_SOL,
+                  "There are 7 hidden tests. Each number is accepted within a relative 1e-8. The out-of-sample tests fail a score that uses the test mean as its baseline.", T3_SOL,
                   fb("All seven tests pass: the fit saw only the first rows and the score used the training mean.", "A hidden test failed. Check the lag, which rows the fit sees, and the baseline of the out-of-sample score."),
                   {"text": "Lag the features so each row predicts forward. Fit on the first rows only, and score the rest against the training mean. A fit on every row, or a test-set baseline, borrows from the future."}),
     ]
