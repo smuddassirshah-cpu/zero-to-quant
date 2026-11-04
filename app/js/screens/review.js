@@ -56,7 +56,7 @@
     return out;
   };
   const md = (s) => G().inline(s || '');
-  const stemOf = (it) => (it ? (it.question || it.prose || it.prompt || it.title || '') : '');
+  const stemOf = (it) => (it ? (it.question || it.prose || it.prompt || it.title || (Array.isArray(it.parts) && it.parts[0] && it.parts[0].question) || '') : '');
   const store = {
     get: (k, d) => { try { return ZQ.store.get(k, d); } catch { return d; } },
     set: (k, v) => { try { ZQ.store.set(k, v); } catch { /* storage blocked */ } },
@@ -459,9 +459,11 @@
     window.ZQ.test = hook;
     /* ---------- The clock of a timed set: countdown and live score; the page, not the engine, ends the set ---------- */
     const remaining = () => (cfg.timed ? cfg.timed.seconds - ((Date.now() - t0) / 1000 + offset) : Infinity);
+    /* what an item is worth so far: 1 when right, else the share of its parts right (an item with parts, ENGINE-BACKLOG 467), else 0 */
+    const creditOf = (res) => Math.round(res.reduce((a, x) => a + (x ? (x.ok ? 1 : typeof x.credit === 'number' ? x.credit : 0) : 0), 0) * 10) / 10;
     const drawClock = () => {
       if (!cfg.timed || !run || finished) return;
-      const r = remaining(), res = run.results(), ok = res.filter(x => x && x.ok).length, n = res.filter(Boolean).length;
+      const r = remaining(), res = run.results(), ok = creditOf(res), n = res.filter(Boolean).length;
       const low = r <= Math.min(60, cfg.timed.seconds / 4);
       if (!right.querySelector('.rvs-timer')) {
         right.classList.add('is-timed');
@@ -498,11 +500,13 @@
     };
     const summary = (items, res, out) => {
       const nRight = res.filter(r => r && r.ok).length;
+      const partsCredit = res.some(r => r && typeof r.credit === 'number') ? creditOf(res) : null;
       const pace = ZQ.mock.pacing(paceRows(items, res));
       col.innerHTML = `<section class="hw-sum">
         <span class="t-overline hw-deep">${esc(cfg.over || '')}</span>
         <h1 class="t-complete">${esc(cfg.doneTitle || 'Set complete')}</h1>
         <div class="hw-score-big"><span class="t-stat tnum" data-count>${nRight}</span><span class="t-h2 secondary">of ${items.length} right</span></div>
+        ${partsCredit != null ? `<p class="t-body hw-late hw-credit"><span>Counting each part of a multi-part problem: ${partsCredit} of ${items.length}.</span></p>` : ''}
         ${timedOut ? `<p class="t-body hw-late">${I('timer', 'sm')}<span>Time ran out with ${plural(res.filter(Boolean).length, 'problem', 'problems')} answered. The rest count as missed.</span></p>` : cfg.timed ? `<p class="t-body hw-late">${I('timer', 'sm')}<span>Finished with ${esc(clock(Math.max(0, remaining())))} left on the clock.</span></p>` : ''}
         ${pace.n ? `<p class="t-body hw-late hw-pace">${I('timer', 'sm')}<span>${esc(pace.text)}</span></p>` : ''}
         <div class="hw-badges">${(out.badges || []).map(([v, l], k) => `<div class="hw-badge hw-in" style="animation-delay:${200 + k * 80}ms"><span class="t-h1 tnum">${v}</span><span class="t-caption muted">${esc(l)}</span></div>`).join('')}</div>
@@ -511,7 +515,7 @@
         <ol class="hw-res">${items.map((it, j) => { const r = res[j]; const ok = !!(r && r.ok); return `<li><div class="hw-res-r ${ok ? 'ok' : 'no'} is-static">
           <span class="hw-res-ic" aria-hidden="true">${I(ok ? 'check' : 'cross')}</span>
           <span class="hw-rl-t"><span class="t-body">${md(stemOf(it))}</span><span class="t-caption secondary">${esc(it.source || '')}${out.lines && out.lines[j] ? ' · ' + esc(out.lines[j]) : ''}${r && typeof r.seconds === 'number' ? ` · ${esc(ZQ.mock.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${esc(ZQ.mock.fmtSeconds(it.pace))} pace` : ''}` : ''}</span></span>
-          <span class="t-label tnum hw-res-m">${ok ? 'Right' : r ? 'Not right' : 'Skipped'}</span><span></span></div></li>`; }).join('')}</ol>
+          <span class="t-label tnum hw-res-m">${ok ? 'Right' : r && typeof r.credit === 'number' ? `${r.right} of ${r.of} parts` : r ? 'Not right' : 'Skipped'}</span><span></span></div></li>`; }).join('')}</ol>
       </section>`;
       setActs(`${cfg.again ? `<button type="button" class="btn secondary hw-sec" data-again>${esc(cfg.again)}</button>` : ''}<button type="button" class="btn hw-primary" data-back>Back to Review</button>`);
       right.innerHTML = `${I('check', 'xs')}<span>${nRight} of ${items.length} right</span>`;
@@ -807,7 +811,7 @@
         <h2 class="t-h2 hw-res-h">Item by item</h2>
         <ol class="hw-res">${items.map((it, j) => { const x = R.items[j] || {}; return `<li><button type="button" class="hw-res-r ${x.ok ? 'ok' : 'no'}" data-nav="${j}">
           <span class="hw-res-ic" aria-hidden="true">${I(x.ok ? 'check' : 'cross')}</span>
-          <span class="hw-rl-t"><span class="t-body"><span class="tnum">${j + 1}.</span> ${esc(it.title || 'Item ' + (j + 1))}</span><span class="t-caption secondary">${isLong(it) ? `Self-marked ${x.got} of ${marksOf(it)}` : x.ok ? 'Right' : x.answered ? 'Not right' : 'No answer'}${x.ok ? '' : ' · to redo'}</span></span>
+          <span class="hw-rl-t"><span class="t-body"><span class="tnum">${j + 1}.</span> ${esc(it.title || 'Item ' + (j + 1))}</span><span class="t-caption secondary">${isLong(it) ? `Self-marked ${x.got} of ${marksOf(it)}` : x.ok ? 'Right' : Array.isArray(x.parts) && x.answered ? `${x.parts.filter(q => q.ok).length} of ${x.parts.length} parts right` : x.answered ? 'Not right' : 'No answer'}${x.ok ? '' : ' · to redo'}</span></span>
           <span class="t-label tnum hw-res-m">${x.got} of ${marksOf(it)}</span>${I('chevronR', 'sm rv-chev')}</button></li>`; }).join('')}</ol>` : ''}
       </section>`;
       setActions(`<button type="button" class="btn hw-primary" data-back>Back to Review</button>`);
@@ -839,7 +843,7 @@
         let r = { ok: false, key: null };
         if (h && answered(j)) { try { r = await h.check(); } catch (e) { console.error(e); } }
         if (r && r.pending) r = { ok: false, key: null };
-        const got = isLong(it) ? ((r.detail && r.detail.score) || 0) : r.ok ? marksOf(it) : 0;
+        const got = isLong(it) ? ((r.detail && r.detail.score) || 0) : r.ok ? marksOf(it) : typeof r.credit === 'number' ? Math.round(r.credit * marksOf(it) * 100) / 100 : 0;   // parts: the share of parts right
         graded.push({ r, got, answered: answered(j) });
         if (h) { h.step.lock(); if (answered(j)) h.step.mark(Object.assign({}, r, { final: true })); }
       }
@@ -851,7 +855,8 @@
       const marks = graded.reduce((a, g) => a + g.got, 0);
       const R = { at: Date.now(), marks, total: total(), pct: Math.round(marks / Math.max(1, total()) * 100), right: results.filter(x => x.ok).length, xp: out.xp || 0, mp: out.mp || 0,
         wrong: results.map((x, j) => (x.ok ? null : j + 1)).filter(Boolean),
-        items: graded.map((g, j) => ({ id: items[j].id, ok: !!g.r.ok, got: g.got, answered: g.answered, key: g.r.key ?? null, value: handles[j] ? handles[j].value() : null })) };
+        items: graded.map((g, j) => ({ id: items[j].id, ok: !!g.r.ok, got: g.got, answered: g.answered, key: g.r.key ?? null, value: handles[j] ? handles[j].value() : null,
+          ...(Array.isArray(g.r.parts) ? { credit: g.r.credit, parts: g.r.parts, line: g.r.line || null } : {}) })) };
       store.set(`hw.result.${key}`, R);
       store.set(`hw.draft.${key}`, null); delete session.hw[key];
       itemsEl.querySelectorAll('[data-mark-row]').forEach(n => { n.hidden = true; });
@@ -862,12 +867,13 @@
       const R = result(); if (!R) return '';
       const x = R.items[j], it = items[j];
       const fb = it.feedback || {};
-      const line = x.ok ? fb.correct : (x.key != null && fb.byKey && fb.byKey[x.key]) || fb.generic || '';
-      const head = isLong(it) ? `Self-marked ${x.got} of ${marksOf(it)}` : x.ok ? 'Right' : x.answered ? 'Not right' : 'No answer';
+      const parted = Array.isArray(it.parts) && Array.isArray(x.parts);
+      const line = parted ? (x.line || '') : x.ok ? fb.correct : (x.key != null && fb.byKey && fb.byKey[x.key]) || fb.generic || '';
+      const head = isLong(it) ? `Self-marked ${x.got} of ${marksOf(it)}` : x.ok ? 'Right' : parted && x.answered ? `${x.parts.filter(q => q.ok).length} of ${x.parts.length} parts right` : x.answered ? 'Not right' : 'No answer';
       return `<div class="rv-chip ${x.ok ? 'is-ok' : 'is-no'} hw-verdict"><span class="rv-chip-ic" aria-hidden="true">${I(x.ok ? 'check' : 'cross')}</span>
         <span class="rv-chip-tx"><span class="rv-chip-h"><b>${head}</b></span><span>${x.got} of ${marksOf(it)} marks.${x.ok ? '' : ' Back in your redo queue in 7 days, then 30.'}</span></span></div>
         ${line ? `<p class="t-body hw-why">${md(line)}</p>` : ''}
-        ${it.explain && it.explain.text ? `<p class="t-body hw-why">${md(it.explain.text)}</p>` : ''}`;
+        ${(it.explain && it.explain.text ? [it.explain.text] : []).concat(Array.isArray(it.parts) ? it.parts.map(q => (q.explain && q.explain.text) || '').filter(Boolean) : []).map(t => `<p class="t-body hw-why">${md(t)}</p>`).join('')}`;
     };
     const confirmSubmit = () => {
       const box = Z.h(`<div class="hw-conf"><h2 class="t-sheet-title">Submit Homework ${esc(lv.n)}?</h2>
@@ -906,6 +912,7 @@
         if (R && h) {
           const x = R.items[j] || {};
           h.step.lock();
+          if (h.restore && Array.isArray(x.parts)) h.restore(x.parts);   // parts: each part's own verdict
           if (x.answered) h.step.mark({ ok: !!x.ok, key: x.key, final: true });
           const vd = wrap.querySelector('[data-verdict]'); vd.innerHTML = verdictHTML(j); vd.hidden = false;
           const nt = wrap.querySelector('[data-note]'); if (nt) nt.hidden = true;
@@ -941,7 +948,7 @@
         const R = result();
         if (R) return { kind: 'done', phase: 'homework', state: 'done', screenIndex: -1, total: items.length, right: R.right, marks: R.marks, of: R.total };
         if (!doc) return { kind: 'loading', phase: 'homework', state: 'read', screenIndex: -1, total: 0 };
-        if (typeof view === 'number') return { kind: 'item', phase: 'homework', state: answered(view) ? 'engaged' : 'idle', screenIndex: view, total: items.length };
+        if (typeof view === 'number') { const hp = handles[view]; return { kind: 'item', phase: 'homework', state: answered(view) ? 'engaged' : 'idle', screenIndex: view, total: items.length, ...(hp && hp.partCount && hp.partCount() > 1 ? { part: hp.part().index, parts: hp.partCount() } : {}) }; }
         return { kind: view === 'intro' ? 'start' : 'submit', phase: 'homework', state: 'read', screenIndex: -1, total: items.length };
       },
       answerCorrect: () => { const h = typeof view === 'number' && handles[view]; if (!h) return false; const ok = h.answerCorrect(); persist(); return ok; },
@@ -954,6 +961,7 @@
       continue: async () => {
         if (result()) return;
         if (view === 'intro') go(0);
+        else if (typeof view === 'number' && handles[view] && handles[view].more && handles[view].more() && handles[view].advance()) persist();   // the next part of this item
         else if (typeof view === 'number' && view < items.length - 1) go(view + 1);
         else await submit();
       },

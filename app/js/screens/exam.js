@@ -2,7 +2,10 @@
    Route: #exam/<examId>, for content/exams/<examId>.json (topic-<topic>, stage-<n> or mock-<id>); an optional second
    segment, #exam/<examId>/<seed>, fixes the seed of generated items (otherwise a new seed per attempt).
    A paper may score { right, wrong, blank } with passNet (ENGINE-BACKLOG 450), run forward only with navigation
-   "forward" and skip: false (451), and hold { generator: "arith" } entries that expand to seeded choice items (452).
+   "forward" and skip: false (451), and hold { generator: "arith" } entries that expand to seeded choice items (452). A paper's
+   draw: [{ from, tags, difficulty, n }] adds items drawn from bank files and drill packs when the attempt begins (468, ZQ.mock.draw;
+   the attempt keeps seed and drawn). An item with parts (467) opens them one at a time with a Next part button; its credit is the
+   share of parts right (ZQ.mock.tally) and the unopened parts count as missed.
    A mock exam (453) has a style and a models line, earns no XP, and every attempt is kept with a net score and trend.
    Start card, then the timed paper: one question at a time through ZQ.player.renderItem in exam mode (nothing is marked
    until you submit, one attempt, questions can be marked to come back to), a question navigator, a timer from the file
@@ -21,7 +24,7 @@
   const MARK = 'M7 3.5h10a1 1 0 0 1 1 1V20.5l-6-4.25-6 4.25V4.5a1 1 0 0 1 1-1z';
   const CALC = 'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8.5 6.5h7v3h-7zM8.5 13.5h.01M12 13.5h.01M15.5 13.5h.01M8.5 17h.01M12 17h.01M15.5 17h.01';
   const KIND = { choice: 'Single choice', multi: 'Select all that apply', numeric: 'Numeric answer', expression: 'Expression', order: 'Put in order', table: 'Fill in the table',
-    place: 'Place the pieces', 'tap-regions': 'Tap the regions', slider: 'Set the value', 'drag-point': 'Drag the point', manipulate: 'Step by step', longform: 'Written answer', code: 'Code', sketch: 'Sketch', balance: 'Balance' };
+    place: 'Place the pieces', 'tap-regions': 'Tap the regions', slider: 'Set the value', 'drag-point': 'Drag the point', manipulate: 'Step by step', longform: 'Written answer', code: 'Code', sketch: 'Sketch', balance: 'Balance', parts: 'Follow-up parts' };
 
   const clock = (s) => { s = Math.max(0, Math.ceil(s)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h ? `${h}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : `${m}:${String(s % 60).padStart(2, '0')}`; };
   const listAnd = (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]);
@@ -29,11 +32,12 @@
   const icon = (Z, name, cls = '') => (name === 'calc' || name === 'mark' ? `<svg class="icon ${cls}" viewBox="0 0 24 24" aria-hidden="true"><path d="${name === 'calc' ? CALC : MARK}"/></svg>` : Z.icon(name, cls));
   const G = () => ZQ.grade;
   const md = (s) => G().inline(s || '');
-  const kindOf = (it) => (it.kind === 'longform' ? 'longform' : (it.widget || {}).kind || 'choice');
+  const kindOf = (it) => (it.kind === 'longform' ? 'longform' : Array.isArray(it.parts) ? 'parts' : (it.widget || {}).kind || 'choice');
   const skillNames = () => { const out = {}; try { ZQ.content.courses().forEach(c => Object.assign(out, c.skills || {})); } catch { /* not loaded */ } return out; };
 
   /* The authored answer, written out for the result page */
   const correctHTML = (it) => {
+    if (Array.isArray(it.parts)) return it.parts.map((p, k) => { const a = correctHTML({ widget: p.widget }); return a ? `<span class="t-caption">Part ${k + 1}:</span> ${a}` : ''; }).filter(Boolean).join('<br>');
     const w = it.widget || {};
     switch (w.kind) {
       case 'choice': { const o = (w.options || []).find(x => x.correct); return o ? md(o.text) : ''; }
@@ -61,7 +65,17 @@
     root.innerHTML = shell('<p class="t-caption">Loading the exam</p>');
     root.querySelector('.exm-close').addEventListener('click', () => Z.go('review'));
 
-    ZQ.content.exam(id).then((doc) => (doc && ZQ.arith ? ZQ.arith.ready.then(() => doc) : doc)).then((doc) => {
+    /* The seed fixes every generated and drawn item of this attempt; it is stored with the attempt */
+    const seed = params[1] != null && /^\d+$/.test(params[1]) ? Number(params[1]) % 4294967296 : Math.floor(Math.random() * 4294967296);
+    const drawn = {};   // paper number -> the items its `draw` entries resolved to (ENGINE-BACKLOG 468)
+    const drawAll = async (doc) => {
+      if (!doc) return doc;
+      const raw = Array.isArray(doc.parts) ? doc.parts.filter(p => p && p.kind === 'paper') : [doc];
+      const used = new Set(), seen = ZQ.mock.seenOf(doc.id), sample = !!(ZQ.content.isSample && ZQ.content.isSample(`exams/${doc.id}.json`));
+      for (let n = 0; n < raw.length; n++) if (Array.isArray(raw[n].draw) && raw[n].draw.length) drawn[n] = await ZQ.mock.draw(raw[n].draw, { seed, salt: n, exam: doc.id, sample, seen, used });
+      return doc;
+    };
+    ZQ.content.exam(id).then((doc) => (doc && ZQ.arith ? ZQ.arith.ready.then(() => doc) : doc)).then(drawAll).then((doc) => {
       if (!alive) return;
       if (!doc) { bail('Not yet written', `The exam ${id} has not been written yet.`); return; }
       run(doc);
@@ -74,14 +88,13 @@
       /* A mock has parts, or the fields of one paper at the top level */
       const raw = Array.isArray(doc.parts) ? doc.parts
         : [{ kind: 'paper', id: 'paper', name: doc.name, minutes: doc.minutes || 60, pass: doc.pass, passNet: doc.passNet, scoring: doc.scoring, navigation: doc.navigation, skip: doc.skip, items: doc.items || [] }];
-      /* The seed fixes every generated item of this attempt; it is stored with the attempt */
-      const seed = params[1] != null && /^\d+$/.test(params[1]) ? Number(params[1]) % 4294967296 : Math.floor(Math.random() * 4294967296);
       let paperNo = 0;
-      const parts = raw.map(p => (p.kind === 'paper' ? Object.assign({}, p, { pass: p.pass == null && p.passNet == null ? 0.7 : p.pass, items: ZQ.arith ? ZQ.arith.expand(p.items || [], seed, paperNo++) : (p.items || []) }) : p));
+      const parts = raw.map(p => (p.kind === 'paper' ? Object.assign({}, p, { pass: p.pass == null && p.passNet == null ? 0.7 : p.pass, items: (() => { const own = (p.items || []).concat(drawn[paperNo] || []); return ZQ.arith ? ZQ.arith.expand(own, seed, paperNo++) : (paperNo++, own); })() }) : p));
       const papers = parts.filter(p => p.kind === 'paper');
       const checks = parts.filter(p => p.kind === 'check');
       const multi = stage || (mock && (papers.length > 1 || checks.length > 0));
       const generated = papers.some(p => p.items.some(it => it && it.generated));
+      const drawnUids = papers.flatMap(p => p.items.filter(it => it && it.drawn).map(it => it.drawn.uid));
       const scored = papers.some(M.scored);
       const topic = !stage && !mock && ZQ.content.topic(doc.topic);
       const mstyle = M.style(doc.style);
@@ -397,7 +410,7 @@
             let r = { ok: false, key: null };
             if (h && isAns(i)) { try { r = await h.check(); } catch (e) { console.error(e); } }
             if (!r || r.pending) r = { ok: false, key: null };
-            res[i] = { ok: !!r.ok, key: r.key ?? null, done: isAns(i), flag: S.flags.has(i), line: r.line || null, seconds: Math.round(qsec[i] * 10) / 10 };
+            res[i] = { ok: !!r.ok, key: r.key ?? null, done: isAns(i), flag: S.flags.has(i), line: r.line || null, seconds: Math.round(qsec[i] * 10) / 10, ...(typeof r.credit === 'number' ? { credit: r.credit, right: r.right, of: r.of } : {}) };
           }
           A.results[pi] = res; A.used[pi] = used; A.flags[pi] = [...S.flags]; A.timeUp = A.timeUp || timeUp;
           /* Detach the rendered questions so the result page can show them, marked */
@@ -425,10 +438,10 @@
         };
         T = {
           kind: 'item',
-          cur: () => ({ kind: S.over ? 'loading' : 'item', phase: 'exam', state: isAns(S.cur) ? 'engaged' : 'idle', screenIndex: S.cur, total: N, paper: pi, forward: FWD, noSkip: NOSKIP }),
+          cur: () => { const hp = local[S.cur]; return { kind: S.over ? 'loading' : 'item', phase: 'exam', state: isAns(S.cur) ? 'engaged' : 'idle', screenIndex: S.cur, total: N, paper: pi, forward: FWD, noSkip: NOSKIP, ...(hp && hp.partCount && hp.partCount() > 1 ? { part: hp.part().index, parts: hp.partCount() } : {}) }; },
           answer: () => { const h = local[S.cur]; if (!h) return false; const ok = h.answerCorrect(); renderChrome(); return ok; },
           check: async () => { const h = local[S.cur]; return h ? h.step.grade() : null; },
-          go: () => (S.cur < N - 1 ? go(S.cur + 1) : (NOSKIP && !isAns(S.cur) ? null : submit(false))),
+          go: () => { const hp = local[S.cur]; if (hp && hp.more && hp.more() && hp.advance()) { renderChrome(); return; } return S.cur < N - 1 ? go(S.cur + 1) : (NOSKIP && !isAns(S.cur) ? null : submit(false)); },   // an item with parts opens its next part first
         };
         seenAt = Date.now();
         show(true);
@@ -457,8 +470,8 @@
         let out = {};
         try {
           out = ZQ.state.examFinished({ id: doc.id, score, items: total, passed, bySkill, seconds,
-            results: rows.map(({ it, r }, k) => ({ id: it.generated ? null : it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null && !it.generated ? { exam: doc.id, item: it.id } : null, seconds: r.done ? r.seconds : undefined, pace: it.pace, family: fam[k] && fam[k].id })),
-            extra: { ...(mock || scored || generated ? { net, max, wrong, blank, seconds, ...(generated ? { seed: A.seed } : {}) } : {}), itemSeconds: rows.map(({ r }) => (typeof r.seconds === 'number' ? Math.round(r.seconds) : 0)) } }) || {};
+            results: rows.map(({ it, r }, k) => ({ id: it.generated || it.drawn ? null : it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null && !it.generated && !it.drawn ? { exam: doc.id, item: it.id } : null, seconds: r.done ? r.seconds : undefined, pace: it.pace, family: fam[k] && fam[k].id })),
+            extra: { ...(mock || scored || generated || drawnUids.length ? { net, max, wrong, blank, seconds, ...(generated || drawnUids.length ? { seed: A.seed } : {}), ...(drawnUids.length ? { drawn: drawnUids } : {}) } : {}), itemSeconds: rows.map(({ r }) => (typeof r.seconds === 'number' ? Math.round(r.seconds) : 0)) } }) || {};
         } catch (e) { console.error(e); }
         T = { kind: 'done', info: { score, total, passed, net, max, wrong, blank, seed: A.seed } };
         cleanups.push(mountResult(root, Z, { doc, stage, mock, multi, scored, title, over, track, names, rows, bySkill, paperScores, checks, ticks: A.ticks, checksOk, score, total, net, max, wrong, blank, passed, seconds, pacing, xp: out.xp || 0, mp: out.mp || 0, timeUp: !!A.timeUp,
@@ -482,12 +495,14 @@
     const { rows, names, paperScores, stage, multi, mock, scored, score, total, passed } = at;
     const M = ZQ.mock;
     /* The headline is the net score when a paper is marked with wrong or blank marks, else the count of right answers */
-    const heroN = scored ? at.net : score, heroMax = scored ? at.max : total;
+    const heroN = scored ? at.net : Math.round(paperScores.reduce((a, s) => a + s.right, 0) * 100) / 100, heroMax = scored ? at.max : total;
     const pct = Math.max(0, Math.round(heroN / Math.max(1, heroMax) * 100));
     const p0 = paperScores[0];
     const PASS = multi || typeof p0.p.passNet === 'number' ? null : p0.p.pass;
     const passRef = multi ? 0.7 : PASS != null ? PASS : p0.max > 0 ? Math.min(1, Math.max(0, p0.need / p0.max)) : 0.7;
     const sgn = (v) => M.signed(v);
+    const fx = (v) => String(Math.round(v * 100) / 100);   // a count that parts credit can make fractional
+    const rightT = Math.round(paperScores.reduce((a, s) => a + s.right, 0) * 1e6) / 1e6;
     const wrong = rows.filter(x => !x.r.ok);
     const flagged = rows.filter(x => x.r.flag);
     const bySkill = Object.entries(at.bySkill).map(([id, [c, t]]) => ({ id, name: names[id] || id, c, t, p: t ? c / t : 0, qs: rows.map((x, k) => ((x.it.skills || []).includes(id) ? k : -1)).filter(k => k >= 0) }))
@@ -500,7 +515,7 @@
     /* This mock's attempts so far, newest last, with the one just recorded */
     const attempts = mock ? ((ZQ.state.exams[at.doc.id] || {}).attempts || []) : [];
     const nets = attempts.map(a => (typeof a.net === 'number' ? a.net : a.score));
-    const marksOf = (x) => { const s = M.scoring(paperScores[x.pi].p); return x.r.ok ? s.right : x.r.done ? s.wrong : s.blank; };
+    const marksOf = (x) => { const s = M.scoring(paperScores[x.pi].p); const c = x.r.credit; return x.r.ok ? s.right : x.r.done && typeof c === 'number' && c > 0 ? Math.round((c * s.right + (1 - c) * s.wrong) * 1e6) / 1e6 : x.r.done ? s.wrong : s.blank; };
 
     const skillRow = (s) => {
       const w = (s.p * 100).toFixed(2) + '%', near = Math.abs(s.p - passRef) < 0.06;
@@ -513,14 +528,14 @@
     const reviewItem = (x, k) => {
       const { it, r } = x;
       const fb = it.feedback || {};
-      const line = r.ok ? fb.correct : (r.key != null && fb.byKey && fb.byKey[r.key]) || (r.done ? fb.generic : '');
+      const line = Array.isArray(it.parts) ? (r.line || '') : r.ok ? fb.correct : (r.key != null && fb.byKey && fb.byKey[r.key]) || (r.done ? fb.generic : '');
       const mk = scored ? ` ${marksOf(x) > 0 ? '+' : ''}${sgn(marksOf(x))}` : '';
-      const v = r.ok ? `<span class="exm-v is-ok">${Z.icon('check')}<span>Correct${mk}</span></span>` : `<span class="exm-v is-no">${Z.icon('cross')}<span>${r.done ? 'Not correct' : 'No answer'}${mk}</span></span>`;
+      const v = r.ok ? `<span class="exm-v is-ok">${Z.icon('check')}<span>Correct${mk}</span></span>` : `<span class="exm-v is-no">${Z.icon('cross')}<span>${r.done ? (typeof r.credit === 'number' ? `${r.right} of ${r.of} parts` : 'Not correct') : 'No answer'}${mk}</span></span>`;
       const ans = correctHTML(it);
       return `<article class="exm-ri${r.ok ? '' : ' is-no'}" data-ok="${r.ok}" data-flag="${!!r.flag}" data-k="${k}">
         <button type="button" class="exm-ri-h" aria-expanded="${!r.ok}" aria-controls="exm-rb-${k}">
           <span class="exm-ri-n tnum">${qlabel(k)}</span>
-          <span class="exm-ri-t"><span class="t-label">${Z.esc(it.title || (it.question || '').replace(/\$[^$]*\$/g, '…').slice(0, 80))}</span><span class="t-caption exm-ri-meta">${it.generated ? 'Generated question' : `${Z.esc((it.skills || []).map(s => names[s] || s).join(', '))} · Difficulty ${it.difficulty || 3} of 5`}${typeof r.seconds === 'number' && r.done ? ` · ${Z.esc(M.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${Z.esc(M.fmtSeconds(it.pace))} pace` : ''}` : ''}${r.flag ? ` · <span class="exm-ri-mark">${icon(Z, 'mark', 'xs')}Marked</span>` : ''}</span></span>
+          <span class="exm-ri-t"><span class="t-label">${Z.esc(it.title || (it.question || (it.parts && it.parts[0] && it.parts[0].question) || '').replace(/\$[^$]*\$/g, '…').slice(0, 80))}</span><span class="t-caption exm-ri-meta">${it.generated ? 'Generated question' : `${Z.esc((it.skills || []).map(s => names[s] || s).join(', '))} · Difficulty ${it.difficulty || 3} of 5`}${typeof r.seconds === 'number' && r.done ? ` · ${Z.esc(M.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${Z.esc(M.fmtSeconds(it.pace))} pace` : ''}` : ''}${r.flag ? ` · <span class="exm-ri-mark">${icon(Z, 'mark', 'xs')}Marked</span>` : ''}</span></span>
           ${v}
           <span class="exm-ri-chev" aria-hidden="true">${Z.icon('chevronD', 'sm')}</span>
         </button>
@@ -529,7 +544,7 @@
             <button type="button" class="icon-btn exm-report" data-report="${qlabel(k)}" aria-label="Report a problem with question ${qlabel(k)}" title="Report a problem with this question">${Z.icon('flag')}</button></div>
           ${ans ? `<dl class="exm-ans exm-ans-1"><div><dt class="t-caption">Correct answer</dt><dd>${ans}</dd></div></dl>` : ''}
           ${line ? `<p class="t-body ${r.ok ? 'exm-accept' : 'exm-diag'}">${md(line)}</p>` : ''}
-          ${it.explain && it.explain.text ? `<p class="t-overline exm-ws-h">Worked explanation</p><p class="t-body exm-ws">${md(it.explain.text)}</p>` : ''}
+          ${(it.explain && it.explain.text ? [it.explain.text] : []).concat(Array.isArray(it.parts) ? it.parts.map(q => (q.explain && q.explain.text) || '').filter(Boolean) : []).length ? `<p class="t-overline exm-ws-h">Worked explanation</p>${(it.explain && it.explain.text ? [it.explain.text] : []).concat(Array.isArray(it.parts) ? it.parts.map(q => (q.explain && q.explain.text) || '').filter(Boolean) : []).map(t => `<p class="t-body exm-ws">${md(t)}</p>`).join('')}` : ''}
         </div>
       </article>`;
     };
@@ -556,9 +571,9 @@
           <p class="t-overline exm-ov">${Z.esc(at.over)}</p>
           <h1 class="t-complete" id="exm-rh">${Z.esc(stage || mock ? at.title : (at.doc.name || 'Topic exam'))}</h1>
           <div class="exm-scorerow">
-            <p class="exm-score"><span class="sr-only">${scored ? `Net score ${sgn(heroN)} of ${sgn(heroMax)}: ${score} right, ${at.wrong} wrong, ${at.blank} blank` : `${score} of ${total} correct, ${pct}%`}. ${passed ? 'Pass' : 'Not passed'}.</span>
+            <p class="exm-score"><span class="sr-only">${scored ? `Net score ${sgn(heroN)} of ${sgn(heroMax)}: ${fx(rightT)} right, ${fx(at.wrong)} wrong, ${fx(at.blank)} blank` : `${score} of ${total} correct, ${pct}%`}. ${passed ? 'Pass' : 'Not passed'}.</span>
               <span aria-hidden="true" class="exm-score-n"><b class="t-stat" data-score>0</b><span class="exm-of"> of ${sgn(heroMax)}${scored ? ' net' : ''}</span></span>
-              <span aria-hidden="true" class="exm-pct tnum">${scored ? `${score} right · ${at.wrong} wrong · ${at.blank} blank` : `<span data-pct>0</span>% correct`}</span>
+              <span aria-hidden="true" class="exm-pct tnum">${scored ? `${fx(rightT)} right · ${fx(at.wrong)} wrong · ${fx(at.blank)} blank` : `<span data-pct>0</span>% correct`}</span>
             </p>
             <div class="exm-stamp ${passed ? 'is-pass' : 'is-fail'}" aria-hidden="true">${Z.icon(passed ? 'check' : 'cross')}<span>${passed ? 'Pass' : 'Not passed'}</span></div>
           </div>
@@ -581,7 +596,7 @@
 
         ${multi ? `<section class="exm-card exm-parts-r exm-later" data-l="4" aria-labelledby="exm-pt-h">
           <div class="exm-sec-h"><h2 class="t-h2" id="exm-pt-h">Part by part</h2></div>
-          <ul class="exm-pres">${paperScores.map((s, i) => `<li class="${s.passed ? 'ok' : 'no'}"><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(s.p.name)}</b><span class="t-caption">${M.scored(s.p) ? `${sgn(s.net)} net: ${s.c} right, ${s.wrong} wrong, ${s.blank} blank. Pass mark ${needLine(s)}.` : `${s.c} of ${s.n} correct, ${Math.round(s.share * 100)}%. Pass mark ${Math.round(s.p.pass * 100)}%.`}</span></span><span class="exm-v ${s.passed ? 'is-ok' : 'is-no'}">${Z.icon(s.passed ? 'check' : 'cross')}<span>${s.passed ? 'Passed' : 'Not passed'}</span></span></li>`).join('')}
+          <ul class="exm-pres">${paperScores.map((s, i) => `<li class="${s.passed ? 'ok' : 'no'}"><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(s.p.name)}</b><span class="t-caption">${M.scored(s.p) ? `${sgn(s.net)} net: ${fx(s.c)} right, ${fx(s.wrong)} wrong, ${fx(s.blank)} blank. Pass mark ${needLine(s)}.` : `${fx(s.c)} of ${s.n} correct, ${Math.round(s.share * 100)}%. Pass mark ${Math.round(s.p.pass * 100)}%.`}</span></span><span class="exm-v ${s.passed ? 'is-ok' : 'is-no'}">${Z.icon(s.passed ? 'check' : 'cross')}<span>${s.passed ? 'Passed' : 'Not passed'}</span></span></li>`).join('')}
             ${at.checks.map((c, i) => `<li class="${at.ticks.has(i) ? 'ok' : 'no'}"><span class="exm-ri-n tnum">${paperScores.length + i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(c.name)}</b><span class="t-caption">Self-ticked check</span></span><span class="exm-v ${at.ticks.has(i) ? 'is-ok' : 'is-no'}">${Z.icon(at.ticks.has(i) ? 'check' : 'cross')}<span>${at.ticks.has(i) ? 'Ticked' : 'Not ticked'}</span></span></li>`).join('')}</ul>
         </section>` : ''}
 

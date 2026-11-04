@@ -1053,6 +1053,7 @@
 
   /* ---------- One item, for set mode and exams ---------- */
   function renderItem(item, host, { mode = 'set', onGraded, key } = {}) {
+    if (Array.isArray(item.parts) && item.parts.length) return renderParts(item, host, { mode, onGraded, key });
     const ref = item.ref || {};
     const draftKey = ref.exam ? `${ref.exam}/${ref.item}` : ref.course && ref.lesson ? `${ref.course}/${ref.lesson}/${ref.item ?? 's' + ref.screen}` : null;
     const step = buildScreen(item, { mode, key: key || item.id || 'item', pointEl: () => {}, into: () => {}, draftKey });
@@ -1083,6 +1084,148 @@
     };
   }
 
+  /* ---------- An item with parts (ENGINE-BACKLOG 467, docs/AUTHORING.md 5, "Follow-up parts") ----------
+     item.parts: [{ question, widget, feedback, explain?, prose?, canvas?, difficulty? }]. The item's own title, prose, canvas
+     and question (all optional) form the stem above the parts. Part 1 is open; part k + 1 opens once part k is checked, right or
+     wrong. In a set (practice, review, redo, bank) Check grades the open part and Continue opens the next. In an exam or homework
+     nothing is marked until submit, so a Next part button locks the open part's answer and opens the next. Credit is the share
+     of parts right (equal weight); a part never opened counts as missed. A code part's tests are cumulative: the tests of every
+     earlier code part of the same language run first, then its own (widget.cumulative: false switches that off).
+     The handle is renderItem's, plus: more(), advance(), settle(), touched(), part() and partCount(). */
+  function renderParts(item, host, { mode = 'set', onGraded, key } = {}) {
+    const parts = item.parts, N = parts.length, base = key || item.id || 'item', ref = item.ref || {};
+    const root = Z.h('<section class="lsn-parts"></section>');
+    host.append(root);
+    const hs = [], partRes = [], listeners = [];
+    let final = null, last = null;
+    const fire = (d) => listeners.forEach(f => f(d));
+    let stem = null;
+    if (item.title || item.prose || item.canvas || item.question) {
+      stem = buildScreen({ id: base + '-stem', title: item.title, prose: item.prose, canvas: item.canvas, question: item.question }, { mode, key: base + 's', pointEl: () => {}, into: () => {} });
+      root.append(stem.el);
+    }
+    const sameTest = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const widgetOf = (k) => {
+      const w = parts[k].widget;
+      if (!w || w.kind !== 'code' || w.cumulative === false) return w;
+      const tests = [];
+      parts.slice(0, k).forEach(q => { const v = q.widget; if (v && v.kind === 'code' && (v.language || 'python') === (w.language || 'python')) (v.tests || []).forEach(t => { if (!tests.some(u => sameTest(u, t))) tests.push(t); }); });
+      (w.tests || []).forEach(t => { if (!tests.some(u => sameTest(u, t))) tests.push(t); });
+      return Object.assign({}, w, { tests });
+    };
+    const specOf = (k) => {
+      const p = parts[k];
+      return { id: `${item.id || 'item'}-p${k + 1}`, difficulty: p.difficulty != null ? p.difficulty : item.difficulty, prose: p.prose, canvas: p.canvas, question: p.question, widget: widgetOf(k), feedback: p.feedback,
+        explain: p.explain || item.explain, skills: item.skills, ref: Object.assign({}, ref, { item: `${ref.item != null ? ref.item : item.id || 'item'}-p${k + 1}` }) };
+    };
+    const more = () => hs.length < N;
+    const lockPart = (k) => { try { hs[k].step.lock(); } catch (e) { console.error(e); } const b = root.querySelector(`[data-part="${k}"] .lsn-part-act`); if (b) b.hidden = true; };
+    const mountNext = () => {
+      const k = hs.length;
+      const wrap = Z.h(`<div class="lsn-part" data-part="${k}"><p class="t-overline lsn-part-h">${N > 1 ? `Part ${k + 1} of ${N}` : 'Question'}</p><div class="lsn-part-b"></div>${mode === 'exam' && k < N - 1 ? `<div class="lsn-part-act"><button type="button" class="btn secondary lsn-part-next" disabled>Next part</button><span class="t-caption muted">Your answer to this part locks when the next part opens.</span></div>` : ''}</div>`);
+      root.append(wrap);
+      const h = renderItem(specOf(k), wrap.querySelector('.lsn-part-b'), { mode, key: `${base}p${k}` });
+      hs.push(h);
+      const btn = wrap.querySelector('.lsn-part-next');
+      h.onChange((d) => { if (btn) btn.disabled = !h.ready(); fire(d); });
+      if (btn) btn.addEventListener('click', () => { if (!btn.disabled) advance(); });
+      Z.mathify(wrap);
+      if (k > 0 && !Z.reducedMotion()) wrap.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.05, 0.7, 0.1, 1)' });
+      return h;
+    };
+    /* Open the next part: in an exam or homework once the open part has an answer (it locks), in a set once it is checked */
+    const advance = () => {
+      if (!more() || final) return false;
+      const k = hs.length - 1;
+      if (mode === 'exam') { if (!hs[k].ready()) return false; lockPart(k); }
+      else if (!partRes[k]) return false;
+      const h = mountNext();
+      fire(null);
+      if (h && h.focus && !Z.reducedMotion()) { try { h.focus(); } catch { /* nothing to focus */ } }
+      return true;
+    };
+    const value = () => { const v = hs.map(h => h.value()); return hs.length === 1 && empty(v[0]) ? null : { open: hs.length, parts: v }; };
+    /* Grade every part not yet graded: one with an answer is checked, the rest (including parts never opened) are missed */
+    const gradeAll = async (lastR) => {
+      for (let k = 0; k < N; k++) {
+        if (partRes[k]) continue;
+        const h = hs[k];
+        if (h && h.ready()) { try { const r = await h.check(); if (r && !r.pending) partRes[k] = r; } catch (e) { console.error(e); } }
+        if (!partRes[k]) partRes[k] = { ok: false, key: null, missed: true };
+      }
+      const right = partRes.filter(r => r.ok).length, bad = partRes.find(r => !r.ok);
+      const tail = lastR || partRes[hs.length - 1] || {};
+      final = { ok: right === N, credit: right / N, right, of: N, key: bad ? bad.key : null, partOk: !!tail.ok, done: partRes.some(r => !r.missed),
+        parts: partRes.map(r => ({ ok: !!r.ok, key: r.key == null ? null : r.key, missed: !!r.missed })),
+        line: [tail.line && !tail.missed ? tail.line : '', N > 1 ? `${right} of ${N} parts right.` : ''].filter(Boolean).join(' ') || null, final: true, item };
+      final.value = value();
+      return final;
+    };
+    mountNext();
+    const handle = {
+      el: root, item, canvas: stem && stem.canvas, parts: hs,
+      get widget() { return hs[hs.length - 1].widget; },
+      ready: () => (mode === 'exam' ? hs.some(h => h.ready()) : hs[hs.length - 1].ready()),
+      value,
+      set(v) {
+        if (!v || !Array.isArray(v.parts)) return;
+        const n = Math.max(1, Math.min(N, +v.open || 1));
+        while (hs.length < n) mountNext();
+        if (mode === 'exam') for (let k = 0; k < hs.length - 1; k++) lockPart(k);
+        v.parts.forEach((x, k) => { if (hs[k] && !empty(x)) hs[k].set(x); });
+      },
+      onChange: (f) => listeners.push(f),
+      answerCorrect: () => hs[hs.length - 1].answerCorrect(),
+      pick: (i) => hs[hs.length - 1].pick && hs[hs.length - 1].pick(i),
+      more, advance,
+      part: () => ({ index: hs.length - 1, of: N }),
+      partCount: () => N,
+      /* anything answered or checked? (a locking clock settles such an item; an untouched one is simply missed) */
+      touched: () => partRes.length > 0 || hs.some(h => h.ready()),
+      async check() {
+        if (final) return final;
+        if (mode === 'exam') { last = await gradeAll(null); return last; }
+        const k = hs.length - 1;
+        if (partRes[k]) return last;
+        const r = await hs[k].check();
+        if (r && r.pending) return r;
+        partRes[k] = r;
+        if (k < N - 1) { last = Object.assign({}, r, { partial: true, partOk: !!r.ok, part: k, of: N, final: false }); return last; }
+        last = await gradeAll(r);
+        return last;
+      },
+      /* A locking clock: grade the open part if it has an answer, count the rest as missed, return the item's result */
+      async settle() { if (final) return final; if (!handle.touched()) return null; last = await gradeAll(null); return last; },
+      result: () => final || last,
+      /* a saved result ([{ ok, key, missed }] per part) read back, so mark() can draw each part's verdict after a reload */
+      restore: (list) => { (list || []).forEach((p, k) => { if (p && !p.missed && k < N) partRes[k] = { ok: !!p.ok, key: p.key == null ? null : p.key }; }); },
+      why: () => hs[Math.max(0, Math.min(hs.length - 1, partRes.length ? partRes.length - 1 : hs.length - 1))].why(),
+      reveal: () => hs.forEach(h => { try { h.reveal(); } catch (e) { console.error(e); } }),
+      focus: () => hs[hs.length - 1].focus(),
+      destroy: () => { hs.forEach(h => { try { h.destroy(); } catch (e) { console.error(e); } }); try { stem && stem.destroy(); } catch (e) { console.error(e); } root.remove(); },
+    };
+    handle.step = {
+      spec: item, el: root, mode, kind: 'task',
+      get widget() { return handle.widget; },
+      ready: handle.ready,
+      lock: () => hs.forEach((h, k) => lockPart(k)),
+      /* the test hook's check: grades the open part alone, without marking it */
+      grade: async () => hs[hs.length - 1].step.grade(),
+      /* the result page: open any part never reached, lock them all, and mark each answered part with its own result */
+      mark: () => {
+        while (more()) mountNext();
+        hs.forEach((h, k) => { lockPart(k); const r = partRes[k]; if (r && !r.missed) { try { h.step.mark(Object.assign({}, r, { final: true })); } catch (e) { console.error(e); } } });
+      },
+      clear: () => {}, reset: () => {}, enter: () => {},
+      reveal: handle.reveal,
+      explainText: () => hs[hs.length - 1].step.explainText(),
+      explainCanvas: (h) => hs[hs.length - 1].step.explainCanvas(h),
+      answer: handle.answerCorrect, pick: handle.pick, focusInput: handle.focus,
+      destroy: handle.destroy,
+    };
+    return handle;
+  }
+
   /* ---------- A list of items with dot progress, one attempt each ---------- */
   function runSet(host, { title = 'Practice', items = [], mode = 'set', onDone, track = 'prob' } = {}) {
     carryReset();
@@ -1102,16 +1245,18 @@
     const dots = () => wrap.querySelectorAll('.lsn-qhead .dots i').forEach((d, j) => { d.className = results[j] ? (results[j].ok ? 'ok' : 'bad') : j === i ? 'cur' : ''; });
     const sync = () => {
       primary.className = 'btn lsn-primary' + (st0 === 'ok' ? ' correct' : st0 === 'no' ? ' notyet' : '');
-      primary.textContent = st0 === 'idle' || st0 === 'engaged' || st0 === 'eval' ? 'Check' : i < items.length - 1 ? 'Continue' : 'Finish';
+      primary.textContent = st0 === 'idle' || st0 === 'engaged' || st0 === 'eval' ? 'Check' : i < items.length - 1 || (cur && cur.more && cur.more()) ? 'Continue' : 'Finish';
       primary.disabled = st0 === 'idle' || st0 === 'eval';
       sec.hidden = !(st0 === 'ok' || st0 === 'no');
       wrap.classList.toggle('is-ok', st0 === 'ok'); wrap.classList.toggle('is-no', st0 === 'no');
     };
+    /* "Question 2 of 8 · Part 1 of 3" for an item with parts (ENGINE-BACKLOG 467) */
+    const qof = () => { wrap.querySelector('.lsn-qof').textContent = `Question ${i + 1} of ${items.length}${cur && cur.partCount && cur.partCount() > 1 ? ` · Part ${cur.part().index + 1} of ${cur.partCount()}` : ''} · No hints, one try`; };
     const show = (k) => {
       if (cur) cur.destroy();
       i = k; st0 = 'idle'; verdict.innerHTML = ''; shownAt = Date.now();
-      wrap.querySelector('.lsn-qof').textContent = `Question ${i + 1} of ${items.length} · No hints, one try`;
       cur = renderItem(items[i], body, { mode, key: 'set' + i });
+      qof();
       if (!Z.reducedMotion()) cur.el.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.05, 0.7, 0.1, 1)' });
       cur.onChange(() => { if (st0 === 'idle' || st0 === 'engaged') { st0 = cur.ready() ? 'engaged' : 'idle'; sync(); } });
       if (!cur.widget) st0 = 'engaged';
@@ -1122,16 +1267,21 @@
       const r = await cur.check();
       if (!alive) return;
       if (r && r.pending) { st0 = cur.ready() ? 'engaged' : 'idle'; sync(); return; }
-      results[i] = stamp(r); st0 = r.ok ? 'ok' : 'no';
+      /* an item with parts: a part that is not the last is a partial result (the item's result comes with its last part); the
+         chip speaks of the part just checked (partOk), the item's own ok means every part right */
+      const pok = r.partOk != null ? r.partOk : r.ok;
+      if (!r.partial) results[i] = stamp(r);
+      st0 = pok ? 'ok' : 'no';
       if (mode !== 'exam') {
-        if (r.ok) { Z.sound('correct'); } else Z.sound('notyet');
-        verdict.innerHTML = `<div class="lsn-chip is-${r.ok ? 'ok' : 'no'}"><span class="lsn-chip-ic">${icon(r.ok ? 'check' : 'cross', 'sm')}</span><div class="lsn-chip-tx"><div class="lsn-chip-h"><b>${r.ok ? 'Correct.' : 'Not quite right.'}</b></div>${r.line ? `<span>${G().inline(strip(r.line, r.ok ? 'Correct.' : 'Not quite right.'))}</span>` : ''}</div></div>`;
+        if (pok) { Z.sound('correct'); } else Z.sound('notyet');
+        verdict.innerHTML = `<div class="lsn-chip is-${pok ? 'ok' : 'no'}"><span class="lsn-chip-ic">${icon(pok ? 'check' : 'cross', 'sm')}</span><div class="lsn-chip-tx"><div class="lsn-chip-h"><b>${pok ? 'Correct.' : 'Not quite right.'}</b></div>${r.line ? `<span>${G().inline(strip(r.line, pok ? 'Correct.' : 'Not quite right.'))}</span>` : ''}</div></div>`;
       }
       dots(); sync();
     };
     const onPrimary = () => {
       if (primary.disabled) return;
       if (st0 === 'engaged') return doCheck();
+      if (cur && cur.more && cur.more() && (st0 === 'ok' || st0 === 'no')) { cur.advance(); st0 = 'idle'; verdict.innerHTML = ''; qof(); dots(); sync(); return; }   // the next part of this item
       if (i < items.length - 1) return show(i + 1);
       alive = false;
       if (onDone) onDone(results.slice());
@@ -1143,7 +1293,8 @@
        first; the rest stay unanswered. onDone gets the results so far, with holes for what was not answered. */
     const finishNow = async () => {
       if (!alive) return;
-      if (st0 === 'engaged' && cur) { try { const r = await cur.check(); if (r && !r.pending) results[i] = stamp(r); } catch (e) { console.error(e); } }
+      if (cur && cur.settle && !results[i]) { try { const r = await cur.settle(); if (r) results[i] = stamp(r); } catch (e) { console.error(e); } }   // parts: the open one is graded if answered, the rest missed
+      else if (st0 === 'engaged' && cur) { try { const r = await cur.check(); if (r && !r.pending) results[i] = stamp(r); } catch (e) { console.error(e); } }
       if (!alive) return;
       alive = false;
       if (onDone) onDone(results.slice());
@@ -1156,7 +1307,7 @@
     document.addEventListener('keydown', onKey);
     /* Test hook in set mode (docs/PLAN.md 7), the same calls as the lesson's: current(), answerCorrect(), check(), continue() */
     const hook = {
-      current: () => ({ screenIndex: i, kind: alive ? 'item' : 'done', phase: 'set', state: st0, total: items.length, mode, title }),
+      current: () => ({ screenIndex: i, kind: alive ? 'item' : 'done', phase: 'set', state: st0, total: items.length, mode, title, ...(cur && cur.partCount && cur.partCount() > 1 ? { part: cur.part().index, parts: cur.partCount() } : {}) }),
       answerCorrect: () => {
         if (!alive || !cur || !(st0 === 'idle' || st0 === 'engaged')) return false;
         const ok = cur.answerCorrect();

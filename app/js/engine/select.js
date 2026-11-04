@@ -73,7 +73,7 @@
 
   const quizItems = (L, course, lesson) => (L && Array.isArray(L.quiz) ? L.quiz.map((q, i) => norm(q, { course, lesson, skills: L.skills, index: i })) : []);
   const setItems = (D, course, id, { practice = false } = {}) => (D && Array.isArray(D.items) ? D.items.map((q, i) => norm(q, { course, lesson: id, skills: [], index: i }))
-    .filter(q => !practice || !(q.kind === 'longform' || (q.widget && (q.widget.kind === 'longform' || q.widget.kind === 'code')))) : []);
+    .filter(q => !practice || !(q.kind === 'longform' || (q.widget && (q.widget.kind === 'longform' || q.widget.kind === 'code')) || (Array.isArray(q.parts) && q.parts.some(p => p && p.widget && (p.widget.kind === 'longform' || p.widget.kind === 'code'))))) : []);
 
   /* ---------- Learner helpers ---------- */
   const finished = () => Object.entries((S() && S().lessons) || {}).filter(([, r]) => r && r.done).map(([id]) => { const [course, lesson] = id.split('/'); return { course, lesson }; });
@@ -238,7 +238,8 @@
     if (ref.bank) { const D = await safe(C().bank(ref.bank)); const it = D && findIn(D.items, ref.item); return it ? bankItem(it, ref.bank, D) : null; }
     if (ref.exam) {
       const E = await safe(C().exam(ref.exam)); if (!E) return null;
-      const all = (E.items || []).concat(...(E.parts || []).map(p => p.items || []));
+      /* an exam document's own `parts` are its papers and checks (stage and mock exams); an item's `parts` (ENGINE-BACKLOG 467) live on the item */
+      const all = (E.items || []).concat(...(Array.isArray(E.parts) ? E.parts : []).filter(p => p && p.kind === 'paper').map(p => p.items || []));
       const it = findIn(all, ref.item); if (!it) return null;
       const out = Object.assign({}, it, { ref, uid: `${ref.exam}/${ref.item}`, source: source(ref, kind), group: ref.exam, skills: it.skills || [] });
       delete out.hints; // set mode has none
