@@ -147,6 +147,17 @@
   /* The interview question bank (content/bank/<family>.json, ENGINE-BACKLOG 456): file ids from the manifest, sorted; none without one */
   const bankIds = () => (manifest ? [...manifest].filter(f => /^bank\/[^/]+\.json$/.test(f)).map(f => f.slice(5, -5)).sort() : []);
   const bank = (id) => load(`bank/${id}.json`);
+  /* ENGINE-BACKLOG 469 (E14): data files for Python code items. map is { "bare-name.csv": "content/data/<path>" }; resolves to
+     { "bare-name.csv": "<text>" }. Each path is fetched once and cached; a file that cannot be read rejects with a plain message. */
+  const dataCache = new Map();
+  const dataFiles = (map) => {
+    const names = map && typeof map === 'object' ? Object.keys(map) : [];
+    return Promise.all(names.map(n => {
+      const p = String(map[n]);
+      if (!dataCache.has(p)) dataCache.set(p, fetch(new URL(p, document.baseURI).href, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(`${p}: HTTP ${r.status}`); return r.text(); }).catch(e => { dataCache.delete(p); throw e; }));
+      return dataCache.get(p).then(t => [n, t]);
+    })).then(Object.fromEntries);
+  };
   const drill = (id) => load(`drills/${id}.json`);
   const drills = () => drillIndex || [];
 
@@ -229,7 +240,7 @@
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
     stages, allStages, stage, topic, topicPassed, courseTestedOut, resumeStands, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
-    lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills,
+    lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills, dataFiles,
     prep, prepPaths, prepPath, prepRefLessons, prepSteps, prepFor, prepForCourse, prepDetail, prepChip, prepMonth, prepStageLabel: (s) => STAGE_LABEL[s] || s,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */
     probe: (cid) => Promise.all(courseLessons(cid).map(x => load(`courses/${cid}/${x.id}.json`).catch(() => null))).then(() => courseLessons(cid)),

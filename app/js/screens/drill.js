@@ -124,7 +124,7 @@ if not callable(globals().get(${py(P.fn)})):
       topic: topic ? `${topic.id} ${topic.name}` : (C.topic || ''),
       brief: d.brief || '', definition: d.definition || '', cons: d.constraints || [], hint: d.hint || '',
       how: d.how || '', rule: RULES[main].rule, accept: RULES[main].accept, where: d.where || '',
-      starter: d.starter || '', reference: d.solution || '', notes: d.notes || [], prelude: d.prelude || '', returns: d.returns || 'a value of the right type',
+      starter: d.starter || '', reference: d.solution || '', notes: d.notes || [], prelude: d.prelude || '', data: d.data && typeof d.data === 'object' ? d.data : null, returns: d.returns || 'a value of the right type',
       examples: (d.examples || []).map((x, i) => ({ ...x, name: x.name || `Example ${i + 1}` })),
       hidden: (d.tests || []).map((x, i) => ({ ...x, name: x.name || `Test ${i + 1}` })),
     };
@@ -748,7 +748,13 @@ if not callable(globals().get(${py(P.fn)})):
       if (li) li.outerHTML = rowHTML(S.run, i);
     };
 
+    const dataPrelude = (Q) => (Q.dataText && Object.keys(Q.dataText).length ? `import sys as _zfs\nif '' not in _zfs.path: _zfs.path.insert(0, '')\nfor _zn, _zt in __import__('json').loads(${py(JSON.stringify(Q.dataText))}).items():\n    open(_zn, 'w').write(_zt)\n` : '');
     const go = (mode) => {
+      if (P.data && !P.dataText) {
+        if (P.dataFailed) { say('The data files could not be loaded. Reload the page and try again.'); return; }
+        Z.content.dataFiles(P.data).then((d) => { P.dataText = d; go(mode); }, () => { P.dataFailed = true; say('The data files could not be loaded. Check the connection and try again.'); });
+        return;
+      }
       if (mode === 'submit' && S.verified && !S.dirtySinceVerify) { leave(); return; }
       if (pyr.status !== 'ready') { if (pyr.status !== 'running') say(pyr.status === 'unavailable' ? 'Python is unavailable in this browser.' : 'Python is still loading.'); return; }
       if (mode === 'submit' && pristine()) { say('Change the starter code before you submit.'); return; }
@@ -769,7 +775,8 @@ if not callable(globals().get(${py(P.fn)})):
       body.scrollTop = 0;
       badge.hidden = false; badge.className = 'drl-badge is-run'; badge.textContent = '…';
       say(mode === 'examples' ? 'Running the examples.' : `Running ${n} hidden tests.`);
-      const spec = { fn: '__zq_case', compare: 'isclose', prelude: '', tests: defs.map((_, i) => ({ args: `(${i},)`, expected: 1 })) };
+      /* ENGINE-BACKLOG 469 (E14): the drill's data files are written into the working directory before the learner's code loads (spec.prelude runs first) */
+      const spec = { fn: '__zq_case', compare: 'isclose', prelude: dataPrelude(P), tests: defs.map((_, i) => ({ args: `(${i},)`, expected: 1 })) };
       const ok = pyr.exec(R.code + harness(P, defs), spec, (d) => onEvent(R, d), (info) => onEnd(R, info));
       if (!ok) { S.run = null; paintIdle(); }
       paintButtons();
