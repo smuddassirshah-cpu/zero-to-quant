@@ -1,0 +1,227 @@
+{
+  "id": "mock-sample-data",
+  "sample": true,
+  "name": "Sample data and allocation items",
+  "style": "research",
+  "models": "A short engine sample: a Python item reading a data file, and two C++ items counting calls to new.",
+  "description": "A small sample of the data file and allocation counter features, for checking the engine. It is not a real assessment.",
+  "parts": [
+    {
+      "kind": "paper",
+      "id": "code",
+      "name": "Code items",
+      "minutes": 20,
+      "pass": 0.6,
+      "items": [
+        {
+          "id": "data-best-day",
+          "difficulty": 2,
+          "title": "Biggest rise in a price file",
+          "question": "A price file `sample-prices.csv` is in the working directory. Write `best_day(path)`: the day number with the biggest one-day rise in `close_pence`.",
+          "widget": {
+            "kind": "code",
+            "language": "python",
+            "data": {
+              "sample-prices.csv": "content/data/sample-prices.csv"
+            },
+            "starter": "def best_day(path):\n    \"\"\"The day number of the biggest one-day rise\n    in close_pence. The file has a header row.\"\"\"\n    # Your code here\n    return 0\n",
+            "solution": "def best_day(path):\n    lines = open(path).read().splitlines()[1:]\n    days, closes = [], []\n    for line in lines:\n        d, c = line.split(\",\")\n        days.append(int(d))\n        closes.append(int(c))\n    best = 1\n    for i in range(2, len(closes)):\n        if closes[i] - closes[i - 1] > closes[best] - closes[best - 1]:\n            best = i\n    return days[best]\n",
+            "examples": [
+              {
+                "call": "best_day('sample-prices.csv')",
+                "expect": "4",
+                "compare": "equal"
+              }
+            ],
+            "tests": [
+              {
+                "call": "best_day('sample-prices.csv')",
+                "expect": "4",
+                "compare": "equal"
+              },
+              {
+                "setup": "open('tiny.csv', 'w').write('day,close_pence\\n1,100\\n2,90\\n3,120\\n4,119\\n')",
+                "call": "best_day('tiny.csv')",
+                "expect": "3",
+                "compare": "equal"
+              },
+              {
+                "setup": "n = len(open('sample-prices.csv').read().splitlines()) - 1",
+                "call": "n",
+                "expect": "10",
+                "compare": "equal"
+              },
+              {
+                "setup": "last = open('sample-prices.csv').read().splitlines()[-1]",
+                "call": "last",
+                "expect": "'10,10490'",
+                "compare": "equal"
+              }
+            ],
+            "how": "Check runs 4 hidden tests. Each answer must equal the expected value."
+          },
+          "feedback": {
+            "correct": "The tests pass and the counter reads what it should.",
+            "generic": "Some tests failed. Open the first one that failed below the editor."
+          },
+          "explain": {
+            "text": "Reading a file by its bare name, or counting calls to `new`, is how the checker sees what the code did."
+          }
+        },
+        {
+          "id": "alloc-pool",
+          "difficulty": 3,
+          "title": "A pool that never allocates",
+          "question": "Make the pool work without touching the heap after the constructor. The last test counts calls to `new`.",
+          "widget": {
+            "kind": "code",
+            "language": "cpp",
+            "allocCheck": true,
+            "starter": "#include <vector>\n\n// A pool of `slots` fixed slots, numbered 0 .. slots-1.\n// allocate() returns a free slot, or -1 if none is free. release(s) makes slot s free again.\n// The most recently released slot is the next one allocated. No call may use the heap after the constructor.\nclass Pool {\npublic:\n    explicit Pool(int slots) : in_use_(0) {\n        for (int s = slots - 1; s >= 0; --s) free_.push_back(s);\n    }\n    int allocate() {\n        if (free_.empty()) return -1;\n        std::vector<int> keep(free_);          // a copy of the whole list on every call\n        int slot = keep.back();\n        free_.pop_back();\n        ++in_use_;\n        return slot;\n    }\n    void release(int slot) { free_.push_back(slot); --in_use_; }\n    int in_use() const { return in_use_; }\nprivate:\n    std::vector<int> free_;\n    int in_use_;\n};\n",
+            "solution": "#include <vector>\n\nclass Pool {\npublic:\n    explicit Pool(int slots) : next_free_(slots, -1), in_use_(0) {\n        for (int s = 0; s + 1 < slots; ++s) next_free_[s] = s + 1;   // slot s points at slot s+1\n        head_ = slots > 0 ? 0 : -1;\n    }\n    int allocate() {\n        if (head_ < 0) return -1;\n        int slot = head_;\n        head_ = next_free_[slot];\n        ++in_use_;\n        return slot;\n    }\n    void release(int slot) {\n        next_free_[slot] = head_;\n        head_ = slot;\n        --in_use_;\n    }\n    int in_use() const { return in_use_; }\nprivate:\n    std::vector<int> next_free_;\n    int head_;\n    int in_use_;\n};\n",
+            "examples": [
+              {
+                "setup": "Pool p(3);",
+                "call": "p.allocate()",
+                "expect": 0,
+                "compare": "equal"
+              }
+            ],
+            "tests": [
+              {
+                "setup": "Pool p(3);",
+                "call": "p.allocate()",
+                "expect": 0,
+                "compare": "equal"
+              },
+              {
+                "setup": "Pool p(3); p.allocate(); p.allocate();",
+                "call": "p.allocate()",
+                "expect": 2,
+                "compare": "equal"
+              },
+              {
+                "setup": "Pool p(3); p.allocate(); p.allocate(); p.allocate();",
+                "call": "p.allocate()",
+                "expect": -1,
+                "compare": "equal"
+              },
+              {
+                "setup": "Pool p(3); int a = p.allocate(); int b = p.allocate(); p.allocate(); p.release(b);",
+                "call": "p.allocate()",
+                "expect": 1,
+                "compare": "equal"
+              },
+              {
+                "setup": "Pool p(3); int a = p.allocate(); int b = p.allocate(); p.release(a); p.release(b);",
+                "call": "p.allocate()",
+                "expect": 1,
+                "compare": "equal"
+              },
+              {
+                "setup": "Pool p(3); int a = p.allocate(); int b = p.allocate(); p.release(a); p.release(b); p.allocate();",
+                "call": "p.allocate()",
+                "expect": 0,
+                "compare": "equal"
+              },
+              {
+                "setup": "Pool p(2); p.allocate(); p.allocate(); p.release(0); p.allocate();",
+                "call": "p.in_use()",
+                "expect": 2,
+                "compare": "equal"
+              },
+              {
+                "setup": "Pool p(2); p.allocate(); p.allocate(); p.release(0); p.release(1);",
+                "call": "p.in_use()",
+                "expect": 0,
+                "compare": "equal"
+              },
+              {
+                "setup": "Pool p(0);",
+                "call": "p.allocate()",
+                "expect": -1,
+                "compare": "equal"
+              },
+              {
+                "setup": "Pool p(8); reset_alloc_count(); for (int r = 0; r < 100; ++r) { int s = p.allocate(); p.release(s); }",
+                "call": "alloc_count()",
+                "expect": 0,
+                "compare": "equal"
+              }
+            ],
+            "how": "Check runs 10 hidden tests. The last one counts the calls to `new` made while the pool runs, and expects none."
+          },
+          "feedback": {
+            "correct": "The tests pass and the counter reads what it should.",
+            "generic": "Some tests failed. Open the first one that failed below the editor."
+          },
+          "explain": {
+            "text": "Reading a file by its bare name, or counting calls to `new`, is how the checker sees what the code did."
+          }
+        },
+        {
+          "id": "alloc-leak-buffer",
+          "difficulty": 3,
+          "title": "A buffer that frees itself",
+          "question": "Add what the buffer is missing so nothing leaks, and make `total()` stop allocating.",
+          "widget": {
+            "kind": "code",
+            "language": "cpp",
+            "allocCheck": true,
+            "leakCheck": true,
+            "starter": "#include <vector>\n\n// A fixed buffer of `n` ints, allocated once in the constructor and released in the destructor.\n// total() adds the values up. It must not allocate.\nclass Buffer {\npublic:\n    explicit Buffer(int n) : n_(n), data_(new int[n]) { for (int i = 0; i < n; ++i) data_[i] = i + 1; }\n    int total() const {\n        std::vector<int> copy(data_, data_ + n_);   // allocates on every call\n        int s = 0;\n        for (int v : copy) s += v;\n        return s;\n    }\nprivate:\n    int n_;\n    int* data_;\n};\n",
+            "solution": "class Buffer {\npublic:\n    explicit Buffer(int n) : n_(n), data_(new int[n]) { for (int i = 0; i < n; ++i) data_[i] = i + 1; }\n    ~Buffer() { delete[] data_; }\n    Buffer(const Buffer&) = delete;\n    Buffer& operator=(const Buffer&) = delete;\n    int total() const {\n        int s = 0;\n        for (int i = 0; i < n_; ++i) s += data_[i];\n        return s;\n    }\nprivate:\n    int n_;\n    int* data_;\n};\n",
+            "examples": [
+              {
+                "setup": "Buffer b(4);",
+                "call": "b.total()",
+                "expect": 10,
+                "compare": "equal"
+              }
+            ],
+            "tests": [
+              {
+                "setup": "Buffer b(4);",
+                "call": "b.total()",
+                "expect": 10,
+                "compare": "equal"
+              },
+              {
+                "setup": "Buffer b(1);",
+                "call": "b.total()",
+                "expect": 1,
+                "compare": "equal"
+              },
+              {
+                "setup": "Buffer b(100);",
+                "call": "b.total()",
+                "expect": 5050,
+                "compare": "equal"
+              },
+              {
+                "setup": "Buffer b(50); reset_alloc_count(); for (int r = 0; r < 20; ++r) b.total();",
+                "call": "alloc_count()",
+                "expect": 0,
+                "compare": "equal"
+              },
+              {
+                "setup": "reset_alloc_count(); { Buffer b(8); }",
+                "call": "alloc_count()",
+                "expect": 1,
+                "compare": "equal"
+              }
+            ],
+            "how": "Check runs 5 hidden tests. Two harness checks run beside them: every `new[]` must be matched by `delete[]`, and `total()` must not call `new`."
+          },
+          "feedback": {
+            "correct": "The tests pass and the counter reads what it should.",
+            "generic": "Some tests failed. Open the first one that failed below the editor."
+          },
+          "explain": {
+            "text": "Reading a file by its bare name, or counting calls to `new`, is how the checker sees what the code did."
+          }
+        }
+      ]
+    }
+  ]
+}

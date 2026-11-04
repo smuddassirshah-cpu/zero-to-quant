@@ -166,7 +166,7 @@ const buildPch = async (head) => {
 /* Pass 7: flags from the page (items 402, 452, 476: -W..., -O0 to -O3, -D, -U, -ffast-math, -std), checked again here;
    extra source files (item 403) compiled and linked with main.cpp; a precompiled-header compile that fails because a
    header cannot be opened is retried without the header (item 471) */
-const FLAG_OK = /^-(W[\w=+-]*|O[0-3sz]|D[A-Za-z_]\w*(=[\w.+-]*)?|U[A-Za-z_]\w*|f(no-)?fast-math|std=c\+\+(14|17|20))$/;
+const FLAG_OK = /^-(W[\w=+-]*|O[0-3sz]|D[A-Za-z_]\w*(=[\w.+-]*)?|U[A-Za-z_]\w*|f(no-)?fast-math|fno-builtin|std=c\+\+(14|17|20))$/; // fno-builtin: added by the page for allocCheck (item 470), never by an author
 const argsFor = (flags) => {
   const extra = (flags || []).map(String).filter((f) => FLAG_OK.test(f));
   let base = [...FLAGS];

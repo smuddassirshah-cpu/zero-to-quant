@@ -386,6 +386,12 @@ def __zq_case(_i):
   Z.widgets.register('code', (host, spec, ctx) => {
     if (spec.language === 'cpp' && Z.cppCode) return Z.cppCode(host, spec, ctx); // item 304: C++ is compiled and graded by js/engine/widgets/cpp-grade.js
     const examples = spec.examples || [], tests = spec.tests || [];
+    /* ENGINE-BACKLOG 469 (E14): spec.data { "name.csv": "content/data/..." } is copied into the working directory before every run;
+       a read-only peek at the first rows sits under the editor unless dataPeek is false */
+    const dataMap = spec.data && typeof spec.data === 'object' && Object.keys(spec.data).length && Z.content && Z.content.dataFiles ? spec.data : null;
+    const hasData = !!dataMap && spec.dataPeek !== false;
+    let dataP = null;
+    const loadData = () => (dataP || (dataP = dataMap ? Z.content.dataFiles(dataMap).catch(e => { dataP = null; throw e; }) : Promise.resolve({})));
     const el = Z.h(`<div class="wd-code">
       <div class="wd-code-head">
         <span class="t-label">${spec.language === 'python' || !spec.language ? 'Python' : Z.esc(spec.language)}</span>
@@ -393,6 +399,7 @@ def __zq_case(_i):
         <button type="button" class="btn secondary wd-run" disabled>${Z.icon('play', 'sm')} Run examples</button>
       </div>
       <div class="wd-ed"></div>
+      ${hasData ? '<details class="wd-code-data"><summary class="t-caption">Data files in the working directory</summary><div class="wd-code-data-b t-caption">Loading the files…</div></details>' : ''}
       <p class="t-caption wd-code-keys"><kbd>Tab</kbd> indents. <kbd>Esc</kbd> then <kbd>Tab</kbd> leaves the editor. <kbd>Ctrl</kbd> <kbd>Enter</kbd> runs the examples. Check runs the hidden tests.</p>
       ${spec.how ? `<p class="t-caption wd-code-how">${Z.grade.inline(spec.how)}</p>` : ''}
       <div class="wd-res" aria-live="polite"></div>
@@ -438,9 +445,10 @@ def __zq_case(_i):
     };
     /* Run a list of cases; resolves to { rows, error } */
     const script = [...examples, ...tests].some(c => isOut(c) || c.stdin != null || c.argv != null || (c.compare === 'raises' && c.call == null));
-    const runCases = (cases) => new Promise((resolve) => {
+    const runCases0 = (cases, dataTexts) => new Promise((resolve) => {
       const pre = String(spec.prelude || ''), post = String(spec.postlude || '');
-      const files = spec.files && typeof spec.files === 'object' && Object.keys(spec.files).length ? spec.files : null;
+      const own = spec.files && typeof spec.files === 'object' && Object.keys(spec.files).length ? spec.files : null;
+      const files = dataTexts && Object.keys(dataTexts).length ? { ...(own || {}), ...dataTexts } : own; // data files are written like files, before the prelude
       const code = script ? scriptHarness(ed.value, cases, pre, post, files) : (pre || post || files ? loadHarness(ed.value, pre, post, files) : ed.value) + harness(cases, ed.value);
       const rows = cases.map(c => ({ tol: tolOf(c), argv: Array.isArray(c.argv) ? c.argv.map(String) : null, call: c.call ?? '', raises: c.compare === 'raises', setup: c.setup == null ? '' : String(c.setup), expect: String(c.expect ?? ''), out: isOut(c), stdin: c.stdin == null ? '' : String(c.stdin), ok: false, actual: null, error: null, stdout: '' }));
       let loadErr = null, loaded = '';
@@ -480,6 +488,27 @@ def __zq_case(_i):
         caseMs);
       if (!ok) resolve({ rows, printed: '', error: Py.status === 'unavailable' ? 'Python could not load: ' + Py.reason : 'Python is still loading. Try again in a moment.' });
     });
+    /* the data files are fetched once (cached by Z.content.dataFiles); a file that cannot be read stops the run with a plain message */
+    const runCases = async (cases) => {
+      let d = null;
+      if (dataMap) { try { d = await loadData(); } catch (e) { return { rows: cases.map(c => ({ tol: tolOf(c), argv: null, call: c.call ?? '', raises: false, setup: '', expect: String(c.expect ?? ''), out: false, stdin: '', ok: false, actual: null, error: null })), printed: '', error: 'The data files for this exercise could not be loaded (' + (e && e.message || e) + '). Check the connection and try again.' }; } }
+      return runCases0(cases, d);
+    };
+    if (hasData) loadData().then((d) => {
+      if (!alive) return;
+      const b = el.querySelector('.wd-code-data-b'); if (!b) return;
+      b.textContent = '';
+      Object.entries(d).forEach(([n, t]) => {
+        const ls = String(t).split('\n'); if (ls.length && ls[ls.length - 1] === '') ls.pop();
+        const first = ls.slice(0, 6).map(x => (x.length > 120 ? x.slice(0, 120) + '…' : x)).join('\n');
+        const bytes = new Blob([t]).size;
+        const box = Z.h(`<div class="wd-code-data-f"><p class="t-caption"><b></b> <span></span></p><pre class="wd-res-out"></pre></div>`);
+        box.querySelector('b').textContent = n;
+        box.querySelector('span').textContent = `${ls.length.toLocaleString('en-GB')} line${ls.length === 1 ? '' : 's'}, ${bytes < 1024 ? bytes + ' bytes' : (bytes / 1024).toFixed(1) + ' KB'}. First ${Math.min(6, ls.length)}:`;
+        box.querySelector('pre').textContent = first;
+        b.append(box);
+      });
+    }).catch(() => { const b = el.querySelector('.wd-code-data-b'); if (b) b.textContent = 'The data files could not be loaded. Check the connection and reload.'; });
     const runExamples = async () => {
       if (busy || locked || Py.status !== 'ready' || !examples.length) return;
       busy = true; sync();

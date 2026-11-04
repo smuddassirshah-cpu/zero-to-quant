@@ -106,7 +106,28 @@ const tolCase = (file, at, t) => {
   else if (t.compare && t.compare !== 'isclose') warn(file, `${at}.tol`, 'tol only applies to compare: "isclose"');
   if (t.budget != null && !(typeof t.budget === 'number' && t.budget >= 0 && t.budget <= 120000)) err(file, `${at}.budget`, 'a case budget is extra milliseconds for that case, 0 to 120000');
 };
+/* ENGINE-BACKLOG 469 (E14): data { "name.csv": "content/data/<path>" } on a Python code widget or a drill file. Each path must be under
+   content/data/, exist and hold at most DATA_CAP bytes of UTF-8 text; the name is the bare file name the code and the tests read. */
+const DATA_CAP = 256 * 1024;
+const dataFiles = (file, where, w, { cpp = false } = {}) => {
+  if (w.dataPeek != null && typeof w.dataPeek !== 'boolean') err(file, `${where}.dataPeek`, 'dataPeek is true or false (false hides the first-rows panel under the editor)');
+  if (w.data == null) return;
+  if (cpp) { err(file, `${where}.data`, 'data is for Python code items only: C++ has no file system, so pass the data as call arguments or inside the prelude'); return; }
+  if (!isObj(w.data) || !Object.keys(w.data).length) { err(file, `${where}.data`, 'data maps bare file names to paths under content/data/ ({ "houses.csv": "content/data/houses.csv" })'); return; }
+  Object.entries(w.data).forEach(([name, p]) => {
+    const at = `${where}.data["${name}"]`;
+    if (!/^[A-Za-z0-9][\w.-]*$/.test(name) || name === '.' || name === '..') err(file, at, 'the name is a bare file name (letters, digits, dot, dash, underscore), as the code opens it');
+    else if (isObj(w.files) && name in w.files) err(file, at, 'the name is also a key of files');
+    if (typeof p !== 'string' || !/^content\/data\/[\w./-]+$/.test(p) || /(^|\/)\.\.?(\/|$)/.test(p)) { err(file, at, 'the path starts with content/data/ and has no .. ("content/data/houses.csv")'); return; }
+    const abs = path.join(APP, p);
+    let st = null; try { st = fs.statSync(abs); } catch { /* reported below */ }
+    if (!st || !st.isFile()) { err(file, at, `${p} does not exist (paths are relative to app/)`); return; }
+    if (st.size > DATA_CAP) err(file, at, `${p} is ${st.size} bytes, over the ${DATA_CAP / 1024} KB cap for a data file`);
+    else { try { new TextDecoder('utf-8', { fatal: true }).decode(fs.readFileSync(abs)); } catch { err(file, at, `${p} is not UTF-8 text (data files are text: csv, tsv, json, txt, hex)`); } }
+  });
+};
 const cppCodeWidget = (file, where, w) => {
+  dataFiles(file, where, w, { cpp: true });
   if (!Array.isArray(w.tests) || w.tests.length < 3) err(file, `${where}.tests`, 'at least 3 tests');
   else if (w.tests.length > 15) err(file, `${where}.tests`, 'at most 15 tests');
   if (w.examples != null && !Array.isArray(w.examples)) err(file, `${where}.examples`, 'examples is a list of cases');
@@ -118,8 +139,14 @@ const cppCodeWidget = (file, where, w) => {
   const FLAG_OK = /^-(W[\w=+-]*|O[0-3sz]|D[A-Za-z_]\w*(=[\w.+-]*)?|U[A-Za-z_]\w*|f(no-)?fast-math|std=c\+\+(14|17|20))$/;
   if (w.flags != null && !(Array.isArray(w.flags) && w.flags.every(f => typeof f === 'string'))) err(file, `${where}.flags`, 'flags is a list of compiler flags ("-Wall", "-O2", "-DNDEBUG")');
   else (w.flags || []).forEach((f, k) => { if (!FLAG_OK.test(f)) err(file, `${where}.flags[${k}]`, `flag ${f} is not allowed: use -W..., -O0 to -O3, -Os, -DNAME[=v], -UNAME, -ffast-math or -std=c++14/17/20`); });
-  ['leakCheck', 'testkit'].forEach(k => { if (w[k] != null && typeof w[k] !== 'boolean') err(file, `${where}.${k}`, `${k} is true or false`); });
+  ['leakCheck', 'testkit', 'allocCheck'].forEach(k => { if (w[k] != null && typeof w[k] !== 'boolean') err(file, `${where}.${k}`, `${k} is true or false`); });
   if (w.signature != null && !(typeof w.signature === 'string' && /^.+?\b[A-Za-z_]\w*\s*\([\s\S]*\)\s*$/.test(w.signature.trim()))) err(file, `${where}.signature`, 'signature is a declaration such as "double total(const std::vector<double>&)"');
+  if (w.allocCheck === true) { // item 470: the harness defines alloc_count(), reset_alloc_count() and the global operator new; a hidden prelude must not
+    const hidden = [w.prelude, w.postlude, ...(isObj(w.files) ? Object.values(w.files) : [])].filter(x => typeof x === 'string').join('\n');
+    if (/\boperator\s+new\b/.test(hidden)) err(file, `${where}.allocCheck`, 'allocCheck supplies the global operator new: remove the replacement operator new from the prelude, postlude or files');
+    if (/\b(?:reset_)?alloc_count\s*\(\s*\)\s*\{/.test(hidden)) err(file, `${where}.allocCheck`, 'allocCheck defines alloc_count() and reset_alloc_count(): do not define them in the prelude');
+    if (!(w.tests || []).some(t => t && typeof t === 'object' && /\balloc_count\s*\(/.test(`${t.call || ''} ${t.setup || ''}`))) warn(file, `${where}.allocCheck`, 'allocCheck is on but no test reads alloc_count()');
+  }
   if (w.files != null && !(isObj(w.files) && Object.entries(w.files).every(([k, v]) => /^[\w.-]+\.(cpp|cc|h|hpp)$/.test(k) && k !== 'main.cpp' && typeof v === 'string'))) err(file, `${where}.files`, 'files maps hidden file names (pricer.h, pricer.cpp) to C++ source');
   cases.forEach(([t, at]) => {
     if (!t || typeof t !== 'object') { err(file, at, 'each case is an object'); return; }
@@ -630,6 +657,8 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         if (!script && !all.some(t => typeof t.call === 'string' && /printed\s*:=/.test(t.call)) && all.some(t => typeof t.call === 'string' && /\bprinted\b/.test(t.call) && !/_getframe/.test(t.call))) err(file, `${where}.tests`, 'printed is only defined when a case uses compare: "stdout" or stdin (script mode)');
       }
       ['prelude', 'postlude'].forEach(k => { if (w[k] != null && typeof w[k] !== 'string') err(file, `${where}.${k}`, `${k} is Python source, a string`); });
+      dataFiles(file, where, w);
+      if (w.allocCheck != null) err(file, `${where}.allocCheck`, 'allocCheck is for C++ code items (language: "cpp")');
       if (w.budget != null && !(typeof w.budget === 'number' && w.budget >= 0 && w.budget <= 120000)) err(file, `${where}.budget`, 'budget is extra milliseconds for a run, 0 to 120000');
       if (w.caseBudget != null && !(typeof w.caseBudget === 'number' && w.caseBudget >= 0 && w.caseBudget <= 120000)) err(file, `${where}.caseBudget`, 'caseBudget is extra milliseconds for each case, 0 to 120000');
       if (!w.how) warn(file, `${where}.how`, 'say how it is checked');
@@ -1359,6 +1388,7 @@ const checkDrill = (file, id, d, cur) => {
   else if (d.tests.length > 15) err(file, 'tests', 'at most 15 tests');
   checkText(file, 'name', d.name); checkText(file, 'brief', d.brief); checkText(file, 'how', d.how);
   checkTags(file, 'tags', d.tags); checkPace(file, 'pace', d.pace);
+  dataFiles(file, '', d); // item 469: data files, as on a lesson code widget
 };
 
 /* ---------- Interview bank: content/bank/<family>.json (ENGINE-BACKLOG 456, docs/AUTHORING.md section 5) ---------- */
@@ -1656,7 +1686,7 @@ listJSON(drillDir).filter(f => f !== 'index.json').forEach(f => {
   const r = readJSON(file); if (!r.data) return;
   manifest.push(`drills/${f}`);
   guard(file, () => checkDrill(file, id, r.data, cur));
-  if (!listed.has(id)) warn(file, '', 'drill is not listed in drills/index.json');
+  if (!listed.has(id) && !(isObj(r.data) && r.data.sample === true)) warn(file, '', 'drill is not listed in drills/index.json');
   listed.delete(id);
 });
 listed.forEach(id => err(idxFile, '', `drill "${id}" is listed but drills/${id}.json does not exist`));

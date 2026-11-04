@@ -19,7 +19,7 @@
    402, 452, 476); a case's defines { NAME: value } compiled once per distinct set (item 454); a case { compiles:
    "snippet", expect: false } that must not compile (item 474); stdout cases with lines: true or match: "regex" (item
    451); what a case printed before a timeout (item 369); spec.leakCheck, spec.testkit, spec.signature (items 437, 455,
-   438); spec.files, hidden extra source files compiled and linked with main.cpp (item 403, in part). */
+   438), spec.allocCheck (item 470); spec.files, hidden extra source files compiled and linked with main.cpp (item 403, in part). */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -306,6 +306,29 @@ void operator delete[](void* p) noexcept { zq_leak::put(p, 1); }
 void operator delete(void* p, std::size_t) noexcept { zq_leak::put(p, 0); }
 void operator delete[](void* p, std::size_t) noexcept { zq_leak::put(p, 1); }
 `;
+  /* ENGINE-BACKLOG 470 (C-alloc-check): spec.allocCheck gives alloc_count() and reset_alloc_count(). One counter, a volatile int that
+     every global operator new and new[] (the throwing and the nothrow overloads) bumps, so the optimiser may not drop the count; malloc is
+     not counted, and neither are the over-aligned overloads. Clang at -O1 removes a visible new/delete pair (the count would read 0 for `int* t = new int; delete t;`), so an allocCheck unit is compiled with -fno-builtin, which stops that. Alone, the operators here call malloc; with leakCheck the leak wrapper's own
+     operators are patched to bump the same counter (two sets of replacement operators would not link). */
+  const ALLOC_CNT = String.raw`#include <cstdlib>
+#include <cstddef>
+#include <new>
+namespace zq_alloc { inline volatile int n = 0; }
+inline void reset_alloc_count() { zq_alloc::n = 0; }
+inline int alloc_count() { return zq_alloc::n; }
+`;
+  const ALLOC_OPS = String.raw`namespace zq_alloc { inline void* get(std::size_t n) { zq_alloc::n = zq_alloc::n + 1; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); return p; } }
+void* operator new(std::size_t n) { return zq_alloc::get(n); }
+void* operator new[](std::size_t n) { return zq_alloc::get(n); }
+void* operator new(std::size_t n, const std::nothrow_t&) noexcept { return zq_alloc::get(n); }
+void* operator new[](std::size_t n, const std::nothrow_t&) noexcept { return zq_alloc::get(n); }
+void operator delete(void* p) noexcept { std::free(p); }
+void operator delete[](void* p) noexcept { std::free(p); }
+void operator delete(void* p, std::size_t) noexcept { std::free(p); }
+void operator delete[](void* p, std::size_t) noexcept { std::free(p); }
+`;
+  const LEAK_COUNTED = LEAK.replace('inline void* get(std::size_t n, unsigned kind) {', 'inline void* get(std::size_t n, unsigned kind) { zq_alloc::n = zq_alloc::n + 1;')
+    + 'void* operator new(std::size_t n, const std::nothrow_t&) noexcept { return zq_leak::get(n, 0); }\nvoid* operator new[](std::size_t n, const std::nothrow_t&) noexcept { return zq_leak::get(n, 1); }\n';
   const TESTKIT = String.raw`#include <cmath>
 #include <cstdio>
 #include <type_traits>
@@ -332,13 +355,13 @@ inline int test_count() { return (int)zq_tk::all().size(); }
   const flagsOf = (spec) => [].concat(spec.flags || []).map(String).filter((f) => FLAG_OK.test(f));
   const unit = (spec, src, cases, script, extra = {}) => {
     const defs = extra.defines && typeof extra.defines === 'object' ? Object.entries(extra.defines).filter(([k]) => /^[A-Za-z_]\w*$/.test(k)).map(([k, v]) => `#define ${k} ${v === true ? 1 : String(v)}`).join('\n') : '';
-    const pre = (spec.leakCheck ? LEAK : '') + (spec.testkit ? TESTKIT : '') + (defs ? defs + '\n' : '') + String(spec.prelude || ''); // defines come first, so a hidden prelude can #ifdef on them
+    const pre = (spec.allocCheck ? ALLOC_CNT + (spec.leakCheck ? LEAK_COUNTED : ALLOC_OPS) : spec.leakCheck ? LEAK : '') + (spec.testkit ? TESTKIT : '') + (defs ? defs + '\n' : '') + String(spec.prelude || ''); // defines come first, so a hidden prelude can #ifdef on them
     const post = String(spec.postlude || '') + sigCheck(spec.signature) + (extra.probe != null ? `\n#line 1 "compile check"\n[[maybe_unused]] static void zq_compile_probe() {\n${extra.probeSetup || ''}\n${extra.probe}\n}\n` : '');
     const P = splitHead(pre), L = splitHead(src);
     const head = [...new Set([...P.head, ...L.head])].join('\n');
     const build = (p, s) => (p.trim() ? `#line 1 "prelude.cpp"\n${p}\n` : '') + (script ? '' : '#define main zq_learner_main\n') + `#line 1 "main.cpp"\n${s}\n` + (script ? '' : '#undef main\n') + (post.trim() ? `#line 1 "postlude.cpp"\n${post}\n` : '') + (script ? '' : harness(cases));
     const files = spec.files && typeof spec.files === 'object' && Object.keys(spec.files).length ? Object.fromEntries(Object.entries(spec.files).filter(([k]) => /^[\w.-]+\.(cpp|cc|h|hpp)$/.test(k) && k !== 'main.cpp').map(([k, v]) => [k, String(v)])) : null;
-    return { src: build(pre, src), srcPch: build(P.blank, L.blank), head: head ? head + '\n' : '', flags: flagsOf(spec), files };
+    return { src: build(pre, src), srcPch: build(P.blank, L.blank), head: head ? head + '\n' : '', flags: spec.allocCheck ? [...flagsOf(spec), '-fno-builtin'] : flagsOf(spec), files };
   };
 
   /* ---------- Reading results ---------- */
