@@ -116,3 +116,43 @@ My value is the one I computed; "ok" means the key, every wrong value and the qu
 | homework-2 | items[6] h-cond-cube | 20 (wrong 8, 12, 14) | 8 + 6 x 2 = 20; 14 = 8 + 6 x 1 | ok |
 | homework-2 | items[7] h-why-not-chain | longform rubric 2+2+2+2+2 = 10 | model: 0.27986, 0.25992, gap 0.019935, 2 and 8 points, median growth 0 at 8% and 40%, half the paths below the start | ok (every point checkable, correct), note 10 |
 | **Total** | **79 widgets** | 48 numeric fields with 124 wrong values, 12 choice, 1 multi, 5 order, 2 expression, 1 table (8 cells), 1 drag-point, 8 code items (50 hidden tests), 1 longform | | 1 error, 7 warnings, 10 notes, 0 wrong keys |
+
+## Fix pass
+
+Targeted edits to the six level 2 files only. Scripts in the scratchpad folder `fix-ito2` (`calc.py` for the new numbers, `apply.py` for the edits). New seeded values were computed twice: the solution run with NumPy, and an independent pure-Python loop that uses the identities left = (W_n^2 - sum of squared steps)/2 and mid = W_n^2/2 (agreement to 1e-15). Closed forms (Phi values, slip values) came from `math.erf` and a numerical integral of the normal density (agreement to 1e-11).
+
+1. Fixed. l7 `screens[4]` `plain` is now 0.1809 with `tol` abs 0.0005 (slip z 0.9118, 1 - Phi = 0.180931). The other wrong values are clear of it.
+2. Fixed. l7 `screens[3]` `plain` is now 0.9118 (z of the drift-0.08 slip), so the feedback text is true as written.
+3. Fixed. l8 `screens[2]` cell `r3c1` `tol` abs 0.005 (3.69 passes, 3.7 does not) and the prose says "Give the last row to at least 2 decimal places."
+4. Fixed. `homework-2` `h-ito-vs-strat` uses seed 11 with `ns = [8, 64, 512]` (rows as in the finding, confirmed by both routes), seed 12 with `[10, 100, 1000]` for test 2 (new rows, both routes), seed 4 for the identity test; example, `how` and `explain` updated.
+5. Fixed. `homework-2` `h-apply-ito`: $S^2$ with $\mu = 0.05$, $\sigma = 0.3$ at (0, 50) and (1, 40) gives `[[475, 1500], [304, 960]]`; $\ln S$ gives `[0.005, 0.3]` at every price; example and `explain` updated. Tests 3 to 5 unchanged.
+6. Fixed. Keys shortened to the finding's wording: l5 `screens[5]` `gap` (116 to 82 characters), l7 `screens[6]` `qv` (117 to 83), l8 `screens[8]` `avg` (107 to 68). Meaning unchanged.
+7. Fixed. l8 `quiz[3]` `quarter` feedback now names the slip (near over far, 1 over 4) and gives 1/5.
+8. Fixed. l6 `screens[7]` prose now states $\sigma = 20\%$, $T = 1$.
+9. Fixed. l5 `screens[0]` `accept` and `explain` state $-0.1853$ with "$-0.1852$ from the rounded products".
+10. Fixed. l6 `screens[7]` `explain` now reads $0.27986 - 0.25992 = 0.0199$; `homework-2` `h-why-not-chain` rubric point 3 uses 0.27986 and 0.25992 and accepts 0.0199 or about 0.02.
+11. Fixed. l5 `screens[2]` `feedback.generic` now says "on the four-step grid `W[::1024]` the left sum is -0.185297".
+12. Fixed. l5 `screens[9]` tests 1 to 3 now expect the exact 0.495, 0.49 and 0.4975 (tol 0.04 kept); the seeded results 0.4788, 0.4851 and 0.4835 stay inside.
+13. Fixed. l8 `screens[7]` prose now says the stopped bankroll stays between -£3 and +£7; `explain` says "No bounded stopping rule".
+14. Fixed. l6 `screens[2]` prompt now names the two lines that may swap (first-order substitution and the squaring of $dX$), which matches `same` `[e2, e3]` exactly.
+15. Fixed. l6 `screens[4]` `feedback.correct` now cites $e^{km + k^2s^2/2}$ at $k = 2$ from the moment generating function of level 1.
+16. Fixed. `homework-2` `h-which-mart` now keys $e^{3W_t - 4.5t}$ (correction $\tfrac12\theta^2 = 4.5$; the wrong options are unchanged and still wrong); `explain` updated. Also `review-2` `r-prob-low` moved to $\mu = 6\%$, $\sigma = 25\%$ so it no longer reuses lesson 7's share: mean of $\ln S_1$ is $0.06 - 0.03125 = 0.02875$, z = -1.0076, P = 0.1568 (0.156829 by erf and by numerical integral); wrong `plain` (drift 0.06 in the log, z = -1.1326) 0.1287; wrong `price` ($\Phi(-0.8)$) 0.2119.
+17. Left (P32-expr-exp), as instructed: an engine pass fixes the grader.
+18. Disputed. Every sample-based test runs on a fixed seed, so the results are deterministic and cannot flake; the margins quoted (ratio 3.895 inside 3.4 to 4.6, $|\bar{W^3}|$ 0.0032 under 0.04, 0.05 standard errors) are checked in Pyodide on each playthrough and a wrong solution (midpoint, mean of sums) still fails the tests that target it.
+
+### Changed keys
+
+- `l5-integrating-noise.json` `screens[5]` (`gap`): option text only (key shortened).
+- `l5-integrating-noise.json` `screens[9]` (code): `expect` of tests 1 to 3 (0.5 to 0.495, 0.49, 0.4975).
+- `l6-ito-lemma.json` `screens[2]` (order): prompt wording only; `same` and `answer` unchanged.
+- `l7-solving-gbm.json` `screens[3]` (z-score): `wrong` `plain` 1.3118 to 0.9118.
+- `l7-solving-gbm.json` `screens[4]` (P(S_1 > 130)): `wrong` `plain` 0.1087 to 0.1809, `tol` 0.0008 to 0.0005.
+- `l7-solving-gbm.json` `screens[6]` (`qv`): option text only (key shortened).
+- `l8-fair-games.json` `screens[2]` (table): cell `r3c1` `tol` abs 0.001 to 0.005; prose adds precision.
+- `l8-fair-games.json` `screens[8]` (`avg`): option text only (key shortened).
+- `review-2.json` `r-prob-low`: numbers, key 0.0784 to 0.1568, `wrong` `plain` 0.0648 to 0.1287, `wrong` `price` 0.1587 to 0.2119.
+- `homework-2.json` `h-ito-vs-strat`: seeds, grids, example and `expect` of tests 1, 2 and 5; test 3 seed.
+- `homework-2.json` `h-apply-ito`: GBM parameters and points in example and tests 1 and 2, with new `expect`.
+- `homework-2.json` `h-which-mart`: correct option `expo` text $e^{2W_t - 2t}$ to $e^{3W_t - 4.5t}$.
+
+Results: `node tools/validate.mjs` 0 errors; playthrough of all six files with `--local-cdn`, with and without `--mobile`, all passed; changed code items (l5 `screens[2]` and `screens[9]`, `h-ito-vs-strat`, `h-apply-ito`) solution passes all tests and starter fails all in Pyodide. Voice scan: 0 explanations over three sentences; 2 sentences over 20 words, both in level 1 files (`homework-1.json` `items.8.model`, `l2-normal-increments.json` `screens.8.prose`), none in level 2 and not touched here.
