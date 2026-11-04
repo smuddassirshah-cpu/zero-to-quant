@@ -107,3 +107,13 @@ Engine pass C and first topic 3.5 levels (4 Nov)
 - Playthrough limits seen in topic 3.5: it never runs code starters (authors confirm starters fail by script), it does not run the code tests inside some homework `parts` items (systems homework-4 histogram, checked with g++). The intermittent `rq-clean-frame-py` and `rq-group-slopes-py` failures were an engine bug, fixed in ENGINE-BACKLOG 500: the drill runner counted pandas loading against the 5 s limit, so a slow load timed the model solution out.
 - coding-int (fix pass): no per-screen language skip in the engine (a C++ screen cannot be skipped by a Python learner), and the `orderbook` canvas labels are small at 390 px; both in the inbox.
 - ito L2 (topic 3.2) was not started in session H: the 5-hour usage limit was hit once mid-session.
+
+Session I (4 Nov 2026, topic 3.2)
+- measure-prob L1 leans on countability (analysis l5, a Pure course), but AUTHORING 11 forbids a Pure course gating a Quant one, so L1 has no such `requires` and no recap screen. Decide: a recap screen in l1, or relax the rule.
+- 606 validator warnings: item 515 added 66 (per cent values above 1, mostly `wrong` values whose accept text does not show the matching number); not triaged.
+- `expression` with a declared function: `f(x)+1` graded against itself is false (no numeric value); predates session I.
+- `table` returns a matched cell `wrong[]` id before the cell id, so `r{i}c{j}` feedback never shows while a `wrong[]` entry matches; ito L3, L4 and measure-prob L4 moved slips into cell-id lines. The validator still rejects cell `wrong[]` ids as `byKey` keys.
+- pdes l12 s7: the "slope -2" label still sits on its line (judged acceptable). Canvas screens can run under the bottom bar at 1376 until scrolled (inbox).
+- Playthrough runs in Chromium at the device sizes, not WebKit; touch, Safari and the C++ compiler's memory on an iPhone are untested on real devices.
+- Reviews are capped at 10 items by the validator, while test-out of a required level wants 12 or more (inbox [Should]).
+- The whole-app `--tablet` pass was not run at close (several hours at three extra widths); topic 3.2 files and the exam were run with `--mobile --tablet` during the session.

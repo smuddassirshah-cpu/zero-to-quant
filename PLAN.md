@@ -63,7 +63,7 @@ Rules: work topic by topic. A topic closes when every level (lessons, review, ho
 5a. Prerequisite gating (user request, 4 Nov; brief `docs/briefs/prereq-gating.md`; runs beside the remaining topic 3.5 levels):
    - [x] (4 Nov, items 481 to 498; `docs/reports/engine-pass-e.md`; review and fix `docs/reviews/review-engine-pass-e.md`) Engine pass E: level `requires`, the met rule, locked card grouped by stage, topic, course and lesson, test-out, Strict mode (on by default), Today, Learn and Prepare, validator and playthrough support, AUTHORING section 11 (number from 481)
    - [x] (4 Nov; `docs/reports/prereq-mapping.md`, mocks `prereq-mapping-mocks.md`; review and fix `docs/reviews/review-prereq-mapping.md`) Content pass: `requires` lists in every `course.json` (one mapping agent, then a second reader and fix), validate 0 errors with no cycles, full split playthrough green
-6. Topic 3.2: ito L2 to L4, measure-prob, pdes; exam topic-3.2; second read and fix.
+6. [done 4 Nov (session I), topic 3.2 closed: ito L2 to L4, measure-prob L1 to L4, pdes L1 to L3 (54 lessons, 11 reviews, 11 homeworks); exam topic-3.2 (30 items); answer check, fix and recheck per level; second reads and fix passes `docs/reviews/review-{ito,measure-prob,pdes,exam-3.2}.md`, voice 0 and 0; engine items 501 to 515 (expression grader `\exp`, call heads, `integers`, `D`/`N`; device viewports 440, 1032, 1376; iPad column 780 px; drill passes; per cent key rule); 46 per cent keys fixed in nine other courses (`docs/reviews/fix-pct-keys.md`); mapping `docs/reports/prereq-mapping-3.2.md`] Topic 3.2: ito L2 to L4, measure-prob, pdes; exam topic-3.2; second read and fix.
 7. Appended levels: trees L4 (extend exam topic-1.7), cpp L5 (extend exam topic-1.9); second read of each new level.
 8. Remaining gaps: exam topic-0.6; extend stage-0 to 0.6 and 0.7; momentum-rep L2, L3, pairs-rep, exam topic-3.1; analysis L5, linear-maps L4, exam topic-1.10; second reads for the other finished topics (0.1 to 0.4, 0.6, 1.1, 1.2, 1.10, 2.2 to 2.4).
 9. Then 2b and the rest (1.11, 2.5, 2.6, 3.4) topic by topic, bank part 2, drill packs, stage exams 1 to 3.
@@ -121,14 +121,14 @@ Phase 3, trader and researcher depth
 - [x] game-theory L2: Sequential games and auctions (`docs/reports/game-theory-2.md`; 5 lessons, review-2, homework-2; 2 inbox bullets)
 - [x] game-theory L3: Poker and decisions (`docs/reports/game-theory-3.md`; 5 lessons, review-3, homework-3; 2 inbox bullets)
 - [x] ito L1 (`docs/reports/ito-1.md`; 4 lessons, review-1, homework-1; 7 inbox bullets)
-- [ ] ito L2
-- [ ] ito L3
+- [x] ito L2 (`docs/reports/ito-2.md`; 4 lessons, review-2, homework-2)
+- [x] ito L3 (`docs/reports/ito-3.md`; 4 lessons, review-3, homework-3)
 - [x] Engine pass D: E12 trading-game widget (items 459 `trade`, 460 `carry`; `docs/reports/engine-pass-d.md`; sample `exams/mock-trade-sample.json`; full run green, 903 lessons, all sets, 24 exams)
 - [ ] Bank part 2 (200 items)
-- [ ] Exams: topic-3.3 (done 6 Nov, `docs/reports/exam-3.3.md`), topic-3.2 (ito part)
+- [x] Exams: topic-3.3 (done 6 Nov, `docs/reports/exam-3.3.md`), topic-3.2 (done 4 Nov, `docs/reports/exam-3.2.md`; 30 items over ito, measure-prob and pdes)
 
 Phase 4, developer and strats depth
-- [ ] ito L4: Stochastic calculus at interview
+- [x] ito L4: Stochastic calculus at interview (`docs/reports/ito-4.md`; 5 lessons, review-4 timed, homework-4)
 - [ ] cpp L5: C++ questions at interview
 - [x] systems L1 (`docs/reports/systems-1.md`; 5 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] systems L2 (`docs/reports/systems-2.md`; 5 lessons on `interleave`, review-2, homework-2; 8 inbox bullets)
@@ -181,13 +181,13 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] stat-models L2: Experiments [Quant]
 - [ ] stat-models L3: Without the assumptions [Quant]
 - [ ] stat-models L4: Bayesian models [Quant]
-- [ ] measure-prob L1: Measures [Quant]
-- [ ] measure-prob L2: Integration [Quant]
-- [ ] measure-prob L3: Information and martingales [Quant]
-- [ ] measure-prob L4: Changing measure [Quant]
-- [ ] pdes L1: The heat equation [Quant]
-- [ ] pdes L2: Separation and Fourier series [Quant]
-- [ ] pdes L3: Pricing equations [Quant]
+- [x] measure-prob L1: Measures [Quant] (`docs/reports/measure-prob-1.md`)
+- [x] measure-prob L2: Integration [Quant] (`docs/reports/measure-prob-2.md`)
+- [x] measure-prob L3: Information and martingales [Quant] (`docs/reports/measure-prob-3.md`)
+- [x] measure-prob L4: Changing measure [Quant] (`docs/reports/measure-prob-4.md`)
+- [x] pdes L1: The heat equation [Quant] (`docs/reports/pdes-1.md`)
+- [x] pdes L2: Separation and Fourier series [Quant] (`docs/reports/pdes-2.md`)
+- [x] pdes L3: Pricing equations [Quant] (`docs/reports/pdes-3.md`)
 - [ ] algebra L1: Groups [Pure maths]
 - [ ] algebra L2: Inside a group [Pure maths]
 - [ ] algebra L3: Maps between groups [Pure maths]
@@ -204,8 +204,8 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] pairs-rep L2
 - [ ] pairs-rep L3
 - [x] ito L1 (`docs/reports/ito-1.md`; 4 lessons, review-1, homework-1; 7 inbox bullets)
-- [ ] ito L2
-- [ ] ito L3
+- [x] ito L2 (`docs/reports/ito-2.md`)
+- [x] ito L3 (`docs/reports/ito-3.md`)
 - [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] puzzles L2 (`docs/reports/puzzles-2.md`; 6 lessons, review-2, homework-2; 8 inbox bullets)
 - [x] puzzles L3 (`docs/reports/puzzles-3.md`)
@@ -225,7 +225,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] topic-2.3 (backtest, alpha, opt-dash)
 - [x] topic-2.4 (contests)
 - [ ] topic-3.1 (momentum-rep, pairs-rep)
-- [ ] topic-3.2 (ito)
+- [x] topic-3.2 (ito, measure-prob, pdes; `docs/reports/exam-3.2.md`)
 - [x] topic-3.3 (6 Nov: 30 items over all five courses, one `trade` game; `docs/reports/exam-3.3.md`)
 - [ ] Breadth exams: topic-0.6, topic-1.10, topic-1.11, topic-2.5, topic-2.6, topic-3.4; topic-3.2 covers ito, measure-prob and pdes; topic-1.5 is at the 30-item cap, so the markov gap level packs into multi-part items
 - [ ] stage-1, stage-2, stage-3 exams (pattern: `app/content/exams/stage-0.json`)
@@ -237,8 +237,8 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] Second reader 0.5 then fix pass (`docs/reviews/review-0.5.md`; 21 of 23 fixed, 2 engine bullets)
 - [ ] Second reader 2.2 then fix pass
 - [ ] Second reader 2.3 and 2.4 then fix pass
-- [ ] Second reader 3.1 to 3.3 then fix pass (3.3 done 6 Nov: `docs/reviews/review-<course>.md` for its five courses)
-- [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.2 additions, 3.4
+- [ ] Second reader 3.1 to 3.3 then fix pass (3.3 done 6 Nov: `docs/reviews/review-<course>.md` for its five courses; 3.2 done 4 Nov: `review-ito.md`, `review-measure-prob.md`, `review-pdes.md`, `review-exam-3.2.md`; 3.1 open)
+- [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (3.2 additions done 4 Nov)
 - [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
 
 ### 6. Engine
