@@ -231,3 +231,41 @@ Also split five sentences over 20 words that the edits created; voice scan is 0 
 - homework-3 `h-colleague` (prompt, model and rubric numbers)
 
 Results: validator 0 errors; playthrough of l9 to l12, review-3 and homework-3 passes plain and with `--mobile --tablet`; voice scan 0 and 0.
+
+## Recheck
+
+Every changed key recomputed independently (scratchpad `rc-pdes3/n1.py` to `n5.py`: closed forms, SciPy `quad`, banded CN solver in heat variables and on an S grid, the hidden tests run in CPython against solution and starter). Old values grepped in all six files: 1.0966, 13.33, 7.9656, 5.5735, 5.5714, 5.5730, 15.5261, 10.9864, 14.48, 0.216, 0.5236, 4.3865, 8.89, 0.1333 survive only in other lessons' own items (l9 7.9656 and 3.0625, l11 15.5261), never in a changed widget. In each changed widget `answer`, `accept`, feedback and explain agree. New numbers appear in no lesson of the course.
+
+- l9 `q-backward`: text only, key `ill` unchanged. Pass. Correct option 62 characters against 55 and 51.
+- l10 screen 4: call at S = 110 is 17.66295 (87.5330 - 69.8700); rounded-value route 87.54 - 69.87 = 17.67; `accept` 17.66 abs 0.015 takes both; hint, feedback, explain agree; `no-disc` 110 x 0.7958 - 100 x 0.7345 = 14.088 (14.08, abs 0.03), `same-x` 10.4506. Pass.
+- l10 screen 5 slider: price(c) = 6.6810, 10.0962, 10.4506, 10.8018 at c = 1, 1.9, 2.0, 2.1; step 0.1 and `tol` 0.05 (grader `<= tol + 1e-9`) pass only 2.0; `tau-only` range 0.8 to 1.2 excludes it; 36% low is 35.9%. Pass.
+- l11 screen 0: standard error of 2,000 paths 0.329, so 0.33 and "0.7 away" (two errors) hold; key `settle` unchanged. Pass.
+- l11 `q-sigma0`: dV/dt = rV along S0 e^rt gives V = S - Ke^-r(T-t); key unchanged. Pass.
+- l12 screen 6: 400 by 4, lambda = 200, top-mode g = -0.99501; plain 10.00855, Rannacher 10.44925, 1,600 by 50 is 0.03081 off, wrong by 44 pence (0.4421). Pass on numbers. Low: correct option is 86 characters against 64, 64 and 58, still the longest by a third (Fix A).
+- l12 screen 7 `same`: errors 0.018829 above and 0.007862 below (ratio 2.395, accept 2.4); interpolation alone 0.017287 (0.01729); `same` value 1 and `smaller` 0.4 (1/2.4 = 0.417) are the slips they name. Pass. See Fix B for the 201-interval sentence.
+- l12 screen 8 explain: S-grid CN, 600 intervals, 200 steps, to 300: 10.44997, 6.1e-4 below the formula. Pass.
+- l12 screen 9 tests: 9 of 9 for the solution with `h = x[1] - x[0]` and with `h = 2 * L / nx`; starter 0 of 9; literals 7.760257 (formula 7.7602567) and 10.054162 (10.0541622); sigma^2 T = 0.03125 and 0.03, inside 0.05; at S = 110 Richardson is 17.66173, 1.22e-3 below 17.66296. Pass.
+- l12 screen 10, `q-rannacher`: text only, keys unchanged; full implicit step 1/(1 + 4 lambda s^2) is right for a full step. Pass.
+- review-3 `r-agree`: 10.45058 - 10.45054 = 4e-5 < 5e-5; "No" option roundings 10.4505 and 10.4506 are right; key `yes`. Pass.
+- review-3 `r-decay`: 0.5 x (3pi/4)^2 = 2.77583 (2.7758, abs 0.0006); no-square 0.5 x 3pi/4 = 1.17810; no-d 5.55165 (5.5517, abs 0.001); e^-2.77583 = 0.062298 (0.0623). Pass; no tolerance overlaps.
+- homework-3 `h-r0-sigma`: sigma = 16% gives 6.37627 (6.3763); sigma = 100 sqrt(0.0256/2.25) = 10.6667 (10.67, abs 0.02); `inverse` 24 = 16 x 1.5, `time` 7.11 = 16/2.25; feedback of both reads correctly. Pass.
+- homework-3 `h-put-4dp`: puts 4.7751999 (S = K = 100, r 6%, sigma 20%, T 0.75), 6.5076262, 4.7686973; kernel 4.77519996, 6.50762628, 4.76869769, all within 5e-5; 5 of 5, starter 0 of 5; example round 4.78 ok; explain 4.7727 (200), 4.7746 (400), Richardson 4.7752000 against 4.7751999 and 6.5076263 against 6.5076262 all recomputed; sigma^2 T 0.03, 0.03, 0.025. Pass.
+- homework-3 `h-chain`: c1 and c2 are the only independent pair (c3 needs both, c4 needs c3, c5 needs c4); engine `same` makes positions 0 and 1 interchangeable, so c1 c2 and c2 c1 both pass and nothing else; k = 0.64, alpha = 0.18, beta = -0.6724 for r 2%, sigma 25%; the line algebra of c2 to c5 re-derived. Pass.
+- homework-3 `h-drift-sim`: m = 9% with e^-0.05 is 13.19966; m = 5% with e^-0.06 is 10.34660; m = 9% with e^-0.09 is 12.68209; the correct two give 10.45058. Five options, prose says five. Pass.
+- homework-3 `h-colleague`: formula 6.888729; 400 by 4 is 6.572776 (0.31595 low); lambda 100, top-mode g = -0.99005 (-0.9900); Rannacher 6.883682 (0.00505 below), strike-area second differences all positive; 1,600 by 50 is 0.01849 off; sequence 6.8760493, 6.8855674, 6.8879388, 6.8885312, 6.8886792; errors 1.268e-2, 3.16e-3, 7.90e-4, 1.97e-4, 4.93e-5 (ratios 4.011, 4.003, 4.001, 4.000); Richardson 100/200 6.8887402 (1.16e-5 above); only 1,600 passes the 5e-5 test. Rubric points sum to 10. Pass on numbers; two wording nits (Fix C, D).
+
+### Screenshots
+
+Playthrough with `--mobile --tablet --shots` for l9 to l12, review-3 and homework-3: all pass. Viewed 440, 1032 and 1376 for l10 screen 5 and l12 screen 6; 440 for l12 screens 7, 9, 10, l11 screen 0, review items 7 and 9, homework items 2, 4, 8; 1376 for homework item 1 and l12 screen 9. No caption is wrong and no text overlaps an answer control. Minor, all cosmetic:
+- l10 screen 5, every width: the word "product" on the canvas is crossed by the dashed kernel curve.
+- l12 screens 7, 9, 10, every width: the y caption "Error x 10^6" sits on the start of the curve, and "slope -2" sits on the end of the dashed line.
+- 1376 x 1032: l11 screen 0 and l12 screens 6 and 9 fill the height, so the answer options or the editor lie under the bottom bar until scrolled (they scroll, as other canvas screens do).
+- homework item 1 at 1376: the starter's right-hand comments at lines 14 and 15 run past the editor width (horizontal scroll).
+
+### New mismatches and exact fixes
+
+None changes a key. All low severity.
+- Fix A (l12 screen 6, `kink` text): shorten to "Its top-mode factor is $-0.9950$, so the kink's high modes barely damp" (about 66 characters, level with 64 and 64).
+- Fix B (l12 screen 7 explain): the 101 and 100 figures use 20 steps. With 20 steps the 201-interval error is £0.0031; the stated £0.0048 needs 40 steps (where 101 gives £0.0184). Change "Even with 201 intervals the error is £0.0048" to "Even with 201 intervals the error is £0.0031". Also the `err` hint "Both errors lie on the same plot as the nodes" points at a convergence plot with no nodes; use "Both errors are in pounds, against the same formula price."
+- Fix C (homework-3 `h-colleague` model, point 3): "Their factor $1/(1 + 4\lambda s^2)$ is near 0" is the full-step factor. Each half step has $\lambda/2$, so write "Each half step has factor $1/(1 + 2\lambda s^2)$, about 1/201 for the top mode, so the high modes vanish."
+- Fix D (same model, point 1): -0.277 is the computed gamma (second difference in S), not the second difference in x (-0.068). Write "The pricer's gamma goes negative beside the strike, down to $-0.277$."
