@@ -36,6 +36,7 @@ C++ runtime
 - libc++ `std::normal_distribution` draws differ from libstdc++ and NumPy; expected values come from the app runtime.
 - `std::chrono::steady_clock` ticks every 100 µs in Chromium; timings are illustrative, never graded.
 - A range-for over a braced list needs `<initializer_list>` included.
+- Vector growth with a move that is not `noexcept`: the app (no `-fno-exceptions` flag) copies on growth as the standard says (four pushes: 3 copies and 4 moves). A desktop build with libc++ and an explicit `-fno-exceptions` moves anyway (0 copies, 7 moves), so a learner who pastes l19 or exam `e-vector-growth` code there sees 0; the explains say so.
 
 Process
 - Claude Code's Write tool refuses a subagent write to any `.md` file whose name starts with `report`, `summary`, `findings` or `analysis` (a built-in filename rule with no setting). Only the `analysis` course's reports are hit. User decision (29 Oct): the agent returns the report as text and the main session saves `docs/reports/analysis-<n>.md`; no workaround. analysis-1.md to analysis-3.md were saved this way.
