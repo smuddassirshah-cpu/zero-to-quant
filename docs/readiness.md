@@ -151,8 +151,7 @@ Acceptance check: a fresh trader profile is never shown `graphs-dp` as next work
 | From (required or recommended) | Optional course reached | Edge or route |
 | --- | --- | --- |
 | `brainteasers` | `contests` | L3 needs contests/L2 |
-| `brainteasers` | `graphs-dp` | L2 needs graphs-dp/L3 |
-| `game-theory` | `graphs-dp` | L2 needs graphs-dp/L4 |
+| `brainteasers` | `graphs-dp` | via `contests` |
 
 Required courses that need a recommended course: `game-theory` needs `micro`; `mm-games` needs `micro`, `options`; `puzzles` needs `estimation`.
 <!-- /generated -->
