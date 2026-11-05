@@ -126,3 +126,26 @@ Session J (5 Nov 2026, PLAN 2a item 7)
 - Another session (session_01E26gTN3...) pushed to this branch during session J (desktop split record, per cent batch); both rebased cleanly. Two sessions on one branch risk state-file conflicts.
 - Deferred from the trees L4 and cpp L5 fix passes: l14 s4 "0.000" tick label; array canvases in a tall band at 440 px ([Should]); fenced prose code blocks have no wrap switch ([Could]); topic-1.9 thin on cpp level 1, and l20 and l23 untested directly.
 - The 606 to 610 validator warnings were not triaged (4 added this session are deliberate ladder canvas-kind changes in trees l16 and l18).
+
+Course correction review (5 Nov 2026; `docs/reviews/review-course-correction.md`, verified at 1e67d6f; PLAN 2c)
+Open review ids (none is fixed at HEAD; closure only on the review's acceptance evidence):
+- F01 (2c item 2): Today ignores role; `profile.track` is stored but unread; no strats or derivatives track exists.
+- F02 (item 7): cross-course `requires` edges carry no reason; trader superday closure 107 levels, 35 courses, 470 lessons.
+- F03 (item 7): pdes/L1 and pdes/L3 depend on unwritten odes/L4 and numerics/L4; unreachable under Strict.
+- F04, N07 (item 5): no lesson quiz holds code or longform; AUTHORING 489 and 529 produce the defect.
+- F05, N02, N03 (item 4): met is a 70% review share with no skill floor; a review can be sat cold; a 21 of 30 topic pass meets up to 22 levels.
+- F05.6, F05.7 (item 6): mock-oa-code passes at one of two and draws from the open `oa` pack.
+- F05.8: only stage-0 has a stage exam (PLAN 4, stage exams line).
+- F06, N08 (item 8): no out-of-app capstone record; verified drills feed no met rule.
+- F07 (item 10): `minutes` 11 to 15 everywhere; interview lessons state 25 to 60 minutes in prose.
+- F08, N05 (item 9): five known precision lines; 69 summary candidates in the seven named courses. Needs a human maths reader.
+- F09 (item 11): hours 3,265 stored against 3,695 summed.
+- N01 (item 3): self-ticked longform (259 homework widgets) and mock checks count as mastery and as `ok`.
+- N04 (item 2): prep.json names five mocks with no file (15 references); no developer or strats final-round mock.
+- N06: closed by 2c item 1 (5 Nov).
+- Pilot (item 12) and the precision reader (item 9) need humans; capstone reviewer (item 8), readiness contract (item 2) and the odes and numerics decision (item 7) need the user.
+Process found this session:
+- The review's line references to KNOWN_ISSUES are one line early at HEAD (`:86` dates, `:53` weekly cap, `:110` session H).
+- CLAUDE.md "Models" still says implementation subagents run on Sonnet, while `content-author` and second readers run on Opus (operating model 2.5 keeps them there).
+- `app/tools/merge-wave.sh` is named in SESSION PROTOCOL 3 but not written yet (2c O1); merge by DECISIONS "Parallel worktree merges" until it exists.
+
