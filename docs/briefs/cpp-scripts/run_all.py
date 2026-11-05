@@ -3,7 +3,7 @@
 import sys, os, importlib, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from harness import run
-MODS = sys.argv[1:] or ["problems_l19", "problems_l20", "problems_l21", "problems_l22", "problems_l23", "problems_hw"]
+MODS = sys.argv[1:] or ["problems_l19", "problems_l20", "problems_l21", "problems_l22", "problems_l23", "problems_hw", "problems_exam"]
 ok = True
 for m in MODS:
     mod = importlib.import_module(m)

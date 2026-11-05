@@ -1,0 +1,81 @@
+{
+ "prelude": "#include <utility>\n#include <type_traits>\n\n// Hidden: counts copies, moves and live objects. It has no assignment operators and no default constructor.\nstruct Counted {\n    static inline int copies = 0, moves = 0, live = 0;\n    int v;\n    Counted(int x) : v(x) { ++live; }\n    Counted(const Counted& o) : v(o.v) { ++copies; ++live; }\n    Counted(Counted&& o) noexcept : v(o.v) { ++moves; ++live; o.v = -1; }\n    Counted& operator=(const Counted&) = delete;\n    Counted& operator=(Counted&&) = delete;\n    ~Counted() { --live; }\n};\n",
+ "tests": [
+  {
+   "call": "v.size() * 10000 + v.capacity()",
+   "expect": 10001024,
+   "setup": "Vec<int> v; for (int i = 0; i < 1000; ++i) v.push_back(i);"
+  },
+  {
+   "call": "v[0] + v[500] + v[999]",
+   "expect": 1499,
+   "setup": "Vec<int> v; for (int i = 0; i < 1000; ++i) v.push_back(i);"
+  },
+  {
+   "call": "alloc_count()",
+   "expect": 11,
+   "setup": "Vec<int> v; reset_alloc_count(); for (int i = 0; i < 1000; ++i) v.push_back(i);"
+  },
+  {
+   "call": "alloc_count() * 10 + v.capacity()",
+   "expect": 0,
+   "setup": "reset_alloc_count(); Vec<int> v;"
+  },
+  {
+   "call": "Counted::copies * 100 + Counted::moves",
+   "expect": 15,
+   "setup": "{ Vec<Counted> v; for (int i = 0; i < 8; ++i) v.push_back(Counted(i)); }"
+  },
+  {
+   "call": "Counted::live",
+   "expect": 0,
+   "setup": "{ Vec<Counted> v; for (int i = 0; i < 5; ++i) v.push_back(Counted(i)); }"
+  },
+  {
+   "call": "a[0] * 10 + b[0]",
+   "expect": 19,
+   "setup": "Vec<int> a; a.push_back(1); a.push_back(2); Vec<int> b = a; b[0] = 9;"
+  },
+  {
+   "call": "Counted::copies - before",
+   "expect": 4,
+   "setup": "Vec<Counted> a; for (int i = 0; i < 4; ++i) a.push_back(Counted(i)); int before = Counted::copies; Vec<Counted> b = a;"
+  },
+  {
+   "call": "alloc_count()",
+   "expect": 0,
+   "setup": "Vec<int> a; for (int i = 0; i < 100; ++i) a.push_back(i); reset_alloc_count(); Vec<int> b = std::move(a);"
+  },
+  {
+   "call": "a.size() * 1000 + b.size()",
+   "expect": 100,
+   "setup": "Vec<int> a; for (int i = 0; i < 100; ++i) a.push_back(i); Vec<int> b = std::move(a);"
+  },
+  {
+   "call": "b.size() * 10 + b[0]",
+   "expect": 15,
+   "setup": "Vec<int> a; a.push_back(5); Vec<int> b; b.push_back(1); b.push_back(2); b = a;"
+  },
+  {
+   "call": "b.size() * 10 + b[0] + a.size() * 100",
+   "expect": 15,
+   "setup": "Vec<int> a; a.push_back(5); Vec<int> b; b.push_back(1); b = std::move(a);"
+  },
+  {
+   "call": "a.size() * 10 + a[1]",
+   "expect": 26,
+   "setup": "Vec<int> a; a.push_back(5); a.push_back(6); Vec<int>& r = a; a = r;"
+  },
+  {
+   "call": "v[1]",
+   "expect": 7,
+   "setup": "Vec<int> v; v.push_back(7); v.push_back(v[0]);"
+  },
+  {
+   "call": "std::is_nothrow_move_constructible_v<Vec<int>>",
+   "expect": true
+  }
+ ],
+ "alloc": true,
+ "leak": true
+}

@@ -1,0 +1,59 @@
+{
+ "prelude": "#include <type_traits>\n",
+ "tests": [
+  {
+   "call": "l.cost(2.0)",
+   "expect": 200.0,
+   "setup": "Limit l(100, 2.5);"
+  },
+  {
+   "call": "l.cost(3.0)",
+   "expect": 0.0,
+   "setup": "Limit l(100, 2.5);"
+  },
+  {
+   "call": "l.cost(2.5)",
+   "expect": 250.0,
+   "setup": "Limit l(100, 2.5);"
+  },
+  {
+   "call": "q->cost(2.0)",
+   "expect": 200.0,
+   "setup": "Limit l(100, 2.5); std::unique_ptr<Order> q = l.clone();"
+  },
+  {
+   "call": "q->cost(3.0)",
+   "expect": 0.0,
+   "setup": "Limit l(100, 2.5); std::unique_ptr<Order> q = l.clone();"
+  },
+  {
+   "call": "b.cost(2.0)",
+   "expect": 500.0,
+   "setup": "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5));"
+  },
+  {
+   "call": "b.cost(3.0)",
+   "expect": 300.0,
+   "setup": "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5));"
+  },
+  {
+   "call": "c->cost(2.0)",
+   "expect": 500.0,
+   "setup": "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5)); std::unique_ptr<Order> c = b.clone();"
+  },
+  {
+   "call": "c->cost(2.0)",
+   "expect": 500.0,
+   "setup": "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5)); std::unique_ptr<Order> c = b.clone(); b.add(std::make_unique<Market>(1000));"
+  },
+  {
+   "call": "c->cost(3.0)",
+   "expect": 300.0,
+   "setup": "Basket inner; inner.add(std::make_unique<Limit>(10, 2.5)); inner.add(std::make_unique<Market>(100)); Basket outer; outer.add(inner.clone()); outer.add(std::make_unique<Market>(0)); std::unique_ptr<Order> c = outer.clone(); inner.add(std::make_unique<Market>(5));"
+  },
+  {
+   "call": "std::is_abstract_v<Basket>",
+   "expect": false
+  }
+ ]
+}
