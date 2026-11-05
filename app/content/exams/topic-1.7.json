@@ -2,7 +2,7 @@
   "id": "topic-1.7",
   "topic": "1.7",
   "name": "Finance basics topic exam",
-  "minutes": 60,
+  "minutes": 70,
   "pass": 0.7,
   "skills": {
     "fi-interest": "Interest and discounting",
@@ -1431,104 +1431,275 @@
       }
     },
     {
-      "id": "e-crr-q",
+      "id": "e-atm-rule",
       "difficulty": 3,
       "skills": [
-        "tp-multistep",
-        "tp-riskneutral"
+        "tp-bs",
+        "op-greeks"
       ],
-      "title": "Calibrating a weekly tree",
-      "prose": "A CRR tree takes weekly steps, $\\Delta t = 1/52$ of a year. The share's volatility is 25%, so $u = e^{0.25\\sqrt{\\Delta t}}$ and $d = 1/u$. The rate is 5% a year, compounded continuously, so cash grows by $e^{r\\Delta t}$ per step.",
-      "question": "What is the risk-neutral probability $q$ of an up step? Give four decimal places.",
-      "widget": {
-        "kind": "numeric",
-        "answer": 0.5052,
-        "tol": {
-          "abs": 6e-05
-        },
-        "placeholder": "a decimal",
-        "label": "q",
-        "accept": "$q = \\dfrac{e^{0.05/52} - 0.965925}{1.035277 - 0.965925} = 0.5052$",
-        "wrong": [
-          {
-            "id": "annual-growth",
-            "value": 1.2306,
+      "tags": [
+        "option-estimate"
+      ],
+      "title": "A quick price for an at-the-money call",
+      "prose": "A share is at £250.00. A three-month European call is struck at £250.00. Take $\\sigma = 30\\%$ and $r = 0$.",
+      "parts": [
+        {
+          "question": "Use the rule $0.4\\,\\sigma\\sqrt T\\,S$. What price does it give?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 15.0,
             "tol": {
-              "abs": 0.0005
-            }
+              "abs": 0.1
+            },
+            "unit": "£",
+            "label": "Rule price",
+            "wrong": [
+              {
+                "id": "no-root",
+                "value": 30.0,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "time-not-root",
+                "value": 7.5,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
           },
-          {
-            "id": "annual-simple",
-            "value": 1.2123,
-            "tol": {
-              "abs": 0.0005
-            }
-          },
-          {
-            "id": "no-growth",
-            "value": 0.4913,
-            "tol": {
-              "abs": 0.0002
+          "feedback": {
+            "correct": "$0.4 \\times 0.3 \\times 0.5 \\times 250 = 15.00$.",
+            "generic": "Multiply $0.4$, $\\sigma$, $\\sqrt T$ and $S$. Three months is $T = 0.25$.",
+            "byKey": {
+              "no-root": "You left out the square root of time: $0.4\\sigma S$ is for one year.",
+              "time-not-root": "You used $T$, not $\\sqrt T$. A quarter of a year gives $\\sqrt{0.25} = 0.5$, not 0.25."
             }
           }
-        ]
-      },
-      "feedback": {
-        "correct": "$u = 1.0353$, $d = 0.9659$ and $q = 0.5052$.",
-        "generic": "Compute $u$, $d$ and $e^{r\\Delta t}$ for one month, then $q = \\dfrac{e^{r\\Delta t} - d}{u - d}$.",
-        "byKey": {
-          "annual-growth": "You grew cash for a whole year in one step, and your $q$ is above 1. One step is a week: use $e^{0.05/52}$.",
-          "annual-simple": "You used $1 + r = 1.05$ per step, and your $q$ is above 1. A weekly step grows cash by $e^{0.05/52}$.",
-          "no-growth": "You left interest out. Under $q$ the share must grow like cash, by $e^{r\\Delta t}$ a step."
+        },
+        {
+          "question": "Implied volatility rises from 30% to 32%. About how much does the call gain? Use vega $\\approx$ price $\\div\\,\\sigma$.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1.0,
+            "tol": {
+              "abs": 0.05
+            },
+            "unit": "£",
+            "label": "Gain",
+            "wrong": [
+              {
+                "id": "points-as-units",
+                "value": 100,
+                "tol": {
+                  "abs": 1
+                }
+              },
+              {
+                "id": "one-point",
+                "value": 0.5,
+                "tol": {
+                  "abs": 0.02
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$15/0.3 \\times 0.02 = 1.00$.",
+            "generic": "Vega is price over $\\sigma$, per 1.00 of vol. Scale it by the rise in $\\sigma$.",
+            "byKey": {
+              "points-as-units": "You took vega per 1.00 of vol, 50, and multiplied by 2. Two points is 0.02 of vol.",
+              "one-point": "That is one vol point, 0.50. The rise is two points."
+            }
+          }
+        },
+        {
+          "question": "Now one month is left, with the same strike and vol. What does the rule give?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 8.66,
+            "tol": {
+              "abs": 0.1
+            },
+            "unit": "£",
+            "label": "Rule price",
+            "wrong": [
+              {
+                "id": "by-time",
+                "value": 5.0,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "unchanged",
+                "value": 15.0,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$15/\\sqrt 3 = 8.66$.",
+            "generic": "The rule goes like $\\sqrt T$. One month is a third of three.",
+            "byKey": {
+              "by-time": "You scaled the price by the time left, a third. It scales by the square root, $1/\\sqrt 3$.",
+              "unchanged": "At the money the price still falls as time runs down: it goes like $\\sqrt T$."
+            }
+          }
         }
-      },
+      ],
       "explain": {
-        "text": "$u = e^{0.25 \\times 0.138675} = 1.035277$ and $d = 0.965925$. One week grows cash by $e^{0.05/52} = 1.000962$. So $q = (1.000962 - 0.965925)/(1.035277 - 0.965925) = 0.5052$."
+        "text": "$0.4 \\times 0.3 \\times \\sqrt{0.25} \\times 250 = 15.00$. Price is linear in $\\sigma$ and goes like $\\sqrt T$. So two vol points add $15/0.3 \\times 0.02 = 1.00$, and a month left gives $15/\\sqrt 3 = 8.66$."
       }
     },
     {
       "id": "e-greek-signs",
       "difficulty": 3,
       "skills": [
-        "op-greeks"
+        "op-greeks",
+        "tp-bs"
       ],
       "title": "Signs of a short put",
       "prose": "A trader has sold one European put on a share. Rates are 0.",
-      "question": "Which signs do her delta, gamma, vega and theta have?",
-      "widget": {
-        "kind": "choice",
-        "layout": "stack",
-        "options": [
-          {
-            "id": "a",
-            "text": "Delta +, gamma −, vega −, theta +",
-            "correct": true
+      "tags": [
+        "greek-signs",
+        "gamma-pnl"
+      ],
+      "parts": [
+        {
+          "question": "Which signs do her delta, gamma, vega and theta have?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "a",
+                "text": "Delta +, gamma −, vega −, theta +",
+                "correct": true
+              },
+              {
+                "id": "put-delta",
+                "text": "Delta −, gamma −, vega −, theta +",
+                "why": "You gave the short put a long put's delta. Selling flips it: a short put gains as the share rises."
+              },
+              {
+                "id": "delta-only",
+                "text": "Delta +, gamma +, vega +, theta −",
+                "why": "You flipped only delta. Selling flips gamma, vega and theta too."
+              },
+              {
+                "id": "long",
+                "text": "Delta −, gamma +, vega +, theta −",
+                "why": "Those are the long put's signs. Selling the put flips every one."
+              }
+            ],
+            "shuffle": true
           },
-          {
-            "id": "put-delta",
-            "text": "Delta −, gamma −, vega −, theta +",
-            "why": "You gave the short put a long put's delta. Selling flips it: a short put gains as the share rises."
+          "feedback": {
+            "correct": "Every sign of the long put, flipped.",
+            "generic": "Write the long put's signs, then flip every one for the short side."
           },
-          {
-            "id": "delta-only",
-            "text": "Delta +, gamma +, vega +, theta −",
-            "why": "You flipped only delta. Selling flips gamma, vega and theta too."
-          },
-          {
-            "id": "long",
-            "text": "Delta −, gamma +, vega +, theta −",
-            "why": "Those are the long put's signs. Selling the put flips every one."
+          "explain": {
+            "text": "A long put has negative delta, positive gamma and vega, and negative theta at a rate of 0. The seller holds the mirror image. She gains if the share rises or time passes, and loses on big moves or rising volatility."
           }
-        ],
-        "shuffle": true
-      },
-      "feedback": {
-        "correct": "Every sign of the long put, flipped.",
-        "generic": "Write the long put's signs, then flip every one for the short side."
-      },
-      "explain": {
-        "text": "A long put has negative delta, positive gamma and vega, and negative theta at a rate of 0. The seller holds the mirror image. She gains if the share rises or time passes, and loses on big moves or rising volatility."
-      }
+        },
+        {
+          "question": "Her put has strike £100.00, one year left and a volatility of 20%. At which share price is her gamma largest in size?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "a",
+                "text": "Close to the strike",
+                "correct": true
+              },
+              {
+                "id": "deep-itm",
+                "text": "Far below the strike, deep in the money",
+                "why": "You read gamma as following delta's level. Gamma is delta's slope, and delta is flat out there."
+              },
+              {
+                "id": "deep-otm",
+                "text": "Far above the strike",
+                "why": "You read gamma as following delta's level. Gamma is delta's slope, and delta is flat out there."
+              },
+              {
+                "id": "same",
+                "text": "It is the same at every price",
+                "why": "Gamma changes with the share price. It peaks near the strike, at £94.18 here."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "Gamma peaks near the strike, at about £94.18 here.",
+            "generic": "Gamma is the slope of delta. Where does delta change fastest?"
+          },
+          "explain": {
+            "text": "Delta moves from 0 to 1 around the strike, so its slope is steepest there. The peak is at $Ke^{-1.5\\sigma^2 T} = 94.18$ for a one-year option at 20%."
+          }
+        },
+        {
+          "prose": "She sold 1,000 of the puts, each on one share. Each has gamma 0.0198 per £1 at a share price of £100. She priced them at 20% volatility and hedges delta every day. Over the next 21 trading days (252 in a year) the share's realised volatility is 28%. Treat gamma as constant.",
+          "question": "What is her hedged P&L in pounds? Use a negative number for a loss.",
+          "widget": {
+            "kind": "numeric",
+            "answer": -317,
+            "tol": {
+              "abs": 2
+            },
+            "unit": "£",
+            "label": "Hedged P&L",
+            "wrong": [
+              {
+                "id": "sign",
+                "value": 317,
+                "tol": {
+                  "abs": 2
+                }
+              },
+              {
+                "id": "no-half",
+                "value": -634,
+                "tol": {
+                  "abs": 4
+                }
+              },
+              {
+                "id": "vol-gap",
+                "value": -660,
+                "tol": {
+                  "abs": 4
+                }
+              },
+              {
+                "id": "no-time",
+                "value": -3802,
+                "tol": {
+                  "abs": 12
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "About −£317: she is short gamma and realised volatility beat implied.",
+            "generic": "Use $\\tfrac12\\Gamma S^2 \\times$ (realised variance minus implied variance) $\\times$ time, with the sign of a short position.",
+            "byKey": {
+              "sign": "You gave her the long option's P&L. She is short gamma, so realised above implied costs her.",
+              "no-half": "You left out the half in $\\tfrac12\\Gamma S^2$.",
+              "vol-gap": "You used the gap in volatilities, 0.08. The formula uses the gap in variances, $0.28^2 - 0.20^2 = 0.0384$.",
+              "no-time": "You counted a whole year of variance. Only 21 of 252 days passed."
+            }
+          },
+          "explain": {
+            "text": "$\\tfrac12 \\times 0.0198 \\times 100^2 \\times 1{,}000 = 99{,}000$ per unit of variance. She is short, so the P&L is $-99{,}000 \\times (0.0784 - 0.04) \\times 21/252 = -316.80$, about −£317."
+          }
+        }
+      ]
     },
     {
       "id": "e-code-mm",
@@ -1666,7 +1837,8 @@
       "difficulty": 4,
       "skills": [
         "tp-bs",
-        "op-greeks"
+        "op-greeks",
+        "tp-riskneutral"
       ],
       "title": "Black-Scholes and the hedge",
       "prose": "A desk sells 2,000 six-month European calls struck at £75.00 on a share at £80.00, with no dividends. It uses $\\sigma = 25\\%$ and $r = 3\\%$ a year, compounded continuously, so $T = 0.5$. The table gives $\\Phi$, the standard normal cdf.",
@@ -1707,69 +1879,161 @@
         "state": {},
         "maxHeight": 220
       },
-      "question": "Fill in $d_1$, $d_2$, the call's price and the shares the desk buys to hedge.",
-      "widget": {
-        "kind": "table",
-        "columns": [
-          "Quantity",
-          "Value"
-        ],
-        "rows": [
-          [
-            "$d_1$",
-            {
-              "edit": true,
-              "answer": 0.5383,
-              "tol": {
-                "abs": 0.001
-              }
+      "tags": [
+        "digital-option",
+        "vol-smile"
+      ],
+      "parts": [
+        {
+          "question": "Fill in $d_1$, $d_2$, the call's price and the shares the desk buys to hedge.",
+          "widget": {
+            "kind": "table",
+            "columns": [
+              "Quantity",
+              "Value"
+            ],
+            "rows": [
+              [
+                "$d_1$",
+                {
+                  "edit": true,
+                  "answer": 0.5383,
+                  "tol": {
+                    "abs": 0.001
+                  }
+                }
+              ],
+              [
+                "$d_2$",
+                {
+                  "edit": true,
+                  "answer": 0.3615,
+                  "tol": {
+                    "abs": 0.001
+                  }
+                }
+              ],
+              [
+                "Price of one call (£)",
+                {
+                  "edit": true,
+                  "answer": 9.01,
+                  "tol": {
+                    "abs": 0.01
+                  }
+                }
+              ],
+              [
+                "Shares to buy",
+                {
+                  "edit": true,
+                  "answer": 1409.6,
+                  "tol": {
+                    "abs": 1
+                  }
+                }
+              ]
+            ]
+          },
+          "feedback": {
+            "correct": "$c = 80 \\times 0.7048 - 73.88 \\times 0.6412 = 9.01$, and the hedge is about 1,410 shares.",
+            "generic": "Compute $d_1$ and $d_2$, read $\\Phi$ from the table, then price and hedge with $\\Phi(d_1)$.",
+            "byKey": {
+              "r0c1": "Use $d_1 = \\dfrac{\\ln(80/75) + (0.03 + 0.25^2/2) \\times 0.5}{0.25\\sqrt{0.5}}$. The denominator is $\\sigma\\sqrt T$, not $\\sigma$.",
+              "r1c1": "$d_2 = d_1 - \\sigma\\sqrt T = d_1 - 0.1768$.",
+              "r2c1": "Discount the strike: $75e^{-0.015} = 73.88$.",
+              "r3c1": "The hedge is $\\Phi(d_1)$ shares per call sold, times 2,000."
             }
-          ],
-          [
-            "$d_2$",
-            {
-              "edit": true,
-              "answer": 0.3615,
-              "tol": {
-                "abs": 0.001
+          },
+          "explain": {
+            "text": "$\\ln(80/75) = 0.0645$ and $(0.03 + 0.03125) \\times 0.5 = 0.0306$; over $0.25\\sqrt{0.5} = 0.1768$ that gives $d_1 = 0.5383$ and $d_2 = 0.3615$. The call is $80 \\times 0.7048 - 75e^{-0.015} \\times 0.6412 = 9.01$ pounds. Short 2,000 calls need $2{,}000 \\times 0.7048 \\approx 1{,}410$ shares."
+          }
+        },
+        {
+          "question": "A client asks for a digital call instead: £1 paid in six months if the share is above £75.00. What is its price, to four decimal places?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.6316,
+            "tol": {
+              "abs": 0.0008
+            },
+            "unit": "£",
+            "label": "Digital call",
+            "wrong": [
+              {
+                "id": "no-discount",
+                "value": 0.6412,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "d1-slip",
+                "value": 0.6943,
+                "tol": {
+                  "abs": 0.001
+                }
+              },
+              {
+                "id": "put-slip",
+                "value": 0.3535,
+                "tol": {
+                  "abs": 0.001
+                }
               }
+            ]
+          },
+          "feedback": {
+            "correct": "$e^{-0.015} \\times 0.6412 = 0.6316$.",
+            "generic": "A digital call is $e^{-rT}\\Phi(d_2)$. Use $d_2$ from the table above.",
+            "byKey": {
+              "no-discount": "You gave the risk-neutral chance, $\\Phi(d_2)$. The £1 arrives in six months, so discount it by $e^{-0.015}$.",
+              "d1-slip": "You used $\\Phi(d_1)$, the call's delta. A digital uses $\\Phi(d_2)$.",
+              "put-slip": "That is the digital put, $e^{-rT}\\Phi(-d_2)$. The call pays above £75."
             }
-          ],
-          [
-            "Price of one call (£)",
-            {
-              "edit": true,
-              "answer": 9.01,
-              "tol": {
-                "abs": 0.01
+          },
+          "explain": {
+            "text": "A digital call is $e^{-rT}\\Phi(d_2) = e^{-0.015} \\times 0.6412 = 0.6316$. It is the limit of a tight call spread divided by its width."
+          }
+        },
+        {
+          "prose": "In the market the 70-strike puts on this share trade at an implied volatility of 29% and the 80-strike puts at 25%, for the same expiry.",
+          "question": "What does the 70 strike's higher volatility say?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "a",
+                "text": "The market gives a fall to £70 more weight than a lognormal model at 25% does",
+                "correct": true
+              },
+              {
+                "id": "sell",
+                "text": "The 70 puts are mispriced, so sell them",
+                "why": "An implied vol is the market's price, not an error. Selling it needs a view that realised volatility will be lower."
+              },
+              {
+                "id": "rise",
+                "text": "The share is expected to rise",
+                "why": "Dearer low-strike puts reflect demand for crash protection, not a forecast of a rise."
+              },
+              {
+                "id": "flat",
+                "text": "Nothing: every strike should share one vol",
+                "why": "Black-Scholes assumes that, and the market does not follow it. The slope is the skew."
               }
-            }
-          ],
-          [
-            "Shares to buy",
-            {
-              "edit": true,
-              "answer": 1409.6,
-              "tol": {
-                "abs": 1
-              }
-            }
-          ]
-        ]
-      },
-      "feedback": {
-        "correct": "$c = 80 \\times 0.7048 - 73.88 \\times 0.6412 = 9.01$, and the hedge is about 1,410 shares.",
-        "generic": "Compute $d_1$ and $d_2$, read $\\Phi$ from the table, then price and hedge with $\\Phi(d_1)$.",
-        "byKey": {
-          "r0c1": "Use $d_1 = \\dfrac{\\ln(80/75) + (0.03 + 0.25^2/2) \\times 0.5}{0.25\\sqrt{0.5}}$. The denominator is $\\sigma\\sqrt T$, not $\\sigma$.",
-          "r1c1": "$d_2 = d_1 - \\sigma\\sqrt T = d_1 - 0.1768$.",
-          "r2c1": "Discount the strike: $75e^{-0.015} = 73.88$.",
-          "r3c1": "The hedge is $\\Phi(d_1)$ shares per call sold, times 2,000."
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "The skew puts more risk-neutral weight on large falls.",
+            "generic": "Ask what a higher implied vol at a low strike says about the distribution, not the future."
+          },
+          "explain": {
+            "text": "A skew that falls as the strike rises puts more risk-neutral weight on large falls. It is a statement about the distribution, not about the future."
+          }
         }
-      },
-      "explain": {
-        "text": "$\\ln(80/75) = 0.0645$ and $(0.03 + 0.03125) \\times 0.5 = 0.0306$; over $0.25\\sqrt{0.5} = 0.1768$ that gives $d_1 = 0.5383$ and $d_2 = 0.3615$. The call is $80 \\times 0.7048 - 75e^{-0.015} \\times 0.6412 = 9.01$ pounds. Short 2,000 calls need $2{,}000 \\times 0.7048 \\approx 1{,}410$ shares."
-      }
+      ]
     },
     {
       "id": "e-forward-dividend-arb",
@@ -1833,7 +2097,8 @@
       "difficulty": 4,
       "skills": [
         "tp-multistep",
-        "op-parity"
+        "op-parity",
+        "tp-riskneutral"
       ],
       "title": "An American put on two steps",
       "prose": "A share at £50.00 is multiplied by $u = 1.2$ or $d = 0.8$ at each of two steps. Cash grows by $1 + r$ per step, with $r = 3\\%$ per step. An American put struck at £52.00 may be exercised at any node.",
@@ -1917,50 +2182,93 @@
           "caption": "Cash grows by $1 + r$ per step, $r = 3\\%$. Exercise pays $52 - S$."
         }
       },
-      "question": "What is the American put worth today? Give two decimal places.",
-      "widget": {
-        "kind": "numeric",
-        "answer": 5.87,
-        "tol": {
-          "abs": 0.006
-        },
-        "unit": "£",
-        "placeholder": "a number of pounds",
-        "label": "American put value",
-        "accept": "£5.87, exercising at the £40.00 node",
-        "wrong": [
-          {
-            "id": "european",
-            "value": 5.25,
+      "tags": [
+        "exotic-ranking"
+      ],
+      "parts": [
+        {
+          "question": "What is the American put worth today? Give two decimal places.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 5.87,
             "tol": {
               "abs": 0.006
+            },
+            "unit": "£",
+            "placeholder": "a number of pounds",
+            "label": "American put value",
+            "accept": "£5.87, exercising at the £40.00 node",
+            "wrong": [
+              {
+                "id": "european",
+                "value": 5.25,
+                "tol": {
+                  "abs": 0.006
+                }
+              },
+              {
+                "id": "exercise-now",
+                "value": 2.0,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Exercise at £40.00, where £12.00 beats holding's £10.49. The put is worth £5.87.",
+            "generic": "Find $q$, then at each node keep the larger of holding and $52 - S$.",
+            "byKey": {
+              "european": "You took the max only at expiry. At £40.00 exercising pays £12.00, more than the £10.49 from holding.",
+              "exercise-now": "You exercised today for £2.00. Holding is worth more."
             }
           },
-          {
-            "id": "exercise-now",
-            "value": 2.0,
-            "tol": {
-              "abs": 0.005
+          "explain": {
+            "text": "$q = (1.03 - 0.8)/0.4 = 0.575$, and the leaves pay £0, £4 and £20. At £40.00 holding is worth $(0.575 \\times 4 + 0.425 \\times 20)/1.03 = 10.49$, so exercise for £12.00. Today it is $(0.575 \\times 1.65 + 0.425 \\times 12)/1.03 = 5.87$, against £5.25 for the European put.",
+            "canvas": {
+              "highlight": [
+                "d"
+              ]
             }
           }
-        ]
-      },
-      "feedback": {
-        "correct": "Exercise at £40.00, where £12.00 beats holding's £10.49. The put is worth £5.87.",
-        "generic": "Find $q$, then at each node keep the larger of holding and $52 - S$.",
-        "byKey": {
-          "european": "You took the max only at expiry. At £40.00 exercising pays £12.00, more than the £10.49 from holding.",
-          "exercise-now": "You exercised today for £2.00. Holding is worth more."
+        },
+        {
+          "question": "List the four paths of the tree. Which order of today's values is right, dearest first, for three puts struck at £52.00 on this tree: the American put, the European put, and a put on the average of the two step prices (an Asian)?",
+          "widget": {
+            "kind": "choice",
+            "options": [
+              {
+                "id": "a",
+                "text": "American, European, Asian",
+                "correct": true
+              },
+              {
+                "id": "eu-first",
+                "text": "European, American, Asian",
+                "why": "The American put can do everything the European can, so it cannot be cheaper."
+              },
+              {
+                "id": "asian-mid",
+                "text": "American, Asian, European",
+                "why": "You treated the average as extra choice. On this tree the average is calmer, so the Asian put is worth less. Check it by listing the paths."
+              },
+              {
+                "id": "equal",
+                "text": "All three are equal at this strike",
+                "why": "Early exercise adds value to a put when rates are positive, and on this tree averaging removes some."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "£5.87, £5.25 and £4.57, in that order.",
+            "generic": "Price each put on the four paths. Averaging smooths the payoff; early exercise adds choice."
+          },
+          "explain": {
+            "text": "The values are £5.87, £5.25 and £4.57. The first two come from the tree above. The Asian is worth $\\big(0.2444 \\times 8 + 0.1806 \\times 16\\big)/1.03^2 = 4.57$, found by listing the four paths."
+          }
         }
-      },
-      "explain": {
-        "text": "$q = (1.03 - 0.8)/0.4 = 0.575$, and the leaves pay £0, £4 and £20. At £40.00 holding is worth $(0.575 \\times 4 + 0.425 \\times 20)/1.03 = 10.49$, so exercise for £12.00. Today it is $(0.575 \\times 1.65 + 0.425 \\times 12)/1.03 = 5.87$, against £5.25 for the European put.",
-        "canvas": {
-          "highlight": [
-            "d"
-          ]
-        }
-      }
+      ]
     },
     {
       "id": "e-split-impact",

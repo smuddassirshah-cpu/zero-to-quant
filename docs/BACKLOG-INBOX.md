@@ -1108,3 +1108,7 @@ trees L4 (5 Nov):
 - [Could] `plane`: when a curve ends near y = 0 at the right edge (an implied density, l16 screens 1 to 5), the x-axis title drops below the axis and collides with the canvas caption. Workaround: removed the caption and put the setting in the prose.
 - [Could] Pyodide homework code with NumPy has no cheap vector normal cdf: `np.vectorize(math.erf)` over 1.5 million values took about 1.4 s a call in CPython, against 0.6 s for a table read with `np.interp` (and Pyodide is slower), while SciPy is a heavy load. Wanted: a documented light route (for example a `norm_cdf` helper in prelude conventions). Workaround: homework-4 `hedged_vol_report` prelude builds a 3,201-point table from `math.erf` and interpolates (error about 1e-7).
 - [Could] `tools/validate.mjs`: the point-hint highlight warning does not know `distribution` or `bars` ids (`curve`, a category id), so authors must add them by hand; a plane `sketch` screen with no functions needs the id `sketch`. No change needed beyond documenting them.
+
+Raised later (exam topic-1.7 extension (5 Nov)):
+- [Could] Exam playthrough counts parts as items ("37 items" for a 30-item exam). Wanted: "30 items, 37 parts" so it matches the validator cap wording.
+- [Could] The playthrough does not assert that an item-level `canvas.highlight` in a part-1 `explain` fires (e-american-put node d); it was left unchecked. Wanted: a check or a screenshot of the review state of a part with a highlight.
