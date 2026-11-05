@@ -13,6 +13,9 @@
   const K = 32;                         // Elo K factor
   const ELO_START = 1200;               // PLAN section 6 schema
   const MASTERY = 0.8;                  // lesson quiz share that marks a lesson mastered
+  const REVIEW_PASS = 0.8;              // review pass share when a review file carries no pass (matches MASTERY); met rule 1
+  const SKILL_FLOOR = 0.7;              // per-skill share every essential skill of a level needs for a review, test-out or exam pass to meet it (rules 2, 4)
+  const REVEAL_CAP = 0.25;              // share of a lesson's gradable screens that may be revealed (Solve) before it stops counting as done (rule 3)
   const REDO_FIRST = 7, REDO_SECOND = 30;
   const REST_EVERY = 7, REST_MAX = 2;
   const QUALIFY_PROBLEMS = 3;
@@ -49,6 +52,12 @@
     prereq: { met: {}, testouts: {}, opened: {}, started: {}, grandfathered: false },   // prerequisite gating (ENGINE-BACKLOG 481): levels recorded met, test-out attempts, levels opened early
   });
   const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
+  /* The skills below the floor: bySkill is { skill: [correct, total] } over auto rows; an essential skill that is absent or has no rows is below it */
+  const floorGaps = (bySkill, essential, floor = SKILL_FLOOR) => (essential || []).filter(s => {
+    const v = bySkill && bySkill[s];
+    const [c, t] = Array.isArray(v) ? v : v == null ? [0, 0] : [v, v];
+    return !(t > 0 && c / t >= floor - 1e-9);
+  });
   /* Fill anything missing from a loaded or imported document with the defaults, one level deep, keeping unknown keys */
   const normalise = (raw) => {
     const d = fresh();
@@ -88,7 +97,7 @@
   const lessonId = (course, lesson) => `${course}/${lesson}`;
   const lessonRec = (course, lesson) => {
     const id = lessonId(course, lesson);
-    return doc.lessons[id] || (doc.lessons[id] = { attempts: 0, done: false, firstTry: null, xp: 0, bestQuiz: null, mastered: false, perfect: false, completedAt: null, secondsSpent: 0, position: null, positionAt: null });
+    return doc.lessons[id] || (doc.lessons[id] = { attempts: 0, done: false, firstTry: null, xp: 0, bestQuiz: null, mastered: false, perfect: false, completedAt: null, secondsSpent: 0, position: null, positionAt: null, revealed: [], gradable: 0 });
   };
   const itemRating = (difficulty) => 1000 + (Math.min(5, Math.max(1, Number(difficulty) || 1)) - 1) * 150;
   const mpFor = (difficulty) => 2 * Math.min(5, Math.max(1, Math.round(Number(difficulty) || 2)));
@@ -214,6 +223,13 @@
   const screenGraded = ({ course, lesson, screen, ok, firstTry, revealed, difficulty = 1, skills = [] } = {}) => {
     const rec = lessonRec(course, lesson);
     const repeat = rec.done;
+    /* revealed screens (met rule 3): a Solve before the lesson is first finished adds the screen; a later honest solve takes it off */
+    if (screen != null) {
+      if (!Array.isArray(rec.revealed)) rec.revealed = [];
+      const at = rec.revealed.indexOf(screen);
+      if (revealed && !rec.done && at < 0) rec.revealed.push(screen);
+      else if (ok && !revealed && at >= 0) rec.revealed.splice(at, 1);
+    }
     let xp = 0;
     if (ok && !revealed && !repeat) xp = firstTry ? XP.first : XP.retry;
     doc.xp += xp; rec.xp += xp;
@@ -231,6 +247,7 @@
     doc.xp += xp; rec.xp += xp;
     rec.attempts++; rec.done = true;
     if (firstTry) rec.firstTry = firstTry;
+    if (Array.isArray(firstTry) && Number(firstTry[1]) >= 0) rec.gradable = Number(firstTry[1]);   // gradable screens plus quiz items, the denominator of the reveal cap
     rec.perfect = rec.perfect || !!perfect;
     rec.completedAt = rec.completedAt || now();
     rec.secondsSpent += Math.max(0, Number(seconds) || 0);
@@ -241,6 +258,9 @@
     return { xp, qualified, repeat };
   };
 
+  /* Rule 3: a lesson counts as done (for prerequisites and progress) unless more than REVEAL_CAP of its gradable screens were revealed. Raw rec.done still means finished. */
+  const revealShare = (r) => (r && Number(r.gradable) > 0 && Array.isArray(r.revealed) ? r.revealed.length / Number(r.gradable) : 0);
+  const lessonCounts = (r) => !!(r && r.done && !(revealShare(r) > REVEAL_CAP + 1e-9));
   const quizFinished = ({ course, lesson, score = 0, items = 0, wrongItems = [], results, skills = [], seconds = 0 } = {}) => {
     const rec = lessonRec(course, lesson);
     const repeat = !!rec.bestQuiz;
@@ -255,14 +275,14 @@
     const share = total ? correct / total : 0;
     const mastered = share >= MASTERY;
     if (mastered) rec.mastered = true;
-    const redo = mastered ? [] : list.filter(x => !x.ok).map(x => redoAdd({ kind: 'quiz', ref: x.ref || { course, lesson, item: x.id }, skills: x.skills, difficulty: x.difficulty }));
+    const redo = list.filter(x => !x.ok).map(x => redoAdd({ kind: 'quiz', ref: x.ref || { course, lesson, item: x.id }, skills: x.skills, difficulty: x.difficulty }));
     logSeconds('main', seconds, 'quiz');
     const qualified = touch();
     changed('lessons');
     return { xp, mp, mastered, redo, qualified };
   };
 
-  const reviewFinished = ({ course, id, score = 0, items = 0, wrongItems = [], results, skills = [], seconds = 0, pass = 0.7 } = {}) => {
+  const reviewFinished = ({ course, id, score = 0, items = 0, wrongItems = [], results, skills = [], seconds = 0, pass = REVIEW_PASS } = {}) => {
     const key = `${course}/${id}`;
     const prev = doc.reviews[key];
     const repeat = !!prev;
@@ -276,8 +296,13 @@
     /* passed is sticky: a later weaker attempt never takes it away (prerequisite gating, ENGINE-BACKLOG 481) */
     /* passedAuto: the same pass mark over auto and external rows only (self rows leave numerator and denominator); prerequisite met reads it */
     const selfN = list.filter(isSelf).length, aTotal = Math.max(0, total - selfN), aCorrect = list.filter(x => x.ok && !isSelf(x)).length;
+    /* Rule 2: passedAuto also needs every essential skill (every skill tagged on the items) at SKILL_FLOOR over the auto rows of this attempt; passBySkill keeps the attempt that met it */
+    const bySkill = {}, essential = [...new Set(list.flatMap(x => x.skills || []).filter(Boolean))];
+    list.filter(x => !isSelf(x)).forEach(x => (x.skills || []).forEach(sk => { if (!sk) return; const b = bySkill[sk] || (bySkill[sk] = [0, 0]); b[1]++; if (x.ok) b[0]++; }));
+    const metNow = aTotal > 0 && aCorrect >= Math.ceil(aTotal * pass - 1e-9) && floorGaps(bySkill, essential).length === 0;
+    const kept = !!(prev && prev.passedAuto);
     doc.reviews[key] = { score: correct, items: total, at: now(), passed: !!((prev && prev.passed) || (total > 0 && correct >= Math.ceil(total * pass - 1e-9))),
-      passedAuto: !!((prev && prev.passedAuto) || (aTotal > 0 && aCorrect >= Math.ceil(aTotal * pass - 1e-9))) };
+      passedAuto: kept || metNow, essential, bySkill, ...(kept ? (prev.passBySkill ? { passBySkill: prev.passBySkill } : {}) : metNow ? { passBySkill: bySkill } : {}) };
     const redo = list.filter(x => !x.ok).map(x => redoAdd({ kind: 'quiz', ref: x.ref || { course, lesson: id, item: x.id }, skills: x.skills, difficulty: x.difficulty }));
     logSeconds('main', seconds, 'review');
     const qualified = touch();
@@ -391,8 +416,14 @@
     /* passedAuto: the pass with self rows (and self checks) left out; absent when the caller gave none and an old attempt has none either.
        Without results or self rows it equals passed. checks: [{ name, how: 'self', ok }], the tick boxes the app cannot mark. */
     const hasSelf = Array.isArray(results) && results.some(isSelf);
+    /* bySkillAuto (met rule 4): { skill: [correct, total] } over auto and external rows only; without results it is bySkill */
+    let bySkillAuto = bySkill;
+    if (Array.isArray(results) && results.length && results.every(x => x && Array.isArray(x.skills))) {
+      bySkillAuto = {};
+      results.filter(x => !isSelf(x)).forEach(x => x.skills.forEach(sk => { if (!sk) return; const b = bySkillAuto[sk] || (bySkillAuto[sk] = [0, 0]); b[1]++; if (x.ok) b[0]++; }));
+    }
     const pa = typeof passedAuto === 'boolean' ? passedAuto : (hasSelf || (Array.isArray(checks) && checks.length) ? undefined : !!passed);
-    rec.attempts.push({ at: now(), score, items, passed: !!passed, ...(typeof pa === 'boolean' ? { passedAuto: pa } : {}), ...(Array.isArray(checks) && checks.length ? { checks: checks.map(c => ({ name: String(c.name), how: 'self', ok: !!c.ok })) } : {}), bySkill, ...(extra && typeof extra === 'object' ? extra : {}) }); // extra: a mock's net, wrong, blank, seed, seconds
+    rec.attempts.push({ at: now(), score, items, passed: !!passed, ...(typeof pa === 'boolean' ? { passedAuto: pa } : {}), ...(Array.isArray(checks) && checks.length ? { checks: checks.map(c => ({ name: String(c.name), how: 'self', ok: !!c.ok })) } : {}), bySkill, bySkillAuto, ...(extra && typeof extra === 'object' ? extra : {}) }); // extra: a mock's net, wrong, blank, seed, seconds
     const redo = (Array.isArray(results) ? results : []).filter(x => x && !x.ok && (x.id != null || (x.ref && x.ref.item != null)))
       .map(x => redoAdd({ kind: 'exam', ref: x.ref && x.ref.exam ? x.ref : { exam: id, item: x.id }, skills: x.skills || [], difficulty: x.difficulty || 3 }));
     logTiming(results);
@@ -555,7 +586,7 @@
       try {
         (C.allCourses || C.courses)().forEach(c => {
           const ls = C.courseLessons(c.id).filter(x => x.kind === 'lesson');
-          const done = ls.filter(x => doc.lessons[lessonId(c.id, x.id)] && doc.lessons[lessonId(c.id, x.id)].done).length;
+          const done = ls.filter(x => lessonCounts(doc.lessons[lessonId(c.id, x.id)])).length;
           courseProgress[c.id] = ls.length ? done / ls.length : 0;
         });
       } catch (e) { console.error(e); }
@@ -574,7 +605,7 @@
       streakOff: doc.settings.streakMode === 'off', week,
       xp: doc.xp, mp: doc.mp,
       hoursWeek, hoursWeekTotal: Math.round(Object.values(hoursWeek).reduce((a, b) => a + b, 0) * 100) / 100, weeklyGoalH: goal, weekGoal: weeklySplit(goal),
-      lessonsDone: lessons.filter(([, r]) => r.done).length, mastered: lessons.filter(([, r]) => r.mastered).length,
+      lessonsDone: lessons.filter(([, r]) => lessonCounts(r)).length, mastered: lessons.filter(([, r]) => r.mastered).length,
       courseProgress, skillMastery,
       redoDue: due.length, redoMinutes: due.length * 2, redoTotal: doc.redo.length,
       homeworkOpen, resume,
@@ -615,10 +646,10 @@
     lessonPosition: { set: positionSet, get: positionGet },
     lesson: (course, lesson) => doc.lessons[lessonId(course, lesson)] || null,
     prereq: ns('prereq', { mark: prereqMet, testout: prereqTestout, open: prereqOpened, start: prereqStarted, grandfather: prereqGrandfathered, get: () => prq() }),
-    screenGraded, lessonFinished, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult, bankResult, provenance, howOf,
+    screenGraded, lessonFinished, lessonCounts, revealShare, floorGaps, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult, bankResult, provenance, howOf,
     summary, weeklySplit,
     export: exportDoc, import: importDoc, reset, flush,
-    dates, rules: { XP, MASTERY, REDO_FIRST, REDO_SECOND, REST_EVERY, REST_MAX, QUALIFY_PROBLEMS, K, ELO_START, BLOCKS, TRACKS, GOALS, itemRating, mpFor },
+    dates, rules: { XP, MASTERY, REVIEW_PASS, SKILL_FLOOR, REVEAL_CAP, REDO_FIRST, REDO_SECOND, REST_EVERY, REST_MAX, QUALIFY_PROBLEMS, K, ELO_START, BLOCKS, TRACKS, GOALS, itemRating, mpFor },
     /* Test hook: replace the clock (a function returning ms) and reload from storage. Not for screens. */
     _setClock(fn) { clock = typeof fn === 'function' ? fn : () => Date.now(); },
     _reload() { doc = read(); return doc; },
