@@ -59,3 +59,42 @@ Almost every number reproduces to the stated digits (all of l13 to l18, the revi
 ## Verdict
 
 Fix the six errors before the level agent starts (the 12.88 key, the Asian fixing count, the r on the American-put pairs, the homework count, the exam gamma mismatch, the smile direction). The repetition warnings change the lesson plan and are cheaper to fix now than after authoring.
+
+## Fix pass
+
+Script re-run after the edits: **PASS: 207 checks, every number computed by two independent methods** (34 new checks under "fix pass numbers" in `check_l4.py`, brief updated). 16 findings fixed in the Errors and Warnings lists plus all 13 notes; 0 disputed.
+
+Errors
+- l13 `whole-gap`: fixed. Key 12.88 tol 0.02 (8.00 + 4.8771 = 12.8771, by closed form and by put-call parity), checked in the script; no 12.44 remains.
+- l17 screen 4 Asian: fixed. Screen now says daily closes (4.6 stays, 252 fixings 4.6254); 12 fixings give 4.8977 (Monte Carlo 4.9036, se 0.0087, ratio 0.614), 52 give 0.587; screen 9 reads "daily-averaged".
+- American against European put: fixed. Screen 5 row and review item 5 state r = 5%; at r = 0 the two are equal on an 800-step tree (7.9631 both), now the l17 trap (screen 6).
+- Homework 6 count: fixed. Sixth statement added (false: vega is largest for the shortest expiry; 2.51 against 39.70), so four true, two false.
+- `e-greek-signs` gamma: fixed. Parts 2 and 3 both use one year and 20% (peak 94.18, gamma 0.0198); −317 kept.
+- `e-bs-hedge` smile: fixed. Now "a skew that falls as the strike rises".
+
+Warnings
+- l16 and l18 prerequisites: fixed. One-line recap rule in Context; report to propose `opt-dash/L3` in `requires`.
+- l18 screens 2 to 4 repeats: fixed. One recap screen; new screens on the variance gap (0.0276) and the Itô step along the real path.
+- Repeats (l18 screen 9, l16 screen 9, l14 screens 3 and 4, l17 screen 6): fixed. l18 transfer is a loss (−47,556); l16 uses an 80/120 risk reversal (+0.9224 skew, −0.9614 flat); l14 uses K = 130 gamma (ratio 6.58) and vega = ΓS²σT; l17 screen 6 takes the put at r = 0.
+- l14 screen 2 tolX: fixed. `tolX` 5 plus an `at-strike` region [99.5, 102] with the byKey line.
+- l14 screen 1 band: fixed. 0.05 (ramp error 0.1003 checked in the script).
+- Homework 2: fixed. Layout fixed in the starter, `norm_cdf` in the prelude, `bool(...)`, four se, se within 15%, mean within four se.
+- l18 screen 10 NumPy: fixed. Prelude holds prices as a literal list; docstring says simple return.
+- `e-american-put` part 2: fixed. Question says list the four paths; `asian-mid` why limited to this tree.
+- l18 screen 8: fixed. States 26% realised against 20% implied.
+- Follow-up screens: fixed. Marked l13 screen 5, l14 screen 5, l17 screen 3.
+
+Notes
+- l13 quiz doubling: fixed ("spot and strike", "about").
+- l14 quiz Greek: fixed (which falls as expiry nears: vega).
+- l14 screen 7 trap: fixed ("at the strike").
+- l14 screen 6 and review item 2: fixed (short call row; distractor "the short call").
+- l15 `unscaled-width`: fixed (5.325 for the undivided h = 10 spread, checked).
+- l16 screen 2 density: fixed (lognormal in `exp`, `ln`, `sqrt`; step 2.5).
+- l17 `path_payoffs`: fixed (`path[0]` is the start; Asian averages `path[1:]`; test a rising path).
+- l17 monitoring: fixed (continuous stated on screen 3, the intro and homework 5).
+- Homework 3 `order`: fixed (Itô on V_i along the σ_r path, distractor "gamma is constant").
+- `vol-gap`: fixed (−660).
+- Exam voice: fixed (part 3 prose and `e-atm-rule` explain split).
+- `e-american-put` canvas: fixed (playthrough check noted, fallback to part 1).
+- `e-crr-q` coverage: no action, as the reviewer said.
