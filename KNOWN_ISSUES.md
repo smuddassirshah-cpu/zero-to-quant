@@ -161,3 +161,4 @@ Process found this session:
 - (5 Nov) Open user decision, review-perf-pilots Q1: the proof L3 performance task gates met on a Stage 0 level the verb rule excludes (DECISIONS "Performance tasks in force").
 - (5 Nov) ENGINE-BACKLOG 533 (per-case run time), 536 (follow-ups as their own step), 537 (aloud clock reading stored) deferred.
 - (5 Nov) `docs/reports/coding-int-1-perf.md` describes the pre-fix task (`count_prefix`); the fix pass replaced it (add, remove, has, longest_listed, count_match). The review's Fix pass section is current.
+- Session P (5 Nov): `playthrough.mjs --all --local-cdn` runs over two hours and its single browser closes after about 786 items ("Target page, context or browser has been closed"); every later item throws. coint/l12, backtest/l9, proof/homework-3 and topic-3.5 pass alone. Engine item in the inbox.
