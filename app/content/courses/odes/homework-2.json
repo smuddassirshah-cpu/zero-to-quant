@@ -1,0 +1,406 @@
+{
+ "id": "homework-2",
+ "course": "odes",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-step",
+   "difficulty": 5,
+   "skills": [
+    "de-second"
+   ],
+   "tags": [
+    "step-response"
+   ],
+   "prose": "A filter obeys $y'' + 2\\zeta\\omega y' + \\omega^2y = \\omega^2$ from rest: a unit step. Write `step_response(zeta, w, t)` in all three regimes, vectorised in `t`. Use $y_h + 1$ and fit $y(0) = y'(0) = 0$.",
+   "question": "Write `step_response`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef step_response(zeta, w, t):\n    \"\"\"y(t) for y'' + 2 zeta w y' + w^2 y = w^2, from y(0) = y'(0) = 0.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef step_response(zeta, w, t):\n    \"\"\"y(t) for y'' + 2 zeta w y' + w^2 y = w^2, from y(0) = y'(0) = 0.\"\"\"\n    t = np.asarray(t, dtype=float)\n    if abs(zeta - 1) < 1e-12:\n        return 1 - (1 + w * t) * np.exp(-w * t)\n    if zeta < 1:\n        wd = w * np.sqrt(1 - zeta ** 2)\n        return 1 - np.exp(-zeta * w * t) * (np.cos(wd * t) + zeta / np.sqrt(1 - zeta ** 2) * np.sin(wd * t))\n    s = np.sqrt(zeta ** 2 - 1)\n    r1, r2 = -w * (zeta - s), -w * (zeta + s)\n    return 1 + (r2 * np.exp(r1 * t) - r1 * np.exp(r2 * t)) / (r1 - r2)\n",
+    "examples": [
+     {
+      "call": "round(float(step_response(0.25, 2, 1)), 6)",
+      "expect": "1.070645",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "round(float(step_response(0.25, 2, 1)), 6)",
+      "expect": "1.070645",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(step_response(1, 2, 1)), 6)",
+      "expect": "0.593994",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(step_response(1.25, 2, 1)), 6)",
+      "expect": "0.515599",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(step_response(0.5, 1, np.array([0.0, 2.0])), 6).tolist()",
+      "expect": "[0.0, 0.849426]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "round(float(step_response(0, 2, np.pi / 2)), 6)",
+      "expect": "2.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(float(step_response(3, 1, 40)), 6)",
+      "expect": "0.998922",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests within a relative 1e-9 (absolute 1e-6 where a value is 0). They cover all three regimes and no damping. The first run loads NumPy."
+   },
+   "feedback": {
+    "correct": "One function, three regimes, each fitted to rest.",
+    "generic": "Some tests failed. Check each branch at $t = 0$: it must give 0 with slope 0.",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace the `...` with your function body."
+    }
+   },
+   "explain": {
+    "text": "Over-damped: with roots $r_1, r_2$, $y = 1 + \\dfrac{r_2e^{r_1t} - r_1e^{r_2t}}{r_1 - r_2}$, which is 0 with slope 0 at $t = 0$.\n\n```python\nr1, r2 = -w * (zeta - s), -w * (zeta + s)\nreturn 1 + (r2 * np.exp(r1 * t) - r1 * np.exp(r2 * t)) / (r1 - r2)\n```"
+   }
+  },
+  {
+   "id": "h-repeated",
+   "difficulty": 4,
+   "skills": [
+    "de-second"
+   ],
+   "tags": [
+    "char-roots"
+   ],
+   "prose": "Let $r$ be a double root, so the equation is $y'' - 2ry' + r^2y = 0$. Show $y = te^{rt}$ solves it. One line is wrong; leave it out.",
+   "question": "Put the proof in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$y' = (1 + rt)e^{rt}$, by the product rule"
+     },
+     {
+      "id": "b",
+      "text": "$y'' = (2r + r^2t)e^{rt}$, by the product rule again"
+     },
+     {
+      "id": "c",
+      "text": "$y'' - 2ry' + r^2y = [2r + r^2t - 2r - 2r^2t + r^2t]e^{rt}$, substituting"
+     },
+     {
+      "id": "d",
+      "text": "$= 0$: the constants $2r - 2r$ and the $t$ terms $r^2t - 2r^2t + r^2t$ cancel"
+     },
+     {
+      "id": "x",
+      "text": "$= 0$ for every $r$, so $te^{rt}$ solves every constant-coefficient equation",
+      "why": "The cancellation used the coefficients $-2r$ and $r^2$, which only a double root gives."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "feedback": {
+    "correct": "Two product rules, substitute, cancel.",
+    "generic": "Not quite right. Find $y'$ and $y''$ before substituting.",
+    "byKey": {
+     "x": "You claimed too much. The cancellation needs $b = -2r$ and $c = r^2$, a double root."
+    }
+   },
+   "explain": {
+    "text": "The proof uses $(r^2 - 2r \\cdot r + r^2) = 0$ for the $t$ terms and $2r - 2r = 0$ for the rest. Both rely on the double root."
+   }
+  },
+  {
+   "id": "h-ivp",
+   "difficulty": 4,
+   "skills": [
+    "de-second"
+   ],
+   "tags": [
+    "char-roots"
+   ],
+   "prose": "Take $y'' + 2y' + 2y = 0$ with $y(0) = 0$, $y'(0) = 1$.",
+   "question": "What is $y(\\pi/2)$, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2079,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.2079: $y = e^{-t}\\sin t$",
+    "wrong": [
+     {
+      "id": "noenv",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "cos",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Roots $-1 \\pm i$; $c_1 = 0$, $c_2 = 1$: $y = e^{-t}\\sin t$, so $y(\\pi/2) = e^{-\\pi/2} = 0.2079$.",
+    "generic": "Not quite right. Fit $y = e^{-t}(c_1\\cos t + c_2\\sin t)$: $y(0) = c_1$, $y'(0) = -c_1 + c_2$.",
+    "byKey": {
+     "noenv": "You forgot the decay factor $e^{-\\pi/2}$.",
+     "cos": "You used $\\cos t$; $y(0) = 0$ means $c_1 = 0$."
+    }
+   },
+   "explain": {
+    "text": "$y = e^{-t}\\sin t$ and $y(\\pi/2) = e^{-\\pi/2} = 0.2079$."
+   }
+  },
+  {
+   "id": "h-resonant-exp",
+   "difficulty": 4,
+   "skills": [
+    "de-second"
+   ],
+   "tags": [
+    "undetermined-coefficients"
+   ],
+   "prose": "Take $y'' - 3y' + 2y = e^{t}$. Its homogeneous solutions are $e^t$ and $e^{2t}$.",
+   "question": "With $y_p = Ate^{t}$, what is $A$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "$-1$",
+    "wrong": [
+     {
+      "id": "plus",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$A[(2 + t) - 3(1 + t) + 2t]e^t = -Ae^t$, so $A = -1$.",
+    "generic": "Not quite right. $y_p' = A(1 + t)e^t$, $y_p'' = A(2 + t)e^t$.",
+    "byKey": {
+     "plus": "Check the constant: $2 - 3 = -1$, so $-A = 1$.",
+     "half": "A half appears only for a double root, as in $y'' - 2y' + y = e^t$."
+    }
+   },
+   "explain": {
+    "text": "The $t$ terms cancel ($t - 3t + 2t$), leaving $-Ae^t = e^t$. So $A = -1$ and $y_p = -te^t$."
+   }
+  },
+  {
+   "id": "h-peak",
+   "difficulty": 4,
+   "skills": [
+    "de-second"
+   ],
+   "tags": [
+    "resonance"
+   ],
+   "prose": "Take $y'' + 0.4y' + 4y = \\cos\\omega t$, so $\\zeta = 0.1$. The peak is at $\\omega = 2\\sqrt{1 - 2\\zeta^2}$.",
+   "question": "What is the peak steady amplitude, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.2563,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "1.2563",
+    "wrong": [
+     {
+      "id": "at2",
+      "value": 1.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "static",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "At $\\omega^2 = 3.92$: $1/\\sqrt{0.08^2 + 0.16 \\times 3.92} = 1.2563$.",
+    "generic": "Not quite right. Use $1/\\sqrt{(4 - \\omega^2)^2 + (0.4\\omega)^2}$ at $\\omega^2 = 3.92$.",
+    "byKey": {
+     "at2": "That is the amplitude at $\\omega = 2$ exactly. The peak is slightly lower in frequency and slightly higher.",
+     "static": "That is $\\omega = 0$, the static response."
+    }
+   },
+   "explain": {
+    "text": "$\\omega = 1.9799$ and the amplitude is 1.2563, five times the static 0.25. Light damping makes a sharp, tall peak."
+   }
+  },
+  {
+   "id": "h-slow-root",
+   "difficulty": 4,
+   "skills": [
+    "de-second"
+   ],
+   "tags": [
+    "damping"
+   ],
+   "prose": "Take $y'' + by' + 4y = 0$ with heavy damping.",
+   "question": "Which $b$ makes the slow root $-0.5$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "8.5: $0.25 - 0.5b + 4 = 0$",
+    "wrong": [
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 4.25,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$r = -0.5$ gives $0.25 - 0.5b + 4 = 0$, so $b = 8.5$; the other root is $-8$.",
+    "generic": "Not quite right. Put $r = -0.5$ into $r^2 + br + 4 = 0$.",
+    "byKey": {
+     "four": "That is critical damping.",
+     "half": "You dropped the factor 0.5 on $b$."
+    }
+   },
+   "explain": {
+    "text": "$b = 8.5$: roots $-0.5$ and $-8$ (they multiply to 4). The slow part halves every $\\ln 2/0.5 = 1.39$, so heavy damping settles slowly."
+   }
+  },
+  {
+   "id": "h-statements",
+   "difficulty": 3,
+   "skills": [
+    "de-second"
+   ],
+   "tags": [
+    "second-order"
+   ],
+   "prose": "Statements about $y'' + p(t)y' + q(t)y = g(t)$.",
+   "question": "Select all that apply: which are true?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "diff",
+      "text": "The difference of two solutions solves the homogeneous equation",
+      "correct": true
+     },
+     {
+      "id": "two",
+      "text": "Two starting values $y(0)$, $y'(0)$ fix one solution",
+      "correct": true
+     },
+     {
+      "id": "sum",
+      "text": "The sum of two solutions is a solution",
+      "why": "Only when $g = 0$; otherwise the sum solves the equation with $2g$."
+     },
+     {
+      "id": "fitfirst",
+      "text": "The constants may be fitted before adding $y_p$",
+      "why": "Fitting must use the full $y_h + y_p$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Differences of forced solutions are homogeneous, and two starting values fix the solution.",
+    "generic": "Not quite right. Superposition needs $g = 0$."
+   },
+   "explain": {
+    "text": "Subtracting two forced equations cancels $g$. Sums double it. Constants are fitted last."
+   }
+  },
+  {
+   "id": "h-smoother",
+   "difficulty": 5,
+   "skills": [
+    "de-second"
+   ],
+   "kind": "longform",
+   "tags": [
+    "damping"
+   ],
+   "title": "The smoother that reacts fastest",
+   "prompt": "A colleague smooths a price with $y'' + 2\\zeta\\omega y' + \\omega^2y = \\omega^2x$, with $\\omega = 0.5$ a day and $\\zeta = 0.25$. She says it \"reacts fastest\". Write a note. Explain the overshoot after a £1 jump with the figure. Give the cost in false signals. Say what critical damping gives, and the lag each filter pays on a trend of £1 a day.",
+   "model": "**1. Overshoot.** With $\\zeta = 0.25 < 1$ the roots are complex, so the step response rings. The first peak overshoots by $e^{-\\zeta\\pi/\\sqrt{1 - \\zeta^2}} = e^{-0.8112} = 44.43\\%$. After a £1 jump the smoothed price reaches about £1.44 above the old level, at $t = \\pi/(\\omega\\sqrt{1 - \\zeta^2}) = 6.49$ days.\n\n**2. False signals.** A rule that trades on the smoothed price sees a 44p move that the price never made. It then sees the swing back. So it trades twice on one jump, paying two spreads and probably losing on each.\n\n**3. Critical damping.** With $\\zeta = 1$ the roots are a double real root, $-\\omega$. The response $1 - (1 + \\omega t)e^{-\\omega t}$ never overshoots, and it is the fastest filter that does not.\n\n**4. Lag on a trend.** For $x = t$, try $y_p = t + c$: $2\\zeta\\omega + \\omega^2c = 0$, so the lag is $2\\zeta/\\omega$. With $\\omega = 0.5$: 1 day for $\\zeta = 0.25$, 4 days for $\\zeta = 1$. So she is right that it reacts faster on a trend. But it pays with overshoot on every jump.\n\n**5. Verdict.** \"Fastest\" trades lag for false signals. Most desks take $\\zeta$ near 1 and accept the 4-day lag, or raise $\\omega$ to cut it.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Gives the overshoot $e^{-\\zeta\\pi/\\sqrt{1 - \\zeta^2}} = 44.43\\%$ and explains it from complex roots."
+    },
+    {
+     "points": 2,
+     "text": "Explains the false signal: a move the price never made, and the round trip it costs."
+    },
+    {
+     "points": 2,
+     "text": "States that $\\zeta = 1$ never overshoots and is the fastest response that does not."
+    },
+    {
+     "points": 2,
+     "text": "Derives the trend lag $2\\zeta/\\omega$: 1 day at $\\zeta = 0.25$ and 4 days at $\\zeta = 1$."
+    },
+    {
+     "points": 2,
+     "text": "Weighs lag against overshoot and gives a clear recommendation."
+    }
+   ]
+  }
+ ]
+}
