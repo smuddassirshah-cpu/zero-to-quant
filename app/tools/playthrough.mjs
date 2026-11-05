@@ -1657,7 +1657,7 @@ const main = async () => {
           await importDoc();
         }
         /* 7b2. Readiness contract (PLAN 2c item 2): a trader is never offered graphs-dp or contests as Today's next work, and edges into an
-           optional course are advisory (brainteasers L2 needs graphs-dp/L3, game-theory L2 needs graphs-dp/L4); a developer and an undecided learner still block. */
+           optional course are advisory (brainteasers L3 needs contests/L2; the graphs-dp edges into brainteasers L2 and game-theory L2 are diagnostics since item 8); a developer and an undecided learner still block. */
         {
           const OPT = ['graphs-dp', 'contests'];
           const todayCourse = async () => { await route('today'); return evalOnly(() => { const h = document.querySelector('.zt-hero'); return h ? h.getAttribute('aria-label') || '' : ''; }); };
@@ -1679,21 +1679,21 @@ const main = async () => {
           await importDoc({ profile: Object.assign(JSON.parse(await evalOnly(() => ZQ.state.export())).profile, { track: 'Trader' }) });
           const adv = (track) => evalOnly((t) => {
             ZQ.state.profile.set({ track: t });
-            ZQ.prereq.unlockRefs(['brainteasers/L1', 'game-theory/L1', 'micro/L3', 'limits/L4', 'brainteasers/L2']);
-            const rest = ZQ.prereq.missingFor('brainteasers', ZQ.content.course('brainteasers').levels.find(l => l.n === 2).lessons[0]);
-            return { bt: ZQ.prereq.levelLocked('brainteasers', 2), gt: ZQ.prereq.levelLocked('game-theory', 2), note: ZQ.prereq.advisoryForLevel('brainteasers', 2).length, direct: rest.direct.map(n => n.ref) };
+            ZQ.prereq.unlockRefs(['brainteasers/L1', 'game-theory/L1', 'micro/L3', 'limits/L4', 'brainteasers/L2', 'mental/L3', 'series/L2', 'exp-log/L3']);
+            const rest = ZQ.prereq.missingFor('brainteasers', ZQ.content.course('brainteasers').levels.find(l => l.n === 3).lessons[0]);
+            return { bt: ZQ.prereq.levelLocked('brainteasers', 3), gt: ZQ.prereq.levelLocked('game-theory', 2), note: ZQ.prereq.advisoryForLevel('brainteasers', 3).length, direct: rest.direct.map(n => n.ref) };
           }, track);
           const tr = await adv('Trader');
-          if (tr.bt || tr.gt) fails.push(`trader: brainteasers L2 locked ${tr.bt}, game-theory L2 locked ${tr.gt}; edges into graphs-dp should be advisory`);
-          if (!tr.note) fails.push('trader: brainteasers L2 shows no advisory note for graphs-dp/L3');
-          await importDoc(); await evalOnly(() => ZQ.prereq.unlockRefs(['brainteasers/L1', 'game-theory/L1', 'micro/L3', 'limits/L4']));
+          if (tr.bt || tr.gt) fails.push(`trader: brainteasers L3 locked ${tr.bt}, game-theory L2 locked ${tr.gt}; edges into contests should be advisory and graphs-dp diagnostics never lock`);
+          if (!tr.note) fails.push('trader: brainteasers L3 shows no advisory note for contests/L2');
+          await importDoc(); await evalOnly(() => ZQ.prereq.unlockRefs(['brainteasers/L1', 'game-theory/L1', 'micro/L3', 'limits/L4', 'brainteasers/L2', 'mental/L3', 'series/L2', 'exp-log/L3']));
           await evalOnly(() => ZQ.state.profile.set({ track: 'Trader' }));
-          await route(`lesson/brainteasers/${await evalOnly(() => ZQ.content.course('brainteasers').levels.find(l => l.n === 2).lessons[0])}`);
-          if (await evalOnly(() => !!document.querySelector('.lk') || !document.querySelector('.lsn'))) fails.push('trader: brainteasers L2 first lesson did not open without graphs-dp met');
+          await route(`lesson/brainteasers/${await evalOnly(() => ZQ.content.course('brainteasers').levels.find(l => l.n === 3).lessons[0])}`);
+          if (await evalOnly(() => !!document.querySelector('.lk') || !document.querySelector('.lsn'))) fails.push('trader: brainteasers L3 first lesson did not open without contests met');
           for (const t of ['Developer', 'Undecided']) {
-            await importDoc(); await evalOnly(() => ZQ.prereq.unlockRefs(['brainteasers/L1']));
-            const r = await evalOnly((t) => { ZQ.state.profile.set({ track: t }); return ZQ.prereq.levelLocked('brainteasers', 2); }, t);
-            if (!r) fails.push(`${t}: brainteasers L2 should still lock while graphs-dp/L3 is unmet`);
+            await importDoc(); await evalOnly(() => ZQ.prereq.unlockRefs(['brainteasers/L1', 'brainteasers/L2', 'mental/L3', 'series/L2', 'exp-log/L3']));
+            const r = await evalOnly((t) => { ZQ.state.profile.set({ track: t }); return ZQ.prereq.levelLocked('brainteasers', 3); }, t);
+            if (!r) fails.push(`${t}: brainteasers L3 should still lock while contests/L2 is unmet`);
           }
           await importDoc();
         }
@@ -1915,7 +1915,7 @@ const main = async () => {
     };
 
     /* ---------- Capstone card and role verdicts (PLAN 2c item 8, F06, ENGINE-BACKLOG 564, 566): part of --routes-only ----------
-       A fresh profile: no role is ready (ZQ.content.readiness.status), Today never says "ready" as a role verdict, and the You screen draws the Capstone card
+       A fresh profile: no role is ready (ZQ.content.readiness.roleState), Today never says "ready" as a role verdict, and the You screen draws the Capstone card
        with one read-only block per role, the learner's own role first, no sideways scroll, and a note that the reviewer fills content/capstones.json. */
     const capstoneChecks = async () => {
       where = '#you (capstone)';
@@ -1930,7 +1930,7 @@ const main = async () => {
           d.profile = Object.assign(d.profile || {}, { track: 'Researcher' });
           ZQ.state.import(d); ZQ.prereq.sync(); ZQ.content._setCapstones([]);
         });
-        const roles = await page.evaluate(() => ['trader', 'researcher', 'developer', 'strats', 'strats-deriv'].map(r => ({ r, ready: ZQ.content.readiness.status(r).ready, v: ZQ.content.readiness.verdict(r) })));
+        const roles = await page.evaluate(() => ['trader', 'researcher', 'developer', 'strats', 'strats-deriv'].map(r => ({ r, ready: ZQ.content.readiness.roleState(r).ready, v: ZQ.content.readiness.verdict(r) })));
         roles.filter(x => x.ready || /^ready/i.test(x.v)).forEach(x => fails.push(`a fresh profile shows ${x.r} as ready`));
         await go('today'); await page.waitForTimeout(400);
         const today = await page.evaluate(() => (document.querySelector('.screen-today') || document.body).innerText);

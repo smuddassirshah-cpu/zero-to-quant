@@ -50,26 +50,26 @@ const complete = { role: ROLE, project: 'my-book', repo: 'https://github.com/a/b
 
 await test('capstone (a): every required level met but no external record is not ready', async () => {
   meetAll();
-  const s = C.readiness.status(ROLE);
+  const s = C.readiness.roleState(ROLE);
   eq(s.levels.met, s.levels.total, 'all levels met'); ok(s.levels.total > 0, 'has levels');
   ok(!s.ready, 'not ready'); ok(s.missing.includes('Capstone not recorded'), `missing says so (${s.missing})`);
   ok(!/^ready/i.test(C.readiness.verdict(ROLE)), `verdict is not Ready (${C.readiness.verdict(ROLE)})`);
 });
 await test('capstone (a2): an empty record is "not done" and levels unmet is not ready', async () => {
   C._setCapstones([{ role: ROLE, project: '', repo: '', reviewer: '', date: '', rerun: '', defence: '', external: false }]);
-  ok(!C.readiness.status(ROLE).ready, 'empty record, no levels: not ready');
+  ok(!C.readiness.roleState(ROLE).ready, 'empty record, no levels: not ready');
   meetAll();
-  ok(!C.readiness.status(ROLE).ready, 'empty record, levels met: still not ready');
-  eq(C.readiness.status(ROLE).missing[0], 'Capstone not recorded', 'empty record reads as not recorded');
+  ok(!C.readiness.roleState(ROLE).ready, 'empty record, levels met: still not ready');
+  eq(C.readiness.roleState(ROLE).missing[0], 'Capstone not recorded', 'empty record reads as not recorded');
 });
 await test('capstone (b): every required level met and a complete external record is ready', async () => {
   meetAll(); C._setCapstones([complete]);
-  const s = C.readiness.status(ROLE);
+  const s = C.readiness.roleState(ROLE);
   ok(s.ready && s.capstoneDone && !s.missing.length, 'ready'); eq(C.readiness.verdict(ROLE), 'Ready', 'verdict');
 });
 await test('capstone (b2): a complete record with levels unmet is not ready', async () => {
   C._setCapstones([complete]);
-  const s = C.readiness.status(ROLE);
+  const s = C.readiness.roleState(ROLE);
   ok(!s.ready && s.capstoneDone, 'record done, levels not');
   ok(/required levels not met/.test(s.missing[0]), `says levels (${s.missing})`);
 });
@@ -77,14 +77,18 @@ await test('capstone (c): an incomplete external record (blank reviewer, or reru
   meetAll();
   for (const bad of [{ reviewer: '' }, { rerun: 'fail' }, { rerun: '' }, { external: false }, { repo: '' }, { date: '  ' }]) {
     C._setCapstones([{ ...complete, ...bad }]);
-    ok(!C.readiness.status(ROLE).ready, `not ready with ${JSON.stringify(bad)}`);
+    ok(!C.readiness.roleState(ROLE).ready, `not ready with ${JSON.stringify(bad)}`);
   }
   C._setCapstones([{ ...complete, reviewer: '' }]);
-  eq(C.readiness.status(ROLE).missing[0], 'Capstone incomplete', 'says incomplete');
+  eq(C.readiness.roleState(ROLE).missing[0], 'Capstone incomplete', 'says incomplete');
 });
 await test('capstone: undecided and a missing file are never ready', async () => {
-  ok(!C.readiness.status('undecided').ready, 'undecided'); ok(C.readiness.verdict('undecided') === '', 'no verdict for undecided');
+  ok(!C.readiness.roleState('undecided').ready, 'undecided'); ok(C.readiness.verdict('undecided') === '', 'no verdict for undecided');
   eq(C.readiness.capstones().length, 0, 'missing file is an empty list');
+});
+await test('readiness: status(course, role) still returns the course status (advisory edges read it)', async () => {
+  eq(C.readiness.status(oneCourse.id, ROLE), 'required', 'course status for the role');
+  eq(typeof C.readiness.roleState, 'function', 'role verdict is a separate function');
 });
 
 /* ---------- oa drill and the code performance task ---------- */

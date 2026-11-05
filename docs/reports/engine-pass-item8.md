@@ -12,3 +12,6 @@ Tests: test-capstone 9 of 9, test-validate-capstone 17 of 17; test-met-rule 17, 
 Playthrough `--routes-only` (desktop and `--mobile`): the new capstone check passes. The existing gating check fails in both modes on trader brainteasers L2 (`graphs-dp/L3` is still a hard edge in content; the DECISIONS lever turns it into a diagnostic, a content change). Not caused by this pass.
 
 Main session: write the five empty records, regenerate `manifest.json`.
+
+## Main-session fix after merge
+The role verdict was added as a second `status` key on `ZQ.content.readiness`, shadowing `status(course, role)`. Advisory edges (`prereq.js` `advisory`) then never fired, so a trader was locked out of brainteasers L3 by `contests/L2`. Renamed to `roleState(role)`; `test-capstone.mjs` gains a case that `status(course, role)` still returns the course status (10 of 10). The `--routes-only` gating fixture moved from brainteasers L2 (now a diagnostic, user lever) to brainteasers L3 needing `contests/L2`, the only remaining gate from a trader course into a trader-optional one.

@@ -335,7 +335,7 @@
         return `<div class="yu-card-h"><div><h2 class="t-h1" id="yu-cp-h">Capstone</h2>
             <p class="t-caption secondary">A role is ready only with its required levels met and an external capstone, rerun from clean and reviewed. The reviewer fills these records in <code>content/capstones.json</code>.</p></div></div>
           <ul class="yu-cp-list">${roles.map(r => {
-            const rec = C.readiness.capstone(r) || {}, st = C.readiness.status(r), done = !!rec.role && C.readiness.capstoneComplete(rec);
+            const rec = C.readiness.capstone(r) || {}, st = C.readiness.roleState(r), done = !!rec.role && C.readiness.capstoneComplete(rec);
             const label = done ? 'Capstone complete' : (rec.role && (rec.external || rec.repo || rec.reviewer || rec.date || rec.project)) ? 'Capstone incomplete' : 'Capstone not recorded';
             return `<li class="yu-cp${r === own ? ' is-own' : ''}" data-role="${r}">
               <div class="yu-cp-h"><span class="t-label">${ROLE_NAME[r]}${r === own ? ' (your role)' : ''}</span>

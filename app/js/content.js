@@ -248,7 +248,7 @@
     capstoneComplete: (r) => capstoneComplete(r),
     /* Role status: { role, levels: { total, met, missing: [{course, n}] }, capstone: record|null, capstoneDone, ready, missing: [text] }.
        Ready only when every level of the role's required courses is met and a complete external capstone record exists. */
-    status: (role) => {
+    roleState: (role) => {
       const P = window.ZQ && window.ZQ.prereq, r = readinessDoc && readinessDoc.roles[role];
       const levels = { total: 0, met: 0, missing: [] };
       if (r && r.courses && P) Object.keys(r.courses).filter(c => r.courses[c] === 'required').forEach(cid => {
@@ -262,7 +262,7 @@
       return { role, levels, capstone: rec, capstoneDone: done, ready: !missing.length, missing };
     },
     /* The word "ready" as a role verdict comes only from here. */
-    verdict: (role) => { const s = readiness.status(role); return s.ready ? 'Ready' : s.missing[0] === 'No role chosen' ? '' : `Not ready: ${s.missing.join('; ').toLowerCase()}`; },
+    verdict: (role) => { const s = readiness.roleState(role); return s.ready ? 'Ready' : s.missing[0] === 'No role chosen' ? '' : `Not ready: ${s.missing.join('; ').toLowerCase()}`; },
   };
   /* A record counts only when external is true and repo, reviewer, date are non-empty and the rerun result is pass. */
   function capstoneComplete(r) { return !!r && r.external === true && ['repo', 'reviewer', 'date'].every(k => typeof r[k] === 'string' && r[k].trim()) && r.rerun === 'pass'; }
