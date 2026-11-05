@@ -404,8 +404,10 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       /* item 515: with unit "%" the engine divides what the learner types by 100, so the key is the fraction (0.1587, not 15.87) */
       if (w.unit === '%') {
         const accText = typeof w.accept === 'string' ? w.accept : '';
-        /* item 516: only the leading figure of the accept text counts (the first number, before any colon, followed by % or "per cent") */
-        const lead = accText.replace(/\\%/g, '%').split(':')[0].match(/(-?[−–]?\d[\d,]*(?:\.\d+)?)(\s*(?:%|per ?cent))?/i);
+        /* items 516, 517: the accept figure that represents the key: the one after the last "=" or "\\approx" if it is followed by % or "per cent", else the leading figure (first number, before any colon) if followed by % or "per cent" */
+        const fig = /(-?[−–]?\d[\d,]*(?:\.\d+)?)(\s*(?:%|per ?cent))?/i, flat = accText.replace(/\\%/g, '%');
+        const tailTxt = flat.split(/=|\\approx/).slice(1).pop(), tailM = tailTxt && tailTxt.match(fig);
+        const lead = tailM && tailM[2] ? tailM : flat.split(':')[0].match(fig);
         const shown = lead && lead[2] ? [Math.abs(+lead[1].replace(/[−–,]/g, '').replace(/^-/, ''))] : [];
         const pctKey = (v, f, isKey) => {
           if (typeof v !== 'number' || !Number.isFinite(v) || v === 0 || (Math.abs(v) <= 1 && !isKey)) return; // at or below 1, only the key itself (a wrong value may be a real per cent)

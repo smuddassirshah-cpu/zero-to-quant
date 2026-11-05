@@ -1393,6 +1393,9 @@ Source: `docs/reviews/pct-keys-scan.txt` (37 numeric widgets with `unit: "%"` st
 
 516. Done (per cent leading figure): `tools/playthrough.mjs` (`pctWidgets`) and `tools/validate.mjs` (numeric case) read only the leading figure of `accept` (the first number, before any colon, followed by `%`); the extra typed form is skipped otherwise (fixes a false alarm on measure-prob l11 screens[8], "250: 1% a day for 250 days"). The validator error now also covers keys at or below 1: leading accept figure followed by `%` equal to a non-zero key (key 0.63, accept "0.630%: ...", should be 0.0063). Documented in `docs/AUTHORING.md` section 3 (numeric).
 
+517. Done (per cent representative figure): item 516 typed the leading accept figure, which fails correct keys whose accept shows working first (limits-thm l9 screens[8]: "$2\\% / \\sqrt{2000} \\approx 0.0447\\%$", key 0.000447). `tools/playthrough.mjs` (`pctWidgets`) now types the figure after the last `=` or `\\approx` if its hundredth is within tolerance of the key, else any figure whose hundredth is, else the leading figure (which then fails, as before). `tools/validate.mjs` (numeric case) takes the figure after the last `=` or `\\approx` when followed by `%`, else the leading figure, as the figure compared with the key. Still skipped unless the leading figure is followed by `%`. Documented in `docs/AUTHORING.md` section 3 (numeric).
+
 Status block (validator pass, per cent keys):
 - 515 (per cent keys): done.
 - 516 (per cent leading figure): done.
+- 517 (per cent representative figure): done.

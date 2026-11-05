@@ -153,11 +153,15 @@ const pctWidgets = (root) => {
     if (!v || typeof v !== 'object') return;
     if (v.kind === 'numeric' && v.unit === '%' && typeof v.answer === 'number') {
       const k = Math.round(v.answer * 1e10) / 1e8, typed = [String(k), k + '%'];
-      /* item 516: only the leading figure of the accept text (the first number, before any colon, followed by %) is typed; any other figure is skipped */
-      const head = String(typeof v.accept === 'string' ? v.accept : '').replace(/\\%/g, '%').split(':')[0];
-      const lead = head.match(/([-−–]?\d[\d,]*(?:\.\d+)?)(\s*%)?/);
-      if (lead && lead[2]) { const n = lead[1].replace(/,/g, '').replace(/[−–]/g, '-'); typed.push(n, n + '%'); }
-      out.push({ at, answer: v.answer, tol: v.tol, typed });
+      /* items 516, 517: the accept figure that represents the key is typed, not simply the leading one: the figure after the last "=" or "\\approx", else any figure whose hundredth is within tolerance of the key (resolved in the page), else the leading figure, which then fails; skipped unless the leading figure is followed by % */
+      const txt = String(typeof v.accept === 'string' ? v.accept : '').replace(/\\%/g, '%'), head = txt.split(':')[0];
+      const lead = head.match(/([-−–]?\d[\d,]*(?:\.\d+)?)(\s*%)?/), num = /[-−–]?\d[\d,]*(?:\.\d+)?/g, clean = (n) => n.replace(/,/g, '').replace(/[−–]/g, '-');
+      let figs = null;
+      if (lead && lead[2]) {
+        const tail = txt.split(/=|\\approx/).slice(1).pop(), tailFig = tail ? (tail.match(num) || [])[0] : undefined;
+        figs = { lead: clean(lead[1]), tail: tailFig === undefined ? null : clean(tailFig), all: (txt.match(num) || []).map(clean) };
+      }
+      out.push({ at, answer: v.answer, tol: v.tol, typed, figs });
     }
     Object.entries(v).forEach(([k, x]) => seen(x, `${at}.${k}`));
   };
@@ -385,9 +389,13 @@ const main = async () => {
           if (pcts.length) {
             const bad = await page.evaluate((list) => {
               const G = ZQ.grade, out = [];
-              for (const w of list) for (const t of w.typed) {
+              for (const w of list) {
+                const ok = (n) => { const x = G.parseNum(n) / 100; return Number.isFinite(x) && G.within(x, +w.answer, w.tol); };
+                if (w.figs) { const f = w.figs, n = (f.tail !== null && ok(f.tail)) ? f.tail : (f.all.find(ok) ?? f.lead); w.typed.push(n, n + '%'); }
+                for (const t of w.typed) {
                 const v0 = G.parseNum(t), v = t.includes('%') ? v0 : v0 / 100;
                 if (!(Number.isFinite(v) && G.within(v, +w.answer, w.tol))) out.push(`${w.at}: typing "${t}" is not graded right (key ${w.answer})`);
+                }
               }
               return out;
             }, pcts);
