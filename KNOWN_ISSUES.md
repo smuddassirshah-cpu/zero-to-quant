@@ -149,3 +149,6 @@ Process found this session:
 - CLAUDE.md "Models" still says implementation subagents run on Sonnet, while `content-author` and second readers run on Opus (operating model 2.5 keeps them there).
 - `app/tools/merge-wave.sh` is named in SESSION PROTOCOL 3 but not written yet (2c O1); merge by DECISIONS "Parallel worktree merges" until it exists.
 
+- Readiness draft (2c item 2, `docs/readiness.md`): required trader courses `brainteasers` (needs graphs-dp L3, contests L2) and `game-theory` (needs graphs-dp L4) pull optional courses in. Until item 7 cuts or justifies those edges, Today cannot meet the acceptance "a fresh trader is never shown graphs-dp".
+- Readiness draft: trader required set is 442 lessons, 1,214 h, and the Learn figure (required plus recommended) is 630 lessons, 1,804 h. The old superday closure was 470 lessons. The required route is only 6% shorter; most of it is Stage 0 (193 lessons).
+- Readiness draft: topics 3.2 and 3.4 store 0 hours, so derivatives sub-route hours are understated (item 11).

@@ -289,7 +289,7 @@ The post is a sound resource list but not a curriculum: it has no order, no hour
 | No order, hours or tests | Fixed order, hours and an exit test per stage | Without them there is no way to know when to move on |
 | Axler listed first for linear algebra | Strang first, Axler in 1.10 | Axler is a proof-based second course |
 | Toronto text or DeGroot for probability | Blitzstein and Stat 110, the post's picks as alternatives | Closer to interview problems |
-| Finance basics optional | Required | Traders and researchers are asked about markets |
+| Finance basics optional | Recommended for traders and researchers, required for strats | Employer guidance does not make it universal (first review F01); strats screens test pricing |
 | ISLR optional | Core text | Validation and linear models are most of quant machine learning |
 | Géron, Keras and TensorFlow edition | PyTorch edition | Newer edition, October 2025 |
 | CampusX videos | English alternatives named | Teaching language, to my knowledge Hindi |

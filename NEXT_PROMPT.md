@@ -2,19 +2,14 @@ Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4
 
 Expected census (`node app/tools/census.mjs | tail -20`): lessons 1054 of 1214 (193, 507, 150, 204); reviews 243, none with `pass`; exams 22 topic, 1 stage, 11 mock; drills 35; bank 200; hours 3,265 stored, 3,695 summed. Any difference: fix state files first.
 
-Task: PLAN 2c item 2, readiness contract per role (F01, N04). Freeze in force. Do not write the contract until the user has answered:
+Task: PLAN 2c item 2, second half. Freeze in force.
 
-1. Roles: trader, researcher, developer, strats, derivatives? `state.js:20` has only Trader, Researcher, Developer, Undecided. Add strats and derivatives as tracks, or map them onto existing ones?
-2. Trader: are ds, graphs-dp, algo-think, contests, integrals and multivar required, recommended or optional? Today the trader superday closure pulls them in (107 levels, 470 lessons).
-3. Finance basics: required for traders and researchers (`docs/curriculum.md:292`) or recommended?
-4. Undecided: shared foundation to which stage before the role fork?
-5. Missing mocks (mock-video, mock-oa-strats, mock-superday-strats, mock-superday-developer, mock-oa-code-hard): listed as gaps, or dropped from prep.json?
-6. Learn header: one total for the chosen role only?
+Context not in state files: the user answered all eight questions (DECISIONS "Readiness contract answers"). `docs/readiness.md` is drafted and `node app/tools/readiness-sums.mjs` exits 0. The user has not signed it off. Open sign-off points: judgement calls in its "Notes for sign-off"; the trader required set is 442 lessons against the old 470-lesson closure (KNOWN_ISSUES); `brainteasers` and `game-theory` require graphs-dp and contests.
 
-Also pending: item 7 (odes and numerics before 2b: write them, or mark pdes route-limited) and item 8 (who reviews capstones).
+Step 1: ask the user to sign off `docs/readiness.md`, or take edits. Ask whether the brainteasers and game-theory edges into graphs-dp and contests are cut now (pulled forward from item 7) or Today filters optional courses regardless of edges. Re-run the script after any edit.
 
-With answers: agent drafts `docs/readiness.md` (independent tasks, required, recommended, optional courses, existing and missing mocks per role) from `docs/curriculum.md`, `content/prep.json` and `docs/reviews/review-curriculum-first.md` section 5; user signs off; then an engine agent makes Today read the role. Without answers: draft options only and stop.
+Step 2, only after sign-off: an engine-dev agent (Sonnet) adds the Strats track to `state.js:20`; makes Today read the role from the contract (required first, then recommended, never optional); makes the Learn header one total from the contract; shows "route limited: odes, numerics unwritten" on pdes. The contract may need a JSON form under `app/content/` for the engine; generate it from the script, never by hand.
 
-Files: `docs/readiness.md`, `app/js/screens/today.js`, `app/js/state.js`, `app/js/screens/learn.js`.
+Files: `docs/readiness.md`, `app/tools/readiness-sums.mjs`, `app/js/state.js`, `app/js/screens/today.js`, `app/js/screens/learn.js`, `docs/AUTHORING.md`.
 
-Acceptance: a fresh trader profile is never shown `graphs-dp` as next work unless the contract makes it required; Learn shows one total equal to the contract's sum for that role; `--routes-only` green.
+Acceptance: a fresh trader profile is never shown `graphs-dp` as next work; the Learn header for trader reads 630 lessons, 1,804 h (or the signed-off figure); `--routes-only` green; validator 0 errors. Tick item 2 only then.
