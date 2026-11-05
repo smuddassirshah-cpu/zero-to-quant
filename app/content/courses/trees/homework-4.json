@@ -1,0 +1,659 @@
+{
+  "id": "homework-4",
+  "course": "trees",
+  "level": 4,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h-rule-rate",
+      "difficulty": 4,
+      "skills": [
+        "tp-bs"
+      ],
+      "title": "The rule with a rate",
+      "prose": "With a rate, add half of $S - Ke^{-rT}$ to the 0.4 rule. The rule is for the money: it works near the forward and fails far from it. Write it, and measure the error against Black-Scholes.",
+      "question": "Complete `rule_with_rate(S, K, r, sigma, T)`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import erf, exp, log, sqrt\n\ndef Phi(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_call(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * Phi(d1) - K * exp(-r * T) * Phi(d1 - sigma * sqrt(T))\n\ndef rule_with_rate(S, K, r, sigma, T):\n    \"\"\"Return (rule, exact, error), error = rule - exact.\n    rule = 0.4 * sigma * sqrt(T) * S + 0.5 * (S - K * exp(-r * T)).\n    The rule is for the money: it is meant for K near the forward.\"\"\"\n    ...\n",
+        "solution": "from math import erf, exp, log, sqrt\n\ndef Phi(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\ndef bs_call(S, K, r, sigma, T):\n    d1 = (log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    return S * Phi(d1) - K * exp(-r * T) * Phi(d1 - sigma * sqrt(T))\n\ndef rule_with_rate(S, K, r, sigma, T):\n    \"\"\"Return (rule, exact, error), error = rule - exact.\n    rule = 0.4 * sigma * sqrt(T) * S + 0.5 * (S - K * exp(-r * T)).\n    The rule is for the money: it is meant for K near the forward.\"\"\"\n    rule = 0.4 * sigma * sqrt(T) * S + 0.5 * (S - K * exp(-r * T))\n    exact = bs_call(S, K, r, sigma, T)\n    return rule, exact, rule - exact\n",
+        "examples": [
+          {
+            "call": "list(rule_with_rate(100, 100, 0.05, 0.2, 1))",
+            "expect": "[10.4385, 10.4506, -0.0121]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 6e-05
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "list(rule_with_rate(100, 100, 0.05, 0.2, 1))",
+            "expect": "[10.4385, 10.4506, -0.0121]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 6e-05
+            }
+          },
+          {
+            "call": "list(rule_with_rate(100, 100, 0, 0.2, 1))",
+            "expect": "[8.0, 7.9656, 0.0344]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 6e-05
+            }
+          },
+          {
+            "call": "list(rule_with_rate(100, 130, 0.05, 0.2, 1))",
+            "expect": "[-3.8299, 1.6396, -5.4695]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 6e-05
+            }
+          },
+          {
+            "call": "list(rule_with_rate(100, 80, 0.03, 0.25, 0.5))",
+            "expect": "[17.6666, 21.8351, -4.1685]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 6e-05
+            }
+          },
+          {
+            "call": "list(rule_with_rate(50, 50, 0.02, 0.3, 0.25))",
+            "expect": "[3.1247, 3.1082, 0.0165]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 6e-05
+            }
+          },
+          {
+            "call": "abs(rule_with_rate(100, 130, 0.05, 0.2, 1)[2]) > 5",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(rule_with_rate(100, 100, 0.05, 0.2, 1)[2]) < 0.02",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 7 hidden tests, including a strike far from the forward where the error is large."
+      },
+      "feedback": {
+        "correct": "Within 1p at the money, and wrong by more than £5 far from it.",
+        "generic": "Not quite right. Check the discounted strike and the sign of the error."
+      },
+      "explain": {
+        "text": "At the money with 5% the rule is £10.4385 against £10.4506. At a strike of 130 it gives −£3.83 against £1.64: the rule is for the money only."
+      },
+      "tags": [
+        "option-estimate"
+      ],
+      "pace": 300
+    },
+    {
+      "id": "h-hedge-sim",
+      "difficulty": 5,
+      "skills": [
+        "tp-bs"
+      ],
+      "title": "Simulate the hedged P&L",
+      "prose": "Simulate daily-hedged long at-the-money options, bought and hedged at the implied vol while the share moves at the realised vol. The mean P&L should be close to $BS(\\sigma_r) - BS(\\sigma_i)$. The starter fixes the draw layout, and `norm_cdf` is loaded.",
+      "question": "Complete `bs_call_vec` and `hedged_vol_report`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import math\nimport numpy as np\n\n_X = np.linspace(-8.0, 8.0, 3201)\n_P = np.array([0.5 * (1 + math.erf(v / math.sqrt(2))) for v in _X])\n\ndef norm_cdf(x):\n    \"\"\"Standard normal cdf, element by element: a table built on math.erf,\n    read by linear interpolation (accurate to about 1e-7).\"\"\"\n    return np.interp(x, _X, _P)\n",
+        "starter": "import numpy as np\n\n# norm_cdf(x) is loaded: the standard normal cdf, element by element.\n\ndef bs_call_vec(S, sigma, T, K=100.0):\n    \"\"\"Black-Scholes call at r = 0. S and T may be arrays; T > 0.\"\"\"\n    d1 = ...\n    return ...\n\ndef hedged_vol_report(sigma_imp, sigma_real, paths, seed):\n    \"\"\"Long one at-the-money call (K = S0 = 100, T = 1, r = 0) bought at\n    the price for sigma_imp, hedged daily at sigma_imp, while the share\n    moves at sigma_real. Return (mean, se, price_gap, within).\"\"\"\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal((paths, 252))\n    dt = 1 / 252\n    # share paths: log steps -sigma_real^2/2 * dt + sigma_real * sqrt(dt) * z\n    ...\n    # per step P&L: value next - value now - delta * (S next - S now)\n    ...\n    pnl = ...                      # one total per path\n    mean = float(pnl.mean())\n    se = float(pnl.std(ddof=1) / np.sqrt(paths))\n    price_gap = ...                # BS(sigma_real) - BS(sigma_imp)\n    within = ...                   # plain bool: gap within four se of the mean\n    return mean, se, price_gap, within\n",
+        "solution": "import numpy as np\n\n# norm_cdf(x) is loaded: the standard normal cdf, element by element.\n\ndef bs_call_vec(S, sigma, T, K=100.0):\n    \"\"\"Black-Scholes call at r = 0. S and T may be arrays; T > 0.\"\"\"\n    d1 = (np.log(S / K) + 0.5 * sigma ** 2 * T) / (sigma * np.sqrt(T))\n    return S * norm_cdf(d1) - K * norm_cdf(d1 - sigma * np.sqrt(T))\n\ndef hedged_vol_report(sigma_imp, sigma_real, paths, seed):\n    \"\"\"Long one at-the-money call (K = S0 = 100, T = 1, r = 0) bought at\n    the price for sigma_imp, hedged daily at sigma_imp, while the share\n    moves at sigma_real. Return (mean, se, price_gap, within).\"\"\"\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal((paths, 252))\n    dt = 1 / 252\n    # share paths: log steps -sigma_real^2/2 * dt + sigma_real * sqrt(dt) * z\n    steps = -0.5 * sigma_real ** 2 * dt + sigma_real * np.sqrt(dt) * z\n    S = 100.0 * np.exp(np.cumsum(np.hstack([np.zeros((paths, 1)), steps]), axis=1))\n    tau = (252 - np.arange(252)) * dt              # time left at each step\n    S0, S1 = S[:, :-1], S[:, 1:]\n    now = bs_call_vec(S0, sigma_imp, tau)\n    d1 = (np.log(S0 / 100.0) + 0.5 * sigma_imp ** 2 * tau) / (sigma_imp * np.sqrt(tau))\n    delta = norm_cdf(d1)\n    nxt = np.empty_like(now)\n    nxt[:, :-1] = bs_call_vec(S1[:, :-1], sigma_imp, tau[:-1] - dt)\n    nxt[:, -1] = np.maximum(S1[:, -1] - 100.0, 0.0)\n    # per step P&L: value next - value now - delta * (S next - S now)\n    pnl = (nxt - now - delta * (S1 - S0)).sum(axis=1)\n    mean = float(pnl.mean())\n    se = float(pnl.std(ddof=1) / np.sqrt(paths))\n    price_gap = float(bs_call_vec(100.0, sigma_real, 1.0) - bs_call_vec(100.0, sigma_imp, 1.0))\n    within = bool(abs(mean - price_gap) < 4 * se)\n    return mean, se, price_gap, within\n",
+        "examples": [
+          {
+            "call": "round(hedged_vol_report(0.2, 0.26, 2000, 18)[2], 4)",
+            "expect": "2.3778",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "hedged_vol_report(0.2, 0.26, 2000, 18)[2]",
+            "expect": "2.3778",
+            "compare": "isclose",
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "call": "hedged_vol_report(0.2, 0.18, 2000, 18)[2]",
+            "expect": "-0.7943",
+            "compare": "isclose",
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "call": "hedged_vol_report(0.3, 0.25, 2000, 3)[2]",
+            "expect": "-1.9759",
+            "compare": "isclose",
+            "tol": {
+              "abs": 5e-05
+            }
+          },
+          {
+            "call": "hedged_vol_report(0.2, 0.26, 6000, 18)[1]",
+            "expect": "0.0154",
+            "compare": "isclose",
+            "tol": {
+              "rel": 0.15
+            }
+          },
+          {
+            "call": "abs(m - g) < 4 * s",
+            "expect": "True",
+            "compare": "equal",
+            "setup": "m, s, g, w = hedged_vol_report(0.2, 0.26, 6000, 18)"
+          },
+          {
+            "call": "abs(m - g) < 4 * s",
+            "expect": "True",
+            "compare": "equal",
+            "setup": "m, s, g, w = hedged_vol_report(0.2, 0.18, 6000, 18)"
+          },
+          {
+            "call": "w is True",
+            "expect": "True",
+            "compare": "equal",
+            "setup": "m, s, g, w = hedged_vol_report(0.3, 0.25, 6000, 3)"
+          },
+          {
+            "call": "abs(m) < 4 * s",
+            "expect": "True",
+            "compare": "equal",
+            "setup": "m, s, g, w = hedged_vol_report(0.2, 0.2, 6000, 7)"
+          }
+        ],
+        "how": "Check runs 8 hidden tests. The price gap is exact to 4 places, `se` is within 15% of the reference, and the mean lies within four standard errors of the gap.",
+        "budget": 30000,
+        "caseBudget": 30000
+      },
+      "feedback": {
+        "correct": "Your simulation reproduces the price gap within its standard error.",
+        "generic": "Not quite right. Check the hedge ratio at each step, the time left and the final payoff."
+      },
+      "explain": {
+        "text": "With 6,000 paths and seed 18 a realised 26% gives a mean of about 2.37 with standard error 0.015, against the price gap 2.3778. At 18% the mean is about −0.793 against −0.7943. The small shortfall comes from hedging daily, not continuously."
+      },
+      "tags": [
+        "gamma-pnl"
+      ],
+      "pace": 600
+    },
+    {
+      "id": "h-derive-gap",
+      "difficulty": 4,
+      "skills": [
+        "tp-bs"
+      ],
+      "title": "Expected P&L is a price gap",
+      "prose": "Put the lines in order to show that the expected hedged P&L is $BS(\\sigma_r) - BS(\\sigma_i)$. $r = 0$ and the share is a martingale.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "The hedged P&L over a step is $\\tfrac12\\Gamma_iS^2(R^2 - \\sigma_i^2\\,\\delta t)$, where $\\Gamma_i$ is the gamma at the implied vol"
+          },
+          {
+            "id": "b",
+            "text": "Apply Itô to $V_i(S, t)$, the price at $\\sigma_i$, along a share that moves at $\\sigma_r$: its drift is $\\tfrac12(\\sigma_r^2 - \\sigma_i^2)S^2\\Gamma_i$, using the pricing equation, and this is the expected P&L per unit time"
+          },
+          {
+            "id": "c",
+            "text": "Summing over time, $E[\\text{P\\&L}] = E_r[V_i(S_T, T)] - V_i(S_0, 0)$, because the drifts add up to the expected change in $V_i$"
+          },
+          {
+            "id": "d",
+            "text": "$V_i(S_T, T)$ is the payoff, so $E_r[V_i(S_T, T)]$ is the payoff's expectation at $\\sigma_r$, which is $BS(\\sigma_r)$; and $V_i(S_0, 0) = BS(\\sigma_i)$"
+          },
+          {
+            "id": "e",
+            "text": "So $E[\\text{P\\&L}] = BS(\\sigma_r) - BS(\\sigma_i)$"
+          },
+          {
+            "id": "x",
+            "text": "Gamma is constant, so $E[\\text{P\\&L}] = \\tfrac12\\Gamma S^2(\\sigma_r^2 - \\sigma_i^2)T$",
+            "why": "Gamma decays as the share wanders. A constant gamma gives 2.74 where the truth is 2.38."
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d",
+          "e"
+        ],
+        "distractors": [
+          "x"
+        ]
+      },
+      "feedback": {
+        "correct": "The drift of the implied-vol price, summed, is the price gap.",
+        "generic": "Not quite right. Write the step, apply Itô, sum, identify the endpoints, conclude.",
+        "byKey": {
+          "x": "Constant gamma overshoots: 2.74 against the true 2.38 at 26% realised.",
+          "e": "State the conclusion last, after both endpoints."
+        }
+      },
+      "explain": {
+        "text": "The expected hedged P&L is the expected change in $V_i$ along the real path. Its end is the payoff priced at $\\sigma_r$ and its start is the price at $\\sigma_i$."
+      },
+      "tags": [
+        "gamma-pnl"
+      ],
+      "pace": 240
+    },
+    {
+      "id": "h-skew-110",
+      "difficulty": 4,
+      "skills": [
+        "tp-bs",
+        "tp-riskneutral"
+      ],
+      "prose": "The skew of lesson 16 at $K = 110$: vol 18%, $S = 100$, $T = 1$, $r = 0$, slope −0.002 per strike point. Vega at 18% is 36.2214.",
+      "parts": [
+        {
+          "question": "Read the 18% as a flat vol: what is the digital call?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.2678,
+            "tol": {
+              "abs": 0.0005
+            },
+            "unit": "£",
+            "label": "Price in pounds",
+            "accept": "£0.2678: $\\Phi(d_2)$ at 18%",
+            "wrong": [
+              {
+                "id": "flat-20",
+                "value": 0.2821,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "£0.2678 at the strike's own vol.",
+            "generic": "Not quite right. $\\Phi(d_2)$ with the vol 18% and $K = 110$.",
+            "byKey": {
+              "flat-20": "You used 20%, the at-the-money vol. The strike's own vol is 18%."
+            }
+          },
+          "explain": {
+            "text": "$d_2 = (\\ln(100/110) - 0.0162)/0.18 = -0.6193$, and $\\Phi(-0.6193) = 0.2678$."
+          }
+        },
+        {
+          "question": "Add the skew's correction, vega times 0.002.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.3402,
+            "tol": {
+              "abs": 0.0005
+            },
+            "unit": "£",
+            "label": "Price in pounds",
+            "accept": "£0.3402: $0.2678 + 0.0724$",
+            "wrong": [
+              {
+                "id": "flat-only",
+                "value": 0.2678,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The skew adds 0.0724: £0.3402.",
+            "generic": "Not quite right. $36.2214 \\times 0.002 = 0.0724$.",
+            "byKey": {
+              "flat-only": "You left out the correction."
+            }
+          },
+          "explain": {
+            "text": "$0.2678 + 36.2214 \\times 0.002 = 0.3402$."
+          }
+        },
+        {
+          "question": "The flat-20% digital is 0.2821. By what fraction is the skew price larger?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.21,
+            "tol": {
+              "abs": 0.01
+            },
+            "label": "Fraction",
+            "accept": "0.21: $0.3402/0.2821 - 1 = 0.2059$",
+            "wrong": [
+              {
+                "id": "diff",
+                "value": 0.0581,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "About 21% larger.",
+            "generic": "Not quite right. Divide the skew price by 0.2821 and subtract 1.",
+            "byKey": {
+              "diff": "You gave the difference, 0.0581. The question asks for a fraction of the flat price."
+            }
+          },
+          "explain": {
+            "text": "$0.3402 / 0.2821 = 1.2059$, so the skew price is 0.21 above, as a fraction."
+          }
+        }
+      ],
+      "tags": [
+        "digital-option"
+      ],
+      "pace": 240
+    },
+    {
+      "id": "h-rank-exotics",
+      "difficulty": 4,
+      "skills": [
+        "tp-riskneutral",
+        "tp-multistep"
+      ],
+      "title": "Five options in order",
+      "prose": "At $r = 0$, $S = K = 100$, $\\sigma = 20\\%$, $T = 1$. Put the options from cheapest to dearest using reasons, not numbers. The European and the American call are tied.",
+      "question": "Put the options in order, cheapest first.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "ko",
+            "text": "Down-and-out call, barrier 99, monitored continuously: nearly dead at once, since 99 is 1% below the spot"
+          },
+          {
+            "id": "as",
+            "text": "Daily-averaged Asian call: the average has about $1/\\sqrt3$ of the vol"
+          },
+          {
+            "id": "eu",
+            "text": "European call: the vanilla benchmark"
+          },
+          {
+            "id": "am",
+            "text": "American call: no dividend, so no early exercise, so equal to the European"
+          },
+          {
+            "id": "lb",
+            "text": "Floating lookback call: it pays at least the vanilla on every path"
+          },
+          {
+            "id": "x",
+            "text": "The American call is dearer than the European",
+            "why": "No dividend means no early exercise, so the two are equal."
+          }
+        ],
+        "answer": [
+          "ko",
+          "as",
+          "eu",
+          "am",
+          "lb"
+        ],
+        "distractors": [
+          "x"
+        ],
+        "same": [
+          [
+            "eu",
+            "am"
+          ]
+        ]
+      },
+      "feedback": {
+        "correct": "Knock-out, Asian, European and American tied, lookback.",
+        "generic": "Not quite right. Dominance first, then volatility.",
+        "byKey": {
+          "x": "With no dividend there is no early exercise on a call.",
+          "ko": "The barrier at 99 is almost at the spot, so the option is nearly worthless."
+        }
+      },
+      "explain": {
+        "text": "The knock-out at 99 is worth about £0.96, the Asian £4.60, the European and American calls £7.97 and the lookback £14.98."
+      },
+      "tags": [
+        "exotic-ranking"
+      ],
+      "pace": 180
+    },
+    {
+      "id": "h-greek-claims",
+      "difficulty": 3,
+      "skills": [
+        "tp-bs"
+      ],
+      "title": "Which Greek claims are true?",
+      "prose": "All options are at the money with $r = 0$.",
+      "question": "Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "gt",
+            "text": "Gamma and theta have opposite signs for a long option",
+            "correct": true
+          },
+          {
+            "id": "day",
+            "text": "The gamma of a one-day option is much larger than that of a one-year option",
+            "correct": true
+          },
+          {
+            "id": "vega",
+            "text": "Vega falls as expiry nears",
+            "correct": true
+          },
+          {
+            "id": "str",
+            "text": "The theta of a long straddle is twice a call's",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "Delta is exactly 0.5 at the money",
+            "why": "You assumed a coin flip. With $r = 0$ delta is $\\Phi(\\sigma\\sqrt T/2) = 0.5398$ at one year."
+          },
+          {
+            "id": "vmax",
+            "text": "The vega of an at-the-money option is largest for the shortest expiry",
+            "why": "You gave vega gamma's shape. Vega goes as $\\sqrt T$: 2.51 for one day against 39.70 for one year."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Four true, two false.",
+        "generic": "Not quite right. Check each against its dependence on $T$ and on $\\sqrt T$.",
+        "byKey": {
+          "half": "Delta is 0.5398, not 0.5.",
+          "vmax": "Vega is largest for the longest expiry."
+        }
+      },
+      "explain": {
+        "text": "Gamma and theta are linked by $\\Theta = -\\tfrac12\\sigma^2S^2\\Gamma$. Gamma goes as $1/\\sqrt T$ and vega as $\\sqrt T$. A call and a put at $r = 0$ share one theta, so the straddle's is twice a call's."
+      },
+      "tags": [
+        "greek-signs"
+      ],
+      "pace": 120
+    },
+    {
+      "id": "h-long-interview",
+      "difficulty": 5,
+      "skills": [
+        "tp-bs"
+      ],
+      "title": "The five-minute answer",
+      "kind": "longform",
+      "prompt": "Say it aloud first, then write it and mark it. You are long a delta-hedged one-year at-the-money option bought at 20% implied. The share realises 15%. Walk me through what happens, what you earn, and when the gamma story misleads.",
+      "model": "**What happens.** Each day the hedged position earns $\\tfrac12\\Gamma S^2(R^2 - \\sigma_i^2\\,\\delta t)$: gamma pays for the squared move and theta charges for the implied one. Realised variance $0.15^2 = 0.0225$ is below implied $0.04$, so theta wins.\n\n**What I earn.** Over the year $E[\\text{P\\&L}] \\approx \\tfrac12\\Gamma S^2(\\sigma_r^2 - \\sigma_i^2)T$, which in vega terms is $39.695 \\times (-0.05) = -1.98$ per option. Exactly it is $BS(0.15) - BS(0.20) = -1.9870$. The breakeven daily move is $100 \\times 0.2/\\sqrt{252} = £1.26$, and the actual daily move is $100 \\times 0.15/\\sqrt{252} = £0.94$.\n\n**Direction does not matter.** The share could be up or down: variance is what counts, not the sign.\n\n**When it misleads.** The path matters: gamma is high near the strike, so moves near it count most, and a pin at expiry makes gamma explode. Jumps and discrete hedging add noise. With a steep skew the hedge delta depends on whether the smile moves with the strike or with the spot (sticky strike against sticky delta).",
+      "rubric": [
+        {
+          "points": 2,
+          "text": "States the gamma-times-variance-gap formula, $\\tfrac12\\Gamma S^2(\\sigma_r^2 - \\sigma_i^2)T$, or its daily form."
+        },
+        {
+          "points": 1,
+          "text": "Gives the vega shortcut with the number, about −1.98 (exact −1.9870)."
+        },
+        {
+          "points": 2,
+          "text": "Gives the breakeven move £1.26 and the actual £0.94 with the daily figures."
+        },
+        {
+          "points": 1,
+          "text": "Says direction does not matter, only realised variance."
+        },
+        {
+          "points": 1,
+          "text": "Makes the path or pin point: gamma is high near the strike."
+        },
+        {
+          "points": 1,
+          "text": "Names one more risk: jumps, hedging frequency or the skew."
+        },
+        {
+          "points": 2,
+          "text": "Gives a clear structure that could be said in five minutes."
+        }
+      ],
+      "tags": [
+        "gamma-pnl"
+      ],
+      "pace": 300
+    },
+    {
+      "id": "h-parts-320",
+      "difficulty": 4,
+      "skills": [
+        "tp-bs"
+      ],
+      "prose": "S = K = £320, implied vol 18%, T = 0.5, $r = 0$.",
+      "parts": [
+        {
+          "question": "What does the 0.4 rule give for the call?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 16.29,
+            "tol": {
+              "abs": 0.1
+            },
+            "unit": "£",
+            "label": "Price in pounds",
+            "accept": "£16.29: $0.4 \\times 0.18 \\times 0.7071 \\times 320$ (Black-Scholes £16.2377)",
+            "wrong": [
+              {
+                "id": "no-root",
+                "value": 11.52,
+                "tol": {
+                  "abs": 0.1
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The rule gives £16.29.",
+            "generic": "Not quite right. $0.4\\sigma\\sqrt T\\,S$.",
+            "byKey": {
+              "no-root": "You used $T = 0.5$ where the rule needs $\\sqrt T = 0.7071$."
+            }
+          },
+          "explain": {
+            "text": "$0.4 \\times 0.18 \\times 0.7071 \\times 320 = 16.29$."
+          }
+        },
+        {
+          "question": "Implied vol rises by 3 points. What does the call gain, by rule divided by vol?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2.72,
+            "tol": {
+              "abs": 0.1
+            },
+            "unit": "£",
+            "label": "Gain in pounds",
+            "accept": "£2.72: $16.29 / 0.18 \\times 0.03 = 2.7153$ (Black-Scholes £2.7017)",
+            "wrong": [
+              {
+                "id": "percent-slip",
+                "value": 271.5,
+                "tol": {
+                  "abs": 1
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The call gains about £2.72.",
+            "generic": "Not quite right. Vega is about price divided by vol.",
+            "byKey": {
+              "percent-slip": "You used 3 where the vol rise is 0.03."
+            }
+          },
+          "explain": {
+            "text": "Vega is about $16.29/0.18 = 90.5$ per 1.00, so 3 points add $90.5 \\times 0.03 = 2.72$."
+          }
+        },
+        {
+          "question": "She is short 500 of these, hedged at 18%, and the share realises 15%. What is the expected P&L?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1352,
+            "tol": {
+              "abs": 15
+            },
+            "unit": "£",
+            "label": "P&L in pounds",
+            "accept": "+£1,352: $500 \\times (16.2377 - 13.5342)$, the price gap",
+            "wrong": [
+              {
+                "id": "loss",
+                "value": -1352,
+                "tol": {
+                  "abs": 15
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "She gains about £1,352.",
+            "generic": "Not quite right. Short 500 times the price gap, with the sign.",
+            "byKey": {
+              "loss": "You gave a loss. She sold at 18% and the share realises less, so she keeps the gap."
+            }
+          },
+          "explain": {
+            "text": "The gap is £2.7035 an option, so £1,351.75 for 500. She is short and the share is quieter than implied."
+          }
+        }
+      ],
+      "tags": [
+        "option-estimate",
+        "gamma-pnl"
+      ],
+      "pace": 240
+    }
+  ]
+}
