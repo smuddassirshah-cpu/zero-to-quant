@@ -711,7 +711,11 @@ const checkLongform = (file, where, x) => {
   if (Array.isArray(x.rubric)) {
     const sum = x.rubric.reduce((a, r) => a + (Number(r.points) || 0), 0);
     if (sum !== 10) err(file, `${where}.rubric`, `rubric points must sum to 10 (found ${sum})`);
-    x.rubric.forEach((r, i) => checkText(file, `${where}.rubric[${i}].text`, r.text));
+    x.rubric.forEach((r, i) => {
+      checkText(file, `${where}.rubric[${i}].text`, r.text);
+      if (r && r.required !== undefined && typeof r.required !== 'boolean') err(file, `${where}.rubric[${i}].required`, 'required must be true or false');
+    });
+    if (x.rubric.length && x.rubric.every(r => r && r.required === true)) warn(file, `${where}.rubric`, 'every rubric row is required: drop "required" from the rows that are not essential');
   }
 };
 
@@ -1135,6 +1139,7 @@ const checkItem = (file, where, it, ctx) => {
   if (ctx.skillsRequired && (!Array.isArray(it.skills) || !it.skills.length)) err(file, `${where}.skills`, 'name at least one skill');
   (it.skills || []).forEach(s => { if (ctx.skills && !ctx.skills.has(s)) err(file, `${where}.skills`, `unknown skill "${s}"`); });
   if (it.performance !== undefined) perfItem(file, where, it, ctx);
+  if (typeof it.title === 'string' && it.title.includes('$')) warn(file, `${where}.title`, 'an item title is shown as plain text, so maths in it is not typeset: write it in words');   // item 538
   if (it.parts !== undefined) return checkParts(file, where, it, ctx);
   if (it.kind === 'longform' || (it.widget && it.widget.kind === 'longform')) {
     if (!ctx.allowLongform) err(file, where, 'longform items belong in homework and exams');

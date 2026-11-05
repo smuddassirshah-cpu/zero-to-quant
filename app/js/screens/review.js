@@ -826,9 +826,10 @@
           <li>${I('clock', 'sm')}<span>${r ? `${esc(whenDue(r.due))}.` : `Due ${doc.dueDays || 7} days after it is set.`} About ${Math.round(items.length * 6)} minutes.</span></li>
           <li>${I('lock', 'sm')}<span>No hints, and nothing is marked until you submit. You can change answers until then.</span></li>
           <li>${I('replay', 'sm')}<span>Items you miss join your redo queue: back after 7 days and again after 30.</span></li>
-          ${items.some(isLong) ? `<li>${I('edit', 'sm')}<span>${listAnd(items.map((it, j) => (isLong(it) ? `Item ${j + 1}` : null)).filter(Boolean))} is written. You mark it yourself against a model answer and a 10-point rubric.</span></li>` : ''}
+          ${items.some(isLong) ? `<li>${I('edit', 'sm')}<span>${(() => { const w = items.map((it, j) => (isLong(it) ? j + 1 : null)).filter(Boolean); return w.length === 1 ? `Item ${w[0]} is written. You mark it yourself` : `Items ${listAnd(w.map(String))} are written. You mark them yourself`; })()} against a model answer and a 10-point rubric.</span></li>` : ''}
+          ${items.some(it => it.performance) ? `<li>${I('flag', 'sm')}<span>${(() => { const w = items.map((it, j) => (it.performance ? j + 1 : null)).filter(Boolean); return `${w.length === 1 ? `Item ${w[0]} is` : `Items ${listAnd(w.map(String))} are`} the level's performance task. The level counts as met once you pass ${w.length === 1 ? 'it' : 'one'}.`; })()}</span></li>` : ''}
         </ul>
-        <ol class="hw-ov">${items.map((it, j) => `<li><span class="hw-ov-n tnum">${j + 1}</span><span class="t-body">${esc(it.title || 'Item ' + (j + 1))}</span>${pips(it.difficulty || 3)}<span class="t-caption muted tnum hw-ov-m">${plural(marksOf(it), 'mark', 'marks')}</span></li>`).join('')}</ol>
+        <ol class="hw-ov">${items.map((it, j) => `<li><span class="hw-ov-n tnum">${j + 1}</span><span class="t-body">${esc(it.title || 'Item ' + (j + 1))}${it.performance ? ' <span class="t-caption secondary hw-perf">Performance task</span>' : ''}</span>${pips(it.difficulty || 3)}<span class="t-caption muted tnum hw-ov-m">${plural(marksOf(it), 'mark', 'marks')}</span></li>`).join('')}</ol>
         <p class="t-caption secondary">${total()} marks in all. Each item is worth its difficulty; a written item is worth 10.</p>
       </section>`;
       setActions(`<button type="button" class="btn hw-primary" data-nav="0">${values().some(v => !empty(v)) ? 'Continue' : 'Start'}</button>`);
@@ -875,7 +876,7 @@
         <h2 class="t-h2 hw-res-h">Item by item</h2>
         <ol class="hw-res">${items.map((it, j) => { const x = R.items[j] || {}; return `<li><button type="button" class="hw-res-r ${x.ok ? 'ok' : 'no'}" data-nav="${j}">
           <span class="hw-res-ic" aria-hidden="true">${I(x.ok ? 'check' : 'cross')}</span>
-          <span class="hw-rl-t"><span class="t-body"><span class="tnum">${j + 1}.</span> ${esc(it.title || 'Item ' + (j + 1))}</span><span class="t-caption secondary">${isLong(it) ? `Self-marked ${x.got} of ${marksOf(it)}` : x.ok ? 'Right' : Array.isArray(x.parts) && x.answered ? `${x.parts.filter(q => q.ok).length} of ${x.parts.length} parts right` : x.answered ? 'Not right' : 'No answer'}${x.ok ? '' : ' · to redo'}</span></span>
+          <span class="hw-rl-t"><span class="t-body"><span class="tnum">${j + 1}.</span> ${esc(it.title || 'Item ' + (j + 1))}</span><span class="t-caption secondary">${it.performance ? `Performance task ${x.ok ? 'passed' : 'not passed'}. ` : ''}${isLong(it) ? `Self-marked ${x.got} of ${marksOf(it)}` : x.ok ? 'Right' : Array.isArray(x.parts) && x.answered ? `${x.parts.filter(q => q.ok).length} of ${x.parts.length} parts right` : x.answered ? 'Not right' : 'No answer'}${x.ok ? '' : ' · to redo'}</span></span>
           <span class="t-label tnum hw-res-m">${x.got} of ${marksOf(it)}</span>${I('chevronR', 'sm rv-chev')}</button></li>`; }).join('')}</ol>` : ''}
       </section>`;
       setActions(`<button type="button" class="btn hw-primary" data-back>Back to Review</button>`);
@@ -933,7 +934,7 @@
       const fb = it.feedback || {};
       const parted = Array.isArray(it.parts) && Array.isArray(x.parts);
       const line = parted ? (x.line || '') : x.ok ? fb.correct : (x.key != null && fb.byKey && fb.byKey[x.key]) || fb.generic || '';
-      const head = isLong(it) ? `Self-marked ${x.got} of ${marksOf(it)}` : x.ok ? 'Right' : parted && x.answered ? `${x.parts.filter(q => q.ok).length} of ${x.parts.length} parts right` : x.answered ? 'Not right' : 'No answer';
+      const head = (it.performance ? `Performance task ${x.ok ? 'passed' : 'not passed'}. ` : '') + (isLong(it) ? `Self-marked ${x.got} of ${marksOf(it)}` : x.ok ? 'Right' : parted && x.answered ? `${x.parts.filter(q => q.ok).length} of ${x.parts.length} parts right` : x.answered ? 'Not right' : 'No answer');
       return `<div class="rv-chip ${x.ok ? 'is-ok' : 'is-no'} hw-verdict"><span class="rv-chip-ic" aria-hidden="true">${I(x.ok ? 'check' : 'cross')}</span>
         <span class="rv-chip-tx"><span class="rv-chip-h"><b>${head}</b></span><span>${x.got} of ${marksOf(it)} marks.${x.ok ? '' : ' Back in your redo queue in 7 days, then 30.'}</span></span></div>
         ${line ? `<p class="t-body hw-why">${md(line)}</p>` : ''}
@@ -961,7 +962,7 @@
       const draft = session.hw[key] || store.get(`hw.draft.${key}`, null);
       items.forEach((it, j) => {
         const wrap = Z.h(`<section class="hw-item" data-kind="${esc(isLong(it) ? 'longform' : (it.widget || {}).kind || '')}" hidden>
-          <div class="hw-meta"><span class="t-overline hw-deep">Item ${j + 1} of ${items.length}${it.title ? ' · ' + esc(it.title) : ''}</span><span class="hw-meta-r">${pips(it.difficulty || 3)}<span class="t-caption muted tnum">${plural(marksOf(it), 'mark', 'marks')}</span></span></div>
+          <div class="hw-meta"><span class="t-overline hw-deep">Item ${j + 1} of ${items.length}${it.title ? ' · ' + esc(it.title) : ''}${it.performance ? ' · Performance task, needed for the level' : ''}</span><span class="hw-meta-r">${pips(it.difficulty || 3)}<span class="t-caption muted tnum">${plural(marksOf(it), 'mark', 'marks')}</span></span></div>
           <div class="hw-w" data-host></div>
           ${isLong(it) ? `<div class="hw-mark-row" data-mark-row><button type="button" class="btn secondary" data-mark="${j}">Mark my answer</button><span class="t-caption muted">Shows the model answer and the rubric. Your working then locks.</span></div>` : '<p class="t-caption muted hw-note" data-note>No feedback until you submit.</p>'}
           <div data-verdict hidden></div>
@@ -998,7 +999,7 @@
         const j = +mk.dataset.mark, h = handles[j];
         if (!h) return;
         const v = h.value() || {};
-        if (!String(v.text || '').trim()) { Z.toast('Write your working first. Then mark it against the model answer.'); return; }
+        if (!String(v.text || '').trim() && !(h.ready && h.ready())) { Z.toast('Write your working first. Then mark it against the model answer.'); return; }
         h.check().then(() => { mk.closest('[data-mark-row]').hidden = true; persist(); Z.mathify(itemsEl); }).catch(err => console.error(err));
       }
     };

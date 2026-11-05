@@ -1460,3 +1460,26 @@ Status block (engine pass, item 4):
 Status block (engine pass, item 5):
 - 529 (performance tasks, N07): done. Pilots (one level each in coding-int, ito, proof, research-int) remain for a content agent; the main session prunes perf-pending as tasks land.
 
+## Engine pass, performance pilots (`docs/reports/engine-pass-pilots.md`)
+
+Numbered from the 16 inbox bullets under "Raised later (... perf pilot)". 530 to 533 coding-int, 534 to 537 research-int, 538 to 541 proof, 542 to 545 ito.
+
+530. Done: `playthrough.mjs --set` plays the starter of every `performance: "code"` homework item and fails if it passes (Python and C++ comment suffix).
+531. Done: after a homework holding a performance item, the set playthrough asserts `state.perf["<course>/L<n>"]` exists with how auto or self.
+532. Done: "Performance task, needed for the level" tag in the item header, "Performance task" in the overview list, a start-card line, and "Performance task passed / not passed" on the result row and verdict (also covers 539 and 543).
+533. Deferred: per-case run time in the code widget and playthrough. Needs the worker to report per-case seconds; not cheap, no author blocked (CPython and Pyodide timings are the workaround).
+534. Done (Must): Mark my answer skips the text check when the widget's `ready()` is true (an aloud item); ordinary longform keeps the guard. The set playthrough now clicks the real button, checks an empty box is refused on written items and accepted on aloud, and fails on the old bug (verified by reverting the fix).
+535. Done: an aloud longform labels its box "Your notes (optional)" with a notes placeholder.
+536. Deferred: a follow-ups step after the answer with the clock restarted, before the model opens. A new phase in the widget and its restore path; the content workaround (follow-up answers last, under a heading) holds.
+537. Deferred: storing the aloud clock reading on the result row. Needs a widget-to-result field through `grade().detail` and the state schema; the rubric time line is 1 of 10 points.
+538. Done (warning only): the validator warns on `$` in a homework, review or exam item `title`. Typesetting titles deferred (the header is uppercased text; 8 files still carry `$`, for content to reword).
+539. Done: see 532.
+540. Done: start card reads "Items 9 and 10 are written. You mark them yourself" for more than one longform item (also covers 542).
+541. Done: `--shots` takes a `-marked` shot of each longform item after the real Mark my answer click (also covers 545).
+542. Done: see 540.
+543. Done: see 532.
+544. Done: longform rubric rows take `"required": true`; the self-mark fails without it; validator checks the type and warns if every row is required. Scratch cases (a string `required`, all rows required, `$` in a title) run on a scratch copy of the content: error, warning, warning as expected.
+545. Done: see 541.
+
+Status block (engine pass, performance pilots):
+- 530, 531, 532, 534, 535, 538 (warning), 540, 541, 544: done. 533, 536, 537: deferred with reason above. 539, 542, 543, 545: done as duplicates of 532, 540, 541.

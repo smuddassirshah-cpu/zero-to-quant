@@ -422,7 +422,7 @@ const main = async () => {
       where = '#' + route;
       const fails = [];
       const t0 = Date.now();
-      let checks = 0;
+      let checks = 0, perfStarters = 0, markedReal = 0;
       const probed = new Set();
       try {
         await page.evaluate(() => { delete window.ZQ.test; });
@@ -458,6 +458,30 @@ const main = async () => {
             if (tick) await tick(c, checks);
             const py = await waitPython();
             if (py) { fails.push(`item ${c.screenIndex + 1}: ${py}`); break; }
+            if (/^homework\//.test(route)) {
+              /* items 530, 534: a performance code item's starter must fail its tests; a longform item is marked through the real
+                 Mark my answer button (an empty box is refused unless the item is aloud), not only through the test hook */
+              const hi = await page.evaluate(() => { const j = ZQ.test.current().screenIndex, it = (window.ZQHomework ? ZQHomework.items() : [])[j]; const w = it ? (it.kind === 'longform' ? it : it.widget || {}) : {}; return it ? { perf: it.performance || null, kind: w.kind || null, lang: w.language || 'python', starter: w.starter || '', aloud: Number(w.seconds) > 0 } : null; });
+              if (hi && hi.perf === 'code' && hi.kind === 'code') {
+                await page.evaluate((x) => { const j = ZQ.test.current().screenIndex; ZQHomework.handles()[j].set(x.starter + (x.lang === 'cpp' ? '\n// starter check\n' : '\n# starter check\n')); }, hi);
+                const sr = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok } : null; });
+                if (!sr) fails.push(`item ${c.screenIndex + 1}: the performance task's starter could not be checked`);
+                else if (sr.ok) fails.push(`item ${c.screenIndex + 1}: the performance task's starter passes every hidden test`);
+                else perfStarters++;
+              }
+              if (hi && hi.kind === 'longform') {
+                const btn = page.locator('.hw-item:not([hidden]) [data-mark]');
+                const marked = () => page.evaluate(() => { const j = ZQ.test.current().screenIndex; return !!(ZQHomework.handles()[j].value() || {}).marked; });
+                if (!hi.aloud) {
+                  await btn.click(); await page.waitForTimeout(80);
+                  if (await marked()) fails.push(`item ${c.screenIndex + 1}: Mark my answer opened the model with an empty box on a written item`);
+                  await page.locator('.hw-item:not([hidden]) textarea').fill('Working for the playthrough.');
+                }
+                await btn.click(); await page.waitForTimeout(80);
+                if (!(await marked())) fails.push(`item ${c.screenIndex + 1}: Mark my answer did not open the model${hi.aloud ? ' with an empty notes box' : ''}`);
+                else { markedReal++; if (opt.shots) await shot(`${label}-item-${String(c.screenIndex).padStart(2, '0')}-marked`); }
+              }
+            }
             const applied = await page.evaluate(() => ZQ.test.answerCorrect());
             let r = await page.evaluate(async () => { const r = await ZQ.test.check(); return r ? { ok: !!r.ok, key: r.key ?? null, pending: !!r.pending } : null; });
             if (r && r.pending) {
@@ -474,6 +498,7 @@ const main = async () => {
         }
         const v = await verify();
         if (v.fail) fails.push(v.fail);
+        if (perfStarters || markedReal) v.note = `${v.note || ''}${perfStarters ? `, ${perfStarters} performance starter${perfStarters === 1 ? '' : 's'} fail` : ''}${markedReal ? `, ${markedReal} longform marked by the button` : ''}`;
         await shot(`${label}-done`);
         /* item 335: an exam's result page with every question's explanation opened */
         if (opt.why && opt.shots && /^exam\//.test(route)) { await page.evaluate(() => document.querySelectorAll('.exm-ri-h[aria-expanded="false"]').forEach((b) => b.click())); await page.waitForTimeout(400); await page.screenshot({ path: path.join(opt.shots, `${label}-done-why`.replace(/[^\w.-]+/g, '_') + '.png'), fullPage: true }); }
@@ -650,6 +675,14 @@ const main = async () => {
         if (!h || !h.submitted) return { fail: 'the homework was not submitted' };
         const c = await page.evaluate(() => ZQ.test.current());
         const note = `marked ${h.score} of ${h.items} right, ${c.marks} of ${c.of} marks`;
+        /* item 531: a homework holding a performance item records the level's task in state.perf */
+        const hd = readJSON(path.join(CONTENT, 'courses', ...st.id.split('/')) + '.json'), hn = (/(\d+)$/.exec(st.id) || [])[1];
+        const pf = (hd.items || []).filter(it => it && it.performance);
+        if (pf.length) {
+          const got = await page.evaluate((k) => (ZQ.state.perf.get() || {})[k] || null, `${st.id.split('/')[0]}/L${hn}`);
+          if (!got) return { fail: `${note}; the performance task was not recorded in state.perf (${st.id.split('/')[0]}/L${hn})`, note };
+          if (got.how !== 'auto' && got.how !== 'self') return { fail: `${note}; state.perf has an odd record ${JSON.stringify(got)}`, note };
+        }
         return { fail: h.score !== h.items || !h.items ? note : null, note };
       });
       if (st.kind === 'homework') await partsHomeworkChecks(st);

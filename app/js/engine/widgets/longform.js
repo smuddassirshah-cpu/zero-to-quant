@@ -30,14 +30,16 @@
         <div class="wd-long-model"><h3 class="t-h2">Model answer</h3><div class="wd-long-model-b">${Z.grade.prose(spec.model || '', 't-body')}</div></div>
         <fieldset class="wd-rubric">
           <legend class="t-h2">Mark it out of ${total}</legend>
-          <p class="t-caption secondary">Tick each point your working shows. Be strict. This mark is your own, so it shows under Self-marked and never moves your mastery map. ${PASS} or more counts as right.</p>
-          <div class="wd-rbs">${rubric.map((r, k) => `<label class="wd-rb"><input type="checkbox" data-rb="${k}"><span class="wd-box" aria-hidden="true">${Z.icon('check')}</span><span class="t-body">${Z.grade.inline(r.text)}</span><span class="wd-rb-pts t-caption tnum">${r.points} ${+r.points === 1 ? 'point' : 'points'}</span></label>`).join('')}</div>
+          <p class="t-caption secondary">Tick each point your working shows. Be strict. This mark is your own, so it shows under Self-marked and never moves your mastery map. ${PASS} or more counts as right${rubric.some(r => r.required) ? ', and every row marked required must be ticked' : ''}.</p>
+          <div class="wd-rbs">${rubric.map((r, k) => `<label class="wd-rb"><input type="checkbox" data-rb="${k}"><span class="wd-box" aria-hidden="true">${Z.icon('check')}</span><span class="t-body">${Z.grade.inline(r.text)}</span><span class="wd-rb-pts t-caption tnum">${r.points} ${+r.points === 1 ? 'point' : 'points'}${r.required ? ', required' : ''}</span></label>`).join('')}</div>
           <div class="wd-score" aria-live="polite"><span class="t-stat tnum" data-score>0</span><span class="t-h2 muted">of ${total}</span></div>
         </fieldset>
       </div>
     </div>`);
     const aloud = Number(spec.seconds) > 0, follow = Array.isArray(spec.followUps) ? spec.followUps : [];
     if (aloud) {
+      el.querySelector('label.t-label').textContent = 'Your notes (optional)';
+      el.querySelector('.wd-long-ta').placeholder = 'Jot the points you will say. You can leave this empty.';
       const clock = Z.h(`<div class="wd-long-clock"><span class="t-stat tnum" data-clock>${fmt(spec.seconds)}</span><button type="button" class="btn secondary" data-clock-go>Start the clock</button><span class="t-caption muted">Say your answer aloud. The clock is a guide and never stops you. The box is for notes and is optional.</span></div>`);
       el.querySelector('.wd-long-write').prepend(clock);
       const out = clock.querySelector('[data-clock]'), go = clock.querySelector('[data-clock-go]');
@@ -87,8 +89,8 @@
       dirty: () => ta.value !== '' || ticks().length > 0,
       grade() {
         if (phase === 'write') { toMark(); return { pending: true, ok: false, key: null }; }
-        const s = score();
-        return { how: 'self', ok: s >= PASS, key: s >= PASS ? null : 'below', line: s >= PASS ? null : `You marked ${s} of ${total}. ${PASS} or more counts as right, so this one returns in your Redo queue.`, detail: { score: s, ticks: ticks(), text: ta.value } };
+        const s = score(), ticked = ticks(), lacks = rubric.some((r, k) => r.required && !ticked.includes(k)), pass = s >= PASS && !lacks;
+        return { how: 'self', ok: pass, key: pass ? null : 'below', line: pass ? null : lacks && s >= PASS ? `You marked ${s} of ${total}, but a required point is missing. This one returns in your Redo queue.` : `You marked ${s} of ${total}. ${PASS} or more counts as right, so this one returns in your Redo queue.`, detail: { score: s, ticks: ticks(), text: ta.value } };
       },
       lock() { setLock(true); },
       unlock() { setLock(false); el.classList.remove('is-ok', 'is-bad'); },
