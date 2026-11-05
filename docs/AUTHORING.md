@@ -25,7 +25,18 @@ This is the contract between content authors and the engine. Every content file 
 ```
 
 - `skills` are ids declared in the course's `course.json`. Every lesson names at least one.
-- `minutes` is the planned time, 10 to 15.
+- `minutes` is the planned time. `session` (optional, ENGINE-BACKLOG 556) says what kind of sitting it is: `short` (the default: the 11 to 15 minute lesson, `minutes` 5 to 20), `workshop` (`minutes` 20 to 90) or `project` (`minutes` 60 to 240). With `workshop` or `project`, `minutes` is the true estimate, with no 15 cap. The validator checks the enum and that `minutes` fits (the ranges are `SESSION_RANGE` in `app/js/hours.js`; the workshops found run 25 to 60 minutes and no project exists yet, so the ranges are the brief's, unchanged). Write `"session"` on the line after `"minutes"`. A workshop or project shows its length ("Workshop, 60 min") on the lesson start screen, the lesson's row and card on the course page, and the course card on Learn, and its weight in the topic's hours is `minutes / 14` (section 14).
+
+### Duration in the opening prose (ENGINE-BACKLOG 557)
+
+The validator warns `duration-prose` when the opening prose states a time that differs from `minutes` by more than 5. The one matcher is `app/tools/duration-prose.mjs` (`node app/tools/duration-prose.mjs --all` lists the hits and counts by variant).
+
+- Where: the `prose` of the first two screens.
+- What: a quantity then a unit, in five variants: `digits-min` ("60 minutes", "35 min", "45-minute"), `words-min` ("forty-five minutes"), `digits-hour` ("2 hours", "1.5 hours", "3-hour"), `half-hour` ("half an hour"), `words-hour` ("an hour", "one hour", "two hours", "a full hour").
+- Ignored as data: a duration right after "every", "each" or "per" ("trades every 5 minutes"), or right before "later", "ago", "apart", "bars", "candles", "window", "interval", "sample" and the like ("10 minutes later", "5-minute bars"). Seconds are never read.
+- Ignored as item times: anything under 20 minutes ("two minutes a question"). A short lesson (5 to 20 minutes) already holds it.
+- The figure a lesson states is the largest that survives; the warning fires when it differs from `minutes` by more than 5.
+- Known false positives: a duration that is a problem's data and not the lesson's length ("a 60-minute exam" inside a question, "a graph over 25 minutes", "an hour" as an arrival rate, "two hours free this week" in a scenario). The matcher cannot tell these from "this lesson takes about 25 minutes". Once a person has read the opening prose, add the lesson to `app/tools/duration-prose-ignore.json` with the reason; the validator then skips it. Better, write the lesson's own length in words the matcher reads and the data in a way it does not.
 
 ## 2. Screens
 
@@ -840,3 +851,14 @@ Every graded row the engine stores carries `how`: `auto` (the app marked it), `s
 - Met rule: an exam or review counts towards a level only if it still passes with self rows removed from numerator and denominator, against the same pass mark (an absolute `passNet` scales to the auto share). The result is stored at finish time: `passedAuto` on each exam attempt and on the review record. Mock and stage checks are left out of it. An attempt with no auto item cannot meet anything. Homework never feeds met, and no prerequisite or readiness code reads `selfMarked`.
 - Old saves: a row, exam attempt or review without the new fields loads unchanged and is not rewritten. Missing `how` reads `auto`; old longform rows and checks cannot be told apart in the stored aggregates, so old Elo and mastery points still include any earlier self ticks (not split, not invented). A review record without `passedAuto` uses `passed` (level reviews hold no longform). An exam attempt without `passedAuto` counts as its `passed` when the exam holds no self item and no check part, and does not count when it does (or when there is no manifest). The validator writes `selfExams` into `content/manifest.json`: the exam ids holding a longform item, a longform widget, a part with a longform widget, or a `check` part (the test `state.provenance` uses). A level already in `state.prereq.met` stays met, and the engine records met levels on every change. One helper, `ZQ.content.examPassedAuto(id)` and `examPassedAt(id)`, applies this rule for prerequisite met, `topicPassed` (Today and Learn) and the refresh date.
 - `ZQ.state.provenance(item)` returns `self` or `auto` for an item spec; build result rows with it.
+
+## 14. Workload: one function, `ZQ.hours` (PLAN 2c item 11, ENGINE-BACKLOG 559 to 563)
+
+Hours are computed in one place, `app/js/hours.js` (`ZQ.hours` in the app, `require('../js/hours.js')` in node tools). Nothing else adds up hours.
+
+- A topic's hours are stored on the topic in `curriculum.json` (`hours`). A stage's hours are **never stored**: they are the sum of its topics' hours. A stored stage `hours` field is ignored by the engine and warned about by the validator; `node app/tools/apply-item11-content.mjs` removes it.
+- A topic's hours are shared across its courses, and a course's across its lessons, by weight: 1 for a short lesson, `minutes / 14` for a workshop or project (14 is the median short lesson). With no workshop or project the shares equal the mapped-lesson counts. A topic's total never changes with `session`; a workshop only takes a larger share of it.
+- A role's hours are the totals in `content/readiness.json` (required plus recommended is the Learn header), written by `node app/tools/readiness-sums.mjs --write` through `ZQ.hours`. After changing any lesson's `session` or `minutes`, run it with `--write`; `apply-item10-content.mjs` does this itself.
+- Figures quoted in prose come from `node app/tools/curriculum-hours.mjs` (`--write` rewrites the block in `docs/curriculum.md`, `--check` also compares the stage figures in its prose). Learn's stage cards, its header and "about N months at 15 h a week" (`ZQ.hours.months`) read the same function.
+- A topic that stores 0 hours (3.2 and 3.4) is not invented: `curriculum-hours.mjs` lists the figure its lesson minutes would give beside the 0.
+

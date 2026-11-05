@@ -13,7 +13,8 @@ const args = new Set(process.argv.slice(2));
 const read = (p) => JSON.parse(readFileSync(p, 'utf8'));
 const jsonFiles = (d) => (existsSync(d) ? readdirSync(d).filter((f) => f.endsWith('.json')).sort() : []);
 
-const { entriesOf } = createRequire(import.meta.url)('../js/prereq.js');   // the one requires normaliser (ENGINE-BACKLOG 551)
+const { entriesOf } = createRequire(import.meta.url)('../js/prereq.js');
+const HOURS = createRequire(import.meta.url)('../js/hours.js');   // the one workload function (PLAN 2c item 11): a stage's hours are the sum of its topics', stored stage field ignored   // the one requires normaliser (ENGINE-BACKLOG 551)
 const cur = read(join(C, 'curriculum.json'));
 const topicStage = {};
 const topicHours = {};
@@ -100,10 +101,11 @@ out.push('== Census summary (from source) ==');
 for (const s of cur.stages) {
   const rows = courses.filter((r) => String(r.stage) === String(s.id));
   const summed = s.topics.reduce((a, t) => a + (t.hours ?? 0), 0);
-  out.push(`Stage ${s.id}: lessons ${sum(rows, 'authored')}/${sum(rows, 'mapped')} (missing ${sum(rows, 'mapped') - sum(rows, 'authored')}), courses ${rows.length}, hours stored ${s.hours} summed ${summed}`);
+  out.push(`Stage ${s.id}: lessons ${sum(rows, 'authored')}/${sum(rows, 'mapped')} (missing ${sum(rows, 'mapped') - sum(rows, 'authored')}), courses ${rows.length}, hours stored ${HOURS.stageHours(s)} summed ${summed}`);
 }
 const real = exams.filter((e) => !e.sample);
-const storedH = cur.stages.reduce((a, s) => a + (s.hours ?? 0), 0);
+const storedH = HOURS.totalHours(cur);   // derived: what the Learn header and stage cards show
+const legacy = cur.stages.filter((s) => s.hours != null);
 const summedH = Object.values(topicHours).reduce((a, h) => a + h, 0);
 out.push(`Total lessons ${sum(courses, 'authored')}/${sum(courses, 'mapped')} (missing ${sum(courses, 'mapped') - sum(courses, 'authored')}); course maps ${courses.length}; courses with 0 lessons ${courses.filter((r) => r.authored === 0).length}`);
 out.push(`Levels fully written ${sum(courses, 'levelsWritten')}/${sum(courses, 'levels')}; cross-course requires edges ${sum(courses, 'cross')}, without why ${sum(courses, 'noWhy')}`);
@@ -116,5 +118,6 @@ out.push(`Topic exam pass marks: ${[...new Set(real.filter((e) => e.kind === 'to
 out.push(`Drills (non-sample) ${drillReal.length}: ${Object.entries(drillPack).map(([k, v]) => `${k} ${v}`).join(', ')}; samples ${drills.length - drillReal.length}`);
 out.push(`Bank: ${bankReal.length} files, ${bankItems} items; sample files ${bank.length - bankReal.length}`);
 out.push(`Prep paths ${prepPaths}; mock ids named in prep.json with no file: ${prepMissing.size} (${[...prepMissing].join(', ')})`);
+out.push(legacy.length ? `Legacy stage hours field present on ${legacy.length} stage(s), total ${legacy.reduce((a, s) => a + s.hours, 0)}, ignored by the engine (run tools/apply-item11-content.mjs)` : 'Legacy stage hours field: absent (stage hours are derived from topics)');
 out.push(`Hours: stored stage total ${storedH}, summed topic total ${summedH}, gap ${summedH - storedH}`);
 console.log(out.join('\n'));

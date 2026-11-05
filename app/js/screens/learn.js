@@ -12,7 +12,7 @@
   'use strict';
 
   /* Months at 15 h a week, as the curriculum map states them */
-  const MONTHS = { 0: 8, 1: 21, 2: 12, 3: 6 };
+  const MONTHS_FALLBACK = { 0: 9, 1: 25, 2: 14, 3: 8 };   // only when js/hours.js is missing: the months come from the derived stage hours (ZQ.hours.months)
   const TRACKS = ['all', 'maths', 'prob', 'code', 'fin', 'ml', 'speed'];
   const TRACK_WORD = { maths: 'maths', prob: 'probability and statistics', code: 'programming', fin: 'finance', ml: 'machine learning', speed: 'interview and speed' };
 
@@ -216,7 +216,7 @@
         const nPassed = req.filter(passed).length;
         const opt = s.topics.filter(t => t.optional);
         const exit = /^[A-Z][a-z]/.test(s.exit) ? s.exit.charAt(0).toLowerCase() + s.exit.slice(1) : s.exit;
-        const facts = [esc(s.name), hrs(s.hours), `<span class="zl-months">about ${MONTHS[s.id]} months at 15 h a week</span>`,
+        const facts = [esc(s.name), hrs(s.hours), `<span class="zl-months">about ${window.ZQ.hours ? window.ZQ.hours.months(s.hours) : MONTHS_FALLBACK[s.id]} months at 15 h a week</span>`,
           done ? `Exit test passed with ${Math.max(...ex.passed.map(pctOf))}%` : `${nPassed} of ${req.length} topics passed`,
           ...(!done && ex.sat ? [`Best exit test ${Math.max(...ex.attempts.map(pctOf))}%`] : []),
           ...(opt.length ? [`${opt.map(t => t.id).join(', ')} optional`] : [])];
@@ -270,17 +270,18 @@
       const card = (c, t) => {
         const p = prog(c.id), pct = Math.round(p * 100), s = courseState(c, t), cur = c.id === curId;
         const n = lessonsOf(c.id).length, w = writtenCount(c.id), mapOnly = n > 0 && w === 0;
+        const sess = C.courseSessionLabel ? C.courseSessionLabel(c.id) : '';   // item 10: "Workshop, 60 min" when the course holds a workshop or project lesson
         const counts = `${fmt(n)} lessons · ${c.levels.length} ${c.levels.length === 1 ? 'level' : 'levels'}`;
         const rl = Z.prereq && Z.prereq.routeLimitsForCourse ? Z.prereq.routeLimitsForCourse(c.id) : [];   // ENGINE-BACKLOG 551: the computed route label replaces the static "route limited" note generated into readiness.json
         const lim = rl.length && /^route limited/i.test(C.readiness.limited(c.id)) ? '' : C.readiness.limited(c.id);
         const pp = C.prepForCourse(c.id), tags = C.strandBadge(c.strand, c.strandNote) + C.prepChip(pp);
-        const label = `${c.name}.${lim ? ` ${lim}.` : ''}${rl.map(x => ` ${Z.prereq.routeText(x)}.`).join('')}${c.strand ? ` ${c.strand === 'pure' ? 'Pure maths' : 'Quant'}.` : ''}${pp.length ? ' Interview prep.' : ''} ${counts}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
+        const label = `${c.name}.${lim ? ` ${lim}.` : ''}${rl.map(x => ` ${Z.prereq.routeText(x)}.`).join('')}${c.strand ? ` ${c.strand === 'pure' ? 'Pure maths' : 'Quant'}.` : ''}${pp.length ? ' Interview prep.' : ''} ${counts}${sess ? `, includes ${sess.charAt(0).toLowerCase() + sess.slice(1)}` : ''}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
         return `<button type="button" class="zl-card${cur ? ' is-current' : ''}${mapOnly ? ' is-map' : ''}" data-track="${t.track}" data-course="${c.id}" aria-label="${esc(label)}">
             <span class="zl-art" aria-hidden="true">${ZQArt(c.art)}</span>
             <span class="zl-body">
               ${cur ? '<span class="zl-cur" aria-hidden="true">Current</span>' : ''}
               <span class="zl-title">${esc(c.name)}</span>${pp.length ? `<span class="zl-tags">${tags}</span>` : tags}
-              <span class="zl-label tnum">${counts}</span>${lim ? `<span class="zl-label zl-limited">${esc(lim)}</span>` : ''}${rl.map(x => `<span class="zl-label zl-limited zl-route">${esc(Z.prereq.routeText(x))}</span>`).join('')}
+              <span class="zl-label tnum">${counts}</span>${sess ? `<span class="zl-label zl-session tnum">${esc(sess)}</span>` : ''}${lim ? `<span class="zl-label zl-limited">${esc(lim)}</span>` : ''}${rl.map(x => `<span class="zl-label zl-limited zl-route">${esc(Z.prereq.routeText(x))}</span>`).join('')}
               <span class="zl-foot"><span class="bar thin track" aria-hidden="true"><i data-w="${pct}"></i></span><span class="zl-chips">${chip(s)}${mapOnly ? '<span class="zl-maponly">Map only</span>' : ''}</span></span>
             </span>
           </button>`;

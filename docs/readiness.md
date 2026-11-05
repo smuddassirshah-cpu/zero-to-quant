@@ -14,10 +14,10 @@ Signed off by the user, 5 Nov (PLAN 2c item 2; DECISIONS "Readiness contract sig
 Status words: **required** is shown as next work in order. **Recommended** is shown after required. **Optional** is never shown as next work for the role; it stays reachable from Learn.
 
 <!-- generated:catalogue -->
-Catalogue: 79 courses, 1214 lessons mapped (1054 written, 160 unwritten). Hours are stored topic hours shared across a topic's courses by mapped lessons; topics 3.2 and 3.4 store 0.
+Catalogue: 79 courses, 1214 lessons mapped (1054 written, 160 unwritten). Hours are stored topic hours shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1); topics 3.2 and 3.4 store 0.
 <!-- /generated -->
 
-Hours in each table are rounded per cell, and the header is the sum of the cells. Run `node app/tools/readiness-sums.mjs` from the repo root to check every figure here. It exits non-zero on any mismatch.
+Hours come from `app/js/hours.js` (AUTHORING section 14): a short lesson weighs 1 and a workshop or project `minutes / 14`. Hours in each table are rounded per cell, and the header is the sum of the cells. Run `node app/tools/readiness-sums.mjs` from the repo root to check every figure here. It exits non-zero on any mismatch.
 
 Derivatives and desk quant is a sub-route of Strats, not its own track. Its table sits inside the Strats section.
 

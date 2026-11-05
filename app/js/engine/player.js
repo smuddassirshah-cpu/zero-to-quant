@@ -647,7 +647,7 @@
         <div class="t-overline lsn-over">${Z.esc(meta)}${info.strand && window.ZQ.content.strandBadge ? ` ${window.ZQ.content.strandBadge(info.strand, info.strandNote)}` : ''}</div>
         <h1 class="t-lesson-title">${G().inline(spec.title || LSN.title)}</h1>
         ${G().prose(spec.prose || '')}
-        <p class="t-caption lsn-meta">${icon('clock', 'xs')} About ${LSN.minutes || 12} minutes${quizSpec.length ? `, then a ${quizSpec.length}-question quiz` : ''}</p>
+        <p class="t-caption lsn-meta">${icon('clock', 'xs')} ${LSN.session && LSN.session !== 'short' && window.ZQ.hours ? window.ZQ.hours.sessionLabel(LSN.session, LSN.minutes) : `About ${LSN.minutes || 12} minutes`}${quizSpec.length ? `, then a ${quizSpec.length}-question quiz` : ''}</p>
       </section>`);
       return { el, kind: 'read', type: 'title', spec, ready: () => false, dirty: () => false, destroy() {} };
     };

@@ -16,7 +16,9 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { scanO2, O2_CODES } from './o2-rules.mjs';
+import { statedMinutes, ignoreList as durationIgnore, FLOOR as DURATION_FLOOR } from './duration-prose.mjs';
 import { checkTask, howOf as perfHow, checkLevel as perfCheckLevel, matchVerb } from './perf-rules.mjs';
+const hoursLib = createRequire(import.meta.url)('../js/hours.js');   // SESSION_RANGE: the minutes each lesson session accepts (item 10)
 const cmap = createRequire(import.meta.url)('../js/engine/canvas/complex-map.js'); // { compile }: formula check for complex-map (item 432)
 const tradeSim = createRequire(import.meta.url)('../js/engine/widgets/trade.js'); // { norm, play, ... }: the trade widget's game, so the authored strategy is played against the benchmark (item 459)
 const interleaveEngine = createRequire(import.meta.url)('../js/engine/canvas/interleave.js'); // { check, idsOf, ... }: the interleave canvas's spec rules, schedule replay and enumeration limit (item 471)
@@ -1230,13 +1232,22 @@ const checkDraw = (file, where, draw, { sample = false } = {}) => {
 };
 
 /* ---------- Lesson (rules 1 to 9 and the warnings) ---------- */
+const DURATION_IGNORE = durationIgnore();
 const checkLesson = (file, courseId, lessonId, L, course) => {
   const skills = new Set(Object.keys(course.skills || {}));
   req(file, '', L, ['id', 'course', 'title', 'minutes', 'objectives', 'skills', 'screens', 'summary', 'quiz']);
   if (L.id !== lessonId) err(file, 'id', `id "${L.id}" must match the file name "${lessonId}"`);
   if (L.course !== courseId) err(file, 'course', `course "${L.course}" must match the folder "${courseId}"`);
   checkText(file, 'title', L.title);
-  if (typeof L.minutes !== 'number' || L.minutes < 10 || L.minutes > 15) err(file, 'minutes', 'minutes is 10 to 15');
+  /* Item 10: session is short (default), workshop or project; minutes is the true estimate for the session, in its range */
+  if (L.session != null && !hoursLib.SESSIONS.includes(L.session)) err(file, 'session', `session is one of ${hoursLib.SESSIONS.join(', ')} (default short)`);
+  else {
+    const [lo, hi] = hoursLib.SESSION_RANGE[L.session || 'short'];
+    if (typeof L.minutes !== 'number' || L.minutes < lo || L.minutes > hi) err(file, 'minutes', `minutes is ${lo} to ${hi} for a ${L.session || 'short'} lesson${L.session ? '' : ' (a longer lesson sets "session": "workshop" or "project")'}`);
+  }
+  /* duration-prose: a duration of ${DURATION_FLOOR} minutes or more in the opening prose that differs from minutes by more than 5 (tools/duration-prose.mjs, AUTHORING section 1) */
+  { const st = typeof L.minutes === 'number' ? statedMinutes(L) : null;
+    if (st && Math.abs(st.minutes - L.minutes) > 5 && !DURATION_IGNORE[`${courseId}/${lessonId}`]) warn(file, 'screens[0..1].prose', `duration-prose: the opening prose says "${st.text}" (${st.minutes} min) but minutes is ${L.minutes}; set the true minutes (and "session": "workshop" or "project" above 20), or add the lesson to tools/duration-prose-ignore.json if it is a problem's data`); }
   if (!Array.isArray(L.objectives) || !L.objectives.length) err(file, 'objectives', 'at least one objective');
   (L.objectives || []).forEach((o, i) => checkText(file, `objectives[${i}]`, o));
   if (!Array.isArray(L.skills) || !L.skills.length) err(file, 'skills', 'name at least one skill');
@@ -1629,7 +1640,8 @@ if (!Array.isArray(C.stages)) err(curFile, 'stages', 'must be an array');
 if (C.tracks) TRACKS.forEach(t => { if (!C.tracks[t]) err(curFile, `tracks.${t}`, 'track name missing'); });
 (C.stages || []).forEach((s, i) => {
   const at = `stages[${i}]`;
-  req(curFile, at, s, ['name', 'hours', 'exit', 'topics']);
+  req(curFile, at, s, ['name', 'exit', 'topics']);
+  if (s.hours != null) warn(curFile, `${at}.hours`, 'stage hours is derived (the sum of its topic hours, js/hours.js) and the engine ignores this field; remove it with tools/apply-item11-content.mjs');;
   if (!Number.isInteger(s.id)) err(curFile, `${at}.id`, 'stage id is an integer');
   cur.stages.add(s.id);
   checkText(curFile, `${at}.exit`, s.exit);
@@ -1681,6 +1693,7 @@ const KINDS_OK = (it) => ['code', 'derivation', 'aloud', 'data'].includes(it.per
 
 /* Courses */
 const manifest = [];
+const sessionManifest = {};   // item 10: "course/lesson" -> { session, minutes } for workshop and project lessons, read by js/content.js and js/hours.js
 const selfExams = [];   // exam ids that hold a self-marked item or a check part (same test as ZQ.state.provenance); js/content.js reads it to split old exam passes
 const holdsSelf = (d) => { const L = (w) => !!w && w.kind === 'longform'; const it = (x) => !!x && (x.kind === 'longform' || L(x.widget) || (Array.isArray(x.parts) && x.parts.some(q => q && L(q.widget)))); return (Array.isArray(d.items) && d.items.some(it)) || (Array.isArray(d.parts) && d.parts.some(p => p && (p.kind === 'check' || (Array.isArray(p.items) && p.items.some(it))))); };
 const writtenByCourse = new Map();   // course id -> Set of written lesson ids, for the prerequisite rules
@@ -1745,6 +1758,7 @@ Object.keys(C.courses || {}).forEach(cid => {
       if (lr.data && Array.isArray(lr.data.objectives)) objs.push(...lr.data.objectives.filter(o => typeof o === 'string'));
       written.push(l); manifest.push(`courses/${cid}/${l}.json`);
       if (noteSample(lf, `courses/${cid}/${l}.json`, lr.data)) err(lf, 'sample', 'a sample file cannot be on a course map: leave it out of course.json');
+      if (lr.data && (lr.data.session === 'workshop' || lr.data.session === 'project') && typeof lr.data.minutes === 'number') sessionManifest[`${cid}/${l}`] = { session: lr.data.session, minutes: lr.data.minutes };
       if (lr.data) guard(lf, () => checkLesson(lf, cid, l, lr.data, D).forEach(s => usedSkills.add(s)));
     });
     [['review', `review-${i + 1}`], ['homework', `homework-${i + 1}`]].forEach(([kind, expect]) => {
@@ -2177,7 +2191,7 @@ if (SUMMARY) {
 
 if (!errors.length && WRITE_MANIFEST) {
   const mf = path.join(CONTENT, 'manifest.json');
-  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. perf lists the levels that carry a performance task. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), perf: Object.fromEntries(Object.keys(perfManifest).sort().map(k => [k, perfManifest[k]])), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
+  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. sessions lists the workshop and project lessons with their true minutes. perf lists the levels that carry a performance task. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), sessions: Object.fromEntries(Object.keys(sessionManifest).sort().map(k => [k, sessionManifest[k]])), perf: Object.fromEntries(Object.keys(perfManifest).sort().map(k => [k, perfManifest[k]])), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }
