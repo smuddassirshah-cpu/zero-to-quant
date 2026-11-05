@@ -919,6 +919,108 @@ check("l13: BS gain 20% -> 22% vol", bs_call(100, 100, 0, .22, 1) - bs_call(100,
 check("l18: BS at 26% vol", bs_call(100, 100, 0, .26, 1), call_B(100, 100, 0, .26, 1), 1e-6)
 print("   BS gain 20->22:", round(bs_call(100, 100, 0, .22, 1) - bs_call(100, 100, 0, .2, 1), 4), " BS at 26%:", round(bs_call(100, 100, 0, .26, 1), 4))
 
+# ---- fix pass (review-brief-trees-4): numbers added or changed ----
+print("fix pass numbers")
+# l13 screen 7: the full present-value gap, and the half-gap rule
+gap_pv = 100 - 100 * math.exp(-.05)
+check("l13 PV gap 100 - Ke^-rT (A closed, B put-call parity)", gap_pv, bs_call(100, 100, .05, .2, 1) - bs_put(100, 100, .05, .2, 1), 1e-9)
+check("l13 `whole-gap` key: 8.00 + full gap = 12.88", 8.0 + gap_pv, 8.0 - 100 * math.expm1(-.05), 1e-12)
+assert round(8.0 + gap_pv, 2) == 12.88
+# l15 screen 2: the h = 10 spread undivided is 5.325, the width-1 spread is 0.5323
+sp10 = bs_call(100, 95, .05, .2, 1) - bs_call(100, 105, .05, .2, 1)
+check("l15 h=10 spread undivided (5.325)", sp10, call_B(100, 95, .05, .2, 1) - call_B(100, 105, .05, .2, 1), 1e-6)
+check("l15 width-1 spread (0.5323)", bs_call(100, 99.5, .05, .2, 1) - bs_call(100, 100.5, .05, .2, 1), call_B(100, 99.5, .05, .2, 1) - call_B(100, 100.5, .05, .2, 1), 1e-6)
+# l17 screen 4: the Asian by number of fixings (moment matching) and the effective-vol ratio
+def asian_n(nf, s_=.2):
+    tf = np.arange(1, nf + 1) / nf
+    mm2 = 1e4 * np.exp(s_ * s_ * np.minimum.outer(tf, tf)).sum() / nf ** 2
+    va = math.sqrt(math.log(mm2 / 1e4))
+    return lognormal_call(100.0, va, 100.0), va / s_
+a12, ratio12 = asian_n(12)
+rng12 = np.random.default_rng(5)
+pay12 = []
+for _ in range(10):
+    Z12 = rng12.standard_normal((40_000, 12))
+    for sg in (1, -1):
+        L12 = np.cumsum(-.02 / 12 + .2 * math.sqrt(1 / 12) * sg * Z12, axis=1)
+        pay12.append(np.maximum((100 * np.exp(L12)).mean(axis=1) - 100, 0))
+pay12 = np.concatenate(pay12)
+se12 = pay12.std(ddof=1) / math.sqrt(len(pay12))
+check("l17 Asian, 12 monthly fixings: moment match vs MC (4.90)", a12, pay12.mean(), 4 * se12 + 0.01)
+print(f"   12 fixings: moment matching {a12:.4f}, MC {pay12.mean():.4f} (se {se12:.4f}); vol ratio {ratio12:.4f} (formula {math.sqrt(13 * 25 / (6 * 144)):.4f})")
+check("l17 12-fixing effective vol ratio 0.614 (moment vs formula sqrt((n+1)(2n+1)/6n^2))", ratio12, math.sqrt(13 * 25 / (6 * 144)), 0.002)
+a52, ratio52 = asian_n(52)
+check("l17 52-fixing vol ratio 0.587 vs the 252-fixing 0.580", ratio52, math.sqrt(53 * 105 / (6 * 52 ** 2)), 0.002)
+check("l17 daily (252) fixings: 4.63 against vanilla / sqrt3 4.60", asian_mm, bs_call(100, 100, 0, .2, 1) / math.sqrt(3), 0.04)
+assert 4.85 < a12 < 4.95 and 0.60 < ratio12 < 0.62
+# l17 screen 5 and review item 5: American against European put is equal at r = 0, dearer at r = 5%
+am0 = crr_american_put(100, 100, 0.0, .2, 1, 800)
+eu0 = crr_american_put(100, 100, 0.0, .2, 1, 800, american=False)
+check("l17 American put = European put at r = 0 (tree, 800 steps)", am0, eu0, 1e-9)
+check("l17 European put at r = 0 (tree vs Black-Scholes)", eu0, bs_put(100, 100, 0, .2, 1), 0.01)
+am5 = crr_american_put(100, 100, .05, .2, 1, 800)
+eu5 = crr_american_put(100, 100, .05, .2, 1, 800, american=False)
+check("l17 American put dearer at r = 5% (premium above 0.4)", am5 - eu5, 0.5164, 0.02)
+assert am5 > eu5 + 0.4
+# l14 screen 1: a straight ramp from 0 at 60 to 1 at 140 against the target delta, at 20 samples
+xs20 = np.linspace(60, 140, 20)
+tgt = np.array([Phi(math.log(x / 100) / .2 + .1) for x in xs20])
+ramp_err = np.abs((xs20 - 60) / 80 - tgt).max()
+tgt_B = np.array([(call_B(x + .01, 100, 0, .2, 1) - call_B(x - .01, 100, 0, .2, 1)) / .02 for x in xs20])
+check("l14 delta target at 20 samples (formula vs finite difference)", tgt.max(), tgt_B.max(), 1e-5)
+print("   straight-ramp error at 20 samples:", round(ramp_err, 4))
+assert ramp_err > 0.05          # so band 0.05 rejects the ramp
+# l14 screen 2: peak at the strike is 4% lower than at the peak; the put's gamma equals the call's
+Spk = 100 * math.exp(-1.5 * .04)
+check("l14 gamma at the peak vs at 100 (0.02076 / 0.01985)", greeks(Spk, 100, 0, .2, 1)[1] / greeks(100, 100, 0, .2, 1)[1], 0.020761 / 0.019848, 1e-4)
+hp = 0.1
+put_gamma = (put_B(Spk + hp, 100, 0, .2, 1) - 2 * put_B(Spk, 100, 0, .2, 1) + put_B(Spk - hp, 100, 0, .2, 1)) / hp ** 2
+check("l14/exam: put gamma at the peak equals call gamma (T = 1)", greeks(Spk, 100, 0, .2, 1)[1], put_gamma, 1e-6)
+check("exam part 2: peak at 94.18 for T = 1, sigma 20%", Spk, 94.18, 0.005)
+# l14 screen 3: gamma of a far out-of-the-money option rises with T (K = 130)
+g130a = greeks(100, 130, 0, .2, 1)[1]
+g130b = greeks(100, 130, 0, .2, .25)[1]
+fd_a = gamma_fd(100, 130, .2, 1.0, 0.5)
+fd_b = gamma_fd(100, 130, .2, .25, 0.5)
+check("l14 K=130 gamma T=1 (closed vs second difference)", g130a, fd_a, 1e-5)
+check("l14 K=130 gamma T=0.25", g130b, fd_b, 1e-5)
+check("l14 K=130 gamma ratio T=1 over T=0.25 (6.6)", g130a / g130b, fd_a / fd_b, 0.05)
+# l14 screen 4: vega = gamma S^2 sigma T
+check("l14 vega per 1.00 = Gamma S^2 sigma T (39.70)", 0.019847 * 1e4 * .2 * 1.0, (call_B(100, 100, 0, .2001, 1) - call_B(100, 100, 0, .1999, 1)) / 0.0002, 0.01)
+check("l14 slip: no sigma gives 198.5 per 1.00", 0.019848 * 1e4, greeks(100, 100, 0, .2, 1)[1] * 1e4, 0.01)
+# l14 table: a short call is (-, -, -, +) at the money
+sc = greeks(100, 100, 0, .2, 1)
+assert -sc[0] < 0 and -sc[1] < 0 and -sc[2] < 0 and -sc[3] > 0
+# homework 6: vega of a one-day option is far smaller than a one-year option's (so "vega is largest for the shortest expiry" is false)
+v1d, v1y = greeks(100, 100, 0, .2, 1 / 252)[2], greeks(100, 100, 0, .2, 1)[2]
+check("hw6 vega one day vs one year (0.0633 ratio = 1/sqrt(252))", v1d / v1y, (call_B(100, 100, 0, .2001, 1 / 252) - call_B(100, 100, 0, .1999, 1 / 252)) / 0.0002 / v1y, 1e-5)
+assert v1d < v1y
+# l16 screen 9: risk reversal 80 put (24%) against 120 call (16%), skew against flat 20%
+sv = lambda K: 0.20 - 0.002 * (K - 100)
+rr_s = bs_put(100, 80, 0, sv(80), 1) - bs_call(100, 120, 0, sv(120), 1)
+check("l16 RR 80/120 skew: she receives 0.9224", rr_s, put_B(100, 80, 0, sv(80), 1) - call_B(100, 120, 0, sv(120), 1), 1e-6)
+rr_f = bs_put(100, 80, 0, .2, 1) - bs_call(100, 120, 0, .2, 1)
+check("l16 RR 80/120 flat 20%: she pays 0.9614", rr_f, put_B(100, 80, 0, .2, 1) - call_B(100, 120, 0, .2, 1), 1e-6)
+assert rr_s > 0 > rr_f
+print("   RR 80/120: put", round(bs_put(100, 80, 0, sv(80), 1), 4), "call", round(bs_call(100, 120, 0, sv(120), 1), 4), " flat put", round(bs_put(100, 80, 0, .2, 1), 4), "call", round(bs_call(100, 120, 0, .2, 1), 4))
+# l18 screen 3 and 9
+check("l18 variance gap 0.26^2 - 0.20^2 = 0.0276", .26 ** 2 - .2 ** 2, (.26 - .2) * (.26 + .2), 1e-15)
+check("l18 constant-gamma overshoot 99.238 x 0.0276 = 2.739", 99.238 * 0.0276, 0.5 * greeks(100, 100, 0, .2, 1)[1] * 1e4 * 0.0276, 5e-3)
+gap26 = bs_call(100, 100, 0, .26, 1) - bs_call(100, 100, 0, .2, 1)
+check("l18 transfer: 20,000 options sold at 20%, share realises 26%: loss 47,556", 20000 * gap26, 20000 * expected_hedged_pnl(.2, .26), 100)
+check("l18 transfer: vega x gap at the 20% vega (47,634)", 20000 * greeks(100, 100, 0, .2, 1)[2] * .06, 20000 * 39.6953 * .06, 1.0)
+print("   l18 transfer: gap", round(gap26, 4), " 20,000 options", round(20000 * gap26, 1))
+check("l18 quiz slip: S=50, sigma 30%, sqrt(365) gives 0.785", 50 * .3 / math.sqrt(365), 15 / 19.1050, 1e-4)
+check("l18 quiz breakeven S=50, sigma 30% (0.9449)", 50 * .3 / math.sqrt(252), 15 / 15.8745, 1e-4)
+# exam e-greek-signs part 3 (one year to run, gamma 0.0198, realised 28%, 1,000 puts, 21 of 252 days)
+pe = -1000 * 0.5 * 0.0198 * 1e4 * (0.28 ** 2 - 0.20 ** 2) * 21 / 252
+check("exam part 3 P&L -316.80", pe, -99000 * 0.0384 / 12, 1e-9)
+check("exam part 3 no-half -633.6", 2 * pe, -1000 * 0.0198 * 1e4 * 0.0384 / 12, 1e-9)
+check("exam part 3 vol-gap -660 (99,000 x 0.08 x 21/252)", -99000 * 0.08 * 21 / 252, -99000 * 0.08 / 12, 1e-9)
+assert round(-99000 * 0.08 * 21 / 252) == -660
+check("exam part 3 no-time -3801.6", -99000 * 0.0384, -3801.6, 1e-9)
+check("exam part 3 with gamma 0.019848 (-317.6)", -1000 * 0.5 * greeks(100, 100, 0, .2, 1)[1] * 1e4 * 0.0384 / 12, -317.56, 0.02)
+
 # the plan's sentence, one more time
 check("plan check: rule 8.00 vs 7.9656", 8.0 - bs_call(100, 100, 0, .2, 1), 8.0 - 7.9656, 5e-5)
 
