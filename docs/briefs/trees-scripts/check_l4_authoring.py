@@ -304,6 +304,69 @@ check("hw2 price gap 26% 2.3778, 18% -0.7943, 25% vs 30% -1.9759", (call(100, 10
       call_B(100, 100, 0, .25, 1) - call_B(100, 100, 0, .3, 1), 1e-7)
 check("hw6 delta at the money 0.5398; vega one day 2.51 against 39.70", vega_A(100, 100, 0, .2, 1 / 252), vega_B(100, 100, 0, .2, 1 / 252), 1e-4)
 
+# ---- Fix pass (2026-11-05): Asian figures settled by a third method, review-4 fresh inputs ----
+# Convention (l17 screens 3, 8, 9): r = 0, S = K = 100, sigma = 20%, T = 1, n fixings at t = i/n, i = 1..n, average of the n closes.
+# Method A: Monte Carlo with a geometric-average control variate (exact lognormal mean for the control), batch standard errors.
+# Method B: plain antithetic Monte Carlo (no control variate) with another seed; agreement within four of its standard errors.
+def asian_cv(n, N, B, seed):
+    rng = np.random.default_rng(seed)
+    t = np.arange(1, n + 1) / n
+    v = (0.04 * np.minimum.outer(t, t)).mean()
+    m = log(100) - .5 * .04 * t.mean()
+    sd = sqrt(v)
+    gp = exp(m + v / 2) * Phi((m + v - log(100)) / sd) - 100 * Phi((m + v - log(100)) / sd - sd)
+    est = []
+    for _ in range(B):
+        z = rng.standard_normal((N // B // 2, n))
+        z = np.vstack([z, -z])
+        ls = np.cumsum(-.5 * .04 / n + .2 * sqrt(1 / n) * z, axis=1) + log(100)
+        a = np.maximum(np.exp(ls).mean(1) - 100, 0)
+        g = np.maximum(np.exp(ls.mean(1)) - 100, 0)
+        c = np.cov(a, g)[0, 1] / g.var()
+        est.append((a - c * (g - gp)).mean())
+    est = np.array(est)
+    return est.mean(), est.std(ddof=1) / sqrt(B)
+
+
+def asian_plain(n, N, seed):
+    rng = np.random.default_rng(seed)
+    z = rng.standard_normal((N // 2, n))
+    z = np.vstack([z, -z])
+    ls = np.cumsum(-.5 * .04 / n + .2 * sqrt(1 / n) * z, axis=1) + log(100)
+    a = np.maximum(np.exp(ls).mean(1) - 100, 0)
+    return a.mean(), a.std(ddof=1) / sqrt(len(a))
+
+
+for n, stated, N in ((12, 4.8887, 1_000_000), (52, 4.6687, 1_000_000), (252, 4.6159, 1_000_000)):
+    mA, seA = asian_cv(n, 2_000_000, 20, 101 + n)
+    mB, seB = asian_plain(n, N, 202 + n)
+    check(f"l17 Asian {n} fixings: control-variate MC {mA:.4f} (se {seA:.4f}) against stated {stated}", mA, stated, 4 * seA + 5e-5)
+    check(f"l17 Asian {n} fixings: plain MC {mB:.4f} (se {seB:.4f}) against control-variate MC", mB, mA, 4 * seB)
+check("l17 12-fixing vol share 0.614 = 4.8887 / 7.9656", 4.8887 / 7.9656, 0.614, 5e-4)
+check("l17 daily Asian £4.62 against vanilla / sqrt3 4.60: within 0.03", 4.6159, call(100, 100, 0, .2, 1) / sqrt(3), 0.03)
+check("l17 screen 3 key 4.6 tol 0.1 accepts 4.62 and rejects the half slip 3.98", 4.6159 - 4.6, 0.0, 0.1)
+# review-4 fresh inputs
+r_, s_, T_ = .05, .2, 1.
+d1_, d2_ = d12(100, 95, r_, s_, T_)
+exp_ = exp(-r_ * T_)
+check("review-4 digital at 95: d2 0.4065", d2_, (log(100 / 95) + .03) / .2, 1e-12)
+check("review-4 digital at 95: 0.9512 x 0.6578 = 0.6257", exp_ * Phi(d2_), exp_ * ndtr(d2_), 1e-12)
+check("review-4 digital at 95: price key 0.6257", exp_ * Phi(d2_), .6257, 5e-5)
+check("review-4 digital at 95: no-discount slip 0.6578", Phi(d2_), .6578, 5e-5)
+check("review-4 digital at 95: put slip 0.3255", exp_ * Phi(-d2_), .3255, 5e-5)
+check("review-4 digital at 95: put slip by 1 - call", exp_ - exp_ * Phi(d2_), exp_ * ndtr(-d2_), 1e-12)
+check("review-4 breakeven £40 at 35%: 40 x 0.35 / sqrt(252) = 0.8819", 40 * .35 / sqrt(252), 40 * .35 * sqrt(1 / 252), 1e-12)
+check("review-4 breakeven key 0.88 (tol 0.01) against 0.8819", .8819, .88, .01)
+check("review-4 breakeven annual slip 14 = 40 x 0.35", 40 * .35, 14, 1e-12)
+check("review-4 gamma part 3: key 261 tol 7 accepts full revaluation 255 (rejects 522)", 261 - 255, 6, 7)
+check("homework-4 part 3.0: d2 = (ln(100/110) - 0.0162) / 0.18 = -0.6195", (log(100 / 110) - .0162) / .18, -0.6195, 5e-5)
+check("homework-4 part 3.0: Phi(-0.6195) = 0.2678", Phi(-0.6195), ndtr(-0.6195), 1e-12)
+check("l16 screen 4: 0.1072 - 12.95 x 0.002 = 0.0813", .1072 - 12.95 * .002, .0813, 1e-4)
+check("l17 screen 7: up-and-out vanilla at 90/100, 20%, 1y, r = 0 is 3.59", call(90, 100, 0, .2, 1), call_B(90, 100, 0, .2, 1), 1e-7)
+check("l17 screen 7: the vanilla slip 3.59", call(90, 100, 0, .2, 1), 3.59, 5e-3)
+check("l15 screen 1: reversed spread -0.5323", -(call(100, 99.5, .05, .2, 1) - call(100, 100.5, .05, .2, 1)), -(call_B(100, 99.5, .05, .2, 1) - call_B(100, 100.5, .05, .2, 1)), 1e-6)
+check("l15 screen 8: tol 5000 around 1,064,650 excludes 1,119,235 and 1,211,544", 1119235 - 1064650 > 5000 and 1211544 - 1064650 > 5000, True, 0)
+
 print()
 print(f"{'PASS' if not fails else 'FAIL'}: {n_ok + len(fails)} checks, {n_ok} ok, {len(fails)} failed")
 for f in fails:
