@@ -253,7 +253,7 @@
       "type": "problem",
       "difficulty": 2,
       "title": "What std::move does",
-      "prose": "`Type&&`, met in l11, is a reference that binds to temporaries. `Tracked` counts its copies and moves. After a move the source is **moved-from**: valid and safe to destroy, with a value nobody promises.",
+      "prose": "An lvalue has a name and an address. An rvalue is a temporary, or a value cast by `std::move`. `Type&&`, met in l11, is a reference that binds to rvalues. `Tracked` counts its copies and moves. After a move the source is **moved-from**: valid and safe to destroy, with a value nobody promises.",
       "tags": [
         "move-semantics",
         "moved-from"
@@ -553,7 +553,7 @@
         }
       },
       "explain": {
-        "text": "The library calls `std::move_if_noexcept`: it moves only when the move cannot throw. If a move threw half way, the old block would be damaged, so it copies and keeps the old block whole."
+        "text": "The library calls `std::move_if_noexcept`, which moves only when the move cannot throw (the strong exception guarantee). A move that threw half way would damage the old block, so it copies. A build with exceptions off, such as libc++ with `-fno-exceptions`, moves anyway."
       }
     },
     {
@@ -569,19 +569,13 @@
         "kind": "array",
         "params": {
           "cells": [
-            "a.data_",
-            "a.size_",
-            "b.data_",
-            "b.size_"
+            "block",
+            "3",
+            "none",
+            "none"
           ]
         },
         "state": {
-          "cells": [
-            "block",
-            "3",
-            "",
-            ""
-          ],
           "highlight": {
             "ranges": [
               {
@@ -602,14 +596,33 @@
             ]
           }
         },
-        "enter": {
-          "cells": [
-            "null",
-            "0",
-            "block",
-            "3"
-          ]
-        }
+        "controls": [
+          {
+            "frames": [
+              {
+                "cells": [
+                  "block",
+                  "3",
+                  "none",
+                  "none"
+                ]
+              },
+              {
+                "cells": [
+                  "null",
+                  "0",
+                  "block",
+                  "3"
+                ]
+              }
+            ],
+            "frameLabels": [
+              "before the move",
+              "the goal after it"
+            ],
+            "label": "State"
+          }
+        ]
       },
       "question": "Write `Buffer(Buffer&&) noexcept` and `Buffer& operator=(Buffer&&) noexcept`.",
       "widget": {
@@ -724,7 +737,7 @@
         "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n",
         "allocCheck": true,
         "leakCheck": true,
-        "how": "Submit runs 15 hidden tests. `alloc_count()` counts calls to `operator new` and `new[]` since the last reset, so a move that copies shows as 1 instead of 0; a block never freed fails its test. A moved-from buffer must report size 0 and `data()` null."
+        "how": "Submit runs 15 hidden tests. `alloc_count()` counts calls to `operator new` and `new[]` since the last reset. A move that copies shows as 1 instead of 0. A block never freed fails its test. A moved-from buffer must report size 0 and `data()` null."
       },
       "hints": [
         {
@@ -746,7 +759,7 @@
       ],
       "feedback": {
         "correct": "Both moves took the block and left the source empty.",
-        "generic": "Not quite right. Read the failing rows: a count above 0 means you allocated, and a size above 0 means the source was not emptied.",
+        "generic": "Not quite right. Read the failing rows. A count above 0 means you allocated. A size above 0 means the source was not emptied.",
         "byKey": {
           "compile": "The compiler stopped. Check the `Buffer&&` parameter and the `noexcept` position."
         }
@@ -869,6 +882,11 @@
             "correct": true
           },
           {
+            "id": "size",
+            "text": "`int n = v.size();` (valid, but the value is unspecified)",
+            "correct": true
+          },
+          {
             "id": "index",
             "text": "`v[0] = 1;`",
             "why": "A moved-from vector may be empty. Nothing promises an element at index 0."
@@ -888,7 +906,7 @@
         },
         {
           "rung": "point",
-          "text": "Destroying, assigning and clearing work on any valid vector, empty or not."
+          "text": "Destroying, assigning, clearing and asking the size work on any valid vector, empty or not."
         },
         {
           "rung": "step",
@@ -896,18 +914,18 @@
         }
       ],
       "feedback": {
-        "correct": "Destroy, assign and clear need nothing in the vector.",
+        "correct": "Destroy, assign, clear and `size()` need nothing in the vector.",
         "generic": "Not quite right. Keep only the operations that work on an empty vector."
       },
       "explain": {
-        "text": "A moved-from object is valid, so anything with no precondition on its contents is safe. Reading an element needs a size, and the library promises none."
+        "text": "A moved-from object is valid, so any call with no precondition on its contents is safe. That includes `size()`, though its result is unspecified. Reading an element needs a size, and the library promises none."
       }
     },
     {
       "type": "generalise",
       "difficulty": 2,
       "title": "The pattern",
-      "prose": "A move takes the block from something about to go, and leaves it empty and safe to destroy.\n\n```cpp\n// Say aloud: a move takes, a copy duplicates.\nBuffer(Buffer&& o) noexcept\n    : size_(o.size_), data_(o.data_) {\n    o.size_ = 0;\n    o.data_ = nullptr;\n}\nBuffer& operator=(Buffer&& o) noexcept {\n    if (this != &o) {\n        delete[] data_;\n        size_ = o.size_;  data_ = o.data_;\n        o.size_ = 0;      o.data_ = nullptr;\n    }\n    return *this;\n}\n```\nMeyers' *Effective Modern C++* and the C++ Core Guidelines cover the same ground.",
+      "prose": "A move takes the block from something about to go, and leaves it empty and safe to destroy.\n\n```cpp\n// Say aloud:\n// a move takes, a copy duplicates.\nBuffer(Buffer&& o) noexcept\n    : size_(o.size_), data_(o.data_) {\n    o.size_ = 0;\n    o.data_ = nullptr;\n}\nBuffer& operator=(Buffer&& o) noexcept {\n    if (this != &o) {\n        delete[] data_;\n        size_ = o.size_;  data_ = o.data_;\n        o.size_ = 0;      o.data_ = nullptr;\n    }\n    return *this;\n}\n```\nMeyers' *Effective Modern C++* and the C++ Core Guidelines cover the same ground.",
       "tags": [
         "move-semantics",
         "moved-from"
@@ -947,7 +965,7 @@
       "type": "transfer",
       "difficulty": 3,
       "title": "A setter that keeps its argument",
-      "prose": "A pricer keeps its history. `history` holds 1,000,000 doubles.\n\n```cpp\nvoid set_prices(std::vector<double> p) {\n    prices_ = std::move(p);\n}\n```\nTake it by value and move it in, so one function serves both callers.",
+      "prose": "A pricer keeps its history. `history` holds 1,000,000 doubles.\n\n```cpp\nvoid keep(std::vector<double> p) {\n    prices_ = std::move(p);\n}\n```\nTake it by value and move it in, so one function serves both callers.",
       "tags": [
         "sink-argument",
         "copy-vs-move"
@@ -961,7 +979,7 @@
         ],
         "rows": [
           [
-            "`set_prices(history);`",
+            "`keep(history)`",
             {
               "edit": true,
               "answer": 1000000,
@@ -971,7 +989,7 @@
             }
           ],
           [
-            "`set_prices(std::move(history));`",
+            "`keep(std::move(history))`",
             {
               "edit": true,
               "answer": 0,
@@ -981,7 +999,7 @@
             }
           ],
           [
-            "`set_prices(load());`",
+            "`keep(load())`",
             {
               "edit": true,
               "answer": 0,

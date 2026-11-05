@@ -1124,3 +1124,7 @@ cpp L5 (5 Nov):
 
 Raised later (exam topic-1.9 extension (5 Nov)):
 - [Could] `docs/reviews/voice-scan.py` counts an inline code span as one word (`CODE`) but still flags the sentence at 20 tokens, so a prose sentence with three code spans reads long. Wanted: no change needed; noted so authors split such sentences rather than fight the scan.
+
+Raised later (cpp level 5 fix pass, 6 Nov):
+- [Should] `array` canvas at 440 px (cpp l19 screen 5, l21 screens 2 and 3): a single row of cells sits in a band about 100 px tall above and below. Wanted: the canvas height follows the number of rows at narrow widths.
+- [Could] Console and code blocks wrap with `wrap: true` (used on l20 screen 5 and l21 screen 7), but a fenced code block in screen prose has no wrap switch and clips at 440 px; l21 screen 9 was fixed by shortening the lines. Wanted: wrap on fenced blocks in prose.

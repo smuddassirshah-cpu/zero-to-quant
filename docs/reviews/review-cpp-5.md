@@ -120,3 +120,99 @@ Every lesson, `review-5` and `homework-5` passed at desktop, `--mobile` and `--t
 - Repetition: l23 (see warnings) re-asks l9; l20 screens[0]-[3] build on l11's table without repeating it; l21 does not re-ask cpp-pricing l5's `Call`/`Put`; l22 does not use `x + 1 < x`.
 - Interview realism: the spoken sentences ("a move takes, a copy duplicates", "the table picks the function", "declare one and you decide all five", "check before, never after") are what candidates say. Missing and worth one line each: lvalue versus rvalue (l19), `std::forward` is out of scope but "universal reference" gets asked (note only), `dynamic_cast` and RTTI (l21 note only), dangling references as a fifth undefined example in l22 (the lesson names four plus `std::sort`).
 - Schema: 10, 10, 11, 11, 10 screens (8 to 12); 5, 4, 4, 4, 4 quiz items; `minutes` 15 each; screen difficulty ramps 1 to 3 in every lesson; tags on every screen; no id duplicates in `review-5` (10 items, difficulty 2 to 4) or `homework-5` (9 items, difficulty 4 and 5, two `longform` rubrics summing to 10, two `code`, one `order`, two `parts`); `skills` on every item are `cp-*` ids already on the map (validator reports 0 errors per the report, not re-run to avoid rewriting `manifest.json`). Code screens: starters fail and solutions pass per the report; `P-move-buffer` starter, solution and 15 tests read here and match the prose (the `alloc_count` of 2 for the third push is correct: one for the temporary, one for the grown block).
+
+
+## Fix pass
+
+Fixed with targeted edits (no file regenerated). Every number was recomputed before it was written, in the app toolchain (`docs/briefs/cpp-scripts/app_toolchain/`: YoWASP clang 21, libc++, the app's flags) and natively with g++ and clang++. After the edits: `node tools/validate.mjs` 0 errors (manifest unchanged); l19 to l23, `--set cpp/review-5`, `--set cpp/homework-5` and `--exam topic-1.9` pass at desktop, `--mobile` and `--tablet`; the voice scan reports 0 sentences over 20 words and 0 long explanations in the cpp folder and in a scratch copy of topic-1.9.json. The 440 px screenshots of l21 screens 7 and 9 show no clipping.
+
+Status: fixed 77, disputed 2, deferred 5 (the three reviews together). The old keys and removed ids (`q-copy-unique`, `q-use-count`, `r5-use-count`, `r5-int-max-pounds`) were grepped across the course folder, the exam and `course.json`: no reference remains outside this report and the briefs.
+
+### Vector growth (exam review warning 1, answers about l19)
+
+Disputed in part. The reviewer's 0 copies and 7 moves come from compiling with an explicit `-fno-exceptions`, which the app does not pass (`app/js/screens/cpp-worker.js` `FLAGS`). With the app's real flags the app toolchain prints 3 copies and 4 moves for four pushes with a throwing move, 1 and 2 for two pushes, and 0 and 7 with a `noexcept` move, the same as g++ and clang++ on libstdc++. With `-fno-exceptions` added, libc++ moves anyway (0 and 7), g++ and clang++ on libstdc++ still copy (3 and 4). So the keys stay (3, and 1 copy with 2 moves), and the claim is stated as the standard rule with its reason: l19 screen 4 explain now names `std::move_if_noexcept` and the strong exception guarantee and adds that a build with exceptions off, such as libc++ with `-fno-exceptions`, moves anyway; `e-vector-growth` has the same sentence and a `wrong` value 1. `review-5` `r5-growth-copies` asks which changes stop the copies instead (a `noexcept` move, `reserve`), which agrees in every build. KNOWN_ISSUES has a line. The brief (`docs/briefs/cpp.md`, from `part1-level5.md`) says every key and run-it claim must hold in the app toolchain.
+
+### review-cpp-5: lessons
+
+1. l19 lvalue and rvalue: fixed, screen 2 prose defines both.
+2. l19 screen 7 moved-from vector: fixed, `v.size()` added as a fourth correct option.
+3. l19 screen 5 array canvas: fixed, it no longer opens on the finished state; a `frames` control shows before and goal.
+4. l19 screen 9 call column: fixed, the function is `keep` and the semicolons are gone.
+5. l19 screen 8 comment: fixed, split over two lines.
+6. l19 growth quiz and review item the same: fixed, the review item is now a `multi` on what stops the copies.
+7. l19 screen 4 strong guarantee: fixed.
+8. l20 screen 4 delete-first distractor `why`, byKey and explain: fixed, only the failing `new` reason is kept.
+9. l20 screens 2 and 3 and homework cells accepting exact words only: fixed, `accept` lists on every text cell (homework error cells accept `deleted`, `does not compile`, `compile error` and more).
+10. l20 screen 3 defaulted copy: fixed, said in the prose.
+11. l20 screen 7 "implicitly defined as deleted": fixed.
+12. l20 q-unique-class: fixed.
+13. l20 screen 0 `b`: fixed.
+14. l20 screen 5 clipping: fixed, `wrap: true`.
+15. l21 screen 7 clipping at 440: fixed with `wrap: true`; the screenshot shows both `return` bodies. No engine change needed.
+16. l21 screen 9 snippet: fixed, shortened and rewrapped; screenshot checked.
+17. l21 screen 9 explain: fixed, it answers the dispatch question.
+18. l21 q-vector-slice abstract base: fixed, "a concrete base".
+19. l21 screen 3 padding: fixed, a `gap` cell is drawn.
+20. l21 screen 2 `eight`: fixed.
+21. l21 q-abstract: fixed.
+22. l21 screen 10 wording: fixed.
+23. l22 screen 5 repeats the INT_MAX fact: fixed, replaced by a new trap (a null read always crashes). I did not use the unsigned loop the review proposed, because screen 6 already shows it and teaches the wrap. Null read checked natively (segmentation fault) and in the app (it runs on, `v` is 0).
+24. l22 screen 3 sentence: fixed.
+25. l22 quiz and review pounds question the same: fixed, the review item is now a part about pence over the limit (352,516,353).
+26. l22 screen 2 slot merging two terms: fixed, each tile's feedback names implementation-defined or unspecified.
+27. l22 screen 0 truncated output: fixed, a closing `...` line.
+28. l23 screen 7 repeats screen 4: fixed, replaced by a move between two owners of one object (`b.use_count()` is 1, checked in the app and natively).
+29. l23 screen 7 explain list: fixed, replaced; the follow-ups moved to screen 8 with a short answer each.
+30. l23 re-asks l9 (q-copy-unique, q-use-count, review use_count): fixed, replaced by `q-deleter` and `q-weak-count`; the review item is a `parts` item on a move.
+31. l23 screen 8 no code: fixed, the `~SharedPtr` body is added.
+32. l23 screen 3 `inside` twice: fixed.
+33. l23 screen 6 `leak` wording: fixed.
+
+### review-cpp-5: review-5 and homework-5
+
+34. Six review items repeated lessons: fixed. Varied: take with a `const` argument (2), growth (a `multi`), `sizeof` of a `char` after a vptr (8), pence over `INT_MAX`, `use_count` after a move, `shared_ptr` built from `a.get()` (double delete, ASan confirms). Kept as retrieval: defaulted `noexcept`, virtual destructor.
+35. r5-order-compiles unknown `b`: fixed.
+36. r5-sizeof-quote sentence: fixed (the item was replaced).
+37. review-5 no `parts` or `order` item: fixed, one of each.
+38. r5-which-undefined `at`: fixed.
+39. Homework members table byKey: fixed, each cell names its slip.
+40. Homework members table spellings: fixed (see 9).
+41. h5-sink part 3 wording: fixed.
+42. h5-shared-move-assign frame: fixed.
+43. homework difficulty ramp: fixed, h5-sink is difficulty 3 (marks 48 of 48).
+44. h5-say-virtual phrase: fixed.
+45. h5-vec and h5-scope-guard: no finding in the review.
+46. The 24 voice warnings (including the voice lines for l19 to l23, review-5 and homework-5): fixed, all split.
+47. Layout: array canvases in a tall band at 440 px: deferred, [Should] bullet in `docs/BACKLOG-INBOX.md`.
+48. Fenced prose code blocks have no wrap switch: deferred, [Could] bullet (the clipped lines were shortened).
+49. Pedagogy notes (universal reference, `dynamic_cast`, a dangling pointer as a fifth example): deferred, notes only in the review.
+
+### answers-2026-11-05-cpp-5
+
+50. l23 `SharedPtr` move assignment that leaves the source unemptied: fixed. Test 10 now reads `live * 100 + b.use_count() * 10 + a.use_count()` (110) and test 5 (subsumed by test 3) became a move between two sharers (10). Still 15 tests. New mutants `move-assign-keeps-source` (2 failing) and `move-assign-keeps-own` (2) are caught in the app toolchain, c++17 and c++20; the solution passes 0 of 15 and the starter fails 14.
+51. l23 screen 0 wrong value 3: fixed, 4 now carries the per-copy counter line and 3 has its own line; frame 5 label no longer says `new`.
+52. Equivalent mutants: no change, they follow the lesson's own rule.
+53. `long long` widening accepted in l22 screen 4: no change, a correct alternative.
+54. Homework item 4 exact words: fixed (see 9).
+55. C++26 uninitialised read: no change while the toolchain stays at c++17 and c++20.
+56. `sizeof(long)` on Windows: no change.
+57. Homework item 7 "each growth copies 8 MB": fixed, "a growth at that size".
+58. Homework item 2 part 3 key: fixed (see 41).
+59. Pointer widths: no change.
+
+### review-exam-1.9
+
+60. e-vector-growth: see the section above (disputed in part, claim fixed).
+61. e-vector-growth `wrong` value 1: fixed.
+62. e-ub-which "cannot break the program": fixed, "Defined code may still be a bug."
+63. e-ub-which missed UB lines: fixed, `byKey` for `zero-div`, `const-cast` and `wrong-delete`.
+64. e-ub-which "None of them is optimised away": fixed, dropped.
+65. e-virtual-dtor "counter block": fixed, "control block (the counter block of l23)".
+66. e-virtual-dtor overlap with r5-virtual-dtor: disputed, kept as the brief specifies.
+67. e-code-clone-basket stealing clone: fixed, a twelfth test (`b.cost(2.0)` after `b.clone()`). The mutant that swaps the children out through `const_cast` now fails 1 of 12 in the app toolchain (c++17 and c++20); the solution passes 0 of 12, the starter fails 10, the earlier mutants are still caught.
+68. e-code-clone-basket starter lines clipping: fixed, every starter and solution line is at most 60 characters.
+69. e-code-clone-basket duplicated comment: fixed.
+70. Exam balance (level 1 thin, l20 and l23 untested directly): deferred, noted in the brief for a later pass.
+71. Other exam notes (const-move explain, minutes, ordering, pace, the `generic` feedback): no change needed.
+
+Briefs: `docs/briefs/cpp-scripts/part1-level5.md`, `part2-exam.md`, `build_brief.py`, `problems_l23.py` and `problems_exam.py` carry the changes, `results.txt` and `results_app.txt` the new runs, and `docs/briefs/cpp.md` was rebuilt with `build_brief.py`.

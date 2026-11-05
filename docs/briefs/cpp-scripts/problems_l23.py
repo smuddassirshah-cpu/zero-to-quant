@@ -211,6 +211,23 @@ S_MUT = {
     }""", """    SharedPtr(SharedPtr&& other) noexcept : ptr_(other.ptr_), count_(other.count_) {
         if (count_) ++*count_;
     }"""),
+    "move-assign-keeps-source": sm("""            ptr_ = other.ptr_;
+            count_ = other.count_;
+            other.ptr_ = nullptr;
+            other.count_ = nullptr;
+        }
+        return *this;""", """            ptr_ = other.ptr_;
+            count_ = other.count_;
+        }
+        return *this;"""),
+    "move-assign-keeps-own": sm("""        if (this != &other) {
+            drop();
+            ptr_ = other.ptr_;
+            count_ = other.count_;
+            other.ptr_ = nullptr;""", """        if (this != &other) {
+            ptr_ = other.ptr_;
+            count_ = other.count_;
+            other.ptr_ = nullptr;"""),
     "move-not-noexcept": sm("SharedPtr(SharedPtr&& other) noexcept", "SharedPtr(SharedPtr&& other)"),
 }
 ST = []
@@ -222,12 +239,12 @@ st("Tracked::live", 0, "{ SharedPtr<Tracked> a(new Tracked(1)); }")
 st("a.use_count()", 2, "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a;")
 st("a.use_count() * 10 + Tracked::live", 11, "SharedPtr<Tracked> a(new Tracked(1)); { SharedPtr<Tracked> b = a; SharedPtr<Tracked> c = b; }")
 st("Tracked::live", 0, "{ SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a; }")
-st("Tracked::live", 1, "SharedPtr<Tracked> a(new Tracked(1)); { SharedPtr<Tracked> b = a; }")
+st("b.use_count() * 10 + a.use_count()", 10, "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a; b = std::move(a);")
 st("Tracked::live * 10 + a.use_count()", 12, "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b(new Tracked(2)); b = a;")
 st("Tracked::live * 10 + a.use_count()", 11, "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked>& r = a; a = r;")
 st("b.use_count() * 10 + a.use_count()", 10, "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = std::move(a);")
 st("Tracked::live", 0, "{ SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = std::move(a); }")
-st("Tracked::live * 10 + b.use_count()", 11, "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b(new Tracked(2)); b = std::move(a);")
+st("Tracked::live * 100 + b.use_count() * 10 + a.use_count()", 110, "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b(new Tracked(2)); b = std::move(a);")
 st("p.use_count() * 10 + (p.get() == nullptr ? 1 : 0)", 1, "SharedPtr<Tracked> p;")
 st("b->v + (*a).v", 16, "SharedPtr<Tracked> a(new Tracked(8)); SharedPtr<Tracked> b = a;")
 st("a.use_count()", 6, "SharedPtr<Tracked> a(new Tracked(1)); std::vector<SharedPtr<Tracked>> v(5, a);")

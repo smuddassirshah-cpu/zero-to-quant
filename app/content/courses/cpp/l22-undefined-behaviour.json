@@ -33,7 +33,8 @@
             "// clang, wasm32, -O1, shortened:",
             "first(int*):",
             "    local.get 0",
-            "    i32.load 0"
+            "    i32.load 0",
+            "    ..."
           ],
           "title": "source and compiler output",
           "numbers": true
@@ -306,9 +307,9 @@
         "byKey": {
           "t1": "`UINT_MAX + 1u` is 0: unsigned arithmetic wraps by definition.",
           "t2": "`-7 / 2` is -3: division rounds towards zero since C++11.",
-          "t3": "`sizeof(long)` is 4 here and 8 on a desktop: the compiler documents it.",
-          "t4": "Whether plain `char` is signed depends on the platform, so the compiler documents it.",
-          "t5": "The standard leaves the order of evaluation of arguments unspecified: either may run first.",
+          "t3": "`sizeof(long)` is implementation-defined: 4 here and 8 on a desktop, and the compiler documents it.",
+          "t4": "Plain `char` signedness is implementation-defined: the platform decides and the compiler documents it.",
+          "t5": "The order of evaluation of arguments is unspecified: either may run first, and nothing is documented.",
           "t6": "Signed overflow is undefined: the standard puts no limit on what follows.",
           "t7": "An index past the end is undefined, even if the memory happens to exist.",
           "t8": "Reading an unset `int` is undefined, not just a garbage value.",
@@ -323,7 +324,7 @@
       "type": "ladder",
       "difficulty": 2,
       "title": "Making it report",
-      "prose": "These lines come from a desk machine running g++, not from this app. This app compiles with libc++ hardening on, which stops an out-of-range vector index, but it cannot see an overflow or a null read.",
+      "prose": "These lines come from a desk machine running g++, not from this app. This app compiles with libc++ hardening on. That stops an out-of-range vector index, but not an overflow or a null read.",
       "tags": [
         "sanitisers",
         "undefined-behaviour"
@@ -510,7 +511,7 @@
           }
         ],
         "prelude": "#include <climits>\n",
-        "how": "Submit runs 13 hidden tests. Each answer is `true` when `a + b` does not fit in an `int`, and every test uses values the correct check handles without overflowing."
+        "how": "Submit runs 13 hidden tests. Each answer is `true` when `a + b` does not fit in an `int`. Every test uses values the correct check handles without overflowing."
       },
       "hints": [
         {
@@ -543,48 +544,48 @@
     {
       "type": "trap",
       "difficulty": 3,
-      "title": "What value is y?",
-      "prose": "The pricing course showed a check on `x + 1` change between `-O0` and `-O2`. Here is the plain case.",
+      "title": "Does null always crash?",
+      "prose": "Many programmers believe a null pointer read always crashes. Here is the plain case.",
       "tags": [
-        "signed-overflow",
-        "undefined-behaviour"
+        "undefined-behaviour",
+        "null-pointer"
       ],
       "canvas": {
         "kind": "console",
         "params": {
           "lines": [
-            "int x = INT_MAX;",
-            "int y = x + 1;"
+            "int* p = nullptr;",
+            "int v = *p;"
           ],
           "title": "main.cpp",
           "numbers": true
         },
         "state": {}
       },
-      "question": "What value does `y` hold?",
+      "question": "What does the standard promise about `int v = *p;`?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "none",
-            "text": "No value is promised: the program is undefined",
+            "text": "Nothing: the program is undefined, and a crash is only one possible outcome",
             "correct": true
           },
           {
-            "id": "wrap",
-            "text": "-2,147,483,648, because the hardware wraps",
-            "why": "The hardware may wrap. C++ does not promise to pass that on."
+            "id": "crash",
+            "text": "A crash with a segmentation fault",
+            "why": "Many desktops do crash. The standard promises no crash, and this app reads address 0 without complaint."
           },
           {
-            "id": "big",
-            "text": "2,147,483,648",
-            "why": "There is no larger `int` to hold 2,147,483,648."
+            "id": "zero",
+            "text": "`v` is 0",
+            "why": "No value is promised. A build may read whatever sits at address 0, or delete the read."
           },
           {
-            "id": "error",
-            "text": "It does not compile",
-            "why": "It compiles, and the compiler may warn if it can see the constants."
+            "id": "throw",
+            "text": "A thrown exception",
+            "why": "C++ never checks a dereference, so nothing is thrown."
           }
         ],
         "shuffle": true
@@ -592,31 +593,31 @@
       "hints": [
         {
           "rung": "nudge",
-          "text": "Is signed overflow defined in C++?"
+          "text": "Which part of the standard says a null read must crash?"
         },
         {
           "rung": "point",
-          "text": "Unsigned wraps. Signed does not.",
+          "text": "Reading through a null pointer is undefined, like signed overflow.",
           "highlight": [
             "l2"
           ]
         },
         {
           "rung": "step",
-          "text": "With no defined result, the standard promises nothing about `y`, or about the rest of the run."
+          "text": "Undefined means no promise at all: not a crash, not a value."
         }
       ],
       "feedback": {
-        "correct": "No value is promised: signed overflow is undefined.",
-        "generic": "Not quite right. Ask whether the standard defines signed overflow.",
+        "correct": "No promise: a null read is undefined, and a crash is only one outcome.",
+        "generic": "Not quite right. Ask what the standard defines for a null dereference.",
         "byKey": {
-          "wrap": "You assumed the hardware's wrap. C++ does not promise to pass that on.",
-          "big": "There is no larger `int` to hold 2,147,483,648.",
-          "error": "It compiles, and the compiler may warn if it can see the constants."
+          "crash": "You assumed the operating system always stops the program. The standard does not, and this app does not.",
+          "zero": "You assumed a harmless value. No value is promised.",
+          "throw": "C++ does not check dereferences, so no exception is thrown."
         }
       },
       "explain": {
-        "text": "Wrapping is what many CPUs do, but C++ promises nothing for a signed overflow. The optimiser may assume it never happens."
+        "text": "A null read is undefined, so the standard promises neither a crash nor a value. A desktop often crashes, which makes the bug look reliable until the compiler deletes the read."
       }
     },
     {
@@ -953,7 +954,7 @@
   ],
   "summary": {
     "ideas": [
-      "Undefined behaviour is not a bug that crashes: the standard puts no limit on the run, so the compiler assumes it never happens and may delete checks.",
+      "Undefined behaviour is not a bug that crashes. The standard puts no limit on the run, so the compiler assumes it never happens and may delete checks.",
       "Signed overflow, an index past the end, an unset read and a shift by the width are undefined. Unsigned wrap-around and `-7 / 2` are defined.",
       "Check before the operation, never after. Tests and sanitisers only sample inputs; use `-fsanitize=undefined` and wide types for money."
     ],

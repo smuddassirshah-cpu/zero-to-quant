@@ -14,7 +14,7 @@
       "type": "problem",
       "difficulty": 1,
       "title": "Which lines compile?",
-      "prose": "`Fill` has a constructor from a string and a move constructor. It declares nothing else. `a` is an existing `Fill`.",
+      "prose": "`Fill` has a constructor from a string and a move constructor. It declares nothing else. `a` and `b` are existing `Fill`s.",
       "tags": [
         "special-members",
         "rule-of-five"
@@ -314,7 +314,7 @@
         }
       },
       "explain": {
-        "text": "Once you declare a destructor or a copy member, the moves are not written and `std::move` falls back to a copy, silently. Only an explicit move assignment, or all five, makes `b = std::move(a)` move."
+        "text": "Declare a destructor or a copy member and the moves are not written. `std::move` then falls back to a copy, silently. Only an explicit move assignment, or all five, makes `b = std::move(a)` move."
       }
     },
     {
@@ -354,8 +354,9 @@
               "edit": true,
               "answer": "move",
               "accept": [
-                "mv",
-                "moves"
+                "moves",
+                "moved",
+                "mv"
               ]
             }
           ],
@@ -365,7 +366,9 @@
               "edit": true,
               "answer": "copy",
               "accept": [
-                "copies"
+                "copies",
+                "copied",
+                "cp"
               ]
             }
           ],
@@ -375,7 +378,9 @@
               "edit": true,
               "answer": "copy",
               "accept": [
-                "copies"
+                "copies",
+                "copied",
+                "cp"
               ]
             }
           ],
@@ -385,8 +390,9 @@
               "edit": true,
               "answer": "move",
               "accept": [
-                "mv",
-                "moves"
+                "moves",
+                "moved",
+                "mv"
               ]
             }
           ]
@@ -434,7 +440,7 @@
       "type": "ladder",
       "difficulty": 2,
       "title": "Is the move noexcept?",
-      "prose": "A defaulted move and a hand-written one look alike. Both classes hold a `std::string` and a `std::vector<int>`. Say whether each move constructor is `noexcept`.",
+      "prose": "A defaulted move and a hand-written one look alike. Both classes hold a `std::string` and a `std::vector<int>`. The defaulted copy keeps `Pos` copyable once a move is declared. Say whether each move constructor is `noexcept`.",
       "tags": [
         "noexcept-move",
         "special-members"
@@ -474,7 +480,10 @@
               "edit": true,
               "answer": "yes",
               "accept": [
-                "noexcept"
+                "noexcept",
+                "true",
+                "y",
+                "yes noexcept"
               ]
             }
           ],
@@ -484,7 +493,11 @@
               "edit": true,
               "answer": "no",
               "accept": [
-                "not"
+                "not",
+                "false",
+                "n",
+                "not noexcept",
+                "throws"
               ]
             }
           ]
@@ -517,7 +530,7 @@
         }
       },
       "explain": {
-        "text": "`= default` is the safe way to write a move: it is `noexcept` when its members are, so `std::vector<Pos>` still moves on growth. The hand-written `Pos3` forgot the keyword, so the vector would copy."
+        "text": "`= default` is the safe way to write a move. It is `noexcept` when its members are, so `std::vector<Pos>` still moves on growth. The hand-written `Pos3` forgot the keyword, so the vector would copy."
       }
     },
     {
@@ -568,7 +581,7 @@
           {
             "id": "d1",
             "text": "`delete[]` the old block first, then allocate",
-            "why": "In `a = a` you would copy from a block you just freed. If `new` failed, the object would point at freed memory."
+            "why": "If `new` throws after the delete, `data_` points at freed memory. Allocate first, free after."
           },
           {
             "id": "s5",
@@ -617,12 +630,12 @@
         "correct": "Allocate and copy first, free after, then point. The guard keeps `a = a` safe.",
         "generic": "Not quite right. The old block must stay until the new one is ready.",
         "byKey": {
-          "d1": "You freed the old block first. In `a = a` you would copy from freed memory.",
+          "d1": "You freed the old block first. If `new` throws, `data_` points at freed memory.",
           "d2": "You copied the address. Two objects then own one block."
         }
       },
       "explain": {
-        "text": "Allocate and copy before freeing, so the old data survives a failed `new` and a self-assignment. Copying the pointer is the shallow copy that makes a double free."
+        "text": "Allocate and copy before freeing, so the old data survives a failed `new`; the guard handles `a = a`. Copying the pointer is the shallow copy that makes a double free."
       }
     },
     {
@@ -643,7 +656,8 @@
             "a = a;           // changes nothing"
           ],
           "title": "what must hold",
-          "numbers": true
+          "numbers": true,
+          "wrap": true
         },
         "state": {}
       },
@@ -950,7 +964,7 @@
         }
       },
       "explain": {
-        "text": "The destructor stopped the move being written. The copy constructor exists, implicitly defined as deleted, and overload resolution picks it for `std::move(a)`. A deleted function is chosen, not absent, which is why the error says so."
+        "text": "The destructor stopped the move being written. The copy constructor is implicitly declared, and deleted because `unique_ptr` cannot be copied. Overload resolution still picks it, because a deleted function is chosen, not absent."
       }
     },
     {
@@ -1240,7 +1254,7 @@
         "generic": "Not quite right. A class copies only if every member does."
       },
       "explain": {
-        "text": "With no members declared, the compiler writes a move and a copy. The copy is deleted because one member cannot be copied."
+        "text": "With no special members declared, the compiler writes both. The copy is deleted because one data member cannot be copied."
       }
     }
   ]
