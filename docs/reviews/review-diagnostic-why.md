@@ -30,3 +30,22 @@ Lines 11, 12, 13, 16, 19, 21 and 24 carry a softer form ("only a small part", "a
 ## Recommendation
 
 A Sonnet fix pass on the ten `course.json` lines above (fix agents may edit `course.json`; content authors may not). Raise as a validator warning only if the class recurs: a `why` on a `gate: false` edge that contains "not required", "not needed", "does not need" or "not used" (protocol 6 threshold not yet met: seen once).
+
+## Fix pass
+
+D1: fixed 10, disputed 0, deferred 0. Each old line matched the file in full; each Proposed `why` applied unchanged (lesson files for the named ideas spot-checked: bit tricks, intervals, ROC and logistic, turnover, bivariate normal, shares). Edits are in `course.json` only, formatting kept.
+
+| Course | Edge | Old | New |
+|---|---|---|---|
+| analysis | least-squares/L1 | Length from the dot product and perpendicularity help with norms in metric examples; only a little is used. | Metric examples use length from the dot product and perpendicularity. |
+| coding-int | contests/L3 | Bitmasks and difference arrays overlap with the XOR, mask and sweep patterns, but this level teaches them itself. | XOR, mask and sweep patterns go faster if bitmasks and difference arrays are familiar. |
+| coding-int | contests/L4 | Contest timing habits (ordering problems, debugging fast) overlap with triage and partial credit, but are not required. | Triage and partial credit build on contest timing habits: ordering problems and debugging fast. |
+| cpp | first-python/L3 | C++ functions, headers and loops are easier after Python functions and scripts; the level does not need them. | C++ functions, headers and loops are easier after Python functions and scripts. |
+| eigen | multivar/L4 | Bivariate normal density may use double integrals, but no lesson objective visibly needs them. | The bivariate normal density is easier to read with double integrals in hand. |
+| ensembles | stat-learning/L3 | Trees are introduced as yes-no classifiers; logistic regression and ROC are only needed from later levels. | Later levels compare trees with logistic regression and use ROC curves. |
+| options | markets/L2 | Option payoffs need only shares and prices from markets; bonds, yields and returns are not used. | Option payoffs use share prices and the vocabulary of trading shares. |
+| research-int | pytest/L2 | Take-home reports and edge-case interpolators touch test design lightly; pytest's edge cases help but are not required. | Take-home reports and edge-case interpolators reuse pytest's habit of testing edge cases. |
+| stat-models | limits-thm/L4 | Kernel density estimates and permutation tests use densities and sums of variables lightly; no joint-density use is visible. | Kernel density estimates and permutation tests use densities and sums of variables. |
+| momentum-rep | alpha/L4 | Level 1 only reads the paper; the long-short, turnover and cost machinery from alpha is needed when replicating. | Replicating the paper uses the long-short, turnover and cost machinery from alpha. |
+
+Gates: validate 0 errors, 2104 warnings (text-only edits, no new warning sources); test-check-first all passed; closure mock-superday-trader reads 96 levels, 32 courses, 422 lessons.
