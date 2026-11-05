@@ -1,0 +1,1133 @@
+{
+  "id": "l22-undefined-behaviour",
+  "course": "cpp",
+  "title": "Undefined behaviour",
+  "minutes": 15,
+  "objectives": [
+    "Spot undefined behaviour in short snippets and say what the compiler may do with it."
+  ],
+  "skills": [
+    "cp-basics",
+    "cp-memory"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The check that vanished",
+      "prose": "This app never runs undefined behaviour: whatever happens is allowed, so the answer could differ by build. These screens show code and compiler output, and you judge.",
+      "tags": [
+        "optimiser-assumptions",
+        "undefined-behaviour"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "int first(int* p) {",
+            "    int v = *p;",
+            "    if (p == nullptr) return -1;",
+            "    return v;",
+            "}",
+            "",
+            "// clang, wasm32, -O1, shortened:",
+            "first(int*):",
+            "    local.get 0",
+            "    i32.load 0"
+          ],
+          "title": "source and compiler output",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Why is there no null test in the output?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "assumed",
+            "text": "It had already read `*p`, so it assumed `p` is not null",
+            "correct": true
+          },
+          {
+            "id": "drops",
+            "text": "The optimiser removes every `if` it can",
+            "why": "It dropped one comparison it could prove, not every `if`."
+          },
+          {
+            "id": "bug",
+            "text": "It is a compiler bug",
+            "why": "A program that breaks the rules has no wrong answer, so this is not a compiler bug."
+          },
+          {
+            "id": "never",
+            "text": "`nullptr` is never a real value",
+            "why": "`nullptr` is a real value. The compiler assumed it away only after the read."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the order of lines 2 and 3."
+        },
+        {
+          "rung": "point",
+          "text": "The read comes before the test.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Reading through a null pointer is undefined, so the compiler may assume it never happens."
+        }
+      ],
+      "feedback": {
+        "correct": "The read came first, so the test after it could never be needed.",
+        "generic": "Not quite right. Compare the order of the read and the test.",
+        "byKey": {
+          "drops": "You thought it removes every `if`. It dropped one comparison it could prove.",
+          "bug": "A program that breaks the rules has no wrong answer, so this is not a compiler bug.",
+          "never": "`nullptr` is a real value. The compiler assumed it away only after the read."
+        }
+      },
+      "explain": {
+        "text": "Reading `*p` is undefined for null, so the compiler may assume `p` is not null from line 2 on. The later test is then always false, and it is deleted.",
+        "canvas": {
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Which lines are undefined?",
+      "prose": "Eight lines, one function. Unsigned arithmetic and signed arithmetic differ. In the standard this app uses, reading a variable before it is set is undefined.",
+      "tags": [
+        "defined-vs-undefined",
+        "undefined-behaviour"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "int a[3] = {1, 2, 3};",
+            "unsigned u = 0;",
+            "u = u - 1;",
+            "int s = a[3];",
+            "int x;",
+            "int y = x + 1;",
+            "int big = 2147483647;",
+            "big = big + 1;"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Tap every line with undefined behaviour.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l4",
+          "l6",
+          "l8"
+        ],
+        "wrong": [
+          {
+            "id": "with-unsigned",
+            "set": [
+              "l3",
+              "l4",
+              "l6",
+              "l8"
+            ]
+          },
+          {
+            "id": "no-uninit",
+            "set": [
+              "l4",
+              "l8"
+            ]
+          },
+          {
+            "id": "no-index",
+            "set": [
+              "l6",
+              "l8"
+            ]
+          }
+        ],
+        "countWord": "lines"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ask of each line: does the standard define the result?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 3 wraps by definition.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Lines 4, 6 and 8: one past the end, an unset variable, a signed overflow."
+        }
+      ],
+      "feedback": {
+        "correct": "Lines 4, 6 and 8: an index past the end, an unset read and a signed overflow.",
+        "generic": "Not quite right. Only some arithmetic is left undefined by the standard.",
+        "byKey": {
+          "with-unsigned": "You tapped line 3. Unsigned arithmetic wraps by definition: `u - 1` is 4,294,967,295. Only signed overflow is undefined.",
+          "no-uninit": "You left out line 6. Reading `x` before it is set is undefined, not just a garbage value.",
+          "no-index": "You left out line 4. `a[3]` is one past the end of a 3-element array."
+        }
+      },
+      "explain": {
+        "text": "Line 3 wraps to 4,294,967,295, which is defined. Lines 4, 6 and 8 have no defined result, so the compiler may assume they never run.",
+        "canvas": {
+          "shade": {
+            "ub": [
+              "l4",
+              "l6",
+              "l8"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Three kinds of unclear",
+      "prose": "Defined means one answer. Implementation-defined means the compiler documents its choice, and unspecified means it may pick either. Undefined means no promise at all.",
+      "tags": [
+        "defined-vs-undefined"
+      ],
+      "question": "Drag each snippet to its kind.",
+      "widget": {
+        "kind": "place",
+        "mode": "assign",
+        "tokens": [
+          {
+            "id": "t1",
+            "text": "`UINT_MAX + 1u`"
+          },
+          {
+            "id": "t2",
+            "text": "`-7 / 2`"
+          },
+          {
+            "id": "t3",
+            "text": "`sizeof(long)`"
+          },
+          {
+            "id": "t4",
+            "text": "`char c = -1; c < 0`"
+          },
+          {
+            "id": "t5",
+            "text": "`f(g(), h())`: which runs first"
+          },
+          {
+            "id": "t6",
+            "text": "`INT_MAX + 1`"
+          },
+          {
+            "id": "t7",
+            "text": "`v[3]` on a 3-element vector"
+          },
+          {
+            "id": "t8",
+            "text": "`int x; return x;`"
+          },
+          {
+            "id": "t9",
+            "text": "`1 << 32` for an `int`"
+          }
+        ],
+        "slots": [
+          {
+            "id": "defined",
+            "label": "defined",
+            "accepts": [
+              "t1",
+              "t2"
+            ]
+          },
+          {
+            "id": "impl",
+            "label": "implementation-defined or unspecified",
+            "accepts": [
+              "t3",
+              "t4",
+              "t5"
+            ]
+          },
+          {
+            "id": "undef",
+            "label": "undefined",
+            "accepts": [
+              "t6",
+              "t7",
+              "t8",
+              "t9"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with the ones that wrap or round by a fixed rule."
+        },
+        {
+          "rung": "point",
+          "text": "Sizes and the sign of a plain `char` depend on the platform."
+        },
+        {
+          "rung": "step",
+          "text": "Anything that overflows a signed type, indexes past the end, or reads an unset variable is undefined."
+        }
+      ],
+      "feedback": {
+        "correct": "Two defined, three left to the compiler, four undefined.",
+        "generic": "Not quite right. Sort by who decides the result: the standard, the compiler or nobody.",
+        "byKey": {
+          "t1": "`UINT_MAX + 1u` is 0: unsigned arithmetic wraps by definition.",
+          "t2": "`-7 / 2` is -3: division rounds towards zero since C++11.",
+          "t3": "`sizeof(long)` is 4 here and 8 on a desktop: the compiler documents it.",
+          "t4": "Whether plain `char` is signed depends on the platform, so the compiler documents it.",
+          "t5": "The standard leaves the order of evaluation of arguments unspecified: either may run first.",
+          "t6": "Signed overflow is undefined: the standard puts no limit on what follows.",
+          "t7": "An index past the end is undefined, even if the memory happens to exist.",
+          "t8": "Reading an unset `int` is undefined, not just a garbage value.",
+          "t9": "Shifting by the width of the type or more is undefined."
+        }
+      },
+      "explain": {
+        "text": "Defined: one answer. Implementation-defined or unspecified: a choice that does not break the program. Undefined: the whole run loses its guarantees."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Making it report",
+      "prose": "These lines come from a desk machine running g++, not from this app. This app compiles with libc++ hardening on, which stops an out-of-range vector index, but it cannot see an overflow or a null read.",
+      "tags": [
+        "sanitisers",
+        "undefined-behaviour"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "runtime error: signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'",
+            "runtime error: index 3 out of bounds for type 'int [3]'",
+            "runtime error: load of null pointer of type 'volatile int'"
+          ],
+          "title": "desk machine, g++, not this app",
+          "numbers": true,
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Which flag turns these reports on?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ubsan",
+            "text": "`-fsanitize=undefined`",
+            "correct": true
+          },
+          {
+            "id": "wall",
+            "text": "`-Wall`",
+            "why": "`-Wall` warns at compile time. It cannot see values that only exist at run time."
+          },
+          {
+            "id": "o0",
+            "text": "`-O0`",
+            "why": "A lower optimisation level changes what happens. It does not report anything."
+          },
+          {
+            "id": "g",
+            "text": "`-g`",
+            "why": "`-g` adds line numbers to reports but turns none on."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The reports appear while the program runs."
+        },
+        {
+          "rung": "point",
+          "text": "One flag instruments the code to check each operation.",
+          "highlight": [
+            "l1",
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It is spelt `-fsanitize=` followed by the checker."
+        }
+      ],
+      "feedback": {
+        "correct": "`-fsanitize=undefined`. For memory errors, `-fsanitize=address`.",
+        "generic": "Not quite right. Which flag adds checks that run with the program?",
+        "byKey": {
+          "wall": "You chose `-Wall`. It warns at compile time and cannot see run-time values.",
+          "o0": "You chose `-O0`. A lower level changes what happens but reports nothing.",
+          "g": "You chose `-g`. It adds line numbers to reports but turns none on."
+        }
+      },
+      "explain": {
+        "text": "The sanitiser instruments each risky operation and prints the line when one is undefined. Add `-fsanitize=address` for memory errors such as a read past a heap block."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A check that is defined",
+      "prose": "Return `true` when `a + b` does not fit in an `int`. The starter looks at the sum after it has overflowed. Your check must never overflow itself.",
+      "tags": [
+        "signed-overflow",
+        "undefined-behaviour"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "add_overflows(2147483647, 1)    // true",
+            "add_overflows(5, 7)                // false",
+            "add_overflows(-2147483648, -1)  // true"
+          ],
+          "title": "what must hold",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Rewrite `add_overflows` so the addition never happens.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <climits>\n\n// Return true if a + b does not fit in an int. The check itself must never overflow.\nbool add_overflows(int a, int b) {\n    return a + b > INT_MAX;    // TODO: this looks at the sum after it has already overflowed\n}\n",
+        "solution": "#include <climits>\n\n// Return true if a + b does not fit in an int. The check itself must never overflow.\nbool add_overflows(int a, int b) {\n    if (b > 0) return a > INT_MAX - b;\n    return a < INT_MIN - b;\n}\n",
+        "examples": [
+          {
+            "call": "add_overflows(INT_MAX, 1)",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(INT_MAX, 0)",
+            "expect": false,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "add_overflows(INT_MAX, 1)",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(INT_MAX, 0)",
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(INT_MIN, -1)",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(INT_MIN, 0)",
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(2000000000, 2000000000)",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(1000, 2000)",
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(-2000000000, -2000000000)",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(INT_MAX, -1)",
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(INT_MIN, 1)",
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(1073741824, 1073741824)",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(1073741823, 1073741824)",
+            "expect": false,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(INT_MAX, INT_MAX)",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "add_overflows(INT_MIN, INT_MIN)",
+            "expect": true,
+            "compare": "equal"
+          }
+        ],
+        "prelude": "#include <climits>\n",
+        "how": "Submit runs 13 hidden tests. Each answer is `true` when `a + b` does not fit in an `int`, and every test uses values the correct check handles without overflowing."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Rearrange the test so it uses only subtraction that cannot overflow."
+        },
+        {
+          "rung": "point",
+          "text": "For positive `b`, the sum overflows when `a` is above `INT_MAX - b`.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "For `b` below zero, compare `a` with `INT_MIN - b`."
+        }
+      ],
+      "feedback": {
+        "correct": "Your check never overflows, so it stays defined on every input.",
+        "generic": "Not quite right. A test that calls `a + b` has already gone wrong.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the return type and the `<climits>` names."
+        }
+      },
+      "explain": {
+        "text": "Check before you do it: compare `a` with `INT_MAX - b` instead of adding. This app's compiler removes a check made after the addition. Another build might not, which is the point."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "What value is y?",
+      "prose": "The pricing course showed a check on `x + 1` change between `-O0` and `-O2`. Here is the plain case.",
+      "tags": [
+        "signed-overflow",
+        "undefined-behaviour"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "int x = INT_MAX;",
+            "int y = x + 1;"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "What value does `y` hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "none",
+            "text": "No value is promised: the program is undefined",
+            "correct": true
+          },
+          {
+            "id": "wrap",
+            "text": "-2,147,483,648, because the hardware wraps",
+            "why": "The hardware may wrap. C++ does not promise to pass that on."
+          },
+          {
+            "id": "big",
+            "text": "2,147,483,648",
+            "why": "There is no larger `int` to hold 2,147,483,648."
+          },
+          {
+            "id": "error",
+            "text": "It does not compile",
+            "why": "It compiles, and the compiler may warn if it can see the constants."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is signed overflow defined in C++?"
+        },
+        {
+          "rung": "point",
+          "text": "Unsigned wraps. Signed does not.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With no defined result, the standard promises nothing about `y`, or about the rest of the run."
+        }
+      ],
+      "feedback": {
+        "correct": "No value is promised: signed overflow is undefined.",
+        "generic": "Not quite right. Ask whether the standard defines signed overflow.",
+        "byKey": {
+          "wrap": "You assumed the hardware's wrap. C++ does not promise to pass that on.",
+          "big": "There is no larger `int` to hold 2,147,483,648.",
+          "error": "It compiles, and the compiler may warn if it can see the constants."
+        }
+      },
+      "explain": {
+        "text": "Wrapping is what many CPUs do, but C++ promises nothing for a signed overflow. The optimiser may assume it never happens."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The unsigned size",
+      "prose": "`v` is an empty `std::vector<int>`. Here `size_t` is 4 bytes. On a desktop it is 8.",
+      "tags": [
+        "defined-vs-undefined",
+        "signed-overflow"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "std::vector<int> v;",
+            "auto n = v.size() - 1;",
+            "for (size_t i = v.size() - 1; i >= 0; --i) {}"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "What does `v.size() - 1` equal here?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4294967295,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4,294,967,295: unsigned wrap-around, defined",
+        "wrong": [
+          {
+            "id": "minus-one",
+            "value": -1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What type does `size()` return?"
+        },
+        {
+          "rung": "point",
+          "text": "An unsigned type cannot go below 0.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Zero minus one wraps to the largest 32-bit value."
+        }
+      ],
+      "feedback": {
+        "correct": "4,294,967,295: defined, and the reason that loop never ends.",
+        "generic": "Not quite right. `size()` is unsigned.",
+        "byKey": {
+          "minus-one": "You expected -1. `size()` is unsigned, so the subtraction wraps."
+        }
+      },
+      "explain": {
+        "text": "Unsigned subtraction wraps, so 0 - 1 is 4,294,967,295 here and 18,446,744,073,709,551,615 on a desktop. It is defined, and `i >= 0` is always true, so the loop never ends."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The defined check",
+      "prose": "For `add_overflows`, order the reasoning when `b` is positive. One line is the flawed habit.",
+      "tags": [
+        "signed-overflow",
+        "defined-vs-undefined"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "bool add_overflows(int a, int b) {",
+            "    // reasoning, in order",
+            "}"
+          ],
+          "title": "add_overflows",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Put the lines in order, and leave the flawed one out.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s3",
+            "text": "otherwise it overflows exactly when `a < INT_MIN - b`"
+          },
+          {
+            "id": "d1",
+            "text": "compute `a + b` and compare it with `a`",
+            "why": "The addition has already overflowed, so there is nothing defined left to compare."
+          },
+          {
+            "id": "s1",
+            "text": "if `b > 0`"
+          },
+          {
+            "id": "s2",
+            "text": "the sum overflows exactly when `a > INT_MAX - b`"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Split on the sign of `b` first."
+        },
+        {
+          "rung": "point",
+          "text": "Each branch compares `a` with a limit shifted by `b`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Positive `b` pushes up, so compare with `INT_MAX - b`."
+        }
+      ],
+      "feedback": {
+        "correct": "Split on the sign, then compare with a shifted limit. No sum is ever formed.",
+        "generic": "Not quite right. Decide the branch before the test.",
+        "byKey": {
+          "d1": "You added first. The addition has already overflowed, so there is nothing defined left to compare."
+        }
+      },
+      "explain": {
+        "text": "Each test uses a subtraction that stays in range. No line forms the sum, so the check is defined for every input."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A comparator that breaks sort",
+      "prose": "`std::sort` assumes the comparator is a strict weak ordering. A comparator that breaks that makes the sort undefined.",
+      "tags": [
+        "undefined-behaviour",
+        "defined-vs-undefined"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "std::sort(v.begin(), v.end(), cmp);"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Which comparator makes `std::sort` undefined?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "le",
+            "text": "`[](int a, int b) { return a <= b; }`",
+            "correct": true
+          },
+          {
+            "id": "lt",
+            "text": "`[](int a, int b) { return a < b; }`",
+            "why": "Plain `<` is the model strict ordering."
+          },
+          {
+            "id": "gt",
+            "text": "`[](int a, int b) { return a > b; }`",
+            "why": "A descending sort is fine: `>` is a strict ordering."
+          },
+          {
+            "id": "abs",
+            "text": "`[](int a, int b) { return std::abs(a) < std::abs(b); }`",
+            "why": "Ties are allowed: equivalent elements compare false both ways."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A comparator must return false for two equal elements."
+        },
+        {
+          "rung": "point",
+          "text": "Which option returns true for equal values?",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`a <= b` says an element is less than itself."
+        }
+      ],
+      "feedback": {
+        "correct": "`<=` returns true for equal elements, so it is not a strict ordering.",
+        "generic": "Not quite right. Check what each comparator returns for two equal numbers.",
+        "byKey": {
+          "lt": "You picked plain `<`. It is the model strict ordering.",
+          "gt": "You picked `>`. A descending sort is fine.",
+          "abs": "You picked the absolute value. Ties compare false both ways, which is allowed."
+        }
+      },
+      "explain": {
+        "text": "With `a <= b`, equal elements each count as less than the other. The algorithm's loops may then run off the end of the range, which is undefined."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Check before, never after",
+      "prose": "Test a condition before the operation that could break it. Ask whether any input can reach the operation.\n\n```cpp\n// Say aloud: undefined behaviour is a property of the\n// code for every input, not of the inputs I tried.\nbool add_overflows(int a, int b) {\n    if (b > 0) return a > INT_MAX - b;\n    return a < INT_MIN - b;\n}\n```",
+      "tags": [
+        "undefined-behaviour",
+        "sanitisers"
+      ],
+      "question": "Your tests pass and the sanitiser is silent. Is the code free of undefined behaviour?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "inputs",
+            "text": "Only for the inputs run, on that build",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: nothing went wrong",
+            "why": "Undefined behaviour belongs to the code for any input it can meet, and testing only samples inputs."
+          },
+          {
+            "id": "sanitiser",
+            "text": "Yes: the sanitiser sees everything",
+            "why": "The sanitiser reports only what the run reaches."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Tests and sanitisers sample inputs. They do not prove the absence.",
+        "generic": "Not quite right. Think about inputs you did not run."
+      },
+      "explain": {
+        "text": "A clean run says nothing about the inputs it never met. Write the check before the operation and keep the sanitiser in your tests as well."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Summing fills in pence",
+      "prose": "A desk sums fill values in pence in an `int`. 5,000 fills of £5,000 are £25,000,000, that is 2,500,000,000 pence.",
+      "tags": [
+        "signed-overflow",
+        "undefined-behaviour"
+      ],
+      "question": "What type should the total be?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "i64",
+            "text": "`std::int64_t` (`long long`)",
+            "correct": true
+          },
+          {
+            "id": "unsigned",
+            "text": "`unsigned`",
+            "why": "It doubles the range to £42,949,672.95 and wraps silently."
+          },
+          {
+            "id": "double",
+            "text": "`double`",
+            "why": "It is exact for whole pence up to 2^53, but sums of money belong in integers."
+          },
+          {
+            "id": "check",
+            "text": "Keep `int` and check after each addition",
+            "why": "A check after the addition runs too late, as in the earlier overflow task."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many pence does an `int` hold?"
+        },
+        {
+          "rung": "point",
+          "text": "It tops out at 2,147,483,647 pence, about £21 million."
+        },
+        {
+          "rung": "step",
+          "text": "Use a 64-bit integer: its range is far beyond any desk total."
+        }
+      ],
+      "feedback": {
+        "correct": "A 64-bit integer. An `int` holds only £21,474,836.47 of pence.",
+        "generic": "Not quite right. 2,500,000,000 pence is above the `int` limit.",
+        "byKey": {
+          "unsigned": "You chose `unsigned`. It doubles the range to £42,949,672.95 and wraps silently.",
+          "double": "You chose `double`. Sums of money belong in integers.",
+          "check": "You kept `int` and checked after. A check after the addition runs too late."
+        }
+      },
+      "explain": {
+        "text": "An `int` holds up to 2,147,483,647 pence, which is £21,474,836.47. A signed overflow is undefined, so use `std::int64_t` and keep money in whole pence."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Undefined behaviour is not a bug that crashes: the standard puts no limit on the run, so the compiler assumes it never happens and may delete checks.",
+      "Signed overflow, an index past the end, an unset read and a shift by the width are undefined. Unsigned wrap-around and `-7 / 2` are defined.",
+      "Check before the operation, never after. Tests and sanitisers only sample inputs; use `-fsanitize=undefined` and wide types for money."
+    ],
+    "formula": {
+      "name": "Check before you do it",
+      "tex": "\\texttt{if (b > 0) return a > INT\\_MAX - b;}",
+      "note": "Never form the sum you are testing."
+    },
+    "trap": "Signed overflow does not wrap in C++. No value is promised, and the compiler may remove checks made afterwards."
+  },
+  "quiz": [
+    {
+      "id": "q-signed-unsigned",
+      "difficulty": 2,
+      "tags": [
+        "signed-overflow"
+      ],
+      "question": "Which statement about overflow is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "unsigned",
+            "text": "Unsigned overflow wraps by definition; signed overflow is undefined",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Both wrap, because the hardware does",
+            "why": "C++ promises wrapping only for unsigned types."
+          },
+          {
+            "id": "signed",
+            "text": "Signed wraps; unsigned is undefined",
+            "why": "It is the other way round."
+          },
+          {
+            "id": "neither",
+            "text": "Both are undefined",
+            "why": "Unsigned arithmetic is defined to wrap."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Only unsigned wraps.",
+        "generic": "Not quite right. One of the two is defined."
+      },
+      "explain": {
+        "text": "The standard defines unsigned wrap-around. Signed overflow gets no promise."
+      }
+    },
+    {
+      "id": "q-flag",
+      "difficulty": 2,
+      "tags": [
+        "sanitisers"
+      ],
+      "question": "Which flag finds undefined behaviour while the program runs?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ubsan",
+            "text": "`-fsanitize=undefined`",
+            "correct": true
+          },
+          {
+            "id": "wall",
+            "text": "`-Wall`",
+            "why": "It warns at compile time and cannot see values at run time."
+          },
+          {
+            "id": "o2",
+            "text": "`-O2`",
+            "why": "It optimises. It reports nothing."
+          },
+          {
+            "id": "std",
+            "text": "`-std=c++20`",
+            "why": "It picks a language version only."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The sanitiser instruments the code.",
+        "generic": "Not quite right. The check must run with the program."
+      },
+      "explain": {
+        "text": "Use `-fsanitize=undefined` in tests, and `-fsanitize=address` for memory errors."
+      }
+    },
+    {
+      "id": "q-int-max-pounds",
+      "difficulty": 3,
+      "tags": [
+        "signed-overflow"
+      ],
+      "prose": "`INT_MAX` is 2,147,483,647 and a price is held in pence.",
+      "question": "What is `INT_MAX` pence in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21474836.47,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "£21,474,836.47",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "pence",
+            "value": 2147483647,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Divide the pence by 100.",
+        "generic": "Not quite right. A pound is 100 pence.",
+        "byKey": {
+          "pence": "You gave the pence figure. Divide by 100 to get pounds."
+        }
+      },
+      "explain": {
+        "text": "2,147,483,647 / 100 is 21,474,836.47 pounds. That is the most an `int` of pence can hold."
+      }
+    },
+    {
+      "id": "q-array-write",
+      "difficulty": 3,
+      "tags": [
+        "undefined-behaviour"
+      ],
+      "prose": "```cpp\nint a[4];\na[4] = 0;\n```",
+      "question": "What does the standard say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ub",
+            "text": "Undefined: index 4 is one past the end",
+            "correct": true
+          },
+          {
+            "id": "ok",
+            "text": "Fine: the array has room for 4 numbers",
+            "why": "An array of 4 has indices 0 to 3."
+          },
+          {
+            "id": "wrap",
+            "text": "It wraps to index 0",
+            "why": "Indexing does not wrap."
+          },
+          {
+            "id": "error",
+            "text": "A compile error",
+            "why": "It compiles. The standard just promises nothing."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Index 4 is out of range.",
+        "generic": "Not quite right. Count the valid indices."
+      },
+      "explain": {
+        "text": "An array of 4 has indices 0 to 3, so `a[4]` is undefined even when it appears to work."
+      }
+    }
+  ]
+}
