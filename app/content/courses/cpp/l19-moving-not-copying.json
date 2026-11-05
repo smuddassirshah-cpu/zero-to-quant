@@ -1,0 +1,1245 @@
+{
+  "id": "l19-moving-not-copying",
+  "course": "cpp",
+  "title": "Moving instead of copying",
+  "minutes": 15,
+  "objectives": [
+    "Explain move semantics, write a move constructor, and say when a move happens."
+  ],
+  "skills": [
+    "cp-memory",
+    "cp-classes"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which lines copy?",
+      "prose": "`Tracked` counts its own copies and moves. `make()` returns a `Tracked(1)` by value, `take` takes one by value, and `v` is a reserved `std::vector<Tracked>`. l11 already tapped the copy constructor, so line 2 is familiar. The other lines are new.",
+      "tags": [
+        "copy-vs-move",
+        "move-semantics"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "Tracked a(1);",
+            "Tracked b = a;",
+            "Tracked c = std::move(a);",
+            "Tracked d = make();",
+            "take(b);",
+            "take(std::move(b));",
+            "take(Tracked(2));",
+            "v.push_back(c);"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Tap every line that copies.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l2",
+          "l5",
+          "l8"
+        ],
+        "wrong": [
+          {
+            "id": "with-make",
+            "set": [
+              "l2",
+              "l4",
+              "l5",
+              "l8"
+            ]
+          },
+          {
+            "id": "with-temp",
+            "set": [
+              "l2",
+              "l5",
+              "l7",
+              "l8"
+            ]
+          },
+          {
+            "id": "with-move",
+            "set": [
+              "l2",
+              "l3",
+              "l5",
+              "l8"
+            ]
+          }
+        ],
+        "countWord": "lines"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A named object passed or assigned by value is copied. Which lines do that?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 2 is the copy you know. Which other lines hand over a named object that is still needed?",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Line 3 casts `a` with `std::move`, so it takes `a` instead of copying it."
+        }
+      ],
+      "feedback": {
+        "correct": "Lines 2, 5 and 8 copy: each passes a named object that stays in use.",
+        "generic": "Not quite right. A copy happens when a named object that stays alive is passed or assigned by value.",
+        "byKey": {
+          "with-make": "You counted the return from `make()` as a copy. Since C++17 a returned temporary is built straight into `d`.",
+          "with-temp": "`Tracked(2)` is a temporary, so it is built straight into the parameter. No copy runs.",
+          "with-move": "Line 3 moves: it takes the block and writes none of the data."
+        }
+      },
+      "explain": {
+        "text": "Lines 2, 5 and 8 copy. Lines 3 and 6 move, and lines 4 and 7 build the object in place, so neither runs. A temporary needs no copy because nothing else will use it.",
+        "canvas": {
+          "shade": {
+            "copies": [
+              "l2",
+              "l5",
+              "l8"
+            ]
+          },
+          "caption": "Lines 2 to 8: copy, move, neither, copy, move, neither, copy."
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "One block, two owners",
+      "prose": "`a` and `b` are `Buffer`s from l11: a pointer and a size. `a` owns a million doubles. Slide through the three frames and watch where `b` gets its block.",
+      "tags": [
+        "move-semantics",
+        "copy-vs-move"
+      ],
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "a",
+              "shape": "pill",
+              "x": 0.2,
+              "y": 0.25
+            },
+            {
+              "id": "blk",
+              "label": "1,000,000 doubles",
+              "shape": "rect",
+              "x": 0.72,
+              "y": 0.25
+            }
+          ],
+          "edges": [
+            {
+              "from": "a",
+              "to": "blk",
+              "directed": true
+            }
+          ],
+          "directed": true,
+          "height": 220
+        },
+        "state": {},
+        "controls": [
+          {
+            "frames": [
+              {},
+              {
+                "nodes": {
+                  "b": {
+                    "label": "b",
+                    "shape": "pill",
+                    "x": 0.2,
+                    "y": 0.75
+                  },
+                  "blk2": {
+                    "label": "1,000,000 doubles (new)",
+                    "shape": "rect",
+                    "x": 0.72,
+                    "y": 0.75
+                  }
+                },
+                "edges": {
+                  "e-b-blk2": {
+                    "from": "b",
+                    "to": "blk2",
+                    "directed": true
+                  }
+                }
+              },
+              {
+                "nodes": {
+                  "a": {
+                    "label": "a (empty)"
+                  },
+                  "b": {
+                    "label": "b",
+                    "shape": "pill",
+                    "x": 0.2,
+                    "y": 0.75
+                  }
+                },
+                "edges": {
+                  "e-a-blk": null,
+                  "e-b-blk": {
+                    "from": "b",
+                    "to": "blk",
+                    "directed": true
+                  }
+                }
+              }
+            ],
+            "frameLabels": [
+              "a owns the block",
+              "b = a: copy",
+              "b = std::move(a): move"
+            ],
+            "label": "Step"
+          }
+        ]
+      },
+      "question": "How many of the 1,000,000 doubles does the move copy?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "None: the move hands the block over",
+        "wrong": [
+          {
+            "id": "all",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the third frame with the second. Is there a second block?"
+        }
+      ],
+      "feedback": {
+        "correct": "None. The block did not move; only its owner changed.",
+        "generic": "Not quite right. Count the doubles written in the third frame.",
+        "byKey": {
+          "all": "You counted the copy. A move hands over the block and writes none of the doubles."
+        }
+      },
+      "explain": {
+        "text": "The copy writes 8,000,000 bytes, about 0.8 ms at 10 GB/s, a round figure. The move writes a pointer and a size: 8 bytes here and 16 on a desktop."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "What std::move does",
+      "prose": "`Type&&`, met in l11, is a reference that binds to temporaries. `Tracked` counts its copies and moves. After a move the source is **moved-from**: valid and safe to destroy, with a value nobody promises.",
+      "tags": [
+        "move-semantics",
+        "moved-from"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "std::move(a);",
+            "// copies=0 moves=0",
+            "Tracked b = std::move(a);",
+            "// copies=0 moves=1"
+          ],
+          "title": "counters",
+          "numbers": true
+        },
+        "state": {
+          "tone": {
+            "l2": "muted",
+            "l4": "muted"
+          }
+        }
+      },
+      "question": "What does `std::move(a)` do by itself?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cast",
+            "text": "Nothing at run time: it casts `a` to an rvalue reference, so a move can be chosen",
+            "correct": true
+          },
+          {
+            "id": "moves",
+            "text": "It moves the contents of `a` into a temporary",
+            "why": "You read the name literally. The move constructor does the moving; `std::move` only allows it."
+          },
+          {
+            "id": "deletes",
+            "text": "It destroys `a` early",
+            "why": "`a` is still alive and is destroyed at the end of its scope as usual."
+          },
+          {
+            "id": "flag",
+            "text": "It sets a flag on `a` that says it may be taken",
+            "why": "There is no flag on the object. The choice is made from the type of the cast."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare line 2 with line 4. What changed between them?"
+        },
+        {
+          "rung": "point",
+          "text": "The first line moved nothing: both counters stay at 0.",
+          "highlight": [
+            "l2",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The counter moved only on the second line, which has a constructor call."
+        }
+      ],
+      "feedback": {
+        "correct": "It is only a cast. The move constructor does the work.",
+        "generic": "Not quite right. The first statement left both counters at zero.",
+        "byKey": {
+          "moves": "You read the name literally. The move constructor does the moving; `std::move` only allows it."
+        }
+      },
+      "explain": {
+        "text": "`std::move(a)` changes how `a` is seen, not what it holds. A move happens only when a constructor or assignment takes that rvalue.",
+        "canvas": {
+          "shade": {
+            "cast": [
+              "l1",
+              "l2"
+            ],
+            "move": [
+              "l3",
+              "l4"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Four pushes",
+      "prose": "Four `v.push_back(Tracked(i))` run on an empty vector. `Tracked`'s move constructor is `noexcept`. This library grows its capacity 1, 2, 4, 8, and the growth factor is a library choice. Growth moves the old elements into the new block.",
+      "tags": [
+        "noexcept-move",
+        "copy-vs-move"
+      ],
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "T1"
+          ]
+        },
+        "state": {},
+        "controls": [
+          {
+            "frames": [
+              {
+                "cells": [
+                  "T1"
+                ]
+              },
+              {
+                "cells": [
+                  "T1",
+                  "T2"
+                ]
+              },
+              {
+                "cells": [
+                  "T1",
+                  "T2",
+                  "T3",
+                  "."
+                ]
+              },
+              {
+                "cells": [
+                  "T1",
+                  "T2",
+                  "T3",
+                  "T4"
+                ]
+              }
+            ],
+            "frameLabels": [
+              "push 1: capacity 1",
+              "push 2: capacity 2",
+              "push 3: capacity 4",
+              "push 4: capacity 4"
+            ],
+            "label": "Push"
+          }
+        ]
+      },
+      "question": "How many copies and how many moves run in all?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "copies",
+          "moves"
+        ],
+        "rows": [
+          [
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            },
+            {
+              "edit": true,
+              "answer": 7,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each push moves the temporary in. Growth also moves old elements."
+        },
+        {
+          "rung": "point",
+          "text": "The vector grew at the second and third pushes.",
+          "highlight": [
+            "c0",
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Count 4 pushes, 1 element moved at the second push and 2 at the third."
+        }
+      ],
+      "feedback": {
+        "correct": "No copies and 7 moves: 4 for the pushes, 1 and 2 for the two growths.",
+        "generic": "Not quite right. Count the four pushes, then the old elements moved at each growth.",
+        "byKey": {
+          "r0c1": "You may have counted only the four pushes. Growth also moves the old elements: 1 at the second push, 2 at the third.",
+          "r0c0": "A vector with a `noexcept` move moves its old elements. It does not copy them."
+        }
+      },
+      "explain": {
+        "text": "Four moves put the temporaries in. Growth to capacity 2 moved 1 element and growth to 4 moved 2, so 4 + 1 + 2 is 7. The fourth push fits and needs no growth."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A move that can throw",
+      "prose": "Now `Tracked`'s move constructor is not marked `noexcept`. Two pushes of `Tracked(i)` run. This library grows its capacity 1, 2, 4, 8, so the second push grows from 1 to 2.",
+      "tags": [
+        "noexcept-move",
+        "copy-vs-move"
+      ],
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "T1"
+          ]
+        },
+        "state": {},
+        "controls": [
+          {
+            "frames": [
+              {
+                "cells": [
+                  "T1"
+                ]
+              },
+              {
+                "cells": [
+                  "T1",
+                  "T2"
+                ]
+              }
+            ],
+            "frameLabels": [
+              "push 1: capacity 1",
+              "push 2: capacity 2"
+            ],
+            "label": "Push"
+          }
+        ]
+      },
+      "question": "What runs in all?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "1 copy and 2 moves",
+            "correct": true
+          },
+          {
+            "id": "all-move",
+            "text": "0 copies and 3 moves",
+            "why": "You assumed `vector` always moves. It moves only if the move cannot throw; otherwise it copies, so a failure leaves the old block whole."
+          },
+          {
+            "id": "all-copy",
+            "text": "3 copies",
+            "why": "The pushes still move from the temporaries. Only the relocation copies."
+          },
+          {
+            "id": "two-two",
+            "text": "2 copies and 1 move",
+            "why": "The relocation copies one element, and both pushes move."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Two things happen: the pushes, and one relocation at growth."
+        },
+        {
+          "rung": "point",
+          "text": "A temporary can always be moved in.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The relocation copies, because a throwing move would leave the old block half emptied."
+        }
+      ],
+      "feedback": {
+        "correct": "Two moves put the temporaries in, and the growth copies the one old element.",
+        "generic": "Not quite right. Separate the two pushes from the one relocation.",
+        "byKey": {
+          "all-move": "You assumed `vector` always moves. It moves only if the move cannot throw; otherwise it copies."
+        }
+      },
+      "explain": {
+        "text": "The library calls `std::move_if_noexcept`: it moves only when the move cannot throw. If a move threw half way, the old block would be damaged, so it copies and keeps the old block whole."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the moves",
+      "prose": "This `Buffer` is the l11 class with copy members only, so `std::move(a)` silently copies. Add the two moves. Each takes the block and leaves the source empty, with no allocation.",
+      "tags": [
+        "move-semantics",
+        "moved-from"
+      ],
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "a.data_",
+            "a.size_",
+            "b.data_",
+            "b.size_"
+          ]
+        },
+        "state": {
+          "cells": [
+            "block",
+            "3",
+            "",
+            ""
+          ],
+          "highlight": {
+            "ranges": [
+              {
+                "range": [
+                  0,
+                  1
+                ],
+                "label": "a"
+              },
+              {
+                "range": [
+                  2,
+                  3
+                ],
+                "label": "b",
+                "colour": 3
+              }
+            ]
+          }
+        },
+        "enter": {
+          "cells": [
+            "null",
+            "0",
+            "block",
+            "3"
+          ]
+        }
+      },
+      "question": "Write `Buffer(Buffer&&) noexcept` and `Buffer& operator=(Buffer&&) noexcept`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "// A buffer of doubles on the heap. It copies correctly already.\n// Add a move constructor and a move assignment: each takes the other buffer's block\n// and leaves it empty (size 0, data() null). Neither may allocate, and both must be noexcept.\n// The move assignment must be safe for `a = std::move(a)`.\nclass Buffer {\npublic:\n    Buffer(int n, double x) : size_(n), data_(new double[n]) {\n        for (int i = 0; i < n; ++i) data_[i] = x;\n    }\n    Buffer(const Buffer& other) : size_(other.size_), data_(new double[other.size_]) {\n        for (int i = 0; i < size_; ++i) data_[i] = other.data_[i];\n    }\n    Buffer& operator=(const Buffer& other) {\n        if (this != &other) {\n            double* fresh = new double[other.size_];\n            for (int i = 0; i < other.size_; ++i) fresh[i] = other.data_[i];\n            delete[] data_;\n            data_ = fresh;\n            size_ = other.size_;\n        }\n        return *this;\n    }\n    ~Buffer() { delete[] data_; }\n\n    // TODO: Buffer(Buffer&& other) noexcept\n    // TODO: Buffer& operator=(Buffer&& other) noexcept\n\n    int size() const { return size_; }\n    double get(int i) const { return data_[i]; }\n    const double* data() const { return data_; }\n\nprivate:\n    int size_;\n    double* data_;\n};\n",
+        "solution": "// A buffer of doubles on the heap. It copies correctly already.\n// Add a move constructor and a move assignment: each takes the other buffer's block\n// and leaves it empty (size 0, data() null). Neither may allocate, and both must be noexcept.\n// The move assignment must be safe for `a = std::move(a)`.\nclass Buffer {\npublic:\n    Buffer(int n, double x) : size_(n), data_(new double[n]) {\n        for (int i = 0; i < n; ++i) data_[i] = x;\n    }\n    Buffer(const Buffer& other) : size_(other.size_), data_(new double[other.size_]) {\n        for (int i = 0; i < size_; ++i) data_[i] = other.data_[i];\n    }\n    Buffer& operator=(const Buffer& other) {\n        if (this != &other) {\n            double* fresh = new double[other.size_];\n            for (int i = 0; i < other.size_; ++i) fresh[i] = other.data_[i];\n            delete[] data_;\n            data_ = fresh;\n            size_ = other.size_;\n        }\n        return *this;\n    }\n    ~Buffer() { delete[] data_; }\n\n    Buffer(Buffer&& other) noexcept : size_(other.size_), data_(other.data_) {\n        other.size_ = 0;\n        other.data_ = nullptr;\n    }\n    Buffer& operator=(Buffer&& other) noexcept {\n        if (this != &other) {\n            delete[] data_;\n            size_ = other.size_;\n            data_ = other.data_;\n            other.size_ = 0;\n            other.data_ = nullptr;\n        }\n        return *this;\n    }\n\n    int size() const { return size_; }\n    double get(int i) const { return data_[i]; }\n    const double* data() const { return data_; }\n\nprivate:\n    int size_;\n    double* data_;\n};\n",
+        "examples": [
+          {
+            "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
+            "call": "b.size()",
+            "expect": 3,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
+            "call": "a.size()",
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
+            "call": "b.size()",
+            "expect": 3,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
+            "call": "a.size()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
+            "call": "b.get(2)",
+            "expect": 1.5,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Buffer a(1000, 2.0); reset_alloc_count(); Buffer b = std::move(a);",
+            "call": "alloc_count()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);",
+            "call": "b.size()",
+            "expect": 4,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);",
+            "call": "a.size()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(1000, 2.0); Buffer b(2, 9.0); reset_alloc_count(); b = std::move(a);",
+            "call": "alloc_count()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(3, 4.0); Buffer& r = a; a = std::move(r);",
+            "call": "a.size()",
+            "expect": 3,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);",
+            "call": "a.data() == nullptr",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);",
+            "call": "a.data() == nullptr",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "std::is_nothrow_move_constructible_v<Buffer>",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "std::is_nothrow_move_assignable_v<Buffer>",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "setup": "std::vector<Buffer> v; v.reserve(2); v.push_back(Buffer(100, 1.0)); v.push_back(Buffer(100, 2.0)); reset_alloc_count(); v.push_back(Buffer(100, 3.0));",
+            "call": "alloc_count()",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "Buffer a(3, 1.0); Buffer b = std::move(a); a = Buffer(2, 7.0);",
+            "call": "a.get(1)",
+            "expect": 7.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);",
+            "call": "b.get(3)",
+            "expect": 1.0,
+            "compare": "isclose"
+          }
+        ],
+        "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n",
+        "allocCheck": true,
+        "leakCheck": true,
+        "how": "Submit runs 15 hidden tests. `alloc_count()` counts calls to `operator new` and `new[]` since the last reset, so a move that copies shows as 1 instead of 0; a block never freed fails its test. A moved-from buffer must report size 0 and `data()` null."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Copy the two fields across, then reset the source."
+        },
+        {
+          "rung": "point",
+          "text": "The source must end with a null pointer and size 0.",
+          "highlight": [
+            "c0",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "In the assignment, `delete[]` your own block first, and guard with `this != &other`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both moves took the block and left the source empty.",
+        "generic": "Not quite right. Read the failing rows: a count above 0 means you allocated, and a size above 0 means the source was not emptied.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the `Buffer&&` parameter and the `noexcept` position."
+        }
+      },
+      "explain": {
+        "text": "A move copies two fields and nulls the source. Nothing allocates, so the cost does not depend on the size."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "The const that cannot move",
+      "prose": "`Order` holds a `std::vector<Fill>` of 1,000,000 fills and has the usual special members.",
+      "tags": [
+        "copy-vs-move",
+        "move-semantics"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "const Order c = make_order();",
+            "Order d = std::move(c);"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "What runs for `Order d = std::move(c);`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "copy",
+            "text": "The copy constructor: it copies a million fills",
+            "correct": true
+          },
+          {
+            "id": "move",
+            "text": "The move constructor",
+            "why": "`std::move` always moves. It yields a `const Order&&`, and the move constructor takes `Order&&`, not const."
+          },
+          {
+            "id": "error",
+            "text": "A compile error",
+            "why": "It compiles: a `const Order&&` binds to the copy constructor's `const Order&`."
+          },
+          {
+            "id": "ub",
+            "text": "Undefined behaviour",
+            "why": "Nothing here is undefined. It is a plain copy of 1,000,000 fills."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A move constructor must change its source. Can it change a `const` object?"
+        },
+        {
+          "rung": "point",
+          "text": "Which constructors can accept a `const Order`?",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only the copy constructor takes `const Order&`, so overload resolution picks it."
+        }
+      ],
+      "feedback": {
+        "correct": "The copy constructor runs, quietly. The `const` blocked the move.",
+        "generic": "Not quite right. A move needs to change its source, and `c` is const.",
+        "byKey": {
+          "move": "You believed `std::move` always moves. It yields a `const Order&&`, and the move constructor takes `Order&&`.",
+          "error": "It compiles: a `const Order&&` binds to the copy constructor's `const Order&`."
+        }
+      },
+      "explain": {
+        "text": "A move changes the source, and a `const` object cannot be changed. So `std::move(c)` becomes a `const Order&&`, which only the copy constructor accepts. No error, only a million-fill copy.",
+        "canvas": {
+          "shade": {
+            "bad": [
+              "l2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "What a moved-from vector holds",
+      "prose": "After `std::vector<int> w = std::move(v);` the library promises that `v` is valid but in an unspecified state. Your own classes decide for themselves: `Buffer` leaves size 0.",
+      "tags": [
+        "moved-from"
+      ],
+      "question": "Select all that apply: which are always valid on the moved-from `v`?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "destroy",
+            "text": "Letting `v` go out of scope",
+            "correct": true
+          },
+          {
+            "id": "assign",
+            "text": "`v = std::vector<int>{1, 2};`",
+            "correct": true
+          },
+          {
+            "id": "clear",
+            "text": "`v.clear();`",
+            "correct": true
+          },
+          {
+            "id": "index",
+            "text": "`v[0] = 1;`",
+            "why": "A moved-from vector may be empty. Nothing promises an element at index 0."
+          },
+          {
+            "id": "back",
+            "text": "`int x = v.back();`",
+            "why": "`back()` needs a non-empty vector, and a moved-from one may be empty."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which operations need the vector to hold something?"
+        },
+        {
+          "rung": "point",
+          "text": "Destroying, assigning and clearing work on any valid vector, empty or not."
+        },
+        {
+          "rung": "step",
+          "text": "Indexing and `back()` need an element to exist."
+        }
+      ],
+      "feedback": {
+        "correct": "Destroy, assign and clear need nothing in the vector.",
+        "generic": "Not quite right. Keep only the operations that work on an empty vector."
+      },
+      "explain": {
+        "text": "A moved-from object is valid, so anything with no precondition on its contents is safe. Reading an element needs a size, and the library promises none."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "A move takes the block from something about to go, and leaves it empty and safe to destroy.\n\n```cpp\n// Say aloud: a move takes, a copy duplicates.\nBuffer(Buffer&& o) noexcept\n    : size_(o.size_), data_(o.data_) {\n    o.size_ = 0;\n    o.data_ = nullptr;\n}\nBuffer& operator=(Buffer&& o) noexcept {\n    if (this != &o) {\n        delete[] data_;\n        size_ = o.size_;  data_ = o.data_;\n        o.size_ = 0;      o.data_ = nullptr;\n    }\n    return *this;\n}\n```\nMeyers' *Effective Modern C++* and the C++ Core Guidelines cover the same ground.",
+      "tags": [
+        "move-semantics",
+        "moved-from"
+      ],
+      "question": "What must a move constructor leave behind in the source?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "safe",
+            "text": "A valid object that is safe to destroy",
+            "correct": true
+          },
+          {
+            "id": "intact",
+            "text": "The source unchanged, so it can be used again",
+            "why": "Then both objects own the block and it is freed twice."
+          },
+          {
+            "id": "deleted",
+            "text": "Nothing: the source is already deleted",
+            "why": "The source is destroyed later, so its destructor must still be safe."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The source must be valid and safe to destroy.",
+        "generic": "Not quite right. The source still gets destroyed at the end of its scope."
+      },
+      "explain": {
+        "text": "Nulling the pointer makes the source destructor a harmless `delete[] nullptr`. That is why the move assignment tests `this != &o` before freeing its own block."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A setter that keeps its argument",
+      "prose": "A pricer keeps its history. `history` holds 1,000,000 doubles.\n\n```cpp\nvoid set_prices(std::vector<double> p) {\n    prices_ = std::move(p);\n}\n```\nTake it by value and move it in, so one function serves both callers.",
+      "tags": [
+        "sink-argument",
+        "copy-vs-move"
+      ],
+      "question": "How many doubles does each call copy?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "call",
+          "doubles copied"
+        ],
+        "rows": [
+          [
+            "`set_prices(history);`",
+            {
+              "edit": true,
+              "answer": 1000000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`set_prices(std::move(history));`",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "`set_prices(load());`",
+            {
+              "edit": true,
+              "answer": 0,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The parameter is built first. Then the assignment moves from it."
+        },
+        {
+          "rung": "point",
+          "text": "A named lvalue is copied into the parameter; a moved or returned value is not."
+        },
+        {
+          "rung": "step",
+          "text": "The assignment into the member is always a move."
+        }
+      ],
+      "feedback": {
+        "correct": "Only the first call copies, once, into the parameter.",
+        "generic": "Not quite right. Ask for each call how the parameter is built.",
+        "byKey": {
+          "r0c1": "You counted two copies. The parameter is the copy; the assignment into the member is a move.",
+          "r1c1": "You counted a copy for `std::move(history)`. The parameter takes its block, and nothing is copied.",
+          "r2c1": "`load()` returns a temporary, so it is built straight into the parameter. The assignment then moves it."
+        }
+      },
+      "explain": {
+        "text": "The copy is made once, where the caller passes a named lvalue. Everywhere else the parameter takes a block that was already going. Interviewers call this a sink argument."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A copy duplicates what an object owns. A move takes it from an object that is about to go, and leaves it empty and safe to destroy.",
+      "`std::move` is only a cast to an rvalue reference. The move constructor does the moving, and a `const` object cannot be moved, so it copies.",
+      "A vector moves its old elements on growth only if their move is `noexcept`. Otherwise it copies, to keep the old block whole."
+    ],
+    "formula": {
+      "name": "The move pattern",
+      "tex": "\\texttt{T(T\\&\\& o) noexcept : p(o.p) \\{ o.p = nullptr; \\}}",
+      "note": "Take the pointer, null the source, mark it noexcept."
+    },
+    "trap": "Writing `return std::move(t);` blocks elision, so a move runs where `return t;` would run none."
+  },
+  "quiz": [
+    {
+      "id": "q-move-cast",
+      "difficulty": 2,
+      "tags": [
+        "move-semantics"
+      ],
+      "question": "Which statement about `std::move(a)` is true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "cast",
+            "text": "It casts `a` to an rvalue reference and moves nothing itself",
+            "correct": true
+          },
+          {
+            "id": "moves",
+            "text": "It moves the contents of `a` into a new object",
+            "why": "The move constructor does that. `std::move` only makes a move possible."
+          },
+          {
+            "id": "deletes",
+            "text": "It marks `a` as deleted",
+            "why": "`a` stays alive and is destroyed at the end of its scope."
+          },
+          {
+            "id": "constrefs",
+            "text": "It makes `a` const",
+            "why": "It makes `a` look like a temporary, which is the opposite of const."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It is only a cast.",
+        "generic": "Not quite right. Think about what the cast changes."
+      },
+      "explain": {
+        "text": "`std::move` changes how `a` is seen. A constructor or assignment that takes `T&&` then does the move."
+      }
+    },
+    {
+      "id": "q-take-copies",
+      "difficulty": 2,
+      "tags": [
+        "copy-vs-move"
+      ],
+      "prose": "A function `take` takes a `Tracked` by value.\n\n```cpp\ntake(a);\ntake(std::move(a));\ntake(Tracked(3));\n```",
+      "question": "How many of the three calls copy?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only `take(a)` copies.",
+        "generic": "Not quite right. Check which arguments are named objects that stay alive.",
+        "byKey": {
+          "three": "You counted every call. Only a named object passed as it is must be copied."
+        }
+      },
+      "explain": {
+        "text": "The named `a` is copied. `std::move(a)` moves, and `Tracked(3)` is built straight into the parameter."
+      }
+    },
+    {
+      "id": "q-throwing-growth",
+      "difficulty": 3,
+      "tags": [
+        "noexcept-move"
+      ],
+      "prose": "A `std::vector<T>` must grow, and `T`'s move constructor is not `noexcept`.",
+      "question": "Why does it copy the old elements?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "whole",
+            "text": "A throw half way through moving would leave the old block damaged; copying keeps it whole",
+            "correct": true
+          },
+          {
+            "id": "faster",
+            "text": "Copying is faster than moving for small objects",
+            "why": "Moving is never slower. The reason is safety when a move can throw."
+          },
+          {
+            "id": "error",
+            "text": "The vector cannot call a move that might throw",
+            "why": "It can call it. It chooses not to when a copy is available."
+          },
+          {
+            "id": "empty",
+            "text": "A move would leave the new elements empty",
+            "why": "A move fills the new elements. The risk is a throw part way."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Safety wins: the copy keeps the old block whole.",
+        "generic": "Not quite right. Think about what a throw does half way through."
+      },
+      "explain": {
+        "text": "The library calls `std::move_if_noexcept`. A copy that throws leaves the old block intact, a move that throws does not."
+      }
+    },
+    {
+      "id": "q-const-move",
+      "difficulty": 3,
+      "tags": [
+        "copy-vs-move"
+      ],
+      "prose": "```cpp\nconst Order c = make_order();\nOrder d = std::move(c);\n```",
+      "question": "Which constructor runs for `d`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "copy",
+            "text": "The copy constructor",
+            "correct": true
+          },
+          {
+            "id": "move",
+            "text": "The move constructor",
+            "why": "It takes `Order&&`, and a `const Order&&` does not bind to that."
+          },
+          {
+            "id": "none",
+            "text": "Neither: it is an error",
+            "why": "It compiles. The `const Order&&` binds to the copy constructor."
+          },
+          {
+            "id": "elide",
+            "text": "Neither: the compiler elides it",
+            "why": "Elision applies to a returned temporary, not to a `std::move` of a named object."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A const object can only be copied.",
+        "generic": "Not quite right. The move constructor needs a non-const source."
+      },
+      "explain": {
+        "text": "Moving changes the source, so a const source falls back to the copy constructor."
+      }
+    },
+    {
+      "id": "q-return-move",
+      "difficulty": 3,
+      "tags": [
+        "move-semantics"
+      ],
+      "prose": "```cpp\nTracked make() {\n    Tracked t(1);\n    return std::move(t);\n}\n```",
+      "question": "What does the `std::move` do here?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "blocks",
+            "text": "It blocks copy elision, so a move runs where plain `return t;` would run none",
+            "correct": true
+          },
+          {
+            "id": "faster",
+            "text": "It makes the return faster",
+            "why": "A returned local is already treated as an rvalue, and elision builds it in place for free."
+          },
+          {
+            "id": "needed",
+            "text": "It is needed, or the compiler would copy",
+            "why": "The compiler moves a returned local without being asked."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing at all",
+            "why": "It changes what runs: a move replaces the elision."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Plain `return t;` is better.",
+        "generic": "Not quite right. Compare the counts of the two spellings."
+      },
+      "explain": {
+        "text": "On the desk compiler `return t;` ran 0 moves and `return std::move(t);` ran 1. Let the compiler move for you."
+      }
+    }
+  ]
+}
