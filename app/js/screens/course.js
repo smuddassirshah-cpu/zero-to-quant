@@ -339,6 +339,18 @@
       const where = r && r.position ? (r.position.phase === 'quiz' ? ` · Paused at quiz question ${(r.position.q || 0) + 1}` : ` · Paused at screen ${(r.position.i || 0) + 1}`) : '';
       return (m ? `${m.screens} screens · about ${m.minutes} min` : `About ${DEFAULT_MIN} min`) + where + note;
     };
+    /* ENGINE-BACKLOG 551: the reason for the first missing prerequisite, "Check first" diagnostics and the route label, as short lines on the card */
+    const nodeNotes = (e) => {
+      const P = Z.prereq, it = e.it;
+      if (!P || !Z.checkFirst || (it.kind !== 'lesson' && it.kind !== 'review' && it.kind !== 'homework')) return '';
+      const lesson = it.kind === 'lesson', st = statusOf(e);
+      const m = st === 'locked' ? (lesson ? P.missingFor(cid, it.id) : P.missingForLevel(cid, e.lv.n)) : null;
+      const first = m && ((m.start && m.start.node) || m.direct[0]);
+      const why = first && first.why ? `<p class="t-caption secondary zc-why">${esc(first.why)}</p>` : '';
+      const chk = Z.checkFirst(lesson ? P.diagnosticsFor(cid, it.id) : P.diagnosticsForLevel(cid, e.lv.n), esc);
+      const lim = lesson ? P.routeLimitsForLesson(cid, it.id) : P.routeLimitsForLevel(cid, e.lv.n);
+      return `${why}${chk}${lim.length ? `<div class="rl-row">${Z.routeLimited(lim, esc)}</div>` : ''}`;
+    };
     const fillInfo = (body, e, close) => {
       const it = e.it, st = statusOf(e);
       const over = `Level ${e.lv.n} · ${it.kind === 'lesson' ? `Lesson ${e.no}` : it.kind === 'review' ? 'Review' : 'Homework'}`;
@@ -360,6 +372,7 @@
         <h2 class="t-sheet-title" id="zc-pop-title">${esc(title)}</h2>
         ${it.objective ? `<p class="t-body zc-obj">${Z.md(esc(it.objective))}</p>` : ''}
         <p class="t-body secondary zc-meta" data-meta>${esc(metaFor(e))}</p>
+        ${nodeNotes(e)}
         ${prepLine}${score}${perfect}
         ${act ? `<button type="button" class="btn track lg block" data-act>${act.label}</button>` : ''}
         ${act && act.cap ? `<p class="t-caption muted zc-cap">${esc(act.cap)}</p>` : ''}

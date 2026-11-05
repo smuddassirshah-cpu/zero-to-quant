@@ -82,7 +82,7 @@
       if (!doc) { bail('Not yet written', `The exam ${id} has not been written yet.`); return; }
       /* Prerequisite gating (ENGINE-BACKLOG 487, 495): an exam file (mock, topic exam or stage test) that names requires shows the locked card while one is unmet */
       if (ZQ.prereq && ZQ.lockedCard && ZQ.prereq.examLocked(id, doc)) {
-        cleanups.push(ZQ.lockedCard(root, { title: `${doc.name || 'This mock'} is locked`, route: `exam/${id}`, openKey: 'exam/' + id, missing: ZQ.prereq.missingRefs(ZQ.prereq.examRefs(doc)), back: '#review' }));
+        cleanups.push(ZQ.lockedCard(root, { title: `${doc.name || 'This mock'} is locked`, route: `exam/${id}`, openKey: 'exam/' + id, missing: ZQ.prereq.missingRefs(ZQ.prereq.examRefs(doc)), limits: ZQ.prereq.routeLimits(ZQ.prereq.examRefs(doc)), back: '#review' }));
         return;
       }
       run(doc);

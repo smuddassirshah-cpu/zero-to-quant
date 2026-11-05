@@ -27,7 +27,8 @@
       : t.nextAt ? `<span class="t-caption muted lk-wait">Test out again in ${hoursLeft(t.nextAt)}</span>`
       : `<span class="t-caption muted lk-wait">Finish its lessons to unlock it</span>`;
     const title = nd.kind === 'lesson' ? `Lesson: ${nd.name}` : `Level ${nd.n}${nd.levelName ? ': ' + nd.levelName : ''}`;
-    return `<li class="lk-row" data-ref="${esc(nd.ref)}"><div class="lk-row-t"><a class="lk-row-n" href="#course/${esc(nd.course)}">${esc(title)}</a><span class="t-caption secondary">${esc(st)}</span></div>${to}</li>`;
+    const why = nd.why ? `<p class="t-caption secondary lk-why">${esc(nd.why)}</p>` : '';   // one line from course.json (ENGINE-BACKLOG 551)
+    return `<li class="lk-row" data-ref="${esc(nd.ref)}"><div class="lk-row-t"><a class="lk-row-n" href="#course/${esc(nd.course)}">${esc(title)}</a><span class="t-caption secondary">${esc(st)}</span></div>${why}${to}</li>`;
   };
   /* Stage > Topic > Course groups, open, each with a count */
   const tree = (nodes, esc) => {
@@ -48,6 +49,14 @@
     }).join('');
   };
 
+  /* "Check first" lines for diagnostic requires (gate: false): never a lock, the reason and a link to sit that level's review */
+  Z.checkFirst = (nodes, esc) => (nodes || []).map(nd => {
+    const name = nd.kind === 'lesson' ? nd.name : `${nd.courseName}, level ${nd.n}`;
+    return `<p class="t-caption secondary lk-check" data-ref="${esc(nd.ref)}"><b>Check first:</b> ${esc(name)}${nd.why ? `. ${esc(nd.why)}` : ''}${nd.route ? ` <a href="#${esc(nd.route)}">Sit its review as a check</a>` : ''}</p>`;
+  }).join('');
+  /* "Route limited: X unwritten", one chip per course */
+  Z.routeLimited = (list, esc) => (list || []).map(c => `<span class="rl-chip" data-course="${esc(c.course)}">${Z.icon('lock', 'xs')}<span>${esc(Z.prereq.routeText(c))}</span></span>`).join('');
+
   Z.lockedCard = function (host, spec) {
     const esc = Z.esc, S = Z.state, P = Z.prereq;
     const m = spec.missing, back = spec.back || '#learn';
@@ -65,7 +74,9 @@
         <h1 class="t-h1">${esc(spec.title)}</h1>
         <p class="t-body secondary">${plural(m.count, 'thing', 'things')} to finish before this opens. Each one is used by what comes after it, so a solid base saves you coming back.</p>
         ${start}
+        ${spec.limits && spec.limits.length ? `<div class="rl-row">${Z.routeLimited(spec.limits, esc)}</div>` : ''}
       </header>
+      ${spec.check && spec.check.length ? `<section class="lk-sec lk-checks">${Z.checkFirst(spec.check, esc)}</section>` : ''}
       ${direct}${indirect}
       <footer class="lk-foot">
         <p class="t-caption muted">A level counts as met when you pass its review, pass the topic exam or stage test, or test out of it. Opening a lesson does not count. Nothing you have unlocked locks again.</p>
@@ -93,6 +104,7 @@
     const x = Z.content.courseLessons(cid).find(y => y.id === id);
     const name = isLesson ? (x ? x.name : id) : lv.review === id ? `Level ${lv.n} review` : `Homework ${lv.n}`;
     return Z.lockedCard(host, { title: `${name} is locked`, route, openKey: P.keyOfLevel(cid, lv.n),
-      missing: isLesson ? P.missingFor(cid, id) : P.missingForLevel(cid, lv.n), back: `#course/${cid}` });
+      missing: isLesson ? P.missingFor(cid, id) : P.missingForLevel(cid, lv.n), back: `#course/${cid}`,
+      check: isLesson ? P.diagnosticsFor(cid, id) : P.diagnosticsForLevel(cid, lv.n), limits: isLesson ? P.routeLimitsForLesson(cid, id) : P.routeLimitsForLevel(cid, lv.n) });
   };
 })();

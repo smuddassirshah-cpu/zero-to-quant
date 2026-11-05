@@ -4,6 +4,7 @@
 // The last 20 lines are the summary that state files quote (PLAN, PROGRESS, KNOWN_ISSUES).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const APP = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -12,6 +13,7 @@ const args = new Set(process.argv.slice(2));
 const read = (p) => JSON.parse(readFileSync(p, 'utf8'));
 const jsonFiles = (d) => (existsSync(d) ? readdirSync(d).filter((f) => f.endsWith('.json')).sort() : []);
 
+const { entriesOf } = createRequire(import.meta.url)('../js/prereq.js');   // the one requires normaliser (ENGINE-BACKLOG 551)
 const cur = read(join(C, 'curriculum.json'));
 const topicStage = {};
 const topicHours = {};
@@ -25,10 +27,12 @@ for (const id of readdirSync(join(C, 'courses')).sort()) {
   const cj = read(p);
   const topic = cj.topic ?? cur.courses?.[id]?.topic ?? '?';
   const row = { id, topic, stage: topicStage[topic] ?? '?', strand: cj.strand ?? 'core', levels: 0, levelsWritten: 0,
-    mapped: 0, authored: 0, reviewsMapped: 0, reviews: 0, homeworkMapped: 0, homework: 0, reviewItems: 0, reviewPassSet: 0 };
+    mapped: 0, authored: 0, reviewsMapped: 0, reviews: 0, homeworkMapped: 0, homework: 0, reviewItems: 0, reviewPassSet: 0, cross: 0, noWhy: 0 };
   for (const lv of cj.levels ?? []) {
     row.levels++;
     let w = 0;
+    const ents = entriesOf(lv.requires).concat((lv.lessons ?? []).flatMap((l) => entriesOf((cj.lessonRequires ?? {})[l])));
+    for (const e of ents) if (e.ref.split('/')[0] !== id) { row.cross++; if (!e.why) row.noWhy++; }
     for (const l of lv.lessons ?? []) { row.mapped++; if (existsSync(join(C, 'courses', id, `${l}.json`))) { row.authored++; w++; } }
     if (w === (lv.lessons ?? []).length && w > 0) row.levelsWritten++;
     if (lv.review) { row.reviewsMapped++; const rp = join(C, 'courses', id, `${lv.review}.json`);
@@ -102,7 +106,7 @@ const real = exams.filter((e) => !e.sample);
 const storedH = cur.stages.reduce((a, s) => a + (s.hours ?? 0), 0);
 const summedH = Object.values(topicHours).reduce((a, h) => a + h, 0);
 out.push(`Total lessons ${sum(courses, 'authored')}/${sum(courses, 'mapped')} (missing ${sum(courses, 'mapped') - sum(courses, 'authored')}); course maps ${courses.length}; courses with 0 lessons ${courses.filter((r) => r.authored === 0).length}`);
-out.push(`Levels fully written ${sum(courses, 'levelsWritten')}/${sum(courses, 'levels')}`);
+out.push(`Levels fully written ${sum(courses, 'levelsWritten')}/${sum(courses, 'levels')}; cross-course requires edges ${sum(courses, 'cross')}, without why ${sum(courses, 'noWhy')}`);
 out.push(`Reviews ${sum(courses, 'reviews')}/${sum(courses, 'reviewsMapped')} (items ${sum(courses, 'reviewItems')}, with own pass ${sum(courses, 'reviewPassSet')}); homework ${sum(courses, 'homework')}/${sum(courses, 'homeworkMapped')}`);
 out.push(`Exams (non-sample) ${real.length}: topic ${real.filter((e) => e.kind === 'topic').length}, stage ${real.filter((e) => e.kind === 'stage').length}, mock ${real.filter((e) => e.kind === 'mock').length} (mock versions included); samples ${exams.length - real.length}`);
 out.push(`Topic exams: ${real.filter((e) => e.kind === 'topic').map((e) => e.id.replace('topic-', '')).join(', ')}`);
