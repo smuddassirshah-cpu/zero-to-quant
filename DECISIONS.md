@@ -120,3 +120,9 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 - Self rows (longform items, exam checks) leave both numerator and denominator when a pass is judged for met or tested-out (`passedAuto`), against the same pass mark. An attempt with no auto items meets nothing. Reason: "ignores self" means absent, not zero; scoring self as zero would make longform-heavy topic exams unpassable for met.
 - `external` counts like `auto`; no producer exists yet (item 8 adds one).
 - Old attempts without `passedAuto`: `passed` stands for exams with no self item (manifest `selfExams` decides); for listed exams it counts for nothing, but levels already in `prereq.met` stay met. Old Elo is not rewritten.
+
+### Met rule figures (5 Nov, PLAN 2c item 4, ENGINE-BACKLOG 528)
+- Review `pass` 0.8 in every review file, written by `app/tools/write-review-pass.mjs`; the engine fallback is also 0.8. Reason: N02, the review bar was below the quiz MASTERY bar of 0.8.
+- `SKILL_FLOOR = 0.7`: a review, test-out, topic or stage pass meets a level only when every skill tagged on that level's review items is at the floor over the attempt's auto rows and `skills[s].seen > 0`. Floors read `skills[s]`, never `state.selfMarked`.
+- `REVEAL_CAP = 0.25`: a lesson with more than a quarter of its gradable screens revealed does not count as done for prerequisites or progress figures; an honest replay restores it.
+- Old review records with `passedAuto: true` and no `essential` stay met (nothing unlocked locks again). Topic and stage exam `pass` stays 0.7; the coverage floor is what changed.

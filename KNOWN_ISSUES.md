@@ -154,3 +154,6 @@ Process found this session:
 - Readiness contract (signed off 5 Nov): trader required set is 442 lessons, 1,214 h; Learn shows 630 lessons, 1,804 h. The old superday closure was 470 lessons, so the required route is only 6% shorter; most of it is Stage 0 (193 lessons). Accepted by the user as drafted.
 - Readiness contract: topics 3.2 and 3.4 store 0 hours, so derivatives sub-route hours are understated (item 11).
 - `playthrough --routes-only` without `--local-cdn` fails `#drill (filters)` on HTTP 404 `/vendor/yowasp-clang/bundle.js` in cloud sandboxes, before and after 2c item 2 (checked at e210324). With `--local-cdn` it is green.
+
+- (5 Nov) `playthrough.mjs --all --routes-only` fails one check, "samples: #you shows the sample ..." (sample exam names in You exam history after sample mocks are played); reproduced at 41a0f75 with `--exam mock-sample --routes-only`, so it predates item 4. `--routes-only` alone is green. Owner: engine (You screen exam history).
+- (5 Nov) O2 warnings on current content: 1,484 in all; O2-no-slip and O2-explain-answer sample at about 70% precision, so treat their hits as candidates, not findings (`docs/reports/engine-pass-o2.md`).
