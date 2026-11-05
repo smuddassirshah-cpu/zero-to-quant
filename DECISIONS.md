@@ -132,3 +132,8 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 - Grandfathering: the 111 rule-matched levels written before item 5 sit in `app/tools/perf-pending.json` (108 after the pilots) and warn instead of error. Content agents never edit it; the main session runs `node app/tools/perf-pending.mjs --prune` after a merge. Reason: keep the validator at 0 errors while the retrofit runs (about 25 to 30 levels a session).
 - A task gates met as an extra AND condition: auto kinds need an auto pass; self kinds need a submitted mark at the rubric pass, with `required` rows; a self mark never meets a level alone.
 - Decided (user, 5 Nov, review-perf-pilots Q1): a performance task on a level the verb rule does not match is practice-only and never gates met. proof L3 keeps `h-prove-cube-minus-n` as practice, so analysis and linear-maps no longer wait on a self-mark. Reason: the rule scopes the gate; voluntary tasks must not widen it.
+
+### User answers at session Q start (5 Nov, PLAN 2c items 7 to 9)
+- `odes` and `numerics` are written before 2b (user). Until they exist, Learn and Prepare show "Route limited: <course> unwritten" on routes that reach them; 2c item 7 closes on the label, the levels follow as their own PLAN lines ahead of 2b.
+- Capstone reviewer (item 8): the user. Maths second reader (item 9): the user. Both items are human-closed; agents prepare records and candidate lists only.
+- Branch stays `claude/amazing-wright-d4mx7i` (user), though the session was opened on another name.
