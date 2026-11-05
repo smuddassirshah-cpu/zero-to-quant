@@ -146,8 +146,8 @@ const cppCodeWidget = (file, where, w) => {
   if (w.allocCheck === true) { // item 470: the harness defines alloc_count(), reset_alloc_count() and the global operator new; a hidden prelude must not
     const hidden = [w.prelude, w.postlude, ...(isObj(w.files) ? Object.values(w.files) : [])].filter(x => typeof x === 'string').join('\n');
     if (/\boperator\s+new\b/.test(hidden)) err(file, `${where}.allocCheck`, 'allocCheck supplies the global operator new: remove the replacement operator new from the prelude, postlude or files');
-    if (/\b(?:reset_)?alloc_count\s*\(\s*\)\s*\{/.test(hidden)) err(file, `${where}.allocCheck`, 'allocCheck defines alloc_count() and reset_alloc_count(): do not define them in the prelude');
-    if (!(w.tests || []).some(t => t && typeof t === 'object' && /\balloc_count\s*\(/.test(`${t.call || ''} ${t.setup || ''}`))) warn(file, `${where}.allocCheck`, 'allocCheck is on but no test reads alloc_count()');
+    if (/\b(?:(?:reset_)?alloc_count|free_count|live_blocks)\s*\(\s*\)\s*\{/.test(hidden)) err(file, `${where}.allocCheck`, 'allocCheck defines alloc_count(), reset_alloc_count(), free_count() and live_blocks(): do not define them in the prelude');
+    if (!(w.tests || []).some(t => t && typeof t === 'object' && /\b(?:alloc_count|free_count|live_blocks)\s*\(/.test(`${t.call || ''} ${t.setup || ''}`))) warn(file, `${where}.allocCheck`, 'allocCheck is on but no test reads alloc_count(), free_count() or live_blocks()');
   }
   if (w.files != null && !(isObj(w.files) && Object.entries(w.files).every(([k, v]) => /^[\w.-]+\.(cpp|cc|h|hpp)$/.test(k) && k !== 'main.cpp' && typeof v === 'string'))) err(file, `${where}.files`, 'files maps hidden file names (pricer.h, pricer.cpp) to C++ source');
   cases.forEach(([t, at]) => {

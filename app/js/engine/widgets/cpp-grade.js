@@ -288,15 +288,18 @@ ${cases.map((_, i) => `  case ${i}: zq_case_${i}(zq_o); break;`).join('\n')}
 `;
   /* In function mode a main the learner wrote (to try things out) is renamed, so it does not clash with the harness */
   const LEAK = String.raw`#include <cstdio>
+#include <cstring>
 #include <cstdlib>
 #include <cstddef>
 #include <new>
 namespace zq_leak {
 inline bool& on() { static bool v = false; return v; }
 inline long* counts() { static long c[3] = { 0, 0, 0 }; return c; }
-inline void* get(std::size_t n, unsigned kind) { void* raw = std::malloc(n + 16); if (!raw) std::abort(); unsigned* h = static_cast<unsigned*>(raw); h[0] = on() ? 0x5a514c4bu : 0u; h[1] = kind; if (on()) ++counts()[kind]; return static_cast<char*>(raw) + 16; }
-inline void put(void* p, unsigned kind) { if (!p) return; char* raw = static_cast<char*>(p) - 16; unsigned* h = reinterpret_cast<unsigned*>(raw); if (h[0] == 0x5a514c4bu) { if (h[1] != kind) ++counts()[2]; --counts()[h[1] ? 1 : 0]; h[0] = 0; } std::free(raw); }
-struct Check { Check() { on() = true; } ~Check() { on() = false; long* c = counts(); if (c[0] > 0 || c[1] > 0 || c[2] > 0) { std::fflush(stdout); if (c[2]) std::fprintf(stderr, "Memory error: %ld block(s) were freed with the wrong form of delete (delete on new[] memory, or delete[] on new).\n", c[2]); if (c[0] > 0 || c[1] > 0) std::fprintf(stderr, "Memory leak: %ld block(s) from new and %ld from new[] were never deleted.\n", c[0] > 0 ? c[0] : 0, c[1] > 0 ? c[1] : 0); std::_Exit(1); } } };
+inline unsigned long& quarantined() { static unsigned long q = 0; return q; }
+inline void* get(std::size_t n, unsigned kind) { void* raw = std::malloc(n + 16); if (!raw) std::abort(); unsigned* h = static_cast<unsigned*>(raw); h[0] = on() ? 0x5a514c4bu : 0u; h[1] = kind; h[2] = static_cast<unsigned>(n); if (on()) ++counts()[kind]; return static_cast<char*>(raw) + 16; }
+inline void put(void* p, unsigned kind) { if (!p) return; char* raw = static_cast<char*>(p) - 16; unsigned* h = reinterpret_cast<unsigned*>(raw); if (h[0] == 0x66726565u) { std::fflush(stdout); std::fprintf(stderr, "Memory error: a block was deleted twice.\n"); std::_Exit(1); } if (h[0] == 0x5a514c4bu) { if (h[1] != kind) ++counts()[2]; --counts()[h[1] ? 1 : 0]; } if (quarantined() > 67108864ul) { std::free(raw); return; } std::memset(p, 0xDD, h[2]); h[0] = 0x66726565u; quarantined() += h[2] + 16; }
+inline constexpr bool report = true;
+struct Check { Check() { on() = true; } ~Check() { on() = false; long* c = counts(); if (report && (c[0] > 0 || c[1] > 0 || c[2] > 0)) { std::fflush(stdout); if (c[2]) std::fprintf(stderr, "Memory error: %ld block(s) were freed with the wrong form of delete (delete on new[] memory, or delete[] on new).\n", c[2]); if (c[0] > 0 || c[1] > 0) std::fprintf(stderr, "Memory leak: %ld block(s) from new and %ld from new[] were never deleted.\n", c[0] > 0 ? c[0] : 0, c[1] > 0 ? c[1] : 0); std::_Exit(1); } } };
 static Check check;
 }
 void* operator new(std::size_t n) { return zq_leak::get(n, 0); }
@@ -313,21 +316,14 @@ void operator delete[](void* p, std::size_t) noexcept { zq_leak::put(p, 1); }
   const ALLOC_CNT = String.raw`#include <cstdlib>
 #include <cstddef>
 #include <new>
-namespace zq_alloc { inline volatile int n = 0; }
-inline void reset_alloc_count() { zq_alloc::n = 0; }
+namespace zq_alloc { inline volatile int n = 0; inline volatile int f = 0; inline volatile int live = 0; }
+inline void reset_alloc_count() { zq_alloc::n = 0; zq_alloc::f = 0; }
 inline int alloc_count() { return zq_alloc::n; }
+inline int free_count() { return zq_alloc::f; }
+inline int live_blocks() { return zq_alloc::live; }
 `;
-  const ALLOC_OPS = String.raw`namespace zq_alloc { inline void* get(std::size_t n) { zq_alloc::n = zq_alloc::n + 1; void* p = std::malloc(n ? n : 1); if (!p) std::abort(); return p; } }
-void* operator new(std::size_t n) { return zq_alloc::get(n); }
-void* operator new[](std::size_t n) { return zq_alloc::get(n); }
-void* operator new(std::size_t n, const std::nothrow_t&) noexcept { return zq_alloc::get(n); }
-void* operator new[](std::size_t n, const std::nothrow_t&) noexcept { return zq_alloc::get(n); }
-void operator delete(void* p) noexcept { std::free(p); }
-void operator delete[](void* p) noexcept { std::free(p); }
-void operator delete(void* p, std::size_t) noexcept { std::free(p); }
-void operator delete[](void* p, std::size_t) noexcept { std::free(p); }
-`;
-  const LEAK_COUNTED = LEAK.replace('inline void* get(std::size_t n, unsigned kind) {', 'inline void* get(std::size_t n, unsigned kind) { zq_alloc::n = zq_alloc::n + 1;')
+  const LEAK_COUNTED = LEAK.replace('inline void* get(std::size_t n, unsigned kind) {', 'inline void* get(std::size_t n, unsigned kind) { zq_alloc::n = zq_alloc::n + 1; zq_alloc::live = zq_alloc::live + 1;')
+    .replace('inline void put(void* p, unsigned kind) { if (!p) return;', 'inline void put(void* p, unsigned kind) { if (!p) return; zq_alloc::f = zq_alloc::f + 1; zq_alloc::live = zq_alloc::live - 1;')
     + 'void* operator new(std::size_t n, const std::nothrow_t&) noexcept { return zq_leak::get(n, 0); }\nvoid* operator new[](std::size_t n, const std::nothrow_t&) noexcept { return zq_leak::get(n, 1); }\n';
   const TESTKIT = String.raw`#include <cmath>
 #include <cstdio>
@@ -355,7 +351,7 @@ inline int test_count() { return (int)zq_tk::all().size(); }
   const flagsOf = (spec) => [].concat(spec.flags || []).map(String).filter((f) => FLAG_OK.test(f));
   const unit = (spec, src, cases, script, extra = {}) => {
     const defs = extra.defines && typeof extra.defines === 'object' ? Object.entries(extra.defines).filter(([k]) => /^[A-Za-z_]\w*$/.test(k)).map(([k, v]) => `#define ${k} ${v === true ? 1 : String(v)}`).join('\n') : '';
-    const pre = (spec.allocCheck ? ALLOC_CNT + (spec.leakCheck ? LEAK_COUNTED : ALLOC_OPS) : spec.leakCheck ? LEAK : '') + (spec.testkit ? TESTKIT : '') + (defs ? defs + '\n' : '') + String(spec.prelude || ''); // defines come first, so a hidden prelude can #ifdef on them
+    const pre = (spec.allocCheck ? ALLOC_CNT + (spec.leakCheck ? LEAK_COUNTED : LEAK_COUNTED.replace('inline constexpr bool report = true;', 'inline constexpr bool report = false;')) : spec.leakCheck ? LEAK : '') + (spec.testkit ? TESTKIT : '') + (defs ? defs + '\n' : '') + String(spec.prelude || ''); // defines come first, so a hidden prelude can #ifdef on them
     const post = String(spec.postlude || '') + sigCheck(spec.signature) + (extra.probe != null ? `\n#line 1 "compile check"\n[[maybe_unused]] static void zq_compile_probe() {\n${extra.probeSetup || ''}\n${extra.probe}\n}\n` : '');
     const P = splitHead(pre), L = splitHead(src);
     const head = [...new Set([...P.head, ...L.head])].join('\n');
