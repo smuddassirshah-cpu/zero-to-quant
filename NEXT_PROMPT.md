@@ -2,14 +2,12 @@ Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4
 
 Expected census (`node app/tools/census.mjs | tail -20`): lessons 1054 of 1214 (193, 507, 150, 204); reviews 243, none with `pass`; exams 22 topic, 1 stage, 11 mock; drills 35; bank 200; hours 3,265 stored, 3,695 summed. Any difference: fix state files first.
 
-Task: PLAN 2c item 2, second half. Freeze in force.
+Task: PLAN 2c item 3, result provenance (N01). Freeze in force. Item 2 is done (readiness contract signed off; engine reads `app/content/readiness.json`).
 
-Context not in state files: the user answered all eight questions (DECISIONS "Readiness contract answers"). `docs/readiness.md` is drafted and `node app/tools/readiness-sums.mjs` exits 0. The user has not signed it off. Open sign-off points: judgement calls in its "Notes for sign-off"; the trader required set is 442 lessons against the old 470-lesson closure (KNOWN_ISSUES); `brainteasers` and `game-theory` require graphs-dp and contests.
+Context not in state files: 259 homework widgets are self-ticked longform, and mock checks count as mastery and as `ok` today (KNOWN_ISSUES N01). The sandbox needs the local CDN for playthroughs: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` (870 MB, about a minute), then pass `--local-cdn <scratchpad>/pkgs`. Without it `#drill (filters)` fails on a 404, before and after item 2.
 
-Step 1: ask the user to sign off `docs/readiness.md`, or take edits. Ask whether the brainteasers and game-theory edges into graphs-dp and contests are cut now (pulled forward from item 7) or Today filters optional courses regardless of edges. Re-run the script after any edit.
+Step: one engine-dev agent (Sonnet). `results[]` rows carry `how: auto | self | external`; `rate()` stores Elo per provenance or excludes `self`; You shows self-marked work separately; prerequisite met (`prereq.js`) ignores `self`. Old saves load, with missing `how` read as `auto` except longform and mock checks, read as `self`. Document in `docs/AUTHORING.md`. No content edits.
 
-Step 2, only after sign-off: an engine-dev agent (Sonnet) adds the Strats track to `state.js:20`; makes Today read the role from the contract (required first, then recommended, never optional); makes the Learn header one total from the contract; shows "route limited: odes, numerics unwritten" on pdes. The contract may need a JSON form under `app/content/` for the engine; generate it from the script, never by hand.
+Files: `app/js/state.js`, `app/js/prereq.js`, `app/js/screens/you.js`, the homework and longform widget under `app/js/engine/widgets/`, `app/tools/playthrough.mjs`, `docs/AUTHORING.md`.
 
-Files: `docs/readiness.md`, `app/tools/readiness-sums.mjs`, `app/js/state.js`, `app/js/screens/today.js`, `app/js/screens/learn.js`, `docs/AUTHORING.md`.
-
-Acceptance: a fresh trader profile is never shown `graphs-dp` as next work; the Learn header for trader reads 630 lessons, 1,804 h (or the signed-off figure); `--routes-only` green; validator 0 errors. Tick item 2 only then.
+Acceptance: a scripted homework with only longform items cannot change a prerequisite or a mastery-map cell, and the You screen labels it self-marked; an old save without `how` imports clean; validator 0 errors; `--routes-only --local-cdn` green with and without `--mobile`; readiness-sums exit 0. Tick item 3 only then.

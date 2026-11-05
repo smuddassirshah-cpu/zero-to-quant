@@ -143,12 +143,13 @@ Open review ids (none is fixed at HEAD; closure only on the review's acceptance 
 - N01 (item 3): self-ticked longform (259 homework widgets) and mock checks count as mastery and as `ok`.
 - N04 (item 2): prep.json names five mocks with no file (15 references); no developer or strats final-round mock.
 - N06: closed by 2c item 1 (5 Nov).
-- Pilot (item 12) and the precision reader (item 9) need humans; capstone reviewer (item 8), readiness contract (item 2) and the odes and numerics decision (item 7) need the user.
+- Pilot (item 12) and the precision reader (item 9) need humans; capstone reviewer (item 8) and the odes and numerics decision (item 7) need the user.
 Process found this session:
 - The review's line references to KNOWN_ISSUES are one line early at HEAD (`:86` dates, `:53` weekly cap, `:110` session H).
 - CLAUDE.md "Models" still says implementation subagents run on Sonnet, while `content-author` and second readers run on Opus (operating model 2.5 keeps them there).
 - `app/tools/merge-wave.sh` is named in SESSION PROTOCOL 3 but not written yet (2c O1); merge by DECISIONS "Parallel worktree merges" until it exists.
 
-- Readiness draft (2c item 2, `docs/readiness.md`): required trader courses `brainteasers` (needs graphs-dp L3, contests L2) and `game-theory` (needs graphs-dp L4) pull optional courses in. Until item 7 cuts or justifies those edges, Today cannot meet the acceptance "a fresh trader is never shown graphs-dp".
-- Readiness draft: trader required set is 442 lessons, 1,214 h, and the Learn figure (required plus recommended) is 630 lessons, 1,804 h. The old superday closure was 470 lessons. The required route is only 6% shorter; most of it is Stage 0 (193 lessons).
-- Readiness draft: topics 3.2 and 3.4 store 0 hours, so derivatives sub-route hours are understated (item 11).
+- Readiness contract (2c item 2): edges from required trader courses into optional `graphs-dp` and `contests` (brainteasers L2, L3; game-theory L2), and strats `coding-int` into `contests`, `numerics` into `opt-dash`, are advisory by role, not cut. Item 7 still owes a `why` per edge; under Undecided they still block.
+- Readiness contract (signed off 5 Nov): trader required set is 442 lessons, 1,214 h; Learn shows 630 lessons, 1,804 h. The old superday closure was 470 lessons, so the required route is only 6% shorter; most of it is Stage 0 (193 lessons). Accepted by the user as drafted.
+- Readiness contract: topics 3.2 and 3.4 store 0 hours, so derivatives sub-route hours are understated (item 11).
+- `playthrough --routes-only` without `--local-cdn` fails `#drill (filters)` on HTTP 404 `/vendor/yowasp-clang/bundle.js` in cloud sandboxes, before and after 2c item 2 (checked at e210324). With `--local-cdn` it is green.
