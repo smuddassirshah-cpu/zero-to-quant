@@ -1,0 +1,1277 @@
+{
+  "id": "l21-virtual-dispatch",
+  "course": "cpp",
+  "title": "How virtual functions work",
+  "minutes": 15,
+  "objectives": [
+    "Explain the vtable, object slicing and why a base class needs a virtual destructor."
+  ],
+  "skills": [
+    "cp-classes"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Four bytes from nowhere",
+      "prose": "Sizes here are for this app's compiler, which is 32-bit WebAssembly: a pointer is 4 bytes. A desktop build has 8-byte pointers.",
+      "tags": [
+        "vtable",
+        "virtual-dispatch"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "struct Tick { int px; };",
+            "struct VTick { int px; virtual int level() const; };",
+            "",
+            "sizeof(Tick)  is 4",
+            "sizeof(VTick) is 8 here (16 on a desktop)"
+          ],
+          "title": "sizes",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Where do the extra bytes in `VTick` go?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ptr",
+            "text": "A hidden pointer to the class's table of functions",
+            "correct": true
+          },
+          {
+            "id": "code",
+            "text": "A copy of `level`'s code in every object",
+            "why": "You thought each object carries its own code. Code is stored once, in the class, not in each object."
+          },
+          {
+            "id": "padding",
+            "text": "Padding after `px`",
+            "why": "`px` and the pointer are 4 bytes each here, so there is no padding to blame."
+          },
+          {
+            "id": "name",
+            "text": "The class name, for run-time type information",
+            "why": "Type information sits in the table, not in each object."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two sizes. What did the `virtual` keyword add?"
+        },
+        {
+          "rung": "point",
+          "text": "The extra amount equals one pointer here.",
+          "highlight": [
+            "l4",
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The object points at one table of functions shared by its class."
+        }
+      ],
+      "feedback": {
+        "correct": "A hidden pointer, one per object, to the class's table of functions.",
+        "generic": "Not quite right. The extra size is exactly one pointer here.",
+        "byKey": {
+          "code": "You thought each object carries its own code. Code is stored once, in the class.",
+          "padding": "`px` and the pointer are 4 bytes each here, so there is no padding.",
+          "name": "Type information sits in the table, not in each object."
+        }
+      },
+      "explain": {
+        "text": "A class with a virtual function gives every object one hidden pointer, the vptr. It leads to a table of function pointers shared by every object of that class."
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Follow the call",
+      "prose": "`p` is a `Payoff*` pointing at a `Call`. The `Put` table is drawn too, as another class's table would be.",
+      "tags": [
+        "vtable",
+        "virtual-dispatch"
+      ],
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "p",
+              "label": "p",
+              "shape": "pill",
+              "x": 0.25,
+              "y": 0.1
+            },
+            {
+              "id": "obj",
+              "label": "Call object\nvptr, strike",
+              "shape": "rect",
+              "x": 0.25,
+              "y": 0.35
+            },
+            {
+              "id": "ctab",
+              "label": "Call\ntable",
+              "shape": "rect",
+              "x": 0.25,
+              "y": 0.62
+            },
+            {
+              "id": "ptab",
+              "label": "Put\ntable",
+              "shape": "rect",
+              "x": 0.78,
+              "y": 0.62
+            },
+            {
+              "id": "cfn",
+              "label": "Call::\nvalue",
+              "shape": "rect",
+              "x": 0.25,
+              "y": 0.88
+            },
+            {
+              "id": "pfn",
+              "label": "Put::\nvalue",
+              "shape": "rect",
+              "x": 0.78,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "p",
+              "to": "obj"
+            },
+            {
+              "from": "obj",
+              "to": "ctab",
+              "label": "vptr"
+            },
+            {
+              "from": "ctab",
+              "to": "cfn",
+              "label": "slot 0"
+            },
+            {
+              "from": "ptab",
+              "to": "pfn",
+              "label": "slot 0"
+            }
+          ],
+          "directed": true,
+          "height": 340
+        },
+        "state": {}
+      },
+      "question": "Tap, in order, what `p->value(110)` visits: the object, its table, the function.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "obj",
+          "ctab",
+          "cfn"
+        ],
+        "ordered": true,
+        "wrong": [
+          {
+            "id": "skip",
+            "set": [
+              "obj",
+              "cfn"
+            ]
+          },
+          {
+            "id": "put",
+            "set": [
+              "obj",
+              "ptab",
+              "pfn"
+            ]
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start with the object `p` points at."
+        },
+        {
+          "rung": "point",
+          "text": "The object holds the pointer to a table.",
+          "highlight": [
+            "obj"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Object, then its own class's table, then the function in slot 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Object, its table, the function: two hops from the object.",
+        "generic": "Not quite right. Follow the arrows from the object.",
+        "byKey": {
+          "skip": "You went from the object straight to the function. There is no such pointer: the call goes through the table.",
+          "put": "You took the `Put` table. The object's own vptr leads to its class's table, the `Call` table."
+        }
+      },
+      "explain": {
+        "text": "The call reads the vptr from the object, goes to that class's table, and calls the function in the slot. The pointer's own type is `Payoff*`, but the table comes from the object.",
+        "canvas": {
+          "highlight": [
+            "obj",
+            "ctab",
+            "cfn"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Adding a field",
+      "prose": "`struct B { int x; virtual void f(); };` is 8 bytes here, with the vptr first. `struct D : B { int y; void f() override; };` adds one `int`.",
+      "tags": [
+        "vtable",
+        "virtual-dispatch"
+      ],
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        "state": {
+          "highlight": {
+            "ranges": [
+              {
+                "range": [
+                  0,
+                  3
+                ],
+                "label": "vptr"
+              },
+              {
+                "range": [
+                  4,
+                  7
+                ],
+                "label": "x",
+                "colour": 3
+              }
+            ]
+          },
+          "caption": "B: 8 bytes here."
+        }
+      },
+      "question": "What is `sizeof(D)` here?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "12",
+        "wrong": [
+          {
+            "id": "eight",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sixteen",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the 8 bytes of `B`."
+        },
+        {
+          "rung": "point",
+          "text": "D adds one int on top.",
+          "highlight": [
+            "c4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "8 plus 4. The vptr is not counted twice."
+        }
+      ],
+      "feedback": {
+        "correct": "12: the 8 bytes of `B` and 4 for `y`.",
+        "generic": "Not quite right. Add the new field to the size of `B`.",
+        "byKey": {
+          "eight": "You counted the two ints. The pointer is a real field.",
+          "sixteen": "That is the desktop answer: its pointer is 8 bytes. Here it is 4."
+        }
+      },
+      "explain": {
+        "text": "The derived object holds the base part, vptr and `x`, then `y`: 4 + 4 + 4 is 12 bytes here. A desktop gives 16, with an 8-byte pointer.",
+        "canvas": {
+          "cells": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "highlight": {
+            "ranges": [
+              {
+                "range": [
+                  0,
+                  3
+                ],
+                "label": "vptr"
+              },
+              {
+                "range": [
+                  4,
+                  7
+                ],
+                "label": "x",
+                "colour": 3
+              },
+              {
+                "range": [
+                  8,
+                  11
+                ],
+                "label": "y",
+                "colour": 4
+              }
+            ]
+          },
+          "caption": "D: 12 bytes here."
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Padding",
+      "prose": "`struct Quote { virtual double mid() const; double bid, ask; };` A `double` starts on a multiple of 8.",
+      "tags": [
+        "vtable",
+        "virtual-dispatch"
+      ],
+      "canvas": {
+        "kind": "array",
+        "params": {
+          "cells": [
+            "vptr",
+            "bid",
+            "ask"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Two doubles are 16 bytes. What is `sizeof(Quote)` here?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "24",
+        "wrong": [
+          {
+            "id": "twenty",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sixteen",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The pointer is 4 bytes here. Where can the first double start?"
+        },
+        {
+          "rung": "point",
+          "text": "The next multiple of 8 after 4 is 8.",
+          "highlight": [
+            "c0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "4 for the pointer, 4 skipped, then 16."
+        }
+      ],
+      "feedback": {
+        "correct": "24: 4 for the pointer, 4 of padding, 16 for the doubles.",
+        "generic": "Not quite right. A `double` cannot start at byte 4.",
+        "byKey": {
+          "twenty": "You added 4 and 16. You left out the padding: a double starts on a multiple of 8, so 4 bytes are skipped.",
+          "sixteen": "You counted the two doubles only. The pointer is a real field."
+        }
+      },
+      "explain": {
+        "text": "The pointer takes bytes 0 to 3, bytes 4 to 7 are padding, and the doubles fill 8 to 23. A desktop also gives 24, for another reason: 8 for the pointer and no padding.",
+        "canvas": {
+          "cells": [
+            "vptr (4)",
+            "pad (4)",
+            "bid (8)",
+            "ask (8)"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Copied into the base",
+      "prose": "`Payoff` is a concrete base with a virtual `value`. `Call` derives from it. The copy on line 2 holds only a `Payoff`.",
+      "tags": [
+        "object-slicing",
+        "vtable"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "Call c(100);",
+            "Payoff q = c;",
+            "q.value(110);"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Which table does `q`'s vptr point to?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "payoff",
+            "text": "`Payoff`'s table: the copy is a `Payoff`",
+            "correct": true
+          },
+          {
+            "id": "calls",
+            "text": "`Call`'s table, copied from `c`",
+            "why": "You assumed the copy brings the vptr along. It does not: each constructor sets its own class's table."
+          },
+          {
+            "id": "none",
+            "text": "No table: `q` has no vptr",
+            "why": "`q` is a whole `Payoff` object with its own vptr."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which constructor builds `q`?"
+        },
+        {
+          "rung": "point",
+          "text": "It is the `Payoff` copy constructor.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A constructor sets the vptr of the class it belongs to."
+        }
+      ],
+      "feedback": {
+        "correct": "`q` is a `Payoff`, so its vptr leads to `Payoff`'s table.",
+        "generic": "Not quite right. Ask which class's constructor builds `q`.",
+        "byKey": {
+          "calls": "You assumed the copy brings the vptr along. It does not: each constructor sets its own class's table.",
+          "none": "`q` is a whole object with its own vptr."
+        }
+      },
+      "explain": {
+        "text": "This is object slicing: the `Call` part is cut off, and `q.value(110)` runs `Payoff`'s version. That is why cpp-pricing l5 passed `Payoff&`, never `Payoff`."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The table by hand",
+      "prose": "Build what the compiler builds. Each `Payoff` holds a pointer to a table of one function pointer. Write `value_of`, the three functions, the three tables and the three makers.",
+      "tags": [
+        "vtable",
+        "virtual-dispatch"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "Payoff c = make_call(100);",
+            "Payoff p = make_put(100);",
+            "value_of(&c, 110);   // 10",
+            "value_of(&p, 110);   // 0"
+          ],
+          "title": "what must hold",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Complete the hand-made virtual call.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <algorithm>\n\n// A virtual call by hand. Every Payoff holds a pointer to a table of functions,\n// as the compiler arranges for a class with virtual functions.\nstruct Payoff;\nstruct PayoffTable {\n    double (*value)(const Payoff* self, double spot);\n};\nstruct Payoff {\n    const PayoffTable* table;    // the \"vptr\": which table this object uses\n    double strike;\n};\n\n// What `p->value(spot)` compiles to: find the object's table, call the function in it.\ndouble value_of(const Payoff* p, double spot) {\n    return 0.0;    // TODO\n}\n\n// TODO: the three functions: call max(spot - strike, 0), put max(strike - spot, 0),\n// digital 1 if spot > strike else 0.\ndouble call_value(const Payoff* self, double spot) { return 0.0; }\ndouble put_value(const Payoff* self, double spot) { return 0.0; }\ndouble digital_value(const Payoff* self, double spot) { return 0.0; }\n\n// TODO: one table per kind, shared by every object of that kind.\nconst PayoffTable call_table = { nullptr };\nconst PayoffTable put_table = { nullptr };\nconst PayoffTable digital_table = { nullptr };\n\n// TODO: each maker builds a Payoff that points at the right table.\nPayoff make_call(double strike) { return Payoff{ nullptr, strike }; }\nPayoff make_put(double strike) { return Payoff{ nullptr, strike }; }\nPayoff make_digital(double strike) { return Payoff{ nullptr, strike }; }\n",
+        "solution": "#include <algorithm>\n\n// A virtual call by hand. Every Payoff holds a pointer to a table of functions,\n// as the compiler arranges for a class with virtual functions.\nstruct Payoff;\nstruct PayoffTable {\n    double (*value)(const Payoff* self, double spot);\n};\nstruct Payoff {\n    const PayoffTable* table;    // the \"vptr\": which table this object uses\n    double strike;\n};\n\n// What `p->value(spot)` compiles to: find the object's table, call the function in it.\ndouble value_of(const Payoff* p, double spot) {\n    return p->table->value(p, spot);\n}\n\ndouble call_value(const Payoff* self, double spot) { return std::max(spot - self->strike, 0.0); }\ndouble put_value(const Payoff* self, double spot) { return std::max(self->strike - spot, 0.0); }\ndouble digital_value(const Payoff* self, double spot) { return spot > self->strike ? 1.0 : 0.0; }\n\nconst PayoffTable call_table = { call_value };\nconst PayoffTable put_table = { put_value };\nconst PayoffTable digital_table = { digital_value };\n\nPayoff make_call(double strike) { return Payoff{ &call_table, strike }; }\nPayoff make_put(double strike) { return Payoff{ &put_table, strike }; }\nPayoff make_digital(double strike) { return Payoff{ &digital_table, strike }; }\n",
+        "examples": [
+          {
+            "setup": "Payoff c = make_call(100);",
+            "call": "value_of(&c, 110.0)",
+            "expect": 10.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Payoff c = make_call(100);",
+            "call": "value_of(&c, 90.0)",
+            "expect": 0.0,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "Payoff c = make_call(100);",
+            "call": "value_of(&c, 110.0)",
+            "expect": 10.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Payoff c = make_call(100);",
+            "call": "value_of(&c, 90.0)",
+            "expect": 0.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Payoff p = make_put(100);",
+            "call": "value_of(&p, 90.0)",
+            "expect": 10.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Payoff p = make_put(100);",
+            "call": "value_of(&p, 110.0)",
+            "expect": 0.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Payoff d = make_digital(100);",
+            "call": "value_of(&d, 101.0)",
+            "expect": 1.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Payoff d = make_digital(100);",
+            "call": "value_of(&d, 100.0)",
+            "expect": 0.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Payoff c = make_call(80);",
+            "call": "value_of(&c, 100.0)",
+            "expect": 20.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Payoff a = make_call(100); Payoff b = make_call(90);",
+            "call": "a.table == b.table",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "setup": "Payoff a = make_call(100); Payoff b = make_put(100);",
+            "call": "a.table != b.table",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "setup": "Payoff c = make_call(100); Payoff p = make_put(100); Payoff d = make_digital(100); const Payoff* book[3] = {&c, &p, &d}; double total = 0.0; for (const Payoff* x : book) total += value_of(x, 105.0);",
+            "call": "total",
+            "expect": 6.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Payoff d = make_digital(100);",
+            "call": "value_of(&d, 99.0)",
+            "expect": 0.0,
+            "compare": "isclose"
+          }
+        ],
+        "leakCheck": true,
+        "how": "Submit runs 11 hidden tests. Each call goes through the object's own table; two objects of one kind must share one table."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`value_of` has two steps: find the table, call the function in it."
+        },
+        {
+          "rung": "point",
+          "text": "The table is `p->table`, and the function is its `value` field."
+        },
+        {
+          "rung": "step",
+          "text": "`return p->table->value(p, spot);` and each maker passes the address of its own table."
+        }
+      ],
+      "feedback": {
+        "correct": "One table per kind, shared by every object, and the call goes through it.",
+        "generic": "Not quite right. A wrong value means the maker pointed at the wrong table or the function body is off.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the table initialisers: `{ call_value }` and the address `&call_table`."
+        }
+      },
+      "explain": {
+        "text": "The compiler writes the same two steps for `p->value(spot)`: read the table pointer, call the function in the slot. Objects of one kind share one table, so the cost per object is one pointer."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Deleting through the base",
+      "prose": "`Derived` owns a `std::vector<double>`. `Base` has no virtual functions at all.",
+      "tags": [
+        "virtual-destructor",
+        "virtual-dispatch"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "struct Base { ~Base() {} };",
+            "struct Derived : Base {",
+            "    std::vector<double> v;",
+            "    ~Derived() {}",
+            "};",
+            "Base* p = new Derived;",
+            "delete p;"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "What does the standard say about `delete p`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ub",
+            "text": "Undefined behaviour: typically `~Derived` never runs and the vector leaks",
+            "correct": true
+          },
+          {
+            "id": "defined",
+            "text": "Defined: only `~Base` runs, and the vector leaks",
+            "why": "You think only `~Base` runs by rule. The rule is that it is undefined, so anything may happen."
+          },
+          {
+            "id": "smart",
+            "text": "`delete` finds the real type and runs both destructors",
+            "why": "`delete` does not look at the heap block to find the real type."
+          },
+          {
+            "id": "error",
+            "text": "It does not compile",
+            "why": "It compiles; the compiler cannot know the dynamic type here."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which destructor does a call through `Base*` pick when it is not virtual?"
+        },
+        {
+          "rung": "point",
+          "text": "The static type is `Base`, and `~Base` is not virtual.",
+          "highlight": [
+            "l7"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The standard calls this undefined, which is more than a leak."
+        }
+      ],
+      "feedback": {
+        "correct": "Undefined behaviour. In practice `~Derived` is skipped and the vector leaks.",
+        "generic": "Not quite right. Compare the static type of `p` with the type of the object.",
+        "byKey": {
+          "defined": "You think only `~Base` runs by rule. The rule is that it is undefined, so anything may happen.",
+          "smart": "`delete` does not look at the heap block to find the real type.",
+          "error": "It compiles; the compiler cannot know the dynamic type here."
+        }
+      },
+      "explain": {
+        "text": "A non-virtual destructor is chosen by the pointer's type, and the standard makes `delete` through it undefined. Write `virtual ~Base() = default;`, which costs the 4 bytes of a vptr in each object, as on the first screen.",
+        "canvas": {
+          "shade": {
+            "bad": [
+              "l7"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A virtual call in a constructor",
+      "prose": "`Base`'s constructor sets `who` from a virtual `name()`. `Derived` overrides `name()` to return `\"Derived\"`.",
+      "tags": [
+        "constructor-dispatch",
+        "virtual-dispatch"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "struct Base {",
+            "    std::string who;",
+            "    Base() { who = name(); }",
+            "    virtual std::string name() const { return \"Base\"; }",
+            "    virtual ~Base() = default;",
+            "};",
+            "struct Derived : Base {",
+            "    std::string name() const override { return \"Derived\"; }",
+            "};",
+            "Derived d;"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "`Derived d;` runs. What does `d.who` hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "base",
+            "text": "`\"Base\"`",
+            "correct": true
+          },
+          {
+            "id": "derived",
+            "text": "`\"Derived\"`",
+            "why": "While `Base` is being built, the object is a `Base`. Its vptr points at `Base`'s table, and `Derived`'s part does not exist yet."
+          },
+          {
+            "id": "crash",
+            "text": "Undefined: `Derived` is not built yet",
+            "why": "It is well defined: the call goes to `Base::name`."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which constructor runs first, and what is the object's type while it runs?"
+        },
+        {
+          "rung": "point",
+          "text": "Line 3 runs inside `Base`'s constructor.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The vptr is set to `Base`'s table at that point."
+        }
+      ],
+      "feedback": {
+        "correct": "`\"Base\"`: during `Base`'s constructor the object is a `Base`.",
+        "generic": "Not quite right. The base part is built before the derived part exists.",
+        "byKey": {
+          "derived": "You expected the real type to win. While `Base` is being built, the object is a `Base`.",
+          "crash": "It is well defined: the call goes to `Base::name`."
+        }
+      },
+      "explain": {
+        "text": "Each constructor sets the vptr to its own class's table before its body runs. So inside `Base()` a virtual call reaches `Base::name`, never the override."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "What a virtual call does",
+      "prose": "Order the steps of `p->value(110)` when `value` is virtual and `p` points at a `Call`. One line is not a step.",
+      "tags": [
+        "vtable",
+        "virtual-dispatch"
+      ],
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "p",
+              "label": "p",
+              "shape": "pill",
+              "x": 0.25,
+              "y": 0.1
+            },
+            {
+              "id": "obj",
+              "label": "Call object\nvptr, strike",
+              "shape": "rect",
+              "x": 0.25,
+              "y": 0.35
+            },
+            {
+              "id": "ctab",
+              "label": "Call\ntable",
+              "shape": "rect",
+              "x": 0.25,
+              "y": 0.62
+            },
+            {
+              "id": "ptab",
+              "label": "Put\ntable",
+              "shape": "rect",
+              "x": 0.78,
+              "y": 0.62
+            },
+            {
+              "id": "cfn",
+              "label": "Call::\nvalue",
+              "shape": "rect",
+              "x": 0.25,
+              "y": 0.88
+            },
+            {
+              "id": "pfn",
+              "label": "Put::\nvalue",
+              "shape": "rect",
+              "x": 0.78,
+              "y": 0.88
+            }
+          ],
+          "edges": [
+            {
+              "from": "p",
+              "to": "obj"
+            },
+            {
+              "from": "obj",
+              "to": "ctab",
+              "label": "vptr"
+            },
+            {
+              "from": "ctab",
+              "to": "cfn",
+              "label": "slot 0"
+            },
+            {
+              "from": "ptab",
+              "to": "pfn",
+              "label": "slot 0"
+            }
+          ],
+          "directed": true,
+          "height": 340
+        },
+        "state": {}
+      },
+      "question": "Put the steps in order, and leave the flawed one out.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s3",
+            "text": "call that function with `p` as `this`"
+          },
+          {
+            "id": "d1",
+            "text": "search `Call`'s members by name at run time",
+            "why": "No search: the slot number is fixed when the class is compiled. A call costs two loads and an indirect jump."
+          },
+          {
+            "id": "s1",
+            "text": "load the object's vptr"
+          },
+          {
+            "id": "s2",
+            "text": "index the table at the slot for `value`"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The table pointer lives in the object."
+        },
+        {
+          "rung": "point",
+          "text": "First the vptr, then the slot, then the call.",
+          "highlight": [
+            "obj"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Load the vptr, load the slot, jump to it."
+        }
+      ],
+      "feedback": {
+        "correct": "Load the vptr, index the table, call. Two loads and an indirect jump.",
+        "generic": "Not quite right. The object gives the table, the table gives the function.",
+        "byKey": {
+          "d1": "You searched by name. The slot number is fixed when the class is compiled, so there is no search."
+        }
+      },
+      "explain": {
+        "text": "The slot is a fixed number, so the call is two dependent loads and an indirect jump. Nothing is looked up by name."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The pattern",
+      "prose": "A base has a virtual destructor, and each function is virtual. Derived classes say `override`. Hold objects through a pointer or reference, never by value.\n\n```cpp\n// Say aloud: the table picks the function,\n// so the real type of the object decides.\nstruct Payoff {\n    virtual ~Payoff() = default;\n    virtual double value(double spot) const = 0;\n};\nstruct Call : Payoff {\n    double value(double s) const override;\n};\nstd::unique_ptr<Payoff> p = std::make_unique<Call>(100);\n```",
+      "tags": [
+        "virtual-dispatch",
+        "virtual-destructor"
+      ],
+      "question": "A call `p->f()` runs the function of the object's real type when?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "right",
+            "text": "`f` is virtual, and `p` is a pointer or a reference",
+            "correct": true
+          },
+          {
+            "id": "always",
+            "text": "Always: a pointer always follows the real object",
+            "why": "A non-virtual `f` is chosen by the pointer's type."
+          },
+          {
+            "id": "value",
+            "text": "`f` is virtual, even when the object is passed by value",
+            "why": "An object passed by value is a base object: the derived part was sliced off."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Virtual, and reached through a pointer or reference.",
+        "generic": "Not quite right. Both conditions must hold."
+      },
+      "explain": {
+        "text": "A base with `virtual ~Base() = default;` declares a destructor, so its moves are not written. That suits a polymorphic base: copy through a `clone()`, not through a base reference."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Ten million lookups",
+      "prose": "A pricer calls `payoff->value(spot)` 10,000,000 times in a loop. Every payoff in this book is a call.",
+      "tags": [
+        "virtual-dispatch",
+        "vtable"
+      ],
+      "question": "Which change removes the table lookup?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "template",
+            "text": "Make the pricer a template on the payoff type, and keep the virtual one for mixed books",
+            "correct": true
+          },
+          {
+            "id": "inline",
+            "text": "Mark `value` as `inline`",
+            "why": "`inline` does not tell the compiler which function a call through a base pointer reaches."
+          },
+          {
+            "id": "final",
+            "text": "Mark every class `final`",
+            "why": "`final` helps only when the compiler can see the exact type."
+          },
+          {
+            "id": "fewer",
+            "text": "Call `value` fewer times",
+            "why": "Removing a lookup is the point. Calling less is a different change."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The lookup exists because the compiler does not know the type."
+        },
+        {
+          "rung": "point",
+          "text": "Make the type known at compile time."
+        },
+        {
+          "rung": "step",
+          "text": "A template instantiates `price<Call>`, so the call is direct and inlinable."
+        }
+      ],
+      "feedback": {
+        "correct": "A template on the payoff type: the call is resolved at compile time.",
+        "generic": "Not quite right. Which option tells the compiler the exact type?",
+        "byKey": {
+          "inline": "`inline` does not tell the compiler which function a call through a base pointer reaches.",
+          "final": "`final` helps only when the compiler can see the exact type.",
+          "fewer": "Removing a lookup is the point. Calling less is a different change."
+        }
+      },
+      "explain": {
+        "text": "A virtual call costs two dependent loads and an indirect call, and usually stops inlining, because the compiler does not know the target. A compiler devirtualises when it can prove the type, so say usually, never never. A template gives the same code with no lookup (see cpp l13)."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A class with virtual functions has one table of function pointers. Each object holds a vptr to its class's table, so a `virtual` adds one pointer to every object.",
+      "A call through a base pointer loads the vptr, indexes the table and jumps. Slicing copies only the base part, so its vptr is the base's.",
+      "Delete through a base pointer only if the destructor is virtual: otherwise it is undefined. During a constructor, virtual calls reach that constructor's class."
+    ],
+    "formula": {
+      "name": "A virtual call",
+      "tex": "\\texttt{p->f(x)} \\;\\to\\; \\texttt{p->vptr->f(p, x)}",
+      "note": "Two loads and an indirect call."
+    },
+    "trap": "A non-virtual destructor on a base makes `delete p` through a `Base*` undefined, not merely leaky."
+  },
+  "quiz": [
+    {
+      "id": "q-sizeof-virtual",
+      "difficulty": 2,
+      "tags": [
+        "vtable"
+      ],
+      "prose": "`struct W { virtual void f(); int n; };`",
+      "question": "What is `sizeof(W)` here?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 8,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "8",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "8: the vptr and the int.",
+        "generic": "Not quite right. Count the hidden pointer.",
+        "byKey": {
+          "four": "You counted the `int` only. The hidden pointer is a real field."
+        }
+      },
+      "explain": {
+        "text": "A pointer is 4 bytes here and the `int` is 4, so 8. A desktop gives 16."
+      }
+    },
+    {
+      "id": "q-override",
+      "difficulty": 2,
+      "tags": [
+        "virtual-dispatch"
+      ],
+      "question": "What does `override` buy you?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "error",
+            "text": "A compile error if nothing in a base is actually overridden",
+            "correct": true
+          },
+          {
+            "id": "faster",
+            "text": "A faster call",
+            "why": "`override` changes nothing at run time. It is a check."
+          },
+          {
+            "id": "virtual",
+            "text": "It makes the function virtual",
+            "why": "It only compiles if the base function is already virtual."
+          },
+          {
+            "id": "hide",
+            "text": "It hides the base version",
+            "why": "The base version is replaced in the table, not hidden by the keyword."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It catches a typo in the signature.",
+        "generic": "Not quite right. `override` is a safety check."
+      },
+      "explain": {
+        "text": "With `override`, a misspelt name or a missing `const` fails to compile, instead of quietly creating a new function."
+      }
+    },
+    {
+      "id": "q-abstract",
+      "difficulty": 3,
+      "tags": [
+        "virtual-dispatch"
+      ],
+      "prose": "`virtual double value(double) const = 0;` in `Payoff`.",
+      "question": "What does this make `Payoff`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "abstract",
+            "text": "An abstract class: it cannot be built, and each derived class must override `value`",
+            "correct": true
+          },
+          {
+            "id": "final",
+            "text": "A final class that nothing can derive from",
+            "why": "`final` is a different keyword."
+          },
+          {
+            "id": "static",
+            "text": "A class whose `value` is static",
+            "why": "Static means no object. The `= 0` means no body here."
+          },
+          {
+            "id": "leak",
+            "text": "A class that leaks unless it has a destructor",
+            "why": "The `= 0` is about missing bodies, not memory."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "An abstract class.",
+        "generic": "Not quite right. A `= 0` function has no body in the base."
+      },
+      "explain": {
+        "text": "A pure virtual function leaves a slot unfilled, so the class cannot be instantiated and acts as an interface."
+      }
+    },
+    {
+      "id": "q-vector-slice",
+      "difficulty": 3,
+      "tags": [
+        "object-slicing"
+      ],
+      "prose": "A desk keeps `std::vector<Payoff>` and pushes `Call(100)` into it.",
+      "question": "What does the vector hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sliced",
+            "text": "Payoff objects: the Call part is cut off",
+            "correct": true
+          },
+          {
+            "id": "calls",
+            "text": "Call objects behind a `Payoff` label",
+            "why": "The vector stores `Payoff` values, so only that part is copied."
+          },
+          {
+            "id": "error",
+            "text": "It does not compile",
+            "why": "It compiles. The `Call` converts to its base."
+          },
+          {
+            "id": "ptr",
+            "text": "Pointers to the calls",
+            "why": "A vector of values holds values, not pointers."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Sliced: only the base part is stored.",
+        "generic": "Not quite right. The element type is `Payoff`."
+      },
+      "explain": {
+        "text": "A vector of base objects copies the base part and drops the rest. Hold `std::unique_ptr<Payoff>` instead."
+      }
+    }
+  ]
+}
