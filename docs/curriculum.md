@@ -4,7 +4,7 @@ Oct 5, 2026 · @Muddassir Shah
 
 ## Start here
 
-The full path is about 3,695 hours of deliberate work: roughly 4.7 years at 15 hours a week, or about 2.8 years at 25. Without the pure maths items it is 3,495 hours, about 4.5 years at 15 hours a week. It follows the three tiers of Priyanshu Priyank's Quant Roadmap (Quant Memo, 16 slides), with a Stage 0 added underneath, because the post's Tier 1 already assumes school maths and a working computer setup.
+The full path is about 3,695 hours of deliberate work: roughly 4.7 years at 15 hours a week, or about 2.8 years at 25. Without the pure maths items it is 3,492 hours, about 4.5 years at 15 hours a week. It follows the three tiers of Priyanshu Priyank's Quant Roadmap (Quant Memo, 16 slides), with a Stage 0 added underneath, because the post's Tier 1 already assumes school maths and a working computer setup.
 
 Zero means: you can read English, use a web browser and do arithmetic with a calculator. Nothing else is assumed, including school algebra or ever having written a line of code.
 
@@ -17,12 +17,58 @@ Four things to know before starting:
 
 ## The map
 
-Four stages, 3,695 hours (3,495 on the quant path, without the pure maths items), each closed by a test you can mark yourself.
+Four stages, 3,695 hours (3,492 on the quant path, without the pure maths items), each closed by a test you can mark yourself.
+
+Generated from the source by `node app/tools/curriculum-hours.mjs --write` (check with `--check`). The Learn header, stage cards and census read the same function, `app/js/hours.js`. Never type these figures by hand.
+
+<!-- generated:hours -->
+| Stage | Hours | Quant path | At 15 h/week |
+| --- | --- | --- | --- |
+| 0. From nothing | 555 | 515 | 9 months |
+| 1. Foundations | 1,650 | 1,487 | 25 months |
+| 2. Intermediate | 940 | 940 | 14 months |
+| 3. Advanced | 550 | 550 | 8 months |
+| All stages | 3,695 | 3,492 | 57 months |
+
+Stage hours are the sum of topic hours; nothing stores them. Quant path leaves out the courses tagged Pure maths, at their lesson share of a topic's hours. Topic hours:
+
+| Topic | Name | Hours | Lessons mapped | Lessons written |
+| --- | --- | --- | --- | --- |
+| 0.1 | Number | 60 | 27 | 27 |
+| 0.2 | Algebra | 180 | 48 | 48 |
+| 0.3 | Precalculus | 200 | 52 | 52 |
+| 0.4 | Computer basics | 40 | 24 | 24 |
+| 0.5 | Mental arithmetic | 20 | 12 | 12 |
+| 0.6 | Reasoning and proof | 40 | 15 | 15 |
+| 0.7 | Getting hired | 15 | 15 | 15 |
+| 1.1 | Python | 150 | 42 | 42 |
+| 1.2 | Tools | 40 | 36 | 36 |
+| 1.3 | Calculus | 200 | 69 | 69 |
+| 1.4 | Linear algebra | 150 | 53 | 53 |
+| 1.5 | Probability | 250 | 99 | 99 |
+| 1.6 | Statistics | 120 | 36 | 36 |
+| 1.7 | Finance basics | 100 | 55 | 55 |
+| 1.8 | Data structures and algorithms | 250 | 49 | 49 |
+| 1.9 | C++ | 140 | 35 | 35 |
+| 1.10 | Analysis and proof-based linear algebra | 130 | 43 | 33 |
+| 1.11 | Complex numbers, vector calculus and differential equations | 120 | 43 | 0 |
+| 2.1 | Machine learning | 200 | 50 | 50 |
+| 2.2 | Time series | 60 | 36 | 36 |
+| 2.3 | Projects | 400 | 48 | 48 |
+| 2.4 | Contests | 140 | 16 | 16 |
+| 2.5 | Numerical methods and optimisation | 90 | 34 | 0 |
+| 2.6 | Statistical modelling | 50 | 18 | 0 |
+| 3.1 | Research papers | 150 | 30 | 5 |
+| 3.2 | Stochastic calculus | 0 (stores 0; its lesson minutes would give about 11 h) | 46 | 46 |
+| 3.3 | Interview preparation | 250 | 96 | 96 |
+| 3.4 | Pure mathematics | 0 (stores 0; its lesson minutes would give about 7 h) | 30 | 0 |
+| 3.5 | Interviews by role | 150 | 57 | 57 |
+<!-- /generated -->
 
 | Stage | Hours | Quant path | At 15 h/week | You leave when |
 | --- | --- | --- | --- | --- |
 | 0. From nothing (not in the post) | 555 | 515 | 9 months | A GCSE Higher paper at 80%, a precalculus test at 85%, and a Python script you wrote runs; five short proofs a stranger can check **[Pure maths]** |
-| 1. Foundations (post's Tier 1) | 1,650 | 1,490 | 25 months | University finals at 70% in calculus, linear algebra, probability and differential equations; 150 algorithm problems solved; a proof-based analysis paper at 60% **[Pure maths]** |
+| 1. Foundations (post's Tier 1) | 1,650 | 1,487 | 25 months | University finals at 70% in calculus, linear algebra, probability and differential equations; 150 algorithm problems solved; a proof-based analysis paper at 60% **[Pure maths]** |
 | 2. Intermediate (post's Tier 2) | 940 | 940 | 14 months | Three finished projects, each with tests and a written results note; one option priced three numerical ways with each error explained |
 | 3. Advanced (post's Tier 3) | 550 | 550 | 8 months | One paper replicated out of sample; the interview books solved cold |
 

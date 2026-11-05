@@ -187,6 +187,9 @@
           ${glyph}${mstar}
         </g></svg>`;
     };
+    /* Item 10: a workshop or project lesson says so on its row ("Workshop, 60 min"); short lessons say nothing */
+    const sessionOf = (e) => (e.it.kind === 'lesson' && C.sessionOf ? C.sessionOf(cid, e.it.id) : null);
+    const sessionTag = (e) => { const x = sessionOf(e); return x && Z.hours ? `<span class="zc-sesstag">${esc(Z.hours.sessionLabel(x.session, x.minutes))}</span>` : ''; };
     const nodeCls = (e, st) => `zc-node k-${e.it.kind} s-${st}${st === 'done' && mastered(e) ? ' is-m' : ''}`;
     const node = (e) => {
       const st = shown(e);
@@ -198,7 +201,7 @@
           <span class="zc-mark" aria-hidden="true"><span>${Z.mark()}</span></span>
           ${st === 'locked' ? `<span class="zc-lock" aria-hidden="true">${Z.icon('lock', 'sm')}</span>` : ''}
         </span>
-        <span class="zc-tt"><span class="zc-title">${esc(e.it.name)}</span>${C.prepChip(prepOf(e), 'is-sm')}${st === 'nw' ? '<span class="zc-nwtag">Not yet written</span>' : ''}</span>
+        <span class="zc-tt"><span class="zc-title">${esc(e.it.name)}</span>${C.prepChip(prepOf(e), 'is-sm')}${st === 'nw' ? '<span class="zc-nwtag">Not yet written</span>' : sessionTag(e)}</span>
       </button></li>`;
     };
 
@@ -337,7 +340,9 @@
       const adv = Z.prereq && it.kind === 'lesson' ? Z.prereq.advisoryFor(cid, it.id) : [];
       const note = adv.length ? ` · Note: it relies on ${adv.map(x => `${x.courseName}, level ${x.n}`).join(' and ')}, which is optional on your track` : '';
       const where = r && r.position ? (r.position.phase === 'quiz' ? ` · Paused at quiz question ${(r.position.q || 0) + 1}` : ` · Paused at screen ${(r.position.i || 0) + 1}`) : '';
-      return (m ? `${m.screens} screens · about ${m.minutes} min` : `About ${DEFAULT_MIN} min`) + where + note;
+      const sx = sessionOf(e);
+      const len = sx && Z.hours ? Z.hours.sessionLabel(sx.session, sx.minutes) : m ? `about ${m.minutes} min` : `About ${DEFAULT_MIN} min`;
+      return (m ? `${m.screens} screens · ${len}` : len) + where + note;
     };
     /* ENGINE-BACKLOG 551: the reason for the first missing prerequisite, "Check first" diagnostics and the route label, as short lines on the card */
     const nodeNotes = (e) => {
@@ -385,7 +390,7 @@
       if (it.kind === 'lesson' && st !== 'nw' && !lessonMeta[keyOf(cid, it.id)]) {
         C.lesson(cid, it.id).then(Ld => {
           if (!Ld) return;
-          lessonMeta[keyOf(cid, it.id)] = { screens: (Ld.screens || []).length + (Ld.summary ? 1 : 0), minutes: Ld.minutes || DEFAULT_MIN };
+          lessonMeta[keyOf(cid, it.id)] = { screens: (Ld.screens || []).length + (Ld.summary ? 1 : 0), minutes: Ld.minutes || DEFAULT_MIN, session: Ld.session || 'short' };
           const m = body.querySelector('[data-meta]'); if (m && alive) m.textContent = metaFor(e);
         }).catch(() => { /* keep the estimate */ });
       }

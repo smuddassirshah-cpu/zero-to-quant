@@ -4,12 +4,14 @@
 //   node app/tools/readiness-sums.mjs          check (default)
 //   node app/tools/readiness-sums.mjs --write  regenerate the generated blocks from the classification tables, and app/content/readiness.json
 // Check mode also fails when app/content/readiness.json differs from what --write would generate. Never hand-edit the JSON.
-// Hours source is the census source: stored topic hours in curriculum.json, shared by a topic's
-// courses in proportion to mapped lessons. Written means the lesson file exists on disk.
+// Hours come from js/hours.js (ZQ.hours, the one workload function, PLAN 2c item 11): stored topic hours in curriculum.json, shared by a
+// topic's courses and lessons by lesson weight (a short lesson weighs 1; a workshop or project weighs minutes / 14, item 10).
+// Written means the lesson file exists on disk.
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { loadHours } from './hours-source.mjs';
 
 const { refsOf } = createRequire(import.meta.url)('../js/prereq.js');   // the one requires normaliser (ENGINE-BACKLOG 551): gating strings only, diagnostics never count as edges
 const APP = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -33,8 +35,9 @@ const STATUS = ['required', 'recommended', 'optional'];
 
 // Catalogue.
 const cur = read(join(C, 'curriculum.json'));
-const topicStage = {}; const topicHours = {};
-for (const s of cur.stages) for (const t of s.topics) { topicStage[t.id] = s.id; topicHours[t.id] = t.hours ?? 0; }
+const topicStage = {};
+for (const s of cur.stages) for (const t of s.topics) topicStage[t.id] = s.id;
+const { H } = loadHours(C);
 const courses = {};
 for (const id of readdirSync(join(C, 'courses')).sort()) {
   const p = join(C, 'courses', id, 'course.json');
@@ -51,9 +54,6 @@ for (const id of readdirSync(join(C, 'courses')).sort()) {
   courses[id] = c;
 }
 const ids = Object.keys(courses);
-const topicMapped = {};
-for (const c of Object.values(courses)) topicMapped[c.topic] = (topicMapped[c.topic] ?? 0) + c.mapped;
-for (const c of Object.values(courses)) c.hours = topicMapped[c.topic] ? topicHours[c.topic] * c.mapped / topicMapped[c.topic] : 0;
 
 // Parse the md.
 const lines = readFileSync(MD, 'utf8').split('\n');
@@ -89,15 +89,7 @@ for (const r of ROLES) {
 
 // Totals.
 const fmt = (n) => String(Math.round(n));
-function sums(role, statuses) {
-  let w = 0, u = 0, hw = 0, hu = 0;
-  for (const id of ids) {
-    if (!statuses.includes(cls[role][id])) continue;
-    const c = courses[id]; w += c.written; u += c.mapped - c.written;
-    hw += c.mapped ? c.hours * c.written / c.mapped : 0; hu += c.mapped ? c.hours * (c.mapped - c.written) / c.mapped : 0;
-  }
-  return { w, u, hw: Math.round(hw), hu: Math.round(hu) };
-}
+const sums = (role, statuses) => H.roleSums((id) => cls[role][id], statuses);
 function totalsBlock(role) {
   const rq = sums(role, ['required']); const rc = sums(role, ['recommended']);
   const hd = { w: rq.w + rc.w, u: rq.u + rc.u, hw: rq.hw + rc.hw, hu: rq.hu + rc.hu };
@@ -143,7 +135,7 @@ function conflictsBlock(role) {
 
 function catalogueBlock() {
   const m = ids.reduce((a, i) => a + courses[i].mapped, 0); const w = ids.reduce((a, i) => a + courses[i].written, 0);
-  return `Catalogue: ${ids.length} courses, ${m} lessons mapped (${w} written, ${m - w} unwritten). Hours are stored topic hours shared across a topic's courses by mapped lessons; topics 3.2 and 3.4 store 0.`;
+  return `Catalogue: ${ids.length} courses, ${m} lessons mapped (${w} written, ${m - w} unwritten). Hours are stored topic hours shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1); topics 3.2 and 3.4 store 0.`;
 }
 
 // Mocks check.
