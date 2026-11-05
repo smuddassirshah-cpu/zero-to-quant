@@ -62,6 +62,7 @@ Totals: Must 2 (P1, R1), Should 8 (P2, P3, C1, C2, R2, R3, Q1, Q2), Could 7 (P4,
 - R4: not changed (reordering items is not a one-line fix).
 - R5: not changed (rubric redesign and the design-choice record belong to the main session).
 - Q1: deferred to user. The proof item stays in place.
+- Q1 (5 Nov, user): practice-only. Tasks on levels the verb rule does not match never gate met (DECISIONS "Performance tasks in force"; engine item 6 pass).
 - Q2: fixed. Row 2 covers factorising and any other method; row 4 reads "Shows $n^3 - n$ is 3 times an integer...". Factorisation claim checked for n up to 10,000 in `proof-3-perf-numbers.py`.
 - Q3: fixed. "for an integer $m \ge 0$".
 - Old-value grep: no other copy of the changed figures in the four course folders. Stale text remains in `docs/reports/coding-int-1-perf.md` (it describes `count_prefix`), outside the files this pass may edit.
