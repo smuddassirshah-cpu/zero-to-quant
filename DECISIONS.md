@@ -100,3 +100,13 @@ Performance tasks (5 Nov 2026, user decision)
 - Sizing at `f9a4545`: about 110 written levels (Stage 1: 63, Stage 2: 22, Stage 3: 22, plus the two Stage 0 code courses). Retrofit order: interview courses and Stages 2 and 3 first, Stage 1 second. One item per level, not a level rewrite; about 25 to 30 levels per session. Verified at 1e67d6f: 111 (Stage 0 contributes 4 levels), counted from the lesson files' `objectives`; `course.json` `lessonObjectives` gives 83, so the rule reads the lesson files.
 - The rule is applied by the validator from objectives, not by hand: a level the rule matches without a performance task is a validator error once item 5 lands.
 - Levels the rule does not match keep their numeric and choice quizzes as their valid assessment. Do not add longform boxes there; self-marked evidence is what the correction reduces.
+
+Readiness contract answers (user, 5 Nov; PLAN 2c items 2, 7, 8)
+- Roles: add a Strats track; derivatives and desk quant is a Strats sub-route, not its own track. Tracks become Trader, Researcher, Developer, Strats, Undecided.
+- Trader: integrals and multivar required; ds and algo-think recommended; graphs-dp and contests optional.
+- Finance basics: recommended for traders and researchers, required for strats. `docs/curriculum.md:292` is edited to match.
+- Undecided: shared foundation is Stage 0 plus Stage 1 core probability and first Python; the app prompts a role choice after that.
+- Missing mocks (mock-video, mock-oa-strats, mock-superday-strats, mock-superday-developer, mock-oa-code-hard): kept in `prep.json` and listed as gaps; a role cannot read "ready" while one of its mocks is missing.
+- Learn header: one total, required plus recommended for the chosen role, from the contract. Undecided shows the shared foundation.
+- Item 7: pdes is marked "route limited: odes, numerics unwritten" now; odes and numerics are written after 2c items 1 to 5 and before any 2b level.
+- Item 8: the user reviews capstones. The record names the user as reviewer; a learner's own review never counts as `external`.
