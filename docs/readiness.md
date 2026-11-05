@@ -270,9 +270,9 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:totals:researcher -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
 | --- | --- | --- | --- | --- | --- | --- |
-| Required | 524 | 10 | 534 | 1595 | 50 | 1645 |
-| Recommended | 273 | 67 | 340 | 893 | 215 | 1108 |
-| Learn header (required plus recommended) | 797 | 77 | 874 | 2488 | 265 | 2753 |
+| Required | 524 | 10 | 534 | 1603 | 50 | 1653 |
+| Recommended | 273 | 67 | 340 | 892 | 215 | 1107 |
+| Learn header (required plus recommended) | 797 | 77 | 874 | 2495 | 265 | 2760 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -401,9 +401,9 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 <!-- generated:totals:developer -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
 | --- | --- | --- | --- | --- | --- | --- |
-| Required | 228 | 0 | 228 | 688 | 0 | 688 |
+| Required | 228 | 0 | 228 | 680 | 0 | 680 |
 | Recommended | 248 | 0 | 248 | 836 | 0 | 836 |
-| Learn header (required plus recommended) | 476 | 0 | 476 | 1524 | 0 | 1524 |
+| Learn header (required plus recommended) | 476 | 0 | 476 | 1516 | 0 | 1516 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -534,9 +534,9 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 <!-- generated:totals:strats -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
 | --- | --- | --- | --- | --- | --- | --- |
-| Required | 569 | 0 | 569 | 1684 | 0 | 1684 |
+| Required | 569 | 0 | 569 | 1683 | 0 | 1683 |
 | Recommended | 175 | 48 | 223 | 463 | 132 | 595 |
-| Learn header (required plus recommended) | 744 | 48 | 792 | 2147 | 132 | 2279 |
+| Learn header (required plus recommended) | 744 | 48 | 792 | 2146 | 132 | 2278 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -661,9 +661,9 @@ Same learner as Strats, plus the pricing mathematics. Route limited: odes, numer
 <!-- generated:totals:strats-deriv -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
 | --- | --- | --- | --- | --- | --- | --- |
-| Required | 598 | 48 | 646 | 1732 | 132 | 1864 |
+| Required | 598 | 48 | 646 | 1731 | 132 | 1863 |
 | Recommended | 199 | 29 | 228 | 455 | 78 | 533 |
-| Learn header (required plus recommended) | 797 | 77 | 874 | 2187 | 210 | 2397 |
+| Learn header (required plus recommended) | 797 | 77 | 874 | 2186 | 210 | 2396 |
 <!-- /generated -->
 
 **Dependency conflicts**

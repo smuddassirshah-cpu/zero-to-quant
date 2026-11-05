@@ -3,7 +3,7 @@
 Engine: ENGINE-BACKLOG 551 to 555 (`docs/reports/engine-pass-item7.md`). Content: `app/tools/apply-item7-content.mjs` (idempotent), reading the Sonnet draft `docs/reports/closure-item7-proposal.json` with the main session's review as overrides in the script. Closures from `app/tools/closure.mjs`.
 
 ## Result
-- 248 cross-course edges reviewed. After review: 204 kept as gates, 21 diagnostics (`gate: false`, "Check first"), 11 retargeted to the level actually used, 6 moved to the dependent course's later level that uses them, 6 cut, 3 new edges (2 diagnostics, 1 gate). 244 cross-course edges now, 0 without `why`; the validator errors on a missing `why` (`--lax-why` relaxes it).
+- 248 cross-course edges reviewed. After review: 204 kept as gates, 21 diagnostics (`gate: false`, "Check first"), 11 retargeted to the level actually used, 6 moved to the dependent course's later level that uses them, 6 cut, 3 new edges (2 diagnostics, 1 gate). 245 cross-course edges now, 0 without `why`; the validator errors on a missing `why` (`--lax-why` relaxes it).
 - Route limitation: pdes reaches unwritten `odes` L1, L2 and `complex` L1 (pdes/L3 also `numerics` L4); Learn and Prepare show "Route limited". `complex` was not in the user's "write before 2b" answer: decide whether it joins `odes` and `numerics`.
 
 ## Closures (levels; courses; mapped lessons)
@@ -36,5 +36,5 @@ Cut: linear-maps/L2 least-squares/L1 (covered by L3's least-squares/L2); measure
 Diagnostics (23: 21 from the draft, 2 added) are listed by `node app/tools/closure.mjs --target <t> --edges` and in course.json as `"gate": false`.
 
 ## Checks
-Validator 0 errors (244 edges, 0 without why); `readiness-sums.mjs` 0 after `--write` (conflict tables lose contests, graphs-dp and cpp-pricing rows); `apply-item7-content.mjs` second run changes 0 files; `--routes-only --local-cdn` desktop and mobile: see PLAN line.
+Validator 0 errors (245 edges, 0 without why); `readiness-sums.mjs` 0 after `--write` (conflict tables lose contests, graphs-dp and cpp-pricing rows); `apply-item7-content.mjs` second run changes 0 files; `--routes-only --local-cdn` desktop and mobile: see PLAN line.
 Open: the 23 diagnostics' `why` lines come from the draft unedited apart from the overrides; a second reader should sample them. No DOM test of the "Check first" card (engine report).
