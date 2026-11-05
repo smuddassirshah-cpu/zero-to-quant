@@ -1112,3 +1112,11 @@ trees L4 (5 Nov):
 Raised later (exam topic-1.7 extension (5 Nov)):
 - [Could] Exam playthrough counts parts as items ("37 items" for a 30-item exam). Wanted: "30 items, 37 parts" so it matches the validator cap wording.
 - [Could] The playthrough does not assert that an item-level `canvas.highlight` in a part-1 `explain` fires (e-american-put node d); it was left unchecked. Wanted: a check or a screenshot of the review state of a part with a highlight.
+
+cpp L5 (5 Nov):
+- [Should] `graph` canvas on a 440 px phone: rect nodes spread across the frame (four columns of boxes with edge labels) drew on top of each other, as the frame narrows to about 260 px. Workaround: a vertical layout in two columns (l21 screen 2). Wanted: the frame to scale node spacing, or a validator warning when a row of labelled rect nodes cannot fit the narrow frame.
+- [Could] `frames` control: a long `frameLabels` entry ("a owns the block") wraps to three lines at the right end of the slider on a phone. Wanted: the label under the slider, or a wider label slot.
+- [Could] `table` canvas and `table` widget at 440 px: a column header in inline code (`b(std::move(a))`) breaks mid-token ("b(a" then ")"). Workaround: plain-text short headers ("b(move a)"). Wanted: no break inside a code span in a header.
+- [Could] `array` canvas: `highlight.ranges` labels stagger below the index row, and the second label sits lower than the first, so labels read as if attached to different rows (l19 screen 6). Wanted: labels on one line when the ranges are disjoint.
+- [Could] `place` assign screens with no canvas trigger "a problem screen without a canvas before the ladder ends" (l22 screen 3); a static legend canvas would be filler. Wanted: the warning to skip a `place` widget whose tokens carry the code.
+- [Could] A `graph` frame patch is relative to the opening state, so a six-step build (l23 screen 1) needs each frame written in full. Wanted: a cumulative `frames` mode, or `frames` that accept a list applied in order.

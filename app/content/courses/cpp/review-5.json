@@ -1,0 +1,473 @@
+{
+  "id": "review-5",
+  "course": "cpp",
+  "level": 5,
+  "items": [
+    {
+      "id": "r5-take-copies",
+      "difficulty": 3,
+      "skills": [
+        "cp-memory",
+        "cp-classes"
+      ],
+      "tags": [
+        "copy-vs-move"
+      ],
+      "pace": 60,
+      "prose": "A function `take` takes a `Tracked` by value.\n\n```cpp\ntake(a);\ntake(std::move(a));\ntake(Tracked(3));\n```",
+      "question": "How many of the three calls copy?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only `take(a)` copies.",
+        "generic": "Not quite right. Look for the named object that stays in use.",
+        "byKey": {
+          "three": "You counted every call. A moved or temporary argument is not copied."
+        }
+      },
+      "explain": {
+        "text": "`take(a)` copies the named `a`. `std::move(a)` moves, and `Tracked(3)` is built straight into the parameter."
+      }
+    },
+    {
+      "id": "r5-growth-copies",
+      "difficulty": 4,
+      "skills": [
+        "cp-memory",
+        "cp-classes"
+      ],
+      "tags": [
+        "noexcept-move"
+      ],
+      "pace": 75,
+      "prose": "A `std::vector<T>` grows, and `T`'s move constructor is not `noexcept`.",
+      "question": "Why does it copy the old elements?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "whole",
+            "text": "So a throw part way through leaves the old block whole",
+            "correct": true
+          },
+          {
+            "id": "speed",
+            "text": "Copying is faster than moving here",
+            "why": "Moving is never slower. The reason is what a throw does half way."
+          },
+          {
+            "id": "rule",
+            "text": "The standard bans moving a type that can throw",
+            "why": "Moving is allowed. The vector chooses the copy when one exists, to be safe."
+          },
+          {
+            "id": "empty",
+            "text": "A move would leave the new block empty",
+            "why": "A move fills the new block. The danger is a throw part way."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Safety: the copy keeps the old block whole.",
+        "generic": "Not quite right. Think about a throw half way through."
+      },
+      "explain": {
+        "text": "The library calls `std::move_if_noexcept`. A move that throws part way would leave elements gone from the old block, so it copies instead."
+      }
+    },
+    {
+      "id": "r5-order-compiles",
+      "difficulty": 4,
+      "skills": [
+        "cp-classes"
+      ],
+      "tags": [
+        "special-members"
+      ],
+      "pace": 90,
+      "prose": "```cpp\nstruct Order {\n    std::unique_ptr<Fill> fill;\n    ~Order() {}\n};\n```",
+      "question": "Select all that apply: which lines compile?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`Order a;`",
+            "correct": true
+          },
+          {
+            "id": "move",
+            "text": "`Order b = std::move(a);`",
+            "why": "You expected the member to move. The destructor stopped the move, so the deleted copy constructor is chosen."
+          },
+          {
+            "id": "copy",
+            "text": "`Order c = a;`",
+            "why": "The copy constructor is deleted, because `unique_ptr` cannot be copied."
+          },
+          {
+            "id": "assign",
+            "text": "`a = std::move(b);`",
+            "why": "No move assignment is written, and the copy assignment is deleted."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Only the default construction compiles.",
+        "generic": "Not quite right. The destructor changes what is written."
+      },
+      "explain": {
+        "text": "A declared destructor stops the moves, and the copy members are deleted by the `unique_ptr`. Only construction from nothing is left."
+      }
+    },
+    {
+      "id": "r5-defaulted-nothrow",
+      "difficulty": 3,
+      "skills": [
+        "cp-classes"
+      ],
+      "tags": [
+        "defaulted-moves"
+      ],
+      "pace": 60,
+      "prose": "```cpp\nstruct Pos {\n    std::string sym;\n    std::vector<int> lots;\n    Pos(Pos&&) = default;\n    Pos(const Pos&) = default;\n};\n```",
+      "question": "Is `std::is_nothrow_move_constructible_v<Pos>` true?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "yes",
+            "text": "Yes: a defaulted move is `noexcept` when its members' moves are",
+            "correct": true
+          },
+          {
+            "id": "no",
+            "text": "No: `= default` is cautious",
+            "why": "You expected `= default` to be cautious. It is `noexcept` when every member's move is."
+          },
+          {
+            "id": "write",
+            "text": "No: only a move written with `noexcept` counts",
+            "why": "Only a hand-written move needs `noexcept` written. A defaulted one is deduced."
+          },
+          {
+            "id": "depends",
+            "text": "It depends on the compiler",
+            "why": "The rule is in the standard, so every compiler agrees."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It is true.",
+        "generic": "Not quite right. A defaulted move asks its members."
+      },
+      "explain": {
+        "text": "`std::string` and `std::vector` have `noexcept` moves, so the defaulted move is `noexcept` too."
+      }
+    },
+    {
+      "id": "r5-sizeof-quote",
+      "difficulty": 3,
+      "skills": [
+        "cp-classes"
+      ],
+      "tags": [
+        "vtable"
+      ],
+      "pace": 60,
+      "prose": "```cpp\nstruct Q { virtual double mid() const; double bid, ask; };\n```",
+      "question": "What is `sizeof(Q)` here, where a pointer is 4 bytes?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 24,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "24: 4 for the pointer, 4 of padding, 16",
+        "wrong": [
+          {
+            "id": "twenty",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "sixteen",
+            "value": 16,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "24 bytes.",
+        "generic": "Not quite right. Add the pointer, the padding and the doubles.",
+        "byKey": {
+          "twenty": "You left out the padding before the first double.",
+          "sixteen": "You left out the hidden pointer."
+        }
+      },
+      "explain": {
+        "text": "The pointer takes 4 bytes, a `double` must start at a multiple of 8, so 4 are skipped, then 16 for the pair."
+      }
+    },
+    {
+      "id": "r5-virtual-dtor",
+      "difficulty": 4,
+      "skills": [
+        "cp-classes"
+      ],
+      "tags": [
+        "virtual-destructor"
+      ],
+      "pace": 90,
+      "prose": "The base class `Base` has a non-virtual destructor.",
+      "question": "Select all that apply: which need `Base`'s destructor to be virtual?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "delete",
+            "text": "`delete` of a `Derived` through a `Base*`",
+            "correct": true
+          },
+          {
+            "id": "unique",
+            "text": "A `std::unique_ptr<Base>` holding a `Derived`",
+            "correct": true
+          },
+          {
+            "id": "shared",
+            "text": "A `std::shared_ptr<Base>` made from `std::make_shared<Derived>()`",
+            "why": "The counter block remembers `Derived`'s deleter, so it is destroyed correctly."
+          },
+          {
+            "id": "stack",
+            "text": "A `Derived` on the stack",
+            "why": "The compiler knows the real type there, so the right destructor runs."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Delete through a base pointer, and unique_ptr.",
+        "generic": "Not quite right. Ask whether the deleter knows the real type."
+      },
+      "explain": {
+        "text": "`delete` and `unique_ptr<Base>` call `~Base` through the pointer type. `shared_ptr` records the real deleter when it is built."
+      }
+    },
+    {
+      "id": "r5-which-undefined",
+      "difficulty": 3,
+      "skills": [
+        "cp-basics"
+      ],
+      "tags": [
+        "defined-vs-undefined"
+      ],
+      "pace": 75,
+      "question": "Select all that apply: which are undefined?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "unsigned",
+            "text": "`unsigned u = 0; --u;`",
+            "why": "Unsigned arithmetic wraps by definition."
+          },
+          {
+            "id": "index",
+            "text": "`int a[4]; a[4] = 1;`",
+            "correct": true
+          },
+          {
+            "id": "overflow",
+            "text": "`int x = INT_MAX; ++x;`",
+            "correct": true
+          },
+          {
+            "id": "at",
+            "text": "`v.at(5)` on a 3-element vector",
+            "why": "It throws, which ends the program here. That is defined."
+          },
+          {
+            "id": "uninit",
+            "text": "`int y; int z = y;`",
+            "correct": true
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Index past the end, signed overflow and the unset read.",
+        "generic": "Not quite right. Unsigned wrap and `at()` are defined."
+      },
+      "explain": {
+        "text": "Signed overflow, one past the end and an unset read are undefined. Unsigned wrap and a checked `at()` have defined results."
+      }
+    },
+    {
+      "id": "r5-int-max-pounds",
+      "difficulty": 2,
+      "skills": [
+        "cp-basics",
+        "cp-memory"
+      ],
+      "tags": [
+        "signed-overflow"
+      ],
+      "pace": 45,
+      "prose": "`INT_MAX` is 2,147,483,647 and prices are held in pence.",
+      "question": "What is `INT_MAX` pence in pounds?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 21474836.47,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "£21,474,836.47",
+        "unit": "£",
+        "wrong": [
+          {
+            "id": "pence",
+            "value": 2147483647,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Divide by 100.",
+        "generic": "Not quite right. A pound is 100 pence.",
+        "byKey": {
+          "pence": "You gave the pence figure. Divide by 100."
+        }
+      },
+      "explain": {
+        "text": "2,147,483,647 pence is £21,474,836.47. A bigger total overflows an `int`."
+      }
+    },
+    {
+      "id": "r5-use-count",
+      "difficulty": 3,
+      "skills": [
+        "cp-memory"
+      ],
+      "tags": [
+        "reference-count"
+      ],
+      "pace": 45,
+      "prose": "```cpp\nSharedPtr<T> a(new T);\nauto b = a;\n{ auto c = b; }\n```",
+      "question": "What is `a.use_count()` after the block?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two: `a` and `b`.",
+        "generic": "Not quite right. `c` has left its scope.",
+        "byKey": {
+          "three": "You counted `c`, which is gone.",
+          "one": "You counted `a` only. `b` is still alive."
+        }
+      },
+      "explain": {
+        "text": "`c` raised the count to 3 and its destructor lowered it to 2 again."
+      }
+    },
+    {
+      "id": "r5-two-from-raw",
+      "difficulty": 4,
+      "skills": [
+        "cp-memory"
+      ],
+      "tags": [
+        "control-block"
+      ],
+      "pace": 75,
+      "prose": "```cpp\nT* raw = new T;\nSharedPtr<T> a(raw);\nSharedPtr<T> b(raw);\n```",
+      "question": "What happens when `a` and `b` go out of scope?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "double",
+            "text": "Each has its own count, so the object is deleted twice",
+            "correct": true
+          },
+          {
+            "id": "once",
+            "text": "The object is deleted once, when the shared count reaches zero",
+            "why": "There is no shared count. Each constructor from a raw pointer starts its own."
+          },
+          {
+            "id": "leak",
+            "text": "The object is never deleted",
+            "why": "Each count reaches zero and deletes, so it is freed, twice."
+          },
+          {
+            "id": "error",
+            "text": "It does not compile",
+            "why": "It compiles. Nothing stops a second owner from a raw pointer."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Two counters, two deletes.",
+        "generic": "Not quite right. Count the counters."
+      },
+      "explain": {
+        "text": "Each pointer built from the raw one makes its own counter. Both reach zero, and the object is deleted twice."
+      }
+    }
+  ]
+}

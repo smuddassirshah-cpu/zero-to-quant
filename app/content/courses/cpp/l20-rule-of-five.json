@@ -1,0 +1,1247 @@
+{
+  "id": "l20-rule-of-five",
+  "course": "cpp",
+  "title": "The rule of five",
+  "minutes": 15,
+  "objectives": [
+    "Decide which special members a class needs and write them correctly."
+  ],
+  "skills": [
+    "cp-classes"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Which lines compile?",
+      "prose": "`Fill` has a constructor from a string and a move constructor. It declares nothing else. `a` is an existing `Fill`.",
+      "tags": [
+        "special-members",
+        "rule-of-five"
+      ],
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "line",
+            "compiles?"
+          ],
+          "rows": [
+            [
+              "`Fill b = a;`",
+              ""
+            ],
+            [
+              "`Fill b = std::move(a);`",
+              ""
+            ],
+            [
+              "`b = a;`",
+              ""
+            ],
+            [
+              "`b = std::move(a);`",
+              ""
+            ]
+          ],
+          "tap": "rows"
+        },
+        "state": {}
+      },
+      "question": "Tap every line that compiles.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "r1"
+        ],
+        "wrong": [
+          {
+            "id": "all",
+            "set": [
+              "r0",
+              "r1",
+              "r2",
+              "r3"
+            ]
+          },
+          {
+            "id": "copies",
+            "set": [
+              "r0",
+              "r2"
+            ]
+          },
+          {
+            "id": "moves",
+            "set": [
+              "r1",
+              "r3"
+            ]
+          }
+        ],
+        "countWord": "rows"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Declaring one special member changes what the compiler writes for the others."
+        },
+        {
+          "rung": "point",
+          "text": "You wrote the move constructor, so that line is fine.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Declaring a move constructor deletes the copy members and writes no assignment."
+        }
+      ],
+      "feedback": {
+        "correct": "Only the line that uses the move constructor you wrote compiles.",
+        "generic": "Not quite right. Ask what each line needs, and which of those you declared.",
+        "byKey": {
+          "all": "You expected the compiler to write the rest. Declaring a move constructor deletes the copy members and writes no assignment.",
+          "copies": "You tapped the copies. Copying is deleted once you declare a move constructor.",
+          "moves": "You tapped both moves. No move assignment is written for you; it must be declared."
+        }
+      },
+      "explain": {
+        "text": "Declaring a move constructor deletes the implicit copy constructor and copy assignment, and writes no move assignment. So three of the four lines fail. The rest of this lesson maps what is written when.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "What the compiler writes",
+      "prose": "Seven classes, each declaring something different. `move a` means `std::move(a)`. `error` means the line picks a deleted function: declared and deleted. Copies written after a destructor are deprecated, yet still written.",
+      "tags": [
+        "special-members",
+        "rule-of-five"
+      ],
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "you declare",
+            "b(a)",
+            "b(move a)",
+            "b = a",
+            "b = move a"
+          ],
+          "rows": [
+            [
+              "nothing",
+              "copy",
+              "move",
+              "copy",
+              "move"
+            ],
+            [
+              "a destructor",
+              "copy",
+              "copy",
+              "copy",
+              "copy"
+            ],
+            [
+              "a copy constructor",
+              "copy",
+              "copy",
+              "copy",
+              "copy"
+            ],
+            [
+              "a copy assignment",
+              "copy",
+              "copy",
+              "copy",
+              "copy"
+            ],
+            [
+              "a move constructor",
+              "error",
+              "move",
+              "error",
+              "error"
+            ],
+            [
+              "a move assignment",
+              "error",
+              "error",
+              "error",
+              "move"
+            ],
+            [
+              "all five, defaulted",
+              "copy",
+              "move",
+              "copy",
+              "move"
+            ]
+          ],
+          "align": [
+            "left",
+            "center",
+            "center",
+            "center",
+            "center"
+          ],
+          "compact": true
+        },
+        "state": {
+          "highlight": {
+            "rows": [
+              0
+            ]
+          }
+        },
+        "controls": [
+          {
+            "frames": [
+              {
+                "highlight": {
+                  "rows": [
+                    0
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    1
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    2
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    3
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    4
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    5
+                  ]
+                }
+              },
+              {
+                "highlight": {
+                  "rows": [
+                    6
+                  ]
+                }
+              }
+            ],
+            "frameLabels": [
+              "nothing",
+              "destructor",
+              "copy ctor",
+              "copy assign",
+              "move ctor",
+              "move assign",
+              "all five"
+            ],
+            "label": "Class"
+          }
+        ]
+      },
+      "question": "In how many of the six rows that declare something does `b = std::move(a)` really move?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2: a move assignment, and all five",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the last column. Where does it say `move`?"
+        },
+        {
+          "rung": "point",
+          "text": "Look at the rows from the second down.",
+          "highlight": [
+            "r5",
+            "r6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Only two of the six rows have `move` in the last column."
+        }
+      ],
+      "feedback": {
+        "correct": "Two: the lone move assignment and the full five.",
+        "generic": "Not quite right. Count the rows below the first that say `move` in the last column.",
+        "byKey": {
+          "one": "You counted the all-five row only. A lone move assignment also moves."
+        }
+      },
+      "explain": {
+        "text": "Once you declare a destructor or a copy member, the moves are not written and `std::move` falls back to a copy, silently. Only an explicit move assignment, or all five, makes `b = std::move(a)` move."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The silent fallback",
+      "prose": "Each class holds a `std::string` and a `std::vector<Fill>`. Fill the `b(std::move(a))` column with `move` or `copy`.",
+      "tags": [
+        "special-members",
+        "rule-of-five"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "struct A { std::string s; std::vector<Fill> v; };",
+            "struct B { /* same members */ ~B(); };",
+            "struct C { /* same members */ C(const C&); };",
+            "struct D { /* same members */ D(D&&) noexcept; };"
+          ],
+          "title": "classes",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "What does `b(std::move(a))` do for each class?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "class",
+          "`b(std::move(a))`"
+        ],
+        "rows": [
+          [
+            "`A`",
+            {
+              "edit": true,
+              "answer": "move",
+              "accept": [
+                "mv",
+                "moves"
+              ]
+            }
+          ],
+          [
+            "`B`",
+            {
+              "edit": true,
+              "answer": "copy",
+              "accept": [
+                "copies"
+              ]
+            }
+          ],
+          [
+            "`C`",
+            {
+              "edit": true,
+              "answer": "copy",
+              "accept": [
+                "copies"
+              ]
+            }
+          ],
+          [
+            "`D`",
+            {
+              "edit": true,
+              "answer": "move",
+              "accept": [
+                "mv",
+                "moves"
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ask of each class: did you declare a destructor or a copy member?"
+        },
+        {
+          "rung": "point",
+          "text": "Two of the four classes declared something that hides the move.",
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "B and C have no move constructor, so `std::move(a)` finds only the copy."
+        }
+      ],
+      "feedback": {
+        "correct": "A and D move. B and C copy, and say nothing about it.",
+        "generic": "Not quite right. A move is written only if you declared none of the other special members.",
+        "byKey": {
+          "r0c1": "With nothing declared, the compiler writes the move for you.",
+          "r1c1": "A destructor stops the move being written, so `std::move(a)` falls back to the copy, silently.",
+          "r2c1": "A declared copy constructor also stops the move. Moves fall back to the copy.",
+          "r3c1": "A move constructor is the one thing you wrote, so it runs."
+        }
+      },
+      "explain": {
+        "text": "A declared destructor or copy constructor stops the compiler writing the moves. The code still compiles, because the copy accepts an rvalue, so nothing warns you.",
+        "canvas": {
+          "highlight": [
+            "l2",
+            "l3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Is the move noexcept?",
+      "prose": "A defaulted move and a hand-written one look alike. Both classes hold a `std::string` and a `std::vector<int>`. Say whether each move constructor is `noexcept`.",
+      "tags": [
+        "noexcept-move",
+        "special-members"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "struct Pos {",
+            "    std::string sym;",
+            "    std::vector<int> lots;",
+            "    Pos(Pos&&) = default;",
+            "    Pos(const Pos&) = default;",
+            "};",
+            "struct Pos3 {",
+            "    /* same members */",
+            "    Pos3(Pos3&& o)",
+            "        : sym(std::move(o.sym)), lots(std::move(o.lots)) {}",
+            "};"
+          ],
+          "title": "classes",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Is the move constructor `noexcept` in each class?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "class",
+          "noexcept?"
+        ],
+        "rows": [
+          [
+            "`Pos`",
+            {
+              "edit": true,
+              "answer": "yes",
+              "accept": [
+                "noexcept"
+              ]
+            }
+          ],
+          [
+            "`Pos3`",
+            {
+              "edit": true,
+              "answer": "no",
+              "accept": [
+                "not"
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "One move was declared `= default`; the other was written out."
+        },
+        {
+          "rung": "point",
+          "text": "The defaulted one asks the members.",
+          "highlight": [
+            "l4",
+            "l9"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A hand-written move is `noexcept` only if you write `noexcept` on it."
+        }
+      ],
+      "feedback": {
+        "correct": "`Pos` is `noexcept`: it was deduced. `Pos3` is not: nothing was written.",
+        "generic": "Not quite right. Ask who decides `noexcept` in each class.",
+        "byKey": {
+          "r1c1": "A hand-written move is `noexcept` only if you write it. Nothing is deduced.",
+          "r0c1": "A defaulted move is `noexcept` when every member's move is, and the move of `std::string` and `std::vector` is."
+        }
+      },
+      "explain": {
+        "text": "`= default` is the safe way to write a move: it is `noexcept` when its members are, so `std::vector<Pos>` still moves on growth. The hand-written `Pos3` forgot the keyword, so the vector would copy."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Order of a copy assignment",
+      "prose": "`Samples` holds a raw `double* data_` and a size. Order the lines of its copy assignment. On a desk machine a failing `new` throws, and allocating first keeps the old data. This app cannot catch that.",
+      "tags": [
+        "self-assignment",
+        "copy-assignment"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "class Samples {",
+            "    double* data_;  int size_;",
+            "    // ...",
+            "};",
+            "Samples& operator=(const Samples& other)"
+          ],
+          "title": "Samples",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Put the lines in order. Leave out the flawed ones.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s6",
+            "text": "`return *this;`"
+          },
+          {
+            "id": "d2",
+            "text": "`data_ = other.data_;`",
+            "why": "That copies the address, so two objects own one block, the l11 bug."
+          },
+          {
+            "id": "s3",
+            "text": "copy `other`'s doubles into it"
+          },
+          {
+            "id": "s1",
+            "text": "`if (this != &other) {`"
+          },
+          {
+            "id": "d1",
+            "text": "`delete[]` the old block first, then allocate",
+            "why": "In `a = a` you would copy from a block you just freed. If `new` failed, the object would point at freed memory."
+          },
+          {
+            "id": "s5",
+            "text": "point `data_` at the fresh block and set `size_`"
+          },
+          {
+            "id": "s2",
+            "text": "allocate a fresh block of `other.size_` doubles"
+          },
+          {
+            "id": "s4",
+            "text": "`delete[]` the old block"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build the new block completely before the old one goes."
+        },
+        {
+          "rung": "point",
+          "text": "The guard comes first and the return comes last.",
+          "highlight": [
+            "l5"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Allocate, copy, free the old block, then point at the new one."
+        }
+      ],
+      "feedback": {
+        "correct": "Allocate and copy first, free after, then point. The guard keeps `a = a` safe.",
+        "generic": "Not quite right. The old block must stay until the new one is ready.",
+        "byKey": {
+          "d1": "You freed the old block first. In `a = a` you would copy from freed memory.",
+          "d2": "You copied the address. Two objects then own one block."
+        }
+      },
+      "explain": {
+        "text": "Allocate and copy before freeing, so the old data survives a failed `new` and a self-assignment. Copying the pointer is the shallow copy that makes a double free."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Make the copy real",
+      "prose": "This `Samples` has a destructor and both moves, so the compiler writes nothing else. Its copy members are shallow: they copy the pointer. Make each a true copy, free the old block in assignment, and guard `a = a`.",
+      "tags": [
+        "copy-assignment",
+        "self-assignment"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "Samples b = a;   // b gets its own doubles",
+            "b = a;           // old block freed, doubles copied",
+            "a = a;           // changes nothing"
+          ],
+          "title": "what must hold",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Write the copy constructor and the copy assignment.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <utility>\n\n// Samples owns a heap array of doubles. The destructor and the two move members are done.\n// The copy constructor and copy assignment are wrong: they copy the pointer, so two objects\n// would free one block. Make each a true copy of the doubles.\n// Copy assignment must free the old block, be safe for `a = a`, and return *this.\nclass Samples {\npublic:\n    Samples(int n, double x) : size_(n), data_(new double[n]) {\n        for (int i = 0; i < n; ++i) data_[i] = x;\n    }\n    ~Samples() { delete[] data_; }\n    Samples(Samples&& other) noexcept : size_(other.size_), data_(other.data_) {\n        other.size_ = 0;\n        other.data_ = nullptr;\n    }\n    Samples& operator=(Samples&& other) noexcept {\n        if (this != &other) {\n            delete[] data_;\n            size_ = other.size_;\n            data_ = other.data_;\n            other.size_ = 0;\n            other.data_ = nullptr;\n        }\n        return *this;\n    }\n\n    // TODO: copy the doubles, not the pointer\n    Samples(const Samples& other) : size_(other.size_), data_(other.data_) {}\n    // TODO: free the old block, copy the doubles, guard against a = a, return *this\n    Samples& operator=(const Samples& other) {\n        size_ = other.size_;\n        data_ = other.data_;\n        return *this;\n    }\n\n    int size() const { return size_; }\n    double get(int i) const { return data_[i]; }\n    void set(int i, double x) { data_[i] = x; }\n\nprivate:\n    int size_;\n    double* data_;\n};\n",
+        "solution": "#include <utility>\n\n// Samples owns a heap array of doubles. The destructor and the two move members are done.\n// The copy constructor and copy assignment are wrong: they copy the pointer, so two objects\n// would free one block. Make each a true copy of the doubles.\n// Copy assignment must free the old block, be safe for `a = a`, and return *this.\nclass Samples {\npublic:\n    Samples(int n, double x) : size_(n), data_(new double[n]) {\n        for (int i = 0; i < n; ++i) data_[i] = x;\n    }\n    ~Samples() { delete[] data_; }\n    Samples(Samples&& other) noexcept : size_(other.size_), data_(other.data_) {\n        other.size_ = 0;\n        other.data_ = nullptr;\n    }\n    Samples& operator=(Samples&& other) noexcept {\n        if (this != &other) {\n            delete[] data_;\n            size_ = other.size_;\n            data_ = other.data_;\n            other.size_ = 0;\n            other.data_ = nullptr;\n        }\n        return *this;\n    }\n\n    Samples(const Samples& other) : size_(other.size_), data_(new double[other.size_]) {\n        for (int i = 0; i < size_; ++i) data_[i] = other.data_[i];\n    }\n    Samples& operator=(const Samples& other) {\n        if (this != &other) {\n            double* fresh = new double[other.size_];\n            for (int i = 0; i < other.size_; ++i) fresh[i] = other.data_[i];\n            delete[] data_;\n            data_ = fresh;\n            size_ = other.size_;\n        }\n        return *this;\n    }\n\n    int size() const { return size_; }\n    double get(int i) const { return data_[i]; }\n    void set(int i, double x) { data_[i] = x; }\n\nprivate:\n    int size_;\n    double* data_;\n};\n",
+        "examples": [
+          {
+            "setup": "Samples a(3, 1.5); Samples b = a; b.set(0, 9.0);",
+            "call": "a.get(0)",
+            "expect": 1.5,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Samples a(3, 1.5); Samples b = a; b.set(0, 9.0);",
+            "call": "b.get(0)",
+            "expect": 9.0,
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "Samples a(3, 1.5); Samples b = a; b.set(0, 9.0);",
+            "call": "a.get(0)",
+            "expect": 1.5,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Samples a(3, 1.5); Samples b = a; b.set(0, 9.0);",
+            "call": "b.get(0)",
+            "expect": 9.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Samples a(3, 1.5); Samples b = a;",
+            "call": "b.size()",
+            "expect": 3,
+            "compare": "equal"
+          },
+          {
+            "setup": "Samples a(3, 1.5); Samples b = a;",
+            "call": "b.get(2)",
+            "expect": 1.5,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Samples a(1000, 0.5); reset_alloc_count(); Samples b = a;",
+            "call": "alloc_count()",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "Samples a(3, 1.5); Samples b(2, 0.0); b = a; b.set(1, 7.0);",
+            "call": "a.get(1)",
+            "expect": 1.5,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Samples a(3, 1.5); Samples b(2, 0.0); b = a;",
+            "call": "b.size()",
+            "expect": 3,
+            "compare": "equal"
+          },
+          {
+            "setup": "Samples a(1000, 0.5); Samples b(2, 0.0); reset_alloc_count(); b = a;",
+            "call": "alloc_count()",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "Samples a(10, 1.5); Samples& r = a; a = r;",
+            "call": "a.get(0) + a.get(1)",
+            "expect": 3.0,
+            "compare": "isclose"
+          },
+          {
+            "setup": "Samples a(2, 1.0); Samples b(5, 2.0); Samples c(1, 3.0); c = b = a;",
+            "call": "c.size()",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "Samples a(0, 0.0); Samples b = a;",
+            "call": "b.size()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Samples a(3, 1.5); Samples b = std::move(a);",
+            "call": "a.size()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Samples a(5, 2.5); Samples b(1, 0.0); b = a;",
+            "call": "b.get(4)",
+            "expect": 2.5,
+            "compare": "isclose"
+          }
+        ],
+        "prelude": "#include <utility>\n#include <type_traits>\n",
+        "allocCheck": true,
+        "leakCheck": true,
+        "how": "Submit runs 13 hidden tests. `alloc_count()` counts calls to `operator new` and `new[]`: a copy must allocate once. A block never freed fails its test."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The copy constructor needs its own `new double[...]` and a loop."
+        },
+        {
+          "rung": "point",
+          "text": "Both members need to allocate once.",
+          "highlight": [
+            "l1",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Assignment: guard, allocate, copy, `delete[]` the old block, then point and set the size."
+        }
+      ],
+      "feedback": {
+        "correct": "Both copies are real: one allocation each, and nothing freed twice.",
+        "generic": "Not quite right. Read the failing rows: a changed original means a shared block, and a count of 0 means no new block.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the `const Samples&` parameter and the return type of the assignment."
+        }
+      },
+      "explain": {
+        "text": "Each copy allocates once and copies the doubles, so changing one object leaves the other alone. Allocating before freeing, behind a guard, is the habit to say in an interview."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "The destructor that stops the move",
+      "prose": "`books` is reserved, so growth does not interfere. `b` holds 1,000,000 fills.",
+      "tags": [
+        "rule-of-five",
+        "special-members"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "struct Book {",
+            "    std::vector<Fill> fills;",
+            "    ~Book() { log(\"closed\"); }",
+            "};",
+            "books.push_back(std::move(b));"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "What happens to the million fills in `books.push_back(std::move(b));`?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "copy",
+            "text": "The copy constructor copies all 1,000,000 fills",
+            "correct": true
+          },
+          {
+            "id": "zero",
+            "text": "None are copied: the vector member moves",
+            "why": "You reasoned about the members, which are movable. The class decides, and it has no move constructor."
+          },
+          {
+            "id": "moves",
+            "text": "The move constructor runs",
+            "why": "There is no move constructor to run. Declaring the destructor stopped it being written."
+          },
+          {
+            "id": "error",
+            "text": "It does not compile",
+            "why": "It compiles: the copy constructor is still written, deprecated but present."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at what `Book` declares."
+        },
+        {
+          "rung": "point",
+          "text": "A destructor is declared on line 3.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A declared destructor stops the move being written. The copy still is."
+        }
+      ],
+      "feedback": {
+        "correct": "The destructor hid the move, so the copy ran: 1,000,000 fills.",
+        "generic": "Not quite right. Check what `Book` declares before asking what its members can do.",
+        "byKey": {
+          "zero": "You reasoned about the members. The class decides, and it has no move constructor.",
+          "moves": "There is no move constructor to run.",
+          "error": "It compiles: the copy constructor is still written, deprecated but present."
+        }
+      },
+      "explain": {
+        "text": "The destructor on line 3 stopped the implicit move. `push_back` found only the copy constructor, which copies the vector. Deleting the destructor, or declaring all five, restores the move.",
+        "canvas": {
+          "shade": {
+            "bad": [
+              "l3"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Deleted, not absent",
+      "prose": "`unique_ptr` cannot be copied.",
+      "tags": [
+        "special-members",
+        "rule-of-five"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "struct Order {",
+            "    std::unique_ptr<Fill> fill;",
+            "    ~Order() {}",
+            "};",
+            "Order a;",
+            "Order b = std::move(a);"
+          ],
+          "title": "main.cpp",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Does `Order b = std::move(a);` compile?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: it selects the deleted copy constructor",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: the `unique_ptr` member is moved",
+            "why": "You expected the move from the `unique_ptr` member. The destructor suppressed the move."
+          },
+          {
+            "id": "copy",
+            "text": "Yes: it falls back to a copy",
+            "why": "The copy constructor is selected, and it is deleted because `unique_ptr` cannot be copied."
+          },
+          {
+            "id": "warn",
+            "text": "Yes, with a warning",
+            "why": "It is an error, not a warning: the only candidate is the deleted copy constructor."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What does the destructor on line 3 do to the moves?"
+        },
+        {
+          "rung": "point",
+          "text": "No move constructor is written, so only one candidate is left.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The copy constructor is declared for you and defined as deleted."
+        }
+      ],
+      "feedback": {
+        "correct": "No. The copy constructor is chosen and it is deleted.",
+        "generic": "Not quite right. Find the constructors that exist, and which one `std::move(a)` can use.",
+        "byKey": {
+          "yes": "You expected the move from the member. The destructor suppressed the move.",
+          "copy": "The copy constructor is selected, and it is deleted because `unique_ptr` cannot be copied.",
+          "warn": "It is an error, not a warning: the only candidate is the deleted copy constructor."
+        }
+      },
+      "explain": {
+        "text": "The destructor stopped the move being written. The copy constructor exists, implicitly defined as deleted, and overload resolution picks it for `std::move(a)`. A deleted function is chosen, not absent, which is why the error says so."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The five, and zero",
+      "prose": "Declare any of the five and decide all five. cppreference.com lists the rules in full.\n\n```cpp\n// Say aloud: declare one, and you decide all five.\n~T();\nT(const T&);\nT& operator=(const T&);\nT(T&&) noexcept;\nT& operator=(T&&) noexcept;\n// Zero (l9, l11): own through members, declare nothing.\n// struct Fills { std::vector<Fill> v; std::string venue; };\n```",
+      "tags": [
+        "rule-of-five",
+        "rule-of-zero"
+      ],
+      "question": "`struct Book { std::vector<Fill> fills; ~Book(); };` What does `b2 = std::move(b1)` do to the fills?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "copy",
+            "text": "It copies them: the declared destructor stopped the moves being written",
+            "correct": true
+          },
+          {
+            "id": "moves",
+            "text": "It moves them",
+            "why": "The vector member is movable, but the class decides, and `Book` has no move assignment."
+          },
+          {
+            "id": "error",
+            "text": "It does not compile",
+            "why": "It compiles: the copy assignment is still written, though deprecated."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It copies: a declared destructor hides the moves.",
+        "generic": "Not quite right. Ask what `Book` declares, not what its member can do."
+      },
+      "explain": {
+        "text": "A declared destructor stops the moves being written, and the copy assignment is still written. So the move quietly becomes a copy."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Which class needs the five?",
+      "prose": "A desk reviews its classes before a release. Only one of these owns a raw resource itself.",
+      "tags": [
+        "rule-of-zero",
+        "special-members"
+      ],
+      "question": "Which needs hand-written special members?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "handle",
+            "text": "`FeedHandle { int fd; }`, closed in its destructor",
+            "correct": true
+          },
+          {
+            "id": "vector",
+            "text": "`PositionBook { std::vector<Position>; std::string name; }`",
+            "why": "A vector already owns its memory correctly, and so does the string."
+          },
+          {
+            "id": "string",
+            "text": "`Quote { double bid, ask; std::string venue; }`",
+            "why": "A `std::string` copies and moves itself, and the doubles copy by value."
+          },
+          {
+            "id": "map",
+            "text": "`OrderBook { std::map<int, Order>; }`",
+            "why": "A `std::map` owns its nodes and frees them itself."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which class holds something the compiler cannot copy or close for you?"
+        },
+        {
+          "rung": "point",
+          "text": "The other three hold only self-managing members."
+        },
+        {
+          "rung": "step",
+          "text": "A file descriptor is just an `int`: copying it duplicates the number, not the open file."
+        }
+      ],
+      "feedback": {
+        "correct": "The `FeedHandle`: a raw descriptor needs a destructor, and copying must be deleted.",
+        "generic": "Not quite right. Look for the class that owns a raw resource itself.",
+        "byKey": {
+          "vector": "A vector already owns its memory correctly.",
+          "string": "A `std::string` member copies and moves itself.",
+          "map": "A `std::map` owns its nodes and cleans them up itself."
+        }
+      },
+      "explain": {
+        "text": "Only a class that owns a raw resource, such as a descriptor or a raw pointer, needs the five. Then delete the copy and write the move, as in the l11 `Connection`."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Declare a destructor or a copy member and the moves are not written: `std::move` falls back to a copy, silently.",
+      "Declare a move constructor and the copy members are deleted and no move assignment is written. A deleted function is chosen, not absent.",
+      "Own through members and declare nothing, or declare all five. A defaulted move is `noexcept` when its members are; a hand-written one is not."
+    ],
+    "formula": {
+      "name": "Declare one, decide five",
+      "tex": "\\texttt{~T(), T(const T\\&), operator=(const T\\&), T(T\\&\\&), operator=(T\\&\\&)}",
+      "note": "The rule of five. With none declared, the rule of zero."
+    },
+    "trap": "A class with a destructor still compiles `std::move(a)`: it quietly copies."
+  },
+  "quiz": [
+    {
+      "id": "q-copy-ctor-only",
+      "difficulty": 2,
+      "tags": [
+        "special-members"
+      ],
+      "prose": "A class declares only a copy constructor.",
+      "question": "What does `b = std::move(a);` do on existing objects?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "copy",
+            "text": "It copies: no move assignment is written",
+            "correct": true
+          },
+          {
+            "id": "move",
+            "text": "It moves",
+            "why": "Declaring a copy member stops the moves being written."
+          },
+          {
+            "id": "error",
+            "text": "It does not compile",
+            "why": "The copy assignment is still written, so the line compiles."
+          },
+          {
+            "id": "swap",
+            "text": "It swaps `a` and `b`",
+            "why": "Assignment never swaps unless you write it so."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It copies.",
+        "generic": "Not quite right. Check which members are written when a copy constructor is declared."
+      },
+      "explain": {
+        "text": "A declared copy constructor suppresses the moves. The copy assignment is still written, so the line copies."
+      }
+    },
+    {
+      "id": "q-zero-line",
+      "difficulty": 2,
+      "tags": [
+        "rule-of-zero"
+      ],
+      "question": "Which one-line summary of the rule of zero would you say aloud?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "Own resources through members that manage themselves, and declare no special members",
+            "correct": true
+          },
+          {
+            "id": "none",
+            "text": "Never write a destructor in any class",
+            "why": "A class that owns a raw resource still needs one."
+          },
+          {
+            "id": "delete",
+            "text": "Delete every copy operation",
+            "why": "That is for a unique owner, not for the rule of zero."
+          },
+          {
+            "id": "default",
+            "text": "Write `= default` on all five",
+            "why": "That is the rule of five, spelled out."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Members do the work.",
+        "generic": "Not quite right. The rule of zero declares nothing."
+      },
+      "explain": {
+        "text": "Use `std::vector`, `std::string` and `std::unique_ptr` as members and the compiler's versions are right."
+      }
+    },
+    {
+      "id": "q-self-guard",
+      "difficulty": 3,
+      "tags": [
+        "self-assignment"
+      ],
+      "prose": "The copy assignment of `Samples` starts with `if (this != &other)`.",
+      "question": "Why is the guard there?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "correct",
+            "text": "For correctness: `a = a` would free the block it is about to copy from",
+            "correct": true
+          },
+          {
+            "id": "time",
+            "text": "To save time when the objects are equal",
+            "why": "It is for correctness: `a = a` would free the block it is about to copy from."
+          },
+          {
+            "id": "compile",
+            "text": "The compiler requires it",
+            "why": "Nothing requires it. Without it the code compiles and misbehaves."
+          },
+          {
+            "id": "const",
+            "text": "It makes the function `const`",
+            "why": "The guard changes nothing about `const`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The guard protects `a = a`.",
+        "generic": "Not quite right. Think about what happens when both sides are one object."
+      },
+      "explain": {
+        "text": "In `a = a` the old block would be freed before it is read. The guard, or allocate-then-free, prevents that."
+      }
+    },
+    {
+      "id": "q-unique-class",
+      "difficulty": 3,
+      "tags": [
+        "special-members"
+      ],
+      "prose": "A class holds a `std::unique_ptr<Fill>` and declares no special members.",
+      "question": "Is it copyable? Is it movable?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "mv",
+            "text": "Movable, not copyable",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Copyable and movable",
+            "why": "The `unique_ptr` member cannot be copied, so the class copy is deleted."
+          },
+          {
+            "id": "neither",
+            "text": "Neither",
+            "why": "The moves are written and work, because `unique_ptr` can move."
+          },
+          {
+            "id": "cp",
+            "text": "Copyable, not movable",
+            "why": "It is the other way round: the moves exist and the copy is deleted."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Movable, not copyable.",
+        "generic": "Not quite right. A class copies only if every member does."
+      },
+      "explain": {
+        "text": "With no members declared, the compiler writes a move and a copy. The copy is deleted because one member cannot be copied."
+      }
+    }
+  ]
+}

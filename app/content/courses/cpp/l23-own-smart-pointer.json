@@ -1,0 +1,1424 @@
+{
+  "id": "l23-own-smart-pointer",
+  "course": "cpp",
+  "title": "Writing your own smart pointer",
+  "minutes": 15,
+  "objectives": [
+    "Implement a minimal unique pointer and a reference-counted pointer."
+  ],
+  "skills": [
+    "cp-memory"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Six steps, one counter",
+      "prose": "A shared pointer is built in steps. Slide through six: `a` is made, then copied twice, then the three go out of scope in turn.",
+      "tags": [
+        "reference-count",
+        "control-block"
+      ],
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "a",
+              "shape": "pill",
+              "x": 0.15,
+              "y": 0.12
+            },
+            {
+              "id": "obj",
+              "label": "Tracked(1)",
+              "shape": "rect",
+              "x": 0.28,
+              "y": 0.85
+            },
+            {
+              "id": "cnt",
+              "label": "count",
+              "shape": "rect",
+              "x": 0.78,
+              "y": 0.85
+            }
+          ],
+          "edges": [],
+          "directed": true,
+          "height": 300
+        },
+        "state": {},
+        "controls": [
+          {
+            "frames": [
+              {
+                "nodes": {
+                  "obj": {
+                    "label": "Tracked(1)\nnew"
+                  },
+                  "cnt": {
+                    "label": "count: 1"
+                  }
+                },
+                "edges": {
+                  "e-a-obj": {
+                    "from": "a",
+                    "to": "obj",
+                    "directed": true
+                  },
+                  "e-a-cnt": {
+                    "from": "a",
+                    "to": "cnt",
+                    "directed": true
+                  }
+                }
+              },
+              {
+                "nodes": {
+                  "obj": {
+                    "label": "Tracked(1)"
+                  },
+                  "cnt": {
+                    "label": "count: 2"
+                  },
+                  "b": {
+                    "label": "b",
+                    "shape": "pill",
+                    "x": 0.5,
+                    "y": 0.12
+                  }
+                },
+                "edges": {
+                  "e-a-obj": {
+                    "from": "a",
+                    "to": "obj",
+                    "directed": true
+                  },
+                  "e-a-cnt": {
+                    "from": "a",
+                    "to": "cnt",
+                    "directed": true
+                  },
+                  "e-b-obj": {
+                    "from": "b",
+                    "to": "obj",
+                    "directed": true
+                  },
+                  "e-b-cnt": {
+                    "from": "b",
+                    "to": "cnt",
+                    "directed": true
+                  }
+                }
+              },
+              {
+                "nodes": {
+                  "obj": {
+                    "label": "Tracked(1)"
+                  },
+                  "cnt": {
+                    "label": "count: 3"
+                  },
+                  "b": {
+                    "label": "b",
+                    "shape": "pill",
+                    "x": 0.5,
+                    "y": 0.12
+                  },
+                  "c": {
+                    "label": "c",
+                    "shape": "pill",
+                    "x": 0.85,
+                    "y": 0.12
+                  }
+                },
+                "edges": {
+                  "e-a-obj": {
+                    "from": "a",
+                    "to": "obj",
+                    "directed": true
+                  },
+                  "e-a-cnt": {
+                    "from": "a",
+                    "to": "cnt",
+                    "directed": true
+                  },
+                  "e-b-obj": {
+                    "from": "b",
+                    "to": "obj",
+                    "directed": true
+                  },
+                  "e-b-cnt": {
+                    "from": "b",
+                    "to": "cnt",
+                    "directed": true
+                  },
+                  "e-c-obj": {
+                    "from": "c",
+                    "to": "obj",
+                    "directed": true
+                  },
+                  "e-c-cnt": {
+                    "from": "c",
+                    "to": "cnt",
+                    "directed": true
+                  }
+                }
+              },
+              {
+                "nodes": {
+                  "obj": {
+                    "label": "Tracked(1)"
+                  },
+                  "cnt": {
+                    "label": "count: 2"
+                  },
+                  "b": {
+                    "label": "b",
+                    "shape": "pill",
+                    "x": 0.5,
+                    "y": 0.12
+                  }
+                },
+                "edges": {
+                  "e-a-obj": {
+                    "from": "a",
+                    "to": "obj",
+                    "directed": true
+                  },
+                  "e-a-cnt": {
+                    "from": "a",
+                    "to": "cnt",
+                    "directed": true
+                  },
+                  "e-b-obj": {
+                    "from": "b",
+                    "to": "obj",
+                    "directed": true
+                  },
+                  "e-b-cnt": {
+                    "from": "b",
+                    "to": "cnt",
+                    "directed": true
+                  }
+                }
+              },
+              {
+                "nodes": {
+                  "obj": {
+                    "label": "Tracked(1)\nnew"
+                  },
+                  "cnt": {
+                    "label": "count: 1"
+                  }
+                },
+                "edges": {
+                  "e-a-obj": {
+                    "from": "a",
+                    "to": "obj",
+                    "directed": true
+                  },
+                  "e-a-cnt": {
+                    "from": "a",
+                    "to": "cnt",
+                    "directed": true
+                  }
+                }
+              },
+              {
+                "nodes": {
+                  "obj": {
+                    "label": "Tracked(1)\ndeleted",
+                    "dashed": true
+                  },
+                  "cnt": {
+                    "label": "count: 0\nfreed",
+                    "dashed": true
+                  }
+                },
+                "edges": {}
+              }
+            ],
+            "frameLabels": [
+              "1 a made",
+              "2 b = a",
+              "3 c = b",
+              "4 c ends",
+              "5 b ends",
+              "6 a ends"
+            ],
+            "label": "Step"
+          }
+        ]
+      },
+      "question": "How many times does `new` run across these six steps?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2: the object and the counter, both at step 1",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at which steps add a new box."
+        },
+        {
+          "rung": "point",
+          "text": "Only the first step adds boxes.",
+          "highlight": [
+            "obj",
+            "cnt"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A copy adds an arrow, not a box."
+        }
+      ],
+      "feedback": {
+        "correct": "Twice: one for the object and one for the counter, both in step 1.",
+        "generic": "Not quite right. Count the boxes that appear, not the arrows.",
+        "byKey": {
+          "three": "You counted a new counter for each copy. A copy shares the counter that already exists."
+        }
+      },
+      "explain": {
+        "text": "Step 1 allocates the object and the counter. Each copy adds an arrow to both and one to the count, with no new allocation. The last owner frees both."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Who holds the count",
+      "prose": "After `a`, `b = a` and `c = b`, three pointers share one object.",
+      "tags": [
+        "reference-count",
+        "control-block"
+      ],
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "a",
+              "shape": "pill",
+              "x": 0.15,
+              "y": 0.12
+            },
+            {
+              "id": "obj",
+              "label": "Tracked(1)",
+              "shape": "rect",
+              "x": 0.28,
+              "y": 0.85
+            },
+            {
+              "id": "cnt",
+              "label": "count",
+              "shape": "rect",
+              "x": 0.78,
+              "y": 0.85
+            },
+            {
+              "id": "b",
+              "label": "b",
+              "shape": "pill",
+              "x": 0.5,
+              "y": 0.12
+            },
+            {
+              "id": "c",
+              "label": "c",
+              "shape": "pill",
+              "x": 0.85,
+              "y": 0.12
+            }
+          ],
+          "edges": [
+            {
+              "from": "a",
+              "to": "obj",
+              "directed": true
+            },
+            {
+              "from": "a",
+              "to": "cnt",
+              "directed": true
+            },
+            {
+              "from": "b",
+              "to": "obj",
+              "directed": true
+            },
+            {
+              "from": "b",
+              "to": "cnt",
+              "directed": true
+            },
+            {
+              "from": "c",
+              "to": "obj",
+              "directed": true
+            },
+            {
+              "from": "c",
+              "to": "cnt",
+              "directed": true
+            }
+          ],
+          "directed": true,
+          "height": 300
+        },
+        "state": {
+          "nodes": {
+            "cnt": {
+              "label": "count: 3"
+            }
+          }
+        }
+      },
+      "question": "How many counters exist on the heap?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the arrows from `a`, `b` and `c` to the counter."
+        },
+        {
+          "rung": "point",
+          "text": "They all end at the same box.",
+          "highlight": [
+            "cnt"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One counter, shared."
+        }
+      ],
+      "feedback": {
+        "correct": "One counter, shared by all three.",
+        "generic": "Not quite right. Count the counter boxes in the picture.",
+        "byKey": {
+          "three": "You gave each pointer its own count. If each kept its own, no pointer would know when the others had gone. One counter is shared."
+        }
+      },
+      "explain": {
+        "text": "The counter lives on the heap beside the object, so every owner can reach it. The last one to subtract sees zero and frees both.",
+        "canvas": {
+          "highlight": [
+            "cnt"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the unique pointer",
+      "prose": "A unique pointer owns one object or nothing. Write the destructor, delete copying, write the two moves, and finish `release()` and `reset()`.",
+      "tags": [
+        "unique-ptr",
+        "smart-pointer"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "{ UniquePtr<Tracked> p(new Tracked(5)); }   // Tracked::live is 0 after",
+            "UniquePtr<Tracked> q = p;               // does not compile",
+            "UniquePtr<Tracked> q = std::move(p);    // p is now empty"
+          ],
+          "title": "what must hold",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Complete `UniquePtr`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "// A minimal unique pointer. It owns one heap object, or nothing.\n// Write: the destructor; copying deleted; a move constructor and move assignment that\n// transfer ownership and leave the source empty; release(); reset().\n// The move assignment must be safe for `a = std::move(a)`.\ntemplate <typename T>\nclass UniquePtr {\npublic:\n    UniquePtr() = default;\n    explicit UniquePtr(T* p) : ptr_(p) {}\n\n    // TODO: destructor\n    // TODO: delete copying; write the move constructor and move assignment\n\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n    explicit operator bool() const { return ptr_ != nullptr; }\n\n    T* release() { return nullptr; }                 // TODO: give up ownership, do not delete\n    void reset(T* p = nullptr) { (void)p; }          // TODO: delete the current object, then own p\n\nprivate:\n    T* ptr_ = nullptr;\n};\n",
+        "solution": "// A minimal unique pointer. It owns one heap object, or nothing.\n// Write: the destructor; copying deleted; a move constructor and move assignment that\n// transfer ownership and leave the source empty; release(); reset().\n// The move assignment must be safe for `a = std::move(a)`.\ntemplate <typename T>\nclass UniquePtr {\npublic:\n    UniquePtr() = default;\n    explicit UniquePtr(T* p) : ptr_(p) {}\n\n    ~UniquePtr() { delete ptr_; }\n    UniquePtr(const UniquePtr&) = delete;\n    UniquePtr& operator=(const UniquePtr&) = delete;\n    UniquePtr(UniquePtr&& other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }\n    UniquePtr& operator=(UniquePtr&& other) noexcept {\n        if (this != &other) {\n            delete ptr_;\n            ptr_ = other.ptr_;\n            other.ptr_ = nullptr;\n        }\n        return *this;\n    }\n\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n    explicit operator bool() const { return ptr_ != nullptr; }\n\n    T* release() {\n        T* p = ptr_;\n        ptr_ = nullptr;\n        return p;\n    }\n    void reset(T* p = nullptr) {\n        T* old = ptr_;\n        ptr_ = p;\n        delete old;\n    }\n\nprivate:\n    T* ptr_ = nullptr;\n};\n",
+        "examples": [
+          {
+            "setup": "{ UniquePtr<Tracked> p(new Tracked(5)); }",
+            "call": "Tracked::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> p(new Tracked(5));",
+            "call": "p->v + (*p).v",
+            "expect": 10,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "{ UniquePtr<Tracked> p(new Tracked(5)); }",
+            "call": "Tracked::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> p(new Tracked(5));",
+            "call": "p->v + (*p).v",
+            "expect": 10,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b = std::move(a);",
+            "call": "b->v",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b = std::move(a);",
+            "call": "a.get() == nullptr",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b = std::move(a); }",
+            "call": "Tracked::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> a;",
+            "compiles": "UniquePtr<Tracked> b = a;",
+            "expect": false
+          },
+          {
+            "setup": "UniquePtr<Tracked> a;",
+            "compiles": "UniquePtr<Tracked> b; b = a;",
+            "expect": false
+          },
+          {
+            "setup": "UniquePtr<Tracked> a(new Tracked(3)); Tracked* raw = a.release(); int live_after = Tracked::live; delete raw;",
+            "call": "live_after",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> a(new Tracked(3)); Tracked* raw = a.release(); delete raw;",
+            "call": "a.get() == nullptr",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> a(new Tracked(1)); a.reset(new Tracked(2));",
+            "call": "Tracked::live * 10 + a->v",
+            "expect": 12,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> a(new Tracked(1)); a.reset();",
+            "call": "Tracked::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b(new Tracked(2)); b = std::move(a);",
+            "call": "Tracked::live",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> a(new Tracked(4)); UniquePtr<Tracked>& r = a; a = std::move(r);",
+            "call": "a.get() != nullptr",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "call": "std::is_nothrow_move_constructible_v<UniquePtr<Tracked>>",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "setup": "UniquePtr<Tracked> p; UniquePtr<Tracked> q(new Tracked(1));",
+            "call": "(p ? 10 : 0) + (q ? 1 : 0)",
+            "expect": 1,
+            "compare": "equal"
+          }
+        ],
+        "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Tracked objects are alive.\nstruct Tracked {\n    static inline int live = 0;\n    int v;\n    explicit Tracked(int x) : v(x) { ++live; }\n    ~Tracked() { --live; }\n};\n",
+        "leakCheck": true,
+        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects, so an object deleted twice or never shows in the count; two compile checks fail if copying is allowed."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The destructor is `delete ptr_;`, and a null pointer is safe to delete."
+        },
+        {
+          "rung": "point",
+          "text": "A move takes the pointer and sets the source's to null.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`release()` returns the pointer and nulls it. `reset(p)` deletes the old one, then owns `p`."
+        }
+      ],
+      "feedback": {
+        "correct": "One owner at a time, and the object is deleted exactly once.",
+        "generic": "Not quite right. A live count above 0 is a leak, and a negative count is a double delete.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the deleted copy members and the move signatures."
+        }
+      },
+      "explain": {
+        "text": "Deleting the copy members makes ownership single. The move hands it over and nulls the source, so exactly one destructor frees the object."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Why two pointers wide",
+      "prose": "On a desk machine `sizeof(std::unique_ptr<int>)` is one pointer and `sizeof(std::shared_ptr<int>)` is two. Here that is 4 and 8 bytes.",
+      "tags": [
+        "control-block",
+        "smart-pointer"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "unique_ptr<int>:  [ ptr ]",
+            "shared_ptr<int>:  [ ptr ] [ counter block ]"
+          ],
+          "title": "layout",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Why is the shared one two pointers wide?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "block",
+            "text": "It also points at the counter block",
+            "correct": true
+          },
+          {
+            "id": "inside",
+            "text": "It stores its own count",
+            "why": "A count inside each pointer would not be shared between copies."
+          },
+          {
+            "id": "deleter",
+            "text": "It stores the deleter",
+            "why": "The deleter lives in the counter block, not in each pointer."
+          },
+          {
+            "id": "align",
+            "text": "It is padded for alignment",
+            "why": "Padding does not double a pointer."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must every owner be able to reach?"
+        },
+        {
+          "rung": "point",
+          "text": "A count that all owners share.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One pointer for the object and one for the counter."
+        }
+      ],
+      "feedback": {
+        "correct": "The second pointer leads to the shared counter block.",
+        "generic": "Not quite right. Think of what all the copies must share.",
+        "byKey": {
+          "inside": "You put the count in each pointer. A count inside each pointer would not be shared between copies.",
+          "deleter": "The deleter lives in the counter block, not in each pointer.",
+          "align": "Padding does not double a pointer."
+        }
+      },
+      "explain": {
+        "text": "One pointer reaches the object and one reaches the counter block. The unique pointer needs only the first."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Copy assignment, in order",
+      "prose": "Order the lines of `SharedPtr`'s copy assignment. One line is a tempting order that breaks `a = a`.",
+      "tags": [
+        "shared-ptr",
+        "reference-count"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "SharedPtr& operator=(const SharedPtr& other) {",
+            "    // three steps",
+            "    return *this;",
+            "}"
+          ],
+          "title": "SharedPtr",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Put the lines in order, and leave the flawed one out.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s3",
+            "text": "copy `ptr_` and `count_` from `other`"
+          },
+          {
+            "id": "d1",
+            "text": "drop this pointer's own count first, then add one to `other`'s",
+            "why": "For `a = a` the count falls to zero and the object is deleted. Then you add to a freed counter."
+          },
+          {
+            "id": "s2",
+            "text": "drop this pointer's own count: subtract one, and at zero delete the object and the counter"
+          },
+          {
+            "id": "s1",
+            "text": "add one to `other`'s count"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Make sure the new object stays alive while the old one is released."
+        },
+        {
+          "rung": "point",
+          "text": "Take your new share before you give up the old one.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add to `other`, subtract from yourself, then copy the pointers."
+        }
+      ],
+      "feedback": {
+        "correct": "Add first, subtract second, copy third: `a = a` stays safe.",
+        "generic": "Not quite right. Think about `a = a`.",
+        "byKey": {
+          "d1": "You dropped first. For `a = a` the count falls to zero and the object is deleted, then you add to a freed counter."
+        }
+      },
+      "explain": {
+        "text": "Adding first means `a = a` never lets the count reach zero. Dropping first could free the object you are about to share."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Write the shared pointer",
+      "prose": "The constructor from a raw pointer starts a counter at 1. Write the copy and move members and the destructor. The last owner deletes the object and the counter.",
+      "tags": [
+        "shared-ptr",
+        "reference-count"
+      ],
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "SharedPtr<Tracked> a(new Tracked(1));   // use_count 1",
+            "SharedPtr<Tracked> b = a;                  // use_count 2",
+            "b = SharedPtr<Tracked>();                // use_count 1"
+          ],
+          "title": "what must hold",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "question": "Complete `SharedPtr`.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "// A minimal reference-counted pointer. All owners share one heap counter next to the object.\n// The object is deleted, and the counter freed, when the last owner goes.\n// Write: the copy and move members and the destructor. use_count() is 0 for an empty pointer.\ntemplate <typename T>\nclass SharedPtr {\npublic:\n    SharedPtr() = default;\n    explicit SharedPtr(T* p) : ptr_(p), count_(p ? new long(1) : nullptr) {}\n\n    // TODO: copy constructor: share the object and add one to the count\n    SharedPtr(const SharedPtr& other) : ptr_(other.ptr_), count_(other.count_) {}\n    // TODO: copy assignment: let go of the old object, share the new one\n    SharedPtr& operator=(const SharedPtr& other) {\n        ptr_ = other.ptr_;\n        count_ = other.count_;\n        return *this;\n    }\n    // TODO: move constructor and move assignment (noexcept): take over, leave the source empty\n    // TODO: destructor: subtract one; at zero delete the object and the counter\n    ~SharedPtr() {}\n\n    long use_count() const { return count_ ? *count_ : 0; }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    T* ptr_ = nullptr;\n    long* count_ = nullptr;\n};\n",
+        "solution": "// A minimal reference-counted pointer. All owners share one heap counter next to the object.\n// The object is deleted, and the counter freed, when the last owner goes.\n// Write: the copy and move members and the destructor. use_count() is 0 for an empty pointer.\ntemplate <typename T>\nclass SharedPtr {\npublic:\n    SharedPtr() = default;\n    explicit SharedPtr(T* p) : ptr_(p), count_(p ? new long(1) : nullptr) {}\n\n    SharedPtr(const SharedPtr& other) : ptr_(other.ptr_), count_(other.count_) {\n        if (count_) ++*count_;\n    }\n    SharedPtr& operator=(const SharedPtr& other) {\n        if (count_ != other.count_) {\n            if (other.count_) ++*other.count_;\n            drop();\n            ptr_ = other.ptr_;\n            count_ = other.count_;\n        }\n        return *this;\n    }\n    SharedPtr(SharedPtr&& other) noexcept : ptr_(other.ptr_), count_(other.count_) {\n        other.ptr_ = nullptr;\n        other.count_ = nullptr;\n    }\n    SharedPtr& operator=(SharedPtr&& other) noexcept {\n        if (this != &other) {\n            drop();\n            ptr_ = other.ptr_;\n            count_ = other.count_;\n            other.ptr_ = nullptr;\n            other.count_ = nullptr;\n        }\n        return *this;\n    }\n    ~SharedPtr() { drop(); }\n\n    long use_count() const { return count_ ? *count_ : 0; }\n    T* get() const { return ptr_; }\n    T& operator*() const { return *ptr_; }\n    T* operator->() const { return ptr_; }\n\nprivate:\n    void drop() {\n        if (count_ && --*count_ == 0) {\n            delete ptr_;\n            delete count_;\n        }\n        ptr_ = nullptr;\n        count_ = nullptr;\n    }\n    T* ptr_ = nullptr;\n    long* count_ = nullptr;\n};\n",
+        "examples": [
+          {
+            "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); }",
+            "call": "Tracked::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a;",
+            "call": "a.use_count()",
+            "expect": 2,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); }",
+            "call": "Tracked::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a;",
+            "call": "a.use_count()",
+            "expect": 2,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); { SharedPtr<Tracked> b = a; SharedPtr<Tracked> c = b; }",
+            "call": "a.use_count() * 10 + Tracked::live",
+            "expect": 11,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a; }",
+            "call": "Tracked::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); { SharedPtr<Tracked> b = a; }",
+            "call": "Tracked::live",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b(new Tracked(2)); b = a;",
+            "call": "Tracked::live * 10 + a.use_count()",
+            "expect": 12,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked>& r = a; a = r;",
+            "call": "Tracked::live * 10 + a.use_count()",
+            "expect": 11,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = std::move(a);",
+            "call": "b.use_count() * 10 + a.use_count()",
+            "expect": 10,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = std::move(a); }",
+            "call": "Tracked::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b(new Tracked(2)); b = std::move(a);",
+            "call": "Tracked::live * 10 + b.use_count()",
+            "expect": 11,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> p;",
+            "call": "p.use_count() * 10 + (p.get() == nullptr ? 1 : 0)",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(8)); SharedPtr<Tracked> b = a;",
+            "call": "b->v + (*a).v",
+            "expect": 16,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); std::vector<SharedPtr<Tracked>> v(5, a);",
+            "call": "a.use_count()",
+            "expect": 6,
+            "compare": "equal"
+          },
+          {
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); { std::vector<SharedPtr<Tracked>> v(5, a); }",
+            "call": "a.use_count() * 10 + Tracked::live",
+            "expect": 11,
+            "compare": "equal"
+          },
+          {
+            "call": "std::is_nothrow_move_constructible_v<SharedPtr<Tracked>>",
+            "expect": true,
+            "compare": "equal"
+          }
+        ],
+        "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Tracked objects are alive.\nstruct Tracked {\n    static inline int live = 0;\n    int v;\n    explicit Tracked(int x) : v(x) { ++live; }\n    ~Tracked() { --live; }\n};\n",
+        "leakCheck": true,
+        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects; `leakCheck` also fails a test whose counter block is never freed."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Copying adds one to `*count_`. The destructor subtracts one."
+        },
+        {
+          "rung": "point",
+          "text": "At zero, delete both the object and the counter.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Copy assignment: add to `other` first, then release your own, then copy the two pointers."
+        }
+      ],
+      "feedback": {
+        "correct": "The count tracks the owners, and the last one frees both blocks.",
+        "generic": "Not quite right. A live count above 0 is a leak, and below 0 a double delete.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the const parameter and the `noexcept` on the moves."
+        }
+      },
+      "explain": {
+        "text": "Each copy adds one and each destructor subtracts one. When the count reaches zero, the object and the counter are deleted exactly once."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Two counters, one object",
+      "prose": "```cpp\nTracked* raw = new Tracked(1);\nSharedPtr<Tracked> a(raw);\nSharedPtr<Tracked> b(raw);\n```\nBoth pointers are built from the same raw pointer. Each starts its own count at 1.",
+      "tags": [
+        "control-block",
+        "shared-ptr"
+      ],
+      "canvas": {
+        "kind": "graph",
+        "params": {
+          "nodes": [
+            {
+              "id": "a",
+              "label": "a",
+              "shape": "pill",
+              "x": 0.2,
+              "y": 0.12
+            },
+            {
+              "id": "b",
+              "label": "b",
+              "shape": "pill",
+              "x": 0.8,
+              "y": 0.12
+            },
+            {
+              "id": "obj",
+              "label": "Tracked(1)",
+              "shape": "rect",
+              "x": 0.5,
+              "y": 0.85
+            },
+            {
+              "id": "c1",
+              "label": "count: 1",
+              "shape": "rect",
+              "x": 0.15,
+              "y": 0.5
+            },
+            {
+              "id": "c2",
+              "label": "count: 1",
+              "shape": "rect",
+              "x": 0.85,
+              "y": 0.5
+            }
+          ],
+          "edges": [
+            {
+              "from": "a",
+              "to": "obj",
+              "directed": true
+            },
+            {
+              "from": "b",
+              "to": "obj",
+              "directed": true
+            },
+            {
+              "from": "a",
+              "to": "c1",
+              "directed": true
+            },
+            {
+              "from": "b",
+              "to": "c2",
+              "directed": true
+            }
+          ],
+          "directed": true,
+          "height": 300
+        },
+        "state": {}
+      },
+      "question": "What happens at the end of the block?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "twice",
+            "text": "Each count reaches zero, so the object is deleted twice: undefined behaviour",
+            "correct": true
+          },
+          {
+            "id": "two",
+            "text": "The count is 2, so it is deleted once",
+            "why": "You gave the count as 2. Each constructor from a raw pointer starts its own count at 1."
+          },
+          {
+            "id": "leak",
+            "text": "It is never deleted",
+            "why": "It is freed, twice; not never."
+          },
+          {
+            "id": "once",
+            "text": "It is deleted once, because the counters know about each other",
+            "why": "The counters do not know about each other."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "How many counters are in the picture?"
+        },
+        {
+          "rung": "point",
+          "text": "Each pointer decrements its own.",
+          "highlight": [
+            "c1",
+            "c2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Both reach zero, and each then deletes the object."
+        }
+      ],
+      "feedback": {
+        "correct": "Two counters, two deletes: the object is freed twice.",
+        "generic": "Not quite right. Count the counters first.",
+        "byKey": {
+          "two": "You gave the count as 2. Each constructor from a raw pointer starts its own count at 1.",
+          "leak": "It is freed, twice; not never.",
+          "once": "The counters do not know about each other."
+        }
+      },
+      "explain": {
+        "text": "Each pointer built from the raw one made its own counter, so each deletes the object when its count reaches zero. Make a shared owner with `make_shared`, or copy an existing `shared_ptr`, never from one raw pointer twice.",
+        "canvas": {
+          "shade": {
+            "bad": [
+              "c1",
+              "c2"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Add before you drop",
+      "prose": "Your `operator=` adds one to the other count, then drops its own.",
+      "tags": [
+        "shared-ptr",
+        "self-assignment"
+      ],
+      "question": "In `operator=`, why add to the other count before dropping your own?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "self",
+            "text": "`a = a`: the count could fall to zero and free the object before it is taken again",
+            "correct": true
+          },
+          {
+            "id": "speed",
+            "text": "It is faster that way round",
+            "why": "Order makes no speed difference."
+          },
+          {
+            "id": "atomic",
+            "text": "The count is atomic and must be changed first",
+            "why": "The real count is atomic, ours is not, and that is unrelated to the order."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What happens if both sides are the same pointer?"
+        },
+        {
+          "rung": "point",
+          "text": "If you drop first, the count may reach zero."
+        },
+        {
+          "rung": "step",
+          "text": "Then the object is deleted before you copy it."
+        }
+      ],
+      "feedback": {
+        "correct": "Add first keeps the object alive in `a = a`.",
+        "generic": "Not quite right. Think about `a = a` and the count.",
+        "byKey": {
+          "speed": "You thought it saves time. Order makes no speed difference.",
+          "atomic": "The real count is atomic, ours is not, and that is unrelated to the order."
+        }
+      },
+      "explain": {
+        "text": "The next questions an interviewer asks: is it thread safe (the count is atomic, the pointee is not), what is `weak_ptr` (a handle that does not add to the count), and what is `enable_shared_from_this`."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Unique or shared",
+      "prose": "l9 gave the rule: prefer `unique_ptr`. Here is what each class is.\n\n```cpp\n// Say aloud: unique owns one thing and moves;\n// shared counts its owners and the last one frees.\n// unique: one owner, move only, no overhead\n// shared: a count, copy is cheap, last owner frees\n```",
+      "tags": [
+        "smart-pointer",
+        "reference-count"
+      ],
+      "question": "What does copying a `shared_ptr` cost that moving one does not?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "atomic",
+            "text": "An atomic add to the shared count",
+            "correct": true
+          },
+          {
+            "id": "alloc",
+            "text": "A new counter block",
+            "why": "A copy shares the existing counter. It allocates nothing."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing: both are just pointer copies",
+            "why": "Every copy adds one to a shared count, and the add is atomic."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "An atomic add to the count. A move takes the pointers and leaves it alone.",
+        "generic": "Not quite right. Think about the count."
+      },
+      "explain": {
+        "text": "A copy increments the shared count, atomically. A move transfers the two pointers and touches nothing else."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A feed handler",
+      "prose": "A feed handler makes 200,000 messages a second as `std::shared_ptr<Message>(new Message)`. Take an allocation as 50 ns, a round figure.",
+      "tags": [
+        "control-block",
+        "shared-ptr"
+      ],
+      "question": "Fill in the three figures.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "case",
+          "figure"
+        ],
+        "rows": [
+          [
+            "allocations a second with `shared_ptr(new Message)`",
+            {
+              "edit": true,
+              "answer": 400000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "allocations a second with `make_shared<Message>()`",
+            {
+              "edit": true,
+              "answer": 200000,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ],
+          [
+            "milliseconds a second the change saves",
+            {
+              "edit": true,
+              "answer": 10,
+              "tol": {
+                "abs": 0
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each message needs an object. How many blocks does `shared_ptr(new T)` make?"
+        },
+        {
+          "rung": "point",
+          "text": "The object, and the counter block."
+        },
+        {
+          "rung": "step",
+          "text": "`make_shared` builds both in one block. Then multiply the difference by 50 ns."
+        }
+      ],
+      "feedback": {
+        "correct": "400,000 and 200,000 allocations, saving 10 ms a second.",
+        "generic": "Not quite right. Count the blocks a message needs each way.",
+        "byKey": {
+          "r0c1": "You may have given the `make_shared` count. `new` gives one allocation for the object and one for the counter.",
+          "r1c1": "`make_shared` builds the object and the counter in one block: one allocation a message.",
+          "r2c1": "200,000 allocations at 50 ns is 10,000,000 ns, which is 10 ms."
+        }
+      },
+      "explain": {
+        "text": "`new` plus the counter is 2 blocks a message, so 400,000 a second. `make_shared` is one, so 200,000, and the 200,000 saved at 50 ns are 10,000,000 ns, 10 ms."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A smart pointer is a class whose destructor frees what it owns. A unique one deletes copying and moves ownership, leaving the source null.",
+      "A shared pointer holds the object pointer and a pointer to a counter block that all owners share. The last owner deletes both.",
+      "Add to the other count before dropping your own, so `a = a` is safe. Never build two shared pointers from one raw pointer."
+    ],
+    "formula": {
+      "name": "The shared count",
+      "tex": "\\texttt{copy: ++*count\\_} \\quad\\quad \\texttt{destroy: if (--*count\\_ == 0) delete both}",
+      "note": "One counter, shared by every owner."
+    },
+    "trap": "Two shared pointers built from one raw pointer have two counters, so the object is deleted twice."
+  },
+  "quiz": [
+    {
+      "id": "q-copy-unique",
+      "difficulty": 2,
+      "tags": [
+        "unique-ptr"
+      ],
+      "prose": "```cpp\nstd::unique_ptr<int> a = std::make_unique<int>(1);\nstd::unique_ptr<int> b = a;\n```",
+      "question": "What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "error",
+            "text": "A compile error: copying is deleted",
+            "correct": true
+          },
+          {
+            "id": "share",
+            "text": "Both own the int",
+            "why": "That would be a double delete. Copying is deleted to prevent it."
+          },
+          {
+            "id": "move",
+            "text": "It moves automatically",
+            "why": "A move needs `std::move(a)`. A plain copy is refused."
+          },
+          {
+            "id": "null",
+            "text": "`a` becomes null",
+            "why": "The line does not compile, so nothing happens to `a`."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Copying is deleted.",
+        "generic": "Not quite right. A unique pointer has exactly one owner."
+      },
+      "explain": {
+        "text": "The copy constructor is deleted, so only `std::move(a)` can pass ownership."
+      }
+    },
+    {
+      "id": "q-use-count",
+      "difficulty": 2,
+      "tags": [
+        "reference-count"
+      ],
+      "prose": "```cpp\nauto a = std::make_shared<Tracked>(1);\nauto b = a;\n{ auto c = a; }\n```",
+      "question": "What is `a.use_count()` after the block?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2",
+        "wrong": [
+          {
+            "id": "three",
+            "value": 3,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two: `a` and `b`.",
+        "generic": "Not quite right. `c` has gone out of scope.",
+        "byKey": {
+          "three": "You counted `c`. It went out of scope at the closing brace."
+        }
+      },
+      "explain": {
+        "text": "`c` made it 3 and its destructor made it 2 again."
+      }
+    },
+    {
+      "id": "q-make-shared",
+      "difficulty": 3,
+      "tags": [
+        "control-block"
+      ],
+      "question": "How many allocations does `std::make_shared<T>()` make?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1: the object and counter share one block",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "One block holds both.",
+        "generic": "Not quite right. `make_shared` combines them.",
+        "byKey": {
+          "two": "You gave the `new` figure. `make_shared` builds the object and counter together."
+        }
+      },
+      "explain": {
+        "text": "`shared_ptr(new T)` makes 2: the object and then the counter. `make_shared` makes 1."
+      }
+    },
+    {
+      "id": "q-release-reset",
+      "difficulty": 3,
+      "tags": [
+        "unique-ptr"
+      ],
+      "question": "Which of `release()` and `reset()` deletes the object?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "reset",
+            "text": "`reset()`",
+            "correct": true
+          },
+          {
+            "id": "release",
+            "text": "`release()`",
+            "why": "`release()` gives up ownership and returns the pointer. Nothing is deleted."
+          },
+          {
+            "id": "both",
+            "text": "Both",
+            "why": "`release()` hands the object to the caller, who must delete it."
+          },
+          {
+            "id": "neither",
+            "text": "Neither",
+            "why": "`reset()` deletes the current object."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`reset()` deletes.",
+        "generic": "Not quite right. One of them gives the pointer away."
+      },
+      "explain": {
+        "text": "`release()` returns the raw pointer and stops owning it. `reset()` deletes what it owns."
+      }
+    }
+  ]
+}
