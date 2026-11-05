@@ -162,3 +162,10 @@ Process found this session:
 - (5 Nov) ENGINE-BACKLOG 533 (per-case run time), 536 (follow-ups as their own step), 537 (aloud clock reading stored) deferred.
 - (5 Nov) `docs/reports/coding-int-1-perf.md` describes the pre-fix task (`count_prefix`); the fix pass replaced it (add, remove, has, longest_listed, count_match). The review's Fix pass section is current.
 - Session P (5 Nov): `playthrough.mjs --all --local-cdn` runs over two hours and its single browser closes after about 786 items ("Target page, context or browser has been closed"); every later item throws. coint/l12, backtest/l9, proof/homework-3 and topic-3.5 pass alone. Engine item in the inbox.
+
+Session Q (5 Nov, PLAN 2c items 7, 10, 11):
+- (item 7) The pdes route also reaches unwritten `complex` L1 (via odes), which the user's "odes and numerics before 2b" answer does not cover; pdes keeps a "Route limited" label until complex L1 exists too. User to decide.
+- (item 7) Trader closure lever, not taken: `game-theory/L2 -> graphs-dp/L4` and `brainteasers/L2 -> graphs-dp/L3` as diagnostics would take the trader superday closure from 465 to 422 lessons (`docs/reports/closure-item7.md`).
+- (item 7) The 23 diagnostic `why` lines and most kept ones are the Sonnet draft, reviewed by closure impact and sampling, not line by line; a second reader should sample them. No DOM test of the "Check first" card.
+- (item 7) `systems/L1` closure fell from 231 to 17 lessons (now cpp L1, L2 and terminal); accepted on the draft's evidence that systems teaches its ideas itself.
+- (shard, 550) The relaunch does not cover a browser close during the routes block or `--bank`/`--drill` runs; routes run in shard 1 only.
