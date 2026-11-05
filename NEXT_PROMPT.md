@@ -4,7 +4,7 @@ Expected census: lessons 1054 of 1214 (193, 507, 150, 204); reviews 243, own pas
 
 Tasks, in parallel. Start the wave only with over half the usage window left; past half, finish the step in flight and stop.
 
-A. PLAN 2c item 9, precision read (F08, N05); the user is the maths reader. Commit `app/tools/precision-candidates.mjs`: grep "only", "exactly when", "any", "always", "never", "all", "iff" in `summary.ideas`, `summary.trap`, `summary.formula.note` of ito, measure-prob, pdes, markov, limits-thm, random-vars, research-int; report the count (PLAN 69, the review about 180). Write `docs/reviews/review-precision-3.2.md`, one row per candidate. One Sonnet agent drafts counterexamples; the user rules; then fix by grepping the old value. The five known lines (review-course-correction F08, N05) are fixed regardless.
+A. PLAN 2c item 9, precision read (F08, N05); the user is the maths reader. Commit `app/tools/precision-candidates.mjs`: grep "only", "exactly when", "any", "always", "never", "all", "iff" in `summary.ideas`, `summary.trap`, `summary.formula.note` of ito, measure-prob, pdes, markov, limits-thm, random-vars, research-int; report the count (PLAN 69, the review about 180). Write `docs/reviews/review-precision-3.2.md`, one row per candidate. One Sonnet agent drafts counterexamples; the user rules; then fix by grepping the old value. The five known lines (F08, N05) are fixed regardless.
 
 B. Wave of four, worktrees, `merge-wave.sh`:
 - content-author: odes L1 to L3.
