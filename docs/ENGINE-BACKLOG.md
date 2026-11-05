@@ -1419,3 +1419,8 @@ Status block (engine pass, C++ freed-memory harness):
 
 Status block (engine pass, provenance):
 - 521 (result provenance, N01): done.
+
+522. Done (PLAN 2c item O1): `app/tools/merge-wave.sh <branch>...` merges worktree branches by the DECISIONS "Parallel worktree merges" rules (union of `drills/index.json` by id, both sides of `BACKLOG-INBOX.md`, `PROGRESS.md` and report or review markdown, newer side of a review file, anything else aborts that branch as UNRESOLVED), scans the merge for conflict markers, runs the validator, stages `manifest.json` and commits. The last lines are one status per branch, `validator: N errors` and OK or FAIL. `app/tools/test-merge-wave.sh` is the acceptance test (two branches, conflicts in all three named files): PASS.
+
+Status block (engine pass O1):
+- 522 (merge-wave.sh, O1): done.
