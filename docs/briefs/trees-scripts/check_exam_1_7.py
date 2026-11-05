@@ -90,4 +90,9 @@ def Veu(S, t):
     return (q * Veu(S * u, t + 1) + (1 - q) * Veu(S * d, t + 1)) / R
 check("american 5.87", Vam(S0, 0), 5.87, 0.005); check("european 5.25", Veu(S0, 0), 5.25, 0.005)
 assert Vam(S0, 0) > Veu(S0, 0) > asian_enum
+# fix pass 2026-11-05: rounded learner answers against the widened tolerances
+check("d1 rounded 0.54 accepted at tol 0.005", abs(0.54 - 0.5383) <= 0.005, True, 0)
+check("d2 rounded 0.36 accepted at tol 0.005", abs(0.36 - 0.3615) <= 0.005, True, 0)
+check("sigma-denominator slip 0.3807 still outside d2 tol", abs(0.3807 - 0.3615) > 0.005, True, 0)
+check("digital 0.632 (three places) accepted at tol 0.0008", abs(0.632 - 0.6316) <= 0.0008, True, 0)
 print(f"PASS: {N} checks")

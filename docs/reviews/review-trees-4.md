@@ -44,3 +44,61 @@ None. Exam keys recomputed: 15.00, 1.00, 8.66; short-put signs, gamma peak 94.18
 - Wrong answers in the four exam items: every listed slip has its own `byKey` line and tolerances do not overlap the keys (nearest gap 0.0096 on the digital). Unlisted slips fall back to the generic line.
 - Pedagogy: objectives met, each lesson has a hook, trap, edge case, follow-up and interviewer-voiced transfer; feedback names the slip.
 - Lesson numbers spot-checked (another agent recomputes keys): l13, l14 greeks and calendar, l15 table and pin delta, l16 chances and risk reversal, l17 knock-in 1.4982, l18 price gaps, review-4 and homework-4 including the KO at 99 (0.9646) and the £320 case (1,351.7).
+
+## Fix pass
+
+Both reviews (`review-trees-4.md` and `answers-2026-11-05-trees-4.md`) applied with targeted edits. Numbers recomputed twice in `docs/briefs/trees-scripts/check_l4_authoring.py` (163 checks pass) and `check_exam_1_7.py` (37 pass). 30 findings fixed, 3 disputed or deferred. No lesson id or `course.json` change.
+
+### Asian figures (answer check, 4 mismatches)
+
+Settled by a third method: Monte Carlo with a geometric-average control variate (2,000,000 paths, 20 batches) and, as a cross-check, plain antithetic Monte Carlo with another seed. Convention as the screens state it: r = 0, S = K = 100, 20%, one year, n fixings at t = i/n, average of the n closes. Results: 252 fixings 4.6157 (standard error 0.0001), 52 fixings 4.6684, 12 fixings 4.8890. The checker's 4.6159, 4.6687 and 4.8887 agree to 3e-4, and plain MC agrees within one standard error. The old "formula" values were a moment-matching approximation, 0.01 to 0.014 high.
+
+1. l17 s3 accept and s3/s8 explain: fixed. "4.63 by formula" became "4.62 by a very large simulation"; 12 closes "4.90" became "4.89" (0.614 of the vol, 4.8887 / 7.9656).
+2. l17 s9 test 6 `expect` 4.6779 became 4.6687 and test 9 `expect` 4.8977 became 4.8887; the `how` line and explain follow. Tolerances 0.21 are unchanged and still hold (four standard errors at 20,000 paths).
+3. homework-4 item 3 part 0: fixed, d2 = -0.6195 and Phi(-0.6195) = 0.2678 (key unaffected).
+4. l17 "£4.60" key 4.6 (tol 0.1): kept. It is the stated rule (vanilla over root 3); 4.62 lies inside the tolerance and the screens now say so.
+
+### Answer-check notes
+
+1. l18 s5 accept: fixed, "10.3434 - 7.9656 = 2.3778 from unrounded prices".
+2. l18 s1 explain and accept: fixed, "about 0.0397 with exact gamma", "0.0238, or 0.0239 with exact gamma".
+3. l14 s4 accept: fixed, "-£0.0157 to -£0.0158".
+4. l14 s8 accept: fixed, adds "= -632.5 (-632.45 from the exact gamma)". Key and tolerance unchanged.
+5. l13 q-ratio accept: fixed, "Black-Scholes 0.2891 at 20% vol".
+6. l14 s5 straddle delta: fixed in the prompt, "0 means about zero". Key kept.
+7. l15 s1 slip `unscaled-width`: fixed, replaced by `reversed` (-0.5323, tol 0.0005, the subtraction the wrong way round), which every learner can reach; feedback rewritten.
+8. l15 s8 tolerance: fixed, 200 to 5,000 (the wrong values 1,119,235 and 1,211,544 stay outside).
+9. review-4 r-parts-gamma part 3: fixed, tolerance 5 to 7 so the full-revaluation £255 is accepted (the `accept` line already cites it; 522 stays wrong).
+10. homework-4 item 1 explain: fixed, the 0.0016 gap is called noise, under one standard error.
+11. l16 density canvases: disputed. Differences are 2e-5 at the ends of unkeyed curves, invisible at screen scale.
+12. l14 s0 sketch: no change. The engine tests the correct band first, so the answer is right as written.
+
+### Second-reader warnings
+
+1. Manifest: fixed. `node tools/validate.mjs` regenerated `content/manifest.json`, committed with this pass.
+2. l13 s9 table clip at 440 px: fixed in content. S, sigma and T merged into one column "S, vol, T", leaving four columns (Case, Rule, Exact, Error). The 440 px screenshot was not retaken here; `--mobile` passes. A [Could] inbox bullet asks the engine to scroll or shrink wide tables.
+3. l16 s4 sign slip: fixed with the proposed sentence, "takes vega x 0.002 = 0.0259 off the flat-vol chance: 0.1072 - 0.0259 = 0.0813".
+4. l17 s7 up-and-out: fixed, "Take 20% vol, one year and r = 0" added (the 3.59 slip is then reachable; recomputed 3.5891). The feedback line "priced the vanilla call at £90" now reads "£3.59".
+5. review-4 verbatim reuse: fixed with new inputs, computed twice. r-breakeven is £40 at 35%, 0.8819 (key 0.88, slip 14). r-upout uses 80/85/90 (answer zero). r-smile uses vols 24/20/17. r-digital is struck at 95: 0.9512 x 0.6578 = 0.6257, slips 0.6578 (no discount) and 0.3255 (put). r-rank now compares puts: Asian put under European, up-and-out call under vanilla, fixed-strike lookback put over vanilla put, American put equal at r = 0 and above at r = 2%.
+6. l14 and l18 overlap with opt-dash l14: reframed as interview recall, not cut. l14 s2, s6, s7 and quiz q-falls, q-gamma-time, q-straddle-theta open "Recall from the options course, lesson 14."; l18 q-breakeven the same. Partly disputed for l18 s1: it already says "Recap" and ties to the new l14 s3 and s4, so a different move would break that continuity; its numbers are kept.
+7. e-bs-hedge d1 and d2: fixed, tolerance 0.001 to 0.005 (the 0.3807 sigma slip stays outside).
+8. Exam voice: fixed. e-bs-hedge part 3 is three short sentences; e-american-put part 2 is "Rank today's values, dearest first, for puts struck at £52.00. The three are American, European, and an Asian on the average of the two step prices." The "list the paths" instruction was already in the explanation.
+
+### Second-reader notes
+
+1. e-bs-hedge part 2: fixed, "to three decimal places" (0.632 passes, tol 0.0008).
+2. l14 s4 accept: see answer-check note 3.
+3. l18 s1: see answer-check note 2.
+4. l17 s3 and s8 "formula 4.63": fixed, see the Asian figures.
+5. l17 s5 "£7.96": fixed, "about £7.97" (two places).
+6. l15 s1 slip: see answer-check note 7.
+7. Layout labels: l14 s2 curve labels shortened to "K 100" and "K 130"; l17 s3 and s9 series label "Average so far" became "Average". Not re-screenshotted. The l14 s4 "0.000" tick is deferred: no content cause (tick placement is the engine's), so not changed.
+8. l16 s0: fixed, "Which market charges more for the 70 put, crash protection?"
+9. l13 s0: fixed, the figures moved out of the correct option (they were already in the explanation).
+10. Schema: deferred. `course.json` level 4 `requires` should gain `opt-dash/L3`; this pass may not edit `course.json`.
+
+Also: `check_l4.py` still labels its 12-fixing and daily lines "4.90" and "4.63" (its moment-matching assertions still pass; the screens no longer quote those values).
+
+### Recheck
+
+`node tools/validate.mjs`: 0 errors. Playthrough with the local CDN at desktop, `--mobile` and `--tablet`: l13 to l18 (14 checks each, quiz 4 of 4), `--set trees/review-4` (9 of 9), `--set trees/homework-4` (8 of 8, 38 of 38 marks, parts checks) and `--exam topic-1.7` (30 of 30) all pass. Voice scan: 0 hits in l13 to l18, review-4 and homework-4, and 0 sentences over 20 words in a scratch copy of topic-1.7.
