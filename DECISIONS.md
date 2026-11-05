@@ -148,3 +148,9 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 ### Session lengths and hours (5 Nov, PLAN 2c items 10 and 11)
 - A lesson whose prose states a longer sitting is a `workshop` (20 to 90 minutes) or `project` (60 to 240), with true `minutes`; a duration that is the subject matter (an assessment's length) is not the lesson's length.
 - Hours come from one function (`app/js/hours.js`); a workshop weighs minutes/14 of a standard lesson; stage hours are the sum of topic hours and are no longer stored.
+
+### Capstones and route scope (5 Nov, PLAN 2c item 8, user)
+- `complex` L1 joins `odes` and `numerics` in the set written before 2b (the pdes route reaches all three).
+- Trader lever taken: `game-theory/L2 -> graphs-dp/L4` and `brainteasers/L2 -> graphs-dp/L3` become diagnostics (`gate: false`); trader superday closure 465 to 422 lessons.
+- One capstone record per role (trader, researcher, developer, strats, strats-deriv) in `content/capstones.json`. Researcher: `momentum-rep` or an equivalent external project; the other four: a project the user names in the record. No role shows "ready" without a record marked `external: true`. The user is the reviewer and fills the records.
+- A verified `oa` drill counts toward the code performance task of the coding-int level it maps to.
