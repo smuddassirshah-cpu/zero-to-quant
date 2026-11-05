@@ -67,12 +67,14 @@
 
     /* The seed fixes every generated and drawn item of this attempt; it is stored with the attempt */
     const seed = params[1] != null && /^\d+$/.test(params[1]) ? Number(params[1]) % 4294967296 : Math.floor(Math.random() * 4294967296);
+    let seenMap = {};   // uid -> { why, at } for a drawn item seen before (ENGINE-BACKLOG 546), computed before the draw
+    const seenTag = (it) => (it && it.drawn && seenMap[it.drawn.uid] ? ZQ.mock.seenLabel(seenMap[it.drawn.uid]) : '');
     const drawn = {};   // paper number -> the items its `draw` entries resolved to (ENGINE-BACKLOG 468)
     const drawAll = async (doc) => {
       if (!doc) return doc;
       const raw = Array.isArray(doc.parts) ? doc.parts.filter(p => p && p.kind === 'paper') : [doc];
-      const used = new Set(), seen = ZQ.mock.seenOf(doc.id), sample = !!(ZQ.content.isSample && ZQ.content.isSample(`exams/${doc.id}.json`));
-      for (let n = 0; n < raw.length; n++) if (Array.isArray(raw[n].draw) && raw[n].draw.length) drawn[n] = await ZQ.mock.draw(raw[n].draw, { seed, salt: n, exam: doc.id, sample, seen, used });
+      const used = new Set(), seen = ZQ.mock.seenOf(doc.id), info = ZQ.mock.seenInfo(doc.id), sample = !!(ZQ.content.isSample && ZQ.content.isSample(`exams/${doc.id}.json`));
+      for (let n = 0; n < raw.length; n++) if (Array.isArray(raw[n].draw) && raw[n].draw.length) { drawn[n] = await ZQ.mock.draw(raw[n].draw, { seed, salt: n, exam: doc.id, sample, seen, used }); drawn[n].forEach(it => { if (it.drawn && info[it.drawn.uid]) seenMap[it.drawn.uid] = { why: info[it.drawn.uid].why, at: info[it.drawn.uid].at }; }); }
       return doc;
     };
     ZQ.content.exam(id).then((doc) => (doc && ZQ.arith ? ZQ.arith.ready.then(() => doc) : doc)).then(drawAll).then((doc) => {
@@ -143,6 +145,7 @@
         const rules = [
           ['clock', multi ? `${minutes} minutes in ${plural(papers.length, 'paper', 'papers')}` : `${minutes} minutes`, 'Each paper has its own clock. It starts when you begin and does not pause.'],
           ['clipboard', plural(allItems.length, 'question', 'questions'), generated ? `${kinds.length ? listAnd(kinds).replace(/^./, c => c.toUpperCase()) + '. ' : ''}Questions are generated afresh for each attempt.` : kinds.length ? `${listAnd(kinds).replace(/^./, c => c.toUpperCase())}.` : 'Mixed formats.'],
+          ...(drawnUids.some(u => seenMap[u]) ? [['replay', 'Previously seen', `${plural(drawnUids.filter(u => seenMap[u]).length, 'problem', 'problems')} in this paper you have met before. They are labelled on the paper. The pool had no unseen problem left for them.`]] : []),
           ['bulb', 'No hints', 'Hints, explanations and animated aids are switched off.'],
           allFwd ? ['replay', 'No going back', `Each answer is final once you move on.${anySkip0 ? ' You must answer a question before the next one opens.' : ' A question you skip scores as blank.'}`]
             : ['replay', 'No retries', anyFwd ? 'One attempt. Some papers are forward only; the others let you change an answer until you submit.' : 'One attempt. You can change an answer until you submit.'],
@@ -271,7 +274,7 @@
         /* Every question is rendered once and kept, so answers survive moving between questions */
         QS.forEach((it, i) => {
           const wrap = Z.h(`<section class="exm-q" data-q-i="${i}" aria-label="Question ${i + 1}" hidden>
-            <div class="exm-qhead"><span class="t-overline exm-ov">Question ${i + 1} · ${Z.esc(KIND[kindOf(it)] || 'Question')}</span><span class="exm-marked" hidden>${icon(Z, 'mark', 'xs')}Marked</span></div>
+            <div class="exm-qhead"><span class="t-overline exm-ov">Question ${i + 1} · ${Z.esc(KIND[kindOf(it)] || 'Question')}</span>${seenTag(it) ? `<span class="exm-seen t-caption" data-seen>${Z.esc(seenTag(it))}</span>` : ''}<span class="exm-marked" hidden>${icon(Z, 'mark', 'xs')}Marked</span></div>
             <div class="exm-item" data-host></div></section>`);
           col.append(wrap);
           let h = null;
@@ -487,10 +490,10 @@
           out = ZQ.state.examFinished({ id: doc.id, score, items: total, passed, bySkill, seconds,
             results: rows.map(({ it, r }, k) => ({ id: it.generated || it.drawn ? null : it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null && !it.generated && !it.drawn ? { exam: doc.id, item: it.id } : null, seconds: r.done ? r.seconds : undefined, pace: it.pace, family: fam[k] && fam[k].id, how: ZQ.state.provenance(it) })),
             passedAuto, checks: checks.map((c, i) => ({ name: c.name, ok: A.ticks.has(i) })),
-            extra: { ...(mock || scored || generated || drawnUids.length ? { net, max, wrong, blank, seconds, ...(generated || drawnUids.length ? { seed: A.seed } : {}), ...(drawnUids.length ? { drawn: drawnUids } : {}) } : {}), itemSeconds: rows.map(({ r }) => (typeof r.seconds === 'number' ? Math.round(r.seconds) : 0)) } }) || {};
+            extra: { ...(mock || scored || generated || drawnUids.length ? { net, max, wrong, blank, seconds, ...(generated || drawnUids.length ? { seed: A.seed } : {}), ...(drawnUids.length ? { drawn: drawnUids } : {}), ...(drawnUids.some(u => seenMap[u]) ? { seen: Object.fromEntries(drawnUids.filter(u => seenMap[u]).map(u => [u, seenMap[u]])) } : {}) } : {}), itemSeconds: rows.map(({ r }) => (typeof r.seconds === 'number' ? Math.round(r.seconds) : 0)) } }) || {};
         } catch (e) { console.error(e); }
         T = { kind: 'done', info: { score, total, passed, net, max, wrong, blank, seed: A.seed } };
-        cleanups.push(mountResult(root, Z, { doc, stage, mock, multi, scored, title, over, track, names, rows, bySkill, paperScores, checks, ticks: A.ticks, checksOk, score, total, net, max, wrong, blank, passed, seconds, pacing, xp: out.xp || 0, mp: out.mp || 0, timeUp: !!A.timeUp,
+        cleanups.push(mountResult(root, Z, { seenTag, doc, stage, mock, multi, scored, title, over, track, names, rows, bySkill, paperScores, checks, ticks: A.ticks, checksOk, score, total, net, max, wrong, blank, passed, seconds, pacing, xp: out.xp || 0, mp: out.mp || 0, timeUp: !!A.timeUp,
           minutes: papers.reduce((a, p) => a + (p.minutes || 0), 0) }));
       }
 
@@ -509,6 +512,7 @@
   /* ================================================================== */
   function mountResult(root, Z, at) {
     const { rows, names, paperScores, stage, multi, mock, scored, score, total, passed } = at;
+    const seenTag = at.seenTag || (() => '');
     const M = ZQ.mock;
     /* The headline is the net score when a paper is marked with wrong or blank marks, else the count of right answers */
     const heroN = scored ? at.net : Math.round(paperScores.reduce((a, s) => a + s.right, 0) * 100) / 100, heroMax = scored ? at.max : total;
@@ -551,7 +555,7 @@
       return `<article class="exm-ri${r.ok ? '' : ' is-no'}" data-ok="${r.ok}" data-flag="${!!r.flag}" data-k="${k}">
         <button type="button" class="exm-ri-h" aria-expanded="${!r.ok}" aria-controls="exm-rb-${k}">
           <span class="exm-ri-n tnum">${qlabel(k)}</span>
-          <span class="exm-ri-t"><span class="t-label">${Z.esc(it.title || (it.question || (it.parts && it.parts[0] && it.parts[0].question) || '').replace(/\$[^$]*\$/g, '…').slice(0, 80))}</span><span class="t-caption exm-ri-meta">${it.generated ? 'Generated question' : `${Z.esc((it.skills || []).map(s => names[s] || s).join(', '))} · Difficulty ${it.difficulty || 3} of 5`}${typeof r.seconds === 'number' && r.done ? ` · ${Z.esc(M.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${Z.esc(M.fmtSeconds(it.pace))} pace` : ''}` : ''}${r.flag ? ` · <span class="exm-ri-mark">${icon(Z, 'mark', 'xs')}Marked</span>` : ''}</span></span>
+          <span class="exm-ri-t"><span class="t-label">${Z.esc(it.title || (it.question || (it.parts && it.parts[0] && it.parts[0].question) || '').replace(/\$[^$]*\$/g, '…').slice(0, 80))}</span><span class="t-caption exm-ri-meta">${it.generated ? 'Generated question' : `${seenTag(it) ? Z.esc(seenTag(it)) + ' · ' : ''}${Z.esc((it.skills || []).map(s => names[s] || s).join(', '))} · Difficulty ${it.difficulty || 3} of 5`}${typeof r.seconds === 'number' && r.done ? ` · ${Z.esc(M.fmtSeconds(r.seconds))}${it.pace > 0 ? ` of ${Z.esc(M.fmtSeconds(it.pace))} pace` : ''}` : ''}${r.flag ? ` · <span class="exm-ri-mark">${icon(Z, 'mark', 'xs')}Marked</span>` : ''}</span></span>
           ${v}
           <span class="exm-ri-chev" aria-hidden="true">${Z.icon('chevronD', 'sm')}</span>
         </button>

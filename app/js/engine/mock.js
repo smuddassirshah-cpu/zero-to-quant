@@ -90,9 +90,10 @@
      attempt begins from the seed (and so fixed by #exam/<id>/<seed>). `from` is "bank/<file>" (a bank file, or "bank/<prefix>"
      for every file named <prefix>-<n>, or "bank/*"), or "drills/<pack>" (drills whose `pack` is <pack>, or whose id it is, or
      "drills/*"), each drill becoming a `code` item with its hidden tests. `tags` keeps an item holding any of them (an item's
-     first tag is its family); `difficulty` is a number or [low, high]. The pick is balanced across families (round robin, the
-     families in seeded order); inside a family items not seen in an earlier attempt of this exam come first, then the least
-     recently seen. Items `requires` and sample files are ignored unless the exam is itself a sample. An item is never drawn twice
+     first tag is its family); `difficulty` is a number or [low, high]. Never-seen items come before any seen one, whatever the
+     family; "seen" is a drill the learner verified in the library or an item drawn in an earlier attempt of this exam (546), and a
+     later sitting ranks higher, so the least recently seen comes next. Inside each tier the pick is balanced across families (round
+     robin, the families in seeded order). Items `requires` and sample files are ignored unless the exam is itself a sample. An item is never drawn twice
      in one attempt. The uids drawn are stored on the attempt (`drawn`) by exam.js, which is what "seen" reads. */
   const hash32 = (str) => { let h = 2166136261; for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
   const rngOf = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
@@ -145,23 +146,43 @@
       const pool = (await candidates(spec.from, { sample })).filter(c => !used.has(c.uid)
         && (!want.length || (Array.isArray(c.item.tags) && c.item.tags.some(t => want.includes(t))))
         && (!band || (c.item.difficulty >= band[0] && c.item.difficulty <= band[1])));
-      const byFam = new Map();
-      shuffled(pool, rng).forEach(c => { const f = familyOf(c.item), a = byFam.get(f) || []; a.push(c); byFam.set(f, a); });
-      /* unseen first, then the least recently seen; the shuffle above breaks ties */
-      const queues = shuffled([...byFam.values()], rng).map(q => q.map((c, i) => ({ c, i })).sort((a, b) => ((seen[a.c.uid] || 0) - (seen[b.c.uid] || 0)) || a.i - b.i).map(o => o.c));
-      const n = Math.max(1, Math.round(+spec.n || 1)), got = [];
-      while (got.length < n && queues.some(q => q.length)) queues.forEach(q => { if (got.length < n && q.length) got.push(q.shift()); });
+      /* never seen first, then the least recently seen (546): one tier per "seen" rank, lowest first, and the families
+         balanced by round robin inside a tier, so a seen problem is drawn only once no unseen one is left in the pool */
+      const n = Math.max(1, Math.round(+spec.n || 1)), got = [], order = shuffled(pool, rng);
+      for (const rank of [...new Set(order.map(c => seen[c.uid] || 0))].sort((a, b) => a - b)) {
+        if (got.length >= n) break;
+        const byFam = new Map();
+        order.filter(c => (seen[c.uid] || 0) === rank).forEach(c => { const f = familyOf(c.item), q = byFam.get(f) || []; q.push(c); byFam.set(f, q); });
+        const queues = shuffled([...byFam.values()], rng);
+        while (got.length < n && queues.some(q => q.length)) queues.forEach(q => { if (got.length < n && q.length) got.push(q.shift()); });
+      }
       if (got.length < n) console.warn(`draw ${spec.from}: ${got.length} of ${n} items available`);
       got.forEach(c => { used.add(c.uid); out.push(c.item); });
     }
     return out;
   };
-  /* uid -> how recent, from the attempts kept for an exam: later attempts rank higher, so the least recently seen is drawn first */
-  const seenOf = (examId) => {
+  /* uid -> why and when an item counts as seen (ENGINE-BACKLOG 546): { why: 'sat', at, rank } for a uid drawn in an earlier attempt of
+     this exam (rank is the attempt number, later is higher), or { why: 'solved', at, rank: 0.5 } for a drill the learner has verified in
+     the drill library (state.drills[id].verified; the uid is "drills/<id>"). A sitting wins over a solve. */
+  const seenInfo = (examId) => {
     const m = {};
-    try { (((Z.state.exams || {})[examId] || {}).attempts || []).forEach((a, i) => (a.drawn || []).forEach(u => { m[u] = i + 1; })); } catch { /* no state */ }
+    try {
+      const S = Z.state;
+      (((S.exams || {})[examId] || {}).attempts || []).forEach((a, i) => (a.drawn || []).forEach(u => { m[u] = { why: 'sat', at: a.at || null, rank: i + 1 }; }));
+      const dr = (S.drills && S.drills.get && S.drills.get()) || {};
+      Object.keys(dr).forEach(id => { const u = `drills/${id}`; if (dr[id] && dr[id].verified && !m[u]) m[u] = { why: 'solved', at: dr[id].at || null, rank: 0.5 }; });
+    } catch { /* no state */ }
     return m;
   };
+  /* uid -> how recent (a number), for draw: never seen is absent (0), a solve ranks 0.5, a sitting its attempt number, so the least recently seen is drawn first */
+  const seenOf = (examId) => { const m = {}, info = seenInfo(examId); Object.keys(info).forEach(u => { m[u] = info[u].rank; }); return m; };
+  /* The label for a seen item: "Previously seen: solved in the drill library" or "Previously seen: sat on 3 Nov 2026" */
+  const seenLabel = (s) => {
+    if (!s) return '';
+    if (s.why === 'solved') return 'Previously seen: solved in the drill library';
+    const d = s.at ? new Date(s.at) : null;
+    return d && !isNaN(d) ? `Previously seen: sat on ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Previously seen: sat in an earlier attempt';
+  };
 
-  Z.mock = { draw, seenOf, fmtSeconds, family, pacing, is: (id) => /^mock-/.test(String(id || '')), style: (s) => STYLES[s] || { label: s ? String(s) : 'Mock', track: 'speed' }, STYLES, scoring, scored, tally, need, passed, signed, trend };
+  Z.mock = { draw, seenOf, seenInfo, seenLabel, fmtSeconds, family, pacing, is: (id) => /^mock-/.test(String(id || '')), style: (s) => STYLES[s] || { label: s ? String(s) : 'Mock', track: 'speed' }, STYLES, scoring, scored, tally, need, passed, signed, trend };
 })();

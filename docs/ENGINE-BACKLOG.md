@@ -1483,3 +1483,13 @@ Numbered from the 16 inbox bullets under "Raised later (... perf pilot)". 530 to
 
 Status block (engine pass, performance pilots):
 - 530, 531, 532, 534, 535, 538 (warning), 540, 541, 544: done. 533, 536, 537: deferred with reason above. 539, 542, 543, 545: done as duplicates of 532, 540, 541.
+
+## Engine pass, item 6 (holdout and resit integrity; `docs/reports/engine-pass-item6.md`)
+
+546. Done (PLAN 2c item 6, F05.6): the draw is unseen-first across the whole pool, not within a family only. Seen is a drill verified in the library or an item drawn in an earlier attempt (`ZQ.mock.seenInfo`, `seenLabel`); never-seen items come first, then the least recently seen (a library solve is older than any sitting), families balanced inside each tier. A seen drawn problem shows "Previously seen: solved in the drill library" or "sat on <date>" on the paper, the start card and the results, and the attempt stores `seen`. The library stays open. Evidence: `playthrough.mjs --exam mock-oa-code` (holdout check: all 8 drills verified gives the label on both problems; five fresh sittings draw 8 distinct problems, then the label says "sat on"). Content: `tools/apply-item6-content.mjs` sets mock-oa-code `pass` to 1 and rewrites its description (mark illustrative, new behaviour).
+547. Done (F05.7): `versionOf` on fixed mock versions. The Prepare page groups `<base>-<n>` under the base mock ("Version 1, 2, 3", next unsat first); prep.json keeps naming the base only (readiness-sums needs that). Validator errors: bad or missing `versionOf`, version number below 2, base named by no prep path. Evidence: `tools/test-validate-versions.mjs` (5 of 5), a Prepare check in `playthrough.mjs --routes-only`. The same script adds the field to the four `-2` and `-3` files.
+548. Done: `ZQ.prereq.examLocked` ignored advisory references (role-optional courses), so mock-oa-code showed a locked card with "0 things to finish" to a non-developer profile; it now uses `blocking()` as levels do.
+549. Done (decision on review-perf-pilots Q1): a performance task gates met only when its level is rule-matched. The validator writes `"gates": true` on the manifest `perf` row of a matched level; `ZQ.prereq.perfNeeded` returns null without it; the homework page says "practice only" for such a task. proof/L3 `h-prove-cube-minus-n` no longer gates. Evidence: `test-met-rule.mjs` 17 of 17 (one new case), `test-validate-perf.mjs` 33 of 33. Needs `node app/tools/validate.mjs` once to regenerate `content/manifest.json`.
+
+Status block (engine pass, item 6):
+- 546, 547, 548, 549: done. Content scripts and manifest regeneration are for the main session (commands in the report).

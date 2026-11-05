@@ -113,12 +113,19 @@
       };
 
       /* ---------- The path ---------- */
+      /* Fixed versions of a mock (ENGINE-BACKLOG 547): <id>-<n> files (versionOf <id>) sit under the base mock the path names, as
+         "Version 1, 2, 3". The button offers the next unsat version, else the one sat longest ago. */
+      const versionsOf = (id) => { const re = new RegExp('^' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-(\\d+)$'); return C.mocks().filter(m => re.test(m)).sort((a, b) => +a.match(/(\d+)$/)[1] - +b.match(/(\d+)$/)[1]); };
+      const sat = (m) => (((S.exams || {})[m] || {}).attempts || []);
+      const nextVersion = (all) => all.find(m => !sat(m).length) || all.slice().sort((a, b) => (+new Date(sat(a).slice(-1)[0].at) || 0) - (+new Date(sat(b).slice(-1)[0].at) || 0))[0];
       const mockRow = (id) => {
         const there = C.mocks().includes(id);
         const name = C.deKebab(id.replace(/^mock-/, ''));
-        return there
-          ? `<li class="pp-mock" data-mock="${esc(id)}"><span class="pp-mock-ic">${Z.icon('timer', 'sm')}</span><span class="pp-mock-n">${esc(name)}</span><a class="btn secondary pp-mock-go" href="#exam/${esc(id)}">Sit mock</a></li>`
-          : `<li class="pp-mock is-nw" data-mock="${esc(id)}"><span class="pp-mock-ic">${Z.icon('timer', 'sm')}</span><span class="pp-mock-n"><code>${esc(id)}</code></span><span class="pp-mock-tag">Not yet written</span></li>`;
+        if (!there) return `<li class="pp-mock is-nw" data-mock="${esc(id)}"><span class="pp-mock-ic">${Z.icon('timer', 'sm')}</span><span class="pp-mock-n"><code>${esc(id)}</code></span><span class="pp-mock-tag">Not yet written</span></li>`;
+        const vs = versionsOf(id);
+        if (!vs.length) return `<li class="pp-mock" data-mock="${esc(id)}"><span class="pp-mock-ic">${Z.icon('timer', 'sm')}</span><span class="pp-mock-n">${esc(name)}</span><a class="btn secondary pp-mock-go" href="#exam/${esc(id)}">Sit mock</a></li>`;
+        const all = [id, ...vs], nx = nextVersion(all);
+        return `<li class="pp-mock has-versions" data-mock="${esc(id)}"><span class="pp-mock-ic">${Z.icon('timer', 'sm')}</span><span class="pp-mock-n"><span class="pp-mock-nm">${esc(name)}</span><span class="pp-mock-vs t-caption muted">${all.map((m, i) => `<a href="#exam/${esc(m)}" data-version="${esc(m)}">Version ${i + 1}${sat(m).length ? ' (sat)' : ''}</a>`).join(', ')}</span></span><a class="btn secondary pp-mock-go" href="#exam/${esc(nx)}" data-next-version="${esc(nx)}">${esc(sat(nx).length ? 'Sit again' : 'Sit')} version ${all.indexOf(nx) + 1}</a></li>`;
       };
       const pathHTML = (p) => {
         if (!p) {
@@ -163,7 +170,7 @@
         panelEl.querySelectorAll('.pp-mock:not(.is-nw)').forEach(li => {
           C.exam(li.dataset.mock).then(doc => {
             if (!alive || !doc) return;
-            if (doc.name) { const n = li.querySelector('.pp-mock-n'); if (n) n.textContent = doc.name; }
+            if (doc.name) { const n = li.querySelector('.pp-mock-nm') || li.querySelector('.pp-mock-n'); if (n) n.textContent = doc.name; }
             /* a mock that names requires follows the lock (ENGINE-BACKLOG 487) */
             const P = Z.prereq, go = li.querySelector('.pp-mock-go');
             if (P && go && P.examLocked(doc.id || li.dataset.mock, doc)) { go.innerHTML = `${Z.icon('lock', 'xs')} Locked`; li.classList.add('is-locked'); }

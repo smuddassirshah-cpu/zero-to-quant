@@ -16,7 +16,7 @@
      node app/tools/playthrough.mjs --drill sample-cpp-row-sums   one drill (repeatable; --drills for every file in content/drills): the starter fails, the model
                                                            solution passes every hidden test, the stopwatch is read and recorded (add --mobile, --narrow or --tablet to repeat it at those sizes)
      node app/tools/playthrough.mjs --session              the sample drill session: both drills, minutes per drill, result, carry, expiry (--drills includes it)
-     node app/tools/playthrough.mjs --routes-only          only the routes, then the interview bank deck (due and new items, the 3-day box,
+     node app/tools/playthrough.mjs --routes-only          (also: mock-oa-code holdout and resit checks, mock versions in Prepare) only the routes, then the interview bank deck (due and new items, the 3-day box,
                                                            a miss, prerequisites, an old save, the pace line) and one exam sat with a
                                                            skewed Date.now so per-item seconds and the pace line are checked
      node app/tools/playthrough.mjs --shots out/shots      a screenshot per lesson screen and per route
@@ -877,6 +877,117 @@ const main = async () => {
       }
       fails.forEach(f => failures.push(`#exam/${ex}: ${f}`));
     };
+    /* ---------- Holdout and resit integrity (PLAN 2c item 6, F05.6, ENGINE-BACKLOG 546): part of --routes-only and --exam mock-oa-code ----------
+       (a) a profile that has verified every drill of the mock's pool is told, on the start card, on each drawn question and in the
+       results, that both problems were previously seen (reason: solved in the library), and the attempt stores `seen`; (b) two
+       consecutive sittings by a fresh profile draw four distinct problems while the pool allows, the second labelled "sat on". */
+    const holdoutChecks = async (ex) => {
+      const f = path.join(CONTENT, 'exams', ex + '.json');
+      if (!fs.existsSync(f)) return;
+      const doc = readJSON(f), papers = (doc.parts || []).filter(p => p.kind === 'paper'), entries = papers.flatMap(p => p.draw || []);
+      const drillPools = entries.filter(e => /^drills\//.test(e.from));
+      if (!drillPools.length) return;
+      where = `#exam/${ex}`;
+      const fails = [], t0 = Date.now();
+      let saved = null;
+      const fresh = (verify) => page.evaluate(([v, refs]) => {
+        const d = JSON.parse(ZQ.state.export());
+        d.exams = {}; d.redo = []; d.drills = {};
+        (v || []).forEach(id => { d.drills[id] = { verified: true, code: 'x', at: 1 }; });
+        d.prereq = { met: {}, testouts: {}, opened: {}, started: {}, grandfathered: true };
+        d.flags.setupDone = true;
+        const ok = ZQ.state.import(JSON.stringify(d)).ok;
+        ZQ.prereq.unlockRefs(refs);   // the mock's own requires, as unlockRoute does for every other exam
+        return ok;
+      }, [verify, doc.requires || []]);
+      /* sit once: the start card text, the label on each question, then the result */
+      const sit = async (seed) => {
+        await reopen(`exam/${ex}/${seed}`).catch(async (e) => { throw new Error(`the exam did not open: ${(await page.evaluate(() => document.body.innerText.slice(0, 120).replace(/\\s+/g, ' ')))}`); });
+        const start = await page.evaluate(() => document.body.innerText);
+        await page.evaluate(() => ZQ.test.continue());
+        await page.waitForFunction(() => window.ZQExam && ZQExam.handles().length, null, { timeout: opt.timeout });
+        const n = await page.evaluate(() => ZQExam.handles().length), labels = [];
+        for (let i = 0; i < n + 2; i++) {
+          const c = await page.evaluate(() => ZQ.test.current());
+          if (c.kind === 'done') break;
+          labels.push(await page.evaluate(() => Array.from(document.querySelectorAll('.exm-seen')).map(e => e.textContent.trim()).join('|')));
+          await page.evaluate(() => ZQ.test.continue());
+          await page.waitForTimeout(150);
+        }
+        const done = await page.evaluate(() => ZQ.test.current().kind === 'done');
+        const result = await page.evaluate(() => document.body.textContent);
+        const at = await page.evaluate((id) => ((ZQ.state.exams[id] || {}).attempts || []).slice(-1)[0] || null, ex);
+        return { start, labels: labels.filter(Boolean), done, result, at };
+      };
+      try {
+        saved = await page.evaluate(() => ZQ.state.export());
+        const ids = await page.evaluate(async (pools) => {
+          const out = [];
+          for (const r of ZQ.content.drills()) { const id = typeof r === 'string' ? r : r.id, d = await ZQ.content.drill(id).catch(() => null); if (d && pools.some(p => { const name = p.split('/')[1]; return name === '*' || d.pack === name || d.id === name || String(d.id).startsWith(name + '-'); })) out.push(id); }
+          return out;
+        }, drillPools.map(e => e.from));
+        if (ids.length < 4) fails.push(`only ${ids.length} drills in the pool, expected the pool to allow four distinct problems`);
+        /* (a) everything verified */
+        if (!(await fresh(ids))) throw new Error('could not import a profile');
+        const a = await sit(31337);
+        if (!/Previously seen/.test(a.start)) fails.push('(a) the start card does not say previously seen');
+        if (a.labels.length < entries.reduce((x, e) => x + (e.n || 1), 0)) fails.push(`(a) ${a.labels.length} drawn questions show a "previously seen" label, expected one per drawn problem`);
+        if (!a.labels.every(l => /Previously seen: solved in the drill library/.test(l))) fails.push(`(a) the label does not give the reason: ${a.labels.join(' / ')}`);
+        if (!a.done) fails.push('(a) the result page was not reached');
+        else {
+          if (!/Previously seen: solved in the drill library/.test(a.result)) fails.push('(a) the results do not carry the label');
+          if (!a.at || !a.at.seen || Object.keys(a.at.seen).length !== (a.at.drawn || []).length) fails.push('(a) the attempt does not store seen for every drawn problem');
+        }
+        /* (b) a fresh profile, two sittings */
+        if (!(await fresh([]))) throw new Error('could not import a fresh profile');
+        const b1 = await sit(1), b2 = await sit(2);
+        const d1 = (b1.at && b1.at.drawn) || [], d2 = (b2.at && b2.at.drawn) || [];
+        if (b1.labels.length) fails.push(`(b) a fresh profile saw "previously seen" on the first sitting: ${b1.labels.join(' / ')}`);
+        if (new Set([...d1, ...d2]).size !== d1.length + d2.length || !d1.length) fails.push(`(b) two sittings did not draw distinct problems: ${d1.join(', ')} then ${d2.join(', ')}`);
+        if (b2.labels.length) fails.push(`(b) the second sitting labelled a problem previously seen with the pool unexhausted: ${b2.labels.join(' / ')}`);
+        /* a third sitting still has two unseen problems; a fifth must repeat and say "sat on" */
+        for (const sd of [3, 4]) await sit(sd);
+        const b5 = await sit(5);
+        if (!b5.labels.length || !b5.labels.every(l => /Previously seen: sat on /.test(l))) fails.push(`(b) a sitting after the pool is used up should label its problems "sat on <date>": ${b5.labels.join(' / ')}`);
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} #exam/${ex} holdout  ${ids.length}-drill pool: verified profile sees "previously seen", two sittings draw four distinct problems  (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log(`FAIL #exam/${ex} holdout  threw`);
+      } finally {
+        if (saved) { try { await page.evaluate((d) => ZQ.state.import(d), saved); } catch { /* the run ends anyway */ } }
+      }
+      fails.forEach(x => failures.push(`#exam/${ex} holdout: ${x}`));
+    };
+    /* Fixed versions in Prepare (PLAN 2c item 6, F05.7, ENGINE-BACKLOG 547): a mock with <id>-<n> files shows "Version 1, 2, 3" under the base mock
+       a path names, and its button offers the next unsat version first. Part of --routes-only. */
+    const versionChecks = async () => {
+      const prep = path.join(CONTENT, 'prep.json'), paths = fs.existsSync(prep) ? (readJSON(prep).paths || []) : [];
+      const files = fs.readdirSync(path.join(CONTENT, 'exams')).map(f => f.replace(/\.json$/, ''));
+      const base = paths.flatMap(p => (p.mocks || []).map(m => ({ p, m }))).find(x => files.some(f => new RegExp('^' + x.m + '-\\d+$').test(f)));
+      if (!base) return;
+      const want = [base.m, ...files.filter(f => new RegExp('^' + base.m + '-\\d+$').test(f)).sort()];
+      where = `#prepare/${base.p.id}`;
+      const fails = [], t0 = Date.now();
+      let saved = null;
+      try {
+        saved = await page.evaluate(() => ZQ.state.export());
+        const read = async () => { await go('review'); await go(`prepare/${base.p.id}`); await page.waitForSelector(`.pp-mock[data-mock="${base.m}"]`, { timeout: opt.timeout }); return page.evaluate((m) => { const li = document.querySelector(`.pp-mock[data-mock="${m}"]`); return { vs: Array.from(li.querySelectorAll('[data-version]')).map(a => a.dataset.version), next: (li.querySelector('[data-next-version]') || {}).dataset ? li.querySelector('[data-next-version]').dataset.nextVersion : null }; }, base.m); };
+        await page.evaluate(() => { const d = JSON.parse(ZQ.state.export()); d.exams = {}; ZQ.state.import(JSON.stringify(d)); });
+        let got = await read();
+        if (JSON.stringify(got.vs) !== JSON.stringify(want)) fails.push(`versions listed ${got.vs.join(', ')}, expected ${want.join(', ')}`);
+        if (got.next !== want[0]) fails.push(`the unsat state should offer ${want[0]}, offered ${got.next}`);
+        await page.evaluate(([e]) => { const d = JSON.parse(ZQ.state.export()); d.exams = { [e]: { attempts: [{ at: 1, score: 1, items: 2, passed: false, bySkill: {} }] } }; ZQ.state.import(JSON.stringify(d)); }, [want[0]]);
+        got = await read();
+        if (want.length > 1 && got.next !== want[1]) fails.push(`with version 1 sat, the next should be ${want[1]}, offered ${got.next}`);
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} #prepare  ${base.m}: versions ${want.length} grouped, next unsat offered  (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log('FAIL #prepare versions  threw');
+      } finally {
+        if (saved) { try { await page.evaluate((d) => ZQ.state.import(d), saved); } catch { /* the run ends anyway */ } }
+      }
+      fails.forEach(x => failures.push(`#prepare versions: ${x}`));
+    };
     for (const ex of exams) {
       await playSet(`exam/${ex}`, ex, async () => {
         const c = await page.evaluate(() => ZQ.test.current());
@@ -886,6 +997,7 @@ const main = async () => {
       });
       if (/^mock-/.test(ex)) await mockChecks(ex);
       if (/^mock-/.test(ex)) { await drawChecks(ex); await partsExamChecks(ex); }
+      if (ex === 'mock-oa-code') await holdoutChecks(ex);
     }
 
     /* ---------- Interview bank deck and per-item timing (ENGINE-BACKLOG 456, 457): part of --routes-only ----------
@@ -1754,6 +1866,8 @@ const main = async () => {
       await sampleChecks();
       await gatingChecks();
       await provenanceChecks();
+      if (!exams.includes('mock-oa-code')) await holdoutChecks('mock-oa-code');
+      await versionChecks();
       const paceExam = fs.existsSync(path.join(CONTENT, 'exams', 'mock-sample.json')) ? 'mock-sample' : exams.includes('topic-1.5') ? 'topic-1.5' : null;
       if (paceExam) await paceExamChecks(paceExam);
     }

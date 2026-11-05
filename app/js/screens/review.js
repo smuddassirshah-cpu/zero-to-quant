@@ -760,6 +760,7 @@
     const lockOff = Z.lockedFor && Z.lockedFor(root, cid, id, `homework/${cid}/${id}`);   // prerequisite gating (ENGINE-BACKLOG 483)
     if (lockOff) return lockOff;
     const c = course(cid), lv = levelOfId(cid, id) || { n: id.split('-')[1], name: '' };
+    const perfGates = (() => { try { return !!(ZQ.prereq && ZQ.prereq.perfNeeded(cid, lv)); } catch { return false; } })();   // 549: only a rule-matched level's task gates met; any other is practice
     let alive = true, view = 'intro', handles = [], items = [], doc = null, t0 = Date.now();
     const rec = () => S().homework[key] || null;
     const stored = () => store.get(`hw.result.${key}`, null);
@@ -827,7 +828,7 @@
           <li>${I('lock', 'sm')}<span>No hints, and nothing is marked until you submit. You can change answers until then.</span></li>
           <li>${I('replay', 'sm')}<span>Items you miss join your redo queue: back after 7 days and again after 30.</span></li>
           ${items.some(isLong) ? `<li>${I('edit', 'sm')}<span>${(() => { const w = items.map((it, j) => (isLong(it) ? j + 1 : null)).filter(Boolean); return w.length === 1 ? `Item ${w[0]} is written. You mark it yourself` : `Items ${listAnd(w.map(String))} are written. You mark them yourself`; })()} against a model answer and a 10-point rubric.</span></li>` : ''}
-          ${items.some(it => it.performance) ? `<li>${I('flag', 'sm')}<span>${(() => { const w = items.map((it, j) => (it.performance ? j + 1 : null)).filter(Boolean); return `${w.length === 1 ? `Item ${w[0]} is` : `Items ${listAnd(w.map(String))} are`} the level's performance task. The level counts as met once you pass ${w.length === 1 ? 'it' : 'one'}.`; })()}</span></li>` : ''}
+          ${items.some(it => it.performance) ? `<li>${I('flag', 'sm')}<span>${(() => { const w = items.map((it, j) => (it.performance ? j + 1 : null)).filter(Boolean); return `${w.length === 1 ? `Item ${w[0]} is` : `Items ${listAnd(w.map(String))} are`} ${perfGates ? `the level's performance task. The level counts as met once you pass ${w.length === 1 ? 'it' : 'one'}.` : `${w.length === 1 ? 'a performance task' : 'performance tasks'} for practice. ${w.length === 1 ? 'It does' : 'They do'} not count towards the level being met.`}`; })()}</span></li>` : ''}
         </ul>
         <ol class="hw-ov">${items.map((it, j) => `<li><span class="hw-ov-n tnum">${j + 1}</span><span class="t-body">${esc(it.title || 'Item ' + (j + 1))}${it.performance ? ' <span class="t-caption secondary hw-perf">Performance task</span>' : ''}</span>${pips(it.difficulty || 3)}<span class="t-caption muted tnum hw-ov-m">${plural(marksOf(it), 'mark', 'marks')}</span></li>`).join('')}</ol>
         <p class="t-caption secondary">${total()} marks in all. Each item is worth its difficulty; a written item is worth 10.</p>
@@ -962,7 +963,7 @@
       const draft = session.hw[key] || store.get(`hw.draft.${key}`, null);
       items.forEach((it, j) => {
         const wrap = Z.h(`<section class="hw-item" data-kind="${esc(isLong(it) ? 'longform' : (it.widget || {}).kind || '')}" hidden>
-          <div class="hw-meta"><span class="t-overline hw-deep">Item ${j + 1} of ${items.length}${it.title ? ' · ' + esc(it.title) : ''}${it.performance ? ' · Performance task, needed for the level' : ''}</span><span class="hw-meta-r">${pips(it.difficulty || 3)}<span class="t-caption muted tnum">${plural(marksOf(it), 'mark', 'marks')}</span></span></div>
+          <div class="hw-meta"><span class="t-overline hw-deep">Item ${j + 1} of ${items.length}${it.title ? ' · ' + esc(it.title) : ''}${it.performance ? (perfGates ? ' · Performance task, needed for the level' : ' · Performance task, practice only') : ''}</span><span class="hw-meta-r">${pips(it.difficulty || 3)}<span class="t-caption muted tnum">${plural(marksOf(it), 'mark', 'marks')}</span></span></div>
           <div class="hw-w" data-host></div>
           ${isLong(it) ? `<div class="hw-mark-row" data-mark-row><button type="button" class="btn secondary" data-mark="${j}">Mark my answer</button><span class="t-caption muted">Shows the model answer and the rubric. Your working then locks.</span></div>` : '<p class="t-caption muted hw-note" data-note>No feedback until you submit.</p>'}
           <div data-verdict hidden></div>

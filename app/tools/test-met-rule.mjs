@@ -210,7 +210,7 @@ await test('acceptance: sat cold, 8 of 10 aggregate with a skill under the floor
 });
 
 /* ---------- Performance task (ENGINE-BACKLOG 529): an extra AND on every route to met ---------- */
-const withTask = (L, kind = 'code') => { C._setPerf({ [`${L.cid}/L${L.lv.n}`]: { file: `courses/${L.cid}/homework-${L.lv.n}.json`, item: 'perf-item', kind, how: kind === 'code' ? 'auto' : 'self' } }); return `${L.cid}/L${L.lv.n}`; };
+const withTask = (L, kind = 'code', gates = true) => { C._setPerf({ [`${L.cid}/L${L.lv.n}`]: { file: `courses/${L.cid}/homework-${L.lv.n}.json`, item: 'perf-item', kind, how: kind === 'code' ? 'auto' : 'self', ...(gates ? { gates: true } : {}) } }); return `${L.cid}/L${L.lv.n}`; };
 const perfRow = (kind, ok, how) => ({ id: 'perf-item', ok, how, perf: kind, difficulty: 4, skills: [] });
 const submitPerf = (L, kind, ok, how) => S.homeworkSubmitted({ course: L.cid, level: L.lv.n, id: `homework-${L.lv.n}`, results: [perfRow(kind, ok, how)], items: 1 });
 await test('performance: a level with a task is not met by a review pass at the floor until the task is passed', async () => {
@@ -246,6 +246,17 @@ await test('performance: a level without a task is unchanged (review pass meets 
   sitReview(L, good); P.sync();
   ok(P.levelMet(L.cid, L.lv.n), 'no task: met by the review as before');
   ok(P.perfPassed(L.cid, L.lv) && !P.perfNeeded(L.cid, L.lv), 'perfPassed is true when there is no task');
+});
+await test('performance: a task on a level the verb rule does not match is practice only and never gates met (549)', async () => {
+  const { L, good } = findPairs();
+  const key = withTask(L, 'derivation', false);   // a manifest row without gates: the validator did not rule-match the level
+  ok(!P.perfNeeded(L.cid, L.lv) && P.perfPassed(L.cid, L.lv), 'an ungated task is not needed and counts as passed');
+  eq(P.nodeOf(key).perf, null, 'the node carries no performance fact');
+  sitReview(L, good); P.sync();
+  ok(P.levelMet(L.cid, L.lv.n), 'the review pass alone meets the level, no self mark awaited');
+  withTask(L, 'derivation', true);   // the same row on a rule-matched level gates again
+  ok(P.perfNeeded(L.cid, L.lv) && !P.perfPassed(L.cid, L.lv), 'a gated task is needed until passed');
+  C._setPerf({});
 });
 await test('performance: a code task row in the review file records the pass (level from review-<n>)', async () => {
   const { L, D } = findPairs();

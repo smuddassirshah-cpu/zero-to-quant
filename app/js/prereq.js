@@ -102,7 +102,7 @@
   };
   /* Performance task (ENGINE-BACKLOG 529): a level whose manifest row names a task needs it passed as well. The record is state.perf["course/L<n>"],
      written when a homework or review row for the task comes back ok (how: auto, self or external). An extra AND on every route except a grandfathered record. */
-  const perfNeeded = (cid, lv) => { try { return C().perfOf(cid, lv.n) || null; } catch { return null; } };
+  const perfNeeded = (cid, lv) => { try { const t = C().perfOf(cid, lv.n); return t && t.gates ? t : null; } catch { return null; } };   // gates: the validator found the level rule-matched (549); any other task is practice only
   const perfRec = (cid, lv) => { try { return (S().perf.get() || {})[keyOfLevel(cid, lv.n)] || null; } catch { return null; } };
   const perfPassed = (cid, lv) => !perfNeeded(cid, lv) || !!perfRec(cid, lv);
   /* met by something other than a record in state.prereq.met */
@@ -178,7 +178,7 @@
   };
   const examRefs = (d) => (d && Array.isArray(d.requires) ? d.requires : []);
   /* A mock names requires at the top of its file (levels or lessons, as on a level); it is locked while one is unmet, unless opened early */
-  const examLocked = (id, d) => !rec().opened['exam/' + id] && examRefs(d).some(r => !refMet(r));
+  const examLocked = (id, d) => !rec().opened['exam/' + id] && blocking(examRefs(d)).some(r => !refMet(r));   // advisory references never lock, as on a level (548)
 
   /* ---------- What is missing ---------- */
   const testOutFacts = (cid, lv) => {
