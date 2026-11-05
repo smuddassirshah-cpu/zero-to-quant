@@ -862,3 +862,13 @@ Hours are computed in one place, `app/js/hours.js` (`ZQ.hours` in the app, `requ
 - Figures quoted in prose come from `node app/tools/curriculum-hours.mjs` (`--write` rewrites the block in `docs/curriculum.md`, `--check` also compares the stage figures in its prose). Learn's stage cards, its header and "about N months at 15 h a week" (`ZQ.hours.months`) read the same function.
 - A topic that stores 0 hours (3.2 and 3.4) is not invented: `curriculum-hours.mjs` lists the figure its lesson minutes would give beside the 0.
 
+## 15. Capstones: `capstones.json` and the role verdict (PLAN 2c item 8, ENGINE-BACKLOG 564 to 569)
+
+`app/content/capstones.json` is an optional array with one record per role (`trader`, `researcher`, `developer`, `strats`, `strats-deriv`; not `undecided`). The reviewer fills it by hand; the app only reads it. Fields: `role`, `project` (free text; the researcher's is `momentum-rep`, or another project with `"equivalentOf": "momentum-rep"`), `repo` (https URL or empty), `reviewer`, `date` (YYYY-MM-DD or empty), `rerun` (`pass`, `fail` or empty: the result of rerunning the project from a clean checkout), `defence` (notes), `external` (boolean). An all-blank record with `external: false` is valid and means "not done".
+
+A record is complete only when `external` is true, `repo`, `reviewer` and `date` are non-empty and `rerun` is `pass`. A role is ready only when every level of its required courses (`readiness.json`) is met and its record is complete: `ZQ.content.readiness.status(role)` and `.verdict(role)`. No screen may print "ready" as a role verdict from anywhere else. Exam "Mastery map estimate" lines are per-exam estimates and say so.
+
+The validator (`tools/capstone-rules.mjs`) errors on an unknown role or field, a wrong type, a duplicate role, `external: true` with a blank repo, reviewer, date or rerun, a malformed URL or date, and a researcher project that is not `momentum-rep` or its equivalent. A missing file is fine. The You screen shows the records read-only in a Capstone card.
+
+**Oa drills and code tasks.** A verified drill of pack `oa` (file `pack: "oa"` or an id starting `oa-`) counts as passing the code performance task of its level. The level is the drill's optional integer `level` (drill file or `drills/index.json` row), else the lowest level of the drill's `course` that has a gating code task (coding-int level 1 today). Self-marked and non-code tasks are unaffected.
+

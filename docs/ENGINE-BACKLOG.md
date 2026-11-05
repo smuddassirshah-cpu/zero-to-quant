@@ -1524,3 +1524,15 @@ Status block (engine pass, items 10 and 11):
 - 556, 557, 559: done. 558 and 562: scripts written, not run on `app/content/` (commands in the report).
 - 560, 561, 563: done. Topics 3.2 and 3.4 still store 0 hours; the derived figure from lesson minutes is reported, not stored.
 
+
+## Engine pass, item 8 (independent capstone; `docs/reports/engine-pass-item8.md`)
+
+564. Done (PLAN 2c item 8, F06, N08): `content/capstones.json` (optional; absent means no records) loaded by `js/content.js`; `ZQ.content.readiness.status(role)` returns required levels met (every level of the role's required courses, by `ZQ.prereq.levelMet`), the record and `ready`; `readiness.verdict(role)` is the only source of the word "ready" for a role, "Ready" only with all levels met and a complete record (`external: true`, repo, reviewer, date non-empty, `rerun: pass`), else "Not ready: capstone not recorded" or similar. `readiness.capstone`, `capstones`, `capstoneComplete`.
+565. Done: validator rule via `tools/capstone-rules.mjs`: unknown role, unknown field, wrong type, duplicate role, `external: true` with a blank repo, reviewer, date or rerun, malformed repo URL or date, researcher `project` other than `momentum-rep` without `equivalentOf: "momentum-rep"`. A missing file is not an error. `tools/test-validate-capstone.mjs` (17 cases).
+566. Done: You card "Capstone" (`data-card="capstone"`), one read-only block per role, the learner's role first, says the reviewer fills `content/capstones.json`; stacks at 390 px.
+567. Done: per-exam "% ready, from your mastery map" (Today exam card, Review card and ring label) relabelled "Mastery map estimate: N%." because it is an estimate for one exam, not a role verdict. Today shows no role verdict.
+568. Done: a verified `oa` drill (`state.drills` record `verified`) counts toward the code performance task of the coding-int level it maps to, in one place (`perfPassed` in `js/prereq.js`, via `content.perfDrillsFor`). Mapping: a drill with pack `oa` (or id `oa-...`) and `course`, to its `level` field if present (drill file or index row; the validator checks it and copies `pack` and `level` into `manifest.drills`), else the lowest level of its course with a gating code task (coding-int L1 today). Content needs no field today; add `level` to an oa drill only to map it elsewhere.
+569. Done: `tools/test-capstone.mjs` (9 tests: not ready without record, ready with one, incomplete record, verified and unverified oa drill, other drill or task kind, explicit level); playthrough `--routes-only` capstone check (fresh profile has no ready role, Today clear, You card renders, no sideways scroll). `docs/AUTHORING.md` section 15.
+
+Status block (engine pass, item 8):
+- 564 to 569: done. Main session: write the five empty records in `content/capstones.json`, regenerate `manifest.json` (adds `pack` to drill rows).

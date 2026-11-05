@@ -1914,6 +1914,46 @@ const main = async () => {
       fails.forEach(f => failures.push(`provenance: ${f}`));
     };
 
+    /* ---------- Capstone card and role verdicts (PLAN 2c item 8, F06, ENGINE-BACKLOG 564, 566): part of --routes-only ----------
+       A fresh profile: no role is ready (ZQ.content.readiness.status), Today never says "ready" as a role verdict, and the You screen draws the Capstone card
+       with one read-only block per role, the learner's own role first, no sideways scroll, and a note that the reviewer fills content/capstones.json. */
+    const capstoneChecks = async () => {
+      where = '#you (capstone)';
+      const fails = [];
+      let saved = null;
+      try {
+        saved = await page.evaluate(() => ZQ.state.export());
+        await page.evaluate(() => {
+          const d = JSON.parse(ZQ.state.export());
+          d.lessons = {}; d.reviews = {}; d.homework = {}; d.exams = {}; d.redo = []; d.skills = {}; d.flags.setupDone = true;
+          d.prereq = { met: {}, testouts: {}, opened: {}, started: {}, grandfathered: true };
+          d.profile = Object.assign(d.profile || {}, { track: 'Researcher' });
+          ZQ.state.import(d); ZQ.prereq.sync(); ZQ.content._setCapstones([]);
+        });
+        const roles = await page.evaluate(() => ['trader', 'researcher', 'developer', 'strats', 'strats-deriv'].map(r => ({ r, ready: ZQ.content.readiness.status(r).ready, v: ZQ.content.readiness.verdict(r) })));
+        roles.filter(x => x.ready || /^ready/i.test(x.v)).forEach(x => fails.push(`a fresh profile shows ${x.r} as ready`));
+        await go('today'); await page.waitForTimeout(400);
+        const today = await page.evaluate(() => (document.querySelector('.screen-today') || document.body).innerText);
+        if (/\bready\b/i.test(today)) fails.push(`Today says "ready" for a fresh profile: ${(today.match(/.{0,30}\bready\b.{0,20}/i) || [''])[0].replace(/\s+/g, ' ')}`);
+        await go('you'); await page.waitForTimeout(400);
+        const you = await page.evaluate(() => { const c = document.querySelector('[data-card="capstone"]'); return { has: !!c, text: c ? c.innerText : '', roles: c ? [...c.querySelectorAll('.yu-cp')].map(n => n.dataset.role) : [], wide: document.documentElement.scrollWidth > window.innerWidth + 1, vw: window.innerWidth }; });
+        if (!you.has) fails.push('the You screen has no Capstone card');
+        else {
+          if (you.roles.join(',') !== 'researcher,trader,developer,strats,strats-deriv') fails.push(`capstone roles in order ${you.roles.join(',')}, expected the learner's role first`);
+          if (!/content\/capstones\.json/.test(you.text)) fails.push('the Capstone card does not say the reviewer fills content/capstones.json');
+          if (/\bready\b/i.test(you.text.replace(/A role is ready only[^.]*\./i, ''))) fails.push('the Capstone card shows "ready" as a verdict');
+          if (you.wide) fails.push(`the You screen scrolls sideways with the Capstone card at ${you.vw} px`);
+        }
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} capstone  fresh profile: no role ready, Today clear of "ready", You card for ${you.roles.length} roles, no sideways scroll`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log('FAIL capstone  threw');
+      } finally {
+        if (saved) { try { await page.evaluate((d) => ZQ.state.import(d), saved); } catch { /* the run ends anyway */ } }
+      }
+      fails.forEach(f => failures.push(`capstone: ${f}`));
+    };
+
     /* Every other route once */
     if (opt.bankIds.length) await bankPlay(opt.bankIds);
     if (runRoutes) {
@@ -1958,6 +1998,7 @@ const main = async () => {
       await sampleChecks();
       await gatingChecks();
       await provenanceChecks();
+      await capstoneChecks();
       if (!exams.includes('mock-oa-code')) await holdoutChecks('mock-oa-code');
       await versionChecks();
       const paceExam = fs.existsSync(path.join(CONTENT, 'exams', 'mock-sample.json')) ? 'mock-sample' : exams.includes('topic-1.5') ? 'topic-1.5' : null;

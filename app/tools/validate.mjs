@@ -16,6 +16,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { scanO2, O2_CODES } from './o2-rules.mjs';
+import { checkCapstones } from './capstone-rules.mjs';
 import { statedMinutes, ignoreList as durationIgnore, FLOOR as DURATION_FLOOR } from './duration-prose.mjs';
 import { checkTask, howOf as perfHow, checkLevel as perfCheckLevel, matchVerb } from './perf-rules.mjs';
 const hoursLib = createRequire(import.meta.url)('../js/hours.js');   // SESSION_RANGE: the minutes each lesson session accepts (item 10)
@@ -1959,6 +1960,15 @@ else if (prepDoc.missing && PREP_FILE) err(prepFile, '', 'the file given to --pr
   }
 }
 
+/* Capstone records (ENGINE-BACKLOG 565): content/capstones.json is optional; when present its shape is checked by tools/capstone-rules.mjs */
+{
+  const cf = path.join(CONTENT, 'capstones.json');
+  if (fs.existsSync(cf)) {
+    const cr = readJSON(cf);
+    if (cr.data !== undefined && cr.data !== null) { guard(cf, () => checkCapstones(cr.data).forEach(x => err(cf, x.where, x.msg))); manifest.push('capstones.json'); }
+  }
+}
+
 /* Drills */
 const drillDir = path.join(CONTENT, 'drills');
 const idxFile = path.join(drillDir, 'index.json');
@@ -1981,6 +1991,8 @@ listJSON(drillDir).filter(f => f !== 'index.json').forEach(f => {
     if (typeof D.pace === 'number') meta.pace = D.pace;
     if (Array.isArray(D.tags)) meta.tags = D.tags;
     if (D.sample === true) meta.sample = true;
+    if (typeof D.pack === 'string') meta.pack = D.pack;                  // ENGINE-BACKLOG 568: an oa drill counts toward its level's code task
+    if (D.level !== undefined) { if (!Number.isInteger(D.level) || D.level < 1) err(file, 'level', 'level is a whole number from 1: the level of its course whose code performance task a verified oa drill counts toward'); else meta.level = D.level; }
     if (Object.keys(meta).length) drillMeta[id] = meta;
   }
   if (!listed.has(id) && !isSample) warn(file, '', 'drill is not listed in drills/index.json');

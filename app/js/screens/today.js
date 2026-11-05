@@ -348,8 +348,8 @@
 
     const C_ = 2 * Math.PI * 26;
     const examLine = passedAt.length ? `Passed with ${Math.max(...passedAt.map(pctOf))}%. Sit it again any time to check it has stuck.`
-      : attempts.length ? `Best so far ${Math.max(...attempts.map(pctOf))}%. ${examPct}% ready, from your mastery map.`
-      : `${examPct}% ready, from your mastery map. Timed, with no hints and no retries.`;
+      : attempts.length ? `Best so far ${Math.max(...attempts.map(pctOf))}%. Mastery map estimate: ${examPct}%.`
+      : `Mastery map estimate: ${examPct}%. Timed, with no hints and no retries.`;
     P.exam = topic ? `<section class="card zt-exam" data-part="exam" data-track="${topic.track || track}" aria-labelledby="zt-exam-h">
         <div class="zt-ring ${ringGrow ? 'grow' : ''}" role="img" aria-label="Readiness ${examPct}%">
           <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><circle cx="32" cy="32" r="26" class="zt-ring-track"/>

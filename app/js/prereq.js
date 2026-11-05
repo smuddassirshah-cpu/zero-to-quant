@@ -123,7 +123,9 @@
      written when a homework or review row for the task comes back ok (how: auto, self or external). An extra AND on every route except a grandfathered record. */
   const perfNeeded = (cid, lv) => { try { const t = C().perfOf(cid, lv.n); return t && t.gates ? t : null; } catch { return null; } };   // gates: the validator found the level rule-matched (549); any other task is practice only
   const perfRec = (cid, lv) => { try { return (S().perf.get() || {})[keyOfLevel(cid, lv.n)] || null; } catch { return null; } };
-  const perfPassed = (cid, lv) => !perfNeeded(cid, lv) || !!perfRec(cid, lv);
+  /* A verified oa drill mapped to the level counts toward its code task (ENGINE-BACKLOG 568; content.perfDrillsFor). */
+  const perfByDrill = (cid, lv, t) => { try { return t.kind === 'code' && C().perfDrillsFor(cid, lv.n).some(id => { const r = S().drills.get(id); return !!(r && r.verified); }); } catch { return false; } };
+  const perfPassed = (cid, lv) => { const t = perfNeeded(cid, lv); return !t || !!perfRec(cid, lv) || perfByDrill(cid, lv, t); };
   /* met by something other than a record in state.prereq.met */
   const derivedMet = (cid, lv) => perfPassed(cid, lv) && derivedMetBase(cid, lv);
   const derivedMetBase = (cid, lv) => {

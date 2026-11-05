@@ -324,9 +324,9 @@
         const note = passed ? `Passed. Best ${Math.round(b * 100)}%. You can sit it again at any time.`
           : at.length ? `Best so far ${Math.round(b * 100)}%. Pass mark ${Math.round(doc.pass * 100)}%. ${doc.minutes} min.`
           : unlocked ? `Unlocked: every course has a mastered lesson. ${doc.minutes} min, pass mark ${Math.round(doc.pass * 100)}%.`
-          : `Sit it early to test out. ${doc.minutes} min, pass mark ${Math.round(doc.pass * 100)}%. ${ready}% ready, from your mastery map.`;
+          : `Sit it early to test out. ${doc.minutes} min, pass mark ${Math.round(doc.pass * 100)}%. Mastery map estimate: ${ready}%.`;
         return `<li class="rv-ex" data-track="${esc(t.track)}">
-          <span class="rv-ring" role="img" aria-label="${ready}% ready"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="22" class="rv-ring-t"/><circle cx="28" cy="28" r="22" class="rv-ring-f" ${ready ? '' : 'opacity="0"'} stroke-dasharray="${(ringC * ready / 100).toFixed(2)} ${ringC.toFixed(2)}" transform="rotate(-90 28 28)"/></svg><span class="tnum" aria-hidden="true">${passed ? I('check', 'sm') : ready + '%'}</span></span>
+          <span class="rv-ring" role="img" aria-label="Mastery map estimate ${ready}%"><svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="28" cy="28" r="22" class="rv-ring-t"/><circle cx="28" cy="28" r="22" class="rv-ring-f" ${ready ? '' : 'opacity="0"'} stroke-dasharray="${(ringC * ready / 100).toFixed(2)} ${ringC.toFixed(2)}" transform="rotate(-90 28 28)"/></svg><span class="tnum" aria-hidden="true">${passed ? I('check', 'sm') : ready + '%'}</span></span>
           <div class="rv-ex-body"><span class="t-overline rv-deep">${esc(t.id)} ${esc(t.name)} ${sb(t)}</span><h3 class="t-h2">Topic exam</h3>
             <p class="t-caption secondary">${esc(note)}</p></div>
           <a class="btn secondary" href="#exam/${esc(id)}">${at.length ? 'Sit again' : 'Sit exam'}</a></li>`;

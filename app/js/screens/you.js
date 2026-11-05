@@ -323,6 +323,27 @@
       };
 
       /* =====================================================================
+         Capstone (ENGINE-BACKLOG 566): read-only records, one per role, the learner's role first. The reviewer fills content/capstones.json.
+         ===================================================================== */
+      const ROLE_NAME = { trader: 'Trader', researcher: 'Researcher', developer: 'Developer', strats: 'Strats', 'strats-deriv': 'Strats (derivatives)' };
+      const capstoneHTML = () => {
+        const own = C.readiness.roleKey(S.profile.get().track);
+        const order = ['trader', 'researcher', 'developer', 'strats', 'strats-deriv'];
+        const roles = order.includes(own) ? [own, ...order.filter(r => r !== own)] : order;
+        const link = (u) => (/^https:\/\//.test(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u.replace(/^https:\/\//, ''))}</a>` : esc(u));
+        const row = (k, v) => `<div class="yu-cp-r"><dt class="t-caption muted">${k}</dt><dd class="t-body">${v || '<span class="muted">Not recorded</span>'}</dd></div>`;
+        return `<div class="yu-card-h"><div><h2 class="t-h1" id="yu-cp-h">Capstone</h2>
+            <p class="t-caption secondary">A role is ready only with its required levels met and an external capstone, rerun from clean and reviewed. The reviewer fills these records in <code>content/capstones.json</code>.</p></div></div>
+          <ul class="yu-cp-list">${roles.map(r => {
+            const rec = C.readiness.capstone(r) || {}, st = C.readiness.status(r), done = !!rec.role && C.readiness.capstoneComplete(rec);
+            const label = done ? 'Capstone complete' : (rec.role && (rec.external || rec.repo || rec.reviewer || rec.date || rec.project)) ? 'Capstone incomplete' : 'Capstone not recorded';
+            return `<li class="yu-cp${r === own ? ' is-own' : ''}" data-role="${r}">
+              <div class="yu-cp-h"><span class="t-label">${ROLE_NAME[r]}${r === own ? ' (your role)' : ''}</span>
+                <span class="chip ${done ? 'correct' : 'notyet'}">${label}</span></div>
+              <dl class="yu-cp-d">${row('Project', esc(rec.project || ''))}${row('Repo', rec.repo ? link(rec.repo) : '')}${row('Reviewer', esc(rec.reviewer || ''))}${row('Date', esc(rec.date || ''))}${row('Rerun from clean', esc(rec.rerun || ''))}${row('External', rec.external === true ? 'Yes' : 'No')}${row('Defence notes', esc(rec.defence || ''))}</dl></li>`; }).join('')}</ul>`;
+      };
+
+      /* =====================================================================
          Settings and data
          ===================================================================== */
       const seg = (name, label, opts, val, help = '') => `<div class="yu-set-row yu-set-stack">
@@ -412,6 +433,7 @@
                   <p class="t-caption secondary" data-ex-sub></p></div></div>
                 <div data-card="exams"></div>
               </section>
+              <section class="card yu-card yu-cps" aria-labelledby="yu-cp-h" data-card="capstone"></section>
             </div>
           </div>
           <section class="card yu-card yu-set" id="yu-settings" aria-labelledby="yu-set-h" tabindex="-1" data-card="settings"></section>
@@ -505,6 +527,7 @@
           $('[data-ex-sub]').textContent = rows.length ? `${rows.filter(e => e.passed).length} passed, ${rows.filter(e => !e.passed).length} not passed. Open one to see marks by skill.` : 'Your topic and stage exams appear here.';
           $('[data-card="exams"]').innerHTML = examsHTML();
         },
+        capstone: () => { $('[data-card="capstone"]').innerHTML = capstoneHTML(); },
         settings: () => { $('[data-card="settings"]').innerHTML = settingsHTML(); },
       };
       const paintAll = () => Object.values(paint).forEach(f => f());
