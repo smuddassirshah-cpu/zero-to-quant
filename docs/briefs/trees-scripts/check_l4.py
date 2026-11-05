@@ -797,6 +797,128 @@ assert seeded_year(18, 0.26)[1] > 0 > seeded_year(21, 0.14)[1]
 for Kx in (95, 98, 99, 99.5, 100.5, 101, 102, 105):
     check(f"C({Kx}) shared option", bs_call(100, Kx, .05, .2, 1), call_B(100, Kx, .05, .2, 1), 1e-7)
 
+# ---- more numbers the brief states (quizzes, review-4, homework-4, exam parts) ----
+print("quiz, review and homework numbers")
+# l13 quiz and code
+check("l13 quiz BS S=K=80 s=.25 T=.25", bs_call(80, 80, 0, .25, .25), call_B(80, 80, 0, .25, .25), 1e-7)
+assert abs(rule(80, .25, .25) - 4.0) < 1e-12
+check("l13 rule error T=0.25 (rule/BS - 1)", 4.0 / bs_call(100, 100, 0, .2, .25) - 1, 4.0 / call_B(100, 100, 0, .2, .25) - 1, 1e-9)
+print("   rule error T=0.25:", round(4.0 / bs_call(100, 100, 0, .2, .25) - 1, 6), " BS(100,.2,.25)", round(bs_call(100, 100, 0, .2, .25), 4))
+check("l13 double the vol: price ratio", bs_call(100, 100, 0, .4, 1) / bs_call(100, 100, 0, .2, 1), 2.0, 0.01)
+print("   BS at 40% vol:", round(bs_call(100, 100, 0, .4, 1), 4), " ratio", round(bs_call(100, 100, 0, .4, 1) / bs_call(100, 100, 0, .2, 1), 4))
+print("   BS 1m / 1y ratio", round(bs_call(100, 100, 0, .2, 1 / 12) / bs_call(100, 100, 0, .2, 1), 4), "1/sqrt(12)", round(1 / math.sqrt(12), 4))
+# exam e-greek-signs part 3 (realised 28%)
+dg_half = 0.5 * 0.019847 * 100 ** 2
+pe = -1000 * dollar_gamma_half * (0.28 ** 2 - 0.20 ** 2) * 21 / 252
+check("exam greek-signs P&L (28% realised, 21 days, short 1,000)", pe, -1000 * 0.5 * greeks(100, 100, 0, .2, 1)[1] * 1e4 * (0.0784 - 0.04) * (21 / 252), 1e-6)
+print("   exam P&L 28%:", round(pe, 2), " with gamma 0.0198:", round(-1000 * 0.5 * 0.0198 * 1e4 * 0.0384 * 21 / 252, 2),
+      " no-half slip", round(2 * pe, 2), " vol-gap slip", round(-1000 * dollar_gamma_half * 0.08 * 21 / 252, 2), " no-time slip", round(-1000 * dollar_gamma_half * 0.0384, 2))
+# exam e-bs-hedge part 2 slips
+print("   exam digital slips: no discount", 0.6412, " d1 slip", round(math.exp(-0.015) * 0.7048, 4), " right", round(math.exp(-0.015) * 0.6412, 4))
+# exam e-atm-rule slips
+print("   exam atm-rule slips: no sqrt", 0.4 * .3 * 250, " time not root", 0.4 * .3 * .25 * 250, " 1-month by time", 15 / 3)
+# l18 transfer: short 20,000 ATM options, implied 24%, realised 18%, one year, r = 0
+gap_t = bs_call(100, 100, 0, .24, 1) - bs_call(100, 100, 0, .18, 1)
+ep_t = -expected_hedged_pnl(.24, .18)                      # long hedger at 24 implied earns the negative of this for the short
+check("l18 transfer: price gap 24 vs 18 (per option)", gap_t, ep_t, 0.01)
+print("   per option", round(gap_t, 4), " for 20,000 short options", round(20000 * gap_t, 2), " vega x gap (vega at 24%)", round(20000 * greeks(100, 100, 0, .24, 1)[2] / 100 * 6, 2))
+# review item 7: S = K = 50, s = 25%, T = 0.25, gamma .0637, a day with a 1.20 move
+gr = greeks(50, 50, 0, .25, .25)
+day_pnl = 0.5 * gr[1] * 1.2 ** 2 + gr[3] / 252
+print("   review 7: theta/day", round(gr[3] / 252, 5), " breakeven", round(50 * .25 / math.sqrt(252), 4), " day P&L per option", round(day_pnl, 5), " 10,000 options", round(10000 * day_pnl, 2))
+full = (call_B(51.2, 50, 0, .25, .25 - 1 / 252) - call_B(50, 50, 0, .25, .25)) - greeks(50, 50, 0, .25, .25)[0] * 1.2
+check("review 7: gamma+theta vs full revaluation per option", day_pnl, full, 1e-3)
+# review 8 / homework 4: digitals along the skew
+print("   hw4 digital call at 110: reading the strike's own vol (18%) as flat:", round(dig_call_flat(110, 0.18), 4), " with skew:", round(dig_call_skew(110), 4), " vega at 110:", round(S * phi(d1d2(S, 110, 0, 0.18, 1)[0]), 4))
+check("hw4: skew = flat-at-own-vol + vega x 0.002", dig_call_skew(110), dig_call_flat(110, 0.18) + S * phi(d1d2(S, 110, 0, 0.18, 1)[0]) * 0.002, 1e-12)
+# review 3 flat digital call at 105 with the shared option
+print("   review 3 slips: Phi(d2) without discount", round(Phi(d2k), 4), " put", round(dp105, 4))
+# homework 1: the rule with a rate
+cr = 100 * 0 + (0.4 * .2 * 1 * 100 + 0.5 * (100 - 100 * math.exp(-.05)))
+print("   hw1 corrected rule", round(cr, 4), "exact", round(bs_call(100, 100, .05, .2, 1), 4), "error", round(cr - bs_call(100, 100, .05, .2, 1), 4))
+# homework 5 ranking uses the l17 numbers (see above)
+# homework 7: realised 15% against implied 20%, long hedged, one year, r = 0
+gap15 = bs_call(100, 100, 0, .15, 1) - bs_call(100, 100, 0, .2, 1)
+ep15 = expected_hedged_pnl(.2, .15)
+check("hw7 price gap 15% vs 20%", gap15, ep15, 0.01)
+print("   hw7: expected P&L per option", round(gap15, 4), " vega x gap", round(greeks(100, 100, 0, .2, 1)[2] * (-0.05), 4), " daily move at 15%", round(100 * .15 / math.sqrt(252), 4), " breakeven", round(100 * .2 / math.sqrt(252), 4))
+# homework 8: S = 320, K = 320, s = 18% implied, T = 0.5, r = 0
+r8 = rule(320, .18, .5)
+b8 = bs_call(320, 320, 0, .18, .5)
+check("hw8 BS S=K=320 s=.18 T=.5", b8, call_B(320, 320, 0, .18, .5), 1e-6)
+print("   hw8: rule", round(r8, 4), " BS", round(b8, 4), " vega-rule gain for +3 points", round(r8 / .18 * .03, 4), " BS gain", round(bs_call(320, 320, 0, .21, .5) - b8, 4))
+gap8 = bs_call(320, 320, 0, .18, .5) - bs_call(320, 320, 0, .15, .5)
+ep8 = expected_hedged_pnl(.18, .15, T=.5, S=320.0, K=320.0)
+check("hw8 price gap 18 vs 15 (320, T=.5): short earns the gap", gap8, -ep8, 0.01)
+print("   hw8: per option", round(gap8, 4), " short 500 options hedged at 18% earn", round(500 * gap8, 2))
+
+# l14: gamma at its peak (T = 1) and the 3-month ATM straddle's theta for the transfer screen
+Sp1 = 100 * math.exp(-1.5 * .2 ** 2)
+check("gamma at its peak S=94.18, T=1", greeks(Sp1, 100, 0, .2, 1)[1], gamma_fd(Sp1, 100, .2, 1.0, 0.1), 1e-6)
+print("   peak gamma", round(greeks(Sp1, 100, 0, .2, 1)[1], 5), " gamma at 100:", round(gm, 5))
+stt = (call_B(100, 100, 0, .2, .25 - 1e-4) + put_B(100, 100, 0, .2, .25 - 1e-4) - call_B(100, 100, 0, .2, .25 + 1e-4) - put_B(100, 100, 0, .2, .25 + 1e-4)) / 2e-4
+check("3m ATM straddle theta per year", st[3], stt, 1e-3)
+check("10,000 straddles: theta per day", 10000 * st[3] / 252, 10000 * stt / 252, 0.1)
+print("   straddle theta/day", round(st[3] / 252, 5), " x 10,000 =", round(10000 * st[3] / 252, 2))
+check("straddle theta = 2 x call theta (r=0)", st[3], 2 * greeks(100, 100, 0, .2, .25)[3], 1e-9)
+
+# l17 code screen: weekly fixings (52), 20,000 paths, default_rng(17): vanilla and Asian by simulation against formulas
+n52, paths52 = 52, 20000
+dt52 = 1 / n52
+rng = np.random.default_rng(17)
+Z52 = rng.standard_normal((paths52, n52))
+S52 = 100 * np.exp(np.cumsum((-0.2 ** 2 / 2) * dt52 + 0.2 * math.sqrt(dt52) * Z52, axis=1))
+van52 = np.maximum(S52[:, -1] - 100, 0)
+asi52 = np.maximum(S52.mean(axis=1) - 100, 0)
+se_v, se_a = van52.std(ddof=1) / math.sqrt(paths52), asi52.std(ddof=1) / math.sqrt(paths52)
+t52 = np.arange(1, n52 + 1) * dt52
+m2_52 = (100.0 ** 2) * np.exp(0.2 ** 2 * np.minimum.outer(t52, t52)).sum() / n52 ** 2
+vol52 = math.sqrt(math.log(m2_52 / 100.0 ** 2))
+asian52_formula = lognormal_call(100.0, vol52, 100.0)
+check("l17 code: vanilla MC (seed 17) vs Black-Scholes", bs_call(100, 100, 0, .2, 1), van52.mean(), 4 * se_v)
+check("l17 code: Asian MC (seed 17, 52 fixings) vs moment matching", asian52_formula, asi52.mean(), 4 * se_a)
+print(f"   seed 17: vanilla {van52.mean():.4f} (se {se_v:.4f}), Asian {asi52.mean():.4f} (se {se_a:.4f}); formulas {bs_call(100, 100, 0, .2, 1):.4f} and {asian52_formula:.4f}")
+
+# l14 code screen: 3-month ATM call Greeks (r = 0), rounded to 4 places as the tests state them
+g3 = greeks(100, 100, 0, .2, .25)
+check("l14 code: delta T=.25", g3[0], (call_B(100.01, 100, 0, .2, .25) - call_B(99.99, 100, 0, .2, .25)) / 0.02, 1e-6)
+check("l14 code: vega per point T=.25", g3[2] / 100, (call_B(100, 100, 0, .2001, .25) - call_B(100, 100, 0, .1999, .25)) / 0.0002 / 100, 1e-5)
+check("l14 code: theta per day T=.25", g3[3] / 252, (call_B(100, 100, 0, .2, .25 - 1e-4) - call_B(100, 100, 0, .2, .25 + 1e-4)) / 2e-4 / 252, 1e-5)
+print("   T=.25 greeks [delta, gamma, vega/pt, theta/day]:", [round(g3[0], 4), round(g3[1], 4), round(g3[2] / 100, 4), round(g3[3] / 252, 4)],
+      " T=1:", [round(dl, 4), round(gm, 4), round(vg / 100, 4), round(th / 252, 4)])
+print("   long straddle T=.25 [delta, gamma, vega/pt, theta/day]:", [round(st[0], 4), round(st[1], 4), round(st[2] / 100, 4), round(st[3] / 252, 4)])
+
+# l17 homework 5: a barrier at 99 (almost the spot) is touched at once, so the knock-out is nearly worthless
+B = 99.0
+lam99 = (0 + s * s / 2) / (s * s)
+y99 = math.log(B * B / (S * K)) / (s * math.sqrt(T)) + lam99 * s * math.sqrt(T)
+c_di99 = S * (B / S) ** (2 * lam99) * Phi(y99) - K * (B / S) ** (2 * lam99 - 2) * Phi(y99 - s * math.sqrt(T))
+c_do99 = vanilla - c_di99
+rng = np.random.default_rng(44)
+o99 = np.concatenate([do_chunk(rng, 50_000)[0] for _ in range(8)])
+check("down-and-out call B=99: formula vs MC", c_do99, o99.mean(), 4 * o99.std(ddof=1) / math.sqrt(len(o99)))
+print("   D&O B=99:", round(c_do99, 4), " MC", round(o99.mean(), 4), " below the Asian", round(asian_mm, 4))
+assert c_do99 < asian_mm < vanilla < look_exact
+
+# l18 code screen: the share sits at 100 all year (r = 0): the long hedger loses the premium
+dtp = 1 / 252
+ex_flat, es_flat = 0.0, 0.0
+for k in range(252):
+    tau = 1 - k * dtp
+    d1v, _ = d1d2(100, 100, 0, .2, tau)
+    gam = phi(d1v) / (100 * .2 * math.sqrt(tau))
+    nxt = bs_call(100, 100, 0, .2, tau - dtp) if tau - dtp > 1e-12 else 0.0
+    ex_flat += nxt - bs_call(100, 100, 0, .2, tau)
+    es_flat += 0.5 * gam * 100 ** 2 * (0 - .2 ** 2 * dtp)
+check("flat path: hedged P&L is minus the premium", ex_flat, -bs_call(100, 100, 0, .2, 1), 1e-9)
+check("flat path: gamma sum vs minus the premium (last day too sharp for a second-order step)", es_flat, -bs_call(100, 100, 0, .2, 1), 0.4)
+print("   flat path: exact", round(ex_flat, 4), " gamma estimate", round(es_flat, 4))
+
+# l13 screen 5: a two-point vol rise at the money (20% to 22%) and the table's prices at 26%
+check("l13: BS gain 20% -> 22% vol", bs_call(100, 100, 0, .22, 1) - bs_call(100, 100, 0, .2, 1), call_B(100, 100, 0, .22, 1) - call_B(100, 100, 0, .2, 1), 1e-6)
+check("l18: BS at 26% vol", bs_call(100, 100, 0, .26, 1), call_B(100, 100, 0, .26, 1), 1e-6)
+print("   BS gain 20->22:", round(bs_call(100, 100, 0, .22, 1) - bs_call(100, 100, 0, .2, 1), 4), " BS at 26%:", round(bs_call(100, 100, 0, .26, 1), 4))
+
 # the plan's sentence, one more time
 check("plan check: rule 8.00 vs 7.9656", 8.0 - bs_call(100, 100, 0, .2, 1), 8.0 - 7.9656, 5e-5)
 
