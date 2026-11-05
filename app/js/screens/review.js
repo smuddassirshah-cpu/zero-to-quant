@@ -62,7 +62,7 @@
     set: (k, v) => { try { ZQ.store.set(k, v); } catch { /* storage blocked */ } },
   };
   const logReview = (seconds, source) => { const m = seconds / 60; if (m >= 0.1) { try { S().hours.log({ block: 'review', minutes: m, source }); } catch (e) { console.error(e); } } };
-  const resultRow = (r) => ({ id: r.item.id, ok: !!r.ok, difficulty: r.item.difficulty || 2, skills: r.item.skills || [], ref: r.item.ref, seconds: r.seconds, pace: r.item.pace, family: (ZQ.mock.family(r.item) || {}).id, how: S().provenance(r.item) });
+  const resultRow = (r) => ({ id: r.item.id, ok: !!r.ok, difficulty: r.item.difficulty || 2, skills: r.item.skills || [], ref: r.item.ref, seconds: r.seconds, pace: r.item.pace, family: (ZQ.mock.family(r.item) || {}).id, how: S().provenance(r.item), ...(r.item.performance ? { perf: r.item.performance } : {}) });
   /* The rows ZQ.mock.pacing reads: one per answered item, numbered as the summary lists them */
   const paceRows = (items, res) => items.map((it, j) => { const r = res[j], f = ZQ.mock.family(it, skillNames()); return r && typeof r.seconds === 'number' ? { label: String(j + 1), seconds: r.seconds, pace: it.pace, family: f && f.id, familyLabel: f && f.label } : null; }).filter(Boolean);
   /* Practice and weekly answers move skill scores and the streak's problem count (no XP, no MP) */
@@ -715,7 +715,8 @@
         const links = [...new Map(missed.map(where).filter(Boolean).map(l => [l.id, l])).values()].map(l => `<a href="#lesson/${Z.esc(cid)}/${Z.esc(l.id)}">${Z.esc(l.title)}</a>`);
         return { badges: [[`${right} of ${items.length}`, 'right'], [need, 'needed to pass']],
           lines: items.map((it, j) => (ok[j] ? '' : (where(it) ? `Revisit ${where(it).title}` : ''))),
-          note: passed ? `Level ${n} now counts as met. What depends on it is open.`
+          note: passed && P && lv && P.perfNeeded(cid, lv) && !P.perfPassed(cid, lv) ? `Test passed, but level ${n} has a performance task (in its homework or review) that is not passed yet. It counts as met once you pass it.`
+            : passed ? `Level ${n} now counts as met. What depends on it is open.`
             : right >= need ? `Not passed: enough right, but too few on ${low.map(sk => nm[sk] || sk).join(', ')}. You can retake it after 24 hours.${links.length ? ' Revisit: ' + links.join(', ') + '.' : ''}`
             : `Not passed. You can retake it after 24 hours.${links.length ? ' Revisit: ' + links.join(', ') + '.' : ''}` };
       },
@@ -910,7 +911,7 @@
         graded.push({ r, got, answered: answered(j) });
         if (h) { h.step.lock(); if (answered(j)) h.step.mark(Object.assign({}, r, { final: true })); }
       }
-      const results = items.map((it, j) => ({ id: it.id, ok: !!graded[j].r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], how: S().provenance(it), ref: { course: cid, lesson: id, item: it.id } }));
+      const results = items.map((it, j) => ({ id: it.id, ok: !!graded[j].r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], how: S().provenance(it), ...(it.performance ? { perf: it.performance } : {}), ref: { course: cid, lesson: id, item: it.id } }));
       const selfMarks = {};
       items.forEach((it, j) => { if (isLong(it)) { const v = handles[j] ? handles[j].value() : {}; selfMarks[it.id] = { score: (v && v.score) || 0, ticks: (v && v.ticks) || [], of: marksOf(it) }; } });
       if (!rec()) S().homeworkAssigned({ course: cid, level: lv.n, dueDays: doc.dueDays || 7 });

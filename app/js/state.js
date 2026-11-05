@@ -49,6 +49,7 @@
     hours: [],
     streak: { current: 0, best: 0, lastDay: null, restDays: 0, restEarnedAt: 0, days: {}, count: { day: null, problems: 0 } },
     flags: { setupDone: false, streakGoal: null },
+    perf: {},   // performance tasks passed (ENGINE-BACKLOG 529): "course/L<n>" -> { item, kind, how, at }; sticky, read by the met rule
     prereq: { met: {}, testouts: {}, opened: {}, started: {}, grandfathered: false },   // prerequisite gating (ENGINE-BACKLOG 481): levels recorded met, test-out attempts, levels opened early
   });
   const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
@@ -303,11 +304,27 @@
     const kept = !!(prev && prev.passedAuto);
     doc.reviews[key] = { score: correct, items: total, at: now(), passed: !!((prev && prev.passed) || (total > 0 && correct >= Math.ceil(total * pass - 1e-9))),
       passedAuto: kept || metNow, essential, bySkill, ...(kept ? (prev.passBySkill ? { passBySkill: prev.passBySkill } : {}) : metNow ? { passBySkill: bySkill } : {}) };
+    perfFrom(course, Number((String(id).match(/(\d+)$/) || [])[1]) || null, results);
     const redo = list.filter(x => !x.ok).map(x => redoAdd({ kind: 'quiz', ref: x.ref || { course, lesson: id, item: x.id }, skills: x.skills, difficulty: x.difficulty }));
     logSeconds('main', seconds, 'review');
     const qualified = touch();
     changed('reviews');
     return { xp, mp, redo, qualified };
+  };
+
+  /* Performance task (ENGINE-BACKLOG 529): a result row carrying `perf` (the item's kind) that came back ok records the level's task passed.
+     how is the row's own provenance: auto (code, numeric data), self (the rubric mark) or external. Sticky: a later miss never removes it. */
+  const perfPass = ({ course, level, item, kind, how } = {}) => {
+    if (!course || !level) return null;
+    if (!isObj(doc.perf)) doc.perf = {};
+    const key = `${course}/L${level}`;
+    if (doc.perf[key]) return doc.perf[key];
+    doc.perf[key] = { item: item || null, kind: kind || null, how: how === 'self' || how === 'external' ? how : 'auto', at: now() };
+    changed('perf');
+    return doc.perf[key];
+  };
+  const perfFrom = (course, level, results) => {
+    (Array.isArray(results) ? results : []).forEach(x => { if (x && x.perf && x.ok) perfPass({ course, level, item: x.id, kind: x.perf, how: howOf(x) }); });
   };
 
   const homeworkAssigned = ({ course, level, dueDays = 7 } = {}) => {
@@ -330,6 +347,7 @@
     const xp = repeat ? 0 : XP.homework + XP.homeworkItem * list.filter(x => x.ok && !isSelf(x)).length;   // self-ticked items earn no item XP
     doc.xp += xp; doc.mp += mp;
     Object.assign(rec, { submitted: true, submittedAt: now(), score: correct, items: items || list.length, selfMarks });
+    perfFrom(course, level, results);
     const redo = list.filter(x => !x.ok).map(x => redoAdd({ kind: 'homework', ref: x.ref || { course, lesson: id || 'homework-' + level, item: x.id }, skills: x.skills, difficulty: x.difficulty }));
     logSeconds('main', seconds, 'homework');
     const qualified = touch();
@@ -632,6 +650,7 @@
     get exams() { return doc.exams; },
     get skills() { return doc.skills; },
     get selfMarked() { return doc.selfMarked; },
+    perf: ns('perf', { pass: perfPass, get: () => doc.perf }),
     profile: ns('profile', { set: profileSet, get: () => doc.profile }),
     settings: ns('settings', { set: settingsSet, get: () => doc.settings }),
     flags: ns('flags', { set: flagsSet, get: () => doc.flags }),

@@ -48,5 +48,15 @@
     return `<button type="button" class="opt-card wd-opt" role="${multi ? 'checkbox' : 'radio'}" aria-checked="false" data-id="${Z.esc(opt.id)}" data-key="${index + 1}">${multi ? '<span class="wd-check" aria-hidden="true"></span>' : ''}<span class="wd-opt-body">${body}</span><span class="wd-badge" aria-hidden="true"></span></button>`;
   };
 
-  Z.widgets = { register, create, kinds, parseNum, within, sameSet, shuffle, normExpr, optionCard };
+  /* Data panel (ENGINE-BACKLOG 529, performance task "data"): a numeric or longform widget with spec.data { "name.csv": "content/data/..." } shows each file
+     as a download link and its first rows, so the learner can read it into whatever tool they use. Returns an element, or null without data. */
+  const dataPanel = (spec) => {
+    const map = spec && spec.data && typeof spec.data === 'object' ? spec.data : null, names = map ? Object.keys(map) : [];
+    if (!names.length) return null;
+    const el = Z.h(`<details class="wd-code-data wd-data" open><summary class="t-caption">Data file${names.length > 1 ? 's' : ''}</summary><div class="wd-code-data-b t-caption">${names.map(n => `<div class="wd-code-data-f"><p><a href="${Z.esc(map[n])}" download="${Z.esc(n)}">${Z.esc(n)}</a></p><pre class="wd-data-rows" data-n="${Z.esc(n)}">Loading the first rows...</pre></div>`).join('')}</div></details>`);
+    if (Z.content && Z.content.dataFiles) Z.content.dataFiles(map).then(d => { el.querySelectorAll('[data-n]').forEach(pre => { const t = String(d[pre.dataset.n] || ''); const rows = t.split('\n'); pre.textContent = rows.slice(0, 6).join('\n') + (rows.length > 6 ? `\n... ${rows.length - 1} rows in all` : ''); }); }, () => { el.querySelectorAll('[data-n]').forEach(pre => { pre.textContent = 'The file could not be loaded. Use the link.'; }); });
+    return el;
+  };
+
+  Z.widgets = { register, create, dataPanel, kinds, parseNum, within, sameSet, shuffle, normExpr, optionCard };
 })();

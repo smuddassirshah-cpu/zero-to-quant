@@ -1452,3 +1452,11 @@ Status block (engine pass O2):
 
 Status block (engine pass, item 4):
 - 528 (met rule rewrite, N02, N03): done.
+
+## Engine pass, item 5 (performance tasks)
+
+529. Done (PLAN 2c item 5, N07): the performance-task kind. (1) An item in a level's homework (or review) carries `"performance": "code" | "derivation" | "aloud" | "data"`, built on `code`, an empty-box `longform`, a timed `longform` with follow-ups, and a `numeric` or `longform` that reads a data file; `app/tools/perf-rules.mjs` holds the shapes and the verb rule, and `validate.mjs` applies them (`perfItem` per item, `perfLevel` per level). (2) The verb rule reads the lesson files' `objectives`: 111 written levels match (Stage 0: 4, Stage 1: 63, Stage 2: 22, Stage 3: 22). (3) `app/tools/perf-pending.json` grandfathers those 111 (`node tools/perf-pending.mjs --write | --prune`); a matched level without a task and not on the list is an error, a listed level with a task warns "remove from perf-pending". (4) Met hook: `state.perf["course/L<n>"] = { item, kind, how, at }` written by `ZQ.state.perf.pass` (called from `homeworkSubmitted` and `reviewFinished` for rows carrying `perf`); `manifest.perf` tells `ZQ.content.perfOf` which levels need one; `ZQ.prereq.derivedMet` and a `testout` met record need `perfPassed` as an extra AND; the locked card and the test-out note say so. (5) Engine support: longform `seconds` (aloud clock) and `followUps`, a data panel (`ZQ.widgets.dataPanel`) on `numeric` and `longform`. (6) Tests: `tools/test-validate-perf.mjs` (33 cases under `tools/fixtures/perf/`), 6 new cases in `tools/test-met-rule.mjs`. Documented in AUTHORING sections 5, 7 and 11; report `docs/reports/engine-pass-item5.md`.
+
+Status block (engine pass, item 5):
+- 529 (performance tasks, N07): done. Pilots (one level each in coding-int, ito, proof, research-int) remain for a content agent; the main session prunes perf-pending as tasks land.
+

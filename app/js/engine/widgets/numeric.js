@@ -17,6 +17,7 @@
       <p class="t-caption wd-help" hidden>Type a number, a fraction such as 3/4, or a decimal such as 0.75.</p>
       <p class="t-caption wd-accept" hidden></p>
     </div>`);
+    const dp = Z.widgets.dataPanel(spec); if (dp) el.prepend(dp);   // performance task "data": the file to read
     host.append(el);
     const field = el.querySelector('.field'), input = el.querySelector('input'), help = el.querySelector('.wd-help'), acc = el.querySelector('.wd-accept');
     let undoWhy = null;

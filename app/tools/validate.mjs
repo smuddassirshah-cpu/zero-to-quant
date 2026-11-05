@@ -16,6 +16,7 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { scanO2, O2_CODES } from './o2-rules.mjs';
+import { checkTask, howOf as perfHow, checkLevel as perfCheckLevel, matchVerb } from './perf-rules.mjs';
 const cmap = createRequire(import.meta.url)('../js/engine/canvas/complex-map.js'); // { compile }: formula check for complex-map (item 432)
 const tradeSim = createRequire(import.meta.url)('../js/engine/widgets/trade.js'); // { norm, play, ... }: the trade widget's game, so the authored strategy is played against the benchmark (item 459)
 const interleaveEngine = createRequire(import.meta.url)('../js/engine/canvas/interleave.js'); // { check, idsOf, ... }: the interleave canvas's spec rules, schedule replay and enumeration limit (item 471)
@@ -1111,6 +1112,17 @@ const checkPace = (file, where, v) => {
   else if (v > 1800) warn(file, where, `pace ${v} is over 30 minutes: it is in seconds`);
 };
 
+/* Performance task (ENGINE-BACKLOG 529, docs/AUTHORING.md section 5): the shape of one item; the level rules run in the course loop (tools/perf-rules.mjs) */
+const perfItem = (file, where, it, ctx) => {
+  if (!ctx.perf) { err(file, `${where}.performance`, 'performance belongs on a homework or level-review item'); return; }
+  checkTask(it).forEach(m => err(file, `${where}.performance`, m));
+  const s = isObj(it.widget) ? it.widget : it;
+  if (it.performance === 'data' && s.data != null) dataFiles(file, isObj(it.widget) ? `${where}.widget` : where, s);
+  if (it.performance === 'aloud') {
+    const x = it.kind === 'longform' ? it : it.widget, at = it.kind === 'longform' ? where : `${where}.widget`;
+    if (isObj(x) && Array.isArray(x.followUps)) x.followUps.forEach((f, i) => checkText(file, `${at}.followUps[${i}]`, f));
+  }
+};
 /* An item: a problem screen without hints (quiz, review, homework, exam, bank) */
 const checkItem = (file, where, it, ctx) => {
   if (!isObj(it)) { err(file, where, 'item must be an object'); return null; }
@@ -1122,6 +1134,7 @@ const checkItem = (file, where, it, ctx) => {
   if (typeof it.prose === 'string' && it.prose.trim() && typeof (it.prompt || (isObj(it.widget) && it.widget.kind === 'longform' && it.widget.prompt)) === 'string' && String(it.prompt || it.widget.prompt).trim()) warn(file, where, 'this item has both prose and prompt: prose replaces prompt on screen, so the prompt is never shown (merge them into one)');
   if (ctx.skillsRequired && (!Array.isArray(it.skills) || !it.skills.length)) err(file, `${where}.skills`, 'name at least one skill');
   (it.skills || []).forEach(s => { if (ctx.skills && !ctx.skills.has(s)) err(file, `${where}.skills`, `unknown skill "${s}"`); });
+  if (it.performance !== undefined) perfItem(file, where, it, ctx);
   if (it.parts !== undefined) return checkParts(file, where, it, ctx);
   if (it.kind === 'longform' || (it.widget && it.widget.kind === 'longform')) {
     if (!ctx.allowLongform) err(file, where, 'longform items belong in homework and exams');
@@ -1328,7 +1341,7 @@ const checkSet = (file, kind, courseId, id, level, doc, course) => {
   const items = Array.isArray(doc.items) ? doc.items : [];
   const [lo, hi, nlo, nhi] = kind === 'review' ? [2, 4, 6, 10] : [3, 5, 6, 12];
   if (items.length < nlo || items.length > nhi) err(file, 'items', `${nlo} to ${nhi} items (found ${items.length})`);
-  const kinds = items.map((it, i) => checkItem(file, `items[${i}]`, it, { lo, hi, label: kind, skills, skillsRequired: true, allowLongform: kind === 'homework' }));
+  const kinds = items.map((it, i) => checkItem(file, `items[${i}]`, it, { lo, hi, label: kind, skills, skillsRequired: true, allowLongform: kind === 'homework', perf: true }));
   const qids = new Set(); items.forEach((it, i) => { if (it && it.id) { if (qids.has(it.id)) err(file, `items[${i}].id`, `duplicate id "${it.id}"`); qids.add(it.id); } });
   if (kind === 'homework') {
     if (!items.some(it => it && it.difficulty === 5)) err(file, 'items', 'homework needs at least one item at difficulty 5');
@@ -1640,6 +1653,26 @@ Object.entries(C.courses || {}).forEach(([id, c]) => {
   checkText(curFile, `courses.${id}.description`, c.description);
 });
 
+/* Performance tasks (ENGINE-BACKLOG 529): the verb rule per written level, the one-task rule, the grandfather list (tools/perf-pending.json) and the manifest rows */
+let perfPending = new Set(); try { const j = JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'perf-pending.json'), 'utf8')); perfPending = new Set(Array.isArray(j.levels) ? j.levels : []); } catch { /* none: nothing is grandfathered */ }
+const perfManifest = {};   // "course/L<n>" -> { file, item, kind, how }: js/content.js reads it so the met rule needs no extra fetch
+const perfStats = { matched: 0, withTask: 0, pending: 0, levels: new Set() };
+const perfLevel = (file, cid, n, objs, lessonsWritten, sets) => {
+  const key = `${cid}/L${n}`; perfStats.levels.add(key);
+  const written = lessonsWritten && sets.review && sets.homework;   // only a written level is held to the rule; a half-written one is not yet
+  const tasks = [];
+  ['review', 'homework'].forEach(k => { const st = sets[k]; if (st && Array.isArray(st.data.items)) st.data.items.forEach(it => { if (isObj(it) && it.performance !== undefined) tasks.push({ id: it.id, file: st.file, it }); }); });
+  const stage = (cur.topics.get(cur.courseTopic[cid]) || {}).stage;
+  const matched = written ? matchVerb(cid, stage, objs) : null;
+  if (matched) perfStats.matched++;
+  const r = perfCheckLevel({ key, matched, tasks, pending: perfPending.has(key) });
+  r.errors.forEach(m => err(file, 'levels', m)); r.warnings.forEach(m => warn(file, 'levels', m));
+  if (r.pendingNoTask) perfStats.pending++;
+  if (tasks.length) perfStats.withTask++;
+  if (tasks.length === 1 && KINDS_OK(tasks[0].it)) perfManifest[key] = { file: path.relative(CONTENT, tasks[0].file).split(path.sep).join('/'), item: tasks[0].id, kind: tasks[0].it.performance, how: perfHow(tasks[0].it) };
+};
+const KINDS_OK = (it) => ['code', 'derivation', 'aloud', 'data'].includes(it.performance);
+
 /* Courses */
 const manifest = [];
 const selfExams = [];   // exam ids that hold a self-marked item or a check part (same test as ZQ.state.provenance); js/content.js reads it to split old exam passes
@@ -1689,6 +1722,7 @@ Object.keys(C.courses || {}).forEach(cid => {
     if (lv.n !== i + 1) err(file, `${at}.n`, `levels are numbered from 1 in order (expected ${i + 1})`);
     if (!lv.name) err(file, `${at}.name`, 'required field missing');
     checkText(file, `${at}.name`, lv.name);
+    const objs = [], sets = {}; let lessonsWritten = true;   // item 529: the level's lesson objectives and its review and homework, for the performance-task rule
     const ls = Array.isArray(lv.lessons) ? lv.lessons : [];
     if (ls.length < 4 || ls.length > 6) err(file, `${at}.lessons`, `4 to 6 lessons per level (found ${ls.length})`);
     ls.forEach(l => {
@@ -1701,7 +1735,8 @@ Object.keys(C.courses || {}).forEach(cid => {
       else { checkText(file, `lessonNames.${l}`, name); if (name.includes('$')) err(file, `lessonNames.${l}`, 'keep maths out of lesson names (they show as plain text)'); }
       checkText(file, `lessonObjectives.${l}`, (D.lessonObjectives || {})[l]);
       const lf = path.join(dir, `${l}.json`), lr = readJSON(lf);
-      if (lr.missing) { unwritten.push(l); return; }
+      if (lr.missing) { unwritten.push(l); lessonsWritten = false; return; }
+      if (lr.data && Array.isArray(lr.data.objectives)) objs.push(...lr.data.objectives.filter(o => typeof o === 'string'));
       written.push(l); manifest.push(`courses/${cid}/${l}.json`);
       if (noteSample(lf, `courses/${cid}/${l}.json`, lr.data)) err(lf, 'sample', 'a sample file cannot be on a course map: leave it out of course.json');
       if (lr.data) guard(lf, () => checkLesson(lf, cid, l, lr.data, D).forEach(s => usedSkills.add(s)));
@@ -1713,8 +1748,9 @@ Object.keys(C.courses || {}).forEach(cid => {
       if (sr.missing) { if (kind === 'review') reviewsMissing++; else homeworkMissing++; return; }
       manifest.push(`courses/${cid}/${id}.json`);
       if (noteSample(sf, `courses/${cid}/${id}.json`, sr.data)) err(sf, 'sample', 'a sample file cannot be on a course map: leave it out of course.json');
-      if (sr.data) guard(sf, () => checkSet(sf, kind, cid, id, i + 1, sr.data, D));
+      if (sr.data) { guard(sf, () => checkSet(sf, kind, cid, id, i + 1, sr.data, D)); sets[kind] = { file: sf, id, data: sr.data }; }
     });
+    guard(file, () => perfLevel(file, cid, lv.n, objs, lessonsWritten, sets));
   });
   listJSON(dir).forEach(f => {
     if (referenced.has(f)) return;
@@ -1731,6 +1767,10 @@ Object.keys(C.courses || {}).forEach(cid => {
   writtenByCourse.set(cid, new Set(written));
   summary.push({ cid, topic: meta.topic, lessons: lessonTotal, levels: levels.length, written: written.length, unwritten, reviews: levels.length - reviewsMissing, homework: levels.length - homeworkMissing });
 });
+
+/* perf-pending.json: a key that is not a level is stale; one count line for the rest */
+[...perfPending].filter(k => !perfStats.levels.has(k)).forEach(k => warn(path.join(path.dirname(fileURLToPath(import.meta.url)), 'perf-pending.json'), k, 'not a level on any course map: remove it'));
+if (perfStats.pending) warn('tools/perf-pending.json', '', `${perfStats.pending} rule-matched level${perfStats.pending === 1 ? '' : 's'} have no performance task yet (grandfathered; matched ${perfStats.matched}, with a task ${perfStats.withTask}); see docs/AUTHORING.md section 5`);
 
 /* Exams */
 const examDir = path.join(CONTENT, 'exams');
@@ -2085,7 +2125,7 @@ if (SUMMARY) {
 
 if (!errors.length && WRITE_MANIFEST) {
   const mf = path.join(CONTENT, 'manifest.json');
-  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
+  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. perf lists the levels that carry a performance task. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), perf: Object.fromEntries(Object.keys(perfManifest).sort().map(k => [k, perfManifest[k]])), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }

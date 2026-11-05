@@ -100,8 +100,14 @@
     if (!ess || !ess.length || !seenAll(ess)) return false;
     return C().examAutoAttempts(examId).some(a => S().floorGaps(a.bySkillAuto || a.bySkill || {}, ess, SKILL_FLOOR).length === 0);
   };
+  /* Performance task (ENGINE-BACKLOG 529): a level whose manifest row names a task needs it passed as well. The record is state.perf["course/L<n>"],
+     written when a homework or review row for the task comes back ok (how: auto, self or external). An extra AND on every route except a grandfathered record. */
+  const perfNeeded = (cid, lv) => { try { return C().perfOf(cid, lv.n) || null; } catch { return null; } };
+  const perfRec = (cid, lv) => { try { return (S().perf.get() || {})[keyOfLevel(cid, lv.n)] || null; } catch { return null; } };
+  const perfPassed = (cid, lv) => !perfNeeded(cid, lv) || !!perfRec(cid, lv);
   /* met by something other than a record in state.prereq.met */
-  const derivedMet = (cid, lv) => {
+  const derivedMet = (cid, lv) => perfPassed(cid, lv) && derivedMetBase(cid, lv);
+  const derivedMetBase = (cid, lv) => {
     if (reviewPassed(cid, lv)) return true;
     const co = doc(cid);
     if (co && co.topic && examPassedAuto('topic-' + co.topic) && examMeets('topic-' + co.topic, cid, lv)) return true;
@@ -112,7 +118,8 @@
   const levelMet = (cid, n) => {
     const lv = levelOf(cid, n);
     if (!lv) return true;                         // an unknown reference never blocks (the validator reports it)
-    if (rec().met[keyOfLevel(cid, n)]) return true;
+    const m = rec().met[keyOfLevel(cid, n)];
+    if (m && (m.how !== 'testout' || perfPassed(cid, lv))) return true;   // a test-out pass is a badge until the performance task is passed
     return derivedMet(cid, lv);
   };
   const lessonMet = (cid, id) => {
@@ -194,6 +201,7 @@
       lessonsTotal: (lv.lessons || []).length, lessonsWritten: ws.length, lessonsDone: ws.filter(id => lessonDone(p.course, id)).length,
       refs: p.kind === 'level' ? levelRefs(p.course, p.n) : lessonRefs(p.course, p.id),
       testOut: testOutFacts(p.course, lv),
+      perf: perfNeeded(p.course, lv) ? { ...perfNeeded(p.course, lv), passed: perfPassed(p.course, lv) } : null,   // ENGINE-BACKLOG 529: the level's performance task and whether it is passed
     };
     if (p.kind === 'lesson') {
       const x = C().courseLessons(p.course).find(y => y.kind === 'lesson' && y.id === p.id);
@@ -303,7 +311,7 @@
   };
 
   const api = {
-    strict, parse, levelRefs, lessonRefs, examRefs, examLocked, levelMet, lessonMet, refMet, levelLocked, lessonLocked, itemLocked, courseLocked, openedEarly, startedLevel,
+    strict, parse, levelRefs, lessonRefs, examRefs, examLocked, perfNeeded, perfPassed, perfRec, levelMet, lessonMet, refMet, levelLocked, lessonLocked, itemLocked, courseLocked, openedEarly, startedLevel,
     advisory, advisoryFor, advisoryForLevel, missingFor, missingForLevel, missingRefs, nodeOf, launchOf, testOutFacts, refreshFor, sync, unlock, unlockRefs, levelHolding, keyOfLevel,
     openedCount: () => Object.keys(rec().opened).length,
     PASS, SKILL_FLOOR, TESTOUT_N, RETAKE_H, REFRESH_D,

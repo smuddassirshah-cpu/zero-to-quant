@@ -209,6 +209,77 @@ await test('acceptance: sat cold, 8 of 10 aggregate with a skill under the floor
   ok(P.levelMet(L.cid, L.lv.n), 'at the floor on every skill');
 });
 
+/* ---------- Performance task (ENGINE-BACKLOG 529): an extra AND on every route to met ---------- */
+const withTask = (L, kind = 'code') => { C._setPerf({ [`${L.cid}/L${L.lv.n}`]: { file: `courses/${L.cid}/homework-${L.lv.n}.json`, item: 'perf-item', kind, how: kind === 'code' ? 'auto' : 'self' } }); return `${L.cid}/L${L.lv.n}`; };
+const perfRow = (kind, ok, how) => ({ id: 'perf-item', ok, how, perf: kind, difficulty: 4, skills: [] });
+const submitPerf = (L, kind, ok, how) => S.homeworkSubmitted({ course: L.cid, level: L.lv.n, id: `homework-${L.lv.n}`, results: [perfRow(kind, ok, how)], items: 1 });
+await test('performance: a level with a task is not met by a review pass at the floor until the task is passed', async () => {
+  const { L, good } = findPairs();
+  withTask(L);
+  sitReview(L, good); P.sync();
+  ok(!P.levelMet(L.cid, L.lv.n), 'review at the floor, task not passed: not met');
+  ok(P.perfNeeded(L.cid, L.lv) && !P.perfPassed(L.cid, L.lv), 'perfNeeded and not passed');
+  eq(P.nodeOf(`${L.cid}/L${L.lv.n}`).perf.passed, false, 'node fact says not passed');
+  submitPerf(L, 'code', false, 'auto'); P.sync();
+  ok(!P.levelMet(L.cid, L.lv.n), 'a failed attempt does not meet it');
+  submitPerf(L, 'code', true, 'auto'); P.sync();
+  ok(P.levelMet(L.cid, L.lv.n), 'task passed and review at the floor: met');
+  const rec = saved().perf[`${L.cid}/L${L.lv.n}`];
+  ok(rec && rec.how === 'auto' && rec.kind === 'code' && rec.item === 'perf-item', 'stored as { item, kind, how: auto }');
+  submitPerf(L, 'code', false, 'auto');
+  ok(P.levelMet(L.cid, L.lv.n) && saved().perf[`${L.cid}/L${L.lv.n}`].how === 'auto', 'a later miss never removes it');
+  C._setPerf({});
+});
+await test('performance: the task alone meets nothing, and a self mark is stored how: self', async () => {
+  const { L } = findPairs();
+  withTask(L, 'derivation');
+  submitPerf(L, 'derivation', true, 'self'); P.sync();
+  eq(saved().perf[`${L.cid}/L${L.lv.n}`].how, 'self', 'self mark recorded as self');
+  ok(!P.levelMet(L.cid, L.lv.n), 'a self mark never meets a level alone (no review pass)');
+  sitReview(L, []); P.sync();
+  ok(P.levelMet(L.cid, L.lv.n), 'with the review pass as well it is met');
+  C._setPerf({});
+});
+await test('performance: a level without a task is unchanged (review pass meets it, a perf row elsewhere is ignored)', async () => {
+  const { L, good } = findPairs();
+  C._setPerf({});
+  sitReview(L, good); P.sync();
+  ok(P.levelMet(L.cid, L.lv.n), 'no task: met by the review as before');
+  ok(P.perfPassed(L.cid, L.lv) && !P.perfNeeded(L.cid, L.lv), 'perfPassed is true when there is no task');
+});
+await test('performance: a code task row in the review file records the pass (level from review-<n>)', async () => {
+  const { L, D } = findPairs();
+  withTask(L);
+  const rows = D.items.map((it, i) => ({ id: it.id || 'q' + i, ok: true, difficulty: 3, skills: it.skills || [], ...(i === 0 ? { perf: 'code', how: 'auto' } : {}) }));
+  S.reviewFinished({ course: L.cid, id: L.lv.review, results: rows, items: rows.length }); P.sync();
+  ok(saved().perf[`${L.cid}/L${L.lv.n}`], 'recorded');
+  ok(P.levelMet(L.cid, L.lv.n), 'review passed and task passed: met');
+  C._setPerf({});
+});
+await test('performance: test-out is a badge until the task is passed, then the level is met', async () => {
+  const { L } = findPairs();
+  const key = withTask(L);
+  S.prereq.testout({ key, score: 6, items: 6, passed: true }); P.sync();
+  ok(S.prereq.get().testouts[key].passed, 'test-out recorded');
+  ok(!P.levelMet(L.cid, L.lv.n), 'test-out passed, task not passed: not met');
+  submitPerf(L, 'code', true, 'auto'); P.sync();
+  ok(P.levelMet(L.cid, L.lv.n), 'task passed: the test-out now meets it');
+  C._setPerf({});
+});
+await test('performance: a topic exam pass is a badge for a level with a task until the task is passed', async () => {
+  const { A, topic, ea } = needsExam();
+  await C.loadEssentials(A.cid);
+  const key = withTask(A);
+  const rows = ea.map((s, i) => ({ id: 'x' + i, ok: true, difficulty: 3, skills: [s] }));
+  S.examFinished({ id: 'topic-' + topic, score: rows.length, items: rows.length, passed: true, results: rows, bySkill: Object.fromEntries(rows.map(r => [r.skills[0], [1, 1]])) });
+  P.sync();
+  ok(C.examPassedAuto('topic-' + topic), 'exam counts as passed');
+  ok(!P.levelMet(A.cid, A.lv.n), 'covered, but the task is not passed: not met');
+  submitPerf(A, 'code', true, 'auto'); P.sync();
+  ok(P.levelMet(A.cid, A.lv.n), `task passed (${key}): met`);
+  C._setPerf({});
+});
+
 const pass = results.filter(Boolean).length;
 console.log(`${pass === results.length ? 'PASS' : 'FAIL'} summary: ${pass} of ${results.length} tests passed`);
 process.exit(pass === results.length ? 0 : 1);

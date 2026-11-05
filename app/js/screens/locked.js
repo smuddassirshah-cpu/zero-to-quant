@@ -19,6 +19,7 @@
       const bits = [`${nd.lessonsDone} of ${nd.lessonsWritten} lessons finished`];
       if (nd.lessonsWritten < nd.lessonsTotal) bits.push(`${nd.lessonsTotal - nd.lessonsWritten} not yet written`);
       bits.push(nd.reviewWritten ? 'review not passed' : 'no review written yet');
+      if (nd.perf && !nd.perf.passed) bits.push('performance task not passed');   // ENGINE-BACKLOG 529
       st = nd.lessonsWritten === 0 && !nd.reviewWritten ? 'not yet written' : bits.join(', ');
     }
     const t = nd.testOut;

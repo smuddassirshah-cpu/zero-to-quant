@@ -5,6 +5,8 @@
    ok when it is 7 or more. Spec fields: prompt (optional, shown above), model (markdown with KaTeX), rubric[].
    The help line names the button that opens the marking: "Check" in set mode, "Mark my answer" in exam mode (the
    homework page, which renders items in exam mode, has a Mark my answer button under each written item).
+   Performance task (ENGINE-BACKLOG 529): spec.seconds makes it an aloud answer (a clock with a Start button, a guide that never locks, the box is
+   optional notes) and spec.followUps lists the interviewer's next questions, shown with the model answer; spec.data adds the data panel.
    Provenance (N01): grade() carries how: 'self'; result rows for longform items are stored as self and never reach
    the mastery map or a prerequisite (docs/AUTHORING.md, Result provenance). */
 (function () {
@@ -13,7 +15,8 @@
   const PASS = 7;
 
   Z.widgets.register('longform', (host, spec, ctx) => {
-    const rubric = spec.rubric || [];
+    const rubric = spec.rubric || [], destroyers = [];
+    const fmt = (n) => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`;
     const total = rubric.reduce((a, r) => a + (+r.points || 0), 0) || 10;
     const el = Z.h(`<div class="wd-long">
       <div class="wd-long-write">
@@ -33,6 +36,18 @@
         </fieldset>
       </div>
     </div>`);
+    const aloud = Number(spec.seconds) > 0, follow = Array.isArray(spec.followUps) ? spec.followUps : [];
+    if (aloud) {
+      const clock = Z.h(`<div class="wd-long-clock"><span class="t-stat tnum" data-clock>${fmt(spec.seconds)}</span><button type="button" class="btn secondary" data-clock-go>Start the clock</button><span class="t-caption muted">Say your answer aloud. The clock is a guide and never stops you. The box is for notes and is optional.</span></div>`);
+      el.querySelector('.wd-long-write').prepend(clock);
+      const out = clock.querySelector('[data-clock]'), go = clock.querySelector('[data-clock-go]');
+      let t0 = 0, iv = null;
+      const tick = () => { const left = Math.round(spec.seconds - (Date.now() - t0) / 1000); out.textContent = (left < 0 ? '-' : '') + fmt(Math.abs(left)); clock.classList.toggle('is-over', left < 0); };
+      go.addEventListener('click', () => { if (iv) { clearInterval(iv); iv = null; go.textContent = 'Start the clock'; out.textContent = fmt(spec.seconds); clock.classList.remove('is-over'); return; } t0 = Date.now(); iv = setInterval(tick, 500); go.textContent = 'Stop'; tick(); });
+      destroyers.push(() => { if (iv) clearInterval(iv); });
+    }
+    if (follow.length) el.querySelector('.wd-long-model').insertAdjacentHTML('beforebegin', `<div class="wd-long-follow"><h3 class="t-h2">Follow-ups</h3><p class="t-caption secondary">An interviewer would ask these next. Answer each aloud before you read the model answer.</p><ol class="t-body">${follow.map(f => `<li>${Z.grade.inline(f)}</li>`).join('')}</ol></div>`);
+    const dp = Z.widgets.dataPanel(spec); if (dp) el.prepend(dp);   // performance task "data": the file to read
     host.append(el);
     const id = 'wd-long-' + Math.random().toString(36).slice(2, 8);
     const ta = el.querySelector('.wd-long-ta'); ta.id = id; el.querySelector('label.t-label').setAttribute('for', id);
@@ -68,7 +83,7 @@
         ctx.change && ctx.change(this.value());
       },
       answer: () => ({ text: 'I followed the model answer.', ticks: rubric.map((_, i) => i), marked: true }),
-      ready: () => (phase === 'write' ? ta.value.trim() !== '' : true),
+      ready: () => (phase === 'write' ? aloud || ta.value.trim() !== '' : true),
       dirty: () => ta.value !== '' || ticks().length > 0,
       grade() {
         if (phase === 'write') { toMark(); return { pending: true, ok: false, key: null }; }
@@ -81,7 +96,7 @@
       reveal() { toMark(); setLock(true); el.classList.add('wd-rev'); },
       reset() { phase = 'write'; ta.value = ''; upd(); boxes.forEach(b => { b.checked = false; }); syncScore(); write.hidden = false; markP.hidden = true; setLock(false); el.classList.remove('is-ok', 'is-bad', 'wd-rev'); },
       focus() { (phase === 'write' ? ta : boxes[0])?.focus({ preventScroll: true }); },
-      destroy() {},
+      destroy() { destroyers.forEach(f => f()); },
     };
   });
 })();
