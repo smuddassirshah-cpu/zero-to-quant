@@ -87,3 +87,34 @@ All eight: model solution passes every hidden test (c++17 and c++20), starter fa
 8. **Homework item 7 model answer.** "Each growth copies 8 MB" is true only for growths made when the vector already holds 1,000 `Buffer`s of 1,000 doubles; earlier growths copy less. Round and acceptable as a spoken figure.
 9. **Homework item 2 part 3.** The key "by value, then move" is the best of the four options, but the explanation says two overloads are faster. The overloads are not offered, so the key stands.
 10. **Pointer widths.** Every size claim is stated for wasm32 with the desktop figure beside it; none disagrees with the app toolchain (4-byte pointers) or with x86-64 (8-byte).
+
+## Recheck
+
+Merged origin/claude/amazing-wright-d4mx7i (fix pass ecb7f19, cd1452d). Checked independently: my own runner built from the content JSON (not the problems_*.py), the app's own `unit()` and the app's real flags (`-std=c++17 -O1 -D_LIBCPP_HARDENING_MODE=DEBUG`, no `-fno-exceptions`), plus native g++ 13 and clang++ (libstdc++).
+
+### Widgets
+
+- Code items (l19 to l23, homework-5, exam 23, 26, 28): every solution passes all hidden tests and every starter fails (l19 9/15, l20 11/13, l21 6/11, l22 7/13, l23 SharedPtr 14/15, homework 8/12 and 11/15, clone-basket 10/12). The exam items that use `raises` and list compare (17, 24, 27) show spurious failures only because my runner does not model those compare modes; they are unchanged by the fix.
+- New SharedPtr tests (l23 screen 5), five wrong move assignments (no drop of the old share, source count not cleared, move that adds a count, move written as a copy, no drop before taking): each fails 2 of 15. The `b = a; b = std::move(a)` test (expect 10) and the `live*100 + b*10 + a` test (expect 110) catch them.
+- New clone-basket test (`c = b.clone(); b.cost(2.0)` expect 500): a clone that steals the source children via `const_cast` fails exactly that test. Empty clone, sliced Limit clone and Market-for-everything clone fail 2 to 3 tests.
+- Facts, all as keyed, same in the app, g++ and clang++ unless noted: review-5 item 1 (`take` with const: 2 copies, 0 moves); item 2 (noexcept and reserve stop copies; `emplace_back` does not); item 5 (sizeof is 8 here, 16 on a desktop); item 8 (`use_count` 2; 352,516,353 pence); item 9 (order); item 10 (`shared_ptr(a.get())`: counts 1 and 1, two destructor runs in the app, ASan double-free natively); l23 s0 (4 and 3 slips match their text); l23 s7 and quiz (`b.use_count()` is 1 after a move-assign; `weak_ptr` leaves `use_count` at 2); l22 s5 (null read: the app prints v = 0 and runs on; g++ segfaults; clang++ -O1 reads garbage and exits 0); l21 s2 and s3 (12, 24); Order with a user destructor (default compiles; move, copy and move-assign all fail with a deleted copy).
+- Homework members table: all 12 cells match g++, clang++ and the app (row 1 copy, error, move; row 2 move, error, error; row 3 copy x3 and row 0 copy x3). Slip texts agree with each cell.
+- No mismatch found in key, accept list, slip or stated fact.
+
+### Vector growth (l19 and e-vector-growth)
+
+Verdict: correct. With the app's real flags a `Tracked` whose move is `noexcept(false)` gives 1 copy and 2 moves for two pushes and 3 copies and 4 moves for four. A `noexcept` move gives 0 and 7 in the app, g++ and clang++. g++ and clang++ with libstdc++ give 3 and 4 even with `-fno-exceptions`. libc++ in the app with `-fno-exceptions` added gives 0 copies and 7 moves, which confirms the fixer's dispute of the reviewer's 0 and 7. The text names `std::move_if_noexcept` and the strong guarantee correctly.
+
+One minor flag: the added sentence "a build with exceptions off, such as libc++ with `-fno-exceptions`, moves anyway" (l19 screen 4 explain, exam e-vector-growth explain) is true but a learner cannot observe it: the app has no flag control and never passes `-fno-exceptions`. It is also library-specific (libstdc++ still copies). Optional: drop it or label it as a desktop note.
+
+### Old values
+
+Grepped the cpp folder, exam and manifest for `q-copy-unique`, `q-use-count`, `r5-use-count`, `r5-int-max-pounds`, "Add before you drop", "What value is y", and the old l19 `set_prices` setter: none remains in the files the diff changed. `set_prices` still appears in homework-5 h5-sink, which the diff did not touch (a different item, still correct).
+
+### Layout
+
+`playthrough --lesson cpp/l21-virtual-dispatch --exam topic-1.9 --mobile --tablet`: l21 15 checks ok, exam 30 of 30 passed. l21 screens 7 and 9 at 440, 1032 and 1376: no clipped code (both `return` bodies wrapped). Clone-basket starter (exam item 27): clean at 1032 and 1376. At 440 the editor still cuts the right end of lines 4, 8, 9, 14, 15, 17 and 18 (the first columns show; the editor scrolls sideways). The starter comments were shortened but the signatures are longer than 440 allows. Minor: wrap them as the fixer did for the other items, or accept editor scrolling.
+
+### Voice
+
+`voice-scan.py --summary` on the cpp folder: 0 explanations over three sentences, 0 sentences over 20 words (10,403 scanned). A scratch copy of topic-1.9.json: 0 and 0 (639 scanned).
