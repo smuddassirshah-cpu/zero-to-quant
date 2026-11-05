@@ -118,3 +118,7 @@ Grepped the cpp folder, exam and manifest for `q-copy-unique`, `q-use-count`, `r
 ### Voice
 
 `voice-scan.py --summary` on the cpp folder: 0 explanations over three sentences, 0 sentences over 20 words (10,403 scanned). A scratch copy of topic-1.9.json: 0 and 0 (639 scanned).
+
+Applied: topic-1.9 e-code-clone-basket starter (and solution header) rewrapped to at most 42 columns, same code and behaviour; mirrored in `docs/briefs/cpp-scripts/problems_exam.py`, `P-clone-basket_starter.cpp`, `P-clone-basket_solution.cpp` and the P-clone-basket blocks of `docs/briefs/cpp.md`. App-toolchain runner (c++17): solution 0 of 12 failed, starter 10 of 12 failed. The 440 screenshot (item 27 of 30) shows no clipped line; clean l21 code reaches 43 columns.
+Applied: the `-fno-exceptions` sentence removed from l19 screen 4 explain and exam e-vector-growth explain; the `move_if_noexcept` rule and reason kept; `docs/briefs/cpp.md` notes updated to match.
+Applied: validate 0 errors; playthrough l19 (15 checks, quiz 5/5) and topic-1.9 (30 of 30) green with --mobile --tablet; voice scan 0 and 0 (cpp folder, exam copy).

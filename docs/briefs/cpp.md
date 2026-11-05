@@ -28,7 +28,7 @@ Follow `docs/LEVEL-BRIEF.md` exactly (read it first) and `docs/AUTHORING.md` in 
 - `allocCheck: true` gives `alloc_count()` and `reset_alloc_count()`: a test reads `alloc_count()` as its last expression after `reset_alloc_count()` in its `setup`, so a real move (no allocation) differs from a copy (one). `leakCheck: true` ends a test with exit status 1 if a `new` or `new[]` block is never freed or is freed with the wrong form; the two flags coexist (AUTHORING, C++ addendum). Use `allocCheck` only where a test reads `alloc_count()` (the validator warns otherwise). Each of the nine code problems states its flags under "Code problems".
 - A hidden `prelude` type `Tracked` or `Counted` counts live objects, copies and moves with `static inline int` members (C++17). The counters count what happens, so a "move that really copies" is caught by a number, not by reading the code.
 - No `try` or `catch`: a `throw` ends the program. l20 mentions the exception-safety reason for "allocate before you delete" in one sentence and says that this app cannot show it.
-- Move and growth counts. The standard does not fix the growth rule: libc++ and libstdc++ double the capacity and MSVC grows it by 1.5, so say "this library grows its capacity 1, 2, 4, 8" wherever a count depends on it (l19 S4 and S5, exam `e-vector-growth`). Here `std::vector` grows from capacity 0 to 1, 2, 4, 8 and relocates with `std::move_if_noexcept`: four `push_back(Tracked(i))` do 7 moves and no copy; with a move constructor that is not `noexcept`, two pushes do 1 copy and 2 moves, and four pushes 3 copies and 4 moves. I checked these natively with g++ 13.3 and clang++ 18.1 on libstdc++ (`cpp-scripts/facts_l19.cpp`, `facts_misc.cpp`), with a model (`cpp-scripts/number_checks.py`) and in the app's own toolchain (YoWASP clang 21 with libc++; the second reader's run of `facts_l19.cpp` and `facts_misc.cpp` printed identical counts). Before stating them in a lesson, run `facts_l19.cpp` once through the app's own compiler again (a scratch `code` screen in your scratchpad copy with a `stdout` case) and report any difference. The `Vec` homework item does not depend on the library: it grows by its own rule. Fix pass (6 Nov): the counts hold under the app's real flags (`cpp-worker.js` passes no `-fno-exceptions`, so libc++ keeps `move_if_noexcept`: four pushes with a throwing move give 3 copies and 4 moves, with a `noexcept` move 0 and 7; checked with `app_toolchain/` and `facts_l19.cpp`). A build with an explicit `-fno-exceptions` makes libc++ move anyway (0 copies, 7 moves), where libstdc++ still copies. So a lesson or exam item states the standard rule as a fact with its reason (a vector copies on growth unless the move constructor is `noexcept`, because it relocates with `std::move_if_noexcept`), and the l19 S5 and `e-vector-growth` explains say that a library built with exceptions off moves anyway. Every key and every run-it claim must hold in the app's toolchain.
+- Move and growth counts. The standard does not fix the growth rule: libc++ and libstdc++ double the capacity and MSVC grows it by 1.5, so say "this library grows its capacity 1, 2, 4, 8" wherever a count depends on it (l19 S4 and S5, exam `e-vector-growth`). Here `std::vector` grows from capacity 0 to 1, 2, 4, 8 and relocates with `std::move_if_noexcept`: four `push_back(Tracked(i))` do 7 moves and no copy; with a move constructor that is not `noexcept`, two pushes do 1 copy and 2 moves, and four pushes 3 copies and 4 moves. I checked these natively with g++ 13.3 and clang++ 18.1 on libstdc++ (`cpp-scripts/facts_l19.cpp`, `facts_misc.cpp`), with a model (`cpp-scripts/number_checks.py`) and in the app's own toolchain (YoWASP clang 21 with libc++; the second reader's run of `facts_l19.cpp` and `facts_misc.cpp` printed identical counts). Before stating them in a lesson, run `facts_l19.cpp` once through the app's own compiler again (a scratch `code` screen in your scratchpad copy with a `stdout` case) and report any difference. The `Vec` homework item does not depend on the library: it grows by its own rule. Fix pass (6 Nov): the counts hold under the app's real flags (`cpp-worker.js` passes no `-fno-exceptions`, so libc++ keeps `move_if_noexcept`: four pushes with a throwing move give 3 copies and 4 moves, with a `noexcept` move 0 and 7; checked with `app_toolchain/` and `facts_l19.cpp`). A build with an explicit `-fno-exceptions` makes libc++ move anyway (0 copies, 7 moves), where libstdc++ still copies. So a lesson or exam item states the standard rule as a fact with its reason (a vector copies on growth unless the move constructor is `noexcept`, because it relocates with `std::move_if_noexcept`). Every key and every run-it claim must hold in the app's toolchain.
 - Sizes on wasm32 were checked with `static_assert` on `clang++ --target=wasm32-unknown-wasi` (`cpp-scripts/wasm_sizes.cpp`): a class with one virtual function and an `int` is 8 bytes (16 on a desktop); two virtual functions add no bytes; a derived class with two more `int`s is 12 (16); `struct Quote { virtual double mid() const; double bid, ask; }` is 24 on both (here 4 for the pointer, 4 of padding, 16; on a desktop 8 and 16).
 - The compiler's own output in l22 (`first`, `grows`, `wraps`, `sign`) was produced with `clang++ --target=wasm32-unknown-wasi -O1 -S` (`cpp-scripts/ub_asm.cpp`): `grows` returns `i32.const 1`, `wraps` returns `i32.const 0`, `first` is one `i32.load` and no null test, `sign` returns `i32.const 1` for every input. The sanitiser lines in l22 are from `g++ -fsanitize=undefined` on a desk machine (`cpp-scripts/ub_facts.cpp`); say "on a desk machine, not in this app", and never say what this app's clang 21 prints.
 - Engine limits to write around: a `derive` screen takes only `expression`, `order` or `choice`; `longform` is accepted only in homework and exams; `table` widgets and canvases of five or more columns turn compact at 390 px, so a `table` canvas of five columns is the limit, but a `table` widget with editable cells overflows a 390 px phone from the fourth column (`docs/BACKLOG-INBOX.md`), so keep widget tables to four columns with one-word cells and `compact: true`, and check the `--mobile` playthrough; grid and array cell text is plain text; table ids are zero-based (`r0c1`), console line ids one-based (`l1`); set `shuffle: true` on every `choice` and `multi` except ordered options; a `table` cell's own `wrong` id cannot carry a `byKey` line (the validator rejects it, already raised in `docs/BACKLOG-INBOX.md`), so write `byKey` lines on cell ids (`r1c1`) only and describe the slip in the text.
@@ -58,7 +58,7 @@ Objective (course.json): "Explain move semantics, write a move constructor, and 
 - S2 (explore, d1): `graph` with `frames` control (`frameLabels` "a owns the block", "b = a: copy", "b = std::move(a): move"). Nodes `a`, `b` (pills) and `blk` (rect "1,000,000 doubles"); frame 2 adds a second block under `b` (edge `b` to `blk2`); frame 3 removes `a`'s edge and points `b` at `blk`, with `a` relabelled "a (empty)". Question (numeric): "How many of the 1,000,000 doubles does the move copy?" Key 0. Slip `all` (1000000): "You counted the copy. A move hands over the block and writes none of the doubles." Explain: the copy writes 8,000,000 bytes, about 0.8 ms at 10 GB/s (a round figure); the move writes a pointer and a size, 8 bytes here and 16 on a desktop. Name the type on the screen: `a` and `b` are `Buffer`s (the l11 class: a pointer and a size) holding 1,000,000 doubles. A `std::vector<double>` move writes three pointers (12 bytes here, 24 on a desktop), so do not give 8 and 16 for a vector.
 - S3 (problem, d2, names it): `console` of two counter lines, `std::move(a);` alone gives `copies=0 moves=0` and `Tracked b = std::move(a);` gives `copies=0 moves=1`. "What does `std::move(a)` do by itself?" (choice). Key: nothing at run time; it casts `a` to an rvalue reference so a move can be chosen. Slips: `moves` "You read the name literally. The move constructor does the moving; `std::move` only allows it."; `deletes` "`a` is still alive and still destroyed at the end of its scope."; `copies-flag` "There is no flag on the object; the choice is made from the cast's type." Introduce the term "moved-from" here: valid, safe to destroy, value not promised. Fix pass (6 Nov): prose also defines the two words: "An lvalue has a name and an address. An rvalue is a temporary, or a value cast by `std::move`."
 - S4 (ladder, d2): `array` with `frames` showing capacity 1, 2, 4, 4 as four pushes run. "Four `v.push_back(Tracked(i))` into an empty vector, `Tracked`'s move constructor `noexcept`. How many copies and how many moves?" (`table` widget, two numeric cells). Key copies 0, moves 7 (4 pushes plus 1 and 2 relocated when it grew at pushes 2 and 3). Say on the screen: "This library grows its capacity 1, 2, 4, 8. The growth factor is a library choice." Slips, as `byKey` on the cell id `r0c1` (moves): "You counted the four pushes. Growth also moves the old elements: 1 at the second push, 2 at the third."; copies cell `r0c0`: "A vector with a `noexcept` move moves its old elements; it does not copy them."
-- S5 (ladder, d3): same `array`. "Now `Tracked`'s move constructor is not marked `noexcept`. Two pushes of `Tracked(i)`: what runs?" Key `1 copy, 2 moves`. Say again that this library grows its capacity 1, 2, 4, 8. Slips: `all-move` (0 copies, 3 moves) "You assumed `vector` always moves. It moves only if the move cannot throw; otherwise it copies, so a failure leaves the old block whole."; `all-copy` (3 copies) "The pushes still move from the temporaries; only the relocation copies."; `two-two` (2 copies, 1 move) "The relocation copies one element, and both pushes move." Name `std::move_if_noexcept` once. Fix pass (6 Nov): the explain adds "(the strong exception guarantee)" and "A build with exceptions off, such as libc++ with `-fno-exceptions`, moves anyway."
+- S5 (ladder, d3): same `array`. "Now `Tracked`'s move constructor is not marked `noexcept`. Two pushes of `Tracked(i)`: what runs?" Key `1 copy, 2 moves`. Say again that this library grows its capacity 1, 2, 4, 8. Slips: `all-move` (0 copies, 3 moves) "You assumed `vector` always moves. It moves only if the move cannot throw; otherwise it copies, so a failure leaves the old block whole."; `all-copy` (3 copies) "The pushes still move from the temporaries; only the relocation copies."; `two-two` (2 copies, 1 move) "The relocation copies one element, and both pushes move." Name `std::move_if_noexcept` once. Fix pass (6 Nov): the explain adds "(the strong exception guarantee)" (a later pass dropped the sentence about `-fno-exceptions`, which the app never passes).
 - S6 (ladder, d3): `code`, P-move-buffer (below). Starter has copy members only, so `std::move(a)` silently copies. Fix pass (6 Nov): the `array` canvas keeps its cells but starts at the state before the moves and has a `frames` control (before, and the goal after), instead of opening on the finished state.
 - S7 (trap, d3): `console`: `const Order c = make_order();` `Order d = std::move(c);` with `Order` holding a `std::vector<Fill>` of 1,000,000 fills. "What runs?" Key: the copy constructor. Slips: `move` "`std::move` always moves. It yields a `const Order&&`, and the move constructor takes `Order&&`, not const."; `error` "It compiles: a `const Order&&` binds to the copy constructor's `const Order&`."; `ub` "Nothing here is undefined. It is a plain copy of 1,000,000 fills."
 - S8 (problem, d3, edge case): "Select all that apply: which are always valid on a moved-from `std::vector<int> v`?" Key: destroy it, assign a new vector to it, call `v.clear()`. Slips: `index` (`v[0] = 1;`) "A moved-from vector may be empty. Nothing promises an element."; `back` (`v.back()`) "`back()` needs a non-empty vector; a moved-from one may be empty." Say: the library promises a valid but unspecified state; your own classes decide, as `Buffer` leaves size 0. Fix pass (6 Nov): a fourth correct option, `int n = v.size();` (valid, but the value is unspecified), so `size()` is not mistaken for excluded.
@@ -212,7 +212,7 @@ Order. The file runs in rising difficulty; insert each new item at its difficult
 | `e-code-clone-basket` | `code` (C++) | 4 | `cp-classes` | `clone-idiom` | 600 |
 
 1. `e-const-move` (l19, `choice`, key the copy). Prose: `struct Order { std::string id; std::vector<int> fills; };` then `const Order a{"A1", {1, 2, 3}};` and `Order b = std::move(a);`. Question: "What is `a.fills.size()` afterwards?" Key `3` (the copy constructor ran: `std::move(a)` is a `const Order&&`, which a move constructor cannot take). Slips: `0` "You assumed `std::move` always empties its argument. A const object cannot be moved from, so a copy ran."; `error` "It compiles: a const rvalue binds to the copy constructor's `const Order&`."; `unspecified` "A moved-from object is unspecified only if a move ran. None did." Shuffle on.
-2. `e-vector-growth` (l19, `numeric`, key 3, `tol` abs 0). Prose: a `Fill` with a copy constructor and a move constructor that is not `noexcept`; four `v.push_back(Fill(i))` on an empty `std::vector<Fill>`, and the line "This library grows its capacity 1, 2, 4, 8; the growth factor is a library choice." Question: "In all, how many times does the copy constructor run?" Key 3 (capacity 1, 2, 4: it grows at the second and third push and relocates 1 and 2 elements by copy; each push moves from its temporary, 4 moves). Slips (`wrong[]`): `zero` (0) "You assumed a vector always moves on growth. With a move that may throw it copies."; `four` (4) "The pushes move from the temporaries; the copies come from growth."; `seven` (7) "That adds the 4 pushes' moves to the 3 copies. Only copies were asked." Model: `cpp-scripts/number_checks.py` (3 copies and 4 moves) and `facts_misc.cpp`. Fix pass (6 Nov): key 3 holds in the app's real flags; an explicit `-fno-exceptions` with libc++ gives 0 copies and 7 moves, so the explain states the standard rule with `std::move_if_noexcept` and says a build with exceptions off moves anyway. Added `wrong` value 1 (the first growth only).
+2. `e-vector-growth` (l19, `numeric`, key 3, `tol` abs 0). Prose: a `Fill` with a copy constructor and a move constructor that is not `noexcept`; four `v.push_back(Fill(i))` on an empty `std::vector<Fill>`, and the line "This library grows its capacity 1, 2, 4, 8; the growth factor is a library choice." Question: "In all, how many times does the copy constructor run?" Key 3 (capacity 1, 2, 4: it grows at the second and third push and relocates 1 and 2 elements by copy; each push moves from its temporary, 4 moves). Slips (`wrong[]`): `zero` (0) "You assumed a vector always moves on growth. With a move that may throw it copies."; `four` (4) "The pushes move from the temporaries; the copies come from growth."; `seven` (7) "That adds the 4 pushes' moves to the 3 copies. Only copies were asked." Model: `cpp-scripts/number_checks.py` (3 copies and 4 moves) and `facts_misc.cpp`. Fix pass (6 Nov): key 3 holds in the app's real flags; an explicit `-fno-exceptions` with libc++ gives 0 copies and 7 moves, so the explain states the standard rule with `std::move_if_noexcept` (6 Nov, second pass: the sentence about `-fno-exceptions` was dropped, since the app never passes that flag). Added `wrong` value 1 (the first growth only).
 3. `e-ub-which` (l22, `multi`, "Select all that apply: which lines have undefined behaviour?"). Five lines not used in l22, the review or the homework. Options: `int n = 0; int r = 5 / n;` (key: division by zero); `std::string s = "ab"; char c = s[s.size()];` (no: reading the terminating null is defined, `c` is 0); `const int k = 3; const_cast<int&>(k) = 4;` (key: modifying an object defined `const`); `int* p = new int[2]; delete p;` (key: the wrong form of `delete`); `unsigned char b = 255; ++b;` (no: unsigned arithmetic wraps, `b` is 0). Slips: `size` "Reading `s[s.size()]` is allowed and gives the null character."; `unsigned` "Unsigned arithmetic wraps by definition.". Checked natively (`cpp-scripts/facts_fixpass.cpp` for the two defined lines). Fix pass (6 Nov): `byKey` lines for the three correct options as well; the explain ends "Defined code may still be a bug." (not "cannot break the program"); the prose no longer says "None of them is optimised away".
 4. `e-virtual-dtor` (l21, `choice`, key `~Derived` runs: a reversal of l21 S7, which used a raw `delete`). Prose: `struct Base { ~Base() {} }; struct Derived : Base { std::vector<double> v; ~Derived() { ++gone; } };` `std::shared_ptr<Base> p = std::make_shared<Derived>(); p.reset();`. Question: "`Base`'s destructor is not virtual. What happens at `p.reset()`?" Key: `~Derived` runs and `gone` is 1: the counter block remembers the real type's deleter, so this is defined. Slips: `base-only` "You applied the raw `delete` rule. A `shared_ptr` made by `make_shared<Derived>` stores the deleter for `Derived`."; `ub` "Undefined behaviour is for `delete` through a `Base*`. Here the deleter was chosen when the pointer was made."; `leak` "The vector is freed, because `~Derived` runs." Explain: the safe habit is still a virtual destructor, because a `unique_ptr<Base>` or a raw `delete` has no such memory. Checked natively (`cpp-scripts/facts_misc.cpp` and `facts_fixpass.cpp`: `gone` is 1). Fix pass (6 Nov): the explain says "control block (the counter block of l23)".
 5. `e-code-clone-basket` (l21 and l9, `code`, C++). Brief: "An `Order` is an interface with `cost(double market)` and `clone()`. `Market` is written. Write `Limit`, which buys only when the market is at most its limit, and `Basket`, which holds orders of any kind and deep-copies them in `clone()`." Widget: P-clone-basket under "Code problems": 12 hidden tests, `tests` as given, `leakCheck: true` (no `allocCheck`), `how`: "Submit runs 12 hidden tests. Costs are compared with `isclose`." Fix pass (6 Nov): 12 hidden tests: a twelfth, `b.cost(2.0)` after `c = b.clone()`, catches a clone that steals the original's children (mutant `basket-clone-steals-the-originals-children`). The starter lines are wrapped to at most 60 columns and the comment that repeated the prose is cut.
@@ -1513,48 +1513,67 @@ Starter (the learner sees this; it compiles and fails the tests):
 #include <memory>
 #include <vector>
 
-// Order is an interface. Market is written for you.
+// Order is an interface.
+// Market is written for you.
 struct Order {
     virtual ~Order() = default;
     // pounds to buy at this market price
-    virtual double cost(double market) const = 0;
-    virtual std::unique_ptr<Order> clone() const = 0;
+    virtual double
+    cost(double market) const = 0;
+    virtual std::unique_ptr<Order>
+    clone() const = 0;
 };
 
 struct Market : Order {
     explicit Market(int q) : qty(q) {}
-    double cost(double market) const override {
+    double cost(double market)
+        const override {
         return qty * market;
     }
-    std::unique_ptr<Order> clone() const override {
-        return std::make_unique<Market>(*this);
+    std::unique_ptr<Order>
+    clone() const override {
+        return std::make_unique<Market>(
+            *this);
     }
     int qty;
 };
 
-// TODO: Limit(q, px): buys q shares only if the market
-// price is at most px, so cost is q * market then, and 0
-// when the market is above px. clone() returns a Limit.
+// TODO: Limit(q, px): buys q shares only
+// if the market price is at most px, so
+// cost is q * market then, and 0 when
+// the market is above px. clone()
+// returns a Limit.
 struct Limit : Order {
-    Limit(int q, double px) : qty(q), limit(px) {}
-    double cost(double) const override { return 0.0; }
-    std::unique_ptr<Order> clone() const override {
+    Limit(int q, double px)
+        : qty(q), limit(px) {}
+    double cost(double) const override {
+        return 0.0;
+    }
+    std::unique_ptr<Order>
+    clone() const override {
         return nullptr;
     }
     int qty;
     double limit;
 };
 
-// TODO: Basket: holds orders of any kind. cost() is the
-// sum of their costs. clone() returns a Basket holding a
+// TODO: Basket: holds orders of any kind.
+// cost() is the sum of their costs.
+// clone() returns a Basket holding a
 // clone of each child (a deep copy).
 struct Basket : Order {
-    void add(std::unique_ptr<Order> o) { (void)o; }
-    double cost(double) const override { return 0.0; }
-    std::unique_ptr<Order> clone() const override {
+    void add(std::unique_ptr<Order> o) {
+        (void)o;
+    }
+    double cost(double) const override {
+        return 0.0;
+    }
+    std::unique_ptr<Order>
+    clone() const override {
         return nullptr;
     }
-    std::vector<std::unique_ptr<Order>> kids;
+    std::vector<std::unique_ptr<Order>>
+        kids;
 };
 ```
 
@@ -1564,31 +1583,40 @@ Reference solution:
 #include <memory>
 #include <vector>
 
-// Order is an interface. Market is written for you.
+// Order is an interface.
+// Market is written for you.
 struct Order {
     virtual ~Order() = default;
     // pounds to buy at this market price
-    virtual double cost(double market) const = 0;
-    virtual std::unique_ptr<Order> clone() const = 0;
+    virtual double
+    cost(double market) const = 0;
+    virtual std::unique_ptr<Order>
+    clone() const = 0;
 };
 
 struct Market : Order {
     explicit Market(int q) : qty(q) {}
-    double cost(double market) const override {
+    double cost(double market)
+        const override {
         return qty * market;
     }
-    std::unique_ptr<Order> clone() const override {
-        return std::make_unique<Market>(*this);
+    std::unique_ptr<Order>
+    clone() const override {
+        return std::make_unique<Market>(
+            *this);
     }
     int qty;
 };
 
 struct Limit : Order {
-    Limit(int q, double px) : qty(q), limit(px) {}
-    double cost(double market) const override {
+    Limit(int q, double px)
+        : qty(q), limit(px) {}
+    double cost(double market)
+        const override {
         return market <= limit ? qty * market : 0.0;
     }
-    std::unique_ptr<Order> clone() const override {
+    std::unique_ptr<Order>
+    clone() const override {
         return std::make_unique<Limit>(*this);
     }
     int qty;
@@ -1599,17 +1627,20 @@ struct Basket : Order {
     void add(std::unique_ptr<Order> o) {
         kids.push_back(std::move(o));
     }
-    double cost(double market) const override {
+    double cost(double market)
+        const override {
         double total = 0.0;
         for (const auto& k : kids) total += k->cost(market);
         return total;
     }
-    std::unique_ptr<Order> clone() const override {
+    std::unique_ptr<Order>
+    clone() const override {
         auto copy = std::make_unique<Basket>();
         for (const auto& k : kids) copy->add(k->clone());
         return copy;
     }
-    std::vector<std::unique_ptr<Order>> kids;
+    std::vector<std::unique_ptr<Order>>
+        kids;
 };
 ```
 
