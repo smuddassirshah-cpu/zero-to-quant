@@ -1424,3 +1424,24 @@ Status block (engine pass, provenance):
 
 Status block (engine pass O1):
 - 522 (merge-wave.sh, O1): done.
+
+## Engine pass O2 (recurring finding classes as validator warnings)
+
+Source: PLAN 2c item O2; `docs/reviews/session-operating-model.md` 2.2.
+
+523. Done (O2-long-sentence, O2-long-explain): `tools/o2-rules.mjs`, run by `tools/validate.mjs`, warns on sentences of 20 words or more in learner-facing strings and on explanations of more than three sentences.
+
+524. Done (O2-unshuffled-numeric): warns on interval or ordered-numeric `choice` and `multi` options without `shuffle: true`.
+
+525. Done (O2-no-slip): warns on numeric distractors (choice options, `numeric` `wrong` entries) that match no common slip, no given number and carry no slip note.
+
+526. Done (O2-prose-prompt): warns when `prose` and a `prompt` are both present, or the `question` repeats the prose word for word.
+
+527. Done (O2-explain-answer): warns when `explain.text` never states a numeric key (tolerance and common formats allowed). `tools/test-validate-o2.mjs` runs a bad and an ok fixture per code; counts are in `docs/reports/engine-pass-o2.md`.
+
+Status block (engine pass O2):
+- 523 (long sentences, long explanations): done.
+- 524 (unshuffled numeric choices): done.
+- 525 (distractors with no slip): done.
+- 526 (prose and prompt): done.
+- 527 (explain against answer): done.
