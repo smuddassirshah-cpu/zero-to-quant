@@ -1128,3 +1128,9 @@ Raised later (exam topic-1.9 extension (5 Nov)):
 Raised later (cpp level 5 fix pass, 6 Nov):
 - [Should] `array` canvas at 440 px (cpp l19 screen 5, l21 screens 2 and 3): a single row of cells sits in a band about 100 px tall above and below. Wanted: the canvas height follows the number of rows at narrow widths.
 - [Could] Console and code blocks wrap with `wrap: true` (used on l20 screen 5 and l21 screen 7), but a fenced code block in screen prose has no wrap switch and clips at 440 px; l21 screen 9 was fixed by shortening the lines. Wanted: wrap on fenced blocks in prose.
+
+Raised later (ito level 2 perf pilot):
+- [Should] Homework start card (`js/screens/review.js` line 829): with two written items it reads "Item 8 and Item 9 is written. You mark it yourself". Wanted: "are written ... mark them" when more than one item is listed.
+- [Should] Homework start card and item header do not say which item is the performance task, or that the level is met only once it is passed (ito homework-2 item 9, `h-derive-ito`). Workaround: the title "Derive Itô's lemma" names the product. Wanted: a "Needed for the level" line on the card and a tag in the item header.
+- [Could] `longform` rubric has no required criterion: a 7 of 10 pass can omit the collected formula itself. Workaround: five 2-point criteria, so a pass needs four of five. Wanted: `"required": true` on a rubric row, so the self-mark fails without it.
+- [Could] `node tools/playthrough.mjs --set` marks a self kind 10 of 10 without opening Mark my answer, so the model and rubric panel is never screenshotted. Display maths in the model scrolled sideways at 440 px (two lines in `h-derive-ito`); found with a scratch Playwright script and fixed in content with `aligned`. Wanted: the set playthrough opens the marking panel and shoots it at each viewport.
