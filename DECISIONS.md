@@ -137,3 +137,14 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 - `odes` and `numerics` are written before 2b (user). Until they exist, Learn and Prepare show "Route limited: <course> unwritten" on routes that reach them; 2c item 7 closes on the label, the levels follow as their own PLAN lines ahead of 2b.
 - Capstone reviewer (item 8): the user. Maths second reader (item 9): the user. Both items are human-closed; agents prepare records and candidate lists only.
 - Branch stays `claude/amazing-wright-d4mx7i` (user), though the session was opened on another name.
+
+### Dependency review rules (5 Nov, PLAN 2c item 7)
+- Every first level that had a gate keeps one, retargeted to the minimal level used; a course never opens cold because its edges became diagnostics.
+- Interview courses (research-int, coding-int and the like) keep gates into the topics they examine: they ask across the whole topic, so "one lesson uses it" does not make the level optional.
+- A lesson reference is the narrower gate and is never widened to its level. An edge used only by a later level of the dependent course moves to that level.
+- Diagnostics (`gate: false`) advise ("Check first") and never lock; the validator errors on a cross-course edge without `why` (`--lax-why` relaxes it for scratch work).
+- Not taken, left to the user: two trader edges into graphs-dp (game-theory L2, brainteasers L2) carry 43 lessons of the trader route.
+
+### Session lengths and hours (5 Nov, PLAN 2c items 10 and 11)
+- A lesson whose prose states a longer sitting is a `workshop` (20 to 90 minutes) or `project` (60 to 240), with true `minutes`; a duration that is the subject matter (an assessment's length) is not the lesson's length.
+- Hours come from one function (`app/js/hours.js`); a workshop weighs minutes/14 of a standard lesson; stage hours are the sum of topic hours and are no longer stored.

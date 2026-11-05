@@ -1,20 +1,16 @@
 Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4mx7i` only; `git pull --rebase` first.
 
-Expected census (`node app/tools/census.mjs | tail -20`): lessons 1054 of 1214 (193, 507, 150, 204); reviews 243, with own pass 243; exams 22 topic, 1 stage, 11 mock; drills 35 (oa 8); bank 200; hours 3,265 stored, 3,695 summed.
+Expected census (`node app/tools/census.mjs | tail -20`): lessons 1054 of 1214 (193, 507, 150, 204); reviews 243, with own pass 243; exams 22 topic, 1 stage, 11 mock; drills 35 (oa 8); bank 200; hours 3,695 stored, 3,695 summed, gap 0.
 
-Task: PLAN 2c items 7, 10 and 11, plus the playthrough shard fix. In order; past half the usage window, finish the step in flight and record the stop.
+Task: PLAN 2c item 8, independent capstone (F06, N08). The user is the reviewer (DECISIONS "User answers at session Q start"). Past half the usage window, finish the step in flight and record the stop.
 
-Ask the user once, at the start: (a) are `odes` and `numerics` written before 2b; (b) who reviews capstones (item 8); (c) who is the maths second reader (item 9).
+Ask the user once, at the start: (a) does `complex` L1 join `odes` and `numerics` before 2b (the pdes route reaches it); (b) take the trader lever in `docs/reports/closure-item7.md` (two graphs-dp edges as diagnostics, 465 to 422 lessons) or not; (c) which external capstone each role uses, and whether verified `oa` drills count toward coding-int levels.
 
-1. Wave 1, two engine-devs in worktrees, merged with `app/tools/merge-wave.sh`:
-   - Playthrough: `--shard i/n` and a browser relaunch on close (playthrough.mjs only; inbox "session P").
-   - Item 7 engine: `why` schema (plain strings stay valid), validator rule, "route limited: X unwritten" on Learn and Prepare, closure tool.
-2. Item 7 content: one Sonnet agent drafts `why` for the 248 cross-course edges into a proposal JSON. The main session reviews and applies it by script; indefensible edges are cut or become diagnostics. Report `docs/reports/closure-item7.md`: trader closure before and after.
-3. Wave 2, one engine-dev (both touch hours and Learn): item 10 `session` field and validator warning, pattern written down; item 11 one hours function from `readiness.json`, stage `hours` derived. Main session runs content scripts.
-4. Close: `--all --shard i/4 --local-cdn` as four background runs; then `--routes-only --mobile`.
+1. One engine-dev in a worktree, merged with `app/tools/merge-wave.sh`: a capstone record per role in `content/capstones.json` (repo link, reviewer, date, rerun-from-clean result, defence notes, `external: true`); research route's capstone is `momentum-rep` or an equivalent external project; a validator rule; Today and the readiness summary never show "ready" without an `external` record; a You card to view records (the user fills them; the app never writes `external`). Drill verification feeds the coding met rule if the user says so.
+2. Main session writes empty records for the five roles by script.
 
-Acceptance: each item's line in PLAN 2c; validator 0 errors; readiness-sums exits 0. After item 11, stored hours equal summed hours; lessons unchanged.
+Acceptance: PLAN 2c item 8 line; a test where a role with every level met but no external record is not "ready"; validator 0 errors; readiness-sums 0; `--routes-only --local-cdn` green with and without `--mobile`.
 
-After each merge: `node app/tools/perf-pending.mjs --prune`; renumber clashing ENGINE-BACKLOG items by hand. Local CDN: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
+After each merge: `node app/tools/perf-pending.mjs --prune`. Local CDN: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`. Full runs: `--all --shard i/4 --local-cdn` as four background runs (about two hours in parallel).
 
-Next prompt: item 8 if a reviewer is named, else item 9's candidate list.
+Next prompt: item 9's candidate list (user is the maths reader), then the odes and numerics levels.
