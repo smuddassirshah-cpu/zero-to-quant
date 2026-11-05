@@ -339,7 +339,7 @@ const main = async () => {
        closed", or the disconnected event fired) Chromium is relaunched, setup is redone and the item is played once more; an ordinary failure is never retried.
        ZQ_TEST_CLOSE_AFTER=k (test hook) closes the context after the k-th item to prove the relaunch. */
     const closedRe = /Target page, context or browser has been closed|Browser has been closed|browser has disconnected|Target closed/i;
-    let nItems = 0;
+    let nItems = 0, played = 0;
     const relaunch = async (label, why) => {
       relaunches++;
       console.log(`     ${label}: ${why}; relaunching the browser (relaunch ${relaunches})`);
@@ -357,6 +357,7 @@ const main = async () => {
         await relaunch(label, 'the browser closed during the item');
         try { await fn(); } catch (e) { failures.push(`${label}: threw ${String(e.message || e).split('\n')[0]}`); }
       } else if (thrown) failures.push(`${label}: threw ${String(thrown.message || thrown).split('\n')[0]}`);
+      played++;
       if (process.env.ZQ_TEST_CLOSE_AFTER && ++nItems === +process.env.ZQ_TEST_CLOSE_AFTER) { console.log(`     (test hook: closing the context after item ${nItems})`); try { await ctx.close(); } catch { /* closed */ } }
     };
 
@@ -1916,6 +1917,8 @@ const main = async () => {
     /* Every other route once */
     if (opt.bankIds.length) await bankPlay(opt.bankIds);
     if (runRoutes) {
+      /* the route checks (bank counts, samples hidden from You) assume a fresh profile; after played items (--all, shard 1) start one */
+      if (played > 0) await freshSetup();
       const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^topic-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')) : [];
       const drills = fs.existsSync(path.join(CONTENT, 'drills', 'index.json')) ? readJSON(path.join(CONTENT, 'drills', 'index.json')).map(d => d.id || d) : [];
       /* The Prepare for page (ENGINE-BACKLOG 455): the default path, then one deep link for each kind of path in content/prep.json */
