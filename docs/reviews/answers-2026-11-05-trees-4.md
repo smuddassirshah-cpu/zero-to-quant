@@ -95,3 +95,7 @@ Grepped `courses/trees/` and `exams/topic-1.7.json` for 4.63, 4.90, 4.6779, 4.89
 ### 5. Voice
 
 `VOICE_BASE=app/content/courses/trees/ python3 docs/reviews/voice-scan.py --summary`: 0 explanations over three sentences. The full scan lists no hits in l13 to l18, review-4 or homework-4 (its 14 long sentences are in homework-1 to homework-3).
+
+Applied: l17 s5 put prices at r = 0 changed from £7.97 to £7.96 (two places; CRR 800 steps gives 7.9631 by recomputation); other 7.97 left as the Black-Scholes call.
+Applied: l17 52-fixing Asian 4.6687 to 4.6685 (prose, `how` line, test `expect`; tolerance 0.21 still passes) and in check_l4_authoring.py (recomputed 4.6685 by control-variate Monte Carlo); docs/briefs/trees.md had no copy.
+Applied: l16 s4 vega x 0.002 = 0.0258, with "0.10715 - 0.02583 = 0.08132"; answer 8.13% unchanged.

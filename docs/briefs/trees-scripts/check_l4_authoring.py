@@ -337,7 +337,7 @@ def asian_plain(n, N, seed):
     return a.mean(), a.std(ddof=1) / sqrt(len(a))
 
 
-for n, stated, N in ((12, 4.8887, 1_000_000), (52, 4.6687, 1_000_000), (252, 4.6159, 1_000_000)):
+for n, stated, N in ((12, 4.8887, 1_000_000), (52, 4.6685, 1_000_000), (252, 4.6159, 1_000_000)):
     mA, seA = asian_cv(n, 2_000_000, 20, 101 + n)
     mB, seB = asian_plain(n, N, 202 + n)
     check(f"l17 Asian {n} fixings: control-variate MC {mA:.4f} (se {seA:.4f}) against stated {stated}", mA, stated, 4 * seA + 5e-5)
