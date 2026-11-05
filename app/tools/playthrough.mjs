@@ -1636,9 +1636,12 @@ const main = async () => {
         if (!topic) fails.push('no topic with a course to test the exam rule on');
         else {
           await base();
-          const rule = (passedAuto) => page.evaluate((t) => {
-            const rows = [{ id: 'a', ok: false, how: 'auto', skills: [] }, { id: 'b', ok: true, how: 'self', skills: [] }, { id: 'c', ok: true, how: 'self', skills: [] }];
-            const x = { id: 'topic-' + t.t.id, score: 2, items: 3, passed: true, results: rows };
+          /* PLAN 2c item 4 (rule 4): the pass meets a level only when its auto rows cover the level's essential skills (the review's item skills) at the floor, so the rows carry them */
+          const rule = (passedAuto) => page.evaluate(async (t) => {
+            const lv0 = ZQ.content.course(t.t.cid).levels.find(l => l.n === t.t.n), RV = await ZQ.content.review(t.t.cid, lv0.review);
+            const ess = [...new Set(((RV && RV.items) || []).flatMap(it => it.skills || []))];
+            const rows = [...ess.map((sk, i) => ({ id: 'a' + i, ok: !!t.pa, how: 'auto', skills: [sk] })), { id: 'b', ok: true, how: 'self', skills: [] }, { id: 'c', ok: true, how: 'self', skills: [] }];
+            const x = { id: 'topic-' + t.t.id, score: 2, items: rows.length, passed: true, results: rows };
             ZQ.state.examFinished(Object.assign(x, { passedAuto: t.pa }));
             ZQ.prereq.sync();
             const a = ZQ.state.exams[x.id].attempts.slice(-1)[0];
@@ -1651,7 +1654,8 @@ const main = async () => {
           if (!auto.met && auto.passedAuto !== true) fails.push('a recorded passedAuto of true was not stored');
           else if (!auto.met) fails.push(`a topic exam passed on auto rows did not meet ${topic.cid} level ${topic.n}`);
         }
-        /* (d) an old passed attempt with no passedAuto: fully auto on an exam with no self item (topic-1.5), not counted on one with longform (topic-1.1) */
+        /* (d) an old passed attempt with no passedAuto: fully auto on an exam with no self item (topic-1.5), not counted on one with longform (topic-1.1).
+           Under rule 4 it holds no per-skill record, so even where it counts as a pass (topicPassed) it meets no level. */
         for (const [tid, want] of [['1.5', true], ['1.1', false]]) {
           await base();
           const got = await page.evaluate((t) => {
@@ -1663,7 +1667,7 @@ const main = async () => {
             return { met: ZQ.prereq.levelMet(c, ZQ.content.course(c).levels[0].n), passed: ZQ.content.topicPassed(t) };
           }, tid);
           if (!got) fails.push(`topic ${tid} has no course with levels to test an old attempt`);
-          else if (got.met !== want || got.passed !== want) fails.push(`an old passed attempt with no passedAuto on topic-${tid} should ${want ? '' : 'not '}count (met ${got.met}, topicPassed ${got.passed})`);
+          else if (got.met !== false || got.passed !== want) fails.push(`an old passed attempt with no passedAuto on topic-${tid} should ${want ? '' : 'not '}count as a pass and meet no level (met ${got.met}, topicPassed ${got.passed})`);
         }
         console.log(`${fails.length ? 'FAIL' : 'ok  '} provenance  ${hw.id}: longform-only homework moves no met record or map cell, shown as Self-marked; old save migrates; self-only exam pass meets nothing, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
       } catch (e) {
