@@ -1,0 +1,821 @@
+{
+  "id": "homework-5",
+  "course": "cpp",
+  "level": 5,
+  "dueDays": 7,
+  "items": [
+    {
+      "id": "h5-scope-guard",
+      "difficulty": 4,
+      "skills": [
+        "cp-memory",
+        "cp-classes"
+      ],
+      "tags": [
+        "scope-guard"
+      ],
+      "pace": 900,
+      "prose": "This is the l11 `Connection` with a callback. A scope guard runs its callback once, when it goes out of scope, unless dismissed. A guard in a growing `std::vector<ScopeGuard>` must run `ran` exactly 3 times: relocation moves a guard and never runs its callback.",
+      "question": "Write the destructor, `dismiss()`, deleted copying, a `noexcept` move that hands over the duty, and deleted assignment.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <functional>\n#include <utility>\n\n// A scope guard runs a callback once, when it goes out of scope, unless it was dismissed.\n// Write: the destructor, dismiss(), copying deleted, a noexcept move constructor that\n// hands the duty to the new guard (the old one must do nothing), and assignment deleted.\nclass ScopeGuard {\npublic:\n    explicit ScopeGuard(std::function<void()> f) : f_(std::move(f)), active_(true) {}\n    // TODO: destructor\n    void dismiss() {}                    // TODO: the callback will not run\n    // TODO: copying deleted; move constructor; assignment deleted\n\nprivate:\n    std::function<void()> f_;\n    bool active_;\n};\n",
+        "solution": "#include <functional>\n#include <utility>\n\n// A scope guard runs a callback once, when it goes out of scope, unless it was dismissed.\n// Write: the destructor, dismiss(), copying deleted, a noexcept move constructor that\n// hands the duty to the new guard (the old one must do nothing), and assignment deleted.\nclass ScopeGuard {\npublic:\n    explicit ScopeGuard(std::function<void()> f) : f_(std::move(f)), active_(true) {}\n    ~ScopeGuard() {\n        if (active_) f_();\n    }\n    void dismiss() { active_ = false; }\n\n    ScopeGuard(const ScopeGuard&) = delete;\n    ScopeGuard& operator=(const ScopeGuard&) = delete;\n    ScopeGuard(ScopeGuard&& other) noexcept : f_(std::move(other.f_)), active_(other.active_) {\n        other.active_ = false;\n    }\n    ScopeGuard& operator=(ScopeGuard&&) = delete;\n\nprivate:\n    std::function<void()> f_;\n    bool active_;\n};\n",
+        "examples": [
+          {
+            "setup": "{ ScopeGuard g([] { ++ran; }); }",
+            "call": "ran",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ ScopeGuard g([] { ++ran; }); g.dismiss(); }",
+            "call": "ran",
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "{ ScopeGuard g([] { ++ran; }); }",
+            "call": "ran",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ ScopeGuard g([] { ++ran; }); g.dismiss(); }",
+            "call": "ran",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ ScopeGuard a([] { ++ran; }); ScopeGuard b = std::move(a); }",
+            "call": "ran",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ ScopeGuard a([] { ++ran; }); ScopeGuard b = std::move(a); b.dismiss(); }",
+            "call": "ran",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ ScopeGuard a([] { trace += 'a'; }); ScopeGuard b([] { trace += 'b'; }); }",
+            "call": "trace",
+            "expect": "ba",
+            "compare": "equal"
+          },
+          {
+            "setup": "{ ScopeGuard g = make_guard(); }",
+            "call": "ran",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ std::vector<ScopeGuard> v; v.push_back(ScopeGuard([] { ++ran; })); v.push_back(ScopeGuard([] { ++ran; })); v.push_back(ScopeGuard([] { ++ran; })); }",
+            "call": "ran",
+            "expect": 3,
+            "compare": "equal"
+          },
+          {
+            "setup": "int inside = -1; { ScopeGuard g([] { ++ran; }); inside = ran; }",
+            "call": "inside * 10 + ran",
+            "expect": 1,
+            "compare": "equal"
+          },
+          {
+            "setup": "ScopeGuard a([] {});",
+            "compiles": "ScopeGuard b = a;",
+            "expect": false
+          },
+          {
+            "setup": "ScopeGuard a([] {});",
+            "compiles": "ScopeGuard b([] {}); b = std::move(a);",
+            "expect": false
+          },
+          {
+            "call": "std::is_nothrow_move_constructible_v<ScopeGuard>",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ ScopeGuard a([] { ++ran; }); a.dismiss(); ScopeGuard b = std::move(a); }",
+            "call": "ran",
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "prelude": "#include <functional>\n#include <string>\n#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: the callbacks the tests hand to a guard write here.\nint ran = 0;\nstd::string trace;\n",
+        "postlude": "\n// Hidden: a factory that returns a guard by value.\nScopeGuard make_guard() { return ScopeGuard([] { ++ran; }); }\n",
+        "leakCheck": true,
+        "how": "Submit runs 12 hidden tests. The callbacks write to a hidden counter and a hidden string; two compile checks fail if copying or assignment is allowed."
+      },
+      "feedback": {
+        "correct": "The duty runs once, wherever the guard has been moved.",
+        "generic": "Not quite right. Read the failing rows: a count that is too high means a moved-from guard still runs.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the deleted members and the `noexcept` move."
+        }
+      },
+      "explain": {
+        "text": "The move constructor takes the callback and switches the old guard off, so only one destructor does the work. Deleted copying means no second guard can exist."
+      }
+    },
+    {
+      "id": "h5-vec",
+      "difficulty": 5,
+      "skills": [
+        "cp-memory",
+        "cp-classes"
+      ],
+      "tags": [
+        "vec-from-scratch"
+      ],
+      "pace": 1800,
+      "prose": "Build a growing array from raw storage, with placement `new`. It must count its allocations, move on growth when it is `noexcept`, survive `v.push_back(v[0])`, and copy-assign safely for `a = a`.",
+      "question": "Complete `Vec<T>`: destructor, copy and move members, and both `push_back` overloads.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "starter": "#include <cstddef>\n#include <new>\n#include <utility>\n\n// A growing array of T. T need not be default constructible or assignable, so keep raw\n// storage from ::operator new and build elements in it with placement new.\n// Growth: capacity 0 to start (no allocation), 1 on the first push, then doubling.\n// push_back must work when its argument lives inside the vector (v.push_back(v[0])).\n// Copy assignment must be safe for `a = a`.\n// Write both push_back overloads, or share a helper: a template parameter `U&&` accepts both,\n// and std::forward<U>(x) passes it on as a copy or a move.\n// Growth moves elements if T's move constructor is noexcept (std::move_if_noexcept).\ntemplate <typename T>\nclass Vec {\npublic:\n    Vec() = default;\n    // TODO: destructor (destroy every element, then free the block)\n    // TODO: copy constructor and copy assignment\n    // TODO: move constructor and move assignment (noexcept)\n    void push_back(const T& x) { (void)x; }       // TODO\n    void push_back(T&& x) { (void)x; }            // TODO\n\n    std::size_t size() const { return size_; }\n    std::size_t capacity() const { return cap_; }\n    T& operator[](std::size_t i) { return data_[i]; }\n    const T& operator[](std::size_t i) const { return data_[i]; }\n\nprivate:\n    std::size_t size_ = 0;\n    std::size_t cap_ = 0;\n    T* data_ = nullptr;\n};\n",
+        "solution": "#include <cstddef>\n#include <new>\n#include <utility>\n\n// A growing array of T. T need not be default constructible or assignable, so keep raw\n// storage from ::operator new and build elements in it with placement new.\n// Growth: capacity 0 to start (no allocation), 1 on the first push, then doubling.\n// push_back must work when its argument lives inside the vector (v.push_back(v[0])).\n// Copy assignment must be safe for `a = a`.\n// Write both push_back overloads, or share a helper: a template parameter `U&&` accepts both,\n// and std::forward<U>(x) passes it on as a copy or a move.\n// Growth moves elements if T's move constructor is noexcept (std::move_if_noexcept).\ntemplate <typename T>\nclass Vec {\npublic:\n    Vec() = default;\n    ~Vec() { destroy(); }\n\n    Vec(const Vec& other) : size_(other.size_), cap_(other.size_), data_(allocate(other.size_)) {\n        for (std::size_t i = 0; i < size_; ++i) new (data_ + i) T(other.data_[i]);\n    }\n    Vec& operator=(const Vec& other) {\n        if (this != &other) {\n            Vec copy(other);\n            swap(copy);\n        }\n        return *this;\n    }\n    Vec(Vec&& other) noexcept : size_(other.size_), cap_(other.cap_), data_(other.data_) {\n        other.size_ = 0;\n        other.cap_ = 0;\n        other.data_ = nullptr;\n    }\n    Vec& operator=(Vec&& other) noexcept {\n        if (this != &other) {\n            destroy();\n            size_ = other.size_;\n            cap_ = other.cap_;\n            data_ = other.data_;\n            other.size_ = 0;\n            other.cap_ = 0;\n            other.data_ = nullptr;\n        }\n        return *this;\n    }\n\n    void push_back(const T& x) { emplace(x); }\n    void push_back(T&& x) { emplace(std::move(x)); }\n\n    std::size_t size() const { return size_; }\n    std::size_t capacity() const { return cap_; }\n    T& operator[](std::size_t i) { return data_[i]; }\n    const T& operator[](std::size_t i) const { return data_[i]; }\n\nprivate:\n    static T* allocate(std::size_t n) {\n        return n ? static_cast<T*>(::operator new(n * sizeof(T))) : nullptr;\n    }\n    void destroy() {\n        for (std::size_t i = 0; i < size_; ++i) data_[i].~T();\n        ::operator delete(data_);\n        size_ = 0;\n        cap_ = 0;\n        data_ = nullptr;\n    }\n    void swap(Vec& o) {\n        std::swap(size_, o.size_);\n        std::swap(cap_, o.cap_);\n        std::swap(data_, o.data_);\n    }\n    template <typename U>\n    void emplace(U&& x) {\n        if (size_ == cap_) {\n            std::size_t new_cap = cap_ ? cap_ * 2 : 1;\n            T* fresh = allocate(new_cap);\n            new (fresh + size_) T(std::forward<U>(x));      // x may live in the old block, so build it first\n            for (std::size_t i = 0; i < size_; ++i) {\n                new (fresh + i) T(std::move_if_noexcept(data_[i]));\n                data_[i].~T();\n            }\n            ::operator delete(data_);\n            data_ = fresh;\n            cap_ = new_cap;\n        } else {\n            new (data_ + size_) T(std::forward<U>(x));\n        }\n        ++size_;\n    }\n\n    std::size_t size_ = 0;\n    std::size_t cap_ = 0;\n    T* data_ = nullptr;\n};\n",
+        "examples": [
+          {
+            "setup": "Vec<int> v; for (int i = 0; i < 1000; ++i) v.push_back(i);",
+            "call": "v.size() * 10000 + v.capacity()",
+            "expect": 10001024,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<int> v; for (int i = 0; i < 1000; ++i) v.push_back(i);",
+            "call": "v[0] + v[500] + v[999]",
+            "expect": 1499,
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "Vec<int> v; for (int i = 0; i < 1000; ++i) v.push_back(i);",
+            "call": "v.size() * 10000 + v.capacity()",
+            "expect": 10001024,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<int> v; for (int i = 0; i < 1000; ++i) v.push_back(i);",
+            "call": "v[0] + v[500] + v[999]",
+            "expect": 1499,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<int> v; reset_alloc_count(); for (int i = 0; i < 1000; ++i) v.push_back(i);",
+            "call": "alloc_count()",
+            "expect": 11,
+            "compare": "equal"
+          },
+          {
+            "setup": "reset_alloc_count(); Vec<int> v;",
+            "call": "alloc_count() * 10 + v.capacity()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ Vec<Counted> v; for (int i = 0; i < 8; ++i) v.push_back(Counted(i)); }",
+            "call": "Counted::copies * 100 + Counted::moves",
+            "expect": 15,
+            "compare": "equal"
+          },
+          {
+            "setup": "{ Vec<Counted> v; for (int i = 0; i < 5; ++i) v.push_back(Counted(i)); }",
+            "call": "Counted::live",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<int> a; a.push_back(1); a.push_back(2); Vec<int> b = a; b[0] = 9;",
+            "call": "a[0] * 10 + b[0]",
+            "expect": 19,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<Counted> a; for (int i = 0; i < 4; ++i) a.push_back(Counted(i)); int before = Counted::copies; Vec<Counted> b = a;",
+            "call": "Counted::copies - before",
+            "expect": 4,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<int> a; for (int i = 0; i < 100; ++i) a.push_back(i); reset_alloc_count(); Vec<int> b = std::move(a);",
+            "call": "alloc_count()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<int> a; for (int i = 0; i < 100; ++i) a.push_back(i); Vec<int> b = std::move(a);",
+            "call": "a.size() * 1000 + b.size()",
+            "expect": 100,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<int> a; a.push_back(5); Vec<int> b; b.push_back(1); b.push_back(2); b = a;",
+            "call": "b.size() * 10 + b[0]",
+            "expect": 15,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<int> a; a.push_back(5); Vec<int> b; b.push_back(1); b = std::move(a);",
+            "call": "b.size() * 10 + b[0] + a.size() * 100",
+            "expect": 15,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<int> a; a.push_back(5); a.push_back(6); Vec<int>& r = a; a = r;",
+            "call": "a.size() * 10 + a[1]",
+            "expect": 26,
+            "compare": "equal"
+          },
+          {
+            "setup": "Vec<Counted> v; v.push_back(Counted(7)); v.push_back(v[0]);",
+            "call": "Counted::bad * 100 + v[1].v",
+            "expect": 7,
+            "compare": "equal"
+          },
+          {
+            "call": "std::is_nothrow_move_constructible_v<Vec<int>>",
+            "expect": true,
+            "compare": "equal"
+          }
+        ],
+        "prelude": "#include <cstdint>\n#include <utility>\n#include <type_traits>\n\n// Hidden: counts copies, moves and live objects. It has no assignment operators and no default constructor.\n// It also keeps a table of the addresses of its live objects (no heap use). A copy or move whose source\n// is not in the table was made from a destroyed object: it is counted in `bad` and never reads the source.\nstruct Counted {\n    static inline int copies = 0, moves = 0, live = 0, bad = 0;\n    static inline std::uintptr_t table[64] = {};\n    static bool is_live(const Counted* p) {\n        for (std::uintptr_t a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) return true;\n        return false;\n    }\n    static void add(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == 0) { a = reinterpret_cast<std::uintptr_t>(p); return; }\n    }\n    static void drop(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) { a = 0; return; }\n    }\n    int v;\n    Counted(int x) : v(x) { ++live; add(this); }\n    Counted(const Counted& o) : v(-2) { ++copies; ++live; add(this); if (is_live(&o)) v = o.v; else ++bad; }\n    Counted(Counted&& o) noexcept : v(-2) { ++moves; ++live; add(this); if (is_live(&o)) { v = o.v; o.v = -1; } else ++bad; }\n    Counted& operator=(const Counted&) = delete;\n    Counted& operator=(Counted&&) = delete;\n    ~Counted() { --live; drop(this); }\n};\n",
+        "allocCheck": true,
+        "leakCheck": true,
+        "how": "Submit runs 15 hidden tests. `alloc_count()` counts calls to `operator new` and `new[]`: 1,000 pushes must allocate 11 times. A hidden `Counted` type counts copies, moves and live objects, and counts any copy or move made from a destroyed object (`Counted::bad`)."
+      },
+      "feedback": {
+        "correct": "Every element is built once, moved or copied as the rules say, and destroyed once.",
+        "generic": "Not quite right. Read the failing rows and compare allocation and move counts.",
+        "byKey": {
+          "compile": "The compiler stopped. Check the template members and the placement `new`."
+        }
+      },
+      "explain": {
+        "text": "Grow by doubling into new raw storage, relocate with `std::move_if_noexcept`, then destroy the old elements. Build the new element before freeing the old block, so an argument inside the vector is still alive."
+      }
+    },
+    {
+      "id": "h5-sink",
+      "difficulty": 4,
+      "skills": [
+        "cp-classes"
+      ],
+      "tags": [
+        "sink-argument"
+      ],
+      "pace": 240,
+      "prose": "A setter keeps its argument.\n\n```cpp\nvoid set_prices(std::vector<double> p) {\n    prices_ = std::move(p);\n}\n```\n`history` holds 1,000,000 doubles.",
+      "parts": [
+        {
+          "question": "How many doubles does `set_prices(history);` copy?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 1000000,
+            "tol": {
+              "abs": 0
+            },
+            "accept": "1,000,000",
+            "wrong": [
+              {
+                "id": "two",
+                "value": 2000000,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "One copy, into the parameter.",
+            "generic": "Not quite right. Ask where the parameter gets its block.",
+            "byKey": {
+              "two": "You counted two copies. The assignment into the member is a move."
+            }
+          },
+          "explain": {
+            "text": "The lvalue is copied into the parameter, then the parameter is moved into the member."
+          }
+        },
+        {
+          "question": "How many doubles does `set_prices(std::move(history));` copy?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0,
+            "tol": {
+              "abs": 0
+            },
+            "accept": "0",
+            "wrong": [
+              {
+                "id": "all",
+                "value": 1000000,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "None: the parameter takes the block.",
+            "generic": "Not quite right. A moved argument is not copied.",
+            "byKey": {
+              "all": "You counted a copy. The parameter is move-constructed from `history`."
+            }
+          },
+          "explain": {
+            "text": "Both steps are moves, so only pointers change hands."
+          }
+        },
+        {
+          "question": "Which signature is best for a setter that keeps its argument?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "value",
+                "text": "By value, then move into the member",
+                "correct": true
+              },
+              {
+                "id": "cref",
+                "text": "`const std::vector<double>&` only",
+                "why": "It copies even when the caller is finished with the vector."
+              },
+              {
+                "id": "rref",
+                "text": "`std::vector<double>&&` only",
+                "why": "Callers with an lvalue cannot call it."
+              },
+              {
+                "id": "lref",
+                "text": "`std::vector<double>&`",
+                "why": "It cannot take a temporary, and it lets the callee change the caller's data."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "By value and move: one function serves both callers.",
+            "generic": "Not quite right. Think of the two kinds of caller."
+          },
+          "explain": {
+            "text": "Two overloads, `const T&` and `T&&`, avoid the extra move and can reuse the member's capacity. By value is the short version."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h5-shared-move-assign",
+      "difficulty": 4,
+      "skills": [
+        "cp-memory"
+      ],
+      "tags": [
+        "shared-ptr-assign"
+      ],
+      "prose": "The move assignment of `SharedPtr` takes over another pointer's object and counter. Two of the lines below are tempting and wrong.",
+      "question": "Put the lines in order, and leave the flawed ones out.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s4",
+            "text": "empty the source: set its `ptr_` and `count_` to null"
+          },
+          {
+            "id": "d2",
+            "text": "drop own count after taking the new pointer",
+            "why": "You would drop the count of the object you just took."
+          },
+          {
+            "id": "s2",
+            "text": "drop own count: subtract one, and at zero delete the object and the counter"
+          },
+          {
+            "id": "s1",
+            "text": "`if (this != &other) {`"
+          },
+          {
+            "id": "d1",
+            "text": "leave the source's count unchanged and point both at it",
+            "why": "Both would drop the count: it falls by two for one owner."
+          },
+          {
+            "id": "s3",
+            "text": "take `other`'s `ptr_` and `count_`"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "feedback": {
+        "correct": "Guard, drop, take, empty: one owner, one count.",
+        "generic": "Not quite right. Release your own share before you take the new one.",
+        "byKey": {
+          "d1": "You left the count unchanged and shared the pointers. Both would drop the count.",
+          "d2": "You took first and dropped after. You would drop the count of the object you just took."
+        }
+      },
+      "explain": {
+        "text": "A move transfers the share, so the count does not change for the new object. The source is emptied so its destructor does nothing."
+      }
+    },
+    {
+      "id": "h5-members-table",
+      "difficulty": 4,
+      "skills": [
+        "cp-classes"
+      ],
+      "tags": [
+        "special-members"
+      ],
+      "prose": "Four classes each declare exactly one special member, as named. Fill each cell with `copy`, `move` or `error`. `error` means the line picks a deleted function.",
+      "question": "What does each line do?",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "you declare",
+          "b(move a)",
+          "b = a",
+          "b = move a"
+        ],
+        "rows": [
+          [
+            "a copy assignment",
+            {
+              "edit": true,
+              "answer": "copy"
+            },
+            {
+              "edit": true,
+              "answer": "copy"
+            },
+            {
+              "edit": true,
+              "answer": "copy"
+            }
+          ],
+          [
+            "a move assignment",
+            {
+              "edit": true,
+              "answer": "error"
+            },
+            {
+              "edit": true,
+              "answer": "error"
+            },
+            {
+              "edit": true,
+              "answer": "move"
+            }
+          ],
+          [
+            "a move constructor",
+            {
+              "edit": true,
+              "answer": "move"
+            },
+            {
+              "edit": true,
+              "answer": "error"
+            },
+            {
+              "edit": true,
+              "answer": "error"
+            }
+          ],
+          [
+            "a destructor",
+            {
+              "edit": true,
+              "answer": "copy"
+            },
+            {
+              "edit": true,
+              "answer": "copy"
+            },
+            {
+              "edit": true,
+              "answer": "copy"
+            }
+          ]
+        ],
+        "compact": true
+      },
+      "feedback": {
+        "correct": "Twelve cells, one rule: declare one and the compiler stops guessing.",
+        "generic": "Not quite right. Recall which members each declaration suppresses.",
+        "byKey": {
+          "r0c1": "For a class with a copy assignment, this call falls back to the copy.",
+          "r0c2": "For a class with a copy assignment, this call falls back to the copy.",
+          "r0c3": "For a class with a copy assignment, this call falls back to the copy.",
+          "r1c1": "For a class with a move assignment, this call picks a deleted function.",
+          "r1c2": "For a class with a move assignment, this call picks a deleted function.",
+          "r1c3": "For a class with a move assignment, this call runs the move you declared.",
+          "r2c1": "For a class with a move constructor, this call runs the move you declared.",
+          "r2c2": "For a class with a move constructor, this call picks a deleted function.",
+          "r2c3": "For a class with a move constructor, this call picks a deleted function.",
+          "r3c1": "For a class with a destructor, this call falls back to the copy.",
+          "r3c2": "For a class with a destructor, this call falls back to the copy.",
+          "r3c3": "For a class with a destructor, this call falls back to the copy."
+        }
+      },
+      "explain": {
+        "text": "A copy member or a destructor hides the moves, so moves copy. A lone move constructor deletes the copies, and a lone move assignment leaves the constructors deleted."
+      }
+    },
+    {
+      "id": "h5-six-snippets",
+      "difficulty": 4,
+      "skills": [
+        "cp-basics",
+        "cp-memory"
+      ],
+      "tags": [
+        "defined-vs-undefined"
+      ],
+      "pace": 150,
+      "question": "Select all that apply: which are undefined?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "push",
+            "text": "`std::vector<int> v{1, 2, 3}; for (int x : v) if (x == 2) v.push_back(4);`",
+            "correct": true
+          },
+          {
+            "id": "neg",
+            "text": "`int a = INT_MIN; int b = -a;`",
+            "correct": true
+          },
+          {
+            "id": "shift",
+            "text": "`unsigned u = 1u << 31;`",
+            "why": "Shifting an unsigned 1 by 31 is defined: the result is 2,147,483,648."
+          },
+          {
+            "id": "buf",
+            "text": "`char buf[4]; buf[4] = 0;`",
+            "correct": true
+          },
+          {
+            "id": "del",
+            "text": "`int* p = new int(1); delete p; delete p;`",
+            "correct": true
+          },
+          {
+            "id": "div",
+            "text": "`int n = 7; n = n / 2;`",
+            "why": "Integer division rounds towards zero: n is 3. It is defined."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Four are undefined: iterator invalidation, negating INT_MIN, a write past the end and a double delete.",
+        "generic": "Not quite right. Check each for an overflow, a bad index or a dead object."
+      },
+      "explain": {
+        "text": "`push_back` may reallocate and invalidate the loop's iterators. `-INT_MIN` overflows, index 4 is past the end, and a second `delete` frees a dead block."
+      }
+    },
+    {
+      "id": "h5-virtual-parts",
+      "difficulty": 4,
+      "skills": [
+        "cp-classes"
+      ],
+      "tags": [
+        "virtual-dispatch"
+      ],
+      "pace": 300,
+      "prose": "Sizes are for this app, where a pointer is 4 bytes.",
+      "parts": [
+        {
+          "question": "What is `sizeof` of `struct B { virtual void f(); double x; };`?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 16,
+            "tol": {
+              "abs": 0
+            },
+            "accept": "16: 4 for the pointer, 4 of padding, 8",
+            "wrong": [
+              {
+                "id": "twelve",
+                "value": 12,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "eight",
+                "value": 8,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "16 bytes.",
+            "generic": "Not quite right. A double starts on a multiple of 8.",
+            "byKey": {
+              "twelve": "You left out the padding before the double.",
+              "eight": "You counted the double only. The pointer is a real field."
+            }
+          },
+          "explain": {
+            "text": "The vptr takes 4 bytes, 4 are skipped so the double lands on 8, and the double takes 8."
+          }
+        },
+        {
+          "question": "`Payoff q = call;` copies a `Call` into a `Payoff`. What does `q.value(110)` run?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "base",
+                "text": "`Payoff`'s version: the copy's vptr is `Payoff`'s",
+                "correct": true
+              },
+              {
+                "id": "call",
+                "text": "`Call`'s version: the object remembers its type",
+                "why": "You assumed the copy brings the vptr along. It does not."
+              },
+              {
+                "id": "error",
+                "text": "It does not compile",
+                "why": "It compiles. The `Call` converts to its base."
+              },
+              {
+                "id": "crash",
+                "text": "It crashes",
+                "why": "The sliced copy is a whole valid `Payoff`."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "The copy is a `Payoff`.",
+            "generic": "Not quite right. Ask which constructor built `q`."
+          },
+          "explain": {
+            "text": "Slicing keeps only the base part, and the base constructor sets the base's table."
+          }
+        },
+        {
+          "question": "Select all that apply: which fixes the slice?",
+          "widget": {
+            "kind": "multi",
+            "layout": "stack",
+            "options": [
+              {
+                "id": "uptr",
+                "text": "A `std::vector<std::unique_ptr<Payoff>>`",
+                "correct": true
+              },
+              {
+                "id": "ptrs",
+                "text": "A `std::vector<const Payoff*>` over objects that outlive it",
+                "correct": true
+              },
+              {
+                "id": "reserve",
+                "text": "A `std::vector<Payoff>` with `reserve`",
+                "why": "`reserve` changes capacity, not the element type. The elements are still `Payoff` values."
+              },
+              {
+                "id": "refs",
+                "text": "A `std::vector<Payoff&>`",
+                "why": "References cannot be stored in a vector."
+              }
+            ],
+            "shuffle": true
+          },
+          "feedback": {
+            "correct": "Hold pointers: the objects keep their real type.",
+            "generic": "Not quite right. Keep the derived objects out of by-value storage."
+          },
+          "explain": {
+            "text": "A vector of pointers stores the addresses of whole objects, so no part is cut off."
+          }
+        }
+      ]
+    },
+    {
+      "id": "h5-say-move",
+      "difficulty": 5,
+      "skills": [
+        "cp-memory",
+        "cp-classes"
+      ],
+      "tags": [
+        "move-semantics"
+      ],
+      "pace": 600,
+      "question": "Say what a candidate should say about moves and the rule of five.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Say aloud, in three minutes: what `std::move` does, when a move happens, why a move constructor should be `noexcept`, and what the rule of five and the rule of zero ask you to do. Write it as you would speak it, about 250 words.",
+        "model": "`std::move` is a cast to an rvalue reference. It moves nothing itself: it only lets a move constructor or assignment be chosen.\n\nA move happens when the source is an rvalue (a temporary, a returned local, a `std::move` cast) and a move constructor exists that is not hidden by a declared destructor or copy member. A `const` object cannot be moved, so `std::move(c)` quietly copies.\n\nA move takes the resource and leaves a valid, destroyable, empty source.\n\n`noexcept` matters because `std::vector` grows with `std::move_if_noexcept`. If the move can throw, every element is copied on growth: for 1,000 `Buffer`s of 1,000 doubles, each growth copies 8 MB instead of moving 1,000 pointers.\n\nRule of zero: own through members that manage themselves, and declare nothing. Rule of five: if you declare any of the destructor, copy or move members, decide all five. For a class that owns a raw resource, delete the copy and write the moves. A destructor alone silently turns every move into a copy.\n\nOne sentence to close: a move takes, a copy duplicates.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "`std::move` is only a cast"
+          },
+          {
+            "points": 2,
+            "text": "When a move happens, with the const and rvalue cases"
+          },
+          {
+            "points": 1,
+            "text": "What a move leaves behind"
+          },
+          {
+            "points": 2,
+            "text": "`noexcept` and vector growth, with a figure"
+          },
+          {
+            "points": 1,
+            "text": "The rule of zero"
+          },
+          {
+            "points": 2,
+            "text": "The rule of five and the silent copy after a destructor"
+          }
+        ]
+      }
+    },
+    {
+      "id": "h5-say-virtual",
+      "difficulty": 5,
+      "skills": [
+        "cp-classes",
+        "cp-basics"
+      ],
+      "tags": [
+        "virtual-dispatch"
+      ],
+      "pace": 600,
+      "question": "Say what happens when a base destructor is not virtual, and what undefined behaviour means for you.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Say aloud, in three minutes, what happens for `Base* p = new Derived; p->f(); delete p;` when `Base`'s destructor is not virtual, and what undefined behaviour means for a quant who ships code. About 250 words.",
+        "model": "If `f` is virtual, `p->f()` loads the object's vptr, indexes its class's table at the slot for `f`, and calls that function: the real type decides.\n\n`delete p` through a `Base*` with a non-virtual destructor is undefined. In practice only `~Base` runs, and `Derived`'s members leak. The fix is `virtual ~Base() = default;`. It costs 4 bytes an object here, two loads and an indirect call a call, and usually no inlining when the compiler cannot see the dynamic type. Copying a `Derived` into a `Base` slices it: the copy's vptr is `Base`'s.\n\nUndefined behaviour means the standard places no limit on the run. The optimiser assumes it never happens, so it deletes a null check after a dereference, or an overflow check made after the addition. Common examples are signed overflow, an index past the end, an unset read and a dangling pointer.\n\nOn the desk: run tests under `-fsanitize=undefined` and `-fsanitize=address`, check before the operation and never after, and hold money in `std::int64_t` pence.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "The dispatch path: vptr, table, slot, call"
+          },
+          {
+            "points": 2,
+            "text": "The non-virtual destructor: undefined, in practice only the base destructor runs"
+          },
+          {
+            "points": 1,
+            "text": "The fix and its cost"
+          },
+          {
+            "points": 1,
+            "text": "Slicing"
+          },
+          {
+            "points": 2,
+            "text": "What undefined behaviour permits, and why the optimiser deletes checks"
+          },
+          {
+            "points": 1,
+            "text": "Three examples"
+          },
+          {
+            "points": 1,
+            "text": "Desk practice"
+          }
+        ]
+      }
+    }
+  ]
+}
