@@ -1,0 +1,81 @@
+{
+ "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Tracked objects are alive.\nstruct Tracked {\n    static inline int live = 0;\n    int v;\n    explicit Tracked(int x) : v(x) { ++live; }\n    ~Tracked() { --live; }\n};\n",
+ "tests": [
+  {
+   "call": "Tracked::live",
+   "expect": 0,
+   "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); }"
+  },
+  {
+   "call": "a.use_count()",
+   "expect": 2,
+   "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a;"
+  },
+  {
+   "call": "a.use_count() * 10 + Tracked::live",
+   "expect": 11,
+   "setup": "SharedPtr<Tracked> a(new Tracked(1)); { SharedPtr<Tracked> b = a; SharedPtr<Tracked> c = b; }"
+  },
+  {
+   "call": "Tracked::live",
+   "expect": 0,
+   "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a; }"
+  },
+  {
+   "call": "Tracked::live",
+   "expect": 1,
+   "setup": "SharedPtr<Tracked> a(new Tracked(1)); { SharedPtr<Tracked> b = a; }"
+  },
+  {
+   "call": "Tracked::live * 10 + a.use_count()",
+   "expect": 12,
+   "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b(new Tracked(2)); b = a;"
+  },
+  {
+   "call": "Tracked::live * 10 + a.use_count()",
+   "expect": 11,
+   "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked>& r = a; a = r;"
+  },
+  {
+   "call": "b.use_count() * 10 + a.use_count()",
+   "expect": 10,
+   "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = std::move(a);"
+  },
+  {
+   "call": "Tracked::live",
+   "expect": 0,
+   "setup": "{ SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = std::move(a); }"
+  },
+  {
+   "call": "Tracked::live * 10 + b.use_count()",
+   "expect": 11,
+   "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b(new Tracked(2)); b = std::move(a);"
+  },
+  {
+   "call": "p.use_count() * 10 + (p.get() == nullptr ? 1 : 0)",
+   "expect": 1,
+   "setup": "SharedPtr<Tracked> p;"
+  },
+  {
+   "call": "b->v + (*a).v",
+   "expect": 16,
+   "setup": "SharedPtr<Tracked> a(new Tracked(8)); SharedPtr<Tracked> b = a;"
+  },
+  {
+   "call": "a.use_count()",
+   "expect": 6,
+   "setup": "SharedPtr<Tracked> a(new Tracked(1)); std::vector<SharedPtr<Tracked>> v(5, a);"
+  },
+  {
+   "call": "a.use_count() * 10 + Tracked::live",
+   "expect": 11,
+   "setup": "SharedPtr<Tracked> a(new Tracked(1)); { std::vector<SharedPtr<Tracked>> v(5, a); }"
+  },
+  {
+   "call": "std::is_nothrow_move_constructible_v<SharedPtr<Tracked>>",
+   "expect": true
+  }
+ ],
+ "alloc": true,
+ "leak": true
+}

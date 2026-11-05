@@ -1,0 +1,67 @@
+{
+ "prelude": "#include <functional>\n#include <string>\n#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: the callbacks the tests hand to a guard write here.\nint ran = 0;\nstd::string trace;\n",
+ "postlude": "\n// Hidden: a factory that returns a guard by value.\nScopeGuard make_guard() { return ScopeGuard([] { ++ran; }); }\n",
+ "tests": [
+  {
+   "call": "ran",
+   "expect": 1,
+   "setup": "{ ScopeGuard g([] { ++ran; }); }"
+  },
+  {
+   "call": "ran",
+   "expect": 0,
+   "setup": "{ ScopeGuard g([] { ++ran; }); g.dismiss(); }"
+  },
+  {
+   "call": "ran",
+   "expect": 1,
+   "setup": "{ ScopeGuard a([] { ++ran; }); ScopeGuard b = std::move(a); }"
+  },
+  {
+   "call": "ran",
+   "expect": 0,
+   "setup": "{ ScopeGuard a([] { ++ran; }); ScopeGuard b = std::move(a); b.dismiss(); }"
+  },
+  {
+   "call": "trace",
+   "expect": "ba",
+   "setup": "{ ScopeGuard a([] { trace += 'a'; }); ScopeGuard b([] { trace += 'b'; }); }"
+  },
+  {
+   "call": "ran",
+   "expect": 1,
+   "setup": "{ ScopeGuard g = make_guard(); }"
+  },
+  {
+   "call": "ran",
+   "expect": 3,
+   "setup": "{ std::vector<ScopeGuard> v; v.push_back(ScopeGuard([] { ++ran; })); v.push_back(ScopeGuard([] { ++ran; })); v.push_back(ScopeGuard([] { ++ran; })); }"
+  },
+  {
+   "call": "inside * 10 + ran",
+   "expect": 1,
+   "setup": "int inside = -1; { ScopeGuard g([] { ++ran; }); inside = ran; }"
+  },
+  {
+   "compiles": "ScopeGuard b = a;",
+   "setup": "ScopeGuard a([] {});",
+   "expect": false
+  },
+  {
+   "compiles": "ScopeGuard b([] {}); b = std::move(a);",
+   "setup": "ScopeGuard a([] {});",
+   "expect": false
+  },
+  {
+   "call": "std::is_nothrow_move_constructible_v<ScopeGuard>",
+   "expect": true
+  },
+  {
+   "call": "ran",
+   "expect": 0,
+   "setup": "{ ScopeGuard a([] { ++ran; }); a.dismiss(); ScopeGuard b = std::move(a); }"
+  }
+ ],
+ "alloc": true,
+ "leak": true
+}

@@ -91,14 +91,14 @@ def compile_check(prob, code, t, cxx, std):
     return (r.returncode == 0) == t["expect"]
 
 
-def one(prob, code, name, cxx, std):
+def one(prob, code, name, cxx, std, extra=()):
     """returns (failed, total, lines): failed -1 means a compile error, -2 a crash"""
     src = build(prob, code)
     d = tempfile.mkdtemp(dir=BUILD)
     fn = f"{d}/{prob['id']}_{name}.cpp"
     open(fn, "w").write(src)
     exe = fn[:-4] + "." + cxx.replace("+", "p")
-    flags = [f"-std={std}", "-O1", "-fno-exceptions", "-Wall", "-Wno-unused", "-Wno-pessimizing-move", "-Wno-self-move"]
+    flags = [f"-std={std}", "-O1", "-fno-exceptions", "-Wall", "-Wno-unused", "-Wno-pessimizing-move", "-Wno-self-move", *extra]
     if prob.get("alloc"):
         flags.append("-fno-builtin")
     r = subprocess.run([cxx, *flags, fn, "-o", exe], capture_output=True, text=True)
@@ -140,8 +140,19 @@ def run(prob, compilers=("g++", "clang++"), stds=("c++17", "c++20")):
                     print("    ", [l for l in lines if l.startswith("FAIL") or "error" in l][:5])
             for name, code in prob.get("mutants", {}).items():
                 f, n, lines = one(prob, code, "mut_" + name, cxx, std)
-                good = f not in (0, -1)
+                good = f != 0
                 allok &= good
                 tag = {-1: "COMPILE ERROR"}.get(f)
-                print(f"[{prob['id']}] mutant {name:24s} {cxx:8s} {std}: " + (tag if tag else f"{f} of {n} failed") + f"   {'caught' if good else 'NOT CAUGHT'}")
+                print(f"[{prob['id']}] mutant {name:24s} {cxx:8s} {std}: " + (tag if tag else f"{f} of {n} failed") + f"   {('caught' if f != -1 else 'caught by a compile error') if good else 'NOT CAUGHT'}")
+            for name, code in prob.get("alts", {}).items():
+                f, n, lines = one(prob, code, "alt_" + name, cxx, std)
+                good = f == 0
+                allok &= good
+                print(f"[{prob['id']}] alt solution {name:20s} {cxx:8s} {std}: {f} of {n} failed   {'OK' if good else 'UNEXPECTED'}")
+            if prob.get("ubsan", True) and cxx == "g++":
+                f, n, lines = one(prob, prob["solution"], "solution_ubsan", cxx, std, ("-fsanitize=undefined", "-fno-sanitize-recover=all"))
+                good = f == 0
+                allok &= good
+                print(f"[{prob['id']}] solution under -fsanitize=undefined {cxx:8s} {std}: {f} of {n} failed   {'OK' if good else 'UNEXPECTED'}")
+                if not good: print("    ", lines[:5])
     return allok

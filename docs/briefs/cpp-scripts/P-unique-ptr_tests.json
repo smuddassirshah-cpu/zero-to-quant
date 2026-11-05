@@ -1,0 +1,81 @@
+{
+ "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Tracked objects are alive.\nstruct Tracked {\n    static inline int live = 0;\n    int v;\n    explicit Tracked(int x) : v(x) { ++live; }\n    ~Tracked() { --live; }\n};\n",
+ "tests": [
+  {
+   "call": "Tracked::live",
+   "expect": 0,
+   "setup": "{ UniquePtr<Tracked> p(new Tracked(5)); }"
+  },
+  {
+   "call": "p->v + (*p).v",
+   "expect": 10,
+   "setup": "UniquePtr<Tracked> p(new Tracked(5));"
+  },
+  {
+   "call": "b->v",
+   "expect": 1,
+   "setup": "UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b = std::move(a);"
+  },
+  {
+   "call": "a.get() == nullptr",
+   "expect": true,
+   "setup": "UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b = std::move(a);"
+  },
+  {
+   "call": "Tracked::live",
+   "expect": 0,
+   "setup": "{ UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b = std::move(a); }"
+  },
+  {
+   "compiles": "UniquePtr<Tracked> b = a;",
+   "setup": "UniquePtr<Tracked> a;",
+   "expect": false
+  },
+  {
+   "compiles": "UniquePtr<Tracked> b; b = a;",
+   "setup": "UniquePtr<Tracked> a;",
+   "expect": false
+  },
+  {
+   "call": "live_after",
+   "expect": 1,
+   "setup": "UniquePtr<Tracked> a(new Tracked(3)); Tracked* raw = a.release(); int live_after = Tracked::live; delete raw;"
+  },
+  {
+   "call": "a.get() == nullptr",
+   "expect": true,
+   "setup": "UniquePtr<Tracked> a(new Tracked(3)); Tracked* raw = a.release(); delete raw;"
+  },
+  {
+   "call": "Tracked::live * 10 + a->v",
+   "expect": 12,
+   "setup": "UniquePtr<Tracked> a(new Tracked(1)); a.reset(new Tracked(2));"
+  },
+  {
+   "call": "Tracked::live",
+   "expect": 0,
+   "setup": "UniquePtr<Tracked> a(new Tracked(1)); a.reset();"
+  },
+  {
+   "call": "Tracked::live",
+   "expect": 1,
+   "setup": "UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked> b(new Tracked(2)); b = std::move(a);"
+  },
+  {
+   "call": "a.get() != nullptr",
+   "expect": true,
+   "setup": "UniquePtr<Tracked> a(new Tracked(4)); UniquePtr<Tracked>& r = a; a = std::move(r);"
+  },
+  {
+   "call": "std::is_nothrow_move_constructible_v<UniquePtr<Tracked>>",
+   "expect": true
+  },
+  {
+   "call": "(p ? 10 : 0) + (q ? 1 : 0)",
+   "expect": 1,
+   "setup": "UniquePtr<Tracked> p; UniquePtr<Tracked> q(new Tracked(1));"
+  }
+ ],
+ "alloc": true,
+ "leak": true
+}
