@@ -1,6 +1,6 @@
 # Readiness contract
 
-Draft for user sign-off (PLAN 2c item 2). Answers in DECISIONS "Readiness contract answers (user, 5 Nov)" are binding here.
+Signed off by the user, 5 Nov (PLAN 2c item 2; DECISIONS "Readiness contract sign-off"). Answers in DECISIONS "Readiness contract answers (user, 5 Nov)" are binding here.
 
 ## What this contract says
 
