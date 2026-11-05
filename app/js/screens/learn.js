@@ -65,6 +65,14 @@
         { title: 'Live Market Data Handler', topicId: '2.3', meta: 'Project 4 · In C++', art: 'vol', track: 'fin' },
         { course: 'puzzles' },
       ] },
+    { id: 'Strats', tests: 'Maths, finance, derivatives pricing, Python or C++',
+      steps: [
+        { course: 'markets' },
+        { course: 'options' },
+        { course: 'trees' },
+        { course: 'regression' },
+        { course: 'backtest', tag: 'Project 1' },
+      ] },
   ];
 
   /* View state lasts for this visit, so returning from a course keeps the stage and tab */
@@ -79,9 +87,10 @@
   const nextLesson = (Z, cid) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !((Z.state.lessons[keyOf(cid, x.id)] || {}).done) && !(Z.prereq && Z.prereq.lessonLocked(cid, x.id))) || null;   // locked lessons are never picked (ENGINE-BACKLOG 486)
   const currentCourse = (Z, sum) => {
     const C = Z.content;
-    if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume)) return sum.resume.course;
+    const track = Z.state.profile.get().track;
+    if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume) && C.readiness.offerable(sum.resume.course, track)) return sum.resume.course;
     const start = Number(Z.state.profile.startStage) || 0;
-    const open = C.courses().filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id));
+    const open = C.readiness.plan(C.courses(), track).filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id));
     /* A course in a passed topic is skipped; it is chosen only when nothing else has a lesson left */
     const fresh = open.filter(c => !C.courseTestedOut(c.id));
     const c = fresh.find(x => x.stage >= start) || fresh[0] || open[0];
@@ -152,13 +161,23 @@
       const stageOf = (n) => STAGES.find(s => s.id === n);
       const inTrack = (t) => view.track === 'all' || t.track === view.track;
       const totalH = STAGES.reduce((a, s) => a + (s.hours || 0), 0);
+      /* The readiness contract (content/readiness.json): one total for the chosen role, required plus recommended, written and unwritten stated separately.
+         Undecided shows the shared foundation. Without the file the old line stands. */
+      const roleHeader = () => {
+        const role = C.readiness.roleKey(prof.track), t = C.readiness.totals(role), h = t && t.header;
+        if (!h) return `${fmt(totalH)} hours in ${STAGES.length === 4 ? 'four' : STAGES.length} stages. Sit a stage’s exit test first to skip it.`;
+        const split = `${fmt(h.written)} written, ${fmt(h.unwritten)} unwritten`;
+        return role === 'undecided'
+          ? `Shared foundation: ${fmt(h.total)} lessons, ${fmt(h.hours)} h (${split}). Choose a role on You before Stage 2. Sit a stage’s exit test first to skip it.`
+          : `${esc(prof.track)} route: ${fmt(h.total)} lessons, ${fmt(h.hours)} h, required plus recommended (${split}). Sit a stage’s exit test first to skip it.`;
+      };
 
       /* ---------- Skeleton ---------- */
       root.innerHTML = `
         <div class="zl">
           <header class="zl-head">
             <h1 class="t-h1 zl-h1">Learn</h1>
-            <p class="t-body secondary zl-desc">${fmt(totalH)} hours in ${STAGES.length === 4 ? 'four' : STAGES.length} stages. Sit a stage’s exit test first to skip it.</p>
+            <p class="t-body secondary zl-desc">${roleHeader()}</p>
             ${C.prepPaths().length ? `<a class="zl-prepare" href="#prepare">${Z.icon('target', 'xs')}<span>Prepare for an assessment or a firm</span>${Z.icon('chevronR', 'xs')}</a>` : ''}
             <div class="zl-toggle" role="group" aria-label="View">
               <button type="button" data-view="courses">${Z.icon('grid', 'xs')}<span>Courses</span></button>
@@ -252,14 +271,15 @@
         const p = prog(c.id), pct = Math.round(p * 100), s = courseState(c, t), cur = c.id === curId;
         const n = lessonsOf(c.id).length, w = writtenCount(c.id), mapOnly = n > 0 && w === 0;
         const counts = `${fmt(n)} lessons · ${c.levels.length} ${c.levels.length === 1 ? 'level' : 'levels'}`;
+        const lim = C.readiness.limited(c.id);
         const pp = C.prepForCourse(c.id), tags = C.strandBadge(c.strand, c.strandNote) + C.prepChip(pp);
-        const label = `${c.name}.${c.strand ? ` ${c.strand === 'pure' ? 'Pure maths' : 'Quant'}.` : ''}${pp.length ? ' Interview prep.' : ''} ${counts}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
+        const label = `${c.name}.${lim ? ` ${lim}.` : ''}${c.strand ? ` ${c.strand === 'pure' ? 'Pure maths' : 'Quant'}.` : ''}${pp.length ? ' Interview prep.' : ''} ${counts}${mapOnly ? ', map only, no lessons written yet' : w < n ? `, ${w} written` : ''}. ${pct}% done. ${STATE[s][0]}.${cur ? ' Your current course.' : ''}`;
         return `<button type="button" class="zl-card${cur ? ' is-current' : ''}${mapOnly ? ' is-map' : ''}" data-track="${t.track}" data-course="${c.id}" aria-label="${esc(label)}">
             <span class="zl-art" aria-hidden="true">${ZQArt(c.art)}</span>
             <span class="zl-body">
               ${cur ? '<span class="zl-cur" aria-hidden="true">Current</span>' : ''}
               <span class="zl-title">${esc(c.name)}</span>${pp.length ? `<span class="zl-tags">${tags}</span>` : tags}
-              <span class="zl-label tnum">${counts}</span>
+              <span class="zl-label tnum">${counts}</span>${lim ? `<span class="zl-label zl-limited">${esc(lim)}</span>` : ''}
               <span class="zl-foot"><span class="bar thin track" aria-hidden="true"><i data-w="${pct}"></i></span><span class="zl-chips">${chip(s)}${mapOnly ? '<span class="zl-maponly">Map only</span>' : ''}</span></span>
             </span>
           </button>`;

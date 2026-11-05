@@ -84,9 +84,10 @@
      that is not finished and has a written lesson still to do. null when no written lesson is left anywhere. */
   const currentCourse = (Z, sum, anyLock) => {
     const C = Z.content;
-    if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume)) return sum.resume.course;
+    const track = Z.state.profile.get().track;
+    if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume) && C.readiness.offerable(sum.resume.course, track)) return sum.resume.course;
     const start = Number(Z.state.profile.startStage) || 0;
-    const open = C.courses().filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id, anyLock));
+    const open = C.readiness.plan(C.courses(), track).filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id, anyLock));
     /* A course in a passed topic is skipped; it is chosen only when nothing else has a lesson left */
     const fresh = open.filter(c => !C.courseTestedOut(c.id));
     const c = fresh.find(x => x.stage >= start) || fresh[0] || open[0];

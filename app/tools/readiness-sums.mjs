@@ -2,7 +2,8 @@
 // Checks docs/readiness.md against the content: course coverage per role, totals, dependency
 // conflicts and mocks. Exits non-zero on any mismatch.
 //   node app/tools/readiness-sums.mjs          check (default)
-//   node app/tools/readiness-sums.mjs --write  regenerate the generated blocks from the classification tables
+//   node app/tools/readiness-sums.mjs --write  regenerate the generated blocks from the classification tables, and app/content/readiness.json
+// Check mode also fails when app/content/readiness.json differs from what --write would generate. Never hand-edit the JSON.
 // Hours source is the census source: stored topic hours in curriculum.json, shared by a topic's
 // courses in proportion to mapped lessons. Written means the lesson file exists on disk.
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
@@ -170,6 +171,31 @@ for (const [name, body] of Object.entries(gen)) {
   if (WRITE) text = text.replace(re, (_, a, __, c) => a + body + c);
   else if (m[2] !== body) err(`block generated:${name} is out of date (run with --write after checking the tables)`);
 }
-if (WRITE && !errors.length) { writeFileSync(MD, text); console.log('readiness.md blocks rewritten'); }
+// readiness.json: what the engine reads (js/readiness.js). Per role: course -> status, totals, mocks.
+// LIMITED: courses whose route is cut short by unwritten courses (DECISIONS, item 7); the script fails once the gap closes.
+const LIMITED = { pdes: { missing: ['odes', 'numerics'] } };
+for (const [cid, l] of Object.entries(LIMITED)) {
+  if (!courses[cid]) err(`LIMITED: unknown course ${cid}`);
+  for (const m of l.missing) if (!courses[m]) err(`LIMITED: unknown course ${m}`); else if (courses[m].written > 0) err(`LIMITED: ${m} now has written lessons; update LIMITED for ${cid}`);
+}
+const setOf = (s) => ({ written: s.w, unwritten: s.u, total: s.w + s.u, hoursWritten: s.hw, hoursUnwritten: s.hu, hours: s.hw + s.hu });
+const json = { generated: 'node app/tools/readiness-sums.mjs --write; do not edit by hand', roles: {}, limited: {} };
+for (const r of ROLES) {
+  const rq = sums(r.key, ['required']), rc = sums(r.key, ['recommended']);
+  const hd = { w: rq.w + rc.w, u: rq.u + rc.u, hw: rq.hw + rc.hw, hu: rq.hu + rc.hu };
+  const courseMap = {}; for (const id of ids) courseMap[id] = cls[r.key][id];
+  json.roles[r.key] = {
+    courses: courseMap, totals: { required: setOf(rq), recommended: setOf(rc), header: setOf(hd) },
+    mocks: { present: mocks[r.key].filter((m) => m.status === 'exists').map((m) => m.id), missing: mocks[r.key].filter((m) => m.status !== 'exists').map((m) => m.id) },
+  };
+}
+for (const [cid, l] of Object.entries(LIMITED)) json.limited[cid] = `route limited: ${l.missing.join(', ')} unwritten`;
+const JSON_FILE = join(C, 'readiness.json');
+const jsonText = JSON.stringify(json, null, 1) + '\n';
+if (!WRITE) {
+  if (!existsSync(JSON_FILE)) err('content/readiness.json missing (run with --write)');
+  else if (readFileSync(JSON_FILE, 'utf8') !== jsonText) err('content/readiness.json is out of date (run with --write)');
+}
+if (WRITE && !errors.length) { writeFileSync(JSON_FILE, jsonText); writeFileSync(MD, text); console.log('readiness.md blocks rewritten'); }
 if (errors.length) { console.error(errors.join('\n')); console.error(`FAIL: ${errors.length} problem(s)`); process.exit(1); }
 console.log(`OK: ${ROLES.length} roles, ${ids.length} courses each, totals, conflicts and mocks agree`);

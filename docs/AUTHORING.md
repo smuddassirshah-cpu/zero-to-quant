@@ -740,3 +740,17 @@ Errors: a reference that is not `<course>/L<n>` or `<course>/<lesson-id>`; an un
 **A level is accepted with and without `--mobile`, and with `--tablet`** (see `docs/LEVEL-BRIEF.md`).
 
 Pass 507 to 511 (device CSS): the column is 780px from 768px up and 540px is gone from the tablet and desktop layouts; the screenshots at 1032, 1376 and 1280 show it. `--tablet` shots now also wait for an exam result's staged reveal (`.exm-res.final`).
+
+## 12. Readiness contract: `readiness.json` and how roles gate (PLAN 2c item 2)
+
+`app/content/readiness.json` is generated. Never edit it. The source is the classification tables in `docs/readiness.md`; run `node app/tools/readiness-sums.mjs --write` after changing a table, a `course.json` map or a mock. The same script without `--write` fails if the markdown blocks or the JSON are out of date. The validator only checks the JSON's shape and lists it in the manifest.
+
+The file holds, per role key (`trader`, `researcher`, `developer`, `strats`, `strats-deriv`, `undecided`): each course's status (`required`, `recommended`, `optional`), totals (lessons and hours, written and unwritten, for required, recommended and the Learn header) and the mocks present and missing. `strats-deriv` is a sub-route of Strats, in the JSON only; it is not a profile track. The profile tracks are Trader, Researcher, Developer, Strats and Undecided (`ZQ.content.readiness.roleKey`).
+
+What the engine does with it:
+- Today picks next work from required courses first, then recommended, never optional. Optional courses stay on Learn. Undecided keeps the old order.
+- Under Strict (`settings.strictPrereqs`), a `requires` edge into a course that is optional for the profile's role is advisory: it never locks, and the course map adds a note to the lesson ("it relies on ... which is optional on your track"). Undecided, and any role for which the target course is required or recommended, still block. No `course.json` edit is needed; `ZQ.prereq.advisory(ref)` is the rule.
+- The Learn header shows one total for the role: required plus recommended, written and unwritten stated separately. Undecided shows the shared foundation.
+- A course card shows "route limited: odes, numerics unwritten" for a course listed in `LIMITED` at the top of the generator's JSON section (today `pdes`). The script fails when a course it names as missing gains a written lesson, so the note cannot go stale.
+
+Authors writing a `requires` edge into a course that is optional for a role should still write it: it keeps the order for roles that need it.

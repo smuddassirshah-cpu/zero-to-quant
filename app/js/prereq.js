@@ -109,11 +109,23 @@
     return p.kind === 'level' ? levelMet(p.course, p.n) : lessonMet(p.course, p.id);
   };
 
+  /* ---------- Advisory edges (readiness contract, DECISIONS "Readiness contract sign-off") ----------
+     Under Strict, a reference into a course that is optional for the profile's role (content/readiness.json) is advisory:
+     it never locks, and the level or lesson shows it as a note. Undecided, or no readiness file, keeps every edge blocking. */
+  const roleNow = () => { try { const R = C().readiness; return R ? R.roleKey(S().profile.get().track) : 'undecided'; } catch { return 'undecided'; } };
+  const advisory = (ref) => {
+    if (!strict()) return false;
+    const p = parse(ref), role = roleNow();
+    if (!p || role === 'undecided') return false;
+    try { return C().readiness.status(p.course, role) === 'optional'; } catch { return false; }
+  };
+  const blocking = (refs) => refs.filter(r => !advisory(r));
+
   /* ---------- Locked ---------- */
   const openedEarly = (cid, n) => !!rec().opened[keyOfLevel(cid, n)];
   const startedLevel = (cid, n) => !!(rec().started || {})[keyOfLevel(cid, n)];
   /* A level that is met, opened early or started is open as a place to work, whatever its own references say */
-  const levelLocked = (cid, n) => !openedEarly(cid, n) && !startedLevel(cid, n) && !levelMet(cid, n) && levelRefs(cid, n).some(r => !refMet(r));
+  const levelLocked = (cid, n) => !openedEarly(cid, n) && !startedLevel(cid, n) && !levelMet(cid, n) && blocking(levelRefs(cid, n)).some(r => !refMet(r));
   const lessonLocked = (cid, lid) => {
     if (lessonDone(cid, lid)) return false;
     const lv = levelHolding(cid, lid);
@@ -121,7 +133,7 @@
     const d = doc(cid) || {};
     const own = !!(d.lessonRequires && Array.isArray(d.lessonRequires[lid]));
     if (lv && !own && levelMet(cid, lv.n)) return false;
-    return lessonRefs(cid, lid).some(r => !refMet(r));
+    return blocking(lessonRefs(cid, lid)).some(r => !refMet(r));
   };
   /* A lesson, review or homework id of a course map */
   const itemLocked = (cid, id) => {
@@ -195,20 +207,24 @@
       seen.add(k); into.push(nd);
       return nd;
     };
-    const walk = (nd) => nd.refs.forEach(r => { const x = add(r, indirect); if (x) walk(x); });
-    refs.forEach(r => add(r, direct));
+    const walk = (nd) => blocking(nd.refs).forEach(r => { const x = add(r, indirect); if (x) walk(x); });
+    blocking(refs).forEach(r => add(r, direct));
     direct.slice().forEach(walk);
     const byOrd = (a, b) => a.ord - b.ord;
     direct.sort(byOrd); indirect.sort(byOrd);
     const all = direct.concat(indirect).sort(byOrd);
     let start = null;
     for (const nd of all) {
-      if (nd.refs.some(r => !refMet(r))) continue;
+      if (blocking(nd.refs).some(r => !refMet(r))) continue;
       const l = launchOf(nd);
       if (l) { start = { node: nd, ...l }; break; }
     }
     return { direct, indirect, start, count: direct.length + indirect.length };
   };
+  /* Advisory references still unmet for a lesson or level: nodes to show as a note, never as a lock */
+  const advisoryNodes = (refs) => refs.filter(r => advisory(r) && !refMet(r)).map(nodeOf).filter(Boolean);
+  const advisoryFor = (cid, id) => advisoryNodes(lessonRefs(cid, id));
+  const advisoryForLevel = (cid, n) => advisoryNodes(levelRefs(cid, n));
   const missingFor = (cid, id) => missingRefs(lessonRefs(cid, id));
   const missingForLevel = (cid, n) => missingRefs(levelRefs(cid, n));
 
@@ -266,7 +282,7 @@
 
   const api = {
     strict, parse, levelRefs, lessonRefs, examRefs, examLocked, levelMet, lessonMet, refMet, levelLocked, lessonLocked, itemLocked, courseLocked, openedEarly, startedLevel,
-    missingFor, missingForLevel, missingRefs, nodeOf, launchOf, testOutFacts, refreshFor, sync, unlock, unlockRefs, levelHolding, keyOfLevel,
+    advisory, advisoryFor, advisoryForLevel, missingFor, missingForLevel, missingRefs, nodeOf, launchOf, testOutFacts, refreshFor, sync, unlock, unlockRefs, levelHolding, keyOfLevel,
     openedCount: () => Object.keys(rec().opened).length,
     PASS, TESTOUT_N, RETAKE_H, REFRESH_D,
   };

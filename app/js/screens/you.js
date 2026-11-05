@@ -13,7 +13,7 @@
   const MONTH = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const BLOCKS = [['main', 'Main subject'], ['build', 'Build'], ['review', 'Review'], ['mental', 'Mental arithmetic']];
-  const TRACKS = [['Trader', 'Trader'], ['Researcher', 'Researcher'], ['Developer', 'Developer'], ['Undecided', 'Not sure']];
+  const TRACKS = [['Trader', 'Trader'], ['Researcher', 'Researcher'], ['Developer', 'Developer'], ['Strats', 'Strats'], ['Undecided', 'Not sure']];
   const BIN_LABEL = ['Not started', '1 to 16%', '17 to 33%', '34 to 50%', '51 to 66%', '67 to 83%', '84 to 100%'];
   const RESET_WORD = 'RESET';
 

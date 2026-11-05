@@ -13,6 +13,8 @@
       react: 'Researchers get the most statistics and machine learning, plus projects 1 and 2 and a paper replication.' },
     { id: 'Developer', desc: 'Algorithms, C++, systems design',
       react: 'Developers get more algorithm practice and contests, and C++ needs at least double its 140 hours.' },
+    { id: 'Strats', desc: 'Maths, finance, derivatives pricing, Python or C++',
+      react: 'Strats gets finance basics as required work, with derivatives and desk quant as a route inside it.' },
     { id: 'Undecided', desc: 'Stages 0 and 1 are the same for every track',
       react: 'That is fine. Stages 0 and 1 are shared; you choose before Stage 2.' },
   ];

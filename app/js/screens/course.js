@@ -33,9 +33,10 @@
   const nextLesson = (Z, cid) => Z.content.courseLessons(cid).find(x => x.kind === 'lesson' && x.written === true && !((Z.state.lessons[keyOf(cid, x.id)] || {}).done) && !(Z.prereq && Z.prereq.lessonLocked(cid, x.id))) || null;   // locked lessons are never picked (ENGINE-BACKLOG 486)
   const currentCourse = (Z, sum) => {
     const C = Z.content;
-    if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume)) return sum.resume.course;
+    const track = Z.state.profile.get().track;
+    if (sum.resume && C.course(sum.resume.course) && C.resumeStands(sum.resume) && C.readiness.offerable(sum.resume.course, track)) return sum.resume.course;
     const start = Number(Z.state.profile.startStage) || 0;
-    const open = C.courses().filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id));
+    const open = C.readiness.plan(C.courses(), track).filter(c => (sum.courseProgress[c.id] || 0) < 1 && nextLesson(Z, c.id));
     /* A course in a passed topic is skipped; it is chosen only when nothing else has a lesson left */
     const fresh = open.filter(c => !C.courseTestedOut(c.id));
     const c = fresh.find(x => x.stage >= start) || fresh[0] || open[0];
@@ -333,8 +334,10 @@
       }
       const m = lessonMeta[keyOf(cid, it.id)];
       const r = lrec(e);
+      const adv = Z.prereq && it.kind === 'lesson' ? Z.prereq.advisoryFor(cid, it.id) : [];
+      const note = adv.length ? ` · Note: it relies on ${adv.map(x => `${x.courseName}, level ${x.n}`).join(' and ')}, which is optional on your track` : '';
       const where = r && r.position ? (r.position.phase === 'quiz' ? ` · Paused at quiz question ${(r.position.q || 0) + 1}` : ` · Paused at screen ${(r.position.i || 0) + 1}`) : '';
-      return (m ? `${m.screens} screens · about ${m.minutes} min` : `About ${DEFAULT_MIN} min`) + where;
+      return (m ? `${m.screens} screens · about ${m.minutes} min` : `About ${DEFAULT_MIN} min`) + where + note;
     };
     const fillInfo = (body, e, close) => {
       const it = e.it, st = statusOf(e);

@@ -1458,6 +1458,47 @@ const main = async () => {
           if (await evalOnly(() => !!document.querySelector('.lk'))) fails.push(`#review/${mt.c}/${mt.review}: a level that is met showed the locked card`);
           await importDoc();
         }
+        /* 7b2. Readiness contract (PLAN 2c item 2): a trader is never offered graphs-dp or contests as Today's next work, and edges into an
+           optional course are advisory (brainteasers L2 needs graphs-dp/L3, game-theory L2 needs graphs-dp/L4); a developer and an undecided learner still block. */
+        {
+          const OPT = ['graphs-dp', 'contests'];
+          const todayCourse = async () => { await route('today'); return evalOnly(() => { const h = document.querySelector('.zt-hero'); return h ? h.getAttribute('aria-label') || '' : ''; }); };
+          const optNames = await evalOnly((ids) => ids.map(i => ZQ.content.course(i).name), OPT);
+          await importDoc({ profile: Object.assign(JSON.parse(await evalOnly(() => ZQ.state.export())).profile, { track: 'Trader', startStage: 0 }) });
+          const fresh = await todayCourse();
+          if (optNames.some(n => fresh.startsWith(n + ','))) fails.push(`a fresh trader was offered "${fresh}" on Today`);
+          /* every written lesson of a required or recommended course done: Today must still not offer an optional course */
+          await evalOnly(() => {
+            const d = JSON.parse(ZQ.state.export()); d.profile.track = 'Trader';
+            for (const c of ZQ.content.allCourses()) {
+              if (ZQ.content.readiness.status(c.id, 'trader') === 'optional') continue;
+              for (const x of ZQ.content.courseLessons(c.id)) if (x.kind === 'lesson' && x.written === true) d.lessons[`${c.id}/${x.id}`] = { attempts: 1, done: true, firstTry: null, xp: 0, bestQuiz: null, mastered: true, perfect: false, completedAt: Date.now(), secondsSpent: 0, position: null };
+            }
+            ZQ.state.import(d);
+          });
+          const after = await todayCourse();
+          if (optNames.some(n => after.startsWith(n + ','))) fails.push(`a trader with all required and recommended work done was offered "${after}" on Today`);
+          await importDoc({ profile: Object.assign(JSON.parse(await evalOnly(() => ZQ.state.export())).profile, { track: 'Trader' }) });
+          const adv = (track) => evalOnly((t) => {
+            ZQ.state.profile.set({ track: t });
+            ZQ.prereq.unlockRefs(['brainteasers/L1', 'game-theory/L1', 'micro/L3', 'limits/L4', 'brainteasers/L2']);
+            const rest = ZQ.prereq.missingFor('brainteasers', ZQ.content.course('brainteasers').levels.find(l => l.n === 2).lessons[0]);
+            return { bt: ZQ.prereq.levelLocked('brainteasers', 2), gt: ZQ.prereq.levelLocked('game-theory', 2), note: ZQ.prereq.advisoryForLevel('brainteasers', 2).length, direct: rest.direct.map(n => n.ref) };
+          }, track);
+          const tr = await adv('Trader');
+          if (tr.bt || tr.gt) fails.push(`trader: brainteasers L2 locked ${tr.bt}, game-theory L2 locked ${tr.gt}; edges into graphs-dp should be advisory`);
+          if (!tr.note) fails.push('trader: brainteasers L2 shows no advisory note for graphs-dp/L3');
+          await importDoc(); await evalOnly(() => ZQ.prereq.unlockRefs(['brainteasers/L1', 'game-theory/L1', 'micro/L3', 'limits/L4']));
+          await evalOnly(() => ZQ.state.profile.set({ track: 'Trader' }));
+          await route(`lesson/brainteasers/${await evalOnly(() => ZQ.content.course('brainteasers').levels.find(l => l.n === 2).lessons[0])}`);
+          if (await evalOnly(() => !!document.querySelector('.lk') || !document.querySelector('.lsn'))) fails.push('trader: brainteasers L2 first lesson did not open without graphs-dp met');
+          for (const t of ['Developer', 'Undecided']) {
+            await importDoc(); await evalOnly(() => ZQ.prereq.unlockRefs(['brainteasers/L1']));
+            const r = await evalOnly((t) => { ZQ.state.profile.set({ track: t }); return ZQ.prereq.levelLocked('brainteasers', 2); }, t);
+            if (!r) fails.push(`${t}: brainteasers L2 should still lock while graphs-dp/L3 is unmet`);
+          }
+          await importDoc();
+        }
         /* 7c. A started level (one lesson finished) keeps its other lessons open, and does not count as met */
         const sl = await evalOnly(() => {
           const L = ZQ.content.allCourses().flatMap(c => (c.levels || []).map(lv => ({ c: c.id, lv }))).find(({ c, lv }) => (lv.lessons || []).filter(id => ZQ.content.exists(c, id) !== false).length >= 2 && ZQ.prereq.levelLocked(c, lv.n));

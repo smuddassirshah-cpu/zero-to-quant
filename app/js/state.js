@@ -17,7 +17,7 @@
   const REST_EVERY = 7, REST_MAX = 2;
   const QUALIFY_PROBLEMS = 3;
   const BLOCKS = ['main', 'build', 'review', 'mental'];
-  const TRACKS = ['Trader', 'Researcher', 'Developer', 'Undecided'];
+  const TRACKS = ['Trader', 'Researcher', 'Developer', 'Strats', 'Undecided'];
   const GOALS = [5, 10, 15, 25];
   const XP = { first: 15, retry: 5, lesson: 20, perfect: 15, quizItem: 15, homework: 50, homeworkItem: 5, topicExam: 200, stageExam: 1000 };
 
