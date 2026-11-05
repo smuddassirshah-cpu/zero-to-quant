@@ -1,0 +1,1195 @@
+{
+ "id": "l5-mean-reversion",
+ "course": "odes",
+ "title": "Mean reversion: the Vasicek drift",
+ "minutes": 14,
+ "objectives": [
+  "Solve $dr/dt = \\kappa(\\theta - r)$ and read the half-life of a rate’s pull to its mean."
+ ],
+ "skills": [
+  "de-first"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A rate with a home",
+   "prose": "A short rate sits at 6%. It is pulled towards a long-run mean $\\theta = 4\\%$ at speed $\\kappa$: $\\dfrac{dr}{dt} = \\kappa(\\theta - r)$. Slide the start $r_0$ and the speed $\\kappa$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      10
+     ],
+     "y": [
+      0.01,
+      0.08
+     ],
+     "xLabel": "$t$ (years)",
+     "yLabel": "rate",
+     "yFormat": "percent",
+     "height": 280,
+     "functions": [
+      {
+       "id": "r",
+       "expr": "0.04 + (r0 - 0.04)*exp(-kappa*x)",
+       "label": "$r(t)$",
+       "colour": 1,
+       "labelAt": 7
+      }
+     ],
+     "hlines": [
+      {
+       "id": "theta",
+       "y": 0.04,
+       "label": "$\\theta = 4\\%$"
+      }
+     ],
+     "params": {
+      "r0": 0.06,
+      "kappa": 0.5
+     }
+    },
+    "state": {},
+    "derive": {
+     "caption": "$r_0$ = {{fixed(r0 * 100, 1)}}%, $\\kappa$ = {{fixed(kappa, 2)}}: $r(2)$ = {{fixed((0.04 + (r0 - 0.04) * exp(-2 * kappa)) * 100, 3)}}%"
+    },
+    "controls": [
+     {
+      "bind": "r0",
+      "min": 0.01,
+      "max": 0.08,
+      "step": 0.005,
+      "start": 0.06,
+      "label": "$r_0$",
+      "format": "percent"
+     },
+     {
+      "bind": "kappa",
+      "min": 0.1,
+      "max": 2,
+      "step": 0.05,
+      "start": 0.5,
+      "label": "$\\kappa$"
+     }
+    ]
+   },
+   "question": "What do all the paths have in common?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "theta",
+      "text": "They all head to 4%, faster for larger $\\kappa$",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "They all decay to 0%",
+      "why": "Try a start of 2%: the path rises. The pull is towards 4%, not 0."
+     },
+     {
+      "id": "start",
+      "text": "Each settles near its own start",
+      "why": "Move $r_0$ from 1% to 8%: every path ends at the dashed line."
+     },
+     {
+      "id": "kappa",
+      "text": "Larger $\\kappa$ moves the level they reach",
+      "why": "$\\kappa$ changes how fast, not where. The level is $\\theta$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Every path ends at $\\theta = 4\\%$; $\\kappa$ sets how fast.",
+    "generic": "Not quite right. Try two starts and two speeds, and compare where each path ends."
+   },
+   "explain": {
+    "text": "Above 4% the drift is negative and below it positive, so every path is pulled to $\\theta$. This is **mean reversion**, the drift of the Vasicek model.",
+    "canvas": {
+     "params": {
+      "r0": 0.02
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Solve it either way",
+   "prose": "The gap $u = r - \\theta$ obeys $u' = -\\kappa u$, which separates (lesson 2): $u = u_0e^{-\\kappa t}$. Or read $r' = -\\kappa r + \\kappa\\theta$ as lesson 3's $y' = ay + q$, with steady level $\\theta$. Both give $r(t) = \\theta + (r_0 - \\theta)e^{-\\kappa t}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      8
+     ],
+     "y": [
+      0.03,
+      0.065
+     ],
+     "xLabel": "$t$ (years)",
+     "yLabel": "rate",
+     "yFormat": "percent",
+     "height": 270,
+     "functions": [
+      {
+       "id": "r",
+       "expr": "0.04 + 0.02*exp(-0.5*x)",
+       "label": "$r(t)$",
+       "colour": 1,
+       "labelAt": 6
+      }
+     ],
+     "hlines": [
+      {
+       "id": "theta",
+       "y": 0.04,
+       "label": "$\\theta = 4\\%$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "With $r_0 = 6\\%$, $\\theta = 4\\%$, $\\kappa = 0.5$, what is $r(1)$, to 4 decimal places of a per cent?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.052131,
+    "tol": {
+     "abs": 5e-06
+    },
+    "accept": "5.2131%, from $4\\% + 2\\% \\times e^{-0.5}$",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "gap",
+      "value": 0.012131,
+      "tol": {
+       "abs": 5e-06
+      }
+     },
+     {
+      "id": "decay",
+      "value": 0.036392,
+      "tol": {
+       "abs": 5e-06
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The gap at the start is 2 points."
+    },
+    {
+     "rung": "point",
+     "text": "After one year the gap is $0.02e^{-0.5} = 0.012131$.",
+     "highlight": [
+      "r"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.04 + 0.012131 = 0.052131$."
+    }
+   ],
+   "feedback": {
+    "correct": "$4\\% + 2\\% \\times 0.60653 = 5.2131\\%$.",
+    "generic": "Not quite right. Shrink the 2-point gap by $e^{-0.5}$, then add back 4%.",
+    "byKey": {
+     "gap": "You found the gap, 1.2131%, and forgot to add $\\theta$ back.",
+     "decay": "You shrank the whole rate, $6\\% \\times e^{-0.5}$. Only the gap to $\\theta$ shrinks."
+    }
+   },
+   "explain": {
+    "text": "$r(1) = 0.04 + 0.02e^{-0.5} = 5.2131\\%$, and $r(2) = 0.04 + 0.02e^{-1} = 4.7358\\%$. The gap shrinks by the same factor each year.",
+    "canvas": {
+     "points": {
+      "p1": {
+       "x": 1,
+       "y": 0.052131,
+       "label": "5.2131%"
+      },
+      "p2": {
+       "x": 2,
+       "y": 0.047358,
+       "label": "4.7358%"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The half-life",
+   "prose": "The gap halves in a fixed time, whatever its size: the **half-life**. Solve $e^{-\\kappa t} = \\tfrac12$. The dashed line at 5% marks a gap of half the start.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      8
+     ],
+     "y": [
+      0.03,
+      0.065
+     ],
+     "xLabel": "$t$ (years)",
+     "yLabel": "rate",
+     "yFormat": "percent",
+     "height": 270,
+     "functions": [
+      {
+       "id": "r",
+       "expr": "0.04 + 0.02*exp(-0.5*x)",
+       "label": "$r(t)$",
+       "colour": 1,
+       "labelAt": 6
+      }
+     ],
+     "hlines": [
+      {
+       "id": "theta",
+       "y": 0.04,
+       "label": "$\\theta = 4\\%$"
+      }
+     ]
+    },
+    "state": {
+     "hlines": [
+      {
+       "id": "half",
+       "y": 0.05,
+       "label": "5%"
+      }
+     ]
+    }
+   },
+   "question": "With $\\kappa = 0.5$, what is the half-life in years, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.3863,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "1.3863: $\\ln 2/0.5$",
+    "unit": "years",
+    "wrong": [
+     {
+      "id": "ln2",
+      "value": 0.6931,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mean",
+      "value": 2,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set the gap factor $e^{-0.5t}$ to $\\tfrac12$."
+    },
+    {
+     "rung": "point",
+     "text": "$-0.5t = \\ln\\tfrac12 = -\\ln 2$.",
+     "highlight": [
+      "half"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$t = \\ln 2/0.5 = 1.3863$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\ln 2/0.5 = 1.3863$ years: the rate is 5% then.",
+    "generic": "Not quite right. Take logs of $e^{-0.5t} = \\tfrac12$.",
+    "byKey": {
+     "ln2": "You found $\\ln 2$ and stopped. Divide by $\\kappa = 0.5$.",
+     "mean": "$1/\\kappa = 2$ is the time the gap falls to $1/e$ of its start, not to a half."
+    }
+   },
+   "explain": {
+    "text": "$t_{1/2} = \\ln 2/\\kappa = 1.3863$ years. After one half-life the rate is 5%. After two, at 2.7726 years, it is 4.5%: a quarter of the gap is left.",
+    "canvas": {
+     "points": {
+      "h1": {
+       "x": 1.3863,
+       "y": 0.05,
+       "label": "1.3863"
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Speed from a half-life",
+   "prose": "Desks often quote the half-life and leave $\\kappa$ implied. The relation runs both ways: $\\kappa = \\ln 2/t_{1/2}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      8
+     ],
+     "y": [
+      0.03,
+      0.065
+     ],
+     "xLabel": "$t$ (years)",
+     "yLabel": "rate",
+     "yFormat": "percent",
+     "height": 270,
+     "functions": [
+      {
+       "id": "r",
+       "expr": "0.04 + 0.02*exp(-0.5*x)",
+       "label": "$r(t)$",
+       "colour": 1,
+       "labelAt": 6
+      }
+     ],
+     "hlines": [
+      {
+       "id": "theta",
+       "y": 0.04,
+       "label": "$\\theta = 4\\%$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "A model's half-life is 2 years. What is $\\kappa$, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3466,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.3466: $\\ln 2/2$",
+    "wrong": [
+     {
+      "id": "recip",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "times",
+      "value": 1.3863,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Swap the roles of $\\kappa$ and $t_{1/2}$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\kappa = \\ln 2/t_{1/2}$.",
+     "highlight": [
+      "r"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.6931/2 = 0.3466$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\kappa = \\ln 2/2 = 0.3466$ a year.",
+    "generic": "Not quite right. Rearrange $t_{1/2} = \\ln 2/\\kappa$.",
+    "byKey": {
+     "recip": "You took $1/t_{1/2}$. The factor $\\ln 2$ belongs in it.",
+     "times": "You multiplied $\\ln 2$ by 2. Divide instead."
+    }
+   },
+   "explain": {
+    "text": "$\\kappa = \\ln 2/2 = 0.3466$. A slower half-life means a smaller $\\kappa$: the curve on the chart would flatten.",
+    "canvas": {
+     "functions": [
+      {
+       "id": "slow",
+       "expr": "0.04 + 0.02*exp(-0.3466*x)",
+       "label": "$\\kappa = 0.3466$",
+       "colour": 2,
+       "dashed": true,
+       "labelAt": 3.5
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The average rate over five years",
+   "prose": "A five-year loan pays the average rate: $\\dfrac{1}{T}\\int_0^T r\\,dt = \\theta + (r_0 - \\theta)\\dfrac{1 - e^{-\\kappa T}}{\\kappa T}$. The shaded area is the integral.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      8
+     ],
+     "y": [
+      0,
+      0.065
+     ],
+     "xLabel": "$t$ (years)",
+     "yLabel": "rate",
+     "yFormat": "percent",
+     "height": 270,
+     "functions": [
+      {
+       "id": "r",
+       "expr": "0.04 + 0.02*exp(-0.5*x)",
+       "label": "$r(t)$",
+       "colour": 1,
+       "labelAt": 6
+      }
+     ],
+     "hlines": [
+      {
+       "id": "theta",
+       "y": 0.04,
+       "label": "$\\theta = 4\\%$"
+      }
+     ]
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "r",
+      "from": 0,
+      "to": 5
+     }
+    }
+   },
+   "question": "For $T = 5$, what is the average rate, to 4 decimal places of a per cent?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.047343,
+    "tol": {
+     "abs": 5e-06
+    },
+    "accept": "4.7343%: $4\\% + 2\\% \\times (1 - e^{-2.5})/2.5$",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "mid",
+      "value": 0.05,
+      "tol": {
+       "abs": 5e-06
+      }
+     },
+     {
+      "id": "end",
+      "value": 0.041642,
+      "tol": {
+       "abs": 5e-06
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Integrate the gap $0.02e^{-0.5t}$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\int_0^5 e^{-0.5t}dt = 2(1 - e^{-2.5})$.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.04 + 0.02 \\times 0.36717 = 0.047343$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(1 - e^{-2.5})/2.5 = 0.36717$, so the average is $4\\% + 0.7343\\% = 4.7343\\%$.",
+    "generic": "Not quite right. Integrate $0.02e^{-0.5t}$ from 0 to 5, divide by 5, add 4%.",
+    "byKey": {
+     "mid": "You averaged the start and the mean. The path is curved, so it is closer to 4% for longer.",
+     "end": "That is $r(5)$, the rate at the end. The average includes the higher early years."
+    }
+   },
+   "explain": {
+    "text": "$\\int_0^5 0.02e^{-0.5t}dt = 0.04(1 - e^{-2.5}) = 0.036717$; divided by 5 and added to 4% it is 4.7343%. The average sits above $r(5) = 4.1642\\%$ because early rates are higher."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Adding noise: the Vasicek model",
+   "prose": "The Vasicek model adds shocks: $dr = \\kappa(\\theta - r)\\,dt + \\sigma\\,dW$. Daily, it is an AR(1): each day keeps $\\phi = e^{-\\kappa/252} \\approx 0.998018$ of the gap. The shocks have mean zero, so the dashed mean path solves our equation.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "ou",
+     "steps": 504,
+     "paths": 20,
+     "start": 0.06,
+     "mu": 0.04,
+     "theta": 0.001982,
+     "sigma": 0.0006,
+     "y": [
+      0.02,
+      0.08
+     ],
+     "sim": {
+      "seed": 3
+     },
+     "xLabel": "trading days",
+     "yLabel": "rate",
+     "levelLabel": "θ = 4%"
+    },
+    "state": {
+     "showMean": true,
+     "showSpread": 2
+    },
+    "controls": [
+     {
+      "bind": "theta",
+      "min": 0.0005,
+      "max": 0.01,
+      "step": 1e-06,
+      "start": 0.001982,
+      "label": "daily pull $1 - \\phi$",
+      "decimals": 6
+     },
+     {
+      "bind": "sigma",
+      "min": 0,
+      "max": 0.002,
+      "step": 0.0001,
+      "start": 0.0006,
+      "label": "daily noise $\\sigma$",
+      "decimals": 4
+     }
+    ]
+   },
+   "question": "What is the **expected** rate after 252 trading days, to 4 decimal places of a per cent?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.052131,
+    "tol": {
+     "abs": 5e-06
+    },
+    "accept": "5.2131%: the noise averages out, so $E[r(1)] = 4\\% + 2\\% \\times e^{-0.5}$",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "start",
+      "value": 0.06,
+      "tol": {
+       "abs": 5e-06
+      }
+     },
+     {
+      "id": "theta",
+      "value": 0.04,
+      "tol": {
+       "abs": 5e-06
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Shocks with mean zero do not move the mean."
+    },
+    {
+     "rung": "point",
+     "text": "The mean path solves $r' = 0.5(0.04 - r)$.",
+     "highlight": [
+      "mean"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.04 + 0.02e^{-0.5} = 0.052131$."
+    }
+   ],
+   "feedback": {
+    "correct": "The expected rate is the ODE's 5.2131%: $0.04 + 0.02\\phi^{252} = 0.04 + 0.02e^{-0.5}$.",
+    "generic": "Not quite right. The noise has mean zero, so the mean path is the solution from screen 2.",
+    "byKey": {
+     "start": "You reasoned that noise makes the future unknowable, so the start is the best guess. The drift still pulls the mean down.",
+     "theta": "That is where it ends in the long run. After one year the gap is still $0.02e^{-0.5}$."
+    }
+   },
+   "explain": {
+    "text": "$\\phi^{252} = e^{-0.5}$ exactly, so the dashed mean after a year is 5.2131%. Noise spreads the paths around it; the subject of `ito` studies that spread. The same AR(1) comes back in `arma` l12 and `coint` l7, later courses."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Half of what?",
+   "prose": "A colleague says: \"$\\kappa = 0.5$, so the half-life is 1.39 years. The rate will have halved to 3% by then.\" Another writes the drift as $0.5(r - 0.04)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      8
+     ],
+     "y": [
+      0.03,
+      0.065
+     ],
+     "xLabel": "$t$ (years)",
+     "yLabel": "rate",
+     "yFormat": "percent",
+     "height": 270,
+     "functions": [
+      {
+       "id": "r",
+       "expr": "0.04 + 0.02*exp(-0.5*x)",
+       "label": "$r(t)$",
+       "colour": 1,
+       "labelAt": 6
+      }
+     ],
+     "hlines": [
+      {
+       "id": "theta",
+       "y": 0.04,
+       "label": "$\\theta = 4\\%$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Where is the rate after 1.3863 years?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "five",
+      "text": "5%",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "3%",
+      "why": "You halved the rate itself. The half-life halves the gap to $\\theta$, from 2 points to 1."
+     },
+     {
+      "id": "eight",
+      "text": "8%",
+      "why": "You used the drift $0.5(r - 0.04)$, which pushes away from 4%. The gap then doubles."
+     },
+     {
+      "id": "four",
+      "text": "4%",
+      "why": "The rate gets to 4% only in the long run; one half-life leaves half the gap."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The half-life acts on $r - \\theta$."
+    },
+    {
+     "rung": "point",
+     "text": "The gap starts at 2 points.",
+     "highlight": [
+      "theta"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Half of 2 points is 1, so $r = 4\\% + 1\\% = 5\\%$."
+    }
+   ],
+   "feedback": {
+    "correct": "The gap halves from 2 points to 1, so the rate is 5%.",
+    "generic": "Not quite right. Halve the gap to $\\theta$, not the rate.",
+    "byKey": {
+     "three": "You halved the rate itself. Mean reversion halves the gap to $\\theta$: 6% goes to 5%.",
+     "eight": "You used the drift $0.5(r - 0.04)$: above 4% it pushes up, so the gap doubles instead."
+    }
+   },
+   "explain": {
+    "text": "After one half-life the gap is $2\\% \\times \\tfrac12 = 1\\%$, so $r = 5\\%$. The drift must be $\\kappa(\\theta - r)$: with the signs swapped the rate runs away.",
+    "canvas": {
+     "functions": [
+      {
+       "id": "bad",
+       "expr": "0.04 + 0.02*exp(0.5*x)",
+       "label": "$0.5(r - 0.04)$",
+       "colour": 2,
+       "dashed": true,
+       "domain": [
+        0,
+        0.9
+       ],
+       "labelAt": 0.5
+      }
+     ],
+     "hlines": [
+      {
+       "id": "five",
+       "y": 0.05,
+       "label": "5%"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The mean-reverting solution",
+   "prose": "For $\\dfrac{dr}{dt} = \\kappa(\\theta - r)$ with $\\kappa > 0$:\n\n$$r(t) = \\theta + (r_0 - \\theta)e^{-\\kappa t}, \\qquad t_{1/2} = \\frac{\\ln 2}{\\kappa}.$$\n\nEvery half-life halves the gap. To reach a target $r^*$, solve $e^{-\\kappa t} = \\dfrac{r^* - \\theta}{r_0 - \\theta}$.",
+   "question": "From 6%, how long until the rate reaches 4.5%, in years to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.7726,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "2.7726: two half-lives, $\\ln 4/0.5$",
+    "unit": "years",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1.3863,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "lin",
+      "value": 3,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The gap falls from 2 to 0.5, a quarter: two half-lives, $\\ln 4/0.5 = 2.7726$ years.",
+    "generic": "Not quite right. Solve $e^{-0.5t} = 0.5/2 = \\tfrac14$.",
+    "byKey": {
+     "one": "One half-life leaves 1 point, so the rate is 5%. You need a quarter of the gap.",
+     "lin": "You let the rate fall in a straight line. The fall slows as the gap shrinks."
+    }
+   },
+   "explain": {
+    "text": "$(0.045 - 0.04)/(0.06 - 0.04) = \\tfrac14$, so $t = \\ln 4/0.5 = 2.7726$ years. Two half-lives leave a quarter."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The drift in NumPy",
+   "prose": "Code the mean path, the half-life and the time to a target. Two edge cases: with $\\kappa \\le 0$ nothing reverts, so there is no half-life. And $\\theta$ itself is never reached, only approached.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "numpy",
+     "lines": [
+      ">>> vasicek_mean(0.06, 0.5, 0.04, np.array([1, 2]))",
+      "array([0.05213061, 0.04735759])",
+      ">>> np.log(2) / 0.5",
+      "1.3862943611198906"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef vasicek_mean(r0, kappa, theta, t):\n    \"\"\"theta + (r0 - theta) e^(-kappa t), for an array t.\"\"\"\n    ...\n\ndef half_life(kappa):\n    \"\"\"ln 2 / kappa; ValueError when kappa <= 0.\"\"\"\n    ...\n\ndef time_to_reach(r0, kappa, theta, target):\n    \"\"\"Time for the mean path to reach target; ValueError if it never does.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef vasicek_mean(r0, kappa, theta, t):\n    \"\"\"theta + (r0 - theta) e^(-kappa t), for an array t.\"\"\"\n    t = np.asarray(t, dtype=float)\n    return theta + (r0 - theta) * np.exp(-kappa * t)\n\ndef half_life(kappa):\n    \"\"\"ln 2 / kappa; ValueError when kappa <= 0.\"\"\"\n    if kappa <= 0:\n        raise ValueError(\"no reversion, so no half-life\")\n    return float(np.log(2) / kappa)\n\ndef time_to_reach(r0, kappa, theta, target):\n    \"\"\"Time for the mean path to reach target; ValueError if it never does.\"\"\"\n    if kappa <= 0 or r0 == theta:\n        raise ValueError(\"the path never moves towards theta\")\n    ratio = (target - theta) / (r0 - theta)\n    if not (0 < ratio <= 1):\n        raise ValueError(\"target is not between r0 and theta\")\n    return float(-np.log(ratio) / kappa)\n",
+    "examples": [
+     {
+      "call": "np.round(vasicek_mean(0.06, 0.5, 0.04, np.array([0, 1, 2])), 6).tolist()",
+      "expect": "[0.06, 0.052131, 0.047358]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(vasicek_mean(0.06, 0.5, 0.04, np.array([0, 1, 2])), 6).tolist()",
+      "expect": "[0.06, 0.052131, 0.047358]",
+      "compare": "isclose"
+     },
+     {
+      "call": "np.round(vasicek_mean(0.04, 0.5, 0.04, np.array([0, 5])), 6).tolist()",
+      "expect": "[0.04, 0.04]",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(half_life(0.5), 4)",
+      "expect": "1.3863",
+      "compare": "isclose"
+     },
+     {
+      "call": "half_life(0)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "half_life(-0.2)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "round(time_to_reach(0.06, 0.5, 0.04, 0.045), 4)",
+      "expect": "2.7726",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(time_to_reach(0.02, 0.5, 0.04, 0.03), 4)",
+      "expect": "1.3863",
+      "compare": "isclose"
+     },
+     {
+      "call": "time_to_reach(0.06, 0.5, 0.04, 0.04)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "time_to_reach(0.06, 0.5, 0.04, 0.07)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 9 hidden tests. Values are rounded as in the calls and compared within a relative 1e-9. Four cases must raise ValueError. The first run loads NumPy, which takes a few seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the guards first."
+    },
+    {
+     "rung": "point",
+     "text": "The time is $-\\ln(\\text{ratio})/\\kappa$ with ratio $(r^* - \\theta)/(r_0 - \\theta)$.",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Raise when `kappa <= 0`, and when the ratio is not in $(0, 1]$."
+    }
+   ],
+   "feedback": {
+    "correct": "The closed form, its half-life and its inverse, each with its guard.",
+    "generic": "Some tests failed. Check the guards: $\\kappa \\le 0$, and a target that is not strictly between $\\theta$ and $r_0$ (or equal to $r_0$).",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace each `...` with code that returns."
+    }
+   },
+   "explain": {
+    "text": "The gap ratio must lie in $(0, 1]$: 0 is $\\theta$ itself, and above 1 is further away than the start.\n\n```python\nratio = (target - theta) / (r0 - theta)\nif not (0 < ratio <= 1):\n    raise ValueError(\"target is not between r0 and theta\")\n```"
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Calibrating the speed",
+   "prose": "A rates desk watches the forward rate converge on its long-run level. The gap to $\\theta$ falls from 150 basis points to 50 in two years. It fits $\\kappa$ and quotes the half-life to traders.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      4
+     ],
+     "y": [
+      0,
+      170
+     ],
+     "xLabel": "$t$ (years)",
+     "yLabel": "gap to $\\theta$ (bp)",
+     "height": 260,
+     "functions": [
+      {
+       "id": "g",
+       "expr": "150*exp(-0.5493*x)",
+       "label": "fitted path",
+       "colour": 1,
+       "labelAt": 3
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a",
+       "x": 0,
+       "y": 150,
+       "label": "150 bp"
+      },
+      {
+       "id": "b",
+       "x": 2,
+       "y": 50,
+       "label": "50 bp"
+      }
+     ]
+    }
+   },
+   "question": "What $\\kappa$ fits, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5493,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.5493: $\\ln 3/2$",
+    "wrong": [
+     {
+      "id": "lin",
+      "value": 0.3333,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "ln3",
+      "value": 1.0986,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The gap shrinks by a factor of 3."
+    },
+    {
+     "rung": "point",
+     "text": "$e^{-2\\kappa} = \\tfrac13$.",
+     "highlight": [
+      "a",
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\kappa = \\ln 3/2 = 1.0986/2 = 0.5493$."
+    }
+   ],
+   "feedback": {
+    "correct": "$e^{-2\\kappa} = \\tfrac13$, so $\\kappa = \\ln 3/2 = 0.5493$ and the half-life is $\\ln 2/0.5493 = 1.26$ years.",
+    "generic": "Not quite right. Solve $150e^{-2\\kappa} = 50$.",
+    "byKey": {
+     "lin": "You took the fall, 100 bp in 2 years, as a straight line. The gap decays exponentially.",
+     "ln3": "You found $\\ln 3$ and stopped. Divide by the 2 years."
+    }
+   },
+   "explain": {
+    "text": "$\\kappa = \\ln 3/2 = 0.5493$ a year, a half-life of 1.26 years. A pairs desk does the same for a spread, in days; `coint` l7 returns to it."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "$r' = \\kappa(\\theta - r)$ pulls the rate to $\\theta$: the gap $r - \\theta$ decays as $e^{-\\kappa t}$.",
+   "The half-life $\\ln 2/\\kappa$ halves the gap, not the rate; two half-lives leave a quarter.",
+   "The Vasicek model adds mean-zero noise, so its expected path is exactly this solution."
+  ],
+  "formula": {
+   "name": "Mean reversion",
+   "tex": "r(t) = \\theta + (r_0 - \\theta)e^{-\\kappa t}, \\quad t_{1/2} = \\frac{\\ln 2}{\\kappa}",
+   "note": "Daily, $\\phi = e^{-\\kappa/252}$: an AR(1)."
+  },
+  "trap": "Halving the rate instead of the gap, or writing the drift as $\\kappa(r - \\theta)$."
+ },
+ "quiz": [
+  {
+   "id": "q-flat",
+   "difficulty": 2,
+   "prose": "A rate starts at its long-run mean: $r_0 = \\theta = 4\\%$, $\\kappa = 0.5$.",
+   "question": "What is $r(3)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.04,
+    "tol": {
+     "abs": 5e-05
+    },
+    "accept": "4%: the gap is 0 and stays 0",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.02,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "With no gap there is no drift: the rate stays at 4%.",
+    "generic": "Not quite right. Compute the gap at the start.",
+    "byKey": {
+     "half": "You halved the rate. With no gap there is nothing to halve."
+    }
+   },
+   "explain": {
+    "text": "$r_0 - \\theta = 0$, so $r(t) = \\theta + 0 \\cdot e^{-\\kappa t} = 4\\%$ for every $t$. It is the equilibrium of the drift."
+   }
+  },
+  {
+   "id": "q-neg",
+   "difficulty": 3,
+   "prose": "A model is fitted with $\\kappa = -0.2$.",
+   "question": "What does the mean path do from $r_0 = 6\\%$ with $\\theta = 4\\%$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "away",
+      "text": "The gap grows as $e^{0.2t}$, so there is no half-life",
+      "correct": true
+     },
+     {
+      "id": "slow",
+      "text": "It reverts slowly, with half-life $\\ln 2/0.2$",
+      "why": "A negative $\\kappa$ flips the drift: the gap grows instead."
+     },
+     {
+      "id": "stay",
+      "text": "It stays at 6%",
+      "why": "That is $\\kappa = 0$. Here the drift is $-0.2(0.04 - r) > 0$ above 4%."
+     },
+     {
+      "id": "theta",
+      "text": "It jumps to 4%",
+      "why": "Nothing in the equation jumps; it moves away from 4% smoothly."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$e^{-\\kappa t} = e^{0.2t}$ grows: the rate moves away from $\\theta$.",
+    "generic": "Not quite right. Put $\\kappa = -0.2$ into $e^{-\\kappa t}$."
+   },
+   "explain": {
+    "text": "With $\\kappa < 0$ the gap is multiplied by $e^{0.2t}$, so it doubles every 3.47 years. There is no reversion and no half-life."
+   }
+  },
+  {
+   "id": "q-hl2",
+   "difficulty": 2,
+   "prose": "A spread reverts with $\\kappa = 2$ a year.",
+   "question": "What is its half-life in years, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3466,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.3466: $\\ln 2/2$",
+    "unit": "years",
+    "wrong": [
+     {
+      "id": "recip",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "times",
+      "value": 1.3863,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln 2/2 = 0.3466$ years, about 87 trading days.",
+    "generic": "Not quite right. Use $t_{1/2} = \\ln 2/\\kappa$.",
+    "byKey": {
+     "recip": "You took $1/\\kappa$. The half-life needs the $\\ln 2$.",
+     "times": "You multiplied by $\\kappa$ instead of dividing."
+    }
+   },
+   "explain": {
+    "text": "$t_{1/2} = 0.6931/2 = 0.3466$ years."
+   }
+  },
+  {
+   "id": "q-quarter",
+   "difficulty": 3,
+   "prose": "A rate starts at 8%, with $\\theta = 4\\%$.",
+   "question": "Where is it after two half-lives?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.05,
+    "tol": {
+     "abs": 5e-05
+    },
+    "accept": "5%: a quarter of the 4-point gap is left",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "two",
+      "value": 0.02,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "six",
+      "value": 0.06,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Two half-lives leave $\\tfrac14$ of the gap: 1 point, so 5%.",
+    "generic": "Not quite right. Halve the 4-point gap twice.",
+    "byKey": {
+     "two": "You halved the rate twice. It is the gap that halves.",
+     "six": "That is after one half-life."
+    }
+   },
+   "explain": {
+    "text": "The gap goes 4, 2, 1 points, so the rate is $4\\% + 1\\% = 5\\%$."
+   }
+  }
+ ]
+}
