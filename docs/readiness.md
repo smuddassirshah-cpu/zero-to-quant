@@ -280,14 +280,13 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 <!-- generated:conflicts:researcher -->
 | From (required or recommended) | Optional course reached | Edge or route |
 | --- | --- | --- |
-| `coding-int` | `contests` | L1 needs contests/L3, L4 needs contests/L4 |
 | `numerics` | `cpp-pricing` | L1 needs cpp-pricing/L1 |
 | `numerics` | `odes` | L3 needs odes/L4 |
 | `numerics` | `opt-dash` | L4 needs opt-dash/L2 |
 | `numerics` | `complex` | via `odes` |
 | `numerics` | `cpp` | via `cpp-pricing` |
 
-Required courses that need a recommended course: `momentum-rep` needs `alpha`, `backtest`; `research-int` needs `pytest`.
+Required courses that need a recommended course: `momentum-rep` needs `backtest`.
 <!-- /generated -->
 
 ## Developer
@@ -416,13 +415,10 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 | `cpp-pricing` | `integrals` | via `trees` > `limits-thm` |
 | `cpp-pricing` | `limits` | via `trees` > `limits-thm` > `integrals` |
 | `cpp-pricing` | `limits-thm` | via `trees` |
-| `cpp-pricing` | `markov` | via `trees` |
 | `cpp-pricing` | `multivar` | via `trees` > `limits-thm` |
-| `cpp-pricing` | `options` | via `trees` |
-| `cpp-pricing` | `vectors` | via `trees` > `markov` |
 | `random-vars` | `limits` | L5 needs limits/L5 |
 
-Required courses that need a recommended course: `coding-int` needs `contests`, `micro`; `pytest` needs `plotting`; `systems` needs `cpp-pricing`.
+Required courses that need a recommended course: `coding-int` needs `micro`; `pytest` needs `plotting`.
 <!-- /generated -->
 
 ## Strats
@@ -548,7 +544,6 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 <!-- generated:conflicts:strats -->
 | From (required or recommended) | Optional course reached | Edge or route |
 | --- | --- | --- |
-| `coding-int` | `contests` | L1 needs contests/L3, L4 needs contests/L4 |
 | `numerics` | `opt-dash` | L4 needs opt-dash/L2 |
 
 Required courses that need a recommended course: `coding-int` needs `graphs-dp`; `regression` needs `testing`.
@@ -676,7 +671,6 @@ Same learner as Strats, plus the pricing mathematics. Route limited: odes, numer
 <!-- generated:conflicts:strats-deriv -->
 | From (required or recommended) | Optional course reached | Edge or route |
 | --- | --- | --- |
-| `coding-int` | `contests` | L1 needs contests/L3, L4 needs contests/L4 |
 | `numerics` | `opt-dash` | L4 needs opt-dash/L2 |
 
 Required courses that need a recommended course: `coding-int` needs `graphs-dp`; `regression` needs `testing`.

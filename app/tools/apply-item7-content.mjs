@@ -26,7 +26,10 @@ const OVERRIDE = {
   [K('arma/L1', 'regression/L3')]: { a: 'retarget', to: 'regression/L1', w: 'The Dickey-Fuller test is a regression on lagged values, read like a fitted line.' },
   [K('arma/L1', 'numpy-pandas/L3')]: { a: 'keep', w: 'Computes returns and differences with pandas shift, pct_change and rolling means.' },
   [K('coding-int/L1', 'algo-think/L3')]: { a: 'keep', w: 'Interval, two-pointer and binary-search patterns assume sorting and searching.' },
-  [K('contests/L1', 'graphs-dp/L2')]: { a: 'keep', w: 'Choosing an algorithm from the limits assumes BFS, Dijkstra and union-find are known.' },
+  // contests: graph algorithms appear only in the L4 virtual contest, so the gate moves there; L1 writes Python
+  // functions in every lesson and gets a direct Python gate (a trader reaches contests/L2 for modular arithmetic).
+  [K('contests/L1', 'graphs-dp/L2')]: { a: 'keep', move: 'contests/L4', w: 'The virtual contest set includes BFS and shortest-path problems from graphs and paths.',
+    extra: [{ ref: 'py-found/L2', why: 'Reads input and writes Python functions with lists, dictionaries and fast I/O.' }] },
   [K('counting/L1', 'equations/L1')]: { a: 'keep', w: 'Writes factorial counts as algebraic expressions and simplifies them.' },
   [K('cpp-pricing/L1', 'cpp/L2')]: { a: 'retarget', to: 'cpp/L1', w: 'Writes C++ programs with doubles, cmath and random number generators.',
     extra: [{ ref: 'cpp/L2', why: 'A few lessons pass by reference and use pointers; refresh references and memory first.', gate: false }] },
@@ -38,6 +41,19 @@ const OVERRIDE = {
   [K('sql/L1', 'equations/L3')]: { a: 'keep', w: 'WHERE clauses filter rows with comparison operators and inequalities.' },
   [K('systems/L1', 'cpp-pricing/L3')]: { a: 'retarget', to: 'cpp/L2', w: 'Cache and layout questions rely on references and contiguous memory in C++.',
     extra: [{ ref: 'cpp-pricing/L3', why: 'The contiguous-memory timing demo in C++ pricing previews the cache questions.', gate: false }] },
+  // Diagnostics measured by closure impact (docs/reports/closure-item7.md) and restored as gates: an interview
+  // course asks across the whole topic, so "one lesson uses it" does not make the level optional.
+  [K('research-int/L1', 'regression/L3')]: { a: 'keep', w: 'Answers multiple-regression and collinearity questions from regression level 3.' },
+  [K('research-int/L1', 'testing/L3')]: { a: 'keep', w: 'Answers multiple-testing questions, which need the corrections in testing level 3.' },
+  [K('research-int/L2', 'ensembles/L3')]: { a: 'keep', w: 'Answers bagging, boosting and feature-importance questions from ensembles level 3.' },
+  [K('research-int/L2', 'validation/L3')]: { a: 'keep', w: 'Answers leakage questions on finance prediction, taught in validation level 3.' },
+  [K('research-int/L2', 'fin-ml/L2')]: { a: 'keep', w: 'Answers questions on weak signals, regimes and feature stationarity from finance ML level 2.' },
+  [K('coding-int/L1', 'graphs-dp/L4')]: { a: 'keep', w: 'Interview patterns build on dynamic programming; the OA pool includes decodings and critical-path problems.' },
+  [K('algo-think/L1', 'py-found/L2')]: { a: 'retarget', to: 'py-found/L1', w: 'Counts the steps of Python functions over lists, strings and loops.' },
+  [K('pytest/L1', 'py-found/L2')]: { a: 'retarget', to: 'py-found/L1', w: 'Tests small Python functions on core types, floats and strings.' },
+  [K('limits-thm/L4', 'integrals/L4')]: { a: 'keep', w: 'Gamma and Beta integrals and convolutions need substitution and improper integrals.' },
+  [K('game-theory/L2', 'limits/L4')]: { a: 'keep', w: 'Bid shading maximises expected profit by setting a derivative to zero.' },
+  [K('stat-learning/L1', 'numpy-pandas/L3')]: { a: 'retarget', to: 'numpy-pandas/L1', w: 'Fits and scores models with NumPy arrays, means, argmin and argsort.' },
   // Rejected retarget: L3 would widen a trader gate on one named idea.
   [K('brainteasers/L1', 'counting-chance/L2')]: { a: 'keep', w: 'Forces coincidences by counting boxes and objects with the counting tools.' },
   // Rejected retargets: a lesson reference is the narrower gate, so it stays.
@@ -69,7 +85,7 @@ for (const row of P) {
   const { lv } = level(row.from);
   const req = lv.requires || [];
   const i = req.findIndex((e) => refOf(e) === row.ref);
-  if (i < 0) throw new Error(`${row.from}: edge ${row.ref} not found`);
+  if (i < 0) { const done = action === 'cut' || o.move || req.some((e) => refOf(e) === (o.to || row.retarget)); if (done) continue; throw new Error(`${row.from}: edge ${row.ref} not found`); }
   if (action === 'cut' || o.move) {
     req.splice(i, 1);
     if (o.move) { adds.push({ at: o.move, edge: { ref: row.ref, why } }); tally.moved++; log.push(`move ${row.from} -> ${o.move}: ${row.ref}`); }
@@ -128,10 +144,10 @@ for (const c in docs) {
     const end = (starts.find((x) => x.n === k + 2) || { at: text.length }).at;
     let block = text.slice(st.at, end);
     const ind = /^(\s*)"n"/.exec(block)[1];
-    const r = /"requires": \[[^\]\n]*\]/;
+    const r = /"requires": \[(?:[^\]\n]*\]|\n[\s\S]*?\n\s*\])/; // one line, or one entry per line
     const req = docs[c].levels[k].requires;
     if (r.test(block)) {
-      if (req === undefined) block = block.replace(/,?\n\s*"requires": \[[^\]\n]*\]/, '');
+      if (req === undefined) block = block.replace(/,?\n\s*"requires": \[(?:[^\]\n]*\]|\n[\s\S]*?\n\s*\])/, '');
       else block = block.replace(r, fmt(req, ind));
     } else {
       block = block.replace(/("name": .*,\n)/, `$1${ind}${fmt(req, ind)},\n`);

@@ -28,7 +28,7 @@ const args = new Set(process.argv.slice(2));
 const SUMMARY = args.has('--summary');
 const prepArg = process.argv.indexOf('--prep');
 const PREP_FILE = prepArg > 0 && process.argv[prepArg + 1] ? path.resolve(process.argv[prepArg + 1]) : null; // a scratch copy of prep.json to check instead
-const STRICT_WHY = args.has('--strict-why');   // a cross-course requires entry without a why is an error (ENGINE-BACKLOG 551); a warning otherwise
+const STRICT_WHY = !args.has('--lax-why');   // a cross-course requires entry without a why is an error (ENGINE-BACKLOG 551; strict since 2c item 7 content, 5 Nov); --lax-why makes it a warning
 const WRITE_MANIFEST = !args.has('--no-manifest') && !PREP_FILE;
 
 /* ---------- Reporting ---------- */
@@ -2097,7 +2097,7 @@ guard(courseDir, () => {
     if (!/^mock-/.test(f)) warn(ef, 'requires', 'a topic exam or stage test is how a learner tests out; locking it behind requires removes that way round');
     checkRefs(ef, 'requires', er.data.requires, null, null, false);
   });
-  console.log(`Requires: ${crossEdges} cross-course edges, ${crossNoWhy} without why (${STRICT_WHY ? 'errors' : 'warnings; --strict-why makes them errors'})`);
+  console.log(`Requires: ${crossEdges} cross-course edges, ${crossNoWhy} without why (${STRICT_WHY ? 'errors' : 'warnings, --lax-why'})`);
 });
 
 /* Draw sources (ENGINE-BACKLOG 468): every `from` must name files, and enough items must match the tags and difficulty. A sample exam may

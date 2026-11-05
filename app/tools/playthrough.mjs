@@ -1606,7 +1606,8 @@ const main = async () => {
             for (const [i, lv] of lvs.entries()) {
               if (i === 0 && !Array.isArray(lv.requires)) continue;
               const refs = Array.isArray(lv.requires) ? lv.requires : [`${c}/L${lvs[i - 1].n}`];
-              for (const r of refs) {
+              for (const e of refs) {
+                const r = typeof e === 'string' ? e : (e && e.gate !== false ? e.ref : null); if (!r) continue; /* object entries (ENGINE-BACKLOG 551); a diagnostic never gates */
                 const m = /^([^/]+)\/L(\d+)$/.exec(r); if (!m) continue;
                 const rf = path.join(CONTENT, 'courses', m[1], 'course.json'); if (!fs.existsSync(rf)) continue;
                 const rl = (readJSON(rf).levels || []).find(x => x.n === +m[2]);
