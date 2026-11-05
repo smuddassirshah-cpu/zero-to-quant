@@ -717,6 +717,8 @@ A met level is open as a place to work: its lessons, review and homework open ev
 
 A level is locked while any direct reference is unmet; its lessons, review and homework are locked with it. The locked card lists the unmet references and, transitively, what those need. A reference to an unwritten level can never be met (its lessons cannot be finished and it has no review to test out with), so the dependent level stays locked until it is written.
 
+Items 1 to 3 read the auto and external part of a result only. Self-marked items do not count (section 13).
+
 ### What the learner sees
 
 - Course map: a locked node carries a lock and no "Jump ahead"; its card offers "See what is missing". `#lesson/...`, `#review/...` and `#homework/...` for a locked item open the locked card instead.
@@ -754,3 +756,13 @@ What the engine does with it:
 - A course card shows "route limited: odes, numerics unwritten" for a course listed in `LIMITED` at the top of the generator's JSON section (today `pdes`). The script fails when a course it names as missing gains a written lesson, so the note cannot go stale.
 
 Authors writing a `requires` edge into a course that is optional for a role should still write it: it keeps the order for roles that need it.
+
+## 13. Result provenance: `how` (ENGINE-BACKLOG 521, PLAN 2c item 3)
+
+Every graded row the engine stores carries `how`: `auto` (the app marked it), `self` (the learner ticked it) or `external` (reserved for a reviewer-entered record; stored and counted like `auto`). A row without `how` reads as `auto`.
+
+- Self rows: a `longform` item (kind `longform`, a `longform` widget, or an item with a longform part) in homework, a topic exam or a superday mock. Everything else, code and sketches included, is `auto`. The mock and stage "checks" (`no-lookup`, `game-aloud`, `story-aloud`) are self ticks too; they are stored on the attempt as `checks: [{ name, how: "self", ok }]`.
+- A self row never touches `skills[s]` (Elo, mastery points, `seen`, `correct`) and earns no mastery points or item XP. The homework base XP stays. Self results go to `state.selfMarked[skill] = { seen, correct, lastAt }`, shown on You under "Self-marked", never in the mastery map. A self miss still joins the redo queue.
+- Met rule: an exam or review counts towards a level only if it still passes with self rows removed from numerator and denominator, against the same pass mark (an absolute `passNet` scales to the auto share). The result is stored at finish time: `passedAuto` on each exam attempt and on the review record. Mock and stage checks are left out of it. An attempt with no auto item cannot meet anything. Homework never feeds met, and no prerequisite or readiness code reads `selfMarked`.
+- Old saves: a row, exam attempt or review without the new fields loads unchanged and is not rewritten. Missing `how` reads `auto`; old longform rows and checks cannot be told apart in the stored aggregates, so old Elo and mastery points still include any earlier self ticks (not split, not invented). A review record without `passedAuto` uses `passed` (level reviews hold no longform). An exam attempt without `passedAuto` counts as its `passed` when the exam holds no self item and no check part, and does not count when it does (or when there is no manifest). The validator writes `selfExams` into `content/manifest.json`: the exam ids holding a longform item, a longform widget, a part with a longform widget, or a `check` part (the test `state.provenance` uses). A level already in `state.prereq.met` stays met, and the engine records met levels on every change. One helper, `ZQ.content.examPassedAuto(id)` and `examPassedAt(id)`, applies this rule for prerequisite met, `topicPassed` (Today and Learn) and the refresh date.
+- `ZQ.state.provenance(item)` returns `self` or `auto` for an item spec; build result rows with it.

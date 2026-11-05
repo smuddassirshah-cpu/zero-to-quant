@@ -4,7 +4,9 @@
    the rubric appear, one tick box per criterion, points summing to 10). Phase 2: Check grades the self-mark;
    ok when it is 7 or more. Spec fields: prompt (optional, shown above), model (markdown with KaTeX), rubric[].
    The help line names the button that opens the marking: "Check" in set mode, "Mark my answer" in exam mode (the
-   homework page, which renders items in exam mode, has a Mark my answer button under each written item). */
+   homework page, which renders items in exam mode, has a Mark my answer button under each written item).
+   Provenance (N01): grade() carries how: 'self'; result rows for longform items are stored as self and never reach
+   the mastery map or a prerequisite (docs/AUTHORING.md, Result provenance). */
 (function () {
   'use strict';
   const Z = window.ZQ;
@@ -25,7 +27,7 @@
         <div class="wd-long-model"><h3 class="t-h2">Model answer</h3><div class="wd-long-model-b">${Z.grade.prose(spec.model || '', 't-body')}</div></div>
         <fieldset class="wd-rubric">
           <legend class="t-h2">Mark it out of ${total}</legend>
-          <p class="t-caption secondary">Tick each point your working shows. Be strict: your mastery map trusts this mark. ${PASS} or more counts as right.</p>
+          <p class="t-caption secondary">Tick each point your working shows. Be strict. This mark is your own, so it shows under Self-marked and never moves your mastery map. ${PASS} or more counts as right.</p>
           <div class="wd-rbs">${rubric.map((r, k) => `<label class="wd-rb"><input type="checkbox" data-rb="${k}"><span class="wd-box" aria-hidden="true">${Z.icon('check')}</span><span class="t-body">${Z.grade.inline(r.text)}</span><span class="wd-rb-pts t-caption tnum">${r.points} ${+r.points === 1 ? 'point' : 'points'}</span></label>`).join('')}</div>
           <div class="wd-score" aria-live="polite"><span class="t-stat tnum" data-score>0</span><span class="t-h2 muted">of ${total}</span></div>
         </fieldset>
@@ -71,7 +73,7 @@
       grade() {
         if (phase === 'write') { toMark(); return { pending: true, ok: false, key: null }; }
         const s = score();
-        return { ok: s >= PASS, key: s >= PASS ? null : 'below', line: s >= PASS ? null : `You marked ${s} of ${total}. ${PASS} or more counts as right, so this one returns in your Redo queue.`, detail: { score: s, ticks: ticks(), text: ta.value } };
+        return { how: 'self', ok: s >= PASS, key: s >= PASS ? null : 'below', line: s >= PASS ? null : `You marked ${s} of ${total}. ${PASS} or more counts as right, so this one returns in your Redo queue.`, detail: { score: s, ticks: ticks(), text: ta.value } };
       },
       lock() { setLock(true); },
       unlock() { setLock(false); el.classList.remove('is-ok', 'is-bad'); },

@@ -472,10 +472,21 @@
         /* Per-item timing: the family is the first tag (else the first skill); only answered questions count towards the pace line */
         const fam = rows.map(({ it }) => ZQ.mock.family(it, names));
         const pacing = ZQ.mock.pacing(rows.map(({ it, r, pi, i }, k) => (r.done && typeof r.seconds === 'number' ? { label: multi ? `${pi + 1}.${i + 1}` : String(k + 1), seconds: r.seconds, pace: it.pace, family: fam[k] && fam[k].id, familyLabel: fam[k] && fam[k].label } : null)).filter(Boolean));
+        /* The pass with self-marked items and the self-ticked checks left out of numerator and denominator (provenance, N01).
+           A paper with no auto item is skipped; with none at all nothing passes. An absolute passNet scales to the auto share. */
+        const autoPapers = papers.map((p, pi) => {
+          const keep = (p.items || []).map((it, i) => (ZQ.state.provenance(it) === 'self' ? -1 : i)).filter(i => i >= 0);
+          if (!keep.length) return null;
+          const q = { ...p, items: keep.map(i => p.items[i]) };
+          if (typeof p.passNet === 'number') q.passNet = p.passNet * keep.length / Math.max(1, (p.items || []).length);
+          return M.passed(q, M.tally(q, keep.map(i => (A.results[pi] || [])[i] || { ok: false, done: false })));
+        }).filter(v => v !== null);
+        const passedAuto = autoPapers.length > 0 && autoPapers.every(Boolean);
         let out = {};
         try {
           out = ZQ.state.examFinished({ id: doc.id, score, items: total, passed, bySkill, seconds,
-            results: rows.map(({ it, r }, k) => ({ id: it.generated || it.drawn ? null : it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null && !it.generated && !it.drawn ? { exam: doc.id, item: it.id } : null, seconds: r.done ? r.seconds : undefined, pace: it.pace, family: fam[k] && fam[k].id })),
+            results: rows.map(({ it, r }, k) => ({ id: it.generated || it.drawn ? null : it.id, ok: !!r.ok, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.id != null && !it.generated && !it.drawn ? { exam: doc.id, item: it.id } : null, seconds: r.done ? r.seconds : undefined, pace: it.pace, family: fam[k] && fam[k].id, how: ZQ.state.provenance(it) })),
+            passedAuto, checks: checks.map((c, i) => ({ name: c.name, ok: A.ticks.has(i) })),
             extra: { ...(mock || scored || generated || drawnUids.length ? { net, max, wrong, blank, seconds, ...(generated || drawnUids.length ? { seed: A.seed } : {}), ...(drawnUids.length ? { drawn: drawnUids } : {}) } : {}), itemSeconds: rows.map(({ r }) => (typeof r.seconds === 'number' ? Math.round(r.seconds) : 0)) } }) || {};
         } catch (e) { console.error(e); }
         T = { kind: 'done', info: { score, total, passed, net, max, wrong, blank, seed: A.seed } };

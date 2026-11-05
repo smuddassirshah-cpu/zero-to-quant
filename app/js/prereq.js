@@ -69,13 +69,15 @@
   };
 
   /* ---------- Met ---------- */
-  const examPassed = (id) => { try { const r = S().exams[id]; return !!(r && Array.isArray(r.attempts) && r.attempts.some(a => a && a.passed)); } catch { return false; } };
-  const examPassedAt = (id) => { try { return S().exams[id].attempts.filter(a => a && a.passed).reduce((m, a) => Math.max(m, Number(a.at) || 0), 0); } catch { return 0; } };
+  /* Met reads only the auto and external part of a pass (N01); the one rule, with its old-attempt fallback, is ZQ.content.examPassedAuto */
+  const examPassedAuto = (id) => C().examPassedAuto(id);
+  const examPassedAt = (id) => C().examPassedAt(id);
   const reviewRec = (cid, lv) => { try { return lv.review ? S().reviews[`${cid}/${lv.review}`] || null : null; } catch { return null; } };
   const reviewPassed = (cid, lv) => {
     const r = reviewRec(cid, lv);
     if (!r) return false;
-    if (typeof r.passed === 'boolean') return r.passed;
+    if (typeof r.passedAuto === 'boolean') return r.passedAuto;   // self-marked rows left out
+    if (typeof r.passed === 'boolean') return r.passed;           // a record from before provenance: level reviews hold no self-marked item
     return Number(r.items) > 0 && Number(r.score) / Number(r.items) >= PASS;   // a record from before this pass
   };
   const lessonRec = (cid, id) => { try { return S().lessons[`${cid}/${id}`] || null; } catch { return null; } };
@@ -86,8 +88,8 @@
   const derivedMet = (cid, lv) => {
     if (reviewPassed(cid, lv)) return true;
     const co = doc(cid);
-    if (co && co.topic && C().topicPassed(co.topic)) return true;
-    if (co && co.stage != null && examPassed('stage-' + co.stage)) return true;
+    if (co && co.topic && examPassedAuto('topic-' + co.topic)) return true;
+    if (co && co.stage != null && examPassedAuto('stage-' + co.stage)) return true;
     if (!lv.review || C().exists(cid, lv.review) === false) return fullyFinished(cid, lv);
     return false;
   };

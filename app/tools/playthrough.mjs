@@ -1564,6 +1564,117 @@ const main = async () => {
       fails.forEach(f => failures.push(`gating: ${f}`));
     };
 
+    /* ---------- Result provenance (PLAN 2c item 3, N01): part of --routes-only ----------
+       (a) a homework of only longform items, all ticked in full, moves no prerequisite and no mastery-map cell (skills elo, mp, seen, correct) and
+       the You screen shows it under Self-marked; (b) an old save without `how`, `passedAuto` or `selfMarked` imports and migrates as AUTHORING.md
+       says: a met record is kept, an old exam pass cannot meet a level; (c) a topic exam passed only on self rows does not meet its levels,
+       and the same pass on auto rows does. */
+    const provenanceChecks = async () => {
+      where = '#you (self-marked)';
+      const fails = [], t0 = Date.now();
+      let saved = null;
+      try {
+        saved = await page.evaluate(() => ZQ.state.export());
+        const base = (p) => page.evaluate((patch) => {
+          const d = JSON.parse(ZQ.state.export());
+          d.lessons = {}; d.reviews = {}; d.homework = {}; d.exams = {}; d.redo = []; d.skills = {}; delete d.selfMarked;
+          d.prereq = { met: {}, testouts: {}, opened: {}, started: {}, grandfathered: true };
+          d.settings.strictPrereqs = true; d.flags.setupDone = true;
+          return ZQ.state.import(Object.assign(d, patch || {})).ok;
+        }, p);
+        /* a homework with a longform item, and the course that holds it */
+        const hw = await page.evaluate(async () => {
+          for (const c of ZQ.content.courses()) {
+            for (const lv of (c.levels || [])) {
+              if (!lv.homework) continue;
+              const D = await ZQ.content.homework(c.id, lv.homework).catch(() => null);
+              const long = D && Array.isArray(D.items) ? D.items.filter(it => ZQ.state.provenance(it) === 'self') : [];
+              if (long.length) return { cid: c.id, n: lv.n, id: lv.homework, items: long.map(it => ({ id: it.id, difficulty: it.difficulty || 3, skills: it.skills || [] })) };
+            }
+          }
+          return null;
+        });
+        if (!hw) { console.log('skip provenance  no homework with a longform item'); return; }
+        /* (a) */
+        if (!(await base())) throw new Error('could not import a fresh profile');
+        await page.evaluate(() => ZQ.prereq.sync());
+        const before = await page.evaluate(() => ({ met: JSON.stringify(ZQ.state.prereq.get().met), skills: JSON.stringify(ZQ.state.skills), mp: ZQ.state.summary().mp }));
+        await page.evaluate((h) => {
+          ZQ.state.homeworkAssigned({ course: h.cid, level: h.n });
+          ZQ.state.homeworkSubmitted({ course: h.cid, level: h.n, id: h.id, items: h.items.length, selfMarks: {}, results: h.items.map(it => ({ id: it.id, ok: true, difficulty: it.difficulty, skills: it.skills, how: ZQ.state.provenance({ kind: 'longform' }), ref: { course: h.cid, lesson: h.id, item: it.id } })) });
+          ZQ.prereq.sync();
+        }, hw);
+        const after = await page.evaluate(() => ({ met: JSON.stringify(ZQ.state.prereq.get().met), skills: JSON.stringify(ZQ.state.skills), mp: ZQ.state.summary().mp, self: JSON.stringify(ZQ.state.selfMarked) }));
+        if (after.met !== before.met) fails.push('a longform-only homework changed the prerequisite met records');
+        if (after.skills !== before.skills) fails.push('a longform-only homework changed a mastery-map skill record (elo, mp, seen or correct)');
+        if (after.mp !== before.mp) fails.push(`a longform-only homework added mastery points (${before.mp} to ${after.mp})`);
+        const skillIds = [...new Set(hw.items.flatMap(it => it.skills))];
+        if (skillIds.length && !skillIds.every(k => JSON.parse(after.self)[k])) fails.push('the self-marked skills are not stored in state.selfMarked');
+        await go('today'); await go('you'); await page.waitForTimeout(400);
+        const you = await page.evaluate(() => { const c = document.querySelector('[data-card="selfmarked"]'); return { shown: !!c && !c.hidden, text: c ? c.innerText : '', cells: document.querySelectorAll('.yu-cell:not(.b0)').length }; });
+        if (skillIds.length && (!you.shown || !/Self-marked/.test(you.text))) fails.push('the You screen does not show the Self-marked block');
+        if (you.cells) fails.push(`${you.cells} mastery-map cell(s) are shaded after a longform-only homework`);
+        /* (b) an old save: no how, no passedAuto, no selfMarked */
+        const key = `${hw.cid}/L${hw.n}`;
+        const old = await page.evaluate(([h, k]) => {
+          const d = JSON.parse(ZQ.state.export());
+          d.lessons = {}; d.homework = {}; delete d.selfMarked; d.redo = [];
+          d.skills = { 'old-skill': { mp: 4, elo: 1040, seen: 3, correct: 2, lastAt: 1 } };
+          d.reviews = { [`${h.cid}/old-review`]: { score: 8, items: 10, at: 1, passed: true } };
+          d.exams = { 'topic-9.9': { attempts: [{ at: 1, score: 9, items: 10, passed: true, bySkill: {} }] } };
+          d.prereq = { met: { [k]: { at: 1, how: 'derived' } }, testouts: {}, opened: {}, started: {}, grandfathered: true };
+          const r = ZQ.state.import(JSON.stringify(d));
+          return { ok: r.ok, self: JSON.stringify(ZQ.state.selfMarked), skills: JSON.stringify(ZQ.state.skills['old-skill']), kept: ZQ.prereq.levelMet(h.cid, h.n), attempt: ZQ.state.exams['topic-9.9'].attempts[0].passedAuto, review: ZQ.state.reviews[`${h.cid}/old-review`].passedAuto };
+        }, [hw, key]);
+        if (!old.ok) fails.push('an old save without provenance fields did not import');
+        if (old.self !== '{}') fails.push(`an old save should migrate to an empty selfMarked, got ${old.self}`);
+        if (old.skills !== JSON.stringify({ mp: 4, elo: 1040, seen: 3, correct: 2, lastAt: 1 })) fails.push('an old skills record was altered by the import');
+        if (!old.kept) fails.push('an existing met record was lost on import');
+        if (old.attempt !== undefined || old.review !== undefined) fails.push('the import invented a passedAuto on an old record');
+        /* (c) a topic exam passed on self rows only */
+        const topic = await page.evaluate(() => { for (const s of ZQ.content.allStages()) for (const t of s.topics) { const c = (t.courses || []).find(id => (ZQ.content.course(id) || {}).levels && ZQ.content.course(id).levels.length); if (c) return { id: t.id, cid: c, n: ZQ.content.course(c).levels[0].n }; } return null; });
+        if (!topic) fails.push('no topic with a course to test the exam rule on');
+        else {
+          await base();
+          const rule = (passedAuto) => page.evaluate((t) => {
+            const rows = [{ id: 'a', ok: false, how: 'auto', skills: [] }, { id: 'b', ok: true, how: 'self', skills: [] }, { id: 'c', ok: true, how: 'self', skills: [] }];
+            const x = { id: 'topic-' + t.t.id, score: 2, items: 3, passed: true, results: rows };
+            ZQ.state.examFinished(Object.assign(x, { passedAuto: t.pa }));
+            ZQ.prereq.sync();
+            const a = ZQ.state.exams[x.id].attempts.slice(-1)[0];
+            return { met: ZQ.prereq.levelMet(t.t.cid, t.t.n), passedAuto: a.passedAuto, passed: a.passed };
+          }, { t: topic, pa: passedAuto });
+          const self = await rule(false);
+          if (self.met) fails.push(`a topic exam passed only on self rows met ${topic.cid} level ${topic.n}`);
+          await base();
+          const auto = await rule(true);
+          if (!auto.met && auto.passedAuto !== true) fails.push('a recorded passedAuto of true was not stored');
+          else if (!auto.met) fails.push(`a topic exam passed on auto rows did not meet ${topic.cid} level ${topic.n}`);
+        }
+        /* (d) an old passed attempt with no passedAuto: fully auto on an exam with no self item (topic-1.5), not counted on one with longform (topic-1.1) */
+        for (const [tid, want] of [['1.5', true], ['1.1', false]]) {
+          await base();
+          const got = await page.evaluate((t) => {
+            const T = ZQ.content.topic(t), c = (T.courses || []).find(id => (ZQ.content.course(id) || {}).levels && ZQ.content.course(id).levels.length);
+            if (!c) return null;
+            const d = JSON.parse(ZQ.state.export());
+            d.exams = { ['topic-' + t]: { attempts: [{ at: 1, score: 9, items: 10, passed: true, bySkill: {} }] } };
+            ZQ.state.import(JSON.stringify(d)); ZQ.prereq.sync();
+            return { met: ZQ.prereq.levelMet(c, ZQ.content.course(c).levels[0].n), passed: ZQ.content.topicPassed(t) };
+          }, tid);
+          if (!got) fails.push(`topic ${tid} has no course with levels to test an old attempt`);
+          else if (got.met !== want || got.passed !== want) fails.push(`an old passed attempt with no passedAuto on topic-${tid} should ${want ? '' : 'not '}count (met ${got.met}, topicPassed ${got.passed})`);
+        }
+        console.log(`${fails.length ? 'FAIL' : 'ok  '} provenance  ${hw.id}: longform-only homework moves no met record or map cell, shown as Self-marked; old save migrates; self-only exam pass meets nothing, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      } catch (e) {
+        fails.push('threw: ' + String(e.message || e).split('\n')[0]);
+        console.log('FAIL provenance  threw');
+      } finally {
+        if (saved) { try { await page.evaluate((d) => ZQ.state.import(d), saved); } catch { /* the run ends anyway */ } }
+      }
+      fails.forEach(f => failures.push(`provenance: ${f}`));
+    };
+
     /* Every other route once */
     if (opt.bankIds.length) await bankPlay(opt.bankIds);
     if (opt.routes) {
@@ -1605,6 +1716,7 @@ const main = async () => {
       await drillRouteChecks();
       await sampleChecks();
       await gatingChecks();
+      await provenanceChecks();
       const paceExam = fs.existsSync(path.join(CONTENT, 'exams', 'mock-sample.json')) ? 'mock-sample' : exams.includes('topic-1.5') ? 'topic-1.5' : null;
       if (paceExam) await paceExamChecks(paceExam);
     }

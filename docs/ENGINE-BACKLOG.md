@@ -1414,3 +1414,8 @@ Status block (engine pass, C++ freed-memory harness):
 - 518 (C-poison-quarantine): done.
 - 519 (C-free-count): done.
 - 520 (array ranges doc): done.
+
+521. Done (PLAN 2c item 3, N01): result provenance. Rows carry `how` (`auto`, `self`, `external`); `rate()` keeps self rows out of `skills[s]` (they go to `state.selfMarked`), no MP or item XP from them; You shows a "Self-marked" block; prerequisite met reads `passedAuto` (exam attempts and reviews) and ignores self rows and checks; old saves migrate (see AUTHORING.md section 13). Playthrough `--routes-only` has a provenance check. Report: `docs/reports/engine-pass-provenance.md`.
+
+Status block (engine pass, provenance):
+- 521 (result provenance, N01): done.

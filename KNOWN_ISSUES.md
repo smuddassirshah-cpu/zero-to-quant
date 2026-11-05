@@ -140,7 +140,8 @@ Open review ids (none is fixed at HEAD; closure only on the review's acceptance 
 - F07 (item 10): `minutes` 11 to 15 everywhere; interview lessons state 25 to 60 minutes in prose.
 - F08, N05 (item 9): five known precision lines; 69 summary candidates in the seven named courses. Needs a human maths reader.
 - F09 (item 11): hours 3,265 stored against 3,695 summed.
-- N01 (item 3): self-ticked longform (259 homework widgets) and mock checks count as mastery and as `ok`.
+- N01: closed by 2c item 3 (5 Nov). Residue: Elo and MP in saves from before provenance still include earlier self ticks (cannot be split). Old attempts on the 25 `selfExams` meet nothing unless already in `prereq.met`.
+- `--exam mock-superday-research` times out in `waitForFunction`, identically on HEAD before item 3; not investigated. Full `--all` (about 3 hours) not run for item 3; `--routes-only`, 15 longform topic exams, three homework sets and `mock-superday-trader` passed.
 - N04 (item 2): prep.json names five mocks with no file (15 references); no developer or strats final-round mock.
 - N06: closed by 2c item 1 (5 Nov).
 - Pilot (item 12) and the precision reader (item 9) need humans; capstone reviewer (item 8) and the odes and numerics decision (item 7) need the user.

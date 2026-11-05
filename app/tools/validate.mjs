@@ -1641,6 +1641,8 @@ Object.entries(C.courses || {}).forEach(([id, c]) => {
 
 /* Courses */
 const manifest = [];
+const selfExams = [];   // exam ids that hold a self-marked item or a check part (same test as ZQ.state.provenance); js/content.js reads it to split old exam passes
+const holdsSelf = (d) => { const L = (w) => !!w && w.kind === 'longform'; const it = (x) => !!x && (x.kind === 'longform' || L(x.widget) || (Array.isArray(x.parts) && x.parts.some(q => q && L(q.widget)))); return (Array.isArray(d.items) && d.items.some(it)) || (Array.isArray(d.parts) && d.parts.some(p => p && (p.kind === 'check' || (Array.isArray(p.items) && p.items.some(it))))); };
 const writtenByCourse = new Map();   // course id -> Set of written lesson ids, for the prerequisite rules
 const summary = [];
 const skillOwner = new Map();
@@ -1736,6 +1738,7 @@ listJSON(examDir).forEach(f => {
   if (!/^(topic-\d+\.\d+|stage-\d+|mock-[a-z0-9]+(-[a-z0-9]+)*)$/.test(id)) { err(file, '', 'exam files are topic-<topic>.json, stage-<n>.json or mock-<id>.json'); return; }
   const r = readJSON(file); if (!r.data) return;
   manifest.push(`exams/${f}`); noteSample(file, `exams/${f}`, r.data);
+  if (holdsSelf(r.data)) selfExams.push(id);
   guard(file, () => checkExam(file, id, r.data, cur));
 });
 
@@ -2071,7 +2074,7 @@ if (SUMMARY) {
 
 if (!errors.length && WRITE_MANIFEST) {
   const mf = path.join(CONTENT, 'manifest.json');
-  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
+  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }

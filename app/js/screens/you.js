@@ -398,6 +398,7 @@
                   <div class="yu-tip" aria-hidden="true" hidden></div>
                 </div>
               </section>
+              <section class="card yu-card yu-sm" aria-labelledby="yu-sm-h" data-card="selfmarked" hidden></section>
               <section class="card yu-card yu-st" aria-labelledby="yu-st-h"${streakOff() ? ' hidden' : ''}>
                 <div class="yu-card-h">
                   <div><h2 class="t-h1" id="yu-st-h">Streak calendar</h2>
@@ -482,11 +483,22 @@
         const kh = card.querySelector('[data-keyhelp]'); if (kh) kh.hidden = on;
       };
 
+      /* Self-marked work (N01): ticks the learner gave themselves. Kept out of the mastery map and every prerequisite. */
+      const selfHTML = () => {
+        const rows = Object.entries(S.selfMarked || {}).filter(([, v]) => v && v.seen).map(([k, v]) => ({ label: skillLabel[k] || k, c: v.correct | 0, t: v.seen | 0 })).sort((a, b) => a.label.localeCompare(b.label));
+        if (!rows.length) return '';
+        return `<div class="yu-card-h"><div><h2 class="t-h1" id="yu-sm-h">Self-marked</h2>
+            <p class="t-caption secondary">Written answers you marked yourself. They do not move the mastery map or unlock anything.</p></div></div>
+          <div class="yu-tablewrap" tabindex="0" role="region" aria-label="Self-marked work as a table"><table class="yu-tbl">
+            <caption class="sr-only">Self-marked answers by skill</caption>
+            <thead><tr><th scope="col">Skill</th><th scope="col" class="num">Marked right</th></tr></thead>
+            <tbody>${rows.map(r => `<tr><td>${esc(r.label)}</td><td class="num tnum">${r.c} of ${r.t}</td></tr>`).join('')}</tbody></table></div>`;
+      };
       const paint = {
         head: () => { $('[data-card="head"]').innerHTML = headerHTML(); },
         hours: () => { const f = $('[data-log]'); const keep = f ? { block: f.block.value, date: f.date.value } : null; $('[data-card="hours"]').innerHTML = hoursHTML(); if (keep) { const g = $('[data-log]'); g.block.value = keep.block; g.date.value = keep.date; } },
         drills: () => { $('[data-card="drills"]').innerHTML = drillsHTML(); },
-        map: () => { $('[data-card="map"]').innerHTML = mapHTML(); $('[data-card="maptable"]').innerHTML = mapTable(); },
+        map: () => { $('[data-card="map"]').innerHTML = mapHTML(); $('[data-card="maptable"]').innerHTML = mapTable(); const sm = $('[data-card="selfmarked"]'), h = selfHTML(); sm.innerHTML = h; sm.hidden = !h; },
         cal: () => { $('[data-card="cal"]').innerHTML = calHTML(); setView('cal', views.cal); },
         exams: () => {
           const rows = examRows();

@@ -2,12 +2,12 @@ Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4
 
 Expected census (`node app/tools/census.mjs | tail -20`): lessons 1054 of 1214 (193, 507, 150, 204); reviews 243, none with `pass`; exams 22 topic, 1 stage, 11 mock; drills 35; bank 200; hours 3,265 stored, 3,695 summed. Any difference: fix state files first.
 
-Task: PLAN 2c item 3, result provenance (N01). Freeze in force. Item 2 is done (readiness contract signed off; engine reads `app/content/readiness.json`).
+Task: PLAN 2c item 4, met rule rewrite (N02, N03, F05.1 to .4). Freeze in force. Items 1 to 3 are done; item 3 added `how` on result rows and `passedAuto` (DECISIONS "Provenance and the met rule"; AUTHORING section 13).
 
-Context not in state files: 259 homework widgets are self-ticked longform, and mock checks count as mastery and as `ok` today (KNOWN_ISSUES N01). The sandbox needs the local CDN for playthroughs: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs` (870 MB, about a minute), then pass `--local-cdn <scratchpad>/pkgs`. Without it `#drill (filters)` fails on a 404, before and after item 2.
+Context not in state files: the met rule now lives in `prereq.js` `derivedMet` plus `content.js` `examPassedAuto`; any new floor must read `skills[s]` only, never `state.selfMarked`. A review can be sat cold, so the skill floor on the review changes met. Writing per-level `pass` into 243 review files is a content edit: do it with a committed script run by the main session, not by the engine agent. Local CDN: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`, then `--local-cdn <scratchpad>/pkgs`. `--exam mock-superday-research` times out before and after item 3 (KNOWN_ISSUES).
 
-Step: one engine-dev agent (Sonnet). `results[]` rows carry `how: auto | self | external`; `rate()` stores Elo per provenance or excludes `self`; You shows self-marked work separately; prerequisite met (`prereq.js`) ignores `self`. Old saves load, with missing `how` read as `auto` except longform and mock checks, read as `self`. Document in `docs/AUTHORING.md`. No content edits.
+Step: read `docs/reviews/review-course-correction.md` N02, N03 and F05. One engine-dev agent (Sonnet): essential-skill floor per level, revealed-screen cap for `done`, topic pass meets a level only on covered skills, missed quiz items always queue; unit tests for `prereq.js` and `state.js` (a node script under `app/tools/`). Then the `pass` script.
 
-Files: `app/js/state.js`, `app/js/prereq.js`, `app/js/screens/you.js`, the homework and longform widget under `app/js/engine/widgets/`, `app/tools/playthrough.mjs`, `docs/AUTHORING.md`.
+Files: `app/js/prereq.js`, `app/js/state.js`, `app/js/content.js`, `app/js/screens/review.js`, `app/tools/playthrough.mjs`, a new test script, `docs/AUTHORING.md`; review files via script only.
 
-Acceptance: a scripted homework with only longform items cannot change a prerequisite or a mastery-map cell, and the You screen labels it self-marked; an old save without `how` imports clean; validator 0 errors; `--routes-only --local-cdn` green with and without `--mobile`; readiness-sums exit 0. Tick item 3 only then.
+Acceptance: unit tests pass for each rule; a scripted learner who reveals every screen and scores 4 of 5 on quizzes ends with zero levels met; validator 0 errors; `--routes-only --local-cdn` green with and without `--mobile`; readiness-sums exit 0; census shows reviews with `pass` 243. Tick item 4 only then.

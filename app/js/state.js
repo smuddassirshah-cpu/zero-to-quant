@@ -39,7 +39,7 @@
     profile: { name: '', initial: '', track: 'Undecided', weeklyGoalH: 15, startStage: 0, createdAt: null },
     settings: { theme: 'system', motion: 'system', sound: false, haptics: true, streakMode: 'daily', quantOnly: false, strictPrereqs: true },
     xp: 0, mp: 0,
-    lessons: {}, reviews: {}, homework: {}, exams: {}, skills: {},
+    lessons: {}, reviews: {}, homework: {}, exams: {}, skills: {}, selfMarked: {},   // selfMarked: per skill { seen, correct, lastAt } from self-ticked rows, never mixed into skills (provenance, N01)
     redo: [], notebook: [], drills: {}, drillSessions: [],
     bank: {}, timing: { families: {} },
     warmup: { history: [] },
@@ -94,10 +94,19 @@
   const mpFor = (difficulty) => 2 * Math.min(5, Math.max(1, Math.round(Number(difficulty) || 2)));
   const skillRec = (id) => doc.skills[id] || (doc.skills[id] = { mp: 0, elo: ELO_START, seen: 0, correct: 0, lastAt: null });
   /* Elo-style update for one graded item against each of its skills; adds MP when asked */
-  const rate = (skills, ok, difficulty, { elo = true, mp = 0 } = {}) => {
+  /* Provenance of a graded row (N01): 'auto' machine-marked, 'self' ticked by the learner, 'external' entered by a reviewer.
+     Only 'self' is kept apart; 'external' counts like 'auto'. Anything else reads as 'auto'. */
+  const HOWS = ['auto', 'self', 'external'];
+  const howOf = (x) => (x && HOWS.includes(x.how) ? x.how : 'auto');
+  const isSelf = (x) => howOf(x) === 'self';
+  /* The provenance of an item spec: a longform item (or one with a longform part) is marked by the learner's own ticks */
+  const provenance = (it) => { const L = (w) => !!w && w.kind === 'longform'; return it && (it.kind === 'longform' || L(it.widget) || (Array.isArray(it.parts) && it.parts.some(q => q && L(q.widget)))) ? 'self' : 'auto'; };
+  const selfRec = (id) => { if (!isObj(doc.selfMarked)) doc.selfMarked = {}; return doc.selfMarked[id] || (doc.selfMarked[id] = { seen: 0, correct: 0, lastAt: null }); };
+  const rate = (skills, ok, difficulty, { elo = true, mp = 0, how = 'auto' } = {}) => {
     const R = itemRating(difficulty);
     (skills || []).forEach(s => {
       if (!s) return;
+      if (how === 'self') { const q = selfRec(s); q.seen++; if (ok) q.correct++; q.lastAt = now(); return; }   // no Elo, MP, seen or correct on the skill
       const r = skillRec(s);
       r.seen++; if (ok) r.correct++; r.lastAt = now();
       if (elo) { const E = 1 / (1 + Math.pow(10, (R - r.elo) / 400)); r.elo = Math.round((r.elo + K * ((ok ? 1 : 0) - E)) * 10) / 10; }
@@ -106,9 +115,9 @@
   };
   /* Score each item of a set: results [{ id, ok, difficulty, skills }] if given, else wrongItems and a count of correct */
   const itemsOf = ({ results, wrongItems = [], score = 0, skills = [], difficulty = 2 }) => {
-    if (Array.isArray(results) && results.length) return results.map(r => ({ id: r.id, ok: !!r.ok, difficulty: r.difficulty || difficulty, skills: r.skills || skills, ref: r.ref }));
-    const wrong = wrongItems.map(w => ({ id: w.id, ok: false, difficulty: w.difficulty || difficulty, skills: w.skills || skills, ref: w.ref }));
-    const right = Array.from({ length: Math.max(0, Number(score) || 0) }, (_, i) => ({ id: null, ok: true, difficulty, skills }));
+    if (Array.isArray(results) && results.length) return results.map(r => ({ id: r.id, ok: !!r.ok, difficulty: r.difficulty || difficulty, skills: r.skills || skills, ref: r.ref, how: howOf(r) }));
+    const wrong = wrongItems.map(w => ({ id: w.id, ok: false, difficulty: w.difficulty || difficulty, skills: w.skills || skills, ref: w.ref, how: howOf(w) }));
+    const right = Array.from({ length: Math.max(0, Number(score) || 0) }, (_, i) => ({ id: null, ok: true, difficulty, skills, how: 'auto' }));
     return right.concat(wrong);
   };
 
@@ -239,8 +248,8 @@
     const correct = list.filter(x => x.ok).length;
     const total = items || list.length;
     let mp = 0;
-    list.forEach(x => { const gain = x.ok && !repeat ? mpFor(x.difficulty) : 0; mp += gain; rate(x.skills, x.ok, x.difficulty, { mp: gain }); });
-    const xp = repeat ? 0 : XP.quizItem * correct;
+    list.forEach(x => { const gain = x.ok && !repeat && !isSelf(x) ? mpFor(x.difficulty) : 0; mp += gain; rate(x.skills, x.ok, x.difficulty, { mp: gain, how: x.how }); });
+    const xp = repeat ? 0 : XP.quizItem * list.filter(x => x.ok && !isSelf(x)).length;
     doc.xp += xp; doc.mp += mp; rec.xp += xp;
     if (!rec.bestQuiz || correct > rec.bestQuiz[0]) rec.bestQuiz = [correct, total];
     const share = total ? correct / total : 0;
@@ -260,12 +269,15 @@
     const list = itemsOf({ results, wrongItems, score, skills, difficulty: 3 });
     const correct = list.filter(x => x.ok).length;
     let mp = 0;
-    list.forEach(x => { const gain = x.ok && !repeat ? mpFor(x.difficulty) : 0; mp += gain; rate(x.skills, x.ok, x.difficulty, { mp: gain }); });
-    const xp = repeat ? 0 : XP.quizItem * correct;
+    list.forEach(x => { const gain = x.ok && !repeat && !isSelf(x) ? mpFor(x.difficulty) : 0; mp += gain; rate(x.skills, x.ok, x.difficulty, { mp: gain, how: x.how }); });
+    const xp = repeat ? 0 : XP.quizItem * list.filter(x => x.ok && !isSelf(x)).length;
     doc.xp += xp; doc.mp += mp;
     const total = items || list.length;
     /* passed is sticky: a later weaker attempt never takes it away (prerequisite gating, ENGINE-BACKLOG 481) */
-    doc.reviews[key] = { score: correct, items: total, at: now(), passed: !!((prev && prev.passed) || (total > 0 && correct >= Math.ceil(total * pass - 1e-9))) };
+    /* passedAuto: the same pass mark over auto and external rows only (self rows leave numerator and denominator); prerequisite met reads it */
+    const selfN = list.filter(isSelf).length, aTotal = Math.max(0, total - selfN), aCorrect = list.filter(x => x.ok && !isSelf(x)).length;
+    doc.reviews[key] = { score: correct, items: total, at: now(), passed: !!((prev && prev.passed) || (total > 0 && correct >= Math.ceil(total * pass - 1e-9))),
+      passedAuto: !!((prev && prev.passedAuto) || (aTotal > 0 && aCorrect >= Math.ceil(aTotal * pass - 1e-9))) };
     const redo = list.filter(x => !x.ok).map(x => redoAdd({ kind: 'quiz', ref: x.ref || { course, lesson: id, item: x.id }, skills: x.skills, difficulty: x.difficulty }));
     logSeconds('main', seconds, 'review');
     const qualified = touch();
@@ -289,8 +301,8 @@
     const list = itemsOf({ results, wrongItems, score, skills, difficulty: 4 });
     const correct = list.filter(x => x.ok).length;
     let mp = 0;
-    list.forEach(x => { const gain = x.ok && !repeat ? mpFor(x.difficulty) : 0; mp += gain; rate(x.skills, x.ok, x.difficulty, { mp: gain }); });
-    const xp = repeat ? 0 : XP.homework + XP.homeworkItem * correct;
+    list.forEach(x => { const gain = x.ok && !repeat && !isSelf(x) ? mpFor(x.difficulty) : 0; mp += gain; rate(x.skills, x.ok, x.difficulty, { mp: gain, how: x.how }); });
+    const xp = repeat ? 0 : XP.homework + XP.homeworkItem * list.filter(x => x.ok && !isSelf(x)).length;   // self-ticked items earn no item XP
     doc.xp += xp; doc.mp += mp;
     Object.assign(rec, { submitted: true, submittedAt: now(), score: correct, items: items || list.length, selfMarks });
     const redo = list.filter(x => !x.ok).map(x => redoAdd({ kind: 'homework', ref: x.ref || { course, lesson: id || 'homework-' + level, item: x.id }, skills: x.skills, difficulty: x.difficulty }));
@@ -362,12 +374,12 @@
      Each missed result with an id joins the redo queue as kind 'exam' with ref { exam, item } (ZQ.select.resolve reads it).
      results may carry seconds, family and pace per item; they feed ZQ.state.timing and never affect marks.
      extra (optional): more fields kept on the attempt (itemSeconds, a mock's net). A mock exam (mock-*) earns no XP and keeps every attempt. */
-  const examFinished = ({ id, score = 0, passed = false, bySkill = {}, items = 0, results, seconds = 0, extra } = {}) => {
+  const examFinished = ({ id, score = 0, passed = false, passedAuto, bySkill = {}, items = 0, results, seconds = 0, extra, checks } = {}) => {
     const rec = doc.exams[id] || (doc.exams[id] = { attempts: [] });
     const passedBefore = rec.attempts.some(a => a.passed);
     let mp = 0;
     if (Array.isArray(results) && results.length) {
-      results.forEach(x => { const gain = x.ok ? mpFor(x.difficulty || 3) : 0; mp += gain; rate(x.skills || [], !!x.ok, x.difficulty || 3, { mp: gain }); });
+      results.forEach(x => { const gain = x.ok && !isSelf(x) ? mpFor(x.difficulty || 3) : 0; mp += gain; rate(x.skills || [], !!x.ok, x.difficulty || 3, { mp: gain, how: howOf(x) }); });
     } else {
       Object.entries(bySkill).forEach(([s, v]) => {
         const [ok, total] = Array.isArray(v) ? v : [v, v];
@@ -376,7 +388,11 @@
     }
     const xp = passed && !passedBefore && !String(id).startsWith('mock-') ? (String(id).startsWith('stage-') ? XP.stageExam : XP.topicExam) : 0; // a mock is sat many times: no XP
     doc.xp += xp; doc.mp += mp;
-    rec.attempts.push({ at: now(), score, items, passed: !!passed, bySkill, ...(extra && typeof extra === 'object' ? extra : {}) }); // extra: a mock's net, wrong, blank, seed, seconds
+    /* passedAuto: the pass with self rows (and self checks) left out; absent when the caller gave none and an old attempt has none either.
+       Without results or self rows it equals passed. checks: [{ name, how: 'self', ok }], the tick boxes the app cannot mark. */
+    const hasSelf = Array.isArray(results) && results.some(isSelf);
+    const pa = typeof passedAuto === 'boolean' ? passedAuto : (hasSelf || (Array.isArray(checks) && checks.length) ? undefined : !!passed);
+    rec.attempts.push({ at: now(), score, items, passed: !!passed, ...(typeof pa === 'boolean' ? { passedAuto: pa } : {}), ...(Array.isArray(checks) && checks.length ? { checks: checks.map(c => ({ name: String(c.name), how: 'self', ok: !!c.ok })) } : {}), bySkill, ...(extra && typeof extra === 'object' ? extra : {}) }); // extra: a mock's net, wrong, blank, seed, seconds
     const redo = (Array.isArray(results) ? results : []).filter(x => x && !x.ok && (x.id != null || (x.ref && x.ref.item != null)))
       .map(x => redoAdd({ kind: 'exam', ref: x.ref && x.ref.exam ? x.ref : { exam: id, item: x.id }, skills: x.skills || [], difficulty: x.difficulty || 3 }));
     logTiming(results);
@@ -584,6 +600,7 @@
     get homework() { return doc.homework; },
     get exams() { return doc.exams; },
     get skills() { return doc.skills; },
+    get selfMarked() { return doc.selfMarked; },
     profile: ns('profile', { set: profileSet, get: () => doc.profile }),
     settings: ns('settings', { set: settingsSet, get: () => doc.settings }),
     flags: ns('flags', { set: flagsSet, get: () => doc.flags }),
@@ -598,7 +615,7 @@
     lessonPosition: { set: positionSet, get: positionGet },
     lesson: (course, lesson) => doc.lessons[lessonId(course, lesson)] || null,
     prereq: ns('prereq', { mark: prereqMet, testout: prereqTestout, open: prereqOpened, start: prereqStarted, grandfather: prereqGrandfathered, get: () => prq() }),
-    screenGraded, lessonFinished, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult, bankResult,
+    screenGraded, lessonFinished, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult, bankResult, provenance, howOf,
     summary, weeklySplit,
     export: exportDoc, import: importDoc, reset, flush,
     dates, rules: { XP, MASTERY, REDO_FIRST, REDO_SECOND, REST_EVERY, REST_MAX, QUALIFY_PROBLEMS, K, ELO_START, BLOCKS, TRACKS, GOALS, itemRating, mpFor },
