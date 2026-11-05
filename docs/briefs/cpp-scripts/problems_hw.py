@@ -78,22 +78,36 @@ GT.append({"compiles": "ScopeGuard b = a;", "setup": "ScopeGuard a([] {});", "ex
 GT.append({"compiles": "ScopeGuard b([] {}); b = std::move(a);", "setup": "ScopeGuard a([] {});", "expect": False})
 gt("std::is_nothrow_move_constructible_v<ScopeGuard>", True)
 gt("ran", 0, "{ ScopeGuard a([] { ++ran; }); a.dismiss(); ScopeGuard b = std::move(a); }")
-P_G = dict(id="P-scope-guard", starter=G_STARTER, solution=G_SOLUTION, prelude=G_PRELUDE, postlude=G_POSTLUDE, tests=GT, alloc=True, leak=True, mutants=G_MUT)
+P_G = dict(id="P-scope-guard", starter=G_STARTER, solution=G_SOLUTION, prelude=G_PRELUDE, postlude=G_POSTLUDE, tests=GT, leak=True, mutants=G_MUT)
 
 # ---------------------------------------------------------------- Vec
-V_PRELUDE = '''#include <utility>
+V_PRELUDE = '''#include <cstdint>
+#include <utility>
 #include <type_traits>
 
 // Hidden: counts copies, moves and live objects. It has no assignment operators and no default constructor.
+// It also keeps a table of the addresses of its live objects (no heap use). A copy or move whose source
+// is not in the table was made from a destroyed object: it is counted in `bad` and never reads the source.
 struct Counted {
-    static inline int copies = 0, moves = 0, live = 0;
+    static inline int copies = 0, moves = 0, live = 0, bad = 0;
+    static inline std::uintptr_t table[64] = {};
+    static bool is_live(const Counted* p) {
+        for (std::uintptr_t a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) return true;
+        return false;
+    }
+    static void add(const Counted* p) {
+        for (std::uintptr_t& a : table) if (a == 0) { a = reinterpret_cast<std::uintptr_t>(p); return; }
+    }
+    static void drop(const Counted* p) {
+        for (std::uintptr_t& a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) { a = 0; return; }
+    }
     int v;
-    Counted(int x) : v(x) { ++live; }
-    Counted(const Counted& o) : v(o.v) { ++copies; ++live; }
-    Counted(Counted&& o) noexcept : v(o.v) { ++moves; ++live; o.v = -1; }
+    Counted(int x) : v(x) { ++live; add(this); }
+    Counted(const Counted& o) : v(-2) { ++copies; ++live; add(this); if (is_live(&o)) v = o.v; else ++bad; }
+    Counted(Counted&& o) noexcept : v(-2) { ++moves; ++live; add(this); if (is_live(&o)) { v = o.v; o.v = -1; } else ++bad; }
     Counted& operator=(const Counted&) = delete;
     Counted& operator=(Counted&&) = delete;
-    ~Counted() { --live; }
+    ~Counted() { --live; drop(this); }
 };
 '''
 V_HEAD = '''#include <cstddef>
@@ -104,6 +118,9 @@ V_HEAD = '''#include <cstddef>
 // storage from ::operator new and build elements in it with placement new.
 // Growth: capacity 0 to start (no allocation), 1 on the first push, then doubling.
 // push_back must work when its argument lives inside the vector (v.push_back(v[0])).
+// Copy assignment must be safe for `a = a`.
+// Write both push_back overloads, or share a helper: a template parameter `U&&` accepts both,
+// and std::forward<U>(x) passes it on as a copy or a move.
 // Growth moves elements if T's move constructor is noexcept (std::move_if_noexcept).
 template <typename T>
 class Vec {
@@ -262,7 +279,7 @@ vt("a.size() * 1000 + b.size()", 100, "Vec<int> a; for (int i = 0; i < 100; ++i)
 vt("b.size() * 10 + b[0]", 15, "Vec<int> a; a.push_back(5); Vec<int> b; b.push_back(1); b.push_back(2); b = a;")
 vt("b.size() * 10 + b[0] + a.size() * 100", 15, "Vec<int> a; a.push_back(5); Vec<int> b; b.push_back(1); b = std::move(a);")
 vt("a.size() * 10 + a[1]", 26, "Vec<int> a; a.push_back(5); a.push_back(6); Vec<int>& r = a; a = r;")
-vt("v[1]", 7, "Vec<int> v; v.push_back(7); v.push_back(v[0]);")
+vt("Counted::bad * 100 + v[1].v", 7, "Vec<Counted> v; v.push_back(Counted(7)); v.push_back(v[0]);")
 vt("std::is_nothrow_move_constructible_v<Vec<int>>", True)
 P_V = dict(id="P-vec", starter=V_STARTER, solution=V_SOLUTION, prelude=V_PRELUDE, tests=VT, alloc=True, leak=True, mutants=V_MUT)
 

@@ -74,3 +74,50 @@ Results in one place.
 4. Schema limits. Review 10 items (limit 10); homework 9 (limit 12), with difficulty 5 present, a `longform` and `code`; exam 30 (limit 30); every code widget has 3 to 15 tests (the three 15s count their compile checks); `longform` stays in homework and the exam; `multi` questions must say "Select all that apply" (the validator warns): l19 S8, review items 3, 6 and 7 and homework 6 and 7(c) are worded "Select all that are...". How the harness reports: a failing row shows the call, expected and actual with the C++ type; compile checks show the first `error:` line.
 5. Exam plan. Ids unique and absent from the file; insertion points are right (`e-link-stage` is the last difficulty 2, `e-code-credit-line` the last 3, `e-code-rank-fills` the second-to-last 4); skills exist in the exam map; 7 code items and 1 longform as stated. See the warnings on counts, paces, skills balance and the missing `how` count.
 6. Voice and pedagogy. Objectives in `course.json` match `interview-plan.md` word for word. Repetition of l9 and l11 is the main weakness (warnings). No em-dashes or exclamation marks in the brief. Interview realism is good (spoken questions, sentences to say aloud); gaps in the notes.
+
+## Fix pass
+
+The brief `docs/briefs/cpp.md` is generated: hand-written parts `cpp-scripts/part1-level5.md` and `part2-exam.md`, plus the problem modules and `build_brief.py` (META text, pass lines). I edited those and regenerated it with `python3 build_brief.py`; `cpp.md` itself was not edited by hand. Every problem was re-run in the app's own toolchain (`cpp-scripts/app_toolchain/`, results in `results_app.txt`, YoWASP clang 21 + libc++, the app's `unit()`, `-std=c++17` and `c++20`) and natively (`run_all.py`, g++ 13.3 and clang++ 18.1, `c++17` and `c++20`, `results.txt`). App result: all nine solutions pass; all nine starters fail (9, 7, 6, 7, 14, 14, 8, 11, 9 tests); every named mutant is caught (0 NOT CAUGHT) except the one known gap below; `facts_fixpass.cpp` prints the same through the app's clang.
+
+Errors
+- P-move-buffer forgotten null: fixed. `data()` added to the starter and solution; two new tests (`a.data() == nullptr` after the move constructor and after the move assignment); 15 tests. Mutants `move-ctor-forgets-null` and `move-assign-forgets-null` are now caught in the app (1 of 15 each).
+- P-copy-samples delete-first, P-vec free-before-build and the "caught 20 of 20 / 28 of 28" lines: fixed in part. P-vec: `Counted` keeps a table of live addresses and counts a copy or move from a destroyed source (`Counted::bad`) without reading it; the new test `Counted::bad * 100 + v[1].v` expects 7 and `frees-before-building-new` now fails it (1 of 15, app). The weak `Vec<int>` `push_back(v[0])` test is replaced. P-copy-samples `delete-first-no-guard` cannot be made deterministic with today's harness (passes 13 of 13 in the app): moved to a `uncaught` list, no longer counted, the problem marked "waiting on an engine item", and a [Must] added under "Raised later (cpp L5 brief, 5 Nov)" in `docs/BACKLOG-INBOX.md` (poison and quarantine freed blocks, report a double delete). The "caught N of N" lines are now generated from native runs, and the app run is listed beside them.
+- l21 virtual call cost: fixed ("two loads and an indirect jump" in S9 and the distractor, "two dependent loads and an indirect call" in S11 and homework 9).
+- l21 S11 `inline` slip and explain: fixed ("`inline` does not tell the compiler which function a call through a base pointer reaches"; "usually stops inlining"; devirtualisation named).
+- l20 S8 copy and warn slips: fixed (the deleted copy constructor is selected; an error, not a warning); the explain and the l20 S2 table note say deleted, not absent.
+- l23 S8 key: fixed ("`a = a`: the count could fall to zero...").
+
+Warnings
+- Rule of zero overlap (l20 S4, S9, quiz 2, review 4; l23 S9; l19 S1): fixed. l20 S4 is now defaulted moves (`noexcept` deduced; checked 1 and 0); the rule of zero is one quiz item, cited to l9 and l11; S9's confirmation is what a declared destructor does to the moves; review 4 is the defaulted-move item; l23 S9 asks the cost of copying a `shared_ptr`; l19 S1 cites l11 and names the new cases.
+- Homework 1 and P-scope-guard: fixed as reframing ("the l11 `Connection` with a callback", recall); the new part is the `vector<ScopeGuard>` growth test.
+- l23 S1 and S2: fixed. S1 asks how many times `new` runs (2); S2 keeps the mechanism.
+- l23 S1 greyed node: fixed (`dashed` with a label).
+- l19 S2 sizes: fixed (type named `Buffer`; a vector move is three pointers, 12 and 24 bytes).
+- Homework 8 figure: fixed (1,000 `Buffer`s of 1,000 doubles, 8 MB) and added to `number_checks.py` (also 12 and 24).
+- Growth rule: fixed in l19 S4 and S5, the runtime facts and `e-vector-growth` prose.
+- Homework 3(c): fixed (two overloads in the explain; slip "copies even when the caller is finished with it").
+- Self-move and self-copy comments: fixed in the starters of P-move-buffer, P-unique-ptr and P-vec.
+- P-add-overflows optimiser dependence: fixed in the META note, the runtime facts and l22 S5's explain; the post-check solution fails 7 of 13 in the app (re-measured).
+- Clone-basket test count: fixed (11 in both exam places).
+- Exam minutes and pace: fixed (330 s and 600 s, 15.5 minutes; the existing 25 items carry neither `tags` nor `pace`).
+- Exam skills balance: fixed (`e-vector-growth` to `cp-stl`, `cp-classes` 6 of 30; `e-virtual-dtor` is a `shared_ptr` reversal; `e-ub-which` has five new lines).
+- l21 S5 `calls` why: fixed.
+- Homework 5 table: fixed (four columns, `compact`, one-word cells, mobile check and a split fallback).
+- Voice (four sentences over 20 words): fixed (l20 S5, l21 S8, l21 S9, l23 S5).
+- `array` `highlight.ranges`: fixed (cited to `array.js`, single-range fallback, [Should] in the inbox to document it).
+
+Notes
+- l19 missing `return std::move(t)` and forwarding: fixed (quiz item 5; the P-vec starter comment).
+- l23 next questions: fixed (S8 explain).
+- l21 S10 link to l20: fixed.
+- l22 S2 standard version: fixed.
+- l19 S3 `[[nodiscard]]` on `std::move`: no action needed (the screen is a static console).
+- l20 S7 `books` reserved: fixed.
+- P-clone-basket `leakCheck` and the `<algorithm>` include: fixed (both).
+- Number checks: no change needed; the new figures were added.
+- Reuse (the l11 `Buffer`): fixed in the P-move-buffer note.
+- Compile checks wording: fixed (`how` no longer says the checks "confirm" on a file that does not compile).
+
+Also fixed: `multi` questions now say "Select all that apply" (l19 S8, review 3, 6, 7, homework 6, 7(c)); the harness includes the counter header for a `leakCheck`-only problem; the four problems that declare only `leakCheck` no longer run with `allocCheck` in the app run, matching their stated flags.
+
+Disputed: none.

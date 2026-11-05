@@ -66,19 +66,24 @@ SOLUTION = HEAD + COPY_CTOR + ASSIGN + TAIL
 
 MUTANTS = {
     "assign-leaks-old-block": HEAD + COPY_CTOR + ASSIGN.replace("            delete[] data_;\n", "") + TAIL,
-    "delete-first-no-guard": HEAD + COPY_CTOR + '''    Samples& operator=(const Samples& other) {
-        delete[] data_;
-        data_ = new double[other.size_];
-        size_ = other.size_;
-        for (int i = 0; i < size_; ++i) data_[i] = other.data_[i];
-        return *this;
-    }
-''' + TAIL,
     "assign-copies-twice": HEAD + COPY_CTOR + ASSIGN.replace("            data_ = fresh;\n", "            data_ = new double[other.size_];\n            for (int i = 0; i < other.size_; ++i) data_[i] = fresh[i];\n            delete[] fresh;\n") + TAIL,
     "ctor-copies-size-only": HEAD + '''    Samples(const Samples& other) : size_(other.size_), data_(new double[other.size_]) {}
 ''' + ASSIGN + TAIL,
     "assign-shallow-only": HEAD + COPY_CTOR + '''    Samples& operator=(const Samples& other) {
         if (this != &other) { delete[] data_; size_ = other.size_; data_ = other.data_; }
+        return *this;
+    }
+''' + TAIL,
+}
+
+# Slips no test can see today: the delete-first assignment only misbehaves for `a = a`, by reading the block it has just freed.
+# The harness cannot make that read deterministic (see the [Must] under "Raised later (cpp L5 brief, 5 Nov)" in docs/BACKLOG-INBOX.md).
+UNCAUGHT = {
+    "delete-first-no-guard": HEAD + COPY_CTOR + '''    Samples& operator=(const Samples& other) {
+        delete[] data_;
+        data_ = new double[other.size_];
+        size_ = other.size_;
+        for (int i = 0; i < size_; ++i) data_[i] = other.data_[i];
         return *this;
     }
 ''' + TAIL,
@@ -106,4 +111,4 @@ t("b.size()", 0, "Samples a(0, 0.0); Samples b = a;")
 t("a.size()", 0, "Samples a(3, 1.5); Samples b = std::move(a);")
 t("b.get(4)", 2.5, "Samples a(5, 2.5); Samples b(1, 0.0); b = a;")
 
-P = dict(id="P-copy-samples", starter=STARTER, solution=SOLUTION, prelude=PRELUDE, tests=T, alloc=True, leak=True, mutants=MUTANTS)
+P = dict(id="P-copy-samples", starter=STARTER, solution=SOLUTION, prelude=PRELUDE, tests=T, alloc=True, leak=True, mutants=MUTANTS, uncaught=UNCAUGHT)

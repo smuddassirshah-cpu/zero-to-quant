@@ -78,4 +78,4 @@ t("a.table == b.table", True, "Payoff a = make_call(100); Payoff b = make_call(9
 t("a.table != b.table", True, "Payoff a = make_call(100); Payoff b = make_put(100);")
 t("total", 6.0, "Payoff c = make_call(100); Payoff p = make_put(100); Payoff d = make_digital(100); const Payoff* book[3] = {&c, &p, &d}; double total = 0.0; for (const Payoff* x : book) total += value_of(x, 105.0);")
 t("value_of(&d, 99.0)", 0.0, "Payoff d = make_digital(100);")
-P = dict(id="P-hand-vtable", starter=STARTER, solution=SOLUTION, prelude=PRELUDE, tests=T, alloc=True, leak=True, mutants=MUTANTS)
+P = dict(id="P-hand-vtable", starter=STARTER, solution=SOLUTION, prelude=PRELUDE, tests=T, leak=True, mutants=MUTANTS)

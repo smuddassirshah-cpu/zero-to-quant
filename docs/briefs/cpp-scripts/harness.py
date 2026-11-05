@@ -63,7 +63,7 @@ def esc(s):
 
 
 def build(prob, code):
-    alloc = prob.get("alloc", False)
+    alloc = prob.get("alloc", False) or prob.get("leak", False)
     s = PRE + (ALLOC if alloc else "") + prob.get("prelude", "") + "\n" + code + "\n" + prob.get("postlude", "") + CMP
     s += "\nint main(int argc, char** argv){ int which = argc > 1 ? std::atoi(argv[1]) : -1;\n"
     for i, t in enumerate(prob["tests"]):
@@ -144,6 +144,10 @@ def run(prob, compilers=("g++", "clang++"), stds=("c++17", "c++20")):
                 allok &= good
                 tag = {-1: "COMPILE ERROR"}.get(f)
                 print(f"[{prob['id']}] mutant {name:24s} {cxx:8s} {std}: " + (tag if tag else f"{f} of {n} failed") + f"   {('caught' if f != -1 else 'caught by a compile error') if good else 'NOT CAUGHT'}")
+            for name, code in prob.get("uncaught", {}).items():
+                # known gaps: reported, never a failure (the slip needs a harness feature that does not exist yet)
+                f, n, lines = one(prob, code, "unc_" + name, cxx, std)
+                print(f"[{prob['id']}] known-uncaught {name:20s} {cxx:8s} {std}: " + ({-1: "COMPILE ERROR"}.get(f) or f"{f} of {n} failed") + ("   caught here (not relied on)" if f > 0 else "   not caught (known gap, waits on the [Must] in BACKLOG-INBOX)"))
             for name, code in prob.get("alts", {}).items():
                 f, n, lines = one(prob, code, "alt_" + name, cxx, std)
                 good = f == 0

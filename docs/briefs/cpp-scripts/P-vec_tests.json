@@ -1,5 +1,5 @@
 {
- "prelude": "#include <utility>\n#include <type_traits>\n\n// Hidden: counts copies, moves and live objects. It has no assignment operators and no default constructor.\nstruct Counted {\n    static inline int copies = 0, moves = 0, live = 0;\n    int v;\n    Counted(int x) : v(x) { ++live; }\n    Counted(const Counted& o) : v(o.v) { ++copies; ++live; }\n    Counted(Counted&& o) noexcept : v(o.v) { ++moves; ++live; o.v = -1; }\n    Counted& operator=(const Counted&) = delete;\n    Counted& operator=(Counted&&) = delete;\n    ~Counted() { --live; }\n};\n",
+ "prelude": "#include <cstdint>\n#include <utility>\n#include <type_traits>\n\n// Hidden: counts copies, moves and live objects. It has no assignment operators and no default constructor.\n// It also keeps a table of the addresses of its live objects (no heap use). A copy or move whose source\n// is not in the table was made from a destroyed object: it is counted in `bad` and never reads the source.\nstruct Counted {\n    static inline int copies = 0, moves = 0, live = 0, bad = 0;\n    static inline std::uintptr_t table[64] = {};\n    static bool is_live(const Counted* p) {\n        for (std::uintptr_t a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) return true;\n        return false;\n    }\n    static void add(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == 0) { a = reinterpret_cast<std::uintptr_t>(p); return; }\n    }\n    static void drop(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) { a = 0; return; }\n    }\n    int v;\n    Counted(int x) : v(x) { ++live; add(this); }\n    Counted(const Counted& o) : v(-2) { ++copies; ++live; add(this); if (is_live(&o)) v = o.v; else ++bad; }\n    Counted(Counted&& o) noexcept : v(-2) { ++moves; ++live; add(this); if (is_live(&o)) { v = o.v; o.v = -1; } else ++bad; }\n    Counted& operator=(const Counted&) = delete;\n    Counted& operator=(Counted&&) = delete;\n    ~Counted() { --live; drop(this); }\n};\n",
  "tests": [
   {
    "call": "v.size() * 10000 + v.capacity()",
@@ -67,9 +67,9 @@
    "setup": "Vec<int> a; a.push_back(5); a.push_back(6); Vec<int>& r = a; a = r;"
   },
   {
-   "call": "v[1]",
+   "call": "Counted::bad * 100 + v[1].v",
    "expect": 7,
-   "setup": "Vec<int> v; v.push_back(7); v.push_back(v[0]);"
+   "setup": "Vec<Counted> v; v.push_back(Counted(7)); v.push_back(v[0]);"
   },
   {
    "call": "std::is_nothrow_move_constructible_v<Vec<int>>",

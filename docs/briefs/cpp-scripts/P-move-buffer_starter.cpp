@@ -1,6 +1,7 @@
 // A buffer of doubles on the heap. It copies correctly already.
 // Add a move constructor and a move assignment: each takes the other buffer's block
-// and leaves it empty (size 0). Neither may allocate, and both must be noexcept.
+// and leaves it empty (size 0, data() null). Neither may allocate, and both must be noexcept.
+// The move assignment must be safe for `a = std::move(a)`.
 class Buffer {
 public:
     Buffer(int n, double x) : size_(n), data_(new double[n]) {
@@ -26,6 +27,7 @@ public:
 
     int size() const { return size_; }
     double get(int i) const { return data_[i]; }
+    const double* data() const { return data_; }
 
 private:
     int size_;

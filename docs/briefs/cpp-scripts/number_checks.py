@@ -12,6 +12,9 @@ def check(name, got, want):
 # --- l19: sizes and costs
 check("1,000,000 doubles in bytes", 1_000_000 * 8, 8_000_000)
 check("copy time at 10 GB/s, ms", Fraction(8_000_000, 10_000_000_000) * 1000, Fraction(4, 5))      # 0.8 ms
+check("1,000 Buffers of 1,000 doubles, bytes copied per growth (homework 8)", 1_000 * 1_000 * 8, 8_000_000)
+check("a vector move writes three pointers, bytes here (wasm32)", 3 * 4, 12)
+check("a vector move writes three pointers, bytes on a desktop", 3 * 8, 24)
 check("pointer and size moved, bytes here (wasm32)", 4 + 4, 8)
 check("pointer and size moved, bytes on a desktop", 8 + 8, 16)
 

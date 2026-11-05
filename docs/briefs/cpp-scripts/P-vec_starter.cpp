@@ -6,6 +6,9 @@
 // storage from ::operator new and build elements in it with placement new.
 // Growth: capacity 0 to start (no allocation), 1 on the first push, then doubling.
 // push_back must work when its argument lives inside the vector (v.push_back(v[0])).
+// Copy assignment must be safe for `a = a`.
+// Write both push_back overloads, or share a helper: a template parameter `U&&` accepts both,
+// and std::forward<U>(x) passes it on as a copy or a move.
 // Growth moves elements if T's move constructor is noexcept (std::move_if_noexcept).
 template <typename T>
 class Vec {

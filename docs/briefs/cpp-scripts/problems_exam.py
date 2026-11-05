@@ -1,6 +1,5 @@
 # P-clone-basket: exam item e-code-clone-basket (topic-1.9 extension). The clone idiom: copying polymorphic objects without slicing.
-HEAD = '''#include <algorithm>
-#include <memory>
+HEAD = '''#include <memory>
 #include <vector>
 
 // Order is an interface. clone() returns a copy of the same dynamic type, so an
@@ -90,4 +89,4 @@ t("c->cost(2.0)", 500.0, "Basket b; b.add(std::make_unique<Market>(100)); b.add(
 t("c->cost(2.0)", 500.0, "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5)); std::unique_ptr<Order> c = b.clone(); b.add(std::make_unique<Market>(1000));")
 t("c->cost(3.0)", 300.0, "Basket inner; inner.add(std::make_unique<Limit>(10, 2.5)); inner.add(std::make_unique<Market>(100)); Basket outer; outer.add(inner.clone()); outer.add(std::make_unique<Market>(0)); std::unique_ptr<Order> c = outer.clone(); inner.add(std::make_unique<Market>(5));")
 t("std::is_abstract_v<Basket>", False)
-P = dict(id="P-clone-basket", starter=STARTER, solution=SOLUTION, prelude=PRELUDE, tests=T, mutants=MUTANTS)
+P = dict(id="P-clone-basket", starter=STARTER, solution=SOLUTION, prelude=PRELUDE, tests=T, leak=True, mutants=MUTANTS)

@@ -1,7 +1,8 @@
 # P-move-buffer: l19-moving-not-copying. Starter has copy members only; the learner adds the two move members.
 STARTER = '''// A buffer of doubles on the heap. It copies correctly already.
 // Add a move constructor and a move assignment: each takes the other buffer's block
-// and leaves it empty (size 0). Neither may allocate, and both must be noexcept.
+// and leaves it empty (size 0, data() null). Neither may allocate, and both must be noexcept.
+// The move assignment must be safe for `a = std::move(a)`.
 class Buffer {
 public:
     Buffer(int n, double x) : size_(n), data_(new double[n]) {
@@ -27,6 +28,7 @@ public:
 
     int size() const { return size_; }
     double get(int i) const { return data_[i]; }
+    const double* data() const { return data_; }
 
 private:
     int size_;
@@ -35,7 +37,8 @@ private:
 '''
 SOLUTION = '''// A buffer of doubles on the heap. It copies correctly already.
 // Add a move constructor and a move assignment: each takes the other buffer's block
-// and leaves it empty (size 0). Neither may allocate, and both must be noexcept.
+// and leaves it empty (size 0, data() null). Neither may allocate, and both must be noexcept.
+// The move assignment must be safe for `a = std::move(a)`.
 class Buffer {
 public:
     Buffer(int n, double x) : size_(n), data_(new double[n]) {
@@ -73,6 +76,7 @@ public:
 
     int size() const { return size_; }
     double get(int i) const { return data_[i]; }
+    const double* data() const { return data_; }
 
 private:
     int size_;
@@ -114,6 +118,27 @@ MUTANTS = {
     }
     Buffer& operator=(Buffer&&""", """    }
     Buffer& operator=(Buffer&&"""),
+    # the commonest slip: the size is zeroed but the pointer is left set, so both objects delete[] one block
+    "move-ctor-forgets-null": mut("""        other.size_ = 0;
+        other.data_ = nullptr;
+    }
+    Buffer& operator=(Buffer&&""", """        other.size_ = 0;
+    }
+    Buffer& operator=(Buffer&&"""),
+    "move-assign-forgets-null": mut("""            data_ = other.data_;
+            other.size_ = 0;
+            other.data_ = nullptr;
+        }
+        return *this;
+    }
+
+    int size()""", """            data_ = other.data_;
+            other.size_ = 0;
+        }
+        return *this;
+    }
+
+    int size()"""),
     # a "move" that copies the block
     "move-that-copies": mut("""Buffer(Buffer&& other) noexcept : size_(other.size_), data_(other.data_) {
         other.size_ = 0;
@@ -140,6 +165,8 @@ t("b.size()", 4, "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);")
 t("a.size()", 0, "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);")
 t("alloc_count()", 0, "Buffer a(1000, 2.0); Buffer b(2, 9.0); reset_alloc_count(); b = std::move(a);")
 t("a.size()", 3, "Buffer a(3, 4.0); Buffer& r = a; a = std::move(r);")
+t("a.data() == nullptr", True, "Buffer a(3, 1.5); Buffer b = std::move(a);")
+t("a.data() == nullptr", True, "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);")
 t("std::is_nothrow_move_constructible_v<Buffer>", True)
 t("std::is_nothrow_move_assignable_v<Buffer>", True)
 t("alloc_count()", 2, "std::vector<Buffer> v; v.reserve(2); v.push_back(Buffer(100, 1.0)); v.push_back(Buffer(100, 2.0)); reset_alloc_count(); v.push_back(Buffer(100, 3.0));")

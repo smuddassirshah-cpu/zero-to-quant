@@ -16,6 +16,7 @@ struct Tracked {
 U_HEAD = '''// A minimal unique pointer. It owns one heap object, or nothing.
 // Write: the destructor; copying deleted; a move constructor and move assignment that
 // transfer ownership and leave the source empty; release(); reset().
+// The move assignment must be safe for `a = std::move(a)`.
 template <typename T>
 class UniquePtr {
 public:
@@ -106,7 +107,7 @@ ut("Tracked::live", 1, "UniquePtr<Tracked> a(new Tracked(1)); UniquePtr<Tracked>
 ut("a.get() != nullptr", True, "UniquePtr<Tracked> a(new Tracked(4)); UniquePtr<Tracked>& r = a; a = std::move(r);")
 ut("std::is_nothrow_move_constructible_v<UniquePtr<Tracked>>", True)
 ut("(p ? 10 : 0) + (q ? 1 : 0)", 1, "UniquePtr<Tracked> p; UniquePtr<Tracked> q(new Tracked(1));")
-P_U = dict(id="P-unique-ptr", starter=U_STARTER, solution=U_SOLUTION, prelude=PRELUDE, tests=UT, alloc=True, leak=True, mutants=U_MUT)
+P_U = dict(id="P-unique-ptr", starter=U_STARTER, solution=U_SOLUTION, prelude=PRELUDE, tests=UT, leak=True, mutants=U_MUT)
 
 # ---------------------------------------------------------------- SharedPtr
 S_HEAD = '''// A minimal reference-counted pointer. All owners share one heap counter next to the object.
@@ -232,6 +233,6 @@ st("b->v + (*a).v", 16, "SharedPtr<Tracked> a(new Tracked(8)); SharedPtr<Tracked
 st("a.use_count()", 6, "SharedPtr<Tracked> a(new Tracked(1)); std::vector<SharedPtr<Tracked>> v(5, a);")
 st("a.use_count() * 10 + Tracked::live", 11, "SharedPtr<Tracked> a(new Tracked(1)); { std::vector<SharedPtr<Tracked>> v(5, a); }")
 st("std::is_nothrow_move_constructible_v<SharedPtr<Tracked>>", True)
-P_S = dict(id="P-shared-ptr", starter=S_STARTER, solution=S_SOLUTION, prelude=PRELUDE, tests=ST, alloc=True, leak=True, mutants=S_MUT)
+P_S = dict(id="P-shared-ptr", starter=S_STARTER, solution=S_SOLUTION, prelude=PRELUDE, tests=ST, leak=True, mutants=S_MUT)
 
 PROBLEMS = [P_U, P_S]

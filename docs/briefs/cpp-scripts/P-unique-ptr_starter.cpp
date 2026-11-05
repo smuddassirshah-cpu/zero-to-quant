@@ -1,6 +1,7 @@
 // A minimal unique pointer. It owns one heap object, or nothing.
 // Write: the destructor; copying deleted; a move constructor and move assignment that
 // transfer ownership and leave the source empty; release(); reset().
+// The move assignment must be safe for `a = std::move(a)`.
 template <typename T>
 class UniquePtr {
 public:
