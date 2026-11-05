@@ -62,7 +62,7 @@ Second-read pass (3 Nov 2026)
 
 Session B (3 Nov 2026, label 4 Nov)
 - mock-oa-arith's 16 decimal, fraction and percentage items are fixed, so resits repeat them (inbox bullet asks E4 for those operations). Its start card's parts list squeezes at 390 px (engine, inbox).
-- mock-oa-sig and mock-oa-trader ship three fixed versions each (3 Nov); resits repeat items until E3 (fresh draws); E15 (calculator) is not built. `prep.json` names version 1 only, so versions 2 and 3 are reachable from the exams list, not from prep.
+- mock-oa-sig and mock-oa-trader ship three fixed versions each (3 Nov); resits repeat items until E3 (fresh draws); E15 (calculator) is not built. `prep.json` names version 1 only, so versions 2 and 3 are reachable from the exams list, not from prep. [5 Nov: versions grouped in Prepare via `versionOf`, ENGINE-BACKLOG 547.]
 - The 12-screen lesson cap pushed several brief drills into quizzes in brainteasers L2 and L3 (listed in their reports).
 - Raw `git stash -u` while agents write untracked files hides their files for a moment; use `git pull --rebase --autostash` and stage the manifest entry by entry.
 
@@ -134,7 +134,7 @@ Open review ids (none is fixed at HEAD; closure only on the review's acceptance 
 - F03 (item 7): pdes/L1 and pdes/L3 depend on unwritten odes/L4 and numerics/L4; unreachable under Strict.
 - F04, N07 (item 5): no lesson quiz holds code or longform; AUTHORING 489 and 529 produce the defect.
 - F05, N02, N03 (item 4): met is a 70% review share with no skill floor; a review can be sat cold; a 21 of 30 topic pass meets up to 22 levels.
-- F05.6, F05.7 (item 6): mock-oa-code passes at one of two and draws from the open `oa` pack.
+- F05.6, F05.7 (item 6): closed 5 Nov (ENGINE-BACKLOG 546, 547). Left open: the `oa` pool is 8, so a fifth sitting repeats, and a learner who verified all 8 gets only labelled repeats; no hidden holdout pack exists. The mock draws difficulty 3 and 4, while the curriculum exit says "two medium".
 - F05.8: only stage-0 has a stage exam (PLAN 4, stage exams line).
 - F06, N08 (item 8): no out-of-app capstone record; verified drills feed no met rule.
 - F07 (item 10): `minutes` 11 to 15 everywhere; interview lessons state 25 to 60 minutes in prose.
