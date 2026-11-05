@@ -1,0 +1,411 @@
+{
+ "id": "homework-3",
+ "course": "odes",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-equilibria",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "de-systems"
+   ],
+   "tags": [
+    "linearise"
+   ],
+   "prose": "Write `equilibria_and_types(f, guesses)`. From each guess, run Newton's method, $\\mathbf{z} \\leftarrow \\mathbf{z} - \\mathbf{J}^{-1}\\mathbf{f}(\\mathbf{z})$, with the numerical Jacobian, until $\\max|\\mathbf{f}| < 10^{-12}$. Return each point, rounded to 6 places, with its type. `jacobian` and `classify` are defined for you. Raise `ValueError` if the Jacobian is singular or Newton fails in `max_iter` steps.",
+   "question": "Write `equilibria_and_types`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n# jacobian and classify are defined for you.\n\ndef equilibria_and_types(f, guesses, tol=1e-12, max_iter=50):\n    \"\"\"Newton from each guess: [[[x, y], type], ...].\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\n# jacobian and classify are defined for you.\n\ndef equilibria_and_types(f, guesses, tol=1e-12, max_iter=50):\n    \"\"\"Newton from each guess: [[[x, y], type], ...].\"\"\"\n    out = []\n    for g in guesses:\n        z = np.asarray(g, dtype=float)\n        for _ in range(max_iter):\n            F = np.asarray(f(z), dtype=float)\n            if np.max(np.abs(F)) < tol:\n                break\n            J = jacobian(f, z)\n            if abs(np.linalg.det(J)) < 1e-14:\n                raise ValueError(\"singular Jacobian\")\n            z = z - np.linalg.solve(J, F)\n        else:\n            raise ValueError(\"Newton did not converge\")\n        point = [round(float(v), 6) + 0.0 for v in z]\n        out.append([point, classify(jacobian(f, z))])\n    return out\n",
+    "examples": [
+     {
+      "setup": "pp = lambda z: [z[0] - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; cr = lambda z: [z[0]*(1 - z[0]/6) - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; pl = lambda z: [z[0]**2 - 1, z[1]]",
+      "call": "equilibria_and_types(pp, [[0.2, 0.1]])",
+      "expect": "[[[0.0, 0.0], 'saddle']]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "pp = lambda z: [z[0] - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; cr = lambda z: [z[0]*(1 - z[0]/6) - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; pl = lambda z: [z[0]**2 - 1, z[1]]",
+      "call": "equilibria_and_types(pp, [[0.2, 0.1]])",
+      "expect": "[[[0.0, 0.0], 'saddle']]",
+      "compare": "equal"
+     },
+     {
+      "setup": "pp = lambda z: [z[0] - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; cr = lambda z: [z[0]*(1 - z[0]/6) - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; pl = lambda z: [z[0]**2 - 1, z[1]]",
+      "call": "equilibria_and_types(pp, [[2.5, 1.5]])",
+      "expect": "[[[3.0, 2.0], 'centre']]",
+      "compare": "equal"
+     },
+     {
+      "setup": "pp = lambda z: [z[0] - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; cr = lambda z: [z[0]*(1 - z[0]/6) - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; pl = lambda z: [z[0]**2 - 1, z[1]]",
+      "call": "equilibria_and_types(cr, [[2.5, 1.5]])",
+      "expect": "[[[3.0, 1.0], 'stable spiral']]",
+      "compare": "equal"
+     },
+     {
+      "setup": "pp = lambda z: [z[0] - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; cr = lambda z: [z[0]*(1 - z[0]/6) - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; pl = lambda z: [z[0]**2 - 1, z[1]]",
+      "call": "equilibria_and_types(pl, [[-0.7, 0.3], [1.4, -0.2]])",
+      "expect": "[[[-1.0, 0.0], 'saddle'], [[1.0, 0.0], 'unstable node']]",
+      "compare": "equal"
+     },
+     {
+      "setup": "pp = lambda z: [z[0] - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; cr = lambda z: [z[0]*(1 - z[0]/6) - 0.5*z[0]*z[1], -0.75*z[1] + 0.25*z[0]*z[1]]; pl = lambda z: [z[0]**2 - 1, z[1]]",
+      "call": "equilibria_and_types(pl, [[0.0, 0.5]])",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. They cover predator and prey from two guesses, the crowded model and a planted saddle and node. One guess has a singular Jacobian. Points are compared exactly after rounding. The first run loads NumPy.",
+    "prelude": "import numpy as np\n\ndef jacobian(f, z, h=1e-6):\n    z = np.asarray(z, dtype=float)\n    n = len(z)\n    J = np.zeros((n, n))\n    for k in range(n):\n        e = np.zeros(n)\n        e[k] = h\n        J[:, k] = (np.asarray(f(z + e)) - np.asarray(f(z - e))) / (2 * h)\n    return J\n\ndef classify(A, tol=1e-6):\n    A = np.asarray(A, dtype=float)\n    tau, det = float(np.trace(A)), float(np.linalg.det(A))\n    if abs(det) <= tol:\n        return \"degenerate\"\n    if det < 0:\n        return \"saddle\"\n    if abs(tau) <= tol:\n        return \"centre\"\n    side = \"stable\" if tau < 0 else \"unstable\"\n    return side + (\" node\" if tau * tau - 4 * det >= -tol else \" spiral\")\n"
+   },
+   "feedback": {
+    "correct": "Newton finds each equilibrium; the Jacobian there names it.",
+    "generic": "Some tests failed. Step with `np.linalg.solve(J, F)`, stop when every entry of $\\mathbf{f}$ is below the tolerance, then classify at the final point.",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace the `...` with your function body."
+    }
+   },
+   "explain": {
+    "text": "Newton uses the same linearisation twice: to step towards the equilibrium, then to classify it there.\n\n```python\nJ = jacobian(f, z)\nz = z - np.linalg.solve(J, F)\n```"
+   }
+  },
+  {
+   "id": "h-regions",
+   "difficulty": 4,
+   "skills": [
+    "de-systems"
+   ],
+   "tags": [
+    "trace-det"
+   ],
+   "prose": "Derive the trace-determinant map from $\\lambda^2 - \\tau\\lambda + \\Delta = 0$. One line is wrong; leave it out.",
+   "question": "Put the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "The roots satisfy $\\lambda_1\\lambda_2 = \\Delta$ and $\\lambda_1 + \\lambda_2 = \\tau$, by Vieta"
+     },
+     {
+      "id": "b",
+      "text": "If $\\Delta < 0$, the roots are real with opposite signs: a saddle"
+     },
+     {
+      "id": "c",
+      "text": "If $\\Delta > 0$, real roots share a sign and complex roots have real part $\\tau/2$: the sign of $\\tau$ decides"
+     },
+     {
+      "id": "d",
+      "text": "The discriminant $\\tau^2 - 4\\Delta$ splits real roots (node) from complex ones (spiral), at the parabola $\\Delta = \\tau^2/4$"
+     },
+     {
+      "id": "e",
+      "text": "With $\\Delta > 0$ and $\\tau = 0$ the roots are $\\pm i\\sqrt{\\Delta}$: a centre"
+     },
+     {
+      "id": "x",
+      "text": "If both diagonal entries are negative then $\\tau < 0$, so the origin is stable",
+      "why": "$\\tau < 0$ is not enough: with $\\Delta < 0$ it is a saddle, as $\\begin{pmatrix}-1&3\\\\3&-1\\end{pmatrix}$ shows."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "feedback": {
+    "correct": "Vieta, then the sign of $\\Delta$, the sign of $\\tau$, the discriminant and the centre.",
+    "generic": "Not quite right. Start from what the product and sum of the roots say.",
+    "byKey": {
+     "x": "You read stability from the diagonal. $\\Delta < 0$ makes a saddle whatever $\\tau$ is."
+    }
+   },
+   "explain": {
+    "text": "The product $\\Delta$ decides saddle or not; the sum $\\tau$ decides stable or not; $\\tau^2 - 4\\Delta$ decides node or spiral."
+   }
+  },
+  {
+   "id": "h-solve",
+   "difficulty": 4,
+   "skills": [
+    "de-systems"
+   ],
+   "tags": [
+    "eigen-solution"
+   ],
+   "prose": "Solve $\\mathbf{x}' = \\begin{pmatrix}3&-2\\\\2&-2\\end{pmatrix}\\mathbf{x}$ with $\\mathbf{x}(0) = (1, 0)$. The eigenvalues are 2 and $-1$, with eigenvectors $(2, 1)$ and $(1, 2)$.",
+   "question": "What is $x_1(1)$, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9.7294,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "9.7294: $\\tfrac43e^2 - \\tfrac13e^{-1}$",
+    "wrong": [
+     {
+      "id": "c",
+      "value": 14.7781,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "noneg",
+      "value": 9.8521,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$c_1 = \\tfrac23$, $c_2 = -\\tfrac13$, so $x_1(1) = \\tfrac43e^2 - \\tfrac13e^{-1} = 9.7294$.",
+    "generic": "Not quite right. Solve $2c_1 + c_2 = 1$, $c_1 + 2c_2 = 0$ first.",
+    "byKey": {
+     "c": "You took $\\mathbf{c} = \\mathbf{x}(0) = (1, 0)$, giving $2e^2$. Solve $\\mathbf{V}\\mathbf{c} = \\mathbf{x}(0)$.",
+     "noneg": "You dropped the decaying term $-\\tfrac13e^{-1}$."
+    }
+   },
+   "explain": {
+    "text": "$x_1(t) = \\tfrac23 \\cdot 2e^{2t} - \\tfrac13e^{-t}$; at $t = 1$ it is $9.8521 - 0.1226 = 9.7294$. The saddle's growing mode dominates."
+   }
+  },
+  {
+   "id": "h-sketch",
+   "difficulty": 3,
+   "skills": [
+    "de-systems"
+   ],
+   "tags": [
+    "phase-plane"
+   ],
+   "prose": "$\\mathbf{A} = \\begin{pmatrix}-3&4\\\\-2&1\\end{pmatrix}$.",
+   "question": "Select all that apply: which describe its phase portrait?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "st",
+      "text": "Stable",
+      "correct": true
+     },
+     {
+      "id": "sp",
+      "text": "A spiral",
+      "correct": true
+     },
+     {
+      "id": "cw",
+      "text": "Turning clockwise",
+      "correct": true
+     },
+     {
+      "id": "node",
+      "text": "A node",
+      "why": "$\\tau^2 = 4 < 20 = 4\\Delta$: complex eigenvalues."
+     },
+     {
+      "id": "acw",
+      "text": "Turning anticlockwise",
+      "why": "$\\mathbf{A}(1, 0) = (-3, -2)$ points down."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$\\tau = -2$, $\\Delta = 5$: $\\lambda = -1 \\pm 2i$, a stable spiral turning clockwise.",
+    "generic": "Not quite right. Compute $\\tau$, $\\Delta$ and $\\mathbf{A}(1, 0)$."
+   },
+   "explain": {
+    "text": "Stable from $\\tau < 0$, a spiral from $\\tau^2 < 4\\Delta$, clockwise from the bottom-left entry $-2$."
+   }
+  },
+  {
+   "id": "h-competition",
+   "difficulty": 4,
+   "skills": [
+    "de-systems"
+   ],
+   "tags": [
+    "linearise"
+   ],
+   "prose": "Two strategies compete for the same flow: $x' = x(3 - x - 2y)$, $y' = y(2 - x - y)$. The coexistence point is $(1, 1)$, with $\\mathbf{J} = \\begin{pmatrix}-1&-2\\\\-1&-1\\end{pmatrix}$.",
+   "question": "What is the coexistence point?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sad",
+      "text": "A saddle: one strategy wins",
+      "correct": true
+     },
+     {
+      "id": "sn",
+      "text": "A stable node: they share the flow",
+      "why": "$\\Delta = 1 - 2 = -1 < 0$."
+     },
+     {
+      "id": "ss",
+      "text": "A stable spiral",
+      "why": "$\\Delta < 0$ rules out spirals."
+     },
+     {
+      "id": "c",
+      "text": "A centre",
+      "why": "$\\tau = -2$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$\\Delta = -1$: eigenvalues $-1 \\pm \\sqrt2$, a saddle.",
+    "generic": "Not quite right. Compute $\\Delta$."
+   },
+   "explain": {
+    "text": "A saddle is trusted for the nonlinear system: almost every start leaves $(1, 1)$, and one strategy takes the flow."
+   }
+  },
+  {
+   "id": "h-crowded-eig",
+   "difficulty": 4,
+   "skills": [
+    "de-systems"
+   ],
+   "tags": [
+    "linearise"
+   ],
+   "prose": "The crowded predator and prey has $\\mathbf{J} = \\begin{pmatrix}-0.5&-1.5\\\\0.25&0\\end{pmatrix}$ at $(3, 1)$.",
+   "question": "Enter the eigenvalue with positive imaginary part, exactly.",
+   "widget": {
+    "kind": "expression",
+    "answer": "-\\frac{1}{4}+\\frac{\\sqrt{5}}{4}i",
+    "accept": [
+     "-1/4+sqrt(5)/4*i",
+     "-0.25+\\sqrt{0.3125}i"
+    ],
+    "wrong": [
+     {
+      "id": "conj",
+      "tex": "-\\frac{1}{4}-\\frac{\\sqrt{5}}{4}i"
+     },
+     {
+      "id": "nohalf",
+      "tex": "-\\frac{1}{2}+\\frac{\\sqrt{5}}{2}i"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "feedback": {
+    "correct": "$\\lambda^2 + 0.5\\lambda + 0.375 = 0$ gives $-0.25 \\pm 0.5590i$.",
+    "generic": "Not quite right. $\\tau = -0.5$, $\\Delta = 0.375$, so $\\lambda = (\\tau \\pm \\sqrt{\\tau^2 - 4\\Delta})/2$.",
+    "byKey": {
+     "conj": "That is the conjugate.",
+     "nohalf": "Divide both parts by 2."
+    }
+   },
+   "explain": {
+    "text": "$\\tau^2 - 4\\Delta = 0.25 - 1.5 = -1.25$, and $\\sqrt{1.25}/2 = \\sqrt5/4 = 0.5590$."
+   }
+  },
+  {
+   "id": "h-doubling",
+   "difficulty": 3,
+   "skills": [
+    "de-systems"
+   ],
+   "tags": [
+    "eigen-solution"
+   ],
+   "prose": "Two spreads move as $\\mathbf{A} = \\begin{pmatrix}-1&3\\\\3&-1\\end{pmatrix}$; the sum grows at eigenvalue 2.",
+   "question": "How long does the sum take to double, in years to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3466,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.3466: $\\ln 2/2$",
+    "unit": "years",
+    "wrong": [
+     {
+      "id": "diff",
+      "value": 0.1733,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "recip",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^{2t} = 2$ at $t = \\ln 2/2 = 0.3466$.",
+    "generic": "Not quite right. Solve $e^{2t} = 2$.",
+    "byKey": {
+     "diff": "That is the difference's half-life, $\\ln 2/4$.",
+     "recip": "$1/2$ drops the $\\ln 2$."
+    }
+   },
+   "explain": {
+    "text": "The sum doubles every 0.3466 years, while the difference halves every 0.1733."
+   }
+  },
+  {
+   "id": "h-spreads",
+   "difficulty": 5,
+   "skills": [
+    "de-systems"
+   ],
+   "kind": "longform",
+   "tags": [
+    "trace-det"
+   ],
+   "title": "Each spread reverts, so the pair is stable",
+   "prompt": "A colleague models two spreads with $\\mathbf{x}' = \\mathbf{A}\\mathbf{x}$, $\\mathbf{A} = \\begin{pmatrix}-1&3\\\\3&-1\\end{pmatrix}$. He calls it stable because each spread reverts on its own, and he holds the sum. Show what the origin really is, find how the sum and the difference move, and say which position to hold.",
+   "model": "**1. The diagonal is not the test.** Each diagonal entry, $-1$, is the pull of a spread on itself. The coupling 3 is larger. Stability needs the eigenvalues: $\\tau = -2$, $\\Delta = 1 - 9 = -8 < 0$, so the origin is a **saddle**.\n\n**2. The eigenvalues.** $\\lambda^2 + 2\\lambda - 8 = (\\lambda - 2)(\\lambda + 4) = 0$: $\\lambda = 2$ on $(1, 1)$ and $\\lambda = -4$ on $(1, -1)$.\n\n**3. The sum.** $s = x + y$ obeys $s' = (-x + 3y) + (3x - y) = 2s$, so $s = s_0e^{2t}$. It doubles every $\\ln 2/2 = 0.3466$ years and never reverts.\n\n**4. The difference.** $d = x - y$ obeys $d' = -4d$, so it reverts with half-life $\\ln 2/4 = 0.1733$ years.\n\n**5. The position.** Holding the sum bets on the unstable direction: it runs away. Hold the difference, which mean-reverts quickly. This is the eigenvector view of a cointegrated pair, which `coint` develops in Stage 2.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the diagonal entries do not decide stability and computes $\\tau = -2$, $\\Delta = -8$."
+    },
+    {
+     "points": 2,
+     "text": "Concludes a saddle and gives the eigenvalues 2 and $-4$ with eigenvectors $(1, 1)$ and $(1, -1)$."
+    },
+    {
+     "points": 2,
+     "text": "Shows the sum obeys $s' = 2s$ and doubles every $\\ln 2/2 = 0.3466$."
+    },
+    {
+     "points": 2,
+     "text": "Shows the difference obeys $d' = -4d$ with half-life $\\ln 2/4 = 0.1733$."
+    },
+    {
+     "points": 2,
+     "text": "Recommends holding the difference, not the sum, with the reason."
+    }
+   ]
+  }
+ ]
+}

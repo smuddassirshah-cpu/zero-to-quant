@@ -1,0 +1,448 @@
+{
+ "id": "homework-1",
+ "course": "odes",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-fit-kappa",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "de-first"
+   ],
+   "tags": [
+    "calibrate-kappa"
+   ],
+   "prose": "A desk has noiseless points on a Vasicek mean path, $r = \\theta + (r_0 - \\theta)e^{-\\kappa t}$, and knows $\\theta$. Taking logs, $\\ln|r - \\theta| = \\ln|r_0 - \\theta| - \\kappa t$: a straight line in $t$ with slope $-\\kappa$. Write `fit_kappa(times, rates, theta)` with `np.polyfit`. Raise `ValueError` if any rate equals $\\theta$.",
+   "question": "Write `fit_kappa`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef fit_kappa(times, rates, theta):\n    \"\"\"Recover kappa from points on theta + (r0 - theta) e^(-kappa t).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef fit_kappa(times, rates, theta):\n    \"\"\"Recover kappa from points on theta + (r0 - theta) e^(-kappa t).\"\"\"\n    t = np.asarray(times, dtype=float)\n    gap = np.asarray(rates, dtype=float) - theta\n    if np.any(gap == 0):\n        raise ValueError(\"a rate equals theta, so its log gap is undefined\")\n    slope, _ = np.polyfit(t, np.log(np.abs(gap)), 1)\n    return float(-slope)\n",
+    "examples": [
+     {
+      "setup": "t = np.linspace(0, 5, 11); r = 0.04 + 0.02*np.exp(-0.5*t)",
+      "call": "round(fit_kappa(t, r, 0.04), 6)",
+      "expect": "0.5",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "t = np.linspace(0, 5, 11); r = 0.04 + 0.02*np.exp(-0.5*t)",
+      "call": "round(fit_kappa(t, r, 0.04), 6)",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "setup": "t = np.linspace(0, 2, 9); r = 0.05 - 0.03*np.exp(-2*t)",
+      "call": "round(fit_kappa(t, r, 0.05), 6)",
+      "expect": "2.0",
+      "compare": "isclose"
+     },
+     {
+      "setup": "t = np.array([0.0, 0.25, 1.5]); r = 0.03 + 0.01*np.exp(-1.2*t)",
+      "call": "round(fit_kappa(t, r, 0.03), 6)",
+      "expect": "1.2",
+      "compare": "isclose"
+     },
+     {
+      "call": "round(fit_kappa([0, 1, 2], [0.06, 0.052131, 0.047358], 0.04), 3)",
+      "expect": "0.5",
+      "compare": "isclose"
+     },
+     {
+      "call": "fit_kappa([0, 1, 2], [0.06, 0.04, 0.05], 0.04)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. Three use planted paths with $\\kappa$ of 0.5, 2 and 1.2, one from below $\\theta$. One uses rounded data. In the last a rate equals $\\theta$, which must raise ValueError. The first run loads NumPy."
+   },
+   "feedback": {
+    "correct": "A straight-line fit of the log gap returns $\\kappa$ from its slope.",
+    "generic": "Some tests failed. Fit `np.log(np.abs(rates - theta))` against `times` with degree 1, and return minus the slope.",
+    "byKey": {
+     "error": "Your code stopped with an error. Replace the `...` with your function body."
+    }
+   },
+   "explain": {
+    "text": "The absolute value handles a rate below $\\theta$, where the gap is negative.\n\n```python\nslope, _ = np.polyfit(t, np.log(np.abs(gap)), 1)\nreturn float(-slope)\n```"
+   }
+  },
+  {
+   "id": "h-derive-vasicek",
+   "difficulty": 4,
+   "skills": [
+    "de-first"
+   ],
+   "tags": [
+    "integrating-factor"
+   ],
+   "prose": "Solve $r' = \\kappa(\\theta - r)$ by an integrating factor: write it as $r' + \\kappa r = \\kappa\\theta$. One line below is wrong; leave it out.",
+   "question": "Put the derivation in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Multiply by $\\mu = e^{\\kappa t}$, since $p = \\kappa$ is constant and $\\int \\kappa\\,dt = \\kappa t$"
+     },
+     {
+      "id": "b",
+      "text": "The left side is $(e^{\\kappa t}r)'$ by the product rule, so $(e^{\\kappa t}r)' = \\kappa\\theta e^{\\kappa t}$"
+     },
+     {
+      "id": "c",
+      "text": "Integrate: $e^{\\kappa t}r = \\theta e^{\\kappa t} + C$"
+     },
+     {
+      "id": "d",
+      "text": "Set $t = 0$: $r_0 = \\theta + C$, so $C = r_0 - \\theta$"
+     },
+     {
+      "id": "e",
+      "text": "Divide by $e^{\\kappa t}$: $r = \\theta + (r_0 - \\theta)e^{-\\kappa t}$"
+     },
+     {
+      "id": "x",
+      "text": "Integrate: $e^{\\kappa t}r = \\kappa\\theta e^{\\kappa t} + C$",
+      "why": "$\\int \\kappa\\theta e^{\\kappa t}dt = \\theta e^{\\kappa t}$: the $\\kappa$ from the chain rule cancels."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d",
+     "e"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "feedback": {
+    "correct": "Factor, product rule, integrate, fit, divide.",
+    "generic": "Not quite right. Choose $\\mu$ first, then use the product rule, then integrate.",
+    "byKey": {
+     "x": "You integrated $\\kappa\\theta e^{\\kappa t}$ to $\\kappa\\theta e^{\\kappa t}$. Dividing by the inner derivative $\\kappa$ gives $\\theta e^{\\kappa t}$."
+    }
+   },
+   "explain": {
+    "text": "Each line follows from the reason beside it, and the result matches separation of the gap $r - \\theta$."
+   }
+  },
+  {
+   "id": "h-phase",
+   "difficulty": 3,
+   "skills": [
+    "de-first",
+    "de-systems"
+   ],
+   "tags": [
+    "phase-line"
+   ],
+   "prose": "Take $y' = y(y - 1)(y - 3)$.",
+   "question": "Select all that apply: which equilibria are stable?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "$y = 1$",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "$y = 0$",
+      "why": "$f'(0) = (0 - 1)(0 - 3) = 3 > 0$: paths leave 0."
+     },
+     {
+      "id": "three",
+      "text": "$y = 3$",
+      "why": "$f'(3) = 3 \\times 2 = 6 > 0$: paths leave 3."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$f'(y) = 3y^2 - 8y + 3$: $f'(1) = -2$, the only negative value.",
+    "generic": "Not quite right. Compute $f'$ at 0, 1 and 3."
+   },
+   "explain": {
+    "text": "$f'(0) = 3$, $f'(1) = -2$ and $f'(3) = 6$, so only $y = 1$ attracts. Paths starting between 0 and 3 all end at 1."
+   }
+  },
+  {
+   "id": "h-semi",
+   "difficulty": 4,
+   "skills": [
+    "de-first",
+    "de-systems"
+   ],
+   "tags": [
+    "phase-line"
+   ],
+   "prose": "Take $y' = y^2(1 - y)$, with $y(0) = -0.5$.",
+   "question": "What happens to this path as $t$ grows?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero",
+      "text": "It rises and approaches 0 from below",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "It rises to 1",
+      "why": "It cannot cross the equilibrium at 0: solutions never cross a constant solution."
+     },
+     {
+      "id": "down",
+      "text": "It falls away to $-\\infty$",
+      "why": "Below 0, $y^2 > 0$ and $1 - y > 0$, so the slope is positive."
+     },
+     {
+      "id": "test",
+      "text": "The derivative test says 0 is unstable, so it moves away",
+      "why": "$f'(0) = 0$: the test is silent. Read the signs: $f > 0$ on both sides of 0."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$f > 0$ on both sides of 0, so 0 is semi-stable: paths from below rise into it.",
+    "generic": "Not quite right. Find the sign of $y^2(1 - y)$ for $y < 0$."
+   },
+   "explain": {
+    "text": "For $y < 0$ the slope is positive, so the path rises, but it cannot cross the constant solution $y = 0$. It approaches 0 from below; from just above 0 a path would rise to 1."
+   }
+  },
+  {
+   "id": "h-sep-cos",
+   "difficulty": 4,
+   "skills": [
+    "de-first"
+   ],
+   "tags": [
+    "separable"
+   ],
+   "prose": "Solve $y' = y\\cos t$ with $y(0) = 1$.",
+   "question": "What is $y(\\pi/2)$, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.7183,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "2.7183: $y = e^{\\sin t}$, so $y(\\pi/2) = e$",
+    "wrong": [
+     {
+      "id": "add",
+      "value": 2.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "cos",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\ln y = \\sin t$, so $y = e^{\\sin t}$ and $y(\\pi/2) = e = 2.7183$.",
+    "generic": "Not quite right. Separate and integrate $\\cos t$.",
+    "byKey": {
+     "add": "You wrote $e^{\\sin t} + C$. The constant multiplies, and $y(0) = 1$ makes it 1.",
+     "cos": "You integrated $\\cos t$ to $\\cos t$, which is 0 at $\\pi/2$. Its integral is $\\sin t$."
+    }
+   },
+   "explain": {
+    "text": "$\\int dy/y = \\int \\cos t\\,dt$ gives $\\ln y = \\sin t$, with $C = 0$ from $y(0) = 1$. Then $y(\\pi/2) = e^1 = 2.7183$."
+   }
+  },
+  {
+   "id": "h-if-t",
+   "difficulty": 4,
+   "skills": [
+    "de-first"
+   ],
+   "tags": [
+    "integrating-factor"
+   ],
+   "prose": "Solve $ty' + 2y = 4t^2$ for $t > 0$, with $y(1) = 2$.",
+   "question": "What is $y(2)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.25,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "4.25: $y = t^2 + 1/t^2$",
+    "wrong": [
+     {
+      "id": "noc",
+      "value": 4,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Divide by $t$: $p = 2/t$, $\\mu = t^2$, $(t^2y)' = 4t^3$, so $y = t^2 + C/t^2$ with $C = 1$.",
+    "generic": "Not quite right. Divide by $t$ first, so $p = 2/t$ and $\\mu = e^{2\\ln t} = t^2$.",
+    "byKey": {
+     "noc": "You dropped the constant. $y(1) = 2$ gives $C = 1$, adding $1/t^2$."
+    }
+   },
+   "explain": {
+    "text": "$t^2y = t^4 + C$ and $y(1) = 2$ gives $C = 1$, so $y = t^2 + t^{-2}$ and $y(2) = 4.25$."
+   }
+  },
+  {
+   "id": "h-blowup",
+   "difficulty": 4,
+   "skills": [
+    "de-first"
+   ],
+   "tags": [
+    "separable"
+   ],
+   "prose": "Solve $y' = 1 + y^2$ with $y(0) = 0$.",
+   "question": "At what time does the solution stop existing, to 4 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5708,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "1.5708: $y = \\tan t$ blows up at $\\pi/2$",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1.0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "pi",
+      "value": 3.1416,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\arctan y = t$, so $y = \\tan t$, which blows up at $\\pi/2 = 1.5708$.",
+    "generic": "Not quite right. Separate: $\\int dy/(1 + y^2) = \\arctan y$.",
+    "byKey": {
+     "one": "You compared it with $y' = y^2$ from $y(0) = 1$. Here $y = \\tan t$.",
+     "pi": "$\\tan t$ first blows up at $\\pi/2$, not at $\\pi$."
+    }
+   },
+   "explain": {
+    "text": "$\\int dy/(1 + y^2) = \\arctan y = t$, so $y = \\tan t$. It runs to infinity at $t = \\pi/2 = 1.5708$, although the equation looks harmless."
+   }
+  },
+  {
+   "id": "h-drawdown",
+   "difficulty": 4,
+   "skills": [
+    "de-first"
+   ],
+   "tags": [
+    "integrating-factor"
+   ],
+   "prose": "A retiree's £100,000 earns 3% a year, continuously, while she draws £8,000 a year: $B' = 0.03B - 8000$.",
+   "question": "When does the money run out, in years to 2 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 15.67,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "15.67 years: $e^{0.03t} = 1.6$",
+    "unit": "years",
+    "wrong": [
+     {
+      "id": "simple",
+      "value": 12.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 32.69,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$B = 266{,}667 - 166{,}667e^{0.03t}$, zero when $e^{0.03t} = 1.6$: $t = \\ln 1.6/0.03 = 15.67$.",
+    "generic": "Not quite right. The steady level is $8000/0.03 = 266{,}667$; solve for the time the gap below it has grown to that level.",
+    "byKey": {
+     "simple": "You divided £100,000 by £8,000 and ignored interest.",
+     "ratio": "You divided the steady level by the starting £100,000. Divide it by the gap below it, £166,667."
+    }
+   },
+   "explain": {
+    "text": "$B = (100000 - 266667)e^{0.03t} + 266667$, which reaches 0 when $e^{0.03t} = 1.6$. So $t = \\ln 1.6/0.03 = 15.67$ years, against 12.5 with no interest."
+   }
+  },
+  {
+   "id": "h-colleague",
+   "difficulty": 5,
+   "skills": [
+    "de-first"
+   ],
+   "kind": "longform",
+   "tags": [
+    "mean-reversion"
+   ],
+   "title": "A colleague's rate forecast",
+   "prompt": "A colleague models a short rate at 6% that reverts to $\\theta = 4\\%$ with $\\kappa = 0.5$. He writes the drift as $0.5(r - 0.04)$ and says: \"It halves in 1.39 years, so it will be 3% by then.\" List every error. Give the corrected equation, its solution and its half-life, with the rate at 1, 2 and 2.77 years. End with the one sentence a trader should hear.",
+   "model": "**1. The drift has the wrong sign.** $0.5(r - 0.04)$ is positive above 4%, so it pushes the rate away. From 6% the gap would grow as $e^{0.5t}$, doubling to 4 points (8%) after 1.39 years. Mean reversion needs $\\dfrac{dr}{dt} = \\kappa(\\theta - r) = 0.5(0.04 - r)$.\n\n**2. The half-life halves the gap, not the rate.** The gap is $6\\% - 4\\% = 2$ points. After one half-life it is 1 point, so the rate is 5%, not 3%.\n\n**3. 3% is never reached.** Starting above $\\theta$, the mean path stays above 4% for ever: the gap shrinks but never changes sign.\n\n**4. The corrected path.** The gap $u = r - \\theta$ solves $u' = -0.5u$, so $r(t) = 0.04 + 0.02e^{-0.5t}$. The half-life is $\\ln 2/0.5 = 1.3863$ years. Then $r(1) = 5.2131\\%$, $r(2) = 4.7358\\%$, and the rate is 4.5% at $\\ln 4/0.5 = 2.7726$ years, two half-lives.\n\n**5. For the trader.** \"The rate is 2 points above its 4% mean, and the gap halves every 1.39 years. Expect about 5% in 1.4 years and 4.5% in 2.8, never below 4% on average.\"",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says the drift $0.5(r - 0.04)$ pushes the rate away from 4%, and gives the correct $0.5(0.04 - r)$."
+    },
+    {
+     "points": 2,
+     "text": "Says the half-life halves the gap $r - \\theta$, so one half-life gives 5%, not 3%."
+    },
+    {
+     "points": 1,
+     "text": "Says 3% is never reached because the mean path stays above $\\theta$."
+    },
+    {
+     "points": 2,
+     "text": "Gives $r(t) = 0.04 + 0.02e^{-0.5t}$ and the half-life $\\ln 2/0.5 = 1.3863$ years."
+    },
+    {
+     "points": 2,
+     "text": "Gives $r(1) = 5.2131\\%$, $r(2) = 4.7358\\%$ and 4.5% at 2.7726 years."
+    },
+    {
+     "points": 1,
+     "text": "Ends with one plain sentence a trader can act on: the gap, its half-life and the level it never crosses."
+    }
+   ]
+  }
+ ]
+}
