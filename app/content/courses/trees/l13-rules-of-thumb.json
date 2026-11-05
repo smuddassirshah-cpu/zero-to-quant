@@ -1,0 +1,1338 @@
+{
+  "id": "l13-rules-of-thumb",
+  "course": "trees",
+  "title": "Rules of thumb for option prices",
+  "minutes": 13,
+  "objectives": [
+    "Estimate an at-the-money option as about 0.4σ√T times the spot, and check it against Black-Scholes.",
+    "Say where the 0.4 comes from and where the rule fails"
+  ],
+  "skills": [
+    "tp-bs"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Price against volatility",
+      "prose": "Interviewer: a one-year at-the-money option on a £100 share at 20% vol, no rates. What is it worth, without a calculator? First see how the price moves. Slide the time left.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            26
+          ],
+          "functions": [
+            {
+              "id": "c",
+              "expr": "S*(2*Phi(x*sqrt(T)/2)-1)",
+              "label": "call value"
+            }
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "params": {
+            "S": 100,
+            "T": 1
+          },
+          "xFormat": "percent"
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v20",
+              "x": 0.2,
+              "label": "20%"
+            },
+            {
+              "id": "v40",
+              "x": 0.4,
+              "label": "40%"
+            }
+          ],
+          "caption": "Call, S = K = £100, r = 0. Value against volatility."
+        },
+        "controls": [
+          {
+            "bind": "T",
+            "stops": [
+              1,
+              0.25,
+              0.0625
+            ],
+            "start": 1,
+            "label": "Time left $T$ (years)"
+          }
+        ]
+      },
+      "question": "At $T = 1$ the vol doubles from 20% to 40%. What does the price do?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "double",
+            "text": "It about doubles, from £7.97 to £15.85",
+            "correct": true
+          },
+          {
+            "id": "quad",
+            "text": "It about quadruples",
+            "why": "You squared the change, as variance does. At the money the price is close to a straight line in volatility."
+          },
+          {
+            "id": "still",
+            "text": "It barely moves",
+            "why": "You treated the price as fixed. At the money the call is all time value, so it is the most sensitive to volatility."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "At the money, price is nearly proportional to volatility.",
+        "generic": "Not quite right. Read the curve at 20% and at 40%."
+      },
+      "explain": {
+        "text": "The curve is close to a straight line through zero. Doubling σ takes £7.97 to £15.85, a ratio of 1.99.",
+        "canvas": {
+          "points": [
+            {
+              "id": "p20",
+              "x": 0.2,
+              "y": 7.9656,
+              "label": "£{y:.2f}"
+            },
+            {
+              "id": "p40",
+              "x": 0.4,
+              "y": 15.8519,
+              "label": "£{y:.2f}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A quarter of the time",
+      "prose": "Same option, same 20% vol. With a year left it is worth £7.97. Predict its price with three months left.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            26
+          ],
+          "functions": [
+            {
+              "id": "c1",
+              "expr": "100*(2*Phi(x*sqrt(1)/2)-1)",
+              "label": "T = 1"
+            },
+            {
+              "id": "c4",
+              "expr": "100*(2*Phi(x*sqrt(0.25)/2)-1)",
+              "label": "T = 0.25"
+            }
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xFormat": "percent"
+        },
+        "state": {
+          "hide": [
+            "c4"
+          ],
+          "vlines": [
+            {
+              "id": "v20",
+              "x": 0.2,
+              "label": "20%"
+            }
+          ],
+          "caption": "Call, S = K = £100, r = 0. Value against volatility."
+        }
+      },
+      "question": "What is the price with $T = 0.25$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.0,
+        "tol": {
+          "abs": 0.1
+        },
+        "unit": "£",
+        "label": "Price in pounds",
+        "accept": "about £4.00: the price halves when time quarters",
+        "wrong": [
+          {
+            "id": "quarter",
+            "value": 1.99,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "same",
+            "value": 7.97,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Time falls by a factor of four. How did a doubling of vol change the price?"
+        },
+        {
+          "rung": "point",
+          "text": "Time enters through its square root.",
+          "highlight": [
+            "c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{0.25} = 0.5$, so the price halves: $7.97 \\div 2 \\approx 4.00$."
+        }
+      ],
+      "feedback": {
+        "correct": "Time quarters and the price halves: about £4.00.",
+        "generic": "Not quite right. Compare the price at one year and at three months at 20%.",
+        "byKey": {
+          "quarter": "You divided by four, as if price fell in step with time. It falls with the square root of time.",
+          "same": "You kept the one-year price. Less time means less room to move, so the call is cheaper."
+        }
+      },
+      "explain": {
+        "text": "The three-month price is £3.99, a ratio of 0.5006: time quarters, price halves. Price grows with the square root of time, as the spread of a random walk does.",
+        "canvas": {
+          "hide": [],
+          "points": [
+            {
+              "id": "p",
+              "x": 0.2,
+              "y": 3.9878,
+              "label": "£{y:.2f}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Name the rule",
+      "prose": "Doubling $\\sigma$ doubles the price and quartering $T$ halves it, so price follows $\\sigma\\sqrt T\\,S$. For $S = £100$, $\\sigma = 20\\%$, $T = 1$, the constant is $7.9656 \\div (0.2 \\times 100) = 0.398$, about 0.4. That is the rule $C \\approx 0.4\\,\\sigma\\sqrt T\\,S$, which gives £8.00 here against Black-Scholes £7.9656. Now use it on a £50 share at 32% vol with three months left.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            7
+          ],
+          "functions": [
+            {
+              "id": "c",
+              "expr": "50*(2*Phi(x*sqrt(0.25)/2)-1)",
+              "label": "exact"
+            },
+            {
+              "id": "rule",
+              "expr": "0.4*sqrt(0.25)*50*x",
+              "label": "rule",
+              "dashed": true
+            }
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xFormat": "percent"
+        },
+        "state": {
+          "hide": [
+            "rule"
+          ],
+          "vlines": [
+            {
+              "id": "v32",
+              "x": 0.32,
+              "label": "32%"
+            }
+          ],
+          "caption": "Call, S = K = £50, T = 0.25, r = 0."
+        },
+        "enter": {
+          "hide": []
+        }
+      },
+      "question": "What does the rule give for the price?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.2,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "£",
+        "label": "Price in pounds",
+        "accept": "£3.20: $0.4 \\times 0.32 \\times 0.5 \\times 50$",
+        "wrong": [
+          {
+            "id": "no-root",
+            "value": 1.6,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "whole-number-vol",
+            "value": 320,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put the three numbers into the rule."
+        },
+        {
+          "rung": "point",
+          "text": "Use $\\sqrt{0.25} = 0.5$ and $\\sigma = 0.32$.",
+          "highlight": [
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.4 \\times 0.32 \\times 0.5 \\times 50 = 3.20$."
+        }
+      ],
+      "feedback": {
+        "correct": "The rule gives £3.20.",
+        "generic": "Not quite right. Multiply 0.4, the vol, the square root of time and the spot.",
+        "byKey": {
+          "no-root": "You used $T$ where the rule needs $\\sqrt T$. Three months is 0.5 of a year in the root.",
+          "whole-number-vol": "You typed 32 for the vol. The rule needs 0.32."
+        }
+      },
+      "explain": {
+        "text": "$0.4 \\times 0.32 \\times 0.5 \\times 50 = 3.20$. Black-Scholes gives £3.19, so the rule is about 0.4% high.",
+        "canvas": {
+          "points": [
+            {
+              "id": "r",
+              "x": 0.32,
+              "y": 3.2,
+              "label": "rule £{y:.2f}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Where 0.4 comes from",
+      "prose": "At $r = 0$ and $K = S$, put the lines in order. $Z$ is a standard normal and $\\varphi$ its density.",
+      "question": "Put the lines in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "a",
+            "text": "The call is worth $E[\\max(S_T - S, 0)]$, as the share is a martingale at $r = 0$. Here $S_T - S$ is about normal with spread $\\sigma\\sqrt T\\,S$"
+          },
+          {
+            "id": "b",
+            "text": "Write $S_T - S = \\sigma\\sqrt T\\,S\\,Z$, so the call is $\\sigma\\sqrt T\\,S\\,E[\\max(Z, 0)]$, because a constant comes out of an expectation"
+          },
+          {
+            "id": "c",
+            "text": "$E[\\max(Z, 0)] = \\int_0^\\infty z\\,\\varphi(z)\\,dz = 1/\\sqrt{2\\pi} = 0.3989$, because $-\\varphi$ is an antiderivative of $z\\varphi$"
+          },
+          {
+            "id": "d",
+            "text": "So $C \\approx 0.3989\\,\\sigma\\sqrt T\\,S$, with nothing to discount at $r = 0$, and we round to $0.4\\,\\sigma\\sqrt T\\,S$"
+          },
+          {
+            "id": "x",
+            "text": "The mean of $\\max(Z, 0)$ is 0.5, since $Z$ is positive half the time",
+            "why": "You gave the chance $P(Z > 0)$. The mean of $\\max(Z, 0)$ weights each positive value by its size, and it is 0.3989."
+          }
+        ],
+        "answer": [
+          "a",
+          "b",
+          "c",
+          "d"
+        ],
+        "distractors": [
+          "x"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from what the call pays at expiry."
+        },
+        {
+          "rung": "point",
+          "text": "Scale out the spread before you take the expectation."
+        },
+        {
+          "rung": "step",
+          "text": "Payoff, scale, integral, then round."
+        }
+      ],
+      "feedback": {
+        "correct": "The 0.4 is the mean of a half-normal, $1/\\sqrt{2\\pi}$.",
+        "generic": "Not quite right. Write the payoff, scale it, integrate, then round.",
+        "byKey": {
+          "x": "You used the chance of a positive value. The rule needs the mean of the positive part, 0.3989.",
+          "c": "The integral needs the scaled form from the line before it."
+        }
+      },
+      "explain": {
+        "text": "The price is the average positive part of a normal with spread $\\sigma\\sqrt T\\,S$. That average is $0.3989$ times the spread, which we round to 0.4."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A straight line in vol",
+      "prose": "The rule is a straight line in $\\sigma$, with slope $0.4\\sqrt T\\,S = 40$ per 1.00 of vol, or £0.40 a vol point. So vega is about price $\\div\\ \\sigma$: 39.83 against the true 39.695. The vol now rises from 20% to 22%, with $T = 1$ and $S = 100$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            26
+          ],
+          "functions": [
+            {
+              "id": "c",
+              "expr": "100*(2*Phi(x*sqrt(1)/2)-1)",
+              "label": "exact"
+            },
+            {
+              "id": "rule",
+              "expr": "40*x",
+              "label": "rule",
+              "dashed": true
+            }
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xFormat": "percent"
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p20",
+              "x": 0.2,
+              "y": 8,
+              "label": "rule £{y:.2f}"
+            }
+          ],
+          "vlines": [
+            {
+              "id": "v22",
+              "x": 0.22,
+              "label": "22%"
+            }
+          ],
+          "caption": "Call, S = K = £100, r = 0. Value against volatility."
+        }
+      },
+      "question": "How much does the call gain?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "£",
+        "label": "Gain in pounds",
+        "accept": "about £0.80: $40 \\times 0.02$ (Black-Scholes gives £0.79)",
+        "wrong": [
+          {
+            "id": "percent-slip",
+            "value": 80,
+            "tol": {
+              "abs": 1
+            }
+          },
+          {
+            "id": "half",
+            "value": 0.4,
+            "tol": {
+              "abs": 0.03
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Multiply the slope by the change in vol."
+        },
+        {
+          "rung": "point",
+          "text": "The change is 0.02 in the units the slope uses.",
+          "highlight": [
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$40 \\times 0.02 = 0.80$."
+        }
+      ],
+      "feedback": {
+        "correct": "About £0.80 for two vol points.",
+        "generic": "Not quite right. Slope times the change in vol, as a decimal.",
+        "byKey": {
+          "percent-slip": "You used 2 as the change. The slope is per 1.00 of vol, so the change is 0.02.",
+          "half": "You priced one vol point, £0.40. The vol rose by two."
+        }
+      },
+      "explain": {
+        "text": "Slope times change is $40 \\times 0.02 = 0.80$. Black-Scholes gives £0.7935: £8.7591 less £7.9656.",
+        "canvas": {
+          "points": [
+            {
+              "id": "p22",
+              "x": 0.22,
+              "y": 8.8,
+              "label": "rule £{y:.2f}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 2,
+      "title": "Rates break the rule",
+      "prose": "Interviewer: same share, same 20% vol, one year, but rates are now 5%. Your rule still says £8.00. The model price is £10.45.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            30
+          ],
+          "functions": [
+            {
+              "id": "c",
+              "expr": "100*Phi((0.05+x^2/2)/x)-95.1229*Phi((0.05+x^2/2)/x-x)",
+              "label": "exact",
+              "domain": [
+                0.02,
+                0.6
+              ]
+            },
+            {
+              "id": "rule",
+              "expr": "40*x",
+              "label": "rule",
+              "dashed": true
+            }
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xFormat": "percent"
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "pv",
+              "y": 4.877,
+              "label": "S minus PV of K: £4.88"
+            }
+          ],
+          "vlines": [
+            {
+              "id": "v20",
+              "x": 0.2,
+              "label": "20%"
+            }
+          ],
+          "caption": "Call, S = K = £100, T = 1, r = 5%."
+        }
+      },
+      "question": "Why does the rule fail here?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "pv",
+            "text": "The strike's present value is £95.12, so the call is already £4.88 in the money in today's money. The rule prices only time value",
+            "correct": true
+          },
+          {
+            "id": "units",
+            "text": "Volatility should be entered in per cent",
+            "why": "You blamed the units. The rule used 0.20 and was right at $r = 0$."
+          },
+          {
+            "id": "margin",
+            "text": "The quote includes a dealer margin",
+            "why": "You assumed the quote is padded. £10.45 is the model value, with no margin."
+          },
+          {
+            "id": "rv",
+            "text": "Rates raise volatility",
+            "why": "You moved the vol. It is still 20%. The strike's present value is what changed."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What changes between $r = 0$ and $r = 5\\%$?"
+        },
+        {
+          "rung": "point",
+          "text": "You pay the strike at expiry, so today it is worth less.",
+          "highlight": [
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100 e^{-0.05} = 95.12$, so the call is £4.88 in the money today."
+        }
+      ],
+      "feedback": {
+        "correct": "The rule priced time value only. Rates add the discounted strike gap.",
+        "generic": "Not quite right. Compare the spot with the strike's present value.",
+        "byKey": {
+          "units": "You blamed the units. Nothing changed in how vol is written.",
+          "margin": "You assumed a margin. The model value is £10.45 exactly.",
+          "rv": "You moved the vol. Rates changed the strike's present value, not the vol."
+        }
+      },
+      "explain": {
+        "text": "At $\\sigma \\to 0$ the call is worth $S - Ke^{-rT} = £4.88$, the in-the-money gap in today's money. The rule has no such term, so at 20% it misses by £2.45, half the gap.",
+        "canvas": {
+          "points": [
+            {
+              "id": "m",
+              "x": 0.2,
+              "y": 10.4506,
+              "label": "£{y:.2f}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Add half the gap",
+      "prose": "Fix the rule by adding half of the present-value gap: $C \\approx 0.4\\,\\sigma\\sqrt T\\,S + \\tfrac12(S - Ke^{-rT})$. At $r = 5\\%$ the gap is £4.88.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.6
+          ],
+          "y": [
+            0,
+            30
+          ],
+          "functions": [
+            {
+              "id": "c",
+              "expr": "100*Phi((0.05+x^2/2)/x)-95.1229*Phi((0.05+x^2/2)/x-x)",
+              "label": "exact",
+              "domain": [
+                0.02,
+                0.6
+              ]
+            },
+            {
+              "id": "rule",
+              "expr": "40*x",
+              "label": "rule",
+              "dashed": true
+            },
+            {
+              "id": "fix",
+              "expr": "40*x+2.4385",
+              "label": "rule plus half the gap",
+              "dashed": true,
+              "colour": 3
+            }
+          ],
+          "xLabel": "Volatility $\\sigma$",
+          "yLabel": "Call price (£)",
+          "xFormat": "percent"
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v20",
+              "x": 0.2,
+              "label": "20%"
+            }
+          ],
+          "caption": "Call, S = K = £100, T = 1, r = 5%."
+        }
+      },
+      "question": "What does the corrected rule give for the one-year call at 20%?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10.44,
+        "tol": {
+          "abs": 0.02
+        },
+        "unit": "£",
+        "label": "Price in pounds",
+        "accept": "£10.44: $8.00 + \\tfrac12 \\times 4.88$, against £10.4506",
+        "wrong": [
+          {
+            "id": "whole-gap",
+            "value": 12.88,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Halve the gap before adding it to £8.00."
+        },
+        {
+          "rung": "point",
+          "text": "Half of £4.88 is £2.44.",
+          "highlight": [
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$8.00 + 2.44 = 10.44$."
+        }
+      ],
+      "feedback": {
+        "correct": "£10.44, which is £0.012 below £10.4506.",
+        "generic": "Not quite right. Add £8.00 to half of £4.88.",
+        "byKey": {
+          "whole-gap": "You added the whole £4.88. The rule needs only half of it."
+        }
+      },
+      "explain": {
+        "text": "Discount the forward version, $e^{-rT}\\left[0.4\\sigma\\sqrt T F + \\tfrac12(F - K)\\right]$ with $F = Se^{rT}$, and you get $0.4\\sigma\\sqrt T S + \\tfrac12(S - Ke^{-rT})$. Here that is £10.44 against £10.4506."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Away from the money",
+      "prose": "Edge case. Back to $r = 0$. The rule says £8.00 whatever the strike. Now move the strike away from the money.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            80,
+            140
+          ],
+          "y": [
+            0,
+            25
+          ],
+          "functions": [
+            {
+              "id": "c",
+              "expr": "100*Phi(ln(100/x)/0.2+0.1)-x*Phi(ln(100/x)/0.2-0.1)",
+              "label": "exact",
+              "domain": [
+                80,
+                140
+              ]
+            }
+          ],
+          "xLabel": "Strike $K$ (£)",
+          "yLabel": "Call price (£)"
+        },
+        "state": {
+          "hlines": [
+            {
+              "id": "rule",
+              "y": 8,
+              "label": "rule £8.00"
+            }
+          ],
+          "vlines": [
+            {
+              "id": "v110",
+              "x": 110,
+              "label": "K = 110"
+            }
+          ],
+          "caption": "Call, S = £100, σ = 20%, T = 1, r = 0, against the strike."
+        }
+      },
+      "question": "Read the curve: what is the call struck at 110, 10% out of the money, worth?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.29,
+        "tol": {
+          "abs": 0.1
+        },
+        "unit": "£",
+        "label": "Price in pounds",
+        "accept": "£4.29, read from the curve",
+        "wrong": [
+          {
+            "id": "rule",
+            "value": 8.0,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "atm",
+            "value": 7.97,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the dashed line at 110 and read across to the axis."
+        },
+        {
+          "rung": "point",
+          "text": "The curve at 110 sits well below £8.",
+          "highlight": [
+            "c"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The value is about £4.29."
+        }
+      ],
+      "feedback": {
+        "correct": "About £4.29, nearly half the rule.",
+        "generic": "Not quite right. Read the height of the curve at a strike of 110.",
+        "byKey": {
+          "rule": "You read the rule's £8.00. The curve is the real price, and it has fallen a long way by 110.",
+          "atm": "You read the at-the-money price. The strike is 110, so read the curve there."
+        }
+      },
+      "explain": {
+        "text": "Out of the money by 5%, 10% and 20% the call is worth £5.91, £4.29 and £2.15. The rule says £8.00 each time and overstates by about a factor of two at 10%. It is for the money only.",
+        "canvas": {
+          "points": [
+            {
+              "id": "k105",
+              "x": 105,
+              "y": 5.9056,
+              "label": "£{y:.2f}"
+            },
+            {
+              "id": "k110",
+              "x": 110,
+              "y": 4.292,
+              "label": "£{y:.2f}"
+            },
+            {
+              "id": "k120",
+              "x": 120,
+              "y": 2.1473,
+              "label": "£{y:.2f}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A client's straddle",
+      "prose": "Interviewer: a client asks for a one-month at-the-money straddle on a £120 share at 25% vol, rates zero. About 90 seconds. Give the reason, then the number. The call and put are worth the same.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Input",
+            "Value"
+          ],
+          "rows": [
+            [
+              "Share",
+              "£120"
+            ],
+            [
+              "Strike",
+              "£120"
+            ],
+            [
+              "Volatility",
+              "25%"
+            ],
+            [
+              "Time",
+              "1/12 year"
+            ],
+            [
+              "Rate",
+              "0"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the straddle worth?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6.93,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "£",
+        "label": "Price in pounds",
+        "accept": "£6.93: $2 \\times 0.4 \\times 0.25 \\times \\sqrt{1/12} \\times 120$ (Black-Scholes £6.9084)",
+        "wrong": [
+          {
+            "id": "one-leg",
+            "value": 3.46,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "no-root",
+            "value": 2.0,
+            "tol": {
+              "abs": 0.05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The call and put are equal, so double one leg."
+        },
+        {
+          "rung": "point",
+          "text": "One leg is $0.4\\sigma\\sqrt T\\,S$ with $\\sqrt{1/12} = 0.2887$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.8 \\times 0.25 \\times 0.2887 \\times 120 = 6.93$."
+        }
+      ],
+      "feedback": {
+        "correct": "About £6.93 for the straddle.",
+        "generic": "Not quite right. Price one leg with the rule, then double it.",
+        "byKey": {
+          "one-leg": "You priced one leg. A straddle is the call and the put.",
+          "no-root": "You used $T = 1/12$ in place of its root, 0.2887."
+        }
+      },
+      "explain": {
+        "text": "The straddle is $0.8\\,\\sigma\\sqrt T\\,S = £6.93$, against Black-Scholes £6.9084. As a share of the spot that is 5.77% (5.76% exact), the move needed to break even. Say aloud: about 0.8 of the vol over the root of time, times spot."
+      },
+      "tags": [
+        "option-estimate"
+      ],
+      "pace": 90
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The rule against the formula",
+      "prose": "Interviewer: show me how good the rule is. Write the rule, the exact at-the-money price with $r = 0$, and the rule's relative error. Use `math.erf`.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "S",
+            "$\\sigma$",
+            "T",
+            "Rule",
+            "Exact",
+            "Error"
+          ],
+          "rows": [
+            [
+              "100",
+              "0.20",
+              "1",
+              "8.0000",
+              "7.9656",
+              "0.43%"
+            ],
+            [
+              "100",
+              "0.20",
+              "0.25",
+              "4.0000",
+              "3.9878",
+              "0.31%"
+            ],
+            [
+              "250",
+              "0.30",
+              "0.25",
+              "15.0000",
+              "14.9463",
+              "0.36%"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `atm_rule`, `bs_atm` and `rule_error`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "from math import erf, sqrt\n\ndef atm_rule(S, sigma, T):\n    \"\"\"Rule of thumb: 0.4 * sigma * sqrt(T) * S.\"\"\"\n    ...\n\ndef bs_atm(S, sigma, T):\n    \"\"\"Black-Scholes at the money, r = 0: S * (2 * Phi(sigma * sqrt(T) / 2) - 1).\"\"\"\n    # Phi(z) = 0.5 * (1 + erf(z / sqrt(2)))\n    ...\n\ndef rule_error(S, sigma, T):\n    \"\"\"The rule divided by the exact price, minus 1.\"\"\"\n    ...\n",
+        "solution": "from math import erf, sqrt\n\ndef atm_rule(S, sigma, T):\n    \"\"\"Rule of thumb: 0.4 * sigma * sqrt(T) * S.\"\"\"\n    return 0.4 * sigma * sqrt(T) * S\n\ndef bs_atm(S, sigma, T):\n    \"\"\"Black-Scholes at the money, r = 0: S * (2 * Phi(sigma * sqrt(T) / 2) - 1).\"\"\"\n    # Phi(z) = 0.5 * (1 + erf(z / sqrt(2)))\n    z = sigma * sqrt(T) / 2\n    return S * (2 * 0.5 * (1 + erf(z / sqrt(2))) - 1)\n\ndef rule_error(S, sigma, T):\n    \"\"\"The rule divided by the exact price, minus 1.\"\"\"\n    return atm_rule(S, sigma, T) / bs_atm(S, sigma, T) - 1\n",
+        "examples": [
+          {
+            "call": "round(atm_rule(100, 0.2, 1), 4)",
+            "expect": "8.0",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "atm_rule(100, 0.2, 1)",
+            "expect": "8.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "bs_atm(100, 0.2, 1)",
+            "expect": "7.965567",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "rule_error(100, 0.2, 1)",
+            "expect": "0.004323",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "bs_atm(100, 0.2, 0.25)",
+            "expect": "3.987761",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "rule_error(100, 0.2, 0.25)",
+            "expect": "0.003069",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "bs_atm(250, 0.3, 0.25)",
+            "expect": "14.946322",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "atm_rule(250, 0.3, 0.25)",
+            "expect": "15.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "rule_error(250, 0.3, 0.25)",
+            "expect": "0.003591",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ],
+        "how": "Check runs 8 hidden tests on the three functions, compared with `math.isclose` to six places."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each function is one line of arithmetic."
+        },
+        {
+          "rung": "point",
+          "text": "`bs_atm` needs the normal cdf from `erf`: $\\Phi(z) = \\tfrac12(1 + \\mathrm{erf}(z/\\sqrt2))$.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`rule_error` is `atm_rule(...) / bs_atm(...) - 1`."
+        }
+      ],
+      "feedback": {
+        "correct": "The rule is within half a per cent of Black-Scholes at the money.",
+        "generic": "Not quite right. Check `sqrt(T)` and the argument of the cdf, $\\sigma\\sqrt T/2$."
+      },
+      "explain": {
+        "text": "The exact price is $S(2\\Phi(\\sigma\\sqrt T/2) - 1)$, and the 0.4 is that with $\\Phi$ replaced by its slope at 0. The error is about 0.4% across all three cases, and it grows as $\\sigma\\sqrt T$ does."
+      },
+      "tags": [
+        "option-estimate"
+      ]
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "At the money with $r = 0$, a call is worth about $0.4\\,\\sigma\\sqrt T\\,S$: proportional to vol, to $\\sqrt T$ and to the spot.",
+      "The 0.4 is $1/\\sqrt{2\\pi}$, the mean of a standard normal's positive part. Vega is about price divided by $\\sigma$.",
+      "With rates add half of $S - Ke^{-rT}$, and away from the money do not use the rule at all."
+    ],
+    "formula": {
+      "name": "At-the-money rule",
+      "tex": "C \\approx 0.4\\,\\sigma\\sqrt{T}\\,S",
+      "note": "At the money, r = 0; add half of S minus the discounted strike when r is not 0."
+    },
+    "trap": "At 5% rates the rule is £2.45 short, because it prices only the time value."
+  },
+  "quiz": [
+    {
+      "id": "q-estimate",
+      "difficulty": 2,
+      "prose": "S = £80, σ = 25%, T = 0.25, r = 0, at the money.",
+      "question": "What does the rule give for the call?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4.0,
+        "tol": {
+          "abs": 0.05
+        },
+        "unit": "£",
+        "label": "Price in pounds",
+        "accept": "£4.00: $0.4 \\times 0.25 \\times 0.5 \\times 80$ (Black-Scholes £3.9868)",
+        "wrong": [
+          {
+            "id": "no-root",
+            "value": 2.0,
+            "tol": {
+              "abs": 0.05
+            }
+          },
+          {
+            "id": "whole-number-vol",
+            "value": 400,
+            "tol": {
+              "abs": 1
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "£4.00, against £3.9868.",
+        "generic": "Not quite right. Multiply 0.4, the vol, the root of time and the spot.",
+        "byKey": {
+          "no-root": "You used $T$ where the rule needs $\\sqrt T$.",
+          "whole-number-vol": "You typed 25 for the vol. The rule needs 0.25."
+        }
+      },
+      "explain": {
+        "text": "$0.4 \\times 0.25 \\times 0.5 \\times 80 = 4.00$. Black-Scholes gives £3.9868, a rule error of 0.3%."
+      },
+      "tags": [
+        "option-estimate"
+      ],
+      "pace": 60
+    },
+    {
+      "id": "q-ratio",
+      "difficulty": 2,
+      "prose": "A one-month and a one-year at-the-money option on the same share, same vol, r = 0.",
+      "question": "What is the one-month price as a fraction of the one-year price?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.29,
+        "tol": {
+          "abs": 0.01
+        },
+        "label": "Fraction",
+        "accept": "about 0.29: $1/\\sqrt{12} = 0.2887$ (Black-Scholes 0.2891)",
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 0.083,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "same",
+            "value": 1.0,
+            "tol": {
+              "abs": 0.02
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About 0.29: price scales with the square root of time.",
+        "generic": "Not quite right. How does the price scale with time?",
+        "byKey": {
+          "linear": "You divided by 12, as if price fell in step with time. It falls with $\\sqrt{12}$.",
+          "same": "You kept the prices equal. Less time means a cheaper call."
+        }
+      },
+      "explain": {
+        "text": "The ratio is $\\sqrt{1/12} = 0.2887$. Black-Scholes gives 0.2891."
+      },
+      "tags": [
+        "option-estimate"
+      ],
+      "pace": 60
+    },
+    {
+      "id": "q-double",
+      "difficulty": 3,
+      "prose": "At the money, r = 0, rule of thumb.",
+      "question": "Select all that apply: which changes about double the price?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sk",
+            "text": "Doubling the spot and the strike together",
+            "correct": true
+          },
+          {
+            "id": "vol",
+            "text": "Doubling the volatility",
+            "correct": true
+          },
+          {
+            "id": "t4",
+            "text": "Quadrupling the time left",
+            "correct": true
+          },
+          {
+            "id": "t2",
+            "text": "Doubling the time left",
+            "why": "You doubled the price for doubled time. Price goes with $\\sqrt T$, so doubling $T$ gives about 1.41 times."
+          },
+          {
+            "id": "s2",
+            "text": "Doubling the spot at a fixed strike",
+            "why": "You doubled only the spot. The option leaves the money and is worth about 12.6 times as much."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Scale, vol and the square root of time all enter as products.",
+        "generic": "Not quite right. Price is about $0.4\\,\\sigma\\sqrt T\\,S$ while the option stays at the money.",
+        "byKey": {
+          "t2": "Doubling $T$ multiplies by $\\sqrt2$, not 2.",
+          "s2": "A fixed strike means the option is no longer at the money."
+        }
+      },
+      "explain": {
+        "text": "Price scales as $S$, $\\sigma$ and $\\sqrt T$. So doubling $S$ with $K$, doubling $\\sigma$ and quadrupling $T$ each give about 1.99 to 2 times the price."
+      },
+      "tags": [
+        "option-estimate"
+      ],
+      "pace": 90
+    },
+    {
+      "id": "q-otm",
+      "difficulty": 3,
+      "prose": "The rule of thumb at a strike 10% above the spot, S = 100, σ = 20%, T = 1, r = 0.",
+      "question": "How does the rule's £8.00 compare with the true price?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "twice",
+            "text": "It overstates by about a factor of two",
+            "correct": true
+          },
+          {
+            "id": "exact",
+            "text": "It is still within 1%",
+            "why": "You assumed the rule holds away from the money. At the money it is within half a per cent."
+          },
+          {
+            "id": "under",
+            "text": "It understates, because out-of-the-money options carry skew",
+            "why": "You brought in skew, which is a different effect. The true flat-vol price is £4.29, well below the rule."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The rule is for the money only.",
+        "generic": "Not quite right. Compare £8.00 with the curve at a strike of 110."
+      },
+      "explain": {
+        "text": "The true price at 110 is £4.29, so £8.00 is 1.86 times too high."
+      },
+      "tags": [
+        "option-estimate"
+      ],
+      "pace": 75
+    }
+  ]
+}

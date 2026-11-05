@@ -1399,3 +1399,18 @@ Status block (validator pass, per cent keys):
 - 515 (per cent keys): done.
 - 516 (per cent leading figure): done.
 - 517 (per cent representative figure): done.
+
+## Engine pass (C++ freed-memory harness)
+
+Source: `docs/BACKLOG-INBOX.md`, "Raised later (cpp L5 brief, 5 Nov)".
+
+518. Done (C-poison-quarantine, Must): in `js/engine/widgets/cpp-grade.js`, every `allocCheck` and `leakCheck` unit now uses one operator set (`allocCheck` alone no longer has its own bare-`malloc` operators). A block has a 16-byte header with magic, kind and size; `delete` fills the block with 0xDD, marks the header freed and never releases it (quarantine, capped at 64 MB, then plain `free`). A second `delete` of a quarantined block prints "Memory error: a block was deleted twice." and exits 1, in `allocCheck` alone too; `leakCheck`'s `put` no longer reads a freed header. Leak reporting stays off for `allocCheck` alone. Documented in `docs/AUTHORING.md` section 3.
+
+519. Done (C-free-count, Should): `allocCheck` adds `free_count()` (non-null deletes since `reset_alloc_count()`, which resets it) and `live_blocks()` (never reset). `tools/validate.mjs` forbids defining them in hidden sources and counts a read of any of the three as using `allocCheck`.
+
+520. Done (array ranges doc, Should): `highlight.ranges` for the `array` canvas documented in `app/js/engine/canvas/README-B.md` (shape from `array.js`: `{ range, label, colour, id }` or a bare pair).
+
+Status block (engine pass, C++ freed-memory harness):
+- 518 (C-poison-quarantine): done.
+- 519 (C-free-count): done.
+- 520 (array ranges doc): done.
