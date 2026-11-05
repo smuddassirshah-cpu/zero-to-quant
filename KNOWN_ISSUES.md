@@ -117,3 +117,5 @@ Session I (4 Nov 2026, topic 3.2)
 - Playthrough runs in Chromium at the device sizes, not WebKit; touch, Safari and the C++ compiler's memory on an iPhone are untested on real devices.
 - Reviews are capped at 10 items by the validator, while test-out of a required level wants 12 or more (inbox [Should]).
 - The whole-app `--tablet` pass was not run at close (several hours at three extra widths); topic 3.2 files and the exam were run with `--mobile --tablet` during the session.
+- `--exams` under four parallel shards: the `mock-sample-draw` timed check failed once ("timed out with one answer per paper but scored 0") and passed when re-run alone; treat as load flakiness unless it repeats.
+- Five more per cent keys at or below 1 (garch l4, numpy-pandas l12, py-found l16, random-vars l19, random-vars review-5) were stored as per cents; fixed, and item 516 now errors on them.
