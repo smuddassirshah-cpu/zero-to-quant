@@ -64,7 +64,7 @@ Rules: work topic by topic. A topic closes when every level (lessons, review, ho
    - [x] (4 Nov, items 481 to 498; `docs/reports/engine-pass-e.md`; review and fix `docs/reviews/review-engine-pass-e.md`) Engine pass E: level `requires`, the met rule, locked card grouped by stage, topic, course and lesson, test-out, Strict mode (on by default), Today, Learn and Prepare, validator and playthrough support, AUTHORING section 11 (number from 481)
    - [x] (4 Nov; `docs/reports/prereq-mapping.md`, mocks `prereq-mapping-mocks.md`; review and fix `docs/reviews/review-prereq-mapping.md`) Content pass: `requires` lists in every `course.json` (one mapping agent, then a second reader and fix), validate 0 errors with no cycles, full split playthrough green
 6. [done 4 Nov (session I), topic 3.2 closed: ito L2 to L4, measure-prob L1 to L4, pdes L1 to L3 (54 lessons, 11 reviews, 11 homeworks); exam topic-3.2 (30 items); answer check, fix and recheck per level; second reads and fix passes `docs/reviews/review-{ito,measure-prob,pdes,exam-3.2}.md`, voice 0 and 0; engine items 501 to 515 (expression grader `\exp`, call heads, `integers`, `D`/`N`; device viewports 440, 1032, 1376; iPad column 780 px; drill passes; per cent key rule); 46 per cent keys fixed in nine other courses (`docs/reviews/fix-pct-keys.md`); mapping `docs/reports/prereq-mapping-3.2.md`] Topic 3.2: ito L2 to L4, measure-prob, pdes; exam topic-3.2; second read and fix.
-7. Appended levels: trees L4 (extend exam topic-1.7), cpp L5 (extend exam topic-1.9); second read of each new level.
+7. [done 5 Nov (session J): briefs `docs/briefs/trees.md`, `cpp.md` with second reads and fix passes; engine 517 to 520 (per cent accept figure; C++ freed-memory poison, quarantine and double-delete report, `free_count`, `live_blocks`; array `highlight.ranges` documented); trees L4 and cpp L5 levels; exams topic-1.7 (30 items, 37 parts, 70 min) and topic-1.9 (30 items, 75 min); answer checks, fixes and rechecks; second reads and fix passes `docs/reviews/review-trees-4.md`, `review-cpp-5.md`, `review-exam-1.9.md`, voice 0 and 0; split playthrough green at desktop, `--mobile` result in PROGRESS] Appended levels: trees L4 (extend exam topic-1.7), cpp L5 (extend exam topic-1.9); second read of each new level.
 8. Remaining gaps: exam topic-0.6; extend stage-0 to 0.6 and 0.7; momentum-rep L2, L3, pairs-rep, exam topic-3.1; analysis L5, linear-maps L4, exam topic-1.10; second reads for the other finished topics (0.1 to 0.4, 0.6, 1.1, 1.2, 1.10, 2.2 to 2.4).
 9. Then 2b and the rest (1.11, 2.5, 2.6, 3.4) topic by topic, bank part 2, drill packs, stage exams 1 to 3.
 
@@ -101,7 +101,7 @@ Phase 1, trader core
 - [x] Second readers and fix passes: puzzles, mental-pressure (6 Nov, with mm-games, brainteasers and game-theory: `docs/reviews/review-<course>.md`; 221 findings, 213 fixed; voice 0 and 0 on all five)
 
 Phase 2, researcher core
-- [ ] Briefs: research-int (done 4 Nov), coding-int (done 4 Nov), game-theory (done 2 Nov, `docs/briefs/game-theory.md`), systems (done 4 Nov; reviews `docs/reviews/review-briefs-3.5.md`), trees L4, cpp L5 (puzzles L5, mm-games L4, mental-pressure L4, ito L4 are in their briefs)
+- [x] Briefs: research-int (done 4 Nov), coding-int (done 4 Nov), game-theory (done 2 Nov, `docs/briefs/game-theory.md`), systems (done 4 Nov; reviews `docs/reviews/review-briefs-3.5.md`), trees L4 and cpp L5 (done 5 Nov, `docs/briefs/trees.md`, `cpp.md`; reviews `docs/reviews/review-brief-trees-4.md`, `review-brief-cpp-5.md`) (puzzles L5, mm-games L4, mental-pressure L4, ito L4 are in their briefs)
 - [x] research-int L1: Statistics and linear algebra questions (`docs/reports/research-int-1.md`; 5 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] research-int L2: Machine learning questions (`docs/reports/research-int-2.md`; 5 lessons, review-2, homework-2, six CSVs in `content/data/`; 6 inbox bullets)
 - [x] research-int L3: The open case (`docs/reports/research-int-3.md`; 5 lessons, review-3, homework-3)
@@ -110,7 +110,7 @@ Phase 2, researcher core
 - [x] coding-int L2: Strings and simulation (`docs/reports/coding-int-2.md`; 5 lessons, review-2, homework-2, three tick CSVs; 5 inbox bullets)
 - [x] coding-int L3: Design in code (`docs/reports/coding-int-3.md`; 4 lessons, review-3, homework-3)
 - [x] coding-int L4: Under the clock (`docs/reports/coding-int-4.md`; 5 lessons, review-4, homework-4, 10 `ci-` drills)
-- [ ] trees L4: Options at interview
+- [x] trees L4: Options at interview (`docs/reports/trees-4.md`; 6 lessons, review-4 9 items, homework-4 8 items; exam topic-1.7 extended, `docs/reports/exam-1.7-ext.md`)
 - [x] Engine pass C (4 Nov; items 467 to 480; reports `docs/reports/engine-pass-c-a.md` to `-d.md`; second read and fix pass `docs/reviews/review-engine-pass-c.md`): E3 exam item banks, E8 drill library (C++, timed), E11 follow-up parts, E14 data files, with the `C-*` requirements (two parts; scope in 2a order item 5)
 - [ ] Drill packs 1 to 4 (60 drills)
 - [x] Exams: mock-oa-code, mock-superday-research, mock-oa-quant-data (`docs/reports/exam-mock-*.md`; 8 `oa` drills; second read `docs/reviews/review-exams-3.5.md`)
@@ -129,7 +129,7 @@ Phase 3, trader and researcher depth
 
 Phase 4, developer and strats depth
 - [x] ito L4: Stochastic calculus at interview (`docs/reports/ito-4.md`; 5 lessons, review-4 timed, homework-4)
-- [ ] cpp L5: C++ questions at interview
+- [x] cpp L5: C++ questions at interview (`docs/reports/cpp-5.md`; 5 lessons, review-5 10 items, homework-5 9 items; exam topic-1.9 extended to 30 items, `docs/reports/exam-1.9-ext.md`)
 - [x] systems L1 (`docs/reports/systems-1.md`; 5 lessons, review-1, homework-1; 6 inbox bullets)
 - [x] systems L2 (`docs/reports/systems-2.md`; 5 lessons on `interleave`, review-2, homework-2; 8 inbox bullets)
 - [x] systems L3 (`docs/reports/systems-3.md`; 4 lessons, review-3, homework-3)

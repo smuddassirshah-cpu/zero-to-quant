@@ -36,7 +36,7 @@ C++ runtime
 - libc++ `std::normal_distribution` draws differ from libstdc++ and NumPy; expected values come from the app runtime.
 - `std::chrono::steady_clock` ticks every 100 µs in Chromium; timings are illustrative, never graded.
 - A range-for over a braced list needs `<initializer_list>` included.
-- Vector growth with a move that is not `noexcept`: the app (no `-fno-exceptions` flag) copies on growth as the standard says (four pushes: 3 copies and 4 moves). A desktop build with libc++ and an explicit `-fno-exceptions` moves anyway (0 copies, 7 moves), so a learner who pastes l19 or exam `e-vector-growth` code there sees 0; the explains say so.
+- Vector growth with a move that is not `noexcept`: the app (no `-fno-exceptions` flag) copies on growth as the standard says (four pushes: 3 copies and 4 moves). A desktop build with libc++ and an explicit `-fno-exceptions` moves anyway (0 copies, 7 moves), so a learner who pastes l19 or exam `e-vector-growth` code there sees 0. The explains no longer mention that build, since the app cannot show it.
 
 Process
 - Claude Code's Write tool refuses a subagent write to any `.md` file whose name starts with `report`, `summary`, `findings` or `analysis` (a built-in filename rule with no setting). Only the `analysis` course's reports are hit. User decision (29 Oct): the agent returns the report as text and the main session saves `docs/reports/analysis-<n>.md`; no workaround. analysis-1.md to analysis-3.md were saved this way.
@@ -120,3 +120,9 @@ Session I (4 Nov 2026, topic 3.2)
 - The whole-app `--tablet` pass was not run at close (several hours at three extra widths); topic 3.2 files and the exam were run with `--mobile --tablet` during the session.
 - `--exams` under four parallel shards: the `mock-sample-draw` timed check failed once ("timed out with one answer per paper but scored 0") and passed when re-run alone; treat as load flakiness unless it repeats.
 - Five more per cent keys at or below 1 (garch l4, numpy-pandas l12, py-found l16, random-vars l19, random-vars review-5) were stored as per cents; fixed, and item 516 now errors on them.
+
+Session J (5 Nov 2026, PLAN 2a item 7)
+- CLAUDE.md says C++ runs with "no exceptions", but `app/js/screens/cpp-worker.js` passes no `-fno-exceptions` (flags `-std=c++17 -O1`, libc++ hardening debug); a throw still cannot be caught in the wasm build. Left for the user to correct.
+- Another session (session_01E26gTN3...) pushed to this branch during session J (desktop split record, per cent batch); both rebased cleanly. Two sessions on one branch risk state-file conflicts.
+- Deferred from the trees L4 and cpp L5 fix passes: l14 s4 "0.000" tick label; array canvases in a tall band at 440 px ([Should]); fenced prose code blocks have no wrap switch ([Could]); topic-1.9 thin on cpp level 1, and l20 and l23 untested directly.
+- The 606 to 610 validator warnings were not triaged (4 added this session are deliberate ladder canvas-kind changes in trees l16 and l18).
