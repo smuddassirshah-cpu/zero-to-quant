@@ -1120,3 +1120,6 @@ cpp L5 (5 Nov):
 - [Could] `array` canvas: `highlight.ranges` labels stagger below the index row, and the second label sits lower than the first, so labels read as if attached to different rows (l19 screen 6). Wanted: labels on one line when the ranges are disjoint.
 - [Could] `place` assign screens with no canvas trigger "a problem screen without a canvas before the ladder ends" (l22 screen 3); a static legend canvas would be filler. Wanted: the warning to skip a `place` widget whose tokens carry the code.
 - [Could] A `graph` frame patch is relative to the opening state, so a six-step build (l23 screen 1) needs each frame written in full. Wanted: a cumulative `frames` mode, or `frames` that accept a list applied in order.
+
+Raised later (exam topic-1.9 extension (5 Nov)):
+- [Could] `docs/reviews/voice-scan.py` counts an inline code span as one word (`CODE`) but still flags the sentence at 20 tokens, so a prose sentence with three code spans reads long. Wanted: no change needed; noted so authors split such sentences rather than fight the scan.
