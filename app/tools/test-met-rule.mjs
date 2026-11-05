@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Unit tests for the met rule rewrite (PLAN 2c item 4; ENGINE-BACKLOG 523). Plain node, no browser: a minimal fake window and
+/* Unit tests for the met rule rewrite (PLAN 2c item 4; ENGINE-BACKLOG 528). Plain node, no browser: a minimal fake window and
    localStorage, the real js/state.js, js/content.js and js/prereq.js, and the real content/ files read through a fake fetch, as the app loads them.
    Run from anywhere: node app/tools/test-met-rule.mjs. One PASS or FAIL line per test, a summary line, exit code 1 on any failure. */
 import fs from 'node:fs';

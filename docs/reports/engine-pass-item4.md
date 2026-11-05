@@ -1,4 +1,4 @@
-# Engine pass, PLAN 2c item 4: met rule rewrite (ENGINE-BACKLOG 523)
+# Engine pass, PLAN 2c item 4: met rule rewrite (ENGINE-BACKLOG 528)
 
 Findings addressed: N02, N03, F05.1 to F05.4 (`docs/reviews/review-course-correction.md`).
 
@@ -12,7 +12,7 @@ Findings addressed: N02, N03, F05.1 to F05.4 (`docs/reviews/review-course-correc
 | 4 Exam coverage | uses `SKILL_FLOOR` | `examFinished`, `prereq.examMeets`, `content.js` | Exam attempts now store `bySkillAuto` (auto and external rows). A topic or stage pass meets a level only if one passing attempt covers all the level's essential skills at the floor. Essentials come from the level review's item skills, kept as reviews load (`essentialSkills`) and preloaded by `prereq.sync` for courses whose exam is passed (`loadEssentials`). Unknown essentials mean not met until loaded. |
 | 5 Quiz redo | none | `quizFinished` | Misses always queue. |
 
-Docs: `docs/AUTHORING.md` section 11 (met rule, test-out line). Backlog item 523.
+Docs: `docs/AUTHORING.md` section 11 (met rule, test-out line). Backlog item 528.
 
 ## Decisions and caveats
 
