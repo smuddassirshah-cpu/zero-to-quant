@@ -1,0 +1,1320 @@
+{
+ "id": "l5-bisection-and-newton",
+ "course": "numerics",
+ "title": "Bisection and Newton compared",
+ "minutes": 15,
+ "objectives": [
+  "Compare the convergence rates of bisection, secant and Newton’s method."
+ ],
+ "skills": [
+  "nm-roots"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Three methods race to $\\sqrt 2$, the root of $x^2 - 2$, from the bracket $[1, 2]$. Bisection halves the bracket. Newton starts at 1. The secant method starts from 1 and 2. Here are their first two steps.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Step",
+      "Bisection width",
+      "Newton error",
+      "Secant error"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.5",
+       "0.0858",
+       "0.0809"
+      ],
+      [
+       "2",
+       "0.25",
+       "0.00245",
+       "0.0142"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which method will reach 12 correct digits first?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "newton",
+      "text": "Newton",
+      "correct": true
+     },
+     {
+      "id": "secant",
+      "text": "The secant method",
+      "why": "It is fast, but each step multiplies the digits by about 1.6, not 2. It needs one more step."
+     },
+     {
+      "id": "bisect",
+      "text": "Bisection",
+      "why": "Bisection gains one binary digit a step: 40 steps for a width below $10^{-12}$."
+     },
+     {
+      "id": "tie",
+      "text": "All three at about the same step",
+      "why": "Their errors already differ by factors of 10 after two steps, and the gap widens."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at how the number of correct digits grows from step 1 to step 2."
+    },
+    {
+     "rung": "point",
+     "text": "Newton went from about 1 correct digit to about 2.6. Bisection gains a fixed 0.3 digits a step.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Newton roughly doubles its digits each step: about 5.7, then 11.8 at step 4."
+    }
+   ],
+   "feedback": {
+    "correct": "Newton, at step 4: error $1.59 \\times 10^{-12}$.",
+    "generic": "Not quite right. Compare how fast each method's digits grow."
+   },
+   "explain": {
+    "text": "Newton's errors run 0.0858, 0.00245, $2.12 \\times 10^{-6}$, $1.59 \\times 10^{-12}$: done at step 4. The secant method needs step 5 or 6, and bisection's width needs 40 halvings to pass $10^{-12}$. The rest of the lesson measures why.",
+    "canvas": {
+     "rows": [
+      [
+       "1",
+       "0.5",
+       "0.0858",
+       "0.0809"
+      ],
+      [
+       "2",
+       "0.25",
+       "0.00245",
+       "0.0142"
+      ],
+      [
+       "3",
+       "0.125",
+       "$2.12 \\times 10^{-6}$",
+       "$4.21 \\times 10^{-4}$"
+      ],
+      [
+       "4",
+       "0.0625",
+       "$1.59 \\times 10^{-12}$",
+       "$2.12 \\times 10^{-6}$"
+      ],
+      [
+       "5",
+       "0.03125",
+       "",
+       "$3.16 \\times 10^{-10}$"
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "The **secant method** replaces Newton's tangent with a chord through the last two guesses. Drag the two points along $y = x^2 - 2$. The open dot is where the chord crosses the axis: the next guess.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      2.5
+     ],
+     "y": [
+      -2.5,
+      4.5
+     ],
+     "height": 280,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2 - 2",
+       "label": "$x^2 - 2$",
+       "labelAt": 2.2
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a",
+       "x": 1,
+       "y": -1,
+       "drag": true,
+       "on": "f",
+       "label": "$x_0$"
+      },
+      {
+       "id": "b",
+       "x": 2,
+       "y": 2,
+       "drag": true,
+       "on": "f",
+       "label": "$x_1$"
+      },
+      {
+       "id": "c",
+       "x": 1.3333,
+       "y": 0,
+       "open": true,
+       "label": "$x_2$",
+       "tap": false
+      }
+     ],
+     "segments": [
+      {
+       "id": "chord",
+       "from": "a",
+       "to": "c",
+       "dashed": true
+      },
+      {
+       "id": "chord2",
+       "from": "b",
+       "to": "c",
+       "dashed": true
+      }
+     ]
+    },
+    "derive": {
+     "c.x": "b.x - (pow(b.x, 2) - 2) * (b.x - a.x) / (pow(b.x, 2) - pow(a.x, 2))",
+     "caption": "The chord crosses the axis at {{fixed(c.x, 4)}}, error {{fixed(abs(c.x - 1.41421356), 4)}}."
+    }
+   },
+   "question": "With the points at 1 and 2, where does the chord cross the axis?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.3333,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "newton",
+      "value": 1.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put the points back at $x = 1$ and $x = 2$ and read the caption."
+    },
+    {
+     "rung": "point",
+     "text": "The chord joins $(1, -1)$ and $(2, 2)$, so its slope is 3.",
+     "highlight": [
+      "c"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "From $(2, 2)$ with slope 3, the axis is $\\tfrac23$ to the left: $x = \\tfrac43$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac43 \\approx 1.3333$, an error of 0.0809.",
+    "generic": "Not quite right. Find where the line through $(1, -1)$ and $(2, 2)$ meets $y = 0$.",
+    "byKey": {
+     "newton": "1.5 is Newton's step from 1, along the tangent. The chord through 1 and 2 crosses at $\\tfrac43$."
+    }
+   },
+   "explain": {
+    "text": "The chord through $(1, -1)$ and $(2, 2)$ has slope 3 and crosses at $\\tfrac43$, an error of 0.0809. Each secant step needs one new value of $f$ and no derivative. Drag the points closer and the chord turns into the tangent.",
+    "canvas": {
+     "points": {
+      "a": {
+       "x": 1,
+       "y": -1
+      },
+      "b": {
+       "x": 2,
+       "y": 2
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Fast methods obey $e_{k+1} \\approx C e_k^{\\,p}$. The power $p$ is the **order of convergence**. Taking logs of two steps, $$p \\approx \\frac{\\ln(e_{k+1}/e_k)}{\\ln(e_k/e_{k-1})}.$$",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Step",
+      "Bisection width",
+      "Newton error",
+      "Secant error"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.5",
+       "0.0858",
+       "0.0809"
+      ],
+      [
+       "2",
+       "0.25",
+       "0.00245",
+       "0.0142"
+      ],
+      [
+       "3",
+       "0.125",
+       "$2.12 \\times 10^{-6}$",
+       "$4.21 \\times 10^{-4}$"
+      ],
+      [
+       "4",
+       "0.0625",
+       "$1.59 \\times 10^{-12}$",
+       "$2.12 \\times 10^{-6}$"
+      ],
+      [
+       "5",
+       "0.03125",
+       "",
+       "$3.16 \\times 10^{-10}$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Estimate Newton's order from its errors at steps 1 to 3, then at steps 2 to 4.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Errors used",
+     "Order $p$"
+    ],
+    "rows": [
+     [
+      "$0.0858,\\ 0.00245,\\ 2.12 \\times 10^{-6}$",
+      {
+       "edit": true,
+       "answer": 1.98,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "$0.00245,\\ 2.12 \\times 10^{-6},\\ 1.59 \\times 10^{-12}$",
+      {
+       "edit": true,
+       "answer": 2.0,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each line needs two ratios of neighbouring errors."
+    },
+    {
+     "rung": "point",
+     "text": "First line: $\\ln(2.12 \\times 10^{-6}/0.00245) = -7.05$ and $\\ln(0.00245/0.0858) = -3.56$.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-7.05 / -3.56 = 1.98$. The second line gives $-14.1 / -7.05 = 2.00$."
+    }
+   ],
+   "feedback": {
+    "correct": "1.98 and 2.00: Newton is second order.",
+    "generic": "Not quite right. Divide the log of the later ratio by the log of the earlier one.",
+    "byKey": {
+     "r0c1": "Use $\\ln(2.12 \\times 10^{-6}/0.00245)$ on top and $\\ln(0.00245/0.0858)$ below.",
+     "r1c1": "Use $\\ln(1.59 \\times 10^{-12}/2.12 \\times 10^{-6})$ on top and $\\ln(2.12 \\times 10^{-6}/0.00245)$ below."
+    }
+   },
+   "explain": {
+    "text": "The ratios give 1.98, then 2.00: each Newton step doubles the number of correct digits. That is **quadratic** convergence, $p = 2$. Bisection's width halves exactly, so it has $p = 1$ with $C = \\tfrac12$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Now the secant method, from its errors 0.0142, $4.21 \\times 10^{-4}$, $2.12 \\times 10^{-6}$ and $3.16 \\times 10^{-10}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Step",
+      "Bisection width",
+      "Newton error",
+      "Secant error"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.5",
+       "0.0858",
+       "0.0809"
+      ],
+      [
+       "2",
+       "0.25",
+       "0.00245",
+       "0.0142"
+      ],
+      [
+       "3",
+       "0.125",
+       "$2.12 \\times 10^{-6}$",
+       "$4.21 \\times 10^{-4}$"
+      ],
+      [
+       "4",
+       "0.0625",
+       "$1.59 \\times 10^{-12}$",
+       "$2.12 \\times 10^{-6}$"
+      ],
+      [
+       "5",
+       "0.03125",
+       "",
+       "$3.16 \\times 10^{-10}$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Estimate its order twice, from the first three and the last three of these errors.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Errors used",
+     "Order $p$"
+    ],
+    "rows": [
+     [
+      "$0.0142,\\ 4.21 \\times 10^{-4},\\ 2.12 \\times 10^{-6}$",
+      {
+       "edit": true,
+       "answer": 1.5,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "$4.21 \\times 10^{-4},\\ 2.12 \\times 10^{-6},\\ 3.16 \\times 10^{-10}$",
+      {
+       "edit": true,
+       "answer": 1.67,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Same formula: log of the later ratio over log of the earlier one."
+    },
+    {
+     "rung": "point",
+     "text": "$\\ln(2.12 \\times 10^{-6}/4.21 \\times 10^{-4}) = -5.29$ and $\\ln(4.21 \\times 10^{-4}/0.0142) = -3.52$.",
+     "highlight": [
+      "c3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-5.29 / -3.52 = 1.50$, then $-8.81 / -5.29 = 1.67$."
+    }
+   ],
+   "feedback": {
+    "correct": "1.50, then 1.67, heading for $\\varphi = 1.618$.",
+    "generic": "Not quite right. Take the logs of the two error ratios and divide.",
+    "byKey": {
+     "r0c1": "Divide $\\ln(2.12 \\times 10^{-6}/4.21 \\times 10^{-4})$ by $\\ln(4.21 \\times 10^{-4}/0.0142)$.",
+     "r1c1": "Divide $\\ln(3.16 \\times 10^{-10}/2.12 \\times 10^{-6})$ by $\\ln(2.12 \\times 10^{-6}/4.21 \\times 10^{-4})$."
+    }
+   },
+   "explain": {
+    "text": "The estimates swing, 1.50 then 1.67, around the true order $\\varphi = \\tfrac{1 + \\sqrt5}{2} \\approx 1.618$, the golden ratio. The secant method is **superlinear**: faster than bisection, slower per step than Newton."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Plot $\\log_{10} e_{k+1}$ against $\\log_{10} e_k$ and each method makes a line whose slope is its order: 1, 1.618 or 2. For Newton the line is $e_{k+1} \\approx Ce_k^2$, so $C = e_{k+1}/e_k^2$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -12,
+      0
+     ],
+     "y": [
+      -12.5,
+      0
+     ],
+     "height": 300,
+     "xStep": 2,
+     "yStep": 2,
+     "xAxis": "bottom",
+     "yAxis": "left",
+     "xLabel": "$\\log_{10} e_k$",
+     "yLabel": "$\\log_{10} e_{k+1}$",
+     "functions": [
+      {
+       "id": "newton",
+       "points": [
+        [
+         -1.067,
+         -2.61
+        ],
+        [
+         -2.61,
+         -5.673
+        ],
+        [
+         -5.673,
+         -11.797
+        ]
+       ],
+       "label": "Newton, slope 2",
+       "labelAt": -5,
+       "labelSide": "below"
+      },
+      {
+       "id": "secant",
+       "points": [
+        [
+         -1.092,
+         -1.847
+        ],
+        [
+         -1.847,
+         -3.376
+        ],
+        [
+         -3.376,
+         -5.673
+        ],
+        [
+         -5.673,
+         -9.501
+        ]
+       ],
+       "colour": 2,
+       "label": "secant",
+       "labelAt": -3.5
+      },
+      {
+       "id": "bisect",
+       "points": [
+        [
+         -0.301,
+         -0.602
+        ],
+        [
+         -0.602,
+         -0.903
+        ],
+        [
+         -0.903,
+         -1.204
+        ],
+        [
+         -1.204,
+         -1.505
+        ],
+        [
+         -1.505,
+         -1.806
+        ],
+        [
+         -1.806,
+         -2.107
+        ],
+        [
+         -2.107,
+         -2.408
+        ],
+        [
+         -2.408,
+         -2.709
+        ],
+        [
+         -2.709,
+         -3.01
+        ],
+        [
+         -3.01,
+         -3.311
+        ],
+        [
+         -3.311,
+         -3.612
+        ]
+       ],
+       "colour": 3,
+       "label": "bisection, slope 1",
+       "labelAt": -1.5
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "From Newton's last step, errors $2.12 \\times 10^{-6}$ then $1.59 \\times 10^{-12}$, what is $C$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3535,
+    "tol": {
+     "abs": 0.002
+    },
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 7.5e-07,
+      "tol": {
+       "rel": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the new error by the square of the old one."
+    },
+    {
+     "rung": "point",
+     "text": "$(2.12 \\times 10^{-6})^2 = 4.51 \\times 10^{-12}$.",
+     "highlight": [
+      "newton"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1.59 \\times 10^{-12} / 4.51 \\times 10^{-12} = 0.3535$."
+    }
+   ],
+   "feedback": {
+    "correct": "$C \\approx 0.3535$. Theory gives $\\tfrac{1}{2\\sqrt 2} = 0.353553$.",
+    "generic": "Not quite right. Square the earlier error, then divide the later error by it.",
+    "byKey": {
+     "ratio": "That divides the errors without squaring. Newton's rule has $e_k^2$ underneath."
+    }
+   },
+   "explain": {
+    "text": "$1.59 \\times 10^{-12} / (2.12 \\times 10^{-6})^2 = 0.3535$. The steps before gave 0.3333 and 0.3529, closing on $\\left|\\tfrac{f''}{2f'}\\right| = \\tfrac{2}{2 \\cdot 2\\sqrt2} = 0.353553$ at the root. The next screen derives that constant.",
+    "canvas": {
+     "highlight": [
+      "newton"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Why $e_{k+1} \\approx \\tfrac{f''}{2f'}e_k^2$? Let $r$ be the root and $e_k = x_k - r$. Newton sets $x_{k+1} = x_k - f(x_k)/f'(x_k)$. Order the argument and leave out the false line.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "n1",
+      "text": "Taylor about $x_k$, evaluated at the root: $0 = f(r) = f(x_k) - e_kf'(x_k) + \\tfrac12 e_k^2 f''(\\xi)$."
+     },
+     {
+      "id": "n2",
+      "text": "Divide by $f'(x_k)$: $\\dfrac{f(x_k)}{f'(x_k)} = e_k - \\dfrac{f''(\\xi)}{2f'(x_k)}e_k^2$."
+     },
+     {
+      "id": "n3",
+      "text": "Subtract from $x_k - r$: $e_{k+1} = e_k - \\dfrac{f(x_k)}{f'(x_k)} = \\dfrac{f''(\\xi)}{2f'(x_k)}e_k^2$."
+     },
+     {
+      "id": "n4",
+      "text": "As $x_k \\to r$, $\\xi \\to r$ too, so $e_{k+1} \\approx \\dfrac{f''(r)}{2f'(r)}e_k^2$: order 2."
+     },
+     {
+      "id": "nx",
+      "text": "Drop the $f''$ term as small: then $e_{k+1} = 0$, so Newton converges in one step.",
+      "why": "You dropped the $f''$ term, which is the whole error. Keeping it gives the $e_k^2$ law, not an exact answer."
+     }
+    ],
+    "answer": [
+     "n1",
+     "n2",
+     "n3",
+     "n4"
+    ],
+    "distractors": [
+     "nx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from Taylor's theorem with a remainder."
+    },
+    {
+     "rung": "point",
+     "text": "Expand $f(r)$ about $x_k$, where $r = x_k - e_k$."
+    },
+    {
+     "rung": "step",
+     "text": "Taylor, divide by $f'$, subtract from $e_k$, then let $x_k \\to r$."
+    }
+   ],
+   "feedback": {
+    "correct": "Taylor with remainder gives $e_{k+1} = \\tfrac{f''(\\xi)}{2f'(x_k)}e_k^2$.",
+    "generic": "Not quite right. Start from Taylor's theorem and keep the second-order term.",
+    "byKey": {
+     "nx": "You dropped the $f''$ term. That term is exactly the error, so dropping it proves nothing.",
+     "left-out": "All four true lines belong in the derivation."
+    }
+   },
+   "explain": {
+    "text": "Taylor's theorem with remainder makes the leftover after one Newton step exactly $\\tfrac{f''(\\xi)}{2f'(x_k)}e_k^2$. For $x^2 - 2$ that constant is $\\tfrac{2}{2 \\cdot 2\\sqrt 2} = 0.353553$. It also shows the danger: a small $f'$ makes $C$ huge."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "A five-year bond with a 5% annual coupon trades at £95. Its yield solves $\\sum_{t=1}^{5} \\tfrac{5}{(1+y)^t} + \\tfrac{100}{(1+y)^5} = 95$. Newton from 5% gives the iterates below; the yield is 6.193228%.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Newton step",
+      "Yield"
+     ],
+     "rows": [
+      [
+       "0",
+       "5%"
+      ],
+      [
+       "1",
+       "6.15487%"
+      ],
+      [
+       "2",
+       "6.193188%"
+      ],
+      [
+       "3",
+       "6.1932283%"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Bisection on $[0, 0.2]$ needs how many halvings for a bracket narrower than $10^{-10}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 31,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "halvings",
+    "wrong": [
+     {
+      "id": "w30",
+      "value": 30,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "w34",
+      "value": 34,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "After $k$ halvings the width is $0.2 / 2^k$."
+    },
+    {
+     "rung": "point",
+     "text": "You need $2^k > 0.2 / 10^{-10} = 2 \\times 10^9$.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2^{30} \\approx 1.07 \\times 10^9$ is too small; $2^{31} \\approx 2.15 \\times 10^9$ is enough."
+    }
+   ],
+   "feedback": {
+    "correct": "31 halvings, against Newton's 3 steps.",
+    "generic": "Not quite right. Find the smallest $k$ with $0.2 / 2^k < 10^{-10}$.",
+    "byKey": {
+     "w30": "$0.2 / 2^{30} = 1.9 \\times 10^{-10}$, still wider than $10^{-10}$.",
+     "w34": "That starts from a width of 1. The bracket starts at 0.2."
+    }
+   },
+   "explain": {
+    "text": "$0.2 / 2^{31} = 9.3 \\times 10^{-11}$, so 31 halvings. Newton reached 7 correct digits in 3 steps. Bisection is slow but certain; Newton is fast near the root."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague says Newton is always the fastest method because it has the highest order. In the bond problem, $f'(y)$ costs about as much to compute as $f(y)$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Step",
+      "Bisection width",
+      "Newton error",
+      "Secant error"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.5",
+       "0.0858",
+       "0.0809"
+      ],
+      [
+       "2",
+       "0.25",
+       "0.00245",
+       "0.0142"
+      ],
+      [
+       "3",
+       "0.125",
+       "$2.12 \\times 10^{-6}$",
+       "$4.21 \\times 10^{-4}$"
+      ],
+      [
+       "4",
+       "0.0625",
+       "$1.59 \\times 10^{-12}$",
+       "$2.12 \\times 10^{-6}$"
+      ],
+      [
+       "5",
+       "0.03125",
+       "",
+       "$3.16 \\times 10^{-10}$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Per evaluation of $f$ or $f'$, which method gains digits faster here?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "secant",
+      "text": "Secant: digits grow by 1.618 per evaluation, against Newton's $\\sqrt 2 \\approx 1.414$",
+      "correct": true
+     },
+     {
+      "id": "newton",
+      "text": "Newton: order 2 beats order 1.618",
+      "why": "You counted iterations, not evaluations. A Newton step costs two evaluations, so its gain per evaluation is $2^{1/2}$."
+     },
+     {
+      "id": "same",
+      "text": "They are the same, both superlinear",
+      "why": "Both are superlinear, but at different rates per unit of work."
+     },
+     {
+      "id": "bisect",
+      "text": "Bisection, since it never fails",
+      "why": "Bisection is safe, but it gains only a factor of 2 in error per evaluation, far behind."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count evaluations per step: Newton needs $f$ and $f'$, the secant one new $f$."
+    },
+    {
+     "rung": "point",
+     "text": "Two Newton evaluations multiply the digits by 2, so one multiplies them by $\\sqrt 2$.",
+     "highlight": [
+      "r3",
+      "r4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The secant method multiplies the digits by 1.618 per single evaluation."
+    }
+   ],
+   "feedback": {
+    "correct": "Secant, 1.618 against 1.414.",
+    "generic": "Not quite right. Compare the gain per evaluation, not per step.",
+    "byKey": {
+     "newton": "You counted iterations, not evaluations. Newton's two evaluations per step give only $\\sqrt 2$ each."
+    }
+   },
+   "explain": {
+    "text": "Newton doubles the digits for two evaluations, an **efficiency** of $2^{1/2} \\approx 1.414$ per evaluation. The secant method multiplies them by 1.618 for one. When $f'$ is as costly as $f$, the secant method wins."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write the three solvers and an order estimator. Each solver returns the root and how many times it called `f`, so you can compare their cost. `observed_order` uses the formula from earlier on the last three errors.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Step",
+      "Bisection width",
+      "Newton error",
+      "Secant error"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.5",
+       "0.0858",
+       "0.0809"
+      ],
+      [
+       "2",
+       "0.25",
+       "0.00245",
+       "0.0142"
+      ],
+      [
+       "3",
+       "0.125",
+       "$2.12 \\times 10^{-6}$",
+       "$4.21 \\times 10^{-4}$"
+      ],
+      [
+       "4",
+       "0.0625",
+       "$1.59 \\times 10^{-12}$",
+       "$2.12 \\times 10^{-6}$"
+      ],
+      [
+       "5",
+       "0.03125",
+       "",
+       "$3.16 \\times 10^{-10}$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `bisect`, `secant`, `newton` and `observed_order`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def bisect(f, lo, hi, tol):\n    \"\"\"Halve [lo, hi] until hi - lo < tol. Return (root, f_calls).\n    Raise ValueError if f(lo) and f(hi) have the same sign.\"\"\"\n    ...\n\ndef secant(f, x0, x1, tol):\n    \"\"\"Secant steps until |step| < tol. Return (root, f_calls).\"\"\"\n    ...\n\ndef newton(f, df, x0, tol):\n    \"\"\"Newton steps until |step| < tol. Return (root, f_calls),\n    counting calls of f only.\"\"\"\n    ...\n\ndef observed_order(errs):\n    \"\"\"Order p from the last three errors.\"\"\"\n    ...\n",
+    "solution": "import math\n\ndef bisect(f, lo, hi, tol):\n    flo, fhi = f(lo), f(hi)\n    calls = 2\n    if flo * fhi > 0:\n        raise ValueError('no sign change')\n    while hi - lo >= tol:\n        mid = (lo + hi) / 2\n        fm = f(mid)\n        calls += 1\n        if (fm > 0) == (flo > 0):\n            lo, flo = mid, fm\n        else:\n            hi = mid\n    return (lo + hi) / 2, calls\n\ndef secant(f, x0, x1, tol):\n    f0, f1 = f(x0), f(x1)\n    calls = 2\n    while abs(x1 - x0) >= tol and f1 != f0:\n        x0, x1 = x1, x1 - f1 * (x1 - x0) / (f1 - f0)\n        f0, f1 = f1, f(x1)\n        calls += 1\n    return x1, calls\n\ndef newton(f, df, x0, tol):\n    x, calls = x0, 0\n    while True:\n        fx = f(x)\n        calls += 1\n        step = fx / df(x)\n        x -= step\n        if abs(step) < tol:\n            return x, calls\n\ndef observed_order(errs):\n    e0, e1, e2 = errs[-3], errs[-2], errs[-1]\n    return math.log(e2 / e1) / math.log(e1 / e0)\n",
+    "examples": [
+     {
+      "call": "round(bisect(lambda x: x * x - 2, 1, 2, 1e-12)[0], 10)",
+      "expect": "1.4142135624",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "bisect(lambda x: x * x - 2, 1, 2, 1e-12)[0]",
+      "expect": "2 ** 0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "40 <= bisect(lambda x: x * x - 2, 1, 2, 1e-12)[1] <= 44",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "bisect(lambda x: x * x + 1, 0, 1, 1e-6)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "secant(lambda x: x * x - 2, 1.0, 2.0, 1e-12)[0]",
+      "expect": "2 ** 0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "secant(lambda x: x * x - 2, 1.0, 2.0, 1e-12)[1] <= 11",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "newton(lambda x: x * x - 2, lambda x: 2 * x, 1.0, 1e-12)[0]",
+      "expect": "2 ** 0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "newton(lambda x: x * x - 2, lambda x: 2 * x, 1.0, 1e-12)[1] <= 8",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "P = lambda y: sum(5 / (1 + y) ** t for t in range(1, 6)) + 100 / (1 + y) ** 5 - 95\ndP = lambda y: sum(-5 * t / (1 + y) ** (t + 1) for t in range(1, 6)) - 500 / (1 + y) ** 6",
+      "call": "newton(P, dP, 0.05, 1e-12)[0]",
+      "expect": "0.0619322827",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-10
+      }
+     },
+     {
+      "setup": "P = lambda y: sum(5 / (1 + y) ** t for t in range(1, 6)) + 100 / (1 + y) ** 5 - 95\ndP = lambda y: sum(-5 * t / (1 + y) ** (t + 1) for t in range(1, 6)) - 500 / (1 + y) ** 6",
+      "call": "bisect(P, 0.0, 0.2, 1e-10)[0]",
+      "expect": "0.0619322827",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-10
+      }
+     },
+     {
+      "call": "observed_order([0.0858, 0.00245, 2.12e-6, 1.59e-12])",
+      "expect": "2.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "observed_order([4.21e-4, 2.12e-6, 3.16e-10])",
+      "expect": "1.665",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ],
+    "how": "Submit runs 11 hidden tests. Each method must find the root of x² − 2 within 1e-12. Call counts must be 40 to 44 for bisection, at most 11 for secant and at most 8 for Newton. The bond yield is checked within 1e-10, the ValueError is checked, and two orders within 0.01."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Bisection keeps the half whose ends still have opposite signs; check the signs once at the start."
+    },
+    {
+     "rung": "point",
+     "text": "The secant step is `x1 - f1 * (x1 - x0) / (f1 - f0)`; keep `f1` so each step calls `f` once.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`observed_order` is `log(e2 / e1) / log(e1 / e0)` on the last three errors."
+    }
+   ],
+   "feedback": {
+    "correct": "All four pass: bisection takes about 42 calls, the secant method 9, Newton 6.",
+    "generic": "Not quite right. Check each solver on $x^2 - 2$ first, then the counts."
+   },
+   "explain": {
+    "text": "Bisection calls `f` twice to start and once per halving: 42 calls. The secant method reuses its last value and calls `f` 9 times. Newton calls `f` 6 times and `f'` 6 times, the efficiency count of the last screen."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "Each night a desk solves the yields of 5,000 bonds. Newton from the coupon rate needs about 4 iterations, each costing one $f$ and one $f'$: 8 evaluations. Bisection on $[0, 0.2]$ needs 31.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Evaluations per bond",
+      "Guaranteed"
+     ],
+     "rows": [
+      [
+       "Newton",
+       "8",
+       "no"
+      ],
+      [
+       "Bisection",
+       "31",
+       "yes"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many times cheaper is Newton per bond?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.875,
+    "tol": {
+     "abs": 0.13
+    },
+    "placeholder": "ratio",
+    "wrong": [
+     {
+      "id": "iter",
+      "value": 7.75,
+      "tol": {
+       "abs": 0.13
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide bisection's evaluations by Newton's."
+    },
+    {
+     "rung": "point",
+     "text": "Newton's 4 iterations each cost 2 evaluations.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$31 / 8 \\approx 3.9$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 3.9 times cheaper: 31 against 8.",
+    "generic": "Not quite right. Compare 31 with 8 evaluations, not with 4 iterations.",
+    "byKey": {
+     "iter": "You compared with Newton's 4 iterations. Each needs $f$ and $f'$, so 8 evaluations."
+    }
+   },
+   "explain": {
+    "text": "$31 / 8 \\approx 3.9$, so Newton is about 4 times cheaper per bond. But only bisection is guaranteed: a bad start or a flat $f$ can send Newton anywhere. The next lesson builds a solver with both properties."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Bisection halves a bracket: order 1, certain, about 40 steps for 12 digits from width 1.",
+   "Newton doubles the digits each step, $e_{k+1} \\approx \\tfrac{f''}{2f'}e_k^2$; the secant method has order $\\varphi \\approx 1.618$.",
+   "Count evaluations, not iterations: per evaluation the secant method gains 1.618 against Newton's 1.414."
+  ],
+  "formula": {
+   "name": "Order of convergence",
+   "tex": "p \\approx \\dfrac{\\ln(e_{k+1}/e_k)}{\\ln(e_k/e_{k-1})}",
+   "note": "Newton has $p = 2$, secant $p = 1.618$, bisection $p = 1$."
+  },
+  "trap": "Highest order is not fastest per unit of work: Newton pays for $f'$ every step."
+ },
+ "quiz": [
+  {
+   "id": "q-bisect-midpoint",
+   "difficulty": 2,
+   "prose": "Bisection on $[1, 2]$ for $\\sqrt 2$ has midpoint errors 0.0858, 0.164, 0.0392, 0.0233.",
+   "question": "Why do we track the bracket width rather than the midpoint error?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The midpoint error can grow from one step to the next; the width always halves",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "They always shrink together",
+      "why": "The second midpoint, 1.25, is further from $\\sqrt 2$ than the first, 1.5."
+     },
+     {
+      "id": "cheap",
+      "text": "The width is cheaper to compute",
+      "why": "Both are cheap. The width matters because it is a guaranteed bound."
+     },
+     {
+      "id": "wrong",
+      "text": "The midpoint error is not defined",
+      "why": "It is defined, just not monotone."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The width is a guaranteed, steadily shrinking bound.",
+    "generic": "Not quite right. Look at the second midpoint error."
+   },
+   "explain": {
+    "text": "The errors 0.0858 then 0.164 show the midpoint can move away from the root. The width, 0.5, 0.25, 0.125, halves every time and always bounds the error. So the stopping rule uses the width."
+   }
+  },
+  {
+   "id": "q-halvings",
+   "difficulty": 2,
+   "prose": "Bisection starts from a bracket of width 1.",
+   "question": "How many halvings make the width less than $10^{-6}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 20,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "w19",
+      "value": 19,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "w6",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2^{20} \\approx 1.05 \\times 10^6$, so 20.",
+    "generic": "Not quite right. Find the smallest $k$ with $2^k > 10^6$.",
+    "byKey": {
+     "w19": "$2^{19} \\approx 5.2 \\times 10^5$, so the width is still $1.9 \\times 10^{-6}$.",
+     "w6": "Each halving gains a binary digit, not a decimal one."
+    }
+   },
+   "explain": {
+    "text": "$2^{20} = 1{,}048{,}576 > 10^6$, so 20 halvings. Each halving gains $\\log_{10} 2 \\approx 0.3$ decimal digits."
+   }
+  },
+  {
+   "id": "q-newton-zero",
+   "difficulty": 3,
+   "prose": "Newton's method on $x^2 - 2$ is started at $x_0 = 0$.",
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "It fails at once: $f'(0) = 0$, so the step divides by zero",
+      "correct": true
+     },
+     {
+      "id": "slow",
+      "text": "It converges slowly, at order 1",
+      "why": "The first step is $-f(0)/f'(0) = 2/0$: there is no step to take."
+     },
+     {
+      "id": "neg",
+      "text": "It converges to $-\\sqrt 2$",
+      "why": "It never takes a step, so it cannot reach either root."
+     },
+     {
+      "id": "fine",
+      "text": "It converges as fast as from 1",
+      "why": "The constant $\\tfrac{f''}{2f'}$ is infinite where $f' = 0$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A zero slope gives no tangent crossing.",
+    "generic": "Not quite right. Work out $f'(0)$."
+   },
+   "explain": {
+    "text": "At $x_0 = 0$ the tangent is flat and never meets the axis. The constant $\\tfrac{f''}{2f'}$ blows up wherever $f'$ is near 0. Fast convergence is a local promise only."
+   }
+  },
+  {
+   "id": "q-bisect-order",
+   "difficulty": 3,
+   "prose": "Bisection's bracket width obeys $w_{k+1} = Cw_k^{\\,p}$.",
+   "question": "What are $p$ and $C$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$p = 1$, $C = \\tfrac12$",
+      "correct": true
+     },
+     {
+      "id": "p2",
+      "text": "$p = 2$, $C = \\tfrac12$",
+      "why": "Squaring would double the digits each step. Bisection adds a fixed 0.3 digits."
+     },
+     {
+      "id": "c2",
+      "text": "$p = 1$, $C = 2$",
+      "why": "The width shrinks, so $C$ is below 1."
+     },
+     {
+      "id": "phi",
+      "text": "$p = 1.618$, $C = 1$",
+      "why": "That is the secant method's order."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Linear, with ratio one half.",
+    "generic": "Not quite right. Each step halves the width exactly."
+   },
+   "explain": {
+    "text": "$w_{k+1} = \\tfrac12 w_k$ exactly, so the order is 1 and the constant $\\tfrac12$. It is the slowest method here, and the only one that cannot fail."
+   }
+  }
+ ]
+}
