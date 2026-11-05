@@ -768,7 +768,7 @@ const main = async () => {
         }
         await open(`exam/${ex}`);
         const before = await page.evaluate((id) => (ZQ.state.exams[id] || { attempts: [] }).attempts.length, ex);
-        let guard = 0, answered = new Set();
+        let guard = 0, answered = new Set(), drawnParts = false;
         while (++guard < 80) {
           const c = await page.evaluate(() => ZQ.test.current());
           if (c.kind === 'done') break;
@@ -776,7 +776,10 @@ const main = async () => {
           else if (c.kind === 'item') {
             if (!answered.has(c.paper)) {
               answered.add(c.paper);
+              if (c.parts > 1) drawnParts = true;   /* a drawn paper can open on an item with parts, which the file alone does not show */
               await page.evaluate(() => ZQ.test.answerCorrect());
+              /* ENGINE-BACKLOG 570: the answer registers asynchronously for some widgets; zero the clock only once exam state counts it */
+              await page.waitForFunction(() => ZQ.test.current().state === 'engaged', null, { timeout: opt.timeout }).catch(() => {});
               await page.evaluate(() => ZQExam.setRemaining(0));
             }
           }
@@ -789,7 +792,7 @@ const main = async () => {
           if (r.n !== before + 1) fails.push(`the timed-out sitting was not kept as an attempt (${before} before, ${r.n} after)`);
           if (!/Time ran out/.test(r.note)) fails.push('the result does not say that time ran out');
           /* the one answer is the first part of an item with parts when a paper opens with one: that item is not right in full (partial credit) */
-          const partsFirst = papers.some(p => (p.items || []).length && Array.isArray(p.items[0].parts));
+          const partsFirst = drawnParts || papers.some(p => (p.items || []).length && Array.isArray(p.items[0].parts));
           if (!(c.score >= (partsFirst ? 0 : 1) && c.score <= papers.length)) fails.push(`timed out with one answer per paper but scored ${c.score}`);
           if (typeof r.last.net !== 'number' || typeof r.last.max !== 'number') fails.push('the attempt carries no net score');
           await shot(`${ex}-timeup`);

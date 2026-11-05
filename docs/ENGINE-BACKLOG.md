@@ -1536,3 +1536,13 @@ Status block (engine pass, items 10 and 11):
 
 Status block (engine pass, item 8):
 - 564 to 569: done. Main session: write the five empty records in `content/capstones.json`, regenerate `manifest.json` (adds `pack` to drill rows).
+
+
+## Engine pass, tooling (`docs/reports/engine-pass-tooling.md`)
+
+570. Done: `mock-sample-draw` timed check flake. Cause was in the check, not the engine: a mock that draws its items can open on an item with parts, and the check expected a whole-item score of at least 1 because it only read the file's own items (a drawn paper has none) for "parts first". With that item the sitting scores 0 whole items, with partial credit. `tools/playthrough.mjs` now records a drawn first item with `parts` (`drawnParts`) and allows 0; it also waits for `ZQ.test.current().state === 'engaged'` (the answer registered in exam state) before `setRemaining(0)`. Evidence: 12 of 12 desktop runs and 3 of 3 `--mobile` runs green (before: 2 failures in 10).
+571. Done: `tools/lint-dup-keys.mjs` (no dependencies; tokenizer with strings, comments, templates with `${}`, regex; brace stack) reports an object literal with a repeated key, and a later `X.y = <function>` that replaces a function defined in X's own literal in the same file. Plain data fields reassigned later are normal state updates and are not reported. `tools/test-lint-dup-keys.mjs` with fixtures in `tools/fixtures/lint-dup-keys/` (bad: 3 findings, good: 0; it also flags the pre-9c70a04 `content.js` shadowed `status`). Run on `app/js/` (72 files): 0 findings, no engine file changed.
+572. Done: `tools/test-check-first.mjs`, a Playwright DOM test of the "Check first" card (ENGINE-BACKLOG 552). It reads a real `gate: false` edge from the course files (today `proof` level 2 lesson `l6-sets`, diagnostic `counting/L1`), then on a profile with the gating prerequisites met asserts: the diagnostic is unmet and does not lock the level or lesson; the lesson start shows `.lk-check` "Check first: ..." with the why line and the link `#review/counting/review-1`; the Learn node card shows the same and the node is not `s-locked`; no sideways scroll. On a fresh profile the lesson is locked by the gating edge only and the lock card does not list the diagnostic as a prerequisite to finish. Desktop and `--mobile` pass.
+
+Status block (engine pass, tooling):
+- 570: done (12/12 desktop, 3/3 mobile). 571: done (0 findings in `app/js`). 572: done (desktop and mobile).
