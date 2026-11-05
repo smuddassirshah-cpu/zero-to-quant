@@ -2,7 +2,7 @@
  "id": "topic-1.9",
  "topic": "1.9",
  "name": "C++ topic exam",
- "minutes": 60,
+ "minutes": 75,
  "pass": 0.7,
  "skills": {
   "cp-basics": "Types and control flow",
@@ -267,6 +267,54 @@
       "l3": "err"
      }
     }
+   }
+  },
+  {
+   "id": "e-const-move",
+   "difficulty": 2,
+   "skills": [
+    "cp-memory"
+   ],
+   "tags": [
+    "move-semantics"
+   ],
+   "pace": 60,
+   "title": "Moving from a const order",
+   "prose": "```cpp\nstruct Order {\n    std::string id;\n    std::vector<int> fills;\n};\nconst Order a{\"A1\", {1, 2, 3}};\nOrder b = std::move(a);\n```",
+   "question": "What is `a.fills.size()` afterwards?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "three",
+      "text": "3",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "0",
+      "why": "You assumed `std::move` always empties its argument. A const object cannot be moved from, so a copy ran."
+     },
+     {
+      "id": "error",
+      "text": "It does not compile.",
+      "why": "It compiles: a const rvalue binds to the copy constructor's `const Order&`."
+     },
+     {
+      "id": "unspecified",
+      "text": "Unspecified: `a` is moved-from.",
+      "why": "A moved-from object is unspecified only if a move ran. None did."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The copy constructor ran, so `a` still holds its 3 fills.",
+    "generic": "Ask which constructor can take a `const Order&&`."
+   },
+   "explain": {
+    "text": "`std::move(a)` is a `const Order&&`. A move constructor takes `Order&&`, which cannot bind to a const object, so the copy constructor runs. The copy leaves `a` untouched."
    }
   },
   {
@@ -966,6 +1014,119 @@
    }
   },
   {
+   "id": "e-vector-growth",
+   "difficulty": 3,
+   "skills": [
+    "cp-stl"
+   ],
+   "tags": [
+    "noexcept-move"
+   ],
+   "pace": 90,
+   "title": "Copies hidden in growth",
+   "prose": "`Fill` has a copy constructor and a move constructor that is not `noexcept`. Each constructor adds one to its own counter.\n\n```cpp\nstd::vector<Fill> v;\nfor (int i = 0; i < 4; ++i)\n    v.push_back(Fill(i));\n```\n\nThis library grows its capacity 1, 2, 4, 8, and the growth factor is a library choice.",
+   "question": "In all, how many times does the copy constructor run?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "3",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "seven",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Growth copies 1 element, then 2 more: 3 copies.",
+    "generic": "Count the pushes that find the vector full, and the elements each must relocate.",
+    "byKey": {
+     "zero": "You assumed a vector always moves on growth. With a move that may throw it copies.",
+     "four": "The pushes move from the temporaries. The copies come from growth.",
+     "seven": "That adds the 4 pushes' moves to the 3 copies. Only copies were asked."
+    }
+   },
+   "explain": {
+    "text": "Capacity runs 1, 2, 4, so the second and third pushes grow the block. They relocate 1 and then 2 elements. The move may throw, so the vector copies them: 1 + 2 = 3, and the 4 pushes themselves move."
+   }
+  },
+  {
+   "id": "e-ub-which",
+   "difficulty": 3,
+   "skills": [
+    "cp-basics"
+   ],
+   "tags": [
+    "defined-vs-undefined"
+   ],
+   "pace": 90,
+   "title": "Which lines are undefined",
+   "prose": "Each snippet is a complete function body. None of them is optimised away.",
+   "question": "Select all that apply: which lines have undefined behaviour?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zero-div",
+      "text": "```cpp\nint n = 0;\nint r = 5 / n;\n```",
+      "correct": true
+     },
+     {
+      "id": "size",
+      "text": "```cpp\nstd::string s = \"ab\";\nchar c = s[s.size()];\n```",
+      "why": "Reading `s[s.size()]` is allowed and gives the null character."
+     },
+     {
+      "id": "const-cast",
+      "text": "```cpp\nconst int k = 3;\nconst_cast<int&>(k) = 4;\n```",
+      "correct": true
+     },
+     {
+      "id": "wrong-delete",
+      "text": "```cpp\nint* p = new int[2];\ndelete p;\n```",
+      "correct": true
+     },
+     {
+      "id": "unsigned",
+      "text": "```cpp\nunsigned char b = 255;\n++b;\n```",
+      "why": "Unsigned arithmetic wraps by definition, so `b` becomes 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Division by zero, a write to a const object and a mismatched `delete` are all undefined.",
+    "generic": "For each line, ask whether the standard defines the result or leaves it open.",
+    "byKey": {
+     "size": "Reading `s[s.size()]` is allowed and gives the null character.",
+     "unsigned": "Unsigned arithmetic wraps by definition."
+    }
+   },
+   "explain": {
+    "text": "Dividing by zero, changing an object that was defined `const` and using `delete` on a `new[]` block are undefined. Reading the string terminator and wrapping an unsigned value are defined. Defined does not mean useful, but it cannot break the program."
+   }
+  },
+  {
    "id": "e-fill-specials",
    "difficulty": 4,
    "skills": [
@@ -1319,6 +1480,165 @@
    },
    "explain": {
     "text": "A comparator must be a strict weak ordering: `a.venue < b.venue || a.qty > b.qty` is not, since two fills can each come before the other. `std::accumulate` takes its total's type from the start value, so `0` makes an `int` and drops every fraction. The lambda's `[min_qty]` copies the threshold in."
+   }
+  },
+  {
+   "id": "e-virtual-dtor",
+   "difficulty": 4,
+   "skills": [
+    "cp-classes"
+   ],
+   "tags": [
+    "virtual-destructor"
+   ],
+   "pace": 90,
+   "title": "A shared pointer to a base",
+   "prose": "```cpp\nint gone = 0;\nstruct Base { ~Base() {} };\nstruct Derived : Base {\n    std::vector<double> v;\n    ~Derived() { ++gone; }\n};\n\nstd::shared_ptr<Base> p =\n    std::make_shared<Derived>();\np.reset();\n```",
+   "question": "`Base`'s destructor is not virtual. What happens at `p.reset()`?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "derived",
+      "text": "`~Derived` runs, `gone` is 1, and the vector is freed.",
+      "correct": true
+     },
+     {
+      "id": "base-only",
+      "text": "Only `~Base` runs, so `gone` stays 0.",
+      "why": "You applied the raw `delete` rule. A `shared_ptr` made by `make_shared<Derived>` stores the deleter for `Derived`."
+     },
+     {
+      "id": "ub",
+      "text": "Undefined behaviour.",
+      "why": "Undefined behaviour is for `delete` through a `Base*`. Here the deleter was chosen when the pointer was made."
+     },
+     {
+      "id": "leak",
+      "text": "The vector leaks.",
+      "why": "The vector is freed, because `~Derived` runs."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The control block remembers the real type, so `~Derived` runs.",
+    "generic": "Ask where a `shared_ptr` learns which destructor to call, and when."
+   },
+   "explain": {
+    "text": "The counter block remembers the deleter for `Derived` from the moment `make_shared<Derived>` built it, so the call is defined. The safe habit is still a virtual destructor. A `unique_ptr<Base>` or a raw `delete` has no such memory."
+   }
+  },
+  {
+   "id": "e-code-clone-basket",
+   "difficulty": 4,
+   "skills": [
+    "cp-classes"
+   ],
+   "tags": [
+    "clone-idiom"
+   ],
+   "pace": 600,
+   "title": "A basket of orders",
+   "prose": "An `Order` is an interface with `cost(double market)` and `clone()`. `Market` is written for you. A `clone()` returns a copy of the same dynamic type, so an order can be copied through a base pointer without slicing.",
+   "question": "Write `Limit`, which buys only when the market is at most its limit, and `Basket`, which holds orders of any kind and deep-copies them in `clone()`.",
+   "widget": {
+    "kind": "code",
+    "language": "cpp",
+    "prelude": "#include <type_traits>\n",
+    "starter": "#include <memory>\n#include <vector>\n\n// Order is an interface. clone() returns a copy of the same dynamic type, so an\n// Order can be copied through a base pointer without slicing. Market is written for you.\nstruct Order {\n    virtual ~Order() = default;\n    virtual double cost(double market) const = 0;      // pounds to buy at this market price\n    virtual std::unique_ptr<Order> clone() const = 0;\n};\n\nstruct Market : Order {\n    explicit Market(int q) : qty(q) {}\n    double cost(double market) const override { return qty * market; }\n    std::unique_ptr<Order> clone() const override { return std::make_unique<Market>(*this); }\n    int qty;\n};\n\n// TODO: Limit(q, px): buys q shares only if the market price is at most px,\n// so cost is q * market then, and 0 when the market is above px. clone() returns a Limit.\nstruct Limit : Order {\n    Limit(int q, double px) : qty(q), limit(px) {}\n    double cost(double) const override { return 0.0; }\n    std::unique_ptr<Order> clone() const override { return nullptr; }\n    int qty;\n    double limit;\n};\n\n// TODO: Basket: holds orders of any kind. cost() is the sum of their costs.\n// clone() returns a Basket holding a clone of each child (a deep copy).\nstruct Basket : Order {\n    void add(std::unique_ptr<Order> o) { (void)o; }\n    double cost(double) const override { return 0.0; }\n    std::unique_ptr<Order> clone() const override { return nullptr; }\n    std::vector<std::unique_ptr<Order>> kids;\n};\n",
+    "solution": "#include <memory>\n#include <vector>\n\n// Order is an interface. clone() returns a copy of the same dynamic type, so an\n// Order can be copied through a base pointer without slicing. Market is written for you.\nstruct Order {\n    virtual ~Order() = default;\n    virtual double cost(double market) const = 0;      // pounds to buy at this market price\n    virtual std::unique_ptr<Order> clone() const = 0;\n};\n\nstruct Market : Order {\n    explicit Market(int q) : qty(q) {}\n    double cost(double market) const override { return qty * market; }\n    std::unique_ptr<Order> clone() const override { return std::make_unique<Market>(*this); }\n    int qty;\n};\n\nstruct Limit : Order {\n    Limit(int q, double px) : qty(q), limit(px) {}\n    double cost(double market) const override { return market <= limit ? qty * market : 0.0; }\n    std::unique_ptr<Order> clone() const override { return std::make_unique<Limit>(*this); }\n    int qty;\n    double limit;\n};\n\nstruct Basket : Order {\n    void add(std::unique_ptr<Order> o) { kids.push_back(std::move(o)); }\n    double cost(double market) const override {\n        double total = 0.0;\n        for (const auto& k : kids) total += k->cost(market);\n        return total;\n    }\n    std::unique_ptr<Order> clone() const override {\n        auto copy = std::make_unique<Basket>();\n        for (const auto& k : kids) copy->add(k->clone());\n        return copy;\n    }\n    std::vector<std::unique_ptr<Order>> kids;\n};\n",
+    "examples": [
+     {
+      "setup": "Limit l(100, 2.5);",
+      "call": "l.cost(2.0)",
+      "expect": 200.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Limit l(100, 2.5);",
+      "call": "l.cost(3.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "Limit l(100, 2.5);",
+      "call": "l.cost(2.0)",
+      "expect": 200.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Limit l(100, 2.5);",
+      "call": "l.cost(3.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Limit l(100, 2.5);",
+      "call": "l.cost(2.5)",
+      "expect": 250.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Limit l(100, 2.5); std::unique_ptr<Order> q = l.clone();",
+      "call": "q->cost(2.0)",
+      "expect": 200.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Limit l(100, 2.5); std::unique_ptr<Order> q = l.clone();",
+      "call": "q->cost(3.0)",
+      "expect": 0.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5));",
+      "call": "b.cost(2.0)",
+      "expect": 500.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5));",
+      "call": "b.cost(3.0)",
+      "expect": 300.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5)); std::unique_ptr<Order> c = b.clone();",
+      "call": "c->cost(2.0)",
+      "expect": 500.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5)); std::unique_ptr<Order> c = b.clone(); b.add(std::make_unique<Market>(1000));",
+      "call": "c->cost(2.0)",
+      "expect": 500.0,
+      "compare": "isclose"
+     },
+     {
+      "setup": "Basket inner; inner.add(std::make_unique<Limit>(10, 2.5)); inner.add(std::make_unique<Market>(100)); Basket outer; outer.add(inner.clone()); outer.add(std::make_unique<Market>(0)); std::unique_ptr<Order> c = outer.clone(); inner.add(std::make_unique<Market>(5));",
+      "call": "c->cost(3.0)",
+      "expect": 300.0,
+      "compare": "isclose"
+     },
+     {
+      "call": "std::is_abstract_v<Basket>",
+      "expect": false,
+      "compare": "equal"
+     }
+    ],
+    "leakCheck": true,
+    "how": "Submit runs 11 hidden tests. Costs are compared with `isclose`."
+   },
+   "feedback": {
+    "correct": "Each order clones itself, so the copy shares nothing with the original.",
+    "generic": "Check each failing row: does `clone()` return the right dynamic type, and does the basket copy its children?"
+   },
+   "explain": {
+    "text": "`Limit::clone` copies the limit as well as the quantity. `Basket::clone` calls `clone()` on every child and adds the result to a new basket. A copy through the base type would slice, and a copied pointer would share one order between two baskets."
    }
   },
   {
