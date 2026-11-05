@@ -95,6 +95,101 @@
       }
     },
     {
+      "id": "h1-ticker-book",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "ci-patterns"
+      ],
+      "tags": [
+        "trie"
+      ],
+      "pace": 1200,
+      "prose": "A desk's search box holds the live list of tickers. Tickers are listed and delisted all day. `add` and `remove` change nothing when the ticker is already listed or is absent. `has` checks a whole ticker, and `count_prefix` counts the listed tickers that start with the prefix.",
+      "question": "Build `TickerBook` on a trie, from the stub.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "class TickerBook:\n    def __init__(self):\n        pass\n\n    def add(self, ticker):\n        pass\n\n    def remove(self, ticker):\n        pass\n\n    def has(self, ticker):\n        pass\n\n    def count_prefix(self, prefix):\n        pass\n",
+        "solution": "class TickerBook:\n    def __init__(self):\n        self.root = {'#n': 0}            # '#n': tickers at or below this node\n\n    def _walk(self, s):\n        node = self.root\n        for ch in s:\n            node = node.get(ch)\n            if node is None:\n                return None\n        return node\n\n    def has(self, ticker):\n        node = self._walk(ticker)\n        return bool(node and node.get('#end'))\n\n    def add(self, ticker):\n        if self.has(ticker):             # listed already: no change\n            return\n        node = self.root\n        node['#n'] += 1\n        for ch in ticker:\n            node = node.setdefault(ch, {'#n': 0})\n            node['#n'] += 1\n        node['#end'] = True\n\n    def remove(self, ticker):\n        if not self.has(ticker):         # not listed: no change\n            return\n        node = self.root\n        node['#n'] -= 1\n        for ch in ticker:\n            node = node[ch]\n            node['#n'] -= 1\n        node['#end'] = False\n\n    def count_prefix(self, prefix):\n        node = self._walk(prefix)\n        return node['#n'] if node else 0\n",
+        "postlude": "def run_book(ops):\n    book = TickerBook()\n    out = []\n    for op, arg in ops:\n        if op == 'add': book.add(arg)\n        elif op == 'remove': book.remove(arg)\n        elif op == 'has': out.append(book.has(arg))\n        else: out.append(book.count_prefix(arg))\n    return out\n\ndef big_case(n=100000):\n    state = [2026]\n    def rnd(m):\n        state[0] = (state[0] * 6364136223846793005 + 1442695040888963407) % 2**64\n        return (state[0] >> 33) % m\n    def word(lo, hi):\n        return ''.join('ABCDEFGH'[rnd(8)] for _ in range(lo + rnd(hi - lo + 1)))\n    book = TickerBook()\n    total = hits = 0\n    for _ in range(n):\n        r = rnd(10)\n        if r < 5:\n            book.add(word(1, 6))\n        elif r < 6:\n            book.remove(word(1, 6))\n        elif r < 7:\n            if book.has(word(1, 6)):\n                hits += 1\n        else:\n            total += book.count_prefix(word(0, 3))\n    return [total, hits, book.count_prefix('')]\n",
+        "examples": [
+          {
+            "call": "run_book([('add', 'AAPL'), ('add', 'AMZN'), ('add', 'AMD'), ('has', 'AM'), ('count', 'AM'), ('count', 'A'), ('has', 'AMD')])",
+            "expect": "[False, 2, 3, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_book([('add', 'IBM'), ('add', 'INTC'), ('remove', 'IBM'), ('has', 'IBM'), ('count', 'I')])",
+            "expect": "[False, 1]",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "run_book([('add', 'AAPL'), ('add', 'AMZN'), ('add', 'AMD'), ('has', 'AM'), ('count', 'AM'), ('count', 'A'), ('has', 'AMD')])",
+            "expect": "[False, 2, 3, True]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_book([('add', 'IBM'), ('add', 'INTC'), ('remove', 'IBM'), ('has', 'IBM'), ('count', 'I')])",
+            "expect": "[False, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_book([('add', 'MSFT'), ('add', 'MSFT'), ('count', 'M'), ('remove', 'MSFT'), ('has', 'MSFT'), ('count', 'M')])",
+            "expect": "[1, False, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_book([('add', 'AAPL'), ('remove', 'GOOG'), ('remove', 'AA'), ('count', 'AA'), ('has', 'AAPL'), ('count', '')])",
+            "expect": "[1, True, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_book([('add', 'BA'), ('add', 'BAC'), ('remove', 'BA'), ('has', 'BA'), ('has', 'BAC'), ('count', 'BA'), ('count', 'B')])",
+            "expect": "[False, True, 1, 1]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_book([('count', ''), ('has', 'X'), ('count', 'X')])",
+            "expect": "[0, False, 0]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_book([('add', 'C'), ('remove', 'C'), ('count', 'C'), ('add', 'C'), ('has', 'C'), ('count', 'CA'), ('add', 'CAT'), ('count', 'C')])",
+            "expect": "[0, True, 0, 2]",
+            "compare": "equal"
+          },
+          {
+            "call": "run_book([('add', 'GS'), ('has', 'GSX'), ('count', 'GSX'), ('has', 'G')])",
+            "expect": "[False, 0, False]",
+            "compare": "equal"
+          },
+          {
+            "call": "big_case()",
+            "expect": "[90388604, 5169, 18841]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests through `run_book(ops)`, where a `count` step calls `count_prefix`. They cover a repeated add, an absent ticker, and a ticker that begins another. Test 9 plays 100,000 random steps and must finish within 5 s."
+      },
+      "feedback": {
+        "correct": "Counts on the nodes answer each step in one walk, $O(L)$ for a ticker of length $L$.",
+        "generic": "Not quite right. Check the first failing test.",
+        "byKey": {
+          "test-3": "Test 3 adds `MSFT` twice. A repeated add must not raise the counts.",
+          "test-4": "Test 4 removes `GOOG` and `AA`, which are not listed. Ask `has` before you lower any count.",
+          "test-5": "Test 5 removes `BA` while `BAC` stays. Clear the end mark only; the nodes still carry `BAC`.",
+          "test-7": "Test 7 lists `C` again after removing it. The end mark must come back on.",
+          "test-9": "Test 9 timed out or drifted. A scan of every ticker per query is too slow; walk the trie."
+        }
+      },
+      "explain": {
+        "text": "Each node keeps how many listed tickers pass through it, so `count_prefix` is one walk. `add` and `remove` ask `has` first, so a repeat or an absent ticker leaves the counts alone. A scan per query costs $O(nq)$; the trie costs $O(L)$ per step."
+      }
+    },
+    {
       "id": "h1-two-singles",
       "difficulty": 4,
       "skills": [
