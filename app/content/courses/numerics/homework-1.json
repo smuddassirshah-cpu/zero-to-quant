@@ -1,0 +1,419 @@
+{
+ "id": "homework-1",
+ "course": "numerics",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h1-hex",
+   "difficulty": 3,
+   "skills": [
+    "nm-float"
+   ],
+   "prose": "A debugger shows a double as the hex word `0x4024000000000000`. The top 12 bits are `0x402`: sign 0, stored exponent $\\texttt{0x402} = 1026$. The mantissa field is `0x4000000000000`.",
+   "question": "What number is it?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10,
+    "tol": {
+     "abs": 1e-09
+    },
+    "wrong": [
+     {
+      "id": "nohidden",
+      "value": 2,
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "id": "nobias",
+      "value": 0,
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1.25 \\times 2^3 = 10$.",
+    "generic": "Not quite right. Find the power, the fraction, then $(1 + m) \\times 2^p$.",
+    "byKey": {
+     "nohidden": "You left out the hidden 1: $(1 + 0.25) \\times 8$, not $0.25 \\times 8$."
+    }
+   },
+   "explain": {
+    "text": "The power is $1026 - 1023 = 3$. The mantissa `0x4000000000000` sets only the second bit, worth $\\tfrac14$. So the number is $1.25 \\times 2^3 = 10$."
+   }
+  },
+  {
+   "id": "h1-float32-int",
+   "difficulty": 3,
+   "skills": [
+    "nm-float"
+   ],
+   "prose": "float32 keeps 23 mantissa bits after the hidden 1. A tick counter is stored in float32.",
+   "question": "What is the largest $N$ such that every whole number from 0 to $N$ is stored exactly?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16777216,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "f64",
+      "value": 9007199254740992,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "half",
+      "value": 8388608,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2^{24} = 16{,}777{,}216$.",
+    "generic": "Not quite right. Find where float32's gap first passes 1.",
+    "byKey": {
+     "f64": "That is $2^{53}$, the float64 limit. float32 runs out at $2^{24}$.",
+     "half": "At $2^{23}$ the gap is $\\tfrac12$, and up to $2^{24}$ it is 1: every whole number is still there."
+    }
+   },
+   "explain": {
+    "text": "Between $2^{23}$ and $2^{24}$ the float32 gap is $2^{0} = 1$, so all whole numbers survive up to $2^{24} = 16{,}777{,}216$. Above it the gap is 2, and $2^{24} + 1$ is lost. A float32 counter silently stops counting."
+   }
+  },
+  {
+   "id": "h1-expm1-kappa",
+   "difficulty": 4,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "Take $f(x) = e^x - 1$ for $x > 0$.",
+   "question": "Find its condition number $\\kappa(x) = \\dfrac{x f'(x)}{f(x)}$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{xe^x}{e^x-1}",
+    "accept": [
+     "x e^x/(e^x-1)",
+     "x/(1-e^{-x})",
+     "xe^x/(e^x-1)"
+    ],
+    "wrong": [
+     {
+      "id": "noxf",
+      "tex": "\\frac{e^x}{e^x-1}"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "feedback": {
+    "correct": "$\\kappa(x) = \\dfrac{xe^x}{e^x - 1}$, which tends to 1 as $x \\to 0$.",
+    "generic": "Not quite right. $f'(x) = e^x$; multiply by $x$ and divide by $f$.",
+    "byKey": {
+     "noxf": "You left out the factor $x$ in $x f'(x)$."
+    }
+   },
+   "explain": {
+    "text": "$x f'(x)/f(x) = \\tfrac{x e^x}{e^x - 1}$, and as $x \\to 0$ it tends to 1. So $e^x - 1$ is well conditioned near 0. The seven digits lost to `exp(1e-10) - 1` were the algorithm's fault, which is why `expm1` exists."
+   }
+  },
+  {
+   "id": "h1-forward-backward",
+   "difficulty": 4,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "A backward stable algorithm returns $\\hat y = f(x + \\Delta x)$ with $|\\Delta x / x|$ near $u$. Show why its relative forward error is about $\\kappa$ times that.",
+   "question": "Order the steps and leave out the false one.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "f1",
+      "text": "Backward stability: $\\hat y = f(x + \\Delta x)$ for a small $\\Delta x$."
+     },
+     {
+      "id": "f2",
+      "text": "Taylor to first order: $\\hat y - y = f(x + \\Delta x) - f(x) \\approx f'(x)\\Delta x$."
+     },
+     {
+      "id": "f3",
+      "text": "Divide by $y = f(x)$ and multiply and divide by $x$: $\\dfrac{\\hat y - y}{y} \\approx \\dfrac{x f'(x)}{f(x)} \\cdot \\dfrac{\\Delta x}{x}$."
+     },
+     {
+      "id": "f4",
+      "text": "Take sizes: $\\left|\\dfrac{\\hat y - y}{y}\\right| \\approx \\kappa(x)\\left|\\dfrac{\\Delta x}{x}\\right|$."
+     },
+     {
+      "id": "fx",
+      "text": "Since $\\Delta x$ is small, $\\hat y - y \\approx \\Delta x$.",
+      "why": "The output moves by $f'(x)\\Delta x$, not by $\\Delta x$. The slope is what $\\kappa$ measures."
+     }
+    ],
+    "answer": [
+     "f1",
+     "f2",
+     "f3",
+     "f4"
+    ],
+    "distractors": [
+     "fx"
+    ]
+   },
+   "feedback": {
+    "correct": "Stability on the input, Taylor, then rescale to relative terms.",
+    "generic": "Not quite right. Start from the definition, then use Taylor's theorem.",
+    "byKey": {
+     "fx": "The output moves by $f'(x)\\Delta x$, not by $\\Delta x$.",
+     "left-out": "All four true lines belong in the argument."
+    }
+   },
+   "explain": {
+    "text": "The algorithm's answer is $f$ at a nearby input. Taylor's theorem turns that input change into an output change $f'(x)\\Delta x$, and writing both relatively gives $\\kappa(x)$. So forward error $\\lesssim \\kappa \\times$ backward error."
+   }
+  },
+  {
+   "id": "h1-normal-digits",
+   "difficulty": 4,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "A regression design has $\\kappa(\\mathbf X) = 3 \\times 10^5$ and is solved by the normal equations in double precision, which holds about 16 digits.",
+   "question": "About how many correct digits can the betas keep?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.0,
+    "tol": {
+     "abs": 0.15
+    },
+    "wrong": [
+     {
+      "id": "qr",
+      "value": 10.5,
+      "tol": {
+       "abs": 0.15
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$16 - \\log_{10}(9 \\times 10^{10}) \\approx 5.0$.",
+    "generic": "Not quite right. Square $\\kappa$, take $\\log_{10}$, subtract from 16.",
+    "byKey": {
+     "qr": "10.5 is what QR keeps, using $\\kappa$ itself. The normal equations square it."
+    }
+   },
+   "explain": {
+    "text": "$\\kappa^2 = 9 \\times 10^{10}$, which costs about 11 digits, leaving 5. QR would keep about $16 - 5.5 = 10.5$. On data good to only 6 digits, the normal equations would leave almost nothing."
+   }
+  },
+  {
+   "id": "h1-stable-not-accurate",
+   "difficulty": 4,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "A backward stable solver is run on a system with $\\kappa = 10^{14}$.",
+   "question": "What can you expect of its answer?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "A relative error up to about $10^{14} u \\approx 10^{-2}$: two digits",
+      "correct": true
+     },
+     {
+      "id": "full",
+      "text": "Full accuracy, because the algorithm is stable",
+      "why": "Stability bounds the backward error. The forward error is still $\\kappa$ times that."
+     },
+     {
+      "id": "none",
+      "text": "No correct digits, because it is unstable",
+      "why": "It is stable; with $\\kappa u \\approx 0.01$ about two digits remain."
+     },
+     {
+      "id": "resid",
+      "text": "An error about as small as its residual",
+      "why": "That would need $\\kappa$ near 1. Here the error can be $10^{14}$ times larger."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Stable means the right answer to nearby data, not the right answer.",
+    "generic": "Not quite right. Multiply $\\kappa$ by $u$."
+   },
+   "explain": {
+    "text": "A backward stable method gives the exact answer for data within about $u$. With $\\kappa = 10^{14}$ that can move the answer by $10^{14} \\times 10^{-16} = 10^{-2}$ in relative terms. Stability is the most an algorithm can promise; conditioning sets the rest."
+   }
+  },
+  {
+   "id": "h1-gamma-bump",
+   "difficulty": 4,
+   "skills": [
+    "nm-float"
+   ],
+   "prose": "The second difference $\\tfrac{f(x+h) - 2f(x) + f(x-h)}{h^2}$ has error about $\\tfrac{h^2}{12}|f''''| + \\tfrac{4\\epsilon|f|}{h^2}$. Minimising gives $h^* = (48\\epsilon|f|/|f''''|)^{1/4}$.",
+   "question": "For $e^x$ at $x = 0$, what is $h^*$, times $10^4$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.21,
+    "tol": {
+     "abs": 0.03
+    },
+    "placeholder": "h times 10^4",
+    "wrong": [
+     {
+      "id": "sqrt",
+      "value": 1.03,
+      "tol": {
+       "abs": 0.03
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$(48 \\times 2.22 \\times 10^{-16})^{1/4} \\approx 3.21 \\times 10^{-4}$.",
+    "generic": "Not quite right. With $|f| = |f''''| = 1$, take the fourth root of $48\\epsilon$.",
+    "byKey": {
+     "sqrt": "You took the square root of $48\\epsilon$, then scaled by $10^7$. The bump needs the fourth root."
+    }
+   },
+   "explain": {
+    "text": "$48\\epsilon = 1.07 \\times 10^{-14}$, and its fourth root is $3.21 \\times 10^{-4}$, so 3.21 in these units. A second difference wants a much larger bump than a first. That is why gamma at $10^{-6}$ failed in lesson 2."
+   }
+  },
+  {
+   "id": "h1-stats-code",
+   "difficulty": 5,
+   "skills": [
+    "nm-float"
+   ],
+   "prose": "Write the two building blocks of a P&L report. `stable_stats` returns the mean and sample variance by Welford's method. `kahan_total` sums with Kahan's compensation, keeping the type of its entries, so float32 inputs stay float32.",
+   "question": "Complete `stable_stats(prices)` and `kahan_total(pnl)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np  # the tests pass float32 values\n\ndef stable_stats(prices):\n    \"\"\"(mean, sample variance) in one pass, by Welford's method.\n    Raise ValueError for fewer than two prices.\"\"\"\n    ...\n\ndef kahan_total(pnl):\n    \"\"\"Compensated sum, kept in the type of the entries.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef stable_stats(prices):\n    if len(prices) < 2:\n        raise ValueError('need at least two prices')\n    mean, m2, n = 0.0, 0.0, 0\n    for x in prices:\n        n += 1\n        d = x - mean\n        mean += d / n\n        m2 += d * (x - mean)\n    return (mean, m2 / (n - 1))\n\ndef kahan_total(pnl):\n    total, c = 0.0, 0.0\n    for x in pnl:\n        y = x - c\n        t = total + y\n        c = (t - total) - y\n        total = t\n    return total\n",
+    "caseBudget": 20000,
+    "examples": [
+     {
+      "call": "stable_stats([1.0, 2.0, 3.0, 4.0])",
+      "expect": "(2.5, 5 / 3)",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "stable_stats([1.0, 2.0, 3.0, 4.0])",
+      "expect": "(2.5, 5 / 3)",
+      "compare": "isclose"
+     },
+     {
+      "setup": "prices = [1e9 + 4, 1e9 + 7, 1e9 + 13, 1e9 + 16]",
+      "call": "stable_stats(prices)",
+      "expect": "(1e9 + 10, 30.0)",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-12
+      }
+     },
+     {
+      "call": "stable_stats([])",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "stable_stats([5.0])",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "kahan_total([1.0] + [1e-16] * 10**6)",
+      "expect": "1.0000000001",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-13
+      }
+     },
+     {
+      "setup": "import numpy as np\npennies = [np.float32(0.01)] * 10**6",
+      "call": "float(kahan_total(pennies))",
+      "expect": "10000.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "setup": "import numpy as np",
+      "call": "isinstance(kahan_total([np.float32(0.01)] * 100), np.float32)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "kahan_total([])",
+      "expect": "0.0",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests. They include the 10^9 prices, fewer than two prices (ValueError) and a million tiny terms. They also sum a million float32 pennies, where a plain loop gives 9865.22. Values use math.isclose; the float32 case allows half a penny."
+   },
+   "feedback": {
+    "correct": "Both pass: 30.0 on the $10^9$ prices and £10,000.00 from a million float32 pennies.",
+    "generic": "Not quite right. Check the error cases first, then the float32 pennies."
+   },
+   "explain": {
+    "text": "Welford subtracts the running mean before squaring, so the $10^9$ offset never meets $10^{18}$. Kahan's `c` holds the part of each addition that rounding dropped, and feeds it back next time. A plain float32 loop over the pennies gives £9,865.22."
+   }
+  },
+  {
+   "id": "h1-book-variance",
+   "difficulty": 5,
+   "skills": [
+    "nm-float",
+    "nm-stability"
+   ],
+   "kind": "longform",
+   "prompt": "A risk report computes the variance of a hedged book's daily mark-to-market over 250 days. The book is worth about £1bn and moves by only a few pounds a day. The code uses $\\overline{x^2} - \\bar x^2$ in double precision, and one morning the report shows a negative variance. Explain the cancellation, and why the problem is well conditioned but the algorithm unstable. Then give the fix and the test you would add.",
+   "model": "**What happened.** Each mark $x$ is near $10^9$, so $x^2$ is near $10^{18}$. Doubles there are $2^{59-52} = 128$ apart. The true variance is a few pounds squared, near 10, far below that gap. So $\\overline{x^2}$ and $\\bar x^2$ agree in every stored digit that matters, and their difference is rounding noise. Noise can be negative, so the report printed a negative number.\n\n**Conditioning.** Variance as a function of the marks is well conditioned. Shifting every mark by £1bn changes nothing. A relative change of $u$ in each mark moves the variance very little. The data hold the answer perfectly well.\n\n**Stability.** The formula is not backward stable. It squares numbers near $10^9$, then subtracts two results near $10^{18}$ that are nearly equal. The relative error is about $u \\times (\\bar x / s)^2 \\approx 10^{-16} \\times 10^{17} = 10$, so no digit survives. That is catastrophic cancellation inside the algorithm, not in the problem.\n\n**Fix.** Use Welford's method, or two passes: subtract the mean before squaring. Then every squared deviation is a few pounds squared and nothing cancels. In 200 simulated years of this book, the one-pass formula gave 0 half the time. Otherwise it swung between $-263$ and $263$. Two passes gave about 9 every time.\n\n**Test.** Add a unit test with an offset: marks $10^9 + 4, 10^9 + 7, 10^9 + 13, 10^9 + 16$ must give sample variance 30.0 within $10^{-9}$. The one-pass formula returns 0.0 there and fails. Also assert the variance is never negative.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Explains that squares near $10^{18}$ have a gap of about 128, far above the true variance"
+    },
+    {
+     "points": 2,
+     "text": "Names catastrophic cancellation: subtracting two nearly equal large numbers leaves noise, which can be negative"
+    },
+    {
+     "points": 2,
+     "text": "States that the problem is well conditioned (shift-invariant, the data determine the variance)"
+    },
+    {
+     "points": 1,
+     "text": "States that the algorithm, not the problem, is unstable"
+    },
+    {
+     "points": 2,
+     "text": "Gives the fix: Welford's method or a two-pass formula that subtracts the mean first"
+    },
+    {
+     "points": 1,
+     "text": "Proposes a test with a large offset and a known variance, such as 30.0 for the four offset prices"
+    }
+   ]
+  }
+ ]
+}

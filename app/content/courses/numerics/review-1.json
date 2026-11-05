@@ -1,0 +1,433 @@
+{
+ "id": "review-1",
+ "course": "numerics",
+ "level": 1,
+ "items": [
+  {
+   "id": "r1-exponent",
+   "difficulty": 2,
+   "skills": [
+    "nm-float"
+   ],
+   "prose": "The double nearest 0.01 has stored exponent field $e = 1016$.",
+   "question": "What power of two does it carry? Give $p$ in $2^p$.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -7,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "p",
+    "wrong": [
+     {
+      "id": "no-bias",
+      "value": 1016,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1016 - 1023 = -7$.",
+    "generic": "Not quite right. Subtract the bias 1023 from the stored exponent.",
+    "byKey": {
+     "no-bias": "1016 is the stored field. The power is the field minus 1023.",
+     "sign": "The field is below 1023, so the power is negative."
+    }
+   },
+   "explain": {
+    "text": "$p = 1016 - 1023 = -7$, and indeed $0.01 = 1.28 \\times 2^{-7}$. Numbers below 1 have stored exponents below 1023."
+   }
+  },
+  {
+   "id": "r1-sqrt-gap",
+   "difficulty": 2,
+   "skills": [
+    "nm-float"
+   ],
+   "prose": "A model computes $\\sqrt{x + 1} - \\sqrt x$ for $x$ near $10^{12}$.",
+   "question": "Which rewrite avoids cancellation?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$\\dfrac{1}{\\sqrt{x + 1} + \\sqrt x}$",
+      "correct": true
+     },
+     {
+      "id": "sq",
+      "text": "$\\sqrt{(x + 1) - x}$",
+      "why": "That squares inside the root, which is not the same quantity: it gives 1."
+     },
+     {
+      "id": "order",
+      "text": "$-\\sqrt x + \\sqrt{x + 1}$",
+      "why": "Reordering keeps the subtraction of two numbers near $10^6$."
+     },
+     {
+      "id": "log",
+      "text": "$e^{\\ln\\sqrt{x+1}} - e^{\\ln\\sqrt x}$",
+      "why": "That still subtracts two numbers near $10^6$, after more rounding."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Multiply by the conjugate: the top becomes exactly 1.",
+    "generic": "Not quite right. Look for the form with a sum and no subtraction."
+   },
+   "explain": {
+    "text": "Multiplying by $\\tfrac{\\sqrt{x+1} + \\sqrt x}{\\sqrt{x+1} + \\sqrt x}$ turns the top into $(x + 1) - x = 1$. The bottom is a sum of two positive numbers, so nothing cancels. The answer is about $5 \\times 10^{-7}$ to full precision."
+   }
+  },
+  {
+   "id": "r1-sv-digits",
+   "difficulty": 2,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "A matrix has largest singular value 50 and smallest 0.005.",
+   "question": "About how many digits does solving with it lose?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.05
+    },
+    "wrong": [
+     {
+      "id": "kappa",
+      "value": 10000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "kept",
+      "value": 12,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\kappa = 10^4$, so about 4 digits.",
+    "generic": "Not quite right. Divide the singular values, then take $\\log_{10}$.",
+    "byKey": {
+     "kappa": "10,000 is $\\kappa$ itself. The digits lost are its $\\log_{10}$.",
+     "kept": "12 is what is left of 16. The question asks how many go."
+    }
+   },
+   "explain": {
+    "text": "$\\kappa = 50 / 0.005 = 10^4$, and $\\log_{10} 10^4 = 4$ digits lost. A stable solver on double data keeps about 12."
+   }
+  },
+  {
+   "id": "r1-normal-or-qr",
+   "difficulty": 3,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "A factor-model regression has $\\kappa(\\mathbf X) = 10^9$.",
+   "question": "Which solver should it use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "QR or `lstsq`: the normal equations would face $\\kappa = 10^{18}$",
+      "correct": true
+     },
+     {
+      "id": "normal",
+      "text": "The normal equations: they are faster and just as accurate",
+      "why": "They solve with $\\kappa(\\mathbf X)^2 = 10^{18}$, past $1/\\epsilon$: no digit survives."
+     },
+     {
+      "id": "either",
+      "text": "Either: the problem's $\\kappa$ is the same",
+      "why": "The problem's $\\kappa$ is the same, but the normal equations square it."
+     },
+     {
+      "id": "inv",
+      "text": "`inv(X.T @ X) @ X.T @ y`, to avoid a solve",
+      "why": "The inverse still works with $\\mathbf X^T\\mathbf X$, and adds more rounding."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "QR keeps about 7 digits; the normal equations keep none.",
+    "generic": "Not quite right. Square $\\kappa$ and compare it with $10^{16}$."
+   },
+   "explain": {
+    "text": "QR loses about $\\log_{10} 10^9 = 9$ digits and keeps 7. The normal equations face $10^{18}$, beyond the 16 digits a double holds. Here the choice of algorithm decides whether the betas mean anything."
+   }
+  },
+  {
+   "id": "r1-float32-notional",
+   "difficulty": 3,
+   "skills": [
+    "nm-float"
+   ],
+   "prose": "A GPU kernel keeps a running notional near £1,000,000 in float32, which has 23 mantissa bits. $10^6$ lies between $2^{19}$ and $2^{20}$.",
+   "question": "What is the gap between float32 numbers there, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0625,
+    "tol": {
+     "abs": 0.0001
+    },
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "upper",
+      "value": 0.125,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "f64",
+      "value": 1.16e-10,
+      "tol": {
+       "rel": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2^{19 - 23} = £0.0625$.",
+    "generic": "Not quite right. Use $2^{k - 23}$ with $k = 19$.",
+    "byKey": {
+     "upper": "You used $2^{20}$. The gap comes from the power of two just below.",
+     "f64": "That is the float64 gap at a million. float32 keeps 23 bits, not 52."
+    }
+   },
+   "explain": {
+    "text": "Between $2^{19}$ and $2^{20}$ float32 numbers are $2^{-4} = £0.0625$ apart. Pennies added one at a time are rounded to a sixteenth of a pound. Keep money in float64, or better in whole pence."
+   }
+  },
+  {
+   "id": "r1-bump",
+   "difficulty": 3,
+   "skills": [
+    "nm-float"
+   ],
+   "prose": "A forward-difference Greek uses $h^* = 2\\sqrt{\\epsilon |f| / |f''|}$, with $\\epsilon = 2.22 \\times 10^{-16}$. For one price $|f| = 100$ and $|f''| = 1$.",
+   "question": "What is $h^*$, times $10^7$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.98,
+    "tol": {
+     "abs": 0.02
+    },
+    "placeholder": "h times 10^7",
+    "wrong": [
+     {
+      "id": "noroot",
+      "value": 0.0089,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "notwo",
+      "value": 1.49,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$h^* = 2\\sqrt{2.22 \\times 10^{-14}} \\approx 2.98 \\times 10^{-7}$.",
+    "generic": "Not quite right. Multiply $\\epsilon$ by 100, take the root, double it.",
+    "byKey": {
+     "notwo": "You left out the factor 2 in front of the root.",
+     "noroot": "You forgot the square root."
+    }
+   },
+   "explain": {
+    "text": "$\\epsilon \\times 100 = 2.22 \\times 10^{-14}$, whose root is $1.49 \\times 10^{-7}$. Doubling gives $h^* = 2.98 \\times 10^{-7}$, which is 2.98 in these units. A bigger price needs a bigger bump."
+   }
+  },
+  {
+   "id": "r1-residual",
+   "difficulty": 3,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "A solve with $\\kappa(\\mathbf A) = 10^6$ returns $\\hat{\\mathbf x}$ whose relative residual $\\|\\mathbf b - \\mathbf A\\hat{\\mathbf x}\\| / \\|\\mathbf b\\|$ is $10^{-10}$.",
+   "question": "What bounds the relative error of $\\hat{\\mathbf x}$? Give the power of ten.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -4,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "exponent",
+    "wrong": [
+     {
+      "id": "resid",
+      "value": -10,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sign",
+      "value": 4,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$10^6 \\times 10^{-10} = 10^{-4}$.",
+    "generic": "Not quite right. Multiply the relative residual by $\\kappa$.",
+    "byKey": {
+     "resid": "That reads the residual as the error. The error can be $\\kappa$ times larger.",
+     "sign": "The bound is a small number, $10^{-4}$, so its exponent is negative."
+    }
+   },
+   "explain": {
+    "text": "A residual $\\mathbf r$ means $\\hat{\\mathbf x}$ solves the system with $\\mathbf b - \\mathbf r$. So the error is at most $\\kappa \\times 10^{-10} = 10^{-4}$. A small residual is reassuring only next to a small $\\kappa$."
+   }
+  },
+  {
+   "id": "r1-negative-var",
+   "difficulty": 2,
+   "skills": [
+    "nm-float"
+   ],
+   "prose": "A report prints a variance of $-2.0$ for a set of prices near £$10^9$ that differ by a few pounds.",
+   "question": "What went wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Cancellation in $\\overline{x^2} - \\bar x^2$, two nearly equal numbers near $10^{18}$",
+      "correct": true
+     },
+     {
+      "id": "data",
+      "text": "The prices must contain an error",
+      "why": "A variance cannot be negative for any data. The formula, not the data, is at fault."
+     },
+     {
+      "id": "overflow",
+      "text": "The squares overflowed",
+      "why": "$10^{18}$ is far below the largest double, $1.8 \\times 10^{308}$."
+     },
+     {
+      "id": "bias",
+      "text": "It divided by $n$ instead of $n - 1$",
+      "why": "That changes the size by a factor, never the sign."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Squares near $10^{18}$ are 128 apart, so their difference is noise.",
+    "generic": "Not quite right. A true variance is never negative, so look at the formula."
+   },
+   "explain": {
+    "text": "Each $x^2$ is near $10^{18}$, where doubles sit 128 apart, far above a spread of a few pounds squared. The subtraction returns noise, here negative. Welford's method subtracts the mean first."
+   }
+  },
+  {
+   "id": "r1-discount",
+   "difficulty": 4,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "A credit model needs $e^{-30}$, a survival factor. A junior writes a loop that sums $\\sum_k (-30)^k / k!$.",
+   "question": "What happens, and what is the fix?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Terms near $7.8 \\times 10^{11}$ cancel to $9.4 \\times 10^{-14}$: no digit survives; use $1/\\sum_k 30^k/k!$",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "It works: the series converges for every $x$",
+      "why": "Convergence in exact arithmetic says nothing about rounding. The largest term is 25 powers of ten above the answer."
+     },
+     {
+      "id": "illcond",
+      "text": "No method can work: $e^{-30}$ is ill-conditioned",
+      "why": "$\\kappa = 30$ for $e^x$ at $-30$. The problem is fine; the algorithm is not."
+     },
+     {
+      "id": "terms",
+      "text": "Sum 500 terms instead of 120",
+      "why": "The missing digits were lost to cancellation, not truncation."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The terms of the alternating series dwarf the answer; the positive series does not cancel.",
+    "generic": "Not quite right. Compare the largest term with the answer."
+   },
+   "explain": {
+    "text": "The largest term, $30^{30}/30! \\approx 7.8 \\times 10^{11}$, carries a rounding error near $10^{-4}$. The answer is $9.4 \\times 10^{-14}$, so nothing survives. Summing $e^{30}$, whose terms are all positive, and inverting keeps every digit."
+   }
+  },
+  {
+   "id": "r1-kappa-shift",
+   "difficulty": 3,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "A spread is computed as $f(x) = x - 100$ for a price $x = 100.01$.",
+   "question": "What is the condition number $\\kappa(x) = |xf'(x)/f(x)|$ there?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10001,
+    "tol": {
+     "rel": 0.001
+    },
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 0.0001,
+      "tol": {
+       "abs": 1e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$100.01 / 0.01 = 10{,}001$.",
+    "generic": "Not quite right. $f' = 1$, so $\\kappa = x / (x - 100)$.",
+    "byKey": {
+     "inv": "You divided the wrong way. $\\kappa = x f'/f = 100.01 / 0.01$."
+    }
+   },
+   "explain": {
+    "text": "$\\kappa = 100.01 / 0.01 = 10{,}001$: a relative error of $10^{-8}$ in the price becomes $10^{-4}$ in the spread. Subtracting nearby prices is ill-conditioned, which is cancellation seen from the problem's side."
+   }
+  }
+ ]
+}

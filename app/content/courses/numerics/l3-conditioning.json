@@ -1,0 +1,1144 @@
+{
+ "id": "l3-conditioning",
+ "course": "numerics",
+ "title": "How sensitive a problem is",
+ "minutes": 14,
+ "objectives": [
+  "Compute a condition number and predict how much input error is amplified."
+ ],
+ "skills": [
+  "nm-stability"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Two lines, $x + y = 2$ and $x + 1.0001y = b_2$, are nearly parallel. Their meeting point solves the system. Move $b_2$ in its fourth decimal and watch the meeting point.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.5,
+      3.5
+     ],
+     "y": [
+      -0.5,
+      3.5
+     ],
+     "height": 280,
+     "equal": false,
+     "params": {
+      "b2": 2.0001
+     },
+     "functions": [
+      {
+       "id": "f1",
+       "expr": "2 - x",
+       "label": "$x + y = 2$",
+       "labelAt": -1
+      },
+      {
+       "id": "f2",
+       "expr": "(b2 - x)/1.0001",
+       "dashed": true,
+       "colour": 2,
+       "label": "$x + 1.0001y = b_2$",
+       "labelAt": 2.6,
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 1,
+       "y": 1,
+       "label": "meet"
+      }
+     ],
+     "params": {
+      "b2": 2.0001
+     }
+    },
+    "derive": {
+     "P.y": "(b2 - 2)/0.0001",
+     "P.x": "2 - (b2 - 2)/0.0001",
+     "caption": "b₂ = {{fixed(b2, 5)}}: the lines meet at ({{fixed(P.x, 2)}}, {{fixed(P.y, 2)}})."
+    },
+    "controls": [
+     {
+      "bind": "b2",
+      "min": 2.0,
+      "max": 2.0003,
+      "step": 1e-05,
+      "start": 2.0001,
+      "decimals": 5,
+      "label": "$b_2$"
+     }
+    ]
+   },
+   "question": "Move $b_2$ from 2.0001 to 2.0002. By how much does the meeting point's $y$ change?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1,
+    "tol": {
+     "abs": 0.01
+    },
+    "wrong": [
+     {
+      "id": "input",
+      "value": 0.0001,
+      "tol": {
+       "abs": 1e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set the slider to 2.0001 and read $y$, then set it to 2.0002."
+    },
+    {
+     "rung": "point",
+     "text": "The caption gives the meeting point at each setting.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At 2.0001 the lines meet at $(1, 1)$; at 2.0002 they meet at $(0, 2)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$y$ moves from 1 to 2: a change of 1.",
+    "generic": "Not quite right. Read $y$ at both settings and subtract.",
+    "byKey": {
+     "input": "0.0001 is the change you made to $b_2$. The question asks how far the answer moved."
+    }
+   },
+   "explain": {
+    "text": "A change of 0.0001 in $b_2$ moved the answer from $(1, 1)$ to $(0, 2)$. Nearly parallel lines meet at a shallow angle, so a tiny shift slides the crossing a long way. No rounding was involved: the problem itself is this sensitive.",
+    "canvas": {
+     "params": {
+      "b2": 2.0002
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Measure the effect with lengths, $\\|\\mathbf v\\| = \\sqrt{v_1^2 + v_2^2}$. The data went from $\\mathbf b = (2, 2.0001)$ to $(2, 2.0002)$. The answer went from $\\mathbf x = (1, 1)$ to $(0, 2)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.5,
+      3.5
+     ],
+     "y": [
+      -0.5,
+      3.5
+     ],
+     "height": 280,
+     "equal": false,
+     "params": {
+      "b2": 2.0002
+     },
+     "functions": [
+      {
+       "id": "f1",
+       "expr": "2 - x",
+       "label": "$x + y = 2$",
+       "labelAt": -1
+      },
+      {
+       "id": "f2",
+       "expr": "(b2 - x)/1.0001",
+       "dashed": true,
+       "colour": 2,
+       "label": "$x + 1.0001y = b_2$",
+       "labelAt": 2.6,
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 1,
+       "y": 1,
+       "label": "meet"
+      }
+     ],
+     "params": {
+      "b2": 2.0002
+     }
+    },
+    "derive": {
+     "P.y": "(b2 - 2)/0.0001",
+     "P.x": "2 - (b2 - 2)/0.0001",
+     "caption": "b₂ = {{fixed(b2, 5)}}: the lines meet at ({{fixed(P.x, 2)}}, {{fixed(P.y, 2)}})."
+    }
+   },
+   "question": "Fill in the relative changes and their ratio.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$\\|\\Delta\\mathbf b\\| / \\|\\mathbf b\\|$, times $10^5$",
+      {
+       "edit": true,
+       "answer": 3.536,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "$\\|\\Delta\\mathbf x\\| / \\|\\mathbf x\\|$",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "Ratio, output over input",
+      {
+       "edit": true,
+       "answer": 28285,
+       "tol": {
+        "rel": 0.002
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\Delta\\mathbf b = (0, 0.0001)$ and $\\|\\mathbf b\\| = \\sqrt{4 + 4.0004} \\approx 2.8285$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\Delta\\mathbf x = (-1, 1)$ has length $\\sqrt 2$, and so does $\\mathbf x = (1, 1)$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Input: $0.0001 / 2.8285 = 3.536 \\times 10^{-5}$. Output: 1. Ratio: $1 / (3.536 \\times 10^{-5}) \\approx 28{,}285$."
+    }
+   ],
+   "feedback": {
+    "correct": "A relative change of $3.5 \\times 10^{-5}$ in became 1 out: amplified 28,285 times.",
+    "generic": "Not quite right. Divide each change's length by the length of the vector it changed.",
+    "byKey": {
+     "r0c1": "$\\|\\Delta\\mathbf b\\| = 0.0001$ and $\\|\\mathbf b\\| \\approx 2.8285$. Divide, then multiply by $10^5$.",
+     "r1c1": "$\\|(-1, 1)\\| / \\|(1, 1)\\| = \\sqrt2 / \\sqrt2$.",
+     "r2c1": "Divide the output change, 1, by the input change, $3.536 \\times 10^{-5}$."
+    }
+   },
+   "explain": {
+    "text": "The relative change in $\\mathbf b$ was $3.536 \\times 10^{-5}$ and the relative change in $\\mathbf x$ was 1, so the ratio is 28,285. The largest such ratio over every small change is the **condition number** $\\kappa$. It belongs to the problem, not to any method of solving it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "For a function, the condition number compares relative changes: $$\\kappa(x) = \\left|\\frac{x f'(x)}{f(x)}\\right|.$$ The curve is $\\kappa$ for $f(x) = x - 1$. It shoots up near $x = 1$, where the answer is near 0.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3
+     ],
+     "y": [
+      0,
+      20
+     ],
+     "height": 240,
+     "xAxis": "bottom",
+     "functions": [
+      {
+       "id": "k",
+       "expr": "abs(x/(x - 1))",
+       "label": "$\\kappa$ for $x - 1$",
+       "labelAt": 2.2
+      }
+     ],
+     "vlines": [
+      {
+       "id": "one",
+       "x": 1,
+       "label": "$x = 1$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in $\\kappa$ for each function at the given point.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "$f(x)$",
+     "At",
+     "$\\kappa$"
+    ],
+    "rows": [
+     [
+      "$\\sqrt x$",
+      "any $x > 0$",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "$e^x$",
+      "$x = 20$",
+      {
+       "edit": true,
+       "answer": 20,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ],
+     [
+      "$x - 1$",
+      "$x = 1.0001$",
+      {
+       "edit": true,
+       "answer": 10001,
+       "tol": {
+        "rel": 0.001
+       }
+      }
+     ],
+     [
+      "$\\ln x$",
+      "$x = 1.0001$",
+      {
+       "edit": true,
+       "answer": 10000,
+       "tol": {
+        "rel": 0.001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Work out $x f'(x)/f(x)$ for each function first."
+    },
+    {
+     "rung": "point",
+     "text": "For $e^x$ it is $x$. For $x - 1$ it is $\\tfrac{x}{x - 1}$. For $\\ln x$ it is $\\tfrac{1}{\\ln x}$.",
+     "highlight": [
+      "one"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\sqrt x$: $\\tfrac{x \\cdot \\frac{1}{2\\sqrt x}}{\\sqrt x} = \\tfrac12$. $x - 1$ at 1.0001: $1.0001/0.0001 = 10{,}001$. $\\ln 1.0001 \\approx 0.0001$, so about $10{,}000$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac12$, 20, 10,001 and about 10,000.",
+    "generic": "Not quite right. Simplify $x f'(x)/f(x)$, then substitute.",
+    "byKey": {
+     "r0c2": "$x \\cdot \\frac{1}{2\\sqrt x} / \\sqrt x = \\tfrac12$, whatever $x$ is.",
+     "r1c2": "$x e^x / e^x = x$, so 20.",
+     "r2c2": "$x/(x - 1) = 1.0001/0.0001$.",
+     "r3c2": "$1/\\ln x$, and $\\ln 1.0001 \\approx 0.00009999500$."
+    }
+   },
+   "explain": {
+    "text": "A square root halves relative errors, and $e^x$ multiplies them by $x$. Subtracting 1 near 1 multiplies them by 10,001: cancellation is ill-conditioned subtraction, as in the last lesson. $\\ln x$ near 1 is just as bad, about 10,000.",
+    "canvas": {
+     "highlight": [
+      "k"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "For a matrix, $\\kappa(\\mathbf A) = \\|\\mathbf A\\|\\,\\|\\mathbf A^{-1}\\| = \\sigma_{\\max}/\\sigma_{\\min}$, the ratio of its largest and smallest singular values. Our $\\mathbf A$ has $\\sigma_{\\max} = 2.00005$ and $\\sigma_{\\min} = 4.999875 \\times 10^{-5}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         1,
+         1
+        ],
+        [
+         1,
+         1.0001
+        ]
+       ],
+       "label": "$\\mathbf A$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $\\kappa(\\mathbf A)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 40002,
+    "tol": {
+     "rel": 0.001
+    },
+    "wrong": [
+     {
+      "id": "measured",
+      "value": 28285,
+      "tol": {
+       "rel": 0.002
+      }
+     },
+     {
+      "id": "det",
+      "value": 10000,
+      "tol": {
+       "rel": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the largest singular value by the smallest."
+    },
+    {
+     "rung": "point",
+     "text": "$2.00005 / (5 \\times 10^{-5})$ is about $40{,}000$.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2.00005 / (4.999875 \\times 10^{-5}) = 40{,}002$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\kappa(\\mathbf A) = 40{,}002$.",
+    "generic": "Not quite right. Divide $\\sigma_{\\max}$ by $\\sigma_{\\min}$.",
+    "byKey": {
+     "measured": "28,285 is the amplification for the one change you tried. $\\kappa$ is the worst case over every change.",
+     "det": "That is $1/\\det\\mathbf A$. The determinant measures volume, not sensitivity."
+    }
+   },
+   "explain": {
+    "text": "$\\kappa(\\mathbf A) = 2.00005 / (4.999875 \\times 10^{-5}) = 40{,}002$. Your measured 28,285 is below it, as it must be: $\\kappa$ is the worst direction. A $\\mathbf b$ change along the smallest singular direction would reach 40,002."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "A rule of thumb: the answer loses about $\\log_{10}\\kappa$ digits of the data's accuracy. The 8 by 8 Hilbert matrix has $\\kappa \\approx 1.53 \\times 10^{10}$, so it loses 10.2 digits.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         1,
+         1
+        ],
+        [
+         1,
+         1.0001
+        ]
+       ],
+       "label": "$\\mathbf A$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many digits does our system, with $\\kappa = 40{,}002$, lose?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.6,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "digits, to one place",
+    "wrong": [
+     {
+      "id": "kept",
+      "value": 11.4,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Take $\\log_{10}$ of the condition number."
+    },
+    {
+     "rung": "point",
+     "text": "$\\log_{10} 40{,}000 = 4 + \\log_{10} 4$.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\log_{10} 40{,}002 \\approx 4.60$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 4.6 digits.",
+    "generic": "Not quite right. Take $\\log_{10} 40{,}002$.",
+    "byKey": {
+     "kept": "11.4 is what is left of 16 digits. The question asks how many are lost."
+    }
+   },
+   "explain": {
+    "text": "$\\log_{10} 40{,}002 \\approx 4.6$, so 16-digit data gives an answer good to about 11 digits. Data good to 6 digits gives one good to about 1. The same count holds for `regression`'s $\\tfrac{1 + r}{1 - r}$ for two correlated signals."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "For $\\mathbf b = (2, 2.0001)$ a solver returns $\\hat{\\mathbf x} = (0, 2)$. Its residual $\\mathbf b - \\mathbf A\\hat{\\mathbf x}$ is $(0, -0.0001)$, tiny next to $\\mathbf b$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.5,
+      3.5
+     ],
+     "y": [
+      -0.5,
+      3.5
+     ],
+     "height": 280,
+     "equal": false,
+     "params": {
+      "b2": 2.0001
+     },
+     "functions": [
+      {
+       "id": "f1",
+       "expr": "2 - x",
+       "label": "$x + y = 2$",
+       "labelAt": -1
+      },
+      {
+       "id": "f2",
+       "expr": "(b2 - x)/1.0001",
+       "dashed": true,
+       "colour": 2,
+       "label": "$x + 1.0001y = b_2$",
+       "labelAt": 2.6,
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 1,
+       "y": 1,
+       "label": "true"
+      },
+      {
+       "id": "xh",
+       "x": 0,
+       "y": 2,
+       "label": "$\\hat{\\mathbf x}$"
+      }
+     ],
+     "params": {
+      "b2": 2.0001
+     }
+    },
+    "derive": {
+     "P.y": "(b2 - 2)/0.0001",
+     "P.x": "2 - (b2 - 2)/0.0001"
+    }
+   },
+   "question": "Is $\\hat{\\mathbf x}$ a good answer?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "No: the true answer is $(1, 1)$, so every digit is wrong",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "Yes: a residual of 0.0001 means an error of about 0.0001",
+      "why": "You read a small residual as a small error. That holds only when $\\kappa$ is small; here it is 40,002."
+     },
+     {
+      "id": "half",
+      "text": "Partly: the $y$ value 2 is right",
+      "why": "The true $y$ is 1, so $y$ is wrong too."
+     },
+     {
+      "id": "round",
+      "text": "Yes, after rounding to four decimals",
+      "why": "Rounding the answer cannot move it from $(0, 2)$ to $(1, 1)$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where do the two lines really meet for this $\\mathbf b$?"
+    },
+    {
+     "rung": "point",
+     "text": "Both points lie almost on both lines, because the lines are nearly the same.",
+     "highlight": [
+      "xh",
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The true answer is $(1, 1)$. A residual tells you how well the equations fit, not how close the answer is."
+    }
+   ],
+   "feedback": {
+    "correct": "No. The residual is small, the error is 1 in each coordinate.",
+    "generic": "Not quite right. Compare $\\hat{\\mathbf x}$ with the true meeting point.",
+    "byKey": {
+     "small": "You took a small residual for a small error. With $\\kappa = 40{,}002$ the error can be 40,002 times larger in relative terms."
+    }
+   },
+   "explain": {
+    "text": "$\\hat{\\mathbf x} = (0, 2)$ nearly satisfies both equations, yet the answer is $(1, 1)$. A small residual means a small error only when $\\kappa$ is small. Here the relative error can be up to 40,002 times the relative residual.",
+    "canvas": {
+     "highlight": [
+      "xh",
+      "P"
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Why is $\\kappa(\\mathbf A) = \\|\\mathbf A\\|\\,\\|\\mathbf A^{-1}\\|$ the bound? Start from $\\mathbf A\\mathbf x = \\mathbf b$ and the changed system $\\mathbf A(\\mathbf x + \\Delta\\mathbf x) = \\mathbf b + \\Delta\\mathbf b$. Put the steps in order and leave out the false one.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "d1",
+      "text": "Subtract the two systems: $\\mathbf A\\,\\Delta\\mathbf x = \\Delta\\mathbf b$, so $\\Delta\\mathbf x = \\mathbf A^{-1}\\Delta\\mathbf b$."
+     },
+     {
+      "id": "d2",
+      "text": "A matrix stretches a vector by at most its norm: $\\|\\Delta\\mathbf x\\| \\le \\|\\mathbf A^{-1}\\|\\,\\|\\Delta\\mathbf b\\|$."
+     },
+     {
+      "id": "d3",
+      "text": "The same fact for $\\mathbf A$: $\\|\\mathbf b\\| \\le \\|\\mathbf A\\|\\,\\|\\mathbf x\\|$, so $\\tfrac{1}{\\|\\mathbf x\\|} \\le \\tfrac{\\|\\mathbf A\\|}{\\|\\mathbf b\\|}$."
+     },
+     {
+      "id": "d4",
+      "text": "Multiply the two: $\\tfrac{\\|\\Delta\\mathbf x\\|}{\\|\\mathbf x\\|} \\le \\|\\mathbf A\\|\\,\\|\\mathbf A^{-1}\\|\\,\\tfrac{\\|\\Delta\\mathbf b\\|}{\\|\\mathbf b\\|} = \\kappa(\\mathbf A)\\tfrac{\\|\\Delta\\mathbf b\\|}{\\|\\mathbf b\\|}$."
+     },
+     {
+      "id": "x1",
+      "text": "Equality always holds: $\\|\\Delta\\mathbf x\\| = \\|\\mathbf A^{-1}\\|\\,\\|\\Delta\\mathbf b\\|$ for every $\\Delta\\mathbf b$.",
+      "why": "Equality holds only for the worst direction of $\\Delta\\mathbf b$. That is why your change gave 28,285, below 40,002."
+     }
+    ],
+    "answer": [
+     "d1",
+     "d2",
+     "d3",
+     "d4"
+    ],
+    "same": [
+     [
+      "d2",
+      "d3"
+     ]
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First find $\\Delta\\mathbf x$ in terms of $\\Delta\\mathbf b$."
+    },
+    {
+     "rung": "point",
+     "text": "Two inequalities follow, one for $\\Delta\\mathbf x$ and one for $\\mathbf x$; either can come first."
+    },
+    {
+     "rung": "step",
+     "text": "Subtract, bound $\\|\\Delta\\mathbf x\\|$, bound $1/\\|\\mathbf x\\|$, then multiply."
+    }
+   ],
+   "feedback": {
+    "correct": "Subtract, bound each side, multiply: the bound is $\\kappa$ times the input change.",
+    "generic": "Not quite right. Find $\\Delta\\mathbf x$ first, and leave out the claim of equality.",
+    "byKey": {
+     "x1": "Equality holds only for the worst direction. Your change gave 28,285, below 40,002.",
+     "left-out": "Every line but the equality claim belongs in the derivation."
+    }
+   },
+   "explain": {
+    "text": "Subtracting gives $\\Delta\\mathbf x = \\mathbf A^{-1}\\Delta\\mathbf b$, and two norm bounds give the result. The bound $\\kappa\\,\\|\\Delta\\mathbf b\\|/\\|\\mathbf b\\|$ is reached for the worst $\\Delta\\mathbf b$. With the 2-norm, $\\|\\mathbf A\\| = \\sigma_{\\max}$ and $\\|\\mathbf A^{-1}\\| = 1/\\sigma_{\\min}$."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "Everything so far is one inequality: $$\\frac{\\|\\Delta\\mathbf x\\|}{\\|\\mathbf x\\|} \\le \\kappa\\,\\frac{\\|\\Delta\\mathbf b\\|}{\\|\\mathbf b\\|}, \\qquad \\text{digits lost} \\approx \\log_{10}\\kappa.$$ An exactly singular matrix has $\\kappa = \\infty$.",
+   "question": "Prices are good to 6 significant digits and the model has $\\kappa = 10^4$. How many digits of the answer can you trust?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "About 2",
+      "correct": true
+     },
+     {
+      "id": "six",
+      "text": "About 6",
+      "why": "The data's 6 digits are the start. Each factor of 10 in $\\kappa$ costs one of them."
+     },
+     {
+      "id": "twelve",
+      "text": "About 12",
+      "why": "16 minus 4 counts the computer's digits, but the data only has 6."
+     },
+     {
+      "id": "none",
+      "text": "None",
+      "why": "$\\kappa = 10^4$ costs 4 digits, which leaves 2 of the 6."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$6 - \\log_{10} 10^4 = 2$ digits.",
+    "generic": "Not quite right. Subtract $\\log_{10}\\kappa$ from the data's digits."
+   },
+   "explain": {
+    "text": "A relative error of $10^{-6}$ in the data can become $10^{-6} \\times 10^4 = 10^{-2}$ in the answer. That is about 2 good digits. The computer's 16 digits do not help when the data has 6."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write the three checks. `np.linalg.svd(A, compute_uv=False)` returns the singular values, largest first. Do not call `np.linalg.cond`: the tests compare your answer with it.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         1,
+         1
+        ],
+        [
+         1,
+         1.0001
+        ]
+       ],
+       "label": "$\\mathbf A$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `cond2`, `digits_lost` and `predicted_error`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef cond2(A):\n    \"\"\"2-norm condition number from the singular values.\"\"\"\n    ...\n\ndef digits_lost(A):\n    \"\"\"log10 of cond2(A), rounded to one decimal place.\"\"\"\n    ...\n\ndef predicted_error(A, rel_db):\n    \"\"\"Bound on the relative error in x: kappa * rel_db.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef cond2(A):\n    s = np.linalg.svd(np.asarray(A, dtype=float), compute_uv=False)\n    return float(s[0] / s[-1])\n\ndef digits_lost(A):\n    return round(float(np.log10(cond2(A))), 1)\n\ndef predicted_error(A, rel_db):\n    return cond2(A) * rel_db\n",
+    "examples": [
+     {
+      "call": "cond2([[1, 1], [1, 1.0001]])",
+      "expect": "40002.00007",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "cond2([[1, 1], [1, 1.0001]])",
+      "expect": "40002.00007",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "cond2(np.eye(3))",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "setup": "H8 = [[1 / (j + k + 1) for k in range(8)] for j in range(8)]",
+      "call": "cond2(H8)",
+      "expect": "np.linalg.cond(np.array(H8))",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "cond2([[3, 0], [0, 0.5]])",
+      "expect": "6.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "digits_lost([[1, 1], [1, 1.0001]])",
+      "expect": "4.6",
+      "compare": "isclose"
+     },
+     {
+      "setup": "H8 = [[1 / (j + k + 1) for k in range(8)] for j in range(8)]",
+      "call": "digits_lost(H8)",
+      "expect": "10.2",
+      "compare": "isclose"
+     },
+     {
+      "call": "predicted_error([[1, 1], [1, 1.0001]], 1e-8)",
+      "expect": "4.0002e-4",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "'linalg.cond' not in __learner_source__",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests with NumPy. Condition numbers are compared with math.isclose at relative 1e-6, against np.linalg.cond for the Hilbert matrix. One test checks that your code does not call np.linalg.cond itself."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`s = np.linalg.svd(np.asarray(A, dtype=float), compute_uv=False)`."
+    },
+    {
+     "rung": "point",
+     "text": "The condition number is `s[0] / s[-1]`.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`digits_lost` is `round(np.log10(cond2(A)), 1)`, and `predicted_error` is `cond2(A) * rel_db`."
+    }
+   ],
+   "feedback": {
+    "correct": "All three pass, the Hilbert matrix included.",
+    "generic": "Not quite right. Check `cond2` first: the other two use it."
+   },
+   "explain": {
+    "text": "The singular values come sorted, so `s[0] / s[-1]` is $\\sigma_{\\max}/\\sigma_{\\min}$. For our matrix that is 40,002, so `digits_lost` gives 4.6. A relative data error of $10^{-8}$ can become $4 \\times 10^{-4}$ in the answer."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "Implied volatility inverts a price, so its sensitivity is $\\Delta\\sigma \\approx \\Delta V / \\text{vega}$. The standard call has vega 37.52. A one-tick error of £0.01 moves its vol by 0.027 vol points. The one-year 60 put costs £0.0113 and has vega 0.588.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Option",
+      "Price (£)",
+      "Vega",
+      "Vol move per £0.01"
+     ],
+     "rows": [
+      [
+       "Call, strike 100",
+       "10.4506",
+       "37.52",
+       "0.027 vol points"
+      ],
+      [
+       "Put, strike 60",
+       "0.0113",
+       "0.588",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many vol points does a £0.01 error move the 60 put's implied vol?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.7,
+    "tol": {
+     "abs": 0.02
+    },
+    "unit": "vol points",
+    "wrong": [
+     {
+      "id": "frac",
+      "value": 0.017,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "call",
+      "value": 0.027,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the price error by vega."
+    },
+    {
+     "rung": "point",
+     "text": "$0.01 / 0.588 = 0.0170$, as a decimal volatility.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "One vol point is 0.01, so 0.0170 is 1.70 vol points."
+    }
+   ],
+   "feedback": {
+    "correct": "1.70 vol points, about 64 times the at-the-money figure.",
+    "generic": "Not quite right. Divide £0.01 by the put's vega, then express it in vol points.",
+    "byKey": {
+     "frac": "0.017 is the move as a decimal. One vol point is 0.01, so multiply by 100.",
+     "call": "That is the at-the-money call's figure. Use the put's vega, 0.588."
+    }
+   },
+   "explain": {
+    "text": "$0.01 / 0.588 = 0.017$, which is 1.70 vol points against 0.027 at the money. A wing quote is ill-conditioned in absolute terms: one tick of noise moves its implied vol by points. The safeguarded root finder of level 2 meets this again.",
+    "canvas": {
+     "values": {
+      "r1c3": "1.70 vol points"
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The condition number $\\kappa$ is the largest ratio of relative change out to relative change in. It belongs to the problem.",
+   "For a function $\\kappa = |xf'/f|$; for a matrix $\\kappa = \\sigma_{\\max}/\\sigma_{\\min}$. Expect to lose about $\\log_{10}\\kappa$ digits.",
+   "A small residual guarantees a small error only when $\\kappa$ is small."
+  ],
+  "formula": {
+   "name": "Error bound",
+   "tex": "\\dfrac{\\|\\Delta\\mathbf x\\|}{\\|\\mathbf x\\|} \\le \\kappa(\\mathbf A)\\,\\dfrac{\\|\\Delta\\mathbf b\\|}{\\|\\mathbf b\\|}",
+   "note": "$\\kappa(\\mathbf A) = \\|\\mathbf A\\|\\,\\|\\mathbf A^{-1}\\|$; a singular matrix has $\\kappa = \\infty$."
+  },
+  "trap": "A tiny residual is not a right answer. $(0, 2)$ fits our equations to 0.0001 and is wrong in every digit."
+ },
+ "quiz": [
+  {
+   "id": "q-corr-kappa",
+   "difficulty": 2,
+   "prose": "Two trading signals have correlation $r = 0.95$. The `regression` course gave the condition number of $\\begin{bmatrix}1 & r\\\\ r & 1\\end{bmatrix}$ as $\\tfrac{1 + r}{1 - r}$.",
+   "question": "What is it here?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 39,
+    "tol": {
+     "abs": 0.05
+    },
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 0.0256,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "vif",
+      "value": 10.26,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\tfrac{1.95}{0.05} = 39$.",
+    "generic": "Not quite right. Substitute $r = 0.95$ into $\\tfrac{1 + r}{1 - r}$.",
+    "byKey": {
+     "inv": "You divided the other way round. The largest eigenvalue goes on top.",
+     "vif": "That is the variance inflation factor, $\\tfrac{1}{1 - r^2}$. The condition number is $\\tfrac{1 + r}{1 - r}$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{1 + 0.95}{1 - 0.95} = 39$, so a fit on these signals loses about $\\log_{10} 39 \\approx 1.6$ digits. At $r = 0.99$ it would be 199."
+   }
+  },
+  {
+   "id": "q-singular",
+   "difficulty": 3,
+   "prose": "A data error stores signal B as exactly twice signal A, so $r = 1$.",
+   "question": "What is the condition number of the fit?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Infinite: the matrix is singular and there is no unique answer",
+      "correct": true
+     },
+     {
+      "id": "two",
+      "text": "2, from the factor of two",
+      "why": "The factor rescales B, but B still adds nothing A lacks. The columns are dependent."
+     },
+     {
+      "id": "one",
+      "text": "1, since the signals agree perfectly",
+      "why": "Perfect agreement makes the columns dependent, the worst case, not the best."
+     },
+     {
+      "id": "big",
+      "text": "Large but finite, about $10^{16}$",
+      "why": "In exact arithmetic $1 - r = 0$, so the ratio has no finite value."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$\\kappa = \\infty$.",
+    "generic": "Not quite right. Put $r = 1$ into $\\tfrac{1 + r}{1 - r}$."
+   },
+   "explain": {
+    "text": "With $r = 1$ the smallest singular value is 0 and $\\tfrac{1 + r}{1 - r}$ divides by 0. There is no answer to be sensitive about: infinitely many coefficient pairs fit equally well. A computer may still print numbers, which is why you check $\\kappa$ first."
+   }
+  },
+  {
+   "id": "q-kappa-square",
+   "difficulty": 2,
+   "prose": "Take $f(x) = x^2$.",
+   "question": "What is its condition number $\\kappa(x) = \\left|\\tfrac{x f'(x)}{f(x)}\\right|$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\kappa = \\tfrac{x \\cdot 2x}{x^2} = 2$ everywhere.",
+    "generic": "Not quite right. Substitute $f' = 2x$ and simplify.",
+    "byKey": {
+     "half": "That is $\\kappa$ for $\\sqrt x$. Squaring doubles relative errors instead of halving them."
+    }
+   },
+   "explain": {
+    "text": "$x \\cdot 2x / x^2 = 2$: squaring doubles a relative error, wherever $x$ is. That is the mirror of $\\sqrt x$, with $\\kappa = \\tfrac12$."
+   }
+  },
+  {
+   "id": "q-atm-vol",
+   "difficulty": 3,
+   "prose": "The standard call has vega 37.52. Its price is quoted with an error of up to £0.05.",
+   "question": "How many vol points of implied vol error can that cause?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.133,
+    "tol": {
+     "abs": 0.003
+    },
+    "unit": "vol points",
+    "wrong": [
+     {
+      "id": "frac",
+      "value": 0.00133,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.05 / 37.52 = 0.00133$, which is 0.133 vol points.",
+    "generic": "Not quite right. Divide the price error by vega, then multiply by 100.",
+    "byKey": {
+     "frac": "That is the move as a decimal. Multiply by 100 for vol points."
+    }
+   },
+   "explain": {
+    "text": "$0.05 / 37.52 = 0.00133$, or 0.133 vol points. At the money the vol is well conditioned in absolute terms. The same £0.05 on the 60 put would move it 8.5 points."
+   }
+  }
+ ]
+}
