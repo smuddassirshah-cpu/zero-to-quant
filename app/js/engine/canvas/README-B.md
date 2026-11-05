@@ -558,7 +558,7 @@ Sampling: each curve starts with 180 to 240 samples, is subdivided where the ima
 **state**
 - `cells`: replaces the values.
 - `pointers: [{ id, at, label, below, colour }]`. `at` is a displayed index. Pointers that share a cell fan out side by side.
-- `highlight`: ids, or `{ "range": [lo, hi], "label": "..." }` for a wash behind a run of cells.
+- `highlight`: ids, or `{ "range": [lo, hi], "label": "..." }` for a wash behind a run of cells. `{ "ranges": [ { "range": [lo, hi], "label": "vptr", "colour": 2 }, ... ] }` draws several labelled bands at once (an entry may be a bare `[lo, hi]`); `range` is an inclusive pair of cell indices, `colour` a slot number (1 to 4, default 2 for the first band, 3 for the second and so on), `label` text under the band (each band's label sits a line lower), and an optional `id` names the band. `range` and `ranges` can be combined: the single `range` is drawn first in slot 1. Example for three byte ranges: `"highlight": { "ranges": [ { "range": [0, 7], "label": "vptr" }, { "range": [8, 11], "label": "x" }, { "range": [12, 15], "label": "y" } ] }`.
 - `active: [lo, hi]` dims the cells outside it, for example in a binary search. `done: [indices]` draws those cells in slot 3, bold.
 - `swap: [i, j]` (displayed indices) is an action. It animates the two cells along arcs (640 ms) and updates `cells`. In demonstrate steps, give `cells` alongside `swap` so that stepping back and forth stays correct.
 - `selected`.
