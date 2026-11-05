@@ -656,7 +656,7 @@
       tag: (it) => { const n = skillNames(); return (it.skills || []).map(s => n[s] || s).join(', '); },
       emptyTitle: 'Not yet written', emptyText: 'This level review has not been written yet. Use the course map to pick another item.',
       doneTitle: 'Level review done', setTitle: 'Level review',
-      load: () => C().review(cid, id).then(D => { cfg.timed = timedOf(D && D.timed); cfg.pass = D && Number(D.pass) > 0 && Number(D.pass) <= 1 ? Number(D.pass) : ZQ.prereq ? ZQ.prereq.PASS : 0.7; return D; }).then(D => (D && Array.isArray(D.items) ? D.items.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: id, item: it.id || 'q' + i }, source: `Item ${i + 1}` })) : [])),
+      load: () => C().review(cid, id).then(D => { cfg.timed = timedOf(D && D.timed); cfg.pass = D && Number(D.pass) > 0 && Number(D.pass) <= 1 ? Number(D.pass) : ZQ.prereq ? ZQ.prereq.PASS : 0.8; return D; }).then(D => (D && Array.isArray(D.items) ? D.items.map((it, i) => Object.assign({}, it, { skills: it.skills || [], ref: { course: cid, lesson: id, item: it.id || 'q' + i }, source: `Item ${i + 1}` })) : [])),
       record: (items, res, seconds) => {
         const results = items.map((it, j) => res[j] ? resultRow(res[j]) : { id: it.id, ok: false, difficulty: it.difficulty || 3, skills: it.skills || [], ref: it.ref });
         const o = S().reviewFinished({ course: cid, id, results, items: items.length, seconds, pass: cfg.pass }) || {};
@@ -704,7 +704,11 @@
       },
       record: (items, res) => {
         const ok = items.map((it, j) => !!(res[j] && res[j].ok));
-        const right = ok.filter(Boolean).length, passed = right >= need;
+        /* the skill floor (met rule 2): every skill the drawn items carry needs P.SKILL_FLOOR of its items right */
+        const drawn = {};
+        items.forEach((it, j) => (it.skills || []).forEach(sk => { const b = drawn[sk] || (drawn[sk] = [0, 0]); b[1]++; if (ok[j]) b[0]++; }));
+        const low = S().floorGaps(drawn, Object.keys(drawn), P.SKILL_FLOOR), nm = skillNames();
+        const right = ok.filter(Boolean).length, passed = right >= need && !low.length;
         const missed = items.filter((it, j) => !ok[j]);
         const where = (it) => (it.skills || []).map(sk => bySkill[sk]).find(Boolean) || ((lv.lessons || [])[0] ? { id: lv.lessons[0], title: 'the first lesson' } : null);
         S().prereq.testout({ key, score: right, items: items.length, passed, missed: missed.map(it => it.id).filter(Boolean), seen: shownIds });
@@ -712,6 +716,7 @@
         return { badges: [[`${right} of ${items.length}`, 'right'], [need, 'needed to pass']],
           lines: items.map((it, j) => (ok[j] ? '' : (where(it) ? `Revisit ${where(it).title}` : ''))),
           note: passed ? `Level ${n} now counts as met. What depends on it is open.`
+            : right >= need ? `Not passed: enough right, but too few on ${low.map(sk => nm[sk] || sk).join(', ')}. You can retake it after 24 hours.${links.length ? ' Revisit: ' + links.join(', ') + '.' : ''}`
             : `Not passed. You can retake it after 24 hours.${links.length ? ' Revisit: ' + links.join(', ') + '.' : ''}` };
       },
     };

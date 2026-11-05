@@ -1445,3 +1445,10 @@ Status block (engine pass O2):
 - 525 (distractors with no slip): done.
 - 526 (prose and prompt): done.
 - 527 (explain against answer): done.
+
+## Engine pass, item 4 (met rule rewrite)
+
+528. Done (PLAN 2c item 4, N02, N03, F05.1 to .4): met rule rewrite. (1) Review pass fallback 0.8 (`prereq.js` `PASS`, `state.js` `REVIEW_PASS`, matching MASTERY); the review files' own `pass` is written by the main session. (2) `SKILL_FLOOR = 0.7`: a review pass meets its level only when every skill tagged on its items is at the floor over the attempt's auto rows and `skills[s].seen > 0`; the review record keeps `essential`, `bySkill`, `passBySkill`; test-out applies the floor to the skills it drew. (3) `REVEAL_CAP = 0.25`: `state.lessonCounts` (lesson records now keep `revealed` screens and `gradable`) gates `lessonDone`, `lessonMet`, `fullyFinished` and the progress figures; finished lessons stay unlocked and a replay clears the count. (4) Topic and stage exam passes meet a level only when one passing attempt's `bySkillAuto` (new on exam attempts) covers every essential skill at the floor (`content.essentialSkills`, `loadEssentials`). (5) `quizFinished` always queues misses. Tests: `app/tools/test-met-rule.mjs` (10 of 10). Report: `docs/reports/engine-pass-item4.md`.
+
+Status block (engine pass, item 4):
+- 528 (met rule rewrite, N02, N03): done.

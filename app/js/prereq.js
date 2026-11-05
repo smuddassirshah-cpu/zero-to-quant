@@ -19,7 +19,8 @@
 (function () {
   'use strict';
   const DAY = 86400000;
-  const PASS = 0.7;            // review pass share when a review file carries no pass
+  const PASS = 0.8;            // review pass share when a review file carries no pass (matches the quiz MASTERY bar; rule 1)
+  const SKILL_FLOOR = 0.7;     // share every essential skill of a level needs in a review, test-out or exam pass to meet it (rules 2 and 4); state.js holds the same figure for the finish-time check
   const TESTOUT_N = 6;         // items in a test-out
   const RETAKE_H = 24;         // hours before a failed test-out can be retaken
   const REFRESH_D = 30;        // days after which a met prerequisite shows a Refresh chip
@@ -73,23 +74,38 @@
   const examPassedAuto = (id) => C().examPassedAuto(id);
   const examPassedAt = (id) => C().examPassedAt(id);
   const reviewRec = (cid, lv) => { try { return lv.review ? S().reviews[`${cid}/${lv.review}`] || null : null; } catch { return null; } };
+  /* Rule 2: the essential skills of a level are the skills tagged on its review's items; each needs a skill record that has been seen */
+  const essentialsOf = (cid, lv) => {
+    if (!lv.review) return null;
+    const known = C().essentialSkills(cid, lv.review), r = reviewRec(cid, lv);
+    return known || (r && Array.isArray(r.essential) ? r.essential : null);
+  };
+  const seenAll = (skills) => { try { const k = S().skills; return skills.every(s => k[s] && k[s].seen > 0); } catch { return false; } };
   const reviewPassed = (cid, lv) => {
     const r = reviewRec(cid, lv);
     if (!r) return false;
-    if (typeof r.passedAuto === 'boolean') return r.passedAuto;   // self-marked rows left out
+    if (typeof r.passedAuto === 'boolean') return r.passedAuto && (!Array.isArray(r.essential) || seenAll(r.essential));   // self-marked rows left out; passedAuto holds the skill floor from the attempt itself
     if (typeof r.passed === 'boolean') return r.passed;           // a record from before provenance: level reviews hold no self-marked item
     return Number(r.items) > 0 && Number(r.score) / Number(r.items) >= PASS;   // a record from before this pass
   };
   const lessonRec = (cid, id) => { try { return S().lessons[`${cid}/${id}`] || null; } catch { return null; } };
-  const lessonDone = (cid, id) => { const r = lessonRec(cid, id); return !!(r && r.done); };
+  const lessonFinished = (cid, id) => { const r = lessonRec(cid, id); return !!(r && r.done); };   // finished, however it was done: never locks, opens the level
+  const lessonDone = (cid, id) => { const r = lessonRec(cid, id); return !!(r && S().lessonCounts(r)); };   // finished and not over the reveal cap (rule 3): counts for prerequisites and progress
   /* every lesson on the map is written and finished (a half-written level never counts as complete) */
   const fullyFinished = (cid, lv) => { const all = lv.lessons || [], ws = writtenLessons(cid, lv); return all.length > 0 && ws.length === all.length && ws.every(id => lessonDone(cid, id)); };
+  /* Rule 4: a topic or stage exam pass meets a level only when one passing attempt covers every essential skill of the level at SKILL_FLOOR over its auto rows;
+     otherwise the pass is a badge for that level. A level whose essentials are not known yet (its review not loaded) is not met by an exam until they are. */
+  const examMeets = (examId, cid, lv) => {
+    const ess = essentialsOf(cid, lv);
+    if (!ess || !ess.length || !seenAll(ess)) return false;
+    return C().examAutoAttempts(examId).some(a => S().floorGaps(a.bySkillAuto || a.bySkill || {}, ess, SKILL_FLOOR).length === 0);
+  };
   /* met by something other than a record in state.prereq.met */
   const derivedMet = (cid, lv) => {
     if (reviewPassed(cid, lv)) return true;
     const co = doc(cid);
-    if (co && co.topic && examPassedAuto('topic-' + co.topic)) return true;
-    if (co && co.stage != null && examPassedAuto('stage-' + co.stage)) return true;
+    if (co && co.topic && examPassedAuto('topic-' + co.topic) && examMeets('topic-' + co.topic, cid, lv)) return true;
+    if (co && co.stage != null && examPassedAuto('stage-' + co.stage) && examMeets('stage-' + co.stage, cid, lv)) return true;
     if (!lv.review || C().exists(cid, lv.review) === false) return fullyFinished(cid, lv);
     return false;
   };
@@ -101,7 +117,7 @@
   };
   const lessonMet = (cid, id) => {
     const r = lessonRec(cid, id);
-    if (r && r.done && r.mastered) return true;
+    if (r && S().lessonCounts(r) && r.mastered) return true;
     const lv = levelHolding(cid, id);
     return lv ? levelMet(cid, lv.n) : true;
   };
@@ -129,7 +145,7 @@
   /* A level that is met, opened early or started is open as a place to work, whatever its own references say */
   const levelLocked = (cid, n) => !openedEarly(cid, n) && !startedLevel(cid, n) && !levelMet(cid, n) && blocking(levelRefs(cid, n)).some(r => !refMet(r));
   const lessonLocked = (cid, lid) => {
-    if (lessonDone(cid, lid)) return false;
+    if (lessonFinished(cid, lid)) return false;
     const lv = levelHolding(cid, lid);
     if (lv && (openedEarly(cid, lv.n) || startedLevel(cid, lv.n))) return false;
     const d = doc(cid) || {};
@@ -249,6 +265,7 @@
   /* ---------- Recording (grandfathering, persisting what is met) ---------- */
   const allLevels = () => C().allCourses().flatMap(c => (c.levels || []).map(lv => ({ course: c.id, lv })));
   let syncing = false;
+  const preloaded = new Set();   // courses whose review skills were requested for rule 4
   const sync = () => {
     if (syncing || !S() || !C() || !C().curriculum) return;
     syncing = true;
@@ -259,8 +276,11 @@
         S().prereq.grandfather(keys);
       }
       /* a level with a finished lesson is work in progress: its remaining lessons, review and homework stay open (never counted as met) */
-      const begun = allLevels().filter(({ course, lv }) => !(p.started || {})[keyOfLevel(course, lv.n)] && (lv.lessons || []).some(id => lessonDone(course, id))).map(({ course, lv }) => keyOfLevel(course, lv.n));
+      const begun = allLevels().filter(({ course, lv }) => !(p.started || {})[keyOfLevel(course, lv.n)] && (lv.lessons || []).some(id => lessonFinished(course, id))).map(({ course, lv }) => keyOfLevel(course, lv.n));
       if (begun.length) S().prereq.start(begun);
+      /* levels of a course whose topic or stage exam is passed need their reviews' skills (rule 4); load them, then look again */
+      const need = C().allCourses().filter(c => !preloaded.has(c.id) && ((c.topic && examPassedAuto('topic-' + c.topic)) || (c.stage != null && examPassedAuto('stage-' + c.stage)))).map(c => c.id);
+      if (need.length) { need.forEach(id => preloaded.add(id)); Promise.all(need.map(id => C().loadEssentials(id))).then(() => sync()).catch(() => {}); }
       const fresh = allLevels().filter(({ course, lv }) => !p.met[keyOfLevel(course, lv.n)] && derivedMet(course, lv)).map(({ course, lv }) => keyOfLevel(course, lv.n));
       if (fresh.length) S().prereq.mark(fresh, 'derived');
     } catch (e) { console.error(e); }
@@ -286,7 +306,7 @@
     strict, parse, levelRefs, lessonRefs, examRefs, examLocked, levelMet, lessonMet, refMet, levelLocked, lessonLocked, itemLocked, courseLocked, openedEarly, startedLevel,
     advisory, advisoryFor, advisoryForLevel, missingFor, missingForLevel, missingRefs, nodeOf, launchOf, testOutFacts, refreshFor, sync, unlock, unlockRefs, levelHolding, keyOfLevel,
     openedCount: () => Object.keys(rec().opened).length,
-    PASS, TESTOUT_N, RETAKE_H, REFRESH_D,
+    PASS, SKILL_FLOOR, TESTOUT_N, RETAKE_H, REFRESH_D,
   };
   window.ZQ = window.ZQ || {};
   window.ZQ.prereq = api;

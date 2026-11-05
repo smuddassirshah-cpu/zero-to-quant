@@ -96,6 +96,7 @@
     } catch { return []; }
   };
   const examPassedAuto = (id) => autoPasses(id).length > 0;
+  const examAutoAttempts = (id) => autoPasses(id);   // the attempts that count as a pass; met rule 4 reads their bySkillAuto
   const examPassedAt = (id) => autoPasses(id).reduce((m, a) => Math.max(m, Number(a.at) || 0), 0);
   const topicPassed = (tid) => examPassedAuto('topic-' + tid);
   const courseTestedOut = (cid) => { const w = topicOfCourse(cid); return !!w && topicPassed(w.t.id); };
@@ -151,7 +152,11 @@
   };
 
   const lesson = (cid, id) => load(`courses/${cid}/${id}.json`).then(d => { if (d && d.title) lessonCache.set(`${cid}/${id}`, d.title); return d; });
-  const review = (cid, id) => load(`courses/${cid}/${id}.json`);
+  /* The skills tagged on a review's items (the level's essential skills, met rules 2 and 4), kept as reviews load so the met rule can read them without waiting */
+  const essentials = new Map();   // `${cid}/${reviewId}` -> [skill]
+  const review = (cid, id) => load(`courses/${cid}/${id}.json`).then(d => { if (d && Array.isArray(d.items)) essentials.set(`${cid}/${id}`, [...new Set(d.items.flatMap(it => it.skills || []).filter(Boolean))]); return d; });
+  const essentialSkills = (cid, id) => essentials.get(`${cid}/${id}`) || null;
+  const loadEssentials = (cid) => Promise.all(((courseDocs[cid] || {}).levels || []).filter(l => l.review && exists(cid, l.review) !== false).map(l => review(cid, l.review).catch(() => null)));
   const homework = (cid, id) => load(`courses/${cid}/${id}.json`);
   /* true or false from the manifest; null when there is no manifest */
   const examWritten = (id) => (manifest ? manifest.has(`exams/${id}.json`) : null);
@@ -286,7 +291,7 @@
     ready,
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
-    stages, allStages, stage, topic, topicPassed, examPassedAuto, examPassedAt, courseTestedOut, resumeStands, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
+    stages, allStages, stage, topic, topicPassed, examPassedAuto, examAutoAttempts, essentialSkills, loadEssentials, examPassedAt, courseTestedOut, resumeStands, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
     lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills, dataFiles, drillSessionIds, drillSession, isSample, fileList,
     readiness, prep, prepPaths, prepPath, prepRefLessons, prepSteps, prepFor, prepForCourse, prepDetail, prepChip, prepMonth, prepStageLabel: (s) => STAGE_LABEL[s] || s,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */
