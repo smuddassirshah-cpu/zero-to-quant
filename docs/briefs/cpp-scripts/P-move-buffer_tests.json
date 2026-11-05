@@ -1,0 +1,70 @@
+{
+ "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n",
+ "tests": [
+  {
+   "call": "b.size()",
+   "expect": 3,
+   "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);"
+  },
+  {
+   "call": "a.size()",
+   "expect": 0,
+   "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);"
+  },
+  {
+   "call": "b.get(2)",
+   "expect": 1.5,
+   "setup": "Buffer a(3, 1.5); Buffer b = std::move(a);"
+  },
+  {
+   "call": "alloc_count()",
+   "expect": 0,
+   "setup": "Buffer a(1000, 2.0); reset_alloc_count(); Buffer b = std::move(a);"
+  },
+  {
+   "call": "b.size()",
+   "expect": 4,
+   "setup": "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);"
+  },
+  {
+   "call": "a.size()",
+   "expect": 0,
+   "setup": "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);"
+  },
+  {
+   "call": "alloc_count()",
+   "expect": 0,
+   "setup": "Buffer a(1000, 2.0); Buffer b(2, 9.0); reset_alloc_count(); b = std::move(a);"
+  },
+  {
+   "call": "a.size()",
+   "expect": 3,
+   "setup": "Buffer a(3, 4.0); Buffer& r = a; a = std::move(r);"
+  },
+  {
+   "call": "std::is_nothrow_move_constructible_v<Buffer>",
+   "expect": true
+  },
+  {
+   "call": "std::is_nothrow_move_assignable_v<Buffer>",
+   "expect": true
+  },
+  {
+   "call": "alloc_count()",
+   "expect": 2,
+   "setup": "std::vector<Buffer> v; v.reserve(2); v.push_back(Buffer(100, 1.0)); v.push_back(Buffer(100, 2.0)); reset_alloc_count(); v.push_back(Buffer(100, 3.0));"
+  },
+  {
+   "call": "a.get(1)",
+   "expect": 7.0,
+   "setup": "Buffer a(3, 1.0); Buffer b = std::move(a); a = Buffer(2, 7.0);"
+  },
+  {
+   "call": "b.get(3)",
+   "expect": 1.0,
+   "setup": "Buffer a(4, 1.0); Buffer b(2, 9.0); b = std::move(a);"
+  }
+ ],
+ "alloc": true,
+ "leak": true
+}
