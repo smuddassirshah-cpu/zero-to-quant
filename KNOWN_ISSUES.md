@@ -157,3 +157,7 @@ Process found this session:
 
 - (5 Nov) `playthrough.mjs --all --routes-only` fails one check, "samples: #you shows the sample ..." (sample exam names in You exam history after sample mocks are played); reproduced at 41a0f75 with `--exam mock-sample --routes-only`, so it predates item 4. `--routes-only` alone is green. Owner: engine (You screen exam history).
 - (5 Nov) O2 warnings on current content: 1,484 in all; O2-no-slip and O2-explain-answer sample at about 70% precision, so treat their hits as candidates, not findings (`docs/reports/engine-pass-o2.md`).
+
+- (5 Nov) Open user decision, review-perf-pilots Q1: the proof L3 performance task gates met on a Stage 0 level the verb rule excludes (DECISIONS "Performance tasks in force").
+- (5 Nov) ENGINE-BACKLOG 533 (per-case run time), 536 (follow-ups as their own step), 537 (aloud clock reading stored) deferred.
+- (5 Nov) `docs/reports/coding-int-1-perf.md` describes the pre-fix task (`count_prefix`); the fix pass replaced it (add, remove, has, longest_listed, count_match). The review's Fix pass section is current.

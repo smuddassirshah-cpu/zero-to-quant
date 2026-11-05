@@ -92,6 +92,16 @@ check(not any(k in item for k in ('starter', 'steps', 'order', 'derive', 'hints'
 check(len(d['items']) <= 12, 'homework over 12 items')
 check(sum(1 for i in d['items'] if 'performance' in i) == 1, 'more than one performance item')
 
+# 5b. Review Q2 and Q3: the factorisation route and the method-neutral rubric rows.
+check(all(any(x % 3 == 0 for x in (n - 1, n, n + 1)) for n in range(1, 10001)), 'one of n-1, n, n+1 is a multiple of 3')
+check(all(n**3 - n == (n - 1) * n * (n + 1) for n in range(-50, 10001)), 'n^3 - n = (n-1)n(n+1)')
+check(all((n**3 - n) % 3 == 0 for n in range(1, 10001)), 'direct check to 10000')
+check('Factorising: shows one of $n - 1$, $n$ and $n + 1$ is a multiple of 3' in item['rubric'][1]['text'], 'row 2 lacks the factorising route')
+check('Any other method: every $n$ is covered' in item['rubric'][1]['text'], 'row 2 lacks the open clause')
+check('Shows $n^3 - n$ is 3 times an integer' in item['rubric'][3]['text'], 'row 4 not method-neutral')
+check('for an integer $m \\ge 0$' in m and 'whole number $m$' not in m, 'cases proof still says whole number m')
+check(all(n % 3 in (0, 1, 2) and (n == 3 * (n // 3) + n % 3) for n in range(0, 100)) and 1 // 3 == 0 and 2 // 3 == 0, 'm = 0 occurs for n = 1, 2')
+
 # 6. The edited exit-longform remark: n^2 - n + 11 for n = 0..10 and the failure at 11.
 def is_prime(x):
     return x >= 2 and all(x % p for p in range(2, int(x**0.5) + 1))

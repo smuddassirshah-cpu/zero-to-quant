@@ -2,9 +2,10 @@
 
 Run from the repo root: python3 docs/reports/coding-int-1-perf-numbers.py  (exits 0 when all checks pass).
 Each test expectation is computed twice, by two implementations that share no code with each other:
-  A. the item's own `solution` (a trie with counts on the nodes), run under the item's `postlude`;
-  B. an independent reference in this file (a dict of prefix counts plus a set), run under the same postlude.
+  A. the item's own `solution` (a trie with end marks), run under the item's `postlude`;
+  B. an independent reference in this file (a set plus a dict of wildcard masks), run under the same postlude.
 The small cases are also run a third time with a plain set and a scan per query.
+Times (CPython, seconds) are measured for the solution and the scan on test 9 and stated in the item's report.
 """
 import json, os, sys
 
@@ -21,24 +22,32 @@ def check(name, got, want):
     if not ok:
         fails.append(name)
 
-PREFIX_DICT = '''class TickerBook:
+PREFIX_DICT = '''from itertools import product
+class TickerBook:
     def __init__(self):
         self.live = set()
-        self.pre = {}
+        self.mask = {}
+    def _masks(self, t):
+        for pick in product((False, True), repeat=len(t)):
+            yield ''.join('?' if m else c for c, m in zip(t, pick))
     def add(self, t):
         if t in self.live: return
         self.live.add(t)
-        for i in range(len(t) + 1):
-            self.pre[t[:i]] = self.pre.get(t[:i], 0) + 1
+        for m in self._masks(t):
+            self.mask[m] = self.mask.get(m, 0) + 1
     def remove(self, t):
         if t not in self.live: return
         self.live.discard(t)
-        for i in range(len(t) + 1):
-            self.pre[t[:i]] -= 1
+        for m in self._masks(t):
+            self.mask[m] -= 1
     def has(self, t):
         return t in self.live
-    def count_prefix(self, p):
-        return self.pre.get(p, 0)
+    def longest_listed(self, q):
+        for i in range(len(q), 0, -1):
+            if q[:i] in self.live: return q[:i]
+        return None
+    def count_match(self, p):
+        return self.mask.get(p, 0)
 '''
 
 SCAN = '''class TickerBook:
@@ -47,7 +56,11 @@ SCAN = '''class TickerBook:
     def add(self, t): self.s.add(t)
     def remove(self, t): self.s.discard(t)
     def has(self, t): return t in self.s
-    def count_prefix(self, p): return sum(1 for t in self.s if t.startswith(p))
+    def longest_listed(self, q):
+        c = [t for t in self.s if q.startswith(t)]
+        return max(c, key=len) if c else None
+    def count_match(self, p):
+        return sum(1 for t in self.s if len(t) == len(p) and all(a == '?' or a == b for a, b in zip(p, t)))
 '''
 
 def namespace(src):
@@ -88,22 +101,47 @@ for k, t in enumerate(tests, 1):
 import inspect
 check('big_case default n (100,000)', inspect.signature(B['big_case']).parameters['n'].default, 100000)
 
-# scan work in test 9: count steps times live tickers at each, against the trie's O(L) walk
+# scan work in test 9: query steps times live tickers at each, against the trie's walk per step
 def scan_work():
     ns = namespace(PREFIX_DICT)
     book_cls = ns['TickerBook']
-    work = {'count_steps': 0, 'scanned': 0}
-    class Counting(book_cls):
-        def count_prefix(self, p):
-            work['count_steps'] += 1
+    work = {'query_steps': 0, 'scanned': 0}
+    def wrap(name):
+        base = getattr(book_cls, name)
+        def f(self, a):
+            work['query_steps'] += 1
             work['scanned'] += len(self.live)
-            return super().count_prefix(p)
+            return base(self, a)
+        return f
+    class Counting(book_cls):
+        count_match = wrap('count_match')
+        longest_listed = wrap('longest_listed')
     ns['TickerBook'] = Counting
     ns['big_case']()
     return work
 wk = scan_work()
-print('info test 9: count steps', wk['count_steps'], 'tickers scanned by a scan per query', wk['scanned'])
-check('test 9 scan work above 10**8 startswith calls', wk['scanned'] > 10**8, True)
+print('info test 9: query steps', wk['query_steps'], 'tickers scanned by a scan per query', wk['scanned'])
+check('test 9 scan work above 10**8 ticker checks', wk['scanned'] > 10**8, True)
+
+# measured time of test 9 (CPython): the trie against the scan, limit 5 s
+import time
+def timed(src):
+    ns = namespace(src)
+    t0 = time.perf_counter()
+    r = ns['big_case']()
+    return time.perf_counter() - t0, r
+t_trie, r_trie = timed(w['solution'])
+t_mask, r_mask = timed(PREFIX_DICT)
+print('info test 9 time: trie %.2f s, wildcard-mask dict %.2f s (limit 5 s)' % (t_trie, t_mask))
+check('trie passes test 9 inside 5 s', t_trie < 5, True)
+check('test 9 trie and mask reference agree', r_trie, r_mask)
+# the scan, on the first half of the steps only: it already misses the limit, so the whole test does
+ns_scan = namespace(SCAN)
+t0 = time.perf_counter()
+ns_scan['big_case'](50000)
+t_scan_half = time.perf_counter() - t0
+print('info scan per query on the first 50,000 steps: %.2f s (limit 5 s for all 100,000)' % t_scan_half)
+check('a scan per query fails the 5 s limit', t_scan_half > 5, True)
 
 # each byKey line names a slip; the slip, planted in the solution, fails that test
 def first_fail(src):
@@ -117,14 +155,19 @@ def first_fail(src):
     return None
 sol = w['solution']
 MUTANTS = {
-    3: sol.replace("        if self.has(ticker):             # listed already: no change\n            return\n", ""),
-    4: sol.replace("        if not self.has(ticker):         # not listed: no change\n            return\n", "        if self._walk(ticker) is None:\n            return\n"),
-    5: sol.replace("        node['#end'] = False\n", "        node['#end'] = False\n        node.clear(); node['#n'] = 0\n"),
-    7: sol.replace("        if self.has(ticker):             # listed already: no change", "        if self._walk(ticker) is not None:"),
+    # test 4: remove wipes the whole subtree below the ticker
+    4: sol.replace("            node.pop('#', None)          # clear the end mark only", "            node.clear()"),
+    # test 5: remove walks without checking the node exists
+    5: sol.replace("        node = self._walk(ticker)\n        if node:                         # absent: no change\n            node.pop('#', None)          # clear the end mark only",
+                   "        node = self.root\n        for ch in ticker:\n            node = node[ch]\n        node.pop('#', None)"),
 }
 for k, src in MUTANTS.items():
     check(f'slip named by test-{k} byKey is caught first at test {k}', (src != sol, first_fail(src)), (True, k))
-check('byKey names exactly those tests and test 9', sorted(item['feedback']['byKey']), ['test-%d' % k for k in (3, 4, 5, 7, 9)])
+# test 8: a '?' that only tries the first child is caught by a test no later than 8
+m8 = sol.replace("for k, c in node.items() if k != '#')", "for k, c in list(node.items())[:1] if k != '#')")
+check('first-child-only ? is caught by a test up to 8', (m8 != sol, first_fail(m8) is not None and first_fail(m8) <= 8), (True, True))
+check('byKey names exactly tests 4, 5, 8 and 9', sorted(item['feedback']['byKey']), ['test-%d' % k for k in (4, 5, 8, 9)])
+check('item prose and how mention the 5 s limit and 9 tests', ('5 s' in w['how'], 'Check runs 9 hidden tests' in w['how']), (True, True))
 
 print('\n%d failures' % len(fails))
 sys.exit(1 if fails else 0)

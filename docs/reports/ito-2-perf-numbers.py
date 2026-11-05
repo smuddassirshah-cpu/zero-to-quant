@@ -187,6 +187,47 @@ grid = np.linspace(0, 1, 100001)
 trap = float(np.sum((np.exp(grid[1:]) + np.exp(grid[:-1])) / 2 * np.diff(grid)))
 check('int_0^1 e^s ds = e - 1 = 1.71828 by quadrature', abs(trap - (math.e - 1)) < 1e-8, f'{trap:.6f}')
 
+# ---------------------------------------------------------------- 6. the justification of model steps 3 and 4 (review P1)
+# 6a. symbolic: dW ~ N(0, h), so E[dW^2] = h and Var(dW^2) = E[dW^4] - h^2 = 3h^2 - h^2 = 2h^2; n of them add to mean t, variance 2 t h.
+if HAVE_SYMPY:
+    hs, ns_, ts = sp.symbols('h n t', positive=True)
+    zv = sp.symbols('zv', real=True)
+    dens1 = sp.exp(-zv**2 / 2) / sp.sqrt(2 * sp.pi)
+    m2 = sp.integrate(zv**2 * dens1, (zv, -sp.oo, sp.oo))
+    m4 = sp.integrate(zv**4 * dens1, (zv, -sp.oo, sp.oo))
+    check('E[Z^2] = 1 and E[Z^4] = 3', m2 == 1 and m4 == 3)
+    var_one = sp.simplify((m4 - m2**2) * hs**2)                     # Var((dW)^2) for dW = sqrt(h) Z
+    check('Var((dW)^2) = 2 h^2', sp.simplify(var_one - 2 * hs**2) == 0)
+    check('n = t/h terms: mean t and variance 2 t h', sp.simplify(ns_.subs(ns_, ts / hs) * hs - ts) == 0
+          and sp.simplify((ts / hs) * var_one - 2 * ts * hs) == 0)
+# 6b. numeric: many seeded paths on a grid with h = 1/256, t = 1
+rr = np.random.default_rng(21)
+n6, P6 = 256, 20000
+h6 = 1.0 / n6
+dW6 = rr.standard_normal((P6, n6)) * math.sqrt(h6)
+W6 = np.concatenate([np.zeros((P6, 1)), np.cumsum(dW6, axis=1)], axis=1)
+qv6 = np.sum(dW6**2, axis=1)
+se_mean = math.sqrt(2 * h6 / P6)
+check('sum (dW)^2: mean 1 within 4 SE', abs(qv6.mean() - 1) < 4 * se_mean, f'{qv6.mean():.5f}')
+check('sum (dW)^2: variance 2 t h within 5%', abs(qv6.var(ddof=1) / (2 * h6) - 1) < 0.05, f'{qv6.var(ddof=1):.5f} vs {2 * h6:.5f}')
+g6 = np.cos(W6[:, :-1])                                          # bounded (|g| <= 1) and adapted
+wsum = np.sum(g6 * (dW6**2 - h6), axis=1)
+check('weighted sum g((dW)^2 - h): mean 0 within 4 SE', abs(wsum.mean()) < 4 * wsum.std(ddof=1) / math.sqrt(P6), f'{wsum.mean():.2e}')
+check('weighted sum variance is at most 2 sup g^2 t h', wsum.var(ddof=1) <= 2 * 1.0 * 1.0 * h6 * 1.05, f'{wsum.var(ddof=1):.5f} <= {2 * h6:.5f}')
+direct = np.sum(g6 * dW6**2, axis=1)
+riem = np.sum(g6 * h6, axis=1)
+check('sum g (dW)^2 is close to the Riemann sum of g ds', float(np.sqrt(np.mean((direct - riem)**2))) < 3 * math.sqrt(2 * h6), f'rms {float(np.sqrt(np.mean((direct - riem)**2))):.4f}')
+# 6c. step 4 bounds: |sum dt dW| <= t max|dW|, and sum (dt)^2 = t h
+cross6 = np.abs(np.sum(h6 * dW6, axis=1))
+bound6 = 1.0 * np.max(np.abs(dW6), axis=1)
+check('|sum dt dW| <= t max|dW| on every path', bool(np.all(cross6 <= bound6 + 1e-15)))
+check('sum (dt)^2 = t h exactly', abs(n6 * h6**2 - 1.0 * h6) < 1e-15)
+# 6d. the rubric flags: rows 3 and 4 required, others not, and a row 3 that names the reason
+req = [bool(r.get('required')) for r in it['rubric']]
+check('rubric rows 3 and 4 are required, rows 1, 2 and 5 are not', req == [False, False, True, True, False], str(req))
+check('row 3 names mean t and variance 2t dt', 'mean $t$' in it['rubric'][2]['text'] and 'variance $2t\\Delta t' in it['rubric'][2]['text'])
+check('model step 3 states the weighted sum and the variance bound', 'variance at most $2\\sup g^2' in it['model'] and 'f_{xx}b^2' in it['model'])
+
 print()
 if fails:
     print(f'{len(fails)} check(s) failed: ' + '; '.join(fails))

@@ -44,3 +44,25 @@ Read at HEAD `61f3386`. The working tree also holds an uncommitted engine pass (
 - Voice: all four items are clean (method above).
 
 Totals: Must 2 (P1, R1), Should 8 (P2, P3, C1, C2, R2, R3, Q1, Q2), Could 7 (P4, P5, P6, C3, R4, R5, Q3).
+
+## Fix pass
+
+- P1: fixed. Model step 3 now gives mean $t$ and variance $2t\Delta t$ for $\sum(\Delta W)^2$ and the weighted-sum bound (bounded adapted weights, variance at most $2\sup g^2 t\Delta t$). Step 4 bounds $\sum\Delta t\,\Delta W$ and $\sum(\Delta t)^2$. Row 3 names the reasons. Recomputed in `ito-2-perf-numbers.py` section 6 (symbolic and seeded simulation).
+- P2: fixed. `"required": true` on rows 3 and 4 of `h-derive-ito`.
+- P3: fixed. Rows 1 and 4 open with "Tick only if all are stated" and "Tick only if both are given".
+- P4: fixed. Uniform continuity on the bounded set is in step 4.
+- P5: fixed. "adapted (strictly, progressively measurable)" in the setting.
+- P6: not changed (a new check function is more than a one-line fix; the blank box is real production, as the review says).
+- C1: fixed by changing the requirement. `count_prefix` is gone, so no prefix-count dict is the cheaper path. Prose now asks for cost in proportion to the argument length, and test 9 has 29,791 `longest_listed` and `count_match` steps. Measured test 9 (CPython): trie 0.39 s, wildcard-mask dict 1.09 s, a scan per query 5.98 s on only the first 50,000 of 100,000 steps (about 26 s in all). Limit 5 s.
+- C2: fixed. The item is now `add`, `remove`, `has`, `longest_listed(query)` and `count_match(pattern)` with `?` as any one letter. Neither of the last two is solved in l2 (screen 4 is the count_prefix `Trie`; screen 9 is `top_completions`). 9 hidden tests against 2 examples, the starter fails all 9, the solution passes all 9. byKey is now tests 4, 5, 8 and 9 (slips for 4 and 5 verified by mutants in the script).
+- C3: fixed. `how` names only the `count` and `longest` steps and the timing test.
+- R1: fixed. Model, "Said aloud", rows 1 and 3 and the explain text now read "this strong, up or down" and "either way". One-sided 1 in 79 and two-sided 1 in 39.5 are both computed twice in the script.
+- R2: fixed. `"required": true` on rows 1 to 3; row 4 stays optional.
+- R3: fixed. The question is "Start the clock and answer aloud. Then mark your answer against the model." BACKLOG-INBOX:1138 is not closed here (out of my file scope).
+- R4: not changed (reordering items is not a one-line fix).
+- R5: not changed (rubric redesign and the design-choice record belong to the main session).
+- Q1: deferred to user. The proof item stays in place.
+- Q2: fixed. Row 2 covers factorising and any other method; row 4 reads "Shows $n^3 - n$ is 3 times an integer...". Factorisation claim checked for n up to 10,000 in `proof-3-perf-numbers.py`.
+- Q3: fixed. "for an integer $m \ge 0$".
+- Old-value grep: no other copy of the changed figures in the four course folders. Stale text remains in `docs/reports/coding-int-1-perf.md` (it describes `count_prefix`), outside the files this pass may edit.
+- Checks: all four numbers scripts exit 0. `node tools/validate.mjs`: 0 errors. Voice scan on each course folder: 0 and 0 on the four touched files (the remaining hits are in other files). Playthrough `--set` with and without `--mobile` for the four homeworks (local CDN): All passed.

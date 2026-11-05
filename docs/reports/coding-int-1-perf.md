@@ -1,3 +1,5 @@
+> Superseded in part: the fix pass in `docs/reviews/review-perf-pilots.md` (C1, C2) replaced the product and all 9 hidden tests; read that section for the current task.
+
 # coding-int level 1: performance task pilot (PLAN 2c item 5)
 
 Kind `code`. One item added to `app/content/courses/coding-int/homework-1.json`: `h1-ticker-book`, item 2 of 10 (was 9; the AUTHORING limit is 12, so nothing was converted).

@@ -102,91 +102,91 @@
         "ci-patterns"
       ],
       "tags": [
-        "trie"
+        "trie",
+        "wildcard-match"
       ],
       "pace": 1200,
-      "prose": "A desk's search box holds the live list of tickers. Tickers are listed and delisted all day. `add` and `remove` change nothing when the ticker is already listed or is absent. `has` checks a whole ticker, and `count_prefix` counts the listed tickers that start with the prefix.",
-      "question": "Build `TickerBook` on a trie, from the stub.",
+      "prose": "A desk's search box holds the live list of tickers. Tickers are listed and delisted all day. `add` and `remove` change nothing when the ticker is already listed or is absent. `has` checks a whole ticker. `longest_listed(query)` returns the longest listed ticker that is a prefix of `query`, or `None`. `count_match(pattern)` counts the listed tickers that fit `pattern`. A ticker fits when it has the same length and agrees wherever the pattern is not `?`. A `?` stands for any one letter. Each step must take time in proportion to the length of its argument, not to the number of tickers listed.",
+      "question": "Build `TickerBook`, from the stub. A trie keeps every step quick.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "class TickerBook:\n    def __init__(self):\n        pass\n\n    def add(self, ticker):\n        pass\n\n    def remove(self, ticker):\n        pass\n\n    def has(self, ticker):\n        pass\n\n    def count_prefix(self, prefix):\n        pass\n",
-        "solution": "class TickerBook:\n    def __init__(self):\n        self.root = {'#n': 0}            # '#n': tickers at or below this node\n\n    def _walk(self, s):\n        node = self.root\n        for ch in s:\n            node = node.get(ch)\n            if node is None:\n                return None\n        return node\n\n    def has(self, ticker):\n        node = self._walk(ticker)\n        return bool(node and node.get('#end'))\n\n    def add(self, ticker):\n        if self.has(ticker):             # listed already: no change\n            return\n        node = self.root\n        node['#n'] += 1\n        for ch in ticker:\n            node = node.setdefault(ch, {'#n': 0})\n            node['#n'] += 1\n        node['#end'] = True\n\n    def remove(self, ticker):\n        if not self.has(ticker):         # not listed: no change\n            return\n        node = self.root\n        node['#n'] -= 1\n        for ch in ticker:\n            node = node[ch]\n            node['#n'] -= 1\n        node['#end'] = False\n\n    def count_prefix(self, prefix):\n        node = self._walk(prefix)\n        return node['#n'] if node else 0\n",
-        "postlude": "def run_book(ops):\n    book = TickerBook()\n    out = []\n    for op, arg in ops:\n        if op == 'add': book.add(arg)\n        elif op == 'remove': book.remove(arg)\n        elif op == 'has': out.append(book.has(arg))\n        else: out.append(book.count_prefix(arg))\n    return out\n\ndef big_case(n=100000):\n    state = [2026]\n    def rnd(m):\n        state[0] = (state[0] * 6364136223846793005 + 1442695040888963407) % 2**64\n        return (state[0] >> 33) % m\n    def word(lo, hi):\n        return ''.join('ABCDEFGH'[rnd(8)] for _ in range(lo + rnd(hi - lo + 1)))\n    book = TickerBook()\n    total = hits = 0\n    for _ in range(n):\n        r = rnd(10)\n        if r < 5:\n            book.add(word(1, 6))\n        elif r < 6:\n            book.remove(word(1, 6))\n        elif r < 7:\n            if book.has(word(1, 6)):\n                hits += 1\n        else:\n            total += book.count_prefix(word(0, 3))\n    return [total, hits, book.count_prefix('')]\n",
+        "starter": "class TickerBook:\n    def __init__(self):\n        pass\n\n    def add(self, ticker):\n        pass\n\n    def remove(self, ticker):\n        pass\n\n    def has(self, ticker):\n        pass\n\n    def longest_listed(self, query):\n        pass\n\n    def count_match(self, pattern):\n        pass\n",
+        "solution": "class TickerBook:\n    def __init__(self):\n        self.root = {}                   # letter -> child node; '#' marks a listed ticker\n\n    def _walk(self, s):\n        node = self.root\n        for ch in s:\n            node = node.get(ch)\n            if node is None:\n                return None\n        return node\n\n    def has(self, ticker):\n        node = self._walk(ticker)\n        return bool(node and node.get('#'))\n\n    def add(self, ticker):\n        node = self.root\n        for ch in ticker:\n            node = node.setdefault(ch, {})\n        node['#'] = True                 # listed already: nothing changes\n\n    def remove(self, ticker):\n        node = self._walk(ticker)\n        if node:                         # absent: no change\n            node.pop('#', None)          # clear the end mark only\n\n    def longest_listed(self, query):\n        node, best = self.root, None\n        for i, ch in enumerate(query):\n            node = node.get(ch)\n            if node is None:\n                break\n            if node.get('#'):\n                best = query[:i + 1]\n        return best\n\n    def count_match(self, pattern):\n        def go(node, i):\n            if i == len(pattern):\n                return 1 if node.get('#') else 0\n            if pattern[i] == '?':        # any one letter: try every child\n                return sum(go(c, i + 1) for k, c in node.items() if k != '#')\n            child = node.get(pattern[i])\n            return go(child, i + 1) if child else 0\n        return go(self.root, 0)\n",
+        "postlude": "def run_book(ops):\n    book = TickerBook()\n    out = []\n    for op, arg in ops:\n        if op == 'add': book.add(arg)\n        elif op == 'remove': book.remove(arg)\n        elif op == 'has': out.append(book.has(arg))\n        elif op == 'longest': out.append(book.longest_listed(arg))\n        else: out.append(book.count_match(arg))\n    return out\n\ndef big_case(n=100000):\n    state = [2026]\n    def rnd(m):\n        state[0] = (state[0] * 6364136223846793005 + 1442695040888963407) % 2**64\n        return (state[0] >> 33) % m\n    def word(lo, hi):\n        return ''.join('ABCDEFGH'[rnd(8)] for _ in range(lo + rnd(hi - lo + 1)))\n    def pattern():\n        s = list(word(2, 4))\n        for _ in range(1 + rnd(2)):\n            s[rnd(len(s))] = '?'\n        return ''.join(s)\n    book = TickerBook()\n    total = hits = longest = 0\n    for _ in range(n):\n        r = rnd(10)\n        if r < 5:\n            book.add(word(1, 6))\n        elif r < 6:\n            book.remove(word(1, 6))\n        elif r < 7:\n            if book.has(word(1, 6)):\n                hits += 1\n        elif r < 8:\n            longest += len(book.longest_listed(word(1, 8)) or '')\n        else:\n            total += book.count_match(pattern())\n    return [total, hits, longest]\n",
         "examples": [
           {
-            "call": "run_book([('add', 'AAPL'), ('add', 'AMZN'), ('add', 'AMD'), ('has', 'AM'), ('count', 'AM'), ('count', 'A'), ('has', 'AMD')])",
-            "expect": "[False, 2, 3, True]",
+            "call": "run_book([('add', 'AAPL'), ('add', 'AMZN'), ('add', 'AMD'), ('has', 'AM'), ('count', 'AM?'), ('count', 'A???'), ('longest', 'AMDX'), ('longest', 'AMX')])",
+            "expect": "[False, 1, 2, 'AMD', None]",
             "compare": "equal"
           },
           {
-            "call": "run_book([('add', 'IBM'), ('add', 'INTC'), ('remove', 'IBM'), ('has', 'IBM'), ('count', 'I')])",
-            "expect": "[False, 1]",
+            "call": "run_book([('add', 'IBM'), ('add', 'INTC'), ('remove', 'IBM'), ('has', 'IBM'), ('count', 'I??'), ('count', 'I???')])",
+            "expect": "[False, 0, 1]",
             "compare": "equal"
           }
         ],
         "tests": [
           {
-            "call": "run_book([('add', 'AAPL'), ('add', 'AMZN'), ('add', 'AMD'), ('has', 'AM'), ('count', 'AM'), ('count', 'A'), ('has', 'AMD')])",
-            "expect": "[False, 2, 3, True]",
+            "call": "run_book([('add', 'AAPL'), ('add', 'AMZN'), ('add', 'AMD'), ('has', 'AM'), ('count', 'AM?'), ('count', 'A???'), ('longest', 'AMDX'), ('longest', 'AMX')])",
+            "expect": "[False, 1, 2, 'AMD', None]",
             "compare": "equal"
           },
           {
-            "call": "run_book([('add', 'IBM'), ('add', 'INTC'), ('remove', 'IBM'), ('has', 'IBM'), ('count', 'I')])",
-            "expect": "[False, 1]",
+            "call": "run_book([('add', 'IBM'), ('add', 'INTC'), ('remove', 'IBM'), ('has', 'IBM'), ('count', 'I??'), ('count', 'I???')])",
+            "expect": "[False, 0, 1]",
             "compare": "equal"
           },
           {
-            "call": "run_book([('add', 'MSFT'), ('add', 'MSFT'), ('count', 'M'), ('remove', 'MSFT'), ('has', 'MSFT'), ('count', 'M')])",
+            "call": "run_book([('add', 'MSFT'), ('add', 'MSFT'), ('count', '????'), ('remove', 'MSFT'), ('remove', 'MSFT'), ('has', 'MSFT'), ('count', '????')])",
             "expect": "[1, False, 0]",
             "compare": "equal"
           },
           {
-            "call": "run_book([('add', 'AAPL'), ('remove', 'GOOG'), ('remove', 'AA'), ('count', 'AA'), ('has', 'AAPL'), ('count', '')])",
-            "expect": "[1, True, 1]",
+            "call": "run_book([('add', 'BA'), ('add', 'BAC'), ('remove', 'BA'), ('has', 'BA'), ('has', 'BAC'), ('longest', 'BAC'), ('longest', 'BAD'), ('count', 'BA?'), ('count', 'B??')])",
+            "expect": "[False, True, 'BAC', None, 1, 1]",
             "compare": "equal"
           },
           {
-            "call": "run_book([('add', 'BA'), ('add', 'BAC'), ('remove', 'BA'), ('has', 'BA'), ('has', 'BAC'), ('count', 'BA'), ('count', 'B')])",
-            "expect": "[False, True, 1, 1]",
+            "call": "run_book([('add', 'AAPL'), ('remove', 'GOOG'), ('remove', 'AA'), ('has', 'AAPL'), ('longest', 'AAPLX'), ('longest', 'AA'), ('count', 'AA??')])",
+            "expect": "[True, 'AAPL', None, 1]",
             "compare": "equal"
           },
           {
-            "call": "run_book([('count', ''), ('has', 'X'), ('count', 'X')])",
-            "expect": "[0, False, 0]",
+            "call": "run_book([('count', '???'), ('count', ''), ('longest', 'X'), ('has', 'X')])",
+            "expect": "[0, 0, None, False]",
             "compare": "equal"
           },
           {
-            "call": "run_book([('add', 'C'), ('remove', 'C'), ('count', 'C'), ('add', 'C'), ('has', 'C'), ('count', 'CA'), ('add', 'CAT'), ('count', 'C')])",
-            "expect": "[0, True, 0, 2]",
+            "call": "run_book([('add', 'C'), ('remove', 'C'), ('longest', 'CA'), ('add', 'C'), ('has', 'C'), ('longest', 'CAT'), ('add', 'CAT'), ('longest', 'CATX'), ('longest', 'CA'), ('count', '?')])",
+            "expect": "[None, True, 'C', 'CAT', 'C', 1]",
             "compare": "equal"
           },
           {
-            "call": "run_book([('add', 'GS'), ('has', 'GSX'), ('count', 'GSX'), ('has', 'G')])",
-            "expect": "[False, 0, False]",
+            "call": "run_book([('add', 'GS'), ('add', 'GM'), ('add', 'MS'), ('add', 'GSK'), ('count', '?S'), ('count', 'G?'), ('count', '??'), ('count', 'G?K'), ('count', '?S?'), ('count', '???'), ('count', 'S?')])",
+            "expect": "[2, 2, 3, 1, 1, 1, 0]",
             "compare": "equal"
           },
           {
             "call": "big_case()",
-            "expect": "[90388604, 5169, 18841]",
+            "expect": "[366061, 5244, 27956]",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 9 hidden tests through `run_book(ops)`, where a `count` step calls `count_prefix`. They cover a repeated add, an absent ticker, and a ticker that begins another. Test 9 plays 100,000 random steps and must finish within 5 s."
+        "how": "Check runs 9 hidden tests through `run_book(ops)`, where a `count` step calls `count_match` and a `longest` step calls `longest_listed`. Test 9 plays 100,000 random steps and must finish within 5 s."
       },
       "feedback": {
-        "correct": "Counts on the nodes answer each step in one walk, $O(L)$ for a ticker of length $L$.",
+        "correct": "One walk down the trie answers each step, branching only at a `?`.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-3": "Test 3 adds `MSFT` twice. A repeated add must not raise the counts.",
-          "test-4": "Test 4 removes `GOOG` and `AA`, which are not listed. Ask `has` before you lower any count.",
-          "test-5": "Test 5 removes `BA` while `BAC` stays. Clear the end mark only; the nodes still carry `BAC`.",
-          "test-7": "Test 7 lists `C` again after removing it. The end mark must come back on.",
-          "test-9": "Test 9 timed out or drifted. A scan of every ticker per query is too slow; walk the trie."
+          "test-4": "Test 4 removes `BA` while `BAC` stays. Clear the end mark only; the nodes below still carry `BAC`.",
+          "test-5": "Test 5 removes `GOOG` and `AA`, which are not listed. Check that the walk reaches a node before you touch it.",
+          "test-8": "Test 8 puts `?` first, in the middle and last. A `?` tries every child, and the pattern must end where the ticker ends.",
+          "test-9": "Test 9 timed out. Scanning every ticker per query is too slow; follow the pattern down the trie and branch only at a `?`."
         }
       },
       "explain": {
-        "text": "Each node keeps how many listed tickers pass through it, so `count_prefix` is one walk. `add` and `remove` ask `has` first, so a repeat or an absent ticker leaves the counts alone. A scan per query costs $O(nq)$; the trie costs $O(L)$ per step."
+        "text": "Each ticker is a path with an end mark, so `has` and `longest_listed` are one walk. A `?` branches into every child, so the work grows with the question marks, not with the tickers listed. A scan per query costs $O(n)$ for $n$ tickers listed."
       }
     },
     {

@@ -29,6 +29,12 @@ N = 400_000
 p2 = sum(abs(rng.gauss(0, 1)) >= t for _ in range(N)) / N
 check('two-sided p', p1, p2, 0.025, 0.002, 0.0005)
 check('one time in 40 (1/p, p = 0.025 as stated)', 1 / 0.025, 40.0, 40, 1e-12, 0)
+# Review R1: p is two-sided, so "one time in 40" counts results this strong either way; "this good" alone (one-sided) is 1 in 79.
+one_sided = 1 - Phi(t)
+one_sided_sim = sum(rng.gauss(0, 1) >= t for _ in range(N)) / N
+check('one-sided p is half the two-sided p (1 time in 79)', one_sided, one_sided_sim, 0.0127, 0.001, 0.0005)
+check('one-sided odds, 1 in 79', 1 / one_sided, 1 / one_sided_sim, 79, 4, 0.5)
+check('two-sided odds, 1 in 39.5 (stated as 1 in 40)', 1 / p1, 1 / p2, 40, 1.5, 1)
 
 # 2. Power against a true Sharpe of 1 over five years, 5% two-sided (critical value 1.96).
 z = 1.959963984540054
@@ -96,11 +102,20 @@ if pts != 10: fails.append('rubric')
 if item.get('performance') != 'aloud' or not (15 <= w['seconds'] <= 1800) or not (1 <= len(w['followUps']) <= 5):
     fails.append('aloud shape')
 text = w['prompt'] + w['model'] + ' '.join(r['text'] for r in w['rubric']) + item['explain']['text']
-for figure in ['0.025', '0.61', '0.0025', '40', 'four times in ten', 'six times in ten', 'eight years', '2.24', '2.8', '7.84', 'tenfold', 'all twenty are under 0.05']:
+for figure in ['up or down', 'either way', '0.025', '0.61', '0.0025', '40', 'four times in ten', 'six times in ten', 'eight years', '2.24', '2.8', '7.84', 'tenfold', 'all twenty are under 0.05']:
     hit = figure in text
     print(f"{'ok  ' if hit else 'FAIL'} the item quotes {figure!r}")
     if not hit: fails.append('quote ' + figure)
 
+req = [bool(r.get('required')) for r in w['rubric']]
+print(f"{'ok  ' if req == [True, True, True, False] else 'FAIL'} rubric rows 1 to 3 required, row 4 optional {req}")
+if req != [True, True, True, False]: fails.append('required rows')
+qok = 'type one line' not in item['question'] and 'Mark button' not in item['question']
+print(f"{'ok  ' if qok else 'FAIL'} question carries no notes workaround")
+if not qok: fails.append('workaround')
+bad = [s for s in ('this good one time', 'this good about four') if s in text]
+print(f"{'ok  ' if not bad else 'FAIL'} no 'this good' misreading of the two-sided p {bad}")
+if bad: fails.append('this good')
 if fails:
     print('FAILED:', ', '.join(fails))
     sys.exit(1)

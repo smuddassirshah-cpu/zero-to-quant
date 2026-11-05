@@ -126,3 +126,9 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 - `SKILL_FLOOR = 0.7`: a review, test-out, topic or stage pass meets a level only when every skill tagged on that level's review items is at the floor over the attempt's auto rows and `skills[s].seen > 0`. Floors read `skills[s]`, never `state.selfMarked`.
 - `REVEAL_CAP = 0.25`: a lesson with more than a quarter of its gradable screens revealed does not count as done for prerequisites or progress figures; an honest replay restores it.
 - Old review records with `passedAuto: true` and no `essential` stay met (nothing unlocked locks again). Topic and stage exam `pass` stays 0.7; the coverage floor is what changed.
+
+### Performance tasks in force; freeze lifted (5 Nov, PLAN 2c item 5)
+- 2c items 1 to 5 are ticked, so the freeze (DECISIONS "Freeze") is lifted. New levels must carry a performance task where the verb rule matches; the validator errors otherwise.
+- Grandfathering: the 111 rule-matched levels written before item 5 sit in `app/tools/perf-pending.json` (108 after the pilots) and warn instead of error. Content agents never edit it; the main session runs `node app/tools/perf-pending.mjs --prune` after a merge. Reason: keep the validator at 0 errors while the retrofit runs (about 25 to 30 levels a session).
+- A task gates met as an extra AND condition: auto kinds need an auto pass; self kinds need a submitted mark at the rubric pass, with `required` rows; a self mark never meets a level alone.
+- Open (user): proof L3 carries a voluntary task on a Stage 0 level the rule excludes, so analysis and linear-maps now wait on a self-marked proof (review-perf-pilots Q1). Keep the gate, or make tasks on unmatched levels practice-only.
