@@ -15,6 +15,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { scanO2, O2_CODES } from './o2-rules.mjs';
 const cmap = createRequire(import.meta.url)('../js/engine/canvas/complex-map.js'); // { compile }: formula check for complex-map (item 432)
 const tradeSim = createRequire(import.meta.url)('../js/engine/widgets/trade.js'); // { norm, play, ... }: the trade widget's game, so the authored strategy is played against the benchmark (item 459)
 const interleaveEngine = createRequire(import.meta.url)('../js/engine/canvas/interleave.js'); // { check, idsOf, ... }: the interleave canvas's spec rules, schedule replay and enumeration limit (item 471)
@@ -2053,6 +2054,16 @@ const wu = readJSON(path.join(CONTENT, 'warmup.json'));
 if (wu.missing) warn(path.join(CONTENT, 'warmup.json'), '', 'warmup.json is missing');
 else if (wu.data) { req(path.join(CONTENT, 'warmup.json'), '', wu.data, ['seconds', 'operations']); }
 
+/* O2 rules (ENGINE-BACKLOG 523 to 527): recurring finding classes, warnings only, one code each */
+const o2Counts = Object.fromEntries(O2_CODES.map(c => [c, 0]));
+{
+  const walkJSON = function* (d) { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const q = path.join(d, e.name); if (e.isDirectory()) yield* walkJSON(q); else if (e.name.endsWith('.json') && e.name !== 'manifest.json') yield q; } };
+  for (const f of walkJSON(CONTENT)) {
+    let j; try { j = JSON.parse(fs.readFileSync(f, 'utf8')); } catch { continue; }
+    scanO2(j, (code, where, msg) => { o2Counts[code]++; warn(f, where, `[${code}] ${msg}`); });
+  }
+}
+
 /* ---------- Output ---------- */
 const errors = problems.filter(p => p.level === 'error'), warnings = problems.filter(p => p.level === 'warning');
 for (const p of [...errors, ...warnings]) console.log(`${p.level.padEnd(7)} ${p.file}${p.where ? '  ' + p.where : ''}: ${p.msg}`);
@@ -2078,5 +2089,6 @@ if (!errors.length && WRITE_MANIFEST) {
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }
+console.log('\nO2 warnings: ' + O2_CODES.map(c => `${c} ${o2Counts[c]}`).join(', '));
 console.log(`\n${errors.length} error${errors.length === 1 ? '' : 's'}, ${warnings.length} warning${warnings.length === 1 ? '' : 's'}`);
 process.exit(errors.length ? 1 : 0);
