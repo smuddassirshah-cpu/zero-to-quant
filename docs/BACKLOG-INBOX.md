@@ -1158,3 +1158,7 @@ Raised later (odes level 1):
 
 Raised later (odes level 2):
 - [Could] `plane` curve formulas have no conditional, so one curve whose closed form changes with a slider (under-, critically and over-damped $y'' + by' + 4y = 0$) needs `exprs` with `index` set by a `derive` rule (`"params.k": "abs(b - 4) < 0.001 ? 1 : (b < 4 ? 0 : 2)"`). Worked in odes l9 screens 1 to 4. Wanted: a `trajectory` for second-order equations in time (a field in $(t, y, y')$ plotted as $y$ against $t$), or `if(c, a, b)` in curve formulas.
+
+Raised later (odes level 3):
+- [Could] Validator ladder rule (`tools/validate.mjs`, the "reuses the previous canvas kind" warning): `matrix` is not among the views that pair naturally, so a ladder that moves from a `matrix` (eigenvectors, constants) to a `plane` of the same solution warns. Workaround in odes l10: screens 4 and 6 are `problem` screens, leaving one ladder. Wanted: `matrix` beside `plane`, `table` and `vectors` counted as natural.
+- [Should] `tools/o2-rules.mjs` does not scan `widget.how`, `summary.ideas`, `order` line text or longform `model`, while `docs/reviews/voice-scan.py` does: each odes level had 4 to 8 sentences over 20 words there that the validator passed. Workaround: ran the voice scan per level and split them. Wanted: the O2 long-sentence rule over the same fields as the voice scan.
