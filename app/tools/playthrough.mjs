@@ -1671,7 +1671,8 @@ const main = async () => {
         if (ord && (JSON.stringify(ord.a) !== JSON.stringify(ord.want) || JSON.stringify(ord.b) !== JSON.stringify(ord.want))) fails.push(`missingRefs groups by list order: ${JSON.stringify(ord)}`);
         {
           const closure = new Set(), cache = {}, courseDoc = (c) => (cache[c] = cache[c] || readJSON(path.join(CONTENT, 'courses', c, 'course.json')));
-          const refsOfLevel = (c, n) => { const lvs = courseDoc(c).levels, lv = lvs.find(x => x.n === n), i = lvs.indexOf(lv); return Array.isArray(lv.requires) ? lv.requires : i > 0 ? [`${c}/L${lvs[i - 1].n}`] : []; };
+          const { refsOf } = (await import('node:module')).createRequire(import.meta.url)('../js/prereq.js');   // the one requires normaliser (ENGINE-BACKLOG 551): gating strings, objects allowed
+          const refsOfLevel = (c, n) => { const lvs = courseDoc(c).levels, lv = lvs.find(x => x.n === n), i = lvs.indexOf(lv); return Array.isArray(lv.requires) ? refsOf(lv.requires) : i > 0 ? [`${c}/L${lvs[i - 1].n}`] : []; };
           const walk = (refs) => refs.forEach(r => {
             const m = /^([^/]+)\/(.+)$/.exec(r), c = m[1];
             const n = /^L\d+$/.test(m[2]) ? +m[2].slice(1) : courseDoc(c).levels.find(x => (x.lessons || []).includes(m[2])).n;
@@ -1680,9 +1681,45 @@ const main = async () => {
             closure.add(k); walk(refsOfLevel(c, n));
           });
           const lcd = courseDoc(lc), llv = lcd.levels.find(x => (x.lessons || []).includes(ll));
-          walk((lcd.lessonRequires && lcd.lessonRequires[ll]) || refsOfLevel(lc, llv.n));
+          walk((lcd.lessonRequires && lcd.lessonRequires[ll] && refsOf(lcd.lessonRequires[ll])) || refsOfLevel(lc, llv.n));
           const got = await evalOnly(([c, l]) => { const m = ZQ.prereq.missingFor(c, l); return m.direct.concat(m.indirect).map(n => `${n.course}/L${n.n}`); }, [lc, ll]);
           if (JSON.stringify([...closure].sort()) !== JSON.stringify([...new Set(got)].sort())) fails.push(`${locked3}: the card lists ${new Set(got).size} levels, the closure computed from course.json has ${closure.size}`);
+        }
+        /* 7d2. Route limitation (ENGINE-BACKLOG 551): the gating closure of a course (gate: false left out, own course excluded) reaches courses with a level that has no
+           written lesson; the engine's list equals one computed here from course.json and the lesson files, and Learn shows "Route limited:" on such a course's card */
+        {
+          const cache = {}, courseDoc = (c) => (cache[c] = cache[c] || (fs.existsSync(path.join(CONTENT, 'courses', c, 'course.json')) ? readJSON(path.join(CONTENT, 'courses', c, 'course.json')) : null));
+          const { refsOf } = (await import('node:module')).createRequire(import.meta.url)('../js/prereq.js');
+          const written = (c, lv) => (lv.lessons || []).some(id => fs.existsSync(path.join(CONTENT, 'courses', c, id + '.json')));
+          const levelRefs = (c, lv, i, lvs) => (Array.isArray(lv.requires) ? refsOf(lv.requires) : i > 0 ? [`${c}/L${lvs[i - 1].n}`] : []).concat((lv.lessons || []).flatMap(l => (courseDoc(c).lessonRequires && courseDoc(c).lessonRequires[l]) ? refsOf(courseDoc(c).lessonRequires[l]) : []));
+          const expect = (self) => {
+            const seen = new Set(), bad = new Set();
+            const visit = (ref) => {
+              const m = /^([^/]+)\/(.+)$/.exec(ref), c = m && m[1], d = c && courseDoc(c);
+              if (!d) return;
+              const lvs = d.levels || [], i = lvs.findIndex(x => /^L\d+$/.test(m[2]) ? x.n === +m[2].slice(1) : (x.lessons || []).includes(m[2]));
+              if (i < 0 || seen.has(`${c}/${lvs[i].n}`)) return;
+              seen.add(`${c}/${lvs[i].n}`);
+              if (c !== self && !written(c, lvs[i])) bad.add(c);
+              levelRefs(c, lvs[i], i, lvs).forEach(visit);
+            };
+            const sd = courseDoc(self);
+            (sd.levels || []).forEach((lv, i, lvs) => levelRefs(self, lv, i, lvs).forEach(visit));
+            return [...bad].sort();
+          };
+          const ids = cur.stages.flatMap(st => st.topics.flatMap(t => t.courses || [])).filter(c => courseDoc(c));
+          const got = await evalOnly((cs) => Object.fromEntries(cs.map(c => [c, ZQ.prereq.routeLimitsForCourse(c).map(x => x.course).sort()])), ids);
+          const diff = ids.filter(c => JSON.stringify(got[c]) !== JSON.stringify(expect(c)));
+          if (diff.length) fails.push(`route limitation differs from course.json for ${diff.slice(0, 5).join(', ')}${diff.length > 5 ? ` and ${diff.length - 5} more` : ''} (engine ${JSON.stringify(got[diff[0]])}, files ${JSON.stringify(expect(diff[0]))})`);
+          const lim = ids.includes('pdes') && got.pdes.length ? 'pdes' : ids.find(c => got[c].length);
+          if (lim) {
+            await route('learn');
+            const stg = cur.stages.find(st => st.topics.some(t => (t.courses || []).includes(lim)));
+            await evalOnly((n) => { const b = (sel) => document.querySelector(sel); if (b('.zl-view [data-view="courses"]')) b('.zl-view [data-view="courses"]').click(); if (b('.zl-tab[data-tab="all"]')) b('.zl-tab[data-tab="all"]').click(); if (b(`.zl-stages [data-stage="${n}"]`)) b(`.zl-stages [data-stage="${n}"]`).click(); }, stg.id);
+            await page.waitForTimeout(400);
+            const card = await evalOnly((c) => { const el = document.querySelector(`.zl-card[data-course="${c}"] .zl-route`); return el ? el.textContent : null; }, lim);
+            if (card === null || !/^Route limited: .+ unwritten$/.test(card)) fails.push(`Learn: the ${lim} card should show "Route limited: <course> unwritten" (got ${JSON.stringify(card)})`);
+          }
         }
         /* 7e. A test-out remembers the items it showed, across attempts */
         const sn = await evalOnly(() => { const k = 'gating-probe/L1'; ZQ.state.prereq.testout({ key: k, score: 0, items: 2, passed: false, seen: ['a', 'b'] }); ZQ.state.prereq.testout({ key: k, score: 0, items: 2, passed: false, seen: ['b', 'c'] }); return ZQ.state.prereq.get().testouts[k].seen; });

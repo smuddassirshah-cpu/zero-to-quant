@@ -8,8 +8,10 @@
 // courses in proportion to mapped lessons. Written means the lesson file exists on disk.
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
+const { refsOf } = createRequire(import.meta.url)('../js/prereq.js');   // the one requires normaliser (ENGINE-BACKLOG 551): gating strings only, diagnostics never count as edges
 const APP = join(dirname(fileURLToPath(import.meta.url)), '..');
 const C = join(APP, 'content');
 const MD = join(APP, '..', 'docs', 'readiness.md');
@@ -41,7 +43,7 @@ for (const id of readdirSync(join(C, 'courses')).sort()) {
   const c = { id, topic: cj.topic, stage: topicStage[cj.topic], mapped: 0, written: 0, edges: [] };
   for (const lv of cj.levels ?? []) {
     for (const l of lv.lessons ?? []) { c.mapped++; if (existsSync(join(C, 'courses', id, `${l}.json`))) c.written++; }
-    for (const r of lv.requires ?? []) {
+    for (const r of refsOf(lv.requires)) {
       const [to, tl] = String(r).split('/');
       if (to !== id) c.edges.push({ from: id, level: lv.n, to, toLevel: tl });
     }

@@ -65,16 +65,24 @@
         const P = Z.prereq, w = st.lessons.filter(l => l.written === true && !done(l));
         if (!P || !w.length || !w.every(l => P.lessonLocked(l.course, l.id))) return null;
         const m = P.missingFor(w[0].course, w[0].id), nd = (m.start && m.start.node) || m.direct[0];
-        return nd ? { text: nd.kind === 'lesson' ? nd.name : `${nd.courseName}, level ${nd.n}`, count: m.count, first: w[0] } : { text: 'a prerequisite', count: 1, first: w[0] };
+        return nd ? { text: nd.kind === 'lesson' ? nd.name : `${nd.courseName}, level ${nd.n}`, why: nd.why || '', count: m.count, first: w[0] } : { text: 'a prerequisite', why: '', count: 1, first: w[0] };
       };
+      /* Route limitation (ENGINE-BACKLOG 551): courses in the step's gating closure with a level that has no written lesson */
+      const limitsOf = (st) => {
+        const P = Z.prereq;
+        if (!P || !P.routeLimitsForCourse) return [];
+        const [cid, rest] = st.ref.split('/'), lv = /^level-(\d+)$/.exec(rest || '');
+        return lv ? P.routeLimitsForLevel(cid, +lv[1]) : P.routeLimitsForCourse(cid);
+      };
+      const pathLimits = (steps) => { const by = new Map(); steps.forEach(st => limitsOf(st).forEach(c => by.set(c.course, c))); return [...by.values()]; };
       const stepRow = (st, i) => {
-        const s = stepState(st.lessons), { title, sub } = stepTitle(st), lk = lockOf(st);
+        const s = stepState(st.lessons), { title, sub } = stepTitle(st), lk = lockOf(st), lims = limitsOf(st);
         const w = st.lessons.filter(l => l.written === true), d = st.lessons.filter(done).length, nw = st.lessons.length - w.length;
         const course = C.course(st.ref.split('/')[0]) || {};
         const facts = [plural(st.lessons.length, 'lesson', 'lessons')];
         if (w.length) facts.push(`${d} done`);
         if (nw) facts.push(`${nw} not yet written`);
-        const label = `Step ${i + 1}: ${title}, ${sub}. ${st.priority === 'must' ? 'Must do' : 'Should do'}. ${STATE[s][0]}. ${lk ? `Locked, first missing: ${lk.text}. ` : ''}${facts.join(', ')}.`;
+        const label = `Step ${i + 1}: ${title}, ${sub}. ${st.priority === 'must' ? 'Must do' : 'Should do'}. ${STATE[s][0]}. ${lk ? `Locked, first missing: ${lk.text}. ` : ''}${lims.map(c => Z.prereq.routeText(c) + '. ').join('')}${facts.join(', ')}.`;
         return `<li class="pp-step is-${s}${lk ? ' is-locked' : ''}" data-track="${esc(course.track || 'prob')}">
           <span class="pp-n tnum" aria-hidden="true">${i + 1}</span>
           <div class="pp-step-b">
@@ -87,6 +95,8 @@
               <span class="pp-facts tnum">${esc(facts.join(' · '))}</span>
             </div>
             ${lk ? `<p class="t-caption secondary pp-lock">First missing: ${esc(lk.text)}${lk.count > 1 ? ` (and ${lk.count - 1} more)` : ''}. <a href="#lesson/${esc(lk.first.course)}/${esc(lk.first.id)}">See what is missing</a></p>` : ''}
+            ${lk && lk.why ? `<p class="t-caption secondary pp-lock-why">${esc(lk.why)}</p>` : ''}
+            ${lims.length && Z.routeLimited ? `<div class="rl-row">${Z.routeLimited(lims, esc)}</div>` : ''}
             <p class="t-body secondary pp-why">${esc(st.why)}</p>
           </div></li>`;
       };
@@ -145,6 +155,7 @@
             ${p.description ? `<p class="t-body secondary">${esc(p.description)}</p>` : ''}
             ${src ? `<p class="t-caption muted">Source: <a href="#course/${esc(src.course)}">${esc(src.name)}</a>. Formats come from candidate reports and change.</p>` : ''}
           </div>
+          ${pathLimits(steps).length && Z.routeLimited ? `<div class="rl-row pp-limits">${Z.routeLimited(pathLimits(steps), esc)}<span class="t-caption muted">Some steps lead through lessons not written yet, so the route cannot be finished today.</span></div>` : ''}
           ${steps.length ? `<div class="pp-prog"><div class="bar thin track" role="progressbar" aria-label="Steps done" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>
             <span class="t-caption muted tnum">${ds} of ${plural(steps.length, 'step', 'steps')} done</span></div>
           <ol class="pp-steps">${steps.map(stepRow).join('')}</ol>` : '<p class="t-body secondary pp-none">No steps are written for this path yet.</p>'}

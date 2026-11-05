@@ -678,7 +678,15 @@
     const refreshStrip = () => {
       let refresh = [];
       try { refresh = Z.prereq ? Z.prereq.refreshFor(course, lessonId) : []; } catch (e) { console.error(e); }
-      return refresh.length ? h(`<p class="lsn-refresh">${refresh.map(r => `<a class="rf-chip" href="#review/${Z.esc(r.course)}/${Z.esc(r.review)}" title="You have not reviewed it for ${r.days >= 999 ? 'a while' : r.days + ' days'}">${icon('replay', 'xs')}Refresh ${Z.esc(r.name)}</a>`).join(' ')}</p>`) : null;
+      const refreshP = refresh.length ? h(`<p class="lsn-refresh">${refresh.map(r => `<a class="rf-chip" href="#review/${Z.esc(r.course)}/${Z.esc(r.review)}" title="You have not reviewed it for ${r.days >= 999 ? 'a while' : r.days + ' days'}">${icon('replay', 'xs')}Refresh ${Z.esc(r.name)}</a>`).join(' ')}</p>`) : null;
+      /* ENGINE-BACKLOG 551: unmet diagnostic requires (gate: false) as "Check first" lines, and the route label; neither locks */
+      let notes = '';
+      try { if (Z.prereq && Z.checkFirst) notes = Z.checkFirst(Z.prereq.diagnosticsFor(course, lessonId), Z.esc) + (Z.routeLimited ? `<div class="rl-row">${Z.routeLimited(Z.prereq.routeLimitsForLesson(course, lessonId), Z.esc)}</div>` : ''); } catch (e) { console.error(e); }
+      if (!notes.replace(/<div class="rl-row"><\/div>/, '')) return refreshP;
+      const box = h(`<div class="lsn-notes">${notes}</div>`);
+      if (!refreshP) return box;
+      const wrap = h('<div></div>'); wrap.append(refreshP, box);
+      return wrap;
     };
     const lessonFactory = (i) => () => {
       if (i === SUMMARY) return summaryStep();

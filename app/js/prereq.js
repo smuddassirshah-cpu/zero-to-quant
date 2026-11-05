@@ -15,7 +15,13 @@
    every level found met in state.prereq.met, so nothing that was unlocked locks again. A met level is also open as a place
    to work (its lessons, review and homework), even when its own references are unmet: it was met by mastery shown. Lessons
    already done, reviews or levels opened early, and levels the learner has started (a finished lesson, state.prereq.started,
-   not counted as met for dependants) are never locked either. */
+   not counted as met for dependants) are never locked either.
+
+   Entries (ENGINE-BACKLOG 551). A requires entry is a plain string, or { "ref": "<course>/L<n>" | "<course>/<lesson-id>", "why": "<one line>" },
+   optionally with "gate": false: a diagnostic that never locks, shown as "Check first" with its reason and a link to sit that level's review.
+   entryOf and entriesOf are the one normaliser; refsOf returns the gating strings, whyOf the reason for a ref. Every reader of requires goes
+   through them (levelRefs, lessonRefs and examRefs already return gating strings). routeLimits walks the gating closure and names the
+   courses in it with a level that has no written lesson ("Route limited"). */
 (function () {
   'use strict';
   const DAY = 86400000;
@@ -55,19 +61,32 @@
   };
 
   /* ---------- What a level or lesson requires ---------- */
-  const levelRefs = (cid, n) => {
+  /* The one normaliser: an entry is a string or { ref, why, gate }. Anything else is dropped (the validator reports it). */
+  const entryOf = (e) => {
+    if (typeof e === 'string') return { ref: e, why: '', gate: true };
+    if (e && typeof e === 'object' && typeof e.ref === 'string') return { ref: e.ref, why: typeof e.why === 'string' ? e.why : '', gate: e.gate !== false };
+    return null;
+  };
+  const entriesOf = (list) => (Array.isArray(list) ? list : []).map(entryOf).filter(Boolean);
+  const refsOf = (list) => entriesOf(list).filter(e => e.gate).map(e => e.ref);   // the references that gate
+  const whyOf = (list, ref) => { const e = entriesOf(list).find(x => x.ref === ref); return e ? e.why : ''; };
+  /* Node tools (validate, census, closure, readiness-sums, playthrough) load only the normaliser: const { entriesOf, refsOf } = createRequire(import.meta.url)('../js/prereq.js') */
+  if (typeof window === 'undefined') { module.exports = { entryOf, entriesOf, refsOf, whyOf, parse }; return; }
+  const levelEntries = (cid, n) => {
     const lv = levelOf(cid, n);
     if (!lv) return [];
-    if (Array.isArray(lv.requires)) return lv.requires;
+    if (Array.isArray(lv.requires)) return entriesOf(lv.requires);
     const ls = levelsOf(cid), i = ls.indexOf(lv);
-    return i > 0 ? [keyOfLevel(cid, ls[i - 1].n)] : [];
+    return i > 0 ? entriesOf([keyOfLevel(cid, ls[i - 1].n)]) : [];
   };
-  const lessonRefs = (cid, lid) => {
+  const lessonEntries = (cid, lid) => {
     const d = doc(cid) || {};
-    if (d.lessonRequires && Array.isArray(d.lessonRequires[lid])) return d.lessonRequires[lid];
+    if (d.lessonRequires && Array.isArray(d.lessonRequires[lid])) return entriesOf(d.lessonRequires[lid]);
     const lv = levelHolding(cid, lid);
-    return lv ? levelRefs(cid, lv.n) : [];
+    return lv ? levelEntries(cid, lv.n) : [];
   };
+  const levelRefs = (cid, n) => levelEntries(cid, n).filter(e => e.gate).map(e => e.ref);
+  const lessonRefs = (cid, lid) => lessonEntries(cid, lid).filter(e => e.gate).map(e => e.ref);
 
   /* ---------- Met ---------- */
   /* Met reads only the auto and external part of a pass (N01); the one rule, with its old-attempt fallback, is ZQ.content.examPassedAuto */
@@ -176,7 +195,7 @@
     const ls = C().courseLessons(cid).filter(x => x.kind === 'lesson' && x.written !== false);
     return ls.length > 0 && ls.every(x => lessonLocked(cid, x.id));
   };
-  const examRefs = (d) => (d && Array.isArray(d.requires) ? d.requires : []);
+  const examRefs = (d) => refsOf(d && d.requires);
   /* A mock names requires at the top of its file (levels or lessons, as on a level); it is locked while one is unmet, unless opened early */
   const examLocked = (id, d) => !rec().opened['exam/' + id] && blocking(examRefs(d)).some(r => !refMet(r));   // advisory references never lock, as on a level (548)
 
@@ -200,6 +219,7 @@
       ord: ordOf(p.course, lv.n), review: lv.review || '', reviewPassed: reviewPassed(p.course, lv), reviewWritten: !!lv.review && C().exists(p.course, lv.review) !== false,
       lessonsTotal: (lv.lessons || []).length, lessonsWritten: ws.length, lessonsDone: ws.filter(id => lessonDone(p.course, id)).length,
       refs: p.kind === 'level' ? levelRefs(p.course, p.n) : lessonRefs(p.course, p.id),
+      entries: p.kind === 'level' ? levelEntries(p.course, p.n) : lessonEntries(p.course, p.id),
       testOut: testOutFacts(p.course, lv),
       perf: perfNeeded(p.course, lv) ? { ...perfNeeded(p.course, lv), passed: perfPassed(p.course, lv) } : null,   // ENGINE-BACKLOG 529: the level's performance task and whether it is passed
     };
@@ -220,21 +240,23 @@
   };
   /* The unmet references under a set of references. direct: the listed ones; indirect: what they need in turn.
      start: the earliest missing node whose own references are met and that has something to open. */
-  const missingRefs = (refs) => {
+  const missingRefs = (list) => {
     const seen = new Set(), direct = [], indirect = [];
+    const ents = entriesOf(list).filter(e => e.gate), refs = ents.map(e => e.ref);
     const nodeKey = (nd) => (nd.kind === 'lesson' ? nd.ref : keyOfLevel(nd.course, nd.n));
     /* two passes, so that direct and indirect do not depend on list order: every unmet listed reference is direct first */
-    const add = (r, into) => {
+    const add = (r, into, why) => {
       if (refMet(r)) return null;
       const nd = nodeOf(r);
       if (!nd) return null;
+      nd.why = why || '';
       const k = nodeKey(nd);
       if (seen.has(k)) return null;
       seen.add(k); into.push(nd);
       return nd;
     };
-    const walk = (nd) => blocking(nd.refs).forEach(r => { const x = add(r, indirect); if (x) walk(x); });
-    blocking(refs).forEach(r => add(r, direct));
+    const walk = (nd) => nd.entries.filter(e => e.gate && !advisory(e.ref)).forEach(e => { const x = add(e.ref, indirect, e.why); if (x) walk(x); });
+    ents.filter(e => !advisory(e.ref)).forEach(e => add(e.ref, direct, e.why));
     direct.slice().forEach(walk);
     const byOrd = (a, b) => a.ord - b.ord;
     direct.sort(byOrd); indirect.sort(byOrd);
@@ -251,8 +273,55 @@
   const advisoryNodes = (refs) => refs.filter(r => advisory(r) && !refMet(r)).map(nodeOf).filter(Boolean);
   const advisoryFor = (cid, id) => advisoryNodes(lessonRefs(cid, id));
   const advisoryForLevel = (cid, n) => advisoryNodes(levelRefs(cid, n));
-  const missingFor = (cid, id) => missingRefs(lessonRefs(cid, id));
-  const missingForLevel = (cid, n) => missingRefs(levelRefs(cid, n));
+  const missingFor = (cid, id) => missingRefs(lessonEntries(cid, id));
+  const missingForLevel = (cid, n) => missingRefs(levelEntries(cid, n));
+  /* Diagnostics (gate: false) still unmet: nodes carrying their why and a review route, to show as "Check first", never as a lock */
+  const diagnosticNodes = (entries) => entries.filter(e => !e.gate && !refMet(e.ref)).map(e => {
+    const nd = nodeOf(e.ref);
+    return nd ? { ...nd, why: e.why, route: nd.reviewWritten ? `review/${nd.course}/${nd.review}` : '' } : null;
+  }).filter(Boolean);
+  const diagnosticsFor = (cid, id) => diagnosticNodes(lessonEntries(cid, id));
+  const diagnosticsForLevel = (cid, n) => diagnosticNodes(levelEntries(cid, n));
+
+  /* ---------- Route limitation (ENGINE-BACKLOG 551) ----------
+     The gating closure of a set of references (implicit previous-level edges and lessonRequires included, gate: false left out) reaches
+     courses with a level that has no written lesson; such a level can never be met under Strict, so the route is limited. Own course excluded. */
+  const closureLevels = (refs) => {
+    const seen = new Set(), out = [];
+    const visit = (ref) => {
+      const p = parse(ref);
+      if (!p) return;
+      const lv = p.kind === 'level' ? levelOf(p.course, p.n) : levelHolding(p.course, p.id);
+      if (!lv) return;
+      const k = keyOfLevel(p.course, lv.n);
+      if (seen.has(k)) return;
+      seen.add(k); out.push({ course: p.course, lv });
+      levelAllRefs(p.course, lv).forEach(visit);
+    };
+    refs.forEach(visit);
+    return out;
+  };
+  /* a level's references plus those of lessonRequires entries on its lessons, the same edge set the validator and closure tool use */
+  const levelAllRefs = (cid, lv) => {
+    const d = doc(cid) || {}, out = levelRefs(cid, lv.n).slice();
+    (lv.lessons || []).forEach(l => { if (d.lessonRequires && Array.isArray(d.lessonRequires[l])) refsOf(d.lessonRequires[l]).forEach(r => out.push(r)); });
+    return out;
+  };
+  const routeLimits = (refs, selfCourse) => {
+    const by = new Map();
+    closureLevels(refs).forEach(({ course, lv }) => {
+      if (course === selfCourse || writtenLessons(course, lv).length) return;
+      (by.get(course) || by.set(course, []).get(course)).push(lv.n);
+    });
+    return [...by.entries()].map(([course, levels]) => {
+      const mapped = levelsOf(course).flatMap(l => l.lessons || []), written = mapped.filter(id => C().exists(course, id) !== false).length;
+      return { course, name: (doc(course) || {}).name || course, levels: levels.sort((a, b) => a - b), partly: written > 0 };
+    }).sort((a, b) => ordOf(a.course) - ordOf(b.course));
+  };
+  const routeLimitsForLevel = (cid, n) => { const lv = levelOf(cid, n); return lv ? routeLimits(levelAllRefs(cid, lv), cid) : []; };
+  const routeLimitsForCourse = (cid) => routeLimits(levelsOf(cid).flatMap(lv => levelAllRefs(cid, lv)), cid);
+  const routeLimitsForLesson = (cid, id) => routeLimits(lessonRefs(cid, id), cid);
+  const routeText = (c) => `Route limited: ${c.name} ${c.partly ? 'partly ' : ''}unwritten`;
 
   /* ---------- Refresh: a met prerequisite not reviewed for 30 days ---------- */
   const lastTouch = (cid, lv) => {
@@ -311,7 +380,8 @@
   };
 
   const api = {
-    strict, parse, levelRefs, lessonRefs, examRefs, examLocked, perfNeeded, perfPassed, perfRec, levelMet, lessonMet, refMet, levelLocked, lessonLocked, itemLocked, courseLocked, openedEarly, startedLevel,
+    strict, parse, entryOf, entriesOf, refsOf, whyOf, levelEntries, lessonEntries, levelRefs, lessonRefs, examRefs,
+    diagnosticsFor, diagnosticsForLevel, routeLimits, routeLimitsForLevel, routeLimitsForCourse, routeLimitsForLesson, routeText, examLocked, perfNeeded, perfPassed, perfRec, levelMet, lessonMet, refMet, levelLocked, lessonLocked, itemLocked, courseLocked, openedEarly, startedLevel,
     advisory, advisoryFor, advisoryForLevel, missingFor, missingForLevel, missingRefs, nodeOf, launchOf, testOutFacts, refreshFor, sync, unlock, unlockRefs, levelHolding, keyOfLevel,
     openedCount: () => Object.keys(rec().opened).length,
     PASS, SKILL_FLOOR, TESTOUT_N, RETAKE_H, REFRESH_D,

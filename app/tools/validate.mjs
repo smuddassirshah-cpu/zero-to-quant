@@ -28,6 +28,7 @@ const args = new Set(process.argv.slice(2));
 const SUMMARY = args.has('--summary');
 const prepArg = process.argv.indexOf('--prep');
 const PREP_FILE = prepArg > 0 && process.argv[prepArg + 1] ? path.resolve(process.argv[prepArg + 1]) : null; // a scratch copy of prep.json to check instead
+const STRICT_WHY = args.has('--strict-why');   // a cross-course requires entry without a why is an error (ENGINE-BACKLOG 551); a warning otherwise
 const WRITE_MANIFEST = !args.has('--no-manifest') && !PREP_FILE;
 
 /* ---------- Reporting ---------- */
@@ -1992,18 +1993,42 @@ guard(courseDir, () => {
   const levelsOf = (cid) => (Array.isArray((cur.courseDocs[cid] || {}).levels) ? cur.courseDocs[cid].levels : []);
   const lessonLevel = (cid, l) => levelsOf(cid).find(lv => Array.isArray(lv.lessons) && lv.lessons.includes(l));
   const writtenIn = (cid, lv) => (lv.lessons || []).filter(l => (writtenByCourse.get(cid) || new Set()).has(l));
+  let crossEdges = 0, crossNoWhy = 0;
   const edges = new Map(), where = new Map();   // node "course/L<n>" -> Set of nodes it requires; node -> course.json path
   const addEdge = (a, b) => { if (a === b) return; (edges.get(a) || edges.set(a, new Set()).get(a)).add(b); };
   /* Checks a list of references and returns their level nodes. fromCid and fromNode are null for a mock. */
-  const checkRefs = (file, at, refs, fromCid, fromNode) => {
-    if (!Array.isArray(refs)) { err(file, at, 'requires is a list of "<course>/L<n>" or "<course>/<lesson-id>" strings'); return []; }
+  /* An entry is a string or { ref, why, gate }. gate: false makes it a diagnostic (shown as "Check first", never locks) and needs a why.
+     why: one line, under 20 words, no em-dash. Exam files take plain strings (objectsOk false). The engine normaliser is js/prereq.js (entriesOf). */
+  const checkWhy = (file, w, why) => {
+    if (typeof why !== 'string' || !why.trim()) { err(file, w, 'why is a non-empty string'); return; }
+    if (/[\r\n]/.test(why)) err(file, w, 'why is one line (no line break)');
+    if (why.trim().split(/\s+/).length >= 20) err(file, w, `why is ${why.trim().split(/\s+/).length} words; keep it under 20`);
+    if (/\u2014/.test(why)) err(file, w, 'why has an em-dash; use a comma, colon or full stop');
+  };
+  const checkRefs = (file, at, refs, fromCid, fromNode, objectsOk = true) => {
+    if (!Array.isArray(refs)) { err(file, at, 'requires is a list of "<course>/L<n>" or "<course>/<lesson-id>" strings, or { "ref", "why", "gate" } objects'); return []; }
     const out = [], seenRef = new Set();
-    refs.forEach((r, k) => {
-      const w = `${at}[${k}]`, m = typeof r === 'string' ? REF.exec(r) : null;
+    refs.forEach((entry, k) => {
+      const w = `${at}[${k}]`;
+      let r = entry, why;
+      if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+        if (!objectsOk) { err(file, w, 'an exam file takes plain "<course>/L<n>" strings; { ref, why } objects are for course.json'); return; }
+        const bad = Object.keys(entry).filter(x => !['ref', 'why', 'gate'].includes(x));
+        if (bad.length) err(file, w, `unknown key ${bad.join(', ')}; an entry has ref, why and optionally gate`);
+        r = entry.ref; why = entry.why;
+        if (entry.why !== undefined) checkWhy(file, `${w}.why`, entry.why);
+        if (entry.gate !== undefined && typeof entry.gate !== 'boolean') err(file, `${w}.gate`, 'gate is true or false');
+        if (entry.gate === false && (typeof entry.why !== 'string' || !entry.why.trim())) err(file, `${w}.gate`, 'gate: false (a diagnostic) needs a why, which the learner reads as "Check first"');
+      }
+      const m = typeof r === 'string' ? REF.exec(r) : null;
       if (!m) { err(file, w, `${JSON.stringify(r)} is not "<course>/L<n>" or "<course>/<lesson-id>"`); return; }
       if (seenRef.has(r)) { warn(file, w, `"${r}" is listed twice`); return; }
       seenRef.add(r);
       const [, c, rest] = m;
+      if (fromCid && c !== fromCid) {
+        crossEdges++;
+        if (typeof why !== 'string' || !why.trim()) { crossNoWhy++; (STRICT_WHY ? err : warn)(file, w, `cross-course requires "${r}" has no why: add { "ref": "${r}", "why": "<one line>" }`); }
+      }
       if (!C.courses || !C.courses[c] || !cur.courseDocs[c]) { err(file, w, `unknown course "${c}"`); return; }
       let node, lv, lessonRef = null;
       if (/^L\d+$/.test(rest)) {
@@ -2070,8 +2095,9 @@ guard(courseDir, () => {
     const ef = path.join(CONTENT, 'exams', f), er = readJSON(ef);
     if (!er.data || er.data.requires === undefined) return;
     if (!/^mock-/.test(f)) warn(ef, 'requires', 'a topic exam or stage test is how a learner tests out; locking it behind requires removes that way round');
-    checkRefs(ef, 'requires', er.data.requires, null, null);
+    checkRefs(ef, 'requires', er.data.requires, null, null, false);
   });
+  console.log(`Requires: ${crossEdges} cross-course edges, ${crossNoWhy} without why (${STRICT_WHY ? 'errors' : 'warnings; --strict-why makes them errors'})`);
 });
 
 /* Draw sources (ENGINE-BACKLOG 468): every `from` must name files, and enough items must match the tags and difficulty. A sample exam may
