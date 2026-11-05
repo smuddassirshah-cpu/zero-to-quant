@@ -4,6 +4,13 @@ Goal: a single-user, Brilliant-style interactive teaching app (vanilla JS, stati
 
 Design documents live in `docs/` (`PLAN.md` there is the product design, not this checklist). Briefs for every unwritten level are in `docs/briefs/`. Conventions are in `CLAUDE.md`.
 
+## State at HEAD (census, 2026-11-05, `node app/tools/census.mjs | tail -20`)
+Figures in this file, PROGRESS.md and KNOWN_ISSUES.md come from the census, not memory; dates come from `git log` (UTC).
+- Lessons 1054 of 1214 (Stage 0 193/193, Stage 1 507/560, Stage 2 150/202, Stage 3 204/259); 79 course maps, 9 with no lesson; 243 of 279 levels fully written.
+- Reviews 243 (none sets `pass`), homework 243. Exams: 22 topic (0.1 to 0.5, 0.7, 1.1 to 1.9, 2.1 to 2.4, 3.2, 3.3, 3.5; all pass at 0.7), 1 stage (stage-0), 11 mocks with versions; 7 samples. No topic exam for 0.6, 1.10, 1.11, 2.5, 2.6, 3.1, 3.4.
+- Drills 35 non-sample (ci 10, rq 6, sy 3, oa 8, untagged 8); bank 20 files, 200 items; prep paths 23, naming 5 mocks with no file.
+- Hours: stored stage total 3,265, summed topic total 3,695.
+
 ## Tasks (one per session; tick when committed)
 
 ### 0. Triage
@@ -48,12 +55,12 @@ Rules: work topic by topic. A topic closes when every level (lessons, review, ho
 1. [done 2 Nov] Prep tags: engine pass 455, then the mapping (general and stage paths first, foundations to superday; firm paths last).
 2. [done 2 Nov] Topic 0.7: recruiting L3; exam topic-0.7; second read and fix.
 3. [done 3 Nov] Second reads and fix passes for finished interview foundations: topic 0.5 (mental), 1.8 (algorithms), 2.1 (machine learning); plus voice passes bringing every sentence in 1.8 and 2.1 under 20 words. Fix pass 1.9 done 3 Nov.
-4. [done 4 Nov, topic 3.3 closed: bank sessions 2 to 4, answer check and fix, whole-bank second read and fix, `bank/sample.json` removed] Topic 3.3 (part four done 6 Nov: bank brief and session 1, exam topic-3.3, mock-superday-trader, second reads and fix passes for all five courses, topic playthrough green; only bank sessions 2 to 4 remain; part one done 3 Nov: engine pass B, mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2; part two done 4 Nov: mocks brief `docs/briefs/mocks.md`, mock-oa-arith, puzzles L5, brainteasers L2 and L3, game-theory L1):
+4. [done 4 Nov, topic 3.3 closed: bank sessions 2 to 4, answer check and fix, whole-bank second read and fix, `bank/sample.json` removed] Topic 3.3 (part four done 3 Nov: bank brief and session 1, exam topic-3.3, mock-superday-trader, second reads and fix passes for all five courses, topic playthrough green; only bank sessions 2 to 4 remain; part one done 3 Nov: engine pass B, mental-pressure L4, puzzles L4, brainteasers L1, mm-games L2; part two done 3 Nov: mocks brief `docs/briefs/mocks.md`, mock-oa-arith, puzzles L5, brainteasers L2 and L3, game-theory L1; part three done 3 Nov; dates restamped from `git log` 5 Nov, labels were 4 and 6 Nov):
    - Briefs first: game-theory (all levels); revise the mm-games L3 and L4 sections for the E12 trading-game widget once it is built (done 3 Nov: 11 games specified, 63 runs checked in engine and Python).
    - [done 3 Nov] Engine pass B (E7 question bank with item spacing, E9 per-item timing) and engine pass D (E12 trading-game widget) before the levels that use them.
    - mental-pressure L3, L4, then mock-oa-arith; puzzles L3 to L5, then mock-oa-sig and mock-oa-trader; brainteasers L1 to L3; mm-games L2, then L3 and L4 on the E12 widget; game-theory L1 to L3.
-   - [done 4 Nov] Bank part 1 (200 items) on E7 (brief `docs/briefs/bank.md` done 6 Nov; sessions 1 to 4 done).
-   - [done 6 Nov] Exam topic-3.3; mock-superday-trader; second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers, game-theory.
+   - [done 4 Nov] Bank part 1 (200 items) on E7 (brief `docs/briefs/bank.md` done 3 Nov; sessions 1 to 4 done).
+   - [done 3 Nov] Exam topic-3.3; mock-superday-trader; second reads and fix passes for puzzles, mental-pressure, mm-games, brainteasers, game-theory.
 5. [done 4 Nov (session H), topic 3.5 closed: levels 3 and 4 of research-int, coding-int and systems with 27 drills; mock-oa-code, mock-superday-research, mock-oa-quant-data; exam topic-3.5; answer checks and rechecks A to D; second reads and fix passes `docs/reviews/review-{research-int,coding-int,systems,exams-3.5}.md`, voice 0 and 0; split playthrough green] Topic 3.5 (part one done 4 Nov: briefs `docs/briefs/research-int.md`, `coding-int.md`, `systems.md` with check scripts in `docs/briefs/<course>-scripts/`; second read and two fix passes `docs/reviews/review-briefs-3.5.md`). Engine requirements are the E bullets and the eight `C-*` and `E13-blocked-lanes` bullets in `docs/BACKLOG-INBOX.md` ("Raised later (topic 3.5 briefs, engine requirements, 4 Nov)" and the brief and fix-pass sections above it). Each part documents its fields in `docs/AUTHORING.md` before any level uses them.
    - [done 4 Nov] Briefs for research-int, coding-int, systems (all levels); second read and fix.
    - [done 4 Nov, items 467, 469; 474 to 480 fix pass; `docs/reports/engine-pass-c-a.md`, `-b.md`; review `docs/reviews/review-engine-pass-c.md`] Engine pass C, part 1 (before any topic 3.5 level except coding-int L1): E11 follow-up parts with C-parts-credit, C-parts-mixed and C-parts-code; then E14 data files with C-data-cap. First users: research-int L1 (E11), L2 and L3 (E11, E14); coding-int L2 (E14), L3 (E11); systems L1 (E11), L3 (E14).
@@ -98,7 +105,7 @@ Phase 1, trader core
 - [x] Engine pass B: E7 question bank with item spacing, E9 per-item timing (items 456 to 458, `tags` checked; `docs/reports/engine-pass-b.md`; sample `bank/sample.json`; full run green)
 - [x] Bank part 1 (200 items in 20 files `bank/<family group>-<1..4>.json`; reports `docs/reports/bank-1-1.md` to `bank-1-4.md`; answer checks `docs/reviews/answers-2026-11-06.md`, `answers-2026-11-03-bank.md`; second read `docs/reviews/review-bank-1.md`; `bank/sample.json` removed)
 - [x] Exam: mock-superday-trader (`docs/reports/exam-mock-superday-trader.md`; 4 papers, 24 items, 3 `trade` games; 5 inbox bullets)
-- [x] Second readers and fix passes: puzzles, mental-pressure (6 Nov, with mm-games, brainteasers and game-theory: `docs/reviews/review-<course>.md`; 221 findings, 213 fixed; voice 0 and 0 on all five)
+- [x] Second readers and fix passes: puzzles, mental-pressure (3 Nov, with mm-games, brainteasers and game-theory: `docs/reviews/review-<course>.md`; 221 findings, 213 fixed; voice 0 and 0 on all five)
 
 Phase 2, researcher core
 - [x] Briefs: research-int (done 4 Nov), coding-int (done 4 Nov), game-theory (done 2 Nov, `docs/briefs/game-theory.md`), systems (done 4 Nov; reviews `docs/reviews/review-briefs-3.5.md`), trees L4 and cpp L5 (done 5 Nov, `docs/briefs/trees.md`, `cpp.md`; reviews `docs/reviews/review-brief-trees-4.md`, `review-brief-cpp-5.md`) (puzzles L5, mm-games L4, mental-pressure L4, ito L4 are in their briefs)
@@ -125,7 +132,7 @@ Phase 3, trader and researcher depth
 - [x] ito L3 (`docs/reports/ito-3.md`; 4 lessons, review-3, homework-3)
 - [x] Engine pass D: E12 trading-game widget (items 459 `trade`, 460 `carry`; `docs/reports/engine-pass-d.md`; sample `exams/mock-trade-sample.json`; full run green, 903 lessons, all sets, 24 exams)
 - [ ] Bank part 2 (200 items)
-- [x] Exams: topic-3.3 (done 6 Nov, `docs/reports/exam-3.3.md`), topic-3.2 (done 4 Nov, `docs/reports/exam-3.2.md`; 30 items over ito, measure-prob and pdes)
+- [x] Exams: topic-3.3 (done 3 Nov, `docs/reports/exam-3.3.md`), topic-3.2 (done 4 Nov, `docs/reports/exam-3.2.md`; 30 items over ito, measure-prob and pdes)
 
 Phase 4, developer and strats depth
 - [x] ito L4: Stochastic calculus at interview (`docs/reports/ito-4.md`; 5 lessons, review-4 timed, homework-4)
@@ -141,7 +148,7 @@ Phase 4, developer and strats depth
 ### 2b. Maths breadth pass (user request, 27 Oct; runs after 2a, before the rest of task 3)
 Fills seven gaps against a traditional maths degree, now written into `docs/curriculum.md`: proof (0.6), analysis and proof-based linear algebra (1.10), complex numbers, vector calculus and ODEs (1.11), numerical methods and optimisation (2.5), statistical modelling (2.6), measure theory and PDEs (added to 3.2), pure mathematics (3.4, optional), plus a 1.5 gap level (Poisson process, martingales, optional stopping). Suggested courses: `proof`; `analysis`, `linear-maps`; `complex`, `vector-calc`, `odes`; `numerics`, `convex`; `stat-models`; `measure-prob`, `pdes`; `algebra`, `topology`; a new markov level.
 - [x] Breadth plan: `docs/briefs/breadth-plan.md` (49 levels, 218 lessons in 13 new courses plus markov L5; validator accepts `strand` but ignores it) (pattern `docs/briefs/gaps-plan.md`): per course the levels, lesson ids, titles, objectives, prerequisites and the existing lessons each builds on; write the `course.json` maps and add topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (and the 3.2 courses) to `app/content/curriculum.json`; the markov gap level appended to `markov/course.json`; every new `course.json` carries `strand` (`"quant"` or `"pure"`, per the tags in `docs/curriculum.md`; vector calculus is `pure`, complex numbers and ODEs `quant`) and `strandNote` (the roles, e.g. "Desk quant"); validate at 0 errors with the new lessons shown as unwritten; replace the level placeholder below with one line per level, each marked [Quant] or [Pure maths]
-- [x] Engine: (report `docs/reports/engine-breadth.md`; items 424 to 428; stage hours and Paths view not yet filtered, item 428) the Learn screen shows the new topics with targets (`app/js/screens/learn.js`), exams list them, nothing throws on an empty course; validator accepts and checks `strand`; a "Pure maths" or "Quant" badge (with `strandNote`) on course cards, the lesson start screen, topic chips and exam chips, distinct in both themes; untagged courses show no badge (core path); a "Quant path only" setting hides pure courses and drops them from stage-exam gating; document in AUTHORING.md
+- [x] Engine: (report `docs/reports/engine-breadth.md`; items 424 to 428; stage hours and Paths view not yet filtered, item 428: open part carried by 2c item 11) the Learn screen shows the new topics with targets (`app/js/screens/learn.js`), exams list them, nothing throws on an empty course; validator accepts and checks `strand`; a "Pure maths" or "Quant" badge (with `strandNote`) on course cards, the lesson start screen, topic chips and exam chips, distinct in both themes; untagged courses show no badge (core path); a "Quant path only" setting hides pure courses and drops them from stage-exam gating; document in AUTHORING.md
 - [x] Briefs for 0.6, 1.10, 1.11 courses and the markov gap level (`docs/briefs/proof.md`, `analysis.md`, `linear-maps.md`, `complex.md`, `vector-calc.md`, `odes.md`, `gap-markov-2.md`; 7 briefs, 23 levels, 107 lessons)
 - [x] Engine: breadth visuals and complex grading (report `docs/reports/engine-breadth-2.md`; items 429 to 437 done, follow-ups 438 to 448; new canvases `complex-map` and `space`) (user request, 27 Oct; inbox section "Raised later (breadth briefs ...)", numbered from 429): complex values graded by real and imaginary parts in `expression` and in code `isclose` (Python and C++); vector answers in one `expression`; `order` distractor lines; `plane` vector-field and slope-field layers and trajectories traced from a dragged start; a complex-mapping canvas; `vectors` matrix state readable by `derive` and applied to every vector; `walk` overlays, slider-bound barriers and a mean-reverting mode; a rotatable 3D canvas (item 241). If the 3D canvas overruns, split it into its own item
 - [x] Brief revision (28 Oct; remaining limits cite items 438 to 448): replace every engine fallback in the seven breadth briefs (`proof`, `analysis`, `linear-maps`, `complex`, `vector-calc`, `odes`, `gap-markov-2.md`) with the new features, so no level ships a static or reduced visual
@@ -196,37 +203,24 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] topology L2: Topological spaces [Pure maths]
 - [ ] topology L3: Compact and complete [Pure maths]
 
-### 3. Stage 3 content (briefs in `docs/briefs/`; puzzles, mm-games, mental-pressure and ito lines are duplicated in 2a: tick both)
+### 3. Stage 3 content (briefs in `docs/briefs/`)
+Superseded 5 Nov (census reconciliation): the ito L1 to L3, puzzles L1 to L4, mm-games L1 to L3 and mental-pressure L1 to L3 lines here duplicated 2a, where they stay ticked with their reports; the copies were removed.
 - [x] momentum-rep L1 (look-ahead bug gives 17.06% a month, not the brief's 15%; `docs/reports/momentum-rep-1.md`)
 - [ ] momentum-rep L2
 - [ ] momentum-rep L3
 - [ ] pairs-rep L1
 - [ ] pairs-rep L2
 - [ ] pairs-rep L3
-- [x] ito L1 (`docs/reports/ito-1.md`; 4 lessons, review-1, homework-1; 7 inbox bullets)
-- [x] ito L2 (`docs/reports/ito-2.md`)
-- [x] ito L3 (`docs/reports/ito-3.md`)
-- [x] puzzles L1 (`docs/reports/puzzles-1.md`; 6 lessons, review-1, homework-1; 6 inbox bullets)
-- [x] puzzles L2 (`docs/reports/puzzles-2.md`; 6 lessons, review-2, homework-2; 8 inbox bullets)
-- [x] puzzles L3 (`docs/reports/puzzles-3.md`)
-- [x] puzzles L4 (`docs/reports/puzzles-4.md`)
-- [x] mm-games L1 (`docs/reports/mm-games-1.md`; 4 lessons, review-1, homework-1; 6 inbox bullets)
-- [x] mm-games L2 (`docs/reports/mm-games-2.md`)
-- [x] mm-games L3 (`docs/reports/mm-games-3.md`; 4 lessons with `trade` games, review-3, homework-3; 8 inbox bullets)
-- [x] mental-pressure L1 (`docs/reports/mental-pressure-1.md`; 4 lessons, review-1, homework-1; 5 inbox bullets)
-- [x] mental-pressure L2 (`docs/reports/mental-pressure-2.md`; 4 lessons, review-2, homework-2; 5 inbox bullets)
-- [x] mental-pressure L3 (`docs/reports/mental-pressure-3.md`)
 
 ### 4. Exams (pattern: `app/content/exams/topic-1.7.json`; brief pattern in `docs/reports/exam-1.8.md`)
-- [x] topic-0.1 to topic-0.5 (Stage 0 topic exams; never written, the Learn screen shows them as unwritten; pattern topic-1.1.json, items from the Stage 0 courses of each topic)
+- [x] topic-0.1 to topic-0.5 (Stage 0 topic exams, written 27 Oct; census 5 Nov: 23, 26, 25, 20 and 22 items. "Never written" described the state before 27 Oct and is superseded.)
 - [x] topic-1.9 (cpp, cpp-pricing; the 1.9 review proposes coverage)
 - [x] topic-2.1 (stat-learning, validation, ensembles, fin-ml)
 - [x] topic-2.2 (arma, garch, coint)
 - [x] topic-2.3 (backtest, alpha, opt-dash)
 - [x] topic-2.4 (contests)
-- [ ] topic-3.1 (momentum-rep, pairs-rep)
-- [x] topic-3.2 (ito, measure-prob, pdes; `docs/reports/exam-3.2.md`)
-- [x] topic-3.3 (6 Nov: 30 items over all five courses, one `trade` game; `docs/reports/exam-3.3.md`)
+- [ ] topic-3.1 (momentum-rep, pairs-rep; also in 2a order item 8)
+Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams" (ticked there) and were removed; topic-3.5 is in 2a Phase 4.
 - [ ] Breadth exams: topic-0.6, topic-1.10, topic-1.11, topic-2.5, topic-2.6, topic-3.4; topic-3.2 covers ito, measure-prob and pdes; topic-1.5 is at the 30-item cap, so the markov gap level packs into multi-part items
 - [ ] stage-1, stage-2, stage-3 exams (pattern: `app/content/exams/stage-0.json`)
 
@@ -237,7 +231,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] Second reader 0.5 then fix pass (`docs/reviews/review-0.5.md`; 21 of 23 fixed, 2 engine bullets)
 - [ ] Second reader 2.2 then fix pass
 - [ ] Second reader 2.3 and 2.4 then fix pass
-- [ ] Second reader 3.1 to 3.3 then fix pass (3.3 done 6 Nov: `docs/reviews/review-<course>.md` for its five courses; 3.2 done 4 Nov: `review-ito.md`, `review-measure-prob.md`, `review-pdes.md`, `review-exam-3.2.md`; 3.1 open)
+- [ ] Second reader 3.1 to 3.3 then fix pass (3.3 done 3 Nov: `docs/reviews/review-<course>.md` for its five courses; 3.2 done 4 Nov: `review-ito.md`, `review-measure-prob.md`, `review-pdes.md`, `review-exam-3.2.md`; 3.1 open)
 - [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (3.2 additions done 4 Nov)
 - [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
 
@@ -252,7 +246,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [ ] Final report to the user; create `DONE`
 
 ## Completed
-- [x] Stage 0 content (163 lessons, 76 sets, stage exam)
+- [x] Stage 0 content (163 lessons, 76 sets, stage exam; census 5 Nov: Stage 0 is now 193 lessons with proof and recruiting)
 - [x] Stage 1 original content: all 426 lessons and 204 sets of topics 1.1 to 1.9
 - [x] Exams topic-1.1 to topic-1.8
 - [x] Second readers and fix passes for topics 1.3, 1.4, 1.5, 1.6, 1.7

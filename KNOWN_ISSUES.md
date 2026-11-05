@@ -6,8 +6,8 @@ Open at migration (27 Oct 2026)
 - Gap briefs and Stage 3 briefs (`docs/briefs/gap-*.md`, `momentum-rep.md` and others) name scratchpad and pkgs paths from an older session; give agents the current paths.
 - Topic exams 1.3, 1.4, 1.5 sit at the validator's 30-item cap (markov L5, 28 Oct, has no exam items; `docs/reports/markov-5.md` names candidates); gap items are packed into multi-part tables marked all or nothing, and the 1.3 curve sketch is typed, not tapped (inbox bullets ask for partial credit and compound items).
 - Seven homework items have both prose and a hidden longform prompt (list in ENGINE-BACKLOG.md pass 6 note).
-- Stage 1, 2 and 3 have no stage exams; topics 3.x have no topic exams.
-- Learn header still says 3,100 hours (curriculum: 3,530; quant path 3,330), stage hours ignore "Quant path only", and the Paths view is unfiltered (ENGINE-BACKLOG item 428). Direct links to hidden pure courses still open.
+- [Superseded 5 Nov, census] Stage 1, 2 and 3 have no stage exams; topics 3.x have no topic exams. Now: stage-0 is the only stage exam; topic exams 3.2, 3.3 and 3.5 exist; topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.1 and 3.4 have none.
+- [Corrected 5 Nov, census: the 3,100 and 3,530 figures are superseded] The Learn header sums stored stage hours, 3,265 (515, 1,400, 800, 550); topic hours sum to 3,695 (555, 1,650, 940, 550), the figure `docs/curriculum.md` quotes (review F09, 2c item 11). Stage hours ignore "Quant path only", and the Paths view is unfiltered (ENGINE-BACKLOG item 428). Direct links to hidden pure courses still open.
 - A bare `i` in an `expression` answer is now the imaginary unit (item 446); only `markov/homework-3` used it as an index and it still passes. `drill.js` keeps a float-only `isclose` (item 447).
 - `space` canvas: no 3D dragging of points or vectors yet, flat arrowheads, per-piece painter's order (large interpenetrating surfaces can sort wrongly); items 438 to 444.
 - Sandbox CPython lacks SciPy and SymPy; brief-writers installed them (SymPy system-wide, SciPy by `pip --target` in the scratchpad). The `pkgs` local CDN is rebuilt per session (a container restart keeps the scratchpad).
@@ -60,32 +60,32 @@ Second-read pass (3 Nov 2026)
 - Exam items were replaced in topic-0.5 (four items) and topic-1.8 (two items); attempts sat before 3 Nov no longer line up item by item with the new papers. Lesson ids and progress are unaffected.
 - Topics not yet second-read probably carry the same voice debt as 2.1; run `docs/reviews/voice-scan.py` on each before closing it.
 
-Session B (4 Nov 2026)
+Session B (3 Nov 2026, label 4 Nov)
 - mock-oa-arith's 16 decimal, fraction and percentage items are fixed, so resits repeat them (inbox bullet asks E4 for those operations). Its start card's parts list squeezes at 390 px (engine, inbox).
-- mock-oa-sig and mock-oa-trader ship three fixed versions each (5 Nov); resits repeat items until E3 (fresh draws); E15 (calculator) is not built. `prep.json` names version 1 only, so versions 2 and 3 are reachable from the exams list, not from prep.
+- mock-oa-sig and mock-oa-trader ship three fixed versions each (3 Nov); resits repeat items until E3 (fresh draws); E15 (calculator) is not built. `prep.json` names version 1 only, so versions 2 and 3 are reachable from the exams list, not from prep.
 - The 12-screen lesson cap pushed several brief drills into quizzes in brainteasers L2 and L3 (listed in their reports).
 - Raw `git stash -u` while agents write untracked files hides their files for a moment; use `git pull --rebase --autostash` and stage the manifest entry by entry.
 
 Session A (3 Nov 2026)
-- `voice-scan.py` with a relative `VOICE_BASE` scanned 0 files and reported a pass until 3 Nov (fixed: it resolves the path and exits on an empty folder). The topic 3.3 voice debt (mental-pressure, puzzles, mm-games) was cleared on 6 Nov: all five courses scan 0 and 0.
+- `voice-scan.py` with a relative `VOICE_BASE` scanned 0 files and reported a pass until 3 Nov (fixed: it resolves the path and exits on an empty folder). The topic 3.3 voice debt (mental-pressure, puzzles, mm-games) was cleared on 3 Nov: all five courses scan 0 and 0.
 - Second read pending for limits L5, multivar L5 and eigen L4 (written after their topics' reads); markov L5 has no topic-1.5 exam items; 25 levels are covered by the exam only through skills shared with earlier levels (list in `docs/reports/stage-status-2026-11-03.md`).
 - `carry` values are lost if a lesson is reopened part-way; the `trade` widget cannot quote one side at a limit, run limit 0, hedge or take liquidity, or open with a carried position (engine pass D follow-ups 2 to 5).
 - The `file-finder` agent may not write `.md` reports; the main session saved the stage status report from its scratchpad output.
 
-Session C (5 Nov 2026)
+Session C (3 Nov 2026, label 5 Nov)
 - Multi-paper mock results show "Pass mark NaN%" on every mock-oa-trader paper under +1, 0, 0 scoring with `passNet` (engine, inbox bullet). Scores and pass verdicts are correct; only the line is wrong.
-- Voice debt outside this session's files: exams topic-1.2 and mock-trade-sample still flag long sentences (mm-games l4-fermi cleared 6 Nov).
+- Voice debt outside this session's files: exams topic-1.2 and mock-trade-sample still flag long sentences (mm-games l4-fermi cleared 3 Nov).
 - The validator does not flag overlapping numeric `wrong` ranges (inbox bullet from mock-oa-sig).
 
-Session D (6 Nov 2026)
+Session D (3 Nov 2026, label 6 Nov)
 - Bank: the validator does not catch a misspelt family tag, and every bank `pace` stays at 180 s or less because `--routes-only` expects exactly one item over pace after a 200 s answer. `--bank` (462) answers right only and ignores `--mobile` (inbox).
 - `content/prep.json` lists no topic exams, so topic-3.3 is reachable from Exams only (`docs/reports/exam-3.3.md` says where it would go). Puzzles L5, mental-pressure L3 and L4 and mm-games L3 and L4 are covered in topic-3.3 only through skills shared with earlier levels.
 - game-theory poker cards draw their labels at about 8.6 px at 390 px because `.cv-svg text { font-size: 13px }` overrides the size `boxes.js` sets (engine, inbox); captions list the cards on six screens in l11 and l12.
-- mental-pressure l12's paper is seed 80 plus 31 hand-swapped distractors (fix pass, 6 Nov); re-running the L3 generator script would undo them.
+- mental-pressure l12's paper is seed 80 plus 31 hand-swapped distractors (fix pass, 3 Nov); re-running the L3 generator script would undo them.
 - Table cells' own `wrong[]` ids still cannot be `byKey` keys; mm-games l8 and mental-pressure l2 to l4 key on `r{i}c{j}` (inbox, several votes).
-- Dates: the container clock read 3 Nov while the state files run 3, 4, 5 and 6 Nov as session labels; `answers-2026-11-06.md` follows the labels.
+- [Resolved 5 Nov] Dates: the container clock read 3 Nov while the state files run 3, 4, 5 and 6 Nov as session labels. State-file dates are now restamped from `git log`. File names keep the old labels: `docs/reviews/answers-2026-11-04.md` (session B), `answers-2026-11-05.md` (session C) and `answers-2026-11-06.md` (session D) were all committed on 3 Nov.
 
-Session E (4 Nov 2026)
+Session E (3 to 4 Nov 2026)
 - Five bank ids describe older numbers after the answer-check fix pass and stay unchanged (progress keys on them): `semicircle-seven-points` (nine points), `cycle-following-two-hundred-boxes` (100 prisoners), `waiting-for-hh-three-losing-days` (four days), `fair-from-biased-quarter-coin` (coin 1/5), `hats-mod-k-six-prisoners` (family `hats-simultaneous`).
 - The interview results list shows one identical question line for all 30 behavioural items (engine, inbox "Bank second read (4 Nov)").
 - Behavioural rubric lines that judge delivery (pace, tone) stay compound until spoken mode (E10).
@@ -101,7 +101,7 @@ Engine pass C and first topic 3.5 levels (4 Nov)
 - `allocCheck` (470) compiles with `-fno-builtin` because clang 21 at `-O1` deleted a visible `new`/`delete` pair, and skips the precompiled header, so a Check on such an item is a few seconds slower.
 - `isclose` and `equal` in Python `code` still do not compare a pandas DataFrame or treat NaN as equal to NaN; the research-int brief works round it (`tolist()`, `np.isnan`). Levels 3 and 4 should confirm they need nothing more.
 - The homework `parts` item sits first in systems homework-1 and homework-2, research-int homework-1 and homework-2, because the old playthrough check needed it there (fixed in 479); the order is harmless and was left.
-- 537 validator warnings (4 Nov, after topic 3.5): mostly "a point hint usually highlights the canvas" and ladder canvas-kind warnings in research-int, plus 30 "reference to a level with no written lesson" from the `requires` mapping. None is an error; the topic 3.5 second reads did not clear the style warnings.
+- 537 validator warnings (4 Nov, after topic 3.5): mostly "a point hint usually highlights the canvas" and ladder canvas-kind warnings in research-int, plus 30 "reference to a level with no written lesson" from the `requires` mapping (23 at 1e67d6f, census 5 Nov; 610 warnings in all). None is an error; the topic 3.5 second reads did not clear the style warnings.
 - Drill pattern vocabulary has 21 slugs (472 added nine for packs 2 to 8 beyond the 12 the briefs named); drill packs are id prefixes (`ci-`, `rq-`, `sy-`) or an optional `pack` field (473).
 - `stale-local-backup` is a local-only branch holding the container's out-of-date copy of amazing-wright from session start; it has nothing unique and is not pushed.
 - Gating (4 Nov, engine pass E): mock-oa-code draws from the eight `oa` drills, which the drill library also lists, so a learner can practise the mock's problems first; the description asks them not to open the pack. Fix needs an engine `language` filter on `draw` and unseen-first draws by solved state (inbox). Interview closures are large under Strict mode (DECISIONS "Interview closures under Strict mode").
