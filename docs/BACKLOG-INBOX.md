@@ -1128,3 +1128,9 @@ Raised later (exam topic-1.9 extension (5 Nov)):
 Raised later (cpp level 5 fix pass, 6 Nov):
 - [Should] `array` canvas at 440 px (cpp l19 screen 5, l21 screens 2 and 3): a single row of cells sits in a band about 100 px tall above and below. Wanted: the canvas height follows the number of rows at narrow widths.
 - [Could] Console and code blocks wrap with `wrap: true` (used on l20 screen 5 and l21 screen 7), but a fenced code block in screen prose has no wrap switch and clips at 440 px; l21 screen 9 was fixed by shortening the lines. Wanted: wrap on fenced blocks in prose.
+
+Raised later (proof level 3 perf pilot):
+- [Should] Homework item header and start-card list show an item `title` as raw text: KaTeX is not typeset and the header uppercases it ("THREE DIVIDES $N^3 - N$"). Worked round in proof homework-3 by plain-word titles (four items). Six homework or review files still carry `$` in a title. Wanted: typeset titles, or a validator warning on `$` in `title`.
+- [Should] Nothing on the homework page marks the performance task. The start card and the item header do not say that item 9 is the level's task and is needed for met. Wanted: a "Performance task" label on the item and one line on the start card.
+- [Could] Homework start card with two longform items reads "Item 9 and Item 10 is written. You mark it yourself". Wanted: "Items 9 and 10 are written. You mark them yourself".
+- [Could] `playthrough.mjs --set --shots` takes no screenshot of a longform item after Mark my answer, so the model and rubric layout at 440 px goes unseen. Worked round with a scratch Playwright script. Wanted: a `-marked` shot per longform item.
