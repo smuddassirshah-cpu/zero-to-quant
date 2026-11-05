@@ -7,6 +7,10 @@
    Usage (from the repository root or anywhere):
      node app/tools/playthrough.mjs                        every written lesson, then every route
      node app/tools/playthrough.mjs --all                  lessons, routes, every review and homework, every exam
+     node app/tools/playthrough.mjs --all --shard 2/4      only every 4th item of the full ordered item list (lessons, then sets, then exams), starting at the 2nd: shard i of n
+                                                           (1-based) runs the items whose zero-based index % n === i-1, so shards 1/4 to 4/4 cover each item once. The routes and
+                                                           their checks run in shard 1 only; --routes-only with any other shard has no items and passes with a note. Prints "shard i/n: K of N items"
+     node app/tools/playthrough.mjs --all --list           print the item ids (lesson/, set/, exam/) the run would play, one per line, and exit (works with --shard; no browser)
      node app/tools/playthrough.mjs --sets                 every written level review and homework only
      node app/tools/playthrough.mjs --exams                every exam in content/exams only (combine with --sets)
      node app/tools/playthrough.mjs --set number-sense/review-1   one review or homework (repeatable)
@@ -83,7 +87,7 @@ const IGNORE_HOSTS = /(^|\.)cdn\.jsdelivr\.net$|(^|\.)fonts\.googleapis\.com$|(^
 
 /* ---------- Arguments ---------- */
 const argv = process.argv.slice(2);
-const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, sessionRun: false, all: false };
+const opt = { mobile: false, narrow: false, tablet: false, why: false, lessons: [], shots: null, localCdn: null, routes: null, lessonsOn: true, headed: false, timeout: 20000, sets: false, exams: false, setIds: [], examIds: [], bankIds: [], drillIds: [], drillsAll: false, sessionRun: false, all: false, shard: null, list: false };
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i], next = () => { const v = argv[++i]; if (v == null || v.startsWith('--')) die(`${a} needs a value`); return v; };
   if (a === '--lesson') opt.lessons.push(next());
@@ -106,6 +110,8 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--drills') opt.drillsAll = true;
   else if (a === '--session') opt.sessionRun = true;
   else if (a === '--all') opt.all = true;
+  else if (a === '--list') opt.list = true;
+  else if (a === '--shard') { const v = next(), m = /^(\d+)\/(\d+)$/.exec(v); if (!m || +m[1] < 1 || +m[2] < 1 || +m[1] > +m[2]) die(`--shard needs i/n with 1 <= i <= n (for example 2/4), got "${v}"`); opt.shard = { i: +m[1], n: +m[2] }; }
   else if (a === '--help' || a === '-h') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('*/')[0].replace(/^#!.*\n\/\* ?/, '')); process.exit(0); }
   else die(`unknown argument ${a} (try --help)`);
 }
@@ -234,20 +240,35 @@ const cdnFile = (u) => {
 const main = async () => {
   const { chromium } = await loadPlaywright();
   const { lessons: allLessons, courses, sets: allSets, exams: allExams } = writtenLessons();
-  const lessons = opt.lessonsOn ? (opt.lessons.length ? opt.lessons : allLessons) : [];
+  const lessons0 = opt.lessonsOn ? (opt.lessons.length ? opt.lessons : allLessons) : [];
   for (const l of opt.lessons) if (!allLessons.includes(l)) die(`--lesson ${l}: no such written lesson (the file must exist and be listed in its course.json)`);
   for (const x of opt.setIds) if (!allSets.some(s2 => s2.id === x)) die(`--set ${x}: no such written review or homework (the file must exist and be named in its course.json)`);
   for (const x of opt.examIds) if (!allExams.includes(x)) die(`--exam ${x}: no such exam in content/exams`);
-  const sets = opt.setIds.length ? allSets.filter(s2 => opt.setIds.includes(s2.id)) : opt.sets ? allSets : [];
-  const exams = opt.examIds.length ? opt.examIds : opt.exams ? allExams : [];
+  const sets0 = opt.setIds.length ? allSets.filter(s2 => opt.setIds.includes(s2.id)) : opt.sets ? allSets : [];
+  const exams0 = opt.examIds.length ? opt.examIds : opt.exams ? allExams : [];
+  /* ENGINE-BACKLOG 550: the full ordered item list is lessons, then sets, then exams; --shard i/n keeps the items whose index % n === i-1 */
+  const full = [...lessons0.map(id => ({ k: 'lesson', id })), ...sets0.map(st => ({ k: 'set', id: st.id })), ...exams0.map(id => ({ k: 'exam', id }))];
+  const mine = opt.shard ? full.filter((_, ix) => ix % opt.shard.n === opt.shard.i - 1) : full;
+  const lessons = lessons0.filter(id => mine.some(m => m.k === 'lesson' && m.id === id));
+  const sets = sets0.filter(st => mine.some(m => m.k === 'set' && m.id === st.id));
+  const exams = exams0.filter(id => mine.some(m => m.k === 'exam' && m.id === id));
+  if (opt.list) { mine.forEach(m => console.log(`${m.k}/${m.id}`)); return; }
+  if (opt.shard) console.log(`shard ${opt.shard.i}/${opt.shard.n}: ${mine.length} of ${full.length} items${opt.routes ? (opt.shard.i === 1 ? ', plus the routes and their checks' : ', routes run in shard 1 only') : ''}`);
+  const runRoutes = opt.routes && (!opt.shard || opt.shard.i === 1);
   const { proc, base } = await startServer();
-  const browser = await chromium.launch({ headless: !opt.headed, ...(fs.existsSync(CHROMIUM) ? { executablePath: CHROMIUM } : {}) });
+  let browser = null, ctx = null, page = null, relaunches = 0, browserGone = false;
   const failures = [], consoleErrors = [];
   let where = 'start';
-  const cleanup = async () => { try { await browser.close(); } catch { /* closed */ } proc.kill(); };
+  const cleanup = async () => { try { if (browser) await browser.close(); } catch { /* closed */ } proc.kill(); };
   process.on('SIGINT', async () => { await cleanup(); process.exit(130); });
-  try {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, acceptDownloads: true });
+  const hostOf = (u) => { try { return new URL(u).hostname; } catch { return ''; } };
+  /* ENGINE-BACKLOG 550: launch Chromium and give it a fresh context and page with the same options and listeners; used at the start and again on a relaunch */
+  const openBrowser = async () => {
+    if (browser) { try { await browser.close(); } catch { /* already closed */ } }
+    browserGone = false; curVp = DESKTOP;
+    browser = await chromium.launch({ headless: !opt.headed, ...(fs.existsSync(CHROMIUM) ? { executablePath: CHROMIUM } : {}) });
+    browser.on('disconnected', () => { browserGone = true; });
+    ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, acceptDownloads: true });
     if (opt.localCdn) {
       await ctx.route(/^https:\/\/cdn\.jsdelivr\.net\//, async (route) => {
         const f = cdnFile(new URL(route.request().url()));
@@ -256,9 +277,7 @@ const main = async () => {
       });
       await ctx.route(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.fulfill({ status: 200, body: '', headers: { 'content-type': 'text/css' } }));
     }
-    const page = await ctx.newPage();
-    const setVp = async (v, settle = 300) => { curVp = v; await page.setViewportSize({ width: v.w, height: v.h }); await page.waitForTimeout(settle); };
-    const hostOf = (u) => { try { return new URL(u).hostname; } catch { return ''; } };
+    page = await ctx.newPage();
     page.on('console', (m) => {
       if (m.type() !== 'error') return;
       const loc = m.location() && m.location().url;
@@ -268,6 +287,10 @@ const main = async () => {
     page.on('pageerror', (e) => consoleErrors.push({ where, text: 'Uncaught ' + (e.stack || e.message) }));
     page.on('requestfailed', (r) => { if (!IGNORE_HOSTS.test(hostOf(r.url()))) consoleErrors.push({ where, text: `request failed: ${r.url()} (${r.failure() && r.failure().errorText})` }); });
     page.on('response', (r) => { if (r.status() >= 400 && r.url().startsWith(base)) consoleErrors.push({ where, text: `HTTP ${r.status()} ${r.url().slice(base.length)}` }); });
+  };
+  try {
+    await openBrowser();
+    const setVp = async (v, settle = 300) => { curVp = v; await page.setViewportSize({ width: v.w, height: v.h }); await page.waitForTimeout(settle); };
 
     /* items 199, 205, 504: --mobile, --narrow and --tablet add a copy of every screenshot per extra viewport (name-440, -390, -1032, -1376; the viewport resizes, then returns) */
     /* inbox (backtest 1): a failing code screen names its first failing test (or the error) in the failure line */
@@ -288,7 +311,8 @@ const main = async () => {
       await page.waitForTimeout(400);
     };
 
-    /* Fresh profile, then setup through the form */
+    /* Fresh profile, then setup through the form (again after a relaunch) */
+    const freshSetup = async () => {
     where = 'setup';
     // A new browser context starts with empty storage; clear it anyway, then reload once everything has settled
     await page.goto(base + '/#setup');
@@ -307,7 +331,34 @@ const main = async () => {
     await shot('setup-3');
     await page.click('[data-next]');
     await page.waitForFunction(() => window.ZQ && ZQ.state && ZQ.state.flags.setupDone === true, null, { timeout: opt.timeout });
+    };
+    await freshSetup();
     console.log(`setup done. ${lessons.length} lesson${lessons.length === 1 ? '' : 's'}${sets.length ? `, ${sets.length} review and homework set${sets.length === 1 ? '' : 's'}` : ''}${exams.length ? `, ${exams.length} exam${exams.length === 1 ? '' : 's'}` : ''} to play.`);
+
+    /* ENGINE-BACKLOG 550: each item runs under `guarded`. When the browser has closed (the item threw "Target page, context or browser has been
+       closed", or the disconnected event fired) Chromium is relaunched, setup is redone and the item is played once more; an ordinary failure is never retried.
+       ZQ_TEST_CLOSE_AFTER=k (test hook) closes the context after the k-th item to prove the relaunch. */
+    const closedRe = /Target page, context or browser has been closed|Browser has been closed|browser has disconnected|Target closed/i;
+    let nItems = 0;
+    const relaunch = async (label, why) => {
+      relaunches++;
+      console.log(`     ${label}: ${why}; relaunching the browser (relaunch ${relaunches})`);
+      await openBrowser();
+      await freshSetup();
+    };
+    const guarded = async (label, fn) => {
+      if (browserGone) await relaunch(label, 'the browser had disconnected before the item');
+      const f0 = failures.length, e0 = consoleErrors.length;
+      let thrown = null;
+      try { await fn(); } catch (e) { thrown = e; }
+      const closed = browserGone || (thrown && closedRe.test(String(thrown.message || thrown))) || failures.slice(f0).some(f => closedRe.test(f));
+      if (closed) {
+        failures.length = f0; consoleErrors.length = e0;
+        await relaunch(label, 'the browser closed during the item');
+        try { await fn(); } catch (e) { failures.push(`${label}: threw ${String(e.message || e).split('\n')[0]}`); }
+      } else if (thrown) failures.push(`${label}: threw ${String(thrown.message || thrown).split('\n')[0]}`);
+      if (process.env.ZQ_TEST_CLOSE_AFTER && ++nItems === +process.env.ZQ_TEST_CLOSE_AFTER) { console.log(`     (test hook: closing the context after item ${nItems})`); try { await ctx.close(); } catch { /* closed */ } }
+    };
 
     /* Lessons */
     /* Item 112: a code screen is checked only once Python is ready (or has failed to load, which is a failure) */
@@ -336,7 +387,7 @@ const main = async () => {
       }
       return 0;
     };
-    for (const id of lessons) {
+    for (const id of lessons) await guarded(`lesson/${id}`, async () => {
       where = `#lesson/${id}`;
       const fails = [];
       const t0 = Date.now();
@@ -411,7 +462,7 @@ const main = async () => {
         console.log(`FAIL ${id}  threw`);
       }
       fails.forEach(f => failures.push(`#lesson/${id}: ${f}`));
-    }
+    });
 
     /* Reviews, homework and exams through the set-mode hook. Each page installs window.ZQ.test on mount; wait for a hook
        that is past 'loading', then: 'start' and 'submit' -> continue(); 'item' -> answerCorrect(), check() (a pending
@@ -663,7 +714,7 @@ const main = async () => {
       }
       fails.forEach(f => failures.push(`#${st.route}: ${f}`));
     };
-    for (const st of sets) {
+    for (const st of sets) await guarded(`set/${st.id}`, async () => {
       if (st.kind === 'review') { const t = readJSON(path.join(CONTENT, 'courses', ...st.id.split('/')) + '.json').timed; if (t && t.lockAtZero) { await timedChecks(st, t); await timedPartsChecks(st); } }
       await playSet(st.route, st.id, async () => {
         if (st.kind === 'review') {
@@ -686,7 +737,7 @@ const main = async () => {
         return { fail: h.score !== h.items || !h.items ? note : null, note };
       });
       if (st.kind === 'homework') await partsHomeworkChecks(st);
-    }
+    });
     /* A mock exam: forward-only papers are probed while it is played (above); here the generated items must repeat for one
        seed and differ for another, and a second sitting with the clock moved to zero must submit itself (no timer is waited for) */
     const mockChecks = async (ex) => {
@@ -988,7 +1039,7 @@ const main = async () => {
       }
       fails.forEach(x => failures.push(`#prepare versions: ${x}`));
     };
-    for (const ex of exams) {
+    for (const ex of exams) await guarded(`exam/${ex}`, async () => {
       await playSet(`exam/${ex}`, ex, async () => {
         const c = await page.evaluate(() => ZQ.test.current());
         if (c.kind !== 'done') return { fail: 'the result page was not reached' };
@@ -998,7 +1049,7 @@ const main = async () => {
       if (/^mock-/.test(ex)) await mockChecks(ex);
       if (/^mock-/.test(ex)) { await drawChecks(ex); await partsExamChecks(ex); }
       if (ex === 'mock-oa-code') await holdoutChecks(ex);
-    }
+    });
 
     /* ---------- Interview bank deck and per-item timing (ENGINE-BACKLOG 456, 457): part of --routes-only ----------
        Date.now is skewed from the tool (window.__skew, in seconds), so an item can "take" 90 s and a schedule can be
@@ -1826,7 +1877,7 @@ const main = async () => {
 
     /* Every other route once */
     if (opt.bankIds.length) await bankPlay(opt.bankIds);
-    if (opt.routes) {
+    if (runRoutes) {
       const exams = fs.existsSync(path.join(CONTENT, 'exams')) ? fs.readdirSync(path.join(CONTENT, 'exams')).filter(f => /^topic-.*\.json$/.test(f)).map(f => f.replace(/\.json$/, '')) : [];
       const drills = fs.existsSync(path.join(CONTENT, 'drills', 'index.json')) ? readJSON(path.join(CONTENT, 'drills', 'index.json')).map(d => d.id || d) : [];
       /* The Prepare for page (ENGINE-BACKLOG 455): the default path, then one deep link for each kind of path in content/prep.json */
@@ -1882,8 +1933,10 @@ const main = async () => {
   if (failures.length) {
     console.log(`\n${failures.length} problem${failures.length === 1 ? '' : 's'}:`);
     failures.forEach(f => console.log('  - ' + f));
+    console.log(`\nbrowser relaunches: ${relaunches}`);
     process.exit(1);
   }
-  console.log('\nAll passed.');
+  console.log(`\nbrowser relaunches: ${relaunches}`);
+  console.log('All passed.');
 };
 main().catch((e) => { console.error(e); process.exit(2); });
