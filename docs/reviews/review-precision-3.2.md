@@ -120,3 +120,31 @@ Lines in the same lessons, outside `summary`, that repeat a False or Loose claim
 - Row 69: `research-int/l5-matrices-on-the-spot.json:119, 205, 931` "rank 1 leaves one non-zero eigenvalue" (zero when $v \cdot u = 0$).
 - Row 70: `research-int/l5-matrices-on-the-spot.json:710` already adds "unless $n = 1$"; align the trap line with it.
 - Row 56: `random-vars/l7-linearity.json:726` says "needs independence", which is correct; only line 1053 claims "only".
+
+## Fix pass
+
+Script: `app/tools/apply-item9-rulings.mjs` (30 exact old to new pairs, idempotent, JSON-parse checked). Line numbers are those at the time of the pass.
+
+- Row 4: `ito/l15-moments-quickly.json:943` formula.note: "The mean is 0 for a $dW$ integral whose $E\int f^2\,dt$ is finite. It does not hold for $dt$ integrals."
+- Row 14: `measure-prob/l17-risk-neutral-rigorous.json:931`: "With no arbitrage, it is complete exactly when the measure is unique."; draft note, line 160: "Existence gives no arbitrage; with no arbitrage, uniqueness gives completeness."
+- Row 19: `pdes/l8-heat-on-a-rod.json:1196`: "One term is accurate once the other terms $e^{-k^2t}$ have died. At $t = 0$ a partial sum overshoots by Gibbs's 8.95% of the jump."; draft note, line 947: "The overshoot of a partial sum is ... so its peak is 117.9."
+- Row 21: `markov/l2-transition-matrix.json:1368`: "Squaring an entry is not a two-step chance: off the diagonal it matches no path. Multiply the matrices, ..."; draft notes, lines 1073 ("which matches only the path that stays Sunny"), 1079 ("Squaring an entry matches one path on the diagonal, the one that stays put, and none off it."), 1127 ("On the diagonal that matches only the paths that never change state; off it, no path at all.").
+- K4: `markov/l2-transition-matrix.json:609`: "You squared the one-step entry 0.1, which is no path. Sunny, Rain, Rain has chance $0.1 \times 0.3 = 0.03$; add the paths through Sunny and Cloudy." (Checked: row Sunny $(0.6, 0.3, 0.1)$, column Rain $(0.1, 0.3, 0.3)$, third term 0.03 at line 616.)
+- Row 22: `markov/l3-never-leave.json:1462`: "a recurrent one is revisited with probability 1 ($f_i = 1$)".
+- Row 32: `markov/l13-balanced-flows.json:1510`: "Birth-death chains on a finite set of states are always reversible."; draft note, line 866: "Every such chain on a finite set of states is reversible".
+- Row 34: `markov/l15-sampling-by-chain.json:3361`: "A Metropolis chain proposes a neighbour up or down with equal chance. It accepts with chance ..."
+- Row 36: `markov/l17-fair-bets.json:1374`: "A forecast of revealed information is fair when the quantity has a finite mean. A price is fair under the chance that balances its moves."
+- Row 43: `limits-thm/l9-averages-settle.json:13129`: "Take independent draws with one distribution and a finite mean $\mu$. Their average settles near $\mu$: ..."
+- Row 44: `limits-thm/l9-averages-settle.json:13131`: "... a heavy-tailed draw such as the Cauchy, with no finite mean, does not settle."
+- Row 47: `limits-thm/l19-generating-functions.json:975`: "$M_{X+Y}$ is a product when $X$ and $Y$ are independent."
+- Row 56: `random-vars/l7-linearity.json:1053`: "$E[X^2] \ne E[X]^2$ unless $X$ is constant. $E[XY] = E[X]E[Y]$ when $X$ and $Y$ are independent." (Line 726 left, already correct.)
+- Row 58: `random-vars/l7-linearity.json:1058`: "For any $X$ and $Y$ with finite means, dependent or not."
+- Row 69: `research-int/l5-matrices-on-the-spot.json:1157`: "A rank-one matrix $uv^\top$ has eigenvalue $v \cdot u$ and otherwise only 0; ..."; draft notes: line 119 "Rank 1 leaves at most one non-zero eigenvalue.", line 133 "at most one of them is non-zero", line 931 "$v \cdot u$, which is 0 if $v$ is perpendicular to $u$." (Lines 205, 315 ask for $uu^\top$ and $(1,2),(3,4)$ cases with non-zero $v \cdot u$; they hold and are unchanged.)
+- Row 70: `research-int/l5-matrices-on-the-spot.json:1165`: "For $n \ge 2$ the all-ones matrix has eigenvalues $n$ and 0, never 1." (Line 710 already says "unless $n = 1$".)
+- Row 71: `research-int/l6-bias-variance-aloud.json:1345`: "The lowest training error is not the best model. For nested least-squares fits, training error never rises as flexibility grows."; draft notes, lines 499, 800, 1012: "always falls" became "never rises".
+- Row 72: `research-int/l7-ridge-against-lasso.json:1012`: "With uncorrelated, standardised columns, ridge divides each coefficient by $1 + \lambda$ and never reaches zero."
+
+Graded answers changed: none. No review or homework file held an old phrase (grepped across the seven courses).
+
+Gates: validator before 0 errors, 2104 warnings; after 0 errors, 2104 warnings (an intermediate 2105, a four-sentence explain at l2 screen 6, was merged to three). Playthrough results below.
+Playthrough: all 14 changed lessons, desktop and mobile (28 runs, `--local-cdn`): All passed. No review or homework file changed.
