@@ -14,16 +14,23 @@
         "copy-vs-move"
       ],
       "pace": 60,
-      "prose": "A function `take` takes a `Tracked` by value.\n\n```cpp\ntake(a);\ntake(std::move(a));\ntake(Tracked(3));\n```",
+      "prose": "`take` takes a `Tracked` by value, and `k` is a `const Tracked`.\n\n```cpp\ntake(k);\ntake(std::move(k));\ntake(Tracked(3));\n```",
       "question": "How many of the three calls copy?",
       "widget": {
         "kind": "numeric",
-        "answer": 1,
+        "answer": 2,
         "tol": {
           "abs": 0
         },
-        "accept": "1",
+        "accept": "2",
         "wrong": [
+          {
+            "id": "one",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
           {
             "id": "three",
             "value": 3,
@@ -34,14 +41,15 @@
         ]
       },
       "feedback": {
-        "correct": "Only `take(a)` copies.",
-        "generic": "Not quite right. Look for the named object that stays in use.",
+        "correct": "Two: `take(k)` and `take(std::move(k))`.",
+        "generic": "Not quite right. A `const` object cannot be moved from.",
         "byKey": {
-          "three": "You counted every call. A moved or temporary argument is not copied."
+          "one": "You expected `std::move(k)` to move. A `const` source cannot be moved, so it copies.",
+          "three": "You counted every call. A temporary argument is built straight into the parameter."
         }
       },
       "explain": {
-        "text": "`take(a)` copies the named `a`. `std::move(a)` moves, and `Tracked(3)` is built straight into the parameter."
+        "text": "`take(k)` copies. `std::move(k)` gives a `const Tracked&&`, which only the copy constructor accepts, so it copies too. `Tracked(3)` is built straight into the parameter."
       }
     },
     {
@@ -55,41 +63,41 @@
         "noexcept-move"
       ],
       "pace": 75,
-      "prose": "A `std::vector<T>` grows, and `T`'s move constructor is not `noexcept`.",
-      "question": "Why does it copy the old elements?",
+      "prose": "A `std::vector<Fill>` is filled with many `push_back` calls. `Fill`'s move constructor is not `noexcept`, and the profile shows copies on every growth.",
+      "question": "Select all that apply: which changes stop those copies?",
       "widget": {
-        "kind": "choice",
+        "kind": "multi",
         "layout": "stack",
         "options": [
           {
-            "id": "whole",
-            "text": "So a throw part way through leaves the old block whole",
+            "id": "noexcept",
+            "text": "Mark `Fill`'s move constructor `noexcept`",
             "correct": true
           },
           {
-            "id": "speed",
-            "text": "Copying is faster than moving here",
-            "why": "Moving is never slower. The reason is what a throw does half way."
+            "id": "reserve",
+            "text": "Call `v.reserve(n)` first, when `n` is known",
+            "correct": true
           },
           {
-            "id": "rule",
-            "text": "The standard bans moving a type that can throw",
-            "why": "Moving is allowed. The vector chooses the copy when one exists, to be safe."
+            "id": "emplace",
+            "text": "Use `emplace_back` instead of `push_back`",
+            "why": "`emplace_back` builds the new element in place, but growth still relocates the old ones, by copy."
           },
           {
-            "id": "empty",
-            "text": "A move would leave the new block empty",
-            "why": "A move fills the new block. The danger is a throw part way."
+            "id": "fast",
+            "text": "Make the copy constructor faster",
+            "why": "The vector would still copy. A faster copy is a smaller cost, not a removed one."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "Safety: the copy keeps the old block whole.",
-        "generic": "Not quite right. Think about a throw half way through."
+        "correct": "A `noexcept` move, or no growth at all.",
+        "generic": "Not quite right. Either the vector may move, or it never has to relocate."
       },
       "explain": {
-        "text": "The library calls `std::move_if_noexcept`. A move that throws part way would leave elements gone from the old block, so it copies instead."
+        "text": "With a `noexcept` move the vector relocates by move. With `reserve` it never relocates at all, because the capacity is already enough."
       }
     },
     {
@@ -102,20 +110,20 @@
         "special-members"
       ],
       "pace": 90,
-      "prose": "```cpp\nstruct Order {\n    std::unique_ptr<Fill> fill;\n    ~Order() {}\n};\n```",
+      "prose": "```cpp\nstruct Order {\n    std::unique_ptr<Fill> fill;\n    ~Order() {}\n};\n```\n`Order a, b;` exist already.",
       "question": "Select all that apply: which lines compile?",
       "widget": {
         "kind": "multi",
         "layout": "stack",
         "options": [
           {
-            "id": "a",
-            "text": "`Order a;`",
+            "id": "default",
+            "text": "`Order d;`",
             "correct": true
           },
           {
             "id": "move",
-            "text": "`Order b = std::move(a);`",
+            "text": "`Order c = std::move(a);`",
             "why": "You expected the member to move. The destructor stopped the move, so the deleted copy constructor is chosen."
           },
           {
@@ -125,7 +133,7 @@
           },
           {
             "id": "assign",
-            "text": "`a = std::move(b);`",
+            "text": "`b = std::move(a);`",
             "why": "No move assignment is written, and the copy assignment is deleted."
           }
         ],
@@ -196,26 +204,26 @@
         "vtable"
       ],
       "pace": 60,
-      "prose": "```cpp\nstruct Q { virtual double mid() const; double bid, ask; };\n```",
-      "question": "What is `sizeof(Q)` here, where a pointer is 4 bytes?",
+      "prose": "```cpp\nstruct S { virtual void f(); char c; };\n```",
+      "question": "What is `sizeof(S)` here, where a pointer is 4 bytes?",
       "widget": {
         "kind": "numeric",
-        "answer": 24,
+        "answer": 8,
         "tol": {
           "abs": 0
         },
-        "accept": "24: 4 for the pointer, 4 of padding, 16",
+        "accept": "8: 4 for the pointer, 1 for the char, 3 of padding",
         "wrong": [
           {
-            "id": "twenty",
-            "value": 20,
+            "id": "five",
+            "value": 5,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "sixteen",
-            "value": 16,
+            "id": "four",
+            "value": 4,
             "tol": {
               "abs": 0
             }
@@ -223,15 +231,15 @@
         ]
       },
       "feedback": {
-        "correct": "24 bytes.",
-        "generic": "Not quite right. Add the pointer, the padding and the doubles.",
+        "correct": "8 bytes.",
+        "generic": "Not quite right. Add the pointer and the `char`, then round up.",
         "byKey": {
-          "twenty": "You left out the padding before the first double.",
-          "sixteen": "You left out the hidden pointer."
+          "five": "You left out the padding at the end. A size is a multiple of the largest alignment, here 4.",
+          "four": "You counted the hidden pointer only. The `char` is a real field."
         }
       },
       "explain": {
-        "text": "The pointer takes 4 bytes, a `double` must start at a multiple of 8, so 4 are skipped, then 16 for the pair."
+        "text": "The pointer takes 4 bytes and the `char` 1. The size rounds up to a multiple of 4, so 8. A desktop gives 16."
       }
     },
     {
@@ -314,7 +322,7 @@
           {
             "id": "at",
             "text": "`v.at(5)` on a 3-element vector",
-            "why": "It throws, which ends the program here. That is defined."
+            "why": "It throws `std::out_of_range`, which is defined, though this app cannot catch it."
           },
           {
             "id": "uninit",
@@ -333,93 +341,165 @@
       }
     },
     {
-      "id": "r5-int-max-pounds",
-      "difficulty": 2,
+      "id": "r5-count-and-money",
+      "difficulty": 3,
       "skills": [
         "cp-basics",
         "cp-memory"
       ],
       "tags": [
+        "reference-count",
         "signed-overflow"
       ],
-      "pace": 45,
-      "prose": "`INT_MAX` is 2,147,483,647 and prices are held in pence.",
-      "question": "What is `INT_MAX` pence in pounds?",
-      "widget": {
-        "kind": "numeric",
-        "answer": 21474836.47,
-        "tol": {
-          "abs": 0.005
-        },
-        "accept": "£21,474,836.47",
-        "unit": "£",
-        "wrong": [
-          {
-            "id": "pence",
-            "value": 2147483647,
-            "tol": {
-              "abs": 0.005
-            }
-          }
-        ]
-      },
-      "feedback": {
-        "correct": "Divide by 100.",
-        "generic": "Not quite right. A pound is 100 pence.",
-        "byKey": {
-          "pence": "You gave the pence figure. Divide by 100."
-        }
-      },
-      "explain": {
-        "text": "2,147,483,647 pence is £21,474,836.47. A bigger total overflows an `int`."
-      }
-    },
-    {
-      "id": "r5-use-count",
-      "difficulty": 3,
-      "skills": [
-        "cp-memory"
-      ],
-      "tags": [
-        "reference-count"
-      ],
-      "pace": 45,
-      "prose": "```cpp\nSharedPtr<T> a(new T);\nauto b = a;\n{ auto c = b; }\n```",
-      "question": "What is `a.use_count()` after the block?",
-      "widget": {
-        "kind": "numeric",
-        "answer": 2,
-        "tol": {
-          "abs": 0
-        },
-        "accept": "2",
-        "wrong": [
-          {
-            "id": "three",
-            "value": 3,
+      "pace": 90,
+      "prose": "Two follow-ups from one interview.",
+      "parts": [
+        {
+          "prose": "```cpp\nauto a = std::make_shared<Tracked>(1);\nauto b = a;\nauto c = std::move(b);\n```",
+          "question": "What is `a.use_count()`?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 2,
             "tol": {
               "abs": 0
+            },
+            "accept": "2",
+            "wrong": [
+              {
+                "id": "three",
+                "value": 3,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Two: `a` and `c`.",
+            "generic": "Not quite right. Ask who holds a share after the move.",
+            "byKey": {
+              "three": "You counted `b`. `std::move(b)` handed its share to `c`, so `b` is empty."
             }
           },
-          {
-            "id": "one",
-            "value": 1,
+          "explain": {
+            "text": "`b = a` made the count 2. The move passed `b`'s share to `c` and added nothing."
+          }
+        },
+        {
+          "prose": "A desk adds up £25,000,000 in pence in an `int`. That is 2,500,000,000 pence, and `INT_MAX` is 2,147,483,647.",
+          "question": "By how many pence does the total exceed `INT_MAX`?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 352516353,
             "tol": {
               "abs": 0
+            },
+            "accept": "352516353",
+            "wrong": [
+              {
+                "id": "total",
+                "value": 2500000000,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "limit",
+                "value": 2147483647,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "352,516,353 pence over.",
+            "generic": "Not quite right. Subtract the limit from the total.",
+            "byKey": {
+              "total": "You gave the total. The question asks how far past the limit it goes.",
+              "limit": "You gave the limit. Subtract it from the total."
             }
+          },
+          "explain": {
+            "text": "2,500,000,000 - 2,147,483,647 is 352,516,353. A signed overflow is undefined, so the sum needs `std::int64_t`."
           }
+        }
+      ]
+    },
+    {
+      "id": "r5-unique-move-assign",
+      "difficulty": 3,
+      "skills": [
+        "cp-memory",
+        "cp-classes"
+      ],
+      "tags": [
+        "unique-ptr",
+        "move-semantics"
+      ],
+      "pace": 90,
+      "prose": "Order the lines of `UniquePtr`'s move assignment. One line is flawed.",
+      "question": "Put the lines in order, and leave the flawed one out.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "UniquePtr& operator=(UniquePtr&& other) noexcept"
+          ],
+          "title": "UniquePtr",
+          "numbers": true
+        },
+        "state": {}
+      },
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s2",
+            "text": "`delete ptr_;`"
+          },
+          {
+            "id": "d1",
+            "text": "`delete other.ptr_;`",
+            "why": "That frees the object you are taking, and you would hold a dangling pointer."
+          },
+          {
+            "id": "s4",
+            "text": "`other.ptr_ = nullptr;`"
+          },
+          {
+            "id": "s1",
+            "text": "`if (this != &other) {`"
+          },
+          {
+            "id": "s5",
+            "text": "`return *this;`"
+          },
+          {
+            "id": "s3",
+            "text": "`ptr_ = other.ptr_;`"
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "distractors": [
+          "d1"
         ]
       },
       "feedback": {
-        "correct": "Two: `a` and `b`.",
-        "generic": "Not quite right. `c` has left its scope.",
+        "correct": "Guard, free your own, take theirs, null theirs, return.",
+        "generic": "Not quite right. Free your own object before you take the other's pointer.",
         "byKey": {
-          "three": "You counted `c`, which is gone.",
-          "one": "You counted `a` only. `b` is still alive."
+          "d1": "You freed the other object. It is the one you are taking."
         }
       },
       "explain": {
-        "text": "`c` raised the count to 3 and its destructor lowered it to 2 again."
+        "text": "Free the object you own, take the other pointer, then null the source. The guard keeps `a = std::move(a)` safe."
       }
     },
     {
@@ -432,8 +512,8 @@
         "control-block"
       ],
       "pace": 75,
-      "prose": "```cpp\nT* raw = new T;\nSharedPtr<T> a(raw);\nSharedPtr<T> b(raw);\n```",
-      "question": "What happens when `a` and `b` go out of scope?",
+      "prose": "```cpp\nstd::shared_ptr<T> a(new T);\nstd::shared_ptr<T> b(a.get());\n```",
+      "question": "What happens when `b` and then `a` go out of scope?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
@@ -445,8 +525,8 @@
           },
           {
             "id": "once",
-            "text": "The object is deleted once, when the shared count reaches zero",
-            "why": "There is no shared count. Each constructor from a raw pointer starts its own."
+            "text": "`b` shares `a`'s count, so the object is deleted once",
+            "why": "`get()` hands over a raw pointer, and a raw pointer carries no count."
           },
           {
             "id": "leak",
@@ -463,10 +543,10 @@
       },
       "feedback": {
         "correct": "Two counters, two deletes.",
-        "generic": "Not quite right. Count the counters."
+        "generic": "Not quite right. Does `get()` pass on the count?"
       },
       "explain": {
-        "text": "Each pointer built from the raw one makes its own counter. Both reach zero, and the object is deleted twice."
+        "text": "A `shared_ptr` built from a raw pointer starts its own count. Both reach zero, and the object is deleted twice."
       }
     }
   ]

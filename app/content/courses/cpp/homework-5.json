@@ -15,7 +15,7 @@
         "scope-guard"
       ],
       "pace": 900,
-      "prose": "This is the l11 `Connection` with a callback. A scope guard runs its callback once, when it goes out of scope, unless dismissed. A guard in a growing `std::vector<ScopeGuard>` must run `ran` exactly 3 times: relocation moves a guard and never runs its callback.",
+      "prose": "This is the l11 `Connection` with a callback. A scope guard runs its callback once, when it goes out of scope, unless dismissed. A guard in a growing `std::vector<ScopeGuard>` must run `ran` exactly 3 times. Relocation moves a guard and never runs its callback.",
       "question": "Write the destructor, `dismiss()`, deleted copying, a `noexcept` move that hands over the duty, and deleted assignment.",
       "widget": {
         "kind": "code",
@@ -110,7 +110,7 @@
         "prelude": "#include <functional>\n#include <string>\n#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: the callbacks the tests hand to a guard write here.\nint ran = 0;\nstd::string trace;\n",
         "postlude": "\n// Hidden: a factory that returns a guard by value.\nScopeGuard make_guard() { return ScopeGuard([] { ++ran; }); }\n",
         "leakCheck": true,
-        "how": "Submit runs 12 hidden tests. The callbacks write to a hidden counter and a hidden string; two compile checks fail if copying or assignment is allowed."
+        "how": "Submit runs 12 hidden tests. The callbacks write to a hidden counter and a hidden string. Two compile checks fail if copying or assignment is allowed."
       },
       "feedback": {
         "correct": "The duty runs once, wherever the guard has been moved.",
@@ -249,7 +249,7 @@
         "prelude": "#include <cstdint>\n#include <utility>\n#include <type_traits>\n\n// Hidden: counts copies, moves and live objects. It has no assignment operators and no default constructor.\n// It also keeps a table of the addresses of its live objects (no heap use). A copy or move whose source\n// is not in the table was made from a destroyed object: it is counted in `bad` and never reads the source.\nstruct Counted {\n    static inline int copies = 0, moves = 0, live = 0, bad = 0;\n    static inline std::uintptr_t table[64] = {};\n    static bool is_live(const Counted* p) {\n        for (std::uintptr_t a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) return true;\n        return false;\n    }\n    static void add(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == 0) { a = reinterpret_cast<std::uintptr_t>(p); return; }\n    }\n    static void drop(const Counted* p) {\n        for (std::uintptr_t& a : table) if (a == reinterpret_cast<std::uintptr_t>(p)) { a = 0; return; }\n    }\n    int v;\n    Counted(int x) : v(x) { ++live; add(this); }\n    Counted(const Counted& o) : v(-2) { ++copies; ++live; add(this); if (is_live(&o)) v = o.v; else ++bad; }\n    Counted(Counted&& o) noexcept : v(-2) { ++moves; ++live; add(this); if (is_live(&o)) { v = o.v; o.v = -1; } else ++bad; }\n    Counted& operator=(const Counted&) = delete;\n    Counted& operator=(Counted&&) = delete;\n    ~Counted() { --live; drop(this); }\n};\n",
         "allocCheck": true,
         "leakCheck": true,
-        "how": "Submit runs 15 hidden tests. `alloc_count()` counts calls to `operator new` and `new[]`: 1,000 pushes must allocate 11 times. A hidden `Counted` type counts copies, moves and live objects, and counts any copy or move made from a destroyed object (`Counted::bad`)."
+        "how": "Submit runs 15 hidden tests. `alloc_count()` counts calls to `operator new` and `new[]`: 1,000 pushes must allocate 11 times. A hidden `Counted` type counts copies, moves and live objects. It also counts any copy or move made from a destroyed object (`Counted::bad`)."
       },
       "feedback": {
         "correct": "Every element is built once, moved or copied as the rules say, and destroyed once.",
@@ -264,7 +264,7 @@
     },
     {
       "id": "h5-sink",
-      "difficulty": 4,
+      "difficulty": 3,
       "skills": [
         "cp-classes"
       ],
@@ -335,7 +335,7 @@
           }
         },
         {
-          "question": "Which signature is best for a setter that keeps its argument?",
+          "question": "Which signature gives one short function that serves both callers?",
           "widget": {
             "kind": "choice",
             "layout": "stack",
@@ -435,6 +435,20 @@
       },
       "explain": {
         "text": "A move transfers the share, so the count does not change for the new object. The source is emptied so its destructor does nothing."
+      },
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            "SharedPtr& operator=(SharedPtr&& other) noexcept {",
+            "    // four steps; the if closes after the last",
+            "    return *this;",
+            "}"
+          ],
+          "title": "SharedPtr",
+          "numbers": true
+        },
+        "state": {}
       }
     },
     {
@@ -461,60 +475,132 @@
             "a copy assignment",
             {
               "edit": true,
-              "answer": "copy"
+              "answer": "copy",
+              "accept": [
+                "copies",
+                "copied",
+                "cp"
+              ]
             },
             {
               "edit": true,
-              "answer": "copy"
+              "answer": "copy",
+              "accept": [
+                "copies",
+                "copied",
+                "cp"
+              ]
             },
             {
               "edit": true,
-              "answer": "copy"
+              "answer": "copy",
+              "accept": [
+                "copies",
+                "copied",
+                "cp"
+              ]
             }
           ],
           [
             "a move assignment",
             {
               "edit": true,
-              "answer": "error"
+              "answer": "error",
+              "accept": [
+                "deleted",
+                "error: deleted",
+                "does not compile",
+                "doesn't compile",
+                "compile error",
+                "not compile"
+              ]
             },
             {
               "edit": true,
-              "answer": "error"
+              "answer": "error",
+              "accept": [
+                "deleted",
+                "error: deleted",
+                "does not compile",
+                "doesn't compile",
+                "compile error",
+                "not compile"
+              ]
             },
             {
               "edit": true,
-              "answer": "move"
+              "answer": "move",
+              "accept": [
+                "moves",
+                "moved",
+                "mv"
+              ]
             }
           ],
           [
             "a move constructor",
             {
               "edit": true,
-              "answer": "move"
+              "answer": "move",
+              "accept": [
+                "moves",
+                "moved",
+                "mv"
+              ]
             },
             {
               "edit": true,
-              "answer": "error"
+              "answer": "error",
+              "accept": [
+                "deleted",
+                "error: deleted",
+                "does not compile",
+                "doesn't compile",
+                "compile error",
+                "not compile"
+              ]
             },
             {
               "edit": true,
-              "answer": "error"
+              "answer": "error",
+              "accept": [
+                "deleted",
+                "error: deleted",
+                "does not compile",
+                "doesn't compile",
+                "compile error",
+                "not compile"
+              ]
             }
           ],
           [
             "a destructor",
             {
               "edit": true,
-              "answer": "copy"
+              "answer": "copy",
+              "accept": [
+                "copies",
+                "copied",
+                "cp"
+              ]
             },
             {
               "edit": true,
-              "answer": "copy"
+              "answer": "copy",
+              "accept": [
+                "copies",
+                "copied",
+                "cp"
+              ]
             },
             {
               "edit": true,
-              "answer": "copy"
+              "answer": "copy",
+              "accept": [
+                "copies",
+                "copied",
+                "cp"
+              ]
             }
           ]
         ],
@@ -524,18 +610,18 @@
         "correct": "Twelve cells, one rule: declare one and the compiler stops guessing.",
         "generic": "Not quite right. Recall which members each declaration suppresses.",
         "byKey": {
-          "r0c1": "For a class with a copy assignment, this call falls back to the copy.",
-          "r0c2": "For a class with a copy assignment, this call falls back to the copy.",
-          "r0c3": "For a class with a copy assignment, this call falls back to the copy.",
-          "r1c1": "For a class with a move assignment, this call picks a deleted function.",
-          "r1c2": "For a class with a move assignment, this call picks a deleted function.",
-          "r1c3": "For a class with a move assignment, this call runs the move you declared.",
-          "r2c1": "For a class with a move constructor, this call runs the move you declared.",
-          "r2c2": "For a class with a move constructor, this call picks a deleted function.",
-          "r2c3": "For a class with a move constructor, this call picks a deleted function.",
-          "r3c1": "For a class with a destructor, this call falls back to the copy.",
-          "r3c2": "For a class with a destructor, this call falls back to the copy.",
-          "r3c3": "For a class with a destructor, this call falls back to the copy."
+          "r0c1": "You expected a move. A declared copy assignment stopped the moves being written, so this copies.",
+          "r0c2": "This runs the copy assignment you declared. Nothing is deleted.",
+          "r0c3": "You expected a move. With a copy assignment declared, no move assignment is written, so it copies.",
+          "r1c1": "You expected a copy. A declared move assignment deletes the copy constructor, and no move constructor is written.",
+          "r1c2": "You expected a copy. A declared move assignment deletes the copy assignment.",
+          "r1c3": "This is the move assignment you declared, so it runs.",
+          "r2c1": "You expected a copy. This is the move constructor you declared, so it runs.",
+          "r2c2": "You expected a copy. A declared move constructor deletes the copy constructor and the copy assignment.",
+          "r2c3": "You expected a move. No move assignment is written, and the copy assignment is deleted.",
+          "r3c1": "You expected the members to move. The destructor stopped the move being written, so it copies.",
+          "r3c2": "You expected an error. The copy assignment is still written after a destructor, though deprecated.",
+          "r3c3": "You expected a move. The destructor stopped the moves being written, so it copies."
         }
       },
       "explain": {
@@ -739,8 +825,8 @@
       "question": "Say what a candidate should say about moves and the rule of five.",
       "widget": {
         "kind": "longform",
-        "prompt": "Say aloud, in three minutes: what `std::move` does, when a move happens, why a move constructor should be `noexcept`, and what the rule of five and the rule of zero ask you to do. Write it as you would speak it, about 250 words.",
-        "model": "`std::move` is a cast to an rvalue reference. It moves nothing itself: it only lets a move constructor or assignment be chosen.\n\nA move happens when the source is an rvalue (a temporary, a returned local, a `std::move` cast) and a move constructor exists that is not hidden by a declared destructor or copy member. A `const` object cannot be moved, so `std::move(c)` quietly copies.\n\nA move takes the resource and leaves a valid, destroyable, empty source.\n\n`noexcept` matters because `std::vector` grows with `std::move_if_noexcept`. If the move can throw, every element is copied on growth: for 1,000 `Buffer`s of 1,000 doubles, each growth copies 8 MB instead of moving 1,000 pointers.\n\nRule of zero: own through members that manage themselves, and declare nothing. Rule of five: if you declare any of the destructor, copy or move members, decide all five. For a class that owns a raw resource, delete the copy and write the moves. A destructor alone silently turns every move into a copy.\n\nOne sentence to close: a move takes, a copy duplicates.",
+        "prompt": "Say aloud, in three minutes, what `std::move` does and when a move happens. Say why a move constructor should be `noexcept`. Say what the rule of five and the rule of zero ask of you. Write it as you would speak it, about 250 words.",
+        "model": "`std::move` is a cast to an rvalue reference. It moves nothing itself: it only lets a move constructor or assignment be chosen.\n\nA move happens when the source is an rvalue such as a temporary, a returned local or a `std::move` cast. A move constructor must also exist. A declared destructor or copy member hides it. A `const` object cannot be moved, so `std::move(c)` quietly copies.\n\nA move takes the resource and leaves a valid, destroyable, empty source.\n\n`noexcept` matters because `std::vector` grows with `std::move_if_noexcept`. If the move can throw, every element is copied on growth. For 1,000 `Buffer`s of 1,000 doubles, each growth copies 8 MB instead of moving 1,000 pointers.\n\nRule of zero: own through members that manage themselves, and declare nothing. Rule of five: if you declare any of the destructor, copy or move members, decide all five. For a class that owns a raw resource, delete the copy and write the moves. A destructor alone silently turns every move into a copy.\n\nOne sentence to close: a move takes, a copy duplicates.",
         "rubric": [
           {
             "points": 2,
@@ -783,8 +869,8 @@
       "question": "Say what happens when a base destructor is not virtual, and what undefined behaviour means for you.",
       "widget": {
         "kind": "longform",
-        "prompt": "Say aloud, in three minutes, what happens for `Base* p = new Derived; p->f(); delete p;` when `Base`'s destructor is not virtual, and what undefined behaviour means for a quant who ships code. About 250 words.",
-        "model": "If `f` is virtual, `p->f()` loads the object's vptr, indexes its class's table at the slot for `f`, and calls that function: the real type decides.\n\n`delete p` through a `Base*` with a non-virtual destructor is undefined. In practice only `~Base` runs, and `Derived`'s members leak. The fix is `virtual ~Base() = default;`. It costs 4 bytes an object here, two loads and an indirect call a call, and usually no inlining when the compiler cannot see the dynamic type. Copying a `Derived` into a `Base` slices it: the copy's vptr is `Base`'s.\n\nUndefined behaviour means the standard places no limit on the run. The optimiser assumes it never happens, so it deletes a null check after a dereference, or an overflow check made after the addition. Common examples are signed overflow, an index past the end, an unset read and a dangling pointer.\n\nOn the desk: run tests under `-fsanitize=undefined` and `-fsanitize=address`, check before the operation and never after, and hold money in `std::int64_t` pence.",
+        "prompt": "Take `Base* p = new Derived; p->f(); delete p;` with a non-virtual `~Base`. Say aloud, in three minutes, what happens. Then say what undefined behaviour means for a quant who ships code. About 250 words.",
+        "model": "If `f` is virtual, `p->f()` loads the object's vptr and indexes its class's table at the slot for `f`. It then calls that function. The real type decides.\n\n`delete p` through a `Base*` with a non-virtual destructor is undefined. In practice only `~Base` runs, and `Derived`'s members leak. The fix is `virtual ~Base() = default;`. It costs 4 bytes an object here. Each call costs two loads and an indirect call. It usually loses inlining when the compiler cannot see the dynamic type. Copying a `Derived` into a `Base` slices it: the copy's vptr is `Base`'s.\n\nUndefined behaviour means the standard places no limit on the run. The optimiser assumes it never happens. It deletes a null check after a dereference, or an overflow check made after the addition. Common examples are signed overflow, an index past the end, an unset read and a dangling pointer.\n\nOn the desk, run tests under `-fsanitize=undefined` and `-fsanitize=address`. Check before the operation, never after, and hold money in `std::int64_t` pence.",
         "rubric": [
           {
             "points": 2,

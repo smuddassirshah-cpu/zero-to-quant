@@ -208,7 +208,7 @@
               {
                 "nodes": {
                   "obj": {
-                    "label": "Tracked(1)\nnew"
+                    "label": "Tracked(1)"
                   },
                   "cnt": {
                     "label": "count: 1"
@@ -263,6 +263,13 @@
         "accept": "2: the object and the counter, both at step 1",
         "wrong": [
           {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
             "id": "three",
             "value": 3,
             "tol": {
@@ -293,7 +300,8 @@
         "correct": "Twice: one for the object and one for the counter, both in step 1.",
         "generic": "Not quite right. Count the boxes that appear, not the arrows.",
         "byKey": {
-          "three": "You counted a new counter for each copy. A copy shares the counter that already exists."
+          "four": "You counted a new counter for each copy. A copy shares the counter that already exists.",
+          "three": "You counted one `new` for each pointer. A copy allocates nothing."
         }
       },
       "explain": {
@@ -576,7 +584,7 @@
         ],
         "prelude": "#include <utility>\n#include <vector>\n#include <type_traits>\n\n// Hidden: counts how many Tracked objects are alive.\nstruct Tracked {\n    static inline int live = 0;\n    int v;\n    explicit Tracked(int x) : v(x) { ++live; }\n    ~Tracked() { --live; }\n};\n",
         "leakCheck": true,
-        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects, so an object deleted twice or never shows in the count; two compile checks fail if copying is allowed."
+        "how": "Submit runs 15 hidden tests. A hidden `Tracked` type counts live objects, so an object deleted twice or never shows in the count. Two compile checks fail if copying is allowed."
       },
       "hints": [
         {
@@ -676,7 +684,7 @@
         "correct": "The second pointer leads to the shared counter block.",
         "generic": "Not quite right. Think of what all the copies must share.",
         "byKey": {
-          "inside": "You put the count in each pointer. A count inside each pointer would not be shared between copies.",
+          "inside": "You put the count in each pointer. Copies need one count that they all see.",
           "deleter": "The deleter lives in the counter block, not in each pointer.",
           "align": "Padding does not double a pointer."
         }
@@ -835,9 +843,9 @@
             "compare": "equal"
           },
           {
-            "setup": "SharedPtr<Tracked> a(new Tracked(1)); { SharedPtr<Tracked> b = a; }",
-            "call": "Tracked::live",
-            "expect": 1,
+            "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b = a; b = std::move(a);",
+            "call": "b.use_count() * 10 + a.use_count()",
+            "expect": 10,
             "compare": "equal"
           },
           {
@@ -866,8 +874,8 @@
           },
           {
             "setup": "SharedPtr<Tracked> a(new Tracked(1)); SharedPtr<Tracked> b(new Tracked(2)); b = std::move(a);",
-            "call": "Tracked::live * 10 + b.use_count()",
-            "expect": 11,
+            "call": "Tracked::live * 100 + b.use_count() * 10 + a.use_count()",
+            "expect": 110,
             "compare": "equal"
           },
           {
@@ -1026,7 +1034,7 @@
           {
             "id": "leak",
             "text": "It is never deleted",
-            "why": "It is freed, twice; not never."
+            "why": "It is freed, twice, so it is not leaked."
           },
           {
             "id": "once",
@@ -1059,12 +1067,12 @@
         "generic": "Not quite right. Count the counters first.",
         "byKey": {
           "two": "You gave the count as 2. Each constructor from a raw pointer starts its own count at 1.",
-          "leak": "It is freed, twice; not never.",
+          "leak": "It is freed, twice, so it is not leaked.",
           "once": "The counters do not know about each other."
         }
       },
       "explain": {
-        "text": "Each pointer built from the raw one made its own counter, so each deletes the object when its count reaches zero. Make a shared owner with `make_shared`, or copy an existing `shared_ptr`, never from one raw pointer twice.",
+        "text": "Each pointer built from the raw one made its own counter. Each deletes the object when its count reaches zero. Make a shared owner with `make_shared`, or copy an existing `shared_ptr`, never from one raw pointer twice.",
         "canvas": {
           "shade": {
             "bad": [
@@ -1078,66 +1086,68 @@
     {
       "type": "problem",
       "difficulty": 3,
-      "title": "Add before you drop",
-      "prose": "Your `operator=` adds one to the other count, then drops its own.",
+      "title": "A move between two owners",
+      "prose": "`a` and `b` share one object, so the count is 2. Then `b = std::move(a);` runs on your `SharedPtr`.",
       "tags": [
         "shared-ptr",
-        "self-assignment"
+        "move-semantics"
       ],
-      "question": "In `operator=`, why add to the other count before dropping your own?",
+      "question": "What is `b.use_count()` afterwards?",
       "widget": {
-        "kind": "choice",
-        "layout": "stack",
-        "options": [
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1: b let go of its share and took a's",
+        "wrong": [
           {
-            "id": "self",
-            "text": "`a = a`: the count could fall to zero and free the object before it is taken again",
-            "correct": true
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
           },
           {
-            "id": "speed",
-            "text": "It is faster that way round",
-            "why": "Order makes no speed difference."
-          },
-          {
-            "id": "atomic",
-            "text": "The count is atomic and must be changed first",
-            "why": "The real count is atomic, ours is not, and that is unrelated to the order."
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
           }
-        ],
-        "shuffle": true
+        ]
       },
       "hints": [
         {
           "rung": "nudge",
-          "text": "What happens if both sides are the same pointer?"
+          "text": "What does `b` do with its own share before it takes `a`'s?"
         },
         {
           "rung": "point",
-          "text": "If you drop first, the count may reach zero."
+          "text": "`b` subtracts one for its old share, then takes over `a`'s share without adding."
         },
         {
           "rung": "step",
-          "text": "Then the object is deleted before you copy it."
+          "text": "The count went from 2 to 1 when `b` let go. `a` is left empty."
         }
       ],
       "feedback": {
-        "correct": "Add first keeps the object alive in `a = a`.",
-        "generic": "Not quite right. Think about `a = a` and the count.",
+        "correct": "One: `b` is now the only owner, and `a` is empty.",
+        "generic": "Not quite right. A move adds no owner and `b` drops its old share.",
         "byKey": {
-          "speed": "You thought it saves time. Order makes no speed difference.",
-          "atomic": "The real count is atomic, ours is not, and that is unrelated to the order."
+          "two": "You kept both owners. A move hands `a`'s share to `b`, and `a` is left empty.",
+          "zero": "You dropped both shares. `b` keeps the share that `a` handed over."
         }
       },
       "explain": {
-        "text": "The next questions an interviewer asks: is it thread safe (the count is atomic, the pointee is not), what is `weak_ptr` (a handle that does not add to the count), and what is `enable_shared_from_this`."
+        "text": "The move assignment drops `b`'s old share, so the count falls from 2 to 1. It then takes `a`'s pointers without adding to the count, and empties `a`."
       }
     },
     {
       "type": "generalise",
       "difficulty": 2,
       "title": "Unique or shared",
-      "prose": "l9 gave the rule: prefer `unique_ptr`. Here is what each class is.\n\n```cpp\n// Say aloud: unique owns one thing and moves;\n// shared counts its owners and the last one frees.\n// unique: one owner, move only, no overhead\n// shared: a count, copy is cheap, last owner frees\n```",
+      "prose": "l9 gave the rule: prefer `unique_ptr`. Here is what each class is.\n\n```cpp\n// Say aloud: unique owns one thing and moves;\n// shared counts its owners and the last one frees.\n// unique: one owner, move only, no overhead\n// shared: a count, copy is cheap, last owner frees\n~SharedPtr() {\n    if (count_ && --*count_ == 0) {\n        delete ptr_;\n        delete count_;\n    }\n}\n```\nInterviewers then ask three follow-ups. Is it thread safe? The count is atomic, the object is not. What is `weak_ptr`? A handle that adds nothing to the count. What is `enable_shared_from_this`? A base that lets an object hand out owners of itself.",
       "tags": [
         "smart-pointer",
         "reference-count"
@@ -1265,56 +1275,56 @@
   },
   "quiz": [
     {
-      "id": "q-copy-unique",
-      "difficulty": 2,
+      "id": "q-deleter",
+      "difficulty": 3,
       "tags": [
-        "unique-ptr"
+        "control-block"
       ],
-      "prose": "```cpp\nstd::unique_ptr<int> a = std::make_unique<int>(1);\nstd::unique_ptr<int> b = a;\n```",
-      "question": "What happens?",
+      "prose": "A `std::shared_ptr<Fill>` is built from `new Fill` and a custom deleter function.",
+      "question": "Where does the shared pointer keep the deleter?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
-            "id": "error",
-            "text": "A compile error: copying is deleted",
+            "id": "block",
+            "text": "In the counter block, shared by every owner",
             "correct": true
           },
           {
-            "id": "share",
-            "text": "Both own the int",
-            "why": "That would be a double delete. Copying is deleted to prevent it."
+            "id": "each",
+            "text": "In each `shared_ptr`, beside the pointers",
+            "why": "A `shared_ptr` is two pointers wide. The deleter sits in the counter block."
           },
           {
-            "id": "move",
-            "text": "It moves automatically",
-            "why": "A move needs `std::move(a)`. A plain copy is refused."
+            "id": "object",
+            "text": "In the `Fill` object",
+            "why": "The object knows nothing about how it is deleted."
           },
           {
-            "id": "null",
-            "text": "`a` becomes null",
-            "why": "The line does not compile, so nothing happens to `a`."
+            "id": "none",
+            "text": "Nowhere: it always calls `delete`",
+            "why": "It remembers the deleter given at construction and calls that."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "Copying is deleted.",
-        "generic": "Not quite right. A unique pointer has exactly one owner."
+        "correct": "The counter block holds it.",
+        "generic": "Not quite right. Every owner must call the same deleter."
       },
       "explain": {
-        "text": "The copy constructor is deleted, so only `std::move(a)` can pass ownership."
+        "text": "The counter block holds the count, the deleter and the weak count. Every owner reaches the same block, so the last one runs the right deleter."
       }
     },
     {
-      "id": "q-use-count",
+      "id": "q-weak-count",
       "difficulty": 2,
       "tags": [
         "reference-count"
       ],
-      "prose": "```cpp\nauto a = std::make_shared<Tracked>(1);\nauto b = a;\n{ auto c = a; }\n```",
-      "question": "What is `a.use_count()` after the block?",
+      "prose": "```cpp\nauto a = std::make_shared<Tracked>(1);\nstd::weak_ptr<Tracked> w = a;\nauto b = a;\n```",
+      "question": "What is `a.use_count()`?",
       "widget": {
         "kind": "numeric",
         "answer": 2,
@@ -1334,13 +1344,13 @@
       },
       "feedback": {
         "correct": "Two: `a` and `b`.",
-        "generic": "Not quite right. `c` has gone out of scope.",
+        "generic": "Not quite right. Does a `weak_ptr` own anything?",
         "byKey": {
-          "three": "You counted `c`. It went out of scope at the closing brace."
+          "three": "You counted `w`. A `weak_ptr` watches and adds nothing to the count."
         }
       },
       "explain": {
-        "text": "`c` made it 3 and its destructor made it 2 again."
+        "text": "Only `a` and `b` own the object. The `weak_ptr` keeps a separate weak count."
       }
     },
     {

@@ -1035,6 +1035,13 @@
     "accept": "3",
     "wrong": [
      {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
       "id": "zero",
       "value": 0,
       "tol": {
@@ -1063,11 +1070,12 @@
     "byKey": {
      "zero": "You assumed a vector always moves on growth. With a move that may throw it copies.",
      "four": "The pushes move from the temporaries. The copies come from growth.",
-     "seven": "That adds the 4 pushes' moves to the 3 copies. Only copies were asked."
+     "seven": "That adds the 4 pushes' moves to the 3 copies. Only copies were asked.",
+     "one": "That is the first growth only. The vector grows again at the third push."
     }
    },
    "explain": {
-    "text": "Capacity runs 1, 2, 4, so the second and third pushes grow the block. They relocate 1 and then 2 elements. The move may throw, so the vector copies them: 1 + 2 = 3, and the 4 pushes themselves move."
+    "text": "Capacity runs 1, 2, 4, so the second and third pushes relocate 1 and then 2 elements. A vector copies them when the move may throw (`std::move_if_noexcept`), which makes 3 copies; the 4 pushes move. With exceptions off, as in libc++ with `-fno-exceptions`, it moves anyway."
    }
   },
   {
@@ -1081,7 +1089,7 @@
    ],
    "pace": 90,
    "title": "Which lines are undefined",
-   "prose": "Each snippet is a complete function body. None of them is optimised away.",
+   "prose": "Each snippet is a complete function body.",
    "question": "Select all that apply: which lines have undefined behaviour?",
    "widget": {
     "kind": "multi",
@@ -1119,11 +1127,14 @@
     "generic": "For each line, ask whether the standard defines the result or leaves it open.",
     "byKey": {
      "size": "Reading `s[s.size()]` is allowed and gives the null character.",
-     "unsigned": "Unsigned arithmetic wraps by definition."
+     "unsigned": "Unsigned arithmetic wraps by definition.",
+     "zero-div": "Dividing by zero is undefined for integers. It is not an error value, and it is not infinity.",
+     "const-cast": "A `const` object may sit in read-only memory. The compiler may also assume it never changes.",
+     "wrong-delete": "`new[]` stores a count that `delete` ignores. Pair `new[]` with `delete[]`."
     }
    },
    "explain": {
-    "text": "Dividing by zero, changing an object that was defined `const` and using `delete` on a `new[]` block are undefined. Reading the string terminator and wrapping an unsigned value are defined. Defined does not mean useful, but it cannot break the program."
+    "text": "Dividing by zero, changing an object that was defined `const` and using `delete` on a `new[]` block are undefined. Reading the string terminator and wrapping an unsigned value are defined: the standard fixes the result. Defined code may still be a bug."
    }
   },
   {
@@ -1527,7 +1538,7 @@
     "generic": "Ask where a `shared_ptr` learns which destructor to call, and when."
    },
    "explain": {
-    "text": "The counter block remembers the deleter for `Derived` from the moment `make_shared<Derived>` built it, so the call is defined. The safe habit is still a virtual destructor. A `unique_ptr<Base>` or a raw `delete` has no such memory."
+    "text": "The control block (the counter block of l23) remembers the deleter for `Derived`, set when `make_shared<Derived>` built it. So the call is defined, though the safe habit is still a virtual destructor. A `unique_ptr<Base>` or a raw `delete` has no such memory."
    }
   },
   {
@@ -1547,8 +1558,8 @@
     "kind": "code",
     "language": "cpp",
     "prelude": "#include <type_traits>\n",
-    "starter": "#include <memory>\n#include <vector>\n\n// Order is an interface. clone() returns a copy of the same dynamic type, so an\n// Order can be copied through a base pointer without slicing. Market is written for you.\nstruct Order {\n    virtual ~Order() = default;\n    virtual double cost(double market) const = 0;      // pounds to buy at this market price\n    virtual std::unique_ptr<Order> clone() const = 0;\n};\n\nstruct Market : Order {\n    explicit Market(int q) : qty(q) {}\n    double cost(double market) const override { return qty * market; }\n    std::unique_ptr<Order> clone() const override { return std::make_unique<Market>(*this); }\n    int qty;\n};\n\n// TODO: Limit(q, px): buys q shares only if the market price is at most px,\n// so cost is q * market then, and 0 when the market is above px. clone() returns a Limit.\nstruct Limit : Order {\n    Limit(int q, double px) : qty(q), limit(px) {}\n    double cost(double) const override { return 0.0; }\n    std::unique_ptr<Order> clone() const override { return nullptr; }\n    int qty;\n    double limit;\n};\n\n// TODO: Basket: holds orders of any kind. cost() is the sum of their costs.\n// clone() returns a Basket holding a clone of each child (a deep copy).\nstruct Basket : Order {\n    void add(std::unique_ptr<Order> o) { (void)o; }\n    double cost(double) const override { return 0.0; }\n    std::unique_ptr<Order> clone() const override { return nullptr; }\n    std::vector<std::unique_ptr<Order>> kids;\n};\n",
-    "solution": "#include <memory>\n#include <vector>\n\n// Order is an interface. clone() returns a copy of the same dynamic type, so an\n// Order can be copied through a base pointer without slicing. Market is written for you.\nstruct Order {\n    virtual ~Order() = default;\n    virtual double cost(double market) const = 0;      // pounds to buy at this market price\n    virtual std::unique_ptr<Order> clone() const = 0;\n};\n\nstruct Market : Order {\n    explicit Market(int q) : qty(q) {}\n    double cost(double market) const override { return qty * market; }\n    std::unique_ptr<Order> clone() const override { return std::make_unique<Market>(*this); }\n    int qty;\n};\n\nstruct Limit : Order {\n    Limit(int q, double px) : qty(q), limit(px) {}\n    double cost(double market) const override { return market <= limit ? qty * market : 0.0; }\n    std::unique_ptr<Order> clone() const override { return std::make_unique<Limit>(*this); }\n    int qty;\n    double limit;\n};\n\nstruct Basket : Order {\n    void add(std::unique_ptr<Order> o) { kids.push_back(std::move(o)); }\n    double cost(double market) const override {\n        double total = 0.0;\n        for (const auto& k : kids) total += k->cost(market);\n        return total;\n    }\n    std::unique_ptr<Order> clone() const override {\n        auto copy = std::make_unique<Basket>();\n        for (const auto& k : kids) copy->add(k->clone());\n        return copy;\n    }\n    std::vector<std::unique_ptr<Order>> kids;\n};\n",
+    "starter": "#include <memory>\n#include <vector>\n\n// Order is an interface. Market is written for you.\nstruct Order {\n    virtual ~Order() = default;\n    // pounds to buy at this market price\n    virtual double cost(double market) const = 0;\n    virtual std::unique_ptr<Order> clone() const = 0;\n};\n\nstruct Market : Order {\n    explicit Market(int q) : qty(q) {}\n    double cost(double market) const override {\n        return qty * market;\n    }\n    std::unique_ptr<Order> clone() const override {\n        return std::make_unique<Market>(*this);\n    }\n    int qty;\n};\n\n// TODO: Limit(q, px): buys q shares only if the market\n// price is at most px, so cost is q * market then, and 0\n// when the market is above px. clone() returns a Limit.\nstruct Limit : Order {\n    Limit(int q, double px) : qty(q), limit(px) {}\n    double cost(double) const override { return 0.0; }\n    std::unique_ptr<Order> clone() const override {\n        return nullptr;\n    }\n    int qty;\n    double limit;\n};\n\n// TODO: Basket: holds orders of any kind. cost() is the\n// sum of their costs. clone() returns a Basket holding a\n// clone of each child (a deep copy).\nstruct Basket : Order {\n    void add(std::unique_ptr<Order> o) { (void)o; }\n    double cost(double) const override { return 0.0; }\n    std::unique_ptr<Order> clone() const override {\n        return nullptr;\n    }\n    std::vector<std::unique_ptr<Order>> kids;\n};\n",
+    "solution": "#include <memory>\n#include <vector>\n\n// Order is an interface. Market is written for you.\nstruct Order {\n    virtual ~Order() = default;\n    // pounds to buy at this market price\n    virtual double cost(double market) const = 0;\n    virtual std::unique_ptr<Order> clone() const = 0;\n};\n\nstruct Market : Order {\n    explicit Market(int q) : qty(q) {}\n    double cost(double market) const override {\n        return qty * market;\n    }\n    std::unique_ptr<Order> clone() const override {\n        return std::make_unique<Market>(*this);\n    }\n    int qty;\n};\n\nstruct Limit : Order {\n    Limit(int q, double px) : qty(q), limit(px) {}\n    double cost(double market) const override {\n        return market <= limit ? qty * market : 0.0;\n    }\n    std::unique_ptr<Order> clone() const override {\n        return std::make_unique<Limit>(*this);\n    }\n    int qty;\n    double limit;\n};\n\nstruct Basket : Order {\n    void add(std::unique_ptr<Order> o) {\n        kids.push_back(std::move(o));\n    }\n    double cost(double market) const override {\n        double total = 0.0;\n        for (const auto& k : kids) total += k->cost(market);\n        return total;\n    }\n    std::unique_ptr<Order> clone() const override {\n        auto copy = std::make_unique<Basket>();\n        for (const auto& k : kids) copy->add(k->clone());\n        return copy;\n    }\n    std::vector<std::unique_ptr<Order>> kids;\n};\n",
     "examples": [
      {
       "setup": "Limit l(100, 2.5);",
@@ -1619,6 +1630,12 @@
       "compare": "isclose"
      },
      {
+      "setup": "Basket b; b.add(std::make_unique<Market>(100)); b.add(std::make_unique<Limit>(150, 2.5)); std::unique_ptr<Order> c = b.clone();",
+      "call": "b.cost(2.0)",
+      "expect": 500.0,
+      "compare": "isclose"
+     },
+     {
       "setup": "Basket inner; inner.add(std::make_unique<Limit>(10, 2.5)); inner.add(std::make_unique<Market>(100)); Basket outer; outer.add(inner.clone()); outer.add(std::make_unique<Market>(0)); std::unique_ptr<Order> c = outer.clone(); inner.add(std::make_unique<Market>(5));",
       "call": "c->cost(3.0)",
       "expect": 300.0,
@@ -1631,7 +1648,7 @@
      }
     ],
     "leakCheck": true,
-    "how": "Submit runs 11 hidden tests. Costs are compared with `isclose`."
+    "how": "Submit runs 12 hidden tests. Costs are compared with `isclose`."
    },
    "feedback": {
     "correct": "Each order clones itself, so the copy shares nothing with the original.",

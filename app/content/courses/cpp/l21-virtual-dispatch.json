@@ -330,7 +330,7 @@
         "correct": "12: the 8 bytes of `B` and 4 for `y`.",
         "generic": "Not quite right. Add the new field to the size of `B`.",
         "byKey": {
-          "eight": "You counted the two ints. The pointer is a real field.",
+          "eight": "You counted the two ints and left out the pointer.",
           "sixteen": "That is the desktop answer: its pointer is 8 bytes. Here it is 4."
         }
       },
@@ -396,6 +396,7 @@
         "params": {
           "cells": [
             "vptr",
+            "gap",
             "bid",
             "ask"
           ]
@@ -793,7 +794,8 @@
             "Derived d;"
           ],
           "title": "main.cpp",
-          "numbers": true
+          "numbers": true,
+          "wrap": true
         },
         "state": {}
       },
@@ -994,7 +996,7 @@
       "type": "generalise",
       "difficulty": 2,
       "title": "The pattern",
-      "prose": "A base has a virtual destructor, and each function is virtual. Derived classes say `override`. Hold objects through a pointer or reference, never by value.\n\n```cpp\n// Say aloud: the table picks the function,\n// so the real type of the object decides.\nstruct Payoff {\n    virtual ~Payoff() = default;\n    virtual double value(double spot) const = 0;\n};\nstruct Call : Payoff {\n    double value(double s) const override;\n};\nstd::unique_ptr<Payoff> p = std::make_unique<Call>(100);\n```",
+      "prose": "A base has a virtual destructor, and each function is virtual. Derived classes say `override`. Hold objects through a pointer or reference, never by value.\n\n```cpp\n// Say aloud: the table picks the function,\n// so the real type of the object decides.\nstruct Payoff {\n    virtual ~Payoff() = default;\n    virtual double value(double) const = 0;\n};\nstruct Call : Payoff {\n    double value(double) const override;\n};\nstd::unique_ptr<Payoff> p =\n    std::make_unique<Call>(100);\n```",
       "tags": [
         "virtual-dispatch",
         "virtual-destructor"
@@ -1027,7 +1029,7 @@
         "generic": "Not quite right. Both conditions must hold."
       },
       "explain": {
-        "text": "A base with `virtual ~Base() = default;` declares a destructor, so its moves are not written. That suits a polymorphic base: copy through a `clone()`, not through a base reference."
+        "text": "A virtual `f` is looked up in the object's own table. A non-virtual `f` is fixed by the pointer's type, and a by-value object is a base object."
       }
     },
     {
@@ -1039,7 +1041,7 @@
         "virtual-dispatch",
         "vtable"
       ],
-      "question": "Which change removes the table lookup?",
+      "question": "Which change lets the compiler resolve the call at compile time?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
@@ -1062,7 +1064,7 @@
           {
             "id": "fewer",
             "text": "Call `value` fewer times",
-            "why": "Removing a lookup is the point. Calling less is a different change."
+            "why": "Calling less changes how often the call runs, not how it is resolved."
           }
         ],
         "shuffle": true
@@ -1087,11 +1089,11 @@
         "byKey": {
           "inline": "`inline` does not tell the compiler which function a call through a base pointer reaches.",
           "final": "`final` helps only when the compiler can see the exact type.",
-          "fewer": "Removing a lookup is the point. Calling less is a different change."
+          "fewer": "Calling less changes how often the call runs, not how it is resolved."
         }
       },
       "explain": {
-        "text": "A virtual call costs two dependent loads and an indirect call, and usually stops inlining, because the compiler does not know the target. A compiler devirtualises when it can prove the type, so say usually, never never. A template gives the same code with no lookup (see cpp l13)."
+        "text": "A virtual call costs two dependent loads and an indirect call. It usually stops inlining, because the compiler does not know the target. A template resolves the call at compile time (see cpp l13)."
       }
     }
   ],
@@ -1212,7 +1214,7 @@
           {
             "id": "static",
             "text": "A class whose `value` is static",
-            "why": "Static means no object. The `= 0` means no body here."
+            "why": "Static means no object. The `= 0` means no body is required here."
           },
           {
             "id": "leak",
@@ -1224,7 +1226,7 @@
       },
       "feedback": {
         "correct": "An abstract class.",
-        "generic": "Not quite right. A `= 0` function has no body in the base."
+        "generic": "Not quite right. A `= 0` function needs no body in the base."
       },
       "explain": {
         "text": "A pure virtual function leaves a slot unfilled, so the class cannot be instantiated and acts as an interface."
@@ -1236,7 +1238,7 @@
       "tags": [
         "object-slicing"
       ],
-      "prose": "A desk keeps `std::vector<Payoff>` and pushes `Call(100)` into it.",
+      "prose": "A desk keeps `std::vector<Payoff>`, where `Payoff` is a concrete base, and pushes `Call(100)` into it.",
       "question": "What does the vector hold?",
       "widget": {
         "kind": "choice",
