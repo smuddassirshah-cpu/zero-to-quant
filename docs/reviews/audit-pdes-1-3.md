@@ -94,3 +94,4 @@ Fix-pass checks (worktree, from `app/` unless said):
 - Concepts scripts, `python3 -I` from the repo root: `pdes-L1-concepts.py` exit 0, `pdes-L2-concepts.py` exit 0, `pdes-L3-concepts.py` exit 0, each "all checks passed"; no check needed changing.
 - `docs/briefs/exam-3.2-scripts/check_pdes.py` (`PYTHONPATH` set, `python3 -I`): exit 0; no expectation changed.
 - Voice scan 35: `explanations over three sentences: 0`; `sentences scanned: 5634; over 35 words: 0`.
+- Playthrough (`--local-cdn <pkgs>`), one run each plain and `--mobile` over l2, l4, l7, l8, l10, l11, homework-1 and homework-2: 8 of 8 `ok`, `browser relaunches: 0`, `All passed.` both times.
