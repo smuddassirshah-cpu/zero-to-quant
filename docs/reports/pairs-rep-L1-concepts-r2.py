@@ -104,10 +104,24 @@ print(f'[open-share] top-20 pair-days open, 127 cycles, same day: {share_open:.3
 # l1 screens[8].explain says most of the 120 live pairs are waiting (open share under 0.5); l13 screens[2].options[2].why
 # says "our pairs are open most of the time" (over 0.5). Exactly one of them can hold on this panel.
 # l1 screens[8].explain "Most will be waiting for a 2 sd gap" needs an open share under 0.5. It is 0.533 on this panel.
-# EXPECTED_FAIL (finding): the open share is above one half, so most of the 120 pairs on the screen are open, not waiting.
-expected_fail(share_open < 0.5, 'EXPECTED_FAIL l1 screens[8].explain [open-share] pairs are open on more than half of pair-days (0.533)')
-# corrected assert, ready to enable once the text says "about half will be open":
-# assert abs(share_open - 0.5) < 0.1, 'l1 screens[8].explain [open-share] about half of the pairs are open at any time'
+# Fix pass: the explain now reads "About half are open at any time; the rest wait for a 2 sd gap."
+# Second computation (fix pass): a position counts as held on day t when it was held overnight into t, using the
+# course's trade_pair rule with the one-day wait; the same 127 cycles give 0.528 (0.533 same day, 0.534 on mids).
+held_days, n_days = 0, 0
+for s in range(0, CLOSE.shape[0] - 378 + 1, 21):
+    Pn = normalise(CLOSE[s:s + 378]); form, trade = Pn[:252], Pn[252:]
+    for i, j in top_pairs(form, 20):
+        sd = float(np.std(form[:, i] - form[:, j])); a_, b_ = trade[:, i], trade[:, j]; n = len(a_); h = np.zeros(n, bool); t = 0
+        while t < n:
+            s_ = a_[t] - b_[t]
+            if sd > 0 and abs(s_) > 2 * sd and t + 1 < n - 1:
+                side = np.sign(s_); tc = next((u for u in range(t + 1, n) if (a_[u] - b_[u]) * side <= 0), None)
+                tx = n - 1 if tc is None else min(tc + 1, n - 1); h[t + 2:tx + 1] = True; t = tx + 1; continue
+            t += 1
+        held_days += int(h.sum()); n_days += n
+print(f'[open-share] second count, held overnight, one-day wait: {held_days / n_days:.3f}')
+assert abs(share_open - 0.5) < 0.1 and abs(held_days / n_days - 0.5) < 0.1 and 'About half are open' in DOC['l1-ggr-design']['screens'][8]['explain']['text'], \
+    'l1 screens[8].explain [open-share] about half of the pairs are open at any time (corrected claim, fix pass)'
 assert share_open > 0.5, 'l13 screens[2].options[2].why [open-share] our pairs are open most of the time'
 
 # ---- 5. SSD and sd toys (l2 screens[2], screens[3]; review-1 items[2], items[3]) [ssd-toy] [sd-toy]

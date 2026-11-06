@@ -125,9 +125,19 @@ l2 = json.load(open(os.path.join(ROOT, 'l2-normalised-paths.json')))
 l10 = DOC['l10-matching-results']
 rebase_is_error = l2['quiz'][1]['question'].startswith('What goes wrong')
 norm_is_gap = l10['screens'][3]['widget']['options'][1].get('correct', False)
-expected_fail(not (rebase_is_error and norm_is_gap), 'EXPECTED_FAIL l2 quiz[1] [rebase] re-basing is graded as an error while l10 screens[3] lists carrying the formation base through as a departure from the paper')
-# corrected assert, ready to enable once l2 quiz[1] presents re-basing as the paper's convention and the course's choice as its own:
-# assert norm_is_gap and not rebase_is_error, 'l2 quiz[1] / l10 screens[3] [rebase] consistent about the paper'
+# Fix pass: l2 quiz[1] now states that the paper re-bases (Krauss 2015 FAU discussion paper 09/2015, Siy-Yap 2009,
+# Rubesam 2021, Rad, Low and Faff 2016) and keys "which trades open" as what re-basing changes.
+# Second computation (fix pass): over all 127 cycles, top 20, re-basing changes the payoff of 2,414 of 2,540 pair-cycles
+# (the trades differ) while a fixed trade pays the same on either base; the committed month moves 1.00% to 0.99%.
+q2 = l2['quiz'][1]; key = next(o for o in q2['widget']['options'] if o.get('correct'))
+n_diff = n_all = 0
+for s0 in range(0, CLOSE.shape[0] - 378 + 1, 21):
+    Pc = normalise(CLOSE[s0:s0 + 378]); fc, tc_ = Pc[:252], Pc[252:]
+    for i, j in top_pairs(fc, 20):
+        n_all += 1; n_diff += abs(trade_pair(fc, tc_, i, j)[0] - trade_pair(fc, tc_ / tc_[0], i, j)[0]) > 1e-12
+print(f'[rebase] second count: re-basing changes the payoff of {n_diff} of {n_all} top-20 pair-cycles')
+assert norm_is_gap and not rebase_is_error and 're-normalises' in q2['prose'] and key['text'].startswith('Which trades open') \
+    and n_diff > n_all / 2, 'l2 quiz[1] / l10 screens[3] [rebase] consistent about the paper (corrected claim, fix pass)'
 
 # ---- 6. which paper cell is "up to 11%" (l10 screens[0], quiz[0]) [fair-cell]
 paper = {'top20_employed_wait': 0.00895, 'top20_committed_wait': 0.00520, 'top5_employed_wait': 0.00745, 'top5_committed_wait': 0.00463}  # Table 1 transcription
@@ -137,11 +147,16 @@ closest_cell = min(ann, key=lambda k: abs(ann[k] - 0.11))
 assert closest_cell == 'top20_employed_wait', 'l10 screens[0] [fair-cell] the paper\'s 11% is the fully invested (employed) top-20 one-day-wait cell'
 ours_committed_wait = R1.mean(); ours_employed_wait = np.mean([cycle_return(CLOSE, s, 20, 1)[1] for s in starts]) / 6
 print(f'[fair-cell] course: committed wait {(1 + ours_committed_wait) ** 12 - 1:.1%}, employed wait {(1 + ours_employed_wait) ** 12 - 1:.1%}')
-# EXPECTED_FAIL (finding): the course sets its committed cell beside an employed headline
-expected_fail('employed' in DOC['l10-matching-results']['screens'][0]['widget']['options'][0]['text'].lower(),
-              'EXPECTED_FAIL l10 screens[0].options[0] [fair-cell] the cell set beside the paper\'s 11% should be the employed (fully invested) one-day-wait cell, as the headline is')
-# corrected assert, ready to enable once the screen names employed capital with the wait as the like-for-like cell:
-# assert 'employed' in DOC['l10-matching-results']['screens'][0]['widget']['options'][0]['text'].lower(), 'l10 screens[0] [fair-cell]'
+# Fix pass: l10 screens[0] and quiz[0] now key employed capital with the wait as the like-for-like cell.
+# Second computation (fix pass): the paper's top-20 employed one-day-wait month, 0.895% (Table 1 as transcribed in the
+# Skiena lecture 23 slides), compounds to 11.3% and is 10.7% simple; the committed one, 0.520%, gives 6.4%. Ours: 0.84% a
+# month employed with the wait compounds to 10.6%, committed 0.75% to 9.4%.
+assert abs(1.00895 ** 12 - 1 - 0.113) < 5e-4 and abs(12 * 0.00895 - 0.107) < 5e-4 and abs(1.0052 ** 12 - 1 - 0.064) < 5e-4
+assert round(ours_employed_wait * 100, 2) == 0.84 and round(((1 + ours_employed_wait) ** 12 - 1) * 100, 1) == 10.6
+l10s0 = DOC['l10-matching-results']['screens'][0]; l10q0 = DOC['l10-matching-results']['quiz'][0]
+k0 = next(o for o in l10s0['widget']['options'] if o.get('correct')); kq = next(o for o in l10q0['widget']['options'] if o.get('correct'))
+assert all('employed' in k['text'] and 'wait' in k['text'] for k in (k0, kq)) and '10.6%' in l10s0['explain']['text'], \
+    'l10 screens[0], quiz[0] [fair-cell] the like-for-like cell is employed with the wait (corrected claim, fix pass)'
 
 # ---- 7. costs and k/n identities (l9 screens[4] to [6], review-2 items[6]; l8 screens[6]) [cost] [kn]
 assert abs(4 * 0.001 * 1.6886 - 0.00675) < 5e-6 and abs(0.0452 / (4 * 1.6886) - 0.00669) < 5e-6, 'l9 screens[4], screens[5] [cost]'
