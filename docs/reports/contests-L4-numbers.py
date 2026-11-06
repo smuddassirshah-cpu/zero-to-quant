@@ -374,5 +374,43 @@ for p, mins in [('A', 9), ('B', 17), ('C', 27)]:
     E('homework', 'items[6].widget.model', mins)
 E('homework', 'items[6].widget.model', 60 - 9 - 17 - 27)                                # 7 left for D
 
+# ---------- fix pass (review-contests-3-4) ----------
+# finding 13: 75 minutes for 3 problems is 25 each; 4 / 25 = 0.16, about a sixth (1/6 = 0.167)
+assert 75 / 3 == 25 and abs(4 / 25 - 1 / 6) < 0.01 and abs(4 / 25 - 1 / 10) > 0.05
+E('l13', 'screens[10].widget.options[3].text', 'a sixth of a problem')
+# finding 14: the ends-counting slip first fails test 3, the two-close case 4 9
+def peaks_ends(c): return sum(1 for i in range(len(c)) if (i == 0 or c[i] > c[i - 1]) and (i == len(c) - 1 or c[i] > c[i + 1]))
+assert peaks_ends([4, 9]) == 1 and peaks_ends([5, 1, 5]) == 2
+K('l13', 'screens[3].feedback.byKey', 'test-3', 9)
+E('l13', 'screens[2].widget.options[2].why', 'previous screen')
+# finding 18: the problem A statement is one sentence per line; the note is line 6 and the description line 2
+import json as _j
+_a = _j.load(open(os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'contests', 'l13-virtual-contest.json')))
+assert _a['screens'][1]['canvas']['params']['lines'][5].startswith('Note: the first and last days')
+assert _a['screens'][1]['hints'][1]['highlight'] == ['l6']
+for _s in (3, 4, 5):
+    assert _a['screens'][_s]['hints'][1]['highlight'] == ['l2'] and len(_a['screens'][_s]['canvas']['params']['lines']) <= 6
+assert [len(r) for r in _a['screens'][8]['widget']['rows']] == [4] * 5 and _a['screens'][8]['widget']['columns'] == ['Problem', 'Read', 'Code', 'Debug']
+# finding 19: the Wrong column is in the prose now: none on A and D, one on B, two on C
+assert [LOG[p][3] for p in 'ABCD'] == [0, 1, 2, 0]
+E('l13', 'screens[8].prose', 'one on B and two on C')
+E('l13', 'screens[8].hints[2].text', tots[0]); E('l13', 'screens[8].hints[2].text', tots[1]); E('l13', 'screens[8].hints[2].text', tots[2]); E('l13', 'screens[8].hints[2].text', sum(tots[:3]))
+E('l13', 'screens[8].feedback.correct', sum(tots[:3]))
+# finding 12: numbers added to the explanations
+E('l14', 'screens[1].explain.text', sum(dcba.values())); E('l14', 'screens[1].explain.text', sum(abcd.values()))
+assert sum(dcba.values()) == 3440 and sum(abcd.values()) == 3550 and dcba['D'] == 1600 and abcd['D'] == 1080
+E('l16', 'screens[1].explain.text', thirds([0] * 5)); E('l16', 'screens[1].explain.text', 2, fmt='2 \\cdot 10^{{10}}')
+assert abs(math.comb(199999, 2) / 2e10 - 1) < 0.01
+E('homework', 'items[4].explain.text', pen + 20 * 3)
+# finding 20, 24, 25
+E('l14', 'screens[9].prose', 'neither score is at its floor'); E('l14', 'screens[9].explain.text', "lesson 10's exchange argument")
+E('l16', 'screens[1].canvas.controls[0].frameLabels', 'test 9')
+# finding 22
+E('l15', 'screens[9].explain.text', 'almost never tie')
+# finding 23, 26, 27
+E('l16', 'screens[0].prose', 'five-problem virtual round')
+E('review', 'items[3].prose', 1000); E('review', 'items[3].prose', 40); E('review', 'items[3].prose', 500); E('review', 'items[3].prose', 15); E('review', 'items[3].prose', 250)
+E('homework', 'items[5].widget.options[0].text', 1380); E('homework', 'items[5].widget.options[0].text', 1600); E('homework', 'items[5].prose', 1380)
+
 lv.check_wrongs()
 lv.report()

@@ -89,3 +89,40 @@ L2's first screens (l5 modulo, l6 gears, l7 grid routes, l8 tokens) use the same
 4. `fresh-check.mjs --file content/courses/<c>/<set>.json --as courses/<c>` runs with code names and without self-matches: it worked on all four sets here. The protocol-6 "Must" (ENOENT on course sets) may need only this usage in AUTHORING section 11.
 5. A `console` with `wrap: true` whose statement is hard-wrapped re-wraps at 440 px into ragged lines (finding 18). Wanted: an AUTHORING note (with `wrap: true`, one sentence per line), or a validator warning when a wrapped console line ends without punctuation and the next starts in lower case.
 6. Seen again: the five-column editable `table` at phone width (l13 `screens[8]`; already in the inbox under "contests level 4"). Finding 19 is the content workaround.
+
+## Fix pass
+
+Edits are targeted (JSON path replacements) in `app/content/courses/contests/` L3 and L4 files only. Number scripts updated and tightened to the new values (`docs/reports/contests-L3-numbers.py` 189 of 189, exit 0; `contests-L4-numbers.py` 258 of 258, exit 0). No code widget touched, so no solution or starter changed.
+
+1. fixed: l9 `screens[4]` option `sorted` why now says increasing order is the worst case; 1 2 3 4 5 and 5 4 3 2 1 are the only two orders of 1 to 5 with every gap 1 (script).
+2. fixed: l10 `screens[1].explain`; A (0 to 13) overlaps B to F, C (4 to 7) blocks B and D (script).
+3. fixed: l10 `screens[9].prose` opens "Problem M's greedy has the shape most greedies share".
+4. fixed in prose and canvas line (l11 `screens[8]` is a numeric screen with a console, no code widget): running best profit added. Basis: derivation checked in the script, right half (risk, profit) (0,0), (1,5), (2,1) with budget 2 lands on (2,1), profit 1, while the best is 5.
+5. fixed: l11 `screens[10].explain` teaches `x > 0 and (x & (x - 1)) == 0`; review-3 `items[5].explain` teaches `x > 0 && (x & (x - 1)) == 0` and notes Python's `x > 0 and x & (x - 1) == 0`. Basis: g++ -O1 run on 0, 1, 8, 6: the wrong form gives 0, 1, 0, 0 (false for 8) and the right form 0, 1, 1, 0; CPython: the wrong form is True for 0, the right form False. Note: in C++ the wrong form is false for 0 (it is `0 & (-1 == 0)`) and true for 1; the reader's "true for 0" holds in Python only. Review-3 `items[5]` already graded the correct option (false for 8, `==` binds tighter than `&`); only its explanation and key text changed.
+6. fixed: l11 `screens[3]` and `screens[8]` explanations say "the app's Python".
+7. fixed: l12 `screens[5].explain` last sentence.
+8. fixed: review-3 `items[3]` prose and question rewritten; answer 10, wrongs 15 and 7 and feedback unchanged (script).
+9. fixed: review-3 `items[4]` inverted as specified; graded answer changed to the option "22" (recomputed: 2 + 4 + 16 = 22; 13 = 01101, 26 = 11010, 20 = 10100).
+10. fixed: homework-3 `items[2].prose` appended "The cap is between 0 and $10^9$."
+11. fixed: all 15 key texts shortened or distractors lengthened as listed (review-4 `items[5]` distractors; homework-4 `items[5]` rewritten under finding 27); validator `key-length` warnings on L3 and L4: 0.
+12. fixed: all 8 explanations now state the graded answer (values recomputed: 3 rooms at 4.5, 4 orders, 3 meetings, 8 masks, 3,440 and 3,550, 6 pairs, 269); l10 `screens[3]` reads "the strict rule keeps 2: 1 to 3 and 5 to 7".
+13. fixed: l13 `screens[10]` option now "a sixth of a problem's time" (4 / 25 = 0.16).
+14. fixed: l13 `screens[3].feedback.byKey` has `test-3`; an ends-counting `peaks` gives 1 for [4, 9] (script).
+15. fixed: l13 `screens[2]` option `statements` why says "previous screen".
+16. fixed: l13 `screens[8].explain`.
+17. fixed: l13 `quiz[3].explain`.
+18. fixed: l13 statements A to D rewritten one sentence per line in `screens[1]` (canvas and frames), A in `screens[3]`, B in `screens[4]`, C in `screens[5]`; hint highlights set to `l6` and `l2`. Not re-screenshotted at 440 px; mobile playthrough passes.
+19. fixed: l13 `screens[8]` Wrong column dropped, prose, hint and feedback updated; Read, Code and Debug answers unchanged (16, 27, 17).
+20. fixed: l14 `screens[9].prose` floor condition added.
+21. fixed: l15 `screens[0].explain` "a very common wrong answer".
+22. fixed: l15 `screens[9].explain` as specified.
+23. fixed: l16 `screens[0].prose` as specified.
+24. fixed: l14 `screens[9].explain` "lesson 10's".
+25. fixed: l16 `screens[1]` frame labels shortened and the code lines re-indented with two-space steps in both copies.
+26. fixed: review-4 `items[3].prose` rewritten (numbers 1,000, 40, 500, 15, 250 unchanged).
+27. fixed: homework-4 `items[5]` turned round; graded answer changed to "Push the rating from 1,380 past 1,600" (question now "Which one does least for a trader application?").
+- from review-contests-1-2 finding 21: fixed, l9 `screens[0].explain` now cites lesson 4's checker, no bold.
+- from review-contests-1-2 finding 22: fixed, l11 `screens[0].prose` appended "Lesson 2's problem D had this shape with up to 20 instruments."
+- Engine items 1 to 6: deferred, already in the inbox.
+
+Gates: validator 0 errors (remaining L3 and L4 warnings: the known false positives of Engine 1 and 2, ladder and point-hint style notes, and sentences of 20 to 26 words). Voice scan over the course: 0 sentences over 35 words; one explanation over three sentences, in l5 (L2, other fixer). Playthrough with `--local-cdn`, desktop and `--mobile`: l9 to l16, review-3, review-4, homework-3 and homework-4 all passed (24 of 24 runs).
