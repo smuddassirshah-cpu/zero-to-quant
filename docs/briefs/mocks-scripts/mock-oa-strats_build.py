@@ -151,28 +151,25 @@ def net_positions_b(fills):                      # second method: sort by accoun
     return out
 
 
-def fewest_days(volumes, target):
-    best = len(volumes) + 1
-    left, total = 0, 0
+def longest_within(volumes, limit):
+    best, left, total = 0, 0, 0
     for right, v in enumerate(volumes):
         total += v
-        while total >= target:
-            best = min(best, right - left + 1)
+        while total > limit:
             total -= volumes[left]
             left += 1
-    return best if best <= len(volumes) else 0
+        best = max(best, right - left + 1)
+    return best
 
 
-def fewest_days_b(volumes, target):              # second method: prefix sums and a binary search per end
+def longest_within_b(volumes, limit):            # second method: prefix sums and a binary search per end
     pre = [0]
     for v in volumes:
         pre.append(pre[-1] + v)
     best = 0
     for j in range(1, len(pre)):
-        # the latest start i with pre[j] - pre[i] >= target, i.e. pre[i] <= pre[j] - target
-        i = bisect_left(pre, pre[j] - target + 1) - 1
-        if i >= 0 and pre[j] - pre[i] >= target:
-            best = j - i if best == 0 else min(best, j - i)
+        i = bisect_left(pre, pre[j] - limit)     # the earliest start with pre[j] - pre[i] <= limit
+        best = max(best, j - i)
     return best
 
 
@@ -185,18 +182,17 @@ C1_SOL = '''def net_positions(fills):
     return [[a, n] for a, n in sorted(net.items()) if n != 0]
 '''
 C1_START = 'def net_positions(fills):\n    return []\n'
-C2_SOL = '''def fewest_days(volumes, target):
-    best = len(volumes) + 1
-    left, total = 0, 0
+C2_SOL = '''def longest_within(volumes, limit):
+    best, left, total = 0, 0, 0
     for right, v in enumerate(volumes):
         total += v
-        while total >= target:
-            best = min(best, right - left + 1)
+        while total > limit:
             total -= volumes[left]
             left += 1
-    return best if best <= len(volumes) else 0
+        best = max(best, right - left + 1)
+    return best
 '''
-C2_START = 'def fewest_days(volumes, target):\n    return 0\n'
+C2_START = 'def longest_within(volumes, limit):\n    return 0\n'
 
 C1_BIG = "F = ['A%05d %s %d' % (i % 50000, 'B' if i % 3 else 'S', i % 97 + 1) for i in range(100000)]"
 C1_CASES = [
@@ -221,17 +217,17 @@ C2_CASES = [
     (None, ([4, 1, 1, 6, 2, 3], 8)),
     (None, ([], 5)),
     (None, ([9], 9)),
-    (None, ([9], 10)),
-    (None, ([1, 2, 3], 7)),
+    (None, ([9], 8)),
     (None, ([1, 2, 3], 6)),
-    (None, ([5, 1, 1, 1, 12], 12)),
+    (None, ([1, 2, 3], 5)),
+    (None, ([12, 1, 1, 1, 5], 3)),
     (None, ([3, 3, 3, 3], 7)),
     (None, ([2, 7, 1, 1, 1, 8], 9)),
     ('[1] * 200000', 150000),
     (C2_BIG, 5000),
-    ('[1] * 199999 + [10**6]', 10 ** 6),
+    ('[10**6] + [1] * 199999', 199999),
 ]
-C2_EXAMPLES = [([4, 1, 1, 6, 2, 3], 8), ([1, 2, 3], 7)]
+C2_EXAMPLES = [([4, 1, 1, 6, 2, 3], 8), ([1, 2, 3], 5)]
 
 
 def c1_test(setup, arg):
@@ -252,27 +248,27 @@ def c1_test(setup, arg):
 def c2_test(setup, arg):
     if setup is None:
         vols, target = arg
-        exp = fewest_days(vols, target)
-        assert exp == fewest_days_b(vols, target)
-        return {'call': f'fewest_days({json.dumps(vols)}, {target})', 'expect': repr(exp), 'compare': 'equal'}
+        exp = longest_within(vols, target)
+        assert exp == longest_within_b(vols, target)
+        return {'call': f'longest_within({json.dumps(vols)}, {target})', 'expect': repr(exp), 'compare': 'equal'}
     if setup.startswith('V ='):
         g = {}
         exec(setup, g)
         vols = g['V']
-        exp = fewest_days(vols, arg)
-        assert exp == fewest_days_b(vols, arg)
-        return {'setup': setup, 'call': f'fewest_days(V, {arg})', 'expect': repr(exp), 'compare': 'equal'}
+        exp = longest_within(vols, arg)
+        assert exp == longest_within_b(vols, arg)
+        return {'setup': setup, 'call': f'longest_within(V, {arg})', 'expect': repr(exp), 'compare': 'equal'}
     vols = eval(setup)
-    exp = fewest_days(vols, arg)
-    assert exp == fewest_days_b(vols, arg)
-    return {'call': f'fewest_days({setup}, {arg if arg < 10 ** 6 else "10**6"})', 'expect': repr(exp), 'compare': 'equal'}
+    exp = longest_within(vols, arg)
+    assert exp == longest_within_b(vols, arg)
+    return {'call': f'longest_within({setup}, {arg})', 'expect': repr(exp), 'compare': 'equal'}
 
 
 c1_tests = [c1_test(s, a) for s, a in C1_CASES]
 c2_tests = [c2_test(s, a) for s, a in C2_CASES]
 c1_examples = [{'call': f'[list(p) for p in net_positions({json.dumps(x)})]', 'expect': repr(net_positions(x)), 'compare': 'equal'} for x in C1_EXAMPLES]
-c2_examples = [{'call': f'fewest_days({json.dumps(v)}, {t})', 'expect': repr(fewest_days(v, t)), 'compare': 'equal'} for v, t in C2_EXAMPLES]
-assert c2_tests[9]['expect'] == '150000' and c2_tests[11]['expect'] == '1'
+c2_examples = [{'call': f'longest_within({json.dumps(v)}, {t})', 'expect': repr(longest_within(v, t)), 'compare': 'equal'} for v, t in C2_EXAMPLES]
+assert c2_tests[9]['expect'] == '150000' and c2_tests[11]['expect'] == '199999'
 BIG_C1_LEN = int(c1_tests[9]['expect'])
 BIG_C2 = int(c2_tests[10]['expect'])
 
@@ -396,19 +392,19 @@ code_items = [
      'explain': {'text': "A dictionary keeps each account's running net, in constant time per fill. "
                          'Sort the accounts once at the end and drop the zeros. '
                          'A search through a list of accounts is quadratic, and 100,000 fills stop it.'}},
-    {'id': 'c2-fewest-days', 'difficulty': 3, 'skills': ['ds-pointers'], 'tags': ['fewest-days'], 'pace': 960,
-     'title': 'The fewest days to reach a volume',
+    {'id': 'c2-longest-within', 'difficulty': 3, 'skills': ['ds-pointers'], 'tags': ['longest-within'], 'pace': 960,
+     'title': 'The longest run of days within a volume',
      'question': '`volumes[i]` is the volume traded on day `i`, a positive whole number. Write '
-                 '`fewest_days(volumes, target)`. It returns the fewest neighbouring days whose volumes add up to at '
-                 'least `target`. It returns 0 if no block of days reaches `target`. `target` is a positive whole '
+                 '`longest_within(volumes, limit)`. It returns the most neighbouring days whose volumes add up to at '
+                 'most `limit`. It returns 0 if every single day is over `limit`. `limit` is a positive whole '
                  'number, and there may be 200,000 days.',
      'widget': {'kind': 'code', 'language': 'python', 'starter': C2_START, 'examples': c2_examples, 'tests': c2_tests,
                 'how': f'There are {len(c2_tests)} hidden tests. Each answer must equal the expected value. The last three use 200,000 days.',
                 'solution': C2_SOL},
      'feedback': {'correct': 'All the tests pass, including the 200,000 days.',
-                  'generic': 'A hidden test failed. Check a block that equals the target, a target no block reaches and the large cases.'},
-     'explain': {'text': "Volumes are positive, so a block's sum grows as it widens and falls as it narrows. "
-                         'Move the right end on, then shrink from the left while the sum reaches `target`, keeping the shortest. '
+                  'generic': 'A hidden test failed. Check a run that equals the limit, a limit below every day and the large cases.'},
+     'explain': {'text': "Volumes are positive, so a run's sum grows as it widens and falls as it narrows. "
+                         'Widen on the right, shrink from the left while the sum exceeds `limit`, and keep the longest run. '
                          'Each day enters and leaves once, so the work is $O(n)$.'}},
 ]
 
@@ -420,19 +416,20 @@ exam = {
     'description': 'This is the reported format of a bank strats online test, as candidates described it by Nov 2026. '
                    'A 30-minute coding paper comes first, with two short Python problems. '
                    'Hidden tests include large inputs, so a slow answer fails them. '
+                   'You pass the coding paper only with both problems; this line is illustrative, as firms do not publish cut-offs. '
                    'Then a 22-minute maths paper has eight multiple-choice questions. '
                    'They cover calculus, linear algebra and probability. '
                    'Reports give no calculator rule, so sit the maths paper with a pen and paper only. '
                    'Older reports give more questions over three hours. '
                    'Use no search engine and no notes.',
-    'requires': ['ds/L2', 'eigen/L1'],
+    'requires': ['ds/L2', 'eigen/L2'],
     'skills': {'ds-hashing': 'Hash maps', 'ds-pointers': 'Pointers and windows', 'lm-chain': 'Derivatives',
                'lm-limits': 'Limits', 'in-techniques': 'Integration', 'de-first': 'First-order equations',
                'eg-eigen': 'Eigenvalues', 'eg-pd': 'Positive definite matrices', 'bayes': "Bayes' rule",
                'cc-count': 'Counting'},
     'parts': [
         {'kind': 'paper', 'id': 'code', 'name': 'Software fundamentals', 'minutes': 30,
-         'scoring': {'right': 1, 'wrong': 0, 'blank': 0}, 'pass': 0.5, 'items': code_items},
+         'scoring': {'right': 1, 'wrong': 0, 'blank': 0}, 'pass': 1, 'items': code_items},
         {'kind': 'paper', 'id': 'maths', 'name': 'Maths', 'minutes': 22,
          'scoring': {'right': 1, 'wrong': 0, 'blank': 0}, 'pass': 0.625, 'items': maths},
         {'kind': 'check', 'id': 'no-calculator', 'name': 'I used no calculator on the maths paper',

@@ -108,19 +108,46 @@ def h2_two_way(n, links):
     return min(cands) if cands else -1
 
 
+SLOW_WRONG = {'voucher on every link', 'state Bellman-Ford'}
+BF_SRC = ('def cheapest_with_voucher(n, links):\n    inf = float("inf"); d = [[inf, inf] for _ in range(n)]; d[0][0] = 0\n'
+          '    for _ in range(2 * n):\n        ch = False\n        for u, v, c in links:\n'
+          '            for s in (0, 1):\n                if d[u][s] + c < d[v][s]:\n                    d[v][s] = d[u][s] + c; ch = True\n'
+          '            if d[u][0] < d[v][1]:\n                d[v][1] = d[u][0]; ch = True\n'
+          '        if not ch:\n            break\n    r = min(d[n - 1])\n    return -1 if r == inf else r\n')
+
+
+def timed_out(src, case, limit):
+    """True when the solution does not finish `case` inside `limit` seconds (the engine allows 5 s plus the budget)."""
+    prog = src + '\n' + case['setup'] + '\nprint(' + case['call'] + ')\n'
+    try:
+        subprocess.run([sys.executable, '-I', '-c', prog], capture_output=True, timeout=limit)
+    except subprocess.TimeoutExpired:
+        return True
+    return False
+
+
 WRONG_PY = {
     'h1-busiest-worker': {
         'strict free': 'import heapq\ndef busiest_worker(k, jobs):\n    free = list(range(k)); busy = []; count = [0] * k; last = 0\n    for a, l in sorted(jobs):\n        while busy and busy[0][0] < a:\n            heapq.heappush(free, heapq.heappop(busy)[1])\n        if free:\n            w, s = heapq.heappop(free), a\n        else:\n            s, w = heapq.heappop(busy)\n        heapq.heappush(busy, (s + l, w)); count[w] += 1; last = max(last, s + l)\n    return [min(range(k), key=lambda w: (-count[w], w)), last] if jobs else [0, 0]\n',
         'end from arrival': 'import heapq\ndef busiest_worker(k, jobs):\n    free = list(range(k)); busy = []; count = [0] * k; last = 0\n    for a, l in sorted(jobs):\n        while busy and busy[0][0] <= a:\n            heapq.heappush(free, heapq.heappop(busy)[1])\n        if free:\n            w, s = heapq.heappop(free), a\n        else:\n            s, w = heapq.heappop(busy)\n        heapq.heappush(busy, (a + l, w)); count[w] += 1; last = max(last, a + l)\n    return [min(range(k), key=lambda w: (-count[w], w)), last] if jobs else [0, 0]\n',
         'waits for lowest number': 'def busiest_worker(k, jobs):\n    end = [0] * k; count = [0] * k; last = 0\n    for a, l in sorted(jobs):\n        free = [w for w in range(k) if end[w] <= a]\n        w = free[0] if free else 0\n        s = a if free else end[0]\n        end[w] = s + l; count[w] += 1; last = max(last, end[w])\n    return [min(range(k), key=lambda w: (-count[w], w)), last] if jobs else [0, 0]\n',
+        'waiting tie to highest number': 'import heapq\ndef busiest_worker(k, jobs):\n    free = list(range(k)); busy = []; count = [0] * k; last = 0\n    for a, l in sorted(jobs):\n        while busy and busy[0][0] <= a:\n            heapq.heappush(free, -heapq.heappop(busy)[1])\n        if free:\n            w, s = heapq.heappop(free), a\n        else:\n            s, nw = heapq.heappop(busy); w = -nw\n        heapq.heappush(busy, (s + l, -w)); count[w] += 1; last = max(last, s + l)\n    return [min(range(k), key=lambda w: (-count[w], w)), last] if jobs else [0, 0]\n',
         'unsorted input': 'import heapq\ndef busiest_worker(k, jobs):\n    free = list(range(k)); busy = []; count = [0] * k; last = 0\n    for a, l in jobs:\n        while busy and busy[0][0] <= a:\n            heapq.heappush(free, heapq.heappop(busy)[1])\n        if free:\n            w, s = heapq.heappop(free), a\n        else:\n            s, w = heapq.heappop(busy)\n        heapq.heappush(busy, (s + l, w)); count[w] += 1; last = max(last, s + l)\n    return [min(range(k), key=lambda w: (-count[w], w)), last] if jobs else [0, 0]\n',
     },
     'h2-voucher-route': {
         'plain route minus dearest link': 'import heapq\ndef cheapest_with_voucher(n, links):\n    adj = [[] for _ in range(n)]\n    for u, v, c in links:\n        adj[u].append((v, c))\n    best = {0: (0, 0)}; pq = [(0, 0, 0)]; done = set()\n    while pq:\n        d, mx, u = heapq.heappop(pq)\n        if u in done:\n            continue\n        done.add(u)\n        if u == n - 1:\n            return d - mx\n        for v, c in adj[u]:\n            if v not in done and (v not in best or d + c < best[v][0]):\n                best[v] = (d + c, max(mx, c)); heapq.heappush(pq, (d + c, max(mx, c), v))\n    return -1\n',
         'voucher on every link': 'def cheapest_with_voucher(n, links):\n    seen = {0}; stack = [0]\n    while stack:\n        u = stack.pop()\n        for a, b, c in links:\n            if a == u and b not in seen:\n                seen.add(b); stack.append(b)\n    return 0 if n - 1 in seen else -1\n',
+        'missing state (one distance per site)': 'import heapq\ndef cheapest_with_voucher(n, links):\n    adj = [[] for _ in range(n)]\n    for u, v, c in links:\n        adj[u].append((v, c))\n    dist = [float("inf")] * n; dist[0] = 0; pq = [(0, 0, 0)]\n    while pq:\n        d, u, used = heapq.heappop(pq)\n        if d > dist[u]:\n            continue\n        if u == n - 1:\n            return d\n        for v, c in adj[u]:\n            if d + c < dist[v]:\n                dist[v] = d + c; heapq.heappush(pq, (d + c, v, used))\n            if not used and d < dist[v]:\n                dist[v] = d; heapq.heappush(pq, (d, v, 1))\n    return -1\n',
         'links both ways': 'import heapq\ndef cheapest_with_voucher(n, links):\n    adj = [[] for _ in range(n)]\n    for u, v, c in links:\n        adj[u].append((v, c)); adj[v].append((u, c))\n    best = [[float("inf")] * 2 for _ in range(n)]; best[0][0] = 0; pq = [(0, 0, 0)]\n    while pq:\n        d, u, s = heapq.heappop(pq)\n        if d > best[u][s]:\n            continue\n        if u == n - 1:\n            return d\n        for v, c in adj[u]:\n            if d + c < best[v][s]:\n                best[v][s] = d + c; heapq.heappush(pq, (d + c, v, s))\n            if not s and d < best[v][1]:\n                best[v][1] = d; heapq.heappush(pq, (d, v, 1))\n    return -1\n',
     },
 }
+
+chain = [t for t in items['h2-voucher-route']['widget']['tests'] if t.get('setup', '').startswith('L = [[i, i + 1, 5] for i in range(19998, -1, -1)]')]
+rec(len(chain) == 1, 'h2: the chain of links is listed in reverse order')
+rec(chain and chain[0]['expect'] == '99990', 'h2: reversed chain of 19,999 links at 5 costs 99,990 with one free link')
+rec(chain and timed_out(BF_SRC, chain[0], 9), 'h2: a state Bellman-Ford with an early stop runs past 9 s (5 s plus the budget) on the reversed chain')
+rec(chain and not timed_out(items['h2-voucher-route']['widget']['solution'], chain[0], 9), 'h2: the solution finishes the reversed chain inside 9 s')
+rec(chain and chain[0]['budget'] == 4000, 'h2: the chain case carries budget 4000')
 
 for iid, second in (('h1-busiest-worker', None), ('h2-voucher-route', None)):
     w = items[iid]['widget']
@@ -150,7 +177,7 @@ for iid, second in (('h1-busiest-worker', None), ('h2-voucher-route', None)):
     for name, src in WRONG_PY[iid].items():
         fails = 0
         for case in w['tests']:
-            if case.get('setup') and name == 'voucher on every link':
+            if case.get('setup') and name in SLOW_WRONG:
                 continue                                   # quadratic search, too slow to run to the end here
             fails += run_py(src, case)[0] != eval(case['expect'])
         rec(fails >= 1, f'{iid}: wrong version "{name}" fails {fails}')
@@ -232,6 +259,7 @@ rec(all(c['expect'] > 2 ** 31 - 1 for c in w3['tests'][-3:]), 'h3: the last thre
 s_out, _ = run_cpp(w3['starter'], w3['tests'])
 rec(sum(a != c['expect'] for a, c in zip(s_out, w3['tests'])) >= 1, 'h3: starter fails at least one test')
 WRONG_CPP = {
+    'heap greedy (buy low, sell high, no cap)': '#include <vector>\n#include <queue>\nlong long best_cash(const std::vector<int>& prices, int cap) {\n    std::priority_queue<int, std::vector<int>, std::greater<int>> pq;\n    long long s = 0;\n    for (int p : prices) {\n        pq.push(p);\n        if (pq.top() < p) { s += p - pq.top(); pq.pop(); pq.push(p); }\n    }\n    return s;\n}\n',
     'int total': w3['solution'].replace('long long', 'int').replace('-(1LL << 62)', '-(1 << 30)').replace('int best_cash', 'long long best_cash'),
     'no cap': w3['solution'].replace('std::vector<long long> dp(cap + 1, NONE), next(cap + 1);', 'cap = (int)prices.size(); std::vector<long long> dp(cap + 1, NONE), next(cap + 1);'),
     'sum of rises': '#include <vector>\nlong long best_cash(const std::vector<int>& prices, int cap) {\n    long long s = 0;\n    for (size_t i = 1; i < prices.size(); ++i) if (cap > 0 && prices[i] > prices[i - 1]) s += prices[i] - prices[i - 1];\n    return s;\n}\n',
@@ -283,11 +311,14 @@ for iid, it in items.items():
                 bad.append(m.group(0))
     rec(not bad, f'{iid}: every stated number is an input, a count or an answer', f'unmatched {sorted(set(bad))}' if bad else '')
 
-ex.expect('exam', 'models', 90)
+ex.expect('exam', 'models', 70)
+ex.expect('exam', 'models', 150)
 ex.expect('exam', 'description', 90)
 ex.expect('exam', 'description', 150)
 p = doc['parts'][0]
-rec(p['minutes'] == 90 and len(p['items']) == 3 and p['pass'] == 0.6, 'paper: 90 minutes, 3 items, pass 0.6 (2 of 3)')
+rec(p['minutes'] == 90 and len(p['items']) == 3 and p['pass'] == 1, 'paper: 90 minutes, 3 items, pass 1 (all three, so the C++ problem counts)')
+rec(sum(1 for t in items['h1-busiest-worker']['widget']['tests'] if t['call'] == 'list(busiest_worker(2, [[0, 4], [1, 3], [2, 1]]))') == 1, 'h1: the small waiting tie test is present')
+rec(len(doc['models']) <= 200 and '90 minutes' not in doc['models'], 'models: does not state the mock\'s own 90 minutes as reported')
 rec(sum(i['pace'] for i in p['items']) <= 90 * 60, 'pace within the paper')
 rec(len(doc['models']) <= 200 and 'Reported, as of Nov 2026' in doc['models'], 'models: reported, Nov 2026, under 200 characters')
 
