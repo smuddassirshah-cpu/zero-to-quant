@@ -65,3 +65,21 @@ Format: `n. item [index] path | severity | problem | evidence | fix`. Severities
 - Coverage: 4 (findings 2, 3, 10 and 11; 10 and 11 need no exam change, and 2 is fixed by 1).
 - Voice: 0. Layout: 1 (finding 8).
 - Author's scripts: `check_numbers.py` 215 of 215, exit 0, 7 by-hand lines all recompute; `fresh.py` clean in `stat-models` by number. Validator 0 errors, no topic-2.6 warning. No engine change needed.
+
+## Fix pass
+
+Edits by `docs/briefs/exam-2.6-scripts/build.py`, regenerated into `app/content/exams/topic-2.6.json`; `check_numbers.py` and `fresh.py` updated for each change. Every changed key and slip recomputed.
+
+1. fixed: [20] rewritten as proposed (Gamma(12, rate 8), exactly one event, answer 0.3244, slips 0.3347, 0.2433, 0.0270), recomputed by quadrature and 4 million Monte Carlo draws. Departure: the story is a venue's outages per month, not a loan book, so it shares no setup with l15 or with [14].
+2. fixed: by the same rewrite (new question, coefficient 12 needed, answer below the plug-in).
+3. fixed: [0] now block trade sizes in £m; options unchanged, two whys reworded. No "block trade" or "outage" in `stat-models`.
+4. fixed: [11] now $B = 299$, $c = 20$, answer 0.0700; slips 0.0669, 0.0702, 0.0667. The script asserts that no band overlaps.
+5. fixed: [17] `tol.abs` 0.5; the script checks 857.1 and 857.4 pass and the slips fail.
+6. fixed: [23] part 2 `tol.abs` 0.0015; the script checks $p$ from $z$ = 1.48, 1.49, 1.485 passes and the Poisson slip fails.
+7. fixed: [9] `block` option reworded to a coin flip assigning algorithm A.
+8. fixed: [1], [7] and [15] `accept` lines now in `$...$`.
+9. fixed: [24] explanation states the group-size condition.
+10. deferred: the one-line change to `docs/reports/exam-2.6.md` (Hodges-Lehmann and rank ANOVA "defined in the prompts") is outside the two exams and their scripts; the exam is unchanged.
+11. no change needed, as the review says.
+
+Gates: validator 0 errors, no warning naming topic-2.6; voice scan on a copy 0 long sentences, 0 long explanations, no `!` or dashes; `check_numbers.py` 233 of 233, exit 0 (`check_wrongs()` then `report()`); `fresh.py` runs, new items clean in `stat-models`; playthrough `--exam topic-2.6` green (25 of 25) with and without `--mobile`.

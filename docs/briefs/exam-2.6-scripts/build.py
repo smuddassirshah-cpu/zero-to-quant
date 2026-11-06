@@ -84,20 +84,20 @@ items = []
 # ---------------------------------------------------------------- difficulty 2
 # G1 L1 (l1): family and link for a positive time
 items.append(item(
-    "e-fill-time-family", 2, ["sm-glm"], ["family-link"], 60, "Time to fill",
-    "A desk models the seconds until a resting limit order fills, against its queue position. Times are positive and right-skewed, and their spread grows with their mean.",
+    "e-fill-time-family", 2, ["sm-glm"], ["family-link"], 60, "Block trade sizes",
+    "A desk models the size, in £m, of each block trade against the stock's daily volume. Sizes are positive and right-skewed, and their spread grows with their mean.",
     "Which family and link suit this outcome?",
     choice([
         opt("gamma", "Gamma with a log link", correct=True),
         opt("poisson", "Poisson with a log link",
-            "You matched \"positive and skewed\" to counts. Poisson is for whole-number counts, not continuous times."),
+            "You matched \"positive and skewed\" to counts. Poisson is for whole-number counts, not continuous sizes."),
         opt("normal", "Normal with the identity link",
-            "You kept the default. It allows negative times and gives every order the same variance."),
+            "You kept the default. It allows negative sizes and gives every order the same variance."),
         opt("binomial", "Binomial with a logit link",
-            "You picked the 0/1 family. Whether an order fills is binary, but how long it takes is not.")]),
+            "You picked the 0/1 family. Whether a block trade happens is binary, but its size is not.")]),
     fb("Gamma has variance $\\phi\\mu^2$, so the spread grows with the mean, and the log link keeps $\\mu > 0$.",
        "Match the family to the outcome's values and its variance function."),
-    "A time is continuous and positive. The Gamma family has variance function $\\mu^2$, so spread grows with the mean. "
+    "A size is continuous and positive. The Gamma family has variance function $\\mu^2$, so spread grows with the mean. "
     "The log link keeps every fitted mean positive."))
 
 # G2 L1 (l2): a fitted probability of default
@@ -108,7 +108,7 @@ items.append(item(
     "A logistic PD model has $\\hat\\beta_0 = -4.2$ and $\\hat\\beta_1 = 6.0$ on leverage $L$.",
     "What is the fitted PD of a firm with $L = 0.5$? Give it in % to 2 decimal places.",
     num(r(pd), 0.00005, [("odds", r(math.exp(eta_pd)), 0.00005), ("sign", r(1 - pd), 0.00005)], unit="%",
-        label="PD", accept="1 / (1 + e^{1.2}) = 23.15%"),
+        label="PD", accept="$1/(1 + e^{1.2}) = 23.15\\%$"),
     fb("$\\eta = -4.2 + 6.0 \\times 0.5 = -1.2$, and $1/(1 + e^{1.2}) = 23.15\\%$.",
        "Work out $\\eta$, then apply the inverse logit $1/(1 + e^{-\\eta})$.",
        {"odds": "You stopped at the odds, $e^{-1.2} = 0.3012$. The probability is odds over 1 plus odds.",
@@ -201,7 +201,7 @@ items.append(item(
     "Adding two predictors to a logistic PD model cuts its deviance from 412.6 to 405.1.",
     "What is the likelihood-ratio $p$-value? Give 4 decimal places.",
     num(r(p_g5, 4), 0.0005, [("one-df", r(chi2_sf(7.5, 1), 4), 0.0005)], label="p-value",
-        accept="P(chi-square with 2 df > 7.5) = e^{-3.75} = 0.0235"),
+        accept="$P(\\chi^2_2 > 7.5) = e^{-3.75} = 0.0235$"),
     fb("The drop is 7.5 on 2 df, and $P(\\chi^2_2 > 7.5) = e^{-7.5/2} = 0.0235$.",
        "Refer the drop in deviance to $\\chi^2$ with one df per added coefficient.",
        {"one-df": "You used 1 df, giving 0.0062. Two added coefficients give 2 df."}),
@@ -232,7 +232,7 @@ items.append(item(
     "Which designs keep anything about the orders from following the algorithm? Select all that apply.",
     choice([
         opt("coin", "A coin flip assigns each parent order to A or B.", correct=True),
-        opt("block", "Each stock-day sends one order to A and one to B, with a random choice of which goes first.", correct=True),
+        opt("block", "Each stock-day has two orders, and a coin flip picks which one goes to A.", correct=True),
         opt("choose", "Traders pick the algorithm they think suits each order.",
             "You trusted judgement over chance. What traders see in an order then follows the algorithm."),
         opt("time", "A runs through January and B through February.",
@@ -265,14 +265,18 @@ items.append(item(
 # N3 L3 (l11): permutation p-value
 items.append(item(
     "e-perm-p", 3, ["sm-nonpar"], ["permutation"], 75, "Reporting the shuffles",
-    "A permutation test of a signal's edge runs $B = 999$ shuffles of the signal days. 12 shuffles give an edge at least as large as the real one.",
+    "A permutation test of a signal's edge runs $B = 299$ shuffles of the signal days. 20 shuffles give an edge at least as large as the real one.",
     "What $p$-value should be reported? Give 4 decimal places.",
-    num(r((12 + 1) / (999 + 1), 4), 0.00005, [("raw", r(12 / 999, 6), 0.00005)], label="p-value"),
-    fb("$(12 + 1)/(999 + 1) = 0.0130$.",
+    num(r((20 + 1) / (299 + 1), 4), 0.00005,
+        [("raw", r(20 / 299, 6), 0.00005), ("top-only", r(21 / 299, 6), 0.00005), ("bottom-only", r(20 / 300, 6), 0.00005)],
+        label="p-value"),
+    fb("$(20 + 1)/(299 + 1) = 0.0700$.",
        "Count the real labelling as one of the arrangements.",
-       {"raw": "You divided 12 by 999, giving 0.0120. Add the real data to both counts: $(c + 1)/(B + 1)$."}),
+       {"raw": "You divided 20 by 299, giving 0.0669. Add the real data to both counts: $(c + 1)/(B + 1)$.",
+        "top-only": "You added 1 to the count but not to $B$, giving 0.0702. The real labelling joins both counts.",
+        "bottom-only": "You added 1 to $B$ but not to the count, giving 0.0667. The real labelling is at least as large as itself."}),
     "The observed labelling is one of the possible arrangements, so it joins both counts. "
-    "That gives $(12 + 1)/(999 + 1) = 0.0130$, never below the floor $1/1000$."))
+    "That gives $(20 + 1)/(299 + 1) = 0.0700$, never below the floor $1/300$."))
 
 # N4 L3 (l12): Silverman's bandwidth
 h_n4 = 0.9 * min(1.6, 1.75 / 1.34) * 250 ** (-0.2)
@@ -325,7 +329,7 @@ items.append(item(
     "A new fund's alpha is estimated at 8% a year, with standard error 3%. The prior is $N(0, 1.5^2)$, in %.",
     "What is the posterior mean alpha, in %?",
     num(r(post_b3 / 100, 6), 0.0005, [("average", 0.04, 0.0005), ("inverted", r(8 * (4 / 9) / (5 / 9) / 100, 6), 0.0005)],
-        unit="%", label="Posterior mean", accept="(8/9) / (4/9 + 1/9) = 1.6%"),
+        unit="%", label="Posterior mean", accept="$(8/9)/(4/9 + 1/9) = 1.6\\%$"),
     fb("Precisions $4/9$ and $1/9$ add to $5/9$, so the mean is $(8/9)/(5/9) = 1.6\\%$.",
        "Weight each mean by its precision, one over its variance.",
        {"average": "You averaged 0 and 8 equally, giving 4%. The prior is four times as precise as the estimate.",
@@ -353,7 +357,7 @@ items.append(item(
     "e-ess-sticky", 3, ["sm-mcmc"], ["ess"], 75, "What 6,000 draws are worth",
     "After burn-in a chain keeps 6,000 draws. It behaves like an AR(1) with $\\phi = 0.75$.",
     "What is its effective sample size by the AR(1) rule $n(1 - \\phi)/(1 + \\phi)$? Give 1 decimal place.",
-    num(r(ess6, 2), 0.05, [("one-minus", 6000 * 0.25, 0.05), ("over-one-plus", r(6000 / 1.75, 2), 0.05)], label="ESS"),
+    num(r(ess6, 2), 0.5, [("one-minus", 6000 * 0.25, 0.05), ("over-one-plus", r(6000 / 1.75, 2), 0.05)], label="ESS"),
     fb("$6{,}000 \\times 0.25/1.75 = 857.1$ draws' worth.",
        "Multiply by $1 - \\phi$ and divide by $1 + \\phi$.",
        {"one-minus": "You multiplied by $1 - \\phi$ but did not divide by $1 + \\phi = 1.75$, giving 1,500.",
@@ -408,31 +412,37 @@ items.append(parts(
     "The median is the fourth of seven sorted values, 0.3, whatever the takeover day does. "
     "The distances from it have median 0.4, so the scaled MAD is 0.5930. The mean and SD, 1.2714 and 2.9702, are dragged by one day."))
 
-# B4 L4 (l15): posterior predictive against plug-in
-pred0 = (7 / 8) ** 10
-plug0 = math.exp(-10 / 7)
+# B4 L4 (l15): posterior predictive against plug-in, at one outage
+pred1 = 12 * (8 / 9) ** 12 / 9
+plug1 = 1.5 * math.exp(-1.5)
+pred0 = (8 / 9) ** 12
 items.append(parts(
-    "e-no-defaults-next", 4, ["sm-bayes"], ["predictive"], 180, "A year with no defaults",
-    "A loan book's default rate has posterior Gamma(10, rate 7). Next year's count is Poisson($\\lambda$). Its predictive is negative binomial, with $P(0) = \\left(\\tfrac{7}{8}\\right)^{10}$.",
+    "e-no-defaults-next", 4, ["sm-bayes"], ["predictive"], 180, "One outage next month",
+    "A venue's outage rate, in outages a month, has posterior Gamma(12, rate 8). Next month's count is Poisson($\\lambda$). "
+    "Its predictive is negative binomial: $P(j) = \\binom{11 + j}{j}\\left(\\tfrac89\\right)^{12}\\left(\\tfrac19\\right)^j$.",
     "Compare the predictive with plugging in the mean.",
-    [("What is the predictive chance of no defaults next year? Give 4 decimal places.",
-      num(r(pred0, 4), 0.0005, [("plug-in", r(plug0, 4), 0.0005)], label="P(no defaults)"),
-      fb("$(7/8)^{10} = 0.2631$.",
-         "Raise rate over rate plus 1 to the power of the shape.",
-         {"plug-in": "You plugged in $\\lambda = 10/7$, giving $e^{-1.4286} = 0.2397$. That ignores the doubt about $\\lambda$."})),
-     ("Why is the predictive chance above the plug-in's 0.2397?",
+    [("What is the predictive chance of exactly one outage next month? Give 4 decimal places.",
+      num(r(pred1, 4), 0.0005,
+          [("plug-in", r(plug1, 4), 0.0005), ("zero", r(pred0, 4), 0.0005), ("no-coef", r(pred1 / 12, 4), 0.0005)],
+          label="P(one outage)"),
+      fb("$12 \\times (8/9)^{12} \\times \\tfrac19 = 0.3244$.",
+         "Put $j = 1$ into $P(j)$. The coefficient is $\\binom{12}{1} = 12$.",
+         {"plug-in": "You plugged in $\\lambda = 1.5$, giving $1.5e^{-1.5} = 0.3347$. That ignores the doubt about $\\lambda$.",
+          "zero": "That is $P(0) = (8/9)^{12}$. The question asks for exactly one outage.",
+          "no-coef": "You left out $\\binom{12}{1} = 12$, giving 0.0270."})),
+     ("Why is the predictive chance below the plug-in's 0.3347?",
       choice([
-          opt("doubt", "It averages over $\\lambda$, and low-$\\lambda$ draws make a quiet year more likely.", correct=True),
+          opt("doubt", "Doubt about $\\lambda$ spreads the predictive, moving chance from middle counts to both tails.", correct=True),
           opt("prior", "The prior pulls $\\lambda$ down, so the predictive mean is lower.",
-              "You blamed the mean. Both use the same mean, $10/7$; the predictive adds spread."),
+              "You blamed the mean. Both use the same mean, $12/8 = 1.5$; the predictive adds spread."),
           opt("bias", "The plug-in is biased, so the predictive corrects its mean.",
               "You treated it as a bias. The plug-in has the right mean but too little spread."),
           opt("rounding", "It is rounding: the two agree to 2 decimal places.",
-              "You dismissed the gap. 0.2631 against 0.2397 differ in the second decimal.")]),
-      fb("Doubt about $\\lambda$ widens the predictive, which puts more weight in both tails, including 0.",
+              "You dismissed the gap. 0.3244 against 0.3347 differ in the second decimal.")]),
+      fb("Same mean, more spread: one outage sits in the middle, so it loses chance to the tails.",
          "Ask what the predictive averages over that the plug-in fixes."))],
-    "The plug-in fixes $\\lambda = 10/7$ and gives $e^{-1.4286} = 0.2397$. The predictive averages $e^{-\\lambda}$ over the posterior, giving 0.2631. "
-    "Averaging over doubt fattens the tails, so a quiet year is more likely."))
+    "The plug-in fixes $\\lambda = 1.5$ and gives $1.5e^{-1.5} = 0.3347$. The predictive averages $\\lambda e^{-\\lambda}$ over the posterior, giving 0.3244. "
+    "Doubt about $\\lambda$ moves chance from the middle counts to the tails."))
 
 # B8 L4 (l18): beta shrinkage of a hit rate
 a8, b8 = 18, 22
@@ -525,7 +535,7 @@ items.append(parts(
          {"phi": "You multiplied by $\\hat\\phi = 3$, giving 0.084. Variances scale by $\\hat\\phi$, standard errors by its root.",
           "divided": "You divided by $\\sqrt{3}$, giving 0.0162. Overdispersion widens the errors."})),
      ("What is the two-sided $p$-value of the coefficient with that standard error? Give 4 decimal places.",
-      num(r(p_q, 4), 0.0005, [("poisson", r(p_pois, 4), 0.0005)], label="p-value"),
+      num(r(p_q, 4), 0.0015, [("poisson", r(p_pois, 4), 0.0005)], label="p-value"),
       fb("$z = 0.072/0.0485 = 1.485$, so $p = 0.1376$: not significant at 5%.",
          "Divide the coefficient by its new standard error and take both tails of $N(0, 1)$.",
          {"poisson": "You kept the Poisson error, $z = 2.571$ and $p = 0.0101$. That trusts a variance three times too small."}))],
@@ -611,7 +621,7 @@ items.append({
     "feedback": fb("Ranks replace the slippages, ties share their average rank, and the ANOVA ratio is taken on the ranks.",
                    "Compute the ranks first, with tied values sharing the mean of their places, then the sums of squares."),
     "explain": {"text": "On ranks the grand mean is $(N + 1)/2$, and $(N - 1)\\,\\text{SSB}/\\text{SST}$ is the Kruskal-Wallis $H$ with its tie correction. "
-                        "A wild order becomes just the top rank, so it cannot swamp SSB. Refer $H$ to $\\chi^2$ with $k - 1$ df."}})
+                        "A wild order becomes just the top rank, so it cannot swamp SSB. With about five or more orders per group, refer $H$ to $\\chi^2$ with $k - 1$ df."}})
 
 order_d = {2: [], 3: [], 4: [], 5: []}
 for it in items:
