@@ -51,3 +51,19 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's script: `pairs-rep-L3-numbers.py` exit 0 (472 of 472).
 
 ## Fix pass
+
+All 14 findings applied by targeted edits; none disputed, none deferred. I recomputed the key figures from `pairs_panel(seed=2006)` with my own code: at start 0, 18 of the 30 chance pairs in the 50 closest pass at 5% (10 below 1%); at start 2,016, 12 of 47; 407 pass in all with 15 planted, so 392 chance passes.
+
+- l12 screens[9] question, prose and explain (error): the question now asks about 50 pairs picked blind (2.5 stays correct); explain gives the cause (distance picks on the same year, biasing pairs towards passing) and the 18 of 30.
+- l12 screens[8] explain (error): now "At start 0, 18 of the shortlist's 30 chance pairs pass at 5%, not 2.5."
+- review-3 `r-why-chance` (warning): option `a` and explain now name the shortlist chosen on the same year; the generic feedback points at how the 50 were chosen. Distractors b to d stand: independent walks, half-life 8 detectable, rules disagree.
+- l12 screens[4] explain (warning): states the 392 chance passes against 248 and the over-rejection on this panel's short, noisy year, in three sentences.
+- l15 screens[9] option `b` (warning): 9.4% is the waited return over all 127 cycles, not an in-sample figure; relabelled "a pairs return, not a margin over the market".
+- l15 screens[0] (warning): the cause now sits with the top 5 (all 67 post-break cycles hold at least one unbroken pair in it).
+- l15 screens[5] (warning): "before costs" added to the 0.75% lead; the trailing clause now reads "Break-even and the decline".
+- homework-3 items[3] (warning): the 3 and 17 mix is now "Suppose"; the pre-break figure is the top 20's 9.0% a cycle (1.5011% x 6 = 9.01%).
+- Notes (6): "23rd"; l12 summary "Over 22 cycles"; hyphen-minus to "−" in l12 screens[5] and l13 (six strings); l15 tests[1] call uses `(0.015011, 0.006359)` expecting 42% and `how` says the last case is on rounded figures; review-3 "Assume ln L moves ...".
+- Starters: l12 `eg_pvalue` returns "todo" and homework-3 `rolling_hit_rate` returns None, so each fails every hidden test. l14 and l15 left as the reviewer allowed (their passing cases are structural).
+- Script: `pairs-rep-L3-numbers.py` extended (18 of 30 and 10 below 1%, 392 of 407, 9.0%, 42% split, starters failing every test); exit 0, 479 of 479.
+- Gates: validator 0 errors; voice scan 0 and 0 (7,080 sentences); playthrough "All passed" desktop and `--mobile` (local CDN) for l12, l13, l15, review-3, homework-3.
+- Graded answers changed: none (l12 screens[9] stays 2.5; review-3 option `a` stays correct); l15 `survival_sentence` test expectation 43% to 42% on a changed input.

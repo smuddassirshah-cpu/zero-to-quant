@@ -1123,7 +1123,7 @@
     "generic": "Not quite. Read the p-value in each caption."
    },
    "explain": {
-    "text": "Pair (38, 39) ranks 2nd by distance, yet its p-value is 0.2955. Pair (28, 87) ranks 23th and scores 0.0009. The two rules measure different things.",
+    "text": "Pair (38, 39) ranks 2nd by distance, yet its p-value is 0.2955. Pair (28, 87) ranks 23rd and scores 0.0009. The two rules measure different things.",
     "canvas": {
      "hide": [
       "a38",
@@ -1679,7 +1679,7 @@
     }
    },
    "explain": {
-    "text": "About 248 chance passes would be expected. On our first formation year 407 of the 4,950 pairs pass, and only 15 are planted. Hypothesis Testing's \"Twenty tests, one false alarm\" applies: most passes here are chance."
+    "text": "About 248 chance passes would be expected, as in Hypothesis Testing's \"Twenty tests, one false alarm\". On our first formation year 407 pass and only 15 are planted. The 392 chance passes exceed 248, because on this panel's short, noisy year the test over-rejects."
    }
   },
   {
@@ -2158,7 +2158,7 @@
     }
    },
    "explain": {
-    "text": "The z-score reaches -9.7 in trading and ends at -7.9: the spread never comes back. A cointegration test describes its sample, not the future. The same holds for distance: both rules choose on the past.",
+    "text": "The z-score reaches −9.7 in trading and ends at −7.9: the spread never comes back. A cointegration test describes its sample, not the future. The same holds for distance: both rules choose on the past.",
     "canvas": {
      "highlight": [
       "brk"
@@ -2407,7 +2407,7 @@
     "kind": "code",
     "language": "python",
     "prelude": "import numpy as np\ndef pairs_panel(seed=2006, n_ind=10, per_ind=10, n_pairs=20, days=3024, half_life=8.0, ou_sd=0.008,\n                rw_sd=0.015, break_day=1512, break_frac=0.8, half_spread=0.005):\n    rng = np.random.default_rng(seed)\n    N = n_ind * per_ind\n    ind = np.repeat(np.arange(n_ind), per_ind)\n    mkt = np.cumsum(0.0003 + 0.010 * rng.standard_normal(days))\n    indf = np.cumsum(0.008 * rng.standard_normal((days, n_ind)), axis=0)\n    phi = 0.5 ** (1.0 / half_life)\n    u = np.cumsum(rw_sd * rng.standard_normal((days, N)), axis=0)        # unpaired: random walks\n    common = np.cumsum(rw_sd * rng.standard_normal((days, n_pairs)), axis=0)\n    eps = ou_sd * rng.standard_normal((days, 2 * n_pairs))\n    a = np.zeros((days, 2 * n_pairs))\n    for t in range(1, days):\n        a[t] = phi * a[t - 1] + eps[t]                                   # mean-reverting gaps\n    broken = rng.random(n_pairs) < break_frac\n    drift = np.cumsum(rw_sd * rng.standard_normal((days, 2 * n_pairs)), axis=0)\n    for k in range(n_pairs):\n        for j in (2 * k, 2 * k + 1):\n            x = common[:, k] + a[:, j]\n            if broken[k]:                                                # the pair stops co-moving\n                x = x + np.where(np.arange(days) >= break_day, drift[:, j] - drift[break_day, j], 0.0)\n            u[:, j] = x\n    pair_ind = np.repeat(np.arange(n_ind), 2)[:n_pairs]\n    ind[:2 * n_pairs] = np.repeat(pair_ind, 2)                           # two planted pairs an industry\n    logp = np.log(50.0) + mkt[:, None] + indf[:, ind] + u\n    mid = np.exp(logp)\n    bounce = np.where(rng.random((days, N)) < 0.5, 1 + half_spread, 1 - half_spread)\n    close = mid * bounce                                                 # closes at bid or ask\n    return close, mid, ind, broken\n\n\ndef normalise(P):\n    P = np.asarray(P, dtype=float)\n    return P / P[0]\n\n\ndef ssd_matrix(Pn):\n    G = Pn.T @ Pn\n    d = np.diag(G)\n    return d[:, None] + d[None, :] - 2 * G\n\n\ndef top_pairs(Pn, k):\n    D = ssd_matrix(Pn)\n    i, j = np.triu_indices(D.shape[0], 1)\n    order = np.argsort(D[i, j], kind=\"stable\")[:k]\n    return [(int(i[o]), int(j[o])) for o in order]\n\n\ndef trade_pair(form, trade, i, j, wait=0, open_at=2.0):\n    sd = float(np.std(form[:, i] - form[:, j]))\n    a, b = trade[:, i].tolist(), trade[:, j].tolist()\n    n = len(a)\n    payoff, opened, t = 0.0, False, 0\n    while t < n:\n        s = a[t] - b[t]\n        if sd > 0 and abs(s) > open_at * sd and t + wait < n - 1:\n            side = 1 if s > 0 else -1          # +1: i is dearer, so short i and buy j\n            to = t + wait\n            tc = next((u for u in range(t + 1, n) if (a[u] - b[u]) * side <= 0), None)\n            tx = n - 1 if tc is None else min(tc + wait, n - 1)\n            ri = (a[tx] - a[to]) / a[to]\n            rj = (b[tx] - b[to]) / b[to]\n            payoff += side * (rj - ri)\n            opened = True\n            t = tx + 1\n            continue\n        t += 1\n    return payoff, opened\n\n\ndef trade_trips(form, trade, i, j, wait=0, open_at=2.0):\n    \"\"\"Every round trip of trade_pair as (open day, close day, converged, payoff).\"\"\"\n    sd = float(np.std(form[:, i] - form[:, j]))\n    a, b = trade[:, i].tolist(), trade[:, j].tolist()\n    n = len(a)\n    trips, t = [], 0\n    while t < n:\n        s = a[t] - b[t]\n        if sd > 0 and abs(s) > open_at * sd and t + wait < n - 1:\n            side = 1 if s > 0 else -1\n            to = t + wait\n            tc = next((u for u in range(t + 1, n) if (a[u] - b[u]) * side <= 0), None)\n            tx = n - 1 if tc is None else min(tc + wait, n - 1)\n            pay = side * ((b[tx] - b[to]) / b[to] - (a[tx] - a[to]) / a[to])\n            trips.append((to, tx, tc is not None, pay))\n            t = tx + 1\n            continue\n        t += 1\n    return trips\n\n\ndef cycle_return(close, start, k, wait=0, open_at=2.0):\n    \"\"\"(committed, employed, opened) for the k closest pairs of the cycle from day start.\"\"\"\n    Pn = normalise(close[start:start + 378])\n    form, trade = Pn[:252], Pn[252:]\n    res = [trade_pair(form, trade, i, j, wait, open_at) for i, j in top_pairs(form, k)]\n    total = sum(p for p, _ in res)\n    n = sum(1 for _, o in res if o)\n    return total / k, (total / n if n else 0.0), n\n\n\ndef run(close, k, wait=0, step=21, open_at=2.0):\n    \"\"\"[(start, committed return over the six trading months)] for every cycle.\"\"\"\n    return [(s, cycle_return(close, s, k, wait, open_at)[0]) for s in range(0, close.shape[0] - 378 + 1, step)]\n\n\ndef hedge_ratio(y, x):\n    \"\"\"OLS of y on x with an intercept: return (beta, alpha), each to 6 places.\"\"\"\n    beta, alpha = np.polyfit(x, y, 1)\n    return round(float(beta), 6), round(float(alpha), 6)\n\n\ndef eg_decision(y, x, alpha=0.05):\n    \"\"\"Return (statistic, p-value, reject) from coint(y, x).\"\"\"\n    from statsmodels.tsa.stattools import coint\n    stat, p, crit = coint(y, x)\n    return round(float(stat), 4), round(float(p), 4), bool(p < alpha)\n\n\ndef half_life(s):\n    \"\"\"Half-life in days from the regression ds_t = a + b * s_(t-1); math.inf when b >= 0.\"\"\"\n    import math\n    s = np.asarray(s, dtype=float)\n    ds = np.diff(s)\n    X = np.column_stack([np.ones(len(ds)), s[:-1]])\n    a, b = np.linalg.lstsq(X, ds, rcond=None)[0]\n    if b >= 0:\n        return math.inf\n    return math.log(0.5) / math.log(1 + b)\n\n\ndef positions(z, entry=2.0, exit=0.0, stop=4.0):\n    \"\"\"+1 long the spread (long y, short beta x), -1 short, 0 flat; decided at each day's close.\"\"\"\n    pos = np.zeros(len(z)); cur = 0\n    for t in range(len(z)):\n        zt = z[t]\n        if np.isnan(zt): cur = 0\n        elif cur == 0:\n            if entry <= zt < stop: cur = -1\n            elif -stop < zt <= -entry: cur = 1\n        elif cur == 1 and (zt >= -exit or zt <= -stop): cur = 0\n        elif cur == -1 and (zt <= exit or zt >= stop): cur = 0\n        pos[t] = cur\n    return pos\n\n\ndef trade_coint(form, trade, i, j, entry=2.0):\n    \"\"\"Trade the residual z-score of log i on log j: long or short 1 pound of i against beta pounds of j.\n    Opens at |z| >= entry, closes when z crosses 0 or on the last day; returns (payoff, opened).\"\"\"\n    beta, alpha = hedge_ratio(np.log(form[:, i]), np.log(form[:, j]))\n    res = np.log(form[:, i]) - alpha - beta * np.log(form[:, j])\n    sd = float(np.std(res))\n    z = (np.log(trade[:, i]) - alpha - beta * np.log(trade[:, j])) / sd\n    pos = positions(z, entry, 0.0, np.inf)\n    pos[-1] = 0\n    a, b = trade[:, i], trade[:, j]\n    payoff, t0, side = 0.0, None, 0\n    for t in range(len(pos)):\n        if side == 0 and pos[t] != 0:\n            side, t0 = int(pos[t]), t\n        elif side != 0 and pos[t] != side:\n            payoff += side * ((a[t] / a[t0] - 1) - beta * (b[t] / b[t0] - 1))\n            side = 0\n            if pos[t] != 0:\n                side, t0 = int(pos[t]), t\n    return float(payoff), bool(np.any(pos != 0))\n\nclose, mid, ind, broken = pairs_panel()\n\nF0 = normalise(close[:252])\n",
-    "starter": "import numpy as np\nfrom statsmodels.tsa.stattools import coint\n\ndef eg_pvalue(x, y):\n    \"\"\"p-value of coint(log x, log y), to 4 places.\"\"\"\n    ...\n",
+    "starter": "import numpy as np\nfrom statsmodels.tsa.stattools import coint\n\ndef eg_pvalue(x, y):\n    \"\"\"p-value of coint(log x, log y), to 4 places.\"\"\"\n    return \"todo\"\n",
     "solution": "import numpy as np\nfrom statsmodels.tsa.stattools import coint\n\ndef eg_pvalue(x, y):\n    \"\"\"p-value of coint(log x, log y), to 4 places.\"\"\"\n    stat, p, crit = coint(np.log(x), np.log(y))\n    return round(float(p), 4)\n",
     "examples": [
      {
@@ -2585,15 +2585,15 @@
     "generic": "Not quite. Sort the p-values stably and keep the first k."
    },
    "explain": {
-    "text": "At start 0 the five lowest p-values are (36, 37), (8, 9), (10, 11), (14, 15), (2, 3). The stable sort keeps four tied zeros in distance order. Testing 50 shortlisted pairs at 5% expects 2.5 chance passes, not 248."
+    "text": "At start 0 the five lowest p-values are (36, 37), (8, 9), (10, 11), (14, 15), (2, 3). The stable sort keeps four tied zeros in distance order. At start 0, 18 of the shortlist's 30 chance pairs pass at 5%, not 2.5."
    }
   },
   {
    "type": "generalise",
    "difficulty": 2,
    "title": "Two rules, two models",
-   "prose": "Distance and cointegration model a pair differently:\n$$\\text{SSD}_{ij} = \\sum_t (p_{i,t} - p_{j,t})^2 \\qquad \\ln P_{i,t} = \\alpha + \\beta \\ln P_{j,t} + u_t$$\nDistance fixes $\\beta = 1$ and wants small gaps. Engle-Granger estimates $\\beta$ and wants a stationary $u_t$. Each test passes by chance at its level $\\alpha$.",
-   "question": "We test only the 50 closest pairs at 5%. How many chance passes should we expect if none is cointegrated?",
+   "prose": "Distance and cointegration model a pair differently:\n$$\\text{SSD}_{ij} = \\sum_t (p_{i,t} - p_{j,t})^2 \\qquad \\ln P_{i,t} = \\alpha + \\beta \\ln P_{j,t} + u_t$$\nDistance fixes $\\beta = 1$ and wants small gaps. Engle-Granger estimates $\\beta$ and wants a stationary $u_t$. Each test of a pair picked blind passes by chance at its level $\\alpha$.",
+   "question": "We test 50 pairs picked without looking at the formation year, at 5%. How many chance passes should we expect if none is cointegrated?",
    "widget": {
     "kind": "numeric",
     "answer": 2.5,
@@ -2643,7 +2643,7 @@
     }
    },
    "explain": {
-    "text": "50 × 0.05 = 2.5 chance passes. A distance shortlist cuts the expected chance passes nearly a hundredfold before the test runs. It also inherits distance's bias towards a hedge of 1."
+    "text": "50 × 0.05 = 2.5 for pairs picked blind. Distance picks on the same year, which biases pairs towards passing. At start 0, 18 of the shortlist's 30 chance pairs pass at 5%."
    }
   },
   {
@@ -2705,7 +2705,7 @@
  "summary": {
   "ideas": [
    "Distance fixes a 1 to 1 hedge and wants small gaps; Engle-Granger estimates the hedge and wants a stationary residual.",
-   "Choosing from the 50 closest, Engle-Granger picks 10 planted pairs at start 0 to distance's 20. It earns 0.63% a month against 1.05%.",
+   "Choosing from the 50 closest, Engle-Granger picks 10 planted pairs at start 0 to distance's 20. Over 22 cycles it earns 0.63% a month against 1.05%.",
    "Many tests mean many chance passes: tests times level. A formation p-value says nothing certain about the trading period."
   ],
   "formula": {
