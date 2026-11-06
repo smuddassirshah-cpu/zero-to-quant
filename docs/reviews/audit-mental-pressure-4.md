@@ -66,3 +66,4 @@ Counts: 10 fixed, 0 disputed, 0 deferred. Graded answers changed: none (keys, `w
 - `node tools/validate.mjs 2>&1 | tail -1` (app/): `0 errors, 4279 warnings`; `content/manifest.json` restored.
 - `python3 -I docs/reports/mental-pressure-L4-concepts.py` (repo root): `34 of 34 checks passed`, exit 0.
 - `VOICE_BASE=app/content/courses/mental-pressure/ python3 docs/reviews/voice-scan.py 35 --summary`: `explanations over three sentences: 0`, `over 35 words: 0`.
+- `node tools/playthrough.mjs --lesson mental-pressure/<l13 to l17> --set mental-pressure/review-4 --set mental-pressure/homework-4 --local-cdn <PKGS>` (app/), plain and with `--mobile`: each `browser relaunches: 0` / `All passed.`
