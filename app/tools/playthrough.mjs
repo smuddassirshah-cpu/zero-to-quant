@@ -478,11 +478,36 @@ const main = async () => {
        long-form check is answered and checked again), continue(); until 'done'. */
     /* item 445: a set that reports no items, or a hook that never answers (a course file mid-write by another agent, or a
        worker left busy by the lessons before), is reloaded and played once more before it counts as a failure */
+    /* ENGINE-BACKLOG 589: the exam marking step, driven through the page as a learner would. Every written item shown has its
+       model answer and rubric open; each rubric row is clicked, the running score must reach the rubric's points, then Finish
+       marking is pressed. Returns { n, plain }: the written items marked and how many are a plain (not parts) item. */
+    const markStage = async (fails) => {
+      const wraps = page.locator('.exm-q:not([hidden])');
+      const n = await wraps.count();
+      let plain = 0;
+      if (!n) fails.push('the marking step shows no written item');
+      for (let k = 0; k < n; k++) {
+        const w = wraps.nth(k), rows = w.locator('.wd-rb');
+        if (!(await w.locator('.wd-long-mark:not([hidden])').count())) fails.push(`marking item ${k + 1}: the model answer and rubric are not shown`);
+        if (!(await w.locator('.lsn-parts').count())) plain++;
+        const m = await rows.count();
+        const before = await w.locator('[data-score]').evaluateAll(els => els.reduce((a, e) => a + (+e.textContent || 0), 0));
+        if (before !== 0) fails.push(`marking item ${k + 1}: the rubric starts at ${before} points, expected 0 (nothing is ticked for the learner)`);
+        for (let j = 0; j < m; j++) await rows.nth(j).click();
+        const pts = await rows.evaluateAll(els => els.reduce((a, e) => a + (parseFloat((e.querySelector('.wd-rb-pts') || {}).textContent) || 0), 0));
+        const got = await w.locator('[data-score]').evaluateAll(els => els.reduce((a, e) => a + (+e.textContent || 0), 0));
+        if (+got !== pts) fails.push(`marking item ${k + 1}: ticking every row gives ${got} points, expected ${pts}`);
+      }
+      if (!(await page.locator('.exm-skipmark').count())) fails.push('the marking step has no skip button');
+      await page.locator('.exm-donemark').click();
+      await page.waitForFunction(() => ZQ.test && ZQ.test.current().kind !== 'loading', null, { timeout: opt.timeout });
+      return { n, plain };
+    };
     const playSet = async (route, label, verify, attempt = 1, tick = null) => {
       where = '#' + route;
       const fails = [];
       const t0 = Date.now();
-      let checks = 0, perfStarters = 0, markedReal = 0;
+      let checks = 0, perfStarters = 0, markedReal = 0, markedExam = 0, markedPlain = 0;
       const probed = new Set();
       try {
         await page.evaluate(() => { delete window.ZQ.test; });
@@ -495,6 +520,10 @@ const main = async () => {
           const c = await page.evaluate(() => ZQ.test.current());
           if (c.kind === 'done') break;
           if (c.kind === 'empty') { fails.push('the set has no items'); break; }
+          if (c.kind === 'mark') {   // ENGINE-BACKLOG 589: an exam's written answers, marked through the real panel: tick each rubric row, then Finish marking
+            const ms = await markStage(fails);
+            markedExam += ms.n; markedPlain += ms.plain; await page.waitForTimeout(150); continue;
+          }
           const key = `${c.kind}:${c.screenIndex}:${c.state}:${c.paper ?? ''}:${c.part ?? ''}`;   // an item with parts moves on by part
           same = key === last ? same + 1 : 0; last = key;
           if (same >= 4) { fails.push(`stuck at ${c.kind} ${c.screenIndex} (state ${c.state})`); break; }
@@ -556,8 +585,16 @@ const main = async () => {
           await page.evaluate(() => ZQ.test.continue());
           await page.waitForTimeout(120);
         }
+        if (markedExam) {   // the written items came out of the marking step with their rubric credit, not a silent 0
+          const rows = await page.evaluate(() => [...document.querySelectorAll('.exm-ri .exm-v')].map(e => e.textContent.trim()));
+          const rub = rows.map(t => /(\d+(?:\.\d+)?) of (\d+(?:\.\d+)?) rubric points/.exec(t)).filter(Boolean);
+          if (rows.some(t => /Marking skipped/.test(t))) fails.push('a written answer shows as skipped after it was marked');
+          if (rub.length < markedPlain) fails.push(`${markedPlain} written item(s) were marked but the result shows ${rub.length} rubric score(s): ${rows.join(' | ')}`);
+          rub.forEach(m => { if (+m[1] !== +m[2]) fails.push(`a written item with every rubric row ticked scores ${m[1]} of ${m[2]}`); });
+        }
         const v = await verify();
         if (v.fail) fails.push(v.fail);
+        if (markedExam) v.note = `${v.note || ''}, ${markedExam} written answer${markedExam === 1 ? '' : 's'} marked in the exam's marking step`;
         if (perfStarters || markedReal) v.note = `${v.note || ''}${perfStarters ? `, ${perfStarters} performance starter${perfStarters === 1 ? '' : 's'} fail` : ''}${markedReal ? `, ${markedReal} longform marked by the button` : ''}`;
         await shot(`${label}-done`);
         /* item 335: an exam's result page with every question's explanation opened */
@@ -781,6 +818,7 @@ const main = async () => {
           const c = await page.evaluate(() => ZQ.test.current());
           if (c.kind === 'done') break;
           if (c.kind === 'start') await page.evaluate(() => ZQ.test.continue());
+          else if (c.kind === 'mark') await markStage(fails);   // time ran out: the written answers are still marked, off the clock
           else if (c.kind === 'item') {
             if (!answered.has(c.paper)) {
               answered.add(c.paper);

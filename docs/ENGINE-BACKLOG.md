@@ -1602,3 +1602,8 @@ Status block (engine pass, items 585 to 587):
 
 Status block (engine pass, item 588):
 - 588: done (new tool and test; validator 0 errors).
+
+589. Done [Must]: exam longform marking. `screens/exam.js` `markWritten()` runs after submit (and after time-up), off the clock: it opens each written item's marking panel (the widget's own, as the homework page does), the learner ticks the rubric and presses Finish marking, or Skip marking (scores 0, result row says "Marking skipped"). A plain longform item's credit is ticks over rubric points (`ZQ.mock.tally` reads `rubric` credit), the row stays `how: self`. The test hook's `answer` only types the text and `check` defers (no more pre-marked answer); hook kind `mark` drives the step. `playthrough.mjs` `markStage()` clicks every rubric row and Finish, and checks the result rows. Forward-only papers unchanged.
+
+Status block (engine pass, item 589):
+- 589: done (see handback for playthrough results).
