@@ -44,6 +44,14 @@ const slips = (k) => {
 const nums = (o) => { const out = []; (function w(x) { if (typeof x === 'string') out.push(...numbersIn(x)); else if (typeof x === 'number') out.push(x); else if (Array.isArray(x)) x.forEach(w); else if (isObj(x)) Object.values(x).forEach(w); })(o); return out; };
 const CALC = /=|×|\\times|\\cdot|divid|multipl|forgot|instead|rather than|used|add|subtract|squar|root|half|twice|doubl|rounded|counted/i;
 
+/* Options that are ordered numbers or ordered intervals (shared with validate.mjs, session V): returns a reason or null. */
+export const orderedOptionsWhy = (opts) => {
+  const vs = opts.map(optNum), rs = opts.map(rangeOf);
+  if (rs.every(Boolean) && (rs.every((r, i) => i === 0 || r[0] > rs[i - 1][0]) || rs.every((r, i) => i === 0 || r[0] < rs[i - 1][0]))) return 'interval options in order';
+  if (vs.every(v => v != null)) { const up = vs.every((v, i) => i === 0 || v > vs[i - 1]), dn = vs.every((v, i) => i === 0 || v < vs[i - 1]); if (up || dn) return 'numeric options in order'; }
+  return null;
+};
+
 export const scanO2 = (json, emit) => {
   const visit = (n, where) => {
     if (Array.isArray(n)) { n.forEach((x, i) => visit(x, `${where}[${i}]`)); return; }
@@ -68,11 +76,7 @@ export const scanO2 = (json, emit) => {
     const opts = Array.isArray(w.options) ? w.options : [];
     /* 2: unshuffled interval or ordered numeric choices */
     if ((w.kind === 'choice' || w.kind === 'multi') && opts.length >= 3 && w.shuffle !== true) {
-      const vs = opts.map(optNum);
-      let why = null;
-      const rs = opts.map(rangeOf);
-      if (rs.every(Boolean) && (rs.every((r, i) => i === 0 || r[0] > rs[i - 1][0]) || rs.every((r, i) => i === 0 || r[0] < rs[i - 1][0]))) why = 'interval options in order';
-      else if (vs.every(v => v != null)) { const up = vs.every((v, i) => i === 0 || v > vs[i - 1]), dn = vs.every((v, i) => i === 0 || v < vs[i - 1]); if (up || dn) why = 'numeric options in order'; }
+      const why = orderedOptionsWhy(opts);
       if (why) emit('O2-unshuffled-numeric', `${where}.widget`, `${why} without shuffle: true: the key sits at a fixed place`);
     }
     /* 3: numeric distractors that match no slip */

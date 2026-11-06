@@ -8,12 +8,16 @@
 #   app/content/drills/index.json   union by id (ours first, then theirs' new ids)
 #   docs/BACKLOG-INBOX.md           keep both sides (ours, then theirs)
 #   app/content/courses/*/review-*.json   side whose last commit on the file is newer
-#   PROGRESS.md, docs/reports/*.md, docs/reviews/*.md   keep both sides
+#   PROGRESS.md, docs/reports/*.md, docs/reviews/*.md, docs/briefs/*.md   keep both sides
+#   docs/readiness.md               keep both sides, then drop a repeated table row key (ours first)
 #   anything else                   abort that merge, print UNRESOLVED, go on
 # Then: conflict-marker scan of the lines the merge adds, `node tools/validate.mjs`
-# from app/ (manifest.json is staged), commit "Merge <branch> (merge-wave)".
+# from app/ (manifest.json is staged), `node tools/readiness-sums.mjs --write` from app/
+# (content/readiness.json and the generated blocks of docs/readiness.md are staged),
+# commit "Merge <branch> (merge-wave)".
 # Output: verbose log in ${TMPDIR:-/tmp}/merge-wave.log; the last lines are one
-# status per branch (merged, unresolved, invalid), "validator: N errors", OK or FAIL.
+# status per branch (merged, unresolved, invalid), "validator: N errors",
+# "readiness: ..." (regenerated, unchanged or FAIL), OK or FAIL.
 # Exit 0 only if every branch merged. The working tree must be clean.
 set -u
 [ $# -ge 1 ] || { echo "usage: $0 <branch> [<branch>...]" >&2; exit 2; }
@@ -22,7 +26,7 @@ cd "$ROOT" || exit 2
 LOG="${TMPDIR:-/tmp}/merge-wave.log"; : > "$LOG"
 if ! git diff --quiet HEAD; then echo "working tree not clean" >&2; exit 2; fi
 
-summary=(); fail=0; verr=0
+summary=(); fail=0; verr=0; rstat="not run"
 
 join_json() { # union by id: node script; args: ours theirs out
   node -e '
@@ -44,7 +48,14 @@ resolve_file() { # path branch ; returns 0 if resolved
     app/content/drills/index.json)
       git show ":2:$f" > "$d/o" 2>/dev/null && git show ":3:$f" > "$d/t" 2>/dev/null || return 1
       join_json "$d/o" "$d/t" "$f" >>"$LOG" 2>&1 || return 1 ;;
-    docs/BACKLOG-INBOX.md|PROGRESS.md|docs/reports/*.md|docs/reviews/*.md)
+    docs/readiness.md)
+      git show ":2:$f" > "$d/o" 2>/dev/null && git show ":3:$f" > "$d/t" 2>/dev/null || return 1
+      git show ":1:$f" > "$d/b" 2>/dev/null || : > "$d/b"
+      cp "$d/o" "$f"
+      git merge-file --union "$f" "$d/b" "$d/t" >>"$LOG" 2>&1
+      [ $? -lt 128 ] || return 1
+      node "$ROOT/app/tools/union-table-rows.mjs" "$f" "$d/b" "$d/o" "$d/t" >>"$LOG" 2>&1 || return 1 ;;
+    docs/BACKLOG-INBOX.md|PROGRESS.md|docs/reports/*.md|docs/reviews/*.md|docs/briefs/*.md)
       git show ":2:$f" > "$d/o" 2>/dev/null && git show ":3:$f" > "$d/t" 2>/dev/null || return 1
       git show ":1:$f" > "$d/b" 2>/dev/null || : > "$d/b"
       cp "$d/o" "$f"
@@ -95,7 +106,15 @@ for br in "$@"; do
     summary+=("invalid $br: validator ${n:-failed} errors"); fail=1; continue
   fi
   verr=0
-  git add -A -- app/content/manifest.json >/dev/null 2>&1
+  # readiness.json and the generated blocks of docs/readiness.md follow the merged content (a merge of two branches' tables needs this by hand otherwise)
+  rout=$(cd app && node tools/readiness-sums.mjs --write 2>&1); rrc=$?; echo "$rout" | tail -40 >>"$LOG"
+  if [ $rrc -eq 0 ]; then
+    rstat="OK"
+    if git diff --quiet -- app/content/readiness.json docs/readiness.md; then :; else rstat="regenerated"; fi
+  else
+    rstat="FAIL ($(echo "$rout" | grep -v '^$' | tail -1 | cut -c1-120))"; fail=1
+  fi
+  git add -A -- app/content/manifest.json app/content/readiness.json docs/readiness.md >/dev/null 2>&1
   if git commit -q -m "Merge $br (merge-wave)" >>"$LOG" 2>&1; then
     summary+=("merged $br")
   else
@@ -107,5 +126,6 @@ done
 echo "log: $LOG"
 for s in "${summary[@]}"; do echo "$s"; done
 echo "validator: $verr errors"
+echo "readiness: $rstat"
 if [ $fail -eq 0 ]; then echo OK; else echo FAIL; fi
 exit $fail

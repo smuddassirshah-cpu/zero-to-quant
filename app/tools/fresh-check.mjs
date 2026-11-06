@@ -2,7 +2,7 @@
 // Freshness check (ENGINE-BACKLOG 588). Flags items whose prose, question or widget prompt text
 // copies a lesson screen, quiz, review, homework or other exam item, even with changed numbers.
 // Usage (from app/): node tools/fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams
-//                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--json] [--content <dir>] [--file <json> [--as exams]]
+//                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--no-code] [--json] [--content <dir>] [--file <json> [--as exams]]
 // Exit 1 on any hit. A hit is a shared word n-gram (default 8 tokens, numbers normalised to "#")
 // or a 5-word shingle Jaccard at or above the threshold (default 0.5).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -14,7 +14,9 @@ const opt = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] 
 const has = (k) => argv.includes(k);
 const APP = join(dirname(fileURLToPath(import.meta.url)), '..');
 const C = opt('--content', join(APP, 'content'));
-const MIN_RUN = Number(opt('--min-run', 8)), MIN_SHARE = Number(opt('--min-share', 0));
+// Gate defaults (AUTHORING section 11): a shared run of 12 word tokens that covers 60% of the item's words.
+// Triage settings are --min-run 8 --min-share 0.
+const MIN_RUN = Number(opt('--min-run', 12)), MIN_SHARE = Number(opt('--min-share', 0.6));
 const THRESH = Number(opt('--threshold', 0.5));
 const NGRAM = Number(opt('--ngram', 8));
 const SHINGLE = Number(opt('--shingle', 5)), BOILER = Number(opt('--boiler', 20)), MIN_SHINGLES = 8, MIN_WORDS = 3, MIN_WORDS_N = 3;
@@ -34,19 +36,39 @@ function collect(node, out, on) {
     }
   }
 }
-// Lower-case, strip KaTeX delimiters and markup, numbers become "#".
+// Standard AUTHORING instruction sentences. They are boilerplate by design, so they are cut out (and
+// break a run) before tokens are compared. Add a pattern here only for a sentence AUTHORING prescribes.
+const STOPLIST = [
+  /put the (?:lines|steps|proof|derivation|argument|lines of the \w+) in order(?:, a reason in each line)?\.?/g,
+  /(?:leave out|move|drop) the (?:\w+ )?(?:lines?|steps?|ones?) (?:that )?(?:do(?:es)? not belong|(?:is|are) flawed)\.?/g,
+  /leave out the (?:\w+ )?(?:flawed lines?|that do not belong)\.?/g,
+  /move (?:it|the (?:two )?flawed lines?) to left out\.?/g,
+  /(?:one|two) lines? (?:does not belong|do not belong|is flawed|are flawed)[.:]?/g,
+  /the two lines may come in either order\.?/g,
+  /each line carries its reason\.?/g,
+  /give a reason for every line\.?/g,
+  /select all that apply:?\.?/g,
+  /give (?:a |an )?(?:\w+ )?(?:decimal places?|fraction or a decimal)\.?/g,
+  /say the (?:reasoning|argument) aloud (?:first|before you answer)\.?/g,
+  /(?:complete|fill in) the (?:three )?(?:functions|answers|table)\.?/g,
+  /which statements? (?:is|are) (?:right|true)\?/g,
+  /what does (?:it|that) (?:print|return)\?/g,
+];
+// Lower-case; instruction sentences become a break "|"; every maths span, command and number becomes "#".
 function tokens(strings) {
   let s = strings.join(' \n ').toLowerCase();
   s = s.replace(/```[a-z+]*/g, ' ');
-  s = s.replace(/\\([a-z]+)/g, ' $1 ').replace(/\\[\\,;:!{}()[\]]/g, ' ');
+  for (const re of STOPLIST) s = s.replace(re, ' | ');
+  s = s.replace(/\$\$[\s\S]*?\$\$|\$[^$]*\$/g, ' # ');
+  s = s.replace(/\\[a-z]+|\\[\\,;:!{}()[\]]/g, ' # ');
   s = s.replace(/\d+(?:[.,]\d+)*(?:e[+-]?\d+)?/g, ' # ');
-  // Words, variables and LaTeX command names; a run of numbers collapses to one "#".
-  return (s.match(/[a-z]+|#/g) ?? []).filter((t, i, o) => !(t === '#' && o[i - 1] === '#'));
+  // Words, "#" placeholders and breaks; a run of placeholders collapses to one "#".
+  return (s.match(/[a-z]+|#|\|/g) ?? []).filter((t, i, o) => !(t === '#' && o[i - 1] === '#') && !(t === '|' && o[i - 1] === '|'));
 }
 // A window of repeated symbols (x # y # x # y #) is not shared phrasing: it needs enough distinct tokens.
 const STOP = new Set('what is the of and a an to in on for with that this which be are by it its at as from has have then give find how many much do does you your one two'.split(' '));
 const informative = (g) => new Set(g.filter((t) => t !== '#' && !STOP.has(t))).size >= (g.length >= NGRAM ? MIN_WORDS_N : MIN_WORDS);
-function grams(tk, n) { const o = []; for (let i = 0; i + n <= tk.length; i++) o.push(tk.slice(i, i + n)); return o; }
+function grams(tk, n) { const o = []; for (let i = 0; i + n <= tk.length; i++) { const g = tk.slice(i, i + n); if (!g.includes('|')) o.push(g); } return o; }
 
 // Units: one lesson screen / quiz item / review item / homework item / exam item / drill / bank item.
 function unitsOf(file, rel) {
@@ -63,7 +85,7 @@ function unitsOf(file, rel) {
     (d.parts ?? []).forEach((p, i) => walk(p.items, `parts[${i}].`));
   } else if (rel.startsWith('bank/')) (d.items ?? []).forEach((q, i) => add(`items[${i}]`, q));
   else if (rel.startsWith('drills/')) add('', d);
-  return { id: d.id, units: u };
+  return { id: d.versionOf || d.id, units: u };   // a mock version (versionOf) shares its family id: versions repeat each other on purpose
 }
 function listAll() {
   const files = [];
@@ -97,16 +119,21 @@ corpus.forEach((x, i) => {
   for (const g of x.shingles) { let a = idxS.get(g); if (!a) idxS.set(g, (a = [])); a.push(i); }
 });
 
-// Longest run of tokens the two texts share (longest common substring), with its text.
+// Longest run the two texts share (longest common substring), scored in word tokens only: "#" placeholders
+// join a run but do not count, and a "|" break never matches.
 function longestRun(a, b) {
-  let best = 0, end = 0, prev = new Array(b.length + 1).fill(0);
+  let best = 0, end = 0, endLen = 0, prev = new Array(b.length + 1).fill(0), prevL = new Array(b.length + 1).fill(0);
   for (let i = 1; i <= a.length; i++) {
-    const cur = new Array(b.length + 1).fill(0);
-    for (let j = 1; j <= b.length; j++) if (a[i - 1] === b[j - 1]) { cur[j] = prev[j - 1] + 1; if (cur[j] > best) { best = cur[j]; end = i; } }
-    prev = cur;
+    const cur = new Array(b.length + 1).fill(0), curL = new Array(b.length + 1).fill(0);
+    for (let j = 1; j <= b.length; j++) if (a[i - 1] === b[j - 1] && a[i - 1] !== '|') {
+      cur[j] = prev[j - 1] + (a[i - 1] === '#' ? 0 : 1); curL[j] = prevL[j - 1] + 1;
+      if (cur[j] > best) { best = cur[j]; end = i; endLen = curL[j]; }
+    }
+    prev = cur; prevL = curL;
   }
-  return { len: best, text: a.slice(end - best, end).slice(0, 30).join(' ') };
+  return { len: best, text: a.slice(end - endLen, end).slice(0, 30).join(' ') };
 }
+const words = (tk) => tk.filter((t) => t !== '#' && t !== '|').length;
 
 function scan(rel, targetUnits, selfId) {
   const hits = [];
@@ -124,11 +151,58 @@ function scan(rel, targetUnits, selfId) {
       const score = +(inter / (sh.size + s.shingles.size - inter || 1)).toFixed(2);
       const big = Math.min(sh.size, s.shingles.size) >= MIN_SHINGLES;
       if (gramHit.has(i)) {
-        const r = longestRun(t.tk, s.tk), share = +(r.len / t.tk.length).toFixed(2);
+        const r = longestRun(t.tk, s.tk), share = +(r.len / (words(t.tk) || 1)).toFixed(2);
         if (r.len >= MIN_RUN && share >= MIN_SHARE) hits.push({ target: `${rel}:${t.path}`, source: `${s.file}:${s.path}`, kind: 'ngram', ngram: r.text, run: r.len, share, score });
       }
       else if (big && score >= THRESH) hits.push({ target: `${rel}:${t.path}`, source: `${s.file}:${s.path}`, kind: 'jaccard', score });
     }
+  }
+  return hits;
+}
+
+// Code names (ENGINE-BACKLOG 600): function and class names of code widgets in a target (exam, drill or bank
+// item) against every code widget of every lesson, review and homework. A task renamed in prose but with the
+// same function (`walk_forward_mse`, `irls_logistic`, `metropolis`) is a reuse the prose scan cannot see.
+const GENERIC = new Set(('main solve helper run test check demo example answer result compute calculate fit predict transform ' +
+  'mean std var variance median total count update reset push pop peek size empty get set add remove insert erase find ' +
+  'init step simulate price payoff value evaluate score loss gradient hessian apply process parse read write load dump ' +
+  'len sum min max abs round sorted range print format str int float list dict tuple zip map filter any all enumerate ' +
+  'sqrt exp log norm array zeros ones arange linspace dot where cumsum diff append extend isclose allclose assert ' +
+  'swap merge sort search partition build reverse flatten uniform normal random seed').split(' '));
+const nameOk = (n) => !n.startsWith('_') && !n.startsWith('test_') && !GENERIC.has(n) && (n.length >= 6 || n.includes('_')) && /^[A-Za-z]\w*$/.test(n);
+function namesOf(w) {
+  const out = new Set(), src = [w.starter, w.solution].filter((x) => typeof x === 'string');
+  const defs = [/^[ \t]*(?:async\s+)?def\s+([A-Za-z]\w*)/gm, /^[ \t]*class\s+([A-Za-z]\w*)/gm, /^[ \t]*(?:class|struct)\s+([A-Za-z]\w*)/gm,
+    /^[ \t]*(?:template\s*<[^>]*>\s*)?(?:(?:static|inline|constexpr|const|unsigned|long|short)\s+)*[A-Za-z_][\w:<>,*&]*[\s*&]+([A-Za-z]\w*)\s*\([^;{}()]*\)\s*(?:const\s*)?\{/gm];
+  for (const code of src) for (const re of defs) for (const m of code.matchAll(re)) if (m[1] !== 'main') out.add(m[1]);
+  if (typeof w.fn === 'string') out.add(w.fn);
+  for (const t of [...(w.tests ?? []), ...(w.examples ?? [])]) { const m = typeof t?.call === 'string' && t.call.match(/^\s*([A-Za-z]\w*)\s*\(/); if (m) out.add(m[1]); }
+  return [...out].filter(nameOk);
+}
+function codeWidgets(node, path, out) {
+  if (Array.isArray(node)) node.forEach((v, i) => codeWidgets(v, `${path}[${i}]`, out));
+  else if (node && typeof node === 'object') {
+    if (typeof node.starter === 'string' || typeof node.solution === 'string') { const n = namesOf(node); if (n.length) out.push({ path, names: n }); }
+    for (const [k, v] of Object.entries(node)) if (v && typeof v === 'object') codeWidgets(v, path ? `${path}.${k}` : k, out);
+  }
+}
+const nameIdx = new Map();
+if (!has('--no-code')) {
+  for (const rel of listAll()) {
+    if (!rel.startsWith('courses/')) continue;
+    const ws = []; codeWidgets(rd(join(C, rel)), '', ws);
+    for (const w of ws) for (const n of w.names) { let a = nameIdx.get(n); if (!a) nameIdx.set(n, (a = [])); a.push(`${rel}:${w.path}`); }
+  }
+}
+// A name used in IDIOM or more courses is a shared helper idiom (daily_returns, run_tests), not a reused task.
+const IDIOM = Number(opt('--idiom', 3));
+function scanCode(rel) {
+  const ws = []; codeWidgets(rd(join(C, rel)), '', ws);
+  const hits = [];
+  for (const w of ws) for (const n of new Set(w.names)) {
+    const srcs = (nameIdx.get(n) ?? []).filter((x) => !x.startsWith(rel + ':'));
+    if (!srcs.length || new Set(srcs.map((x) => x.split('/')[1])).size >= IDIOM) continue;
+    hits.push({ target: `${rel}:${w.path}`, source: srcs[0] + (srcs.length > 1 ? ` (+${srcs.length - 1} more)` : ''), kind: 'code-name', names: [n], ngram: n, score: 0 });
   }
   return hits;
 }
@@ -155,14 +229,14 @@ if (direct) {
 }
 // One line per target item and source file: the best hit (an n-gram hit beats a score, then the higher score).
 const best = new Map();
-for (const t of targets) for (const h of scan(t.rel, t.units, t.id)) {
-  const k = `${h.target}|${h.source.split(':')[0]}`, o = best.get(k);
-  if (!o || (h.kind === 'ngram' && o.kind !== 'ngram') || (h.kind === o.kind && (h.run ?? 0) > (o.run ?? 0)) || (h.kind === o.kind && h.run === o.run && h.score > o.score)) best.set(k, h);
+for (const t of targets) for (const h of [...scan(t.rel, t.units, t.id), ...(has('--no-code') ? [] : scanCode(t.rel))]) {
+  const k = `${h.target}|${h.kind === 'code-name' ? 'name:' + h.ngram : h.source.split(':')[0]}`, o = best.get(k);
+  if (!o || (h.kind === 'code-name' && o.kind !== 'code-name') || (h.kind === 'ngram' && o.kind === 'jaccard') || (h.kind === o.kind && (h.run ?? 0) > (o.run ?? 0)) || (h.kind === o.kind && h.run === o.run && h.score > o.score)) best.set(k, h);
 }
 const all = [...best.values()];
 if (has('--json')) console.log(JSON.stringify(all, null, 1));
 else {
-  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
+  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
   console.log(`${all.length} hit(s) in ${targets.length} target file(s)`);
 }
 process.exitCode = all.length ? 1 : 0;   // not process.exit: piped output must flush

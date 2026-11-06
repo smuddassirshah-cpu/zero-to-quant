@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # test-merge-wave.sh: clone the repo, make two branches that conflict in
-# drills/index.json, BACKLOG-INBOX.md and one review file, merge them with
-# merge-wave.sh and assert the result. Prints PASS or FAIL (last line).
+# drills/index.json, BACKLOG-INBOX.md, one review file, docs/briefs/README.md and two
+# adjacent rows of docs/readiness.md (session V), one branch also leaves content/readiness.json
+# stale; merge them with merge-wave.sh and assert the result, including the readiness
+# regeneration. Prints PASS or FAIL (last line).
 set -u
 SRC=$(git rev-parse --show-toplevel); T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
-git clone -q "$SRC" "$T/r" 2>/dev/null || { echo "FAIL: clone"; exit 1; }
-cd "$T/r"; git config user.email t@t; git config user.name t
-cp "$SRC/app/tools/merge-wave.sh" app/tools/merge-wave.sh   # the script under test may be uncommitted
+# A fresh repository holding a snapshot of the working tree (a clone fails in a shallow checkout: merges need history).
+mkdir "$T/r" && cd "$T/r" && git init -q || { echo "FAIL: init"; exit 1; }
+git config user.email t@t; git config user.name t
+cp -r "$SRC/app" "$SRC/docs" "$SRC/PROGRESS.md" . 2>/dev/null || { echo "FAIL: copy"; exit 1; }
+rm -rf app/node_modules
 git add -A; git commit -q -m "base" ; BASE=$(git rev-parse --abbrev-ref HEAD)
 # drill ids that have a file but no index entry (the validator needs a real file)
 FREE=($(for f in app/content/drills/*.json; do i=$(basename "$f" .json); [ "$i" = index ] || grep -q "\"$i\"" app/content/drills/index.json || echo "$i"; done | head -3))
@@ -23,13 +27,19 @@ fs.writeFileSync(i,JSON.stringify(d,null,2)+"\n");
 const r=JSON.parse(fs.readFileSync(rev));r.items[0].prose="side-"+tag+" "+r.items[0].prose;
 fs.writeFileSync(rev,JSON.stringify(r,null,2)+"\n");' "$2" "$REV" "${FREE[@]}"
   echo "inbox line $2" >> docs/BACKLOG-INBOX.md
+  echo "brief line $2" >> docs/briefs/README.md
+  node -e '
+const fs=require("fs"),tag=process.argv[1],k=tag==="a"?"algebra":"algo-think";
+const t=fs.readFileSync("docs/readiness.md","utf8").split("\n").map(l=>l.startsWith("| `"+k+"` |")?l.replace(/\| [^|]* \|$/,"| reason-"+tag+" |"):l);
+fs.writeFileSync("docs/readiness.md",t.join("\n"));
+if(tag==="b"){const j=JSON.parse(fs.readFileSync("app/content/readiness.json"));j.zzStale=1;fs.writeFileSync("app/content/readiness.json",JSON.stringify(j,null,2)+"\n");}' "$2"
   git add -A; GIT_COMMITTER_DATE="$3" git commit -q -m "branch $2"
 }
 edit wave-a a "2026-01-01T00:00:00Z"
 edit wave-b b "2026-01-02T00:00:00Z"
 git checkout -q "$BASE"
 OUT=$(app/tools/merge-wave.sh wave-a wave-b 2>&1); RC=$?
-echo "$OUT" | tail -6
+echo "$OUT" | tail -7
 fail=""
 [ $RC -eq 0 ] || fail="$fail exit=$RC"
 git grep -n -E '^(<<<<<<< |>>>>>>> )' -- app docs >/dev/null && fail="$fail markers"
@@ -37,5 +47,13 @@ for id in "${FREE[@]}"; do [ "$(grep -c "\"id\": \"$id\"" app/content/drills/ind
 grep -q "inbox line a" docs/BACKLOG-INBOX.md && grep -q "inbox line b" docs/BACKLOG-INBOX.md || fail="$fail inbox"
 grep -q "side-b" "$REV" && ! grep -q "side-a" "$REV" || fail="$fail review-newer"
 (cd app && node tools/validate.mjs 2>&1 | grep -q '^0 errors') || fail="$fail validator"
+grep -q "brief line a" docs/briefs/README.md && grep -q "brief line b" docs/briefs/README.md || fail="$fail briefs"
+NA=$(git show "$BASE:docs/readiness.md" | grep -c '^| `algebra` |')   # one row in each of the six role tables
+[ "$(grep -c '^| `algebra` |.*reason-a |$' docs/readiness.md)" = "$NA" ] || fail="$fail readiness-row-ours"
+[ "$(grep -c '^| `algo-think` |.*reason-b |$' docs/readiness.md)" = "$NA" ] || fail="$fail readiness-row-theirs"
+[ "$(grep -c '^| `algebra` |' docs/readiness.md)" = "$(git show "$BASE:docs/readiness.md" | grep -c '^| `algebra` |')" ] || fail="$fail readiness-dup-rows"
+grep -q zzStale app/content/readiness.json && fail="$fail readiness-json-stale"
+(cd app && node tools/readiness-sums.mjs 2>&1 | grep -q '^OK') || fail="$fail readiness-check"
+echo "$OUT" | grep -q '^readiness: regenerated' || fail="$fail readiness-status"
 [ -z "$(git status --porcelain)" ] || fail="$fail dirty"
 [ -z "$fail" ] && echo "PASS merge-wave" || { echo "FAIL merge-wave:$fail"; exit 1; }
