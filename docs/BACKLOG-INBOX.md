@@ -1280,3 +1280,7 @@ Raised later (pairs-rep level 3):
 - [Could] `bars` `hlines`: the label sits at the right end over the bars, and a long label ("247.5 a bin if no pair is cointegrated", l12 p-value histogram) overprints the bar tops at 1280 px. Wanted: hline labels placed clear of bars (above the plot, or at the left when bars are tall on the right). Workaround: a short label and the detail in the caption.
 - [Could] `table` widget at 440 px: four columns with a text column ("From", "Value", "To", "Result") wrap to one word a line and push the inputs off the right edge (l15 results screen). Wanted: a stacked layout for narrow screens, one row a card. Workaround: three columns with short labels.
 - [Could] Validator, number-script check: it looks for an import of `numbers_lib` and `Level(` in the script text, so the level 1 and 2 scripts, which import `Level` through `docs/reports/pairs_rep_common.py`, still warn "never uses numbers_lib". Wanted: follow one level of local imports. Workaround: the level 3 script imports `numbers_lib` directly.
+
+Raised later (vector-calc level 3):
+
+- `space` `curves`: no direction marker on a curve. Stokes (l12 screens 0, 2 and 9) needs the boundary's orientation shown (counterclockwise seen from above, or clockwise in the trap). Wanted: `arrow: true` (or `arrows: n`) on a curve entry, drawing small arrowheads along it in the direction of increasing `t`. Workaround: a short `vectors` entry tangent to the curve at one point, from a `points` entry.
