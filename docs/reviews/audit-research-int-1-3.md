@@ -83,3 +83,5 @@ Checks:
 - `node tools/validate.mjs 2>&1 | tail -3` (from `app/`): `0 errors, 4272 warnings` (5 more advisory O2 long-sentence warnings from the longer sentences); manifest restored.
 - `python3 -I docs/reports/research-int-L1-concepts.py`: exit 0 (`all checks passed`); `-L2-`: exit 0; `-L3-`: exit 0; `research-int-1-perf-numbers.py`: `all numbers agree`, exit 0 (no hard-coded number touched).
 - `VOICE_BASE=app/content/courses/research-int/ python3 docs/reviews/voice-scan.py 35 --summary`: `explanations over three sentences: 0`, `sentences scanned: 10349; over 35 words: 0`.
+- Playthrough (from `app/`, `--local-cdn <PKGS>`) of every changed file: `--lesson research-int/` l1, l4, l6, l7, l10, l12, l14 and `--set research-int/homework-3`, plain and `--mobile`: each `browser relaunches: 0` / `All passed.` (homework-3 39 of 39 marks, parts checks ok). review-1 was not changed and not played.
+- Second commit: the l4 s5 explain check message carries "(corrected claim, fix pass)", per the orchestrator's decision; L1 script exit 0 again.
