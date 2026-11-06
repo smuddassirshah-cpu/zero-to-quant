@@ -135,13 +135,14 @@ t_mask, r_mask = timed(PREFIX_DICT)
 print('info test 9 time: trie %.2f s, wildcard-mask dict %.2f s (limit 5 s)' % (t_trie, t_mask))
 check('trie passes test 9 inside 5 s', t_trie < 5, True)
 check('test 9 trie and mask reference agree', r_trie, r_mask)
-# the scan, on the first half of the steps only: it already misses the limit, so the whole test does
+# the scan on all 100,000 steps (the half-run used before took under 5 s on some machines, so the
+# check misfired; audit fix pass, coding-int, 6 Nov 2026)
 ns_scan = namespace(SCAN)
 t0 = time.perf_counter()
-ns_scan['big_case'](50000)
-t_scan_half = time.perf_counter() - t0
-print('info scan per query on the first 50,000 steps: %.2f s (limit 5 s for all 100,000)' % t_scan_half)
-check('a scan per query fails the 5 s limit', t_scan_half > 5, True)
+ns_scan['big_case'](100000)
+t_scan_full = time.perf_counter() - t0
+print('info scan per query on all 100,000 steps: %.2f s (limit 5 s)' % t_scan_full)
+check('a scan per query fails the 5 s limit', t_scan_full > 5, True)
 
 # each byKey line names a slip; the slip, planted in the solution, fails that test
 def first_fail(src):
