@@ -29,8 +29,24 @@ Unverified (not findings, recorded for the fixer): whether GGR continue the form
 
 ## Overlap with the earlier review
 
-OVERLAP_TABLE
+Read after the ledger and findings were committed (5b5e187): `docs/reviews/review-pairs-rep-1-2.md` and `docs/reviews/review-pairs-rep-3.md`, both with their fix passes already applied to the content this audit read. Conceptual findings only (arithmetic, pointer, tolerance, starter and style items of the reviews are left out).
+
+| | count | items |
+|---|---|---|
+| audit only | 7 | findings 1, 2, 3 (the paper's matching rule), 4 (normalisation base inconsistency), 5 (why random pairs lose), 6 (l9 screens[6] "pays the spread"), 7 (l10 industry restriction as a gap source) |
+| review only | 15 | L1 to L2: l5 screens[7] "the wait is not a cost" (error); homework-2 items[6] `norm` graded correct (error); l10 screens[6] cause of the top-5 ordering; l9 screens[9] "the half-spread" as what the wait addresses; l5 screens[4] "independent"; l4 screens[8] "larger" for "at least as large"; l5 screens[9] missing 1 <= n and total > 0; l9 screens[0] half against full spread. L3: l12 screens[9] and [8] n alpha applied to a shortlist chosen on the same year (two errors, counted once); review-3 items[5] cause of the chance picks; l15 screens[9] "9% is the in-sample figure"; l15 screens[0] cause attached to the wrong portfolio; l15 screens[5] lead figure without "before costs"; homework-3 items[3] a stylised mix stated as fact; review-3 items[4] volatility drag ("Assume") |
+| both | 1 | l12 screens[4].explain: the review found the 392-against-248 gap unexplained and supplied "on one noisy year the test rejects too often"; finding 8 refines that fix (the bounce lifts the size only to about 7%; the larger cause is dependence among 4,950 tests on 100 shares) |
+
+Review findings this audit missed, one line each: every one of the 15 was applied in the review's fix pass before this audit read the files, so the corrected text was what the audit saw and the ledger records each as correct (for example l5 screens[7] now reads "a bounce nobody could capture. Its real cost, a day of convergence, is small", homework-2 items[6] `norm` carries the base-cancels `why`, l12 screens[9] asks about pairs "picked without looking at the formation year", l15 screens[5] says "before costs"). None was missed on the text as it now stands. One review conclusion the audit disagrees with: review-pairs-rep-1-2 "Automated checks" reads the cycle-1 placebo figures as showing that "random pairs lose about 1.0% a cycle"; finding 5 shows the expectation is 0 and the figure is one cycle's draw. One review fix the audit cannot settle without the paper: the review kept l10 screens[3] `norm` as "a real gap source", which finding 4 questions.
+
+Overlap counts for `docs/reports/concept-audit-log.md`: audit only 7, review only 15, both 1; new `wrong` not found by an earlier read: 4 (findings 1, 2, 3 on one root cause, and 5).
 
 ## Checks
 
-CHECKS
+- Validator (from `app/`): `node tools/validate.mjs 2>&1 | tail -3` gives "0 errors, 4279 warnings" (warning tail: O2-long-sentence 714, O2-long-explain 48, O2-unshuffled-numeric 73, O2-no-slip 46, O2-prose-prompt 8, O2-explain-answer 615, repo-wide); `content/manifest.json` unchanged afterwards (`git checkout` restored 0 paths).
+- Voice: `VOICE_BASE=app/content/courses/pairs-rep/ python3 docs/reviews/voice-scan.py 35 --summary`: explanations over three sentences 0; sentences scanned 7,080, over 35 words 0.
+- Numbers scripts (`python3 -I`, repo root): `pairs-rep-L1-numbers.py` exit 0 (146 of 146, every solution passes and every starter fails); `pairs-rep-L2-numbers.py` exit 0 (139 of 139); `pairs-rep-L3-numbers.py` exit 0 (479 of 479, three "check by hand" byKey lines, each a correct slip).
+- Concepts scripts: `pairs-rep-L1-concepts.py` exit 1, 28 checks pass, 2 EXPECTED_FAIL (findings 1 and 5; the corrected asserts sit in comments beside them); `pairs-rep-L2-concepts.py` exit 0, 26 checks; `pairs-rep-L3-concepts.py` exit 0, 22 checks (about 30 s, statsmodels). Monte Carlo sizes: 150 fresh panels of 40 random pairs (finding 5), 60 panels of 20 planted pairs (bounce, wait, stop), 4,000 draws for the overlap t statistics, 24 panels of 120 chance pairs plus 20 panels of 20 planted pairs for Engle-Granger size and power, 12 panels for the selection bias, 30 panels for the market beta, 4,000 draws for the winner's curse.
+- Playthrough (from `app/`, `--local-cdn <pkgs>`): `--set pairs-rep/review-1 --set pairs-rep/homework-1`, `--set pairs-rep/review-2 --set pairs-rep/homework-2`, `--set pairs-rep/review-3 --set pairs-rep/homework-3`: each ends "browser relaunches: 0 / All passed."; `--lesson pairs-rep/l3-closest-pairs`, `--lesson pairs-rep/l7-closing`, `--lesson pairs-rep/l12-cointegration-selection`: each "All passed.". No content was changed.
+- Paper text: `www.nber.org`, `papers.ssrn.com`, `academic.oup.com`, `repec.som.yale.edu` and the other paper hosts are outside this session's allowed network, so GGR could not be fetched; citations are from the auditor's reading of the published version and the two normalisation-base rows stay `unverified`.
+- Inbox: no engine or validator limit was hit, so nothing was added to `docs/BACKLOG-INBOX.md`.
