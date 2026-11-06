@@ -260,7 +260,7 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 | `mock-oa-code` | exists |  |
 | `mock-oa-quant-data` | exists |  |
 | `mock-superday-research` | exists |  |
-| `mock-video` | gap: not yet written | behavioural and spoken video mock |
+| `mock-video` | exists | behavioural and spoken video mock |
 
 **Capstone:** one replication (`momentum-rep` or an equivalent external project) with repo link, rerun-from-clean result and defence notes, reviewed by the user.
 
@@ -523,7 +523,7 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 | --- | --- | --- |
 | `mock-oa-strats` | exists |  |
 | `mock-oa-code` | exists |  |
-| `mock-video` | gap: not yet written | behavioural and spoken video mock |
+| `mock-video` | exists | behavioural and spoken video mock |
 | `mock-superday-strats` | gap: not yet written | derivatives, harder probability, coding |
 
 **Capstone:** a small pricer or risk tool in C++ or Python with tests and a written error note. The record holds repo link, rerun-from-clean result and defence notes. The user reviews it.
@@ -650,7 +650,7 @@ Same learner as Strats, plus the pricing mathematics.
 | --- | --- | --- |
 | `mock-oa-strats` | exists | shared with Strats |
 | `mock-oa-code` | exists |  |
-| `mock-video` | gap: not yet written | shared with Strats |
+| `mock-video` | exists | shared with Strats |
 | `mock-superday-strats` | gap: not yet written | shared with Strats |
 
 **Capstone:** a priced-and-validated option project with a derivation note. The record holds repo link, rerun-from-clean result and defence notes. The user reviews it.
@@ -778,7 +778,7 @@ Plan: build the shared foundation, then choose a role. The app prompts the choic
 | Mock | Status | Note |
 | --- | --- | --- |
 | `mock-oa-arith` | exists | used for task 2 |
-| `mock-video` | gap: not yet written | general path; shared with Researcher and Strats |
+| `mock-video` | exists | general path; shared with Researcher and Strats |
 
 Undecided never reads "ready". It reads "foundation done" once the required courses are met.
 
