@@ -56,3 +56,20 @@ What a single read missed, measured on the content as it now stands: the review,
   - `--set mental-pressure/review-2 --set mental-pressure/homework-2`: `ok review-2 10 items, recorded 10 of 10, 2.6 s` / `ok homework-2 8 items, marked 8 of 8 right, 38 of 38 marks, 1 longform, 4.0 s` / `All passed.`
   - `--set mental-pressure/review-3 --set mental-pressure/homework-3`: `ok review-3 10 items, recorded 10 of 10, 2.5 s` / `ok homework-3 8 items, marked 8 of 8 right, 37 of 37 marks, 1 longform, 3.9 s` / `All passed.`
   - `--lesson mental-pressure/l2-two-by-two --lesson mental-pressure/l8-square-roots --lesson mental-pressure/l10-next-in-sequence`: `ok l2-two-by-two 16 checks, 11.0 s, quiz 4/4` / `ok l8-square-roots 16 checks, 9.5 s, quiz 4/4` / `ok l10-next-in-sequence 16 checks, 9.3 s, quiz 4/4` / `All passed.`
+
+## Fix pass
+
+1. fixed | basis: `app/js/engine/arith.js` `problem()` gives every usable operation weight 1 when no weights are passed, and `content/warmup.json` notes say each operation is equally likely; the vendor default cannot be checked here, so the claim now names the app's warm-up.
+2. fixed, with a different worked example | basis: (100 − g)(100 − h) = 100(100 − g − h) + gh, so gh fills two digits only when gh < 100; 97 × 98 = 9,506 (95 then 06) and 98 × 93 = 9,114 checked twice. I used 97 × 98 rather than the auditor's 98 × 96 because 98 × 96 is a drill row on screens[10] and the prose would give its key away. quiz[3].explain merged to three sentences.
+3. fixed | basis: (10a + b)(10c + d) = 100ac + 10(ad + bc) + bd ends in a three-term sum, which screens[2] itself performs (1200 + 450 + 42).
+4. fixed | basis: 0.5 − 0.49 = 0.01, which is 2% of a half; 0.01 × 812 = 8.12 and 406 − 8.12 = 397.88; 0.01 × 640 = 6.4 and 320 + 6.4 = 326.4.
+5. fixed | basis: at fixed numerator a/b falls as b grows, 5/11 ≈ 0.455 < 5/7 ≈ 0.714; at different counts it fails, 3/4 > 1/2.
+6. fixed, in shorter words than the auditor's | basis: l9 and l12 screens[2] tell the learner to cut options and guess on slow questions, so a fast wrong answer may be a guess, whose cause is a missing or slow method. l12 screens[6] now says the seconds are a first sort, a fast wrong guess is a method gap and the candidate guessed none of the rows (keys unchanged); quiz[2] and review-3 items[7] state the question was worked, not guessed. homework-1's model now says it sorts by what went wrong, not by seconds alone, which matches l12's "first sort". I filed a guess as a method gap, not with the time losses as the auditor proposed, since a time loss is defined as a right answer.
+
+Counts: fixed 6, disputed 0, deferred 0. No graded answer, key, tolerance or option changed; prose, hints, why, feedback, explain and one longform model line only.
+
+Checks:
+- Validator (from `app/`): `0 errors, 4265 warnings`; `content/manifest.json` restored, not committed.
+- Concepts scripts: `mental-pressure-L1-concepts.py` exit 0, `-L2-` exit 0, `-L3-` exit 0. No `mental-pressure-L<n>-numbers.py` exists for these levels.
+- Voice (35): `# explanations over three sentences: 0`, `# sentences scanned: 11031; over 35 words: 0`.
+- Playthrough (`--local-cdn <pkgs>`) of l1-towards-fifty, l2-two-by-two, l5-which-fraction, l7-estimating-products, l12-mock-test, review-2, review-3, homework-1: desktop `All passed.` (lessons 16 checks, quiz 4/4; homework-1 38 of 38 marks; reviews 10 of 10); `--mobile` `All passed.` with the same figures.
