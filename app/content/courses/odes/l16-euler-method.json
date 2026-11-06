@@ -1,0 +1,1513 @@
+{
+  "id": "l16-euler-method",
+  "course": "odes",
+  "title": "Euler’s method",
+  "minutes": 15,
+  "objectives": [
+    "Step a solution forward with Euler’s method in NumPy and watch the error shrink with the step."
+  ],
+  "skills": [
+    "de-numeric"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Follow the tangent",
+      "prose": "Take $y' = y$ with $y(0) = 1$. At $t = 0$ the slope is $y = 1$. Walk along that slope for half a year: $y(0.5) \\approx 1 + 0.5 \\times 1$. Then read the slope at the new point and walk again.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1.05
+          ],
+          "y": [
+            0.9,
+            2.9
+          ],
+          "xLabel": "$t$",
+          "height": 240,
+          "functions": [
+            {
+              "id": "ex",
+              "expr": "exp(1*x)",
+              "label": "exact",
+              "dashed": true,
+              "colour": 2
+            },
+            {
+              "id": "E",
+              "expr": "(1+h*k)^floor(x/h)*(1+k*(x-h*floor(x/h)))",
+              "label": "Euler",
+              "labelSide": "below",
+              "colour": 1,
+              "labelAt": 0.55
+            }
+          ],
+          "params": {
+            "h": 0.5,
+            "k": 1
+          }
+        },
+        "state": {
+          "hide": [
+            "E"
+          ]
+        }
+      },
+      "question": "Fill in the two steps.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$t_n$",
+          "$y_n$"
+        ],
+        "rows": [
+          [
+            "0",
+            "1"
+          ],
+          [
+            "0.5",
+            {
+              "edit": true,
+              "answer": 1.5,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "1",
+            {
+              "edit": true,
+              "answer": 2.25,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Each step adds $h$ times the slope at the start of the step."
+        },
+        {
+          "rung": "point",
+          "text": "From $y = 1$: $1 + 0.5 \\times 1$.",
+          "highlight": [
+            "ex"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then from 1.5: $1.5 + 0.5 \\times 1.5 = 2.25$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 \\to 1.5 \\to 2.25$.",
+        "generic": "Not quite right. Use the slope at the start of each step.",
+        "byKey": {
+          "r1c1": "From 1 with slope 1 and step 0.5, you reach $1 + 0.5 = 1.5$.",
+          "r2c1": "At $y = 1.5$ the slope is 1.5, so add $0.5 \\times 1.5 = 0.75$."
+        }
+      },
+      "explain": {
+        "text": "Each step adds $h$ times the current slope: $1 \\to 1.5 \\to 2.25$. The true value is $e = 2.718282$, so two steps fall short by 0.47.",
+        "canvas": {
+          "hide": []
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Smaller steps",
+      "prose": "That is **Euler's method**: $y_{n+1} = y_n + h\\,f(t_n, y_n)$, one tangent step at a time. Here $f(t, y) = y$. Slide the step $h$ and watch the broken line close on $e^t$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1.05
+          ],
+          "y": [
+            0.9,
+            2.9
+          ],
+          "xLabel": "$t$",
+          "height": 240,
+          "functions": [
+            {
+              "id": "ex",
+              "expr": "exp(x)",
+              "label": "$e^t$",
+              "dashed": true,
+              "colour": 2
+            },
+            {
+              "id": "E",
+              "expr": "(1+h*k)^floor(x/h)*(1+k*(x-h*floor(x/h)))",
+              "label": "Euler",
+              "labelSide": "below",
+              "colour": 1,
+              "labelAt": 0.55
+            }
+          ],
+          "params": {
+            "h": 0.5,
+            "k": 1
+          }
+        },
+        "state": {},
+        "controls": [
+          {
+            "bind": "h",
+            "stops": [
+              0.5,
+              0.25,
+              0.125,
+              0.1,
+              0.05
+            ],
+            "start": 0.5,
+            "label": "step $h$"
+          }
+        ],
+        "derive": {
+          "caption": "Euler at $t = 1$: {{fixed(pow(1 + h, round(1/h)), 6)}}, against $e = 2.718282$"
+        }
+      },
+      "question": "What does Euler give at $t = 1$ with $h = 0.25$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.4414,
+        "tol": {
+          "abs": 5e-05
+        },
+        "accept": "2.4414: $1.25^4$",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 2.25,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set the slider to 0.25."
+        },
+        {
+          "rung": "point",
+          "text": "Each step multiplies by $1 + h = 1.25$.",
+          "highlight": [
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Four steps: $1.25^4 = 2.4414$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.25^4 = 2.4414$.",
+        "generic": "Not quite right. Four steps of 0.25 each multiply by 1.25.",
+        "byKey": {
+          "half": "That is the $h = 0.5$ value from the last screen. Move the slider to 0.25."
+        }
+      },
+      "explain": {
+        "text": "On $y' = y$ each step multiplies by $1 + h$, so four steps give $1.25^4 = 2.4414$. The gap to $e$ shrank from 0.47 to 0.28.",
+        "canvas": {
+          "params": {
+            "h": 0.25
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Euler is compounding",
+      "prose": "Euler on $y' = 0.05y$ with $h = \\tfrac{1}{12}$ multiplies by $1 + 0.05/12$ each month. That is monthly compounding. Lesson 1's continuous rate is the limit as the step shrinks.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            1,
+            1.06
+          ],
+          "xLabel": "years $t$",
+          "height": 220,
+          "functions": [
+            {
+              "id": "ex",
+              "expr": "exp(0.05*x)",
+              "label": "$e^{0.05t}$",
+              "dashed": true,
+              "colour": 2
+            },
+            {
+              "id": "E",
+              "expr": "(1+h*k)^floor(x/h)*(1+k*(x-h*floor(x/h)))",
+              "label": "monthly",
+              "labelSide": "below",
+              "colour": 1,
+              "labelAt": 0.55
+            }
+          ],
+          "params": {
+            "h": 0.0833333333,
+            "k": 0.05
+          }
+        },
+        "state": {}
+      },
+      "question": "What does Euler give at $t = 1$, to 6 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.051162,
+        "tol": {
+          "abs": 5e-07
+        },
+        "accept": "1.051162: $(1 + 0.05/12)^{12}$",
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 1.051271,
+            "tol": {
+              "abs": 5e-07
+            }
+          },
+          {
+            "id": "annual",
+            "value": 1.05,
+            "tol": {
+              "abs": 1e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Twelve steps, each multiplying by $1 + 0.05/12$."
+        },
+        {
+          "rung": "point",
+          "text": "$1 + 0.05/12 = 1.0041667$.",
+          "highlight": [
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.0041667^{12} = 1.051162$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(1 + 0.05/12)^{12} = 1.051162$.",
+        "generic": "Not quite right. Compound twelve times at $0.05/12$.",
+        "byKey": {
+          "exact": "That is $e^{0.05}$, the continuous answer. Euler's monthly steps fall a little short of it.",
+          "annual": "That is one step of a whole year. With $h = \\tfrac{1}{12}$ there are twelve steps."
+        }
+      },
+      "explain": {
+        "text": "$(1 + 0.05/12)^{12} = 1.051162$, against $e^{0.05} = 1.051271$. Monthly compounding is Euler's method with a step of one month.",
+        "canvas": {
+          "highlight": [
+            "E"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Halve the step, halve the error",
+      "prose": "The error at $t = 1$ on $y' = y$ is 0.124539 for $h = 0.1$, 0.064984 for $h = 0.05$ and 0.013468 for $h = 0.01$. The canvas plots error against step on log axes. The points lie close to a line.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.008,
+            0.15
+          ],
+          "y": [
+            0.008,
+            0.2
+          ],
+          "xScale": "log",
+          "yScale": "log",
+          "xLabel": "step $h$",
+          "yLabel": "error at $t = 1$",
+          "height": 240,
+          "functions": [
+            {
+              "id": "ref",
+              "expr": "1.25*x",
+              "label": "slope 1",
+              "dashed": true,
+              "colour": 3
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "e0",
+              "x": 0.1,
+              "y": 0.12453936835904278,
+              "label": ""
+            },
+            {
+              "id": "e1",
+              "x": 0.05,
+              "y": 0.06498412331462289,
+              "label": ""
+            },
+            {
+              "id": "e2",
+              "x": 0.025,
+              "y": 0.03321799006908188,
+              "label": ""
+            },
+            {
+              "id": "e3",
+              "x": 0.0125,
+              "y": 0.016796887705717634,
+              "label": ""
+            }
+          ]
+        }
+      },
+      "question": "By what factor does halving $h$ from 0.1 to 0.05 cut the error?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.92,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "1.92: $0.124539/0.064984$",
+        "wrong": [
+          {
+            "id": "second",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "flip",
+            "value": 0.52,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the larger error by the smaller."
+        },
+        {
+          "rung": "point",
+          "text": "$0.124539/0.064984$.",
+          "highlight": [
+            "e0",
+            "e1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That is 1.92, close to 2."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.124539/0.064984 = 1.92$, close to 2.",
+        "generic": "Not quite right. Divide the error at 0.1 by the error at 0.05.",
+        "byKey": {
+          "second": "A factor of 4 would mean error proportional to $h^2$. Euler's is close to 2.",
+          "flip": "You divided the small error by the large one. The factor is its reciprocal, 1.92."
+        }
+      },
+      "explain": {
+        "text": "The ratio is 1.92, close to 2: the error is proportional to $h$. Each step errs by about $\\tfrac{h^2}{2}y''$ (taylor lesson 11), and there are $1/h$ steps. The four points have a fitted slope of 0.964: **first order**.",
+        "canvas": {
+          "highlight": [
+            "ref"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The Vasicek drift by Euler",
+      "prose": "Lesson 5's drift $r' = 0.5(0.04 - r)$ from $r(0) = 6\\%$ has $r(1) = 5.2131\\%$. Take Euler with quarterly steps, $h = 0.25$: each step adds $0.125(0.04 - r)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            0.05,
+            0.061
+          ],
+          "xLabel": "years $t$",
+          "yLabel": "rate",
+          "yFormat": "percent",
+          "height": 230,
+          "functions": [
+            {
+              "id": "ex",
+              "expr": "0.04+0.02*exp(-0.5*x)",
+              "label": "exact",
+              "dashed": true,
+              "colour": 2
+            },
+            {
+              "id": "E",
+              "expr": "0.04+0.02*(1-h*0.5)^floor(x/h)*(1-0.5*(x-h*floor(x/h)))",
+              "label": "Euler",
+              "labelSide": "below",
+              "colour": 1,
+              "labelAt": 0.55
+            }
+          ],
+          "params": {
+            "h": 0.25
+          }
+        },
+        "state": {},
+        "controls": [
+          {
+            "bind": "h",
+            "stops": [
+              0.25,
+              0.0833333333
+            ],
+            "start": 0.25,
+            "label": "step $h$",
+            "decimals": 4
+          }
+        ],
+        "derive": {
+          "caption": "Euler $r(1)$ = {{fixed(100*(0.04 + 0.02*pow(1 - 0.5*h, round(1/h))), 4)}}%"
+        }
+      },
+      "question": "What does Euler give for $r(1)$ with quarterly steps?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.051724,
+        "tol": {
+          "abs": 5e-06
+        },
+        "unit": "%",
+        "accept": "5.1724%",
+        "wrong": [
+          {
+            "id": "annual",
+            "value": 0.05,
+            "tol": {
+              "abs": 5e-06
+            }
+          },
+          {
+            "id": "exact",
+            "value": 0.052131,
+            "tol": {
+              "abs": 5e-06
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The first step: $6\\% + 0.125(4\\% - 6\\%) = 5.75\\%$."
+        },
+        {
+          "rung": "point",
+          "text": "Then 5.5313% and 5.3398%.",
+          "highlight": [
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The fourth step gives 5.1724%."
+        }
+      ],
+      "feedback": {
+        "correct": "5.75%, 5.5313%, 5.3398%, then 5.1724%.",
+        "generic": "Not quite right. Take four steps, each adding $0.125(0.04 - r)$.",
+        "byKey": {
+          "annual": "That is one step of a whole year. Quarterly means four steps of 0.25.",
+          "exact": "That is the closed form. Euler's four steps undershoot it."
+        }
+      },
+      "explain": {
+        "text": "Four steps give 5.75%, 5.5313%, 5.3398% and 5.1724%, against 5.2131%. Monthly steps give 5.2001%: three times as many steps, about a third of the error.",
+        "canvas": {
+          "params": {
+            "h": 0.0833333333
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Euler round a centre",
+      "prose": "Now a system: $x' = y$, $y' = -x$, a centre like lesson 11's. Euler with $h = 0.1$ sends $(x, y)$ to $(x + 0.1y,\\ y - 0.1x)$. The true orbit is the unit circle. Euler's path spirals out.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.6,
+            1.6
+          ],
+          "y": [
+            -1.6,
+            1.6
+          ],
+          "equal": true,
+          "height": 260,
+          "field": {
+            "id": "F",
+            "P": "y",
+            "Q": "-x",
+            "normalise": true
+          },
+          "functions": [
+            {
+              "id": "c",
+              "x": "cos(t)",
+              "y": "sin(t)",
+              "t": [
+                0,
+                6.2832
+              ],
+              "label": "true",
+              "dashed": true,
+              "colour": 2
+            },
+            {
+              "id": "E",
+              "points": [
+                [
+                  1.0,
+                  0.0
+                ],
+                [
+                  1.0,
+                  -0.1
+                ],
+                [
+                  0.99,
+                  -0.2
+                ],
+                [
+                  0.97,
+                  -0.299
+                ],
+                [
+                  0.9401,
+                  -0.396
+                ],
+                [
+                  0.9005,
+                  -0.49
+                ],
+                [
+                  0.8515,
+                  -0.5801
+                ],
+                [
+                  0.7935,
+                  -0.6652
+                ],
+                [
+                  0.727,
+                  -0.7446
+                ],
+                [
+                  0.6525,
+                  -0.8173
+                ],
+                [
+                  0.5708,
+                  -0.8825
+                ],
+                [
+                  0.4825,
+                  -0.9396
+                ],
+                [
+                  0.3886,
+                  -0.9878
+                ],
+                [
+                  0.2898,
+                  -1.0267
+                ],
+                [
+                  0.1871,
+                  -1.0557
+                ],
+                [
+                  0.0816,
+                  -1.0744
+                ],
+                [
+                  -0.0259,
+                  -1.0825
+                ],
+                [
+                  -0.1341,
+                  -1.08
+                ],
+                [
+                  -0.2421,
+                  -1.0665
+                ],
+                [
+                  -0.3488,
+                  -1.0423
+                ],
+                [
+                  -0.453,
+                  -1.0075
+                ],
+                [
+                  -0.5538,
+                  -0.9622
+                ],
+                [
+                  -0.65,
+                  -0.9068
+                ],
+                [
+                  -0.7407,
+                  -0.8418
+                ],
+                [
+                  -0.8248,
+                  -0.7677
+                ],
+                [
+                  -0.9016,
+                  -0.6852
+                ],
+                [
+                  -0.9701,
+                  -0.5951
+                ],
+                [
+                  -1.0296,
+                  -0.4981
+                ],
+                [
+                  -1.0794,
+                  -0.3951
+                ],
+                [
+                  -1.119,
+                  -0.2871
+                ],
+                [
+                  -1.1477,
+                  -0.1753
+                ],
+                [
+                  -1.1652,
+                  -0.0605
+                ],
+                [
+                  -1.1712,
+                  0.056
+                ],
+                [
+                  -1.1656,
+                  0.1732
+                ],
+                [
+                  -1.1483,
+                  0.2897
+                ],
+                [
+                  -1.1193,
+                  0.4046
+                ],
+                [
+                  -1.0789,
+                  0.5165
+                ],
+                [
+                  -1.0272,
+                  0.6244
+                ],
+                [
+                  -0.9648,
+                  0.7271
+                ],
+                [
+                  -0.8921,
+                  0.8236
+                ],
+                [
+                  -0.8097,
+                  0.9128
+                ],
+                [
+                  -0.7185,
+                  0.9938
+                ],
+                [
+                  -0.6191,
+                  1.0656
+                ],
+                [
+                  -0.5125,
+                  1.1275
+                ],
+                [
+                  -0.3998,
+                  1.1788
+                ],
+                [
+                  -0.2819,
+                  1.2187
+                ],
+                [
+                  -0.16,
+                  1.2469
+                ],
+                [
+                  -0.0353,
+                  1.2629
+                ],
+                [
+                  0.091,
+                  1.2665
+                ],
+                [
+                  0.2176,
+                  1.2574
+                ],
+                [
+                  0.3434,
+                  1.2356
+                ],
+                [
+                  0.4669,
+                  1.2013
+                ],
+                [
+                  0.587,
+                  1.1546
+                ],
+                [
+                  0.7025,
+                  1.0959
+                ],
+                [
+                  0.8121,
+                  1.0256
+                ],
+                [
+                  0.9147,
+                  0.9444
+                ],
+                [
+                  1.0091,
+                  0.853
+                ],
+                [
+                  1.0944,
+                  0.752
+                ],
+                [
+                  1.1696,
+                  0.6426
+                ],
+                [
+                  1.2339,
+                  0.5256
+                ],
+                [
+                  1.2864,
+                  0.4023
+                ],
+                [
+                  1.3266,
+                  0.2736
+                ],
+                [
+                  1.354,
+                  0.141
+                ],
+                [
+                  1.3681,
+                  0.0056
+                ]
+              ],
+              "label": "Euler",
+              "colour": 1
+            }
+          ]
+        },
+        "state": {
+          "caption": "Dashed: the true orbit. Solid: 63 Euler steps of 0.1."
+        }
+      },
+      "question": "What is the radius after 63 steps, one turn?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.3681,
+        "tol": {
+          "abs": 0.0001
+        },
+        "accept": "1.3681: $(\\sqrt{1.01})^{63}$",
+        "wrong": [
+          {
+            "id": "circle",
+            "value": 1,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "no-root",
+            "value": 1.8717,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare $x_{n+1}^2 + y_{n+1}^2$ with $x_n^2 + y_n^2$."
+        },
+        {
+          "rung": "point",
+          "text": "It grows by $1 + h^2 = 1.01$ a step, so the radius grows by $\\sqrt{1.01}$.",
+          "highlight": [
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{1.01}^{63} = 1.3681$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(\\sqrt{1.01})^{63} = 1.3681$.",
+        "generic": "Not quite right. Find what one step does to the radius.",
+        "byKey": {
+          "circle": "That is the true orbit. Euler's tangent steps leave the circle outwards every time.",
+          "no-root": "That is $1.01^{63}$, the squared radius. Take its square root."
+        }
+      },
+      "explain": {
+        "text": "One step multiplies $x^2 + y^2$ by $1 + h^2$, so the radius grows by $\\sqrt{1.01}$. After 63 steps it is 1.3681, where the true orbit stays at 1. Each tangent step leaves the circle on its outside.",
+        "canvas": {
+          "highlight": [
+            "E"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A step too far",
+      "prose": "Take $y' = -10y$ with $y(0) = 1$, which decays like $e^{-10t}$. With $h = 0.25$, Euler multiplies by $1 - 10h$ each step. The chart shows the true solution at the step times.",
+      "canvas": {
+        "kind": "series",
+        "params": {
+          "series": [
+            {
+              "id": "ex",
+              "label": "true",
+              "values": [
+                1,
+                0.0821,
+                0.0067,
+                0.0006,
+                0.0
+              ]
+            },
+            {
+              "id": "eu",
+              "label": "Euler",
+              "values": [
+                1,
+                -1.5,
+                2.25,
+                -3.375,
+                5.0625
+              ]
+            }
+          ],
+          "x": "index",
+          "xLabel": "step $n$",
+          "y": [
+            -4,
+            6
+          ],
+          "height": 230
+        },
+        "state": {
+          "hide": [
+            "eu"
+          ]
+        }
+      },
+      "question": "What is Euler's value after four steps, at $t = 1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5.0625,
+        "tol": {
+          "abs": 5e-05
+        },
+        "accept": "5.0625: $(-1.5)^4$",
+        "wrong": [
+          {
+            "id": "decay",
+            "value": 0,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "sign",
+            "value": -5.0625,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out $1 - 10h$ for $h = 0.25$."
+        },
+        {
+          "rung": "point",
+          "text": "It is $-1.5$, so each step multiplies by $-1.5$.",
+          "highlight": [
+            "eu"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(-1.5)^4 = 5.0625$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(-1.5)^4 = 5.0625$.",
+        "generic": "Not quite right. Multiply by $1 - 10 \\times 0.25$ four times.",
+        "byKey": {
+          "decay": "You expected Euler to decay like the true solution. Each step multiplies by $-1.5$, so it grows.",
+          "sign": "Four factors of $-1.5$ make a positive number: $(-1.5)^4$."
+        }
+      },
+      "explain": {
+        "text": "$(1 - 10 \\times 0.25)^4 = (-1.5)^4 = 5.0625$, while the true value is $e^{-10} = 0.0000454$. Each step overshoots zero and lands further away.",
+        "canvas": {
+          "hide": [],
+          "highlight": [
+            "eu"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 3,
+      "title": "When Euler is stable",
+      "prose": "On $y' = -\\lambda y$ each step multiplies by $1 - h\\lambda$. The steps stay bounded only if $$|1 - h\\lambda| < 1, \\quad\\text{so}\\quad h < \\frac{2}{\\lambda}.$$ This is lesson 12's discrete test. At $h = 0.05$ the factor is 0.5; at $h = 0.1$ it is 0. `numerics` lesson 12 calls such equations **stiff**.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.3
+          ],
+          "y": [
+            0,
+            2
+          ],
+          "xLabel": "step $h$",
+          "height": 220,
+          "functions": [
+            {
+              "id": "g",
+              "expr": "abs(1 - 10*x)",
+              "label": "$|1 - 10h|$"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "one",
+              "y": 1,
+              "label": "1"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the largest stable $h$ for $y' = -10y$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.2: $2/10$",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find where $1 - 10h = -1$."
+        },
+        {
+          "rung": "point",
+          "text": "$10h = 2$.",
+          "highlight": [
+            "g",
+            "one"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$h = 0.2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$h < 2/10 = 0.2$.",
+        "generic": "Not quite right. Solve $|1 - 10h| = 1$ for the larger $h$.",
+        "byKey": {
+          "one": "At $h = 0.1$ the factor is 0, which is still stable: it jumps straight to 0. The edge is where $1 - 10h = -1$."
+        }
+      },
+      "explain": {
+        "text": "The curve $|1 - 10h|$ crosses 1 at $h = 0.2$. Below it every step shrinks the error; above it every step grows it. At $h = 0.1$ the factor is 0, so one step lands on 0 exactly.",
+        "canvas": {
+          "highlight": [
+            "g"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Euler in NumPy",
+      "prose": "Write `euler` so that one function serves numbers and systems: keep `y` as an array with one row per step. Then measure the order from errors, as the log-log chart did.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "numpy",
+          "lines": [
+            ">>> t, y = euler(lambda t, y: y, 0, 1.0, 0.1, 10)",
+            ">>> y[-1]",
+            "2.5937424601000023",
+            ">>> observed_order([0.01, 0.0025], [0.1, 0.05])",
+            "2.0"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `euler` and `observed_order`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef euler(f, t0, y0, h, n):\n    \"\"\"n Euler steps of y' = f(t, y). Returns arrays t and y.\n    t has n + 1 entries; y[k] is the value (a number or a vector) at t[k].\"\"\"\n    ...\n\ndef observed_order(errors, hs):\n    \"\"\"Slope of log(error) against log(h), by a straight-line fit.\"\"\"\n    ...\n",
+        "solution": "import numpy as np\n\ndef euler(f, t0, y0, h, n):\n    \"\"\"n Euler steps of y' = f(t, y). Returns arrays t and y.\n    t has n + 1 entries; y[k] is the value (a number or a vector) at t[k].\"\"\"\n    t = t0 + h * np.arange(n + 1)\n    y = np.zeros((n + 1,) + np.shape(y0))\n    y[0] = y0\n    for k in range(n):\n        y[k + 1] = y[k] + h * np.asarray(f(t[k], y[k]))\n    return t, y\n\ndef observed_order(errors, hs):\n    \"\"\"Slope of log(error) against log(h), by a straight-line fit.\"\"\"\n    return float(np.polyfit(np.log(hs), np.log(errors), 1)[0])\n",
+        "examples": [
+          {
+            "call": "float(euler(lambda t, y: y, 0, 1.0, 0.1, 10)[1][-1])",
+            "expect": "2.5937424601",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "float(euler(lambda t, y: y, 0, 1.0, 0.1, 10)[1][-1])",
+            "expect": "2.5937424601",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "len(euler(lambda t, y: y, 0, 1.0, 0.1, 10)[0])",
+            "expect": "11",
+            "compare": "equal"
+          },
+          {
+            "call": "float(euler(lambda t, y: y, 0, 1.0, 0.1, 10)[0][-1])",
+            "expect": "1.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "float(np.hypot(*euler(lambda t, z: np.array([z[1], -z[0]]), 0, np.array([1.0, 0.0]), 0.1, 63)[1][-1]))",
+            "expect": "1.368117109470999",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "np.sign(euler(lambda t, y: -10*y, 0, 1.0, 0.25, 4)[1]).tolist()",
+            "expect": "[1.0, -1.0, 1.0, -1.0, 1.0]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "float(euler(lambda t, y: -10*y, 0, 1.0, 0.25, 4)[1][-1])",
+            "expect": "5.0625",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "setup": "hs = [0.1, 0.05, 0.025, 0.0125]; errs = [np.e - euler(lambda t, y: y, 0, 1.0, h, round(1/h))[1][-1] for h in hs]",
+            "call": "observed_order(errs, hs)",
+            "expect": "0.9639130568579825",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "observed_order([0.01, 0.0025], [0.1, 0.05])",
+            "expect": "2.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "how": "Check runs 8 hidden tests. Values must be within absolute 1e-9 (1e-12 for exact cases) and the step count exact. The fitted order must be within 1e-6 of 0.963913. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`t = t0 + h * np.arange(n + 1)`; make `y` with `np.zeros((n + 1,) + np.shape(y0))`."
+        },
+        {
+          "rung": "point",
+          "text": "In the loop, `y[k + 1] = y[k] + h * f(t[k], y[k])`.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`observed_order` returns `np.polyfit(np.log(hs), np.log(errors), 1)[0]`."
+        }
+      ],
+      "feedback": {
+        "correct": "All eight pass: $1.1^{10}$, the spiral's 1.368117, and the stiff case's flipping signs.",
+        "generic": "Not quite right. Read the failing row: the last value, the shape, or the fitted slope."
+      },
+      "explain": {
+        "text": "`np.shape(y0)` is `()` for a number and `(2,)` for a pair, so the same loop handles both. The fitted slope of 0.964 is the first order the chart showed."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A loan schedule",
+      "prose": "Lesson 1's loan: $L' = 0.06L - 12{,}000$ from £100,000. A bank's monthly schedule adds 0.5% interest and takes £1,000 each month: $L_{n+1} = L_n + \\tfrac{1}{12}(0.06L_n - 12{,}000)$. That is Euler with $h = \\tfrac{1}{12}$. Lesson 3's formula gives £93,816.35 after a year.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1
+          ],
+          "y": [
+            93000,
+            100500
+          ],
+          "xLabel": "years $t$",
+          "yLabel": "balance",
+          "height": 220,
+          "functions": [
+            {
+              "id": "ex",
+              "expr": "200000-100000*exp(0.06*x)",
+              "label": "formula",
+              "dashed": true,
+              "colour": 2
+            },
+            {
+              "id": "E",
+              "expr": "200000-100000*(1+h*0.06)^floor(x/h)*(1+0.06*(x-h*floor(x/h)))",
+              "label": "monthly",
+              "labelSide": "below",
+              "colour": 1,
+              "labelAt": 0.55
+            }
+          ],
+          "params": {
+            "h": 0.0833333333
+          },
+          "yStep": 2000
+        },
+        "state": {
+          "caption": "The two curves differ by under £16, too little to see at this scale."
+        }
+      },
+      "question": "What balance does the monthly schedule give after 12 months?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 93832.22,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "accept": "£93,832.22",
+        "wrong": [
+          {
+            "id": "continuous",
+            "value": 93816.35,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The gap $L - 200{,}000$ is multiplied by 1.005 each month."
+        },
+        {
+          "rung": "point",
+          "text": "So $L_{12} = 200{,}000 - 100{,}000 \\times 1.005^{12}$.",
+          "highlight": [
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.005^{12} = 1.0616778$, so $L_{12} = £93{,}832.22$."
+        }
+      ],
+      "feedback": {
+        "correct": "£93,832.22, £15.87 above the formula.",
+        "generic": "Not quite right. Compound the gap $L - 200{,}000$ monthly.",
+        "byKey": {
+          "continuous": "That is lesson 3's continuous formula. The monthly schedule compounds less often."
+        }
+      },
+      "explain": {
+        "text": "The schedule leaves £93,832.22, £15.87 above the continuous £93,816.35. The gap $L - 200{,}000$ compounds monthly instead of continuously. That difference is Euler's first-order error, in pounds.",
+        "canvas": {
+          "highlight": [
+            "E"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Euler follows the tangent: $y_{n+1} = y_n + hf(t_n, y_n)$. On $y' = ry$ it is compounding.",
+      "Its error at a fixed time is proportional to $h$: halve the step and the error halves. That is first order.",
+      "On $y' = -\\lambda y$ it is stable only for $h < 2/\\lambda$; past that the steps flip sign and grow."
+    ],
+    "formula": {
+      "name": "Euler's method",
+      "tex": "y_{n+1} = y_n + h\\,f(t_n, y_n), \\qquad \\text{stable on } y' = -\\lambda y \\text{ for } h < \\tfrac{2}{\\lambda}",
+      "note": "Global error proportional to $h$."
+    },
+    "trap": "A step past $2/\\lambda$ makes a decaying solution blow up, with alternating signs."
+  },
+  "quiz": [
+    {
+      "id": "q-step",
+      "difficulty": 2,
+      "question": "One Euler step on $y' = t + y$, $y(0) = 1$, with $h = 0.1$. What is $y_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.1,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "1.1: $1 + 0.1(0 + 1)$",
+        "wrong": [
+          {
+            "id": "end",
+            "value": 1.1222,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 + 0.1(0 + 1) = 1.1$.",
+        "generic": "Not quite right. Use the slope at $(0, 1)$.",
+        "byKey": {
+          "end": "You used the slope at the end of the step. Euler uses the slope at the start."
+        }
+      },
+      "explain": {
+        "text": "The slope at $(0, 1)$ is $0 + 1 = 1$, so $y_1 = 1 + 0.1 \\times 1 = 1.1$."
+      }
+    },
+    {
+      "id": "q-equilibrium",
+      "difficulty": 3,
+      "question": "Euler on $r' = 0.5(0.04 - r)$ starts at $r_0 = 4\\%$, with $h = 1$. What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "It stays at exactly 4% for ever",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "It drifts slowly away from 4%",
+            "why": "At $r = 4\\%$ the slope is 0, so every step adds exactly 0."
+          },
+          {
+            "id": "c",
+            "text": "It overshoots, because $h$ is large",
+            "why": "Overshooting needs a non-zero slope. Here the slope is 0 at every step."
+          },
+          {
+            "id": "d",
+            "text": "It has an error proportional to $h$",
+            "why": "The error is zero: Euler is exact at an equilibrium, whatever the step."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "At an equilibrium Euler is exact for any step.",
+        "generic": "Not quite right. Work out the slope at 4%."
+      },
+      "explain": {
+        "text": "The slope $0.5(0.04 - 0.04)$ is 0, so each step adds 0. Euler is exact at an equilibrium, whatever $h$ is."
+      }
+    },
+    {
+      "id": "q-stable",
+      "difficulty": 3,
+      "question": "What is the largest stable Euler step for $y' = -50y$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.04,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.04: $2/50$",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 0.02,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$h < 2/50 = 0.04$.",
+        "generic": "Not quite right. Use $h < 2/\\lambda$.",
+        "byKey": {
+          "half": "At $h = 0.02$ the factor is 0, still stable. The edge is $2/\\lambda$."
+        }
+      },
+      "explain": {
+        "text": "Stability needs $|1 - 50h| < 1$, so $h < 2/50 = 0.04$."
+      }
+    },
+    {
+      "id": "q-order",
+      "difficulty": 2,
+      "question": "Euler's error at $t = 1$ is 0.027 with $h = 0.02$. Roughly what is it with $h = 0.01$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.0135",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "0.0068",
+            "why": "That would be a second-order method, error proportional to $h^2$."
+          },
+          {
+            "id": "c",
+            "text": "0.027",
+            "why": "The error depends on the step: a smaller step gives a smaller error."
+          },
+          {
+            "id": "d",
+            "text": "0.054",
+            "why": "You doubled it. Halving the step halves Euler's error."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Halve the step, halve the error: about 0.0135.",
+        "generic": "Not quite right. Euler is first order."
+      },
+      "explain": {
+        "text": "Euler's error is proportional to $h$, so halving $h$ halves it: about 0.0135. The true value is 0.013468."
+      }
+    }
+  ]
+}

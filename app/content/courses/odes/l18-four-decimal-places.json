@@ -1,0 +1,1361 @@
+{
+  "id": "l18-four-decimal-places",
+  "course": "odes",
+  "title": "Matching a closed form to four decimals",
+  "minutes": 15,
+  "objectives": [
+    "Solve the Vasicek drift numerically and match its closed form to four decimal places."
+  ],
+  "skills": [
+    "de-numeric",
+    "de-first"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A bond from a rate path",
+      "prose": "A five-year zero-coupon bond pays £100. The short rate follows lesson 5's drift with no noise: $r' = 0.5(0.04 - r)$ from 6%. The bond's price is $100e^{-I(5)}$, where $I(5) = \\int_0^5 r\\,dt$ is the shaded area.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            5
+          ],
+          "y": [
+            0,
+            0.065
+          ],
+          "xLabel": "years $t$",
+          "yLabel": "rate",
+          "yFormat": "percent",
+          "height": 230,
+          "functions": [
+            {
+              "id": "r",
+              "expr": "0.04+0.02*exp(-0.5*x)",
+              "label": "$r(t)$",
+              "colour": 2,
+              "labelAt": 4
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "r",
+            "from": 0,
+            "to": 5
+          }
+        },
+        "derive": {
+          "caption": "$I(5)$ = {{fixed(values.A, 6)}}"
+        }
+      },
+      "question": "What is the bond's price, to the nearest penny?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 78.92,
+        "tol": {
+          "abs": 0.005
+        },
+        "unit": "£",
+        "accept": "£78.92: $100e^{-0.236717}$",
+        "wrong": [
+          {
+            "id": "theta",
+            "value": 81.87,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "start",
+            "value": 74.08,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read $I(5)$ from the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The price is $100e^{-I(5)}$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100e^{-0.236717} = £78.92$."
+        }
+      ],
+      "feedback": {
+        "correct": "$100e^{-0.236717} = £78.92$.",
+        "generic": "Not quite right. Discount by the whole area under the rate.",
+        "byKey": {
+          "theta": "That discounts at 4% throughout. The rate starts at 6%, so the area is larger.",
+          "start": "That discounts at 6% throughout. The rate falls towards 4%, so the area is smaller."
+        }
+      },
+      "explain": {
+        "text": "The area is $I(5) = 0.236717$, so the price is $100e^{-0.236717} = £78.9215$. A rate falling from 6% to 4% gives a price between £74.08 and £81.87.",
+        "canvas": {
+          "highlight": [
+            "A"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The closed form",
+      "prose": "Integrate lesson 5's $r(t) = \\theta + (r_0 - \\theta)e^{-\\kappa t}$ from 0 to $T$: $$I(T) = \\theta T + (r_0 - \\theta)\\frac{1 - e^{-\\kappa T}}{\\kappa}.$$ With $\\kappa = 0.5$ and $T = 5$, everything hangs on one factor.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            5
+          ],
+          "y": [
+            0,
+            0.065
+          ],
+          "xLabel": "years $t$",
+          "yLabel": "rate",
+          "yFormat": "percent",
+          "height": 230,
+          "functions": [
+            {
+              "id": "r",
+              "expr": "0.04+0.02*exp(-0.5*x)",
+              "label": "$r(t)$",
+              "colour": 2,
+              "labelAt": 4
+            }
+          ]
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "r",
+            "from": 0,
+            "to": 5
+          }
+        },
+        "derive": {
+          "caption": "$I(5)$ = {{fixed(values.A, 6)}}"
+        }
+      },
+      "question": "What is $\\dfrac{1 - e^{-\\kappa T}}{\\kappa}$, to 6 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.83583,
+        "tol": {
+          "abs": 5e-07
+        },
+        "accept": "1.835830: $(1 - e^{-2.5})/0.5$",
+        "wrong": [
+          {
+            "id": "no-kappa",
+            "value": 0.917915,
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\kappa T = 2.5$."
+        },
+        {
+          "rung": "point",
+          "text": "$e^{-2.5} = 0.082085$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$(1 - 0.082085)/0.5 = 1.835830$."
+        }
+      ],
+      "feedback": {
+        "correct": "$(1 - e^{-2.5})/0.5 = 1.835830$.",
+        "generic": "Not quite right. Compute $1 - e^{-2.5}$, then divide by 0.5.",
+        "byKey": {
+          "no-kappa": "You did not divide by $\\kappa = 0.5$. Dividing doubles 0.917915."
+        }
+      },
+      "explain": {
+        "text": "$I(5) = 0.2 + 0.02 \\times 1.835830 = 0.236717$, the area on the canvas. So $D = e^{-0.236717} = 0.789215$ and the price is £78.9215.",
+        "canvas": {
+          "highlight": [
+            "A"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 2,
+      "title": "Euler on the system",
+      "prose": "Now solve it as a computer would: the system $(r, I)' = (\\kappa(\\theta - r),\\ r)$ from $(0.06, 0)$, then $D = e^{-I(5)}$. Euler's broken line for $r$ is drawn; its $I$ adds up $h$ times each $r_n$. Slide the number of steps $n$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            5
+          ],
+          "y": [
+            0,
+            0.065
+          ],
+          "xLabel": "years $t$",
+          "yLabel": "rate",
+          "yFormat": "percent",
+          "height": 230,
+          "functions": [
+            {
+              "id": "r",
+              "expr": "0.04+0.02*exp(-0.5*x)",
+              "label": "$r(t)$",
+              "colour": 2,
+              "labelAt": 4,
+              "dashed": true
+            },
+            {
+              "id": "E",
+              "expr": "0.04+0.02*(1-(5/n)*0.5)^floor(x/(5/n))*(1-0.5*(x-(5/n)*floor(x/(5/n))))",
+              "label": "Euler $r$",
+              "colour": 1,
+              "labelSide": "below",
+              "labelAt": 2.2
+            }
+          ],
+          "params": {
+            "n": 10
+          }
+        },
+        "state": {},
+        "controls": [
+          {
+            "bind": "n",
+            "stops": [
+              1,
+              2,
+              4,
+              10,
+              60,
+              100,
+              1000
+            ],
+            "start": 10,
+            "label": "steps $n$"
+          }
+        ],
+        "derive": {
+          "caption": "Euler $D_n$ = {{fixed(exp(-(0.2 + 0.04*(1 - pow(1 - 2.5/n, n)))), 6)}}; exact $D$ = 0.789215"
+        }
+      },
+      "question": "What does Euler give for $D$ with 10 steps?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.788402,
+        "tol": {
+          "abs": 5e-07
+        },
+        "accept": "0.788402",
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 0.789215,
+            "tol": {
+              "abs": 5e-07
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $n = 10$."
+        },
+        {
+          "rung": "point",
+          "text": "Read $D_n$ in the caption.",
+          "highlight": [
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It is 0.788402."
+        }
+      ],
+      "feedback": {
+        "correct": "0.788402, below the exact 0.789215.",
+        "generic": "Not quite right. Read Euler's $D_n$ at $n = 10$.",
+        "byKey": {
+          "exact": "That is the closed form. Euler's 10 steps fall short of it."
+        }
+      },
+      "explain": {
+        "text": "Ten steps give 0.788402, 100 give 0.789134 and 1,000 give 0.789207. The error falls tenfold with each tenfold rise in $n$: first order, as in lesson 16.",
+        "canvas": {
+          "params": {
+            "n": 10
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "What four decimals means",
+      "prose": "Matching to four decimal places means $|D_{\\text{num}} - D| < 5 \\times 10^{-5}$: then the printed 0.7892 agrees. The caption shows Euler's error in units of $10^{-6}$. Slide $n$ until it drops below 50.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            5
+          ],
+          "y": [
+            0,
+            0.065
+          ],
+          "xLabel": "years $t$",
+          "yLabel": "rate",
+          "yFormat": "percent",
+          "height": 230,
+          "functions": [
+            {
+              "id": "r",
+              "expr": "0.04+0.02*exp(-0.5*x)",
+              "label": "$r(t)$",
+              "colour": 2,
+              "labelAt": 4,
+              "dashed": true
+            },
+            {
+              "id": "E",
+              "expr": "0.04+0.02*(1-(5/n)*0.5)^floor(x/(5/n))*(1-0.5*(x-(5/n)*floor(x/(5/n))))",
+              "label": "Euler $r$",
+              "colour": 1,
+              "labelSide": "below",
+              "labelAt": 2.2
+            }
+          ],
+          "params": {
+            "n": 100
+          }
+        },
+        "state": {},
+        "controls": [
+          {
+            "bind": "n",
+            "min": 100,
+            "max": 300,
+            "step": 1,
+            "start": 100,
+            "label": "steps $n$"
+          }
+        ],
+        "derive": {
+          "caption": "Error = {{fixed(1e6*(0.7892149198 - exp(-(0.2 + 0.04*(1 - pow(1 - 2.5/n, n))))), 2)}} × 10⁻⁶"
+        }
+      },
+      "question": "What is the smallest $n$ with error below $5 \\times 10^{-5}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 163,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "163",
+        "wrong": [
+          {
+            "id": "hundred",
+            "value": 100,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start at 100 and move up."
+        },
+        {
+          "rung": "point",
+          "text": "The error is about $8.1 \\times 10^{-3}/n$.",
+          "highlight": [
+            "E"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At 162 it is 50.02; at 163 it is 49.71."
+        }
+      ],
+      "feedback": {
+        "correct": "163 steps: the error is $49.71 \\times 10^{-6}$.",
+        "generic": "Not quite right. Find where the caption first reads below 50.",
+        "byKey": {
+          "hundred": "At 100 steps the error is $81 \\times 10^{-6}$, outside the band."
+        }
+      },
+      "explain": {
+        "text": "At $n = 162$ the error is $50.02 \\times 10^{-6}$; at 163 it is $49.71 \\times 10^{-6}$. So Euler needs 163 steps for four decimals.",
+        "canvas": {
+          "params": {
+            "n": 163
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "RK4 on the same system",
+      "prose": "Lesson 17's RK4 on the same system, with $n$ doubling. The table gives $D_n$ and its error in units of $10^{-6}$. The band is an error below 50.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$n$",
+            "$D_n$",
+            "error $\\times 10^6$"
+          ],
+          "rows": [
+            [
+              "1",
+              "0.807298",
+              "18083"
+            ],
+            [
+              "2",
+              "0.789608",
+              "393"
+            ],
+            [
+              "4",
+              "0.789229",
+              "13.9"
+            ],
+            [
+              "8",
+              "0.789216",
+              "0.67"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the fewest steps in the sequence 1, 2, 4, 8 inside the band?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "4",
+        "wrong": [
+          {
+            "id": "two",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "eight",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find the first row with error below 50."
+        },
+        {
+          "rung": "point",
+          "text": "Two steps err by 393.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Four steps err by 13.9, inside the band."
+        }
+      ],
+      "feedback": {
+        "correct": "Four steps, $h = 1.25$.",
+        "generic": "Not quite right. Find the first row whose error is under 50.",
+        "byKey": {
+          "two": "Two steps err by $393 \\times 10^{-6}$, outside the band.",
+          "eight": "Eight steps are inside, but four already are."
+        }
+      },
+      "explain": {
+        "text": "Four steps, $h = 1.25$, give 0.789229, inside the band by a factor of 3.6. Ten steps err by $2.6 \\times 10^{-7}$. Euler needed 163 steps for what RK4 does in 4.",
+        "canvas": {
+          "highlight": [
+            "r2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Coarse luck",
+      "prose": "A colleague runs Euler with 2 steps: the error is 0.00062. With 4 steps it is 0.00196, three times worse. The chart shows Euler's error for $n$ = 2, 4, 8, 16 and 32.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            1.5,
+            45
+          ],
+          "y": [
+            0,
+            2200
+          ],
+          "xScale": "log",
+          "xLabel": "steps $n$",
+          "yLabel": "error $\\times 10^6$",
+          "height": 220
+        },
+        "state": {
+          "points": [
+            {
+              "id": "p2",
+              "x": 2,
+              "y": 618.0,
+              "label": ""
+            },
+            {
+              "id": "p4",
+              "x": 4,
+              "y": 1964.6,
+              "label": ""
+            },
+            {
+              "id": "p8",
+              "x": 8,
+              "y": 1015.1,
+              "label": ""
+            },
+            {
+              "id": "p16",
+              "x": 16,
+              "y": 508.2,
+              "label": ""
+            },
+            {
+              "id": "p32",
+              "x": 32,
+              "y": 253.7,
+              "label": ""
+            }
+          ]
+        }
+      },
+      "question": "What should the colleague conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "One step size proves nothing: double $n$ until two runs agree",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Two steps is the better grid",
+            "why": "Two steps are lucky: the rate overshoots below 4% and the errors in $I$ cancel."
+          },
+          {
+            "id": "c",
+            "text": "Euler is unstable here",
+            "why": "With 2 steps $h\\kappa = 1.25$, so the factor $-0.25$ is inside $(-1, 1)$: stable, just coarse."
+          },
+          {
+            "id": "d",
+            "text": "Euler has no fixed order on this system",
+            "why": "From 4 steps on, each doubling halves the error: first order once $h$ is small."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the points from $n = 4$ on."
+        },
+        {
+          "rung": "point",
+          "text": "Each doubling halves the error from there.",
+          "highlight": [
+            "p2",
+            "p4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The 2-step value is a coincidence; only a converging sequence counts."
+        }
+      ],
+      "feedback": {
+        "correct": "A single lucky grid proves nothing; test convergence.",
+        "generic": "Not quite right. Look at the whole sequence, not one point."
+      },
+      "explain": {
+        "text": "From 4 steps on the error halves with each doubling, so Euler behaves as first order. The 2-step error is small by cancellation, not by accuracy. Test a sequence of halvings and stop when two runs agree.",
+        "canvas": {
+          "highlight": [
+            "p2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Monthly steps",
+      "prose": "Monthly Euler steps, $n = 60$, give $D = 0.789080$: a price of £78.9080 against the formula's £78.9215. A colleague says this matches to four decimals, because the prices agree to within 5p.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "",
+            "$D$",
+            "printed",
+            "price"
+          ],
+          "rows": [
+            [
+              "formula",
+              "0.789215",
+              "0.7892",
+              "£78.9215"
+            ],
+            [
+              "monthly Euler",
+              "0.789080",
+              "0.7891",
+              "£78.9080"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Does monthly Euler match $D$ to four decimal places?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "No: $D$ is off by $1.35 \\times 10^{-4}$, outside the band",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Yes: the prices agree to within 5p",
+            "why": "Four decimals is a statement about $D$: an error below $5 \\times 10^{-5}$. This one is $1.35 \\times 10^{-4}$."
+          },
+          {
+            "id": "c",
+            "text": "Yes: 60 steps is plenty for five years",
+            "why": "Euler's error is proportional to $h$. Here it takes 163 steps."
+          },
+          {
+            "id": "d",
+            "text": "No: Euler is unstable at monthly steps",
+            "why": "$h\\kappa = 0.0417$, far inside Euler's limit of 2. The problem is accuracy, not stability."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the two values of $D$."
+        },
+        {
+          "rung": "point",
+          "text": "$0.789215 - 0.789080 = 0.000135$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That is $1.35 \\times 10^{-4}$, more than $5 \\times 10^{-5}$."
+        }
+      ],
+      "feedback": {
+        "correct": "The fourth decimal of $D$ is wrong: 0.7891, not 0.7892.",
+        "generic": "Not quite right. Compare the error in $D$ with $5 \\times 10^{-5}$.",
+        "byKey": {
+          "b": "That is the trap. On £100, a 5p gap is $5 \\times 10^{-4}$ in $D$, ten times the band."
+        }
+      },
+      "explain": {
+        "text": "0.789080 prints as 0.7891 against 0.7892, so the fourth decimal is wrong. The error is first order, so it takes 163 steps, not 60, to meet the band. A price that looks close in pence can still fail the test.",
+        "canvas": {
+          "highlight": [
+            "r1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Add noise",
+      "prose": "Real Vasicek rates are noisy, with $\\sigma = 1\\%$ a year. Then the price gains a factor $e^{\\frac12\\mathrm{Var}(I)}$, because $e^{-I}$ is convex; here it is $e^{4.643\\sigma^2}$. So $D = 0.789581$ and the price is £78.9581. Deriving it needs `ito` and `pdes`; we only use the result.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.03
+          ],
+          "y": [
+            78.9,
+            79.3
+          ],
+          "xLabel": "$\\sigma$",
+          "yLabel": "price",
+          "xFormat": "percent",
+          "height": 220,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "100*0.7892149198*exp(4.643204*x^2)",
+              "label": "price"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.01,
+              "y": 78.9581,
+              "drag": true,
+              "on": "f",
+              "label": ""
+            }
+          ]
+        },
+        "derive": {
+          "caption": "$\\sigma$ = {{fixed(100*P.x, 1)}}%: price £{{fixed(P.y, 4)}}"
+        }
+      },
+      "question": "How much higher is the noisy price than £78.9215?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0367,
+        "tol": {
+          "abs": 0.0001
+        },
+        "unit": "£",
+        "accept": "£0.0367: $78.9581 - 78.9215$",
+        "wrong": [
+          {
+            "id": "lower",
+            "value": -0.0367,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract the two prices."
+        },
+        {
+          "rung": "point",
+          "text": "$78.9581 - 78.9215$.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About £0.0367."
+        }
+      ],
+      "feedback": {
+        "correct": "About £0.0367 higher.",
+        "generic": "Not quite right. Subtract £78.9215 from £78.9581.",
+        "byKey": {
+          "lower": "Noise raises the price here: $e^{-I}$ is convex, so averaging over paths lifts it."
+        }
+      },
+      "explain": {
+        "text": "$100 \\times 0.789581 = £78.9581$, which is £0.0367 above £78.9215. The no-noise system gives the expected rate path, not the expected discount factor. The gap is convexity.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 0.01,
+              "y": 78.9581
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "A convergence check",
+      "prose": "The habit this lesson builds is a procedure. One line below would let coarse luck through; leave it out.",
+      "question": "Put the check in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "Compute the closed form $D$ for a case that has one."
+          },
+          {
+            "id": "s2",
+            "text": "Run the method with $n = 1$, then keep doubling $n$."
+          },
+          {
+            "id": "s3",
+            "text": "Stop when two successive runs agree within $5 \\times 10^{-5}$ and the last is within $5 \\times 10^{-5}$ of $D$."
+          },
+          {
+            "id": "s4",
+            "text": "Report $n$, the value and the tolerance in the validation note."
+          },
+          {
+            "id": "d1",
+            "text": "Stop at the first $n$ whose value lands within $5 \\times 10^{-5}$ of $D$.",
+            "why": "That trusts one lucky grid, like Euler's 2 steps. Two successive runs must agree as well."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What must exist before any run is judged?"
+        },
+        {
+          "rung": "point",
+          "text": "The closed form comes first, then the doubling runs."
+        },
+        {
+          "rung": "step",
+          "text": "Stop on agreement of two runs and the closed form, then report."
+        }
+      ],
+      "feedback": {
+        "correct": "Closed form, doubling runs, a two-part stopping rule, a report.",
+        "generic": "Not quite right. The stopping rule needs two runs to agree as well.",
+        "byKey": {
+          "d1": "One run near $D$ can be luck, as Euler's 2 steps were. Ask two successive runs to agree too.",
+          "left-out": "Every step but the lucky-grid rule belongs in the check."
+        }
+      },
+      "explain": {
+        "text": "The closed form gives the target; doubling gives a sequence; two agreeing runs show it has converged. Reporting the tolerance says what was checked. Homework 4 codes exactly this."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The check in NumPy",
+      "prose": "Code the bond both ways and the step search. `rk4` from lesson 17 is already defined, and so is `discount_euler`, Euler on the same system. `steps_to_4dp` doubles $n$ from 1 until the method's $D$ is within $5 \\times 10^{-5}$ of the closed form.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "numpy",
+          "lines": [
+            ">>> discount_exact(0.06, 0.5, 0.04, 5)",
+            "0.7892149197923242",
+            ">>> discount_rk4(0.06, 0.5, 0.04, 5, 4)",
+            "0.7892288673245939",
+            ">>> steps_to_4dp(discount_rk4, 0.06, 0.5, 0.04, 5)",
+            "4"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete the four functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n# rk4(f, t0, y0, h, n) from lesson 17 is already defined for you.\n\ndef vasicek_rhs(t, y, kappa, theta):\n    \"\"\"y = (r, I). Returns the NumPy vector (kappa (theta - r), r).\"\"\"\n    ...\n\ndef discount_exact(r0, kappa, theta, T):\n    \"\"\"exp(-I(T)) from the closed form.\"\"\"\n    ...\n\ndef discount_rk4(r0, kappa, theta, T, n):\n    \"\"\"exp(-I(T)) from n RK4 steps on the system.\"\"\"\n    ...\n\ndef steps_to_4dp(method, r0, kappa, theta, T):\n    \"\"\"Smallest n in 1, 2, 4, 8, ... with |method(...) - exact| < 5e-5.\"\"\"\n    ...\n",
+        "solution": "import numpy as np\n\n# rk4(f, t0, y0, h, n) from lesson 17 is already defined for you.\n\ndef vasicek_rhs(t, y, kappa, theta):\n    \"\"\"y = (r, I). Returns the NumPy vector (kappa (theta - r), r).\"\"\"\n    return np.array([kappa * (theta - y[0]), y[0]])\n\ndef discount_exact(r0, kappa, theta, T):\n    \"\"\"exp(-I(T)) from the closed form.\"\"\"\n    I = theta * T + (r0 - theta) * (1 - np.exp(-kappa * T)) / kappa\n    return float(np.exp(-I))\n\ndef discount_rk4(r0, kappa, theta, T, n):\n    \"\"\"exp(-I(T)) from n RK4 steps on the system.\"\"\"\n    f = lambda t, y: vasicek_rhs(t, y, kappa, theta)\n    t, y = rk4(f, 0.0, np.array([r0, 0.0]), T / n, n)\n    return float(np.exp(-y[-1][1]))\n\ndef steps_to_4dp(method, r0, kappa, theta, T):\n    \"\"\"Smallest n in 1, 2, 4, 8, ... with |method(...) - exact| < 5e-5.\"\"\"\n    exact = discount_exact(r0, kappa, theta, T)\n    n = 1\n    while abs(method(r0, kappa, theta, T, n) - exact) >= 5e-5:\n        n *= 2\n    return n\n",
+        "prelude": "import numpy as np\n\ndef rk4(f, t0, y0, h, n):\n    t = t0 + h * np.arange(n + 1)\n    y = np.zeros((n + 1,) + np.shape(y0))\n    y[0] = y0\n    for k in range(n):\n        tk, yk = t[k], y[k]\n        k1 = np.asarray(f(tk, yk)); k2 = np.asarray(f(tk + h/2, yk + h/2*k1))\n        k3 = np.asarray(f(tk + h/2, yk + h/2*k2)); k4 = np.asarray(f(tk + h, yk + h*k3))\n        y[k + 1] = yk + h/6*(k1 + 2*k2 + 2*k3 + k4)\n    return t, y\n\ndef discount_euler(r0, kappa, theta, T, n):\n    h = T / n\n    r, I = r0, 0.0\n    for _ in range(n):\n        r, I = r + h * kappa * (theta - r), I + h * r\n    return float(np.exp(-I))\n",
+        "examples": [
+          {
+            "call": "discount_exact(0.06, 0.5, 0.04, 5)",
+            "expect": "0.7892149197923242",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "discount_exact(0.06, 0.5, 0.04, 5)",
+            "expect": "0.7892149197923242",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "vasicek_rhs(0, np.array([0.06, 0.0]), 0.5, 0.04).tolist()",
+            "expect": "[-0.01, 0.06]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "discount_exact(0.04, 0.5, 0.04, 5)",
+            "expect": "0.8187307530779818",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "discount_exact(0.02, 1.0, 0.05, 3)",
+            "expect": "0.8855967104773879",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "discount_rk4(0.06, 0.5, 0.04, 5, 4)",
+            "expect": "0.7892288673245939",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "bool(abs(discount_rk4(0.06, 0.5, 0.04, 5, 4) - 0.7892149197923242) < 5e-5)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "discount_rk4(0.06, 0.5, 0.04, 5, 50)",
+            "expect": "0.7892149197923242",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "steps_to_4dp(discount_rk4, 0.06, 0.5, 0.04, 5)",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_to_4dp(discount_euler, 0.06, 0.5, 0.04, 5)",
+            "expect": "256",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Discount factors must be within absolute 1e-9 (1e-12 for the exact cases). The band check and the step counts must match exactly. A hidden prelude defines `rk4` from lesson 17 and `discount_euler`. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`vasicek_rhs` returns `np.array([kappa * (theta - y[0]), y[0]])`."
+        },
+        {
+          "rung": "point",
+          "text": "`discount_rk4` calls `rk4` with `h = T / n` from `[r0, 0.0]` and takes `y[-1][1]`.",
+          "highlight": [
+            "l3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`steps_to_4dp` loops `n *= 2` while the error is at least `5e-5`."
+        }
+      ],
+      "feedback": {
+        "correct": "All nine pass: RK4 needs 4 steps and Euler 256 in the doubling sequence.",
+        "generic": "Not quite right. Read the failing row; check the closed form first."
+      },
+      "explain": {
+        "text": "In the doubling sequence RK4 meets the band at 4 steps and Euler at 256. Euler's true minimum is 163, but the sequence jumps from 128 to 256. A search by doubling overshoots the minimum; that is the price of a simple rule."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "With solve_ivp",
+      "prose": "The production version is three lines. Use `rtol=1e-10` and `atol=1e-12`. The tests compare with the closed form, never with another `solve_ivp` run. Its output changes slightly between SciPy versions.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "scipy",
+          "lines": [
+            ">>> discount_ivp(0.06, 0.5, 0.04, 5) - discount_exact(0.06, 0.5, 0.04, 5)",
+            "1.78e-12"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `discount_ivp`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom scipy.integrate import solve_ivp\n\ndef discount_ivp(r0, kappa, theta, T):\n    \"\"\"exp(-I(T)) from solve_ivp on (r, I)' = (kappa (theta - r), r).\"\"\"\n    ...\n",
+        "solution": "import numpy as np\nfrom scipy.integrate import solve_ivp\n\ndef discount_ivp(r0, kappa, theta, T):\n    \"\"\"exp(-I(T)) from solve_ivp on (r, I)' = (kappa (theta - r), r).\"\"\"\n    f = lambda t, y: [kappa * (theta - y[0]), y[0]]\n    sol = solve_ivp(f, (0, T), [r0, 0.0], rtol=1e-10, atol=1e-12)\n    return float(np.exp(-sol.y[1, -1]))\n",
+        "examples": [
+          {
+            "call": "discount_ivp(0.06, 0.5, 0.04, 5)",
+            "expect": "0.7892149197923242",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "discount_ivp(0.06, 0.5, 0.04, 5)",
+            "expect": "0.7892149197923242",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          },
+          {
+            "call": "discount_ivp(0.04, 0.5, 0.04, 5)",
+            "expect": "0.8187307530779818",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          },
+          {
+            "call": "discount_ivp(0.02, 1.0, 0.05, 3)",
+            "expect": "0.8855967104773879",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          },
+          {
+            "call": "discount_ivp(0.1, 2.0, 0.03, 10)",
+            "expect": "0.7153380864041647",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          }
+        ],
+        "how": "Check runs 4 hidden tests against the closed form, each within absolute 1e-8. **The first run loads NumPy and SciPy.** That took about 2 seconds from a local cache here; expect 5 to 20 seconds over a home connection. Later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The system is `[kappa * (theta - y[0]), y[0]]`."
+        },
+        {
+          "rung": "point",
+          "text": "`solve_ivp(f, (0, T), [r0, 0.0], rtol=1e-10, atol=1e-12)`.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `float(np.exp(-sol.y[1, -1]))`."
+        }
+      ],
+      "feedback": {
+        "correct": "All four agree with the closed form to $10^{-8}$.",
+        "generic": "Not quite right. Return $e^{-I}$ at the last time, with the tight tolerances."
+      },
+      "explain": {
+        "text": "With these tolerances `solve_ivp` agrees with the closed form to about $2 \\times 10^{-12}$, in this browser's SciPy as on a desktop. The closed form is the test; the solver is what is tested."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The desk habit",
+      "prose": "A desk builds a pricer for a callable bond under a two-factor rate model. No closed form exists for that bond. The log shows the pricer's first run.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "validation.log",
+          "lines": [
+            "closed form  D = 0.789215",
+            "rk4  n = 2   D = 0.789608   |err| = 3.9e-04",
+            "rk4  n = 4   D = 0.789229   |err| = 1.4e-05",
+            "rk4  n = 8   D = 0.789216   |err| = 6.7e-07   agree: yes",
+            "pass: within 5e-05 of the closed form, two runs agree"
+          ],
+          "wrap": true
+        },
+        "state": {
+          "caption": "One run per line; the last line is the verdict."
+        }
+      },
+      "question": "Before it prices the callable bond, what should the desk have done?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Priced the Vasicek zero, a case with a closed form, to $5 \\times 10^{-5}$ with a doubling check, as in the log",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Run it once with a small step and trusted the result",
+            "why": "A small step can still hide a slip, like lesson 17's $k_1$ in place of $k_2$."
+          },
+          {
+            "id": "c",
+            "text": "Compared it with another numerical pricer",
+            "why": "Two pricers can share a bug or a coarse grid. A closed form cannot."
+          },
+          {
+            "id": "d",
+            "text": "Checked that the price looks reasonable in pence",
+            "why": "That is the monthly-Euler trap: £78.9080 looked fine and failed."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which check uses a known right answer?"
+        },
+        {
+          "rung": "point",
+          "text": "Only a closed form is known to be right, as on the log's first line.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Match the closed-form case first, with a convergence check."
+        }
+      ],
+      "feedback": {
+        "correct": "Validate on a case with a closed form, to a stated tolerance, first.",
+        "generic": "Not quite right. Find the check against a known answer."
+      },
+      "explain": {
+        "text": "Every numerical pricer is first checked against a closed form, to a stated tolerance. Only then does it price anything that has none. The Vasicek zero is that case for a rate model.",
+        "canvas": {
+          "highlight": [
+            "l5"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Four decimals means $|D_{\\text{num}} - D| < 5 \\times 10^{-5}$: a statement about $D$, not about the price in pence.",
+      "On the five-year Vasicek zero Euler needs 163 steps for that; RK4 needs 4.",
+      "Trust a method only after a doubling sequence converges and matches a closed form."
+    ],
+    "formula": {
+      "name": "Vasicek zero, no noise",
+      "tex": "D = e^{-I(T)}, \\quad I(T) = \\theta T + (r_0 - \\theta)\\frac{1 - e^{-\\kappa T}}{\\kappa}",
+      "note": "0.789215 for $\\kappa = 0.5$, $\\theta = 4\\%$, $r_0 = 6\\%$, $T = 5$."
+    },
+    "trap": "Monthly Euler prices within 2p, yet misses the fourth decimal of $D$."
+  },
+  "quiz": [
+    {
+      "id": "q-flat",
+      "difficulty": 2,
+      "question": "With $r_0 = \\theta = 5\\%$, what is the five-year discount factor $D$, to 4 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.7788,
+        "tol": {
+          "abs": 5e-05
+        },
+        "accept": "0.7788: $e^{-0.25}$",
+        "wrong": [
+          {
+            "id": "simple",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$e^{-0.05 \\times 5} = 0.7788$.",
+        "generic": "Not quite right. With $r_0 = \\theta$ the rate is constant.",
+        "byKey": {
+          "simple": "That is $1 - 0.25$, simple interest. Continuous discounting gives $e^{-0.25}$."
+        }
+      },
+      "explain": {
+        "text": "The rate stays at 5%, so $I(5) = 0.25$ and $D = e^{-0.25} = 0.7788$."
+      }
+    },
+    {
+      "id": "q-band",
+      "difficulty": 3,
+      "question": "The closed form is $D = 0.789215$. Which numerical value matches it to four decimal places?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.789180",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "0.789134",
+            "why": "Its error is $8.1 \\times 10^{-5}$, outside $5 \\times 10^{-5}$."
+          },
+          {
+            "id": "c",
+            "text": "0.789080",
+            "why": "That is monthly Euler, $1.35 \\times 10^{-4}$ away."
+          },
+          {
+            "id": "d",
+            "text": "0.789290",
+            "why": "Its error is $7.5 \\times 10^{-5}$, outside the band."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "0.789180 is $3.5 \\times 10^{-5}$ away, inside the band.",
+        "generic": "Not quite right. Find the value within $5 \\times 10^{-5}$."
+      },
+      "explain": {
+        "text": "Only 0.789180 is within $5 \\times 10^{-5}$ of 0.789215: its error is $3.5 \\times 10^{-5}$."
+      }
+    },
+    {
+      "id": "q-steps",
+      "difficulty": 3,
+      "question": "Euler's error on the bond is $8.1 \\times 10^{-5}$ with 100 steps. About how many steps bring it to $4 \\times 10^{-5}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 200,
+        "tol": {
+          "abs": 10
+        },
+        "accept": "about 200: first order, so twice the steps halve the error",
+        "wrong": [
+          {
+            "id": "second",
+            "value": 142,
+            "tol": {
+              "abs": 3
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "First order: about 200 steps.",
+        "generic": "Not quite right. Euler's error is proportional to $h$.",
+        "byKey": {
+          "second": "That assumes error proportional to $h^2$. Euler's is proportional to $h$."
+        }
+      },
+      "explain": {
+        "text": "Error proportional to $h$ means halving the error needs twice the steps: about 200."
+      }
+    },
+    {
+      "id": "q-rk4",
+      "difficulty": 3,
+      "question": "RK4's error on the bond is $1.4 \\times 10^{-5}$ with 4 steps. Roughly what is it with 8?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$9 \\times 10^{-7}$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$7 \\times 10^{-6}$",
+            "why": "That halves it, which is first order."
+          },
+          {
+            "id": "c",
+            "text": "$3.5 \\times 10^{-6}$",
+            "why": "That divides by 4, which is second order."
+          },
+          {
+            "id": "d",
+            "text": "$1.4 \\times 10^{-5}$",
+            "why": "More steps cut RK4's error sharply."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "About 16 times smaller: $9 \\times 10^{-7}$.",
+        "generic": "Not quite right. RK4 is fourth order."
+      },
+      "explain": {
+        "text": "Fourth order divides the error by about 16 per doubling: $1.4 \\times 10^{-5}/16 \\approx 9 \\times 10^{-7}$. The true figure is $6.7 \\times 10^{-7}$."
+      }
+    }
+  ]
+}

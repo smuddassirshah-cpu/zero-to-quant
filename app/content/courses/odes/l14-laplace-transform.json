@@ -1,0 +1,1352 @@
+{
+  "id": "l14-laplace-transform",
+  "course": "odes",
+  "title": "The Laplace transform",
+  "minutes": 14,
+  "objectives": [
+    "Compute Laplace transforms from the definition and a table."
+  ],
+  "skills": [
+    "de-laplace"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Paying for ever",
+      "prose": "A contract pays £1 a year, continuously, for ever. Money due at time $t$ is worth $e^{-st}$ today at rate $s$. The present value is the whole area under that curve. Slide the rate and watch the area.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            60
+          ],
+          "y": [
+            0,
+            1.1
+          ],
+          "xLabel": "years $t$",
+          "height": 260,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-s*x)",
+              "label": "$e^{-st}$",
+              "labelAt": 27.0
+            }
+          ],
+          "params": {
+            "s": 0.04
+          },
+          "yLabel": "weight"
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "f",
+            "from": 0,
+            "to": 600
+          }
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0.02,
+            "max": 0.1,
+            "step": 0.01,
+            "start": 0.04,
+            "label": "rate $s$",
+            "format": "percent"
+          }
+        ],
+        "derive": {
+          "caption": "Area under $e^{-st}$: £{{fixed(values.A, 2)}}"
+        }
+      },
+      "question": "What is the contract worth at 4%?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 25,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "accept": "£25: $1/0.04$",
+        "wrong": [
+          {
+            "id": "percent",
+            "value": 0.25,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the caption at 4%."
+        },
+        {
+          "rung": "point",
+          "text": "The area under $e^{-st}$ is $\\int_0^\\infty e^{-st}\\,dt$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\int_0^\\infty e^{-0.04t}\\,dt = 1/0.04 = 25$."
+        }
+      ],
+      "feedback": {
+        "correct": "The area under $e^{-0.04t}$ is $1/0.04 = 25$.",
+        "generic": "Not quite right. Set the rate to 4% and read the area.",
+        "byKey": {
+          "percent": "You divided by 4, not by 0.04. Rates enter as decimals."
+        }
+      },
+      "explain": {
+        "text": "The area is $\\int_0^\\infty e^{-0.04t}\\,dt = 1/0.04 = 25$. A higher rate shrinks the area, as the slider showed.",
+        "canvas": {
+          "params": {
+            "s": 0.04
+          },
+          "highlight": [
+            "A"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "A name for the area",
+      "prose": "Weight any cash flow $f(t)$ by $e^{-st}$ and add it up for ever:\n\n$$F(s) = \\int_0^\\infty e^{-st} f(t)\\,dt.$$\n\nThis is the **Laplace transform** of $f$, written $\\mathcal{L}\\{f\\}$. Your £25 was $F(0.04)$ for $f(t) = 1$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            60
+          ],
+          "y": [
+            0,
+            1.1
+          ],
+          "xLabel": "years $t$",
+          "height": 260,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(-s*x)",
+              "label": "$e^{-st}$",
+              "labelAt": 27.0
+            }
+          ],
+          "params": {
+            "s": 0.04
+          },
+          "yLabel": "weight"
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "f",
+            "from": 0,
+            "to": 600
+          }
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 0.02,
+            "max": 0.1,
+            "step": 0.01,
+            "start": 0.04,
+            "label": "rate $s$",
+            "format": "percent"
+          }
+        ],
+        "derive": {
+          "caption": "Area under $e^{-st}$: £{{fixed(values.A, 2)}}"
+        }
+      },
+      "question": "Write $\\mathcal{L}\\{1\\}$ as a function of $s$.",
+      "widget": {
+        "kind": "expression",
+        "answer": "\\frac{1}{s}",
+        "accept": [
+          "1/s",
+          "s^{-1}"
+        ],
+        "keyboard": "calculus",
+        "wrong": [
+          {
+            "id": "rate",
+            "tex": "s"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "What area did 4% give, and how does 25 depend on 0.04?"
+        },
+        {
+          "rung": "point",
+          "text": "$\\int_0^b e^{-st}\\,dt = \\tfrac{1}{s}(1 - e^{-sb})$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Let $b \\to \\infty$: the area is $1/s$ for every $s > 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathcal{L}\\{1\\} = 1/s$ for $s > 0$.",
+        "generic": "Not quite right. Integrate $e^{-st}$ from 0 to infinity.",
+        "byKey": {
+          "rate": "That is the rate itself. The area under $e^{-st}$ is its reciprocal, $1/s$."
+        }
+      },
+      "explain": {
+        "text": "$\\int_0^\\infty e^{-st}\\,dt = 1/s$, so a perpetuity at rate $s$ is worth $1/s$. Every present value at a continuous rate is a Laplace transform.",
+        "canvas": {
+          "highlight": [
+            "A"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A growing cash flow",
+      "prose": "Let the cash flow grow: $f(t) = e^{at}$. Then $e^{-st}e^{at} = e^{-(s - a)t}$, the same curve with rate $s - a$. The rate here is $s = 6\\%$. Slide the growth $a$ up past 6%.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            60
+          ],
+          "y": [
+            0,
+            1.6
+          ],
+          "xLabel": "years $t$",
+          "height": 260,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp((a - 0.06)*x)",
+              "label": "$e^{-(0.06 - a)t}$",
+              "labelAt": 27.0
+            }
+          ],
+          "params": {
+            "a": 0.02
+          },
+          "yLabel": "weight"
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "f",
+            "from": 0,
+            "to": 600
+          }
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "min": 0,
+            "max": 0.08,
+            "step": 0.01,
+            "start": 0.02,
+            "label": "growth $a$",
+            "format": "percent"
+          }
+        ],
+        "derive": {
+          "caption": "Area over 600 years: {{fixed(values.A, 1)}}"
+        }
+      },
+      "question": "What is $\\mathcal{L}\\{e^{at}\\}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$\\dfrac{1}{s - a}$, for $s > a$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$\\dfrac{1}{s + a}$, for $s > -a$",
+            "why": "You added the rates. The exponents combine as $-(s - a)t$, so $a$ is subtracted."
+          },
+          {
+            "id": "c",
+            "text": "$\\dfrac{1}{s - a}$, for every $s$",
+            "why": "You kept the formula past $s = a$. There the curve never falls, as the slider showed."
+          },
+          {
+            "id": "d",
+            "text": "$\\dfrac{e^{a}}{s}$",
+            "why": "You moved $e^{a}$ out of the integral. The factor is $e^{at}$, which depends on $t$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The integrand is $e^{-(s - a)t}$."
+        },
+        {
+          "rung": "point",
+          "text": "That is the first screen's curve, with rate $s - a$ in place of $s$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So the area is $1/(s - a)$, but only while $s - a > 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathcal{L}\\{e^{at}\\} = 1/(s - a)$ for $s > a$.",
+        "generic": "Not quite right. Combine the exponents first.",
+        "byKey": {
+          "c": "At $a \\ge s$ the area kept growing. The formula needs $s > a$."
+        }
+      },
+      "explain": {
+        "text": "The integrand is $e^{-(s - a)t}$, so the area is $1/(s - a)$ while $s > a$. At $s \\le a$ the curve never falls and the area grows without bound.",
+        "canvas": {
+          "params": {
+            "a": 0.02
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "By parts: $f(t) = t$",
+      "prose": "For $f(t) = t$, integrate by parts with $u = t$ and $dv = e^{-st}\\,dt$ (integrals lesson 10). The boundary term is 0 at both ends. What is left is $\\tfrac{1}{s}\\int_0^\\infty e^{-st}\\,dt$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            6
+          ],
+          "y": [
+            0,
+            0.4
+          ],
+          "xLabel": "$t$",
+          "height": 260,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x*exp(-s*x)",
+              "label": "$te^{-st}$",
+              "labelAt": 2.7
+            }
+          ],
+          "params": {
+            "s": 2
+          }
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "f",
+            "from": 0,
+            "to": 60
+          }
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 1,
+            "max": 4,
+            "step": 0.5,
+            "start": 2,
+            "label": "$s$"
+          }
+        ],
+        "derive": {
+          "caption": "Shaded area: {{fixed(values.A, 4)}}"
+        }
+      },
+      "question": "What is $\\mathcal{L}\\{t\\}$ at $s = 2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.25,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.25: $1/s^2 = 1/4$",
+        "wrong": [
+          {
+            "id": "no-square",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "square",
+            "value": 4,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Parts leaves $\\tfrac1s$ times an integral you know."
+        },
+        {
+          "rung": "point",
+          "text": "That integral is $\\mathcal{L}\\{1\\} = 1/s$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac1s \\cdot \\tfrac1s = 1/s^2$, which is $1/4$ at $s = 2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathcal{L}\\{t\\} = 1/s^2 = 0.25$ at $s = 2$.",
+        "generic": "Not quite right. Finish the parts step, then set $s = 2$.",
+        "byKey": {
+          "no-square": "That is $1/s$. Parts leaves $\\tfrac1s\\int_0^\\infty e^{-st}\\,dt$, which brings a second factor of $1/s$.",
+          "square": "You found $s^2$. The transform is its reciprocal, $1/s^2$."
+        }
+      },
+      "explain": {
+        "text": "$\\int_0^\\infty te^{-st}\\,dt = \\tfrac1s \\cdot \\tfrac1s = 1/s^2$, which is 0.25 at $s = 2$. The shaded area on the canvas is the same 0.25.",
+        "canvas": {
+          "params": {
+            "s": 2
+          },
+          "highlight": [
+            "A"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Powers, sines and cosines",
+      "prose": "Two rounds of parts give $\\mathcal{L}\\{t^2\\} = 2/s^3$. Sines and cosines also take two rounds. The canvas shades $e^{-t}\\sin 3t$, so its signed area is $\\mathcal{L}\\{\\sin 3t\\}(1)$. Fill each value at $s = 1$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            6
+          ],
+          "y": [
+            -0.6,
+            0.8
+          ],
+          "xLabel": "$t$",
+          "height": 260,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "sin(3*x)*exp(-x)",
+              "label": "$e^{-t}\\sin 3t$",
+              "labelAt": 2.7
+            }
+          ],
+          "params": {}
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "f",
+            "from": 0,
+            "to": 40
+          }
+        },
+        "derive": {
+          "caption": "Signed area: {{fixed(values.A, 4)}}"
+        }
+      },
+      "question": "Fill the column $F(1)$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$f(t)$",
+          "$F(s)$",
+          "$F(1)$"
+        ],
+        "rows": [
+          [
+            "$t^2$",
+            "$2/s^3$",
+            {
+              "edit": true,
+              "answer": 2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$\\sin 3t$",
+            "$3/(s^2 + 9)$",
+            {
+              "edit": true,
+              "answer": 0.3,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "$\\cos 2t$",
+            "$s/(s^2 + 4)$",
+            {
+              "edit": true,
+              "answer": 0.2,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put $s = 1$ into each formula."
+        },
+        {
+          "rung": "point",
+          "text": "$s^2 + 9 = 10$ and $s^2 + 4 = 5$ at $s = 1$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$2/1 = 2$, $3/10 = 0.3$, $1/5 = 0.2$."
+        }
+      ],
+      "feedback": {
+        "correct": "2, 0.3 and 0.2.",
+        "generic": "Not quite right. Substitute $s = 1$ in each formula.",
+        "byKey": {
+          "r1c2": "Check the sine row. If you put $s$ on top, that is the cosine's transform; the sine has $b = 3$ on top.",
+          "r2c2": "Check the cosine row. If you put $b$ on top, that is the sine's transform; the cosine has $s$ on top."
+        }
+      },
+      "explain": {
+        "text": "At $s = 1$: $2/1 = 2$, $3/(1 + 9) = 0.3$ and $1/(1 + 4) = 0.2$. The signed area of $e^{-t}\\sin 3t$ is the 0.3.",
+        "canvas": {
+          "highlight": [
+            "A"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "A growing dividend",
+      "prose": "A share pays £5 a year, growing at 2%. Its value is $\\mathcal{L}\\{5e^{0.02t}\\}(r) = \\dfrac{5}{r - 0.02}$, which is £125 at $r = 6\\%$: the Gordon growth model. Slide $r$ down to 1%.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            100
+          ],
+          "y": [
+            0,
+            12
+          ],
+          "xLabel": "years $t$",
+          "height": 260,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "5*exp((0.02 - r)*x)",
+              "label": "$5e^{(0.02 - r)t}$",
+              "labelAt": 45.0
+            }
+          ],
+          "params": {
+            "r": 0.06
+          },
+          "yLabel": "£ a year"
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "f",
+            "from": 0,
+            "to": 600
+          }
+        },
+        "controls": [
+          {
+            "bind": "r",
+            "min": 0.01,
+            "max": 0.08,
+            "step": 0.01,
+            "start": 0.06,
+            "label": "rate $r$",
+            "format": "percent"
+          }
+        ],
+        "derive": {
+          "caption": "Value of 600 years of dividends: £{{fixed(values.A, 0)}}"
+        }
+      },
+      "question": "What is the share worth at $r = 1\\%$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "−£500, from $5/(0.01 - 0.02)$",
+            "why": "You trusted the formula where the integral does not exist. With $r \\le g$ the dividends never shrink."
+          },
+          {
+            "id": "b",
+            "text": "£500",
+            "why": "You dropped the sign of $r - g$. Either way, the formula does not apply when $r \\le g$."
+          },
+          {
+            "id": "c",
+            "text": "No finite value: the integral diverges",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "−£50,000, from $\\mathcal{L}\\{5\\} \\cdot \\mathcal{L}\\{e^{0.02t}\\}$",
+            "why": "You multiplied the transforms of 5 and $e^{0.02t}$. The transform of a product is not the product of transforms."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the caption as $r$ falls below 2%."
+        },
+        {
+          "rung": "point",
+          "text": "At $r = 1\\%$ the integrand is $5e^{0.01t}$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That grows for ever, so no finite area exists."
+        }
+      ],
+      "feedback": {
+        "correct": "At 1% the area has no limit, so the formula gives nonsense.",
+        "generic": "Not quite right. Check whether the integral exists at 1%.",
+        "byKey": {
+          "a": "That is the trap: $1/(s - a)$ holds only for $s > a$. Here $s = 0.01 < 0.02$.",
+          "d": "A product of cash flows has no product rule. Transform $5e^{0.02t}$ as one function."
+        }
+      },
+      "explain": {
+        "text": "At 1% the dividends grow faster than they are discounted, and the caption's area kept growing. $\\mathcal{L}\\{e^{at}\\}$ exists only for $s > a$. A negative price is the formula used outside that range.",
+        "canvas": {
+          "params": {
+            "r": 0.01
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "No transform at all",
+      "prose": "Some functions grow too fast for any rate. The canvas draws $e^{t^2 - st}$. Slide $s$ as high as it goes and watch the far end of the curve.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            8
+          ],
+          "y": [
+            0,
+            3
+          ],
+          "xLabel": "$t$",
+          "height": 240,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "exp(x^2 - s*x)",
+              "label": "$e^{t^2 - st}$"
+            }
+          ],
+          "params": {
+            "s": 2
+          }
+        },
+        "state": {
+          "caption": "The curve is lowest at $t = s/2$, then climbs for ever."
+        },
+        "controls": [
+          {
+            "bind": "s",
+            "min": 1,
+            "max": 8,
+            "step": 1,
+            "start": 2,
+            "label": "$s$"
+          }
+        ]
+      },
+      "question": "Which cash flow has no Laplace transform at any $s$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$e^{t^2}$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$e^{5t}$",
+            "why": "That grows fast, but any $s > 5$ beats it: its transform is $1/(s - 5)$."
+          },
+          {
+            "id": "c",
+            "text": "$t^{10}$",
+            "why": "Any power loses to $e^{-st}$ when $s > 0$. Its transform is $10!/s^{11}$."
+          },
+          {
+            "id": "d",
+            "text": "$\\sin(t^2)$",
+            "why": "That stays between $-1$ and 1, so $e^{-st}$ makes it integrable for every $s > 0$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the exponents $t^2$ and $st$ for large $t$."
+        },
+        {
+          "rung": "point",
+          "text": "$t^2 - st = t(t - s)$, positive once $t > s$.",
+          "highlight": [
+            "f"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "So $e^{t^2 - st}$ grows for every $s$: $e^{t^2}$ has no transform."
+        }
+      ],
+      "feedback": {
+        "correct": "$e^{t^2}$ outgrows $e^{st}$ for every $s$.",
+        "generic": "Not quite right. Find the function no exponential can discount."
+      },
+      "explain": {
+        "text": "$t^2 - st$ is positive once $t > s$, whatever $s$ is. So $e^{t^2 - st}$ grows without bound and no rate gives a finite area. Exponential growth is the fastest a transform can handle.",
+        "canvas": {
+          "params": {
+            "s": 8
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The derivative rule",
+      "prose": "Take the transform of $f'$ and integrate by parts with $u = e^{-st}$ and $dv = f'(t)\\,dt$. One line below is wrong; leave it out.",
+      "question": "Put the argument in order.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "s1",
+            "text": "$\\mathcal{L}\\{f'\\} = \\int_0^\\infty e^{-st} f'(t)\\,dt$ (the definition)"
+          },
+          {
+            "id": "s2",
+            "text": "$= \\big[e^{-st}f(t)\\big]_0^\\infty + s\\int_0^\\infty e^{-st}f(t)\\,dt$ (parts, with $du = -se^{-st}\\,dt$)"
+          },
+          {
+            "id": "s3",
+            "text": "$= \\big(0 - f(0)\\big) + sF(s)$ ($e^{-st}f(t) \\to 0$ as $t \\to \\infty$)"
+          },
+          {
+            "id": "s4",
+            "text": "$= sF(s) - f(0)$ (rearrange)"
+          },
+          {
+            "id": "d1",
+            "text": "$= \\big(0 + f(0)\\big) + sF(s)$ (the lower limit adds)",
+            "why": "A bracket is the upper value minus the lower value: $0 - f(0)$."
+          }
+        ],
+        "answer": [
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "distractors": [
+          "d1"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the definition."
+        },
+        {
+          "rung": "point",
+          "text": "Parts gives a bracket and an integral with $s$ in front."
+        },
+        {
+          "rung": "step",
+          "text": "The bracket is $0 - f(0)$, so $\\mathcal{L}\\{f'\\} = sF(s) - f(0)$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathcal{L}\\{f'\\} = sF(s) - f(0)$.",
+        "generic": "Not quite right. Follow parts line by line.",
+        "byKey": {
+          "d1": "The lower limit is subtracted: $[g]_0^\\infty = g(\\infty) - g(0)$.",
+          "left-out": "Each correct line is needed; only the one with $+f(0)$ goes."
+        }
+      },
+      "explain": {
+        "text": "Parts moves the derivative from $f$ onto $e^{-st}$, which brings out $s$. The boundary term at 0 leaves $-f(0)$. Applied twice, $\\mathcal{L}\\{f''\\} = s^2F - sf(0) - f'(0)$, the rule lesson 15 runs on."
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Reading the table",
+      "prose": "Transforms add: $\\mathcal{L}\\{af + bg\\} = aF + bG$. The **shift rule** handles an exponential factor: $$\\mathcal{L}\\{e^{at}f(t)\\} = F(s - a).$$ So read $F$ from the table, then replace $s$ by $s - a$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$f(t)$",
+            "$F(s)$",
+            "valid for"
+          ],
+          "rows": [
+            [
+              "$1$",
+              "$1/s$",
+              "$s > 0$"
+            ],
+            [
+              "$e^{at}$",
+              "$1/(s - a)$",
+              "$s > a$"
+            ],
+            [
+              "$t^n$",
+              "$n!/s^{n+1}$",
+              "$s > 0$"
+            ],
+            [
+              "$\\sin bt$",
+              "$b/(s^2 + b^2)$",
+              "$s > 0$"
+            ],
+            [
+              "$\\cos bt$",
+              "$s/(s^2 + b^2)$",
+              "$s > 0$"
+            ],
+            [
+              "$e^{at}f(t)$",
+              "$F(s - a)$",
+              "shift"
+            ],
+            [
+              "$f'(t)$",
+              "$sF(s) - f(0)$",
+              "derivative"
+            ]
+          ],
+          "align": [
+            "left",
+            "left",
+            "left"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $\\mathcal{L}\\{e^{-t}\\cos 2t\\}$?",
+      "widget": {
+        "kind": "expression",
+        "answer": "\\frac{s+1}{(s+1)^2+4}",
+        "accept": [
+          "(s+1)/((s+1)^2+4)",
+          "(s+1)/(s^2+2s+5)"
+        ],
+        "keyboard": "calculus",
+        "wrong": [
+          {
+            "id": "sign",
+            "tex": "\\frac{s-1}{(s-1)^2+4}"
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from $\\mathcal{L}\\{\\cos 2t\\} = s/(s^2 + 4)$."
+        },
+        {
+          "rung": "point",
+          "text": "Here $a = -1$, so $s - a = s + 1$.",
+          "highlight": [
+            "r4c1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Replace every $s$: $\\dfrac{s + 1}{(s + 1)^2 + 4}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\dfrac{s + 1}{(s + 1)^2 + 4}$.",
+        "generic": "Not quite right. Shift the cosine's transform by $a = -1$.",
+        "byKey": {
+          "sign": "You shifted the wrong way. With $a = -1$, $s - a$ is $s + 1$."
+        }
+      },
+      "explain": {
+        "text": "The cosine row gives $s/(s^2 + 4)$; the factor $e^{-t}$ shifts $s$ to $s + 1$. The result is $\\dfrac{s + 1}{(s + 1)^2 + 4}$.",
+        "canvas": {
+          "highlight": [
+            "r4",
+            "r5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Transforms in NumPy",
+      "prose": "A computer cuts the integral at $T = 50$ and uses the trapezium rule on $n$ strips. Write the sum out rather than calling a library routine. Then guard the growing perpetuity: no value exists when $r \\le g$.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "numpy",
+          "lines": [
+            ">>> laplace_numeric(lambda t: t, 2)",
+            "0.24999999479166676",
+            ">>> pv_growing(5, 0.02, 0.06)",
+            "125.00000000000001",
+            ">>> pv_growing(5, 0.02, 0.01)",
+            "ValueError: no value when r <= g"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `laplace_numeric` and `pv_growing`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef laplace_numeric(f, s, T=50, n=200000):\n    \"\"\"Trapezium rule for the integral of exp(-s t) f(t) over [0, T].\"\"\"\n    ...\n\ndef pv_growing(c, g, r):\n    \"\"\"Value of c e^(g t) a year for ever, discounted at r.\"\"\"\n    ...\n",
+        "solution": "import numpy as np\n\ndef laplace_numeric(f, s, T=50, n=200000):\n    \"\"\"Trapezium rule for the integral of exp(-s t) f(t) over [0, T].\"\"\"\n    t = np.linspace(0, T, n + 1)\n    g = np.exp(-s * t) * f(t)\n    h = T / n\n    return h * (g.sum() - (g[0] + g[-1]) / 2)\n\ndef pv_growing(c, g, r):\n    \"\"\"Value of c e^(g t) a year for ever, discounted at r.\"\"\"\n    if r <= g:\n        raise ValueError(\"no value when r <= g\")\n    return c / (r - g)\n",
+        "examples": [
+          {
+            "call": "laplace_numeric(lambda t: t, 2)",
+            "expect": "0.25",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "pv_growing(5, 0.02, 0.06)",
+            "expect": "125.0",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "laplace_numeric(lambda t: np.exp(-t), 1)",
+            "expect": "0.5",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "laplace_numeric(lambda t: t, 2)",
+            "expect": "0.25",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "laplace_numeric(lambda t: np.sin(3*t), 1)",
+            "expect": "0.3",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "laplace_numeric(lambda t: np.cos(2*t), 1)",
+            "expect": "0.2",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "laplace_numeric(lambda t: t**2, 1)",
+            "expect": "2.0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-05
+            }
+          },
+          {
+            "call": "pv_growing(5, 0.02, 0.06)",
+            "expect": "125.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "pv_growing(1, 0, 0.04)",
+            "expect": "25.0",
+            "compare": "isclose"
+          },
+          {
+            "call": "pv_growing(5, 0.02, 0.01)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "pv_growing(5, 0.02, 0.02)",
+            "expect": "ValueError",
+            "compare": "raises"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Transforms are compared within absolute 1e-6 (1e-5 for $t^2$). Prices use `math.isclose` (relative 1e-9). The two divergent cases must raise `ValueError`. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build the grid with `np.linspace(0, T, n + 1)` and evaluate $e^{-st}f(t)$ on it."
+        },
+        {
+          "rung": "point",
+          "text": "The trapezium sum is $h$ times all the values, less half of the two end values.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`pv_growing` raises `ValueError` when `r <= g`, else returns `c / (r - g)`."
+        }
+      ],
+      "feedback": {
+        "correct": "Both pass: the trapezium values sit within $10^{-7}$ of 0.5, 0.25 and 0.3.",
+        "generic": "Not quite right. Read the failing row: a transform off by a factor, or a missing `ValueError`."
+      },
+      "explain": {
+        "text": "The trapezium rule on 200,000 strips is accurate to about $10^{-8}$ here; the cut at $T = 50$ costs less than $e^{-50}$. The guard turns the trap into an error a pricer cannot ignore."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A claim paid at default",
+      "prose": "A contract pays £100 when its issuer defaults. Default comes at hazard rate 2% a year, so its time has density $0.02e^{-0.02t}$. Discount at 4%. The value is $100\\,\\mathcal{L}\\{0.02e^{-0.02t}\\}(0.04)$. The moment generating function of `limits-thm` lesson 19 is this transform, read at $-s$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            80
+          ],
+          "y": [
+            0,
+            2.2
+          ],
+          "xLabel": "years $t$",
+          "height": 260,
+          "functions": [
+            {
+              "id": "f",
+              "expr": "2*exp(-0.06*x)",
+              "label": "$100 \\times 0.02e^{-0.02t}e^{-0.04t}$",
+              "labelAt": 36.0
+            }
+          ],
+          "params": {},
+          "yLabel": "£ a year"
+        },
+        "state": {
+          "area": {
+            "id": "A",
+            "f": "f",
+            "from": 0,
+            "to": 600
+          }
+        },
+        "derive": {
+          "caption": "Value: £{{fixed(values.A, 2)}}"
+        }
+      },
+      "question": "What is the claim worth?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 33.33,
+        "tol": {
+          "abs": 0.01
+        },
+        "unit": "£",
+        "accept": "£33.33: $100 \\times 0.02/0.06$",
+        "wrong": [
+          {
+            "id": "no-shift",
+            "value": 50,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "undiscounted",
+            "value": 100,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the exponential row with $a = -0.02$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\mathcal{L}\\{e^{-0.02t}\\}(s) = 1/(s + 0.02)$.",
+          "highlight": [
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100 \\times 0.02/(0.04 + 0.02) = £33.33$."
+        }
+      ],
+      "feedback": {
+        "correct": "$100 \\times 0.02/0.06 = £33.33$.",
+        "generic": "Not quite right. Transform the density, then multiply by £100.",
+        "byKey": {
+          "no-shift": "You used $0.02/0.04$, as if default never thinned the payments. The density's own $e^{-0.02t}$ adds to the rate.",
+          "undiscounted": "That is the payment with no discounting. A payment far in the future is worth less today."
+        }
+      },
+      "explain": {
+        "text": "$\\mathcal{L}\\{0.02e^{-0.02t}\\}(0.04) = 0.02/(0.04 + 0.02) = 1/3$. So the claim is worth £33.33, the area on the canvas. Discounting and default add their rates.",
+        "canvas": {
+          "highlight": [
+            "A"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A present value at continuous rate $s$ is a Laplace transform: $F(s) = \\int_0^\\infty e^{-st}f(t)\\,dt$.",
+      "The table follows from the definition and parts: $1/s$, $1/(s - a)$, $n!/s^{n+1}$, the sine and cosine rows, and the shift rule.",
+      "$\\mathcal{L}\\{f'\\} = sF - f(0)$ turns derivatives into algebra, starting values included."
+    ],
+    "formula": {
+      "name": "Laplace transform",
+      "tex": "F(s) = \\int_0^\\infty e^{-st}f(t)\\,dt, \\qquad \\mathcal{L}\\{f'\\} = sF(s) - f(0)",
+      "note": "A present value at the continuous rate $s$."
+    },
+    "trap": "Using $1/(s - a)$ at $s \\le a$: there the integral diverges, so a negative price means nothing."
+  },
+  "quiz": [
+    {
+      "id": "q-exp",
+      "difficulty": 2,
+      "question": "What is $\\mathcal{L}\\{e^{3t}\\}$ at $s = 5$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.5,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.5: $1/(5 - 3)$",
+        "wrong": [
+          {
+            "id": "plus",
+            "value": 0.125,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1/(5 - 3) = 0.5$.",
+        "generic": "Not quite right. Use $1/(s - a)$.",
+        "byKey": {
+          "plus": "You used $1/(s + a)$. The growth is subtracted from the rate."
+        }
+      },
+      "explain": {
+        "text": "$\\mathcal{L}\\{e^{3t}\\} = 1/(s - 3)$, which is $1/2 = 0.5$ at $s = 5$."
+      }
+    },
+    {
+      "id": "q-second",
+      "difficulty": 3,
+      "question": "Which is $\\mathcal{L}\\{f''\\}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$s^2F(s) - sf(0) - f'(0)$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$s^2F(s)$",
+            "why": "You dropped the starting values. Each use of the derivative rule leaves one."
+          },
+          {
+            "id": "c",
+            "text": "$s^2F(s) - f(0) - f'(0)$",
+            "why": "The rule is applied twice, so $f(0)$ picks up a factor of $s$."
+          },
+          {
+            "id": "d",
+            "text": "$s^2F(s) - sf'(0) - f(0)$",
+            "why": "You swapped the starting values. The $s$ multiplies $f(0)$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$s(sF - f(0)) - f'(0)$.",
+        "generic": "Not quite right. Apply $\\mathcal{L}\\{g'\\} = sG - g(0)$ with $g = f'$."
+      },
+      "explain": {
+        "text": "$\\mathcal{L}\\{f''\\} = s\\mathcal{L}\\{f'\\} - f'(0) = s(sF - f(0)) - f'(0)$. That is $s^2F - sf(0) - f'(0)$."
+      }
+    },
+    {
+      "id": "q-sine",
+      "difficulty": 2,
+      "question": "What is $\\mathcal{L}\\{\\sin 3t\\}$ at $s = 4$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.12,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.12: $3/(16 + 9)$",
+        "wrong": [
+          {
+            "id": "cos",
+            "value": 0.16,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$3/25 = 0.12$.",
+        "generic": "Not quite right. Use $b/(s^2 + b^2)$.",
+        "byKey": {
+          "cos": "That is $s/(s^2 + b^2)$, the cosine's transform."
+        }
+      },
+      "explain": {
+        "text": "$\\mathcal{L}\\{\\sin 3t\\} = 3/(s^2 + 9)$, which is $3/25 = 0.12$ at $s = 4$."
+      }
+    },
+    {
+      "id": "q-exist",
+      "difficulty": 3,
+      "question": "For which $s$ does $\\int_0^\\infty e^{-st}e^{2t}\\,dt$ exist?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$s > 2$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$s > 0$",
+            "why": "Positive rates are not enough: at $s = 1$ the integrand is $e^{t}$."
+          },
+          {
+            "id": "c",
+            "text": "$s > -2$",
+            "why": "You added the growth to the rate. The exponent is $-(s - 2)t$."
+          },
+          {
+            "id": "d",
+            "text": "Every $s$",
+            "why": "At $s \\le 2$ the integrand never decays, so the integral diverges."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "It exists exactly when $s > 2$.",
+        "generic": "Not quite right. Combine the exponents."
+      },
+      "explain": {
+        "text": "The integrand is $e^{-(s - 2)t}$. It decays only when $s > 2$, and then the integral is $1/(s - 2)$."
+      }
+    }
+  ]
+}
