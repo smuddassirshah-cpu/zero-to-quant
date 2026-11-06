@@ -2,6 +2,8 @@ Read CLAUDE.md, then `docs/briefs/concept-audit.md` (binding), DECISIONS "Correc
 
 Git: `git fetch origin claude/amazing-wright-d4mx7i`, then `git checkout -B claude/fable-audit origin/claude/amazing-wright-d4mx7i` (if `origin/claude/fable-audit` exists, check that out instead and rebase it onto `origin/claude/amazing-wright-d4mx7i`; never reset). Work and push only on `claude/fable-audit` (`git push -u origin claude/fable-audit`). Never push to `claude/amazing-wright-d4mx7i`: the content session merges your branch. Build the local CDN in the background first: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
 
+Resume: if `docs/reports/concept-audit-next.md` exists on the branch, read it and `docs/reports/concept-audit-log.md` first and continue from them: finish open courses (fix passes, re-audits) before starting new ones. The same prompt is pasted for every audit session.
+
 Scope: a content session is second-reading and fixing other courses in parallel. To avoid conflicting edits, audit only courses with no entry in `docs/reports/unread-levels-session-u.txt`, and no course a commit on `origin/claude/amazing-wright-d4mx7i` touched in the last day. Order: interview courses and Stage 3, then Stage 2, Stage 1, Stage 0. Exams come after their courses close.
 
 Per course, as `concept-audit.md` says:
