@@ -212,17 +212,22 @@ for h in (1 / 252, 1 / 1008):
     gap = np.abs(exact - euler).mean()
     check(gap < 2 * sig ** 2 * h, "euler_vs_exact: Euler gap is O(sigma^2 dt) at dt=%.5f (l4 screens[6].explain)" % h)
 
-# additive_update_not_first_order (EXPECTED_FAIL): the content claims "all three agree to first order".
+# additive_update_not_first_order (was EXPECTED_FAIL): the content claimed "all three agree to first order".
 # The additive update S + mu dt + sigma sqrt(dt) Z differs from the exact step by about (S - 1) sigma sqrt(dt) |Z|,
-# which is order sqrt(dt), not order dt, for S = 100. The assert below states the content's claim and fails.
+# which is order sqrt(dt), not order dt, for S = 100.
 h = 1 / 252
 S = 100.0
 exact = S * np.exp((mu - sig ** 2 / 2) * h + sig * math.sqrt(h) * zs)
 additive = S + mu * h + sig * math.sqrt(h) * zs
 gap_add = np.abs(exact - additive).mean()
-check(gap_add < 2 * S * sig ** 2 * h, "EXPECTED_FAIL additive_update_not_first_order: content says the additive update agrees to first order, gap %.3f vs O(dt) %.4f (l4 quiz[2].explain)" % (gap_add, S * sig ** 2 * h))
-# corrected assert, ready to enable once the explain is fixed:
-# check(gap_add > 10 * S * sig ** 2 * h, "additive update disagrees at order sqrt(dt) for S = 100 (l4 quiz[2].explain)")
+# Corrected claim (fix pass): the explain now says Euler agrees with the exact step to first order and the
+# additive update is a different model. Own computation: exact - additive = (S - 1) sigma sqrt(dt) Z + O(dt),
+# so the mean gap is about (S - 1) sigma sqrt(dt) sqrt(2/pi), order sqrt(dt); Euler's gap at S = 100 stays O(sigma^2 dt).
+euler_S = S * (1 + mu * h + sig * math.sqrt(h) * zs)
+gap_eul = np.abs(exact - euler_S).mean()
+pred_add = (S - 1) * sig * math.sqrt(h) * math.sqrt(2 / math.pi)
+check(abs(gap_add / pred_add - 1) < 0.05 and gap_add > 10 * S * sig ** 2 * h and gap_eul < 2 * S * sig ** 2 * h,
+      "additive_update_not_first_order (corrected claim, fix pass): additive gap %.3f ~ (S-1) sigma sqrt(dt) E|Z| = %.3f, order sqrt(dt); Euler gap %.4f is O(dt) (l4 quiz[2].explain)" % (gap_add, pred_add, gap_eul))
 
 # ---------------------------------------------------------------- review-1 and homework-1
 # w_fourth_moment: E W_t^4 = 3 t^2

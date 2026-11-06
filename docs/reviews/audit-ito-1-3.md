@@ -65,3 +65,26 @@ Reading: the two earlier passes between them found 14 conceptual issues and fixe
 - Concepts scripts: `python3 -I docs/reports/ito-L1-concepts.py`: 1 failure, the EXPECTED_FAIL for finding 1, exit 1. `ito-L2-concepts.py`: all checks passed, exit 0 (31 s). `ito-L3-concepts.py`: 1 failure, the EXPECTED_FAIL for finding 5, exit 1 (30 s).
 - Playthrough (from `app/`, `--local-cdn <pkgs>`): `--set ito/review-1 --set ito/homework-1`: browser relaunches 0, All passed. Same for levels 2 and 3. `--lesson ito/l3-quadratic-variation`, `ito/l8-fair-games`, `ito/l12-barrier-option`: browser relaunches 0, All passed.
 - No content file, `course.json` or state file was changed.
+
+## Fix pass
+
+Fixer: Opus, 6 Nov 2026, worktree `worktree-agent-ac83cfc728c549751`. Targeted string edits only; no lesson id, `course.json`, engine or other level touched.
+
+1. fixed | basis: exact minus additive step is $(S - 1)\sigma\sqrt{\Delta t}\,Z + O(\Delta t)$, mean gap 0.995 predicted, 0.997 simulated at $S = 100$, $\Delta t = 1/252$; Euler's gap is 0.0077, $O(\sigma^2\Delta t)$ (Kloeden and Platen 10.2). Explain now separates Euler (first order) from the additive model.
+2. fixed | basis: $\operatorname{sd}(\Delta W/\Delta t) = \Delta t^{-1/2}$ gives non-differentiability at each fixed $t$ almost surely; nowhere-differentiability of almost every path is the Paley-Wiener-Zygmund theorem (Karatzas and Shreve, Theorem 2.9.18). Applied with the citation reduced to the authors' names to fit the course voice.
+3. fixed | basis: Shreve II, Theorem 4.3.1: martingale property and isometry hold for adapted $\Delta$ with $E\int_0^T \Delta^2\,du < \infty$; otherwise only a local martingale (Øksendal 3.1, 3.3). Screen 7 and summary.ideas[2] now carry the condition.
+4. fixed | basis: $X_t = X_0 + \int_0^t b\,dW$ when $a = 0$, a martingale by Shreve II Theorem 4.3.1 when $E\int b^2 < \infty$; martingale definition needs adaptedness and $E|X_t| < \infty$ (Williams 10.3, Shreve II Definition 2.3.5). For the four rows of screen 2, $E\int_0^T b^2\,dt$ is $2T^2$, $9T^3$, $2T^2$ and $(e^{2T} - 1)/2$, all finite. Edited screens[1].explain, screens[2].prose, summary.ideas[0], summary.formula.note and review-1 items[4].prose; the note says "may be only a local martingale" without a screen number.
+5. fixed | basis: Glasserman 4.2: on the same $n$ draws the se ratio is $\sqrt{2/(1 + \rho)}$, $\rho = \operatorname{corr}(h(z), h(-z))$. My run, seed 11: $\rho = -0.50$ at the money (ratio 2.00), $-0.14$ at $K = 120$ (1.52), $-0.89$ at $K = 80$ (4.18); homework-3 items[4] 1.66. Prose and summary now say half for this call and less out of the money.
+6. fixed | basis: first-passage law for drifted Brownian motion (Shreve II Corollary 7.2.2): $\nu = r - \sigma^2/2 = 0.03$ gives 0.5508, $\nu = 0.10$ (real $\mu = 12\%$) gives 0.4412; a 500-step bridge-corrected simulation of 20,000 paths gave 0.559 and 0.442. Rounded to 55% and 44%; sentence rephrased to fit 35 words.
+7. fixed | basis: for the l12 down-and-out call, $c_{do} = c - c_{di}$ has delta 0.94 just above $B = 90$ (vanilla 0.43) and is 0 once knocked out, so delta jumps on a touch within Black-Scholes (Hull 26.9); discrete hedging and gaps are what turn that jump into a loss. Two sentences, no new number; rubric unaffected (it grades constant volatility and vega).
+
+Counts: fixed 7, disputed 0, deferred 0. Graded answers changed: none (all edits are prose, explain, summary or model text; no `answer`, `correct`, `wrong[]`, hint or feedback changed).
+
+Scripts: the two EXPECTED_FAIL asserts were replaced by the corrected claims with the fixer's own computation (L1: additive gap against $(S - 1)\sigma\sqrt{\Delta t}\,E|Z|$ and Euler gap; L3: $\sqrt{2/(1 + \rho)}$ at the money, at $K = 120$ and for homework-3), names and ledger references kept, "(corrected claim, fix pass)" added. No other check touched.
+
+### Fix-pass checks
+
+- Validator: `0 errors, 4290 warnings` (was 4279; new warnings are long-sentence and long-explain advisories); `content/manifest.json` restored.
+- Concepts and numbers scripts (`python3 -I`): `ito-L1-concepts.py` exit 0, `ito-L2-concepts.py` exit 0, `ito-L3-concepts.py` exit 0, `ito-2-perf-numbers.py` exit 0.
+- Voice: explanations over three sentences 0; over 35 words 0 (7802 sentences).
+- Playthrough (from `app/`, `--local-cdn <pkgs>`), plain and `--mobile`: lessons l2-normal-increments, l4-gbm, l5-integrating-noise, l8-fair-games, l11-prices-as-expectations, l12-barrier-option (quiz 4/4 each), sets review-1 (9 of 9) and homework-3 (36 of 36): browser relaunches 0, All passed, both runs.
