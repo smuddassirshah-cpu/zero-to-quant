@@ -1214,3 +1214,8 @@ Raised later (momentum-rep level 2):
 - `code` widget, `equal` and `isclose` on arrays holding NaN: NaN never equals NaN, so a test of `formation_returns` (NaN before month J + skip by design) cannot compare the array as it is. Wanted: an option such as `"nan": "equal"` that treats NaN as equal to NaN in element-wise comparisons. Workaround (l7): the call wraps the result in `np.nan_to_num(..., nan=-9.0)` and the `how` says NaN shows as −9.
 - `table` canvas and control `frames`: `rows` is a param, so a frame cannot swap a whole table (no skip against skip). Workaround (l10 explore): each frame patches `state.values` with all sixteen `r{i}c{j}` cells. Wanted: `state.rows` (or `frames` accepting a rows patch) for tables that switch panels.
 - Docs: `docs/LEVEL-BRIEF.md` says "look at the screenshots when you pass `--shots`", but `playthrough.mjs --shots` needs a folder argument and stops with "--shots needs a value" without one. Wanted: the brief shows `--shots <dir>`.
+
+Raised later (momentum-rep level 3):
+
+- `distribution` canvas, overlay labels: an `overlay` curve's label ("true 0.5%" in l13 screen 4) is drawn at the right end of the axis beside the main curve's tail, not on its own curve, so it reads as a label for the wrong curve. Wanted: overlay labels placed at the overlay's peak or with a `labelAt`. Workaround: the prose says which curve is dashed.
+- `numbers_lib`: every level script that has code widgets copies its own harness to run solutions and starters against the hidden tests (momentum-rep L2 and L3, numerics, convex and others). Wanted: a shared `lv.run_code_widgets()` in `app/tools/numbers_lib.py` that handles `isclose`, `equal`, `raises`, `setup`, `prelude` and `tol`. Workaround: the harness is copied into each script.
