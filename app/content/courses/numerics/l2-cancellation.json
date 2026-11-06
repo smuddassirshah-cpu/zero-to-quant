@@ -1,0 +1,1237 @@
+{
+ "id": "l2-cancellation",
+ "course": "numerics",
+ "title": "Losing digits to cancellation",
+ "minutes": 14,
+ "objectives": [
+  "Spot catastrophic cancellation and rewrite a formula to avoid it."
+ ],
+ "skills": [
+  "nm-float"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "The equation $x^2 - 10^8x + 1 = 0$ has a small root near $10^{-8}$. The textbook formula $x = \\tfrac{b - \\sqrt{b^2 - 4c}}{2}$ with $b = 10^8$, $c = 1$ gives the first row. The second row is the true root.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Small root"
+     ],
+     "rows": [
+      [
+       "Textbook formula",
+       "$7.450581 \\times 10^{-9}$"
+      ],
+      [
+       "True root",
+       "$1.000000 \\times 10^{-8}$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many significant digits of the textbook answer are correct?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "printed",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the two numbers digit by digit, starting from the first."
+    },
+    {
+     "rung": "point",
+     "text": "The first significant digits are 7 and 1.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Even the first digit differs, and the answer is $25.5\\%$ too small."
+    }
+   ],
+   "feedback": {
+    "correct": "None. Even the first digit is wrong.",
+    "generic": "Not quite right. Compare the leading digits, 7 and 1.",
+    "byKey": {
+     "printed": "Seven digits are printed, but they are not the true root's digits.",
+     "one": "The leading digits are 7 and 1, so not even the first one is right."
+    }
+   },
+   "explain": {
+    "text": "$7.450581 \\times 10^{-9}$ against $1.000000 \\times 10^{-8}$: the first digits already differ. The answer is $25.5\\%$ too small. Every step was rounded to 16 digits, so the loss happened somewhere specific.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Change the slider to set $b = 10^k$ in $x^2 - bx + 1 = 0$. The solid line is the textbook root's measured relative error, on a $\\log_{10}$ scale. The black dot follows the slider.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.5,
+      8.5
+     ],
+     "y": [
+      -17,
+      1
+     ],
+     "height": 280,
+     "xStep": 1,
+     "yStep": 2,
+     "xAxis": "bottom",
+     "xLabel": "$k$, where $b = 10^k$",
+     "yLabel": "$\\log_{10}$ relative error",
+     "functions": [
+      {
+       "id": "err",
+       "points": [
+        [
+         1,
+         -14.371
+        ],
+        [
+         2,
+         -12.913
+        ],
+        [
+         3,
+         -10.686
+        ],
+        [
+         4,
+         -8.952
+        ],
+        [
+         5,
+         -6.471
+        ],
+        [
+         6,
+         -5.118
+        ],
+        [
+         7,
+         -2.458
+        ],
+        [
+         8,
+         -0.594
+        ]
+       ],
+       "label": "textbook root",
+       "labelAt": 3
+      },
+      {
+       "id": "guide",
+       "expr": "2*x - 15.95",
+       "dashed": true,
+       "colour": 3,
+       "label": "slope 2",
+       "labelAt": 6.5,
+       "labelSide": "below"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 1,
+       "y": -14.371
+      }
+     ],
+     "params": {
+      "k": 1
+     }
+    },
+    "derive": {
+     "let": {
+      "b": "pow(10, k)",
+      "d": "sqrt(b*b - 4)",
+      "tb": "(b - d)/2",
+      "st": "2/(b + d)",
+      "err": "max(abs(tb - st)/st, pow(10, -17))"
+     },
+     "P.x": "k",
+     "P.y": "log10(err)",
+     "caption": "At b = 10^{{k}} the relative error is about 10^{{fixed(log10(err), 1)}}: about {{fixed(min(16, -log10(err)), 0)}} correct digits."
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "start": 1,
+      "label": "$k$"
+     }
+    ]
+   },
+   "question": "Each tenfold rise in $b$ costs about how many correct digits?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "two",
+      "text": "About two",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "About one",
+      "why": "The error rises two decades for each step in $k$, along the slope-2 line."
+     },
+     {
+      "id": "none",
+      "text": "None until $b = 10^8$",
+      "why": "Digits go long before the last step: at $b = 10^5$ about seven are already lost."
+     },
+     {
+      "id": "eight",
+      "text": "About eight",
+      "why": "That is the total over the whole range, not the cost of one step."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Follow the solid line from $k = 1$ to $k = 8$."
+    },
+    {
+     "rung": "point",
+     "text": "The solid line tracks the dashed line of slope 2.",
+     "highlight": [
+      "guide"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The error climbs from $10^{-14.4}$ to $10^{-0.6}$ in seven steps: about two decades a step."
+    }
+   ],
+   "feedback": {
+    "correct": "About two digits per tenfold $b$: the error grows like $b^2$.",
+    "generic": "Not quite right. Read the slope of the solid line."
+   },
+   "explain": {
+    "text": "The relative error grows like $b^2$: about $10^{-14}$ at $b = 10$, $10^{-6.5}$ at $10^5$ and $10^{-0.6}$ at $10^8$. At $10^8$ that is the $25.5\\%$ of the first screen. The rest of the lesson finds the step that does it.",
+    "canvas": {
+     "highlight": [
+      "err"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "$\\sqrt{b^2 - 4}$ is within $10^{-8}$ of $b = 10^8$, and each carries an absolute error near $10^{-8}$. Subtracting them keeps the error but shrinks the answer to $2 \\times 10^{-8}$. This is **catastrophic cancellation**: two nearly equal numbers subtracted.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Value"
+     ],
+     "rows": [
+      [
+       "$b$",
+       "$100{,}000{,}000$"
+      ],
+      [
+       "$\\sqrt{b^2 - 4}$",
+       "$99{,}999{,}999.99999998$"
+      ],
+      [
+       "$b - \\sqrt{b^2 - 4}$",
+       "$2 \\times 10^{-8}$, but only its error survives"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which formula gives the small root with no cancellation?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$x = \\dfrac{2c}{b + \\sqrt{b^2 - 4c}}$",
+      "correct": true
+     },
+     {
+      "id": "big",
+      "text": "$x = \\dfrac{b + \\sqrt{b^2 - 4c}}{2}$",
+      "why": "That adds instead of subtracting, but it is the other root, about $10^8$."
+     },
+     {
+      "id": "reorder",
+      "text": "$x = \\dfrac{-\\sqrt{b^2 - 4c} + b}{2}$",
+      "why": "Reordering the terms keeps the same subtraction of two numbers near $10^8$."
+     },
+     {
+      "id": "float32",
+      "text": "The textbook formula with $b$ rounded to 8 digits",
+      "why": "Fewer digits make the subtraction worse, not better."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply the textbook formula top and bottom by $b + \\sqrt{b^2 - 4c}$."
+    },
+    {
+     "rung": "point",
+     "text": "The top becomes $b^2 - (b^2 - 4c) = 4c$ exactly, with no subtraction left to compute.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So $x = \\tfrac{4c}{2(b + \\sqrt{b^2 - 4c})} = \\tfrac{2c}{b + \\sqrt{b^2 - 4c}}$: a sum of two positive numbers."
+    }
+   ],
+   "feedback": {
+    "correct": "Multiplying by the conjugate turns the subtraction into an addition.",
+    "generic": "Not quite right. Look for the formula that never subtracts two numbers near $10^8$.",
+    "byKey": {
+     "reorder": "You reordered the terms. The subtraction of two numbers near $10^8$ is still there."
+    }
+   },
+   "explain": {
+    "text": "Multiply by the conjugate: the top becomes $4c$ exactly and the bottom is a sum. The new formula gives $1.0 \\times 10^{-8}$ to full precision. Adding two positive numbers never cancels.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       2
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "The same subtraction hides in $e^x - 1$ for small $x$. Python has `math.expm1(x)` for it. Here are both at $x = 10^{-10}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Result"
+     ],
+     "rows": [
+      [
+       "`math.exp(1e-10) - 1`",
+       "$1.000000082740371 \\times 10^{-10}$"
+      ],
+      [
+       "`math.expm1(1e-10)`",
+       "$1.00000000005 \\times 10^{-10}$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the relative error of `math.exp(1e-10) - 1`, times $10^8$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8.27,
+    "tol": {
+     "abs": 0.05
+    },
+    "placeholder": "error times 10^8",
+    "wrong": [
+     {
+      "id": "abs",
+      "value": 0.0827,
+      "tol": {
+       "abs": 0.002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Relative error is the difference over the true value."
+    },
+    {
+     "rung": "point",
+     "text": "The two results differ by about $8.27 \\times 10^{-18}$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$8.27 \\times 10^{-18} / 10^{-10} = 8.27 \\times 10^{-8}$, which is 8.27 in these units."
+    }
+   ],
+   "feedback": {
+    "correct": "$8.27 \\times 10^{-8}$: about seven of 16 digits are lost.",
+    "generic": "Not quite right. Subtract the two results, divide by $10^{-10}$, then multiply by $10^8$.",
+    "byKey": {
+     "abs": "You stopped before multiplying by $10^8$, or divided by 100 too many."
+    }
+   },
+   "explain": {
+    "text": "`math.exp(1e-10)` is $1.0000000001$ with an error near $10^{-16}$. Subtracting 1 leaves $10^{-10}$ with that same error, a relative error of $8.27 \\times 10^{-8}$. `expm1` never forms the 1, so it keeps every digit."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "A one-pass variance uses $\\tfrac{\\sum x^2 - (\\sum x)^2/n}{n - 1}$: two huge sums, then a subtraction. Four prices sit at $10^9 + 4$, $10^9 + 7$, $10^9 + 13$ and $10^9 + 16$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Sample variance"
+     ],
+     "rows": [
+      [
+       "One-pass formula",
+       "$0.0$"
+      ],
+      [
+       "Two-pass",
+       "?"
+      ],
+      [
+       "Welford",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What sample variance should the code report?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 30,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "pop",
+      "value": 22.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The offset $10^9$ does not change the spread. Work with 4, 7, 13 and 16."
+    },
+    {
+     "rung": "point",
+     "text": "Their mean is 10, so the deviations are $-6, -3, 3, 6$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The squares sum to $36 + 9 + 9 + 36 = 90$, and $90 / 3 = 30$."
+    }
+   ],
+   "feedback": {
+    "correct": "30. The one-pass formula lost all of it.",
+    "generic": "Not quite right. Drop the offset, take deviations from the mean, square and divide by $n - 1$.",
+    "byKey": {
+     "pop": "You divided by $n = 4$. The sample variance divides by $n - 1 = 3$.",
+     "zero": "That is what the one-pass formula printed. The prices do differ, so the spread is not 0."
+    }
+   },
+   "explain": {
+    "text": "Each $x^2$ is near $10^{18}$, where doubles are 128 apart, so the sums lose the spread. Two passes, or **Welford's method** with a running mean, subtract the mean first and give 30.0. With the offset at $10^8$ the one-pass formula gives 29.33.",
+    "canvas": {
+     "values": {
+      "r1c1": "$30.0$",
+      "r2c1": "$30.0$"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "A derivative by forward bump, $\\tfrac{f(x + h) - f(x)}{h}$, subtracts two nearly equal numbers too. The dots are its error for $e^x$ at $x = 1$, with $h = 10^{-1}$ down to $10^{-15}$. The curve is the model $\\tfrac h2 c + \\tfrac{2\\epsilon c}{h}$ with $c = |f| = |f''|$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -15.5,
+      -0.5
+     ],
+     "y": [
+      -9.5,
+      0.5
+     ],
+     "height": 300,
+     "xStep": 2,
+     "yStep": 1,
+     "xAxis": "bottom",
+     "xLabel": "$\\log_{10} h$",
+     "yLabel": "$\\log_{10}$ error",
+     "params": {
+      "c": 2.718,
+      "u": 2.220446e-16
+     },
+     "functions": [
+      {
+       "id": "model",
+       "expr": "ln(c*10^x/2 + 2*u*c/10^x)/ln(10)",
+       "dashed": true,
+       "colour": 3,
+       "label": "model",
+       "labelAt": -3
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "h1",
+       "x": -1,
+       "y": -0.852
+      },
+      {
+       "id": "h2",
+       "x": -2,
+       "y": -1.865
+      },
+      {
+       "id": "h3",
+       "x": -3,
+       "y": -2.867
+      },
+      {
+       "id": "h4",
+       "x": -4,
+       "y": -3.867
+      },
+      {
+       "id": "h5",
+       "x": -5,
+       "y": -4.867
+      },
+      {
+       "id": "h6",
+       "x": -6,
+       "y": -5.867
+      },
+      {
+       "id": "h7",
+       "x": -7,
+       "y": -6.854
+      },
+      {
+       "id": "h8",
+       "x": -8,
+       "y": -8.18
+      },
+      {
+       "id": "h9",
+       "x": -9,
+       "y": -6.667
+      },
+      {
+       "id": "h10",
+       "x": -10,
+       "y": -5.81
+      },
+      {
+       "id": "h11",
+       "x": -11,
+       "y": -4.486
+      },
+      {
+       "id": "h12",
+       "x": -12,
+       "y": -3.364
+      },
+      {
+       "id": "h13",
+       "x": -13,
+       "y": -3.341
+      },
+      {
+       "id": "h14",
+       "x": -14,
+       "y": -2.03
+      },
+      {
+       "id": "h15",
+       "x": -15,
+       "y": -0.409
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "c",
+      "min": 0.5,
+      "max": 10,
+      "step": 0.1,
+      "start": 2.7,
+      "label": "$c$"
+     }
+    ]
+   },
+   "question": "Tap the bump size with the smallest error.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "h8"
+    ],
+    "max": 1,
+    "wrong": [
+     {
+      "id": "tiniest",
+      "set": [
+       "h15"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The error falls, then rises again. Find the bottom of the V."
+    },
+    {
+     "rung": "point",
+     "text": "Truncation error falls like $h$; rounding error grows like $\\epsilon/h$.",
+     "highlight": [
+      "h8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The lowest dot sits at $h = 10^{-8}$, with error $6.6 \\times 10^{-9}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$h = 10^{-8}$, error $6.6 \\times 10^{-9}$.",
+    "generic": "Not quite right. Look for the lowest dot, not the leftmost.",
+    "byKey": {
+     "tiniest": "You tapped the smallest bump. Its error is 0.39: rounding error grows like $\\epsilon / h$.",
+     "h1": "That is the largest bump. Its error, 0.14, is truncation from the curve's bend."
+    }
+   },
+   "explain": {
+    "text": "Truncation error $\\tfrac h2|f''|$ falls with $h$, while rounding error $\\tfrac{2\\epsilon|f|}{h}$ grows. The best measured bump is $h = 10^{-8}$, with error $6.6 \\times 10^{-9}$. At $h = 10^{-15}$ the error is 0.39.",
+    "canvas": {
+     "highlight": [
+      "h8",
+      "model"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "Take the standard call: $S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$. A risk system finds its delta by a forward bump of the spot. The true delta is $\\Phi(d_1) = 0.636831$. The table shows prices at bumped spots.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Spot",
+      "Call price (£)"
+     ],
+     "rows": [
+      [
+       "$100$",
+       "10.450583572185565"
+      ],
+      [
+       "$101$",
+       "11.096708127437402"
+      ],
+      [
+       "$100.01$",
+       "10.456952816712182"
+      ],
+      [
+       "$100 + 10^{-12}$",
+       "10.450583572186197"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which bump gives the most accurate delta?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "£1",
+      "why": "A £1 bump has truncation error from gamma: the delta comes out 0.6461, wrong by $9.3 \\times 10^{-3}$."
+     },
+     {
+      "id": "cent",
+      "text": "£0.01",
+      "correct": true
+     },
+     {
+      "id": "tiny",
+      "text": "$£10^{-12}$",
+      "why": "You picked the smallest bump. Only four digits of the price difference survive, so delta is 0.6324."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count how many digits of the two prices differ in the last row."
+    },
+    {
+     "rung": "point",
+     "text": "At $10^{-12}$ the prices agree to 13 digits, so only about three digits of their difference are real.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The errors are $9.3 \\times 10^{-3}$ at £1, $9.4 \\times 10^{-5}$ at £0.01 and $4.4 \\times 10^{-3}$ at $10^{-12}$."
+    }
+   ],
+   "feedback": {
+    "correct": "£0.01: error $9.4 \\times 10^{-5}$.",
+    "generic": "Not quite right. A smaller bump cuts truncation but multiplies rounding error.",
+    "byKey": {
+     "tiny": "You took the smallest bump as the most accurate. Rounding error grows like $\\epsilon/h$ and makes this delta wrong in the third decimal."
+    }
+   },
+   "explain": {
+    "text": "The £0.01 bump errs by $9.4 \\times 10^{-5}$, against $9.3 \\times 10^{-3}$ at £1 and $4.4 \\times 10^{-3}$ at $10^{-12}$. The model puts the best forward bump near $2\\sqrt{\\epsilon V/\\Gamma} \\approx 7 \\times 10^{-7}$. A bump size is a numerical choice, not a convention.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       3
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Write the forward-bump error as $$E(h) = \\frac{mh}{2} + \\frac{2\\epsilon c}{h},$$ with $m = |f''(x)|$ and $c = |f(x)|$. The best bump makes $E'(h) = \\tfrac m2 - \\tfrac{2\\epsilon c}{h^2}$ zero.",
+   "question": "Solve $E'(h) = 0$ for the best bump $h^*$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "2\\sqrt{\\frac{\\epsilon c}{m}}",
+    "accept": [
+     "2sqrt(epsilon c/m)",
+     "sqrt(4 epsilon c/m)",
+     "2*sqrt(epsilon*c/m)"
+    ],
+    "wrong": [
+     {
+      "id": "no-two",
+      "tex": "\\sqrt{\\frac{\\epsilon c}{m}}"
+     },
+     {
+      "id": "no-root",
+      "tex": "\\frac{4\\epsilon c}{m}"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Move the second term across: $\\tfrac m2 = \\tfrac{2\\epsilon c}{h^2}$."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply both sides by $\\tfrac{2h^2}{m}$."
+    },
+    {
+     "rung": "step",
+     "text": "$h^2 = \\tfrac{4\\epsilon c}{m}$, so take the square root."
+    }
+   ],
+   "feedback": {
+    "correct": "$h^* = 2\\sqrt{\\epsilon c/m}$.",
+    "generic": "Not quite right. Set $\\tfrac m2 = \\tfrac{2\\epsilon c}{h^2}$ and solve for $h$.",
+    "byKey": {
+     "no-two": "You dropped the factor 4 under the root. $h^2 = 4\\epsilon c/m$, so $h^* = 2\\sqrt{\\epsilon c/m}$.",
+     "no-root": "That is $h^2$. Take its square root."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac m2 = \\tfrac{2\\epsilon c}{h^2}$ gives $h^2 = \\tfrac{4\\epsilon c}{m}$, so $h^* = 2\\sqrt{\\epsilon c/m}$. For $e^x$ at 1, $c = m = e$ and $h^* = 2\\sqrt\\epsilon \\approx 2.98 \\times 10^{-8}$, next to the best dot. A central difference has truncation like $h^2$, so its best $h$ is near $\\epsilon^{1/3} \\approx 6 \\times 10^{-6}$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write the three fixes. Welford's method keeps a running mean and $M_2$, the sum of squared deviations. For each new $x$, set $d = x - \\text{mean}$ and add $d/n$ to the mean. Then add $d(x - \\text{mean})$ to $M_2$. The variance is $M_2/(n-1)$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Function",
+      "Fix"
+     ],
+     "rows": [
+      [
+       "`stable_small_root`",
+       "$\\tfrac{2c}{b + \\sqrt{b^2 - 4c}}$"
+      ],
+      [
+       "`welford_var`",
+       "running mean and $M_2$"
+      ],
+      [
+       "`best_bump`",
+       "central difference, $h = \\epsilon^{1/3}\\max(1, |x|)$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `stable_small_root`, `welford_var` and `best_bump`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\n\ndef stable_small_root(b, c):\n    \"\"\"Smaller root of x**2 - b*x + c = 0 (b > 0, b*b >= 4*c).\"\"\"\n    ...\n\ndef welford_var(xs):\n    \"\"\"Sample variance in one pass, by Welford's method.\"\"\"\n    ...\n\ndef best_bump(f, x):\n    \"\"\"Central difference with h = eps**(1/3) * max(1, |x|).\"\"\"\n    ...\n",
+    "solution": "import math\n\ndef stable_small_root(b, c):\n    return 2 * c / (b + math.sqrt(b * b - 4 * c))\n\ndef welford_var(xs):\n    mean, m2, n = 0.0, 0.0, 0\n    for x in xs:\n        n += 1\n        d = x - mean\n        mean += d / n\n        m2 += d * (x - mean)\n    return m2 / (n - 1)\n\ndef best_bump(f, x):\n    h = 2.220446049250313e-16 ** (1 / 3) * max(1.0, abs(x))\n    return (f(x + h) - f(x - h)) / (2 * h)\n",
+    "examples": [
+     {
+      "call": "stable_small_root(5, 6)",
+      "expect": "2.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "stable_small_root(1e8, 1)",
+      "expect": "1e-08",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-12
+      }
+     },
+     {
+      "call": "stable_small_root(5, 6)",
+      "expect": "2.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "stable_small_root(1e5, 1)",
+      "expect": "1.0000000001e-05",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-12
+      }
+     },
+     {
+      "call": "welford_var([1e9 + 4, 1e9 + 7, 1e9 + 13, 1e9 + 16])",
+      "expect": "30.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "welford_var([1e8 + 4, 1e8 + 7, 1e8 + 13, 1e8 + 16])",
+      "expect": "30.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "welford_var([1.0, 2.0, 3.0, 4.0])",
+      "expect": "5 / 3",
+      "compare": "isclose"
+     },
+     {
+      "call": "best_bump(math.exp, 1.0)",
+      "expect": "math.e",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "best_bump(math.sin, 0.5)",
+      "expect": "math.cos(0.5)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "best_bump(math.log, 1000.0)",
+      "expect": "0.001",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-07
+      }
+     }
+    ],
+    "how": "Submit runs 9 hidden tests, three per function. Answers are compared with math.isclose: the roots at relative 1e-12, the variances within 1e-9, the derivatives within 1e-9."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For the root, use the conjugate form from earlier."
+    },
+    {
+     "rung": "point",
+     "text": "In `welford_var`, update the mean before the second factor: $M_2$ gains $d \\times (x - \\text{new mean})$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For `best_bump`, `h = 2.220446049250313e-16 ** (1/3) * max(1.0, abs(x))`, then `(f(x + h) - f(x - h)) / (2 * h)`."
+    }
+   ],
+   "feedback": {
+    "correct": "All three pass, including the $10^9$ prices.",
+    "generic": "Not quite right. Check each function against the fix in the table."
+   },
+   "explain": {
+    "text": "The root uses a sum instead of a difference. Welford subtracts the running mean before squaring, so it never forms a number near $10^{18}$. The central bump at $\\epsilon^{1/3}$ balances its $h^2$ truncation against rounding."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "The same call has gamma $\\Gamma = 0.0187620$. The system estimates it by $\\tfrac{V(S + h) - 2V(S) + V(S - h)}{h^2}$, which divides a tiny difference by $h^2$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Bump $h$ (£)",
+      "Gamma estimate"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.01875972"
+      ],
+      [
+       "0.01",
+       "0.01876202"
+      ],
+      [
+       "0.0001",
+       "0.01876188"
+      ],
+      [
+       "0.000001",
+       "0.02842171"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which bump should the system use for gamma?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cent",
+      "text": "£0.01",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "£1",
+      "why": "£1 is close, but its truncation error, $2.3 \\times 10^{-6}$, is far above the £0.01 bump's."
+     },
+     {
+      "id": "tiny",
+      "text": "£0.000001",
+      "why": "You chose the smallest bump. Dividing by $h^2 = 10^{-12}$ multiplies the rounding error: the estimate is 51% too big."
+     },
+     {
+      "id": "mid",
+      "text": "£0.0001",
+      "why": "That bump already has rounding error $1.4 \\times 10^{-7}$, above the £0.01 bump's."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each estimate with $\\Gamma = 0.0187620$."
+    },
+    {
+     "rung": "point",
+     "text": "Rounding error in the numerator grows like $\\epsilon V / h^2$, faster than for delta.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "At £0.01 the estimate 0.01876202 is within $2.7 \\times 10^{-10}$ of gamma."
+    }
+   ],
+   "feedback": {
+    "correct": "£0.01: error $2.7 \\times 10^{-10}$.",
+    "generic": "Not quite right. Find the estimate closest to 0.0187620.",
+    "byKey": {
+     "tiny": "You chose the smallest bump. At $10^{-6}$ the estimate is 0.02842, wrong in the first digit."
+    }
+   },
+   "explain": {
+    "text": "At £0.01 gamma is right to $2.7 \\times 10^{-10}$. At $10^{-6}$ the estimate is 0.02842: dividing by $h^2$ turns $10^{-15}$ of rounding into $10^{-3}$. Central delta at £0.01 errs by only $8.6 \\times 10^{-9}$, so a risk system's bump size is a numerical choice.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1,
+       3
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Subtracting two nearly equal numbers keeps their absolute error but not their size. The relative error grows by their ratio.",
+   "Rewrite the formula so the subtraction never happens: the conjugate root, `expm1`, `log1p`, Welford's variance.",
+   "A bump size balances truncation against rounding: $h^* = 2\\sqrt{\\epsilon c/m}$ for a forward difference, near $\\epsilon^{1/3}$ for a central one."
+  ],
+  "formula": {
+   "name": "Stable small root",
+   "tex": "x = \\dfrac{2c}{b + \\sqrt{b^2 - 4c}}",
+   "note": "The same root as the textbook formula, with a sum where it subtracts."
+  },
+  "trap": "A smaller bump is not always more accurate. Below the best $h$, rounding error grows like $\\epsilon/h$."
+ },
+ "quiz": [
+  {
+   "id": "q-log1p",
+   "difficulty": 2,
+   "prose": "A small return $x = 10^{-12}$ goes into $\\ln(1 + x)$.",
+   "question": "Which call keeps every digit?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`math.log1p(x)`",
+      "correct": true
+     },
+     {
+      "id": "log",
+      "text": "`math.log(1 + x)`",
+      "why": "Forming $1 + x$ rounds away all but four digits of $x$ first: the result is $1.000089 \\times 10^{-12}$."
+     },
+     {
+      "id": "log10",
+      "text": "`math.log10(1 + x) * math.log(10)`",
+      "why": "That still forms $1 + x$ first, so the digits are already gone."
+     },
+     {
+      "id": "exp",
+      "text": "`math.exp(x) - 1`",
+      "why": "That is a different quantity, and it cancels too."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`log1p` never forms $1 + x$.",
+    "generic": "Not quite right. Look for the call that never adds 1 to $x$."
+   },
+   "explain": {
+    "text": "`math.log(1 + 1e-12)` gives $1.000089 \\times 10^{-12}$, wrong in the fifth digit. `math.log1p` works on $x$ directly and gives $9.999999999995 \\times 10^{-13}$. It is the logarithm's version of `expm1`."
+   }
+  },
+  {
+   "id": "q-sterbenz",
+   "difficulty": 3,
+   "prose": "Two doubles $x = 1.5$ and $y = 1.25$ are stored exactly, and $y/2 \\le x \\le 2y$.",
+   "question": "What can you say about the computed $x - y$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "It is exact: subtraction of close doubles adds no rounding",
+      "correct": true
+     },
+     {
+      "id": "cat",
+      "text": "It suffers catastrophic cancellation",
+      "why": "Cancellation harms only when $x$ and $y$ already carry errors. These are exact."
+     },
+     {
+      "id": "eps",
+      "text": "It is off by up to $\\epsilon$",
+      "why": "When $y/2 \\le x \\le 2y$ the difference fits in the format, so nothing is rounded."
+     },
+     {
+      "id": "never",
+      "text": "Subtraction is never exact in floating point",
+      "why": "Here the result 0.25 is a double, and the hardware returns it exactly."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Exact, by Sterbenz's lemma.",
+    "generic": "Not quite right. Ask whether $x$ and $y$ carry any error before the subtraction."
+   },
+   "explain": {
+    "text": "When $y/2 \\le x \\le 2y$ the difference of two doubles is itself a double, so it is computed exactly. Cancellation does no harm here. The damage on earlier screens came from errors already sitting in $\\sqrt{b^2 - 4}$ and in $\\sum x^2$."
+   }
+  },
+  {
+   "id": "q-book-variance",
+   "difficulty": 3,
+   "prose": "A book's daily mark-to-market sits near £1bn and moves by a few thousand pounds a day.",
+   "question": "Which variance method should the risk report use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Welford's method, or two passes",
+      "correct": true
+     },
+     {
+      "id": "onepass",
+      "text": "$\\overline{x^2} - \\bar x^2$, because it needs one pass",
+      "why": "Each $x^2$ is near $10^{18}$, where doubles are 128 apart, so the spread is lost before the subtraction."
+     },
+     {
+      "id": "float32",
+      "text": "Any formula, in float32 to save memory",
+      "why": "float32 keeps seven digits, so £1bn has a gap of £64: the moves vanish."
+     },
+     {
+      "id": "round",
+      "text": "The one-pass formula, rounded to pence",
+      "why": "Rounding the answer cannot restore digits the subtraction has already lost."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Subtract the mean before squaring.",
+    "generic": "Not quite right. Avoid squaring numbers near £1bn."
+   },
+   "explain": {
+    "text": "Squares near $10^{18}$ have gaps of 128, so $\\overline{x^2} - \\bar x^2$ keeps almost nothing of a variance near $10^7$. It can even come out negative. Welford or two passes subtract the mean first and keep every digit."
+   }
+  },
+  {
+   "id": "q-central-h",
+   "difficulty": 2,
+   "prose": "A central difference $\\tfrac{f(x + h) - f(x - h)}{2h}$ has truncation error like $h^2$ and rounding error like $\\epsilon/h$.",
+   "question": "Near which $h$ is it most accurate, for $x$ near 1?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "About $6 \\times 10^{-6}$, near $\\epsilon^{1/3}$",
+      "correct": true
+     },
+     {
+      "id": "sqrt",
+      "text": "About $10^{-8}$, near $\\sqrt\\epsilon$",
+      "why": "That balances an $h$ truncation. The central difference's truncation falls like $h^2$."
+     },
+     {
+      "id": "eps",
+      "text": "About $10^{-16}$, near $\\epsilon$",
+      "why": "At that bump only rounding error is left, and it is huge."
+     },
+     {
+      "id": "big",
+      "text": "About $10^{-2}$",
+      "why": "That bump leaves truncation error near $10^{-5}$, far above the best."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Balancing $h^2$ against $\\epsilon/h$ gives $h \\sim \\epsilon^{1/3} \\approx 6 \\times 10^{-6}$.",
+    "generic": "Not quite right. Set $h^2$ equal to $\\epsilon/h$ and solve."
+   },
+   "explain": {
+    "text": "$h^2 \\approx \\epsilon/h$ gives $h^3 \\approx \\epsilon$, so $h \\approx \\epsilon^{1/3} \\approx 6 \\times 10^{-6}$. For $e^x$ at 1 the measured error is $5.9 \\times 10^{-11}$ at $h = 10^{-5}$. That is why `best_bump` used $\\epsilon^{1/3}$."
+   }
+  }
+ ]
+}

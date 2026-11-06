@@ -1,0 +1,1141 @@
+{
+ "id": "l4-stability",
+ "course": "numerics",
+ "title": "How sensitive an algorithm is",
+ "minutes": 15,
+ "objectives": [
+  "Compare normal equations with QR for least squares and explain which is stable."
+ ],
+ "skills": [
+  "nm-stability"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "$e^{-20} = \\sum_k \\tfrac{(-20)^k}{k!}$. Summing the Taylor series term by term looks like a safe way to compute it. Here is the sum beside the library value.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> s, t = 0.0, 1.0",
+      ">>> for k in range(1, 120):",
+      "...     s += t",
+      "...     t *= -20 / k",
+      ">>> s",
+      "6.147561828914626e-09",
+      ">>> math.exp(-20)",
+      "2.061153622438558e-09"
+     ]
+    },
+    "state": {
+     "tone": {
+      "l6": "err",
+      "l8": "ok"
+     }
+    }
+   },
+   "question": "By what percentage is the series sum too big?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.983,
+    "tol": {
+     "abs": 0.005
+    },
+    "unit": "%",
+    "accept": "198.3%",
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 2.983,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ],
+    "over100": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Percentage error is (computed minus true) over true."
+    },
+    {
+     "rung": "point",
+     "text": "$6.1476 - 2.0612 = 4.0864$, in units of $10^{-9}$.",
+     "highlight": [
+      "l6",
+      "l8"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$4.0864 / 2.0612 = 1.983$, which is 198.3%."
+    }
+   ],
+   "feedback": {
+    "correct": "198.3% too big: nearly three times the answer.",
+    "generic": "Not quite right. Subtract the true value, then divide by it.",
+    "byKey": {
+     "ratio": "That is the ratio of the two values, 2.983. Subtract 1 for the error."
+    }
+   },
+   "explain": {
+    "text": "$(6.1476 - 2.0612)/2.0612 = 1.983$, so the sum is 198.3% too big. Yet $e^x$ at $-20$ has $\\kappa = 20$, a well-conditioned problem. Something in the method lost the digits.",
+    "canvas": {
+     "highlight": [
+      "l6"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "The curve is the size of the term $\\tfrac{m^k}{k!}$ in the series for $e^{-m}$, on a $\\log_{10}$ scale. The dashed line is the answer $e^{-m}$. Each term carries a rounding error of about $\\epsilon$ times its size.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      60
+     ],
+     "y": [
+      -14,
+      12
+     ],
+     "height": 280,
+     "xStep": 10,
+     "yStep": 2,
+     "xAxis": "bottom",
+     "xLabel": "term $k$",
+     "yLabel": "$\\log_{10}$ size",
+     "params": {
+      "m": 20
+     },
+     "functions": [
+      {
+       "id": "term",
+       "expr": "(x*ln(m) - lgamma(x + 1))/ln(10)",
+       "domain": [
+        0,
+        60
+       ],
+       "label": "term size",
+       "labelAt": 45
+      },
+      {
+       "id": "ans",
+       "expr": "-m/ln(10)",
+       "dashed": true,
+       "colour": 2,
+       "label": "answer $e^{-m}$",
+       "labelAt": 50
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "m": 20
+     }
+    },
+    "derive": {
+     "let": {
+      "top": "(m*ln(m) - lgamma(m + 1))/ln(10)",
+      "bot": "-m/ln(10)"
+     },
+     "caption": "Largest term about 10^{{fixed(top, 1)}}, answer about 10^{{fixed(bot, 1)}}: {{fixed(top - bot, 1)}} powers of ten apart."
+    },
+    "controls": [
+     {
+      "bind": "m",
+      "min": 2,
+      "max": 30,
+      "step": 1,
+      "start": 20,
+      "label": "$m$"
+     }
+    ]
+   },
+   "question": "At $m = 20$, how many powers of ten separate the largest term from the answer?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16.3,
+    "tol": {
+     "abs": 0.15
+    },
+    "wrong": [
+     {
+      "id": "top",
+      "value": 7.6,
+      "tol": {
+       "abs": 0.15
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption at $m = 20$."
+    },
+    {
+     "rung": "point",
+     "text": "The largest term is $\\tfrac{20^{20}}{20!} \\approx 4.31 \\times 10^7$, and the answer is $2.06 \\times 10^{-9}$.",
+     "highlight": [
+      "term",
+      "ans"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\log_{10}(4.31 \\times 10^7) - \\log_{10}(2.06 \\times 10^{-9}) = 7.63 + 8.69 \\approx 16.3$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 16.3: more than the 16 digits a double holds.",
+    "generic": "Not quite right. Subtract the answer's power of ten from the largest term's.",
+    "byKey": {
+     "top": "7.6 is the largest term's power alone. Count down to the answer's, $-8.7$, as well."
+    }
+   },
+   "explain": {
+    "text": "The largest term is $4.31 \\times 10^7$, and its rounding error alone is near $10^{-8}$. That is bigger than the answer, $2.06 \\times 10^{-9}$. The terms cancel down by 16.3 powers of ten, and a double cannot follow that far.",
+    "canvas": {
+     "params": {
+      "m": 20
+     },
+     "highlight": [
+      "term",
+      "ans"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "An algorithm is **backward stable** when its answer is the exact answer for slightly changed data. Then $$\\text{forward error} \\lesssim \\kappa \\times \\text{backward error}.$$ The series for $e^{-20}$ is not: no nearby $x$ has $e^x = 6.1 \\times 10^{-9}$ within rounding.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> s, t = 0.0, 1.0",
+      ">>> for k in range(1, 120):",
+      "...     s += t",
+      "...     t *= 20 / k",
+      ">>> 1 / s",
+      "2.061153622438557e-09"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which way of computing $e^{-20}$ is stable?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Sum the series for $e^{20}$, then take $1/\\text{sum}$",
+      "correct": true
+     },
+     {
+      "id": "reverse",
+      "text": "Sum the series for $e^{-20}$ from the smallest term up",
+      "why": "The order changes little: terms of $4 \\times 10^7$ still cancel to $10^{-9}$."
+     },
+     {
+      "id": "more",
+      "text": "Sum more terms of the series for $e^{-20}$",
+      "why": "The missing digits were lost to cancellation, not to too few terms."
+     },
+     {
+      "id": "none",
+      "text": "None: the problem is ill-conditioned",
+      "why": "$e^x$ at $-20$ has $\\kappa = 20$. The problem is fine; the algorithm was not."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which series has terms all of one sign?"
+    },
+    {
+     "rung": "point",
+     "text": "The series for $e^{20}$ only adds positive numbers, so nothing cancels.",
+     "highlight": [
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Its sum is accurate to $u$ in relative terms, and $1/x$ has $\\kappa = 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1/e^{20}$ gives $2.061153622438557 \\times 10^{-9}$, every digit but the last.",
+    "generic": "Not quite right. Look for a sum with no cancellation.",
+    "byKey": {
+     "none": "You blamed the problem. $\\kappa = 20$ costs about one digit; the series lost all of them."
+    }
+   },
+   "explain": {
+    "text": "The terms of $e^{20}$ are all positive, so their sum keeps a relative error near $u$. Taking $1/\\text{sum}$ keeps it, since $\\kappa = 1$ for $1/x$. The result matches `math.exp(-20)` in every digit but the last."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "The same thing happens in least squares. The **Läuchli matrix** below has two nearly parallel columns. The normal equations form $\\mathbf A^T\\mathbf A$, whose diagonal holds $1 + \\epsilon^2 = 1 + 10^{-16}$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         1,
+         1
+        ],
+        [
+         "$\\epsilon$",
+         0
+        ],
+        [
+         0,
+         "$\\epsilon$"
+        ]
+       ],
+       "label": "$\\mathbf A$"
+      },
+      {
+       "id": "N",
+       "rows": [
+        [
+         "$1 + \\epsilon^2$",
+         1
+        ],
+        [
+         1,
+         "$1 + \\epsilon^2$"
+        ]
+       ],
+       "label": "$\\mathbf A^T\\mathbf A$"
+      }
+     ],
+     "ops": [
+      "$\\Rightarrow$"
+     ]
+    },
+    "state": {
+     "caption": "$\\epsilon = 10^{-8}$, $\\mathbf b = (2, \\epsilon, \\epsilon)$, exact answer $(1, 1)$."
+    }
+   },
+   "question": "What is the determinant of $\\mathbf A^T\\mathbf A$ as stored?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 1e-20
+    },
+    "wrong": [
+     {
+      "id": "exact",
+      "value": 2e-16,
+      "tol": {
+       "abs": 1e-17
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is $1 + 10^{-16}$ a double, or does it round?"
+    },
+    {
+     "rung": "point",
+     "text": "The gap above 1 is $2.2 \\times 10^{-16}$, so $1 + 10^{-16}$ rounds to 1.",
+     "highlight": [
+      "N"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The stored matrix is $\\begin{bmatrix}1 & 1\\\\ 1 & 1\\end{bmatrix}$, whose determinant is $1 - 1$."
+    }
+   ],
+   "feedback": {
+    "correct": "0. The stored $\\mathbf A^T\\mathbf A$ is singular.",
+    "generic": "Not quite right. Round $1 + 10^{-16}$ to the nearest double first.",
+    "byKey": {
+     "exact": "$2 \\times 10^{-16}$ is the exact determinant. The computer rounds $1 + 10^{-16}$ to 1 before it gets there."
+    }
+   },
+   "explain": {
+    "text": "$1 + 10^{-16}$ is below $1 + u$, so it rounds to 1. The stored $\\mathbf A^T\\mathbf A$ is $\\begin{bmatrix}1 & 1\\\\ 1 & 1\\end{bmatrix}$, singular, and the normal equations fail. QR and `np.linalg.lstsq` work on $\\mathbf A$ itself and return $(1, 1)$.",
+    "canvas": {
+     "rows": {
+      "N": [
+       [
+        1,
+        1
+       ],
+       [
+        1,
+        1
+       ]
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "$\\kappa(\\mathbf A) = 1.41 \\times 10^8$ here. A stable method loses about $\\log_{10}\\kappa(\\mathbf A)$ digits. The normal equations solve a system with $\\kappa(\\mathbf A^T\\mathbf A) = \\kappa(\\mathbf A)^2$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         1,
+         1
+        ],
+        [
+         "$\\epsilon$",
+         0
+        ],
+        [
+         0,
+         "$\\epsilon$"
+        ]
+       ],
+       "label": "$\\mathbf A$"
+      },
+      {
+       "id": "N",
+       "rows": [
+        [
+         "$1 + \\epsilon^2$",
+         1
+        ],
+        [
+         1,
+         "$1 + \\epsilon^2$"
+        ]
+       ],
+       "label": "$\\mathbf A^T\\mathbf A$"
+      }
+     ],
+     "ops": [
+      "$\\Rightarrow$"
+     ]
+    },
+    "state": {
+     "caption": "$\\epsilon = 10^{-8}$, $\\mathbf b = (2, \\epsilon, \\epsilon)$, exact answer $(1, 1)$."
+    }
+   },
+   "question": "How many digits can the normal equations lose here?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 16.3,
+    "tol": {
+     "abs": 0.1
+    },
+    "placeholder": "digits, to one place",
+    "wrong": [
+     {
+      "id": "single",
+      "value": 8.15,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Square the condition number first."
+    },
+    {
+     "rung": "point",
+     "text": "$(1.41 \\times 10^8)^2 = 2 \\times 10^{16}$.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\log_{10}(2 \\times 10^{16}) = 16.3$."
+    }
+   ],
+   "feedback": {
+    "correct": "16.3 digits: more than a double has.",
+    "generic": "Not quite right. Take $\\log_{10}$ of $\\kappa(\\mathbf A)^2$.",
+    "byKey": {
+     "single": "8.15 digits is what QR loses, from $\\kappa(\\mathbf A)$. The normal equations square it."
+    }
+   },
+   "explain": {
+    "text": "$\\kappa(\\mathbf A)^2 = 2 \\times 10^{16}$ is past $1/\\epsilon$, so $\\log_{10}$ of it, 16.3, is more digits than a double holds. QR works with $\\kappa(\\mathbf A)$ and loses about 8. The problem is the same; one algorithm squares its sensitivity."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Why does $\\mathbf A^T\\mathbf A$ square the condition number? Use the SVD. Put the steps in order and leave out the two false lines.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Every matrix has an SVD: $\\mathbf A = \\mathbf U\\boldsymbol\\Sigma\\mathbf V^T$, with $\\mathbf U^T\\mathbf U = \\mathbf I$ and $\\mathbf V$ orthogonal."
+     },
+     {
+      "id": "s2",
+      "text": "The transpose reverses the product: $\\mathbf A^T\\mathbf A = \\mathbf V\\boldsymbol\\Sigma^T\\mathbf U^T\\mathbf U\\boldsymbol\\Sigma\\mathbf V^T$."
+     },
+     {
+      "id": "s3",
+      "text": "$\\mathbf U^T\\mathbf U = \\mathbf I$, so $\\mathbf A^T\\mathbf A = \\mathbf V(\\boldsymbol\\Sigma^T\\boldsymbol\\Sigma)\\mathbf V^T$, with diagonal entries $\\sigma_k^2$."
+     },
+     {
+      "id": "s4",
+      "text": "That is an SVD of $\\mathbf A^T\\mathbf A$, so $\\kappa(\\mathbf A^T\\mathbf A) = \\sigma_{\\max}^2/\\sigma_{\\min}^2 = \\kappa(\\mathbf A)^2$."
+     },
+     {
+      "id": "x1",
+      "text": "QR changes the conditioning of the problem, so $\\kappa(\\mathbf R) = \\sqrt{\\kappa(\\mathbf A)}$.",
+      "why": "QR leaves the problem alone: $\\mathbf Q$ keeps lengths, so $\\kappa(\\mathbf R) = \\kappa(\\mathbf A)$. It wins by not squaring $\\kappa$."
+     },
+     {
+      "id": "x2",
+      "text": "$\\mathbf A^T\\mathbf A = \\mathbf U\\boldsymbol\\Sigma^2\\mathbf U^T$.",
+      "why": "The factors that meet in the middle are $\\mathbf U^T\\mathbf U$. The outer factors are $\\mathbf V$ and $\\mathbf V^T$."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4"
+    ],
+    "distractors": [
+     "x1",
+     "x2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the factorisation of $\\mathbf A$."
+    },
+    {
+     "rung": "point",
+     "text": "Transposing $\\mathbf U\\boldsymbol\\Sigma\\mathbf V^T$ gives $\\mathbf V\\boldsymbol\\Sigma^T\\mathbf U^T$."
+    },
+    {
+     "rung": "step",
+     "text": "The middle $\\mathbf U^T\\mathbf U$ cancels, leaving singular values $\\sigma_k^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "The singular values square, so the condition number squares.",
+    "generic": "Not quite right. Write the SVD, transpose, cancel $\\mathbf U^T\\mathbf U$, then read off the singular values.",
+    "byKey": {
+     "x1": "QR does not change the problem's conditioning. $\\kappa(\\mathbf R) = \\kappa(\\mathbf A)$, and QR wins by not squaring it.",
+     "x2": "The factors meeting in the middle are $\\mathbf U^T\\mathbf U$, so $\\mathbf V$ ends up outside.",
+     "left-out": "All four true lines belong in the derivation."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf A^T\\mathbf A = \\mathbf V(\\boldsymbol\\Sigma^T\\boldsymbol\\Sigma)\\mathbf V^T$ has singular values $\\sigma_k^2$, so its condition number is $\\kappa(\\mathbf A)^2$. QR solves $\\mathbf R\\mathbf x = \\mathbf Q^T\\mathbf b$, and $\\kappa(\\mathbf R) = \\kappa(\\mathbf A)$. That is why `least-squares` preferred QR."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Trefethen and Bau's lecture 19 fits a degree-14 polynomial to $e^{\\sin 4t}$ at 100 points of $[0, 1]$. It is scaled so the last coefficient is 1. Here $\\kappa(\\mathbf A) \\approx 2.27 \\times 10^{10}$. The table shows the app's own NumPy.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Last coefficient",
+      "Correct digits"
+     ],
+     "rows": [
+      [
+       "`np.linalg.lstsq`",
+       "0.99999997",
+       "about 7"
+      ],
+      [
+       "QR, then solve with $\\mathbf R$",
+       "0.99999997",
+       "about 7"
+      ],
+      [
+       "Normal equations",
+       "$-0.27$",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many digits of the last coefficient do the normal equations get right?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "wrong": [
+     {
+      "id": "qr",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "bound",
+      "value": 6,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare $-0.27$ with the true value, 1."
+    },
+    {
+     "rung": "point",
+     "text": "Even the sign is wrong.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\kappa(\\mathbf A)^2 \\approx 5 \\times 10^{20}$, far past $1/\\epsilon$: no digit can survive."
+    }
+   ],
+   "feedback": {
+    "correct": "None: $-0.27$ for a true 1.",
+    "generic": "Not quite right. Compare $-0.27$ with 1.",
+    "byKey": {
+     "qr": "7 digits is what QR and `lstsq` kept. The normal equations got none.",
+     "bound": "About 6 is the stable bound, $16 - \\log_{10}\\kappa(\\mathbf A)$. The normal equations square $\\kappa$."
+    }
+   },
+   "explain": {
+    "text": "QR and `lstsq` give 0.99999997, a relative error of about $3.5 \\times 10^{-8}$, inside the stable bound $\\kappa u \\approx 2.5 \\times 10^{-6}$. The normal equations give $-0.27$ here, and $-0.16$ in a desktop NumPy: no digit, and no agreement between machines. That disagreement is itself the sign of an unstable algorithm.",
+    "canvas": {
+     "values": {
+      "r2c2": "none"
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague sees the normal equations return $-0.27$ for a coefficient that should be 1. They say: \"This fit is hopeless; the problem is too ill-conditioned to solve.\"",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Last coefficient",
+      "Correct digits"
+     ],
+     "rows": [
+      [
+       "`np.linalg.lstsq`",
+       "0.99999997",
+       "about 7"
+      ],
+      [
+       "QR, then solve with $\\mathbf R$",
+       "0.99999997",
+       "about 7"
+      ],
+      [
+       "Normal equations",
+       "$-0.27$",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What do you tell them?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The algorithm failed, not the problem: QR gets 7 digits from the same data",
+      "correct": true
+     },
+     {
+      "id": "blame",
+      "text": "They are right: a wrong answer means an ill-conditioned problem",
+      "why": "You took a wrong answer as proof of a bad problem. QR solves the same problem to 7 digits, so the algorithm was at fault."
+     },
+     {
+      "id": "eps",
+      "text": "Use float32 to make the rounding smaller",
+      "why": "float32 rounds more, not less: its $\\epsilon$ is $1.19 \\times 10^{-7}$."
+     },
+     {
+      "id": "lower",
+      "text": "Drop to a degree-2 fit; degree 14 cannot be fitted",
+      "why": "Degree 14 fits to 7 digits by QR. Changing the model hides an algorithm fault."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is there a method that solved this exact problem well?"
+    },
+    {
+     "rung": "point",
+     "text": "The first two rows use the same $\\mathbf A$ and $\\mathbf b$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A good algorithm on this problem loses about $\\log_{10} 2.27 \\times 10^{10} \\approx 10$ digits at worst, and here only 8 or 9."
+    }
+   ],
+   "feedback": {
+    "correct": "A bad algorithm for a fair problem.",
+    "generic": "Not quite right. Look at what QR did with the same numbers.",
+    "byKey": {
+     "blame": "You blamed the problem for the algorithm's failure. The same data gives 7 good digits by QR."
+    }
+   },
+   "explain": {
+    "text": "The problem has $\\kappa \\approx 2.3 \\times 10^{10}$, and a stable method still keeps 7 digits. The normal equations square $\\kappa$ and keep none. Wrong answers come from bad problems or bad algorithms; $\\kappa$ tells you which.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write both solvers. `np.linalg.qr(A)` returns the thin $\\mathbf Q$ and the triangular $\\mathbf R$. Solve $\\mathbf R\\mathbf x = \\mathbf Q^T\\mathbf b$ from the bottom row up, or with `np.linalg.solve` on $\\mathbf R$. Do not call `np.linalg.lstsq`.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         1,
+         1
+        ],
+        [
+         "$\\epsilon$",
+         0
+        ],
+        [
+         0,
+         "$\\epsilon$"
+        ]
+       ],
+       "label": "$\\mathbf A$"
+      },
+      {
+       "id": "N",
+       "rows": [
+        [
+         "$1 + \\epsilon^2$",
+         1
+        ],
+        [
+         1,
+         "$1 + \\epsilon^2$"
+        ]
+       ],
+       "label": "$\\mathbf A^T\\mathbf A$"
+      }
+     ],
+     "ops": [
+      "$\\Rightarrow$"
+     ]
+    },
+    "state": {
+     "caption": "$\\epsilon = 10^{-8}$, $\\mathbf b = (2, \\epsilon, \\epsilon)$, exact answer $(1, 1)$."
+    }
+   },
+   "question": "Complete `lstsq_normal` and `lstsq_qr`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef lstsq_normal(A, b):\n    \"\"\"Least squares by the normal equations: solve (A^T A) x = A^T b.\"\"\"\n    ...\n\ndef lstsq_qr(A, b):\n    \"\"\"Least squares by QR: A = QR, then solve R x = Q^T b.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef lstsq_normal(A, b):\n    A, b = np.asarray(A, dtype=float), np.asarray(b, dtype=float)\n    return np.linalg.solve(A.T @ A, A.T @ b)\n\ndef lstsq_qr(A, b):\n    A, b = np.asarray(A, dtype=float), np.asarray(b, dtype=float)\n    Q, R = np.linalg.qr(A)\n    y = Q.T @ b\n    n = R.shape[1]\n    x = np.zeros(n)\n    for k in range(n - 1, -1, -1):\n        x[k] = (y[k] - R[k, k + 1:] @ x[k + 1:]) / R[k, k]\n    return x\n",
+    "examples": [
+     {
+      "call": "lstsq_qr([[1, 0], [1, 1], [1, 2]], [1, 3, 2])",
+      "expect": "[1.5, 0.5]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "lstsq_qr([[1, 0], [1, 1], [1, 2]], [1, 3, 2])",
+      "expect": "[1.5, 0.5]",
+      "compare": "isclose"
+     },
+     {
+      "call": "lstsq_normal([[1, 0], [1, 1], [1, 2]], [1, 3, 2])",
+      "expect": "[1.5, 0.5]",
+      "compare": "isclose"
+     },
+     {
+      "setup": "e = 1e-8; A8 = [[1, 1], [e, 0], [0, e]]; b8 = [2, e, e]",
+      "call": "lstsq_qr(A8, b8)",
+      "expect": "[1.0, 1.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "setup": "e = 1e-7; A7 = [[1, 1], [e, 0], [0, e]]; b7 = [2, e, e]",
+      "call": "lstsq_normal(A7, b7)",
+      "expect": "[1.0, 1.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "e = 1e-8; A8 = [[1, 1], [e, 0], [0, e]]; b8 = [2, e, e]\ntry:\n    r8 = lstsq_normal(A8, b8)\nexcept Exception:\n    r8 = None",
+      "call": "r8 is None or not np.allclose(r8, [1, 1])",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "t = np.linspace(0, 1, 100); A15 = np.vander(t, 15, increasing=True); b15 = np.exp(np.sin(4 * t)) / 2006.787453080206",
+      "call": "abs(float(lstsq_qr(A15, b15)[-1]) - 1) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "'linalg.lstsq' not in __learner_source__ and 'linalg.qr' in __learner_source__",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests with NumPy. They cover a small fit, the Läuchli matrix at two sizes of epsilon, and Trefethen's degree-14 fit. Vectors are compared entry by entry with math.isclose. One test checks you use np.linalg.qr and not np.linalg.lstsq."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "For the normal equations, `np.linalg.solve(A.T @ A, A.T @ b)`."
+    },
+    {
+     "rung": "point",
+     "text": "For QR: `Q, R = np.linalg.qr(A)`, then `y = Q.T @ b`.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Back substitution: for `k` from the last row up, `x[k] = (y[k] - R[k, k+1:] @ x[k+1:]) / R[k, k]`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both pass. QR returns $(1, 1)$ on the Läuchli matrix, where the normal equations fail.",
+    "generic": "Not quite right. Convert `A` and `b` to float arrays first, then check each solver on the small fit."
+   },
+   "explain": {
+    "text": "QR never forms $\\mathbf A^T\\mathbf A$, so the $\\epsilon^2$ terms are never rounded away. With $\\epsilon = 10^{-7}$ the normal equations still work: $\\kappa^2 u \\approx 0.02$ is below 1. At $10^{-8}$ it passes 1 and they fail."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A desk fits a cubic yield curve with columns $1, t, t^2, t^3$. Its quotes are at 1, 2, 3, 5, 7, 10, 15, 20 and 30 years. In raw years $\\kappa(\\mathbf A) \\approx 2.98 \\times 10^4$ and $\\kappa(\\mathbf A^T\\mathbf A) \\approx 8.88 \\times 10^8$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Design",
+      "$\\kappa$"
+     ],
+     "rows": [
+      [
+       "$\\mathbf A$, raw years",
+       "$2.98 \\times 10^4$"
+      ],
+      [
+       "$\\mathbf A^T\\mathbf A$, raw years",
+       "$8.88 \\times 10^8$"
+      ],
+      [
+       "$\\mathbf A$, centred and scaled years",
+       "13.3"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many digits do the normal equations throw away on the raw design?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8.95,
+    "tol": {
+     "abs": 0.1
+    },
+    "placeholder": "digits, to one place",
+    "wrong": [
+     {
+      "id": "qr",
+      "value": 4.47,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The normal equations work with $\\mathbf A^T\\mathbf A$."
+    },
+    {
+     "rung": "point",
+     "text": "Take $\\log_{10}(8.88 \\times 10^8)$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\log_{10} 8.88 + 8 \\approx 0.95 + 8 = 8.95$."
+    }
+   ],
+   "feedback": {
+    "correct": "About 9 digits, against 4.5 for QR on the same design.",
+    "generic": "Not quite right. Take $\\log_{10}\\kappa(\\mathbf A^T\\mathbf A)$.",
+    "byKey": {
+     "qr": "4.47 digits is $\\log_{10}\\kappa(\\mathbf A)$, what QR loses. The normal equations square it."
+    }
+   },
+   "explain": {
+    "text": "$\\log_{10}(8.88 \\times 10^8) \\approx 8.95$, so the normal equations keep about 7 of 16 digits. Centring and scaling the maturities brings $\\kappa(\\mathbf A)$ to 13.3, and QR then loses about one. Production code calls `np.linalg.lstsq`, never `inv(A.T @ A)`.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       1,
+       2
+      ]
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "An algorithm can lose digits a problem does not. The series for $e^{-20}$ cancels terms 16 powers of ten above the answer.",
+   "A backward stable algorithm gives the exact answer to nearby data, so its forward error is at most about $\\kappa u$.",
+   "The normal equations square the condition number; QR and `lstsq` work on $\\mathbf A$ and keep $\\kappa(\\mathbf A)$."
+  ],
+  "formula": {
+   "name": "Normal equations",
+   "tex": "\\kappa(\\mathbf A^T\\mathbf A) = \\kappa(\\mathbf A)^2",
+   "note": "From the SVD: $\\mathbf A^T\\mathbf A = \\mathbf V(\\boldsymbol\\Sigma^T\\boldsymbol\\Sigma)\\mathbf V^T$."
+  },
+  "trap": "A wrong answer does not prove an ill-conditioned problem. A bad algorithm on a fair problem gives one too."
+ },
+ "quiz": [
+  {
+   "id": "q-lauchli-1e7",
+   "difficulty": 3,
+   "prose": "Take the Läuchli matrix with $\\epsilon = 10^{-7}$ instead, so $\\kappa(\\mathbf A) \\approx 1.41 \\times 10^7$ and $\\kappa(\\mathbf A)^2 u \\approx 0.02$.",
+   "question": "What do the normal equations return?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$(1, 1)$, with some digits lost",
+      "correct": true
+     },
+     {
+      "id": "nan",
+      "text": "`nan`, as at $\\epsilon = 10^{-8}$",
+      "why": "Here $1 + \\epsilon^2 = 1 + 10^{-14}$ is stored, so $\\mathbf A^T\\mathbf A$ is not singular."
+     },
+     {
+      "id": "exact",
+      "text": "$(1, 1)$ to all 16 digits",
+      "why": "Squaring $\\kappa$ still costs about 14 digits; the answer is right, not exact."
+     },
+     {
+      "id": "garbage",
+      "text": "Numbers with no correct digit",
+      "why": "That needs $\\kappa^2 u$ near 1. At 0.02 a couple of digits survive."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$(1, 1)$: the instability shows only once $\\kappa^2 u$ nears 1.",
+    "generic": "Not quite right. Check whether $1 + 10^{-14}$ survives rounding."
+   },
+   "explain": {
+    "text": "$1 + 10^{-14}$ is about 45 gaps above 1, so it is stored and $\\mathbf A^T\\mathbf A$ stays invertible. The relative error bound $\\kappa^2 u \\approx 0.02$ is below 1, and NumPy returns $(1, 1)$. Instability appears only once $\\kappa^2 u$ nears 1."
+   }
+  },
+  {
+   "id": "q-backward",
+   "difficulty": 2,
+   "prose": "An algorithm returns $\\hat y$ for the input $x$.",
+   "question": "What makes it backward stable?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$\\hat y$ is the exact answer for some input within about $u$ of $x$",
+      "correct": true
+     },
+     {
+      "id": "forward",
+      "text": "$\\hat y$ is within $u$ of the true answer",
+      "why": "That is forward accuracy. An ill-conditioned problem rules it out for any algorithm."
+     },
+     {
+      "id": "residual",
+      "text": "Its residual is zero",
+      "why": "Rounding makes a zero residual rare. Backward stability allows a tiny change in the data."
+     },
+     {
+      "id": "fast",
+      "text": "It runs in the fewest steps",
+      "why": "Speed is separate from stability."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Exact answer for nearly the right data.",
+    "generic": "Not quite right. Backward stability is about the input, not the output."
+   },
+   "explain": {
+    "text": "Backward stable means $\\hat y = f(x + \\Delta x)$ with $|\\Delta x| / |x|$ near $u$. Then the forward error is at most about $\\kappa u$. QR for least squares is backward stable; the normal equations are not."
+   }
+  },
+  {
+   "id": "q-kappa-squared",
+   "difficulty": 2,
+   "prose": "A regression design has $\\kappa(\\mathbf A) = 1000$.",
+   "question": "How many digits can the normal equations lose?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0.01
+    },
+    "wrong": [
+     {
+      "id": "single",
+      "value": 3,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\kappa(\\mathbf A^T\\mathbf A) = 10^6$, so 6 digits.",
+    "generic": "Not quite right. Square $\\kappa$, then take $\\log_{10}$.",
+    "byKey": {
+     "single": "3 digits is what QR loses. The normal equations square $\\kappa$."
+    }
+   },
+   "explain": {
+    "text": "$\\kappa(\\mathbf A)^2 = 10^6$, so about 6 of 16 digits go. QR on the same design loses about 3. Both leave enough for most fits, which is why the danger hides until $\\kappa$ is large."
+   }
+  },
+  {
+   "id": "q-production",
+   "difficulty": 3,
+   "prose": "A backtest refits betas each day with `beta = np.linalg.inv(X.T @ X) @ X.T @ y`.",
+   "question": "What should the code use instead?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`np.linalg.lstsq(X, y, rcond=None)[0]`",
+      "correct": true
+     },
+     {
+      "id": "solve",
+      "text": "`np.linalg.solve(X.T @ X, X.T @ y)`",
+      "why": "That avoids the inverse but still forms $\\mathbf X^T\\mathbf X$, so $\\kappa$ is still squared."
+     },
+     {
+      "id": "pinv",
+      "text": "`np.linalg.pinv(X.T @ X) @ X.T @ y`",
+      "why": "The pseudo-inverse of $\\mathbf X^T\\mathbf X$ still works with $\\kappa^2$."
+     },
+     {
+      "id": "same",
+      "text": "Keep it: the inverse is exact",
+      "why": "Forming $\\mathbf X^T\\mathbf X$ squares $\\kappa$, and inverting adds more rounding."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "`lstsq` works on $\\mathbf X$ itself, by an SVD.",
+    "generic": "Not quite right. Avoid forming $\\mathbf X^T\\mathbf X$ at all."
+   },
+   "explain": {
+    "text": "Any route through $\\mathbf X^T\\mathbf X$ squares the condition number. `np.linalg.lstsq` factorises $\\mathbf X$ directly, so it loses only $\\log_{10}\\kappa(\\mathbf X)$ digits. With correlated signals that difference decides whether betas are trustworthy."
+   }
+  }
+ ]
+}

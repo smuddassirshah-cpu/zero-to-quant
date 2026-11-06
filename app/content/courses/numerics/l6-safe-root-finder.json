@@ -1,0 +1,1217 @@
+{
+ "id": "l6-safe-root-finder",
+ "course": "numerics",
+ "title": "A root finder that never fails",
+ "minutes": 15,
+ "objectives": [
+  "Build a safeguarded Newton method and use it for implied volatility on every strike."
+ ],
+ "skills": [
+  "nm-roots"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Eleven one-month quotes ($S = 100$, $r = 5\\%$) need implied vols. Plain Newton starts at $\\sigma_0 = 0.2$ and moves to $0.2 - \\tfrac{V(0.2) - \\text{quote}}{\\text{vega}(0.2)}$. The table shows the price and vega at $\\sigma = 0.2$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Strike",
+      "Type",
+      "Quote (£)",
+      "$V(0.2)$ (£)",
+      "Vega at 0.2"
+     ],
+     "rows": [
+      [
+       "75",
+       "put",
+       "0.0766",
+       "0.0000",
+       "0.000028"
+      ],
+      [
+       "80",
+       "put",
+       "0.0794",
+       "0.0000",
+       "0.004424"
+      ],
+      [
+       "85",
+       "put",
+       "0.1154",
+       "0.0030",
+       "0.164048"
+      ],
+      [
+       "90",
+       "put",
+       "0.2448",
+       "0.0609",
+       "1.802487"
+      ],
+      [
+       "95",
+       "put",
+       "0.6958",
+       "0.5039",
+       "7.058698"
+      ],
+      [
+       "100",
+       "call",
+       "2.5121",
+       "2.5121",
+       "11.457839"
+      ],
+      [
+       "105",
+       "call",
+       "0.6182",
+       "0.7440",
+       "8.731917"
+      ],
+      [
+       "110",
+       "call",
+       "0.0872",
+       "0.1476",
+       "3.465519"
+      ],
+      [
+       "115",
+       "call",
+       "0.0093",
+       "0.0196",
+       "0.781334"
+      ],
+      [
+       "120",
+       "call",
+       "0.0012",
+       "0.0018",
+       "0.107697"
+      ],
+      [
+       "125",
+       "call",
+       "0.0003",
+       "0.0001",
+       "0.009660"
+      ]
+     ],
+     "tap": "rows",
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Tap the quotes where Newton's first step lands above $\\sigma = 5$.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "r0",
+     "r1"
+    ],
+    "countWord": "quotes",
+    "wrong": [
+     {
+      "id": "three",
+      "set": [
+       "r0",
+       "r1",
+       "r2"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the gap between quote and price by the vega, row by row."
+    },
+    {
+     "rung": "point",
+     "text": "Look for the rows where vega at 0.2 is tiny next to the price gap.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The 75 put steps by $0.0766 / 0.000028 \\approx 2{,}724$ and the 80 put by $0.0794 / 0.0044 \\approx 18$."
+    }
+   ],
+   "feedback": {
+    "correct": "The 75 and 80 puts: steps of about 2,724 and 18.",
+    "generic": "Not quite right. Compute (quote minus price) over vega for the deep puts.",
+    "byKey": {
+     "three": "The 85 put steps by $0.112 / 0.164 = 0.69$, to 0.89. That stays sensible.",
+     "r5": "At the money the price at 0.2 is the quote, so the step is almost 0."
+    }
+   },
+   "explain": {
+    "text": "Far out of the money, vega at 0.2 is almost 0, so the step is huge. The 75 put jumps to 2,724 and the 80 put to 18.14, then $-218$. The other nine converge; `opt-dash` met the same failure at 1,323.",
+    "canvas": {
+     "highlight": {
+      "rows": [
+       0,
+       1
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "The curve is the 75 put's price against $\\sigma$; the dashed line is its quote, £0.0766. Drag the start along the curve. The tangent shows Newton's step and the caption gives where it lands.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.05,
+      1
+     ],
+     "y": [
+      -0.1,
+      0.6
+     ],
+     "height": 280,
+     "xLabel": "$\\sigma$",
+     "yLabel": "price (£)",
+     "functions": [
+      {
+       "id": "V",
+       "expr": "75*exp(-0.05/12)*Phi(-((ln(100/75) + (0.05 + x^2/2)/12)/(x*sqrt(1/12)) - x*sqrt(1/12))) - 100*Phi(-((ln(100/75) + (0.05 + x^2/2)/12)/(x*sqrt(1/12))))",
+       "domain": [
+        0.05,
+        1
+       ],
+       "label": "75 put",
+       "labelAt": 0.9
+      }
+     ],
+     "hlines": [
+      {
+       "id": "q",
+       "y": 0.0766,
+       "label": "quote",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p1",
+       "x": 0.5,
+       "y": 0.09,
+       "drag": true,
+       "on": "V",
+       "label": "start"
+      }
+     ],
+     "tangent": {
+      "f": "V",
+      "x": "p1",
+      "lengthPx": 160
+     }
+    },
+    "derive": {
+     "let": {
+      "s": "p1.x",
+      "d1": "(ln(100/75) + (0.05 + s*s/2)/12)/(s*sqrt(1/12))",
+      "V": "75*exp(-0.05/12)*Phi(-(d1 - s*sqrt(1/12))) - 100*Phi(-d1)",
+      "vg": "100*sqrt(1/12)*normpdf(d1, 0, 1)"
+     },
+     "caption": "Start σ = {{fixed(s, 2)}}: Newton's next guess is {{fixed(s - (V - 0.0766)/vg, 2)}}. The root is 0.48."
+    }
+   },
+   "question": "Drag the start to $\\sigma = 0.3$. Where does Newton's next guess land?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.53,
+    "tol": {
+     "abs": 0.05
+    },
+    "wrong": [
+     {
+      "id": "root",
+      "value": 0.48,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Move the point to $\\sigma = 0.3$ and read the caption."
+    },
+    {
+     "rung": "point",
+     "text": "At 0.3 the curve is almost flat, so the tangent meets the quote line far away.",
+     "highlight": [
+      "p1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The step is $(0.0007 - 0.0766) / 0.034 \\approx -2.23$, so the next guess is about 2.53."
+    }
+   ],
+   "feedback": {
+    "correct": "About 2.53, far past the root at 0.48.",
+    "generic": "Not quite right. Read the caption with the start at 0.3.",
+    "byKey": {
+     "root": "0.48 is the root. From 0.3 the flat tangent overshoots it."
+    }
+   },
+   "explain": {
+    "text": "At $\\sigma = 0.3$ the curve is nearly flat, so the tangent overshoots to 2.53. From 0.5 the next guess is 0.482, almost the root. Newton is excellent near the root and wild far from it.",
+    "canvas": {
+     "points": {
+      "p1": {
+       "x": 0.3
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "We know the root lies in $[lo, hi] = [0.0001, 5]$: the quote sits between the prices at the two ends. A **safeguarded Newton** method keeps such a bracket with a sign change and shrinks it every step.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 5,
+     "step": 0.5
+    },
+    "state": {
+     "intervals": [
+      {
+       "id": "br",
+       "from": 0.0001,
+       "to": 5,
+       "label": "bracket"
+      }
+     ],
+     "points": [
+      {
+       "id": "x",
+       "x": 0.2,
+       "label": "$\\sigma_0$"
+      },
+      {
+       "id": "nx",
+       "x": 4.9,
+       "label": "?",
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "Newton's step from $\\sigma$ would land outside the bracket. What does the method do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Take the bisection step, the bracket's midpoint, instead",
+      "correct": true
+     },
+     {
+      "id": "clip",
+      "text": "Clip the Newton step to the bracket's edge",
+      "why": "The edge may be the worst point: the next step can bounce off it for ever."
+     },
+     {
+      "id": "take",
+      "text": "Take the Newton step anyway and hope",
+      "why": "That is plain Newton, which sent the 75 put to 2,724."
+     },
+     {
+      "id": "restart",
+      "text": "Restart Newton from $\\sigma = 0.2$",
+      "why": "Restarting repeats the same bad step."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which step is guaranteed to shrink the bracket?"
+    },
+    {
+     "rung": "point",
+     "text": "Bisection always halves the bracket and keeps the sign change.",
+     "highlight": [
+      "br"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Use the Newton step when it lands strictly inside $[lo, hi]$; otherwise bisect."
+    }
+   ],
+   "feedback": {
+    "correct": "Bisect whenever Newton would leave the bracket.",
+    "generic": "Not quite right. Look for the step that always keeps the root inside."
+   },
+   "explain": {
+    "text": "The method is Numerical Recipes' `rtsafe`: Newton inside the bracket, bisection otherwise. After each step the sign of $f$ at the new point tells us which end to move. Near the root Newton takes over, so it keeps the fast finish."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Why can the safeguarded method never fail? Order the argument and leave out the false line.",
+   "question": "Order the argument.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "t1",
+      "text": "At the start $f(lo)$ and $f(hi)$ have opposite signs, so a root lies in $[lo, hi]$."
+     },
+     {
+      "id": "t2",
+      "text": "Each new point replaces the end whose $f$ has its sign, so the root stays inside."
+     },
+     {
+      "id": "t3",
+      "text": "Every step moves an end inward, so the bracket never grows."
+     },
+     {
+      "id": "t4",
+      "text": "Every bisection halves it, and the stopping rule caps the Newton steps between bisections."
+     },
+     {
+      "id": "t5",
+      "text": "So after $\\lceil \\log_2(\\text{width}/\\text{xtol}) \\rceil$ bisections at most, the bracket is below xtol: the method ends."
+     },
+     {
+      "id": "tx",
+      "text": "The Newton steps alone shrink the bracket fast enough, so no count is needed.",
+      "why": "A Newton step can move an end by almost nothing. Only bisection gives a guaranteed halving."
+     }
+    ],
+    "answer": [
+     "t1",
+     "t2",
+     "t3",
+     "t4",
+     "t5"
+    ],
+    "distractors": [
+     "tx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with why a root is inside at all."
+    },
+    {
+     "rung": "point",
+     "text": "Then show the root stays inside, and the bracket never grows."
+    },
+    {
+     "rung": "step",
+     "text": "Finish with the bisections, which are what guarantee the end."
+    }
+   ],
+   "feedback": {
+    "correct": "The root stays bracketed, and the bisections force the end.",
+    "generic": "Not quite right. Start from the sign change, then the invariant, then the count.",
+    "byKey": {
+     "tx": "A Newton step can creep. Only bisection guarantees the bracket halves.",
+     "left-out": "All five true lines belong in the argument."
+    }
+   },
+   "explain": {
+    "text": "The sign change keeps a root inside, the ends only move inward, and each bisection halves the width. So the method ends after at most $\\log_2$ of width over tolerance bisections. That is the guarantee plain Newton lacks."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "On the smile, the safe solver needs 9 iterations for the 75 and 80 puts. One of them is a bisection. The other quotes need 2 to 8. The worst case is all bisection.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Strike",
+      "Iterations",
+      "Bisections"
+     ],
+     "rows": [
+      [
+       "75",
+       "9",
+       "1"
+      ],
+      [
+       "80",
+       "9",
+       "1"
+      ],
+      [
+       "85",
+       "8",
+       "0"
+      ],
+      [
+       "100",
+       "2",
+       "0"
+      ],
+      [
+       "125",
+       "6",
+       "0"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "At most how many bisections shrink $[0.0001, 5]$ below $10^{-10}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 36,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "w35",
+      "value": 35,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "w33",
+      "value": 33,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "After $k$ halvings the width is $5 / 2^k$."
+    },
+    {
+     "rung": "point",
+     "text": "You need $2^k > 5 \\times 10^{10}$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2^{35} \\approx 3.4 \\times 10^{10}$ is too few; $2^{36} \\approx 6.9 \\times 10^{10}$ is enough."
+    }
+   ],
+   "feedback": {
+    "correct": "36: the guaranteed cap.",
+    "generic": "Not quite right. Find the smallest $k$ with $5/2^k < 10^{-10}$.",
+    "byKey": {
+     "w35": "$5 / 2^{35} = 1.5 \\times 10^{-10}$, still too wide.",
+     "w33": "That treats the width as 1. It is 5."
+    }
+   },
+   "explain": {
+    "text": "$5 / 2^{36} = 7.3 \\times 10^{-11}$, so 36 bisections at most. In practice the solver needed 9 iterations or fewer here. The cap is the promise; Newton makes the usual case fast."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "The 125 call's quote, £0.0003, was rounded to 4 decimals. Its recovered vol is 0.2124, but the smile says 0.2103. Its vega is 0.0218.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Strike",
+      "Quote (£)",
+      "Smile vol",
+      "Recovered vol",
+      "Vega"
+     ],
+     "rows": [
+      [
+       "125 call",
+       "0.0003",
+       "0.2103",
+       "0.2124",
+       "0.0218"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What should you do about the gap of 0.0021?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Accept it: half a unit in the 4th decimal moves $\\sigma$ by $0.00005/0.0218 \\approx 0.0023$",
+      "correct": true
+     },
+     {
+      "id": "tighten",
+      "text": "Tighten the solver's tolerance to $10^{-12}$",
+      "why": "You asked the solver for digits the quote does not hold. It already solved the rounded price exactly."
+     },
+     {
+      "id": "newton",
+      "text": "Switch to plain Newton for this strike",
+      "why": "The solver is not at fault; the data are."
+     },
+     {
+      "id": "bug",
+      "text": "Report a solver bug",
+      "why": "Rounding the price to £0.0001 alone explains 0.0023 of vol here."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How much can rounding to 4 decimals change the price?"
+    },
+    {
+     "rung": "point",
+     "text": "At most £0.00005. Divide by vega.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.00005 / 0.0218 = 0.0023$, bigger than the gap of 0.0021."
+    }
+   ],
+   "feedback": {
+    "correct": "The gap is within the rounding: 0.0023 of vol.",
+    "generic": "Not quite right. Convert the rounding error in price into vol.",
+    "byKey": {
+     "tighten": "You tightened the solver to chase digits the rounded quote cannot give."
+    }
+   },
+   "explain": {
+    "text": "Rounding moves the price by up to £0.00005, which moves $\\sigma$ by $0.00005/0.0218 \\approx 0.0023$. The solver found the exact vol of the rounded price. Set the tolerance in price, or relative to vega, as level 1's conditioning says."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "A call can never be worth less than $\\max(S - Ke^{-rT}, 0)$. For the one-month 95 call that bound is £5.3950. A stale feed quotes it at £5.00.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 4.5,
+     "max": 6,
+     "step": 0.25
+    },
+    "state": {
+     "intervals": [
+      {
+       "id": "ok",
+       "from": 5.395,
+       "to": null,
+       "label": "prices with a vol"
+      }
+     ],
+     "points": [
+      {
+       "id": "q",
+       "x": 5.0,
+       "label": "quote",
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "What should `implied_vols` return for this quote?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "NaN: no volatility produces that price",
+      "correct": true
+     },
+     {
+      "id": "lo",
+      "text": "0.0001, the bottom of the bracket",
+      "why": "That would report a vol whose price is £5.3950, not £5.00."
+     },
+     {
+      "id": "zero",
+      "text": "0",
+      "why": "Even zero vol prices the call at £5.3950. No vol gives £5.00."
+     },
+     {
+      "id": "raise",
+      "text": "Whatever the solver reaches after 100 iterations",
+      "why": "With no sign change there is no root to reach; the number would be meaningless."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is there any $\\sigma$ whose price is £5.00?"
+    },
+    {
+     "rung": "point",
+     "text": "As $\\sigma \\to 0$ the price falls to the bound, £5.3950.",
+     "highlight": [
+      "q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Check the sign change first: $f(lo) > 0$ means the quote is below every possible price."
+    }
+   ],
+   "feedback": {
+    "correct": "NaN, and report the quote.",
+    "generic": "Not quite right. A quote below the bound has no implied vol."
+   },
+   "explain": {
+    "text": "Every vol gives a price at or above £5.3950, so £5.00 has no implied vol. The solver must test the bracket's sign change and return NaN. A number there would hide a data error."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write the general method. It works whether $f$ rises or falls. Compare the sign of $f(x)$ with the sign of $f(lo)$ to decide which end to move. A zero derivative must not crash it: bisect instead.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": 0,
+     "max": 5,
+     "step": 0.5
+    },
+    "state": {
+     "intervals": [
+      {
+       "id": "br",
+       "from": 0.0001,
+       "to": 5,
+       "label": "keep a sign change"
+      }
+     ]
+    }
+   },
+   "question": "Complete `safe_newton`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    \"\"\"Root of f in [lo, hi], f(lo) and f(hi) of opposite signs.\n    Newton when the step stays inside the bracket, else bisect.\n    Start at the midpoint. Raise ValueError without a sign change.\"\"\"\n    ...\n",
+    "solution": "def safe_newton(f, df, lo, hi, xtol=1e-10, ftol=1e-12, maxit=100):\n    flo, fhi = f(lo), f(hi)\n    if flo * fhi > 0:\n        raise ValueError('no sign change')\n    x = 0.5 * (lo + hi)\n    for _ in range(maxit):\n        fx = f(x)\n        if abs(fx) < ftol:\n            return x\n        if (fx > 0) == (flo > 0):\n            lo, flo = x, fx\n        else:\n            hi = x\n        d = df(x)\n        new = x - fx / d if d != 0 else lo - 1.0\n        if not (min(lo, hi) < new < max(lo, hi)):\n            new = 0.5 * (lo + hi)\n        if abs(new - x) < xtol:\n            return new\n        x = new\n    return x\n",
+    "examples": [
+     {
+      "call": "safe_newton(lambda x: x * x - 2, lambda x: 2 * x, 0.0, 2.0)",
+      "expect": "2 ** 0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-10
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "safe_newton(lambda x: x * x - 2, lambda x: 2 * x, 0.0, 2.0)",
+      "expect": "2 ** 0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-10
+      }
+     },
+     {
+      "call": "safe_newton(lambda x: 2 - x * x, lambda x: -2 * x, 0.0, 2.0)",
+      "expect": "2 ** 0.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-10
+      }
+     },
+     {
+      "call": "safe_newton(lambda x: x ** 3 - 2 * x + 2, lambda x: 3 * x * x - 2, -3.0, 0.0)",
+      "expect": "-1.769292354238631",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "safe_newton(lambda x: x ** 3 - 1, lambda x: 3 * x * x, -2.0, 2.0)",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "safe_newton(lambda x: x * x + 1, lambda x: 2 * x, 0.0, 1.0)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "setup": "calls = [0]\ndef g(x):\n    calls[0] += 1\n    return x * x - 2",
+      "call": "abs(safe_newton(g, lambda x: 2 * x, 0.0, 2.0) - 2 ** 0.5) < 1e-10 and calls[0] <= 60",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, each root within 1e-9. They use a rising f, a falling f, and x³ − 2x + 2 on [−3, 0], where Newton from 0 cycles. Then x³ − 1 on [−2, 2] has zero slope at the start. A missing sign change must raise ValueError, and f may be called at most 60 times."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check the sign change first, then start at the midpoint."
+    },
+    {
+     "rung": "point",
+     "text": "After computing $f(x)$, move `lo` if $f(x)$ has the sign of $f(lo)$, else move `hi`.",
+     "highlight": [
+      "br"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Try `x - fx / df(x)`; if the slope is 0 or the step leaves the bracket, use `(lo + hi) / 2`."
+    }
+   ],
+   "feedback": {
+    "correct": "It passes, cycle and flat start included.",
+    "generic": "Not quite right. Check the sign test that moves the ends."
+   },
+   "explain": {
+    "text": "The sign comparison with $f(lo)$ handles rising and falling $f$ alike. On $x^3 - 2x + 2$ plain Newton from 0 cycles between 0 and 1; the bracket forces it to $-1.769292$. A zero slope at the start costs one bisection, not a crash."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Now solve the whole smile at once. Keep arrays `s`, `lo` and `hi`, one entry per strike. A boolean mask chooses, strike by strike, between the Newton step and the midpoint. `scipy.optimize.brentq` agrees with the result to $10^{-10}$; Brent's method mixes bisection, secant and inverse quadratic steps.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Strike",
+      "Type",
+      "Quote (£)",
+      "Implied vol"
+     ],
+     "rows": [
+      [
+       "75",
+       "put",
+       "0.0766",
+       "0.480564"
+      ],
+      [
+       "80",
+       "put",
+       "0.0794",
+       "0.388822"
+      ],
+      [
+       "85",
+       "put",
+       "0.1154",
+       "0.317818"
+      ],
+      [
+       "90",
+       "put",
+       "0.2448",
+       "0.264333"
+      ],
+      [
+       "95",
+       "put",
+       "0.6958",
+       "0.225781"
+      ],
+      [
+       "100",
+       "call",
+       "2.5121",
+       "0.200003"
+      ],
+      [
+       "105",
+       "call",
+       "0.6182",
+       "0.185246"
+      ],
+      [
+       "110",
+       "call",
+       "0.0872",
+       "0.180055"
+      ],
+      [
+       "115",
+       "call",
+       "0.0093",
+       "0.183233"
+      ],
+      [
+       "120",
+       "call",
+       "0.0012",
+       "0.193805"
+      ],
+      [
+       "125",
+       "call",
+       "0.0003",
+       "0.212383"
+      ]
+     ],
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Complete `implied_vols`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nimport numpy as np\n_erf = np.vectorize(math.erf, otypes=[float])\ndef ncdf(x):\n    return 0.5 * (1 + _erf(np.asarray(x, dtype=float) / math.sqrt(2)))\ndef bs_price(S, K, r, T, sigma, kinds):\n    K = np.asarray(K, dtype=float); sigma = np.asarray(sigma, dtype=float)\n    sd = sigma * math.sqrt(T)\n    d1 = (np.log(S / K) + (r + sigma ** 2 / 2) * T) / sd\n    d2 = d1 - sd\n    call = S * ncdf(d1) - K * math.exp(-r * T) * ncdf(d2)\n    put = K * math.exp(-r * T) * ncdf(-d2) - S * ncdf(-d1)\n    return np.where(np.asarray(kinds) == 'c', call, put)\ndef bs_vega(S, K, r, T, sigma):\n    K = np.asarray(K, dtype=float); sigma = np.asarray(sigma, dtype=float)\n    d1 = (np.log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * math.sqrt(T))\n    return S * math.sqrt(T) * np.exp(-d1 ** 2 / 2) / math.sqrt(2 * math.pi)\n",
+    "starter": "import numpy as np\n\n# bs_price(S, K, r, T, sigma, kinds) and bs_vega(S, K, r, T, sigma)\n# are provided and work on arrays; kinds holds 'c' or 'p'.\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    \"\"\"Implied vols for a whole smile at once, NaN where none exists.\n    Bracket [1e-4, 5], start at 0.2.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef implied_vols(prices, strikes, S, r, T, kinds, tol=1e-10, maxit=100):\n    p = np.asarray(prices, dtype=float)\n    K = np.asarray(strikes, dtype=float)\n    kinds = np.asarray(kinds)\n    f = lambda s: bs_price(S, K, r, T, s, kinds) - p\n    lo = np.full(p.shape, 1e-4)\n    hi = np.full(p.shape, 5.0)\n    ok = (f(lo) < 0) & (f(hi) > 0)\n    s = np.full(p.shape, 0.2)\n    with np.errstate(divide='ignore', invalid='ignore', over='ignore'):\n        for _ in range(maxit):\n            fs = f(s)\n            low = fs < 0\n            lo = np.where(low, s, lo)\n            hi = np.where(low, hi, s)\n            new = s - fs / bs_vega(S, K, r, T, s)\n            bad = ~np.isfinite(new) | (new <= lo) | (new >= hi)\n            new = np.where(bad, 0.5 * (lo + hi), new)\n            done = np.abs(new - s) < tol\n            s = new\n            if np.all(done | ~ok):\n                break\n    return np.where(ok, s, np.nan)\n",
+    "examples": [
+     {
+      "call": "round(float(implied_vols([2.5121], [100], 100.0, 0.05, 1 / 12, ['c'])[0]), 4)",
+      "expect": "0.2",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "K11 = list(range(75, 130, 5)); kinds11 = ['p'] * 5 + ['c'] * 6\nP11 = [0.0766, 0.0794, 0.1154, 0.2448, 0.6958, 2.5121, 0.6182, 0.0872, 0.0093, 0.0012, 0.0003]",
+      "call": "implied_vols(P11, K11, 100.0, 0.05, 1 / 12, kinds11)",
+      "expect": "[0.4805643773, 0.3888224503, 0.3178175298, 0.2643331891, 0.2257805086, 0.2000028726, 0.1852458045, 0.1800550096, 0.1832333240, 0.1938045067, 0.2123829659]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "bool(np.isnan(implied_vols([5.0], [95], 100.0, 0.05, 1 / 12, ['c'])[0]))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "implied_vols([2.5121, 5.0], [100, 95], 100.0, 0.05, 1 / 12, ['c', 'c'])[0]",
+      "expect": "0.2000028726",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "import time\nK1k = np.linspace(80, 120, 1000); kinds1k = np.where(K1k < 100, 'p', 'c')\nP1k = bs_price(100.0, K1k, 0.05, 1 / 12, 0.2 + 0.001 * (K1k - 100) ** 2 / 10, kinds1k)\n_t0 = time.perf_counter(); _v = implied_vols(P1k, K1k, 100.0, 0.05, 1 / 12, kinds1k); _dt = time.perf_counter() - _t0",
+      "call": "_dt < 1.0 and bool(np.all(np.isfinite(_v)))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests with NumPy; none loads SciPy. The eleven quotes must match brentq within 1e-6. A quote below its bound must give NaN, alone and beside a good quote. 1,000 strikes must solve in under a second."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First compute `ok`, the strikes whose quote lies between the prices at 0.0001 and 5."
+    },
+    {
+     "rung": "point",
+     "text": "In the loop: `lo = np.where(fs < 0, s, lo)` and `hi = np.where(fs < 0, hi, s)`, because price rises with $\\sigma$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Mask the Newton step: where it is not finite or leaves `(lo, hi)`, use `0.5 * (lo + hi)`. Return `np.where(ok, s, np.nan)`."
+    }
+   ],
+   "feedback": {
+    "correct": "All eleven vols match brentq, and the bad quote is NaN.",
+    "generic": "Not quite right. Check the `ok` mask and the bracket updates."
+   },
+   "explain": {
+    "text": "One loop updates every strike together, so 1,000 strikes cost about as much as one. The mask sends the 75 and 80 puts to the midpoint on their first step. Strikes with no vol keep `ok` false and come back as NaN."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A market maker refits the smile every second on 2,000 quotes. One solver failure blanks a strike on the trading screen. Last week the log showed 3 NaNs a day, all on stale quotes below their bounds.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Solver",
+      "Fails on deep wings",
+      "Ends for sure"
+     ],
+     "rows": [
+      [
+       "Plain Newton",
+       "yes",
+       "no"
+      ],
+      [
+       "Safeguarded Newton",
+       "no",
+       "yes"
+      ],
+      [
+       "Bisection",
+       "no",
+       "yes, slowly"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What should the desk do with the NaNs?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Keep the bracketed solver and report each NaN as a bad quote",
+      "correct": true
+     },
+     {
+      "id": "fill",
+      "text": "Fill each NaN with the vol of the neighbouring strike",
+      "why": "That invents a vol for a price no vol fits. The quote is the problem; report it."
+     },
+     {
+      "id": "newton",
+      "text": "Switch to plain Newton, which never returns NaN",
+      "why": "Plain Newton returns nonsense like 2,724 instead. NaN is the honest answer."
+     },
+     {
+      "id": "tol",
+      "text": "Loosen the tolerance until the NaNs go away",
+      "why": "No tolerance makes a price below the bound valid."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is the solver wrong, or the data?"
+    },
+    {
+     "rung": "point",
+     "text": "Every NaN came from a quote below its no-arbitrage bound.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A NaN flags a data problem. Hiding it puts a fake vol on the screen."
+    }
+   ],
+   "feedback": {
+    "correct": "Bracketed solver, and every NaN reported.",
+    "generic": "Not quite right. A NaN here is information about the quote."
+   },
+   "explain": {
+    "text": "The bracketed solver cannot fail on a valid quote, so every NaN points at the data. Desks log them and fix the feed. Filling them in would quote a vol for an arbitrage price."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Plain Newton fails where the slope is tiny. On the deep puts vega at 0.2 is near 0, so the step is huge.",
+   "A safeguarded Newton keeps a bracket with a sign change. It takes Newton steps inside the bracket and bisects otherwise, so it always ends.",
+   "Stop in the data's units: a price good to £0.0001 fixes $\\sigma$ only to $0.0001/\\text{vega}$. A price below its bound has no vol."
+  ],
+  "formula": {
+   "name": "Safeguarded step",
+   "tex": "x_{\\text{new}} = \\begin{cases} x - f(x)/f'(x) & \\text{if inside } (lo, hi) \\\\ \\tfrac12(lo + hi) & \\text{otherwise} \\end{cases}",
+   "note": "At most $\\lceil\\log_2(\\text{width}/\\text{xtol})\\rceil$ bisections."
+  },
+  "trap": "A rounded quote gives a vol that differs from the smile. That is not a solver bug, and a tighter tolerance only chases digits the data lack."
+ },
+ "quiz": [
+  {
+   "id": "q-brent",
+   "difficulty": 2,
+   "prose": "`scipy.optimize.brentq(f, a, b)` is the library's safe root finder.",
+   "question": "What does Brent's method combine?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Bisection with secant and inverse quadratic steps",
+      "correct": true
+     },
+     {
+      "id": "newton",
+      "text": "Newton's method with line search",
+      "why": "Brent never needs $f'$: its fast steps use past values of $f$ only."
+     },
+     {
+      "id": "bisect",
+      "text": "Pure bisection, made faster in C",
+      "why": "Pure bisection would gain only one bit a step."
+     },
+     {
+      "id": "grid",
+      "text": "A fine grid search",
+      "why": "A grid would need millions of evaluations for 10 digits."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A bracket kept by bisection, with fast steps from past values.",
+    "generic": "Not quite right. Brent's method needs no derivative."
+   },
+   "explain": {
+    "text": "Brent keeps a bracket like bisection, and tries secant or inverse quadratic steps from past values of $f$. It falls back to bisection when they misbehave. It is the safeguard idea without $f'$."
+   }
+  },
+  {
+   "id": "q-vol-tol",
+   "difficulty": 3,
+   "prose": "Quotes are good to £0.0001. A strike has vega 0.5.",
+   "question": "To what accuracy in $\\sigma$ is its implied vol meaningful?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0002,
+    "tol": {
+     "abs": 1e-05
+    },
+    "wrong": [
+     {
+      "id": "times",
+      "value": 5e-05,
+      "tol": {
+       "abs": 5e-06
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.0001 / 0.5 = 0.0002$.",
+    "generic": "Not quite right. Divide the price accuracy by vega.",
+    "byKey": {
+     "times": "You multiplied by vega. A price error becomes a vol error divided by vega."
+    }
+   },
+   "explain": {
+    "text": "$\\Delta\\sigma \\approx \\Delta V / \\text{vega} = 0.0001 / 0.5 = 0.0002$. Asking the solver for more digits than that wastes iterations on noise. That is level 1's conditioning in a desk's units."
+   }
+  },
+  {
+   "id": "q-ten-bisections",
+   "difficulty": 2,
+   "prose": "A bracket $[0, 5]$ is bisected 10 times.",
+   "question": "How wide is it then?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.00488,
+    "tol": {
+     "abs": 2e-05
+    },
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$5 / 2^{10} = 0.00488$.",
+    "generic": "Not quite right. Divide 5 by $2^{10}$.",
+    "byKey": {
+     "half": "That divides by 10, not by $2^{10}$."
+    }
+   },
+   "explain": {
+    "text": "Each bisection halves the width: $5 / 1024 \\approx 0.00488$. This guaranteed shrinking is what makes the safeguarded method end."
+   }
+  },
+  {
+   "id": "q-put-bound",
+   "difficulty": 3,
+   "prose": "A put can never be worth less than $\\max(Ke^{-rT} - S, 0)$. A one-month 110 put on $S = 100$, $r = 5\\%$, is quoted at £9.40, and the bound is £9.5426.",
+   "question": "What is its implied vol?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "There is none: return NaN",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "A very small vol, near 0.0001",
+      "why": "Even at zero vol the put is worth £9.5426, above the quote."
+     },
+     {
+      "id": "big",
+      "text": "A very large vol",
+      "why": "Larger vols make the put dearer still, further from £9.40."
+     },
+     {
+      "id": "neg",
+      "text": "A negative vol",
+      "why": "Volatility cannot be negative."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "No vol fits a price below the bound.",
+    "generic": "Not quite right. Compare the quote with the lowest possible price."
+   },
+   "explain": {
+    "text": "$110e^{-0.05/12} - 100 = £9.5426$ is the least a put can be worth. A quote of £9.40 is an arbitrage or a stale price. The solver's sign check catches it and returns NaN."
+   }
+  }
+ ]
+}

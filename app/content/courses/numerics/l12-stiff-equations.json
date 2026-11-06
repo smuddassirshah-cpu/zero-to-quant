@@ -1,0 +1,1026 @@
+{
+ "id": "l12-stiff-equations",
+ "course": "numerics",
+ "title": "Stiff equations",
+ "minutes": 15,
+ "objectives": [
+  "See an explicit solver blow up on a stiff equation, and fix it with an implicit step."
+ ],
+ "skills": [
+  "nm-quadrature",
+  "nm-stability"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A target level $m$ drifts slowly to $\\theta = 4\\%$, $m' = 0.5(\\theta - m)$, from 6%. The short rate tracks it fast, $r' = 50(m - r)$, from 3%. Exactly $r(1) = 5.2253\\%$. The orange path is Euler's method; change its step $h$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1.05
+     ],
+     "y": [
+      0,
+      10
+     ],
+     "height": 260,
+     "xLabel": "$t$ (years)",
+     "yLabel": "$r$ (%)",
+     "params": {
+      "h": 0.01
+     },
+     "functions": [
+      {
+       "id": "ex",
+       "expr": "4 + 2.0202020*exp(-0.5*x) - 3.0202020*exp(-50*x)",
+       "label": "exact",
+       "labelAt": 0.8,
+       "labelSide": "below"
+      },
+      {
+       "id": "m",
+       "expr": "4 + 2.0202020*(1 - 0.5*h)^floor(x/h)*(1 + (-0.5)*(x - h*floor(x/h))) - 3.0202020*(1 - 50*h)^floor(x/h)*(1 + (-50)*(x - h*floor(x/h)))",
+       "domain": [
+        0,
+        1
+       ],
+       "colour": 2,
+       "label": "Euler",
+       "labelAt": 0.5
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "h": 0.01
+     }
+    },
+    "controls": [
+     {
+      "bind": "h",
+      "stops": [
+       0.01,
+       0.02,
+       0.04,
+       0.05
+      ],
+      "start": 0.01,
+      "label": "$h$"
+     }
+    ],
+    "derive": {
+     "caption": "h = {{h}}: Euler r(1) = {{fixed(4 + 2.0202020*pow(1 - 0.5*h, round(1/h)) - 3.0202020*pow(1 - 50*h, round(1/h)), 4)}}%."
+    }
+   },
+   "question": "At $h = 0.04$, what does Euler give for $r(1)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0824,
+    "tol": {
+     "abs": 0.0002
+    },
+    "unit": "%",
+    "accept": "8.24%",
+    "wrong": [
+     {
+      "id": "exact",
+      "value": 0.052253,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "small",
+      "value": 0.052222,
+      "tol": {
+       "abs": 1e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set $h$ to 0.04 and read the caption."
+    },
+    {
+     "rung": "point",
+     "text": "The path zigzags and never settles.",
+     "highlight": [
+      "m"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The caption reads 8.2393%."
+    }
+   ],
+   "feedback": {
+    "correct": "8.24%, against the true 5.2253%.",
+    "generic": "Not quite right. Read the caption at $h = 0.04$.",
+    "byKey": {
+     "exact": "That is the exact value. Euler at 0.04 is far off.",
+     "small": "That is Euler at $h = 0.02$."
+    }
+   },
+   "explain": {
+    "text": "At $h = 0.04$ the fast part is multiplied by $1 - 50h = -1$ each step. It flips sign for ever, and $r(1)$ is 8.24%. At $h = 0.05$ the factor is $-1.5$ and $r(1) = -10{,}038\\%$: a mode dead within days sets the step all year.",
+    "canvas": {
+     "params": {
+      "h": 0.04
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "The system has two decay rates, $\\lambda = -0.5$ and $\\lambda = -50$. Euler multiplies each mode by $1 + h\\lambda$ per step. Widely separated rates, where stability rather than accuracy sets an explicit method's step, make a problem **stiff**.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1.05
+     ],
+     "y": [
+      -20,
+      30
+     ],
+     "height": 260,
+     "xLabel": "$t$ (years)",
+     "yLabel": "$r$ (%)",
+     "params": {
+      "h": 0.05
+     },
+     "functions": [
+      {
+       "id": "ex",
+       "expr": "4 + 2.0202020*exp(-0.5*x) - 3.0202020*exp(-50*x)",
+       "label": "exact",
+       "labelAt": 0.8,
+       "labelSide": "below"
+      },
+      {
+       "id": "m",
+       "expr": "4 + 2.0202020*(1 - 0.5*h)^floor(x/h)*(1 + (-0.5)*(x - h*floor(x/h))) - 3.0202020*(1 - 50*h)^floor(x/h)*(1 + (-50)*(x - h*floor(x/h)))",
+       "domain": [
+        0,
+        1
+       ],
+       "colour": 2,
+       "label": "Euler",
+       "labelAt": 0.5
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "h": 0.05
+     }
+    }
+   },
+   "question": "Below what step $h$ does Euler's fast mode decay?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.04,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "slow",
+      "value": 4,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "half",
+      "value": 0.02,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A mode decays when $|1 + h\\lambda| < 1$."
+    },
+    {
+     "rung": "point",
+     "text": "For $\\lambda = -50$: $-1 < 1 - 50h < 1$.",
+     "highlight": [
+      "m"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So $h < \\tfrac{2}{50} = 0.04$."
+    }
+   ],
+   "feedback": {
+    "correct": "$h < 2/50 = 0.04$.",
+    "generic": "Not quite right. Solve $|1 - 50h| < 1$.",
+    "byKey": {
+     "slow": "That is the slow mode's limit, $2/0.5$. The fast mode is stricter.",
+     "half": "At 0.02 the factor is 0, the best case; stability holds up to 0.04."
+    }
+   },
+   "explain": {
+    "text": "$|1 - 50h| < 1$ needs $h < 0.04$, while the slow mode alone would allow $h < 4$. Accuracy for the slow mode needs nothing like 0.04. That mismatch is stiffness."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "**Implicit Euler** uses the slope at the end of the step: $y_{n+1} = y_n + hf(t_{n+1}, y_{n+1})$. For our linear system that means solving $(\\mathbf I - h\\mathbf A)\\mathbf y_{n+1} = \\mathbf y_n + h\\mathbf c$ each step. Each mode is multiplied by $\\tfrac{1}{1 - h\\lambda}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1.05
+     ],
+     "y": [
+      0,
+      10
+     ],
+     "height": 260,
+     "xLabel": "$t$ (years)",
+     "yLabel": "$r$ (%)",
+     "params": {
+      "h": 0.25
+     },
+     "functions": [
+      {
+       "id": "ex",
+       "expr": "4 + 2.0202020*exp(-0.5*x) - 3.0202020*exp(-50*x)",
+       "label": "exact",
+       "labelAt": 0.8,
+       "labelSide": "below"
+      },
+      {
+       "id": "m",
+       "expr": "4 + 2.0202020*(1/(1 + 0.5*h))^floor(x/h)*(1 + (1/(1 + 0.5*h) - 1)*(x/h - floor(x/h))) - 3.0202020*(1/(1 + 50*h))^floor(x/h)*(1 + (1/(1 + 50*h) - 1)*(x/h - floor(x/h)))",
+       "domain": [
+        0,
+        1
+       ],
+       "colour": 2,
+       "label": "implicit Euler",
+       "labelAt": 0.5
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "h": 0.25
+     }
+    },
+    "controls": [
+     {
+      "bind": "h",
+      "stops": [
+       0.05,
+       0.1,
+       0.25,
+       0.5
+      ],
+      "start": 0.25,
+      "label": "$h$"
+     }
+    ]
+   },
+   "question": "At $h = 0.25$, what is the fast mode's factor $\\tfrac{1}{1 - h\\lambda}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0741,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "euler",
+      "value": -11.5,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "inv",
+      "value": 13.5,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Here $h\\lambda = 0.25 \\times (-50) = -12.5$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tfrac{1}{1 + 12.5}$.",
+     "highlight": [
+      "m"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1}{13.5} \\approx 0.0741$."
+    }
+   ],
+   "feedback": {
+    "correct": "$1/13.5 \\approx 0.0741$: the fast mode is crushed in one step.",
+    "generic": "Not quite right. Put $h\\lambda = -12.5$ into $\\tfrac{1}{1 - h\\lambda}$.",
+    "byKey": {
+     "euler": "That is Euler's factor $1 + h\\lambda$.",
+     "inv": "That is $1 - h\\lambda$; the factor is its reciprocal."
+    }
+   },
+   "explain": {
+    "text": "Here the factor is $1/13.5 = 0.0741$, and it is below 1 for every $h > 0$ when $\\lambda < 0$. In four steps of 0.25 implicit Euler gives 5.5720%, 5.5796%, 5.4176%, 5.2611%. That is first-order accurate and stable at six times Euler's limit."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Each method's factor depends only on $z = h\\lambda$. The curves bound the **stability regions**. Euler is stable inside its circle and implicit Euler outside its own. The trapezoidal rule is stable left of the axis, RK4 inside the dashed curve. Drag $z$ and read the factors.",
+   "canvas": {
+    "kind": "plane",
+    "maxHeight": 320,
+    "params": {
+     "x": [
+      -3.2,
+      2.2
+     ],
+     "y": [
+      -3,
+      3
+     ],
+     "height": 300,
+     "equal": true,
+     "xLabel": "Re $h\\lambda$",
+     "yLabel": "Im $h\\lambda$",
+     "functions": [
+      {
+       "id": "eu",
+       "implicit": "(1 + x)^2 + y^2 - 1",
+       "label": "Euler",
+       "labelAt": [
+        -1.75,
+        -0.9
+       ]
+      },
+      {
+       "id": "ie",
+       "implicit": "(1 - x)^2 + y^2 - 1",
+       "colour": 2,
+       "label": "implicit Euler",
+       "labelAt": [
+        1.75,
+        0.9
+       ]
+      },
+      {
+       "id": "rk",
+       "implicit": "(1 + x + x^2/2 - y^2/2 + x^3/6 - x*y^2/2 + x^4/24 - x^2*y^2/4 + y^4/24)^2 + (y + x*y + x^2*y/2 - y^3/6 + x^3*y/6 - x*y^3/6)^2 - 1",
+       "colour": 3,
+       "dashed": true,
+       "label": "RK4",
+       "labelAt": [
+        -2.6,
+        2.2
+       ]
+      }
+     ],
+     "vlines": [
+      {
+       "id": "tr",
+       "x": 0,
+       "label": "trapezoidal",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "Z",
+       "x": -1.5,
+       "y": 0,
+       "drag": true,
+       "label": "$h\\lambda$"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "hλ = {{fixed(Z.x, 2)}} + {{fixed(Z.y, 2)}}i: Euler {{fixed(hypot(1 + Z.x, Z.y), 3)}}, implicit {{fixed(1/hypot(1 - Z.x, Z.y), 3)}}, trapezoidal {{fixed(hypot(1 + Z.x/2, Z.y/2)/hypot(1 - Z.x/2, Z.y/2), 3)}}, RK4 {{fixed(hypot((1 + Z.x + Z.x*Z.x/2 - Z.y*Z.y/2 + Z.x*Z.x*Z.x/6 - Z.x*Z.y*Z.y/2 + Z.x*Z.x*Z.x*Z.x/24 - Z.x*Z.x*Z.y*Z.y/4 + Z.y*Z.y*Z.y*Z.y/24), (Z.y + Z.x*Z.y + Z.x*Z.x*Z.y/2 - Z.y*Z.y*Z.y/6 + Z.x*Z.x*Z.x*Z.y/6 - Z.x*Z.y*Z.y*Z.y/6)), 3)}}."
+    }
+   },
+   "question": "Take the fast mode at $h = 0.05$, so $z = -2.5$. Select all that apply: which methods are stable there?",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "eu",
+      "text": "Euler",
+      "why": "Euler's factor is $|1 - 2.5| = 1.5$, so the mode grows."
+     },
+     {
+      "id": "ie",
+      "text": "Implicit Euler",
+      "correct": true
+     },
+     {
+      "id": "tr",
+      "text": "Trapezoidal rule",
+      "correct": true
+     },
+     {
+      "id": "rk",
+      "text": "RK4",
+      "correct": true
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Drag $z$ to $-2.5$ on the real axis."
+    },
+    {
+     "rung": "point",
+     "text": "Read each factor in the caption: below 1 is stable.",
+     "highlight": [
+      "Z"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Euler 1.5, implicit 0.286, trapezoidal 0.111, RK4 0.648."
+    }
+   ],
+   "feedback": {
+    "correct": "Implicit Euler, the trapezoidal rule and RK4.",
+    "generic": "Not quite right. A method is stable where its factor is below 1.",
+    "byKey": {
+     "eu": "Euler's factor at $-2.5$ is 1.5, so the fast mode grows."
+    }
+   },
+   "explain": {
+    "text": "At $z = -2.5$ Euler's factor is 1.5, while RK4's region reaches $-2.7853$ on the axis, so RK4 survives. Implicit Euler and the trapezoidal rule are stable on the whole left half-plane. Explicit methods always have a bounded region.",
+    "canvas": {
+     "points": {
+      "Z": {
+       "x": -2.5,
+       "y": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "The trapezoidal rule is stable for every $h$ and second order. A colleague runs it at $h = 0.25$: the fast factor is $\\tfrac{1 + z/2}{1 - z/2} = \\tfrac{1 - 6.25}{1 + 6.25} = -0.7241$. Its path is 7.9696%, 3.9891%, 6.5346%, 4.3941%, against the true 5.7828%, 5.5733%, 5.3885%, 5.2253%.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1.05
+     ],
+     "y": [
+      0,
+      10
+     ],
+     "height": 260,
+     "xLabel": "$t$ (years)",
+     "yLabel": "$r$ (%)",
+     "params": {
+      "h": 0.25
+     },
+     "functions": [
+      {
+       "id": "ex",
+       "expr": "4 + 2.0202020*exp(-0.5*x) - 3.0202020*exp(-50*x)",
+       "label": "exact",
+       "labelAt": 0.8,
+       "labelSide": "below"
+      },
+      {
+       "id": "m",
+       "expr": "4 + 2.0202020*((1 - 0.25*h)/(1 + 0.25*h))^floor(x/h)*(1 + ((1 - 0.25*h)/(1 + 0.25*h) - 1)*(x/h - floor(x/h))) - 3.0202020*((1 - 25*h)/(1 + 25*h))^floor(x/h)*(1 + ((1 - 25*h)/(1 + 25*h) - 1)*(x/h - floor(x/h)))",
+       "domain": [
+        0,
+        1
+       ],
+       "colour": 2,
+       "label": "trapezoidal",
+       "labelAt": 0.5
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "h": 0.25
+     }
+    }
+   },
+   "question": "Is an unconditionally stable method safe at any step?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "No: its factor tends to $-1$ for stiff modes, so they ring instead of dying",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: stable means accurate",
+      "why": "You read stable as accurate. The fast mode shrinks only by 0.72 a step, flipping sign each time."
+     },
+     {
+      "id": "unstable",
+      "text": "No: it is unstable at $h = 0.25$",
+      "why": "It is stable, $|{-0.7241}| < 1$; the trouble is slow decay with sign flips."
+     },
+     {
+      "id": "order",
+      "text": "Yes, because it is second order",
+      "why": "Its order describes small $h$; at $h\\lambda = -12.5$ the factor is far from $e^{-12.5}$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the exact factor $e^{h\\lambda}$ for the fast mode?"
+    },
+    {
+     "rung": "point",
+     "text": "$e^{-12.5} \\approx 4 \\times 10^{-6}$, but the rule gives $-0.7241$.",
+     "highlight": [
+      "m"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "As $h\\lambda \\to -\\infty$ the trapezoidal factor tends to $-1$; implicit Euler's tends to 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Stable, but ringing.",
+    "generic": "Not quite right. Compare $-0.7241$ with the exact $e^{-12.5}$.",
+    "byKey": {
+     "yes": "You took stable to mean safe. The fast mode rings: 7.97%, 3.99%, 6.53%, 4.39%."
+    }
+   },
+   "explain": {
+    "text": "The exact fast factor is $e^{-12.5} \\approx 4 \\times 10^{-6}$; the trapezoidal rule gives $-0.7241$, so the error flips sign and fades slowly. A method whose factor tends to 0 for stiff modes, like implicit Euler, is called **L-stable**. Crank-Nicolson in level 4 rings the same way."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "For $y' = \\lambda y$ each method has a factor $R(z)$, $z = h\\lambda$: $$1 + z,\\quad \\frac{1}{1 - z},\\quad \\frac{1 + z/2}{1 - z/2},\\quad 1 + z + \\tfrac{z^2}{2} + \\tfrac{z^3}{6} + \\tfrac{z^4}{24}.$$ Stable means $|R(z)| < 1$. For stiff modes we also want $R(z) \\to 0$ as $z \\to -\\infty$.",
+   "question": "At $h = 0.02$, Euler's fast factor is $1 - 50h$. What happens to the fast mode?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Its factor is 0, so it vanishes after one step",
+      "correct": true
+     },
+     {
+      "id": "grow",
+      "text": "It grows",
+      "why": "$1 - 50 \\times 0.02 = 0$, so nothing is left to grow."
+     },
+     {
+      "id": "ring",
+      "text": "It rings for ever",
+      "why": "Ringing needs a factor of $-1$, at $h = 0.04$."
+     },
+     {
+      "id": "slow",
+      "text": "It decays slowly",
+      "why": "A factor of 0 kills it at once."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Factor 0: gone after one step.",
+    "generic": "Not quite right. Compute $1 - 50 \\times 0.02$."
+   },
+   "explain": {
+    "text": "$1 - 50 \\times 0.02 = 0$, so the fast mode disappears after one step. Euler then gives 5.2222%, accurate by luck: at $h = 0.03$ the factor is $-0.5$. Stiff problems need a method stable by design."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write both implicit steppers for $\\mathbf y' = \\mathbf A\\mathbf y + \\mathbf c$, with $\\mathbf y = (m, r)$, $\\mathbf A = \\begin{bmatrix}-0.5 & 0\\\\ 50 & -50\\end{bmatrix}$ and $\\mathbf c = (0.02, 0)$. The trapezoidal rule solves $(\\mathbf I - \\tfrac h2\\mathbf A)\\mathbf y_{n+1} = (\\mathbf I + \\tfrac h2\\mathbf A)\\mathbf y_n + h\\mathbf c$.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "M",
+       "rows": [
+        [
+         "$1 + 0.5h$",
+         0
+        ],
+        [
+         "$-50h$",
+         "$1 + 50h$"
+        ]
+       ],
+       "label": "$\\mathbf I - h\\mathbf A$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `implicit_euler_linear` and `trapezoidal_linear`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef implicit_euler_linear(A, c, y0, h, n):\n    \"\"\"n steps of implicit Euler for y' = A y + c.\"\"\"\n    ...\n\ndef trapezoidal_linear(A, c, y0, h, n):\n    \"\"\"n steps of the trapezoidal rule for y' = A y + c.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef implicit_euler_linear(A, c, y0, h, n):\n    A = np.asarray(A, dtype=float); c = np.asarray(c, dtype=float)\n    y = np.asarray(y0, dtype=float)\n    M = np.eye(len(y)) - h * A\n    for _ in range(n):\n        y = np.linalg.solve(M, y + h * c)\n    return y\n\ndef trapezoidal_linear(A, c, y0, h, n):\n    A = np.asarray(A, dtype=float); c = np.asarray(c, dtype=float)\n    y = np.asarray(y0, dtype=float)\n    I = np.eye(len(y))\n    L, R = I - h / 2 * A, I + h / 2 * A\n    for _ in range(n):\n        y = np.linalg.solve(L, R @ y + h * c)\n    return y\n",
+    "examples": [
+     {
+      "setup": "A = [[-0.5, 0.0], [50.0, -50.0]]; c = [0.02, 0.0]; y0 = [0.06, 0.03]",
+      "call": "round(float(implicit_euler_linear(A, c, y0, 0.25, 4)[1]), 7)",
+      "expect": "0.0526111",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "A = [[-0.5, 0.0], [50.0, -50.0]]; c = [0.02, 0.0]; y0 = [0.06, 0.03]",
+      "call": "float(implicit_euler_linear(A, c, y0, 0.25, 4)[1])",
+      "expect": "0.0526111",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "A = [[-0.5, 0.0], [50.0, -50.0]]; c = [0.02, 0.0]; y0 = [0.06, 0.03]",
+      "call": "float(implicit_euler_linear(A, c, y0, 0.25, 4)[0])",
+      "expect": "0.04 + 0.02 / 1.125 ** 4",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "setup": "A = [[-0.5, 0.0], [50.0, -50.0]]; c = [0.02, 0.0]; y0 = [0.06, 0.03]",
+      "call": "float(trapezoidal_linear(A, c, y0, 0.25, 4)[1])",
+      "expect": "0.0439405",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "A = [[-0.5, 0.0], [50.0, -50.0]]; c = [0.02, 0.0]; y0 = [0.06, 0.03]",
+      "call": "float(trapezoidal_linear(A, c, y0, 0.05, 20)[1])",
+      "expect": "0.0522528",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "A = [[-0.5, 0.0], [50.0, -50.0]]; c = [0.02, 0.0]; y0 = [0.06, 0.03]",
+      "call": "float(implicit_euler_linear(A, c, y0, 0.001, 1000)[1])",
+      "expect": "0.05225314464",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ],
+    "how": "Submit runs 5 hidden tests with NumPy. r(1) at h = 0.25 must be within 1e-6, for both methods, and the slow mode exactly. The trapezoidal rule is also checked at h = 0.05. A fine-step run must approach the exact 5.2253%."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build $\\mathbf I - h\\mathbf A$ once, outside the loop."
+    },
+    {
+     "rung": "point",
+     "text": "Each step: `y = np.linalg.solve(M, y + h * c)`.",
+     "highlight": [
+      "M"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For the trapezoidal rule, `y = np.linalg.solve(I - h/2*A, (I + h/2*A) @ y + h * c)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both pass: 5.2611% and 4.3941% at $h = 0.25$.",
+    "generic": "Not quite right. Check the implicit Euler example first."
+   },
+   "explain": {
+    "text": "One linear solve per step makes the method implicit; for a 2 by 2 system it costs little. At $h = 0.05$ the trapezoidal rule gives 5.22528%, near the exact 5.22531%. At $h = 0.25$ it rings to 4.3941%."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "SciPy's `solve_ivp` offers explicit `RK45` and the implicit `Radau` and `BDF`. Compare their cost on the two-speed model over 10 years. SciPy takes a few seconds to load the first time.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Kind"
+     ],
+     "rows": [
+      [
+       "RK45",
+       "explicit, adaptive"
+      ],
+      [
+       "Radau",
+       "implicit, order 5"
+      ],
+      [
+       "BDF",
+       "implicit, variable order"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `compare_solvers`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\nfrom scipy.integrate import solve_ivp\n\ndef compare_solvers():\n    \"\"\"Solve the two-speed model on [0, 10] with RK45, Radau and BDF at\n    rtol=1e-6, atol=1e-9. Return {method: (nfev, r at t = 10)}.\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\nfrom scipy.integrate import solve_ivp\n\ndef compare_solvers():\n    A = np.array([[-0.5, 0.0], [50.0, -50.0]]); c = np.array([0.02, 0.0])\n    out = {}\n    for m in ('RK45', 'Radau', 'BDF'):\n        s = solve_ivp(lambda t, y: A @ y + c, [0, 10], [0.06, 0.03], method=m, rtol=1e-6, atol=1e-9)\n        out[m] = (int(s.nfev), float(s.y[1, -1]))\n    return out\n",
+    "examples": [
+     {
+      "call": "sorted(compare_solvers())",
+      "expect": "['BDF', 'RK45', 'Radau']",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "sorted(compare_solvers())",
+      "expect": "['BDF', 'RK45', 'Radau']",
+      "compare": "equal"
+     },
+     {
+      "call": "compare_solvers()['RK45'][0] > 2 * compare_solvers()['BDF'][0]",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "max(abs(v[1] - (0.04 + (0.02 * 50 / 49.5) * math.exp(-5) + (0.03 - 0.04 - 0.02 * 50 / 49.5) * math.exp(-500))) for v in compare_solvers().values()) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 3 hidden tests with SciPy, which takes about 2 s to import after it has downloaded. RK45 must use more than twice the evaluations of BDF. Each r(10) must be within 1e-6 of the closed form."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the right-hand side as `lambda t, y: A @ y + c`."
+    },
+    {
+     "rung": "point",
+     "text": "Call `solve_ivp(f, [0, 10], [0.06, 0.03], method=m, rtol=1e-6, atol=1e-9)`.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Store `(s.nfev, s.y[1, -1])` for each method."
+    }
+   ],
+   "feedback": {
+    "correct": "RK45 used 1,172 evaluations, Radau 422 and BDF 226.",
+    "generic": "Not quite right. Check the keys and the tuple order."
+   },
+   "explain": {
+    "text": "In the app's SciPy 1.14.1, RK45 took 1,172 evaluations, Radau 422 and BDF 226. All three meet $10^{-6}$. The explicit method pays for stability long after the fast mode has died."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "On a grid of spacing $\\Delta S$, the Black-Scholes equation becomes a large linear ODE system. Its fastest decay rate grows like $\\sigma^2S_{\\max}^2/\\Delta S^2$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Grid spacing",
+      "Fastest rate",
+      "Explicit step"
+     ],
+     "rows": [
+      [
+       "$\\Delta S$",
+       "$\\lambda$",
+       "$h$"
+      ],
+      [
+       "$\\Delta S / 2$",
+       "$4\\lambda$",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Halving $\\Delta S$ divides the largest stable explicit step by how much?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.01
+    },
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The stable step is about $2/|\\lambda|$."
+    },
+    {
+     "rung": "point",
+     "text": "Halving $\\Delta S$ multiplies $\\lambda$ by 4.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So the step must shrink by 4."
+    }
+   ],
+   "feedback": {
+    "correct": "By 4: the step shrinks with the square of the spacing.",
+    "generic": "Not quite right. The rate grows like $1/\\Delta S^2$.",
+    "byKey": {
+     "two": "The rate grows like $1/\\Delta S^2$, not $1/\\Delta S$."
+    }
+   },
+   "explain": {
+    "text": "The fastest rate scales like $1/\\Delta S^2$, so halving $\\Delta S$ quarters the stable explicit step. That is level 4's stability limit for finite differences. Its fix is this lesson's implicit step."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A stiff system has widely separated decay rates; Euler's step must satisfy $|1 + h\\lambda| < 1$ for the fastest, $h < 0.04$ here.",
+   "Implicit Euler solves $(\\mathbf I - h\\mathbf A)\\mathbf y_{n+1} = \\mathbf y_n + h\\mathbf c$ and has factor $\\tfrac{1}{1 - h\\lambda}$: stable for every $h$.",
+   "The trapezoidal rule is stable and second order, but its factor tends to $-1$, so stiff modes ring."
+  ],
+  "formula": {
+   "name": "Amplification factors",
+   "tex": "R_{\\text{Euler}} = 1 + z, \\quad R_{\\text{implicit}} = \\dfrac{1}{1 - z}, \\quad R_{\\text{trap}} = \\dfrac{1 + z/2}{1 - z/2}",
+   "note": "$z = h\\lambda$; stable where $|R(z)| < 1$."
+  },
+  "trap": "Unconditionally stable is not the same as accurate: the trapezoidal rule at $h = 0.25$ rings between 4% and 8%."
+ },
+ "quiz": [
+  {
+   "id": "q-euler-limit",
+   "difficulty": 2,
+   "prose": "A mode decays at rate $\\lambda = -200$.",
+   "question": "What is the largest stable step for Euler's method?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.01,
+    "tol": {
+     "abs": 0.0001
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.005,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$h < 2/200 = 0.01$.",
+    "generic": "Not quite right. Use $h < 2/|\\lambda|$.",
+    "byKey": {
+     "one": "That is $1/|\\lambda|$; the limit is $2/|\\lambda|$."
+    }
+   },
+   "explain": {
+    "text": "$|1 - 200h| < 1$ gives $h < 0.01$. Every extra fast mode in a system adds a limit like this, and the strictest one wins."
+   }
+  },
+  {
+   "id": "q-impl-factor",
+   "difficulty": 3,
+   "prose": "Implicit Euler is applied with $h\\lambda = -10$.",
+   "question": "What is the mode's factor per step?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0909,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "euler",
+      "value": -9,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/11 \\approx 0.0909$.",
+    "generic": "Not quite right. Use $\\tfrac{1}{1 - h\\lambda}$.",
+    "byKey": {
+     "euler": "That is Euler's $1 + h\\lambda$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{1}{1 + 10} = 0.0909$: strongly damped, as the true $e^{-10}$ is. For larger $|h\\lambda|$ it tends to 0, which makes implicit Euler L-stable."
+   }
+  },
+  {
+   "id": "q-stiff-def",
+   "difficulty": 2,
+   "prose": "A model has decay rates $-0.5$ and $-50$.",
+   "question": "What makes it stiff?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The fast rate, not accuracy, limits an explicit method's step",
+      "correct": true
+     },
+     {
+      "id": "big",
+      "text": "Its solution is large",
+      "why": "Size has nothing to do with stiffness; separated rates do."
+     },
+     {
+      "id": "nonlin",
+      "text": "It is nonlinear",
+      "why": "This system is linear and still stiff."
+     },
+     {
+      "id": "slow",
+      "text": "The slow mode takes years to settle",
+      "why": "Slow modes alone allow big steps."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Stability, not accuracy, sets the step.",
+    "generic": "Not quite right. Compare the two rates."
+   },
+   "explain": {
+    "text": "The fast mode dies within days but forces Euler's $h < 0.04$ all year. The slow mode alone would allow steps a hundred times larger. Implicit methods remove that restriction."
+   }
+  }
+ ]
+}

@@ -1,0 +1,1024 @@
+{
+ "id": "l10-gaussian-quadrature",
+ "course": "numerics",
+ "title": "Gaussian quadrature",
+ "minutes": 14,
+ "objectives": [
+  "Price a European option by Gauss-Legendre quadrature against the lognormal density."
+ ],
+ "skills": [
+  "nm-quadrature"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "A two-node rule on $[-1, 1]$ is $f(-x_1) + f(x_1)$, both weights 1. The curve is $f(x) = x^2$, whose integral is $\\tfrac23$. Drag the right node; the left one mirrors it.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.1,
+      1.1
+     ],
+     "y": [
+      -0.2,
+      1.1
+     ],
+     "height": 240,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2",
+       "label": "$x^2$",
+       "labelAt": 0.9
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0.8,
+       "y": 0,
+       "drag": true,
+       "lockY": true,
+       "label": "$x_1$"
+      },
+      {
+       "id": "Q",
+       "x": -0.8,
+       "y": 0,
+       "label": "$-x_1$",
+       "tap": false
+      }
+     ],
+     "segments": [
+      {
+       "id": "sp",
+       "from": "P",
+       "to": [
+        0.8,
+        0.64
+       ],
+       "dashed": true
+      },
+      {
+       "id": "sq",
+       "from": "Q",
+       "to": [
+        -0.8,
+        0.64
+       ],
+       "dashed": true
+      }
+     ]
+    },
+    "derive": {
+     "Q.x": "-P.x",
+     "sp.to": "[P.x, P.x*P.x]",
+     "sq.to": "[-P.x, P.x*P.x]",
+     "caption": "Rule: 2 × {{fixed(P.x, 4)}}² = {{fixed(2*P.x*P.x, 4)}}; exact 0.6667; error {{fixed(2*P.x*P.x - 2/3, 4)}}."
+    }
+   },
+   "question": "Drag the node until the rule integrates $x^2$ exactly.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "P",
+      "target": [
+       0.57735,
+       0
+      ],
+      "tol": 0.006
+     }
+    ],
+    "wrong": [
+     {
+      "id": "half",
+      "region": {
+       "x": [
+        0.45,
+        0.55
+       ],
+       "y": [
+        -0.1,
+        0.1
+       ]
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The rule gives $2x_1^2$; the integral is $\\tfrac23$."
+    },
+    {
+     "rung": "point",
+     "text": "Solve $2x_1^2 = \\tfrac23$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$x_1 = \\tfrac{1}{\\sqrt3} \\approx 0.57735$."
+    }
+   ],
+   "feedback": {
+    "correct": "$x_1 = 1/\\sqrt3 \\approx 0.57735$.",
+    "generic": "Not quite right. Make the caption's error zero.",
+    "byKey": {
+     "half": "At 0.5 the rule gives 0.5, below $\\tfrac23$. Move the node out a little.",
+     "P": "Keep moving until the error reads 0.0000."
+    }
+   },
+   "explain": {
+    "text": "$2x_1^2 = \\tfrac23$ gives $x_1 = 1/\\sqrt3 \\approx 0.57735$. By symmetry the rule is also exact for $x$ and $x^3$, and for 1 it gives 2. Two nodes are exact up to degree 3.",
+    "canvas": {
+     "points": {
+      "P": {
+       "x": 0.57735
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "With nodes $\\pm\\tfrac1{\\sqrt3}$ the rule is exact for $1, x, x^2, x^3$. This is **Gauss-Legendre quadrature**: $n$ nodes at the roots of the Legendre polynomial $P_n$. It is exact for every polynomial of degree up to $2n - 1$. NumPy gives them: `np.polynomial.legendre.leggauss(n)`.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.1,
+      1.1
+     ],
+     "y": [
+      -0.2,
+      1.1
+     ],
+     "height": 220,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^4",
+       "label": "$x^4$",
+       "labelAt": 0.9
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "P",
+       "x": 0.57735,
+       "y": 0.1111,
+       "label": "$\\tfrac19$"
+      },
+      {
+       "id": "Q",
+       "x": -0.57735,
+       "y": 0.1111
+      }
+     ]
+    }
+   },
+   "question": "What does the two-node rule give for $\\int_{-1}^{1}x^4\\,dx$, whose exact value is 0.4?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2222,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "exact",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "one",
+      "value": 0.1111,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Evaluate $x^4$ at $\\pm 0.57735$ and add."
+    },
+    {
+     "rung": "point",
+     "text": "$(1/\\sqrt3)^4 = \\tfrac19$.",
+     "highlight": [
+      "P",
+      "Q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac19 + \\tfrac19 = \\tfrac29 \\approx 0.2222$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac29 \\approx 0.2222$: degree 4 is one too many.",
+    "generic": "Not quite right. Add $x_1^4$ at both nodes.",
+    "byKey": {
+     "exact": "0.4 is the integral. Two nodes are exact only up to degree 3.",
+     "one": "That is one node's value; there are two."
+    }
+   },
+   "explain": {
+    "text": "Each node contributes $\\tfrac19$, so the rule gives $\\tfrac29 = 0.2222$ against 0.4. Two free nodes and two weights fix four conditions, degrees 0 to 3. That is where $2n - 1$ comes from."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Three nodes sit at $0$ and $\\pm\\sqrt{0.6} \\approx \\pm 0.774597$, with weights $\\tfrac89$ and $\\tfrac59$. They should be exact up to degree 5.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.1,
+      1.1
+     ],
+     "y": [
+      -0.2,
+      1.1
+     ],
+     "height": 220,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^6",
+       "label": "$x^6$",
+       "labelAt": 0.95
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a",
+       "x": -0.774597,
+       "y": 0.216,
+       "label": "$w = \\tfrac59$"
+      },
+      {
+       "id": "b",
+       "x": 0,
+       "y": 0,
+       "label": "$w = \\tfrac89$"
+      },
+      {
+       "id": "c",
+       "x": 0.774597,
+       "y": 0.216
+      }
+     ]
+    }
+   },
+   "question": "What does the three-node rule give for $\\int_{-1}^{1}x^6\\,dx$, whose exact value is $\\tfrac27 \\approx 0.2857$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.24,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "noweights",
+      "value": 0.432,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "exact",
+      "value": 0.2857,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$x^6$ at $\\pm\\sqrt{0.6}$ is $0.6^3 = 0.216$, and at 0 it is 0."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply each by its weight $\\tfrac59$.",
+     "highlight": [
+      "a",
+      "c"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2 \\times \\tfrac59 \\times 0.216 = 0.24$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.24: degree 6 is past $2n - 1 = 5$.",
+    "generic": "Not quite right. Weight the two outer values by $\\tfrac59$.",
+    "byKey": {
+     "noweights": "You left out the weights $\\tfrac59$.",
+     "exact": "That is the integral. Degree 6 is beyond what 3 nodes catch."
+    }
+   },
+   "explain": {
+    "text": "$2 \\times \\tfrac59 \\times 0.216 = 0.24$, short of 0.2857. For $x^4$ the same rule gives $2 \\times \\tfrac59 \\times 0.36 = 0.4$, exactly right. Three nodes are exact to degree 5."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Gauss nodes live on $[-1, 1]$. To integrate over $[a, b]$, substitute $t = \\tfrac{b - a}{2}x + \\tfrac{a + b}{2}$. Order the steps and leave out the false one.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "g1",
+      "text": "Map $x \\in [-1, 1]$ to $t = \\tfrac{b - a}{2}x + \\tfrac{a + b}{2}$, which runs from $a$ to $b$."
+     },
+     {
+      "id": "g2",
+      "text": "Then $dt = \\tfrac{b - a}{2}\\,dx$."
+     },
+     {
+      "id": "g3",
+      "text": "So $\\int_a^b f(t)\\,dt = \\tfrac{b - a}{2}\\int_{-1}^{1} f\\left(\\tfrac{b - a}{2}x + \\tfrac{a + b}{2}\\right)dx$."
+     },
+     {
+      "id": "g4",
+      "text": "Apply the rule: $\\int_a^b f \\approx \\tfrac{b - a}{2}\\sum_k w_k f\\left(\\tfrac{b - a}{2}x_k + \\tfrac{a + b}{2}\\right)$."
+     },
+     {
+      "id": "gx",
+      "text": "Moving the nodes changes nothing else: $\\int_a^b f \\approx \\sum_k w_k f(t_k)$.",
+      "why": "That forgets the factor $\\tfrac{b - a}{2}$ from $dt$. The weights sum to 2, the length of $[-1, 1]$, not $b - a$."
+     }
+    ],
+    "answer": [
+     "g1",
+     "g2",
+     "g3",
+     "g4"
+    ],
+    "distractors": [
+     "gx"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start with the map from $[-1, 1]$ to $[a, b]$."
+    },
+    {
+     "rung": "point",
+     "text": "Differentiate the map to change $dt$."
+    },
+    {
+     "rung": "step",
+     "text": "Substitute, then apply the rule to the new integral."
+    }
+   ],
+   "feedback": {
+    "correct": "Map, change $dt$, substitute, apply.",
+    "generic": "Not quite right. Keep the factor from $dt$.",
+    "byKey": {
+     "gx": "You dropped $\\tfrac{b - a}{2}$. The weights add to 2, not to $b - a$.",
+     "left-out": "All four true lines belong in the derivation."
+    }
+   },
+   "explain": {
+    "text": "The substitution stretches $[-1, 1]$ to $[a, b]$, and $dt = \\tfrac{b - a}{2}dx$ brings in the factor. Without it every integral is off by $\\tfrac{b - a}{2}$. With it, the rule's exactness carries over to any interval."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Price the standard call on $[z^*, 8]$ with $z^* = -0.15$, where the integrand is smooth. Gauss errors are $-1.32 \\times 10^{-3}$ with 8 nodes, $-2.0 \\times 10^{-9}$ with 16 and $-2.6 \\times 10^{-13}$ with 32. Simpson needed 128 panels for $1.9 \\times 10^{-6}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1,
+      8.5
+     ],
+     "y": [
+      -0.5,
+      5
+     ],
+     "height": 220,
+     "xLabel": "$z$",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "exp(-0.05)*max(100*exp(0.03 + 0.2*x) - 100, 0)*exp(-x^2/2)/sqrt(2*pi)",
+       "domain": [
+        -0.15,
+        8.5
+       ],
+       "label": "integrand on $[z^*, 8]$",
+       "labelAt": 3
+      }
+     ],
+     "vlines": [
+      {
+       "id": "k",
+       "x": -0.15,
+       "label": "$z^*$"
+      },
+      {
+       "id": "e",
+       "x": 8,
+       "label": "8"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why does the error stop near $2.6 \\times 10^{-13}$ at 32 nodes?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "That is the tail cut off beyond $z = 8$, about $2.5 \\times 10^{-13}$",
+      "correct": true
+     },
+     {
+      "id": "round",
+      "text": "Rounding error in the sum",
+      "why": "Rounding is near $10^{-15}$ here; the missing tail is a hundred times bigger."
+     },
+     {
+      "id": "order",
+      "text": "Gauss rules stop converging past 16 nodes",
+      "why": "They keep converging; the integral itself was cut short."
+     },
+     {
+      "id": "kink",
+      "text": "The kink at $z^*$",
+      "why": "The interval starts at the kink, so the integrand is smooth inside it."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What did we leave out of the integral?"
+    },
+    {
+     "rung": "point",
+     "text": "Everything beyond $z = 8$.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That tail is $2.5 \\times 10^{-13}$, the size of the 32-node error."
+    }
+   ],
+   "feedback": {
+    "correct": "The truncation at $z = 8$.",
+    "generic": "Not quite right. Compare the error with what lies beyond $z = 8$."
+   },
+   "explain": {
+    "text": "The tail beyond 8 is worth $2.5 \\times 10^{-13}$, and the 32-node error matches it. So 16 Gauss nodes beat 128 Simpson panels by three orders of magnitude. Smoothness is what Gauss rules spend.",
+    "canvas": {
+     "highlight": [
+      "e"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague skips the split and runs Gauss on all of $[-8, 8]$, with the kink inside. The errors for 8, 16, 32 and 64 nodes are 3.90, 0.927, 0.120 and $-0.036$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      -0.5,
+      5
+     ],
+     "height": 220,
+     "xLabel": "$z$",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "exp(-0.05)*max(100*exp(0.03 + 0.2*x) - 100, 0)*exp(-x^2/2)/sqrt(2*pi)",
+       "label": "payoff × density",
+       "labelAt": 1.5
+      }
+     ],
+     "vlines": [
+      {
+       "id": "k",
+       "x": -0.15,
+       "label": "kink"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What do you tell them?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Split at the kink: Gauss speed needs a smooth integrand",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "Use 1,000 nodes: Gauss always wins in the end",
+      "why": "You trusted node count over smoothness. With the kink inside, the error only creeps down, worse than Simpson."
+     },
+     {
+      "id": "simpson",
+      "text": "Gauss is broken for option prices",
+      "why": "Split at $z^*$, the same rule gives $2 \\times 10^{-9}$ with 16 nodes."
+     },
+     {
+      "id": "range",
+      "text": "Shrink the range to $[-4, 4]$",
+      "why": "The range is not the problem; the kink is."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare with the split errors on the last screen."
+    },
+    {
+     "rung": "point",
+     "text": "Gauss rules converge fast only when $f$ has many smooth derivatives.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A kink inside the interval wrecks that; put it at an end."
+    }
+   ],
+   "feedback": {
+    "correct": "Split first.",
+    "generic": "Not quite right. The kink, not the node count, causes these errors.",
+    "byKey": {
+     "more": "You trusted more nodes to fix it. With a kink inside, Gauss converges slowly and erratically."
+    }
+   },
+   "explain": {
+    "text": "With the kink inside, 64 nodes still err by 0.036, worse than Simpson. Split at $z^*$, 16 nodes reach $2 \\times 10^{-9}$. The speed of Gauss rules comes from smoothness, so remove the kink first.",
+    "canvas": {
+     "highlight": [
+      "k"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "A polynomial payoff of low degree, against a polynomial weight, is integrated exactly by a few Gauss nodes. Take $\\int_{-1}^{1}(x^3 + 2x^2 + 1)\\,dx$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.1,
+      1.1
+     ],
+     "y": [
+      -0.5,
+      4.5
+     ],
+     "height": 220,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^3 + 2*x^2 + 1",
+       "label": "$x^3 + 2x^2 + 1$",
+       "labelAt": 0.6
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a",
+       "x": -0.57735,
+       "y": 1.4742
+      },
+      {
+       "id": "b",
+       "x": 0.57735,
+       "y": 1.8591
+      }
+     ]
+    }
+   },
+   "question": "What does the two-node rule give?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.3333,
+    "tol": {
+     "abs": 0.0005
+    },
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1.6667,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add $f(-0.57735)$ and $f(0.57735)$."
+    },
+    {
+     "rung": "point",
+     "text": "The cubic terms cancel; each $2x^2$ term is $\\tfrac23$.",
+     "highlight": [
+      "a",
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$2 \\times (\\tfrac23 + 1) = 3.3333$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{10}{3} \\approx 3.3333$, exactly the integral.",
+    "generic": "Not quite right. Evaluate at both nodes and add.",
+    "byKey": {
+     "one": "That is half: there are two nodes, each with weight 1."
+    }
+   },
+   "explain": {
+    "text": "The rule gives $1.4742 + 1.8591 = 3.3333$, and $\\int_{-1}^1(x^3 + 2x^2 + 1)\\,dx = 0 + \\tfrac43 + 2 = \\tfrac{10}{3}$. Degree 3 is within $2n - 1 = 3$. Exactness is a test for quadrature code."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write the rule and two pricers. In $z$ the call is $C = e^{-rT}\\int_{z^*}^{8}\\left(S_0e^{(r - \\sigma^2/2)T + \\sigma\\sqrt Tz} - K\\right)\\varphi(z)\\,dz$, with $z^* = \\tfrac{\\ln(K/S_0) - (r - \\sigma^2/2)T}{\\sigma\\sqrt T}$. The put integrates $K - S_T$ over $[-8, z^*]$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Option",
+      "Black-Scholes (£)"
+     ],
+     "rows": [
+      [
+       "Call, $K = 100$",
+       "10.450584"
+      ],
+      [
+       "Put, $K = 100$",
+       "5.573526"
+      ],
+      [
+       "Call, $K = 200$",
+       "0.004799"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `gl_integrate`, `gl_call_price` and `gl_put_price`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\ndef gl_integrate(f, a, b, n):\n    \"\"\"Gauss-Legendre with n nodes on [a, b]; f takes arrays.\"\"\"\n    ...\n\ndef gl_call_price(S0, K, r, sigma, T, n, zmax=8):\n    \"\"\"Call by quadrature in z, split at the kink z*.\"\"\"\n    ...\n\ndef gl_put_price(S0, K, r, sigma, T, n, zmax=8):\n    \"\"\"Put by quadrature in z on [-zmax, z*].\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef gl_integrate(f, a, b, n):\n    x, w = np.polynomial.legendre.leggauss(n)\n    t = (b - a) / 2 * x + (a + b) / 2\n    return float((b - a) / 2 * np.sum(w * f(t)))\n\ndef _parts(S0, K, r, sigma, T):\n    m = (r - sigma ** 2 / 2) * T\n    s = sigma * math.sqrt(T)\n    zs = (math.log(K / S0) - m) / s\n    ST = lambda z: S0 * np.exp(m + s * z)\n    phi = lambda z: np.exp(-z ** 2 / 2) / math.sqrt(2 * math.pi)\n    return zs, ST, phi\n\ndef gl_call_price(S0, K, r, sigma, T, n, zmax=8):\n    zs, ST, phi = _parts(S0, K, r, sigma, T)\n    return math.exp(-r * T) * gl_integrate(lambda z: (ST(z) - K) * phi(z), zs, zmax, n)\n\ndef gl_put_price(S0, K, r, sigma, T, n, zmax=8):\n    zs, ST, phi = _parts(S0, K, r, sigma, T)\n    return math.exp(-r * T) * gl_integrate(lambda z: (K - ST(z)) * phi(z), -zmax, zs, n)\n",
+    "examples": [
+     {
+      "call": "gl_integrate(lambda x: x ** 2, -1, 1, 2)",
+      "expect": "2 / 3",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "gl_integrate(lambda x: x ** 2, -1, 1, 2)",
+      "expect": "2 / 3",
+      "compare": "isclose"
+     },
+     {
+      "call": "gl_integrate(lambda x: x ** 5 - x, 0, 2, 3)",
+      "expect": "64 / 6 - 2",
+      "compare": "isclose"
+     },
+     {
+      "call": "gl_integrate(np.exp, 0, 1, 8)",
+      "expect": "np.e - 1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-14
+      }
+     },
+     {
+      "call": "gl_call_price(100, 100, 0.05, 0.2, 1.0, 16)",
+      "expect": "10.450583572185565",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "gl_put_price(100, 100, 0.05, 0.2, 1.0, 16)",
+      "expect": "5.573526022256971",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "gl_call_price(100, 100, 0.05, 0.2, 1.0, 16) - gl_put_price(100, 100, 0.05, 0.2, 1.0, 16)",
+      "expect": "100 - 100 * math.exp(-0.05)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "gl_call_price(100, 200, 0.05, 0.2, 1.0, 32)",
+      "expect": "0.0047988351066194646",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     }
+    ],
+    "how": "Submit runs 7 hidden tests with NumPy, no SciPy. Exactness is checked on x² and x⁵ − x, and e^x to 1e-14. The call, the put, put-call parity and a far call at K = 200 must match Black-Scholes within 1e-8."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`x, w = np.polynomial.legendre.leggauss(n)`, then map the nodes to $[a, b]$ and multiply by $\\tfrac{b - a}{2}$."
+    },
+    {
+     "rung": "point",
+     "text": "Compute $z^*$ first; the call integrates from $z^*$ to `zmax`.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The put integrates $(K - S_T(z))\\varphi(z)$ from `-zmax` to $z^*$; discount both by $e^{-rT}$."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass: £10.450584 with 16 nodes.",
+    "generic": "Not quite right. Check `gl_integrate` on $x^2$ first, then the split point."
+   },
+   "explain": {
+    "text": "Splitting at $z^*$ leaves a smooth integrand, so 16 nodes reach $10^{-8}$. Parity, $C - P = S_0 - Ke^{-rT}$, checks both prices at once. The far call needs 32 nodes because its integrand sits far out in the tail."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A desk's model has a known density for $\\ln S_T$ but no closed-form option price. It must price 2,000 options every few seconds.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Evaluations per price",
+      "Error"
+     ],
+     "rows": [
+      [
+       "Simpson, 128 panels",
+       "129",
+       "$1.9 \\times 10^{-6}$"
+      ],
+      [
+       "Gauss, 16 nodes, split",
+       "16",
+       "$2.0 \\times 10^{-9}$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which approach fits the budget?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Gauss-Legendre split at each strike: a few dozen evaluations per price",
+      "correct": true
+     },
+     {
+      "id": "mc",
+      "text": "Monte Carlo with a million paths per option",
+      "why": "Monte Carlo error falls like $1/\\sqrt n$: far too slow for one-dimensional integrals."
+     },
+     {
+      "id": "simp",
+      "text": "Simpson on a fixed grid without splitting",
+      "why": "Without splitting the kink drops Simpson to an erratic $h^2$."
+     },
+     {
+      "id": "tree",
+      "text": "A binomial tree for each option",
+      "why": "A tree converges like $1/n$ and needs many steps."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare evaluations per price at similar accuracy."
+    },
+    {
+     "rung": "point",
+     "text": "Gauss needs 16 evaluations for $2 \\times 10^{-9}$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Split at each strike's kink, then apply Gauss on each smooth piece."
+    }
+   ],
+   "feedback": {
+    "correct": "Gauss, split at the strike.",
+    "generic": "Not quite right. Look at evaluations per price."
+   },
+   "explain": {
+    "text": "Sixteen evaluations per price give $2 \\times 10^{-9}$, so 2,000 prices cost 32,000 evaluations. Desks price by quadrature whenever a density or characteristic function is known. Fourier pricing in `complex` level 3 is the same idea in another variable."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Gauss-Legendre puts $n$ nodes at the roots of $P_n$, so the rule is exact for polynomials up to degree $2n - 1$.",
+   "Map nodes to $[a, b]$ with $t = \\tfrac{b - a}{2}x + \\tfrac{a + b}{2}$ and multiply by $\\tfrac{b - a}{2}$.",
+   "Split at the payoff's kink: 16 nodes then price the call to $2 \\times 10^{-9}$. With the kink inside, 64 nodes err by 0.036."
+  ],
+  "formula": {
+   "name": "Gauss-Legendre",
+   "tex": "\\int_a^b f \\approx \\tfrac{b - a}{2}\\sum_{k=1}^{n} w_k f\\left(\\tfrac{b - a}{2}x_k + \\tfrac{a + b}{2}\\right)",
+   "note": "Two nodes: $\\pm 1/\\sqrt3$, weights 1."
+  },
+  "trap": "More Gauss nodes do not fix a kink inside the interval: its speed comes from smoothness, so split first."
+ },
+ "quiz": [
+  {
+   "id": "q-truncate",
+   "difficulty": 3,
+   "prose": "A pricer integrates the call in $S_T$ over $[K, 200]$ with 64 Gauss nodes and errs by $-0.0483$. With 128 nodes the error is the same.",
+   "question": "What is wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The range stops at 200 and misses the upper tail",
+      "correct": true
+     },
+     {
+      "id": "nodes",
+      "text": "Too few nodes",
+      "why": "Doubling the nodes changed nothing, so the rule has converged to the wrong integral."
+     },
+     {
+      "id": "kink",
+      "text": "The kink at $K$",
+      "why": "The range starts at $K$, so the kink is at an end."
+     },
+     {
+      "id": "round",
+      "text": "Rounding error",
+      "why": "Rounding is near $10^{-15}$, not 0.05."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Truncation: widen the range.",
+    "generic": "Not quite right. An error that ignores the node count is not the rule's."
+   },
+   "explain": {
+    "text": "On $[K, 200]$ the error is $-0.0483$, on $[K, 300]$ $-9.2 \\times 10^{-6}$ and on $[K, 400]$ $-1.8 \\times 10^{-9}$. No number of nodes recovers a region left out. Working in $z$ makes the cut-off explicit."
+   }
+  },
+  {
+   "id": "q-degree",
+   "difficulty": 2,
+   "prose": "A Gauss-Legendre rule has 5 nodes.",
+   "question": "Up to what degree is it exact for polynomials?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 9,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "ten",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2n - 1 = 9$.",
+    "generic": "Not quite right. Gauss rules are exact to degree $2n - 1$.",
+    "byKey": {
+     "five": "That is as many as the nodes. Free nodes double it.",
+     "ten": "$2n$ is one too many."
+    }
+   },
+   "explain": {
+    "text": "Five nodes and five weights fix ten conditions, degrees 0 to 9. That is twice what fixed equally spaced nodes give."
+   }
+  },
+  {
+   "id": "q-interval",
+   "difficulty": 3,
+   "prose": "A colleague maps Gauss nodes to $[0, 4]$ but forgets the factor $\\tfrac{b - a}{2}$.",
+   "question": "By what factor is every integral wrong?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Too small by half: the factor is $\\tfrac{4 - 0}{2} = 2$.",
+    "generic": "Not quite right. The missing factor is $\\tfrac{b - a}{2}$.",
+    "byKey": {
+     "two": "2 is the missing factor; the computed integral is half the true one."
+    }
+   },
+   "explain": {
+    "text": "The weights add to 2, but $[0, 4]$ has length 4, so the missing factor is 2. Every result comes out at 0.5 times its true value."
+   }
+  }
+ ]
+}

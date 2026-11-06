@@ -1,0 +1,1139 @@
+{
+ "id": "l9-quadrature",
+ "course": "numerics",
+ "title": "Trapezium and Simpson",
+ "minutes": 14,
+ "objectives": [
+  "Integrate with the trapezium and Simpson rules and measure their error order."
+ ],
+ "skills": [
+  "nm-quadrature"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "$\\int_0^1 e^x\\,dx = e - 1 = 1.718281828$. The trapezium rule replaces the curve by straight segments over $n$ strips, as in `integrals`. Change $n$ and read the caption.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.05,
+      1.05
+     ],
+     "y": [
+      0,
+      3
+     ],
+     "height": 240,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(x)",
+       "label": "$e^x$",
+       "labelAt": 0.8
+      }
+     ]
+    },
+    "state": {
+     "riemann": {
+      "id": "R",
+      "f": "f",
+      "from": 0,
+      "to": 1,
+      "n": 2,
+      "rule": "trap"
+     }
+    },
+    "derive": {
+     "let": {
+      "T": "(0.5*(1 + e) + sum(1, riemann.n - 1, \"exp(k/m)\", \"m\", riemann.n))/riemann.n"
+     },
+     "caption": "n = {{riemann.n}}: trapezium {{fixed(T, 8)}}, error {{fixed(T - 1.718281828, 6)}}."
+    },
+    "controls": [
+     {
+      "bind": "riemann.n",
+      "stops": [
+       2,
+       4,
+       8,
+       16
+      ],
+      "start": 2,
+      "label": "$n$"
+     }
+    ]
+   },
+   "question": "At $n = 4$, what is the trapezium rule's error?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.00894,
+    "tol": {
+     "abs": 2e-05
+    },
+    "wrong": [
+     {
+      "id": "n2",
+      "value": 0.0357,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set $n$ to 4."
+    },
+    {
+     "rung": "point",
+     "text": "The caption gives the sum and its error.",
+     "highlight": [
+      "R"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$T_4 = 1.72722$, so the error is $0.00894$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.00894: the segments sit above the curve.",
+    "generic": "Not quite right. Read the error with $n = 4$.",
+    "byKey": {
+     "n2": "That is the error at $n = 2$."
+    }
+   },
+   "explain": {
+    "text": "At $n = 4$ the error is 0.00894, against 0.0357 at $n = 2$. Doubling the strips cut it by four. The next screen measures that factor.",
+    "canvas": {
+     "riemann": {
+      "n": 4
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "If error $\\approx Ch^p$, halving $h$ divides it by $2^p$. So $p = \\log_2$ of the ratio of successive errors: the **order** of the rule. `integrals` said the error was like $h^2$; now we measure it.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$n$",
+      "Trapezium error"
+     ],
+     "rows": [
+      [
+       "2",
+       "0.0357"
+      ],
+      [
+       "4",
+       "0.00894"
+      ],
+      [
+       "8",
+       "0.00224"
+      ],
+      [
+       "16",
+       "0.000559"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the ratios and the order.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Step",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Ratio, $n = 2$ to 4",
+      {
+       "edit": true,
+       "answer": 3.99,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "Ratio, $n = 8$ to 16",
+      {
+       "edit": true,
+       "answer": 4.0,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "Order $p$",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0.01
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide each error by the next one."
+    },
+    {
+     "rung": "point",
+     "text": "$0.0357 / 0.00894 \\approx 3.99$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A ratio of 4 is $2^2$, so $p = 2$."
+    }
+   ],
+   "feedback": {
+    "correct": "Ratios near 4, so order 2.",
+    "generic": "Not quite right. Divide each error by the next, then take $\\log_2$.",
+    "byKey": {
+     "r0c1": "$0.0357 / 0.00894$.",
+     "r1c1": "$0.00224 / 0.000559$.",
+     "r2c1": "$\\log_2 4 = 2$."
+    }
+   },
+   "explain": {
+    "text": "Each ratio is close to 4, and $\\log_2 4 = 2$: the trapezium rule is second order. The formula behind it is $-\\tfrac{(b - a)h^2}{12}f''(\\xi)$. We now beat it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "**Simpson's rule** fits a parabola through each pair of strips: $\\tfrac h3(f_0 + 4f_1 + 2f_2 + 4f_3 + \\dots + f_n)$, for even $n$. The orange curve is the parabolas; change $n$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.05,
+      1.05
+     ],
+     "y": [
+      0,
+      3
+     ],
+     "height": 240,
+     "params": {
+      "n": 2
+     },
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(x)",
+       "label": "$e^x$",
+       "labelAt": 0.3
+      },
+      {
+       "id": "q",
+       "expr": "exp((2*floor(x*n/2)/n)) + (x - (2*floor(x*n/2)/n))*n*(exp((2*floor(x*n/2)/n) + 1/n) - exp((2*floor(x*n/2)/n))) + (x - (2*floor(x*n/2)/n))*(x - (2*floor(x*n/2)/n) - 1/n)*n^2/2*(exp((2*floor(x*n/2)/n) + 2/n) - 2*exp((2*floor(x*n/2)/n) + 1/n) + exp((2*floor(x*n/2)/n)))",
+       "domain": [
+        0,
+        1
+       ],
+       "colour": 2,
+       "dashed": true,
+       "label": "parabolas",
+       "labelAt": 0.8
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "n": 2
+     }
+    },
+    "derive": {
+     "let": {
+      "S": "(1 + e + 4*sum(1, n/2, \"exp((2*k - 1)/m)\", \"m\", n) + 2*sum(1, n/2 - 1, \"exp(2*k/m)\", \"m\", n))/(3*n)"
+     },
+     "caption": "n = {{n}}: Simpson {{fixed(S, 10)}}, error {{(S - 1.718281828459045).toExponential(2)}}."
+    },
+    "controls": [
+     {
+      "bind": "n",
+      "stops": [
+       2,
+       4,
+       8,
+       16
+      ],
+      "start": 2,
+      "label": "$n$"
+     }
+    ]
+   },
+   "question": "Simpson's errors are $5.79 \\times 10^{-4}$, $3.70 \\times 10^{-5}$, $2.33 \\times 10^{-6}$ and $1.46 \\times 10^{-7}$. What is its order?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0.05
+    },
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 16,
+      "tol": {
+       "abs": 0.1
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide one error by the next."
+    },
+    {
+     "rung": "point",
+     "text": "$5.79 \\times 10^{-4} / 3.70 \\times 10^{-5} \\approx 15.6$, and the later ratios are 15.9 and 16.0.",
+     "highlight": [
+      "q"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\log_2 16 = 4$."
+    }
+   ],
+   "feedback": {
+    "correct": "Order 4: each halving divides the error by 16.",
+    "generic": "Not quite right. Take $\\log_2$ of the ratio of successive errors.",
+    "byKey": {
+     "two": "That is the trapezium order. Simpson's ratios are 16.",
+     "ratio": "16 is the ratio; the order is its $\\log_2$."
+    }
+   },
+   "explain": {
+    "text": "The ratios approach 16, so the order is 4. Parabolas copy the curve's bend, so the $h^2$ term cancels. With 16 strips it is good to $1.5 \\times 10^{-7}$.",
+    "canvas": {
+     "params": {
+      "n": 16
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "The trapezium error is $-\\tfrac{(b - a)h^2}{12}f''(\\xi)$ for some $\\xi$ in $[a, b]$. Here the average of $f'' = e^x$ over $[0, 1]$ is $e - 1 = 1.71828$, and the sum lies above the integral.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.05,
+      1.05
+     ],
+     "y": [
+      0,
+      3
+     ],
+     "height": 240,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(x)",
+       "label": "$e^x$",
+       "labelAt": 0.8
+      }
+     ]
+    },
+    "state": {
+     "riemann": {
+      "id": "R",
+      "f": "f",
+      "from": 0,
+      "to": 1,
+      "n": 4,
+      "rule": "trap"
+     }
+    },
+    "derive": {
+     "let": {
+      "T": "(0.5*(1 + e) + sum(1, riemann.n - 1, \"exp(k/m)\", \"m\", riemann.n))/riemann.n"
+     },
+     "caption": "n = {{riemann.n}}: trapezium {{fixed(T, 8)}}, error {{fixed(T - 1.718281828, 6)}}."
+    }
+   },
+   "question": "Use the average of $f''$ for $f''(\\xi)$. What error does the formula predict at $n = 4$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.00895,
+    "tol": {
+     "abs": 2e-05
+    },
+    "wrong": [
+     {
+      "id": "noh2",
+      "value": 0.1432,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "twelve",
+      "value": 0.1074,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$h = \\tfrac14$, so $h^2 = \\tfrac1{16}$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\tfrac{1 \\times 1/16}{12} \\times 1.71828$.",
+     "highlight": [
+      "R"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is $0.00895$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.00895, against the measured 0.00894.",
+    "generic": "Not quite right. Multiply $\\tfrac{h^2}{12}$ by 1.71828.",
+    "byKey": {
+     "noh2": "You left out $h^2$.",
+     "twelve": "You divided by 16 but not by 12."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{1}{16 \\cdot 12} \\times 1.71828 = 0.00895$, almost exactly the measured 0.00894. The formula says which way the error goes and how big it is. It also says how to cancel it."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "Write $A = T_n = I + ch^2 + O(h^4)$ and $B = T_{2n} = I + c\\tfrac{h^2}{4} + O(h^4)$. Combine them to cancel the $ch^2$ term: this is **Richardson extrapolation**.",
+   "question": "Which combination of $A$ and $B$ equals $I + O(h^4)$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{4B-A}{3}",
+    "accept": [
+     "(4B-A)/3",
+     "4B/3-A/3",
+     "(4*B-A)/3"
+    ],
+    "wrong": [
+     {
+      "id": "avg",
+      "tex": "\\frac{A+B}{2}"
+     },
+     {
+      "id": "diff",
+      "tex": "4B-A"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply $B$ by 4 so its $h^2$ term matches $A$'s."
+    },
+    {
+     "rung": "point",
+     "text": "$4B - A = 3I + O(h^4)$."
+    },
+    {
+     "rung": "step",
+     "text": "Divide by 3."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\tfrac{4B - A}{3}$.",
+    "generic": "Not quite right. Make the $ch^2$ terms equal, subtract, then rescale.",
+    "byKey": {
+     "avg": "Averaging leaves $\\tfrac58ch^2$ behind.",
+     "diff": "That is $3I$. Divide by 3."
+    }
+   },
+   "explain": {
+    "text": "$4B - A$ removes $ch^2$ and leaves $3I$, so $\\tfrac{4B - A}{3}$ is fourth order. With $A = T_4$ and $B = T_8$ it gives 1.7182841547, exactly Simpson's $S_8$. Simpson's rule is Richardson extrapolation of the trapezium rule."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "On a log scale each rule's errors fall on a line whose slope is minus its order. The dots are $\\log_{10}$ of the errors against $\\log_{10} n$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.2,
+      1.3
+     ],
+     "y": [
+      -7.5,
+      -1
+     ],
+     "height": 260,
+     "xStep": 0.2,
+     "yStep": 1,
+     "xAxis": "bottom",
+     "xLabel": "$\\log_{10} n$",
+     "yLabel": "$\\log_{10}$ error",
+     "functions": [
+      {
+       "id": "tr",
+       "points": [
+        [
+         0.301,
+         -1.4479
+        ],
+        [
+         0.6021,
+         -2.0487
+        ],
+        [
+         0.9031,
+         -2.6504
+        ],
+        [
+         1.2041,
+         -3.2524
+        ]
+       ],
+       "label": "trapezium",
+       "labelAt": 0.8
+      },
+      {
+       "id": "si",
+       "points": [
+        [
+         0.301,
+         -3.2371
+        ],
+        [
+         0.6021,
+         -4.4316
+        ],
+        [
+         0.9031,
+         -5.6333
+        ],
+        [
+         1.2041,
+         -6.8369
+        ]
+       ],
+       "colour": 2,
+       "label": "Simpson",
+       "labelAt": 0.8
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "s2",
+       "x": 0.301,
+       "y": -3.2371,
+       "tap": false
+      },
+      {
+       "id": "s4",
+       "x": 0.6021,
+       "y": -4.4316,
+       "tap": false
+      },
+      {
+       "id": "s8",
+       "x": 0.9031,
+       "y": -5.6333,
+       "tap": false
+      },
+      {
+       "id": "s16",
+       "x": 1.2041,
+       "y": -6.8369,
+       "tap": false
+      }
+     ]
+    }
+   },
+   "question": "From Simpson's errors at $n = 2$ and $n = 16$, what is the slope?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -4,
+    "tol": {
+     "abs": 0.05
+    },
+    "wrong": [
+     {
+      "id": "pos",
+      "value": 4,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "tr",
+      "value": -2,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slope is the change in $\\log_{10}$ error over the change in $\\log_{10} n$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\log_{10}(1.46 \\times 10^{-7}) - \\log_{10}(5.79 \\times 10^{-4}) = -3.60$, and $\\log_{10} 16 - \\log_{10} 2 = 0.903$.",
+     "highlight": [
+      "si"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-3.60 / 0.903 \\approx -3.98$."
+    }
+   ],
+   "feedback": {
+    "correct": "About $-4$.",
+    "generic": "Not quite right. Divide the drop in $\\log_{10}$ error by the rise in $\\log_{10} n$.",
+    "byKey": {
+     "pos": "The error falls as $n$ grows, so the slope is negative.",
+     "tr": "$-2$ is the trapezium line's slope."
+    }
+   },
+   "explain": {
+    "text": "Simpson's line falls with slope $-3.98$ and the trapezium's with $-2$. Reading slopes off a log-log plot is how orders are measured in practice. A line that bends tells you the rule has stopped behaving."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "Price the standard call as $e^{-rT}\\int (S_T(z) - K)^+\\varphi(z)\\,dz$ over $[-8, 8]$. The integrand has a kink at $z^* = -0.15$, where the option starts to pay. Simpson's errors for $n = 16, 32, 64, 128$ are 0.600, 0.116, 0.0108 and $-0.00644$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      -0.5,
+      5
+     ],
+     "height": 240,
+     "xLabel": "$z$",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "exp(-0.05)*max(100*exp(0.03 + 0.2*x) - 100, 0)*exp(-x^2/2)/sqrt(2*pi)",
+       "label": "payoff × density",
+       "labelAt": 1.5
+      }
+     ],
+     "vlines": [
+      {
+       "id": "k",
+       "x": -0.15,
+       "label": "$z^*$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why does Simpson's rule lose its order here?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The kink is not at a node, so the parabolas cannot follow it",
+      "correct": true
+     },
+     {
+      "id": "always",
+      "text": "It has not: Simpson is fourth order for any integrand",
+      "why": "You trusted the $h^4$ law for any integrand. It needs a smooth $f^{(4)}$, and the kink breaks that."
+     },
+     {
+      "id": "range",
+      "text": "$[-8, 8]$ is too short",
+      "why": "The tail beyond 8 is about $10^{-13}$, far below these errors."
+     },
+     {
+      "id": "round",
+      "text": "Rounding error has taken over",
+      "why": "Rounding is near $10^{-14}$; these errors are thousands of times bigger."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Does the integrand have four smooth derivatives everywhere?"
+    },
+    {
+     "rung": "point",
+     "text": "At $z^* = -0.15$ the slope jumps.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Split at $z^*$ and integrate $[z^*, 8]$ only: the errors become $9.26 \\times 10^{-3}$, $5.10 \\times 10^{-4}$, $3.10 \\times 10^{-5}$, $1.93 \\times 10^{-6}$."
+    }
+   ],
+   "feedback": {
+    "correct": "The kink sits inside a panel.",
+    "generic": "Not quite right. Look at the integrand at $z^*$.",
+    "byKey": {
+     "always": "You trusted $h^4$ for any integrand. The error formula needs $f^{(4)}$, which a kink does not have."
+    }
+   },
+   "explain": {
+    "text": "A kink inside a panel leaves an error about $h^2$ that jumps around. Integrating $[z^*, 8]$, where the integrand is smooth, restores ratios of about 16. Put kinks on nodes, or split there.",
+    "canvas": {
+     "highlight": [
+      "k"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "prose": "Simpson's error is $-\\tfrac{(b - a)h^4}{180}f^{(4)}(\\xi)$: fourth order, for integrands with four smooth derivatives. Richardson's $\\tfrac{4T_{2n} - T_n}{3}$ is the same rule.",
+   "question": "How many Simpson panels integrate $\\int_0^2 (x^3 - x)\\,dx$ exactly?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "one",
+      "text": "One panel, $n = 2$: a cubic has $f^{(4)} = 0$",
+      "correct": true
+     },
+     {
+      "id": "many",
+      "text": "Many: the error only shrinks like $h^4$",
+      "why": "With $f^{(4)} = 0$ the error term is exactly 0."
+     },
+     {
+      "id": "none",
+      "text": "None: Simpson fits parabolas, not cubics",
+      "why": "The odd terms cancel, so Simpson is exact for cubics too."
+     },
+     {
+      "id": "four",
+      "text": "Four panels, one per power",
+      "why": "Exactness comes from $f^{(4)} = 0$, not from counting powers."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "One panel suffices.",
+    "generic": "Not quite right. Work out $f^{(4)}$ for a cubic."
+   },
+   "explain": {
+    "text": "$f^{(4)} = 0$ for any cubic, so one panel is exact: $\\tfrac13(0 + 4 \\cdot 0 + 6) = 2 = \\int_0^2(x^3 - x)\\,dx$. Simpson gets cubics free, one degree more than its parabolas."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write both rules vectorised: one call of `f` on all the nodes, then a weighted sum. Do not use `np.trapz` or `np.trapezoid`, whose name changed between NumPy versions. Then measure an order and extrapolate.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Rule",
+      "Weights, times $h$"
+     ],
+     "rows": [
+      [
+       "Trapezium",
+       "$\\tfrac12, 1, 1, \\dots, 1, \\tfrac12$"
+      ],
+      [
+       "Simpson",
+       "$\\tfrac13, \\tfrac43, \\tfrac23, \\dots, \\tfrac43, \\tfrac13$"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `trapezium`, `simpson`, `observed_order` and `richardson`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef trapezium(f, a, b, n):\n    \"\"\"Trapezium rule with n strips; f takes NumPy arrays.\"\"\"\n    ...\n\ndef simpson(f, a, b, n):\n    \"\"\"Simpson's rule with n strips; ValueError if n is odd.\"\"\"\n    ...\n\ndef observed_order(f, a, b, exact, rule, ns):\n    \"\"\"log2 of the last error ratio, for n doubling through ns.\"\"\"\n    ...\n\ndef richardson(t_n, t_2n, p):\n    \"\"\"Extrapolate two results with error like h**p.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef trapezium(f, a, b, n):\n    x = np.linspace(a, b, n + 1)\n    y = f(x)\n    h = (b - a) / n\n    return float(h * (y.sum() - 0.5 * (y[0] + y[-1])))\n\ndef simpson(f, a, b, n):\n    if n % 2:\n        raise ValueError('n must be even')\n    x = np.linspace(a, b, n + 1)\n    y = f(x)\n    h = (b - a) / n\n    return float(h / 3 * (y[0] + y[-1] + 4 * y[1:-1:2].sum() + 2 * y[2:-1:2].sum()))\n\ndef observed_order(f, a, b, exact, rule, ns):\n    e = [abs(rule(f, a, b, n) - exact) for n in ns]\n    return float(np.log2(e[-2] / e[-1]))\n\ndef richardson(t_n, t_2n, p):\n    return (2 ** p * t_2n - t_n) / (2 ** p - 1)\n",
+    "examples": [
+     {
+      "call": "round(simpson(np.exp, 0, 1, 2), 6)",
+      "expect": "1.718861",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "trapezium(np.exp, 0, 1, 4) - (np.e - 1)",
+      "expect": "0.008940076098471472",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "trapezium(np.exp, 0, 1, 16) - (np.e - 1)",
+      "expect": "0.0005593001209489579",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "simpson(np.exp, 0, 1, 4) - (np.e - 1)",
+      "expect": "3.7013462701906974e-05",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "simpson(np.exp, 0, 1, 16) - (np.e - 1)",
+      "expect": "1.455928468896417e-07",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "simpson(np.exp, 0, 1, 3)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "simpson(lambda x: x ** 3 - x, 0, 2, 2)",
+      "expect": "2.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "observed_order(np.exp, 0, 1, np.e - 1, trapezium, [2, 4, 8, 16])",
+      "expect": "2.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "call": "observed_order(np.exp, 0, 1, np.e - 1, simpson, [2, 4, 8, 16])",
+      "expect": "4.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "call": "richardson(trapezium(np.exp, 0, 1, 4), trapezium(np.exp, 0, 1, 8), 2)",
+      "expect": "simpson(np.exp, 0, 1, 8)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "setup": "import math\ng = lambda z: math.exp(-0.05) * np.maximum(100 * np.exp(0.03 + 0.2 * z) - 100, 0) * np.exp(-z ** 2 / 2) / math.sqrt(2 * math.pi)",
+      "call": "simpson(g, -0.15, 8, 128)",
+      "expect": "10.450584",
+      "compare": "isclose",
+      "tol": {
+       "abs": 2e-06
+      }
+     }
+    ],
+    "how": "Submit runs 10 hidden tests with NumPy. The error tables must match within 1e-12, and odd n must raise ValueError. A cubic must be exact, the two orders within 0.02, and Richardson must equal Simpson. The split call price must be within 2e-6 of 10.450584."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`x = np.linspace(a, b, n + 1)`, `y = f(x)`, `h = (b - a) / n`."
+    },
+    {
+     "rung": "point",
+     "text": "Simpson: `h / 3 * (y[0] + y[-1] + 4 * y[1:-1:2].sum() + 2 * y[2:-1:2].sum())`.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`richardson` is `(2**p * t_2n - t_n) / (2**p - 1)`; `observed_order` is `log2` of the last two errors' ratio."
+    }
+   ],
+   "feedback": {
+    "correct": "All pass, the split call price included.",
+    "generic": "Not quite right. Check `simpson` on $e^x$ with $n = 2$ first: 1.718861."
+   },
+   "explain": {
+    "text": "The slices `y[1:-1:2]` and `y[2:-1:2]` pick the odd and even inner nodes for weights 4 and 2. Richardson with $p = 2$ turns $T_4, T_8$ into $S_8$ to the last digit. The split integral gives the call to $2 \\times 10^{-6}$ with 128 strips."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A risk system prices thousands of strikes by integrating each payoff against a density. It uses Simpson on a fixed grid. Its errors vary oddly from strike to strike.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3,
+      3
+     ],
+     "y": [
+      -0.5,
+      5
+     ],
+     "height": 220,
+     "xLabel": "$z$",
+     "functions": [
+      {
+       "id": "g",
+       "expr": "exp(-0.05)*max(100*exp(0.03 + 0.2*x) - 100, 0)*exp(-x^2/2)/sqrt(2*pi)",
+       "label": "payoff × density",
+       "labelAt": 1.5
+      }
+     ],
+     "vlines": [
+      {
+       "id": "k",
+       "x": -0.15,
+       "label": "kink"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the cheapest fix?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Put each strike's kink on a node, or split the integral there",
+      "correct": true
+     },
+     {
+      "id": "more",
+      "text": "Use four times as many nodes for every strike",
+      "why": "Without the split the error falls only like $h^2$ and jumps about."
+     },
+     {
+      "id": "trap",
+      "text": "Switch to the trapezium rule",
+      "why": "The trapezium rule has the same kink problem and a lower order."
+     },
+     {
+      "id": "tail",
+      "text": "Widen the range past $\\pm 8$",
+      "why": "The tail beyond 8 is about $10^{-13}$; the kink is the issue."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where is the integrand not smooth?"
+    },
+    {
+     "rung": "point",
+     "text": "At the strike, where the payoff starts.",
+     "highlight": [
+      "k"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "With the kink on a node or at an end, Simpson is fourth order again."
+    }
+   ],
+   "feedback": {
+    "correct": "Split at each kink.",
+    "generic": "Not quite right. The error comes from the kink, not from too few nodes."
+   },
+   "explain": {
+    "text": "Splitting at $z^*$ turned 0.0108 at $n = 64$ into $3.1 \\times 10^{-5}$, and the order back to 4. It costs nothing but bookkeeping. It is the difference between order 2 and order 4."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Measure an order as $\\log_2$ of the error ratio when $h$ halves: 2 for the trapezium rule, 4 for Simpson's.",
+   "Richardson's $\\tfrac{4T_{2n} - T_n}{3}$ cancels the $h^2$ term, and it is exactly Simpson's rule.",
+   "A rule's order needs a smooth integrand: put a payoff's kink on a node, or split there."
+  ],
+  "formula": {
+   "name": "Simpson's rule",
+   "tex": "\\int_a^b f \\approx \\tfrac h3(f_0 + 4f_1 + 2f_2 + \\dots + 4f_{n-1} + f_n)",
+   "note": "Error $-\\tfrac{(b - a)h^4}{180}f^{(4)}(\\xi)$; exact for cubics."
+  },
+  "trap": "Simpson is not fourth order for any integrand: a kink inside a panel drops it to an erratic $h^2$."
+ },
+ "quiz": [
+  {
+   "id": "q-trap-halve",
+   "difficulty": 2,
+   "prose": "A trapezium-rule integral of a smooth function has error 0.004 with $n = 10$ strips.",
+   "question": "What error do you expect with $n = 20$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.001,
+    "tol": {
+     "abs": 5e-05
+    },
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.002,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "simp",
+      "value": 0.00025,
+      "tol": {
+       "abs": 1e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.004 / 4 = 0.001$.",
+    "generic": "Not quite right. Halving $h$ divides an $h^2$ error by 4.",
+    "byKey": {
+     "half": "That halves the error, as for a first-order rule.",
+     "simp": "That divides by 16, Simpson's factor."
+    }
+   },
+   "explain": {
+    "text": "Second order: halving $h$ divides the error by $2^2 = 4$, so 0.001. Simpson's would fall by 16."
+   }
+  },
+  {
+   "id": "q-simpson-n",
+   "difficulty": 3,
+   "prose": "Simpson's rule has error $3.70 \\times 10^{-5}$ with $n = 4$ on a smooth integral.",
+   "question": "What is the smallest $n$, by doubling, with error below $10^{-9}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 64,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "w32",
+      "value": 32,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "w128",
+      "value": 128,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$n = 64$: error about $3.70 \\times 10^{-5} / 16^4 = 5.6 \\times 10^{-10}$.",
+    "generic": "Not quite right. Each doubling divides the error by 16.",
+    "byKey": {
+     "w32": "At 32 the error is about $9 \\times 10^{-9}$, still too big.",
+     "w128": "64 already reaches $5.6 \\times 10^{-10}$."
+    }
+   },
+   "explain": {
+    "text": "From $n = 4$: $3.7 \\times 10^{-5}$, then $2.3 \\times 10^{-6}$, $1.4 \\times 10^{-7}$, $9.0 \\times 10^{-9}$ and $5.6 \\times 10^{-10}$ at $n = 64$. Four doublings, each worth 16."
+   }
+  },
+  {
+   "id": "q-richardson-num",
+   "difficulty": 3,
+   "prose": "For $\\int_0^1 e^x\\,dx$, $T_2 = 1.7539311$ and $T_4 = 1.7272219$.",
+   "question": "What is $\\tfrac{4T_4 - T_2}{3}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.7183188,
+    "tol": {
+     "abs": 2e-06
+    },
+    "wrong": [
+     {
+      "id": "avg",
+      "value": 1.7405765,
+      "tol": {
+       "abs": 2e-06
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1.7183188, which is Simpson's $S_4$.",
+    "generic": "Not quite right. Compute $4 \\times 1.7272219 - 1.7539311$, then divide by 3.",
+    "byKey": {
+     "avg": "That is the average of the two."
+    }
+   },
+   "explain": {
+    "text": "$(6.9088876 - 1.7539311)/3 = 1.7183188$, an error of $3.7 \\times 10^{-5}$ against the trapezium's 0.0089. It equals Simpson's rule with 4 strips."
+   }
+  }
+ ]
+}
