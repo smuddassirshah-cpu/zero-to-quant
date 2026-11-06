@@ -223,9 +223,9 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] algebra L2: Inside a group [Pure maths] (session U: `docs/reports/algebra-2.md`; 32 of 33 fixed, `docs/reviews/review-algebra-1-2.md`)
 - [x] algebra L3: Maps between groups [Pure maths] (session U: `docs/reports/algebra-3.md`; read and fix in `docs/reviews/review-algebra-3-4.md`)
 - [x] algebra L4: Rings and fields [Pure maths] (session U: `docs/reports/algebra-4.md`; 14 of 15 fixed, `docs/reviews/review-algebra-3-4.md`)
-- [ ] topology L1: Metric spaces revisited [Pure maths]
-- [ ] topology L2: Topological spaces [Pure maths]
-- [ ] topology L3: Compact and complete [Pure maths]
+- [x] topology L1: Metric spaces revisited [Pure maths] (session U: `docs/reports/topology-1.md`; read and fix 21 of 21 in `docs/reviews/review-topology-1-2.md`)
+- [x] topology L2: Topological spaces [Pure maths] (session U: `docs/reports/topology-2.md`; `docs/reviews/review-topology-1-2.md`)
+- [x] topology L3: Compact and complete [Pure maths] (session U: `docs/reports/topology-3.md`; read and fix 20 of 20 in `docs/reviews/review-topology-3.md`)
 
 ### 3. Stage 3 content (briefs in `docs/briefs/`)
 Superseded 5 Nov (census reconciliation): the ito L1 to L3, puzzles L1 to L4, mm-games L1 to L3 and mental-pressure L1 to L3 lines here duplicated 2a, where they stay ticked with their reports; the copies were removed.
