@@ -23,8 +23,23 @@ Negative marking: $E[\text{guess}] = \tfrac1k - w\tfrac{k-1}{k}$, its values at 
 
 ## Overlap with the earlier review
 
-(filled after the blind phase, below)
+Read after the ledger and findings were committed (6b85c84): `docs/reviews/review-mental-pressure.md`, level 4 lines only. The earlier review's level 4 findings are mechanical (tags, pace, shuffle, non-breaking spaces, tolerance against "to two decimal places") except two conceptual ones, both applied in its fix pass before this audit.
+
+| | count | items |
+|---|---|---|
+| audit only | 10 | findings 1 to 10 above |
+| earlier review only | 2 | l17 screens[2] feedback naming a subtraction and a percentage complement "the reverse operation" (misnamed slip); homework-4 items[0] byKey r4c1 "$64 \times 0.8$" reading as 80% accuracy |
+| both | 0 | |
+
+The two review-only findings were not missed on this read: both fixes are in the content as audited ("C a subtraction", "$64 \times (0.9 - 0.1)$"), so there was nothing left to find. No conceptual finding of the earlier review survives unfixed, and none of this audit's ten was raised there. Note for the convergence log: 0 `wrong` new to this audit.
 
 ## Checks
 
-(below)
+All from `app/` unless said; content unchanged by this audit, so the playthroughs only confirm the files play.
+
+- `node tools/validate.mjs 2>&1 | tail -3`: `0 errors, 4269 warnings` (the O2 warning line precedes it). `content/manifest.json` restored with `git checkout` (it was rewritten identically).
+- `VOICE_BASE=app/content/courses/mental-pressure/ python3 docs/reviews/voice-scan.py 35 --summary` (repo root): `# explanations over three sentences: 0` / `# sentences scanned: 11031; over 35 words: 0`.
+- Number scripts for this level: none exist under `docs/reports` (the author's `seq16.py`, `hw/run.py` and builders stayed in the scratchpad per `docs/reports/mental-pressure-4.md`; `docs/reports/mental-pressure-3-scripts` is level 3's). The arithmetic of every level 4 key is recomputed in the concepts script instead.
+- `python3 -I docs/reports/mental-pressure-L4-concepts.py` (repo root): `34 of 34 checks passed`, exit 0; it also prints the six rows where more than one rule of the taxonomy fits (all agreeing on the next term).
+- `node tools/playthrough.mjs --set mental-pressure/review-4 --set mental-pressure/homework-4 --local-cdn <PKGS> 2>&1 | tail -3`: `browser relaunches: 0` / `All passed.`
+- `node tools/playthrough.mjs --lesson mental-pressure/l13-negative-marking --lesson mental-pressure/l16-harder-sequences --local-cdn <PKGS> 2>&1 | tail -3`: `browser relaunches: 0` / `All passed.`
