@@ -172,5 +172,16 @@ lv.expect("homework", "items[4].widget.answer", round(net, 5))
 lv.expect("homework", "items[5].widget.answer", round(1_000_000 / 23.10))
 lv.expect("homework", "items[3].widget.model", round((mid0 - midw) * 100, 2))
 
+# ---- fix pass additions
+lv.expect("l7", "screens[2].widget.accept", round(T0[x0, 2] / T0[e0, 2] - 1, 5)); lv.expect("l7", "screens[2].widget.accept", round(T0[x0, 3] / T0[e0, 3] - 1, 5))
+lv.expect("l7", "screens[4].prose", round(lg21[0][3], 4))
+_cl = mean(run(C, 20, 0), 1) / 6; _mi = mean(run(MID, 20, 0), 1) / 6
+lv.expect("l9", "screens[2].widget.accept", round(_cl * 100, 3)); lv.expect("l9", "screens[2].widget.accept", round(_mi * 100, 3))
+_rows = [(st, cycle(C, st, 5)[0], cycle(C, st, 5)[3]) for st in range(1260, 2647, 21)]
+_un = set((2 * k, 2 * k + 1) for k in range(20) if not BROKEN[k])
+lv.expect("l10", "screens[6].explain.text", round(float(np.mean([len(_un & set(r[2])) for r in _rows])), 1))
+lv.expect("l10", "screens[6].explain.text", round(float(np.mean([r[1] for r in _rows])) / 6 * 100, 2))
+lv.expect("l10", "screens[6].explain.text", round(float(np.mean([cycle(C, st, 20)[0] for st in range(1260, 2647, 21)])) / 6 * 100, 2))
+
 check_code(lv)
 lv.report()

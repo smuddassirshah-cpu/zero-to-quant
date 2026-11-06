@@ -756,7 +756,7 @@
     },
     "unit": "",
     "placeholder": "a number",
-    "accept": "0.0574 = 0.1404 − 0.0829",
+    "accept": "0.0574 = 0.14036 − 0.08293",
     "wrong": [
      {
       "id": "add",
@@ -789,7 +789,7 @@
     },
     {
      "rung": "step",
-     "text": "0.1404 − 0.0829 = 0.0574."
+     "text": "0.14036 − 0.08293 = 0.0574."
     }
    ],
    "feedback": {
@@ -1137,7 +1137,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "A pair that never converges",
-   "prose": "Another cycle, starting on day 21: pair (48, 62) opens on trading day 55. Its spread never crosses back, so the position is closed on day 125.",
+   "prose": "Another cycle, starting on day 21: pair (48, 62) gains 0.1403 early, then reopens on trading day 55. Its spread never crosses back, so the position is closed on day 125.",
    "canvas": {
     "kind": "series",
     "params": {
@@ -2404,7 +2404,7 @@
     "kind": "code",
     "language": "python",
     "prelude": "import numpy as np\ndef pairs_panel(seed=2006, n_ind=10, per_ind=10, n_pairs=20, days=3024, half_life=8.0, ou_sd=0.008,\n                rw_sd=0.015, break_day=1512, break_frac=0.8, half_spread=0.005):\n    rng = np.random.default_rng(seed)\n    N = n_ind * per_ind\n    ind = np.repeat(np.arange(n_ind), per_ind)\n    mkt = np.cumsum(0.0003 + 0.010 * rng.standard_normal(days))\n    indf = np.cumsum(0.008 * rng.standard_normal((days, n_ind)), axis=0)\n    phi = 0.5 ** (1.0 / half_life)\n    u = np.cumsum(rw_sd * rng.standard_normal((days, N)), axis=0)        # unpaired: random walks\n    common = np.cumsum(rw_sd * rng.standard_normal((days, n_pairs)), axis=0)\n    eps = ou_sd * rng.standard_normal((days, 2 * n_pairs))\n    a = np.zeros((days, 2 * n_pairs))\n    for t in range(1, days):\n        a[t] = phi * a[t - 1] + eps[t]                                   # mean-reverting gaps\n    broken = rng.random(n_pairs) < break_frac\n    drift = np.cumsum(rw_sd * rng.standard_normal((days, 2 * n_pairs)), axis=0)\n    for k in range(n_pairs):\n        for j in (2 * k, 2 * k + 1):\n            x = common[:, k] + a[:, j]\n            if broken[k]:                                                # the pair stops co-moving\n                x = x + np.where(np.arange(days) >= break_day, drift[:, j] - drift[break_day, j], 0.0)\n            u[:, j] = x\n    pair_ind = np.repeat(np.arange(n_ind), 2)[:n_pairs]\n    ind[:2 * n_pairs] = np.repeat(pair_ind, 2)                           # two planted pairs an industry\n    logp = np.log(50.0) + mkt[:, None] + indf[:, ind] + u\n    mid = np.exp(logp)\n    bounce = np.where(rng.random((days, N)) < 0.5, 1 + half_spread, 1 - half_spread)\n    close = mid * bounce                                                 # closes at bid or ask\n    return close, mid, ind, broken\n\n\ndef normalise(P):\n    P = np.asarray(P, dtype=float)\n    return P / P[0]\n\nclose, mid, ind, broken = pairs_panel()\n",
-    "starter": "import numpy as np\n\ndef trade_pair(form, trade, i, j, wait=0, open_at=2.0):\n    \"\"\"(payoff, opened) of pair (i, j) over the trading period.\"\"\"\n    sd = float(np.std(form[:, i] - form[:, j]))\n    a, b = trade[:, i].tolist(), trade[:, j].tolist()\n    n = len(a)\n    payoff, opened, t = 0.0, False, 0\n    while t < n:\n        ...  # open beyond the trigger, find the crossing, book the payoff\n        t += 1\n    return payoff, opened\n\n\ndef holding_days(form, trade, i, j, wait=0):\n    \"\"\"Exit day minus open day, for each trade.\"\"\"\n    ...\n",
+    "starter": "import numpy as np\n\ndef trade_pair(form, trade, i, j, wait=0, open_at=2.0):\n    \"\"\"(payoff, opened) of pair (i, j) over the trading period.\"\"\"\n    sd = float(np.std(form[:, i] - form[:, j]))\n    a, b = trade[:, i].tolist(), trade[:, j].tolist()\n    n = len(a)\n    payoff, opened, t = 0.0, False, 0\n    while t < n:\n        ...  # open beyond the trigger, find the crossing, book the payoff\n        t += 1\n    return None  # replace with (payoff, opened)\n\n\ndef holding_days(form, trade, i, j, wait=0):\n    \"\"\"Exit day minus open day, for each trade.\"\"\"\n    ...\n",
     "solution": "import numpy as np\n\ndef _trips(form, trade, i, j, wait=0, open_at=2.0):\n    sd = float(np.std(form[:, i] - form[:, j]))\n    a, b = trade[:, i].tolist(), trade[:, j].tolist()\n    n = len(a)\n    out, t = [], 0\n    while t < n:\n        s = a[t] - b[t]\n        if sd > 0 and abs(s) > open_at * sd and t + wait < n - 1:\n            side = 1 if s > 0 else -1\n            to = t + wait\n            tc = next((u for u in range(t + 1, n) if (a[u] - b[u]) * side <= 0), None)\n            tx = n - 1 if tc is None else min(tc + wait, n - 1)\n            pnl = side * ((b[tx] - b[to]) / b[to] - (a[tx] - a[to]) / a[to])\n            out.append((to, tx, pnl))\n            t = tx + 1\n            continue\n        t += 1\n    return out\n\n\ndef trade_pair(form, trade, i, j, wait=0, open_at=2.0):\n    \"\"\"(payoff, opened) of pair (i, j) over the trading period.\"\"\"\n    trips = _trips(form, trade, i, j, wait, open_at)\n    return sum(p for _, _, p in trips), len(trips) > 0\n\n\ndef holding_days(form, trade, i, j, wait=0):\n    \"\"\"Exit day minus open day, for each trade.\"\"\"\n    return [tx - to for to, tx, _ in _trips(form, trade, i, j, wait)]\n",
     "examples": [
      {
