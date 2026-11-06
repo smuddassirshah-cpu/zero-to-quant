@@ -8,7 +8,7 @@ counts, and second implementations of every code task run on the data files. Eve
 every starter fails one, a leaky walk-forward and a one-control Monte Carlo fail theirs, and second implementations of the
 statistical code tasks pass. A last pass reads every number in every learner-visible string of each item: whole numbers 0 to
 10 count as structure, every other number must match a route-B or given value for that item to its printed precision.
-Exits 1 on any failure. Run: python3 docs/briefs/exam-stage-2-scripts/check_numbers.py
+Topic 2.6 (the researcher track) has no items here: it sits in topic-2.6. Exits 1 on any failure. Run: python3 docs/briefs/exam-stage-2-scripts/check_numbers.py
 """
 import glob
 import json
@@ -22,6 +22,8 @@ from statistics import NormalDist, stdev
 import numpy as np
 import pandas as pd
 from scipy import optimize, stats
+from statsmodels.tsa.adfvalues import mackinnoncrit
+from statsmodels.tsa.stattools import adfuller
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, '..', '..', '..')
@@ -137,7 +139,8 @@ def run_py(src, tests, want_fail=False):
                 exec(src, ns)
                 if t.get('setup'):
                     exec(t['setup'], ns)
-                if t['compare'] == 'raises':
+                cmp_ = t.get('compare', 'equal')
+                if cmp_ == 'raises':
                     try:
                         eval(t['call'], ns)
                         ok = False
@@ -146,7 +149,7 @@ def run_py(src, tests, want_fail=False):
                 else:
                     got = _plain(eval(t['call'], ns))
                     want = eval(t['expect'], {})
-                    ok = got == want if t['compare'] == 'equal' else _close(got, want, t.get('tol', {}))
+                    ok = got == want if cmp_ == 'equal' else _close(got, want, t.get('tol', {}))
             except Exception:  # noqa: BLE001
                 ok = False
             passed += bool(ok)
@@ -162,6 +165,14 @@ def code_py(iid, part=None):
     rec(run_py(w['solution'], w['tests']) == n, f'{lab}: the solution passes all {n} tests')
     rec(run_py(w['starter'], w['tests']) < n, f'{lab}: the starter fails a test')
     rec(all(e['expect'] in [t['expect'] for t in w['tests']] for e in w['examples']), f'{lab}: each example is a hidden test')
+    rec(run_py(w['solution'], w['examples']) == len(w['examples']), f'{lab}: the solution passes its examples as Run examples compares them')
+    for e in w['examples']:
+        isfloat = not (e['expect'] in ('True', 'False') or e['expect'].lstrip('-').isdigit() or e['expect'].isidentifier())
+        rec(not isfloat or (e.get('compare') == 'isclose' and e.get('tol')), f'{lab}: the float example {e["call"][:40]} has compare isclose and a tolerance')
+        tt = [t for t in w['tests'] if t['call'] == e['call'] and t['expect'] == e['expect']]
+        rec(tt and all(e.get('compare', 'equal') == t.get('compare', 'equal') and e.get('tol') == t.get('tol') for t in tt), f'{lab}: the example keeps its hidden test\'s compare and tolerance')
+    if w.get('data'):
+        rec('import pandas' in w['starter'], f'{lab}: the starter imports pandas, so Pyodide loads it for the data tests')
     rec(f'{n} hidden tests' in w['how'], f'{lab}: how states {n} tests')
     for name in w.get('data', {}):
         rec(os.path.exists(os.path.join(DATA, name)) and os.path.getsize(os.path.join(DATA, name)) < 262144, f'{lab}: data file {name} exists, under 256 KB')
@@ -220,12 +231,16 @@ correct_ids('a-curves-meet', ['a'])
 allow('a-curves-meet', 1.02, 1.05, 0.80)
 
 y6 = np.array([-14, -9, -2, 5, 7, 18], float)
-red = [len(y6) * y6.var() - k * y6[:k].var() - (6 - k) * y6[k:].var() for k in range(1, 6)]
-key('a-tree-split', round(max(red), 4))
-wrong('a-tree-split', 'parent', round(len(y6) * y6.var(), 4))
-wrong('a-tree-split', 'children', round(len(y6) * y6.var() - max(red), 4))
-wrong('a-tree-split', 'biggest-gap', round(red[4], 4))
-allow('a-tree-split', 14, 9, 2, 18, 7, 5, round(y6.mean(), 2), 3 * y6[:3].var(), 3 * y6[3:].var())
+lad = lambda v_: min(float(np.abs(v_ - c_).sum()) for c_ in np.linspace(-20, 20, 4001))      # the best centre, by search: the median
+par6 = lad(y6)
+dropa = [par6 - lad(y6[:k]) - lad(y6[k:]) for k in range(1, 6)]
+sqd = max(len(y6) * y6.var() - k * y6[:k].var() - (6 - k) * y6[k:].var() for k in range(1, 6))
+key('a-tree-split', round(max(dropa), 4))
+wrong('a-tree-split', 'squared', round(sqd, 4))
+wrong('a-tree-split', 'parent', round(par6, 4))
+wrong('a-tree-split', 'biggest-gap', round(dropa[4], 4))
+rec(int(np.argmax(dropa)) == 2, 'a-tree-split: the best split is after the third week')
+allow('a-tree-split', 14, 9, 2, 18, 7, 5, np.median(y6), lad(y6[:3]), lad(y6[3:]), -9)
 
 pmiss = F(24, 25) ** 25
 key('a-block-bootstrap', round(float(25 * (1 - pmiss)), 4))
@@ -277,29 +292,42 @@ def gbinom(d, k):
     return math.gamma(d + 1) / (math.gamma(k + 1) * math.gamma(d - k + 1))
 
 
-w3 = (-1) ** 3 * gbinom(0.35, 3)
-w2 = gbinom(0.35, 2)
-key('a-frac-weight', round(w3, 6))
-wrong('a-frac-weight', 'sign', round(-w3, 6))
-wrong('a-frac-weight', 'stopped-early', round(w2, 6))
-allow('a-frac-weight', 0.35, -0.35, 0.65, -0.65, 1.65, -1.65, w2, -w2)
+w2f = lambda d_: gbinom(d_, 2)                              # w_2 = (-1)^2 C(d, 2), the binomial-series weight
+dlo = optimize.brentq(lambda d_: w2f(d_) + 0.1, 0.01, 0.5)
+dhi = optimize.brentq(lambda d_: w2f(d_) + 0.1, 0.5, 0.99)
+dhalf = optimize.brentq(lambda d_: 2 * w2f(d_) + 0.1, 0.01, 0.5)
+key('a-frac-weight', round(dlo, 6))
+wrong('a-frac-weight', 'other-root', round(dhi, 6))
+wrong('a-frac-weight', 'dropped-half', round(dhalf, 6))
+rec(abs(dlo + dhi - 1) < 1e-9, 'a-frac-weight: the two roots sum to 1')
+allow('a-frac-weight', 0.1, 0.2, 0.5, dlo)
 
-M12 = np.zeros((4, 9))
-for i, (a, b) in enumerate([(1, 4), (3, 6), (5, 7), (6, 9)]):
-    M12[i, a - 1:b] = 1
-ct = M12.sum(axis=0)
-uq = [(M12[i] / ct)[M12[i] > 0].mean() for i in range(4)]
-key('a-label-uniqueness', round(sum(uq), 4))
-wrong('a-label-uniqueness', 'count', 4)
-wrong('a-label-uniqueness', 'mean-not-sum', round(sum(uq) / 4, 4))
-allow('a-label-uniqueness', *uq, 9)
+def uniq_b(spans):
+    D_ = max(b_ for _, b_ in spans)
+    M_ = np.zeros((len(spans), D_))
+    for i_, (a_, b_) in enumerate(spans):
+        M_[i_, a_ - 1:b_] = 1
+    ct_ = M_.sum(axis=0)
+    return ct_, [(M_[i_] / ct_)[M_[i_] > 0].mean() for i_ in range(len(spans))]
 
-p13 = 0.62
-z13 = (p13 - 0.5) / math.sqrt(p13 * (1 - p13))
-key('a-bet-size', round(2 * N01.cdf(z13) - 1, 6))
-wrong('a-bet-size', 'linear', 0.24)
-wrong('a-bet-size', 'no-rescale', round(N01.cdf(z13), 6))
-allow('a-bet-size', 0.62, 0.5, 0.12, 0.2356, z13, N01.cdf(z13))
+
+sp4 = [(1, 5), (4, 7), (6, 8), (7, 10)]
+ct5, uq5 = uniq_b(sp4 + [(3, 9)])
+ct4, uq4 = uniq_b(sp4)
+key('a-label-uniqueness', round(sum(uq5), 4))
+wrong('a-label-uniqueness', 'count', 5)
+wrong('a-label-uniqueness', 'four-before', round(sum(uq4), 4))
+wrong('a-label-uniqueness', 'old-plus-one', round(sum(uq4) + 1, 4))
+rec(sum(uq5) < sum(uq4), 'a-label-uniqueness: the fifth label lowers the total, as the explanation says')
+allow('a-label-uniqueness', *uq5)
+
+zb = N01.inv_cdf(0.75)
+pb = optimize.brentq(lambda p_: 2 * N01.cdf((p_ - 0.5) / math.sqrt(p_ * (1 - p_))) - 1 - 0.5, 0.5001, 0.9999)
+key('a-bet-size', round(pb, 6))
+wrong('a-bet-size', 'linear', 0.75)
+m75 = 2 * N01.cdf(0.25 / math.sqrt(0.75 * 0.25)) - 1
+rec(abs(m75 - 0.5) > 0.05, f'a-bet-size: p = 0.75, the answer of 2p - 1 = 0.5, gives size {m75:.3f} under the rule, not 0.5')
+allow('a-bet-size', 0.5, 0.75, zb)
 
 den = math.sqrt(1 + 0.8 * 0.12 + 4.5 / 4 * 0.0144)
 z14 = 0.12 * math.sqrt(155) / den
@@ -356,8 +384,9 @@ Q = 250 * 252 * sum(rk * rk / (250 - k) for k, rk in enumerate(rho3, 1))
 key('b-ljung-box', round(float(Q), 4))
 wrong('b-ljung-box', 'box-pierce', round(float(250 * sum(rk * rk for rk in rho3)), 4))
 wrong('b-ljung-box', 'no-square', round(float(250 * 252 * sum(rk / (250 - k) for k, rk in enumerate(rho3, 1))), 4))
-allow('b-ljung-box', 250, 0.12, -0.05, 0.08, 252, 0.0144, 249, 0.0025, 248, 0.0064, 247, stats.chi2.ppf(0.95, 3))
-rec(abs(stats.chi2.ppf(0.95, 3) - 7.81) < 0.005, 'b-ljung-box: the 5% point of chi2(3) is 7.81')
+allow('b-ljung-box', 250, 0.12, -0.05, 0.08, 252, 0.0144, 249, 0.0025, 248, 0.0064, 247, stats.chi2.ppf(0.95, 2))
+rec(abs(stats.chi2.ppf(0.95, 2) - 5.99) < 0.005, 'b-ljung-box: the 5% point of chi2(2), three lags less one AR coefficient, is 5.99')
+rec(float(Q) < stats.chi2.ppf(0.95, 2) < stats.chi2.ppf(0.95, 3), 'b-ljung-box: Q is below the chi2(2) point, so the stated conclusion holds')
 
 eig = sorted(abs(np.linalg.eigvals(np.array([[1.1, -0.3], [1, 0]]))))
 key('b-ar2-root', round(eig[-1], 6))
@@ -386,13 +415,20 @@ wrong('b-arch-lm', 'r-not-n', 1.88)
 allow('b-arch-lm', 750, 0.0188, stats.chi2.ppf(0.95, 5))
 rec(abs(stats.chi2.ppf(0.95, 5) - 11.07) < 0.005, 'b-arch-lm: the 5% point of chi2(5) is 11.07')
 
-v = 1e-4
-for _ in range(5000):
-    v = 3e-6 + (0.07 + 0.91) * v                          # E[sigma^2] under the recursion, iterated to its fixed point
-key('b-garch-longrun', round(math.sqrt(252 * v), 6))
-wrong('b-garch-longrun', 'daily', round(math.sqrt(v), 6))
-wrong('b-garch-longrun', 'omega-over-beta', round(math.sqrt(252 * 3e-6 / 0.09), 6))
-allow('b-garch-longrun', 1.5, 3e-6, 0.07, 0.91, 252, 0.02, 1.5e-4, 0.0122, round(math.sqrt(v), 4))
+def long_run(om_, ab_=0.06 + 0.92):
+    v_ = 1e-4
+    for _ in range(5000):
+        v_ = om_ + ab_ * v_                                # E[sigma^2] under the recursion, iterated to its fixed point
+    return v_
+
+
+Vt = 0.18 ** 2 / 252
+om = optimize.brentq(lambda o_: long_run(o_) - Vt, 1e-9, 1e-3, xtol=1e-18)
+key('b-garch-target', round(om * 1e6, 4))
+wrong('b-garch-target', 'annual', round(0.18 ** 2 * 0.02 * 1e6, 4))
+wrong('b-garch-target', 'vol-not-variance', round(0.18 / math.sqrt(252) * 0.02 * 1e6, 4))
+wrong('b-garch-target', 'one-minus-beta', round(Vt * 0.08 * 1e6, 4))
+allow('b-garch-target', 18, 0.18, 252, 0.06, 0.92, 0.02, 0.08, Vt * 1e4)
 
 v9 = 0.94 * 0.011 ** 2 + 0.06 * 0.028 ** 2
 key('b-ewma-update', round(math.sqrt(v9), 6))
@@ -406,6 +442,10 @@ key('b-es-normal', round(3e6 * 0.014 * tail, 2))
 wrong('b-es-normal', 'var', round(3e6 * 0.014 * zq, 2))
 wrong('b-es-normal', 'density-only', round(3e6 * 0.014 * N01.pdf(zq), 2))
 allow('b-es-normal', 0.014, 3e6, 0.975, 97.5, 1.96, N01.pdf(zq), 42000, 0.025, 3e6 * 0.014 * tail, 3e6 * 0.014 * zq)
+tolES = W('b-es-normal')['tol']['abs']
+for ph_ in (0.0584, 0.05845):
+    rec(abs(42000 * ph_ / 0.025 - W('b-es-normal')['answer']) <= tolES, f'b-es-normal: phi rounded to {ph_} gives {42000 * ph_ / 0.025:,.0f}, inside the tolerance {tolES}')
+rec(all(abs(w_['value'] - W('b-es-normal')['answer']) > tolES + w_['tol']['abs'] for w_ in W('b-es-normal')['wrong']), 'b-es-normal: no wrong band reaches the widened answer band')
 
 correct_ids('b-spurious-read', ['a'])
 allow('b-spurious-read', 11.4, 0.42, 0.98, 1000)
@@ -418,7 +458,9 @@ tdf = float(bhat[0] / math.sqrt(s2 * np.linalg.inv(Xd.T @ Xd)[0, 0]))
 key('b-df-hand', round(tdf, 4))
 wrong('b-df-hand', 'slope', round(float(bhat[0]), 4))
 wrong('b-df-hand', 'n-divisor', round(float(bhat[0] / math.sqrt(float(res[0]) / len(yd) * np.linalg.inv(Xd.T @ Xd)[0, 0])), 4))
-allow('b-df-hand', *e12, float(Xd[:, 0] @ yd), float(Xd[:, 0] @ Xd[:, 0]), s2, -3.34, -2.86, 7, 6)
+allow('b-df-hand', *e12, float(Xd[:, 0] @ yd), float(Xd[:, 0] @ Xd[:, 0]), s2, -3.34, -1.95, 7, 6)
+rec(abs(mackinnoncrit(N=1, regression='n', nobs=np.inf)[1] + 1.95) < 0.02, 'b-df-hand: the no-constant Dickey-Fuller 5% point is about -1.95')
+rec(tdf < -1.95 and tdf > -3.34, 'b-df-hand: t misses the Engle-Granger point and passes the plain one')
 
 eg_t = code_py('b-eg-pair', 0)
 eg_b = ("import numpy as np\n\ndef adf1_spread(a, b):\n    y = np.log(np.array(a, float)); x = np.log(np.array(b, float))\n"
@@ -443,6 +485,9 @@ wrong('b-eg-pair', 'small-rho', round(-math.log(2) / given, 4), part=1)
 wrong('b-eg-pair', 'no-log', round(-1 / given, 4), part=1)
 t_ab, t_ac = expect_of(eg_t, 'adf1_spread(a, b)[1]'), expect_of(eg_t, 'adf1_spread(a, c)[1]')
 rec(t_ab < -3.34 < t_ac, f'b-eg-pair: a-b rejects ({t_ab:.2f}), a-c does not ({t_ac:.2f})')
+for c_ in 'ab':
+    pv_ = adfuller(np.log(pc[c_].to_numpy()), maxlag=1, autolag=None, regression='c')[1]
+    rec(pv_ > 0.05, f'b-eg-pair: ln {c_} does not reject a unit root (ADF(1) p = {pv_:.2f}), as the prose says')
 allow('b-eg-pair', 0.5, 500, given, 1 + given, t_ab, t_ac, -3.34, 1e-7, round(optimize.brentq(lambda h_: (1 + given) ** h_ - 0.5, 0.1, 100), 2))
 
 key('b-hedge-notional', float(F('1.6') * 800000))
@@ -468,13 +513,14 @@ key('c-float32-fees', float(x) - 100000)
 wrong('c-float32-fees', 'exact', 10)
 wrong('c-float32-fees', 'absorbed', 0)
 allow('c-float32-fees', 32, 24, 100000, 1000, ulp, 16, 17, 23, 0.01)
+rec(abs(round(float(x) - 100000, 2) - W('c-float32-fees')['answer']) <= W('c-float32-fees')['tol']['abs'], 'c-float32-fees: a learner who rounds to the penny (7.81) is inside the tolerance')
 rec(ulp == 2 ** -7, 'c-float32-fees: float32 spacing near 100,000 is 2^-7')
 
-kap = float(np.linalg.cond(np.array([[1, 0.999], [0.999, 1]])))
-key('c-condition-digits', round(math.log10(kap), 4))
-wrong('c-condition-digits', 'squared', round(2 * math.log10(kap), 4))
-wrong('c-condition-digits', 'one-over-gap', 3.0)
-allow('c-condition-digits', 0.999, 1.999, 0.001, round(kap), 16)
+rc_ = optimize.brentq(lambda r_: np.linalg.cond(np.array([[1, r_], [r_, 1]])) - 1e4, 0.9, 0.9999999999, xtol=1e-14)
+key('c-condition-digits', round(rc_, 6))
+wrong('c-condition-digits', 'one-over-gap', 0.9999)
+rec(abs(math.log10(np.linalg.cond(np.array([[1, 0.9998], [0.9998, 1]]))) - 4) < 0.001, 'c-condition-digits: at r = 0.9998 about four digits go')
+allow('c-condition-digits', rc_)
 
 f3 = lambda y: 5 / (1 + y) + 105 / (1 + y) ** 2 - 95
 d3 = (f3(0.05 + 1e-6) - f3(0.05 - 1e-6)) / 2e-6
@@ -485,7 +531,7 @@ wrong('c-newton-yield', 'sign', round(0.05 + f3(0.05) / d3, 6))
 wrong('c-newton-yield', 'converged', round(ytrue, 6))
 allow('c-newton-yield', 95, 105, 0.05, 4.7619, 95.2381, d3, -d3, ytrue)
 
-correct_ids('c-simpson-kink', ['a'])
+correct_ids('c-simpson-jump', ['a'])
 
 
 def q_s(S0, K, r, sg, T, n, start):
@@ -498,8 +544,24 @@ def q_s(S0, K, r, sg, T, n, start):
 bsb = bs_call(100, 105, 0.03, 0.25, 1.0)
 e_split = [abs(q_s(100, 105, 0.03, 0.25, 1.0, n, 105) - bsb) for n in (200, 400)]
 e_kink = [abs(q_s(100, 105, 0.03, 0.25, 1.0, n, 50.3) - bsb) for n in (200, 400)]
-rec(13 < e_split[0] / e_split[1] < 19, f'c-simpson-kink: split at the strike, halving h divides the error by {e_split[0] / e_split[1]:.1f} (about 16)')
-rec(e_kink[0] / e_kink[1] < 8 and e_kink[1] > 10 * e_split[1], f'c-simpson-kink: with the strike inside a panel the error is {e_kink[1]:.2e} against {e_split[1]:.2e}, no h^4 rate')
+rec(13 < e_split[0] / e_split[1] < 19, f'c-error-rates: split at the strike, halving h divides the error by {e_split[0] / e_split[1]:.1f} (about 16)')
+rec(e_kink[0] / e_kink[1] < 8 and e_kink[1] > 10 * e_split[1], f'c-error-rates: with the strike inside a panel the error is {e_kink[1]:.2e} against {e_split[1]:.2e}, no h^4 rate')
+
+
+def digital_err(n, zk, split):
+    # a digital call: integral of 1{z > zk} phi(z) dz by Simpson on a fixed grid [-8, 8], or split at zk and run to 8
+    f = N01.pdf if split else (lambda z_: N01.pdf(z_) * (z_ > zk))
+    a_, b_ = (zk, 8.0) if split else (-8.0, 8.0)
+    return abs(simpson(f, a_, b_, n) - (1 - N01.cdf(zk)))
+
+
+zks = np.random.default_rng(5).uniform(-1.5, 1.5, 60)
+rms = lambda n, split: math.sqrt(np.mean([digital_err(n, z_, split) ** 2 for z_ in zks]))
+ratio_fixed = rms(200, False) / rms(400, False)
+ratio_split = rms(200, True) / rms(400, True)
+rec(1.5 < ratio_fixed < 2.7, f'c-simpson-jump: on a fixed grid halving h divides the digital error by {ratio_fixed:.2f} (order h, about 2)')
+rec(ratio_split > 10, f'c-simpson-jump: split at the strike halving h divides the error by {ratio_split:.1f} (order h^4)')
+rec(rms(400, False) > 100 * rms(400, True), 'c-simpson-jump: the split rule is far more accurate')
 
 cells = [r_[1] for r_ in W('c-error-rates')['rows']]
 rec([c['answer'] for c in cells] == [2, 4, 16], 'c-error-rates: keys 2, 4, 16')
@@ -590,17 +652,22 @@ for c_ in kk_t:
     got = eval(c_['expect'])
     got = [got] if not isinstance(got, list) else got
     rec(all(abs(a_ - b_) < 1e-6 for a_, b_ in zip(got, want)), f'c-kkt-code: {call[:40]}... matches SLSQP to 1e-6')
+rec(all('[0.06, 0.1]' not in e_['call'] for e_ in W('c-kkt-code')['examples']), 'c-kkt-code: the visible example is not the c-kkt-hand problem')
 allow('c-kkt-code', 1e-8)
 
-res_lp = optimize.linprog([0.97, 1.02], A_ub=-np.array([[1, 0.06], [0, 1.06]]), b_ub=-np.array([100, 150]), bounds=[(0, None)] * 2, method='highs')
+res_lp = optimize.linprog([0.96, 1.01], A_ub=-np.array([[1, 0.05], [0, 1.05]]), b_ub=-np.array([80, 120]), bounds=[(0, None)] * 2, method='highs')
 duals = -res_lp.ineqlin.marginals
 key('c-dedication-lp', round(res_lp.fun, 4), part=0)
-res_nc = optimize.linprog([0.97, 1.02], A_ub=-np.array([[1, 0], [0, 1.06]]), b_ub=-np.array([100, 150]), bounds=[(0, None)] * 2, method='highs')
+res_nc = optimize.linprog([0.96, 1.01], A_ub=-np.array([[1, 0], [0, 1.05]]), b_ub=-np.array([80, 120]), bounds=[(0, None)] * 2, method='highs')
 wrong('c-dedication-lp', 'no-coupon', round(res_nc.fun, 4), part=0)
-key('c-dedication-lp', round(duals[1], 6), part=1)
-wrong('c-dedication-lp', 'ignored-coupon', round(1.02 / 1.06, 6), part=1)
-wrong('c-dedication-lp', 'year-one', round(duals[0], 6), part=1)
-allow('c-dedication-lp', 100000, 150000, 0.97, 0.06, 1.06, 1.02, 100, 150, *res_lp.x, res_lp.fun, 0.0582, *duals, 100 * duals[0] + 150 * duals[1])
+rc_c = 0.95 - 1.07 * duals[1]
+key('c-dedication-lp', round(rc_c, 6), part=1)
+wrong('c-dedication-lp', 'ignored-coupon', round(0.95 - 1.07 * (1.01 / 1.05), 6), part=1)
+wrong('c-dedication-lp', 'sign', round(-rc_c, 6), part=1)
+res_3 = optimize.linprog([0.96, 1.01, 0.95], A_ub=-np.array([[1, 0.05, 0], [0, 1.05, 1.07]]), b_ub=-np.array([80, 120]), bounds=[(0, None)] * 3, method='highs')
+rec(res_3.fun < res_lp.fun - 1e-6 and res_3.x[2] > 0, f'c-dedication-lp: adding the third bond cuts the cost ({res_lp.fun:.2f} to {res_3.fun:.2f}), as the explanation says')
+rec(abs(80 * duals[0] + 120 * duals[1] - res_lp.fun) < 1e-6, 'c-dedication-lp: the dual objective equals the primal cost')
+allow('c-dedication-lp', 80000, 120000, 0.96, 0.05, 1.05, 1.01, 0.95, 1.07, 80, 120, *res_lp.x, res_lp.fun, 0.048, *duals)
 
 correct_ids('c-convex-functions', ['a', 'b', 'c', 'd'])
 g_ = np.random.default_rng(3)
@@ -625,126 +692,6 @@ wrong('c-projected-step', 'renormalise', round(float(F('0.5') / F('1.1')), 6))
 wrong('c-projected-step', 'shift-all', round(v11[0] - (v11.sum() - 1) / 3, 6))
 wrong('c-projected-step', 'no-projection', round(v11[0], 6))
 allow('c-projected-step', 0.6, 0.3, 0.1, 0.2, -0.6, 0.5, *v11, *pr, 0.05)
-
-mu12 = 6.5 * math.exp(-1.2) * math.exp(0.18) ** 8
-key('c-poisson-offset', round(mu12, 4))
-wrong('c-poisson-offset', 'no-offset', round(math.exp(0.24), 4))
-wrong('c-poisson-offset', 'offset-added', round(math.exp(0.24) + 6.5, 4))
-allow('c-poisson-offset', -1.2, 0.18, 6.5, 0.24, math.exp(0.24), mu12)
-
-lg_t = code_py('c-irls-two', 0)
-po_t = code_py('c-irls-two', 1)
-fb_ = csv('fill-buckets.csv')
-Xl = np.column_stack([np.ones(len(fb_)), fb_['spread_bp'], fb_['queue_k']])
-kl, ml = fb_['fills'].to_numpy(float), fb_['orders'].to_numpy(float)
-
-
-def score_glogit(b, X_, k_, m_):
-    return X_.T @ (k_ - m_ / (1 + np.exp(-X_ @ b)))
-
-
-for c_, (X_, k_, m_) in zip(lg_t, [(Xl, kl, ml), (Xl[:60], kl[:60], ml[:60]),
-                                   (np.column_stack([np.ones(5), np.arange(5.0)]), np.array([1, 3, 4, 7, 8.0]), np.array([10, 10, 8, 10, 9.0]))]):
-    b_ = optimize.root(score_glogit, np.zeros(X_.shape[1]), args=(X_, k_, m_), tol=1e-14).x
-    rec(np.allclose(eval(c_['expect']), b_, rtol=1e-7, atol=1e-10), f'c-irls-two grouped logit {c_["call"]}: binomial score equations solved by scipy root agree')
-expanded = np.repeat(Xl, ml.astype(int), axis=0)                 # one row per order: the same fit as the grouped one
-yy = np.concatenate([np.r_[np.ones(int(k_)), np.zeros(int(m_ - k_))] for k_, m_ in zip(kl, ml)])
-b_e = optimize.minimize(lambda b: np.sum(np.logaddexp(0, expanded @ b) - yy * (expanded @ b)), np.zeros(3), method='BFGS', options={'gtol': 1e-10}).x
-rec(np.allclose(eval(lg_t[0]['expect']), b_e, rtol=1e-4), 'c-irls-two: the grouped fit equals the fit on one row per order')
-jd = csv('jump-days.csv')
-Xp = np.column_stack([np.ones(len(jd)), jd['vix']])
-yp, op = jd['jumps'].to_numpy(float), np.log(jd['hours'].to_numpy())
-
-
-def score_pois(b, X_, y_, o_):
-    return X_.T @ (y_ - np.exp(X_ @ b + o_))
-
-
-for c_, o_, j_ in zip(po_t, [op, op, np.zeros(len(yp))], [0, 1, 1]):
-    b_ = optimize.root(score_pois, np.array([np.log(yp.mean() + 0.1), 0.0]), args=(Xp, yp, o_), tol=1e-14).x
-    info = Xp.T @ (np.exp(Xp @ b_ + o_)[:, None] * Xp)                 # Fisher information at the root
-    want = b_ if j_ == 0 else np.sqrt(np.diag(np.linalg.inv(info)))
-    rec(np.allclose(eval(c_['expect']), want, rtol=1e-7, atol=1e-12), f'c-irls-two Poisson {c_["call"]}: scipy root and the Fisher information agree')
-slope_p, se_p = eval(po_t[0]['expect'])[1], eval(po_t[1]['expect'])[1]
-allow('c-irls-two', 240, 1e-10, 1e-6, slope_p, se_p, round((math.exp(slope_p) - 1) * 100))
-
-Xf = np.array([[1, -1, -1, 1], [1, 1, -1, -1], [1, -1, 1, -1], [1, 1, 1, 1]], float)   # rows: old am, new am, old pm, new pm
-yf = np.array([12.0, 9.5, 8.0, 7.5])
-cf = np.linalg.solve(Xf, yf)
-key('c-factorial-interaction', round(2 * cf[3], 6))
-wrong('c-factorial-interaction', 'no-half', round(4 * cf[3], 6))
-wrong('c-factorial-interaction', 'main-effect', round(2 * cf[1], 6))
-allow('c-factorial-interaction', 12.0, 9.5, 8.0, 7.5, -0.5, -2.5, 2 * cf[3])
-
-d15 = np.array([1.4, -0.6, 2.2, 0.9, -1.7, 3.0, 0.3, 1.1])
-rk = stats.rankdata(np.abs(d15))
-Wp = float(rk[d15 > 0].sum())
-wil = stats.wilcoxon(d15)
-rec(math.isclose(wil.statistic, rk[d15 < 0].sum()), f'c-signed-rank: scipy W- = {wil.statistic}')
-mW, vW = 8 * 9 / 4, 8 * 9 * 17 / 24
-key('c-signed-rank', round((Wp - mW) / math.sqrt(vW), 4))
-wrong('c-signed-rank', 'sign', round(-(Wp - mW) / math.sqrt(vW), 4))
-wrong('c-signed-rank', 'no-root', round((Wp - mW) / vW, 4))
-allow('c-signed-rank', *d15, Wp, mW, vW, 36, Wp - mW, (Wp - mW) / math.sqrt(vW))
-
-w16 = [5.2, 7.9, 3.4, 9.1, 6.8, 4.4]
-post = stats.gamma(a=4 + 6, scale=1 / (30 + sum(w16)))
-ew = post.expect(lambda l_: 1 / l_)
-key('c-gamma-waits', round(ew, 4))
-wrong('c-gamma-waits', 'inverted-mean', round(1 / post.mean(), 4))
-wrong('c-gamma-waits', 'ignored-prior', round(sum(w16) / 6, 4))
-wrong('c-gamma-waits', 'prior-only', round(stats.gamma(a=4, scale=1 / 30).expect(lambda l_: 1 / l_), 4))
-allow('c-gamma-waits', *w16, 30, 36.8, 66.8, 9, ew, sum(w16) / 6)
-
-bm = [0.212, 0.198, 0.231, 0.205, 0.187, 0.224, 0.219, 0.193, 0.208, 0.226]
-mcse = stdev(bm) / math.sqrt(10)
-key('c-batch-means', round(mcse, 6))
-wrong('c-batch-means', 'naive', 0.25 / math.sqrt(10000))
-wrong('c-batch-means', 'batch-sd', round(stdev(bm), 6))
-allow('c-batch-means', 10000, 0.25, 1000, *bm, stdev(bm), mcse, round(0.25 ** 2 / mcse ** 2))
-
-grid_t = np.linspace(-10, 15, 250001)
-lp_ = -0.5 * ((grid_t - 1.5) / 1.0) ** 2 - 0.5 * ((4.2 - grid_t) / (6.0 / 3)) ** 2      # prior times the likelihood of the mean of 9
-pw = np.exp(lp_ - lp_.max())
-pm = float((grid_t * pw).sum() / pw.sum())
-key('c-partial-pooling', round(pm, 4))
-wrong('c-partial-pooling', 'no-pooling', 4.2)
-wrong('c-partial-pooling', 'complete-pooling', 1.5)
-wrong('c-partial-pooling', 'swapped-weight', round(1.5 + (1 - 0.2) * 2.7, 4))
-wrong('c-partial-pooling', 'sd-not-variance', round(1.5 + 1.5 / 2.5 * 2.7, 4))
-allow('c-partial-pooling', 1.5, 1.0, 4.2, 9, 6.0, 36, 0.25, 0.2, 2.7, pm)
-
-gb_t = code_py('c-mcmc-check', 0)
-yf = csv('factor-days.csv')['y'].to_numpy()
-yh = np.array([0.012, -0.004, 0.009, 0.015, -0.011, 0.006, 0.002, -0.007])
-for yv, c_ in ((yf, gb_t[1]), (yh, gb_t[3])):
-    S_ = float(((yv - yv.mean()) ** 2).sum())
-    post_s2 = stats.invgamma((len(yv) - 1) / 2, scale=S_ / 2)            # the exact marginal posterior of sigma^2
-    rec(f'{post_s2.mean():.10e}' in c_['call'], f'c-mcmc-check: {c_["call"][:30]}... uses the exact posterior mean of sigma^2, {post_s2.mean():.4e}')
-    rec(f'{yv.mean():.10f}' in (gb_t[0]['call'] if yv is yf else gb_t[3]['call']), 'c-mcmc-check: the mean of mu is the sample mean')
-gb_b = ("import numpy as np\nfrom scipy import stats\n\ndef gibbs_normal(y, n, seed):\n    y = np.asarray(y, float); g = np.random.default_rng(seed + 99); N = len(y); m = y.mean()\n"
-        "    out = []\n    for _ in range(n):\n        s2 = stats.invgamma.rvs(N / 2, scale=((y - m) ** 2).sum() / 2, random_state=g)\n"
-        "        m = g.normal(y.mean(), (s2 / N) ** 0.5); out.append((m, s2))\n    return np.array(out)\n")
-other_passes('c-mcmc-check', gb_b, part=0, label='a scipy invgamma sampler on other seeds')
-other_fails('c-mcmc-check', W('c-mcmc-check', 0)['solution'].replace("mu = rng.normal(ybar, np.sqrt(s2 / N))", "mu = rng.normal(ybar, np.sqrt(s2))"), part=0,
-            label='a sampler that forgets the 1/N in the variance of mu')
-rh_t = code_py('c-mcmc-check', 1)
-chn = csv('chains.csv')
-
-
-def rhat_b(cols):
-    n_ = len(cols[0])
-    Wv = np.mean([stdev(c) ** 2 for c in cols])
-    Bv = n_ * stdev([float(np.mean(c)) for c in cols]) ** 2
-    return math.sqrt(((n_ - 1) / n_ * Wv + Bv / n_) / Wv)
-
-
-cols = [chn[c].tolist() for c in chn.columns]
-rh_b = [rhat_b(cols), rhat_b([c[:100] for c in cols]), rhat_b(cols[:3]), rhat_b([[0.1, 0.3, -0.2, 0.4], [0.5, 0.2, 0.6, 0.3]])]
-for c_, v_ in zip(rh_t, rh_b):
-    rec(math.isclose(eval(c_['expect']), v_, rel_tol=1e-10), f'c-mcmc-check {c_["call"]}: R-hat by statistics.stdev = {v_:.6f}')
-rec(rh_b[0] > 1.01 > rh_b[2], 'c-mcmc-check: all four chains above 1.01, the first three below')
-allow('c-mcmc-check', 400, 4000, 20000, rh_b[0], rh_b[2], 1.01, 1e-9)
 
 # ======================================================================== Paper D
 r1 = pd.Series([0.021, -0.012, 0.008, -0.025, 0.015, 0.006])
@@ -794,11 +741,13 @@ wrong('d-reversal-weights', 'no-demean', round(0.04 / r7.abs().sum(), 6))
 wrong('d-reversal-weights', 'momentum', round(-w7d[3], 6))
 allow('d-reversal-weights', *r7, 0.006, -0.046, 0.046, s7.abs().sum(), w7d[3])
 
-ir = 0.55 * 0.025 * math.sqrt(400 * 12)
-key('d-fundamental-law', round(ir, 5))
-wrong('d-fundamental-law', 'no-tc', round(0.025 * math.sqrt(4800), 5))
-wrong('d-fundamental-law', 'one-month', round(0.55 * 0.025 * math.sqrt(400), 5))
-allow('d-fundamental-law', 12, 55, 0.025, 400, 0.55, 4800, math.sqrt(4800), ir)
+br = 250 * 52
+ic_need = optimize.brentq(lambda ic_: 0.4 * ic_ * math.sqrt(br) - 0.8, 1e-4, 1)
+key('d-fundamental-law', round(ic_need, 6))
+wrong('d-fundamental-law', 'no-tc', round(0.8 / math.sqrt(br), 6))
+wrong('d-fundamental-law', 'tc-multiplied', round(0.8 * 0.4 / math.sqrt(br), 6))
+wrong('d-fundamental-law', 'one-rebalance', round(0.8 / (0.4 * math.sqrt(250)), 6))
+allow('d-fundamental-law', 250, 52, 0.4, 0.8, 40, br, math.sqrt(br), 13000)
 
 cst = F(12) * F('0.40') * F(12, 10000)
 key('d-net-sharpe', round(float((F('0.09') - cst) / F('0.06')), 5))
@@ -917,7 +866,8 @@ for iid, it in ITEM.items():
 for p in doc['parts']:
     if p['kind'] == 'paper':
         n = len(p['items']) + sum(d['n'] for d in p.get('draw', []))
-        rec(15 <= n <= 25, f'{p["id"]}: {n} items (15 to 25)')
+        rec(10 <= n <= 25, f'{p["id"]}: {n} items (10 to 25)')
+        rec(p['id'] != 'numerics-optimisation' or p['minutes'] <= 120, f'{p["id"]}: {p["minutes"]} minutes (paper C stays one paper only at 120 or less)')
         pace = sum(it['pace'] for it in p['items']) + (1800 if p.get('draw') else 0)
         rec(p['minutes'] * 60 >= 1.25 * pace - 1e-9, f'{p["id"]}: {p["minutes"]} min covers 1.25 times the pace {pace} s')
         ds = [it['difficulty'] for it in p['items']]
@@ -937,12 +887,16 @@ for iid, it in ITEM.items():
     if all(k in AUTO for k in kinds):
         for s in it['skills']:
             covered.setdefault(skill_topic[s], set()).add(iid)
-rec(sorted(covered) == ['2.1', '2.2', '2.3', '2.4', '2.5', '2.6'], f'every topic 2.1 to 2.6 on an auto-graded item, no other topic: {sorted(covered)}')
+rec(sorted(covered) == ['2.1', '2.2', '2.3', '2.4', '2.5'], f'every topic 2.1 to 2.5 on an auto-graded item, none from 2.6 (the researcher track): {sorted(covered)}')
 for tp in sorted(covered):
     rec(len(covered[tp]) >= 2, f'topic {tp}: {len(covered[tp])} auto-graded items')
-stage2_skills = {s for s, tp in skill_topic.items() if tp.startswith('2.')}
+stage2_skills = {s for s, tp in skill_topic.items() if tp.startswith('2.') and tp != '2.6'}
 used = {s for it in ITEM.values() for s in it['skills']}
-rec(stage2_skills <= used, f'every Stage 2 skill on an item (missing {sorted(stage2_skills - used)})')
+rec(stage2_skills <= used, f'every Stage 2 skill outside topic 2.6 on an item (missing {sorted(stage2_skills - used)})')
+rec(not any(skill_topic[s_] == '2.6' for s_ in used), 'no item carries a topic 2.6 skill')
+refs = {n_ for it in ITEM.values() for w_ in ([it['widget']] if 'widget' in it else [p_['widget'] for p_ in it['parts']]) for n_ in w_.get('data', {})}
+files_ = set(os.listdir(DATA))
+rec(files_ == refs, f'every data file is used by an item, and every named file exists (files {sorted(files_)}, used {sorted(refs)})')
 # drawn pools hold at least twice n
 for p in doc['parts']:
     for d in p.get('draw', []):
