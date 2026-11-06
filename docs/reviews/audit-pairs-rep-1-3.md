@@ -72,4 +72,4 @@ Counts: fixed 3 (5, 6, 7), disputed 5 (1, 2, 3, 4 unverified; 8 on computation),
 - Voice: `VOICE_BASE=app/content/courses/pairs-rep/ python3 docs/reviews/voice-scan.py 35 --summary`: explanations over three sentences 0; over 35 words 0.
 - Concepts: L1 exit 1, only "EXPECTED_FAIL l3 screens[4]/[5]/[6], review-1 items[4], homework-1 items[0]" failing (finding 1, disputed: unverified, left as is); the l5 screens[6] check now passes as the corrected claim. L2 exit 0. L3 exit 0.
 - Numbers: L1 exit 0 (146 of 146), L2 exit 0 (139 of 139), L3 exit 0 (479 of 479). No hard-coded number changed.
-- Playthrough (from `app/`, `--local-cdn <pkgs>`, desktop and `--mobile`): lessons l5-plan, l9-bid-ask-bounce, l10-matching-results; results in the second commit's line below.
+- Playthrough (from `app/`, `--local-cdn <pkgs>`, desktop and `--mobile`): lessons l5-plan, l9-bid-ask-bounce, l10-matching-results; each "ok" (14, 13 and 13 checks, quiz 3/3), "browser relaunches: 0 / All passed." on desktop and on mobile.
