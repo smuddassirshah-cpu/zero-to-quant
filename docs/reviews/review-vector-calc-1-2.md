@@ -53,3 +53,11 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's scripts: `vector-calc-L1-numbers.py` exit 0 (227 of 227), `vector-calc-L2-numbers.py` exit 0 (182 of 182).
 
 ## Fix pass
+
+All 17 findings (2 errors, 8 warnings, 7 notes) applied by targeted edits; none disputed, none deferred. Each ruling verified by recomputation first.
+
+- L1 fixed (5): l4 converse hypotheses (summary.ideas[1], screens[8] explain) and screens[6] `test` why; review-1 items[7] now the circle of radius 3 about the origin (integrand 1, so $2\pi$; needs only L1 facts); l2 screens[3] "length 8.886 times the average height $\pi$" (27.915 = 8.886 x 3.1416); homework-1 "gradient-field test case".
+- L2 fixed (12): l6 screens[2] Green hypotheses (piecewise smooth simple closed curve, $C^1$ on an open set containing $D$; the vortex fails it at the origin), l6 summary.ideas[0] and l8 screens[3] and summary.ideas[1] tightened the same way; l6 screens[10] now "test 4 gives $4\pi$ instead of $2\pi$" with byKey `test-4` (recomputed: no-$r$ gives $8\pi$ at test 2, $4\pi$ at test 4, 1 against $\tfrac23$ at test 5); l6 screens[9] general loop; l6 screens[3] `len` ($8\pi^2$) replaced by `one` ($4\pi$, curl taken as 1) plus the area/length note; l5 curl wording (screens[1], screens[5]; curl is twice the turning rate) and screens[9]; l8 screens[0] and screens[10]; l7 summary; homework-2 folium limit.
+- Scripts: `vector-calc-L1-numbers.py` review-1 circle now radius 3; `vector-calc-L2-numbers.py` checks `one` = $4\pi$ and the no-$r$ mutant values. Both exit 0 (227 of 227, 183 of 183).
+- Gates: validator 0 errors; voice scan 0 and 0; playthrough "All passed" desktop and mobile for l2, l4, l5, l6, l7, l8 and sets review-1, homework-1, homework-2.
+- Graded answers changed: none to correct answers; wrong-answer `len` (l6 screens[3]) became `one` ($8\pi^2$ to $4\pi$); review-1 items[7] keeps answer $2\pi$ on a new curve; l6 code byKey `test-2` became `test-4`.

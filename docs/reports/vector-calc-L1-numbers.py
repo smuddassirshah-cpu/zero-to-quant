@@ -206,7 +206,7 @@ lv.expect(R, "items[3].widget.answer", r"-18\pi"); lv.expect(R, "items[3].explai
 f7 = lambda x, y: x * x * y + y ** 3
 r7 = both(f7(2, 1) - f7(1, 1), work(lambda p: (2 * p[0] * p[1], p[0] ** 2 + 3 * p[1] ** 2), lambda t: (1 + t, 1), lambda t: (1, 0), 0, 1))
 lv.expect(R, "items[6].widget.answer", r7); lv.expect(R, "items[6].widget.wrong[0].value", f7(2, 1))
-both(2 * pi, work(vort, lambda t: (0.5 + math.cos(t), math.sin(t)), lambda t: (-math.sin(t), math.cos(t)), 0, 2 * pi))
+both(2 * pi, work(vort, lambda t: (3 * math.cos(t), 3 * math.sin(t)), lambda t: (-3 * math.sin(t), 3 * math.cos(t)), 0, 2 * pi))
 lv.expect(R, "items[7].widget.answer", r"2\pi")
 both(16 * pi, sline(lambda p: p[0] ** 2 + p[1] ** 2, lambda t: (2 * math.cos(t), 2 * math.sin(t)), lambda t: (-2 * math.sin(t), 2 * math.cos(t)), 0, 2 * pi))
 lv.expect(R, "items[8].widget.answer", r"16\pi")

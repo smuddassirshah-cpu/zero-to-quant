@@ -240,6 +240,12 @@ lv.expect(Hm, "items[7].parts[0].widget.wrong[0].value", round(-pi, 3))
 tri = [(lambda t: 2 * t, lambda t: 0, lambda t: 2, lambda t: 0), (lambda t: 2 - 2 * t, lambda t: 2 * t, lambda t: -2, lambda t: 2), (lambda t: 0, lambda t: 2 - 2 * t, lambda t: 0, lambda t: -2)]
 tv = sum(circ(lambda x, y: y + math.exp(x), lambda x, y: 2 * x + math.cos(y * y), *s, 0, 1) for s in tri)
 lv.expect(Hm, "items[8].widget.answer", round(both(2, tv, 1e-6)))
+# fix pass: l6 screens[3] wrong `one` is curl 1 times area 4pi; no-r mutant fails test 4 (4pi vs 2pi) and test 5 (1 vs 2/3), passes test 2
+lv.expect("l6", "screens[3].widget.wrong[1].tex", r"4\pi")
+assert abs(polar(lambda x, y: 1, 0, 2) - 4 * pi) < 1e-9
+nor = lambda c, rm, t0, t1: dblquad(lambda r, th: c(r * math.cos(th), r * math.sin(th)), t0, t1, lambda th: 0, lambda th: rm)[0]
+assert abs(nor(lambda x, y: 2, 2, 0, 2 * pi) - 8 * pi) < 1e-6
+assert abs(nor(lambda x, y: 2, 1, 0, 2 * pi) - 4 * pi) < 1e-6 and abs(nor(lambda x, y: y, 1, 0, pi) - 1) < 1e-6
 
 lv.check_wrongs()
 lv.report()
