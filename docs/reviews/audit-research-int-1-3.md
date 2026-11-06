@@ -59,3 +59,27 @@ The earlier review's conceptual findings this audit did not raise, one line each
   - `--set research-int/review-3 --set research-int/homework-3`: `browser relaunches: 0` / `All passed.`
   - `--set research-int/review-1 --set research-int/homework-1`: the plain set and homework pass (`ok research-int/review-1 11 items, recorded 9 of 9`, `ok research-int/homework-1 ... 48 of 48 marks`), but the two timed checks of review-1 throw `page.waitForFunction: Timeout 20000ms exceeded` on both runs (`FAIL research-int/review-1 (timed)` and `(timed parts)`), while review-2's timed checks pass. No content was changed; raised in the inbox as a playthrough item.
   - `--lesson research-int/l3-estimators-on-the-spot`, `--lesson research-int/l10-weak-signals`, `--lesson research-int/l13-baseline-first`: each `browser relaunches: 0` / `All passed.`
+
+## Fix pass
+
+Fixer: Opus, 6 Nov 2026. Each correction was established by its own computation before editing (scratch script `verify.py`, statsmodels, scikit-learn, scipy, pandas); edits are targeted string replacements.
+
+1. fixed | basis: 2 x P(T_3 > 2) = 0.1393 (scipy) and a null Monte Carlo of four yearly returns rejects 13.9%; four years of daily returns (1,008 draws, SR x sqrt(252) x sqrt(4)) reject 4.55%, the normal figure. Explain now gives both readings in three sentences.
+2. fixed | basis: a p-value bounds what luck can produce, not whether luck did it; Bonferroni 50 x 0.0027 = 0.135 (recomputed). Wording now "after fifty tries luck alone could explain it".
+3. fixed | basis: statsmodels on pasted rows with k = 2, 3, 4 parameters: the t ratio equals sqrt((2n - k)/(n - k)) exactly, and sqrt((2n - 2)/(n - 2)) only at k = 2. Generic feedback now names the one-slope case and the degrees of freedom; `byKey.root2` already says "4 to 10" for this item and stays.
+4. fixed | basis: the decomposition is E over training sets and new noise at fixed x of squared loss (ESL 7.3); prose rule line, the spoken sentence and order line `s1` now say "squared" and name the expectation. Summary already said "Expected squared error".
+5. fixed | basis: on X^T X = nI, `Lasso(alpha=0.2)` equals sign(b)max(|b| - 0.2, 0) and the loss RSS + 30 L1 thresholds at 30/(2n) (both checked with scikit-learn to 1e-6); `Ridge(alpha=n lambda)` gives b/(1 + lambda). Summary note and the s5 prose now name scikit-learn's scaling.
+6. fixed | basis: simulated halves of 2 million rows each with slopes +-0.1: pooled correlation -0.00003 with equal means, 0.4998 with a shift of 2 in both variables. Prose and explain now require equal means.
+7. fixed | basis: pandas `rolling(3, center=True)` at index 2 of 0..5 returns 2.0, the mean of t-1, t, t+1; with `y = ret.shift(-1)` the simulated correlation is 0.5768 against 1/sqrt(3) = 0.5774. Prose now defines m over r_{t-1}, r_t, r_{t+1}.
+8. fixed, with the auditor's number corrected | basis: refitting with the age median from the training rows only (41 against 42; 15 train and 5 test blanks) moves the l14 test errors 85.05, 46.86, 29.66, 40.44, 32.95 to 85.05, 46.86, 29.63, 40.44, 32.93, so the shift is up to £0.03k, not "below £0.01k"; homework-3 moves 28.767 to 28.726. Prelude, starter and solution are unchanged (every hidden test stays as keyed), so no code test changes; l14 `screens[1].prose` and homework-3 `items[4].explain.text` now name the leak, l14 with "at most £0.03k".
+9. fixed | basis: 400 simulated rent fits (area and bedrooms correlated, six rents x100 at random rows): the bedrooms coefficient rose in 52% and fell in 48%, so no fixed direction.
+10. fixed | basis: exp(0.0725177) - 1 = 0.07521 and exp(0.3) - 1 = 0.3499 (Wooldridge 7.4). Explain now says log points with the exact 7.5%; `feedback.correct` changed from "about 7.3%" to "0.0725 in log points, about 7.5%".
+
+Counts: fixed 10, disputed 0, deferred 0. Graded answers changed: none (no key, `wrong[]` value or test changed; feedback and explanations only).
+
+Script change: `research-int-L1-concepts.py`, the final assert of the `l4 s5` block, as the auditor specified: it now simulates four years of daily returns under the null and checks the rejection rate against the content's 0.0455 (0.0461 on this seed, tolerance 0.004) and the t_3 figure against the content's 0.14. The other checks are untouched.
+
+Checks:
+- `node tools/validate.mjs 2>&1 | tail -3` (from `app/`): `0 errors, 4272 warnings` (5 more advisory O2 long-sentence warnings from the longer sentences); manifest restored.
+- `python3 -I docs/reports/research-int-L1-concepts.py`: exit 0 (`all checks passed`); `-L2-`: exit 0; `-L3-`: exit 0; `research-int-1-perf-numbers.py`: `all numbers agree`, exit 0 (no hard-coded number touched).
+- `VOICE_BASE=app/content/courses/research-int/ python3 docs/reviews/voice-scan.py 35 --summary`: `explanations over three sentences: 0`, `sentences scanned: 10349; over 35 words: 0`.

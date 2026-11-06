@@ -180,7 +180,14 @@ null = rng.normal(0, 0.1, (400_000, T))
 t_null = null.mean(axis=1) / (null.std(axis=1, ddof=1) / np.sqrt(T))
 rate = (abs(t_null) >= 2).mean()
 check(abs(rate - p_t3) < 0.003, "l4 s5: Monte Carlo under the null, 4 yearly returns, P(|t| >= 2) matches t_3 (about 0.139)")
-check(abs(rate - 0.0455) < 0.01, "l4 s5 explain: content says 'p approx 0.0455' for t = 2 from four yearly returns (FINDING: the t_3 tail is 0.139; 0.0455 needs the Sharpe estimated from many sub-period returns)")
+# After the fix pass the content says: p approx 0.0455 with the Sharpe estimated from daily returns, t_3 gives about 0.14 from four yearly figures.
+hits = 0
+for _ in range(4):
+    daily = rng.normal(0, 0.01, (10_000, 4 * 252))
+    t_daily = daily.mean(axis=1) / daily.std(axis=1, ddof=1) * np.sqrt(252) * np.sqrt(4)
+    hits += (abs(t_daily) >= 2).sum()
+rate_daily = hits / 40_000
+check(abs(rate_daily - 0.0455) < 0.004 and abs(p_t3 - 0.14) < 0.005, f"l4 s5 explain: Sharpe from 4 years of daily returns, P(|t| >= 2) under the null = {rate_daily:.4f} (content 0.0455); from four yearly figures t_3 gives {p_t3:.3f} (content 0.14)")
 check(np.isclose(1 - 0.95 ** 10, 0.4013, atol=5e-5) and np.isclose(1 - 0.95 ** 15, 0.5367, atol=5e-5) and 1 - 0.995 ** 10 < 0.05, "l4 s6 and r1 item6: 1 - 0.95^m; Bonferroni keeps the family below 5%")
 # MC: ten independent tests at 5% under the null
 z = rng.normal(size=(200_000, 10))
