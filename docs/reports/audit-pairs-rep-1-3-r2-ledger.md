@@ -155,3 +155,115 @@ Verdicts: correct, wrong, imprecise, misleading, unverified.
 | homework-1 | items[4] | 14.20 / 11.36 = 1.25 = 5/4 so 4 of 5 opened | correct | k/n identity |
 | homework-1 | items[5].explain | 1.0084^12 − 1 = 10.56%, a payoff per opened pair on a zero-cost position, not comparable with a fund | correct | as l4 s5 |
 | homework-1 | items[6].options | The log supports selection, the k/n consistency and the bounce lift; not real-data or cost claims | correct | numbers; placebo |
+
+## Level 2
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l6 | screens[0].explain | GGR open a pair on the day its spread first passes 2 formation sds (same-day fill as the base case) | correct | Table 1 Panel A (no wait) is the paper's headline case and Panel B the one-day-wait robustness check (Stony Brook transcription; Quantpedia) |
+| l6 | screens[1].prose | Cointegration's z-score thresholds are the same idea, measured in formation sds | correct | both are entry rules on a standardised spread |
+| l6 | screens[1].explain | A wider trigger means fewer trades, each from a larger gap; the paper fixes 2 | correct | monotone in the threshold; GGR "two historical standard deviations" |
+| l6 | screens[2].options[0] | Negative spread: buy A (cheaper normalised price), sell B | correct | convergence rule |
+| l6 | screens[2].options[2].why | Selling both is a bet on the market falling, not on the gap | correct | net short the common factor |
+| l6 | screens[3].prose | £1 buys 1/p units of a leg priced p; each leg's gain is units times price change | correct | arithmetic; GGR $1 long $1 short |
+| l6 | screens[4].explain | 1.5 sd earns most on this pair; one pair in one cycle is not evidence for a lower trigger; choosing it on the same data overfits | correct | selection on the same sample; l14 |
+| l6 | screens[5].explain | Buying the dear leg bets on divergence; the mirror trade loses what the right one gains | correct | r2 L1 (sign) |
+| l6 | screens[6].options[0] | Spread already beyond 2 sd on day 0: open at once, the rule is a level test | correct | course convention (no re-basing); under the paper's re-based start the day-0 spread is 0 by construction, so the case cannot arise there; the screen does not claim it is the paper's |
+| l6 | screens[6].options[1].why | The rule is a level, not a crossing | correct | GGR "diverge by more than two historical standard deviations" |
+| l6 | screens[7].widget | `threshold`, `first_open`, `units` solution passes, starter fails | correct | r2 L2 (code) |
+| l6 | screens[7].explain | The `sd > 0` guard handles identical paths; the day-0 test checks the loop starts at 0 | correct | code reading |
+| l6 | screens[8].prose | Open on day t if the absolute spread exceeds 2 sigma_form, long the cheaper, 1/p units each side | correct | GGR rule in course notation |
+| l6 | screens[9].explain | Equal pounds on each side is the paper's rule, scaled up | correct | GGR $1 long, $1 short |
+| l6 | quiz[0] | Spread +0.040 beyond 0.036: short i, buy j | correct | sign convention stated on screens[7] |
+| l6 | quiz[2].options[0] | Raising the trigger gives fewer trades, each at a larger gap | correct | threshold monotonicity; numbers (6, 4, 3, 2 opens) |
+| l7 | screens[0].prose | The paper closes a pair when the two normalised prices cross | correct | GGR: unwind at the next crossing of the prices |
+| l7 | screens[0].feedback.byKey.inside | Re-entering the 2 sd band does not close; the paper waits for the crossing | correct | same |
+| l7 | screens[1].prose | GGR let a pair reopen after it closes | correct | GGR Table 2 reports round-trip trades per pair above 1 (Krauss 2017 summary) |
+| l7 | screens[2].explain | A round trip pays the long leg's return minus the short leg's on £1 a side | correct | GGR pair payoff: return on long minus return on short, $1 each |
+| l7 | screens[3].explain | The side alternates as the spread swings from one band to the other | correct | numbers (sides −1, +1, −1, +1) |
+| l7 | screens[4].options[0] | A pair that never converges is booked at the last price of the period, a loss here | correct | GGR: if prices do not cross before the end of the trading interval, gains or losses are computed at the end of the last trading day |
+| l7 | screens[4].options[2].why | Each cycle ends its own positions on its last day | correct | same |
+| l7 | screens[4].explain | 35% of the top 20's trades end in a forced close; most such losses come from pairs close only by chance | correct | numbers (35%); r2 L2 (forced): losing forced closes come mostly from unplanted or broken pairs |
+| l7 | screens[5].prose | A 4 sd stop is not in the paper | correct | GGR have no stop-loss |
+| l7 | screens[5].explain | The stop cuts the mean from 6.02% to 4.32%; a planted pair at 4 sd usually comes back; real pairs may differ, so a stop is a risk choice | correct | numbers; hedged |
+| l7 | screens[6].options[0] | Exiting when the spread re-enters the band books only part of the convergence | correct | numbers (0.1955 against 0.2218); GGR exit at crossing |
+| l7 | screens[6].options[2].why | Band exit trades more often, so pays more costs | correct | numbers (9 trips against 4) |
+| l7 | screens[7].explain | With the wait a signal on day 124 would open on day 125 and close at once; the rule t + 1 < 125 forbids it | correct | course code convention, stated |
+| l7 | screens[8].widget | `trade_pair`, `holding_days` solution passes, starter fails | correct | r2 L2 (code) |
+| l7 | screens[8].prose | After a close, scanning resumes the day after the exit; with wait 1 every open and close fills at the next day's price | correct | code reading; GGR wait-one-day rule applies to opening and closing |
+| l7 | screens[9].options[0] | The rule holds an unconverged pair to a crossing or the forced close; the loss stays open | correct | GGR rule |
+| l7 | screens[9].options[2].why | Adding doubles a bet the rule never makes | correct | GGR fixed $1 positions |
+| l7 | summary.formula | pi = p_L^out/p_L^in − p_S^out/p_S^in | correct | long return minus short return |
+| l7 | quiz[1].options[0] | The paper closes at the next crossing or on the last trading day | correct | GGR |
+| l7 | quiz[1].options[2].why | The paper has no stop-loss | correct | GGR |
+| l8 | screens[0].explain | GGR report both committed and employed returns | correct | GGR §2.3 as quoted |
+| l8 | screens[1].explain | Returns are high before cycle 60 and lower after, which level 3 explains | correct | numbers; cycles whose trading crosses day 1,512 start at index 55 and up |
+| l8 | screens[2].explain | The committed–employed gap is larger for the top 5 because one of five never opened | correct | k/n = 5/4 against 20/19 |
+| l8 | screens[3].prose | The paper marks every pair to market daily, compounds within each calendar month, and averages the six live portfolios | unverified | consistent with secondary descriptions of GGR §2.3 (daily returns, overlapping portfolios as in Jegadeesh and Titman) but the compounding sentence could not be quoted |
+| l8 | screens[3].options[0] | Dividing a six-month payoff by 6 spreads it evenly; the paper books it in the months earned, compounded | correct | course convention against the described paper method; the direction is stated as timing, not level |
+| l8 | screens[3].options[1].why | The paper never divides by six; it measures each calendar month | unverified | as above |
+| l8 | screens[4].prose | Adjacent cycles share five of six trading months, so their returns are correlated; a naive t ignores it; Newey-West with 5 lags allows for it | correct | overlapping 6-period returns sampled monthly have MA(5) errors, so 5 lags is the Hansen-Hodrick lag; r2 L2 (nw) reproduces 13.55 and 8.09 and (nw-mc) shows the naive t over-rejects under H0 |
+| l8 | screens[4].options[1].why | The mean is the same in both; only its standard error changes | correct | HAC changes the covariance, not the point estimate |
+| l8 | screens[4].options[2].why | Newey-West does not always halve t; it depends on the correlation | correct | r2 L2 (nw) |
+| l8 | screens[4].explain | With the wait 11.09 becomes 6.91; Replicating Momentum uses the same correction | correct | r2 L2 (nw) |
+| l8 | screens[5].explain | The denominator is pairs; dividing by shares halves the return | correct | each payoff is per pair of £1 a side |
+| l8 | screens[6].options[0] | With every pair opened, committed and employed are equal | correct | n = k |
+| l8 | screens[6].explain | This happens in 46 of 127 cycles for the top 20 | correct | numbers |
+| l8 | screens[7].widget | `cycle_return` solution passes, starter fails | correct | r2 L2 (code) |
+| l8 | screens[7].prose | The cycle is normalised once at `start` | correct | course convention, stated |
+| l8 | screens[8].explain | 22 cycles at step 126 are a fair sample, not the full result; 1.05% against 1.00% | correct | numbers |
+| l8 | screens[9].explain | £904,000 a cycle on £20m long and £20m short; what capital that needs depends on margin rules | correct | arithmetic; margin is outside the course |
+| l8 | summary.ideas[2] | Adjacent cycles overlap by five months in six, so a naive t overstates the evidence | correct | r2 L2 (nw-mc) |
+| l8 | quiz[1].options[2].why | Overlap leaves the mean unbiased | correct | expectation is linear; dependence affects variance only |
+| l9 | screens[0].explain | A backtest that buys at a close printed at the bid pays the full spread less than a real buyer | correct | bid £49.75 against ask £50.25 is 1% of the mid |
+| l9 | screens[1].explain | The extra day-to-day noise of the close spread is the bid-ask bounce; a same-day trade on closes buys that bounce | correct | Roll (1984); generator: iid ±0.5% each day |
+| l9 | screens[2].explain | Closes 1.00%, mids 0.82%: about 0.19 points is bounce; the wait gives 0.75%, removing the bounce and giving up a day of each move | correct | numbers; r2 L2 (bounce) on fresh panels |
+| l9 | screens[3].options[0] | Tomorrow's close is at bid or ask independently of today's, so the trade no longer buys today's bounce | correct | generator draws the side each day independently; r2 L2 (bounce): with the wait the closes-minus-mids gap vanishes |
+| l9 | screens[3].options[1].why | The wait still trades at a close, a day later | correct | GGR wait-one-day rule |
+| l9 | screens[3].options[2].why | The wait does not add costs; it changes which price is used | correct | same |
+| l9 | screens[3].explain | It also gives up a day of convergence, so it is conservative | correct | numbers (mids: 0.82% to 0.75%) |
+| l9 | screens[4].prose | Each round trip is four trades of £1 (open and close each leg); cost per pair per cycle = 4c × trips | correct | counting; GGR count round-trip costs on both legs |
+| l9 | screens[5].explain | Break-even c* = gross / (4 × trips); the paper reports profits survive conservative cost estimates | correct | algebra; GGR abstract |
+| l9 | screens[6].options[1].why | Every buy and every sell pays half the spread and a commission | correct | market microstructure |
+| l9 | screens[6].explain | Charged once the cost looks harmless up to 4.52%; per trade it breaks even at 0.67%, about a seventh | correct | 4 × 1.69 = 6.75 trades |
+| l9 | screens[7].explain | On mids the wait costs 0.07 points, the lost day; on closes 0.25 because it also removes the bounce; the two parts roughly add | correct | numbers; additivity is stated as "roughly" |
+| l9 | screens[8].widget | `bounce_effect`, `net_of_costs`, `breakeven_cost` solution passes, starter fails | correct | r2 L2 (code) |
+| l9 | screens[8].explain | On 22 cycles the wait run sits slightly above the mid run; on 127 slightly below; a sample of 22 moves the second decimal | correct | numbers |
+| l9 | screens[9].options[0] | The wait-one-day rule addresses only the bounce, a spread effect | correct | GGR introduce the wait for the bid-ask bounce |
+| l9 | screens[9].options[2].why | The borrow fee depends on holding time, not the fill price | correct | stock-loan economics |
+| l9 | screens[9].explain | Commission, the half-spread on each real fill and the borrow fee must still be charged; a 0.12% stack leaves room under 0.67% | correct | arithmetic |
+| l9 | quiz[1].options[0] | A close at the bid makes a share look cheap; buying it books the rebound to the mid | correct | Roll (1984) bounce |
+| l10 | screens[0].prose | GGR report annualised excess returns of up to 11% for self-financing pairs portfolios | correct | abstract |
+| l10 | screens[0].options[0] | Top 20, committed, one-day wait is the fairest cell to set beside the paper's 11% | misleading | the 11% headline is the fully invested (employed) top-20 one-day-wait figure: 0.895% a month is 10.7% simple and 11.3% compounded, while the committed one-day-wait figure is 0.52% a month, 6.4% a year (Table 1 transcription). The like-for-like cell is the course's employed-with-wait 0.84% (10.6%); setting committed beside an employed headline mixes the denominators l4 screens[5] warns about. r2 L2 (fair-cell). See finding |
+| l10 | screens[0].options[1].why | Leading with the best cell flatters the match | correct | reporting practice |
+| l10 | screens[0].options[3].why | Choosing the cell by closeness to the target is matching, not checking | correct | l10 screens[5] |
+| l10 | screens[0].explain | 0.75% a month, 9.4% a year, sits inside the paper's "up to 11%" | misleading | as above: it sits inside because it is a smaller measure than the headline's |
+| l10 | screens[1].explain | Three committed cells exceed 11% a year; each gap needs a reason, not a tweak | correct | numbers; the denominator caveat applies to the comparison |
+| l10 | screens[2].options[0] | A match on a tuned, planted panel shows the code reproduces the method, not that the strategy works | correct | the panel's profit is designed in |
+| l10 | screens[3].options | Real gap sources: monthly method, normalising once and carrying through, no delistings or dividends, 100-share universe; not the seed or the 2 sd rule | correct | "normalise once" as a difference from the paper agrees with Krauss (2017) and Rad, Low and Faff (2016) on re-normalisation; this is the row l2 quiz[1] contradicts |
+| l10 | screens[3].explain | A small universe means fewer and odder pairs | correct | fewer candidates, so the 20th closest is further |
+| l10 | screens[4].explain | Sampling one cycle in six moves the second decimal, so quote the full run | correct | numbers |
+| l10 | screens[5].options[0] | Settings fitted to the target make the match prove nothing | correct | data snooping |
+| l10 | screens[5].options[2].why | Reporting the best of several tries hides how many were tried | correct | multiple comparisons |
+| l10 | screens[6].options[0] | State our top-5 over top-20 ordering as ours, without claiming the paper's | correct | GGR Table 1 in fact has top 20 above top 5 fully invested (1.436% against 1.308%), so not claiming is right |
+| l10 | screens[6].explain | After the break the three surviving pairs average 2.7 of the top 5 places, so the top 5 hold up better | correct | numbers |
+| l10 | screens[7].widget | `results_table` solution passes, starter fails | correct | r2 L2 (code) |
+| l10 | screens[8].prose | Gap = ours − paper; compounding (1 + R_month)^12 − 1 is the shared yardstick | correct | course convention, stated |
+| l10 | screens[9].options[0] | Lead with the conservative cell and every condition | correct | reporting practice; the sentence states committed and wait, so it is not misleading on its own |
+| l10 | screens[9].options[2].why | Matching one range on data we built is not an exact replication | correct | honest |
+| l10 | quiz[0] | The cell to set first beside the headline is committed with the wait | misleading | as screens[0] |
+| review-2 | items[0] | Spread −0.032 beyond 0.030: buy i, sell j | correct | rule |
+| review-2 | items[2] | Long leg −0.0455, short leg price fell 0.1000: payoff 0.0545 | correct | long return minus short return |
+| review-2 | items[3].options[0] | Band exit books only part of each convergence, earns less and trades more | correct | numbers |
+| review-2 | items[5].options[0] | Quote the Newey-West t | correct | r2 L2 (nw) |
+| review-2 | items[5].options[2].why | t statistics apply to returns; they need the overlap correction | correct | standard |
+| review-2 | items[8].options[0] | Check the code, list gap sources, report the gap | correct | replication practice |
+| homework-2 | items[0] | `full_results` solution passes, starter fails | correct | r2 L2 (code) |
+| homework-2 | items[0].explain | Four cells 1.37%, 1.01%, 1.00%, 0.75%; the wait lowers both portfolios | correct | numbers |
+| homework-2 | items[1] | `blotter` solution passes, starter fails | correct | r2 L2 (code) |
+| homework-2 | items[2].lines | Trade life: sd fixed in formation, signal at 2 sd, fill next day with the wait, hold to sign change or last day, close a day late with the wait, book long minus short | correct | GGR rule with the one-day wait on opening and closing |
+| homework-2 | items[3].model | Waiting a day removes the bounce (fresh draw) and loses a day of convergence; the same-day figure answers a question no trader can act on | correct | r2 L2 (bounce) |
+| homework-2 | items[3].model | The paper reports that waiting a day cuts returns materially but leaves them positive | correct | Table 1: top 20 1.436% to 0.895% a month |
+| homework-2 | items[4] | Net = (4.52% − 4 × 0.2% × 1.69) / 6 = 0.53% a month | correct | arithmetic under the stated cost model |
+| homework-2 | items[6].options[1].why | Each leg's return is p_out/p_in so the base cancels on the same trades; re-basing changes which trades open | correct | r2 L2 (rebase): payoff invariant for a fixed trade, trade set changes |
+| homework-2 | items[6].options[0] | Dividing by 6 instead of compounding within months changes the figure even on the same trades | correct | different aggregation of the same payoffs |
