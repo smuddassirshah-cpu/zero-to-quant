@@ -39,6 +39,15 @@ def stated(ref, path, phrase, ok):
     lv._rec(bool(ok) or not there, f'stated: {ref} {path} "{phrase}"', '' if ok or not there else 'the stated claim is false')
 
 
+def must(ref, path, phrase, ok):
+    """The fixed wording must be present and its claim must hold, so the script fails if a fix is reverted."""
+    try:
+        there = phrase in lv.text(ref, path)
+    except KeyError:
+        there = False
+    lv._rec(bool(ok) and there, f'must: {ref} {path} "{phrase}"', '' if there else 'the fixed wording is missing')
+
+
 def two(name, a, b, tol=1e-9):
     lv._rec(math.isclose(float(a), float(b), rel_tol=tol, abs_tol=tol), f'two routes: {name} {a!r} vs {b!r}', '')
 
@@ -140,11 +149,13 @@ lines = doc('l5-bs-pricer')['screens'][5]['canvas']['params']['lines']
 sw_line = 1 + next(i for i, s in enumerate(lines) if '1, 0.2, 0.05' in s)
 pc_line = 1 + next(i for i, s in enumerate(lines) if '100, 5, 0.2' in s)
 claim(f'l5 s5: swapped call on line {sw_line}, percent call on line {pc_line}', (sw_line, pc_line) == (3, 5))
-stated('l5', 'screens[5].prose', 'Line 2 passes', sw_line == 2)
-stated('l5', 'screens[5].prose', 'Line 3 types the rate in percent', pc_line == 3)
-stated('l5', 'screens[5].question', 'line 2', sw_line == 2)
-stated('l5', 'screens[5].widget.options[3].why', 'The percent slip is line 3', pc_line == 3)
-stated('l5', 'screens[5].feedback.byKey.percent', 'Line 3 is the percent slip', pc_line == 3)
+must('l5', 'screens[5].prose', 'Line 3 passes', sw_line == 3)
+must('l5', 'screens[5].prose', 'Line 5 types the rate in percent', pc_line == 5)
+must('l5', 'screens[5].question', 'call on line 3', sw_line == 3)
+must('l5', 'screens[5].widget.options[3].why', 'The percent slip is line 5', pc_line == 5)
+must('l5', 'screens[5].feedback.byKey', 'Line 5 is the percent slip', pc_line == 5)
+must('l5', 'screens[5].feedback.byKey', 'Line 3 is a different mistake', sw_line == 3)
+claim('l5 s4: the no-discount slip is the signed value 99.005 - 100 = -0.995', R_(no_disc, 3) == -0.995 and doc('l5-bs-pricer')['screens'][4]['widget']['wrong'][1]['value'] == -0.995)
 grid = np.array([[bs(100, K, .05, .2, T) for T in (0.25, 0.5, 1.0)] for K in (90, 100, 110)])
 claim('l5 s6 example grid', np.allclose(grid, json.loads(doc('l5-bs-pricer')['screens'][6]['widget']['examples'][0]['expect']), atol=6e-7))
 claim('l5 s6 console grid to 4 places', np.round(grid, 4)[0].tolist() == [11.6701, 13.4985, 16.6994] and np.round(grid, 4)[2].tolist() == [1.1911, 2.9065, 6.0401])
@@ -203,7 +214,11 @@ for K in (90, 95, 105, 110):
     e = [crr_l(100, K, .05, .2, 1, n) - bs(100, K, .05, .2, 1) for n in range(100, 121)]
     br.append(all((e[i] > 0) != (e[i + 1] > 0) for i in range(len(e) - 1)))
 print(f'check by hand: l6 s8 odd/even bracketing for n = 100..120 at K = 90, 95, 105, 110: {br}')
-stated('l6', 'screens[8].prose', 'Odd and even trees bracket the limit', all(br))
+stated('l6', 'screens[8].prose', 'Odd and even trees bracket the limit, and', all(br))
+at_money = [crr_l(100, 100, .05, .2, 1, n) - bs(100, 100, .05, .2, 1) for n in range(100, 121)]
+must('l6', 'screens[8].prose', 'At the money odd and even trees bracket the limit', all((at_money[i] > 0) != (at_money[i + 1] > 0) for i in range(len(at_money) - 1)))
+claim('l6 s8: away from the money the sign does not alternate (the reader found it so at K = 90, 95, 105)', not all(br))
+must('l6', 'summary.ideas', 'At the money, odd and even trees bracket', (c500 - c0) < 0 < (c501 - c0))
 dt4 = 0.25; u4 = math.exp(.2 * .5); d4 = 1 / u4
 E('l6', 'screens[2].widget.answer', R_((math.exp(.04 * dt4) - d4) / (u4 - d4), 4))
 E('l6', 'screens[2].widget.wrong[0].value', R_((math.exp(.05 * dt4) - d4) / (u4 - d4), 4))
@@ -242,7 +257,8 @@ E('l6', 'quiz[2].widget.options[0].text', R_(cr_bug, 4))
 E('l6', 'quiz[2].widget.options[1].text', R_(crr(100, 100, .05, .2, 1, 500, q=.01), 4))
 dt5 = 1 / 500; u5 = math.exp(.2 * math.sqrt(dt5)); d5 = 1 / u5
 p5q, p5r = (math.exp(.04 * dt5) - d5) / (u5 - d5), (math.exp(.05 * dt5) - d5) / (u5 - d5)
-stated('l6', 'quiz[2].widget.options[2].why', '0.5252 to 0.5378 per quarter', False)  # the item is a 500-step tree: p is 0.5022 vs 0.5034
+stated('l6', 'quiz[2].widget.options[2].why', '0.5252 to 0.5378 per quarter', False)  # the item is a 500-step tree
+must('l6', 'quiz[2].widget.options[2].why', '0.5022 to 0.5034 on 500 steps', R_(p5q, 4) == 0.5022 and R_(p5r, 4) == 0.5034)
 print(f'check by hand: l6 quiz2 500-step p with q {p5q:.4f}, with r {p5r:.4f}')
 
 # ================= l7 =================
@@ -364,8 +380,10 @@ E('review', 'items[1].widget.wrong[0].value', R_(50 - 50 * math.exp(-.08), 4))  
 u2 = math.exp(.3 * math.sqrt(1 / 12)); d2_ = 1 / u2
 E('review', 'items[2].widget.answer', R_((math.exp(.03 / 12) - d2_) / (u2 - d2_), 4))
 E('review', 'items[2].widget.wrong[0].value', R_((math.exp(.05 / 12) - d2_) / (u2 - d2_), 4))
-E('review', 'items[4].widget.answer', 40_000 * (0.05 / 0.02) ** 2)
-E('review', 'items[5].explain.text', R_(as_, 4)); E('review', 'items[5].explain.text', R_(wrong_se, 4))
+E('review', 'items[4].widget.answer', R_(0.05 / math.sqrt(10), 4))
+E('review', 'items[4].widget.wrong[0].value', 0.05 / 10)
+E('review', 'items[4].explain.text', R_(math.sqrt(10), 2))
+claim('review-2 i4: one second at 0.1 s per 40,000 paths is 400,000 paths', 40_000 * (1 / 0.1) == 400_000)
 E('review', 'items[7].prose', R_(c0, 2))
 
 # ================= homework-2 =================
@@ -397,25 +415,44 @@ payr = np.where(itm.any(axis=1), (100 - pth[np.arange(100_000), first]) * np.exp
 print(f'check by hand: homework-2 longform rule price here {payr.mean():.3f} +- {payr.std(ddof=1) / math.sqrt(100_000):.4f}')
 claim('homework-2 longform: the rule prices near £3.20', abs(payr.mean() - 3.20) < 0.05)
 
-# ---------- claims behind the review's proposed fixes (pass while the new phrase is absent) ----------
+# ---------- the fixes: wording must be present and the claim must hold ----------
 eu1p = crr(100, 100, .05, .2, 1, 500, 'put')
-print(f'check by hand: review-2 i3 proposal: 500-step European 1y ATM put {eu1p:.4f}, American {am1y:.4f}, BS {p0:.4f}')
-stated('review', 'items[3].prose', '£5.5695', R_(eu1p, 4) == 5.5695)
-stated('review', 'items[3].widget.options[0].text', '£6.09', R_(am1y, 2) == 6.09)
+print(f'check by hand: review-2 i3: 500-step European 1y ATM put {eu1p:.4f}, American {am1y:.4f}, BS {p0:.4f}')
+must('review', 'items[3].prose', '£5.5695', R_(eu1p, 4) == 5.5695)
+must('review', 'items[3].widget.options', '£6.09', R_(am1y, 2) == 6.09)
+must('review', 'items[3].widget.options', '£5.5735', R_(p0, 4) == 5.5735)
+must('review', 'items[3].explain.text', '£6.09', R_(am1y, 2) == 6.09)
 s_pair = as_ * math.sqrt(50_000)
-print(f'check by hand: review-2 i5 proposal: spread of the 50,000 pair averages {s_pair:.4f}, SE {s_pair / math.sqrt(50_000):.4f}, wrong SE {s_pair / math.sqrt(100_000):.4f}')
-stated('review', 'items[5].prose', '7.36', R_(s_pair, 2) == 7.36)
-stated('review', 'items[5].widget.accept', '0.0329', R_(s_pair / math.sqrt(50_000), 4) == 0.0329)
+print(f'check by hand: review-2 i5: spread of the 50,000 pair averages {s_pair:.4f}, SE {s_pair / math.sqrt(50_000):.4f}, wrong SE {s_pair / math.sqrt(100_000):.4f}')
+must('review', 'items[5].prose', '7.36', R_(s_pair, 2) == 7.36)
+must('review', 'items[5].widget.accept', '0.0329', R_(s_pair / math.sqrt(50_000), 4) == 0.0329)
+E('review', 'items[5].widget.answer', R_(s_pair / math.sqrt(50_000), 4))
+E('review', 'items[5].widget.wrong[0].value', R_(s_pair / math.sqrt(100_000), 4))
+E('review', 'items[5].widget.wrong[1].value', R_(7.36 / 50_000, 6))
+must('review', 'items[5].explain.text', '7.36/223.6', R_(math.sqrt(50_000), 1) == 223.6)
 cvp_se = (yp - bp * (x - 100)).std(ddof=1) / math.sqrt(100_000)
 n_put = 100_000 * (pse / cvp_se) ** 2
-print(f'check by hand: homework-2 i5 proposal: put plain SE {pse:.5f}, CV SE {cvp_se:.6f}, plain paths to match {n_put:.0f}; from the rounded 0.0274 and 0.0178: {100_000 * (0.0274 / 0.0178) ** 2:.0f}')
-stated('homework', 'items[5].widget.accept', '238,000', R_(n_put, -3) == 238_000 and R_(100_000 * (0.0274 / 0.0178) ** 2, -3) == 237_000)
-stated('l6', 'screens[7].explain.text', '|r - q|', True)
-stated('l6', 'screens[9].feedback.byKey.same', 'in-the-money puts', vp[120] > vp[95] > vp[80])
-stated('l8', 'screens[5].explain.text', 'about 5,000 times cheaper than Monte Carlo', R_(0.018 / 3.7e-6, -3) == 5_000)
-stated('l8', 'screens[5].explain.text', '13,500 times', R_(0.050 / 3.7e-6, -2) == 13_500)
-stated('l8', 'summary.ideas[1]', 'from 0.03p to £2.18', R_(pmin * 100, 2) == 0.03)
-stated('homework', 'items[5].explain.text', '6.8', R_((.0465 / .0178) ** 2, 1) == 6.8)
+print(f'check by hand: homework-2 i5: put plain SE {pse:.5f}, CV SE {cvp_se:.6f}, plain paths to match {n_put:.0f}; from the rounded 0.0274 and 0.0178: {100_000 * (0.0274 / 0.0178) ** 2:.0f}')
+must('homework', 'items[5].prose', '£0.0274', R_(pse, 4) == 0.0274)
+must('homework', 'items[5].prose', '£0.0178', R_(cvp_se, 4) == 0.0178)
+must('homework', 'items[5].widget.accept', '238,000', R_(n_put, -3) == 238_000 and R_(100_000 * (0.0274 / 0.0178) ** 2, -3) == 237_000)
+must('homework', 'items[5].explain.text', '2.37', R_((.0274 / .0178) ** 2, 2) == 2.37)
+must('homework', 'items[5].feedback.correct', '2.4 times', R_(n_put / 100_000, 1) == 2.4)
+E('homework', 'items[5].widget.answer', R_(n_put, -3))
+E('homework', 'items[5].widget.wrong[0].value', R_(100_000 * 0.0274 / 0.0178, -3))
+stated('homework', 'items[5].explain.text', '(0.0465/0.0178)^2 = 6.86', False)
+must('l6', 'screens[7].explain.text', '|r - q|', True)
+must('l6', 'screens[9].feedback.byKey', 'in-the-money puts', vp[120] > vp[95] > vp[80])
+must('l8', 'screens[5].explain.text', 'about 5,000 times cheaper than Monte Carlo', R_(0.018 / 3.7e-6, -3) == 5_000)
+must('l8', 'screens[5].explain.text', '13,500 times', R_(0.050 / 3.7e-6, -2) == 13_500)
+must('l8', 'screens[5].feedback.byKey', 'more than three orders of magnitude', 0.018 / 3.7e-6 > 1000)
+must('l8', 'summary.ideas', 'from 0.03p to £2.18', R_(pmin * 100, 2) == 0.03)
+must('homework', 'items[6].model', 'by 0.03p to £2.18', R_(pmin * 100, 2) == 0.03)
+must('l8', 'screens[9].explain.text', '4.1% of the price', R_(k80.mc_se / k80.bs * 100, 1) == 4.1)
+must('l6', 'screens[2].explain.text', '0.5252', R_((math.exp(.04 * dt4) - d4) / (u4 - d4), 4) == 0.5252)
+must('l6', 'quiz[1].explain.text', '£10.4503', R_((c500 + c501) / 2, 4) == 10.4503)
+claim('l6 s0: the four-step graph is capped at maxHeight 330 so the target node and caption stay in view', doc('l6-tree-pricer')['screens'][0]['canvas'].get('maxHeight') == 330)
+must('l7', 'screens[1].widget.options[1].why', '2,500 and at 10,000', True)
 
 lv.check_wrongs()
 lv.report()
