@@ -246,7 +246,7 @@ Superseded 5 Nov (census reconciliation): the ito L1 to L3, puzzles L1 to L4, mm
 - [x] topic-3.1 (momentum-rep, pairs-rep; also in 2a order item 8) (session T: 30 items; `docs/reports/exam-3.1.md`; second read and fix pass in `docs/reviews/review-exam-3.1.md`)
 Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams" (ticked there) and were removed; topic-3.5 is in 2a Phase 4.
 - [x] Breadth exams: topic-0.6, topic-1.10, topic-1.11, topic-2.5, topic-2.6, topic-3.4 (session U: each written, second-read and fixed; `docs/reviews/review-exam-<topic>.md`); topic-3.2 covers ito, measure-prob and pdes; topic-1.5 is at the 30-item cap, so the markov gap level packs into multi-part items
-- [ ] stage-1, stage-2, stage-3 exams (pattern: `app/content/exams/stage-0.json`) (session U: stage-1 done with read and fix, `docs/reviews/review-exam-stage-1.md`; stage-0 gains paper `proof` for 0.6, 0.7 stays outside per curriculum line 91)
+- [x] stage-1, stage-2, stage-3 exams (pattern: `app/content/exams/stage-0.json`) (session U: each written, second-read and fixed, `docs/reviews/review-exam-stage-<n>.md`; stage-0 gains paper `proof` for 0.6, 0.7 stays outside per curriculum line 91; 2.6, 3.2 and 3.4 do not gate their stage, DECISIONS session U)
 
 ### 5. Second readers and fix passes (reader pattern: `docs/reviews/review-1.5.md`; fix pattern: its `## Fix pass` section)
 - [x] Second reader 1.8 then fix pass 1.8 (`docs/reviews/review-1.8.md`; 37 of 39 fixed, finding 34 completed; voice pass)
