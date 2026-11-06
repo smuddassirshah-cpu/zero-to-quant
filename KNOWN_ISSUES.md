@@ -193,3 +193,8 @@ Session T (6 Nov, waves 1 to 3):
 - (open, user) Under Strict, `prereq.js` `advisory()` makes every reference into a course optional for the role non-blocking, including a course's implicit in-course chain: momentum-rep L2 opens before L1 is met for a trader profile. Decide whether in-course references stay blocking (ENGINE-BACKLOG 583 design note).
 - Session T shards ran at 77ec3b3; later merges (vector-calc L3 and topic-3.1 fix passes, 583) were played through in their own passes and by `--routes-only` at ff41b0f; shard 1 rerun at ff41b0f passed (558 ok).
 - The validator warning count rose to about 2,277 (rule 581 companion overlaps, new O2 hits in new levels); errors 0.
+
+Session U (6 Nov):
+- algebra l2 review finding 20 deferred: l2 is at the 12-screen cap, so the {1, -1, i, -i} ladder rung needs an author to merge a screen away.
+- Rule 584 (`[table-slip-key]`) also flags a deliberate per-cell generic line (a cell-id key that should fire for every non-slip wrong answer). The algebra L1 to L2 fix pass dropped such lines to clear it. Refine: warn only when none of the cell's `wrong[]` ids has its own `byKey` line. Inbox bullet added.
+- Choice shuffling (topology L1 to L2 review): 3,373 of 6,605 lesson choices list the key first without `shuffle`. Open for the user (inbox bullet).

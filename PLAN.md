@@ -219,10 +219,10 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] pdes L1: The heat equation [Quant] (`docs/reports/pdes-1.md`)
 - [x] pdes L2: Separation and Fourier series [Quant] (`docs/reports/pdes-2.md`)
 - [x] pdes L3: Pricing equations [Quant] (`docs/reports/pdes-3.md`)
-- [ ] algebra L1: Groups [Pure maths]
-- [ ] algebra L2: Inside a group [Pure maths]
-- [ ] algebra L3: Maps between groups [Pure maths]
-- [ ] algebra L4: Rings and fields [Pure maths]
+- [x] algebra L1: Groups [Pure maths] (session U: `docs/reports/algebra-1.md`; read and fix in `docs/reviews/review-algebra-1-2.md`)
+- [x] algebra L2: Inside a group [Pure maths] (session U: `docs/reports/algebra-2.md`; 32 of 33 fixed, `docs/reviews/review-algebra-1-2.md`)
+- [x] algebra L3: Maps between groups [Pure maths] (session U: `docs/reports/algebra-3.md`; read and fix in `docs/reviews/review-algebra-3-4.md`)
+- [x] algebra L4: Rings and fields [Pure maths] (session U: `docs/reports/algebra-4.md`; 14 of 15 fixed, `docs/reviews/review-algebra-3-4.md`)
 - [ ] topology L1: Metric spaces revisited [Pure maths]
 - [ ] topology L2: Topological spaces [Pure maths]
 - [ ] topology L3: Compact and complete [Pure maths]
