@@ -102,3 +102,41 @@ Outside scope, for the bank owner: `bank/probability-3` `waiting-for-hh-three-lo
 - Voice: 2 (findings 5, 16). Layout: 0.
 - Authors' scripts: `check_numbers.py` 238 of 238, exit 0; `fresh.py` exit 0, with two hit groups misread in the report (findings 6, 7); `fresh-check.mjs` 2 boilerplate hits. Validator 0 errors, no warning on `stage-3.json`.
 - Engine items: "seen" across exams and mocks (finding 20); arithmetic distractors that keep the units digit (finding 21); a check ticked from the warm-up (finding 22); a validator warning for float artefacts such as `4.499999999999999` in learner text, and one for a wrong-value band narrower than half a unit of the places the question asks (findings 1, 3).
+
+## Fix pass
+
+Every changed key, wrong value and prose number was recomputed before it was written: Fractions and exact binomial sums, a fundamental-matrix and absorbing solve for the two-state chain, Simpson integration for the circle, an enumeration of all compositions of 5 lots and of all 2^8 skewed-bet outcomes, and a seeded simulation beside each new item. `docs/briefs/exam-stage-3-scripts/build.py` was edited and re-run (it reproduced the earlier file byte for byte before the first change, so the file diff is only the changes below); `check_numbers.py` and `fresh.py` were updated to match. A band checker (scratchpad `fp3/tols.py`) rounds every wrong value to the places its question asks and confirms it fires, stays outside the answer band, and overlaps no other wrong band: 57 wrong values, 0 problems.
+
+Status: fixed 21, disputed 0, deferred 2. A fix that differs from the proposal says why.
+
+1. a-third-loss float artefact: fixed by finding 11. The answer is 9 exactly (win chance 0.75), so no float appears.
+2. a-even-product: fixed. The question now asks for "a fraction or 4 decimal places".
+3. Wrong-value bands: fixed. The ten bands outside the replaced items are widened as proposed (`sign` 0.005, `twice` 5e-05, `no-root` and `years` 0.005, `value-weighted` 0.0004, `scaled-own` 6e-05, `one-variant` and `added-chances` 0.005, part 2 `null-rate` 6e-05, `nothing-survived` 0.005). The two [A9] bands went with the replaced item, whose new bands (0.0005 at 4 places) fire on the typed slip.
+4. a-all-pay: fixed. "First-order condition" replaces "truthful", and sentences 1 and 2 are merged, so the explanation has three sentences.
+5. a-quote-game explanation: fixed, "£0.50".
+6. a-lead-by-two: fixed with a new setup, not new numbers (the review's p = 0.65 keeps Stage 1's ruin chain). Now "Two busy hours": a quiet or busy order flow with chances 0.2 and 0.5; part 1 the wait for two busy hours in a row (12, from 1 + 0.8E_Q + 0.2E_B and E_B = 1 + 0.5E_Q; slips 5 and 10), part 2 the chance two busy hours come before two quiet hours (1/9 = 0.1111; slips 0.2 and 0.1). Simulation 12.0 hours and 0.111. Id and skill kept.
+7. a-uniform-product: fixed with a new setup. Now "Past the diagonal": given X + Y > 1, P(X² + Y² < 1) = π/2 − 1 = 0.5708 (slips π/4 and π/4 − 1/2). Simulation 0.5708. No hyperbola.
+8. a-six-or-nine: fixed with a new setup (the race of totals is still a first-to-succeed trick). Now "Exactly five lots": slices of 1 lot at 0.6 or 2 at 0.4, chance the total lands on 5 is 0.71136 (slips 0.07776, 0.7216 for 4 lots, 0.7143 long run). Enumerated by compositions, simulated 0.711.
+9. a-two-flags: fixed with a new setup. Now "Which broker is it?": careful 0.4 or sloppy 0.6, fills at 0.9 or 0.6, three orders filled, filled, not filled, so the fourth fills with 15/22 = 0.6818 (slips 0.72, 2/3, 3/11). A cube walk, a ballot count and a posterior predictive on a coin were rejected after grep (topic-3.3, markov l11, stat-models l15).
+10. a-quote-game title: fixed, "A mix of two quotes".
+11. a-third-loss: fixed as proposed (win chance 0.75, answer 9, slips 12 and 3).
+12. a-edge-hundred: fixed with a new setup, as the instruction to replace A9 asks. Now "Skewed bets": eight bets of +£3 at 0.3 or −£1; she is ahead from three wins, with chance 0.4482 (slips 0.7447 for counting level as ahead, 0.1941 for asking four wins). Exact by enumeration of 2^8 outcomes, simulated 0.448. Id and skill kept.
+13. Draw regrouping: fixed. Draw 0 is `waiting-for-hh`, `betting-on-sequences`, `ruin-in-interviews` (pool 6); draw 1 is `when-to-stop`, `who-wins`, `duels` (pool 6). `duels` stays because the authored duel item is gone.
+14. r-which-leak: fixed as proposed (option c and f, correct line and explanation). The explanation sentence is shortened to "from 1990 to 2024" to keep under 20 words.
+15. Key length in r-backfill, r-same-month, r-note-sentence: fixed as proposed; each key is now shorter than its longest distractor.
+16. byKey lines that do not name the action: fixed (`left-out` in r-pairs-oos-order; the lead-by-two line went with the replaced item, and every new byKey line starts with what the learner did).
+17. r-false-share 4.55: fixed. The text now reads 200 × 0.02275 ≈ 4.55, and 200 × 0.0228 is not printed. The key 0.0465 stands.
+18. r-june-book option b: fixed as proposed.
+19. r-as-of-code: fixed. `test-1` and `test-6` lines added; `test-2`, `test-3` and `test-7` stay.
+20. Drill pools shared across exams: deferred. It needs an engine change ("seen" across exams and mocks) and more Python mediums in `oa` and `ci`, both outside this file.
+21. Arithmetic distractors keep the units digit: deferred. Engine change in `js/arith.js`, already in the inbox.
+22. zetamac-50 check: fixed in content (detail now names the Today warm-up, same settings). A self-ticking check stays an engine item.
+23. Paper A: fixed. One draw each from `bank/brainteasers` and `bank/market-making`, difficulty 3 to 4, n 1, tagless pools of 19 and 26 auto-marked items; 55 minutes (authored pace 1,890 s, plus 6 × 180 + 180 + 120 s of draws, 3,270 s, 54.5 minutes); name "Paper A: probability, games and markets at interview pace"; description updated; `pass` stays 0.8. The report is corrected for paper A, the draws, the totals (126 items, 117 scored), the gates and the freshness section, including the misread `fresh.py` hit groups.
+
+Gates:
+
+- Validator: 0 errors, 3,983 warnings (the baseline), none naming `stage-3.json`. The validator's under-20-word rule caught two 20-word sentences, both shortened.
+- Voice scan on a copy: 0 sentences over 20 words, 0 explanations over three sentences (707 sentences).
+- `check_numbers.py`: 258 of 258, exit 0. `fresh.py`: exit 0, new-item hits are common values and unrelated phrases only. `fresh-check.mjs --exam stage-3 --min-run 10`: the same 2 boilerplate hits.
+- Playthrough with `--local-cdn`: green with and without `--mobile` (126 items, 117 of 117 scored, passed).
+- `readiness-sums.mjs`: OK.
