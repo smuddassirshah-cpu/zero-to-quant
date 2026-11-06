@@ -266,7 +266,7 @@ for J in Js:
     E('l9', 'screens[3].explain.text', abs(p2(D[(J, 3)])))
 E('l9', 'screens[4].widget.answer', round(float(D[(3, 3)]), 4)); E('l9', 'screens[4].prose', p2(M0[(3, 3)])); E('l9', 'screens[4].prose', p2(M1[(3, 3)]))
 E('l9', 'screens[8].explain.text', p2(M0[(6, 6)])); E('l9', 'screens[8].explain.text', p2(M1[(6, 6)])); E('l9', 'screens[8].explain.text', p2(D[(6, 6)]))
-E('l9', 'quiz[1].widget.answer', round(float(D[(6, 6)]), 4)); E('l9', 'quiz[2].explain.text', p2(D[(3, 3)])); E('l9', 'quiz[2].explain.text', abs(p2(D[(12, 12)])))
+E('l9', 'quiz[1].widget.answer', round(float(D[(6, 6)]), 5)); E('l9', 'quiz[1].explain.text', 0.08); E('l9', 'quiz[2].explain.text', p2(D[(3, 3)])); E('l9', 'quiz[2].explain.text', abs(p2(D[(12, 12)])))
 
 # ---------- l10 ----------
 SE66 = SD66 / math.sqrt(len(x66))

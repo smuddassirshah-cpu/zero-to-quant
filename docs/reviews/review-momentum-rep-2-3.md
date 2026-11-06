@@ -79,3 +79,17 @@ voice-scan on the course folder: 7 sentences over 20 words and 3 explanations ov
 - Author's scripts: `momentum-rep-L2-numbers.py` exit 0 (186 of 186), `momentum-rep-L3-numbers.py` exit 0 (176 of 176).
 
 ## Fix pass
+
+All 5 errors and 6 warnings applied by targeted edits, plus 11 notes and the 6 Level 1 voice locations; none disputed. Deferred: the `nw_t_by_hand` starter (lag 0 is already right, so it still passes one test; it fails the others) and the two report-only notes (`momentum-rep-2.md` "nine" cells, `momentum-rep-3.md` scale 0.38), which need no content change.
+
+- L2 errors (2): l8 "less than a sixth" restated as "more than a sixth of 1.577" (K = 6 turnover 0.577; 1.577 / 6 = 0.263, recomputed) and option `one` trimmed; l9 quiz[1] `0.0007` to `0.00075` (1.0387 − 0.9639 = 0.0748) with accept and explain "1.04 − 0.96 = 0.08 points (0.075 before rounding)".
+- L2 notes (5): l10 "2 × 0.413 = 0.83", "1.314 ± 0.83", "(0.964 − 0.95) / 0.352", "1.456 − 0.372 = 1.08"; l8 `k9` and l9 `six` name the pick; l8 quiz[2] prose; homework-2 microstructure wording.
+- L3 errors (3): l12 window now "ending at month 419" (`rb24[i0 - 24]`, months 396 to 419, −0.13; the window ending at 408 is the rebound, −0.72); l13 "little more than half" (0.58 against 0.52); l14 "beta alone does it" to "exposure to the market and factor 1 does it". My recompute of the month-420 cohort alone gave about −3 points through the market and −23 through factor 1, so the reviewer's split (−2.3 and −23.9 for the composite) holds in kind.
+- L3 warnings (6): l14 option `beta` and explain reworded to market plus factor 1; l14 "only eighth" (month 421 has 7 worse months, now asserted in the script); l11 summary idea and feedback.correct; l12 sixth-regressor prose; l12 screens[11] trailing-beta lag.
+- L3 notes (6): l14 double negatives and "scale falls most once the crash month enters"; l11 cohort-sum wording; l15 `−25.4%`; review-3 "leave a significant alpha"; homework-3 "0.275% a month".
+- Starters: l6 `drop_short_history`, l10 `jk_table`, l11 `overlap_returns` and l12 `rolling_beta` now raise NotImplementedError in the loop body, so each fails every hidden test.
+- Brief: one line added to `docs/briefs/momentum-rep.md` recording the 0.0569/5.53/3.56 off-by-one and the correct 0.0572/5.58/3.59 (reviewer's finding, cohorts 6 to 293).
+- Level 1 voice (6 locations): homework-1 `model` (four long sentences split), l1 `rows[0][0]` on screens[3] and [4], l4 screens[6] prose (formula moved last and ended with a full stop) and screens[7] explain, l5 screens[4] and [8] explains merged. No numbers changed.
+- Scripts: `momentum-rep-L2-numbers.py` (l9 0.00075 and 0.08; 187 of 187) and `-L3-numbers.py` (absolute values for the crash legs; new asserts for the month 419 beta, the half claim and month 421's rank; 176 of 176) exit 0.
+- Gates: validator 0 errors; voice scan 0 and 0 for the folder; playthrough "All passed" desktop and mobile (`--local-cdn`) for l1, l4, l5, l6, l8 to l15, review-3, homework-1 to 3 (review-2 unchanged, also passes).
+- Graded answers changed: l9 quiz[1] answer 0.0007 to 0.00075 (tol 0.0001, so 0.07 and 0.08 both pass) and its wrong `neg` value to −0.00075; no other correct answer changed.

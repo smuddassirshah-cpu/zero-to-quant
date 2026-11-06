@@ -976,7 +976,7 @@
     },
     {
      "rung": "step",
-     "text": "6/6: (0.96 − 0.95) / 0.35."
+     "text": "6/6: (0.964 − 0.95) / 0.352."
     }
    ],
    "feedback": {
@@ -1265,7 +1265,7 @@
     },
     {
      "rung": "point",
-     "text": "1.46 − 0.37.",
+     "text": "1.456 − 0.372 = 1.08.",
      "highlight": [
       "r1c2"
      ]
@@ -1530,11 +1530,11 @@
     },
     {
      "rung": "point",
-     "text": "2 × 0.41 = 0.83."
+     "text": "2 × 0.413 = 0.83."
     },
     {
      "rung": "step",
-     "text": "1.31 ± 0.83."
+     "text": "1.314 ± 0.83."
     }
    ],
    "feedback": {
@@ -1600,7 +1600,7 @@
     "kind": "code",
     "language": "python",
     "prelude": "import numpy as np\ndef momentum_panel(n=500, T=300, seed=2, c=0.015, e=0.03, d=0.006, nf=4, fsd=0.035,\n                   c_after=None, t_pub=300, crash=None):\n    TMAX, L = 480, 36\n    rng = np.random.default_rng(seed)\n    size = rng.normal(0.0, 1.0, n)                 # log size as a z-score\n    sig = 0.09 - 0.02 * np.tanh(size)              # small shares are noisier\n    beta = rng.uniform(0.5, 1.5, n)\n    lam = rng.standard_normal((n, nf))             # loadings on nf style factors\n    s = rng.standard_normal((TMAX + L, n))[:T + L] * sig   # news shocks, 36 months burn-in\n    m = (0.006 + 0.045 * rng.standard_normal(TMAX))[:T]    # market excess return\n    F = (fsd * rng.standard_normal((TMAX, nf)))[:T]        # factor returns\n    if crash is not None:                          # a bear market, then a rebound\n        m[crash - 12:crash] = -0.03; F[crash - 12:crash, 0] = -0.03\n        m[crash:crash + 3] = [0.12, 0.06, 0.04]; F[crash:crash + 3, 0] = [0.12, 0.06, 0.04]\n    ct = np.full(T, c)\n    if c_after is not None:\n        ct[t_pub:] = c_after                       # the effect after publication\n    cont = sum(s[L - k:L - k + T] for k in range(2, 13))   # lags 2 to 12: continuation\n    rev = sum(s[L - k:L - k + T] for k in range(13, 37))   # lags 13 to 36: reversal\n    idio = s[L:L + T] - e * s[L - 1:L - 1 + T] + ct[:, None] * cont - d * rev\n    r = 0.004 + beta * m[:, None] + F @ lam.T + idio\n    return r, size, m, F                           # r is (T, n) simple monthly returns\n\ndef formation_returns(r, J, skip=0):\n    T = r.shape[0]\n    c = np.vstack([np.zeros((1, r.shape[1])), np.cumsum(np.log1p(r), axis=0)])\n    f = np.full(r.shape, np.nan)\n    for t in range(J + skip, T):\n        f[t] = np.expm1(c[t - skip] - c[t - skip - J])\n    return f\n\ndef cohort_weights(f_t, q=10):\n    n = len(f_t)\n    rank = np.argsort(np.argsort(f_t, kind=\"stable\"), kind=\"stable\")\n    dec = rank * q // n\n    top, bot = dec == q - 1, dec == 0\n    return np.where(top, 1 / top.sum(), 0.0) - np.where(bot, 1 / bot.sum(), 0.0)\n\ndef wml(r, J, K, skip=0):\n    T = r.shape[0]\n    f = formation_returns(r, J, skip)\n    W = np.zeros(r.shape)\n    for s in range(J + skip, T):\n        W[s] = cohort_weights(f[s])\n    out = []\n    for t in range(J + skip + K - 1, T):\n        out.append(W[t - K + 1:t + 1].mean(axis=0) @ r[t])\n    return np.array(out)\n",
-    "starter": "import numpy as np\n\ndef jk_table(r, Js, Ks, skip):\n    table = []\n    for J in Js:\n        row = ...  # rounded means of wml for every K\n        table.append(row)\n    return table\n",
+    "starter": "import numpy as np\n\ndef jk_table(r, Js, Ks, skip):\n    table = []\n    for J in Js:\n        raise NotImplementedError  # row = rounded means of wml for every K\n        table.append(row)\n    return table\n",
     "solution": "import numpy as np\n\ndef jk_table(r, Js, Ks, skip):\n    table = []\n    for J in Js:\n        row = [round(float(wml(r, J, K, skip).mean()), 6) for K in Ks]\n        table.append(row)\n    return table\n",
     "examples": [
      {
