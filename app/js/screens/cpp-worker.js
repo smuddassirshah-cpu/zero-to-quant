@@ -27,9 +27,13 @@
           { type: 'done', id } | { type: 'crash', id, message } */
 'use strict';
 
-/* The libc++ debug hardening mode turns an out-of-range vector[] or a bad iterator into a readable message
-   ("libc++ Hardening assertion __n < size() failed: vector[] index out of bounds") instead of a silent wrong read */
-let FLAGS = ['-std=c++17', '-O1', '-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG', '-fno-color-diagnostics', '-fmessage-length=0', '-ferror-limit=10'];
+/* The libc++ hardening mode turns an out-of-range vector[] or a bad iterator into a readable message
+   ("libc++ Hardening assertion __n < size() failed: vector[] index out of bounds") instead of a silent wrong read.
+   ENGINE-BACKLOG 599: the extensive mode with the enforce semantic. The debug mode also runs libc++'s internal checks, which
+   validate a whole std::map or std::set tree on every erase (200 000 erases took 742 ms against 6 ms in extensive mode), and
+   the extensive mode alone traps without the message. Setting the semantic by hand needs _LIBCPP_ENABLE_EXPERIMENTAL
+   (libc++ calls assertion semantics experimental); it only declares the experimental headers, none of which are linked. */
+let FLAGS = ['-std=c++17', '-O1', '-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE', '-D_LIBCPP_ENABLE_EXPERIMENTAL', '-D_LIBCPP_ASSERTION_SEMANTIC=_LIBCPP_ASSERTION_SEMANTIC_ENFORCE', '-fno-color-diagnostics', '-fmessage-length=0', '-ferror-limit=10'];
 /* --stack-first: a stack overflow traps (memory access out of bounds) instead of overwriting the program's data */
 const LINK = ['-Wl,--stack-first,-z,stack-size=8388608'];
 

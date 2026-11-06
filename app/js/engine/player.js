@@ -167,6 +167,8 @@
     const el = Z.h(`<section class="lsn-step lsn-t-${Z.esc(type)}"></section>`);
     const add = (html) => { const n = typeof html === 'string' ? Z.h(html) : html; el.append(n); return n; };
     const rng = o.rng || rngFrom(hash((o.key || '') + JSON.stringify(spec.widget || {}).length));
+    /* choice and multi option order (ENGINE-BACKLOG 591): seeded from the screen, the item and the attempt (ZQ.attempt, new for each page visit), so it is stable within an attempt */
+    const shuffleRng = rngFrom(hash(`${o.draftKey || ''}|${o.key || ''}|${spec.id || ''}|${Z.attempt || 0}|${((w && w.options) || []).map(x => x && x.id).join(',')}`));
     let canvas = null, born = null, widget = null, cvHost = null, cbar = null, countEl = null, stepper = null;
 
     if (spec.title && type !== 'title') add(`<h2 class="t-h1 lsn-h">${G().inline(spec.title)}</h2>`);
@@ -270,7 +272,7 @@
     const tapCount = (n) => { const word = w.countWord || (spec.canvas && spec.canvas.kind === 'grid' ? 'shaded' : 'selected'); return Number.isInteger(w.count) ? `${n} of ${w.count} ${word}` : `${n} ${word}`; };
     if (w) {
       try {
-        widget = Z.widgets ? Z.widgets.create(wHost, w, { canvas, rng, reducedMotion: Z.reducedMotion(), mode: mode === 'quiz' ? 'set' : mode, count, screen: spec, draftKey: o.draftKey || null }) : null;
+        widget = Z.widgets ? Z.widgets.create(wHost, w, { canvas, rng, shuffleRng, reducedMotion: Z.reducedMotion(), mode: mode === 'quiz' ? 'set' : mode, count, screen: spec, draftKey: o.draftKey || null }) : null;
         if (!Z.widgets) wHost.append(Z.h(`<div class="wd wd-missing t-caption">Widget "${Z.esc(w.kind)}" is not available.</div>`));
       } catch (e) { console.error('Widget ' + w.kind + ' failed', e); widget = null; wHost.innerHTML = `<div class="wd wd-missing t-caption">Widget "${Z.esc(w.kind)}" could not be drawn.</div>`; }
       if (widget) widget.onChange((d) => {
@@ -1186,7 +1188,14 @@
       }
       const right = partRes.filter(r => r.ok).length, bad = partRes.find(r => !r.ok);
       const tail = lastR || partRes[hs.length - 1] || {};
-      final = { ok: right === N, credit: right / N, right, of: N, key: bad ? bad.key : null, partOk: !!tail.ok, done: partRes.some(r => !r.missed),
+      /* ENGINE-BACKLOG 598: a written (longform) part is worth its rubric ticks over its points, not the 7 of 10 share rule that makes it right or wrong on its own;
+         every other part is worth 1 or 0 */
+      const partCredit = (r, k) => {
+        if (r && r.how === 'self' && r.detail && typeof r.detail.score === 'number') { const rub = parts[k].rubric || (parts[k].widget || {}).rubric || [], tot = rub.reduce((x, y) => x + (+y.points || 0), 0) || 10; return Math.min(1, r.detail.score / tot); }
+        return r && r.ok ? 1 : 0;
+      };
+      const credit = partRes.reduce((x, r, k) => x + partCredit(r, k), 0) / N;
+      final = { ok: right === N, credit, right, of: N, ...(partRes.some(r => r && r.how === 'self' && r.detail && typeof r.detail.score === 'number') ? { fractional: true } : {}), key: bad ? bad.key : null, partOk: !!tail.ok, done: partRes.some(r => !r.missed),
         parts: partRes.map(r => ({ ok: !!r.ok, key: r.key == null ? null : r.key, missed: !!r.missed })),
         line: [tail.line && !tail.missed ? tail.line : '', N > 1 ? `${right} of ${N} parts right.` : ''].filter(Boolean).join(' ') || null, final: true, item };
       final.value = value();

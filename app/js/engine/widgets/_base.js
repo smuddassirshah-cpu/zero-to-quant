@@ -40,6 +40,10 @@
   };
   const sameSet = (a, b) => { const A = new Set(a), B = new Set(b); return A.size === B.size && [...A].every(x => B.has(x)); };
   const shuffle = (arr, rng = Math.random) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  /* Option order for choice and multi (ENGINE-BACKLOG 591): shuffled unless the spec says shuffle: false. The player passes shuffleRng, seeded from the
+     screen, the attempt and the item, so a re-render within one attempt keeps the order and a new attempt reorders. The ids never change, so grading,
+     canvases and the playthrough work by id. */
+  const orderOptions = (spec, ctx) => { const o = spec.options || []; return spec.shuffle === false ? o.slice() : shuffle(o, (ctx && (ctx.shuffleRng || ctx.rng)) || Math.random); };
   /* Normalise a typed expression for the fallback comparison: strip spaces, unify ^ and **, lower-case, sort nothing (authors list accepted forms). */
   const normExpr = (s) => String(s ?? '').toLowerCase().replace(/\s+/g, '').replace(/\*\*/g, '^').replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '($1)/($2)').replace(/\\cdot/g, '*').replace(/\\left|\\right/g, '').replace(/\{/g, '(').replace(/\}/g, ')').replace(/\\/g, '');
   /* Option card HTML shared by choice and multi (design-research 5.3 no. 1) */
@@ -58,5 +62,5 @@
     return el;
   };
 
-  Z.widgets = { register, create, dataPanel, kinds, parseNum, within, sameSet, shuffle, normExpr, optionCard };
+  Z.widgets = { register, create, dataPanel, kinds, parseNum, within, sameSet, shuffle, orderOptions, normExpr, optionCard };
 })();

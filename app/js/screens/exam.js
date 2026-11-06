@@ -67,6 +67,7 @@
 
     /* The seed fixes every generated and drawn item of this attempt; it is stored with the attempt */
     const seed = params[1] != null && /^\d+$/.test(params[1]) ? Number(params[1]) % 4294967296 : Math.floor(Math.random() * 4294967296);
+    ZQ.attempt = seed;   // the seed also fixes the option order of choice and multi (ENGINE-BACKLOG 591)
     let seenMap = {};   // uid -> { why, at } for a drawn item seen before (ENGINE-BACKLOG 546), computed before the draw
     const seenTag = (it) => (it && it.drawn && seenMap[it.drawn.uid] ? ZQ.mock.seenLabel(seenMap[it.drawn.uid]) : '');
     const drawn = {};   // paper number -> the items its `draw` entries resolved to (ENGINE-BACKLOG 468)
@@ -97,9 +98,21 @@
         : [{ kind: 'paper', id: 'paper', name: doc.name, minutes: doc.minutes || 60, pass: doc.pass, passNet: doc.passNet, scoring: doc.scoring, navigation: doc.navigation, skip: doc.skip, items: doc.items || [] }];
       let paperNo = 0;
       const parts = raw.map(p => (p.kind === 'paper' ? Object.assign({}, p, { pass: p.pass == null && p.passNet == null ? 0.7 : p.pass, items: (() => { const own = (p.items || []).concat(drawn[paperNo] || []); return ZQ.arith ? ZQ.arith.expand(own, seed, paperNo++) : (paperNo++, own); })() }) : p));
-      const papers = parts.filter(p => p.kind === 'paper');
-      const checks = parts.filter(p => p.kind === 'check');
-      const multi = stage || (mock && (papers.length > 1 || checks.length > 0));
+      /* Per-paper `tracks` (ENGINE-BACKLOG 593): a paper naming role ids counts only for a learner on one of them. For anyone else it is left out of the
+         sitting (named on the start card, with a link to sit it too); sat with the route flag "all", it is optional and never gates the pass.
+         The route flag "as-<role>" sits as that role (the playthrough uses it). */
+      const flags = params.slice(1).filter(x => !/^\d+$/.test(x));
+      const asFlag = (flags.find(x => /^as-/.test(x)) || '').slice(3) || null;
+      const role = asFlag || M.roleOf((ZQ.state.profile.get() || {}).track), sitAll = flags.includes('all');
+      const offTrack = parts.filter(p => p.kind === 'paper' && !M.paperFor(p, role));
+      const allPaperN = parts.filter(p => p.kind === 'paper').length;
+      offTrack.forEach(p => { p.optional = true; });
+      const partsIn = sitAll ? parts : parts.filter(p => !offTrack.includes(p));
+      const papers = partsIn.filter(p => p.kind === 'paper');
+      const checks = partsIn.filter(p => p.kind === 'check');
+      const multi = stage || (mock && (allPaperN > 1 || checks.length > 0));
+      const rolesOf = (p) => listAnd((p.tracks || []).map(t => (ZQ.mock.STYLES[t] || { label: t.replace(/^./, c => c.toUpperCase()) }).label.toLowerCase()));
+      const reqOf = (p) => (p.items || []).map((it, i) => (it && it.required === true ? i + 1 : 0)).filter(Boolean);
       const generated = papers.some(p => p.items.some(it => it && it.generated));
       const drawnUids = papers.flatMap(p => p.items.filter(it => it && it.drawn).map(it => it.drawn.uid));
       const scored = papers.some(M.scored);
@@ -150,9 +163,10 @@
           allFwd ? ['replay', 'No going back', `Each answer is final once you move on.${anySkip0 ? ' You must answer a question before the next one opens.' : ' A question you skip scores as blank.'}`]
             : ['replay', 'No retries', anyFwd ? 'One attempt. Some papers are forward only; the others let you change an answer until you submit.' : 'One attempt. You can change an answer until you submit.'],
           ['check', 'Marked when you submit', 'No feedback until then. Worked explanations follow.'],
-          multi ? ['target', 'Pass every part', papers.map(p => `${p.name}: ${passOf(p)[0].replace(/^Pass mark /, '')}`).join('. ') + '.']
+          multi ? ['target', 'Pass every part', papers.filter(p => !p.optional).map(p => `${p.name}: ${passOf(p)[0].replace(/^Pass mark /, '')}`).join('. ') + '.']
             : ['target', passOf(p0)[0], `${passOf(p0)[1]}${mock ? ' Every attempt is kept.' : ' A pass earns 200 XP.'}`],
           ...(scored && multi ? [['flag', 'Negative marking', papers.filter(M.scored).map(p => `${p.name}: ${markLine(p)}`).join(' ')]] : scored && !multi && typeof p0.passNet !== 'number' ? [['flag', 'Marking', markLine(p0)]] : []),
+          ...(papers.some(p => reqOf(p).length) ? [['flag', 'Must be right to pass', papers.filter(p => reqOf(p).length).map(p => `${multi ? p.name + ': ' : ''}${reqOf(p).length > 1 ? 'questions' : 'question'} ${listAnd(reqOf(p).map(String))}`).join('. ') + '. The paper fails if one of them is wrong, whatever your share.']] : []),
           ...(allFwd ? [] : [['mark', 'Mark questions', 'Mark any question to come back to before you submit.']]),
           ['calc', 'Finish early', allFwd ? 'The last question submits the paper. Time left over is not counted against you.' : 'Submit whenever you are done. Time left over is not counted against you.'],
         ];
@@ -165,8 +179,9 @@
               <h1 class="t-lesson-title">${Z.esc(title)}</h1>
               <p class="t-prose exm-lede">${Z.esc(mock ? (doc.description || 'A timed mock assessment. Sit it as often as you like: every attempt is kept.') : stage ? (doc.description || 'The exit test for this stage. Sit it first to skip the stage.') : `${doc.name || 'The topic exam'} covers every course in the topic. Sit it now to test out, or after the last course.`)}</p>
               ${mock && doc.models ? `<p class="t-caption exm-models"><b class="t-label">Models</b> ${Z.esc(doc.models)}</p>` : ''}
-              ${multi ? `<ol class="exm-parts">${parts.map((p, i) => `<li><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(p.name)}</b><span class="t-caption">${p.kind === 'paper' ? `${plural((p.items || []).length, 'question', 'questions')} · ${p.minutes} minutes · ${passOf(p)[0].replace(/^Pass mark/, 'pass')}${wayOf(p).length ? ' · ' + wayOf(p).join(', ') : ''}` : 'You tick this yourself at the end'}</span></span></li>`).join('')}</ol>` : ''}
+              ${multi ? `<ol class="exm-parts">${partsIn.map((p, i) => `<li><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(p.name)}</b><span class="t-caption">${p.kind === 'paper' ? `${plural((p.items || []).length, 'question', 'questions')} · ${p.minutes} minutes · ${passOf(p)[0].replace(/^Pass mark/, 'pass')}${wayOf(p).length ? ' · ' + wayOf(p).join(', ') : ''}${p.optional ? ' · optional for your track, not counted' : ''}${reqOf(p).length ? ` · ${plural(reqOf(p).length, 'item', 'items')} must be right to pass` : ''}` : 'You tick this yourself at the end'}</span></span></li>`).join('')}</ol>` : ''}
               <ul class="exm-rules">${rules.map(([ic, h, t]) => `<li><span class="exm-rule-ic">${icon(Z, ic)}</span><div><b class="t-label">${Z.esc(h)}</b><p class="t-caption">${Z.esc(t)}</p></div></li>`).join('')}</ul>
+              ${offTrack.length ? `<p class="t-caption exm-tracks">${sitAll ? `Optional for your track: ${Z.esc(listAnd(offTrack.map(p => p.name)))}. They do not count towards your pass.` : `Left out for your track: ${Z.esc(listAnd(offTrack.map(p => `${p.name} (${rolesOf(p)})`)))}. They do not count towards your pass. <a href="#exam/${Z.esc(doc.id)}/all">Sit them as well</a>.`}</p>` : ''}
               ${mix.length ? `<p class="t-caption exm-mix">Difficulty, on a scale of 1 to 5: ${listAnd(mix.map(([d, n]) => `${n} at level ${d}`))}.</p>` : ''}
             </div></div>
             <div class="exm-foot"><p class="t-caption exm-foot-note">Leaving after you begin ends the attempt.</p><div class="exm-actions"><button type="button" class="btn exm-begin">${multi ? 'Begin part 1' : 'Begin exam'}</button></div></div>
@@ -274,7 +289,7 @@
         /* Every question is rendered once and kept, so answers survive moving between questions */
         QS.forEach((it, i) => {
           const wrap = Z.h(`<section class="exm-q" data-q-i="${i}" aria-label="Question ${i + 1}" hidden>
-            <div class="exm-qhead"><span class="t-overline exm-ov">Question ${i + 1} · ${Z.esc(KIND[kindOf(it)] || 'Question')}</span>${seenTag(it) ? `<span class="exm-seen t-caption" data-seen>${Z.esc(seenTag(it))}</span>` : ''}<span class="exm-marked" hidden>${icon(Z, 'mark', 'xs')}Marked</span></div>
+            <div class="exm-qhead"><span class="t-overline exm-ov">Question ${i + 1} · ${Z.esc(KIND[kindOf(it)] || 'Question')}</span>${it.required === true ? '<span class="exm-req t-caption" data-required>Must be right to pass</span>' : ''}${seenTag(it) ? `<span class="exm-seen t-caption" data-seen>${Z.esc(seenTag(it))}</span>` : ''}<span class="exm-marked" hidden>${icon(Z, 'mark', 'xs')}Marked</span></div>
             <div class="exm-item" data-host></div></section>`);
           col.append(wrap);
           let h = null;
@@ -457,7 +472,7 @@
             const rub = !Array.isArray(QS[i].parts) && isLong(QS[i]) && r.how === 'self' && r.detail && typeof r.detail.score === 'number' ? (QS[i].rubric || (QS[i].widget || {}).rubric || []).reduce((a, x) => a + (+x.points || 0), 0) || 10 : 0;
             if (rub) { const c = Math.min(1, r.detail.score / rub); r = { ...r, credit: c, right: r.detail.score, of: rub, rubric: true }; }
             if (skipped.has(i)) r = { ...r, line: 'You skipped marking this written answer, so it scores 0.', skippedMark: true };
-            res[i] = { ok: !!r.ok, key: r.key ?? null, done: isAns(i), flag: S.flags.has(i), line: r.line || null, seconds: Math.round(qsec[i] * 10) / 10, ...(typeof r.credit === 'number' ? { credit: r.credit, right: r.right, of: r.of, ...(r.rubric ? { rubric: true } : {}) } : {}), ...(r.skippedMark ? { skippedMark: true } : {}) };
+            res[i] = { ok: !!r.ok, key: r.key ?? null, done: isAns(i), flag: S.flags.has(i), line: r.line || null, seconds: Math.round(qsec[i] * 10) / 10, ...(typeof r.credit === 'number' ? { credit: r.credit, right: r.right, of: r.of, ...(r.rubric ? { rubric: true } : {}), ...(r.fractional ? { fractional: true } : {}) } : {}), ...(r.skippedMark ? { skippedMark: true } : {}) };
           }
           A.results[pi] = res; A.used[pi] = used; A.flags[pi] = [...S.flags]; A.timeUp = A.timeUp || timeUp;
           /* Detach the rendered questions so the result page can show them, marked */
@@ -510,12 +525,12 @@
         const bySkill = {};
         rows.forEach(({ it, r }) => (it.skills || []).forEach(s => { const b = bySkill[s] || (bySkill[s] = [0, 0]); b[1]++; if (r.ok) b[0]++; }));
         /* Each paper is marked by its own scoring (default +1, 0, 0) against passNet, else pass as a share of the marks */
-        const paperScores = papers.map((p, pi) => { const t = M.tally(p, A.results[pi] || []); return { p, ...t, c: t.right, share: t.n ? t.right / t.n : 0, need: M.need(p, t.max), passed: M.passed(p, t) }; });
+        const paperScores = papers.map((p, pi) => { const t = M.tally(p, A.results[pi] || []); return { p, ...t, c: t.right, share: t.n ? t.right / t.n : 0, need: M.need(p, t.max), passed: M.passed(p, t, A.results[pi] || []), reqMissed: M.requiredMissed(p, A.results[pi] || []), shareMet: M.passed(p, t) }; });
         const score = rows.filter(x => x.r.ok).length, total = rows.length;
         const sum = (k) => Math.round(paperScores.reduce((a, s) => a + s[k], 0) * 1e6) / 1e6;
         const net = sum('net'), max = sum('max'), wrong = sum('wrong'), blank = sum('blank');
         const checksOk = checks.every((c, i) => A.ticks.has(i));
-        const passed = multi ? paperScores.every(s => s.passed) && checksOk : paperScores[0].passed;
+        const passed = multi ? paperScores.every(s => s.passed || s.p.optional) && checksOk : paperScores[0].passed;   // an optional (off-track) paper never gates
         const seconds = A.used.reduce((a, b) => a + (b || 0), 0);
         /* Per-item timing: the family is the first tag (else the first skill); only answered questions count towards the pace line */
         const fam = rows.map(({ it }) => ZQ.mock.family(it, names));
@@ -524,10 +539,11 @@
            A paper with no auto item is skipped; with none at all nothing passes. An absolute passNet scales to the auto share. */
         const autoPapers = papers.map((p, pi) => {
           const keep = (p.items || []).map((it, i) => (ZQ.state.provenance(it) === 'self' ? -1 : i)).filter(i => i >= 0);
-          if (!keep.length) return null;
+          if (!keep.length || p.optional) return null;
           const q = { ...p, items: keep.map(i => p.items[i]) };
           if (typeof p.passNet === 'number') q.passNet = p.passNet * keep.length / Math.max(1, (p.items || []).length);
-          return M.passed(q, M.tally(q, keep.map(i => (A.results[pi] || [])[i] || { ok: false, done: false })));
+          const kr = keep.map(i => (A.results[pi] || [])[i] || { ok: false, done: false });
+          return M.passed(q, M.tally(q, kr), kr);
         }).filter(v => v !== null);
         const passedAuto = autoPapers.length > 0 && autoPapers.every(Boolean);
         let out = {};
@@ -580,7 +596,7 @@
     /* This mock's attempts so far, newest last, with the one just recorded */
     const attempts = mock ? ((ZQ.state.exams[at.doc.id] || {}).attempts || []) : [];
     const nets = attempts.map(a => (typeof a.net === 'number' ? a.net : a.score));
-    const marksOf = (x) => { const s = M.scoring(paperScores[x.pi].p); const c = x.r.credit; return x.r.ok && !x.r.rubric ? s.right : x.r.done && typeof c === 'number' && c > 0 ? Math.round((c * s.right + (1 - c) * s.wrong) * 1e6) / 1e6 : x.r.done ? s.wrong : s.blank; };
+    const marksOf = (x) => { const s = M.scoring(paperScores[x.pi].p); const c = x.r.credit; return x.r.ok && !x.r.rubric && !x.r.fractional ? s.right : x.r.done && typeof c === 'number' && c > 0 ? Math.round((c * s.right + (1 - c) * s.wrong) * 1e6) / 1e6 : x.r.done ? s.wrong : s.blank; };
 
     const skillRow = (s) => {
       const w = (s.p * 100).toFixed(2) + '%', near = Math.abs(s.p - passRef) < 0.06;
@@ -618,13 +634,13 @@
     const needLine = (x) => (typeof x.p.passNet === 'number' ? `${sgn(x.need)} net` : `${Math.round(x.p.pass * 100)}% of the marks`);
     const heroNote = timeNote + (mock
       ? (multi
-        ? (passed ? 'Every paper reached its pass mark and every check is ticked.' : `To pass, every paper must reach its pass mark${at.checks.length ? ' and every check must be ticked' : ''}.${paperScores.filter(x => !x.passed).length ? ` Short of the mark: ${listAnd(paperScores.filter(x => !x.passed).map(x => x.p.name))}.` : ''}`)
-        : (passed ? `Pass mark ${needLine(p0)}. You scored ${sgn(at.net)} net.` : `Pass mark ${needLine(p0)}, which is ${sgn(p0.need)} of ${sgn(p0.max)}. You need ${sgn(Math.max(0, Math.round((p0.need - p0.net) * 1e6) / 1e6))} more net. Sit it again when you are ready.`))
+        ? (passed ? 'Every paper reached its pass mark and every check is ticked.' : `To pass, every paper must reach its pass mark${at.checks.length ? ' and every check must be ticked' : ''}.${paperScores.filter(x => !x.passed && !x.p.optional).length ? ` Short of the mark: ${listAnd(paperScores.filter(x => !x.passed && !x.p.optional).map(x => x.p.name))}.` : ''}${paperScores.some(x => x.reqMissed.length) ? ' A required item was wrong, which fails its paper whatever the share.' : ''}`)
+        : (passed ? `Pass mark ${needLine(p0)}. You scored ${sgn(at.net)} net.` : `Pass mark ${needLine(p0)}, which is ${sgn(p0.need)} of ${sgn(p0.max)}. ${p0.shareMet ? '' : `You need ${sgn(Math.max(0, Math.round((p0.need - p0.net) * 1e6) / 1e6))} more net. `}${p0.reqMissed.length ? 'A required item was wrong, which fails the paper whatever the share. ' : ''}Sit it again when you are ready.`))
         + (nets.length > 1 ? ` Attempt ${nets.length}; your best net is ${sgn(Math.max(...nets))}.` : '')
       : stage
       ? (passed ? 'Every paper passed and every check ticked. This stage counts as passed.' : `To pass, every paper must reach its pass mark and every check must be ticked.${at.checksOk ? '' : ' A check is not ticked yet.'}`)
       : (passed ? `Pass mark ${Math.round(PASS * 100)}%. This topic now counts as passed, so Today moves on. Its lessons stay open on Learn.`
-        : `Pass mark ${Math.round(PASS * 100)}%, which is ${Math.ceil(total * PASS)} of ${total}. You need ${Math.max(0, Math.ceil(total * PASS) - score)} more. Study the skills below, then sit it again.`));
+        : `Pass mark ${Math.round(PASS * 100)}%, which is ${Math.ceil(total * PASS)} of ${total}. ${p0.shareMet ? '' : `You need ${Math.max(0, Math.ceil(total * PASS) - score)} more. `}${p0.reqMissed.length ? 'A required item was wrong, which fails the exam whatever the share. ' : ''}Study the skills below, then sit it again.`));
 
     root.innerHTML = `<div class="exm-res" data-track="${at.track}">
       <header class="exm-top exm-rtop">
@@ -661,7 +677,7 @@
 
         ${multi ? `<section class="exm-card exm-parts-r exm-later" data-l="4" aria-labelledby="exm-pt-h">
           <div class="exm-sec-h"><h2 class="t-h2" id="exm-pt-h">Part by part</h2></div>
-          <ul class="exm-pres">${paperScores.map((s, i) => `<li class="${s.passed ? 'ok' : 'no'}"><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(s.p.name)}</b><span class="t-caption">${M.scored(s.p) ? `${sgn(s.net)} net: ${fx(s.c)} right, ${fx(s.wrong)} wrong, ${fx(s.blank)} blank. Pass mark ${needLine(s)}.` : `${fx(s.c)} of ${s.n} correct, ${Math.round(s.share * 100)}%. Pass mark ${Math.round(s.p.pass * 100)}%.`}</span></span><span class="exm-v ${s.passed ? 'is-ok' : 'is-no'}">${Z.icon(s.passed ? 'check' : 'cross')}<span>${s.passed ? 'Passed' : 'Not passed'}</span></span></li>`).join('')}
+          <ul class="exm-pres">${paperScores.map((s, i) => `<li class="${s.passed ? 'ok' : 'no'}${s.p.optional ? ' is-optional' : ''}"><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(s.p.name)}</b><span class="t-caption">${M.scored(s.p) ? `${sgn(s.net)} net: ${fx(s.c)} right, ${fx(s.wrong)} wrong, ${fx(s.blank)} blank. Pass mark ${needLine(s)}.` : `${fx(s.c)} of ${s.n} correct, ${Math.round(s.share * 100)}%. Pass mark ${Math.round(s.p.pass * 100)}%.`}${s.p.optional ? ' Optional for your track, not counted.' : ''}${s.reqMissed.length ? ` A required item was wrong (${s.reqMissed.length > 1 ? 'questions' : 'question'} ${listAnd(s.reqMissed.map(k => String(k + 1)))}).` : ''}</span></span><span class="exm-v ${s.passed ? 'is-ok' : 'is-no'}">${Z.icon(s.passed ? 'check' : 'cross')}<span>${s.passed ? 'Passed' : 'Not passed'}</span></span></li>`).join('')}
             ${at.checks.map((c, i) => `<li class="${at.ticks.has(i) ? 'ok' : 'no'}"><span class="exm-ri-n tnum">${paperScores.length + i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(c.name)}</b><span class="t-caption">Self-ticked check</span></span><span class="exm-v ${at.ticks.has(i) ? 'is-ok' : 'is-no'}">${Z.icon(at.ticks.has(i) ? 'check' : 'cross')}<span>${at.ticks.has(i) ? 'Ticked' : 'Not ticked'}</span></span></li>`).join('')}</ul>
         </section>` : ''}
 

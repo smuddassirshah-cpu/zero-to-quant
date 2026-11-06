@@ -253,6 +253,7 @@
     const S = window.ZQ && window.ZQ.state;
     if (S && !S.flags.setupDone && def.id !== 'setup' && def.id !== 'system' && screens.some(s => s.id === 'setup')) { location.replace('#setup'); return; }
     params = r.params;
+    if (window.ZQ) window.ZQ.attempt = (Math.random() * 4294967296) >>> 0;   // ENGINE-BACKLOG 591: one option order per page visit (an exam sets its own seed)
     if (typeof cleanup === 'function') { try { cleanup(); } catch (e) { console.error(e); } }
     cleanup = null;
     document.querySelectorAll('.scrim, .sheet, .modal, .toast').forEach(n => n.remove());

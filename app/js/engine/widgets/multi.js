@@ -6,7 +6,7 @@
   const Z = window.ZQ;
 
   Z.widgets.register('multi', (host, spec, ctx) => {
-    const opts = spec.shuffle ? Z.widgets.shuffle(spec.options || [], ctx.rng || Math.random) : (spec.options || []).slice();
+    const opts = Z.widgets.orderOptions(spec, ctx);
     const cols = Z.widgets.optColumns(spec, opts);
     const el = Z.h(`<div class="opts wd-opts wd-multi wd-cols-${cols}" role="group" aria-label="${Z.esc(spec.label || 'Answer options. Select all that apply.')}">${opts.map((o, i) =>
       `<button type="button" class="opt wd-opt" role="checkbox" aria-checked="false" tabindex="${i === 0 ? 0 : -1}" data-id="${Z.esc(o.id)}"><span class="wd-check" aria-hidden="true">${Z.icon('check')}</span>${Z.widgets.optBody(o)}</button>`).join('')}</div>`);
