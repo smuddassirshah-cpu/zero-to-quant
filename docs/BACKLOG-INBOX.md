@@ -1330,3 +1330,6 @@ Raised later (topology level 3):
 
 Raised later (exam 0.6):
 - [Could] Playthrough: `--exam` prints "25 items" for topic-0.6, which has 24 items, one of them in two parts. Wanted: count items, and give parts separately ("24 items, 25 graded answers"). Workaround: none needed; the score line (24 of 24) is right.
+
+Raised later (exam 2.6):
+- [Could] `table`: an editable numeric cell is about 70 px wide at 440 px, so a placeholder such as "number" shows as "numbe" (topic-2.6 ANOVA table, five cells in a row of five columns). Wanted: the placeholder is clipped with an ellipsis or the cell grows to fit it. Workaround: leave `placeholder` out, so the cell shows "?".
