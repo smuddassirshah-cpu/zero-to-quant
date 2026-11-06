@@ -15,6 +15,6 @@
 | systems | L4 | 1 | 2 | 7 | 2 | 10 | 0 | 1 | no: 2 wrong in 1 level exceeds the rule; fix pass 11 fixed, 0 disputed, gates green (l17 timing key 80 to 66.7, one-read bracket model now stated, recomputed by the orchestrator); round 2 started |
 | coding-int | L4 | 1 | 0 | 4 | 1 | 5 | 11 (all fixed before the audit) | 0 | yes (fix pass 5 fixed, 0 disputed; gates green; course fully closed) |
 | pairs-rep | L1 to L3 | 1 | 4 | 4 | 0 | 7 | 15 (all fixed before the audit) | 1 | no: 4 wrong in 3 levels exceeds the rule; fix pass 3 fixed, 5 disputed (1 to 4 unverified: paper host blocked; 8 on computation); disputes to a fresh reader, then round 2 |
-| puzzles | L4 to L5 | 2 | 0 | 3 | 0 | 3 | 9 (all fixed before round 2) | 0 | converged (0 new wrong); fix pass of 3 imprecise pending |
+| puzzles | L4 to L5 | 2 | 0 | 3 | 0 | 3 | 9 (all fixed before round 2) | 0 | yes (round 2: 0 new wrong; fix pass 3 fixed, 0 disputed; gates green; course fully closed) |
 | systems | L4 | 2 | 0 | 7 | 1 | 7 | 10 (all fixed before round 2) | 1 | converged (0 new wrong); fix pass of 8 pending |
 | ito | L1 to L3 | 1 | 1 | 5 | 1 | 7 | 14 (all fixed before the audit) | 0 | pending fix pass |
