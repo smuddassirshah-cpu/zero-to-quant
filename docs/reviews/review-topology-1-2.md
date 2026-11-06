@@ -116,3 +116,33 @@ Counts: 3 wrong, 14 misleading, 3 voice, 1 layout (21 findings).
 - Brief deviations that keep the teaching intact: the l2 hook grades the three fits in a `table` rather than a slider with `tol`; the l7 letters screen labels the junctions rather than tapping them (the report says so).
 - l7 `screens[8]` draws $h(t_6)$ at $x = 0.9862$ ($\cos\tfrac16 = 0.98614$); this is only a canvas coordinate and is not visible at plot scale.
 - The reader did not run the playthrough; the author reports green at desktop, `--mobile` and `--tablet`.
+
+## Fix pass
+
+1. fixed: "is zero exactly when the points are equal".
+2. fixed: "can change its answer with the metric".
+3. fixed: "which need not fit in either set".
+4. fixed: `e_1`, `e_2`, `e_k` in the prose, options 0 and 2 and the explanation of l2 `quiz[3]`.
+5. fixed: option `rim` now reads "$X$, because every $y \ne x$ is a limit of points of $B(x, 1)$", with the reviewer's why.
+6. fixed: "Which valid $\rho$ give an invertible matrix, and what is that set to the valid set?".
+7. fixed: the line now uses $V = (0, \infty)$ and $V^c = (-\infty, 0]$; $x^2$ sends them to $(0, \infty)$ and $[0, \infty)$, which are not complements.
+8. fixed: l4 prose now says $|f(p) - f(q)| \le d_1$, $d_1 \le 2d_\infty$, $d_1 \le \sqrt2\, d_2$. Recomputed: at $(1, 0)$, $d_1 = 1$, $2d_\infty = 2$, $\sqrt2\, d_2 = 1.4142$, and the old link $2d_\infty \le \sqrt2\, d_2$ fails (2 > 1.4142). The $\delta$ values $\varepsilon$, $\tfrac{\varepsilon}{2}$, $\tfrac{\varepsilon}{\sqrt2}$ stand. One-line note added to `docs/briefs/topology.md` under the l4 bullet.
+9. fixed: line `d1` why and byKey `d1` reworded with $B(0, 1)$ and $B(1, 1)$ sharing $(0, 1)$ in $\mathbb{R}$.
+10. fixed: "Non-empty finite sets are not open."
+11. fixed: continuity at 0 now argued from $d_2(0, P') = d_\infty(0, P)$ and $d_\infty \le d_2 \le \sqrt2\, d_\infty$ (checked at seven points in the L2 script).
+12. fixed: "For $y \ge 0$, ... agree. A negative input tells them apart."
+13. fixed: five `are_homeomorphic` tests listed; the sentence was trimmed ("two chains", "different sizes") to stay at 19 words, since the reviewer's wording is 22. The script counts exactly five such tests.
+14. fixed: second sentence replaced as suggested.
+15. fixed: "each has only one open singleton".
+16. fixed: "For $r > 1$ the diamond holds $(1, 0)$, which is outside the open disc, so $r = 1$."
+17. fixed: the image option's why now names the preimage as every $x$ with $\lfloor x \rfloor \in V$. Recomputed $f((-0.5, 0.5)) = \{-1, 0\}$.
+18. fixed: "In the other three, any two non-empty open sets meet."
+19. fixed: explain and byKey `other-edge` corrected. Recomputed from $(0.2, 0.1)$: $x + y = 1$ gives 0.7, $x - y = 1$ gives 0.9, $-x + y = 1$ gives 1.1, $-x - y = 1$ gives 1.3, each over $\sqrt2$: 0.4950, 0.6364, 0.7778, 0.9192. The graded answer 0.495 is unchanged.
+20. fixed: "within $2 \times 10^{-6}$". Recomputed at 20,000 strips: the largest error (p = 4) is between $10^{-6}$ and $2 \times 10^{-6}$.
+21. fixed for the 55 named `choice` widgets (`"shuffle": true`; l1 1, l2 6, l3 6, l4 6, l5 7, l6 7, l7 4, l8 7, review-1 4, review-2 6, homework-2 1). Deferred to the engine: the validator warning for key-first unshuffled choices.
+
+Counts: 21 fixed, 0 disputed, 0 deferred findings (the engine warning in 21 is the one deferred part). Graded answers changed: 0.
+
+Number scripts: both now check the l4 chain as an inequality at 53 points including (1, 0) and that the old link fails there, all four homework-1 item 2 edge distances with the text and byKey, the p = 1 to 4 errors against $2 \times 10^{-6}$ (and above $10^{-6}$), plus the review-1, l7, l8 and review-2 claims. `topology-L1-numbers.py` 184 of 184 and `topology-L2-numbers.py` 141 of 141, both exit 0.
+
+Gates: `validate.mjs` 0 errors; voice scan 0 and 0; playthrough with `--local-cdn` green for l1 to l8, review-1, review-2, homework-1 and homework-2, desktop and `--mobile` (24 of 24 runs).

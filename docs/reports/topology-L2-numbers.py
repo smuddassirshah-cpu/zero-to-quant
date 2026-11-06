@@ -264,6 +264,24 @@ for w_ in widgets:
     if not run_widget(w_, w_['solution']): fails.append('a code solution fails its tests: ' + w_['tests'][0]['call'])
     if run_widget(w_, w_['starter']): fails.append('a code starter passes its tests: ' + w_['tests'][0]['call'])
 
+# Fix pass (review-topology-1-2): prose claims added or reworded by the fix pass.
+r2_ = math.sqrt(2)
+for v_ in [(1, 0), (0, 1), (1, 1), (-0.3, 0.7), (0.6, 0.8), (3, -4), (1e-6, 2e-6)]:
+    d2v = math.hypot(*v_); div = max(abs(v_[0]), abs(v_[1]))
+    assert div <= d2v + 1e-15 and d2v <= r2_ * div + 1e-15, v_            # d_inf <= d_2 <= sqrt2 d_inf (l7 s1)
+    Pp = (v_[0] * div / d2v, v_[1] * div / d2v)                            # the radial image P' of P
+    two('radial |P\'|_2 = |P|_inf', math.hypot(*Pp), div)
+cof_ = range(-60, 60)
+for A_ in [(), (0,), (1, 2), (-5, 7, 9)]:
+    for B_ in [(), (3,), (1, 4), (0, -2, 8)]:
+        assert (set(cof_) - set(A_)) & (set(cof_) - set(B_)), (A_, B_)     # any two non-empty cofinite sets meet (review-2 item 6)
+assert frozenset() in [frozenset(), frozenset(cof_)]                       # the empty set is finite and open in the cofinite topology (l5 s7)
+sier_ = {frozenset(), frozenset({1}), frozenset({0, 1})}
+assert is_top(frozenset({0, 1}), sier_) and sum(1 for U_ in sier_ if len(U_) == 1) == 1   # one open singleton (l8 quiz[0])
+l7_ = json.load(open(os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'topology', 'l7-homeomorphisms.json')))
+n_hom_ = [t_ for sc_ in l7_['screens'] for t_ in (sc_.get('widget', {}) or {}).get('tests', []) if str(t_.get('call', '')).startswith('are_homeomorphic')]
+assert len(n_hom_) == 5, len(n_hom_)                                       # "Five test are_homeomorphic" (l7 s9)
+
 lv.check_wrongs()
 for f_ in fails: print('FAIL', f_)
 if fails: sys.exit(1)
