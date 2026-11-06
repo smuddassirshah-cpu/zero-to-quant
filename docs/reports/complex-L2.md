@@ -32,7 +32,7 @@ Traps: $1/z$ taken as $\bar z$ (l5); $\operatorname{Re} z$ called differentiable
 
 Every number is in the script with its two methods. Measured in Pyodide 0.27.7 (node, local copy) and CPython 3.13, identical to the last digit:
 
-- Bond: $P = 102.54617478$, $P'(0.04) = -293.41504823$, duration 2.8613. Errors in $P'$: complex step $5.7 \times 10^{-14}$; central difference $4.3 \times 10^{-6}$ at $h = 10^{-4}$, $2.3 \times 10^{-7}$ at $10^{-8}$, $3.5 \times 10^{-3}$ at $10^{-12}$ (the brief's "compute and report" values; the table rounds them to one figure).
+- Bond: $P = 102.54617478$, $P'(0.04) = -293.41504823$, duration 2.8613. Errors in $P'$: complex step $4 \times 10^{-15}$ against the exact value; central difference $4.3 \times 10^{-6}$ at $h = 10^{-4}$, $2.3 \times 10^{-7}$ at $10^{-8}$, $3.5 \times 10^{-3}$ at $10^{-12}$ (the brief's "compute and report" values; the table rounds them to one figure).
 - CF residuals at $u = 1 - 0.5i$: $(1.04 \times 10^{-12}, -4.51 \times 10^{-12})$ for $e^{0.03iu - 0.02u^2}$; $(-0.040178, 0.018604)$ for the version with `abs(u) ** 2`.
 - SciPy 1.14.1 in Pyodide evaluates `erf` at complex arguments: `erf(0.35 + 1e-20j)` has imaginary part $9.98 \times 10^{-21}$, and the complex-step delta and vega match $\Phi(0.35) = 0.6368306511756191$ and $37.52403469169379$ to within $10^{-15}$ relative. No prelude series was needed. SciPy loaded in 2.2 s in node from the local copy (a 13.5 MB wheel); the item's `how` warns that the first load can take ten seconds or more on a phone.
 - Newton for $z^3 = 1$: starts 2, $-1 + i$, $-1 - i$, $-0.5$, $i$, $0$, $0.5 + 0.5i$ give 0, 1, 2, 0, 1, None, 1; from $0.5 + 0.5i$ the nearest root is 1 (0.7071 away) but Newton reaches $\omega$ (1.0649 away).

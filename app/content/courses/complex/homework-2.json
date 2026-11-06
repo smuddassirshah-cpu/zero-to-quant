@@ -345,10 +345,10 @@
             }
           }
         ],
-        "how": "Check runs 5 hidden tests against $\\Phi(d_1)$ and $S\\varphi(d_1)\\sqrt T$, within relative $10^{-12}$. SciPy loads on the first run: it is large, so this can take ten seconds or more."
+        "how": "Check runs 5 hidden tests against $\\Phi(d_1)$ and $S\\,N'(d_1)\\sqrt T$, within relative $10^{-12}$. SciPy loads on the first run: it is large, so this can take ten seconds or more."
       },
       "feedback": {
-        "correct": "Delta $\\Phi(0.35) = 0.6368$ and vega $S\\varphi(d_1)\\sqrt T = 37.5240$, both to 12 figures.",
+        "correct": "Delta $\\Phi(0.35) = 0.6368$ and vega $S\\,N'(d_1)\\sqrt T = 37.5240$, both to 12 figures.",
         "generic": "Not quite right. Read the first failing test.",
         "byKey": {
           "test-1": "Test 1: evaluate `call_price(S + 1j * h, ...)`, take `.imag` and divide by `h`.",
@@ -447,7 +447,7 @@
       "kind": "longform",
       "title": "A complex-step delta of zero",
       "prompt": "A colleague prices a call by Monte Carlo and takes its delta by the complex step, pricing at $S_0 + ih$. The delta came out as exactly 0. Their payoff line is `max(S_T.real - K, 0)`. Their characteristic-function code also replaces $\\operatorname{Log}(G_1G_2)$ by `cmath.log(G1) + cmath.log(G2)`. List every problem. Say how each one corrupts the number, and give a fix for each.",
-      "model": "**1. `.real` kills the step.** The complex step needs the imaginary part $ih\\,\\partial V/\\partial S_0$ to survive to the end.\n`S_T.real` throws it away on every path, so each payoff is real and the average has imaginary part 0. That is why the delta is exactly 0, not merely small.\n\n**2. `max` and `abs` are not analytic.** Python cannot compare complex numbers, which is why `.real` was added. But no fix inside `max` helps: $\\max(x - K, 0)$ has a kink at $K$ and no complex derivative there.\nThe complex step works only on functions built from analytic pieces.\n\n**3. The kink needs care even in real arithmetic.** The payoff's derivative in $S_T$ is $\\mathbf{1}\\{S_T > K\\}$, a step.\nBump-and-reprice with independent paths is very noisy; with common random numbers it works but has bias of order the bump.\nBetter: the pathwise delta $e^{-rT}\\,\\overline{\\mathbf{1}\\{S_T > K\\}\\,S_T/S_0}$, or the likelihood-ratio delta $e^{-rT}\\,\\overline{(S_T - K)^+\\,Z/(S_0\\sigma\\sqrt T)}$, with $Z$ the normal draw.\n\n**4. Use the complex step where it belongs.** On a smooth pricer, such as Black-Scholes written with `cmath` and SciPy's complex `erf`, it gives $\\Phi(d_1) = 0.6368$ to 12 figures.\n\n**5. $\\operatorname{Log}(G_1G_2) \\ne \\operatorname{Log} G_1 + \\operatorname{Log} G_2$.** The two sides differ by a multiple of $2\\pi i$ whenever the arguments add past $\\pm\\pi$.\nMultiply the logarithm by a non-whole $c$ and exponentiate: the error becomes a factor $e^{2\\pi ic} \\ne 1$, so $\\varphi$ is wrong.\n\n**6. The principal branch jumps.** Along an integration path $G(u)$ may circle 0. $\\operatorname{Log}$ then jumps by $2\\pi i$ at each crossing of the cut: the little Heston trap.\nFix: track the branch along the path, or use an equivalent formula whose argument never crosses the cut.\n\n**7. Test it.** Check $\\varphi(0) = 1$ and $|\\varphi(u)| \\le 1$ on the grid. Run the Cauchy-Riemann residual test at complex $u$, and compare the delta with $\\Phi(d_1)$ in the Black-Scholes case.",
+      "model": "**1. `.real` kills the step.** The complex step needs the imaginary part $ih\\,\\partial V/\\partial S_0$ to survive to the end.\n`S_T.real` throws it away on every path, so each payoff is real and the average has imaginary part 0. That is why the delta is exactly 0, not merely small.\n\n**2. `max` and `abs` are not analytic.** Python cannot compare complex numbers, which is why `.real` was added. $\\max(x - K, 0)$ has a kink at $K$ and no complex derivative there. Writing the payoff as `S_T - K if S_T.real > K else 0` keeps the step on each path. That gives the pathwise delta of point 3, since no path lands exactly on $K$.\nThe complex step works only on functions built from analytic pieces.\n\n**3. The kink needs care even in real arithmetic.** The payoff's derivative in $S_T$ is $\\mathbf{1}\\{S_T > K\\}$, a step.\nBump-and-reprice with independent paths is very noisy; with common random numbers it works, with a bias that shrinks with the bump.\nBetter: the pathwise delta $e^{-rT}\\,\\overline{\\mathbf{1}\\{S_T > K\\}\\,S_T/S_0}$, or the likelihood-ratio delta $e^{-rT}\\,\\overline{(S_T - K)^+\\,Z/(S_0\\sigma\\sqrt T)}$, with $Z$ the normal draw.\n\n**4. Use the complex step where it belongs.** On a smooth pricer, such as Black-Scholes written with `cmath` and SciPy's complex `erf`, it gives $\\Phi(d_1) = 0.6368$ to 12 figures.\n\n**5. $\\operatorname{Log}(G_1G_2) \\ne \\operatorname{Log} G_1 + \\operatorname{Log} G_2$.** The two sides differ by a multiple of $2\\pi i$ whenever the arguments add past $\\pm\\pi$.\nMultiply the logarithm by a non-whole $c$ and exponentiate: the error becomes a factor $e^{2\\pi ic} \\ne 1$, so $\\varphi$ is wrong.\n\n**6. The principal branch jumps.** Along an integration path $G(u)$ may circle 0. $\\operatorname{Log}$ then jumps by $2\\pi i$ at each crossing of the cut: the little Heston trap.\nFix: track the branch along the path, or use an equivalent formula whose argument never crosses the cut.\n\n**7. Test it.** Check $\\varphi(0) = 1$ and $|\\varphi(u)| \\le 1$ on the grid. Run the Cauchy-Riemann residual test at complex $u$, and compare the delta with $\\Phi(d_1)$ in the Black-Scholes case.",
       "rubric": [
         {
           "points": 2,
@@ -456,7 +456,7 @@
         },
         {
           "points": 2,
-          "text": "Says `max` and `abs` are not analytic (the kink at $K$), so the complex step is invalid for this payoff."
+          "text": "Says `max` and `abs` are not analytic (the kink at $K$), so the step through `max` fails. Credit also a payoff that keeps $S_T - K$ when $S_T > K$."
         },
         {
           "points": 2,

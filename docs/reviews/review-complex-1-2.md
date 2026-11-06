@@ -56,3 +56,14 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 
 Errors 5, warnings 11, notes 17.
 Author scripts: `python3 -I docs/reports/complex-L1-numbers.py` exit 0 (175 checks, 0 failing); `python3 -I docs/reports/complex-L2-numbers.py` exit 0 (137 checks, 0 failing). Neither script reads prose claims, quantifiers, `why` and `byKey` texts or question uniqueness, which is where four of the five errors are.
+
+## Fix pass
+
+All findings fixed as written unless noted; none disputed, none deferred. Old values grepped across all complex L1 and L2 lessons, reviews, homework and reports; no further repeats.
+- L1 l1 (sqrt quantifier x4, damped cycle, y'' ODE): fixed. l2 (sum of arguments, re^{i theta} before Euler, "multiplied by about 0.71" x2, atan2 signed zero, zero-arrow why): fixed. l3 (series definition, exponents add, easy cases): fixed. l4 (z not 0, distinct roots, product reason): fixed.
+- review-1: r-sqrt-trap why fixed; r-i-power "odd" fixed; r-cube-root-real reworded to "largest imaginary part" (only $1 + \sqrt3 i$ has $\sqrt3$; others $0$ and $-\sqrt3$), feedback, byKey.real-only and explain updated, accept list unchanged. Graded answers changed: 0 (answer key the same, question now unambiguous).
+- homework-1 h-euler-derive: prompt, model step 1, rubric[0], rubric[2] required, rubric[5] fixed.
+- L2 l5 (no image in the plane), l6 (complex-step error, "all 16 figures", quiz power-up why, f' not 0 x2, f real on the real line), l7 (conjugate named, right angles x3, trust on partials, numerical hint), l8 (signed zero, ceil branch curve; `ceil` is in the canvas expression whitelist; l8 tests[5] note: no change needed): fixed.
+- Complex-step error: exact P' = -293.41504822553259126748669901483888... (mpmath 50 digits and Decimal 60 agree); complex step -293.4150482255326 differs by 4.36e-15, so "$4 \times 10^{-15}$". Also fixed the one figure in `docs/briefs/complex.md` and the line in `docs/reports/complex-L2.md`; `complex-L2-numbers.py` now checks it against a Decimal reference.
+- homework-2: greeks `S N'(d_1)` (both strings), max-payoff model point and rubric[1], bias wording: fixed.
+- Gates: validator 0 errors; voice scan 0 and 0; `complex-L1-numbers.py` and `complex-L2-numbers.py` exit 0 (0 failing); playthrough All passed, desktop and mobile, for l1 to l8, review-1, review-2, homework-1 and homework-2.

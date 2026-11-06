@@ -103,8 +103,12 @@ P, dP = bond(0.04).real, -(5 * math.exp(-0.04) + 10 * math.exp(-0.08) + 315 * ma
 check('l6 bond price', 5 * math.exp(-0.04) + 5 * math.exp(-0.08) + 105 * math.exp(-0.12), P, 102.5462)
 check("l6 bond P'(y)", dP, bond(0.04 + 1e-20j).imag / 1e-20, -293.4150)
 check('l6 duration', -dP / P, -(bond(0.04 + 1e-20j).imag / 1e-20) / P, 2.8613)
-cs_err = abs(bond(0.04 + 1e-20j).imag / 1e-20 - dP)
-check('l6 complex-step error about 6e-14', cs_err, cs_err, 6e-14, tol=1e-14)
+from decimal import Decimal, getcontext
+getcontext().prec = 60
+_d = Decimal('0.04')
+_exact = -(5 * (-_d).exp() + 10 * (-2 * _d).exp() + 315 * (-3 * _d).exp())
+cs_err = abs(Decimal(bond(0.04 + 1e-20j).imag / 1e-20) - _exact)
+check('l6 complex-step error about 4e-15 (exact reference, Decimal)', float(cs_err), float(cs_err), 4e-15, tol=5e-16)
 for hh, st in [(1e-4, 4e-6), (1e-8, 2e-7), (1e-12, 4e-3)]:
     e = abs((bond(0.04 + hh).real - bond(0.04 - hh).real) / (2 * hh) - dP)
     check(f'l6 central-difference error at h = {hh}', e, e, st, tol=st / 2)
