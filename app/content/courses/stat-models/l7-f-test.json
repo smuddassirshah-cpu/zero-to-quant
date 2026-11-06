@@ -1,0 +1,726 @@
+{
+ "id": "l7-f-test",
+ "course": "stat-models",
+ "title": "The F-test",
+ "minutes": 14,
+ "objectives": ["Test whether several group means differ with an F-test, and link it to regression."],
+ "skills": ["sm-anova"],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "How surprising is 4.15",
+   "prose": "The three brokers of lesson 6 gave $F = 4.1538$. If the brokers were equally good, how often would noise alone give an $F$ this large? Slide the cut and read the shaded tail.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 10],
+     "y": [0, 1.0],
+     "xLabel": "$F$",
+     "yLabel": "density",
+     "height": 240,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(lgamma((d1+d2)/2) - lgamma(d1/2) - lgamma(d2/2) + (d1/2)*ln(d1/d2) + (d1/2-1)*ln(x) - ((d1+d2)/2)*ln(1+d1*x/d2))",
+       "domain": [0.001, 10],
+       "label": "$F(2, 9)$ density"
+      }
+     ],
+     "params": {"d1": 2, "d2": 9}
+    },
+    "state": {
+     "area": {"id": "A", "f": "f", "from": 2, "to": 60, "label": "auto"},
+     "vlines": [
+      {"id": "crit", "x": 4.2565, "label": "5% cut"}
+     ]
+    },
+    "controls": [
+     {"bind": "area.from", "min": 0.5, "max": 9, "step": 0.0001, "start": 2, "decimals": 4, "label": "Cut"}
+    ]
+   },
+   "question": "What is the tail area beyond $F = 4.1538$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0527,
+    "tol": {"abs": 0.0008},
+    "unit": "",
+    "accept": "0.0527: the area under the $F(2, 9)$ density beyond 4.1538.",
+    "label": "Tail area",
+    "wrong": [
+     {
+      "id": "crit",
+      "value": 0.05,
+      "tol": {"abs": 0.0002}
+     },
+     {
+      "id": "cdf",
+      "value": 0.9473,
+      "tol": {"abs": 0.0008}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Move the cut to 4.1538."},
+    {
+     "rung": "point",
+     "text": "The shaded area's label gives the tail.",
+     "highlight": ["A"]
+    },
+    {"rung": "step", "text": "About 0.053, just above 5%."}
+   ],
+   "feedback": {
+    "correct": "$p = 0.0527$: just above 5%. The 5% cut is at 4.2565.",
+    "generic": "Not quite right. Put the cut at 4.1538 and read the shaded area.",
+    "byKey": {"crit": "0.05 is the area beyond the 5% cut at 4.2565. Our $F$ is a little below it.", "cdf": "That is the area to the left of the cut."}
+   },
+   "explain": {
+    "text": "$P(F_{2,9} > 4.1538) = 0.0527$. At the 5% level the brokers' difference is not quite significant; the critical value is 4.2565.",
+    "canvas": {
+     "area": {"from": 4.1538}
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Push F over the line",
+   "prose": "Back to the twelve orders. Only broker A's worst order, 6 bps, can move now.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0.4, 3.6],
+     "y": [0, 10],
+     "xLabel": "Broker (A, B, C)",
+     "yLabel": "Slippage (bps)",
+     "height": 280,
+     "xStep": 1,
+     "functions": []
+    },
+    "state": {
+     "points": [
+      {"id": "a1", "x": 0.85, "y": 1, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "a2", "x": 0.95, "y": 3, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "a3", "x": 1.05, "y": 2, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "a4", "x": 1.15, "y": 6, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "b1", "x": 1.85, "y": 5, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "b2", "x": 1.95, "y": 7, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "b3", "x": 2.05, "y": 4, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "b4", "x": 2.15, "y": 8, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "c1", "x": 2.85, "y": 2, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "c2", "x": 2.95, "y": 4, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "c3", "x": 3.05, "y": 3, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "c4", "x": 3.15, "y": 3, "lockX": true, "snap": 0.5, "tap": false},
+      {"id": "maL", "x": 0.7, "y": 3.0, "hidden": true, "tap": false},
+      {"id": "maR", "x": 1.3, "y": 3.0, "hidden": true, "tap": false},
+      {"id": "mbL", "x": 1.7, "y": 6.0, "hidden": true, "tap": false},
+      {"id": "mbR", "x": 2.3, "y": 6.0, "hidden": true, "tap": false},
+      {"id": "mcL", "x": 2.7, "y": 3.0, "hidden": true, "tap": false},
+      {"id": "mcR", "x": 3.3, "y": 3.0, "hidden": true, "tap": false}
+     ],
+     "segments": [
+      {"id": "sa", "from": "maL", "to": "maR", "colour": 2},
+      {"id": "sb", "from": "mbL", "to": "mbR", "colour": 2},
+      {"id": "sc", "from": "mcL", "to": "mcR", "colour": 2}
+     ],
+     "hlines": [
+      {"id": "gm", "y": 4, "label": "grand mean"}
+     ]
+    },
+    "derive": {
+     "let": {
+      "ma": "(a1.y + a2.y + a3.y + a4.y)/4",
+      "mb": "(b1.y + b2.y + b3.y + b4.y)/4",
+      "mc": "(c1.y + c2.y + c3.y + c4.y)/4",
+      "gm": "(ma + mb + mc)/3",
+      "ssb": "4*(pow(ma - gm, 2) + pow(mb - gm, 2) + pow(mc - gm, 2))",
+      "ssw": "pow(a1.y-ma,2)+pow(a2.y-ma,2)+pow(a3.y-ma,2)+pow(a4.y-ma,2)+pow(b1.y-mb,2)+pow(b2.y-mb,2)+pow(b3.y-mb,2)+pow(b4.y-mb,2)+pow(c1.y-mc,2)+pow(c2.y-mc,2)+pow(c3.y-mc,2)+pow(c4.y-mc,2)"
+     },
+     "maL.y": "ma",
+     "maR.y": "ma",
+     "mbL.y": "mb",
+     "mbR.y": "mb",
+     "mcL.y": "mc",
+     "mcR.y": "mc",
+     "gm.y": "gm",
+     "caption": "SSB = {{fixed(ssb, 2)}}, SSW = {{fixed(ssw, 2)}}, $F$ = {{fixed((ssb/2)/(ssw/9), 4)}} against the 5% cut of 4.2565"
+    }
+   },
+   "question": "Drag that order until $F$ passes the 5% cut of 4.2565.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "a4",
+      "target": [1.15, 3],
+      "tol": [0.05, 2.75]
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Which way shrinks the noise inside broker A?"},
+    {
+     "rung": "point",
+     "text": "Moving 6 down towards A's other orders cuts SSW.",
+     "highlight": ["a4"]
+    },
+    {"rung": "step", "text": "Put it at 3: $F$ rises to 9.61."}
+   ],
+   "feedback": {
+    "correct": "Pulling the outlier in cuts SSW faster than SSB, so $F$ rises past 4.2565.",
+    "generic": "Not yet past the cut. Bring that order closer to A's other three.",
+    "byKey": {"a4": "Your order is still too far from A's other orders, so SSW stays large. Bring it down towards 2 or 3."}
+   },
+   "explain": {
+    "text": "At $a_4 = 3$, SSW falls from 26 to 14.75 and $F$ rises to 9.61. One wild order was hiding the brokers' difference. Lesson 13 meets such outliers again.",
+    "canvas": {
+     "points": {
+      "a4": {"y": 3}
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The F-test",
+   "prose": "Under equal group means and normal noise, SSB$/\\sigma^2$ and SSW$/\\sigma^2$ are independent $\\chi^2_{k-1}$ and $\\chi^2_{N-k}$ variables (`limits-thm` lesson 18). Their ratio, each over its df, is\n$$F = \\frac{\\text{MSB}}{\\text{MSW}} \\sim F(k - 1, N - k)$$\nReject equal means when $F$ is far in the right tail.",
+   "question": "The 90 orders of lesson 6 sit in 3 groups. Which distribution does their $F$ follow under equal means?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "f287", "text": "$F(2, 87)$", "correct": true},
+     {"id": "f390", "text": "$F(3, 90)$", "why": "You used $k$ and $N$. The degrees of freedom are $k - 1 = 2$ and $N - k = 87$."},
+     {"id": "f289", "text": "$F(2, 89)$", "why": "The within df is $N - k$: each group mean costs one, so $90 - 3 = 87$."},
+     {"id": "chi", "text": "$\\chi^2_2$", "why": "That would hold if $\\sigma^2$ were known. Estimating it by MSW gives an $F$."}
+    ],
+    "shuffle": true
+   },
+   "feedback": {"correct": "$F(2, 87)$.", "generic": "Not quite right. Use $k - 1$ and $N - k$."},
+   "explain": {"text": "With $k = 3$ and $N = 90$ the reference is $F(2, 87)$, whose 5% cut is 3.1013."}
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The test on ninety orders",
+   "prose": "On the 90 orders, $F = 5.4478$ on $(2, 87)$. `scipy.stats.f_oneway` agrees.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 8],
+     "y": [0, 1.0],
+     "xLabel": "$F$",
+     "yLabel": "density",
+     "height": 240,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(lgamma((d1+d2)/2) - lgamma(d1/2) - lgamma(d2/2) + (d1/2)*ln(d1/d2) + (d1/2-1)*ln(x) - ((d1+d2)/2)*ln(1+d1*x/d2))",
+       "domain": [0.001, 8],
+       "label": "$F(2, 87)$ density"
+      }
+     ],
+     "params": {"d1": 2, "d2": 87}
+    },
+    "state": {
+     "area": {"id": "A", "f": "f", "from": 5.4478, "to": 60, "label": "auto"},
+     "vlines": [
+      {"id": "crit", "x": 3.1013, "label": "5% cut"}
+     ]
+    }
+   },
+   "question": "What is the $p$-value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0059,
+    "tol": {"abs": 0.0003},
+    "unit": "",
+    "accept": "0.0059: the area of $F(2, 87)$ beyond 5.4478.",
+    "label": "p-value",
+    "wrong": [
+     {
+      "id": "cdf",
+      "value": 0.9941,
+      "tol": {"abs": 0.0003}
+     },
+     {
+      "id": "crit",
+      "value": 0.05,
+      "tol": {"abs": 0.0002}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Read the shaded area."},
+    {
+     "rung": "point",
+     "text": "It runs from 5.4478 to the right.",
+     "highlight": ["A"]
+    },
+    {"rung": "step", "text": "About 0.006."}
+   ],
+   "feedback": {
+    "correct": "$p = 0.00590$: the algorithms' mean slippages differ.",
+    "generic": "Not quite right. Read the area to the right of 5.4478.",
+    "byKey": {"cdf": "That is the area to the left.", "crit": "0.05 is the area beyond the 5% cut at 3.1013, not beyond our $F$."}
+   },
+   "explain": {"text": "$p = 0.00590$, so at least one algorithm's mean differs. The test does not say which: that needs pairwise comparisons, done carefully."}
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "ANOVA is a regression",
+   "prose": "Code the algorithm as dummy columns and run OLS, as in `regression` lesson 12: `smf.ols('slip ~ C(algo)', data=df)` with VWAP as the base. The intercept is the base mean; each coefficient is a difference from it.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "smf.ols('slip ~ C(algo)', data=df).fit(), VWAP as the base",
+     "compact": true,
+     "lines": [
+      "R-squared:  0.111        F-statistic:  5.448",
+      "Prob (F-statistic):  0.00590",
+      "==============================================",
+      "              coef   std err       t   P>|t|",
+      "----------------------------------------------",
+      "Intercept   2.1402     0.992   2.157   0.034",
+      "POV         4.0908     1.403   2.915   0.005",
+      "TWAP        0.1630     1.403   0.116   0.908"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is POV's mean slippage, from the regression output?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.231,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "6.2310: $2.1402 + 4.0908$.",
+    "label": "POV mean (bps)",
+    "wrong": [
+     {
+      "id": "coef",
+      "value": 4.0908,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "base",
+      "value": 2.1402,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "The base group's mean is the intercept."},
+    {
+     "rung": "point",
+     "text": "POV's coefficient is its difference from VWAP.",
+     "highlight": ["l6", "l7"]
+    },
+    {"rung": "step", "text": "$2.140226 + 4.090789 = 6.231015$."}
+   ],
+   "feedback": {
+    "correct": "6.2310 bps, POV's group mean.",
+    "generic": "Not quite right. Add the POV coefficient to the intercept.",
+    "byKey": {"coef": "That is POV's difference from VWAP. Add the intercept.", "base": "That is the VWAP mean, the intercept."}
+   },
+   "explain": {
+    "text": "POV's mean is 6.231 bps. The regression's overall $F$ is 5.448 with $p = 0.00590$ and $R^2 = 0.1113$, as in the ANOVA. ANOVA is the regression $F$-test with dummy columns.",
+    "canvas": {
+     "shade": {
+      "k": ["l1", "l2"]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two groups: F is t squared",
+   "prose": "Take brokers A and B alone. The pooled two-sample $t$-statistic is $-2.1213$ on 6 df.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Broker", "Order 1", "Order 2", "Order 3", "Order 4", "Mean"],
+     "rows": [
+      ["A", "1", "3", "2", "6", "3"],
+      ["B", "5", "7", "4", "8", "6"],
+      ["C", "2", "4", "3", "3", "3"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What $F$ does a one-way ANOVA of A and B give?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.5,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "4.5: $(-2.1213)^2$.",
+    "label": "F",
+    "wrong": [
+     {
+      "id": "t",
+      "value": -2.1213,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "abs",
+      "value": 2.1213,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "With two groups the regression has one dummy."},
+    {
+     "rung": "point",
+     "text": "One predictor: $F = t^2$.",
+     "highlight": ["r0", "r1"]
+    },
+    {"rung": "step", "text": "$2.1213^2 = 4.5$."}
+   ],
+   "feedback": {
+    "correct": "$F = 4.5 = t^2$, with the same $p = 0.0781$.",
+    "generic": "Not quite right. Square the $t$-statistic.",
+    "byKey": {"t": "That is $t$. With two groups $F = t^2$.", "abs": "Square it."}
+   },
+   "explain": {
+    "text": "SSB $= 4[(3 - 4.5)^2 + (6 - 4.5)^2] = 18$ and MSW $= 24/6 = 4$, so $F = 4.5 = (-2.1213)^2$. Both tests give $p = 0.0781$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Every pair at five per cent",
+   "prose": "A colleague skips the $F$-test and runs the three pairwise $t$-tests on the 90 orders. The table gives their $p$-values.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Pair", "$t$", "$p$"],
+     "rows": [
+      ["VWAP, TWAP", "-0.112", "0.911"],
+      ["VWAP, POV", "-2.991", "0.0041"],
+      ["TWAP, POV", "-2.828", "0.0064"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "If the algorithms were all the same, what is the chance that one of three independent 5% tests rejects?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1426,
+    "tol": {"abs": 0.0005},
+    "unit": "%",
+    "accept": "14.26%: $1 - 0.95^3$.",
+    "label": "Family-wise error",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 0.05,
+      "tol": {"abs": 0.0002}
+     },
+     {
+      "id": "sum",
+      "value": 0.15,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Each test passes with probability 0.95."},
+    {"rung": "point", "text": "All three pass with probability $0.95^3$."},
+    {"rung": "step", "text": "$1 - 0.95^3 = 0.1426$."}
+   ],
+   "feedback": {
+    "correct": "Up to 14.26%: nearly three times the 5% the colleague thinks.",
+    "generic": "Not quite right. Compute $1 - 0.95^3$.",
+    "byKey": {
+     "five": "You treated the three tests as one. Each gets its own 5% chance of a false alarm.",
+     "sum": "You added $3 \\times 5\\%$. That is the Bonferroni bound; the exact figure for independent tests is $1 - 0.95^3$."
+    }
+   },
+   "explain": {
+    "text": "Three tests at 5% give a family-wise error of up to $1 - 0.95^3 = 14.26\\%$ (`testing` lesson 9). Run the $F$-test first, then correct the pairwise tests."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Which pairs differ",
+   "prose": "The $F$-test said some means differ. Now test the pairs with Bonferroni's correction (`testing` lesson 10): each at $0.05/3 = 0.0167$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Pair", "$p$"],
+     "rows": [
+      ["VWAP, TWAP", "0.911"],
+      ["VWAP, POV", "0.0041"],
+      ["TWAP, POV", "0.0064"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which pairs differ at a family-wise 5%?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "pov", "text": "VWAP and POV, and TWAP and POV", "correct": true},
+     {"id": "all", "text": "All three pairs", "why": "VWAP and TWAP have $p = 0.911$, far above 0.0167."},
+     {"id": "one", "text": "Only VWAP and POV", "why": "TWAP and POV give $p = 0.0064$, also below 0.0167."},
+     {"id": "none", "text": "None: Bonferroni is too strict here", "why": "0.0041 and 0.0064 both pass the corrected threshold of 0.0167."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Compare each $p$ with 0.0167."},
+    {"rung": "point", "text": "0.0041 and 0.0064 are below it."},
+    {"rung": "step", "text": "POV differs from both; VWAP and TWAP do not differ."}
+   ],
+   "feedback": {"correct": "POV is worse than both; VWAP and TWAP are indistinguishable.", "generic": "Not quite right. Compare each $p$ with $0.05/3$."},
+   "explain": {
+    "text": "Two pairs pass 0.0167: POV's mean is above both others. If the groups' spreads differed a lot, Welch's version of the ANOVA would replace the pooled MSW."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The F-test two ways",
+   "prose": "Compute $F$ and its $p$ from the sums, then the same $F$ from a regression on dummy columns. The setup builds the 90 orders from seed 41.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "smf.ols('slip ~ C(algo)', data=df).fit(), VWAP as the base",
+     "compact": true,
+     "lines": [
+      "R-squared:  0.111        F-statistic:  5.448",
+      "Prob (F-statistic):  0.00590",
+      "==============================================",
+      "              coef   std err       t   P>|t|",
+      "----------------------------------------------",
+      "Intercept   2.1402     0.992   2.157   0.034",
+      "POV         4.0908     1.403   2.915   0.005",
+      "TWAP        0.1630     1.403   0.116   0.908"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `f_test` and `anova_by_regression`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.stats import f\n\n\ndef f_test(groups):\n    \"\"\"Return (F, p) for a one-way ANOVA, from your own sums.\"\"\"\n    ...\n\n\ndef anova_by_regression(y, labels):\n    \"\"\"Overall regression F with a dummy column for each label but the first.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom scipy.stats import f\n\n\ndef f_test(groups):\n    allv = np.concatenate([np.asarray(g, dtype=float) for g in groups])\n    N, k, gm = len(allv), len(groups), allv.mean()\n    ssb = sum(len(g) * (np.mean(g) - gm) ** 2 for g in groups)\n    ssw = sum(np.sum((np.asarray(g) - np.mean(g)) ** 2) for g in groups)\n    F = (ssb / (k - 1)) / (ssw / (N - k))\n    return F, f.sf(F, k - 1, N - k)\n\n\ndef anova_by_regression(y, labels):\n    y = np.asarray(y, dtype=float)\n    labels = np.asarray(labels)\n    levels = list(dict.fromkeys(labels.tolist()))\n    cols = [np.ones(len(y))] + [(labels == lv).astype(float) for lv in levels[1:]]\n    X = np.column_stack(cols)\n    beta = np.linalg.lstsq(X, y, rcond=None)[0]\n    sse = np.sum((y - X @ beta) ** 2)\n    sst = np.sum((y - y.mean()) ** 2)\n    p = X.shape[1] - 1\n    return ((sst - sse) / p) / (sse / (len(y) - p - 1))\n",
+    "examples": [
+     {
+      "call": "round(f_test([[1, 3, 2, 6], [5, 7, 4, 8], [2, 4, 3, 3]])[0], 4)",
+      "expect": "4.1538",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "groups = [[1, 3, 2, 6], [5, 7, 4, 8], [2, 4, 3, 3]]",
+      "call": "list(f_test(groups))",
+      "expect": "[4.153846153846154, 0.05272481278900583]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "rng = np.random.default_rng(41); s = np.repeat([2.0, 3.0, 6.0], 30) + rng.normal(0, 6, 90); labels = np.repeat(['VWAP', 'TWAP', 'POV'], 30); groups = [s[:30], s[30:60], s[60:]]",
+      "call": "list(f_test(groups))",
+      "expect": "[5.447809485415127, 0.00590045936308082]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "call": "list(f_test([[1, 3, 2, 6], [5, 7, 4, 8]]))",
+      "expect": "[4.5, 0.07814074941121585]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "rng = np.random.default_rng(41); s = np.repeat([2.0, 3.0, 6.0], 30) + rng.normal(0, 6, 90); labels = np.repeat(['VWAP', 'TWAP', 'POV'], 30); groups = [s[:30], s[30:60], s[60:]]",
+      "call": "float(anova_by_regression(s, labels))",
+      "expect": "5.447809485415143",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "rng = np.random.default_rng(41); s = np.repeat([2.0, 3.0, 6.0], 30) + rng.normal(0, 6, 90); labels = np.repeat(['VWAP', 'TWAP', 'POV'], 30); groups = [s[:30], s[30:60], s[60:]]",
+      "call": "abs(float(anova_by_regression(s, labels)) - float(f_test(groups)[0])) < 1e-9",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "float(anova_by_regression([1, 3, 2, 6, 5, 7, 4, 8, 2, 4, 3, 3], list('AAAABBBBCCCC')))",
+      "expect": "4.153846153846154",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     }
+    ],
+    "how": "Check runs 6 hidden tests. Three compare $(F, p)$ with `scipy.stats.f_oneway` within $10^{-9}$. Three check the regression $F$ against statsmodels and against `f_test`. The first run loads NumPy and SciPy, about 10 seconds."
+   },
+   "hints": [
+    {"rung": "nudge", "text": "`f.sf(F, k - 1, N - k)` is the right-tail area."},
+    {
+     "rung": "point",
+     "text": "For the regression, $F = \\frac{(\\text{SST} - \\text{SSE})/p}{\\text{SSE}/(n - p - 1)}$."
+    },
+    {"rung": "step", "text": "Build `X` from a column of ones and `(labels == level)` for each level but the first."}
+   ],
+   "feedback": {"correct": "Both routes give 5.4478 on the 90 orders.", "generic": "Some tests failed. Check the degrees of freedom and the dummy columns."},
+   "explain": {"text": "SST $-$ SSE in the regression is exactly SSB, and SSE is SSW. So the two $F$ values agree to rounding error: ANOVA is the regression $F$-test."}
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Ranking five brokers",
+   "prose": "A quarterly broker review ranks five brokers on 12 orders each. Before anyone is dropped, the desk runs an ANOVA: $F = 1.8$ on $(4, 55)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 6],
+     "y": [0, 0.8],
+     "xLabel": "$F$",
+     "yLabel": "density",
+     "height": 240,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(lgamma((d1+d2)/2) - lgamma(d1/2) - lgamma(d2/2) + (d1/2)*ln(d1/d2) + (d1/2-1)*ln(x) - ((d1+d2)/2)*ln(1+d1*x/d2))",
+       "domain": [0.001, 6],
+       "label": "$F(4, 55)$ density"
+      }
+     ],
+     "params": {"d1": 4, "d2": 55}
+    },
+    "state": {
+     "area": {"id": "A", "f": "f", "from": 1.8, "to": 60, "label": "auto"},
+     "vlines": [
+      {"id": "crit", "x": 2.5397, "label": "5% cut"}
+     ]
+    }
+   },
+   "question": "What is the $p$-value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.142,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "0.142: the area of $F(4, 55)$ beyond 1.8.",
+    "label": "p-value",
+    "wrong": [
+     {
+      "id": "cdf",
+      "value": 0.858,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "crit",
+      "value": 0.05,
+      "tol": {"abs": 0.0002}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Read the shaded tail."},
+    {"rung": "point", "text": "The 5% cut for $F(4, 55)$ is 2.5397; 1.8 is short of it."},
+    {"rung": "step", "text": "About 0.14."}
+   ],
+   "feedback": {
+    "correct": "$p = 0.142$: the ranking is not distinguishable from noise.",
+    "generic": "Not quite right. Read the area beyond 1.8.",
+    "byKey": {"cdf": "That is the area to the left of 1.8.", "crit": "0.05 belongs to the cut at 2.5397."}
+   },
+   "explain": {
+    "text": "$P(F_{4,55} > 1.8) = 0.142$. The order of these five brokers this quarter is mostly luck. Dropping the last one on this evidence chases noise."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Under equal means, $F = \\text{MSB}/\\text{MSW}$ follows $F(k - 1, N - k)$; its right tail gives $p$ (0.0527 for the twelve orders).",
+   "ANOVA is the regression $F$-test on dummy columns; with two groups $F = t^2$.",
+   "Test all means at once first, then compare pairs with a correction such as Bonferroni."
+  ],
+  "formula": {
+   "name": "The F-test",
+   "tex": "F = \\frac{\\text{SSB}/(k - 1)}{\\text{SSW}/(N - k)} \\sim F(k - 1, N - k) \\text{ under equal means}",
+   "note": "Three uncorrected 5% tests carry up to 14.26% family-wise error."
+  },
+  "trap": "Running every pairwise $t$-test at 5% inflates the chance of a false difference."
+ },
+ "quiz": [
+  {
+   "id": "q-crit",
+   "difficulty": 2,
+   "prose": "An ANOVA of 3 groups of 4 gives $F = 3.0$. The 5% critical value of $F(2, 9)$ is 4.2565.",
+   "question": "At 5%, do the group means differ?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "no", "text": "No: 3.0 is below 4.2565, so $p > 0.05$", "correct": true},
+     {"id": "yes", "text": "Yes: $F$ is well above 1", "why": "Above 1 is not enough. With 2 and 9 df, noise alone passes 3.0 about 10% of the time."},
+     {"id": "cannot", "text": "Cannot tell without SSB and SSW", "why": "The $F$ value and its degrees of freedom are all the test needs."}
+    ]
+   },
+   "feedback": {"correct": "$p = 0.100$.", "generic": "Not quite right. Compare $F$ with the critical value."},
+   "explain": {
+    "text": "$F = 3.0 < 4.2565$, and $P(F_{2,9} > 3) = 0.100$."
+   }
+  },
+  {
+   "id": "q-t2",
+   "difficulty": 2,
+   "prose": "A pooled two-sample $t$-test gives $t = 2.5$.",
+   "question": "What is the one-way ANOVA $F$ for the same two groups?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.25,
+    "tol": {"abs": 0.001},
+    "unit": "",
+    "accept": "6.25: $2.5^2$.",
+    "label": "F",
+    "wrong": [
+     {
+      "id": "t",
+      "value": 2.5,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "twice",
+      "value": 5,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$F = t^2 = 6.25$.",
+    "generic": "Not quite right. With two groups $F = t^2$.",
+    "byKey": {"t": "Square it.", "twice": "You doubled $t$. Square it."}
+   },
+   "explain": {"text": "With one dummy column, $F = t^2 = 6.25$ and the $p$-values agree."}
+  },
+  {
+   "id": "q-which",
+   "difficulty": 3,
+   "prose": "An ANOVA of four strategies' daily returns gives $p = 0.003$.",
+   "question": "What may we conclude?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "some", "text": "At least one strategy's mean differs from the others", "correct": true},
+     {"id": "all", "text": "All four means differ from each other", "why": "The test only rejects that all four are equal. Two could still share a mean."},
+     {"id": "best", "text": "The strategy with the highest sample mean is the best", "why": "Which means differ needs corrected pairwise tests."}
+    ]
+   },
+   "feedback": {"correct": "Not all equal: no more than that.", "generic": "Not quite right. Think about what the null hypothesis said."},
+   "explain": {"text": "The null was that all four means are equal. Rejecting it says at least one differs; pairwise tests with a correction say which."}
+  }
+ ]
+}

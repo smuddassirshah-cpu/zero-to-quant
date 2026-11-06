@@ -1,0 +1,281 @@
+{
+ "id": "homework-2",
+ "course": "stat-models",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-design-sim",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": ["sm-anova", "sm-nonpar"],
+   "title": "Simulate the design and the peeking",
+   "prose": "Write two tools. `design_and_analyse` simulates a blocked test with `np.random.default_rng(seed)`. Draw, in this order and each of length `n_blocks`: block effects $N(0, \\sigma_{\\text{block}})$, then A's and B's noise, $N(0, \\sigma_{\\text{noise}})$. Then $A = \\text{block} + e_A$ and $B = \\text{block} - \\delta + e_B$. Return the paired, Welch and sign-test $p$-values.\n\n`false_positive_rate` simulates null experiments read after each of `n_looks` equal batches and returns the share that ever rejects at 5%. Vectorise it with NumPy so 200,000 simulations take well under a second.",
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy import stats\n\n\ndef design_and_analyse(seed, n_blocks, delta, sigma_block, sigma_noise):\n    \"\"\"Simulate a blocked two-arm test; return {'paired', 'unpaired', 'sign'} p-values.\"\"\"\n    ...\n\n\ndef false_positive_rate(n_looks, n_sims, seed):\n    \"\"\"Share of null experiments that a test read after every look rejects.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom scipy import stats\n\n\ndef design_and_analyse(seed, n_blocks, delta, sigma_block, sigma_noise):\n    rng = np.random.default_rng(seed)\n    block = rng.normal(0, sigma_block, n_blocks)\n    a = block + rng.normal(0, sigma_noise, n_blocks)\n    b = block - delta + rng.normal(0, sigma_noise, n_blocks)\n    d = b - a\n    nz = d[d != 0]\n    return {'paired': float(stats.ttest_rel(b, a).pvalue),\n            'unpaired': float(stats.ttest_ind(b, a, equal_var=False).pvalue),\n            'sign': float(stats.binomtest(int(np.sum(nz < 0)), len(nz), 0.5).pvalue)}\n\n\ndef false_positive_rate(n_looks, n_sims, seed):\n    rng = np.random.default_rng(seed)\n    z = rng.standard_normal((n_sims, n_looks))\n    s = np.cumsum(z, axis=1) / np.sqrt(np.arange(1, n_looks + 1))\n    return float(np.mean(np.any(np.abs(s) > 1.959964, axis=1)))\n",
+    "examples": [
+     {
+      "call": "round(design_and_analyse(1, 200, 1.0, 8.0, 3.0)['paired'], 4)",
+      "expect": "0.0465",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[design_and_analyse(1, 200, 1.0, 8.0, 3.0)[k] for k in ('paired', 'unpaired', 'sign')]",
+      "expect": "[0.04648953282971124, 0.4388736414716574, 0.10363903843785752]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "call": "[design_and_analyse(2, 50, 1.0, 8.0, 3.0)[k] for k in ('paired', 'unpaired', 'sign')]",
+      "expect": "[0.25993177425669434, 0.7014828198899004, 0.47988766169832786]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "call": "[design_and_analyse(5, 100, 0.0, 5.0, 2.0)[k] for k in ('paired', 'unpaired', 'sign')]",
+      "expect": "[0.5443468435474133, 0.8051771960123544, 0.6172994135892521]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "call": "false_positive_rate(10, 200000, 1)",
+      "expect": "0.1935",
+      "compare": "isclose",
+      "tol": {"abs": 0.01}
+     },
+     {
+      "call": "false_positive_rate(1, 200000, 2)",
+      "expect": "0.05",
+      "compare": "isclose",
+      "tol": {"abs": 0.003}
+     },
+     {
+      "call": "false_positive_rate(2, 200000, 3)",
+      "expect": "0.0835",
+      "compare": "isclose",
+      "tol": {"abs": 0.005}
+     },
+     {
+      "call": "false_positive_rate(5, 200000, 4)",
+      "expect": "0.142",
+      "compare": "isclose",
+      "tol": {"abs": 0.005}
+     }
+    ],
+    "how": "Check runs 7 hidden tests. Three compare your three $p$-values within $10^{-9}$ with this solution's, computed in Pyodide from `scipy.stats` (`ttest_rel`, Welch `ttest_ind`, `binomtest`). Four check `false_positive_rate` against the exact rates, within a simulation tolerance. The rates are 0.1935, 0.05, 0.0835 and 0.142 for 10, 1, 2 and 5 looks. The first run loads NumPy and SciPy, about 10 seconds."
+   },
+   "feedback": {
+    "correct": "Both tools work: paired beats unpaired on every seed, and 10 looks give about 19%.",
+    "generic": "Some tests failed. Check the order of the draws and that the peeking test rejects on either side."
+   },
+   "explain": {
+    "text": "On seed 1 the paired $p$ is 0.046 while Welch's is 0.439: the same data, different analyses. The peeking rate comes from the running $z$, $S_k/\\sqrt k$, crossing 1.96 at any look."
+   }
+  },
+  {
+   "id": "h-var-diff",
+   "difficulty": 4,
+   "skills": ["sm-anova"],
+   "title": "The variance of a within-block difference",
+   "prose": "Two orders in one stock-day have shortfalls $Y_A$ and $Y_B$, each with variance $\\sigma^2$ and correlation $\\rho$. Derive $\\operatorname{Var}(Y_B - Y_A)$ and the pairs needed for a given power.",
+   "question": "Put the lines in order and leave out the slip.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$\\operatorname{Var}(Y_B - Y_A) = \\operatorname{Var}(Y_B) + \\operatorname{Var}(Y_A) - 2\\operatorname{Cov}(Y_A, Y_B)$, the variance of a difference"
+     },
+     {
+      "id": "b",
+      "text": "$\\operatorname{Cov}(Y_A, Y_B) = \\rho\\sigma^2$, by the definition of correlation"
+     },
+     {
+      "id": "c",
+      "text": "$\\operatorname{Var}(D) = 2\\sigma^2 - 2\\rho\\sigma^2 = 2\\sigma^2(1 - \\rho)$, substituting"
+     },
+     {
+      "id": "d",
+      "text": "So $n_{\\text{pairs}} = (z_{0.975} + z_{0.8})^2 \\cdot 2\\sigma^2(1 - \\rho)/\\delta^2$, the one-sample formula with $\\operatorname{Var}(D)$"
+     },
+     {"id": "e", "text": "That is $(1 - \\rho)$ times the per-arm $n$ of two independent arms"},
+     {
+      "id": "x",
+      "text": "$\\operatorname{Var}(Y_B - Y_A) = 2\\sigma^2 + 2\\rho\\sigma^2$, since the covariance adds",
+      "why": "In a difference the covariance enters with a minus sign: shared noise cancels, it does not add."
+     }
+    ],
+    "answer": ["a", "b", "c", "d", "e"],
+    "distractors": ["x"]
+   },
+   "feedback": {
+    "correct": "$\\operatorname{Var}(D) = 2\\sigma^2(1 - \\rho)$, so pairs need $(1 - \\rho)$ times the orders.",
+    "generic": "Not quite right. Start from the variance of a difference.",
+    "byKey": {"x": "You added the covariance. For $B - A$ it is subtracted."}
+   },
+   "explain": {
+    "text": "With $\\sigma = 8$ and $\\rho = 0.8$, $\\operatorname{Var}(D) = 25.6$ and 201 pairs match 1,005 orders per arm."
+   }
+  },
+  {
+   "id": "h-monday-friday",
+   "difficulty": 5,
+   "skills": ["sm-anova", "sm-nonpar"],
+   "title": "A test that proved too much",
+   "kind": "longform",
+   "prompt": "A colleague ran the new algorithm on Mondays and the old one on Fridays for six weeks. They checked the $p$-value every day, stopped when it first dipped below 5%, and report \"1.2 bps better, significant\". List every flaw. Design the experiment again with blocks, randomisation, a sample size and a stopping rule. Write the two-sentence conclusion the data could support.",
+   "model": "**Flaws.**\n1. *No randomisation, and day of week confounded.* New on Mondays, old on Fridays. Any Monday to Friday gap in volume, volatility or flow is credited to the algorithm.\n2. *No blocking.* Orders in different stocks and days were compared, so the large stock-day noise (about 8 bps) stays in the variance.\n3. *No sample size.* Six weeks were chosen without a power calculation; for 1 bp at $\\sigma = 8$ two independent arms need 1,005 orders each.\n4. *Peeking.* Checking the $p$-value daily and stopping at the first dip below 5% inflates the false-positive rate. Thirty looks push it to about 28%; 10 looks already give 19.4%.\n5. *The estimate is biased upwards.* Stopping when the result first looks good selects a lucky moment, so \"1.2 bps\" overstates the effect.\n6. *No interval.* \"Significant\" alone hides the uncertainty.\n\n**Redesign.** Unit: one parent order. Block: the stock-day, with one order to each algorithm. A seeded coin per stock-day sets the assignment, so time of day and stock cancel. Sample size: with $\\rho = 0.8$ between the pair, $\\operatorname{SD}(D) = 5.06$ bps and 201 stock-days give 80% power for 1 bp at 5%. Analysis, fixed in advance: paired $t$ on the differences, with the sign test as a check for fat tails. Stopping: read once after 201 stock-days. Or use a sequential test with barriers $\\ln(0.2/0.95) = -1.558$ and $\\ln(0.8/0.05) = 2.773$, checked daily.\n\n**What the data could support.** \"The Monday and Friday comparison cannot separate the algorithm from the day of the week. The new algorithm may be about 1 bp better, but this test can neither confirm nor size it.\"",
+   "rubric": [
+    {"points": 2, "text": "Names the confounding of algorithm with day of week and the missing randomisation."},
+    {"points": 2, "text": "Names the peeking and its effects: false positives well above 5% (19.4% at 10 looks), and an estimate biased upwards."},
+    {"points": 1, "text": "Names the missing blocking and the missing power calculation."},
+    {"points": 2, "text": "Redesigns with the stock-day as the block and a coin per stock-day. States the analysis: paired $t$, with the sign test as a check."},
+    {
+     "points": 2,
+     "text": "Gives a sample size with its working: about 201 stock-days for 1 bp at $\\sigma = 8$, $\\rho = 0.8$. Fixes a stopping rule in advance: one read, or SPRT barriers."
+    },
+    {"points": 1, "text": "Writes a two-sentence conclusion that claims no more than the data support."}
+   ]
+  },
+  {
+   "id": "h-power500",
+   "difficulty": 4,
+   "skills": ["sm-anova"],
+   "title": "Power with 500 per arm",
+   "prose": "Two independent arms have 500 orders each, and shortfall has $\\sigma = 8$ bps. The true gain is $\\delta = 1$ bp; the test is two-sided at 5%.",
+   "question": "What is the power?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5066,
+    "tol": {"abs": 0.002},
+    "unit": "%",
+    "accept": "50.7%: SE $= 8\\sqrt{2/500} = 0.50596$, $\\delta/\\text{SE} = 1.9764$, and $P(Z > 1.96 - 1.9764) = 0.5066$.",
+    "label": "Power",
+    "wrong": [
+     {
+      "id": "se",
+      "value": 0.7982,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "one",
+      "value": 0.2395,
+      "tol": {"abs": 0.002}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 50.7%: a coin toss.",
+    "generic": "Not quite right. Find $\\delta/\\text{SE}$, then $P(Z > 1.96 - \\delta/\\text{SE})$.",
+    "byKey": {
+     "se": "You used SE $= 8/\\sqrt{500}$, one arm only. The difference has variance $2\\sigma^2/n$.",
+     "one": "That is the power at 200 per arm."
+    }
+   },
+   "explain": {"text": "At 500 per arm the effect sits 1.976 SEs out, almost on the 1.96 cut. So power is about one half: 50.7%."}
+  },
+  {
+   "id": "h-anova-summary",
+   "difficulty": 4,
+   "skills": ["sm-anova"],
+   "title": "ANOVA from a summary",
+   "prose": "Three algorithms each worked 10 orders. Their mean slippages were 1, 2 and 6 bps, and the pooled within-group SD is 3 bps.",
+   "question": "What is $F$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 7.7778,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "7.778: SSB $= 10[(1 - 3)^2 + (2 - 3)^2 + (6 - 3)^2] = 140$, MSB $= 70$, MSW $= 3^2 = 9$.",
+    "label": "F",
+    "wrong": [
+     {
+      "id": "sd",
+      "value": 23.333,
+      "tol": {"abs": 0.01}
+     },
+     {
+      "id": "raw",
+      "value": 15.556,
+      "tol": {"abs": 0.01}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$F = 70/9 = 7.78$ on $(2, 27)$, $p = 0.0022$.",
+    "generic": "Not quite right. MSW is the pooled variance, $3^2$.",
+    "byKey": {"sd": "You used the SD, 3, as MSW. MSW is a variance: 9.", "raw": "You divided SSB by 9 without first dividing by its 2 df."}
+   },
+   "explain": {"text": "The grand mean is 3, so SSB $= 140$ and MSB $= 70$; MSW $= 9$. $F = 7.778$ on $(2, 27)$ gives $p = 0.0022$."}
+  },
+  {
+   "id": "h-three-arms",
+   "difficulty": 4,
+   "skills": ["sm-anova"],
+   "title": "Three algorithms in one stock-day",
+   "prose": "A desk wants to compare VWAP, TWAP and POV. Each stock-day can take three parent orders.",
+   "question": "Which design and analysis fit?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "rcb", "text": "One order to each algorithm per stock-day, in random order; analyse by OLS with algorithm and stock-day factors", "correct": true},
+     {
+      "id": "pairs",
+      "text": "Three separate paired experiments, each on its own stock-days",
+      "why": "Running three experiments triples the days and loses the shared block."
+     },
+     {
+      "id": "oneway",
+      "text": "Random algorithms per order, analysed by one-way ANOVA",
+      "why": "Valid, but it leaves the stock-day noise in MSW and needs far more orders."
+     },
+     {"id": "fixed", "text": "VWAP in the morning, TWAP at midday, POV at close", "why": "Fixed times confound the algorithm with time of day."}
+    ],
+    "shuffle": true
+   },
+   "feedback": {"correct": "A randomised block design, analysed with a block factor.", "generic": "Not quite right. Use the stock-day as the block and randomise within it."},
+   "explain": {"text": "This is the paired design with three arms. `smf.ols('sf ~ C(algo) + C(blk)')` removes the stock-day level and tests the algorithms on 2 df."}
+  },
+  {
+   "id": "h-asn1",
+   "difficulty": 4,
+   "skills": ["sm-anova", "sm-nonpar"],
+   "title": "Average length under the effect",
+   "prose": "The sequential test of lesson 9 has barriers $-1.5581$ and $2.7726$, with $\\alpha = 0.05$ and $\\beta = 0.2$. Under the effect each step has mean $+0.03125$.",
+   "question": "What is Wald's average sample size under the effect, $\\frac{\\beta\\ln B + (1 - \\beta)\\ln A}{0.03125}$, with $\\ln B = -1.5581$ and $\\ln A = 2.7726$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 61.01,
+    "tol": {"abs": 0.05},
+    "unit": "",
+    "accept": "61.0: $(0.2 \\times (-1.5581) + 0.8 \\times 2.7726)/0.03125 = 1.90646/0.03125$.",
+    "label": "Stock-days",
+    "wrong": [
+     {
+      "id": "null",
+      "value": 42.93,
+      "tol": {"abs": 0.05}
+     },
+     {
+      "id": "swap",
+      "value": -22.14,
+      "tol": {"abs": 0.05}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 61 stock-days, against 99 for a fixed one-sided test.",
+    "generic": "Not quite right. Weight the barriers by $\\beta$ and $1 - \\beta$.",
+    "byKey": {"null": "That is the average under no effect.", "swap": "You swapped the weights: $0.8 \\times (-1.5581) + 0.2 \\times 2.7726$ gives $-22.1$."}
+   },
+   "explain": {"text": "$(0.2 \\times (-1.5581) + 0.8 \\times 2.7726)/0.03125 = 61.0$. In the seeded walk, 246 of 300 tests stopped at the top under the effect."}
+  }
+ ]
+}
