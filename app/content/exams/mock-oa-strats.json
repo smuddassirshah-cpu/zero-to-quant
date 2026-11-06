@@ -1,0 +1,649 @@
+{
+ "id": "mock-oa-strats",
+ "name": "Strats online assessment",
+ "style": "strats",
+ "models": "Reported, as of Nov 2026: the Goldman Sachs strats online test. A 30-minute coding paper, then 8 maths questions in 22 minutes.",
+ "description": "This is the reported format of a bank strats online test, as candidates described it by Nov 2026. A 30-minute coding paper comes first, with two short Python problems. Hidden tests include large inputs, so a slow answer fails them. Then a 22-minute maths paper has eight multiple-choice questions. They cover calculus, linear algebra and probability. Reports give no calculator rule, so sit the maths paper with a pen and paper only. Older reports give more questions over three hours. Use no search engine and no notes.",
+ "requires": [
+  "ds/L2",
+  "eigen/L1"
+ ],
+ "skills": {
+  "ds-hashing": "Hash maps",
+  "ds-pointers": "Pointers and windows",
+  "lm-chain": "Derivatives",
+  "lm-limits": "Limits",
+  "in-techniques": "Integration",
+  "de-first": "First-order equations",
+  "eg-eigen": "Eigenvalues",
+  "eg-pd": "Positive definite matrices",
+  "bayes": "Bayes' rule",
+  "cc-count": "Counting"
+ },
+ "parts": [
+  {
+   "kind": "paper",
+   "id": "code",
+   "name": "Software fundamentals",
+   "minutes": 30,
+   "scoring": {
+    "right": 1,
+    "wrong": 0,
+    "blank": 0
+   },
+   "pass": 0.5,
+   "items": [
+    {
+     "id": "c1-net-positions",
+     "difficulty": 2,
+     "skills": [
+      "ds-hashing"
+     ],
+     "tags": [
+      "net-positions"
+     ],
+     "pace": 720,
+     "title": "Net positions from fills",
+     "question": "Each fill is a string `\"ACCOUNT SIDE QTY\"`, such as `\"K7 B 300\"`. Side `B` adds the quantity to the account's position, and side `S` takes it away. Write `net_positions(fills)`. It returns a list of `[account, net]` pairs, sorted by account name. Leave out any account whose net is 0. Quantities are whole numbers, and there may be 100,000 fills.",
+     "widget": {
+      "kind": "code",
+      "language": "python",
+      "starter": "def net_positions(fills):\n    return []\n",
+      "examples": [
+       {
+        "call": "[list(p) for p in net_positions([\"K7 B 300\", \"M2 S 100\", \"K7 S 120\"])]",
+        "expect": "[['K7', 180], ['M2', -100]]",
+        "compare": "equal"
+       },
+       {
+        "call": "[list(p) for p in net_positions([\"H4 B 25\", \"H4 S 25\", \"D2 B 8\"])]",
+        "expect": "[['D2', 8]]",
+        "compare": "equal"
+       }
+      ],
+      "tests": [
+       {
+        "call": "[list(p) for p in net_positions([\"K7 B 300\", \"M2 S 100\", \"K7 S 120\"])]",
+        "expect": "[['K7', 180], ['M2', -100]]",
+        "compare": "equal"
+       },
+       {
+        "call": "[list(p) for p in net_positions([])]",
+        "expect": "[]",
+        "compare": "equal"
+       },
+       {
+        "call": "[list(p) for p in net_positions([\"A1 B 50\", \"A1 S 50\"])]",
+        "expect": "[]",
+        "compare": "equal"
+       },
+       {
+        "call": "[list(p) for p in net_positions([\"Z9 B 5\", \"B3 B 7\", \"M4 B 1\"])]",
+        "expect": "[['B3', 7], ['M4', 1], ['Z9', 5]]",
+        "compare": "equal"
+       },
+       {
+        "call": "[list(p) for p in net_positions([\"Q1 S 40\"])]",
+        "expect": "[['Q1', -40]]",
+        "compare": "equal"
+       },
+       {
+        "call": "[list(p) for p in net_positions([\"X1 B 12\", \"X1 B 30\"])]",
+        "expect": "[['X1', 42]]",
+        "compare": "equal"
+       },
+       {
+        "call": "[list(p) for p in net_positions([\"AB B 10\", \"A B 3\", \"B S 2\"])]",
+        "expect": "[['A', 3], ['AB', 10], ['B', -2]]",
+        "compare": "equal"
+       },
+       {
+        "call": "[list(p) for p in net_positions([\"K1 B 1000000\", \"K1 S 1\", \"K2 S 999999\", \"K2 B 999999\"])]",
+        "expect": "[['K1', 999999]]",
+        "compare": "equal"
+       },
+       {
+        "call": "[list(p) for p in net_positions([\"P1 B 5\", \"P2 B 5\", \"P1 S 5\", \"P3 S 9\", \"P2 S 2\"])]",
+        "expect": "[['P2', 3], ['P3', -9]]",
+        "compare": "equal"
+       },
+       {
+        "setup": "F = ['A%05d %s %d' % (i % 50000, 'B' if i % 3 else 'S', i % 97 + 1) for i in range(100000)]",
+        "call": "len(net_positions(F))",
+        "expect": "50000",
+        "compare": "equal"
+       },
+       {
+        "setup": "F = ['A%05d %s %d' % (i % 50000, 'B' if i % 3 else 'S', i % 97 + 1) for i in range(100000)]",
+        "call": "sum(p[1] for p in net_positions(F))",
+        "expect": "1633103",
+        "compare": "equal"
+       }
+      ],
+      "how": "There are 11 hidden tests. Each answer must equal the expected value. The last two use 100,000 fills.",
+      "solution": "def net_positions(fills):\n    net = {}\n    for fill in fills:\n        account, side, qty = fill.split()\n        q = int(qty)\n        net[account] = net.get(account, 0) + (q if side == \"B\" else -q)\n    return [[a, n] for a, n in sorted(net.items()) if n != 0]\n"
+     },
+     "feedback": {
+      "correct": "All the tests pass, including the 100,000 fills.",
+      "generic": "A hidden test failed. Check the sign of a sale, the zero nets, the order and the large case."
+     },
+     "explain": {
+      "text": "A dictionary keeps each account's running net, in constant time per fill. Sort the accounts once at the end and drop the zeros. A search through a list of accounts is quadratic, and 100,000 fills stop it."
+     }
+    },
+    {
+     "id": "c2-fewest-days",
+     "difficulty": 3,
+     "skills": [
+      "ds-pointers"
+     ],
+     "tags": [
+      "fewest-days"
+     ],
+     "pace": 960,
+     "title": "The fewest days to reach a volume",
+     "question": "`volumes[i]` is the volume traded on day `i`, a positive whole number. Write `fewest_days(volumes, target)`. It returns the fewest neighbouring days whose volumes add up to at least `target`. It returns 0 if no block of days reaches `target`. `target` is a positive whole number, and there may be 200,000 days.",
+     "widget": {
+      "kind": "code",
+      "language": "python",
+      "starter": "def fewest_days(volumes, target):\n    return 0\n",
+      "examples": [
+       {
+        "call": "fewest_days([4, 1, 1, 6, 2, 3], 8)",
+        "expect": "2",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([1, 2, 3], 7)",
+        "expect": "0",
+        "compare": "equal"
+       }
+      ],
+      "tests": [
+       {
+        "call": "fewest_days([4, 1, 1, 6, 2, 3], 8)",
+        "expect": "2",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([], 5)",
+        "expect": "0",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([9], 9)",
+        "expect": "1",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([9], 10)",
+        "expect": "0",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([1, 2, 3], 7)",
+        "expect": "0",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([1, 2, 3], 6)",
+        "expect": "3",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([5, 1, 1, 1, 12], 12)",
+        "expect": "1",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([3, 3, 3, 3], 7)",
+        "expect": "3",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([2, 7, 1, 1, 1, 8], 9)",
+        "expect": "2",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([1] * 200000, 150000)",
+        "expect": "150000",
+        "compare": "equal"
+       },
+       {
+        "setup": "V = [(i * 7919) % 100 + 1 for i in range(200000)]",
+        "call": "fewest_days(V, 5000)",
+        "expect": "98",
+        "compare": "equal"
+       },
+       {
+        "call": "fewest_days([1] * 199999 + [10**6], 10**6)",
+        "expect": "1",
+        "compare": "equal"
+       }
+      ],
+      "how": "There are 12 hidden tests. Each answer must equal the expected value. The last three use 200,000 days.",
+      "solution": "def fewest_days(volumes, target):\n    best = len(volumes) + 1\n    left, total = 0, 0\n    for right, v in enumerate(volumes):\n        total += v\n        while total >= target:\n            best = min(best, right - left + 1)\n            total -= volumes[left]\n            left += 1\n    return best if best <= len(volumes) else 0\n"
+     },
+     "feedback": {
+      "correct": "All the tests pass, including the 200,000 days.",
+      "generic": "A hidden test failed. Check a block that equals the target, a target no block reaches and the large cases."
+     },
+     "explain": {
+      "text": "Volumes are positive, so a block's sum grows as it widens and falls as it narrows. Move the right end on, then shrink from the left while the sum reaches `target`, keeping the shortest. Each day enters and leaves once, so the work is $O(n)$."
+     }
+    }
+   ]
+  },
+  {
+   "kind": "paper",
+   "id": "maths",
+   "name": "Maths",
+   "minutes": 22,
+   "scoring": {
+    "right": 1,
+    "wrong": 0,
+    "blank": 0
+   },
+   "pass": 0.625,
+   "items": [
+    {
+     "id": "m1-chain-rule",
+     "difficulty": 2,
+     "skills": [
+      "lm-chain"
+     ],
+     "tags": [
+      "chain-rule"
+     ],
+     "pace": 120,
+     "title": "A slope through a logarithm",
+     "question": "Let $f(x) = \\ln(1 + 3x^2)$. What is $f'(1)$?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "label": "Answer options",
+      "options": [
+       {
+        "id": "a",
+        "text": "$\\tfrac{3}{2}$",
+        "correct": true
+       },
+       {
+        "id": "b",
+        "text": "$\\tfrac{1}{4}$",
+        "why": "You differentiated the logarithm and left out the inner derivative, $6x$."
+       },
+       {
+        "id": "c",
+        "text": "$6$",
+        "why": "You differentiated only the inside, $6x$, and left out the factor $1/(1 + 3x^2)$."
+       },
+       {
+        "id": "d",
+        "text": "$\\ln 4$",
+        "why": "You gave $f(1)$, the value of the function, not its slope."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right: the outer derivative times the inner one.",
+      "generic": "Differentiate the logarithm, then multiply by the derivative of $1 + 3x^2$."
+     },
+     "explain": {
+      "text": "By the chain rule, $f'(x) = \\dfrac{6x}{1 + 3x^2}$. At $x = 1$ that is $\\tfrac{6}{4} = 1.5$. A central difference with a step of $10^{-6}$ gives 1.5 too."
+     }
+    },
+    {
+     "id": "m2-eigenvalues",
+     "difficulty": 2,
+     "skills": [
+      "eg-eigen"
+     ],
+     "tags": [
+      "eigenvalues-2x2"
+     ],
+     "pace": 120,
+     "title": "Eigenvalues of a 2 by 2 matrix",
+     "question": "What are the eigenvalues of $A = \\begin{pmatrix} 5 & 4 \\\\ 1 & 2 \\end{pmatrix}$?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "label": "Answer options",
+      "options": [
+       {
+        "id": "a",
+        "text": "$1$ and $6$",
+        "correct": true
+       },
+       {
+        "id": "b",
+        "text": "$2$ and $5$",
+        "why": "You read the diagonal entries. They are the eigenvalues only of a triangular matrix."
+       },
+       {
+        "id": "c",
+        "text": "$-1$ and $-6$",
+        "why": "You solved $\\lambda^2 + 7\\lambda + 6 = 0$. The trace enters with a minus sign."
+       },
+       {
+        "id": "d",
+        "text": "$6$ and $7$",
+        "why": "You gave the determinant and the trace. The eigenvalues are the two numbers with that product and sum."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right: the roots of the characteristic polynomial.",
+      "generic": "Write $\\det(A - \\lambda I) = 0$ and solve the quadratic."
+     },
+     "explain": {
+      "text": "The characteristic polynomial is $\\lambda^2 - 7\\lambda + 6 = (\\lambda - 1)(\\lambda - 6)$, so the eigenvalues are 1 and 6. Their sum is the trace, 7, and their product the determinant, 6. Check: $A(4, 1) = 6(4, 1)$ and $A(1, -1) = 1(1, -1)$."
+     }
+    },
+    {
+     "id": "m3-limit",
+     "difficulty": 3,
+     "skills": [
+      "lm-limits"
+     ],
+     "tags": [
+      "limit-series"
+     ],
+     "pace": 150,
+     "title": "A limit from a series",
+     "question": "As $x$ tends to 0, what does $\\dfrac{e^{2x} - 1 - 2x}{x^2}$ tend to?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "label": "Answer options",
+      "options": [
+       {
+        "id": "a",
+        "text": "$2$",
+        "correct": true
+       },
+       {
+        "id": "b",
+        "text": "$4$",
+        "why": "You expanded $e^{2x}$ as $1 + 2x + (2x)^2$ and dropped the $\\tfrac{1}{2!}$."
+       },
+       {
+        "id": "c",
+        "text": "$\\tfrac{1}{2}$",
+        "why": "You wrote the square term as $x^2/2$. It is $(2x)^2/2 = 2x^2$."
+       },
+       {
+        "id": "d",
+        "text": "$0$",
+        "why": "You saw the first-order terms cancel and stopped. The $x^2$ term is what is left."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right: the $x^2$ term of the series decides it.",
+      "generic": "Expand $e^{2x}$ to the $x^2$ term, then divide by $x^2$."
+     },
+     "explain": {
+      "text": "The series gives $e^{2x} = 1 + 2x + 2x^2 + O(x^3)$. So the top is $2x^2 + O(x^3)$, and the limit is 2. At $x = 10^{-4}$ the quotient is about 2.0001."
+     }
+    },
+    {
+     "id": "m4-probability-tree",
+     "difficulty": 3,
+     "skills": [
+      "bayes"
+     ],
+     "tags": [
+      "probability-tree"
+     ],
+     "pace": 150,
+     "title": "Which route failed",
+     "question": "60% of a desk's trades settle through route A and 40% through route B. Of route A's trades, 2% fail. Of route B's, 5% fail. A trade fails. What is the chance it went through route B?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "label": "Answer options",
+      "options": [
+       {
+        "id": "a",
+        "text": "$0.625$",
+        "correct": true
+       },
+       {
+        "id": "b",
+        "text": "$0.375$",
+        "why": "You found the chance it went through route A, the other branch."
+       },
+       {
+        "id": "c",
+        "text": "$0.05$",
+        "why": "You gave the failure rate of route B, not the chance of route B given a failure."
+       },
+       {
+        "id": "d",
+        "text": "$0.714$",
+        "why": "You compared the failure rates, 5 against 2, and left out the 60% and 40% split."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right: the failures from B over all the failures.",
+      "generic": "Find the failures through each route, then take B's share of them."
+     },
+     "explain": {
+      "text": "Failures through A are $0.6 \\times 0.02 = 0.012$, and through B $0.4 \\times 0.05 = 0.02$. So the chance is $0.02 / 0.032 = 0.625$. Out of 1,000 trades, 12 fail through A and 20 through B."
+     }
+    },
+    {
+     "id": "m5-by-parts",
+     "difficulty": 3,
+     "skills": [
+      "in-techniques"
+     ],
+     "tags": [
+      "by-parts"
+     ],
+     "pace": 180,
+     "title": "An integral by parts",
+     "question": "What is $\\displaystyle\\int_1^e \\dfrac{\\ln x}{x^2}\\,dx$?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "label": "Answer options",
+      "options": [
+       {
+        "id": "a",
+        "text": "$1 - \\tfrac{2}{e}$",
+        "correct": true
+       },
+       {
+        "id": "b",
+        "text": "$1 - \\tfrac{1}{e}$",
+        "why": "You dropped the boundary term $-\\tfrac{\\ln x}{x}$ that parts gives, and kept only $-\\tfrac{1}{x}$."
+       },
+       {
+        "id": "c",
+        "text": "$\\tfrac{2}{e} - 1$",
+        "why": "You took $v = \\tfrac{1}{x}$, so every sign flipped. The integral of $x^{-2}$ is $-x^{-1}$."
+       },
+       {
+        "id": "d",
+        "text": "$-\\tfrac{2}{e}$",
+        "why": "You left out the lower limit. The antiderivative is $-1$ at $x = 1$, not 0."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right: parts, then both limits.",
+      "generic": "Integrate by parts with $u = \\ln x$, then evaluate at both limits."
+     },
+     "explain": {
+      "text": "By parts with $u = \\ln x$ and $dv = x^{-2}\\,dx$, the antiderivative is $-\\tfrac{\\ln x}{x} - \\tfrac{1}{x}$. It is $-\\tfrac{2}{e}$ at $e$ and $-1$ at 1. So the integral is $1 - \\tfrac{2}{e} \\approx 0.264$."
+     }
+    },
+    {
+     "id": "m6-linear-ode",
+     "difficulty": 3,
+     "skills": [
+      "de-first"
+     ],
+     "tags": [
+      "linear-ode"
+     ],
+     "pace": 180,
+     "title": "A first-order equation",
+     "question": "Solve $y' = 2y + 4$ with $y(0) = 1$. What is $y(1)$?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "label": "Answer options",
+      "options": [
+       {
+        "id": "a",
+        "text": "$3e^2 - 2$",
+        "correct": true
+       },
+       {
+        "id": "b",
+        "text": "$e^2$",
+        "why": "You solved $y' = 2y$ and dropped the constant 4."
+       },
+       {
+        "id": "c",
+        "text": "$3e^2$",
+        "why": "You found $C = 3$ but left out the steady state, $-2$."
+       },
+       {
+        "id": "d",
+        "text": "$5e^2 - 4$",
+        "why": "You set the steady state to $-4$. Setting $y' = 0$ gives $2y + 4 = 0$, so it is $-2$."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right: the steady state plus a decaying or growing term.",
+      "generic": "Find the steady state from $y' = 0$, then fit the constant to $y(0) = 1$."
+     },
+     "explain": {
+      "text": "The steady state solves $2y + 4 = 0$, so $y = -2 + Ce^{2x}$. Then $y(0) = 1$ gives $C = 3$. So $y(1) = 3e^2 - 2 \\approx 20.17$."
+     }
+    },
+    {
+     "id": "m7-shared-book",
+     "difficulty": 4,
+     "skills": [
+      "cc-count"
+     ],
+     "tags": [
+      "shared-book"
+     ],
+     "pace": 180,
+     "title": "Three trades in one book",
+     "question": "Nine trades are split at random into three books of three trades each. What is the chance that three named trades all land in the same book?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "label": "Answer options",
+      "options": [
+       {
+        "id": "a",
+        "text": "$\\tfrac{1}{28}$",
+        "correct": true
+       },
+       {
+        "id": "b",
+        "text": "$\\tfrac{1}{9}$",
+        "why": "You treated each trade's book as an independent pick of one in three. A book fills up, so the picks are not independent."
+       },
+       {
+        "id": "c",
+        "text": "$\\tfrac{1}{84}$",
+        "why": "You counted only one of the three books. Any of the three can hold the named trades."
+       },
+       {
+        "id": "d",
+        "text": "$\\tfrac{1}{4}$",
+        "why": "You found the chance that two named trades share a book, and stopped before the third."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right: place one trade, then fill the two places left in its book.",
+      "generic": "Place the first named trade, then ask where the other two can go."
+     },
+     "explain": {
+      "text": "Put the first named trade anywhere. The second joins its book with chance $\\tfrac{2}{8}$, and the third with chance $\\tfrac{1}{7}$. So the chance is $\\tfrac{2}{56} = \\tfrac{1}{28} \\approx 0.036$, and 10 of all 280 splits keep them together."
+     }
+    },
+    {
+     "id": "m8-correlation-bound",
+     "difficulty": 4,
+     "skills": [
+      "eg-pd"
+     ],
+     "tags": [
+      "correlation-bound"
+     ],
+     "pace": 210,
+     "title": "How low can a correlation go",
+     "question": "The correlation of $X$ and $Y$ is 0.8, and the correlation of $Y$ and $Z$ is 0.8. What is the smallest possible correlation of $X$ and $Z$?",
+     "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "shuffle": true,
+      "label": "Answer options",
+      "options": [
+       {
+        "id": "a",
+        "text": "$0.28$",
+        "correct": true
+       },
+       {
+        "id": "b",
+        "text": "$0.64$",
+        "why": "You multiplied the two correlations. That is the value when $X$ and $Z$ are linked only through $Y$."
+       },
+       {
+        "id": "c",
+        "text": "$0.6$",
+        "why": "You added the two and took off 1. That is not a bound: values down to 0.28 are possible."
+       },
+       {
+        "id": "d",
+        "text": "$0$",
+        "why": "You assumed two positive links only rule out a negative one. The matrix forces more than that."
+       }
+      ]
+     },
+     "feedback": {
+      "correct": "Right: the correlation matrix must stay positive semidefinite.",
+      "generic": "Write the 3 by 3 correlation matrix with an unknown $r$ and ask when it is positive semidefinite."
+     },
+     "explain": {
+      "text": "The correlation matrix must be positive semidefinite, and here that needs its determinant $-r^2 + 1.28r - 0.28$ to be at least 0. That holds for $r$ from 0.28 to 1. In angles, each pair is $36.9^\\circ$ apart, so $X$ and $Z$ are at most $73.7^\\circ$ apart, and $\\cos 73.7^\\circ \\approx 0.28$."
+     }
+    }
+   ]
+  },
+  {
+   "kind": "check",
+   "id": "no-calculator",
+   "name": "I used no calculator on the maths paper",
+   "detail": "Tick this only if you worked every maths question by hand."
+  },
+  {
+   "kind": "check",
+   "id": "no-lookup",
+   "name": "I used no search engine and no notes",
+   "detail": "Tick this only if you sat both papers without either."
+  }
+ ]
+}

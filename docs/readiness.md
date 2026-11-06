@@ -426,7 +426,7 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 
 **Independent tasks that count** (each done alone, on material the learner has not seen)
 
-1. Sit a timed maths paper on calculus, linear algebra and probability. Evidence: `mock-oa-strats` (gap).
+1. Sit a timed maths paper on calculus, linear algebra and probability. Evidence: `mock-oa-strats`.
 2. Derive put-call parity and one Greek from first principles, aloud. Evidence: external spoken mock.
 3. Solve an unseen probability tree or martingale question cold. Evidence: drill in `markov` and `trees`, then `mock-superday-strats` (gap).
 4. Complete a coding challenge in Python or C++. Evidence: `mock-oa-code`.
@@ -521,7 +521,7 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 
 | Mock | Status | Note |
 | --- | --- | --- |
-| `mock-oa-strats` | gap: not yet written | timed maths paper plus coding |
+| `mock-oa-strats` | exists |  |
 | `mock-oa-code` | exists |  |
 | `mock-video` | gap: not yet written | behavioural and spoken video mock |
 | `mock-superday-strats` | gap: not yet written | derivatives, harder probability, coding |
@@ -648,7 +648,7 @@ Same learner as Strats, plus the pricing mathematics.
 
 | Mock | Status | Note |
 | --- | --- | --- |
-| `mock-oa-strats` | gap: not yet written | shared with Strats |
+| `mock-oa-strats` | exists | shared with Strats |
 | `mock-oa-code` | exists |  |
 | `mock-video` | gap: not yet written | shared with Strats |
 | `mock-superday-strats` | gap: not yet written | shared with Strats |
