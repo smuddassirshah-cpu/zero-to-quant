@@ -60,4 +60,4 @@ Scripts: in `puzzles-L5-concepts-r2.py` the two EXPECTED_FAIL checks are now ass
 - Validator (from `app/`): "0 errors, 4288 warnings" (O2-long-sentence 723; the rise from the audit's 4279 is not from these edits, whose sentences are all 20 words or fewer); `git checkout content/manifest.json`: "Updated 0 paths from the index".
 - `python3 -I docs/reports/puzzles-L4-concepts.py`: all checks passed, exit 0. `puzzles-L5-concepts.py`: all checks passed, exit 0. `puzzles-L4-concepts-r2.py`: ALL 155 CHECKS PASSED, exit 0. `puzzles-L5-concepts-r2.py`: "145 checks run (puzzles L5, round 2); 0 EXPECTED_FAIL", exit 0.
 - Voice scan 35: explanations over three sentences 0; sentences over 35 words 0 (13,321 scanned).
-- Playthrough: see the second commit.
+- Playthrough (from `app/`, `--local-cdn <PKGS>`), the three changed lessons: plain "ok puzzles/l22-when-to-hedge 13 checks, quiz 3/3", "ok puzzles/l26-estimating-n 13 checks, quiz 3/3", "ok puzzles/l27-given-the-total 15 checks, quiz 3/3", "browser relaunches: 0", "All passed."; `--mobile`: the same three lines, "browser relaunches: 0", "All passed." No review or homework set changed.
