@@ -1546,3 +1546,12 @@ Status block (engine pass, item 8):
 
 Status block (engine pass, tooling):
 - 570: done (12/12 desktop, 3/3 mobile). 571: done (0 findings in `app/js`). 572: done (desktop and mobile).
+
+## Engine pass, session T step 0 (`docs/reports/engine-pass-T0.md`)
+
+573. Done [Must]: `tools/numbers_lib.py` (standard library only). `Level(course, n)` loads a level's lessons, review and homework; `expect(file, path, value, fmt=None)` checks a number or string against a JSON path (`screens[3].prose`, `items[1].widget.wrong[0].value`, a path ending on an object searches below it, `[*]` joins); `text(file, path)` and `report()` (exit 1 on a failure). It copes with thousands commas, £, U+2212, LaTeX spacing and braces and trailing zeros. `tools/test-numbers-lib.py` ports checks from odes level 3 and proves wrong values fail. The validator warns when a written level's `docs/reports/<course>-L<n>-numbers.py` never uses `Level(` and `expect(`; LEVEL-BRIEF requires the helper.
+574. Done [Should]: `validate.mjs` errors on a mapped level review with no `pass` (`tools/test-validate-review-pass.mjs` proves it); named in LEVEL-BRIEF.
+575. Done [Should]: `startServer` in `tools/playthrough.mjs` retries on a new port (up to 6 attempts, short random pause) when the python server dies, and only trusts a ready answer while its own process is alive. Four simultaneous `--lesson proof/l1-true-or-false` runs all exit 0.
+
+Status block (engine pass, session T step 0):
+- 573: done (8 warnings from older scripts). 574: done (errors 0). 575: done (4 of 4 parallel runs exit 0).
