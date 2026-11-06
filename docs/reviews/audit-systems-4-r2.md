@@ -26,16 +26,22 @@ Allocation claims: every line of l15 screens[0], the trap (screens[6]), `q15-res
 
 ## Overlap with the earlier reads
 
-Filled after the blind phase, against `docs/reviews/review-systems.md`, `docs/reviews/answers-*systems-4*.md` and `docs/reviews/audit-systems-4.md` (round 1 with its fix pass).
+Read after the ledger and findings above were committed: `docs/reviews/review-systems.md` (second read of the course; its level 4 items are 9, 11, 19, 20, 21 and 26), `docs/reviews/answers-2026-11-04-systems-4.md` (answer check: every key recomputed, hidden-test gaps, 0 wrong keys) and `docs/reviews/audit-systems-4.md` (round 1: 11 findings, wrong 2, misleading 2, imprecise 7, all fixed in its fix pass before this read). Conceptual findings only.
 
-| | count | findings |
+| found by | count | which |
 |---|---|---|
-| this audit only | | |
-| earlier reads only | | |
-| both | | |
+| this audit only | 7 | findings 1, 3, 4, 5, 6, 7, 8. Finding 7 sits on the same homework part as round-1 finding 11 and review note 21 (h4-sizing part 5), but those were about the `all` option's `why`; the question stem's "and so stays resident" was not raised. |
+| earlier reads only | 10 | round-1 findings 2 to 11 (wrap reasoning, alignas and true sharing, false-sharing wording, the plain-counter ring, the two-read timing model, the kernel-bypass sentence, "cost never varies", q16-pow2 `even`, the model answer's L1 reason, h4-sizing option `all`). All were fixed before this read; this ledger marks each corrected text `correct` with its own basis (l16 screens[8].explain, [4].explain, [3].explain, [9].prose; l17 screens[9]; l18 screens[1].explain; l15 screens[4].explain; l16 quiz[1]; homework-4 model §4 and h4-sizing part 5 options). Review note 21 is the same item as round-1 finding 11 and is counted once. |
+| both | 1 | finding 2: round-1 finding 1 found the data-race definition wrong ("two writers") and rewrote it; the rewritten sentence still omits "non-atomic", which this read flags as the residual imprecision. |
 
-New `wrong` found by this audit that no earlier read found: 0 (this audit found no `wrong`).
+New `wrong` found by this audit that no earlier read found: 0 (this audit found no `wrong`). The second read and the answer check raised no level 4 conceptual finding that round 1 had not; the answer check confirmed the NumPy `inverted_cdf` claim on 2.5.3, as this read did.
 
 ## Checks
 
-Filled at the end of the audit.
+- Validator (from `app/`): `node tools/validate.mjs 2>&1 | tail -3`: `O2 warnings: O2-long-sentence 723, O2-long-explain 48, O2-unshuffled-numeric 73, O2-no-slip 46, O2-prose-prompt 8, O2-explain-answer 615` / `0 errors, 4288 warnings`. `content/manifest.json` restored with `git checkout` afterwards, not committed.
+- Voice: `VOICE_BASE=app/content/courses/systems/ python3 docs/reviews/voice-scan.py 35 --summary`: `# explanations over three sentences: 0` / `# sentences scanned: 9495; over 35 words: 0`.
+- Number script: none exists for systems level 4 (as round 1 noted); the keyed numbers are re-derived in the concepts script below.
+- Round-1 concepts script (run after the blind phase): `python3 -I docs/reports/systems-L4-concepts.py`: `0 failing check(s)` / `0 expected (content findings), 0 unexpected`, exit 0.
+- This audit's concepts script: `python3 -I docs/reports/systems-L4-concepts-r2.py` from the repo root: `ok l15_checks` ... `ok h4_checks` / `note: NumPy 2.5.3: inverted_cdf p99.9 of 999 tens and one 1,000 gives 1000.0, as the lesson says of 2.0.2` / `systems L4 concepts r2: all checks passed`, exit 0. It compiles the five C++ items (g++ 13, `-O1 -fno-builtin`, `-std=c++17` and `-std=c++20`) with a counting `operator new`, runs the SPSC ring and its three relaxed variants under ThreadSanitizer, executes the Python item against `latencies.csv`, and recomputes every keyed number and hidden-test expectation from an independent model; no wall-clock assert. About two minutes. No check fails on the current content, so the eight findings above are all matters of statement (an unstated condition, a dropped convention, a wrong habit), none of which a compiled or simulated check can catch; the ledger row of each names the source instead.
+- Playthrough (from `app/`, `--local-cdn <pkgs>`): `--set systems/review-4 --set systems/homework-4 --lesson systems/l16-ring-buffer --lesson systems/l18-feed-handler`: `ok systems/l16-ring-buffer 16 checks, quiz 4/4` / `ok systems/l18-feed-handler 15 checks, quiz 4/4` / `ok systems/review-4 9 items, recorded 9 of 9` / `ok systems/homework-4 13 items, marked 6 of 6 right, 30 of 30 marks, 1 longform marked by the button` / `ok systems/homework-4 (parts checks)` / `browser relaunches: 0` / `All passed.` No content was changed by this audit.
+- Inbox: one bullet appended to `docs/BACKLOG-INBOX.md` under "Raised later (audit systems L4, round 2)".
