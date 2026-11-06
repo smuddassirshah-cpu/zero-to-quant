@@ -205,5 +205,18 @@ w = node('l19', 'screens[10]')['widget']
 coarse = [eval(t['call'].replace('sup_gap_bump', '')) for t in w['tests'][5:]]
 print('l19 coarse tests where 1/n IS a grid point:', [(n, m) for n, m in coarse if (F(1, n) * m).denominator == 1])
 
+# ================= fix pass (review-analysis-3-4): new values, NEW value only =================
+E('l19', 'screens[4].widget.wrong[2].tol.abs', 0.0002)
+edge = 1 / 10.1
+ok('l19 screens[4]: edge band [0.0988, 0.0992] is disjoint from tenth band [0.0995, 0.1005]', edge + 0.0002 < 0.1 - 0.0005 and edge - 0.0002 > 0)
+for a in (1, 10, 100, 1000):
+    two(f'x^2 largest delta at a={a}, eps 0.1 is sqrt(a^2+eps)-a', largest_delta(sq, a, 0.1, 0, 0.1), math.sqrt(a * a + 0.1) - a, 1e-5)
+ok('x^2 largest delta shrinks as a grows', all(math.sqrt(a * a + 0.1) - a > math.sqrt(b * b + 0.1) - b for a, b in [(1, 10), (10, 100), (100, 1000)]))
+rec2 = lambda x: 1 / x
+ok('1/x largest delta shrinks to 0 as a -> 0 (eps 0.1)', all(0.01 * 0.01 * 0.1 / (1 + 0.01 * 0.1) < 0.1 * 0.1 * 0.1 / (1 + 0.1 * 0.1) < 0.5 * 0.5 * 0.1 / (1 + 0.05) for _ in [0]))
+two('l15 screens[11]: 0.03 / 0.6 = 0.05', 0.03 / 0.6, 0.05)
+ok('l15 screens[11] accept uses non-strict', '\\le 0.03' in node('l15', 'screens[11].widget.accept') and 'at most' in node('l15', 'screens[11].prose'))
+ok('l19 how: states 12 tests and the m = 1 test', 'Six use coarse' in node('l19', 'screens[10].widget.how') and 'm = 1' in node('l19', 'screens[10].widget.how'))
+
 lv.check_wrongs()
 lv.report()
