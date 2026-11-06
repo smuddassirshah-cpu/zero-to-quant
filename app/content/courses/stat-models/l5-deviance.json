@@ -1,0 +1,878 @@
+{
+ "id": "l5-deviance",
+ "course": "stat-models",
+ "title": "Deviance and model checks",
+ "minutes": 15,
+ "objectives": ["Compare GLMs by deviance and check for overdispersion."],
+ "skills": ["sm-glm"],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "No Poisson fits",
+   "prose": "The 200 days of fills from lesson 1: mean 4.405, variance 17.117. The dashed curve is a Poisson count with mean $\\lambda$. Slide $\\lambda$ to fit the zero days, then the right tail.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+     "xLabel": "Fills in a day",
+     "yLabel": "Days",
+     "height": 250,
+     "yMax": 50,
+     "curves": [
+      {"id": "pc", "expr": "200*exp(-l + x*ln(l) - lgamma(x + 1))", "label": "Poisson", "colour": 2}
+     ]
+    },
+    "state": {
+     "values": {
+      "0": 28,
+      "1": 28,
+      "2": 27,
+      "3": 22,
+      "4": 15,
+      "5": 19,
+      "6": 11,
+      "7": 11,
+      "8": 8,
+      "9": 5,
+      "10": 10,
+      "11": 5,
+      "12": 2,
+      "13": 1,
+      "14": 2,
+      "15": 2,
+      "16": 2,
+      "17": 0,
+      "18": 0,
+      "19": 0,
+      "20": 0,
+      "21": 1,
+      "22": 0,
+      "23": 1
+     },
+     "params": {"l": 4.405}
+    },
+    "controls": [
+     {"bind": "l", "min": 1, "max": 9, "step": 0.05, "start": 4.405, "label": "$\\lambda$"}
+    ],
+    "derive": {
+     "caption": "With $\\lambda = {{fixed(l, 2)}}$ a Poisson count expects {{fixed(200*exp(-l), 1)}} zero days; we saw 28."
+    }
+   },
+   "question": "At $\\lambda = 4.405$, the sample mean, how many zero days does the Poisson curve expect?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.443,
+    "tol": {"abs": 0.01},
+    "unit": "",
+    "accept": "2.44: $200e^{-4.405} = 200 \\times 0.01222$.",
+    "label": "Zero days",
+    "wrong": [
+     {
+      "id": "share",
+      "value": 0.0122,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "seen",
+      "value": 28,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 2.4 zero days against 28 seen.",
+    "generic": "Not quite right. Compute $200 \\times e^{-4.405}$.",
+    "byKey": {"share": "That is the probability of a zero day. Multiply by the 200 days.", "seen": "28 is what we saw. The question asks what the Poisson curve expects."}
+   },
+   "explain": {
+    "text": "$200e^{-4.405} = 2.44$ zero days, against 28 seen. Lowering $\\lambda$ fits the zeros but loses the tail of 21 and 23 fills. No single $\\lambda$ fits both.",
+    "canvas": {
+     "params": {"l": 4.405},
+     "highlight": ["x0"]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Measuring the misfit",
+   "prose": "Compare the model with the **saturated** model, which gives each observation its own mean, $\\hat\\mu_j = y_j$. The **deviance** is $D = 2(\\ell_{\\text{sat}} - \\ell_{\\text{model}})$. For a Poisson model\n$$D = 2\\sum_j\\Big[y_j\\ln\\frac{y_j}{\\hat\\mu_j} - (y_j - \\hat\\mu_j)\\Big], \\quad 0\\ln 0 = 0$$",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["$y_j$", "$\\hat\\mu_j$"],
+     "rows": [
+      ["2", "3"],
+      ["0", "1"],
+      ["5", "4"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the deviance of these three counts?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.6096,
+    "tol": {"abs": 0.001},
+    "unit": "",
+    "accept": "2.6096: $2[(-0.8109 + 1) + (0 + 1) + (1.1157 - 1)]$.",
+    "label": "Deviance",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 1.3048,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "nozero",
+      "value": 0.6096,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "One bracket per row, then add and double."},
+    {
+     "rung": "point",
+     "text": "Row 1: $2\\ln\\frac23 + 1 = 0.1891$. Row 2: $0 + 1 = 1$.",
+     "highlight": ["r1"]
+    },
+    {"rung": "step", "text": "Row 3: $5\\ln\\frac54 - 1 = 0.1157$. The sum is 1.3048; doubled, 2.6096."}
+   ],
+   "feedback": {
+    "correct": "$D = 2.6096$.",
+    "generic": "Not quite right. Sum the three brackets and double.",
+    "byKey": {"half": "You forgot the factor 2 in front.", "nozero": "You dropped the row with $y = 0$. With $0\\ln 0 = 0$ its bracket is $\\hat\\mu = 1$."}
+   },
+   "explain": {
+    "text": "The brackets are 0.1891, 1 and 0.1157, so $D = 2 \\times 1.3048 = 2.6096$. The zero count contributes $2\\hat\\mu_j$: a model that expects activity on a dead day pays for it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Is the spread too large",
+   "prose": "Fit a Poisson GLM of fills on market volume $x$: $\\hat{\\boldsymbol\\beta} = (1.433431, 0.385410)$. The residual deviance is 631.371 on 198 degrees of freedom. The Pearson statistic $\\chi^2 = \\sum(y_j - \\hat\\mu_j)^2/\\hat\\mu_j$ is 625.317.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+     "xLabel": "Fills in a day",
+     "yLabel": "Days",
+     "height": 250,
+     "yMax": 50,
+     "curves": [
+      {"id": "pc", "expr": "200*exp(-l + x*ln(l) - lgamma(x + 1))", "label": "Poisson", "colour": 2}
+     ]
+    },
+    "state": {
+     "values": {
+      "0": 28,
+      "1": 28,
+      "2": 27,
+      "3": 22,
+      "4": 15,
+      "5": 19,
+      "6": 11,
+      "7": 11,
+      "8": 8,
+      "9": 5,
+      "10": 10,
+      "11": 5,
+      "12": 2,
+      "13": 1,
+      "14": 2,
+      "15": 2,
+      "16": 2,
+      "17": 0,
+      "18": 0,
+      "19": 0,
+      "20": 0,
+      "21": 1,
+      "22": 0,
+      "23": 1
+     },
+     "params": {"l": 4.405}
+    }
+   },
+   "question": "What is the dispersion estimate, Pearson $\\chi^2$ over its degrees of freedom?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.158,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "3.158: $625.317/198$.",
+    "label": "Dispersion",
+    "wrong": [
+     {
+      "id": "dev",
+      "value": 3.1887,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "n",
+      "value": 3.1266,
+      "tol": {"abs": 0.002}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Degrees of freedom: 200 days less 2 coefficients."},
+    {"rung": "point", "text": "$625.317 / 198$."},
+    {"rung": "step", "text": "About 3.16. A Poisson model needs about 1."}
+   ],
+   "feedback": {
+    "correct": "$\\hat\\phi = 3.158$: three times the spread a Poisson count allows.",
+    "generic": "Not quite right. Divide 625.317 by 198.",
+    "byKey": {
+     "dev": "That is deviance over degrees of freedom, 3.19. It tells the same story; the question asks for Pearson.",
+     "n": "You divided by 200. Two coefficients were fitted, so use 198."
+    }
+   },
+   "explain": {
+    "text": "$\\hat\\phi = 625.317/198 = 3.158$, and deviance over df is $631.371/198 = 3.19$. Both say the variance is about three times the mean: **overdispersion**. The coefficients can still be fine; the standard errors are not."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Does the signal help",
+   "prose": "Add an unrelated signal $z$ to the model. The deviance falls by 5.557. If the smaller model is right, that drop is roughly $\\chi^2_1$: one coefficient added.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 12],
+     "y": [0, 0.6],
+     "xLabel": "$\\chi^2_1$ statistic",
+     "yLabel": "density",
+     "height": 230,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(-lgamma(k/2) - (k/2)*ln(2) + (k/2 - 1)*ln(x) - x/2)",
+       "domain": [0.05, 12],
+       "label": "$\\chi^2_1$ density"
+      }
+     ],
+     "params": {"k": 1}
+    },
+    "state": {
+     "area": {"id": "A", "f": "f", "from": 5.557, "to": 40, "label": "auto"},
+     "vlines": [
+      {"id": "obs", "x": 5.557, "label": "5.557"}
+     ]
+    }
+   },
+   "question": "What is the $p$-value of the drop, the shaded area?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0184,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.0184: $P(\\chi^2_1 > 5.557)$.",
+    "label": "p-value",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.0092,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "cdf",
+      "value": 0.9816,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Read the shaded area's label."},
+    {"rung": "point", "text": "The area runs from 5.557 to the right."},
+    {"rung": "step", "text": "About 0.018."}
+   ],
+   "feedback": {
+    "correct": "$p = 0.0184$: by this test, $z$ is a signal.",
+    "generic": "Not quite right. Take the area to the right of 5.557.",
+    "byKey": {
+     "half": "You halved the area. A likelihood-ratio test is one-sided in $\\chi^2$.",
+     "cdf": "That is the area to the left. The $p$-value is the tail beyond 5.557."
+    }
+   },
+   "explain": {
+    "text": "$P(\\chi^2_1 > 5.557) = 0.0184$, and the Wald test in the summary agrees, $p = 0.0191$. Both trust the Poisson variance, which we just saw is three times too small.",
+    "canvas": {
+     "highlight": ["A"]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Scale by the dispersion",
+   "prose": "The quasi-Poisson fix keeps the coefficients and divides the deviance drop by the larger model's dispersion, $\\hat\\phi = 3.141$. The statistic is then compared with $F(1, 197)$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "statsmodels GLM, Poisson, fills on x and the signal z",
+     "compact": true,
+     "lines": [
+      "Model Family:    Poisson   Df Residuals:         197",
+      "Link Function:       Log   Deviance:          625.81",
+      "Pearson chi2:        619.",
+      "==========================================",
+      "          coef   std err       z   P>|z|",
+      "------------------------------------------",
+      "const   1.4309     0.035  40.357   0.000",
+      "x       0.3858     0.036  10.821   0.000",
+      "z      -0.0798     0.034  -2.344   0.019"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the scaled statistic $F$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.769,
+    "tol": {"abs": 0.003},
+    "unit": "",
+    "accept": "1.769: $5.557 / 3.141$.",
+    "label": "F",
+    "wrong": [
+     {
+      "id": "times",
+      "value": 17.455,
+      "tol": {"abs": 0.01}
+     },
+     {
+      "id": "sqrt",
+      "value": 3.1354,
+      "tol": {"abs": 0.003}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Divide the drop by $\\hat\\phi$."},
+    {"rung": "point", "text": "$5.557 / 3.141$."},
+    {"rung": "step", "text": "About 1.77."}
+   ],
+   "feedback": {
+    "correct": "$F = 1.769$ and $p = 0.185$: no evidence for $z$.",
+    "generic": "Not quite right. Divide 5.557 by 3.141.",
+    "byKey": {
+     "times": "You multiplied by $\\hat\\phi$. Overdispersion makes the drop less surprising, so divide.",
+     "sqrt": "You divided by $\\sqrt{\\hat\\phi}$. That scales a standard error; the deviance is on the variance scale."
+    }
+   },
+   "explain": {
+    "text": "$F = 5.557/3.141 = 1.769$, with $p = 0.185$. Every standard error grows by $\\sqrt{3.141} = 1.77$, so the Wald $z$ of $-2.34$ shrinks to about $-1.32$.",
+    "canvas": {
+     "shade": {
+      "z": ["l9"]
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The signal that was noise",
+   "prose": "$z$ was drawn independently of everything, so its true coefficient is 0. The plain Poisson fit gives it $p = 0.018$. A colleague wants to trade it.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "statsmodels GLM, Poisson, fills on x and the signal z",
+     "compact": true,
+     "lines": [
+      "Model Family:    Poisson   Df Residuals:         197",
+      "Link Function:       Log   Deviance:          625.81",
+      "Pearson chi2:        619.",
+      "==========================================",
+      "          coef   std err       z   P>|z|",
+      "------------------------------------------",
+      "const   1.4309     0.035  40.357   0.000",
+      "x       0.3858     0.036  10.821   0.000",
+      "z      -0.0798     0.034  -2.344   0.019"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why did the Poisson test call $z$ significant?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "se", "text": "Overdispersion: the coefficients are fine, but Poisson standard errors are too small by a factor near 1.77", "correct": true},
+     {
+      "id": "coef",
+      "text": "Overdispersion biases the coefficient of $z$ away from 0",
+      "why": "The coefficients barely move: $x$ goes from 0.3854 to 0.3858. It is the standard errors that are wrong."
+     },
+     {
+      "id": "luck",
+      "text": "Bad luck: 1 in 50 tests is a false positive anyway",
+      "why": "Under the right variance this $p$ is 0.185, not 0.018. The error is in the model."
+     },
+     {"id": "df", "text": "The test used the wrong degrees of freedom", "why": "One coefficient was added, so one degree of freedom is right."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Compare the two $p$-values: 0.018 and 0.185."},
+    {"rung": "point", "text": "Only the variance assumption changed between them."},
+    {
+     "rung": "step",
+     "text": "With $\\hat\\phi = 3.14$, Poisson SEs are $\\sqrt{3.14} = 1.77$ times too small."
+    }
+   ],
+   "feedback": {
+    "correct": "Too-small standard errors made noise look like a signal.",
+    "generic": "Not quite. Look at what changes when we scale by the dispersion.",
+    "byKey": {
+     "coef": "You blamed the coefficient. It is the standard error that is too small.",
+     "luck": "You put it down to chance. The test's own size was wrong, not just this draw."
+    }
+   },
+   "explain": {
+    "text": "Overdispersion leaves $\\hat{\\boldsymbol\\beta}$ nearly unchanged and shrinks the Poisson standard errors. A test that trusts them rejects true nulls far more often than 5% of the time."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A negative binomial model",
+   "prose": "The negative binomial (NB2) adds a parameter: $\\operatorname{Var}(Y) = \\mu + \\alpha\\mu^2$. On the fills it estimates $\\hat\\alpha = 0.5422$; the data were made with 0.5. statsmodels' `NegativeBinomial` and SciPy agree.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "categories": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+     "xLabel": "Fills in a day",
+     "yLabel": "Days",
+     "height": 250,
+     "yMax": 50,
+     "curves": [
+      {"id": "pc", "expr": "200*exp(-l + x*ln(l) - lgamma(x + 1))", "label": "Poisson", "colour": 2}
+     ]
+    },
+    "state": {
+     "values": {
+      "0": 28,
+      "1": 28,
+      "2": 27,
+      "3": 22,
+      "4": 15,
+      "5": 19,
+      "6": 11,
+      "7": 11,
+      "8": 8,
+      "9": 5,
+      "10": 10,
+      "11": 5,
+      "12": 2,
+      "13": 1,
+      "14": 2,
+      "15": 2,
+      "16": 2,
+      "17": 0,
+      "18": 0,
+      "19": 0,
+      "20": 0,
+      "21": 1,
+      "22": 0,
+      "23": 1
+     },
+     "params": {"l": 4.405}
+    }
+   },
+   "question": "What variance does the NB2 model give a day with mean $\\mu = 4.405$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 14.93,
+    "tol": {"abs": 0.02},
+    "unit": "",
+    "accept": "14.93: $4.405 + 0.5422 \\times 4.405^2$.",
+    "label": "Variance",
+    "wrong": [
+     {
+      "id": "pois",
+      "value": 4.405,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "nomu",
+      "value": 10.52,
+      "tol": {"abs": 0.02}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Use $\\mu + \\alpha\\mu^2$."},
+    {"rung": "point", "text": "$4.405^2 = 19.404$."},
+    {"rung": "step", "text": "$4.405 + 0.5422 \\times 19.404 = 14.93$."}
+   ],
+   "feedback": {
+    "correct": "14.93, against 4.405 for a Poisson count.",
+    "generic": "Not quite right. Add $\\alpha\\mu^2$ to $\\mu$.",
+    "byKey": {"pois": "That is the Poisson variance. NB2 adds $\\alpha\\mu^2$.", "nomu": "You dropped the $\\mu$ term. NB2 is $\\mu + \\alpha\\mu^2$."}
+   },
+   "explain": {
+    "text": "At $\\mu = 4.405$ the NB2 variance is 14.93, close to the 17.117 seen once volume varies too. Under NB2 the likelihood-ratio statistic for $z$ is 1.183, $p = 0.277$: noise, as it should be."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "The Poisson deviance",
+   "prose": "Derive $D$ from the log-likelihood $\\ell(\\boldsymbol\\mu) = \\sum[y_j\\ln\\mu_j - \\mu_j - \\ln y_j!]$. Leave out the slip.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$\\ell_{\\text{sat}} = \\sum[y_j\\ln y_j - y_j - \\ln y_j!]$, putting $\\mu_j = y_j$"
+     },
+     {
+      "id": "b",
+      "text": "$\\ell_{\\text{model}} = \\sum[y_j\\ln\\hat\\mu_j - \\hat\\mu_j - \\ln y_j!]$, putting in the fitted means"
+     },
+     {
+      "id": "c",
+      "text": "$\\ell_{\\text{sat}} - \\ell_{\\text{model}} = \\sum[y_j\\ln\\frac{y_j}{\\hat\\mu_j} - (y_j - \\hat\\mu_j)]$, the $\\ln y_j!$ terms cancel"
+     },
+     {
+      "id": "d",
+      "text": "$D = 2\\sum[y_j\\ln\\frac{y_j}{\\hat\\mu_j} - (y_j - \\hat\\mu_j)]$, doubling, with $0\\ln 0 = 0$ for zero counts"
+     },
+     {
+      "id": "x",
+      "text": "Days with $y_j = 0$ have no $\\ln y_j$, so they leave the sum",
+      "why": "Zero days stay in. $y\\ln y \\to 0$ as $y \\to 0$, so a zero day contributes $2\\hat\\mu_j$, and dropping our 28 zero days would hide the misfit."
+     }
+    ],
+    "answer": ["a", "b", "c", "d"],
+    "distractors": ["x"],
+    "same": [
+     ["a", "b"]
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Write both log-likelihoods first."},
+    {"rung": "point", "text": "Subtract: the factorials cancel."},
+    {"rung": "step", "text": "Double the difference, and keep the zeros with $0\\ln 0 = 0$."}
+   ],
+   "feedback": {
+    "correct": "$D = 2\\sum[y\\ln(y/\\hat\\mu) - (y - \\hat\\mu)]$.",
+    "generic": "Not quite right. Both likelihoods, then the difference, then double.",
+    "byKey": {"x": "You dropped the zero days. Their term is the limit $0\\ln 0 = 0$, so they contribute $2\\hat\\mu_j$."}
+   },
+   "explain": {
+    "text": "$D$ is a likelihood ratio against the model that fits every point exactly. For nested models, the drop in $D$ is the likelihood-ratio statistic you tested with $\\chi^2_1$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The deviance of yes or no data",
+   "prose": "For 0/1 outcomes the saturated model predicts each outcome exactly, so $\\ell_{\\text{sat}} = \\sum\\ln 1 = 0$. The default model of lesson 2 has $\\hat\\ell = -102.31956$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "statsmodels GLM, Binomial, 300 firms",
+     "compact": true,
+     "lines": ["Df Residuals:      298", "Log-Likelihood:  -102.32", "Deviance:         204.64"]
+    },
+    "state": {}
+   },
+   "question": "What is its deviance?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 204.639,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "204.639: $-2 \\times (-102.31956)$.",
+    "label": "Deviance",
+    "wrong": [
+     {
+      "id": "ll",
+      "value": 102.3196,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "dfr",
+      "value": 0.6867,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$D = 2(\\ell_{\\text{sat}} - \\hat\\ell)$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\ell_{\\text{sat}} = 0$ here.",
+     "highlight": ["l3"]
+    },
+    {"rung": "step", "text": "$D = -2\\hat\\ell = 204.639$."}
+   ],
+   "feedback": {
+    "correct": "$D = -2\\hat\\ell = 204.639$.",
+    "generic": "Not quite right. With $\\ell_{\\text{sat}} = 0$, $D = -2\\hat\\ell$.",
+    "byKey": {"ll": "You forgot the factor 2.", "dfr": "That is deviance over degrees of freedom. The question asks for the deviance."}
+   },
+   "explain": {
+    "text": "$D = -2\\hat\\ell = 204.639$, and $204.639/298 = 0.687$. For 0/1 data that ratio says nothing about fit. Each point's deviance depends only on $\\hat\\mu_j$, not on how well it matches."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Deviance and dispersion in code",
+   "prose": "Write the three checks every count model needs. `xlogy(y, y / mu)` returns 0 where $y = 0$, which is $0\\ln 0 = 0$. The setup builds the 200 days from seed 61 and the fitted means.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 12],
+     "y": [0, 0.6],
+     "xLabel": "$\\chi^2_1$ statistic",
+     "yLabel": "density",
+     "height": 230,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(-lgamma(k/2) - (k/2)*ln(2) + (k/2 - 1)*ln(x) - x/2)",
+       "domain": [0.05, 12],
+       "label": "$\\chi^2_1$ density"
+      }
+     ],
+     "params": {"k": 1}
+    },
+    "state": {
+     "area": {"id": "A", "f": "f", "from": 5.557, "to": 40, "label": "auto"},
+     "vlines": [
+      {"id": "obs", "x": 5.557, "label": "5.557"}
+     ]
+    }
+   },
+   "question": "Complete `poisson_deviance`, `dispersion` and `lr_test`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.special import xlogy\nfrom scipy.stats import chi2\n\n\ndef poisson_deviance(y, mu):\n    ...\n\n\ndef dispersion(y, mu, n_params):\n    \"\"\"Pearson chi-square over its degrees of freedom.\"\"\"\n    ...\n\n\ndef lr_test(dev_small, dev_big, df):\n    \"\"\"Return (statistic, p-value) for nested models.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom scipy.special import xlogy\nfrom scipy.stats import chi2\n\n\ndef poisson_deviance(y, mu):\n    y = np.asarray(y, dtype=float)\n    mu = np.asarray(mu, dtype=float)\n    return 2 * np.sum(xlogy(y, y / mu) - (y - mu))\n\n\ndef dispersion(y, mu, n_params):\n    y = np.asarray(y, dtype=float)\n    mu = np.asarray(mu, dtype=float)\n    return np.sum((y - mu) ** 2 / mu) / (len(y) - n_params)\n\n\ndef lr_test(dev_small, dev_big, df):\n    stat = dev_small - dev_big\n    return stat, chi2.sf(stat, df)\n",
+    "examples": [
+     {
+      "call": "round(float(poisson_deviance([2, 0, 5], [3, 1, 4])), 4)",
+      "expect": "2.6096",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "float(poisson_deviance([2, 0, 5], [3, 1, 4]))",
+      "expect": "2.60957508070944",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "rng = np.random.default_rng(61); x = rng.normal(0, 1, 200); z = rng.normal(0, 1, 200); lam = rng.gamma(2.0, 0.5 * np.exp(1.5 + 0.4 * x)); y = rng.poisson(lam); mu = np.exp(1.4334307985486983 + 0.3854102222821626 * x)",
+      "call": "float(poisson_deviance(y, mu))",
+      "expect": "631.3708912525251",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "call": "float(poisson_deviance([0, 0], [0.5, 2.0]))",
+      "expect": "5.0",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "rng = np.random.default_rng(61); x = rng.normal(0, 1, 200); z = rng.normal(0, 1, 200); lam = rng.gamma(2.0, 0.5 * np.exp(1.5 + 0.4 * x)); y = rng.poisson(lam); mu = np.exp(1.4334307985486983 + 0.3854102222821626 * x)",
+      "call": "round(float(dispersion(y, mu, 2)), 6)",
+      "expect": "3.158169",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "call": "float(dispersion([2, 0, 5], [3, 1, 4], 1))",
+      "expect": "0.7916666666666666",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "call": "[float(v) for v in lr_test(631.3708912525251, 625.8138622619642, 1)]",
+      "expect": "[5.557028990560866, 0.018406626050570606]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "call": "[float(v) for v in lr_test(10.0, 4.0, 2)]",
+      "expect": "[6.0, 0.049787068367863944]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     }
+    ],
+    "how": "Check runs 7 hidden tests. Three test deviances, including the 200 days (631.371 within $10^{-6}$). Two test the dispersion, 3.158169 on the days. Two test likelihood ratios against `scipy.stats.chi2`. The first run loads NumPy and SciPy, about 10 seconds."
+   },
+   "hints": [
+    {"rung": "nudge", "text": "`poisson_deviance` is one line with `xlogy`."},
+    {"rung": "point", "text": "`dispersion` divides $\\sum(y - \\mu)^2/\\mu$ by `len(y) - n_params`."},
+    {"rung": "step", "text": "`lr_test` returns `dev_small - dev_big` and `chi2.sf(stat, df)`."}
+   ],
+   "feedback": {
+    "correct": "Your checks reproduce 631.371, 3.158 and $p = 0.0184$.",
+    "generic": "Some tests failed. Keep the zero counts with `xlogy`, and divide Pearson's sum by $n - p$."
+   },
+   "explain": {"text": "A plain `y * np.log(y / mu)` gives `nan` at $y = 0$ and poisons the sum. `xlogy` returns the limit 0, so the zero days count as $2\\hat\\mu_j$."}
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Twenty signals on Poisson errors",
+   "prose": "A desk tests 20 unrelated signals, one at a time, on overdispersed fill counts with $\\hat\\phi = 3.141$. Each Wald test uses Poisson standard errors, too small by $\\sqrt{3.141} = 1.772$. So a 5% test really rejects when $|Z| > 1.96/1.772 = 1.106$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {"mu": 0, "sigma": 1},
+     "x": [-4, 4],
+     "variable": "Z"
+    },
+    "state": {
+     "shade": [
+      {"from": null, "to": -1.106},
+      {"from": 1.106, "to": null}
+     ]
+    }
+   },
+   "question": "How many of the 20 null signals does the desk expect to call significant?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.376,
+    "tol": {"abs": 0.03},
+    "unit": "",
+    "accept": "5.38: each test rejects with probability $2P(Z > 1.106) = 0.2688$, and $20 \\times 0.2688 = 5.38$.",
+    "label": "Expected false signals",
+    "wrong": [
+     {
+      "id": "nominal",
+      "value": 1,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "one",
+      "value": 2.688,
+      "tol": {"abs": 0.03}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Find the true size of one test from the shaded tails."},
+    {"rung": "point", "text": "$2P(Z > 1.106) = 0.2688$."},
+    {"rung": "step", "text": "Multiply by 20 signals."}
+   ],
+   "feedback": {
+    "correct": "About 5.4 false signals instead of 1.",
+    "generic": "Not quite right. Multiply the shaded share by 20.",
+    "byKey": {
+     "nominal": "That is what correct standard errors would give: $20 \\times 0.05$. These SEs are too small.",
+     "one": "You took one tail. The test rejects on both sides."
+    }
+   },
+   "explain": {
+    "text": "Each test's real size is 26.9%, so 20 null signals give about 5.4 false discoveries, not 1. Fills and defaults cluster in busy markets and credit cycles, so check $\\hat\\phi$ first. `testing` lesson 9 covers the multiple-testing side."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The deviance $D = 2(\\ell_{\\text{sat}} - \\ell_{\\text{model}})$; for nested models the drop in $D$ is roughly $\\chi^2$ with one df per added coefficient.",
+   "Pearson $\\chi^2/(n - p)$ estimates the dispersion: 3.158 on the fills, where a Poisson model needs about 1.",
+   "Overdispersion leaves coefficients nearly unchanged but shrinks Poisson standard errors; scale by $\\hat\\phi$ or fit a negative binomial."
+  ],
+  "formula": {
+   "name": "Poisson deviance",
+   "tex": "D = 2\\sum_j\\Big[y_j\\ln\\frac{y_j}{\\hat\\mu_j} - (y_j - \\hat\\mu_j)\\Big], \\qquad \\hat\\phi = \\frac{1}{n - p}\\sum_j\\frac{(y_j - \\hat\\mu_j)^2}{\\hat\\mu_j}",
+   "note": "For 0/1 data $D = -2\\hat\\ell$, and $D/\\text{df}$ is no fit check."
+  },
+  "trap": "Trusting Poisson standard errors on overdispersed counts: an unrelated signal got $p = 0.018$, which became 0.185 once scaled."
+ },
+ "quiz": [
+  {
+   "id": "q-binary-df",
+   "difficulty": 3,
+   "prose": "The default model on 300 firms has deviance 204.639 on 298 degrees of freedom, a ratio of 0.687.",
+   "question": "What does the ratio tell us about the fit?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "nothing", "text": "Nothing: for 0/1 outcomes deviance over df is not a goodness-of-fit check", "correct": true},
+     {
+      "id": "good",
+      "text": "The fit is good, since the ratio is below 1",
+      "why": "For count data a ratio near 1 is reassuring. For 0/1 data each term depends only on $\\hat\\mu_j$, so the ratio carries no such meaning."
+     },
+     {"id": "under", "text": "The data are underdispersed", "why": "Bernoulli outcomes cannot be over- or underdispersed: their variance is fixed by the mean."}
+    ]
+   },
+   "feedback": {"correct": "No information about fit.", "generic": "Not quite right. Think about what the saturated model is for 0/1 data."},
+   "explain": {
+    "text": "With $\\ell_{\\text{sat}} = 0$, the binary deviance is $-2\\hat\\ell$, which depends on the $\\hat\\mu_j$ alone. Check a binary model with a calibration table instead."
+   }
+  },
+  {
+   "id": "q-lr2",
+   "difficulty": 3,
+   "prose": "Adding two predictors to a Poisson model cuts the deviance from 260.0 to 254.0. The dispersion is near 1.",
+   "question": "What is the likelihood-ratio $p$-value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0498,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.0498: $P(\\chi^2_2 > 6) = e^{-3}$.",
+    "label": "p-value",
+    "wrong": [
+     {
+      "id": "df1",
+      "value": 0.0143,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "cdf",
+      "value": 0.9502,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^{-3} = 0.0498$.",
+    "generic": "Not quite right. Compare a drop of 6 with $\\chi^2_2$.",
+    "byKey": {"df1": "You used one degree of freedom. Two predictors were added.", "cdf": "That is the area to the left of 6."}
+   },
+   "explain": {
+    "text": "The drop is 6 on 2 degrees of freedom, and $P(\\chi^2_2 > 6) = e^{-6/2} = 0.0498$."
+   }
+  },
+  {
+   "id": "q-spot",
+   "difficulty": 2,
+   "prose": "Daily cancels on a venue have mean 12.0 and variance 13.1.",
+   "question": "Is a Poisson model's variance assumption reasonable?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "yes", "text": "Roughly yes: the ratio is 1.09, close to 1", "correct": true},
+     {"id": "no", "text": "No: the variance is larger than the mean", "why": "Slightly larger is normal sampling noise. Our fills had a ratio of 3.89."},
+     {"id": "cannot", "text": "It cannot be judged without fitting a model", "why": "The raw ratio is a first check; the fitted dispersion refines it."}
+    ]
+   },
+   "feedback": {"correct": "A ratio of 1.09 is close to 1.", "generic": "Not quite right. Divide the variance by the mean."},
+   "explain": {"text": "$13.1/12.0 = 1.09$. Compare 3.89 for the fills, which needed a quasi-Poisson or negative binomial model."}
+  }
+ ]
+}

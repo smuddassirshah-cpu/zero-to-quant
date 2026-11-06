@@ -1,0 +1,348 @@
+{
+ "id": "homework-1",
+ "course": "stat-models",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-irls",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": ["sm-glm"],
+   "title": "One IRLS loop for both families",
+   "prose": "Write one IRLS routine for logistic and Poisson regression. The link and the variance function should be the only difference. Start the logistic fit at zero, the Poisson fit at $\\beta_0 = \\ln(\\sum y/\\sum e^{\\text{offset}})$ with the rest zero. Stop when the deviance changes by less than `tol`; raise `ValueError` on separation or an unknown family.",
+   "question": "Write `irls(X, y, family, offset=None, tol=1e-10, max_iter=50)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef irls(X, y, family, offset=None, tol=1e-10, max_iter=50):\n    \"\"\"IRLS for family 'binomial' (logit) or 'poisson' (log).\n\n    Return the coefficients. Raise ValueError for an unknown family\n    or when the deviance has not settled after max_iter updates.\n    \"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef _dev(family, y, eta):\n    if family == 'binomial':\n        return 2 * np.sum(np.logaddexp(0, eta) - y * eta)\n    mu = np.exp(eta)\n    with np.errstate(divide='ignore', invalid='ignore'):\n        t = np.where(y > 0, y * np.log(y / mu), 0.0)\n    return 2 * np.sum(t - (y - mu))\n\n\ndef irls(X, y, family, offset=None, tol=1e-10, max_iter=50):\n    if family not in ('binomial', 'poisson'):\n        raise ValueError('unknown family: ' + str(family))\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    off = np.zeros(len(y)) if offset is None else np.asarray(offset, dtype=float)\n    beta = np.zeros(X.shape[1])\n    if family == 'poisson':\n        beta[0] = np.log(y.sum() / np.exp(off).sum())\n    dev = _dev(family, y, X @ beta + off)\n    for k in range(max_iter):\n        eta = X @ beta + off\n        if family == 'binomial':\n            mu = 1 / (1 + np.exp(-eta))\n            W = mu * (1 - mu)\n        else:\n            mu = np.exp(eta)\n            W = mu\n        z = eta - off + (y - mu) / W\n        beta = np.linalg.solve(X.T @ (W[:, None] * X), X.T @ (W * z))\n        new_dev = _dev(family, y, X @ beta + off)\n        if abs(new_dev - dev) < tol:\n            return beta\n        dev = new_dev\n    raise ValueError('IRLS did not converge')\n",
+    "examples": [
+     {
+      "setup": "x = np.arange(6.0); y = np.array([0, 0, 1, 0, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "[round(b, 6) for b in irls(X, y, 'binomial').tolist()]",
+      "expect": "[-3.035069, 1.214028]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x = np.arange(6.0); y = np.array([0, 0, 1, 0, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "irls(X, y, 'binomial').tolist()",
+      "expect": "[-3.0350689646265123, 1.214027585850605]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); X = np.column_stack([np.ones(300), L])",
+      "call": "irls(X, y, 'binomial').tolist()",
+      "expect": "[-5.451164308995994, 8.690639009216971]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "L = np.array([0.10, 0.20, 0.30, 0.35, 0.40, 0.50, 0.55, 0.60, 0.70, 0.80, 0.85, 0.95]); y = np.array([0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1.0]); X = np.column_stack([np.ones(12), L])",
+      "call": "irls(X, y, 'binomial').tolist()",
+      "expect": "[-3.721961708778537, 6.133700299510535]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "rng = np.random.default_rng(23); v = rng.uniform(10, 40, 120); t = np.where(v > 25, rng.choice([5, 15], 120), rng.choice([30, 60], 120)); y = rng.poisson(t * np.exp(-0.5 + 0.06 * v)); X = np.column_stack([np.ones(120), v])",
+      "call": "irls(X, y, 'poisson', np.log(t)).tolist()",
+      "expect": "[-0.47859278790894677, 0.05913496159076384]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "rng = np.random.default_rng(23); v = rng.uniform(10, 40, 120); t = np.where(v > 25, rng.choice([5, 15], 120), rng.choice([30, 60], 120)); y = rng.poisson(t * np.exp(-0.5 + 0.06 * v)); X = np.column_stack([np.ones(120), v])",
+      "call": "irls(X, y, 'poisson').tolist()",
+      "expect": "[4.583922353677266, -0.020324374175238122]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "x = np.arange(1, 7.0); y = np.array([0, 0, 0, 1, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "irls(X, y, 'binomial')",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "setup": "x = np.arange(6.0); y = np.array([0, 0, 1, 0, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "irls(X, y, 'gamma')",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 7 hidden tests. Five compare your coefficients with statsmodels `sm.GLM` coefficients, computed once in Pyodide, within $10^{-6}$. Data: the six points, the 300 firms (seed 11), the twelve firms, and the 120 intervals (seed 23) twice. Two expect `ValueError`: separated data and the family 'gamma'. Only NumPy is needed; the first run loads it in a few seconds."
+   },
+   "feedback": {
+    "correct": "One loop, two families, statsmodels' answers.",
+    "generic": "Some tests failed. Check the Poisson start, the offset in $z$, and that the loop raises when it does not settle."
+   },
+   "explain": {
+    "text": "Only three lines depend on the family: the inverse link, the weight and the deviance. The working response $z = \\eta - \\text{offset} + (y - \\mu)/W$ is the same for both."
+   }
+  },
+  {
+   "id": "h-newton-pois",
+   "difficulty": 4,
+   "skills": ["sm-glm"],
+   "title": "Poisson IRLS is Newton's method",
+   "prose": "For a Poisson GLM with log link and offset $o_j$, $\\mu_j = e^{o_j + \\mathbf{x}_j^T\\boldsymbol\\beta}$. Show that a Newton step is a weighted least squares fit with $W = \\mu$ and $z = \\eta - o + (y - \\mu)/\\mu$.",
+   "question": "Put the lines in order and leave out the slip.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$\\ell = \\sum_j [y_j\\eta_j - e^{\\eta_j} - \\ln y_j!]$ with $\\eta_j = o_j + \\mathbf{x}_j^T\\boldsymbol\\beta$, from the pmf"
+     },
+     {
+      "id": "b",
+      "text": "Score: $\\nabla\\ell = \\sum_j (y_j - \\mu_j)\\mathbf{x}_j = \\mathbf{X}^T(\\mathbf{y} - \\boldsymbol\\mu)$, differentiating $\\eta_j$"
+     },
+     {
+      "id": "c",
+      "text": "Hessian: $\\nabla^2\\ell = -\\sum_j \\mu_j\\mathbf{x}_j\\mathbf{x}_j^T = -\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$ with $W_{jj} = \\mu_j$"
+     },
+     {
+      "id": "d",
+      "text": "Newton: $\\boldsymbol\\beta_{\\text{new}} = \\boldsymbol\\beta + (\\mathbf{X}^T\\mathbf{W}\\mathbf{X})^{-1}\\mathbf{X}^T(\\mathbf{y} - \\boldsymbol\\mu)$"
+     },
+     {
+      "id": "e",
+      "text": "$= (\\mathbf{X}^T\\mathbf{W}\\mathbf{X})^{-1}\\mathbf{X}^T\\mathbf{W}[\\mathbf{X}\\boldsymbol\\beta + \\mathbf{W}^{-1}(\\mathbf{y} - \\boldsymbol\\mu)]$, and $\\mathbf{X}\\boldsymbol\\beta = \\boldsymbol\\eta - \\mathbf{o}$, so $\\mathbf{z} = \\boldsymbol\\eta - \\mathbf{o} + (\\mathbf{y} - \\boldsymbol\\mu)/\\boldsymbol\\mu$"
+     },
+     {
+      "id": "x",
+      "text": "$= (\\mathbf{X}^T\\mathbf{W}\\mathbf{X})^{-1}\\mathbf{X}^T\\mathbf{W}[\\boldsymbol\\eta + \\mathbf{W}^{-1}(\\mathbf{y} - \\boldsymbol\\mu)]$, so $\\mathbf{z}$ keeps the offset",
+      "why": "Here $\\mathbf{X}\\boldsymbol\\beta$ has been replaced by $\\boldsymbol\\eta$, which includes the offset. The solve would then add the offset a second time."
+     }
+    ],
+    "answer": ["a", "b", "c", "d", "e"],
+    "distractors": ["x"]
+   },
+   "feedback": {
+    "correct": "$W = \\mu$ and $z = \\eta - o + (y - \\mu)/\\mu$.",
+    "generic": "Not quite right. Score, Hessian, Newton step, then rewrite as weighted least squares.",
+    "byKey": {
+     "x": "You kept the offset in $z$. $\\mathbf{X}\\boldsymbol\\beta$ is $\\boldsymbol\\eta$ minus the offset."
+    }
+   },
+   "explain": {
+    "text": "The log link is canonical for the Poisson, so the Hessian is exactly $-\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$ with $W = \\mu$. Writing $\\boldsymbol\\beta$ as a weighted fit of $\\mathbf{X}\\boldsymbol\\beta$ turns the Newton step into IRLS."
+   }
+  },
+  {
+   "id": "h-colleague",
+   "difficulty": 5,
+   "skills": ["sm-glm"],
+   "title": "Three errors in one research note",
+   "kind": "longform",
+   "prompt": "A colleague models trades per interval by OLS on $\\ln(\\text{count} + 1)$ against volatility. They leave out interval length. They report \"volatility lowers activity, $p < 0.001$ from a Poisson fit\". Use the 120 intervals (D2) and the 200 fill days (D3) of this level. List each error with its consequence. Give the corrected model with its offset and estimates. Describe the dispersion check, and write the sentence for the note.",
+   "model": "**Error 1: OLS on $\\ln(\\text{count} + 1)$.** This models $E[\\ln(Y + 1)]$, not $\\ln E[Y]$; for a Poisson(2) count these are 0.9780 and 1.0986. The $+1$ is arbitrary, and zero counts get a made-up log. The slope has no rate-ratio reading. *Consequence:* a biased, unit-free coefficient and residual variance that changes with the mean.\n\n**Error 2: no interval length.** On D2 the quiet intervals were 30 or 60 minutes and the volatile ones 5 or 15. Without the offset the Poisson fit gives $\\hat\\beta_1 = -0.020324$, a rate ratio of 0.8161 per 10 points. *Consequence:* the wrong sign. Short intervals are the volatile ones, so length masquerades as a volatility effect.\n\n**Error 3: $p < 0.001$ from Poisson standard errors without a dispersion check.** On D3 the Pearson dispersion is 3.158, so Poisson SEs are about $\\sqrt{3.14} = 1.77$ times too small. An unrelated signal got $p = 0.018$, which became 0.185 once scaled. *Consequence:* $p$-values far too small and false signals.\n\n**Corrected model.** $Y_j \\sim$ Poisson with $\\ln E[Y_j] = \\ln t_j + \\beta_0 + \\beta_1v_j$, fitted as `sm.GLM(y, X, family=sm.families.Poisson(), offset=np.log(t))`. On D2: $\\hat\\beta_1 = 0.059135$ (SE 0.001534), a rate ratio of $e^{0.59135} = 1.8064$ per 10 points. A free coefficient on $\\ln t$ is 0.976 (SE 0.022), consistent with 1, which supports the offset.\n\n**Dispersion check.** Compute Pearson $\\chi^2/(n - p)$. On D2 it is $113/118$, about 0.96, so Poisson SEs stand. Were it near 3, as on D3, we would scale SEs by $\\sqrt{\\hat\\phi}$ (quasi-Poisson). A negative binomial is the other fix; test by $F = \\Delta D/\\hat\\phi$.\n\n**Sentence for the note.** \"Allowing for interval length, trading activity rises with volatility. Each 10 points of annualised volatility multiply the trade rate by 1.81 (95% interval 1.75 to 1.86). The counts show no overdispersion.\"",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Names the log-transform error: it models $E[\\ln(Y + 1)]$, not $\\ln E[Y]$, and mishandles zeros."
+    },
+    {
+     "points": 2,
+     "text": "Names the missing exposure and its cost on D2: the slope flips to $-0.020324$ (0.8161 per 10 points). Short intervals are the volatile ones."
+    },
+    {
+     "points": 2,
+     "text": "Names the missing dispersion check and its cost: on D3, $\\hat\\phi = 3.158$. Poisson SEs are about 1.77 times too small, and $p = 0.018$ becomes 0.185."
+    },
+    {
+     "points": 2,
+     "text": "Gives the Poisson GLM with offset $\\ln t$: slope 0.059135, rate ratio 1.8064 per 10 points. Mentions the free $\\ln t$ coefficient of 0.976."
+    },
+    {"points": 1, "text": "Describes the dispersion check (Pearson $\\chi^2/(n - p)$) and the remedy: quasi-Poisson scaling or a negative binomial."},
+    {"points": 1, "text": "Writes a clear sentence for the note with the rate ratio and an interval."}
+   ]
+  },
+  {
+   "id": "h-quasi",
+   "difficulty": 4,
+   "skills": ["sm-glm"],
+   "title": "A scaled deviance test",
+   "prose": "Adding a new order-flow signal to a Poisson model of daily fills cuts the deviance by 9.6. The larger model has Pearson $\\chi^2 = 768$ on 240 degrees of freedom.",
+   "question": "What is the quasi-Poisson $F$ statistic for the signal?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.0,
+    "tol": {"abs": 0.005},
+    "unit": "",
+    "accept": "3.0: $\\hat\\phi = 768/240 = 3.2$ and $F = 9.6/3.2$.",
+    "label": "F",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 9.6,
+      "tol": {"abs": 0.005}
+     },
+     {
+      "id": "sqrt",
+      "value": 5.3666,
+      "tol": {"abs": 0.005}
+     },
+     {
+      "id": "times",
+      "value": 30.72,
+      "tol": {"abs": 0.01}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$F = 3.0$ on $(1, 240)$, $p \\approx 0.085$: not significant at 5%.",
+    "generic": "Not quite right. Divide the drop by $\\hat\\phi = 768/240$.",
+    "byKey": {
+     "raw": "You left the drop unscaled. With $\\hat\\phi = 3.2$ it must be divided.",
+     "sqrt": "You divided by $\\sqrt{\\hat\\phi}$. Deviances scale with $\\hat\\phi$ itself.",
+     "times": "You multiplied by $\\hat\\phi$."
+    }
+   },
+   "explain": {"text": "$\\hat\\phi = 768/240 = 3.2$, so $F = 9.6/3.2 = 3.0$. Unscaled, $P(\\chi^2_1 > 9.6) = 0.002$ would have looked decisive."}
+  },
+  {
+   "id": "h-fill-tick",
+   "difficulty": 3,
+   "skills": ["sm-glm"],
+   "title": "One tick further from the mid",
+   "prose": "The fill model of lesson 2 is $\\hat\\mu(d) = 1/(1 + e^{-(1.293818 - 0.972967d)})$, with $d$ the distance from the mid in ticks. At $d = 2$ it gives 34.25%.",
+   "question": "By how many percentage points does the fill probability fall from $d = 1$ to $d = 2$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 23.7,
+    "tol": {"abs": 0.03},
+    "unit": "points",
+    "accept": "23.70 points: 57.95% at $d = 1$, 34.25% at $d = 2$.",
+    "label": "Fall in points",
+    "wrong": [
+     {
+      "id": "coef",
+      "value": 97.3,
+      "tol": {"abs": 0.05}
+     },
+     {
+      "id": "odds",
+      "value": 37.8,
+      "tol": {"abs": 0.05}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "From 57.95% to 34.25%: 23.70 points.",
+    "generic": "Not quite right. Compute the probability at $d = 1$ and subtract 34.25%.",
+    "byKey": {
+     "coef": "You read the coefficient as points. It moves the log odds by 0.973.",
+     "odds": "You used the odds ratio, 0.3780. That multiplies the odds, not the probability."
+    }
+   },
+   "explain": {
+    "text": "At $d = 1$, $\\eta = 0.320851$ and the fill probability is 57.95%; at $d = 2$ it is 34.25%, a fall of 23.70 points. Between $d = 4$ and $d = 5$ the fall is only 4.19 points: the curve flattens in its tail."
+   }
+  },
+  {
+   "id": "h-hour",
+   "difficulty": 4,
+   "skills": ["sm-glm"],
+   "title": "A long quiet interval",
+   "prose": "The trade model of lesson 3 is $\\ln E[Y] = \\ln t - 0.478593 + 0.059135v$.",
+   "question": "How many trades does it expect in a 60-minute interval at $v = 15$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 90.27,
+    "tol": {"abs": 0.05},
+    "unit": "",
+    "accept": "90.27: $60 \\times e^{-0.478593 + 0.887024} = 60 \\times 1.5045$.",
+    "label": "Trades",
+    "wrong": [
+     {
+      "id": "rate",
+      "value": 1.5045,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "v20",
+      "value": 121.32,
+      "tol": {"abs": 0.05}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "90.27 trades.",
+    "generic": "Not quite right. Compute the rate at $v = 15$ and multiply by 60.",
+    "byKey": {"rate": "That is the rate per minute. The interval lasts 60 minutes.", "v20": "You used $v = 20$, the lesson's example. This interval has $v = 15$."}
+   },
+   "explain": {
+    "text": "$\\eta = \\ln 60 - 0.478593 + 15 \\times 0.059135 = 4.502776$, and $e^{4.502742} = 90.27$. The same as 60 minutes at 1.5045 trades a minute."
+   }
+  },
+  {
+   "id": "h-sep-fix",
+   "difficulty": 4,
+   "skills": ["sm-glm"],
+   "title": "Fixing separation",
+   "prose": "A PD model on one sector is perfectly separated: every firm above leverage 0.8 defaulted. The bank still needs a finite PD for a new firm at 0.85.",
+   "question": "Which change gives finite, usable coefficients?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "pen", "text": "Add a penalty, such as ridge or Firth's, or pool the sector with similar ones", "correct": true},
+     {"id": "iter", "text": "Run IRLS for 500 iterations", "why": "More iterations push the slope higher still. Separation has no finite maximum to reach."},
+     {"id": "drop", "text": "Drop the defaulted firms above 0.8", "why": "Removing the defaults throws away exactly the information about high-leverage risk."},
+     {
+      "id": "ols",
+      "text": "Switch to OLS on the 0/1 outcomes",
+      "why": "OLS gives finite numbers, but predicted PDs outside $[0, 1]$, as in lesson 1."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {"correct": "A penalty bounds the coefficients.", "generic": "Not quite right. The likelihood alone has no finite maximum, so something must be added."},
+   "explain": {
+    "text": "A ridge or Firth penalty makes the objective fall as the slope grows, so it has a finite maximum. scikit-learn's default $C = 1$ ridge is one such penalty; pooling sectors is another fix."
+   }
+  },
+  {
+   "id": "h-nb-lr",
+   "difficulty": 3,
+   "skills": ["sm-glm"],
+   "title": "The signal under a negative binomial",
+   "prose": "Take the NB2 model of lesson 5. Adding the unrelated signal $z$ raises its log-likelihood from $-498.178$ to $-497.586$.",
+   "question": "What is the likelihood-ratio $p$-value for $z$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2767,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "0.277: the statistic is $2 \\times 0.5915 = 1.183$ and $P(\\chi^2_1 > 1.183) = 0.277$.",
+    "label": "p-value",
+    "wrong": [
+     {
+      "id": "nodouble",
+      "value": 0.4418,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "pois",
+      "value": 0.0184,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$p = 0.277$: no evidence for $z$, as it should be.",
+    "generic": "Not quite right. Double the log-likelihood gain and compare with $\\chi^2_1$.",
+    "byKey": {"nodouble": "You used the gain of 0.5915 without doubling it.", "pois": "That is the plain Poisson $p$-value. The NB2 model allows for the overdispersion."}
+   },
+   "explain": {
+    "text": "$2(-497.586 + 498.178) = 1.183$ and $P(\\chi^2_1 > 1.183) = 0.277$. The negative binomial, like the quasi-Poisson fix, stops the noise passing as signal."
+   }
+  }
+ ]
+}
