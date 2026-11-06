@@ -1297,3 +1297,13 @@ Raised later (algebra level 3):
 
 Raised later (algebra level 4):
 - [Should] `plane` functions: in l17 screen 8 two curves `{ "id": "g", "expr": "x^2 + 2x + 2", "labelSide": "below" }` and `{ "id": "h", "expr": "x^2 - 2x + 2", ... }` beside `f` were not drawn at all at 440 or 1280 px, and the validator said nothing. Renaming them `q1`, `q2`, writing `2*x` and dropping `labelSide` drew both; the cause was not isolated. Wanted: the curve drawn, or a validator error naming the reason. Workaround: the renamed entries.
+Raised later (algebra level 1):
+
+- `vectors`: `segments` listed under `params` are not drawn; only `state.segments` is. The README lists `segments` beside the params-level `vectors` and `points`, so a square drawn from corner vectors showed no edges until the list moved into `state`. Wanted: seed `segments` (and `angles`) from params as `vectors` and `points` are, or say in the README that they are state only. Workaround: `state.segments` (algebra l1, all square and triangle canvases).
+- `plane` in a `frames` control: a keyed `functions` patch (`{ "functions": { "f": { "expr": "..." } } }`) throws `object is not iterable` in `plane.js` `functionsOf`, although AUTHORING section 4 says a `functions` patch by id keeps the domain. Wanted: keyed patches on plane `functions` like other lists. Workaround: each frame gives the whole `functions` list (algebra l1 transfer, four payoffs and their mirrors).
+- `expression` with a complex answer: parts are compared at 1e-9, so `0.5+0.866i` and the exact `\frac{1}{2}+\frac{\sqrt{3}}{2}i` are different answers, and a learner typing 0.86603 fails. Wanted: an answer-level `tol` (absolute, per part) for decimal answers. Workaround: `answer` `0.5+0.866i` with the exact form, `e^{i\pi/3}`, `0.5+0.8660i` and the cos/sin form in `accept` (algebra l4 screen 6).
+
+Raised later (algebra level 2):
+
+- `manipulate`: the validator requires the target to be reachable, so an exploration whose point is that the target can never be reached (the 15-puzzle with 14 and 15 swapped) cannot be built as a slide game. Wanted: `"target": null` or `"explore": true`, graded by a following question, with each state still a canvas patch. Workaround: the target is "blank home again" after a four-slide loop, a refused "swap 14 and 15" chip states the rule, and the next screen asks whether the board can be solved (algebra l9 screens 0 and 1).
+- `grid`: row and column heads are not tap targets, so "tap the four rotations" on a Cayley table cannot be asked of the heads. Wanted: head ids (`h-r2`, `h-c3`) in tap mode. Workaround: the learner taps cells inside the rotation block with the rest dimmed (algebra l5 screen 0) or a column of cells standing for the elements (l7 screen 0).
