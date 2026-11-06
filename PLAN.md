@@ -195,7 +195,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] complex L3: Integrals and Fourier [Quant] (session T: second read and fix pass in `docs/reviews/review-complex-3.md`)
 - [x] vector-calc L1: Fields and line integrals [Pure maths] (session T: second read and fix pass in `docs/reviews/review-vector-calc-1-2.md`)
 - [x] vector-calc L2: Green’s theorem [Pure maths] (session T: second read and fix pass in `docs/reviews/review-vector-calc-1-2.md`)
-- [ ] vector-calc L3: Surfaces and space [Pure maths]
+- [x] vector-calc L3: Surfaces and space [Pure maths] (session T: second read and fix pass in `docs/reviews/review-vector-calc-3.md`)
 - [x] odes L1: First-order equations [Quant] (session S: second read and fix pass in `docs/reviews/review-odes-1-3.md`)
 - [x] odes L2: Second-order equations [Quant] (session S: second read and fix pass in `docs/reviews/review-odes-1-3.md`)
 - [x] odes L3: Systems and stability [Quant] (session S: second read and fix pass in `docs/reviews/review-odes-1-3.md`)
