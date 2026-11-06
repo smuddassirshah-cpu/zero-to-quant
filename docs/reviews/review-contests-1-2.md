@@ -91,3 +91,32 @@ Notation and conventions match across L1 to L4: Mira's P&L legend, problems lett
 4. Seen again (fourth time in the inbox): `numbers_lib` paths cannot name a hyphenated key such as `feedback.byKey.test-9`; the scripts here fall back to the whole `byKey` object.
 5. Workaround found for the repeated `fresh-check.mjs` ENOENT on course sets: `--file content/courses/<c>/<set>.json --as courses/<c>` runs both the prose and the code-name scans with no crash and no self-match. Documenting it in AUTHORING section 11 would unblock readers until the tool reads `--file` directly.
 
+
+## Fix pass
+
+1. fixed: l8 `screens[0].feedback.generic` now names the route B, A, A, B (basis: recomputed (3,2,1) to (4,0,2), (2,1,3), (0,2,4), (1,0,5); the script simulates it).
+2. fixed: homework-1 `items[1].canvas.params.lines[2]` now "1 ≤ k ≤ 2·10⁵"; test 8 stands.
+3. fixed: l8 `screens[8].prose` bound now $10^{18}$.
+4. fixed: l6 `screens[4].explain.text` "Every quotient but the last was 1" (basis: 2 = 2·1 + 0).
+5. fixed: review-2 `items[9].feedback.byKey.gcd` no longer infers reachability from the gcd (basis: l8 summary trap, $(2,7)$ counter-example).
+6. fixed: l2 `screens[5].prose` names the $2 \cdot 10^5$ queries.
+7. fixed: l6 sieve test `sieve(49)[-1]` expects 47 inserted as `tests[7]`; `how` says 11 tests. In CPython the solution passes all 11, the starter fails all 11, and a `p * p < n` sieve passes 10 and fails only the new test (returns 49). Number script checks the variant.
+8. fixed: homework-1 `items[4].widget.model` correctness paragraph rewritten (basis: monotonicity, a window containing an invalid window is invalid).
+9. fixed: homework-1 `items[5].feedback.correct` now 1.1·10⁷ (recomputed: 2e5·17.6 + 4e5·17.6 = 1.06e7; with 18, 1.08e7).
+10. fixed: l1 `screens[1].hints[2].text` no longer cites line numbers.
+11. fixed: l3 `screens[6].canvas.params.numbers` set to true.
+12. fixed: l5 `screens[1].feedback.byKey.n4` reworded (5 + 4 = 9, 9 mod 7 = 2).
+13. fixed: l5 `screens[9].explain.text` (basis: 5·5 = 25 ≡ 1 mod 12, so an inverse of 5 exists mod 12 though 12 is not prime; an inverse of b mod m exists iff gcd(b, m) = 1, the congruence ax ≡ 1 (mod m) is solvable iff gcd(a, m) = 1, by Bezout).
+14. fixed: l7 `screens[0].prose` says city blocks.
+15. fixed: l8 `screens[1].canvas.maxHeight` 400 (all nine rows).
+16. fixed: all nine consoles and the l5 display shortened as given; the l4 `screens[0]` time column dropped, line ids unchanged; l7 `screens[9]` has a sixth line, highlight l4 unchanged.
+17. fixed: l5 `screens[5].explain.text` is three sentences (at most 60 bits: 59 squarings plus at most 60 products is under 120).
+18. fixed: six `choice` widgets' options[1] and options[2] lengthened as given (l1 `screens[8]`, l8 `screens[9]`, review-1 `items[5]`, l3 `screens[11]`, l2 `quiz[1]`, l7 `screens[9]`); each `why` still true.
+19. fixed: l7 `screens[0].explain.text` cites Pascal's rule from `counting-chance` instead of bolding it as new.
+20. fixed: l7 `screens[5].explain.text` cites stars and bars from `counting-chance`.
+21. deferred: l9 `screens[0].explain.text`, L3 side, to the L3-L4 fix pass.
+22. deferred: l11 `screens[0].prose`, L3 side, to the L3-L4 fix pass.
+23. no change (freshness note).
+
+Gates: `python3 docs/reports/contests-L1-numbers.py` exit 0 (145 of 145); `python3 docs/reports/contests-L2-numbers.py` exit 0 (256 of 256; index checks for l6 sieve tests shifted by one, new checks for finding 1 and 7); voice scan 0 sentences over 35 and 0 explanations over three; validator 0 errors; playthrough results below.
+Playthrough with `--local-cdn`, desktop and `--mobile`: l1 to l8, review-1, review-2 and homework-1, 22 of 22 runs "All passed" (homework-2 unchanged).

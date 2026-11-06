@@ -139,9 +139,9 @@ b[0] = b[1] = 0
 for p in range(2, math.isqrt(N) + 1):
     if b[p]:
         b[p * p::p] = bytes(len(range(p * p, N + 1, p)))
-E('l6', 'screens[7].widget.tests[7].expect', sum(b[:10**6 + 1]))
-E('l6', 'screens[7].widget.tests[9].expect', sum(b))
-E('l6', 'screens[7].widget.tests[8].expect', sum(i for i in range(1_500_000) if b[i]))
+E('l6', 'screens[7].widget.tests[8].expect', sum(b[:10**6 + 1]))
+E('l6', 'screens[7].widget.tests[10].expect', sum(b))
+E('l6', 'screens[7].widget.tests[9].expect', sum(i for i in range(1_500_000) if b[i]))
 E('l6', 'screens[7].explain.text', sum(i for i in range(1_500_000) if b[i]))
 E('l6', 'screens[7].widget.tests[5].expect', len(primes100))
 assert is_prime(1_000_003) and is_prime(999_983) and is_prime(999_999_999_989)
@@ -164,8 +164,20 @@ E('l6', 'quiz[3].widget.options[1].why', round(math.sqrt(200), 1))
 # finding: the Fibonacci explanation says every quotient was 1; the last one is 2 (2 = 2 x 1)
 E('l6', 'screens[4].explain.text', 'Every quotient but the last was 1')
 # finding: no sieve test sits at n = p^2, so p * p < n passes; the fix adds sieve(49)[-1] == 47
-E('l6', 'screens[7].widget.tests', 'sieve(49)[-1]')
+E('l6', 'screens[7].widget.tests[7].call', 'sieve(49)[-1]')
+E('l6', 'screens[7].widget.tests[7].expect', max(v for v in range(2, 50) if is_prime(v)))
 assert max(v for v in range(50) if is_prime(v)) == 47
+def sieve_lt(n):    # the wrong bound p * p < n
+    f = [True] * (n + 1)
+    f[0:2] = [False] * min(2, n + 1)
+    p = 2
+    while p * p < n:
+        if f[p]:
+            for m in range(p * p, n + 1, p):
+                f[m] = False
+        p += 1
+    return [i for i in range(n + 1) if f[i]]
+lv._rec(sieve_lt(49)[-1] == 49, 'l6 sieve with p * p < n fails the new test (returns 49, not 47)', str(sieve_lt(49)[-1]))
 
 # ---------- l7 ----------
 grid = {}
@@ -248,6 +260,11 @@ for _ in range(6):
     path.append(s)
 lv._rec((1, 0, 5) not in path, 'l8 fullest-box strategy never reaches 1, 0, 5 (so the old feedback is wrong)', str(path))
 E('l8', 'screens[0].feedback.generic', '4, 0, 2')
+s = (3, 2, 1)
+for i in (1, 0, 0, 1):          # the route the new feedback names: B, A, A, B
+    s = tuple(s[j] - 2 if j == i else s[j] + 1 for j in range(3))
+    E('l8', 'screens[0].feedback.generic', ', '.join(map(str, s)))
+lv._rec(s == (1, 0, 5), 'l8 feedback route ends at 1, 0, 5', str(s))
 dark = doc['l8-invariants']['screens'][3]['canvas']['state']['shade']['dark']['ids']
 E('l8', 'screens[3].widget.answer', len(dark))
 lv._rec(len(dark) == 32 - 2 and 'r1c1' not in dark and 'r8c8' not in dark, 'l8 chessboard: 30 shaded left', '')
