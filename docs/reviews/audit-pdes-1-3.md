@@ -73,3 +73,25 @@ All from `app/` with the scratchpad `pkgs` as `--local-cdn`, after the ledger an
 - Playthrough sets: `node tools/playthrough.mjs --set pdes/review-1 --set pdes/homework-1 --local-cdn <pkgs>`: `browser relaunches: 0`, `All passed.`; the same for `review-2`/`homework-2` and `review-3`/`homework-3`: `All passed.`
 - Playthrough lessons: `--lesson pdes/l4-boundary-conditions`, `pdes/l8-heat-on-a-rod`, `pdes/l12-four-decimal-pricer`: each `browser relaunches: 0`, `All passed.`
 - Inbox: no engine or validator limit was hit, so nothing was appended to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Opus fix pass, 6 Nov 2026. Each correction established independently before editing; targeted string edits only, no ids, keys or tolerances changed.
+
+1. fixed | basis: the walk's mean speed $c$ is a property of the step bias, not a pricing measure; risk-neutral $\ln S$ drifts at $r - \tfrac12\sigma^2$ (Shreve II 5.2.5). Lesson 9 does remove the first-derivative term of Black-Scholes, so the replacement sentence points there.
+2. fixed | basis: explicit scheme for $u_t = Du_{xx}$ with mesh ratio $\lambda = D\Delta t/\Delta x^2$, stable and max-principle preserving iff $\lambda \le \tfrac12$ (Strikwerda ch. 6, the forward-time central-space scheme for parabolic equations). $D$ is defined in lesson 2, so defining $\lambda$ through it closes the gap; added to l4 screens[8].prose and explain, and homework-1 h-unstable.prose.
+3. fixed | basis: Dirichlet's theorem needs $f$ and $f'$ piecewise continuous (Strauss 5.4 Thm 4; Körner ch. 18 for a continuous $f$ with divergent series). Hypothesis added to l7 screens[9].prose and summary.ideas[0].
+4. fixed (stated model kept, key unchanged) | basis: own computation (`fix-pdes/drift.py`, scratch): survival in $(-a, a)$ by the sine-series density times the Girsanov factor $e^{\mu x/\sigma^2 - \mu^2T/(2\sigma^2)}$ gives 0.370777 driftless and 0.369278 at $\mu = -\tfrac12\sigma^2$ ($\sigma = 0.2$, $a = 0.2$), so £37.08 against £36.93; homework 0.540358 against 0.537295; a 100,000-path, 2,000-step simulation sits about 0.01 higher, the expected discrete-monitoring bias. The Girsanov route needs lesson 9, so the key stays on the series and the screens now state driftlessness as a simplification, with the risk-neutral £36.93 named in l8; questions say "Under the driftless model". The keyed 37.08 and 54.04 match the stated model and the canvas ($\mu = 0$).
+5. fixed | basis: every term of the truncated sum solves $u_t = Du_{xx}$ with zero ends, and by linearity so does the sum; its start is the partial sum with peak $b_1 = 400/\pi = 127.32$, so the maximum principle (Evans 2.3.3) bounds it by 127.3, and above 100 shows only that it is not the solution from 100.
+6. fixed | basis: $V = Ke^{\alpha x + \beta\tau}u(x, \tau)$ (WHD 5.4) with $\alpha = -\tfrac12(k - 1) = -0.75$ here (the canvas caption's $-0.75x_c$); $e^{-0.75\ln 1.1} = 0.9310$, recomputed.
+7. fixed | basis: the ordered lines (Itô drift zero, martingale, constant mean, read off $V$) prove the verification direction; the forward direction (expectation solves the PDE) uses the tower property for the martingale and then Itô (Shreve II 6.4, Thms 6.4.1 and 6.4.3). Prose now states the claim the lines prove, f3 adds the sufficient condition $\sigma V_x$ bounded for a true martingale, and explain gives the converse in one sentence. The lesson's later statement screen and summary keep the standard forward statement, which is correct.
+
+Counts: fixed 7, disputed 0, deferred 0. Graded answers changed: none (findings 4 and 5 change wording only; no `answer`, `wrong[]`, `tol` or order key moved).
+
+Fix-pass checks (worktree, from `app/` unless said):
+
+- `node tools/validate.mjs 2>&1 | tail -3`: `0 errors, 4298 warnings` (O2 advisory); `content/manifest.json` restored.
+- Concepts scripts, `python3 -I` from the repo root: `pdes-L1-concepts.py` exit 0, `pdes-L2-concepts.py` exit 0, `pdes-L3-concepts.py` exit 0, each "all checks passed"; no check needed changing.
+- `docs/briefs/exam-3.2-scripts/check_pdes.py` (`PYTHONPATH` set, `python3 -I`): exit 0; no expectation changed.
+- Voice scan 35: `explanations over three sentences: 0`; `sentences scanned: 5634; over 35 words: 0`.
+- Playthrough (`--local-cdn <pkgs>`), one run each plain and `--mobile` over l2, l4, l7, l8, l10, l11, homework-1 and homework-2: 8 of 8 `ok`, `browser relaunches: 0`, `All passed.` both times.
