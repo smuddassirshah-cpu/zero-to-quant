@@ -111,3 +111,55 @@ Course review and homework sets cannot be fresh-checked (Engine 4), so each item
 2. `[wrong-band]`: 3 of its 7 hits here are false. The rule compares the band with half the rounding step, but the right test is whether the slip rounded as asked still falls inside the band (0.0213 to 0.02 is inside ±0.002; 0.0333 to 0.03 is not). Wanted: round the wrong value to the asked places and test membership.
 3. Lo's standard error in the one-yearly-return form on daily data appeared five times in one level (finding 1). Wanted: a validator advisory for `(1 + SR^2/2)/T` in a course whose data are daily when the text has no $SR_d$ or "yearly".
 4. Seen again: `fresh-check.mjs --file content/courses/<c>/<set>.json --as exams` exits ENOENT, so course review and homework sets cannot be fresh-checked.
+
+## Fix pass
+
+Basis for findings 1, 5, 6, 7 (Sharpe standard error, derived independently). Lo (2002), "The Statistics of Sharpe Ratios", eq. 8 and 9: for iid returns at frequency q periods a year, the estimated per-period Sharpe $\widehat{SR}_q$ has $\mathrm{Var} \approx (1 + SR_q^2/2)/N$, where $N$ is the number of per-period returns and $SR_q$ the per-period Sharpe. The annual Sharpe is $\sqrt{q}\,SR_q$, so $SE(\widehat{SR}_{ann}) = \sqrt{q}\,\sqrt{(1 + SR_q^2/2)/N}$. With daily data, $q = 252$, $N = 252T$ ($T$ in years) and $SR_q = SR/\sqrt{252}$, this is $\sqrt{(1 + SR^2/504)/T}$, close to $1/\sqrt{T}$. The form $\sqrt{(1 + SR^2/2)/T}$ is the $q = 1$ case (one return a year, $T$ years): right for yearly returns, wrong for daily data. Annualising multiplies the standard error by $\sqrt{q}$ and $N$ grows by $q$, so the $SR^2$ term shrinks by $q$. Recomputed: SR 0.55, one year: 1.0003; SR 1.863, one year: 1.0034; SR 1.5, one year: 1.0022; SR 1.0, two years: 0.7078; SR 0, two years: 0.7071. All five places (l13 screens[3] and quiz[2], l16 screens[5] and quiz[2], homework-4 items[0] and its model note) now agree with l9 screens[8] and screens[10].
+
+1. fixed: umbrella finding; every use of the yearly form in L4 replaced by the daily form (findings 5 to 7). Basis above.
+2. fixed: l9 screens[5] `double` text 1.79. $0.08/0.708 \times 15.875 = 1.794$.
+3. fixed: l10 screens[9] explain. $1.1^{1/2} - 1 = 4.88\%$, shown 4.9%. Basis: with $n$ = values the sample counts one period too many, so the exponent is $1/2$ for one true period.
+4. fixed: l12 quiz[2] options[2] text 0.64 ($162/252 = 0.643$), options[3] text 1.22 ($110/90 = 1.222$), whys updated.
+5. fixed: l13 screens[3] (prose, canvas sigma 1.0, key 1.0, accept, wrong `yearly` 1.07 and `four` 0.5, hints, feedback, explain 29%) and quiz[2] question. Basis above; $\Phi(-0.547/1.0003) = 0.292$; $T = 4$ gives 0.5001. Graded answer changed 1.07 to 1.00.
+6. fixed: l16 screens[5] (prose, canvas sigma 1.003, key 1.0, accept, wrong `yearly` 1.65 and `daily` 0.063, hints, feedback, explain "about 1.9") and quiz[2] (prose "about 1.0", option, why, explain). $1.863/1.0034 = 1.857$; $1.5/1.0022 = 1.50$; $0.1174^2/2 = 0.0069$; $1.0034/15.875 = 0.063$. Graded answer changed 1.65 to 1.00.
+7. fixed: homework-4 items[0] (prose, question, key 0.71, accept, wrong `yearly` 0.87, `one` 1.0, `noroot` 0.5, feedback, explain) and items[7] model "about 1.00". $\sqrt{(1 + 1/504)/2} = 0.7078$; $1.002/2 = 0.501$. Graded answer changed 0.87 to 0.71.
+8. fixed: l13 screens[5] table cells 0.21 (0.2052) and 1.29 (1.2852), against the reviewer's engine figures (my script reruns the prelude and agrees).
+9. fixed by finding 40 (review-4 items[3] replaced); l14 quiz[1] wrong value 15.15 ($252 \times 0.06/0.9982 = 15.147$).
+10. fixed: l10 screens[1] explain last sentence. Basis: `pytest/l11-testing-drawdown.json` solution returns `(peak - price) / peak`, a positive size; plotting l7 uses `prices / peak - 1`.
+11. fixed: l10 screens[5] prose and option text. $1 - 875{,}774/1{,}397{,}068 = 0.373$; $1{,}397{,}068/875{,}774 - 1 = 0.595$.
+12. fixed: l10 screens[0] byKey `range`. Equity ratio 1.595, a 60% rise (script check).
+13. fixed: l9 screens[9] feedback.
+14. fixed: l9 quiz[0] wrong[1] tol 0.004; l12 screens[3] wrong[0] tol 0.0002; review-3 items[5] wrong[1] tol 0.005; review-3 items[3] wrong[1] tol 0.0002 (item then rewritten by 37; both of its slips sit inside their 0.0002 bands). Script `band` checks pass for each. The validator's [wrong-band] still fires on these: its rule is engine item 2 (known false positive).
+15. fixed: l12 screens[1] hint text.
+16. fixed: l14 screens[5] hint and explain, screens[7] checklist item 4. Basis: picking the share that rose most over the test years uses information from after the decision date, so it is look-ahead (selection) bias in the universe; survivorship bias is a universe holding only the firms that survived (validation l11). The explain names it "selection with hindsight, a look-ahead bias in the universe and a cousin of survivorship".
+17. fixed: l13 screens[4] prose. Basis: `research_then_test` scores research on the research frame alone, so the gap matters only when research is scored on the full series.
+18. fixed: l13 screens[1] explain ("the last bar before the shaded year"; held out starts at bar 1008).
+19. fixed: homework-4 items[4] prose. Basis: a 2-for-1 split halves the raw price for good; a short on the split day books the fake gain.
+20. fixed: homework-4 items[5] explain appended.
+21. fixed: l11 screens[9] explain. Ratios of Sharpe drops per tenfold step 2.2, 3.1, 3.0, 1.9 (script column), so "roughly two to three times". Basis: $\sqrt{}$ is concave, so per pound the fall slows; per tenfold step it grows.
+22. fixed: l15 screens[1] explain.
+23. fixed: homework-3 items[7] model first-line example.
+24. fixed: l15 summary note. Exact $E[\max_{48} Z] = 2.2331$, simulated 2.240.
+25. fixed: l15 screens[5] explain.
+26. fixed: l13 screens[0] prose ("All course long").
+27. fixed: l14 screens[1] explain (0.5625, 57%); l15 screens[3] explain (0.77 to 1.25: $0.5 \times 1.5388 = 0.77$, $0.5 \times 2.5076 = 1.25$).
+28. fixed: l9 screens[11] feedback. $1.4 \pm 2 \times 0.85$ runs from $-0.3$ to 3.1.
+29. fixed: l12 screens[6] options[0] text.
+30. fixed: key texts and distractors lengthened or shortened as the review gives, in l11, l12, l14, l15, l16 (l16 quiz[3] distractor texts completed from the review's truncated list). Validator [key-length] remains on a few other screens of those lessons that the review did not list.
+31. fixed: all L3 and L4 sentences over 35 words (l9, l11, l12, homework-3 items[5], [6], [7], homework-4 items[7]). Voice scan 35: 0 sentences in my files.
+32. fixed: l14 screens[10] explain, three sentences.
+33. fixed: minus signs in l9 screens[10], l12 screens[9] and screens[11], l16 screens[2] hint and screens[3] option, homework-3 items[6], homework-4 items[7] model.
+34. fixed: l11 screens[9] column headers and prose.
+35. fixed: l13 screens[0] prose sentence on the flat 2.5 bp cost.
+36. fixed: l14 screens[3] explain last sentence.
+37. fixed: review-3 items[3] rewritten. $0.012\% \times 252 = 3.024\%$; slips 0.012% per day and $0.012 \times 15.875 = 0.1905\%$. Graded answer changed 4.5% to 3.0%.
+38. fixed: review-3 items[8] rewritten. Wins 40, 10, 30, 20; losses 25, 5, 15; flat 3: $4/7 = 0.5714$; slips $4/10$ and $7/10$. Graded answer changed 0.55 to 0.57.
+39. fixed: review-4 items[7] options text. $0.7336/0.6126 = 1.198$.
+40. fixed: review-4 items[3] inverted. $p = 0.5 + 0.5/\sqrt{253} = 0.5314$; slips 0.50198 (252 for its root) and 0.5629 (halving missed). Graded answer changed 1.6 to 53.1%.
+
+Engine items 1 to 4: deferred (already in the inbox, engine class).
+
+From review-backtest-1-2 finding 27: fixed. l16 screens[6] console lines now use `fetch = lambda t, s, e: yf.download(` with `t, start=s, end=e, auto_adjust=False)` and `cached_fetch('SPY', fetch, start='2019-01-01', end='2024-01-01')`; the explain names `auto_adjust=False` and the dated key. Basis: l2 screens[8] to [9] build the dated key `(ticker, start, end)`; a ticker-only key serves a stale file for a later range (l2 screens[6] trap), and l2 screens[9] promises `lambda t, s, e` in level 4.
+
+Not touched, by instruction: l1 to l8 files (one sentence in l3 over three explanation sentences remains for the L1-L2 fixer).
+Gates: number scripts backtest-L3-numbers.py exit 0 (234 of 234) and backtest-L4-numbers.py exit 0 (174 of 174), with exact-value checks for every rewritten key and slip. Voice scan 35: 0 sentences and 0 explanations over the gate in L3 and L4 files (the 11 sentences and 1 explanation left are in l1 to l8, the L1-L2 fixer). Validator: 0 errors. Playthrough: 8 lessons and 4 sets (review-3, review-4, homework-3, homework-4) all passed, desktop and --mobile, with --local-cdn. No code item was touched, so no solution or starter run was needed.

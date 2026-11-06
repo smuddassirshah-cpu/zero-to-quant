@@ -267,7 +267,7 @@
     },
     {
      "rung": "step",
-     "text": "Sharpe 0.55 and -0.45; held-out drawdown -0.16; held-out return -0.09."
+     "text": "Sharpe 0.55 and −0.45; held-out drawdown −0.16; held-out return −0.09."
     }
    ],
    "feedback": {
@@ -316,7 +316,7 @@
     "options": [
      {
       "id": "held",
-      "text": "The research-best lookback, 2, lost money in the held-out year: net Sharpe -0.45.",
+      "text": "The research-best lookback, 2, lost money in the held-out year: net Sharpe −0.45.",
       "correct": true
      },
      {
@@ -424,14 +424,14 @@
    "type": "problem",
    "difficulty": 3,
    "title": "A good held-out year",
-   "prose": "Edge case. Had research picked lookback 10, the held-out year would have shown a net Sharpe of 1.86. The note would then be tempted to claim a lot. From l9, one year's standard error is $\\sqrt{(1 + SR^2/2)/T}$.",
+   "prose": "Edge case. Had research picked lookback 10, the held-out year would have shown a net Sharpe of 1.86. The note would then be tempted to claim a lot. From l9, with daily data one year's standard error is $\\sqrt{(1 + SR_d^2/2)/252} \\times \\sqrt{252}$, with $SR_d = SR/\\sqrt{252}$.",
    "canvas": {
     "kind": "distribution",
     "params": {
      "family": "normal",
      "params": {
       "mu": 1.863,
-      "sigma": 1.654
+      "sigma": 1.003
      },
      "x": [
       -4,
@@ -449,25 +449,25 @@
    "question": "What is the standard error of a one-year Sharpe of 1.86? Give 2 decimal places.",
    "widget": {
     "kind": "numeric",
-    "answer": 1.65,
+    "answer": 1.0,
     "tol": {
      "abs": 0.01
     },
     "unit": "",
-    "accept": "1.65: $\\sqrt{1 + 1.86^2/2} = \\sqrt{2.73}$.",
+    "accept": "1.00: $SR_d = 1.86/\\sqrt{252} = 0.117$, and $\\sqrt{1 + 0.117^2/2} = 1.003$.",
     "wrong": [
      {
-      "id": "one",
-      "value": 1.0,
+      "id": "yearly",
+      "value": 1.65,
       "tol": {
        "abs": 0.01
       }
      },
      {
-      "id": "noroot",
-      "value": 2.73,
+      "id": "daily",
+      "value": 0.063,
       "tol": {
-       "abs": 0.01
+       "abs": 0.003
       }
      }
     ],
@@ -476,27 +476,27 @@
    "hints": [
     {
      "rung": "nudge",
-     "text": "$1.86^2/2 = 1.73$."
+     "text": "$SR_d = 1.86/\\sqrt{252} = 0.117$."
     },
     {
      "rung": "point",
-     "text": "$1 + 1.73 = 2.73$, with $T = 1$."
+     "text": "$SR_d^2/2 = 0.0069$, so the root is barely above 1."
     },
     {
      "rung": "step",
-     "text": "$\\sqrt{2.73} = 1.65$."
+     "text": "$\\sqrt{1.0069/252} \\times \\sqrt{252} = 1.00$."
     }
    ],
    "feedback": {
-    "correct": "About 1.65: the 1.86 is barely one standard error from zero.",
-    "generic": "Not quite right. Put $SR = 1.86$ and $T = 1$ into the formula.",
+    "correct": "About 1.00: the 1.86 is just short of two standard errors from zero.",
+    "generic": "Not quite right. Turn the Sharpe into $SR_d$ first, with $T = 1$ year.",
     "byKey": {
-     "one": "That drops the $SR^2/2$ term, which matters at a Sharpe this high.",
-     "noroot": "Take the square root of 2.73."
+     "yearly": "That treats the year as one yearly return. It holds 252 daily returns: use $SR_d$.",
+     "daily": "That is the per-day error. Multiply by $\\sqrt{252}$."
     }
    },
    "explain": {
-    "text": "A held-out 1.86 is only 1.1 standard errors above zero. So a good year earns the sentence \"held out confirmed the sign\", never \"proved the edge\". The note still states $N$ and the standard error.",
+    "text": "A held-out 1.86 is about 1.9 standard errors above zero, short of the usual 2. So a good year earns the sentence \"held out confirmed the sign\", never \"proved the edge\". The note still states $N$ and the standard error.",
     "canvas": {
      "shade": {
       "from": null,
@@ -514,10 +514,9 @@
     "kind": "console",
     "params": {
      "lines": [
-      "fetch = lambda t: yf.download(",
-      "    t, start='2019-01-01', end='2024-01-01',",
-      "    auto_adjust=False)",
-      "bars = cached_fetch('SPY', fetch)",
+      "fetch = lambda t, s, e: yf.download(",
+      "    t, start=s, end=e, auto_adjust=False)",
+      "bars = cached_fetch('SPY', fetch, start='2019-01-01', end='2024-01-01')",
       "s = run_study(bars, LB, 2.5)"
      ],
      "title": "real_data.py"
@@ -574,7 +573,7 @@
     "generic": "Not quite right. Keep every safeguard and add the ones real data needs."
    },
    "explain": {
-    "text": "Adjusted prices keep a split from looking like a crash; raw prices give the shares you could buy. A point-in-time universe stops survivors choosing the sample (alpha, levels 1 to 3). Keys live in the environment, and the held-out rule does not change."
+    "text": "Adjusted prices keep a split from looking like a crash and raw prices give the shares you could buy, so `auto_adjust=False` is set explicitly and the dates are in the cache key (l2). A point-in-time universe stops survivors choosing the sample (alpha, levels 1 to 3). Keys live in the environment, and the held-out rule does not change."
    }
   },
   {
@@ -984,7 +983,7 @@
   {
    "id": "q-good",
    "difficulty": 3,
-   "prose": "Edge case. A study's held-out year shows net Sharpe 1.5, after 20 settings tried. One year's standard error is about 1.35 at that Sharpe.",
+   "prose": "Edge case. A study's held-out year shows net Sharpe 1.5, after 20 settings tried. One year's standard error is about 1.0.",
    "question": "What may the note claim?",
    "widget": {
     "kind": "choice",
@@ -992,13 +991,13 @@
     "options": [
      {
       "id": "sign",
-      "text": "That the held-out year agreed in sign, with $N = 20$ and a standard error of 1.35 stated",
+      "text": "That the held-out year agreed in sign, with $N = 20$ and a standard error of 1.0 stated",
       "correct": true
      },
      {
       "id": "proof",
       "text": "That the edge is proved out of sample",
-      "why": "1.5 is about 1.1 standard errors from zero. One year cannot prove it."
+      "why": "1.5 is about 1.5 standard errors from zero. One year cannot prove it."
      },
      {
       "id": "drop",
@@ -1012,7 +1011,7 @@
     "generic": "Not quite right. How many standard errors from zero is 1.5?"
    },
    "explain": {
-    "text": "$1.5/1.35 = 1.1$ standard errors: encouraging, not proof. The note states the result, $N$ and the standard error, and its next step is more data."
+    "text": "$1.5/1.0 = 1.5$ standard errors: encouraging, not proof. The note states the result, $N$ and the standard error, and its next step is more data."
    }
   },
   {
@@ -1026,17 +1025,17 @@
     "options": [
      {
       "id": "adj",
-      "text": "`auto_adjust=False`, since its default has changed between yfinance versions",
+      "text": "`auto_adjust=False`: its default changed between versions",
       "correct": true
      },
      {
       "id": "thread",
-      "text": "`threads=True`",
+      "text": "`threads=True`, so several tickers download at once",
       "why": "Speed settings do not change the numbers. The adjustment setting does."
      },
      {
       "id": "none",
-      "text": "None: defaults are fine",
+      "text": "None: the library's defaults are fine for a study",
       "why": "A default that changed between versions makes the study unrepeatable."
      }
     ]
