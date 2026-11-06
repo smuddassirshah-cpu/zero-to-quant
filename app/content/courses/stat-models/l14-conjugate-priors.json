@@ -1,0 +1,1343 @@
+{
+ "id": "l14-conjugate-priors",
+ "course": "stat-models",
+ "title": "Conjugate priors",
+ "minutes": 14,
+ "objectives": [
+  "Update Beta-binomial, Gamma-Poisson and normal models in closed form."
+ ],
+ "skills": [
+  "sm-bayes"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A new venue",
+   "prose": "A desk starts routing limit orders to a new venue. Before any data it believes fill rates sit near 20%. Its Beta(2, 8) prior is worth 10 imagined orders with 2 fills. Then 40 real orders arrive. Drag the number of fills and watch the posterior move.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "beta",
+     "params": {
+      "a": 10,
+      "b": 40
+     },
+     "x": [
+      0,
+      1
+     ],
+     "xLabel": "Fill rate $p$",
+     "height": 240,
+     "overlay": [
+      {
+       "id": "prior",
+       "family": "beta",
+       "params": {
+        "a": "0.2*m",
+        "b": "0.8*m"
+       },
+       "label": "prior"
+      }
+     ]
+    },
+    "state": {
+     "observed": {
+      "x": "k/40",
+      "label": "MLE {x}"
+     }
+    },
+    "derive": {
+     "params.a": "0.2*m + k",
+     "params.b": "0.8*m + 40 - k",
+     "caption": "Posterior Beta({{round(0.2*m + k, 1)}}, {{round(0.8*m + 40 - k, 1)}}): mean {{fixed((0.2*m + k)/(m + 40), 4)}}, weight on the data {{fixed(40/(m + 40), 2)}}"
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "start": 8,
+      "label": "Fills out of 40"
+     },
+     {
+      "bind": "m",
+      "min": 5,
+      "max": 100,
+      "step": 5,
+      "start": 10,
+      "label": "Prior strength (imagined orders)"
+     }
+    ]
+   },
+   "question": "Set 13 fills with the prior worth 10 orders. What is the posterior mean fill rate?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3,
+    "tol": {
+     "abs": 0.0015
+    },
+    "unit": "",
+    "accept": "0.30: Beta(15, 35) has mean 15/50.",
+    "label": "Posterior mean",
+    "wrong": [
+     {
+      "id": "mle",
+      "value": 0.325,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "prior",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The caption shows the mean as you drag."
+    },
+    {
+     "rung": "point",
+     "text": "Thirteen fills turn Beta(2, 8) into Beta(15, 35)."
+    },
+    {
+     "rung": "step",
+     "text": "15/50 = 0.30."
+    }
+   ],
+   "feedback": {
+    "correct": "0.30: between the prior's 0.20 and the data's 0.325.",
+    "generic": "Not quite right. Set the fills to 13 and read the posterior mean.",
+    "byKey": {
+     "mle": "That is the MLE, 13/40, the data alone. The prior still pulls it down.",
+     "prior": "That is the prior mean. The 40 orders move it up."
+    }
+   },
+   "explain": {
+    "text": "Beta(2, 8) plus 13 fills and 27 misses is Beta(15, 35), mean 0.30. It sits between the prior mean 0.20 and the MLE 0.325.",
+    "canvas": {
+     "params": {
+      "a": 15,
+      "b": 35,
+      "k": 13,
+      "m": 10
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Updating is adding counts",
+   "prose": "In `estimation` lesson 12 a Beta prior was imagined heads and tails, updated to $\\mathrm{Beta}(a + k, b + n - k)$. The posterior stayed in the prior's family. A prior with that property is **conjugate**: updating is adding counts. Here the mean is a weighted average of the prior mean and the MLE.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "beta",
+     "params": {
+      "a": 15,
+      "b": 35
+     },
+     "x": [
+      0,
+      1
+     ],
+     "xLabel": "Fill rate $p$",
+     "height": 230,
+     "overlay": [
+      {
+       "id": "prior",
+       "family": "beta",
+       "params": {
+        "a": 2,
+        "b": 8
+       },
+       "label": "prior"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "$0.30 = w \\times 0.325 + (1 - w) \\times 0.20$. What weight $w$ sits on the data?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "",
+    "accept": "0.8: $40/(40 + 10)$, real orders over all orders.",
+    "label": "Weight w",
+    "wrong": [
+     {
+      "id": "prior",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "ratio",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Real orders against all orders, real and imagined."
+    },
+    {
+     "rung": "point",
+     "text": "The data carry 40 orders, the prior 10."
+    },
+    {
+     "rung": "step",
+     "text": "$40/50 = 0.8$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.8: the 40 real orders out of 50 in all.",
+    "generic": "Not quite right. Compare the 40 real orders with the 10 imagined ones.",
+    "byKey": {
+     "prior": "That is the weight on the prior, $10/50$.",
+     "ratio": "That is 10/40, prior over data. The weight is a share of the total."
+    }
+   },
+   "explain": {
+    "text": "The posterior mean is $(a + k)/(a + b + n) = \\frac{n}{a + b + n}\\cdot\\frac{k}{n} + \\frac{a + b}{a + b + n}\\cdot\\frac{a}{a + b}$. With $n = 40$ and $a + b = 10$ the weight on the data is 0.8."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Reading the posterior",
+   "prose": "Beta(15, 35) has sd 0.0642 and mode $14/48 = 0.2917$. Its 95% equal-tailed interval runs from 0.1825 to 0.4326. The venue pays off above a 25% fill rate. Drag the shaded region to run from 0.25 to 1.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "beta",
+     "params": {
+      "a": 15,
+      "b": 35
+     },
+     "x": [
+      0,
+      1
+     ],
+     "xLabel": "Fill rate $p$",
+     "height": 230,
+     "snap": 0.01,
+     "drag": true
+    },
+    "state": {
+     "shade": {
+      "from": 0.1825,
+      "to": 0.4326
+     }
+    }
+   },
+   "question": "What is $P(p > 0.25 \\mid \\text{data})$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7747,
+    "tol": {
+     "abs": 0.003
+    },
+    "unit": "",
+    "accept": "0.7747: `beta(15, 35).sf(0.25)`.",
+    "label": "Probability",
+    "wrong": [
+     {
+      "id": "cdf",
+      "value": 0.2253,
+      "tol": {
+       "abs": 0.003
+      }
+     },
+     {
+      "id": "prior",
+      "value": 0.3003,
+      "tol": {
+       "abs": 0.003
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The label on the shaded region is its probability."
+    },
+    {
+     "rung": "point",
+     "text": "Move the left handle to 0.25 and the right one to 1."
+    },
+    {
+     "rung": "step",
+     "text": "About 0.775."
+    }
+   ],
+   "feedback": {
+    "correct": "0.7747: about a 77% chance the venue clears 25%.",
+    "generic": "Not quite right. Shade from 0.25 to 1 and read the label.",
+    "byKey": {
+     "cdf": "That is the chance below 0.25. The question asks above it.",
+     "prior": "That is the prior's chance above 0.25. The data have moved it up."
+    }
+   },
+   "explain": {
+    "text": "`beta(15, 35).sf(0.25)` is 0.7747; two million draws give 0.7753. The prior alone gave 0.3003.",
+    "canvas": {
+     "shade": {
+      "from": 0.25,
+      "to": 1
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Defaults with a Gamma prior",
+   "prose": "A loan book's yearly defaults are Poisson with rate $\\lambda$. The prior is Gamma(2, rate 1), mean 2. Five years bring $3, 1, 4, 2, 5$ defaults. Step through the years: each adds its count to the shape and 1 to the rate.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      8
+     ],
+     "y": [
+      0,
+      0.7
+     ],
+     "xLabel": "$\\lambda$",
+     "yLabel": "Density",
+     "height": 240,
+     "params": {
+      "sh": 2,
+      "r": 1,
+      "cum": [
+       0,
+       3,
+       4,
+       8,
+       10,
+       15
+      ]
+     },
+     "functions": [
+      {
+       "id": "prior",
+       "expr": "x*exp(-x)",
+       "label": "prior",
+       "dashed": true,
+       "domain": [
+        0.01,
+        8
+       ]
+      },
+      {
+       "id": "post",
+       "expr": "exp(sh*ln(r) - lgamma(sh) + (sh-1)*ln(x) - r*x)",
+       "label": "posterior",
+       "domain": [
+        0.01,
+        8
+       ]
+      }
+     ]
+    },
+    "state": {},
+    "derive": {
+     "params.sh": "2 + cum[yrs]",
+     "params.r": "1 + yrs",
+     "caption": "After {{yrs}} years: Gamma({{2 + cum[yrs]}}, rate {{1 + yrs}}), mean {{fixed((2 + cum[yrs])/(1 + yrs), 4)}}"
+    },
+    "controls": [
+     {
+      "bind": "yrs",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "start": 0,
+      "label": "Years seen"
+     }
+    ]
+   },
+   "question": "After five years the mean is $2.8333 = w \\times 3 + (1 - w) \\times 2$, with 3 the MLE. What is $w$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8333,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "",
+    "accept": "0.8333: $5/(5 + 1)$, years of data over years of data plus the prior's rate.",
+    "label": "Weight w",
+    "wrong": [
+     {
+      "id": "prior",
+      "value": 0.1667,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "beta",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The rate counts years: 5 of data, 1 imagined in the prior."
+    },
+    {
+     "rung": "point",
+     "text": "$w = n/(\\beta + n)$."
+    },
+    {
+     "rung": "step",
+     "text": "$5/6 = 0.8333$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.8333: the five real years against one imagined year.",
+    "generic": "Not quite right. Compare the 5 years of data with the prior's rate of 1.",
+    "byKey": {
+     "prior": "That is the weight on the prior mean, $1/6$.",
+     "beta": "That is the fill-rate weight from the Beta screen. Here the prior is worth one year."
+    }
+   },
+   "explain": {
+    "text": "Gamma(2, 1) becomes Gamma(17, rate 6): mean 2.8333, sd $\\sqrt{17}/6 = 0.6872$, 95% interval (1.6505, 4.3305). The weight on the data's MLE of 3 is $5/6$.",
+    "canvas": {
+     "params": {
+      "yrs": 5,
+      "sh": 17,
+      "r": 6
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Three conjugate pairs",
+   "prose": "Each update adds what the data carry to what the prior carries.\n$$\\mathrm{Beta}(a, b) \\to \\mathrm{Beta}(a + k,\\ b + n - k)$$\n$$\\mathrm{Gamma}(\\alpha, \\beta) \\to \\mathrm{Gamma}\\big(\\alpha + \\textstyle\\sum y_t,\\ \\beta + n\\big)$$\nNormal prior $N(m_0, s_0^2)$, estimate $\\hat x$ with error $s$:\n$$\\tfrac{1}{s_1^2} = \\tfrac{1}{s_0^2} + \\tfrac{1}{s^2}$$\n$$m_1 = s_1^2\\left(\\tfrac{m_0}{s_0^2} + \\tfrac{\\hat x}{s^2}\\right)$$",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "beta",
+     "params": {
+      "a": 15,
+      "b": 35
+     },
+     "x": [
+      0,
+      1
+     ],
+     "xLabel": "Fill rate $p$",
+     "height": 230,
+     "overlay": [
+      {
+       "id": "prior",
+       "family": "beta",
+       "params": {
+        "a": 2,
+        "b": 8
+       },
+       "label": "prior"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "In the normal case, what adds up?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "prec",
+      "text": "The precisions, one over each variance",
+      "correct": true
+     },
+     {
+      "id": "var",
+      "text": "The variances",
+      "why": "Adding variances would make the posterior wider than the prior. More information narrows it."
+     },
+     {
+      "id": "sd",
+      "text": "The standard deviations",
+      "why": "Standard deviations never add for independent pieces; precisions do here."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Precisions add, and the mean is their weighted average.",
+    "generic": "Not quite right. Which quantity grows as information grows?",
+    "byKey": {
+     "var": "You added the variances. Information adds as precision, so the posterior narrows."
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "Why the Gamma update works",
+   "prose": "Derive the Gamma-Poisson update for counts $y_1, \\dots, y_n$ with a Gamma($\\alpha$, rate $\\beta$) prior. One line is a slip: leave it out.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      8
+     ],
+     "y": [
+      0,
+      0.7
+     ],
+     "xLabel": "$\\lambda$",
+     "yLabel": "Density",
+     "height": 200,
+     "params": {
+      "sh": 17,
+      "r": 6
+     },
+     "functions": [
+      {
+       "id": "prior",
+       "expr": "x*exp(-x)",
+       "label": "prior",
+       "dashed": true,
+       "domain": [
+        0.01,
+        8
+       ]
+      },
+      {
+       "id": "post",
+       "expr": "exp(sh*ln(r) - lgamma(sh) + (sh-1)*ln(x) - r*x)",
+       "label": "posterior",
+       "domain": [
+        0.01,
+        8
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Likelihood: $\\prod_t e^{-\\lambda}\\lambda^{y_t}/y_t! \\propto \\lambda^{\\sum y_t}e^{-n\\lambda}$, as the years are independent"
+     },
+     {
+      "id": "b",
+      "text": "Prior: $\\pi(\\lambda) \\propto \\lambda^{\\alpha - 1}e^{-\\beta\\lambda}$, the Gamma density in rate form"
+     },
+     {
+      "id": "c",
+      "text": "Posterior $\\propto$ likelihood $\\times$ prior $= \\lambda^{\\alpha + \\sum y_t - 1}e^{-(\\beta + n)\\lambda}$, by Bayes' rule"
+     },
+     {
+      "id": "d",
+      "text": "That kernel is Gamma$(\\alpha + \\sum y_t,\\ \\beta + n)$; the constant follows from the density integrating to 1"
+     },
+     {
+      "id": "x",
+      "text": "So the rate becomes $\\beta + \\sum y_t$, since the counts add to the rate",
+      "why": "The counts sit in the power of $\\lambda$, so they add to the shape. The rate gains $n$, one for each year of exposure."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "same": [
+     [
+      "a",
+      "b"
+     ]
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the likelihood and the prior as powers of $\\lambda$ times exponentials."
+    },
+    {
+     "rung": "point",
+     "text": "Multiply them: powers add, exponents add."
+    },
+    {
+     "rung": "step",
+     "text": "The counts go in the power, the years in the exponential."
+    }
+   ],
+   "feedback": {
+    "correct": "Likelihood times prior is again a Gamma kernel, so the posterior is Gamma.",
+    "generic": "Not quite right. Multiply the two kernels and read off the shape and rate.",
+    "byKey": {
+     "x": "You added the counts to the rate. They sit in the power of $\\lambda$, so they raise the shape.",
+     "left-out": "Every true line is needed."
+    }
+   },
+   "explain": {
+    "text": "With $\\alpha = 2$, $\\beta = 1$, $\\sum y_t = 15$ and $n = 5$ the posterior is Gamma(17, rate 6). Adding the counts to the rate would give Gamma(7, rate 16), mean 0.44."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A fund's alpha",
+   "prose": "A fund's alpha is estimated at 6% a year with standard error 4%. The analyst's prior is $N(0, 2^2)$: most alphas are near zero. Precisions add: $1/4 + 1/16 = 0.3125$, so the posterior sd is $\\sqrt{3.2} = 1.7889$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {
+      "mu": 1.2,
+      "sigma": 1.7889
+     },
+     "x": [
+      -8,
+      16
+     ],
+     "xLabel": "Alpha (% a year)",
+     "height": 230,
+     "overlay": [
+      {
+       "id": "prior",
+       "family": "normal",
+       "params": {
+        "mu": 0,
+        "sigma": 2
+       },
+       "label": "prior"
+      },
+      {
+       "id": "lik",
+       "family": "normal",
+       "params": {
+        "mu": 6,
+        "sigma": 4
+       },
+       "label": "estimate"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the posterior mean alpha, in % a year?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.2,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "",
+    "accept": "1.2: $(0/4 + 6/16)/0.3125$.",
+    "label": "Posterior mean",
+    "wrong": [
+     {
+      "id": "est",
+      "value": 6,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "avg",
+      "value": 3,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "swap",
+      "value": 4.8,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Weight each mean by its precision."
+    },
+    {
+     "rung": "point",
+     "text": "$(0 \\times \\tfrac14 + 6 \\times \\tfrac1{16}) / 0.3125$."
+    },
+    {
+     "rung": "step",
+     "text": "$0.375/0.3125 = 1.2$."
+    }
+   ],
+   "feedback": {
+    "correct": "1.2%: the 6% estimate shrunk by the factor 0.8 towards 0.",
+    "generic": "Not quite right. Weight the prior mean and the estimate by their precisions.",
+    "byKey": {
+     "est": "That is the estimate alone. The prior is tighter than the estimate here.",
+     "avg": "That is a plain average. The prior's precision is four times the estimate's.",
+     "swap": "You put weight 0.8 on the estimate. The 0.8 is the shrinkage towards the prior."
+    }
+   },
+   "explain": {
+    "text": "The posterior is $N(1.2, 1.7889^2)$. The shrinkage factor is $B = 16/(16 + 4) = 0.8$, so $1.2 = (1 - 0.8) \\times 6$. Its 95% interval is $(-2.306, 4.706)$ and $P(\\alpha > 0) = 0.7488$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Scale or rate",
+   "prose": "A colleague checks the default posterior Gamma(17, rate 6) in scipy. Their curve has mean 102 defaults a year. `scipy.stats.gamma` takes a shape `a`, then `loc`, then `scale`.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      8
+     ],
+     "y": [
+      0,
+      0.7
+     ],
+     "xLabel": "$\\lambda$",
+     "yLabel": "Density",
+     "height": 230,
+     "functions": [
+      {
+       "id": "post",
+       "expr": "exp(17*ln(6) - lgamma(17) + (17-1)*ln(x) - 6*x)",
+       "label": "Gamma(17, rate 6)",
+       "domain": [
+        0.01,
+        8
+       ]
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which call gives the posterior?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`gamma(17, scale=1/6)`",
+      "correct": true
+     },
+     {
+      "id": "scale",
+      "text": "`gamma(17, scale=6)`",
+      "why": "You passed the rate as the scale. Its mean is $17 \\times 6 = 102$.",
+      "canvas": {
+       "view": {
+        "x": [
+         0,
+         200
+        ],
+        "y": [
+         0,
+         0.7
+        ]
+       },
+       "functions": [
+        {
+         "id": "wrong",
+         "expr": "exp(17*ln((1/6)) - lgamma(17) + (17-1)*ln(x) - (1/6)*x)",
+         "label": "scale 6, mean 102",
+         "domain": [
+          0.01,
+          200
+         ]
+        }
+       ]
+      }
+     },
+     {
+      "id": "loc",
+      "text": "`gamma(17, 6)`",
+      "why": "The second positional argument is `loc`. It shifts the curve right by 6: mean 23.",
+      "canvas": {
+       "view": {
+        "x": [
+         0,
+         40
+        ],
+        "y": [
+         0,
+         0.7
+        ]
+       },
+       "functions": [
+        {
+         "id": "wrong",
+         "expr": "exp(17*ln(1) - lgamma(17) + 16*ln(x - 6) - (x - 6))",
+         "label": "loc 6, mean 23",
+         "domain": [
+          6.01,
+          40
+         ]
+        }
+       ]
+      }
+     },
+     {
+      "id": "prior",
+      "text": "`gamma(2, scale=1)`",
+      "why": "That is the prior. The counts have not been added.",
+      "canvas": {
+       "functions": [
+        {
+         "id": "wrong",
+         "expr": "x*exp(-x)",
+         "label": "prior",
+         "domain": [
+          0.01,
+          8
+         ]
+        }
+       ]
+      }
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "scipy wants a scale, which is one over the rate."
+    },
+    {
+     "rung": "point",
+     "text": "Rate 6 means scale $1/6$."
+    },
+    {
+     "rung": "step",
+     "text": "`gamma(17, scale=1/6)` has mean $17/6$."
+    }
+   ],
+   "feedback": {
+    "correct": "Scale is one over rate, as in `limits-thm` lesson 18.",
+    "generic": "Not quite right. Convert the rate to a scale.",
+    "byKey": {
+     "scale": "You passed 6 as the scale, so the mean became 102. scipy's scale is one over the rate.",
+     "loc": "You passed 6 as `loc`, which shifts the curve by 6.",
+     "prior": "You left out the data."
+    }
+   },
+   "explain": {
+    "text": "scipy parametrises the Gamma by scale, $1/\\text{rate}$. `gamma(17, scale=1/6).mean()` is 2.8333; `scale=6` gives 102. Plot the curve before trusting a parameter."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A flat prior and no fills",
+   "prose": "A second venue gets a flat prior, Beta(1, 1), and 0 fills in 40 orders. The MLE is 0. The posterior is Beta(1, 41), and its mean is $(k + 1)/(n + 2)$.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "beta",
+     "params": {
+      "a": 1,
+      "b": 41
+     },
+     "x": [
+      0,
+      0.3
+     ],
+     "xLabel": "Fill rate $p$",
+     "height": 220
+    },
+    "state": {
+     "shade": {
+      "from": 0.05,
+      "to": 0.3
+     }
+    }
+   },
+   "question": "What is the posterior mean fill rate?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0238,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "",
+    "accept": "0.0238: $1/42$.",
+    "label": "Posterior mean",
+    "wrong": [
+     {
+      "id": "mle",
+      "value": 0,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "n",
+      "value": 0.025,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $k = 0$ and $n = 40$ into $(k + 1)/(n + 2)$."
+    },
+    {
+     "rung": "point",
+     "text": "$1/42$."
+    },
+    {
+     "rung": "step",
+     "text": "0.0238."
+    }
+   ],
+   "feedback": {
+    "correct": "0.0238: a flat prior is not the MLE, and the posterior keeps mass above 0.",
+    "generic": "Not quite right. Use $(k + 1)/(n + 2)$.",
+    "byKey": {
+     "mle": "That is the MLE. Even a flat prior adds one imagined fill.",
+     "n": "That is $1/40$. The flat prior adds two imagined orders, so divide by 42."
+    }
+   },
+   "explain": {
+    "text": "Beta(1, 1) is one imagined fill and one miss, so the mean is $1/42 = 0.0238$. The shaded chance of a rate above 5% is still 0.12."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The three updates in code",
+   "prose": "Write the three updates and an equal-tailed interval. Return plain tuples. Remember that scipy's Gamma takes `scale = 1/rate`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "What your functions should give",
+     "lines": [
+      ">>> beta_update(2, 8, 13, 40)",
+      "(15, 35)",
+      ">>> gamma_update(2, 1, [3, 1, 4, 2, 5])",
+      "(17, 6)",
+      ">>> normal_update(0, 2, 6, 4)",
+      "(1.2, 1.7888543819998317)"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the four functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from scipy import stats\n\n\ndef beta_update(a, b, k, n):\n    \"\"\"Posterior (a, b) after k fills in n orders.\"\"\"\n    ...\n\n\ndef gamma_update(shape, rate, counts):\n    \"\"\"Posterior (shape, rate) after Poisson counts, one per period.\"\"\"\n    ...\n\n\ndef normal_update(m0, s0, x, se):\n    \"\"\"Posterior (mean, sd) for prior N(m0, s0^2) and estimate x with standard error se.\"\"\"\n    ...\n\n\ndef credible_interval(dist, level):\n    \"\"\"Equal-tailed interval (lo, hi) of a frozen scipy distribution.\"\"\"\n    ...\n",
+    "solution": "from scipy import stats\n\n\ndef beta_update(a, b, k, n):\n    return (a + k, b + n - k)\n\n\ndef gamma_update(shape, rate, counts):\n    return (shape + sum(counts), rate + len(counts))\n\n\ndef normal_update(m0, s0, x, se):\n    prec = 1 / s0 ** 2 + 1 / se ** 2\n    mean = (m0 / s0 ** 2 + x / se ** 2) / prec\n    return (mean, prec ** -0.5)\n\n\ndef credible_interval(dist, level):\n    tail = (1 - level) / 2\n    return (float(dist.ppf(tail)), float(dist.ppf(1 - tail)))\n",
+    "examples": [
+     {
+      "call": "beta_update(2, 8, 13, 40)",
+      "expect": "(15, 35)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "beta_update(2, 8, 13, 40)",
+      "expect": "(15, 35)",
+      "compare": "equal"
+     },
+     {
+      "call": "beta_update(1, 1, 0, 40)",
+      "expect": "(1, 41)",
+      "compare": "equal"
+     },
+     {
+      "call": "gamma_update(2, 1, [3, 1, 4, 2, 5])",
+      "expect": "(17, 6)",
+      "compare": "equal"
+     },
+     {
+      "call": "list(normal_update(0, 2, 6, 4))",
+      "expect": "[1.2, 1.7888543819998317]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "setup": "from scipy import stats",
+      "call": "[round(v, 6) for v in credible_interval(stats.beta(15, 35), 0.95)]",
+      "expect": "[0.182519, 0.43263]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "from scipy import stats",
+      "call": "[round(v, 6) for v in credible_interval(stats.gamma(17, scale=1/6), 0.95)]",
+      "expect": "[1.650521, 4.3305]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "from scipy import stats",
+      "call": "[round(v, 6) for v in credible_interval(stats.norm(1.2, 1.7888543819998317), 0.95)]",
+      "expect": "[-2.30609, 4.70609]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "how": "Submit runs 7 hidden tests. The Beta and Gamma updates must be exact tuples, the normal one within 1e-9. Three intervals are rounded to 6 places. SciPy loads on the first run."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each update is one line of addition."
+    },
+    {
+     "rung": "point",
+     "text": "For the normal case add precisions, then take the precision-weighted mean."
+    },
+    {
+     "rung": "step",
+     "text": "The interval cuts $(1 - \\text{level})/2$ from each tail with `dist.ppf`."
+    }
+   ],
+   "feedback": {
+    "correct": "All three updates add counts or precisions; the interval comes from `ppf`.",
+    "generic": "Not quite right. Compare your output with the console."
+   },
+   "explain": {
+    "text": "The Beta interval is $(0.182519, 0.432630)$ and the Gamma one $(1.650521, 4.330500)$. Both come from `ppf` at 0.025 and 0.975."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Updating every day",
+   "prose": "The venue desk updates daily. Monday ended at Beta(15, 35), which becomes Tuesday's prior. Tuesday brings 6 fills in 30 orders.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "beta",
+     "params": {
+      "a": 21,
+      "b": 59
+     },
+     "x": [
+      0,
+      0.6
+     ],
+     "xLabel": "Fill rate $p$",
+     "height": 220,
+     "overlay": [
+      {
+       "id": "mon",
+       "family": "beta",
+       "params": {
+        "a": 15,
+        "b": 35
+       },
+       "label": "Monday"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the posterior mean fill rate after Tuesday?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2625,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "",
+    "accept": "0.2625: Beta(21, 59), mean $21/80$.",
+    "label": "Posterior mean",
+    "wrong": [
+     {
+      "id": "twice",
+      "value": 0.2556,
+      "tol": {
+       "abs": 0.0004
+      }
+     },
+     {
+      "id": "tue",
+      "value": 0.2,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "mon",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add Tuesday's counts to Monday's posterior."
+    },
+    {
+     "rung": "point",
+     "text": "Beta(15 + 6, 35 + 24)."
+    },
+    {
+     "rung": "step",
+     "text": "$21/80 = 0.2625$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.2625: the same as updating Beta(2, 8) on all 70 orders at once.",
+    "generic": "Not quite right. Monday's posterior already holds the prior and Monday's data.",
+    "byKey": {
+     "twice": "You added the desk's Beta(2, 8) again. It is already inside Monday's posterior, so it was counted twice.",
+     "tue": "That is Tuesday's MLE alone.",
+     "mon": "That is Monday's mean. Tuesday's 6 fills in 30 pull it down."
+    }
+   },
+   "explain": {
+    "text": "Beta(15, 35) plus 6 fills and 24 misses is Beta(21, 59), mean 0.2625. Updating Beta(2, 8) once on 19 fills in 70 orders gives the same posterior.",
+    "canvas": {}
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A conjugate prior keeps the posterior in its family. Beta(2, 8) and 13 fills in 40 give Beta(15, 35), mean 0.30.",
+   "Gamma(shape, rate) adds the counts to the shape and the periods to the rate; scipy wants `scale = 1/rate`.",
+   "Normal priors add precisions: a 6% alpha with a 4% error and a $N(0, 2^2)$ prior shrinks to 1.2%."
+  ],
+  "formula": {
+   "name": "Beta-binomial update",
+   "tex": "p \\mid k \\sim \\mathrm{Beta}(a + k,\\ b + n - k),\\quad E[p \\mid k] = \\tfrac{n}{a + b + n}\\hat p + \\tfrac{a + b}{a + b + n}\\tfrac{a}{a + b}",
+   "note": "The weight on the data is real orders over all orders."
+  },
+  "trap": "Passing a Gamma rate as scipy's scale: `gamma(17, scale=6)` has mean 102, not 2.83."
+ },
+ "quiz": [
+  {
+   "id": "q14-ci",
+   "difficulty": 2,
+   "prose": "The fill rate's 95% credible interval is (0.1825, 0.4326).",
+   "question": "What does it say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "post",
+      "text": "Given the prior and the 40 orders, $p$ lies in it with probability 0.95",
+      "correct": true
+     },
+     {
+      "id": "freq",
+      "text": "95% of intervals built this way from repeated samples cover $p$",
+      "why": "That is a confidence interval, from `testing`. A credible interval is a probability about $p$ given these data."
+     },
+     {
+      "id": "data",
+      "text": "95% of future fill rates will fall in it",
+      "why": "Fill rates are not drawn again. The interval is about the one rate $p$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A credible interval is a posterior probability statement about $p$.",
+    "generic": "Not quite right. A credible interval conditions on the data seen.",
+    "byKey": {
+     "freq": "You read it as a confidence interval. That statement is about repeated samples, not about this $p$."
+    }
+   },
+   "explain": {
+    "text": "The posterior puts probability 0.95 on (0.1825, 0.4326). A confidence interval's 95% is a property of the method over repeated samples."
+   }
+  },
+  {
+   "id": "q14-sd",
+   "difficulty": 2,
+   "prose": "The posterior is Beta(15, 35). Its variance is $\\frac{ab}{(a + b)^2(a + b + 1)}$.",
+   "question": "What is its standard deviation?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0642,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "",
+    "accept": "0.0642: $\\sqrt{525/127{,}500}$.",
+    "label": "sd",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.0041,
+      "tol": {
+       "abs": 0.0002
+      }
+     },
+     {
+      "id": "bin",
+      "value": 0.0725,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.0642.",
+    "generic": "Not quite right. Put $a = 15$, $b = 35$ into the formula, then take the root.",
+    "byKey": {
+     "var": "That is the variance. Take its square root.",
+     "bin": "That is $\\sqrt{0.3 \\times 0.7/40}$, the MLE's standard error. The prior adds 10 orders."
+    }
+   },
+   "explain": {
+    "text": "$15 \\times 35/(50^2 \\times 51) = 0.004118$, whose root is 0.0642."
+   }
+  },
+  {
+   "id": "q14-zero",
+   "difficulty": 3,
+   "prose": "A new loan book has a Gamma(2, rate 1) prior on its yearly default rate. Three years pass with no defaults.",
+   "question": "What is the posterior mean default rate?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "",
+    "accept": "0.5: Gamma(2, rate 4).",
+    "label": "Posterior mean",
+    "wrong": [
+     {
+      "id": "mle",
+      "value": 0,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "prior",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "r3",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.5: shape 2, rate 4.",
+    "generic": "Not quite right. Add 0 to the shape and 3 to the rate.",
+    "byKey": {
+     "mle": "That is the MLE. The prior keeps the rate above 0.",
+     "prior": "That is the prior mean. Three quiet years pull it down.",
+     "r3": "You used rate 3, not $1 + 3$."
+    }
+   },
+   "explain": {
+    "text": "Gamma(2, 1) with no counts over 3 years is Gamma(2, rate 4), mean 0.5."
+   }
+  },
+  {
+   "id": "q14-shrink",
+   "difficulty": 3,
+   "prose": "Another fund's alpha is estimated at 6% with standard error 3%. The prior is $N(0, 3^2)$.",
+   "question": "What is the posterior mean alpha, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "",
+    "accept": "3: equal precisions, so the factor is 0.5.",
+    "label": "Posterior mean",
+    "wrong": [
+     {
+      "id": "est",
+      "value": 6,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "b8",
+      "value": 1.2,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "3%: half the estimate.",
+    "generic": "Not quite right. With equal variances the shrinkage factor is 1/2.",
+    "byKey": {
+     "est": "That ignores the prior.",
+     "b8": "That used the lesson's factor 0.8. Here $B = 9/(9 + 9) = 0.5$."
+    }
+   },
+   "explain": {
+    "text": "$B = 9/(9 + 9) = 0.5$, so the posterior mean is $0.5 \\times 6 = 3$."
+   }
+  }
+ ]
+}

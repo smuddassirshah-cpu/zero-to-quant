@@ -1,0 +1,1381 @@
+{
+ "id": "l16-fitting-by-mcmc",
+ "course": "stat-models",
+ "title": "Fitting a model by MCMC",
+ "minutes": 15,
+ "objectives": [
+  "Fit a Bayesian logistic regression by Metropolis sampling in code."
+ ],
+ "skills": [
+  "sm-mcmc",
+  "sm-bayes"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Propose a move",
+   "prose": "The fill rate's posterior is Beta(15, 35). A sampler sits at the current point $x$ and proposes $x'$. Drag both points along the curve. The caption shows the height ratio $\\pi(x')/\\pi(x)$ and the chance of accepting the move.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      7
+     ],
+     "xLabel": "$x$",
+     "yLabel": "Density",
+     "height": 230,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(lgamma(50) - lgamma(15) - lgamma(35) + 14*ln(x) + 34*ln(1-x))",
+       "label": "Beta(15, 35)",
+       "domain": [
+        0.005,
+        0.995
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "c",
+       "x": 0.5,
+       "y": 0,
+       "on": "f",
+       "drag": true,
+       "snap": 0.01,
+       "label": "$x$"
+      },
+      {
+       "id": "q",
+       "x": 0.45,
+       "y": 0,
+       "on": "f",
+       "drag": true,
+       "snap": 0.01,
+       "label": "$x'$"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$\\pi(x')/\\pi(x)$ = {{fixed(exp(14*ln(q.x/c.x) + 34*ln((1 - q.x)/(1 - c.x))), 4)}}; accept with chance {{fixed(min(1, exp(14*ln(q.x/c.x) + 34*ln((1 - q.x)/(1 - c.x)))), 4)}}"
+    }
+   },
+   "question": "Keep $x$ at 0.50 and put $x'$ at 0.38. What is the ratio $\\pi(x')/\\pi(x)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 32.19,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "",
+    "accept": "32.19: $(0.38/0.5)^{14}(0.62/0.5)^{34}$.",
+    "label": "Ratio",
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 0.0311,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "cap",
+      "value": 1,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Drag $x'$ left until it reads 0.38."
+    },
+    {
+     "rung": "point",
+     "text": "The caption gives the ratio."
+    },
+    {
+     "rung": "step",
+     "text": "About 32.19."
+    }
+   ],
+   "feedback": {
+    "correct": "32.19: the proposal is far more likely, so the move is always taken.",
+    "generic": "Not quite right. Read the ratio with $x' = 0.38$ and $x = 0.50$.",
+    "byKey": {
+     "inv": "That is $\\pi(x)/\\pi(x')$, upside down.",
+     "cap": "That is the acceptance chance, capped at 1. The ratio itself is larger."
+    }
+   },
+   "explain": {
+    "text": "$(0.38/0.5)^{14}(0.62/0.5)^{34} = 32.19$. A ratio above 1 means the move is always accepted.",
+    "canvas": {
+     "points": {
+      "c": {
+       "x": 0.5
+      },
+      "q": {
+       "x": 0.38
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Four steps by hand",
+   "prose": "Start at $x_0 = 0.50$ with step 0.1. Each step proposes $x' = x + 0.1z$. It moves there when $u$ is below the ratio, and otherwise stays put. Fill in each proposal $x'$ and where the chain is after each step.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      7
+     ],
+     "xLabel": "$x$",
+     "yLabel": "Density",
+     "height": 230,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(lgamma(50) - lgamma(15) - lgamma(35) + 14*ln(x) + 34*ln(1-x))",
+       "label": "Beta(15, 35)",
+       "domain": [
+        0.005,
+        0.995
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p0",
+       "x": 0.5,
+       "y": 0,
+       "on": "f",
+       "label": "$x_0$"
+      }
+     ]
+    },
+    "maxHeight": 180
+   },
+   "question": "Fill in the proposals and the chain.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "$z$",
+     "$x'$",
+     "Ratio",
+     "$u$",
+     "Chain"
+    ],
+    "rows": [
+     [
+      "-1.2",
+      {
+       "edit": true,
+       "answer": 0.38,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      "32.19",
+      "0.30",
+      {
+       "edit": true,
+       "answer": 0.38,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "0.4",
+      {
+       "edit": true,
+       "answer": 0.42,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      "0.4205",
+      "0.80",
+      {
+       "edit": true,
+       "answer": 0.38,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "took",
+         "value": 0.42,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "-0.9",
+      {
+       "edit": true,
+       "answer": 0.29,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "fromrej",
+         "value": 0.33,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      },
+      "2.2807",
+      "0.05",
+      {
+       "edit": true,
+       "answer": 0.29,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "2.1",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.001
+       }
+      },
+      "0.01362",
+      "0.60",
+      {
+       "edit": true,
+       "answer": 0.29,
+       "tol": {
+        "abs": 0.001
+       },
+       "wrong": [
+        {
+         "id": "took4",
+         "value": 0.5,
+         "tol": {
+          "abs": 0.001
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Step 2: is 0.80 below 0.4205?"
+    },
+    {
+     "rung": "point",
+     "text": "A rejected step repeats the current value: the chain stays at 0.38."
+    },
+    {
+     "rung": "step",
+     "text": "Proposals 0.38, 0.42, 0.29, 0.50; chain 0.38, 0.38, 0.29, 0.29."
+    }
+   ],
+   "feedback": {
+    "correct": "The chain reads 0.38, 0.38, 0.29, 0.29.",
+    "generic": "Not quite right. After a rejection the chain stays where it was.",
+    "byKey": {
+     "took": "You moved to 0.42, but $u = 0.80$ is above the ratio 0.4205. The chain stays at 0.38.",
+     "fromrej": "You proposed from the rejected 0.42. The chain is at 0.38, so $x' = 0.38 - 0.09$.",
+     "took4": "$u = 0.60$ is above 0.01362, so the move to 0.50 is rejected."
+    }
+   },
+   "explain": {
+    "text": "Steps 1 and 3 accept and steps 2 and 4 reject. The second 0.38 counts as a draw: rejections repeat the current value."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Only ratios matter",
+   "prose": "This is **random-walk Metropolis**, the sampler of `markov` lesson 15, now on a continuous parameter. Its proposal is symmetric, so detailed balance needs only the ratio of target heights. The posterior is likelihood times prior over the evidence $p(\\text{data})$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      7
+     ],
+     "xLabel": "$x$",
+     "yLabel": "Density",
+     "height": 230,
+     "functions": [
+      {
+       "id": "f",
+       "expr": "exp(lgamma(50) - lgamma(15) - lgamma(35) + 14*ln(x) + 34*ln(1-x))",
+       "label": "Beta(15, 35)",
+       "domain": [
+        0.005,
+        0.995
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "c",
+       "x": 0.5,
+       "y": 0,
+       "on": "f",
+       "label": "$x$"
+      },
+      {
+       "id": "q",
+       "x": 0.38,
+       "y": 0,
+       "on": "f",
+       "label": "$x'$"
+      }
+     ]
+    }
+   },
+   "question": "Why can the sampler use $x^{14}(1 - x)^{34}$ without its constant?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cancel",
+      "text": "The constant, the evidence included, cancels in $\\pi(x')/\\pi(x)$",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "The constant is close to 1 here",
+      "why": "It is $1/B(15, 35)$, a huge number. It cancels, whatever its size."
+     },
+     {
+      "id": "prior",
+      "text": "A flat prior has no constant",
+      "why": "The prior here is Beta(2, 8). Every constant cancels in the ratio."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the ratio with the constant in."
+    },
+    {
+     "rung": "point",
+     "text": "The same constant sits on top and bottom."
+    },
+    {
+     "rung": "step",
+     "text": "It cancels."
+    }
+   ],
+   "feedback": {
+    "correct": "The evidence never has to be computed.",
+    "generic": "Not quite right. Look at what the ratio does to a constant factor.",
+    "byKey": {
+     "small": "You thought the constant was small. Its size does not matter: it cancels."
+    }
+   },
+   "explain": {
+    "text": "$\\pi(x')/\\pi(x) = \\frac{c\\,x'^{14}(1 - x')^{34}}{c\\,x^{14}(1 - x)^{34}}$, so $c$ cancels. That is why MCMC works where the evidence is an intractable integral."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The log posterior of a default model",
+   "prose": "D1s is the first 100 firms of D1: leverage $L_i$ and default $y_i$. Give $\\beta_0$ and $\\beta_1$ independent $N(0, 10^2)$ priors. Build the log posterior the sampler needs. Leave out the slip.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "$\\beta_0$",
+      "$\\beta_1$"
+     ],
+     "rows": [
+      [
+       "MLE",
+       "−8.0481",
+       "12.8287"
+      ],
+      [
+       "Standard error",
+       "1.7795",
+       "2.7886"
+      ],
+      [
+       "Posterior mean (grid)",
+       "−7.861",
+       "12.537"
+      ],
+      [
+       "Posterior sd (grid)",
+       "1.591",
+       "2.492"
+      ],
+      [
+       "Posterior mean (chain, 18,000 draws)",
+       "−7.869",
+       "12.545"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "D1s: 100 firms, 33 defaults. Priors $N(0, 10^2)$. Posterior correlation $-0.971$."
+    }
+   },
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$\\ell(\\boldsymbol\\beta) = \\sum_i [y_i\\eta_i - \\ln(1 + e^{\\eta_i})]$ with $\\eta_i = \\beta_0 + \\beta_1L_i$, the log-likelihood of lesson 2"
+     },
+     {
+      "id": "b",
+      "text": "$\\ln\\pi(\\boldsymbol\\beta) = -(\\beta_0^2 + \\beta_1^2)/200 + c$, the log of two $N(0, 10^2)$ densities"
+     },
+     {
+      "id": "c",
+      "text": "$\\ln\\pi(\\boldsymbol\\beta \\mid \\mathbf y) = \\ell(\\boldsymbol\\beta) + \\ln\\pi(\\boldsymbol\\beta) - \\ln p(\\mathbf y)$, the log of Bayes' rule"
+     },
+     {
+      "id": "d",
+      "text": "Drop $c$ and $\\ln p(\\mathbf y)$: they cancel in every Metropolis ratio"
+     },
+     {
+      "id": "x",
+      "text": "$\\ln\\pi(\\boldsymbol\\beta \\mid \\mathbf y) = \\ell(\\boldsymbol\\beta) \\times \\ln\\pi(\\boldsymbol\\beta)$, combining likelihood and prior",
+      "why": "Bayes' rule multiplies densities, so their logs add. Multiplying logs has no meaning."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "same": [
+     [
+      "a",
+      "b"
+     ]
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start from the two pieces: likelihood and prior."
+    },
+    {
+     "rung": "point",
+     "text": "Bayes' rule multiplies them, so the logs add."
+    },
+    {
+     "rung": "step",
+     "text": "Constants cancel in ratios, so drop them last."
+    }
+   ],
+   "feedback": {
+    "correct": "Log-likelihood plus $-(\\beta_0^2 + \\beta_1^2)/200$.",
+    "generic": "Not quite right. Logs of a product add.",
+    "byKey": {
+     "x": "You multiplied the logs. Bayes multiplies densities, so their logs add.",
+     "left-out": "Every true line is needed."
+    }
+   },
+   "explain": {
+    "text": "The sampler needs $\\ell(\\boldsymbol\\beta) - (\\beta_0^2 + \\beta_1^2)/200$ and nothing else. Its maximum is near the MLE, pulled a little towards 0."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Posterior against MLE",
+   "prose": "A grid over 1,101 by 1,361 values of $(\\beta_0, \\beta_1)$ gives the posterior's moments exactly. A 20,000-step chain with step 1.0, after 2,000 burn-in steps, agrees within its Monte Carlo error.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "$\\beta_0$",
+      "$\\beta_1$"
+     ],
+     "rows": [
+      [
+       "MLE",
+       "−8.0481",
+       "12.8287"
+      ],
+      [
+       "Standard error",
+       "1.7795",
+       "2.7886"
+      ],
+      [
+       "Posterior mean (grid)",
+       "−7.861",
+       "12.537"
+      ],
+      [
+       "Posterior sd (grid)",
+       "1.591",
+       "2.492"
+      ],
+      [
+       "Posterior mean (chain, 18,000 draws)",
+       "−7.869",
+       "12.545"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "D1s: 100 firms, 33 defaults. Priors $N(0, 10^2)$. Posterior correlation $-0.971$."
+    }
+   },
+   "question": "Why is the posterior mean of $\\beta_1$, 12.537, below the MLE, 12.829?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "prior",
+      "text": "The $N(0, 10^2)$ prior pulls the slope towards 0",
+      "correct": true
+     },
+     {
+      "id": "mc",
+      "text": "Monte Carlo error in the chain",
+      "why": "The grid, with no Monte Carlo error, gives the same 12.537."
+     },
+     {
+      "id": "skew",
+      "text": "The MLE is biased upwards, and the posterior corrects it exactly",
+      "why": "The posterior mean is not a bias correction. It is the prior's pull plus the likelihood's skew."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The grid has no sampling error."
+    },
+    {
+     "rung": "point",
+     "text": "What does a prior centred at 0 do?"
+    },
+    {
+     "rung": "step",
+     "text": "It shrinks the slope towards 0."
+    }
+   ],
+   "feedback": {
+    "correct": "A prior centred at 0 shrinks both coefficients a little.",
+    "generic": "Not quite right. The grid and the chain agree, so the gap is not noise.",
+    "byKey": {
+     "mc": "You blamed the chain. The grid has no sampling error and gives the same figure."
+    }
+   },
+   "explain": {
+    "text": "The prior adds $-(\\beta_0^2 + \\beta_1^2)/200$, pulling towards 0. The slope moves 0.29, about a tenth of its standard error 2.7886."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "How big a step",
+   "prose": "Small steps are almost always accepted but crawl. Big steps leap but are almost always refused. The console shows acceptance on D1s. On a standard normal target the rate is $(2/\\pi)\\arctan(2/s)$ for step $s$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Metropolis on D1s, 20,000 steps, seed 1",
+     "lines": [
+      ">>> for s in [0.05, 0.5, 1.0, 1.5, 5]:",
+      "...     print(s, round(metropolis(lp, b0, s, 20000, 1)[1], 3))",
+      "0.05 0.952",
+      "0.5 0.579",
+      "1.0 0.351",
+      "1.5 0.24",
+      "5 0.053"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What acceptance rate does a step of $s = 2.4$ give on a standard normal target?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4423,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "",
+    "accept": "0.4423: $(2/\\pi)\\arctan(0.8333)$.",
+    "label": "Rate",
+    "wrong": [
+     {
+      "id": "s1",
+      "value": 0.7048,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "nopi",
+      "value": 0.6947,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$2/s = 0.8333$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\arctan(0.8333) = 0.6947$ radians."
+    },
+    {
+     "rung": "step",
+     "text": "$0.6947 \\times 2/\\pi = 0.4423$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.4423, the classic rate for a one-dimensional normal target.",
+    "generic": "Not quite right. Put $s = 2.4$ into $(2/\\pi)\\arctan(2/s)$.",
+    "byKey": {
+     "s1": "That is the rate at $s = 1$.",
+     "nopi": "That is $\\arctan(0.8333)$ alone. Multiply by $2/\\pi$."
+    }
+   },
+   "explain": {
+    "text": "$(2/\\pi)\\arctan(2/2.4) = 0.4423$; a seeded 20,000-step run gives 0.4439. At $s = 1$ it is 0.7048, at $s = 5$ 0.2422."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Cleaning the chain",
+   "prose": "A colleague drops every repeated value from a chain to clean it. The console compares the full chain with the accepted moves only, on a standard normal target with step 5. The true sd is 1 and 4.55% of the mass lies beyond $\\pm 2$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "200,000 steps, step 5, seed 1",
+     "lines": [
+      "              sd      share beyond ±2",
+      "full chain    1.002   0.0460",
+      "accepted only 1.122   0.0698"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What did dropping the repeats do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "tails",
+      "text": "It over-represents the tails: on this one-peaked target, moves out of the centre are rejected more often",
+      "correct": true
+     },
+     {
+      "id": "ok",
+      "text": "Nothing: the accepted values are the real draws",
+      "why": "A rejection is a draw too. It repeats the current value, which is how the chain weights high-density points."
+     },
+     {
+      "id": "narrow",
+      "text": "It makes the chain too narrow",
+      "why": "The accepted-only sd is 1.122, wider than 1."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where does the chain sit longest without moving?"
+    },
+    {
+     "rung": "point",
+     "text": "Near the mode, where proposals are often refused."
+    },
+    {
+     "rung": "step",
+     "text": "Dropping repeats removes weight from the centre."
+    }
+   ],
+   "feedback": {
+    "correct": "Repeats are draws; dropping them fattens the tails.",
+    "generic": "Not quite right. Compare the two rows of the console.",
+    "byKey": {
+     "ok": "You kept only accepted moves. The second 0.38 in the hand table was a draw too."
+    }
+   },
+   "explain": {
+    "text": "The full chain has sd 1.002 and the accepted-only one 1.122. Rejections repeat the current value, and that repetition is the weighting."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Densities or log densities",
+   "prose": "The likelihood of D1s is a product of 100 terms, each below 1. Written as a product, it is about $e^{-22}$ at the MLE. With 10,000 such firms it would be near $e^{-2200}$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Metropolis on D1s, 20,000 steps, seed 1",
+     "lines": [
+      ">>> for s in [0.05, 0.5, 1.0, 1.5, 5]:",
+      "...     print(s, round(metropolis(lp, b0, s, 20000, 1)[1], 3))",
+      "0.05 0.952",
+      "0.5 0.579",
+      "1.0 0.351",
+      "1.5 0.24",
+      "5 0.053"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why does the sampler compare $\\ln u$ with a difference of log posteriors?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "under",
+      "text": "A product of thousands of small terms underflows to 0, and $0/0$ is undefined",
+      "correct": true
+     },
+     {
+      "id": "speed",
+      "text": "Logs are faster to compute",
+      "why": "Speed is not the reason. A product of many terms below 1 becomes 0 in floating point."
+     },
+     {
+      "id": "same",
+      "text": "It changes which moves are accepted",
+      "why": "$u < \\pi'/\\pi$ and $\\ln u < \\ln\\pi' - \\ln\\pi$ accept exactly the same moves."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the smallest positive double?"
+    },
+    {
+     "rung": "point",
+     "text": "About $10^{-308}$, near $e^{-709}$."
+    },
+    {
+     "rung": "step",
+     "text": "$e^{-2200}$ is stored as 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Work on the log scale; `np.logaddexp(0, eta)` computes $\\ln(1 + e^\\eta)$ without overflow.",
+    "generic": "Not quite right. Think about $e^{-2200}$ in floating point.",
+    "byKey": {
+     "same": "You thought the rule changes. It does not; only the arithmetic is safer."
+    }
+   },
+   "explain": {
+    "text": "Doubles stop near $e^{-745}$, so a product over thousands of firms is 0 and every ratio is $0/0$. Logs turn the product into a sum that never underflows."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Your own sampler",
+   "prose": "Write `metropolis`. Use the prescribed stream so results are exact: `z` first, then `u`, every step. Store the current value after every step, accepted or not.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "A check on a standard normal target",
+     "lines": [
+      ">>> chain, rate = metropolis(lp, [0.0], 2.4, 20000, 1)",
+      ">>> round(rate, 4), round(chain.mean(), 3)",
+      "(0.4439, -0.019)"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `metropolis`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef metropolis(log_post, start, step, n, seed):\n    \"\"\"Random-walk Metropolis. Each step draws z = rng.standard_normal(d),\n    then u = rng.uniform(), and accepts when np.log(u) < lp_new - lp_old.\n    Return (chain of shape (n, d), acceptance rate).\"\"\"\n    rng = np.random.default_rng(seed)\n    x = np.array(start, dtype=float)\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef metropolis(log_post, start, step, n, seed):\n    rng = np.random.default_rng(seed)\n    x = np.array(start, dtype=float)\n    d = len(x)\n    lp = log_post(x)\n    chain = np.empty((n, d))\n    accepted = 0\n    for t in range(n):\n        z = rng.standard_normal(d)\n        u = rng.uniform()\n        prop = x + step * z\n        lp_new = log_post(prop)\n        if np.log(u) < lp_new - lp:\n            x, lp = prop, lp_new\n            accepted += 1\n        chain[t] = x\n    return chain, accepted / n\n",
+    "examples": [
+     {
+      "setup": "lp = lambda v: -0.5 * float(v @ v)",
+      "call": "metropolis(lp, [0.0, 0.0], 1.0, 500, 2)[0].shape",
+      "expect": "(500, 2)",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "lp = lambda v: -0.5 * float(v @ v)",
+      "call": "metropolis(lp, [0.0, 0.0], 1.0, 500, 2)[0].shape",
+      "expect": "(500, 2)",
+      "compare": "equal"
+     },
+     {
+      "setup": "lp = lambda v: -0.5 * float(v @ v)",
+      "call": "metropolis(lp, [0.0], 2.4, 20000, 1)[1]",
+      "expect": "0.4423",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "setup": "lp = lambda v: -0.5 * float(v @ v)",
+      "call": "float(metropolis(lp, [0.0], 2.4, 20000, 1)[0].mean())",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.1
+      }
+     },
+     {
+      "setup": "lp = lambda v: -0.5 * float(v @ v); ch = metropolis(lp, [0.0], 2.4, 1000, 3)[0]",
+      "call": "bool(np.sum(np.all(ch[1:] == ch[:-1], axis=1)) > 300)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "lp = lambda v: -0.5 * float(v @ v)",
+      "call": "np.round(metropolis(lp, [0.0, 0.0], 1.0, 3, 3)[0], 6).tolist()",
+      "expect": "[[0.0, 0.0], [-0.56777, -0.452649], [-0.56777, -0.452649]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "lp = lambda v: 14*np.log(v[0]) + 34*np.log(1 - v[0]) if 0 < v[0] < 1 else -np.inf",
+      "call": "bool(np.all((metropolis(lp, [0.5], 0.3, 2000, 4)[0] > 0) & (metropolis(lp, [0.5], 0.3, 2000, 4)[0] < 1)))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests. On a standard normal target with step 2.4, the rate must be within 0.02 of 0.4423. The mean must be within 0.1 of 0. The rate allows about four Monte Carlo standard errors, the mean about seven. Rejections must repeat the value, and three seeded rows must match exactly. A Beta target must stay inside (0, 1)."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Draw `z`, then `u`, then compare `np.log(u)` with the log ratio."
+    },
+    {
+     "rung": "point",
+     "text": "Write `chain[t] = x` whether or not the move was accepted."
+    },
+    {
+     "rung": "step",
+     "text": "Count acceptances and divide by `n` at the end."
+    }
+   ],
+   "feedback": {
+    "correct": "Your sampler repeats values on rejection and matches the seeded stream.",
+    "generic": "Not quite right. Check the order of the draws and that every step is stored."
+   },
+   "explain": {
+    "text": "A proposal outside (0, 1) has log density $-\\infty$, so it is always rejected. That keeps the Beta chain inside its support."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A Bayesian default model",
+   "prose": "Write the log posterior with `np.logaddexp`, then fit D1s. Twenty thousand steps take about 2 s in the browser. The sampler from the last screen is already in the editor.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "$\\beta_0$",
+      "$\\beta_1$"
+     ],
+     "rows": [
+      [
+       "MLE",
+       "−8.0481",
+       "12.8287"
+      ],
+      [
+       "Standard error",
+       "1.7795",
+       "2.7886"
+      ],
+      [
+       "Posterior mean (grid)",
+       "−7.861",
+       "12.537"
+      ],
+      [
+       "Posterior sd (grid)",
+       "1.591",
+       "2.492"
+      ],
+      [
+       "Posterior mean (chain, 18,000 draws)",
+       "−7.869",
+       "12.545"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "D1s: 100 firms, 33 defaults. Priors $N(0, 10^2)$. Posterior correlation $-0.971$."
+    }
+   },
+   "question": "Complete `log_post_logistic` and `fit_bayes_logistic`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef metropolis(log_post, start, step, n, seed):\n    rng = np.random.default_rng(seed)\n    x = np.array(start, dtype=float)\n    d = len(x)\n    lp = log_post(x)\n    chain = np.empty((n, d))\n    accepted = 0\n    for t in range(n):\n        z = rng.standard_normal(d)\n        u = rng.uniform()\n        prop = x + step * z\n        lp_new = log_post(prop)\n        if np.log(u) < lp_new - lp:\n            x, lp = prop, lp_new\n            accepted += 1\n        chain[t] = x\n    return chain, accepted / n\n\n\ndef log_post_logistic(beta, X, y, prior_sd):\n    \"\"\"Log-likelihood plus independent N(0, prior_sd^2) log priors, no constants.\"\"\"\n    ...\n\n\ndef fit_bayes_logistic(X, y, n, step, seed, burn):\n    \"\"\"Run metropolis from (0, 0) and return the posterior mean of the\n    draws after the first burn, as an array.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef metropolis(log_post, start, step, n, seed):\n    rng = np.random.default_rng(seed)\n    x = np.array(start, dtype=float)\n    d = len(x)\n    lp = log_post(x)\n    chain = np.empty((n, d))\n    accepted = 0\n    for t in range(n):\n        z = rng.standard_normal(d)\n        u = rng.uniform()\n        prop = x + step * z\n        lp_new = log_post(prop)\n        if np.log(u) < lp_new - lp:\n            x, lp = prop, lp_new\n            accepted += 1\n        chain[t] = x\n    return chain, accepted / n\n\n\ndef log_post_logistic(beta, X, y, prior_sd):\n    eta = X @ beta\n    return float(np.sum(y * eta - np.logaddexp(0, eta)) - beta @ beta / (2 * prior_sd ** 2))\n\n\ndef fit_bayes_logistic(X, y, n, step, seed, burn):\n    lp = lambda b: log_post_logistic(b, X, y, 10.0)\n    chain, rate = metropolis(lp, np.zeros(X.shape[1]), step, n, seed)\n    return chain[burn:].mean(axis=0)\n",
+    "budget": 10000,
+    "examples": [
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L])",
+      "call": "round(log_post_logistic(np.zeros(2), X, y, 10.0), 6)",
+      "expect": "-69.314718",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L])",
+      "call": "log_post_logistic(np.zeros(2), X, y, 10.0)",
+      "expect": "-69.31471805599453",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L])",
+      "call": "log_post_logistic(np.array([-8.0, 12.8]), X, y, 10.0)",
+      "expect": "-23.271562864413283",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L])",
+      "call": "bool(np.isfinite(log_post_logistic(np.array([0.0, 1000.0]), X, y, 10.0)))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L])",
+      "call": "fit_bayes_logistic(X, y, 20000, 1.0, 1, 2000).tolist()",
+      "expect": "[-7.861, 12.537]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.25
+      }
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L])",
+      "call": "len(fit_bayes_logistic(X, y, 3000, 1.0, 2, 1000))",
+      "expect": "2",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests. The log posterior must match to 1e-9 and stay finite at $\\beta_1 = 1000$. The fitted means must lie within 0.25 of the grid's $(-7.861, 12.537)$. My run's draws have Monte Carlo standard errors near 0.1 for $\\beta_0$ and 0.17 for $\\beta_1$. SciPy is not needed; NumPy loads on the first run."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The log-likelihood is `np.sum(y * eta - np.logaddexp(0, eta))`."
+    },
+    {
+     "rung": "point",
+     "text": "Subtract `beta @ beta / (2 * prior_sd**2)`."
+    },
+    {
+     "rung": "step",
+     "text": "Call `metropolis` from zeros, drop `burn` rows, take the column means."
+    }
+   ],
+   "feedback": {
+    "correct": "Your chain recovers the grid's posterior means.",
+    "generic": "Not quite right. Compare with the table of grid moments."
+   },
+   "explain": {
+    "text": "Seed 1 gives means $(-7.869, 12.545)$, within 0.01 of the grid's $(-7.861, 12.537)$. `np.logaddexp(0, eta)` keeps $\\ln(1 + e^\\eta)$ finite for any $\\eta$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A default probability with its doubt",
+   "prose": "Every draw $(\\beta_0, \\beta_1)$ gives a PD for a firm with leverage 0.5: $1/(1 + e^{-(\\beta_0 + 0.5\\beta_1)})$. Averaged over the posterior, the PD is 0.1794 (grid; the chain gives 0.1789).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "$\\beta_0$",
+      "$\\beta_1$"
+     ],
+     "rows": [
+      [
+       "MLE",
+       "−8.0481",
+       "12.8287"
+      ],
+      [
+       "Standard error",
+       "1.7795",
+       "2.7886"
+      ],
+      [
+       "Posterior mean (grid)",
+       "−7.861",
+       "12.537"
+      ],
+      [
+       "Posterior sd (grid)",
+       "1.591",
+       "2.492"
+      ],
+      [
+       "Posterior mean (chain, 18,000 draws)",
+       "−7.869",
+       "12.545"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "D1s: 100 firms, 33 defaults. Priors $N(0, 10^2)$. Posterior correlation $-0.971$."
+    }
+   },
+   "question": "What PD does the MLE give when plugged in at $L = 0.5$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1633,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "",
+    "accept": "0.1633: $1/(1 + e^{1.6338})$.",
+    "label": "PD",
+    "wrong": [
+     {
+      "id": "post",
+      "value": 0.1794,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "eta",
+      "value": -1.6338,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\hat\\beta_0 + 0.5\\hat\\beta_1 = -8.0481 + 6.4144$."
+    },
+    {
+     "rung": "point",
+     "text": "That is $-1.6338$."
+    },
+    {
+     "rung": "step",
+     "text": "$1/(1 + e^{1.6338}) = 0.1633$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.1633, below the posterior mean PD of 0.1794.",
+    "generic": "Not quite right. Plug the MLE into the logistic curve at $L = 0.5$.",
+    "byKey": {
+     "post": "That is the posterior mean PD, averaged over the draws.",
+     "eta": "That is the log odds. Put it through $1/(1 + e^{-\\eta})$."
+    }
+   },
+   "explain": {
+    "text": "The plug-in gives 0.1633. Averaging a curved function over the posterior gives 0.1794, and the draws also give an interval for the PD."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A thin segment",
+   "prose": "A credit officer prices loans to a segment with only 100 past firms. The frequentist model gives each firm one PD. The Bayesian model gives each firm a whole posterior of PDs.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "",
+      "$\\beta_0$",
+      "$\\beta_1$"
+     ],
+     "rows": [
+      [
+       "MLE",
+       "−8.0481",
+       "12.8287"
+      ],
+      [
+       "Standard error",
+       "1.7795",
+       "2.7886"
+      ],
+      [
+       "Posterior mean (grid)",
+       "−7.861",
+       "12.537"
+      ],
+      [
+       "Posterior sd (grid)",
+       "1.591",
+       "2.492"
+      ],
+      [
+       "Posterior mean (chain, 18,000 draws)",
+       "−7.869",
+       "12.545"
+      ]
+     ]
+    },
+    "state": {
+     "caption": "D1s: 100 firms, 33 defaults. Priors $N(0, 10^2)$. Posterior correlation $-0.971$."
+    }
+   },
+   "question": "What does the officer gain from the posterior?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "price",
+      "text": "She can price the doubt about each PD, say with a buffer or an interval, in a thin segment",
+      "correct": true
+     },
+     {
+      "id": "exact",
+      "text": "An exact PD with no error",
+      "why": "The posterior is a distribution: it shows the error rather than removing it."
+     },
+     {
+      "id": "same",
+      "text": "Nothing: the posterior mean always equals the MLE plug-in",
+      "why": "Here the posterior mean PD is 0.1794 against the plug-in 0.1633."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a single number hide?"
+    },
+    {
+     "rung": "point",
+     "text": "In a thin segment the doubt is large."
+    },
+    {
+     "rung": "step",
+     "text": "A distribution prices the doubt."
+    }
+   ],
+   "feedback": {
+    "correct": "The whole distribution lets the desk price uncertainty, not just a point.",
+    "generic": "Not quite right. What does a posterior give that a point estimate does not?",
+    "byKey": {
+     "same": "You took the plug-in and the posterior mean as equal. At $L = 0.5$ they differ: 0.1633 against 0.1794."
+    }
+   },
+   "explain": {
+    "text": "With 100 firms the PD's posterior is wide. The officer can charge for a high quantile, or hold capital against it, instead of trusting 0.1633."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Random-walk Metropolis needs only ratios of the unnormalised posterior, so the evidence is never computed.",
+   "A rejected proposal repeats the current value, and that repeat is a draw: never drop it.",
+   "On D1s the chain's means agree with the grid's $(-7.861, 12.537)$; the posterior mean PD at $L = 0.5$ is 0.1794."
+  ],
+  "formula": {
+   "name": "Metropolis acceptance",
+   "tex": "\\text{accept } x' = x + s z \\text{ when } \\ln u < \\ln\\pi(x' \\mid y) - \\ln\\pi(x \\mid y)",
+   "note": "Work on the log scale; a point outside the support has log density $-\\infty$."
+  },
+  "trap": "Keeping only accepted values over-represents the tails of a unimodal target."
+ },
+ "quiz": [
+  {
+   "id": "q16-step",
+   "difficulty": 2,
+   "prose": "A Metropolis chain sits at $x = 0.3$. The proposal $x' = 0.35$ has ratio $\\pi(x')/\\pi(x) = 0.6$, and the uniform is $u = 0.7$.",
+   "question": "Where is the chain after this step?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3,
+    "tol": {
+     "abs": 0.0001
+    },
+    "unit": "",
+    "accept": "0.3: $0.7 > 0.6$, so the move is rejected.",
+    "label": "Chain",
+    "wrong": [
+     {
+      "id": "took",
+      "value": 0.35,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.3: rejected, so the value repeats.",
+    "generic": "Not quite right. Accept only when $u$ is below the ratio.",
+    "byKey": {
+     "took": "You accepted with $u = 0.7$ above the ratio 0.6."
+    }
+   },
+   "explain": {
+    "text": "$u = 0.7$ is above 0.6, so the move is rejected and the chain stays at 0.3, counted again."
+   }
+  },
+  {
+   "id": "q16-support",
+   "difficulty": 2,
+   "prose": "A Metropolis chain on a fill rate sits at 0.04 and proposes $-0.02$.",
+   "question": "What happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rej",
+      "text": "It is rejected: the posterior is 0 there, so the ratio is 0",
+      "correct": true
+     },
+     {
+      "id": "refl",
+      "text": "It is reflected to 0.02",
+      "why": "Plain Metropolis does not reflect. A zero ratio means rejection."
+     },
+     {
+      "id": "err",
+      "text": "The sampler must stop with an error",
+      "why": "Code that returns $-\\infty$ outside (0, 1) simply rejects the move."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Outside the support the ratio is 0, so the proposal is always rejected.",
+    "generic": "Not quite right. What is the posterior below 0?",
+    "byKey": {
+     "refl": "You reflected the proposal. That needs a different sampler."
+    }
+   },
+   "explain": {
+    "text": "A rate below 0 has posterior 0, log density $-\\infty$, so $\\ln u < -\\infty$ never holds."
+   }
+  },
+  {
+   "id": "q16-rate",
+   "difficulty": 3,
+   "prose": "On D1s, steps of 0.05 and 5 accept 95% and 5% of proposals.",
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "both",
+      "text": "Both mix badly: one crawls, the other rarely moves",
+      "correct": true
+     },
+     {
+      "id": "small",
+      "text": "Step 0.05 is best, since it accepts most",
+      "why": "A high rate with tiny steps explores slowly: the draws are nearly identical."
+     },
+     {
+      "id": "big",
+      "text": "Step 5 is best, since its moves are large",
+      "why": "It refuses 95% of moves, so the chain repeats itself for long stretches."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Mixing needs a middle step.",
+    "generic": "Not quite right. Acceptance alone does not measure mixing.",
+    "byKey": {
+     "small": "You equated a high acceptance rate with good mixing."
+    }
+   },
+   "explain": {
+    "text": "Tiny steps are accepted but move little; huge steps move far but are refused. A middle step, near 0.5 to 1.5 here, explores fastest."
+   }
+  }
+ ]
+}

@@ -1,0 +1,392 @@
+{
+ "id": "homework-4",
+ "course": "stat-models",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-exit-mcmc",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "sm-mcmc",
+    "sm-bayes"
+   ],
+   "title": "Fit and check a Bayesian default model",
+   "prose": "Write `bayes_logistic_with_checks` from scratch. Priors are independent $N(0, 10^2)$. Draw the starts with `np.random.default_rng(seed).normal(0, 5, (n_chains, d))`. Chain $c$ runs Metropolis from its start with seed `seed + 1 + c`: each step draws `z = rng.standard_normal(d)`, then `u = rng.uniform()`. Drop the first `n // 5` draws. Return the pooled means, split $\\hat R$ and summed AR(1) effective sample sizes.",
+   "question": "Complete the function. Tests use centred D1s.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef bayes_logistic_with_checks(X, y, n_chains, n, step, seed):\n    \"\"\"Dispersed Metropolis chains for a logistic model with N(0, 10^2) priors.\n    Return {\"mean\": ..., \"split_rhat\": ..., \"ess\": ...}, one entry per coefficient.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef metropolis(log_post, start, step, n, seed):\n    rng = np.random.default_rng(seed)\n    x = np.array(start, dtype=float)\n    lp, chain = log_post(x), np.empty((n, len(x)))\n    for t in range(n):\n        z, u = rng.standard_normal(len(x)), rng.uniform()\n        prop = x + step * z\n        lp_new = log_post(prop)\n        if np.log(u) < lp_new - lp:\n            x, lp = prop, lp_new\n        chain[t] = x\n    return chain\n\n\ndef rhat(c):\n    m, n = c.shape\n    W = c.var(axis=1, ddof=1).mean()\n    B = n * c.mean(axis=1).var(ddof=1)\n    return np.sqrt(((n - 1) / n * W + B / n) / W)\n\n\ndef bayes_logistic_with_checks(X, y, n_chains, n, step, seed):\n    def lp(b):\n        eta = X @ b\n        return np.sum(y * eta - np.logaddexp(0, eta)) - b @ b / 200\n    rng = np.random.default_rng(seed)\n    starts = rng.normal(0, 5, (n_chains, X.shape[1]))\n    burn = n // 5\n    ch = np.array([metropolis(lp, s0, step, n, seed + 1 + c)[burn:]\n                   for c, s0 in enumerate(starts)])\n    d = ch.shape[2]\n    h = ch.shape[1] // 2\n    split = [rhat(np.vstack([ch[:, :h, j], ch[:, -h:, j]])) for j in range(d)]\n    ess = []\n    for j in range(d):\n        tot = 0.0\n        for c in ch[:, :, j]:\n            x = c - c.mean()\n            phi = (x[:-1] @ x[1:]) / (x @ x)\n            tot += len(c) * (1 - phi) / (1 + phi)\n        ess.append(tot)\n    return {\"mean\": ch.reshape(-1, d).mean(axis=0), \"split_rhat\": np.array(split), \"ess\": np.array(ess)}\n",
+    "budget": 10000,
+    "examples": [
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L - L.mean()])",
+      "call": "sorted(bayes_logistic_with_checks(X, y, 2, 500, 1.0, 1))",
+      "expect": "['ess', 'mean', 'split_rhat']",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L - L.mean()])",
+      "call": "sorted(bayes_logistic_with_checks(X, y, 2, 500, 1.0, 1))",
+      "expect": "['ess', 'mean', 'split_rhat']",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L - L.mean()]); r = bayes_logistic_with_checks(X, y, 4, 5000, np.array([0.8, 3.5]), 8)",
+      "call": "np.asarray(r['mean']).tolist()",
+      "expect": "[-2.237, 12.848]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 0.25
+      }
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L - L.mean()]); r = bayes_logistic_with_checks(X, y, 4, 5000, np.array([0.8, 3.5]), 8)",
+      "call": "bool(np.all(np.asarray(r['split_rhat']) < 1.01))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L - L.mean()]); r = bayes_logistic_with_checks(X, y, 4, 5000, np.array([0.8, 3.5]), 8)",
+      "call": "bool(np.all(np.asarray(r['ess']) > 500))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L - L.mean()]); r = bayes_logistic_with_checks(X, y, 4, 1000, 0.05, 7)",
+      "call": "bool(np.max(r['split_rhat']) > 1.01)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); L, y = L[:100], y[:100]; X = np.column_stack([np.ones(100), L - L.mean()]); X = np.column_stack([np.ones(100), L]); r = bayes_logistic_with_checks(X, y, 4, 5000, 1.0, 7)",
+      "call": "bool(np.max(r['split_rhat']) > 1.01)",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 6 hidden tests, each under about 2 s. With steps $(0.8, 3.5)$, 5,000 draws and seed 8, the means must lie within 0.25 of the grid's $(-2.237, 12.848)$. That is about three Monte Carlo standard errors for $\\beta_1$. Split $\\hat R$ must be below 1.01 and each ESS above 500. Tiny steps, and the uncentred predictor, must fail split $\\hat R$. NumPy loads on the first run."
+   },
+   "feedback": {
+    "correct": "Your sampler fits the model and its diagnostics pass: the exit task is done.",
+    "generic": "Not quite right. Check the seeds, the burn-in and the split."
+   },
+   "explain": {
+    "text": "Seed 8 gives means $(-2.233, 12.837)$, split $\\hat R$ $(1.0016, 1.0014)$ and ESS $(1284, 1214)$. Uncentred, the same sampler gives split $\\hat R$ of 1.0447."
+   }
+  },
+  {
+   "id": "h-nb-derive",
+   "difficulty": 4,
+   "skills": [
+    "sm-bayes"
+   ],
+   "title": "The negative binomial predictive",
+   "prose": "Next year's defaults $\\tilde y$ are Poisson($\\lambda$), and $\\lambda \\mid y \\sim \\mathrm{Gamma}(\\alpha, \\beta)$ in rate form. Derive $P(\\tilde y = j)$. Leave out the slip.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$P(\\tilde y = j) = \\int_0^\\infty \\frac{e^{-\\lambda}\\lambda^j}{j!}\\cdot\\frac{\\beta^\\alpha\\lambda^{\\alpha - 1}e^{-\\beta\\lambda}}{\\Gamma(\\alpha)}\\,d\\lambda$, averaging the Poisson over the posterior"
+     },
+     {
+      "id": "b",
+      "text": "$= \\frac{\\beta^\\alpha}{j!\\,\\Gamma(\\alpha)}\\int_0^\\infty \\lambda^{\\alpha + j - 1}e^{-(\\beta + 1)\\lambda}\\,d\\lambda$, collecting powers and exponents"
+     },
+     {
+      "id": "c",
+      "text": "$= \\frac{\\beta^\\alpha}{j!\\,\\Gamma(\\alpha)}\\cdot\\frac{\\Gamma(\\alpha + j)}{(\\beta + 1)^{\\alpha + j}}$, a Gamma integral"
+     },
+     {
+      "id": "d",
+      "text": "$= \\frac{\\Gamma(\\alpha + j)}{j!\\,\\Gamma(\\alpha)}\\left(\\frac{\\beta}{\\beta + 1}\\right)^\\alpha\\left(\\frac{1}{\\beta + 1}\\right)^j$: negative binomial with $r = \\alpha$, $p = \\beta/(\\beta + 1)$"
+     },
+     {
+      "id": "x",
+      "text": "$= \\frac{e^{-\\alpha/\\beta}(\\alpha/\\beta)^j}{j!}$, putting the posterior mean into the Poisson",
+      "why": "That is the plug-in Poisson. The integral averages over $\\lambda$; it does not replace $\\lambda$ by its mean."
+     }
+    ],
+    "answer": [
+     "a",
+     "b",
+     "c",
+     "d"
+    ],
+    "distractors": [
+     "x"
+    ]
+   },
+   "feedback": {
+    "correct": "With $\\alpha = 17$, $\\beta = 6$: $r = 17$, $p = 6/7$.",
+    "generic": "Not quite right. Collect the powers of $\\lambda$ first, then use $\\int_0^\\infty \\lambda^{s - 1}e^{-c\\lambda}d\\lambda = \\Gamma(s)/c^s$.",
+    "byKey": {
+     "x": "You plugged in the mean. That is the thin-tailed plug-in, 0.0681 against 0.0829.",
+     "left-out": "Every true line is needed."
+    }
+   },
+   "explain": {
+    "text": "The posterior predictive is negative binomial with $r = \\alpha$ and $p = \\beta/(\\beta + 1)$. For Gamma(17, rate 6) its mean is 2.8333 and its variance 3.3056."
+   }
+  },
+  {
+   "id": "h-three-fills",
+   "difficulty": 3,
+   "skills": [
+    "sm-bayes"
+   ],
+   "title": "Three fills in a row",
+   "prose": "The fill rate is Beta(15, 35). The desk sends three orders. The chance all three fill is $E[p^3] = \\frac{a(a + 1)(a + 2)}{(a + b)(a + b + 1)(a + b + 2)}$.",
+   "question": "What is it?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.03077,
+    "tol": {
+     "abs": 0.0001
+    },
+    "unit": "",
+    "accept": "0.03077: $4080/132{,}600$.",
+    "label": "Probability",
+    "wrong": [
+     {
+      "id": "plug",
+      "value": 0.027,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.03077, above the plug-in $0.3^3 = 0.027$.",
+    "generic": "Not quite right. Compute $\\frac{15 \\cdot 16 \\cdot 17}{50 \\cdot 51 \\cdot 52}$.",
+    "byKey": {
+     "plug": "That is $0.3^3$, the plug-in. Averaging $p^3$ over the posterior gives more."
+    }
+   },
+   "explain": {
+    "text": "$15 \\cdot 16 \\cdot 17/(50 \\cdot 51 \\cdot 52) = 0.03077$, above $0.3^3 = 0.027$ because $p^3$ is convex."
+   }
+  },
+  {
+   "id": "h-rhat-table",
+   "difficulty": 4,
+   "skills": [
+    "sm-mcmc"
+   ],
+   "title": "R-hat from chain summaries",
+   "prose": "Three chains of $n = 200$ draws have means $0.1$, $0.3$ and $-0.4$, and variances (divisor $n - 1$) of 1.0, 1.2 and 0.8.",
+   "question": "What is $\\hat R$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.0607,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "",
+    "accept": "1.0607: $W = 1$, $B = 26$, $\\widehat{\\text{var}}^+ = 1.125$.",
+    "label": "R-hat",
+    "wrong": [
+     {
+      "id": "sq",
+      "value": 1.125,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "pop",
+      "value": 1.04,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1.0607: these chains have not converged.",
+    "generic": "Not quite right. $B = n$ times the variance of the means, with divisor $m - 1$.",
+    "byKey": {
+     "sq": "That is $\\widehat{\\text{var}}^+/W$. Take its square root.",
+     "pop": "You used divisor $m$ for the variance of the means. Use $m - 1 = 2$."
+    }
+   },
+   "explain": {
+    "text": "The means' variance is $0.26/2 = 0.13$, so $B = 26$. $\\widehat{\\text{var}}^+ = 0.995 + 0.13 = 1.125$ and $\\hat R = 1.0607$."
+   }
+  },
+  {
+   "id": "h-how-many",
+   "difficulty": 4,
+   "skills": [
+    "sm-hier"
+   ],
+   "title": "How long a record",
+   "prose": "Under the population fit $\\hat a = 23.31$, $\\hat b = 19.72$, a strategy wins 70% of its $n$ trades. Its shrunk rate is $(0.7n + 23.31)/(n + 43.02)$.",
+   "question": "What is the smallest whole $n$ for which the shrunk rate exceeds 0.65?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 94,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "",
+    "accept": "94: $0.05n > 4.653$ needs $n > 93.06$.",
+    "label": "Trades",
+    "wrong": [
+     {
+      "id": "floor",
+      "value": 93,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "94 trades.",
+    "generic": "Not quite right. Solve $0.7n + 23.31 > 0.65(n + 43.02)$.",
+    "byKey": {
+     "floor": "93 gives 0.64998, just below 0.65. Round up."
+    }
+   },
+   "explain": {
+    "text": "$0.7n + 23.31 > 0.65n + 27.963$ gives $n > 93.06$, so 94 trades."
+   }
+  },
+  {
+   "id": "h-check-stat",
+   "difficulty": 3,
+   "skills": [
+    "sm-bayes"
+   ],
+   "title": "Choosing the check",
+   "prose": "A Poisson model of hourly fills will set the size of a liquidity buffer for the busiest hours.",
+   "question": "Which posterior predictive check matters most?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "max",
+      "text": "The largest hourly count, or a high quantile, against replicates",
+      "correct": true
+     },
+     {
+      "id": "mean",
+      "text": "The mean hourly count",
+      "why": "The fit matches the mean by construction, so the check cannot fail."
+     },
+     {
+      "id": "zero",
+      "text": "The number of hours with no fills",
+      "why": "Quiet hours do not size a buffer for the busiest ones."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Check the feature the model will be used for: the upper tail.",
+    "generic": "Not quite right. What does the buffer depend on?",
+    "byKey": {
+     "mean": "You chose a statistic the model fits by construction."
+    }
+   },
+   "explain": {
+    "text": "Choose the statistic from the model's use, before looking. A buffer for busy hours needs the upper tail right."
+   }
+  },
+  {
+   "id": "h-post-sd",
+   "difficulty": 4,
+   "skills": [
+    "sm-hier"
+   ],
+   "title": "How sure about fund 10",
+   "prose": "Fund 10 reports 12.26% with standard error 5%. The population fit is $\\hat\\mu = 2.2478$ and $\\hat\\tau = 1.6943$. Its posterior precision is $1/5^2 + 1/1.6943^2$.",
+   "question": "What is the posterior sd of its alpha, in %?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.6047,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "",
+    "accept": "1.6047: $1/\\sqrt{0.04 + 0.34835}$.",
+    "label": "sd",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 2.575,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "se",
+      "value": 5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "1.6047%: far tighter than the 5% standard error.",
+    "generic": "Not quite right. Add the precisions, then take one over the root.",
+    "byKey": {
+     "var": "That is the posterior variance.",
+     "se": "That is the reported standard error, before pooling."
+    }
+   },
+   "explain": {
+    "text": "$0.04 + 0.34835 = 0.38835$, so the sd is $1/\\sqrt{0.38835} = 1.6047$. The posterior is $N(3.28, 1.6047^2)$ (empirical Bayes, ignoring doubt about $\\hat\\tau$)."
+   }
+  },
+  {
+   "id": "h-analyst-errors",
+   "difficulty": 5,
+   "skills": [
+    "sm-mcmc",
+    "sm-hier"
+   ],
+   "title": "Review an analyst's Bayesian report",
+   "kind": "longform",
+   "prompt": "An analyst ran one Metropolis chain of 5,000 steps on an uncentred logistic default model. They kept only the accepted draws and reported the posterior mean PD of one firm with no diagnostics. They then ranked twelve desks by raw hit rate for a bonus pool. Explain every error and the diagnostics to run. Give the fix by centring and the shrunk ranking. End with one sentence for the bonus committee.",
+   "model": "**The chain.** One chain cannot show convergence: it can sit in one mode or drift slowly. Run four chains from dispersed starts and report split $\\hat R$ (below 1.01) and effective sample sizes.\n\n**Accepted draws only.** A rejected proposal repeats the current value, and that repeat is a draw. Dropping repeats removes weight from the high-density centre, so the kept values over-represent the tails. On a normal target with step 5 the sd rose from 1.00 to 1.12.\n\n**Uncentred leverage.** With raw leverage the posterior correlation of $(\\beta_0, \\beta_1)$ is $-0.971$, so a random-walk chain crawls along a ridge. Its 5,000 steps are worth far fewer draws. Centring at $\\bar L = 0.4534$ cuts the correlation to $-0.750$. On D1s it raised the slope's effective sample size from 195 to 1,255. Split $\\hat R$ fell below 1.01.\n\n**The PD.** Report the posterior mean PD with an interval from the draws, not one number. At $L = 0.5$ the posterior mean is 0.1794 against the plug-in 0.1633.\n\n**The desks.** Raw hit rates reward small samples: the extremes are mostly noise. Fit a hierarchical model, $p_j \\sim \\mathrm{Beta}(a, b)$, by the beta-binomial marginal likelihood, and rank by $(k_j + \\hat a)/(n_j + \\hat a + \\hat b)$. A 20-trade desk keeps weight 0.32 on its own record; a 400-trade desk keeps 0.90.\n\n**For the committee.** \"Ranked on shrunk hit rates, which weight each desk's record by its length. Short records are pulled towards the firm-wide rate, so a lucky month cannot top the table.\" ",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Says one chain cannot show convergence; asks for several dispersed chains, split $\\hat R$ below 1.01 and effective sample sizes."
+    },
+    {
+     "points": 2,
+     "text": "Explains that rejected proposals are draws, and that dropping them over-represents the tails."
+    },
+    {
+     "points": 2,
+     "text": "Explains that uncentred leverage gives a posterior correlation near $-0.97$ and slow mixing, fixed by centring (about $-0.75$)."
+    },
+    {
+     "points": 1,
+     "text": "Asks for the PD with an interval from the draws, not one number."
+    },
+    {
+     "points": 2,
+     "text": "Replaces raw hit rates by shrunk ones from a beta-binomial hierarchical model, with weight $n_j/(n_j + \\hat\\kappa)$."
+    },
+    {
+     "points": 1,
+     "text": "Gives a plain sentence for the committee that a non-statistician can follow."
+    }
+   ]
+  }
+ ]
+}
