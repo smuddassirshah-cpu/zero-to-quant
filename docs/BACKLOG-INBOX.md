@@ -1271,3 +1271,8 @@ Raised later (stat-models level 4):
 - [Could] A `derive` `caption` with no `{{...}}` is a validator error ("not an expression"), so a canvas factory that turns its live caption into a fixed one must move it to `state.caption` (l18). Wanted: plain text accepted as a constant caption, or a line in AUTHORING section 4.
 - [Could] `numbers_lib.normalise` strips braces, so `$\sqrt{3.2}$` reads as `\sqrt3.2` and the 3.2 is never matched as a number (l14). Workaround: a string match on `\sqrt{3.2}`. Wanted: a space or separator left where a brace is removed after a command.
 - [Could] No tool prints a canvas's derived caption, so the $\hat R$ the l17 `series` caption shows (from `ar1` and `rolling` in a `let`) had to be recomputed by a Node copy of `_base.js`'s seeded normals and confirmed on a Why? screenshot. Wanted: `playthrough.mjs --captions` printing each screen's caption after `explain.canvas`.
+
+Raised later (vector-calc level 1):
+
+- `plane` polyline function entries (`points: [[x, y], ...]`): `label` with `labelAt` is not placed at the given x; the three walk labels in l2 screen 11 all piled up near the left end, over the paths. Wanted: `labelAt` honoured on a polyline as on an `expr` curve. Workaround: no curve labels, and a caption naming the colours ("Blue: n = 4 ...").
+- `space` `fields`: arrows are drawn only on an n by n by n grid. For work along a space curve (l3 screen 8, $\mathbf F = (y, z, x)$ on the helix) we wanted the arrows at points of the curve, for example `fields: [{ F, along: "h", n: 12 }]`, so the learner sees $\mathbf F$ against $\mathbf r'$. Workaround: a normalised 4 by 4 by 4 grid beside the bold curve.
