@@ -1,0 +1,1404 @@
+{
+ "id": "l10-cauchy-theorem",
+ "course": "complex",
+ "title": "Cauchy’s theorem",
+ "minutes": 15,
+ "objectives": [
+  "Use Cauchy’s theorem and integral formula to evaluate integrals around closed paths."
+ ],
+ "skills": [
+  "cz-contour"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Lesson 9's `contour_integral` ran round the unit circle for three integrands. Two came back as rounding noise, about $10^{-16}$, and one did not.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> loop = lambda f: contour_integral(f, circle, dcircle, 0, 2 * math.pi)",
+      ">>> loop(lambda z: z ** 2)",
+      "(1.1102230246251565e-16-2.220446049250313e-16j)",
+      ">>> loop(np.exp)",
+      "(4.440892098500626e-16-6.661338147750939e-16j)",
+      ">>> loop(lambda z: 1 / z)",
+      "(-3.4458499885999176e-18+6.283185307179586j)"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What do $z^2$ and $e^z$ have that $1/z$ lacks inside the circle?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "analytic",
+      "text": "They are analytic at every point inside the circle; $1/z$ is undefined at 0.",
+      "correct": true
+     },
+     {
+      "id": "bounded",
+      "text": "They are bounded on the circle.",
+      "why": "$|1/z| = 1$ on the unit circle, so $1/z$ is bounded there too. What matters is inside."
+     },
+     {
+      "id": "real",
+      "text": "They are real on the real axis.",
+      "why": "$1/z$ is real on the real axis as well, yet its loop integral is $2\\pi i$."
+     },
+     {
+      "id": "even",
+      "text": "They are even functions.",
+      "why": "$e^z$ is not even, and its loop integral is still 0."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look for a point inside the circle where one integrand fails."
+    },
+    {
+     "rung": "point",
+     "text": "What is $1/z$ at $z = 0$?",
+     "highlight": [
+      "l7"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1/z$ has no value at 0; $z^2$ and $e^z$ are differentiable everywhere."
+    }
+   ],
+   "feedback": {
+    "correct": "$z^2$ and $e^z$ are analytic everywhere inside; $1/z$ blows up at 0, which is inside.",
+    "generic": "Not quite. Compare the three functions at the centre of the circle.",
+    "byKey": {
+     "bounded": "You checked the circle itself. On it $|1/z| = 1$; the difference is the point 0 inside."
+    }
+   },
+   "explain": {
+    "text": "The first two are complex differentiable at every point inside the circle. $1/z$ fails at one point, 0, and that one point carries the whole $2\\pi i$. The rest of this lesson makes that precise.",
+    "canvas": {
+     "highlight": [
+      "l7"
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Slide and resize a circle round the plane. The integrand is $1/z$, analytic everywhere except 0. Watch the caption as the circle passes over 0.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -3.3,
+      3.3
+     ],
+     "y": [
+      -3.3,
+      3.3
+     ],
+     "equal": true,
+     "grid": true,
+     "params": {
+      "a": 1.5,
+      "R": 1
+     },
+     "functions": [
+      {
+       "id": "C",
+       "x": "a + R*cos(t)",
+       "y": "R*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "O",
+       "x": 0,
+       "y": 0,
+       "label": "$0$"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "Centre {{fixed(a, 1)}}, radius {{fixed(R, 1)}}: 0 is {{abs(a) < R ? 'inside' : 'outside'}}, so $\\oint dz/z$ = {{abs(a) < R ? '2πi' : '0'}}."
+    },
+    "controls": [
+     {
+      "bind": "a",
+      "min": -2,
+      "max": 2,
+      "step": 0.1,
+      "start": 1.5,
+      "label": "centre"
+     },
+     {
+      "bind": "R",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "start": 1,
+      "label": "radius"
+     }
+    ],
+    "maxHeight": 300
+   },
+   "question": "When does $\\oint \\frac{dz}{z}$ change as you move the circle?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "cross",
+      "text": "Only when the circle crosses the point 0.",
+      "correct": true
+     },
+     {
+      "id": "radius",
+      "text": "Whenever the radius changes.",
+      "why": "Lesson 9 showed every anticlockwise circle round 0 gives $2\\pi i$, whatever its radius."
+     },
+     {
+      "id": "centre",
+      "text": "Whenever the centre moves.",
+      "why": "Moving the centre leaves the value alone until the circle passes over 0."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "The value jumps only as the path crosses 0, where $1/z$ is not analytic.",
+    "generic": "Not quite. Move one slider at a time and read the caption."
+   },
+   "explain": {
+    "text": "Away from 0 the path can be bent freely and the integral stays put. It jumps from 0 to $2\\pi i$ only when 0 passes inside. That is the next screen's theorem.",
+    "canvas": {
+     "params": {
+      "a": 0.5,
+      "R": 1
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "prose": "**Cauchy's theorem**: if $f$ is analytic on and inside a simple closed path $\\gamma$, then $\\oint_\\gamma f\\,dz = 0$. Prove it when $f$ has an antiderivative $F$, as every polynomial and $e^z$ do. The general proof uses Green's theorem, met in Vector Calculus.",
+   "question": "Put the lines in order to show $\\oint_\\gamma f\\,dz = 0$ when $F' = f$.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "$\\oint_\\gamma f\\,dz = \\int_a^b F'(\\gamma(t))\\,\\gamma'(t)\\,dt$: the definition, with $f = F'$."
+     },
+     {
+      "id": "s2",
+      "text": "$= F(\\gamma(b)) - F(\\gamma(a))$: lesson 9's chain rule and fundamental theorem."
+     },
+     {
+      "id": "s3",
+      "text": "$= 0$: the path is closed, so $\\gamma(b) = \\gamma(a)$."
+     },
+     {
+      "id": "d1",
+      "text": "$\\operatorname{Log} z$ is an antiderivative of $1/z$, so $\\oint_{|z| = 1} \\frac{dz}{z} = 0$ too.",
+      "why": "$\\operatorname{Log} z$ jumps by $2\\pi i$ across its cut, so it is not an antiderivative on any loop round 0."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write the integrand as a derivative first."
+    },
+    {
+     "rung": "point",
+     "text": "Lesson 9 turned $\\int F'(\\gamma)\\gamma'\\,dt$ into $F(\\text{end}) - F(\\text{start})$."
+    },
+    {
+     "rung": "step",
+     "text": "A closed path ends where it starts."
+    }
+   ],
+   "feedback": {
+    "correct": "The ends coincide, so $F(\\gamma(b)) - F(\\gamma(a)) = 0$.",
+    "generic": "Not quite. Definition, then the fundamental theorem, then close the path.",
+    "byKey": {
+     "d1": "You used $\\operatorname{Log}$ round 0. Its value jumps by $2\\pi i$ at the cut, which is the hook's $2\\pi i$.",
+     "left-out": "Every line but one belongs. Leave out the claim about $\\operatorname{Log} z$."
+    }
+   },
+   "explain": {
+    "text": "With an antiderivative only the ends count, and a closed path has equal ends. $z^2$ and $e^z$ have the antiderivatives $\\frac{z^3}{3}$ and $e^z$. $1/z$ has none on a loop round 0, which is why it gave $2\\pi i$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Now $\\frac{e^z}{z - 1}$ on $|z| = 2$, which fails only at $z = 1$. Shrink the path to a small circle round 1: the value does not change. On a small circle $e^z \\approx e$, so $\\oint \\frac{e^z}{z - 1}\\,dz \\approx e\\oint \\frac{dz}{z - 1}$. Shrink $r$ and watch $e^z$ settle.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -2.6,
+      2.6
+     ],
+     "y": [
+      -2.4,
+      2.4
+     ],
+     "equal": true,
+     "grid": true,
+     "params": {
+      "r": 0.8
+     },
+     "functions": [
+      {
+       "id": "big",
+       "x": "2*cos(t)",
+       "y": "2*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "label": "$|z| = 2$",
+       "labelAt": 0.6
+      },
+      {
+       "id": "small",
+       "x": "1 + r*cos(t)",
+       "y": "r*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a",
+       "x": 1,
+       "y": 0,
+       "label": "$1$"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "On $|z - 1| = r$ with $r$ = {{fixed(r, 2)}}, $e^z$ stays within {{fixed(e*(exp(r) - 1), 3)}} of $e$."
+    },
+    "controls": [
+     {
+      "bind": "r",
+      "min": 0.05,
+      "max": 0.9,
+      "step": 0.05,
+      "start": 0.8,
+      "label": "$r$"
+     }
+    ],
+    "maxHeight": 300
+   },
+   "question": "What is $\\oint_{|z| = 2} \\frac{e^z}{z - 1}\\,dz$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "2\\pi i e",
+    "accept": [
+     "2\\pi e i",
+     "2ie\\pi",
+     "2\\pi i e^1"
+    ],
+    "wrong": [
+     {
+      "id": "theorem",
+      "tex": "0"
+     },
+     {
+      "id": "centre",
+      "tex": "2\\pi i"
+     },
+     {
+      "id": "no-i",
+      "tex": "2\\pi e"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Lesson 9: $\\oint \\frac{dz}{z - 1} = 2\\pi i$ round any circle about 1."
+    },
+    {
+     "rung": "point",
+     "text": "Replace $e^z$ by its value at the centre, $e^1$.",
+     "highlight": [
+      "small"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e \\times 2\\pi i = 2\\pi ie$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2\\pi i \\cdot e^1 = 2\\pi ie \\approx 17.0795i$.",
+    "generic": "Not quite. Freeze $e^z$ at the point where the denominator vanishes.",
+    "byKey": {
+     "theorem": "Cauchy's theorem needs $f$ analytic inside. $\\frac{e^z}{z - 1}$ blows up at 1, which is inside.",
+     "centre": "You used $e^0 = 1$. The point that matters is $z = 1$, where $e^z = e$.",
+     "no-i": "The loop integral $\\oint \\frac{dz}{z - 1}$ is $2\\pi i$, not $2\\pi$."
+    }
+   },
+   "explain": {
+    "text": "As $r \\to 0$, $e^z \\to e$ on the small circle, so the integral is $e \\cdot 2\\pi i \\approx 17.0795i$. This is **Cauchy's integral formula**: $f(a) = \\frac{1}{2\\pi i}\\oint \\frac{f(z)}{z - a}\\,dz$. One value inside is fixed by values on the path.",
+    "canvas": {
+     "params": {
+      "r": 0.05
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Differentiate the integral formula $k$ times in $a$: $\\oint \\frac{f(z)}{(z - a)^{k+1}}\\,dz = \\frac{2\\pi i}{k!}f^{(k)}(a)$. Apply it to $\\frac{e^z}{(z - 1)^2}$ on the same circle $|z| = 2$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -2.6,
+      2.6
+     ],
+     "y": [
+      -2.4,
+      2.4
+     ],
+     "equal": true,
+     "grid": true,
+     "functions": [
+      {
+       "id": "big",
+       "x": "2*cos(t)",
+       "y": "2*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "label": "$|z| = 2$",
+       "labelAt": 0.6
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a",
+       "x": 1,
+       "y": 0,
+       "label": "$1$ (double)"
+      }
+     ]
+    },
+    "maxHeight": 260
+   },
+   "question": "What is $\\oint_{|z| = 2} \\frac{e^z}{(z - 1)^2}\\,dz$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "2\\pi i e",
+    "accept": [
+     "2\\pi e i",
+     "2ie\\pi"
+    ],
+    "wrong": [
+     {
+      "id": "theorem",
+      "tex": "0"
+     },
+     {
+      "id": "k-plus-one",
+      "tex": "\\pi i e"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The power is $k + 1 = 2$, so $k = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "$f = e^z$ has $f'(1) = e$, and $1! = 1$.",
+     "highlight": [
+      "a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\frac{2\\pi i}{1!} \\cdot e = 2\\pi ie$."
+    }
+   ],
+   "feedback": {
+    "correct": "$k = 1$: $\\frac{2\\pi i}{1!}f'(1) = 2\\pi ie$, the same as the last screen.",
+    "generic": "Not quite. Find $k$ from the power, then use $f^{(k)}(1)$.",
+    "byKey": {
+     "theorem": "1 is inside the circle, where the integrand blows up, so Cauchy's theorem does not apply.",
+     "k-plus-one": "You divided by $(k + 1)! = 2$. The power is $k + 1 = 2$, so $k = 1$ and $k! = 1$."
+    }
+   },
+   "explain": {
+    "text": "With $k = 1$ the formula gives $2\\pi i \\cdot f'(1)$, and $(e^z)' = e^z$, so it is $2\\pi ie$ again. A derivative is an integral round a circle. The code screen uses this to compute derivatives."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Partial fractions split $\\frac{1}{z^2 - 1} = \\frac12\\left(\\frac{1}{z - 1} - \\frac{1}{z + 1}\\right)$. On $|z| = 2$ both poles are inside, the two terms give $\\frac12(2\\pi i - 2\\pi i)$, and the total is 0. Now take $|z - 1| = 1$, the small circle.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -2.6,
+      2.6
+     ],
+     "y": [
+      -2.4,
+      2.4
+     ],
+     "equal": true,
+     "grid": true,
+     "functions": [
+      {
+       "id": "big",
+       "x": "2*cos(t)",
+       "y": "2*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "label": "$|z| = 2$",
+       "labelAt": 2.2,
+       "dashed": true
+      },
+      {
+       "id": "small",
+       "x": "1 + 1*cos(t)",
+       "y": "1*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "label": "$|z - 1| = 1$",
+       "labelAt": 0.9,
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "p",
+       "x": 1,
+       "y": 0,
+       "label": "$1$"
+      },
+      {
+       "id": "m",
+       "x": -1,
+       "y": 0,
+       "label": "$-1$"
+      }
+     ]
+    },
+    "maxHeight": 280
+   },
+   "question": "What is $\\oint_{|z - 1| = 1} \\frac{dz}{z^2 - 1}$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\pi i",
+    "accept": [
+     "i\\pi"
+    ],
+    "wrong": [
+     {
+      "id": "big-circle",
+      "tex": "0"
+     },
+     {
+      "id": "no-half",
+      "tex": "2\\pi i"
+     },
+     {
+      "id": "other-pole",
+      "tex": "-\\pi i"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which pole lies inside $|z - 1| = 1$?"
+    },
+    {
+     "rung": "point",
+     "text": "Only 1 is inside; $-1$ is at distance 2 from the centre.",
+     "highlight": [
+      "p"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\frac12 \\cdot 2\\pi i = \\pi i$ from the first term; the second gives 0."
+    }
+   ],
+   "feedback": {
+    "correct": "Only the pole at 1 is inside: $\\frac12 \\cdot 2\\pi i = \\pi i \\approx 3.1416i$.",
+    "generic": "Not quite. Integrate each partial fraction separately.",
+    "byKey": {
+     "big-circle": "0 is the $|z| = 2$ answer, where both poles cancel. This circle holds only the pole at 1.",
+     "no-half": "You dropped the $\\frac12$ in front of the partial fractions.",
+     "other-pole": "$-\\pi i$ comes from the pole at $-1$, which is outside this circle."
+    }
+   },
+   "explain": {
+    "text": "$\\frac{1}{z + 1}$ is analytic inside $|z - 1| = 1$, so it gives 0 by Cauchy's theorem. $\\frac{1}{2(z - 1)}$ gives $\\frac12 \\cdot 2\\pi i$. The total is $\\pi i \\approx 3.1416i$.",
+    "canvas": {
+     "highlight": [
+      "small",
+      "p"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Put $z = a + re^{it}$ in the integral formula. Then $dz = ire^{it}\\,dt$ cancels against $z - a = re^{it}$, leaving $f(a) = \\frac{1}{2\\pi}\\int_0^{2\\pi} f(a + re^{it})\\,dt$. So $f(a)$ is the **average** of $f$ round any circle about $a$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.9,
+      1.9
+     ],
+     "y": [
+      -1.3,
+      1.3
+     ],
+     "equal": true,
+     "grid": true,
+     "functions": [
+      {
+       "id": "C",
+       "x": "0.5 + 1*cos(t)",
+       "y": "1*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "label": "$|z - 0.5| = 1$",
+       "labelAt": 0.75
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "q0",
+       "x": 1.5,
+       "y": 0.0,
+       "tap": false
+      },
+      {
+       "id": "q1",
+       "x": 1.4239,
+       "y": 0.3827,
+       "tap": false
+      },
+      {
+       "id": "q2",
+       "x": 1.2071,
+       "y": 0.7071,
+       "tap": false
+      },
+      {
+       "id": "q3",
+       "x": 0.8827,
+       "y": 0.9239,
+       "tap": false
+      },
+      {
+       "id": "q4",
+       "x": 0.5,
+       "y": 1.0,
+       "tap": false
+      },
+      {
+       "id": "q5",
+       "x": 0.1173,
+       "y": 0.9239,
+       "tap": false
+      },
+      {
+       "id": "q6",
+       "x": -0.2071,
+       "y": 0.7071,
+       "tap": false
+      },
+      {
+       "id": "q7",
+       "x": -0.4239,
+       "y": 0.3827,
+       "tap": false
+      },
+      {
+       "id": "q8",
+       "x": -0.5,
+       "y": 0.0,
+       "tap": false
+      },
+      {
+       "id": "q9",
+       "x": -0.4239,
+       "y": -0.3827,
+       "tap": false
+      },
+      {
+       "id": "q10",
+       "x": -0.2071,
+       "y": -0.7071,
+       "tap": false
+      },
+      {
+       "id": "q11",
+       "x": 0.1173,
+       "y": -0.9239,
+       "tap": false
+      },
+      {
+       "id": "q12",
+       "x": 0.5,
+       "y": -1.0,
+       "tap": false
+      },
+      {
+       "id": "q13",
+       "x": 0.8827,
+       "y": -0.9239,
+       "tap": false
+      },
+      {
+       "id": "q14",
+       "x": 1.2071,
+       "y": -0.7071,
+       "tap": false
+      },
+      {
+       "id": "q15",
+       "x": 1.4239,
+       "y": -0.3827,
+       "tap": false
+      },
+      {
+       "id": "a",
+       "x": 0.5,
+       "y": 0,
+       "label": "$0.5$",
+       "colour": 2
+      }
+     ]
+    },
+    "maxHeight": 280
+   },
+   "question": "Average $e^z$ over the circle $|z - 0.5| = 1$. What do you get?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.6487,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$e^{0.5} \\approx 1.6487$",
+    "wrong": [
+     {
+      "id": "centre-zero",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "rightmost",
+      "value": 4.4817,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "e",
+      "value": 2.7183,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The average is $f$ at the centre."
+    },
+    {
+     "rung": "point",
+     "text": "The centre is $a = 0.5$.",
+     "highlight": [
+      "a"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$e^{0.5} \\approx 1.6487$."
+    }
+   ],
+   "feedback": {
+    "correct": "The average is $e^{0.5} \\approx 1.6487$, the value at the centre.",
+    "generic": "Not quite. Evaluate $e^z$ at the centre of the circle.",
+    "byKey": {
+     "centre-zero": "1 is $e^0$, the value at the origin. The circle is centred at 0.5.",
+     "rightmost": "4.4817 is $e^{1.5}$, the right-most point of the circle. Average the whole circle.",
+     "e": "$e$ is $e^1$, the value at radius 1. The centre is 0.5."
+    }
+   },
+   "explain": {
+    "text": "The mean value property gives $e^{0.5} \\approx 1.6487$. The 16 dots already average to it within $10^{-13}$. Round a circle, averaging an analytic function is extremely accurate.",
+    "canvas": {
+     "highlight": [
+      "a"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "A student writes: $\\cos z$ and $z$ are both analytic, so their ratio is analytic, and Cauchy's theorem gives $\\oint_{|z| = 1} \\frac{\\cos z}{z}\\,dz = 0$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.6,
+      1.6
+     ],
+     "y": [
+      -1.4,
+      1.4
+     ],
+     "equal": true,
+     "grid": true,
+     "xStep": 1,
+     "yStep": 1,
+     "functions": [
+      {
+       "id": "C",
+       "x": "1*cos(t)",
+       "y": "1*sin(t)",
+       "t": [
+        0,
+        6.2832
+       ],
+       "label": "$|z| = 1$",
+       "labelAt": 0.9
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "O",
+       "x": 0,
+       "y": 0,
+       "label": "$z = 0$: $\\frac{\\cos z}{z}$ undefined",
+       "labelPos": "ne"
+      }
+     ]
+    },
+    "maxHeight": 260
+   },
+   "question": "What is $\\oint_{|z| = 1} \\frac{\\cos z}{z}\\,dz$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "2\\pi i",
+    "accept": [
+     "2i\\pi"
+    ],
+    "wrong": [
+     {
+      "id": "cauchy",
+      "tex": "0"
+     },
+     {
+      "id": "on-path",
+      "tex": "2\\pi i\\cos 1"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is the ratio analytic at every point inside the circle?"
+    },
+    {
+     "rung": "point",
+     "text": "At $z = 0$ the denominator is 0.",
+     "highlight": [
+      "O"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Use the integral formula with $f = \\cos z$ and $a = 0$: $2\\pi i\\cos 0$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2\\pi i\\cos 0 = 2\\pi i$. A ratio is analytic only where its denominator is not 0.",
+    "generic": "Not quite. Find where the integrand fails, then use the integral formula.",
+    "byKey": {
+     "cauchy": "You applied Cauchy's theorem as the student did. The ratio is undefined at 0, which is inside, so the theorem says nothing.",
+     "on-path": "$\\cos 1$ is a value on the path. The formula takes $f$ at the point inside, $a = 0$."
+    }
+   },
+   "explain": {
+    "text": "$\\frac{\\cos z}{z}$ is analytic except at 0, and 0 is inside the circle. The integral formula gives $2\\pi i \\cos 0 = 2\\pi i \\approx 6.2832i$. Cauchy's theorem needs analytic at every point inside, not only on the path.",
+    "canvas": {
+     "highlight": [
+      "O"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Write `cauchy_value(f, a, r, n=64)`: the mean of $f$ at $n$ equally spaced points of the circle $|z - a| = r$, as a complex number. The starter's points are almost right. NumPy loads on the first run, which takes a few seconds.",
+   "question": "Fix `cauchy_value`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef cauchy_value(f, a, r, n=64):\n    t = np.linspace(0, 2 * np.pi, n)\n    return np.mean(f(a + r * np.exp(1j * t)))\n",
+    "solution": "import numpy as np\n\n\ndef cauchy_value(f, a, r, n=64):\n    t = 2 * np.pi * np.arange(n) / n\n    return np.mean(f(a + r * np.exp(1j * t)))\n",
+    "examples": [
+     {
+      "call": "cauchy_value(np.exp, 0.5, 1)",
+      "expect": "1.6487212707001282+0j",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "cauchy_value(np.exp, 0.5, 1)",
+      "expect": "1.6487212707001282+0j",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "cauchy_value(np.sin, 1, 0.5)",
+      "expect": "math.sin(1)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "cauchy_value(lambda z: z ** 2, 1 + 1j, 2)",
+      "expect": "2j",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "cauchy_value(np.cos, 0, 3)",
+      "expect": "1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     }
+    ],
+    "how": "Check runs 4 hidden tests, each compared with `cmath.isclose` within absolute $10^{-12}$: $e^z$, $\\sin z$, $z^2$ and $\\cos z$ on four circles.",
+    "prelude": "import math\nimport numpy as np\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Print the first and last points of `t`."
+    },
+    {
+     "rung": "point",
+     "text": "`np.linspace(0, 2 * np.pi, n)` includes both 0 and $2\\pi$, the same point twice."
+    },
+    {
+     "rung": "step",
+     "text": "Use `t = 2 * np.pi * np.arange(n) / n`."
+    }
+   ],
+   "feedback": {
+    "correct": "Four of four. $e^{0.5}$ comes back to the last digit.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 is off by about 0.04. The point $t = 2\\pi$ repeats $t = 0$, so one value counts twice.",
+     "error": "Your code stopped with an error. `f` takes a NumPy array of complex points."
+    }
+   },
+   "explain": {
+    "text": "`np.arange(n) / n` spaces the points without repeating the start. With $n$ distinct points the mean is the trapezium rule on a whole period. For analytic $f$ that is exact to rounding, even with 64 points."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write `contour_derivative(f, a, r, k, n=64)`: $\\frac{k!}{2\\pi i}\\oint \\frac{f(z)}{(z - a)^{k+1}}\\,dz$ on $|z - a| = r$ by the trapezium rule. Return the complex value; its imaginary part is rounding noise.",
+   "question": "Fix `contour_derivative`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef contour_derivative(f, a, r, k, n=64):\n    t = 2 * np.pi * np.arange(n) / n\n    z = a + r * np.exp(1j * t)\n    dz = 1j * r * np.exp(1j * t) * (2 * np.pi / n)\n    total = np.sum(f(z) / (z - a) ** (k + 1) * dz)\n    return total / (2j * np.pi)\n",
+    "solution": "import math\nimport numpy as np\n\n\ndef contour_derivative(f, a, r, k, n=64):\n    t = 2 * np.pi * np.arange(n) / n\n    z = a + r * np.exp(1j * t)\n    dz = 1j * r * np.exp(1j * t) * (2 * np.pi / n)\n    total = np.sum(f(z) / (z - a) ** (k + 1) * dz)\n    return math.factorial(k) / (2j * np.pi) * total\n",
+    "examples": [
+     {
+      "call": "contour_derivative(np.exp, 0, 1, 3)",
+      "expect": "1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "contour_derivative(np.exp, 0, 1, 3)",
+      "expect": "1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "contour_derivative(np.sin, 0, 1, 5)",
+      "expect": "1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "contour_derivative(np.exp, 1, 1, 4)",
+      "expect": "math.e",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "contour_derivative(np.cos, 0, 1, 0)",
+      "expect": "1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "contour_derivative(lambda z: z ** 3, 2, 1, 2)",
+      "expect": "12",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     }
+    ],
+    "how": "Check runs 5 hidden tests within absolute $10^{-9}$. Three are high derivatives of $e^z$ and $\\sin z$. The others are $\\cos 0$ and $(z^3)''$ at 2.",
+    "prelude": "import math\nimport numpy as np\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the formula with the last line of the starter."
+    },
+    {
+     "rung": "point",
+     "text": "The formula has $k!$ in front."
+    },
+    {
+     "rung": "step",
+     "text": "`return math.factorial(k) / (2j * np.pi) * total`."
+    }
+   ],
+   "feedback": {
+    "correct": "Five of five. A fifth derivative from 64 values, to about $10^{-14}$.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 gave $\\frac16$. That is $\\frac{f'''(0)}{3!}$: multiply by $k! = 6$.",
+     "error": "Your code stopped with an error. `(z - a) ** (k + 1)` needs `z` as an array."
+    }
+   },
+   "explain": {
+    "text": "The sum is $\\frac{f^{(k)}(a)}{k!}$ times $2\\pi i$, so $k!$ must multiply back. A finite difference for a fifth derivative loses most of its digits. The circle keeps about 14 of them."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "$e^{-z^2/2}$ is analytic everywhere, so its integral round the rectangle is 0. Its size $e^{-(x^2 - y^2)/2}$, shaded, dies at the short ends. So the line $\\operatorname{Im} z = -c$ carries the same integral as the real axis. Pricing libraries rely on this.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -4.2,
+      4.2
+     ],
+     "y": [
+      -2,
+      1
+     ],
+     "grid": true,
+     "params": {
+      "c": 1
+     },
+     "functions": [
+      {
+       "id": "H",
+       "heat": "exp(-(x^2 - y^2)/2)",
+       "range": [
+        0,
+        1
+       ]
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "A",
+       "x": -3.5,
+       "y": 0,
+       "hidden": true,
+       "tap": false
+      },
+      {
+       "id": "B",
+       "x": 3.5,
+       "y": 0,
+       "hidden": true,
+       "tap": false
+      },
+      {
+       "id": "Cc",
+       "x": 3.5,
+       "y": -1,
+       "hidden": true,
+       "tap": false
+      },
+      {
+       "id": "D",
+       "x": -3.5,
+       "y": -1,
+       "hidden": true,
+       "tap": false
+      }
+     ],
+     "segments": [
+      {
+       "id": "top",
+       "from": "A",
+       "to": "B",
+       "arrow": true,
+       "label": "real axis"
+      },
+      {
+       "id": "right",
+       "from": "B",
+       "to": "Cc",
+       "arrow": true
+      },
+      {
+       "id": "bottom",
+       "from": "Cc",
+       "to": "D",
+       "arrow": true,
+       "label": "$\\operatorname{Im} z = -c$",
+       "labelOffset": [
+        60,
+        -14
+       ]
+      },
+      {
+       "id": "left",
+       "from": "D",
+       "to": "A",
+       "arrow": true
+      }
+     ]
+    },
+    "derive": {
+     "Cc.y": "-c",
+     "D.y": "-c"
+    },
+    "controls": [
+     {
+      "bind": "c",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.1,
+      "start": 1,
+      "label": "$c$"
+     }
+    ],
+    "maxHeight": 260
+   },
+   "question": "What is $\\int_{-\\infty}^{\\infty} e^{-(x - i)^2/2}\\,dx$, the case $c = 1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.5066,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\sqrt{2\\pi} \\approx 2.5066$, for every real $c$",
+    "wrong": [
+     {
+      "id": "pulled-out",
+      "value": 4.1327,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The rectangle's integral is 0 and its short ends vanish."
+    },
+    {
+     "rung": "point",
+     "text": "So the bottom line gives the same as the real axis.",
+     "highlight": [
+      "bottom"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The real axis gives the Gaussian integral $\\sqrt{2\\pi}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\sqrt{2\\pi} \\approx 2.5066$, as on the real axis, whatever $c$ is.",
+    "generic": "Not quite. Compare the bottom line with the real axis.",
+    "byKey": {
+     "pulled-out": "You expanded the square and kept $e^{c^2/2}$, dropping the factor $e^{icx}$. Its oscillation cancels the $e^{1/2}$ exactly.",
+     "zero": "The rectangle gives 0, but that is top minus bottom. Each line alone gives $\\sqrt{2\\pi}$."
+    }
+   },
+   "explain": {
+    "text": "The top and bottom lines cancel round the rectangle, so each gives $\\sqrt{2\\pi} \\approx 2.5066$. Lesson 12 uses this for the normal characteristic function. Lesson 13's pricer moves its line from $\\operatorname{Im} v = 0$ to $\\operatorname{Im} v = -(\\alpha + 1)$, allowed because the integrand is analytic between them.",
+    "canvas": {
+     "params": {
+      "c": 1.5
+     }
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Cauchy's theorem: if $f$ is analytic on and inside a closed path, $\\oint f\\,dz = 0$. A path can be bent freely through such a region.",
+   "Cauchy's integral formula: $f(a) = \\frac{1}{2\\pi i}\\oint \\frac{f(z)}{z - a}\\,dz$, and $\\oint \\frac{f(z)}{(z - a)^{k+1}}\\,dz = \\frac{2\\pi i}{k!}f^{(k)}(a)$.",
+   "For $f$ analytic on and inside a circle about $a$, $f(a)$ is the average of $f$ on it. There the trapezium rule round the circle is exact to rounding."
+  ],
+  "formula": {
+   "name": "Cauchy's integral formula",
+   "tex": "f^{(k)}(a) = \\frac{k!}{2\\pi i}\\oint_\\gamma \\frac{f(z)}{(z - a)^{k+1}}\\,dz",
+   "note": "$f$ analytic on and inside $\\gamma$, with $a$ inside and $\\gamma$ anticlockwise."
+  },
+  "trap": "Cauchy's theorem needs analytic at every point inside: $\\oint_{|z| = 1} \\frac{\\cos z}{z}\\,dz = 2\\pi i$, not 0."
+ },
+ "quiz": [
+  {
+   "id": "q-outside-pole",
+   "difficulty": 2,
+   "prose": "The pole of $\\frac{e^z}{z - 2}$ is at 2.",
+   "question": "What is $\\oint_{|z| = 1} \\frac{e^z}{z - 2}\\,dz$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "0",
+    "accept": [
+     "0"
+    ],
+    "wrong": [
+     {
+      "id": "formula",
+      "tex": "2\\pi i e^2"
+     },
+     {
+      "id": "centre",
+      "tex": "2\\pi i"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "feedback": {
+    "correct": "2 is outside the unit circle, so the integrand is analytic inside and the integral is 0.",
+    "generic": "Not quite. Check whether the pole lies inside the path.",
+    "byKey": {
+     "formula": "You applied the integral formula, but 2 is outside $|z| = 1$. The formula needs $a$ inside.",
+     "centre": "You used the value at 0. The integrand is analytic everywhere inside, so Cauchy's theorem gives 0."
+    }
+   },
+   "explain": {
+    "text": "Inside $|z| = 1$ the integrand $\\frac{e^z}{z - 2}$ is analytic, since $|z - 2| \\ge 1$ there. Cauchy's theorem gives 0. The integral formula would give $2\\pi ie^2$ only for a path round 2."
+   }
+  },
+  {
+   "id": "q-pole-on-path",
+   "difficulty": 3,
+   "prose": "The integrand $\\frac{1}{z - 1}$ blows up at $z = 1$, which lies on the unit circle itself.",
+   "question": "What can we say about $\\oint_{|z| = 1} \\frac{dz}{z - 1}$?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "undefined",
+      "text": "As it stands it is undefined: the integrand is unbounded on the path.",
+      "correct": true
+     },
+     {
+      "id": "two-pi",
+      "text": "It is $2\\pi i$.",
+      "why": "$2\\pi i$ needs the pole inside the path. Here it sits on the path."
+     },
+     {
+      "id": "zero",
+      "text": "It is 0.",
+      "why": "0 needs $f$ analytic on and inside the path. It fails at a point of the path."
+     },
+     {
+      "id": "half",
+      "text": "It is $\\pi i$, half way between.",
+      "why": "Half of $2\\pi i$ is a principal value, a different, limiting definition beyond this course."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Undefined: near $z = 1$ the integrand grows like $1/|z - 1|$ along the path.",
+    "generic": "Not quite. Where is the pole compared with the path?"
+   },
+   "explain": {
+    "text": "Both theorems assume the path avoids the pole. With the pole on the path, $|f|$ is unbounded and the integral does not exist as it stands. Move the path off the pole first."
+   }
+  },
+  {
+   "id": "q-cos-over-z",
+   "difficulty": 2,
+   "prose": "Take the larger circle $|z| = 2$.",
+   "question": "What is $\\oint_{|z| = 2} \\frac{\\cos z}{z}\\,dz$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "2\\pi i",
+    "accept": [
+     "2i\\pi"
+    ],
+    "wrong": [
+     {
+      "id": "cauchy",
+      "tex": "0"
+     },
+     {
+      "id": "radius",
+      "tex": "4\\pi i"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "feedback": {
+    "correct": "$2\\pi i\\cos 0 = 2\\pi i$, the same as on $|z| = 1$.",
+    "generic": "Not quite. Use the integral formula at the pole 0.",
+    "byKey": {
+     "cauchy": "0 is inside, where the integrand blows up, so Cauchy's theorem does not apply.",
+     "radius": "The radius does not enter the formula. Only $f(0) = \\cos 0 = 1$ does."
+    }
+   },
+   "explain": {
+    "text": "The path can shrink to a small circle round 0 without changing the integral. The formula gives $2\\pi i\\cos 0 = 2\\pi i \\approx 6.2832i$ on both circles."
+   }
+  },
+  {
+   "id": "q-derivative-form",
+   "difficulty": 3,
+   "prose": "Use the derivative form with $k = 1$.",
+   "question": "What is $\\oint_{|z| = 1} \\frac{e^{2z}}{z^2}\\,dz$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "4\\pi i",
+    "accept": [
+     "4i\\pi"
+    ],
+    "wrong": [
+     {
+      "id": "chain",
+      "tex": "2\\pi i"
+     },
+     {
+      "id": "cauchy",
+      "tex": "0"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "feedback": {
+    "correct": "$\\frac{2\\pi i}{1!}f'(0)$ with $f = e^{2z}$, $f'(0) = 2$: $4\\pi i$.",
+    "generic": "Not quite. Differentiate $e^{2z}$ once and evaluate at 0.",
+    "byKey": {
+     "chain": "You took $f'(0) = 1$. The chain rule gives $(e^{2z})' = 2e^{2z}$, which is 2 at 0.",
+     "cauchy": "0 is a double pole inside the circle, so the integral is not 0."
+    }
+   },
+   "explain": {
+    "text": "$z^2 = (z - 0)^{1+1}$, so $k = 1$ and the integral is $2\\pi i f'(0)$. With $f = e^{2z}$, $f'(0) = 2$, giving $4\\pi i \\approx 12.5664i$."
+   }
+  }
+ ]
+}

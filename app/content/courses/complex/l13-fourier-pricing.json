@@ -1,0 +1,1214 @@
+{
+ "id": "l13-fourier-pricing",
+ "course": "complex",
+ "title": "Pricing an option by Fourier inversion",
+ "minutes": 15,
+ "objectives": [
+  "Price a European call from the characteristic function of the log price, and match Black-Scholes in code."
+ ],
+ "skills": [
+  "cz-fourier",
+  "cz-contour"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "Trees l10 and opt-dash l5 priced this call at $S_0 = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$: £10.4506. Can we get it from $\\varphi$ alone? Write $C(k) = e^{-rT}\\int_k^\\infty (e^s - e^k)\\,q(s)\\,ds$, with $k = \\ln K$, $s = \\ln S_T$ and $q$ its density.",
+   "canvas": {
+    "kind": "payoff",
+    "params": {
+     "legs": [
+      {
+       "id": "c1",
+       "type": "call",
+       "side": "long",
+       "strike": 100,
+       "premium": 10.4506,
+       "label": "long 100 call"
+      }
+     ],
+     "range": [
+      60,
+      140
+     ],
+     "pl": false
+    },
+    "state": {
+     "spot": 100
+    }
+   },
+   "question": "What does the call price $C(k)$ tend to as the strike falls towards 0, so $k \\to -\\infty$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "£100: a call with strike near 0 is the share itself",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "forward",
+      "value": 105.1271,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "nothing",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is a call worth if you pay almost nothing to exercise it?"
+    },
+    {
+     "rung": "point",
+     "text": "With $K \\approx 0$ you receive $S_T$ for free at $T$.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Today that is worth $S_0 = £100$."
+    }
+   ],
+   "feedback": {
+    "correct": "$C \\to S_0 = £100$. A call struck at 0 is the share.",
+    "generic": "Not quite. Think of the call with the lowest possible strike.",
+    "byKey": {
+     "forward": "£105.1271 is $E[S_T]$ at time $T$. Discounting by $e^{-rT}$ brings it back to £100.",
+     "nothing": "0 is the limit as the strike rises. A low strike makes the call valuable."
+    }
+   },
+   "explain": {
+    "text": "As $K \\to 0$ the call pays $S_T$, worth $S_0 = £100$ today. So $C(k) \\to 100$ as $k \\to -\\infty$, and $\\int C(k)\\,dk$ diverges. $C$ has no Fourier transform as it stands.",
+    "canvas": {
+     "spot": 60
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "prose": "Fix it by **damping**: $c(k) = e^{\\alpha k}C(k)$ with $\\alpha > 0$. The plot shows $C(k)$ and the damped curve, scaled by $100^{-\\alpha}$ to share the axis. Slide $\\alpha$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1,
+      7
+     ],
+     "y": [
+      -5,
+      110
+     ],
+     "grid": true,
+     "xLabel": "$k = \\ln K$",
+     "yLabel": "",
+     "params": {
+      "a": 1.5
+     },
+     "functions": [
+      {
+       "id": "C",
+       "expr": "100*Phi((4.60517 - x + 0.07)/0.2) - exp(x - 0.05)*Phi((4.60517 - x + 0.07)/0.2 - 0.2)",
+       "label": "$C(k)$",
+       "labelAt": 2.5,
+       "dashed": true
+      },
+      {
+       "id": "c",
+       "expr": "exp(a*(x - 4.60517))*(100*Phi((4.60517 - x + 0.07)/0.2) - exp(x - 0.05)*Phi((4.60517 - x + 0.07)/0.2 - 0.2))",
+       "label": "damped",
+       "colour": 2,
+       "labelAt": 3.3
+      }
+     ]
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "k0",
+       "x": 4.60517,
+       "label": "$\\ln 100$"
+      }
+     ]
+    },
+    "controls": [
+     {
+      "bind": "a",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "start": 1.5,
+      "label": "$\\alpha$"
+     }
+    ],
+    "maxHeight": 260
+   },
+   "question": "With $\\alpha = 1.5$, how does the damped curve behave as $k \\to -\\infty$?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "zero",
+      "text": "It tends to 0, so it has a Fourier transform.",
+      "correct": true
+     },
+     {
+      "id": "hundred",
+      "text": "It tends to 100, like $C(k)$.",
+      "why": "$e^{\\alpha k} \\to 0$ as $k \\to -\\infty$, which pulls the curve down. Slide $\\alpha$ to 0 to see the undamped case."
+     },
+     {
+      "id": "blows",
+      "text": "It blows up.",
+      "why": "For $\\alpha > 0$, $e^{\\alpha k}$ shrinks as $k$ falls. It would blow up only for $\\alpha < 0$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^{\\alpha k}C(k) \\le 100e^{\\alpha k} \\to 0$, so the damped price is integrable.",
+    "generic": "Not quite. Slide $\\alpha$ between 0 and 3 and watch the left end."
+   },
+   "explain": {
+    "text": "$C(k) \\le 100$, so $e^{\\alpha k}C(k) \\to 0$ on the left; on the right $C$ falls faster than $e^{\\alpha k}$ grows. So $c(k)$ is integrable and has a transform. At $\\alpha = 0$ the curve is $C$ again, flat at 100.",
+    "canvas": {
+     "params": {
+      "a": 0
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "prose": "Transform the damped price: $\\psi(v) = \\int e^{ivk}c(k)\\,dk$. Put in $C(k)$, then swap the order of integration. The result is a closed form in $\\varphi$, the characteristic function of $\\ln S_T$.",
+   "question": "Put the lines in order to find $\\psi(v)$.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "$\\psi(v) = e^{-rT}\\int q(s)$ $\\int_{-\\infty}^{s} e^{(\\alpha + iv)k}(e^s - e^k)\\,dk$ $ds$: swap the order; $k$ runs below $s$."
+     },
+     {
+      "id": "s2",
+      "text": "Inner $= \\frac{e^{(\\alpha + 1 + iv)s}}{\\alpha + iv}$ $- \\frac{e^{(\\alpha + 1 + iv)s}}{\\alpha + 1 + iv}$: integrate; $\\alpha > 0$ kills the lower end."
+     },
+     {
+      "id": "s3",
+      "text": "$= \\frac{e^{(\\alpha + 1 + iv)s}}{(\\alpha + iv)(\\alpha + 1 + iv)}$: common denominator."
+     },
+     {
+      "id": "s4",
+      "text": "$\\int e^{(\\alpha + 1 + iv)s}q(s)\\,ds = \\varphi(v - (\\alpha + 1)i)$, since $i(v - (\\alpha + 1)i) = \\alpha + 1 + iv$."
+     },
+     {
+      "id": "s5",
+      "text": "$\\psi(v) = \\frac{e^{-rT}\\varphi(v - (\\alpha + 1)i)}{\\alpha^2 + \\alpha - v^2 + i(2\\alpha + 1)v}$: expand."
+     },
+     {
+      "id": "d1",
+      "text": "The lower end also vanishes at $\\alpha = 0$, since $e^k \\to 0$.",
+      "why": "At $\\alpha = 0$ the term $e^s e^{ivk}$ keeps size $e^s$ for every $k$, so the integral down to $-\\infty$ diverges."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start by swapping the order: for fixed $s$, $k$ runs from $-\\infty$ to $s$."
+    },
+    {
+     "rung": "point",
+     "text": "Each inner term is the integral of an exponential in $k$."
+    },
+    {
+     "rung": "step",
+     "text": "$(\\alpha + iv)(\\alpha + 1 + iv) = \\alpha^2 + \\alpha - v^2 + i(2\\alpha + 1)v$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\psi(v) = \\frac{e^{-rT}\\varphi(v - (\\alpha + 1)i)}{\\alpha^2 + \\alpha - v^2 + i(2\\alpha + 1)v}$, the Carr-Madan transform.",
+    "generic": "Not quite. Swap, integrate, combine, recognise $\\varphi$, expand.",
+    "byKey": {
+     "d1": "You allowed $\\alpha = 0$. The lower end of $\\int e^{ivk}e^s\\,dk$ never dies, which is the hook's divergence again.",
+     "left-out": "Every line but one belongs. Leave out the claim about $\\alpha = 0$."
+    }
+   },
+   "explain": {
+    "text": "The swap turns a double integral into $\\varphi$ at a shifted point. The shift by $-(\\alpha + 1)i$ comes from the factor $e^{(\\alpha + 1)s}$. Lesson 10 allows it, because $\\varphi$ is analytic in the strip in between."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "Invert: $C(k) = \\frac{e^{-\\alpha k}}{\\pi}\\int_0^\\infty \\operatorname{Re}\\left[e^{-ivk}\\psi(v)\\right]dv$. Half the line is enough, as $\\psi(-v) = \\overline{\\psi(v)}$ (lesson 12). The curve is this integrand at $K = 100$, with $e^{-\\alpha k}/\\pi$ included. Slide $\\alpha$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      12
+     ],
+     "y": [
+      -2,
+      12
+     ],
+     "grid": true,
+     "xLabel": "$v$",
+     "yLabel": "",
+     "params": {
+      "a": 1.5
+     },
+     "functions": [
+      {
+       "id": "g",
+       "expr": "100/pi*exp(-0.05 + 0.03*(a + 1) + 0.02*((a + 1)^2 - x^2))*(cos(x*(0.03 + 0.04*(a + 1)))*(a^2 + a - x^2) + sin(x*(0.03 + 0.04*(a + 1)))*(2*a + 1)*x)/((a^2 + a - x^2)^2 + (2*a + 1)^2*x^2)",
+       "domain": [
+        0,
+        40
+       ],
+       "label": "integrand",
+       "labelAt": 3
+      }
+     ]
+    },
+    "state": {
+     "area": {
+      "id": "A",
+      "f": "g",
+      "from": 0,
+      "to": 40,
+      "label": "area {value}",
+      "dp": 4
+     }
+    },
+    "controls": [
+     {
+      "bind": "a",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "start": 1.5,
+      "label": "$\\alpha$"
+     }
+    ],
+    "maxHeight": 260
+   },
+   "question": "What price does the area give at $K = 100$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.4506,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "£10.4506, the Black-Scholes price",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "height",
+      "value": 9.862,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-discount",
+      "value": 10.9864,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The price is the area under the curve, not its height."
+    },
+    {
+     "rung": "point",
+     "text": "Read the area label.",
+     "highlight": [
+      "A"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "It reads 10.4506 for every $\\alpha$."
+    }
+   ],
+   "feedback": {
+    "correct": "£10.4506: quadrature to $v = 200$ matches Black-Scholes to about $3 \\times 10^{-14}$.",
+    "generic": "Not quite. Read the shaded area, then move $\\alpha$.",
+    "byKey": {
+     "height": "9.862 is the curve's height at $v = 0$. The price is the area under it.",
+     "no-discount": "£10.9864 is $10.4506 \\times e^{0.05}$: the price without the discount $e^{-rT}$. The curve includes it."
+    }
+   },
+   "explain": {
+    "text": "The area is £10.4506 whatever $\\alpha$ is: taller near 0 for small $\\alpha$, flatter for large. In Pyodide the quadrature gives 10.450583572186, within $3 \\times 10^{-14}$ of Black-Scholes. $\\varphi$ alone priced the call.",
+    "canvas": {
+     "params": {
+      "a": 0.5
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "prose": "The table prices the same call with seven values of $\\alpha$, each by quadrature to $v = 200$, shown to ten places.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$\\alpha$",
+      "price (£)"
+     ],
+     "rows": [
+      [
+       "0.5",
+       "10.4505835722"
+      ],
+      [
+       "1",
+       "10.4505835722"
+      ],
+      [
+       "1.5",
+       "10.4505835722"
+      ],
+      [
+       "2",
+       "10.4505835722"
+      ],
+      [
+       "3",
+       "10.4505835722"
+      ],
+      [
+       "5",
+       "10.4505835722"
+      ],
+      [
+       "10",
+       "10.4505835722"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why does every row agree?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "path",
+      "text": "$e^{-\\alpha k}$ undoes the damping exactly. $\\alpha$ only moves the line of integration to $\\operatorname{Im} = -(\\alpha + 1)$, where $\\varphi$ is analytic.",
+      "correct": true
+     },
+     {
+      "id": "rounding",
+      "text": "Rounding to ten places hides real differences.",
+      "why": "They agree to ten places, far finer than any effect of $\\alpha$ on a true price. The price simply does not depend on it."
+     },
+     {
+      "id": "money",
+      "text": "At the money, $\\alpha$ has no effect; it matters for other strikes.",
+      "why": "Other strikes behave the same: for $\\alpha > 0$, $\\alpha$ cancels at every $K$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply by $e^{\\alpha k}$, then by $e^{-\\alpha k}$: what is left?"
+    },
+    {
+     "rung": "point",
+     "text": "In lesson 10 a path can move through a region where the integrand is analytic.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Every $\\alpha > 0$ is a different path to one integral."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\alpha$ is a choice of path, not a model input, so the price cannot depend on it.",
+    "generic": "Not quite. Think of $\\alpha$ as moving the line of integration."
+   },
+   "explain": {
+    "text": "Changing $\\alpha$ moves the evaluation of $\\varphi$ to $v - (\\alpha + 1)i$, a horizontal line in the complex plane. For Black-Scholes $\\varphi$ is analytic everywhere, so lesson 10 lets the line move freely. Only accuracy depends on $\\alpha$, through the shape of the integrand.",
+    "canvas": {
+     "highlight": [
+      "c1"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "One FFT prices a whole grid of strikes at once. With $N = 4{,}096$ points and step $\\eta = 0.25$ in $v$, the log-strikes are $\\lambda = \\frac{2\\pi}{N\\eta} \\approx 0.006136$ apart. The grid is centred on $\\ln S_0$, so $K = 100$ is point 2,048. The dots are grid strikes.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      97,
+      103
+     ],
+     "y": [
+      8.5,
+      12.5
+     ],
+     "grid": true,
+     "xLabel": "strike $K$ (£)",
+     "yLabel": "call (£)",
+     "functions": [
+      {
+       "id": "bs",
+       "expr": "100*Phi((ln(100/x) + 0.07)/0.2) - x*exp(-0.05)*Phi((ln(100/x) + 0.07)/0.2 - 0.2)",
+       "label": "Black-Scholes",
+       "labelAt": 101.6,
+       "labelSide": "below",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "g2044",
+       "x": 97.5755,
+       "y": 11.7964
+      },
+      {
+       "id": "g2045",
+       "x": 98.1761,
+       "y": 11.4527
+      },
+      {
+       "id": "g2046",
+       "x": 98.7803,
+       "y": 11.1138
+      },
+      {
+       "id": "g2047",
+       "x": 99.3883,
+       "y": 10.7797,
+       "label": "£99.39",
+       "labelPos": "sw"
+      },
+      {
+       "id": "g2048",
+       "x": 100.0,
+       "y": 10.4506,
+       "label": "£100",
+       "labelPos": "sw"
+      },
+      {
+       "id": "g2049",
+       "x": 100.6155,
+       "y": 10.1265
+      },
+      {
+       "id": "g2050",
+       "x": 101.2347,
+       "y": 9.8076
+      },
+      {
+       "id": "g2051",
+       "x": 101.8578,
+       "y": 9.4939
+      },
+      {
+       "id": "g2052",
+       "x": 102.4847,
+       "y": 9.1856
+      },
+      {
+       "id": "g2053",
+       "x": 103.1155,
+       "y": 8.8828
+      }
+     ]
+    },
+    "maxHeight": 260
+   },
+   "question": "What is the next grid strike above £100?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100.62,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "$100e^{0.006136} \\approx £100.62$",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "eta",
+      "value": 100.25,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "below",
+      "value": 99.39,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Neighbouring log-strikes differ by $\\lambda$."
+    },
+    {
+     "rung": "point",
+     "text": "So the next strike is $100e^{\\lambda}$.",
+     "highlight": [
+      "g2048"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$100e^{0.006136} \\approx 100.62$."
+    }
+   ],
+   "feedback": {
+    "correct": "$100e^{0.006136} \\approx £100.62$. The grid is even in $\\ln K$, not in $K$.",
+    "generic": "Not quite. Step up by $\\lambda$ in $\\ln K$.",
+    "byKey": {
+     "eta": "$\\eta = 0.25$ is the step in $v$, not in the strike. The log-strike step is $\\lambda = \\frac{2\\pi}{N\\eta}$.",
+     "below": "£99.39 is the strike below, $100e^{-\\lambda}$. Step up instead."
+    }
+   },
+   "explain": {
+    "text": "$\\lambda\\eta = \\frac{2\\pi}{N}$ is the FFT's rule: fine steps in $v$ mean coarse steps in strike. Here $100e^{\\lambda} \\approx £100.62$ and $100e^{-\\lambda} \\approx £99.39$. At $K = 100$ the FFT gives 10.4505834, about $2.2 \\times 10^{-7}$ below Black-Scholes.",
+    "canvas": {
+     "highlight": [
+      "g2049"
+     ]
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "prose": "The price does not depend on $\\alpha$, so a colleague proposes $\\alpha = 0$ and no damping at all. Slide $\\alpha$ down towards 0 and watch the integrand near $v = 0$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.3,
+      6
+     ],
+     "y": [
+      -5,
+      60
+     ],
+     "grid": true,
+     "xLabel": "$v$",
+     "yLabel": "",
+     "params": {
+      "a": 0.3
+     },
+     "functions": [
+      {
+       "id": "g",
+       "expr": "100/pi*exp(-0.05 + 0.03*(a + 1) + 0.02*((a + 1)^2 - x^2))*(cos(x*(0.03 + 0.04*(a + 1)))*(a^2 + a - x^2) + sin(x*(0.03 + 0.04*(a + 1)))*(2*a + 1)*x)/((a^2 + a - x^2)^2 + (2*a + 1)^2*x^2)",
+       "domain": [
+        0,
+        40
+       ],
+       "label": "integrand",
+       "labelAt": 2
+      }
+     ]
+    },
+    "state": {},
+    "controls": [
+     {
+      "bind": "a",
+      "min": 0.05,
+      "max": 1.5,
+      "step": 0.05,
+      "start": 0.3,
+      "label": "$\\alpha$"
+     }
+    ],
+    "maxHeight": 260
+   },
+   "question": "What goes wrong at $\\alpha = 0$?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "pole",
+      "text": "The denominator becomes $-v^2 + iv$, which is 0 at $v = 0$: $|\\psi(10^{-6})| \\approx 10^8$ and the integral blows up.",
+      "correct": true
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing: the price does not depend on $\\alpha$.",
+      "why": "That holds for every $\\alpha > 0$. At $\\alpha = 0$ the line of integration runs through the pole at $v = 0$."
+     },
+     {
+      "id": "discount",
+      "text": "The price comes out $e^{rT}$ times too high.",
+      "why": "That is the symptom of dropping $e^{-rT}$, which gives £10.9864. $\\alpha = 0$ gives no finite price."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Put $\\alpha = 0$ in $\\alpha^2 + \\alpha - v^2 + i(2\\alpha + 1)v$."
+    },
+    {
+     "rung": "point",
+     "text": "It becomes $-v^2 + iv = iv(1 + iv)$.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "That is 0 at $v = 0$, so $\\psi$ has a pole on the path."
+    }
+   ],
+   "feedback": {
+    "correct": "At $\\alpha = 0$ the path hits a pole: $|\\psi(10^{-6})| \\approx 10^8$.",
+    "generic": "Not quite. Look at the denominator of $\\psi$ at $v = 0$.",
+    "byKey": {
+     "nothing": "You applied 'the price does not depend on $\\alpha$' at $\\alpha = 0$. It holds only for $\\alpha > 0$, while the path avoids the pole.",
+     "discount": "A clean factor of $e^{rT}$ is the missing discount. $\\alpha = 0$ is worse: there is no finite answer."
+    }
+   },
+   "explain": {
+    "text": "The integrand's peak grows like $1/\\alpha$ as $\\alpha \\to 0$, and at 0 it is infinite. This is lesson 10's pole on the path: the integral is undefined. For this call, any $\\alpha$ from about 0.5 to 3 works well.",
+    "canvas": {
+     "params": {
+      "a": 0.05
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "Write `bs_logprice_cf(u, S0, r, sigma, T)`: the characteristic function of $\\ln S_T$ under Black-Scholes, for complex $u$ and NumPy arrays. The starter fails the martingale check. NumPy loads on the first run, which takes a few seconds.",
+   "question": "Fix `bs_logprice_cf`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef bs_logprice_cf(u, S0, r, sigma, T):\n    m = np.log(S0) + r * T\n    return np.exp(1j * u * m - sigma ** 2 * T * u ** 2 / 2)\n",
+    "solution": "import numpy as np\n\n\ndef bs_logprice_cf(u, S0, r, sigma, T):\n    m = np.log(S0) + (r - sigma ** 2 / 2) * T\n    return np.exp(1j * u * m - sigma ** 2 * T * u ** 2 / 2)\n",
+    "examples": [
+     {
+      "call": "bs_logprice_cf(-1j, 100, 0.05, 0.2, 1)",
+      "expect": "105.12710963760242+0j",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "bs_logprice_cf(-1j, 100, 0.05, 0.2, 1)",
+      "expect": "105.12710963760242+0j",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "bs_logprice_cf(0, 100, 0.05, 0.2, 1)",
+      "expect": "1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "bs_logprice_cf(1, 100, 0.05, 0.2, 1)",
+      "expect": "cmath.exp(1j * (math.log(100) + 0.03) - 0.02)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "bs_logprice_cf(np.array([0, -1j]), 120, 0.03, 0.3, 0.5)",
+      "expect": "[1, 120 * math.exp(0.015)]",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "how": "Check runs 4 hidden tests: $\\varphi(-i) = S_0e^{rT}$ twice, $\\varphi(0) = 1$, and $\\varphi(1)$, compared as complex numbers.",
+    "prelude": "import math\nimport cmath\nimport numpy as np\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What is the mean of $\\ln S_T$ under Black-Scholes?"
+    },
+    {
+     "rung": "point",
+     "text": "It is $\\ln S_0 + (r - \\frac{\\sigma^2}{2})T$, not $\\ln S_0 + rT$."
+    },
+    {
+     "rung": "step",
+     "text": "`m = np.log(S0) + (r - sigma ** 2 / 2) * T`."
+    }
+   ],
+   "feedback": {
+    "correct": "Four of four: $\\varphi(-i) = 105.12710963760242$, the forward.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 gave about 107.25, which is $S_0e^{rT + \\sigma^2T/2}$. The mean of $\\ln S_T$ needs $-\\frac{\\sigma^2}{2}T$.",
+     "error": "Your code stopped with an error. `u` may be complex: use `np.exp`, not `math.exp`."
+    }
+   },
+   "explain": {
+    "text": "Without $-\\frac{\\sigma^2}{2}$ the forward comes out $e^{0.02}$ too high, and every price with it. The test $\\varphi(-i) = S_0e^{rT}$ catches that in one line. It is the first check in any Fourier pricer."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write `carr_madan_call(cf, K, r, T, alpha=1.5, v_max=200, n=20001)`: build $\\psi$ on a grid of $v$ and integrate by `np.trapezoid`. The hidden `_cf` is the Black-Scholes $\\varphi$ at $S_0 = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$.",
+   "question": "Fix `carr_madan_call`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef carr_madan_call(cf, K, r, T, alpha=1.5, v_max=200, n=20001):\n    v = np.linspace(0, v_max, n)\n    k = np.log(K)\n    den = alpha ** 2 + alpha - v ** 2 + 1j * (2 * alpha + 1) * v\n    psi = cf(v - (alpha + 1) * 1j) / den\n    vals = (np.exp(-1j * v * k) * psi).real\n    return np.exp(-alpha * k) / np.pi * np.trapezoid(vals, v)\n",
+    "solution": "import numpy as np\n\n\ndef carr_madan_call(cf, K, r, T, alpha=1.5, v_max=200, n=20001):\n    v = np.linspace(0, v_max, n)\n    k = np.log(K)\n    den = alpha ** 2 + alpha - v ** 2 + 1j * (2 * alpha + 1) * v\n    psi = np.exp(-r * T) * cf(v - (alpha + 1) * 1j) / den\n    vals = (np.exp(-1j * v * k) * psi).real\n    return np.exp(-alpha * k) / np.pi * np.trapezoid(vals, v)\n",
+    "examples": [
+     {
+      "call": "carr_madan_call(_cf, 100, 0.05, 1)",
+      "expect": "10.450583572185565",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "carr_madan_call(_cf, 100, 0.05, 1)",
+      "expect": "10.450583572185565",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "carr_madan_call(_cf, 90, 0.05, 1)",
+      "expect": "16.699448408416004",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "carr_madan_call(_cf, 110, 0.05, 1)",
+      "expect": "6.040088129724239",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "carr_madan_call(_cf, 100, 0.05, 1, alpha=0.5)",
+      "expect": "10.450583572185565",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "carr_madan_call(_cf, 100, 0.05, 1, alpha=3)",
+      "expect": "10.450583572185565",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     }
+    ],
+    "how": "Check runs 5 hidden tests within absolute $10^{-8}$: strikes 100, 90 and 110, and $\\alpha = 0.5$ and 3. The prices at 90 and 110 are opt-dash l5's grid values, £16.699448 and £6.040088.",
+    "prelude": "import math\nimport cmath\nimport numpy as np\n_cf = lambda u: np.exp(1j * u * (math.log(100) + 0.03) - 0.02 * u ** 2)\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the price with £10.4506 times $e^{0.05}$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\psi$ carries the discount $e^{-rT}$."
+    },
+    {
+     "rung": "step",
+     "text": "`psi = np.exp(-r * T) * cf(v - (alpha + 1) * 1j) / den`."
+    }
+   ],
+   "feedback": {
+    "correct": "Five of five: £10.450583572, £16.699448408 and £6.040088130, and the same at $\\alpha = 0.5$ and 3.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 gave about £10.9864, which is $10.4506 \\times e^{0.05}$. You dropped the discount $e^{-rT}$.",
+     "error": "Your code stopped with an error. `cf` takes a complex array: pass `v - (alpha + 1) * 1j`."
+    }
+   },
+   "explain": {
+    "text": "$\\varphi$ gives an expectation at time $T$; $e^{-rT}$ brings it to today. With it, 20,001 trapezium points match Black-Scholes to about $2 \\times 10^{-14}$. The 90 and 110 strikes match opt-dash l5's `bs_price_vec` grid."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write `carr_madan_fft(cf, S0, r, T, alpha=1.5, N=4096, eta=0.25)`, returning `(strikes, prices)`. Use $v_j = \\eta j$, $k_j = \\ln S_0 - \\frac{N\\lambda}{2} + \\lambda j$, Simpson weights $\\frac13, \\frac43, \\frac23, \\frac43, \\ldots$, and one FFT. SciPy loads for the hidden check.",
+   "question": "Fix `carr_madan_fft`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef carr_madan_fft(cf, S0, r, T, alpha=1.5, N=4096, eta=0.25):\n    lam = 2 * np.pi / (N * eta)\n    j = np.arange(N)\n    v = eta * j\n    k0 = np.log(S0) - N * lam / 2\n    den = alpha ** 2 + alpha - v ** 2 + 1j * (2 * alpha + 1) * v\n    psi = np.exp(-r * T) * cf(v - (alpha + 1) * 1j) / den\n    w = (3 + (-1) ** (j + 1)) / 3\n    w[0] = 1 / 3\n    x = np.exp(-1j * v * k0) * psi * eta * w\n    k = k0 + lam * j\n    prices = np.exp(-alpha * k) / np.pi * np.fft.ifft(x).real\n    return np.exp(k), prices\n",
+    "solution": "import numpy as np\n\n\ndef carr_madan_fft(cf, S0, r, T, alpha=1.5, N=4096, eta=0.25):\n    lam = 2 * np.pi / (N * eta)\n    j = np.arange(N)\n    v = eta * j\n    k0 = np.log(S0) - N * lam / 2\n    den = alpha ** 2 + alpha - v ** 2 + 1j * (2 * alpha + 1) * v\n    psi = np.exp(-r * T) * cf(v - (alpha + 1) * 1j) / den\n    w = (3 + (-1) ** (j + 1)) / 3\n    w[0] = 1 / 3\n    x = np.exp(-1j * v * k0) * psi * eta * w\n    k = k0 + lam * j\n    prices = np.exp(-alpha * k) / np.pi * np.fft.fft(x).real\n    return np.exp(k), prices\n",
+    "examples": [
+     {
+      "call": "len(carr_madan_fft(_cf, 100, 0.05, 1)[0])",
+      "expect": "4096",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "len(carr_madan_fft(_cf, 100, 0.05, 1)[0])",
+      "expect": "4096",
+      "compare": "equal"
+     },
+     {
+      "call": "carr_madan_fft(_cf, 100, 0.05, 1)[0][2048]",
+      "expect": "100",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "carr_madan_fft(_cf, 100, 0.05, 1)[1][2048]",
+      "expect": "10.450583572185565",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "_max_err(*carr_madan_fft(_cf, 100, 0.05, 1))",
+      "expect": "0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "how": "Check runs 4 hidden tests. It wants 4,096 strikes, point 2,048 at £100, and its price within $10^{-6}$ of Black-Scholes. The largest error for strikes from £50 to £200 must be below $10^{-6}$. SciPy loads for the hidden check, so the first run can take ten seconds or more.",
+    "prelude": "import math\nimport cmath\nimport numpy as np\n_cf = lambda u: np.exp(1j * u * (math.log(100) + 0.03) - 0.02 * u ** 2)\nfrom scipy.special import ndtr as _ndtr\n\n\ndef _bs(K):\n    d1 = (np.log(100 / K) + 0.07) / 0.2\n    return 100 * _ndtr(d1) - K * np.exp(-0.05) * _ndtr(d1 - 0.2)\n\n\ndef _max_err(strikes, prices):\n    m = (strikes > 50) & (strikes < 200)\n    return float(np.max(np.abs(prices[m] - _bs(strikes[m]))))\n"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which sign does the sum $\\sum_j e^{-2\\pi ijm/N}x_j$ need?"
+    },
+    {
+     "rung": "point",
+     "text": "`np.fft.ifft` uses $e^{+2\\pi ijm/N}$ and divides by $N$."
+    },
+    {
+     "rung": "step",
+     "text": "Replace `np.fft.ifft(x)` by `np.fft.fft(x)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Four of four: one FFT prices 4,096 strikes, about $2.2 \\times 10^{-7}$ from Black-Scholes.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-3": "Test 3: `ifft` has the wrong sign and divides by $N$, so the price is near 0. The inversion needs $e^{-ivk}$, which is `np.fft.fft`.",
+     "error": "Your code stopped with an error. `w` must be a float array before `w[0] = 1 / 3`."
+    }
+   },
+   "explain": {
+    "text": "$e^{-iv_jk_m}$ splits into $e^{-iv_jk_0}$ times $e^{-2\\pi ijm/N}$, exactly NumPy's `fft`. The error is about $2.2 \\times 10^{-7}$ at every strike from £50 to £200. It comes from Carr and Madan's Simpson weights; plain trapezium weights do better on this smooth integrand."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "Swap the model. Merton adds jumps at rate $\\lambda = 0.5$ a year, log jump mean $-0.1$, sd 0.15. Its $\\varphi$ gains a factor $e^{\\lambda T(e^{-0.1iu - 0.01125u^2} - 1)}$. To keep $\\varphi(-i) = S_0e^{rT}$, the drift drops by $\\lambda\\kappa$, with $\\kappa = E[e^J] - 1 = e^{-0.1 + 0.15^2/2} - 1$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Python",
+     "lines": [
+      ">>> carr_madan_call(bs_cf, 100, 0.05, 1)",
+      "10.450583572185586",
+      ">>> carr_madan_call(merton_cf, 100, 0.05, 1)",
+      "11.661674787503724",
+      ">>> merton_series(100, 100, 0.05, 0.2, 1, 0.5, -0.1, 0.15)",
+      "11.661674787503717"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the drift correction $\\lambda\\kappa$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.0425,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$0.5(e^{-0.08875} - 1) \\approx -0.0425$",
+    "wrong": [
+     {
+      "id": "mean-log",
+      "value": -0.05,
+      "tol": {
+       "abs": 0.0003
+      }
+     },
+     {
+      "id": "no-convexity",
+      "value": -0.0476,
+      "tol": {
+       "abs": 0.0003
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$-0.1 + \\frac{0.15^2}{2} = -0.08875$."
+    },
+    {
+     "rung": "point",
+     "text": "$e^{-0.08875} - 1 \\approx -0.0849$.",
+     "highlight": [
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.5 \\times (-0.0849) \\approx -0.0425$."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\lambda\\kappa = 0.5(e^{-0.08875} - 1) \\approx -0.0425$.",
+    "generic": "Not quite. $\\kappa$ is the mean of $e^J - 1$, not of $J$.",
+    "byKey": {
+     "mean-log": "$-0.05$ is $\\lambda$ times the mean log jump. The drift needs $E[e^J] - 1$.",
+     "no-convexity": "$-0.0476$ uses $e^{-0.1} - 1$. For normal $J$, $E[e^J] = e^{\\mu + \\delta^2/2}$: add $\\frac{0.15^2}{2}$."
+    }
+   },
+   "explain": {
+    "text": "With the drift lowered by $\\lambda\\kappa \\approx -0.0425$, the forward is still £105.1271. One new function gives £11.6617 at $K = 100$, matching Merton's Poisson-weighted series to $10^{-14}$. Desks price Heston and variance gamma, and calibrate a whole smile with the FFT, the same way.",
+    "canvas": {
+     "highlight": [
+      "l4",
+      "l6"
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Damp the call, $c(k) = e^{\\alpha k}C(k)$, so it has a transform: $\\psi(v) = \\frac{e^{-rT}\\varphi(v - (\\alpha + 1)i)}{\\alpha^2 + \\alpha - v^2 + i(2\\alpha + 1)v}$.",
+   "$C(k) = \\frac{e^{-\\alpha k}}{\\pi}\\int_0^\\infty \\operatorname{Re}[e^{-ivk}\\psi(v)]\\,dv$ matches Black-Scholes, and the price does not depend on $\\alpha > 0$.",
+   "One FFT with $\\lambda\\eta = \\frac{2\\pi}{N}$ prices a whole grid of strikes; a new model needs only a new $\\varphi$."
+  ],
+  "formula": {
+   "name": "Carr-Madan",
+   "tex": "C(k) = \\frac{e^{-\\alpha k}}{\\pi}\\int_0^\\infty \\operatorname{Re}\\left[e^{-ivk}\\,\\frac{e^{-rT}\\varphi(v - (\\alpha + 1)i)}{\\alpha^2 + \\alpha - v^2 + i(2\\alpha + 1)v}\\right]dv",
+   "note": "$\\varphi$ is the characteristic function of $\\ln S_T$; $k = \\ln K$."
+  },
+  "trap": "$\\alpha = 0$ puts a pole at $v = 0$ on the path: $|\\psi(10^{-6})| \\approx 10^8$ and there is no price."
+ },
+ "quiz": [
+  {
+   "id": "q-missing-discount",
+   "difficulty": 2,
+   "prose": "A pricer returns £10.9864 at $K = 100$, where Black-Scholes gives £10.4506.",
+   "question": "Which slip explains it?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "discount",
+      "text": "It dropped the discount $e^{-rT}$: $10.4506 \\times e^{0.05} = 10.9864$.",
+      "correct": true
+     },
+     {
+      "id": "alpha",
+      "text": "It used $\\alpha = 0$.",
+      "why": "$\\alpha = 0$ puts a pole on the path and gives no finite price, not a clean 5% error."
+     },
+     {
+      "id": "cf",
+      "text": "It used the characteristic function of $S_T$, not $\\ln S_T$.",
+      "why": "The wrong $\\varphi$ gives prices that are not a clean multiple of the right ones."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$10.4506 \\times e^{0.05} \\approx 10.9864$: the missing discount.",
+    "generic": "Not quite. Divide the two prices."
+   },
+   "explain": {
+    "text": "$10.9864 / 10.4506 = 1.0513 = e^{0.05}$, exactly $e^{rT}$. A clean factor points at the discount. Put-call parity would catch it too."
+   }
+  },
+  {
+   "id": "q-far-strike",
+   "difficulty": 3,
+   "prose": "At the grid strike £299.92 the FFT price is off by about $2.2 \\times 10^{-7}$, as at every strike. The true price there is $4.8 \\times 10^{-7}$.",
+   "question": "About what share of the true price is the error?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.45,
+    "tol": {
+     "abs": 0.03
+    },
+    "accept": "$2.2 / 4.8 \\approx 45\\%$",
+    "unit": "%",
+    "wrong": [
+     {
+      "id": "inverted",
+      "value": 2.18,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ],
+    "over100": true
+   },
+   "feedback": {
+    "correct": "About 45%: a tiny absolute error is huge next to a tiny price.",
+    "generic": "Not quite. Divide the error by the true price.",
+    "byKey": {
+     "inverted": "You divided the price by the error. The share is error over price, about 0.45."
+    }
+   },
+   "explain": {
+    "text": "$\\frac{2.2 \\times 10^{-7}}{4.8 \\times 10^{-7}} \\approx 45\\%$ (45.35% exactly). Far out of the money the FFT's absolute accuracy is still fine, but relative accuracy is lost. Quote such strikes from a direct quadrature, or not at all."
+   }
+  },
+  {
+   "id": "q-short-maturity",
+   "difficulty": 3,
+   "prose": "At $T = 0.01$ the call is worth £0.822915. Quadrature stopped at $v = 200$ is off by about $2.7 \\times 10^{-6}$; stopping at $v = 1{,}000$ removes the error.",
+   "question": "Why does a short maturity need a longer range of $v$?",
+   "widget": {
+    "kind": "choice",
+    "options": [
+     {
+      "id": "decay",
+      "text": "$|\\varphi|$ falls like $e^{-\\sigma^2Tv^2/2} = e^{-0.0002v^2}$, so the integrand is still sizeable at $v = 200$.",
+      "correct": true
+     },
+     {
+      "id": "alpha",
+      "text": "$\\alpha = 1.5$ is too small for short maturities.",
+      "why": "The price does not depend on $\\alpha$; the slow decay comes from $\\sigma^2T$."
+     },
+     {
+      "id": "grid",
+      "text": "The strike grid is too coarse.",
+      "why": "This is a direct quadrature at one strike, with no strike grid."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\sigma^2T = 0.0004$, so $\\varphi$ dies away only past $v \\approx 200$.",
+    "generic": "Not quite. Look at how fast $|\\varphi|$ decays."
+   },
+   "explain": {
+    "text": "$|\\varphi(v - (\\alpha + 1)i)|$ shrinks like $e^{-\\sigma^2Tv^2/2}$. With $T = 0.01$ that is $e^{-0.0002v^2}$, about 0.0003 at $v = 200$. Raising $v_{\\max}$ to 1,000 brings the error below $10^{-13}$."
+   }
+  },
+  {
+   "id": "q-parity",
+   "difficulty": 2,
+   "prose": "Put-call parity: $C - P = S_0 - Ke^{-rT}$. The call at $S_0 = K = 100$, $r = 5\\%$, $T = 1$ is £10.4506.",
+   "question": "What is the put worth?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.5735,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$10.4506 - 100 + 95.1229 \\approx £5.5735$",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "no-discount",
+      "value": 10.4506,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 15.3276,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$P = C - S_0 + Ke^{-rT} = 10.4506 - 100 + 95.1229 \\approx £5.5735$.",
+    "generic": "Not quite. Solve parity for $P$, with $Ke^{-rT} = 95.1229$.",
+    "byKey": {
+     "no-discount": "You used $K$ for $Ke^{-rT}$, so $P = C$. The strike is paid at $T$: discount it.",
+     "sign": "You added $S_0$ and took off $Ke^{-rT}$. Solving for $P$ gives $C - S_0 + Ke^{-rT}$."
+    }
+   },
+   "explain": {
+    "text": "$Ke^{-rT} = 100e^{-0.05} = 95.1229$, so $P = 10.4506 - 100 + 95.1229 \\approx £5.5735$. Parity checks a Fourier pricer with no model at all. Black-Scholes gives the same put."
+   }
+  }
+ ]
+}
