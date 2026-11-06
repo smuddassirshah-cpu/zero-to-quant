@@ -259,6 +259,13 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 - [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (3.2 additions done 4 Nov)
 - [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
 
+### 5b. Concept audit (user priority, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
+- [ ] Audit arma, garch, coint (fixed in session V), then each Phase 2 course as its fix merges
+- [ ] Audit interview courses and Stages 2 and 3 read in earlier sessions
+- [ ] Audit Stage 1, then Stage 0
+- [ ] Audit topic, stage and mock exams after their courses close
+- [ ] Every course closed under the convergence rule (at most one new `wrong` per three levels)
+
 ### 6. Engine
 - [ ] Engine pass 7: backlog items 340 to 422 plus `docs/BACKLOG-INBOX.md` (was in flight; status block "Seventh pass" may be partial). Number inbox bullets from 424, clear the inbox, document in AUTHORING.md and canvas READMEs
 - [ ] Engine pass 8: whatever the inbox holds after Stage 2 and 3 content lands

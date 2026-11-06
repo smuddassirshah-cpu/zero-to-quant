@@ -34,6 +34,10 @@ The 90 unread levels in `docs/reports/unread-levels-session-u.txt`, in its order
 
 Also read the topic exams with no second-read file (the list file's last line) after their courses' levels are fixed, one reader per exam.
 
+## Phase 2b: concept audit (user, 6 Nov: correctness first)
+
+Each course gets a blind Opus concept audit after its fix pass merges, per `docs/briefs/concept-audit.md`, with Opus fix passes and the convergence rule. Audits take priority over Phases 3 and 4, which start only for courses already closed.
+
 ## Phase 3: performance-task retrofit (only with over half the window left)
 
 `app/tools/perf-pending.json` lists 108 grandfathered levels. Retrofit order from DECISIONS "Performance tasks": interview courses and Stages 2 and 3 first. One item per level, not a level rewrite; one content agent per course, up to three levels; each task second-read with its level's next read or by a dedicated reader. Prune with `perf-pending.mjs --prune`.
