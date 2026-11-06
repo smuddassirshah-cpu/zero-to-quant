@@ -1229,3 +1229,14 @@ Raised later (convex level 3):
 - [Could] Validator: the warning "the number script never uses numbers_lib (Level( and expect( )" fires on `convex-L1-numbers.py` and `convex-L2-numbers.py`, which call `lv.expect` through an alias `E = lv.expect`. Wanted: match `Level(` plus `.expect` (or any `expect` reference). Workaround: the L3 script calls `lv.expect(` literally inside its helper.
 - [Could] `space` surfaces with `clip: "clamp"` draw a staircase along the top of the box where the surface leaves it (l9 saddle, $z$ range $[-0.5, 5]$). Wanted: cells cut along the level line at the box edge. Workaround: the $z$ range is widened until nothing is clipped, which flattens the interesting valley.
 - [Could] `space` has no way to reveal a curve or point only after Show why except `hide` plus a patch; and a `plane` trap that hides the true curve (l13, `hide: ["v"]`) must repeat `{"hide": []}` on every `wrong[]` entry and in `explain.canvas`. Wanted: a `revealAfterGrade` list on plane and space, as grid has. Workaround: the patch on each wrong entry.
+
+Raised later (momentum-rep level 2):
+
+- `code` widget, `equal` and `isclose` on arrays holding NaN: NaN never equals NaN, so a test of `formation_returns` (NaN before month J + skip by design) cannot compare the array as it is. Wanted: an option such as `"nan": "equal"` that treats NaN as equal to NaN in element-wise comparisons. Workaround (l7): the call wraps the result in `np.nan_to_num(..., nan=-9.0)` and the `how` says NaN shows as −9.
+- `table` canvas and control `frames`: `rows` is a param, so a frame cannot swap a whole table (no skip against skip). Workaround (l10 explore): each frame patches `state.values` with all sixteen `r{i}c{j}` cells. Wanted: `state.rows` (or `frames` accepting a rows patch) for tables that switch panels.
+- Docs: `docs/LEVEL-BRIEF.md` says "look at the screenshots when you pass `--shots`", but `playthrough.mjs --shots` needs a folder argument and stops with "--shots needs a value" without one. Wanted: the brief shows `--shots <dir>`.
+
+Raised later (momentum-rep level 3):
+
+- `distribution` canvas, overlay labels: an `overlay` curve's label ("true 0.5%" in l13 screen 4) is drawn at the right end of the axis beside the main curve's tail, not on its own curve, so it reads as a label for the wrong curve. Wanted: overlay labels placed at the overlay's peak or with a `labelAt`. Workaround: the prose says which curve is dashed.
+- `numbers_lib`: every level script that has code widgets copies its own harness to run solutions and starters against the hidden tests (momentum-rep L2 and L3, numerics, convex and others). Wanted: a shared `lv.run_code_widgets()` in `app/tools/numbers_lib.py` that handles `isclose`, `equal`, `raises`, `setup`, `prelude` and `tol`. Workaround: the harness is copied into each script.
