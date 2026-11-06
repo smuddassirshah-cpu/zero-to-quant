@@ -214,7 +214,8 @@ lv.expect('l11', 'screens[11].explain.text', r(fF.predicted_mean[9], 2)); lv.exp
 lv.expect('l11', 'screens[11].widget.answer', r(1.96 * math.sqrt(sF * (1 - pF ** 20) / (1 - pF ** 2)), 2))
 lv.expect('l11', 'screens[11].explain.text', r(1.96 * math.sqrt(sF / (1 - pF ** 2)), 2))
 lv.expect('l11', 'screens[11].widget.wrong[0].value', r(1.96 * math.sqrt(10 * sF), 1))
-lv.expect('l11', 'screens[11].feedback.byKey.unc', r(pF ** 20, 2))
+lv.expect('l11', 'screens[11].feedback.byKey.unc', round(100 * (1 - pF ** 20)))   # 93% of the limiting variance after 10 days (finding 16)
+lv.expect('l11', 'screens[11].feedback.byKey.unc', 11.70)
 
 # ---------------- l12 ----------------
 e7 = np.random.default_rng(7).standard_normal(200)
@@ -266,6 +267,8 @@ lv.expect('homework', 'items[1].widget.answer', r(0.5 * 1.25 / 1.75, 4)); lv.exp
 lv.expect('homework', 'items[2].widget.answer', r(2 * math.log(1000) - 12, 2))
 lv.expect('homework', 'items[2].explain.text', r(4 * math.log(1000) + 2000, 2)); lv.expect('homework', 'items[2].explain.text', r(6 * math.log(1000) + 1988, 2))
 lv.expect('homework', 'items[3].widget.answer', 3 / 5)
+lv.expect('homework', 'items[2].explain.text', r((6 * math.log(1000) + 1988) - (4 * math.log(1000) + 2000), 2))   # 1.82, BIC prefers ARMA(1, 1) (finding 19)
+lv.expect('homework', 'items[3].explain.text', 3 / 5)
 lv.expect('homework', 'items[7].model', r(hl(0.97), 1)); lv.expect('homework', 'items[7].model', r(0.97 ** 10, 3))
 se97 = math.sqrt((1 - 0.97 ** 2) / 250)
 lv.expect('homework', 'items[7].model', r(se97, 4)); lv.expect('homework', 'items[7].model', r(hl(0.94), 1))

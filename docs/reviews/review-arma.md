@@ -126,3 +126,47 @@ Three bullets, also appended to `docs/BACKLOG-INBOX.md` under "Raised later (rev
 - The validator does not check a `drag-point` tolerance in screen units. On a `scale: "log"` number line a tolerance of 2 days near 34 is about 8 px at 440 px (finding 33). Wanted: warn when a target's tolerance window is under about 12 px at 440 px.
 
 Pattern to watch (protocol 6): four findings here (1, 4, 7, 35) state a property of one seeded sample as if it were a general fact, or describe a chart feature the seed did not produce. The same class appeared in session U. A number script that recomputes the population value next to the sample value catches it; the three arma scripts now do.
+
+## Fix pass
+
+1. fixed: l4 `screens[9]` prose, option 0 text, option 2 why, `byKey.always`, explain first sentence (variance claim replaced by the lag-1 correlation −0.28; theory −0.25).
+2. fixed: l7 `quiz[0].widget.wrong[1]` value 0.176 (0.3/1.7 = 0.1765).
+3. fixed: l4 `screens[6].explain.text` (residual starts at −14.8, no pinned ends); homework-1 `items[4].widget.options[1].why`.
+4. fixed: l7 `screens[4].explain.text` (second place, x0 = −0.80; recomputed OLS 0.918 against ARIMA 0.888).
+5. fixed: l1 `screens[9].hints[2].text` (0.563/0.0039 = 144.36, so 144.4; unrounded £144.48).
+6. fixed: l5 `screens[4].explain.text` (Bartlett sd sqrt(2.125/500) = 0.065).
+7. fixed: l1 `screens[6].widget.options[3].why` (out-of-sample R^2 0.9937, so about 0.99).
+8. fixed: l3 `quiz[1].widget.options[0].text`, `screens[2].explain.text`, `screens[10].widget.options[2].why` ("loses most of its statistic and can look like a walk").
+9. fixed: l6 `screens[3].explain.text` (Q adds squares, whatever the signs).
+10. fixed: l8 `screens[1].explain.text` (A's lag-3 coefficient 0.103 named; three sentences).
+11. fixed: l9 `screens[5].explain.text`.
+12. fixed: covered by finding 3's l4 `screens[6].explain.text` ("usually looks significant").
+13. fixed: l1 `screens[9].explain.text` ("learnt their level").
+14. fixed: l10 `quiz[1].widget.options[1].why` (θ = −φ).
+15. fixed: l10 `screens[11].explain.text` ("from day to day").
+16. fixed: l11 `screens[11].feedback.byKey.unc` (1 − 0.8781^20 = 0.926, so 93%; 11.70).
+17. fixed: homework-1 `items[5].explain.text` (seed 1 and seed 2 quantiles).
+18. fixed: review-3 `items[0].explain.text` ("trade-price changes").
+19. fixed: homework-3 `items[2].explain.text` (states 1.82, BIC prefers ARMA(1, 1): 2029.45 − 2027.63 = 1.82) and `items[3].explain.text` (states ρ_2 = 3/5 = 0.6).
+20. fixed: review-1 `items[3].widget.wrong` tolerances both 0.005 (windows [1.195, 1.205] and [1.183, 1.193]).
+21. fixed: l4 `screens[11].explain.text` (Cointegration course later in this topic).
+22. fixed: review-1 `items[7]` now `make_walk(31, 500, drift=0.1)` against 5 + 0.03t + `make_ar1(0.5, 500, 32)`; recomputed ADF p: A 0.9951 ("c") and 0.4046 ("ct"), B 0.8519 and 4e-18. Graded key unchanged (B).
+23. fixed: review-1 `items[6]` prose, option 1 why, explain at φ = 0.96 (recomputed with `df_t_many`, seed 11, cut −2.86: 0.3245 at 250 days, 0.8585 at 500 days; miss rate 68%). Graded key unchanged.
+24. fixed: review-1 `items[4]` prose and question reworded; key 1.3158 unchanged (0.25/0.19).
+25. fixed: review-2 `items[1]` now `make_ar1(0.3, 500, 68)`: recomputed lags 1 to 12 match the reader's bars, band 0.0877, only lags 1 and 6 outside. Option id `ar9` renamed `ar6`; `feedback.correct` also updated (0.292, 0.053). Graded key unchanged (AR(1)).
+26. fixed: homework-2 `items[7]` now `make_wn(14395)`: recomputed bars at lags 5 and 10 (0.0915, 0.0935), lags 15 and 20 (0.0303, −0.0796), Q = 25.06, p = 0.199; prompt, model and rubric updated.
+27. fixed: all 8 sentences over 35 words and 12 explanations over three sentences (the l8 explanation via finding 10).
+28. fixed: l3 `screens[5].explain.text` ("significance level").
+29. fixed: l4 `screens[10].prose` ("The cost:").
+30. fixed: l8 `screens[11].explain.text` ("parent orders").
+31. fixed: review-3 `items[7].explain.text`.
+32. fixed: the five key-length items (l1 `quiz[2]`, `quiz[3]`, `screens[11]`; l4 `quiz[1]`; l8 `quiz[0]`) by the reader's rewrites; keys shortened where the reader gave a shorter key.
+33. fixed: l12 `screens[3].widget.points[0].tol` 4 (log axis; linear slip [23.5, 26.5] stays disjoint from [30.31, 38.31]).
+34. fixed: l2 `screens[3].widget.rows[1][1]` ("0.0, 0.0, 0.2, −0.2").
+35. fixed: l4 `screens[9]` option 1 text, option 3 why, hint 2, explain second sentence (day 250 change 1.64; 141 ordinary days are larger).
+
+Engine bullets (three): deferred, already in `docs/BACKLOG-INBOX.md`.
+
+Number scripts: the three scripts gain checks for every new number (review-1 items 4, 6, 7; review-2 item 1; homework-2 item 7; homework-3 items 2 and 3; l4 screens 6 and 9).
+
+Gates: `arma-L1-numbers.py` exit 0 (150 of 150), `arma-L2-numbers.py` exit 0 (214 of 214), `arma-L3-numbers.py` exit 0 (241 of 241); voice scan 0 sentences over 35 words and 0 explanations over three sentences; validator 0 errors; playthrough green for l1 to l12 and review-1 to 3, homework-1 to 3 (18 of 18), with and without `--mobile`, `--local-cdn`. Graded answers changed: one slip value (l7 `quiz[0]` `plus`, 0.429 to 0.176) and one slip id (review-2 `items[1]` `ar9` to `ar6`); no keys changed. No code items touched (only `how` text).
