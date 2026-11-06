@@ -169,7 +169,7 @@ for (const [name, body] of Object.entries(gen)) {
 // readiness.json: what the engine reads (js/readiness.js). Per role: course -> status, totals, mocks.
 // LIMITED: courses whose route is cut short by unwritten courses or levels (DECISIONS, item 7); the script fails once a gap closes.
 // An entry is a course id (no lesson written) or course/Ln (no lesson written in that level).
-const LIMITED = { pdes: { missing: ['odes/L4', 'numerics/L4'] } };
+const LIMITED = {};
 for (const [cid, l] of Object.entries(LIMITED)) {
   if (!courses[cid]) err(`LIMITED: unknown course ${cid}`);
   for (const m of l.missing) {
