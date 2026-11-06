@@ -866,15 +866,15 @@
       "tags": [
         "tail-latency"
       ],
-      "prose": "A clock read costs about 20 ns. In this app the clock ticks in 100 µs steps, so tests use supplied samples. Timing one 10 ns call alone adds two reads to it. A batch of 1,000 calls adds two reads once.",
+      "prose": "A clock read costs about 20 ns. In this app the clock ticks in 100 µs steps, so tests use supplied samples. Timing one 10 ns call alone adds about one read's worth, 20 ns, because the bracket holds the end of the first read and the start of the second. A batch of 1,000 calls pays it once.",
       "canvas": {
         "kind": "console",
         "params": {
           "lines": [
             "clock read: about 20 ns",
             "function under test: 10 ns",
-            "one call timed alone: 2 reads",
-            "a batch of 1,000: 2 reads"
+            "one call timed alone: about one read inside the bracket",
+            "a batch of 1,000: one read's worth"
           ],
           "wrap": true,
           "title": "The cost of looking",
@@ -893,20 +893,38 @@
             "Clock share of one timed call (%)",
             {
               "edit": true,
-              "answer": 80,
+              "answer": 66.7,
               "tol": {
-                "abs": 0
-              }
+                "abs": 0.5
+              },
+              "wrong": [
+                {
+                  "id": "two-reads",
+                  "value": 80,
+                  "tol": {
+                    "abs": 0.5
+                  }
+                }
+              ]
             }
           ],
           [
             "Clock overhead per call in a batch of 1,000 (ns)",
             {
               "edit": true,
-              "answer": 0.04,
+              "answer": 0.02,
               "tol": {
                 "abs": 0.005
-              }
+              },
+              "wrong": [
+                {
+                  "id": "two-reads-batch",
+                  "value": 0.04,
+                  "tol": {
+                    "abs": 0.005
+                  }
+                }
+              ]
             }
           ]
         ]
@@ -914,27 +932,29 @@
       "hints": [
         {
           "rung": "nudge",
-          "text": "Two reads are 40 ns. The timed call then measures 50 ns."
+          "text": "One read's worth, 20 ns, sits inside the bracket, so the timed call measures 30 ns."
         },
         {
           "rung": "point",
-          "text": "In a batch the 40 ns is shared by 1,000 calls."
+          "text": "In a batch the 20 ns is shared by 1,000 calls."
         },
         {
           "rung": "step",
-          "text": "$40 / 50 = 80\\%$, and $40 / 1{,}000 = 0.04$ ns a call."
+          "text": "$20 / 30 \\approx 66.7\\%$, and $20 / 1{,}000 = 0.02$ ns a call."
         }
       ],
       "feedback": {
-        "correct": "80% for one call, 0.04 ns in a batch.",
+        "correct": "About 67% for one call, 0.02 ns in a batch.",
         "generic": "Not quite right. Check the first answer that is marked.",
         "byKey": {
-          "r0c1": "Two reads cost 40 ns of the 50 ns measured.",
-          "r1c1": "40 ns spread over 1,000 calls."
+          "r0c1": "One read's worth, 20 ns of the 30 ns measured.",
+          "r1c1": "20 ns spread over 1,000 calls.",
+          "two-reads": "You counted two whole reads. The bracket runs from the first timestamp to the second, about one read.",
+          "two-reads-batch": "You charged two whole reads to the batch. The bracket adds about one read, 20 ns, over 1,000 calls."
         }
       },
       "explain": {
-        "text": "Timed alone, the 10 ns function reads as 50 ns and the clock is 80% of it. Timed in a batch of 1,000, the two reads add 0.04 ns a call. Warm the code up first, then time batches and take the median."
+        "text": "Timed alone, the 10 ns function reads as about 30 ns and the clock is two thirds of it, 66.7%. Timed in a batch of 1,000, the bracket adds 0.02 ns a call. Warm the code up first, then time batches and take the median."
       }
     },
     {
@@ -1260,7 +1280,7 @@
           {
             "id": "each",
             "text": "Read the clock around every call and add up the differences",
-            "why": "Two reads cost 40 ns, four times the function."
+            "why": "Each bracket adds about 20 ns, twice the function."
           },
           {
             "id": "once",
@@ -1285,7 +1305,7 @@
         }
       },
       "explain": {
-        "text": "The two clock reads then cost 40 ns once, shared by all the calls. A warm-up run fills the caches first."
+        "text": "The bracket then costs about one read, 20 ns, shared by all the calls. A warm-up run fills the caches first."
       }
     }
   ]
