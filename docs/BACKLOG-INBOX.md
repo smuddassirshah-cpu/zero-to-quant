@@ -1337,3 +1337,8 @@ Raised later (exam 0.6):
 
 Raised later (exam 2.6):
 - [Could] `table`: an editable numeric cell is about 70 px wide at 440 px, so a placeholder such as "number" shows as "numbe" (topic-2.6 ANOVA table, five cells in a row of five columns). Wanted: the placeholder is clipped with an ellipsis or the cell grows to fit it. Workaround: leave `placeholder` out, so the cell shows "?".
+Raised later (exam 3.4):
+- [Should] Validator and voice scan disagree on sentence length: a 22-word sentence in `topic-3.4.json` `items[28].prose` (fixed) raised no `O2-long-sentence` warning, while `docs/reviews/voice-scan.py` flagged it. Wanted: one shared word counter (how `$...$`, `|y - y'|` and a full stop inside maths count), used by both.
+- [Could] `app/tools/numbers_lib.py` `normalise` joins cycle notation `$(1\,2\,3)$` into the number 123, so the every-number pass fails on permutations. Wanted: split digits at `\,` in `normalise` (or a documented option). Workaround: the exam script replaces `\,` between digits with a space before reading tokens.
+- [Could] Freshness: all six clashes found here were setups in prose (a formula, an interval, a cycle), not numeric keys, and two came from the analysis course, which shares metric spaces with topology. The shared `tools/fresh.mjs` asked for under exam 1.10 should also compare formula strings in item prose, and should read the courses that share a topic's skills, not only the topic's own courses.
+- [Could] Process: the scratchpad named in `docs/LEVEL-BRIEF.md` is shared by parallel agents, and a scratch patch file of this task (`patch2.py`) was overwritten mid-task by the exam 1.11 agent. Wanted: the brief asks each agent to work in a subfolder named after its task.
