@@ -405,6 +405,40 @@
           });
           setTimeout(() => box.querySelector('.btn[data-close]').focus(), 60);
         }
+        /* Written answers are marked after the paper is handed in (ENGINE-BACKLOG 589): the clock has stopped, each written item
+           shows its model answer and rubric, and the learner ticks the rows as on the homework page (the widget's own panel).
+           Skipping leaves the item unmarked, which scores 0 and says so on the results page. Resolves to the skipped item indexes. */
+        const isLong = (sp) => !!sp && (sp.kind === 'longform' || (sp.widget && sp.widget.kind === 'longform'));
+        const longHandles = (i) => {
+          const h = local[i], it = QS[i];
+          if (!h) return [];
+          if (Array.isArray(it.parts)) return (h.parts || []).filter((ph, k) => isLong(it.parts[k]) && ph.ready());
+          return isLong(it) && h.ready() ? [h] : [];
+        };
+        /* the hook's submit: settles when the paper is marked, or when the marking step opens (it then waits for the learner) */
+        let markOpen = null;
+        const handIn = () => Promise.race([submit(false), new Promise((r) => { markOpen = r; })]);
+        const curLong = (h) => { const it = QS[S.cur]; return Array.isArray(it.parts) ? isLong(it.parts[(h.parts || []).length - 1]) : isLong(it); };
+        async function markWritten() {
+          const targets = QS.map((q, i) => i).filter(i => longHandles(i).length);
+          if (!targets.length) return new Set();
+          for (const i of targets) for (const ph of longHandles(i)) { try { await ph.check(); } catch (e) { console.error(e); } }   // the first check opens the marking
+          $('.exm').classList.add('is-marking');
+          col.querySelectorAll('.exm-q').forEach(q => { q.hidden = !targets.includes(+q.dataset.qI); });
+          col.insertAdjacentHTML('afterbegin', `<div class="exm-markhead"><h2 class="t-h2">Mark your written answers</h2><p class="t-body">The clock has stopped. Compare each answer with the model answer, then tick every point your working shows. Be strict. This mark is your own, so it never moves your mastery map. Skipping scores these answers 0.</p></div>`);
+          $('.exm-mid').innerHTML = `<p class="exm-qof t-label">Marking ${plural(targets.length, 'written answer', 'written answers')}</p>`;
+          $('.exm-actions').innerHTML = `<button type="button" class="btn secondary exm-skipmark">Skip marking, score 0</button><button type="button" class="btn exm-donemark"><span>Finish marking</span></button>`;
+          $('.exm-scroll').scrollTop = 0;
+          announce('Time has stopped. Mark your written answers against the model answers.');
+          Z.mathify(col);
+          return new Promise((resolve) => {
+            const done = (skip) => { T = { kind: 'loading' }; resolve(skip ? new Set(targets) : new Set()); };
+            $('.exm-donemark').addEventListener('click', () => done(false));
+            $('.exm-skipmark').addEventListener('click', () => done(true));
+            markOpen && markOpen();
+            T = { kind: 'mark', info: { total: targets.length, paper: pi, marking: true }, answer: () => { col.querySelectorAll('.exm-q:not([hidden]) [data-rb]').forEach(b => { if (!b.checked && !b.disabled) b.click(); }); return true; }, go: () => done(false) };
+          });
+        }
         async function submit(timeUp) {
           if (S.over) return;
           lap();
@@ -412,13 +446,18 @@
           stop();
           document.querySelectorAll('.scrim, .sheet, .modal').forEach(n => n.remove());
           const used = Math.min(MINUTES * 60, Math.round((performance.now() - S.t0) / 1000 + S.offset));
+          const skipped = await markWritten();
           const res = [];
           for (let i = 0; i < N; i++) {
             const h = local[i];
             let r = { ok: false, key: null };
             if (h && isAns(i)) { try { r = await h.check(); } catch (e) { console.error(e); } }
             if (!r || r.pending) r = { ok: false, key: null };
-            res[i] = { ok: !!r.ok, key: r.key ?? null, done: isAns(i), flag: S.flags.has(i), line: r.line || null, seconds: Math.round(qsec[i] * 10) / 10, ...(typeof r.credit === 'number' ? { credit: r.credit, right: r.right, of: r.of } : {}) };
+            /* a written item's credit is the rubric rows ticked over the rubric's points; a skipped marking scores 0 and says so */
+            const rub = !Array.isArray(QS[i].parts) && isLong(QS[i]) && r.how === 'self' && r.detail && typeof r.detail.score === 'number' ? (QS[i].rubric || (QS[i].widget || {}).rubric || []).reduce((a, x) => a + (+x.points || 0), 0) || 10 : 0;
+            if (rub) { const c = Math.min(1, r.detail.score / rub); r = { ...r, credit: c, right: r.detail.score, of: rub, rubric: true }; }
+            if (skipped.has(i)) r = { ...r, line: 'You skipped marking this written answer, so it scores 0.', skippedMark: true };
+            res[i] = { ok: !!r.ok, key: r.key ?? null, done: isAns(i), flag: S.flags.has(i), line: r.line || null, seconds: Math.round(qsec[i] * 10) / 10, ...(typeof r.credit === 'number' ? { credit: r.credit, right: r.right, of: r.of, ...(r.rubric ? { rubric: true } : {}) } : {}), ...(r.skippedMark ? { skippedMark: true } : {}) };
           }
           A.results[pi] = res; A.used[pi] = used; A.flags[pi] = [...S.flags]; A.timeUp = A.timeUp || timeUp;
           /* Detach the rendered questions so the result page can show them, marked */
@@ -442,14 +481,20 @@
         window.ZQExam = {
           handles: () => local.slice(), go, part: () => ({ index: pi, name: P.name, current: S.cur, total: N }),
           setRemaining: (s) => { S.offset = MINUTES * 60 - s - (performance.now() - S.t0) / 1000; updateTime(); },
-          submit: () => submit(false),
+          submit: () => handIn(),
         };
         T = {
           kind: 'item',
           cur: () => { const hp = local[S.cur]; return { kind: S.over ? 'loading' : 'item', phase: 'exam', state: isAns(S.cur) ? 'engaged' : 'idle', screenIndex: S.cur, total: N, paper: pi, forward: FWD, noSkip: NOSKIP, ...(hp && hp.partCount && hp.partCount() > 1 ? { part: hp.part().index, parts: hp.partCount() } : {}) }; },
-          answer: () => { const h = local[S.cur]; if (!h) return false; const ok = h.answerCorrect(); renderChrome(); return ok; },
-          check: async () => { const h = local[S.cur]; return h ? h.step.grade() : null; },
-          go: () => { const hp = local[S.cur]; if (hp && hp.more && hp.more() && hp.advance()) { renderChrome(); return; } return S.cur < N - 1 ? go(S.cur + 1) : (NOSKIP && !isAns(S.cur) ? null : submit(false)); },   // an item with parts opens its next part first
+          /* A written item is only written here: the hook types a line and leaves the marking to the marking step after submit
+             (its check() reports a deferred pass), so a playthrough takes the same road as a learner (ENGINE-BACKLOG 589). */
+          answer: () => {
+            const h = local[S.cur]; if (!h) return false;
+            if (curLong(h)) { h.widget.set({ text: 'Working for the playthrough.' }); renderChrome(); return true; }
+            const ok = h.answerCorrect(); renderChrome(); return ok;
+          },
+          check: async () => { const h = local[S.cur]; if (!h) return null; return curLong(h) ? { ok: true, key: null, how: 'self', deferred: true } : h.step.grade(); },
+          go: () => { const hp = local[S.cur]; if (hp && hp.more && hp.more() && hp.advance()) { renderChrome(); return; } return S.cur < N - 1 ? go(S.cur + 1) : (NOSKIP && !isAns(S.cur) ? null : handIn()); },   // an item with parts opens its next part first
         };
         seenAt = Date.now();
         show(true);
@@ -535,7 +580,7 @@
     /* This mock's attempts so far, newest last, with the one just recorded */
     const attempts = mock ? ((ZQ.state.exams[at.doc.id] || {}).attempts || []) : [];
     const nets = attempts.map(a => (typeof a.net === 'number' ? a.net : a.score));
-    const marksOf = (x) => { const s = M.scoring(paperScores[x.pi].p); const c = x.r.credit; return x.r.ok ? s.right : x.r.done && typeof c === 'number' && c > 0 ? Math.round((c * s.right + (1 - c) * s.wrong) * 1e6) / 1e6 : x.r.done ? s.wrong : s.blank; };
+    const marksOf = (x) => { const s = M.scoring(paperScores[x.pi].p); const c = x.r.credit; return x.r.ok && !x.r.rubric ? s.right : x.r.done && typeof c === 'number' && c > 0 ? Math.round((c * s.right + (1 - c) * s.wrong) * 1e6) / 1e6 : x.r.done ? s.wrong : s.blank; };
 
     const skillRow = (s) => {
       const w = (s.p * 100).toFixed(2) + '%', near = Math.abs(s.p - passRef) < 0.06;
@@ -548,9 +593,9 @@
     const reviewItem = (x, k) => {
       const { it, r } = x;
       const fb = it.feedback || {};
-      const line = Array.isArray(it.parts) ? (r.line || '') : r.ok ? fb.correct : (r.key != null && fb.byKey && fb.byKey[r.key]) || (r.done ? fb.generic : '');
+      const line = Array.isArray(it.parts) || r.skippedMark ? (r.line || '') : r.ok ? fb.correct : (r.key != null && fb.byKey && fb.byKey[r.key]) || (r.done ? fb.generic : '');
       const mk = scored ? ` ${marksOf(x) > 0 ? '+' : ''}${sgn(marksOf(x))}` : '';
-      const v = r.ok ? `<span class="exm-v is-ok">${Z.icon('check')}<span>Correct${mk}</span></span>` : `<span class="exm-v is-no">${Z.icon('cross')}<span>${r.done ? (typeof r.credit === 'number' ? `${r.right} of ${r.of} parts` : 'Not correct') : 'No answer'}${mk}</span></span>`;
+      const v = r.ok ? `<span class="exm-v is-ok">${Z.icon('check')}<span>${r.rubric ? `${r.right} of ${r.of} rubric points` : 'Correct'}${mk}</span></span>` : `<span class="exm-v is-no">${Z.icon('cross')}<span>${r.done ? (r.skippedMark ? 'Marking skipped' : r.rubric ? `${r.right} of ${r.of} rubric points` : typeof r.credit === 'number' ? `${r.right} of ${r.of} parts` : 'Not correct') : 'No answer'}${mk}</span></span>`;
       const ans = correctHTML(it);
       return `<article class="exm-ri${r.ok ? '' : ' is-no'}" data-ok="${r.ok}" data-flag="${!!r.flag}" data-k="${k}">
         <button type="button" class="exm-ri-h" aria-expanded="${!r.ok}" aria-controls="exm-rb-${k}">

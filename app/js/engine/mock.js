@@ -5,7 +5,7 @@
      ZQ.mock.scoring(paper)          { right, wrong, blank } with the defaults 1, 0, 0
      ZQ.mock.scored(paper)           true when marking is not plain right-or-nothing
      ZQ.mock.tally(paper, results)   { n, right, wrong, blank, net, max } from per-item { ok, done, credit? }; an item with parts that is
-                                     not right in full counts its credit (the share of parts right) as right and the rest as wrong
+                                     not right in full counts its credit (the share of parts right) as right and the rest as wrong; a written item marked by its rubric (result.rubric) counts ticks over points the same way, pass or not (ENGINE-BACKLOG 589)
      ZQ.mock.draw(entries, opts)     async: a paper's `draw` entries resolved to items (ENGINE-BACKLOG 468): see the block below
      ZQ.mock.passed(paper, tally)    net against passNet, else the net share against pass (default 0.7)
      ZQ.mock.need(paper, max)        the pass mark as a net score
@@ -30,7 +30,8 @@
     let right = 0, wrong = 0, blank = 0;
     for (let i = 0; i < n; i++) {
       const r = (results || [])[i];
-      if (r && r.ok) right++;
+      if (r && r.done && r.rubric && typeof r.credit === 'number') { right += r.credit; wrong += 1 - r.credit; }   // a written item (marked by its rubric): ticks over points, pass or not
+      else if (r && r.ok) right++;
       else if (r && r.done && typeof r.credit === 'number' && r.credit > 0 && r.credit < 1) { right += r.credit; wrong += 1 - r.credit; }   // an item with parts: equal credit per part
       else if (r && r.done) wrong++;
       else blank++;
