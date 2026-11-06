@@ -183,10 +183,27 @@ gap_stated = r_dist - r_eg_coint; gap_selection_only = r_dist - r_eg_pair
 print(f'[confound] gap as stated {gap_stated:+.4f}; gap with the trading rule held at trade_pair {gap_selection_only:+.4f}; '
       f'trading-rule effect on the same EG picks {r_eg_coint - r_eg_pair:+.4f}')
 # EXPECTED_FAIL (finding): l12 screens[2].explain reports the two-rule difference as "cointegration selection" against "distance"
-expected_fail(abs(r_eg_coint - r_eg_pair) < 0.25 * abs(gap_stated),
-              'EXPECTED_FAIL l12 screens[2].explain [confound] the trading rule moves the EG arm by more than a quarter of the gap attributed to selection')
-# corrected assert, ready to enable once the sentence attributes the gap to selection and trading rule together (or trades both arms with trade_pair):
-# assert True, 'l12 screens[2].explain [confound] attribution stated'
+# Fix pass: l12 screens[2].explain, summary.ideas[1], homework-3 items[0] and items[6].model, l15 screens[1] line 7 now
+# name the arm (picks and residual rule together), not selection alone.
+# Second computation (fix pass): over the 22 cycles (step 126), % a month: distance picks 1.05 (trade_pair) 1.21
+# (trade_coint); EG picks 0.50 (trade_pair) 0.63 (trade_coint). The residual rule lifts the EG arm by 0.13 points, a third
+# of the stated 0.42 gap; at a fixed rule the selection gap is 0.54 to 0.59. At start 0 with k = 5, EG picks earn 18.90%
+# on trade_pair against 18.19% on trade_coint, so the k = 5 gap comes from the picks.
+r22 = {'eg_pair': [], 'eg_coint': [], 'dist': []}
+for st in range(0, CLOSE.shape[0] - 378 + 1, 126):
+    Pc = normalise(CLOSE[st:st + 378]); fc, tc_ = Pc[:252], Pc[252:]; cd = top_pairs(fc, 50); Lc = np.log(fc)
+    pc = [eg_decision(Lc[:, i], Lc[:, j])[1] for i, j in cd]; egc = [cd[o] for o in np.argsort(pc, kind='stable')[:20]]
+    r22['eg_pair'].append(np.mean([trade_pair(fc, tc_, i, j)[0] for i, j in egc]))
+    r22['eg_coint'].append(np.mean([trade_coint(fc, tc_, i, j)[0] for i, j in egc]))
+    r22['dist'].append(np.mean([trade_pair(fc, tc_, i, j)[0] for i, j in cd[:20]]))
+m22 = {k: np.mean(v) / 6 * 100 for k, v in r22.items()}
+print('[confound] 22 cycles, % a month: ' + ', '.join(f'{k} {v:.2f}' for k, v in m22.items()))
+eg5 = [cand[o] for o in np.argsort(p, kind='stable')[:5]]
+r5_pair = sum(trade_pair(form, trade, i, j)[0] for i, j in eg5) / 5
+txt = DOC['l12-cointegration-selection']['screens'][2]['explain']['text']
+assert round(m22['eg_coint'], 2) == 0.63 and round(m22['dist'], 2) == 1.05 and m22['eg_coint'] - m22['eg_pair'] > 0.25 * (m22['dist'] - m22['eg_coint']) \
+    and 'trading rule' in txt and 'residual rule' in txt and abs(r5_pair - 0.1890) < 5e-4 and '18.90%' in DOC['homework-3']['items'][0]['explain']['text'], \
+    'l12 screens[2].explain, homework-3 items[0] [confound] the gap mixes selection with the trading rule (corrected claim, fix pass)'
 
 # ---- 10. pooled shares and exposures (review-3 items[2], items[7]; l13 screens[7]; homework-3 items[3], items[4]) [exact]
 assert abs(51 / 90 - 0.5667) < 5e-5 and abs((26 / 40 + 25 / 50) / 2 - 0.575) < 1e-12, 'review-3 items[2] [exact] pooled against averaged'
