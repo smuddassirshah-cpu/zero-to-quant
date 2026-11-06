@@ -30,7 +30,32 @@ The following were checked against a source or a simulation and need no change. 
 
 ## Overlap with the earlier reads
 
-(Filled after the ledger and findings above were committed; see the commit history of this file.)
+Read after the ledger and the findings above were committed (`51fe568`): `docs/reviews/review-ito.md` (second read, fix pass) and `docs/reviews/answers-3.2-ito-2.md`, `answers-3.2-ito-3.md` (answer checks, fix passes, rechecks). Level 1 had no answers file. Only conceptual findings are counted: a wrong or dropped hypothesis, a wrong reason in a `why`, `byKey` or explain, a distractor that is true, a valid method or proof order graded wrong, a false empirical claim. Arithmetic slips, fresh-number reuse, key length, tolerance, clipping and voice are left out. Every earlier conceptual finding had been fixed before this audit, so this audit could not find them in the live text; the "both" column is therefore the findings an earlier read raised that are still open, which is none.
+
+| | count | items |
+|---|---|---|
+| audit only | 7 | findings 1 to 7 above |
+| earlier reads only | 14 | listed below |
+| both | 0 | |
+
+Earlier conceptual findings, with why this audit did not raise them (each was checked in its fixed form and sits in the ledger as `correct`):
+
+- review-ito 1, l2 screens[8]: the distractor "normal increments with variance $t - s$" was true for $X_t = \sqrt t Z$. Fixed to "Normal values: each $X_t \sim N(0, t)$"; ledger row l2 screens[8] checks the four options as they now stand.
+- review-ito 2, review-1 r-var-sum3 `byKey.sq`: "36 is $\operatorname{Var}(3W_3)$" was wrong reasoning. Fixed to $(1 + 2 + 3)^2$; checked.
+- review-ito 3, homework-1 h-fourth-cross `byKey.noKurt`: the named slip did not produce the value. Fixed to $E[W_s^4] = 2s^2$; checked.
+- review-ito 6 and answers-3 15, order items (l3 screens[4], l6 screens[2], l9 screens[2], l10 screens[2], l11 screens[6], homework-3 items[0]): valid proof orders were graded wrong. Fixed with `same` groups or reworded prompts; the current `same` and `answer` fields were read and are consistent with the dependencies.
+- review-ito 8, l12 screens[5]: the dead-on-arrival price contradicted "a simulation prices the contract it simulates" because the contract was not stated. Fixed by stating the contract; checked.
+- answers-2 1 and 2, l7 screens[3] and [4] `plain`: the `wrong` values did not match the slip the `byKey` line named. Fixed (0.9118, 0.1809); checked.
+- answers-2 13, l8 screens[7]: "the stopping time is bounded in practice" and "no stopping rule turns a fair game favourable" dropped the hypothesis of optional stopping. Fixed to the bounded stopped bankroll and "no bounded stopping rule"; this audit checked the fixed text against Williams 10.10.
+- answers-2 15, l6 screens[4] `feedback.correct`: cited a moment lesson 4 never gave. Fixed to $e^{km + k^2s^2/2}$; checked.
+- answers-3 1, l12 screens[4], [8], [10], summary: a long simulation "settles at about £8.86" and the shift is "good to about five pence" were false (the exact daily price is 8.9139). Fixed; this audit's 3 million daily paths give $8.906 \pm 0.008$, consistent with 8.9139.
+- answers-3 2 to 5, l9 screens[1], [4], l10 screens[4], quiz[0]: `wrong` values that no named slip produced. Fixed; the slip lines were read and are right.
+- answers-3 8, l9 screens[7]: the carry was attributed to "the short sale" instead of the net book. Fixed to "net interest on the book"; checked ($rS\Delta - rV$).
+- answers-3 10, l11 screens[5] and [8]: "always below" for the CRR tree was true only for even step counts. Fixed; this audit checked the even-odd oscillation (101 steps 10.4680).
+- answers-3 24, homework-3 items[3]: "the risk-neutral price is below the real-world average" needed "when $\mu > r$". Fixed; checked.
+- answers-3 25, homework-3 items[6] model point 5: "loses about vega times the gap" did not say who loses or the sign. Fixed; checked. The same paragraph's last sentence (finding 7 above) was not raised by the earlier reads.
+
+Reading: the two earlier passes between them found 14 conceptual issues and fixed them; this blind read found 7 more, 1 `wrong`, 5 `imprecise`, 1 `misleading`. Of the 7, four are a dropped hypothesis of the kind the audit brief lists (findings 2, 3, 4, 6), two are a lesson's single example stated as a rule (finding 5) or a wrong cause for a true effect (finding 7), and one (finding 1) is a wrong claim in an explain. By the convergence rule (at most one new `wrong` per three levels that no earlier read found) the course closes on this round once the fix pass lands.
 
 ## Checks
 
