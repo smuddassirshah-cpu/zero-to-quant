@@ -198,3 +198,6 @@ Session U (6 Nov):
 - algebra l2 review finding 20 deferred: l2 is at the 12-screen cap, so the {1, -1, i, -i} ladder rung needs an author to merge a screen away.
 - Rule 584 (`[table-slip-key]`) also flags a deliberate per-cell generic line (a cell-id key that should fire for every non-slip wrong answer). The algebra L1 to L2 fix pass dropped such lines to clear it. Refine: warn only when none of the cell's `wrong[]` ids has its own `byKey` line. Inbox bullet added.
 - Choice shuffling (topology L1 to L2 review): 3,373 of 6,605 lesson choices list the key first without `shuffle`. Open for the user (inbox bullet).
+- stage-0: the `getting-hired` check added by the stage exam author was removed (orchestrator): `docs/curriculum.md` line 91 says 0.7 is not part of the exit test, and every check gates the pass. PLAN line 97's "extend stage-0 to 0.7" is therefore met for 0.6 only. An optional-check flag in the engine would allow a non-gating 0.7 check (inbox bullet, stage exams).
+- 586 `[key-length]` gives 1,658 hits at 1.5 times; needs a threshold decision before any content pass. 585 `[shuffled-position]` gives 14 hits, some likely false positives (question parts labelled "(a)"); triage pending.
+- readiness-sums `generated:catalogue` went stale when algebra, topology and linear-maps L4 landed; regenerated with `--write` (1,214 of 1,214 written).
