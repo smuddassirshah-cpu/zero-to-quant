@@ -261,6 +261,20 @@ for ref in ["l5", "l6", "l7", "l8", "l9", "review", "homework"]:
         two(f'{ref} code solution', all(run(w['solution'], w, t) for t in w['tests'] + w.get('examples', [])), True)
         two(f'{ref} code starter fails one', not all(run(w['starter'], w, t) for t in w['tests']), True)
 
+# ---------- numbers the second reader found unchecked (review-algebra-1-2 fix pass) ----------
+two('lcm(100, 250)', math.lcm(100, 250), 100 * 250 // math.gcd(100, 250)); lv.expect("l5", "screens[10].widget.wrong[1]", 500)
+two('16!/4', math.factorial(16) // 4, math.prod(range(1, 17)) // 4); lv.expect("l9", "screens[7].widget.options[2].text", math.factorial(16) // 4)
+per_entry = [sum(1 for b in sig[i + 1:] if b < a) for i, a in enumerate(sig)]
+two('per-entry counts sum to inversions', sum(per_entry), inv_count(sig))
+two('per-entry counts by discordant pairs', per_entry, [sum(1 for j in range(i + 1, 8) if sig[j] < sig[i]) for i in range(8)])
+lv.expect("l9", "screens[4].hints[2].text", ", ".join(map(str, per_entry)))
+two('(1/2)^100', f"{0.5 ** 100:.0e}", "8e-31"); lv.expect("homework", "items[4].feedback.byKey.indep", "8 \\times 10^{-31}")
+two('2 + 5 and 3 + 4 sum to 7', (2 + 5, 3 + 4), (7, 7)); two('lcm(3, 4), lcm(2, 5)', (math.lcm(3, 4), math.lcm(2, 5)), (12, 10))
+lv.expect("l8", "screens[7].hints[1].text", "2 + 5$ gives 10")
+# l7 fix-pass lines: Z4 exponent counterexample, and no element of order 3 in D4
+two('Z4: g^(|G|/2) = 2 != 0 for g = 1', (1 * (4 // 2)) % 4, 2)
+two('D4 has no element of order 3', sum(1 for g in D4 if order_b(g) == 3), 0)
+
 lv.check_wrongs()
 if bad:
     print('two-way mismatches:', *bad, sep='\n  ')

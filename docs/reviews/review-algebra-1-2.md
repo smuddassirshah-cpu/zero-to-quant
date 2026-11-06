@@ -94,3 +94,45 @@ Notation in L3 and L4 matches L1 and L2 on the main points: products by juxtapos
 ## Engine
 
 No engine change is needed for these fixes: the validator already accepts a table cell's own wrong ids as `byKey` keys (item 576). The class in finding 3 (a cell's `wrong[]` id with no `byKey` line while a `byKey` line sits on that cell's id) occurs 8 times here and could be a validator warning.
+
+## Fix pass
+
+Status per finding (32 fixed, 0 disputed, 1 deferred). No stated number changed, so no L1 to L4 number script needed a changed value; every new text was checked by hand (Z_4: 1+1 = 2; subgroup {e, x, y} forces x^3 = e; Row 5 mod 10 is 0, 5, 0, 5 and never 1; lcm(100, 250) = 500).
+
+1. fixed: homework-1 `items[2].explain.text` now says "with $p$ an odd prime".
+2. fixed: l9 `screens[11].explain.text` states the exact condition (an even number of odd-length moved cycles).
+3. fixed with a deviation: the eight slip lines are re-keyed to the wrong ids (l3 `div`, `neg`, `raw5`, `raw7`, `raw11`; l8 `sum`; l9 `pairs`, `fact`). The neutral cell-id lines the review asked for were NOT added, and l9 `quiz[0]`'s old `r0c1` line was dropped: the validator's `table-slip-key` rule warns on any cell-id key whose cell has `wrong[]`, and the gate requires zero hits.
+4. fixed: l1 `screens[3]` cell `r3c1` gets `wrong` `sr` (new line as specified) and `swap` for typing `rs`; the old `r3c1` line moved to `swap` so no cell-id key remains on a cell with `wrong[]`.
+5. fixed: l4 `byKey.two`.
+6. fixed: review-2 `items[4]` option `one` is now $(1\,3\,6)(4\,5)$ with the new why.
+7. fixed: l7 `quiz[1]` `half` why uses $\mathbb{Z}_4$.
+8. fixed: l7 `screens[0].explain.text` (last sentence "The next screen settles it" dropped to stay at three sentences).
+9. fixed: l1 `screens[8].prose`.
+10. fixed: l9 `screens[7].prose`.
+11. fixed: l7 `screens[7].prose` and the `why`.
+12. fixed: l5 `screens[2].prose` drops the Pinter attribution.
+13. fixed: l2 `quiz[3].explain.text`.
+14. fixed: l3 `screens[1].hints[1]`.
+15. fixed: l1 trap and formula note.
+16. fixed: homework-1 `items[0].model`.
+17. fixed: l5 `screens[0].hints[2]`.
+18. fixed: l5 `byKey.all`.
+19. fixed: l8 and l9 `screens[0]` are now `explore` (validator accepts both; playthrough green).
+20. deferred: l2 already has 12 screens, the validator maximum (8 to 12). Adding the {1, -1, i, -i} rung needs another screen removed or merged, which is an author decision. The rung was written and validated apart from the cap (it passed otherwise), then taken out.
+21. fixed: l7 `quiz[2].explain.text` (no $\cong$).
+22. fixed: l9 `screens[9].prose` (sign turns products into products; l10 names the homomorphism).
+23. fixed: l13 `screens[5].prose`.
+24. fixed: l10 `screens[5].prose`.
+25. fixed: l11 `screens[10].prose` (split into two sentences for the 20-word rule).
+26. fixed: l10 `screens[1].prose` (kept the trig citation and the $\zeta^{kj}$ step).
+27. fixed: l13 `screens[2].prose` ("As in l4") and `screens[3].prose` (cites l7's $g^{|G|} = e$).
+28. fixed: l13 `screens[3].hints[1]` now cites l7.
+29. fixed: l3 `screens[6].explain.text` (three sentences).
+30. fixed: l12 `screens[3].explain.text`.
+31. fixed: l14 `screens[0].prose`.
+32. fixed: l14 `screens[2].prose`.
+33. fixed: l10 `screens[0].prose`.
+
+Numbers: `docs/reports/algebra-L2-numbers.py` gains checks for 500 (l5), $16!/4$ (l9), the per-entry inversion counts 4, 2, 5, 0, 1, 2, 1, 0 (l9, two ways), $(1/2)^{100}$ (homework-2), "2 + 5 gives 10" (l8), the $\mathbb{Z}_4$ counterexample and "no element of order 3 in $D_4$" (l7): 131 of 131 pass. The L1, L3 and L4 scripts are unchanged and still exit 0. Files outside L1 and L2 that changed: l10, l11, l12, l13, l14 (continuity findings 23 to 28, 30 to 33).
+
+Gates: validator 0 errors, 0 `table-slip-key` hits in algebra; voice scan 0 sentences over 20 words, 0 explanations over three sentences; all four algebra number scripts exit 0; `playthrough` green with and without `--mobile` for l1, l2, l3, l4, l5, l7, l8, l9, l10 to l14 (`--lesson`) and review-2, homework-1 (`--set`), with `--local-cdn`.
