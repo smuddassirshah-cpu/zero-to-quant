@@ -189,7 +189,7 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] linear-maps L1: Vector spaces [Pure maths] (`docs/reports/linear-maps-1.md`; 5 inbox bullets)
 - [x] linear-maps L2: Linear maps [Pure maths] (`docs/reports/linear-maps-2.md`; 3 inbox bullets; l9 starter passes 4 of 6 hidden tests)
 - [x] linear-maps L3: Duality and inner products [Pure maths] (`docs/reports/linear-maps-3.md`; 5 lessons, review-3, homework-3; 3 inbox bullets)
-- [ ] linear-maps L4: Operators [Pure maths]
+- [x] linear-maps L4: Operators [Pure maths] (session U: `docs/reports/linear-maps-4.md`; second read and fix pass 16 of 16 in `docs/reviews/review-linear-maps-4.md`)
 - [x] complex L1: The complex plane [Quant] (session S: second read and fix pass in `docs/reviews/review-complex-1-2.md`)
 - [x] complex L2: Complex functions [Quant] (session S: second read and fix pass in `docs/reviews/review-complex-1-2.md`)
 - [x] complex L3: Integrals and Fourier [Quant] (session T: second read and fix pass in `docs/reviews/review-complex-3.md`)
