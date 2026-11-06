@@ -70,3 +70,4 @@ Checks:
 - Code harness (`l4_codecheck.mjs` with local paths): l18 `OnlineLine` solution 9/9, starter 0/9; l19 and l20 items unchanged (8/8 and 0/8); ALL CODE OK.
 - Validator (from `app/`): `0 errors, 4283 warnings`; manifest restored.
 - Voice scan 35: explanations over three sentences 0; sentences over 35 words 0.
+- Playthrough (from `app/`, `--local-cdn` on the scratch `pkgs` folder) of the changed lessons l16, l18, l19, l20: plain `ok` for all four (16, 16, 16, 14 checks, quiz 4/4 each), `browser relaunches: 0`, `All passed.`; with `--mobile` the same, `All passed.` review-4 and homework-4 unchanged.
