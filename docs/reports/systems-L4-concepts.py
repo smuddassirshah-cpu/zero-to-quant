@@ -286,9 +286,13 @@ if ok:
     # The content says the subtraction stays right "because 2^32 is a multiple of N". The subtraction is right
     # for N = 3 too (diff == 2); it is the slot, counter mod N, that needs N to divide 2^32.
     check(diff == 2, 'l16 screens[8] explain: tail - head is 2 across the wrap for any N (here N = 3)')
-    check(diff == 2 and not (slot_tail3 == 1 and slot_head3 == 0), 'EXPECTED_FAIL l16 screens[8] explain: the content attributes the correct subtraction to 2^32 being a multiple of N; with N = 3 the subtraction is still right (2) and only the slot mapping breaks')
-    # corrected, ready to enable once the explain says the slot needs N | 2^32 and the subtraction does not:
-    # check(diff == 2 and (slot_tail3, slot_head3) == (1, 0), 'l16 screens[8] explain (fixed): subtraction right for N = 3, slots 1 and 0 show the wrap breaks only the mask')
+    # Fix pass: the explain now says the subtraction is exact mod 2^32 for any N and that the slot (counter mod N)
+    # is what needs N to divide 2^32. Compiled: tail - head is 2 for N = 3, while tail % 3 == 1 and head % 3 == 0
+    # (head 4,294,967,295 is a multiple of 3 and 0 is too, so the run 4294967294.. maps to slots 2, 0, 0, 1).
+    s8 = l16['screens'][8]['explain']['text']
+    check(diff == 2 and (slot_tail3, slot_head3) == (1, 0) and 'for any $N$' in s8 and 'needs $N$ to divide $2^{32}$' in s8
+          and 'multiple of $N$' not in s8,
+          'l16 screens[8] explain (corrected claim, fix pass): subtraction exact mod 2^32 for any N (2 for N = 3); only the slot, counter mod N, needs N to divide 2^32')
 
 # The Ring code item: solution passes, starter fails, counters 64 bytes apart (ledger l16 s9).
 for std in ('c++17', 'c++20'):
@@ -375,9 +379,11 @@ int main() {
 }
 '''
     races_one_writer = tsan(ONE_WRITER)
-    check(races_one_writer == 0, 'EXPECTED_FAIL l16 screens[6] explain: "A race needs two writers of one variable"; one writer and one reader of a plain int is reported as a data race by ThreadSanitizer')
-    # corrected, ready to enable once the explain reads "a race needs two threads touching one variable with at least one writer and nothing ordering them":
-    # check(races_one_writer > 0, 'l16 screens[6] explain (fixed): one writer plus one reader of a plain variable is a data race')
+    # Fix pass: the explain now gives the [intro.races] definition (two threads, one variable, at least one writing,
+    # nothing ordering them). One writer plus one reader of a plain int is a race under ThreadSanitizer.
+    s6 = l16['screens'][6]['explain']['text']
+    check(races_one_writer > 0 and 'at least one writing' in s6 and 'nothing ordering them' in s6 and 'two writers' not in s6,
+          'l16 screens[6] explain (corrected claim, fix pass): a data race needs one writer and an unordered access, and one writer plus one reader of a plain int races under ThreadSanitizer')
 
     # The Ring of screens[9] (plain std::size_t counters) driven by two threads: the item's framing is the two-core
     # ring (separate cache lines for two cores), but its counters are not atomic, so it is a data race.
@@ -401,9 +407,11 @@ int main() {
 }
 '''
     races_plain = tsan(PLAIN_RING)
-    check(races_plain == 0, 'EXPECTED_FAIL l16 screens[9] widget.solution: presented as the two-core ring (alignas(64) for two cores) but its plain size_t counters race under ThreadSanitizer when driven by two threads')
-    # corrected, ready to enable once the prose says this version is single-threaded and the two-thread ring uses std::atomic counters with the orders of screens[5]:
-    # check(races_plain > 0, 'l16 screens[9] (fixed prose): the plain-counter ring is single-threaded only; two threads race on it')
+    # Fix pass: the prose now says this version runs on one thread with plain size_t counters, and that the
+    # two-thread ring makes them std::atomic with the push screen's orders. Two threads on it still race.
+    s9 = l16['screens'][9]['prose']
+    check(races_plain > 0 and 'runs on one thread' in s9 and '`std::atomic`' in s9,
+          'l16 screens[9] widget.solution (corrected claim, fix pass): the plain size_t ring is single-threaded only, as the prose now says; two threads race on it under ThreadSanitizer')
 
 # The solution's counters are at least 64 bytes apart on this ABI too (ledger l16 s9 tests[9]).
 SRC_L16_ALIGN = l16['screens'][9]['widget']['solution'] + r'''
