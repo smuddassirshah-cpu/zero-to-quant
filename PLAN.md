@@ -260,7 +260,8 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 - [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
 
 ### 5b. Concept audit by Fable, after all content is finished (user, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
-- [ ] Starts only when 2a drill packs and bank part 2, the performance-task retrofit and every second read and fix pass are done
+- [ ] Parallel Fable audit session (branch `claude/fable-audit`, started 6 Nov) on earlier-read courses; merge its branch at each content-session close
+- [ ] Phase 2 courses (unread list): audit after all content is finished
 - [ ] Audit interview courses and Stages 2 and 3
 - [ ] Audit Stage 1, then Stage 0
 - [ ] Audit topic, stage and mock exams after their courses close

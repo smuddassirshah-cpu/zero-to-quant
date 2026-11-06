@@ -1,6 +1,6 @@
 # Concept audit (user priority, 6 Nov 2026: learning only what is correct comes first)
 
-Every level, review set, homework set and exam gets a concept audit by a Fable reader (model `fable`) who has not seen that level's earlier reviews. It runs only after all content is finished (user, 6 Nov): every second read and fix pass, the performance-task retrofit, drill packs 1 to 8 and bank part 2. It checks meaning, not arithmetic: definitions, methods, conventions and claims. The number scripts already cover arithmetic.
+Every level, review set, homework set and exam gets a concept audit by a Fable reader (model `fable`) who has not seen that level's earlier reviews. Courses already read in earlier sessions are audited now by a parallel session on branch `claude/fable-audit` (user, 6 Nov; prompt `docs/briefs/fable-audit-session-prompt.md`). Courses still in Phase 2 are audited after all content is finished. It checks meaning, not arithmetic: definitions, methods, conventions and claims. The number scripts already cover arithmetic.
 
 ## Auditor brief (binding)
 
