@@ -204,7 +204,14 @@ def code_py(iid, part=None):
     n = len(w['tests'])
     rec(run_py(w['solution'], w['tests']) == n, f'{lab}: the solution passes all {n} tests')
     rec(run_py(w['starter'], w['tests']) < n, f'{lab}: the starter fails a test')
-    rec(all(e['expect'] in [t['expect'] for t in w['tests']] for e in w['examples']), f'{lab}: each example is a hidden test')
+    def same_case(e):
+        # an example is a hidden test, or its rounded display with compare isclose (the engine's default compare is equal)
+        return any(t.get('setup') == e.get('setup') and t['call'] == e['call']
+                   and (t['expect'] == e['expect'] or (e.get('compare') == 'isclose'
+                        and np.allclose(eval(e['expect']), eval(t['expect']), rtol=1e-9, atol=0)))
+                   for t in w['tests'])
+    rec(all(same_case(e) for e in w['examples']), f'{lab}: each example is a hidden test, or its rounded copy with compare isclose')
+    rec(all(e.get('compare') == 'isclose' for e in w['examples'] if re.search(r'\d\.\d', e['expect'])), f'{lab}: a float example carries compare isclose')
     rec(f'{n} hidden tests' in w['how'], f'{lab}: how states {n} tests')
     return w['tests']
 
@@ -279,9 +286,10 @@ key('a-triangle-integral', round(simpson(lambda x: simpson(lambda y: x + y, 0, x
 wrong('a-triangle-integral', 'square', round(float(np.sum(XX + YY) * h8 * h8), 6))
 allow('a-triangle-integral', 27)
 
-key('a-cos-limit', round((1 - math.cos(4e-4)) / 1e-8, 4))
-wrong('a-cos-limit', 'no-half', round(2 * (1 - math.cos(4e-4)) / 1e-8, 4))
-allow('a-cos-limit', 16)
+xc = 1e-3
+key('a-cos-limit', round((1 - math.cos(3 * xc)) / (xc * math.sin(xc)), 3))
+wrong('a-cos-limit', 'no-half', round(2 * (1 - math.cos(3 * xc)) / (xc * math.sin(xc)), 2))
+allow('a-cos-limit', 4.5, 9)
 
 M10 = np.array([[2, 1, 0], [1, 3, 1], [0, 1, 4.0]])
 key('a-det-three', round(float(np.linalg.det(M10)), 6))
@@ -368,7 +376,7 @@ var1 = float((xb - mu1) ** 2 @ pb)
 sd = math.sqrt(350 * var1)
 key('b-many-bets', round(N01.cdf(-350 * mu1 / sd), 4))
 wrong('b-many-bets', 'no-root', round(N01.cdf(-350 * mu1 / (350 * var1)), 4))
-allow('b-many-bets', 350, 0.53, mu1, mu1 ** 2, var1, 350 * mu1, round(350 * var1, 2), round(sd, 2), round(350 * mu1 / sd, 2))
+allow('b-many-bets', 350, 0.53, mu1, mu1 ** 2, var1, 350 * mu1, round(350 * var1, 2), round(sd, 2), round(350 * mu1 / sd, 2), round(350 * mu1 / sd, 4))
 
 Sig = np.array([[4, 0.5], [0.5, 1]])
 a4 = np.array([2, -3.0])
@@ -396,11 +404,11 @@ key('b-mle-rate', round(float(lam[ll.argmax()]), 4))
 wrong('b-mle-rate', 'gave-mean', round(sum(w6) / 5, 4))
 allow('b-mle-rate', *w6, 6.5)
 
-se7 = F(12) / 8
+se7 = F(30) / 12
 key('b-interval-width', round(float(F(196, 100) * se7), 6))
-wrong('b-interval-width', 'no-root', round(1.96 * 12 / 64, 4))
-wrong('b-interval-width', 'no-se', round(1.96 * 12, 4))
-allow('b-interval-width', 64, 12, 1.96, 1.5, 95)
+wrong('b-interval-width', 'no-root', round(1.96 * 30 / 144, 4))
+wrong('b-interval-width', 'no-se', round(1.96 * 30, 4))
+allow('b-interval-width', 144, 30, 12, 1.96, 2.5, 95)
 
 z8 = 0.07 / (1.1 / math.sqrt(484))
 key('b-pvalue-mean', round(2 * N01.cdf(-z8), 3))
@@ -410,10 +418,13 @@ allow('b-pvalue-mean', 484, 0.07, 1.1, 22, 0.05, round(z8, 2))
 none = 1.0
 for _ in range(40):
     none *= 0.95
-key('b-forty-tests', round(1 - none, 4))
-wrong('b-forty-tests', 'one-test', 0.05)
-wrong('b-forty-tests', 'bonferroni', 0.05 / 40)
-allow('b-forty-tests', 40, 5, 0.95, round(none, 4))
+from scipy.stats import binom  # noqa: E402
+key('b-forty-tests', round(float(binom.sf(1, 40, 0.05)), 4))
+wrong('b-forty-tests', 'at-least-one', round(1 - none, 4))
+wrong('b-forty-tests', 'expected', 40 * 0.05)
+one = float(binom.pmf(1, 40, 0.05))
+rec(math.isclose(one, 2 * 0.95 ** 39, rel_tol=1e-12), 'b-forty-tests: P(exactly one) = 40 * 0.05 * 0.95^39 = 2 * 0.95^39')
+allow('b-forty-tests', 40, 5, 0.05, 0.95, 39, round(none, 4), round(one, 4), 0.6009)
 
 ols_t = code_py('b-ols-table', 0)
 for k in range(0, len(ols_t), 3):
@@ -532,7 +543,11 @@ for t in vol_t:
 for t in dd_t:
     pz = np.array(eval(re.search(r'\[.*\]', t['call']).group(0)), dtype=float)
     rec(math.isclose(float(np.max(1 - pz / np.maximum.accumulate(pz))), eval(t['expect']), abs_tol=1e-15), f'{it_c1}: drawdown by running maximum')
-allow(it_c1, 252, 63.75, 85, 1e-9)
+consts = [eval(re.search(r'\[.*\]', t['call']).group(0)) for t in dd_t]
+rec(any(abs((0.25 if sorted(pz_) != pz_ else 0.0) - eval(t['expect'])) > 1e-9 for pz_, t in zip(consts, dd_t)),
+    f'{it_c1}: the constant 0.25 variant fails a drawdown test')
+allow(it_c1, 252, 59.5, 85, 120, 130, 20, 25, 30, 1e-9)
+rec(math.isclose(mdd_first := 1 - 59.5 / 80, 0.25625) and not math.isclose(mdd_first, 0.3), f'{it_c1}: a drawdown from the first price gives {mdd_first}, not 0.3')
 
 correct_id('c-log-axis', 'a')
 allow('c-log-axis', 30, 2.50, 0.9, 20)
@@ -552,7 +567,7 @@ con.executemany('INSERT INTO trades VALUES (?, ?, ?, ?)',
 sql = re.search(r'```sql\n(.*?)```', ITEM['c-sql-having']['prose'], re.S).group(1)
 out = con.execute(sql).fetchall()
 key('c-sql-having', len(out), part=0)
-wrong('c-sql-having', 'no-having', len(con.execute(sql.replace('HAVING COUNT(*) >= 2\n', '')).fetchall()), part=0)
+wrong('c-sql-having', 'no-having', len(con.execute(sql.replace('HAVING AVG(px) > 3\n', '')).fetchall()), part=0)
 key('c-sql-having', out[1][1], part=1)
 wrong('c-sql-having', 'no-where', con.execute(sql.replace('WHERE qty >= 100\n', '')).fetchall()[1][1], part=1)
 wrong('c-sql-having', 'first-row', out[0][1], part=1)
@@ -604,6 +619,8 @@ rec(run_cpp(wc['starter'], wc['tests']) < nt, 'c-crr-cpp: the starter fails a te
 for t in wc['tests']:
     rec(math.isclose(crr_sum(*t['args'][:6], call=t['args'][6]), t['expect'], rel_tol=1e-9), f'c-crr-cpp: {t["args"]} by the binomial sum')
 rec(f'{nt} hidden tests' in wc['how'], 'c-crr-cpp: how states the test count')
+t2 = wc['tests'][1]['args']
+rec(not math.isclose(crr_sum(*t2[:6], call=True), wc['tests'][1]['expect'], rel_tol=1e-6), 'c-crr-cpp: test 2 is a put that a call-only pricer fails')
 allow('c-crr-cpp', 1000, 1e-9)
 
 prog = re.search(r'```cpp\n(.*?)```', ITEM['c-by-reference']['prose'], re.S).group(1)
@@ -638,10 +655,12 @@ part_sums = [sum(4 ** k / math.factorial(k) for k in range(1, n + 1)) for n in (
 rec(abs(part_sums[1] - (math.e ** 4 - 1)) < 1e-9, 'd-which-converges: partial sums reach e^4 - 1')
 allow('d-which-converges', 0.2, 0.5)
 
-key('d-delta-square', float(F(7, 100) / 7))
-wrong('d-delta-square', 'used-six', round(0.07 / 6, 6))
-rec(max(abs((3 + s) ** 2 - 9) for s in np.linspace(-0.01, 0.01, 2001)) <= 0.07, 'd-delta-square: delta 0.01 keeps |x^2 - 9| within 0.07')
-allow('d-delta-square', 0.07)
+key('d-delta-square', float(F(9, 100) / 6))
+wrong('d-delta-square', 'used-five', round(0.09 / 5, 6))
+rec(max(abs((1 + t) ** 2 + 3 * (1 + t) - 4) for t in np.linspace(-0.015, 0.015, 2001)) <= 0.09 + 1e-12, 'd-delta-square: delta 0.015 keeps |x^2 + 3x - 4| within 0.09')
+rec(max(abs((1 + t) + 4) for t in np.linspace(-1, 1, 2001)) <= 6, 'd-delta-square: |x + 4| <= 6 for |x - 1| <= 1')
+rec((lambda f: f(1) == 0 and f(1 + 1) == (1 + 1 - 1) * (1 + 1 + 4))(lambda x: x * x + 3 * x - 4), 'd-delta-square: x^2 + 3x - 4 = (x - 1)(x + 4)')
+allow('d-delta-square', 0.09, 0.015)
 
 lo, hi = 1.0, 4.0
 fm = lambda x: x ** 3 + 4 * x
@@ -658,7 +677,8 @@ order_check('d-rank-nullity-proof', 5, 2)
 order_check('d-spectral-proof', 6, 2)
 
 ip = lambda f, g: simpson(lambda x: f(x) * g(x), 0, 1)
-key('d-poly-angle', round(ip(lambda x: 1, lambda x: x) / math.sqrt(ip(lambda x: 1, lambda x: 1) * ip(lambda x: x, lambda x: x)), 6))
+key('d-poly-angle', round(ip(lambda x: x, lambda x: x * x) / math.sqrt(ip(lambda x: x, lambda x: x) * ip(lambda x: x * x, lambda x: x * x)), 6))
+allow('d-poly-angle', 0.9682)
 wrong('d-poly-angle', 'coefficient-dot', float(np.dot([1, 0], [0, 1])))
 
 Dm = np.zeros((5, 5))
@@ -683,11 +703,15 @@ allow('d-complex-power', 64)
 M = 4000
 th = 2 * math.pi * np.arange(M) / M
 zc = 2 * np.exp(1j * th)
-integral = np.sum(np.cos(zc) / (zc - 1) * 2j * np.exp(1j * th)) * 2 * math.pi / M
-rec(abs(integral.real) < 1e-9, 'd-residue: the integral is imaginary')
+fz = lambda z: np.cos(z) / (z ** 2 - 4 * z + 3)
+integral = np.sum(fz(zc) * 2j * np.exp(1j * th)) * 2 * math.pi / M
+zc4 = 4 * np.exp(1j * th)
+both = np.sum(fz(zc4) * 4j * np.exp(1j * th)) * 2 * math.pi / M
+rec(abs(integral.real) < 1e-9 and abs(both.real) < 1e-9, 'd-residue: the integrals are imaginary')
 key('d-residue', round(float(integral.imag), 6))
+wrong('d-residue', 'both-poles', round(float(both.imag), 6))
 wrong('d-residue', 'no-2pi', round(float(integral.imag) / (2 * math.pi), 6))
-wrong('d-residue', 'pole-at-zero', round(2 * math.pi, 6))
+allow('d-residue', round(float(integral.imag), 4))
 
 P_ = lambda x, y: x * x * y
 Q_ = lambda x, y: x + y * y

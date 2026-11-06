@@ -107,3 +107,47 @@ Format: `n. item [paper.index] path | severity | problem | evidence | fix`. Seve
 - Voice: 2 (findings 21, 28). Layout: 2 (findings 24, 25).
 - Authors' scripts: Stage 1 `check_numbers.py` 443 of 443 and Stage 0 103 of 103, both exit 0; both `fresh.py` exit 0 with no real number clash. Validator 0 errors; 3 key-length warnings on `stage-1.json`, 1 new on `stage-0.json`.
 - Engine items: a `required` flag on paper items (finding 12); validator warnings for a float example with no `compare` (finding 4) and for a thousands comma inside maths (finding 25).
+
+## Fix pass
+
+Edits went into the three `build.py`, `check_numbers.py` and `fresh.py` scripts under `docs/briefs/exam-stage-1-scripts/` and `docs/briefs/exam-stage-0-scripts/`, and each file was rebuilt (the stage-0 build touches only the added parts, so the 40 old items and all ids are unchanged). Every changed key, wrong value and prose number was recomputed in `check_numbers.py` by a second route.
+
+1. fixed: titles "A power of a cubic", "Three hundred and fifty small bets", "Four million prices".
+2. fixed: explanation now reads $\Phi(-1.1245) \approx 0.1304$ (0.130396 by SciPy).
+3. fixed: `dropped-cross` line now names the one dropped term, $x \cdot (-\tfrac{x^2}{2})$, which adds $-\tfrac{x^3}{2}$.
+4. fixed: `compare: isclose` on the three named examples, and on every other float example in the file (crr, csv, vol, drawdown, rk4); A14 part 1 expect now `[1.14, 0.92]`. `check_numbers.py` asserts each example is a hidden test or its rounded copy with `isclose`.
+5. fixed: test 2 is now `[100, 110, 0.0, 0.2, 1.0, 1, false]`, expect 15.46513943562 (closed-form sum and g++). A check confirms a call-only price fails it.
+6. fixed: `test-1` line on B13, `test-2` line on A14 part 2, and the C0 part 3 tests ($[80, 72, 76, 62, 66, 79, 85, 59.5]$ gives 0.3, $[200, 150, 180, 120]$ gives 0.4) with new `test-1` and `test-3` lines. The constant-0.25 variant now fails (asserted).
+7. fixed: `same: [["g1", "g2"]]` and the new generic, correct and explanation wording.
+8. fixed: the four options as proposed (B9 key now "If the coefficient were 0, a $\lvert t \rvert \ge 2.8$ would have chance 0.9%."). The three key-length warnings are gone.
+9. fixed: `at-least-one` and `bayes-in-a-minute` dropped from the draw tags; pools now 11 and 6 (each at least 2n).
+10. fixed: `final-analysis` name and detail extended (id and position kept).
+11. fixed: ninth check `ols-summary-explained` appended after `final-odes`; description says nine checks.
+12. deferred: waits on the `required` engine flag (already in the inbox); no content change.
+13. fixed: 144 trades, 30p, key 4.9 pence, wrongs 0.408333 and 58.8 (recomputed: $1.96 \times 30 / 12$).
+14. fixed: $x^2 + 3x$ at 1, $\varepsilon = 0.09$, key 0.015, wrong 0.018 (recomputed).
+15. fixed: at least two of 40: key 0.600936 (SciPy `binom.sf(1, 40, 0.05)`), wrongs 0.871488 and 2; the exactly-one figure is written 0.2706 (0.270552), not the review's 0.2705.
+16. fixed: `HAVING AVG(px) > 3`; sqlite3 in `check_numbers.py` confirms 2 rows, 1350 second row, 3 rows without HAVING.
+17. fixed: $\lim \tfrac{1 - \cos 3x}{x \sin x}$ = 4.5, wrong 9.
+18. fixed: $\oint \tfrac{\cos z}{z^2 - 4z + 3}$, key $-1.697410$, wrongs $-4.807563$ and $-0.270151$; both contour sums recomputed on $\lvert z \rvert = 2$ and $\lvert z \rvert = 4$.
+19. fixed: cosine of the angle between $x$ and $x^2$, key 0.968246.
+20. no change needed, as the review says. `fresh-check.mjs` still lists the compactness item against topology review-3; judged acceptable (the 1.10 exit is that fact, and option b now differs).
+21. fixed: the eight `why` texts as proposed.
+22. fixed: description now "a script that runs and five written proofs" (JSON and `build.py`).
+23. fixed: `same: [["i3", "i4"]]` on the induction item and `same: [["o2", "o3"]]` on the direct proof.
+24. fixed: prose names the claim; both tolerances 0 on the integer key and its wrongs.
+25. fixed: `510{,}511` and `26{,}869` in the explanation (the engine warning is in the inbox).
+26. fixed: key a shortened, option d replaced by $\lfloor \tfrac{n^2}{2} \rfloor$ with the proposed why; the key-length warning on `stage-0.json` is gone.
+27. fixed, with a different second setup: contrapositive uses $n^3 + 5$ as proposed. For the counterexample, "for every prime $p$, $2p + 1$ is prime" had the shape of l14's "$2^p - 1$ is prime for every prime $p$" (`fresh-check` hit), so the claim is now "if $a$ divides $bc$ then $a$ divides $b$ or $c$", refuted by $a = 4$, $b = c = 2$ (first counterexample by search; no "divides $bc$" in any content file). Its second flawed line takes $a = 5$, where the hypothesis fails.
+28. fixed: the two `why` texts as proposed.
+
+Counts: 26 fixed, 0 disputed, 1 deferred (12), 1 no change needed (20).
+
+Gates:
+
+- `node tools/validate.mjs`: 0 errors. No warning on `stage-1.json`. One warning on `stage-0.json`, the old `[O2-no-slip]` on `p-index` (`parts[1].items[1]`), which predates this work; the brief keeps old items unchanged, and no slip explains the wrong value 0.0039, so it is left.
+- Voice scan on copies (sentences over 20 words, explanations over three sentences, outside tables and code): 0 and 0; no exclamation mark or dash.
+- `check_numbers.py`: stage-1 458 of 458, stage-0 108 of 108, both exit 0. Both `fresh.py` run; no new hit beyond common values.
+- `fresh-check.mjs --exam stage-1 --min-run 10`: only LaTeX or table skeletons, shared proof-order phrases, and the compactness item noted at 20. `--exam stage-0`: shared frame phrases and old proof-course shapes in items 6 (3^n > n^3, noted in the report as acceptable).
+- Playthrough with `--local-cdn`: stage-1 green with and without `--mobile` (74 items, 66 of 66); stage-0 green with and without `--mobile` (52 of 52).
+- `readiness-sums.mjs`: OK.

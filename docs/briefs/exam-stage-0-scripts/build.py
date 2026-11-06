@@ -49,8 +49,11 @@ def line(id, text, why=None):
     return d
 
 
-def proof(lines, answer, flawed):
-    return {"kind": "order", "lines": lines, "answer": answer, "distractors": flawed}
+def proof(lines, answer, flawed, same=None):
+    w = {"kind": "order", "lines": lines, "answer": answer, "distractors": flawed}
+    if same:
+        w["same"] = same
+    return w
 
 
 def item(id, d, skills, tags, pace, prose, question, widget, feedback, explain):
@@ -81,7 +84,7 @@ L1 = [line("o1", "Let $n$ be odd, so $n = 2k + 1$ for some integer $k$."),
            "4 dividing it gives a factor of 4 only. The even product $k(k + 1)$ supplies the other 2.")]
 P.append(item("p-direct-proof", 3, ["pv-direct"], ["direct-proof"], 240,
     "Claim: if $n$ is an odd integer, then $n^2 - 1$ is divisible by 8.", ORDER_Q,
-    proof(L1, ["o1", "o2", "o3", "o4"], ["x1", "x2"]),
+    proof(L1, ["o1", "o2", "o3", "o4"], ["x1", "x2"], same=[["o2", "o3"]]),
     flawed_fb("From the meaning of odd to a multiple of 8.", "Start from what odd means, then work towards a multiple of 8.", L1,
               "A line that belongs is missing. The proof needs the form of $n$, the factoring, the even product and the conclusion."),
     "A direct proof starts from the hypothesis, $n = 2k + 1$. Factoring gives $4k(k + 1)$, and $k(k + 1)$ is even. "
@@ -91,26 +94,26 @@ k2 = 6
 n2 = 2 * k2 + 1
 m2 = (n2 ** 2 - 1) // 8
 P.append(item("p-direct-step", 2, ["pv-direct"], ["direct-proof"], 60,
-    "In the proof above, $n = 2k + 1$ and $n^2 - 1 = 8m$.", "What is $m$ when $n = 13$?",
-    num(m2, 0.001, [("gave-whole", n2 ** 2 - 1, 0.001), ("forgot-square", (n2 - 1) / 8, 0.001)]),
+    "In the proof that $8 \\mid n^2 - 1$ for odd $n$, we wrote $n = 2k + 1$ and $n^2 - 1 = 8m$.", "What is $m$ when $n = 13$?",
+    num(m2, 0, [("gave-whole", n2 ** 2 - 1, 0), ("forgot-square", (n2 - 1) / 8, 0)]),
     fb("$m = \\tfrac{k(k + 1)}{2}$.", "Find $k$ first, then $4k(k + 1)$, then divide by 8.",
        {"gave-whole": "You gave $n^2 - 1$ itself. Divide it by 8.", "forgot-square": "You used $n - 1$. Square $n$ first."}),
     f"Here $k = {k2}$, so $n^2 - 1 = 4 \\cdot {k2} \\cdot {k2 + 1} = {n2 ** 2 - 1} = 8 \\times {m2}$. So $m = {m2}$."))
 
 # ---------------------------------------------------------------- contrapositive
-L3 = [line("c1", "We prove the contrapositive: if $n$ is even, then $5n + 7$ is odd."),
-      line("c2", "Suppose $n$ is even, so $n = 2k$ for some integer $k$."),
-      line("c3", "Then $5n + 7 = 10k + 7 = 2(5k + 3) + 1$."),
-      line("c4", "So $5n + 7$ is odd. The contrapositive holds, so the claim does too."),
-      line("x1", "We prove the converse: if $n$ is odd, then $5n + 7$ is even.", "The converse is a different statement. Proving it says nothing about the claim."),
-      line("x2", "We prove the inverse: if $5n + 7$ is odd, then $n$ is even.", "The inverse is equivalent to the converse, not to the claim.")]
+L3 = [line("c1", "We prove the contrapositive: if $n$ is odd, then $n^3 + 5$ is even."),
+      line("c2", "Suppose $n$ is odd, so $n = 2k + 1$ for some integer $k$."),
+      line("c3", "Then $n^3 + 5 = 8k^3 + 12k^2 + 6k + 6 = 2(4k^3 + 6k^2 + 3k + 3)$."),
+      line("c4", "So $n^3 + 5$ is even. The contrapositive holds, so the claim does too."),
+      line("x1", "We prove the converse: if $n$ is even, then $n^3 + 5$ is odd.", "The converse is a different statement. Proving it says nothing about the claim."),
+      line("x2", "We prove the inverse: if $n^3 + 5$ is even, then $n$ is odd.", "The inverse is equivalent to the converse, not to the claim.")]
 P.append(item("p-contrapositive-proof", 3, ["pv-indirect"], ["contrapositive"], 180,
-    "Claim: for an integer $n$, if $5n + 7$ is even, then $n$ is odd.", ORDER_Q,
+    "Claim: for an integer $n$, if $n^3 + 5$ is odd, then $n$ is even.", ORDER_Q,
     proof(L3, ["c1", "c2", "c3", "c4"], ["x1", "x2"]),
     flawed_fb("Not the conclusion, then not the hypothesis.", "Negate both parts and swap them, then prove that statement directly.", L3,
               "A line that belongs is missing. State the contrapositive, assume its hypothesis, compute, conclude."),
     "The contrapositive of 'if P then Q' is 'if not Q then not P'. It is equivalent to the claim. "
-    "Here 'not Q' is '$n$ is even', which gives a formula to work with."))
+    "Here 'not Q' is '$n$ is odd', which gives a formula to work with."))
 
 P.append(item("p-contrapositive-form", 3, ["pv-indirect"], ["contrapositive"], 90,
     "For positive reals $a$ and $b$: if $ab > 9$, then $a > 3$ or $b > 3$.", "Which statement is its contrapositive?",
@@ -140,14 +143,16 @@ P.append(item("p-contradiction-proof", 4, ["pv-indirect"], ["contradiction"], 24
 primes6 = [p for p in range(2, 18) if is_prime(p)]
 N6 = math.prod(primes6) + 1
 f6 = next(p for p in range(2, N6) if N6 % p == 0)
+M6 = f"{N6:,}".replace(',', '{,}')  # commas inside maths need braces
+Q6 = f"{N6 // 19:,}".replace(',', '{,}')
 P.append(item("p-euclid-number", 3, ["pv-indirect"], ["contradiction"], 150,
     "Euclid's proof that the primes never run out assumes a finite list, multiplies its primes and adds 1.",
     "Take the primes 2, 3, 5, 7, 11, 13 and 17. What is the smallest prime factor of that number?",
     num(f6, 0, [("assumed-prime", N6, 0)]),
     fb("The number is not prime, but its factors are new primes.", "Find the number, then try primes from 19 upwards.",
        {"assumed-prime": f"You took {N6:,} itself as prime. It need not be; any prime factor of it is missing from the list."}),
-    f"The number is $2 \\times 3 \\times \\dots \\times 17 + 1 = {N6:,}$. None of the listed primes divides it, since each leaves remainder 1. "
-    f"Trying 19 first gives ${N6:,} = 19 \\times {N6 // 19:,}$."))
+    f"The number is $2 \\times 3 \\times \\dots \\times 17 + 1 = {M6}$. None of the listed primes divides it, since each leaves remainder 1. "
+    f"Trying 19 first gives ${M6} = 19 \\times {Q6}$."))
 
 # ---------------------------------------------------------------- induction
 L7 = [line("i1", "Base case: at $n = 4$, $3^4 = 81 > 64 = 4^3$."),
@@ -159,7 +164,7 @@ L7 = [line("i1", "Base case: at $n = 4$, $3^4 = 81 > 64 = 4^3$."),
       line("x2", "Suppose $3^n > n^3$ for every $n$; then it holds at $k + 1$.", "That assumes what we are proving. The step assumes it for one $k$ only.")]
 P.append(item("p-induction-proof", 5, ["pv-induction"], ["induction"], 360,
     "Claim: $3^n > n^3$ for every integer $n \\ge 4$.", ORDER_Q,
-    proof(L7, ["i1", "i2", "i3", "i4", "i5"], ["x1", "x2"]),
+    proof(L7, ["i1", "i2", "i3", "i4", "i5"], ["x1", "x2"], same=[["i3", "i4"]]),
     flawed_fb("A base case at 4, then a step from $k$ to $k + 1$.", "Check the base case first, then assume the claim for one $k$ and reach $k + 1$.", L7,
               "A line that belongs is missing. The proof needs the base, the hypothesis, two inequalities and the conclusion."),
     "The base case starts the chain at 4, and the step carries it from $k$ to $k + 1$. "
@@ -175,20 +180,24 @@ P.append(item("p-induction-base", 3, ["pv-induction"], ["induction"], 90,
     "$3^3 = 27 = 3^3$ fails the strict inequality, and $3^4 = 81 > 64$. The step works from 4 on, so $N = 4$."))
 
 # ---------------------------------------------------------------- counterexample
-n9 = next(n for n in range(1, 100) if not is_prime(n * n + n + 17))
-v9 = n9 * n9 + n9 + 17
-L9 = [line("e1", "The claim is about every positive integer $n$, so one failure refutes it."),
-      line("e2", f"Take $n = {n9}$."),
-      line("e3", f"Then $n^2 + n + 17 = {n9 * n9} + {n9} + 17 = {v9}$."),
-      line("e4", f"${v9} = 17 \\times 17$, so it is not prime. The claim is false."),
-      line("x1", f"For $n = 1$ to ${n9 - 1}$ the value is prime, so the claim is true.", "Fifteen cases do not cover every $n$. One failure is enough to refute it."),
-      line("x2", "Take $n = 0$, which gives 17.", "0 is not a positive integer, and 17 is prime anyway.")]
+a9, b9, c9 = next((a, b, c) for a in range(2, 50) for b in range(1, a) for c in range(b, a) if (b * c) % a == 0 and b % a and c % a)
+holds9 = [a for a in range(2, a9) if all(not ((b * c) % a == 0 and b % a and c % a) for b in range(1, a) for c in range(b, a))]
+miss9 = next(a for a in range(a9 + 1, 50) if (2 * 3) % a)       # a case whose hypothesis fails: a does not divide 2 * 3
+L9 = [line("e1", "The claim is about all positive integers $a$, $b$ and $c$, so one failure refutes it."),
+      line("e2", f"Take $a = {a9}$, $b = {b9}$ and $c = {c9}$."),
+      line("e3", f"Then $bc = {b9 * c9}$, and $a = {a9}$ divides it."),
+      line("e4", f"But {a9} divides neither {b9} nor {c9}, so the claim is false."),
+      line("x1", f"For $a = {holds9[0]}$ and ${holds9[1]}$ the claim holds, so it is true.",
+           "Two cases do not cover every $a$. One failure is enough to refute it."),
+      line("x2", f"Take $a = {miss9}$, $b = 2$ and $c = 3$.",
+           f"You did not check the hypothesis. {miss9} does not divide $bc = 6$, so this case tests nothing.")]
 P.append(item("p-counterexample-proof", 3, ["pv-logic", "pv-direct"], ["counterexample"], 180,
-    "Claim: for every positive integer $n$, $n^2 + n + 17$ is prime.", "Put the disproof in order. Leave out the two flawed lines.",
+    "Claim: for positive integers $a$, $b$ and $c$, if $a$ divides $bc$, then $a$ divides $b$ or $a$ divides $c$.",
+    "Put the disproof in order. Leave out the two flawed lines.",
     proof(L9, ["e1", "e2", "e3", "e4"], ["x1", "x2"]),
-    flawed_fb("One value of $n$ where it fails.", "A claim about every $n$ falls to one counterexample. Find it and check it.", L9,
-              "A line that belongs is missing. State what refutes the claim, pick $n$, compute, and show the value is not prime."),
-    f"A 'for every' claim falls to one counterexample. At $n = {n9}$, $n^2 + n + 17 = {n9} \\cdot {n9 + 1} + 17 = 17^2$."))
+    flawed_fb("One case where the hypothesis holds and the conclusion fails.", "A claim about all cases falls to one counterexample. Find it and check both halves.", L9,
+              "A line that belongs is missing. State what refutes the claim, pick the numbers, check the hypothesis, and show the conclusion fails."),
+    f"A 'for all' claim falls to one counterexample. At $a = {a9}$, $b = {b9}$ and $c = {c9}$, {a9} divides $bc = {b9 * c9}$ but neither {b9} nor {c9}."))
 
 n10 = next(n for n in range(1, 200) if not is_prime(2 * n * n + 29))
 v10 = 2 * n10 * n10 + 29
@@ -202,7 +211,7 @@ P.append(item("p-first-failure", 4, ["pv-logic"], ["counterexample"], 180,
 # ---------------------------------------------------------------- the earlier levels
 P.append(item("p-negate-quantifiers", 3, ["pv-logic"], ["negation"], 120,
     "Statement: every desk has a trader who made a profit on every day.", "Which is its negation?",
-    choice([opt("a", "Some desk has, for each of its traders, a day on which that trader made no profit.", correct=True),
+    choice([opt("a", "Some desk has, for each of its traders, a day with no profit.", correct=True),
             opt("b", "Every desk has a trader who made no profit on some day.", "You negated only the last part. 'Every desk' and 'a trader' must flip too."),
             opt("c", "No desk has a trader who made a profit on any day.", "You turned 'every day' into 'any day'. The negation needs only one bad day per trader."),
             opt("d", "Some desk has a trader who made no profit on some day.", "You kept 'a trader'. The negation must cover every trader of that desk.")]),
@@ -213,9 +222,9 @@ P.append(item("p-negate-quantifiers", 3, ["pv-logic"], ["negation"], 120,
 P.append(item("p-onto-function", 2, ["pv-sets"], ["onto-one-to-one"], 90,
     "Each function sends integers to integers.", "Which function is onto but not one-to-one?",
     choice([opt("a", "$f(n) = \\left\\lceil \\tfrac{n}{2} \\right\\rceil$", correct=True),
-            opt("b", "$f(n) = 2n$", "It is one-to-one, but odd numbers are never reached, so it is not onto."),
-            opt("c", "$f(n) = n + 3$", "It is one-to-one and onto: every $m$ comes from $m - 3$ alone."),
-            opt("d", "$f(n) = n^2$", "It misses negative numbers, so it is not onto.")]),
+            opt("b", "$f(n) = 2n$", "You saw no repeats. But odd numbers are never reached, so it is not onto."),
+            opt("c", "$f(n) = n + 3$", "You expected a shift to miss something. Every $m$ comes from $m - 3$ alone, so it is one-to-one and onto."),
+            opt("d", "$f(n) = \\left\\lfloor \\tfrac{n^2}{2} \\right\\rfloor$", "You saw a halving like the key. It never takes a negative value, so it is not onto.")]),
     fb("Every value reached, some reached twice.", "For each function, ask whether every integer is reached, and whether any is reached twice."),
     "$\\left\\lceil \\tfrac{n}{2} \\right\\rceil$ sends both $2m - 1$ and $2m$ to $m$. So every integer is reached, twice, which breaks one-to-one but keeps onto."))
 
@@ -234,7 +243,7 @@ if __name__ == '__main__':
     at = [p.get("id") for p in parts].index("precalc") + 1
     doc["parts"] = parts[:at] + [PAPER] + parts[at:] + CHECKS
     doc["description"] = ("The exit test for From nothing: a GCSE Higher style paper, a precalculus test and a proof paper. "
-                          "Then a mental arithmetic score, a script that runs, five written proofs and your 0.7 plan.")
+                          "Then a mental arithmetic score, a script that runs and five written proofs.")
     with open(OUT, 'w', encoding='utf8') as f:
         json.dump(doc, f, ensure_ascii=False, indent=2)
         f.write('\n')

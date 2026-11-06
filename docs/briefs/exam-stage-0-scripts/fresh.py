@@ -11,16 +11,16 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'
 TOKENS = {
     'p-direct-proof': ['n^2 - 1$ is divisible by 8', '4k(k + 1)'],
     'p-direct-step': ['n = 13', '168'],
-    'p-contrapositive-proof': ['5n + 7', '2(5k + 3) + 1'],
+    'p-contrapositive-proof': ['n^3 + 5', '8k^3 + 12k^2 + 6k + 6'],
     'p-contrapositive-form': ['ab > 9'],
     'p-contradiction-proof': ['\\\\log_2 5$ is irrational', '2^p = 5^q', '2.321928'],
-    'p-euclid-number': ['510,511', '26,869', '2, 3, 5, 7, 11, 13 and 17'],
+    'p-euclid-number': ['510{,}511', '26{,}869', '2, 3, 5, 7, 11, 13 and 17'],
     'p-induction-proof': ['3^n > n^3', '\\\\tfrac54\\\\right)^3'],
     'p-induction-base': ['3^n > n^3'],
-    'p-counterexample-proof': ['n^2 + n + 17', '289'],
+    'p-counterexample-proof': ['divides $bc$', 'divides $b$ or $a$ divides $c$'],
     'p-first-failure': ['2n^2 + 29', '1,711'],
     'p-negate-quantifiers': ['profit on every day'],
-    'p-onto-function': ['\\\\left\\\\lceil \\\\tfrac{n}{2}'],
+    'p-onto-function': ['\\\\left\\\\lceil \\\\tfrac{n}{2}', '\\\\left\\\\lfloor \\\\tfrac{n^2}{2}'],
 }
 files = [f for f in glob.glob(os.path.join(ROOT, '**', '*.json'), recursive=True)
          if os.path.basename(f) not in ('stage-0.json', 'manifest.json')]

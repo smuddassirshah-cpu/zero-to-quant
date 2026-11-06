@@ -103,6 +103,7 @@ def correct_id(iid, want):
 
 # direct proof: n = 2k + 1 gives n^2 - 1 = 4k(k + 1) = 8m
 order_check('p-direct-proof', 4)
+rec(new['p-direct-proof']['widget'].get('same') == [['o2', 'o3']] and new['p-induction-proof']['widget'].get('same') == [['i3', 'i4']], 'order items accept the independent pairs')
 rec(all((2 * k + 1) ** 2 - 1 == 4 * k * (k + 1) and (k * (k + 1)) % 2 == 0 for k in range(-500, 500)), 'p-direct-proof: n^2 - 1 = 4k(k + 1), k(k + 1) even')
 rec(3 ** 2 - 1 == 8, 'p-direct-proof: the example line 3^2 - 1 = 8')
 key('p-direct-step', (13 * 13 - 1) / 8)
@@ -110,10 +111,13 @@ wrong('p-direct-step', 'gave-whole', 13 * 13 - 1)
 wrong('p-direct-step', 'forgot-square', (13 - 1) / 8)
 allow('p-direct-step', 13, 168, 21)
 
-# contrapositive: n = 2k gives 5n + 7 = 2(5k + 3) + 1; the claim checked over a range
+# contrapositive: n = 2k + 1 gives n^3 + 5 = 2(4k^3 + 6k^2 + 3k + 3); the claim checked over a range
 order_check('p-contrapositive-proof', 4)
-rec(all(5 * (2 * k) + 7 == 2 * (5 * k + 3) + 1 for k in range(-500, 500)), 'p-contrapositive-proof: 10k + 7 = 2(5k + 3) + 1')
-rec(all(n % 2 == 1 for n in range(-1000, 1000) if (5 * n + 7) % 2 == 0), 'p-contrapositive-proof: 5n + 7 even only for odd n')
+rec(all((2 * k + 1) ** 3 + 5 == 8 * k ** 3 + 12 * k ** 2 + 6 * k + 6 == 2 * (4 * k ** 3 + 6 * k ** 2 + 3 * k + 3) for k in range(-500, 500)),
+    'p-contrapositive-proof: (2k + 1)^3 + 5 = 8k^3 + 12k^2 + 6k + 6 = 2(4k^3 + 6k^2 + 3k + 3)')
+rec(all(n % 2 == 0 for n in range(-1000, 1000) if (n ** 3 + 5) % 2 == 1), 'p-contrapositive-proof: n^3 + 5 odd only for even n')
+rec(all((n ** 3 + 5) % 2 == 1 for n in range(-1000, 1000, 2)), 'p-contrapositive-proof: the converse is true too, so it is a different statement')
+allow('p-contrapositive-proof', 12)
 correct_id('p-contrapositive-form', 'a')
 grid = [i / 4 for i in range(1, 80)]
 rec(all(a * b <= 9 for a in grid for b in grid if a <= 3 and b <= 3), 'p-contrapositive-form: a, b <= 3 gives ab <= 9 on a grid')
@@ -137,6 +141,7 @@ key('p-euclid-number', f)
 wrong('p-euclid-number', 'assumed-prime', N)
 rec(all(N % p == 1 for p in (2, 3, 5, 7, 11, 13, 17)), 'p-euclid-number: each listed prime leaves remainder 1')
 allow('p-euclid-number', N, N // f, 17, 19, 11, 13)
+rec(not re.search(r'\\$[^$]*\\d,\\d{3}[^$]*\\$', json.dumps(new['p-euclid-number']['explain']['text'])), 'p-euclid-number: no bare comma inside maths in the explanation')
 
 # induction: 3^n > n^3 from n = 4; (5/4)^3 < 2; base values
 order_check('p-induction-proof', 5)
@@ -151,9 +156,12 @@ allow('p-induction-base', 27, 81, 64)
 
 # counterexamples by sieve
 order_check('p-counterexample-proof', 4)
-n9 = next(n for n in range(1, 1000) if not SIEVE[n * n + n + 17])
-rec(n9 == 16 and 16 * 16 + 16 + 17 == 17 * 17, f'p-counterexample-proof: first failure n = {n9}, value 17^2')
-allow('p-counterexample-proof', n9, n9 * n9, n9 * n9 + n9 + 17, 17, 15)
+cx = [(a, b, c) for a in range(2, 30) for b in range(1, a) for c in range(b, a) if (b * c) % a == 0 and b % a and c % a]
+rec(cx[0] == (4, 2, 2), f'p-counterexample-proof: first counterexample (a, b, c) = {cx[0]}')
+rec(all(not ((b * c) % a == 0 and b % a and c % a) for a in (2, 3) for b in range(1, a) for c in range(b, a)),
+    'p-counterexample-proof: the claim holds for a = 2 and 3')
+rec((2 * 3) % 5 != 0, 'p-counterexample-proof: a = 5 does not divide 2 * 3, so the second flawed line tests nothing')
+allow('p-counterexample-proof', 4, 2, 5, 6)
 n10 = next(n for n in range(1, 1000) if not SIEVE[2 * n * n + 29])
 key('p-first-failure', n10)
 wrong('p-first-failure', 'gave-value', 2 * n10 * n10 + 29)

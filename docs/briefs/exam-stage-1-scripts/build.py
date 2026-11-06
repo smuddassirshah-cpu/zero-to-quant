@@ -120,7 +120,7 @@ A, B, C, D = [], [], [], []
 # ======================================================================== Paper A: calculus and linear algebra
 # A1 chain rule
 a1 = 4 * (1 ** 3 + 2 * 1) ** 3 * (3 * 1 ** 2 + 2)
-A.append(item("a-chain-power", 2, ["lm-chain"], ["chain-rule"], 90, "A power of a quadratic",
+A.append(item("a-chain-power", 2, ["lm-chain"], ["chain-rule"], 90, "A power of a cubic",
     "Let $f(x) = (x^3 + 2x)^4$.", "What is $f'(1)$?",
     num(a1, 0, [("no-inner", 4 * 3 ** 3, 0)]),
     fb("The outer power times the inner derivative.", "Differentiate the outer power, then multiply by the derivative of $x^3 + 2x$.",
@@ -169,7 +169,7 @@ A.append(item("a-taylor-product", 3, ["ty-taylor"], ["series-product"], 150, "A 
          [("only-exp", "1+x+\\frac{x^2}{2}+\\frac{x^3}{6}"), ("dropped-cross", "1+x+\\frac{x^3}{6}")]),
     fb("The $x^2$ terms cancel.", "Multiply $1 + x + \\tfrac{x^2}{2} + \\tfrac{x^3}{6}$ by $1 - \\tfrac{x^2}{2}$ and keep powers up to 3.",
        {"only-exp": "You kept the series of $e^x$ alone. The $-\\tfrac{x^2}{2}$ of $\\cos x$ multiplies every term.",
-        "dropped-cross": "You dropped $1 \\cdot (-\\tfrac{x^2}{2})$ and $x \\cdot (-\\tfrac{x^2}{2})$. Multiply each pair of terms."}),
+        "dropped-cross": "You cancelled the $x^2$ terms but dropped $x \\cdot (-\\tfrac{x^2}{2})$. It adds $-\\tfrac{x^3}{2}$ to the cube term."}),
     "The $x^2$ terms are $\\tfrac{x^2}{2} - \\tfrac{x^2}{2} = 0$. "
     "The $x^3$ terms are $\\tfrac{x^3}{6} - \\tfrac{x^3}{2} = -\\tfrac{x^3}{3}$."))
 
@@ -208,11 +208,11 @@ A.append(item("a-triangle-integral", 4, ["mv-integrals"], ["double-integral"], 1
 
 # A9 a limit
 A.append(item("a-cos-limit", 3, ["lm-limits"], ["small-angle"], 90, "A cosine near zero",
-    None, "What is $\\lim_{x \\to 0} \\dfrac{1 - \\cos 4x}{x^2}$?",
-    num(8, 0.001, [("no-half", 16, 0.001)]),
-    fb("Near 0, $1 - \\cos u$ behaves like $\\tfrac{u^2}{2}$.", "Use $1 - \\cos u \\approx \\tfrac{u^2}{2}$ with $u = 4x$, or L'Hôpital's rule twice.",
+    None, "What is $\\lim_{x \\to 0} \\dfrac{1 - \\cos 3x}{x \\sin x}$?",
+    num(4.5, 0.001, [("no-half", 9, 0.001)]),
+    fb("Near 0, $1 - \\cos u \\approx \\tfrac{u^2}{2}$ and $\\sin x \\approx x$.", "Use $1 - \\cos u \\approx \\tfrac{u^2}{2}$ with $u = 3x$, and $\\sin x \\approx x$.",
        {"no-half": "You took $1 - \\cos u$ as $u^2$. It is $\\tfrac{u^2}{2}$ to leading order."}),
-    "With $u = 4x$, $1 - \\cos 4x \\approx \\tfrac{16x^2}{2} = 8x^2$. Dividing by $x^2$ gives the limit 8."))
+    "With $u = 3x$, $1 - \\cos 3x \\approx \\tfrac{9x^2}{2}$. The bottom, $x \\sin x$, is about $x^2$. So the limit is $\\tfrac92 = 4.5$."))
 
 # A10 determinant
 M10 = [[2, 1, 0], [1, 3, 1], [0, 1, 4]]
@@ -327,7 +327,7 @@ A.append({"id": "a-ls-pca-code", "difficulty": 5, "skills": ["ls-fit", "eg-pca"]
          "widget": {"kind": "code", "language": "python",
                     "starter": "import numpy as np\n\n\ndef ls_fit(X, y):\n    # X: n by p array, y: length-n array\n    ...\n",
                     "solution": ls_sol,
-                    "examples": [{"setup": ls_tests[0]["setup"], "call": "ls_fit(X, y)", "expect": ls_tests[0]["expect"]}],
+                    "examples": [{"setup": ls_tests[0]["setup"], "call": "ls_fit(X, y)", "expect": "[1.14, 0.92]", "compare": "isclose"}],
                     "tests": ls_tests,
                     "how": "Check runs 4 hidden tests. Arrays are compared entry by entry with `math.isclose` at a relative tolerance of 1e-9. Test 4 reads your source for `lstsq` and `polyfit`."},
          "feedback": code_fb("The normal equations give the coefficients in one solve.",
@@ -337,11 +337,12 @@ A.append({"id": "a-ls-pca-code", "difficulty": 5, "skills": ["ls-fit", "eg-pca"]
          "widget": {"kind": "code", "language": "python", "cumulative": False,
                     "starter": "import numpy as np\n\n\ndef first_pc(R):\n    # R: days by assets array of returns\n    ...\n",
                     "solution": pc_sol,
-                    "examples": [{"setup": pc_tests[0]["setup"], "call": "first_pc(R)", "expect": pc_tests[0]["expect"]}],
+                    "examples": [{"setup": pc_tests[0]["setup"], "call": "first_pc(R)", "expect": pc_tests[0]["expect"], "compare": "isclose"}],
                     "tests": pc_tests,
                     "how": "Check runs 4 hidden tests. Vectors are compared entry by entry at a relative tolerance of 1e-9. Test 4 adds 5 to every return."},
          "feedback": code_fb("Centre, form the covariance, take the top eigenvector.",
-                             {"test-3": "Test 3 has a column of zeros. The loading is $(1, 0)$, with the sign rule applied.",
+                             {"test-2": "Test 2's returns do not average 0. Centre each column before you form the covariance.",
+                              "test-3": "Test 3 has a column of zeros. The loading is $(1, 0)$, with the sign rule applied.",
                               "test-4": "Test 4 shifts every return by 5. Centre each column before you form the covariance."})}],
     "explain": {"text": "Least squares solves $\\mathbf{X}^T\\mathbf{X}\\boldsymbol\\beta = \\mathbf{X}^T\\mathbf{y}$, so `np.linalg.solve(X.T @ X, X.T @ y)` is the fit. "
                         "The first principal component is the top eigenvector of the sample covariance of the centred columns. "
@@ -379,14 +380,14 @@ mu3 = 2 * p3w - 1
 var3 = 1 - mu3 ** 2
 sd3 = math.sqrt(n3 * var3)
 b3 = Phi(-n3 * mu3 / sd3)
-B.append(item("b-many-bets", 4, ["dl-clt"], ["clt-sum"], 180, "Four hundred small bets",
+B.append(item("b-many-bets", 4, ["dl-clt"], ["clt-sum"], 180, "Three hundred and fifty small bets",
     "A trader makes 350 independent bets. Each wins £1 with probability 0.53 and loses £1 otherwise.",
     "With the normal approximation and no continuity correction, what is the probability of an overall loss? Give 4 decimal places.",
     num(r(b3, 4), 0.001, [("no-root", r(Phi(-n3 * mu3 / (n3 * var3)), 4), 0.001)]),
     fb(f"Mean {n3 * mu3:.0f}, standard deviation about {sd3:.2f}.", "Find the mean and variance of one bet, scale both by 350, then standardise 0.",
        {"no-root": f"You divided by the variance, {n3 * var3:.2f}. Divide by its square root."}),
     f"One bet has mean $0.06$ and variance $1 - 0.0036 = 0.9964$. The total has mean {n3 * mu3:.0f} and standard deviation $\\sqrt{{{n3 * var3:.2f}}} \\approx {sd3:.2f}$. "
-    f"So $P(\\text{{total}} < 0) \\approx \\Phi(-{n3 * mu3 / sd3:.2f}) \\approx {b3:.4f}$."))
+    f"So $P(\\text{{total}} < 0) \\approx \\Phi(-{n3 * mu3 / sd3:.4f}) \\approx {b3:.4f}$."))
 
 # B4 variance of a combination
 vx, vy, cxy = 4, 1, 0.5
@@ -423,16 +424,16 @@ B.append(item("b-mle-rate", 3, ["es-mle"], ["mle-exponential"], 120, "A rate fro
     f"The log-likelihood $5 \\ln \\lambda - 6.5\\lambda$ peaks at $\\lambda = \\tfrac{{5}}{{6.5}}$. That is $\\tfrac{{1}}{{1.3}} \\approx {b6:.4f}$."))
 
 # B7 interval half-width
-n7, s7 = 64, 12
+n7, s7 = 144, 30
 b7 = 1.96 * s7 / math.sqrt(n7)
 B.append(item("b-interval-width", 3, ["es-intervals"], ["interval-width"], 90, "How wide is the interval",
-    "64 daily P&L figures have sample standard deviation £12.",
-    "What is the half-width of a 95% confidence interval for the mean, in pounds? Use 1.96.",
-    num(r(b7, 4), 0.005, [("no-root", r(1.96 * s7 / n7, 4), 0.005), ("no-se", r(1.96 * s7, 4), 0.005)], unit="£"),
+    "A market maker's profit on each of 144 trades has sample standard deviation 30p.",
+    "What is the half-width of a 95% confidence interval for the mean profit per trade, in pence? Use 1.96.",
+    num(r(b7, 4), 0.005, [("no-root", r(1.96 * s7 / n7, 4), 0.005), ("no-se", r(1.96 * s7, 4), 0.005)], unit="pence"),
     fb("1.96 standard errors.", "The standard error is $\\tfrac{s}{\\sqrt{n}}$.",
-       {"no-root": "You divided by 64. The standard error divides by $\\sqrt{64} = 8$.",
-        "no-se": "You used the standard deviation of one day. The mean has the standard error."}),
-    f"The standard error is $\\tfrac{{12}}{{8}} = 1.5$. The half-width is $1.96 \\times 1.5 = {b7:.2f}$ pounds."))
+       {"no-root": "You divided by 144. The standard error divides by $\\sqrt{144} = 12$.",
+        "no-se": "You used the standard deviation of one trade. The mean has the standard error."}),
+    f"The standard error is $\\tfrac{{30}}{{12}} = 2.5$p. The half-width is $1.96 \\times 2.5 = {b7:.1f}$p."))
 
 # B8 p-value
 n8, m8, s8 = 484, 0.07, 1.1
@@ -448,15 +449,17 @@ B.append(item("b-pvalue-mean", 3, ["ht-pvalue"], ["z-test"], 150, "Is the mean r
     f"The p-value is $2(1 - \\Phi({z8:.2f})) \\approx {b8:.3f}$."))
 
 # B9 multiple testing
-b9 = 1 - 0.95 ** 40
+p0_9, p1_9 = 0.95 ** 40, 40 * 0.05 * 0.95 ** 39
+b9 = 1 - p0_9 - p1_9
 B.append(item("b-forty-tests", 4, ["ht-multiple"], ["family-wise"], 120, "Forty strategies with no edge",
     "You backtest 40 independent strategies, none with any edge. Each is tested at the 5% level.",
-    "What is the probability that at least one looks significant? Give 4 decimal places.",
-    num(r(b9, 4), 0.0005, [("one-test", 0.05, 0.0005), ("bonferroni", 0.00125, 0.0002)]),
-    fb("One minus the chance that all 40 pass quietly.", "Find $P(\\text{no false positive}) = 0.95^{40}$ first.",
-       {"one-test": "You gave the rate for one test. Forty tests give forty chances.",
-        "bonferroni": "You gave the Bonferroni threshold $\\tfrac{0.05}{40}$. The question asks how likely a false find is."}),
-    f"All 40 stay quiet with probability $0.95^{{40}} \\approx {0.95 ** 40:.4f}$. So at least one fires with probability about {b9:.4f}."))
+    "What is the probability that at least two look significant? Give 4 decimal places.",
+    num(r(b9, 4), 0.0005, [("at-least-one", r(1 - p0_9, 4), 0.0005), ("expected", 2, 0.0005)]),
+    fb("One minus the chances of none and of exactly one.", "Find $P(0) = 0.95^{40}$ and $P(1) = 40 \\times 0.05 \\times 0.95^{39}$ first.",
+       {"at-least-one": "You found the chance of at least one. Subtract the chance of exactly one too.",
+        "expected": "You gave the expected number of false finds, $40 \\times 0.05$. The question asks for a probability."}),
+    f"None fires with probability $0.95^{{40}} \\approx {p0_9:.4f}$. Exactly one fires with probability $2 \\times 0.95^{{39}} \\approx {p1_9:.4f}$. "
+    f"So at least two fire with probability about {b9:.4f}."))
 
 # B10 OLS by hand, then read its table
 X10a = [[1, 1.0], [1, 2.0], [1, 3.0], [1, 4.0], [1, 6.0]]
@@ -511,7 +514,7 @@ B.append({"id": "b-ols-table", "difficulty": 4, "skills": ["rg-fit", "rg-inferen
          "widget": {"kind": "code", "language": "python",
                     "starter": "import numpy as np\n\n\ndef ols(X, y):\n    # return beta, se, r2\n    ...\n",
                     "solution": ols_sol,
-                    "examples": [{"setup": ols_tests[0]["setup"], "call": "ols(X, y)[0]", "expect": ols_tests[0]["expect"]}],
+                    "examples": [{"setup": ols_tests[0]["setup"], "call": "ols(X, y)[0]", "expect": ols_tests[0]["expect"], "compare": "isclose"}],
                     "tests": ols_tests,
                     "how": "Check runs 6 hidden tests: the coefficients, standard errors and $R^2$ of two fits. Each is compared at a relative tolerance of 1e-9."},
          "feedback": code_fb("Coefficients, standard errors and $R^2$ all match.",
@@ -524,7 +527,7 @@ B.append({"id": "b-ols-table", "difficulty": 4, "skills": ["rg-fit", "rg-inferen
                         {"inverse": "You divided the standard error by the coefficient. Turn the fraction over."})},
         {"question": f"The same row reports P>|t| as {p10:.3f}. What does that number say?",
          "widget": choice([
-             opt("a", f"If the true coefficient were zero, a t as far from zero as {t10:.1f} would occur {p10 * 100:.1f}% of the time.", correct=True),
+             opt("a", f"If the coefficient were 0, a $\\lvert t \\rvert \\ge {t10:.1f}$ would have chance {p10 * 100:.1f}%.", correct=True),
              opt("b", f"The probability that the true coefficient is zero is {p10 * 100:.1f}%.", "You read the p-value as a probability about the coefficient. It is a probability about the data, given zero."),
              opt("c", f"The coefficient is right with probability {100 - p10 * 100:.1f}%.", "You took one minus the p-value as a confidence in the estimate. No such reading exists."),
              opt("d", f"The regressor explains {p10 * 100:.1f}% of the variance of $y$.", "You mixed the p-value up with $R^2$, which is another line of the table.")]),
@@ -582,10 +585,10 @@ B.append(parts("b-book-orders", 3, ["ms-book", "ms-orders"], ["order-book"], 240
          {"top-only": "Only 200 shares rest at £100.02. The other 300 fill at £100.03.",
           "level-two": "The first 200 shares fill at £100.02, before the order reaches £100.03."})),
      ("Instead, a limit order to buy 100 shares at £100.00 arrives. What happens to it?",
-      choice([opt("a", "It rests in the book as the new best bid, and the spread narrows to £0.02.", correct=True),
+      choice([opt("a", "It rests as the new best bid, so the spread is £0.02.", correct=True),
               opt("b", "It fills at once at £100.02.", "You treated it as a market order. A buy limit at £100.00 cannot pay £100.02."),
               opt("c", "It fills at once at £99.98.", "You matched it with the best bid. A buy order trades only against asks."),
-              opt("d", "It is rejected, because nobody sells at £100.00.", "A limit order that does not cross waits in the book. It is not rejected.")]),
+              opt("d", "It is rejected, because nobody sells at £100.00.", "You thought an order needs a seller at its price. A limit order that does not cross waits in the book.")]),
       fb("A limit buy below the best ask waits.", "Compare the limit price with the best ask."))],
     f"The spread is $100.02 - 99.98 = 0.04$ pounds. The market order pays $\\tfrac{{200 \\times 100.02 + 300 \\times 100.03}}{{500}} = {avg13:.3f}$ pounds. "
     "The limit order does not reach the ask, so it rests at £100.00 above the old best bid."))
@@ -633,11 +636,12 @@ B.append(item("b-crr-python", 4, ["tp-multistep", "tp-riskneutral"], ["crr-price
     {"kind": "code", "language": "python",
      "starter": "import math\n\n\ndef crr_put(S, K, r, div, sigma, T, n):\n    # S spot, K strike, r rate, div dividend yield,\n    # sigma volatility, T years, n steps\n    ...\n",
      "solution": crr_sol,
-     "examples": [{"call": crr_tests[0]["call"], "expect": crr_tests[0]["expect"]}],
+     "examples": [{"call": crr_tests[0]["call"], "expect": crr_tests[0]["expect"], "compare": "isclose"}],
      "tests": crr_tests,
      "how": "Check runs 7 hidden tests. Each price is accepted at a relative tolerance of 1e-9. Test 7 has 400 steps."},
     code_fb("The tree prices match to rounding.",
-            {"test-2": "Test 2 has a dividend yield. It enters $q$ as $e^{(r - \\delta)\\Delta t}$, but the discount stays $e^{-r\\Delta t}$.",
+            {"test-1": "Test 1 is one step at the money, with no rate or dividend. Check $u$, $d$ and $q$, and floor each payoff at 0.",
+             "test-2": "Test 2 has a dividend yield. It enters $q$ as $e^{(r - \\delta)\\Delta t}$, but the discount stays $e^{-r\\Delta t}$.",
              "test-3": "Test 3 has three steps. Discount at every step, not once at the end with the wrong power.",
              "test-6": "Test 6 is far out of the money. A negative payoff must be floored at 0."}),
     "At expiry the put pays $\\max(K - S u^{n-j} d^j, 0)$ at each node. "
@@ -684,8 +688,8 @@ vol_tests = py_tests([(None, "annual_vol(%r)" % v, pyval(avol(v)), "isclose") fo
                      + [("import numpy as np", "annual_vol(np.array(%r))" % V1, pyval(avol(V1)), "isclose")])
 P1 = [100, 120, 90, 130, 104]
 P2 = [50, 51, 53, 58]
-P3 = [80, 72, 76, 62, 66, 79, 85, 63.75]
-P4 = [200, 150]
+P3 = [80, 72, 76, 62, 66, 79, 85, 59.5]
+P4 = [200, 150, 180, 120]
 dd_tests = py_tests([(None, "worst_drawdown(%r)" % p, pyval(mdd(p)), "isclose") for p in (P1, P2, P3, P4)])
 csv_sol = ("import io\nimport pandas as pd\n\n\ndef returns_from_csv(text):\n    df = pd.read_csv(io.StringIO(text)).sort_values('date')\n"
            "    return df['close'].pct_change().dropna().tolist()\n")
@@ -701,7 +705,7 @@ C.append({"id": "c-price-file", "difficulty": 4, "skills": ["pd-time", "np-array
          "widget": {"kind": "code", "language": "python",
                     "starter": "import io\nimport pandas as pd\n\n\ndef returns_from_csv(text):\n    # text: the file's contents, header line first\n    ...\n",
                     "solution": csv_sol,
-                    "examples": [{"setup": csv_tests[0]["setup"], "call": "returns_from_csv(text)", "expect": csv_tests[0]["expect"]}],
+                    "examples": [{"setup": csv_tests[0]["setup"], "call": "returns_from_csv(text)", "expect": csv_tests[0]["expect"], "compare": "isclose"}],
                     "tests": csv_tests,
                     "how": "Check runs 4 hidden tests. Lists are compared entry by entry at a relative tolerance of 1e-9."},
          "feedback": code_fb("Sorted by date, then one return per pair of days.",
@@ -711,7 +715,7 @@ C.append({"id": "c-price-file", "difficulty": 4, "skills": ["pd-time", "np-array
          "widget": {"kind": "code", "language": "python", "cumulative": False,
                     "starter": "import numpy as np\n\n\ndef annual_vol(returns):\n    ...\n",
                     "solution": vol_sol,
-                    "examples": [{"call": vol_tests[0]["call"], "expect": vol_tests[0]["expect"]}],
+                    "examples": [{"call": vol_tests[0]["call"], "expect": vol_tests[0]["expect"], "compare": "isclose"}],
                     "tests": vol_tests,
                     "how": "Check runs 4 hidden tests at a relative tolerance of 1e-9. Test 4 passes a NumPy array."},
          "feedback": code_fb("The sample standard deviation times $\\sqrt{252}$.",
@@ -721,12 +725,12 @@ C.append({"id": "c-price-file", "difficulty": 4, "skills": ["pd-time", "np-array
          "widget": {"kind": "code", "language": "python", "cumulative": False,
                     "starter": "def worst_drawdown(prices):\n    ...\n",
                     "solution": dd_sol,
-                    "examples": [{"call": dd_tests[0]["call"], "expect": dd_tests[0]["expect"]}],
+                    "examples": [{"call": dd_tests[0]["call"], "expect": dd_tests[0]["expect"], "compare": "isclose"}],
                     "tests": dd_tests,
                     "how": "Check runs 4 hidden tests at a relative tolerance of 1e-9. A price path that only rises has drawdown 0."},
          "feedback": code_fb("A running peak and the worst fall below it.",
-                             {"test-1": "Test 1 has a later, higher peak with a smaller fall. Keep the worst fall seen so far.",
-                              "test-3": "Test 3's worst fall is from 85 to 63.75. Measure against the running peak, not the first price."})}],
+                             {"test-1": "Test 1 falls 25% from 120, then 20% from 130. Measure each fall from the running peak and keep the worst.",
+                              "test-3": "Test 3's worst fall, 30%, comes after a new peak at 85. Update the peak as you go."})}],
     "explain": {"text": "Sorting by date first makes the returns run oldest to newest, and `pct_change` gives $\\tfrac{p_t}{p_{t-1}} - 1$. "
                         "Annualised volatility is the sample standard deviation times $\\sqrt{252}$. "
                         "The drawdown keeps a running peak and the largest $1 - \\tfrac{p}{\\text{peak}}$."}})
@@ -735,9 +739,9 @@ C.append({"id": "c-price-file", "difficulty": 4, "skills": ["pd-time", "np-array
 C.append(item("c-log-axis", 3, ["pl-honest"], ["axis-choice"], 120, "Two growth paths on one chart",
     "You plot the value of £1 in two strategies over 10 years. One ends at £30, the other at £2.50.",
     "Which y-axis lets a reader compare their percentage swings by eye?",
-    choice([opt("a", "A log scale, on which equal percentage moves have equal heights.", correct=True),
-            opt("b", "A linear scale starting at 0.", "On a linear scale the £30 line dwarfs the other, so its swings look larger."),
-            opt("c", "Two linear axes, one for each line.", "You gave each line its own scale. A reader can then make any two lines look alike."),
+    choice([opt("a", "A log scale for both lines.", correct=True),
+            opt("b", "A linear scale starting at 0.", "You kept a linear scale. The £30 line then dwarfs the other, so its swings look larger."),
+            opt("c", "Two linear axes, one for each line.", "You gave each line its own scale. Two scales can make any two lines look alike."),
             opt("d", "A linear scale from £1 to £3.", "You cut the axis to fit the small line. The large one runs off the chart.")]),
     fb("A log axis turns ratios into distances.", "Ask which axis makes a 10% fall the same height at £2 and at £20."),
     "On a log scale, $\\ln(0.9p) - \\ln p = \\ln 0.9$ whatever $p$ is. So a 10% fall has one height on both lines."))
@@ -775,26 +779,26 @@ def q5(rows, where=True, having=True):
     for _, desk, qty, px in rows:
         if where and qty < 100:
             continue
-        g.setdefault(desk, []).append(qty * px)
-    out = [(dk, sum(v)) for dk, v in g.items() if not having or len(v) >= 2]
+        g.setdefault(desk, []).append((qty * px, px))
+    out = [(dk, sum(n for n, _ in v)) for dk, v in g.items() if not having or sum(p for _, p in v) / len(v) > 3]
     return sorted(out, key=lambda t: -t[1])
 
 
 res5 = q5(tr5)
 tab5 = "| id | desk | qty | px |\n|---|---|---|---|\n" + "\n".join(f"| {a} | {b} | {c} | {d} |" for a, b, c, d in tr5)
 sql5 = ("```sql\nSELECT desk, SUM(qty * px) AS notional\nFROM trades\nWHERE qty >= 100\nGROUP BY desk\n"
-        "HAVING COUNT(*) >= 2\nORDER BY notional DESC;\n```")
+        "HAVING AVG(px) > 3\nORDER BY notional DESC;\n```")
 C.append(parts("c-sql-having", 3, ["sql-aggregate"], ["group-having"], 180, "A grouped query",
     "The table `trades`:\n\n" + tab5 + "\n\n" + sql5,
     [("How many rows does the query return?", num(len(res5), 0, [("no-having", len(q5(tr5, having=False)), 0)]),
-      fb("WHERE drops rows, HAVING drops groups.", "Filter the rows, group them, then keep groups with two or more rows.",
-         {"no-having": "You kept the credit desk. HAVING drops a group with one row."})),
+      fb("WHERE drops rows, HAVING drops groups.", "Filter the rows, group them, then keep groups whose average price is above 3.",
+         {"no-having": "You kept the credit desk. Its average price, 1.25, fails HAVING."})),
      ("What is the notional on the second row?", num(res5[1][1], 0.001, [("no-where", q5(tr5, where=False)[1][1], 0.001), ("first-row", res5[0][1], 0.001)]),
       fb("The fx desk, from trades 4 and 6.", "Order the surviving groups by notional, largest first.",
          {"no-where": "You kept trade 2, with quantity 50. WHERE removes it before grouping.",
           "first-row": "That is the first row, the rates desk. The second row is fx."}))],
     f"WHERE drops trade 2. Rates keeps trades 1 and 3, with notional {res5[0][1]:g}; fx keeps 4 and 6, with {res5[1][1]:g}. "
-    "Credit has one row, so HAVING drops it."))
+    "Credit's average price is 1.25, so HAVING drops it."))
 
 # C6 Git
 C.append(item("c-git-branch", 3, ["gt-branches"], ["branch-workflow"], 120, "A fix on its own branch",
@@ -804,12 +808,12 @@ C.append(item("c-git-branch", 3, ["gt-branches"], ["branch-workflow"], 120, "A f
            line("g4", "`git commit -m \"Use 252 trading days\"`"), line("g5", "`git push -u origin fix-vol`"),
            line("x1", "`git push origin main`", "You pushed main. The commit is on fix-vol, so main has nothing new."),
            line("x2", "`git reset --hard`", "This throws away your edit before it is committed.")],
-          ["g1", "g2", "g3", "g4", "g5"], ["x1", "x2"]),
-    fb("Branch, edit and test, stage, commit, push the branch.", "Make the branch before the edit, and push the branch you committed on.",
+          ["g1", "g2", "g3", "g4", "g5"], ["x1", "x2"], same=[["g1", "g2"]]),
+    fb("Branch and edit, stage, commit, push the branch.", "Commit on the new branch, then push that branch.",
        {"x1": "You pushed main. The commit is on fix-vol, so main has nothing new.",
         "x2": "`git reset --hard` throws away your edit before it is committed.",
         "left-out": "One step that belongs is missing. Each of branch, edit, add, commit and push is needed."}),
-    "The branch comes first, so the commit lands on it. Staging picks the file, and the commit records it. "
+    "The branch must exist before the commit, so the commit lands on it. Staging picks the file, and the commit records it. "
     "`push -u` sends fix-vol and links it to the remote branch."))
 
 # C7 pytest
@@ -818,9 +822,9 @@ C.append(item("c-pytest-catch", 3, ["pt-basics"], ["test-catches-bug"], 120, "Wh
     "```python\ndef pct_change(old, new):\n    return (new - old) / new\n```",
     "Which test fails on this bug?",
     choice([opt("a", "`assert pct_change(100, 110) == pytest.approx(0.1)`", correct=True),
-            opt("b", "`assert pct_change(100, 100) == 0`", "Both formulas give 0 when the price is flat, so the bug passes."),
-            opt("c", "`assert pct_change(100, 110) > 0`", "Both formulas give a positive change here, so the bug passes."),
-            opt("d", "`assert round(pct_change(100, 110), 1) == 0.1`", "The bug gives 0.0909, which rounds to 0.1. Rounding hides it.")]),
+            opt("b", "`assert pct_change(100, 100) == 0`", "You tested a flat price. Both formulas give 0 there, so the bug passes."),
+            opt("c", "`assert pct_change(100, 110) > 0`", "You tested only the sign. Both formulas give a positive change, so the bug passes."),
+            opt("d", "`assert round(pct_change(100, 110), 1) == 0.1`", "You rounded before comparing. The bug gives 0.0909, which rounds to 0.1.")]),
     fb("A test catches a bug only where the two formulas differ.", "Work out what the buggy function returns for each test."),
     "The bug returns $\\tfrac{10}{110} \\approx 0.0909$ for 100 to 110. Only the exact check against 0.1 tells that from the right answer."))
 
@@ -894,7 +898,7 @@ C.append(item("c-close-pairs", 3, ["ds-pointers"], ["two-pointer-count"], 600, "
     "Each pointer moves at most $n$ times, so the count takes $O(n)$."))
 
 # C11 the CRR pricer in C++
-CRR_CPP = [(100, 100, 0.0, 0.2, 1.0, 1, True), (100, 100, 0.0, 0.2, 1.0, 1, False), (50, 55, 0.04, 0.3, 0.75, 3, True),
+CRR_CPP = [(100, 100, 0.0, 0.2, 1.0, 1, True), (100, 110, 0.0, 0.2, 1.0, 1, False), (50, 55, 0.04, 0.3, 0.75, 3, True),
            (50, 55, 0.04, 0.3, 0.75, 3, False), (210, 200, 0.015, 0.18, 1.5, 120, True), (90, 100, 0.03, 0.4, 2.0, 1000, False)]
 cpp_tests = []
 for a in CRR_CPP:
@@ -939,7 +943,7 @@ C.append(item("c-by-reference", 3, ["cp-references"], ["value-or-reference"], 12
 # C13 binary search steps
 n13 = 4_000_000
 c13 = math.ceil(math.log2(n13 + 1))
-C.append(item("c-halvings", 2, ["at-search"], ["binary-search-steps"], 60, "A million prices",
+C.append(item("c-halvings", 2, ["at-search"], ["binary-search-steps"], 60, "Four million prices",
     "A sorted list holds 4,000,000 prices. Each comparison of a binary search halves the range left.",
     "At most how many comparisons does it need to find a price or rule it out?",
     num(c13, 0, [("log-ten", 6, 0)]),
@@ -964,22 +968,22 @@ D.append(item("d-eps-n", 3, ["an-sequences"], ["epsilon-n"], 150, "How far out i
 D.append(item("d-which-converges", 2, ["an-series"], ["convergence-tests"], 90, "One series that converges",
     None, "Which series converges?",
     choice([opt("a", "$\\sum_{n \\ge 1} \\dfrac{4^n}{n!}$", correct=True),
-            opt("b", "$\\sum_{n \\ge 1} \\dfrac{n + 1}{n^2 + 3}$", "Its terms tend to 0, but they behave like $\\tfrac1n$, whose sum diverges."),
+            opt("b", "$\\sum_{n \\ge 1} \\dfrac{n + 1}{n^2 + 3}$", "You saw terms tending to 0. They behave like $\\tfrac1n$, whose sum diverges."),
             opt("c", "$\\sum_{n \\ge 1} \\dfrac{1}{\\sqrt{n}}$", "You took terms tending to 0 as enough. This is a $p$-series with $p = \\tfrac12 \\le 1$."),
-            opt("d", "$\\sum_{n \\ge 1} \\dfrac{n}{5n - 1}$", "Its terms tend to $\\tfrac15$, not 0, so the sum cannot converge.")]),
+            opt("d", "$\\sum_{n \\ge 1} \\dfrac{n}{5n - 1}$", "You saw terms below 1. They tend to $\\tfrac15$, not 0, so the sum diverges.")]),
     fb("The ratio test settles the factorial.", "Try the ratio test on the factorial, and compare the others with $\\tfrac1n$."),
     "For $\\tfrac{4^n}{n!}$ the ratio of terms is $\\tfrac{4}{n + 1} \\to 0 < 1$. The others diverge by comparison, by $p = \\tfrac12$, or by the term test."))
 
-# D3 epsilon-delta for a square
-eps3, a3, bound3 = 0.07, 3, 7
+# D3 epsilon-delta for a quadratic
+eps3, bound3 = 0.09, 6
 d3 = min(1, eps3 / bound3)
-D.append(item("d-delta-square", 3, ["an-continuity"], ["epsilon-delta"], 150, "A delta for a square",
-    "To show $x^2$ is continuous at 3, write $|x^2 - 9| = |x - 3||x + 3|$. Taking $\\delta \\le 1$ keeps $|x + 3| \\le 7$.",
-    "For $\\varepsilon = 0.07$, what is the largest $\\delta$ this argument allows?",
-    num(r(d3), 0.00005, [("used-six", r(eps3 / 6), 0.00005)]),
-    fb("$\\delta = \\min(1, \\tfrac{\\varepsilon}{7})$.", "Make $7\\delta \\le \\varepsilon$ and keep $\\delta \\le 1$.",
-       {"used-six": "You used $|x + 3| = 6$, its value at 3 itself. Near 3 it can reach 7."}),
-    f"With $|x + 3| \\le 7$, $|x^2 - 9| \\le 7\\delta$. So $\\delta = \\min(1, \\tfrac{{0.07}}{{7}}) = {d3:.2f}$ works."))
+D.append(item("d-delta-square", 3, ["an-continuity"], ["epsilon-delta"], 150, "A delta for a quadratic",
+    "To show $x^2 + 3x$ is continuous at 1, write $|x^2 + 3x - 4| = |x - 1||x + 4|$. Taking $\\delta \\le 1$ keeps $|x + 4| \\le 6$.",
+    "For $\\varepsilon = 0.09$, what is the largest $\\delta$ this argument allows?",
+    num(r(d3), 0.00005, [("used-five", r(eps3 / 5), 0.00005)]),
+    fb("$\\delta = \\min(1, \\tfrac{\\varepsilon}{6})$.", "Make $6\\delta \\le \\varepsilon$ and keep $\\delta \\le 1$.",
+       {"used-five": "You used $|x + 4| = 5$, its value at 1 itself. Near 1 it can reach 6."}),
+    f"With $|x + 4| \\le 6$, $|x^2 + 3x - 4| \\le 6\\delta$. So $\\delta = \\min(1, \\tfrac{{0.09}}{{6}}) = {d3:.3f}$ works."))
 
 # D4 mean value theorem
 d4 = math.sqrt(7)
@@ -1030,13 +1034,13 @@ D.append(item("d-spectral-proof", 5, ["lx-spectral"], ["spectral-proof"], 360, "
     "Induction then handles the complement, and $\\mathbf{q}$ completes the basis."))
 
 # D7 angle in a function space
-d7 = 0.5 / (1 * math.sqrt(1 / 3))
+d7 = 0.25 / math.sqrt(1 / 3 * 1 / 5)
 D.append(item("d-poly-angle", 3, ["lx-inner"], ["function-inner-product"], 150, "An angle between polynomials",
-    "On polynomials, let $\\langle p, q \\rangle = \\int_0^1 p(x)q(x)\\,dx$.", "What is the cosine of the angle between $1$ and $x$? Give 4 decimal places.",
+    "On polynomials, let $\\langle p, q \\rangle = \\int_0^1 p(x)q(x)\\,dx$.", "What is the cosine of the angle between $x$ and $x^2$? Give 4 decimal places.",
     num(r(d7), 0.0005, [("coefficient-dot", 0, 0.0005)]),
-    fb("$\\langle 1, x \\rangle = \\tfrac12$ and $\\|x\\| = \\tfrac{1}{\\sqrt3}$.", "Find $\\langle 1, x \\rangle$, $\\|1\\|$ and $\\|x\\|$ from the integral.",
+    fb("$\\langle x, x^2 \\rangle = \\tfrac14$, $\\|x\\|^2 = \\tfrac13$ and $\\|x^2\\|^2 = \\tfrac15$.", "Find $\\langle x, x^2 \\rangle$, $\\|x\\|$ and $\\|x^2\\|$ from the integral.",
        {"coefficient-dot": "You dotted the coefficient vectors. This inner product integrates the product over $[0, 1]$."}),
-    f"$\\langle 1, x \\rangle = \\tfrac12$, $\\|1\\| = 1$ and $\\|x\\|^2 = \\tfrac13$. So $\\cos\\theta = \\tfrac{{1/2}}{{1/\\sqrt3}} = \\tfrac{{\\sqrt3}}{{2}} \\approx {d7:.4f}$."))
+    f"$\\langle x, x^2 \\rangle = \\int_0^1 x^3\\,dx = \\tfrac14$. The norms are $\\tfrac{{1}}{{\\sqrt3}}$ and $\\tfrac{{1}}{{\\sqrt5}}$. So $\\cos\\theta = \\tfrac{{\\sqrt{{15}}}}{{4}} \\approx {d7:.4f}$."))
 
 # D8 image of differentiation
 D.append(item("d-diff-image", 2, ["lx-maps"], ["kernel-image"], 90, "What differentiation reaches",
@@ -1051,9 +1055,9 @@ D.append(item("d-diff-image", 2, ["lx-maps"], ["kernel-image"], 90, "What differ
 D.append(item("d-compact-set", 3, ["an-metric"], ["compact-sets"], 120, "Which set is compact",
     None, "Which subset of $\\mathbb{R}$ is compact?",
     choice([opt("a", "$\\{0\\} \\cup \\{\\tfrac1n : n \\ge 1\\}$", correct=True),
-            opt("b", "$(0, 1]$", "It is bounded, but not closed: $\\tfrac1n \\to 0$ leaves the set."),
+            opt("b", "$\\{\\tfrac1n : n \\ge 1\\}$", "You saw a bounded set. Its points tend to 0, which it leaves out, so it is not closed."),
             opt("c", "$[0, \\infty)$", "You checked closed only. It is not bounded."),
-            opt("d", "$[0, 1] \\cap \\mathbb{Q}$", "It is bounded, but not closed: rationals converge to $\\tfrac{1}{\\sqrt2}$.")]),
+            opt("d", "$[0, 1] \\cap \\mathbb{Q}$", "You saw a set inside $[0, 1]$. It is not closed: rationals converge to $\\tfrac{1}{\\sqrt2}$.")]),
     fb("In $\\mathbb{R}$, compact means closed and bounded.", "Check each set for both closed and bounded."),
     "By Heine-Borel, a subset of $\\mathbb{R}$ is compact when it is closed and bounded. The set with 0 added contains the limit of $\\tfrac1n$, so it is closed."))
 
@@ -1069,15 +1073,17 @@ D.append(item("d-complex-power", 2, ["cz-polar"], ["de-moivre"], 90, "A sixth po
     "$z^6 = 2^6 e^{4\\pi i} = 64 \\times 1$. The angle $4\\pi$ is two full turns."))
 
 # D11 residue
-d11 = 2 * math.pi * math.cos(1)
+d11 = -math.pi * math.cos(1)
+res_both = 2 * math.pi * (-math.cos(1) / 2 + math.cos(3) / 2)
 D.append(item("d-residue", 3, ["cz-contour"], ["residue"], 150, "One pole inside",
     "Let $C$ be the circle $|z| = 2$, traversed anticlockwise.",
-    "$\\oint_C \\dfrac{\\cos z}{z - 1}\\,dz$ is $i$ times a real number. What is that number? Give 4 decimal places.",
-    num(r(d11), 0.0005, [("no-2pi", r(math.cos(1)), 0.0005), ("pole-at-zero", r(2 * math.pi), 0.0005)]),
-    fb("The residue at $z = 1$ is $\\cos 1$.", "Use Cauchy's integral formula: $\\oint \\tfrac{f(z)}{z - a}\\,dz = 2\\pi i f(a)$.",
-       {"no-2pi": "You gave the residue. The integral is $2\\pi i$ times it.",
-        "pole-at-zero": "You evaluated $\\cos z$ at 0. The pole is at $z = 1$."}),
-    f"The only pole inside $C$ is $z = 1$, with residue $\\cos 1$. So the integral is $2\\pi i \\cos 1$, and $2\\pi \\cos 1 \\approx {d11:.4f}$."))
+    "$\\oint_C \\dfrac{\\cos z}{z^2 - 4z + 3}\\,dz$ is $i$ times a real number. What is that number? Give 4 decimal places.",
+    num(r(d11), 0.0005, [("both-poles", r(res_both), 0.0005), ("no-2pi", r(-math.cos(1) / 2), 0.0005)]),
+    fb("Only $z = 1$ lies inside, with residue $-\\tfrac{\\cos 1}{2}$.", "Factor the bottom as $(z - 1)(z - 3)$, then keep only the pole inside $C$.",
+       {"both-poles": "You added the residue at $z = 3$. That pole lies outside $|z| = 2$.",
+        "no-2pi": "You gave the residue. The integral is $2\\pi i$ times it."}),
+    f"The bottom is $(z - 1)(z - 3)$, and only $z = 1$ lies inside $C$. Its residue is $\\tfrac{{\\cos 1}}{{1 - 3}} = -\\tfrac{{\\cos 1}}{{2}}$. "
+    f"So the integral is $-\\pi \\cos 1$ times $i$, about ${d11:.4f}i$."))
 
 # D12 Green's theorem
 d12 = 1 - 1 / 3
@@ -1131,7 +1137,7 @@ D.append(item("d-rk4-rate", 4, ["de-numeric"], ["runge-kutta"], 900, "A short ra
     "A short rate follows $r' = 1.5(0.04 - r)$ with $r(0) = 0.01$. Its closed form is $r(t) = 0.04 - 0.03e^{-1.5t}$.",
     "Write `rk4(f, t0, y0, t1, n)`: the classical fourth-order Runge-Kutta value at `t1` after `n` equal steps, for $y' = f(t, y)$.",
     {"kind": "code", "language": "python", "starter": "def rk4(f, t0, y0, t1, n):\n    # f(t, y) is the slope; take n equal steps\n    ...\n",
-     "solution": rk_sol, "examples": [{"call": rk_tests[0]["call"], "expect": rk_tests[0]["expect"]}], "tests": rk_tests,
+     "solution": rk_sol, "examples": [{"call": rk_tests[0]["call"], "expect": rk_tests[0]["expect"], "compare": "isclose"}], "tests": rk_tests,
      "how": "Check runs 5 hidden tests. Tests 2 to 4 compare with the closed form to 4 decimal places (absolute 5e-05). Tests 1 and 5 check single steps at a relative tolerance of 1e-9."},
     code_fb("RK4 matches the closed form to four decimal places.",
             {"test-1": "Test 1 is one step of $y' = y$, which RK4 makes $1 + 1 + \\tfrac12 + \\tfrac16 + \\tfrac1{24}$. Check the weights 1, 2, 2, 1 over 6.",
@@ -1164,10 +1170,14 @@ CHECKS = [
      "150 problems from one list, such as NeetCode 150, each accepted by the judge. Then a medium you have not seen, finished in 30 minutes more often than not."),
     ("cpp-pricer-timed", "Your C++ binomial pricer has tests and is timed against the Python one",
      "The pricer from paper C, built with tests in your own repository. Time it against your Python pricer at 1,000 steps and write down both times."),
-    ("final-analysis", "An MIT 18.100A past final at 60%",
-     "A proof-based analysis final from MIT OpenCourseWare, timed, with every proof written out and marked against the solutions."),
+    ("final-analysis", "An MIT 18.100A past final at 60%, and two proofs without notes",
+     "A proof-based analysis final from MIT OpenCourseWare, timed, with every proof written out and marked against the solutions. "
+     "Then prove rank-nullity and the spectral theorem for symmetric matrices on a blank page, without notes. Check each line against the course proofs."),
     ("final-odes", "MIT 18.03 final at 70%",
      "A full 18.03 past final from MIT OpenCourseWare, timed and marked against its solutions."),
+    ("ols-summary-explained", "Your NumPy regression matches statsmodels, and you can explain every number in its summary",
+     "Fit one regression on real returns in NumPy and with statsmodels. Write one line on each number in the summary. "
+     "Cover the coefficients, standard errors, t, P>|t|, the interval, R² and adjusted R². Then the F statistic, log-likelihood, AIC and BIC."),
 ]
 
 
@@ -1175,17 +1185,19 @@ def minutes(items, extra=0):
     return int(math.ceil(1.25 * (sum(it["pace"] for it in items) + extra) / 60 / 5) * 5)
 
 
-PROB_TAGS = ["dice-ev", "every-coupon", "at-least-one", "hats", "bayes-in-a-minute", "indicator-tricks", "given-the-total", "urns"]
+# at-least-one and bayes-in-a-minute stay out of the draws: their pool items are twins of b-forty-tests and b-fraud-flag
+PROB_TAGS = ["dice-ev", "every-coupon", "hats"]
+PROB_TAGS_2 = ["indicator-tricks", "given-the-total", "urns"]
 MM_TAGS = ["quote-centre", "informed-loss", "position-limit", "skew"]
-DRAW_B = [{"from": "bank/probability", "tags": PROB_TAGS[:4], "difficulty": [3, 4], "n": 3},
-          {"from": "bank/probability", "tags": PROB_TAGS[4:8], "difficulty": [3, 4], "n": 2},
+DRAW_B = [{"from": "bank/probability", "tags": PROB_TAGS, "difficulty": [3, 4], "n": 3},
+          {"from": "bank/probability", "tags": PROB_TAGS_2, "difficulty": [3, 4], "n": 2},
           {"from": "bank/market-making", "tags": MM_TAGS, "difficulty": [3, 4], "n": 2}]
 DRAW_C = [{"from": "drills/oa", "difficulty": [3, 4], "n": 1}, {"from": "drills/ci-cpp", "difficulty": [3, 4], "n": 1}]
 doc = {
     "id": "stage-1", "stage": 1, "name": "Stage 1 exit test",
-    "description": "The exit test for Foundations, in four papers and eight checks. "
+    "description": "The exit test for Foundations, in four papers and nine checks. "
                    "The papers cover calculus and linear algebra, probability, statistics and finance, programming, and analysis with the 1.11 methods. "
-                   "The checks cover the past finals, your project and the problem count.",
+                   "The checks cover the past finals, your project, the problem count and a regression you can explain.",
     "parts": [
         {"kind": "paper", "id": "calc-linalg", "name": "Paper A: calculus and linear algebra", "minutes": minutes(A), "pass": 0.7, "items": A},
         {"kind": "paper", "id": "prob-stats-finance", "name": "Paper B: probability, statistics and finance", "minutes": minutes(B, 7 * 180), "pass": 0.7,
