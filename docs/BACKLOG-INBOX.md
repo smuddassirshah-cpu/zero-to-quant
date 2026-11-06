@@ -1284,3 +1284,5 @@ Raised later (pairs-rep level 3):
 Raised later (vector-calc level 3):
 
 - `space` `curves`: no direction marker on a curve. Stokes (l12 screens 0, 2 and 9) needs the boundary's orientation shown (counterclockwise seen from above, or clockwise in the trap). Wanted: `arrow: true` (or `arrows: n`) on a curve entry, drawing small arrowheads along it in the direction of increasing `t`. Workaround: a short `vectors` entry tangent to the curve at one point, from a `points` entry.
+Raised later (exam topic-3.1):
+- [Could] `numbers_lib.Level` loads course levels only, so an exam number script cannot call `expect` or `check_wrongs` on an exam file. Workaround: a short `Exam(Level)` subclass that loads one exam JSON (`docs/briefs/exam-3.1-scripts/check_numbers.py`). Wanted: `numbers_lib.Exam("topic-3.1")`, and a note that a script named `numbers.py` shadows the standard library's `numbers` module (it breaks `fractions`), so exam scripts need another name.
