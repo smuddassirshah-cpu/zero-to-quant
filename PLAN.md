@@ -165,7 +165,7 @@ Phase 4, developer and strats depth
 - [x] systems L4 (`docs/reports/systems-4.md`; 4 lessons, review-4, homework-4, 3 `sy-` drills)
 - [ ] Engine: E13 concurrency canvas (built in engine pass C part 2 with E13-blocked-lanes); [Could] items E15 to E19
 - [ ] Drill packs 5 to 8 (60 drills)
-- [ ] Exams: mock-oa-code-hard, mock-oa-strats, mock-superday-developer, mock-superday-strats, mock-video, topic-3.5 (done 4 Nov, `docs/reports/exam-3.5.md`)
+- [x] Exams: mock-oa-code-hard, mock-oa-strats, mock-superday-developer, mock-superday-strats, mock-video, topic-3.5 (done 4 Nov, `docs/reports/exam-3.5.md`) (session U: all five written, second-read and fixed; briefs in `docs/briefs/mocks.md`, reviews `docs/reviews/review-exam-mock-<id>.md`)
 
 - [x] odes, numerics and complex L1 before 2b (done session T: odes L4 and numerics L4 written, read and fixed; pdes route no longer limited) (user, 5 Nov, sessions Q and R; complex L1 added in R): write `odes` L1 to L4 and `numerics` L1 to L4 from their briefs ahead of the rest of 2b, so the pdes route opens under Strict. The 2b lines below for these two courses are the checklist.
 
