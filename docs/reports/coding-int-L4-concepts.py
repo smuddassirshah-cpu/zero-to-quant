@@ -156,7 +156,13 @@ for n in range(1, 6):
     for xs in itertools.product(range(1, 4), repeat=n):
         check(M['m2'](list(xs)) == ref(list(xs)), 'l16 screens[4] step hint: m2 differs only on []')
 # screens[4] options[2].why says m5 "shows on any run after a break": [1, 1, 2] has one and m5 is right there
-check(M['m5']([1, 1, 2]) != ref([1, 1, 2]), 'EXPECTED_FAIL l16 screens[4] options[2].why: m5 shows on any run after a break ([1, 1, 2] has one, m5 gives 2 = ref)')
+# fix pass: the why now says m5 shows whenever a run after a break is longer than the first run.
+# m5 counts every later run one short, so m5 = max(first run, later run - 1): [1, 1, 2] and [1, 1, 2, 2] give ref, [3, 1, 1] gives 1 not 2
+_w5 = L16['screens'][4]['widget']['options'][2]['why']
+check('run after a break is longer than the first run' in _w5
+      and M['m5']([1, 1, 2]) == ref([1, 1, 2]) == 2 and M['m5']([1, 1, 2, 2]) == ref([1, 1, 2, 2]) == 2
+      and M['m5']([3, 1, 1]) == 1 != ref([3, 1, 1]) == 2,
+      'l16 screens[4] options[2].why: m5 shows whenever a run after a break is longer than the first run (corrected claim, fix pass)')
 # corrected claim, ready to enable: m5 shows exactly when a run after a break is longer than the first run
 def runs(xs):
     out = []
@@ -170,7 +176,12 @@ for n in range(0, 7):
         exposed = bool(r) and max((ln for _, ln in r[1:]), default=0) > r[0][1]
         check((M['m5'](list(xs)) != ref(list(xs))) == exposed, 'l16 corrected: m5 exposed iff a later run is longer than the first run')
 # screens[4] options[3].why says m6 "shows when the longest run does not start the list": [1, 2, 2, 1, 1] is a counter-example
-check(M['m6']([1, 2, 2, 1, 1]) != ref([1, 2, 2, 1, 1]), 'EXPECTED_FAIL l16 screens[4] options[3].why: m6 shows when the longest run does not start the list ([1, 2, 2, 1, 1]: m6 gives 2 = ref)')
+# fix pass: the why now says m6 shows when a run of another value beats every run of the first value.
+# m6 returns the longest run of xs[0]: [1, 2, 2, 1, 1] has no such run (2 ties 2) and m6 = ref = 2; [3, 1, 1] has one and m6 = 1 != 2
+_w6 = L16['screens'][4]['widget']['options'][3]['why']
+check('a run of another value beats every run of the first value' in _w6
+      and M['m6']([1, 2, 2, 1, 1]) == ref([1, 2, 2, 1, 1]) == 2 and M['m6']([3, 1, 1]) == 1 != ref([3, 1, 1]),
+      'l16 screens[4] options[3].why: m6 shows when a run of another value beats every run of the first value (corrected claim, fix pass)')
 # corrected claim: m6 exposed iff the longest run overall beats every run of the first value
 for n in range(0, 7):
     for xs in itertools.product(range(1, 4), repeat=n):
@@ -393,11 +404,17 @@ def stream_pes(stream):
     kept = []                                   # the why's remedy: store the numbers
     for x in stream: kept.append(x)
     return pes(kept), len(kept)                 # cells kept beyond the output
+# fix pass: the distractor now reads "It cannot be done at all once the numbers arrive one at a time" and its why says
+# storing the stream and running the right pass at the end works, in linear time and linear extra space.
+# So the distractor is false: the stored-stream method gives the right answer with n cells kept and 3n multiplications.
+_o18 = L18['screens'][8]['widget']['options'][3]
+_t18 = 'cannot be done at all' in _o18['text'] and 'linear time and linear extra space' in _o18['why']
 for n in [10, 1000, 100000]:
-    _, kept = stream_pes(random.randint(1, 3) for _ in range(n))
-    check(kept <= 2, f'EXPECTED_FAIL l18 screens[8] options[3].why: "it can be done with stored numbers" keeps {kept} cells at n={n}, linear not constant, so the distractor is not refuted')
-# corrected, ready to enable once the distractor reads e.g. "It cannot be done at all once the numbers arrive one at a time":
-# check('cannot be done at all' in L18['screens'][8]['widget']['options'][3]['text'], 'l18 screens[8] options[3] is now a false claim')
+    stream = [random.randint(1, 3) for _ in range(n)]
+    got, kept = stream_pes(iter(stream))
+    out, mul = pes_counted(stream)
+    right = got == out and (n > 1000 or got == brute_pes(stream))
+    check(_t18 and right and kept == n and mul == 3 * n, f'l18 screens[8] options[3].why: storing the stream keeps {kept} cells and uses {mul} multiplications at n={n}, so it can be done and the distractor is false (corrected claim, fix pass)')
 
 # ---------------------------------------------------------------- l19: calendar
 def half_open_overlap(a, b): return a[0] < b[1] and b[0] < a[1]
