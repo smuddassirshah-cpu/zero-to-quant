@@ -235,7 +235,25 @@ lv.expect('review', 'items[3].widget.wrong[1].value', 1.2 * 0.99)
 lv.expect('review', 'items[4].widget.answer', r(0.25 / 0.19, 4))
 lv.expect('review', 'items[4].widget.wrong[0].value', r(0.5 / 0.19, 4))
 lv.expect('review', 'items[4].widget.wrong[1].value', r(0.25 / 0.1, 4))
-lv.expect('review', 'items[6].widget.options[1].why', 88)
+p96_250, p96_500 = power(0.96, 250, 2000, 11), power(0.96, 500, 2000, 11)
+lv.expect('review', 'items[6].prose', round(100 * p96_250)); lv.expect('review', 'items[6].prose', round(100 * p96_500))
+lv.expect('review', 'items[6].widget.options[1].why', round(100 * (1 - p96_250)))
+lv.expect('review', 'items[6].explain.text', round(100 * p96_250)); lv.expect('review', 'items[6].explain.text', round(100 * p96_500))
+# review-1 items[7]: new seeded pair (finding 22)
+rA = make_walk(31, 500, drift=0.1); rB = 5 + 0.03 * np.arange(500) + make_ar1(0.5, 500, 32)
+_, _rv = lv._file('review')
+_rows = _rv['items'][7]['canvas']['params']['rows']
+for _nm, _x, _row in (('A', rA, _rows[0]), ('B', rB, _rows[1])):
+    _pc, _pt = adfuller(_x, regression='c', autolag='AIC')[1], adfuller(_x, regression='ct', autolag='AIC')[1]
+    for _cell, _p in ((_row[1], _pc), (_row[2], _pt)):
+        claim((_cell.startswith('<') and _p < float(_cell.split()[-1])) or (not _cell.startswith('<') and abs(float(_cell) - _p) < 0.0051), f'review items[7] row {_nm}: {_cell} matches ADF p {_p:.4g}')
+lv.expect('review', 'items[7].explain.text', 0.995); lv.expect('review', 'items[7].explain.text', 0.40)
+# review-1 items[4]: variance 0.5^2 / (1 - 0.81)
+lv.expect('review', 'items[4].prose', 0.9); lv.expect('review', 'items[4].prose', 0.5)
+# l4 screens[9] (finding 35): day 250's change, and finding 3's residual start
+lv.expect('l4', 'screens[9].widget.options[3].why', r(brd[250], 2)); lv.expect('l4', 'screens[9].hints[2].text', r(brd[250], 2))
+claim(int((np.abs(brd) > abs(brd[250])).sum()) > 0, 'day 250 change is smaller than some ordinary days (screens[9] explain)')
+lv.expect('l4', 'screens[6].explain.text', r(res6[0], 1))
 lv.expect('homework', 'items[2].widget.answer', -0.045 / 0.012)
 lv.expect('homework', 'items[2].widget.wrong[1].value', r(0.012 / -0.045, 4))
 lv.expect('homework', 'items[2].explain.text', round(math.log(0.5) / math.log(0.955)))   # 15
