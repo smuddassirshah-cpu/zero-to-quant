@@ -34,8 +34,20 @@ Allocation claims: every line the lessons say allocates does, and every line the
 
 ## Overlap with the earlier review
 
-(filled after the blind pass: see the table below)
+Read after the ledger and findings were committed: `docs/reviews/review-systems.md` (second read of the whole course, 27 findings, 0 errors; its level 4 findings are 19, 20, 21, 26 and part of 9) and `docs/reviews/answers-2026-11-04-systems-4.md` (answer check: keys, hidden-test gaps, freshness, 0 wrong keys). Conceptual findings only (meaning, method, convention or claim; not layout, voice, freshness, test coverage or metadata):
+
+| found by | count | which |
+|---|---|---|
+| this audit only | 10 | findings 1 to 10 |
+| earlier review only | 0 | none |
+| both | 1 | finding 11 (h4-sizing part 5, option `all`): review-systems.md note 21 raised the same option, saying "the idea (only touched slots stay hot) is the one l18 teaches; keyed ring alone ignores it", and its fix pass wrote the `why` this audit flags as dismissing that idea by fiat |
+
+Earlier conceptual findings this audit missed: none. The second reader's other level 4 items are a grid-label layout note (19), the "five stages" wording (20), the percentile list of one console (26) and `course.json` `requires` (9); the answer check's gaps are hidden-test coverage (all fixed) and freshness, not concept. The answer check also confirmed the NumPy `inverted_cdf` claim on 2.5.3, as this audit did. Neither earlier read questioned the data-race definition, the wrap reasoning, the alignas claim, the plain-counter ring, the two-read timing model or the kernel-bypass sentence, which is the single-read miss rate this table measures.
 
 ## Checks
 
-Filled after the blind pass: see below.
+- Validator (from `app/`): `node tools/validate.mjs 2>&1 | tail -3`: `O2 warnings: O2-long-sentence 714, O2-long-explain 48, O2-unshuffled-numeric 73, O2-no-slip 46, O2-prose-prompt 8, O2-explain-answer 615` / `0 errors, 4279 warnings`. `content/manifest.json` restored with `git checkout` afterwards, not committed.
+- Voice: `VOICE_BASE=app/content/courses/systems/ python3 docs/reviews/voice-scan.py 35 --summary`: `# explanations over three sentences: 0` / `# sentences scanned: 9490; over 35 words: 0`.
+- Numbers scripts: none exists for systems level 4 (`docs/reports/` has no `systems-L4-numbers.py`; the earlier reader's scripts stayed in a scratchpad, already raised in BACKLOG-INBOX "Raised later (audit systems)").
+- Concepts script: `python3 -I docs/reports/systems-L4-concepts.py` from the repo root: 136 checks pass, 3 fail, all three marked `EXPECTED_FAIL` (findings 1, 2 and 5: the two-writers definition, the wrap reasoning, the plain-counter ring under ThreadSanitizer), 0 unexpected; exit 1 by design until those findings are fixed, with the corrected asserts in comments beside each. Runs about four minutes (twelve g++ builds at two standards, three ThreadSanitizer runs). ThreadSanitizer checks print `skip` and do not fail where `-fsanitize=thread` is unavailable.
+- Playthrough (from `app/`, `--local-cdn <pkgs>`): `--set systems/review-4 --set systems/homework-4`: `browser relaunches: 0` / `All passed.`; `--lesson systems/l16-ring-buffer --lesson systems/l18-feed-handler`: `browser relaunches: 0` / `All passed.` No content was changed, so this only confirms the files play.
