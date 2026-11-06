@@ -129,3 +129,42 @@ Notation and conventions in l9 to l16 match L1 and L2: wide date-by-share frames
 
 - `fresh-check.mjs --file content/courses/alpha/review-1.json --as exams` throws ENOENT: `scanCode` opens `content/exams/review-1.json`. The same call on `homework-2.json` ran past 120 s and was stopped. This adds a symptom to the existing inbox bullet (garch review, engine 4). Freshness for these sets was therefore checked by hand grep (finding 23).
 - `numbers_lib.py`: a path key with a hyphen (`feedback.byKey.test-3`) cannot be addressed. `_PART` stops at `-` and reports `no key "test"`, so a script must read the whole `byKey` object instead. Wanted: allow `[\w-]` in a key.
+
+## Fix pass
+
+Status per finding (25 fixed, 0 disputed, 0 deferred). Every corrected number was recomputed before it was written, by `docs/reports/alpha-L1-numbers.py` (panel rebuilt from l1's prelude, seed 2310) and `alpha-L2-numbers.py`; both gained checks for every new number and now exit 0 (332 of 332 and 178 of 178). Graded answers changed: 5 (review-1 `items[2]` key 0.016 to 0.024, `items[7]` key −0.190667 to −0.155, review-2 `items[8]` key 1.943 to 0.7071, homework-1 `items[3]` key 0 to 0.40, homework-2 `items[6]` key 220 to 170). Only L1 and L2 files were edited; voice hits in L3 and L4 files were left to their own pass.
+
+1. fixed: l2 `screens[7].prose` now "Six of them are shown, with the split ratio of each day." Checked: the six tabled rows are six distinct drops among the 34.
+2. fixed: l2 `screens[10].explain.text`. Basis: 34 drops below −40%, 14 with a split ratio, 20 on a share's last listed day (script claim), so none trips a rule that excludes both.
+3. fixed: l3 `screens[6].explain.text`. Basis, derivation: 3/30 = 20/200 = 10% of names, but deaths per share-year are 3/30/(300/252) = 0.084 on `small` against 20/200/(1260/252) = 0.02 on the full panel.
+4. fixed: l3 `screens[8].explain.text`. Script: only 647 of 1,260 zero-filled rows hold 200 shares; dead shares are 0.0, not NaN, after their death.
+5. fixed: l3 `quiz[1]` `wrong[1]` is 0.06 (10 × 0.6 = 6, typed as 6%), `byKey.big` added.
+6. fixed: review-1 `items[2]` rewritten as specified. Recomputed: 40/5 = 8 a year, 8/250 = 0.032, 0.032 × 0.75 = 0.024, 40/250 × 0.75 = 0.12.
+7. fixed: homework-1 `items[4]`: 0.024 × 400 = 9.6; k = 9.6/0.6 = 16 unchanged.
+8. fixed: homework-1 `items[5].explain.text`. Script: both right lines blank the last 21 rows and give NaN on 800 cells where `forward_returns` has a value.
+9. fixed: homework-1 `items[6]` model, `rubric[2]`, explanation. Script: 160 shares listed on every day; top 21.40% against 18.66%, bottom 8.43% against 6.78%, spread 12.97% against 11.88%; 19 of 20 late listings join on their 60th day and S073 (£3.33m a day) never passes. The rubric and explanation sentences were split to stay under 35 words.
+10. fixed: l4 `screens[8]` prose, console lines 3 and 4, `byKey.good`, explanation (250 dates, −0.0242, +0.1694, t 32.5, momentum leak 0.0356). Script prints all three routes.
+11. fixed: l6 `quiz[3].explain.text`. Basis: 0.8^3 = 0.512 is left, 48.8% went.
+12. fixed: l5 `screens[7].explain.text`, 0.2941 (script: 0.29413 to 4 places).
+13. fixed: l1 `screens[2].feedback.byKey.r2`. C lists on row 30, so on row 87 it has traded 58 days.
+14. fixed: l4 `screens[5]` prose and explanation. Basis: pandas 2.2 `DataFrame.stack(dropna=True)` default drops NaN (pandas 2.2 documentation); pandas 3.0 stack keeps them (run here on 3.0.5: 4 rows from a 2 by 2 frame with one NaN).
+15. fixed: review-1 `items[8].explain.text`. Basis: £1m for 500 days then £10m for 100 days averages £2.5m, below £5m, so the old claim is false in general.
+16. fixed: homework-2 `items[2].explain.text` ("before the clip"). Basis: the clip at ±3 is the last step of `cs_zscore` (690 clipped values, l7 `screens[7]`).
+17. fixed: l5 `screens[6].prose`. Script: 0.0325 with the summed log forward return, 0.0334 with `forward_returns`.
+18. fixed: l6 `screens[9].explain.text`. Basis: l14 prices a stand-alone reversal book's turnover and break-even cost (l14 prose "Lesson 6's reversal signal, as rank weights"). The first two sentences were merged to stay at three.
+19. fixed: review-1 `items[7]` rewritten. Recomputed: 1.03 × 0.50 − 1 = −0.485; (0.04 − 0.02 − 0.485)/3 = −0.155; drop (0.04 − 0.02)/2 = 0.01; last (0.02 − 0.50)/3 = −0.16.
+20. fixed: review-2 `items[8]` inverse item. Basis: φ² = 0.5, φ = 0.70711; ln 0.5 / ln 0.70711 = 2; linear slip 0.75.
+21. fixed: homework-2 `items[6]`. 150 returns: t − 21 − L + 1 ≥ 150 gives t = L + 170; slip 171; 220 − 170 = 50 days sooner.
+22. fixed: homework-1 `items[3]` asks for the dividend. 3 × (31.60 + D)/96 = 1 gives D = 0.40; old 96 − 3 × 31.60 = 1.20; raw 96 − 31.60 = 64.40. Unit is now £ and the key 0.40.
+23. no change needed (freshness note). The optional step for review-1 `items[1]` was not taken.
+24. fixed: all nine `how` lines as specified. The scan reports no sentence over 35 words in any L1 or L2 file.
+25. fixed: l8 `quiz[3]` option `nan`, l7 `quiz[2]` option `dates`, l2 `screens[10]` option `flag` re-worded as specified (l7 `quiz[2]` still draws an advisory `[key-length]`, 55 against 30 characters; the reader's wording was applied as given).
+
+Engine items (the `fresh-check.mjs` ENOENT and the `numbers_lib.py` hyphen key): deferred, already in the inbox.
+
+Gates:
+- `python3 docs/reports/alpha-L1-numbers.py`: exit 0 (332 of 332). `alpha-L2-numbers.py`: exit 0 (178 of 178).
+- `VOICE_BASE=app/content/courses/alpha python3 docs/reviews/voice-scan.py 35`: 0 explanations over three sentences; no sentence over 35 words in any L1 or L2 file (remaining hits are in L3 and L4 files, out of scope).
+- `cd app && node tools/validate.mjs`: 0 errors.
+- No code, starter or solution was touched, so no CPython re-run was needed.
+- Playthrough with `--local-cdn`, 8 lessons (l1 to l8) and 4 sets (review-1, review-2, homework-1, homework-2), each without and with `--mobile`: 24 of 24 passed, every quiz 4/4, review sets 9 of 9, homework sets 7 of 7 and 33 of 33 marks.
