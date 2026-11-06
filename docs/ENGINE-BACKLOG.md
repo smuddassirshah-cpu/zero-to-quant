@@ -1612,3 +1612,17 @@ Status block (engine pass, item 589):
 
 Status block (engine pass, item 590):
 - 590: done.
+
+## Session V engine pass A (runtime and exams), items 591 to 599
+
+(Agent A writes its items and status block here.)
+
+---
+
+(separator: do not edit)
+
+---
+
+## Session V engine pass B (validator and tools), items 600 to 609
+
+(Agent B writes its items and status block here.)
