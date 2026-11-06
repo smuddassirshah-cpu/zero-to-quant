@@ -1415,3 +1415,7 @@ Raised later (review garch 1 to 3):
 - [Could] `series` marker tap targets overlap when markers sit a few days apart at phone width (l11 `screens[1]`: the key 2,311 beside the distractor 2,313, and 2,369 beside 2,371). Wanted: snap a tap to the nearest marker and ring the chosen one, or offset clustered markers (engine 2).
 - [Could] `numbers_lib`: add `stated(file, path, phrase, ok)` beside `expect`, a claim tied to its wording that fails while a false sentence is in the text and passes once a fix rewords it; the three garch number scripts define it locally (engine 3).
 - [Could] `fresh-check.mjs --file <content file> --as exams` matches every item against itself (share 1, Jaccard 1), burying the real hits; skip the file's own entry when `--file` points inside `content/` (engine 4).
+
+Raised later (review alpha 1 and 2):
+- [Could] `fresh-check.mjs --file content/courses/<course>/review-1.json --as exams` throws ENOENT (`scanCode` opens `content/exams/review-1.json`), and on `homework-2.json` it ran past 120 s; a further symptom for the bullet above (garch review, engine 4). Course sets could not be freshness-checked by the tool.
+- [Could] `numbers_lib.py`: a path key with a hyphen (`feedback.byKey.test-3`) cannot be addressed (`_PART` stops at `-`, "no key test"); allow `[\w-]` in keys so number scripts can check `test-N` feedback lines directly.
