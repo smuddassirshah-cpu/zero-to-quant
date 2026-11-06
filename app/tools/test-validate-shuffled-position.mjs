@@ -32,8 +32,11 @@ edit((s) => { s.widget.shuffle = true; s.widget.options.find((o) => !o.correct).
 say(has(run().out, 'shuffled-position', L), 'shuffle with "Option B" in a why: warns');
 edit((s) => { s.widget.shuffle = true; s.explain.text = 'The first map shows the count. Each step adds one.'; });
 say(!has(run().out, 'shuffled-position', L), 'shuffle with "the first map": no warning');
+// Session V: every choice shuffles unless shuffle is false, so a positional name warns without the field and not with shuffle: false.
 edit((s) => { s.explain.text = 'The second option adds the steps, which is the count.'; });
-say(!has(run().out, 'shuffled-position', L), 'no shuffle with "the second option": no warning');
+say(has(run().out, 'shuffled-position', L), 'no shuffle field (default shuffle) with "the second option": warns');
+edit((s) => { s.widget.shuffle = false; s.explain.text = 'The second option adds the steps, which is the count.'; });
+say(!has(run().out, 'shuffled-position', L), 'shuffle: false with "the second option": no warning');
 
 const long = 'The count is the sum of all the steps taken';
 edit((s) => { s.widget.options.forEach((o) => { o.text = o.correct ? long : 'Twice the steps'; }); });

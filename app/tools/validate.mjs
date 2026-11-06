@@ -15,7 +15,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { scanO2, O2_CODES } from './o2-rules.mjs';
+import { scanO2, O2_CODES, orderedOptionsWhy } from './o2-rules.mjs';
 import { checkCapstones } from './capstone-rules.mjs';
 import { statedMinutes, ignoreList as durationIgnore, FLOOR as DURATION_FLOOR } from './duration-prose.mjs';
 import { checkTask, howOf as perfHow, checkLevel as perfCheckLevel, matchVerb } from './perf-rules.mjs';
@@ -84,6 +84,14 @@ const checkText = (file, where, s, { copy = true } = {}) => {
   if (dollars % 2) err(file, where, 'unbalanced $...$');
   if (/[\b\f\v\r\t]/.test(s)) err(file, where, 'control character in text: a KaTeX backslash was not escaped in the JSON (write \\\\frac, not \\frac)');
   const maths = noCode.match(/\$[^$]*\$/g) || [];
+  /* Session V: float artefacts in shown text, and a thousands comma inside maths (KaTeX spaces it as a list separator: write 10{,}000) */
+  const art = noCode.match(/(?<![\d.])\d*\.\d*(?:0{7,}|9{7,})\d{0,3}(?!\d)/);
+  if (art) warn(file, where, `[float-artefact] "${art[0]}" is a floating-point artefact; round it to the digits that mean something`);
+  for (const m of noCode.match(/\$\$[\s\S]*?\$\$|\$[^$]*\$/g) || []) {
+    const c = m.match(/(?<![\d.,{])(?<open>[(\[{]?)\d{1,3}(?:,\d{3})+(?![\d]|,\d)(?!\d)/g) || [];
+    const bad = c.find(x => !/^[(\[{]/.test(x) || /,\d{3},\d{3}/.test(x));
+    if (bad) { warn(file, where, `[math-thousands-comma] "${bad}" inside maths: KaTeX puts a space after the comma; write ${bad.replace(/,/g, '{,}')} (or no separator)`); break; }
+  }
   if (maths.some(m => /\n[a-z]/.test(m))) err(file, where, 'newline inside maths: write \\\\neq, \\\\nu, \\\\nabla with a doubled backslash in JSON');
 };
 
@@ -124,6 +132,32 @@ const wrongCannotFire = (file, where, answer, tolA, wrong) => {
     seen.push([i, x, hw]);
   });
 };
+/* Session V: [wrong-band] a numeric wrong value with more decimals than the rounding the question asks for, whose band is narrower than half a rounding step:
+   a learner who follows the slip and rounds as asked misses it, so its byKey line never fires (12 lines in stage-3). */
+const WORD_NUM = { zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6 };
+const roundingAsked = (text) => {
+  const t = stripMathsAndCode(text || '').toLowerCase();
+  let m = t.match(/\b(zero|one|two|three|four|five|six|\d)\s*(?:decimal places?|decimal points?|d\.?\s?p\.?)/);
+  if (m) return WORD_NUM[m[1]] ?? +m[1];
+  if (/nearest (?:whole number|integer|pound|dollar|basis point|bp|unit|day|share)\b|whole number\b/.test(t)) return 0;
+  if (/nearest (?:penny|pence|cent|0\.01)\b/.test(t)) return 2;
+  if (/nearest 0\.1\b/.test(t)) return 1;
+  return null;
+};
+const decimalsOf = (v) => { const m = String(v).match(/\.(\d+)(?:e([+-]?\d+))?$/i); return m ? Math.max(0, m[1].length - (m[2] ? +m[2] : 0)) : (/e-(\d+)/i.test(String(v)) ? +String(v).match(/e-(\d+)/i)[1] : 0); };
+const wrongBandNarrow = (file, where, w, ctx) => {
+  if (!Array.isArray(w.wrong)) return;
+  const d = roundingAsked(ctx.question) ?? roundingAsked(ctx.prose);
+  if (d == null) return;
+  const scale = w.unit === '%' ? 100 : 1, half = 0.5 * Math.pow(10, -d) / scale;
+  w.wrong.forEach((x, i) => {
+    if (!isObj(x) || typeof x.value !== 'number' || !Number.isFinite(x.value)) return;
+    if (decimalsOf(x.value) <= d + (scale === 100 ? 2 : 0)) return;
+    const hw = halfWidth(x.value, x.tol ?? { abs: 1e-9 });
+    if (hw < half * 0.999) warn(file, `${where}.wrong[${i}]`, `[wrong-band] wrong "${x.id || i}" (${x.value}, band +-${+hw.toPrecision(3)}) is narrower than the rounding the question asks for (${d} decimal place${d === 1 ? '' : 's'}, +-${+half.toPrecision(3)}), so a learner who rounds this slip as asked misses it; widen its tol or give the value at the asked rounding`);
+  });
+};
+const FLOAT_EXPECT = /(?:^|[\[(,\s])-?\d+\.\d*[1-9]\d*(?:e[+-]?\d+)?(?=[\]),\s]|$)/i;
 const tolCase = (file, at, t) => {
   if (t.tol == null) return;
   if (!(isObj(t.tol) && (typeof t.tol.rel === 'number' || typeof t.tol.abs === 'number') && Object.values(t.tol).every(v => typeof v === 'number' && v >= 0))) err(file, `${at}.tol`, 'tol is { "rel": r } or { "abs": x } (or both), for compare: "isclose"');
@@ -415,6 +449,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         text(o.text, `${where}.options[${i}].text`); text(o.why, `${where}.options[${i}].why`);
       });
       checkKeyLength(file, where, w);
+      checkShuffleFalse(file, where, w);
       if (w.kind === 'multi' && ctx.question != null && !/select all that apply/i.test(ctx.question)) warn(file, where, 'a multi question should say "Select all that apply"');
       break;
     }
@@ -422,6 +457,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       if ((typeof w.answer !== 'number' || !Number.isFinite(w.answer)) && !(typeof w.answer === 'string' && /^\{\{\s*carry\.[A-Za-z0-9_.]+\s*\}\}$/.test(w.answer))) err(file, `${where}.answer`, 'numeric answer must be a number (or one {{carry.name}} placeholder)');
       tol(w.tol, `${where}.tol`);
       wrongCannotFire(file, where, w.answer, w.tol, w.wrong);
+      wrongBandNarrow(file, where, w, ctx);
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       (w.wrong || []).forEach((x, i) => { if (typeof x.value !== 'number') err(file, `${where}.wrong[${i}].value`, 'must be a number'); if (x.tol) tol(x.tol, `${where}.wrong[${i}].tol`); });
       text(w.accept, `${where}.accept`);
@@ -456,7 +492,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       else [['answer', w.answer], ...(Array.isArray(w.accept) ? w.accept.map((a, i) => [`accept[${i}]`, a]) : [])].forEach(([f, v]) => { if (typeof v !== 'string') return; for (const m of v.matchAll(/\(-1\)\^(?:\{\s*(?:-?\s*)?([A-Za-z]|\\[A-Za-z]+)(?![A-Za-z])[^{}]*\}|(?:-?\s*)?([A-Za-z]))/g)) { const sym = m[1] || m[2]; if (!(w.integers || []).includes(sym)) { warn(file, `${where}.${f}`, `(-1)^{${sym}} cannot be graded at non-integer points: add integers: ["${sym}"] to this expression`); break; } } });
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       checkText(file, `${where}.answer`, `$${w.answer || ''}$`, { copy: false });
-      if (w.form != null) { if (!['expanded', 'factorised', 'simplified'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised" or "simplified"'); keys.add('form'); }
+      if (w.form != null) { if (!['expanded', 'factorised', 'simplified', 'rectangular'].includes(w.form)) err(file, `${where}.form`, 'form is "expanded", "factorised", "simplified" or "rectangular" (a + bi)'); keys.add('form'); }
       break;
     case 'slider':
       ['min', 'max', 'step'].forEach(f => { if (typeof w[f] !== 'number') err(file, `${where}.${f}`, 'must be a number'); });
@@ -703,6 +739,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         if (t.stdin != null && typeof t.stdin !== 'string') err(file, `${at}.stdin`, 'stdin is a string, one line per input() call ("250\\n262.5\\n")');
         if (t.exact != null && typeof t.exact !== 'boolean') err(file, `${at}.exact`, 'exact is true or false');
         if (t.argv != null && !(Array.isArray(t.argv) && t.argv.every(x => typeof x === 'string' || typeof x === 'number'))) err(file, `${at}.argv`, 'argv is a list of strings, the words after python3 main.py');
+        if (!out && t.compare == null && typeof t.call === 'string' && t.expect != null && FLOAT_EXPECT.test(String(t.expect)) && /\.examples\[/.test(at)) warn(file, `${at}.compare`, `[float-example] this example expects a float (${String(t.expect).slice(0, 40)}) with no compare, so "Run examples" compares exactly and can mark a correct float solution as failed; add "compare": "isclose"`);
         if (t.exact != null && !out) warn(file, `${at}.exact`, 'exact only applies to compare: "stdout"');
         if (typeof t.call === 'string' && /_getframe|f_locals\[/.test(t.call)) warn(file, `${at}.call`, 'reads the harness frame to get printed output; use { "compare": "stdout", "expect": "..." } instead (and printed in later calls)');
       };
@@ -1083,14 +1120,44 @@ const POSITIONAL = [
   /(?:^|[\s,;])\([a-e]\)(?=[\s,.;:]|$)/,
 ];
 const positionalHit = (t) => { if (typeof t !== 'string') return null; const x = stripMathsAndCode(t); for (const re of POSITIONAL) { const m = re.exec(x); if (m) return m[0].trim(); } return null; };
-const checkShuffledPosition = (file, where, host) => {
+/* Session V (600 series): the engine now shuffles every choice and multi unless shuffle is false, so the rule applies to all of them.
+   A hit is dropped when the same screen itself uses that place word or label (a table row "answer A", "the top of the stack",
+   problem "(c)", a code block), or the host carries noPosCheck: true. */
+const PLACE_ANY = /\b(first|second|third|fourth|fifth|last|top|bottom|above|below)\b/i;
+const screenContext = (host, parent) => {
+  const out = [];
+  for (const h of [host, parent]) { if (!isObj(h)) continue; out.push(h.title, h.prose, h.question, h.code, h.canvas ? JSON.stringify(h.canvas) : null); if (isObj(h.widget)) out.push(h.widget.question, h.widget.starter, h.widget.code); }
+  return out.filter(x => typeof x === 'string').join('\n').toLowerCase();
+};
+const posExcluded = (m, host, parent) => {
+  if (host.noPosCheck === true || (isObj(host.widget) && host.widget.noPosCheck === true)) return true;
+  const ctx = screenContext(host, parent), low = m.toLowerCase();
+  if (ctx.includes(low)) return true;
+  const letter = /^\(?([a-e])\)?$|(?:option|choice|answer)s? \(?([a-e])\)?$/i.exec(m);
+  if (letter) return /\((?:[a-e])\)|\b(?:option|choice|answer)s? [a-e]\b/i.test(ctx) || /\|\s*[a-e]\s*\|/.test(ctx);
+  const word = PLACE_ANY.exec(m);
+  if (word && new RegExp(`\\b${word[1]}\\b`, 'i').test(ctx)) return true;
+  if (/```/.test(String(host.prose || '')) && /\b(?:top|bottom|above|below)\b/i.test(m)) return true;
+  if (parent && /\banswer\b/i.test(m)) return true;   // a part's "first answer" is an earlier part's answer
+  return false;
+};
+const checkShuffledPosition = (file, where, host, parent = null) => {
   const w = host && host.widget;
-  if (!isObj(w) || !['choice', 'multi'].includes(w.kind) || w.shuffle !== true) return;
+  if (!isObj(w) || !['choice', 'multi'].includes(w.kind) || w.shuffle === false) return;
   const texts = [[`${where}.explain.text`, isObj(host.explain) ? host.explain.text : null]];
   if (Array.isArray(w.options)) w.options.forEach((o, i) => { if (isObj(o)) texts.push([`${where}.widget.options[${i}].why`, o.why]); });
   if (Array.isArray(host.hints)) host.hints.forEach((h, i) => { if (isObj(h)) texts.push([`${where}.hints[${i}].text`, h.text]); });
   if (isObj(host.feedback)) { texts.push([`${where}.feedback.correct`, host.feedback.correct], [`${where}.feedback.generic`, host.feedback.generic]); if (isObj(host.feedback.byKey)) Object.entries(host.feedback.byKey).forEach(([k, v]) => texts.push([`${where}.feedback.byKey.${k}`, v])); }
-  texts.forEach(([at, t]) => { const m = positionalHit(t); if (m) warn(file, at, `[shuffled-position] "${m}" names an option by its place, but the options are shuffled; name it by what it says`); });
+  texts.forEach(([at, t]) => { const m = positionalHit(t); if (m && !posExcluded(m, host, parent)) warn(file, at, `[shuffled-position] "${m}" names an option by its place, but the options are shuffled; name it by what it says (or set noPosCheck: true if it names something else)`); });
+};
+/* Session V: [shuffle-false] shuffle: false is for options whose order carries meaning (ordered numbers or intervals) or that refer to each other */
+const REFERS = /\b(?:both|all|none|neither|any|either)\s+of\s+(?:the\s+)?(?:above|these|those|them|the\s+(?:above|other|previous|following))\b|\b(?:all|none) of the above\b|\bthe\s+(?:above|other\s+options?)\b|\b(?:options?|answers?)\s+\(?[a-e]\)?\s+(?:and|or)\s+\(?[a-e]\)?\b/i;
+const checkShuffleFalse = (file, where, w) => {
+  if (w.shuffle != null && typeof w.shuffle !== 'boolean') err(file, `${where}.shuffle`, 'shuffle is true or false (absent means true: the engine shuffles)');
+  if (w.shuffle !== false || !Array.isArray(w.options)) return;
+  const opts = w.options.filter(isObj);
+  if (orderedOptionsWhy(opts) || opts.some(o => REFERS.test(String(o.text ?? '')))) return;
+  warn(file, `${where}.shuffle`, '[shuffle-false] shuffle: false stops the engine shuffling; keep it only for ordered numbers or intervals, or options that refer to each other ("both of the above"); otherwise delete it');
 };
 /* ENGINE-BACKLOG 585: [key-length] a choice whose key is over 1.5 times as long as every distractor gives the answer away */
 const optLen = (o) => String(o && o.text != null ? o.text : '').replace(/\\[()[\]]|\$/g, '').trim().length;
@@ -1117,7 +1184,7 @@ const checkFeedback = (file, where, fb, keys, { requireByKey = false } = {}) => 
   if (requireByKey && !Object.keys(byKey).length) err(file, `${where}.byKey`, 'a trap screen needs at least one byKey line naming the misconception');
   Object.entries(byKey).forEach(([k, v]) => {
     if (keys && !keys.has('*') && !keys.has(k)) err(file, `${where}.byKey.${k}`, `the widget cannot return the key "${k}"`);
-    if (keys && keys.slip && keys.slip.has(k)) warn(file, `${where}.byKey.${k}`, `[table-slip-key] key "${k}" is an editable cell id and that cell has wrong[] entries, so table.js returns the wrong id instead and this line never fires for the slip; re-key to ${keys.slip.get(k).map(x => `"${x}"`).join(' or ')}`);
+    if (keys && keys.slip && keys.slip.has(k) && !keys.slip.get(k).some(id => Object.prototype.hasOwnProperty.call(byKey, id))) warn(file, `${where}.byKey.${k}`, `[table-slip-key] key "${k}" is an editable cell id and that cell has wrong[] entries, so table.js returns the wrong id instead and this line never fires for the slip; re-key to ${keys.slip.get(k).map(x => `"${x}"`).join(' or ')}`);
     checkText(file, `${where}.byKey.${k}`, v);
     const sentences = stripMathsAndCode(v).split(/[.?]\s/).filter(s => s.trim()).length;
     if (sentences > 3) warn(file, `${where}.byKey.${k}`, 'at most three sentences');
@@ -1207,7 +1274,7 @@ const checkItem = (file, where, it, ctx) => {
   checkText(file, `${where}.prose`, it.prose); checkText(file, `${where}.question`, it.question);
   if (!it.question) err(file, `${where}.question`, 'required field missing');
   if (!it.widget) { err(file, `${where}.widget`, 'required field missing'); return null; }
-  const keys = checkWidget(file, `${where}.widget`, it.widget, it.canvas, { question: it.question, allowLongform: ctx.allowLongform });
+  const keys = checkWidget(file, `${where}.widget`, it.widget, it.canvas, { question: it.question, prose: it.prose, allowLongform: ctx.allowLongform });
   checkFeedback(file, `${where}.feedback`, it.feedback, keys);
   checkExplain(file, `${where}.explain`, it.explain, { required: true });
   checkShuffledPosition(file, where, it);
@@ -1220,7 +1287,7 @@ const checkItem = (file, where, it, ctx) => {
    difficulty?, id? }], 2 to 6, each of any widget kind except longform, opened in turn once the one before is checked. The item
    carries its own id, difficulty, skills, tags and pace, and optionally a title, prose, canvas and question as the stem. Not on a
    quiz item. A code part's tests are cumulative (the earlier code parts' tests run too), so the merged list is held to 15. */
-const PART_KEYS = ['id', 'prose', 'canvas', 'question', 'widget', 'feedback', 'explain', 'difficulty'];
+const PART_KEYS = ['id', 'prose', 'canvas', 'question', 'widget', 'feedback', 'explain', 'difficulty', 'noPosCheck'];
 const checkParts = (file, where, it, ctx) => {
   if (ctx.label === 'quiz') err(file, `${where}.parts`, 'parts is not allowed on a quiz item (a quiz item is one question with one attempt); use a review, homework, exam or bank item');
   if (!Array.isArray(it.parts) || it.parts.length < 2 || it.parts.length > 6) { err(file, `${where}.parts`, 'parts is a list of 2 to 6 parts (a one-part item is an ordinary item)'); return 'parts'; }
@@ -1243,10 +1310,10 @@ const checkParts = (file, where, it, ctx) => {
     if (!isObj(p.widget)) { err(file, `${at}.widget`, 'required field missing'); return; }
     if (p.widget.kind === 'longform') err(file, `${at}.widget`, 'a part cannot be longform: the learner marks a written answer, which a follow-up cannot wait for');
     if (ctx.label === 'bank' && p.widget.kind === 'code') err(file, `${at}.widget`, 'a code part cannot run in the bank deck');
-    const keys = checkWidget(file, `${at}.widget`, p.widget, p.canvas, { question: p.question, allowLongform: false });
+    const keys = checkWidget(file, `${at}.widget`, p.widget, p.canvas, { question: p.question, prose: p.prose ?? it.prose, allowLongform: false });
     checkFeedback(file, `${at}.feedback`, p.feedback, keys);
     checkExplain(file, `${at}.explain`, p.explain);
-    checkShuffledPosition(file, at, p);
+    checkShuffledPosition(file, at, p, it);
     if (p.widget.cumulative !== undefined) {
       if (p.widget.kind !== 'code') err(file, `${at}.widget.cumulative`, 'cumulative applies to a code part only');
       else if (typeof p.widget.cumulative !== 'boolean') err(file, `${at}.widget.cumulative`, 'cumulative is true or false (true by default: earlier code parts\' tests run too)');
@@ -1326,7 +1393,7 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
     checkCanvas(file, `${at}.canvas`, s.canvas);
     if (s.difficulty != null || GRADED.has(s.type)) checkDifficulty(file, `${at}.difficulty`, s.difficulty, 1, 3, 'lesson screen');
     let keys = null;
-    if (s.widget) keys = checkWidget(file, `${at}.widget`, s.widget, s.canvas, { question: s.question });
+    if (s.widget) keys = checkWidget(file, `${at}.widget`, s.widget, s.canvas, { question: s.question, prose: s.prose });
     if (s.type === 'title') { if (!s.prose) err(file, `${at}.prose`, 'a title screen needs one framing sentence'); if (s.widget) err(file, `${at}.widget`, 'a title screen has no widget'); }
     if (s.type === 'demonstrate') {
       if (s.widget) err(file, `${at}.widget`, 'a demonstrate screen has no widget');
@@ -1443,6 +1510,18 @@ const checkRamp = (file, where, items) => {
 };
 /* Paper fields shared by topic, stage and mock exams: scoring, passNet, navigation, skip (ENGINE-BACKLOG 450, 451) */
 const MOCK_STYLES = ['trader', 'research', 'developer', 'strats'];
+/* Session V: role ids a mock paper's tracks may name: the prep.json tracks and the capstones.json roles */
+const roleIds = () => {
+  const ids = new Set(['trader', 'research', 'strats', 'developer']);
+  try { const c = JSON.parse(fs.readFileSync(path.join(CONTENT, 'capstones.json'), 'utf8')); if (Array.isArray(c)) c.forEach(r => { if (r && typeof r.role === 'string') ids.add(r.role); }); } catch { /* optional */ }
+  return ids;
+};
+const checkTracks = (file, where, p) => {
+  if (p.tracks == null) return;
+  if (!Array.isArray(p.tracks) || !p.tracks.length) { err(file, `${where}.tracks`, 'tracks is a non-empty list of role ids (a paper that counts only for learners on those tracks)'); return; }
+  const known = roleIds();
+  p.tracks.forEach(t => { if (!known.has(t)) err(file, `${where}.tracks`, `unknown role "${t}" (known: ${[...known].join(', ')})`); });
+};
 const SCORING_KEYS = ['right', 'wrong', 'blank'];
 const checkPaperRules = (file, where, p, { needPass = false } = {}) => {
   if (p.minutes != null && !(typeof p.minutes === 'number' && p.minutes > 0)) err(file, `${where}.minutes`, 'minutes is a number above 0');
@@ -1506,7 +1585,7 @@ const checkGenerator = (file, where, g, allSkills) => {
 const checkPaperItems = (file, where, items, ctx) => {
   (Array.isArray(items) ? items : []).forEach((it, j) => {
     if (isObj(it) && it.generator !== undefined) { if (ctx.generators === false) err(file, `${where}[${j}].generator`, 'generated items belong in mock and stage exams, not topic exams'); else checkGenerator(file, `${where}[${j}]`, it, ctx.skills); }
-    else checkItem(file, `${where}[${j}]`, it, ctx);
+    else { checkItem(file, `${where}[${j}]`, it, ctx); if (isObj(it) && it.required != null && typeof it.required !== 'boolean') err(file, `${where}[${j}].required`, 'required is true or false: the paper fails if this item is wrong, whatever the share'); }
   });
 };
 /* A mock exam (ENGINE-BACKLOG 453): exams/mock-<id>.json, papers and optional checks, exempt from the topic skill-coverage rule */
@@ -1527,6 +1606,7 @@ const checkMock = (file, id, doc, cur) => {
   const ictx = { lo: 1, hi: 5, label: 'mock', skills: allSkills, skillsRequired: false, needDifficulty: false, allowLongform: true };
   const paperOf = (p, where) => {
     checkPaperRules(file, where, p, { needPass: true });
+    checkTracks(file, where, p);
     if ((!Array.isArray(p.items) || !p.items.length) && !(Array.isArray(p.draw) && p.draw.length)) err(file, `${where}.items`, 'a paper needs at least one item (or a draw)');
     checkPaperItems(file, `${where}.items`, p.items, ictx);
     checkDraw(file, where ? `${where}.draw` : 'draw', p.draw, { sample: doc.sample === true });

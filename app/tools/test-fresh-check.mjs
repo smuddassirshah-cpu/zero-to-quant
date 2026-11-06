@@ -46,6 +46,29 @@ check('a second exam copying the setup is reported against the first', /exams\/d
 r = run(['--exam', 'nope']);
 check('unknown exam exits 2', r.status === 2, String(r.status));
 
+// Session V (600): word-token runs, stop list, code names.
+const stock = 'Put the steps in order. Leave out the two that do not belong. Give four decimal places. Select all that apply.';
+put('courses/c1/l2.json', { id: 'l2', screens: [{ type: 'ladder', title: 'Steps', prose: `${stock} Alpha beta gamma delta.`, question: stock, widget: num(1) }] });
+put('exams/e.json', { id: 'e', items: [{ id: 'e1', prose: `${stock} Epsilon zeta eta theta.`, question: stock, widget: num(1) }] });
+r = run(['--exam', 'e', '--min-run', '4', '--min-share', '0']);
+check('stop-list instruction sentences do not hit', r.status === 0, r.stdout);
+put('courses/c1/l3.json', { id: 'l3', screens: [{ type: 'ladder', title: 'M', prose: 'Maths.', question: 'Evaluate $\\frac{\\alpha_{1} + \\beta_{2}}{\\gamma^{3}} = \\sum_{k=1}^{n} \\frac{x_k}{y_k}$ for $x = 4$ and $y = 7$.', widget: num(1) }] });
+put('exams/f.json', { id: 'f', items: [{ id: 'f1', prose: 'Skeleton.', question: 'Evaluate $\\frac{\\alpha_{2} + \\beta_{5}}{\\gamma^{9}} = \\sum_{k=1}^{m} \\frac{p_k}{q_k}$ for $x = 8$ and $y = 3$.', widget: num(1) }] });
+r = run(['--exam', 'f', '--min-run', '3', '--min-share', '0']);
+check('a LaTeX skeleton with few words does not hit', r.status === 0, r.stdout);
+const codeW = (fn) => ({ kind: 'code', language: 'python', starter: `def ${fn}(xs):\n    pass\n`, solution: `def ${fn}(xs):\n    return sum(xs)\n`, tests: [{ call: `${fn}([1, 2])`, expect: '3' }] });
+put('courses/c1/l4.json', { id: 'l4', screens: [{ type: 'code', title: 'Walk', prose: 'Write it.', widget: codeW('walk_forward_mse') }] });
+put('exams/g.json', { id: 'g', items: [{ id: 'g1', prose: 'A different story about forecasts.', widget: codeW('walk_forward_mse') }] });
+put('exams/h.json', { id: 'h', items: [{ id: 'h1', prose: 'Another story.', widget: codeW('total_of_things') }] });
+r = run(['--exam', 'g']);
+check('a reused code function name hits', r.status === 1 && /code names walk_forward_mse/.test(r.stdout), r.stdout);
+check('a fresh code function name is clean', run(['--exam', 'h']).status === 0);
+check('--no-code switches the code names off', run(['--exam', 'g', '--no-code']).status === 0);
+for (const k of ['c5', 'c6', 'c1']) put(`courses/${k}/l9.json`, { id: `${k}-l9`, screens: [{ type: 'code', title: 'X', prose: 'Write it.', widget: codeW('shared_helper') }] });
+put('exams/i.json', { id: 'i', items: [{ id: 'i1', prose: 'Idiom.', widget: codeW('shared_helper') }] });
+r = run(['--exam', 'i']);
+check('a name used in three courses is an idiom, not a hit', r.status === 0, r.stdout);
+
 rmSync(root, { recursive: true, force: true });
 console.log(fails ? `${fails} failed` : 'all passed');
 process.exit(fails ? 1 : 0);
