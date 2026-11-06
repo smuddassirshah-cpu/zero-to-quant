@@ -2,7 +2,7 @@
 // Freshness check (ENGINE-BACKLOG 588). Flags items whose prose, question or widget prompt text
 // copies a lesson screen, quiz, review, homework or other exam item, even with changed numbers.
 // Usage (from app/): node tools/fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams
-//                    [--threshold n] [--ngram n] [--json] [--content <dir>] [--file <json> [--as exams]]
+//                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--json] [--content <dir>] [--file <json> [--as exams]]
 // Exit 1 on any hit. A hit is a shared word n-gram (default 8 tokens, numbers normalised to "#")
 // or a 5-word shingle Jaccard at or above the threshold (default 0.5).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -14,6 +14,7 @@ const opt = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] 
 const has = (k) => argv.includes(k);
 const APP = join(dirname(fileURLToPath(import.meta.url)), '..');
 const C = opt('--content', join(APP, 'content'));
+const MIN_RUN = Number(opt('--min-run', 8)), MIN_SHARE = Number(opt('--min-share', 0));
 const THRESH = Number(opt('--threshold', 0.5));
 const NGRAM = Number(opt('--ngram', 8));
 const SHINGLE = Number(opt('--shingle', 5)), BOILER = Number(opt('--boiler', 20)), MIN_SHINGLES = 8, MIN_WORDS = 3, MIN_WORDS_N = 3;
@@ -96,6 +97,17 @@ corpus.forEach((x, i) => {
   for (const g of x.shingles) { let a = idxS.get(g); if (!a) idxS.set(g, (a = [])); a.push(i); }
 });
 
+// Longest run of tokens the two texts share (longest common substring), with its text.
+function longestRun(a, b) {
+  let best = 0, end = 0, prev = new Array(b.length + 1).fill(0);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = new Array(b.length + 1).fill(0);
+    for (let j = 1; j <= b.length; j++) if (a[i - 1] === b[j - 1]) { cur[j] = prev[j - 1] + 1; if (cur[j] > best) { best = cur[j]; end = i; } }
+    prev = cur;
+  }
+  return { len: best, text: a.slice(end - best, end).slice(0, 30).join(' ') };
+}
+
 function scan(rel, targetUnits, selfId) {
   const hits = [];
   for (const t of targetUnits) {
@@ -111,7 +123,10 @@ function scan(rel, targetUnits, selfId) {
       const inter = common.get(i) ?? 0;
       const score = +(inter / (sh.size + s.shingles.size - inter || 1)).toFixed(2);
       const big = Math.min(sh.size, s.shingles.size) >= MIN_SHINGLES;
-      if (gramHit.has(i)) hits.push({ target: `${rel}:${t.path}`, source: `${s.file}:${s.path}`, kind: 'ngram', ngram: gramHit.get(i), score });
+      if (gramHit.has(i)) {
+        const r = longestRun(t.tk, s.tk), share = +(r.len / t.tk.length).toFixed(2);
+        if (r.len >= MIN_RUN && share >= MIN_SHARE) hits.push({ target: `${rel}:${t.path}`, source: `${s.file}:${s.path}`, kind: 'ngram', ngram: r.text, run: r.len, share, score });
+      }
       else if (big && score >= THRESH) hits.push({ target: `${rel}:${t.path}`, source: `${s.file}:${s.path}`, kind: 'jaccard', score });
     }
   }
@@ -133,7 +148,7 @@ if (direct) {
   else if (opt('--drill')) rel = `drills/${opt('--drill')}.json`;
   else if (opt('--bank')) rel = `bank/${opt('--bank').replace(/^.*\//, '').replace(/\.json$/, '')}.json`;
   if (!rel || !existsSync(join(C, rel))) {
-    console.error('usage: fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams [--threshold n] [--json]');
+    console.error('usage: fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams [--threshold n] [--min-run n] [--min-share x] [--json]');
     process.exit(2);
   }
   targets.push({ rel, units: unitsOf(join(C, rel), rel).units, id: fileIds[rel] });
@@ -142,12 +157,12 @@ if (direct) {
 const best = new Map();
 for (const t of targets) for (const h of scan(t.rel, t.units, t.id)) {
   const k = `${h.target}|${h.source.split(':')[0]}`, o = best.get(k);
-  if (!o || (h.kind === 'ngram' && o.kind !== 'ngram') || (h.kind === o.kind && h.score > o.score)) best.set(k, h);
+  if (!o || (h.kind === 'ngram' && o.kind !== 'ngram') || (h.kind === o.kind && (h.run ?? 0) > (o.run ?? 0)) || (h.kind === o.kind && h.run === o.run && h.score > o.score)) best.set(k, h);
 }
 const all = [...best.values()];
 if (has('--json')) console.log(JSON.stringify(all, null, 1));
 else {
-  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'ngram' ? `ngram "${h.ngram}" (jaccard ${h.score})` : `jaccard ${h.score}`}`);
+  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
   console.log(`${all.length} hit(s) in ${targets.length} target file(s)`);
 }
 process.exitCode = all.length ? 1 : 0;   // not process.exit: piped output must flush

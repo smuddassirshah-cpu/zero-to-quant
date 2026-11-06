@@ -86,3 +86,80 @@ Total: 1756 hits on 555 items in 44 exam files.
 ## Reading the list
 
 Most hits are a lesson sentence reused in an exam item (a stem such as "what is the smallest n that works for"), not a copied setup. Review the ones with a score of 0.15 or more first. Calibration: the pre-fix 0.6 item [6] hits `proof/l3-if-then` screens[5]; the pre-fix 1.10 item [12] hits `analysis/l20` screens[3]; the pre-fix 1.10 item [13] (integrand changed only, setup shared with `analysis/homework-5` h-two-limits) is not caught, because it shares fewer than eight tokens.
+
+## Run length and share (follow-up to 588)
+
+Each n-gram hit is now extended to the longest token run the two texts share (`run`, text capped at 30 tokens) and `share` is run over the target item token count. Gate with `--min-run n` (default 8) and `--min-share x` (default 0). Counts below are on the current tree, one hit per target item and source file; the 0.5 Jaccard rule added no hits.
+
+| Setting | Hits | Items hit |
+|---|---|---|
+| run >= 8 | 1756 | 555 |
+| run >= 10 | 841 | 337 |
+| run >= 12 | 492 | 235 |
+| run >= 15 | 291 | 158 |
+| run >= 20 | 154 | 90 |
+| share >= 0.3 | 653 | 259 |
+| share >= 0.5 | 296 | 147 |
+
+### Per exam (hits)
+
+| Exam | run>=8 | >=10 | >=12 | >=15 | >=20 | share>=0.3 | share>=0.5 |
+|---|---|---|---|---|---|---|---|
+| mock-oa-sig-2 | 74 | 59 | 42 | 38 | 32 | 59 | 37 |
+| mock-oa-sig-3 | 75 | 59 | 42 | 38 | 32 | 59 | 38 |
+| mock-oa-sig | 75 | 59 | 42 | 38 | 32 | 59 | 38 |
+| mock-oa-trader-2 | 98 | 55 | 37 | 28 | 12 | 69 | 32 |
+| mock-oa-trader | 96 | 70 | 37 | 31 | 15 | 71 | 40 |
+| mock-superday-trader | 50 | 39 | 37 | 9 | 1 | 10 | 1 |
+| mock-oa-trader-3 | 91 | 55 | 35 | 29 | 13 | 60 | 32 |
+| topic-1.10 | 56 | 34 | 22 | 6 | 2 | 2 | 0 |
+| topic-1.4 | 141 | 43 | 19 | 10 | 3 | 26 | 3 |
+| topic-3.3 | 41 | 26 | 17 | 5 | 0 | 3 | 2 |
+| topic-3.4 | 43 | 17 | 13 | 5 | 1 | 2 | 0 |
+| topic-1.7 | 61 | 29 | 12 | 7 | 0 | 2 | 0 |
+| topic-2.5 | 29 | 16 | 12 | 1 | 0 | 1 | 0 |
+| mock-trade-sample | 11 | 11 | 11 | 2 | 1 | 1 | 0 |
+| topic-1.11 | 54 | 18 | 11 | 3 | 1 | 3 | 2 |
+| topic-0.6 | 21 | 13 | 10 | 5 | 1 | 2 | 1 |
+| topic-1.6 | 38 | 17 | 10 | 4 | 0 | 3 | 0 |
+| stage-0 | 74 | 31 | 9 | 6 | 1 | 39 | 32 |
+| topic-1.3 | 95 | 23 | 9 | 4 | 0 | 14 | 1 |
+| topic-1.5 | 53 | 13 | 9 | 4 | 0 | 14 | 4 |
+| mock-sample-parts | 9 | 6 | 6 | 3 | 3 | 7 | 6 |
+| stage-1 | 107 | 35 | 6 | 1 | 0 | 67 | 5 |
+| topic-1.2 | 20 | 10 | 6 | 4 | 2 | 8 | 2 |
+| topic-2.6 | 18 | 9 | 6 | 1 | 0 | 4 | 0 |
+| topic-3.2 | 29 | 7 | 5 | 3 | 0 | 4 | 0 |
+| topic-0.1 | 12 | 4 | 4 | 0 | 0 | 8 | 6 |
+| topic-0.3 | 26 | 7 | 4 | 1 | 1 | 19 | 10 |
+| mock-superday-research | 8 | 5 | 3 | 0 | 0 | 1 | 0 |
+| topic-2.2 | 37 | 5 | 3 | 0 | 0 | 1 | 0 |
+| mock-oa-quant-data | 15 | 6 | 2 | 2 | 0 | 4 | 0 |
+| topic-2.3 | 22 | 8 | 2 | 1 | 0 | 0 | 0 |
+| topic-3.5 | 37 | 4 | 2 | 1 | 0 | 3 | 0 |
+| mock-interleave-sample | 5 | 2 | 1 | 0 | 0 | 0 | 0 |
+| mock-sample | 1 | 1 | 1 | 0 | 0 | 1 | 0 |
+| topic-0.7 | 32 | 17 | 1 | 0 | 0 | 0 | 0 |
+| topic-1.8 | 7 | 3 | 1 | 1 | 1 | 1 | 0 |
+| topic-1.9 | 7 | 3 | 1 | 0 | 0 | 0 | 0 |
+| topic-2.4 | 5 | 1 | 1 | 0 | 0 | 1 | 0 |
+| topic-3.1 | 19 | 5 | 1 | 0 | 0 | 2 | 0 |
+| mock-sample-data | 1 | 1 | 0 | 0 | 0 | 1 | 0 |
+| topic-0.2 | 17 | 9 | 0 | 0 | 0 | 14 | 4 |
+| topic-0.4 | 11 | 1 | 0 | 0 | 0 | 5 | 0 |
+| topic-1.1 | 15 | 2 | 0 | 0 | 0 | 3 | 0 |
+| topic-2.1 | 20 | 3 | 0 | 0 | 0 | 0 | 0 |
+
+### Known cases
+
+| Case | run | share | Caught at |
+|---|---|---|---|
+| 0.6 item [6] vs proof l3 screens[5] | 13 | 0.30 | run >= 12 (not 15); share >= 0.3 |
+| 1.10 item [12] vs analysis l20 screens[3] | 10 | 0.14 | run >= 10 only; no share setting |
+| 1.10 item [13] vs analysis homework-5 h-two-limits | none | none | no setting |
+
+Item [13] only changes the integrand: it shares fewer than 8 consecutive tokens with homework-5 and its shingles score near 0, so no run, share or Jaccard setting catches it without flooding the list. A word-level tool cannot see an integrand-only change; that needs the second reader.
+
+### Recommended default gate
+
+Gate on `--min-run 12`: 492 hits on 235 items today, still a lot, but it keeps the verbatim copy (0.6 [6]) and drops stock stems. Use `--min-run 10` (841 hits on 337 items) to catch [12]-style cases too; the extra hits are mostly stems and need a read. `--min-share 0.3` (653 hits) adds nothing on the known cases and is better as a sort key. The tool default stays 8 for the scan; authors pass 12 for a hard gate.
