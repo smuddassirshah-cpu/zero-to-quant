@@ -199,7 +199,7 @@ E('l13', 'quiz[1].widget.answer', 288); E('l13', 'quiz[0].widget.answer', 0.75)
 # ---------- l14 ----------
 CR = [v for mo, v in zip(months, xe) if mo in (420, 421, 422)]
 two('brief crash', np.round(np.array(CR) * 100, 1), [-25.4, -13.3, -15.2])
-E('l14', 'screens[0].widget.answer', round(CR[0], 3)); E('l14', 'screens[0].explain.text', p2(CR[1], 1)); E('l14', 'screens[0].explain.text', p2(CR[2], 1))
+E('l14', 'screens[0].widget.answer', round(CR[0], 3)); E('l14', 'screens[0].explain.text', abs(p2(CR[1], 1))); E('l14', 'screens[0].explain.text', abs(p2(CR[2], 1)))
 f1 = form(re, 6, 1); Wt = np.zeros(re.shape); Wl = np.zeros(re.shape)
 for s in range(7, 480):
     dec = wts(f1[s])[1]; Wt[s] = (dec == 9) / 50.0; Wl[s] = (dec == 0) / 50.0
@@ -239,7 +239,7 @@ VCR = vs[i0 - 6:i0 - 3]; SC = np.minimum(1.0, 0.05 / sd6)[i0 - 6:i0 - 3]
 E('l14', 'screens[5].widget.answer', round(VCR[0], 3))
 for k in range(3):
     E('l14', f'screens[5].canvas.params.rows[{k}][2]', round(SC[k], 2)); E('l14', f'screens[5].canvas.params.rows[{k}][3]', p2(VCR[k], 1))
-E('l14', 'screens[5].explain.text', p2(xe[6:].mean())); E('l14', 'screens[5].explain.text', p2(vs.mean())); E('l14', 'screens[5].explain.text', p2(vs2.min(), 1))
+E('l14', 'screens[5].explain.text', p2(xe[6:].mean())); E('l14', 'screens[5].explain.text', p2(vs.mean())); E('l14', 'screens[5].explain.text', abs(p2(vs2.min(), 1)))
 E('l14', 'screens[5].explain.text', int(np.argmin(vs2)) + 18)
 E('l14', 'screens[6].prose', p2(NOCR)); E('l14', 'screens[7].widget.answer', -0.9 * 0.12)
 wst = np.argsort(xe, kind='stable')[:5]
@@ -332,6 +332,17 @@ for fid, doc in lv.files.items():
                 fails.append(f'{fid}: solution fails tests {[i + 1 for i, v in enumerate(res_) if not v]}')
             if not must and all(res_):
                 fails.append(f'{fid}: starter passes every test')
+# ---------- fix pass checks ----------
+# l12: the -0.13 beta is the window ending at month 419 (months 396 to 419), not 408
+if abs(rb24[i0 - 24] + 0.13) > 0.005:
+    fails.append('l12 window 419 beta')
+# l13: 0.58% after removing the crash is above half of the pre-1990 1.04% (0.52%): "little more than half"
+if not (0.5 * MPRE < NOCR < 0.6 * MPRE):
+    fails.append('l13 half claim')
+# l14: month 421 is the eighth-worst month, so "only eighth"
+if int(np.sum(xe < xe[421 - 12])) != 7:
+    fails.append('l14 month 421 rank')
+
 print(f'code widgets checked: {ncode}')
 for f_ in fails:
     print('FAIL', f_)
