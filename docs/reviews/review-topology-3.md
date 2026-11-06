@@ -58,3 +58,31 @@ Format: `n. path | JSON path | severity | problem | evidence | fix`. Severity: w
 ## Summary
 
 20 findings: 3 wrong, 13 misleading, 2 voice, 2 layout. No engine change needed. The five figures the author's script caught in l12 and l13 are now right; l12 and l13 still carry findings 3, 10, 11, 12, 13 and 16, all in prose, hints and tolerances rather than in stated figures.
+
+## Fix pass
+
+1. fixed: l9 hint now says only $I_2$ holds 0.35 (0.6 lies in $I_2$ and $I_5$, checked in the number script).
+2. fixed: "41 open balls of radius 0.3% round the grid points"; the script shows radius 0.25 open balls miss the midpoints and 0.3 covers.
+3. fixed: l12 hint and explain now state $q = 1$ divides by zero and $q > 1$ returns 0 (both run in CPython, now asserted in the script). Code and tests unchanged.
+4. fixed: l9 idea now "every open cover of a compact metric space"; l10 option cites compactness of $K$ (reworded to stay under 20 words).
+5. fixed: l9 line why and byKey.d1 say "may" and "can be" infinitely many.
+6. fixed: greedy-reach justification now by induction on picks.
+7. fixed: l10 Hausdorff step cites l9 with disjoint open sets for balls.
+8. fixed: l11 prose, options[1].why and options[2].why use $2x - 1$ then l7's map; arctan cited "in the sense of l7".
+9. fixed: l11 idea and feedback.correct now say the discrete metric.
+10. fixed: kept $[0, 2]$; why adds that $|\sin|$ reaches 1 at $\tfrac\pi2$, feedback.correct says "at least one", explain notes the missing $q < 1$ (split into three sentences for the voice scan).
+11. fixed: l12 noseries and off, l13 eighty-six now state the learner action; 0.5^20 x 2 = 1.9e-6, 125 q^245 = 0.0101 recomputed.
+12. fixed: l13 explain now states the Lipschitz and near-the-start hypotheses (shortened to one sentence under 20 words).
+13. fixed: ratio tol abs 0.0005; exp tol abs 6e-5 (0.0312 and 0.0313 both inside; answer range 0.03075 to 0.03085 clear). The script now tests every numeric wrong against its question's stated rounding, with half-up and half-even.
+14. fixed: review-3 option why reworded; question now reads "beyond completeness".
+15. fixed: homework-3 prose adds $K, F \ne \varnothing$.
+16. fixed: l13 quiz option why now "the error can be q/(1-q) times the last step".
+17. fixed: row label reworded.
+18. fixed: `math.isclose` in code format.
+19. fixed: `"dashed": true` added to both gap segments.
+20. fixed: l10 controls a in 0 to 2, b in 2 to 4 (start 3); $[0, 3]$ still reachable.
+
+Counts: 20 fixed, 0 disputed, 0 deferred.
+
+Gates: validate 0 errors; voice scan 0 and 0; `python3 docs/reports/topology-L3-numbers.py` exit 0 (242 of 242 plus the new asserts); playthrough green with and without `--mobile` for l9 to l13 (`--lesson`) and review-3, homework-3 (`--set`).
+Graded answers changed: none.

@@ -5,7 +5,7 @@ bisection, a logarithm formula, Newton on Phi, a dense grid). The script also ru
 CPython (solution passes, starter fails) and prints the margin at each stopping boundary, since Pyodide must land on
 the same integer count.
 """
-import sys, os, math, json
+import sys, os, math, json, re
 from fractions import Fraction as F
 from itertools import combinations
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'tools'))
@@ -80,6 +80,58 @@ E("l9", "screens[10].widget.rows[0][1].answer", 41); E("l9", "screens[10].widget
 E("l9", "screens[10].widget.rows[0][1].wrong[0].value", 40); E("l9", "screens[10].widget.rows[1][1].wrong[0].value", 10000)
 for v in (41, 0.25, 5000): E("l9", "screens[10].explain.text", v)
 E("l9", "screens[10].prose", 20000)
+# Review findings 1 and 2: interval membership (open intervals) and the ball cover at grid midpoints
+inside = lambda x: [k + 1 for k, (lo, hi) in enumerate(I) if lo < x < hi]
+assert inside(0.35) == [2], inside(0.35)          # only I2 holds 0.35 (I1 ends there, open)
+assert inside(0.6) == [2, 5], inside(0.6)         # I5 holds 0.6 too, so the hint must not claim I2 alone
+assert '0.6' not in lv.text("l9", "screens[0].hints[2].text"), 'hint still claims 0.6'
+def ball_cover(r):                                 # open balls of radius r at -10, -9.5, ..., 10 against every 0.005 step and every midpoint
+    mids = [F(-10) + F(1, 2) * k + F(1, 4) for k in range(40)]
+    pts = mids + [F(x, 1000) for x in range(-10000, 10001, 5)]
+    return all(any(abs(p - c) < r for c in pts_) for p in pts)
+assert not ball_cover(F(1, 4)), 'radius 0.25 open balls must miss the midpoints'
+assert ball_cover(F(3, 10)), 'radius 0.3 open balls must cover the interval'
+assert '0.3%' in lv.text("l9", "screens[10].explain.text") and 'open balls' in lv.text("l9", "screens[10].explain.text")
+# Review finding 13 and the whole level: each wrong value's slip, typed to the answer's own rounding, must lie outside the
+# answer tolerance and inside its own (both 3 s.f. roundings of 1/32 are tried). The l13 screen asks for 3 s.f.
+from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN
+def sf3(x, mode):
+    d = Decimal(repr(x)); e = d.adjusted() - 2
+    return float(d.quantize(Decimal(1).scaleb(e), rounding=mode))
+_w = json.load(open(os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'topology', 'l13-fixed-point-iteration.json')))['screens'][11]['widget']
+_ans, _atol = _w['answer'], _w['tol']['abs']
+assert _ans == 0.0308 and abs(_ans - (1 - math.exp(-1 / 32))) < 5e-5
+for _x in _w['wrong']:
+    for _m in (ROUND_HALF_UP, ROUND_HALF_EVEN):
+        _r = sf3(_x['value'], _m)
+        if abs(_r - _ans) <= _atol + 1e-9: fails.append(f"l13 wrong {_x['id']} typed to 3 s.f. ({_r}) is graded correct")
+        if abs(_r - _x['value']) > _x['tol']['abs'] + 1e-12: fails.append(f"l13 wrong {_x['id']} typed to 3 s.f. ({_r}) is outside its own tolerance")
+# The same test for every numeric wrong whose question states a rounding ("four decimal places", "3 significant figures"):
+# the slip typed that way must lie outside the answer tolerance and inside its own tolerance.
+_N = {'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6}
+def _typed(x, dp, sig, mode):
+    d = Decimal(repr(x))
+    q = d.adjusted() - (sig - 1) if sig else -dp
+    return float(d.quantize(Decimal(1).scaleb(q), rounding=mode))
+for _f in ['l9-open-covers', 'l10-compact-images', 'l11-complete-spaces', 'l12-contraction-mapping', 'l13-fixed-point-iteration', 'homework-3', 'review-3']:
+    def _scan(o, f=_f):
+        if isinstance(o, dict):
+            w = o.get('widget')
+            if isinstance(o.get('question'), str) and isinstance(w, dict) and w.get('kind') == 'numeric' and w.get('wrong'):
+                m = re.search(r'(\w+) (decimal places|significant figures)', o['question'])
+                if m and (m.group(1) in _N or m.group(1).isdigit()):
+                    n = _N.get(m.group(1)) or int(m.group(1)); sig = m.group(2).startswith('sig')
+                    a = w['answer']; at = (w.get('tol') or {}).get('abs', 0) + 1e-9
+                    for x in w['wrong']:
+                        wt = (x.get('tol') or {}).get('abs', 1e-9) + 1e-12
+                        for mode in (ROUND_HALF_UP, ROUND_HALF_EVEN):
+                            r = _typed(x['value'], None if sig else n, n if sig else None, mode)
+                            if abs(r - a) <= at: fails.append(f"{f}: wrong {x['id']} typed as asked ({r}) is graded correct")
+                            elif abs(r - x['value']) > wt: fails.append(f"{f}: wrong {x['id']} typed as asked ({r}) is outside its own tolerance")
+            for v in o.values(): _scan(v)
+        elif isinstance(o, list):
+            for v in o: _scan(v)
+    _scan(json.load(open(os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'topology', _f + '.json'))))
 
 # ================= l10 =================
 f = lambda x: x * math.exp(-x)
@@ -355,6 +407,16 @@ for n in range(1, 40):
     xn = math.cos(x); b_ = qq / (1 - qq) * abs(xn - x); x = xn
     if n in (38, 39): print(f'margin cos a posteriori step {n}: {b_:.3e} (tol 1e-6)')
 
+# Review findings 3 and 10: the unguarded l12 loop at q = 1 and q > 1; |sin| reaches 1 on [0, 2]
+def _unguarded(q, d01, tol):
+    n = 0
+    while q ** n / (1 - q) * d01 >= tol: n += 1
+    return n
+try: _unguarded(1, 1, 0.01); fails.append('l12 unguarded q = 1 did not raise')
+except ZeroDivisionError: pass
+assert _unguarded(1.5, 1, 0.01) == 0
+assert max(abs(math.sin(k / 10000)) for k in range(20001)) > 0.99999999 and 0 < math.pi / 2 < 2
+assert abs(0.5 ** 20 * 2 - 1.9e-6) < 5e-8 and 0.5 ** 20 < 1e-6 and 125 * (0.02 / 1.06 * 0 + (1.02 / 1.06) ** 245) > 0.01
 lv.check_wrongs()
 for f_ in fails: print('FAIL', f_)
 if fails: sys.exit(1)
