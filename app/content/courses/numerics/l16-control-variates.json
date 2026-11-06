@@ -1,0 +1,1224 @@
+{
+ "id": "l16-control-variates",
+ "course": "numerics",
+ "title": "Control variates and antithetics",
+ "minutes": 15,
+ "objectives": [
+  "Cut Monte Carlo error with antithetic draws and a control variate."
+ ],
+ "skills": [
+  "nm-mc"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Three estimators, one call",
+   "prose": "Three running means of our call, on a log axis of draws. **Plain** averages discounted payoffs. **Antithetic** averages each payoff with its mirror at $-z$. **Control** subtracts a multiple of the discounted share's surprise, whose mean we know. Watch the bands.",
+   "canvas": {
+    "kind": "series",
+    "params": {
+     "xScale": "log",
+     "y": [
+      9,
+      12
+     ],
+     "height": 280,
+     "money": "£",
+     "xLabel": "Draws",
+     "yLabel": "Running mean (£)",
+     "series": [
+      {
+       "id": "plain",
+       "label": "plain",
+       "colour": 1,
+       "sim": {
+        "outcome": "exp(-0.05)*max(100*exp(0.03 + 0.2*z) - 100, 0)",
+        "let": {
+         "z": "n()"
+        },
+        "n": 20000,
+        "seed": 11,
+        "running": "mean",
+        "band": 2
+       }
+      },
+      {
+       "id": "anti",
+       "label": "antithetic",
+       "colour": 2,
+       "sim": {
+        "outcome": "0.5*exp(-0.05)*(max(100*exp(0.03 + 0.2*z) - 100, 0) + max(100*exp(0.03 - 0.2*z) - 100, 0))",
+        "let": {
+         "z": "n()"
+        },
+        "n": 20000,
+        "seed": 11,
+        "running": "mean",
+        "band": 2
+       }
+      },
+      {
+       "id": "cv",
+       "label": "control",
+       "colour": 3,
+       "sim": {
+        "outcome": "exp(-0.05)*max(100*exp(0.03 + 0.2*z) - 100, 0) - 0.6736*(exp(-0.05)*100*exp(0.03 + 0.2*z) - 100)",
+        "let": {
+         "z": "n()"
+        },
+        "n": 20000,
+        "seed": 11,
+        "running": "mean",
+        "band": 2
+       }
+      }
+     ],
+     "hlines": [
+      {
+       "id": "bs",
+       "y": 10.4506,
+       "label": "£10.4506"
+      }
+     ]
+    },
+    "state": {
+     "caption": "Each band is the running mean ± 2 SE. All three share the same normal draws; the antithetic line pairs each $z$ with $-z$."
+    },
+    "controls": [
+     {
+      "bind": "reveal",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "start": 1,
+      "format": "percent",
+      "label": "Draws shown"
+     }
+    ]
+   },
+   "question": "Which band is narrowest after 10,000 draws?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cv",
+      "text": "Control",
+      "correct": true
+     },
+     {
+      "id": "anti",
+      "text": "Antithetic",
+      "why": "Antithetic narrows the band, but less: its pair variance is half the plain one, the control's a seventh."
+     },
+     {
+      "id": "plain",
+      "text": "Plain",
+      "why": "Plain is the widest band. The other two reuse what they know about the share."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare the shaded widths at the right of the chart."
+    },
+    {
+     "rung": "point",
+     "text": "One band hugs the line at £10.4506.",
+     "highlight": [
+      "cv"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "The control's band is the narrowest.",
+    "generic": "Not quite right. Compare the bands at 10,000 draws."
+   },
+   "explain": {
+    "text": "The control's band is about $\\sqrt{6.9} = 2.6$ times narrower than the plain one. Antithetics help less. Both use the same draws, so the gap is the estimator, not luck."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A control with a known mean",
+   "prose": "Let $Y$ be the discounted payoff and $X = e^{-rT}S_T$ the discounted share, whose mean is exactly $S_0 = 100$. The **control variate** estimator averages $Y - b(X - 100)$: still unbiased, for any $b$. The table has the exact moments for our call.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Exact value"
+     ],
+     "rows": [
+      [
+       "$\\text{Var}(Y)$",
+       "216.66"
+      ],
+      [
+       "$\\text{Var}(X)$",
+       "408.11"
+      ],
+      [
+       "$\\text{Cov}(Y, X)$",
+       "274.91"
+      ],
+      [
+       "$E[X]$",
+       "100"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which $b$ minimises $\\text{Var}(Y - bX)$? It is $\\text{Cov}(Y, X)/\\text{Var}(X)$.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6736,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "0.6736 = 274.91 / 408.11",
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 1.4845,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "vy",
+      "value": 1.2688,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the covariance by the control's variance."
+    },
+    {
+     "rung": "point",
+     "text": "$274.91/408.11$.",
+     "highlight": [
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "About 0.6736."
+    }
+   ],
+   "feedback": {
+    "correct": "$b^* = 0.6736$.",
+    "generic": "Not quite right. Divide $\\text{Cov}(Y, X)$ by $\\text{Var}(X)$.",
+    "byKey": {
+     "inv": "You divided the other way. $b^*$ is the covariance over the control's variance.",
+     "vy": "You divided by $\\text{Var}(Y)$. The control's own variance goes underneath."
+    }
+   },
+   "explain": {
+    "text": "$274.91/408.11 = 0.6736$. It is the slope of a regression of $Y$ on $X$. From seed 0's paths it comes out as 0.67307."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "Why that b",
+   "prose": "Derive $b^*$ and what is left of the variance.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Exact value"
+     ],
+     "rows": [
+      [
+       "$\\text{Var}(Y)$",
+       "216.66"
+      ],
+      [
+       "$\\text{Var}(X)$",
+       "408.11"
+      ],
+      [
+       "$\\text{Cov}(Y, X)$",
+       "274.91"
+      ],
+      [
+       "$E[X]$",
+       "100"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put the lines in order. Leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "$\\text{Var}(Y - bX) = \\text{Var}(Y) - 2b\\,\\text{Cov}(Y, X) + b^2\\text{Var}(X)$, since variance is bilinear."
+     },
+     {
+      "id": "o2",
+      "text": "Its derivative in $b$ is $-2\\,\\text{Cov}(Y, X) + 2b\\,\\text{Var}(X)$."
+     },
+     {
+      "id": "o3",
+      "text": "Setting it to 0 gives $b^* = \\text{Cov}(Y, X)/\\text{Var}(X)$, a minimum as $2\\,\\text{Var}(X) > 0$."
+     },
+     {
+      "id": "o4",
+      "text": "Substituting, the variance is $\\text{Var}(Y) - \\text{Cov}(Y, X)^2/\\text{Var}(X)$."
+     },
+     {
+      "id": "o5",
+      "text": "With $\\rho = \\text{Cov}(Y, X)/\\sqrt{\\text{Var}(Y)\\text{Var}(X)}$ that is $\\text{Var}(Y)(1 - \\rho^2)$."
+     },
+     {
+      "id": "d1",
+      "text": "Take $b = 1$, because the call moves one for one with the share.",
+      "why": "You fixed $b$ by feel. At $b = 1$ the variance is $216.66 - 549.81 + 408.11 = 74.95$, more than twice the optimum 31.48."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start by expanding the variance of a difference."
+    },
+    {
+     "rung": "point",
+     "text": "A quadratic in $b$ is minimised where its derivative is 0.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Put $b^*$ back in, then write the result with $\\rho$."
+    }
+   ],
+   "feedback": {
+    "correct": "The control removes the share of $\\text{Var}(Y)$ that $X$ explains.",
+    "generic": "Not quite right. Expand, differentiate, solve, substitute.",
+    "byKey": {
+     "d1": "You set $b = 1$. The call moves about 0.64 per £1 of share at the money, so $b = 1$ over-corrects."
+    }
+   },
+   "explain": {
+    "text": "The variance is a quadratic in $b$ with its minimum at $\\text{Cov}/\\text{Var}(X)$. What is left is $\\text{Var}(Y)(1 - \\rho^2)$, here $216.66 \\times (1 - 0.92450^2) = 31.48$. The control removes the part of $Y$ that moves with $X$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The factor",
+   "prose": "For a fixed standard error, the paths needed scale with the variance per path. Plain Monte Carlo has $\\text{Var}(Y)$; the control has $\\text{Var}(Y)(1 - \\rho^2)$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Exact value"
+     ],
+     "rows": [
+      [
+       "$\\text{Var}(Y)$",
+       "216.66"
+      ],
+      [
+       "$\\text{Var}(X)$",
+       "408.11"
+      ],
+      [
+       "$\\text{Cov}(Y, X)$",
+       "274.91"
+      ],
+      [
+       "$E[X]$",
+       "100"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "By what factor does the control cut the paths needed? Write it in terms of $\\rho$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{1}{1-\\rho^2}",
+    "accept": [
+     "1/(1-\\rho^2)",
+     "1/(1-ρ^2)"
+    ],
+    "wrong": [
+     {
+      "id": "nosq",
+      "tex": "\\frac{1}{1-\\rho}"
+     },
+     {
+      "id": "fraction",
+      "tex": "1-\\rho^2"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the plain variance by the control's."
+    },
+    {
+     "rung": "point",
+     "text": "$\\text{Var}(Y)$ over $\\text{Var}(Y)(1 - \\rho^2)$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1}{1 - \\rho^2}$."
+    }
+   ],
+   "feedback": {
+    "correct": "The **variance-reduction factor** is $\\tfrac{1}{1 - \\rho^2}$.",
+    "generic": "Not quite right. Take the ratio of the two variances.",
+    "byKey": {
+     "nosq": "You dropped the square. The residual variance has $1 - \\rho^2$.",
+     "fraction": "That is the share of variance left. The factor is its reciprocal."
+    }
+   },
+   "explain": {
+    "text": "The ratio of variances is $\\tfrac{1}{1 - \\rho^2}$. It grows fast as $\\rho \\to 1$: 5.3 at $\\rho = 0.9$ and 50 at $\\rho = 0.99$. A control is worth having only if it is highly correlated."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "For our call",
+   "prose": "For our call and the discounted share, $\\rho = 0.92450$. l15 needed 2.17 million plain paths for a standard error of £0.01.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Quantity",
+      "Exact value"
+     ],
+     "rows": [
+      [
+       "$\\text{Var}(Y)$",
+       "216.66"
+      ],
+      [
+       "$\\text{Var}(X)$",
+       "408.11"
+      ],
+      [
+       "$\\text{Cov}(Y, X)$",
+       "274.91"
+      ],
+      [
+       "$E[X]$",
+       "100"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the variance-reduction factor?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.88,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "6.88 = 1 / (1 − 0.92450²)",
+    "wrong": [
+     {
+      "id": "nosq",
+      "value": 13.25,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "rho2",
+      "value": 0.855,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Square 0.92450 first."
+    },
+    {
+     "rung": "point",
+     "text": "$0.92450^2 = 0.85471$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1/(1 - 0.85471)$."
+    }
+   ],
+   "feedback": {
+    "correct": "6.88: about 315,000 paths instead of 2.17 million.",
+    "generic": "Not quite right. Compute $1/(1 - \\rho^2)$.",
+    "byKey": {
+     "nosq": "You used $1/(1 - \\rho)$. Square $\\rho$ first.",
+     "rho2": "That is $\\rho^2$, the share of variance removed. The factor is $1/(1 - \\rho^2)$."
+    }
+   },
+   "explain": {
+    "text": "$1/(1 - 0.85471) = 6.88$. The same £0.01 then needs $2{,}166{,}609/6.88 \\approx 315{,}000$ paths. The control is almost free: one more multiply per path."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The seeded run",
+   "prose": "Seed 0, 100,000 paths. Plain: £10.4362 with SE £0.0465. With the control and $b$ estimated from the same paths ($\\hat b = 0.67307$): £10.4484 with SE £0.0178.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Estimator",
+      "Price",
+      "SE"
+     ],
+     "rows": [
+      [
+       "Plain",
+       "£10.4362",
+       "£0.0465"
+      ],
+      [
+       "Control",
+       "£10.4484",
+       "£0.0178"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What variance reduction does this run show, as the square of the ratio of the two standard errors?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.86,
+    "tol": {
+     "abs": 0.05
+    },
+    "accept": "6.86 = (0.0465 / 0.0178)²",
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 2.62,
+      "tol": {
+       "abs": 0.03
+      }
+     },
+     {
+      "id": "inv",
+      "value": 0.146,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the plain SE by the control's."
+    },
+    {
+     "rung": "point",
+     "text": "$0.0465/0.0178 = 2.62$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Square it."
+    }
+   ],
+   "feedback": {
+    "correct": "Close to the exact factor 6.88.",
+    "generic": "Not quite right. Square the ratio of the standard errors.",
+    "byKey": {
+     "ratio": "That is the ratio of errors. Variance goes with its square.",
+     "inv": "You divided the other way. Put the plain SE on top."
+    }
+   },
+   "explain": {
+    "text": "$(0.0465/0.0178)^2 = 6.86$, against the exact 6.88. Estimating $b$ from the paths costs almost nothing at this size. The control price is 0.12 SE from £10.4506."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Antithetic pairs",
+   "prose": "Antithetics price each $z$ twice, at $z$ and $-z$, and average the pair. For our call the two payoffs in a pair have correlation $-0.501$. A pair average then has variance $\\tfrac12\\text{Var}(Y)(1 + \\rho) = 54.06$. Two independent paths, the same cost, give $216.66/2 = 108.33$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Two payoffs",
+      "Variance of their mean"
+     ],
+     "rows": [
+      [
+       "Independent",
+       "108.33"
+      ],
+      [
+       "Antithetic pair",
+       "54.06"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many times as efficient are the pairs, at equal cost?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.0,
+    "tol": {
+     "abs": 0.02
+    },
+    "accept": "2.0 = 108.33 / 54.06",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "root",
+      "value": 1.41,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Efficiency at equal cost is the ratio of the variances."
+    },
+    {
+     "rung": "point",
+     "text": "$108.33/54.06$.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "About 2.0."
+    }
+   ],
+   "feedback": {
+    "correct": "Twice as efficient: the mirror cancels half the noise.",
+    "generic": "Not quite right. Divide 108.33 by 54.06.",
+    "byKey": {
+     "half": "You divided the other way. The pairs have the smaller variance.",
+     "root": "You compared standard errors. At equal cost, compare variances."
+    }
+   },
+   "explain": {
+    "text": "$108.33/54.06 = 2.0$. Seed 0 with 50,000 pairs gives £10.4721 with SE £0.0329, counting pairs as the samples. Pairs and the control together leave a pair variance of 30.67."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A control for an Asian",
+   "prose": "The arithmetic Asian call pays the mean of 12 monthly prices minus £100. It has no formula, but the geometric Asian does: the log of a geometric mean is normal. Its closed form is £5.9402, and the two payoffs have $\\rho = 0.9996$. Seed 0, 100,000 paths:",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Estimator",
+      "Price",
+      "SE"
+     ],
+     "rows": [
+      [
+       "Plain",
+       "£6.1722",
+       "£0.0269"
+      ],
+      [
+       "Geometric control, seed 0",
+       "£6.1561",
+       "£0.00075"
+      ],
+      [
+       "Geometric control, seed 1",
+       "£6.1558",
+       "£0.00074"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "By about what factor does the control cut the variance? Square the ratio of the seed 0 errors.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1281,
+    "tol": {
+     "rel": 0.02
+    },
+    "accept": "about 1,300: (0.0269 / 0.00075)² ≈ 1,281 to 1,290",
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 35.8,
+      "tol": {
+       "rel": 0.02
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide 0.0269 by 0.00075."
+    },
+    {
+     "rung": "point",
+     "text": "That is about 35.9.",
+     "highlight": [
+      "r0",
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Square it."
+    }
+   ],
+   "feedback": {
+    "correct": "About 1,300: a thousand times less work for the same error.",
+    "generic": "Not quite right. Square $0.0269/0.00075$.",
+    "byKey": {
+     "ratio": "That is the ratio of errors. The variance factor is its square."
+    }
+   },
+   "explain": {
+    "text": "$(0.02692/0.000752)^2 = 1,281$, about 1,300, close to $1/(1 - \\rho^2)$ at $\\rho = 0.9996$. The seeds agree to within their errors: £6.1561 and £6.1558. The plain price is within 1 SE of them."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "When pairs hurt",
+   "prose": "A straddle pays $|S_T - K|$ and is worth £16.0241. A colleague prices it with antithetic pairs, as he did the call.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Straddle",
+      "Value"
+     ],
+     "rows": [
+      [
+       "$\\text{Var}(Y)$",
+       "175.1"
+      ],
+      [
+       "Correlation within a pair",
+       "+0.645"
+      ],
+      [
+       "Variance of a pair mean",
+       "144.0"
+      ],
+      [
+       "Two independent payoffs",
+       "87.6"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What do the pairs do for the straddle?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "worse",
+      "text": "They make it worse: efficiency 0.61 against independent paths",
+      "correct": true
+     },
+     {
+      "id": "better",
+      "text": "They halve the variance, as for the call",
+      "why": "You assumed pairs always help. Here the payoff rises on both sides of $K$, so $z$ and $-z$ pay alike."
+     },
+     {
+      "id": "same",
+      "text": "They make no difference",
+      "why": "You expected the correlation to vanish. It is $+0.645$, and a positive correlation hurts."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does the payoff do when $z$ is large and when $-z$ is large?"
+    },
+    {
+     "rung": "point",
+     "text": "Both tails pay, so the pair moves together.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Compare 144.0 with 87.6."
+    }
+   ],
+   "feedback": {
+    "correct": "Antithetics help only a payoff that is monotone in $z$.",
+    "generic": "Not quite right. Compare the pair variance with two independent payoffs.",
+    "byKey": {
+     "better": "You trusted pairs to help everything. They help only when the payoff moves in opposite ways at $z$ and $-z$."
+    }
+   },
+   "explain": {
+    "text": "The pair correlation is $+0.645$, so a pair mean has variance $\\tfrac12 \\times 175.1 \\times 1.645 = 144.0$. Two independent payoffs give 87.6, so the efficiency is $87.6/144.0 = 0.61$. The straddle rises on both sides, and its mirror draws agree."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Two estimators in code",
+   "prose": "Write `mc_control`, with the discounted share as control and $b$ from the paths. Then write `vrf(rho)` and `mc_antithetic`, where $n$ counts payoffs in $n // 2$ pairs, as in `opt-dash` l7. Draw every normal in one call to `default_rng(seed)`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Ours"
+     ],
+     "rows": [
+      [
+       "`mc_control(100, 100, 0.05, 0.2, 1, 100_000, 0)`",
+       "(10.448368, 0.017764, 0.67307)"
+      ],
+      [
+       "`mc_antithetic(..., 100_000, 0)`",
+       "(10.472147, 0.032934)"
+      ],
+      [
+       "`vrf(0.9245)`",
+       "6.8823"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\ndef mc_control(S0, K, r, sigma, T, n, seed):\n    \"\"\"Call price with the discounted share as control: (price, SE, b).\"\"\"\n    ...\n\ndef vrf(rho):\n    \"\"\"Variance-reduction factor of a control with correlation rho.\"\"\"\n    ...\n\ndef mc_antithetic(S0, K, r, sigma, T, n, seed):\n    \"\"\"Call price from n payoffs in n // 2 antithetic pairs: (price, SE).\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef _paths(S0, r, sigma, T, z):\n    return S0 * np.exp((r - sigma ** 2 / 2) * T + sigma * math.sqrt(T) * z)\n\ndef mc_control(S0, K, r, sigma, T, n, seed):\n    \"\"\"Call price with the discounted share as control: (price, SE, b).\"\"\"\n    if n < 2:\n        raise ValueError(\"a standard error needs at least two paths\")\n    z = np.random.default_rng(seed).standard_normal(n)\n    ST = _paths(S0, r, sigma, T, z)\n    y = math.exp(-r * T) * np.maximum(ST - K, 0.0)\n    x = math.exp(-r * T) * ST                       # E[x] = S0 exactly\n    b = np.cov(y, x)[0, 1] / np.var(x, ddof=1)      # b* from the paths\n    a = y - b * (x - S0)\n    return float(a.mean()), float(a.std(ddof=1) / math.sqrt(n)), float(b)\n\ndef vrf(rho):\n    \"\"\"Variance-reduction factor of a control with correlation rho.\"\"\"\n    return 1 / (1 - rho ** 2)\n\ndef mc_antithetic(S0, K, r, sigma, T, n, seed):\n    \"\"\"Call price from n payoffs in n // 2 antithetic pairs: (price, SE).\"\"\"\n    m = n // 2\n    if m < 2:\n        raise ValueError(\"a standard error needs at least two pairs\")\n    z = np.random.default_rng(seed).standard_normal(m)\n    f = lambda z: math.exp(-r * T) * np.maximum(_paths(S0, r, sigma, T, z) - K, 0.0)\n    y = (f(z) + f(-z)) / 2                          # one average per pair\n    return float(y.mean()), float(y.std(ddof=1) / math.sqrt(m))\n",
+    "examples": [
+     {
+      "call": "round(vrf(0.9), 4)",
+      "expect": "5.2632",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(mc_control(100, 100, 0.05, 0.2, 1, 100_000, 0))",
+      "expect": "[10.4483678008, 0.0177639559, 0.6730735597]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "mc_control(100, 100, 0.05, 0.2, 1, 100_000, 0)[1] < 0.5 * 0.046514",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "vrf(0.9245)",
+      "expect": "6.882324298562107",
+      "compare": "isclose"
+     },
+     {
+      "call": "vrf(0)",
+      "expect": "1.0",
+      "compare": "isclose"
+     },
+     {
+      "call": "list(mc_antithetic(100, 100, 0.05, 0.2, 1, 100_000, 0))",
+      "expect": "[10.4721465633, 0.0329335968]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "mc_antithetic(100, 100, 0.05, 0.2, 1, 2, 0)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "mc_control(100, 100, 0.05, 0.2, 1, 1, 0)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests with NumPy. Seeded results must match ours within 1e-8; too few paths or pairs must raise ValueError."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\hat b$ is `np.cov(y, x)[0, 1] / np.var(x, ddof=1)`."
+    },
+    {
+     "rung": "point",
+     "text": "The adjusted payoffs are `y - b * (x - S0)`, since $E[X] = S_0$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For pairs, draw `n // 2` normals and average `f(z)` with `f(-z)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Both estimators match ours to $10^{-8}$.",
+    "generic": "Not quite right. Check `mc_control` against the table first."
+   },
+   "explain": {
+    "text": "The control needs one more array and one regression slope. The pairs need half the normals, each used twice. Count the error over pairs, not payoffs, or it comes out too small."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The Asian control in code",
+   "prose": "Price the arithmetic Asian call with the geometric Asian as control. The starter gives `geometric_asian_call`. Draw one row of 12 normals per path, all in one call, and build log prices by `np.cumsum`.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Check",
+      "Target"
+     ],
+     "rows": [
+      [
+       "SE at 100,000 paths",
+       "below £0.002"
+      ],
+      [
+       "Price",
+       "within 3 SE of £6.156"
+      ],
+      [
+       "Geometric closed form",
+       "£5.9402"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `asian_geometric_cv`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\nfrom statistics import NormalDist\n\ndef geometric_asian_call(S0, K, r, sigma, T, m):\n    \"\"\"Closed form: the log of the geometric mean of m equally spaced\n    fixings is normal with this mean and variance.\"\"\"\n    t = np.arange(1, m + 1) * T / m\n    mu = math.log(S0) + (r - sigma ** 2 / 2) * t.mean()\n    v = sigma ** 2 / m ** 2 * np.minimum.outer(t, t).sum()\n    N = NormalDist().cdf\n    d = (mu - math.log(K)) / math.sqrt(v)\n    return math.exp(-r * T) * (math.exp(mu + v / 2) * N(d + math.sqrt(v)) - K * N(d))\n\ndef asian_geometric_cv(S0, K, r, sigma, T, m, n, seed):\n    \"\"\"Arithmetic Asian call with the geometric Asian as control: (price, SE).\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\nfrom statistics import NormalDist\n\ndef geometric_asian_call(S0, K, r, sigma, T, m):\n    \"\"\"Closed form: the log of the geometric mean of m equally spaced\n    fixings is normal with this mean and variance.\"\"\"\n    t = np.arange(1, m + 1) * T / m\n    mu = math.log(S0) + (r - sigma ** 2 / 2) * t.mean()\n    v = sigma ** 2 / m ** 2 * np.minimum.outer(t, t).sum()\n    N = NormalDist().cdf\n    d = (mu - math.log(K)) / math.sqrt(v)\n    return math.exp(-r * T) * (math.exp(mu + v / 2) * N(d + math.sqrt(v)) - K * N(d))\n\ndef asian_geometric_cv(S0, K, r, sigma, T, m, n, seed):\n    \"\"\"Arithmetic Asian call with the geometric Asian as control: (price, SE).\"\"\"\n    z = np.random.default_rng(seed).standard_normal((n, m))   # one row a path\n    dt = T / m\n    logS = math.log(S0) + np.cumsum((r - sigma ** 2 / 2) * dt + sigma * math.sqrt(dt) * z, axis=1)\n    y = math.exp(-r * T) * np.maximum(np.exp(logS).mean(axis=1) - K, 0.0)\n    x = math.exp(-r * T) * np.maximum(np.exp(logS.mean(axis=1)) - K, 0.0)\n    b = np.cov(y, x)[0, 1] / np.var(x, ddof=1)\n    a = y - b * (x - geometric_asian_call(S0, K, r, sigma, T, m))\n    return float(a.mean()), float(a.std(ddof=1) / math.sqrt(n))\n",
+    "examples": [
+     {
+      "call": "round(geometric_asian_call(100, 100, 0.05, 0.2, 1, 12), 4)",
+      "expect": "5.9402",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "asian_geometric_cv(100, 100, 0.05, 0.2, 1, 12, 100_000, 0)[1] < 0.002",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(asian_geometric_cv(100, 100, 0.05, 0.2, 1, 12, 100_000, 0)[0] - 6.156) < 3 * asian_geometric_cv(100, 100, 0.05, 0.2, 1, 12, 100_000, 0)[1]",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(asian_geometric_cv(100, 100, 0.05, 0.2, 1, 12, 100_000, 1)[0] - 6.156) < 3 * asian_geometric_cv(100, 100, 0.05, 0.2, 1, 12, 100_000, 1)[1]",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "abs(asian_geometric_cv(100, 100, 0.05, 0.2, 1, 12, 100_000, 0)[0] - geometric_asian_call(100, 100, 0.05, 0.2, 1, 12)) > 0.1",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "geometric_asian_call(100, 100, 0.05, 0.2, 1, 12)",
+      "expect": "5.9402002216",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     }
+    ],
+    "how": "Submit runs 5 hidden tests with NumPy. The SE must be below £0.002 and the price within 3 SE of £6.156 for seeds 0 and 1."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`z` has shape `(n, m)`; `np.cumsum(..., axis=1)` gives each path's log prices."
+    },
+    {
+     "rung": "point",
+     "text": "The control payoff uses `np.exp(logS.mean(axis=1))`, the geometric mean.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Subtract `b * (x - geometric_asian_call(...))` with $\\hat b$ from the paths."
+    }
+   ],
+   "feedback": {
+    "correct": "A standard error of under a tenth of a penny from 100,000 paths.",
+    "generic": "Not quite right. Check that you average prices for the payoff and log prices for the control."
+   },
+   "explain": {
+    "text": "The two payoffs differ only in the kind of mean, so they move almost together. Seed 0 gives £6.1561 with SE £0.00075. The control's mean £5.9402 is exact, so no bias enters."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Machine time",
+   "prose": "An exotic desk needs a price to a fixed error. Plain paths take 10 hours on the grid of machines. The desk finds a control with a closed form and $\\rho = 0.9995$, as a European is for a barrier.",
+   "question": "How many seconds does the controlled run take for the same error?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 36,
+    "tol": {
+     "abs": 0.5
+    },
+    "accept": "about 36 s: 36,000 s / 1,000",
+    "wrong": [
+     {
+      "id": "nosq",
+      "value": 18,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "hours",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Find $1/(1 - \\rho^2)$ first."
+    },
+    {
+     "rung": "point",
+     "text": "$1 - 0.9995^2 \\approx 0.001$, so the factor is about 1,000."
+    },
+    {
+     "rung": "step",
+     "text": "10 hours is 36,000 seconds."
+    }
+   ],
+   "feedback": {
+    "correct": "About 36 seconds: a factor of 1,000 in variance is 1,000 in time.",
+    "generic": "Not quite right. Divide 36,000 seconds by $1/(1 - \\rho^2)$.",
+    "byKey": {
+     "nosq": "You used $1/(1 - \\rho)$, about 2,000. Square $\\rho$.",
+     "hours": "You left the answer in hours. Convert 10 hours to seconds first."
+    }
+   },
+   "explain": {
+    "text": "$1/(1 - 0.9995^2) = 1{,}000$, so 36,000 seconds become 36. Desks pick controls that have a closed form and track the payoff closely. A European for a barrier and the geometric for the arithmetic Asian are the standard pairs."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A control $X$ with known mean gives $\\overline{Y - b(X - E[X])}$; the best $b^* = \\text{Cov}(Y, X)/\\text{Var}(X)$ leaves $\\text{Var}(Y)(1 - \\rho^2)$.",
+   "The variance-reduction factor $1/(1 - \\rho^2)$ is 6.88 for our call with the share. For the Asian with the geometric control it is about 1,300.",
+   "Antithetic pairs halve the call's variance, but hurt a straddle, whose payoff rises on both sides."
+  ],
+  "formula": {
+   "name": "Optimal control",
+   "tex": "b^* = \\dfrac{\\text{Cov}(Y, X)}{\\text{Var}(X)},\\qquad \\text{factor} = \\dfrac{1}{1 - \\rho^2}",
+   "note": "The control must have a known mean."
+  },
+  "trap": "Antithetics do not always help: for a payoff that rises on both sides they increase the variance."
+ },
+ "quiz": [
+  {
+   "id": "q-vrf",
+   "difficulty": 2,
+   "prose": "A control has correlation $\\rho = 0.9$ with the payoff.",
+   "question": "What is the variance-reduction factor?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.26,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "5.26 = 1 / 0.19",
+    "wrong": [
+     {
+      "id": "nosq",
+      "value": 10,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "rho2",
+      "value": 0.81,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/(1 - 0.81) = 5.26$.",
+    "generic": "Not quite right. Compute $1/(1 - \\rho^2)$.",
+    "byKey": {
+     "nosq": "You used $1/(1 - \\rho)$. Square $\\rho$ first.",
+     "rho2": "That is $\\rho^2$. The factor is $1/(1 - \\rho^2)$."
+    }
+   },
+   "explain": {
+    "text": "$1/(1 - 0.81) = 5.26$: the same error from a fifth of the paths."
+   }
+  },
+  {
+   "id": "q-self",
+   "difficulty": 3,
+   "prose": "A colleague uses the call's own payoff $Y$ as its control. Then $\\rho = 1$ and the controlled variance is 0.",
+   "question": "Why is this useless?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mean",
+      "text": "A control needs a known mean, and $E[Y]$ is the unknown price",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "A variance of 0 is impossible, so the code is wrong",
+      "why": "You doubted the algebra. $Y - (Y - E[Y])$ really is constant; the trouble is that we do not know $E[Y]$."
+     },
+     {
+      "id": "bias",
+      "text": "It is biased because $b$ comes from the paths",
+      "why": "You blamed the estimated $b$. That bias is tiny; the missing known mean is fatal."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The estimator needs $E[Y]$, which is what we want.",
+    "generic": "Not quite right. Write out $Y - b(Y - E[Y])$ with $b = 1$."
+   },
+   "explain": {
+    "text": "With $b = 1$ the estimator is $E[Y]$ itself. To compute it we must already know the price. A control is useful only when its mean is known in closed form."
+   }
+  },
+  {
+   "id": "q-put-b",
+   "difficulty": 3,
+   "prose": "A put is priced with the discounted share as control.",
+   "question": "What sign does $b^*$ have?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "neg",
+      "text": "Negative: the put pays more when the share falls",
+      "correct": true
+     },
+     {
+      "id": "pos",
+      "text": "Positive, as for the call",
+      "why": "You carried over the call. The put moves against the share, so the covariance is negative."
+     },
+     {
+      "id": "zero",
+      "text": "Zero: a put and the share are unrelated",
+      "why": "You expected no link. The put's payoff falls as $S_T$ rises."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$b^* = \\text{Cov}/\\text{Var}$ takes the covariance's sign.",
+    "generic": "Not quite right. Ask how the put's payoff moves with $S_T$."
+   },
+   "explain": {
+    "text": "The put's payoff falls as $S_T$ rises, so $\\text{Cov}(Y, X) < 0$ and $b^* < 0$. For the half-year 95 put of l17 the paths give $\\hat b = -0.292$. The control works the same way, with the sign flipped."
+   }
+  }
+ ]
+}
