@@ -671,11 +671,11 @@
         "kind": "console",
         "params": {
           "lines": [
-            "// snippet 1: f runs on two threads",
+            "// snippet 1: one f, run by threads a and b",
             "static std::atomic<int> hits;",
             "thread_local std::vector<int> scratch;",
             "std::mutex m;",
-            "void g() { int n = 8; auto f = [&n] { ++n; }; }",
+            "void g() { int n = 8; auto f = [&n] { ++n; }; std::thread a(f), b(f); a.join(); b.join(); }",
             "",
             "// snippet 2",
             "const int kLimit = 100; // global",
@@ -739,7 +739,7 @@
       "hints": [
         {
           "rung": "nudge",
-          "text": "Statics, globals and anything captured by reference are shared."
+          "text": "Statics, globals and a variable captured by reference in a lambda that two threads run are shared."
         },
         {
           "rung": "point",
@@ -758,14 +758,14 @@
         "correct": "3, 2, 512 and 66,667.",
         "generic": "Not quite right. Check the first marked cell.",
         "byKey": {
-          "r0c1": "`hits` is static and `m` is global. `n` is captured by reference. `scratch` is `thread_local`.",
+          "r0c1": "`hits` is static and `m` is global. `n` is captured by reference in the one `f` that both threads run. `scratch` is `thread_local`.",
           "r1c1": "`kLimit` and `buffer` are globals. `kLimit` is shared but read-only, so safe. Each thread has its own `i`.",
           "r2c1": "$64 \\times 8$ MiB.",
           "r3c1": "$1{,}000{,}000\\ \\mu s / 15\\ \\mu s = 66{,}667$."
         }
       },
       "explain": {
-        "text": "A name is shared when it lives once per process or is captured by reference. Read-only shared data such as `kLimit` is safe; written shared data is where races live. The costs are why threads are made once and reused.",
+        "text": "A name is shared when it lives once per process or is captured by reference in a lambda that two threads run. Read-only shared data such as `kLimit` is safe; written shared data is where races live. The costs are why threads are made once and reused.",
         "canvas": {
           "shade": {
             "shared": [
@@ -791,7 +791,7 @@
         "kind": "console",
         "params": {
           "lines": [
-            "// A: one shared atomic, 60 ns an add",
+            "// A: one shared std::atomic<double> (+= needs C++20), 60 ns an add",
             "for (double v : part) total += v;",
             "",
             "// B: a local sum s, 1 ns an add",
