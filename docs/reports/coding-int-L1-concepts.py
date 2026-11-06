@@ -415,9 +415,22 @@ for w in symbols:
     node = root
     for ch in w:
         node = node.setdefault(ch, {})
-# content claim (l2 s9 option b why): "both are fast, about 12 steps each" for the trie on 4,000 symbols.
-# A trie walk costs one step per letter of the prefix (3 for a 3-letter prefix), so this encoded claim fails.
-check(abs(trie_walk_steps(root, '012') - 12) <= 2, 'l2 s9 o1.why: a trie prefix walk on 4,000 symbols takes about 12 steps (content claim; the walk takes len(prefix) = 3)')
+# content claim (l2 s9 option b why, corrected in the fix pass): `bisect` makes about 12 comparisons and a trie walk
+# one step per letter. Every prefix of every symbol walks in exactly len(prefix) steps; bisect needs 11 or 12.
+_bis = []
+for _p in ('0', '01', '012', '3999', '2500'):
+    _lo, _hi, _c = 0, len(symbols), 0
+    while _lo < _hi:
+        _mid = (_lo + _hi) // 2
+        _c += 1
+        if symbols[_mid] < _p:
+            _lo = _mid + 1
+        else:
+            _hi = _mid
+    _bis.append(_c)
+check(all(trie_walk_steps(root, w[:k]) == k for w in symbols for k in range(1, len(w) + 1)) and trie_walk_steps(root, '012') == 3
+      and all(11 <= c <= 12 for c in _bis),
+      'l2 s9 o1.why: a trie prefix walk takes len(prefix) steps (3 for 012) while bisect makes about 12 comparisons (corrected claim, fix pass)')
 
 # ---------------------------------------------------------------- l3 window maximum
 print('# l3 window maximum')
@@ -881,9 +894,19 @@ for i in range(100):
 for i in range(4096):
     big.add(''.join('ABCDEFGH'[(i // 8 ** j) % 8] for j in range(4)))
 vs, vb = count_match_visits(small, '????'), count_match_visits(big, '????')
-# content claim (h1 i1 prose and explain): every step costs time in proportion to the length of its argument,
-# not the number of tickers listed. For count_match with '?' the nodes visited grow with the tickers, so this fails.
-check(vb <= 2 * vs, 'h1 i1 prose: count_match(????) costs the same with 4,096 tickers as with 100 (content claim; visits %d against %d)' % (vb, vs))
+# content claim (h1 i1 prose and explain, corrected in the fix pass): count_match may branch at each '?' and visits
+# only the trie nodes that still fit the pattern: the visits equal the listed-ticker prefixes (empty one included)
+# that fit the pattern, never a scan of every ticker.
+def _fit_prefixes(tickers, pattern):
+    ps = {t[:k] for t in tickers for k in range(min(len(t), len(pattern)) + 1)}
+    return sum(1 for p in ps if all(a == '?' or a == b for a, b in zip(pattern, p)))
+_small = [''.join('ABCDEFGH'[(i // 8 ** j) % 8] for j in range(4)) for i in range(100)]
+_big = [''.join('ABCDEFGH'[(i // 8 ** j) % 8] for j in range(4)) for i in range(4096)]
+_pats = ['????', 'A???', '?B?D', 'AB??', 'ABCD', '??']
+check(vs == _fit_prefixes(_small, '????') and vb == _fit_prefixes(_big, '????')
+      and all(count_match_visits(big, p) == _fit_prefixes(_big, p) for p in _pats)
+      and count_match_visits(big, '?B?D') < len(_big),
+      'h1 i1 prose: count_match(????) branches at each ? and visits only the nodes that fit (visits %d against %d) (corrected claim, fix pass)' % (vb, vs))
 check(count_match_visits(big, 'ABCD') == 5, 'h1 i1: without a ? the walk is one node per letter (5 visits for ABCD)')
 
 ts_ns = ns_of(widget(H1, 'items[2]'))

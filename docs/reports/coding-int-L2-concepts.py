@@ -399,9 +399,11 @@ check(calculate('12/2*3') == 18 and calculate('-8/3') == -2 and calculate('-9/4'
 check(calculate('8+2*9-4/5-3') == 23, 'r2 i3 distractor: without the brackets, 23')
 check(eval('40*(12-5)') == 280 and eval('-(2*350+100)//3') == -267 and calculate('-(2*350+100)/3') == -266,
       'l7 s9: line 1 is -266 truncated, -267 floored with //; line 2 is 280')
-# content claim (l7 s9 option b why and feedback.byKey.b): plain eval "floors -800/3 with //". Plain eval uses true
-# division and returns the float -266.67, so this encoded claim fails.
-check(eval('-(2*350+100)/3') == -267, 'l7 s9 o1.why: plain eval floors -800/3 to -267 (content claim; eval gives %r)' % eval('-(2*350+100)/3'))
+# content claim (l7 s9 option b why and feedback.byKey.b, corrected in the fix pass): plain eval gives line 1 as the
+# float -266.67 (true division), not the truncated whole number -266.
+_v = eval('-(2*350+100)/3')
+check(isinstance(_v, float) and round(_v, 2) == -266.67 and _v != int(_v) and calculate('-(2*350+100)/3') == -266,
+      'l7 s9 o1.why: plain eval gives line 1 as the float -266.67, not the truncated -266 (corrected claim, fix pass; eval gives %r)' % _v)
 
 # ---------------------------------------------------------------- l8 simulating the rules
 print('# l8 simulating the rules')
