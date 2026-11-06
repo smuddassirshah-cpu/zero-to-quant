@@ -106,3 +106,49 @@ Format: `n. item [paper.index] path | severity | problem | evidence | fix`. Seve
 - Voice: 0. Layout: 0.
 - Engine items: a validator warning for a float example with no `compare` (finding 4, second sighting); `importHint` reading case setups (finding 25); a `required` flag on paper items (finding 26, open since Stage 1).
 - User decisions: whether 2.6 (researcher track) is required of every track and whether paper C splits (finding 27); the report's note that `curriculum.json` stage 2 `exitTests` lists only the three projects.
+
+## Fix pass
+
+Applied through `docs/briefs/exam-stage-2-scripts/build.py` (every edit is a targeted change to one item; the file is rebuilt, and the rebuild reproduced the old file before the first edit). I recomputed every changed key, wrong value, data-file statistic and prose number by a second route in `check_numbers.py` (brentq and a search over centres, HiGHS duals, statsmodels `adfuller` and `mackinnoncrit`, a Simpson rate test on a digital call, SLSQP for the KKT weights). The user decision of the orchestrator (DECISIONS, Stage 2 entry) is applied: topic 2.6 items left the gating papers, and paper C, now 11 items at 4,170 s of pace (90 minutes after the [C5] change), needs no split. Paper ids and positions moved: paper C is `numerics-optimisation`, and `b-garch-longrun` and `c-simpson-kink` became `b-garch-target` and `c-simpson-jump`; stage-2 is new, so no progress keys on them.
+
+Status: fixed 27, disputed 0, deferred 1.
+
+1. [B2] Ljung-Box df: fixed. The item is now an AR(1) fit, so $Q = 5.91$ is compared with 5.99, the 5% point of $\chi^2_2$ (scipy 5.9915). "No autocorrelation is left" became "the test finds no autocorrelation left". Key unchanged.
+2. [B9] ES tolerance: fixed. `tol` is 100, the explanation prints $\varphi(1.96) \approx 0.05845$, and the script asserts that both 0.0584 (98,112) and 0.05845 (98,196) land inside the band and that no wrong band reaches it.
+3. [C0] float32: fixed. `tol` is 0.005; the script asserts that £7.81 is accepted.
+4. Float examples with no `compare`: fixed for [A15], [B12], [C5] parts 1 and 2, [C7], [D9], [D12] through one helper (`ex`) that copies each hidden test's compare and tolerance. [C12] and [C18] left with the 2.6 items. The widget supports `compare` and `tol` on examples (`code.js` shares the case reader), so the examples are not rounded. `check_numbers.py` now runs the solution against the examples as Run examples compares them, and fails a float example without `compare`.
+5. [C7] example gave C6's key: fixed. The example and test 3 are $\boldsymbol\mu = (0.05, 0.09)$, $\gamma = 4$, giving (0.573826, 0.426174), as proposed; checked against SLSQP. The prose now says the expected weights come from SciPy's SLSQP, and the script asserts the visible example is not C6's problem.
+6. [C4] error rates in the prose: fixed. The prose names the three methods only; the generic hint says to recall each rate.
+7. [A15] ridge objective: fixed. The prose states $\sum_i (y_i - \hat y_i)^2 + \lambda\sum_j \beta_j^2$, as `Ridge(alpha=lam)` does.
+8. [A15] `byKey.test-1`: fixed, as proposed.
+9. [A3] leak steps: fixed. The question asks which steps let a row use information from after its own date, and the generic hint matches.
+10. [B11] df critical value: fixed. The explanation compares with $-1.95$ (MacKinnon no-constant 5% point $-1.941$, checked) and no longer with $-2.86$.
+11. [B12] "so the pair is cointegrated": fixed. The explanation says "we reject no cointegration at 5%". The part 1 prose now says both log prices have a unit root on the file; their ADF(1) p values are 0.22 and 0.38, asserted in the script.
+12. [C12] file columns: fixed by removal (2.6 decision); the item left the paper.
+13. [C18] no convergence verdict: fixed by removal (2.6 decision).
+14. [C18] `rhat` repeats `stat-models` l17: fixed by removal (2.6 decision); no replacement was needed.
+15. [B7] garch long run: replaced. New item: $\omega$ by variance targeting (18% a year over 252 days, $\alpha = 0.06$, $\beta = 0.92$), in units of $10^{-6}$, key 2.5714 (2.57 accepted). Wrong values 648.00, 226.78, 10.29. The only `garch` hit for the phrase is a remedy line in homework 2, not the item.
+16. [A5] tree split: replaced. Same returns, scored by the drop in absolute error about each side's median; key 30 after the third week; wrong 504.17 (squared), 55, 20. Search over centres confirms the medians.
+17. [A10] fractional weight: replaced. Which $d$ below 0.5 makes $w_2 = -0.1$: key 0.2764, wrong 0.7236 and 0.1127 (no half). The recursion line is stock notation; the question is new.
+18. [A11] label uniqueness: replaced. New spans (1 to 5, 4 to 7, 6 to 8, 7 to 10) and a fifth label on 3 to 9; key 2.1413, and the four alone give 2.4111, so the fifth lowers the total. Wrong 5, 2.4111, 3.4111.
+19. [A12] bet size: replaced. The probability that gives half the position: key 0.7796 (brentq on the rule), wrong 0.75 (from $2p - 1 = 0.5$, which gives size 0.436 under the rule).
+20. [C1] condition digits: replaced. The $r$ at which $\kappa$ reaches $10^4$: key 0.9998 (tolerance 2e-5), wrong 0.9999. I narrowed the tolerance from the proposed 5e-5, which made the wrong band touch the answer band (validator error).
+21. [C3] Simpson kink: replaced with a digital call. Key: order $h$ on a fixed grid, split at the strike for $h^4$. The script finds ratios 1.85 (fixed grid, about 2, order $h$) and 16.0 (split). Options are now close in length.
+22. [C8] dedication LP: replaced with new liabilities (£80,000 and £120,000) and new bond terms (A costs 0.96; B pays 0.05 and 1.05 and costs 1.01), so no number or story is shared with `convex/homework-2`. Part 1 key 186.74, wrong 192.23. Part 2 is a pricing-out question on a third bond (pays 1.07, costs 0.95): reduced cost $-0.0303$, wrong $-0.0792$ and $+0.0303$. An LP with the third bond confirms it cuts the cost. I changed the proposed numbers because the proposal kept the first bond prices of the homework.
+23. [D7] fundamental law: replaced. The IC that an IR of 0.8 needs for 250 shares, weekly, with TC 0.4: key 0.0175 (0.017541); wrong 0.0070, 0.0028, 0.1265. New numbers, since the proposal's 400 shares and TC 0.55 repeat `alpha/review-3`.
+24. Key is the longest option: fixed. [A4], [B10], [D3], [D5] edited as proposed; [B0] shortened by 4 characters; [C3] replaced. No key is now the longest of its item (checked by length), and none is far longer than the rest (script).
+25. Data tests need pandas: fixed on the item side. Every data starter opens with "# keep these imports: the tests load the file with pandas", and the script asserts each data starter imports pandas. [D9] prose says `Series.corr(method='spearman')` needs SciPy. The 2.6 starters left with their items. The engine `importHint` item stays in the inbox.
+26. Required items: deferred. It needs the engine flag (`required` on a paper item, open since Stage 1). The drill and the code exit tasks stay unflagged. Pass shares are unchanged at 0.7: A 12 of 16, B 11 of 15, C 8 of 11, D 14 of 19 by `ceil`.
+27. [C5] pace and paper C length: fixed. [C5] `pace` is 1,800; paper C is one paper of 11 items at 90 minutes, so no paper E. Ramp for 11 items (2, 5, 3, 1 at difficulties 2 to 5) needed [C2] set to difficulty 2 and [C10] to 3 to pass the validator's ramp rule.
+28. Checks `project-alpha`, `project-options`: fixed, as proposed.
+
+Graded answers changed: [A5] 504.17 to 30; [A10] $w_3$ to $d = 0.2764$; [A11] 2.3611 to 2.1413; [A12] 0.1953 to 0.7796; [B7] 0.1944 to 2.5714 ($10^{-6}$); [C1] 3.30 to 0.9998; [C3] option text, key still a; [C8] 233.10 and 0.9074 to 186.74 and $-0.0303$; [D7] 0.953 to 0.0175. Tolerances widened: [B9] and [C0]. Keys unchanged where not named.
+
+Data files: `fill-buckets.csv`, `jump-days.csv` and `chains.csv` removed (only the 2.6 items used them); `factor-days.csv`, `pair-closes.csv` and `signal-panel.csv` are byte-identical.
+
+Gates (from `app/`, worktree):
+- `node tools/validate.mjs`: 0 errors, 3,978 warnings, none on `stage-2.json`.
+- Voice scan on a copy: 707 sentences, 0 over 20 words, 0 explanations over three sentences; no exclamation marks, em-dashes or en-dashes.
+- `python3 docs/briefs/exam-stage-2-scripts/check_numbers.py`: 766 of 766, exit 0. `fresh.py` prints every matching file (122 lines); `node tools/fresh-check.mjs --exam stage-2 --min-run 10`: 13 hits, all stock notation, top share 0.29 ([B3] AR(2) line, as in the second read).
+- `node tools/playthrough.mjs --exam stage-2 --local-cdn <pkgs>`: All passed, with and without `--mobile` (61 scored items).
+- `node tools/readiness-sums.mjs`: OK.

@@ -101,6 +101,17 @@ def T(call, expect, cmp="isclose", setup=None, tol=None):
     return t
 
 
+def ex(t):
+    """A visible example copied from a hidden test, with the test's compare and tolerance (a float needs its isclose)."""
+    e = {}
+    if t.get("setup"):
+        e["setup"] = t["setup"]
+    e.update({"call": t["call"], "expect": t["expect"]})
+    if t.get("compare") == "isclose" and t.get("tol"):
+        e["compare"], e["tol"] = "isclose", t["tol"]
+    return e
+
+
 def rep(x):
     if isinstance(x, (list, tuple, np.ndarray)):
         return repr([float('%.12g' % v) for v in x])
@@ -152,16 +163,17 @@ pdates = pd.bdate_range('2023-06-01', periods=nP).strftime('%Y-%m-%d')
 pc = pd.DataFrame({'date': pdates, 'a': np.round(np.exp(la), 2), 'b': np.round(np.exp(lb), 2), 'c': np.round(np.exp(lc), 2)})
 pc.to_csv(os.path.join(DATA, 'pair-closes.csv'), index=False)
 
-# fill-buckets.csv: fills out of orders placed, by day and size bucket, against spread and queue
+# fill-buckets, jump-days and chains were the data of the topic 2.6 items, which left the gating papers.
+# They are still drawn, so that signal-panel.csv below keeps its seed stream, but they are not written.
+# fill-buckets: fills out of orders placed, by day and size bucket, against spread and queue
 nL = 120
 spread = np.round(rng.uniform(0.5, 6.0, nL), 2)
 queue = np.round(rng.uniform(0, 20, nL), 1)
 orders = rng.integers(20, 81, nL)
 pL = 1 / (1 + np.exp(-(1.5 - 0.45 * spread - 0.06 * queue)))
 fills = rng.binomial(orders, pL)
-pd.DataFrame({'spread_bp': spread, 'queue_k': queue, 'orders': orders, 'fills': fills}).to_csv(os.path.join(DATA, 'fill-buckets.csv'), index=False)
 
-# jump-days.csv: price jumps per session against the VIX close, with session hours as exposure
+# jump-days: price jumps per session against the VIX close, with session hours as exposure
 nJ = 240
 vix = np.zeros(nJ)
 vix[0] = 18
@@ -170,10 +182,8 @@ for k in range(1, nJ):
 vix = np.round(np.clip(vix, 10.5, 45), 2)
 hours = np.where(rng.uniform(size=nJ) < 0.04, 3.5, 6.5)
 jumps = rng.poisson(hours * np.exp(-2.3 + 0.07 * vix))
-jdates = pd.bdate_range('2025-01-02', periods=nJ).strftime('%Y-%m-%d')
-pd.DataFrame({'date': jdates, 'vix': vix, 'hours': hours, 'jumps': jumps}).to_csv(os.path.join(DATA, 'jump-days.csv'), index=False)
 
-# chains.csv: four AR(1) chains of 400 draws, the fourth sitting a little higher
+# chains: four AR(1) chains of 400 draws, the fourth sitting a little higher
 nC = 400
 ch = np.zeros((4, nC))
 for j in range(4):
@@ -182,7 +192,6 @@ for j in range(4):
         x = 0.6 * x + 0.8 * rng.standard_normal()
         ch[j, k] = x
 ch[3] += 0.4
-pd.DataFrame({f'chain_{j + 1}': np.round(ch[j], 4) for j in range(4)}).to_csv(os.path.join(DATA, 'chains.csv'), index=False)
 
 # signal-panel.csv: 20 weekly dates, 30 tickers, a persistent signal and the next week's return
 nD, nT = 20, 30
@@ -249,7 +258,7 @@ A.append(item("a-purged-fold", 3, ["vl-time"], ["purged-fold"], 150, "Rows left 
 # A4 which steps leak (multi, three keys)
 A.append(item("a-leak-steps", 3, ["vl-leakage"], ["leak-steps"], 150, "Steps that leak",
     "A study predicts next-day returns from 120 features over 2015 to 2024, with walk-forward test blocks.",
-    "Which steps leak information from the test blocks into training? Select all that apply.",
+    "Which steps let a row use information from after its own date? Select all that apply.",
     choice([opt("a", "Scaling each feature by its average and spread over all ten years at once.", correct=True),
             opt("b", "Filling a missing close with the next trading day's close.", correct=True),
             opt("c", "Keeping the 20 features best correlated with the target over the whole sample.", correct=True),
@@ -259,7 +268,7 @@ A.append(item("a-leak-steps", 3, ["vl-leakage"], ["leak-steps"], 150, "Steps tha
                 "You flagged per-block scaling. That is the honest way; it uses no later rows."),
             opt("f", "Dropping training rows whose label window overlaps the test block.",
                 "You flagged the purge. It removes leakage; it does not add any.")], kind="multi"),
-    fb("Three steps use rows from after the training span.", "For each step, ask whether it reads any value dated after the training span."),
+    fb("Three steps use rows from after the training span.", "For each step, ask whether a row's value uses anything dated after it."),
     "The full-sample scaler and the full-sample feature choice both read test-block values. "
     "A backward fill copies tomorrow's close into today. Lagging, per-block scaling and the purge all remove leaks."))
 
@@ -268,7 +277,7 @@ A.append(item("a-curves-meet", 3, ["sl-tradeoff", "vl-overfit"], ["learning-curv
     "As we add training years, a model's training error rises to 1.02 and its validation error falls to 1.05. "
     "The noise floor, the error of a perfect model, is 0.80.",
     "What does this say, and what should we try?",
-    choice([opt("a", "High bias: the curves meet well above the floor, so add features or flexibility, not data.", correct=True),
+    choice([opt("a", "High bias: the curves meet far above the floor, so add features, not data.", correct=True),
             opt("b", "High variance: the small gap means we should collect more years of data.",
                 "You read the small gap as variance. A small gap at a high error is bias; more data will not lower it."),
             opt("c", "Overfitting: the training error rose, so add a stronger penalty to the fit.",
@@ -279,23 +288,26 @@ A.append(item("a-curves-meet", 3, ["sl-tradeoff", "vl-overfit"], ["learning-curv
     "Training and validation error have met at about 1.05, far above 0.80. That is bias: the model cannot fit the signal. "
     "More data narrows a gap, and there is no gap left to narrow."))
 
-# A6 the best regression-tree split
+# A6 the best regression-tree split, scored by absolute error about each side's median
 y6 = np.array([-14, -9, -2, 5, 7, 18], float)
+sae = lambda v: float(np.abs(v - np.median(v)).sum()) if len(v) else 0.0
 sse = lambda v: float(((v - v.mean()) ** 2).sum()) if len(v) else 0.0
-P6 = sse(y6)
-red6 = {k: P6 - sse(y6[:k]) - sse(y6[k:]) for k in range(1, 6)}
+P6 = sae(y6)
+red6 = {k: P6 - sae(y6[:k]) - sae(y6[k:]) for k in range(1, 6)}
 k6 = max(red6, key=red6.get)
+sq6 = sse(y6) - min(sse(y6[:k]) + sse(y6[k:]) for k in range(1, 6))
 A.append(item("a-tree-split", 4, ["en-trees"], ["split-gain"], 240, "One split of a regression tree",
     "Six weeks, sorted by a momentum score, have next-week returns of $-14, -9, -2, 5, 7, 18$ basis points. "
-    "A regression tree tries each split between neighbours. It scores a split by the drop in the sum of squared errors.",
-    "What is the largest drop any one split achieves? Give 2 decimal places.",
-    num(r(red6[k6], 4), 0.005, [("parent", r(P6, 4), 0.005), ("children", r(P6 - red6[k6], 4), 0.005), ("biggest-gap", r(red6[5], 4), 0.005)]),
-    fb(f"The split after the third week wins, with a drop of {red6[k6]:.2f}.", "Find the parent's squared error about its mean, then try all five splits.",
-       {"parent": "You gave the parent's squared error. Subtract the two children's errors from it.",
-        "children": "You gave the children's total error. The score is how far it falls from the parent's.",
+    "A regression tree tries each split between neighbours. "
+    "It scores a split by the drop in the sum of absolute errors about each side's median.",
+    "What is the largest drop any one split achieves?",
+    num(r(red6[k6], 4), 0.005, [("squared", r(sq6, 4), 0.005), ("parent", r(P6, 4), 0.005), ("biggest-gap", r(red6[5], 4), 0.005)]),
+    fb(f"The split after the third week wins, with a drop of {red6[k6]:.0f}.", "Find the parent's absolute error about its median, then try all five splits.",
+       {"squared": "You scored by squared error. This tree scores by absolute error about the median.",
+        "parent": "You gave the parent's absolute error. Subtract the two children's errors from it.",
         "biggest-gap": "You split at the widest gap, between 7 and 18. Score every split; the widest gap is not the best."}),
-    f"The parent mean is 0.83 and its squared error {P6:.2f}. Splitting after $-2$ leaves children with errors {sse(y6[:3]):.2f} and {sse(y6[3:]):.2f}. "
-    f"The drop is {red6[k6]:.2f}, the best of the five."))
+    f"The parent's median is 1.5 and its absolute error {P6:.0f}. Splitting after $-2$ leaves 12 and 13 about the medians $-9$ and 7. "
+    f"The drop is {red6[k6]:.0f}, the best of the five."))
 
 # A7 distinct blocks in a block bootstrap
 n7 = 25
@@ -359,51 +371,64 @@ A.append(item("a-lasso-entry", 3, ["sl-regularise"], ["lasso-path-start"], 150, 
     f"At $\\boldsymbol\\beta = \\mathbf 0$ the gradient of the fit term is $-\\mathbf X^T\\mathbf y/n$. Zero is optimal while every $|\\mathbf x_j^T\\mathbf y|/n \\le \\lambda$. "
     f"So the path starts at $18.6/250 = {lmax10:.4f}$, where the second feature enters first."))
 
-# A11 a fractional differencing weight
-d11 = 0.35
-w11 = [1.0]
-for k in range(1, 4):
-    w11.append(-w11[-1] * (d11 - k + 1) / k)
-A.append(item("a-frac-weight", 3, ["fm-features"], ["frac-diff-weight"], 150, "The fourth weight of a fractional difference",
+# A11 the order of fractional differencing that sets the third weight
+d11 = (1 - math.sqrt(0.2)) / 2
+d11o = (1 + math.sqrt(0.2)) / 2
+d11h = (1 - math.sqrt(0.6)) / 2
+A.append(item("a-frac-weight", 3, ["fm-features"], ["frac-diff-weight"], 150, "Which order gives a weight of minus 0.1",
     "A fractionally differenced price is $\\sum_k w_k \\ln p_{t-k}$ with $w_0 = 1$ and $w_k = -w_{k-1}\\tfrac{d - k + 1}{k}$. "
-    "We take $d = 0.35$.",
-    "What is $w_3$? Give 4 decimal places.",
-    num(r(w11[3]), 0.00005, [("sign", r(-w11[3]), 0.00005), ("stopped-early", r(w11[2]), 0.00005)]),
-    fb("Each weight comes from the one before.", "Start from $w_0 = 1$ and apply the rule three times, keeping signs.",
-       {"sign": "You lost a sign. Every weight after $w_0$ is negative when $0 < d < 1$.",
-        "stopped-early": "You gave $w_2$. Apply the rule once more."}),
-    f"$w_1 = -0.35$, then $w_2 = 0.35 \\times (-0.65)/2 = {w11[2]:.5f}$. "
-    f"Then $w_3 = {-w11[2]:.5f} \\times (-1.65)/3 \\approx {w11[3]:.4f}$."))
+    "For $0 < d < 1$, the weight $w_2$ is negative.",
+    "Which $d$ below 0.5 makes $w_2 = -0.1$? Give 4 decimal places.",
+    num(r(d11), 0.0005, [("other-root", r(d11o), 0.0005), ("dropped-half", r(d11h), 0.0005)]),
+    fb("Write $w_2$ in terms of $d$, then solve the quadratic.", "Find $w_1 = -d$, then $w_2$ from the rule, and set it equal to $-0.1$.",
+       {"other-root": "You took the root above 0.5. The question asks for the one below.",
+        "dropped-half": "You left out the 2 in $w_2 = d(d - 1)/2$. The rule divides by $k = 2$."}),
+    f"We have $w_1 = -d$ and $w_2 = d(d - 1)/2$. Setting $w_2 = -0.1$ gives $d^2 - d + 0.2 = 0$. "
+    f"The roots are $(1 \\pm \\sqrt{{0.2}})/2$, so the one below 0.5 is {d11:.4f}."))
 
-# A12 how many independent labels four overlapping ones are worth
-spans12 = {1: (1, 4), 2: (3, 6), 3: (5, 7), 4: (6, 9)}
-conc12 = {d: sum(a <= d <= b for a, b in spans12.values()) for d in range(1, 10)}
-u12 = {i: sum(1 / conc12[d] for d in range(a, b + 1)) / (b - a + 1) for i, (a, b) in spans12.items()}
-tot12 = sum(u12.values())
-A.append(item("a-label-uniqueness", 3, ["fm-labels"], ["label-uniqueness"], 180, "Four overlapping labels",
-    "Four labels span days 1 to 4, 3 to 6, 5 to 7 and 6 to 9. A day covered by $c_t$ labels gives each of them $1/c_t$ of itself. "
+# A12 how many independent labels five overlapping ones are worth
+def _uniq(spans):
+    dmax = max(b for _, b in spans.values())
+    conc = {d: sum(a <= d <= b for a, b in spans.values()) for d in range(1, dmax + 1)}
+    u = {i: sum(1 / conc[d] for d in range(a, b + 1)) / (b - a + 1) for i, (a, b) in spans.items()}
+    return conc, u, sum(u.values())
+
+
+spans12 = {1: (1, 5), 2: (4, 7), 3: (6, 8), 4: (7, 10)}
+spans12f = dict(spans12)
+spans12f[5] = (3, 9)
+conc12, u12, tot12 = _uniq(spans12f)
+tot12_four = _uniq(spans12)[2]
+A.append(item("a-label-uniqueness", 3, ["fm-labels"], ["label-uniqueness"], 180, "Five overlapping labels",
+    "Four labels span days 1 to 5, 4 to 7, 6 to 8 and 7 to 10. A fifth label then spans days 3 to 9. "
+    "A day covered by $c_t$ labels gives each of them $1/c_t$ of itself. "
     "A label's uniqueness is that share averaged over its own days.",
-    "Add the four uniquenesses. About how many independent labels are the four worth? Give 2 decimal places.",
-    num(r(tot12, 4), 0.005, [("count", 4, 0.005), ("mean-not-sum", r(tot12 / 4, 4), 0.005)]),
-    fb("The overlaps cost more than one and a half labels.", "Find $c_t$ for days 1 to 9, average $1/c_t$ over each label, then add.",
+    "Add the five uniquenesses. About how many independent labels are the five worth? Give 2 decimal places.",
+    num(r(tot12, 4), 0.005, [("count", 5, 0.005), ("four-before", r(tot12_four, 4), 0.005), ("old-plus-one", r(tot12_four + 1, 4), 0.005)]),
+    fb("The fifth label overlaps the others, so the five are worth less than the four were.", "Find $c_t$ for days 1 to 10, average $1/c_t$ over each label, then add.",
        {"count": "You counted the labels. Overlapping labels share days, so each is worth less than one.",
-        "mean-not-sum": "You averaged the four uniquenesses. The question asks for their sum."}),
-    f"Days 1 to 9 have $c_t = 1, 1, 2, 2, 2, 3, 2, 1, 1$. The uniquenesses are {u12[1]:.4f}, {u12[2]:.4f}, {u12[3]:.4f} and {u12[4]:.4f}. "
-    f"They add to {tot12:.2f}, so the four labels carry about {tot12:.2f} labels' worth of information."))
+        "four-before": "You added the four labels without the fifth. Count the fifth in every $c_t$ it covers.",
+        "old-plus-one": "You gave the fifth label a full one. It shares days with the others, and it lowers their shares too."}),
+    "Days 1 to 10 have $c_t = " + ", ".join(str(conc12[d]) for d in range(1, 11)) + f"$. The uniquenesses are "
+    + ", ".join(f"{u12[i]:.4f}" for i in range(1, 5)) + f" and {u12[5]:.4f}, adding to {tot12:.2f}. "
+    f"Without the fifth label the four were worth {tot12_four:.2f}, so adding it lowers the total."))
 
-# A13 a bet size from a probability
-p13 = 0.62
-z13 = (p13 - 0.5) / math.sqrt(p13 * (1 - p13))
-m13 = 2 * Phi(z13) - 1
-A.append(item("a-bet-size", 3, ["fm-sizing"], ["size-from-probability"], 150, "Sizing from a probability",
-    "A meta-label gives a 0.62 probability that a trade is right. The size rule is $m = 2\\Phi(z) - 1$, "
-    "with $z = \\tfrac{p - 0.5}{\\sqrt{p(1 - p)}}$.",
-    "What fraction of the full position does the rule take? Give 4 decimal places.",
-    num(r(m13), 0.0005, [("linear", r(2 * p13 - 1), 0.0005), ("no-rescale", r(Phi(z13)), 0.0005)]),
-    fb("The size is $2\\Phi(z) - 1$, about a fifth of the position.", "Compute $z$, then $\\Phi(z)$, then rescale to $2\\Phi(z) - 1$.",
-       {"linear": "You used $2p - 1$. The rule passes $p$ through $z$ and $\\Phi$ first.",
-        "no-rescale": "You stopped at $\\Phi(z)$. The size is $2\\Phi(z) - 1$, so a coin flip gets zero."}),
-    f"$z = 0.12/\\sqrt{{0.2356}} \\approx {z13:.4f}$ and $\\Phi(z) \\approx {Phi(z13):.4f}$. So $m \\approx {m13:.4f}$ of the full position."))
+# A13 the probability that sizes a bet at half the full position
+from statistics import NormalDist as _ND
+z13 = _ND().inv_cdf(0.75)
+q13 = 1 + z13 ** 2
+p13 = (q13 + math.sqrt(q13 ** 2 - q13)) / (2 * q13)          # root above 0.5 of (p - 0.5)^2 = z^2 p (1 - p)
+assert abs(2 * Phi((p13 - 0.5) / math.sqrt(p13 * (1 - p13))) - 1 - 0.5) < 1e-12
+A.append(item("a-bet-size", 3, ["fm-sizing"], ["size-from-probability"], 150, "Sizing a bet backwards",
+    "A meta-label gives a probability $p$ that a trade is right. The size rule is $m = 2\\Phi(z) - 1$, "
+    "with $z = \\tfrac{p - 0.5}{\\sqrt{p(1 - p)}}$. Only $p > 0.5$ takes a long position.",
+    "What probability $p$ gives half the full position, $m = 0.5$? Give 4 decimal places.",
+    num(r(p13), 0.0005, [("linear", 0.75, 0.0005)]),
+    fb("Half the position needs $\\Phi(z) = 0.75$.", "Find $z$ from $\\Phi(z) = 0.75$, then solve $(p - 0.5)^2 = z^2p(1 - p)$ for $p$.",
+       {"linear": "You solved $2p - 1 = 0.5$. The rule passes $p$ through $z$ and $\\Phi$ first."}),
+    f"A size of 0.5 needs $\\Phi(z) = 0.75$, so $z \\approx {z13:.4f}$. "
+    "Then $(p - 0.5)^2 = z^2p(1 - p)$ is a quadratic in $p$. "
+    f"Its root above 0.5 is {p13:.4f}."))
 
 # A14 probabilistic Sharpe ratio
 SR14, T14, g3, g4 = 0.12, 156, -0.8, 5.5
@@ -473,16 +498,17 @@ A.append(item("a-walk-forward-ridge", 5, ["vl-time", "vl-leakage", "vl-cv", "sl-
     "Test blocks start at row `first` and hold `step` rows, the last perhaps fewer. "
     "For each block, the last `val` rows before it validate each penalty in `lams`, fitted on the rows before them. "
     "The best penalty, the first if tied, is refitted on every row before the block and predicts it. "
-    "Every fit scales features by its own training rows' mean and population standard deviation, and penalises the slopes only.",
+    "Every fit scales features by its own training rows' mean and population standard deviation, and penalises the slopes only. "
+    "A fit with penalty $\\lambda$ minimises $\\sum_i (y_i - \\hat y_i)^2 + \\lambda\\sum_j \\beta_j^2$, as `Ridge(alpha=lam)` does.",
     "Write `nested_walk_forward(X, y, lams, first, step, val)`: the mean squared error over all test rows.",
     {"kind": "code", "language": "python", "data": {"factor-days.csv": DATA_REL + "factor-days.csv"},
-     "starter": "import numpy as np\nimport pandas as pd\n\n\ndef nested_walk_forward(X, y, lams, first, step, val):\n    # choose each penalty on rows before the block\n    ...\n",
+     "starter": "# keep these imports: the tests load the file with pandas\nimport numpy as np\nimport pandas as pd\n\n\ndef nested_walk_forward(X, y, lams, first, step, val):\n    # choose each penalty on rows before the block\n    ...\n",
      "solution": wf_sol,
-     "examples": [{"setup": wf_tests[0]["setup"], "call": wf_tests[0]["call"], "expect": wf_tests[0]["expect"]}],
+     "examples": [ex(wf_tests[0])],
      "tests": wf_tests,
      "how": "Check runs 5 hidden tests at a relative tolerance of 1e-7. Tests 1 to 4 read the file; test 5 is a small hand case."},
     code_fb("Every choice and every fit sees only rows before the block it scores.",
-            {"test-1": "Test 1 chooses among five penalties. Score each on the validation tail, never on the test block.",
+            {"test-1": "Test 1 is the file with five penalties. Choose each on the validation tail, and scale every fit by its own training rows.",
              "test-2": "Test 2 has a longer tail. The inner fit stops `val` rows before the block; the refit uses them all.",
              "test-3": "Test 3 has one penalty, 0, so no choice is made. Check the block edges and the intercept.",
              "test-4": "Test 4's last block holds 40 rows. Average over every test row, not over blocks.",
@@ -495,7 +521,7 @@ A.append(item("a-walk-forward-ridge", 5, ["vl-time", "vl-leakage", "vl-cv", "sl-
 # B1 why returns and not prices
 B.append(item("b-returns-not-prices", 2, ["ts-stationary"], ["returns-not-prices"], 90, "Returns or prices",
     None, "Why do we fit an ARMA model to daily log returns rather than to log prices?",
-    choice([opt("a", "Log prices have a unit root, so their mean and variance drift and the usual tests mislead.", correct=True),
+    choice([opt("a", "Log prices have a unit root, so their mean and variance drift and the tests mislead.", correct=True),
             opt("b", "Returns are normally distributed while prices are not, and ARMA needs normal data.",
                 "You took normality as the reason. Returns have fat tails too; the problem is the unit root."),
             opt("c", "Prices are autocorrelated and returns never are, so an ARMA on returns is simpler.",
@@ -523,14 +549,14 @@ n3, rh3 = 250, [0.12, -0.05, 0.08]
 Q3 = n3 * (n3 + 2) * sum(rk ** 2 / (n3 - k) for k, rk in enumerate(rh3, 1))
 BP3 = n3 * sum(rk ** 2 for rk in rh3)
 B.append(item("b-ljung-box", 3, ["ts-acf"], ["ljung-box"], 150, "Three lags of a residual",
-    "An ARMA fit on 250 days leaves residual autocorrelations $0.12, -0.05$ and $0.08$ at lags 1, 2 and 3.",
+    "An AR(1) fit on 250 days leaves residual autocorrelations $0.12, -0.05$ and $0.08$ at lags 1, 2 and 3.",
     "What is the Ljung-Box statistic $Q = n(n + 2)\\sum_k \\hat\\rho_k^2/(n - k)$ over these three lags? Give 2 decimal places.",
     num(r(Q3, 4), 0.005, [("box-pierce", r(BP3, 4), 0.005), ("no-square", r(n3 * (n3 + 2) * sum(rk / (n3 - k) for k, rk in enumerate(rh3, 1)), 4), 0.005)]),
-    fb(f"$Q \\approx {Q3:.2f}$, below the 5% point of $\\chi^2_3$, 7.81.", "Square each autocorrelation, divide by $n - k$, add, then multiply by $n(n + 2)$.",
+    fb(f"$Q \\approx {Q3:.2f}$, just below 5.99, the 5% point of $\\chi^2_2$: three lags less one fitted coefficient.", "Square each autocorrelation, divide by $n - k$, add, then multiply by $n(n + 2)$.",
        {"box-pierce": "You used $n\\sum\\hat\\rho_k^2$, the Box-Pierce form. Ljung-Box weights each lag by $(n + 2)/(n - k)$.",
         "no-square": "You added the autocorrelations without squaring. Signs would then cancel."}),
     f"$Q = 250 \\times 252 \\times (0.0144/249 + 0.0025/248 + 0.0064/247) \\approx {Q3:.2f}$. "
-    "That is below 7.81, the 5% point of $\\chi^2_3$, so no autocorrelation is left at these lags."))
+    "That is below 5.99, the 5% point of $\\chi^2_2$, so the test finds no autocorrelation left at these lags."))
 
 # B4 the persistence of an AR(2)
 roots4 = sorted(np.roots([1, -1.1, 0.3]).real)
@@ -590,19 +616,24 @@ B.append(item("b-arch-lm", 2, ["gv-clustering"], ["arch-lm"], 90, "Is there vola
         "r-not-n": "You turned $R^2$ into a percentage. Multiply by $n = 750$."}),
     f"$nR^2 = 750 \\times 0.0188 = {LM7:.1f}$. It beats 11.07, the 5% point of $\\chi^2_5$, so the squared residuals carry memory."))
 
-# B8 the long-run volatility of a GARCH(1,1)
-om8, al8, be8 = 3e-6, 0.07, 0.91
-V8 = om8 / (1 - al8 - be8)
-ann8 = math.sqrt(V8 * 252)
-B.append(item("b-garch-longrun", 3, ["gv-models"], ["garch-longrun"], 150, "Where a GARCH settles",
-    "A GARCH(1,1) on daily returns has $\\omega = 3 \\times 10^{-6}$, $\\alpha = 0.07$ and $\\beta = 0.91$.",
-    "What long-run volatility does it imply, annualised over 252 days? Give it as a decimal to 4 places.",
-    num(r(ann8), 0.0005, [("daily", r(math.sqrt(V8)), 0.0005), ("omega-over-beta", r(math.sqrt(om8 / (1 - be8) * 252)), 0.0005)]),
-    fb("The long-run variance is $\\omega/(1 - \\alpha - \\beta)$.", "Find the daily long-run variance, take the root, then scale by $\\sqrt{252}$.",
-       {"daily": "You gave the daily volatility. Multiply by $\\sqrt{252}$ to annualise.",
-        "omega-over-beta": "You divided by $1 - \\beta$. The long-run variance divides by $1 - \\alpha - \\beta$."}),
-    f"The daily variance settles at $3 \\times 10^{{-6}}/0.02 = 1.5 \\times 10^{{-4}}$, a volatility of {math.sqrt(V8):.4f}. "
-    f"Annualised, that is $0.0122\\sqrt{{252}} \\approx {ann8:.4f}$."))
+# B8 fixing omega of a GARCH(1,1) by variance targeting
+vol8, days8, al8, be8 = 0.18, 252, 0.06, 0.92
+V8 = vol8 ** 2 / days8
+om8 = V8 * (1 - al8 - be8)
+B.append(item("b-garch-target", 3, ["gv-models"], ["garch-variance-target"], 150, "Fixing omega by variance targeting",
+    "A desk fits a GARCH(1,1) to daily returns with variance targeting. "
+    "It fixes the long-run volatility at 18% a year, over 252 days, and estimates $\\alpha = 0.06$ and $\\beta = 0.92$.",
+    "What $\\omega$ does that fix? Give it in units of $10^{-6}$ to 2 decimal places.",
+    num(r(om8 * 1e6, 4), 0.005, [("annual", r(vol8 ** 2 * (1 - al8 - be8) * 1e6, 4), 0.005),
+                                  ("vol-not-variance", r(vol8 / math.sqrt(days8) * (1 - al8 - be8) * 1e6, 4), 0.005),
+                                  ("one-minus-beta", r(V8 * (1 - be8) * 1e6, 4), 0.005)]),
+    fb("The long-run variance times $1 - \\alpha - \\beta$ is $\\omega$.", "Turn 18% a year into a daily variance, then multiply by $1 - \\alpha - \\beta$.",
+       {"annual": "You used the annual variance. Divide $0.18^2$ by 252 to get the daily variance first.",
+        "vol-not-variance": "You used the daily volatility as if it were a variance. Square it first.",
+        "one-minus-beta": "You multiplied by $1 - \\beta$. The factor is $1 - \\alpha - \\beta$."}),
+    f"The daily long-run variance is $0.18^2/252 \\approx {V8 * 1e4:.4f} \\times 10^{{-4}}$. "
+    f"Then $\\omega = V_L(1 - \\alpha - \\beta) = {V8 * 1e4:.4f} \\times 10^{{-4}} \\times 0.02$. "
+    f"That is ${om8 * 1e6:.2f} \\times 10^{{-6}}$."))
 
 # B9 an EWMA update
 lam9, s9b, r9 = 0.94, 0.011, -0.028
@@ -626,11 +657,11 @@ VaR10 = pos10 * sig10 * z10
 B.append(item("b-es-normal", 4, ["gv-risk"], ["expected-shortfall"], 240, "The average loss beyond the line",
     "A GARCH model forecasts tomorrow's volatility at 0.014 for a £3,000,000 position. Returns are taken as normal with mean 0.",
     "What is the one-day 97.5% expected shortfall, in pounds?",
-    num(r(ES10, 2), 10, [("var", r(VaR10, 2), 10), ("density-only", r(pos10 * sig10 * phi(z10), 2), 10)], unit="£"),
+    num(r(ES10, 2), 100, [("var", r(VaR10, 2), 10), ("density-only", r(pos10 * sig10 * phi(z10), 2), 10)], unit="£"),
     fb("For a normal, $ES = \\sigma\\varphi(z)/(1 - 0.975)$.", "Find $z = 1.96$, its density $\\varphi(z)$, then divide by the tail mass 0.025.",
        {"var": "You gave the 97.5% value at risk. Expected shortfall averages the losses beyond it.",
         "density-only": "You forgot to divide by the tail mass 0.025."}),
-    f"$\\varphi(1.96) \\approx {phi(z10):.4f}$, so $ES = 42{{,}}000 \\times {phi(z10):.4f}/0.025$. "
+    f"$\\varphi(1.96) \\approx {phi(z10):.5f}$, so $ES = 42{{,}}000 \\times {phi(z10):.5f}/0.025$. "
     f"That is about £{ES10:,.0f}, against a value at risk of £{VaR10:,.0f}."))
 
 # B11 a regression of one random walk on another
@@ -638,7 +669,7 @@ B.append(item("b-spurious-read", 3, ["co-spurious"], ["spurious-regression"], 15
     "We regress the log price of one share on an unrelated share's log price over 1,000 days. "
     "The slope has $t = 11.4$, $R^2 = 0.42$, and the residuals have lag-1 autocorrelation 0.98.",
     "Which reading is right?",
-    choice([opt("a", "The residuals look like a random walk, so the $t$ means nothing until they pass a unit-root test.", correct=True),
+    choice([opt("a", "The residuals look like a random walk, so test them for a unit root before trusting $t$.", correct=True),
             opt("b", "A $t$ of 11.4 shows a strong link at any usual significance level, so the pair is related.",
                 "You read $t$ as if the residuals were stationary. With a unit root in them, $t$ grows with the sample."),
             opt("c", "An $R^2$ of 0.42 is low, so the two prices are unrelated and the slope is noise.",
@@ -666,7 +697,7 @@ B.append(item("b-df-hand", 4, ["co-test"], ["dickey-fuller-hand"], 300, "A unit-
         "n-divisor": "You divided the residual sum of squares by 7. With one slope fitted, divide by 6."}),
     f"$\\sum e_{{t-1}}\\Delta e_t = {float(el12 @ de12):.4f}$ and $\\sum e_{{t-1}}^2 = {float(el12 @ el12):.4f}$, so $\\hat\\rho \\approx {rho12:.4f}$. "
     f"The residual variance is {s2_12:.5f}, giving $t \\approx {t12:.2f}$. "
-    "That misses the Engle-Granger 5% point, about $-3.34$, though it passes the plain $-2.86$."))
+    "That misses the Engle-Granger 5% point, about $-3.34$, though it passes $-1.95$, the plain Dickey-Fuller point."))
 
 # B13 the 2.2 exit task: an augmented Dickey-Fuller test on a pair's spread, then the half-life
 eg_sol = ("import numpy as np\nimport pandas as pd\n\n\ndef adf1_spread(a, b):\n    y, x = np.log(np.asarray(a, float)), np.log(np.asarray(b, float))\n"
@@ -692,15 +723,16 @@ B.append(parts("b-eg-pair", 5, ["co-test", "co-spread"], ["engle-granger-adf"], 
     "`pair-closes.csv` holds 500 daily closes of three shares, `a`, `b` and `c`, in date order.",
     [("Write `adf1_spread(a, b)` for two arrays of closes, returning `(beta, t)`.",
       {"kind": "code", "language": "python", "data": {"pair-closes.csv": DATA_REL + "pair-closes.csv"},
-       "starter": "import numpy as np\nimport pandas as pd\n\n\ndef adf1_spread(a, b):\n    # returns (beta, t)\n    ...\n",
+       "starter": "# keep these imports: the tests load the file with pandas\nimport numpy as np\nimport pandas as pd\n\n\ndef adf1_spread(a, b):\n    # returns (beta, t)\n    ...\n",
        "solution": eg_sol,
-       "examples": [{"setup": eg_tests[0]["setup"], "call": eg_tests[0]["call"], "expect": eg_tests[0]["expect"]}],
+       "examples": [ex(eg_tests[0])],
        "tests": eg_tests,
        "how": "Check runs 5 hidden tests at a relative tolerance of 1e-7. Tests 1 to 4 read the file; test 5 is a short hand case."},
       code_fb("Beta first, then the augmented unit-root $t$ on the residuals.",
               {"test-1": "Test 1 is beta. Regress the log of `a` on a constant and the log of `b`, not the prices.",
                "test-2": "Test 2 is the $t$ statistic. Keep the lagged change as a second regressor, and divide by the observations less 2.",
                "test-4": "Test 4 pairs `a` with `c`, which is unrelated. Its residuals barely revert, so $t$ is small."}),
+      "Both log prices have a unit root on the file; their own ADF tests do not reject. "
       "Regress $\\ln a$ on a constant and $\\ln b$ by least squares; the slope is beta. Take the residuals $e_t$. "
       "Regress $\\Delta e_t$ on $e_{t-1}$ and $\\Delta e_{t-1}$, with no constant, over every $t$ that has both. "
       "Then `t` is the coefficient on $e_{t-1}$ over its standard error. Divide the residual sum of squares by the observations less 2."),
@@ -709,7 +741,7 @@ B.append(parts("b-eg-pair", 5, ["co-test", "co-spread"], ["engle-granger-adf"], 
       fb("The spread keeps $1 + \\hat\\rho$ of itself each day.", "Solve $(1 + \\hat\\rho)^h = 0.5$ for $h$.",
          {"small-rho": "You used $-\\ln 2/\\hat\\rho$, the small-slope shortcut. Use $\\ln 0.5/\\ln(1 + \\hat\\rho)$.",
           "no-log": "You took $-1/\\hat\\rho$, the mean life. The half-life uses $\\ln 0.5$."}))],
-    f"On the file, $a$ against $b$ gives $t \\approx {eg_vals[1]:.2f}$, well past $-3.34$, so the pair is cointegrated. "
+    f"On the file, $a$ against $b$ gives $t \\approx {eg_vals[1]:.2f}$, well past $-3.34$, so we reject no cointegration at 5%. "
     f"Against $c$ it gives ${eg_vals[3]:.2f}$, short of the Engle-Granger line. "
     f"The spread keeps $1 + \\hat\\rho = {1 + rho13g:.4f}$ a day, so it halves in about {hl13:.2f} days."))
 
@@ -740,7 +772,7 @@ B.append(item("b-pair-pnl", 3, ["co-pairs"], ["pair-pnl"], 150, "What a pair tra
         "entry-costs-only": "You charged costs on the opening trades only. Closing both legs costs as well."}),
     f"The short makes £36,000 and the long £7,000, so £{gross15:,.0f} gross. "
     f"The four trades are worth £{traded15:,.0f}, costing £{cost15:,.2f}. Net P&L is £{gross15 - cost15:,.2f}."))
-# ======================================================================== Paper C: numerical methods, optimisation and statistical modelling
+# ======================================================================== Paper C: numerical methods and optimisation (topic 2.5; topic 2.6 sits in topic-2.6)
 # C1 a float32 running total
 tot1 = np.float32(100000)
 for _ in range(1000):
@@ -751,26 +783,26 @@ C.append(item("c-float32-fees", 3, ["nm-float"], ["float-absorption"], 150, "A r
     "A ledger keeps a running total in 32-bit floats, which carry a 24-bit significand. "
     "The total starts at £100,000 and a 1p fee is added 1,000 times.",
     "By how much, in pounds, has the stored total grown?",
-    num(grow1, 0.0001, [("exact", 10, 0.0001), ("absorbed", 0, 0.0001)], unit="£"),
+    num(grow1, 0.005, [("exact", 10, 0.0001), ("absorbed", 0, 0.0001)], unit="£"),
     fb("Each 1p rounds to one step of the float grid, $2^{-7}$ pounds.", "Find the spacing of 32-bit floats between $2^{16}$ and $2^{17}$, then round 0.01 to it.",
        {"exact": "You added the fees exactly. Near £100,000 the float grid is too coarse to hold 1p.",
         "absorbed": "You let every fee vanish. A fee rounds to the nearest grid step, and 0.01 is nearer $2^{-7}$ than 0."}),
     f"Between $2^{{16}}$ and $2^{{17}}$ the spacing is $2^{{16 - 23}} = {ulp1}$. "
     f"Each 1p fee rounds to one step, so 1,000 fees add $1000 \\times {ulp1} = {grow1}$ pounds, not £10."))
 
-# C2 digits lost to a near-singular correlation matrix
-rho2c = 0.999
-kap2 = (1 + rho2c) / (1 - rho2c)
-C.append(item("c-condition-digits", 3, ["nm-stability"], ["condition-digits"], 150, "Two assets that move as one",
-    "Two assets have correlation matrix $\\begin{pmatrix} 1 & 0.999 \\\\ 0.999 & 1 \\end{pmatrix}$. "
-    "Solving a system with a matrix of condition number $\\kappa$ can lose about $\\log_{10}\\kappa$ significant digits.",
-    "What is $\\log_{10}\\kappa$ here, with $\\kappa = \\lambda_{\\max}/\\lambda_{\\min}$? Give 2 decimal places.",
-    num(r(math.log10(kap2), 4), 0.005, [("squared", r(2 * math.log10(kap2), 4), 0.005), ("one-over-gap", r(math.log10(1 / (1 - rho2c)), 4), 0.005)]),
-    fb("The eigenvalues are $1 \\pm 0.999$.", "Find both eigenvalues, divide the larger by the smaller, then take $\\log_{10}$.",
-       {"squared": "You squared $\\kappa$, as normal equations would. This solve uses the matrix itself.",
-        "one-over-gap": "You used $1/0.001$ alone. The larger eigenvalue is 1.999, not 1."}),
-    f"The eigenvalues are 1.999 and 0.001, so $\\kappa = {kap2:.0f}$. "
-    f"$\\log_{{10}} {kap2:.0f} \\approx {math.log10(kap2):.2f}$, so about three of the sixteen digits can go."))
+# C2 the correlation at which a pair of signals loses four digits
+kap2 = 1e4
+rho2c = (kap2 - 1) / (kap2 + 1)
+C.append(item("c-condition-digits", 3, ["nm-stability"], ["condition-digits"], 150, "How close to one before digits go",
+    "Two assets have correlation matrix $\\begin{pmatrix} 1 & r \\\\ r & 1 \\end{pmatrix}$ with $0 < r < 1$. "
+    "Solving a system with a matrix of condition number $\\kappa = \\lambda_{\\max}/\\lambda_{\\min}$ can lose about $\\log_{10}\\kappa$ significant digits.",
+    "At what $r$ does $\\kappa$ reach $10^4$, so about four digits go? Give 4 decimal places.",
+    num(r(rho2c, 6), 0.00002, [("one-over-gap", r(1 - 1 / kap2), 0.00002)]),
+    fb("The eigenvalues are $1 \\pm r$.", "Find both eigenvalues in terms of $r$, set their ratio to $10^4$, then solve for $r$.",
+       {"one-over-gap": "You solved $1/(1 - r) = 10^4$. The larger eigenvalue is $1 + r$, not 1."}),
+    "The eigenvalues are $1 + r$ and $1 - r$, so $\\kappa = (1 + r)/(1 - r)$. "
+    "Setting $\\kappa = 10^4$ gives $r = (10^4 - 1)/(10^4 + 1)$. "
+    f"That is about {rho2c:.4f}, so a correlation that close to 1 costs four of the sixteen digits."))
 
 # C3 one Newton step for a bond yield
 f3c = lambda y: 5 / (1 + y) + 105 / (1 + y) ** 2 - 95
@@ -778,7 +810,7 @@ fp3c = lambda y: -5 / (1 + y) ** 2 - 210 / (1 + y) ** 3
 y1_3 = 0.05 - f3c(0.05) / fp3c(0.05)
 v3 = (-5 + math.sqrt(25 + 4 * 105 * 95)) / (2 * 105)
 ytrue3 = 1 / v3 - 1
-C.append(item("c-newton-yield", 3, ["nm-roots"], ["newton-yield"], 150, "One Newton step for a yield",
+C.append(item("c-newton-yield", 2, ["nm-roots"], ["newton-yield"], 150, "One Newton step for a yield",
     "A bond costs 95 and pays 5 in one year and 105 in two. Its yield solves $f(y) = \\tfrac{5}{1 + y} + \\tfrac{105}{(1 + y)^2} - 95 = 0$.",
     "Newton's method starts at $y_0 = 0.05$. What is $y_1$? Give 4 decimal places.",
     num(r(y1_3), 0.00005, [("sign", r(0.05 + f3c(0.05) / fp3c(0.05)), 0.00005), ("converged", r(ytrue3), 0.00005)]),
@@ -788,31 +820,31 @@ C.append(item("c-newton-yield", 3, ["nm-roots"], ["newton-yield"], 150, "One New
     f"$f(0.05) = 4.7619 + 95.2381 - 95 = 5$ and $f'(0.05) \\approx {fp3c(0.05):.4f}$. "
     f"So $y_1 = 0.05 + 5/{-fp3c(0.05):.4f} \\approx {y1_3:.4f}$, near the true yield {ytrue3:.4f}."))
 
-# C4 Simpson's rule across a kink
-C.append(item("c-simpson-kink", 4, ["nm-quadrature"], ["quadrature-kink"], 240, "Simpson's rule over a strike",
-    "A call is priced by Simpson's rule on $\\int (S(z) - K)^+\\varphi(z)\\,dz$ over a fixed grid of $z$. The strike falls between two nodes.",
+# C4 Simpson's rule across a jump (a digital call)
+C.append(item("c-simpson-jump", 4, ["nm-quadrature"], ["quadrature-jump"], 240, "Simpson's rule over a digital strike",
+    "A digital call pays £1 when $S_T > K$. It is priced by Simpson's rule on $\\int \\mathbf 1\\{S(z) > K\\}\\varphi(z)\\,dz$ over a fixed grid of $z$. "
+    "The strike falls between two nodes.",
     "How does the error shrink as the spacing $h$ falls, and what fixes it?",
-    choice([opt("a", "Like $h^2$, since the payoff's slope jumps at the strike; split the integral there to get $h^4$ back.", correct=True),
-            opt("b", "Like $h^4$, Simpson's order on any continuous integrand, so nothing needs fixing here.",
-                "You took Simpson's $h^4$ as given. It needs a smooth integrand; the kink at the strike breaks that."),
-            opt("c", "Like $h$, because the payoff has no derivative anywhere, so use a Monte Carlo pricer.",
-                "You took the payoff as rough everywhere. It is smooth on each side; only the strike is a kink."),
-            opt("d", "Not at all, because the payoff grows without bound, so cut the range off at $S = 2K$.",
-                "You worried about the unbounded payoff. The normal density makes the integrand decay fast.")]),
-    fb("A kink between nodes costs two orders.", "Ask where the integrand fails to be smooth, and whether a node sits there."),
-    "Simpson's $h^4$ error needs four smooth derivatives on each panel. A panel holding the strike sees a jump in slope, which leaves an $h^2$ error. "
-    "Starting the grid at the strike, where the payoff turns on, restores $h^4$."))
+    choice([opt("a", "Like $h$, since the payoff jumps at the strike; split the integral there for $h^4$.", correct=True),
+            opt("b", "Like $h^2$, as for a call's kink; split the integral at the strike to get $h^4$ back.",
+                "You used the rate for a call's kink. A jump in the payoff costs more than a kink does."),
+            opt("c", "Like $h^4$, which is Simpson's usual order, so nothing needs fixing at the strike.",
+                "You took Simpson's $h^4$ as given. It needs a smooth integrand, and the jump breaks that."),
+            opt("d", "Not at all, since the payoff is bounded; refine the grid far from the strike instead.",
+                "You trusted the bound on the payoff. The jump at the strike is the trouble, not the tails.")]),
+    fb("A jump between nodes costs three orders.", "Ask where the integrand fails to be smooth, and whether a node sits there."),
+    "Simpson's $h^4$ error needs a smooth integrand on each panel. A panel holding the strike sees a jump of 1 in the payoff, which leaves an error of order $h$. "
+    "Starting a panel at the strike, where the payoff jumps, restores $h^4$."))
 
 # C5 how each pricer's error shrinks (table)
 C.append(item("c-error-rates", 3, ["nm-mc", "nm-fd", "nm-quadrature"], ["error-rates"], 180, "How each error shrinks",
-    "One European call is priced three ways. The Monte Carlo error falls like $n^{-1/2}$. "
-    "The explicit grid's falls like $\\Delta\\tau + \\Delta S^2$, and Simpson's rule split at the strike like $h^4$.",
+    "One European call is priced three ways: Monte Carlo, an explicit finite-difference grid and Simpson's rule split at the strike.",
     "Fill in the factor by which each error is divided.",
     {"kind": "table", "columns": ["Change", "Error divided by"],
      "rows": [["Monte Carlo with four times the paths", {"edit": True, "answer": 2, "tol": {"abs": 0}, "wrong": [{"id": "mc-linear", "value": 4, "tol": {"abs": 0}}]}],
               ["Grid with $\\Delta S$ halved and $\\Delta\\tau$ quartered", {"edit": True, "answer": 4, "tol": {"abs": 0}, "wrong": [{"id": "fd-first-order", "value": 2, "tol": {"abs": 0}}]}],
               ["Simpson split at the strike, $h$ halved", {"edit": True, "answer": 16, "tol": {"abs": 0}, "wrong": [{"id": "simpson-unsplit", "value": 4, "tol": {"abs": 0}}]}]]},
-    fb("2, 4 and 16.", "Put each change into its error rate.",
+    fb("2, 4 and 16.", "Recall each method's error rate, then put the change into it.",
        {"mc-linear": "You took Monte Carlo error as falling like $1/n$. It falls like $1/\\sqrt n$, so four times the paths halves it.",
         "fd-first-order": "You took the grid error as first order in $\\Delta S$. It is second order, and $\\Delta\\tau$ quartered keeps pace.",
         "simpson-unsplit": "You used the $h^2$ rate of an unsplit rule. Split at the strike, Simpson is $h^4$."}),
@@ -859,12 +891,12 @@ mc_tests = [T("bool(abs(res[0] - %.6f) < 4 * res[1])" % bs6, "True", "equal", se
             T("bool(0.4 < r4[1] / r1[1] < 0.6)", "True", "equal", setup=mc_setup3)]
 mc_vals = [run_solution(mc_sol, t["call"], t["setup"]) for t in mc_tests]
 assert all(mc_vals), mc_vals
-C.append(parts("c-three-pricers", 5, ["nm-fd", "nm-quadrature", "nm-mc"], ["three-pricers"], 1500, "One call, three pricers",
+C.append(parts("c-three-pricers", 5, ["nm-fd", "nm-quadrature", "nm-mc"], ["three-pricers"], 1800, "One call, three pricers",
     "We price a European call three ways and compare each with Black-Scholes. "
     "Write each function to the specification in its part.",
     [("Write `fd_call(S0, K, r, sigma, T, M, N)`, the explicit grid's value at `S0`.",
       {"kind": "code", "language": "python", "starter": "import math\nimport numpy as np\n\n\ndef fd_call(S0, K, r, sigma, T, M, N):\n    # M even: S0 sits on the middle node\n    ...\n",
-       "solution": fd_sol, "examples": [{"call": fd_tests[0]["call"], "expect": fd_tests[0]["expect"]}], "tests": fd_tests,
+       "solution": fd_sol, "examples": [ex(fd_tests[0])], "tests": fd_tests,
        "how": "Check runs 3 hidden tests, each within 1e-6 of the specified grid's value."},
       code_fb("The grid matches its specification.",
               {"test-1": "Test 1 is the base case. Update every interior node from the old values at once, then reset both ends.",
@@ -876,7 +908,7 @@ C.append(parts("c-three-pricers", 5, ["nm-fd", "nm-quadrature", "nm-mc"], ["thre
       "Then set $V_0 = 0$ and $V_M = e^{x_M} - Ke^{-r\\tau}$. Return the middle node, where $x = \\ln S_0$."),
      ("Write `quad_call(S0, K, r, sigma, T, n)`, Simpson's rule with `n` panels.",
       {"kind": "code", "language": "python", "cumulative": False, "starter": "import math\n\n\ndef quad_call(S0, K, r, sigma, T, n):\n    ...\n",
-       "solution": quad_sol, "examples": [{"call": quad_tests[0]["call"], "expect": quad_tests[0]["expect"]}], "tests": quad_tests,
+       "solution": quad_sol, "examples": [ex(quad_tests[0])], "tests": quad_tests,
        "how": "Check runs 3 hidden tests, each within 1e-5 of the Black-Scholes price."},
       code_fb("Split at the strike, Simpson matches Black-Scholes to five places.",
               {"test-1": "Test 1 is the base case. Start the grid at $K$, so the kink is on a node.",
@@ -934,14 +966,14 @@ cov8a = [[0.04, 0.006, 0.002], [0.006, 0.09, 0.018], [0.002, 0.018, 0.16]]
 mu8b = [0.03, 0.06, 0.07, 0.10]
 cov8b = [[0.02, 0.004, 0.0, 0.003], [0.004, 0.05, 0.01, 0.0], [0.0, 0.01, 0.06, 0.012], [0.003, 0.0, 0.012, 0.12]]
 kkt_cases = ["mv_weights(%r, %r, 3.0)" % (mu8a, cov8a), "mv_weights(%r, %r, 5.0)" % (mu8b, cov8b),
-             "mv_weights([0.06, 0.1], [[0.0225, 0.0075], [0.0075, 0.0625]], 2.5)", "float(sum(mv_weights(%r, %r, 0.5)))" % (mu8b, cov8b)]
+             "mv_weights([0.05, 0.09], [[0.0196, 0.0042], [0.0042, 0.0484]], 4.0)", "float(sum(mv_weights(%r, %r, 0.5)))" % (mu8b, cov8b)]
 kkt_tests = [T(c, rep(run_solution(kkt_sol, c)), tol={"abs": 1e-8}) for c in kkt_cases]
 C.append(item("c-kkt-code", 4, ["cv-qp", "cv-duality"], ["kkt-solve"], 600, "The KKT system in code",
     "For $n$ assets we maximise $\\boldsymbol\\mu^T\\mathbf w - \\tfrac{\\gamma}{2}\\mathbf w^T\\boldsymbol\\Sigma\\mathbf w$ subject to $\\mathbf 1^T\\mathbf w = 1$, with shorts allowed. "
-    "The hidden tests compare with a numerical solver.",
+    "The expected weights in the hidden tests come from SciPy's SLSQP.",
     "Write `mv_weights(mu, cov, gamma)`: solve the $(n + 1)$-equation KKT system for $\\mathbf w$ and $\\lambda$, and return $\\mathbf w$.",
     {"kind": "code", "language": "python", "starter": "import numpy as np\n\n\ndef mv_weights(mu, cov, gamma):\n    ...\n",
-     "solution": kkt_sol, "examples": [{"call": kkt_tests[2]["call"], "expect": kkt_tests[2]["expect"]}], "tests": kkt_tests,
+     "solution": kkt_sol, "examples": [ex(kkt_tests[2])], "tests": kkt_tests,
      "how": "Check runs 4 hidden tests at an absolute tolerance of 1e-8. Weights are compared entry by entry."},
     code_fb("One linear solve gives the solver's answer.",
             {"test-1": "Test 1 has three assets. Stack $\\gamma\\boldsymbol\\Sigma$ with a column of ones, and the budget row below.",
@@ -949,28 +981,31 @@ C.append(item("c-kkt-code", 4, ["cv-qp", "cv-duality"], ["kkt-solve"], 600, "The
     "Stationarity gives $n$ equations $\\gamma\\boldsymbol\\Sigma\\mathbf w + \\lambda\\mathbf 1 = \\boldsymbol\\mu$, and the budget one more. "
     "The objective is concave and the constraint affine, so the KKT point is the optimum. A solver such as SLSQP lands on the same weights."))
 
-# C9 a dedication LP and its dual (parts)
-fB9 = 150 / 1.06
-fA9 = 100 - 0.06 * fB9
-cost9 = 0.97 * fA9 + 1.02 * fB9
-y1_9 = 0.97
-y2_9 = (1.02 - 0.06 * y1_9) / 1.06
+# C9 a dedication LP, its dual and a pricing-out test (parts)
+L1_9, L2_9 = 80, 120
+pA9, cpB9, pB9, pC9, cfC9 = 0.96, 0.05, 1.01, 0.95, 1.07
+fB9 = L2_9 / (1 + cpB9)
+fA9 = L1_9 - cpB9 * fB9
+cost9 = pA9 * fA9 + pB9 * fB9
+y1_9 = pA9
+y2_9 = (pB9 - cpB9 * y1_9) / (1 + cpB9)
+rc9 = pC9 - cfC9 * y2_9
 C.append(parts("c-dedication-lp", 3, ["cv-lp", "cv-duality"], ["dedication-lp"], 240, "Buying bonds to meet two payments",
-    "A fund owes £100,000 in one year and £150,000 in two. Bond A pays £1 in one year and costs 0.97. "
-    "Bond B pays 0.06 in one year and 1.06 in two, and costs 1.02. "
-    "In £ thousand, the plan solves: minimise $0.97a + 1.02b$ with $a + 0.06b \\ge 100$, $1.06b \\ge 150$ and $a, b \\ge 0$.",
+    "A scheme must pay £80,000 in one year and £120,000 in two. Bond A pays £1 in one year and costs 0.96. "
+    "Bond B pays 0.05 in one year and 1.05 in two, and costs 1.01. "
+    "In £ thousand, the plan solves: minimise $0.96a + 1.01b$ with $a + 0.05b \\ge 80$, $1.05b \\ge 120$ and $a, b \\ge 0$.",
     [("What is the cheapest cost, in £ thousand? Give 2 decimal places.",
-      num(r(cost9, 4), 0.005, [("no-coupon", r(0.97 * 100 + 1.02 * fB9, 4), 0.005)]),
-      fb("B covers year two, and its coupon covers part of year one.", "Both constraints bind: solve $1.06b = 150$, then $a = 100 - 0.06b$.",
-         {"no-coupon": "You bought 100 of A as well. B's coupon already pays part of the year-one bill."})),
-     ("What is the dual value of the year-two payment: the extra cost per £1 more owed in two years? Give 4 decimal places.",
-      num(r(y2_9), 0.00005, [("ignored-coupon", r(1.02 / 1.06), 0.00005), ("year-one", y1_9, 0.00005)]),
-      fb("The duals are the discount factors the bond prices imply.", "Make both bonds' reduced costs zero: $y_1 = 0.97$ and $0.06y_1 + 1.06y_2 = 1.02$.",
-         {"ignored-coupon": "You divided B's price by 1.06. Part of that price pays for the year-one coupon, worth $0.06y_1$.",
-          "year-one": "You gave the year-one dual. The question asks about the payment in two years."}))],
-    f"$b = 150/1.06 \\approx {fB9:.4f}$ and $a = 100 - 0.06b \\approx {fA9:.4f}$, costing {cost9:.2f}. "
-    f"The duals are $y_1 = 0.97$ and $y_2 = (1.02 - 0.0582)/1.06 \\approx {y2_9:.4f}$. "
-    f"The dual objective $100y_1 + 150y_2$ is also {100 * y1_9 + 150 * y2_9:.2f}, as strong duality says."))
+      num(r(cost9, 4), 0.005, [("no-coupon", r(pA9 * L1_9 + pB9 * fB9, 4), 0.005)]),
+      fb("B covers year two, and its coupon covers part of year one.", "Both constraints bind: solve $1.05b = 120$, then $a = 80 - 0.05b$.",
+         {"no-coupon": "You bought 80 of A as well. B's coupon already pays part of the year-one bill."})),
+     ("The duals are the discount factors the prices imply. A third bond pays 1.07 in two years only, and costs 0.95. What is its reduced cost, $0.95 - 1.07y_2$? Give 4 decimal places.",
+      num(r(rc9), 0.00005, [("ignored-coupon", r(pC9 - cfC9 * pB9 / (1 + cpB9)), 0.00005), ("sign", r(-rc9), 0.00005)]),
+      fb("Price the third bond with the duals, and compare with its cost.", "Make both bonds' reduced costs zero: $y_1 = 0.96$ and $0.05y_1 + 1.05y_2 = 1.01$.",
+         {"ignored-coupon": "You divided B's price by 1.05. Part of that price pays for the year-one coupon, worth $0.05y_1$.",
+          "sign": "You flipped the sign. The reduced cost is the bond's price less the value the duals give it."}))],
+    f"$b = 120/1.05 \\approx {fB9:.4f}$ and $a = 80 - 0.05b \\approx {fA9:.4f}$, costing {cost9:.2f}. "
+    f"The duals are $y_1 = 0.96$ and $y_2 = (1.01 - 0.048)/1.05 \\approx {y2_9:.4f}$. "
+    f"The third bond's reduced cost is negative, so buying it would cut the cost."))
 
 # C10 which functions are convex (multi, four keys)
 C.append(item("c-convex-functions", 2, ["cv-convex"], ["convex-functions"], 120, "Risk measures that are convex",
@@ -1003,7 +1038,7 @@ def proj_simplex(v):
 
 
 p11, th11 = proj_simplex(v11)
-C.append(item("c-projected-step", 4, ["cv-descent"], ["projected-gradient"], 240, "A step that leaves the simplex",
+C.append(item("c-projected-step", 3, ["cv-descent"], ["projected-gradient"], 240, "A step that leaves the simplex",
     "A long-only, fully invested book has weights $(0.6, 0.3, 0.1)$. The gradient of its loss is $(0.2, -0.6, 0.5)$. "
     "Projected gradient descent steps by 0.5, then projects onto $\\{\\mathbf w \\ge 0, \\sum w_i = 1\\}$. "
     "The projection is $w_i = \\max(v_i - \\theta, 0)$, with one $\\theta$ chosen so the weights sum to 1.",
@@ -1016,210 +1051,6 @@ C.append(item("c-projected-step", 4, ["cv-descent"], ["projected-gradient"], 240
         "no-projection": "You stopped after the step. The weights must be projected back onto the simplex."}),
     f"The step gives $\\mathbf v = (0.5, 0.6, -0.15)$. With the third weight at zero, $(0.5 - \\theta) + (0.6 - \\theta) = 1$ gives $\\theta = {th11:.2f}$. "
     f"So the weights are $({p11[0]:.2f}, {p11[1]:.2f}, 0)$."))
-
-# C12 an expected count from a Poisson model with an offset
-mu12 = 6.5 * math.exp(-1.2 + 0.18 * 8)
-C.append(item("c-poisson-offset", 2, ["sm-glm"], ["poisson-offset"], 90, "Fills expected in a session",
-    "A Poisson model counts an algorithm's fills per session with a log link and offset $\\ln(\\text{hours run})$. "
-    "The intercept is $-1.2$ and the slope on the quoted spread, in basis points, is 0.18.",
-    "How many fills does it expect in a 6.5-hour session at a spread of 8 basis points? Give 3 decimal places.",
-    num(r(mu12, 4), 0.0005, [("no-offset", r(math.exp(-1.2 + 0.18 * 8), 4), 0.0005), ("offset-added", r(math.exp(-1.2 + 0.18 * 8) + 6.5, 4), 0.0005)]),
-    fb("The offset multiplies the rate by the hours.", "Find $e^{-1.2 + 0.18 \\times 8}$, the rate per hour, then multiply by 6.5.",
-       {"no-offset": "You gave the rate per hour. The offset $\\ln 6.5$ multiplies it by the session's hours.",
-        "offset-added": "You added the hours. An offset in the log link multiplies the mean."}),
-    f"The rate is $e^{{0.24}} \\approx {math.exp(0.24):.4f}$ fills an hour. Over 6.5 hours the model expects ${mu12:.3f}$ fills."))
-# C13 the 2.6 exit task, part 1: IRLS for a grouped logistic and a Poisson model with standard errors
-lg_sol = ("import numpy as np\nimport pandas as pd\n\n\ndef irls_grouped_logit(X, k, m):\n    X, k, m = np.asarray(X, float), np.asarray(k, float), np.asarray(m, float)\n"
-          "    beta = np.zeros(X.shape[1])\n    for _ in range(100):\n        eta = X @ beta\n        p = 1 / (1 + np.exp(-eta))\n        w = m * p * (1 - p)\n"
-          "        z = eta + (k - m * p) / w\n        new = np.linalg.solve(X.T @ (w[:, None] * X), X.T @ (w * z))\n"
-          "        if np.max(np.abs(new - beta)) < 1e-10:\n            return new\n        beta = new\n    return beta\n")
-po_sol = ("import numpy as np\nimport pandas as pd\n\n\ndef poisson_irls_se(X, y, offset):\n    X, y, off = np.asarray(X, float), np.asarray(y, float), np.asarray(offset, float)\n"
-          "    beta = np.zeros(X.shape[1])\n    for _ in range(100):\n        eta = X @ beta + off\n        mu = np.exp(eta)\n"
-          "        z = eta - off + (y - mu) / mu   # working response, offset removed\n"
-          "        new = np.linalg.solve(X.T @ (mu[:, None] * X), X.T @ (mu * z))\n        done = np.max(np.abs(new - beta)) < 1e-10\n        beta = new\n"
-          "        if done:\n            break\n    mu = np.exp(X @ beta + off)\n    se = np.sqrt(np.diag(np.linalg.inv(X.T @ (mu[:, None] * X))))\n"
-          "    return beta, se\n")
-lg_setup = ("import numpy as np, pandas as pd; d = pd.read_csv('fill-buckets.csv'); "
-            "X = np.column_stack([np.ones(len(d)), d['spread_bp'], d['queue_k']]); k = d['fills'].to_numpy(); m = d['orders'].to_numpy()")
-lg_hand = "import numpy as np; X = np.column_stack([np.ones(5), np.arange(5.0)]); k = np.array([1, 3, 4, 7, 8.0]); m = np.array([10, 10, 8, 10, 9.0])"
-po_setup = ("import numpy as np, pandas as pd; d = pd.read_csv('jump-days.csv'); "
-            "X = np.column_stack([np.ones(len(d)), d['vix']]); y = d['jumps'].to_numpy(); off = np.log(d['hours'].to_numpy())")
-lg_cases = [(lg_setup, "irls_grouped_logit(X, k, m)"), (lg_setup, "irls_grouped_logit(X[:60], k[:60], m[:60])"), (lg_hand, "irls_grouped_logit(X, k, m)")]
-po_cases = [(po_setup, "poisson_irls_se(X, y, off)[0]"), (po_setup, "poisson_irls_se(X, y, off)[1]"), (po_setup, "poisson_irls_se(X, y, np.zeros(len(y)))[1]")]
-lg_tests = [T(c, rep(run_solution(lg_sol, c, s)), setup=s, tol={"rel": 1e-6}) for s, c in lg_cases]
-po_tests = [T(c, rep(run_solution(po_sol, c, s)), setup=s, tol={"rel": 1e-6}) for s, c in po_cases]
-po_full = [float(v) for v in eval(po_tests[0]["expect"])]
-po_se = [float(v) for v in eval(po_tests[1]["expect"])]
-C.append(parts("c-irls-two", 5, ["sm-glm"], ["irls"], 1200, "Two GLMs by your own IRLS",
-    "`fill-buckets.csv` groups resting orders by day and size bucket: `spread_bp`, `queue_k`, the `orders` placed and how many `fills`. "
-    "`jump-days.csv` records 240 sessions: the `vix` close, the `hours` traded and the count of price `jumps`. "
-    "Each fit starts from $\\boldsymbol\\beta = \\mathbf 0$ and stops once no coefficient moves by more than $10^{-10}$.",
-    [("Write `irls_grouped_logit(X, k, m)`: $k_i$ fills out of $m_i$ orders, with `X` holding a column of ones.",
-      {"kind": "code", "language": "python", "data": {"fill-buckets.csv": DATA_REL + "fill-buckets.csv"},
-       "starter": "import numpy as np\nimport pandas as pd\n\n\ndef irls_grouped_logit(X, k, m):\n    ...\n",
-       "solution": lg_sol, "examples": [{"setup": lg_tests[0]["setup"], "call": lg_tests[0]["call"], "expect": lg_tests[0]["expect"]}], "tests": lg_tests,
-       "how": "Check runs 3 hidden tests. Coefficients are compared entry by entry at a relative tolerance of 1e-6, which a statsmodels binomial GLM also meets."},
-      code_fb("Your IRLS lands on the binomial maximum-likelihood fit.",
-              {"test-1": "Test 1 is the whole file. A bucket of $m$ orders carries $m$ times the weight of one order.",
-               "test-3": "Test 3 is a small hand case. Solve $\\mathbf X^T\\mathbf W\\mathbf X\\boldsymbol\\beta = \\mathbf X^T\\mathbf W\\mathbf z$ each step."}),
-      "Each step solves weighted least squares with weights $m_ip_i(1 - p_i)$ and working response $\\eta_i + \\tfrac{k_i - m_ip_i}{m_ip_i(1 - p_i)}$."),
-     ("Write `poisson_irls_se(X, y, offset)`, returning `(beta, se)` for a log link.",
-      {"kind": "code", "language": "python", "cumulative": False, "data": {"jump-days.csv": DATA_REL + "jump-days.csv"},
-       "starter": "import numpy as np\nimport pandas as pd\n\n\ndef poisson_irls_se(X, y, offset):\n    # returns (beta, se)\n    ...\n",
-       "solution": po_sol, "examples": [{"setup": po_tests[0]["setup"], "call": po_tests[0]["call"], "expect": po_tests[0]["expect"]}], "tests": po_tests,
-       "how": "Check runs 3 hidden tests. Coefficients and standard errors are compared entry by entry at a relative tolerance of 1e-6, as statsmodels reports them."},
-      code_fb("Your fit and its standard errors match the Poisson GLM.",
-              {"test-1": "Test 1 uses $\\ln(\\text{hours})$ as the offset. Add it to $\\eta$, but take it out of the working response.",
-               "test-2": "Test 2 is the standard errors: the root of each diagonal entry of $(\\mathbf X^T\\mathbf W\\mathbf X)^{-1}$ at the fitted $\\mu$.",
-               "test-3": "Test 3 drops the offset. The fit and its errors change, because short sessions now look quiet."}),
-      "Here $\\eta = \\mathbf X\\boldsymbol\\beta + \\text{offset}$, the weights are $\\mu = e^\\eta$, and the working response is $\\eta - \\text{offset} + (y - \\mu)/\\mu$. "
-      "The standard errors are the roots of the diagonal of $(\\mathbf X^T\\mathbf W\\mathbf X)^{-1}$ at the final fit.")],
-    "For a canonical link, IRLS is Newton's method on the log-likelihood, so it converges in a few steps. "
-    f"On the jump file the slope on the VIX is about {po_full[1]:.4f}, with standard error {po_se[1]:.4f}. "
-    f"So each VIX point raises the jump rate per hour by about {(math.exp(po_full[1]) - 1) * 100:.0f}%."))
-
-# C14 an interaction in a two-level factorial design
-y14 = {("old", "am"): 12.0, ("new", "am"): 9.5, ("old", "pm"): 8.0, ("new", "pm"): 7.5}
-int14 = (y14[("new", "pm")] - y14[("old", "pm")] - y14[("new", "am")] + y14[("old", "am")]) / 2
-main14 = (y14[("new", "am")] + y14[("new", "pm")]) / 2 - (y14[("old", "am")] + y14[("old", "pm")]) / 2
-C.append(item("c-factorial-interaction", 3, ["sm-anova"], ["factorial-effects"], 150, "Does the new algorithm help more in the morning",
-    "An execution test crosses two algorithms with two sessions. Mean slippage, in basis points, is as follows. "
-    "In the morning the old algorithm gives 12.0 and the new one 9.5. In the afternoon they give 8.0 and 7.5.",
-    "What is the algorithm-by-session interaction effect, $\\tfrac12[(\\text{new} - \\text{old})_{\\text{pm}} - (\\text{new} - \\text{old})_{\\text{am}}]$?",
-    num(int14, 0.005, [("no-half", 2 * int14, 0.005), ("main-effect", main14, 0.005)]),
-    fb("The new algorithm saves 2.5 in the morning but only 0.5 in the afternoon.", "Find the new-minus-old gap in each session, subtract, then halve.",
-       {"no-half": "You left out the $\\tfrac12$. The effect is half the difference of the two gaps.",
-        "main-effect": "You gave the algorithm's main effect. The interaction compares its gap across sessions."}),
-    f"The gaps are $7.5 - 8.0 = -0.5$ in the afternoon and $9.5 - 12.0 = -2.5$ in the morning. Half their difference is ${int14:.1f}$. "
-    "So the algorithm's saving depends on the session."))
-
-# C15 a signed-rank test by hand
-d15 = [1.4, -0.6, 2.2, 0.9, -1.7, 3.0, 0.3, 1.1]
-order15 = sorted(range(8), key=lambda i: abs(d15[i]))
-rank15 = {i: k + 1 for k, i in enumerate(order15)}
-Wp15 = sum(rank15[i] for i in range(8) if d15[i] > 0)
-m15, v15 = 8 * 9 / 4, 8 * 9 * 17 / 24
-z15 = (Wp15 - m15) / math.sqrt(v15)
-C.append(item("c-signed-rank", 3, ["sm-nonpar"], ["signed-rank"], 180, "Eight days of paired slippage",
-    "On eight days we route matched orders to two brokers. Broker A's slippage minus broker B's, in basis points, is "
-    "$1.4, -0.6, 2.2, 0.9, -1.7, 3.0, 0.3, 1.1$.",
-    "What is the normal-approximation $z$ for the Wilcoxon signed-rank statistic $W^+$? Give 2 decimal places.",
-    num(r(z15, 4), 0.005, [("sign", r(-z15, 4), 0.005), ("no-root", r((Wp15 - m15) / v15, 4), 0.005)]),
-    fb(f"$W^+ = {Wp15}$ against a null mean of 18.", "Rank the absolute differences, add the ranks of the positive ones, then standardise.",
-       {"sign": "You standardised $W^-$, or flipped the sign. $W^+$ is above its mean here.",
-        "no-root": "You divided by the variance. Divide by its square root, $\\sqrt{51}$."}),
-    f"The negative differences have ranks 2 and 6, so $W^+ = 36 - 8 = {Wp15}$. Under the null $E[W^+] = 18$ and $\\text{{Var}}(W^+) = 51$. "
-    f"So $z = 10/\\sqrt{{51}} \\approx {z15:.2f}$."))
-
-# C16 a gamma prior on an exponential rate
-a16, b16 = 4, 30
-w16 = [5.2, 7.9, 3.4, 9.1, 6.8, 4.4]
-A16, B16 = a16 + len(w16), b16 + sum(w16)
-mw16 = B16 / (A16 - 1)
-C.append(item("c-gamma-waits", 4, ["sm-bayes"], ["gamma-exponential"], 240, "How long until the next fill",
-    "Waits between fills, in seconds, are exponential with rate $\\lambda$. The prior on $\\lambda$ is Gamma with shape 4 and rate 30. "
-    "Six waits are observed: $5.2, 7.9, 3.4, 9.1, 6.8, 4.4$.",
-    "What is the posterior mean of the expected wait $1/\\lambda$, in seconds? Give 2 decimal places.",
-    num(r(mw16, 4), 0.005, [("inverted-mean", r(B16 / A16, 4), 0.005), ("ignored-prior", r(sum(w16) / len(w16), 4), 0.005), ("prior-only", b16 / (a16 - 1), 0.005)]),
-    fb("For $\\lambda \\sim \\text{Gamma}(a, b)$, $E[1/\\lambda] = b/(a - 1)$.", "Update to shape $4 + 6$ and rate $30 + \\sum w_i$, then take $E[1/\\lambda]$.",
-       {"inverted-mean": "You inverted the posterior mean of $\\lambda$. $E[1/\\lambda]$ is $b/(a - 1)$, not $b/a$.",
-        "ignored-prior": "You gave the sample mean. The prior adds 4 to the shape and 30 to the rate.",
-        "prior-only": "You gave the prior's answer. Update it with the six waits first."}),
-    f"The posterior is Gamma with shape 10 and rate $30 + 36.8 = {B16:.1f}$. "
-    f"So $E[1/\\lambda] = {B16:.1f}/9 \\approx {mw16:.2f}$ seconds, between the prior's 10 and the data's 6.13."))
-
-# C17 a Monte Carlo standard error from batch means
-bm17 = np.array([0.212, 0.198, 0.231, 0.205, 0.187, 0.224, 0.219, 0.193, 0.208, 0.226])
-mcse17 = float(bm17.std(ddof=1) / math.sqrt(10))
-ess17 = 0.25 ** 2 / mcse17 ** 2
-C.append(item("c-batch-means", 3, ["sm-mcmc"], ["batch-means"], 180, "How precise is a posterior mean",
-    "A chain of 10,000 draws has posterior standard deviation 0.25. Split into ten batches of 1,000, its batch means are "
-    "$0.212, 0.198, 0.231, 0.205, 0.187, 0.224, 0.219, 0.193, 0.208, 0.226$.",
-    "What is the Monte Carlo standard error of the posterior mean, from the batch means? Give 4 decimal places.",
-    num(r(mcse17, 6), 0.00005, [("naive", 0.0025, 0.00005), ("batch-sd", r(bm17.std(ddof=1), 6), 0.00005)]),
-    fb("The spread of the batch means, over $\\sqrt{10}$.", "Take the sample standard deviation of the ten means, then divide by $\\sqrt{10}$.",
-       {"naive": "You used $0.25/\\sqrt{10000}$, which treats the draws as independent. The chain's draws are correlated.",
-        "batch-sd": "You stopped at the spread of the batch means. Divide by $\\sqrt{10}$ for the error of their average."}),
-    f"The batch means have standard deviation {bm17.std(ddof=1):.4f}, so the error is ${bm17.std(ddof=1):.4f}/\\sqrt{{10}} \\approx {mcse17:.4f}$. "
-    f"Independent draws would give 0.0025. So the 10,000 draws are worth about {ess17:,.0f} independent ones."))
-
-# C18 partial pooling of one trader's slippage
-yb18, n18, s18, m18, t18 = 4.2, 9, 6.0, 1.5, 1.0
-w18 = (n18 / s18 ** 2) / (n18 / s18 ** 2 + 1 / t18 ** 2)
-th18 = m18 + w18 * (yb18 - m18)
-C.append(item("c-partial-pooling", 3, ["sm-hier"], ["partial-pooling"], 150, "One trader's slippage, pooled",
-    "Traders' true mean slippages are normal around 1.5 basis points with standard deviation 1.0. "
-    "One trader averaged 4.2 over 9 trades, with trade-to-trade standard deviation 6.0.",
-    "What is the hierarchical model's estimate of that trader's mean, in basis points?",
-    num(r(th18, 4), 0.005, [("no-pooling", yb18, 0.005), ("complete-pooling", m18, 0.005), ("swapped-weight", r(m18 + (1 - w18) * (yb18 - m18), 4), 0.005),
-                            ("sd-not-variance", r(m18 + (n18 / s18) / (n18 / s18 + 1) * (yb18 - m18), 4), 0.005)]),
-    fb("A precision-weighted average of 4.2 and 1.5.", "Weight the trader's mean by $n/\\sigma^2 = 0.25$ and the group mean by $1/\\tau^2 = 1$.",
-       {"no-pooling": "You kept the raw average. Nine noisy trades earn only a fifth of the weight.",
-        "complete-pooling": "You gave the group mean. The trader's own trades still count.",
-        "swapped-weight": "You swapped the weights. The noisier source, the nine trades, gets the smaller weight.",
-        "sd-not-variance": "You weighted by $n/\\sigma$. Precisions use variances: $n/\\sigma^2$."}),
-    f"The data's precision is $9/36 = 0.25$ against the group's $1/1 = 1$, so the trader's weight is 0.2. "
-    f"The estimate is $1.5 + 0.2 \\times 2.7 = {th18:.2f}$ basis points."))
-
-# C19 the 2.6 exit task, part 2: a Gibbs sampler for a normal model, then R-hat on four chains
-gb_sol = ("import numpy as np\nimport pandas as pd\n\n\ndef gibbs_normal(y, n, seed):\n    y = np.asarray(y, float)\n    rng = np.random.default_rng(seed)\n"
-          "    N, ybar = len(y), y.mean()\n    mu, out = ybar, np.empty((n, 2))\n    for k in range(n):\n"
-          "        s2 = (np.sum((y - mu) ** 2) / 2) / rng.gamma(N / 2)     # inverse gamma\n"
-          "        mu = rng.normal(ybar, np.sqrt(s2 / N))\n        out[k] = mu, s2\n    return out\n")
-rh_sol = ("import numpy as np\nimport pandas as pd\n\n\ndef rhat(chains):\n    c = np.asarray(chains, float)\n    m, n = c.shape\n    W = c.var(axis=1, ddof=1).mean()\n"
-          "    B = n * c.mean(axis=1).var(ddof=1)\n    V = (n - 1) / n * W + B / n\n    return float(np.sqrt(V / W))\n")
-_yf = pd.read_csv(os.path.join(DATA, 'factor-days.csv'))['y'].to_numpy()
-_yh = np.array([0.012, -0.004, 0.009, 0.015, -0.011, 0.006, 0.002, -0.007])
-
-
-def _post(yv):
-    S = float(((yv - yv.mean()) ** 2).sum())
-    N = len(yv)
-    return float(yv.mean()), math.sqrt(S / (N * (N - 3))), S / (N - 3)
-
-
-pf, ph = _post(_yf), _post(_yh)
-gb_setup = "import numpy as np, pandas as pd; y = pd.read_csv('factor-days.csv')['y'].to_numpy(); d = gibbs_normal(y, 4000, 1)"
-gb_hand = "import numpy as np; y = np.array(%r); d = gibbs_normal(y, 20000, 2)" % [float(v) for v in _yh]
-gb_tests = [T("bool(abs(d[:, 0].mean() - %.10f) < %.3e)" % (pf[0], 0.1 * pf[1]), "True", "equal", setup=gb_setup),
-            T("bool(abs(d[:, 1].mean() / %.10e - 1) < 0.02)" % pf[2], "True", "equal", setup=gb_setup),
-            T("list(np.shape(d))", "[4000, 2]", "equal", setup=gb_setup),
-            T("bool(abs(d[:, 1].mean() / %.10e - 1) < 0.05 and abs(d[:, 0].mean() - %.10f) < %.3e)" % (ph[2], ph[0], 0.05 * ph[1]), "True", "equal", setup=gb_hand),
-            T("bool(np.all(d[:, 1] > 0))", "True", "equal", setup=gb_hand)]
-assert all(run_solution(gb_sol, t["call"], t.get("setup")) in (True, [4000, 2]) for t in gb_tests)
-rh_setup = "import numpy as np, pandas as pd; c = pd.read_csv('chains.csv').to_numpy().T"
-rh_cases = [(rh_setup, "rhat(c)"), (rh_setup, "rhat(c[:, :100])"), (rh_setup, "rhat(c[:3])"),
-            (None, "rhat([[0.1, 0.3, -0.2, 0.4], [0.5, 0.2, 0.6, 0.3]])")]
-rh_tests = [T(c, rep(run_solution(rh_sol, c, s)), setup=s, tol={"rel": 1e-9}) for s, c in rh_cases]
-rh_vals = [float(t["expect"]) for t in rh_tests]
-C.append(parts("c-mcmc-check", 5, ["sm-mcmc", "sm-bayes"], ["gibbs-rhat"], 1200, "A sampler and its convergence check",
-    "We fit a normal model to returns by Gibbs sampling, then check four chains have mixed. "
-    "The prior is $p(\\mu, \\sigma^2) \\propto 1/\\sigma^2$. Part 1 is tested on the `y` column of `factor-days.csv`. "
-    "`chains.csv` holds four chains of 400 draws, one per column.",
-    [("Write `gibbs_normal(y, n, seed)`, returning an array of `n` rows $(\\mu, \\sigma^2)$.",
-      {"kind": "code", "language": "python", "data": {"factor-days.csv": DATA_REL + "factor-days.csv"},
-       "starter": "import numpy as np\nimport pandas as pd\n\n\ndef gibbs_normal(y, n, seed):\n    ...\n",
-       "solution": gb_sol, "examples": [{"setup": gb_tests[2]["setup"], "call": gb_tests[2]["call"], "expect": gb_tests[2]["expect"]}], "tests": gb_tests,
-       "how": "Check runs 5 hidden tests. They compare the draws' means with the exact posterior means, on the file's `y` and on eight hand-picked returns."},
-      code_fb("The chain targets the exact posterior.",
-              {"test-1": "Test 1 checks the mean of $\\mu$. Draw $\\mu$ from a normal centred on $\\bar y$ with variance $\\sigma^2/N$.",
-               "test-2": "Test 2 checks the mean of $\\sigma^2$. Its conditional is inverse gamma with shape $N/2$ and scale $\\tfrac12\\sum(y_i - \\mu)^2$.",
-               "test-4": "Test 4 has eight returns, where heavy tails show. Use the current $\\mu$ in the sum of squares each step."}),
-      "Use `rng = np.random.default_rng(seed)` and start at $\\mu = \\bar y$. Each step draws $\\sigma^2$ given $\\mu$, then $\\mu$ given $\\sigma^2$. "
-      "Given $\\mu$, $\\sigma^2$ is inverse gamma with shape $N/2$ and scale $\\tfrac12\\sum(y_i - \\mu)^2$. Given $\\sigma^2$, $\\mu$ is normal with mean $\\bar y$ and variance $\\sigma^2/N$."),
-     ("Write `rhat(chains)` for an array with one chain per row.",
-      {"kind": "code", "language": "python", "cumulative": False, "data": {"chains.csv": DATA_REL + "chains.csv"},
-       "starter": "import numpy as np\nimport pandas as pd\n\n\ndef rhat(chains):\n    ...\n",
-       "solution": rh_sol, "examples": [{"setup": rh_tests[0]["setup"], "call": rh_tests[0]["call"], "expect": rh_tests[0]["expect"]}], "tests": rh_tests,
-       "how": "Check runs 4 hidden tests at a relative tolerance of 1e-9. Tests 1 to 3 read the file, one chain per column."},
-      code_fb("$\\hat R$ compares the spread between chains with the spread within them.",
-              {"test-1": "Test 1 is the file, transposed so each row is a chain. Use `ddof=1` for both variances.",
-               "test-3": "Test 3 leaves out the fourth chain, the one that sits higher."}),
-      "$$\\hat R = \\sqrt{\\left(\\tfrac{n - 1}{n}W + \\tfrac{B}{n}\\right)\\Big/W}$$ "
-      "$W$ is the mean of the chains' variances. $B$ is $n$ times the variance of their means. Both use the $n - 1$ divisor.")],
-    "Each Gibbs step draws from an exact conditional, so every draw is accepted and the chain mixes fast here. "
-    f"On the file, $\\hat R \\approx {rh_vals[0]:.4f}$ with all four chains and {rh_vals[2]:.4f} without the fourth, which sits higher. "
-    "Values above about 1.01 mean the chains have not yet mixed."))
 
 # ======================================================================== Paper D: backtesting, alpha, options and contests
 # D1 a Sortino ratio from six months
@@ -1280,7 +1111,7 @@ D.append(item("d-held-out", 3, ["bt-design"], ["held-out-period"], 120, "Where t
     "An engine has daily data from 2012 to 2025. You will tune rules, costs and sizes before reporting.",
     "Where should the held-out period sit?",
     choice([opt("a", "The last two years, untouched until every choice is fixed, then run once.", correct=True),
-            opt("b", "Two years of days drawn at random from across the whole sample.",
+            opt("b", "Two years of days drawn at random from across the whole sample, so every regime appears.",
                 "You drew days at random. Neighbouring days then sit on both sides, so the test leaks."),
             opt("c", "The first two years, so the rules are tuned on the most recent data.",
                 "You held out the start. The test then sits before the training data, which no live trade can."),
@@ -1309,12 +1140,12 @@ D.append(item("d-sharpe-interval", 4, ["bt-report"], ["sharpe-interval"], 240, "
 D.append(item("d-universe-date", 3, ["al-universe"], ["universe-look-ahead"], 120, "A universe picked at the end",
     "A momentum study takes the 300 largest shares by market value on 31 December 2024. It backtests them from 2015 to 2024.",
     "What is wrong with this universe?",
-    choice([opt("a", "It picks names using data from the end, so it holds firms that grew and drops those that failed.", correct=True),
+    choice([opt("a", "It uses end-of-sample values, so it keeps firms that grew and drops those that failed.", correct=True),
             opt("b", "Nothing: the 300 largest shares are liquid in every year, so costs stay small.",
                 "You checked only liquidity. The list uses 2024 values to choose shares for 2015."),
             opt("c", "It only biases the short side, where the shares that later fell are missing.",
                 "You limited the bias to shorts. Winners that grew into the list lift the long side too."),
-            opt("d", "It biases returns down, because large firms grow more slowly than small ones.",
+            opt("d", "It biases returns down, because the large firms of 2024 grow more slowly than small ones.",
                 "You expected a downward bias. Firms that are large in 2024 are mostly ones that rose.")]),
     fb("Rank the universe at each date with data known then.", "Ask what a 2015 investor could have known about the 2024 list."),
     "Market value at the end of 2024 rewards shares that rose over the test. So the universe is chosen with future data. "
@@ -1335,17 +1166,21 @@ D.append(item("d-reversal-weights", 3, ["al-signal", "al-portfolio"], ["reversal
     f"After demeaning, the share's return is $-0.046$, so its signal is $0.046$. The absolute signals sum to {np.abs(s7).sum():.3f}. "
     f"Its weight is $0.046/{np.abs(s7).sum():.3f} \\approx {w7d[3]:.4f}$."))
 
-# D8 the fundamental law with a transfer coefficient
-ir8 = 0.025 * math.sqrt(400 * 12) * 0.55
-D.append(item("d-fundamental-law", 3, ["al-ic"], ["fundamental-law"], 150, "What an IC is worth",
-    "A signal has an information coefficient of 0.025 on 400 shares, rebalanced monthly. "
-    "Constraints give a transfer coefficient of 0.55.",
-    "What annual information ratio does the fundamental law predict, $IR = TC \\cdot IC\\sqrt{\\text{breadth}}$? Give 3 decimal places.",
-    num(r(ir8, 5), 0.002, [("no-tc", r(0.025 * math.sqrt(4800), 5), 0.002), ("one-month", r(0.025 * 20 * 0.55, 5), 0.002)]),
-    fb("Breadth is the number of independent bets a year: 4,800.", "Multiply 400 shares by 12 rebalances for the breadth, then apply the law.",
-       {"no-tc": "You left out the transfer coefficient. Constraints keep only 55% of the signal.",
-        "one-month": "You used one month's breadth of 400. A year holds 12 rebalances."}),
-    f"Breadth is $400 \\times 12 = 4800$, with $\\sqrt{{4800}} \\approx 69.28$. So $IR = 0.55 \\times 0.025 \\times 69.28 \\approx {ir8:.3f}$."))
+# D8 the IC that a target information ratio needs, by the fundamental law
+n8, k8, tc8, ir_t8 = 250, 52, 0.4, 0.8
+br8 = n8 * k8
+ic8 = ir_t8 / (tc8 * math.sqrt(br8))
+D.append(item("d-fundamental-law", 3, ["al-ic"], ["fundamental-law"], 150, "What IC a target needs",
+    "A book trades 250 shares and rebalances weekly, 52 times a year. Constraints give a transfer coefficient of 0.4. "
+    "The fundamental law says $IR = TC \\cdot IC\\sqrt{\\text{breadth}}$.",
+    "What information coefficient does an annual information ratio of 0.8 need? Give 4 decimal places.",
+    num(r(ic8, 6), 0.00005, [("no-tc", r(ir_t8 / math.sqrt(br8), 6), 0.00005), ("tc-multiplied", r(ir_t8 * tc8 / math.sqrt(br8), 6), 0.00005),
+                             ("one-rebalance", r(ir_t8 / (tc8 * math.sqrt(n8)), 6), 0.00005)]),
+    fb("Breadth is the number of independent bets a year: 13,000.", "Multiply 250 shares by 52 rebalances for the breadth, then solve the law for the IC.",
+       {"no-tc": "You left out the transfer coefficient. Constraints keep only 40% of the signal, so the IC must be higher.",
+        "tc-multiplied": "You multiplied by the transfer coefficient. It sits under the IC in the law, so divide by it.",
+        "one-rebalance": "You used 250 for the breadth. A year holds 52 rebalances."}),
+    f"Breadth is $250 \\times 52 = {br8}$, with $\\sqrt{{{br8}}} \\approx {math.sqrt(br8):.2f}$. So $IC = 0.8/(0.4 \\times {math.sqrt(br8):.2f}) \\approx {ic8:.4f}$."))
 
 # D9 a Sharpe ratio after costs
 cost9d = 12 * 0.40 * 0.0012
@@ -1380,11 +1215,12 @@ D.append(item("d-signal-report", 5, ["al-ic", "al-portfolio", "al-costs"], ["ic-
     "`signal-panel.csv` holds 20 weekly dates for the same 30 tickers: each share's `signal` and its next-week return `fwd_ret`. "
     "On each date the IC is the Spearman correlation of `signal` with `fwd_ret`. "
     "The weights are each share's signal rank less the mean rank, scaled so absolute weights sum to 1. "
-    "Turnover is the mean, over consecutive dates, of half the sum of absolute weight changes.",
+    "Turnover is the mean, over consecutive dates, of half the sum of absolute weight changes. "
+    "`Series.corr(method='spearman')` needs SciPy; import it, or correlate the ranks.",
     "Write `ic_and_turnover(df)` returning `(mean_ic, turnover)`.",
     {"kind": "code", "language": "python", "data": {"signal-panel.csv": DATA_REL + "signal-panel.csv"},
-     "starter": "import numpy as np\nimport pandas as pd\n\n\ndef ic_and_turnover(df):\n    # returns (mean_ic, turnover)\n    ...\n",
-     "solution": sr_sol, "examples": [{"setup": sr_tests[0]["setup"], "call": sr_tests[0]["call"], "expect": sr_tests[0]["expect"]}], "tests": sr_tests,
+     "starter": "# keep these imports: the tests load the file with pandas\nimport numpy as np\nimport pandas as pd\n\n\ndef ic_and_turnover(df):\n    # returns (mean_ic, turnover)\n    ...\n",
+     "solution": sr_sol, "examples": [ex(sr_tests[0])], "tests": sr_tests,
      "how": "Check runs 5 hidden tests at a relative tolerance of 1e-9. Tests 1 to 3 read the file; tests 4 and 5 use four tickers on three dates."},
     code_fb("The IC and the turnover match.",
             {"test-1": "Test 1 is the mean IC. Correlate ranks, not raw values, on each date, then average over dates.",
@@ -1449,7 +1285,7 @@ D.append(item("d-parity-fit", 4, ["od-data", "od-pricers"], ["parity-forward"], 
     "Quotes are noisy, so we fit both by least squares across strikes. A strike missing either price is skipped.",
     "Write `parity_fit(strikes, calls, puts)` returning `(D, F)`. Raise `ValueError` with fewer than two usable strikes.",
     {"kind": "code", "language": "python", "starter": "import math\nimport numpy as np\n\n\ndef parity_fit(strikes, calls, puts):\n    ...\n",
-     "solution": pf_sol, "examples": [{"call": pf_tests[3]["call"], "expect": pf_tests[3]["expect"]}], "tests": pf_tests,
+     "solution": pf_sol, "examples": [ex(pf_tests[3])], "tests": pf_tests,
      "how": "Check runs 5 hidden tests at a relative tolerance of 1e-9. Test 3 has a missing call; test 5 expects a ValueError."},
     code_fb("One straight line through $C - P$ against $K$ gives both numbers.",
             {"test-1": "Test 1 is the discount factor: minus the slope of $C - P$ against $K$.",
@@ -1534,9 +1370,9 @@ CHECKS = [
     ("project-backtest", "Backtesting engine: README, tests and a one-page results note",
      "Transaction costs, slippage, a look-ahead check and a held-out period. The note reports Sharpe, Calmar and maximum drawdown, and what failed."),
     ("project-alpha", "Alpha signal research: README, tests and a one-page results note",
-     "Cross-sectional momentum and mean reversion over a few hundred shares. The note reports information coefficient, turnover and Sharpe after costs."),
+     "Cross-sectional momentum and mean reversion over a few hundred shares. The note reports information coefficient, turnover and Sharpe after costs, and what failed."),
     ("project-options", "Options analytics dashboard: README, tests and a one-page results note",
-     "An implied volatility surface and Greeks, with Black-Scholes, binomial and Monte Carlo pricers compared. On the developer track the live market data handler may replace it."),
+     "An implied volatility surface and Greeks, with Black-Scholes, binomial and Monte Carlo pricers compared. The note says what failed. On the developer track the live market data handler may replace it."),
     ("contests", "Weekly Codeforces contests, with your rating recorded",
      "One rated contest most weeks once 100 problems are behind you. A rating of 1400 is a fair first-year target."),
 ]
@@ -1552,11 +1388,12 @@ doc = {
     "id": "stage-2", "stage": 2, "name": "Stage 2 exit test",
     "description": "The exit test for Intermediate, in four papers and six checks. "
                    "Paper A is machine learning and validation, paper B time series. "
-                   "Paper C is numerical methods, optimisation and statistical modelling. Paper D is backtesting, alpha, options and contests. The checks cover your projects, your explanations and your contests.",
+                   "Paper C is numerical methods and optimisation. Paper D is backtesting, alpha, options and contests. "
+                   "Statistical modelling, topic 2.6, is the researcher track, so it sits in its own topic exam. The checks cover your projects, your explanations and your contests.",
     "parts": [
         {"kind": "paper", "id": "ml-validation", "name": "Paper A: machine learning and validation", "minutes": minutes(A), "pass": 0.7, "items": A},
         {"kind": "paper", "id": "time-series", "name": "Paper B: time series", "minutes": minutes(B), "pass": 0.7, "items": B},
-        {"kind": "paper", "id": "numerics-models", "name": "Paper C: numerical methods, optimisation and statistical modelling", "minutes": minutes(C), "pass": 0.7, "items": C},
+        {"kind": "paper", "id": "numerics-optimisation", "name": "Paper C: numerical methods and optimisation", "minutes": minutes(C), "pass": 0.7, "items": C},
         {"kind": "paper", "id": "projects-contests", "name": "Paper D: backtesting, alpha, options and contests", "minutes": minutes(D, DRAW_D_PACE), "pass": 0.7,
          "items": D, "draw": DRAW_D},
     ] + [{"kind": "check", "id": i, "name": n, "detail": dt} for i, n, dt in CHECKS],
