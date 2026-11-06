@@ -2216,4 +2216,4 @@ if (!errors.length && WRITE_MANIFEST) {
 }
 console.log('\nO2 warnings: ' + O2_CODES.map(c => `${c} ${o2Counts[c]}`).join(', '));
 console.log(`\n${errors.length} error${errors.length === 1 ? '' : 's'}, ${warnings.length} warning${warnings.length === 1 ? '' : 's'}`);
-process.exit(errors.length ? 1 : 0);
+process.exitCode = errors.length ? 1 : 0; // not process.exit(): it truncates large piped stdout (merge-wave capture)
