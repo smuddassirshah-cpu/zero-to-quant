@@ -1367,3 +1367,8 @@ Raised later (stage exams):
 
 - Bank: no calculus, linear algebra or differential-equation families exist, so `mock-oa-strats` paper 2 (8 maths `choice` items) is fixed and a resat repeats it with shuffled options. Families such as `chain-rule`, `limit-series`, `by-parts`, `linear-ode`, `eigenvalues-2x2` and `correlation-bound` (role `strats`) would let it `draw` four of its eight afresh, as `mock-superday-research` does for probability.
 - Playthrough `--shots`: exam screenshots are named by item index only (`<id>-item-00`, `<id>-start--1`), so on a mock with two papers the second paper's items and the check page overwrite the first paper's items and the start card. Workaround: a separate Playwright script for the start card and the first item of each paper. Proposed: put the paper index in the name (`<id>-p0-item-00`, `<id>-start`, `<id>-checks`).
+
+## Raised later (mock mock-oa-code-hard):
+
+- `code` widget: one `language` per item, but the reported developer tests let the candidate choose Python or C++ for each problem. `mock-oa-code-hard` fixes H1 and H2 in Python and H3 in C++. Proposed: an item that offers both languages (a starter, solution and tests for each, one graded), so a learner can sit the whole paper in either.
+- `draw`: `mock-oa-code-hard` is three fixed problems, so a resat repeats them. A harder drill pack drawn by difficulty, with the `language` filter already asked for under `mock-oa-quant-data`, would give a fresh sitting and allow one C++ draw beside two Python draws. Workaround: fixed items, with large inputs built in hidden `setup` lines so the file stays small.

@@ -1245,3 +1245,54 @@ Every item is a `choice` with `shuffle: true`, four options of similar length, a
 **Freshness.** `node tools/fresh-check.mjs --exam mock-oa-strats --min-run 10` from `app/`; reused setups are rewritten (LaTeX skeleton hits are noise). A literal search of all content for each setup is run too. First drafts were replaced: the matrix of Q2 was in `eigen` l1 to l3, $x e^{2x}$ in `integrals` l10, $\ln(1 + x^2)$ in `integrals` l15, and the largest of several dice in `mock-oa-trader-2`.
 
 **Acceptance.** The shared "Common acceptance checks", with: validator 0 errors and no warning on this mock; the voice scan on a copy reports 0 and 0; both scripts exit 0; the playthrough green with and without `--mobile`; `node tools/readiness-sums.mjs` OK (or `--write` when only the generated mock block changes). Report at `docs/reports/exam-mock-oa-strats.md`; engine gaps under `Raised later (mock mock-oa-strats):` in `docs/BACKLOG-INBOX.md`.
+
+## mock-oa-code-hard
+
+**What the real test is reported to contain.** `content/prep.json` names this mock on the `oa-developer` stage path: "two to four algorithm problems against the clock, in Python or C++". That path asks for `graphs-dp`, `cpp` L1 to L4 and `coding-int`, and says "some developer tests are in C++ only". `docs/briefs/interview-plan.md` (d) models it on HRT and Citadel software tests: 3 problems in 90 minutes, Python or C++. `docs/briefs/interview-gaps.md` gives the detail from the pages it cites (Taro, QuantVault, 1point3acres, PracHub, TraderMath; reported, Nov 2026). HRT reports conflict: three easy-to-medium problems, a 70-minute test of four, or HackerRank of 70 to 150 minutes. Earlier HRT intern tests were C++ only. One Citadel prep guide gives LeetCode-medium problems for software roles. No report gives a pass mark or partial credit rules.
+
+**How it differs from the other mocks.** `mock-oa-code` draws two problems from the pack `oa` (windows, two pointers, greedy, heaps, stacks, binary search, digit DP, a DAG path), all in Python. This mock draws nothing from the pack `oa`, so the two share no item. It sets three problems a step harder: two heaps with an interval rule, Dijkstra on a state graph, and a DP over a held quantity in C++. `mock-oa-strats` and `mock-oa-quant-data` set short Python and data tasks; `mock-oa-sig` sets no code.
+
+**File.** `app/content/exams/mock-oa-code-hard.json`, one file, three fixed items, no versions. A drawn pool would need a new drill pack and an edit to `drills/index.json`. The report raises that as an inbox bullet.
+
+- `id`: `mock-oa-code-hard`. `name`: `Harder coding assessment`. `style`: `developer`.
+- `models` (under 200 characters): `Reported, as of Nov 2026: harder developer coding tests, as at Hudson River Trading and Citadel. Three problems in 90 minutes, one in C++.`
+- `requires`: `["coding-int/L4", "graphs-dp/L4", "cpp/L4"]`.
+- `skills`: `{ "ds-trees": "Trees and heaps", "ci-patterns": "Further patterns", "gd-paths": "Shortest paths", "gd-dp": "Dynamic programming", "cp-stl": "The standard library", "ci-timed": "Solving under time" }`.
+
+**Description** (plain, each sentence under 20 words):
+
+> This is a harder coding assessment for developer roles, in a format candidates reported by Nov 2026. You have three problems in 90 minutes. The first two are in Python and the third is in C++, as some reported tests are C++ only. Hidden tests include large inputs, so a slow answer fails them. A problem scores only when all its hidden tests pass. You pass the paper with two problems of the three. Reports differ: three or four problems, in 70 to 150 minutes. Read all three statements first, then start with the one you can finish. Use no search engine and no notes.
+
+**Parts.**
+
+| # | Part | Minutes | Items | Pass | `pace` sum |
+| --- | --- | --- | --- | --- | --- |
+| 1 | paper `code`, Three problems in ninety minutes | 90 | 3 `code` (2 Python, 1 C++) | `pass: 0.6` (2 of 3) | 5,100 s |
+| 2 | check `read-all`, `I read all three statements before I wrote any code`, detail `Tick this only if you chose your order of work before you started.` | | | | |
+| 3 | check `no-lookup`, `I used no search engine and no notes`, detail `Tick this only if you sat the whole paper without either.` | | | | |
+
+`scoring: { "right": 1, "wrong": 0, "blank": 0 }`, free navigation. The pass mark is the author's line, not a published cut-off. A code item is right only when every hidden test passes; the engine has no share-of-tests credit (as `mock-oa-code`). That leaves 300 s of the 90 minutes for reading.
+
+**The three problems.** Large inputs are built in hidden `setup` lines (Python) or `call` lambdas (C++) from one 64-bit linear congruential generator, $x \to 6364136223846793005x + 1442695040888963407 \bmod 2^{64}$, using the top 24 bits. Python, Pyodide and clang therefore see the same numbers, and the file stays small.
+
+| Q | Diff | Tag | Skills | `pace` | Problem | Large tests and what they stop |
+| --- | --- | --- | --- | --- | --- | --- |
+| H1 | 4 | `job-scheduling` | ds-trees, ci-patterns | 1500 | `busiest_worker(k, jobs)`: jobs `[arrive, length]` with distinct arrivals, in any order. Each takes the free worker with the lowest number, else waits for the earliest to free (lower number on a tie) and runs its full length. A worker free at `t` takes a job arriving at `t`. Return `[busiest, last_end]` | 100,000 jobs on 2,000 workers twice (light and heavy load), and 100,000 on one worker (closed form 200,000). A scan of every worker per job is $2 \times 10^8$ steps |
+| H2 | 4 | `voucher-route` | gd-paths, ci-timed | 1800 | `cheapest_with_voucher(n, links)`: one-way links `[u, v, cost]`, costs 0 or more; one voucher makes one link free. Least cost from 0 to `n - 1`, or -1 | 20,000 sites: a chain (closed form 99,990) and two seeded graphs of 100,000 links. Dijkstra once per freed link is $10^5$ runs |
+| H3 | 5 | `inventory-dp` | gd-dp, cp-stl, ci-timed | 1800 | C++ `long long best_cash(const std::vector<int>& prices, int cap)`: each day buy one share, sell one or wait; hold 0 to `cap`; start and end with none; the most cash | 200,000 days: alternating 1 and 1,000,000 with cap 1 (closed form $10^5 \times 999{,}999$), and two seeded runs with caps 50 and 100. Every answer passes $2^{31} - 1$, so an `int` total fails |
+
+Tests: H1 12 (9 small), H2 12 (9 small), H3 13 (10 small), each `compare: "equal"`, two visible examples, a `how` line ("There are N hidden tests. Each answer must equal the expected value.", then what the last tests use), a `solution`, and a starter that returns a constant. Python results are wrapped in `list(...)` so a tuple still compares equal.
+
+Small tests and the slips they catch. H1: a worker freed exactly at an arrival (a strict `<` fails), a waiting job given to the lowest number rather than the earliest to free, a delayed job's end taken from its arrival, and an unsorted list. H2: a route dear before the voucher (the cheapest plain route minus its dearest link fails), a voucher used on every link, links read both ways, an unreachable site and `n = 1`. H3: a cap of 0, falling prices, a single day, a cap that binds (a cap of 1 fails), and the sum of rises.
+
+**Keys** (from `mock-oa-code-hard_build.py`; the check recomputes each one). H1: `[1, 10]`, `[0, 0]`, `[0, 7]`, `[0, 6]`, `[0, 9]`, `[0, 7]`, `[0, 9]`, `[0, 21]`, `[1, 150]`, then `[182, 308657]`, `[1845, 466369]`, `[0, 200000]`. H2: 0, 0, −1, −1, 20, 0, 2, 0, 2, then 99,990, 1,213, 72. H3: 7, 0, 0, 4, 3, 0, 0, 18, 13, 16, then 99,999,900,000, 49,503,711,056, 49,667,371,055.
+
+**Prerequisites** (cited; `requires` gates `coding-int/L4`, `graphs-dp/L4` and `cpp/L4`): `ds` l17-always-the-smallest and l18-order-book-heaps; `coding-int` l1-merging-intervals and L4; `graphs-dp` l7-dijkstra and L4; `cpp` l14-vector and l16-algorithms.
+
+### Generation, voice and acceptance
+
+**Scripts** (`docs/briefs/mocks-scripts/`): `mock-oa-code-hard_build.py` writes the exam. It runs each Python reference and a Python port of the C++ recurrence on every case, and asserts each small case against a second method (a scan of every worker, Bellman-Ford with each link freed in turn, every buy, sell or wait sequence). `mock-oa-code-hard_check.py` is the second route. H1 uses a NumPy scan. H2 uses Dijkstra from 0 and on the reversed links to `n - 1`, then $\min(d_0[n-1], \min_{(u,v)} d_0[u] + d_n[v])$. H3 compiles the C++ with the local g++ (`-std=c++17 -O1`), with a NumPy DP and a $3^n$ brute force. It runs the starters and planted wrong versions: each fails at least one test. It checks every number in prose, then `check_wrongs()` and `report()`. Both exit 0.
+
+**Freshness.** `node tools/fresh-check.mjs --exam mock-oa-code-hard --min-run 10` from `app/`, and a literal search for each function name and setup. `graphs-dp` homework 2 has `cheapest_within` (a limit on steps), and `topic-1.8` has a profit with a fee and two trades. This mock's state (a voucher, a holding cap) and its names differ.
+
+**Acceptance.** The shared "Common acceptance checks", with: validator 0 errors and no warning on this mock; the voice scan on a copy 0 and 0; both scripts exit 0; the playthrough with `--local-cdn` green with and without `--mobile` (clang compiles H3 in the browser); `node tools/readiness-sums.mjs` OK. Report at `docs/reports/exam-mock-oa-code-hard.md`; engine gaps under `Raised later (mock mock-oa-code-hard):` in `docs/BACKLOG-INBOX.md`.
