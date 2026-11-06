@@ -117,7 +117,7 @@ d = F(1, 7); two('tail integral', 1 / d - 1, sum(1 / ((float(d) + (k + 0.5) * (1
 I = lambda T: 0.03 * T + 0.001 * T * T
 two('f(5)', (I(5 + 1e-6) - I(5 - 1e-6)) / 2e-6, 0.03 + 0.002 * 5, 1e-7); two('f(5)=0.04', 0.03 + 0.002 * 5, 0.04)
 two('avg rate', I(5) / 5, 0.035); two('integral 5', I(5), 0.175); rounds('DF5', math.exp(-I(5)), 0.8395, 4)
-E('l21', 'screens[11].widget.answer', 0.04); E('l21', 'screens[11].widget.wrong[0].value', 0.035); E('l21', 'screens[11].widget.wrong[1].value', 0.175)
+E('l21', 'screens[11].widget.answer', 0.04); E('l21', 'screens[11].widget.wrong[0].value', 0.035); E('l21', 'screens[11].widget.wrong[1].value', 0.00175)  # unit %: typed 17.5 is graded as 0.175 per cent of 100
 E('l21', 'screens[11].explain.text', 0.8395); E('l21', 'screens[11].feedback.byKey.avg', '3.5%')
 # quiz
 for x in (0.5, 1.3):

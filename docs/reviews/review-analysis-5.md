@@ -91,3 +91,15 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's script: `analysis-L5-numbers.py` exit 0 (136 of 136 checks, 66 wrong-value bands).
 
 ## Fix pass
+
+All 15 L5 findings applied by targeted edits (2 errors, 5 warnings, 8 notes); none disputed, none deferred. The 28 long sentences of levels 1 to 4 each shortened by splitting or trimming, with no number changes.
+
+- l21 errors fixed (2): part one `order` gets `"same": [["p1", "p2"]]` and part two `"same": [["t2", "t3"]]`, distractor d1 kept; both prose lines now say two lines may come in either order.
+- l21 warnings fixed (2): quiz[2] "Only a jump" now "A jump in $f$ does make a corner in $F$"; screens[11] `integral` wrong value 0.175 to 0.00175 (unit %, tolerance abs 5e-06; 0.175 / 100 = 0.00175, recomputed twice). Notes fixed (3): "Call that supremum $s$", "supremum of", "never falls below half the jump's size".
+- l23 warning fixed: "Only finite intersections are sure to stay open". Notes fixed (3): l23 screens[0] reason, quiz[3] infimum; l22 screens[11] "scaled to length 1".
+- l24 warnings fixed (2): screens[1] "In $\mathbb{R}$, two things can go wrong" (consistent with the discrete $\mathbb{N}$ example in quiz[0]); "nonempty" added to screens[6] prose and summary.ideas[2].
+- l20 quiz[1] "With $n$ equal pieces" and homework-5 items[4] "$K$ nonempty" fixed (notes). The homework-5 sentence was re-split to stay under 20 words and three sentences.
+- Levels 1 to 4 voice (28 sentences): homework-1 (2), homework-3 (2), homework-4 (2), l3, l5, l6, l8, l10, l11 (2), l12 (2), l13 (2), l14 (6), l16, l17, l19 (2), review-3. l14 screens[3] and l17 screens[3] gain a paragraph break after the display formula so the scanner sees separate sentences; l14 screens[11] drops the word "offsetting" to fit.
+- Scripts: `docs/reports/analysis-L5-numbers.py` updated for the l21 `integral` value (0.00175); exit 0, 136 of 136 checks, 66 wrong-value bands.
+- Gates: validator 0 errors; voice scan 0 explanations over three sentences and 0 sentences over 20 words for the whole analysis folder; playthrough "All passed" desktop and `--mobile` for all 17 changed lessons and the sets homework-1, homework-3, homework-4, homework-5, review-3.
+- Graded answers changed: none to correct answers. l21 `order` widgets now also accept the swapped valid orders; wrong-answer value `integral` (l21 screens[11]) changed from 0.175 to 0.00175.
