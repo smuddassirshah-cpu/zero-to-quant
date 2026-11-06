@@ -634,7 +634,7 @@ An engine sample is a lesson, review, homework, exam, mock, bank or drill file t
 
 From `design-research.md` 9, binding:
 
-- British English. No exclamation marks. No emoji. Sentences of at most 20 words.
+- British English. No exclamation marks. No emoji. Sentences aim for at most 20 words; this is a target, not a gate. Never shorten a sentence where that would weaken the teaching. The gate is 35 words (`voice-scan.py 35` reports 0); `O2-long-sentence` stays an advisory warning for readers.
 - Second person for instructions, "we" for reasoning together.
 - Puzzle first. Never state a rule before the learner has used it. Name a term only after it has been used.
 - Derive rather than state. Every derivation line carries its justification. No "it can be shown".

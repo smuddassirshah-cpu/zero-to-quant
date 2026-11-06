@@ -25,7 +25,7 @@ You are writing the lessons, the level review and the homework for one level of 
 - Numbers are correct. Compute every answer yourself and check it twice; for simulations state the exact value the empirical frequency converges to.
 - Every summary, `explain` and `why` sentence that states a general rule carries its hypotheses (convexity, a constraint qualification, a sample size or independence condition). Write no unqualified "always" or "any". Check this before you hand the level on.
 - Transfer screens use real quant contexts (a bet, a price path, a portfolio, an order book, a dataset, a backtest, a signal, a P&L), with realistic numbers.
-- British English, no exclamation marks, no emoji, sentences under 20 words, second person, "we" when reasoning together.
+- British English, no exclamation marks, no emoji, sentences aim for under 20 words (target; gate at 35, never shorten at the cost of clarity), second person, "we" when reasoning together.
 - Programming lessons use the `code` widget with hidden tests that run in Pyodide (pure Python, standard library only, no numpy unless the course is numpy-pandas or later, where `numpy` and `pandas` are available in Pyodide but slow to load: prefer pure Python for tests).
 - C++ lessons use the same `code` widget with `"language": "cpp"`: the code is compiled by clang in the browser and tested like Python (function calls with JSON `args` and `expect`, or programs on `stdin` and `stdout`). Read the C++ addendum at the end of `AUTHORING.md` section 3 (types, script mode, prelude and postlude, limits: no `try`/`catch`) before writing one.
 

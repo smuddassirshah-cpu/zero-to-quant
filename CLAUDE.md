@@ -16,7 +16,7 @@
 - One course per content agent, up to three levels, each from its section in `docs/briefs/<course>.md` (SESSION PROTOCOL 3, DECISIONS "Operating model"); per level the agent follows `docs/LEVEL-BRIEF.md` and reports to `docs/reports/<course>-<level>.md` plus `docs/BACKLOG-INBOX.md`, handing back at most six lines. Content agents never edit engine files, `course.json`, or other levels' files.
 - Engine agents never edit content; they number inbox bullets into `docs/ENGINE-BACKLOG.md` and document author-facing changes in `docs/AUTHORING.md` and the canvas READMEs.
 - Second readers write `docs/reviews/review-<topic>.md`; fix agents append `## Fix pass` there. Pattern: `docs/reviews/review-1.5.md`.
-- Voice: British English, no exclamation marks, no em-dashes, sentences under 20 words, explanations of at most three sentences, £ for money. Every stated number computed twice. Every code solution passes its hidden tests and the starter fails them.
+- Voice: British English, no exclamation marks, no em-dashes, sentences aim for under 20 words (a target, not a gate: never cut a sentence where it would weaken the teaching; the gate is 35 words, `voice-scan.py 35`), explanations of at most three sentences, £ for money. Every stated number computed twice. Every code solution passes its hidden tests and the starter fails them.
 - Never rename or remove an existing lesson id (progress data keys on it); add levels instead.
 - Models: implementation and test-fixing subagents run on Sonnet, search and exploration on Haiku (see `.claude/agents/`). The main session plans and reviews only.
 
