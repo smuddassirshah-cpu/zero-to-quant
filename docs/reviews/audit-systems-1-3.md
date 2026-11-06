@@ -43,7 +43,27 @@ Every stated latency, size and cost figure is within a factor of 3 of Dean's tab
 
 ## Overlap with the earlier review (step 7)
 
-To be filled after the blind commit, from `docs/reviews/review-systems.md`.
+Filled after the blind commit (09f7da5) from `docs/reviews/review-systems.md` (one review covering all four levels; 0 errors, 12 warnings, 15 notes, with its fix pass applied before this audit). Conceptual findings only: freshness, voice, canvas-rule, metadata and L4 or drill items are left out.
+
+| | count |
+|---|---|
+| conceptual findings by this audit only | 22 |
+| conceptual findings by the earlier review only | 7 |
+| by both | 0 |
+
+The seven review-only conceptual findings (its 6, 7, 10, 14, 15, 17, 18) were all fixed in its fix pass before this audit, so the text I read was already correct and none counts as a miss of this read:
+
+- 6 (hex answers graded only in decimal): the questions now say "Answer in decimal", a convention I read as stated.
+- 7 (l13 screens[7] "held" against "dropped"): the option now reads "dropped", which I ledgered as correct.
+- 10 (wake priced at 4 µs in l11 against 5 µs in l10 and l12): l11 now adds the scheduler's 1 µs; ledgered as correct.
+- 14 (l8 screens[7] re-locking a `std::mutex` is undefined, not a defined deadlock): the key and explain now say so; ledgered as correct.
+- 15 (l5 screens[7] `TNTN` fools a two-bit counter only from the middle states): the prose now says "that starts in the middle"; sim L1:twobit confirms 8 of 8 from 1.
+- 17 (l12 "copy one" is a DMA write, not a CPU copy): now "two moves"; ledgered as correct.
+- 18 (l12 `epoll_wait` with timeout 0 is a poll): the why now says "A blocking `epoll_wait`"; ledgered as correct.
+
+Near misses worth recording. The review's 13 (l6 screens[7]: `n` at namespace scope cannot be captured) and this audit's 14 are about the same claim; the fix moved `n` into `g()`, which makes the claim fail the other way (each call has its own `n`), so the screen needs the second fix above. The review's 16 (l13 screens[4]: drop "a seeded simulation gave 87") removed the one clue that the key 100 is an average; this audit's 19 restores that with "on average". Neither is counted as "both" because the problems differ.
+
+The earlier review's conceptual findings this audit missed: none that remain in the content.
 
 ## Checks
 
