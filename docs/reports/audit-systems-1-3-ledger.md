@@ -303,3 +303,7 @@ Auditor: Fable (model `fable`), blind to `docs/reviews/review-systems.md` and `d
 | homework-3.json | items[4] | 12 µs a message gives 83,333 a second; 3 µs gives 333,333; 300,000 a second needs 3.6 cores; packing 40 to a datagram gives 7,500 receives; 7,500 x 90 µs = 67.5% | correct | derivation |
 | homework-3.json | items[5] | Blocking `recv` order: empty, sleep, packet arrives, wake and schedule, copy, return; the program never copies from the card, no disk, 0 means closed | correct | as l12 rows |
 | homework-3.json | items[6] | 5 MiB: 2,560 calls (512 µs) against 32 calls (6.4 µs), saving 505.6 µs | correct | sim L3:syscalls |
+
+## Verdict counts
+
+277 claim rows: correct 253, imprecise 22, wrong 1, misleading 0, unverified 0. Every imprecise or wrong row is a numbered finding in `docs/reviews/audit-systems-1-3.md`.
