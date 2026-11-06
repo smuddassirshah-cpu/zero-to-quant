@@ -1,0 +1,686 @@
+{
+ "id": "l11-permutation-tests",
+ "course": "stat-models",
+ "title": "Permutation tests",
+ "minutes": 15,
+ "objectives": ["Build a permutation test for a strategy's edge and compare it with a t-test."],
+ "skills": ["sm-nonpar"],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Shuffle the labels",
+   "prose": "A signal fired on 10 days. The next day's return averaged 0.562 percentage points more than after the 10 other days. If the signal were useless, the labels \"signal\" and \"other\" would be arbitrary. Each run shuffles the 20 returns between the labels.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -1.638, "max": 1.662, "width": 0.1},
+     "xLabel": "Difference in mean return after a shuffle (pp)",
+     "yLabel": "Shuffles",
+     "height": 240,
+     "params": {
+      "pooled": [-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29, 0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58]
+     },
+     "sim": {
+      "trials": [10, 100, 1000],
+      "let": {"s": "shuffle(pooled)"},
+      "outcome": "(s[0] + s[1] + s[2] + s[3] + s[4] + s[5] + s[6] + s[7] + s[8] + s[9])/10 - (s[10] + s[11] + s[12] + s[13] + s[14] + s[15] + s[16] + s[17] + s[18] + s[19])/10",
+      "seed": 11
+     }
+    },
+    "state": {
+     "ran": 0,
+     "cut": {"at": 0.562, "side": "above", "label": "observed 0.562"}
+    },
+    "derive": {
+     "caption": "Share of shuffles at or beyond 0.562: {{fixed(values.beyondShare, 3)}}"
+    }
+   },
+   "question": "Run 1,000 shuffles. About what share give a difference of 0.562 or more?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.104,
+    "tol": {"abs": 0.02},
+    "unit": "",
+    "accept": "About 0.10: the exact one-sided share is 0.1044.",
+    "label": "Share",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.052,
+      "tol": {"abs": 0.01}
+     },
+     {
+      "id": "two",
+      "value": 0.209,
+      "tol": {"abs": 0.01}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About one shuffle in ten does as well as the signal.",
+    "generic": "Not quite. Run 1,000 shuffles and read the caption.",
+    "byKey": {"two": "That is both tails. The question asks about 0.562 or more, one side."}
+   },
+   "explain": {
+    "text": "Roughly 10% of random labellings beat the signal's 0.562, so the edge could easily be luck. This is a **permutation test**. Under no edge the labels are exchangeable, so every relabelling is as likely as the one observed.",
+    "canvas": {"ran": 1000}
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Every relabelling",
+   "prose": "Instead of random shuffles, list every way to choose which 10 of the 20 days carry the signal label.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["", "Next-day returns (%)", "Mean"],
+     "rows": [
+      ["Signal days", "-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29", "0.364"],
+      ["Other days", "0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58", "-0.198"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many ways are there to choose 10 of the 20 days?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 184756,
+    "tol": {"abs": 0},
+    "unit": "",
+    "accept": "184,756: $\\binom{20}{10}$.",
+    "label": "Splits",
+    "wrong": [
+     {
+      "id": "perm",
+      "value": 3628800,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "pow",
+      "value": 1048576,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Order inside each group does not matter."},
+    {
+     "rung": "point",
+     "text": "It is $\\binom{20}{10} = \\frac{20!}{10!\\,10!}$."
+    },
+    {"rung": "step", "text": "184,756."}
+   ],
+   "feedback": {
+    "correct": "$\\binom{20}{10} = 184{,}756$ equally likely splits.",
+    "generic": "Not quite right. Count subsets of size 10 from 20.",
+    "byKey": {
+     "perm": "That is $10!$, the orders of one group. Order does not matter.",
+     "pow": "That is $2^{20}$, every subset of any size."
+    }
+   },
+   "explain": {
+    "text": "Over all 184,756 splits, the share with $|\\text{difference}| \\ge 0.562$ is 0.2088, the exact two-sided $p$. scipy's `permutation_test` with `n_resamples=np.inf` agrees."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The plus one rule",
+   "prose": "With $B$ random shuffles, of which $c$ are at least as extreme as the data, report $p = (c + 1)/(B + 1)$. The $+1$ counts the observed labelling itself, one of the possible ones, so $p$ is never 0. A seeded run of $B = 100{,}000$ found $c = 20{,}916$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["", "Next-day returns (%)", "Mean"],
+     "rows": [
+      ["Signal days", "-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29", "0.364"],
+      ["Other days", "0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58", "-0.198"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the Monte Carlo two-sided $p$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2092,
+    "tol": {"abs": 0.0002},
+    "unit": "",
+    "accept": "0.2092: $20{,}917/100{,}001$.",
+    "label": "p-value",
+    "wrong": [
+     {
+      "id": "plain",
+      "value": 0.20916,
+      "tol": {"abs": 1e-05}
+     },
+     {
+      "id": "one",
+      "value": 0.1046,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Add one to the count and one to $B$."},
+    {
+     "rung": "point",
+     "text": "$(20{,}916 + 1)/(100{,}000 + 1)$."
+    },
+    {"rung": "step", "text": "0.2092."}
+   ],
+   "feedback": {
+    "correct": "0.2092, within simulation error of the exact 0.2088.",
+    "generic": "Not quite right. Use $(c + 1)/(B + 1)$.",
+    "byKey": {"plain": "That is $c/B$. The $+1$ rule keeps the test valid and $p$ above 0.", "one": "You halved it to one side. The count was two-sided."}
+   },
+   "explain": {
+    "text": "$p = 20{,}917/100{,}001 = 0.2092$; the exact value is 0.2088. Welch's $t = 1.3129$ gives $p = 0.2057$, close here because the samples are balanced."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "How wide is the null",
+   "prose": "Under shuffling, each label set is a random 10 of the 20 pooled returns. The variance of all 20 together, divisor 19, is $s^2 = 0.95101$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -1.638, "max": 1.662, "width": 0.1},
+     "xLabel": "Difference in mean return after a shuffle (pp)",
+     "yLabel": "Shuffles",
+     "height": 240,
+     "params": {
+      "pooled": [-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29, 0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58]
+     },
+     "sim": {
+      "trials": [10, 100, 1000],
+      "let": {"s": "shuffle(pooled)"},
+      "outcome": "(s[0] + s[1] + s[2] + s[3] + s[4] + s[5] + s[6] + s[7] + s[8] + s[9])/10 - (s[10] + s[11] + s[12] + s[13] + s[14] + s[15] + s[16] + s[17] + s[18] + s[19])/10",
+      "seed": 11
+     }
+    },
+    "state": {
+     "ran": 1000,
+     "cut": {"at": 0.562, "side": "above", "label": "observed 0.562"}
+    },
+    "derive": {
+     "caption": "Share of shuffles at or beyond 0.562: {{fixed(values.beyondShare, 3)}}"
+    }
+   },
+   "question": "What is the standard deviation of the shuffled difference, $\\sqrt{s^2(1/10 + 1/10)}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4361,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.4361: $\\sqrt{0.95101 \\times 0.2}$.",
+    "label": "Null SD",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 0.1902,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "ten",
+      "value": 0.3084,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Multiply $s^2$ by $1/10 + 1/10 = 0.2$."},
+    {"rung": "point", "text": "$0.95101 \\times 0.2 = 0.19020$."},
+    {
+     "rung": "step",
+     "text": "$\\sqrt{0.19020} = 0.4361$."
+    }
+   ],
+   "feedback": {
+    "correct": "0.4361; 100,000 shuffles give 0.4367.",
+    "generic": "Not quite right. Take $\\sqrt{0.95101 \\times 0.2}$.",
+    "byKey": {"var": "That is the variance. Take its square root.", "ten": "You used $1/10$ once. Both group means carry noise."}
+   },
+   "explain": {
+    "text": "The shuffled difference has SD $\\sqrt{0.95101 \\times 0.2} = 0.4361$, so the observed 0.562 is only 1.29 SDs out. The next screen shows why the formula holds."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "The variance of a shuffled difference",
+   "prose": "Pool $N = 2n$ values with mean $\\bar y$ and variance $s^2$ (divisor $N - 1$). Draw $n$ at random without replacement for group 1. Leave out the slip.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {"id": "a", "text": "$\\bar y_1 - \\bar y_2 = 2(\\bar y_1 - \\bar y)$, since $\\bar y_1 + \\bar y_2 = 2\\bar y$ for equal groups"},
+     {
+      "id": "b",
+      "text": "$\\operatorname{Var}(\\bar y_1) = \\frac{s^2}{n}\\cdot\\frac{N - n}{N}$, the mean of a sample drawn without replacement"
+     },
+     {
+      "id": "c",
+      "text": "With $N = 2n$, $\\operatorname{Var}(\\bar y_1) = \\frac{s^2}{2n}$, since $\\frac{N - n}{N} = \\frac12$"
+     },
+     {
+      "id": "d",
+      "text": "$\\operatorname{Var}(\\bar y_1 - \\bar y_2) = 4 \\cdot \\frac{s^2}{2n} = s^2\\left(\\frac1n + \\frac1n\\right)$, scaling by $2^2$"
+     },
+     {
+      "id": "x",
+      "text": "$\\operatorname{Var}(\\bar y_1 - \\bar y_2) = \\operatorname{Var}(\\bar y_1) + \\operatorname{Var}(\\bar y_2)$, as the groups are independent",
+      "why": "The two groups share one pool, so they are not independent. A high value in one is missing from the other. The route through $2(\\bar y_1 - \\bar y)$ avoids that."
+     }
+    ],
+    "answer": ["a", "b", "c", "d"],
+    "distractors": ["x"]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Write the difference through the pooled mean."},
+    {"rung": "point", "text": "Group 1 is a sample without replacement from the pool."},
+    {"rung": "step", "text": "The finite-population factor is one half."}
+   ],
+   "feedback": {
+    "correct": "$\\operatorname{Var} = s^2(1/n + 1/n)$, the pooled two-sample variance.",
+    "generic": "Not quite right. Difference through the pooled mean, then the without-replacement variance.",
+    "byKey": {"x": "You treated the groups as independent. Under shuffling they are tied by the pool."}
+   },
+   "explain": {"text": "The answer matches the independent-samples formula with pooled $s^2$. That is why Welch's $t$ and the permutation $p$ agree closely here."}
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "When the two tests part company",
+   "prose": "A planted small sample: strategy X's five days $0.1, 0.2, 0.0, 0.3, 3.0$ against Y's $-0.1, 0.05, -0.2, 0.0, 0.1$. X's one 3.0% day inflates its variance.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Test", "Two-sided $p$"],
+     "rows": [
+      ["Exact permutation of the difference in means (252 splits)", "0.0556"],
+      ["Welch $t$", "0.261"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why does Welch's test give the much larger $p$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "var", "text": "The 3.0% day inflates X's standard deviation, and Welch's test assumes near-normal means", "correct": true},
+     {
+      "id": "wrong",
+      "text": "The permutation test is wrong for small samples",
+      "why": "It is exact at any size: the 252 splits are listed, nothing is approximated."
+     },
+     {"id": "n", "text": "Welch's test uses more degrees of freedom", "why": "Welch has about 4 df here; the issue is the inflated variance and non-normality."}
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "What does one huge day do to $s_X$?"},
+    {"rung": "point", "text": "It makes the standard error large, so $t$ is small."},
+    {"rung": "step", "text": "The permutation test makes no normal assumption."}
+   ],
+   "feedback": {
+    "correct": "Skew and a tiny sample break the $t$-test's normal approximation.",
+    "generic": "Not quite right. Look at what the 3.0% day does to the $t$-statistic."
+   },
+   "explain": {
+    "text": "The exact permutation $p$ is 0.0556 (14 of 252 splits) against Welch's 0.261. With 5 days a side and one wild value, the $t$ reference is a poor guide. The permutation null is exact."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A signal that stays on",
+   "prose": "A planted case: 200 days of AR(1) returns with $\\phi = 0.9$. A useless signal is on for 25 days, off for 25, and so on. Shuffling day by day gives $p = 0.0002$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Null built by", "Two-sided $p$"],
+     "rows": [
+      ["Shuffling single days", "0.0002"],
+      ["Shifting the whole signal by a random lag", "0.277"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which $p$-value should we believe, and why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "block", "text": "0.277: day-by-day shuffling breaks the runs in the signal and the returns, so its null is far too narrow", "correct": true},
+     {
+      "id": "naive",
+      "text": "0.0002: more shuffles always beat fewer",
+      "why": "Each shuffle mixes days that are not exchangeable. More of them only pins down a wrong null."
+     },
+     {
+      "id": "both",
+      "text": "Neither: permutation tests fail on time series",
+      "why": "They work if what is shuffled is exchangeable: blocks, or the whole signal shifted."
+     },
+     {"id": "avg", "text": "Their average, about 0.14", "why": "Averaging a wrong answer with a right one is still wrong."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Are neighbouring days alike here?"},
+    {"rung": "point", "text": "With $\\phi = 0.9$, a run of signal days sits on one slow swing of the returns."},
+    {"rung": "step", "text": "Shift the signal as a whole, keeping its runs."}
+   ],
+   "feedback": {
+    "correct": "Shuffle what is exchangeable: whole blocks or lags.",
+    "generic": "Not quite. Ask whether single days can be swapped freely.",
+    "byKey": {"naive": "You trusted the day-by-day null. Breaking the runs makes chance runs look impossible."}
+   },
+   "explain": {
+    "text": "Slow returns and a slow signal line up by chance far more often than shuffled days suggest. Shifting the signal by a random lag keeps both runs, giving $p = 0.277$. Overlapping returns need the same care."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The smallest p a run can show",
+   "prose": "With the $+1$ rule and $B$ shuffles, even data more extreme than every shuffle give $p = 1/(B + 1)$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -1.638, "max": 1.662, "width": 0.1},
+     "xLabel": "Difference in mean return after a shuffle (pp)",
+     "yLabel": "Shuffles",
+     "height": 240,
+     "params": {
+      "pooled": [-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29, 0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58]
+     },
+     "sim": {
+      "trials": [10, 100, 1000],
+      "let": {"s": "shuffle(pooled)"},
+      "outcome": "(s[0] + s[1] + s[2] + s[3] + s[4] + s[5] + s[6] + s[7] + s[8] + s[9])/10 - (s[10] + s[11] + s[12] + s[13] + s[14] + s[15] + s[16] + s[17] + s[18] + s[19])/10",
+      "seed": 11
+     }
+    },
+    "state": {
+     "ran": 1000,
+     "cut": {"at": 0.562, "side": "above", "label": "observed 0.562"}
+    },
+    "derive": {
+     "caption": "Share of shuffles at or beyond 0.562: {{fixed(values.beyondShare, 3)}}"
+    }
+   },
+   "question": "What is the smallest $p$ that 99 shuffles can report?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.01,
+    "tol": {"abs": 0.0001},
+    "unit": "",
+    "accept": "0.01: $1/(99 + 1)$.",
+    "label": "Smallest p",
+    "wrong": [
+     {
+      "id": "b",
+      "value": 0.0101,
+      "tol": {"abs": 5e-05}
+     },
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Put $c = 0$ into $(c + 1)/(B + 1)$."},
+    {"rung": "point", "text": "$1/100$."},
+    {"rung": "step", "text": "0.01."}
+   ],
+   "feedback": {
+    "correct": "0.01: 99 shuffles can never show $p < 0.01$.",
+    "generic": "Not quite right. With $c = 0$, $p = 1/(B + 1)$.",
+    "byKey": {"b": "That is $1/99$. The $+1$ goes in the denominator too.", "zero": "The $+1$ rule never reports 0."}
+   },
+   "explain": {"text": "$1/(99 + 1) = 0.01$. To claim $p < 0.001$ you need at least 999 shuffles, and more for a stable estimate."}
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "One strategy, and the bootstrap",
+   "prose": "For one strategy's mean daily P&L, a **sign-flip** test flips each day's sign at random. It assumes returns are symmetric about 0 under no edge. On the 10 signal days, 100,000 flips give $p = 0.269$; the one-sample $t$ gives 0.258.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["", "Next-day returns (%)", "Mean"],
+     "rows": [
+      ["Signal days", "-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29", "0.364"],
+      ["Other days", "0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58", "-0.198"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How does a permutation test differ from the bootstrap of `estimation` lesson 11?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "roles", "text": "A permutation test builds a null by relabelling; the bootstrap estimates a spread by resampling with replacement", "correct": true},
+     {
+      "id": "same",
+      "text": "They are the same: both resample the data",
+      "why": "Permutation reshuffles without replacement under a null; the bootstrap resamples with replacement with no null."
+     },
+     {
+      "id": "boot",
+      "text": "The bootstrap is exact, permutation approximate",
+      "why": "With all relabellings listed the permutation test is exact; the bootstrap never is."
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "What hypothesis does each assume?"},
+    {"rung": "point", "text": "Permutation assumes the labels do not matter."},
+    {"rung": "step", "text": "The bootstrap assumes the sample stands in for the population."}
+   ],
+   "feedback": {"correct": "Null by relabelling, spread by resampling.", "generic": "Not quite right. Compare what each one simulates."},
+   "explain": {"text": "Use the permutation test to ask \"is there an edge\". Use the bootstrap to ask \"how uncertain is my estimate\". Lesson 13 bootstraps a mean live."}
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A permutation test in code",
+   "prose": "Vectorise: one call to `rng.random((n_perm, N))`, sorted with `np.argsort` along each row, gives `n_perm` shuffles at once. No Python loop over shuffles.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["", "Next-day returns (%)", "Mean"],
+     "rows": [
+      ["Signal days", "-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29", "0.364"],
+      ["Other days", "0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58", "-0.198"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `perm_test` and `sign_flip_test`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef perm_test(a, b, n_perm, seed):\n    \"\"\"Two-sided permutation p for the difference in means, (c + 1)/(B + 1).\"\"\"\n    ...\n\n\ndef sign_flip_test(x, n_perm, seed):\n    \"\"\"Two-sided sign-flip p for mean(x) = 0, (c + 1)/(B + 1).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef perm_test(a, b, n_perm, seed):\n    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)\n    pool = np.r_[a, b]\n    m = len(a)\n    d0 = abs(a.mean() - b.mean())\n    rng = np.random.default_rng(seed)\n    idx = np.argsort(rng.random((n_perm, len(pool))), axis=1)\n    s = pool[idx]\n    d = np.abs(s[:, :m].mean(axis=1) - s[:, m:].mean(axis=1))\n    c = np.sum(d >= d0 - 1e-12)\n    return (c + 1) / (n_perm + 1)\n\n\ndef sign_flip_test(x, n_perm, seed):\n    x = np.asarray(x, dtype=float)\n    rng = np.random.default_rng(seed)\n    flips = rng.choice([-1.0, 1.0], size=(n_perm, len(x)))\n    m = np.abs((flips * x).mean(axis=1))\n    c = np.sum(m >= abs(x.mean()) - 1e-12)\n    return (c + 1) / (n_perm + 1)\n",
+    "examples": [
+     {"call": "round(float(perm_test(list(range(15, 30)), list(range(15)), 999, 1)), 4)", "expect": "0.001", "compare": "isclose"}
+    ],
+    "tests": [
+     {
+      "setup": "a = np.array([-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29]); b = np.array([0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58])",
+      "call": "float(perm_test(a, b, 20000, 5))",
+      "expect": "0.2088",
+      "compare": "isclose",
+      "tol": {"abs": 0.02}
+     },
+     {
+      "call": "float(perm_test(list(range(15, 30)), list(range(15)), 999, 1))",
+      "expect": "0.001",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "a = np.array([-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29]); b = np.array([0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58])",
+      "call": "float(perm_test(a, a, 999, 2))",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "a = np.array([-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29]); b = np.array([0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58])",
+      "call": "float(sign_flip_test(a, 20000, 3))",
+      "expect": "0.269",
+      "compare": "isclose",
+      "tol": {"abs": 0.02}
+     },
+     {
+      "call": "float(sign_flip_test([1.0, 2.0, 3.0, 4.0], 4999, 4))",
+      "expect": "0.125",
+      "compare": "isclose",
+      "tol": {"abs": 0.02}
+     }
+    ],
+    "how": "Check runs 5 hidden tests. Two are Monte Carlo, within 0.02 of the exact $p$ (0.2088 for the signal data, 20,000 shuffles). One is a perfectly separated case of 15 days a side. No shuffle ties it, so 999 shuffles give exactly $1/1000$. The others check a null of identical samples and sign flips. The first run loads NumPy, a few seconds."
+   },
+   "hints": [
+    {"rung": "nudge", "text": "`idx = np.argsort(rng.random((n_perm, N)), axis=1)` gives one shuffle per row."},
+    {"rung": "point", "text": "Count rows with `abs(difference) >= abs(observed)`."},
+    {"rung": "step", "text": "Return `(c + 1) / (n_perm + 1)`."}
+   ],
+   "feedback": {"correct": "Your test lands near 0.2088 and respects the $1/(B + 1)$ floor.", "generic": "Some tests failed. Check the two-sided count and the $+1$ rule."},
+   "explain": {
+    "text": "Sorting uniforms gives a uniform random permutation per row, so 20,000 shuffles take a fraction of a second. The separated case shows the floor: only 2 of 155,117,520 splits tie it, so $p = 1/(B + 1) = 0.001$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Checking a backtest",
+   "prose": "A researcher's signal looks significant in a backtest, $p = 0.01$ by a $t$-test on daily returns. The signal changes state about once a month, and returns are serially correlated.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["", "Next-day returns (%)", "Mean"],
+     "rows": [
+      ["Signal days", "-0.27, 0.05, 0.6, 1.43, 2.26, 0.23, -1.14, 0.09, 0.68, -0.29", "0.364"],
+      ["Other days", "0.25, -1.01, -0.68, -0.7, -0.26, -2.08, 1.17, -0.01, 0.76, 0.58", "-0.198"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which check should the desk ask for?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "shift", "text": "A permutation test that shifts the whole signal by random lags, or shuffles monthly blocks", "correct": true},
+     {
+      "id": "daily",
+      "text": "A day-by-day permutation test with a million shuffles",
+      "why": "Daily shuffling breaks the signal's runs; its null is too narrow, like the $t$-test's."
+     },
+     {"id": "boot", "text": "A bootstrap of the daily returns", "why": "An i.i.d. bootstrap also breaks the dependence, and it does not test a null."},
+     {"id": "more", "text": "A smaller significance level, 1%", "why": "The problem is the null's shape, not the threshold."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "What is exchangeable here?"},
+    {"rung": "point", "text": "Not single days: the signal comes in runs."},
+    {"rung": "step", "text": "Shift the signal, keep its runs."}
+   ],
+   "feedback": {"correct": "Respect the dependence in the null.", "generic": "Not quite. Choose a null that keeps the signal's runs."},
+   "explain": {
+    "text": "Shifting the signal keeps its runs and the returns' dependence, so only the alignment is random. If many signals were tried, `testing` lesson 9's warning applies to each of them as well."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Under no edge the labels are exchangeable, so the null is every relabelling: 184,756 splits give the exact $p = 0.2088$.",
+   "With $B$ shuffles report $(c + 1)/(B + 1)$; the floor is $1/(B + 1)$.",
+   "Shuffle only what is exchangeable: a persistent signal or overlapping returns need blocks or lags."
+  ],
+  "formula": {
+   "name": "Permutation $p$",
+   "tex": "p = \\frac{1 + \\#\\{b : |T^{(b)}| \\ge |T_{\\text{obs}}|\\}}{B + 1}",
+   "note": "The shuffled difference has variance $s^2(1/m + 1/n)$ with pooled $s^2$."
+  },
+  "trap": "Shuffling single days of a dependent series: the null is too narrow and noise looks significant."
+ },
+ "quiz": [
+  {
+   "id": "q-floor",
+   "difficulty": 2,
+   "prose": "A permutation test uses $B = 199$ shuffles and none beats the data.",
+   "question": "What $p$ should be reported?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.005,
+    "tol": {"abs": 1e-05},
+    "unit": "",
+    "accept": "0.005: $1/(199 + 1)$.",
+    "label": "p-value",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "b",
+      "value": 0.005025,
+      "tol": {"abs": 1e-06}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/200 = 0.005$.",
+    "generic": "Not quite right. Use $(c + 1)/(B + 1)$ with $c = 0$.",
+    "byKey": {"zero": "The $+1$ rule never reports 0.", "b": "That is $1/199$."}
+   },
+   "explain": {"text": "$(0 + 1)/(199 + 1) = 0.005$, the smallest value 199 shuffles can show."}
+  },
+  {
+   "id": "q-exch",
+   "difficulty": 3,
+   "prose": "Overlapping five-day returns are tested against a signal by shuffling single days.",
+   "question": "What goes wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "narrow", "text": "Neighbouring five-day returns share four days, so shuffling single days makes the null too narrow", "correct": true},
+     {"id": "wide", "text": "The null becomes too wide and the test loses power", "why": "Breaking positive dependence narrows the null, so false positives rise."},
+     {"id": "fine", "text": "Nothing, if enough shuffles are used", "why": "More shuffles estimate the wrong null more precisely."}
+    ]
+   },
+   "feedback": {"correct": "Too narrow a null, too many false signals.", "generic": "Not quite right. Think about what overlapping returns share."},
+   "explain": {"text": "Overlapping returns are strongly autocorrelated. Shuffle blocks of at least the overlap, or shift the signal."}
+  },
+  {
+   "id": "q-label",
+   "difficulty": 2,
+   "prose": "A permutation test of a signal's edge relabels which days carry the signal.",
+   "question": "What assumption makes every relabelling equally likely under the null?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "exch", "text": "The returns are exchangeable when the signal has no edge", "correct": true},
+     {"id": "normal", "text": "The returns are normal", "why": "Permutation tests need no normality."},
+     {"id": "equal", "text": "The two groups have equal size", "why": "Unequal groups work too; the count of splits changes."}
+    ]
+   },
+   "feedback": {"correct": "Exchangeability.", "generic": "Not quite right. What lets us swap labels freely?"},
+   "explain": {"text": "If the signal has no edge, which days carry the label is arbitrary, so every relabelling is equally likely."}
+  }
+ ]
+}

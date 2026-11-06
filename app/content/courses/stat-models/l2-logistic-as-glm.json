@@ -1,0 +1,1965 @@
+{
+ "id": "l2-logistic-as-glm",
+ "course": "stat-models",
+ "title": "Logistic regression as a GLM",
+ "minutes": 15,
+ "objectives": ["Fit a logistic regression by maximum likelihood and read its coefficients as log odds."],
+ "skills": ["sm-glm"],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Climb the likelihood",
+   "prose": "Twelve firms, five of which defaulted. Each point $(\\beta_0, \\beta_1)$ of the contour plot is one S-curve in the default plot. The contours show its log-likelihood $\\ell$: how probable the curve makes the defaults and survivals we saw.",
+   "canvas": {
+    "kind": "pair",
+    "active": "right",
+    "left": {
+     "kind": "plane",
+     "params": {
+      "x": [0, 1],
+      "y": [-0.1, 1.15],
+      "xLabel": "Leverage $L$",
+      "yLabel": "Default",
+      "height": 260,
+      "functions": [
+       {"id": "S", "expr": "1/(1 + exp(-(b0 + b1*x)))", "label": "$\\mu(L)$", "colour": 1}
+      ],
+      "params": {"b0": 0, "b1": 0}
+     },
+     "state": {
+      "points": [
+       {"id": "f0", "x": 0.1, "y": 0, "tap": false},
+       {"id": "f1", "x": 0.2, "y": 0, "tap": false},
+       {"id": "f2", "x": 0.3, "y": 0, "tap": false},
+       {"id": "f3", "x": 0.35, "y": 0, "tap": false},
+       {"id": "f4", "x": 0.4, "y": 1, "tap": false},
+       {"id": "f5", "x": 0.5, "y": 0, "tap": false},
+       {"id": "f6", "x": 0.55, "y": 0, "tap": false},
+       {"id": "f7", "x": 0.6, "y": 1, "tap": false},
+       {"id": "f8", "x": 0.7, "y": 1, "tap": false},
+       {"id": "f9", "x": 0.8, "y": 0, "tap": false},
+       {"id": "f10", "x": 0.85, "y": 1, "tap": false},
+       {"id": "f11", "x": 0.95, "y": 1, "tap": false}
+      ]
+     }
+    },
+    "right": {
+     "kind": "plane",
+     "params": {
+      "x": [-9, 2],
+      "y": [-2, 14],
+      "xLabel": "$\\beta_0$",
+      "yLabel": "$\\beta_1$",
+      "height": 260,
+      "functions": [
+       {
+        "id": "ll",
+        "contour": "-(ln(1+exp((x+y*0.1)))+ln(1+exp((x+y*0.2)))+ln(1+exp((x+y*0.3)))+ln(1+exp((x+y*0.35)))+ln(1+exp(-(x+y*0.4)))+ln(1+exp((x+y*0.5)))+ln(1+exp((x+y*0.55)))+ln(1+exp(-(x+y*0.6)))+ln(1+exp(-(x+y*0.7)))+ln(1+exp((x+y*0.8)))+ln(1+exp(-(x+y*0.85)))+ln(1+exp(-(x+y*0.95))))",
+        "levels": [-6, -6.5, -7, -8, -10],
+        "colour": 3,
+        "labelAvoid": false
+       }
+      ]
+     },
+     "state": {
+      "points": [
+       {"id": "P", "x": 0, "y": 0, "drag": true, "label": "$\\boldsymbol\\beta$"}
+      ]
+     }
+    },
+    "derive": {
+     "left:params.b0": "P.x",
+     "left:params.b1": "P.y",
+     "caption": "$\\boldsymbol\\beta = ({{fixed(P.x, 2)}}, {{fixed(P.y, 2)}})$, log-likelihood $\\ell = {{fixed(-(ln(1+exp((P.x+P.y*0.1)))+ln(1+exp((P.x+P.y*0.2)))+ln(1+exp((P.x+P.y*0.3)))+ln(1+exp((P.x+P.y*0.35)))+ln(1+exp(-(P.x+P.y*0.4)))+ln(1+exp((P.x+P.y*0.5)))+ln(1+exp((P.x+P.y*0.55)))+ln(1+exp(-(P.x+P.y*0.6)))+ln(1+exp(-(P.x+P.y*0.7)))+ln(1+exp((P.x+P.y*0.8)))+ln(1+exp(-(P.x+P.y*0.85)))+ln(1+exp(-(P.x+P.y*0.95)))), 4)}}$"
+    }
+   },
+   "question": "Drag $\\boldsymbol\\beta$ to make the log-likelihood as large as you can.",
+   "widget": {
+    "kind": "drag-point",
+    "points": [
+     {
+      "id": "P",
+      "target": [-3.722, 6.134],
+      "tol": [0.7, 1.1]
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "The contours are levels of $\\ell$, like a map of a hill. The top is inside the $-6$ ring."},
+    {
+     "rung": "point",
+     "text": "The peak sits where $\\beta_0$ is negative and $\\beta_1$ positive: few defaults at low leverage, more at high.",
+     "highlight": ["right:P"]
+    },
+    {"rung": "step", "text": "Put $\\boldsymbol\\beta$ near $(-3.7, 6.1)$."}
+   ],
+   "feedback": {
+    "correct": "You found the top: $\\hat{\\boldsymbol\\beta} = (-3.721962, 6.133700)$, where $\\hat\\ell = -5.853041$.",
+    "generic": "Not yet at the top. Move towards the inside of the $-6$ contour.",
+    "byKey": {"P": "Your point is off the top of the hill. Follow the contours inwards until $\\ell$ stops rising."}
+   },
+   "explain": {
+    "text": "The highest point is $\\hat{\\boldsymbol\\beta} = (-3.721962, 6.133700)$ with $\\hat\\ell = -5.853041$. statsmodels and a SciPy Nelder-Mead search both land there. That point is the **maximum likelihood estimate**.",
+    "canvas": {
+     "right": {
+      "points": {
+       "P": {"x": -3.722, "y": 6.134}
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The log-likelihood at the start",
+   "prose": "Each firm adds $\\ln\\hat\\mu$ if it defaulted and $\\ln(1 - \\hat\\mu)$ if it survived. At $(-3, 6)$ the total is $-6.263552$; at $(-4, 8)$ it is $-6.479063$.",
+   "canvas": {
+    "kind": "pair",
+    "active": "right",
+    "left": {
+     "kind": "plane",
+     "params": {
+      "x": [0, 1],
+      "y": [-0.1, 1.15],
+      "xLabel": "Leverage $L$",
+      "yLabel": "Default",
+      "height": 260,
+      "functions": [
+       {"id": "S", "expr": "1/(1 + exp(-(b0 + b1*x)))", "label": "$\\mu(L)$", "colour": 1}
+      ],
+      "params": {"b0": 0, "b1": 0}
+     },
+     "state": {
+      "points": [
+       {"id": "f0", "x": 0.1, "y": 0, "tap": false},
+       {"id": "f1", "x": 0.2, "y": 0, "tap": false},
+       {"id": "f2", "x": 0.3, "y": 0, "tap": false},
+       {"id": "f3", "x": 0.35, "y": 0, "tap": false},
+       {"id": "f4", "x": 0.4, "y": 1, "tap": false},
+       {"id": "f5", "x": 0.5, "y": 0, "tap": false},
+       {"id": "f6", "x": 0.55, "y": 0, "tap": false},
+       {"id": "f7", "x": 0.6, "y": 1, "tap": false},
+       {"id": "f8", "x": 0.7, "y": 1, "tap": false},
+       {"id": "f9", "x": 0.8, "y": 0, "tap": false},
+       {"id": "f10", "x": 0.85, "y": 1, "tap": false},
+       {"id": "f11", "x": 0.95, "y": 1, "tap": false}
+      ]
+     }
+    },
+    "right": {
+     "kind": "plane",
+     "params": {
+      "x": [-9, 2],
+      "y": [-2, 14],
+      "xLabel": "$\\beta_0$",
+      "yLabel": "$\\beta_1$",
+      "height": 260,
+      "functions": [
+       {
+        "id": "ll",
+        "contour": "-(ln(1+exp((x+y*0.1)))+ln(1+exp((x+y*0.2)))+ln(1+exp((x+y*0.3)))+ln(1+exp((x+y*0.35)))+ln(1+exp(-(x+y*0.4)))+ln(1+exp((x+y*0.5)))+ln(1+exp((x+y*0.55)))+ln(1+exp(-(x+y*0.6)))+ln(1+exp(-(x+y*0.7)))+ln(1+exp((x+y*0.8)))+ln(1+exp(-(x+y*0.85)))+ln(1+exp(-(x+y*0.95))))",
+        "levels": [-6, -6.5, -7, -8, -10],
+        "colour": 3,
+        "labelAvoid": false
+       }
+      ]
+     },
+     "state": {
+      "points": [
+       {"id": "P", "x": 0, "y": 0, "drag": true, "label": "$\\boldsymbol\\beta$"}
+      ]
+     }
+    },
+    "derive": {
+     "left:params.b0": "P.x",
+     "left:params.b1": "P.y",
+     "caption": "$\\boldsymbol\\beta = ({{fixed(P.x, 2)}}, {{fixed(P.y, 2)}})$, log-likelihood $\\ell = {{fixed(-(ln(1+exp((P.x+P.y*0.1)))+ln(1+exp((P.x+P.y*0.2)))+ln(1+exp((P.x+P.y*0.3)))+ln(1+exp((P.x+P.y*0.35)))+ln(1+exp(-(P.x+P.y*0.4)))+ln(1+exp((P.x+P.y*0.5)))+ln(1+exp((P.x+P.y*0.55)))+ln(1+exp(-(P.x+P.y*0.6)))+ln(1+exp(-(P.x+P.y*0.7)))+ln(1+exp((P.x+P.y*0.8)))+ln(1+exp(-(P.x+P.y*0.85)))+ln(1+exp(-(P.x+P.y*0.95)))), 4)}}$"
+    }
+   },
+   "question": "What is $\\ell$ at $\\boldsymbol\\beta = (0, 0)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -8.317766,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "$-8.3178$: every $\\hat\\mu = 0.5$, so $\\ell = 12\\ln\\tfrac12$.",
+    "label": "Log-likelihood",
+    "wrong": [
+     {
+      "id": "one",
+      "value": -0.6931,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "half",
+      "value": -6,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "sign",
+      "value": 8.317766,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At $\\boldsymbol\\beta = \\mathbf{0}$, what is $\\eta$ for every firm?"
+    },
+    {"rung": "point", "text": "$\\eta = 0$ gives $\\hat\\mu = 0.5$, defaulted or not."},
+    {"rung": "step", "text": "Twelve terms of $\\ln 0.5$: $12 \\times (-0.693147)$."}
+   ],
+   "feedback": {
+    "correct": "$12\\ln\\tfrac12 = -8.317766$.",
+    "generic": "Not quite right. Every firm contributes $\\ln 0.5$.",
+    "byKey": {
+     "one": "That is one firm's term. There are twelve firms.",
+     "half": "You added $-0.5$ per firm, the probability, not its log.",
+     "sign": "A log-likelihood of probabilities below 1 is negative."
+    }
+   },
+   "explain": {
+    "text": "At $(0, 0)$ every curve value is 0.5, so $\\ell = 12\\ln 0.5 = -8.317766$. The fit climbs to $-5.853041$: that gain of 2.46 is what the leverage slope buys."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Logistic regression is a binomial GLM",
+   "prose": "You maximised\n$$\\ell(\\boldsymbol\\beta) = \\sum_j \\big[y_j\\ln\\mu_j + (1 - y_j)\\ln(1 - \\mu_j)\\big], \\quad \\mu_j = \\frac{1}{1 + e^{-\\mathbf{x}_j^T\\boldsymbol\\beta}}$$\nThis is the classifier of `stat-learning` lesson 10: a binomial GLM with logit link. Its log loss is $-\\ell/n$.",
+   "question": "What is the log loss of the fitted curve on the twelve firms?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4878,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.4878: $5.853041 / 12$.",
+    "label": "Log loss",
+    "wrong": [
+     {
+      "id": "total",
+      "value": 5.853,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "sign",
+      "value": -0.4878,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$5.853041 / 12 = 0.4878$.",
+    "generic": "Not quite right. Divide $-\\hat\\ell$ by the number of firms.",
+    "byKey": {"total": "That is $-\\hat\\ell$. Log loss is the average per firm.", "sign": "Log loss is $-\\ell/n$, a positive number."}
+   },
+   "explain": {
+    "text": "Minimising log loss and maximising the likelihood are the same fit. The GLM view adds standard errors and tests, which a classifier rarely reports. Log loss here is $5.853041/12 = 0.4878$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Reading the slope as odds",
+   "prose": "statsmodels fits the 300 firms of lesson 1 in 6 IRLS iterations. A SciPy BFGS search on $-\\ell$ agrees to 6 places. The slope moves the log odds, $\\ln\\frac{\\mu}{1 - \\mu}$, by $\\hat\\beta_1$ per unit of leverage.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "statsmodels GLM, Binomial family, 300 firms",
+     "compact": true,
+     "lines": [
+      "Model Family:   Binomial   Df Residuals:         298",
+      "Link Function:     Logit   Log-Likelihood:   -102.32",
+      "Method:             IRLS   Deviance:          204.64",
+      "No. Iterations:        6",
+      "================================================================",
+      "          coef   std err       z   P>|z|    [0.025   0.975]",
+      "----------------------------------------------------------------",
+      "const  -5.4512     0.611  -8.917   0.000    -6.649   -4.253",
+      "L       8.6906     0.969   8.969   0.000     6.791   10.590"
+     ]
+    },
+    "state": {}
+   },
+   "question": "By what factor do the odds of default multiply when leverage rises by 0.1?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.3847,
+    "tol": {"abs": 0.001},
+    "unit": "",
+    "accept": "2.3847: $e^{0.1 \\times 8.690639} = e^{0.869064}$.",
+    "label": "Odds multiplier",
+    "wrong": [
+     {
+      "id": "logodds",
+      "value": 0.8691,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "unit",
+      "value": 5947,
+      "tol": {"abs": 30}
+     },
+     {
+      "id": "prob",
+      "value": 0.0869,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "A step of 0.1 adds $0.1\\hat\\beta_1$ to the log odds."},
+    {
+     "rung": "point",
+     "text": "$0.1 \\times 8.690639 = 0.869064$.",
+     "highlight": ["l9"]
+    },
+    {
+     "rung": "step",
+     "text": "Exponentiate: $e^{0.869064}$."
+    }
+   ],
+   "feedback": {
+    "correct": "$e^{0.869064} = 2.3847$: the odds more than double.",
+    "generic": "Not quite right. Exponentiate $0.1\\hat\\beta_1$.",
+    "byKey": {
+     "logodds": "That is the change in the log odds. The odds themselves multiply by its exponential.",
+     "unit": "You used a full unit of leverage. The step is 0.1.",
+     "prob": "You read $0.1\\hat\\beta_1$ as a change in probability. It changes the log odds."
+    }
+   },
+   "explain": {
+    "text": "Each 0.1 of leverage adds 0.869064 to the log odds, so the odds multiply by $e^{0.869064} = 2.3847$. This holds at every starting leverage; the change in probability does not.",
+    "canvas": {
+     "shade": {
+      "key": ["l9"]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A predicted default probability",
+   "prose": "The fitted curve is $\\hat\\mu(L) = 1/(1 + e^{-(-5.451164 + 8.690639L)})$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 1],
+     "y": [-0.1, 1.15],
+     "xLabel": "Leverage $L$",
+     "yLabel": "Default probability",
+     "height": 280,
+     "functions": [
+      {"id": "fit", "expr": "1/(1 + exp(-(-5.451164 + 8.690639*x)))", "label": "fitted $\\hat\\mu(L)$", "colour": 1}
+     ]
+    },
+    "state": {
+     "points": [
+      {"id": "d0", "x": 0.129, "y": 0, "tap": false},
+      {"id": "d1", "x": 0.499, "y": 1, "tap": false},
+      {"id": "d2", "x": 0.602, "y": 1, "tap": false},
+      {"id": "d3", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d4", "x": 0.148, "y": 0, "tap": false},
+      {"id": "d5", "x": 0.928, "y": 1, "tap": false},
+      {"id": "d6", "x": 0.07, "y": 0, "tap": false},
+      {"id": "d7", "x": 0.13, "y": 0, "tap": false},
+      {"id": "d8", "x": 0.948, "y": 1, "tap": false},
+      {"id": "d9", "x": 0.622, "y": 1, "tap": false},
+      {"id": "d10", "x": 0.369, "y": 0, "tap": false},
+      {"id": "d11", "x": 0.511, "y": 0, "tap": false},
+      {"id": "d12", "x": 0.663, "y": 1, "tap": false},
+      {"id": "d13", "x": 0.275, "y": 0, "tap": false},
+      {"id": "d14", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d15", "x": 0.788, "y": 1, "tap": false},
+      {"id": "d16", "x": 0.67, "y": 1, "tap": false},
+      {"id": "d17", "x": 0.512, "y": 0, "tap": false},
+      {"id": "d18", "x": 0.817, "y": 1, "tap": false},
+      {"id": "d19", "x": 0.549, "y": 0, "tap": false},
+      {"id": "d20", "x": 0.981, "y": 1, "tap": false},
+      {"id": "d21", "x": 0.204, "y": 0, "tap": false},
+      {"id": "d22", "x": 0.554, "y": 0, "tap": false},
+      {"id": "d23", "x": 0.484, "y": 0, "tap": false},
+      {"id": "d24", "x": 0.353, "y": 0, "tap": false},
+      {"id": "d25", "x": 0.592, "y": 1, "tap": false},
+      {"id": "d26", "x": 0.235, "y": 0, "tap": false},
+      {"id": "d27", "x": 0.802, "y": 1, "tap": false},
+      {"id": "d28", "x": 0.867, "y": 1, "tap": false},
+      {"id": "d29", "x": 0.129, "y": 0, "tap": false},
+      {"id": "d30", "x": 0.467, "y": 0, "tap": false},
+      {"id": "d31", "x": 0.277, "y": 0, "tap": false},
+      {"id": "d32", "x": 0.083, "y": 0, "tap": false},
+      {"id": "d33", "x": 0.896, "y": 1, "tap": false},
+      {"id": "d34", "x": 0.43, "y": 0, "tap": false},
+      {"id": "d35", "x": 0.148, "y": 0, "tap": false},
+      {"id": "d36", "x": 0.673, "y": 0, "tap": false},
+      {"id": "d37", "x": 0.202, "y": 0, "tap": false},
+      {"id": "d38", "x": 0.901, "y": 1, "tap": false},
+      {"id": "d39", "x": 0.217, "y": 0, "tap": false},
+      {"id": "d40", "x": 0.033, "y": 0, "tap": false},
+      {"id": "d41", "x": 0.201, "y": 0, "tap": false},
+      {"id": "d42", "x": 0.346, "y": 0, "tap": false},
+      {"id": "d43", "x": 0.469, "y": 0, "tap": false},
+      {"id": "d44", "x": 0.906, "y": 1, "tap": false},
+      {"id": "d45", "x": 0.697, "y": 0, "tap": false},
+      {"id": "d46", "x": 0.339, "y": 0, "tap": false},
+      {"id": "d47", "x": 0.017, "y": 0, "tap": false},
+      {"id": "d48", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d49", "x": 0.996, "y": 1, "tap": false},
+      {"id": "d50", "x": 0.46, "y": 0, "tap": false},
+      {"id": "d51", "x": 0.691, "y": 1, "tap": false},
+      {"id": "d52", "x": 0.055, "y": 0, "tap": false},
+      {"id": "d53", "x": 0.034, "y": 0, "tap": false},
+      {"id": "d54", "x": 0.846, "y": 1, "tap": false},
+      {"id": "d55", "x": 0.588, "y": 0, "tap": false},
+      {"id": "d56", "x": 0.309, "y": 0, "tap": false},
+      {"id": "d57", "x": 0.317, "y": 0, "tap": false},
+      {"id": "d58", "x": 0.089, "y": 0, "tap": false},
+      {"id": "d59", "x": 0.173, "y": 0, "tap": false},
+      {"id": "d60", "x": 0.025, "y": 0, "tap": false},
+      {"id": "d61", "x": 0.839, "y": 1, "tap": false},
+      {"id": "d62", "x": 0.466, "y": 0, "tap": false},
+      {"id": "d63", "x": 0.127, "y": 0, "tap": false},
+      {"id": "d64", "x": 0.739, "y": 1, "tap": false},
+      {"id": "d65", "x": 0.196, "y": 0, "tap": false},
+      {"id": "d66", "x": 0.062, "y": 0, "tap": false},
+      {"id": "d67", "x": 0.598, "y": 0, "tap": false},
+      {"id": "d68", "x": 0.896, "y": 1, "tap": false},
+      {"id": "d69", "x": 0.027, "y": 0, "tap": false},
+      {"id": "d70", "x": 0.805, "y": 0, "tap": false},
+      {"id": "d71", "x": 0.19, "y": 0, "tap": false},
+      {"id": "d72", "x": 0.093, "y": 0, "tap": false},
+      {"id": "d73", "x": 0.018, "y": 0, "tap": false},
+      {"id": "d74", "x": 0.293, "y": 0, "tap": false},
+      {"id": "d75", "x": 0.727, "y": 1, "tap": false},
+      {"id": "d76", "x": 0.493, "y": 0, "tap": false},
+      {"id": "d77", "x": 0.853, "y": 1, "tap": false},
+      {"id": "d78", "x": 0.217, "y": 0, "tap": false},
+      {"id": "d79", "x": 0.315, "y": 0, "tap": false},
+      {"id": "d80", "x": 0.258, "y": 0, "tap": false},
+      {"id": "d81", "x": 0.978, "y": 1, "tap": false},
+      {"id": "d82", "x": 0.941, "y": 1, "tap": false},
+      {"id": "d83", "x": 0.341, "y": 0, "tap": false},
+      {"id": "d84", "x": 0.436, "y": 1, "tap": false},
+      {"id": "d85", "x": 0.314, "y": 0, "tap": false},
+      {"id": "d86", "x": 0.747, "y": 1, "tap": false},
+      {"id": "d87", "x": 0.04, "y": 0, "tap": false},
+      {"id": "d88", "x": 0.067, "y": 0, "tap": false},
+      {"id": "d89", "x": 0.404, "y": 0, "tap": false},
+      {"id": "d90", "x": 0.245, "y": 0, "tap": false},
+      {"id": "d91", "x": 0.845, "y": 1, "tap": false},
+      {"id": "d92", "x": 0.742, "y": 1, "tap": false},
+      {"id": "d93", "x": 0.546, "y": 1, "tap": false},
+      {"id": "d94", "x": 0.661, "y": 0, "tap": false},
+      {"id": "d95", "x": 0.692, "y": 0, "tap": false},
+      {"id": "d96", "x": 0.781, "y": 1, "tap": false},
+      {"id": "d97", "x": 0.927, "y": 1, "tap": false},
+      {"id": "d98", "x": 0.15, "y": 0, "tap": false},
+      {"id": "d99", "x": 0.626, "y": 0, "tap": false},
+      {"id": "d100", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d101", "x": 0.443, "y": 0, "tap": false},
+      {"id": "d102", "x": 0.786, "y": 1, "tap": false},
+      {"id": "d103", "x": 0.895, "y": 1, "tap": false},
+      {"id": "d104", "x": 0.759, "y": 1, "tap": false},
+      {"id": "d105", "x": 0.035, "y": 0, "tap": false},
+      {"id": "d106", "x": 0.359, "y": 0, "tap": false},
+      {"id": "d107", "x": 0.163, "y": 0, "tap": false},
+      {"id": "d108", "x": 0.999, "y": 1, "tap": false},
+      {"id": "d109", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d110", "x": 0.244, "y": 0, "tap": false},
+      {"id": "d111", "x": 0.357, "y": 1, "tap": false},
+      {"id": "d112", "x": 0.061, "y": 0, "tap": false},
+      {"id": "d113", "x": 0.87, "y": 1, "tap": false},
+      {"id": "d114", "x": 0.636, "y": 1, "tap": false},
+      {"id": "d115", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d116", "x": 0.498, "y": 0, "tap": false},
+      {"id": "d117", "x": 0.079, "y": 0, "tap": false},
+      {"id": "d118", "x": 0.611, "y": 0, "tap": false},
+      {"id": "d119", "x": 0.232, "y": 0, "tap": false},
+      {"id": "d120", "x": 0.039, "y": 0, "tap": false},
+      {"id": "d121", "x": 0.115, "y": 0, "tap": false},
+      {"id": "d122", "x": 0.555, "y": 0, "tap": false},
+      {"id": "d123", "x": 0.637, "y": 0, "tap": false},
+      {"id": "d124", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d125", "x": 0.643, "y": 0, "tap": false},
+      {"id": "d126", "x": 0.352, "y": 0, "tap": false},
+      {"id": "d127", "x": 0.131, "y": 0, "tap": false},
+      {"id": "d128", "x": 0.315, "y": 0, "tap": false},
+      {"id": "d129", "x": 0.395, "y": 0, "tap": false},
+      {"id": "d130", "x": 0.913, "y": 1, "tap": false},
+      {"id": "d131", "x": 0.116, "y": 0, "tap": false},
+      {"id": "d132", "x": 0.086, "y": 0, "tap": false},
+      {"id": "d133", "x": 0.561, "y": 0, "tap": false},
+      {"id": "d134", "x": 0.963, "y": 1, "tap": false},
+      {"id": "d135", "x": 0.907, "y": 1, "tap": false},
+      {"id": "d136", "x": 0.7, "y": 1, "tap": false},
+      {"id": "d137", "x": 0.067, "y": 0, "tap": false},
+      {"id": "d138", "x": 0.806, "y": 1, "tap": false},
+      {"id": "d139", "x": 0.683, "y": 1, "tap": false},
+      {"id": "d140", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d141", "x": 0.465, "y": 0, "tap": false},
+      {"id": "d142", "x": 0.049, "y": 0, "tap": false},
+      {"id": "d143", "x": 0.802, "y": 1, "tap": false},
+      {"id": "d144", "x": 0.719, "y": 0, "tap": false},
+      {"id": "d145", "x": 0.805, "y": 1, "tap": false},
+      {"id": "d146", "x": 0.76, "y": 0, "tap": false},
+      {"id": "d147", "x": 0.267, "y": 0, "tap": false},
+      {"id": "d148", "x": 0.79, "y": 1, "tap": false},
+      {"id": "d149", "x": 0.249, "y": 0, "tap": false},
+      {"id": "d150", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d151", "x": 0.39, "y": 0, "tap": false},
+      {"id": "d152", "x": 0.498, "y": 0, "tap": false},
+      {"id": "d153", "x": 0.286, "y": 0, "tap": false},
+      {"id": "d154", "x": 0.606, "y": 1, "tap": false},
+      {"id": "d155", "x": 0.603, "y": 0, "tap": false},
+      {"id": "d156", "x": 0.24, "y": 0, "tap": false},
+      {"id": "d157", "x": 0.623, "y": 0, "tap": false},
+      {"id": "d158", "x": 0.357, "y": 0, "tap": false},
+      {"id": "d159", "x": 0.735, "y": 0, "tap": false},
+      {"id": "d160", "x": 0.29, "y": 1, "tap": false},
+      {"id": "d161", "x": 0.799, "y": 0, "tap": false},
+      {"id": "d162", "x": 0.415, "y": 1, "tap": false},
+      {"id": "d163", "x": 0.553, "y": 0, "tap": false},
+      {"id": "d164", "x": 0.673, "y": 1, "tap": false},
+      {"id": "d165", "x": 0.518, "y": 0, "tap": false},
+      {"id": "d166", "x": 0.258, "y": 0, "tap": false},
+      {"id": "d167", "x": 0.979, "y": 1, "tap": false},
+      {"id": "d168", "x": 0.096, "y": 0, "tap": false},
+      {"id": "d169", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d170", "x": 0.549, "y": 1, "tap": false},
+      {"id": "d171", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d172", "x": 0.155, "y": 0, "tap": false},
+      {"id": "d173", "x": 0.799, "y": 1, "tap": false},
+      {"id": "d174", "x": 0.784, "y": 1, "tap": false},
+      {"id": "d175", "x": 0.637, "y": 0, "tap": false},
+      {"id": "d176", "x": 0.902, "y": 1, "tap": false},
+      {"id": "d177", "x": 0.755, "y": 1, "tap": false},
+      {"id": "d178", "x": 0.299, "y": 0, "tap": false},
+      {"id": "d179", "x": 0.645, "y": 1, "tap": false},
+      {"id": "d180", "x": 0.34, "y": 0, "tap": false},
+      {"id": "d181", "x": 0.75, "y": 1, "tap": false},
+      {"id": "d182", "x": 0.385, "y": 0, "tap": false},
+      {"id": "d183", "x": 0.153, "y": 0, "tap": false},
+      {"id": "d184", "x": 0.876, "y": 1, "tap": false},
+      {"id": "d185", "x": 0.69, "y": 1, "tap": false},
+      {"id": "d186", "x": 0.745, "y": 0, "tap": false},
+      {"id": "d187", "x": 0.56, "y": 0, "tap": false},
+      {"id": "d188", "x": 0.783, "y": 1, "tap": false},
+      {"id": "d189", "x": 0.448, "y": 0, "tap": false},
+      {"id": "d190", "x": 0.566, "y": 1, "tap": false},
+      {"id": "d191", "x": 0.063, "y": 0, "tap": false},
+      {"id": "d192", "x": 0.555, "y": 1, "tap": false},
+      {"id": "d193", "x": 0.815, "y": 0, "tap": false},
+      {"id": "d194", "x": 0.706, "y": 1, "tap": false},
+      {"id": "d195", "x": 0.803, "y": 0, "tap": false},
+      {"id": "d196", "x": 0.496, "y": 0, "tap": false},
+      {"id": "d197", "x": 0.881, "y": 1, "tap": false},
+      {"id": "d198", "x": 0.108, "y": 0, "tap": false},
+      {"id": "d199", "x": 0.876, "y": 1, "tap": false},
+      {"id": "d200", "x": 0.371, "y": 0, "tap": false},
+      {"id": "d201", "x": 0.091, "y": 0, "tap": false},
+      {"id": "d202", "x": 0.619, "y": 1, "tap": false},
+      {"id": "d203", "x": 0.455, "y": 0, "tap": false},
+      {"id": "d204", "x": 0.428, "y": 1, "tap": false},
+      {"id": "d205", "x": 0.852, "y": 1, "tap": false},
+      {"id": "d206", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d207", "x": 0.617, "y": 0, "tap": false},
+      {"id": "d208", "x": 0.414, "y": 1, "tap": false},
+      {"id": "d209", "x": 0.528, "y": 0, "tap": false},
+      {"id": "d210", "x": 0.499, "y": 1, "tap": false},
+      {"id": "d211", "x": 0.134, "y": 0, "tap": false},
+      {"id": "d212", "x": 0.512, "y": 0, "tap": false},
+      {"id": "d213", "x": 0.862, "y": 1, "tap": false},
+      {"id": "d214", "x": 0.171, "y": 0, "tap": false},
+      {"id": "d215", "x": 0.011, "y": 0, "tap": false},
+      {"id": "d216", "x": 0.068, "y": 0, "tap": false},
+      {"id": "d217", "x": 0.46, "y": 0, "tap": false},
+      {"id": "d218", "x": 0.975, "y": 1, "tap": false},
+      {"id": "d219", "x": 0.044, "y": 0, "tap": false},
+      {"id": "d220", "x": 0.991, "y": 1, "tap": false},
+      {"id": "d221", "x": 0.536, "y": 1, "tap": false},
+      {"id": "d222", "x": 0.12, "y": 0, "tap": false},
+      {"id": "d223", "x": 0.418, "y": 0, "tap": false},
+      {"id": "d224", "x": 0.207, "y": 0, "tap": false},
+      {"id": "d225", "x": 0.714, "y": 0, "tap": false},
+      {"id": "d226", "x": 0.541, "y": 0, "tap": false},
+      {"id": "d227", "x": 0.288, "y": 0, "tap": false},
+      {"id": "d228", "x": 0.255, "y": 0, "tap": false},
+      {"id": "d229", "x": 0.867, "y": 1, "tap": false},
+      {"id": "d230", "x": 0.766, "y": 0, "tap": false},
+      {"id": "d231", "x": 0.436, "y": 0, "tap": false},
+      {"id": "d232", "x": 0.406, "y": 0, "tap": false},
+      {"id": "d233", "x": 0.738, "y": 0, "tap": false},
+      {"id": "d234", "x": 0.971, "y": 1, "tap": false},
+      {"id": "d235", "x": 0.08, "y": 0, "tap": false},
+      {"id": "d236", "x": 0.159, "y": 0, "tap": false},
+      {"id": "d237", "x": 0.362, "y": 1, "tap": false},
+      {"id": "d238", "x": 0.508, "y": 0, "tap": false},
+      {"id": "d239", "x": 0.071, "y": 0, "tap": false},
+      {"id": "d240", "x": 0.053, "y": 0, "tap": false},
+      {"id": "d241", "x": 0.22, "y": 0, "tap": false},
+      {"id": "d242", "x": 0.386, "y": 0, "tap": false},
+      {"id": "d243", "x": 0.739, "y": 1, "tap": false},
+      {"id": "d244", "x": 0.61, "y": 0, "tap": false},
+      {"id": "d245", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d246", "x": 0.045, "y": 0, "tap": false},
+      {"id": "d247", "x": 0.452, "y": 0, "tap": false},
+      {"id": "d248", "x": 0.875, "y": 1, "tap": false},
+      {"id": "d249", "x": 0.915, "y": 1, "tap": false},
+      {"id": "d250", "x": 0.365, "y": 1, "tap": false},
+      {"id": "d251", "x": 0.887, "y": 1, "tap": false},
+      {"id": "d252", "x": 0.929, "y": 1, "tap": false},
+      {"id": "d253", "x": 0.407, "y": 1, "tap": false},
+      {"id": "d254", "x": 0.746, "y": 1, "tap": false},
+      {"id": "d255", "x": 0.365, "y": 0, "tap": false},
+      {"id": "d256", "x": 0.154, "y": 0, "tap": false},
+      {"id": "d257", "x": 0.575, "y": 1, "tap": false},
+      {"id": "d258", "x": 0.086, "y": 0, "tap": false},
+      {"id": "d259", "x": 0.663, "y": 1, "tap": false},
+      {"id": "d260", "x": 0.809, "y": 1, "tap": false},
+      {"id": "d261", "x": 0.915, "y": 0, "tap": false},
+      {"id": "d262", "x": 0.448, "y": 1, "tap": false},
+      {"id": "d263", "x": 0.117, "y": 0, "tap": false},
+      {"id": "d264", "x": 0.902, "y": 1, "tap": false},
+      {"id": "d265", "x": 0.87, "y": 0, "tap": false},
+      {"id": "d266", "x": 0.968, "y": 1, "tap": false},
+      {"id": "d267", "x": 0.594, "y": 0, "tap": false},
+      {"id": "d268", "x": 0.673, "y": 0, "tap": false},
+      {"id": "d269", "x": 0.373, "y": 0, "tap": false},
+      {"id": "d270", "x": 0.183, "y": 0, "tap": false},
+      {"id": "d271", "x": 0.292, "y": 0, "tap": false},
+      {"id": "d272", "x": 0.721, "y": 1, "tap": false},
+      {"id": "d273", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d274", "x": 0.692, "y": 1, "tap": false},
+      {"id": "d275", "x": 0.502, "y": 0, "tap": false},
+      {"id": "d276", "x": 0.449, "y": 0, "tap": false},
+      {"id": "d277", "x": 0.968, "y": 1, "tap": false},
+      {"id": "d278", "x": 0.166, "y": 0, "tap": false},
+      {"id": "d279", "x": 0.487, "y": 1, "tap": false},
+      {"id": "d280", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d281", "x": 0.938, "y": 1, "tap": false},
+      {"id": "d282", "x": 0.489, "y": 0, "tap": false},
+      {"id": "d283", "x": 0.332, "y": 0, "tap": false},
+      {"id": "d284", "x": 0.168, "y": 0, "tap": false},
+      {"id": "d285", "x": 0.594, "y": 1, "tap": false},
+      {"id": "d286", "x": 0.399, "y": 0, "tap": false},
+      {"id": "d287", "x": 0.127, "y": 0, "tap": false},
+      {"id": "d288", "x": 0.032, "y": 0, "tap": false},
+      {"id": "d289", "x": 0.391, "y": 0, "tap": false},
+      {"id": "d290", "x": 0.583, "y": 1, "tap": false},
+      {"id": "d291", "x": 0.519, "y": 0, "tap": false},
+      {"id": "d292", "x": 0.9, "y": 1, "tap": false},
+      {"id": "d293", "x": 0.912, "y": 1, "tap": false},
+      {"id": "d294", "x": 0.936, "y": 1, "tap": false},
+      {"id": "d295", "x": 0.8, "y": 1, "tap": false},
+      {"id": "d296", "x": 0.478, "y": 0, "tap": false},
+      {"id": "d297", "x": 0.524, "y": 0, "tap": false},
+      {"id": "d298", "x": 0.397, "y": 0, "tap": false},
+      {"id": "d299", "x": 0.4, "y": 0, "tap": false},
+      {
+       "id": "Q",
+       "x": 0.5,
+       "y": 0.2486,
+       "on": "fit",
+       "label": "{y:.4f}"
+      }
+     ]
+    },
+    "controls": [
+     {"bind": "points.Q.x", "min": 0, "max": 1, "step": 0.01, "start": 0.5, "label": "Leverage $L$"}
+    ]
+   },
+   "question": "What default probability does the fit give at $L = 0.5$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2486,
+    "tol": {"abs": 0.0005},
+    "unit": "%",
+    "accept": "24.86%: $\\eta = -1.1059$ and $1/(1 + e^{1.1059}) = 0.2486$.",
+    "label": "PD",
+    "wrong": [
+     {
+      "id": "eta",
+      "value": -0.011058,
+      "tol": {"abs": 1e-05}
+     },
+     {
+      "id": "odds",
+      "value": 0.3309,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Linear predictor first, then the inverse logit."},
+    {
+     "rung": "point",
+     "text": "$\\eta = -5.451164 + 8.690639 \\times 0.5 = -1.105845$.",
+     "highlight": ["Q"]
+    },
+    {
+     "rung": "step",
+     "text": "$1/(1 + e^{1.105845}) = 0.2486$."
+    }
+   ],
+   "feedback": {
+    "correct": "24.86%. At $L = 0.7$ the same curve gives 65.30%.",
+    "generic": "Not quite right. Compute $\\eta$ at $L = 0.5$, then $1/(1 + e^{-\\eta})$.",
+    "byKey": {
+     "eta": "That is $\\eta$, the log odds. Push it through the inverse logit.",
+     "odds": "That is the odds, $e^{\\eta}$. The probability is odds over one plus odds."
+    }
+   },
+   "explain": {
+    "text": "At $L = 0.5$, $\\eta = -1.1058$ and the PD is 24.86%. At $L = 0.7$ it is 65.30%. The PD crosses one half where $\\eta = 0$, at $L = 5.451164/8.690639 = 0.6272$.",
+    "canvas": {
+     "points": {
+      "Q": {"x": 0.5}
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The marginal effect",
+   "prose": "The slope of the curve is $\\frac{d\\mu}{dL} = \\hat\\beta_1\\mu(1 - \\mu)$. Move the point along the curve and watch the tangent.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 1],
+     "y": [-0.1, 1.15],
+     "xLabel": "Leverage $L$",
+     "yLabel": "Default probability",
+     "height": 280,
+     "functions": [
+      {"id": "fit", "expr": "1/(1 + exp(-(-5.451164 + 8.690639*x)))", "label": "fitted $\\hat\\mu(L)$", "colour": 1}
+     ]
+    },
+    "state": {
+     "points": [
+      {"id": "d0", "x": 0.129, "y": 0, "tap": false},
+      {"id": "d1", "x": 0.499, "y": 1, "tap": false},
+      {"id": "d2", "x": 0.602, "y": 1, "tap": false},
+      {"id": "d3", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d4", "x": 0.148, "y": 0, "tap": false},
+      {"id": "d5", "x": 0.928, "y": 1, "tap": false},
+      {"id": "d6", "x": 0.07, "y": 0, "tap": false},
+      {"id": "d7", "x": 0.13, "y": 0, "tap": false},
+      {"id": "d8", "x": 0.948, "y": 1, "tap": false},
+      {"id": "d9", "x": 0.622, "y": 1, "tap": false},
+      {"id": "d10", "x": 0.369, "y": 0, "tap": false},
+      {"id": "d11", "x": 0.511, "y": 0, "tap": false},
+      {"id": "d12", "x": 0.663, "y": 1, "tap": false},
+      {"id": "d13", "x": 0.275, "y": 0, "tap": false},
+      {"id": "d14", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d15", "x": 0.788, "y": 1, "tap": false},
+      {"id": "d16", "x": 0.67, "y": 1, "tap": false},
+      {"id": "d17", "x": 0.512, "y": 0, "tap": false},
+      {"id": "d18", "x": 0.817, "y": 1, "tap": false},
+      {"id": "d19", "x": 0.549, "y": 0, "tap": false},
+      {"id": "d20", "x": 0.981, "y": 1, "tap": false},
+      {"id": "d21", "x": 0.204, "y": 0, "tap": false},
+      {"id": "d22", "x": 0.554, "y": 0, "tap": false},
+      {"id": "d23", "x": 0.484, "y": 0, "tap": false},
+      {"id": "d24", "x": 0.353, "y": 0, "tap": false},
+      {"id": "d25", "x": 0.592, "y": 1, "tap": false},
+      {"id": "d26", "x": 0.235, "y": 0, "tap": false},
+      {"id": "d27", "x": 0.802, "y": 1, "tap": false},
+      {"id": "d28", "x": 0.867, "y": 1, "tap": false},
+      {"id": "d29", "x": 0.129, "y": 0, "tap": false},
+      {"id": "d30", "x": 0.467, "y": 0, "tap": false},
+      {"id": "d31", "x": 0.277, "y": 0, "tap": false},
+      {"id": "d32", "x": 0.083, "y": 0, "tap": false},
+      {"id": "d33", "x": 0.896, "y": 1, "tap": false},
+      {"id": "d34", "x": 0.43, "y": 0, "tap": false},
+      {"id": "d35", "x": 0.148, "y": 0, "tap": false},
+      {"id": "d36", "x": 0.673, "y": 0, "tap": false},
+      {"id": "d37", "x": 0.202, "y": 0, "tap": false},
+      {"id": "d38", "x": 0.901, "y": 1, "tap": false},
+      {"id": "d39", "x": 0.217, "y": 0, "tap": false},
+      {"id": "d40", "x": 0.033, "y": 0, "tap": false},
+      {"id": "d41", "x": 0.201, "y": 0, "tap": false},
+      {"id": "d42", "x": 0.346, "y": 0, "tap": false},
+      {"id": "d43", "x": 0.469, "y": 0, "tap": false},
+      {"id": "d44", "x": 0.906, "y": 1, "tap": false},
+      {"id": "d45", "x": 0.697, "y": 0, "tap": false},
+      {"id": "d46", "x": 0.339, "y": 0, "tap": false},
+      {"id": "d47", "x": 0.017, "y": 0, "tap": false},
+      {"id": "d48", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d49", "x": 0.996, "y": 1, "tap": false},
+      {"id": "d50", "x": 0.46, "y": 0, "tap": false},
+      {"id": "d51", "x": 0.691, "y": 1, "tap": false},
+      {"id": "d52", "x": 0.055, "y": 0, "tap": false},
+      {"id": "d53", "x": 0.034, "y": 0, "tap": false},
+      {"id": "d54", "x": 0.846, "y": 1, "tap": false},
+      {"id": "d55", "x": 0.588, "y": 0, "tap": false},
+      {"id": "d56", "x": 0.309, "y": 0, "tap": false},
+      {"id": "d57", "x": 0.317, "y": 0, "tap": false},
+      {"id": "d58", "x": 0.089, "y": 0, "tap": false},
+      {"id": "d59", "x": 0.173, "y": 0, "tap": false},
+      {"id": "d60", "x": 0.025, "y": 0, "tap": false},
+      {"id": "d61", "x": 0.839, "y": 1, "tap": false},
+      {"id": "d62", "x": 0.466, "y": 0, "tap": false},
+      {"id": "d63", "x": 0.127, "y": 0, "tap": false},
+      {"id": "d64", "x": 0.739, "y": 1, "tap": false},
+      {"id": "d65", "x": 0.196, "y": 0, "tap": false},
+      {"id": "d66", "x": 0.062, "y": 0, "tap": false},
+      {"id": "d67", "x": 0.598, "y": 0, "tap": false},
+      {"id": "d68", "x": 0.896, "y": 1, "tap": false},
+      {"id": "d69", "x": 0.027, "y": 0, "tap": false},
+      {"id": "d70", "x": 0.805, "y": 0, "tap": false},
+      {"id": "d71", "x": 0.19, "y": 0, "tap": false},
+      {"id": "d72", "x": 0.093, "y": 0, "tap": false},
+      {"id": "d73", "x": 0.018, "y": 0, "tap": false},
+      {"id": "d74", "x": 0.293, "y": 0, "tap": false},
+      {"id": "d75", "x": 0.727, "y": 1, "tap": false},
+      {"id": "d76", "x": 0.493, "y": 0, "tap": false},
+      {"id": "d77", "x": 0.853, "y": 1, "tap": false},
+      {"id": "d78", "x": 0.217, "y": 0, "tap": false},
+      {"id": "d79", "x": 0.315, "y": 0, "tap": false},
+      {"id": "d80", "x": 0.258, "y": 0, "tap": false},
+      {"id": "d81", "x": 0.978, "y": 1, "tap": false},
+      {"id": "d82", "x": 0.941, "y": 1, "tap": false},
+      {"id": "d83", "x": 0.341, "y": 0, "tap": false},
+      {"id": "d84", "x": 0.436, "y": 1, "tap": false},
+      {"id": "d85", "x": 0.314, "y": 0, "tap": false},
+      {"id": "d86", "x": 0.747, "y": 1, "tap": false},
+      {"id": "d87", "x": 0.04, "y": 0, "tap": false},
+      {"id": "d88", "x": 0.067, "y": 0, "tap": false},
+      {"id": "d89", "x": 0.404, "y": 0, "tap": false},
+      {"id": "d90", "x": 0.245, "y": 0, "tap": false},
+      {"id": "d91", "x": 0.845, "y": 1, "tap": false},
+      {"id": "d92", "x": 0.742, "y": 1, "tap": false},
+      {"id": "d93", "x": 0.546, "y": 1, "tap": false},
+      {"id": "d94", "x": 0.661, "y": 0, "tap": false},
+      {"id": "d95", "x": 0.692, "y": 0, "tap": false},
+      {"id": "d96", "x": 0.781, "y": 1, "tap": false},
+      {"id": "d97", "x": 0.927, "y": 1, "tap": false},
+      {"id": "d98", "x": 0.15, "y": 0, "tap": false},
+      {"id": "d99", "x": 0.626, "y": 0, "tap": false},
+      {"id": "d100", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d101", "x": 0.443, "y": 0, "tap": false},
+      {"id": "d102", "x": 0.786, "y": 1, "tap": false},
+      {"id": "d103", "x": 0.895, "y": 1, "tap": false},
+      {"id": "d104", "x": 0.759, "y": 1, "tap": false},
+      {"id": "d105", "x": 0.035, "y": 0, "tap": false},
+      {"id": "d106", "x": 0.359, "y": 0, "tap": false},
+      {"id": "d107", "x": 0.163, "y": 0, "tap": false},
+      {"id": "d108", "x": 0.999, "y": 1, "tap": false},
+      {"id": "d109", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d110", "x": 0.244, "y": 0, "tap": false},
+      {"id": "d111", "x": 0.357, "y": 1, "tap": false},
+      {"id": "d112", "x": 0.061, "y": 0, "tap": false},
+      {"id": "d113", "x": 0.87, "y": 1, "tap": false},
+      {"id": "d114", "x": 0.636, "y": 1, "tap": false},
+      {"id": "d115", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d116", "x": 0.498, "y": 0, "tap": false},
+      {"id": "d117", "x": 0.079, "y": 0, "tap": false},
+      {"id": "d118", "x": 0.611, "y": 0, "tap": false},
+      {"id": "d119", "x": 0.232, "y": 0, "tap": false},
+      {"id": "d120", "x": 0.039, "y": 0, "tap": false},
+      {"id": "d121", "x": 0.115, "y": 0, "tap": false},
+      {"id": "d122", "x": 0.555, "y": 0, "tap": false},
+      {"id": "d123", "x": 0.637, "y": 0, "tap": false},
+      {"id": "d124", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d125", "x": 0.643, "y": 0, "tap": false},
+      {"id": "d126", "x": 0.352, "y": 0, "tap": false},
+      {"id": "d127", "x": 0.131, "y": 0, "tap": false},
+      {"id": "d128", "x": 0.315, "y": 0, "tap": false},
+      {"id": "d129", "x": 0.395, "y": 0, "tap": false},
+      {"id": "d130", "x": 0.913, "y": 1, "tap": false},
+      {"id": "d131", "x": 0.116, "y": 0, "tap": false},
+      {"id": "d132", "x": 0.086, "y": 0, "tap": false},
+      {"id": "d133", "x": 0.561, "y": 0, "tap": false},
+      {"id": "d134", "x": 0.963, "y": 1, "tap": false},
+      {"id": "d135", "x": 0.907, "y": 1, "tap": false},
+      {"id": "d136", "x": 0.7, "y": 1, "tap": false},
+      {"id": "d137", "x": 0.067, "y": 0, "tap": false},
+      {"id": "d138", "x": 0.806, "y": 1, "tap": false},
+      {"id": "d139", "x": 0.683, "y": 1, "tap": false},
+      {"id": "d140", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d141", "x": 0.465, "y": 0, "tap": false},
+      {"id": "d142", "x": 0.049, "y": 0, "tap": false},
+      {"id": "d143", "x": 0.802, "y": 1, "tap": false},
+      {"id": "d144", "x": 0.719, "y": 0, "tap": false},
+      {"id": "d145", "x": 0.805, "y": 1, "tap": false},
+      {"id": "d146", "x": 0.76, "y": 0, "tap": false},
+      {"id": "d147", "x": 0.267, "y": 0, "tap": false},
+      {"id": "d148", "x": 0.79, "y": 1, "tap": false},
+      {"id": "d149", "x": 0.249, "y": 0, "tap": false},
+      {"id": "d150", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d151", "x": 0.39, "y": 0, "tap": false},
+      {"id": "d152", "x": 0.498, "y": 0, "tap": false},
+      {"id": "d153", "x": 0.286, "y": 0, "tap": false},
+      {"id": "d154", "x": 0.606, "y": 1, "tap": false},
+      {"id": "d155", "x": 0.603, "y": 0, "tap": false},
+      {"id": "d156", "x": 0.24, "y": 0, "tap": false},
+      {"id": "d157", "x": 0.623, "y": 0, "tap": false},
+      {"id": "d158", "x": 0.357, "y": 0, "tap": false},
+      {"id": "d159", "x": 0.735, "y": 0, "tap": false},
+      {"id": "d160", "x": 0.29, "y": 1, "tap": false},
+      {"id": "d161", "x": 0.799, "y": 0, "tap": false},
+      {"id": "d162", "x": 0.415, "y": 1, "tap": false},
+      {"id": "d163", "x": 0.553, "y": 0, "tap": false},
+      {"id": "d164", "x": 0.673, "y": 1, "tap": false},
+      {"id": "d165", "x": 0.518, "y": 0, "tap": false},
+      {"id": "d166", "x": 0.258, "y": 0, "tap": false},
+      {"id": "d167", "x": 0.979, "y": 1, "tap": false},
+      {"id": "d168", "x": 0.096, "y": 0, "tap": false},
+      {"id": "d169", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d170", "x": 0.549, "y": 1, "tap": false},
+      {"id": "d171", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d172", "x": 0.155, "y": 0, "tap": false},
+      {"id": "d173", "x": 0.799, "y": 1, "tap": false},
+      {"id": "d174", "x": 0.784, "y": 1, "tap": false},
+      {"id": "d175", "x": 0.637, "y": 0, "tap": false},
+      {"id": "d176", "x": 0.902, "y": 1, "tap": false},
+      {"id": "d177", "x": 0.755, "y": 1, "tap": false},
+      {"id": "d178", "x": 0.299, "y": 0, "tap": false},
+      {"id": "d179", "x": 0.645, "y": 1, "tap": false},
+      {"id": "d180", "x": 0.34, "y": 0, "tap": false},
+      {"id": "d181", "x": 0.75, "y": 1, "tap": false},
+      {"id": "d182", "x": 0.385, "y": 0, "tap": false},
+      {"id": "d183", "x": 0.153, "y": 0, "tap": false},
+      {"id": "d184", "x": 0.876, "y": 1, "tap": false},
+      {"id": "d185", "x": 0.69, "y": 1, "tap": false},
+      {"id": "d186", "x": 0.745, "y": 0, "tap": false},
+      {"id": "d187", "x": 0.56, "y": 0, "tap": false},
+      {"id": "d188", "x": 0.783, "y": 1, "tap": false},
+      {"id": "d189", "x": 0.448, "y": 0, "tap": false},
+      {"id": "d190", "x": 0.566, "y": 1, "tap": false},
+      {"id": "d191", "x": 0.063, "y": 0, "tap": false},
+      {"id": "d192", "x": 0.555, "y": 1, "tap": false},
+      {"id": "d193", "x": 0.815, "y": 0, "tap": false},
+      {"id": "d194", "x": 0.706, "y": 1, "tap": false},
+      {"id": "d195", "x": 0.803, "y": 0, "tap": false},
+      {"id": "d196", "x": 0.496, "y": 0, "tap": false},
+      {"id": "d197", "x": 0.881, "y": 1, "tap": false},
+      {"id": "d198", "x": 0.108, "y": 0, "tap": false},
+      {"id": "d199", "x": 0.876, "y": 1, "tap": false},
+      {"id": "d200", "x": 0.371, "y": 0, "tap": false},
+      {"id": "d201", "x": 0.091, "y": 0, "tap": false},
+      {"id": "d202", "x": 0.619, "y": 1, "tap": false},
+      {"id": "d203", "x": 0.455, "y": 0, "tap": false},
+      {"id": "d204", "x": 0.428, "y": 1, "tap": false},
+      {"id": "d205", "x": 0.852, "y": 1, "tap": false},
+      {"id": "d206", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d207", "x": 0.617, "y": 0, "tap": false},
+      {"id": "d208", "x": 0.414, "y": 1, "tap": false},
+      {"id": "d209", "x": 0.528, "y": 0, "tap": false},
+      {"id": "d210", "x": 0.499, "y": 1, "tap": false},
+      {"id": "d211", "x": 0.134, "y": 0, "tap": false},
+      {"id": "d212", "x": 0.512, "y": 0, "tap": false},
+      {"id": "d213", "x": 0.862, "y": 1, "tap": false},
+      {"id": "d214", "x": 0.171, "y": 0, "tap": false},
+      {"id": "d215", "x": 0.011, "y": 0, "tap": false},
+      {"id": "d216", "x": 0.068, "y": 0, "tap": false},
+      {"id": "d217", "x": 0.46, "y": 0, "tap": false},
+      {"id": "d218", "x": 0.975, "y": 1, "tap": false},
+      {"id": "d219", "x": 0.044, "y": 0, "tap": false},
+      {"id": "d220", "x": 0.991, "y": 1, "tap": false},
+      {"id": "d221", "x": 0.536, "y": 1, "tap": false},
+      {"id": "d222", "x": 0.12, "y": 0, "tap": false},
+      {"id": "d223", "x": 0.418, "y": 0, "tap": false},
+      {"id": "d224", "x": 0.207, "y": 0, "tap": false},
+      {"id": "d225", "x": 0.714, "y": 0, "tap": false},
+      {"id": "d226", "x": 0.541, "y": 0, "tap": false},
+      {"id": "d227", "x": 0.288, "y": 0, "tap": false},
+      {"id": "d228", "x": 0.255, "y": 0, "tap": false},
+      {"id": "d229", "x": 0.867, "y": 1, "tap": false},
+      {"id": "d230", "x": 0.766, "y": 0, "tap": false},
+      {"id": "d231", "x": 0.436, "y": 0, "tap": false},
+      {"id": "d232", "x": 0.406, "y": 0, "tap": false},
+      {"id": "d233", "x": 0.738, "y": 0, "tap": false},
+      {"id": "d234", "x": 0.971, "y": 1, "tap": false},
+      {"id": "d235", "x": 0.08, "y": 0, "tap": false},
+      {"id": "d236", "x": 0.159, "y": 0, "tap": false},
+      {"id": "d237", "x": 0.362, "y": 1, "tap": false},
+      {"id": "d238", "x": 0.508, "y": 0, "tap": false},
+      {"id": "d239", "x": 0.071, "y": 0, "tap": false},
+      {"id": "d240", "x": 0.053, "y": 0, "tap": false},
+      {"id": "d241", "x": 0.22, "y": 0, "tap": false},
+      {"id": "d242", "x": 0.386, "y": 0, "tap": false},
+      {"id": "d243", "x": 0.739, "y": 1, "tap": false},
+      {"id": "d244", "x": 0.61, "y": 0, "tap": false},
+      {"id": "d245", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d246", "x": 0.045, "y": 0, "tap": false},
+      {"id": "d247", "x": 0.452, "y": 0, "tap": false},
+      {"id": "d248", "x": 0.875, "y": 1, "tap": false},
+      {"id": "d249", "x": 0.915, "y": 1, "tap": false},
+      {"id": "d250", "x": 0.365, "y": 1, "tap": false},
+      {"id": "d251", "x": 0.887, "y": 1, "tap": false},
+      {"id": "d252", "x": 0.929, "y": 1, "tap": false},
+      {"id": "d253", "x": 0.407, "y": 1, "tap": false},
+      {"id": "d254", "x": 0.746, "y": 1, "tap": false},
+      {"id": "d255", "x": 0.365, "y": 0, "tap": false},
+      {"id": "d256", "x": 0.154, "y": 0, "tap": false},
+      {"id": "d257", "x": 0.575, "y": 1, "tap": false},
+      {"id": "d258", "x": 0.086, "y": 0, "tap": false},
+      {"id": "d259", "x": 0.663, "y": 1, "tap": false},
+      {"id": "d260", "x": 0.809, "y": 1, "tap": false},
+      {"id": "d261", "x": 0.915, "y": 0, "tap": false},
+      {"id": "d262", "x": 0.448, "y": 1, "tap": false},
+      {"id": "d263", "x": 0.117, "y": 0, "tap": false},
+      {"id": "d264", "x": 0.902, "y": 1, "tap": false},
+      {"id": "d265", "x": 0.87, "y": 0, "tap": false},
+      {"id": "d266", "x": 0.968, "y": 1, "tap": false},
+      {"id": "d267", "x": 0.594, "y": 0, "tap": false},
+      {"id": "d268", "x": 0.673, "y": 0, "tap": false},
+      {"id": "d269", "x": 0.373, "y": 0, "tap": false},
+      {"id": "d270", "x": 0.183, "y": 0, "tap": false},
+      {"id": "d271", "x": 0.292, "y": 0, "tap": false},
+      {"id": "d272", "x": 0.721, "y": 1, "tap": false},
+      {"id": "d273", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d274", "x": 0.692, "y": 1, "tap": false},
+      {"id": "d275", "x": 0.502, "y": 0, "tap": false},
+      {"id": "d276", "x": 0.449, "y": 0, "tap": false},
+      {"id": "d277", "x": 0.968, "y": 1, "tap": false},
+      {"id": "d278", "x": 0.166, "y": 0, "tap": false},
+      {"id": "d279", "x": 0.487, "y": 1, "tap": false},
+      {"id": "d280", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d281", "x": 0.938, "y": 1, "tap": false},
+      {"id": "d282", "x": 0.489, "y": 0, "tap": false},
+      {"id": "d283", "x": 0.332, "y": 0, "tap": false},
+      {"id": "d284", "x": 0.168, "y": 0, "tap": false},
+      {"id": "d285", "x": 0.594, "y": 1, "tap": false},
+      {"id": "d286", "x": 0.399, "y": 0, "tap": false},
+      {"id": "d287", "x": 0.127, "y": 0, "tap": false},
+      {"id": "d288", "x": 0.032, "y": 0, "tap": false},
+      {"id": "d289", "x": 0.391, "y": 0, "tap": false},
+      {"id": "d290", "x": 0.583, "y": 1, "tap": false},
+      {"id": "d291", "x": 0.519, "y": 0, "tap": false},
+      {"id": "d292", "x": 0.9, "y": 1, "tap": false},
+      {"id": "d293", "x": 0.912, "y": 1, "tap": false},
+      {"id": "d294", "x": 0.936, "y": 1, "tap": false},
+      {"id": "d295", "x": 0.8, "y": 1, "tap": false},
+      {"id": "d296", "x": 0.478, "y": 0, "tap": false},
+      {"id": "d297", "x": 0.524, "y": 0, "tap": false},
+      {"id": "d298", "x": 0.397, "y": 0, "tap": false},
+      {"id": "d299", "x": 0.4, "y": 0, "tap": false},
+      {"id": "Q", "x": 0.5, "y": 0.2486, "on": "fit"}
+     ],
+     "tangent": {"f": "fit", "x": "Q", "label": "slope", "lengthPx": 90}
+    },
+    "controls": [
+     {"bind": "points.Q.x", "min": 0, "max": 1, "step": 0.01, "start": 0.5, "label": "Leverage $L$"}
+    ],
+    "derive": {
+     "caption": "At $L = {{fixed(Q.x, 2)}}$, 0.01 more leverage adds {{fixed(8.690639 / (1 + exp(-(-5.451164 + 8.690639*Q.x))) * (1 - 1/(1 + exp(-(-5.451164 + 8.690639*Q.x)))), 2)}} points of PD."
+    }
+   },
+   "question": "At $L = 0.5$, how many percentage points of PD does 0.01 more leverage add?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.6236,
+    "tol": {"abs": 0.01},
+    "unit": "points",
+    "accept": "1.62 points: $8.690639 \\times 0.2486 \\times 0.7514 \\times 0.01 = 0.0162$.",
+    "label": "Points of PD",
+    "wrong": [
+     {
+      "id": "coef",
+      "value": 8.69,
+      "tol": {"abs": 0.01}
+     },
+     {
+      "id": "max",
+      "value": 2.17,
+      "tol": {"abs": 0.01}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Use $\\hat\\beta_1\\mu(1 - \\mu)$ with $\\mu = 0.2486$."},
+    {
+     "rung": "point",
+     "text": "$8.690639 \\times 0.2486 \\times 0.7514 = 1.6236$ per unit of leverage.",
+     "highlight": ["Q"]
+    },
+    {"rung": "step", "text": "Times 0.01 is 0.016236, which is 1.62 percentage points."}
+   ],
+   "feedback": {
+    "correct": "1.62 points at $L = 0.5$.",
+    "generic": "Not quite right. Multiply $\\hat\\beta_1\\mu(1 - \\mu)$ by 0.01.",
+    "byKey": {
+     "coef": "You read the coefficient as points per 0.01. It moves log odds; the probability moves by $\\hat\\beta_1\\mu(1 - \\mu)$.",
+     "max": "You used $\\mu(1 - \\mu) = 0.25$, the steepest point. At $L = 0.5$, $\\mu = 0.2486$."
+    }
+   },
+   "explain": {
+    "text": "At $L = 0.5$ the tangent's slope is $8.690639 \\times 0.2486 \\times 0.7514 = 1.62$ per unit, so 0.01 adds 1.62 points. The effect is largest at $\\mu = 0.5$ and fades in both tails.",
+    "canvas": {
+     "points": {
+      "Q": {"x": 0.5}
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Is the effect the same everywhere",
+   "prose": "A colleague reads the summary: \"the slope is 8.69, so each 0.01 of leverage adds 8.69 points of PD\". Take a firm at $L = 0.2$, where $\\hat\\mu = 0.0238$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 1],
+     "y": [-0.1, 1.15],
+     "xLabel": "Leverage $L$",
+     "yLabel": "Default probability",
+     "height": 280,
+     "functions": [
+      {"id": "fit", "expr": "1/(1 + exp(-(-5.451164 + 8.690639*x)))", "label": "fitted $\\hat\\mu(L)$", "colour": 1}
+     ]
+    },
+    "state": {
+     "points": [
+      {"id": "d0", "x": 0.129, "y": 0, "tap": false},
+      {"id": "d1", "x": 0.499, "y": 1, "tap": false},
+      {"id": "d2", "x": 0.602, "y": 1, "tap": false},
+      {"id": "d3", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d4", "x": 0.148, "y": 0, "tap": false},
+      {"id": "d5", "x": 0.928, "y": 1, "tap": false},
+      {"id": "d6", "x": 0.07, "y": 0, "tap": false},
+      {"id": "d7", "x": 0.13, "y": 0, "tap": false},
+      {"id": "d8", "x": 0.948, "y": 1, "tap": false},
+      {"id": "d9", "x": 0.622, "y": 1, "tap": false},
+      {"id": "d10", "x": 0.369, "y": 0, "tap": false},
+      {"id": "d11", "x": 0.511, "y": 0, "tap": false},
+      {"id": "d12", "x": 0.663, "y": 1, "tap": false},
+      {"id": "d13", "x": 0.275, "y": 0, "tap": false},
+      {"id": "d14", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d15", "x": 0.788, "y": 1, "tap": false},
+      {"id": "d16", "x": 0.67, "y": 1, "tap": false},
+      {"id": "d17", "x": 0.512, "y": 0, "tap": false},
+      {"id": "d18", "x": 0.817, "y": 1, "tap": false},
+      {"id": "d19", "x": 0.549, "y": 0, "tap": false},
+      {"id": "d20", "x": 0.981, "y": 1, "tap": false},
+      {"id": "d21", "x": 0.204, "y": 0, "tap": false},
+      {"id": "d22", "x": 0.554, "y": 0, "tap": false},
+      {"id": "d23", "x": 0.484, "y": 0, "tap": false},
+      {"id": "d24", "x": 0.353, "y": 0, "tap": false},
+      {"id": "d25", "x": 0.592, "y": 1, "tap": false},
+      {"id": "d26", "x": 0.235, "y": 0, "tap": false},
+      {"id": "d27", "x": 0.802, "y": 1, "tap": false},
+      {"id": "d28", "x": 0.867, "y": 1, "tap": false},
+      {"id": "d29", "x": 0.129, "y": 0, "tap": false},
+      {"id": "d30", "x": 0.467, "y": 0, "tap": false},
+      {"id": "d31", "x": 0.277, "y": 0, "tap": false},
+      {"id": "d32", "x": 0.083, "y": 0, "tap": false},
+      {"id": "d33", "x": 0.896, "y": 1, "tap": false},
+      {"id": "d34", "x": 0.43, "y": 0, "tap": false},
+      {"id": "d35", "x": 0.148, "y": 0, "tap": false},
+      {"id": "d36", "x": 0.673, "y": 0, "tap": false},
+      {"id": "d37", "x": 0.202, "y": 0, "tap": false},
+      {"id": "d38", "x": 0.901, "y": 1, "tap": false},
+      {"id": "d39", "x": 0.217, "y": 0, "tap": false},
+      {"id": "d40", "x": 0.033, "y": 0, "tap": false},
+      {"id": "d41", "x": 0.201, "y": 0, "tap": false},
+      {"id": "d42", "x": 0.346, "y": 0, "tap": false},
+      {"id": "d43", "x": 0.469, "y": 0, "tap": false},
+      {"id": "d44", "x": 0.906, "y": 1, "tap": false},
+      {"id": "d45", "x": 0.697, "y": 0, "tap": false},
+      {"id": "d46", "x": 0.339, "y": 0, "tap": false},
+      {"id": "d47", "x": 0.017, "y": 0, "tap": false},
+      {"id": "d48", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d49", "x": 0.996, "y": 1, "tap": false},
+      {"id": "d50", "x": 0.46, "y": 0, "tap": false},
+      {"id": "d51", "x": 0.691, "y": 1, "tap": false},
+      {"id": "d52", "x": 0.055, "y": 0, "tap": false},
+      {"id": "d53", "x": 0.034, "y": 0, "tap": false},
+      {"id": "d54", "x": 0.846, "y": 1, "tap": false},
+      {"id": "d55", "x": 0.588, "y": 0, "tap": false},
+      {"id": "d56", "x": 0.309, "y": 0, "tap": false},
+      {"id": "d57", "x": 0.317, "y": 0, "tap": false},
+      {"id": "d58", "x": 0.089, "y": 0, "tap": false},
+      {"id": "d59", "x": 0.173, "y": 0, "tap": false},
+      {"id": "d60", "x": 0.025, "y": 0, "tap": false},
+      {"id": "d61", "x": 0.839, "y": 1, "tap": false},
+      {"id": "d62", "x": 0.466, "y": 0, "tap": false},
+      {"id": "d63", "x": 0.127, "y": 0, "tap": false},
+      {"id": "d64", "x": 0.739, "y": 1, "tap": false},
+      {"id": "d65", "x": 0.196, "y": 0, "tap": false},
+      {"id": "d66", "x": 0.062, "y": 0, "tap": false},
+      {"id": "d67", "x": 0.598, "y": 0, "tap": false},
+      {"id": "d68", "x": 0.896, "y": 1, "tap": false},
+      {"id": "d69", "x": 0.027, "y": 0, "tap": false},
+      {"id": "d70", "x": 0.805, "y": 0, "tap": false},
+      {"id": "d71", "x": 0.19, "y": 0, "tap": false},
+      {"id": "d72", "x": 0.093, "y": 0, "tap": false},
+      {"id": "d73", "x": 0.018, "y": 0, "tap": false},
+      {"id": "d74", "x": 0.293, "y": 0, "tap": false},
+      {"id": "d75", "x": 0.727, "y": 1, "tap": false},
+      {"id": "d76", "x": 0.493, "y": 0, "tap": false},
+      {"id": "d77", "x": 0.853, "y": 1, "tap": false},
+      {"id": "d78", "x": 0.217, "y": 0, "tap": false},
+      {"id": "d79", "x": 0.315, "y": 0, "tap": false},
+      {"id": "d80", "x": 0.258, "y": 0, "tap": false},
+      {"id": "d81", "x": 0.978, "y": 1, "tap": false},
+      {"id": "d82", "x": 0.941, "y": 1, "tap": false},
+      {"id": "d83", "x": 0.341, "y": 0, "tap": false},
+      {"id": "d84", "x": 0.436, "y": 1, "tap": false},
+      {"id": "d85", "x": 0.314, "y": 0, "tap": false},
+      {"id": "d86", "x": 0.747, "y": 1, "tap": false},
+      {"id": "d87", "x": 0.04, "y": 0, "tap": false},
+      {"id": "d88", "x": 0.067, "y": 0, "tap": false},
+      {"id": "d89", "x": 0.404, "y": 0, "tap": false},
+      {"id": "d90", "x": 0.245, "y": 0, "tap": false},
+      {"id": "d91", "x": 0.845, "y": 1, "tap": false},
+      {"id": "d92", "x": 0.742, "y": 1, "tap": false},
+      {"id": "d93", "x": 0.546, "y": 1, "tap": false},
+      {"id": "d94", "x": 0.661, "y": 0, "tap": false},
+      {"id": "d95", "x": 0.692, "y": 0, "tap": false},
+      {"id": "d96", "x": 0.781, "y": 1, "tap": false},
+      {"id": "d97", "x": 0.927, "y": 1, "tap": false},
+      {"id": "d98", "x": 0.15, "y": 0, "tap": false},
+      {"id": "d99", "x": 0.626, "y": 0, "tap": false},
+      {"id": "d100", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d101", "x": 0.443, "y": 0, "tap": false},
+      {"id": "d102", "x": 0.786, "y": 1, "tap": false},
+      {"id": "d103", "x": 0.895, "y": 1, "tap": false},
+      {"id": "d104", "x": 0.759, "y": 1, "tap": false},
+      {"id": "d105", "x": 0.035, "y": 0, "tap": false},
+      {"id": "d106", "x": 0.359, "y": 0, "tap": false},
+      {"id": "d107", "x": 0.163, "y": 0, "tap": false},
+      {"id": "d108", "x": 0.999, "y": 1, "tap": false},
+      {"id": "d109", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d110", "x": 0.244, "y": 0, "tap": false},
+      {"id": "d111", "x": 0.357, "y": 1, "tap": false},
+      {"id": "d112", "x": 0.061, "y": 0, "tap": false},
+      {"id": "d113", "x": 0.87, "y": 1, "tap": false},
+      {"id": "d114", "x": 0.636, "y": 1, "tap": false},
+      {"id": "d115", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d116", "x": 0.498, "y": 0, "tap": false},
+      {"id": "d117", "x": 0.079, "y": 0, "tap": false},
+      {"id": "d118", "x": 0.611, "y": 0, "tap": false},
+      {"id": "d119", "x": 0.232, "y": 0, "tap": false},
+      {"id": "d120", "x": 0.039, "y": 0, "tap": false},
+      {"id": "d121", "x": 0.115, "y": 0, "tap": false},
+      {"id": "d122", "x": 0.555, "y": 0, "tap": false},
+      {"id": "d123", "x": 0.637, "y": 0, "tap": false},
+      {"id": "d124", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d125", "x": 0.643, "y": 0, "tap": false},
+      {"id": "d126", "x": 0.352, "y": 0, "tap": false},
+      {"id": "d127", "x": 0.131, "y": 0, "tap": false},
+      {"id": "d128", "x": 0.315, "y": 0, "tap": false},
+      {"id": "d129", "x": 0.395, "y": 0, "tap": false},
+      {"id": "d130", "x": 0.913, "y": 1, "tap": false},
+      {"id": "d131", "x": 0.116, "y": 0, "tap": false},
+      {"id": "d132", "x": 0.086, "y": 0, "tap": false},
+      {"id": "d133", "x": 0.561, "y": 0, "tap": false},
+      {"id": "d134", "x": 0.963, "y": 1, "tap": false},
+      {"id": "d135", "x": 0.907, "y": 1, "tap": false},
+      {"id": "d136", "x": 0.7, "y": 1, "tap": false},
+      {"id": "d137", "x": 0.067, "y": 0, "tap": false},
+      {"id": "d138", "x": 0.806, "y": 1, "tap": false},
+      {"id": "d139", "x": 0.683, "y": 1, "tap": false},
+      {"id": "d140", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d141", "x": 0.465, "y": 0, "tap": false},
+      {"id": "d142", "x": 0.049, "y": 0, "tap": false},
+      {"id": "d143", "x": 0.802, "y": 1, "tap": false},
+      {"id": "d144", "x": 0.719, "y": 0, "tap": false},
+      {"id": "d145", "x": 0.805, "y": 1, "tap": false},
+      {"id": "d146", "x": 0.76, "y": 0, "tap": false},
+      {"id": "d147", "x": 0.267, "y": 0, "tap": false},
+      {"id": "d148", "x": 0.79, "y": 1, "tap": false},
+      {"id": "d149", "x": 0.249, "y": 0, "tap": false},
+      {"id": "d150", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d151", "x": 0.39, "y": 0, "tap": false},
+      {"id": "d152", "x": 0.498, "y": 0, "tap": false},
+      {"id": "d153", "x": 0.286, "y": 0, "tap": false},
+      {"id": "d154", "x": 0.606, "y": 1, "tap": false},
+      {"id": "d155", "x": 0.603, "y": 0, "tap": false},
+      {"id": "d156", "x": 0.24, "y": 0, "tap": false},
+      {"id": "d157", "x": 0.623, "y": 0, "tap": false},
+      {"id": "d158", "x": 0.357, "y": 0, "tap": false},
+      {"id": "d159", "x": 0.735, "y": 0, "tap": false},
+      {"id": "d160", "x": 0.29, "y": 1, "tap": false},
+      {"id": "d161", "x": 0.799, "y": 0, "tap": false},
+      {"id": "d162", "x": 0.415, "y": 1, "tap": false},
+      {"id": "d163", "x": 0.553, "y": 0, "tap": false},
+      {"id": "d164", "x": 0.673, "y": 1, "tap": false},
+      {"id": "d165", "x": 0.518, "y": 0, "tap": false},
+      {"id": "d166", "x": 0.258, "y": 0, "tap": false},
+      {"id": "d167", "x": 0.979, "y": 1, "tap": false},
+      {"id": "d168", "x": 0.096, "y": 0, "tap": false},
+      {"id": "d169", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d170", "x": 0.549, "y": 1, "tap": false},
+      {"id": "d171", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d172", "x": 0.155, "y": 0, "tap": false},
+      {"id": "d173", "x": 0.799, "y": 1, "tap": false},
+      {"id": "d174", "x": 0.784, "y": 1, "tap": false},
+      {"id": "d175", "x": 0.637, "y": 0, "tap": false},
+      {"id": "d176", "x": 0.902, "y": 1, "tap": false},
+      {"id": "d177", "x": 0.755, "y": 1, "tap": false},
+      {"id": "d178", "x": 0.299, "y": 0, "tap": false},
+      {"id": "d179", "x": 0.645, "y": 1, "tap": false},
+      {"id": "d180", "x": 0.34, "y": 0, "tap": false},
+      {"id": "d181", "x": 0.75, "y": 1, "tap": false},
+      {"id": "d182", "x": 0.385, "y": 0, "tap": false},
+      {"id": "d183", "x": 0.153, "y": 0, "tap": false},
+      {"id": "d184", "x": 0.876, "y": 1, "tap": false},
+      {"id": "d185", "x": 0.69, "y": 1, "tap": false},
+      {"id": "d186", "x": 0.745, "y": 0, "tap": false},
+      {"id": "d187", "x": 0.56, "y": 0, "tap": false},
+      {"id": "d188", "x": 0.783, "y": 1, "tap": false},
+      {"id": "d189", "x": 0.448, "y": 0, "tap": false},
+      {"id": "d190", "x": 0.566, "y": 1, "tap": false},
+      {"id": "d191", "x": 0.063, "y": 0, "tap": false},
+      {"id": "d192", "x": 0.555, "y": 1, "tap": false},
+      {"id": "d193", "x": 0.815, "y": 0, "tap": false},
+      {"id": "d194", "x": 0.706, "y": 1, "tap": false},
+      {"id": "d195", "x": 0.803, "y": 0, "tap": false},
+      {"id": "d196", "x": 0.496, "y": 0, "tap": false},
+      {"id": "d197", "x": 0.881, "y": 1, "tap": false},
+      {"id": "d198", "x": 0.108, "y": 0, "tap": false},
+      {"id": "d199", "x": 0.876, "y": 1, "tap": false},
+      {"id": "d200", "x": 0.371, "y": 0, "tap": false},
+      {"id": "d201", "x": 0.091, "y": 0, "tap": false},
+      {"id": "d202", "x": 0.619, "y": 1, "tap": false},
+      {"id": "d203", "x": 0.455, "y": 0, "tap": false},
+      {"id": "d204", "x": 0.428, "y": 1, "tap": false},
+      {"id": "d205", "x": 0.852, "y": 1, "tap": false},
+      {"id": "d206", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d207", "x": 0.617, "y": 0, "tap": false},
+      {"id": "d208", "x": 0.414, "y": 1, "tap": false},
+      {"id": "d209", "x": 0.528, "y": 0, "tap": false},
+      {"id": "d210", "x": 0.499, "y": 1, "tap": false},
+      {"id": "d211", "x": 0.134, "y": 0, "tap": false},
+      {"id": "d212", "x": 0.512, "y": 0, "tap": false},
+      {"id": "d213", "x": 0.862, "y": 1, "tap": false},
+      {"id": "d214", "x": 0.171, "y": 0, "tap": false},
+      {"id": "d215", "x": 0.011, "y": 0, "tap": false},
+      {"id": "d216", "x": 0.068, "y": 0, "tap": false},
+      {"id": "d217", "x": 0.46, "y": 0, "tap": false},
+      {"id": "d218", "x": 0.975, "y": 1, "tap": false},
+      {"id": "d219", "x": 0.044, "y": 0, "tap": false},
+      {"id": "d220", "x": 0.991, "y": 1, "tap": false},
+      {"id": "d221", "x": 0.536, "y": 1, "tap": false},
+      {"id": "d222", "x": 0.12, "y": 0, "tap": false},
+      {"id": "d223", "x": 0.418, "y": 0, "tap": false},
+      {"id": "d224", "x": 0.207, "y": 0, "tap": false},
+      {"id": "d225", "x": 0.714, "y": 0, "tap": false},
+      {"id": "d226", "x": 0.541, "y": 0, "tap": false},
+      {"id": "d227", "x": 0.288, "y": 0, "tap": false},
+      {"id": "d228", "x": 0.255, "y": 0, "tap": false},
+      {"id": "d229", "x": 0.867, "y": 1, "tap": false},
+      {"id": "d230", "x": 0.766, "y": 0, "tap": false},
+      {"id": "d231", "x": 0.436, "y": 0, "tap": false},
+      {"id": "d232", "x": 0.406, "y": 0, "tap": false},
+      {"id": "d233", "x": 0.738, "y": 0, "tap": false},
+      {"id": "d234", "x": 0.971, "y": 1, "tap": false},
+      {"id": "d235", "x": 0.08, "y": 0, "tap": false},
+      {"id": "d236", "x": 0.159, "y": 0, "tap": false},
+      {"id": "d237", "x": 0.362, "y": 1, "tap": false},
+      {"id": "d238", "x": 0.508, "y": 0, "tap": false},
+      {"id": "d239", "x": 0.071, "y": 0, "tap": false},
+      {"id": "d240", "x": 0.053, "y": 0, "tap": false},
+      {"id": "d241", "x": 0.22, "y": 0, "tap": false},
+      {"id": "d242", "x": 0.386, "y": 0, "tap": false},
+      {"id": "d243", "x": 0.739, "y": 1, "tap": false},
+      {"id": "d244", "x": 0.61, "y": 0, "tap": false},
+      {"id": "d245", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d246", "x": 0.045, "y": 0, "tap": false},
+      {"id": "d247", "x": 0.452, "y": 0, "tap": false},
+      {"id": "d248", "x": 0.875, "y": 1, "tap": false},
+      {"id": "d249", "x": 0.915, "y": 1, "tap": false},
+      {"id": "d250", "x": 0.365, "y": 1, "tap": false},
+      {"id": "d251", "x": 0.887, "y": 1, "tap": false},
+      {"id": "d252", "x": 0.929, "y": 1, "tap": false},
+      {"id": "d253", "x": 0.407, "y": 1, "tap": false},
+      {"id": "d254", "x": 0.746, "y": 1, "tap": false},
+      {"id": "d255", "x": 0.365, "y": 0, "tap": false},
+      {"id": "d256", "x": 0.154, "y": 0, "tap": false},
+      {"id": "d257", "x": 0.575, "y": 1, "tap": false},
+      {"id": "d258", "x": 0.086, "y": 0, "tap": false},
+      {"id": "d259", "x": 0.663, "y": 1, "tap": false},
+      {"id": "d260", "x": 0.809, "y": 1, "tap": false},
+      {"id": "d261", "x": 0.915, "y": 0, "tap": false},
+      {"id": "d262", "x": 0.448, "y": 1, "tap": false},
+      {"id": "d263", "x": 0.117, "y": 0, "tap": false},
+      {"id": "d264", "x": 0.902, "y": 1, "tap": false},
+      {"id": "d265", "x": 0.87, "y": 0, "tap": false},
+      {"id": "d266", "x": 0.968, "y": 1, "tap": false},
+      {"id": "d267", "x": 0.594, "y": 0, "tap": false},
+      {"id": "d268", "x": 0.673, "y": 0, "tap": false},
+      {"id": "d269", "x": 0.373, "y": 0, "tap": false},
+      {"id": "d270", "x": 0.183, "y": 0, "tap": false},
+      {"id": "d271", "x": 0.292, "y": 0, "tap": false},
+      {"id": "d272", "x": 0.721, "y": 1, "tap": false},
+      {"id": "d273", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d274", "x": 0.692, "y": 1, "tap": false},
+      {"id": "d275", "x": 0.502, "y": 0, "tap": false},
+      {"id": "d276", "x": 0.449, "y": 0, "tap": false},
+      {"id": "d277", "x": 0.968, "y": 1, "tap": false},
+      {"id": "d278", "x": 0.166, "y": 0, "tap": false},
+      {"id": "d279", "x": 0.487, "y": 1, "tap": false},
+      {"id": "d280", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d281", "x": 0.938, "y": 1, "tap": false},
+      {"id": "d282", "x": 0.489, "y": 0, "tap": false},
+      {"id": "d283", "x": 0.332, "y": 0, "tap": false},
+      {"id": "d284", "x": 0.168, "y": 0, "tap": false},
+      {"id": "d285", "x": 0.594, "y": 1, "tap": false},
+      {"id": "d286", "x": 0.399, "y": 0, "tap": false},
+      {"id": "d287", "x": 0.127, "y": 0, "tap": false},
+      {"id": "d288", "x": 0.032, "y": 0, "tap": false},
+      {"id": "d289", "x": 0.391, "y": 0, "tap": false},
+      {"id": "d290", "x": 0.583, "y": 1, "tap": false},
+      {"id": "d291", "x": 0.519, "y": 0, "tap": false},
+      {"id": "d292", "x": 0.9, "y": 1, "tap": false},
+      {"id": "d293", "x": 0.912, "y": 1, "tap": false},
+      {"id": "d294", "x": 0.936, "y": 1, "tap": false},
+      {"id": "d295", "x": 0.8, "y": 1, "tap": false},
+      {"id": "d296", "x": 0.478, "y": 0, "tap": false},
+      {"id": "d297", "x": 0.524, "y": 0, "tap": false},
+      {"id": "d298", "x": 0.397, "y": 0, "tap": false},
+      {"id": "d299", "x": 0.4, "y": 0, "tap": false},
+      {"id": "Q", "x": 0.2, "y": 0.0238, "on": "fit"}
+     ],
+     "tangent": {"f": "fit", "x": "Q", "label": "slope", "lengthPx": 90}
+    }
+   },
+   "question": "How many points of PD does 0.01 more leverage add at $L = 0.2$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "r", "text": "About 0.20 points", "correct": true},
+     {"id": "coef", "text": "8.69 points", "why": "You read $\\hat\\beta_1$ as a change in probability. It changes the log odds."},
+     {
+      "id": "same",
+      "text": "1.62 points, as at $L = 0.5$",
+      "why": "You assumed one effect everywhere. The slope $\\hat\\beta_1\\mu(1 - \\mu)$ shrinks where $\\mu$ is small."
+     },
+     {
+      "id": "tiny",
+      "text": "0.0869 points",
+      "why": "You took $8.69 \\times 0.01$ and then moved the decimal again. Use $\\hat\\beta_1\\mu(1 - \\mu) \\times 0.01$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "The tangent is much flatter here than at $L = 0.5$."},
+    {
+     "rung": "point",
+     "text": "$\\mu(1 - \\mu) = 0.0238 \\times 0.9762 = 0.0233$.",
+     "highlight": ["Q"]
+    },
+    {"rung": "step", "text": "$8.690639 \\times 0.0233 \\times 0.01 = 0.0020$, about 0.20 points."}
+   ],
+   "feedback": {
+    "correct": "About 0.20 points: eight times less than at $L = 0.5$.",
+    "generic": "Not quite. The change in probability depends on where the firm starts.",
+    "byKey": {
+     "coef": "You treated the coefficient as points of PD per 0.01. It moves log odds; at $L = 0.2$ the probability barely moves.",
+     "same": "You carried the $L = 0.5$ answer over. The curve is flat at low leverage, so the effect is smaller there."
+    }
+   },
+   "explain": {
+    "text": "At $L = 0.2$ the slope is $8.690639 \\times 0.0233 = 0.20$ points per 0.01, against 1.62 at $L = 0.5$. A logistic coefficient has one meaning on the odds scale and many on the probability scale."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "A confidence interval for the slope",
+   "prose": "The Wald statistic is $z = \\hat\\beta_1/\\mathrm{SE} = 8.690639/0.968994 = 8.97$. A 95% interval is $\\hat\\beta_1 \\pm 1.96\\,\\mathrm{SE}$. The standard errors come from the curvature of $\\ell$ at its peak.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "statsmodels GLM, Binomial family, 300 firms",
+     "compact": true,
+     "lines": [
+      "Model Family:   Binomial   Df Residuals:         298",
+      "Link Function:     Logit   Log-Likelihood:   -102.32",
+      "Method:             IRLS   Deviance:          204.64",
+      "No. Iterations:        6",
+      "================================================================",
+      "          coef   std err       z   P>|z|    [0.025   0.975]",
+      "----------------------------------------------------------------",
+      "const  -5.4512     0.611  -8.917   0.000    -6.649   -4.253",
+      "L       8.6906     0.969   8.969   0.000     6.791   10.590"
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the lower end of the 95% interval for $\\beta_1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6.7914,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "6.791: $8.690639 - 1.96 \\times 0.968994$.",
+    "label": "Lower end",
+    "wrong": [
+     {
+      "id": "upper",
+      "value": 10.5899,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "one",
+      "value": 7.7216,
+      "tol": {"abs": 0.002}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Subtract 1.96 standard errors."},
+    {
+     "rung": "point",
+     "text": "$1.96 \\times 0.968994 = 1.899228$.",
+     "highlight": ["l9"]
+    },
+    {"rung": "step", "text": "$8.690639 - 1.899228 = 6.7914$."}
+   ],
+   "feedback": {
+    "correct": "$[6.791, 10.590]$, as the summary prints.",
+    "generic": "Not quite right. Take $8.690639 - 1.96 \\times 0.968994$.",
+    "byKey": {"upper": "That is the upper end. Subtract for the lower one.", "one": "You subtracted one standard error. A 95% interval uses 1.96."}
+   },
+   "explain": {
+    "text": "$8.690639 \\pm 1.96 \\times 0.968994$ gives $[6.791, 10.590]$. On the twelve firms the slope's SE is 3.548652. Few of them sit at high leverage to pin the curve."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "The score equations",
+   "prose": "Set the slope of $\\ell$ to zero to find the peak you dragged to. Put the steps in order. One line is a slip: leave it out.",
+   "question": "Order the derivation of $\\partial\\ell/\\partial\\boldsymbol\\beta$.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$\\ell = \\sum_j [y_j\\eta_j - \\ln(1 + e^{\\eta_j})]$, since $\\ln\\mu = \\eta - \\ln(1 + e^{\\eta})$ and $\\ln(1 - \\mu) = -\\ln(1 + e^{\\eta})$"
+     },
+     {
+      "id": "b",
+      "text": "$\\frac{\\partial}{\\partial\\eta}\\ln(1 + e^{\\eta}) = \\frac{e^{\\eta}}{1 + e^{\\eta}} = \\mu$, by the chain rule"
+     },
+     {
+      "id": "c",
+      "text": "$\\frac{\\partial\\ell}{\\partial\\boldsymbol\\beta} = \\sum_j (y_j - \\mu_j)\\mathbf{x}_j$, since $\\partial\\eta_j/\\partial\\boldsymbol\\beta = \\mathbf{x}_j$"
+     },
+     {
+      "id": "d",
+      "text": "Setting it to zero: $\\mathbf{X}^T(\\mathbf{y} - \\boldsymbol\\mu) = \\mathbf{0}$, two equations for two coefficients"
+     },
+     {
+      "id": "x",
+      "text": "$\\frac{\\partial\\ell}{\\partial\\boldsymbol\\beta} = \\sum_j (y_j - \\mu_j)$, the same for every coefficient",
+      "why": "This line drops $\\mathbf{x}_j$. Each coefficient's derivative is weighted by its own column, so the intercept and the slope get different equations."
+     }
+    ],
+    "answer": ["a", "b", "c", "d"],
+    "distractors": ["x"]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Rewrite $\\ell$ in terms of $\\eta$ first."},
+    {
+     "rung": "point",
+     "text": "Differentiate $\\ln(1 + e^{\\eta})$ before you sum."
+    },
+    {
+     "rung": "step",
+     "text": "The chain rule brings in $\\mathbf{x}_j$, and the result set to zero is the last line."
+    }
+   ],
+   "feedback": {
+    "correct": "$\\mathbf{X}^T(\\mathbf{y} - \\boldsymbol\\mu) = \\mathbf{0}$: the fitted defaults match the observed ones, column by column.",
+    "generic": "Not quite right. Simplify $\\ell$, differentiate, then set the gradient to zero.",
+    "byKey": {"x": "You dropped the covariate from the chain rule. $\\partial\\eta_j/\\partial\\beta_1 = L_j$, not 1."}
+   },
+   "explain": {
+    "text": "The intercept's equation says $\\sum\\mu_j = \\sum y_j$: the fit predicts 5 defaults on the twelve firms. The slope's equation matches $\\sum L_j\\mu_j$ to $\\sum L_j y_j$. These have no closed form, so we search or iterate."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The fit by minimisation",
+   "prose": "Write minus the log-likelihood and hand it to `scipy.optimize.minimize`. For a firm, $-[y\\eta - \\ln(1 + e^{\\eta})]$. `np.logaddexp(0, eta)` computes $\\ln(1 + e^{\\eta})$ without overflow when $\\eta$ is large.",
+   "canvas": {
+    "kind": "pair",
+    "active": "right",
+    "left": {
+     "kind": "plane",
+     "params": {
+      "x": [0, 1],
+      "y": [-0.1, 1.15],
+      "xLabel": "Leverage $L$",
+      "yLabel": "Default",
+      "height": 260,
+      "functions": [
+       {"id": "S", "expr": "1/(1 + exp(-(b0 + b1*x)))", "label": "$\\mu(L)$", "colour": 1}
+      ],
+      "params": {"b0": -3.722, "b1": 6.134}
+     },
+     "state": {
+      "points": [
+       {"id": "f0", "x": 0.1, "y": 0, "tap": false},
+       {"id": "f1", "x": 0.2, "y": 0, "tap": false},
+       {"id": "f2", "x": 0.3, "y": 0, "tap": false},
+       {"id": "f3", "x": 0.35, "y": 0, "tap": false},
+       {"id": "f4", "x": 0.4, "y": 1, "tap": false},
+       {"id": "f5", "x": 0.5, "y": 0, "tap": false},
+       {"id": "f6", "x": 0.55, "y": 0, "tap": false},
+       {"id": "f7", "x": 0.6, "y": 1, "tap": false},
+       {"id": "f8", "x": 0.7, "y": 1, "tap": false},
+       {"id": "f9", "x": 0.8, "y": 0, "tap": false},
+       {"id": "f10", "x": 0.85, "y": 1, "tap": false},
+       {"id": "f11", "x": 0.95, "y": 1, "tap": false}
+      ]
+     }
+    },
+    "right": {
+     "kind": "plane",
+     "params": {
+      "x": [-9, 2],
+      "y": [-2, 14],
+      "xLabel": "$\\beta_0$",
+      "yLabel": "$\\beta_1$",
+      "height": 260,
+      "functions": [
+       {
+        "id": "ll",
+        "contour": "-(ln(1+exp((x+y*0.1)))+ln(1+exp((x+y*0.2)))+ln(1+exp((x+y*0.3)))+ln(1+exp((x+y*0.35)))+ln(1+exp(-(x+y*0.4)))+ln(1+exp((x+y*0.5)))+ln(1+exp((x+y*0.55)))+ln(1+exp(-(x+y*0.6)))+ln(1+exp(-(x+y*0.7)))+ln(1+exp((x+y*0.8)))+ln(1+exp(-(x+y*0.85)))+ln(1+exp(-(x+y*0.95))))",
+        "levels": [-6, -6.5, -7, -8, -10],
+        "colour": 3,
+        "labelAvoid": false
+       }
+      ]
+     },
+     "state": {
+      "points": [
+       {"id": "P", "x": -3.722, "y": 6.134, "drag": true, "label": "$\\boldsymbol\\beta$"}
+      ]
+     }
+    },
+    "derive": {"left:params.b0": "P.x", "left:params.b1": "P.y"}
+   },
+   "question": "Complete `neg_log_lik` and `fit_logistic`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.optimize import minimize\n\n\ndef neg_log_lik(beta, X, y):\n    \"\"\"Minus the Bernoulli log-likelihood with a logit link.\"\"\"\n    eta = X @ beta\n    ...\n\n\ndef fit_logistic(X, y):\n    \"\"\"The maximum likelihood coefficients, by minimize.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom scipy.optimize import minimize\n\n\ndef neg_log_lik(beta, X, y):\n    eta = X @ beta\n    return np.sum(np.logaddexp(0, eta) - y * eta)\n\n\ndef fit_logistic(X, y):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    res = minimize(neg_log_lik, np.zeros(X.shape[1]), args=(X, y), method='BFGS')\n    return res.x\n",
+    "examples": [
+     {
+      "setup": "L = np.array([0.10, 0.20, 0.30, 0.35, 0.40, 0.50, 0.55, 0.60, 0.70, 0.80, 0.85, 0.95]); y = np.array([0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1]); X = np.column_stack([np.ones(12), L])",
+      "call": "round(float(neg_log_lik(np.zeros(2), X, y)), 6)",
+      "expect": "8.317766",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "L = np.array([0.10, 0.20, 0.30, 0.35, 0.40, 0.50, 0.55, 0.60, 0.70, 0.80, 0.85, 0.95]); y = np.array([0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1]); X = np.column_stack([np.ones(12), L])",
+      "call": "float(neg_log_lik(np.array([0.0, 0.0]), X, y))",
+      "expect": "8.317766166719343",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "L = np.array([0.10, 0.20, 0.30, 0.35, 0.40, 0.50, 0.55, 0.60, 0.70, 0.80, 0.85, 0.95]); y = np.array([0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1]); X = np.column_stack([np.ones(12), L])",
+      "call": "float(neg_log_lik(np.array([-3.0, 6.0]), X, y))",
+      "expect": "6.263551593570838",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "L = np.array([0.10, 0.20, 0.30, 0.35, 0.40, 0.50, 0.55, 0.60, 0.70, 0.80, 0.85, 0.95]); y = np.array([0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1]); X = np.column_stack([np.ones(12), L])",
+      "call": "float(neg_log_lik(np.array([-4.0, 8.0]), X, y))",
+      "expect": "6.479063270736672",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "L = np.array([0.10, 0.20, 0.30, 0.35, 0.40, 0.50, 0.55, 0.60, 0.70, 0.80, 0.85, 0.95]); y = np.array([0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1]); X = np.column_stack([np.ones(12), L])",
+      "call": "float(neg_log_lik(np.array([0.0, 800.0]), X, y))",
+      "expect": "2240.0",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "L = np.array([0.10, 0.20, 0.30, 0.35, 0.40, 0.50, 0.55, 0.60, 0.70, 0.80, 0.85, 0.95]); y = np.array([0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1]); X = np.column_stack([np.ones(12), L])",
+      "call": "fit_logistic(X, y).tolist()",
+      "expect": "[-3.721961708778537, 6.133700299510535]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-05}
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); X = np.column_stack([np.ones(300), L])",
+      "call": "fit_logistic(X, y).tolist()",
+      "expect": "[-5.451164308995994, 8.690639009216971]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-05}
+     }
+    ],
+    "how": "Check runs 6 hidden tests. Four test minus the log-likelihood on the twelve firms; one has $\\eta = 760$, where `np.log(1 + np.exp(eta))` overflows. Two test the fitted coefficients on the twelve and the 300 firms (seed 11), within $10^{-5}$ of statsmodels in Pyodide. Use `method='BFGS'` from a start of zeros. The first run loads NumPy and SciPy, about 10 seconds."
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Minus the log-likelihood is `np.sum(np.logaddexp(0, eta) - y * eta)`."},
+    {
+     "rung": "point",
+     "text": "`minimize(neg_log_lik, np.zeros(X.shape[1]), args=(X, y), method='BFGS')`."
+    },
+    {"rung": "step", "text": "Return `res.x`, the minimiser."}
+   ],
+   "feedback": {
+    "correct": "Your minimiser lands on the same peak as the drag and as statsmodels.",
+    "generic": "Some tests failed. Check the sign of the log-likelihood and use `np.logaddexp`."
+   },
+   "explain": {
+    "text": "At $\\boldsymbol\\beta = (0, 800)$ some firms have $\\eta = 760$, and $e^{760}$ overflows. `np.logaddexp(0, 760)` returns 760 exactly, so the sum stays finite at 2,240."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "statsmodels does the same",
+   "prose": "statsmodels fits the same model with `sm.GLM(y, X, family=sm.families.Binomial()).fit()`. The result's `params` are the coefficients and `bse` their standard errors. The first run loads statsmodels, which takes 20 to 40 seconds.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "statsmodels GLM, Binomial family, 300 firms",
+     "compact": true,
+     "lines": [
+      "Model Family:   Binomial   Df Residuals:         298",
+      "Link Function:     Logit   Log-Likelihood:   -102.32",
+      "Method:             IRLS   Deviance:          204.64",
+      "No. Iterations:        6",
+      "================================================================",
+      "          coef   std err       z   P>|z|    [0.025   0.975]",
+      "----------------------------------------------------------------",
+      "const  -5.4512     0.611  -8.917   0.000    -6.649   -4.253",
+      "L       8.6906     0.969   8.969   0.000     6.791   10.590"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `glm_logit` so it returns `params` and `bse`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nimport statsmodels.api as sm\n\n\ndef glm_logit(X, y):\n    \"\"\"Return (params, bse) from a binomial GLM.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nimport statsmodels.api as sm\n\n\ndef glm_logit(X, y):\n    res = sm.GLM(y, X, family=sm.families.Binomial()).fit()\n    return res.params, res.bse\n",
+    "examples": [
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); X = np.column_stack([np.ones(300), L])",
+      "call": "[round(v, 4) for v in glm_logit(X, y)[0].tolist()]",
+      "expect": "[-5.4512, 8.6906]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); X = np.column_stack([np.ones(300), L])",
+      "call": "glm_logit(X, y)[0].tolist()",
+      "expect": "[-5.451164308995994, 8.690639009216971]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); X = np.column_stack([np.ones(300), L])",
+      "call": "glm_logit(X, y)[1].tolist()",
+      "expect": "[0.6113276792765376, 0.9689939179424305]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "L = np.array([0.10, 0.20, 0.30, 0.35, 0.40, 0.50, 0.55, 0.60, 0.70, 0.80, 0.85, 0.95]); y = np.array([0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1]); X = np.column_stack([np.ones(12), L])",
+      "call": "glm_logit(X, y)[1].tolist()",
+      "expect": "[2.148486722973753, 3.5486519938433054]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     }
+    ],
+    "how": "Check runs 3 hidden tests against statsmodels values computed once in Pyodide, within $10^{-6}$. They cover the coefficients and SEs on the 300 firms, and the SEs on the twelve. The first run loads statsmodels, which takes 20 to 40 seconds.",
+    "budget": 60000
+   },
+   "hints": [
+    {"rung": "nudge", "text": "`sm.GLM(y, X, family=...)` takes the response first."},
+    {
+     "rung": "point",
+     "text": "The family is `sm.families.Binomial()`; its default link is the logit.",
+     "highlight": ["l8", "l9"]
+    },
+    {"rung": "step", "text": "`res = sm.GLM(y, X, family=sm.families.Binomial()).fit()`, then `return res.params, res.bse`."}
+   ],
+   "feedback": {"correct": "The same coefficients, and standard errors of 0.611 and 0.969.", "generic": "Some tests failed. Return the fitted result's `params` and `bse`."},
+   "explain": {
+    "text": "statsmodels reaches $(-5.451164, 8.690639)$ by IRLS, the loop you write in lesson 4. On twelve firms the slope's SE is 3.548652: few points, wide interval."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The chance a limit order fills",
+   "prose": "A desk logs 500 limit orders, each $d$ ticks from the mid, $0 \\le d \\le 5$. Of these, 155 filled. The logistic GLM gives $\\hat\\beta_0 = 1.293818$ and $\\hat\\beta_1 = -0.972967$ (SE 0.202580 and 0.090413). statsmodels and SciPy agree.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 5],
+     "y": [0, 1],
+     "xLabel": "Distance from the mid $d$ (ticks)",
+     "yLabel": "Fill probability",
+     "height": 240,
+     "xTicks": "integer",
+     "functions": [
+      {"id": "fp", "expr": "1/(1 + exp(-(1.293818 - 0.972967*x)))", "label": "$\\hat\\mu(d)$", "colour": 1}
+     ]
+    },
+    "state": {
+     "points": [
+      {"id": "Q", "x": 2, "y": 0.3425, "on": "fp"}
+     ]
+    },
+    "controls": [
+     {"bind": "points.Q.x", "min": 0, "max": 5, "step": 1, "start": 2, "label": "Ticks from the mid"}
+    ]
+   },
+   "question": "What is the fill probability of an order two ticks from the mid?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3425,
+    "tol": {"abs": 0.0005},
+    "unit": "%",
+    "accept": "34.25%: $\\eta = 1.293818 - 2 \\times 0.972967 = -0.652116$.",
+    "label": "Fill probability",
+    "wrong": [
+     {
+      "id": "mid",
+      "value": 0.7848,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "lin",
+      "value": -0.006521,
+      "tol": {"abs": 1e-05}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "$\\eta$ at $d = 2$ first."},
+    {
+     "rung": "point",
+     "text": "$\\eta = 1.293818 - 1.945934 = -0.652116$.",
+     "highlight": ["Q"]
+    },
+    {
+     "rung": "step",
+     "text": "$1/(1 + e^{0.652116}) = 0.3425$."
+    }
+   ],
+   "feedback": {
+    "correct": "34.25%. At the mid the same model gives 78.48%.",
+    "generic": "Not quite right. Compute $\\eta$ at $d = 2$, then the inverse logit.",
+    "byKey": {"mid": "That is the fill probability at the mid, $d = 0$.", "lin": "That is $\\eta$, the log odds. Turn it into a probability."}
+   },
+   "explain": {
+    "text": "Each tick multiplies the odds of a fill by $e^{-0.972967} = 0.3780$. So 78.48% at the mid falls to 34.25% two ticks out. A desk trades fill probability against price improvement on exactly this curve."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Logistic regression is the binomial GLM with logit link, fitted by maximising $\\ell = \\sum[y\\ln\\mu + (1 - y)\\ln(1 - \\mu)]$.",
+   "$\\hat\\beta_1$ moves the log odds: a step $\\Delta$ multiplies the odds by $e^{\\Delta\\hat\\beta_1}$, at every starting point.",
+   "The change in probability is $\\hat\\beta_1\\mu(1 - \\mu)$ per unit: 1.62 points per 0.01 at $L = 0.5$, 0.20 at $L = 0.2$."
+  ],
+  "formula": {
+   "name": "Score equations",
+   "tex": "\\mathbf{X}^T(\\mathbf{y} - \\boldsymbol\\mu) = \\mathbf{0}, \\qquad \\mu_j = \\frac{1}{1 + e^{-\\mathbf{x}_j^T\\boldsymbol\\beta}}",
+   "note": "Standard errors come from the curvature of $\\ell$ at its peak."
+  },
+  "trap": "Reading 8.69 as points of PD per 0.01 of leverage. The coefficient moves log odds; the change in probability depends on where you start."
+ },
+ "quiz": [
+  {
+   "id": "q-half",
+   "difficulty": 2,
+   "prose": "The default model has $\\hat\\beta_0 = -5.451164$ and $\\hat\\beta_1 = 8.690639$.",
+   "question": "At what leverage is the fitted PD exactly one half?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6272,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.6272: $\\eta = 0$ at $L = 5.451164/8.690639$.",
+    "label": "Leverage",
+    "wrong": [
+     {
+      "id": "inv",
+      "value": 1.5943,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$L = 0.6272$.",
+    "generic": "Not quite right. A PD of one half means $\\eta = 0$.",
+    "byKey": {"inv": "You divided the slope by the intercept. Solve $-5.451164 + 8.690639L = 0$.", "half": "One half is the probability, not the leverage."}
+   },
+   "explain": {"text": "PD $= 0.5$ when the log odds are 0, at $L = -\\hat\\beta_0/\\hat\\beta_1 = 0.6272$."}
+  },
+  {
+   "id": "q-sklearn",
+   "difficulty": 3,
+   "prose": "On the 300 firms, `LogisticRegression().fit(L.reshape(-1, 1), y)` in scikit-learn returns an intercept near $-3.51$ and a slope near $5.42$. statsmodels returned $(-5.45, 8.69)$.",
+   "question": "Why do they differ?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "ridge", "text": "scikit-learn adds a ridge penalty by default ($C = 1$), which shrinks the slope", "correct": true},
+     {
+      "id": "scale",
+      "text": "scikit-learn rescales leverage to unit variance first",
+      "why": "It does not rescale inputs. With `penalty=None` it returns the MLE, $(-5.45, 8.69)$."
+     },
+     {
+      "id": "bug",
+      "text": "One of the two optimisers has not converged",
+      "why": "Both converged, to different objectives. The penalised loss has its minimum at $(-3.510915, 5.424648)$."
+     },
+     {"id": "link", "text": "scikit-learn uses a probit link", "why": "Its `LogisticRegression` uses the logit, the same link as the binomial GLM."}
+    ],
+    "shuffle": true
+   },
+   "feedback": {"correct": "The default penalty shrinks the slope towards zero.", "generic": "Not quite right. Look at scikit-learn's defaults."},
+   "explain": {
+    "text": "scikit-learn minimises log loss plus $\\tfrac{1}{2C}\\beta_1^2$, so with $C = 1$ the slope shrinks to 5.42. `penalty=None` recovers the MLE. In Pyodide scikit-learn takes 20 to 40 seconds to load the first time."
+   }
+  },
+  {
+   "id": "q-small",
+   "difficulty": 3,
+   "prose": "On the twelve firms the slope is $\\hat\\beta_1 = 6.1337$ with SE 3.5487.",
+   "question": "Is the slope significant at the 5% level by a Wald test?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "no", "text": "No: $z = 1.73$, below 1.96", "correct": true},
+     {"id": "yes", "text": "Yes: 6.13 is large for a slope", "why": "You judged the size alone. Divide by the standard error: $z = 6.1337/3.5487 = 1.73$."},
+     {"id": "yes2", "text": "Yes: the interval $6.13 \\pm 3.55$ excludes 0", "why": "You used one SE. A 95% interval is $\\pm 1.96$ SE, which reaches below 0."}
+    ]
+   },
+   "feedback": {"correct": "$z = 1.73$, $p \\approx 0.08$.", "generic": "Not quite right. Divide the coefficient by its SE."},
+   "explain": {"text": "$z = 6.1337/3.5487 = 1.73 < 1.96$. Twelve firms, with few at high leverage, leave the slope poorly pinned. The 300 firms give $z = 8.97$."}
+  }
+ ]
+}

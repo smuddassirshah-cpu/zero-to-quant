@@ -1,0 +1,270 @@
+{
+ "id": "homework-3",
+ "course": "stat-models",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-block-perm",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": ["sm-nonpar"],
+   "title": "A test that respects the runs",
+   "prose": "Write two permutation tests of a signal's edge, the difference in mean return between signal and other days. `naive_perm_test` shuffles the signal day by day. `shift_test` keeps the signal's runs by rolling the whole signal circularly by a random lag from 1 to $n - 1$ (`np.roll`). Both return the two-sided $p$ with the $+1$ rule.",
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.signal import lfilter\n\n\ndef naive_perm_test(signal, returns, n_perm, seed):\n    \"\"\"Shuffle the signal day by day; two-sided p, (c + 1)/(B + 1).\"\"\"\n    ...\n\n\ndef shift_test(signal, returns, n_perm, seed):\n    \"\"\"Shift the whole signal by a random lag (1 to n - 1, circular).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom scipy.signal import lfilter\n\n\ndef _diff(sig, r):\n    return r[sig].mean() - r[~sig].mean()\n\n\ndef naive_perm_test(signal, returns, n_perm, seed):\n    sig = np.asarray(signal, dtype=bool)\n    r = np.asarray(returns, dtype=float)\n    rng = np.random.default_rng(seed)\n    d0 = abs(_diff(sig, r))\n    idx = np.argsort(rng.random((n_perm, len(r))), axis=1)\n    S = sig[idx]\n    k = S.sum(axis=1)\n    d = (S @ r) / k - ((~S) @ r) / (len(r) - k)\n    c = np.sum(np.abs(d) >= d0 - 1e-12)\n    return (c + 1) / (n_perm + 1)\n\n\ndef shift_test(signal, returns, n_perm, seed):\n    sig = np.asarray(signal, dtype=bool)\n    r = np.asarray(returns, dtype=float)\n    rng = np.random.default_rng(seed)\n    d0 = abs(_diff(sig, r))\n    lags = rng.integers(1, len(r), n_perm)\n    d = np.array([_diff(np.roll(sig, L), r) for L in lags])\n    c = np.sum(np.abs(d) >= d0 - 1e-12)\n    return (c + 1) / (n_perm + 1)\n",
+    "examples": [
+     {
+      "setup": "rng = np.random.default_rng(6); r = lfilter([1.0], [1.0, -0.9], rng.normal(0, 1, 200)); sig = np.repeat([0, 1, 0, 1, 0, 1, 0, 1], [30, 20, 40, 15, 25, 35, 20, 15]).astype(bool)",
+      "call": "bool(naive_perm_test(sig, r, 999, 1) < 0.01)",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rng = np.random.default_rng(6); r = lfilter([1.0], [1.0, -0.9], rng.normal(0, 1, 200)); sig = np.repeat([0, 1, 0, 1, 0, 1, 0, 1], [30, 20, 40, 15, 25, 35, 20, 15]).astype(bool)",
+      "call": "bool(naive_perm_test(sig, r, 5000, 1) < 0.01)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(6); r = lfilter([1.0], [1.0, -0.9], rng.normal(0, 1, 200)); sig = np.repeat([0, 1, 0, 1, 0, 1, 0, 1], [30, 20, 40, 15, 25, 35, 20, 15]).astype(bool)",
+      "call": "bool(shift_test(sig, r, 2000, 2) > 0.1)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(4); sig = np.repeat([0, 1, 0, 1, 0, 1, 0, 1], [30, 20, 40, 15, 25, 35, 20, 15]).astype(bool); r = rng.normal(0, 1, 200) + 0.8 * sig",
+      "call": "bool(naive_perm_test(sig, r, 5000, 3) < 0.05)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(4); sig = np.repeat([0, 1, 0, 1, 0, 1, 0, 1], [30, 20, 40, 15, 25, 35, 20, 15]).astype(bool); r = rng.normal(0, 1, 200) + 0.8 * sig",
+      "call": "bool(shift_test(sig, r, 2000, 4) < 0.05)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(4); sig = np.repeat([0, 1, 0, 1, 0, 1, 0, 1], [30, 20, 40, 15, 25, 35, 20, 15]).astype(bool); r = rng.normal(0, 1, 200) + 0.8 * sig",
+      "call": "float(shift_test(sig, r, 999, 5)) >= 0.001",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "float(naive_perm_test(np.array([True] * 15 + [False] * 15), np.r_[np.arange(15, 30), np.arange(15)], 999, 6))",
+      "expect": "0.001",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     }
+    ],
+    "how": "Check runs 6 hidden tests. Case one: an AR(1) series ($\\phi = 0.9$, seed 6) and a useless signal in runs of 15 to 40 days. There the naive test must reject ($p < 0.01$) and the shift test must not ($p > 0.1$). On a planted real edge (0.8 on signal days, seed 4) both must reject at 5%. One checks the $1/(B + 1)$ floor. The first run loads NumPy and SciPy, about 10 seconds."
+   },
+   "feedback": {
+    "correct": "The naive test rejects a useless signal; the shift test does not, and both catch a real edge.",
+    "generic": "Some tests failed. Shuffle labels for the naive test and roll the whole signal for the shift test."
+   },
+   "explain": {
+    "text": "The planted series wanders slowly, so whichever 25-day runs the signal sits on look different by chance. Rolling the signal keeps its runs and asks only whether this alignment is special."
+   }
+  },
+  {
+   "id": "h-u-moments",
+   "difficulty": 4,
+   "skills": ["sm-nonpar"],
+   "title": "The mean and variance of U",
+   "prose": "Under no difference, A's ranks are a random $m$ of $1, \\dots, N$ drawn without replacement, $N = m + n$. Derive the null mean and variance of $U_A$.",
+   "question": "Put the lines in order and leave out the slip.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "One rank drawn at random from $1..N$ has mean $\\frac{N + 1}{2}$ and variance $\\frac{N^2 - 1}{12}$"
+     },
+     {
+      "id": "b",
+      "text": "$E[R_A] = \\frac{m(N + 1)}{2}$, adding $m$ such draws"
+     },
+     {
+      "id": "c",
+      "text": "$\\operatorname{Var}(R_A) = m\\frac{N^2 - 1}{12}\\cdot\\frac{N - m}{N - 1} = \\frac{mn(N + 1)}{12}$, with the without-replacement factor"
+     },
+     {
+      "id": "d",
+      "text": "$U_A = R_A - \\frac{m(m + 1)}{2}$, so $E[U_A] = \\frac{m(N + 1) - m(m + 1)}{2} = \\frac{mn}{2}$"
+     },
+     {
+      "id": "e",
+      "text": "$\\operatorname{Var}(U_A) = \\operatorname{Var}(R_A) = \\frac{mn(m + n + 1)}{12}$, as a constant shift leaves the variance"
+     },
+     {
+      "id": "x",
+      "text": "$\\operatorname{Var}(R_A) = m\\frac{N^2 - 1}{12}$, since the $m$ ranks are independent",
+      "why": "Ranks drawn without replacement are negatively correlated, so the variance needs the factor $(N - m)/(N - 1)$."
+     }
+    ],
+    "answer": ["a", "b", "c", "d", "e"],
+    "distractors": ["x"]
+   },
+   "feedback": {
+    "correct": "$E[U] = mn/2$ and $\\operatorname{Var}(U) = mn(m + n + 1)/12$.",
+    "generic": "Not quite right. One rank, then the sum, then the shift to $U$.",
+    "byKey": {"x": "You treated the ranks as independent. Without replacement they are not."}
+   },
+   "explain": {
+    "text": "For 12 against 12: $E[U] = 72$, $\\operatorname{Var}(U) = 300$, SD 17.32. That is the normal approximation that gave 0.0102."
+   }
+  },
+  {
+   "id": "h-beta-var",
+   "difficulty": 5,
+   "skills": ["sm-nonpar"],
+   "title": "One day, two wrong numbers",
+   "kind": "longform",
+   "prompt": "For the stock of lesson 13, a colleague reports a beta of 1.58 from OLS. They give a 99% one-day VaR of 7.8% from a normal fit. Explain what day 40 did to each number. Give a robust beta and a KDE-based tail estimate with its bandwidth. Say which numbers the hedge and the risk report should use, and why.",
+   "model": "**What one day did.** Day 40 (a takeover rumour, stock +25% on a market day of +0.85%) is 1 day in 60.\n- *Beta.* OLS gives 1.584 because squared residuals let one point pull the line. Without the day OLS gives 1.151, but deleting by eye is a data-driven choice. Tukey's bisquare fit gives 1.143 (day 40 weight 0), Huber 1.168, Theil-Sen 1.235. The true beta was 1.2.\n- *VaR.* The day inflates the SD to 3.506%, so a normal fit puts the 1% quantile at $0.379 - 2.326 \\times 3.506 = -7.78$%. An up-move has made the loss figure huge. The empirical 1% quantile is $-2.81$%, and a KDE with Silverman's $h = 0.5745$ gives $-3.36$%.\n\n**Hedge.** Use the robust beta, about 1.14 to 1.24. OLS's 1.58 would over-hedge by about a third: £2.2m too much index on a £5m position.\n\n**Risk report.** Use the KDE quantile, about 3.4%, with its bandwidth and a range for $h$. Put the empirical 2.8% beside it. Report day 40 as an event: a jump risk that a variance-based VaR cannot describe.\n\n**Rule.** Fix the method in advance: robust regression for betas, a KDE or empirical quantile for tails. Never delete days by eye.",
+   "rubric": [
+    {"points": 2, "text": "Explains that day 40 pulls the OLS line through squared residuals. Notes that deleting it by eye is a data-driven choice."},
+    {"points": 2, "text": "Gives a robust beta (bisquare 1.143, Huber 1.168 or Theil-Sen 1.235) and compares with the true 1.2."},
+    {"points": 2, "text": "Explains that the up-move inflates the SD (3.506%) and so the normal VaR (7.8%), although it was a gain."},
+    {"points": 2, "text": "Gives a KDE 1% quantile with its bandwidth (about $-3.4$% at $h = 0.57$) and the empirical quantile beside it."},
+    {"points": 2, "text": "Recommends the robust beta for the hedge and the KDE or empirical tail for the report. Fixes the rule in advance."}
+   ]
+  },
+  {
+   "id": "h-mw-z",
+   "difficulty": 4,
+   "skills": ["sm-nonpar"],
+   "title": "The normal approximation for U",
+   "prose": "For the two strategies of lesson 10, $m = n = 12$ and $U_A = 117$. Under the null $E[U] = 72$ and $\\operatorname{Var}(U) = 300$.",
+   "question": "What is the continuity-corrected $z$, $(U - E[U] - 0.5)/\\operatorname{SD}(U)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.5692,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "2.569: $(117 - 72 - 0.5)/17.3205$.",
+    "label": "z",
+    "wrong": [
+     {
+      "id": "nocc",
+      "value": 2.5981,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "var",
+      "value": 0.1483,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$z = 2.569$, two-sided $p = 0.0102$.",
+    "generic": "Not quite right. Subtract 72.5 and divide by $\\sqrt{300}$.",
+    "byKey": {"nocc": "You left out the continuity correction.", "var": "You divided by the variance, not the SD."}
+   },
+   "explain": {"text": "$(117 - 72.5)/17.3205 = 2.569$, so $p = 0.0102$; the exact $p$ is 0.00829."}
+  },
+  {
+   "id": "h-theil-break",
+   "difficulty": 4,
+   "skills": ["sm-nonpar"],
+   "title": "How much can Theil-Sen take",
+   "prose": "Theil-Sen's breakdown point is $1 - 1/\\sqrt 2$. Past that share of bad points, half the pairwise slopes involve one.",
+   "question": "What is it, as a share?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2929,
+    "tol": {"abs": 0.0005},
+    "unit": "%",
+    "accept": "29.3%: $1 - 0.7071$.",
+    "label": "Breakdown point",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "inv",
+      "value": 0.7071,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 29.3%.",
+    "generic": "Not quite right. Compute $1 - 1/\\sqrt 2$.",
+    "byKey": {"half": "That is the median's.", "inv": "That is $1/\\sqrt 2$."}
+   },
+   "explain": {"text": "With a share $\\epsilon$ of bad points, clean pairs are a share $(1 - \\epsilon)^2$. That falls below half at $\\epsilon = 1 - 1/\\sqrt 2 = 0.293$."}
+  },
+  {
+   "id": "h-which-test",
+   "difficulty": 4,
+   "skills": ["sm-nonpar"],
+   "title": "Choosing the test",
+   "prose": "A researcher tests whether a weekly signal predicts next-week returns, on 300 weeks with fat tails and some autocorrelation. The signal stays on for several weeks at a time.",
+   "question": "Which test is the honest one?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "shift", "text": "A permutation test that shifts the signal by random lags, on a robust statistic such as the difference in medians", "correct": true},
+     {
+      "id": "t",
+      "text": "Welch's $t$-test on signal and other weeks",
+      "why": "It assumes independent weeks; the runs make its null too narrow, and fat tails hurt it."
+     },
+     {"id": "mw", "text": "Mann-Whitney on signal against other weeks", "why": "Robust to tails, but it still assumes exchangeable weeks."},
+     {"id": "boot", "text": "An i.i.d. bootstrap of the weekly returns", "why": "It also breaks the dependence, and it estimates spread rather than testing."}
+    ],
+    "shuffle": true
+   },
+   "feedback": {"correct": "Keep the runs, tame the tails.", "generic": "Not quite right. Handle the dependence and the tails together."},
+   "explain": {
+    "text": "Shifting the signal keeps both its runs and the returns' autocorrelation. A median or trimmed difference keeps one wild week from deciding the result."
+   }
+  },
+  {
+   "id": "h-boot-copy",
+   "difficulty": 3,
+   "skills": ["sm-nonpar"],
+   "title": "Resamples with the big month",
+   "prose": "A bootstrap of the fund's nine months draws 9 months with replacement.",
+   "question": "What share of resamples hold at least one copy of the 25% month?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6536,
+    "tol": {"abs": 0.0005},
+    "unit": "%",
+    "accept": "65.36%: $1 - (8/9)^9$.",
+    "label": "Share",
+    "wrong": [
+     {
+      "id": "none",
+      "value": 0.3464,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "one",
+      "value": 0.3897,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - 0.3464 = 65.36\\%$.",
+    "generic": "Not quite right. Take 1 minus the chance of none.",
+    "byKey": {"none": "That is the chance of none.", "one": "That is the chance of exactly one."}
+   },
+   "explain": {"text": "$1 - (8/9)^9 = 0.6536$: two resamples in three contain the big month, so the bootstrap mean is unstable."}
+  }
+ ]
+}

@@ -1,0 +1,770 @@
+{
+ "id": "l8-designing-an-experiment",
+ "course": "stat-models",
+ "title": "Designing an experiment",
+ "minutes": 15,
+ "objectives": ["Use randomisation, blocking and replication to design an experiment."],
+ "skills": ["sm-anova"],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Who chose the algorithm",
+   "prose": "A trader lets each portfolio manager pick algorithm X or Y for their order. Y's average shortfall is 11.5 bps, X's only 3.0. The table shows eight of the orders.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Order", "Stock", "Volatility", "Algorithm chosen", "Shortfall (bps)"],
+     "rows": [
+      ["1", "VOD", "low", "X", "3"],
+      ["2", "BP", "low", "Y", "4"],
+      ["3", "TSLA-like", "high", "Y", "14"],
+      ["4", "HSBA", "low", "X", "2"],
+      ["5", "Small cap", "high", "Y", "16"],
+      ["6", "AZN", "low", "X", "4"],
+      ["7", "Biotech", "high", "Y", "12"],
+      ["8", "ULVR", "low", "X", "3"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the problem with concluding that X is better?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "conf", "text": "Every volatile name went to Y, so volatility and algorithm are tangled", "correct": true},
+     {
+      "id": "small",
+      "text": "Eight orders are too few",
+      "why": "More orders chosen the same way would keep the same tangle. Size does not fix how the orders were assigned."
+     },
+     {"id": "none", "text": "Nothing: Y's shortfall is much larger", "why": "Volatile names cost more to trade whatever the algorithm. Y got all of them."},
+     {"id": "units", "text": "Shortfall should be in pounds, not bps", "why": "Bps are the usual unit; the trouble is who chose."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Look at the volatility column beside the algorithm column."},
+    {"rung": "point", "text": "All three high-volatility orders went to Y."},
+    {"rung": "step", "text": "The managers' choice is confounded with volatility."}
+   ],
+   "feedback": {
+    "correct": "Confounding: the choice followed volatility.",
+    "generic": "Not quite. Compare the volatility of the orders each algorithm got.",
+    "byKey": {"none": "You read the gap as the algorithm's effect. The managers sent the hard orders to Y."}
+   },
+   "explain": {
+    "text": "Y received every volatile order, and volatile orders cost more to trade. The cure is **randomisation**: a coin, not a person, picks the algorithm, so volatility cannot follow the choice.",
+    "canvas": {
+     "highlight": {
+      "cols": [2, 3]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A coin within each stock-day",
+   "prose": "Each stock-day has a morning and an afternoon order. Alternating, A every morning, would tangle the algorithm with time of day. Instead a coin decides per stock-day: heads sends the morning order to A. The coins came up H, T, T, H for VOD, BP, HSBA, AZN.",
+   "canvas": {
+    "kind": "boxes",
+    "params": {
+     "itemKind": "card",
+     "containers": [
+      {
+       "id": "pool",
+       "label": "Orders",
+       "items": [
+        {"id": "vod-am", "kind": "card", "label": "VOD am"},
+        {"id": "vod-pm", "kind": "card", "label": "VOD pm"},
+        {"id": "bp-am", "kind": "card", "label": "BP am"},
+        {"id": "bp-pm", "kind": "card", "label": "BP pm"},
+        {"id": "hsba-am", "kind": "card", "label": "HSBA am"},
+        {"id": "hsba-pm", "kind": "card", "label": "HSBA pm"},
+        {"id": "azn-am", "kind": "card", "label": "AZN am"},
+        {"id": "azn-pm", "kind": "card", "label": "AZN pm"}
+       ],
+       "cols": 2
+      },
+      {
+       "id": "A",
+       "label": "Algorithm A",
+       "items": [],
+       "cols": 2
+      },
+      {
+       "id": "B",
+       "label": "Algorithm B",
+       "items": [],
+       "cols": 2
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put each order in its arm.",
+   "widget": {
+    "kind": "place",
+    "mode": "boxes",
+    "answer": {
+     "A": ["vod-am", "bp-pm", "hsba-pm", "azn-am"],
+     "B": ["vod-pm", "bp-am", "hsba-am", "azn-pm"]
+    }
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Heads: morning to A, afternoon to B. Tails: the reverse."},
+    {"rung": "point", "text": "VOD heads, BP tails, HSBA tails, AZN heads."},
+    {"rung": "step", "text": "A gets VOD am, BP pm, HSBA pm and AZN am."}
+   ],
+   "feedback": {
+    "correct": "Each stock-day has one order in each arm, and the coin decided which.",
+    "generic": "Not quite right. Apply each stock's coin to its two orders.",
+    "byKey": {
+     "vod-am": "VOD came up heads, so its morning order goes to A.",
+     "bp-am": "BP came up tails, so its morning order goes to B.",
+     "hsba-am": "HSBA came up tails: morning to B.",
+     "azn-am": "AZN came up heads: morning to A."
+    }
+   },
+   "explain": {
+    "text": "Every stock-day sends one order to each arm, so stock and day cancel in the comparison. The coin makes time of day equally likely to favour either arm."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "How many orders",
+   "prose": "To detect $\\delta = 1$ bp when shortfall has $\\sigma = 8$ bps, at 5% two-sided with 80% power, each arm needs\n$$n = \\frac{2(z_{0.975} + z_{0.8})^2\\sigma^2}{\\delta^2}, \\quad z_{0.975} = 1.95996, \\; z_{0.8} = 0.84162$$\nSlide $n$ and watch the hatched power under the dashed curve, the statistic when the effect is real.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {"mu": 0, "sigma": 1, "n": 200},
+     "x": [-4, 7],
+     "variable": "Z",
+     "xLabel": "Test statistic $Z$"
+    },
+    "state": {
+     "overlay": [
+      {
+       "id": "alt",
+       "family": "normal",
+       "params": {"mu": "sqrt(n/128)", "sigma": 1},
+       "label": ""
+      }
+     ],
+     "shade": [
+      {
+       "from": 1.96,
+       "to": null,
+       "under": "alt",
+       "label": "power {value}"
+      }
+     ],
+     "observed": {"x": 1.96, "label": "reject above 1.96"}
+    },
+    "controls": [
+     {"bind": "n", "min": 20, "max": 2000, "step": 5, "start": 200, "label": "Orders per arm $n$"}
+    ]
+   },
+   "question": "How many orders per arm, rounded up?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1005,
+    "tol": {"abs": 0},
+    "unit": "",
+    "accept": "1,005: $2 \\times 2.80159^2 \\times 64 = 1{,}004.66$, rounded up.",
+    "label": "Orders per arm",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 503,
+      "tol": {"abs": 1}
+     },
+     {
+      "id": "onearm",
+      "value": 7.849,
+      "tol": {"abs": 0.01}
+     },
+     {
+      "id": "sd",
+      "value": 126,
+      "tol": {"abs": 1}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Add the two quantiles first."},
+    {"rung": "point", "text": "$1.95996 + 0.84162 = 2.80158$, squared 7.849."},
+    {
+     "rung": "step",
+     "text": "$2 \\times 7.849 \\times 64 = 1{,}004.66$, so 1,005."
+    }
+   ],
+   "feedback": {
+    "correct": "1,005 per arm; statsmodels' `NormalIndPower` agrees, and the $t$ version asks 1,006.",
+    "generic": "Not quite right. Square the sum of the quantiles, then multiply by $2\\sigma^2/\\delta^2 = 128$.",
+    "byKey": {
+     "half": "You left out the factor 2. Both arms' means are estimated, so the difference has variance $2\\sigma^2/n$.",
+     "onearm": "That is $(z_{0.975} + z_{0.8})^2$ alone.",
+     "sd": "You used $\\sigma = 8$ instead of $\\sigma^2 = 64$, or a similar slip."
+    }
+   },
+   "explain": {
+    "text": "$n = 2 \\times 7.849 \\times 64 = 1{,}004.66$, so 1,005 per arm. At that $n$ the alternative sits 2.80 standard errors out and 80% of it lies past 1.96.",
+    "canvas": {
+     "params": {"n": 1005}
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A month is not enough",
+   "prose": "The desk can only run 200 orders per arm in a month. The standard error of the difference is then $8\\sqrt{2/200} = 0.8$ bps, so the alternative sits $1/0.8 = 1.25$ standard errors out.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {"mu": 0, "sigma": 1, "n": 200},
+     "x": [-4, 7],
+     "variable": "Z",
+     "xLabel": "Test statistic $Z$"
+    },
+    "state": {
+     "overlay": [
+      {
+       "id": "alt",
+       "family": "normal",
+       "params": {"mu": "sqrt(n/128)", "sigma": 1},
+       "label": ""
+      }
+     ],
+     "shade": [
+      {
+       "from": 1.96,
+       "to": null,
+       "under": "alt",
+       "label": "power {value}"
+      }
+     ],
+     "observed": {"x": 1.96, "label": "reject above 1.96"}
+    },
+    "controls": [
+     {"bind": "n", "min": 20, "max": 2000, "step": 5, "start": 200, "label": "Orders per arm $n$"}
+    ]
+   },
+   "question": "What is the power with 200 orders per arm?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2395,
+    "tol": {"abs": 0.002},
+    "unit": "%",
+    "accept": "24%: $P(Z > 1.96 - 1.25) = P(Z > 0.71)$.",
+    "label": "Power",
+    "wrong": [
+     {
+      "id": "alpha",
+      "value": 0.05,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Read the hatched area at $n = 200$."},
+    {"rung": "point", "text": "$1.96 - 1.25 = 0.71$."},
+    {"rung": "step", "text": "$P(Z > 0.71) = 0.239$."}
+   ],
+   "feedback": {
+    "correct": "24%: a real 1 bp gain is missed three times in four.",
+    "generic": "Not quite right. Find $P(Z > 1.96 - 1.25)$.",
+    "byKey": {"alpha": "5% is the false-alarm rate, not the power.", "half": "50% would need the alternative at 1.96 standard errors."}
+   },
+   "explain": {
+    "text": "Power is $P(Z > 0.71) = 24\\%$. A month of unblocked orders would usually say no difference even if the new algorithm is 1 bp better.",
+    "canvas": {
+     "params": {"n": 200}
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Blocking on the stock-day",
+   "prose": "Most of an order's shortfall is its stock-day: the two orders in one stock-day correlate at $\\rho = 0.8$. Analyse each stock-day's difference $D = Y_B - Y_A$, with $\\operatorname{Var}(D) = 2\\sigma^2(1 - \\rho)$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Design", "SD of one comparison (bps)"],
+     "rows": [
+      [
+       "Two independent orders",
+       "$8\\sqrt{2} = 11.31$"
+      ],
+      ["Two orders in one stock-day", "?"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the standard deviation of $D$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 5.0596,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "5.06: $\\sqrt{2 \\times 64 \\times 0.2} = \\sqrt{25.6}$.",
+    "label": "SD of D (bps)",
+    "wrong": [
+     {
+      "id": "var",
+      "value": 25.6,
+      "tol": {"abs": 0.01}
+     },
+     {
+      "id": "rho",
+      "value": 10.119,
+      "tol": {"abs": 0.005}
+     },
+     {
+      "id": "indep",
+      "value": 11.3137,
+      "tol": {"abs": 0.002}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Put $\\sigma^2 = 64$ and $1 - \\rho = 0.2$ into the variance."},
+    {"rung": "point", "text": "$2 \\times 64 \\times 0.2 = 25.6$."},
+    {
+     "rung": "step",
+     "text": "$\\sqrt{25.6} = 5.06$."
+    }
+   ],
+   "feedback": {
+    "correct": "5.06 bps, less than half of 11.31.",
+    "generic": "Not quite right. Take the square root of $2 \\times 64 \\times 0.2$.",
+    "byKey": {
+     "var": "That is the variance. Take its square root.",
+     "rho": "You used $\\rho$ in place of $1 - \\rho$.",
+     "indep": "That ignores the shared stock-day. Pairing removes it."
+    }
+   },
+   "explain": {
+    "text": "The stock-day's own noise cancels in $D$, leaving $\\sqrt{25.6} = 5.06$ bps. That is **blocking**: compare treatments inside units that share their noise."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Pairs needed",
+   "prose": "With pairs, $n = (z_{0.975} + z_{0.8})^2\\operatorname{SD}(D)^2/\\delta^2$ stock-days, each giving one order to each arm.",
+   "canvas": {
+    "kind": "distribution",
+    "params": {
+     "family": "normal",
+     "params": {"mu": 0, "sigma": 1, "n": 200},
+     "x": [-4, 7],
+     "variable": "Z",
+     "xLabel": "Test statistic $Z$"
+    },
+    "state": {
+     "overlay": [
+      {
+       "id": "alt",
+       "family": "normal",
+       "params": {"mu": "sqrt(n/25.6)", "sigma": 1},
+       "label": ""
+      }
+     ],
+     "shade": [
+      {
+       "from": 1.96,
+       "to": null,
+       "under": "alt",
+       "label": "power {value}"
+      }
+     ],
+     "observed": {"x": 1.96, "label": "reject above 1.96"}
+    },
+    "controls": [
+     {"bind": "n", "min": 20, "max": 1200, "step": 1, "start": 200, "label": "Stock-day pairs $n$"}
+    ]
+   },
+   "question": "How many stock-days give 80% power for $\\delta = 1$ bp?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 201,
+    "tol": {"abs": 0},
+    "unit": "",
+    "accept": "201: $7.849 \\times 25.6 = 200.93$, rounded up.",
+    "label": "Stock-days",
+    "wrong": [
+     {
+      "id": "arm",
+      "value": 1005,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "twice",
+      "value": 402,
+      "tol": {"abs": 1}
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$(z_{0.975} + z_{0.8})^2 = 7.849$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\operatorname{SD}(D)^2 = 25.6$."
+    },
+    {"rung": "step", "text": "$7.849 \\times 25.6 = 200.93$, so 201."}
+   ],
+   "feedback": {
+    "correct": "201 stock-days, against 1,005 orders per arm unblocked. With 200 pairs power is 79.8%.",
+    "generic": "Not quite right. Multiply 7.849 by 25.6.",
+    "byKey": {
+     "arm": "That is the unblocked count. Pairing cuts the variance by $1 - \\rho = 0.2$.",
+     "twice": "You kept the factor 2. It is already inside $\\operatorname{SD}(D)^2 = 2\\sigma^2(1 - \\rho)$."
+    }
+   },
+   "explain": {
+    "text": "$n(1 - \\rho) = 1{,}005 \\times 0.2 \\approx 201$ pairs. The month of 200 stock-days now has 79.8% power, if the analysis keeps the pairs.",
+    "canvas": {
+     "params": {"n": 201}
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Blocked, then analysed apart",
+   "prose": "The desk ran 200 stock-day pairs, as designed. An analyst then compares the 200 A orders with the 200 B orders by Welch's two-sample test.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Analysis", "SD of the comparison", "Power for 1 bp"],
+     "rows": [
+      ["Paired, as designed", "5.06 / sqrt(200)", "79.8%"],
+      ["Two independent samples", "11.31 / sqrt(200)", "?"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the two-sample analysis do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "waste", "text": "It leaves the shared stock-day noise in the variance, throwing away the blocking's power", "correct": true},
+     {
+      "id": "same",
+      "text": "Nothing: the same orders give the same answer",
+      "why": "Same orders, different variance. Welch's test uses $11.31/\\sqrt{200}$, not $5.06/\\sqrt{200}$."
+     },
+     {"id": "bias", "text": "It biases the estimate of the difference", "why": "The mean difference is the same; only its standard error is too large."},
+     {
+      "id": "balance",
+      "text": "It is fine, because randomisation guarantees balance in any one sample",
+      "why": "Randomisation balances on average, not in every sample, and it does not shrink the variance."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Which variance does a two-sample test use?"},
+    {"rung": "point", "text": "It treats the 400 orders as unrelated."},
+    {"rung": "step", "text": "Its power falls back to 24%."}
+   ],
+   "feedback": {
+    "correct": "The analysis must follow the design.",
+    "generic": "Not quite. Compare the standard error each analysis uses.",
+    "byKey": {
+     "same": "You assumed the analysis does not matter. Ignoring the pairs puts the stock-day noise back.",
+     "balance": "You leaned on randomisation. It removes bias, not variance."
+    }
+   },
+   "explain": {
+    "text": "Analysed apart, the 200 pairs have the 24% power of 200 unpaired orders per arm. Lesson 9 shows it on real numbers: $p = 0.22$ unpaired against 0.006 paired."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Where the sample-size formula comes from",
+   "prose": "Derive $n$ for a two-sided 5% test with 80% power. One line forgets the power: leave it out.",
+   "question": "Put the lines in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$\\bar D = \\bar Y_B - \\bar Y_A$ has standard error $\\text{SE} = \\sigma\\sqrt{2/n}$, from two independent means"
+     },
+     {
+      "id": "b",
+      "text": "Under no effect, reject when $\\bar D > z_{0.975}\\,\\text{SE}$, the upper cut of the 5% test"
+     },
+     {
+      "id": "c",
+      "text": "Under the effect $\\bar D \\sim N(\\delta, \\text{SE}^2)$; 80% power needs the cut $z_{0.8}$ SEs below $\\delta$"
+     },
+     {
+      "id": "d",
+      "text": "So $\\delta = (z_{0.975} + z_{0.8})\\,\\sigma\\sqrt{2/n}$, equating the two positions of the cut"
+     },
+     {
+      "id": "e",
+      "text": "$n = 2(z_{0.975} + z_{0.8})^2\\sigma^2/\\delta^2$, solving for $n$"
+     },
+     {
+      "id": "x",
+      "text": "Power needs $\\delta = z_{0.975}\\,\\text{SE}$, putting the effect on the cut",
+      "why": "With the effect exactly on the cut, half the alternative lies beyond it: 50% power, not 80%."
+     }
+    ],
+    "answer": ["a", "b", "c", "d", "e"],
+    "distractors": ["x"]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Start with the standard error of the difference."},
+    {"rung": "point", "text": "Place the cut under the null, then under the effect."},
+    {
+     "rung": "step",
+     "text": "The cut sits $z_{0.975}$ SEs above 0 and $z_{0.8}$ SEs below $\\delta$."
+    }
+   ],
+   "feedback": {
+    "correct": "Two quantiles add because the cut must be far from both means.",
+    "generic": "Not quite right. SE, the cut under the null, the cut under the effect, then solve.",
+    "byKey": {"x": "You put the effect on the cut. That gives 50% power."}
+   },
+   "explain": {
+    "text": "The cut is $z_{0.975}$ SEs above 0 and $z_{0.8}$ SEs below $\\delta$, so $\\delta$ spans both. Halving $\\delta$ quadruples $n$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Size and randomise in code",
+   "prose": "Write the two tools a design needs. `norm.ppf(0.975)` is $z_{0.975}$. For the assignment, use `np.random.default_rng(seed)` so the same seed gives the same plan.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Target",
+     "lines": [
+      ">>> n_per_arm(1, 8), n_per_arm(1, 8, rho=0.8)",
+      "(1005, 201)",
+      ">>> randomise_within_blocks([0, 0, 1, 1], seed=7)",
+      "# a list such as ['B', 'A', 'A', 'B']: one A and one B per block"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `n_per_arm` and `randomise_within_blocks`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.stats import norm\n\n\ndef n_per_arm(delta, sigma, alpha=0.05, power=0.8, rho=0.0):\n    \"\"\"Orders per arm (or pairs, when rho > 0), rounded up.\"\"\"\n    ...\n\n\ndef randomise_within_blocks(block_ids, seed):\n    \"\"\"Return 'A' or 'B' for each order: one of each per block.\n    Raise ValueError if a block does not have exactly two orders.\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\nfrom scipy.stats import norm\n\n\ndef n_per_arm(delta, sigma, alpha=0.05, power=0.8, rho=0.0):\n    z = norm.ppf(1 - alpha / 2) + norm.ppf(power)\n    return math.ceil(2 * (1 - rho) * z ** 2 * sigma ** 2 / delta ** 2)\n\n\ndef randomise_within_blocks(block_ids, seed):\n    rng = np.random.default_rng(seed)\n    where = {}\n    for i, b in enumerate(block_ids):\n        where.setdefault(b, []).append(i)\n    out = [None] * len(block_ids)\n    for b, idx in where.items():\n        if len(idx) != 2:\n            raise ValueError('block ' + str(b) + ' needs exactly two orders')\n        first = int(rng.integers(0, 2))\n        out[idx[first]] = 'A'\n        out[idx[1 - first]] = 'B'\n    return out\n",
+    "examples": [
+     {"call": "n_per_arm(1, 8)", "expect": "1005", "compare": "equal"}
+    ],
+    "tests": [
+     {"call": "n_per_arm(1, 8)", "expect": "1005", "compare": "equal"},
+     {"call": "n_per_arm(1, 8, rho=0.8)", "expect": "201", "compare": "equal"},
+     {"call": "n_per_arm(2, 8)", "expect": "252", "compare": "equal"},
+     {"call": "n_per_arm(1, 8, power=0.9)", "expect": "1345", "compare": "equal"},
+     {"call": "n_per_arm(1, 8, alpha=0.01)", "expect": "1495", "compare": "equal"},
+     {"setup": "blocks = list(np.repeat(np.arange(50), 2))", "call": "_balanced(blocks, randomise_within_blocks(blocks, 7))", "expect": "True", "compare": "equal"},
+     {
+      "setup": "blocks = list(np.repeat(np.arange(50), 2))",
+      "call": "randomise_within_blocks(blocks, 7) == randomise_within_blocks(blocks, 7)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "blocks = list(np.repeat(np.arange(50), 2))",
+      "call": "randomise_within_blocks(blocks, 7) != randomise_within_blocks(blocks, 8)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "_balanced(['d1', 'd2', 'd1', 'd2'], randomise_within_blocks(['d1', 'd2', 'd1', 'd2'], 3))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "randomise_within_blocks(['d1', 'd1', 'd2'], 1)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 10 hidden tests. Five are sample sizes: 1,005, 201, 252, 1,345 and 1,495. Four check an assignment: balanced, the same for one seed, different for another, and blocks out of order. One expects `ValueError` for a block with one order. The first run loads NumPy and SciPy, about 10 seconds.",
+    "prelude": "def _balanced(blocks, arms):\n    seen = {}\n    for b, a in zip(blocks, arms):\n        seen.setdefault(b, []).append(a)\n    return all(sorted(v) == ['A', 'B'] for v in seen.values()) and len(arms) == len(blocks)\n"
+   },
+   "hints": [
+    {"rung": "nudge", "text": "`math.ceil(2 * (1 - rho) * z ** 2 * sigma ** 2 / delta ** 2)` with `z` the sum of two quantiles."},
+    {"rung": "point", "text": "Group the order indices by block first."},
+    {"rung": "step", "text": "For each block draw `rng.integers(0, 2)` to choose which of its two orders gets A."}
+   ],
+   "feedback": {
+    "correct": "Sizes match the formula and every block gets one A and one B.",
+    "generic": "Some tests failed. Check the rounding and that each block has exactly one of each arm."
+   },
+   "explain": {
+    "text": "A block with one order cannot be split across arms, so it raises. The target's exact letters depend on your draws; only the balance and reproducibility are tested."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Run it for a month and see",
+   "prose": "The head of trading says: \"run the new algorithm for a month and see whether shortfall improves\". You expect about 1 bp, shortfall has $\\sigma = 8$ bps, and two orders in a stock-day correlate at 0.8.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Choice", "Your answer"],
+     "rows": [
+      ["Unit", "?"],
+      ["Block", "?"],
+      ["Randomisation", "?"],
+      ["Sample size", "?"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which reply is a design?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "design",
+      "text": "Unit: one parent order. Block: the stock-day. A coin per stock-day sends one order to each algorithm. Run 201 stock-days and analyse the pairs",
+      "correct": true
+     },
+     {
+      "id": "month",
+      "text": "Switch to the new algorithm for a month and compare with last month",
+      "why": "Months differ in volatility and flow, so the comparison is confounded with time."
+     },
+     {"id": "all", "text": "Send every order to both algorithms", "why": "An order can only be worked once. The pair is two orders in one stock-day."},
+     {"id": "big", "text": "Run 1,005 orders per arm, analysed as two samples", "why": "That works but wastes the blocking: 201 pairs give the same power."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "A design names the unit, the block, the randomisation and the size."},
+    {"rung": "point", "text": "The block is what the two orders share."},
+    {"rung": "step", "text": "201 stock-day pairs, analysed as pairs."}
+   ],
+   "feedback": {
+    "correct": "Unit, block, randomisation and size, with the analysis to match.",
+    "generic": "Not quite. Look for the answer that names all four choices.",
+    "byKey": {"month": "You proposed a before and after comparison. Time is then confounded with the algorithm."}
+   },
+   "explain": {"text": "201 blocked pairs give the power of 1,005 orders per arm. Lesson 9 runs this experiment and analyses it."}
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Randomise so nothing about an order can follow the algorithm; letting people choose confounds the comparison.",
+   "Replicate enough: $n = 2(z_{0.975} + z_{0.8})^2\\sigma^2/\\delta^2$, 1,005 orders per arm for 1 bp at $\\sigma = 8$.",
+   "Block on what orders share: with $\\rho = 0.8$ in a stock-day, 201 pairs give the same power. The analysis must keep the pairs."
+  ],
+  "formula": {
+   "name": "Sample size",
+   "tex": "n = \\frac{2(1 - \\rho)(z_{1 - \\alpha/2} + z_{1 - \\beta})^2\\sigma^2}{\\delta^2}",
+   "note": "$\\rho = 0$ for independent arms; with blocking $n$ counts pairs."
+  },
+  "trap": "Blocking the design and then analysing two independent samples throws the power gain away."
+ },
+ "quiz": [
+  {
+   "id": "q-single",
+   "difficulty": 3,
+   "prose": "In a paired execution test, one stock-day had only its A order because the B order was cancelled.",
+   "question": "What does that stock-day add to the paired comparison?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "nothing", "text": "Nothing: with no B order it has no difference to contribute", "correct": true},
+     {"id": "half", "text": "Half a pair's information", "why": "A paired comparison uses differences. One order alone has no difference."},
+     {
+      "id": "a",
+      "text": "An extra A observation that sharpens the estimate",
+      "why": "In the paired analysis it is dropped; adding it to the A mean would reintroduce the stock-day noise."
+     }
+    ]
+   },
+   "feedback": {"correct": "A block with one order contributes nothing.", "generic": "Not quite right. The analysis works on within-block differences."},
+   "explain": {"text": "Each block contributes one difference $D = Y_B - Y_A$. Without a B order there is no difference, so the block drops out."}
+  },
+  {
+   "id": "q-quarter",
+   "difficulty": 2,
+   "prose": "A test needs 1,005 orders per arm to detect 1 bp.",
+   "question": "About how many per arm does it need to detect 2 bps, all else equal?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 252,
+    "tol": {"abs": 1},
+    "unit": "",
+    "accept": "252: $n$ scales with $1/\\delta^2$, so $1{,}004.66/4 = 251.2$, rounded up.",
+    "label": "Orders per arm",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 503,
+      "tol": {"abs": 1}
+     },
+     {
+      "id": "same",
+      "value": 1005,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A quarter: 252.",
+    "generic": "Not quite right. $n$ is proportional to $1/\\delta^2$.",
+    "byKey": {"half": "You halved $n$. Doubling $\\delta$ divides $n$ by 4.", "same": "A larger effect needs fewer orders."}
+   },
+   "explain": {
+    "text": "$n \\propto 1/\\delta^2$, so doubling the effect divides $n$ by 4: $1{,}004.66/4 = 251.2$, so 252."
+   }
+  },
+  {
+   "id": "q-random",
+   "difficulty": 2,
+   "prose": "A desk randomises 40 orders between two algorithms by coin.",
+   "question": "What does randomisation guarantee?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "avg", "text": "That no characteristic of the orders can systematically follow the algorithm", "correct": true},
+     {
+      "id": "bal",
+      "text": "That both arms get the same mix of volatile names in this sample",
+      "why": "Balance holds on average. In one sample of 40 the mix can still differ by chance."
+     },
+     {"id": "pow", "text": "That the test has 80% power", "why": "Power comes from the sample size and the design, not the coin."}
+    ]
+   },
+   "feedback": {"correct": "No systematic tangle.", "generic": "Not quite right. Randomisation removes bias, not chance imbalance."},
+   "explain": {"text": "A coin cannot know an order's volatility, so differences between arms are noise, not bias. Blocking removes known noise as well."}
+  }
+ ]
+}

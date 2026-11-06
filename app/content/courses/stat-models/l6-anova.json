@@ -1,0 +1,729 @@
+{
+ "id": "l6-anova",
+ "course": "stat-models",
+ "title": "Analysis of variance",
+ "minutes": 14,
+ "objectives": ["Split variation into between-group and within-group parts."],
+ "skills": ["sm-anova"],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Three brokers, twelve orders",
+   "prose": "Three brokers each worked four similar orders; the dots are their slippage in bps. The short bars are each broker's mean, the dashed line the mean of all twelve. Drag some orders up and down and watch the three sums.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0.4, 3.6],
+     "y": [0, 10],
+     "xLabel": "Broker (A, B, C)",
+     "yLabel": "Slippage (bps)",
+     "height": 280,
+     "xStep": 1,
+     "functions": []
+    },
+    "state": {
+     "points": [
+      {"id": "a1", "x": 0.85, "y": 1, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "a2", "x": 0.95, "y": 3, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "a3", "x": 1.05, "y": 2, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "a4", "x": 1.15, "y": 6, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "b1", "x": 1.85, "y": 5, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "b2", "x": 1.95, "y": 7, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "b3", "x": 2.05, "y": 4, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "b4", "x": 2.15, "y": 8, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "c1", "x": 2.85, "y": 2, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "c2", "x": 2.95, "y": 4, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "c3", "x": 3.05, "y": 3, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "c4", "x": 3.15, "y": 3, "lockX": true, "snap": 0.5, "drag": true},
+      {"id": "maL", "x": 0.7, "y": 3.0, "hidden": true, "tap": false},
+      {"id": "maR", "x": 1.3, "y": 3.0, "hidden": true, "tap": false},
+      {"id": "mbL", "x": 1.7, "y": 6.0, "hidden": true, "tap": false},
+      {"id": "mbR", "x": 2.3, "y": 6.0, "hidden": true, "tap": false},
+      {"id": "mcL", "x": 2.7, "y": 3.0, "hidden": true, "tap": false},
+      {"id": "mcR", "x": 3.3, "y": 3.0, "hidden": true, "tap": false}
+     ],
+     "segments": [
+      {"id": "sa", "from": "maL", "to": "maR", "colour": 2},
+      {"id": "sb", "from": "mbL", "to": "mbR", "colour": 2},
+      {"id": "sc", "from": "mcL", "to": "mcR", "colour": 2}
+     ],
+     "hlines": [
+      {"id": "gm", "y": 4, "label": "grand mean"}
+     ]
+    },
+    "derive": {
+     "let": {
+      "ma": "(a1.y + a2.y + a3.y + a4.y)/4",
+      "mb": "(b1.y + b2.y + b3.y + b4.y)/4",
+      "mc": "(c1.y + c2.y + c3.y + c4.y)/4",
+      "gm": "(ma + mb + mc)/3",
+      "ssb": "4*(pow(ma - gm, 2) + pow(mb - gm, 2) + pow(mc - gm, 2))",
+      "ssw": "pow(a1.y-ma,2)+pow(a2.y-ma,2)+pow(a3.y-ma,2)+pow(a4.y-ma,2)+pow(b1.y-mb,2)+pow(b2.y-mb,2)+pow(b3.y-mb,2)+pow(b4.y-mb,2)+pow(c1.y-mc,2)+pow(c2.y-mc,2)+pow(c3.y-mc,2)+pow(c4.y-mc,2)"
+     },
+     "maL.y": "ma",
+     "maR.y": "ma",
+     "mbL.y": "mb",
+     "mbR.y": "mb",
+     "mcL.y": "mc",
+     "mcR.y": "mc",
+     "gm.y": "gm",
+     "caption": "SSB = {{fixed(ssb, 2)}}, SSW = {{fixed(ssw, 2)}}, SST = {{fixed(ssb + ssw, 2)}}"
+    }
+   },
+   "question": "However you drag, what stays true of SSB, SSW and SST?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "sum", "text": "SSB + SSW always equals SST", "correct": true},
+     {"id": "ssb", "text": "SSB stays the same", "why": "Drag a whole broker's orders up: SSB grows, because that broker's mean moves away from the rest."},
+     {"id": "ratio", "text": "SSB is always smaller than SSW", "why": "Spread the brokers' means far apart and SSB passes SSW."},
+     {"id": "none", "text": "Nothing: all three move freely", "why": "Watch the caption: SSB and SSW move, but they always add up to SST."}
+    ],
+    "shuffle": true
+   },
+   "feedback": {"correct": "SSB + SSW = SST every time: the total splits into two parts.", "generic": "Not quite. Add SSB and SSW in the caption and compare with SST."},
+   "explain": {
+    "text": "SST is the spread of all twelve orders round the grand mean. SSB is the part between brokers, from their means; SSW is the part within brokers. As given, $50 = 24 + 26$.",
+    "canvas": {
+     "points": {
+      "a1": {"y": 1},
+      "a2": {"y": 3},
+      "a3": {"y": 2},
+      "a4": {"y": 6},
+      "b1": {"y": 5},
+      "b2": {"y": 7},
+      "b3": {"y": 4},
+      "b4": {"y": 8},
+      "c1": {"y": 2},
+      "c2": {"y": 4},
+      "c3": {"y": 3},
+      "c4": {"y": 3}
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The between-group part",
+   "prose": "With the data as given, the broker means are 3, 6 and 3 and the grand mean is 4. The **between-group sum of squares** gives every order its broker's mean: $\\text{SSB} = \\sum_g n_g(\\bar y_g - \\bar y)^2$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Broker", "Order 1", "Order 2", "Order 3", "Order 4", "Mean"],
+     "rows": [
+      ["A", "1", "3", "2", "6", "3"],
+      ["B", "5", "7", "4", "8", "6"],
+      ["C", "2", "4", "3", "3", "3"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is SSB?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 24,
+    "tol": {"abs": 0},
+    "unit": "",
+    "accept": "24: $4[(3 - 4)^2 + (6 - 4)^2 + (3 - 4)^2] = 4 \\times 6$.",
+    "label": "SSB",
+    "wrong": [
+     {
+      "id": "non",
+      "value": 6,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "mean",
+      "value": 2,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Each broker's mean minus 4, squared."},
+    {
+     "rung": "point",
+     "text": "$(-1)^2 + 2^2 + (-1)^2 = 6$.",
+     "highlight": ["r0c5", "r1c5", "r2c5"]
+    },
+    {
+     "rung": "step",
+     "text": "Each broker has 4 orders, so $\\text{SSB} = 4 \\times 6 = 24$."
+    }
+   ],
+   "feedback": {
+    "correct": "SSB = 24.",
+    "generic": "Not quite right. Square each mean's distance from 4, add, and weight by 4 orders.",
+    "byKey": {"non": "You forgot to weight by the 4 orders in each group.", "mean": "You divided by the 3 groups. A sum of squares is a sum, not an average."}
+   },
+   "explain": {
+    "text": "$\\text{SSB} = 4[(3 - 4)^2 + (6 - 4)^2 + (3 - 4)^2] = 24$. Broker B's mean, 2 bps above the rest, supplies 16 of it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The within-group part",
+   "prose": "The **within-group sum of squares** measures order-to-order noise round each broker's own mean: $\\text{SSW} = \\sum_g\\sum_j (y_{gj} - \\bar y_g)^2$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Broker", "Order 1", "Order 2", "Order 3", "Order 4", "Mean"],
+     "rows": [
+      ["A", "1", "3", "2", "6", "3"],
+      ["B", "5", "7", "4", "8", "6"],
+      ["C", "2", "4", "3", "3", "3"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is SSW?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 26,
+    "tol": {"abs": 0},
+    "unit": "",
+    "accept": "26: $14 + 10 + 2$.",
+    "label": "SSW",
+    "wrong": [
+     {
+      "id": "grand",
+      "value": 50,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "a",
+      "value": 14,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Work broker by broker, each round its own mean."},
+    {
+     "rung": "point",
+     "text": "A: $(1-3)^2 + (3-3)^2 + (2-3)^2 + (6-3)^2 = 14$.",
+     "highlight": ["r0c1", "r0c2", "r0c3", "r0c4"]
+    },
+    {"rung": "step", "text": "B gives 10 and C gives 2, so SSW $= 14 + 10 + 2 = 26$."}
+   ],
+   "feedback": {
+    "correct": "SSW = 26, so $50 = 24 + 26$.",
+    "generic": "Not quite right. Measure each order from its own broker's mean.",
+    "byKey": {"grand": "You measured from the grand mean of 4. That is SST, the total.", "a": "That is broker A alone. Add B's 10 and C's 2."}
+   },
+   "explain": {
+    "text": "$\\text{SSW} = 14 + 10 + 2 = 26$ and $\\text{SST} = 50$, so $R^2 = 24/50 = 0.48$. The broker explains 48% of the spread in these twelve orders."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Why the parts add up",
+   "prose": "Show that $\\text{SST} = \\text{SSB} + \\text{SSW}$. Put the steps in order and leave out the slip.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "$y_{gj} - \\bar y = (y_{gj} - \\bar y_g) + (\\bar y_g - \\bar y)$, adding and subtracting the group mean"
+     },
+     {
+      "id": "b",
+      "text": "$\\text{SST} = \\sum\\sum (y_{gj} - \\bar y_g)^2 + \\sum\\sum (\\bar y_g - \\bar y)^2 + 2\\sum\\sum (y_{gj} - \\bar y_g)(\\bar y_g - \\bar y)$, squaring and summing"
+     },
+     {
+      "id": "c",
+      "text": "Cross term: $2\\sum_g (\\bar y_g - \\bar y)\\sum_j (y_{gj} - \\bar y_g)$, since $\\bar y_g - \\bar y$ is constant within group $g$"
+     },
+     {
+      "id": "d",
+      "text": "$\\sum_j (y_{gj} - \\bar y_g) = 0$ in every group, so the cross term vanishes"
+     },
+     {
+      "id": "e",
+      "text": "$\\text{SST} = \\text{SSW} + \\sum_g n_g(\\bar y_g - \\bar y)^2 = \\text{SSW} + \\text{SSB}$"
+     },
+     {
+      "id": "x",
+      "text": "The cross term vanishes because $\\sum_g (\\bar y_g - \\bar y) = 0$",
+      "why": "With unequal group sizes $\\sum_g(\\bar y_g - \\bar y)$ need not be 0; it is $\\sum_g n_g(\\bar y_g - \\bar y)$ that is. The reason that always holds is that deviations sum to zero within each group."
+     }
+    ],
+    "answer": ["a", "b", "c", "d", "e"],
+    "distractors": ["x"]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Split each deviation through the group mean first."},
+    {"rung": "point", "text": "Square, sum, and look at the cross term."},
+    {"rung": "step", "text": "Pull the constant group factor out of the cross term; what is left sums to zero."}
+   ],
+   "feedback": {
+    "correct": "Deviations within a group sum to zero, so the cross term drops out.",
+    "generic": "Not quite right. Split, square, then deal with the cross term.",
+    "byKey": {"x": "You used the wrong zero. Group means need not average to the grand mean with unequal sizes; deviations within a group always sum to zero."}
+   },
+   "explain": {
+    "text": "The decomposition holds for any data, which is why the caption never broke. This is **analysis of variance**: splitting the total spread into a between and a within part."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Mean squares and F",
+   "prose": "Each sum of squares has its degrees of freedom: $k - 1$ between groups and $N - k$ within them. A **mean square** is a sum over its degrees of freedom, and $F = \\text{MSB}/\\text{MSW}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Broker", "Order 1", "Order 2", "Order 3", "Order 4", "Mean"],
+     "rows": [
+      ["A", "1", "3", "2", "6", "3"],
+      ["B", "5", "7", "4", "8", "6"],
+      ["C", "2", "4", "3", "3", "3"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in the ANOVA table for the twelve orders.",
+   "widget": {
+    "kind": "table",
+    "columns": ["Source", "SS", "df", "MS"],
+    "rows": [
+     [
+      "Between",
+      "24",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {"abs": 0}
+      },
+      {
+       "edit": true,
+       "answer": 12,
+       "tol": {"abs": 0.01}
+      }
+     ],
+     [
+      "Within",
+      "26",
+      {
+       "edit": true,
+       "answer": 9,
+       "tol": {"abs": 0}
+      },
+      {
+       "edit": true,
+       "answer": 2.889,
+       "tol": {"abs": 0.002}
+      }
+     ],
+     [
+      "$F$",
+      "",
+      "",
+      {
+       "edit": true,
+       "answer": 4.1538,
+       "tol": {"abs": 0.002}
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "$k = 3$ brokers and $N = 12$ orders."},
+    {"rung": "point", "text": "df: $3 - 1 = 2$ and $12 - 3 = 9$."},
+    {"rung": "step", "text": "MSB $= 24/2 = 12$, MSW $= 26/9 = 2.889$, $F = 12/2.889 = 4.1538$."}
+   ],
+   "feedback": {
+    "correct": "df 2 and 9, MSB 12, MSW 2.889, $F = 4.1538$.",
+    "generic": "Not quite right. Divide each SS by its df, then MSB by MSW.",
+    "byKey": {"r0c2": "Between-group df is $k - 1 = 2$, not $k$.", "r1c2": "Within-group df is $N - k = 9$: each broker's mean uses up one.", "r2c3": "$F = 12/2.889$."}
+   },
+   "explain": {
+    "text": "$F = 12/2.889 = 4.1538$: the brokers' means vary about four times as much as order-to-order noise would make them. Lesson 7 asks whether 4.15 is surprising."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Comparing the raw sums",
+   "prose": "A colleague reads the split $50 = 24 + 26$ and says: \"SSB is less than SSW, so the brokers do not really differ\".",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Broker", "Order 1", "Order 2", "Order 3", "Order 4", "Mean"],
+     "rows": [
+      ["A", "1", "3", "2", "6", "3"],
+      ["B", "5", "7", "4", "8", "6"],
+      ["C", "2", "4", "3", "3", "3"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is wrong with the argument?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "df", "text": "The sums carry 2 and 9 degrees of freedom; per degree, between is 12 against 2.889", "correct": true},
+     {
+      "id": "ok",
+      "text": "Nothing: noise is the bigger part, so the brokers are alike",
+      "why": "You compared totals with different numbers of terms. SSW adds 12 squared deviations, SSB in effect 3 group means."
+     },
+     {
+      "id": "r2",
+      "text": "$R^2 = 0.48$ is below one half, so the brokers explain little",
+      "why": "$R^2$ describes the sample. Whether 48% is more than chance needs the degrees of freedom too."
+     },
+     {"id": "n", "text": "The brokers need more orders before any comparison", "why": "More orders help, but this comparison can be made now, with mean squares."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "How many independent pieces does each sum add up?"},
+    {"rung": "point", "text": "SSB has 2 degrees of freedom, SSW has 9."},
+    {"rung": "step", "text": "Compare $24/2 = 12$ with $26/9 = 2.889$."}
+   ],
+   "feedback": {
+    "correct": "Compare mean squares, not sums.",
+    "generic": "Not quite. Each sum must be divided by its degrees of freedom.",
+    "byKey": {
+     "ok": "You compared raw sums. SSW grows with every extra order whether or not the brokers differ.",
+     "r2": "You read $R^2$ as a test. It ignores how many groups and orders made it."
+    }
+   },
+   "explain": {
+    "text": "Per degree of freedom the between part is four times the within part. With nine orders' worth of noise and only two between-group comparisons, raw sums mislead."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Ninety orders, three algorithms",
+   "prose": "A desk sent 30 orders each to VWAP, TWAP and POV. Mean slippage: 2.1402, 2.3032 and 6.2310 bps; the grand mean is 3.5582. The within-group sum of squares is 2,570.214.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Algorithm", "Orders", "Mean (bps)", "SD (bps)"],
+     "rows": [
+      ["VWAP", "30", "2.1402", "5.5447"],
+      ["TWAP", "30", "2.3032", "5.7032"],
+      ["POV", "30", "6.2310", "5.0357"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is SSB?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 321.886,
+    "tol": {"abs": 0.2},
+    "unit": "",
+    "accept": "321.89: $30[(2.1402 - 3.5582)^2 + (2.3032 - 3.5582)^2 + (6.2310 - 3.5582)^2]$.",
+    "label": "SSB",
+    "wrong": [
+     {
+      "id": "noweight",
+      "value": 10.7295,
+      "tol": {"abs": 0.02}
+     },
+     {
+      "id": "third",
+      "value": 107.295,
+      "tol": {"abs": 0.2}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Distance of each mean from 3.5582, squared, times 30."},
+    {"rung": "point", "text": "$(-1.4180)^2 + (-1.2550)^2 + 2.6728^2 = 10.7295$."},
+    {"rung": "step", "text": "$30 \\times 10.7295 = 321.89$."}
+   ],
+   "feedback": {
+    "correct": "SSB = 321.886, as `scipy.stats.f_oneway`'s sums give.",
+    "generic": "Not quite right. Weight each squared distance by its 30 orders.",
+    "byKey": {"noweight": "You left out the 30 orders in each group.", "third": "You divided by the 3 groups. SSB is a sum."}
+   },
+   "explain": {
+    "text": "SSB $= 321.886$ on 2 df and SSW $= 2{,}570.214$ on 87, so $F = 160.943/29.543 = 5.4478$. POV's mean, 2.7 bps above the grand mean, supplies most of SSB."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "What F near 1 means",
+   "prose": "If every group has the same true mean, the group means still scatter by noise. Then MSB and MSW both estimate the noise variance $\\sigma^2$:\n$$F = \\frac{\\text{SSB}/(k - 1)}{\\text{SSW}/(N - k)} \\approx 1$$\nA large $F$ says the means spread more than noise explains.",
+   "question": "Three brokers' means are identical, 4.0 bps each. What is $F$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0,
+    "tol": {"abs": 0},
+    "unit": "",
+    "accept": "0: SSB $= 0$ when every group mean equals the grand mean.",
+    "label": "F",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$F = 0$: no spread between the means at all.",
+    "generic": "Not quite right. If all means equal the grand mean, SSB is 0.",
+    "byKey": {"one": "1 is what $F$ is near on average under equal true means. Equal sample means give exactly 0."}
+   },
+   "explain": {"text": "Equal sample means give SSB $= 0$ and $F = 0$. Under equal true means $F$ averages close to 1, and only values well above 1 are evidence."}
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "An ANOVA table in code",
+   "prose": "Write the table for any number of groups of any sizes. Use plain Python lists; the grand mean weights every observation equally.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Broker", "Order 1", "Order 2", "Order 3", "Order 4", "Mean"],
+     "rows": [
+      ["A", "1", "3", "2", "6", "3"],
+      ["B", "5", "7", "4", "8", "6"],
+      ["C", "2", "4", "3", "3", "3"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `anova_table`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef anova_table(groups):\n    \"\"\"groups: a list of lists. Return a dict with keys\n    'ssb', 'ssw', 'df_between', 'df_within' and 'F'.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef anova_table(groups):\n    allv = [v for g in groups for v in g]\n    N, k = len(allv), len(groups)\n    gm = sum(allv) / N\n    means = [sum(g) / len(g) for g in groups]\n    ssb = sum(len(g) * (m - gm) ** 2 for g, m in zip(groups, means))\n    ssw = sum((v - m) ** 2 for g, m in zip(groups, means) for v in g)\n    dfb, dfw = k - 1, N - k\n    return {'ssb': ssb, 'ssw': ssw, 'df_between': dfb, 'df_within': dfw, 'F': (ssb / dfb) / (ssw / dfw)}\n",
+    "examples": [
+     {
+      "call": "anova_table([[1, 3, 2, 6], [5, 7, 4, 8], [2, 4, 3, 3]])['ssb']",
+      "expect": "24.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "groups = [[1, 3, 2, 6], [5, 7, 4, 8], [2, 4, 3, 3]]",
+      "call": "anova_table(groups)['ssb']",
+      "expect": "24.0",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "groups = [[1, 3, 2, 6], [5, 7, 4, 8], [2, 4, 3, 3]]",
+      "call": "anova_table(groups)['ssw']",
+      "expect": "26.0",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "groups = [[1, 3, 2, 6], [5, 7, 4, 8], [2, 4, 3, 3]]",
+      "call": "[anova_table(groups)['df_between'], anova_table(groups)['df_within']]",
+      "expect": "[2, 9]",
+      "compare": "equal"
+     },
+     {
+      "setup": "groups = [[1, 3, 2, 6], [5, 7, 4, 8], [2, 4, 3, 3]]",
+      "call": "anova_table(groups)['F']",
+      "expect": "4.153846153846154",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     },
+     {
+      "setup": "import numpy as np; rng = np.random.default_rng(41); s = np.repeat([2.0, 3.0, 6.0], 30) + rng.normal(0, 6, 90); groups = [list(s[:30]), list(s[30:60]), list(s[60:])]",
+      "call": "anova_table(groups)['ssb']",
+      "expect": "321.8859479086759",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "import numpy as np; rng = np.random.default_rng(41); s = np.repeat([2.0, 3.0, 6.0], 30) + rng.normal(0, 6, 90); groups = [list(s[:30]), list(s[30:60]), list(s[60:])]",
+      "call": "anova_table(groups)['ssw']",
+      "expect": "2570.214463540558",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "import numpy as np; rng = np.random.default_rng(41); s = np.repeat([2.0, 3.0, 6.0], 30) + rng.normal(0, 6, 90); groups = [list(s[:30]), list(s[30:60]), list(s[60:])]",
+      "call": "anova_table(groups)['F']",
+      "expect": "5.447809485415127",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "call": "anova_table([[1, 2], [3, 4], [5, 9]])['F']",
+      "expect": "5.166666666666667",
+      "compare": "isclose",
+      "tol": {"abs": 1e-09}
+     }
+    ],
+    "how": "Check runs 8 hidden tests. The twelve orders must match exactly. The 90 orders from seed 41 must match `scipy.stats.f_oneway` within $10^{-6}$. One case has unequal groups. The D5 tests load NumPy, a few seconds."
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Grand mean of all values, then each group's mean."},
+    {"rung": "point", "text": "`ssb` weights each squared mean distance by the group size."},
+    {"rung": "step", "text": "`F = (ssb / (k - 1)) / (ssw / (N - k))`."}
+   ],
+   "feedback": {"correct": "Your table matches `f_oneway` on the 90 orders.", "generic": "Some tests failed. Check the weights in SSB and the two degrees of freedom."},
+   "explain": {
+    "text": "On the 90 orders your function gives $F = 5.4478$, the statistic `f_oneway` reports. With unequal groups, $n_g$ in SSB keeps the decomposition exact."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Is the broker spread real",
+   "prose": "A desk compares three brokers on 20 similar orders each. The between-broker sum of squares is 48 and the within-broker sum is 1,140 (bps squared).",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Source", "SS", "df"],
+     "rows": [
+      ["Brokers", "48", "2"],
+      ["Orders within broker", "1,140", "57"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is $F$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.2,
+    "tol": {"abs": 0.005},
+    "unit": "",
+    "accept": "1.2: MSB $= 48/2 = 24$, MSW $= 1{,}140/57 = 20$.",
+    "label": "F",
+    "wrong": [
+     {
+      "id": "ss",
+      "value": 0.0421,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "df",
+      "value": 1.2632,
+      "tol": {"abs": 0.005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Mean squares first."},
+    {"rung": "point", "text": "MSB $= 24$, MSW $= 20$."},
+    {"rung": "step", "text": "$F = 24/20 = 1.2$."}
+   ],
+   "feedback": {
+    "correct": "$F = 1.2$: the brokers' averages differ about as much as noise makes them.",
+    "generic": "Not quite right. Divide each SS by its df, then take the ratio.",
+    "byKey": {"ss": "You divided the raw sums. Use mean squares.", "df": "You used 60 for the within df. With 3 brokers it is $60 - 3 = 57$."}
+   },
+   "explain": {"text": "$F = 24/20 = 1.2$, close to 1. The ranking of the three brokers on this sample is mostly noise, which lesson 7 makes exact."}
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The total spread splits exactly: $\\text{SST} = \\text{SSB} + \\text{SSW}$; on the twelve orders, $50 = 24 + 26$.",
+   "Each part has its degrees of freedom, $k - 1$ and $N - k$; mean squares put them on one scale.",
+   "$F = \\text{MSB}/\\text{MSW}$ is near 1 when the groups share a mean and large when the means spread more than noise."
+  ],
+  "formula": {
+   "name": "One-way ANOVA",
+   "tex": "F = \\frac{\\sum_g n_g(\\bar y_g - \\bar y)^2/(k - 1)}{\\sum_g\\sum_j (y_{gj} - \\bar y_g)^2/(N - k)}",
+   "note": "SSB over SST is the $R^2$ of the groups."
+  },
+  "trap": "Comparing raw sums of squares: they carry different degrees of freedom, so compare mean squares."
+ },
+ "quiz": [
+  {
+   "id": "q-one-each",
+   "difficulty": 3,
+   "prose": "Each of four brokers has worked exactly one order.",
+   "question": "What can an ANOVA say about them?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "none", "text": "Nothing: with one order per broker SSW is 0 on 0 degrees of freedom, so $F$ is undefined", "correct": true},
+     {
+      "id": "all",
+      "text": "Everything: SSB holds all the spread, so $F$ is very large",
+      "why": "SSB does hold all the spread, but MSW is $0/0$. There is no noise estimate to compare with."
+     },
+     {"id": "one", "text": "$F = 1$ by symmetry", "why": "There is no within-group variation to form the denominator."}
+    ]
+   },
+   "feedback": {"correct": "No within-group spread, no test.", "generic": "Not quite right. Count the within-group degrees of freedom: $N - k$."},
+   "explain": {"text": "$N - k = 4 - 4 = 0$, so MSW cannot be computed. Replication inside each group is what makes a test possible."}
+  },
+  {
+   "id": "q-ms",
+   "difficulty": 2,
+   "prose": "An ANOVA of 5 groups of 10 has SSB = 36 and SSW = 270.",
+   "question": "What is $F$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.5,
+    "tol": {"abs": 0.005},
+    "unit": "",
+    "accept": "1.5: MSB $= 36/4 = 9$, MSW $= 270/45 = 6$.",
+    "label": "F",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.1333,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "dfk",
+      "value": 1.2,
+      "tol": {"abs": 0.005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$F = 9/6 = 1.5$.",
+    "generic": "Not quite right. Use df $k - 1 = 4$ and $N - k = 45$.",
+    "byKey": {"raw": "You divided the raw sums.", "dfk": "You used $k = 5$ for the between df. It is $k - 1 = 4$."}
+   },
+   "explain": {"text": "MSB $= 36/4 = 9$ and MSW $= 270/45 = 6$, so $F = 1.5$."}
+  },
+  {
+   "id": "q-r2",
+   "difficulty": 2,
+   "prose": "An ANOVA has SSB = 30 and SSW = 90.",
+   "question": "What share of the total spread do the groups explain?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.25,
+    "tol": {"abs": 0.001},
+    "unit": "%",
+    "accept": "25%: $30/(30 + 90)$.",
+    "label": "Share",
+    "wrong": [
+     {
+      "id": "ratio",
+      "value": 0.3333,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$30/120 = 25\\%$.",
+    "generic": "Not quite right. Divide SSB by SST = SSB + SSW.",
+    "byKey": {"ratio": "You divided SSB by SSW. The total is SSB + SSW."}
+   },
+   "explain": {
+    "text": "$R^2 = \\text{SSB}/\\text{SST} = 30/120 = 25\\%$."
+   }
+  }
+ ]
+}

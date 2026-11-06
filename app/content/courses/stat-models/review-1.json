@@ -1,0 +1,273 @@
+{
+ "id": "review-1",
+ "course": "stat-models",
+ "level": 1,
+ "pass": 0.8,
+ "items": [
+  {
+   "id": "r1-pool",
+   "difficulty": 2,
+   "skills": ["sm-glm"],
+   "prose": "A credit desk models how many of the 50 loans in each pool default within a year.",
+   "question": "Which family and link fit this outcome?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "bin", "text": "Binomial with $n = 50$ and a logit link", "correct": true},
+     {"id": "pois", "text": "Poisson with a log link", "why": "A Poisson count has no cap. A pool of 50 cannot have 51 defaults."},
+     {
+      "id": "norm",
+      "text": "Normal with an identity link",
+      "why": "A straight line in the default share can leave $[0, 1]$, as the lesson 1 fit did."
+     },
+     {"id": "gam", "text": "Gamma with a log link", "why": "A Gamma variable is continuous and never 0. Zero defaults is common."}
+    ],
+    "shuffle": true
+   },
+   "feedback": {"correct": "A count out of a known $n$: binomial, logit.", "generic": "Not quite right. The outcome is a count with a known maximum."},
+   "explain": {"text": "Defaults out of 50 are binomial, and the logit keeps the default probability in $(0, 1)$."}
+  },
+  {
+   "id": "r2-odds",
+   "difficulty": 2,
+   "skills": ["sm-glm"],
+   "prose": "A logistic model of fills has a coefficient of 0.35 on queue priority, a 0/1 flag.",
+   "question": "By what factor does priority multiply the odds of a fill?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.4191,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "1.4191: $e^{0.35}$.",
+    "label": "Odds ratio",
+    "wrong": [
+     {
+      "id": "coef",
+      "value": 0.35,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "prob",
+      "value": 0.5866,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$e^{0.35} = 1.419$.",
+    "generic": "Not quite right. Exponentiate the coefficient.",
+    "byKey": {
+     "coef": "That is the change in log odds.",
+     "prob": "You put 0.35 through the inverse logit. The odds ratio is $e^{0.35}$."
+    }
+   },
+   "explain": {
+    "text": "A coefficient moves the log odds, so the odds multiply by $e^{0.35} = 1.419$, whatever the starting odds."
+   }
+  },
+  {
+   "id": "r3-offset",
+   "difficulty": 2,
+   "skills": ["sm-glm"],
+   "prose": "Trade counts come from intervals of 5, 15, 30 and 60 minutes. The model is $\\ln E[Y_j] = \\ldots + \\beta_0 + \\beta_1v_j$.",
+   "question": "What fills the gap?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "lnt", "text": "$\\ln t_j$, with its coefficient fixed at 1", "correct": true},
+     {"id": "t", "text": "$t_j$, with its coefficient fixed at 1", "why": "The mean is $t\\lambda$, so on the log scale the term is $\\ln t_j$."},
+     {
+      "id": "free",
+      "text": "$\\beta_2\\ln t_j$, with $\\beta_2$ estimated",
+      "why": "That is the check, which gave 0.976. The model itself fixes the coefficient at 1."
+     },
+     {"id": "none", "text": "Nothing: divide $y_j$ by $t_j$ instead", "why": "Dividing loses the Poisson variance and weights short noisy intervals equally."}
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The offset $\\ln t_j$.",
+    "generic": "Not quite right. Take logs of $E[Y_j] = t_j\\lambda_j$."
+   },
+   "explain": {
+    "text": "$\\ln E[Y_j] = \\ln t_j + \\ln\\lambda_j$, so $\\ln t_j$ enters with coefficient 1: the offset."
+   }
+  },
+  {
+   "id": "r4-z",
+   "difficulty": 3,
+   "skills": ["sm-glm"],
+   "prose": "In a logistic IRLS step a firm with $y = 1$ has $\\eta = -1$.",
+   "question": "What is its working response $z$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.7183,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "2.7183: $\\mu = 0.2689$, $W = 0.1966$, and $z = -1 + 0.7311/0.1966$.",
+    "label": "z",
+    "wrong": [
+     {
+      "id": "resid",
+      "value": 3.7183,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "noW",
+      "value": -0.2689,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$z = 2.7183$, which is $e$.",
+    "generic": "Not quite right. $z = \\eta + (y - \\mu)/W$.",
+    "byKey": {"resid": "You left out $\\eta = -1$.", "noW": "You did not divide the residual by $W$."}
+   },
+   "explain": {"text": "$\\mu = 0.2689$ and $W = 0.1966$, so $z = -1 + 0.7311/0.1966 = 2.7183$. For $y = 1$, $z = \\eta + 1/\\mu = -1 + (1 + e)$, which is $e$."}
+  },
+  {
+   "id": "r5-lr",
+   "difficulty": 3,
+   "skills": ["sm-glm"],
+   "prose": "Adding one predictor to a Poisson model with dispersion near 1 cuts the deviance by 3.2.",
+   "question": "What is the likelihood-ratio $p$-value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0736,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.0736: $P(\\chi^2_1 > 3.2)$.",
+    "label": "p-value",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.0368,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "cdf",
+      "value": 0.9264,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$p = 0.074$: not significant at 5%.",
+    "generic": "Not quite right. Compare 3.2 with $\\chi^2_1$.",
+    "byKey": {"half": "You halved the tail. The test uses the upper tail of $\\chi^2_1$.", "cdf": "That is the area to the left of 3.2."}
+   },
+   "explain": {"text": "$P(\\chi^2_1 > 3.2) = P(|Z| > 1.789) = 0.0736$."}
+  },
+  {
+   "id": "r6-overdisp",
+   "difficulty": 2,
+   "skills": ["sm-glm"],
+   "prose": "Daily rejected orders on a desk have mean 6.0 and variance 21.0.",
+   "question": "Which model suits these counts better than a plain Poisson?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "nb", "text": "A negative binomial or quasi-Poisson model, since the variance is 3.5 times the mean", "correct": true},
+     {"id": "pois", "text": "A plain Poisson is fine, since counts are Poisson", "why": "A Poisson count has variance equal to its mean. Here the ratio is 3.5."},
+     {"id": "bin", "text": "A binomial model", "why": "A binomial has variance below its mean, the wrong direction."},
+     {"id": "ols", "text": "OLS on the log counts", "why": "Logging breaks on zero days and models a different mean."}
+    ],
+    "shuffle": true
+   },
+   "feedback": {"correct": "Overdispersed: variance 3.5 times the mean.", "generic": "Not quite right. Compare the variance with the mean."},
+   "explain": {"text": "$21/6 = 3.5$. A negative binomial ($\\mu + \\alpha\\mu^2$) or a quasi-Poisson ($\\phi\\mu$) variance allows it."}
+  },
+  {
+   "id": "r7-me",
+   "difficulty": 3,
+   "skills": ["sm-glm"],
+   "prose": "A logistic model has slope $\\beta_1 = 2$ on a signal $x$. At the current $x$, $\\hat\\mu = 0.3$.",
+   "question": "By how much does the probability change per unit of $x$, at this point?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.42,
+    "tol": {"abs": 0.001},
+    "unit": "",
+    "accept": "0.42: $2 \\times 0.3 \\times 0.7$.",
+    "label": "Change in probability",
+    "wrong": [
+     {
+      "id": "coef",
+      "value": 2,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "max",
+      "value": 0.5,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$\\beta_1\\mu(1 - \\mu) = 0.42$.",
+    "generic": "Not quite right. Use $\\beta_1\\mu(1 - \\mu)$.",
+    "byKey": {"coef": "You read the slope as a change in probability. It moves log odds.", "max": "You used $\\mu(1 - \\mu) = 0.25$, the value at $\\mu = 0.5$."}
+   },
+   "explain": {"text": "$d\\mu/dx = \\beta_1\\mu(1 - \\mu) = 2 \\times 0.21 = 0.42$ per unit, at this point only."}
+  },
+  {
+   "id": "r8-sep",
+   "difficulty": 3,
+   "skills": ["sm-glm"],
+   "prose": "In a sample of 40 loans, every loan with leverage above 0.7 defaulted and none below did. A logistic fit runs 25 IRLS iterations.",
+   "question": "What will the leverage coefficient be?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "inf", "text": "It has no finite estimate; the software returns a huge number with a warning", "correct": true},
+     {
+      "id": "big",
+      "text": "Large but finite, and very significant",
+      "why": "With perfect separation the likelihood has no maximum, so there is no finite estimate to test."
+     },
+     {"id": "zero", "text": "Near 0, since the fit cannot converge", "why": "The slope runs away upwards, not down to 0."}
+    ]
+   },
+   "feedback": {"correct": "No finite MLE under separation.", "generic": "Not quite right. A step at 0.7 fits perfectly, and only an infinite slope makes a step."},
+   "explain": {"text": "The likelihood keeps rising as the slope grows, so IRLS chases infinity until it stops. statsmodels warns of perfect separation."}
+  },
+  {
+   "id": "r9-quasi",
+   "difficulty": 4,
+   "skills": ["sm-glm"],
+   "prose": "A Poisson fit gives a coefficient SE of 0.020. The Pearson dispersion is 4.0.",
+   "question": "What is the quasi-Poisson standard error?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.04,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.040: $0.020 \\times \\sqrt{4}$.",
+    "label": "SE",
+    "wrong": [
+     {
+      "id": "phi",
+      "value": 0.08,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "div",
+      "value": 0.01,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.020 \\times 2 = 0.040$.",
+    "generic": "Not quite right. Multiply by $\\sqrt{\\hat\\phi}$.",
+    "byKey": {"phi": "You multiplied by $\\hat\\phi$. Standard errors scale with its square root.", "div": "You divided. Overdispersion makes the SE larger."}
+   },
+   "explain": {"text": "Variances scale by $\\hat\\phi = 4$, so standard errors scale by $\\sqrt 4 = 2$: $0.020 \\to 0.040$."}
+  }
+ ]
+}

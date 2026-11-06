@@ -1,0 +1,1242 @@
+{
+ "id": "l12-kernel-density",
+ "course": "stat-models",
+ "title": "Kernel density estimates",
+ "minutes": 15,
+ "objectives": ["Estimate a return density with a kernel and choose the bandwidth."],
+ "skills": ["sm-nonpar"],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Sixty days, many pictures",
+   "prose": "Sixty daily returns of a book, in %. The worst day was $-3.48$%. Drag the bin width and watch the left tail.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -4, "max": 2.5, "width": 0.25},
+     "data": [
+      -0.38,
+      -1.6,
+      -0.42,
+      -0.44,
+      0.02,
+      0.76,
+      0.63,
+      0.27,
+      0.83,
+      0.98,
+      0.9,
+      -0.17,
+      0.13,
+      0.16,
+      0.91,
+      1.28,
+      0.5,
+      -1.09,
+      -1.96,
+      0.82,
+      -1.12,
+      0.2,
+      -0.32,
+      -0.78,
+      0.62,
+      -0.43,
+      1.03,
+      0.15,
+      0.62,
+      -2.27,
+      -0.28,
+      -0.25,
+      1.59,
+      -0.08,
+      1.1,
+      0.4,
+      0.64,
+      -0.74,
+      -0.14,
+      -3.48,
+      0.6,
+      0.44,
+      0.42,
+      -1.39,
+      -0.76,
+      0.8,
+      -0.71,
+      -0.33,
+      0.61,
+      0.15,
+      -0.3,
+      0.29,
+      -0.37,
+      0.52,
+      0.29,
+      -0.14,
+      0.52,
+      0.05,
+      0.1,
+      0.4
+     ],
+     "xLabel": "Daily return (%)",
+     "yLabel": "Days",
+     "height": 250
+    },
+    "state": {
+     "params": {"h": 0.3}
+    },
+    "controls": [
+     {"bind": "binWidth", "min": 0.1, "max": 1.0, "step": 0.05, "start": 0.25, "label": "Bin width"}
+    ]
+   },
+   "question": "What does the histogram say about the left tail?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "bins", "text": "It depends on the bins: the $-3.48$ day looks like a stray or part of a tail", "correct": true},
+     {
+      "id": "stray",
+      "text": "The $-3.48$ day is clearly an isolated error",
+      "why": "At wide bins it merges into a tail. The picture, not the data, made it look isolated."
+     },
+     {"id": "normal", "text": "The returns are normal", "why": "The excess kurtosis is 2.84; a normal has 0."}
+    ]
+   },
+   "feedback": {"correct": "A histogram's shape depends on where the bins fall.", "generic": "Not quite. Watch the tail as the width changes."},
+   "explain": {
+    "text": "The data have mean $-0.0037$, SD 0.8965 and excess kurtosis 2.84, yet the bins decide what the eye sees. A smooth estimate that does not depend on bin edges would help."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "One bump per day",
+   "prose": "Put a small normal bump of width $h$ on each day's return and add them up. Slide $h$ from tiny to wide.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -4, "max": 2.5, "width": 0.25},
+     "data": [
+      -0.38,
+      -1.6,
+      -0.42,
+      -0.44,
+      0.02,
+      0.76,
+      0.63,
+      0.27,
+      0.83,
+      0.98,
+      0.9,
+      -0.17,
+      0.13,
+      0.16,
+      0.91,
+      1.28,
+      0.5,
+      -1.09,
+      -1.96,
+      0.82,
+      -1.12,
+      0.2,
+      -0.32,
+      -0.78,
+      0.62,
+      -0.43,
+      1.03,
+      0.15,
+      0.62,
+      -2.27,
+      -0.28,
+      -0.25,
+      1.59,
+      -0.08,
+      1.1,
+      0.4,
+      0.64,
+      -0.74,
+      -0.14,
+      -3.48,
+      0.6,
+      0.44,
+      0.42,
+      -1.39,
+      -0.76,
+      0.8,
+      -0.71,
+      -0.33,
+      0.61,
+      0.15,
+      -0.3,
+      0.29,
+      -0.37,
+      0.52,
+      0.29,
+      -0.14,
+      0.52,
+      0.05,
+      0.1,
+      0.4
+     ],
+     "xLabel": "Daily return (%)",
+     "yLabel": "Days",
+     "height": 250,
+     "curves": [
+      {
+       "id": "kde",
+       "expr": "w*(normpdf(x,-0.38,h)+normpdf(x,-1.6,h)+normpdf(x,-0.42,h)+normpdf(x,-0.44,h)+normpdf(x,0.02,h)+normpdf(x,0.76,h)+normpdf(x,0.63,h)+normpdf(x,0.27,h)+normpdf(x,0.83,h)+normpdf(x,0.98,h)+normpdf(x,0.9,h)+normpdf(x,-0.17,h)+normpdf(x,0.13,h)+normpdf(x,0.16,h)+normpdf(x,0.91,h)+normpdf(x,1.28,h)+normpdf(x,0.5,h)+normpdf(x,-1.09,h)+normpdf(x,-1.96,h)+normpdf(x,0.82,h)+normpdf(x,-1.12,h)+normpdf(x,0.2,h)+normpdf(x,-0.32,h)+normpdf(x,-0.78,h)+normpdf(x,0.62,h)+normpdf(x,-0.43,h)+normpdf(x,1.03,h)+normpdf(x,0.15,h)+normpdf(x,0.62,h)+normpdf(x,-2.27,h)+normpdf(x,-0.28,h)+normpdf(x,-0.25,h)+normpdf(x,1.59,h)+normpdf(x,-0.08,h)+normpdf(x,1.1,h)+normpdf(x,0.4,h)+normpdf(x,0.64,h)+normpdf(x,-0.74,h)+normpdf(x,-0.14,h)+normpdf(x,-3.48,h)+normpdf(x,0.6,h)+normpdf(x,0.44,h)+normpdf(x,0.42,h)+normpdf(x,-1.39,h)+normpdf(x,-0.76,h)+normpdf(x,0.8,h)+normpdf(x,-0.71,h)+normpdf(x,-0.33,h)+normpdf(x,0.61,h)+normpdf(x,0.15,h)+normpdf(x,-0.3,h)+normpdf(x,0.29,h)+normpdf(x,-0.37,h)+normpdf(x,0.52,h)+normpdf(x,0.29,h)+normpdf(x,-0.14,h)+normpdf(x,0.52,h)+normpdf(x,0.05,h)+normpdf(x,0.1,h)+normpdf(x,0.4,h))",
+       "label": "kernel estimate",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "params": {"h": 0.05}
+    },
+    "controls": [
+     {"bind": "h", "min": 0.05, "max": 1.0, "step": 0.01, "start": 0.05, "label": "Bandwidth $h$", "decimals": 2}
+    ],
+    "derive": {
+     "caption": "$h = {{fixed(h, 3)}}$: the estimate at 0 is $\\hat f(0) = {{fixed((normpdf(0,-0.38,h)+normpdf(0,-1.6,h)+normpdf(0,-0.42,h)+normpdf(0,-0.44,h)+normpdf(0,0.02,h)+normpdf(0,0.76,h)+normpdf(0,0.63,h)+normpdf(0,0.27,h)+normpdf(0,0.83,h)+normpdf(0,0.98,h)+normpdf(0,0.9,h)+normpdf(0,-0.17,h)+normpdf(0,0.13,h)+normpdf(0,0.16,h)+normpdf(0,0.91,h)+normpdf(0,1.28,h)+normpdf(0,0.5,h)+normpdf(0,-1.09,h)+normpdf(0,-1.96,h)+normpdf(0,0.82,h)+normpdf(0,-1.12,h)+normpdf(0,0.2,h)+normpdf(0,-0.32,h)+normpdf(0,-0.78,h)+normpdf(0,0.62,h)+normpdf(0,-0.43,h)+normpdf(0,1.03,h)+normpdf(0,0.15,h)+normpdf(0,0.62,h)+normpdf(0,-2.27,h)+normpdf(0,-0.28,h)+normpdf(0,-0.25,h)+normpdf(0,1.59,h)+normpdf(0,-0.08,h)+normpdf(0,1.1,h)+normpdf(0,0.4,h)+normpdf(0,0.64,h)+normpdf(0,-0.74,h)+normpdf(0,-0.14,h)+normpdf(0,-3.48,h)+normpdf(0,0.6,h)+normpdf(0,0.44,h)+normpdf(0,0.42,h)+normpdf(0,-1.39,h)+normpdf(0,-0.76,h)+normpdf(0,0.8,h)+normpdf(0,-0.71,h)+normpdf(0,-0.33,h)+normpdf(0,0.61,h)+normpdf(0,0.15,h)+normpdf(0,-0.3,h)+normpdf(0,0.29,h)+normpdf(0,-0.37,h)+normpdf(0,0.52,h)+normpdf(0,0.29,h)+normpdf(0,-0.14,h)+normpdf(0,0.52,h)+normpdf(0,0.05,h)+normpdf(0,0.1,h)+normpdf(0,0.4,h))/60, 4)}}$"
+    }
+   },
+   "question": "At $h = 0.05$, what is the estimated density at 0?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2724,
+    "tol": {"abs": 0.0008},
+    "unit": "",
+    "accept": "0.2724, read from the caption at $h = 0.05$.",
+    "label": "Density at 0",
+    "wrong": [
+     {
+      "id": "wide",
+      "value": 0.3132,
+      "tol": {"abs": 0.0008}
+     },
+     {
+      "id": "silver",
+      "value": 0.4688,
+      "tol": {"abs": 0.0008}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Set the slider to 0.05."},
+    {"rung": "point", "text": "Read $\\hat f(0)$ from the caption."},
+    {"rung": "step", "text": "About 0.272."}
+   ],
+   "feedback": {
+    "correct": "0.2724: at tiny $h$ the curve is a comb of spikes, low between days.",
+    "generic": "Not quite. Set $h = 0.05$ and read the caption.",
+    "byKey": {"wide": "That is the value at $h = 1$, a smooth hump.", "silver": "That is the value at $h = 0.29$, the rule of thumb on the next screen."}
+   },
+   "explain": {
+    "text": "At $h = 0.05$ each day is its own spike and $\\hat f(0) = 0.2724$. At $h = 1$ a smooth hump hides the $-3.48$ day, with 0.3132 at 0. This is a **kernel density estimate**.",
+    "canvas": {
+     "params": {"h": 0.05}
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The kernel estimate and its bandwidth",
+   "prose": "$$\\hat f(x) = \\frac{1}{nh}\\sum_{j=1}^n K\\!\\left(\\frac{x - r_j}{h}\\right)$$\nwith $K$ the standard normal density. Silverman's rule picks $h = 0.9\\min(s, \\text{IQR}/1.34)\\,n^{-1/5}$. Here $n = 60$, $s = 0.8965$ and IQR $= 0.985$.",
+   "question": "What is Silverman's $h$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2917,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.2917: $0.9 \\times 0.7351 \\times 60^{-0.2}$, as $0.985/1.34 = 0.7351 < 0.8965$.",
+    "label": "h",
+    "wrong": [
+     {
+      "id": "s",
+      "value": 0.3557,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "nomin",
+      "value": 0.4409,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$h = 0.2917$.",
+    "generic": "Not quite right. Take the smaller of $s$ and IQR$/1.34$ first.",
+    "byKey": {
+     "s": "You used $s = 0.8965$. With fat tails IQR$/1.34 = 0.7351$ is smaller, and the rule takes the minimum.",
+     "nomin": "That is $60^{-0.2}$ alone."
+    }
+   },
+   "explain": {"text": "IQR$/1.34 = 0.7351$ beats $s$, so $h = 0.9 \\times 0.7351 \\times 0.4409 = 0.2917$. The IQR keeps one wild day from widening every bump."}
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The estimate at Silverman's h",
+   "prose": "Set the slider to Silverman's $h = 0.29$ and read the density at 0. scipy's `gaussian_kde` with the matching factor and your own sum of bumps agree.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -4, "max": 2.5, "width": 0.25},
+     "data": [
+      -0.38,
+      -1.6,
+      -0.42,
+      -0.44,
+      0.02,
+      0.76,
+      0.63,
+      0.27,
+      0.83,
+      0.98,
+      0.9,
+      -0.17,
+      0.13,
+      0.16,
+      0.91,
+      1.28,
+      0.5,
+      -1.09,
+      -1.96,
+      0.82,
+      -1.12,
+      0.2,
+      -0.32,
+      -0.78,
+      0.62,
+      -0.43,
+      1.03,
+      0.15,
+      0.62,
+      -2.27,
+      -0.28,
+      -0.25,
+      1.59,
+      -0.08,
+      1.1,
+      0.4,
+      0.64,
+      -0.74,
+      -0.14,
+      -3.48,
+      0.6,
+      0.44,
+      0.42,
+      -1.39,
+      -0.76,
+      0.8,
+      -0.71,
+      -0.33,
+      0.61,
+      0.15,
+      -0.3,
+      0.29,
+      -0.37,
+      0.52,
+      0.29,
+      -0.14,
+      0.52,
+      0.05,
+      0.1,
+      0.4
+     ],
+     "xLabel": "Daily return (%)",
+     "yLabel": "Days",
+     "height": 250,
+     "curves": [
+      {
+       "id": "kde",
+       "expr": "w*(normpdf(x,-0.38,h)+normpdf(x,-1.6,h)+normpdf(x,-0.42,h)+normpdf(x,-0.44,h)+normpdf(x,0.02,h)+normpdf(x,0.76,h)+normpdf(x,0.63,h)+normpdf(x,0.27,h)+normpdf(x,0.83,h)+normpdf(x,0.98,h)+normpdf(x,0.9,h)+normpdf(x,-0.17,h)+normpdf(x,0.13,h)+normpdf(x,0.16,h)+normpdf(x,0.91,h)+normpdf(x,1.28,h)+normpdf(x,0.5,h)+normpdf(x,-1.09,h)+normpdf(x,-1.96,h)+normpdf(x,0.82,h)+normpdf(x,-1.12,h)+normpdf(x,0.2,h)+normpdf(x,-0.32,h)+normpdf(x,-0.78,h)+normpdf(x,0.62,h)+normpdf(x,-0.43,h)+normpdf(x,1.03,h)+normpdf(x,0.15,h)+normpdf(x,0.62,h)+normpdf(x,-2.27,h)+normpdf(x,-0.28,h)+normpdf(x,-0.25,h)+normpdf(x,1.59,h)+normpdf(x,-0.08,h)+normpdf(x,1.1,h)+normpdf(x,0.4,h)+normpdf(x,0.64,h)+normpdf(x,-0.74,h)+normpdf(x,-0.14,h)+normpdf(x,-3.48,h)+normpdf(x,0.6,h)+normpdf(x,0.44,h)+normpdf(x,0.42,h)+normpdf(x,-1.39,h)+normpdf(x,-0.76,h)+normpdf(x,0.8,h)+normpdf(x,-0.71,h)+normpdf(x,-0.33,h)+normpdf(x,0.61,h)+normpdf(x,0.15,h)+normpdf(x,-0.3,h)+normpdf(x,0.29,h)+normpdf(x,-0.37,h)+normpdf(x,0.52,h)+normpdf(x,0.29,h)+normpdf(x,-0.14,h)+normpdf(x,0.52,h)+normpdf(x,0.05,h)+normpdf(x,0.1,h)+normpdf(x,0.4,h))",
+       "label": "kernel estimate",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "params": {"h": 0.29}
+    },
+    "controls": [
+     {"bind": "h", "min": 0.05, "max": 1.0, "step": 0.0001, "start": 0.2917, "label": "Bandwidth $h$", "decimals": 4}
+    ],
+    "derive": {
+     "caption": "$h = {{fixed(h, 3)}}$: the estimate at 0 is $\\hat f(0) = {{fixed((normpdf(0,-0.38,h)+normpdf(0,-1.6,h)+normpdf(0,-0.42,h)+normpdf(0,-0.44,h)+normpdf(0,0.02,h)+normpdf(0,0.76,h)+normpdf(0,0.63,h)+normpdf(0,0.27,h)+normpdf(0,0.83,h)+normpdf(0,0.98,h)+normpdf(0,0.9,h)+normpdf(0,-0.17,h)+normpdf(0,0.13,h)+normpdf(0,0.16,h)+normpdf(0,0.91,h)+normpdf(0,1.28,h)+normpdf(0,0.5,h)+normpdf(0,-1.09,h)+normpdf(0,-1.96,h)+normpdf(0,0.82,h)+normpdf(0,-1.12,h)+normpdf(0,0.2,h)+normpdf(0,-0.32,h)+normpdf(0,-0.78,h)+normpdf(0,0.62,h)+normpdf(0,-0.43,h)+normpdf(0,1.03,h)+normpdf(0,0.15,h)+normpdf(0,0.62,h)+normpdf(0,-2.27,h)+normpdf(0,-0.28,h)+normpdf(0,-0.25,h)+normpdf(0,1.59,h)+normpdf(0,-0.08,h)+normpdf(0,1.1,h)+normpdf(0,0.4,h)+normpdf(0,0.64,h)+normpdf(0,-0.74,h)+normpdf(0,-0.14,h)+normpdf(0,-3.48,h)+normpdf(0,0.6,h)+normpdf(0,0.44,h)+normpdf(0,0.42,h)+normpdf(0,-1.39,h)+normpdf(0,-0.76,h)+normpdf(0,0.8,h)+normpdf(0,-0.71,h)+normpdf(0,-0.33,h)+normpdf(0,0.61,h)+normpdf(0,0.15,h)+normpdf(0,-0.3,h)+normpdf(0,0.29,h)+normpdf(0,-0.37,h)+normpdf(0,0.52,h)+normpdf(0,0.29,h)+normpdf(0,-0.14,h)+normpdf(0,0.52,h)+normpdf(0,0.05,h)+normpdf(0,0.1,h)+normpdf(0,0.4,h))/60, 4)}}$"
+    }
+   },
+   "question": "What is $\\hat f(0)$ at $h = 0.2917$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4688,
+    "tol": {"abs": 0.001},
+    "unit": "",
+    "accept": "0.4688, from the caption at $h = 0.2917$.",
+    "label": "Density at 0",
+    "wrong": [
+     {
+      "id": "narrow",
+      "value": 0.2724,
+      "tol": {"abs": 0.0008}
+     },
+     {
+      "id": "wide",
+      "value": 0.3132,
+      "tol": {"abs": 0.0008}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "The slider opens at 0.2917."},
+    {"rung": "point", "text": "Read the caption."},
+    {"rung": "step", "text": "About 0.469."}
+   ],
+   "feedback": {
+    "correct": "$\\hat f(0) = 0.4688$.",
+    "generic": "Not quite right. Read the caption at $h = 0.2917$.",
+    "byKey": {"narrow": "That is the value at $h = 0.05$. Move the slider back to 0.2917.", "wide": "That is the value at $h = 1$. Move the slider back to 0.2917."}
+   },
+   "explain": {
+    "text": "At the rule-of-thumb bandwidth the estimate is 0.4688 at 0, higher than a normal with SD 0.8965 would give (0.445). Fat tails come with a taller, narrower middle."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A one-in-a-hundred loss",
+   "prose": "The KDE's 1% quantile solves $\\frac1n\\sum_j\\Phi\\!\\left(\\frac{x - r_j}{h}\\right) = 0.01$: $-3.406$%. The empirical 1% quantile is $-2.766$%. A normal fit has mean $-0.0037$ and SD 0.8965; $z_{0.01} = -2.3263$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -4, "max": 2.5, "width": 0.25},
+     "data": [
+      -0.38,
+      -1.6,
+      -0.42,
+      -0.44,
+      0.02,
+      0.76,
+      0.63,
+      0.27,
+      0.83,
+      0.98,
+      0.9,
+      -0.17,
+      0.13,
+      0.16,
+      0.91,
+      1.28,
+      0.5,
+      -1.09,
+      -1.96,
+      0.82,
+      -1.12,
+      0.2,
+      -0.32,
+      -0.78,
+      0.62,
+      -0.43,
+      1.03,
+      0.15,
+      0.62,
+      -2.27,
+      -0.28,
+      -0.25,
+      1.59,
+      -0.08,
+      1.1,
+      0.4,
+      0.64,
+      -0.74,
+      -0.14,
+      -3.48,
+      0.6,
+      0.44,
+      0.42,
+      -1.39,
+      -0.76,
+      0.8,
+      -0.71,
+      -0.33,
+      0.61,
+      0.15,
+      -0.3,
+      0.29,
+      -0.37,
+      0.52,
+      0.29,
+      -0.14,
+      0.52,
+      0.05,
+      0.1,
+      0.4
+     ],
+     "xLabel": "Daily return (%)",
+     "yLabel": "Days",
+     "height": 250,
+     "curves": [
+      {
+       "id": "kde",
+       "expr": "w*(normpdf(x,-0.38,h)+normpdf(x,-1.6,h)+normpdf(x,-0.42,h)+normpdf(x,-0.44,h)+normpdf(x,0.02,h)+normpdf(x,0.76,h)+normpdf(x,0.63,h)+normpdf(x,0.27,h)+normpdf(x,0.83,h)+normpdf(x,0.98,h)+normpdf(x,0.9,h)+normpdf(x,-0.17,h)+normpdf(x,0.13,h)+normpdf(x,0.16,h)+normpdf(x,0.91,h)+normpdf(x,1.28,h)+normpdf(x,0.5,h)+normpdf(x,-1.09,h)+normpdf(x,-1.96,h)+normpdf(x,0.82,h)+normpdf(x,-1.12,h)+normpdf(x,0.2,h)+normpdf(x,-0.32,h)+normpdf(x,-0.78,h)+normpdf(x,0.62,h)+normpdf(x,-0.43,h)+normpdf(x,1.03,h)+normpdf(x,0.15,h)+normpdf(x,0.62,h)+normpdf(x,-2.27,h)+normpdf(x,-0.28,h)+normpdf(x,-0.25,h)+normpdf(x,1.59,h)+normpdf(x,-0.08,h)+normpdf(x,1.1,h)+normpdf(x,0.4,h)+normpdf(x,0.64,h)+normpdf(x,-0.74,h)+normpdf(x,-0.14,h)+normpdf(x,-3.48,h)+normpdf(x,0.6,h)+normpdf(x,0.44,h)+normpdf(x,0.42,h)+normpdf(x,-1.39,h)+normpdf(x,-0.76,h)+normpdf(x,0.8,h)+normpdf(x,-0.71,h)+normpdf(x,-0.33,h)+normpdf(x,0.61,h)+normpdf(x,0.15,h)+normpdf(x,-0.3,h)+normpdf(x,0.29,h)+normpdf(x,-0.37,h)+normpdf(x,0.52,h)+normpdf(x,0.29,h)+normpdf(x,-0.14,h)+normpdf(x,0.52,h)+normpdf(x,0.05,h)+normpdf(x,0.1,h)+normpdf(x,0.4,h))",
+       "label": "kernel estimate",
+       "colour": 2
+      },
+      {"id": "nrm", "expr": "w*60*normpdf(x,-0.0037,0.8965)", "label": "normal fit", "colour": 3, "dashed": true}
+     ]
+    },
+    "state": {
+     "params": {"h": 0.2917}
+    },
+    "derive": {
+     "caption": "$h = {{fixed(h, 3)}}$: the estimate at 0 is $\\hat f(0) = {{fixed((normpdf(0,-0.38,h)+normpdf(0,-1.6,h)+normpdf(0,-0.42,h)+normpdf(0,-0.44,h)+normpdf(0,0.02,h)+normpdf(0,0.76,h)+normpdf(0,0.63,h)+normpdf(0,0.27,h)+normpdf(0,0.83,h)+normpdf(0,0.98,h)+normpdf(0,0.9,h)+normpdf(0,-0.17,h)+normpdf(0,0.13,h)+normpdf(0,0.16,h)+normpdf(0,0.91,h)+normpdf(0,1.28,h)+normpdf(0,0.5,h)+normpdf(0,-1.09,h)+normpdf(0,-1.96,h)+normpdf(0,0.82,h)+normpdf(0,-1.12,h)+normpdf(0,0.2,h)+normpdf(0,-0.32,h)+normpdf(0,-0.78,h)+normpdf(0,0.62,h)+normpdf(0,-0.43,h)+normpdf(0,1.03,h)+normpdf(0,0.15,h)+normpdf(0,0.62,h)+normpdf(0,-2.27,h)+normpdf(0,-0.28,h)+normpdf(0,-0.25,h)+normpdf(0,1.59,h)+normpdf(0,-0.08,h)+normpdf(0,1.1,h)+normpdf(0,0.4,h)+normpdf(0,0.64,h)+normpdf(0,-0.74,h)+normpdf(0,-0.14,h)+normpdf(0,-3.48,h)+normpdf(0,0.6,h)+normpdf(0,0.44,h)+normpdf(0,0.42,h)+normpdf(0,-1.39,h)+normpdf(0,-0.76,h)+normpdf(0,0.8,h)+normpdf(0,-0.71,h)+normpdf(0,-0.33,h)+normpdf(0,0.61,h)+normpdf(0,0.15,h)+normpdf(0,-0.3,h)+normpdf(0,0.29,h)+normpdf(0,-0.37,h)+normpdf(0,0.52,h)+normpdf(0,0.29,h)+normpdf(0,-0.14,h)+normpdf(0,0.52,h)+normpdf(0,0.05,h)+normpdf(0,0.1,h)+normpdf(0,0.4,h))/60, 4)}}$"
+    }
+   },
+   "question": "What 1% quantile does the normal fit give?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -2.0891,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "$-2.089$: $-0.0037 + 0.8965 \\times (-2.3263)$.",
+    "label": "1% quantile (%)",
+    "wrong": [
+     {
+      "id": "kde",
+      "value": -3.4061,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "emp",
+      "value": -2.7661,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "sd",
+      "value": -2.3263,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Mean plus $z_{0.01}$ times SD."
+    },
+    {"rung": "point", "text": "$0.8965 \\times (-2.3263) = -2.0855$."},
+    {"rung": "step", "text": "$-0.0037 - 2.0855 = -2.089$."}
+   ],
+   "feedback": {
+    "correct": "$-2.089$%: the normal understates the KDE's $-3.406$% by 1.3 points.",
+    "generic": "Not quite right. Compute $-0.0037 + 0.8965 \\times (-2.3263)$.",
+    "byKey": {"kde": "That is the KDE's quantile.", "emp": "That is the empirical quantile.", "sd": "You left out the SD."}
+   },
+   "explain": {
+    "text": "The normal says $-2.089$%, the data's own quantile $-2.766$%, the KDE $-3.406$%. The normal's thin tail understates a one-in-a-hundred loss. Small $h$ is noisy, large $h$ blurs: that is the bias and variance trade."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Other rules of thumb",
+   "prose": "Other rules use $s$ alone: $1.06\\,s\\,n^{-1/5}$ (the normal-reference rule) and Scott's $s\\,n^{-1/5} = 0.3953$, scipy's default.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -4, "max": 2.5, "width": 0.25},
+     "data": [
+      -0.38,
+      -1.6,
+      -0.42,
+      -0.44,
+      0.02,
+      0.76,
+      0.63,
+      0.27,
+      0.83,
+      0.98,
+      0.9,
+      -0.17,
+      0.13,
+      0.16,
+      0.91,
+      1.28,
+      0.5,
+      -1.09,
+      -1.96,
+      0.82,
+      -1.12,
+      0.2,
+      -0.32,
+      -0.78,
+      0.62,
+      -0.43,
+      1.03,
+      0.15,
+      0.62,
+      -2.27,
+      -0.28,
+      -0.25,
+      1.59,
+      -0.08,
+      1.1,
+      0.4,
+      0.64,
+      -0.74,
+      -0.14,
+      -3.48,
+      0.6,
+      0.44,
+      0.42,
+      -1.39,
+      -0.76,
+      0.8,
+      -0.71,
+      -0.33,
+      0.61,
+      0.15,
+      -0.3,
+      0.29,
+      -0.37,
+      0.52,
+      0.29,
+      -0.14,
+      0.52,
+      0.05,
+      0.1,
+      0.4
+     ],
+     "xLabel": "Daily return (%)",
+     "yLabel": "Days",
+     "height": 250,
+     "curves": [
+      {
+       "id": "kde",
+       "expr": "w*(normpdf(x,-0.38,h)+normpdf(x,-1.6,h)+normpdf(x,-0.42,h)+normpdf(x,-0.44,h)+normpdf(x,0.02,h)+normpdf(x,0.76,h)+normpdf(x,0.63,h)+normpdf(x,0.27,h)+normpdf(x,0.83,h)+normpdf(x,0.98,h)+normpdf(x,0.9,h)+normpdf(x,-0.17,h)+normpdf(x,0.13,h)+normpdf(x,0.16,h)+normpdf(x,0.91,h)+normpdf(x,1.28,h)+normpdf(x,0.5,h)+normpdf(x,-1.09,h)+normpdf(x,-1.96,h)+normpdf(x,0.82,h)+normpdf(x,-1.12,h)+normpdf(x,0.2,h)+normpdf(x,-0.32,h)+normpdf(x,-0.78,h)+normpdf(x,0.62,h)+normpdf(x,-0.43,h)+normpdf(x,1.03,h)+normpdf(x,0.15,h)+normpdf(x,0.62,h)+normpdf(x,-2.27,h)+normpdf(x,-0.28,h)+normpdf(x,-0.25,h)+normpdf(x,1.59,h)+normpdf(x,-0.08,h)+normpdf(x,1.1,h)+normpdf(x,0.4,h)+normpdf(x,0.64,h)+normpdf(x,-0.74,h)+normpdf(x,-0.14,h)+normpdf(x,-3.48,h)+normpdf(x,0.6,h)+normpdf(x,0.44,h)+normpdf(x,0.42,h)+normpdf(x,-1.39,h)+normpdf(x,-0.76,h)+normpdf(x,0.8,h)+normpdf(x,-0.71,h)+normpdf(x,-0.33,h)+normpdf(x,0.61,h)+normpdf(x,0.15,h)+normpdf(x,-0.3,h)+normpdf(x,0.29,h)+normpdf(x,-0.37,h)+normpdf(x,0.52,h)+normpdf(x,0.29,h)+normpdf(x,-0.14,h)+normpdf(x,0.52,h)+normpdf(x,0.05,h)+normpdf(x,0.1,h)+normpdf(x,0.4,h))",
+       "label": "kernel estimate",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "params": {"h": 0.419}
+    },
+    "controls": [
+     {"bind": "h", "min": 0.05, "max": 1.0, "step": 0.01, "start": 0.05, "label": "Bandwidth $h$", "decimals": 2}
+    ],
+    "derive": {
+     "caption": "$h = {{fixed(h, 3)}}$: the estimate at 0 is $\\hat f(0) = {{fixed((normpdf(0,-0.38,h)+normpdf(0,-1.6,h)+normpdf(0,-0.42,h)+normpdf(0,-0.44,h)+normpdf(0,0.02,h)+normpdf(0,0.76,h)+normpdf(0,0.63,h)+normpdf(0,0.27,h)+normpdf(0,0.83,h)+normpdf(0,0.98,h)+normpdf(0,0.9,h)+normpdf(0,-0.17,h)+normpdf(0,0.13,h)+normpdf(0,0.16,h)+normpdf(0,0.91,h)+normpdf(0,1.28,h)+normpdf(0,0.5,h)+normpdf(0,-1.09,h)+normpdf(0,-1.96,h)+normpdf(0,0.82,h)+normpdf(0,-1.12,h)+normpdf(0,0.2,h)+normpdf(0,-0.32,h)+normpdf(0,-0.78,h)+normpdf(0,0.62,h)+normpdf(0,-0.43,h)+normpdf(0,1.03,h)+normpdf(0,0.15,h)+normpdf(0,0.62,h)+normpdf(0,-2.27,h)+normpdf(0,-0.28,h)+normpdf(0,-0.25,h)+normpdf(0,1.59,h)+normpdf(0,-0.08,h)+normpdf(0,1.1,h)+normpdf(0,0.4,h)+normpdf(0,0.64,h)+normpdf(0,-0.74,h)+normpdf(0,-0.14,h)+normpdf(0,-3.48,h)+normpdf(0,0.6,h)+normpdf(0,0.44,h)+normpdf(0,0.42,h)+normpdf(0,-1.39,h)+normpdf(0,-0.76,h)+normpdf(0,0.8,h)+normpdf(0,-0.71,h)+normpdf(0,-0.33,h)+normpdf(0,0.61,h)+normpdf(0,0.15,h)+normpdf(0,-0.3,h)+normpdf(0,0.29,h)+normpdf(0,-0.37,h)+normpdf(0,0.52,h)+normpdf(0,0.29,h)+normpdf(0,-0.14,h)+normpdf(0,0.52,h)+normpdf(0,0.05,h)+normpdf(0,0.1,h)+normpdf(0,0.4,h))/60, 4)}}$"
+    }
+   },
+   "question": "What is $1.06\\,s\\,n^{-1/5}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.419,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.4190: $1.06 \\times 0.8965 \\times 0.4409$.",
+    "label": "h",
+    "wrong": [
+     {
+      "id": "scott",
+      "value": 0.3953,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "silver",
+      "value": 0.2917,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$n^{-1/5} = 60^{-0.2} = 0.4409$."
+    },
+    {"rung": "point", "text": "$1.06 \\times 0.8965 = 0.9503$."},
+    {"rung": "step", "text": "$0.9503 \\times 0.4409 = 0.4190$."}
+   ],
+   "feedback": {
+    "correct": "0.4190, wider than Silverman's 0.2917.",
+    "generic": "Not quite right. Multiply 1.06, 0.8965 and 0.4409.",
+    "byKey": {"scott": "That is Scott's rule, without the 1.06.", "silver": "That is Silverman's IQR rule."}
+   },
+   "explain": {
+    "text": "$1.06\\,s\\,n^{-1/5} = 0.4190$. Rules based on $s$ alone let the fat tail widen every bump. Stating which $h$ was used is part of any KDE result."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "What scipy calls the bandwidth",
+   "prose": "A colleague wants $h = 0.29$ and writes `gaussian_kde(r, bw_method=0.29)`. They also try `bw_method='silverman'` expecting the IQR rule.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -4, "max": 2.5, "width": 0.25},
+     "data": [
+      -0.38,
+      -1.6,
+      -0.42,
+      -0.44,
+      0.02,
+      0.76,
+      0.63,
+      0.27,
+      0.83,
+      0.98,
+      0.9,
+      -0.17,
+      0.13,
+      0.16,
+      0.91,
+      1.28,
+      0.5,
+      -1.09,
+      -1.96,
+      0.82,
+      -1.12,
+      0.2,
+      -0.32,
+      -0.78,
+      0.62,
+      -0.43,
+      1.03,
+      0.15,
+      0.62,
+      -2.27,
+      -0.28,
+      -0.25,
+      1.59,
+      -0.08,
+      1.1,
+      0.4,
+      0.64,
+      -0.74,
+      -0.14,
+      -3.48,
+      0.6,
+      0.44,
+      0.42,
+      -1.39,
+      -0.76,
+      0.8,
+      -0.71,
+      -0.33,
+      0.61,
+      0.15,
+      -0.3,
+      0.29,
+      -0.37,
+      0.52,
+      0.29,
+      -0.14,
+      0.52,
+      0.05,
+      0.1,
+      0.4
+     ],
+     "xLabel": "Daily return (%)",
+     "yLabel": "Days",
+     "height": 250,
+     "curves": [
+      {
+       "id": "kde",
+       "expr": "w*(normpdf(x,-0.38,h)+normpdf(x,-1.6,h)+normpdf(x,-0.42,h)+normpdf(x,-0.44,h)+normpdf(x,0.02,h)+normpdf(x,0.76,h)+normpdf(x,0.63,h)+normpdf(x,0.27,h)+normpdf(x,0.83,h)+normpdf(x,0.98,h)+normpdf(x,0.9,h)+normpdf(x,-0.17,h)+normpdf(x,0.13,h)+normpdf(x,0.16,h)+normpdf(x,0.91,h)+normpdf(x,1.28,h)+normpdf(x,0.5,h)+normpdf(x,-1.09,h)+normpdf(x,-1.96,h)+normpdf(x,0.82,h)+normpdf(x,-1.12,h)+normpdf(x,0.2,h)+normpdf(x,-0.32,h)+normpdf(x,-0.78,h)+normpdf(x,0.62,h)+normpdf(x,-0.43,h)+normpdf(x,1.03,h)+normpdf(x,0.15,h)+normpdf(x,0.62,h)+normpdf(x,-2.27,h)+normpdf(x,-0.28,h)+normpdf(x,-0.25,h)+normpdf(x,1.59,h)+normpdf(x,-0.08,h)+normpdf(x,1.1,h)+normpdf(x,0.4,h)+normpdf(x,0.64,h)+normpdf(x,-0.74,h)+normpdf(x,-0.14,h)+normpdf(x,-3.48,h)+normpdf(x,0.6,h)+normpdf(x,0.44,h)+normpdf(x,0.42,h)+normpdf(x,-1.39,h)+normpdf(x,-0.76,h)+normpdf(x,0.8,h)+normpdf(x,-0.71,h)+normpdf(x,-0.33,h)+normpdf(x,0.61,h)+normpdf(x,0.15,h)+normpdf(x,-0.3,h)+normpdf(x,0.29,h)+normpdf(x,-0.37,h)+normpdf(x,0.52,h)+normpdf(x,0.29,h)+normpdf(x,-0.14,h)+normpdf(x,0.52,h)+normpdf(x,0.05,h)+normpdf(x,0.1,h)+normpdf(x,0.4,h))",
+       "label": "kernel estimate",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "params": {"h": 0.26}
+    },
+    "controls": [
+     {"bind": "h", "min": 0.05, "max": 1.0, "step": 0.01, "start": 0.05, "label": "Bandwidth $h$", "decimals": 2}
+    ],
+    "derive": {
+     "caption": "$h = {{fixed(h, 3)}}$: the estimate at 0 is $\\hat f(0) = {{fixed((normpdf(0,-0.38,h)+normpdf(0,-1.6,h)+normpdf(0,-0.42,h)+normpdf(0,-0.44,h)+normpdf(0,0.02,h)+normpdf(0,0.76,h)+normpdf(0,0.63,h)+normpdf(0,0.27,h)+normpdf(0,0.83,h)+normpdf(0,0.98,h)+normpdf(0,0.9,h)+normpdf(0,-0.17,h)+normpdf(0,0.13,h)+normpdf(0,0.16,h)+normpdf(0,0.91,h)+normpdf(0,1.28,h)+normpdf(0,0.5,h)+normpdf(0,-1.09,h)+normpdf(0,-1.96,h)+normpdf(0,0.82,h)+normpdf(0,-1.12,h)+normpdf(0,0.2,h)+normpdf(0,-0.32,h)+normpdf(0,-0.78,h)+normpdf(0,0.62,h)+normpdf(0,-0.43,h)+normpdf(0,1.03,h)+normpdf(0,0.15,h)+normpdf(0,0.62,h)+normpdf(0,-2.27,h)+normpdf(0,-0.28,h)+normpdf(0,-0.25,h)+normpdf(0,1.59,h)+normpdf(0,-0.08,h)+normpdf(0,1.1,h)+normpdf(0,0.4,h)+normpdf(0,0.64,h)+normpdf(0,-0.74,h)+normpdf(0,-0.14,h)+normpdf(0,-3.48,h)+normpdf(0,0.6,h)+normpdf(0,0.44,h)+normpdf(0,0.42,h)+normpdf(0,-1.39,h)+normpdf(0,-0.76,h)+normpdf(0,0.8,h)+normpdf(0,-0.71,h)+normpdf(0,-0.33,h)+normpdf(0,0.61,h)+normpdf(0,0.15,h)+normpdf(0,-0.3,h)+normpdf(0,0.29,h)+normpdf(0,-0.37,h)+normpdf(0,0.52,h)+normpdf(0,0.29,h)+normpdf(0,-0.14,h)+normpdf(0,0.52,h)+normpdf(0,0.05,h)+normpdf(0,0.1,h)+normpdf(0,0.4,h))/60, 4)}}$"
+    }
+   },
+   "question": "What bandwidth did `bw_method=0.29` actually use?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "factor", "text": "$0.29 \\times s = 0.26$: scipy's number is a factor on the sample SD", "correct": true},
+     {"id": "h", "text": "$h = 0.29$, as written", "why": "scipy multiplies `bw_method` by the data's standard deviation, 0.8965."},
+     {
+      "id": "silv",
+      "text": "Silverman's IQR rule, 0.2917",
+      "why": "That needs a factor of $0.2917/0.8965$. And scipy's `'silverman'` is $s(3n/4)^{-1/5} = 0.4187$, no IQR."
+     },
+     {"id": "var", "text": "$0.29 \\times s^2 = 0.233$", "why": "The factor multiplies the SD, not the variance."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Read `gaussian_kde`'s documentation for `bw_method`."},
+    {"rung": "point", "text": "A scalar is the factor; the kernel's SD is factor times the data's SD."},
+    {"rung": "step", "text": "$0.29 \\times 0.8965 = 0.26$."}
+   ],
+   "feedback": {
+    "correct": "The factor times $s$: 0.26, not 0.29.",
+    "generic": "Not quite. scipy's scalar is a multiple of the sample SD.",
+    "byKey": {
+     "h": "You read `bw_method` as $h$. Pass `h / data.std(ddof=1)` to get $h$.",
+     "silv": "You read `'silverman'` as the IQR rule. scipy's version is $s(3n/4)^{-1/5} = 0.4187$."
+    }
+   },
+   "explain": {
+    "text": "`bw_method=0.29` gives $h = 0.29 \\times 0.8965 = 0.26$, and `'silverman'` gives 0.4187. To get a chosen $h$, pass `bw_method=h / data.std(ddof=1)`."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A density below zero",
+   "prose": "Bid-ask spreads cannot be negative. A KDE of 40 spreads (bps) with Silverman's $h = 0.3356$ still puts bumps across 0.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [-1.5, 6],
+     "y": [0, 0.8],
+     "xLabel": "Spread (bps)",
+     "yLabel": "density",
+     "height": 240,
+     "functions": [
+      {
+       "id": "s",
+       "expr": "(normpdf(x,1.11,0.3356)+normpdf(x,0.14,0.3356)+normpdf(x,0.25,0.3356)+normpdf(x,0.94,0.3356)+normpdf(x,0.13,0.3356)+normpdf(x,0.01,0.3356)+normpdf(x,5.03,0.3356)+normpdf(x,0.06,0.3356)+normpdf(x,0.61,0.3356)+normpdf(x,1.07,0.3356)+normpdf(x,0.09,0.3356)+normpdf(x,0.09,0.3356)+normpdf(x,0.42,0.3356)+normpdf(x,1.62,0.3356)+normpdf(x,0.13,0.3356)+normpdf(x,0.36,0.3356)+normpdf(x,2.95,0.3356)+normpdf(x,0.19,0.3356)+normpdf(x,0.64,0.3356)+normpdf(x,0.6,0.3356)+normpdf(x,0.27,0.3356)+normpdf(x,0.29,0.3356)+normpdf(x,0.11,0.3356)+normpdf(x,2.01,0.3356)+normpdf(x,3.05,0.3356)+normpdf(x,0.41,0.3356)+normpdf(x,0.23,0.3356)+normpdf(x,2.34,0.3356)+normpdf(x,0.09,0.3356)+normpdf(x,0.67,0.3356)+normpdf(x,1.02,0.3356)+normpdf(x,1.18,0.3356)+normpdf(x,0.48,0.3356)+normpdf(x,2.08,0.3356)+normpdf(x,3.62,0.3356)+normpdf(x,0.98,0.3356)+normpdf(x,2.3,0.3356)+normpdf(x,0.75,0.3356)+normpdf(x,0.93,0.3356)+normpdf(x,1.52,0.3356))/40",
+       "label": "kernel estimate",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "area": {"id": "A", "f": "s", "from": -2, "to": 0, "label": "auto"},
+     "vlines": [
+      {"id": "z", "x": 0, "label": "0 bps"}
+     ]
+    }
+   },
+   "question": "What share of the estimated density lies below 0?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1313,
+    "tol": {"abs": 0.003},
+    "unit": "%",
+    "accept": "0.131, the shaded area.",
+    "label": "Share below 0",
+    "wrong": [
+     {
+      "id": "zero",
+      "value": 0,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "half",
+      "value": 0.5,
+      "tol": {"abs": 0.01}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Read the shaded area."},
+    {"rung": "point", "text": "It runs from far left to 0."},
+    {"rung": "step", "text": "About 0.13."}
+   ],
+   "feedback": {
+    "correct": "13.1% of the estimate sits on impossible negative spreads.",
+    "generic": "Not quite right. Read the shaded area's label.",
+    "byKey": {"zero": "Every bump near 0 spills across it.", "half": "Only the bumps close to 0 spill over; most spreads are well above it."}
+   },
+   "explain": {
+    "text": "Near a boundary the normal bumps leak: 13.1% of the mass is below 0. Estimate on $\\ln(\\text{spread})$ and transform back, or reflect the bumps at 0.",
+    "canvas": {
+     "highlight": ["A"]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A kernel estimate in code",
+   "prose": "Broadcast: a column of grid points minus a row of data gives every $(x - r_j)$ at once. For the quantile, `brentq` finds where the mixture CDF crosses $q$.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -4, "max": 2.5, "width": 0.25},
+     "data": [
+      -0.38,
+      -1.6,
+      -0.42,
+      -0.44,
+      0.02,
+      0.76,
+      0.63,
+      0.27,
+      0.83,
+      0.98,
+      0.9,
+      -0.17,
+      0.13,
+      0.16,
+      0.91,
+      1.28,
+      0.5,
+      -1.09,
+      -1.96,
+      0.82,
+      -1.12,
+      0.2,
+      -0.32,
+      -0.78,
+      0.62,
+      -0.43,
+      1.03,
+      0.15,
+      0.62,
+      -2.27,
+      -0.28,
+      -0.25,
+      1.59,
+      -0.08,
+      1.1,
+      0.4,
+      0.64,
+      -0.74,
+      -0.14,
+      -3.48,
+      0.6,
+      0.44,
+      0.42,
+      -1.39,
+      -0.76,
+      0.8,
+      -0.71,
+      -0.33,
+      0.61,
+      0.15,
+      -0.3,
+      0.29,
+      -0.37,
+      0.52,
+      0.29,
+      -0.14,
+      0.52,
+      0.05,
+      0.1,
+      0.4
+     ],
+     "xLabel": "Daily return (%)",
+     "yLabel": "Days",
+     "height": 250,
+     "curves": [
+      {
+       "id": "kde",
+       "expr": "w*(normpdf(x,-0.38,h)+normpdf(x,-1.6,h)+normpdf(x,-0.42,h)+normpdf(x,-0.44,h)+normpdf(x,0.02,h)+normpdf(x,0.76,h)+normpdf(x,0.63,h)+normpdf(x,0.27,h)+normpdf(x,0.83,h)+normpdf(x,0.98,h)+normpdf(x,0.9,h)+normpdf(x,-0.17,h)+normpdf(x,0.13,h)+normpdf(x,0.16,h)+normpdf(x,0.91,h)+normpdf(x,1.28,h)+normpdf(x,0.5,h)+normpdf(x,-1.09,h)+normpdf(x,-1.96,h)+normpdf(x,0.82,h)+normpdf(x,-1.12,h)+normpdf(x,0.2,h)+normpdf(x,-0.32,h)+normpdf(x,-0.78,h)+normpdf(x,0.62,h)+normpdf(x,-0.43,h)+normpdf(x,1.03,h)+normpdf(x,0.15,h)+normpdf(x,0.62,h)+normpdf(x,-2.27,h)+normpdf(x,-0.28,h)+normpdf(x,-0.25,h)+normpdf(x,1.59,h)+normpdf(x,-0.08,h)+normpdf(x,1.1,h)+normpdf(x,0.4,h)+normpdf(x,0.64,h)+normpdf(x,-0.74,h)+normpdf(x,-0.14,h)+normpdf(x,-3.48,h)+normpdf(x,0.6,h)+normpdf(x,0.44,h)+normpdf(x,0.42,h)+normpdf(x,-1.39,h)+normpdf(x,-0.76,h)+normpdf(x,0.8,h)+normpdf(x,-0.71,h)+normpdf(x,-0.33,h)+normpdf(x,0.61,h)+normpdf(x,0.15,h)+normpdf(x,-0.3,h)+normpdf(x,0.29,h)+normpdf(x,-0.37,h)+normpdf(x,0.52,h)+normpdf(x,0.29,h)+normpdf(x,-0.14,h)+normpdf(x,0.52,h)+normpdf(x,0.05,h)+normpdf(x,0.1,h)+normpdf(x,0.4,h))",
+       "label": "kernel estimate",
+       "colour": 2
+      }
+     ]
+    },
+    "state": {
+     "params": {"h": 0.2917}
+    },
+    "derive": {
+     "caption": "$h = {{fixed(h, 3)}}$: the estimate at 0 is $\\hat f(0) = {{fixed((normpdf(0,-0.38,h)+normpdf(0,-1.6,h)+normpdf(0,-0.42,h)+normpdf(0,-0.44,h)+normpdf(0,0.02,h)+normpdf(0,0.76,h)+normpdf(0,0.63,h)+normpdf(0,0.27,h)+normpdf(0,0.83,h)+normpdf(0,0.98,h)+normpdf(0,0.9,h)+normpdf(0,-0.17,h)+normpdf(0,0.13,h)+normpdf(0,0.16,h)+normpdf(0,0.91,h)+normpdf(0,1.28,h)+normpdf(0,0.5,h)+normpdf(0,-1.09,h)+normpdf(0,-1.96,h)+normpdf(0,0.82,h)+normpdf(0,-1.12,h)+normpdf(0,0.2,h)+normpdf(0,-0.32,h)+normpdf(0,-0.78,h)+normpdf(0,0.62,h)+normpdf(0,-0.43,h)+normpdf(0,1.03,h)+normpdf(0,0.15,h)+normpdf(0,0.62,h)+normpdf(0,-2.27,h)+normpdf(0,-0.28,h)+normpdf(0,-0.25,h)+normpdf(0,1.59,h)+normpdf(0,-0.08,h)+normpdf(0,1.1,h)+normpdf(0,0.4,h)+normpdf(0,0.64,h)+normpdf(0,-0.74,h)+normpdf(0,-0.14,h)+normpdf(0,-3.48,h)+normpdf(0,0.6,h)+normpdf(0,0.44,h)+normpdf(0,0.42,h)+normpdf(0,-1.39,h)+normpdf(0,-0.76,h)+normpdf(0,0.8,h)+normpdf(0,-0.71,h)+normpdf(0,-0.33,h)+normpdf(0,0.61,h)+normpdf(0,0.15,h)+normpdf(0,-0.3,h)+normpdf(0,0.29,h)+normpdf(0,-0.37,h)+normpdf(0,0.52,h)+normpdf(0,0.29,h)+normpdf(0,-0.14,h)+normpdf(0,0.52,h)+normpdf(0,0.05,h)+normpdf(0,0.1,h)+normpdf(0,0.4,h))/60, 4)}}$"
+    }
+   },
+   "question": "Complete `kde`, `silverman_h` and `kde_quantile`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.optimize import brentq\nfrom scipy.stats import norm\n\n\ndef kde(x_grid, data, h):\n    \"\"\"Gaussian KDE at each point of x_grid, no loops.\"\"\"\n    ...\n\n\ndef silverman_h(data):\n    \"\"\"0.9 min(s, IQR / 1.34) n^(-1/5), IQR from np.percentile.\"\"\"\n    ...\n\n\ndef kde_quantile(data, h, q):\n    \"\"\"x with mean(Phi((x - data) / h)) = q.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom scipy.optimize import brentq\nfrom scipy.stats import norm\n\n\ndef kde(x_grid, data, h):\n    x = np.asarray(x_grid, dtype=float)[:, None]\n    d = np.asarray(data, dtype=float)[None, :]\n    return norm.pdf((x - d) / h).mean(axis=1) / h\n\n\ndef silverman_h(data):\n    data = np.asarray(data, dtype=float)\n    q75, q25 = np.percentile(data, [75, 25])\n    s = data.std(ddof=1)\n    return 0.9 * min(s, (q75 - q25) / 1.34) * len(data) ** -0.2\n\n\ndef kde_quantile(data, h, q):\n    data = np.asarray(data, dtype=float)\n    f = lambda x: norm.cdf((x - data) / h).mean() - q\n    lo, hi = data.min() - 10 * h, data.max() + 10 * h\n    return brentq(f, lo, hi, xtol=1e-12)\n",
+    "examples": [
+     {
+      "setup": "rng = np.random.default_rng(96); data = np.round(0.05 + 0.7 * rng.standard_t(4, 60), 2)",
+      "call": "round(float(silverman_h(data)), 4)",
+      "expect": "0.2917",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rng = np.random.default_rng(96); data = np.round(0.05 + 0.7 * rng.standard_t(4, 60), 2)",
+      "call": "round(float(kde([0.0], data, silverman_h(data))[0]), 6)",
+      "expect": "0.468795",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "rng = np.random.default_rng(96); data = np.round(0.05 + 0.7 * rng.standard_t(4, 60), 2)",
+      "call": "bool(np.max(np.abs(kde(np.linspace(-4, 3, 50), data, 0.3) - __import__('scipy.stats', fromlist=['gaussian_kde']).gaussian_kde(data, bw_method=0.3 / data.std(ddof=1))(np.linspace(-4, 3, 50)))) < 1e-12)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(96); data = np.round(0.05 + 0.7 * rng.standard_t(4, 60), 2)",
+      "call": "round(float(silverman_h(data)), 6)",
+      "expect": "0.291705",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "data = np.round(np.random.default_rng(73).exponential(1.0, 40), 2)",
+      "call": "round(float(silverman_h(data)), 6)",
+      "expect": "0.335615",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "rng = np.random.default_rng(96); data = np.round(0.05 + 0.7 * rng.standard_t(4, 60), 2)",
+      "call": "round(float(kde_quantile(data, silverman_h(data), 0.01)), 6)",
+      "expect": "-3.406135",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "rng = np.random.default_rng(96); data = np.round(0.05 + 0.7 * rng.standard_t(4, 60), 2)",
+      "call": "round(float(kde_quantile(data, 0.5, 0.5)), 6)",
+      "expect": "0.110823",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     }
+    ],
+    "how": "Check runs 6 hidden tests on the 60 returns (seed 96) and the 40 spreads (seed 73). They cover $\\hat f(0) = 0.468795$, a grid against `gaussian_kde` within $10^{-12}$, Silverman's $h$, and two quantiles. Values were computed with this solution in Pyodide. The first run loads NumPy and SciPy, about 10 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`norm.pdf((x[:, None] - data[None, :]) / h).mean(axis=1) / h`."
+    },
+    {
+     "rung": "point",
+     "text": "IQR is `np.subtract(*np.percentile(data, [75, 25]))`."
+    },
+    {"rung": "step", "text": "`brentq(lambda x: norm.cdf((x - data) / h).mean() - q, lo, hi)`."}
+   ],
+   "feedback": {
+    "correct": "Your estimate matches scipy to $10^{-12}$ and the 1% quantile is $-3.406$.",
+    "generic": "Some tests failed. Check the $1/h$ factor and the IQR rule."
+   },
+   "explain": {
+    "text": "The $1/h$ outside the mean makes each bump integrate to $1/n$. The quantile is a root of a smooth, increasing function, so `brentq` finds it to machine precision."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A loss figure for a fat-tailed book",
+   "prose": "A risk manager wants the one-day loss exceeded once in a hundred days for a £10m book with these returns. The KDE at Silverman's $h = 0.2917$ gives a 1% quantile of $-3.406$%; the normal fit gives $-2.089$%.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -4, "max": 2.5, "width": 0.25},
+     "data": [
+      -0.38,
+      -1.6,
+      -0.42,
+      -0.44,
+      0.02,
+      0.76,
+      0.63,
+      0.27,
+      0.83,
+      0.98,
+      0.9,
+      -0.17,
+      0.13,
+      0.16,
+      0.91,
+      1.28,
+      0.5,
+      -1.09,
+      -1.96,
+      0.82,
+      -1.12,
+      0.2,
+      -0.32,
+      -0.78,
+      0.62,
+      -0.43,
+      1.03,
+      0.15,
+      0.62,
+      -2.27,
+      -0.28,
+      -0.25,
+      1.59,
+      -0.08,
+      1.1,
+      0.4,
+      0.64,
+      -0.74,
+      -0.14,
+      -3.48,
+      0.6,
+      0.44,
+      0.42,
+      -1.39,
+      -0.76,
+      0.8,
+      -0.71,
+      -0.33,
+      0.61,
+      0.15,
+      -0.3,
+      0.29,
+      -0.37,
+      0.52,
+      0.29,
+      -0.14,
+      0.52,
+      0.05,
+      0.1,
+      0.4
+     ],
+     "xLabel": "Daily return (%)",
+     "yLabel": "Days",
+     "height": 250,
+     "curves": [
+      {
+       "id": "kde",
+       "expr": "w*(normpdf(x,-0.38,h)+normpdf(x,-1.6,h)+normpdf(x,-0.42,h)+normpdf(x,-0.44,h)+normpdf(x,0.02,h)+normpdf(x,0.76,h)+normpdf(x,0.63,h)+normpdf(x,0.27,h)+normpdf(x,0.83,h)+normpdf(x,0.98,h)+normpdf(x,0.9,h)+normpdf(x,-0.17,h)+normpdf(x,0.13,h)+normpdf(x,0.16,h)+normpdf(x,0.91,h)+normpdf(x,1.28,h)+normpdf(x,0.5,h)+normpdf(x,-1.09,h)+normpdf(x,-1.96,h)+normpdf(x,0.82,h)+normpdf(x,-1.12,h)+normpdf(x,0.2,h)+normpdf(x,-0.32,h)+normpdf(x,-0.78,h)+normpdf(x,0.62,h)+normpdf(x,-0.43,h)+normpdf(x,1.03,h)+normpdf(x,0.15,h)+normpdf(x,0.62,h)+normpdf(x,-2.27,h)+normpdf(x,-0.28,h)+normpdf(x,-0.25,h)+normpdf(x,1.59,h)+normpdf(x,-0.08,h)+normpdf(x,1.1,h)+normpdf(x,0.4,h)+normpdf(x,0.64,h)+normpdf(x,-0.74,h)+normpdf(x,-0.14,h)+normpdf(x,-3.48,h)+normpdf(x,0.6,h)+normpdf(x,0.44,h)+normpdf(x,0.42,h)+normpdf(x,-1.39,h)+normpdf(x,-0.76,h)+normpdf(x,0.8,h)+normpdf(x,-0.71,h)+normpdf(x,-0.33,h)+normpdf(x,0.61,h)+normpdf(x,0.15,h)+normpdf(x,-0.3,h)+normpdf(x,0.29,h)+normpdf(x,-0.37,h)+normpdf(x,0.52,h)+normpdf(x,0.29,h)+normpdf(x,-0.14,h)+normpdf(x,0.52,h)+normpdf(x,0.05,h)+normpdf(x,0.1,h)+normpdf(x,0.4,h))",
+       "label": "kernel estimate",
+       "colour": 2
+      },
+      {"id": "nrm", "expr": "w*60*normpdf(x,-0.0037,0.8965)", "label": "normal fit", "colour": 3, "dashed": true}
+     ]
+    },
+    "state": {
+     "params": {"h": 0.2917}
+    },
+    "derive": {
+     "caption": "$h = {{fixed(h, 3)}}$: the estimate at 0 is $\\hat f(0) = {{fixed((normpdf(0,-0.38,h)+normpdf(0,-1.6,h)+normpdf(0,-0.42,h)+normpdf(0,-0.44,h)+normpdf(0,0.02,h)+normpdf(0,0.76,h)+normpdf(0,0.63,h)+normpdf(0,0.27,h)+normpdf(0,0.83,h)+normpdf(0,0.98,h)+normpdf(0,0.9,h)+normpdf(0,-0.17,h)+normpdf(0,0.13,h)+normpdf(0,0.16,h)+normpdf(0,0.91,h)+normpdf(0,1.28,h)+normpdf(0,0.5,h)+normpdf(0,-1.09,h)+normpdf(0,-1.96,h)+normpdf(0,0.82,h)+normpdf(0,-1.12,h)+normpdf(0,0.2,h)+normpdf(0,-0.32,h)+normpdf(0,-0.78,h)+normpdf(0,0.62,h)+normpdf(0,-0.43,h)+normpdf(0,1.03,h)+normpdf(0,0.15,h)+normpdf(0,0.62,h)+normpdf(0,-2.27,h)+normpdf(0,-0.28,h)+normpdf(0,-0.25,h)+normpdf(0,1.59,h)+normpdf(0,-0.08,h)+normpdf(0,1.1,h)+normpdf(0,0.4,h)+normpdf(0,0.64,h)+normpdf(0,-0.74,h)+normpdf(0,-0.14,h)+normpdf(0,-3.48,h)+normpdf(0,0.6,h)+normpdf(0,0.44,h)+normpdf(0,0.42,h)+normpdf(0,-1.39,h)+normpdf(0,-0.76,h)+normpdf(0,0.8,h)+normpdf(0,-0.71,h)+normpdf(0,-0.33,h)+normpdf(0,0.61,h)+normpdf(0,0.15,h)+normpdf(0,-0.3,h)+normpdf(0,0.29,h)+normpdf(0,-0.37,h)+normpdf(0,0.52,h)+normpdf(0,0.29,h)+normpdf(0,-0.14,h)+normpdf(0,0.52,h)+normpdf(0,0.05,h)+normpdf(0,0.1,h)+normpdf(0,0.4,h))/60, 4)}}$"
+    }
+   },
+   "question": "What one-day 99% loss does the KDE give, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 340613,
+    "tol": {"abs": 50},
+    "unit": "£",
+    "accept": "£340,613: $3.406135\\% \\times \\text{£}10{,}000{,}000$.",
+    "label": "99% loss",
+    "wrong": [
+     {
+      "id": "normal",
+      "value": 208912,
+      "tol": {"abs": 50}
+     },
+     {
+      "id": "pct",
+      "value": 34061350,
+      "tol": {"abs": 5000}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Loss is the quantile's size times the book."},
+    {
+     "rung": "point",
+     "text": "$0.03406 \\times 10{,}000{,}000$."
+    },
+    {"rung": "step", "text": "About £340,600."}
+   ],
+   "feedback": {
+    "correct": "About £340,600, against £208,900 from the normal fit.",
+    "generic": "Not quite right. Multiply 3.406% by £10m.",
+    "byKey": {"normal": "That uses the normal fit's 2.089%.", "pct": "You treated 3.406 as a fraction. It is a percentage."}
+   },
+   "explain": {
+    "text": "The KDE gives £340,613, the normal £208,912. Report the bandwidth with it: at $h = 0.42$ the figure moves, and that sensitivity belongs in the risk note."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A KDE averages a normal bump on each observation: $\\hat f(x) = \\frac{1}{nh}\\sum K((x - r_j)/h)$.",
+   "The bandwidth decides everything: Silverman's $h = 0.2917$ here; state the rule you used.",
+   "The KDE's 1% quantile, $-3.406$%, shows a loss the normal fit ($-2.089$%) understates."
+  ],
+  "formula": {
+   "name": "Silverman's rule",
+   "tex": "h = 0.9\\min\\!\\left(s, \\frac{\\text{IQR}}{1.34}\\right)n^{-1/5}",
+   "note": "In scipy, `bw_method` is a factor on $s$: pass $h/s$."
+  },
+  "trap": "Passing $h$ as `bw_method`: scipy multiplies it by the sample SD."
+ },
+ "quiz": [
+  {
+   "id": "q-small-h",
+   "difficulty": 2,
+   "prose": "A KDE is drawn with a very small bandwidth.",
+   "question": "What does it look like?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "spikes", "text": "A comb of spikes, one per observation: low bias, high variance", "correct": true},
+     {"id": "smooth", "text": "A smooth hump", "why": "That is a large bandwidth, which blurs features."},
+     {"id": "normal", "text": "The normal fit", "why": "Only a very large $h$ approaches one wide bump."}
+    ]
+   },
+   "feedback": {"correct": "Spiky: each point is its own peak.", "generic": "Not quite right. Small $h$ means narrow bumps."},
+   "explain": {"text": "Small $h$ follows every point (noisy); large $h$ blurs real features. The rule of thumb balances them."}
+  },
+  {
+   "id": "q-bw",
+   "difficulty": 3,
+   "prose": "Data have SD 2.0. You want a kernel SD of $h = 0.5$ from `scipy.stats.gaussian_kde`.",
+   "question": "What `bw_method` do you pass?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.25,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.25: $0.5/2.0$.",
+    "label": "bw_method",
+    "wrong": [
+     {
+      "id": "h",
+      "value": 0.5,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "var",
+      "value": 0.125,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$0.5/2.0 = 0.25$.",
+    "generic": "Not quite right. scipy multiplies the factor by the SD.",
+    "byKey": {"h": "That would give $h = 1.0$.", "var": "You divided by the variance."}
+   },
+   "explain": {"text": "The kernel SD is `bw_method` times the sample SD, so pass $h/s = 0.25$."}
+  },
+  {
+   "id": "q-iqr",
+   "difficulty": 2,
+   "prose": "Silverman's rule uses $\\min(s, \\text{IQR}/1.34)$.",
+   "question": "Why the IQR?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "robust", "text": "One wild day can inflate $s$; the IQR ignores the extremes", "correct": true},
+     {"id": "faster", "text": "It is faster to compute", "why": "Speed is not the reason."},
+     {"id": "normal", "text": "Because the data are normal", "why": "For normal data the two agree; the IQR matters when they are not."}
+    ]
+   },
+   "feedback": {"correct": "Robust to the tails.", "generic": "Not quite right. Think about what one extreme day does to $s$."},
+   "explain": {"text": "For a normal sample IQR$/1.34 \\approx s$. With fat tails the IQR is smaller, so the bumps stay narrow."}
+  }
+ ]
+}

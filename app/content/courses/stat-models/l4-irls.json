@@ -1,0 +1,1323 @@
+{
+ "id": "l4-irls",
+ "course": "stat-models",
+ "title": "Iteratively reweighted least squares",
+ "minutes": 15,
+ "objectives": ["Fit logistic and Poisson models by your own IRLS and match statsmodels."],
+ "skills": ["sm-glm"],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "One step from zero",
+   "prose": "Six points, $x = 0$ to 5, with outcomes $y = (0, 0, 1, 0, 1, 1)$. Start a logistic fit at $\\boldsymbol\\beta = \\mathbf{0}$: every $\\mu = 0.5$ and every weight $W = \\mu(1 - \\mu) = 0.25$. The **working response** is $z = \\eta + (y - \\mu)/W$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [-0.5, 5.5],
+     "y": [-0.15, 1.2],
+     "xLabel": "$x$",
+     "yLabel": "$y$",
+     "height": 240,
+     "xTicks": "integer",
+     "functions": []
+    },
+    "state": {
+     "points": [
+      {"id": "s0", "x": 0, "y": 0, "tap": false},
+      {"id": "s1", "x": 1, "y": 0, "tap": false},
+      {"id": "s2", "x": 2, "y": 1, "tap": false},
+      {"id": "s3", "x": 3, "y": 0, "tap": false},
+      {"id": "s4", "x": 4, "y": 1, "tap": false},
+      {"id": "s5", "x": 5, "y": 1, "tap": false}
+     ]
+    }
+   },
+   "question": "Fill in $z$ for each point.",
+   "widget": {
+    "kind": "table",
+    "columns": ["$x$", "$y$", "$\\eta$", "$\\mu$", "$W$", "$z$"],
+    "rows": [
+     [
+      "0",
+      "0",
+      "0",
+      "0.5",
+      "0.25",
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {"abs": 0.001}
+      }
+     ],
+     [
+      "1",
+      "0",
+      "0",
+      "0.5",
+      "0.25",
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {"abs": 0.001}
+      }
+     ],
+     [
+      "2",
+      "1",
+      "0",
+      "0.5",
+      "0.25",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {"abs": 0.001}
+      }
+     ],
+     [
+      "3",
+      "0",
+      "0",
+      "0.5",
+      "0.25",
+      {
+       "edit": true,
+       "answer": -2,
+       "tol": {"abs": 0.001}
+      }
+     ],
+     [
+      "4",
+      "1",
+      "0",
+      "0.5",
+      "0.25",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {"abs": 0.001}
+      }
+     ],
+     [
+      "5",
+      "1",
+      "0",
+      "0.5",
+      "0.25",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {"abs": 0.001}
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "With $\\eta = 0$, $z$ is just $(y - 0.5)/0.25$."},
+    {"rung": "point", "text": "A point with $y = 1$: $0.5/0.25$."},
+    {"rung": "step", "text": "$z = 2$ when $y = 1$ and $z = -2$ when $y = 0$."}
+   ],
+   "feedback": {
+    "correct": "$z = (-2, -2, 2, -2, 2, 2)$.",
+    "generic": "Not quite right. Compute $(y - 0.5)/0.25$ for each point.",
+    "byKey": {"r0c5": "For $y = 0$: $(0 - 0.5)/0.25 = -2$. If you wrote $-0.5$, you forgot to divide by $W$.", "r2c5": "For $y = 1$: $(1 - 0.5)/0.25 = 2$."}
+   },
+   "explain": {
+    "text": "Each $z$ is $\\pm 2$: the residual $y - \\mu = \\pm 0.5$, scaled up by $1/W = 4$. Dividing by $W$ turns a residual on the probability scale into one on the $\\eta$ scale."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Least squares on the working response",
+   "prose": "Now fit a straight line to $z$ by ordinary least squares, as in `least-squares` lesson 10. All weights are equal at 0.25, so plain OLS will do. Here $\\bar x = 2.5$ and $\\bar z = 0$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [-0.5, 5.5],
+     "y": [-3, 3],
+     "xLabel": "$x$",
+     "yLabel": "$z$",
+     "height": 240,
+     "xTicks": "integer",
+     "functions": [
+      {
+       "id": "ln",
+       "expr": "-2 + 0.8*x",
+       "label": "$\\eta^{(1)}$",
+       "colour": 1
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {"id": "z0", "x": 0, "y": -2, "tap": false, "colour": 2},
+      {"id": "z1", "x": 1, "y": -2, "tap": false, "colour": 2},
+      {"id": "z2", "x": 2, "y": 2, "tap": false, "colour": 2},
+      {"id": "z3", "x": 3, "y": -2, "tap": false, "colour": 2},
+      {"id": "z4", "x": 4, "y": 2, "tap": false, "colour": 2},
+      {"id": "z5", "x": 5, "y": 2, "tap": false, "colour": 2}
+     ],
+     "hide": ["ln"]
+    }
+   },
+   "question": "What is the slope of the least-squares line through the six $(x, z)$ points?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8,
+    "tol": {"abs": 0.001},
+    "unit": "",
+    "accept": "0.8: $\\sum(x - \\bar x)(z - \\bar z) = 14$ over $\\sum(x - \\bar x)^2 = 17.5$.",
+    "label": "Slope",
+    "wrong": [
+     {
+      "id": "y",
+      "value": 0.2,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "swap",
+      "value": 1.25,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Slope $= \\sum(x - \\bar x)(z - \\bar z) / \\sum(x - \\bar x)^2$."},
+    {
+     "rung": "point",
+     "text": "$\\sum(x - \\bar x)^2 = 17.5$; the cross sum is $\\sum(x - 2.5)z_j$.",
+     "highlight": ["z0", "z5"]
+    },
+    {"rung": "step", "text": "The cross sum is 14, so the slope is $14/17.5 = 0.8$."}
+   ],
+   "feedback": {
+    "correct": "Slope 0.8 and intercept $0 - 0.8 \\times 2.5 = -2$: $\\boldsymbol\\beta^{(1)} = (-2, 0.8)$.",
+    "generic": "Not quite right. Compute $14/17.5$.",
+    "byKey": {"y": "You regressed $y$, not $z$. That gives 0.2, the straight-line fit to the 0s and 1s.", "swap": "You divided 17.5 by 14. The cross sum goes on top."}
+   },
+   "explain": {
+    "text": "The line through the $z$ values is $\\eta = -2 + 0.8x$, so $\\boldsymbol\\beta^{(1)} = (-2, 0.8)$ exactly. One weighted least squares step has moved us from zero towards the MLE.",
+    "canvas": {
+     "hide": []
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Iteratively reweighted least squares",
+   "prose": "Repeat: from $\\boldsymbol\\beta$, compute $\\boldsymbol\\mu$, the weights $\\mathbf{W}$ and $\\mathbf{z}$, then solve the weighted normal equations\n$$\\mathbf{X}^T\\mathbf{W}\\mathbf{X}\\,\\boldsymbol\\beta_{\\text{new}} = \\mathbf{X}^T\\mathbf{W}\\mathbf{z}$$\nThis is **IRLS**. By iteration 5 the six points settle at $(-3.035069, 1.214028)$, deviance 4.955974.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Iteration", "$\\beta_0$", "$\\beta_1$", "Deviance"],
+     "rows": [
+      ["0", "0", "0", "8.317766"],
+      ["1", "-2", "0.8", "5.212903"],
+      ["2", "-2.774439", "1.109776", "4.969749"],
+      ["3", "-3.015312", "1.206125", "4.956049"],
+      ["4", "-3.034950", "1.213980", "4.955974"],
+      ["5", "-3.035069", "1.214028", "4.955974"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "For iteration 2, what weight does the point at $x = 0$ get, from $\\boldsymbol\\beta^{(1)} = (-2, 0.8)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.105,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.1050: $\\mu = 1/(1 + e^{2}) = 0.1192$ and $W = 0.1192 \\times 0.8808$.",
+    "label": "Weight",
+    "wrong": [
+     {
+      "id": "mu",
+      "value": 0.1192,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "old",
+      "value": 0.25,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$W = 0.1050$: points the line is sure about count for less.",
+    "generic": "Not quite right. $W = \\mu(1 - \\mu)$ with $\\mu$ from the new $\\eta$.",
+    "byKey": {"mu": "That is $\\mu$. The weight is $\\mu(1 - \\mu)$.", "old": "That is the old weight. IRLS recomputes $W$ from the current $\\boldsymbol\\beta$."}
+   },
+   "explain": {
+    "text": "At $x = 0$, $\\eta = -2$, $\\mu = 0.1192$ and $W = 0.1050$. Each pass reweights the points and refits, which is where the name comes from.",
+    "canvas": {
+     "highlight": {
+      "rows": [2]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Standard errors from the last weights",
+   "prose": "At convergence, $(\\mathbf{X}^T\\mathbf{W}\\mathbf{X})^{-1}$ is the estimated covariance of $\\hat{\\boldsymbol\\beta}$, the GLM version of $s^2(\\mathbf{X}^T\\mathbf{X})^{-1}$ from `regression` lesson 12. Here is $\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$ for the six points at the fit.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [0.783959, 1.959897],
+        [1.959897, 6.100493]
+       ],
+       "label": "$\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$"
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the standard error of $\\hat\\beta_1$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.9126,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.9126: the determinant is 0.941340, the slope entry of the inverse is $0.783959/0.941340 = 0.83281$, and $\\sqrt{0.83281} = 0.9126$.",
+    "label": "SE",
+    "wrong": [
+     {
+      "id": "noinv",
+      "value": 0.4049,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "int",
+      "value": 2.5457,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "var",
+      "value": 0.8328,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Invert the 2 by 2 matrix: swap the diagonal, negate the off-diagonal, divide by the determinant."},
+    {
+     "rung": "point",
+     "text": "Determinant: $0.783959 \\times 6.100493 - 1.959897^2 = 0.941340$.",
+     "highlight": ["A-1-1"]
+    },
+    {"rung": "step", "text": "Slope entry: $0.783959/0.941340 = 0.83281$; take its square root."}
+   ],
+   "feedback": {
+    "correct": "SE $= 0.9126$, as statsmodels reports. The intercept's is 2.5457.",
+    "generic": "Not quite right. Take the square root of the slope entry of the inverse.",
+    "byKey": {
+     "noinv": "You used $1/\\sqrt{6.100493}$, the diagonal entry alone. Invert the whole matrix first.",
+     "int": "That is the intercept's standard error, from the other diagonal entry.",
+     "var": "That is the variance. Take its square root."
+    }
+   },
+   "explain": {
+    "text": "The inverse's slope entry is $0.783959/0.941340 = 0.83281$, so SE $= 0.9126$; the intercept's is $\\sqrt{6.100493/0.941340} = 2.5457$. statsmodels gives 2.545711 and 0.912585.",
+    "canvas": {
+     "highlight": {
+      "A": {
+       "cells": [
+        [1, 1]
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "IRLS is Newton's method",
+   "prose": "Show that one IRLS step is one Newton step on $\\ell$ for the logit link. Put the lines in order and leave out the slip.",
+   "question": "Order the derivation.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a",
+      "text": "Score: $\\nabla\\ell = \\mathbf{X}^T(\\mathbf{y} - \\boldsymbol\\mu)$, from lesson 2"
+     },
+     {
+      "id": "b",
+      "text": "Hessian: $\\nabla^2\\ell = -\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$ with $W_{jj} = \\mu_j(1 - \\mu_j)$, since $\\partial\\mu_j/\\partial\\eta_j = \\mu_j(1 - \\mu_j)$"
+     },
+     {
+      "id": "c",
+      "text": "Newton: $\\boldsymbol\\beta_{\\text{new}} = \\boldsymbol\\beta + (\\mathbf{X}^T\\mathbf{W}\\mathbf{X})^{-1}\\mathbf{X}^T(\\mathbf{y} - \\boldsymbol\\mu)$, stepping by minus the inverse Hessian times the score"
+     },
+     {
+      "id": "d",
+      "text": "Write $\\boldsymbol\\beta = (\\mathbf{X}^T\\mathbf{W}\\mathbf{X})^{-1}\\mathbf{X}^T\\mathbf{W}\\boldsymbol\\eta$, since $\\boldsymbol\\eta = \\mathbf{X}\\boldsymbol\\beta$"
+     },
+     {
+      "id": "e",
+      "text": "So $\\boldsymbol\\beta_{\\text{new}} = (\\mathbf{X}^T\\mathbf{W}\\mathbf{X})^{-1}\\mathbf{X}^T\\mathbf{W}\\mathbf{z}$ with $\\mathbf{z} = \\boldsymbol\\eta + \\mathbf{W}^{-1}(\\mathbf{y} - \\boldsymbol\\mu)$, collecting terms"
+     },
+     {
+      "id": "x",
+      "text": "The Hessian can use the weights from the first step, since $\\mathbf{W}$ hardly changes",
+      "why": "Freezing $\\mathbf{W}$ is no longer Newton's method. On the six points it gives $(-2.395287, 0.958115)$ at step 2 instead of $(-2.774439, 1.109776)$."
+     }
+    ],
+    "answer": ["a", "b", "c", "d", "e"],
+    "distractors": ["x"],
+    "same": [
+     ["a", "b"]
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Newton needs the gradient and the Hessian first."},
+    {
+     "rung": "point",
+     "text": "Differentiating $\\mathbf{X}^T(\\mathbf{y} - \\boldsymbol\\mu)$ brings in $\\partial\\mu/\\partial\\eta = \\mu(1 - \\mu)$."
+    },
+    {"rung": "step", "text": "After the Newton step, write the old $\\boldsymbol\\beta$ as a weighted fit of $\\boldsymbol\\eta$ and add."}
+   ],
+   "feedback": {
+    "correct": "A weighted least squares fit of $\\mathbf{z}$ is a Newton step on $\\ell$.",
+    "generic": "Not quite right. Score and Hessian first, then the Newton step, then rewrite it.",
+    "byKey": {"x": "You froze the weights. The Hessian must be recomputed at every $\\boldsymbol\\beta$, or the step is not Newton's."}
+   },
+   "explain": {
+    "text": "For a canonical link the Hessian is $-\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$ exactly, so IRLS is Newton's method. That is why it converges so fast: the error roughly squares at each step."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "IRLS on 300 firms",
+   "prose": "From $\\boldsymbol\\beta = \\mathbf{0}$, IRLS on the 300 firms of lesson 1 gives the curves on the slider. statsmodels reports 6 iterations. The deviance falls 233.535, 208.627, 204.794, 204.639, 204.639, 204.639.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0, 1],
+     "y": [-0.1, 1.15],
+     "xLabel": "Leverage $L$",
+     "yLabel": "Default",
+     "height": 280,
+     "functions": [
+      {
+       "id": "S",
+       "expr": "1/(1 + exp(-(b0 + b1*x)))",
+       "label": "$\\mu^{(k)}(L)$",
+       "colour": 1
+      }
+     ],
+     "params": {"b0": -2.795397, "b1": 4.61969}
+    },
+    "state": {
+     "points": [
+      {"id": "d0", "x": 0.129, "y": 0, "tap": false},
+      {"id": "d1", "x": 0.499, "y": 1, "tap": false},
+      {"id": "d2", "x": 0.602, "y": 1, "tap": false},
+      {"id": "d3", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d4", "x": 0.148, "y": 0, "tap": false},
+      {"id": "d5", "x": 0.928, "y": 1, "tap": false},
+      {"id": "d6", "x": 0.07, "y": 0, "tap": false},
+      {"id": "d7", "x": 0.13, "y": 0, "tap": false},
+      {"id": "d8", "x": 0.948, "y": 1, "tap": false},
+      {"id": "d9", "x": 0.622, "y": 1, "tap": false},
+      {"id": "d10", "x": 0.369, "y": 0, "tap": false},
+      {"id": "d11", "x": 0.511, "y": 0, "tap": false},
+      {"id": "d12", "x": 0.663, "y": 1, "tap": false},
+      {"id": "d13", "x": 0.275, "y": 0, "tap": false},
+      {"id": "d14", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d15", "x": 0.788, "y": 1, "tap": false},
+      {"id": "d16", "x": 0.67, "y": 1, "tap": false},
+      {"id": "d17", "x": 0.512, "y": 0, "tap": false},
+      {"id": "d18", "x": 0.817, "y": 1, "tap": false},
+      {"id": "d19", "x": 0.549, "y": 0, "tap": false},
+      {"id": "d20", "x": 0.981, "y": 1, "tap": false},
+      {"id": "d21", "x": 0.204, "y": 0, "tap": false},
+      {"id": "d22", "x": 0.554, "y": 0, "tap": false},
+      {"id": "d23", "x": 0.484, "y": 0, "tap": false},
+      {"id": "d24", "x": 0.353, "y": 0, "tap": false},
+      {"id": "d25", "x": 0.592, "y": 1, "tap": false},
+      {"id": "d26", "x": 0.235, "y": 0, "tap": false},
+      {"id": "d27", "x": 0.802, "y": 1, "tap": false},
+      {"id": "d28", "x": 0.867, "y": 1, "tap": false},
+      {"id": "d29", "x": 0.129, "y": 0, "tap": false},
+      {"id": "d30", "x": 0.467, "y": 0, "tap": false},
+      {"id": "d31", "x": 0.277, "y": 0, "tap": false},
+      {"id": "d32", "x": 0.083, "y": 0, "tap": false},
+      {"id": "d33", "x": 0.896, "y": 1, "tap": false},
+      {"id": "d34", "x": 0.43, "y": 0, "tap": false},
+      {"id": "d35", "x": 0.148, "y": 0, "tap": false},
+      {"id": "d36", "x": 0.673, "y": 0, "tap": false},
+      {"id": "d37", "x": 0.202, "y": 0, "tap": false},
+      {"id": "d38", "x": 0.901, "y": 1, "tap": false},
+      {"id": "d39", "x": 0.217, "y": 0, "tap": false},
+      {"id": "d40", "x": 0.033, "y": 0, "tap": false},
+      {"id": "d41", "x": 0.201, "y": 0, "tap": false},
+      {"id": "d42", "x": 0.346, "y": 0, "tap": false},
+      {"id": "d43", "x": 0.469, "y": 0, "tap": false},
+      {"id": "d44", "x": 0.906, "y": 1, "tap": false},
+      {"id": "d45", "x": 0.697, "y": 0, "tap": false},
+      {"id": "d46", "x": 0.339, "y": 0, "tap": false},
+      {"id": "d47", "x": 0.017, "y": 0, "tap": false},
+      {"id": "d48", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d49", "x": 0.996, "y": 1, "tap": false},
+      {"id": "d50", "x": 0.46, "y": 0, "tap": false},
+      {"id": "d51", "x": 0.691, "y": 1, "tap": false},
+      {"id": "d52", "x": 0.055, "y": 0, "tap": false},
+      {"id": "d53", "x": 0.034, "y": 0, "tap": false},
+      {"id": "d54", "x": 0.846, "y": 1, "tap": false},
+      {"id": "d55", "x": 0.588, "y": 0, "tap": false},
+      {"id": "d56", "x": 0.309, "y": 0, "tap": false},
+      {"id": "d57", "x": 0.317, "y": 0, "tap": false},
+      {"id": "d58", "x": 0.089, "y": 0, "tap": false},
+      {"id": "d59", "x": 0.173, "y": 0, "tap": false},
+      {"id": "d60", "x": 0.025, "y": 0, "tap": false},
+      {"id": "d61", "x": 0.839, "y": 1, "tap": false},
+      {"id": "d62", "x": 0.466, "y": 0, "tap": false},
+      {"id": "d63", "x": 0.127, "y": 0, "tap": false},
+      {"id": "d64", "x": 0.739, "y": 1, "tap": false},
+      {"id": "d65", "x": 0.196, "y": 0, "tap": false},
+      {"id": "d66", "x": 0.062, "y": 0, "tap": false},
+      {"id": "d67", "x": 0.598, "y": 0, "tap": false},
+      {"id": "d68", "x": 0.896, "y": 1, "tap": false},
+      {"id": "d69", "x": 0.027, "y": 0, "tap": false},
+      {"id": "d70", "x": 0.805, "y": 0, "tap": false},
+      {"id": "d71", "x": 0.19, "y": 0, "tap": false},
+      {"id": "d72", "x": 0.093, "y": 0, "tap": false},
+      {"id": "d73", "x": 0.018, "y": 0, "tap": false},
+      {"id": "d74", "x": 0.293, "y": 0, "tap": false},
+      {"id": "d75", "x": 0.727, "y": 1, "tap": false},
+      {"id": "d76", "x": 0.493, "y": 0, "tap": false},
+      {"id": "d77", "x": 0.853, "y": 1, "tap": false},
+      {"id": "d78", "x": 0.217, "y": 0, "tap": false},
+      {"id": "d79", "x": 0.315, "y": 0, "tap": false},
+      {"id": "d80", "x": 0.258, "y": 0, "tap": false},
+      {"id": "d81", "x": 0.978, "y": 1, "tap": false},
+      {"id": "d82", "x": 0.941, "y": 1, "tap": false},
+      {"id": "d83", "x": 0.341, "y": 0, "tap": false},
+      {"id": "d84", "x": 0.436, "y": 1, "tap": false},
+      {"id": "d85", "x": 0.314, "y": 0, "tap": false},
+      {"id": "d86", "x": 0.747, "y": 1, "tap": false},
+      {"id": "d87", "x": 0.04, "y": 0, "tap": false},
+      {"id": "d88", "x": 0.067, "y": 0, "tap": false},
+      {"id": "d89", "x": 0.404, "y": 0, "tap": false},
+      {"id": "d90", "x": 0.245, "y": 0, "tap": false},
+      {"id": "d91", "x": 0.845, "y": 1, "tap": false},
+      {"id": "d92", "x": 0.742, "y": 1, "tap": false},
+      {"id": "d93", "x": 0.546, "y": 1, "tap": false},
+      {"id": "d94", "x": 0.661, "y": 0, "tap": false},
+      {"id": "d95", "x": 0.692, "y": 0, "tap": false},
+      {"id": "d96", "x": 0.781, "y": 1, "tap": false},
+      {"id": "d97", "x": 0.927, "y": 1, "tap": false},
+      {"id": "d98", "x": 0.15, "y": 0, "tap": false},
+      {"id": "d99", "x": 0.626, "y": 0, "tap": false},
+      {"id": "d100", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d101", "x": 0.443, "y": 0, "tap": false},
+      {"id": "d102", "x": 0.786, "y": 1, "tap": false},
+      {"id": "d103", "x": 0.895, "y": 1, "tap": false},
+      {"id": "d104", "x": 0.759, "y": 1, "tap": false},
+      {"id": "d105", "x": 0.035, "y": 0, "tap": false},
+      {"id": "d106", "x": 0.359, "y": 0, "tap": false},
+      {"id": "d107", "x": 0.163, "y": 0, "tap": false},
+      {"id": "d108", "x": 0.999, "y": 1, "tap": false},
+      {"id": "d109", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d110", "x": 0.244, "y": 0, "tap": false},
+      {"id": "d111", "x": 0.357, "y": 1, "tap": false},
+      {"id": "d112", "x": 0.061, "y": 0, "tap": false},
+      {"id": "d113", "x": 0.87, "y": 1, "tap": false},
+      {"id": "d114", "x": 0.636, "y": 1, "tap": false},
+      {"id": "d115", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d116", "x": 0.498, "y": 0, "tap": false},
+      {"id": "d117", "x": 0.079, "y": 0, "tap": false},
+      {"id": "d118", "x": 0.611, "y": 0, "tap": false},
+      {"id": "d119", "x": 0.232, "y": 0, "tap": false},
+      {"id": "d120", "x": 0.039, "y": 0, "tap": false},
+      {"id": "d121", "x": 0.115, "y": 0, "tap": false},
+      {"id": "d122", "x": 0.555, "y": 0, "tap": false},
+      {"id": "d123", "x": 0.637, "y": 0, "tap": false},
+      {"id": "d124", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d125", "x": 0.643, "y": 0, "tap": false},
+      {"id": "d126", "x": 0.352, "y": 0, "tap": false},
+      {"id": "d127", "x": 0.131, "y": 0, "tap": false},
+      {"id": "d128", "x": 0.315, "y": 0, "tap": false},
+      {"id": "d129", "x": 0.395, "y": 0, "tap": false},
+      {"id": "d130", "x": 0.913, "y": 1, "tap": false},
+      {"id": "d131", "x": 0.116, "y": 0, "tap": false},
+      {"id": "d132", "x": 0.086, "y": 0, "tap": false},
+      {"id": "d133", "x": 0.561, "y": 0, "tap": false},
+      {"id": "d134", "x": 0.963, "y": 1, "tap": false},
+      {"id": "d135", "x": 0.907, "y": 1, "tap": false},
+      {"id": "d136", "x": 0.7, "y": 1, "tap": false},
+      {"id": "d137", "x": 0.067, "y": 0, "tap": false},
+      {"id": "d138", "x": 0.806, "y": 1, "tap": false},
+      {"id": "d139", "x": 0.683, "y": 1, "tap": false},
+      {"id": "d140", "x": 0.144, "y": 0, "tap": false},
+      {"id": "d141", "x": 0.465, "y": 0, "tap": false},
+      {"id": "d142", "x": 0.049, "y": 0, "tap": false},
+      {"id": "d143", "x": 0.802, "y": 1, "tap": false},
+      {"id": "d144", "x": 0.719, "y": 0, "tap": false},
+      {"id": "d145", "x": 0.805, "y": 1, "tap": false},
+      {"id": "d146", "x": 0.76, "y": 0, "tap": false},
+      {"id": "d147", "x": 0.267, "y": 0, "tap": false},
+      {"id": "d148", "x": 0.79, "y": 1, "tap": false},
+      {"id": "d149", "x": 0.249, "y": 0, "tap": false},
+      {"id": "d150", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d151", "x": 0.39, "y": 0, "tap": false},
+      {"id": "d152", "x": 0.498, "y": 0, "tap": false},
+      {"id": "d153", "x": 0.286, "y": 0, "tap": false},
+      {"id": "d154", "x": 0.606, "y": 1, "tap": false},
+      {"id": "d155", "x": 0.603, "y": 0, "tap": false},
+      {"id": "d156", "x": 0.24, "y": 0, "tap": false},
+      {"id": "d157", "x": 0.623, "y": 0, "tap": false},
+      {"id": "d158", "x": 0.357, "y": 0, "tap": false},
+      {"id": "d159", "x": 0.735, "y": 0, "tap": false},
+      {"id": "d160", "x": 0.29, "y": 1, "tap": false},
+      {"id": "d161", "x": 0.799, "y": 0, "tap": false},
+      {"id": "d162", "x": 0.415, "y": 1, "tap": false},
+      {"id": "d163", "x": 0.553, "y": 0, "tap": false},
+      {"id": "d164", "x": 0.673, "y": 1, "tap": false},
+      {"id": "d165", "x": 0.518, "y": 0, "tap": false},
+      {"id": "d166", "x": 0.258, "y": 0, "tap": false},
+      {"id": "d167", "x": 0.979, "y": 1, "tap": false},
+      {"id": "d168", "x": 0.096, "y": 0, "tap": false},
+      {"id": "d169", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d170", "x": 0.549, "y": 1, "tap": false},
+      {"id": "d171", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d172", "x": 0.155, "y": 0, "tap": false},
+      {"id": "d173", "x": 0.799, "y": 1, "tap": false},
+      {"id": "d174", "x": 0.784, "y": 1, "tap": false},
+      {"id": "d175", "x": 0.637, "y": 0, "tap": false},
+      {"id": "d176", "x": 0.902, "y": 1, "tap": false},
+      {"id": "d177", "x": 0.755, "y": 1, "tap": false},
+      {"id": "d178", "x": 0.299, "y": 0, "tap": false},
+      {"id": "d179", "x": 0.645, "y": 1, "tap": false},
+      {"id": "d180", "x": 0.34, "y": 0, "tap": false},
+      {"id": "d181", "x": 0.75, "y": 1, "tap": false},
+      {"id": "d182", "x": 0.385, "y": 0, "tap": false},
+      {"id": "d183", "x": 0.153, "y": 0, "tap": false},
+      {"id": "d184", "x": 0.876, "y": 1, "tap": false},
+      {"id": "d185", "x": 0.69, "y": 1, "tap": false},
+      {"id": "d186", "x": 0.745, "y": 0, "tap": false},
+      {"id": "d187", "x": 0.56, "y": 0, "tap": false},
+      {"id": "d188", "x": 0.783, "y": 1, "tap": false},
+      {"id": "d189", "x": 0.448, "y": 0, "tap": false},
+      {"id": "d190", "x": 0.566, "y": 1, "tap": false},
+      {"id": "d191", "x": 0.063, "y": 0, "tap": false},
+      {"id": "d192", "x": 0.555, "y": 1, "tap": false},
+      {"id": "d193", "x": 0.815, "y": 0, "tap": false},
+      {"id": "d194", "x": 0.706, "y": 1, "tap": false},
+      {"id": "d195", "x": 0.803, "y": 0, "tap": false},
+      {"id": "d196", "x": 0.496, "y": 0, "tap": false},
+      {"id": "d197", "x": 0.881, "y": 1, "tap": false},
+      {"id": "d198", "x": 0.108, "y": 0, "tap": false},
+      {"id": "d199", "x": 0.876, "y": 1, "tap": false},
+      {"id": "d200", "x": 0.371, "y": 0, "tap": false},
+      {"id": "d201", "x": 0.091, "y": 0, "tap": false},
+      {"id": "d202", "x": 0.619, "y": 1, "tap": false},
+      {"id": "d203", "x": 0.455, "y": 0, "tap": false},
+      {"id": "d204", "x": 0.428, "y": 1, "tap": false},
+      {"id": "d205", "x": 0.852, "y": 1, "tap": false},
+      {"id": "d206", "x": 0.138, "y": 0, "tap": false},
+      {"id": "d207", "x": 0.617, "y": 0, "tap": false},
+      {"id": "d208", "x": 0.414, "y": 1, "tap": false},
+      {"id": "d209", "x": 0.528, "y": 0, "tap": false},
+      {"id": "d210", "x": 0.499, "y": 1, "tap": false},
+      {"id": "d211", "x": 0.134, "y": 0, "tap": false},
+      {"id": "d212", "x": 0.512, "y": 0, "tap": false},
+      {"id": "d213", "x": 0.862, "y": 1, "tap": false},
+      {"id": "d214", "x": 0.171, "y": 0, "tap": false},
+      {"id": "d215", "x": 0.011, "y": 0, "tap": false},
+      {"id": "d216", "x": 0.068, "y": 0, "tap": false},
+      {"id": "d217", "x": 0.46, "y": 0, "tap": false},
+      {"id": "d218", "x": 0.975, "y": 1, "tap": false},
+      {"id": "d219", "x": 0.044, "y": 0, "tap": false},
+      {"id": "d220", "x": 0.991, "y": 1, "tap": false},
+      {"id": "d221", "x": 0.536, "y": 1, "tap": false},
+      {"id": "d222", "x": 0.12, "y": 0, "tap": false},
+      {"id": "d223", "x": 0.418, "y": 0, "tap": false},
+      {"id": "d224", "x": 0.207, "y": 0, "tap": false},
+      {"id": "d225", "x": 0.714, "y": 0, "tap": false},
+      {"id": "d226", "x": 0.541, "y": 0, "tap": false},
+      {"id": "d227", "x": 0.288, "y": 0, "tap": false},
+      {"id": "d228", "x": 0.255, "y": 0, "tap": false},
+      {"id": "d229", "x": 0.867, "y": 1, "tap": false},
+      {"id": "d230", "x": 0.766, "y": 0, "tap": false},
+      {"id": "d231", "x": 0.436, "y": 0, "tap": false},
+      {"id": "d232", "x": 0.406, "y": 0, "tap": false},
+      {"id": "d233", "x": 0.738, "y": 0, "tap": false},
+      {"id": "d234", "x": 0.971, "y": 1, "tap": false},
+      {"id": "d235", "x": 0.08, "y": 0, "tap": false},
+      {"id": "d236", "x": 0.159, "y": 0, "tap": false},
+      {"id": "d237", "x": 0.362, "y": 1, "tap": false},
+      {"id": "d238", "x": 0.508, "y": 0, "tap": false},
+      {"id": "d239", "x": 0.071, "y": 0, "tap": false},
+      {"id": "d240", "x": 0.053, "y": 0, "tap": false},
+      {"id": "d241", "x": 0.22, "y": 0, "tap": false},
+      {"id": "d242", "x": 0.386, "y": 0, "tap": false},
+      {"id": "d243", "x": 0.739, "y": 1, "tap": false},
+      {"id": "d244", "x": 0.61, "y": 0, "tap": false},
+      {"id": "d245", "x": 0.029, "y": 0, "tap": false},
+      {"id": "d246", "x": 0.045, "y": 0, "tap": false},
+      {"id": "d247", "x": 0.452, "y": 0, "tap": false},
+      {"id": "d248", "x": 0.875, "y": 1, "tap": false},
+      {"id": "d249", "x": 0.915, "y": 1, "tap": false},
+      {"id": "d250", "x": 0.365, "y": 1, "tap": false},
+      {"id": "d251", "x": 0.887, "y": 1, "tap": false},
+      {"id": "d252", "x": 0.929, "y": 1, "tap": false},
+      {"id": "d253", "x": 0.407, "y": 1, "tap": false},
+      {"id": "d254", "x": 0.746, "y": 1, "tap": false},
+      {"id": "d255", "x": 0.365, "y": 0, "tap": false},
+      {"id": "d256", "x": 0.154, "y": 0, "tap": false},
+      {"id": "d257", "x": 0.575, "y": 1, "tap": false},
+      {"id": "d258", "x": 0.086, "y": 0, "tap": false},
+      {"id": "d259", "x": 0.663, "y": 1, "tap": false},
+      {"id": "d260", "x": 0.809, "y": 1, "tap": false},
+      {"id": "d261", "x": 0.915, "y": 0, "tap": false},
+      {"id": "d262", "x": 0.448, "y": 1, "tap": false},
+      {"id": "d263", "x": 0.117, "y": 0, "tap": false},
+      {"id": "d264", "x": 0.902, "y": 1, "tap": false},
+      {"id": "d265", "x": 0.87, "y": 0, "tap": false},
+      {"id": "d266", "x": 0.968, "y": 1, "tap": false},
+      {"id": "d267", "x": 0.594, "y": 0, "tap": false},
+      {"id": "d268", "x": 0.673, "y": 0, "tap": false},
+      {"id": "d269", "x": 0.373, "y": 0, "tap": false},
+      {"id": "d270", "x": 0.183, "y": 0, "tap": false},
+      {"id": "d271", "x": 0.292, "y": 0, "tap": false},
+      {"id": "d272", "x": 0.721, "y": 1, "tap": false},
+      {"id": "d273", "x": 0.325, "y": 0, "tap": false},
+      {"id": "d274", "x": 0.692, "y": 1, "tap": false},
+      {"id": "d275", "x": 0.502, "y": 0, "tap": false},
+      {"id": "d276", "x": 0.449, "y": 0, "tap": false},
+      {"id": "d277", "x": 0.968, "y": 1, "tap": false},
+      {"id": "d278", "x": 0.166, "y": 0, "tap": false},
+      {"id": "d279", "x": 0.487, "y": 1, "tap": false},
+      {"id": "d280", "x": 0.16, "y": 0, "tap": false},
+      {"id": "d281", "x": 0.938, "y": 1, "tap": false},
+      {"id": "d282", "x": 0.489, "y": 0, "tap": false},
+      {"id": "d283", "x": 0.332, "y": 0, "tap": false},
+      {"id": "d284", "x": 0.168, "y": 0, "tap": false},
+      {"id": "d285", "x": 0.594, "y": 1, "tap": false},
+      {"id": "d286", "x": 0.399, "y": 0, "tap": false},
+      {"id": "d287", "x": 0.127, "y": 0, "tap": false},
+      {"id": "d288", "x": 0.032, "y": 0, "tap": false},
+      {"id": "d289", "x": 0.391, "y": 0, "tap": false},
+      {"id": "d290", "x": 0.583, "y": 1, "tap": false},
+      {"id": "d291", "x": 0.519, "y": 0, "tap": false},
+      {"id": "d292", "x": 0.9, "y": 1, "tap": false},
+      {"id": "d293", "x": 0.912, "y": 1, "tap": false},
+      {"id": "d294", "x": 0.936, "y": 1, "tap": false},
+      {"id": "d295", "x": 0.8, "y": 1, "tap": false},
+      {"id": "d296", "x": 0.478, "y": 0, "tap": false},
+      {"id": "d297", "x": 0.524, "y": 0, "tap": false},
+      {"id": "d298", "x": 0.397, "y": 0, "tap": false},
+      {"id": "d299", "x": 0.4, "y": 0, "tap": false}
+     ],
+     "caption": "Iteration 1: $\\boldsymbol\\beta = (−2.795397, 4.619690)$"
+    },
+    "controls": [
+     {
+      "bind": "iter",
+      "frames": [
+       {
+        "params": {"b0": -2.795397, "b1": 4.61969},
+        "caption": "Iteration 1: $\\boldsymbol\\beta = (−2.795397, 4.619690)$"
+       },
+       {
+        "params": {"b0": -4.326671, "b1": 6.985956},
+        "caption": "Iteration 2: $\\boldsymbol\\beta = (−4.326671, 6.985956)$"
+       },
+       {
+        "params": {"b0": -5.214236, "b1": 8.33264},
+        "caption": "Iteration 3: $\\boldsymbol\\beta = (−5.214236, 8.332640)$"
+       },
+       {
+        "params": {"b0": -5.439843, "b1": 8.67354},
+        "caption": "Iteration 4: $\\boldsymbol\\beta = (−5.439843, 8.673540)$"
+       },
+       {
+        "params": {"b0": -5.451138, "b1": 8.690599},
+        "caption": "Iteration 5: $\\boldsymbol\\beta = (−5.451138, 8.690599)$"
+       },
+       {
+        "params": {"b0": -5.451164, "b1": 8.690639},
+        "caption": "Iteration 6: $\\boldsymbol\\beta = (−5.451164, 8.690639)$"
+       }
+      ],
+      "frameLabels": ["1", "2", "3", "4", "5", "6"],
+      "label": "Iteration"
+     }
+    ]
+   },
+   "question": "After which iteration do both coefficients first stop changing in the sixth decimal place?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "i6", "text": "Iteration 6", "correct": true},
+     {"id": "i4", "text": "Iteration 4", "why": "At iteration 4 the slope is 8.673540, still 0.017 short."},
+     {"id": "i5", "text": "Iteration 5", "why": "Iteration 5 gives $(-5.451138, 8.690599)$; iteration 6 still moves both in the fifth decimal."},
+     {"id": "i3", "text": "Iteration 3", "why": "The curve looks settled by eye, but the slope is still 8.332640."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Slide to the last two iterations and compare the captions."},
+    {"rung": "point", "text": "Iteration 5: $(-5.451138, 8.690599)$. Iteration 6: $(-5.451164, 8.690639)$."},
+    {"rung": "step", "text": "The next step would repeat iteration 6, so 6 is the first settled one."}
+   ],
+   "feedback": {
+    "correct": "Iteration 6, matching statsmodels' count. The deviance then changes by about $1.9 \\times 10^{-9}$.",
+    "generic": "Not quite right. Compare iterations 5 and 6 digit by digit."
+   },
+   "explain": {
+    "text": "Iteration 6 gives $(-5.451164, 8.690639)$ and a deviance change of about $1.9 \\times 10^{-9}$. The gaps shrink fast: 0.15, then 0.0003, then $10^{-9}$.",
+    "canvas": {
+     "params": {"b0": -5.451164, "b1": 8.690639},
+     "caption": "Iteration 6: $\\boldsymbol\\beta = (−5.451164, 8.690639)$"
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A loop that crawls",
+   "prose": "A colleague's IRLS on the six points prints this table. It creeps upwards. The correct loop has $(-2.774439, 1.109776)$ at iteration 2 and settles by iteration 5.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Iteration", "$\\beta_0$", "$\\beta_1$"],
+     "rows": [
+      ["1", "-2", "0.8"],
+      ["2", "-2.395287", "0.958115"],
+      ["3", "-2.610195", "1.044078"]
+     ]
+    },
+    "state": {
+     "highlight": {
+      "rows": [1]
+     }
+    }
+   },
+   "question": "What did the colleague's loop get wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "frozen", "text": "It computed $W = 0.25$ once and never updated it", "correct": true},
+     {"id": "ry", "text": "It regressed $y$ instead of $z$", "why": "Regressing $y$ by OLS gives $(0, 0.2)$ at the first step, not $(-2, 0.8)$."},
+     {
+      "id": "noz",
+      "text": "It forgot to divide $y - \\mu$ by $W$",
+      "why": "Then $z$ would be $\\pm 0.5$ at the start and the first step would be $(-0.5, 0.2)$, not $(-2, 0.8)$."
+     },
+     {
+      "id": "ok",
+      "text": "Nothing: IRLS always moves this slowly",
+      "why": "The real loop reaches $(-3.035069, 1.214028)$ in 5 steps. This one is still at 1.04 after 3."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Step 1 is right, so the start was right."},
+    {"rung": "point", "text": "From step 2 on, something should change between iterations that here does not."},
+    {"rung": "step", "text": "With fixed weights, each step is a smaller correction than Newton's."}
+   ],
+   "feedback": {
+    "correct": "Frozen weights: right first step, slow after it.",
+    "generic": "Not quite. Step 1 matches, so the error starts at step 2.",
+    "byKey": {
+     "ry": "You blamed regressing $y$. That fails at step 1 already, and step 1 here is right.",
+     "noz": "You blamed the residual scaling. That also fails at step 1."
+    }
+   },
+   "explain": {
+    "text": "Step 1 is right because $W = 0.25$ really is the weight at $\\boldsymbol\\beta = \\mathbf{0}$. Frozen weights then give $(-2.395287, 0.958115)$ instead of $(-2.774439, 1.109776)$. It converges, but slowly, because it is no longer Newton's method."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "IRLS for a Poisson count",
+   "prose": "For Poisson with a log link, $W = \\mu$ and $z = \\eta - \\text{offset} + (y - \\mu)/\\mu$. On the 120 intervals of lesson 3, start from $\\boldsymbol\\beta = (\\ln(\\sum y/\\sum t), 0) = (0.835439, 0)$. One interval: $t = 15$ minutes, $y = 41$ trades.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Quantity", "Value"],
+     "rows": [
+      ["$\\eta = \\ln 15 + 0.835439$", "3.543489"],
+      [
+       "$\\mu = e^{\\eta}$",
+       "34.587"
+      ],
+      ["$W = \\mu$", "34.587"],
+      [
+       "$z$",
+       {"edit": false, "text": "?"}
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is this interval's working response $z$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.0208,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "1.0208: $0.835439 + (41 - 34.587)/34.587$.",
+    "label": "z",
+    "wrong": [
+     {
+      "id": "twice",
+      "value": 3.7289,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "resid",
+      "value": 0.1854,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Take the offset back out of $\\eta$ before adding the scaled residual."},
+    {"rung": "point", "text": "$\\eta - \\ln 15 = 0.835439$."},
+    {"rung": "step", "text": "$(41 - 34.587)/34.587 = 0.1854$; add it."}
+   ],
+   "feedback": {
+    "correct": "$z = 1.0208$. From here the loop reaches $(-0.478593, 0.059135)$ in 5 iterations, deviance 111.228895.",
+    "generic": "Not quite right. $z = \\eta - \\text{offset} + (y - \\mu)/\\mu$.",
+    "byKey": {
+     "twice": "You kept the offset in $z$. The solve then adds it again through $\\eta$, so it counts twice and the fit drifts.",
+     "resid": "That is the scaled residual alone. Add $\\eta - \\text{offset}$."
+    }
+   },
+   "explain": {
+    "text": "$z = 0.835439 + 0.1854 = 1.0208$. The fit of $z$ predicts $\\eta$ without the offset, so the offset must leave $z$. Left in, it counts twice: iterate 2 is $(8.177492, -0.059293)$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "When there is no answer",
+   "prose": "Now $x = 1, \\dots, 6$ with $y = (0, 0, 0, 1, 1, 1)$: a cut at $x = 3.5$ separates the outcomes perfectly. Slide through the iterations.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [0.5, 6.5],
+     "y": [-0.15, 1.2],
+     "xLabel": "$x$",
+     "yLabel": "$y$",
+     "height": 240,
+     "xTicks": "integer",
+     "functions": [
+      {
+       "id": "S",
+       "expr": "1/(1 + exp(-(b0 + b1*x)))",
+       "label": "$\\mu^{(k)}$",
+       "colour": 1
+      }
+     ],
+     "params": {"b0": -3.6, "b1": 1.028571}
+    },
+    "state": {
+     "points": [
+      {"id": "p0", "x": 1, "y": 0, "tap": false},
+      {"id": "p1", "x": 2, "y": 0, "tap": false},
+      {"id": "p2", "x": 3, "y": 0, "tap": false},
+      {"id": "p3", "x": 4, "y": 1, "tap": false},
+      {"id": "p4", "x": 5, "y": 1, "tap": false},
+      {"id": "p5", "x": 6, "y": 1, "tap": false}
+     ],
+     "caption": "Iteration 1: slope 1.0286"
+    },
+    "controls": [
+     {
+      "bind": "k",
+      "frames": [
+       {
+        "params": {"b0": -3.6, "b1": 1.028571},
+        "caption": "Iteration 1: slope 1.0286"
+       },
+       {
+        "params": {"b0": -10.088823, "b1": 2.882521},
+        "caption": "Iteration 3: slope 2.8825"
+       },
+       {
+        "params": {"b0": -22.887789, "b1": 6.539368},
+        "caption": "Iteration 5: slope 6.5394"
+       },
+       {
+        "params": {"b0": -58.223159, "b1": 16.635188},
+        "caption": "Iteration 10: slope 16.6352"
+       }
+      ],
+      "frameLabels": ["1", "3", "5", "10"],
+      "label": "Iteration"
+     }
+    ]
+   },
+   "question": "What happens to the slope as the loop runs on?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "grow", "text": "It grows without limit: there is no finite MLE", "correct": true},
+     {
+      "id": "conv",
+      "text": "It settles near 16.6 after ten iterations",
+      "why": "It was 6.54 at iteration 5 and 16.64 at iteration 10. It is still climbing by about 2 per step."
+     },
+     {"id": "zero", "text": "It falls back towards 0", "why": "Every step makes the curve steeper, because a steeper curve always fits these points better."}
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Compare iterations 5 and 10."},
+    {"rung": "point", "text": "6.5394, then 16.6352."},
+    {"rung": "step", "text": "A step curve at 3.5 fits perfectly, and only an infinite slope gives a step."}
+   ],
+   "feedback": {"correct": "No maximum exists: the likelihood keeps rising as the slope grows.", "generic": "Not quite right. Watch the slope at each frame."},
+   "explain": {
+    "text": "The slope runs 1.0286, 2.8825, 6.5394, 16.6352. By iteration 11 the weights underflow to 0 and the loop returns NaN. In Pyodide statsmodels stops after 22 iterations at $(-144.32, 41.23)$ with a `PerfectSeparationWarning`.",
+    "canvas": {
+     "params": {"b0": -58.223159, "b1": 16.635188},
+     "caption": "Iteration 10: slope 16.6352"
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Your own IRLS",
+   "prose": "Write the loop. Start at $\\boldsymbol\\beta = \\mathbf{0}$. After each update, stop once the deviance changes by less than `tol`. Return the coefficients and the update count. Separated data never converge: then raise `ValueError`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "What your loop should print on the six points",
+     "lines": [
+      ">>> irls_logistic(X, y)",
+      "(array([-3.035069,  1.214028]), 6)"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in `mu`, `W`, `z` and the weighted least squares solve.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef deviance(X, y, beta):\n    eta = X @ beta\n    return 2 * np.sum(np.logaddexp(0, eta) - y * eta)\n\n\ndef irls_logistic(X, y, tol=1e-10, max_iter=50):\n    \"\"\"Return (beta, iterations).\"\"\"\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    beta = np.zeros(X.shape[1])\n    dev = deviance(X, y, beta)\n    for k in range(1, max_iter + 1):\n        eta = X @ beta\n        mu = ...\n        W = ...\n        z = ...\n        beta = ...\n        new_dev = deviance(X, y, beta)\n        if abs(new_dev - dev) < tol:\n            return beta, k\n        dev = new_dev\n    raise ValueError('IRLS did not converge')\n",
+    "solution": "import numpy as np\n\n\ndef deviance(X, y, beta):\n    eta = X @ beta\n    return 2 * np.sum(np.logaddexp(0, eta) - y * eta)\n\n\ndef irls_logistic(X, y, tol=1e-10, max_iter=50):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    beta = np.zeros(X.shape[1])\n    dev = deviance(X, y, beta)\n    for k in range(1, max_iter + 1):\n        eta = X @ beta\n        mu = 1 / (1 + np.exp(-eta))\n        W = mu * (1 - mu)\n        z = eta + (y - mu) / W\n        beta = np.linalg.solve(X.T @ (W[:, None] * X), X.T @ (W * z))\n        new_dev = deviance(X, y, beta)\n        if abs(new_dev - dev) < tol:\n            return beta, k\n        dev = new_dev\n    raise ValueError('IRLS did not converge')\n",
+    "examples": [
+     {
+      "setup": "x = np.arange(6.0); y = np.array([0, 0, 1, 0, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "[round(b, 6) for b in irls_logistic(X, y)[0].tolist()]",
+      "expect": "[-3.035069, 1.214028]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x = np.arange(6.0); y = np.array([0, 0, 1, 0, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "irls_logistic(X, y)[0].tolist()",
+      "expect": "[-3.0350689646265123, 1.214027585850605]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "x = np.arange(6.0); y = np.array([0, 0, 1, 0, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "irls_logistic(X, y)[1]",
+      "expect": "6",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); X = np.column_stack([np.ones(300), L])",
+      "call": "irls_logistic(X, y)[0].tolist()",
+      "expect": "[-5.451164308995994, 8.690639009216971]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); X = np.column_stack([np.ones(300), L])",
+      "call": "irls_logistic(X, y)[1]",
+      "expect": "7",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = np.arange(6.0); y = np.array([0, 0, 1, 0, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "irls_logistic(X, y, tol=1.0)[1]",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = np.arange(1, 7.0); y = np.array([0, 0, 0, 1, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "irls_logistic(X, y)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 6 hidden tests. The six points need coefficients within $10^{-6}$ and 6 updates. The 300 firms (seed 11) need statsmodels' values from Pyodide within $10^{-6}$, and 7 updates. A loose `tol` must stop after 2, and separated data must raise `ValueError`. The first run loads NumPy, a few seconds."
+   },
+   "hints": [
+    {"rung": "nudge", "text": "`mu` is the inverse logit of `eta`, and `W = mu * (1 - mu)`."},
+    {"rung": "point", "text": "`z = eta + (y - mu) / W`."},
+    {
+     "rung": "step",
+     "text": "`beta = np.linalg.solve(X.T @ (W[:, None] * X), X.T @ (W * z))`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your loop reaches statsmodels' coefficients and refuses separated data.",
+    "generic": "Some tests failed. Recompute `W` inside the loop and solve $\\mathbf{X}^T\\mathbf{W}\\mathbf{X}\\boldsymbol\\beta = \\mathbf{X}^T\\mathbf{W}\\mathbf{z}$."
+   },
+   "explain": {
+    "text": "`W[:, None] * X` scales each row of $\\mathbf{X}$ by its weight, so `X.T @ (W[:, None] * X)` is $\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$ without building a diagonal matrix. On separated data the weights underflow, the solve returns NaN, and the deviance test never passes."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Poisson IRLS, checked against statsmodels",
+   "prose": "Change two lines for counts: $W = \\mu$ and $z = \\eta - \\text{offset} + (y - \\mu)/\\mu$, with $\\eta$ including the offset. Start from $\\beta_0 = \\ln(\\sum y/\\sum e^{\\text{offset}})$, the other coefficients 0. Then compare both loops with `sm.GLM`. The first run loads statsmodels, 20 to 40 seconds.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Target",
+     "lines": [
+      ">>> irls_poisson(X, y, np.log(t))",
+      "array([-0.478593,  0.059135])",
+      ">>> match_statsmodels(X, y, 'poisson', np.log(t)) < 1e-8",
+      "True"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Write `irls_poisson` and `match_statsmodels`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nimport statsmodels.api as sm\n\n\n# Your logistic loop from the last screen\ndef deviance(X, y, beta):\n    eta = X @ beta\n    return 2 * np.sum(np.logaddexp(0, eta) - y * eta)\n\n\ndef irls_logistic(X, y, tol=1e-10, max_iter=50):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    beta = np.zeros(X.shape[1])\n    dev = deviance(X, y, beta)\n    for k in range(1, max_iter + 1):\n        eta = X @ beta\n        mu = 1 / (1 + np.exp(-eta))\n        W = mu * (1 - mu)\n        z = eta + (y - mu) / W\n        beta = np.linalg.solve(X.T @ (W[:, None] * X), X.T @ (W * z))\n        new_dev = deviance(X, y, beta)\n        if abs(new_dev - dev) < tol:\n            return beta, k\n        dev = new_dev\n    raise ValueError('IRLS did not converge')\n\n\ndef irls_poisson(X, y, offset=None, tol=1e-10, max_iter=50):\n    \"\"\"Poisson IRLS with a log link. Column 0 of X is the intercept.\"\"\"\n    ...\n\n\ndef match_statsmodels(X, y, family, offset=None):\n    \"\"\"Largest absolute gap between your coefficients and sm.GLM's.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nimport statsmodels.api as sm\n\n\ndef deviance(X, y, beta):\n    eta = X @ beta\n    return 2 * np.sum(np.logaddexp(0, eta) - y * eta)\n\n\ndef irls_logistic(X, y, tol=1e-10, max_iter=50):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    beta = np.zeros(X.shape[1])\n    dev = deviance(X, y, beta)\n    for k in range(1, max_iter + 1):\n        eta = X @ beta\n        mu = 1 / (1 + np.exp(-eta))\n        W = mu * (1 - mu)\n        z = eta + (y - mu) / W\n        beta = np.linalg.solve(X.T @ (W[:, None] * X), X.T @ (W * z))\n        new_dev = deviance(X, y, beta)\n        if abs(new_dev - dev) < tol:\n            return beta, k\n        dev = new_dev\n    raise ValueError('IRLS did not converge')\n\n\ndef poisson_deviance(y, mu):\n    from scipy.special import xlogy\n    return 2 * np.sum(xlogy(y, y / mu) - (y - mu))\n\n\ndef irls_poisson(X, y, offset=None, tol=1e-10, max_iter=50):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    off = np.zeros(len(y)) if offset is None else np.asarray(offset, dtype=float)\n    beta = np.zeros(X.shape[1])\n    beta[0] = np.log(y.sum() / np.exp(off).sum())\n    dev = poisson_deviance(y, np.exp(X @ beta + off))\n    for k in range(1, max_iter + 1):\n        eta = X @ beta + off\n        mu = np.exp(eta)\n        z = eta - off + (y - mu) / mu\n        beta = np.linalg.solve(X.T @ (mu[:, None] * X), X.T @ (mu * z))\n        new_dev = poisson_deviance(y, np.exp(X @ beta + off))\n        if abs(new_dev - dev) < tol:\n            return beta\n        dev = new_dev\n    raise ValueError('IRLS did not converge')\n\n\ndef match_statsmodels(X, y, family, offset=None):\n    if family == 'binomial':\n        mine = irls_logistic(X, y)[0]\n        ref = sm.GLM(y, X, family=sm.families.Binomial()).fit().params\n    else:\n        mine = irls_poisson(X, y, offset)\n        ref = sm.GLM(y, X, family=sm.families.Poisson(), offset=offset).fit().params\n    return float(np.max(np.abs(mine - ref)))\n",
+    "examples": [
+     {
+      "setup": "rng = np.random.default_rng(23); v = rng.uniform(10, 40, 120); t = np.where(v > 25, rng.choice([5, 15], 120), rng.choice([30, 60], 120)); y = rng.poisson(t * np.exp(-0.5 + 0.06 * v)); X = np.column_stack([np.ones(120), v])",
+      "call": "[round(b, 6) for b in irls_poisson(X, y, np.log(t)).tolist()]",
+      "expect": "[-0.478593, 0.059135]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rng = np.random.default_rng(23); v = rng.uniform(10, 40, 120); t = np.where(v > 25, rng.choice([5, 15], 120), rng.choice([30, 60], 120)); y = rng.poisson(t * np.exp(-0.5 + 0.06 * v)); X = np.column_stack([np.ones(120), v])",
+      "call": "irls_poisson(X, y, np.log(t)).tolist()",
+      "expect": "[-0.47859278790894677, 0.05913496159076384]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "rng = np.random.default_rng(23); v = rng.uniform(10, 40, 120); t = np.where(v > 25, rng.choice([5, 15], 120), rng.choice([30, 60], 120)); y = rng.poisson(t * np.exp(-0.5 + 0.06 * v)); X = np.column_stack([np.ones(120), v])",
+      "call": "irls_poisson(X, y).tolist()",
+      "expect": "[4.583922353677266, -0.020324374175238122]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "rng = np.random.default_rng(23); v = rng.uniform(10, 40, 120); t = np.where(v > 25, rng.choice([5, 15], 120), rng.choice([30, 60], 120)); y = rng.poisson(t * np.exp(-0.5 + 0.06 * v)); X = np.column_stack([np.ones(120), v])",
+      "call": "match_statsmodels(X, y, 'poisson', np.log(t)) < 1e-8",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(11); L = rng.uniform(0, 1, 300); y = rng.binomial(1, 1 / (1 + np.exp(6 - 10 * L))); X = np.column_stack([np.ones(300), L])",
+      "call": "match_statsmodels(X, y, 'binomial') < 1e-8",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "x = np.arange(6.0); y = np.array([0, 0, 1, 0, 1, 1.0]); X = np.column_stack([np.ones(6), x])",
+      "call": "match_statsmodels(X, y, 'binomial') < 1e-8",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests. Two compare Poisson coefficients on the 120 intervals, with and without the offset, with statsmodels values from Pyodide within $10^{-6}$. Three need the gap to `sm.GLM` below $10^{-8}$, on the intervals, the 300 firms and the six points. The first run loads statsmodels, which takes 20 to 40 seconds.",
+    "budget": 60000
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Copy the logistic loop and change the mean, the weight and $z$."},
+    {"rung": "point", "text": "Put the offset in `eta`, then take it out of `z`: `z = eta - off + (y - mu) / mu`."},
+    {"rung": "step", "text": "`match_statsmodels` fits `sm.GLM(..., offset=offset)` and returns `np.max(np.abs(mine - ref))`."}
+   ],
+   "feedback": {
+    "correct": "Both loops agree with statsmodels to better than $10^{-8}$.",
+    "generic": "Some tests failed. Check the start, the offset in $z$ and the stopping rule."
+   },
+   "explain": {
+    "text": "Only the inverse link and the variance function differ between the two loops. With the offset the Poisson loop needs 5 updates; statsmodels reports 5 too."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The monthly PD re-fit",
+   "prose": "A bank's risk team re-fits its default model every month. This month the log shows 22 iterations, a leverage slope of 41 and a `PerfectSeparationWarning`. Last month: 6 iterations and a slope near 8.7.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Model monitoring log",
+     "lines": ["2026-10  iterations: 6   slope:  8.69   warnings: none", "2026-11  iterations: 22  slope: 41.23   warnings: PerfectSeparationWarning"]
+    },
+    "state": {
+     "tone": {"l2": "err"}
+    }
+   },
+   "question": "What should the team check before using this month's model?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "sep", "text": "Whether some segment's outcomes are all 0 or all 1, so the slope has no finite estimate", "correct": true},
+     {
+      "id": "good",
+      "text": "Nothing: a steeper slope means a sharper model",
+      "why": "A slope of 41 with a separation warning is not sharper. The loop ran towards infinity and stopped."
+     },
+     {
+      "id": "iter",
+      "text": "Raise the iteration limit so IRLS can finish",
+      "why": "More iterations only push the slope higher. With separation there is no finish."
+     },
+     {"id": "data", "text": "Whether the leverage column was rescaled", "why": "A rescale changes the slope but not the iteration count or the warning."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "What did the six separated points do to the iteration count and the slope?"},
+    {"rung": "point", "text": "A run-away slope plus that warning is the separation pattern."},
+    {"rung": "step", "text": "Look for a group, such as one sector, where every firm defaulted or none did."}
+   ],
+   "feedback": {
+    "correct": "Separation first: the coefficient is not identified.",
+    "generic": "Not quite. The warning names the problem.",
+    "byKey": {
+     "good": "You read a large slope as a strong signal. Here it is the loop running away.",
+     "iter": "You treated it as slow convergence. Separation never converges."
+    }
+   },
+   "explain": {
+    "text": "Every production GLM, from statsmodels to a bank's credit engine, runs this loop. A jump in iterations with a separation warning means the MLE does not exist. The fix is in the data or a penalty, never more iterations."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "IRLS repeats a weighted least squares fit of the working response $z = \\eta + (y - \\mu)/W$, with $W$ recomputed each time.",
+   "For a canonical link it is Newton's method: score $\\mathbf{X}^T(\\mathbf{y} - \\boldsymbol\\mu)$, Hessian $-\\mathbf{X}^T\\mathbf{W}\\mathbf{X}$.",
+   "Logistic uses $W = \\mu(1 - \\mu)$; Poisson uses $W = \\mu$ and takes the offset out of $z$. Separated data have no MLE."
+  ],
+  "formula": {
+   "name": "One IRLS step",
+   "tex": "\\boldsymbol\\beta_{\\text{new}} = (\\mathbf{X}^T\\mathbf{W}\\mathbf{X})^{-1}\\mathbf{X}^T\\mathbf{W}\\mathbf{z}, \\qquad \\mathbf{z} = \\boldsymbol\\eta + \\mathbf{W}^{-1}(\\mathbf{y} - \\boldsymbol\\mu)",
+   "note": "At convergence $(\\mathbf{X}^T\\mathbf{W}\\mathbf{X})^{-1}$ is the covariance of $\\hat{\\boldsymbol\\beta}$."
+  },
+  "trap": "Freezing the weights, regressing $y$ instead of $z$, or leaving the offset in $z$. Each gives a loop that runs but is wrong or slow."
+ },
+ "quiz": [
+  {
+   "id": "q-weight",
+   "difficulty": 2,
+   "prose": "In a logistic IRLS step a point has $\\eta = 1$.",
+   "question": "What is its weight $W$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1966,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.1966: $\\mu = 0.7311$ and $W = 0.7311 \\times 0.2689$.",
+    "label": "Weight",
+    "wrong": [
+     {
+      "id": "mu",
+      "value": 0.7311,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "quarter",
+      "value": 0.25,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$W = 0.1966$.",
+    "generic": "Not quite right. $W = \\mu(1 - \\mu)$ with $\\mu = 1/(1 + e^{-1})$.",
+    "byKey": {"mu": "That is $\\mu$. The weight is $\\mu(1 - \\mu)$.", "quarter": "0.25 is the weight at $\\eta = 0$ only."}
+   },
+   "explain": {
+    "text": "$\\mu = 1/(1 + e^{-1}) = 0.7311$, so $W = 0.7311 \\times 0.2689 = 0.1966$."
+   }
+  },
+  {
+   "id": "q-pois-z",
+   "difficulty": 3,
+   "prose": "In a Poisson IRLS step with no offset, a point has $\\eta = \\ln 4$ and $y = 6$.",
+   "question": "What is its working response $z$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.8863,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "1.8863: $\\ln 4 + (6 - 4)/4$.",
+    "label": "z",
+    "wrong": [
+     {
+      "id": "w",
+      "value": 9.3863,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "resid",
+      "value": 0.5,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$z = 1.3863 + 0.5 = 1.8863$.",
+    "generic": "Not quite right. $z = \\eta + (y - \\mu)/\\mu$ with $\\mu = 4$.",
+    "byKey": {"w": "You multiplied the residual by $W$ instead of dividing.", "resid": "That is the scaled residual alone. Add $\\eta$."}
+   },
+   "explain": {"text": "$\\mu = 4$, so $z = \\ln 4 + 2/4 = 1.8863$."}
+  },
+  {
+   "id": "q-sep",
+   "difficulty": 3,
+   "prose": "A logistic fit reports a slope of 41 after 22 iterations and a warning of perfect separation.",
+   "question": "What does the slope of 41 tell us?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "none", "text": "Nothing useful: with separation the MLE does not exist, and 41 is where the loop stopped", "correct": true},
+     {
+      "id": "strong",
+      "text": "That the predictor is very strong",
+      "why": "The predictor separates the sample, but the size of 41 is an artefact of the stopping point."
+     },
+     {"id": "se", "text": "That its standard error is small", "why": "Under separation the standard errors are huge, not small."}
+    ],
+    "shuffle": true
+   },
+   "feedback": {"correct": "The number is meaningless.", "generic": "Not quite right. With separation the likelihood has no maximum."},
+   "explain": {"text": "Under separation the likelihood rises for ever as the slope grows. Any reported slope is just where the loop gave up."}
+  }
+ ]
+}
