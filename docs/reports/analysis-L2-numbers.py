@@ -272,5 +272,16 @@ for e, n in [(F(1, 100), 23), (F(1, 10), 7), (1, 2), (2, 1), (F(5, 27), 6), (F(1
 true('70^2 = 4900 < 4998 < 71^2', 70 ** 2 < 4998 < 71 ** 2)
 true('homework rubric totals 10', sum(x['points'] for x in lv.files['homework-2']['items'][7]['rubric']) == 10)
 
+# fix pass: numbers and structure written by the fixes
+true('l7 first version of the product proof: 401 and 801 from |b|, 601 from |b| + 1', tail_start(lambda n: F(1, n), F(1, 400)) == 401 and tail_start(lambda n: F(1, n), F(1, 800)) == 801 and tail_start(lambda n: F(1, n), F(1, 600)) == 601)
+true('l7 screens[5] same group is c2, c3', lv.files[L7]['screens'][5]['widget'].get('same') == [['c2', 'c3']])
+true('l10 screens[7] same group is k1, k2', lv.files[L10]['screens'][7]['widget'].get('same') == [['k1', 'k2']])
+true('homework-2 items[4] same group is q2, q3', lv.files['homework-2']['items'][4]['widget'].get('same') == [['q2', 'q3']])
+true('Cauchy sum: x = y = 0.1 gives sum 0.2 > product 0.01, so d2 is false', abs(0.1 + 0.1) > abs(0.1 * 0.1))
+bq = lambda n: F(n, n + 1)
+true('review-2 items[1]: line 3 gives 1/n, line 4 claims 1/(n+1), for b = 1', all(abs(1 / bq(n) - 1) == F(1, n) and F(1, n) > F(1, n + 1) for n in range(1, 300)))
+E('review', 'items[1].explain.text', '\\tfrac{1}{n+1}')
+true('review-2 items[6]: eps/3 = 0.1', F(3, 10) / 3 == F(1, 10))
+
 lv.check_wrongs()
 lv.report()

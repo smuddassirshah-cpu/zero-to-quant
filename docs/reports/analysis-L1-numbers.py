@@ -334,5 +334,16 @@ true('rubric totals 10', sum(x['points'] for x in lv.files['homework-1']['items'
 true('-1.1 lies between the shifted ends', 0.31 - math.sqrt(2) < -1.1 < 0.32 - math.sqrt(2))
 true('sqrt2+sqrt3 step: sqrt2 = (r^2 - 1)/(2r)', math.isclose(((math.sqrt(2) + math.sqrt(3)) ** 2 - 1) / (2 * (math.sqrt(2) + math.sqrt(3))), math.sqrt(2)))
 
+# fix pass: numbers written by the fixes
+true('hint in l1 screens[10]: x*x - 2 is about 4e-16', 4e-16 < (2 ** 0.5) ** 2 - 2 < 5e-16)
+E('l1', 'screens[10].hints[1].text', '4 \\times 10^{-16}')
+true('1/249 is about 0.004016', r(F(1, 249), 6) == 0.004016); E('review', 'items[2].feedback.byKey.edge', 0.004016)
+two('2n + 1 > 250 means n > 124.5', F(250 - 1, 2), 124.5); E('review', 'items[2].explain.text', 124.5)
+true('floor(-30.3) = -31, so m = -30', math.floor(F(-303, 10)) == -31 and -31 + 1 == -30); E('review', 'items[3].feedback.byKey.r1c1', -31)
+two('2.5^2', 2.5 ** 2, 6.25); two('2.25^2', 2.25 ** 2, 5.0625); E('review', 'items[6].explain.text', 6.25); E('review', 'items[6].explain.text', 5.0625)
+true('review-1 items[0] is the multi with keys n3 and n6 only', [o['id'] for o in lv.files['review-1']['items'][0]['widget']['options'] if o.get('correct')] == ['n3', 'n6'])
+true('l3 screens[7] names its cases', lv.files['l3-completeness']['screens'][7]['widget']['lines'][1]['text'].startswith('Case one') and lv.files['l3-completeness']['screens'][7]['widget']['lines'][3]['text'].startswith('Case two'))
+true('l2 screens[9] and review-1 items[8] label their parts', lv.files['l2-least-upper-bound']['screens'][9]['widget']['lines'][0]['text'].startswith('Part one') and lv.files['review-1']['items'][8]['widget']['lines'][0]['text'].startswith('Part one'))
+
 lv.check_wrongs()
 lv.report()
