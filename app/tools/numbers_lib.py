@@ -13,7 +13,7 @@ Use from docs/reports/<course>-L<n>-numbers.py:
     lv.report()                                                   # prints the count, exits 1 on any failure
 `file` is a lesson id or a unique prefix ("l10"), "review" or "homework". `lv.text(file, path)` returns the string
 (strings below an object or list are joined with newlines) for ad-hoc checks. Without `fmt` a number matches any token
-of equal value after normalisation (thousands commas, currency signs, LaTeX spacing and braces, U+2212, trailing zeros);
+of equal value after normalisation (thousands commas, currency signs, LaTeX spacing and braces, U+2212, trailing zeros; a LaTeX fraction \\tfrac{3}{4}, \\frac{1}{2} or \\frac12 matches its value and its integers);
 a string value must appear verbatim in the raw or the normalised text.
 """
 import json
@@ -75,14 +75,29 @@ def normalise(s):
 _NUM = re.compile(r'(?<![\w.])-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?(?![\d]|\.\d)')
 
 
+_FRAC = re.compile(r'\\[dtc]?frac\s*(?:\{([^{}]+)\}\s*\{([^{}]+)\}|(\d)(\d))')
+
+
 def _numbers(s):
     out = []
+    fr = []
+
+    def _frac(m):                                 # \tfrac{3}{4}, \frac34: keep both integers as tokens and add the value
+        a, b = (m.group(1), m.group(2)) if m.group(1) is not None else (m.group(3), m.group(4))
+        try:
+            x, y = float(normalise(a)), float(normalise(b))
+            if y != 0:
+                fr.append(x / y)
+        except ValueError:
+            pass
+        return f' {a} {b} '
+    s = _FRAC.sub(_frac, s)
     for m in _NUM.finditer(normalise(s)):
         try:
             out.append(float(m.group(0).rstrip('.')))
         except ValueError:
             pass
-    return out
+    return out + fr
 
 
 class Level:

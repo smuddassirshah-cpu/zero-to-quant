@@ -1,6 +1,6 @@
 """List learner-visible sentences over MAX words in one course (or an exam file).
 Usage: VOICE_BASE=/home/user/zero-to-quant/app/content/courses/<course>/ python3 docs/reviews/voice-scan.py [MAX=20] [--summary]
-A $...$ formula, $$...$$ block `code` span or {{template}} value counts as one word; fenced code is dropped.
+Canvas derive/let/formula strings are skipped (a derive caption is scanned). A $...$ formula, $$...$$ block `code` span or {{template}} value counts as one word; fenced code is dropped.
 """
 import json, glob, re, sys, os
 BASE = os.environ.get('VOICE_BASE', '/home/user/zero-to-quant/app/content/courses/graphs-dp/')
@@ -50,7 +50,13 @@ def sentences(t):
     return out
 def words(s):
     return len([w for w in s.split() if re.search(r'[A-Za-z0-9£]', w)])
+def is_formula_path(path):
+    """canvas derive rules (let, targets), curve and function formulas are expressions, not prose; a derive caption is prose (ENGINE-BACKLOG 580)"""
+    if re.search(r'(^|\.)derive\.', path):
+        return not re.search(r'derive\.caption$', path)
+    return bool(re.search(r'\.(expr|formula|formulas|polar|inner)$', path)) and '.canvas.' in path
 def is_code_path(path):
+    if is_formula_path(path): return True
     return '.canvas.params.lines.' in path or path.endswith('.code') or '.tests.' in path and not re.search(r'\.(why|hint|feedback)$', path)
 rows = []; total = 0
 for f in sorted(glob.glob(BASE + '*.json')):

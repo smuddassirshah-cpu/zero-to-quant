@@ -1564,3 +1564,10 @@ Status block (engine pass, session T step 0):
 
 Status block (engine pass, session T):
 - 576: done (new test 3 of 3, `test-validate-why` 12 passed, validator 0 errors). 577: done (odes/l16-euler-method playthrough green desktop and mobile).
+
+578. Done [Should]: `numbers_lib.expect` with a number also matches a LaTeX fraction of equal value (`\tfrac{3}{4}`, `\frac{1}{2}`, `\dfrac{a}{b}` skipped when not numeric, `\frac12`); the numerator and denominator still match as integer tokens. `tools/test-numbers-lib.py` adds checks on convex l4 (`\tfrac12`) and unit checks of the parser.
+579. Done [Should]: the "number script never uses numbers_lib" warning now needs an import of numbers_lib plus `Level(`; calls through an alias (`E = lv.expect`) pass. Warnings 10 to 8 (odes L1-L3, complex L1-L2, numerics L1-L3).
+580. Done [Should]: `docs/reviews/voice-scan.py` skips canvas `derive` rules (targets and `let`), and `expr`, `formula`, `polar`, `inner` strings under a canvas; a `derive.caption` is still scanned. Numerics and stat-models stay 0 and 0 (fewer sentences scanned); a long prose sentence in a temp copy is still caught.
+
+Status block (engine pass, session T, items 578 to 580):
+- 578: done (test-numbers-lib passes, 10 real, 4 wrong). 579: done (8 warnings left, validator 0 errors, test-validate-why 12 passed). 580: done (numerics 0 and 0, stat-models 0 and 0, spot check caught).
