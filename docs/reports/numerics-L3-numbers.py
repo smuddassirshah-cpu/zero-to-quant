@@ -25,7 +25,7 @@ def trap(f, a, b, n):
 def simp(f, a, b, n):
     x = np.linspace(a, b, n + 1); y = f(x); h = (b - a) / n; return h / 3 * (y[0] + y[-1] + 4 * y[1:-1:2].sum() + 2 * y[2:-1:2].sum())
 E1 = float(mexp(1) - 1); check('e - 1', E1, 1.718281828, abs_=5e-10); check('quad e-1', quad(np.exp, 0, 1)[0], E1, abs_=1e-14)
-for n, t, s in [(2, 0.0357, 5.79e-4), (4, 0.00894, 3.70e-5), (8, 0.00224, 2.33e-6), (16, 0.000559, 1.46e-7)]:
+for n, t, s in [(2, 0.0356, 5.79e-4), (4, 0.00894, 3.70e-5), (8, 0.00224, 2.33e-6), (16, 0.000559, 1.46e-7)]:
     check(f'trap {n}', trap(np.exp, 0, 1, n) - E1, t, rel=0.003); check(f'simp {n}', simp(np.exp, 0, 1, n) - E1, s, rel=0.004)
 check('T2 caption', trap(np.exp, 0, 1, 2), 1.75393109, abs_=5e-9); check('T4', trap(np.exp, 0, 1, 4), 1.7272219, abs_=5e-8)
 check('S2 caption', simp(np.exp, 0, 1, 2), 1.7188611519, abs_=5e-11); check('S2 example', round(simp(np.exp, 0, 1, 2), 6), 1.718861)
@@ -44,7 +44,7 @@ zs = (math.log(1) - (0.05 - 0.02)) / 0.2; check('z*', zs, -0.15, abs_=1e-12)
 g = lambda z: math.exp(-0.05) * np.maximum(100 * np.exp(0.03 + 0.2 * z) - 100, 0) * np.exp(-z ** 2 / 2) / math.sqrt(2 * math.pi)
 BS = float(100 * mp.ncdf(mpf('0.35')) - 100 * mexp(-mpf('0.05')) * mp.ncdf(mpf('0.15')))
 check('BS', BS, 10.450584, abs_=5e-7)
-for n, k, sp in [(16, 0.600, 9.26e-3), (32, 0.116, 5.10e-4), (64, 0.0108, 3.10e-5), (128, -0.00644, 1.93e-6)]:
+for n, k, sp in [(16, 0.600, 9.26e-3), (32, 0.116, 5.10e-4), (64, 0.0108, 3.10e-5), (128, -0.00644, 1.92e-6)]:
     check(f'kink {n}', simp(g, -8, 8, n) - BS, k, rel=0.005); check(f'split {n}', simp(g, zs, 8, n) - BS, sp, rel=0.005)
 check('cubic one panel', simp(lambda x: x ** 3 - x, 0, 2, 2), 2.0, abs_=1e-14); check('cubic integral', quad(lambda x: x ** 3 - x, 0, 2)[0], 2.0, abs_=1e-12)
 check('q simp 64', 3.70e-5 / 16 ** 4, 5.6e-10, rel=0.02); check('q simp 32', 3.70e-5 / 16 ** 3, 9.0e-9, rel=0.01)
@@ -110,17 +110,20 @@ check('diff', (y10 - y20), -1.66e-5, rel=0.01); check('within 12%', abs((y10 - y
 def step(f, t, y, h):
     k1 = f(t, y); k2 = f(t + h / 2, y + h / 2 * k1); k3 = f(t + h / 2, y + h / 2 * k2); k4 = f(t + h, y + h * k3)
     return y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)
+# the controller is the lesson's own adaptive_rk4 (screens[7]): scale tol * max(1, |y_half|), used for accept and for the step update
 t, y, h, acc, rej, hs = 0.0, 1.0, 0.1, 0, 0, []
 while t < 0.95 - 1e-15:
     h = min(h, 0.95 - t); f2 = lambda t, y: y * y
     big = step(f2, t, y, h); half = step(f2, t + h / 2, step(f2, t, y, h / 2), h / 2); err = abs(half - big) / 15
-    if err <= 1e-8 * max(1, abs(half)):
+    scale = 1e-8 * max(1.0, abs(half))
+    if err <= scale:
         t += h; y = half + (half - big) / 15; acc += 1; hs.append(h)
     else:
         rej += 1
-    h = h * min(5, max(0.2, 0.9 * (1e-8 * max(1, abs(y)) / err) ** 0.2))
+    h = h * (5.0 if err == 0 else min(5.0, max(0.2, 0.9 * (scale / err) ** 0.2)))
 check('accepted 38', acc, 38); check('rejected 1', rej, 1); check('evals 468', (acc + rej) * 12, 468)
-check('first h 0.069', hs[0], 0.069, abs_=0.0005); check('min h 0.0022', min(hs), 0.0022, abs_=0.00005)
+check('first h 0.070', hs[0], 0.070, abs_=0.0005); check('min controller h 0.0043', min(hs[:-1]), 0.0043, abs_=0.00005)
+check('last h cut to 0.0021', hs[-1], 0.0021, abs_=0.00005)
 check('rel err 2.4e-8', abs(y - 20) / 20, 2.4e-8, rel=0.03)
 check('fixed 400', abs(rk4(lambda t, y: y * y, 0, [1.0], 0.95 / 400, 400)[0] - 20) / 20, 7e-8, rel=0.02)
 s45 = solve_ivp(lambda t, y: y * y, [0, 0.95], [1.0], method='RK45', rtol=1e-8)
@@ -208,6 +211,24 @@ for fn in FILES:
                 except Exception: res.append(False)
             if must and not all(res): fails.append(f'{fn}: solution fails tests {[i + 1 for i, x in enumerate(res) if not x]}')
             if not must and all(res): fails.append(f'{fn}: starter passes every test')
+
+# ---------- fix pass: values changed after the second read ----------
+check('l9 trap n=2 error 0.0356', round(trap(np.exp, 0, 1, 2) - E1, 4), 0.0356)
+check('l9 trap ratio 3.99', (trap(np.exp, 0, 1, 2) - E1) / (trap(np.exp, 0, 1, 4) - E1), 3.99, abs_=0.005)
+check('l9 split n=128 rounds to 1.92e-6', round((simp(g, zs, 8, 128) - BS) * 1e6, 2), 1.92)
+def eulr(h, n):
+    y = y0.copy(); out = []
+    for _ in range(n):
+        y = (np.linalg.solve(np.eye(2) - h / 2 * A2, (np.eye(2) + h / 2 * A2) @ y + h * c2)); out.append(y[1] * 100)
+    return out
+tp = eulr(0.25, 40)
+check('l12 trapezoidal ring min above 3.9 and below 4', min(tp) > 3.9 and min(tp) < 4.0, True)
+check('l12 trapezoidal ring max below 8.1', max(tp) < 8.1, True)
+if True:
+    d = json.load(open(os.path.join(os.path.dirname(__file__), '..', '..', 'app', 'content', 'courses', 'numerics', 'l11-step-size.json'), encoding='utf-8'))
+    pts = d['screens'][4]['canvas']['state']['points']
+    check('l11 dots count', len(pts), acc + 1)
+    check('l11 dot s1 matches the lesson controller', pts[1]['x'], hs[0], abs_=1e-5)
 if fails:
     print('\n'.join(fails)); print(f'{len(fails)} check(s) failed'); sys.exit(1)
 print('numerics L3: all checks passed')

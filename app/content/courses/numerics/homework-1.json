@@ -25,13 +25,6 @@
       "tol": {
        "abs": 1e-09
       }
-     },
-     {
-      "id": "nobias",
-      "value": 0,
-      "tol": {
-       "abs": 1e-09
-      }
      }
     ]
    },
@@ -121,7 +114,7 @@
     }
    },
    "explain": {
-    "text": "$x f'(x)/f(x) = \\tfrac{x e^x}{e^x - 1}$, and as $x \\to 0$ it tends to 1. So $e^x - 1$ is well conditioned near 0. The seven digits lost to `exp(1e-10) - 1` were the algorithm's fault, which is why `expm1` exists."
+    "text": "$x f'(x)/f(x) = \\tfrac{x e^x}{e^x - 1}$, and as $x \\to 0$ it tends to 1. So $e^x - 1$ is well conditioned near 0. The nine digits lost to `exp(1e-10) - 1` were the algorithm's fault, which is why `expm1` exists."
    }
   },
   {
@@ -387,7 +380,7 @@
    ],
    "kind": "longform",
    "prompt": "A risk report computes the variance of a hedged book's daily mark-to-market over 250 days. The book is worth about £1bn and moves by only a few pounds a day. The code uses $\\overline{x^2} - \\bar x^2$ in double precision, and one morning the report shows a negative variance. Explain the cancellation, and why the problem is well conditioned but the algorithm unstable. Then give the fix and the test you would add.",
-   "model": "**What happened.** Each mark $x$ is near $10^9$, so $x^2$ is near $10^{18}$. Doubles there are $2^{59-52} = 128$ apart. The true variance is a few pounds squared, near 10, far below that gap. So $\\overline{x^2}$ and $\\bar x^2$ agree in every stored digit that matters, and their difference is rounding noise. Noise can be negative, so the report printed a negative number.\n\n**Conditioning.** Variance as a function of the marks is well conditioned. Shifting every mark by £1bn changes nothing. A relative change of $u$ in each mark moves the variance very little. The data hold the answer perfectly well.\n\n**Stability.** The formula is not backward stable. It squares numbers near $10^9$, then subtracts two results near $10^{18}$ that are nearly equal. The relative error is about $u \\times (\\bar x / s)^2 \\approx 10^{-16} \\times 10^{17} = 10$, so no digit survives. That is catastrophic cancellation inside the algorithm, not in the problem.\n\n**Fix.** Use Welford's method, or two passes: subtract the mean before squaring. Then every squared deviation is a few pounds squared and nothing cancels. In 200 simulated years of this book, the one-pass formula gave 0 half the time. Otherwise it swung between $-263$ and $263$. Two passes gave about 9 every time.\n\n**Test.** Add a unit test with an offset: marks $10^9 + 4, 10^9 + 7, 10^9 + 13, 10^9 + 16$ must give sample variance 30.0 within $10^{-9}$. The one-pass formula returns 0.0 there and fails. Also assert the variance is never negative.",
+   "model": "**What happened.** Each mark $x$ is near $10^9$, so $x^2$ is near $10^{18}$. Doubles there are $2^{59-52} = 128$ apart. The true variance is a few pounds squared, near 10, far below that gap. So $\\overline{x^2}$ and $\\bar x^2$ agree in every stored digit that matters, and their difference is rounding noise. Noise can be negative, so the report printed a negative number.\n\n**Conditioning.** Variance as a function of the marks is well conditioned. Shifting every mark by £1bn changes nothing. A relative change of $u$ in each mark moves the variance very little. The data hold the answer perfectly well.\n\n**Stability.** The formula is not backward stable. It squares numbers near $10^9$, then subtracts two results near $10^{18}$ that are nearly equal. The relative error is about $u \\times (\\bar x / s)^2 \\approx 10^{-16} \\times 10^{17} = 10$, so no digit survives. That is catastrophic cancellation inside the algorithm, not in the problem.\n\n**Fix.** Use Welford's method, or two passes: subtract the mean before squaring. Then every squared deviation is a few pounds squared and nothing cancels. In 200 simulated years of this book, the one-pass formula often gave exactly 0. Otherwise it swung by a few hundred either way. Two passes gave about 9 every time.\n\n**Test.** Add a unit test with an offset: marks $10^9 + 4, 10^9 + 7, 10^9 + 13, 10^9 + 16$ must give sample variance 30.0 within $10^{-9}$. The one-pass formula returns 0.0 there and fails. Also assert the variance is never negative.",
    "rubric": [
     {
      "points": 2,

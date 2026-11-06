@@ -285,6 +285,44 @@ for f in FILES:
             if not must_pass and all(results):
                 fails.append(f'{f}: starter passes every test')
 
+
+# ---------- fix pass: values changed after the second read (mpmath reference) ----------
+mp.dps = 50
+xe = mexp(mpf('1e-10')) - 1
+re_ = abs((mpf(math.exp(1e-10) - 1) - xe) / xe)
+check('l2 expm1 relative error 8.27e-8', float(re_), 8.27e-8, rel=0.002)
+check('l2 correct digits left 7.1 (so 8.9 of 16 lost)', float(-mlog(re_, 10)), 7.08, abs_=0.01)
+def troot_err(b):
+    bm = mpf(b); true = (bm - msqrt(bm * bm - 4)) / 2
+    got = (b - math.sqrt(b * b - 4)) / 2
+    return float(abs((mpf(got) - true) / true))
+check('l2 b=1e5 leaves about 6.5 digits', -math.log10(troot_err(1e5)), 6.47, abs_=0.3)
+check('l2 b=1e1 error near 1e-14.4', math.log10(troot_err(1e1)) < -14, True)
+check('l2 b=1e8 error about 0.255', troot_err(1e8), 0.255, abs_=0.01)
+check('l2 range costs about 14 digits', -math.log10(troot_err(1e1)) + math.log10(troot_err(1e8)) , 13.8, abs_=0.6)
+rt = msqrt(mpf(10) ** 16 - 4)
+check('l2 stored root error below half-gap 7.45e-9', float(abs(mpf(math.sqrt(1e16 - 4)) - rt)) <= 2.0 ** -27 + 1e-20, True)
+check('l2 gap b - sqrt(b^2-4) is 2e-8', float(mpf(10) ** 8 - rt), 2e-8, rel=1e-6)
+check('l2 b and b^2 - 4 are exact', 1e16 - 4 == 9999999999999996.0 and float(10 ** 8) == 10 ** 8, True)
+check('l2 ulp at 1e8 is 2^-26, half 7.45e-9', math.ulp(1e8) / 2, 7.450580596923828e-09, rel=1e-12)
+check('l2 delta estimate 0.6324 has two correct digits', abs(0.6324 - 0.636831) / 0.636831 < 0.01, True)
+rng = np.random.default_rng(3)
+def onepass_rel(sd, days=250):
+    x = 1e9 + np.round(rng.normal(0, sd, days), 2); xs = [Fraction(float(v)) for v in x]
+    m = sum(xs) / days; true = float(sum((v - m) ** 2 for v in xs) / days)
+    got = float(np.mean(x ** 2) - np.mean(x) ** 2); return abs(got - true) / true, got
+res_small = [onepass_rel(3.0) for _ in range(40)]
+check('l2 q-book-variance with moves of a few pounds: one-pass is mostly wrong', sum(r > 0.5 for r, _ in res_small) > 30, True)
+check('l2 same with moves of a few thousand pounds: worst error under 1e-3', max(onepass_rel(3000.0)[0] for _ in range(40)) < 1e-3, True)
+check('r1 h* = 2 sqrt(100 eps) = 2.98e-7', 2 * math.sqrt(100 * EPS) / 1e-7, 2.98, abs_=0.005)
+check('r1 noroot slip 4.44e-7', 2 * 100 * EPS / 1e-7, 4.44e-7, rel=0.002)
+check('r1 float32 gap at 1e6 is 0.0625, a penny vanishes', float(np.float32(1e6) + np.float32(0.01)) == 1e6 and np.spacing(np.float32(1e6)) == np.float32(0.0625), True)
+A_ = lambda e: np.array([[1, 1], [e, 0], [0, e]]); b_ = lambda e: A_(e) @ np.array([1.0, 1.0])
+Ae = A_(1e-7); sol = np.linalg.solve(Ae.T @ Ae, Ae.T @ b_(1e-7))
+check('l4 lauchli 1e-7: normal equations lose about one digit', float(np.max(np.abs(sol - 1))) < 1e-13, True)
+check('l4 kappa^2 u near 0.02', (math.sqrt(2) / 1e-7) ** 2 * 1.1e-16, 0.02, rel=0.2)
+check('h1 expm1: nine digits lost, seven survive', (round(16 + float(mlog(re_, 10))), round(float(-mlog(re_, 10)))), (9, 7))
+
 if fails:
     print('\n'.join(fails)); print(f'{len(fails)} check(s) failed'); sys.exit(1)
 print('numerics L1: all checks passed')

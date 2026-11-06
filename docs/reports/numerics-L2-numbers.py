@@ -239,6 +239,31 @@ for fn in FILES:
                 except Exception: res.append(False)
             if must and not all(res): fails.append(f'{fn}: solution fails tests {[i + 1 for i, x in enumerate(res) if not x]}')
             if not must and all(res): fails.append(f'{fn}: starter passes every test')
+
+# ---------- fix pass: values changed after the second read (mpmath reference) ----------
+mp.dps = 40
+s0, s1, mse = mpf(1), mpf(2), []
+for _ in range(6):
+    g0, g1 = s0 * s0 - 2, s1 * s1 - 2; s0, s1 = s1, s1 - g1 * (s1 - s0) / (g1 - g0); mse.append(abs(s1 - msqrt(2)))
+check('l5 secant step 5 error 3.16e-10', float(mse[4]), 3.16e-10, rel=0.005)
+check('l5 secant step 6 error 2.37e-16 (so 12 digits at step 6, not 5)', float(mse[5]), 2.37e-16, rel=0.005)
+check('l5 secant first reaches 1e-12 at step 6', next(k + 1 for k, e in enumerate(mse) if e < mpf('1e-12')), 6)
+mpP = lambda y: sum(5 / (1 + y)**t for t in range(1, 6)) + 100 / (1 + y)**5 - 95
+mdP = lambda y: sum(-5 * t / (1 + y)**(t + 1) for t in range(1, 6)) - 500 / (1 + y)**6
+yt = findroot(mpP, mpf('0.06')); ym_ = mpf('0.05')
+for _ in range(3): ym_ -= mpP(ym_) / mdP(ym_)
+rel3 = float(abs(ym_ - yt) / yt)
+check('l5 bond Newton step 3 relative error 7.1e-12 (about 11 digits)', rel3, 7.1e-12, rel=0.05)
+check('l5 about 11 correct digits', round(-math.log10(rel3)), 11)
+check('l5 bisection on [0, 0.2]: 31 halvings plus 2 end checks is 33 evaluations', 31 + 2, 33)
+check('l6 from width 1, 34 halvings reach 1e-10 (2^33 is too few)', (next(k for k in range(1, 60) if 1 / 2**k < 1e-10), 2**33 < 1e10 < 2**34), (34, True))
+check('l6 from width 5, 36 halvings; 35 too few', (next(k for k in range(1, 60) if 5 / 2**k < 1e-10), 5 / 2**35 > 1e-10), (36, True))
+check('l6 w34 stays distinct from 36 and 35', len({34, 35, 36}), 3)
+check('r2 safeguard: bracket [0.3, 0.9] has midpoint 0.6', (0.3 + 0.9) / 2, 0.6, abs_=1e-12)
+check('r2 Newton step 2.53 lies outside [0.3, 0.9]', not (0.3 <= 2.53 <= 0.9), True)
+check('r2 Newton wins only when f-prime costs under 0.44 of f', 1 / math.log2((1 + 5 ** 0.5) / 2) - 1, 0.4405, abs_=5e-4)
+check('r2 at cost 0.44 Newton rate is above 1.618, at 0.45 below', (2 ** (1 / 1.44) > 1.618, 2 ** (1 / 1.45) < 1.618), (True, True))
+
 if fails:
     print('\n'.join(fails)); print(f'{len(fails)} check(s) failed'); sys.exit(1)
 print('numerics L2: all checks passed')

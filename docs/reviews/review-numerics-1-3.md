@@ -71,3 +71,50 @@ The three author scripts read the lesson JSON only to run code widgets. All nine
 - notes: 14
 - Author scripts: `python3 -I docs/reports/numerics-L1-numbers.py` exit 0, `numerics-L2-numbers.py` exit 0, `numerics-L3-numbers.py` exit 0.
 - Validator: 0 errors.
+
+## Fix pass
+
+Every changed value was recomputed twice (author scripts extended with mpmath references, plus a second ad hoc check); the l11 figures come from the lesson's own `adaptive_rk4`.
+
+Level 1
+- l2 screens[3] feedback.correct: fixed ("only about seven of 16 digits survive"; 8.27e-8 gives 7.08 digits left).
+- l2 screens[1] `none` why: fixed (about six correct digits left at b = 10^5; measured 10^-6.47).
+- l2 screens[1] `eight` why: fixed (14 digits over the range).
+- l2 q-book-variance: fixed (prose "a few pounds a day", explain "variance near 10"; one-pass is wrong in most seeded runs there, and under 1e-3 at £3,000 moves, so the old text was false).
+- homework-1 h1-expm1-kappa: fixed (nine digits lost).
+- review-1 r1-bump `noroot`: fixed (value 4.44e-7, rel 0.02; the old 0.0089 matched no slip).
+- l2 screens[2] prose: fixed (gap 2e-8, b exact, root off by up to 7.5e-9).
+- l2 screens[3] `abs` why: fixed ("multiplied by 10^6, not 10^8").
+- l4 q-lauchli-1e7 `exact` and `garbage` whys: fixed (NumPy loses about one digit here, bound allows 14).
+- review-1 r1-float32-notional explain: fixed (a penny changes nothing).
+- homework-1 h1-hex `nobias`: fixed by dropping the entry.
+- l2 screens[6] hint and `tiny` why: fixed (two digits).
+- l4 `nan` option text: fixed ("`nan` or an error").
+- l4 screens[2] hints[2]: fixed ("a few u").
+- homework-1 h1-book-variance model: fixed (seed-neutral wording).
+
+Level 2
+- l5 screens[0] `secant` why and explain: fixed (two more steps, step 6; errors 3.16e-10 and 2.37e-16 in mpmath).
+- l6 screens[4] `w33`: fixed (renamed `w34`, value 34, byKey key renamed; 2^33 = 8.6e9 is too few from width 1).
+- l6 order lines t4 and t5: fixed as suggested.
+- review-2 r2-safeguard: fixed (bracket [0.3, 0.9], bisect to 0.6; graded option text and feedback changed, option id `ok` unchanged).
+- l8 q-natural `third` why: fixed.
+- l5 screens[6] explain: fixed (about 11 digits; relative error 7.1e-12).
+- l5 screens[9] prose: fixed (31 halvings after checking the ends).
+- review-2 r2-efficiency explain: fixed (under about 0.44 of f; 1/log2(1.618) - 1 = 0.4405).
+- l7 screens[3] explain: fixed.
+
+Level 3
+- l11 screens[4] explain: fixed (0.070, 0.0043, last step cut to 0.0021; lesson controller gives first 0.07010, smallest controller step 0.004341, last 0.002067, 38 accepted, 1 rejected, 468 evaluations, end error 2.37e-8). Dots s0 to s38 on screens[4] and [7] regenerated from that run. Script `numerics-L3-numbers.py` now uses the lesson's controller and checks 0.070, 0.0043, 0.0021 and the dots.
+- l9 0.0357 to 0.0356 in all five places: fixed (script tolerance table updated; 0.035649).
+- l9 screens[6] hints[2]: fixed (1.92e-6; script row changed from 1.93e-6 and a rounding check added, the old 0.5% tolerance had hidden it).
+- l11 q-floor feedback: fixed (near 10^-14).
+- l12 summary.trap: fixed ("about 4% and 8%").
+- homework-3 h3-trap-n explain: fixed.
+- course.json levels[2].requires `odes/L4`: deferred (no change allowed; recheck l11 and l12 when odes L4 lands).
+
+Process note (SESSION PROTOCOL 6 rule for scripts asserting figures against the JSON text): deferred to the orchestrator as an engine item. Disputed: none.
+
+Graded answers changed: none by value. Wrong-option values changed: review-1 r1-bump `noroot` 0.0089 to 4.44e-7; l6 `w33` 33 to `w34` 34; homework-1 h1-hex `nobias` removed. review-2 r2-safeguard correct option text now "0.6" (id `ok` unchanged).
+
+Gates: `node tools/validate.mjs` 0 errors; `python3 -I docs/reports/numerics-L1-numbers.py`, `-L2-`, `-L3-` all exit 0; playthrough `--lesson` for l2, l4, l5, l6, l7, l8, l9, l11, l12 and `--set` for homework-1, homework-3, review-1, review-2, desktop and mobile, all "All passed."
