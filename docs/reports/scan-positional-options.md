@@ -123,3 +123,26 @@ By course (or exam/bank folder):
 ## [multi-keys-uniform]: 0 hits
 
 None.
+
+## Fix pass
+
+Shuffled-position: 14 hits, 6 fixed, 8 false positives (hits now 8, all listed below).
+
+Fixed (named by content):
+
+- `eigen/homework-4` `items[2].explain.text` and `items[2].feedback.correct`: "(a)", "(c)" now name the matrices by diagonal. Traces and determinants recomputed: (-3, 2), (-4, 5), det -8, det -1, trace 0.
+- `analysis/review-3` `items[5].explain.text`: "the second option" now "comparison with $\sum |a_n|$".
+- `alpha/l3-including-the-dead` `screens[10].hints[2].text`: "The first option" now "The sentence on delisted shares".
+- `mm-games/l12-thinking-aloud` `screens[3].hints[2].text`: "The first answer" now "The answer that averages 3.5 per die".
+- `exams/topic-0.7` `items[12].explain.text`: "The second answer" now "The answer about fast decisions".
+
+False positives (no change):
+
+- `recruiting/l8-why-this-firm` `screens[1].widget.options[3].why`: "answer A" is row A of the table on the previous screen.
+- `recruiting/l9-sitting-an-assessment` `screens[11].widget.options[1].why`: "top choice" is the table label "Firm A, top choice".
+- `py-found/l9-splitting-files` `quiz[1].feedback.generic`: "the top one" is the top pair of the count.
+- `git/l3-staging-area` `quiz[2].explain.text`: "the top one" is the file in the top folder.
+- `algo-think/l6-call-stack` `screens[4].hints[1].text`: "the one above" is the frame above in the call stack.
+- `convex/l4-recognising-convex-problems` `screens[2].feedback.correct`: "(c)" is problem (c) in the table, not an option.
+- `puzzles/homework-5` `items[4].widget.options[1].why`: "the last answer" is the answer to the previous puzzle.
+- `coding-int/homework-4` `items[0].parts[1].widget.options[3].why`: "the first answer" is the result of the first call.
