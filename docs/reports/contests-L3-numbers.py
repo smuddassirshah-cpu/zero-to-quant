@@ -323,5 +323,62 @@ for n in range(1, 8):
 assert [3, 2, 1][1] == 2 and [2, 3, 1] != [1, 2, 3]   # reverse fixes 2 at n = 3; the shift does not
 E('homework', 'items[7].widget.options[2].why', 4, fmt='4 \\cdot 10^{{10}}')
 
+# ---------- fix pass (review-contests-3-4 and review-contests-1-2 findings 21, 22) ----------
+# finding 1: exactly two orders of 1..5 have every neighbouring pair differing by 1
+assert [p for p in itertools.permutations(range(1, 6)) if not valid(p)] and \
+    sorted(p for p in itertools.permutations(range(1, 6)) if all(abs(p[i] - p[i + 1]) == 1 for i in range(4))) == [(1, 2, 3, 4, 5), (5, 4, 3, 2, 1)]
+E('l9', 'screens[4].widget.options[5].why', 'every pair of neighbours differs by 1')
+# finding 2: earliest start meets A, which overlaps all five others; shortest first meets C, which blocks B and D
+assert all(M[p][0] < M['A'][1] for p in 'BCDEF') and M['B'][1] > M['C'][0] and M['D'][0] < M['C'][1] and M['C'][1] - M['C'][0] == 3
+E('l10', 'screens[1].explain.text', 'Shortest first took C, which blocks B and D')
+# finding 3
+E('l10', 'screens[9].prose', "Problem M's greedy has the shape most greedies share")
+# finding 4: meet in the middle needs a running best profit; a plain binary search on risk can land on a worse subset
+right = [(0, 0), (1, 5), (2, 1)]   # (risk, profit), budget 2
+by_risk = sorted(right)
+import bisect as _b
+landed = by_risk[_b.bisect_right([r for r, _ in by_risk], 2) - 1]
+assert landed == (2, 1) and max(p for r, p in right if r <= 2) == 5
+E('l11', 'screens[8].prose', 'running best profit')
+E('l11', 'screens[8].canvas.params.lines', 'running best profit')
+# finding 5: the power-of-two test. C++ (g++ -O1) gives 0 for 8 with the wrong form; Python is true for 0.
+def py_wrong(x): return x & (x - 1) == 0
+def py_right(x): return x > 0 and (x & (x - 1)) == 0
+assert py_wrong(0) and not py_right(0)
+assert all(py_right(x) == (x > 0 and bin(x).count('1') == 1) for x in range(0, 4097))
+E('l11', 'screens[10].explain.text', 'x > 0 and (x & (x - 1)) == 0')
+E('review', 'items[5].explain.text', 'x > 0 && (x & (x - 1)) == 0')
+assert 8 & (7 == 0) == 0                                  # the C++ reading of the wrong form
+# finding 6
+E('l11', 'screens[3].explain.text', "the app's Python"); E('l11', 'screens[8].explain.text', "the app's Python")
+# finding 7
+E('l12', 'screens[5].explain.text', 'on the first random case almost every time')
+# finding 8
+E('review', 'items[3].widget.answer', 10)
+# finding 9: mask holding B, C and E (bits 1, 2, 4); distractors 13, 26 and 20 read as the lesson says
+mk = lambda bits: sum(1 << b for b in bits)
+assert mk([1, 2, 4]) == 22 and format(22, '05b') == '10110'
+E('review', 'items[4].widget.options[0].text', mk([1, 2, 4]))
+E('review', 'items[4].widget.options[1].text', 13); assert format(13, '05b') == '01101' and [i for i, ch in enumerate(format(13, '05b')) if ch == '1'] == [1, 2, 4]
+E('review', 'items[4].widget.options[2].text', 26); assert format(26, '05b') == '11010'
+E('review', 'items[4].widget.options[3].text', 20); assert format(20, '05b') == '10100'
+E('review', 'items[4].feedback.correct', 2 + 4 + 16); E('review', 'items[4].explain.text', 2 + 4 + 16)
+# finding 10: a negative cap breaks the solution, so the prose bounds it
+E('homework', 'items[2].prose', 'between 0 and $10^9$')
+# finding 12 (O2-explain-answer): numbers added to the explanations
+E('l10', 'screens[3].explain.text', max(r for r in range(4) for c in itertools.combinations(tri, r) if compatible(c, strict=True)))
+peak = max(sum(1 for s, e in M.values() if s <= t / 2 < e) for t in range(0, 32))
+assert peak == 3 and sum(1 for s, e in M.values() if s <= 4.5 < e) == 3
+E('l10', 'screens[5].explain.text', peak); E('l10', 'screens[5].explain.text', 4.5)
+E('l10', 'screens[10].explain.text', len(kept)); E('l10', 'screens[10].explain.text', 8)
+E('l10', 'quiz[1].explain.text', max(r_ for r_ in range(5) for c_ in itertools.combinations(q1, r_) if compatible(c_)))
+E('l11', 'screens[4].explain.text', len(range(1 << 4 - 1)))
+# finding 11: shortened key texts keep their numbers
+E('l10', 'screens[9].widget.options[0].text', 13); E('l12', 'screens[5].widget.options[0].text', 7)
+E('l10', 'screens[7].widget.options[0].text', 6)
+# from review-contests-1-2 findings 21 and 22
+E('l9', 'screens[0].explain.text', 'as lesson 4 named it')
+E('l11', 'screens[0].prose', "Lesson 2's problem D had this shape with up to 20 instruments")
+
 lv.check_wrongs()
 lv.report()
