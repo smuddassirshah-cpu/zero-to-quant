@@ -69,3 +69,24 @@ Format: `n. item [index] path | severity | problem | evidence | fix`. Severities
 - Coverage: the 14 skills in `skills` equal the three `course.json` sets, and each is on an auto-graded item (`cz-arith` on one, [0]). Every level has an item; odes L3 adds no new skill, and [18], [19] and [25] sit on l10, l12 and l13. Ramp 6, 15, 6, 3 (20, 50, 20, 10%).
 - Pace: sum 4,920 s = 82 minutes of 100, 18 spare. Per difficulty: d2 75 to 90 s, d3 120 to 150 s, d4 180 to 270 s, d5 360 s. That fits the three-part items and the eight-line order. The fixes above keep every pace.
 - Voice: see Script results. British spelling throughout ("anticlockwise", "centre", "linearise", "parametrise").
+
+## Fix pass
+
+Edits made in `docs/briefs/exam-1.11-scripts/build.py` and the exam regenerated from it; `check_numbers.py` and `fresh.py` updated. Every replacement recomputed by `check_numbers.py` (route B: exact Fractions, RK4, contour sums, bisection, finite differences).
+
+1. fixed: [0] is now two numeric parts, `a` = -1 and `b` = 2 (pace 90); wrongs `plus-one` 2.2308 and `times-bottom` 0.1538, both recomputed. Engine item left to the reviewer.
+2. fixed: [26] strings now read 0.73576 - 0.00674 = 0.72902 (2e^-1 = 0.735759, e^-5 = 0.006738).
+3. fixed: [27] has `same: [["k3","k4"]]`; the script checks both orders against the proof's dependencies and that other swaps fail.
+4. fixed: [3] asks for 4 decimal places, [20] for 3.
+5. fixed: [23] and [11] option texts rebalanced as listed, whys unchanged except `zero`.
+6. fixed: [19] `clockwise` why names the top-right entry slip.
+7. fixed: [13] `lengths` line states the sqrt(20) slip.
+8. fixed: [21] `no-2pi` is now -0.25.
+9. fixed: [9] replaced by `e-separable-slow` (y' = te^{-y}, y(2) = ln 3 = 1.0986; wrongs 2 and ln 5 = 1.6094; RK4 gives 1.098612). No `te^{-y}` in odes, complex or vector-calc. Counts: complex 10, odes 12.
+10. fixed: [22] is cos z over (z - pi)^3 on |z| = 4, c = 1; wrongs 2, 0.3333, -1; 4,096-point contour sum gives 1.0000.
+11. fixed: [16] is y'' - 4y' + 4y = 6e^{2t} with y_p = At^2e^{2t}, A = 3; wrong 6; finite differences agree.
+12. fixed: [17] part 0 asks the angular frequency at b = 4, 3.4641; wrongs 6.9282 and 4. Part 1 unchanged; explain rewritten as listed.
+13. fixed: [29] part 1 asks the fewest RK4 evaluations, 116 (29 steps; 80/2.7853 = 28.72); wrongs 29, 112, 41; bisection bound 2.78529.
+14. no change, as the review states.
+
+Gates: `check_numbers.py` 305 of 305, exit 0 (calls `check_wrongs()` then `report()`); `fresh.py` exit 0, new setups have no course hits beyond unrelated tokens (`6e^{2t}` in odes l1 and l6 is an unrelated slope check and a table row); `app/tools/fresh-check.mjs` does not exist in this tree. Validator 0 errors, no topic-1.11 warning. Voice scan on a copy 0 and 0. Playthrough `--exam topic-1.11` green, 30 of 30, with and without `--mobile`. Ramp 6, 15, 6, 3 and all 14 skills on auto-graded items kept. Graded answers changed: [0], [9], [16], [17] part 0, [21] wrong only, [22], [29] part 1.

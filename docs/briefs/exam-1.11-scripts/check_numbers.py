@@ -193,13 +193,17 @@ a, b, c, d = F(4), F(7), F(2), F(-3)
 den = c * c + d * d
 re_, im_ = (a * c + b * d) / den, (b * c - a * d) / den
 ok(re_ == -1 and im_ == 2, 'e-divide-conjugate: (4 + 7i)/(2 - 3i) = -1 + 2i exactly')
-expr_check('e-divide-conjugate', lambda: complex(re_, im_), [{}])
+key('e-divide-conjugate', float(re_), part=0)
+key('e-divide-conjugate', float(im_), part=1)
 top_plus = (a * c + b * (-d), a * (-d) + b * c)        # (4 + 7i)(2 + 3i) with i^2 = +1: 8 + 21, 12 + 14
 ok(top_plus == (29, 26), 'e-divide-conjugate: i^2 = +1 gives top 29 + 26i')
-ok(abs(tex_val(node(W('e-divide-conjugate'))['wrong'][0]['tex']) - complex(29, 26) / 13) < 1e-12, 'e-divide-conjugate: plus-one form is (29 + 26i)/13')
+wrong('e-divide-conjugate', 'plus-one', float(F(top_plus[0], 13)), part=0)
 z_self = complex(4, 7) * complex(2, -3)
 ok(abs(z_self - complex(29, 2)) < 1e-12, 'e-divide-conjugate: (4 + 7i)(2 - 3i) = 29 + 2i')
+wrong('e-divide-conjugate', 'times-bottom', z_self.imag / 13, part=1)
 ok(abs(complex(-1, 2) * complex(2, -3) - complex(4, 7)) < 1e-12, 'e-divide-conjugate: check line (-1 + 2i)(2 - 3i) = 4 + 7i')
+ok(abs(complex(4, 7) / complex(2, -3) - complex(-1, 2)) < 1e-12, 'e-divide-conjugate: complex division agrees')
+ok(not any('tex' in x for x in node(W('e-divide-conjugate', 0)).get('wrong', [])), 'e-divide-conjugate: both parts numeric, no retypable expression')
 allow('e-divide-conjugate', 13, 26, 21, 29, -13, 8)
 
 # e-arg-quadrant
@@ -305,13 +309,14 @@ ok(abs(lg2.real - math.log(4)) < 1e-12 and abs((2 * lg1).real - math.log(4)) < 1
 correct_id('e-log-square', 'ok', part=1)
 allow('e-log-square', -2.094, 3)
 
-# e-conjugate-circle: trapezoid round |z| = 2.5
-I_ = circle_integral(lambda z: np.conj(z), 0, 2.5)
-key('e-conjugate-circle', I_.imag / math.pi)
-ok(abs(I_.real) < 1e-9, 'e-conjugate-circle: real part 0')
-wrong('e-conjugate-circle', 'cauchy', 0)
-wrong('e-conjugate-circle', 'radius', circle_integral(lambda z: 2.5 / z, 0, 2.5).imag / math.pi)
-allow('e-conjugate-circle', 2.5, 6.25, 12.5)
+# e-separable-slow: RK4 on y' = t e^{-y}, and the slips by their own formulas
+ys = rk4(lambda t, y: np.array([t * math.exp(-y[0])]), 0, [0.0], 2)[0]
+key('e-separable-slow', ys, tol=5e-5)
+wrong('e-separable-slow', 'frozen', rk4(lambda t, y: np.array([t * 1.0]), 0, [0.0], 2)[0])
+wrong('e-separable-slow', 'no-half', math.log(1 + 2 ** 2))
+ok(all(abs(math.exp(math.log(1 + t * t / 2)) - (1 + t * t / 2)) < 1e-12 for t in (0.5, 2)), 'e-separable-slow: e^y = 1 + t^2/2')
+ok(abs(rk4(lambda t, y: np.array([t * math.exp(-y[0])]), 0, [0.0], 1)[0] - math.log(1.5)) < 1e-9, 'e-separable-slow: y(1) = ln 1.5 by RK4')
+allow('e-separable-slow', 2, 3, 5, 1)
 
 # e-cauchy-plus-normal: numerical Fourier integrals of the two densities
 u0 = 0.8
@@ -369,7 +374,7 @@ key('e-tilted-patch', area_B, tol=1e-4)
 wrong('e-tilted-patch', 'no-factor', 1 * 2)
 wrong('e-tilted-patch', 'lengths', np.linalg.norm([1, 0, 3]) * np.linalg.norm([0, 1, -1]) * 2)
 ok(np.allclose(np.cross([1, 0, 3], [0, 1, -1]), [-3, 1, 1]), 'e-tilted-patch: r_u x r_v = (-3, 1, 1)')
-allow('e-tilted-patch', 11, 6.633, 3.317, 8.944, 10)
+allow('e-tilted-patch', 11, 6.633, 3.317, 8.944, 10, 20)
 
 # e-cube-outflow: the six faces directly, no divergence theorem
 g = np.linspace(0, 2, 401)
@@ -393,28 +398,31 @@ wrong('e-integrating-factor', 'const-add', yi - 2 * math.exp(-4) + 2)
 wrong('e-integrating-factor', 'no-fit', rk4(lambda t, y: -4 * y + 9 * np.exp(-t), 0, [8.0], 1)[0])
 allow('e-integrating-factor', 1.1403, 3.1036, 1.1952)
 
-# e-resonant-guess: y_p = A t e^{2t} by finite differences; the slip by the same substitution with 2 + 4t
+# e-resonant-guess: y_p = A t^2 e^{2t} by finite differences; the slip by taking (t^2)'' = 1
 def resid(A, t, slip=False):
-    yp = A * t * math.exp(2 * t)
-    y1 = A * (1 + 2 * t) * math.exp(2 * t)
-    e = 1e-5
-    y2 = (A * (t + e) * math.exp(2 * (t + e)) - 2 * yp + A * (t - e) * math.exp(2 * (t - e))) / e ** 2
+    f_ = lambda u: A * u * u * math.exp(2 * u)
+    e = 1e-4
+    y1 = (f_(t + e) - f_(t - e)) / (2 * e)
+    y2 = (f_(t + e) - 2 * f_(t) + f_(t - e)) / e ** 2
     if slip:
-        y2 = A * (2 + 4 * t) * math.exp(2 * t)
-    return y2 + 2 * y1 - 8 * yp - 12 * math.exp(2 * t)
+        y2 = A * (1 + 8 * t + 4 * t * t) * math.exp(2 * t)      # constant 2 read as 1
+    return y2 - 4 * y1 + 4 * f_(t) - 6 * math.exp(2 * t)
 
 
-Ab = 12 / ((resid(1, 0.4) + 12 * math.exp(0.8)) / math.exp(0.8))
+Ab = 6 / ((resid(1, 0.4) + 6 * math.exp(0.8)) / math.exp(0.8))
 key('e-resonant-guess', Ab, tol=1e-4)
-ok(abs(resid(2, 0.4)) < 1e-3 and abs(resid(2, 1.3)) < 1e-2, 'e-resonant-guess: 2te^{2t} solves the equation')
-As = 12 / ((resid(1, 0.4, True) + 12 * math.exp(0.8)) / math.exp(0.8))
-wrong('e-resonant-guess', 'deriv', As)
-ok(abs(np.polyval([1, 2, -8], 2)) < 1e-12, 'e-resonant-guess: e^{2t} solves the homogeneous equation')
-allow('e-resonant-guess', 12)
+ok(abs(resid(3, 0.4)) < 1e-3 and abs(resid(3, 1.3)) < 1e-2, 'e-resonant-guess: 3t^2e^{2t} solves the equation')
+As = 6 / ((resid(1, 0.4, True) + 6 * math.exp(0.8)) / math.exp(0.8))
+wrong('e-resonant-guess', 'no-two', As)
+ok(np.allclose(np.roots([1, -4, 4]), [2, 2]), 'e-resonant-guess: 2 is a double root of r^2 - 4r + 4')
+allow('e-resonant-guess', 6)
 
 # e-damping-rate
-key('e-damping-rate', math.sqrt(4 * 16), part=0)
-wrong('e-damping-rate', 'omega', math.sqrt(16), part=0)
+r4 = np.roots([1, 4, 16])
+ok(np.allclose(r4.real, -2), 'e-damping-rate: b = 4 has real part -2')
+key('e-damping-rate', abs(r4.imag[0]), part=0, tol=5e-5)
+wrong('e-damping-rate', 'full-disc', math.sqrt(abs(4 ** 2 - 4 * 16)), part=0)
+wrong('e-damping-rate', 'natural', math.sqrt(16), part=0)
 r10 = sorted(np.roots([1, 10, 16]).real)
 key('e-damping-rate', -r10[1], part=1)
 wrong('e-damping-rate', 'fast', -r10[0], part=1)
@@ -422,7 +430,7 @@ wrong('e-damping-rate', 'half-b', 10 / 2, part=1)
 ok(np.allclose(np.roots([1, 8, 16]), [-4, -4]), 'e-damping-rate: b = 8 gives the double root -4')
 slow = [max(np.roots([1, bb, 16]).real) for bb in np.linspace(0.5, 20, 400)]
 ok(np.argmin(slow) == int(np.argmin(np.abs(np.linspace(0.5, 20, 400) - 8))), 'e-damping-rate: the slow mode decays fastest near b = 8')
-allow('e-damping-rate', 16, 64)
+allow('e-damping-rate', 16, 64, 48, 12, 2 * math.sqrt(3), 4, 10, 8)
 
 # e-saddle-solution: series matrix exponential
 A_s = np.array([[1, 4], [1, 1]])
@@ -471,17 +479,21 @@ wrong('e-upper-pole', 'no-i', -res_B.imag, part=0)
 Ib = simpson(lambda u: np.cosh(u) / (np.sinh(u) ** 2 + 6 * np.sinh(u) + 13), -40, 40, 400000)
 key('e-upper-pole', Ib, part=1, tol=5e-5)
 wrong('e-upper-pole', 'both', 0, part=1)
-wrong('e-upper-pole', 'no-2pi', abs(res_B), part=1)
+wrong('e-upper-pole', 'no-2pi', res_B.imag, part=1)
 wrong('e-upper-pole', 'lower', -Ib, part=1)
 ok(np.allclose(sorted(np.roots([1, 6, 13]).imag), [-2, 2]), 'e-upper-pole: poles -3 +- 2i')
 allow('e-upper-pole', 13, 1.571, 0.25)
 
-# e-third-power-pole: trapezoid round |z| = 2
-Ic = circle_integral(lambda z: np.exp(z) / (z - 1) ** 3, 0, 2)
+# e-third-power-pole: trapezoid round |z| = 4
+Ic = circle_integral(lambda z: np.cos(z) / (z - math.pi) ** 3, 0, 4)
 key('e-third-power-pole', Ic.imag / math.pi, tol=5e-5)
+ok(abs(Ic.real) < 1e-9, 'e-third-power-pole: real part 0')
 wrong('e-third-power-pole', 'no-fact', 2 * Ic.imag / math.pi)
 wrong('e-third-power-pole', 'three-fact', Ic.imag / math.pi / 3)
-allow('e-third-power-pole', 2.718, 2.7183)
+wrong('e-third-power-pole', 'sign', -Ic.imag / math.pi)
+ok(math.pi < 4, 'e-third-power-pole: the point pi is inside |z| = 4')
+ok(abs(-math.cos(math.pi) - 1) < 1e-12, 'e-third-power-pole: f\'\'(pi) = -cos(pi) = 1')
+allow('e-third-power-pole', 1, 2, 4, 1 / 3)
 
 # e-damped-call: Carr-Madan integral against Black-Scholes, two damping factors
 S0, K0, rr_, sg, T_ = 100.0, 105.0, 0.03, 0.25, 0.75
@@ -575,7 +587,7 @@ for sv in (0.4, 2.2, 7.5):
 o_ = node(W('e-laplace-rebound', 0))
 ok(o_['answer'] == ['k1', 'k2', 'k3', 'k4', 'k5'] and o_['distractors'] == ['e1', 'e2'], 'e-laplace-rebound: order key and left-out lines')
 ok(abs(rk4(sys2, 0, [1.0, 3.0], 1)[0] - (2 * math.exp(-1) - math.exp(-5))) < 1e-9, 'e-laplace-rebound: y = 2e^{-t} - e^{-5t}')
-allow('e-laplace-rebound', 0.7358, 0.0067, 0.729, 0.3814)
+allow('e-laplace-rebound', 0.73576, 0.00674, 0.72902, 0.729, 0.3814)
 
 # ================================================================ difficulty 5
 # e-semicircle-proof: the arc bound with two degrees of decay, and its failure with one
@@ -590,6 +602,23 @@ ok(abs(arc(lambda z: 1 / (z * z + 6 * z + 13), 200)) < math.pi * 1.2 / 200, 'e-s
 ok(abs(arc(lambda z: z / (z * z + 1), 200) - 1j * math.pi) < 0.01, 'e-semicircle-proof: degree gap 1, the arc tends to pi i, not 0')
 o_ = node(W('e-semicircle-proof'))
 ok(o_['answer'] == ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'] and o_['distractors'] == ['e1', 'e2'], 'e-semicircle-proof: order key and left-out lines')
+# dependencies: k2 needs k1 (the contour), k3 needs k2, k4 needs only C_R from k1, k5 needs k3 and k4, k6 needs k5
+DEPS = {'k1': set(), 'k2': {'k1'}, 'k3': {'k2'}, 'k4': {'k1'}, 'k5': {'k3', 'k4'}, 'k6': {'k5'}}
+
+
+def valid_order(seq):
+    done = set()
+    for x in seq:
+        if not DEPS[x] <= done:
+            return False
+        done.add(x)
+    return True
+
+
+swapped = ['k1', 'k2', 'k4', 'k3', 'k5', 'k6']
+ok(o_.get('same') == [['k3', 'k4']], 'e-semicircle-proof: k3 and k4 are interchangeable')
+ok(valid_order(o_['answer']) and valid_order(swapped), 'e-semicircle-proof: the key and the k3/k4 swap are both valid proofs')
+ok(not valid_order(['k1', 'k3', 'k2', 'k4', 'k5', 'k6']) and not valid_order(['k1', 'k2', 'k3', 'k5', 'k4', 'k6']), 'e-semicircle-proof: other swaps are not valid')
 
 # e-vortex-square: Simpson round the square (four sides), the off-centre circle, and G
 Pv = lambda x, y: -y / (x * x + y * y)
@@ -637,9 +666,14 @@ ok(abs(rk_b - 2.7853) < 5e-5, f'e-stiff-steps: RK4 boundary {rk_b:.5f} = 2.7853'
 key('e-stiff-steps', eu_b / 80, part=0, tol=1e-6)
 wrong('e-stiff-steps', 'one-over', 1 / 80, part=0)
 wrong('e-stiff-steps', 'rk4', rk_b / 80, part=0)
-key('e-stiff-steps', rk_b / 80, part=1, tol=5e-5)
-wrong('e-stiff-steps', 'euler', eu_b / 80, part=1)
-wrong('e-stiff-steps', 'order', 4 * eu_b / 80, part=1)
+n_rk4 = next(n for n in range(1, 500) if 1 / n < rk_b / 80)     # smallest n with h = 1/n inside the stable interval
+n_eul = next(n for n in range(1, 500) if 1 / n < eu_b / 80)
+ok(n_rk4 == 29 and n_eul == 41 and 1 / 28 > rk_b / 80, 'e-stiff-steps: 29 RK4 steps, 41 Euler steps, 28 unstable')
+key('e-stiff-steps', 4 * n_rk4, part=1, tol=0)
+wrong('e-stiff-steps', 'steps', n_rk4, part=1)
+wrong('e-stiff-steps', 'floor', 4 * (n_rk4 - 1), part=1)
+wrong('e-stiff-steps', 'euler', n_eul, part=1)
+ok(abs(1 / 28 - 0.0357) < 5e-5 and 80 / rk_b > 28 and 80 / rk_b < 29, 'e-stiff-steps: 80 / 2.7853 = 28.72')
 e0, h_ = 1e-3, 0.03
 e1 = e0 + h_ * (-80 * e0)
 key('e-stiff-steps', e1 / e0, part=2, tol=1e-9)
@@ -652,18 +686,18 @@ ok(ys_[1] < 0 < ys_[2] and abs(ys_[3]) > abs(ys_[2]) > abs(ys_[1]) > 1, 'e-stiff
 rkR = 1 - 2.4 + 2.4 ** 2 / 2 - 2.4 ** 3 / 6 + 2.4 ** 4 / 24
 ok(abs(rkR) < 1, f'e-stiff-steps: RK4 factor at h = 0.03 is {rkR:.4f}, stable')
 ok(abs(-e1 / e0 - 1) - 0.4 < 1e-12, 'e-stiff-steps: errors grow by 40% a step')
-allow('e-stiff-steps', 80, -80, 2.7853, rk_b / 80, eu_b / 80, 1 / 80, 0.1, 0.03, 2.4, 1.4, 40)
+allow('e-stiff-steps', 80, -80, 2.7853, rk_b / 80, eu_b / 80, 1 / 80, 0.1, 0.03, 2.4, 1.4, 40, 28, 29, 41, 116, 1 / 28, 4 * n_rk4)
 
 # ------------------------------------------------------------------ every level has an item on a skill first met there
 LEVEL = {
     'e-divide-conjugate': ('complex', 1), 'e-arg-quadrant': ('complex', 1), 'e-fifth-roots': ('complex', 1),
     'e-harmonic-partner': ('complex', 2), 'e-log-square': ('complex', 2),
-    'e-conjugate-circle': ('complex', 3), 'e-cauchy-plus-normal': ('complex', 3), 'e-upper-pole': ('complex', 3),
+    'e-cauchy-plus-normal': ('complex', 3), 'e-upper-pole': ('complex', 3),
     'e-third-power-pole': ('complex', 3), 'e-damped-call': ('complex', 3), 'e-semicircle-proof': ('complex', 3),
     'e-wire-mass': ('vector-calc', 1), 'e-potential-work': ('vector-calc', 1),
     'e-circulation-flux': ('vector-calc', 2), 'e-vortex-square': ('vector-calc', 2),
     'e-tilted-patch': ('vector-calc', 3), 'e-cube-outflow': ('vector-calc', 3), 'e-hemisphere-curl': ('vector-calc', 3),
-    'e-rate-pull': ('odes', 1), 'e-integrating-factor': ('odes', 1),
+    'e-rate-pull': ('odes', 1), 'e-integrating-factor': ('odes', 1), 'e-separable-slow': ('odes', 1),
     'e-char-roots': ('odes', 2), 'e-resonant-guess': ('odes', 2), 'e-damping-rate': ('odes', 2),
     'e-saddle-solution': ('odes', 3), 'e-spiral-turn': ('odes', 3), 'e-crowded-prey': ('odes', 3),
     'e-laplace-shift': ('odes', 4), 'e-euler-by-hand': ('odes', 4), 'e-laplace-rebound': ('odes', 4),

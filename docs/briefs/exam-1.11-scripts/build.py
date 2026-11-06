@@ -83,16 +83,20 @@ items = []
 # complex L1 (l1): division by the conjugate
 z_div = (4 + 7j) / (2 - 3j)
 assert abs(z_div - (-1 + 2j)) < 1e-12
-items.append(item(
-    "e-divide-conjugate", 2, ["cz-arith"], ["division"], 75, "A quotient in the form a + bi",
+items.append(parts(
+    "e-divide-conjugate", 2, ["cz-arith"], ["division"], 90, "A quotient in the form a + bi",
     "Take $z = \\dfrac{4 + 7i}{2 - 3i}$.",
-    "Write $z$ in the form $a + bi$.",
-    expr("-1+2i", ["-1+2i", "2i-1", "-1+2\\cdot i"],
-         [("plus-one", "\\frac{29+26i}{13}"), ("times-bottom", "\\frac{29+2i}{13}")]),
-    fb("Multiplying top and bottom by $2 + 3i$ gives $\\tfrac{-13 + 26i}{13} = -1 + 2i$.",
-       "Multiply top and bottom by the conjugate of the bottom.",
-       {"plus-one": "You took $i^2 = 1$. With $i^2 = -1$ the top is $8 - 21 + 26i = -13 + 26i$.",
-        "times-bottom": "You multiplied by $2 - 3i$ itself. The conjugate $2 + 3i$ is what makes the bottom real."}),
+    "Write $z = a + bi$ with $a$ and $b$ real.",
+    [("What is $a$?",
+      num(-1, 0.001, [("plus-one", r(29 / 13, 4), 0.001)], label="a"),
+      fb("Multiplying top and bottom by $2 + 3i$ gives $\\tfrac{-13 + 26i}{13}$, so $a = -1$.",
+         "Multiply top and bottom by the conjugate of the bottom.",
+         {"plus-one": "You took $i^2 = 1$ in the top. With $i^2 = -1$ the top is $-13 + 26i$."})),
+     ("What is $b$?",
+      num(2, 0.001, [("times-bottom", r(2 / 13, 4), 0.001)], label="b"),
+      fb("The top is $-13 + 26i$ and the bottom is 13, so $b = 2$.",
+         "Divide the imaginary part of the new top by the new bottom.",
+         {"times-bottom": "You multiplied the top by $2 - 3i$, not its conjugate $2 + 3i$."}))],
     "The conjugate $2 + 3i$ makes the bottom $2^2 + 3^2 = 13$. "
     "The top is $(4 + 7i)(2 + 3i) = 8 + 26i + 21i^2 = -13 + 26i$. "
     "So $z = -1 + 2i$, and $(-1 + 2i)(2 - 3i) = 4 + 7i$ checks it."))
@@ -149,7 +153,7 @@ r_not = th + (r0 - th) * math.exp(-kap)
 items.append(item(
     "e-rate-pull", 2, ["de-first"], ["mean-reversion"], 75, "A rate pulled to its mean",
     "A short rate follows $r' = 0.25(0.045 - r)$ with $r(0) = 0.07$, time in years.",
-    "What is $r(4)$? Give it as a decimal.",
+    "What is $r(4)$? Give it to 4 decimal places.",
     num(r(r_t), 0.00005, [("sign", r(r_sign), 0.00005), ("no-t", r(r_not), 0.00005)], placeholder="a decimal",
         label="r(4)", accept="0.0542, about 5.42%"),
     fb("The gap of 0.025 shrinks by $e^{-1}$, so $r(4) = 0.045 + 0.0092 = 0.0542$.",
@@ -260,21 +264,22 @@ items.append(parts(
     "Both logarithms have real part $\\ln|z^2| = \\ln 4$. "
     "So $\\operatorname{Log}(z^2) = 2\\operatorname{Log} z - 2\\pi i$."))
 
-# complex L3 (l9): the conjugate round a circle
-rad = 2.5
-c_conj = 2 * rad ** 2
+# odes L1 (l2): a separable equation
+y_sep = math.log(3)
+y_frozen = 2
+y_nohalf = math.log(5)
 items.append(item(
-    "e-conjugate-circle", 3, ["cz-contour"], ["non-analytic-integral"], 120, "The conjugate round a circle",
-    "Let $\\gamma$ be the circle $|z| = 2.5$, once anticlockwise.",
-    "$\\oint_\\gamma \\bar z\\,dz = c\\pi i$. What is $c$?",
-    num(c_conj, 0.01, [("cauchy", 0, 0.01), ("radius", 2 * rad, 0.01)], label="c"),
-    fb("On the circle $\\bar z = \\tfrac{6.25}{z}$, so the integral is $6.25 \\times 2\\pi i = 12.5\\pi i$.",
-       "Use $z\\bar z = |z|^2$ on the circle.",
-       {"cauchy": "You used Cauchy's theorem. $\\bar z$ is analytic nowhere, so the theorem does not apply.",
-        "radius": "You took $\\bar z = \\tfrac{r}{z}$, which gives 5. On the circle $\\bar z = \\tfrac{r^2}{z}$, with $r^2 = 6.25$."}),
-    "On $|z| = 2.5$ we have $z\\bar z = 6.25$, so $\\bar z = \\tfrac{6.25}{z}$. "
-    "Then $\\oint \\tfrac{6.25}{z}\\,dz = 6.25 \\times 2\\pi i = 12.5\\pi i$. "
-    "Cauchy's theorem gives no help, since $\\bar z$ is not analytic."))
+    "e-separable-slow", 3, ["de-first"], ["separable"], 120, "A growth that slows as it climbs",
+    "Take $y' = te^{-y}$ with $y(0) = 0$.",
+    "What is $y(2)$? Give it to 3 decimal places.",
+    num(r(y_sep, 4), 0.0005, [("frozen", y_frozen, 0.0005), ("no-half", r(y_nohalf, 4), 0.0005)], label="y(2)"),
+    fb("$e^y = 1 + \\tfrac{t^2}{2}$, so $y(2) = \\ln 3 = 1.0986$.",
+       "Move every $y$ to the left: $e^y\\,dy = t\\,dt$.",
+       {"frozen": "You held $e^{-y}$ at its starting value 1, so $y = \\tfrac{t^2}{2}$. Separate first: $e^y\\,dy = t\\,dt$.",
+        "no-half": "You integrated $t$ to $t^2$, giving $\\ln 5$. Its integral is $\\tfrac{t^2}{2}$."}),
+    "Separating gives $e^y\\,dy = t\\,dt$, so $e^y = \\tfrac{t^2}{2} + C$, and $y(0) = 0$ gives $C = 1$. "
+    "So $y = \\ln(1 + \\tfrac{t^2}{2})$ and $y(2) = \\ln 3 = 1.0986$. "
+    "Dividing by $e^{-y}$ is safe, since it is never 0."))
 
 # complex L3 (l12): characteristic function of an independent sum
 u0 = 0.8
@@ -306,11 +311,11 @@ items.append(parts(
       choice([
           opt("ok", "$P_y = Q_x = 2x + 3y^2$ on the plane, which is simply connected, so $\\mathbf F$ has a potential.",
               correct=True),
-          opt("poly", "$\\mathbf F$ has a potential because its components are polynomials.",
+          opt("poly", "$\\mathbf F$ has a potential because both of its components are polynomials in $x$ and $y$.",
               "You judged by the formula's type. $(-y, x)$ has polynomial components and no potential."),
-          opt("winding", "The work depends on the path, since this path winds.",
+          opt("winding", "The work depends on the path, since this path winds and a straight one does not.",
               "You assumed winding changes the work. With a potential the work is $f(B) - f(A)$ on every path."),
-          opt("wrong-test", "$P_x = Q_y$ is the test, and it fails, so there is no potential.",
+          opt("wrong-test", "$P_x = Q_y$ is the test for a potential, and it fails here, so there is none.",
               "You compared the wrong partials. The test is $P_y = Q_x$, and it holds here.")]),
       fb("The partials match on a simply connected region, so a potential exists.",
          "Compare $P_y$ with $Q_x$, and check the region.")),
@@ -360,7 +365,7 @@ items.append(item(
     fb("$|\\mathbf r_u \\times \\mathbf r_v| = \\sqrt{11}$ on a rectangle of area 2, so the area is $2\\sqrt{11} = 6.633$.",
        "Find $\\mathbf r_u \\times \\mathbf r_v$ and its length.",
        {"no-factor": "You found the area of the parameter rectangle. Each cell is stretched by $\\sqrt{11}$.",
-        "lengths": "You multiplied $|\\mathbf r_u| = \\sqrt{10}$ by $|\\mathbf r_v| = \\sqrt2$, giving 8.944. That needs right angles; use the cross product."}),
+        "lengths": "You used $|\\mathbf r_u||\\mathbf r_v| = \\sqrt{20}$ as the stretch, giving 8.944. That needs right angles; use the cross product."}),
     "$\\mathbf r_u = (1, 0, 3)$ and $\\mathbf r_v = (0, 1, -1)$, so $\\mathbf r_u \\times \\mathbf r_v = (-3, 1, 1)$, of length $\\sqrt{11}$. "
     "The map is smooth and one-to-one, so the area is $\\sqrt{11} \\times 2 = 6.633$. "
     "Each cell of the rectangle grows by $\\sqrt{11} \\approx 3.317$."))
@@ -398,45 +403,43 @@ items.append(item(
     "Then $y = 3e^{-t} + Ce^{-4t}$, and $y(0) = 5$ gives $C = 2$. "
     "At $t = 1$, $y = 3e^{-1} + 2e^{-4} = 1.1403$."))
 
-# odes L2 (l8): forcing that solves the homogeneous equation
-A_res = 12 / (2 * 2 + 2)
+# odes L2 (l8): forcing that solves the homogeneous equation twice over
+A_res = 6 / 2
 items.append(item(
-    "e-resonant-guess", 3, ["de-second"], ["undetermined-coefficients"], 150, "A guess that needs a t",
-    "Take $y'' + 2y' - 8y = 12e^{2t}$. The guess $Ae^{2t}$ fails, since $e^{2t}$ solves the homogeneous equation.",
-    "A particular solution is $y_p = Ate^{2t}$. What is $A$?",
-    num(A_res, 0.001, [("deriv", 3, 0.001)], label="A"),
-    fb("The $t$ terms cancel and leave $6Ae^{2t} = 12e^{2t}$, so $A = 2$.",
-       "Differentiate $Ate^{2t}$ twice by the product rule, then substitute.",
-       {"deriv": "You took $y_p'' = A(2 + 4t)e^{2t}$. Differentiating $(1 + 2t)e^{2t}$ gives $(4 + 4t)e^{2t}$."}),
-    "With $y_p = Ate^{2t}$, $y_p' = A(1 + 2t)e^{2t}$ and $y_p'' = A(4 + 4t)e^{2t}$. "
-    "Substituting, the $t$ terms cancel and leave $(4A + 2A)e^{2t} = 12e^{2t}$. "
-    "So $A = 2$."))
+    "e-resonant-guess", 3, ["de-second"], ["undetermined-coefficients"], 150, "A guess that needs t squared",
+    "Take $y'' - 4y' + 4y = 6e^{2t}$. Both $Ae^{2t}$ and $Ate^{2t}$ fail, since 2 is a double root.",
+    "A particular solution is $y_p = At^2e^{2t}$. What is $A$?",
+    num(A_res, 0.001, [("no-two", 6, 0.001)], label="A"),
+    fb("The $t$ and $t^2$ terms cancel and leave $2Ae^{2t} = 6e^{2t}$, so $A = 3$.",
+       "Differentiate $At^2e^{2t}$ twice by the product rule, then substitute.",
+       {"no-two": "You took $(t^2)'' = 1$. The $t$ and $t^2$ terms cancel and leave $2Ae^{2t}$."}),
+    "With $y_p = At^2e^{2t}$, $y_p' = A(2t + 2t^2)e^{2t}$ and $y_p'' = A(2 + 8t + 4t^2)e^{2t}$. "
+    "Substituting, the $t$ and $t^2$ terms cancel and leave $2Ae^{2t} = 6e^{2t}$. "
+    "So $A = 3$."))
 
 # odes L2 (l9): damping past critical
-b_crit = 2 * math.sqrt(16)
+om_b4 = math.sqrt(16 - 4)
 roots_b10 = sorted([(-10 + math.sqrt(100 - 64)) / 2, (-10 - math.sqrt(100 - 64)) / 2])
 k_slow = -roots_b10[1]
 items.append(parts(
     "e-damping-rate", 3, ["de-second"], ["damping"], 150, "More damping, slower decay",
     "Take $y'' + by' + 16y = 0$ with $b > 0$.",
     "Two questions on how the damping $b$ sets the decay.",
-    [("What value of $b$ gives critical damping?",
-      num(b_crit, 0.001, [("omega", 4, 0.001)], label="b"),
-      fb("Critical damping is a double root: $b^2 = 4 \\times 16$, so $b = 8$.",
-         "Set the discriminant of $r^2 + br + 16$ to 0."),
-      ),
+    [("At $b = 4$ the solution is $e^{-2t}$ times an oscillation. What is its angular frequency? Give it to 3 decimal places.",
+      num(r(om_b4, 4), 0.0005, [("full-disc", r(2 * om_b4, 4), 0.0005), ("natural", 4, 0.0005)], label="ω"),
+      fb("The roots are $-2 \\pm 2\\sqrt3\\,i$, so the frequency is $2\\sqrt3 = 3.464$.",
+         "Find the roots of $r^2 + 4r + 16$ and read the imaginary part.",
+         {"full-disc": "You took $\\sqrt{64 - 16} = \\sqrt{48}$. The roots are $\\tfrac{-4 \\pm i\\sqrt{48}}{2}$, so halve it.",
+          "natural": "That is $\\omega_0 = \\sqrt{16}$. Damping lowers it to $\\sqrt{16 - 4} = 2\\sqrt3$."})),
      ("At $b = 10$, the slower mode decays as $e^{-kt}$. What is $k$?",
       num(k_slow, 0.001, [("fast", 8, 0.001), ("half-b", 5, 0.001)], label="k"),
       fb("$r^2 + 10r + 16 = (r + 2)(r + 8)$, so the slow mode is $e^{-2t}$.",
          "Factorise $r^2 + 10r + 16$ and take the root nearer 0.",
          {"fast": "You took the fast root. The $e^{-8t}$ term dies first, so $e^{-2t}$ sets the pace.",
           "half-b": "You took $\\tfrac{b}{2}$. That is the decay rate only for $b \\le 8$; past critical the roots split."}))],
-    "$r^2 + br + 16 = 0$ has a double root when $b^2 = 64$, so $b = 8$ and both modes decay as $e^{-4t}$. "
-    "At $b = 10$ the roots are $-2$ and $-8$. "
-    "The slow mode $e^{-2t}$ decays more slowly than at $b = 8$, so more damping is not always faster."))
-items[-1]["parts"][0]["feedback"]["byKey"] = {
-    "omega": "You set $b = \\omega_0 = 4$. Critical damping needs $b^2 = 4 \\times 16$, so $b = 2\\omega_0 = 8$."}
-
+    "At $b = 4$ the roots are $-2 \\pm 2\\sqrt3\\,i$, so the oscillation decays at rate 2. "
+    "At $b = 10$ the roots are $-2$ and $-8$, so the slow mode also decays at rate 2. "
+    "Two and a half times the damping gave no faster decay."))
 # odes L3 (l10): a saddle from its eigenvectors
 c1, c2 = 2, 1
 x1_half = c1 * 2 * math.exp(3 * 0.5) + c2 * 2 * math.exp(-0.5)
@@ -470,7 +473,7 @@ items.append(item(
     choice([
         opt("ok", "A stable spiral, turning anticlockwise", correct=True),
         opt("clockwise", "A stable spiral, turning clockwise",
-            "You guessed the turn. At $(1, 0)$ the velocity is $\\mathbf A(1, 0) = (-1, 2)$, upwards, so it turns anticlockwise."),
+            "You read the turn from the top-right entry $-4$. Read it from a velocity: $\\mathbf A(1, 0) = (-1, 2)$ points up, so anticlockwise."),
         opt("node", "A stable node",
             "You saw $\\tau < 0$ and $\\Delta > 0$ and stopped. $\\tau^2 - 4\\Delta = -28 < 0$ makes it a spiral."),
         opt("centre", "A centre",
@@ -493,7 +496,7 @@ y_exact = 0.25 + 1 + 2 - math.exp(0.5)
 items.append(item(
     "e-euler-by-hand", 3, ["de-numeric"], ["euler-steps"], 120, "Two Euler steps",
     "Take $y' = y - t^2$ with $y(0) = 1$, and Euler's method with $h = 0.25$.",
-    "What value does Euler give for $y(0.5)$, after two steps?",
+    "What value does Euler give for $y(0.5)$, after two steps? Give it to 3 decimal places.",
     num(y2, 0.0005, [("one-step", y_one, 0.0005), ("stale-t", y_stale, 0.0005)], label="y₂"),
     fb("$y_1 = 1.25$ and $y_2 = 1.25 + 0.25(1.25 - 0.0625) = 1.546875$.",
        "Apply $y_{n+1} = y_n + hf(t_n, y_n)$ twice, updating $t$.",
@@ -519,7 +522,7 @@ items.append(parts(
          "Use $\\tfrac{p(a)}{q'(a)}$ at the simple pole $-3 + 2i$.",
          {"no-i": "You wrote $\\tfrac{1}{4i}$ as $\\tfrac{i}{4}$. Multiplying top and bottom by $i$ gives $-\\tfrac{i}{4}$."})),
      ("What is $I$? Give it to 3 decimal places.",
-      num(r(I_real, 4), 0.0005, [("both", 0, 0.0005), ("no-2pi", 0.25, 0.0005), ("lower", -r(I_real, 4), 0.0005)], label="I"),
+      num(r(I_real, 4), 0.0005, [("both", 0, 0.0005), ("no-2pi", r(res_up.imag, 4), 0.0005), ("lower", -r(I_real, 4), 0.0005)], label="I"),
       fb("$I = 2\\pi i \\cdot (-\\tfrac{i}{4}) = \\tfrac{\\pi}{2} \\approx 1.571$.",
          "Multiply the upper residue by $2\\pi i$.",
          {"both": "You added both residues. Only the pole inside the upper semicircle counts, at $-3 + 2i$.",
@@ -530,20 +533,21 @@ items.append(parts(
     "So $I = 2\\pi i \\cdot (-\\tfrac{i}{4}) = \\tfrac{\\pi}{2}$, and completing the square to $(x + 3)^2 + 4$ confirms it."))
 
 # complex L3 (l10): Cauchy's formula for a second derivative
-c_cif = E
+c_cif = 1.0
 items.append(item(
     "e-third-power-pole", 4, ["cz-contour"], ["cauchy-formula"], 180, "A pole of order three",
-    "Let $\\gamma$ be the circle $|z| = 2$, once anticlockwise. "
-    "$e^z$ is analytic on and inside $\\gamma$, and the point 1 lies inside.",
-    "$\\oint_\\gamma \\tfrac{e^z}{(z - 1)^3}\\,dz = c\\pi i$. What is $c$? Give it to 3 decimal places.",
-    num(r(c_cif, 4), 0.0005, [("no-fact", r(2 * E, 4), 0.0005), ("three-fact", r(E / 3, 4), 0.0005)], label="c"),
-    fb("$\\tfrac{2\\pi i}{2!}f''(1) = \\pi i e$, so $c = e \\approx 2.718$.",
+    "Let $\\gamma$ be the circle $|z| = 4$, once anticlockwise. "
+    "$\\cos z$ is analytic on and inside $\\gamma$, and the point $\\pi$ lies inside.",
+    "$\\oint_\\gamma \\tfrac{\\cos z}{(z - \\pi)^3}\\,dz = c\\pi i$. What is $c$?",
+    num(c_cif, 0.001, [("no-fact", 2, 0.001), ("three-fact", r(1 / 3, 4), 0.001), ("sign", -1, 0.001)], label="c"),
+    fb("$\\tfrac{2\\pi i}{2!}f''(\\pi) = \\pi i \\cdot (-\\cos\\pi) = \\pi i$, so $c = 1$.",
        "Use Cauchy's formula for a derivative, with $k + 1 = 3$.",
-       {"no-fact": "You left out the $k!$, giving $2e$. With $k = 2$, divide by $2! = 2$.",
-        "three-fact": "You used $3!$, giving $\\tfrac{e}{3}$. The power 3 is $k + 1$, so $k = 2$ and $k! = 2$."}),
-    "Cauchy's formula with $k = 2$ gives $\\oint \\tfrac{f(z)}{(z - 1)^3}\\,dz = \\tfrac{2\\pi i}{2!}f''(1)$. "
-    "For $f = e^z$, $f''(1) = e$. "
-    "So the integral is $\\pi i e$, and $c = e \\approx 2.7183$."))
+       {"no-fact": "You left out the $k!$, giving 2. With $k = 2$, divide by $2! = 2$.",
+        "three-fact": "You used $3!$, giving $\\tfrac13$. The power 3 is $k + 1$, so $k = 2$ and $k! = 2$.",
+        "sign": "You took $(\\cos z)'' = \\cos z$. It is $-\\cos z$, and $-\\cos\\pi = 1$."}),
+    "Cauchy's formula with $k = 2$ gives $\\oint \\tfrac{f(z)}{(z - \\pi)^3}\\,dz = \\tfrac{2\\pi i}{2!}f''(\\pi)$. "
+    "For $f = \\cos z$, $f''(\\pi) = -\\cos\\pi = 1$. "
+    "So the integral is $\\pi i$, and $c = 1$."))
 
 # complex L3 (l13): why the call is damped
 items.append(item(
@@ -551,15 +555,15 @@ items.append(item(
     "In Fourier pricing with no dividends, the call price $C(k)$ at log strike $k$ is damped to $c(k) = e^{\\alpha k}C(k)$ before transforming.",
     "Why damp, and what does $\\alpha$ need?",
     choice([
-        opt("ok", "$C(k) \\to S_0$ as $k \\to -\\infty$, so $C$ has no transform; $c$ has one for $\\alpha > 0$ with $E[S_T^{\\alpha + 1}]$ finite.",
+        opt("ok", "$C(k) \\to S_0$ as $k \\to -\\infty$, so only $c$ has a transform; it needs $\\alpha > 0$ and $E[S_T^{\\alpha + 1}] < \\infty$.",
             correct=True),
         opt("fitted", "$\\alpha$ is fitted to market prices, since the price changes with $\\alpha$.",
             "You treated $\\alpha$ as a model input. With $E[S_T^{\\alpha + 1}]$ finite, every $\\alpha > 0$ gives the same price."),
-        opt("zero", "Any $\\alpha \\ge 0$ works, including $\\alpha = 0$.",
-            "You allowed no damping. At $\\alpha = 0$, $c(k) = C(k)$ tends to $S_0$, so its transform does not exist."),
-        opt("phi", "Damping is needed because $\\varphi$ may not exist.",
+        opt("zero", "Any $\\alpha \\ge 0$ works, since $C(k)$ already falls to 0 as the strike rises.",
+            "You looked only at the right tail. At $\\alpha = 0$, $c(k) = C(k)$ tends to $S_0$ on the left, so it has no transform."),
+        opt("phi", "Damping is needed because $\\varphi$ may not exist when $\\ln S_T$ has heavy tails.",
             "You mixed up the call and the law. $\\varphi(u) = E[e^{iuX}]$ exists for every $X$, since $|e^{iuX}| = 1$."),
-        opt("moments", "Any $\\alpha > 0$ works, whatever the moments of $S_T$.",
+        opt("moments", "Any $\\alpha > 0$ works whatever the moments of $S_T$, since $e^{\\alpha k}$ kills the left tail.",
             "You dropped the moment condition. The transform needs $E[S_T^{\\alpha + 1}] < \\infty$, so heavy right tails limit $\\alpha$.")]),
     fb("The left tail of $C$ needs killing, and the moment condition keeps the right tail in check.",
        "Ask what $C(k)$ does as the strike falls to 0."),
@@ -650,12 +654,12 @@ items.append(parts(
          "Start from $\\mathcal{L}\\{y''\\} = s^2Y - sy(0) - y'(0)$.")),
      ("What is $y(1)$? Give it to 3 decimal places.",
       num(r(y_lap(1), 4), 0.0005, [("swapped", r(y_swap(1), 4), 0.0005)], label="y(1)"),
-      fb("$y(1) = 2e^{-1} - e^{-5} = 0.7358 - 0.0067 = 0.7290$.",
+      fb("$y(1) = 2e^{-1} - e^{-5} = 0.73576 - 0.00674 = 0.72902$.",
          "Put $t = 1$ into $2e^{-t} - e^{-5t}$.",
          {"swapped": "You paired $s$ with $y'(0)$ in $\\mathcal{L}\\{y''\\}$, which gives $e^{-t} + 2e^{-5t}$ and 0.3814. The $s$ goes with $y(0)$."}))],
     "The derivative rules carry $y(0) = 1$ and $y'(0) = 3$ into the algebra, so no constants remain to fit. "
     "Cover-up gives 2 at $s = -1$ and $-1$ at $s = -5$. "
-    "So $y = 2e^{-t} - e^{-5t}$, and $y(1) = 0.7358 - 0.0067 = 0.7290$."))
+    "So $y = 2e^{-t} - e^{-5t}$, and $y(1) = 0.73576 - 0.00674 = 0.72902$."))
 
 # ================================================================ difficulty 5
 # complex L3 (l11): the semicircle argument
@@ -675,7 +679,7 @@ items.append(item(
              "Being analytic on a path does not make its integral 0. Cauchy's theorem needs a closed path with nothing singular inside."),
         line("e2", "Since $\\deg q \\ge \\deg p + 1$, $\\left|\\tfrac pq\\right| \\le \\tfrac MR$ on $C_R$, which is enough.",
              "One degree is not enough. The bound $\\pi R \\cdot \\tfrac MR = \\pi M$ does not tend to 0.")],
-     "answer": ["k1", "k2", "k3", "k4", "k5", "k6"], "distractors": ["e1", "e2"]},
+     "answer": ["k1", "k2", "k3", "k4", "k5", "k6"], "same": [["k3", "k4"]], "distractors": ["e1", "e2"]},
     fb("Close the path, apply the residue theorem, bound the arc by its length, then let $R$ grow.",
        "Close the path, apply the residue theorem, then bound the arc."),
     "On the half-disc the residue theorem holds for every large $R$. "
@@ -716,6 +720,8 @@ lam = 80
 h_eu = 2 / lam
 h_rk = 2.7853 / lam
 h_try = 0.03
+n_rk = 29
+n_eu = 41
 amp = 1 - lam * h_try
 items.append(parts(
     "e-stiff-steps", 5, ["de-numeric"], ["stiff-stability"], 360, "Step sizes on a stiff pull",
@@ -728,12 +734,13 @@ items.append(parts(
          "Find when $|1 - 80h| < 1$.",
          {"one-over": "You took $h < \\tfrac{1}{\\lambda} = 0.0125$. The factor $1 - 80h$ stays inside $(-1, 1)$ up to $h = \\tfrac{2}{80}$.",
           "rk4": "That is RK4's limit. Euler's is $\\tfrac{2}{\\lambda} = 0.025$, which is smaller."})),
-     ("What is the largest stable $h$ for RK4? Give it to 4 decimal places.",
-      num(r(h_rk, 4), 0.0002, [("euler", h_eu, 0.0002), ("order", 4 * h_eu, 0.0002)], placeholder="a decimal", label="h"),
-      fb("$h < \\tfrac{2.7853}{80} = 0.0348$.",
-         "Divide RK4's interval end by $\\lambda$.",
-         {"euler": "That is Euler's limit. RK4's interval reaches $h\\lambda = 2.7853$.",
-          "order": "You scaled Euler's limit by the order 4, giving 0.1. The stability limit does not grow with the order like that."})),
+     ("RK4 costs four slope evaluations a step. To cover $0 \\le t \\le 1$ in equal steps and stay stable, what is the fewest evaluations it needs?",
+      num(n_rk * 4, 0, [("steps", n_rk, 0), ("floor", 4 * (n_rk - 1), 0), ("euler", n_eu, 0)], label="Evaluations"),
+      fb("$h = \\tfrac1n < \\tfrac{2.7853}{80} = 0.0348$ needs $n \\ge 29$, so $4 \\times 29 = 116$ evaluations.",
+         "Find the fewest equal steps with $h < 0.0348$, then multiply by four.",
+         {"steps": "That is the number of steps. Each RK4 step makes four evaluations, so 116.",
+          "floor": "At 28 steps $h = 0.0357$, above 0.0348, so RK4 is unstable. Take 29.",
+          "euler": "That is Euler's count: 41 steps of one evaluation each. On this stiff pull Euler is cheaper."})),
      ("With $h = 0.03$, Euler multiplies each error by what factor per step?",
       num(r(amp, 6), 0.001, [("abs", r(-amp, 6), 0.001), ("no-one", r(-lam * h_try, 6), 0.001)], label="Factor"),
       fb("$1 - 80 \\times 0.03 = -1.4$, so errors flip sign and grow by 40% each step.",
@@ -742,7 +749,7 @@ items.append(parts(
           "no-one": "You left out the 1. Euler's factor on $e' = -\\lambda e$ is $1 - h\\lambda$."}))],
     "On $e' = -80e$, Euler multiplies the error by $1 - 80h$ each step, so it is stable only for $h < 0.025$. "
     "At $h = 0.03$ that factor is $-1.4$, so errors flip sign and grow, while RK4 is still stable. "
-    "RK4 is stable up to $h = 0.0348$; higher order raises the limit a little but does not remove it."))
+    "RK4 needs $h < 0.0348$, so 29 steps of four evaluations, 116 in all, against Euler's 41."))
 
 order = {2: [], 3: [], 4: [], 5: []}
 for it in items:
