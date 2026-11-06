@@ -106,3 +106,44 @@ Notation in L3 and L4 matches L1 and L2: $\mathbb{N} = \{1, 2, 3, \dots\}$, $\su
 2. Inline maths followed by letters ("$k$th") can wrap between the maths and the suffix at 440 px (l5 `screens[5]`). Wanted: keep a KaTeX span and the word characters that follow it on one line.
 3. `tap-regions` with `ordered: true` shows every row at once, so a staged choice whose later rows depend on earlier answers gives those answers away (l9 `screens[5]`). Wanted: a per-step `reveal` (show row k + 1 after a right tap on row k).
 4. A code exercise whose prose stresses exact `Fraction` arithmetic can have no test that a float version fails (l6, l10, homework-2; findings 21 to 23). Wanted: in the committed CPython runner the inbox already asks for, an optional float-substitution pass that warns when a float rewrite of the solution passes every test.
+
+## Fix pass
+
+Status per finding (33 fixed, 0 disputed, 1 deferred). Every corrected number was recomputed (exact `Fraction` against a scan, in `docs/reports/analysis-L1-numbers.py` and `-L2-numbers.py`, which now also check each number and structure the fixes write; every fixed-value check names the new value only, so reverting a fix fails the script). Conceptual findings carry a basis.
+
+1. fixed: l1 `summary.trap` now says the move is safe for a prime, not for 4. Basis: if $n$ is squarefree and $n \mid p^2$, every prime $q \mid n$ divides $p$ (Euclid's lemma, Rudin ch. 1 exercises; Abbott 1.2), so $n \mid p$; checked for every $p < 10{,}000$ at $n = 6$.
+2. fixed: homework-1 `items[8]` `qunit` why now says "Every infinite subset of $\mathbb{Q}$ is countable". Basis: l5 `screens[3]` defines countable as a bijection with $\mathbb{N}$ (Abbott 1.5.5), so a finite set is not countable under it; Abbott 1.5.7 and Rudin 2.8 prove that every infinite subset of a countable set is countable.
+3. fixed: l2 `screens[6]` `notin` why uses 0.97 and $n = 34$. 0.95 $= 1 - \tfrac1{20}$ is a term; no $n$ gives 0.97 (33.33), and $1 - \tfrac1{34} \approx 0.9706$.
+4. fixed: l2 `quiz[3].explain` says "A non-empty finite set always has a maximum". Basis: a finite non-empty ordered set has a greatest element by induction on size (induction, no named theorem); $\varnothing$ has no supremum (l2 `screens[10]`).
+5. fixed: l5 `screens[9]` console now follows the 0-or-9 rule ($x = 0.0999\ldots = 0.1 = x_1$); every line is under 44 characters. Basis: $0.0999\ldots = 9 \cdot \tfrac{0.01}{1 - 0.1} = 0.1$.
+6. fixed: l3 `screens[7]` c2 and c4 are labelled "Case one" and "Case two", hint 3 names the order. `same` cannot swap two-line blocks (Engine 1), so the order is named. Basis: Rudin 1.21 treats the cases separately, so naming the order loses no proof.
+7. fixed: l2 `screens[9]` p1, p2 and review-1 `items[8]` i1, i2 labelled "Part one" and "Part two" (labelled steps; the engine cannot express a block `same`).
+8. fixed: l1 `screens[3]` and `screens[8]` prose now cite the proof course's lesson on contradiction as prior knowledge.
+9. fixed: review-1 `items[0]`, `[2]`, `[3]`, `[6]` replaced as specified (ids kept). Recomputed: $n = 3, 6$ keep $n \mid p^2 \Rightarrow n \mid p$, $n = 8, 9, 12$ fail at $p = 4, 3, 6$; $\tfrac{1}{2n+1} < 0.004$ first at $n = 125$ ($\tfrac1{249} \approx 0.004016$); $a = -0.3$, $b = -0.29$ gives $n = 101$, $m = -30$; $\sqrt5$ on $[2, 3]$ gives $[2.125, 2.25]$ after three halvings. Graded answers changed: items[2] 251 to 125, items[3] (201, 141) to (101, -30), items[6] 1.625 to 2.125, items[0] widget `tap-regions` to `multi` (n3 and n6).
+10. fixed: l2 `screens[10].explain` names the two sets instead of "the other two".
+11. fixed: l1 `screens[10].hints[1]` reads "about $4 \times 10^{-16}$" (`x * x - 2` is $2^{-51} \approx 4.4 \times 10^{-16}$).
+12. fixed: l3 `screens[8]` and l5 `screens[3]` key options shortened as specified.
+13. fixed: homework-1 `items[0].title` is plain text.
+14. fixed: l5 `screens[5].prose` rephrased to "digit $k$ of $x$"; the wrap itself is Engine 2.
+15. fixed: l8 `screens[5].hints[1]` gives the order-limit argument. Basis: Abbott 2.3.4; if $L < 1$ take $\varepsilon = 1 - L$, a tail has $a_n < L + \varepsilon = 1$, contradicting $a_n \ge 1$.
+16. fixed: l7 `screens[5]` gets `same: [["c2", "c3"]]`; c4 says "the tail bound". Basis: c3 uses only $N$ and $L$ (Abbott 2.3.2).
+17. fixed: l10 `screens[7]` gets `same: [["k1", "k2"]]`, hint 3 allows either order. Basis: Abbott 2.6.4 proof; $x$ and $N$ are independent, and k3 needs both. `screens[8]` "Line 3" still holds.
+18. fixed: l7 `screens[9]` prose, question and `left-out` say two flawed lines (d2 is false: $\min(N_1, N_2)$ fails the other bound).
+19. fixed: l7 `screens[8].prose` calls the $|b|$ version a first version. Recomputed: $4|b_n - 2| < \tfrac{\varepsilon}{2}$ first at 801, $2|a_n - 3| < \tfrac{\varepsilon}{2}$ at 401 (the table keeps both), and with $|b| + 1$ the second index is 601 and $N$ stays 801.
+20. fixed: l6 `quiz[3]` option why and explain say the terms need not be monotone.
+21. fixed: l6 `screens[10]` test `smallest_n(Fraction(5, 29))` = 27 added; how and explain updated. CPython: the float closed form returns 26, the solution 27; solution 11/11, starter 0/11. A float loop (`5 / (n + 3) >= eps`) does pass, so the prose no longer claims floats always fail.
+22. fixed: l10 `screens[10]` test `cauchy_n(Fraction(1, 49))` = 49 added; how and explain updated. CPython: `math.ceil(1 / float(eps))` returns 50; solution 13/13, starter 0/13.
+23. fixed: homework-2 `items[6].explain` no longer says floats could misjudge the case. Searched: no $n \le 500$ differs.
+24. fixed: l6 `screens[11]` `tenth` 31, `pounds` 30001 (graded wrong-answer values changed; correct 301 unchanged).
+25. fixed: l9 "cluster point" replaced by "subsequential limit", bolded once in `screens[1].feedback.correct`, in four places.
+26. fixed: l6 `screens[9].prose` notes that $n > N$ and $n \ge N$ mean the same. Basis: if $n > N$ works then $n \ge N + 1$ works with $N' = N + 1$.
+27. fixed: l7 `quiz[1].explain` names the difference law ($c = -1$ and the sum law).
+28. fixed: review-2 `items[1]` (quotient proof, line 4 false; $b = 1$, $b_n = \tfrac{n}{n+1}$: line 3 gives $\tfrac1n$, line 4 claims $\tfrac{1}{n+1}$) and `items[6]` (three-term sum law, $N = \max(11, 21, 31) = 31$, direct 7, half 21) replaced as specified. Graded answer items[6]: 41 to 31; items[1] answer still the fourth line (key `r3`).
+29. fixed: homework-2 `items[4]` replaced by the Cauchy sum proof with `same: [["q2", "q3"]]`; d1 and d2 are false steps (d2: $0.2 \le 0.01$ fails). Graded answer changed: the proof is new.
+30. fixed: l6 `quiz[0].prose` says "Four students".
+31. fixed: l7 `screens[10]` and `screens[4]` key options shortened as specified.
+32. fixed: l8 `screens[0].question` no longer asks for a whole number.
+33. fixed: l9 `screens[5].prose` appended with the check sentence (Engine 3 stays open).
+34. deferred: l11 `screens[1].prose` is an L3 file; the L3 and L4 reader owns it.
+
+Gates: `analysis-L1-numbers.py` exit 0 (399 of 399), `analysis-L2-numbers.py` exit 0 (300 of 300); voice scan 0 sentences over 35 words and 0 explanations over three sentences; `validate.mjs` 0 errors (no new warnings in L1 or L2 files); playthrough with `--local-cdn`: 9 lessons (l1, l2, l3, l5 to l10) and 4 sets (review-1, review-2, homework-1, homework-2) green, with and without `--mobile`, 26 of 26 exit 0 (rerun once after a container restart killed the first run). CPython: l6 and l10 solutions 11/11 and 13/13, starters 0.
