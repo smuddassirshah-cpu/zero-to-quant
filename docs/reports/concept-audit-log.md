@@ -8,3 +8,4 @@
 | brainteasers | L1 to L3 | 1 | 0 | 4 | 0 | 4 | 13 (all fixed before the audit) | 0 | yes (fix pass 4 fixed, 0 disputed; gates green) |
 | coding-int | L1 to L3 | 1 | 1 | 5 | 0 | 5 | 5 (all fixed before the audit) | 1 | pending fix pass |
 | systems | L1 to L3 | 1 | 1 | 21 | 0 | 22 | 7 (all fixed before the audit) | 0 | pending fix pass |
+| research-int | L1 to L3 | 1 | 0 | 8 | 2 | 10 | 4 (all fixed before the audit) | 0 | pending fix pass |
