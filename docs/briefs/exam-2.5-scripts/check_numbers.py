@@ -226,9 +226,9 @@ allow('e-duality-sandwich', 8.4, 9.6, 1.2, 9)
 ok(abs(9.6 - 8.4 - 1.2) < 1e-12, 'e-duality-sandwich: gap 1.2')
 
 # e-step-limit: eigenvalues, then descent just inside and just outside the limit
-H = np.array([[5.2, 4.8], [4.8, 5.2]])
+H = np.array([[6.45, 6.05], [6.05, 6.45]])
 ev = sorted(np.linalg.eigvalsh(H))
-ok(np.allclose(ev, [0.4, 10]), 'e-step-limit: eigenvalues 0.4 and 10')
+ok(np.allclose(ev, [0.4, 12.5]), 'e-step-limit: eigenvalues 0.4 and 12.5')
 
 
 def gd(s, n=4000):
@@ -238,12 +238,12 @@ def gd(s, n=4000):
     return np.linalg.norm(x)
 
 
-ok(gd(0.199) < 1e-6 and gd(0.201) > 1e3, 'e-step-limit: converges at 0.199, diverges at 0.201')
+ok(gd(0.159) < 1e-6 and gd(0.161) > 1e3, 'e-step-limit: converges at 0.159, diverges at 0.161')
 key('e-step-limit', 2 / ev[1])
 wrong('e-step-limit', 'min', 2 / ev[0])
 wrong('e-step-limit', 'one-step', 1 / ev[1])
 wrong('e-step-limit', 'best', round(2 / (ev[0] + ev[1]), 4))
-allow('e-step-limit', 5.2, 4.8, 0.4, 0.2, 0.1)
+allow('e-step-limit', 6.45, 6.05, 0.4, 12.5, 0.16, 0.08, 0.155, 5.0)
 
 # e-double-gap: NumPy's spacing
 w_ = node(W('e-double-gap'))
@@ -375,6 +375,8 @@ e1_, e2_ = xs_[1] - math.log(3), xs_[2] - math.log(3)
 ok(abs(e1_ - 0.0050) < 0.00005 and abs(e2_ - 1.3e-5) < 0.05e-5, f'e-newton-minimise: errors {e1_:.5f} then {e2_:.3g}')
 ok(abs(e2_ / e1_ ** 2 - 0.5) < 0.01, 'e-newton-minimise: e2 / e1^2 is about 1/2')
 correct_id('e-newton-minimise', 'ok', part=1)
+from scipy.optimize import brentq  # noqa: E402
+ok(len({round(brentq(lambda x: math.exp(x) - 3 * x, a_, b_), 4) for a_, b_ in [(0, 1), (1, 2)]}) == 2, 'e-newton-minimise: e^x - 3x has two roots, so the text must not say it has none')
 allow('e-newton-minimise', 2.5, math.log(3), 1.0986, 1.1036, 0.005, 0.0050, 1.3e-5, 2.5e-3, 2.5e-5)
 
 # e-cancel-rewrite: doubles against 40-digit decimals
@@ -382,6 +384,7 @@ getcontext().prec = 40
 xb = 1e8
 key('e-cancel-rewrite', math.sqrt(xb * xb + 1) - xb, part=0, tol=0)
 ok(xb * xb + 1 == 1e16, 'e-cancel-rewrite: 1e16 + 1 rounds to 1e16')
+ok(float(np.spacing(1e16)) == 2.0 and (1e16 + 1 == 1e16), 'e-cancel-rewrite: doubles near 1e16 are 2 apart, so +1 is an exact tie that rounds to even')
 true_ = (D(10) ** 16 + 1).sqrt() - D(10) ** 8
 wrong('e-cancel-rewrite', 'true', 5e-9, part=0)
 ok(abs(float(true_) - 5e-9) < 1e-20, 'e-cancel-rewrite: true value 5e-9 to 11 digits')
@@ -418,58 +421,65 @@ correct_id('e-log1p-blame', 'ok')
 allow('e-log1p-blame', 3e-12, 3.0000446571375978, 2.9999999999955, 1.5, 3, 12, 52, 5)
 
 # e-three-point-poly: NumPy's polyfit through three points
-cf3 = np.polyfit([0, 1, 3], [1, 3, 2], 2)
+cf3 = np.polyfit([0, 1, 4], [1, 3, 2], 2)
 key('e-three-point-poly', float(np.polyval(cf3, 2)), tol=5e-5)
-wrong('e-three-point-poly', 'linear', float(np.interp(2, [1, 3], [3, 2])))
+wrong('e-three-point-poly', 'linear', round(float(np.interp(2, [1, 4], [3, 2])), 4))
 wrong('e-three-point-poly', 'two-points', float(np.polyval(np.polyfit([0, 1], [1, 3], 1), 2)))
-allow('e-three-point-poly', 10 / 3, 3.3333)
+allow('e-three-point-poly', 23 / 6, 23, 6, 3.8333, 0.5, 4 / 3, 1 / 6, 2, 4, 3)
 
-# e-richardson-three: synthetic A and B with an h^3 error
-pts = [{'A': 1.0 + 0.8, 'B': 1.0 + 0.1}, {'A': 2.5 - 0.4, 'B': 2.5 - 0.05}]
-expr_check('e-richardson-three', lambda A, B: 1.0 if abs(A - 1.8) < 1e-12 else 2.5, pts)
-allow('e-richardson-three', 8, 7)
+# e-richardson-three: synthetic A and B with an h^3 error, the second step a third of the first
+pts = [{'A': 1.0 + 0.8, 'B': 1.0 + 0.8 / 27}, {'A': 2.5 - 0.4, 'B': 2.5 - 0.4 / 27}, {'A': 0.7 + 1.9, 'B': 0.7 + 1.9 / 27}]
+expr_check('e-richardson-three', lambda A, B: 1.0 if abs(A - 1.8) < 1e-12 else (2.5 if abs(A - 2.1) < 1e-12 else 0.7), pts)
+allow('e-richardson-three', 27, 26, 8, 7, 9, 3, 2)
 
-# e-gauss-two-point: NumPy's Gauss-Legendre nodes
+# e-gauss-two-point: NumPy's Gauss-Legendre nodes on [-1, 5]
 xn, wn = np.polynomial.legendre.leggauss(2)
-rule = 2 * float(np.sum(wn * (2 * xn + 2) ** 4))
+rule = 3 * float(np.sum(wn * (3 * xn + 2) ** 4))
 key('e-gauss-two-point', rule, part=0, tol=5e-5)
-wrong('e-gauss-two-point', 'no-scale', round(rule / 2, 4), part=0)
-wrong('e-gauss-two-point', 'unmapped', round(float(np.sum(wn * xn ** 4)), 4), part=0)
-ok(abs(simpson(lambda x: x ** 4, 0, 4) - 204.8) < 1e-9, 'e-gauss-two-point: exact integral 204.8')
-ok(abs(2 * float(np.sum(wn * (2 * xn + 2) ** 3)) - 64) < 1e-9, 'e-gauss-two-point: two nodes exact for x^3')
+wrong('e-gauss-two-point', 'no-scale', round(float(np.sum(wn * (3 * xn + 2) ** 4)), 4), part=0)
+wrong('e-gauss-two-point', 'full-width', round(6 * float(np.sum(wn * (3 * xn + 2) ** 4)), 4), part=0)
+ok(abs(simpson(lambda x: x ** 4, -1, 5) - 625.2) < 1e-6, 'e-gauss-two-point: exact integral 625.2')
+ok(abs((2 + 3 ** 0.5) ** 4 + (2 - 3 ** 0.5) ** 4 - 194) < 1e-9, 'e-gauss-two-point: the mapped nodes give 194')
+ok(abs(3 * float(np.sum(wn * (3 * xn + 2) ** 3)) - (5 ** 4 - 1) / 4) < 1e-9, 'e-gauss-two-point: two nodes exact for x^3')
 x3n, w3n = np.polynomial.legendre.leggauss(3)
-ok(abs(2 * float(np.sum(w3n * (2 * x3n + 2) ** 4)) - 204.8) < 1e-9, 'e-gauss-two-point: three nodes give 204.8')
+ok(abs(3 * float(np.sum(w3n * (3 * x3n + 2) ** 4)) - 625.2) < 1e-9, 'e-gauss-two-point: three nodes give 625.2')
 correct_id('e-gauss-two-point', 'ok', part=1)
-allow('e-gauss-two-point', 204.8, 199.11, 99.56)
+allow('e-gauss-two-point', 625.2, 582, 194, 1164, 6, 3, 2, 5)
 
-# e-explicit-step: exact Fractions
-den = F('0.25') ** 2 * 80 ** 2 + F('0.02')
+# e-explicit-step: exact Fractions, and a search for the largest M
+Mg = F(300) / F('2.5')
+den = F('0.25') ** 2 * Mg ** 2 + F('0.02')
 key('e-explicit-step', float(1 / den), part=0, tol=5e-7)
-wrong('e-explicit-step', 'no-square', round(float(1 / (F('0.25') * 80 ** 2 + F('0.02'))), 6), part=0)
-den2 = F('0.25') ** 2 * 160 ** 2 + F('0.02')
-import fractions as _fr
-steps2 = math.ceil(den2)
-key('e-explicit-step', steps2, part=1)
-wrong('e-explicit-step', 'linear', math.ceil(2 * den), part=1)
-wrong('e-explicit-step', 'floor', steps2 - 1, part=1)
-ok(math.ceil(den) == 401, 'e-explicit-step: 401 steps at M = 80')
-allow('e-explicit-step', 0.0625, 6400, 400, 400.02, 0.0025, 1600.02, 1601, 1600, 401, 80, 160, 0.25, 0.02)
+wrong('e-explicit-step', 'no-m', round(float(1 / (F('0.25') ** 2 * 300 ** 2 + F('0.02'))), 6), part=0)
+wrong('e-explicit-step', 'no-square', round(float(1 / (F('0.25') * Mg ** 2 + F('0.02'))), 6), part=0)
+ok(Mg == 120 and den == F('900.02'), 'e-explicit-step: M = 120 and the bound denominator is 900.02')
+bound = lambda m_: F('0.25') ** 2 * m_ ** 2 + F('0.02')
+m_best = max(m_ for m_ in range(1, 2000) if bound(m_) <= 2500)
+key('e-explicit-step', m_best, part=1)
+ok(bound(199) == F('2475.0825') and bound(200) == F('2500.02') and bound(199) <= 2500 < bound(200), 'e-explicit-step: 199 fits, 200 is just over')
+wrong('e-explicit-step', 'round-up', m_best + 1, part=1)
+wrong('e-explicit-step', 'no-square', max(m_ for m_ in range(1, 2000) if F('0.25') * m_ ** 2 + F('0.02') <= 2500), part=1)
+wrong('e-explicit-step', 'no-root', int((F(2500) - F('0.02')) / F('0.0625')), part=1)
+allow('e-explicit-step', 0.0625, 120, 900, 900.02, 0.001111, 0.25, 0.02, 300, 2.5, 2500, 2499.98, 199.9992, 199, 200, 2500.02,
+      39999.68, 39999, 99, 0.00178)
 
 # e-control-variate: exact arithmetic and a simulation
-key('e-control-variate', 19.95 / 9, part=0, tol=5e-5)
-wrong('e-control-variate', 'by-vy', round(19.95 / 49, 4), part=0)
-wrong('e-control-variate', 'by-sd', round(19.95 / 3, 4), part=0)
-rho_B = 19.95 / (7 * 3)
+key('e-control-variate', 17.85 / 9, part=0, tol=5e-5)
+wrong('e-control-variate', 'by-vy', round(17.85 / 49, 4), part=0)
+wrong('e-control-variate', 'by-sd', round(17.85 / 3, 4), part=0)
+rho_B = 17.85 / (7 * 3)
+ok(abs(rho_B - 0.85) < 1e-12, 'e-control-variate: rho = 0.85')
 key('e-control-variate', 1 / (1 - rho_B ** 2), part=1, tol=5e-5)
 wrong('e-control-variate', 'one-minus-rho', round(1 / (1 - rho_B), 4), part=1)
 wrong('e-control-variate', 'rho', round(1 / rho_B ** 2, 4), part=1)
 rng = np.random.default_rng(11)
-Cm = np.array([[49, 19.95], [19.95, 9]])
+Cm = np.array([[49, 17.85], [17.85, 9]])
 YX = rng.multivariate_normal([0, 0], Cm, size=400000)
 bs_ = np.cov(YX.T)[0, 1] / YX[:, 1].var(ddof=1)
 resid_ = YX[:, 0] - bs_ * YX[:, 1]
-ok(abs(bs_ - 19.95 / 9) < 0.02 and abs(YX[:, 0].var() / resid_.var() - 10.256) < 0.3, 'e-control-variate: simulation agrees')
-allow('e-control-variate', 49, 9, 19.95, 2.2167, 0.95, 10.26, 0.9025, 4.78, 20, 0.0975, 7, 3)
+ok(abs(bs_ - 17.85 / 9) < 0.02 and abs(YX[:, 0].var() / resid_.var() - 3.6036) < 0.1, 'e-control-variate: simulation agrees')
+ok(abs(49 * (1 - rho_B ** 2) - 13.5975) < 1e-9, 'e-control-variate: variance left 13.60')
+allow('e-control-variate', 49, 9, 17.85, 1.9833, 0.85, 3.60, 0.7225, 13.60, 6.67, 0.2775, 7, 3, 3.6)
 
 # ================================================================ difficulty 4
 # e-projection-kkt: projected gradient descent, then the relaxed problem by the same route
@@ -502,7 +512,7 @@ allow('e-projection-kkt', 3.4, -0.2, 0.2, 1.2, 1.8, 1.68, 1.682, 0.12, 3.1, 2.9,
 
 # e-long-only-kkt: brute force over the feasible simplex, then the multipliers by least squares
 s2 = np.array([0.01, 0.04, 0.09])
-mr = np.array([0.02, 0.06, 0.10])
+mr = np.array([0.01, 0.06, 0.10])
 gw = np.linspace(0, 1, 2001)
 best = (9, None)
 for w1 in gw[:400]:
@@ -524,39 +534,67 @@ key('e-long-only-kkt', nu1B, part=1, tol=1e-9)
 wrong('e-long-only-kkt', 'sign', -nu1B, part=1)
 ok(abs(lam_mu[0] + 0.035) < 1e-12 and abs(0.5 * 0.06 + 0.5 * 0.10 - 0.08) < 1e-12, 'e-long-only-kkt: lambda -0.035, target met exactly')
 correct_id('e-long-only-kkt', 'ok', part=2)
-allow('e-long-only-kkt', 0.01, 0.04, 0.09, 0.02, 0.06, 0.10, 0.08, 0.5, 0.05, 0.035, -0.035, 0.075, 0.025, 1.25)
+allow('e-long-only-kkt', 0.01, 0.04, 0.09, 0.06, 0.10, 0.08, 0.5, 0.05, 0.035, -0.035, 0.075, 0.0125, 0.0225, 1.25)
 
-# e-local-global-proof
+# e-local-global-proof: the order key, the interchangeable pair, and numerical sanity of the claim and its counterexample
 o_ = node(W('e-local-global-proof'))
 ok(o_['answer'] == ['k1', 'k2', 'k3', 'k4', 'k5'] and o_['distractors'] == ['e1', 'e2'], 'e-local-global-proof: order key and left-out lines')
+ok(o_.get('same') == [['k3', 'k4']], 'e-local-global-proof: k3 and k4 are interchangeable')
+rng = np.random.default_rng(5)
+worst = -1.0
+for _ in range(2000):
+    a1, a2 = rng.uniform(0.1, 3, 2)
+    b1, b2 = rng.uniform(-3, 3, 2)
+    f_ = lambda x, a1=a1, b1=b1: a1 * (x - b1) ** 2
+    g_ = lambda x, a2=a2, b2=b2: a2 * (x - b2) ** 2 + 0.3 * x
+    h_ = lambda x: max(f_(x), g_(x))
+    x_, y_, t_ = rng.uniform(-4, 4, 2).tolist() + [rng.uniform(0, 1)]
+    worst = max(worst, h_(t_ * x_ + (1 - t_) * y_) - (t_ * h_(x_) + (1 - t_) * h_(y_)))
+ok(worst <= 1e-9, f'e-local-global-proof: max of two convex quadratics never rises above its chord ({worst:.2g})')
+mn = lambda x: min(x ** 2, (x - 2) ** 2)
+ok(mn(0) == 0 and mn(2) == 0 and mn(1) == 1 > (mn(0) + mn(2)) / 2, 'e-local-global-proof: min(x^2, (x - 2)^2) has a bump at 1')
 
-# e-normal-equations: a matrix built with kappa = 2e6, then both solvers
-rng = np.random.default_rng(3)
-U_, _ = np.linalg.qr(rng.normal(size=(60, 4)))
-V_, _ = np.linalg.qr(rng.normal(size=(4, 4)))
-sv = np.array([1.0, 0.3, 1e-3, 5e-7])
-Am = U_ @ np.diag(sv) @ V_.T
-ok(abs(np.linalg.cond(Am) / 2e6 - 1) < 1e-6, 'e-normal-equations: built kappa(A) = 2e6')
-ok(abs(np.linalg.cond(Am.T @ Am) / 4e12 - 1) < 2e-3, 'e-normal-equations: kappa(A^T A) is about 4e12')
-w_ = node(W('e-normal-equations', 0))
-ok(abs(w_['answer'] - 4e12) <= 1e-9 * 4e12, 'e-normal-equations part 0 answer 4e12')
-for wid, v in [('same', 2e6), ('double', 4e6)]:
-    ok(any(x['id'] == wid and abs(x['value'] - v) < 1e-6 * v for x in w_['wrong']), f'e-normal-equations wrong {wid} = {v}')
-w_ = node(W('e-normal-equations', 1))
-ok(abs(w_['answer'] - 4e12 * 2.0 ** -53) <= 1e-9, 'e-normal-equations part 1 answer kappa^2 u')
-ok(any(x['id'] == 'qr' and abs(x['value'] - 2e6 * 2.0 ** -53) < 1e-20 for x in w_['wrong']), 'e-normal-equations wrong qr = kappa u')
-xt_ = rng.normal(size=4)
-yv = Am @ xt_
-x_ne = np.linalg.solve(Am.T @ Am, Am.T @ yv)
-x_qr = np.linalg.lstsq(Am, yv, rcond=None)[0]
-e_ne = np.linalg.norm(x_ne - xt_) / np.linalg.norm(xt_)
-e_qr = np.linalg.norm(x_qr - xt_) / np.linalg.norm(xt_)
-ok(e_ne > 1e3 * e_qr and e_qr < 1e-8, f'e-normal-equations: normal equations error {e_ne:.1e} against lstsq {e_qr:.1e}')
+# e-normal-equations: the two limits from exact decimals, then real solves either side of each limit
+getcontext().prec = 40
+uD = D(2) ** -53
+k_ne_B = float((D('1e-6') / uD).sqrt())
+k_qr_B = float(D('1e-6') / uD)
+key('e-normal-equations', k_ne_B, part=0, tol=0.01 * 94906.27 / 10)
+key('e-normal-equations', k_qr_B, part=1, tol=0.01 * 9.007199e9 / 10)
+wrong('e-normal-equations', 'qr', k_qr_B, part=0)
+wrong('e-normal-equations', 'eps', float((D('1e-6') / (D(2) ** -52)).sqrt()), part=0)
+wrong('e-normal-equations', 'normal', k_ne_B, part=1)
+wrong('e-normal-equations', 'eps', float(D('1e-6') / (D(2) ** -52)), part=1)
+ok(94900 / k_ne_B > 0.99 and 9.0e9 / k_qr_B > 0.99 and abs(k_qr_B / k_ne_B / 95000 - 1) < 0.01, 'e-normal-equations: 94,900, 9.0e9 and the factor 95,000')
+
+
+def solve_errors(kappa, seed):
+    rg = np.random.default_rng(seed)
+    U2, _ = np.linalg.qr(rg.normal(size=(60, 4)))
+    V2, _ = np.linalg.qr(rg.normal(size=(4, 4)))
+    A2 = U2 @ np.diag([1.0, kappa ** (-1 / 3), kappa ** (-2 / 3), 1 / kappa]) @ V2.T
+    xt2 = rg.normal(size=4)
+    y2 = A2 @ xt2
+    try:
+        xn_ = np.linalg.solve(A2.T @ A2, A2.T @ y2)
+    except np.linalg.LinAlgError:
+        xn_ = np.full(4, np.inf)
+    xq_ = np.linalg.lstsq(A2, y2, rcond=None)[0]
+    f2 = lambda v: np.linalg.norm(v - xt2) / np.linalg.norm(xt2)
+    return f2(xn_), f2(xq_)
+
+
+ne_lo = max(solve_errors(3e3, s_)[0] for s_ in range(5))
+ne_hi = min(solve_errors(3e6, s_)[0] for s_ in range(5))
+qr_lo = max(solve_errors(3e8, s_)[1] for s_ in range(5))
+qr_hi = min(solve_errors(3e12, s_)[1] for s_ in range(5))
+ok(ne_lo < 1e-6 < ne_hi, f'e-normal-equations: normal equations meet 1e-6 at 3e3 ({ne_lo:.1e}) and miss it at 3e6 ({ne_hi:.1e})')
+ok(qr_lo < 1e-6 < qr_hi, f'e-normal-equations: QR meets 1e-6 at 3e8 ({qr_lo:.1e}) and misses it at 3e12 ({qr_hi:.1e})')
 correct_id('e-normal-equations', 'ok', part=2)
-allow('e-normal-equations', 1.11, 2.2, 4.4, 2e6, 4e12, 1.11e-16, 4.4e-4, 2.2e-10, 1e9, 1e-5, 53, 12, 16)
+allow('e-normal-equations', 1.11, 9.0, 94900, 95000, 94906.27, 9.007199e9, 1e-6, 1e-16, 53, 52, 16, 6, 10, 9, 5e4, 1e9)
 
-# e-natural-spline: a general natural-spline solver
-xk, yk = np.array([0.0, 1.0, 2.0]), np.array([0.0, 2.0, 1.0])
+# e-natural-spline: a general natural-spline solver on four points
+xk, yk = np.array([0.0, 1.0, 2.0, 3.0]), np.array([0.0, 2.0, 1.0, 3.0])
 
 
 def natural_spline(xk, yk, x):
@@ -576,14 +614,18 @@ def natural_spline(xk, yk, x):
 
 
 Ms, s05 = natural_spline(xk, yk, 0.5)
+ok(np.allclose(Ms, [0, -6, 6, 0]), 'e-natural-spline: M = (0, -6, 6, 0)')
 key('e-natural-spline', Ms[1], part=0, tol=1e-9)
-wrong('e-natural-spline', 'no-two-thirds', Ms[1] * 2 / 3, part=0)
+one_eq = -3 / (2 / 3)
+wrong('e-natural-spline', 'one-equation', one_eq, part=0)
+ok(np.allclose(np.linalg.solve([[2 / 3, 1 / 6], [1 / 6, 2 / 3]], [3, -3]), [6, -6]), 'e-natural-spline: the swapped right sides give M1 = 6')
 wrong('e-natural-spline', 'sign', -Ms[1], part=0)
 key('e-natural-spline', s05, part=1, tol=5e-6)
 wrong('e-natural-spline', 'linear', float(np.interp(0.5, xk, yk)), part=1)
 wrong('e-natural-spline', 'no-correction', Ms[1] * 0.5 ** 3 / 6 + 2 * 0.5, part=1)
-ok(abs(natural_spline(xk, yk, 1.0)[1] - 2) < 1e-12, 'e-natural-spline: S(1) = 2')
-allow('e-natural-spline', 0.5, 4.5, 0.75, 2.75, 1.28125, 0.09375, 1.375)
+wrong('e-natural-spline', 'three-point', natural_spline(np.array([0.0, 1.0, 2.0]), np.array([0.0, 2.0, 1.0]), 0.5)[1], part=1)
+ok(abs(natural_spline(xk, yk, 1.0)[1] - 2) < 1e-12 and abs(-0.125 + 1.5 - s05) < 1e-12, 'e-natural-spline: S(1) = 2 and S(0.5) = -0.125 + 1.5')
+allow('e-natural-spline', 0.5, 4.5, 6, 3, 18, 1.375, 0.125, 1.5, 2.0)
 
 # e-log-sum-exp: run the solution and the starter on every test in CPython, against 50-digit decimals
 w_ = node(W('e-log-sum-exp'))
@@ -614,9 +656,30 @@ for t_ in w_['tests'] + w_['examples']:
     start_fail += not (isinstance(sg, float) and math.isclose(sg, exp_v, rel_tol=t_['tol']['rel']))
 ok(sol_ok, 'e-log-sum-exp: the solution passes every test')
 ok(start_fail >= 3, f'e-log-sum-exp: the starter fails {start_fail} tests')
-ok(len(w_['tests']) == 8 and '8 hidden tests' in w_['how'], 'e-log-sum-exp: how names 8 tests')
+ok(len(w_['tests']) == 9 and '9 hidden tests' in w_['how'], 'e-log-sum-exp: how names 9 tests')
+
+
+def lse_variant(shift):
+    return lambda xs: shift(xs) + math.log(sum(math.exp(x - shift(xs)) for x in xs))
+
+
+def passes(fn):
+    n_ = 0
+    for t_ in w_['tests']:
+        try:
+            got_ = fn(eval(t_['call'][len('log_sum_exp('):-1]))
+            n_ += math.isclose(got_, eval(t_['expect']), rel_tol=t_['tol']['rel'])
+        except OverflowError:
+            pass
+    return n_
+
+
+ok(passes(lse_variant(max)) == 9, 'e-log-sum-exp: shifting by the max passes all 9')
+ok(passes(lse_variant(lambda xs: xs[0])) < 9, 'e-log-sum-exp: shifting by the first entry fails a test')
+ok(passes(lse_variant(lambda xs: sum(xs) / len(xs))) < 9, 'e-log-sum-exp: shifting by the mean fails a test')
+ok(passes(lse_variant(min)) < 9, 'e-log-sum-exp: shifting by the min fails a test')
 ok(math.exp(709) < float('inf') and math.isinf(np.exp(np.float64(710))) and math.exp(-746) == 0.0, 'e-log-sum-exp: e^710 overflows, e^-746 is 0')
-allow('e-log-sum-exp', 1.8e308, 1.8, 308, 710, 746, 1000, 1e-12, 12, 8)
+allow('e-log-sum-exp', 1.8e308, 1.8, 308, 710, 746, 1000, 1e-12, 12, 9)
 
 # ================================================================ difficulty 5
 # e-solver-certificate: the dual function by grid minimisation, p* by a search along the line
@@ -650,27 +713,40 @@ wrong('e-error-budget', 'mean', (7.968 + 7.962) / 2, part=0)
 wrong('e-error-budget', 'linear', 2 * 7.968 - 7.962, part=0)
 key('e-error-budget', Pt - Pf(1), part=1, tol=5e-6)
 wrong('e-error-budget', 'difference', Pf(1) - Pf(2), part=1)
+wrong('e-error-budget', 'signed', Pf(1) - Pt, part=1)
 nB = int(F(15) ** 2 / F('0.002') ** 2)
 key('e-error-budget', nB, part=2)
 wrong('e-error-budget', 'no-square', int(F(15) / F('0.002')), part=2)
 wrong('e-error-budget', 'grid-change', int(F(15) ** 2 / F('0.006') ** 2), part=2)
 allow('e-error-budget', 7.962, 7.968, 7.97, 7.9700, 0.002, 0.006, 15, 7500, 56_250_000, 0.0020, 0.0060)
 
-# e-stiff-implicit: one step of each method on e' = -200 e, by solving its update equation
-hS, lS = 0.05, 200.0
+# e-stiff-implicit: one step of each method on e' = -200 e, by solving its update equation, then repeated steps
+hS, lS = 0.04, 200.0
 e_imp = np.linalg.solve([[1 + hS * lS]], [1.0])[0]
 e_trp = np.linalg.solve([[1 + hS * lS / 2]], [1 - hS * lS / 2])[0]
 key('e-stiff-implicit', e_imp, part=0, tol=5e-5)
 wrong('e-stiff-implicit', 'explicit', 1 - hS * lS, part=0)
 wrong('e-stiff-implicit', 'inverse-z', round(1 / (hS * lS), 4), part=0)
-key('e-stiff-implicit', e_trp, part=1, tol=5e-5)
-wrong('e-stiff-implicit', 'sign', round(-e_trp, 4), part=1)
-wrong('e-stiff-implicit', 'implicit', round(e_imp, 4), part=1)
+
+
+def steps_cut(factor, cut=1e-8):
+    e_, n_ = 1.0, 0
+    while abs(e_) > cut:
+        e_, n_ = e_ * factor, n_ + 1
+    return n_
+
+
+key('e-stiff-implicit', steps_cut(e_trp), part=1)
+wrong('e-stiff-implicit', 'floor', steps_cut(e_trp) - 1, part=1)
+wrong('e-stiff-implicit', 'implicit', steps_cut(e_imp), part=1)
+ok(abs(e_trp + 0.6) < 1e-12 and abs(0.6 ** 36 - 1.03e-8) < 0.005e-8 and 0.6 ** 37 < 1e-8, 'e-stiff-implicit: 0.6^36 is 1.03e-8 and 0.6^37 is below 1e-8')
+ok(abs(math.log(1e8) / math.log(1 / 0.6) - 36.06) < 0.005, 'e-stiff-implicit: 36.06 steps')
+ok(steps_cut(e_imp) == 9 and 9 ** -8 > 1e-8 > 9 ** -9, 'e-stiff-implicit: implicit Euler needs 9 steps')
 ok(all(abs((1 - z / 2) / (1 + z / 2)) < 1 and 1 / (1 + z) < 1 for z in np.linspace(0.01, 1e4, 1000)), 'e-stiff-implicit: both factors below 1 for every h > 0')
 ok(abs((1 - 5e3) / (1 + 5e3) + 1) < 1e-3, 'e-stiff-implicit: trapezoidal factor tends to -1')
 ok(2 / lS == 0.01, 'e-stiff-implicit: explicit limit h < 0.01')
 correct_id('e-stiff-implicit', 'ok', part=2)
-allow('e-stiff-implicit', 200, -200, 0.05, 0.0909, -0.6667, 0.67, 0.09, 0.01, 11, -9, 1.0)
+allow('e-stiff-implicit', 200, -200, 0.04, 8, 0.1111, 0.11, 0.6, 60, -0.6, 9, 37, 36.06, 36, 1.03, 1.03e-8, 0.01, 4, 5, 1e8, 1e-8, 0.125, 0.9)
 
 # ------------------------------------------------------------------ every level has an item on a skill first met there
 LEVEL = {

@@ -82,3 +82,42 @@ Format: `n. item [index] path | severity | problem | evidence | fix`. Severities
 - Coverage: the 11 skills in `skills` equal the two `course.json` sets, and each is on an auto-graded item (there is no longform). By level, from my own tagging: convex 3, 3, 4, 4; numerics 6, 3, 3, 4, as the report says. Ramp 6, 15, 6, 3 (20, 50, 20, 10%). The proposed rewrites keep every skill, level and difficulty.
 - Pace: sum 5,280 s = 88 of 110 minutes. d2 75 to 90 s, d3 120 to 180 s, d4 210 to 420 s (the code item 420 s), d5 330 to 360 s. That fits; findings 13, 14 and 20 add no more than a minute in all.
 - Voice: 538 sentences, none over 20 words, no explanation over three sentences, British spelling, £ throughout. The proposed texts keep to the same rules.
+
+## Fix pass
+
+I recomputed every corrected number before writing it (SciPy `brentq`, `CubicSpline` and `leggauss`, NumPy `spacing`, exact Fractions, Decimal at 40 digits, descent and trapezoidal steps run by loop, real normal-equation and QR solves either side of each limit). All the reviewer's values agreed. The edits went into `docs/briefs/exam-2.5-scripts/build.py` and the exam was rebuilt from it; `check_numbers.py` and `fresh.py` were updated for every change.
+
+Status: fixed 21, disputed 0, deferred 0, no change required 1 (finding 22). Where a fix differs from the proposal, the line says why.
+
+1. e-newton-minimise root-of-f: fixed. Text now "not for the minimum". `check_numbers.py` asserts that $e^x - 3x$ has two roots (0.6191, 1.5121).
+2. e-cancel-rewrite explain: fixed. Tie at $10^{16} + 1$ rounds to the even $10^{16}$; script asserts `np.spacing(1e16) == 2` and `1e16 + 1 == 1e16`.
+3. e-local-global-proof [23]: fixed twice over. The item is replaced (finding 17) and its two bounding lines k3 and k4 are independent, so the key carries `"same": [["k3", "k4"]]`. To make them independent, k2 now states convexity of both $f$ and $g$, and k3 and k4 each cite one bound. The script asserts the `same` set.
+4. e-log-sum-exp tests: fixed. Added `log_sum_exp([0.0, 1500.0])` (expect 1500.0), 9 tests, `how` now reads 9. `check_numbers.py` runs shift-by-max (9 of 9), shift-by-first, shift-by-mean and shift-by-min (each fails), the solution (9 of 9) and the starter (fails 6).
+5. e-log-sum-exp feedback and explain: fixed with the proposed wording; the feedback is split into two sentences to stay under 20 words.
+6. e-linprog-bounds key length: fixed, key is 55 characters.
+7. e-log1p-blame key length: fixed.
+8. e-stiff-implicit key length: fixed.
+9. Precision asks: fixed in [16] (2 dp, `tol.abs` 0.005), [5] (4 dp), [3] (3 sf, 4.66e-10 is within the 0.1% band). [24] part 1 was replaced by finding 20.
+10. e-error-budget part 1: fixed. "Give its size", new wrong `signed` -0.002.
+11. e-normal-equations conditioning: fixed through finding 20 ("The fit is close, so its residual is small.").
+12. e-gauss-two-point letter clash: fixed through finding 19 ($x = 3t + 2$).
+13. e-explicit-step: fixed as proposed (0.001111, 199; wrongs 0.000178, 0.000278, 200, 99, 39999). Rounded wrongs sit 2e-7 inside their bands.
+14. e-stiff-implicit: fixed, with one change. The proposal's 28 steps clashed with a convex l16 key, so the cut is $10^8$: trapezoidal 37 steps ($0.6^{36} = 1.03 \times 10^{-8}$), wrongs 36 and 9 (implicit Euler, $9^{-9} = 2.6 \times 10^{-9}$). Part 0 is $\tfrac19$ at $h = 0.04$ as proposed.
+15. e-control-variate: fixed as proposed ($\rho = 0.85$; 1.9833, 3.6036).
+16. e-step-limit: fixed as proposed (eigenvalues 0.4 and 12.5, key 0.16; $\mathbf H$ checked by `eigvalsh`; descent converges at 0.159 and diverges at 0.161).
+17. e-local-global-proof: fixed, replaced by the maximum rule (see finding 3 for the k2 to k4 shape). The script samples 2,000 chord checks of a max of two convex quadratics and checks the $\min(x^2, (x - 2)^2)$ bump at 1.
+18. e-natural-spline: fixed as proposed (four points; $M_1 = -6$, $S(0.5) = 1.375$; wrongs -4.5, 6, 1.0, 0.875, 1.28125).
+19. e-gauss-two-point part 0: fixed as proposed ($\int_{-1}^5 x^4 = 625.2$, rule 582, wrongs 194 and 1164).
+20. e-normal-equations: fixed as proposed (94,906 and 9.007e9; wrongs and texts as listed). Route B solves real systems: the normal equations meet $10^{-6}$ at $\kappa = 3 \times 10^3$ and miss at $3 \times 10^6$; QR meets it at $3 \times 10^8$ and misses at $3 \times 10^{12}$.
+21. e-richardson-three: fixed as proposed (step $\tfrac h3$, key $\tfrac{27B - A}{26}$, three wrongs).
+22. Near relatives: no change, as stated.
+
+Extra changes from the wider freshness check. `fresh.py` now compares every exam key with every keyed numeric answer in the convex and numerics folders. It found two more equal keys: e-three-point-poly 3.3333 (numerics l10) and e-long-only-kkt $\nu_1 = 0.01$ (numerics l12). Fixes: nodes $(0, 1)$, $(1, 3)$, $(4, 2)$ giving $\tfrac{23}{6} = 3.8333$ with wrongs 2.6667 and 5; and $m_1 = 0.01$, giving $\nu_1 = 0.0225$ (the point $(0, 0.5, 0.5)$ is still the optimum). It also prints the wrong values that equal a course key; the few left are other-setting coincidences (12, 20, 0.6, 0.625, 0.125, 36).
+
+Graded answers changed: 16 keys (e-step-limit, e-three-point-poly, e-richardson-three, e-gauss-two-point, e-explicit-step x2, e-control-variate x2, e-local-global-proof order, e-normal-equations x2, e-natural-spline x2, e-stiff-implicit x2, e-long-only-kkt $\nu_1$), plus the new log-sum-exp test. The report `docs/reports/exam-2.5.md` was not edited (outside this pass): its "8 hidden tests", order-item and freshness lines are now stale.
+
+Gates:
+- `node tools/validate.mjs`: 0 errors, no topic-2.5 warnings (two O2-long-sentence warnings found and fixed).
+- Voice scan on a copy: 763 sentences, 0 over 20 words, 0 explanations over three sentences.
+- `check_numbers.py`: 344 of 344, exit 0. `fresh.py`: 0 key clashes. `node tools/fresh-check.mjs --exam topic-2.5`: 23 hits, all shared phrase n-grams at Jaccard 0.18 or less (formula openings, "minimise ... subject to"), none a reused setup.
+- `playthrough.mjs --exam topic-2.5 --local-cdn`: 30 of 30, passed, with and without `--mobile`.
