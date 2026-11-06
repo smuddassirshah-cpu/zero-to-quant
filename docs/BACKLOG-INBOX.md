@@ -1240,3 +1240,8 @@ Raised later (momentum-rep level 3):
 
 - `distribution` canvas, overlay labels: an `overlay` curve's label ("true 0.5%" in l13 screen 4) is drawn at the right end of the axis beside the main curve's tail, not on its own curve, so it reads as a label for the wrong curve. Wanted: overlay labels placed at the overlay's peak or with a `labelAt`. Workaround: the prose says which curve is dashed.
 - `numbers_lib`: every level script that has code widgets copies its own harness to run solutions and starters against the hidden tests (momentum-rep L2 and L3, numerics, convex and others). Wanted: a shared `lv.run_code_widgets()` in `app/tools/numbers_lib.py` that handles `isclose`, `equal`, `raises`, `setup`, `prelude` and `tol`. Workaround: the harness is copied into each script.
+
+Raised later (vector-calc level 1):
+
+- `plane` polyline function entries (`points: [[x, y], ...]`): `label` with `labelAt` is not placed at the given x; the three walk labels in l2 screen 11 all piled up near the left end, over the paths. Wanted: `labelAt` honoured on a polyline as on an `expr` curve. Workaround: no curve labels, and a caption naming the colours ("Blue: n = 4 ...").
+- `space` `fields`: arrows are drawn only on an n by n by n grid. For work along a space curve (l3 screen 8, $\mathbf F = (y, z, x)$ on the helix) we wanted the arrows at points of the curve, for example `fields: [{ F, along: "h", n: 12 }]`, so the learner sees $\mathbf F$ against $\mathbf r'$. Workaround: a normalised 4 by 4 by 4 grid beside the bold curve.
