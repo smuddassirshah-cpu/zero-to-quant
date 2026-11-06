@@ -125,3 +125,47 @@ Format: `N. file | JSON path | severity | problem | evidence | exact fix`. Sever
 3. `[float-artefact]` misses a signed zero: "−0.00" in a table cell (l16 `screens[6].canvas.params.rows[1][2]`) and in a model answer. Wanted: flag "−0.00" and "-0.00" in prose, table cells and models.
 4. Validator: prose that points at the canvas with "above" when the canvas renders below the prose (l16 `screens[1]` "The pipeline above"). Advisory, `[canvas-above]`.
 5. Already raised, seen again: `fresh-check.mjs --file <course set> --as exams` fails here with ENOENT (it looks for `content/exams/<id>.json`), so course review and homework sets cannot be fresh-checked at all; freshness here was by grep.
+
+## Fix pass
+
+Status per finding (35 fixed, 0 disputed, 0 deferred, finding 36 by the orchestrator). Every new number was recomputed in CPython from the course's own functions (the L3 and L4 number scripts now carry the checks).
+
+1. fixed: l11 `screens[8].explain.text` now 4, 5, 4, 5 and 5 ($\lceil 5r/23 \rceil$: cuts at r = 4, 9, 13, 18, 23; $5 \times 13/23 = 2.83$, $5 \times 18/23 = 3.91$).
+2. fixed: l11 `quiz[2].explain.text` now 2, 2, 3, 2 and 3 (cuts at r = 2, 4, 7, 9, 12).
+3. fixed, with my own basis. Both rules are valid equal-count partitions (for n = 23, $\lceil 5r/23 \rceil$ gives sizes 4, 5, 4, 5, 5 and $\lfloor 5(r-1)/23 \rfloor + 1$ gives 5, 5, 4, 5, 4; sizes differ by at most one either way), so L4's rule was not wrong in itself. The fault is drift: l16 taught a function other than the one l11 teaches, and `method="first"` breaks ties by column order where l11 averages them. I replaced l16's `quantile_returns` with l11's solution body and renamed `min_n` to `min_shares`, then reran `run_research` under it in CPython: quintiles 0.30%, 0.71%, 0.75%, 0.82%, 1.52% (old 0.22%, 0.81%, 0.75%, 0.83%, 1.52%), each step above the last (+0.41, +0.04, +0.07, +0.70 points), so the "kink" came from the swapped rule and the reader's claim stands. IC, drawdown and every Sharpe are unchanged. Updated l16 `screens[9]` prelude and `tests[4].expect`, `screens[10]` prelude `R`, `screens[3].explain.text`, homework-4 model Measurement. The solution passes all 7 tests and the starter fails all 7, in CPython.
+4. fixed: l13 `screens[6].feedback.byKey.d`. Basis: 12−1 momentum skips the last 21 days (l5), so day $t$'s return is not in it; the script's same-day run moves gross Sharpe 1.82 to 1.81.
+5. fixed: l13 `screens[6].explain.text`. Basis: the honest console line is 3.417 (gross), so a blanket ±2 rule would condemn it.
+6. fixed: l15 `quiz[1].prose`: Lo SE $= \sqrt{(1 + 0.0504^2/2)/1008}\sqrt{252} = 0.500$, so 0.8 ± 0.98 gives −0.18 to 1.78.
+7. fixed: l15 `screens[8].explain.text`: $\sqrt{3/4} = 0.866$, a 13.4% narrower interval.
+8. fixed: l16 `screens[4]` prose, console line and explain (gross 5.238%, cost 1.654%, net 3.584%).
+9. fixed: l16 `screens[6].widget.options[3].text` and homework-4 What failed (combined book turnover 6.1187, momentum alone 2.3386).
+10. fixed: homework-4 `items[4]` accept and explain (2 × 128.8 = 257.6; 36.6 + 257.6 = 294.2).
+11. fixed: homework-4 `items[5].prose` (four years: $\sqrt{252/1007} = 0.500$).
+12. fixed: l10 `screens[3].explain.text` (0.013466 rounds to 0.013).
+13. fixed: l14 `quiz[0].explain.text`.
+14. fixed, with my own basis: `range(252, 1238, 21)` gives dates 21 trading days apart, not calendar month ends (first date 20 December 2019). l9 s1 and s6, l11 s2, l12 s7 (prose and hint) and s9 reworded; l9 s1 also "walk through the dates".
+15. fixed. Basis: the spread is top bucket minus bottom bucket, both equal-weighted, so it takes no net market position; whole-sample cuts change the bucket sizes (14 to 83 shares) and dilute the spread (Sharpe 1.10 against 1.69, recomputed in the L3 script). l11 `screens[7].explain.text` and `summary.ideas[2]`.
+16. fixed: l11 `screens[4].feedback.byKey.one` ($\lceil 4.5 \times 5/10 \rceil = \lceil 2.25 \rceil = 3$).
+17. fixed: l12 `screens[1].explain.text` (dots 0.0249 and 0.0182, peak 0.0316).
+18. fixed, with my own basis: for two z-scored signals with correlation $\rho$, the optimal weights are proportional to $\Sigma^{-1} IC$, so reversal's weight is proportional to $IC_{rev} - \rho\, IC_{mom}$ and is negative iff $IC_{rev} < \rho\, IC_{mom}$. With $\rho = -0.019$ and $IC_{mom} = 0.0182$ that is below −0.0003 (0.019 × 0.0182 = 0.00035). l12 `quiz[3].explain.text` says so rather than "a negative IC" alone.
+19. fixed: l12 `screens[8].explain.text` (weekly ICs before and after the split: momentum 0.0182, 0.0222; reversal 0.0236, 0.0250). Basis: l10 shows reversal halves in two days, so "persistent" was wrong; what held is edge size across the split.
+20. fixed: review-3 `items[8].explain.text`. Basis: Grinold and Kahn's law is an arithmetic upper bound ($0.02\sqrt{20800} = 2.88$), not a backtest result.
+21. fixed: l16 `quiz[1].explain.text`. Basis: an out-of-sample question tests overfitting to the research period; look-ahead is a different fault.
+22. fixed: l14 `screens[11].prose` (1.82 / 2 = 0.91).
+23. fixed: l12 `screens[7].widget.options[3]` (text and why).
+24. fixed: l13 `screens[5].explain.text` ($0.00544 \times 0.5487 = 0.00298$, 30 bp).
+25. fixed: review-3 `items[5]` prose and option 3 (new numbers are illustrative, stated for no panel).
+26. fixed: review-4 `items[4]`: weekly reversal gross 6.37% (0.063667), turnover 34.308, break-even $0.0637/(2 \times 34.3) = 9.3$ bp, one-sided 18.6, median half spread 7.3. Script lines updated. Graded answer changed 112 to 9.3.
+27. fixed: l16 `screens[5].explain.text`.
+28. fixed: l16 `screens[6]` cell now "0.00"; homework-4 model by finding 9.
+29. fixed: l16 `screens[1].prose` "below"; node labels "Univ." and "Book" on both graph screens. Engine 1 stays an engine item.
+30. fixed: U+2212 in l10 `screens[4]` row 3 and l11 `screens[3]` rows 0, 1 and 3.
+31. fixed: l9 `screens[1]` and `screens[6]` explanations state 17 and 1.57.
+32. fixed: l9 `quiz[3]`, l16 `screens[5]` and `screens[8]`, review-4 `items[1]` option texts as specified.
+33. fixed: all 22 listed strings in L3 and L4 files rewritten. `voice-scan.py 35` on L3 and L4 files reports 0 sentences over 35 words and 0 explanations over three sentences. The scan's 9 remaining hits are L1 and L2 files (homework-1, homework-2, l2, l4, l5, l8), outside this pass. One typo fixed in passing (l12 `screens[4].widget.how`: "The last checks").
+34. fixed: review-4 `items[7]` options (weekly reversal gross 2.3511, net −5.6481, break-even 9.3, median half spread 7.3, checked in the L4 script).
+35. fixed: homework-3 `items[1]`: $7/\sqrt{10} = 2.2136$, answer 2.21, wrong 0.7 and 7. Script lines updated. Graded answer changed 1.96 to 2.21.
+36. fixed by orchestrator, aab3f23.
+
+Gates: `alpha-L3-numbers.py` exit 0 (264 of 264); `alpha-L4-numbers.py` exit 0 (266 of 266). Validator 0 errors; none of `[shuffled-position]`, `[O2-explain-answer]` remain on L3 or L4. Playthrough results below.
+Playthrough with `--local-cdn`, desktop and `--mobile`: l9 to l16, review-3, review-4, homework-3, homework-4, all 24 runs exit 0, no failures, no reruns.

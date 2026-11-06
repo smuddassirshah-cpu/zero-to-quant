@@ -218,8 +218,8 @@ E('review', 'items[8].widget.wrong', r(0.02 * math.sqrt(400), 2)); E('review', '
 # ---- homework-3 ----------------------------------------------------------------------------------------------
 E('homework', 'items[0].widget.answer', r(0.025 / 0.07 * 6, 2))
 E('homework', 'items[0].widget.wrong', r(0.025 / 0.07 * math.sqrt(12), 2)); E('homework', 'items[0].widget.wrong', r(0.025 / 0.07 * 36, 2))
-E('homework', 'items[1].widget.answer', r(9 / math.sqrt(21), 2)); E('homework', 'items[1].widget.wrong', r(9 / 21, 2))
-E('homework', 'items[1].explain.text', round(1000 / 21))
+E('homework', 'items[1].widget.answer', r(7 / math.sqrt(10), 2)); E('homework', 'items[1].widget.wrong', r(7 / 10, 2))
+E('homework', 'items[1].explain.text', round(1000 / 10)); E('homework', 'items[1].explain.text', r(math.sqrt(10), 2))
 E('homework', 'items[2].widget.answer', r(0.025 / math.sqrt(0.75), 4)); E('homework', 'items[2].widget.wrong', r(0.025 / math.sqrt(0.5), 4))
 E('homework', 'items[3].widget.answer', r(0.5 ** (1 / 3), 2)); E('homework', 'items[3].widget.wrong', r(1 - 1 / 6, 2))
 E('homework', 'items[5].explain.text', r(g['newey_west_t'](dic, 20), 2))

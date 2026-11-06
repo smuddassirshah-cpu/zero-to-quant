@@ -89,8 +89,8 @@ E('l13', 'screens[5].prose', r(W.loc['2021-04-30', 'S010'], 5)); E('l13', 'scree
 lv._rec(s010.index[-1] == pd.Timestamp('2021-05-19'), 'claim: S010 delists on 19 May 2021', str(s010.index[-1].date()))
 E('l13', 'screens[5].widget.answer', r(-0.01135 * -0.6182 * 1e4, 1))
 s181 = ret['S181'].dropna(); w181 = W.loc[dates[dates < s181.index[-1]][-1], 'S181']
-E('l13', 'screens[5].explain.text', r(w181, 5)); E('l13', 'screens[5].explain.text', r(100 * s181.iloc[-1], 1))
-E('l13', 'screens[5].explain.text', r(w181 * s181.iloc[-1] * 1e4, 0))
+E('l13', 'screens[5].explain.text', r(w181, 5)); E('l13', 'screens[5].explain.text', r(-100 * s181.iloc[-1], 1))
+E('l13', 'screens[5].explain.text', r(-w181 * s181.iloc[-1] * 1e4, 0))
 Wr = g['long_short_weights'](g['reversal_5d'](ret).where(um)); gr = g['portfolio_returns'](Wr, ret, 'D'); rs = gr.index < idx[cut]
 bug = (Wr * ret.fillna(0)).sum(axis=1).loc[gr.index]
 E('l13', 'screens[6].canvas.params.lines', r(g['sharpe'](gr[rs], 252), 3)); E('l13', 'screens[6].canvas.params.lines', r(g['sharpe'](bug[rs], 252), 2))
@@ -238,7 +238,19 @@ E('review', 'items[1].prose', r(R['sharpe_gross'], 2)); E('review', 'items[1].pr
 E('review', 'items[2].widget.answer', r(0.5 * (0.15 + 0.15 + 0.20 + 0.20), 2))
 E('review', 'items[3].widget.answer', round(2e6 * (0.015 * math.sqrt(0.04) + 3e-4)))
 E('review', 'items[3].widget.wrong', round(2e6 * 3e-4)); E('review', 'items[3].widget.wrong', round(2e6 * (0.015 * 0.04 + 3e-4)))
-E('review', 'items[4].widget.answer', round(0.0524 / (2 * 2.34) * 1e4)); E('review', 'items[4].widget.wrong', round(0.0524 / 2.34 * 1e4))
+# weekly reversal book (finding 26): gross return a year, turnover, break-even, from the course's own functions
+RW = rr(P, {'signal': 'reversal', 'rebalance': 'W'})
+sigw = g['reversal_5d'](ret).where(um); Ww = g['long_short_weights'](sigw)
+grossw = g['portfolio_returns'](Ww, ret, 'W'); gw = grossw[grossw.index < idx[cut]].mean() * 252
+E('review', 'items[4].prose', r(gw * 100, 2)); E('review', 'items[4].prose', r(RW['turnover'], 1))
+be = gw / (2 * RW['turnover']) * 1e4
+E('review', 'items[4].widget.answer', r(be, 1)); E('review', 'items[4].widget.accept', r(be, 1))
+E('review', 'items[4].widget.wrong', r(gw / RW['turnover'] * 1e4, 1)); E('review', 'items[4].explain.text', r(2 * RW['turnover'], 1))
+E('review', 'items[4].explain.text', r(be, 1)); E('review', 'items[4].explain.text', r(float(np.median(P['half_spread_bp'])), 1))
+lv._rec(abs(be - RW['break_even_bp']) < 0.05, 'review-4 items[4]: break-even agrees with run_research', '')
+# review-4 items[7] options[0]: weekly reversal gross and net Sharpe at GBP 100m
+E('review', 'items[7].widget.options[0].text', r(RW['sharpe_gross'], 2)); E('review', 'items[7].widget.options[0].text', r(RW['sharpe_net'], 2))
+E('review', 'items[7].widget.options[0].text', r(RW['break_even_bp'], 1)); E('review', 'items[7].widget.options[0].text', r(float(np.median(P['half_spread_bp'])), 1))
 E('review', 'items[5].widget.answer', r(lo(1.0, 504, 252)[0], 2)); E('review', 'items[5].widget.accept', r(lo(1.0, 504, 252)[2], 3))
 E('review', 'items[5].explain.text', r(lo(1.0, 504, 252)[1], 2)); E('review', 'items[5].widget.wrong', r(1 - 1.96 * lo(1.0, 504, 252)[2] / math.sqrt(252), 2))
 lv._rec('about four years' in lv.text('review', 'items[5].explain.text') and math.ceil(1.96 ** 2) == 4, 'claim: a Sharpe of 1 clears zero after about four years', '')
@@ -248,7 +260,7 @@ E('review', 'items[6].widget.answer', 4 * 3 + 2); E('review', 'items[6].widget.w
 E('homework', 'items[3].widget.answer', r(0.058 * 100, 1)); E('homework', 'items[3].widget.wrong', r(0.058 * 50, 1))
 E('homework', 'items[4].widget.answer', r(36.6 + 2 * 128.8, 1)); E('homework', 'items[4].widget.wrong', r(2 * 165.4, 1))
 E('homework', 'items[4].prose', r(spread_bp, 1)); E('homework', 'items[4].prose', r(R['cost_bp'] - spread_bp, 1))
-E('homework', 'items[4].widget.accept', r(2 * 128.8, 1))   # 2 x the stated 128.8; the text says 257.5
+E('homework', 'items[4].widget.accept', r(2 * 128.8, 1))   # 2 x the stated 128.8 = 257.6
 lv._rec(abs(36.6 + 4 * 128.8 - 551.7) < 0.6, 'homework-4 items[4] wrong linear within its tolerance of 36.6 + 4 x 128.8', '')
 E('homework', 'items[5].widget.answer', r(0.5 * ((1 - gam) * 1.2816 + gam * 1.7892), 2))
 E('homework', 'items[5].widget.wrong', r((1 - gam) * 1.2816 + gam * 1.7892, 2))

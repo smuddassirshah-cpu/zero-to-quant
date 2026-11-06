@@ -55,27 +55,27 @@
       "skills": [
         "al-ic"
       ],
-      "prose": "A note reports a t statistic of 9 for a mean IC measured on 1,000 consecutive days against the next 21-day return.",
-      "question": "Roughly what t statistic would dates 21 days apart give? Give 2 decimal places.",
+      "prose": "A note reports a t statistic of 7 for a mean IC measured on 1,000 consecutive days against the next 10-day return.",
+      "question": "Roughly what t statistic would dates 10 days apart give? Give 2 decimal places.",
       "widget": {
         "kind": "numeric",
-        "answer": 1.96,
+        "answer": 2.21,
         "tol": {
           "abs": 0.05
         },
-        "accept": "About 1.96: $9/\\sqrt{21}$.",
+        "accept": "About 2.21: $7/\\sqrt{10}$.",
         "placeholder": "a decimal",
         "wrong": [
           {
             "id": "divide",
-            "value": 0.43,
+            "value": 0.7,
             "tol": {
               "abs": 0.02
             }
           },
           {
             "id": "same",
-            "value": 9,
+            "value": 7,
             "tol": {
               "abs": 0.01
             }
@@ -83,15 +83,15 @@
         ]
       },
       "feedback": {
-        "correct": "$9/\\sqrt{21} = 1.96$.",
+        "correct": "$7/\\sqrt{10} = 2.21$.",
         "generic": "Not quite. Overlap inflates the t statistic by about the square root of the horizon.",
         "byKey": {
-          "divide": "You divided by 21. The t statistic grows with $\\sqrt n$, so the inflation is $\\sqrt{21}$.",
-          "same": "Daily dates against a 21-day return overlap heavily; they are not 1,000 independent draws."
+          "divide": "You divided by 10. The t statistic grows with $\\sqrt n$, so the inflation is $\\sqrt{10}$.",
+          "same": "Daily dates against a 10-day return overlap heavily; they are not 1,000 independent draws."
         }
       },
       "explain": {
-        "text": "About 48 independent dates sit inside 1,000 overlapping ones, so the t statistic is inflated by $\\sqrt{21} = 4.58$. $9/4.58 = 1.96$: borderline. The Newey-West t in this homework measures the same correction directly."
+        "text": "About 100 independent dates sit inside 1,000 overlapping ones, so the t statistic is inflated by $\\sqrt{10} = 3.16$. $7/3.16 = 2.21$: worth a look, not proof. The Newey-West t in this homework measures the same correction directly."
       }
     },
     {
@@ -297,7 +297,7 @@
             "compare": "isclose"
           }
         ],
-        "how": "Check runs 5 hidden tests: a five-date series with 0 and 1 lags, reversal's daily ICs against 5-day returns on a small seeded panel with 0 and 4 lags, and momentum's 1,019 daily ICs against 21-day returns on the full panel with 20 lags (built by `daily_momentum_ics()`, which takes a few seconds). Results match statsmodels' HAC t statistic with `use_correction=False`, to 4 places. The first run loads NumPy and pandas, which takes about 15 s.",
+        "how": "Check runs 5 hidden tests: a five-date series with 0 and 1 lags, and reversal's daily ICs against 5-day returns on a small seeded panel with 0 and 4 lags. The last uses momentum's 1,019 daily ICs against 21-day returns on the full panel with 20 lags (built by `daily_momentum_ics()`, which takes a few seconds). Results match statsmodels' HAC t statistic with `use_correction=False`, to 4 places. The first run loads NumPy and pandas, which takes about 15 s.",
         "budget": 25000
       },
       "feedback": {
@@ -357,7 +357,7 @@
             "compare": "equal"
           }
         ],
-        "how": "Check runs 5 hidden tests on two small seeded panels (30 shares and 300 days with seed 5; 40 shares and 400 days with seed 7): the whole dict for each, its keys, the type of a date count (a plain `int`), and deciles. Dicts must match exactly. The first run loads NumPy and pandas, which takes about 15 s.",
+        "how": "Check runs 5 hidden tests on two small seeded panels: 30 shares and 300 days with seed 5, and 40 shares and 400 days with seed 7. They check the whole dict for each, its keys, the type of a date count (a plain `int`), and deciles. Dicts must match exactly. The first run loads NumPy and pandas, which takes about 15 s.",
         "budget": 15000
       },
       "feedback": {
@@ -378,7 +378,7 @@
       "question": "Review a colleague's signal report.",
       "widget": {
         "kind": "longform",
-        "prompt": "A colleague's report on a new signal says: mean daily IC 0.01 against 21-day forward returns, with a t statistic of 9 on 1,000 overlapping days; a quintile chart that is not monotone; and a combined IC of 0.035 with momentum, using weights chosen on the same 1,000 days. Explain what each number really says, list the corrected numbers to compute, and write an honest one-line verdict.",
+        "prompt": "A colleague's report on a new signal says three things. The mean daily IC is 0.01 against 21-day forward returns, with a t statistic of 9 on 1,000 overlapping days. The quintile chart is not monotone. The combined IC with momentum is 0.035, using weights chosen on the same 1,000 days. Explain what each number really says, list the corrected numbers to compute, and write an honest one-line verdict.",
         "model": "**What each number really says.**\n\n- *Mean daily IC 0.01 against 21-day returns.* A small IC, measured on every day. On its own it is not alarming: 0.01 across 200 shares rebalanced monthly gives at most $0.01\\sqrt{2400} = 0.49$ by the fundamental law, an upper bound before costs.\n- *t = 9 on 1,000 overlapping days.* Neighbouring dates share 20 of their 21 return days, so the ICs are near copies. The 1,000 dates are worth about $1000/21 \\approx 48$ independent ones, and the t statistic is inflated about $\\sqrt{21} = 4.6$ times: an honest t is near $9/4.58 = 1.96$, borderline rather than overwhelming.\n- *Non-monotone quintile chart.* A missing staircase is not by itself a failure; the question is whether the ends separate. It must be reported with the Q5 − Q1 spread, its sd, Sharpe and hit rate, and the monotone flag set to False. If even the ends do not separate, the IC is not turning into money.\n- *Combined IC with in-sample weights.* The weights were chosen and scored on the same data, so the number includes the luck of the choice. On the course's panel a monthly mix chosen this way fell from 0.0404 to 0.0063 after the split.\n\n**Corrected numbers to compute.**\n\n1. The IC on dates 21 days apart: mean, sd, IR with $\\sqrt{12}$, t with $\\sqrt n$, hit rate; or the daily ICs with a Newey-West t using 20 lags.\n2. The IC at 1, 5, 21 and 63 days, each on its own non-overlapping dates, and $IC_h/\\sqrt h$ to see whether the edge persists or decays.\n3. The quintile study with cut points from each date's shares: bucket means, spread mean, sd, Sharpe before costs, hit rate and the monotone flag; deciles as a check.\n4. The correlation of the signals being combined, and the combination's weight chosen on a research period, with its IC reported on the dates after.\n5. The number of variants tried so far, for the deflation in level 4.\n\n**Verdict.** Not yet evidence: on independent dates the t is about 2, the quintiles do not rise steadily, and the combination has not been tested out of sample.",
         "rubric": [
           {
