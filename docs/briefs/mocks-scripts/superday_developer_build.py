@@ -53,69 +53,64 @@ def num(text):
 
 
 # ======================================================================== paper 1: coding round one (Python)
-HOPS_SOL = '''def cheapest_within(n, routes, src, dst, k):
+ARR_SOL = """def earliest_arrival(n, runs, src, dst, t0):
     INF = float("inf")
     best = [INF] * n
-    best[src] = 0
-    for _ in range(min(k, n - 1)):
-        nxt = best[:]
-        changed = False
-        for a, b, fee in routes:
-            if best[a] + fee < nxt[b]:
-                nxt[b] = best[a] + fee
-                changed = True
-        best = nxt
-        if not changed:
-            break
+    best[src] = t0
+    for a, b, depart, arrive in sorted(runs, key=lambda run: run[2]):
+        if best[a] <= depart and arrive < best[b]:
+            best[b] = arrive
     return -1 if best[dst] == INF else best[dst]
-'''
-HOPS_START = ('def cheapest_within(n, routes, src, dst, k):\n'
-              '    """Smallest total fee from src to dst in at most k transfers, or -1."""\n    ...\n')
-BASE4 = '[[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]]'
-TRAP = '[[0, 1, 1], [1, 2, 1], [0, 2, 5], [2, 3, 1]]'
-RAND = 'import random; R = random.Random(11); routes = [[R.randrange(3000), R.randrange(3000), R.randint(1, 500)] for _ in range(30000)]'
-CHAIN = 'routes = [[i, i + 1, 1] for i in range(599)] + [[0, 599, 1000]]'
-hops_cases = [
-    ('', f'cheapest_within(4, {BASE4}, 0, 3, 3)'),
-    ('', f'cheapest_within(4, {BASE4}, 0, 3, 2)'),
-    ('', f'cheapest_within(4, {BASE4}, 0, 3, 1)'),
-    ('', f'cheapest_within(4, {BASE4}, 0, 3, 0)'),
-    ('', f'cheapest_within(4, {BASE4}, 2, 2, 0)'),
-    ('', f'cheapest_within(4, {TRAP}, 0, 3, 2)'),
-    ('', f'cheapest_within(4, {TRAP}, 0, 3, 3)'),
-    ('', 'cheapest_within(5, [[0, 1, 4], [1, 0, 1], [3, 4, 2]], 0, 4, 10)'),
-    ('', 'cheapest_within(3, [[0, 1, 2], [1, 0, 2], [1, 2, 7]], 0, 2, 10 ** 9)'),
-    (RAND, 'cheapest_within(3000, routes, 0, 2999, 6)'),
-    (RAND, 'cheapest_within(3000, routes, 0, 2999, 10 ** 9)'),
-    (CHAIN, 'cheapest_within(600, routes, 0, 599, 599)'),
-    (CHAIN, 'cheapest_within(600, routes, 0, 599, 598)'),
+"""
+ARR_START = ('def earliest_arrival(n, runs, src, dst, t0):\n'
+             '    """Earliest time at dst, starting at src at time t0, or -1."""\n    ...\n')
+BASE = '[[0, 1, 10, 20], [1, 2, 25, 40], [1, 2, 15, 30], [2, 3, 40, 50], [0, 3, 5, 100]]'
+RAND = ('import random; R = random.Random(11); '
+        'runs = [[a, b, d, d + R.randint(1, 300)] for a, b, d in ((R.randrange(3000), R.randrange(3000), R.randrange(10000)) for _ in range(30000))]')
+CHAIN = 'runs = [[i, i + 1, 10 * i, 10 * i + 10] for i in range(599)] + [[0, 599, 0, 9000]]'
+BROKEN = 'runs = [[i, i + 1, 10 * i - (i == 300), 10 * i + 10] for i in range(599)] + [[0, 599, 0, 9000]]'
+arr_cases = [
+    ('', f'earliest_arrival(4, {BASE}, 0, 3, 0)'),
+    ('', f'earliest_arrival(4, {BASE}, 0, 3, 6)'),
+    ('', f'earliest_arrival(4, {BASE}, 0, 3, 11)'),
+    ('', f'earliest_arrival(4, {BASE}, 3, 0, 0)'),
+    ('', 'earliest_arrival(3, [[1, 1, 1, 5], [0, 2, 2, 5], [2, 0, 0, 2]], 2, 0, 0)'),
+    ('', 'earliest_arrival(4, [[0, 1, 0, 5], [1, 2, 3, 4], [0, 2, 0, 50], [1, 2, 10, 20]], 0, 2, 0)'),
+    ('', 'earliest_arrival(3, [[0, 1, 0, 4], [0, 1, 4, 8], [1, 0, 1, 6]], 0, 1, 3)'),
+    ('', 'earliest_arrival(3, [[0, 2, 15, 23], [2, 2, 7, 15], [1, 0, 10, 14]], 1, 2, 0)'),
+    ('', 'earliest_arrival(3, [[2, 1, 12, 19], [2, 1, 18, 21], [2, 1, 12, 15]], 2, 1, 0)'),
+    ('', 'earliest_arrival(3, [[0, 1, 2, 9]], 1, 1, 7)'),
+    (RAND, 'earliest_arrival(3000, runs, 0, 2999, 0)'),
+    (RAND, 'earliest_arrival(3000, runs, 0, 2999, 1500)'),
+    (CHAIN, 'earliest_arrival(600, runs, 0, 599, 0)'),
+    (BROKEN, 'earliest_arrival(600, runs, 0, 599, 0)'),
 ]
-hns = {}
-exec(HOPS_SOL, hns)
-hops_tests = []
-for setup, call in hops_cases:
-    ns = dict(hns)
+ans = {}
+exec(ARR_SOL, ans)
+arr_tests = []
+for setup, call in arr_cases:
+    ns = dict(ans)
     if setup:
         exec(setup, ns)
     t = {'call': call, 'expect': repr(eval(call, ns)), 'compare': 'equal'}
     if setup:
         t = {'setup': setup, **t}
-    hops_tests.append(t)
-assert [t['expect'] for t in hops_tests[:9]] == ['300', '350', '500', '-1', '0', '6', '3', '-1', '9'], [t['expect'] for t in hops_tests]
-assert hops_tests[11]['expect'] == '599' and hops_tests[12]['expect'] == '1000'
-A1 = item('a1-cheapest-within-hops', 4, ['gd-paths', 'ci-timed'], ['hop-limited-path'], 1500, 'The cheapest route in k transfers',
-          prose='Cash moves between accounts numbered 0 to `n - 1`. Each entry of `routes` is a one-way transfer `[a, b, fee]`, with a whole-number fee in pence. '
-          'Fees are at least 1.',
-          question='Write `cheapest_within(n, routes, src, dst, k)`. It returns the smallest total fee from `src` to `dst` in at most `k` transfers, else -1. '
-          '`n` reaches 3,000 and `routes` 30,000, and `k` may be far larger than `n`.',
-          widget={'kind': 'code', 'language': 'python', 'starter': HOPS_START, 'solution': HOPS_SOL,
-           'examples': [hops_tests[0], hops_tests[5]], 'tests': hops_tests,
-           'how': f'Submit runs {len(hops_tests)} hidden tests, compared exactly. Two use 30,000 random routes.'},
-          feedback=fb('Bellman-Ford for at most $k$ rounds, each round from the last round’s costs.',
-             'Keep the cheapest cost to each account in at most $j$ transfers. Build round $j + 1$ from round $j$ only.'),
-          explain='Round $j$ of Bellman-Ford holds the cheapest cost in at most $j$ transfers, if it reads only round $j - 1$. '
-          'Plain Dijkstra settles account 2 at cost 2 on the trap test, a route with too many transfers. '
-          'Capping the rounds at $n - 1$ and stopping when nothing changes keeps a huge $k$ fast.')
+    arr_tests.append(t)
+assert [t['expect'] for t in arr_tests] == ['50', '50', '-1', '-1', '2', '20', '8', '23', '15', '7', '7229', '-1', '5990', '9000'], [t['expect'] for t in arr_tests]
+A1 = item('a1-earliest-arrival', 4, ['gd-paths', 'ci-timed'], ['scheduled-arrival'], 1500, 'The earliest arrival',
+          prose='A market-data relay joins sites numbered 0 to `n - 1`. Each entry of `runs` is a one-way run `[a, b, depart, arrive]`. '
+          'It leaves site `a` at time `depart` and reaches site `b` at time `arrive`, which is later. Times are whole numbers.',
+          question='Write `earliest_arrival(n, runs, src, dst, t0)`. A message starts at `src` at time `t0` and may wait at any site. '
+          'It boards a run only if it is at that run’s site by its `depart`. Return the earliest time it can be at `dst`, else -1. '
+          '`n` reaches 3,000 and `runs` 30,000.',
+          widget={'kind': 'code', 'language': 'python', 'starter': ARR_START, 'solution': ARR_SOL,
+           'examples': [arr_tests[0], arr_tests[5]], 'tests': arr_tests,
+           'how': f'Submit runs {len(arr_tests)} hidden tests, compared exactly. Two use 30,000 random runs. Each test has 5 seconds.'},
+          feedback=fb('Take the runs in order of departure, and board a run if you are already at its site.',
+             'Sort the runs by `depart`. Keep the earliest time at each site, and update it from each run you can board.'),
+          explain='A run cannot help a run that left earlier, so sorting by `depart` settles every site in time. '
+          'A message that arrives exactly at `depart` still boards. '
+          'Plain Dijkstra on run lengths ignores departure times and gets 6 on the trap test, not 20.')
 
 # ======================================================================== paper 2: coding round two (C++ with a requirement added)
 STORE1 = '''#include <iterator>
@@ -161,16 +156,16 @@ public:
 '''
 STORE_START2 = STORE1.replace('''    int size() const { return static_cast<int>(ticks_.size()); }
 ''', '''    int size() const { return static_cast<int>(ticks_.size()); }
-    // -1.0 if the latest tick at or before t is more than max_age old.
+    // That tick's price, or -1.0 if none or it is more than max_age old.
     double asof_fresh(long long t, long long max_age) const { (void)t; (void)max_age; return -1.0; }
     // Drop every tick strictly before t.
     void erase_before(long long t) { (void)t; }
 ''')
 TWO = 'PriceStore s; s.insert(10, 101.5); s.insert(5, 100.0);'
-BIG = ('PriceStore s; for (long long i = 0; i < 100000; ++i) { long long t = (i * 7919) % 100000; s.insert(t * 10, 100.0 + t % 97); } '
-       'double total = 0; for (long long q = 5; q < 1000000; q += 10) total += s.asof(q);')
+BIG = ('PriceStore s; for (long long i = 0; i < 200000; ++i) { long long t = (i * 7919) % 200000; s.insert(t * 10, 100.0 + t % 97); } '
+       'double total = 0; for (long long q = 5; q < 2000000; q += 10) total += s.asof(q);')
 FRESH = 'PriceStore s; s.insert(100, 50.0); s.insert(130, 51.0);'
-WINDOW = 'PriceStore s; for (long long t = 0; t < 50000; ++t) { s.insert(t, t * 0.5); if (t % 1000 == 999) s.erase_before(t - 4999); }'
+WINDOW = 'PriceStore s; for (long long t = 0; t < 50000; ++t) { s.insert(t, t * 0.5); if (t % 1000 == 999) s.erase_before(t - 999); }'
 store_cases1 = [(TWO, 's.asof(7)'), (TWO, 's.asof(10)'), (TWO, 's.asof(4)'), (TWO, 's.asof(1000)'),
                 ('PriceStore s; s.insert(3, 1.0); s.insert(3, 2.0);', 's.asof(3) + 10 * s.size()'),
                 ('PriceStore s;', 's.asof(0)'), (BIG, 'total')]
@@ -200,13 +195,14 @@ B1 = parts_item(
           '`size()` counts the stored ticks.',
           {'kind': 'code', 'language': 'cpp', 'starter': STORE_START1, 'solution': STORE1,
            'examples': [store_tests1[0], store_tests1[2]], 'tests': store_tests1,
-           'how': f'Submit runs {len(store_tests1)} hidden tests. One inserts 100,000 ticks out of order and makes 100,000 queries.'},
+           'how': f'Submit runs {len(store_tests1)} hidden tests. One inserts 200,000 ticks out of order and makes 200,000 queries.'},
           fb('An ordered map, and the tick before `upper_bound(t)`.',
              'Keep the ticks sorted by time, and search for the first tick after `t`.'),
           'A `std::map` keeps the ticks sorted, so each insert and each query costs $O(\\log n)$. '
           'The tick just before `upper_bound(t)` is the latest one at or before `t`. '
-          'A scan of every tick per query takes about $10^{10}$ steps on the large test.'),
+          'A scan of every tick per query takes about $4 \\times 10^{10}$ steps on the large test.'),
      part('The interviewer adds two requirements. `asof_fresh(t, max_age)` returns -1.0 when the latest tick at or before `t` is more than `max_age` older than `t`. '
+          'Otherwise it returns that tick\u2019s price, as `asof` does, or -1.0 if there is none. '
           '`erase_before(t)` drops every tick strictly before `t`, so memory stays bounded.',
           {'kind': 'code', 'language': 'cpp', 'starter': STORE_START2, 'solution': STORE2,
            'examples': [store_tests2[0], store_tests2[1]], 'tests': store_tests2,
@@ -217,7 +213,7 @@ B1 = parts_item(
           '`erase(begin(), lower_bound(t))` removes exactly the ticks before `t`, keeping a tick at `t`. '
           'Each erased tick costs $O(1)$ amortised, so a sliding window stays cheap.'),
      part('Why does `asof` step back from `upper_bound(t)` rather than from `lower_bound(t)`?',
-          choice(rng, [('`upper_bound` skips a tick at exactly `t`, so the step back lands on it', None),
+          choice(rng, [('`upper_bound` passes a tick at `t`; one step back finds it', None),
                        ('`lower_bound` would give the same answer for every `t`',
                         'You expected no difference. Stepping back from `lower_bound` misses a tick at exactly `t`.'),
                        ('`upper_bound` is faster than `lower_bound` on a `std::map`',
@@ -305,78 +301,97 @@ K5 = item('k5-template-deduction', 3, ['cp-classes'], ['template-deduction'], 18
           'Naming `T` explicitly turns off deduction and lets the whole numbers convert.',
           prose=LARGER)
 
-POOL_SOL = '''#include <vector>
+POOL_SOL = """#include <vector>
 
 class SlotPool {
 public:
-    explicit SlotPool(int capacity) : free_(capacity), used_(capacity, false), top_(capacity) {
+    explicit SlotPool(int capacity)
+        : cap_(capacity), free_(capacity), gen_(capacity, 0), used_(capacity, 0), top_(capacity) {
         for (int i = 0; i < capacity; ++i) free_[i] = capacity - 1 - i;
     }
-    int acquire() {
+    long long acquire() {
         if (top_ == 0) return -1;
         const int s = free_[--top_];
-        used_[s] = true;
+        used_[s] = 1;
         ++count_;
-        return s;
+        return s + static_cast<long long>(cap_) * gen_[s];
     }
-    void release(int slot) {
-        if (slot < 0 || slot >= static_cast<int>(used_.size()) || !used_[slot]) return;
-        used_[slot] = false;
-        free_[top_++] = slot;
+    void release(long long handle) {
+        const int s = live_slot(handle);
+        if (s < 0) return;
+        used_[s] = 0;
+        ++gen_[s];
+        free_[top_++] = s;
         --count_;
     }
+    bool valid(long long handle) const { return live_slot(handle) >= 0; }
     int in_use() const { return count_; }
 
 private:
-    std::vector<int> free_;
-    std::vector<bool> used_;
+    int live_slot(long long handle) const {
+        if (handle < 0 || cap_ == 0) return -1;
+        const int s = static_cast<int>(handle % cap_);
+        const long long g = handle / cap_;
+        return used_[s] && gen_[s] == g ? s : -1;
+    }
+    int cap_;
+    std::vector<int> free_, gen_;
+    std::vector<char> used_;
     int top_ = 0;
     int count_ = 0;
 };
-'''
-POOL_START = '''#include <vector>
+"""
+POOL_START = """#include <vector>
 
-// A fixed pool of slots 0 to capacity - 1, handed out by index.
+// A fixed pool of slots 0 to capacity - 1. A handle is slot + capacity * generation.
 // No call after the constructor may allocate.
 class SlotPool {
 public:
     explicit SlotPool(int capacity) { (void)capacity; }
-    // A free slot, or -1 when every slot is in use.
-    int acquire() { return -1; }
-    // Free a slot. A free or out-of-range slot is ignored.
-    void release(int slot) { (void)slot; }
+    // A handle for a free slot, or -1 when every slot is in use.
+    long long acquire() { return -1; }
+    // Free the slot if handle is its current handle. Ignore any other.
+    void release(long long handle) { (void)handle; }
+    // True if handle is a current handle of a slot in use.
+    bool valid(long long handle) const { (void)handle; return false; }
     // The number of slots in use.
     int in_use() const { return 0; }
 };
-'''
+"""
 pool_cases = [
-    ('SlotPool p(3); int a = p.acquire(); int b = p.acquire(); int c = p.acquire();', 'a * 100 + b * 10 + c'),
+    ('SlotPool p(3); long long a = p.acquire(); long long b = p.acquire(); long long c = p.acquire();', 'a * 100 + b * 10 + c'),
     ('SlotPool p(2); p.acquire(); p.acquire();', 'p.acquire()'),
-    ('SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(2); p.release(0);', 'p.acquire()'),
-    ('SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(2); p.release(0); int x = p.acquire(); int y = p.acquire();', 'x * 10 + y'),
-    ('SlotPool p(5); p.acquire(); p.acquire(); p.release(1); int x = p.acquire(); int y = p.acquire();', 'x * 10 + y'),
-    ('SlotPool p(3); int a = p.acquire(); p.release(a); p.release(a); p.release(7); p.release(-1);', 'p.in_use()'),
-    ('SlotPool p(3); int a = p.acquire(); p.release(a); p.release(a); int x = p.acquire(); int y = p.acquire();', 'x * 10 + y'),
-    ('SlotPool p(10); for (int i = 0; i < 7; ++i) p.acquire(); p.release(3); p.release(5);', 'p.in_use()'),
-    ('SlotPool p(0);', 'p.acquire()'),
-    ('SlotPool p(1000); reset_alloc_count(); for (int r = 0; r < 100000; ++r) { int s = p.acquire(); int t = p.acquire(); p.release(s); p.release(t); }', 'alloc_count()'),
+    ('SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(0); p.release(2); long long x = p.acquire(); long long y = p.acquire();', '(x % 4) * 10 + y % 4'),
+    ('SlotPool p(4); long long a = p.acquire(); p.release(a); long long b = p.acquire();', 'b'),
+    ('SlotPool p(3); long long a = p.acquire(); p.release(a); long long b = p.acquire(); p.release(a);', 'p.in_use() * 10 + (p.valid(b) ? 1 : 0)'),
+    ('SlotPool p(3); long long a = p.acquire(); long long b = p.acquire(); p.release(a);', '(p.valid(a) ? 100 : 0) + (p.valid(b) ? 10 : 0) + (p.valid(7) ? 1 : 0)'),
+    ('SlotPool p(3); p.acquire(); p.release(-1); p.release(7); p.release(2);', 'p.in_use()'),
+    ('SlotPool p(3); long long a = p.acquire(); p.release(a); p.release(a); long long x = p.acquire(); long long y = p.acquire();', 'x * 100 + y'),
+    ('SlotPool p(10); long long h[7]; for (int i = 0; i < 7; ++i) h[i] = p.acquire(); p.release(h[3]); p.release(h[5]);', 'p.in_use()'),
+    ('SlotPool p(0);', 'p.acquire() * 10 + (p.valid(0) ? 1 : 0)'),
+    ('SlotPool p(3); long long h = 0; for (int r = 0; r < 1000; ++r) { h = p.acquire(); p.release(h); } h = p.acquire();', 'h'),
+    ('SlotPool p(1000); reset_alloc_count(); for (int r = 0; r < 100000; ++r) { long long s = p.acquire(); long long t = p.acquire(); p.release(s); p.release(t); }', 'alloc_count()'),
     ('SlotPool p(100000); long long sum = 0; for (int i = 0; i < 100000; ++i) sum += p.acquire(); '
-     'for (int i = 0; i < 100000; i += 2) p.release(i); for (int i = 0; i < 50000; ++i) sum += p.acquire();', 'sum'),
+     'for (long long i = 0; i < 100000; i += 2) p.release(i); for (int i = 0; i < 50000; ++i) sum += p.acquire();', 'sum'),
 ]
 pool_tests = cpp_tests(POOL_SOL, pool_cases, alloc=True)
-assert [t['expect'] for t in pool_tests] == [12, -1, 0, 2, 12, 0, 1, 5, -1, 0, 7499900000], [t['expect'] for t in pool_tests]
-K6 = item('k6-slot-pool', 4, ['cp-memory', 'sy-latency'], ['slot-pool'], 1200, 'A pool that never allocates',
-          prose='A gateway keeps open orders in a fixed table and hands out rows by index. The hot path may not touch the heap.',
-          question='Write `SlotPool` in C++. `acquire()` returns the slot released most recently, else the lowest slot never used, else -1. '
-          '`release(slot)` frees a slot, ignoring a free or out-of-range one. `in_use()` counts slots in use. Nothing after the constructor may allocate.',
+assert [t['expect'] for t in pool_tests] == [12, -1, 20, 4, 11, 10, 1, 301, 5, -10, 3000, 0, 12499900000], [t['expect'] for t in pool_tests]
+K6 = item('k6-slot-pool', 4, ['cp-memory', 'sy-latency'], ['slot-pool'], 1080, 'Handles that go stale',
+          prose='A gateway keeps open orders in a fixed table and hands out rows by index. A late message must never reach a row that now holds another order. '
+          'The hot path may not touch the heap.',
+          question='Write `SlotPool` in C++. `acquire()` returns a handle, `slot + capacity * generation`, or -1 if every slot is in use. '
+          'It picks the free slot released most recently, else the lowest slot never used. '
+          'A slot’s generation starts at 0 and rises by 1 at each release. '
+          '`release(h)` frees the slot if `h` is its current handle, and ignores any other. '
+          '`valid(h)` says whether `h` is a current handle. `in_use()` counts slots in use. Nothing after the constructor may allocate.',
           widget={'kind': 'code', 'language': 'cpp', 'allocCheck': True, 'starter': POOL_START, 'solution': POOL_SOL,
-           'examples': [pool_tests[0], pool_tests[3]], 'tests': pool_tests,
+           'examples': [pool_tests[0], pool_tests[4]], 'tests': pool_tests,
            'how': f'Submit runs {len(pool_tests)} hidden tests. One counts calls of `operator new` after its setup and expects 0.'},
-          feedback=fb('A stack of free slots, filled in the constructor, with a flag per slot.',
-             'Preallocate a stack of free slot numbers, lowest on top. Push each released slot back on top.'),
-          explain='Filling the stack with the highest slot at the bottom makes the never-used slots come out lowest first. '
-          'A released slot goes on top, so it comes out next. '
-          'The flag per slot stops a double release from handing one slot to two orders.')
+          feedback=fb('A stack of free slots and a generation per slot; a release bumps the generation.',
+             'Preallocate a stack of free slot numbers, lowest on top. A handle is current only if its generation matches and the slot is in use.'),
+          explain='Fresh slots come out lowest first, and a released slot is next. '
+          'A release raises the generation, so an old handle fails. '
+          'The in-use flag blocks a handle to a never-used slot.')
 
 # ======================================================================== paper 4: concurrency and systems
 HITS = ('```cpp\nint hits = 0;\n\nvoid work() {\n    for (int i = 0; i < 1000000; ++i) ++hits;\n}\n'
@@ -412,7 +427,7 @@ MOVE = ('```cpp\nvoid move_cash(Book& src, Book& dst, long pence) {\n    std::lo
         '// thread 1: move_cash(alpha, beta, 100);\n// thread 2: move_cash(beta, alpha, 50);\n```')
 Y3 = item('y3-lock-order', 3, ['sy-concurrency'], ['lock-ordering'], 200, 'Two books, two locks',
           'Now and then both threads stop for good. Which fix is sound?',
-          choice(rng, [('Take both with one `std::scoped_lock lk(src.m, dst.m);`', None),
+          choice(rng, [('Use `std::scoped_lock lk(src.m, dst.m);`', None),
                        ('Make both mutexes `std::recursive_mutex`', 'You let a thread relock its own mutex. Here each thread waits for the other one’s.'),
                        ('Add a short sleep between the two locks', 'You changed the timing. The opposite orders can still meet.'),
                        ('Unlock in the reverse of the order you locked', 'You changed the release order. The hang happens while locking.')]),
@@ -475,12 +490,13 @@ G1 = longform(
     'I measure latency from each order’s arrival, as a histogram, so a stall is not hidden. '
     'The build fails if the 99th percentile passes 5 µs.',
     [(1, 'Turns the load into a budget: one order every 5 µs'),
-     (2, 'One pinned thread on the hot path, fed by a lock-free queue'),
+     (1, 'One pinned thread on the hot path, fed by a lock-free queue'),
      (2, 'Preallocated flat state and no allocation on the hot path'),
      (2, 'States the three checks correctly, with open orders in the position check'),
      (1, 'Updates limits without blocking the hot path'),
      (1, 'Fails closed, with a kill switch'),
-     (1, 'Tests by replay against a reference, with a latency gate from arrival times')])
+     (1, 'Replays a recorded day against a slow reference checker'),
+     (1, 'Measures latency from each order’s arrival and fails the build above 5 µs at the 99th percentile')])
 G2 = longform(
     'g2-tail-regression', 4, ['sy-latency', 'sy-os'], ['tail-latency-regression'], 900, 'The tail got worse',
     'Say it out loud before you type. Keep the written version to 250 words.\n\n'
@@ -519,7 +535,7 @@ F1 = longform(
      (3, 'One piece of their own evidence with a number or an outcome'),
      (2, 'Names something hard about the work and how they handle it'),
      (1, 'Says why a trading firm rather than elsewhere'),
-     (1, 'About 90 seconds, with no stock phrases')])
+     (1, 'About 90 seconds, and no line that would fit any firm, such as "I am passionate about technology"')])
 F2 = longform(
     'f2-review-disagreement', 3, ['rk-behave'], ['review-disagreement'], 450, 'A review that disagreed',
     'Say it out loud before you type. Keep the written version to 200 words.\n\n'
@@ -543,10 +559,10 @@ doc = {
     'id': 'mock-superday-developer',
     'name': 'Developer superday',
     'style': 'developer',
-    'models': 'Reported, as of Nov 2026: developer and quant developer onsites at Hudson River Trading, Two Sigma and Jane Street. '
-              'Algorithms, C++, concurrency, design and fit.',
-    'description': 'This is the reported shape of a quant developer final-round day, as candidates described it by Nov 2026. '
-                   'Hudson River Trading, Two Sigma and Jane Street report rounds like these. '
+    'models': 'Reported, as of Nov 2026: developer intern onsites at Hudson River Trading, Two Sigma and Jane Street. '
+              'Layered coding, C++, memory, operating systems, design and fit.',
+    'description': 'This mock is built from reports of quant developer final rounds, as candidates described them by Nov 2026. '
+                   'Hudson River Trading, Two Sigma and Jane Street candidates report rounds like these. '
                    'There are six papers, each on its own clock. '
                    'Two are live coding rounds, and the second adds requirements part-way. '
                    'Then come C++, concurrency and systems, a design round and fit. '
@@ -561,7 +577,7 @@ doc = {
                'rk-behave': 'Behavioural answers'},
     'parts': [
         {'kind': 'paper', 'id': 'round-one', 'name': 'Coding round one', 'minutes': 45, 'scoring': SCORE, 'pass': 1, 'items': [A1]},
-        {'kind': 'paper', 'id': 'round-two', 'name': 'Coding round two', 'minutes': 45, 'scoring': SCORE, 'pass': 0.6, 'items': [B1]},
+        {'kind': 'paper', 'id': 'round-two', 'name': 'Coding round two', 'minutes': 45, 'scoring': SCORE, 'pass': 1, 'items': [B1]},
         {'kind': 'paper', 'id': 'cpp', 'name': 'C++', 'minutes': 40, 'scoring': SCORE, 'pass': 0.6, 'items': [K1, K2, K3, K4, K5, K6]},
         {'kind': 'paper', 'id': 'systems', 'name': 'Concurrency and systems', 'minutes': 25, 'scoring': SCORE, 'pass': 0.6, 'items': [Y1, Y2, Y3, Y4, Y5]},
         {'kind': 'paper', 'id': 'design', 'name': 'System design', 'minutes': 45, 'scoring': SCORE, 'pass': 0.5, 'items': [G1, G2]},
