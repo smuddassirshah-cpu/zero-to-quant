@@ -1555,3 +1555,12 @@ Status block (engine pass, tooling):
 
 Status block (engine pass, session T step 0):
 - 573: done (8 warnings from older scripts). 574: done (errors 0). 575: done (4 of 4 parallel runs exit 0).
+
+
+## Engine pass, session T (protocol 6)
+
+576. Done [Must]: `validate.mjs` adds each editable table cell's `wrong[].id` to the table widget's key set, so it is a valid `feedback.byKey` key. Confirmed first: `table.js` returns the matching `wrong` id as the key, and AUTHORING section 3 already says so (no doc change). `tools/test-validate-table-wrong.mjs` proves a cell wrong id is accepted and an unknown key is still refused.
+577. Done [Should]: `plane` log axes (`plane.js`): `fmtLogTick` prints plain digits from 0.001 to 99 999 and powers of ten outside it (10⁻⁶, 2×10⁻⁶), so no tick prints as 0 or in every digit; `logTicks` keeps every nth power of ten when a range is too wide for one per decade. README-B updated.
+
+Status block (engine pass, session T):
+- 576: done (new test 3 of 3, `test-validate-why` 12 passed, validator 0 errors). 577: done (odes/l16-euler-method playthrough green desktop and mobile).

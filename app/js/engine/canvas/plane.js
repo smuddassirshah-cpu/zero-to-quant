@@ -48,6 +48,13 @@
     const s = Math.abs(n).toLocaleString('en-GB', { minimumFractionDigits: dp, maximumFractionDigits: dp, useGrouping: Math.abs(n) >= 10000 });
     return (n < 0 ? '−' : '') + s;
   };
+  /* item 577: log-axis labels. Plain digits for 0.001 up to 99 999; beyond that powers of ten (10⁻⁶, 2×10⁻⁶, 10⁸) so a tick never prints as 0 or in every digit */
+  const SUP = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+  const fmtLogTick = (v, step) => {
+    if (!(v > 0) || (v >= 1e-3 && v < 1e5)) return fmtTick(v, v >= 1 ? 1 : Math.pow(10, Math.floor(Math.log10(v)))) ;
+    const [m, e] = v.toExponential().split('e'), sup = String(+e).split('').map((c) => SUP[c] || c).join('');
+    return (+m === 1 ? '' : m + '×') + '10' + sup;
+  };
   /* Approximate text width at a font size (Archivo is narrow; 0.56em per glyph is a safe overestimate). */
   const tw = (s, size = 13) => String(s).replace(/\$|\\[a-z]+/gi, '').length * size * 0.56;
 
@@ -166,7 +173,7 @@
       const y = sy(v); if (y < y1 - 0.5 || y > y0 + 0.5) continue;
       if (o.grid !== false) gg.append(svg('line', { x1: x0, x2: x1, y1: y, y2: y, class: 'cvb-grid' }));
       const st = yt.log ? Math.pow(10, Math.floor(Math.log10(v))) : yt.step;
-      gg.append(txt(x0 - 7, y, o.fmtY ? o.fmtY(v, st) : fmtTick(v, st), { anchor: 'end', cls: 'cvb-tick', size: 12 }));
+      gg.append(txt(x0 - 7, y, o.fmtY ? o.fmtY(v, st) : (yt.log ? fmtLogTick(v) : fmtTick(v, st)), { anchor: 'end', cls: 'cvb-tick', size: 12 }));
     }
     if (!o.noX) {
       const xt = o.xTicks || ticksFor(sx.domain[0], sx.domain[1], Math.abs(x1 - x0), { minGap: 48, fmtF: o.fmtX });
@@ -187,7 +194,7 @@
   /* Left margin a chart needs for its y tick labels. */
   const yMargin = (min, max, px, fmtY, log = false) => {
     const t = log ? logTicks(min, max, px, { minGap: 24 }) : yTicksFor(min, max, px, fmtY);
-    return 14 + Math.max(...t.ticks.map((v) => tw(fmtY ? fmtY(v, t.step) : fmtTick(v, t.step), 12)));
+    return 14 + Math.max(...t.ticks.map((v) => tw(fmtY ? fmtY(v, t.step) : (log ? fmtLogTick(v) : fmtTick(v, t.step)), 12)));
   };
 
   /* Log scale (yScale: "log"): positive values only; ticks at 1, 2 and 5 times powers of ten that fit, thinned to minGap px */
@@ -204,6 +211,8 @@
     const gapOk = (list) => list.every((v, i) => i === 0 || (Math.log(v / list[i - 1]) * perPx) >= minGap);
     if (!gapOk(ticks)) { keep = [1, 5]; ticks = all.filter((v) => keep.includes(+String(v.toExponential()).split('e')[0][0])); }
     if (!gapOk(ticks)) ticks = all.filter((v) => /^1/.test(v.toExponential()));
+    /* item 577: over a very wide range keep every nth power of ten so labels never collide */
+    for (let n = 2; n < 40 && !gapOk(ticks) && ticks.length > 2; n++) ticks = all.filter((v) => /^1/.test(v.toExponential())).filter((v, i) => i % n === 0);
     if (!ticks.length) ticks = [lo, hi];
     return { ticks, step: Math.pow(10, Math.floor(Math.log10(Math.min(...ticks)))), log: true };
   };
@@ -239,14 +248,14 @@
     for (const v of xt.ticks) {
       const x = sx(v); if ((yAt0 && Math.abs(x - ay) < 2) || x > px1 - 14) continue;
       gg.append(svg('line', { x1: x, x2: x, y1: ax - 3, y2: ax + 3, class: 'cvb-axis thin' }));
-      const t = o.fmtX ? o.fmtX(v, xt.step) : fmtTick(v, xt.log ? Math.pow(10, Math.floor(Math.log10(v))) : xt.step);
+      const t = o.fmtX ? o.fmtX(v, xt.step) : (xt.log ? fmtLogTick(v) : fmtTick(v, xt.step));
       gg.append(txt(x, below, t, { cls: 'cvb-tick', size: 12, halo: true }));
       boxes.push(boxOf({ x, y: below, text: t, h: 14 }));
     }
     for (const v of yt.ticks) {
       const y = sy(v); if ((xAt0 && Math.abs(y - ax) < 2) || y < py1 + 12) continue;
       gg.append(svg('line', { x1: ay - 3, x2: ay + 3, y1: y, y2: y, class: 'cvb-axis thin' }));
-      const t = o.fmtY ? o.fmtY(v, yt.step) : fmtTick(v, yt.log ? Math.pow(10, Math.floor(Math.log10(v))) : yt.step);
+      const t = o.fmtY ? o.fmtY(v, yt.step) : (yt.log ? fmtLogTick(v) : fmtTick(v, yt.step));
       gg.append(txt(ay - 7, y, t, { anchor: 'end', cls: 'cvb-tick', size: 12, halo: true }));
       boxes.push(boxOf({ x: ay - 7, y, text: t, anchor: 'end', h: 14 }));
     }
