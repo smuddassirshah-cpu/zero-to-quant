@@ -87,7 +87,12 @@ w, t, n = equity(["8h", "7h"], ["Kc", "Qd"], ["Kh", "4h", "2s", "9c"])
 assert (w, t, n) == (9, 0, 44), "l11 screens[2] against KcQd exactly 9 of 44 rivers win"
 # the three counts the convention question turns on (l11 screens[2]/[3] finding): 9/46, 9/45, 9/44
 assert F(9, 46) < F(1, 5) == F(9, 45) < F(9, 44), "l11 screens[3]: 19.57% (46 unseen) < 20% price = 9/45 (his king known) < 20.45% (KcQd known)"
-assert abs(9 / 46 * 120 - 37 / 46 * 30 + 0.65) < 0.005, "l11 screens[3] call earns -0.65 under the 46-card count"
+assert abs(9 / 46 * 120 - 37 / 46 * 30 + 0.65) < 0.005, "l11 screens[3] (before the audit fix pass) call earned -0.65 under the 46-card count"
+# fix pass: screens[3] is now £40 into £90, price 40/170, a fold under every count
+assert F(9, 44) < price(40, 90) == F(4, 17), "l11 screens[3]: price 23.5% is above 9/46, 9/45 and 9/44"
+assert F(9, 46) * 130 - F(37, 46) * 40 == F(-155, 23) and abs(-155 / 23 + 6.74) < 0.005, "l11 screens[3] call earns -155/23 = -6.74"
+assert abs(9 / 46 * 130 - 25.43) < 0.005 and abs(37 / 46 * 40 - 32.17) < 0.005, "l11 screens[3] win side 25.43, loss side 32.17"
+assert F(9, 44) * 130 - F(35, 44) * 40 < 0 and F(9, 45) * 130 - F(36, 45) * 40 < 0, "l11 screens[3] the call loses even against his known cards"
 assert abs(9 / 45 * 120 - 36 / 45 * 30) < 1e-12, "l11 screens[3] the same call breaks even exactly once his known king is removed from the unseen cards"
 # flop: at least one heart of two cards among 47 unseen: 1 - 38/47 * 37/46 (l11 screens[4])
 assert abs(1 - 38 / 47 * 37 / 46 - 0.3497) < 5e-5, "l11 screens[4] 34.97%"
