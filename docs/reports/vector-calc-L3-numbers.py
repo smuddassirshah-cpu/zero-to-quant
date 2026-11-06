@@ -281,6 +281,8 @@ lv.expect(Hm, "items[6].model", round(cylv, 1)); lv.expect(Hm, "items[6].model",
 assert sum(r["points"] for r in lv.files["homework-3"]["items"][6]["rubric"]) == 10
 t8 = both(-1.5, flux(lambda x, y, z: curl(Z, x, y, z), lambda u, v: (v * (1 - u), u, 1 - u - v * (1 - u)), 0, 1, 0, 1), 1e-6)
 lv.expect(Hm, "items[7].widget.answer", t8); lv.expect(Hm, "items[7].widget.wrong[1].value", round(-sqrt(3) / 2, 3))
+# fix pass: homework-3 items[4] wrong "no-2" is the half-ball integral of z (pi/4); l11 quiz "six" is divergence 2 times surface area 6
+lv.expect(Hm, "items[4].widget.wrong[0].tex", "\\frac{\\pi}{4}"); assert abs(pi / 4 - ball(lambda x, y, z: z, 1, pi / 2)) < 1e-6; assert 2 * 6 == 12
 
 lv.check_wrongs()
 lv.report()
