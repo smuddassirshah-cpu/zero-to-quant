@@ -83,3 +83,5 @@ Edits by `docs/briefs/exam-2.6-scripts/build.py`, regenerated into `app/content/
 11. no change needed, as the review says.
 
 Gates: validator 0 errors, no warning naming topic-2.6; voice scan on a copy 0 long sentences, 0 long explanations, no `!` or dashes; `check_numbers.py` 233 of 233, exit 0 (`check_wrongs()` then `report()`); `fresh.py` runs, new items clean in `stat-models`; playthrough `--exam topic-2.6` green (25 of 25) with and without `--mobile`.
+
+Orchestrator (session U): finding 10 applied to `docs/reports/exam-2.6.md` line 8.

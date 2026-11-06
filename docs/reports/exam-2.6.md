@@ -5,7 +5,7 @@ File: `app/content/exams/topic-2.6.json` (75 minutes, pass 0.7, 25 items, all si
 ## Result
 
 - Ramp 5, 13, 5, 2 at difficulties 2 to 5; pace 3,420 s (57 min).
-- By level: L1 6 (sm-glm), L2 5 (sm-anova, and sm-nonpar first met in l9's sign test), L3 6 (sm-nonpar: rank, permutation, KDE, robust, Hodges-Lehmann), L4 7 (sm-bayes, sm-mcmc, sm-hier), plus the rank ANOVA across L2 and L3. L3 has no new skill, so it is covered through sm-nonpar items on its own lessons.
+- By level: L1 6 (sm-glm), L2 5 (sm-anova, and sm-nonpar first met in l9's sign test), L3 6 (sm-nonpar: rank, permutation, KDE, robust; plus Hodges-Lehmann and a rank ANOVA, defined in the prompts and not taught in the course), L4 7 (sm-bayes, sm-mcmc, sm-hier), plus the rank ANOVA across L2 and L3. L3 has no new skill, so it is covered through sm-nonpar items on its own lessons.
 - Kinds: 16 numeric, 1 choice, 1 multi, 1 table (ANOVA from three brokers' orders), 4 parts, 2 Python code (`walsh_median`, `kruskal_h`). No longform.
 - Finance data throughout: PDs, trade counts with an offset, slippage, shortfall, fill and default rates, fund alpha, rejected orders.
 
