@@ -1497,9 +1497,14 @@ const main = async () => {
       const cur = readJSON(path.join(CONTENT, 'curriculum.json'));
       const firstLesson = (c, lvN) => { const cf = path.join(CONTENT, 'courses', c, 'course.json'); if (!fs.existsSync(cf)) return null; const lv = (readJSON(cf).levels || []).find(l => lvN == null || l.n === lvN); return lv ? (lv.lessons || []).find(l => fs.existsSync(path.join(CONTENT, 'courses', c, l + '.json'))) || null : null; };
       const firstOf = (stageId, lvN) => { for (const st of cur.stages.filter(x => x.id === stageId)) for (const t of st.topics) for (const c of t.courses || []) { const l = firstLesson(c, lvN); if (l) return `${c}/${l}`; } return null; };
-      const open0 = firstOf(0, 1), locked3 = firstOf(3, 2) || firstOf(2, 2);
+      const allOf = (stageId, lvN) => { const out = []; for (const st of cur.stages.filter(x => x.id === stageId)) for (const t of st.topics) for (const c of t.courses || []) { const l = firstLesson(c, lvN); if (l) out.push(`${c}/${l}`); } return out; };
+      /* the fixture is the first level 2 lesson (Stage 3, then Stage 2) that is locked on the fresh profile; a course optional for the role is advisory under Strict (ENGINE-BACKLOG 583) */
+      const lockedCands = [...allOf(3, 2), ...allOf(2, 2)];
+      const open0 = firstOf(0, 1);
+      let locked3 = lockedCands[0] || null;
       if (!open0 || !locked3) { console.log('skip gating  no written Stage 0 level 1 lesson or Stage 2 or 3 level 2 lesson to check'); return; }
-      const [oc, ol] = open0.split('/'), [lc, ll] = locked3.split('/');
+      const [oc, ol] = open0.split('/');
+      let lc, ll;
       const widths = [DESKTOP, ...EXTRA];
       let saved = null;
       const evalOnly = (fn, arg) => page.evaluate(fn, arg);
@@ -1515,6 +1520,9 @@ const main = async () => {
       try {
         saved = await evalOnly(() => ZQ.state.export());
         if (!(await importDoc())) throw new Error('could not import a fresh profile');
+        const lockedNow = await evalOnly((cs) => cs.filter(x => { const [c, l] = [x.split('/')[0], x.split('/')[1]]; return ZQ.prereq.lessonLocked(c, l); }), lockedCands);
+        locked3 = lockedNow[0] || lockedCands[0];
+        [lc, ll] = locked3.split('/');
         /* 1. Stage 0: open */
         await route(`lesson/${oc}/${ol}`);
         let st = await evalOnly(([c, l]) => ({ locked: ZQ.prereq.lessonLocked(c, l), card: !!document.querySelector('.lk'), lesson: !!document.querySelector('.lsn') }), [oc, ol]);
