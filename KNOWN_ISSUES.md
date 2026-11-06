@@ -206,3 +206,5 @@ Session U (6 Nov):
 - 585 `[shuffled-position]`: 6 of 14 hits fixed, 8 false positives remain listed in `docs/reports/scan-positional-options.md` (inbox bullet proposes the exclusion).
 - 589 follow-ups: the Skip marking path (records 0, "Marking skipped") has no automated test; a longform part inside `parts` counts as right at 7 of 10 ticks (the parts share rule), not ticks over points as a plain longform item does.
 - Capstone records are placeholders (user request, 6 Nov): every role can now read "ready" once its levels are met, without a real capstone review. Replace `app/content/capstones.json` records before any real readiness claim.
+- `--routes-only` without `--local-cdn` fails `#drill (filters)` on an aborted `vendor/yowasp-clang/bundle.js` request (the sandbox does not serve the vendored clang); with `--local-cdn` it passes 102 of 102.
+- The superday-strats and superday-developer fix pass merged after shards 1, 3 and 4 started; both mocks were played by their fixer and by the 590 agent with `--local-cdn`, desktop and mobile, not by a shard.

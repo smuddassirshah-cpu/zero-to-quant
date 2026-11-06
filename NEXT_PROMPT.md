@@ -7,6 +7,6 @@ Session V, in order:
 2. Second reads and Sonnet fix passes: arma, garch, coint, backtest, alpha, opt-dash, contests, proof, analysis L1 to L4, linear-maps L1 to L3, momentum-rep L1. Each fix pass clears its course's sentences over 35 words (97 app-wide; DECISIONS 6 Nov: 20 words is a target, not a gate) and long explanations (61; `docs/reports/voice-census-session-u.txt`).
 3. Drill packs 1 to 8 and bank part 2, only with over half the usage window left.
 
-Open for the user: capstone records. `[key-length]` stays advisory.
+Open for the user: replace the PLACEHOLDER capstone records (DECISIONS 6 Nov). `[key-length]` stays advisory.
 
 Acceptance: validator 0 errors; readiness-sums OK; all `tools/test-*.mjs` pass; four `--all --shard i/4 --local-cdn` runs, staggered, green, with no merge during a shard. Then write NEXT_PROMPT for session W.
