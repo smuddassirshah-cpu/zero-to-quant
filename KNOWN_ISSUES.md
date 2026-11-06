@@ -118,7 +118,7 @@ Session I (4 Nov 2026, topic 3.2)
 - Playthrough runs in Chromium at the device sizes, not WebKit; touch, Safari and the C++ compiler's memory on an iPhone are untested on real devices.
 - Reviews are capped at 10 items by the validator, while test-out of a required level wants 12 or more (inbox [Should]).
 - The whole-app `--tablet` pass was not run at close (several hours at three extra widths); topic 3.2 files and the exam were run with `--mobile --tablet` during the session.
-- `--exams` under four parallel shards: the `mock-sample-draw` timed check failed once ("timed out with one answer per paper but scored 0") and passed when re-run alone; treat as load flakiness unless it repeats.
+- (closed S, ENGINE-BACKLOG 570: the check missed a drawn first item with parts) `--exams` under four parallel shards: the `mock-sample-draw` timed check failed once ("timed out with one answer per paper but scored 0") and passed when re-run alone; treat as load flakiness unless it repeats.
 - Five more per cent keys at or below 1 (garch l4, numpy-pandas l12, py-found l16, random-vars l19, random-vars review-5) were stored as per cents; fixed, and item 516 now errors on them.
 
 Session J (5 Nov 2026, PLAN 2a item 7)
@@ -138,7 +138,7 @@ Open review ids (none is fixed at HEAD; closure only on the review's acceptance 
 - F05.8: only stage-0 has a stage exam (PLAN 4, stage exams line).
 - F06, N08 (item 8): no out-of-app capstone record; verified drills feed no met rule.
 - F07 (item 10): `minutes` 11 to 15 everywhere; interview lessons state 25 to 60 minutes in prose.
-- F08, N05 (item 9): five known precision lines; 69 summary candidates in the seven named courses. Needs a human maths reader.
+- F08, N05 (item 9): closed S. 78 candidates (69 with the five-word set), user ruled as maths reader; 3 False, 14 Loose and the five known lines fixed (`docs/reviews/review-precision-3.2.md`). Residue: the trigger words miss bare universals ("Zero drift means a martingale"), and only seven courses were read; 636 candidate lines exist across 70 courses.
 - F09 (item 11): hours 3,265 stored against 3,695 summed.
 - N01: closed by 2c item 3 (5 Nov). Residue: Elo and MP in saves from before provenance still include earlier self ticks (cannot be split). Old attempts on the 25 `selfExams` meet nothing unless already in `prereq.met`.
 - `--exam mock-superday-research` times out in `waitForFunction`, identically on HEAD before item 3; not investigated. Full `--all` (about 3 hours) not run for item 3; `--routes-only`, 15 longform topic exams, three homework sets and `mock-superday-trader` passed.
@@ -164,13 +164,19 @@ Process found this session:
 - Session P (5 Nov): `playthrough.mjs --all --local-cdn` runs over two hours and its single browser closes after about 786 items ("Target page, context or browser has been closed"); every later item throws. coint/l12, backtest/l9, proof/homework-3 and topic-3.5 pass alone. Engine item in the inbox.
 
 Session Q (5 Nov, PLAN 2c items 7, 10, 11):
-- (item 7, updated R) The pdes route reaches unwritten `complex` L1, `odes` L1 to L2 and `numerics` L4; the user put complex L1 in the before-2b set (DECISIONS "Capstones and route scope"); pdes stays "Route limited" until all are written.
+- (item 7, updated S) After session S the pdes route reaches only odes L4 and numerics L4 unwritten (pdes/L2 reaches none). Was: (R) The pdes route reaches unwritten `complex` L1, `odes` L1 to L2 and `numerics` L4; the user put complex L1 in the before-2b set (DECISIONS "Capstones and route scope"); pdes stays "Route limited" until all are written.
 - (item 7, closed R) Trader closure lever taken by the user: trader superday closure 422 lessons, 96 levels, 32 courses.
-- (item 7) The 23 diagnostic `why` lines and most kept ones are the Sonnet draft, reviewed by closure impact and sampling, not line by line; a second reader should sample them. No DOM test of the "Check first" card.
+- (item 7, closed S: 25 sampled in `docs/reviews/review-diagnostic-why.md`, ten auditor-voice lines rewritten; DOM test `test-check-first.mjs`, 572) The 23 diagnostic `why` lines and most kept ones are the Sonnet draft, reviewed by closure impact and sampling, not line by line; a second reader should sample them. No DOM test of the "Check first" card.
 - (item 7) `systems/L1` closure fell from 231 to 17 lessons (now cpp L1, L2 and terminal); accepted on the draft's evidence that systems teaches its ideas itself.
 - (shard, 550) The relaunch does not cover a browser close during the routes block or `--bank`/`--drill` runs; routes run in shard 1 only.
 - (session Q close, 5 Nov) Full `--all --shard i/4 --local-cdn` at 1ff7793: shards 2, 3, 4 all passed, 0 relaunches; shard 1 items all passed, its route checks failed `#bank` and samples because they ran on the played profile. Fixed in a0ea613 (fresh profile before the routes); `--all --shard 1/300` then green on both.
 - (5 Nov, fixed in 9c70a04: fixture moved to brainteasers L3 and `contests/L2`, and the shadowed `readiness.status` restored) Since d9c1c40 (trader lever, item 8 session) `--routes-only` fails `gating` desktop and mobile: "trader: brainteasers L2 shows no advisory note for graphs-dp/L3" and "Developer: brainteasers L2 should still lock while graphs-dp/L3 is unmet". The check uses that edge as its role-advisory example and it is now `gate: false`; the check needs another example edge. Owner: the item 8 session (engine).
 - (item 8) Capstone records are empty: no role can show "ready" until the user, as reviewer, fills `app/content/capstones.json` (AUTHORING section 15). The oa-drill rule maps every oa drill to coding-int's lowest gated code level (L1); an optional `level` on a drill overrides, none set.
-- (item 8) The engine pass shadowed `readiness.status(course, role)` with the role verdict, silently disabling advisory edges; caught by the gating playthrough after the fixture moved off a diagnostic edge, fixed as `roleState`. A duplicate-key lint on `content.js` objects would catch the class.
-- (item 8, session R) `--exam mock-sample-draw` is intermittent at HEAD: 2 failures in 9 runs ("timed out with one answer per paper but scored 0"), 0 in 5 at d9c1c40 (pre-engine). The check calls `answerCorrect()` then `setRemaining(0)` with no wait, so the answer can miss the commit; item 8 touches no exam code, so likely timing, not proven. Engine item: wait for the answer to register before zeroing the clock, then re-measure.
+- (closed S: `lint-dup-keys.mjs`, 571, 0 findings in app/js) (item 8) The engine pass shadowed `readiness.status(course, role)` with the role verdict, silently disabling advisory edges; caught by the gating playthrough after the fixture moved off a diagnostic edge, fixed as `roleState`. A duplicate-key lint on `content.js` objects would catch the class.
+- (closed S, 570: 12 of 12 desktop, 3 of 3 mobile) (item 8, session R) `--exam mock-sample-draw` is intermittent at HEAD: 2 failures in 9 runs ("timed out with one answer per paper but scored 0"), 0 in 5 at d9c1c40 (pre-engine). The check calls `answerCorrect()` then `setRemaining(0)` with no wait, so the answer can miss the commit; item 8 touches no exam code, so likely timing, not proven. Engine item: wait for the answer to register before zeroing the clock, then re-measure.
+
+Session S (5 to 6 Nov, PLAN 2c item 9 and the odes, numerics, complex wave):
+- Protocol 6 threshold met: three second reads (odes, complex, numerics) found the author's number-recompute script never reads the lesson JSON, so prose claims, wrong-option values and `why` texts go unchecked; most errors sat there. Raised in BACKLOG-INBOX for a validator or script rule before the next wave.
+- The odes brief's claim that critical damping (b = 4) settles fastest is false: b = 3 enters a 5% band at 1.56 against 2.37 (2.8% overshoot); l9 says so, the brief is unchanged.
+- complex L2's `docs/briefs/complex.md` complex-step error figure was measured against a double; corrected to 4e-15 (all 16 figures).
+
