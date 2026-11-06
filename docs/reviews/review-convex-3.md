@@ -52,3 +52,13 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's script: `convex-L3-numbers.py` exit 0 (410 of 410 `numbers_lib` checks, 0 two-route failures, all 6 code widgets green).
 
 ## Fix pass
+
+All 3 errors and 6 warnings applied by targeted edits; 9 of 10 notes applied, 1 deferred; none disputed. Each changed number recomputed and added to `docs/reports/convex-L3-numbers.py`.
+
+- Errors fixed (3): l10 summary now opens "Under Slater's condition" (consistent with screens[9]); l12 screens[11] now says every split has $u_i + v_i \ge |w_i|$, with equality when one part is 0, so the row allows exactly gross at most 2; l12 "millions" now "over 600,000 times" ($0.0062 / 10^{-8} = 620{,}000$).
+- Warnings fixed (6): l9 `cross` tex now $\lambda + \tfrac{3\lambda^2}{4}$ ($\tfrac14 + \tfrac12 = \tfrac34$); l9 `d2` why gives $x = 2$, $\lambda = 1$ gives $-1$; l9 LP dual by the Lagrangian route added as a `choice` screen after the concavity screen (now screens[6], lesson at 12 screens; later l9 screens shift by one, script paths updated; HiGHS gives 480 for both desk LP and dual); l11 `d1` why (weights sum to 1.0833); l11 screens[11] asks for 6 decimal places; l13 quiz[1] tol 0.05.
+- Notes fixed (9): l9 "at or below"; l9 summary Slater qualifier; l11 "scaled by $\tfrac{12}{13}$" (explain and byKey `fine`); l11 "In this lesson"; l11 summary $\mu$ slackness; l12 screens[2] sufficiency and linear-limit necessity; l12 three consoles now print rounded values (0.081111, 0.062051, 0.066721); l13 two "Give 6 decimal places" prompts; homework-3 items[7] rubric.
+- Note deferred (1): l11 screens[5] to [6] vector `expression` for $\mathbf{w}$. The learner reads $(0, \tfrac13, \tfrac23)$ from the table instead of entering it; changing the answer widget is a larger rewrite. Deviation noted for the main session.
+- Extra qualifications from the re-read (1): l13 summary "a multiplier is the rate..." now says "In convex problems". Other general claims (weak duality, concavity of $g$, l10 screens[9] and summary[2], l12 summary) already state their hypotheses.
+- Gates: validator 0 errors; voice scan 0 and 0; `convex-L3-numbers.py` exit 0 (410 of 410, 0 two-route failures, 6 code widgets green); playthrough "All passed" desktop and `--mobile` for l9 to l13 and sets review-3 and homework-3.
+- Graded answers changed: none to correct answers. Wrong-value changed: l9 `cross` ($\lambda + \tfrac{\lambda^2}{4}$ to $\lambda + \tfrac{3\lambda^2}{4}$). New graded item: l9 LP-dual `choice` screen. Tolerances widened: l13 quiz[1] 0.01 to 0.05.
