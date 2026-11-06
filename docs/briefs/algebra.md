@@ -18,7 +18,7 @@ Course context. `algebra` is the first of the two courses of topic 3.4, "Pure ma
 - `order` takes `distractors` and `same` (item 434). An `expression` takes complex values, vectors and matrices (items 429, 433). A bare `i` is the imaginary unit (item 446).
 - Grading residues and polynomials over $\mathbb{Z}_p$: `expression` compares real values, so `8x + 9` is marked wrong against `3x + 4` over $\mathbb{Z}_5$ with the generic line. Ask for coefficients in $\{0, \dots, p - 1\}$ in a `table` (one numeric cell each, with `wrong` entries for the usual unreduced value), or a `numeric` residue with a `wrong` entry for the unreduced number. This is raised in `docs/BACKLOG-INBOX.md` under `Raised later (brief algebra):`.
 - Grading a permutation typed in cycle notation: a `table` text cell compares exact strings, so `(1 5 4)(2 3 8)` and `(2 3 8)(5 4 1)` differ. Grade permutations by two-line notation (the bottom row as numeric `table` cells), by a `choice` among cycle forms, or by a `place` in order mode with number chips. This is also raised in the inbox.
-- Known limits already in the inbox: a `table` cell's own `wrong[]` ids are rejected as `byKey` keys by the validator (key on the cell id instead, `r0c1`), and a `place` in order or assign mode does not count as canvas-bound for an explore screen.
+- Known limits already in the inbox: a `table` cell's own `wrong[]` ids are valid `byKey` keys since ENGINE-BACKLOG 576 (key on the wrong id, not the cell id: the cell id fires only when no `wrong` entry matches), and a `place` in order or assign mode does not count as canvas-bound for an explore screen.
 
 ## Level 1
 
