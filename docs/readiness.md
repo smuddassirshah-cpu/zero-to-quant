@@ -391,7 +391,7 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 | --- | --- | --- |
 | `mock-oa-code` | exists |  |
 | `mock-oa-code-hard` | gap: not yet written | harder algorithm battery |
-| `mock-superday-developer` | gap: not yet written | live coding, C++ and design |
+| `mock-superday-developer` | exists |  |
 
 **Capstone:** an independent systems project, such as a feed handler or matching engine. The record holds repo link, rerun-from-clean result and defence notes. The user reviews it.
 

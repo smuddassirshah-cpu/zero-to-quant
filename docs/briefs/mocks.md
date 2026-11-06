@@ -1263,3 +1263,82 @@ Both difficulty 3, `rk-behave`, `pace` 450, draws on recruiting `l8-why-this-fir
 **Scripts** (in `docs/briefs/mocks-scripts/`): `superday_strats_build.py` (route A, writes the file; item constructors in `superday_lib.py`, which also stops the build on a sentence of 20 words or more), `superday_strats_check.py` (route B through `numbers_lib`: every key, every `wrong`, every number in prose, the option rules, the code items, `check_wrongs()` then `report()`, exit 0). Standard library and the local g++ only.
 
 **Acceptance.** The common checks (1 to 5), plus: validator 0 errors and no warning on this file; `fresh-check --exam mock-superday-strats --min-run 10` 0 hits; voice scan on a copy 0 and 0; the playthrough with and without `--mobile` passes every part, both code items by their solutions, and ticks every rubric point; screenshots at 1280 and 390 px of the start card, a `parts` item, a choice, a longform, both code items and the results page; `readiness-sums` OK after the mock's two status rows in `docs/readiness.md` read `exists` and `--write` refreshes the mock lists in `readiness.json`. Report at `docs/reports/exam-mock-superday-strats.md`; inbox bullets under `Raised later (mock mock-superday-strats):`.
+
+## mock-superday-developer
+
+**File.** `app/content/exams/mock-superday-developer.json`, one file, no versions, every item fixed, for the reason `mock-superday-strats` gives. The drill packs could feed a coding draw, but `mock-oa-code` and `mock-oa-code-hard` draw from them, and no item may be shared with another mock. `content/prep.json` names this mock on `superday-developer` only (no developer firm path carries it); no change is proposed.
+
+- `id`: `mock-superday-developer`. `name`: `Developer superday`. `style`: `developer`.
+- `models` (under 200 characters): `Reported, as of Nov 2026: developer and quant developer onsites at Hudson River Trading, Two Sigma and Jane Street. Algorithms, C++, concurrency, design and fit.`
+- `requires`: `["graphs-dp/L2", "coding-int/L4", "cpp/L5", "systems/L4"]`.
+- `skills`: `gd-paths`, `ci-timed`, `ci-design`, `cp-stl`, `cp-memory`, `cp-classes`, `sy-memory`, `sy-concurrency`, `sy-latency`, `sy-os`, `rk-behave`, each with a short label.
+
+**What the real days are reported to contain** (from `docs/briefs/interview-gaps.md`, snapshot 29 Oct 2026, and `interview-plan.md` (d); all reported). Hudson River Trading: live programming, then three to five final sessions; one intern final extends existing C++ trading code, with a design discussion; reported questions include a pool allocator, pointers and references, memory management, move semantics and operating systems. Two Sigma quant developer: two technical rounds of 45 to 60 minutes (graphs, dynamic programming), one behavioural, design in older reports. Jane Street software engineer: three long coding rounds with requirements added part-way, and one behavioural. The `superday-developer` prep path asks for harder coding with changing requirements, C++ depth, concurrency and systems.
+
+**Description** (plain, each sentence under 20 words, firm names only here and in `models`):
+
+> This is the reported shape of a quant developer final-round day, as candidates described it by Nov 2026. Hudson River Trading, Two Sigma and Jane Street report rounds like these. There are six papers, each on its own clock. Two are live coding rounds, and the second adds requirements part-way. Then come C++, concurrency and systems, a design round and fit. Real rounds are spoken, so talk through your code as you type. No search engine and no notes are allowed. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.
+
+**Parts, in order** (every paper `scoring: { "right": 1, "wrong": 0, "blank": 0 }`, free navigation, `pass` as a share):
+
+| # | Paper `id`, name | Minutes | Items | Pass | `pace` sum |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `round-one`, Coding round one | 45 | 1 Python `code` | `pass: 1` (the problem) | 1,500 s |
+| 2 | `round-two`, Coding round two | 45 | 1 with `parts` (C++ code, C++ code, choice) | `pass: 0.6` (2 of 3 parts) | 1,500 s |
+| 3 | `cpp`, C++ | 40 | 6 (1 `parts`, 4 choice, 1 C++ code) | `pass: 0.6` (4 of 6) | 2,360 s |
+| 4 | `systems`, Concurrency and systems | 25 | 5 (3 choice, 1 numeric, 1 `parts`) | `pass: 0.6` (3 of 5) | 1,180 s |
+| 5 | `design`, System design | 45 | 2 `longform` | `pass: 0.5` (1 of 2) | 2,700 s |
+| 6 | `fit`, Fit and motivation | 15 | 2 `longform` | `pass: 0.5` (1 of 2) | 900 s |
+| 7 | check `talked-aloud`, `I talked through both coding rounds aloud as I typed`, detail `Tick this only if you spoke at every step, as a live round needs.` | | | | |
+| 8 | check `no-lookup`, `I used no search engine, notes or AI help`, detail `Tick this only if you sat all six papers without them.` | | | | |
+
+That is 17 items, 215 minutes, 4 `longform`, 4 code widgets (1 Python, 3 C++). The attempt passes only when every paper passes and both checks are ticked.
+
+**C++ limits respected.** Every C++ item compiles under clang 21 in WebAssembly at `-O1` with libc++: no `try` or `catch` (sentinels such as -1.0 stand in for errors), no threads, no file system. The concurrency questions are choices about code the learner reads, not code they run; the check script runs that code natively with `-pthread`. `allocCheck` counts `operator new` in the pool item. Large tests are sized for the browser: the price store's largest test inserts 100,000 ticks and makes 100,000 queries (a first draft at 200,000 ran past 5 s in the playthrough).
+
+**Rules.** As `mock-superday-strats` (shuffle from `random.Random(2612)`, whys that start "You", no key between a times-ten pair or two equal slips, named slips in `wrong` with `byKey` lines, `skills`, `tags`, `pace`, `difficulty` on every item, no shared family tag, question or setup with another mock).
+
+### Paper 1: coding round one (45 min, 1 item)
+
+**A1, `hop-limited-path`** (difficulty 4, skills `gd-paths`, `ci-timed`, `pace` 1,500; draws on graphs-dp `l7-dijkstra`, `l9-arbitrage-cycle`, coding-int `l16-edge-cases-first`). Python: `cheapest_within(n, routes, src, dst, k)`, the cheapest total fee in at most `k` one-way transfers, else -1; `n` to 3,000, `routes` to 30,000, `k` possibly far above `n`. Reference: Bellman-Ford with each round reading only the last, capped at $n - 1$ rounds, stopping when nothing changes. 13 hidden tests, compared exactly: a four-account base case at $k = 3, 2, 1, 0$ (300, 350, 500, -1), `src == dst` (0), a trap where plain Dijkstra settles an account by a route with too many transfers (6 at $k = 2$, 3 at $k = 3$), unreachable (-1), a cycle with $k = 10^9$ (9), 30,000 seeded random routes at $k = 6$ and $k = 10^9$, and a 600-account chain with a direct route (599 at $k = 599$, 1,000 at $k = 598$). Route B: a Dijkstra over (account, transfers) states recomputes every expected value; a Dijkstra that keeps one cost per account fails the trap.
+
+### Paper 2: coding round two (45 min, 1 item with a requirement added)
+
+**B1, `asof-store`** (difficulty 5, skills `ci-design`, `cp-stl`, `pace` 1,500; draws on coding-int `l13-requirements-change`, cpp `l15-maps`). Part 1, C++: `PriceStore` with `insert(t, px)` (out of order, a repeat replaces), `asof(t)` (the latest price at or before `t`, else -1.0) and `size()`; 7 tests, one with 100,000 out-of-order ticks and 100,000 queries. Part 2, C++: add `asof_fresh(t, max_age)` and `erase_before(t)`; 7 more tests, 14 merged. Part 3, choice: why step back from `upper_bound(t)` rather than `lower_bound(t)` (only the first lands on a tick at exactly `t`); distractors "the same answer" (misses an exact tick), "faster" (both $O(\log n)$), "undefined on an empty map" (both return `end()`). Route B: a Python model on sorted lists with `bisect` recomputes all 14 values; g++ runs both solutions and both starters.
+
+### Paper 3: C++ (40 min, 6 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | Distractors or `wrong` | Checked by |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| K1 | 3 | `struct-padding` | `sy-memory`, `cp-memory`; systems `l4-object-layout` | `parts` (numeric, numeric), 300 | `struct Order { bool; double; int; char; }` on a 64-bit desktop. Part 1: 24. Part 2: smallest after reordering, 16 | Part 1: 14 (summed), 32 (8 each). Part 2: 14 (no tail padding), 24 (unchanged) | g++ `sizeof`, and the minimum over all 24 member orders |
+| K2 | 4 | `copy-or-move` | `cp-classes`, `cp-stl`; cpp `l19-moving-not-copying`, `l14-vector` | choice, 240 | A counting `Tick` pushed four ways after `reserve(4)`: copy constructor calls. Key 1 | 2 (the return copied), 3 (every `push_back`), 4 (every insertion) | g++ at `-O0`, `-O1`, `-fno-elide-constructors`, and clang++: 1 each time |
+| K3 | 3 | `shallow-copy` | `cp-memory`, `cp-classes`; cpp `l20-rule-of-five` | choice, 200 | A class owning `new double[n]` with a destructor and no copy: what goes wrong. Key: a double delete | nothing (deep copy assumed), does not compile, a leak | a counting `operator delete[]` sees one block deleted twice |
+| K4 | 4 | `dispatch-during-construction` | `cp-classes`; cpp `l21-virtual-dispatch` | choice, 240 | `name()` called in the constructors and destructors of a base and a derived class. Key `base tree tree base` | `tree tree tree tree`, `base tree base tree`, `tree tree` | g++ output |
+| K5 | 3 | `template-deduction` | `cp-classes`; cpp `l13-templates` | choice, 180 | `template <typename T> T clamp_to(T, T, T)`: which call fails. Key `clamp_to(101.5, 0, 100)` | explicit `<double>`, three doubles, three strings | `g++ -fsyntax-only` on each call: only the key fails |
+| K6 | 4 | `slot-pool` | `cp-memory`, `sy-latency`; systems `l15-no-allocation`, cpp `l23-own-smart-pointer` | C++ code, `allocCheck`, 1,200 | `SlotPool`: `acquire()` gives the most recently released slot, else the lowest unused, else -1; `release` ignores bad slots; no allocation after construction | | 11 tests; a Python model gives every value; g++ with a counting `operator new`; a `std::set` version fails the allocation test |
+
+### Paper 4: concurrency and systems (25 min, 5 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | Distractors or `wrong` | Checked by |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Y1 | 3 | `lost-updates` | `sy-concurrency`; systems `l7-data-races`, `l9-atomics` | choice, 200 | Two threads run `++hits` a million times each: which change gives exactly 2,000,000. Key `std::atomic<int>` | `volatile`, a sleep, a `static` local | native g++ `-pthread`: the atomic version ends at 2,000,000 in three runs |
+| Y2 | 4 | `release-acquire` | `sy-concurrency`; systems `l9-atomics` | choice, 240 | A release store read by a relaxed load: what can go wrong. Key: `ready` seen true with old `data` | nothing, spins forever, does not compile | no number |
+| Y3 | 3 | `lock-ordering` | `sy-concurrency`; systems `l8-locks-and-deadlock` | choice, 200 | `move_cash` locks source then destination; two threads move cash opposite ways and hang. Key `std::scoped_lock` on both | recursive mutexes, a sleep, reverse unlock order | native g++: 400,000 opposite transfers finish with the total kept |
+| Y4 | 4 | `cache-line-stride` | `sy-memory`; systems `l2-caches` | numeric, 240 | A 4,096 by 4,096 row-major `double` matrix summed by columns, 64-byte lines: lines loaded against row order. Key 8 | 64 (bytes in a line), 4,096 (row length) | an LRU simulation of a 256 by 256 matrix with 16 lines: 65,536 misses against 8,192 |
+| Y5 | 4 | `queue-sizing` | `sy-latency`; systems `l16-ring-buffer`, `l17-measuring-latency` | `parts` (numeric, numeric), 300 | 150,000 orders a second, 40 µs each. Part 1: 6 inside. Part 2: a power-of-two ring of four times that, 32 | Part 1: 6,000 (µs read as ms), 3,750 (divided). Part 2: 24 (not a power of two), 16 (rounded down) | Little's law; a replay of arrivals in nanoseconds has exactly 6 inside at every sample |
+
+### Paper 5: system design (45 min, 2 `longform`)
+
+**G1, `risk-gateway-design`** (difficulty 5, skills `sy-latency`, `sy-concurrency`, `ci-design`, `pace` 1,800; draws on systems `l15` to `l18`). Design the pre-trade risk check between strategies and one exchange: position, order-rate and price-band limits, 200,000 orders a second, at most 5 µs added at the 99th percentile; then how to test it. Rubric (10): the budget, one order every 5 µs (1); one pinned thread fed by a lock-free queue (2); preallocated flat state, no allocation (2); the three checks, open orders in the position check (2); limits updated without blocking the hot path (1); fails closed with a kill switch (1); replay against a reference and a latency gate from arrival times (1).
+
+**G2, `tail-latency-regression`** (difficulty 4, skills `sy-latency`, `sy-os`, `pace` 900; draws on systems `l17-measuring-latency`, `l11-processes`). The 99th percentile rose from 8 to 30 µs after a release and the median did not move: find the cause. Rubric (10): reads it as a rare slow event (2); three plausible causes (2); reproduces by replay on both builds (2); bisects the diff (1); times stages and counts faults, switches or cache misses (2); adds a latency gate (1).
+
+### Paper 6: fit and motivation (15 min, 2 `longform`)
+
+Both difficulty 3, `rk-behave`, `pace` 450; draws on recruiting `l8-why-this-firm`, `l11-stories-that-answer`, `l13-the-final-round`. **F1, `why-trading-systems`**: why build trading systems rather than software elsewhere; rubric as the strats F1 with "measured speed and concrete problems" as the reasons. **F2, `review-disagreement`**: a code review where you disagreed; rubric: the scene (1); both positions fairly (2); settled by evidence such as a test (2); the outcome honestly (2); what you do differently now (2); first person, under two minutes (1).
+
+### Generation, voice and acceptance
+
+**Scripts** (in `docs/briefs/mocks-scripts/`): `superday_developer_build.py` (route A; the C++ test values come from the references compiled by g++ with a counting `operator new` standing in for `allocCheck`), `superday_developer_check.py` (route B through `numbers_lib`, `check_wrongs()` then `report()`, exit 0), and `superday_lib.py`.
+
+**Acceptance.** As `mock-superday-strats`, for this file: validator 0 errors and no warning; `fresh-check --min-run 10` 0 hits; voice scan on a copy 0 and 0; the playthrough with and without `--mobile` passes both coding rounds, the pool item and every part; screenshots at 1280 and 390 px of the start card, each code item, a `parts` numeric item, a choice with a code block, a longform and the results page; `readiness-sums` OK once the mock's row in `docs/readiness.md` reads `exists`. Report at `docs/reports/exam-mock-superday-developer.md`; inbox bullets under `Raised later (mock mock-superday-developer):`.
