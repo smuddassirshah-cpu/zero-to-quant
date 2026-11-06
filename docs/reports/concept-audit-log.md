@@ -17,4 +17,4 @@
 | pairs-rep | L1 to L3 | 1 | 4 | 4 | 0 | 7 | 15 (all fixed before the audit) | 1 | no: 4 wrong in 3 levels exceeds the rule; fix pass 3 fixed, 5 disputed (1 to 4 unverified: paper host blocked; 8 on computation); disputes to a fresh reader, then round 2 |
 | puzzles | L4 to L5 | 2 | 0 | 3 | 0 | 3 | 9 (all fixed before round 2) | 0 | yes (round 2: 0 new wrong; fix pass 3 fixed, 0 disputed; gates green; course fully closed) |
 | systems | L4 | 2 | 0 | 7 | 1 | 7 | 10 (all fixed before round 2) | 1 | yes (round 2: 0 new wrong; fix pass 8 fixed, 0 disputed; q17-rank now names nearest rank, key unchanged; gates green; course fully closed) |
-| ito | L1 to L3 | 1 | 1 | 5 | 1 | 7 | 14 (all fixed before the audit) | 0 | pending fix pass |
+| ito | L1 to L3 | 1 | 1 | 5 | 1 | 7 | 14 (all fixed before the audit) | 0 | yes (1 wrong is within the rule; fix pass 7 fixed, 0 disputed; gates green; L4 not yet audited) |
