@@ -10,7 +10,7 @@
    "skills": [
     "cz-contour"
    ],
-   "prose": "The **argument principle**: $\\frac{1}{2\\pi i}\\oint \\frac{p'(z)}{p(z)}\\,dz$ counts the roots of $p$ inside the path. Near a root $a$, $\\frac{p'}{p}$ behaves like $\\frac{1}{z - a}$, residue 1. Write `count_roots_inside(coeffs, n=4096)` on the unit circle, rounded to a whole number.",
+   "prose": "The **argument principle**: $\\frac{1}{2\\pi i}\\oint \\frac{p'(z)}{p(z)}\\,dz$ counts the roots of $p$ inside the path, with multiplicity, if none lies on it. Near a simple root $a$, $\\frac{p'}{p}$ behaves like $\\frac{1}{z - a}$, residue 1. Write `count_roots_inside(coeffs, n=4096)` on the unit circle, rounded to a whole number.",
    "question": "Fix `count_roots_inside`.",
    "widget": {
     "kind": "code",
@@ -73,7 +73,7 @@
     "cz-fourier"
    ],
    "title": "Merton jump pricing",
-   "prose": "Merton's model adds jumps at rate $\\lambda$, each with log size $J \\sim N(\\mu_J, \\delta_J^2)$. Its characteristic function multiplies Black-Scholes's by $e^{\\lambda T(E[e^{iuJ}] - 1)}$. The drift must drop by $\\lambda\\kappa$, $\\kappa = e^{\\mu_J + \\delta_J^2/2} - 1$, so the forward stays $S_0e^{rT}$. `carr_madan_call` is lesson 13's pricer.",
+   "prose": "Merton's model adds jumps at rate $\\lambda$, each with log size $J \\sim N(\\mu_J, \\delta_J^2)$. Its characteristic function multiplies Black-Scholes's by $e^{\\lambda T(E[e^{iuJ}] - 1)}$. The drift gains the term $-\\lambda\\kappa$, with $\\kappa = e^{\\mu_J + \\delta_J^2/2} - 1$, so the forward stays $S_0e^{rT}$. `carr_madan_call` is lesson 13's pricer.",
    "question": "Write `merton_cf(u, S0, r, sigma, T, lam, mu_j, delta_j)`.",
    "widget": {
     "kind": "code",
@@ -139,7 +139,7 @@
     "correct": "Five of five: £11.661674788 at $K = 100$, matching the series.",
     "generic": "Not quite right. Read the first failing test.",
     "byKey": {
-     "test-1": "Test 1 failed the martingale check: without $-\\lambda\\kappa$ the forward is $S_0e^{(r - \\lambda\\kappa)T}$ too high. Lower the drift.",
+     "test-1": "Test 1 failed the martingale check: without $-\\lambda\\kappa$ the forward is $S_0e^{(r + \\lambda\\kappa)T}$, about £100.76 here. Add $-\\lambda\\kappa$ to the drift.",
      "error": "Your code stopped with an error. `u` is complex: use `np.exp`."
     }
    },
@@ -219,7 +219,7 @@
    "kind": "longform",
    "title": "A faulty FFT pricer",
    "prompt": "A colleague's FFT pricer for $S_0 = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$ returns prices about 5% too high at every strike. They explode for deep in-the-money strikes. The code uses $\\alpha = 0$, passes the characteristic function of $S_T$ instead of $\\ln S_T$, omits $e^{-rT}$ and calls `np.fft.ifft`. Diagnose each fault, say which symptom it causes, and give the checks that would have caught them.",
-   "model": "**1. $\\alpha = 0$: the explosion.** The denominator $\\alpha^2 + \\alpha - v^2 + i(2\\alpha + 1)v$ becomes $iv(1 + iv)$, which is 0 at $v = 0$. So $\\psi$ has a pole on the line of integration, $|\\psi(10^{-6})| \\approx 10^8$, and the integral does not exist. Undamped, $C(k) \\to S_0$ as $k \\to -\\infty$, so the transform fails worst for deep in-the-money strikes, where prices explode. Fix: $\\alpha$ between about 0.5 and 3.\n\n**2. No discount: the 5% bias.** $\\varphi$ gives an expectation at $T$. Without $e^{-rT}$ every price is $e^{0.05} = 1.0513$ times too large: £10.9864 instead of £10.4506 at $K = 100$. A clean ratio at every strike points at this.\n\n**3. The characteristic function of $S_T$.** The Carr-Madan formula integrates over $s = \\ln S_T$, so it needs $E[e^{iu\\ln S_T}]$. $E[e^{iuS_T}]$ is a different function with no closed form here. The prices are then not a clean multiple of the right ones. Part of the error blamed on bias comes from here.\n\n**4. `ifft` instead of `fft`.** The inversion needs $\\sum_j e^{-2\\pi ijm/N}x_j$. `np.fft.ifft` uses $e^{+2\\pi ijm/N}$ and divides by $N$, so it evaluates the wrong sum and scales it by $1/4{,}096$. Check the sign convention of any library against one strike priced by direct quadrature.\n\n**Checks that catch them.** $\\varphi(0) = 1$ and $\\varphi(-i) = S_0e^{rT} = £105.1271$ test the function passed in: the $S_T$ version fails both. A Black-Scholes $\\varphi$ must reproduce £10.4506 at $K = 100$, £16.6994 at 90 and £6.0401 at 110. Put-call parity $C - P = S_0 - Ke^{-rT}$ gives the put £5.5735; a missing discount breaks it. Finally, the price must not move as $\\alpha$ changes between 0.5 and 3.",
+   "model": "**1. $\\alpha = 0$: the explosion.** The denominator $\\alpha^2 + \\alpha - v^2 + i(2\\alpha + 1)v$ becomes $iv(1 + iv)$, which is 0 at $v = 0$. So $\\psi$ has a pole on the line of integration, $|\\psi(10^{-6})| \\approx 10^8$, and the integral does not exist. Undamped, $C(k) \\to S_0$ as $k \\to -\\infty$, so the transform fails worst for deep in-the-money strikes, where prices explode. Fix: $\\alpha$ between about 0.5 and 3.\n\n**2. No discount: the 5% bias.** $\\varphi$ gives an expectation at $T$. Without $e^{-rT}$ every price is $e^{0.05} = 1.0513$ times too large: £10.9864 instead of £10.4506 at $K = 100$. A clean ratio at every strike points at this.\n\n**3. The characteristic function of $S_T$.** The Carr-Madan formula integrates over $s = \\ln S_T$, so it needs $E[e^{iu\\ln S_T}]$. $E[e^{iuS_T}]$ is a different function with no closed form here. Worse, the pricer evaluates it at $v - (\\alpha + 1)i$, which needs $E[e^{(\\alpha + 1)S_T}]$. That is infinite for a lognormal $S_T$, so no price comes out.\n\n**4. `ifft` instead of `fft`.** The inversion needs $\\sum_j e^{-2\\pi ijm/N}x_j$. `np.fft.ifft` uses $e^{+2\\pi ijm/N}$ and divides by $N$, so it evaluates the wrong sum and scales it by $1/4{,}096$. Check the sign convention of any library against one strike priced by direct quadrature.\n\n**Checks that catch them.** $\\varphi(0) = 1$ and $\\varphi(-i) = S_0e^{rT} = £105.1271$ test the function passed in. Every characteristic function passes the first; the $S_T$ version fails the second, as $E[e^{S_T}]$ is infinite. A Black-Scholes $\\varphi$ must reproduce £10.4506 at $K = 100$, £16.6994 at 90 and £6.0401 at 110. Put-call parity $C - P = S_0 - Ke^{-rT}$ gives the put £5.5735; a missing discount breaks it. Finally, the price must not move as $\\alpha$ changes between 0.5 and 3.",
    "rubric": [
     {
      "points": 2,
@@ -332,7 +332,7 @@
    "skills": [
     "cz-contour"
    ],
-   "prose": "Use Jordan's lemma and the upper half plane for $\\int_{-\\infty}^{\\infty} \\frac{\\cos 2x}{1 + x^2}\\,dx = \\operatorname{Re}\\int \\frac{e^{2ix}}{1 + x^2}\\,dx$.",
+   "prose": "Close in the upper half plane, where $|e^{2iz}| \\le 1$, for $\\int_{-\\infty}^{\\infty} \\frac{\\cos 2x}{1 + x^2}\\,dx = \\operatorname{Re}\\int \\frac{e^{2ix}}{1 + x^2}\\,dx$.",
    "question": "What is the integral?",
    "widget": {
     "kind": "numeric",
@@ -402,7 +402,7 @@
     "generic": "Not quite. Independent sums multiply characteristic functions.",
     "byKey": {
      "sum": "You added 250 copies of $\\varphi$. The sum's characteristic function is the product, $\\varphi^{250}$.",
-     "sd": "You scaled the standard deviation by 250. Variances add: $250 \\times 0.0001 = 0.025$, half of it 0.0125."
+     "sd": "You used $250 \\times 0.01 = 2.5$, the scaled sd, as the variance. Variances add: $250 \\times 0.0001 = 0.025$, half of it 0.0125."
     }
    },
    "explain": {
