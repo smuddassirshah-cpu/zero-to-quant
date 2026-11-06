@@ -14,7 +14,7 @@
 | research-int | L4 | 1 | 0 | 5 | 4 | 9 | 6 (all fixed before the audit) | 0 | yes (fix pass 8 fixed, 0 disputed, 1 deferred: l20 four pound-typed rows, see notes; gates green; course fully closed) |
 | systems | L4 | 1 | 2 | 7 | 2 | 10 | 0 | 1 | no: 2 wrong in 1 level exceeds the rule; fix pass 11 fixed, 0 disputed, gates green (l17 timing key 80 to 66.7, one-read bracket model now stated, recomputed by the orchestrator); round 2 started |
 | coding-int | L4 | 1 | 0 | 4 | 1 | 5 | 11 (all fixed before the audit) | 0 | yes (fix pass 5 fixed, 0 disputed; gates green; course fully closed) |
-| pairs-rep | L1 to L3 | 1 | 4 | 4 | 0 | 7 | 15 (all fixed before the audit) | 1 | no: 4 wrong in 3 levels exceeds the rule; fix pass 3 fixed, 5 disputed (1 to 4 unverified: paper host blocked; 8 on computation); disputes to a fresh reader, then round 2 |
+| pairs-rep | L1 to L3 | 1 | 4 | 4 | 0 | 7 | 15 (all fixed before the audit) | 1 | no: 4 wrong in 3 levels exceeds the rule; fix pass 3 fixed, 5 disputed; third reader upheld 1, 2, 3, 8 (applied) and left 4 unverified (needs GGR §2.2); gates green; round 2 started |
 | puzzles | L4 to L5 | 2 | 0 | 3 | 0 | 3 | 9 (all fixed before round 2) | 0 | yes (round 2: 0 new wrong; fix pass 3 fixed, 0 disputed; gates green; course fully closed) |
 | systems | L4 | 2 | 0 | 7 | 1 | 7 | 10 (all fixed before round 2) | 1 | yes (round 2: 0 new wrong; fix pass 8 fixed, 0 disputed; q17-rank now names nearest rank, key unchanged; gates green; course fully closed) |
 | ito | L1 to L3 | 1 | 1 | 5 | 1 | 7 | 14 (all fixed before the audit) | 0 | yes (1 wrong is within the rule; fix pass 7 fixed, 0 disputed; gates green; L4 not yet audited) |
