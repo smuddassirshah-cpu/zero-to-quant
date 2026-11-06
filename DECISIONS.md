@@ -176,3 +176,4 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 Session U (6 Nov)
 - algebra homework-3 `items[6]` (`h-power-in-n`) proves $g^m \in N$ for $|G/N| = m$ instead of the brief's Euler or coset-product `order` item. Kept: both named proofs are already graded in l13 s5 and l11 s8, and the substitute is a sound exercise (review-algebra-3-4 finding 15).
 - Validator warning 584 (`[table-slip-key]`): a table `feedback.byKey` key on a cell id with `wrong[]` is dead; key on the wrong id. Raised after its third sighting (odes L4, algebra L1 to L2, algebra L3 to L4), per protocol 6.
+- `fresh-check.mjs` (588) is a reader's triage aid, not a gate, until its 588-refinement inbox bullet lands: authors and second readers run `--min-run 10` sorted by `share` and judge each hit. The per-exam `fresh.py` number checks stay. Reason: at `--min-run 12` the reviewed session U exams still show 7 to 23 hits, mostly LaTeX skeletons.
