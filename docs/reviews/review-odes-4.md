@@ -57,3 +57,22 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Numerics mismatch: yes (the stiffness claim, the sign convention for $\lambda$ and $z$, and the return shape of `rk4`/`euler`).
 
 ## Fix pass
+
+## Fix pass
+
+13 findings: 12 fixed, 0 declined, 1 deferred. Each changed number recomputed twice and added to `docs/reports/odes-L4-numbers.py` (294 of 294 checks, exit 0).
+
+- l17 quiz[0] error: fixed. Asked for 7 places; answer 0.9048375 (exact, $1 - 0.1 + 0.005 - 0.0001667 + 0.0000042$), tol 5e-8; accept, feedback and explain agree. Script checks 7 places and both terms.
+- l16 screens[7] stiffness error: fixed. Now "Beside slower rates in a system, a fast one like this makes it stiff (`numerics` lesson 12)."
+- l15 screens[9] floating leg: fixed. Retitled "A rate-linked income", flat 5% discounting stated, question reworded.
+- l15 quiz[0] option `d`: fixed. Option now $2/s + 3/s^2$ with a matching why.
+- Sign convention: fixed. One sentence in l16 screens[7] ($\mu = -\lambda$, factor $1 + h\mu$) and one in l17 screens[7] (`numerics` writes $z < 0$, limit $-2.7853$). The odes convention is unchanged.
+- l17 screens[11] byKey `euler`: fixed ("Euler's limit, $40/2 = 20$").
+- l16 screens[7] "stay bounded": fixed ("shrink").
+- l14 screens[9] tail bound: fixed ("below $10^{-18}$"); screens[6] growth claim: fixed.
+- l18 screens[7] accept: fixed (unrounded formula, tol 0.00015). Graded answer 0.0367 unchanged.
+- review-4 items[3] explain: fixed (0.735759 - 0.135335 = 0.6004); script checks moved to 6 places.
+- homework-4 items[5] tests[6]: fixed. Starter `match_to_4dp` body is now `raise NotImplementedError`, so the starter fails all 7 tests.
+- numerics l11 screens[7] rk4/euler return shape: deferred to the numerics owner (no odes edit). No odes screen implies the numerics functions behave identically (l16 and l17 starters state "Returns arrays t and y"), so no odes sentence added. Suggested numerics edit: "Unlike odes lessons 16 and 17, both return only y at t0 + n*h."
+- Gates: validator 0 errors; voice scan 0 and 0; playthrough "All passed" desktop and `--mobile` for l14 to l18, review-4 and homework-4 (`--local-cdn`).
+- Graded answers changed: l17 quiz[0] answer 0.904838 to 0.9048375 (tol 5e-7 to 5e-8); l18 screens[7] tolerance widened only. No wrong-answer values changed except l15 quiz[0] option `d` text.
