@@ -22,8 +22,23 @@ Other points considered and left: l19 screens[11] (Vickrey) states "worth £100 
 
 ## Overlap with the earlier reads
 
-(filled after the blind phase; see below)
+Read after the commits of the ledger and findings above: `docs/reviews/review-puzzles.md` (second read of the whole course with its fix pass, 35 items) and `docs/reviews/audit-puzzles-4-5.md` (round-1 audit, 5 findings, with its fix pass, 5 fixed). Every finding of both earlier reads had been applied before this audit, so the content read here is the post-fix course: "both" can only count findings that survived a fix pass, and none did. The fixed lines were verified in this ledger (l23 s5 prose and summary, l24 s3 hints, l23 s6 byKey.d1, l24 s7 option c, l21 q1 explain, l21 s2 explain; l28 s0 byKey.b, l30 s5 options, l19 s11 explain, l25 q1 option c) and all read `correct`. Mechanical items of the second read (shuffle, pace, precision, display width) are not counted.
+
+| Conceptual findings | Count | Items |
+|---|---:|---|
+| This audit only (round 2) | 3 | 1 to 3 above: l22 s2 hint "at fair odds" for a replication that needs only evens; l26 s3 "the least noisy" across three candidates when the raw maximum has the smaller variance; l27 summary "no longer independent or uniform" when a total leaves each die uniform on its range |
+| Earlier reads only | 9 | round-1 audit: l23 s5 optional stopping with "finite bankroll" as the hypothesis (imprecise); l23 s6 "the product stays 1" (wrong); l24 s7 "2/3 by Laplace's rule" (wrong); l21 q1 "even a large edge stakes less than half" (misleading); l21 s2 growth described as the mean (imprecise). Second read: l28 s0 byKey.b named the wrong slip; l30 s5 option c's why named a slip that gives another value; l19 s11 "backward induction" for a dominance argument; l25 q1 option c's why. All nine fixed before this read, so none was available to find. |
+| Both | 0 | none survived the fix pass |
+
+New `wrong` found here that neither earlier read found: 0 (the three findings are `imprecise`). Convergence rule: at most one new `wrong` per three levels, so these two levels pass.
+
+One disagreement with round 1 is recorded rather than hidden: its Level 5 paragraph accepts "least noisy" as meaning "least noisy among the unbiased estimators (the UMVUE)". That is what the hint and option c's `why` say, but the graded feedback line reads "fair on average and the least noisy" against a screen whose other options include the bare maximum, which has the smaller variance; finding 2 asks for the qualifier on that line. Round 1's own ledger method (variance ratio against $2\bar X - 1$ only) did not compare against the raw maximum, which is where the qualifier is needed.
 
 ## Checks
 
-(filled after the blind phase; see below)
+- Validator (from `app/`): `node tools/validate.mjs 2>&1 | tail -3`: "O2 warnings: O2-long-sentence 714, O2-long-explain 48, O2-unshuffled-numeric 73, O2-no-slip 46, O2-prose-prompt 8, O2-explain-answer 615" then "0 errors, 4279 warnings". `git checkout app/content/manifest.json` afterwards: "Updated 0 paths from the index" (the rewrite matched the committed file); nothing under `app/` is staged.
+- Voice scan: `VOICE_BASE=app/content/courses/puzzles/ python3 docs/reviews/voice-scan.py 35 --summary`: "# explanations over three sentences: 0" and "# sentences scanned: 13318; over 35 words: 0".
+- Number scripts: the course has no separate `puzzles-L4-numbers.py` or `-L5-`; the round-1 concepts scripts carry the number checks. `python3 -I docs/reports/puzzles-L4-concepts.py`: "puzzles L4 concepts: all checks passed", exit 0. `python3 -I docs/reports/puzzles-L5-concepts.py`: "puzzles L5 concepts: all checks passed", exit 0. (Run only after the blind phase.)
+- This audit's scripts: `python3 -I docs/reports/puzzles-L4-concepts-r2.py`: "ALL 155 CHECKS PASSED (puzzles L4, round 2)", exit 0. `python3 -I docs/reports/puzzles-L5-concepts-r2.py`: "145 checks run (puzzles L5, round 2); 2 EXPECTED_FAIL" (findings 2 and 3), exit 1; the corrected asserts sit in comments beside the two EXPECTED_FAIL checks, ready to enable once the fix pass lands, after which the script exits 0.
+- Playthrough (from `app/`, `--local-cdn <PKGS>`): `--set puzzles/review-4 --set puzzles/homework-4 --set puzzles/review-5 --set puzzles/homework-5 --lesson puzzles/l21-kelly --lesson puzzles/l28-duels`: "ok puzzles/l21-kelly 15 checks, 10.2 s, quiz 3/3", "ok puzzles/l28-duels 15 checks, 8.7 s, quiz 3/3", "ok puzzles/review-4 9 items, recorded 9 of 9", "ok puzzles/homework-4 9 items, marked 9 of 9 right, 43 of 43 marks, 1 longform marked by the button", "ok puzzles/review-5 10 items, recorded 10 of 10", "ok puzzles/homework-5 10 items, marked 10 of 10 right, 47 of 47 marks, 1 longform marked by the button", then "browser relaunches: 0" and "All passed." No content was changed by this audit.
+- Engine or validator limits hit: none; no inbox bullets added.
