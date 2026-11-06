@@ -1,0 +1,869 @@
+{
+ "id": "l7-lp-in-code",
+ "course": "convex",
+ "title": "Solving a linear programme in code",
+ "minutes": 14,
+ "objectives": [
+  "Solve a linear programme with SciPy and read its status and slack."
+ ],
+ "skills": [
+  "cv-lp"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "The desk in SciPy",
+   "prose": "Here is the desk problem solved with `scipy.optimize.linprog`. Read each field of the result `res`.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> c = np.array([60, 40])",
+      ">>> A = [[1, 1], [3, 1], [1, 0]]",
+      ">>> b = [10, 18, 5]",
+      ">>> res = linprog(-c, A_ub=A, b_ub=b, method=\"highs\")",
+      ">>> res.x",
+      "array([4., 6.])",
+      ">>> res.fun",
+      "-480.0",
+      ">>> res.status",
+      "0",
+      ">>> res.slack",
+      "array([0., 0., 1.])"
+     ],
+     "title": "Python",
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Tap the output line that shows the £1m of unused liquidity room.",
+   "widget": {
+    "kind": "tap-regions",
+    "answer": [
+     "l12"
+    ],
+    "max": 1,
+    "only": [
+     "l6",
+     "l8",
+     "l10",
+     "l12"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Unused room is the slack $\\mathbf{b} - \\mathbf{A}\\mathbf{x}$."
+    },
+    {
+     "rung": "point",
+     "text": "`res.slack` lists one number per row of `A_ub`.",
+     "highlight": [
+      "l11",
+      "l12"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The third entry, 1, is liquidity."
+    }
+   ],
+   "feedback": {
+    "correct": "`res.slack` is $(0, 0, 1)$: budget and risk are used up, £1m of liquidity room is left.",
+    "generic": "Not quite right. Find the field that holds $\\mathbf{b} - \\mathbf{A}\\mathbf{x}$.",
+    "byKey": {
+     "l6": "`res.x` is the plan $(4, 6)$, not the room left.",
+     "l8": "`res.fun` is the objective value, $-480$ because we passed $-\\mathbf{c}$.",
+     "l10": "`res.status` 0 means solved."
+    }
+   },
+   "explain": {
+    "text": "`res.x` is $(4, 6)$, `res.fun` is $-480$, `res.status` 0 means solved and `res.slack` is $(0, 0, 1)$. The fields match the picture of lesson 6.",
+    "canvas": {
+     "highlight": [
+      "l12"
+     ]
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "What linprog solves",
+   "prose": "`linprog` solves\n$$\\min \\mathbf{c}^T\\mathbf{x} \\ \\text{s.t.}\\ \\mathbf{A}_{ub}\\mathbf{x} \\le \\mathbf{b}_{ub},\\ \\mathbf{A}_{eq}\\mathbf{x} = \\mathbf{b}_{eq},\\ \\ell_i \\le x_i \\le u_i.$$\nIt always minimises, and `bounds` defaults to $(0, \\infty)$ for every variable.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> res = linprog(-c, A_ub=A, b_ub=b, method=\"highs\")",
+      ">>> res.x",
+      "array([4., 6.])",
+      ">>> res.fun",
+      "-480.0"
+     ],
+     "title": "Python",
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "We passed `-c`. What is the desk's best profit?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "£480k: the solver minimised $-60x - 40y$, so the profit is $-$`res.fun`.",
+      "correct": true
+     },
+     {
+      "id": "neg",
+      "text": "$-$£480k: the plan loses money.",
+      "why": "The minus sign comes from passing $-\\mathbf{c}$, not from a loss."
+     },
+     {
+      "id": "unk",
+      "text": "Unknown until we compute $60x + 40y$ ourselves.",
+      "why": "`res.fun` already holds it, with the sign flipped."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Maximise by minimising the negative, then flip the sign of `res.fun` back.",
+    "generic": "Not quite right. Remember which way `linprog` optimises.",
+    "byKey": {
+     "neg": "$-$`res.fun` is the profit, £480k.",
+     "unk": "`res.fun` is $\\mathbf{c}^T\\mathbf{x}$ for the $\\mathbf{c}$ we passed."
+    }
+   },
+   "explain": {
+    "text": "`linprog` minimised $(-\\mathbf{c})^T\\mathbf{x}$ and found $-480$. The best profit is therefore £480k."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Bounds for capacities",
+   "prose": "The venue split has an equality for the total and a capacity per venue: 4,000, 3,000 and 6,000 shares. Capacities go in `bounds`, one pair per variable.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> res = linprog([0.30, 0.25, 0.40],",
+      "...     A_eq=[[1, 1, 1]], b_eq=[10000],",
+      "...     bounds=BOUNDS, method=\"highs\")",
+      ">>> res.x",
+      "array([4000., 3000., 3000.])",
+      ">>> res.fun",
+      "3150.0"
+     ],
+     "title": "Python",
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Which `BOUNDS` gives the run shown?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`[(0, 4000), (0, 3000), (0, 6000)]`",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "`(0, 6000)`",
+      "why": "One pair applies to every variable, so venues 1 and 2 could take 6,000 each."
+     },
+     {
+      "id": "rev",
+      "text": "`[(4000, 0), (3000, 0), (6000, 0)]`",
+      "why": "Each pair is (lower, upper). These lower bounds sit above the upper ones."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each venue has its own limit."
+    },
+    {
+     "rung": "point",
+     "text": "A pair is (lower, upper).",
+     "highlight": [
+      "l3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`[(0, 4000), (0, 3000), (0, 6000)]`."
+    }
+   ],
+   "feedback": {
+    "correct": "One (lower, upper) pair per venue. The run returns the split $(4000, 3000, 3000)$ at 3,150p.",
+    "generic": "Not quite right. Give each venue its own (lower, upper) pair.",
+    "byKey": {
+     "one": "A single pair caps every venue at 6,000.",
+     "rev": "The order is (lower, upper)."
+    }
+   },
+   "explain": {
+    "text": "With per-venue bounds the solver fills venues 2 and 1, then puts 3,000 at venue 3. `res.fun` is 3,150 pence, £31.50.",
+    "canvas": {
+     "highlight": [
+      "l5",
+      "l7"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Solved, infeasible, unbounded",
+   "prose": "`res.status` is 0 when solved, 2 when infeasible and 3 when unbounded. Three runs follow: the running portfolio under a 50% cap, then with a 10% floor. The third is the desk with only $x \\le 5$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> m = np.array([0.05, 0.08, 0.11])",
+      ">>> r1 = linprog(-m, A_eq=[[1, 1, 1]], b_eq=[1],",
+      "...     bounds=[(0, 0.5)] * 3, method=\"highs\")",
+      ">>> r2 = linprog(-m, A_ub=[-m], b_ub=[-0.10],",
+      "...     A_eq=[[1, 1, 1]], b_eq=[1],",
+      "...     bounds=[(0, 0.5)] * 3, method=\"highs\")",
+      ">>> r3 = linprog([-60, -40], A_ub=[[1, 0]], b_ub=[5],",
+      "...     method=\"highs\")"
+     ],
+     "title": "Python",
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Fill in each run's status, and $-$`r1.fun` as a decimal.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Run",
+     "status",
+     "$-$fun"
+    ],
+    "rows": [
+     [
+      "r1",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       }
+      },
+      {
+       "edit": true,
+       "answer": 0.095,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "r2",
+      {
+       "edit": true,
+       "answer": 2,
+       "tol": {
+        "abs": 0
+       }
+      },
+      ""
+     ],
+     [
+      "r3",
+      {
+       "edit": true,
+       "answer": 3,
+       "tol": {
+        "abs": 0
+       }
+      },
+      ""
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "r1 is level 1's capped best return."
+    },
+    {
+     "rung": "point",
+     "text": "Under the cap the best is $(0, 0.5, 0.5)$ at 9.5%, so a 10% floor cannot be met.",
+     "highlight": [
+      "l2",
+      "l4",
+      "l7"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "r3 lets $y$ grow for ever."
+    }
+   ],
+   "feedback": {
+    "correct": "0 with 0.095, then 2, then 3. Check `status` before reading `x`.",
+    "generic": "Not quite right. Match each run to solved, infeasible or unbounded."
+   },
+   "explain": {
+    "text": "r1 returns $(0, 0.5, 0.5)$ and 9.5%. r2 asks for 10%, above the 9.5% maximum, so it is infeasible. r3 has no limit on $y$, so it is unbounded."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "A plan that earns nothing",
+   "prose": "A colleague runs the desk problem with `c = [60, 40]` and reports: \"Solved. The best plan is to invest nothing.\"",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> res = linprog(c, A_ub=A, b_ub=b, method=\"highs\")",
+      ">>> res.x",
+      "array([0., 0.])",
+      ">>> res.fun",
+      "0.0",
+      ">>> res.status",
+      "0"
+     ],
+     "title": "Python",
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "What went wrong?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sign",
+      "text": "`linprog` minimised the profit; they should pass `-c` and flip the sign of `res.fun`.",
+      "correct": true
+     },
+     {
+      "id": "status",
+      "text": "Nothing: status 0 means the answer is right.",
+      "why": "Status 0 means the problem they wrote was solved. They wrote the wrong problem."
+     },
+     {
+      "id": "bounds",
+      "text": "The default bounds forbid positive amounts.",
+      "why": "The defaults are $(0, \\infty)$, so positive amounts are allowed."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which way does `linprog` optimise?"
+    },
+    {
+     "rung": "point",
+     "text": "It minimises $60x + 40y$, and the cheapest plan is $(0, 0)$.",
+     "highlight": [
+      "l1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Pass `-c` to maximise."
+    }
+   ],
+   "feedback": {
+    "correct": "They minimised profit. With `-c` the solver returns $(4, 6)$ and $-480$.",
+    "generic": "Not quite right. Ask what $\\min 60x + 40y$ over the region is.",
+    "byKey": {
+     "status": "The solver did its job on the problem it was given: the least profit, at $(0, 0)$.",
+     "bounds": "Bounds of $(0, \\infty)$ allow $(4, 6)$. The objective's sign is the slip."
+    }
+   },
+   "explain": {
+    "text": "$\\min 60x + 40y$ over the region is 0 at the origin, so the solver is right about the wrong problem. Maximise by passing $-\\mathbf{c}$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A short that never happens",
+   "prose": "A long-short book may hold each weight from $-0.5$ to 1, fully invested, on the running assets. The colleague wrote both limits as rows and left `bounds` out.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> # long-short: each weight at least -0.5, at most 1",
+      ">>> res = linprog(-m, A_ub=np.vstack([-np.eye(3), np.eye(3)]),",
+      "...     b_ub=[0.5] * 3 + [1] * 3, A_eq=[[1, 1, 1]], b_eq=[1],",
+      "...     method=\"highs\")",
+      ">>> res.x",
+      "array([0., 0., 1.])",
+      ">>> -res.fun",
+      "0.11"
+     ],
+     "title": "Python",
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "With `bounds=[(None, None)] * 3` added, what best return does the solver find?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.125,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "12.5%: $(-0.5, 0.5, 1)$.",
+    "unit": "%",
+    "label": "Best return",
+    "wrong": [
+     {
+      "id": "default",
+      "value": 0.11,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The default bounds keep every weight at or above 0."
+    },
+    {
+     "rung": "point",
+     "text": "Freed, the solver shorts the worst asset to $-0.5$ and puts 1 in the best.",
+     "highlight": [
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.5(0.05) + 0.5(0.08) + 1(0.11) = 0.125$."
+    }
+   ],
+   "feedback": {
+    "correct": "12.5% at $(-0.5, 0.5, 1)$. The default bounds had silently forbidden the short.",
+    "generic": "Not quite right. Free the bounds, then short the lowest-return asset as far as allowed.",
+    "byKey": {
+     "default": "11% is what the default bounds allow: no shorting at all."
+    }
+   },
+   "explain": {
+    "text": "The rows allow $w_i \\ge -0.5$, but the default $(0, \\infty)$ bounds still applied. Freed, the optimum is $(-0.5, 0.5, 1)$ with $-0.025 + 0.04 + 0.11 = 0.125$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Nothing to optimise",
+   "prose": "Two equalities in two variables, $x + y = 10$ and $x - y = 2$, leave a single feasible point. The solver still reports status 0.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> res = linprog([1, 1], A_eq=[[1, 1], [1, -1]], b_eq=[10, 2],",
+      "...     method=\"highs\")",
+      ">>> res.status",
+      "0",
+      ">>> res.x",
+      "array([?, ?])"
+     ],
+     "title": "Python",
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "What is the first entry of `res.x`?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "6: the point is $(6, 4)$.",
+    "label": "res.x[0]",
+    "wrong": [
+     {
+      "id": "y",
+      "value": 4,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "half",
+      "value": 5,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the two equations."
+    },
+    {
+     "rung": "point",
+     "text": "$2x = 12$.",
+     "highlight": [
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$x = 6$ and $y = 4$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(6, 4)$, the only feasible point, so the objective plays no part.",
+    "generic": "Not quite right. Solve the two equations together.",
+    "byKey": {
+     "y": "4 is the second entry, $y$.",
+     "half": "5 would split 10 evenly, ignoring $x - y = 2$."
+    }
+   },
+   "explain": {
+    "text": "Adding gives $2x = 12$, so $x = 6$ and $y = 4$. With one feasible point the optimum is that point, whatever $\\mathbf{c}$ is."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Four small solvers",
+   "prose": "Write four functions on `linprog` with `method=\"highs\"`. `solve_desk` maximises; `min_cost` minimises with equalities and bounds; `max_return` and `target_feasible` work on the running portfolio under a cap.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> solve_desk([60, 40], A, b)",
+      "(array([4., 6.]), 480.0)",
+      ">>> max_return(m, 0.5)",
+      "0.095",
+      ">>> target_feasible(m, 0.5, 0.10)",
+      "False"
+     ],
+     "title": "Python",
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Complete all four functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.optimize import linprog\n\n\ndef solve_desk(c, A, b):\n    # maximise c @ x, A @ x <= b, x >= 0; return (x, profit)\n    pass\n\n\ndef min_cost(c, A_eq, b_eq, bounds):\n    # minimise c @ x; return (x, cost)\n    pass\n\n\ndef max_return(m, cap):\n    # best m @ w, sum w = 1, 0 <= w_i <= cap\n    pass\n\n\ndef target_feasible(m, cap, target):\n    # can m @ w >= target be met? True or False\n    pass\n",
+    "examples": [
+     {
+      "call": "solve_desk([60, 40], [[1, 1], [3, 1], [1, 0]], [10, 18, 5])[1]",
+      "expect": "480"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(solve_desk([60, 40], [[1, 1], [3, 1], [1, 0]], [10, 18, 5])[0], 6).tolist()",
+      "expect": "[4.0, 6.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "solve_desk([60, 40], [[1, 1], [3, 1], [1, 0]], [10, 18, 5])[1]",
+      "expect": "480",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "np.round(solve_desk([150, 40], [[1, 1], [3, 1], [1, 0]], [10, 18, 5])[0], 6).tolist()",
+      "expect": "[5.0, 3.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "solve_desk([150, 40], [[1, 1], [3, 1], [1, 0]], [10, 18, 5])[1]",
+      "expect": "870",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "np.round(min_cost([0.30, 0.25, 0.40], [[1, 1, 1]], [10000], [(0, 4000), (0, 3000), (0, 6000)])[0], 6).tolist()",
+      "expect": "[4000.0, 3000.0, 3000.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "min_cost([0.30, 0.25, 0.40], [[1, 1, 1]], [10000], [(0, 4000), (0, 3000), (0, 6000)])[1]",
+      "expect": "3150",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "max_return([0.05, 0.08, 0.11], 0.5)",
+      "expect": "0.095",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "max_return([0.05, 0.08, 0.11], 1)",
+      "expect": "0.11",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "target_feasible([0.05, 0.08, 0.11], 0.5, 0.10)",
+      "expect": "False",
+      "compare": "equal"
+     },
+     {
+      "call": "target_feasible([0.05, 0.08, 0.11], 0.5, 0.09)",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "solution": "import numpy as np\nfrom scipy.optimize import linprog\n\n\ndef solve_desk(c, A, b):\n    res = linprog(-np.array(c, dtype=float), A_ub=A, b_ub=b,\n                  method=\"highs\")\n    return res.x, -res.fun\n\n\ndef min_cost(c, A_eq, b_eq, bounds):\n    res = linprog(c, A_eq=A_eq, b_eq=b_eq, bounds=bounds,\n                  method=\"highs\")\n    return res.x, res.fun\n\n\ndef max_return(m, cap):\n    n = len(m)\n    res = linprog(-np.array(m), A_eq=[[1] * n], b_eq=[1],\n                  bounds=[(0, cap)] * n, method=\"highs\")\n    return -res.fun\n\n\ndef target_feasible(m, cap, target):\n    n = len(m)\n    res = linprog(np.zeros(n), A_ub=[[-x for x in m]],\n                  b_ub=[-target], A_eq=[[1] * n], b_eq=[1],\n                  bounds=[(0, cap)] * n, method=\"highs\")\n    return bool(res.status == 0)\n",
+    "how": "Submit runs 10 hidden tests. Plans are rounded to 6 places and compared exactly; values with math.isclose (absolute 1e-6); True and False exactly. The first run loads NumPy and SciPy: a few seconds from cache, longer on a first visit."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`solve_desk`: pass `-np.array(c)` and return `res.x, -res.fun`."
+    },
+    {
+     "rung": "point",
+     "text": "`min_cost` passes `c` as it is, with `A_eq`, `b_eq` and `bounds`.",
+     "highlight": [
+      "l1",
+      "l2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`target_feasible` writes the floor as `A_ub=[-m]`, `b_ub=[-target]` and returns `res.status == 0`."
+    }
+   ],
+   "feedback": {
+    "correct": "All four pass. At £150k on A the desk's best plan is $(5, 3)$ with £870k, as in lesson 6.",
+    "generic": "Not quite right. Read the failing row: it names the call and what came back."
+   },
+   "explain": {
+    "text": "Each function is one `linprog` call. Signs and bounds are the only traps: negate to maximise, and state every bound you need."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Before every rebalance",
+   "prose": "A desk runs this check each morning: is today's target reachable under today's limits, and which limit binds? The desk solve returns `res.slack` $= (0, 0, 1)$ and `res.ineqlin.marginals` $= (-30, -10, 0)$.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "lines": [
+      ">>> res.status",
+      "0",
+      ">>> res.slack",
+      "array([0., 0., 1.])",
+      ">>> res.ineqlin.marginals",
+      "array([-30., -10.,  -0.])"
+     ],
+     "title": "Python",
+     "wrap": true
+    },
+    "state": {}
+   },
+   "question": "Which limits bind, and which does it pay to relax?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Budget and risk bind; relaxing either adds profit, and liquidity has spare room.",
+      "correct": true
+     },
+     {
+      "id": "liq",
+      "text": "Liquidity binds, because its slack is 1.",
+      "why": "A slack of 1 is spare room. A binding limit has slack 0."
+     },
+     {
+      "id": "all",
+      "text": "All three bind, because the status is 0.",
+      "why": "Status 0 means solved. Binding is read from the slacks."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A binding limit has zero slack."
+    },
+    {
+     "rung": "point",
+     "text": "Budget and risk have slack 0; liquidity has 1.",
+     "highlight": [
+      "l4",
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The marginals put a price on the two binding limits; lesson 8 explains them."
+    }
+   ],
+   "feedback": {
+    "correct": "Budget and risk bind. The marginals say £30k per extra £m of budget and £10k per extra risk unit; lesson 8 derives them.",
+    "generic": "Not quite right. Read the slacks first.",
+    "byKey": {
+     "liq": "Liquidity has £1m of room; relaxing it changes nothing today.",
+     "all": "Only zero slacks bind."
+    }
+   },
+   "explain": {
+    "text": "Zero slack marks a binding limit: budget and risk. Their marginals, $-30$ and $-10$ for our negated problem, are the profit per unit of extra room."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "`linprog` minimises $\\mathbf{c}^T\\mathbf{x}$ with `A_ub @ x <= b_ub`, `A_eq @ x == b_eq` and per-variable `bounds`; to maximise, pass $-\\mathbf{c}$ and negate `res.fun`.",
+   "`res.status` is 0 solved, 2 infeasible, 3 unbounded. `res.slack` is the room left in each row, zero for a binding limit.",
+   "The default bounds are $(0, \\infty)$: a long-short problem must free them with `(None, None)`."
+  ],
+  "formula": {
+   "name": "linprog's problem",
+   "tex": "\\min \\mathbf{c}^T\\mathbf{x} \\ \\text{s.t.}\\ \\mathbf{A}_{ub}\\mathbf{x} \\le \\mathbf{b}_{ub},\\ \\mathbf{A}_{eq}\\mathbf{x} = \\mathbf{b}_{eq},\\ \\ell \\le \\mathbf{x} \\le \\mathbf{u}",
+   "note": "Default bounds: $0 \\le x_i < \\infty$."
+  },
+  "trap": "Passing $\\mathbf{c}$ instead of $-\\mathbf{c}$ minimises the profit and returns the plan that does nothing."
+ },
+ "quiz": [
+  {
+   "id": "q7-max",
+   "difficulty": 2,
+   "prose": "You want to maximise $3x + 2y$ with `linprog`.",
+   "question": "What do you pass as `c`, and how do you read the best value?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`c = [-3, -2]`; the best value is `-res.fun`.",
+      "correct": true
+     },
+     {
+      "id": "plain",
+      "text": "`c = [3, 2]`; the best value is `res.fun`.",
+      "why": "That minimises $3x + 2y$."
+     },
+     {
+      "id": "half",
+      "text": "`c = [-3, -2]`; the best value is `res.fun`.",
+      "why": "`res.fun` is the minimised negative, so flip its sign."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Negate going in, negate coming out.",
+    "generic": "Not quite right. `linprog` only minimises."
+   },
+   "explain": {
+    "text": "$\\max 3x + 2y = -\\min(-3x - 2y)$, so pass the negated costs and negate `res.fun`."
+   }
+  },
+  {
+   "id": "q7-status",
+   "difficulty": 2,
+   "prose": "A run returns `res.status` equal to 3.",
+   "question": "What does that mean?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "unb",
+      "text": "The problem is unbounded: the objective can improve without limit.",
+      "correct": true
+     },
+     {
+      "id": "inf",
+      "text": "The problem is infeasible.",
+      "why": "Infeasible is status 2."
+     },
+     {
+      "id": "ok",
+      "text": "It solved in 3 iterations.",
+      "why": "Status codes are outcomes, not iteration counts; 0 is solved."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Status 3 is unbounded.",
+    "generic": "Not quite right. 0 solved, 2 infeasible, 3 unbounded."
+   },
+   "explain": {
+    "text": "`linprog` reports 0 for solved, 2 for infeasible and 3 for unbounded. Check it before trusting `res.x`."
+   }
+  },
+  {
+   "id": "q7-floor",
+   "difficulty": 3,
+   "prose": "You need the constraint $\\mathbf{m}^T\\mathbf{w} \\ge 0.09$ in `linprog`, which takes `A_ub @ x <= b_ub`.",
+   "question": "What are the row and the bound?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "`A_ub = [-m]`, `b_ub = [-0.09]`",
+      "correct": true
+     },
+     {
+      "id": "flip",
+      "text": "`A_ub = [m]`, `b_ub = [0.09]`",
+      "why": "That says the return is at most 9%."
+     },
+     {
+      "id": "half",
+      "text": "`A_ub = [-m]`, `b_ub = [0.09]`",
+      "why": "Multiply both sides by $-1$, the bound too."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Multiply the whole inequality by $-1$.",
+    "generic": "Not quite right. Turn $\\ge$ into $\\le$ by negating both sides."
+   },
+   "explain": {
+    "text": "$\\mathbf{m}^T\\mathbf{w} \\ge 0.09$ is $-\\mathbf{m}^T\\mathbf{w} \\le -0.09$, so the row is $-\\mathbf{m}$ and the bound $-0.09$."
+   }
+  }
+ ]
+}
