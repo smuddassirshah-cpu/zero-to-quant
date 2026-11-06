@@ -107,3 +107,32 @@ Severity: wrong = false statement or wrong maths; misleading = true answer but a
 - Every proof follows its brief widget plan (`order` with distractor, the `choice` steps, `place` recall, `tap-regions` spot-the-flaw). Every other `order` has one valid order only.
 - Homework rubric sums to 10, with `required` on invariance; review covers the six named topics. Small report slip: it gives the review difficulty as "2 to 4", but the items run 2 to 3 (within the brief).
 - No engine change needed.
+
+## Fix pass
+
+Edits are targeted to the L4 files only. Each new number was recomputed in `docs/reports/linear-maps-L4-numbers.py` (now 257 of 257 checks).
+
+1. Fixed. l15 `quiz[2]` options[1], options[2] and `byKey.first` now use $\mathbf{v} = (1, 1)$ and $(\mathbf{A} - 3\mathbf{I})(\mathbf{A} - 5\mathbf{I})$. Checked: $\mathbf{A} - 5\mathbf{I}$ has rank 2, $\mathbf{A} - \mathbf{I}$ kills $(1, -1)$. Script line 164 now expects `5\mathbf{I}`.
+2. Fixed. l19 `screens[0].hints[1]` says "one non-zero row". Checked: $(\mathbf{M} - 2\mathbf{I})^2$ has 2 non-zero entries in one row, rank 1; $(\mathbf{K} - 2\mathbf{I})^2 = \mathbf{0}$.
+3. Fixed. l15 `screens[11].prose` now speaks of the eigen-coordinate and $0.5 + 0.5i$. Checked: norms 1, 1.4142, 1.1180; $\mathbf{C}^8 = \tfrac{1}{16}\mathbf{I}$.
+4. Fixed. `wrong[2]` of l15 `screens[11]` is now $-0.125$ (tol 0.001); script line 122 checks `xs[6]` signed.
+5. Fixed. l17 `screens[7].widget.same = [["s4", "s5"]]`.
+6. Fixed. l18 `screens[8].prose` ends "Give the free inclusion first."
+7. Fixed. l17 `screens[6].explain.text`, s3, and homework-4 `items[7].model` step 2 state the rank is the same over $\mathbb{R}$ (wording shortened to keep the voice scan at 0).
+8. Fixed. homework-4 model gains the orthonormal-basis line (l13, Axler 7.9); l17 s7 and `screens[7].prose` reworded as proposed.
+9. Fixed. l18 `screens[4].feedback.byKey.grow` replaced.
+10. Fixed. l17 `screens[2]` `minus` renamed `pairs`, value 2, new byKey text. Checked: $1 \cdot 1 + (-1)(-1) = 2$.
+11. Fixed. l15 `screens[9].explain.text` sentence replaced.
+12. Fixed. l15 `screens[1].feedback.byKey.signs` replaced.
+13. Fixed. l18 `screens[7].prose` states $T$, the hypotheses and the invariance of each $G(\lambda_j, T)$.
+14. Fixed. l15 `quiz[3].question` replaced.
+15. Fixed. l17 `aq.v` is $(1.2, 1.2, 1.2)$ (4 x 0.3 = 1.2, inside the box) and the caption is added.
+16. Fixed. l17 `screens[1].canvas.params.params` is `{a: 0.5, b: 0.3}`.
+
+Totals: 16 fixed, 0 disputed, 0 deferred. Graded answers changed: l15 `screens[11]` wrong value (0.125 to -0.125), l17 `screens[2]` wrong value (-1 to 2), l17 `screens[7]` order now accepts s4 and s5 either way. No correct answer changed.
+
+Gates:
+- `node tools/validate.mjs`: 0 errors.
+- Voice scan, L4 files: 0 sentences over 20 words, 0 explanations over three sentences (folder still has 9 in levels 1 to 3).
+- `python3 docs/reports/linear-maps-L4-numbers.py`: exit 0, 257 of 257. New checks cover homework `items[3]`, review `items[7]`, l18 `series[1]` for t = 0 to 20, and the claims behind findings 1 to 3, 9, 10, 15 and 16.
+- Playthrough with and without `--mobile`: l15, l17, l18, l19 lessons, and `--set` homework-4 and review-4, all passed.

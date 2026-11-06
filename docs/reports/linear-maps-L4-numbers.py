@@ -119,7 +119,7 @@ assert c8 == 0.0625 and abs(mod ** 8 - c8) < 1e-12 and 0.5 ** 4 == c8
 lv.expect("l15", "screens[11].widget.answer", 0.0625)
 lv.expect("l15", "screens[11].widget.wrong[0].value", round(mod, 4))
 lv.expect("l15", "screens[11].widget.wrong[1].value", round(0.5 ** 8, 4))
-lv.expect("l15", "screens[11].widget.wrong[2].value", abs(xs[6]))
+lv.expect("l15", "screens[11].widget.wrong[2].value", xs[6])   # signed: -0.125, what a learner reads at t = 6
 assert xs[6] == -0.125
 lv.expect("l15", "screens[11].canvas.params.series[0].values", 0.00390625)
 assert lv.text("l15", "screens[11].canvas.params.series[0].values").count("\n") + 1 == len(xs)
@@ -161,7 +161,7 @@ lv.expect("l15", "quiz[0].prose", "(-1, i)")
 lv.expect("l15", "quiz[0].widget.answer", "i")
 lv.expect("l15", "quiz[4].prose", "(3, 3)")
 lv.expect("l15", "quiz[4].widget.answer", 1)
-lv.expect("l15", "quiz[2].widget.options[1].why", "(1, 1)")
+lv.expect("l15", "quiz[2].widget.options[1].why", "5\\mathbf{I}")
 
 # ================= l16 =================
 A16 = [[2, 2], [2, -1]]
@@ -483,6 +483,82 @@ lv.expect("homework", "items[6].explain.text", 6)
 # deflation tolerance (stated atol 1e-6); the CPython run reaches errors near 1e-14
 lv.expect("homework", "items[1].widget.how", "1e-6")
 lv.expect("homework", "items[1].widget.tests[0].expect", "[2.0, 0.5, 0.5]")
+
+# ================= fix pass additions =================
+import json
+def _load(name):
+    return json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'content', 'courses', 'linear-maps', name + '.json')))
+def _chk(cond, label):
+    lv._rec(bool(cond), label, '' if cond else 'failed')
+    assert cond, label
+
+# finding 1: l15 quiz[2] counterexample, A = [[2,1],[1,2]], v = (1, 1), p(z) = (z-3)(z-5)
+A15 = [[F(2), F(1)], [F(1), F(2)]]
+v11 = [F(1), F(1)]
+A5 = sub(A15, eye(2, 5)); A3 = sub(A15, eye(2, 3)); A1 = sub(A15, eye(2, 1))
+assert mv(A15, v11) == [3, 3]
+assert mv(A3, mv(A5, v11)) == [0, 0]                    # (A-3I)(A-5I)v = 0
+assert rank(A5) == 2                                    # A-5I injective
+assert rank(A3) == 1 and rank(A1) == 1                  # A-3I and A-I fail
+assert mv(A1, [1, -1]) == [0, 0]                        # A-I is not injective (the old claim was false)
+a2v = mv(A15, mv(A15, v11))
+assert [a2v[i] - 8 * mv(A15, v11)[i] + 15 * v11[i] for i in range(2)] == [0, 0]
+lv.expect("l15", "quiz[2].widget.options[2].why", "5\\mathbf{I}")
+lv.expect("l15", "quiz[2].feedback.byKey.first", "5\\mathbf{I}")
+
+# finding 2: l19 (M-2I)^2 has one non-zero row (two non-zero entries), (K-2I)^2 = 0
+M19 = [[2, 1, 0, 0], [0, 2, 1, -1], [0, 0, 2, 0], [0, 0, 0, 2]]
+K19 = [[2, 1, -1, 1], [0, 2, 0, 1], [0, 0, 2, 1], [0, 0, 0, 2]]
+M2 = mpow([[F(x) for x in r] for r in sub([[F(x) for x in r] for r in M19], eye(4, 2))], 2)
+K2 = mpow([[F(x) for x in r] for r in sub([[F(x) for x in r] for r in K19], eye(4, 2))], 2)
+assert M2 == [[0, 0, 1, -1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+assert sum(1 for r in M2 if any(r)) == 1 and sum(1 for r in M2 for x in r if x) == 2 and rank(M2) == 1
+assert all(x == 0 for r in K2 for x in r)
+lv.expect("l19", "screens[0].hints[1].text", "one non-zero row")
+
+# finding 3: l15 C = [[1, -0.5], [1, 0]] on (x_t, x_{t-1}); eigenvalues 0.5 +- 0.5i, modulus sqrt(0.5)
+C = [[F(1), F(-1, 2)], [F(1), F(0)]]
+st = [F(1), F(0)]; norms = [1.0]
+for _ in range(2):
+    st = mv(C, st); norms.append(math.hypot(float(st[0]), float(st[1])))
+assert abs(norms[1] - 1.4142135) < 1e-6 and abs(norms[2] - 1.1180339) < 1e-6   # grows at step one
+assert mpow(C, 8) == [[F(1, 16), 0], [0, F(1, 16)]]                          # C^8 = 0.0625 I exactly
+ev = (0.5 + 0.5j)
+assert abs(abs(ev) - math.sqrt(0.5)) < 1e-12 and abs(cmath.phase(ev) - math.pi / 4) < 1e-12
+lv.expect("l15", "screens[11].prose", "0.5 + 0.5i")
+
+# finding 4 / l18 series[1]: 0.9^t for every t = 0..20 (previously only t = 20 was checked)
+s18 = _load('l18-generalised-eigenvectors')['screens'][10]['canvas']['params']['series'][1]['values']
+_chk(len(s18) == 21 and all(abs(s18[t] - 0.9 ** t) < 1e-4 for t in range(21)), "l18 series[1] equals 0.9^t for t = 0..20")
+
+# finding 9: l18 screens[4], (A3 - 2I)^2 = (A3 - 2I)^3 of rank 1
+lv.expect("l18", "screens[4].feedback.byKey.grow", "rank 1")
+
+# finding 10: l17 screens[2], <(1,-1,0),(1,0,-1)> = 1; pairing non-zero entries in turn gives 1*1 + (-1)(-1) = 2
+assert dot([1, -1, 0], [1, 0, -1]) == 1 and 1 * 1 + (-1) * (-1) == 2
+lv.expect("l17", "screens[2].widget.wrong[1].value", 2)
+
+# finding 15/16: l17 screens[0] arrow positions: q = (1,1,1) at 0.8, Aq = 4q at 0.3 of its length, inside the box
+assert [4 * x * F(3, 10) for x in (1, 1, 1)] == [F(6, 5)] * 3 and F(6, 5) <= F(3, 2)
+lv.expect("l17", "screens[0].explain.canvas.vectors.aq.v", 1.2)
+_chk(_load('l17-spectral-theorem')['screens'][1]['canvas']['params']['params'] == {"a": 0.5, "b": 0.3}, "l17 screens[1] params equal control starts")
+
+# homework items[3]: d = (2,4,5,5,5) -> blocks 3, 2; d = (2,3,4,5,5) -> blocks 4, 1; counts of size >= k
+for dd, blk, atl in (([2, 4, 5, 5, 5], [3, 2], [2, 2, 1]), ([2, 3, 4, 5, 5], [4, 1], [2, 1, 1, 1])):
+    assert blocks(dd) == blk and sum(blk) == 5
+    assert [sum(1 for b in blk if b >= k) for k in range(1, len(atl) + 1)] == atl
+lv.expect("homework", "items[3].explain.text", "3 and 2")
+lv.expect("homework", "items[3].explain.text", "4 and 1")
+lv.expect("homework", "items[3].widget.options[0].text", "3, 2")
+lv.expect("homework", "items[3].widget.options[0].text", "4, 1")
+
+# review items[7]: (1,-1,0)/sqrt2 and (1,1,-2)/sqrt6 lie in the plane, are unit, and have inner product 0/sqrt12
+u1, u2 = [1, -1, 0], [1, 1, -2]
+assert sum(u1) == 0 and sum(u2) == 0 and dot(u1, u1) == 2 and dot(u2, u2) == 6
+assert dot(u1, u2) == 0 and dot(u1, u2) / math.sqrt(12) == 0
+assert dot([1, -1, 0], [1, 0, -1]) / 2 == 0.5            # the "raw" distractor's 1/2
+lv.expect("review", "items[7].explain.text", "\\sqrt{12}")
+lv.expect("review", "items[7].widget.options[1].why", "\\tfrac12")
 
 lv.check_wrongs()
 lv.report()
