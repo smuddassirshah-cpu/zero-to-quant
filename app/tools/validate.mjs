@@ -414,6 +414,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
         if (w.kind === 'choice' && !o.correct && !o.why) err(file, `${where}.options[${i}].why`, 'every distractor needs a why naming its misconception');
         text(o.text, `${where}.options[${i}].text`); text(o.why, `${where}.options[${i}].why`);
       });
+      checkKeyLength(file, where, w);
       if (w.kind === 'multi' && ctx.question != null && !/select all that apply/i.test(ctx.question)) warn(file, where, 'a multi question should say "Select all that apply"');
       break;
     }
@@ -1072,6 +1073,40 @@ const checkCanvas = (file, where, c) => {
   if (c.state && typeof c.state.caption === 'string') checkText(file, `${where}.state.caption`, c.state.caption);
 };
 
+/* ENGINE-BACKLOG 585: [shuffled-position] a choice or multi with shuffle: true must not name an option by its place in the list */
+const PLACE_WORD = 'first|second|third|fourth|fifth|last';
+const POSITIONAL = [
+  new RegExp(`\\b(?:${PLACE_WORD}) (?:option|answer|choice)s?\\b`, 'i'),
+  /\b(?:top|bottom) (?:one|option|choice|answer)\b/i,
+  /\bthe one (?:above|below)\b/i,
+  /\b(?:[Oo]ptions?|[Cc]hoices?|[Aa]nswers?) \(?[A-E]\)?(?![A-Za-z'])/,
+  /(?:^|[\s,;])\([a-e]\)(?=[\s,.;:]|$)/,
+];
+const positionalHit = (t) => { if (typeof t !== 'string') return null; const x = stripMathsAndCode(t); for (const re of POSITIONAL) { const m = re.exec(x); if (m) return m[0].trim(); } return null; };
+const checkShuffledPosition = (file, where, host) => {
+  const w = host && host.widget;
+  if (!isObj(w) || !['choice', 'multi'].includes(w.kind) || w.shuffle !== true) return;
+  const texts = [[`${where}.explain.text`, isObj(host.explain) ? host.explain.text : null]];
+  if (Array.isArray(w.options)) w.options.forEach((o, i) => { if (isObj(o)) texts.push([`${where}.widget.options[${i}].why`, o.why]); });
+  if (Array.isArray(host.hints)) host.hints.forEach((h, i) => { if (isObj(h)) texts.push([`${where}.hints[${i}].text`, h.text]); });
+  if (isObj(host.feedback)) { texts.push([`${where}.feedback.correct`, host.feedback.correct], [`${where}.feedback.generic`, host.feedback.generic]); if (isObj(host.feedback.byKey)) Object.entries(host.feedback.byKey).forEach(([k, v]) => texts.push([`${where}.feedback.byKey.${k}`, v])); }
+  texts.forEach(([at, t]) => { const m = positionalHit(t); if (m) warn(file, at, `[shuffled-position] "${m}" names an option by its place, but the options are shuffled; name it by what it says`); });
+};
+/* ENGINE-BACKLOG 585: [key-length] a choice whose key is over 1.5 times as long as every distractor gives the answer away */
+const optLen = (o) => String(o && o.text != null ? o.text : '').replace(/\\[()[\]]|\$/g, '').trim().length;
+const checkKeyLength = (file, where, w) => {
+  if (!isObj(w) || w.kind !== 'choice' || !Array.isArray(w.options)) return;
+  const key = w.options.find(o => isObj(o) && o.correct === true), others = w.options.filter(o => isObj(o) && o.correct !== true && o.text != null);
+  if (!key || key.text == null || !others.length) return;
+  const k = optLen(key);
+  if (k >= 12 && others.every(o => k > 1.5 * optLen(o))) warn(file, `${where}.options`, `[key-length] the correct option is ${k} characters, more than 1.5 times every distractor (longest ${Math.max(...others.map(optLen))}); the longest option is a giveaway`);
+};
+/* ENGINE-BACKLOG 585: [multi-keys-uniform] in an exam with four or more multis, a count of keys that never varies is a giveaway */
+const checkMultiUniform = (file, where, items) => {
+  const counts = [];
+  (items || []).forEach(it => { if (!isObj(it)) return; [it.widget, ...(Array.isArray(it.parts) ? it.parts.map(p => isObj(p) && p.widget) : [])].forEach(w => { if (isObj(w) && w.kind === 'multi' && Array.isArray(w.options)) counts.push(w.options.filter(o => isObj(o) && o.correct === true).length); }); });
+  if (counts.length >= 4 && counts.every(c => c === counts[0])) warn(file, where, `[multi-keys-uniform] all ${counts.length} multi items have ${counts[0]} keys; vary the number of correct options so "pick ${counts[0]}" does not score`);
+};
 const checkFeedback = (file, where, fb, keys, { requireByKey = false } = {}) => {
   if (!isObj(fb)) { err(file, where, 'feedback with correct and generic lines is required'); return; }
   if (!fb.correct) err(file, `${where}.correct`, 'required field missing');
@@ -1175,6 +1210,7 @@ const checkItem = (file, where, it, ctx) => {
   const keys = checkWidget(file, `${where}.widget`, it.widget, it.canvas, { question: it.question, allowLongform: ctx.allowLongform });
   checkFeedback(file, `${where}.feedback`, it.feedback, keys);
   checkExplain(file, `${where}.explain`, it.explain, { required: true });
+  checkShuffledPosition(file, where, it);
   if (ctx.warnInteractive && (CANVAS_BOUND.has(it.widget.kind) || (it.canvas && (it.canvas.controls || []).length))) warn(file, where, 'a quiz item with an interactive canvas: concreteness should have faded by the quiz');
   return it.widget.kind;
 };
@@ -1210,6 +1246,7 @@ const checkParts = (file, where, it, ctx) => {
     const keys = checkWidget(file, `${at}.widget`, p.widget, p.canvas, { question: p.question, allowLongform: false });
     checkFeedback(file, `${at}.feedback`, p.feedback, keys);
     checkExplain(file, `${at}.explain`, p.explain);
+    checkShuffledPosition(file, at, p);
     if (p.widget.cumulative !== undefined) {
       if (p.widget.kind !== 'code') err(file, `${at}.widget.cumulative`, 'cumulative applies to a code part only');
       else if (typeof p.widget.cumulative !== 'boolean') err(file, `${at}.widget.cumulative`, 'cumulative is true or false (true by default: earlier code parts\' tests run too)');
@@ -1315,6 +1352,7 @@ const checkLesson = (file, courseId, lessonId, L, course) => {
       if (!s.widget) err(file, `${at}.widget`, 'required field missing');
       checkFeedback(file, `${at}.feedback`, s.feedback, keys, { requireByKey: s.type === 'trap' });
       checkHints(file, `${at}.hints`, s.hints, s.canvas, true);
+      checkShuffledPosition(file, at, s);
       if (s.type === 'derive' && s.widget && !['expression', 'order', 'choice'].includes(s.widget.kind)) err(file, `${at}.widget.kind`, 'a derive screen uses expression, order or choice');
       /* item 177: moving between a table and a chart of the same numbers (or into or out of a pair) is a natural step, not a warning */
       const VIEWS = new Set(['table', 'plane', 'series', 'bars', 'scatter', 'distribution', 'console', 'number-line']);
@@ -1525,6 +1563,7 @@ const checkExam = (file, id, doc, cur) => {
     const items = Array.isArray(doc.items) ? doc.items : [];
     if (items.length < 20 || items.length > 30) err(file, 'items', `20 to 30 items (found ${items.length})`);
     checkPaperItems(file, 'items', items, { lo: 2, hi: 5, label: 'exam', skills: examSkills, skillsRequired: true, allowLongform: true, generators: false });
+    checkMultiUniform(file, 'items', items);
     checkPaperRules(file, '', doc);
     const used = new Set(items.flatMap(it => (it && it.skills) || []));
     examSkills.forEach(s => { if (!used.has(s)) err(file, 'items', `no item tests the skill "${s}"`); });
@@ -1543,6 +1582,7 @@ const checkExam = (file, id, doc, cur) => {
         req(file, `parts[${i}]`, p, p.passNet != null ? ['minutes', 'items'] : ['minutes', 'pass', 'items']);
         const items = Array.isArray(p.items) ? p.items : [];
         checkPaperItems(file, `parts[${i}].items`, items, { lo: 2, hi: 5, label: 'exam', skills: allSkills, skillsRequired: true, allowLongform: true });
+        checkMultiUniform(file, `parts[${i}].items`, items);
         checkPaperRules(file, `parts[${i}]`, p, { needPass: true });
         checkDraw(file, `parts[${i}].draw`, p.draw, { sample: doc.sample === true });
         if (items.length >= 10 && !p.draw && !items.some(it => it && it.generator !== undefined)) checkRamp(file, `parts[${i}].items`, items);
