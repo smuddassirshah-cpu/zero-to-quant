@@ -55,8 +55,8 @@
    "skills": [
     "gv-models"
    ],
-   "prose": "An ARCH(1) model in % has $\\omega = 0.4$ and $\\alpha = 0.2$. Yesterday the share fell 3%.",
-   "question": "What is today's daily volatility, in %?",
+   "prose": "An ARCH(1) fit in % reads $\\omega = 0.4$, $\\alpha = 0.2$. The share dropped 3% today.",
+   "question": "What daily volatility does the model forecast for tomorrow, in %?",
    "widget": {
     "kind": "numeric",
     "answer": 0.014832,
@@ -92,7 +92,7 @@
     }
    },
    "explain": {
-    "text": "$\\sigma_t^2 = 0.4 + 0.2 \\times (-3)^2 = 2.2$ %², so $\\sigma_t = 1.48\\%$. It is set the evening before, from yesterday's return alone."
+    "text": "$\\sigma_t^2 = 0.4 + 0.2 \\times (-3)^2 = 2.2$ %², so $\\sigma_t = 1.48\\%$. It is set the evening before, from the latest return alone."
    }
   },
   {
@@ -121,7 +121,7 @@
      },
      {
       "id": "swap",
-      "value": 3.684,
+      "value": 3.714,
       "tol": {
        "abs": 0.005
       }
@@ -133,7 +133,7 @@
     "generic": "Not quite right. Add $\\omega$, $\\alpha r^2$ and $\\beta\\sigma^2$.",
     "byKey": {
      "nobeta": "You left out $\\beta\\,\\sigma_{t-1}^2$: that is ARCH, not GARCH.",
-     "swap": "You swapped $\\alpha$ and $\\beta$."
+     "swap": "You swapped $\\alpha$ and $\\beta$: $0.03 + 0.90 \\times 4 + 0.07 \\times 1.20 = 3.714$."
     }
    },
    "explain": {
@@ -147,8 +147,8 @@
     "gv-models",
     "gv-forecast"
    ],
-   "prose": "A GARCH(1,1) fit in % gives $\\omega = 0.05$, $\\alpha = 0.07$, $\\beta = 0.91$.",
-   "question": "What is its long-run variance, in %²?",
+   "prose": "Fitted to a share's daily returns in %, a GARCH(1,1) has $\\hat\\omega = 0.05$, $\\hat\\alpha = 0.07$, $\\hat\\beta = 0.91$.",
+   "question": "Where does the model expect the variance to settle, in %²?",
    "widget": {
     "kind": "numeric",
     "answer": 2.5,
@@ -192,7 +192,7 @@
    "skills": [
     "gv-models"
    ],
-   "prose": "A colleague's EWMA is `pd.Series(r ** 2).ewm(alpha=0.06, adjust=False).mean()`. He uses its value on day $t$ as the forecast for day $t$.",
+   "prose": "A colleague's volatility forecast for day $t$ is `pd.Series(r).rolling(20).std()` on day $t$.",
    "question": "What is wrong?",
    "widget": {
     "kind": "choice",
@@ -200,18 +200,18 @@
     "options": [
      {
       "id": "peek",
-      "text": "Its day-$t$ value already includes $r_t^2$, which is not known when the forecast for day $t$ is made.",
+      "text": "Its day-$t$ value already includes $r_t$, which is not known when the forecast for day $t$ is made.",
       "correct": true
      },
      {
-      "id": "alpha",
-      "text": "`alpha=0.06` should be `alpha=0.94`.",
-      "why": "You swapped the weights. pandas' `alpha` is the weight on the newest value, $1 - \\lambda = 0.06$."
+      "id": "longer",
+      "text": "`rolling(20)` should be `rolling(60)`.",
+      "why": "A longer window lags more, and it still includes today's return."
      },
      {
-      "id": "adjust",
-      "text": "He should use `adjust=True`.",
-      "why": "`adjust=True` changes the early weights, not the one-day look-ahead."
+      "id": "var",
+      "text": "He should take the root of `rolling(20).var()` instead.",
+      "why": "That is the same number. The look-ahead stays."
      },
      {
       "id": "fine",
@@ -225,7 +225,7 @@
     "generic": "Not quite right. Ask which returns the day-$t$ value has already seen."
    },
    "explain": {
-    "text": "pandas averages up to and including today. Shift it a day: feed it the start, then every squared return but the last. Then day $t$ sees returns to $t - 1$ only."
+    "text": "`rolling(20)` puts each window on its last day, so day $t$'s value includes $r_t$. Shift it with `.shift(1)` before using it as a forecast."
    }
   },
   {
@@ -325,28 +325,29 @@
     "gv-models",
     "gv-forecast"
    ],
-   "prose": "A report puts the long-run volatility at $\\sqrt{0.02} \\times \\sqrt{252} = 2.2\\%$ a year, from the fit's $\\hat\\omega = 0.02$ %². The fit also gives $\\hat\\alpha = 0.08$ and $\\hat\\beta = 0.90$.",
+   "prose": "A report puts the long-run volatility at $\\sqrt{0.036} \\times \\sqrt{252} = 3.0\\%$ a year, from the fit's $\\hat\\omega = 0.036$ %². The fit also gives $\\hat\\alpha = 0.08$ and $\\hat\\beta = 0.90$.",
    "question": "What is the long-run volatility a year, in %?",
    "widget": {
     "kind": "numeric",
-    "answer": 0.1587,
+    "answer": 0.213,
     "tol": {
      "abs": 0.0002
     },
     "unit": "%",
+    "over100": true,
     "label": "Annual volatility in per cent",
-    "accept": "15.87%: $V_L = 0.02/0.02 = 1$ %², times $\\sqrt{252}$.",
+    "accept": "21.30%: $V_L = 0.036/0.02 = 1.8$ %², times 252, then the root.",
     "wrong": [
      {
       "id": "omega",
-      "value": 0.02245,
+      "value": 0.03012,
       "tol": {
        "abs": 0.0001
       }
      },
      {
       "id": "var",
-      "value": 2.52,
+      "value": 4.536,
       "tol": {
        "abs": 0.005
       }
@@ -362,7 +363,7 @@
     }
    },
    "explain": {
-    "text": "$V_L = 0.02/(1 - 0.98) = 1$ %², so 1% a day and $\\sqrt{252} \\times 1\\% = 15.87\\%$ a year. The report understated the risk sevenfold."
+    "text": "$V_L = 0.036/(1 - 0.98) = 1.8$ %², so 1.342% a day and $\\sqrt{252 \\times 1.8} = 21.30\\%$ a year. The report understated the risk sevenfold."
    }
   },
   {
@@ -451,7 +452,7 @@
     }
    },
    "explain": {
-    "text": "$V_L = 0.01/0.005 = 2$ %², so $\\sqrt{252 \\times 2} = 22.45\\%$ a year, up from 15.87%. Near persistence 1, a change in the third decimal moves the long run by six points."
+    "text": "$V_L = 0.01/0.005 = 2$ %², so $\\sqrt{252 \\times 2} = 22.45\\%$ a year, up from 15.87%. Near persistence 1, a change in the third decimal moves the long run by six and a half points."
    }
   }
  ]

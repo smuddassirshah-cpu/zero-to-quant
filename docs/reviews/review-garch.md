@@ -127,4 +127,59 @@ The data run cleanly through the course. Share B, series A and series C keep the
 
 ## Fix pass
 
-(to be appended by the fix agent)
+Status per finding (44 fixed, 0 disputed, 0 deferred; the four items of the Engine section are deferred, already in the inbox). Every corrected number was recomputed before writing (2 routes: Python and hand). Edits were made per path with a JSON round-trip writer that left every untouched line byte-identical (`git diff --stat` shows only the lines changed).
+
+1. fixed: l1 `screens[8].feedback.byKey.same` now "within 0.07 points" (C's first four blocks 0.6713 to 0.7397%, 0.0684 apart; last four 0.0274 apart).
+2. fixed: l1 `screens[8].widget.options[3].why` now "within 0.03 points" (1.2918 to 1.3192%).
+3. fixed: l5 `screens[10].hints[2].text`: $1.1543^2 = 1.33241$, $0.94 \times 1.3324 + 3.84 = 5.0925$, root 2.257%.
+4. fixed: l7 `screens[3].explain.text` rewritten as given (table starts from the true 3.2346 with the true parameters).
+5. fixed: review-2 `items[2]` swap value 3.714 ($0.03 + 3.6 + 0.084$) and the `byKey.swap` working.
+6. fixed: review-2 `items[9].explain.text` "six and a half points" (22.45 - 15.87 = 6.58).
+7. fixed: l5 `screens[4].feedback.correct` and `explain.text` reworded; EWMA(0.90) over the truth on day 1,404 is 1.217, checked by the L2 script ("about 20% high").
+8. fixed: l9 `screens[2]` accept and explain now 5.479 ($0.9864^{19} = 0.77093$, times 5.9544, plus 0.8885 = 5.4789).
+9. fixed: l12 `screens[2]` question, accept and hint use 0.61196 ($0.61196 \times 15.87451 = 9.7145$; $10/9.7145 = 1.0294$).
+10. fixed: l10 `screens[0].widget.options[2].text` "About £18,363" ($2 \times 9{,}181.29 = 18{,}362.58$).
+11. fixed: l7 `screens[7].explain.text` now names lesson 5's RiskMetrics EWMA (0.9863) against the fit's 0.9962.
+12. fixed: l10 `quiz[1].explain.text` reworded.
+13. fixed: l10 `screens[6].prose` "in the shaded storm"; the L3 script now checks the new wording.
+14. fixed: l11 `screens[1].explain.text` (day 2,421 lost 1.73%, day 2,313 1.65%).
+15. fixed: l1 `screens[2].widget.options[2].why` (66 days is the span of the five days).
+16. fixed: l3 `screens[10].widget.options[1].why` as given (the top scales by $100^4 = 10^8$ and $\sigma^4$ by $(100^2)^2 = 10^8$, so they cancel; a factor of $10^4$ comes only from dividing by $\sigma^2$).
+17. fixed: l1 `screens[5].feedback.byKey.leave` (1/0.05 = 20) and review-1 `items[0].feedback.byKey.three` (1/0.03 = 33.3); the L1 script checks both.
+18. fixed: l2 `quiz[3].widget.options[2].why`.
+19. fixed: l6 `screens[6].widget.options[2].why`; l7 `screens[0].widget.options[2].why` and `screens[0].feedback.byKey.alpha`.
+20. fixed: review-2 `items[4]` replaced with the `rolling(20).std()` look-ahead item (ids `longer` and `var` replace `alpha` and `adjust`).
+21. fixed: review-2 `items[7]` now $\hat\omega = 0.036$ (answer 0.213, accept "21.30%", wrongs 0.03012 and 4.536, `over100`). Checks: $\sqrt{0.036} \times 15.8745 = 3.012$; $V_L = 1.8$; $\sqrt{453.6} = 21.298$; $21.30/3.012 = 7.07$. Graded answer changed (0.1587 to 0.213). The L2 script now checks the item with new values.
+22. fixed: review-3 `items[9]` persistence 0.97: answer 22.76 (was 34.31), wrongs 16.67 and 0.03, texts as given ($\ln 0.5/\ln 0.97 = 22.757$). Graded answer changed. L3 script updated.
+23. fixed: review-2 `items[1]` and `items[3]`, review-3 `items[0]` and `items[1]` reworded, numbers unchanged (review-2 `items[1].explain` says "the latest return" to match the new prompt).
+24. fixed: homework-2 `items[4]` now the seed-11 fit (0.0251, 0.0933, 0.8825; reproduced in CPython by the L2 script), answer 2.51e-06 (was 1.21e-06), wrongs 0.000251 and 0.0251; homework-2 `items[6]` is a scenario (0.31, 0.22, 0.07, 0.91, 150 higher; the `trust` why says "150 lower"); homework-3 `items[5]` 12 breaches with 8 after a breach (Kupiec LR 0.3798, p 0.5377, band 5 to 16 checked); homework-3 `items[6]` cap 1.5, 6% forecast, answer 0.09 (was 0.10), wrongs 0.12 and 0.06. Graded answers changed: homework-2 `items[4]`, homework-3 `items[6]`. The L2 and L3 scripts now check all four items.
+25. fixed: review-3 `items[4]` accept and explain (£53,708 and £56,984).
+26. fixed: l4 `screens[9].explain.text`.
+27. fixed: l7 `screens[5].prose` ($\sqrt{1.0585} = 1.029$, checked).
+28. fixed: l7 `screens[8]` table (alpha + beta column dropped, "In", highlight `r1c4`), l12 `screens[7]` table (Mean weight column dropped; the L3 script now also checks turnover and cost in every row), l8 `screens[8]` table ("Long run", "Full (l7)"). The L2 and L3 script paths were updated.
+29. fixed: l11 `screens[1].hints[0]`, l5 `screens[8].hints[2]`, l6 `screens[6].hints[0]` no longer name colours.
+30. fixed: the seven listed items have longer distractors; they still raise advisory key-length warnings where the correct option is a reason clause, which the finding accepts (the whys are unchanged).
+31. fixed: `over100: true` on the seven listed widgets and review-2 `items[7]`'s new `var` value. No `unit "%"` warning is left in the garch files.
+32. fixed: l10 `screens[2]`, `screens[9]` and l12 `screens[4]` displays end with a full stop.
+33. fixed: homework-1 `items[2].widget.how`.
+34. fixed: homework-1 `items[3].prose`.
+35. fixed: homework-1 `items[5].prose` (bulleted keys, two sentences for the verdict).
+36. fixed: homework-1 `items[5].widget.how`.
+37. fixed: l1 `screens[7].widget.how`.
+38. fixed: l3 `screens[3].widget.how`.
+39. fixed: l3 `screens[9].widget.how`.
+40. fixed: full stops on the first two objectives of l9 to l12.
+41. fixed: l2 `screens[7].explain.text`.
+42. fixed: l11 `screens[3].prose` names `scipy.stats.binomtest` and "the exact tail of `testing` lesson 3".
+43. fixed: l8 `screens[2].explain.text`.
+44. fixed: l12 `screens[4].explain.text`.
+
+Engine 1 (table clipping cue), 2 (tap targets), 3 (`stated` helper into `numbers_lib`) and 4 (`fresh-check --file`): deferred, engine items already in the inbox.
+
+Code items: only the `how` strings of five code widgets changed (l1 `screens[7]`, l3 `screens[3]` and `screens[9]`, homework-1 `items[2]` and `items[5]`). No starter, solution or hidden test changed, so the 34 solutions still pass and every starter still fails as the reader found.
+
+Gates:
+- `python3 docs/reports/garch-L1-numbers.py`: exit 0, 600 of 600. `garch-L2-numbers.py`: exit 0, 540 of 540. `garch-L3-numbers.py`: exit 0, 483 of 483.
+- `VOICE_BASE=app/content/courses/garch python3 docs/reviews/voice-scan.py 35`: 0 sentences over 35 words, 0 explanations over three sentences.
+- `node tools/validate.mjs`: 0 errors.
+- Playthrough with --local-cdn, all 12 lessons and 6 sets, desktop and --mobile: All passed both times (lessons 16 checks, quizzes 4/4; reviews 10 of 10; homework 8/8, 9/9 and 8/8 right, full marks; 0 browser relaunches).

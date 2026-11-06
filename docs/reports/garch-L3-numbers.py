@@ -221,6 +221,7 @@ mk = [m['i'] + 1300 for m in lv._file(L)[1]['screens'][6]['canvas']['state']['ma
 b250 = [t for t in range(1300, 1480) if r3[t] < q01 * np.std(rp3[t - 250:t], ddof=1) / 100]
 claim('l10 s6 markers are the 250-day breaches in the shaded storm', mk == [t for t in b250 if t >= 1380])
 stated(L, 'screens[6].prose', "dots mark the 250-day line's breaches.", mk == b250)   # 1,317 and 1,377 are unmarked
+E(L, 'screens[6].prose', "breaches in the shaded storm.")   # fix pass 13
 es = sig * stats.norm.pdf(q01) / 0.01 * pos
 E(L, 'screens[7].prose', R(stats.norm.pdf(q01), 6)); E(L, 'screens[7].widget.answer', R(es, 2)); E(L, 'screens[7].widget.wrong[1].value', R(sig * stats.norm.pdf(q01) * pos, 1))
 E(L, 'screens[7].feedback.correct', round(100 * (es / v99 - 1))); E(L, 'screens[7].explain.text', R(stats.norm.pdf(q01) / 0.01, 3))
@@ -262,6 +263,7 @@ brs = [t for t in top8 if -r3[t] * pos > var_test[t - 2000]]
 claim('l11 s1 the breaches are 2,311, 2,360 and 2,421', brs == [2311, 2360, 2421])
 E(L, 'screens[1].explain.text', R(-rp3[2313], 2)); E(L, 'screens[1].explain.text', R(var_test[313] / pos * 100, 2)); E(L, 'screens[1].explain.text', R(var_test[421] / pos * 100, 2))
 stated(L, 'screens[1].explain.text', 'more than day 2,421', -r3[2313] > -r3[2421])
+E(L, 'screens[1].explain.text', R(-100 * r3[2421], 2)); claim('day 2,313 lost less than day 2,421, by under 0.1 point', 0 < -r3[2421] + r3[2313] < 0.001)   # fix pass 14
 E(L, 'screens[2].widget.answer', R(math.sqrt(9.9), 4)); E(L, 'screens[2].widget.wrong[1].value', R(math.sqrt(10), 4))
 ll0 = 2479 * math.log(0.99) + 41 * math.log(0.01); ll1 = 2479 * math.log(2479 / 2520) + 41 * math.log(41 / 2520)
 lr41, p41 = kupiec(41, 2520)
@@ -358,14 +360,18 @@ E(L, 'screens[6].prose', R(100 * np.std(wl * r3[2000:], ddof=1) * S252, 2)); E(L
 E(L, 'screens[6].explain.text', R(np.abs(np.diff(ws)).sum() * 252 / 999, 2))
 # EWMA and the band
 ew = np.sqrt(ewma(rp3, 0.94)[2000:]) / 100 * S252; we = np.minimum(0.10 / ew, 2)
-E(L, 'screens[7].canvas.params.rows[1][1]', f'{100 * np.std(we * r3[2000:], ddof=1) * S252:.2f}%'); E(L, 'screens[7].canvas.params.rows[1][2]', f'{we.mean():.4f}')
-E(L, 'screens[7].canvas.params.rows[1][3]', f'{np.abs(np.diff(we)).sum() * 252 / 999:.3f}')
+E(L, 'screens[7].canvas.params.rows[1][1]', f'{100 * np.std(we * r3[2000:], ddof=1) * S252:.2f}%')
+tw_ = np.abs(np.diff(we)).sum() * 252 / 999
+E(L, 'screens[7].canvas.params.rows[1][2]', f'{tw_:.3f}'); E(L, 'screens[7].canvas.params.rows[1][3]', f'{tw_ * 0.05:.3f}%')
+E(L, 'screens[7].canvas.params.rows[0][2]', f'{turn:.3f}'); E(L, 'screens[7].canvas.params.rows[0][3]', f'{turn * 0.05:.3f}%')
+_t7 = lv._file(L)[1]['screens'][7]['canvas']['params']
+claim('l12 s7 table has 4 columns (no Mean weight) and every row has 4 cells', len(_t7['columns']) == 4 and 'Mean weight' not in _t7['columns'] and all(len(x) == 4 for x in _t7['rows']))
 held = [w[0]]
 for x_ in w[1:]:
     held.append(x_ if abs(x_ - held[-1]) > 0.1 else held[-1])
 held = np.array(held); tb_ = np.abs(np.diff(held)).sum() * 252 / 999
-E(L, 'screens[7].canvas.params.rows[2][1]', f'{100 * np.std(held * r3[2000:], ddof=1) * S252:.2f}%'); E(L, 'screens[7].canvas.params.rows[2][2]', f'{held.mean():.4f}')
-E(L, 'screens[7].canvas.params.rows[2][3]', f'{tb_:.3f}'); E(L, 'screens[7].prose', int(np.sum(np.diff(held) != 0)))
+E(L, 'screens[7].canvas.params.rows[2][1]', f'{100 * np.std(held * r3[2000:], ddof=1) * S252:.2f}%')
+E(L, 'screens[7].canvas.params.rows[2][2]', f'{tb_:.3f}'); E(L, 'screens[7].canvas.params.rows[2][3]', f'{tb_ * 0.05:.3f}%'); E(L, 'screens[7].prose', int(np.sum(np.diff(held) != 0)))
 E(L, 'screens[7].widget.answer', R((R(turn, 3) - R(tb_, 3)) * 0.0005, 5)); E(L, 'screens[7].feedback.correct', round(100 * (1 - tb_ / turn)))
 wt = np.minimum(math.sqrt(252 * VL) / 100 / fa, 2)   # the target is the fit's long run, 14.96% to 2 places
 E(L, 'screens[9].hints[2].text', R(wt.mean(), 4)); E(L, 'screens[9].hints[2].text', R(wt.max(), 4)); E(L, 'screens[9].explain.text', R(100 * np.std(wt * r3[2000:], ddof=1) * S252, 2))
@@ -392,7 +398,11 @@ for v_ in (-t05, -q05, -t01, -q01):
     E(L, 'items[5].feedback.generic', R(v_, 4))
 E(L, 'items[6].prose', R(kupiec(2, 1000)[0], 3))
 E(L, 'items[8].widget.answer', R(0.7 * 252 / 4 * 0.001, 4)); E(L, 'items[8].widget.wrong[0].value', R(0.1 * 252 / 4 * 0.001, 4)); E(L, 'items[8].widget.wrong[1].value', R(0.7 * 252 / 5 * 0.001, 5))
-E(L, 'items[9].widget.answer', R(math.log(0.5) / math.log(0.98), 2)); E(L, 'items[9].explain.text', R(math.log(0.5) / math.log(0.9864), 1))
+# fix pass 22: persistence 0.97 (22.76), so it no longer repeats l7 quiz[2]'s 34.31
+E(L, 'items[9].widget.answer', R(math.log(0.5) / math.log(0.97), 2)); E(L, 'items[9].widget.accept', R(math.log(0.5) / math.log(0.97), 1))
+E(L, 'items[9].widget.wrong[0].value', R(0.5 / 0.03, 2)); E(L, 'items[9].widget.wrong[1].value', 0.03)
+E(L, 'items[9].explain.text', R(math.log(0.5) / math.log(0.97), 1)); E(L, 'items[9].explain.text', R(math.log(0.5) / math.log(0.9864), 1))
+E(L, 'items[9].prose', 0.97)
 
 # ================= homework-3 =================
 L = 'homework'
@@ -412,7 +422,18 @@ E(L, 'items[3].explain.text', R(pg, 4)); E(L, 'items[3].explain.text', R(kupiec(
 lr9, p9 = kupiec(9, 250)
 E(L, 'items[4].widget.answer', R(lr9, 3)); E(L, 'items[4].feedback.correct', R(p9, 4))
 E(L, 'items[4].explain.text', R(241 * math.log(0.99) + 9 * math.log(0.01), 3)); E(L, 'items[4].explain.text', R(241 * math.log(241 / 250) + 9 * math.log(9 / 250), 3))
-E(L, 'items[5].prose', R(kupiec(11, 1000)[0], 3)); E(L, 'items[5].widget.options[1].text', R(kupiec(11, 1000)[1], 2))
+# fix pass 24: 12 breaches in 1,000 days, 8 of them straight after a breach
+E(L, 'items[5].prose', R(kupiec(12, 1000)[0], 3)); E(L, 'items[5].widget.options[1].text', R(kupiec(12, 1000)[1], 2))
+E(L, 'items[5].prose', 12); E(L, 'items[5].prose', 8); E(L, 'items[5].explain.text', 8); E(L, 'items[5].explain.text', 12)
+_band = [x_ for x_ in range(1, 60) if kupiec(x_, 1000)[1] >= 0.05]
+claim("12 is inside Kupiec's band of 5 to 16 at 1,000 days", min(_band) == 5 and max(_band) == 16 and 12 in _band)
+E(L, 'items[5].widget.options[2].why', 5); E(L, 'items[5].widget.options[2].why', 16); E(L, 'items[5].widget.options[2].why', 12)
+# fix pass 24: capped fund, target 12%, cap 1.5, forecast 6%
+_cap = min(12 / 6, 1.5)
+E(L, 'items[6].widget.answer', R(_cap * 6 / 100, 4)); E(L, 'items[6].widget.accept', R(_cap * 6, 0)); E(L, 'items[6].widget.accept', R(12 / 6, 0)); E(L, 'items[6].widget.accept', _cap)
+E(L, 'items[6].widget.wrong[0].value', 0.12); E(L, 'items[6].widget.wrong[1].value', 0.06)
+E(L, 'items[6].feedback.byKey.target', R(12 / 6, 0)); E(L, 'items[6].feedback.byKey.target', _cap)
+E(L, 'items[6].explain.text', R(12 / 6, 0)); E(L, 'items[6].explain.text', _cap); E(L, 'items[6].explain.text', R(_cap * 6, 0)); claim('the cap binds: 2 > 1.5', 12 / 6 > 1.5)
 E(L, 'items[7].model', R((9 - 2.5) / math.sqrt(2.475), 1)); E(L, 'items[7].model', R(lr9, 2)); E(L, 'items[7].model', R(math.sqrt(2.475), 2))
 E(L, 'items[7].model', round(100 * power[0.02])); E(L, 'items[7].model', R(pg, 2))
 
