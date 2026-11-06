@@ -545,25 +545,58 @@ def check_content_claims():
         if not cond:
             failures.append(msg)
 
+    # Own computations behind the corrected claims (fix pass).
+    from itertools import product as _prod
+
+    def _stopped_gain(rule, T):
+        """Exact E[X_tau - X_0] over all 2^T fair +-1 paths for a rule that stops by bet T."""
+        tot = F(0)
+        for path in _prod((1, -1), repeat=T):
+            x = 0
+            for i, s in enumerate(path):
+                if rule(x, i):
+                    break
+                x += s
+            tot += x
+        return tot / 2 ** T
+    bounded_zero = _stopped_gain(lambda x, i: x >= 3, 12) == 0          # stop 3 ahead or after 12 bets
+    # doubling with eight bets (£255 bankroll): win £1 with chance 255/256, lose £255 otherwise
+    eight_zero = F(255, 256) * 1 - F(1, 256) * 255 == 0 and sum(2 ** i for i in range(8)) == 255
+
     l23 = load("l23-doubling-up")
     prose = l23["screens"][5]["prose"]
-    expect(not ("finite bankroll" in prose and "no rule for when to stop changes" in prose),
-           "finding 1: l23 screens[5].prose states optional stopping with 'finite bankroll' as the hypothesis; equality needs a bounded number of bets (the ruin rule from £7 has E[X_tau] = 0)")
-    expect("no stopping rule changes" not in l23["summary"]["ideas"][1],
-           "finding 1: l23 summary.ideas[1] repeats the finite-bankroll version")
+    expect(bounded_zero and "finite bankroll" in prose and "can raise the expected gain" in prose
+           and "fixed number of bets leaves it exactly unchanged" in prose,
+           "finding 1: l23 screens[5].prose states optional stopping with 'finite bankroll' as the hypothesis; equality needs a bounded number of bets (the ruin rule from £7 has E[X_tau] = 0) (corrected claim, fix pass): finite bankroll bars a rise, a fixed bet limit gives equality")
+    idea = l23["summary"]["ideas"][1]
+    expect(bounded_zero and "can raise" in idea and "fixed number of bets leaves it unchanged" in idea,
+           "finding 1: l23 summary.ideas[1] repeats the finite-bankroll version (corrected claim, fix pass): no rise with a finite bankroll, unchanged within a fixed number of bets")
     l24 = load("l24-mixed-set")
-    expect("bankroll finite" not in l24["screens"][3]["hints"][0]["text"],
-           "finding 1: l24 screens[3] hints reason from a finite bankroll; the cycle is bounded (eight bets), which is the hypothesis that applies")
-    expect("product stays 1" not in l23["screens"][6]["feedback"]["byKey"]["d1"],
-           "finding 2: l23 screens[6] byKey d1 says the product stays 1; it is 1 - 2^-n, the chance of the £1 win")
+    h = l24["screens"][3]["hints"]
+    expect(eight_zero and "fixed number of bets" in h[0]["text"] and "eight bets at most" in h[1]["text"],
+           "finding 1: l24 screens[3] hints reason from a finite bankroll; the cycle is bounded (eight bets), which is the hypothesis that applies (corrected claim, fix pass): hints ask for the bet limit, eight bets from £255")
+    prod_ok = all(F(1, 2 ** n_) * (2 ** n_ - 1) == 1 - F(1, 2 ** n_) for n_ in range(1, 21))
+    d1 = l23["screens"][6]["feedback"]["byKey"]["d1"]
+    d1why = [ln for ln in l23["screens"][6]["widget"]["lines"] if ln.get("id") == "d1"][0]["why"]
+    expect(prod_ok and "$1 - 2^{-n}$" in d1 and "chance of the £1 win" in d1 and "$1 - 2^{-n}$" in d1why,
+           "finding 2: l23 screens[6] byKey d1 says the product stays 1; it is 1 - 2^-n, the chance of the £1 win (corrected claim, fix pass): byKey d1 and the d1 why both give 1 - 2^-n")
+    pp_ = sp.symbols("pp_")
+    lap = sp.integrate(pp_ ** 3, (pp_, 0, 1)) / sp.integrate(pp_ ** 2, (pp_, 0, 1))   # Beta(1,1) prior, two reds
     laplace = [o for o in l24["screens"][7]["widget"]["options"] if "Laplace" in o["text"]]
-    expect(laplace and ("tfrac34" in laplace[0]["text"] or "tfrac{3}{4}" in laplace[0]["text"]),
-           "finding 3: l24 screens[7] option c labels 2/3 as Laplace's rule; after two reds the rule gives (2+1)/(2+2) = 3/4")
+    expect(lap == sp.Rational(3, 4) and laplace and "tfrac34" in laplace[0]["text"] and not laplace[0].get("correct"),
+           "finding 3: l24 screens[7] option c labels 2/3 as Laplace's rule; after two reds the rule gives (2+1)/(2+2) = 3/4 (corrected claim, fix pass): option c reads 3/4 and stays a distractor")
     l21 = load("l21-kelly")
-    expect("Even a large edge stakes less than half" not in l21["quiz"][1]["explain"]["text"],
-           "finding 4: l21 quiz[1] explain generalises 'less than half the bankroll'; p = 0.8 at evens stakes 0.6")
-    expect("overstates it" not in l21["screens"][2]["explain"]["text"],
-           "finding 5: l21 screens[2] explain says wealth grows like e^{0.0201 n} and that the mean return overstates it; e^{ng} is the median path, while expected wealth is 1.04^n (2,540 times over 200 bets)")
+    q1 = l21["quiz"][1]["explain"]["text"]
+    half_at = sp.solve(sp.Eq(2 * pp_ - 1, sp.Rational(1, 2)), pp_)[0]          # 2p - 1 = 1/2
+    expect(half_at == sp.Rational(3, 4) and abs(kelly(0.7, 1) - 0.4) < 1e-12 and "$2p - 1$" in q1 and "tfrac34" in q1,
+           "finding 4: l21 quiz[1] explain generalises 'less than half the bankroll'; p = 0.8 at evens stakes 0.6 (corrected claim, fix pass): stake 2p - 1 passes half only above p = 3/4")
+    s2 = l21["screens"][2]["explain"]["text"]
+    g_ = 0.6 * log(1.2) + 0.4 * log(0.8)
+    med = F(6, 5) ** 120 * F(4, 5) ** 80                                  # 120 wins is the median of Bin(200, 0.6)
+    mean200 = F(26, 25) ** 200
+    expect(round(exp(200 * g_)) == 56 == round(float(med)) and round(float(mean200), -1) == 2550
+           and "median path" in s2 and "2{,}550" in s2 and "overstates it" not in s2,
+           "finding 5: l21 screens[2] explain says wealth grows like e^{0.0201 n} and that the mean return overstates it; e^{ng} is the median path, while expected wealth is 1.04^n (2,540 times over 200 bets) (corrected claim, fix pass): median 56 times, mean 1.04^200 = 2,550.7 (the audit's 2,540 was low)")
     for msg in failures:
         print("CONTENT FAIL:", msg)
     assert not failures, f"{len(failures)} content claim(s) disagree with the checks (see audit-puzzles-4-5.md)"
