@@ -83,7 +83,7 @@
     ],
     "prelude": "import numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    # six hand-made bars, Monday 4 March 2024 to Monday 11 March 2024\n    o = [100.0, 101.0, 99.5, 102.0, 103.0, 101.5]\n    c = [100.5, 100.0, 101.5, 102.5, 102.0, 103.0]\n    v = [1_000_000, 2_000_000, 500_000, 1_000_000, 4_000_000, 1_000_000]\n    return pd.DataFrame({\"open\": o, \"high\": [max(a, b) + 0.5 for a, b in zip(o, c)],\n                         \"low\": [min(a, b) - 0.5 for a, b in zip(o, c)], \"close\": c,\n                         \"volume\": [float(x) for x in v]},\n                        index=pd.bdate_range(\"2024-03-04\", periods=6))\n\ndef iso(index):\n    return [d.strftime(\"%Y-%m-%d\") for d in index]\n\n# level 1 pieces, already defined (as written in l3 and l4)\ndef momentum_signal(close, lookback):\n    \"\"\"+1, -1 or 0 at each bar: the sign of the lookback-day return, 0 where undefined.\"\"\"\n    return np.sign(close.pct_change(lookback)).fillna(0)\n\ndef target_positions(signal, max_units):\n    \"\"\"Whole shares to hold: signal times max_units, NaN as 0, capped at +/- max_units.\"\"\"\n    s = pd.Series(signal, dtype=float)\n    s = s.fillna(0).clip(-1, 1)           # no signal yet: hold nothing\n    return np.round(s * max_units).astype(int)\n\ndef orders_from_targets(targets):\n    \"\"\"Shares to trade each day: today's target minus yesterday's, from flat on day 0.\"\"\"\n    t = pd.Series(targets)\n    orders = t.diff()\n    orders.iloc[0] = t.iloc[0]            # day 0 builds its target from nothing\n    return orders\n\nclass Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n\n    def fill(self, qty, price, cost=0.0):\n        \"\"\"Buy qty shares (sell if negative) at price, paying cost.\"\"\"\n        if qty == 0:\n            return                          # no trade, no cost\n        self.cash -= qty * price + cost     # a sale (qty < 0) raises cash\n        self.shares += qty\n\n    def equity(self, price):\n        \"\"\"Cash plus the shares marked at price.\"\"\"\n        return self.cash + self.shares * price\n\ndef sharpe(returns, periods=252):\n    \"\"\"Annualised Sharpe ratio: sqrt(periods) * mean / sample sd (as in l9).\"\"\"\n    r = pd.Series(returns, dtype=float).dropna()\n    if len(r) < 2:\n        return 0.0\n    sd = r.std(ddof=1)\n    if sd < 1e-12:                # no spread: rounding noise is not risk\n        return 0.0\n    return float(np.sqrt(periods) * r.mean() / sd)\n\ndef trade_cost(qty, price, per_share=0.005, minimum=1.0, half_spread_bp=2.0):\n    if qty == 0:\n        return 0.0\n    q = abs(qty)\n    return max(per_share * q, minimum) + q * price * half_spread_bp / 10_000\n\nimport math\n\ndef slippage_bp(qty, adv_shares, sigma, c=1.0):\n    return c * sigma * math.sqrt(abs(qty) / adv_shares) * 10_000\n\ndef capped_qty(qty, volume, max_participation=0.1):\n    cap = int(max_participation * volume)\n    return int(np.sign(qty)) * min(abs(int(qty)), cap)\n",
     "budget": 10000,
-    "how": "Check runs 9 hidden tests on `hand_bars()` and `make_bars(250)`: whole reports compared with ==, the key set, impact with $c = 0$, no trades, a zero-cost run (the £1 minimum still applies, so gross and net differ), and that the four parts add up to gross minus net within 3p. `Portfolio`, `slippage_bp` and `make_bars` are already defined; NumPy and pandas load on the first run."
+    "how": "Check runs 9 hidden tests on `hand_bars()` and `make_bars(250)`. They compare whole reports with ==, the key set, impact with $c = 0$, no trades, and a zero-cost run (the £1 minimum still applies, so gross and net differ). The last checks that the four parts add up to gross minus net within 3p. `Portfolio`, `slippage_bp` and `make_bars` are already defined; NumPy and pandas load on the first run."
    },
    "feedback": {
     "correct": "Every pound between gross and net is accounted for.",
@@ -346,8 +346,8 @@
     "accept": "5,000 shares: $12\\sqrt{100\\,Q/V} = 6$ gives $Q/V = 0.25\\%$.",
     "wrong": [
      {
-      "id": "half",
-      "value": 10000,
+      "id": "linear",
+      "value": 100000,
       "tol": {
        "abs": 1
       }
@@ -365,7 +365,7 @@
     "correct": "Above 5,000 shares a flip, impact costs more than the edge.",
     "generic": "Not quite right. Solve $0.012\\sqrt{Q/V} \\times 10^4 = 6$ for $Q$.",
     "byKey": {
-     "half": "You solved as if impact were linear. Square both sides: $\\sqrt{Q/V} = 0.05$ gives $Q/V = 0.0025$.",
+     "linear": "You solved as if impact were linear: $0.012 \\times (Q/V) \\times 10^4 = 6$ gives $Q/V = 5\\%$, 100,000 shares. With the square root, $\\sqrt{Q/V} = 0.05$, so $Q/V = 0.0025$.",
      "pct": "You used 2.5% for $Q/V$. It is $0.05^2 = 0.0025$, a quarter of a percent."
     }
    },
@@ -374,42 +374,42 @@
    }
   },
   {
-   "id": "h2-same-close",
-   "difficulty": 4,
-   "skills": [
-    "bt-bias",
-    "bt-execution"
-   ],
-   "prose": "A colleague's engine fills each order at the close of its signal bar. It passes `lookahead_check` at every cut.",
-   "question": "What follows?",
-   "widget": {
-    "kind": "choice",
-    "layout": "stack",
-    "options": [
-     {
-      "id": "right",
-      "text": "Its fills are still too good: the check proves no later rows are read, not that a fill price was available.",
-      "correct": true
-     },
-     {
-      "id": "fine",
-      "text": "The engine is honest, since it passed the check.",
-      "why": "You read the check as a proof of every kind of honesty. A same-close fill reads only row $t$, so it passes, yet no order gets that price."
-     },
-     {
-      "id": "broken",
-      "text": "The check is broken, since it should fail this engine.",
-      "why": "You expected the check to catch fill timing. It tests one property, reads of later rows, and tests it correctly."
-     }
-    ]
-   },
-   "feedback": {
-    "correct": "Each test guards one thing; fills need l5's rule.",
-    "generic": "Not quite right. What exactly does the check compare?"
-   },
-   "explain": {
-    "text": "The check compares runs with and without the future, and a same-close fill uses no future. Its problem is a price no order could get. On `make_bars()` it reports 0.82 where the next open gives 0.57."
-   }
+    "id": "h2-same-close",
+    "difficulty": 4,
+    "skills": [
+      "bt-bias",
+      "bt-execution"
+    ],
+    "prose": "A colleague's engine fills at the next open, as ours does, but works out each fill's spread cost from that day's close instead of the fill price. It passes `lookahead_check` at every cut.",
+    "question": "What follows?",
+    "widget": {
+      "kind": "choice",
+      "layout": "stack",
+      "options": [
+        {
+          "id": "right",
+          "text": "The check cannot see it: the close it reads is on the fill's own row",
+          "correct": true
+        },
+        {
+          "id": "fine",
+          "text": "The cost is honest, since the engine passed the check",
+          "why": "You read the check as proof of every kind of honesty. A cost worked out from a price printed after the trade is still wrong."
+        },
+        {
+          "id": "fails",
+          "text": "The check should fail it, since the close comes after the fill",
+          "why": "You expected the check to see times within a row. It compares rows, and this engine reads nothing past the fill's own row."
+        }
+      ]
+    },
+    "feedback": {
+      "correct": "Each test guards one thing; a fill-ticket test catches this.",
+      "generic": "Not quite right. What exactly does the check compare?"
+    },
+    "explain": {
+      "text": "The fill happens at the open and the cost reads the same row's close, a price printed hours later. Cutting later rows changes nothing, so the check passes. A test that rebuilds each fill's cost from its own fill price catches it."
+    }
   },
   {
    "id": "h2-longform",
@@ -421,7 +421,7 @@
    "question": "Write your review of the backtest.",
    "widget": {
     "kind": "longform",
-    "prompt": "List every problem with this backtest. Estimate the impact in bp with the square-root model ($c = 1$, $\\sigma = 2\\%$), both for the whole order at once and with a 10% participation cap. Say what the corrected Sharpe is likely to look like, and what you would write in the results note.",
+    "prompt": "A colleague's backtest fills each order at the close of its signal bar, charges no spread or commission, and trades £50m at a time in a share whose daily volume is £20m. List every problem with it. Estimate the impact in bp with the square-root model ($c = 1$, $\\sigma = 2\\%$), both for the whole order at once and with a 10% participation cap. Say what the corrected Sharpe is likely to look like, and what you would write in the results note.",
     "model": "**Problems.**\n\n1. *Fill timing.* Filling at the close of the signal bar uses a price no order could get: the close has printed before the signal exists. Fill at the next open. On `make_bars()` that alone moves the same rule from 0.82 to 0.57, because half of each move happens overnight. The look-ahead check would not catch this, since no later row is read.\n2. *No spread.* Every fill crosses half the spread and pays commission. A round trip pays the whole spread once.\n3. *Size.* £50m against £20m a day is $Q/V = 2.5$: 250% of a day's volume. No order trades that in one day.\n\n**Impact.** All at once: $c\\,\\sigma\\sqrt{Q/V} = 0.02 \\times \\sqrt{2.5} = 0.0316$, about 316 bp, or about £1.58m on £50m, each way. With a 10% cap the order takes 25 days of £2m. Each day's slice is $Q/V = 0.1$: $0.02 \\times \\sqrt{0.1} = 0.0063$, about 63 bp, so about £316k on the £50m, each way. Over those 25 days the price also drifts, which is risk the backtest ignores.\n\n**Corrected Sharpe.** A daily rule whose gross edge is a few bp per unit traded cannot pay 63 bp a side. The corrected net Sharpe will be near zero or negative at £50m. It might survive at a far smaller size: capacity, not the Sharpe, is the binding number.\n\n**Results note.** \"Fills at the next open, with commission, half spread and square-root impact. At £50m the rule loses money after costs; its capacity is below £X.\" State the costs you assumed so a reader can check them.",
     "rubric": [
      {
@@ -472,17 +472,17 @@
     "options": [
      {
       "id": "fill",
-      "text": "A rule that fills missing future rows with a default, so its output looks the same whether the rows are there or not",
+      "text": "An engine that pads missing future rows with a default value",
       "correct": true
      },
      {
       "id": "shift",
-      "text": "A plain `shift(-1)` signal",
+      "text": "A plain `shift(-1)` signal on tomorrow's close",
       "why": "You picked a leak both forms catch. Cutting the data already changes the last target."
      },
      {
       "id": "cost",
-      "text": "Costs with the wrong sign",
+      "text": "Costs added to cash with the wrong sign",
       "why": "You picked a bug that reads no later rows. Neither form catches it."
      }
     ]
