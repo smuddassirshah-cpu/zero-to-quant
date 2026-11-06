@@ -54,3 +54,34 @@ Counts: wrong 0, misleading 3, coverage 2, design 9, voice 0, layout 0 (layout n
 
 - libc++ debug hardening (`cpp-worker.js` `FLAGS`) makes every `std::map` and `std::set` erase check the whole red-black tree: 20,000 erases on a map of 5,000 take 742 ms against 6 ms in `_LIBCPP_HARDENING_MODE_EXTENSIVE`. Extensive mode keeps the bounds checks but, in my test, traps without the "vector[] index out of bounds" message. Either choose a mode that keeps the message without the internal checks, or document in the AUTHORING C++ limits that `erase` on ordered containers is linear in the browser.
 - `fresh-check` compares runs of words, so a code item that repeats a course exercise under new wording (`cheapest_within` and the slot pool here, `crr_call` in the strats mock) passes. A check that compares function and class names in `starter` and `solution` across all content would catch it.
+
+## Fix pass
+
+Recomputed before writing (`docs/briefs/mocks-scripts/superday_developer_check.py`): the 200,000-tick total $\sum_{t < 200000}(100 + t \bmod 97) = 29{,}599{,}419$ by the build, by a Python model on sorted lists and by the compiled reference; the window test $1000 + 24{,}999.5 = 25{,}999.5$; every A1 value by the reference and by a label-setting search; every K6 value by the compiled reference and by a Python model with generations (the last, 12,499,900,000, is $4{,}999{,}950{,}000 + 2{,}499{,}950{,}000 + 50{,}000 \times 100{,}000$). Timing in the engine's toolchain (YoWASP clang 21, engine flags, `node:wasi`): a sorted vector with `insert` at 200,000 ticks takes 8.2 s and fails; the browser playthrough passes the reference on every test, the 200,000-tick one included.
+
+1. Fixed. `models` is the review's text (no concurrency); the description opens "This mock is built from reports of quant developer final rounds, as candidates described them by Nov 2026."; the brief says the same and writes Two Sigma's onsite as "(graph traversal; design in older reports)".
+2. Fixed by a fresh problem rather than the review's variant, because `cheapest_route` keeps the homework's hop-limited exercise. A1 is `earliest_arrival(n, runs, src, dst, t0)` over timed runs (sort by departure, keep the earliest time per site). My grep finds no timetable, `earliest_arrival` or run schedule in `app/content`; `fresh-check` gives 0 hits. 14 tests, each of six planted wrong versions fails at least 2.
+3. Fixed by finding 2: the explanation no longer credits a cap, and `how` gives the 5 s per test.
+4. Fixed. The large test is back to 200,000 ticks and 200,000 queries (expect 29599419.0); a sorted vector fails it (8.2 s in the browser toolchain, 6.7 s natively under the check's 5 s cap). `how` and the brief say so; the brief names the window test as the one sized for the browser.
+5. Fixed. The window test keeps 1,000 ticks, expect 25999.5. The engine note is left for the inbox, as the review says.
+6. Fixed with the review's sentence and starter comment.
+7. Fixed. `round-two` has `pass: 1`; the brief's table says so.
+8. Fixed. The key reads "`upper_bound` passes a tick at `t`; one step back finds it" (58 characters against 42, 58 and 54).
+9. Fixed. The new K6 keeps a test that a lowest-free pool fails: release slots 0 and 2, then `(x % 4) * 10 + y % 4` is 20 (a min-heap gives 2). The check's planted min-heap, reserved in the constructor, passes 12 of 13 tests.
+10. Fixed as the review proposes: handles `slot + capacity * generation`, a generation raised at each release, `release` and `valid` ignoring stale, free or out-of-range handles. My grep finds no `SlotPool` outside this mock and no generation counter or stale handle in content. 13 tests; six planted wrong versions (min-heap, no generation, generation at acquire, no in-use flag, first in first out, growing free list) each fail.
+11. Fixed. The key reads "Use `std::scoped_lock lk(src.m, dst.m);`" (40 characters).
+12. Fixed. Replay and the latency gate are two rows of 1 point; the pinned thread row is 1.
+13. Fixed with the review's wording.
+14. Fixed by the second option: K6's `pace` is 1,080 s, so the paces sum to 2,240 s of 2,400 s and the paper stays at 40 minutes (215 in all).
+
+Counts: fixed 14, disputed 0, deferred 0.
+
+Gates:
+
+- `python3 docs/briefs/mocks-scripts/superday_developer_check.py`: `numbers_lib: 174 of 174 checks passed`, exit 0.
+- Validator: 0 errors, no line names the mock.
+- Voice scan on a copy: 0 sentences of 20 words or more (411 scanned), 0 explanations over three sentences.
+- `fresh-check --exam mock-superday-developer --min-run 10`: 0 hits.
+- Playthrough with `--local-cdn`: ok, 21 items, scored 17 of 17, passed; mock checks ok. With `--mobile`: the same.
+- `readiness-sums`: OK.
+- Graded answers changed: A1 (new item, 14 tests), B1 large test expect and window test expect, K6 (new item, 13 tests).

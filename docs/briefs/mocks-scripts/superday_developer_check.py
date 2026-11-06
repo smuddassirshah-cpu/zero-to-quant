@@ -1,7 +1,7 @@
 """Second route for app/content/exams/mock-superday-developer.json. Exits 1 on any failure.
 
-Route A is superday_developer_build.py. Route B here is independent: a Dijkstra over (account, transfers) states for
-the hop-limited path, Python models of the price store and the slot pool for every C++ test, every C++ claim compiled
+Route A is superday_developer_build.py. Route B here is independent: a label-setting search over sites with each site's
+runs sorted by departure and found by bisection for the earliest arrival, Python models of the price store and the slot pool for every C++ test, every C++ claim compiled
 and run with g++ (and clang++ where the standard leaves room: copy elision), a cache simulation, an arrivals replay.
 Every code solution passes its hidden tests and every starter fails one. A last pass reads every number in each item's
 learner-visible strings: whole numbers 0 to 10 count as structure, every other number must match a route-B or given
@@ -125,55 +125,53 @@ void reset_alloc_count() { g_allocs = 0; }
 '''
 
 
-def cpp_case(src, t, alloc=False):
+def cpp_case(src, t, alloc=False, cap=60):
     main = (ALLOC if alloc else '') + src + '\n#include <iostream>\n#include <iomanip>\nint main() { ' + t['setup'] + \
         ' std::cout << std::setprecision(17) << (' + t['call'] + ') << "\\n"; }\n'
     ok, exe, _ = gpp(main, 'm', '-O1', *(['-fno-builtin'] if alloc else []))
     if not ok:
         return None
-    return float(sh([exe], timeout=60).stdout.strip())
+    try:
+        return float(sh([exe], timeout=cap).stdout.strip())
+    except subprocess.TimeoutExpired:
+        return None
 
 
-def cpp_passes(src, tests, alloc=False):
+def cpp_passes(src, tests, alloc=False, cap=60, stop_at_first_fail=False):
     n = 0
     for t in tests:
-        got = cpp_case(src, t, alloc)
+        got = cpp_case(src, t, alloc, cap)
+        if got is None and stop_at_first_fail:
+            return n
         if got is not None:
             tol = t.get('tol', {})
             n += math.isclose(got, float(t['expect']), rel_tol=tol.get('rel', 0), abs_tol=tol.get('abs', 0)) if t['compare'] == 'isclose' else got == t['expect']
     return n
 
 
-# ======================================================================== A1: hop-limited path
-def dijkstra_hops(n, routes, src, dst, k):
-    k = min(k, n)
+# ======================================================================== A1: earliest arrival
+def arrival_dijkstra(n, runs, src, dst, t0):
+    """route B: label-setting search; each site's runs sorted by departure, the first boardable one found by bisection"""
     adj = [[] for _ in range(n)]
-    for a, b, fee in routes:
-        adj[a].append((b, fee))
-    seen = {}
-    pq = [(0, src, 0)]
+    for a, b, d, r in runs:
+        adj[a].append((d, r, b))
+    for lst in adj:
+        lst.sort()
+    dist = [math.inf] * n
+    dist[src] = t0
+    pq = [(t0, src)]
     while pq:
-        c, u, h = heapq.heappop(pq)
-        if u == dst:
-            return c
-        if seen.get((u, h), math.inf) < c or h == k:
+        t, u = heapq.heappop(pq)
+        if t > dist[u]:
             continue
-        for v, fee in adj[u]:
-            if c + fee < seen.get((v, h + 1), math.inf):
-                seen[(v, h + 1)] = c + fee
-                heapq.heappush(pq, (c + fee, v, h + 1))
-    return -1
+        for d, r, v in adj[u][bisect.bisect_left(adj[u], (t, -math.inf, -1)):]:
+            if r < dist[v]:
+                dist[v] = r
+                heapq.heappush(pq, (r, v))
+    return -1 if dist[dst] == math.inf else dist[dst]
 
 
-a1 = W('a1-cheapest-within-hops')
-ok_all = True
-for t in a1['tests']:
-    ns = {'dijkstra_hops': dijkstra_hops}
-    if t.get('setup'):
-        exec(t['setup'], ns)
-    b = eval(t['call'].replace('cheapest_within', 'dijkstra_hops'), ns)
-    ok_all &= b == eval(t['expect'])
-    rec(b == eval(t['expect']), f'a1 {t["call"][:60]} = {b} by Dijkstra over (account, transfers)')
+a1 = W('a1-earliest-arrival')
 
 
 def run_py(src, tests):
@@ -190,25 +188,32 @@ def run_py(src, tests):
     return passed
 
 
+for t in a1['tests']:
+    ns = {'arrival_dijkstra': arrival_dijkstra}
+    if t.get('setup'):
+        exec(t['setup'], ns)
+    b = eval(t['call'].replace('earliest_arrival', 'arrival_dijkstra'), ns)
+    rec(b == eval(t['expect']), f'a1 {t["call"][:60]} = {b} by a label-setting search with bisection')
 rec(run_py(a1['solution'], a1['tests']) == len(a1['tests']), f'a1 solution passes {len(a1["tests"])} tests')
 rec(run_py(a1['starter'], a1['tests']) < len(a1['tests']), 'a1 starter fails a test')
-plain = '''import heapq
-def cheapest_within(n, routes, src, dst, k):
-    adj = [[] for _ in range(n)]
-    for a, b, f in routes: adj[a].append((b, f))
-    dist = {src: (0, 0)}; pq = [(0, 0, src)]
-    while pq:
-        c, h, u = heapq.heappop(pq)
-        if u == dst: return c
-        if dist[u] != (c, h) or h == k: continue
-        for v, f in adj[u]:
-            if v not in dist or c + f < dist[v][0]:
-                dist[v] = (c + f, h + 1); heapq.heappush(pq, (c + f, h + 1, v))
-    return -1
-'''
-trap = [t for t in a1['tests'] if t['call'].startswith('cheapest_within(4, [[0, 1, 1]') and t['call'].endswith(', 2)')]
-rec(len(trap) == 1 and run_py(plain, trap) == 0, 'a1 a Dijkstra that keeps one cost per account fails the trap test')
-allow('a1-cheapest-within-hops', 3000, 30000)
+rec(len(a1['tests']) <= 15, f'a1 {len(a1["tests"])} tests <= 15')
+sol_a = a1['solution']
+EA_WRONGS = {
+    'plain Dijkstra on run lengths': (
+        'import heapq\ndef earliest_arrival(n, runs, src, dst, t0):\n    adj = [[] for _ in range(n)]\n'
+        '    for a, b, d, r in runs: adj[a].append((b, r - d))\n    dist = [float("inf")] * n; dist[src] = 0; pq = [(0, src)]\n'
+        '    while pq:\n        c, u = heapq.heappop(pq)\n        if c > dist[u]: continue\n        for v, w in adj[u]:\n'
+        '            if c + w < dist[v]: dist[v] = c + w; heapq.heappush(pq, (c + w, v))\n'
+        '    return -1 if dist[dst] == float("inf") else t0 + dist[dst]\n'),
+    'boards only if strictly earlier': sol_a.replace('best[a] <= depart', 'best[a] < depart'),
+    'no waiting, must arrive exactly at departure': sol_a.replace('best[a] <= depart', 'best[a] == depart'),
+    'ignores t0': sol_a.replace('best[src] = t0', 'best[src] = 0'),
+    'runs taken in the order given': sol_a.replace('sorted(runs, key=lambda run: run[2])', 'runs'),
+    'stops at the first run that reaches dst': sol_a.replace('            best[b] = arrive\n', '            best[b] = arrive\n            if b == dst:\n                return arrive\n'),
+}
+for name, src in EA_WRONGS.items():
+    rec(src != sol_a and run_py(src, a1['tests']) < len(a1['tests']), f'a1 planted wrong "{name}" fails {len(a1["tests"]) - run_py(src, a1["tests"])} of {len(a1["tests"])} tests')
+allow('a1-earliest-arrival', 3000, 30000, 6, 20)
 
 # ======================================================================== B1: price store
 b1 = ITEM['b1-asof-store']
@@ -249,9 +254,9 @@ def fresh():
 
 
 s3 = Store(); s3.insert(3, 1.0); s3.insert(3, 2.0)
-big_total = sum(100.0 + t % 97 for t in range(100000))      # query q = 10t + 5 sees the tick at 10t, priced 100 + t % 97
+big_total = sum(100.0 + t % 97 for t in range(200000))      # query q = 10t + 5 sees the tick at 10t, priced 100 + t % 97
 win = Store()
-for t in range(45000, 50000):                                 # the last erase_before(45000) keeps 45,000 to 49,999
+for t in range(49000, 50000):                                 # the last erase_before(49000) keeps 49,000 to 49,999
     win.t.append(t); win.p.append(t * 0.5)
 f4, f5, f6 = fresh(), fresh(), fresh()
 f4.erase_before(130); f5.erase_before(130); f6.erase_before(1000)
@@ -267,9 +272,53 @@ rec(cpp_passes(w2['solution'], t12) == len(t12), f'b1 part 2 C++ solution passes
 rec(cpp_passes(w2['starter'], t12) < len(t12), 'b1 part 2 starter fails a test')
 rec(len(t12) <= 15, f'b1 merged tests {len(t12)} <= 15')
 rec(all('try' not in w['solution'] and 'catch' not in w['solution'] for w in (w1, w2)), 'b1 uses no try or catch')
-opt('b1-asof-store', '`upper_bound` skips a tick at exactly `t`, so the step back lands on it', part=2, correct=True)
+opt('b1-asof-store', '`upper_bound` passes a tick at `t`; one step back finds it', part=2, correct=True)
 choice_rules('b1-asof-store', 2)
-allow('b1-asof-store', 100000, 1e10, 1.0, 10)
+allow('b1-asof-store', 200000, 1e10, 4e10, 1.0, 10)
+rec(big_total == 29599419.0, f'b1 the large total {big_total}')
+STORE_FULL = """#include <algorithm>
+#include <iterator>
+#include <utility>
+#include <vector>
+
+class PriceStore {
+public:
+    void insert(long long t, double px) {
+        auto it = std::lower_bound(v_.begin(), v_.end(), std::make_pair(t, -1e300));
+        if (it != v_.end() && it->first == t) it->second = px;
+        else v_.insert(it, std::make_pair(t, px));
+    }
+    double asof(long long t) const {
+        auto it = std::upper_bound(v_.begin(), v_.end(), std::make_pair(t, 1e300));
+        if (it == v_.begin()) return -1.0;
+        return std::prev(it)->second;
+    }
+    int size() const { return static_cast<int>(v_.size()); }
+    double asof_fresh(long long t, long long max_age) const {
+        auto it = std::upper_bound(v_.begin(), v_.end(), std::make_pair(t, 1e300));
+        if (it == v_.begin()) return -1.0;
+        --it;
+        return t - it->first > max_age ? -1.0 : it->second;
+    }
+    void erase_before(long long t) { v_.erase(v_.begin(), std::lower_bound(v_.begin(), v_.end(), std::make_pair(t, -1e300))); }
+
+private:
+    std::vector<std::pair<long long, double>> v_;
+};
+"""
+sol2 = w2['solution']
+B1_WRONGS = {
+    'a sorted vector with insert': STORE_FULL,
+    'lower_bound in place of upper_bound': sol2.replace('ticks_.upper_bound(t)', 'ticks_.lower_bound(t)'),
+    'a scan of the map per query': sol2.replace('        auto it = ticks_.upper_bound(t);\n        if (it == ticks_.begin()) return -1.0;\n        return std::prev(it)->second;',
+                                                '        double best = -1.0;\n        for (const auto& kv : ticks_) { if (kv.first > t) break; best = kv.second; }\n        return best;'),
+    'age test at least max_age': sol2.replace('t - it->first > max_age', 't - it->first >= max_age'),
+    'erase_before also drops the tick at t': sol2.replace('ticks_.lower_bound(t)', 'ticks_.upper_bound(t)'),
+}
+for name, src in B1_WRONGS.items():
+    rec(src != sol2, f'b1 planted wrong "{name}" differs from the solution')
+    got = cpp_passes(src, t12, cap=5, stop_at_first_fail=False)
+    rec(got < len(t12), f'b1 planted wrong "{name}" passes {got} of {len(t12)} tests (5 s cap on each)')
 
 # ======================================================================== K1: padding
 ORDER = 'struct Order {\n    bool live;\n    double price;\n    int qty;\n    char side;\n};\n'
@@ -343,13 +392,13 @@ rec(all(f == c for _, f, c in fails), f'k5 only the key fails to compile: {[(c, 
 choice_rules('k5-template-deduction')
 allow('k5-template-deduction', 101.5, 100)
 
-# ======================================================================== K6: slot pool
+# ======================================================================== K6: slot pool with generation handles
 k6 = W('k6-slot-pool')
 
 
 class Pool:
     def __init__(self, cap):
-        self.cap, self.stack, self.used, self.fresh = cap, [], [False] * cap, 0
+        self.cap, self.stack, self.used, self.fresh, self.gen = cap, [], [False] * cap, 0, [0] * cap
 
     def acquire(self):
         if self.stack:
@@ -359,12 +408,23 @@ class Pool:
         else:
             return -1
         self.used[s] = True
-        return s
+        return s + self.cap * self.gen[s]
 
-    def release(self, s):
-        if 0 <= s < self.cap and self.used[s]:
+    def _live(self, h):
+        if h < 0 or self.cap == 0:
+            return -1
+        s, g = h % self.cap, h // self.cap
+        return s if self.used[s] and self.gen[s] == g else -1
+
+    def release(self, h):
+        s = self._live(h)
+        if s >= 0:
             self.used[s] = False
+            self.gen[s] += 1
             self.stack.append(s)
+
+    def valid(self, h):
+        return self._live(h) >= 0
 
     def in_use(self):
         return sum(self.used)
@@ -375,29 +435,31 @@ def model(case):
         p = Pool(3); a, b, c = p.acquire(), p.acquire(), p.acquire(); return a * 100 + b * 10 + c
     if case == 1:
         p = Pool(2); p.acquire(); p.acquire(); return p.acquire()
-    if case in (2, 3):
+    if case == 2:
         p = Pool(4)
         for _ in range(4):
             p.acquire()
-        p.release(2); p.release(0)
-        if case == 2:
-            return p.acquire()
-        x, y = p.acquire(), p.acquire(); return x * 10 + y
+        p.release(0); p.release(2); x, y = p.acquire(), p.acquire(); return (x % 4) * 10 + y % 4
+    if case == 3:
+        p = Pool(4); a = p.acquire(); p.release(a); return p.acquire()
     if case == 4:
-        p = Pool(5); p.acquire(); p.acquire(); p.release(1); x, y = p.acquire(), p.acquire(); return x * 10 + y
-    if case in (5, 6):
-        p = Pool(3); a = p.acquire(); p.release(a); p.release(a)
-        if case == 5:
-            p.release(7); p.release(-1); return p.in_use()
-        x, y = p.acquire(), p.acquire(); return x * 10 + y
+        p = Pool(3); a = p.acquire(); p.release(a); b = p.acquire(); p.release(a); return p.in_use() * 10 + int(p.valid(b))
+    if case == 5:
+        p = Pool(3); a, b = p.acquire(), p.acquire(); p.release(a); return 100 * p.valid(a) + 10 * p.valid(b) + int(p.valid(7))
+    if case == 6:
+        p = Pool(3); p.acquire(); p.release(-1); p.release(7); p.release(2); return p.in_use()
     if case == 7:
-        p = Pool(10)
-        for _ in range(7):
-            p.acquire()
-        p.release(3); p.release(5); return p.in_use()
+        p = Pool(3); a = p.acquire(); p.release(a); p.release(a); x, y = p.acquire(), p.acquire(); return x * 100 + y
     if case == 8:
-        return Pool(0).acquire()
+        p = Pool(10); h = [p.acquire() for _ in range(7)]; p.release(h[3]); p.release(h[5]); return p.in_use()
     if case == 9:
+        p = Pool(0); return p.acquire() * 10 + int(p.valid(0))
+    if case == 10:
+        p = Pool(3)
+        for _ in range(1000):
+            p.release(p.acquire())
+        return p.acquire()
+    if case == 11:
         return 0
     p = Pool(100000)
     tot = sum(p.acquire() for _ in range(100000))
@@ -410,19 +472,143 @@ want = [model(i) for i in range(len(k6['tests']))]
 rec([t['expect'] for t in k6['tests']] == want, f'k6 every expect matches the Python model {want}')
 rec(cpp_passes(k6['solution'], k6['tests'], alloc=True) == len(k6['tests']), f'k6 C++ solution passes {len(k6["tests"])} tests (g++, counting operator new)')
 rec(cpp_passes(k6['starter'], k6['tests'], alloc=True) < len(k6['tests']), 'k6 starter fails a test')
-vec = '''#include <set>
+rec(len(k6['tests']) <= 15, f'k6 {len(k6["tests"])} tests <= 15')
+sol_k = k6['solution']
+HEAP = """#include <algorithm>
+#include <functional>
+#include <vector>
+
 class SlotPool {
 public:
-    explicit SlotPool(int c) { for (int i = 0; i < c; ++i) free_.insert(i); }
-    int acquire() { if (free_.empty()) return -1; int s = *free_.begin(); free_.erase(free_.begin()); used_.insert(s); return s; }
-    void release(int s) { if (used_.erase(s)) free_.insert(s); }
-    int in_use() const { return static_cast<int>(used_.size()); }
+    explicit SlotPool(int capacity) : cap_(capacity), gen_(capacity, 0), used_(capacity, 0) {
+        heap_.reserve(capacity);
+        for (int i = 0; i < capacity; ++i) heap_.push_back(i);
+    }
+    long long acquire() {
+        if (heap_.empty()) return -1;
+        std::pop_heap(heap_.begin(), heap_.end(), std::greater<int>());
+        const int s = heap_.back();
+        heap_.pop_back();
+        used_[s] = 1;
+        ++count_;
+        return s + static_cast<long long>(cap_) * gen_[s];
+    }
+    void release(long long handle) {
+        const int s = live_slot(handle);
+        if (s < 0) return;
+        used_[s] = 0;
+        ++gen_[s];
+        heap_.push_back(s);
+        std::push_heap(heap_.begin(), heap_.end(), std::greater<int>());
+        --count_;
+    }
+    bool valid(long long handle) const { return live_slot(handle) >= 0; }
+    int in_use() const { return count_; }
+
 private:
-    std::set<int> free_, used_;
+    int live_slot(long long handle) const {
+        if (handle < 0 || cap_ == 0) return -1;
+        const int s = static_cast<int>(handle % cap_);
+        return used_[s] && gen_[s] == handle / cap_ ? s : -1;
+    }
+    int cap_;
+    std::vector<int> heap_, gen_;
+    std::vector<char> used_;
+    int count_ = 0;
 };
-'''
-alloc_test = [t for t in k6['tests'] if t['call'] == 'alloc_count()']
-rec(len(alloc_test) == 1 and cpp_passes(vec, alloc_test, alloc=True) == 0, 'k6 a version built on std::set fails the allocation test')
+"""
+FIFO = """#include <vector>
+
+class SlotPool {
+public:
+    explicit SlotPool(int capacity) : cap_(capacity), q_(capacity), gen_(capacity, 0), used_(capacity, 0), n_(capacity) {
+        for (int i = 0; i < capacity; ++i) q_[i] = i;
+    }
+    long long acquire() {
+        if (n_ == 0) return -1;
+        const int s = q_[head_];
+        head_ = (head_ + 1) % cap_;
+        --n_;
+        used_[s] = 1;
+        ++count_;
+        return s + static_cast<long long>(cap_) * gen_[s];
+    }
+    void release(long long handle) {
+        const int s = live_slot(handle);
+        if (s < 0) return;
+        used_[s] = 0;
+        ++gen_[s];
+        q_[(head_ + n_) % cap_] = s;
+        ++n_;
+        --count_;
+    }
+    bool valid(long long handle) const { return live_slot(handle) >= 0; }
+    int in_use() const { return count_; }
+
+private:
+    int live_slot(long long handle) const {
+        if (handle < 0 || cap_ == 0) return -1;
+        const int s = static_cast<int>(handle % cap_);
+        return used_[s] && gen_[s] == handle / cap_ ? s : -1;
+    }
+    int cap_;
+    std::vector<int> q_, gen_;
+    std::vector<char> used_;
+    int n_;
+    int head_ = 0;
+    int count_ = 0;
+};
+"""
+GROW = """#include <vector>
+
+class SlotPool {
+public:
+    explicit SlotPool(int capacity) : cap_(capacity), gen_(capacity, 0), used_(capacity, 0) {}
+    long long acquire() {
+        int s;
+        if (!free_.empty()) { s = free_.back(); free_.pop_back(); }
+        else if (next_ < cap_) s = next_++;
+        else return -1;
+        used_[s] = 1;
+        ++count_;
+        return s + static_cast<long long>(cap_) * gen_[s];
+    }
+    void release(long long handle) {
+        const int s = live_slot(handle);
+        if (s < 0) return;
+        used_[s] = 0;
+        ++gen_[s];
+        free_.push_back(s);
+        --count_;
+    }
+    bool valid(long long handle) const { return live_slot(handle) >= 0; }
+    int in_use() const { return count_; }
+
+private:
+    int live_slot(long long handle) const {
+        if (handle < 0 || cap_ == 0) return -1;
+        const int s = static_cast<int>(handle % cap_);
+        return used_[s] && gen_[s] == handle / cap_ ? s : -1;
+    }
+    int cap_;
+    std::vector<int> free_, gen_;
+    std::vector<char> used_;
+    int next_ = 0;
+    int count_ = 0;
+};
+"""
+K6_WRONGS = {
+    'a min-heap of free slots (lowest free first), reserved in the constructor': HEAP,
+    'no generation counter, the handle is the slot': sol_k.replace('        ++gen_[s];\n', ''),
+    'generation raised at acquire, not at release': sol_k.replace('        ++gen_[s];\n', '').replace('        used_[s] = 1;\n', '        used_[s] = 1;\n        ++gen_[s];\n'),
+    'no in-use flag': sol_k.replace('return used_[s] && gen_[s] == g ? s : -1;', 'return gen_[s] == g ? s : -1;'),
+    'first in, first out reuse': FIFO,
+    'a free list that grows (no reserve)': GROW,
+}
+for name, src in K6_WRONGS.items():
+    rec(src != sol_k, f'k6 planted wrong "{name}" differs from the solution')
+    got = cpp_passes(src, k6['tests'], alloc=True, cap=5)
+    rec(got < len(k6['tests']), f'k6 planted wrong "{name}" passes {got} of {len(k6["tests"])} tests')
 rec(k6.get('allocCheck') is True and 'try' not in k6['solution'], 'k6 allocCheck on, no try or catch')
 allow('k6-slot-pool', 1)
 
@@ -498,6 +684,12 @@ rec(200000 * 5e-6 == 1.0 and 1 / 200000 == 5e-6, 'g1 one order every 5 us; Littl
 # ======================================================================== structure
 rec([p.get('minutes') for p in doc['parts'] if p['kind'] == 'paper'] == [45, 45, 40, 25, 45, 15], 'papers 45, 45, 40, 25, 45, 15 minutes')
 rec(sum(len(p.get('items', [])) for p in doc['parts']) == 17, '17 items')
+paper = {p['id']: p for p in doc['parts'] if p['kind'] == 'paper'}
+rec(paper['round-one']['pass'] == 1 and paper['round-two']['pass'] == 1, 'both coding rounds need every part (pass 1), so the added requirement cannot be skipped')
+rec(sum(it['pace'] for it in paper['cpp']['items']) <= paper['cpp']['minutes'] * 60 - 120, 'cpp paces leave at least 120 s for the compiler start')
+rec('concurrency' not in doc['models'].lower(), 'models does not list concurrency')
+rec('This mock is built from reports' in doc['description'], 'the description states only the reported format')
+rec(sum(r['points'] for r in ITEM['g1-risk-gateway']['rubric'] if 'Replays' in r['text'] or 'Measures latency' in r['text']) == 2, 'g1 testing earns two points, one each for replay and the latency gate')
 rec(sum(1 for it in ITEM.values() if it.get('kind') == 'longform') == 4, 'four longform items')
 rec(all(sum(r['points'] for r in it['rubric']) == 10 for it in ITEM.values() if it.get('kind') == 'longform'), 'every rubric sums to 10')
 for it in ITEM.values():

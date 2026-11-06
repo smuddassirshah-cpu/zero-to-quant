@@ -2,8 +2,8 @@
   "id": "mock-superday-developer",
   "name": "Developer superday",
   "style": "developer",
-  "models": "Reported, as of Nov 2026: developer and quant developer onsites at Hudson River Trading, Two Sigma and Jane Street. Algorithms, C++, concurrency, design and fit.",
-  "description": "This is the reported shape of a quant developer final-round day, as candidates described it by Nov 2026. Hudson River Trading, Two Sigma and Jane Street report rounds like these. There are six papers, each on its own clock. Two are live coding rounds, and the second adds requirements part-way. Then come C++, concurrency and systems, a design round and fit. Real rounds are spoken, so talk through your code as you type. No search engine and no notes are allowed. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.",
+  "models": "Reported, as of Nov 2026: developer intern onsites at Hudson River Trading, Two Sigma and Jane Street. Layered coding, C++, memory, operating systems, design and fit.",
+  "description": "This mock is built from reports of quant developer final rounds, as candidates described them by Nov 2026. Hudson River Trading, Two Sigma and Jane Street candidates report rounds like these. There are six papers, each on its own clock. Two are live coding rounds, and the second adds requirements part-way. Then come C++, concurrency and systems, a design round and fit. Real rounds are spoken, so talk through your code as you type. No search engine and no notes are allowed. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.",
   "requires": [
     "graphs-dp/L2",
     "coding-int/L4",
@@ -37,115 +37,120 @@
       "pass": 1,
       "items": [
         {
-          "id": "a1-cheapest-within-hops",
+          "id": "a1-earliest-arrival",
           "difficulty": 4,
           "skills": [
             "gd-paths",
             "ci-timed"
           ],
           "tags": [
-            "hop-limited-path"
+            "scheduled-arrival"
           ],
           "pace": 1500,
-          "title": "The cheapest route in k transfers",
-          "prose": "Cash moves between accounts numbered 0 to `n - 1`. Each entry of `routes` is a one-way transfer `[a, b, fee]`, with a whole-number fee in pence. Fees are at least 1.",
-          "question": "Write `cheapest_within(n, routes, src, dst, k)`. It returns the smallest total fee from `src` to `dst` in at most `k` transfers, else -1. `n` reaches 3,000 and `routes` 30,000, and `k` may be far larger than `n`.",
+          "title": "The earliest arrival",
+          "prose": "A market-data relay joins sites numbered 0 to `n - 1`. Each entry of `runs` is a one-way run `[a, b, depart, arrive]`. It leaves site `a` at time `depart` and reaches site `b` at time `arrive`, which is later. Times are whole numbers.",
+          "question": "Write `earliest_arrival(n, runs, src, dst, t0)`. A message starts at `src` at time `t0` and may wait at any site. It boards a run only if it is at that run’s site by its `depart`. Return the earliest time it can be at `dst`, else -1. `n` reaches 3,000 and `runs` 30,000.",
           "widget": {
             "kind": "code",
             "language": "python",
-            "starter": "def cheapest_within(n, routes, src, dst, k):\n    \"\"\"Smallest total fee from src to dst in at most k transfers, or -1.\"\"\"\n    ...\n",
-            "solution": "def cheapest_within(n, routes, src, dst, k):\n    INF = float(\"inf\")\n    best = [INF] * n\n    best[src] = 0\n    for _ in range(min(k, n - 1)):\n        nxt = best[:]\n        changed = False\n        for a, b, fee in routes:\n            if best[a] + fee < nxt[b]:\n                nxt[b] = best[a] + fee\n                changed = True\n        best = nxt\n        if not changed:\n            break\n    return -1 if best[dst] == INF else best[dst]\n",
+            "starter": "def earliest_arrival(n, runs, src, dst, t0):\n    \"\"\"Earliest time at dst, starting at src at time t0, or -1.\"\"\"\n    ...\n",
+            "solution": "def earliest_arrival(n, runs, src, dst, t0):\n    INF = float(\"inf\")\n    best = [INF] * n\n    best[src] = t0\n    for a, b, depart, arrive in sorted(runs, key=lambda run: run[2]):\n        if best[a] <= depart and arrive < best[b]:\n            best[b] = arrive\n    return -1 if best[dst] == INF else best[dst]\n",
             "examples": [
               {
-                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 3)",
-                "expect": "300",
+                "call": "earliest_arrival(4, [[0, 1, 10, 20], [1, 2, 25, 40], [1, 2, 15, 30], [2, 3, 40, 50], [0, 3, 5, 100]], 0, 3, 0)",
+                "expect": "50",
                 "compare": "equal"
               },
               {
-                "call": "cheapest_within(4, [[0, 1, 1], [1, 2, 1], [0, 2, 5], [2, 3, 1]], 0, 3, 2)",
-                "expect": "6",
+                "call": "earliest_arrival(4, [[0, 1, 0, 5], [1, 2, 3, 4], [0, 2, 0, 50], [1, 2, 10, 20]], 0, 2, 0)",
+                "expect": "20",
                 "compare": "equal"
               }
             ],
             "tests": [
               {
-                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 3)",
-                "expect": "300",
+                "call": "earliest_arrival(4, [[0, 1, 10, 20], [1, 2, 25, 40], [1, 2, 15, 30], [2, 3, 40, 50], [0, 3, 5, 100]], 0, 3, 0)",
+                "expect": "50",
                 "compare": "equal"
               },
               {
-                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 2)",
-                "expect": "350",
+                "call": "earliest_arrival(4, [[0, 1, 10, 20], [1, 2, 25, 40], [1, 2, 15, 30], [2, 3, 40, 50], [0, 3, 5, 100]], 0, 3, 6)",
+                "expect": "50",
                 "compare": "equal"
               },
               {
-                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 1)",
-                "expect": "500",
-                "compare": "equal"
-              },
-              {
-                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 0)",
+                "call": "earliest_arrival(4, [[0, 1, 10, 20], [1, 2, 25, 40], [1, 2, 15, 30], [2, 3, 40, 50], [0, 3, 5, 100]], 0, 3, 11)",
                 "expect": "-1",
                 "compare": "equal"
               },
               {
-                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 2, 2, 0)",
-                "expect": "0",
-                "compare": "equal"
-              },
-              {
-                "call": "cheapest_within(4, [[0, 1, 1], [1, 2, 1], [0, 2, 5], [2, 3, 1]], 0, 3, 2)",
-                "expect": "6",
-                "compare": "equal"
-              },
-              {
-                "call": "cheapest_within(4, [[0, 1, 1], [1, 2, 1], [0, 2, 5], [2, 3, 1]], 0, 3, 3)",
-                "expect": "3",
-                "compare": "equal"
-              },
-              {
-                "call": "cheapest_within(5, [[0, 1, 4], [1, 0, 1], [3, 4, 2]], 0, 4, 10)",
+                "call": "earliest_arrival(4, [[0, 1, 10, 20], [1, 2, 25, 40], [1, 2, 15, 30], [2, 3, 40, 50], [0, 3, 5, 100]], 3, 0, 0)",
                 "expect": "-1",
                 "compare": "equal"
               },
               {
-                "call": "cheapest_within(3, [[0, 1, 2], [1, 0, 2], [1, 2, 7]], 0, 2, 10 ** 9)",
-                "expect": "9",
+                "call": "earliest_arrival(3, [[1, 1, 1, 5], [0, 2, 2, 5], [2, 0, 0, 2]], 2, 0, 0)",
+                "expect": "2",
                 "compare": "equal"
               },
               {
-                "setup": "import random; R = random.Random(11); routes = [[R.randrange(3000), R.randrange(3000), R.randint(1, 500)] for _ in range(30000)]",
-                "call": "cheapest_within(3000, routes, 0, 2999, 6)",
-                "expect": "607",
+                "call": "earliest_arrival(4, [[0, 1, 0, 5], [1, 2, 3, 4], [0, 2, 0, 50], [1, 2, 10, 20]], 0, 2, 0)",
+                "expect": "20",
                 "compare": "equal"
               },
               {
-                "setup": "import random; R = random.Random(11); routes = [[R.randrange(3000), R.randrange(3000), R.randint(1, 500)] for _ in range(30000)]",
-                "call": "cheapest_within(3000, routes, 0, 2999, 10 ** 9)",
-                "expect": "500",
+                "call": "earliest_arrival(3, [[0, 1, 0, 4], [0, 1, 4, 8], [1, 0, 1, 6]], 0, 1, 3)",
+                "expect": "8",
                 "compare": "equal"
               },
               {
-                "setup": "routes = [[i, i + 1, 1] for i in range(599)] + [[0, 599, 1000]]",
-                "call": "cheapest_within(600, routes, 0, 599, 599)",
-                "expect": "599",
+                "call": "earliest_arrival(3, [[0, 2, 15, 23], [2, 2, 7, 15], [1, 0, 10, 14]], 1, 2, 0)",
+                "expect": "23",
                 "compare": "equal"
               },
               {
-                "setup": "routes = [[i, i + 1, 1] for i in range(599)] + [[0, 599, 1000]]",
-                "call": "cheapest_within(600, routes, 0, 599, 598)",
-                "expect": "1000",
+                "call": "earliest_arrival(3, [[2, 1, 12, 19], [2, 1, 18, 21], [2, 1, 12, 15]], 2, 1, 0)",
+                "expect": "15",
+                "compare": "equal"
+              },
+              {
+                "call": "earliest_arrival(3, [[0, 1, 2, 9]], 1, 1, 7)",
+                "expect": "7",
+                "compare": "equal"
+              },
+              {
+                "setup": "import random; R = random.Random(11); runs = [[a, b, d, d + R.randint(1, 300)] for a, b, d in ((R.randrange(3000), R.randrange(3000), R.randrange(10000)) for _ in range(30000))]",
+                "call": "earliest_arrival(3000, runs, 0, 2999, 0)",
+                "expect": "7229",
+                "compare": "equal"
+              },
+              {
+                "setup": "import random; R = random.Random(11); runs = [[a, b, d, d + R.randint(1, 300)] for a, b, d in ((R.randrange(3000), R.randrange(3000), R.randrange(10000)) for _ in range(30000))]",
+                "call": "earliest_arrival(3000, runs, 0, 2999, 1500)",
+                "expect": "-1",
+                "compare": "equal"
+              },
+              {
+                "setup": "runs = [[i, i + 1, 10 * i, 10 * i + 10] for i in range(599)] + [[0, 599, 0, 9000]]",
+                "call": "earliest_arrival(600, runs, 0, 599, 0)",
+                "expect": "5990",
+                "compare": "equal"
+              },
+              {
+                "setup": "runs = [[i, i + 1, 10 * i - (i == 300), 10 * i + 10] for i in range(599)] + [[0, 599, 0, 9000]]",
+                "call": "earliest_arrival(600, runs, 0, 599, 0)",
+                "expect": "9000",
                 "compare": "equal"
               }
             ],
-            "how": "Submit runs 13 hidden tests, compared exactly. Two use 30,000 random routes."
+            "how": "Submit runs 14 hidden tests, compared exactly. Two use 30,000 random runs. Each test has 5 seconds."
           },
           "feedback": {
-            "correct": "Bellman-Ford for at most $k$ rounds, each round from the last round’s costs.",
-            "generic": "Keep the cheapest cost to each account in at most $j$ transfers. Build round $j + 1$ from round $j$ only."
+            "correct": "Take the runs in order of departure, and board a run if you are already at its site.",
+            "generic": "Sort the runs by `depart`. Keep the earliest time at each site, and update it from each run you can board."
           },
           "explain": {
-            "text": "Round $j$ of Bellman-Ford holds the cheapest cost in at most $j$ transfers, if it reads only round $j - 1$. Plain Dijkstra settles account 2 at cost 2 on the trap test, a route with too many transfers. Capping the rounds at $n - 1$ and stopping when nothing changes keeps a huge $k$ fast."
+            "text": "A run cannot help a run that left earlier, so sorting by `depart` settles every site in time. A message that arrives exactly at `depart` still boards. Plain Dijkstra on run lengths ignores departure times and gets 6 on the trap test, not 20."
           }
         }
       ]
@@ -160,7 +165,7 @@
         "wrong": 0,
         "blank": 0
       },
-      "pass": 0.6,
+      "pass": 1,
       "items": [
         {
           "id": "b1-asof-store",
@@ -267,9 +272,9 @@
                     }
                   },
                   {
-                    "setup": "PriceStore s; for (long long i = 0; i < 100000; ++i) { long long t = (i * 7919) % 100000; s.insert(t * 10, 100.0 + t % 97); } double total = 0; for (long long q = 5; q < 1000000; q += 10) total += s.asof(q);",
+                    "setup": "PriceStore s; for (long long i = 0; i < 200000; ++i) { long long t = (i * 7919) % 200000; s.insert(t * 10, 100.0 + t % 97); } double total = 0; for (long long q = 5; q < 2000000; q += 10) total += s.asof(q);",
                     "call": "total",
-                    "expect": 14799685.0,
+                    "expect": 29599419.0,
                     "compare": "isclose",
                     "tol": {
                       "rel": 1e-09,
@@ -277,22 +282,22 @@
                     }
                   }
                 ],
-                "how": "Submit runs 7 hidden tests. One inserts 100,000 ticks out of order and makes 100,000 queries."
+                "how": "Submit runs 7 hidden tests. One inserts 200,000 ticks out of order and makes 200,000 queries."
               },
               "feedback": {
                 "correct": "An ordered map, and the tick before `upper_bound(t)`.",
                 "generic": "Keep the ticks sorted by time, and search for the first tick after `t`."
               },
               "explain": {
-                "text": "A `std::map` keeps the ticks sorted, so each insert and each query costs $O(\\log n)$. The tick just before `upper_bound(t)` is the latest one at or before `t`. A scan of every tick per query takes about $10^{10}$ steps on the large test."
+                "text": "A `std::map` keeps the ticks sorted, so each insert and each query costs $O(\\log n)$. The tick just before `upper_bound(t)` is the latest one at or before `t`. A scan of every tick per query takes about $4 \\times 10^{10}$ steps on the large test."
               }
             },
             {
-              "question": "The interviewer adds two requirements. `asof_fresh(t, max_age)` returns -1.0 when the latest tick at or before `t` is more than `max_age` older than `t`. `erase_before(t)` drops every tick strictly before `t`, so memory stays bounded.",
+              "question": "The interviewer adds two requirements. `asof_fresh(t, max_age)` returns -1.0 when the latest tick at or before `t` is more than `max_age` older than `t`. Otherwise it returns that tick’s price, as `asof` does, or -1.0 if there is none. `erase_before(t)` drops every tick strictly before `t`, so memory stays bounded.",
               "widget": {
                 "kind": "code",
                 "language": "cpp",
-                "starter": "#include <iterator>\n#include <map>\n\nclass PriceStore {\npublic:\n    void insert(long long t, double px) { ticks_[t] = px; }\n    double asof(long long t) const {\n        auto it = ticks_.upper_bound(t);\n        if (it == ticks_.begin()) return -1.0;\n        return std::prev(it)->second;\n    }\n    int size() const { return static_cast<int>(ticks_.size()); }\n    // -1.0 if the latest tick at or before t is more than max_age old.\n    double asof_fresh(long long t, long long max_age) const { (void)t; (void)max_age; return -1.0; }\n    // Drop every tick strictly before t.\n    void erase_before(long long t) { (void)t; }\n\nprivate:\n    std::map<long long, double> ticks_;\n};\n",
+                "starter": "#include <iterator>\n#include <map>\n\nclass PriceStore {\npublic:\n    void insert(long long t, double px) { ticks_[t] = px; }\n    double asof(long long t) const {\n        auto it = ticks_.upper_bound(t);\n        if (it == ticks_.begin()) return -1.0;\n        return std::prev(it)->second;\n    }\n    int size() const { return static_cast<int>(ticks_.size()); }\n    // That tick's price, or -1.0 if none or it is more than max_age old.\n    double asof_fresh(long long t, long long max_age) const { (void)t; (void)max_age; return -1.0; }\n    // Drop every tick strictly before t.\n    void erase_before(long long t) { (void)t; }\n\nprivate:\n    std::map<long long, double> ticks_;\n};\n",
                 "solution": "#include <iterator>\n#include <map>\n\nclass PriceStore {\npublic:\n    void insert(long long t, double px) { ticks_[t] = px; }\n    double asof(long long t) const {\n        auto it = ticks_.upper_bound(t);\n        if (it == ticks_.begin()) return -1.0;\n        return std::prev(it)->second;\n    }\n    int size() const { return static_cast<int>(ticks_.size()); }\n    double asof_fresh(long long t, long long max_age) const {\n        auto it = ticks_.upper_bound(t);\n        if (it == ticks_.begin()) return -1.0;\n        --it;\n        return t - it->first > max_age ? -1.0 : it->second;\n    }\n    void erase_before(long long t) { ticks_.erase(ticks_.begin(), ticks_.lower_bound(t)); }\n\nprivate:\n    std::map<long long, double> ticks_;\n};\n",
                 "examples": [
                   {
@@ -374,9 +379,9 @@
                     "compare": "equal"
                   },
                   {
-                    "setup": "PriceStore s; for (long long t = 0; t < 50000; ++t) { s.insert(t, t * 0.5); if (t % 1000 == 999) s.erase_before(t - 4999); }",
+                    "setup": "PriceStore s; for (long long t = 0; t < 50000; ++t) { s.insert(t, t * 0.5); if (t % 1000 == 999) s.erase_before(t - 999); }",
                     "call": "s.size() + s.asof_fresh(49999, 0)",
-                    "expect": 29999.5,
+                    "expect": 25999.5,
                     "compare": "isclose",
                     "tol": {
                       "rel": 1e-09,
@@ -403,7 +408,7 @@
                 "options": [
                   {
                     "id": "a",
-                    "text": "`upper_bound` skips a tick at exactly `t`, so the step back lands on it",
+                    "text": "`upper_bound` passes a tick at `t`; one step back finds it",
                     "correct": true
                   },
                   {
@@ -747,33 +752,33 @@
           "tags": [
             "slot-pool"
           ],
-          "pace": 1200,
-          "title": "A pool that never allocates",
-          "prose": "A gateway keeps open orders in a fixed table and hands out rows by index. The hot path may not touch the heap.",
-          "question": "Write `SlotPool` in C++. `acquire()` returns the slot released most recently, else the lowest slot never used, else -1. `release(slot)` frees a slot, ignoring a free or out-of-range one. `in_use()` counts slots in use. Nothing after the constructor may allocate.",
+          "pace": 1080,
+          "title": "Handles that go stale",
+          "prose": "A gateway keeps open orders in a fixed table and hands out rows by index. A late message must never reach a row that now holds another order. The hot path may not touch the heap.",
+          "question": "Write `SlotPool` in C++. `acquire()` returns a handle, `slot + capacity * generation`, or -1 if every slot is in use. It picks the free slot released most recently, else the lowest slot never used. A slot’s generation starts at 0 and rises by 1 at each release. `release(h)` frees the slot if `h` is its current handle, and ignores any other. `valid(h)` says whether `h` is a current handle. `in_use()` counts slots in use. Nothing after the constructor may allocate.",
           "widget": {
             "kind": "code",
             "language": "cpp",
             "allocCheck": true,
-            "starter": "#include <vector>\n\n// A fixed pool of slots 0 to capacity - 1, handed out by index.\n// No call after the constructor may allocate.\nclass SlotPool {\npublic:\n    explicit SlotPool(int capacity) { (void)capacity; }\n    // A free slot, or -1 when every slot is in use.\n    int acquire() { return -1; }\n    // Free a slot. A free or out-of-range slot is ignored.\n    void release(int slot) { (void)slot; }\n    // The number of slots in use.\n    int in_use() const { return 0; }\n};\n",
-            "solution": "#include <vector>\n\nclass SlotPool {\npublic:\n    explicit SlotPool(int capacity) : free_(capacity), used_(capacity, false), top_(capacity) {\n        for (int i = 0; i < capacity; ++i) free_[i] = capacity - 1 - i;\n    }\n    int acquire() {\n        if (top_ == 0) return -1;\n        const int s = free_[--top_];\n        used_[s] = true;\n        ++count_;\n        return s;\n    }\n    void release(int slot) {\n        if (slot < 0 || slot >= static_cast<int>(used_.size()) || !used_[slot]) return;\n        used_[slot] = false;\n        free_[top_++] = slot;\n        --count_;\n    }\n    int in_use() const { return count_; }\n\nprivate:\n    std::vector<int> free_;\n    std::vector<bool> used_;\n    int top_ = 0;\n    int count_ = 0;\n};\n",
+            "starter": "#include <vector>\n\n// A fixed pool of slots 0 to capacity - 1. A handle is slot + capacity * generation.\n// No call after the constructor may allocate.\nclass SlotPool {\npublic:\n    explicit SlotPool(int capacity) { (void)capacity; }\n    // A handle for a free slot, or -1 when every slot is in use.\n    long long acquire() { return -1; }\n    // Free the slot if handle is its current handle. Ignore any other.\n    void release(long long handle) { (void)handle; }\n    // True if handle is a current handle of a slot in use.\n    bool valid(long long handle) const { (void)handle; return false; }\n    // The number of slots in use.\n    int in_use() const { return 0; }\n};\n",
+            "solution": "#include <vector>\n\nclass SlotPool {\npublic:\n    explicit SlotPool(int capacity)\n        : cap_(capacity), free_(capacity), gen_(capacity, 0), used_(capacity, 0), top_(capacity) {\n        for (int i = 0; i < capacity; ++i) free_[i] = capacity - 1 - i;\n    }\n    long long acquire() {\n        if (top_ == 0) return -1;\n        const int s = free_[--top_];\n        used_[s] = 1;\n        ++count_;\n        return s + static_cast<long long>(cap_) * gen_[s];\n    }\n    void release(long long handle) {\n        const int s = live_slot(handle);\n        if (s < 0) return;\n        used_[s] = 0;\n        ++gen_[s];\n        free_[top_++] = s;\n        --count_;\n    }\n    bool valid(long long handle) const { return live_slot(handle) >= 0; }\n    int in_use() const { return count_; }\n\nprivate:\n    int live_slot(long long handle) const {\n        if (handle < 0 || cap_ == 0) return -1;\n        const int s = static_cast<int>(handle % cap_);\n        const long long g = handle / cap_;\n        return used_[s] && gen_[s] == g ? s : -1;\n    }\n    int cap_;\n    std::vector<int> free_, gen_;\n    std::vector<char> used_;\n    int top_ = 0;\n    int count_ = 0;\n};\n",
             "examples": [
               {
-                "setup": "SlotPool p(3); int a = p.acquire(); int b = p.acquire(); int c = p.acquire();",
+                "setup": "SlotPool p(3); long long a = p.acquire(); long long b = p.acquire(); long long c = p.acquire();",
                 "call": "a * 100 + b * 10 + c",
                 "expect": 12,
                 "compare": "equal"
               },
               {
-                "setup": "SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(2); p.release(0); int x = p.acquire(); int y = p.acquire();",
-                "call": "x * 10 + y",
-                "expect": 2,
+                "setup": "SlotPool p(3); long long a = p.acquire(); p.release(a); long long b = p.acquire(); p.release(a);",
+                "call": "p.in_use() * 10 + (p.valid(b) ? 1 : 0)",
+                "expect": 11,
                 "compare": "equal"
               }
             ],
             "tests": [
               {
-                "setup": "SlotPool p(3); int a = p.acquire(); int b = p.acquire(); int c = p.acquire();",
+                "setup": "SlotPool p(3); long long a = p.acquire(); long long b = p.acquire(); long long c = p.acquire();",
                 "call": "a * 100 + b * 10 + c",
                 "expect": 12,
                 "compare": "equal"
@@ -785,68 +790,80 @@
                 "compare": "equal"
               },
               {
-                "setup": "SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(2); p.release(0);",
-                "call": "p.acquire()",
-                "expect": 0,
+                "setup": "SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(0); p.release(2); long long x = p.acquire(); long long y = p.acquire();",
+                "call": "(x % 4) * 10 + y % 4",
+                "expect": 20,
                 "compare": "equal"
               },
               {
-                "setup": "SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(2); p.release(0); int x = p.acquire(); int y = p.acquire();",
-                "call": "x * 10 + y",
-                "expect": 2,
+                "setup": "SlotPool p(4); long long a = p.acquire(); p.release(a); long long b = p.acquire();",
+                "call": "b",
+                "expect": 4,
                 "compare": "equal"
               },
               {
-                "setup": "SlotPool p(5); p.acquire(); p.acquire(); p.release(1); int x = p.acquire(); int y = p.acquire();",
-                "call": "x * 10 + y",
-                "expect": 12,
+                "setup": "SlotPool p(3); long long a = p.acquire(); p.release(a); long long b = p.acquire(); p.release(a);",
+                "call": "p.in_use() * 10 + (p.valid(b) ? 1 : 0)",
+                "expect": 11,
                 "compare": "equal"
               },
               {
-                "setup": "SlotPool p(3); int a = p.acquire(); p.release(a); p.release(a); p.release(7); p.release(-1);",
+                "setup": "SlotPool p(3); long long a = p.acquire(); long long b = p.acquire(); p.release(a);",
+                "call": "(p.valid(a) ? 100 : 0) + (p.valid(b) ? 10 : 0) + (p.valid(7) ? 1 : 0)",
+                "expect": 10,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(3); p.acquire(); p.release(-1); p.release(7); p.release(2);",
                 "call": "p.in_use()",
-                "expect": 0,
-                "compare": "equal"
-              },
-              {
-                "setup": "SlotPool p(3); int a = p.acquire(); p.release(a); p.release(a); int x = p.acquire(); int y = p.acquire();",
-                "call": "x * 10 + y",
                 "expect": 1,
                 "compare": "equal"
               },
               {
-                "setup": "SlotPool p(10); for (int i = 0; i < 7; ++i) p.acquire(); p.release(3); p.release(5);",
+                "setup": "SlotPool p(3); long long a = p.acquire(); p.release(a); p.release(a); long long x = p.acquire(); long long y = p.acquire();",
+                "call": "x * 100 + y",
+                "expect": 301,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(10); long long h[7]; for (int i = 0; i < 7; ++i) h[i] = p.acquire(); p.release(h[3]); p.release(h[5]);",
                 "call": "p.in_use()",
                 "expect": 5,
                 "compare": "equal"
               },
               {
                 "setup": "SlotPool p(0);",
-                "call": "p.acquire()",
-                "expect": -1,
+                "call": "p.acquire() * 10 + (p.valid(0) ? 1 : 0)",
+                "expect": -10,
                 "compare": "equal"
               },
               {
-                "setup": "SlotPool p(1000); reset_alloc_count(); for (int r = 0; r < 100000; ++r) { int s = p.acquire(); int t = p.acquire(); p.release(s); p.release(t); }",
+                "setup": "SlotPool p(3); long long h = 0; for (int r = 0; r < 1000; ++r) { h = p.acquire(); p.release(h); } h = p.acquire();",
+                "call": "h",
+                "expect": 3000,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(1000); reset_alloc_count(); for (int r = 0; r < 100000; ++r) { long long s = p.acquire(); long long t = p.acquire(); p.release(s); p.release(t); }",
                 "call": "alloc_count()",
                 "expect": 0,
                 "compare": "equal"
               },
               {
-                "setup": "SlotPool p(100000); long long sum = 0; for (int i = 0; i < 100000; ++i) sum += p.acquire(); for (int i = 0; i < 100000; i += 2) p.release(i); for (int i = 0; i < 50000; ++i) sum += p.acquire();",
+                "setup": "SlotPool p(100000); long long sum = 0; for (int i = 0; i < 100000; ++i) sum += p.acquire(); for (long long i = 0; i < 100000; i += 2) p.release(i); for (int i = 0; i < 50000; ++i) sum += p.acquire();",
                 "call": "sum",
-                "expect": 7499900000,
+                "expect": 12499900000,
                 "compare": "equal"
               }
             ],
-            "how": "Submit runs 11 hidden tests. One counts calls of `operator new` after its setup and expects 0."
+            "how": "Submit runs 13 hidden tests. One counts calls of `operator new` after its setup and expects 0."
           },
           "feedback": {
-            "correct": "A stack of free slots, filled in the constructor, with a flag per slot.",
-            "generic": "Preallocate a stack of free slot numbers, lowest on top. Push each released slot back on top."
+            "correct": "A stack of free slots and a generation per slot; a release bumps the generation.",
+            "generic": "Preallocate a stack of free slot numbers, lowest on top. A handle is current only if its generation matches and the slot is in use."
           },
           "explain": {
-            "text": "Filling the stack with the highest slot at the bottom makes the never-used slots come out lowest first. A released slot goes on top, so it comes out next. The flag per slot stops a double release from handing one slot to two orders."
+            "text": "Fresh slots come out lowest first, and a released slot is next. A release raises the generation, so an old handle fails. The in-use flag blocks a handle to a never-used slot."
           }
         }
       ]
@@ -979,7 +996,7 @@
             "options": [
               {
                 "id": "a",
-                "text": "Take both with one `std::scoped_lock lk(src.m, dst.m);`",
+                "text": "Use `std::scoped_lock lk(src.m, dst.m);`",
                 "correct": true
               },
               {
@@ -1185,7 +1202,7 @@
               "text": "Turns the load into a budget: one order every 5 µs"
             },
             {
-              "points": 2,
+              "points": 1,
               "text": "One pinned thread on the hot path, fed by a lock-free queue"
             },
             {
@@ -1206,7 +1223,11 @@
             },
             {
               "points": 1,
-              "text": "Tests by replay against a reference, with a latency gate from arrival times"
+              "text": "Replays a recorded day against a slow reference checker"
+            },
+            {
+              "points": 1,
+              "text": "Measures latency from each order’s arrival and fails the build above 5 µs at the 99th percentile"
             }
           ]
         },
@@ -1303,7 +1324,7 @@
             },
             {
               "points": 1,
-              "text": "About 90 seconds, with no stock phrases"
+              "text": "About 90 seconds, and no line that would fit any firm, such as \"I am passionate about technology\""
             }
           ]
         },
