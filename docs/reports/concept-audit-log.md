@@ -20,3 +20,4 @@
 | ito | L1 to L3 | 1 | 1 | 5 | 1 | 7 | 14 (all fixed before the audit) | 0 | yes (1 wrong is within the rule; fix pass 7 fixed, 0 disputed; gates green; L4 not yet audited) |
 | measure-prob | L1 to L3 | 1 | 0 | 4 | 0 | 3 | 18 (all fixed before the audit) | 1 | yes (fix pass 4 fixed, 0 disputed; gates green; L4 not yet audited) |
 | pdes | L1 to L3 | 1 | 0 | 7 | 0 | 7 | 21 (all fixed before the audit) | 0 | yes (fix pass 7 fixed, 0 disputed; gates green; course fully closed) |
+| pairs-rep | L1 to L3 | 2 | 0 | 2 | 3 | 4 | 22 (all fixed before round 2) | 1 | converged (0 new wrong); fix pass of 5 pending |
