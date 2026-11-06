@@ -267,3 +267,137 @@ Verdicts: correct, wrong, imprecise, misleading, unverified.
 | homework-2 | items[4] | Net = (4.52% − 4 × 0.2% × 1.69) / 6 = 0.53% a month | correct | arithmetic under the stated cost model |
 | homework-2 | items[6].options[1].why | Each leg's return is p_out/p_in so the base cancels on the same trades; re-basing changes which trades open | correct | r2 L2 (rebase): payoff invariant for a fixed trade, trade set changes |
 | homework-2 | items[6].options[0] | Dividing by 6 instead of compounding within months changes the figure even on the same trades | correct | different aggregation of the same payoffs |
+
+## Level 3
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l11 | screens[0].explain | The 12-cycle mean drops at the break and never regains its level; 1.50% before, 0.64% after (same day); 1.14% and 0.48% with the wait | correct | numbers |
+| l11 | screens[1].prose | GGR report lower profits in the later years of their sample | correct | GGR §4 (Do and Faff 2010 abstract: "continuing decline"; GGR note the 1990s decline) |
+| l11 | screens[1].prose | Before = 55 cycles whose trading ends by day 1,512; after = 67 that start trading on it or later; the 5 straddling cycles are left out | correct | start + 378 <= 1512 gives starts 0 to 1,134 (55); start + 252 >= 1512 gives 1,260 to 2,646 (67) |
+| l11 | screens[2].explain | Once 17 planted pairs break, chance pairs fill the ranking; the method still picks the closest 20 | correct | numbers; r2 L1 (chance-close) |
+| l11 | screens[3].explain | Before the break 77% of trades close at a crossing, after it 54%; chance pairs open as readily but often never come back | correct | numbers; r2 L3 (conv-mc) |
+| l11 | screens[4].prose | With `break_frac=0.3` and the same seed, 9 pairs break instead of 17 | correct | the uniform draws for `broken` are the same (same seed, same draws before them); numbers |
+| l11 | screens[4].options[0] | Fewer breaks: the return still falls, by less | correct | numbers (1.07% against 0.64% after) |
+| l11 | screens[4].options[1].why | The fall comes from the pairs that broke, not from the years | correct | generator: the only change at day 1,512 is the break |
+| l11 | screens[5].options[0] | The share of opened trades that close at a crossing tells crowding from broken pairs | correct | r2 L3 (conv-mc): faster reversion leaves the crossing share up, a break cuts it |
+| l11 | screens[5].options[1].why | Both stories predict a fall in returns, so the fall cannot choose | correct | logic |
+| l11 | screens[5].options[2].why | Pairs are long one share and short another, so the market barely moves them | correct | l13 beta 0.053 |
+| l11 | screens[5].explain | Do and Faff (2010) trace the continued decline to fewer pairs converging | unverified | Do and Faff (2010) abstract reachable (decline; strong in turbulence); the convergence attribution is my recollection of their §"Why" and could not be quoted |
+| l11 | screens[6].explain | After the break an unbroken pair earns 10.45% a cycle, a chance pair 2.37%; the rule still works on pairs that co-move | correct | numbers |
+| l11 | screens[7].widget | `planted_in_top`, `split_means` solution passes, starter fails | correct | r2 L3 (code) |
+| l11 | screens[7].explain | A cycle that straddles the break belongs to neither half | correct | code conditions |
+| l11 | screens[8].widget | `convergence_share` solution passes, starter fails; per trade, so a pair opening three times counts three times | correct | r2 L3 (code) |
+| l11 | screens[9].prose | A fall in the crossing share c says pairs stopped co-moving, not that gaps closed faster | correct | r2 L3 (conv-mc), within the two stories the lesson sets |
+| l11 | screens[9].explain | Waiting a day lowers both halves by a similar share (42% either way) | correct | numbers |
+| l11 | screens[10].options[0] | Falling hit rate with steady trade count: test each pair's reversion and retire the broken | correct | consistent with screens[5] |
+| l11 | screens[10].options[1].why | Broken pairs fail at any threshold | correct | a random-walk spread has no reversion to capture |
+| l11 | quiz[1].options[2].why | A drop from 77% to 54% over 2,000 trades is far outside chance variation | correct | binomial se about 1 point; r2 L3 (conv-mc) |
+| l11 | quiz[2].explain | The share counts trades, so a pair that opens twice counts twice | correct | definition |
+| l12 | screens[0].explain | Pair (38, 39) ranks 2nd by distance with p = 0.2955; chance pair (28, 87) ranks 23rd with p = 0.0009; the two rules measure different things | correct | numbers; Engle-Granger tests residual stationarity, not closeness |
+| l12 | screens[1].prose | Cointegration selection runs Engle-Granger on formation log prices and keeps the lowest p-values | correct | course definition; Vidyamurthy (2004) ch. 6 |
+| l12 | screens[1].explain | One year of daily prices with a closing bounce is a small sample for the test; a real relationship can fail it | correct | r2 L3 (eg-power): planted pairs reject at 5% in about three quarters of fresh draws |
+| l12 | screens[2].prose | GGR use distance alone | correct | GGR matching by SSD; no cointegration test in the paper |
+| l12 | screens[2].explain | Before the break Engle-Granger swaps 10 planted pairs for chance pairs; after it both rules find the same 3 survivors | correct | numbers |
+| l12 | screens[2].explain | "Over 22 cycles cointegration selection earns 0.63% a month against 1.05% for distance" | misleading | the 0.63% arm trades Engle-Granger picks with a residual z-score rule and a beta-pound hedge (`trade_coint`), the 1.05% arm trades distance picks with `trade_pair`; the number script computes it so. The gap mixes selection with trading rule and capital base, yet the sentence attributes it to selection. r2 L3 (confound): EG picks traded with `trade_pair` earn a different figure. See finding |
+| l12 | screens[3].options[0] | Distance assumes equal normalised prices, a 1 to 1 hedge; Engle-Granger does not | correct | Engle and Granger (1987) estimate the cointegrating vector |
+| l12 | screens[3].options[1].why | Both rules trade a spread they expect to revert; EG tests it, distance assumes it | correct | definitions |
+| l12 | screens[3].options[3].why | Small gaps and rare trades are a consequence of distance, not an assumption | correct | l3 screens[7] |
+| l12 | screens[3].explain | Engle-Granger allows any hedge ratio and a wide spread, if the spread is stationary | correct | cointegration definition |
+| l12 | screens[4].prose | At 5%, each test of a non-cointegrated pair passes by chance one time in 20 | correct | definition of size, asymptotically; r2 L3 (eg-size) measures the finite-sample size |
+| l12 | screens[4].explain | 4,950 × 0.05 = 247.5 expected chance passes | correct | linearity of expectation under the global null |
+| l12 | screens[4].explain | The short year and the closing bounce lift the false-alarm rate to about 7%; 4,950 tests sharing 100 shares make one year's count swing widely | correct | r2 L3 (eg-size): size of statsmodels `coint` at n = 252 on random walks with a common market walk is 8% without and 10% with the ±0.5% bounce (600 reps), so "about 7%" is the right order; tests on shared shares are dependent |
+| l12 | screens[5].options[0] | A formation p-value describes the formation year; it says nothing direct about the trading period | correct | tests condition on the sample |
+| l12 | screens[5].options[2].why | A p-value is not the chance the relationship holds; it is the chance of so small a statistic if it does not | correct | definition (Casella and Berger §8.3.4) |
+| l12 | screens[5].explain | The same holds for distance: both rules choose on the past | correct | both are formation-period statistics |
+| l12 | screens[6] | ln L = 2 ln A + u: Engle-Granger finds a slope near 2; the SSD ranks far outside the top 20 | correct | r2 L3 (hedge-2); numbers (1.99, rank 177) |
+| l12 | screens[6].feedback.byKey.half | Regressing A on L gives 0.5 | correct | reciprocal slope up to noise |
+| l12 | screens[7].explain | Scaling a price adds a constant to its log, which the intercept absorbs, so normalised and raw prices give the same p-value | correct | `coint` fits a constant; r2 L3 (eg-scale) |
+| l12 | screens[8].explain | At start 0, 18 of the shortlist's 30 chance pairs pass at 5%, not 2.5, because the shortlist was chosen for closeness on the same year | correct | numbers; r2 L3 (eg-select): choosing the closest pairs raises the pass rate of non-cointegrated pairs far above the nominal size |
+| l12 | screens[9].prose | Each test of a pair picked blind passes by chance at its level alpha; expected passes = n × alpha | correct | definition |
+| l12 | screens[10].options[0] | Shortlist on an economic link, test, confirm on a held-out year | correct | multiple-testing and out-of-sample practice |
+| l12 | screens[10].options[2].why | Distance misses ETF pairs with hedges far from 1, such as a leveraged fund on its index | correct | screens[6]; leveraged ETF log price moves about beta times the index's, with volatility drag |
+| l12 | screens[10].options[3].why | A low formation p-value is no promise for the trading period | correct | screens[5] |
+| l12 | summary.ideas[1] | Over 22 cycles cointegration selection earns 0.63% a month against 1.05% | misleading | as screens[2].explain |
+| l12 | quiz[1] | B's log price moves half as far as A's plus a stationary gap: Engle-Granger with hedge near 0.5 can select it; distance cannot ("halved moves make them drift apart") | correct | r2 L3 (hedge-2): slope 0.5 recovered; over 300 constructed years a 0.5-hedge pair sits inside the distance top-20 cut in 4%, a 2-hedge pair in 0%, so the rule holds up to a few quiet years |
+| l12 | quiz[2].options[2].why | At start 1,260 Engle-Granger keeps 11 planted pairs that break the next day | correct | numbers |
+| l13 | screens[0].explain | The least squares slope on 22 non-overlapping cycles is 0.053: the book's market beta | correct | numbers; r2 L3 (beta) |
+| l13 | screens[1].prose | GGR find pairs returns are not explained by standard risk factors | correct | GGR Table 4: small, mostly insignificant factor exposures, alphas remain (Krauss 2017; student summary: "nearly factor-neutral") |
+| l13 | screens[1].explain | Alpha 0.0623 a cycle, t = 7.11; beta 0.0529, t = 0.65; the market explains about 2% of the variation | correct | numbers; R^2 = t^2/(t^2 + 20) = 0.02 |
+| l13 | screens[2].options[0] | Both legs carry the same market loading, so it cancels in each pair | correct | generator: every log price carries the one market walk; in log returns the market term cancels exactly, in simple returns up to second order; r2 L3 (beta) |
+| l13 | screens[2].options[1].why | A rising market lifts both legs; long one and short the other, the rise cancels | correct | same |
+| l13 | screens[2].options[2].why | Our pairs are open most of the time | correct | r2 L1 (open-share): 0.533 of pair-days |
+| l13 | screens[2].options[3].why | Few points widen the error band; they do not pull the slope to 0 | correct | OLS is unbiased for any n |
+| l13 | screens[3].prose | R_p = alpha + beta R_m + e; a small beta says the market moves the book little; alpha is the average return the market does not explain | correct | definitions |
+| l13 | screens[3].explain | The prediction is an average; single cycles scatter widely | correct | residual sd is large relative to beta × 0.10 |
+| l13 | screens[4].options[0] | Report 7.11 on the 22 non-overlapping cycles or a Newey-West t on all 127 | correct | r2 L2 (nw-mc) |
+| l13 | screens[4].options[1].why | Overlapping cycles repeat five months in six, so plain OLS overstates t | correct | same |
+| l13 | screens[4].options[2].why | Averaging a sound and an inflated figure is still inflated | correct | logic |
+| l13 | screens[5].options[0] | A small beta shows only that the market factor explains little; other risks remain | correct | one regressor; the break is a pair-level risk invisible to it |
+| l13 | screens[5].options[3].why | A t of 7.11 on 22 independent cycles is not luck; beta says nothing about that | correct | cycles at step 126 have disjoint trading windows; alpha and beta are separate |
+| l13 | screens[5].explain | 24 of 127 waited cycles lost money, the worst −10.8% | correct | numbers |
+| l13 | screens[6].prose | The paper also finds that pairs returns share a common latent factor | correct | GGR abstract and §5: profits linked to a common factor in pairs returns (ResearchGate abstract snippet) |
+| l13 | screens[6].options[0] | Our panel plants no common factor, so its test cannot speak to the paper's real-data finding | correct | generator: pair gaps are independent across pairs |
+| l13 | screens[6].options[2].why | A correlation of −0.12 on 22 cycles is well inside its noise | correct | se about 0.22 |
+| l13 | screens[7] | Long £1 of A, short £0.60 of B, both loading 1: net industry exposure £0.40 | correct | linear exposure |
+| l13 | screens[7].explain | Distance's 1 to 1 hedge cancels the industry factor; a cointegration hedge may not | correct | same arithmetic |
+| l13 | screens[8].widget | `market_by_cycle` solution passes, starter fails; the market return must cover the same days as the pairs return | correct | r2 L3 (code); regression alignment |
+| l13 | screens[9].widget | `pairs_alpha` solution passes, starter fails | correct | r2 L3 (code) |
+| l13 | screens[9].explain | The wait lowers the alpha, not the market exposure | correct | numbers (betas 0.0529 and 0.0434) |
+| l13 | screens[10].options[0] | Factor regressions plus the worst cycles answer the short-volatility and industry questions | correct | a factor loading needs a regression; tail behaviour needs the worst cycles |
+| l13 | screens[10].options[2].why | A high Sharpe ratio is what a short-volatility book shows before its loss | correct | negatively skewed payoff profiles |
+| l13 | quiz[1].options[2].why | Beta and alpha are separate coefficients | correct | OLS |
+| l14 | screens[0] | 10 in-sample cycles end by day 1,512 (starts 0 to 1,134); 12 held-out cycles start trading on or after it (1,260 to 2,646) | correct | arithmetic |
+| l14 | screens[1].explain | The best in-sample cell is 1.5 sd with k = 10: 1.97% a month; lower thresholds traded more and earned more in years 1 to 6 | correct | numbers |
+| l14 | screens[2].explain | 28% survived; part of the fall is the break, part is having picked the luckiest cell | correct | r2 L3 (best-of): picking the max of noisy cells biases the in-sample figure up |
+| l14 | screens[3].explain | The best of many in-sample results is partly the luckiest | correct | r2 L3 (best-of) |
+| l14 | screens[4].explain | With the paper's rules unchanged 42% survived; no setting was tuned, so this is the headline | correct | numbers; no selection |
+| l14 | screens[5].options[0] | Choosing on the held-out half makes it in sample again; the figure is the best of 12 tries | correct | data snooping |
+| l14 | screens[5].options[2].why | More settings make the best one luckier still | correct | r2 L3 (best-of): bias grows with the number of cells |
+| l14 | screens[5].options[3].why | Dropping the wait adds the bounce back | correct | l9 |
+| l14 | screens[6].options[0] | A rise from 0.43% to 0.45% on 10 and 12 cycles is within chance | correct | cycle sd of several points a cycle; se of a 12-cycle mean is far above 0.02 points a month |
+| l14 | screens[7].widget | `sweep` solution passes, starter fails; never touches a cycle that trades after the lock | correct | r2 L3 (code); condition start + 378 <= end_day |
+| l14 | screens[8].widget | `held_out` solution passes, starter fails | correct | r2 L3 (code) |
+| l14 | screens[9].prose | theta* = argmax of the in-sample mean, fixed before the held-out half is opened; survived = out/in at theta* | correct | protocol definition |
+| l14 | screens[9].options[2].why | An average of the halves hides the decline | correct | logic |
+| l14 | screens[10].options[2].why | A seeded result cannot speak for real markets | correct | generator |
+| l14 | quiz[1].explain | Once held-out data has chosen a setting it no longer tests it; a fresh held-out period would be needed | correct | data snooping |
+| l14 | quiz[2] | start + 378 <= 1,008 gives 6 cycles | correct | arithmetic |
+| l15 | screens[0].explain | Top 5 with the wait: 69% survived against 42% for the top 20; the three unbroken pairs usually rank in the top 5 | correct | numbers |
+| l15 | screens[1].explain | A line that turns planted-panel results into a claim about markets overclaims | correct | generator |
+| l15 | screens[2] | 4.52%/6 = 0.753% a month; (1.0075)^12 − 1 = 9.4%; 0.48/1.14 = 42%; 4.52%/(4 × 1.6886) = 0.67% | correct | arithmetic |
+| l15 | screens[3].options[0] | "About 42% of the waited top-20 return survived the planted break" names share, rules and data | correct | reporting |
+| l15 | screens[4] | Real data adds delistings, dividends, borrow fees and recalls, varying spreads, breaks no seed imitates; the distance formula is the same; the wait still matters | correct | GGR data handling; l9 |
+| l15 | screens[4].prose | 5,000 shares make 12,497,500 pairs, about 2,525 times 4,950 | correct | arithmetic |
+| l15 | screens[5].options[0] | 1.50% stacks same-day fills, no costs and pre-break years | correct | numbers |
+| l15 | screens[5].options[3].why | Committed capital is the conservative return; employed is higher | correct | k/n with positive total |
+| l15 | screens[6].options[0] | A negative held-out mean reads "None of the effect survived" with the same prominence | correct | reporting; course convention stated |
+| l15 | screens[8].widget | `survival_sentence` solution passes, starter fails; a zero in-sample mean raises | correct | r2 L3 (code) |
+| l15 | screens[9].options[1].why | 9.4% is a pairs return, not a margin over the market | correct | self-financing payoff against a long-only return |
+| l15 | quiz[1].options[0] | The code reproduces the method; real data is needed to test the strategy | correct | generator |
+| review-3 | items[1].options[0] | Fewer pairs reach 2 sd, smaller gains, crossing share steady at 75%: crowding | correct | within the lesson's dichotomy; r2 L3 (conv-mc) |
+| review-3 | items[2].explain | Pool the trades: 51/90 = 56.7%; averaging the shares weights the smaller cycle too heavily | correct | weighted against unweighted mean |
+| review-3 | items[3] | 190 × 0.05 = 9.5 chance passes | correct | linearity |
+| review-3 | items[4].options[1].why | Doubled moves pull the normalised prices apart in any year | correct | r2 L3 (hedge-2) |
+| review-3 | items[5].options[0] | The shortlist was chosen on the same noisy year, so its chance pairs already look stationary | correct | r2 L3 (eg-select) |
+| review-3 | items[5].options[1].why | The chance pairs are independent random walks by construction | correct | generator |
+| review-3 | items[5].options[2].why | Engle-Granger can detect a half-life of 8 days; most planted pairs pass | correct | r2 L3 (eg-power) |
+| review-3 | items[6].explain | 0.0623 + 0.0529 × 0.15 = 0.0702; almost all the return is alpha | correct | arithmetic |
+| review-3 | items[7] | Long £1, short £1.25, both loading 1: net −£0.25 | correct | linear exposure |
+| review-3 | items[8].options[3].why | No single rule earned the average of 12, so it reports no strategy | correct | logic |
+| review-3 | items[9] | −0.03/1.20 negative: "None of the effect survived" | correct | course convention |
+| homework-3 | items[0] (performance) | `compare_selection` solution passes, starter fails | correct | r2 L3 (code) |
+| homework-3 | items[0].prose | "Compare the two selection rules": distance picks traded with `trade_pair`, Engle-Granger picks with `trade_coint` | misleading | the item itself says which rule trades which, but its explain and l12 report the result as a selection comparison; see l12 screens[2] finding |
+| homework-3 | items[0].explain | With k = 5 at start 0 Engle-Granger's wider spreads earn 18.19% against 11.36% | misleading | same confound: the 18.19% is a different trading rule on a beta-pound hedge |
+| homework-3 | items[1] | `rolling_hit_rate` solution passes, starter fails; a return of exactly 0 is not a hit | correct | r2 L3 (code) |
+| homework-3 | items[2].lines | Lock, sweep in sample, choose, run once, report; rerunning on years 7 to 12 or moving the split breaks the protocol | correct | data-snooping logic |
+| homework-3 | items[3] | (3 × 10.45% + 17 × 2.37%)/20 = 3.58%; the mix of pairs, not the rule, moved the return | correct | weighted mean; numbers |
+| homework-3 | items[4] | 10 industries × 45 pairs × 0.05 = 22.5; restricting to an economic link cuts chance passes elevenfold | correct | 4,950/450 = 11 |
+| homework-3 | items[5].options[0] | 22 non-overlapping cycles or 127 with Newey-West errors | correct | r2 L2 (nw-mc) |
+| homework-3 | items[5].options[3].why | Choosing the sample after seeing it biases the estimate | correct | selection |
+| homework-3 | items[6].model | Method, results, decline, alternatives, out of sample and real-data paragraph as in the lessons | correct | consistent with the ledger above; inherits the l10 and l12 findings ("sits inside the paper's up to 11%", "cointegration selection earns 0.63%") |
+| homework-3 | items[6].model | "This matches Do and Faff (2010), who trace the decline to fewer pairs converging" | unverified | as l11 screens[5].explain |
+
+## Verdict counts
+
+Rows: 375. correct: 360, wrong: 0, imprecise: 2, misleading: 8, unverified: 5.
