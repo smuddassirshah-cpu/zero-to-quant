@@ -2,7 +2,7 @@ Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4
 
 Expected census: lessons 1,087 of 1,214 (193, 528, 162, 204); levels 251 of 279; reviews 251, own pass 251; exams 22 topic, 1 stage, 11 mock; drills 35 (oa 8); bank 200; hours 3,695 stored and summed, gap 0. Trader superday closure: 96 levels, 32 courses, 422 lessons. `closure.mjs --target pdes/L3`: unwritten only odes L4 and numerics L4.
 
-This is a long session (6 to 7 hours, autonomous). Follow `docs/briefs/session-T-plan.md` in order:
+Long session (6 to 7 hours, autonomous). Follow `docs/briefs/session-T-plan.md` in order:
 
 0. engine-dev alone: the three session S inbox items (number-check helper that reads the lesson JSON, validator error on a review without `pass`, playthrough port retry). Protocol 6: no content agent before it merges.
 1. Wave 1: odes L4, numerics L4, convex L1 to L3, stat-models L1 to L3. On merge, clear pdes's LIMITED list in `readiness-sums.mjs` and `docs/readiness.md`.
