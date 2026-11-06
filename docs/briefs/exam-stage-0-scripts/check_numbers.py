@@ -41,7 +41,7 @@ OLD = {
                 'p-minimum', 'p-vector-length', 'p-codes', 'p-log-equation', 'p-sigma'],
 }
 ids = [p.get('id') for p in doc['parts']]
-rec(ids == ['gcse', 'precalc', 'proof', 'zetamac', 'script', 'proofs-written', 'getting-hired'], f'part order {ids}')
+rec(ids == ['gcse', 'precalc', 'proof', 'zetamac', 'script', 'proofs-written'], f'part order {ids}')
 for pid, items in OLD.items():
     part = next(p for p in doc['parts'] if p.get('id') == pid)
     rec([it['id'] for it in part['items']] == items, f'{pid}: all {len(items)} item ids unchanged, in order')

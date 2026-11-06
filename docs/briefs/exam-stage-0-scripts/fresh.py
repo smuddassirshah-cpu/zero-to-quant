@@ -21,7 +21,6 @@ TOKENS = {
     'p-first-failure': ['2n^2 + 29', '1,711'],
     'p-negate-quantifiers': ['profit on every day'],
     'p-onto-function': ['\\\\left\\\\lceil \\\\tfrac{n}{2}'],
-    'getting-hired': ['three stories'],
 }
 files = [f for f in glob.glob(os.path.join(ROOT, '**', '*.json'), recursive=True)
          if os.path.basename(f) not in ('stage-0.json', 'manifest.json')]

@@ -1,7 +1,7 @@
 """Extend app/content/exams/stage-0.json to topics 0.6 (proof) and 0.7 (getting hired).
 
 The existing parts (gcse, precalc, zetamac, script) are kept as they are, ids and order included. This script inserts the
-paper `proof` after `precalc` and appends the checks `proofs-written` and `getting-hired` after the existing checks, so
+paper `proof` after `precalc` and appends the check `proofs-written` after the existing checks, so
 paper and check positions 0 and 1 are unchanged. It is idempotent: a second run replaces the parts it added.
 Route A for every key is below; check_numbers.py recomputes each by a second route.
 Run: python3 docs/briefs/exam-stage-0-scripts/build.py
@@ -12,7 +12,7 @@ import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', '..', '..', 'app', 'content', 'exams', 'stage-0.json')
-NEW_PARTS = ('proof', 'proofs-written', 'getting-hired')
+NEW_PARTS = ('proof', 'proofs-written')  # getting-hired dropped in session U: curriculum line 91 keeps 0.7 out of the exit test
 
 
 def fb(correct, generic, by_key=None):
@@ -225,9 +225,6 @@ CHECKS = [
     {"kind": "check", "id": "proofs-written", "name": "Five proofs written out so a stranger can check every step",
      "detail": "One statement each by direct proof, contrapositive, contradiction, induction and counterexample, in full sentences. "
                "Ask someone to check every step, or check them yourself a week later."},
-    {"kind": "check", "id": "getting-hired", "name": "Getting hired (0.7): a target list, a one-page CV and three stories",
-     "detail": "A list of the firms you will apply to, with each one's opening date. A one-page CV a stranger can read in a minute. "
-               "Three behavioural stories written as situation, task, action and result."},
 ]
 
 if __name__ == '__main__':
