@@ -25,7 +25,7 @@
   Z.widgets.optBody = optBody; Z.widgets.optColumns = columns;
 
   Z.widgets.register('choice', (host, spec, ctx) => {
-    const opts = spec.shuffle ? Z.widgets.shuffle(spec.options || [], ctx.rng || Math.random) : (spec.options || []).slice();
+    const opts = Z.widgets.orderOptions(spec, ctx);
     const cols = columns(spec, opts);
     const el = Z.h(`<div class="opts wd-opts wd-cols-${cols}" role="radiogroup" aria-label="${Z.esc(spec.label || 'Answer options')}">${opts.map((o, i) =>
       `<button type="button" class="opt wd-opt" role="radio" aria-checked="false" tabindex="${i === 0 ? 0 : -1}" data-id="${Z.esc(o.id)}">${optBody(o)}</button>`).join('')}</div>`);

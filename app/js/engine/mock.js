@@ -7,7 +7,10 @@
      ZQ.mock.tally(paper, results)   { n, right, wrong, blank, net, max } from per-item { ok, done, credit? }; an item with parts that is
                                      not right in full counts its credit (the share of parts right) as right and the rest as wrong; a written item marked by its rubric (result.rubric) counts ticks over points the same way, pass or not (ENGINE-BACKLOG 589)
      ZQ.mock.draw(entries, opts)     async: a paper's `draw` entries resolved to items (ENGINE-BACKLOG 468): see the block below
-     ZQ.mock.passed(paper, tally)    net against passNet, else the net share against pass (default 0.7)
+     ZQ.mock.passed(paper, tally, results?)  net against passNet, else the net share against pass (default 0.7); with results, false while an item
+                                     with required: true is not right (ENGINE-BACKLOG 592). ZQ.mock.requiredMissed(paper, results) lists those indices
+     ZQ.mock.roleOf(track)           the role id of a profile track (Trader trader, Researcher research, Developer developer, Strats strats), else null
+     ZQ.mock.paperFor(paper, role)   true when the paper has no `tracks` or lists the role ("researcher" reads as "research"; ENGINE-BACKLOG 593)
      ZQ.mock.need(paper, max)        the pass mark as a net score
      ZQ.mock.signed(n)               a score with a true minus sign
      ZQ.mock.trend(values, opts)     a small SVG column trend of net scores, oldest first (opts: pass, label, max)
@@ -30,7 +33,7 @@
     let right = 0, wrong = 0, blank = 0;
     for (let i = 0; i < n; i++) {
       const r = (results || [])[i];
-      if (r && r.done && r.rubric && typeof r.credit === 'number') { right += r.credit; wrong += 1 - r.credit; }   // a written item (marked by its rubric): ticks over points, pass or not
+      if (r && r.done && (r.rubric || r.fractional) && typeof r.credit === 'number') { right += r.credit; wrong += 1 - r.credit; }   // a written item (marked by its rubric) or an item with parts that holds a written part (fractional): ticks over points, pass or not
       else if (r && r.ok) right++;
       else if (r && r.done && typeof r.credit === 'number' && r.credit > 0 && r.credit < 1) { right += r.credit; wrong += 1 - r.credit; }   // an item with parts: equal credit per part
       else if (r && r.done) wrong++;
@@ -39,7 +42,12 @@
     return { n, right, wrong, blank, net: round(right * s.right + wrong * s.wrong + blank * s.blank), max: round(n * s.right) };
   };
   const need = (p, max) => (typeof p.passNet === 'number' ? p.passNet : round((typeof p.pass === 'number' ? p.pass : 0.7) * max));
-  const passed = (p, t) => (t.n > 0 && t.net >= need(p, t.max) - 1e-9);
+  /* ENGINE-BACKLOG 592: an item with required: true must be right (result.ok) whatever the share; requiredMissed lists the indices that were not */
+  const requiredMissed = (p, results) => (p.items || []).map((it, i) => (it && it.required === true && !((results || [])[i] && results[i].ok) ? i : -1)).filter(i => i >= 0);
+  const passed = (p, t, results) => (t.n > 0 && t.net >= need(p, t.max) - 1e-9 && (!results || !requiredMissed(p, results).length));
+  const ROLE_OF = { Trader: 'trader', Researcher: 'research', Developer: 'developer', Strats: 'strats' };
+  const roleOf = (track) => ROLE_OF[track] || null;
+  const paperFor = (p, role) => { const t = p && Array.isArray(p.tracks) ? p.tracks.map(x => (x === 'researcher' ? 'research' : x)) : null; return !t || !t.length || (role != null && t.includes(role === 'researcher' ? 'research' : role)); };
   const signed = (n) => String(round(n)).replace('-', '−');
 
   /* Net scores as columns from a zero line; the dashed line is the pass mark. Text alternative in aria-label. */
@@ -169,6 +177,8 @@
     const m = {};
     try {
       const S = Z.state;
+      /* a draw seen in any other exam or mock counts as seen too (ENGINE-BACKLOG 594): rank 0.75, below a sitting of this exam */
+      Object.keys(S.exams || {}).forEach(id => { if (id !== examId) (((S.exams || {})[id] || {}).attempts || []).forEach(a => (a.drawn || []).forEach(u => { if (!m[u] || m[u].why !== 'other' || (a.at || '') > (m[u].at || '')) m[u] = { why: 'other', at: a.at || null, rank: 0.75, exam: id }; })); });
       (((S.exams || {})[examId] || {}).attempts || []).forEach((a, i) => (a.drawn || []).forEach(u => { m[u] = { why: 'sat', at: a.at || null, rank: i + 1 }; }));
       const dr = (S.drills && S.drills.get && S.drills.get()) || {};
       Object.keys(dr).forEach(id => { const u = `drills/${id}`; if (dr[id] && dr[id].verified && !m[u]) m[u] = { why: 'solved', at: dr[id].at || null, rank: 0.5 }; });
@@ -181,9 +191,10 @@
   const seenLabel = (s) => {
     if (!s) return '';
     if (s.why === 'solved') return 'Previously seen: solved in the drill library';
+    if (s.why === 'other') return 'Previously seen: sat in another exam';
     const d = s.at ? new Date(s.at) : null;
     return d && !isNaN(d) ? `Previously seen: sat on ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Previously seen: sat in an earlier attempt';
   };
 
-  Z.mock = { draw, seenOf, seenInfo, seenLabel, fmtSeconds, family, pacing, is: (id) => /^mock-/.test(String(id || '')), style: (s) => STYLES[s] || { label: s ? String(s) : 'Mock', track: 'speed' }, STYLES, scoring, scored, tally, need, passed, signed, trend };
+  Z.mock = { draw, seenOf, seenInfo, seenLabel, fmtSeconds, family, pacing, is: (id) => /^mock-/.test(String(id || '')), style: (s) => STYLES[s] || { label: s ? String(s) : 'Mock', track: 'speed' }, STYLES, scoring, scored, tally, need, passed, requiredMissed, roleOf, paperFor, signed, trend };
 })();

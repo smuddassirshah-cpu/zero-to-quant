@@ -3,10 +3,12 @@
    Engine decides equivalence (isEqual after simplify, with a 5-point numeric second opinion for one variable).
    Both load lazily on the first expression widget with a 6 s budget. If either fails, the widget falls back to a
    plain text field compared, after normExpr, against the answer and the authored accept[] forms.
-   form: "expanded" | "factorised" | "simplified" also asks for a shape, judged on the Compute Engine's canonical
+   form: "expanded" | "factorised" | "simplified" | "rectangular" also asks for a shape, judged on the Compute Engine's canonical
    MathJSON of the input: expanded has no sum inside a product or power (an Add of monomials, or one monomial);
    factorised is a Multiply with a sum among its factors, or a power of a sum (a leading minus is allowed);
-   simplified has no more nodes than its own simplify(). An equal answer in the wrong shape returns key "form".
+   simplified has no more nodes than its own simplify(), and a constant answer is also evaluated (no sum of two plain numbers, no
+   division by a complex number, no bracket holding i inside a product); rectangular (a constant answer) is a + bi in that
+   sense, so retyping the prompt's \frac{4+7i}{2-3i} does not score (ENGINE-BACKLOG 596). An equal answer in the wrong shape returns key "form".
    Complex answers (an i in either side) compare real and imaginary parts at every seeded point; a vector or matrix
    answer ((2, -1, 3) or a pmatrix) compares entry by entry and a wrong size returns key "length" (grade.js).
    Without the engine the text fallback already demands a normalised match with answer or accept[], which authors
@@ -16,6 +18,42 @@
   const Z = window.ZQ;
   const G = () => Z.grade;
   const KB = '<svg class="icon sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7h17v10h-17zM7 10h.01M10 10h.01M13 10h.01M16 10h.01M8 14h8"/></svg>';
+
+  /* The shape checks on canonical MathJSON, shared by the widget and tools/test-engine-runtime.mjs (ENGINE-BACKLOG 596).
+     A constant answer (no free symbol but the imaginary unit, which the grader reads as the symbol iota) must be evaluated:
+     reducible() finds what a learner left undone: two plain numbers added or multiplied, a quotient or power with a complex
+     base, a division by a complex number, a product with a bracket that holds i. rectangular() is a + bi: one real part and
+     one imaginary term (a number, a surd or a fraction times i), nothing reducible. */
+  const hd = (j) => (Array.isArray(j) ? j[0] : null);
+  const ar = (j) => (Array.isArray(j) ? j.slice(1) : []);
+  const hasI = (j) => j === 'iota' || (Array.isArray(j) && j.some(hasI));
+  const isLit = (j) => typeof j === 'number' || (j && typeof j === 'object' && !Array.isArray(j) && 'num' in j) || hd(j) === 'Rational' || (hd(j) === 'Negate' && isLit(ar(j)[0]));
+  const isSum = (j) => hd(j) === 'Add' || hd(j) === 'Subtract';
+  const reducible = (j) => {
+    if (!Array.isArray(j)) return false;
+    const h = hd(j), a = ar(j);
+    if ((h === 'Add' || h === 'Subtract') && a.filter(isLit).length > 1) return true;
+    if (h === 'Multiply' && (a.filter(isLit).length > 1 || a.some(x => isSum(x) && hasI(x)))) return true;
+    if (h === 'Divide' && (hasI(a[1]) || (isSum(a[0]) && hasI(a[0])))) return true;
+    if (h === 'Power' && hasI(a[0]) && a[0] !== 'iota') return true;
+    return a.some(reducible);
+  };
+  const imagTerm = (j) => {
+    if (j === 'iota') return true;
+    const h = hd(j), a = ar(j);
+    if (h === 'Negate') return imagTerm(a[0]);
+    if (h === 'Multiply') { const w = a.filter(hasI); return w.length === 1 && w[0] === 'iota' && a.length === 2; }
+    if (h === 'Divide') return imagTerm(a[0]) && !hasI(a[1]);
+    return false;
+  };
+  const rectangular = (j) => {
+    if (reducible(j)) return false;
+    if (!hasI(j)) return true;                                   // a real number is a + 0i
+    const r = hd(j) === 'Negate' && isSum(ar(j)[0]) ? ar(j)[0] : j;
+    if (isSum(r)) { const w = ar(r).filter(hasI); return w.length === 1 && imagTerm(w[0]); }
+    return imagTerm(r);
+  };
+  Z.widgets.exprForms = { reducible, rectangular, hasI };
 
   Z.widgets.register('expression', (host, spec, ctx) => {
     const el = Z.h(`<div class="wd-expr is-loading">
@@ -90,7 +128,7 @@
       return !!n && (n === G().normExpr(target));
     };
     /* The shape check on canonical MathJSON */
-    const FORM_LINE = { expanded: 'That is equal, but not expanded: multiply out every bracket.', factorised: 'That is equal, but not factorised: write it as a product with a bracket.', simplified: 'That is equal, but not simplified: collect like terms and cancel.' };
+    const FORM_LINE = { rectangular: 'That is equal, but not in the form a + bi: work out the real and imaginary parts.', expanded: 'That is equal, but not expanded: multiply out every bracket.', factorised: 'That is equal, but not factorised: write it as a product with a bracket.', simplified: 'That is equal, but not simplified: collect like terms and cancel.' };
     const head = (j) => (Array.isArray(j) ? j[0] : null);
     const args = (j) => (Array.isArray(j) ? j.slice(1) : []);
     const hasSum = (j) => head(j) === 'Add' || head(j) === 'Subtract' || args(j).some(hasSum);
@@ -104,7 +142,9 @@
           const j = e.json;
           if (spec.form === 'expanded') return isSumLike(j) ? args(j).every(t => !hasSum(t)) : !hasSum(j);
           if (spec.form === 'factorised') { const r = unNeg(j); return (head(r) === 'Multiply' && args(r).some(f => isSumLike(f) || (head(f) === 'Power' && isSumLike(args(f)[0])))) || (head(r) === 'Power' && isSumLike(args(r)[0])); }
-          if (spec.form === 'simplified') { try { return size(j) <= size(e.simplify().json); } catch { return true; } }
+          const constant = !(e.unknowns || []).filter(v => v !== 'iota').length;   // a constant answer must be evaluated, not retyped from the prompt
+          if (spec.form === 'rectangular') return constant ? Z.widgets.exprForms.rectangular(j) : true;
+          if (spec.form === 'simplified') { if (constant && Z.widgets.exprForms.reducible(j)) return false; try { return size(j) <= size(e.simplify().json); } catch { return true; } }
           return true;
         });
       } catch { return true; }

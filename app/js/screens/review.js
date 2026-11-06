@@ -460,7 +460,7 @@
     /* ---------- The clock of a timed set: countdown and live score; the page, not the engine, ends the set ---------- */
     const remaining = () => (cfg.timed ? cfg.timed.seconds - ((Date.now() - t0) / 1000 + offset) : Infinity);
     /* what an item is worth so far: 1 when right, else the share of its parts right (an item with parts, ENGINE-BACKLOG 467), else 0 */
-    const creditOf = (res) => Math.round(res.reduce((a, x) => a + (x ? (x.ok ? 1 : typeof x.credit === 'number' ? x.credit : 0) : 0), 0) * 10) / 10;
+    const creditOf = (res) => Math.round(res.reduce((a, x) => a + (x ? (x.ok && !x.fractional ? 1 : typeof x.credit === 'number' ? x.credit : x.ok ? 1 : 0) : 0), 0) * 10) / 10;
     const drawClock = () => {
       if (!cfg.timed || !run || finished) return;
       const r = remaining(), res = run.results(), ok = creditOf(res), n = res.filter(Boolean).length;
@@ -909,7 +909,7 @@
         let r = { ok: false, key: null };
         if (h && answered(j)) { try { r = await h.check(); } catch (e) { console.error(e); } }
         if (r && r.pending) r = { ok: false, key: null };
-        const got = isLong(it) ? ((r.detail && r.detail.score) || 0) : r.ok ? marksOf(it) : typeof r.credit === 'number' ? Math.round(r.credit * marksOf(it) * 100) / 100 : 0;   // parts: the share of parts right
+        const got = isLong(it) ? ((r.detail && r.detail.score) || 0) : r.ok && !r.fractional ? marksOf(it) : typeof r.credit === 'number' ? Math.round(r.credit * marksOf(it) * 100) / 100 : 0;   // parts: the share of parts right
         graded.push({ r, got, answered: answered(j) });
         if (h) { h.step.lock(); if (answered(j)) h.step.mark(Object.assign({}, r, { final: true })); }
       }

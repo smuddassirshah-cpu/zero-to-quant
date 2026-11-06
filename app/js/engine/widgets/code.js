@@ -241,8 +241,9 @@ def __zq_cmp(_a, _exp, _cmp, _ns, _tol=None):
   /* The harness: one function the worker calls per case, returning 1.0 for a pass */
   /* tol: { rel, abs } on a case: math.isclose with those tolerances (a missing one is 0) */
   const tolOf = (c) => (c.tol && typeof c.tol === 'object' && (Number.isFinite(+c.tol.rel) || Number.isFinite(+c.tol.abs)) ? [Math.max(0, +c.tol.rel || 0), Math.max(0, +c.tol.abs || 0)] : typeof c.tol === 'number' && c.tol >= 0 ? [0, c.tol] : null);
+  /* ENGINE-BACKLOG 595: a test's setup lines are read for imports too, so a data test that imports pandas loads it though the learner's code does not */
   const harness = (cases, src) => `
-${JUDGE}
+${importHint(...cases.map(c => c.setup == null ? '' : String(c.setup)))}${JUDGE}
 def __zq_case(_i):
     _call, _exp, _cmp, _setup, _tol = __ZQ_CASES[_i]
     if _setup:
@@ -264,6 +265,7 @@ __ZQ_CASES = __import__('json').loads(${JSON.stringify(JSON.stringify(cases.map(
   const importsOf = (src) => String(src).split('\n').map(l => l.match(/^\s*(?:import\s+([\w.]+(?:\s+as\s+\w+)?(?:\s*,\s*[\w.]+(?:\s+as\s+\w+)?)*)|from\s+([\w.]+)\s+import\b)/)).filter(Boolean)
     .flatMap(m => (m[1] ? m[1].split(',').map(x => x.replace(/\s+as\s+\w+\s*$/, '')) : [m[2]]).map(x => x.trim())).filter(x => x && !x.startsWith('.'));
   const importHint = (...srcs) => { const im = [...new Set(srcs.flatMap(importsOf))]; return im.length ? 'if False:\n' + im.map(x => '    import ' + x).join('\n') + '\n' : ''; };
+  Z.widgets.codeImports = { importsOf, importHint, harness };   // read by tools/test-engine-runtime.mjs
   /* item 163: prelude (hidden Python run in the learner's namespace before their code) and postlude (run after it).
      With either, the learner's code is carried as a string and compiled as solution.py, so its line numbers stay true. */
   /* inbox (backtest 2): files: { "engine_lib.py": "..." } are written into the run's working directory (on sys.path)
@@ -287,7 +289,7 @@ def __zq_load():
 __zq_load()
 `;
   const scriptHarness = (src, cases, pre = '', post = '', files = null) => `
-${importHint(src, pre, post, ...Object.values(files || {}))}${filesCode(files)}import sys as _zs, io as _zio, linecache as _zlc
+${importHint(src, pre, post, ...Object.values(files || {}), ...cases.map(c => c.setup == null ? '' : String(c.setup)))}${filesCode(files)}import sys as _zs, io as _zio, linecache as _zlc
 __ZQ_SRC = ${JSON.stringify(src)}
 __ZQ_PRE = ${JSON.stringify(pre)}
 __ZQ_POST = ${JSON.stringify(post)}

@@ -386,6 +386,9 @@ const main = async () => {
 
     /* Prerequisite gating (ENGINE-BACKLOG 490): before a lesson, review, homework or mock is played, every prerequisite of it is marked met
        (ZQ.prereq.unlock), so the locked card never stands in the way of a playthrough */
+    /* ENGINE-BACKLOG 593: a paper with `tracks` is left out for a learner off those tracks, so the playthrough sits such an exam with the route flag "all" (every paper, the off-track ones optional) */
+    const trackedExam = (ex) => { try { const d = readJSON(path.join(CONTENT, "exams", ex + ".json")); return (d.parts || []).some(p => p && Array.isArray(p.tracks) && p.tracks.length); } catch { return false; } };
+    const xr = (ex, seed) => `exam/${ex}${seed != null ? "/" + seed : ""}${trackedExam(ex) ? "/all" : ""}`;
     const unlockRoute = async (route) => {
       const m = /^(?:lesson|review|homework)\/([^/]+)\/([^/]+)/.exec(route);
       if (m) return page.evaluate(([c, i]) => (window.ZQ && ZQ.prereq ? ZQ.prereq.unlock(c, i) : 0), [m[1], m[2]]);
@@ -801,7 +804,7 @@ const main = async () => {
         };
         if (JSON.stringify(doc).includes('"generator"')) {
           const grab = async (seed) => {
-            await open(`exam/${ex}/${seed}`);
+            await open(xr(ex, seed));
             await page.evaluate(() => ZQ.test.continue());
             await page.waitForFunction(() => window.ZQExam && ZQExam.handles().length, null, { timeout: opt.timeout });
             return page.evaluate(() => ZQExam.handles().map(h => h && h.item && h.item.generated ? h.item.question : null).filter(Boolean));
@@ -811,7 +814,7 @@ const main = async () => {
           else if (JSON.stringify(a) !== JSON.stringify(b)) fails.push('the same seed gave different generated questions');
           else if (JSON.stringify(a) === JSON.stringify(c2)) fails.push('a different seed gave the same generated questions');
         }
-        await open(`exam/${ex}`);
+        await open(xr(ex));
         const before = await page.evaluate((id) => (ZQ.state.exams[id] || { attempts: [] }).attempts.length, ex);
         let guard = 0, answered = new Set(), drawnParts = false;
         while (++guard < 80) {
@@ -876,7 +879,7 @@ const main = async () => {
       };
       try {
         const grab = async (seed) => {
-          await reopen(`exam/${ex}/${seed}`);
+          await reopen(xr(ex, seed));
           await page.evaluate(() => ZQ.test.continue());
           await page.waitForFunction(() => window.ZQExam && ZQExam.handles().length, null, { timeout: opt.timeout });
           return page.evaluate(() => ZQExam.handles().map(h => (h && h.item && h.item.drawn ? h.item.drawn.uid : null)).filter(Boolean));
@@ -940,7 +943,7 @@ const main = async () => {
       where = `#exam/${ex}`;
       const fails = [], t0 = Date.now(), N = its[target].parts.length, sc = Object.assign({ right: 1, wrong: 0, blank: 0 }, doc.scoring || {});
       try {
-        await reopen(`exam/${ex}/4321`);
+        await reopen(xr(ex, 4321));
         await page.evaluate(() => ZQ.test.continue());
         await page.waitForFunction(() => ZQ.test.current().kind === 'item', null, { timeout: opt.timeout });
         const before = await page.evaluate((id) => (ZQ.state.exams[id] || { attempts: [] }).attempts.length, ex);
@@ -1003,7 +1006,7 @@ const main = async () => {
       }, [verify, doc.requires || []]);
       /* sit once: the start card text, the label on each question, then the result */
       const sit = async (seed) => {
-        await reopen(`exam/${ex}/${seed}`).catch(async (e) => { throw new Error(`the exam did not open: ${(await page.evaluate(() => document.body.innerText.slice(0, 120).replace(/\\s+/g, ' ')))}`); });
+        await reopen(xr(ex, seed)).catch(async (e) => { throw new Error(`the exam did not open: ${(await page.evaluate(() => document.body.innerText.slice(0, 120).replace(/\\s+/g, ' ')))}`); });
         const start = await page.evaluate(() => document.body.innerText);
         await page.evaluate(() => ZQ.test.continue());
         await page.waitForFunction(() => window.ZQExam && ZQExam.handles().length, null, { timeout: opt.timeout });
@@ -1090,7 +1093,7 @@ const main = async () => {
       fails.forEach(x => failures.push(`#prepare versions: ${x}`));
     };
     for (const ex of exams) await guarded(`exam/${ex}`, async () => {
-      await playSet(`exam/${ex}`, ex, async () => {
+      await playSet(xr(ex), ex, async () => {
         const c = await page.evaluate(() => ZQ.test.current());
         if (c.kind !== 'done') return { fail: 'the result page was not reached' };
         const note = `scored ${c.score} of ${c.total}${c.max != null && c.max !== c.total ? `, net ${c.net} of ${c.max}` : ''}, ${c.passed ? 'passed' : 'not passed'}`;
@@ -1271,7 +1274,7 @@ const main = async () => {
        seconds, and the attempt keeps itemSeconds, one per question. Time never changes the marks (everything is right). */
     const paceExamChecks = async (ex) => {
       const doc = readJSON(path.join(CONTENT, 'exams', ex + '.json'));
-      await playSet(`exam/${ex}`, `${ex}-pace`, async () => {
+      await playSet(xr(ex), `${ex}-pace`, async () => {
         const c = await page.evaluate(() => ZQ.test.current());
         if (c.kind !== 'done') return { fail: 'the result page was not reached' };
         const r = await page.evaluate((id) => { const a = ((ZQ.state.exams[id] || {}).attempts || []).slice(-1)[0] || {}; return { secs: a.itemSeconds || null, line: (document.querySelector('.exm-pace') || {}).textContent || '', meta: [...document.querySelectorAll('.exm-ri-meta')].filter(n => / s(\b| of)/.test(n.textContent)).length, fam: Object.keys(ZQ.state.timing.families).length, wide: document.documentElement.scrollWidth > window.innerWidth + 1 }; }, ex);
