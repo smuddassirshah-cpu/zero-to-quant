@@ -14,7 +14,7 @@ Signed off by the user, 5 Nov (PLAN 2c item 2; DECISIONS "Readiness contract sig
 Status words: **required** is shown as next work in order. **Recommended** is shown after required. **Optional** is never shown as next work for the role; it stays reachable from Learn.
 
 <!-- generated:catalogue -->
-Catalogue: 79 courses, 1214 lessons mapped (1054 written, 160 unwritten). Hours are stored topic hours shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1); topics 3.2 and 3.4 store 0.
+Catalogue: 79 courses, 1214 lessons mapped (1087 written, 127 unwritten). Hours are stored topic hours shared across a topic's courses by lesson weight (js/hours.js; a short lesson weighs 1); topics 3.2 and 3.4 store 0.
 <!-- /generated -->
 
 Hours come from `app/js/hours.js` (AUTHORING section 14): a short lesson weighs 1 and a workshop or project `minutes / 14`. Hours in each table are rounded per cell, and the header is the sum of the cells. Run `node app/tools/readiness-sums.mjs` from the repo root to check every figure here. It exits non-zero on any mismatch.
@@ -270,8 +270,8 @@ Plan: probability, statistics, linear algebra, Python, validation and independen
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
 | --- | --- | --- | --- | --- | --- | --- |
 | Required | 524 | 10 | 534 | 1603 | 50 | 1653 |
-| Recommended | 273 | 67 | 340 | 892 | 215 | 1107 |
-| Learn header (required plus recommended) | 797 | 77 | 874 | 2495 | 265 | 2760 |
+| Recommended | 285 | 55 | 340 | 924 | 183 | 1107 |
+| Learn header (required plus recommended) | 809 | 65 | 874 | 2527 | 233 | 2760 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -534,8 +534,8 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
 | --- | --- | --- | --- | --- | --- | --- |
 | Required | 569 | 0 | 569 | 1683 | 0 | 1683 |
-| Recommended | 175 | 48 | 223 | 463 | 132 | 595 |
-| Learn header (required plus recommended) | 744 | 48 | 792 | 2146 | 132 | 2278 |
+| Recommended | 208 | 15 | 223 | 554 | 41 | 595 |
+| Learn header (required plus recommended) | 777 | 15 | 792 | 2237 | 41 | 2278 |
 <!-- /generated -->
 
 **Dependency conflicts**
@@ -550,7 +550,7 @@ Required courses that need a recommended course: `coding-int` needs `graphs-dp`;
 
 ### Derivatives and desk quant sub-route
 
-Same learner as Strats, plus the pricing mathematics. Route limited: odes, numerics unwritten. The ODE and numerical methods courses must be written before this route can read ready.
+Same learner as Strats, plus the pricing mathematics. Route limited: odes L4, numerics L4 unwritten. Those two levels must be written before this route can read ready.
 
 **Independent tasks that count** (each done alone, on material the learner has not seen)
 
@@ -617,7 +617,7 @@ Same learner as Strats, plus the pricing mathematics. Route limited: odes, numer
 | `opt-dash` | 2 | optional | Optimiser and dashboard project. Not needed for derivatives roles; can wait. |
 | `options` | 1 | required | Options, payoffs and parity. Core desk quant content. |
 | `pairs-rep` | 3 | optional | Replication of a pairs-trading paper. Not needed for derivatives roles; can wait. |
-| `pdes` | 3 | recommended | PDEs and the Black-Scholes equation. Black-Scholes as a PDE. Route limited: odes, numerics unwritten. |
+| `pdes` | 3 | recommended | PDEs and the Black-Scholes equation. Black-Scholes as a PDE. Route limited: odes L4, numerics L4 unwritten. |
 | `plotting` | 1 | recommended | Plotting with matplotlib. Helps a pricing profile; not a first gate. |
 | `proof` | 0 | optional | Reasoning and proof. Not needed for derivatives roles; can wait. |
 | `puzzles` | 3 | recommended | Interview probability problems. Helps a pricing profile; not a first gate. |
@@ -660,9 +660,9 @@ Same learner as Strats, plus the pricing mathematics. Route limited: odes, numer
 <!-- generated:totals:strats-deriv -->
 | Set | Lessons written | Lessons unwritten | Lessons total | Hours written | Hours unwritten | Hours total |
 | --- | --- | --- | --- | --- | --- | --- |
-| Required | 598 | 48 | 646 | 1731 | 132 | 1863 |
+| Required | 631 | 15 | 646 | 1821 | 41 | 1862 |
 | Recommended | 199 | 29 | 228 | 455 | 78 | 533 |
-| Learn header (required plus recommended) | 797 | 77 | 874 | 2186 | 210 | 2396 |
+| Learn header (required plus recommended) | 830 | 44 | 874 | 2276 | 119 | 2395 |
 <!-- /generated -->
 
 **Dependency conflicts**

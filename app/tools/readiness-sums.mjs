@@ -43,9 +43,10 @@ for (const id of readdirSync(join(C, 'courses')).sort()) {
   const p = join(C, 'courses', id, 'course.json');
   if (!existsSync(p)) continue;
   const cj = read(p);
-  const c = { id, topic: cj.topic, stage: topicStage[cj.topic], mapped: 0, written: 0, edges: [] };
+  const c = { id, topic: cj.topic, stage: topicStage[cj.topic], mapped: 0, written: 0, edges: [], levelWritten: {} };
   for (const lv of cj.levels ?? []) {
-    for (const l of lv.lessons ?? []) { c.mapped++; if (existsSync(join(C, 'courses', id, `${l}.json`))) c.written++; }
+    c.levelWritten[`L${lv.n}`] = 0;
+    for (const l of lv.lessons ?? []) { c.mapped++; if (existsSync(join(C, 'courses', id, `${l}.json`))) { c.written++; c.levelWritten[`L${lv.n}`]++; } }
     for (const r of refsOf(lv.requires)) {
       const [to, tl] = String(r).split('/');
       if (to !== id) c.edges.push({ from: id, level: lv.n, to, toLevel: tl });
@@ -166,11 +167,16 @@ for (const [name, body] of Object.entries(gen)) {
   else if (m[2] !== body) err(`block generated:${name} is out of date (run with --write after checking the tables)`);
 }
 // readiness.json: what the engine reads (js/readiness.js). Per role: course -> status, totals, mocks.
-// LIMITED: courses whose route is cut short by unwritten courses (DECISIONS, item 7); the script fails once the gap closes.
-const LIMITED = { pdes: { missing: ['odes', 'numerics'] } };
+// LIMITED: courses whose route is cut short by unwritten courses or levels (DECISIONS, item 7); the script fails once a gap closes.
+// An entry is a course id (no lesson written) or course/Ln (no lesson written in that level).
+const LIMITED = { pdes: { missing: ['odes/L4', 'numerics/L4'] } };
 for (const [cid, l] of Object.entries(LIMITED)) {
   if (!courses[cid]) err(`LIMITED: unknown course ${cid}`);
-  for (const m of l.missing) if (!courses[m]) err(`LIMITED: unknown course ${m}`); else if (courses[m].written > 0) err(`LIMITED: ${m} now has written lessons; update LIMITED for ${cid}`);
+  for (const m of l.missing) {
+    const [mc, ml] = m.split('/');
+    if (!courses[mc] || (ml && !(ml in courses[mc].levelWritten))) err(`LIMITED: unknown ${m}`);
+    else if ((ml ? courses[mc].levelWritten[ml] : courses[mc].written) > 0) err(`LIMITED: ${m} now has written lessons; update LIMITED for ${cid}`);
+  }
 }
 const setOf = (s) => ({ written: s.w, unwritten: s.u, total: s.w + s.u, hoursWritten: s.hw, hoursUnwritten: s.hu, hours: s.hw + s.hu });
 const json = { generated: 'node app/tools/readiness-sums.mjs --write; do not edit by hand', roles: {}, limited: {} };
