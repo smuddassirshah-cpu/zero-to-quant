@@ -1,0 +1,457 @@
+{
+ "id": "homework-3",
+ "course": "complex",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-count-roots",
+   "difficulty": 4,
+   "skills": [
+    "cz-contour"
+   ],
+   "prose": "The **argument principle**: $\\frac{1}{2\\pi i}\\oint \\frac{p'(z)}{p(z)}\\,dz$ counts the roots of $p$ inside the path. Near a root $a$, $\\frac{p'}{p}$ behaves like $\\frac{1}{z - a}$, residue 1. Write `count_roots_inside(coeffs, n=4096)` on the unit circle, rounded to a whole number.",
+   "question": "Fix `count_roots_inside`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef count_roots_inside(coeffs, n=4096):\n    t = 2 * np.pi * np.arange(n) / n\n    z = np.exp(1j * t)\n    dt = 2 * np.pi / n\n    ratio = np.polyval(np.polyder(coeffs), z) / np.polyval(coeffs, z)\n    return int(round((np.sum(ratio * dt) / (2j * np.pi)).real))\n",
+    "solution": "import numpy as np\n\n\ndef count_roots_inside(coeffs, n=4096):\n    t = 2 * np.pi * np.arange(n) / n\n    z = np.exp(1j * t)\n    dz = 1j * z * (2 * np.pi / n)\n    ratio = np.polyval(np.polyder(coeffs), z) / np.polyval(coeffs, z)\n    return int(round((np.sum(ratio * dz) / (2j * np.pi)).real))\n",
+    "examples": [
+     {
+      "call": "count_roots_inside([1, -1, 0.5])",
+      "expect": "2",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "count_roots_inside([1, -1, 0.5])",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "count_roots_inside([1, -2.5, 1])",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "count_roots_inside([1, -1.2, 0.32])",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "count_roots_inside([1, 0, 0, -8])",
+      "expect": "0",
+      "compare": "equal"
+     },
+     {
+      "call": "count_roots_inside([1, 0, 0, 0, 0.0625])",
+      "expect": "4",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests, each checked against `np.roots`. They are the spread model, roots 2 and 0.5, roots 0.8 and 0.4, $z^3 - 8$ and $z^4 + \\frac{1}{16}$. Each result must equal the whole number exactly. NumPy loads on the first run.",
+    "prelude": "import math\nimport cmath\nimport numpy as np\n"
+   },
+   "feedback": {
+    "correct": "Five of five: 2, 1, 2, 0 and 4 roots inside.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 gave 0. You integrated against $dt$; on $z = e^{it}$, $dz = iz\\,dt$.",
+     "error": "Your code stopped with an error. `np.polyder` takes the coefficient list."
+    }
+   },
+   "explain": {
+    "text": "Each root inside contributes residue 1 to $\\frac{p'}{p}$, so the integral is $2\\pi i$ times the count. Without $dz = iz\\,dt$ the sum is a different integral, which here rounds to 0. The spread model's polynomial has both roots inside."
+   }
+  },
+  {
+   "id": "h-merton",
+   "difficulty": 5,
+   "skills": [
+    "cz-fourier"
+   ],
+   "title": "Merton jump pricing",
+   "prose": "Merton's model adds jumps at rate $\\lambda$, each with log size $J \\sim N(\\mu_J, \\delta_J^2)$. Its characteristic function multiplies Black-Scholes's by $e^{\\lambda T(E[e^{iuJ}] - 1)}$. The drift must drop by $\\lambda\\kappa$, $\\kappa = e^{\\mu_J + \\delta_J^2/2} - 1$, so the forward stays $S_0e^{rT}$. `carr_madan_call` is lesson 13's pricer.",
+   "question": "Write `merton_cf(u, S0, r, sigma, T, lam, mu_j, delta_j)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\n\ndef carr_madan_call(cf, K, r, T, alpha=1.5, v_max=200, n=20001):\n    v = np.linspace(0, v_max, n)\n    k = np.log(K)\n    den = alpha ** 2 + alpha - v ** 2 + 1j * (2 * alpha + 1) * v\n    psi = np.exp(-r * T) * cf(v - (alpha + 1) * 1j) / den\n    return np.exp(-alpha * k) / np.pi * np.trapezoid((np.exp(-1j * v * k) * psi).real, v)\n\n\ndef merton_cf(u, S0, r, sigma, T, lam, mu_j, delta_j):\n    kappa = np.exp(mu_j + delta_j ** 2 / 2) - 1\n    m = np.log(S0) + (r - sigma ** 2 / 2) * T\n    jumps = lam * T * (np.exp(1j * u * mu_j - delta_j ** 2 * u ** 2 / 2) - 1)\n    return np.exp(1j * u * m - sigma ** 2 * T * u ** 2 / 2 + jumps)\n",
+    "solution": "import numpy as np\n\n\ndef carr_madan_call(cf, K, r, T, alpha=1.5, v_max=200, n=20001):\n    v = np.linspace(0, v_max, n)\n    k = np.log(K)\n    den = alpha ** 2 + alpha - v ** 2 + 1j * (2 * alpha + 1) * v\n    psi = np.exp(-r * T) * cf(v - (alpha + 1) * 1j) / den\n    return np.exp(-alpha * k) / np.pi * np.trapezoid((np.exp(-1j * v * k) * psi).real, v)\n\n\ndef merton_cf(u, S0, r, sigma, T, lam, mu_j, delta_j):\n    kappa = np.exp(mu_j + delta_j ** 2 / 2) - 1\n    m = np.log(S0) + (r - sigma ** 2 / 2 - lam * kappa) * T\n    jumps = lam * T * (np.exp(1j * u * mu_j - delta_j ** 2 * u ** 2 / 2) - 1)\n    return np.exp(1j * u * m - sigma ** 2 * T * u ** 2 / 2 + jumps)\n",
+    "examples": [
+     {
+      "call": "merton_cf(-1j, 100, 0.05, 0.2, 1, 0.5, -0.1, 0.15)",
+      "expect": "105.12710963760242+0j",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "merton_cf(-1j, 100, 0.05, 0.2, 1, 0.5, -0.1, 0.15)",
+      "expect": "105.12710963760242+0j",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-09
+      }
+     },
+     {
+      "call": "merton_cf(0, 100, 0.05, 0.2, 1, 0.5, -0.1, 0.15)",
+      "expect": "1",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "call": "carr_madan_call(lambda u: merton_cf(u, 100, 0.05, 0.2, 1, 0.5, -0.1, 0.15), 100, 0.05, 1)",
+      "expect": "11.661674787503717",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "carr_madan_call(lambda u: merton_cf(u, 100, 0.05, 0.2, 1, 0.5, -0.1, 0.15), 90, 0.05, 1)",
+      "expect": "17.75481188509788",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "carr_madan_call(lambda u: merton_cf(u, 100, 0.05, 0.2, 1, 0, -0.1, 0.15), 100, 0.05, 1)",
+      "expect": "10.450583572185565",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     }
+    ],
+    "how": "Check runs 5 hidden tests: the martingale check $\\varphi(-i) = 105.12710963760242$, and $\\varphi(0) = 1$. Three prices must match Merton's Poisson-weighted series of Black-Scholes prices within absolute $10^{-8}$. They use $\\lambda = 0.5$, $\\mu_J = -0.1$ and $\\delta_J = 0.15$ at $K = 100$ and 90, and $\\lambda = 0$.",
+    "prelude": "import math\nimport cmath\nimport numpy as np\n"
+   },
+   "feedback": {
+    "correct": "Five of five: £11.661674788 at $K = 100$, matching the series.",
+    "generic": "Not quite right. Read the first failing test.",
+    "byKey": {
+     "test-1": "Test 1 failed the martingale check: without $-\\lambda\\kappa$ the forward is $S_0e^{(r - \\lambda\\kappa)T}$ too high. Lower the drift.",
+     "error": "Your code stopped with an error. `u` is complex: use `np.exp`."
+    }
+   },
+   "explain": {
+    "text": "The jump factor is $e^{\\lambda T(e^{iu\\mu_J - \\delta_J^2u^2/2} - 1)}$, and $-\\lambda\\kappa$ in the drift keeps $\\varphi(-i) = £105.1271$. Then the unchanged pricer gives £11.6617 at $K = 100$ and £17.7548 at 90. With $\\lambda = 0$ it falls back to Black-Scholes, £10.4506."
+   }
+  },
+  {
+   "id": "h-proof-pi",
+   "difficulty": 4,
+   "skills": [
+    "cz-contour"
+   ],
+   "prose": "Prove $\\int_{-\\infty}^{\\infty} \\frac{dx}{1 + x^2} = \\pi$ by residues. The closed path is $[-R, R]$ followed by the upper semicircle $C_R$, with $R > 1$.",
+   "question": "Put the lines of the proof in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Inside the path the only pole is $i$, since $1 + z^2 = (z - i)(z + i)$."
+     },
+     {
+      "id": "s2",
+      "text": "Its residue is $\\frac{1}{2i}$, so the closed path gives $2\\pi i \\cdot \\frac{1}{2i} = \\pi$."
+     },
+     {
+      "id": "s3",
+      "text": "On $C_R$, $|1 + z^2| \\ge R^2 - 1$, so $\\left|\\int_{C_R}\\right| \\le \\frac{\\pi R}{R^2 - 1}$."
+     },
+     {
+      "id": "s4",
+      "text": "So $\\int_{-R}^{R} \\frac{dx}{1 + x^2} = \\pi - \\int_{C_R} \\to \\pi$ as $R \\to \\infty$."
+     },
+     {
+      "id": "d1",
+      "text": "The residue at $-i$ is $-\\frac{1}{2i}$, so the total residue is 0.",
+      "why": "$-i$ lies below the real axis, outside the path, so its residue does not count."
+     },
+     {
+      "id": "d2",
+      "text": "On $C_R$, $|1 + z^2| \\le R^2 + 1$, so $\\left|\\int_{C_R}\\right| \\le \\frac{\\pi R}{R^2 + 1}$.",
+      "why": "An upper bound on $|1 + z^2|$ gives a lower bound on $|f|$, not the upper bound the ML estimate needs."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Pole, residue, arc bound, limit: the arc vanishes and the real integral is $\\pi$.",
+    "generic": "Not quite. Find the residue first, then bound the arc.",
+    "byKey": {
+     "d1": "You counted the pole at $-i$. It is outside the upper semicircle.",
+     "d2": "You bounded $|1 + z^2|$ from above. The ML bound needs it from below.",
+     "left-out": "Two lines do not belong: the pole at $-i$ and the upper bound on $|1 + z^2|$."
+    }
+   },
+   "explain": {
+    "text": "The residue theorem gives $\\pi$ for every $R > 1$. The reverse triangle inequality bounds the arc by $\\frac{\\pi R}{R^2 - 1} \\to 0$. So the segment's integral tends to $\\pi$."
+   }
+  },
+  {
+   "id": "h-fft-debug",
+   "difficulty": 4,
+   "skills": [
+    "cz-fourier",
+    "cz-contour"
+   ],
+   "kind": "longform",
+   "title": "A faulty FFT pricer",
+   "prompt": "A colleague's FFT pricer for $S_0 = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$ returns prices about 5% too high at every strike. They explode for deep in-the-money strikes. The code uses $\\alpha = 0$, passes the characteristic function of $S_T$ instead of $\\ln S_T$, omits $e^{-rT}$ and calls `np.fft.ifft`. Diagnose each fault, say which symptom it causes, and give the checks that would have caught them.",
+   "model": "**1. $\\alpha = 0$: the explosion.** The denominator $\\alpha^2 + \\alpha - v^2 + i(2\\alpha + 1)v$ becomes $iv(1 + iv)$, which is 0 at $v = 0$. So $\\psi$ has a pole on the line of integration, $|\\psi(10^{-6})| \\approx 10^8$, and the integral does not exist. Undamped, $C(k) \\to S_0$ as $k \\to -\\infty$, so the transform fails worst for deep in-the-money strikes, where prices explode. Fix: $\\alpha$ between about 0.5 and 3.\n\n**2. No discount: the 5% bias.** $\\varphi$ gives an expectation at $T$. Without $e^{-rT}$ every price is $e^{0.05} = 1.0513$ times too large: £10.9864 instead of £10.4506 at $K = 100$. A clean ratio at every strike points at this.\n\n**3. The characteristic function of $S_T$.** The Carr-Madan formula integrates over $s = \\ln S_T$, so it needs $E[e^{iu\\ln S_T}]$. $E[e^{iuS_T}]$ is a different function with no closed form here. The prices are then not a clean multiple of the right ones. Part of the error blamed on bias comes from here.\n\n**4. `ifft` instead of `fft`.** The inversion needs $\\sum_j e^{-2\\pi ijm/N}x_j$. `np.fft.ifft` uses $e^{+2\\pi ijm/N}$ and divides by $N$, so it evaluates the wrong sum and scales it by $1/4{,}096$. Check the sign convention of any library against one strike priced by direct quadrature.\n\n**Checks that catch them.** $\\varphi(0) = 1$ and $\\varphi(-i) = S_0e^{rT} = £105.1271$ test the function passed in: the $S_T$ version fails both. A Black-Scholes $\\varphi$ must reproduce £10.4506 at $K = 100$, £16.6994 at 90 and £6.0401 at 110. Put-call parity $C - P = S_0 - Ke^{-rT}$ gives the put £5.5735; a missing discount breaks it. Finally, the price must not move as $\\alpha$ changes between 0.5 and 3.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Explains $\\alpha = 0$: the pole at $v = 0$ on the path, and why deep in-the-money prices explode ($C \\to S_0$).",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Ties the 5% bias to the missing $e^{-rT}$, with the factor $e^{0.05} = 1.0513$."
+    },
+    {
+     "points": 2,
+     "text": "Says Carr-Madan needs the characteristic function of $\\ln S_T$, and that $E[e^{iuS_T}]$ is a different function."
+    },
+    {
+     "points": 2,
+     "text": "Explains the `ifft` sign and the $1/N$ scaling, and how to check a library's convention."
+    },
+    {
+     "points": 2,
+     "text": "Gives at least three checks: $\\varphi(0) = 1$, $\\varphi(-i) = S_0e^{rT}$, a Black-Scholes match, put-call parity (£5.5735), or price unchanged in $\\alpha$."
+    }
+   ]
+  },
+  {
+   "id": "h-derivative-form",
+   "difficulty": 3,
+   "skills": [
+    "cz-contour"
+   ],
+   "prose": "Use the derivative form of Cauchy's integral formula.",
+   "question": "What is $\\oint_{|z| = 2} \\frac{e^z}{z^3}\\,dz$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\pi i",
+    "accept": [
+     "i\\pi"
+    ],
+    "wrong": [
+     {
+      "id": "no-factorial",
+      "tex": "2\\pi i"
+     },
+     {
+      "id": "cauchy",
+      "tex": "0"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "feedback": {
+    "correct": "$k = 2$: $\\frac{2\\pi i}{2!}(e^z)''(0) = \\pi i$.",
+    "generic": "Not quite. Here $z^3 = (z - 0)^{k+1}$ with $k = 2$.",
+    "byKey": {
+     "no-factorial": "You left out $k! = 2$. The formula divides $2\\pi i f''(0)$ by $2!$.",
+     "cauchy": "0 is a triple pole inside the circle."
+    }
+   },
+   "explain": {
+    "text": "With $f = e^z$, $a = 0$ and $k = 2$: $\\frac{2\\pi i}{2!}f''(0) = \\pi i \\approx 3.1416i$. Equivalently, the residue is the coefficient $\\frac12$ of $\\frac1z$ in $\\frac{e^z}{z^3}$."
+   }
+  },
+  {
+   "id": "h-trig",
+   "difficulty": 3,
+   "skills": [
+    "cz-contour"
+   ],
+   "prose": "Put $z = e^{i\\theta}$ in $\\int_0^{2\\pi} \\frac{d\\theta}{5 + 4\\cos\\theta}$. The integrand becomes $\\frac{1}{i(2z^2 + 5z + 2)}$, with poles $-\\frac12$ and $-2$.",
+   "question": "What is the integral?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.0944,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\frac{2\\pi}{3} \\approx 2.0944$",
+    "wrong": [
+     {
+      "id": "both",
+      "value": 0,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-q-prime",
+      "value": 1.2566,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Residue at $-\\frac12$: $\\frac{1}{i(4z + 5)} = \\frac{1}{3i}$, so $2\\pi i \\cdot \\frac{1}{3i} = \\frac{2\\pi}{3}$.",
+    "generic": "Not quite. Use only the pole inside the unit circle.",
+    "byKey": {
+     "both": "You added the residue at $-2$, outside the unit circle.",
+     "no-q-prime": "You used $q'(0) = 5$. Evaluate $q' = 4z + 5$ at the pole $-\\frac12$, where it is 3."
+    }
+   },
+   "explain": {
+    "text": "Only $-\\frac12$ is inside. $q' = 4z + 5$ is 3 there, so the residue is $\\frac{1}{3i}$ and the integral is $\\frac{2\\pi}{3} \\approx 2.0944$."
+   }
+  },
+  {
+   "id": "h-cos-two",
+   "difficulty": 4,
+   "skills": [
+    "cz-contour"
+   ],
+   "prose": "Use Jordan's lemma and the upper half plane for $\\int_{-\\infty}^{\\infty} \\frac{\\cos 2x}{1 + x^2}\\,dx = \\operatorname{Re}\\int \\frac{e^{2ix}}{1 + x^2}\\,dx$.",
+   "question": "What is the integral?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4252,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\pi e^{-2} \\approx 0.4252$",
+    "wrong": [
+     {
+      "id": "freq-one",
+      "value": 1.1557,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "e-up",
+      "value": 23.2134,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Residue $\\frac{e^{2i \\cdot i}}{2i} = \\frac{e^{-2}}{2i}$, so the integral is $\\pi e^{-2} \\approx 0.4252$.",
+    "generic": "Not quite. Evaluate $e^{2iz}$ at $z = i$.",
+    "byKey": {
+     "freq-one": "$\\frac{\\pi}{e}$ is frequency 1. With $\\cos 2x$, $e^{2i \\cdot i} = e^{-2}$.",
+     "e-up": "You took $e^{2i \\cdot i} = e^2$. In fact $2i \\cdot i = -2$."
+    }
+   },
+   "explain": {
+    "text": "$e^{2iz}$ at $i$ is $e^{-2}$, so the residue is $\\frac{e^{-2}}{2i}$ and the integral is $\\pi e^{-2} \\approx 0.4252$. This is the Cauchy characteristic function, $\\pi e^{-|u|}$ before dividing by $\\pi$, at $u = 2$."
+   }
+  },
+  {
+   "id": "h-annual-cf",
+   "difficulty": 4,
+   "skills": [
+    "cz-fourier"
+   ],
+   "prose": "Daily log returns are independent $N(0.0002, 0.01^2)$, so each has $\\varphi(u) = e^{0.0002iu - 0.00005u^2}$. A year has 250 trading days.",
+   "question": "What is the characteristic function of the 250-day log return?",
+   "widget": {
+    "kind": "expression",
+    "answer": "e^{0.05iu-0.0125u^2}",
+    "accept": [
+     "e^{0.05ui-0.0125u^2}",
+     "(e^{0.0002iu-0.00005u^2})^{250}"
+    ],
+    "wrong": [
+     {
+      "id": "sum",
+      "tex": "250e^{0.0002iu-0.00005u^2}"
+     },
+     {
+      "id": "sd",
+      "tex": "e^{0.05iu-1.25u^2}"
+     }
+    ],
+    "keyboard": "calculus"
+   },
+   "feedback": {
+    "correct": "$\\varphi^{250} = e^{250(0.0002iu - 0.00005u^2)} = e^{0.05iu - 0.0125u^2}$.",
+    "generic": "Not quite. Independent sums multiply characteristic functions.",
+    "byKey": {
+     "sum": "You added 250 copies of $\\varphi$. The sum's characteristic function is the product, $\\varphi^{250}$.",
+     "sd": "You scaled the standard deviation by 250. Variances add: $250 \\times 0.0001 = 0.025$, half of it 0.0125."
+    }
+   },
+   "explain": {
+    "text": "$\\varphi_{X_1 + \\cdots + X_{250}} = \\varphi^{250}$, so both exponent terms multiply by 250. The year's return is $N(0.05, 0.025)$, with sd about 15.8%."
+   }
+  },
+  {
+   "id": "h-double-pole",
+   "difficulty": 4,
+   "skills": [
+    "cz-contour"
+   ],
+   "prose": "$\\int_{-\\infty}^{\\infty} \\frac{dx}{(x^2 + 4)^2}$ has a double pole at $2i$. Write the integrand as $\\frac{g(z)}{(z - 2i)^2}$ with $g(z) = (z + 2i)^{-2}$.",
+   "question": "What is the integral?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1963,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "$\\frac{\\pi}{16} \\approx 0.1963$",
+    "wrong": [
+     {
+      "id": "ignore-square",
+      "value": 1.5708,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": -0.1963,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$g'(2i) = -2(4i)^{-3} = \\frac{1}{32i}$, so the integral is $\\frac{2\\pi i}{32i} = \\frac{\\pi}{16}$.",
+    "generic": "Not quite. The residue at a double pole is $g'(2i)$.",
+    "byKey": {
+     "ignore-square": "$\\frac{\\pi}{2}$ is $\\int \\frac{dx}{x^2 + 4}$, the simple pole. Squaring the denominator makes $2i$ a double pole.",
+     "sign": "A positive integrand cannot have a negative integral. Check the sign of $g'(2i)$: $(4i)^3 = -64i$."
+    }
+   },
+   "explain": {
+    "text": "$g'(z) = -2(z + 2i)^{-3}$, and at $2i$ that is $\\frac{-2}{(4i)^3} = \\frac{-2}{-64i} = \\frac{1}{32i}$. Times $2\\pi i$: $\\frac{\\pi}{16} \\approx 0.1963$."
+   }
+  }
+ ]
+}
