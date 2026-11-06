@@ -167,7 +167,7 @@ Phase 4, developer and strats depth
 - [ ] Drill packs 5 to 8 (60 drills)
 - [ ] Exams: mock-oa-code-hard, mock-oa-strats, mock-superday-developer, mock-superday-strats, mock-video, topic-3.5 (done 4 Nov, `docs/reports/exam-3.5.md`)
 
-- [ ] odes, numerics and complex L1 before 2b (user, 5 Nov, sessions Q and R; complex L1 added in R): write `odes` L1 to L4 and `numerics` L1 to L4 from their briefs ahead of the rest of 2b, so the pdes route opens under Strict. The 2b lines below for these two courses are the checklist.
+- [x] odes, numerics and complex L1 before 2b (done session T: odes L4 and numerics L4 written, read and fixed; pdes route no longer limited) (user, 5 Nov, sessions Q and R; complex L1 added in R): write `odes` L1 to L4 and `numerics` L1 to L4 from their briefs ahead of the rest of 2b, so the pdes route opens under Strict. The 2b lines below for these two courses are the checklist.
 
 ### 2b. Maths breadth pass (user request, 27 Oct; runs after 2a, before the rest of task 3)
 Fills seven gaps against a traditional maths degree, now written into `docs/curriculum.md`: proof (0.6), analysis and proof-based linear algebra (1.10), complex numbers, vector calculus and ODEs (1.11), numerical methods and optimisation (2.5), statistical modelling (2.6), measure theory and PDEs (added to 3.2), pure mathematics (3.4, optional), plus a 1.5 gap level (Poisson process, martingales, optional stopping). Suggested courses: `proof`; `analysis`, `linear-maps`; `complex`, `vector-calc`, `odes`; `numerics`, `convex`; `stat-models`; `measure-prob`, `pdes`; `algebra`, `topology`; a new markov level.
@@ -185,33 +185,33 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 - [x] analysis L2: Sequences [Pure maths] (`docs/reports/analysis-2.md`, written afterwards; 170 numbers rechecked, two text fixes in l7)
 - [x] analysis L3: Series [Pure maths] (`docs/reports/analysis-3.md`; 4 lessons, review-3 9 items, homework-3 9 items; 5 inbox bullets)
 - [x] analysis L4: Continuity and the derivative [Pure maths] (`docs/reports/analysis-4.md`; 5 lessons, review-4 8 items, homework-4 9 items; 3 inbox bullets; two brief numbers corrected)
-- [ ] analysis L5: Integration and metric spaces [Pure maths]
+- [x] analysis L5: Integration and metric spaces [Pure maths] (session T: second read and fix pass in `docs/reviews/review-analysis-5.md`)
 - [x] linear-maps L1: Vector spaces [Pure maths] (`docs/reports/linear-maps-1.md`; 5 inbox bullets)
 - [x] linear-maps L2: Linear maps [Pure maths] (`docs/reports/linear-maps-2.md`; 3 inbox bullets; l9 starter passes 4 of 6 hidden tests)
 - [x] linear-maps L3: Duality and inner products [Pure maths] (`docs/reports/linear-maps-3.md`; 5 lessons, review-3, homework-3; 3 inbox bullets)
 - [ ] linear-maps L4: Operators [Pure maths]
 - [x] complex L1: The complex plane [Quant] (session S: second read and fix pass in `docs/reviews/review-complex-1-2.md`)
 - [x] complex L2: Complex functions [Quant] (session S: second read and fix pass in `docs/reviews/review-complex-1-2.md`)
-- [ ] complex L3: Integrals and Fourier [Quant]
-- [ ] vector-calc L1: Fields and line integrals [Pure maths]
-- [ ] vector-calc L2: Green’s theorem [Pure maths]
+- [x] complex L3: Integrals and Fourier [Quant] (session T: second read and fix pass in `docs/reviews/review-complex-3.md`)
+- [x] vector-calc L1: Fields and line integrals [Pure maths] (session T: second read and fix pass in `docs/reviews/review-vector-calc-1-2.md`)
+- [x] vector-calc L2: Green’s theorem [Pure maths] (session T: second read and fix pass in `docs/reviews/review-vector-calc-1-2.md`)
 - [ ] vector-calc L3: Surfaces and space [Pure maths]
 - [x] odes L1: First-order equations [Quant] (session S: second read and fix pass in `docs/reviews/review-odes-1-3.md`)
 - [x] odes L2: Second-order equations [Quant] (session S: second read and fix pass in `docs/reviews/review-odes-1-3.md`)
 - [x] odes L3: Systems and stability [Quant] (session S: second read and fix pass in `docs/reviews/review-odes-1-3.md`)
-- [ ] odes L4: Transforms and numerical solution [Quant]
+- [x] odes L4: Transforms and numerical solution [Quant] (session T: second read and fix pass in `docs/reviews/review-odes-4.md`)
 - [x] numerics L1: Errors [Quant] (session S: second read and fix pass in `docs/reviews/review-numerics-1-3.md`)
 - [x] numerics L2: Equations and curves [Quant] (session S: second read and fix pass in `docs/reviews/review-numerics-1-3.md`)
 - [x] numerics L3: Integrals and time steps [Quant] (session S: second read and fix pass in `docs/reviews/review-numerics-1-3.md`)
-- [ ] numerics L4: One option, three ways [Quant]
-- [ ] convex L1: Convexity [Quant]
-- [ ] convex L2: Linear programmes [Quant]
-- [ ] convex L3: Duality and KKT [Quant]
-- [ ] convex L4: Algorithms [Quant]
-- [ ] stat-models L1: Generalised linear models [Quant]
-- [ ] stat-models L2: Experiments [Quant]
-- [ ] stat-models L3: Without the assumptions [Quant]
-- [ ] stat-models L4: Bayesian models [Quant]
+- [x] numerics L4: One option, three ways [Quant] (session T: second read and fix pass in `docs/reviews/review-numerics-4.md`)
+- [x] convex L1: Convexity [Quant] (session T: second read and fix pass in `docs/reviews/review-convex-1-2.md`)
+- [x] convex L2: Linear programmes [Quant] (session T: second read and fix pass in `docs/reviews/review-convex-1-2.md`)
+- [x] convex L3: Duality and KKT [Quant] (session T: second read and fix pass in `docs/reviews/review-convex-3.md`)
+- [x] convex L4: Algorithms [Quant] (session T: second read and fix pass in `docs/reviews/review-convex-4.md`)
+- [x] stat-models L1: Generalised linear models [Quant] (session T: second read and fix pass in `docs/reviews/review-stat-models-1-3.md`)
+- [x] stat-models L2: Experiments [Quant] (session T: second read and fix pass in `docs/reviews/review-stat-models-1-3.md`)
+- [x] stat-models L3: Without the assumptions [Quant] (session T: second read and fix pass in `docs/reviews/review-stat-models-1-3.md`)
+- [x] stat-models L4: Bayesian models [Quant] (session T: second read and fix pass in `docs/reviews/review-stat-models-4.md`)
 - [x] measure-prob L1: Measures [Quant] (`docs/reports/measure-prob-1.md`)
 - [x] measure-prob L2: Integration [Quant] (`docs/reports/measure-prob-2.md`)
 - [x] measure-prob L3: Information and martingales [Quant] (`docs/reports/measure-prob-3.md`)
@@ -230,10 +230,10 @@ Fills seven gaps against a traditional maths degree, now written into `docs/curr
 ### 3. Stage 3 content (briefs in `docs/briefs/`)
 Superseded 5 Nov (census reconciliation): the ito L1 to L3, puzzles L1 to L4, mm-games L1 to L3 and mental-pressure L1 to L3 lines here duplicated 2a, where they stay ticked with their reports; the copies were removed.
 - [x] momentum-rep L1 (look-ahead bug gives 17.06% a month, not the brief's 15%; `docs/reports/momentum-rep-1.md`)
-- [ ] momentum-rep L2
-- [ ] momentum-rep L3
-- [ ] pairs-rep L1
-- [ ] pairs-rep L2
+- [x] momentum-rep L2 (session T: second read and fix pass in `docs/reviews/review-momentum-rep-2-3.md`)
+- [x] momentum-rep L3 (session T: second read and fix pass in `docs/reviews/review-momentum-rep-2-3.md`)
+- [x] pairs-rep L1 (session T: second read and fix pass in `docs/reviews/review-pairs-rep-1-2.md`)
+- [x] pairs-rep L2 (session T: second read and fix pass in `docs/reviews/review-pairs-rep-1-2.md`)
 - [ ] pairs-rep L3
 
 ### 4. Exams (pattern: `app/content/exams/topic-1.7.json`; brief pattern in `docs/reports/exam-1.8.md`)
