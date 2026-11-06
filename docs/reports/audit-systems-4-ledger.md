@@ -213,3 +213,58 @@ Files: `app/content/courses/systems/l15-no-allocation.json`, `l16-ring-buffer.js
 | l18 | quiz[2] | 2,048 × 16 = 32,768 bytes, exactly 32 KiB, a typical L1 | correct | derivation; 32 KiB L1d (48 KiB on Ice Lake and later, still "typical") |
 | l18 | quiz[3].widget.options[0], explain.text | Expecting 9, a 7 is dropped as a duplicate or late arrival | correct | policy; sim: l18 quiz[3] |
 | l18 | quiz[3].widget.options[1..3].why | A gap counts numbers above; nothing is held for a number below; moving back would replay old data | correct | policy |
+
+## review-4
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| review-4 | items[0] (r4-allocating-lines) options and explain | `emplace_back` on an empty vector, `new double[3]` and `std::string(64)` allocate; `double a[3]`, `std::array<double, 3>` and an empty `std::vector<double> w` do not | correct | libstdc++ SSO 15 (libc++ 22), so 64 allocates; sim: review-4 items[0] |
+| review-4 | items[0].feedback.byKey.decl | An empty vector allocates on its first push, not when declared | correct | sim: l15 screens[6] trap |
+| review-4 | items[1] (r4-pool-order) | Release 2, 3, 1: the list reads 1, 3, 2, next allocate returns 1 | correct | sim: review-4 items[1] |
+| review-4 | items[2] (r4-alloc-bill) | 3 × 50 ns × 120,000 = 18 ms | correct | derivation |
+| review-4 | items[3] (r4-ring-counters) | Head 70, tail 85, ring of 32: 15 items, next slot 85 & 31 = 21 | correct | sim: review-4 items[3] |
+| review-4 | items[4] (r4-ring-order) | Ring of 2: 10, 20 in, 30 refused, pop 10, push 40, pops 20 then 40: the third pop is 40 | correct | FIFO derivation |
+| review-4 | items[5] (r4-mean-p99) | Mean 38.1 µs; p99 at position 990 is 400 µs since only 940 are fast | correct | sim: review-4 items[5] (nearest rank, the convention l17 states) |
+| review-4 | items[6] (r4-p60) | p60 of 8 by nearest rank: ⌈4.8⌉ = 5, value 6; rounding down gives 5, rank 6 gives 7 | correct | sim: review-4 items[6] |
+| review-4 | items[7] (r4-budget) | 2,600 + 6 × 50 = 2,900 ns | correct | derivation |
+| review-4 | items[8] (r4-two-reads) | 31 then 41 bytes: 1 frame plus 7 held, then 48 bytes = 2 frames, 3 in all | correct | sim: review-4 items[8] |
+
+## homework-4
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| homework-4 | items[0].prose (h4-latency-hist) | Keeping every sample would allocate; a histogram with a bucket per power of two does not; sample ns goes in bucket ⌊log2 ns⌋ | correct | a growing container allocates; a fixed `std::array<int, 40>` does not; HdrHistogram uses the same log-scale bucketing idea |
+| homework-4 | items[0].widget.starter comment | `percentile_upper(p)` finds the bucket holding the nearest-rank sample (rank ⌈p n / 100 − 1e-9⌉, at least 1) and returns its upper bound 2^(bucket + 1) | correct | the bucket b holds [2^b, 2^(b+1)), so 2^(b+1) is an exclusive upper bound: a conservative report |
+| homework-4 | items[0].widget.solution | Shift loop for ⌊log2⌋, clamp at 39, cumulative walk to the rank | correct | sim: homework-4 items[0] LatencyHist passes 15 tests (c++17, c++20); starter fails; alloc_count 0 over 1,000 records |
+| homework-4 | items[0].widget.tests[8] | 2^45 clamps to bucket 39 and reports 2^40 | correct | sim: homework-4 items[0] explain |
+| homework-4 | items[0].explain.text | 10 ns is bucket 3 (8 to 15), upper bound 16; the array was sized at construction so `record` never allocates | correct | sim |
+| homework-4 | items[1].parts[0..3] (h4-sizing) | 3,000 slots; 60,000 bytes (58.6 KiB); 300 messages in 2 ms, 512 slots; 12,288 bytes | correct | sim: homework-4 items[1] |
+| homework-4 | items[1].parts[4] options and explain | Only the 12,288-byte ring fits a 32,768-byte L1; the pool is 27,232 over, the pair 39,520 over | correct | sim: homework-4 items[1] parts[4] |
+| homework-4 | items[1].parts[4].widget.options[3].why | "The question is about the whole pool, and it is 27,232 bytes over" (against "only the slots in use are touched") | imprecise | the distractor raises the right idea (residency depends on the working set, not the allocation: Drepper §6) and the why dismisses it by fiat; the sound reason is that even the 2,400 live slots are 48,000 bytes, over L1. sim: homework-4 items[1] parts[4] |
+| homework-4 | items[2].model §1 (h4-handler-aloud) | Pipeline: user-space ring, decode, sequence, book, strategy, send; 4 µs target, stages 1,200 + 250 + 350 + 600 + 600 = 3,000 ns, 1,000 ns slack | correct | sim: homework-4 items[2] model budget |
+| homework-4 | items[2].model §2 | Every allocation is about 50 ns and a rare slow case; take memory before the first message; prove it by resetting a `new` counter and asserting 0 | correct | l15; sim: ALLOC harness |
+| homework-4 | items[2].model §3 | Below expected: dropped; above: skipped numbers to a gap count; the gap is repaired from a snapshot; partial frames wait in a small buffer | correct | l18 policy; snapshot recovery is the standard gap repair (exchange snapshot and incremental feeds, e.g. ITCH/MoldUDP64 recovery) |
+| homework-4 | items[2].model §4 | A £4 range in pennies is 401 levels a side | correct | 400 steps, both ends included |
+| homework-4 | items[2].model §4 | "Both are sized at start, so they fit in L1, and neither can rehash" | imprecise | being sized at start makes the size fixed and removes rehashing; fitting in L1 follows from the size (401 × 4 × 2 = 3,208 bytes plus 1,024 × 16 = 16,384, under 32 KiB), not from when it was taken. The rubric asks "why they stay in cache", so the reason given should be the size |
+| homework-4 | items[2].model §4 | A `std::unordered_map` allocates and rehashes at unpredictable moments | correct | N4659 [unord.req]/9 |
+| homework-4 | items[2].model §5 | Time from the intended send time; quote p99 and p99.9 first, the mean after; time batches after a warm-up | correct | Tene (2015); Paoloni (2010) |
+| homework-4 | items[2].model §6 | Counting and moving on keeps delay low but loses frames the other feed may hold; a short hold recovers some at a latency cost | correct | A/B arbitration trade-off (l18 screens[4] explain) |
+| homework-4 | items[2].rubric | Pipeline with figures; allocation avoided and proved; loss handling; arrays and why they stay in cache; percentiles from intended time; a trade-off | correct | matches the lesson's method |
+| homework-4 | items[3].parts[0..2] (h4-two-hosts) | Average of 20 and 800 is 410, a number no request had; pooled p99 with 40 slow of 2,000 is 800; with 15 slow it is 20 | correct | sim: homework-4 items[3] |
+| homework-4 | items[3].parts[1].feedback.byKey.avg, parts[2].feedback.byKey.avg | 410 averages two percentiles, which is not a percentile | correct | Tene (2015) |
+| homework-4 | items[3].parts[2].explain.text | Host B alone still has a p99 of 800 µs (15 slow of 1,000, position 990 slow) | correct | 985 fast, rank 990 slow |
+| homework-4 | items[3].parts[3].widget.options[0], explain.text | Pool the samples (or merge histograms with the same buckets) and read the percentile once | correct | HdrHistogram merge; Tene |
+| homework-4 | items[3].parts[3].widget.options[1].why | The average is a number no request had, "and it moves the wrong way as hosts differ in size" | correct (vague) | an unweighted average ignores request counts; with 15 slow the honest fleet p99 is 20 while the average says 410 |
+| homework-4 | items[3].parts[3].widget.options[2].why, options[3].why | The larger p99 says 800 when only 0.75% were slow; medians say nothing about the tail | correct | derivation |
+| homework-4 | items[4].widget.answer (h4-pop-order) | pop: relaxed load of own `head_`; `if (h == tail_.load(acquire)) return false`; read slot; `head_.store(h + 1, release)`; return true | correct | Williams §7.2, §5.3.3; sim: SPSC ring program (TSan clean, in order) |
+| homework-4 | items[4].widget.lines[5].why (d1) | A relaxed `head_` store can become visible before the slot read, so the producer could overwrite it first | correct | the release on `head_` orders the slot read before the producer's acquire of `head_` and its overwrite (N4659 [intro.races]/9 to 12) |
+| homework-4 | items[4].widget.lines[6].why (d2) | Only the producer writes `tail_` | correct | SPSC ownership |
+| homework-4 | items[4].widget.lines[7].why (d3) | A relaxed load of `tail_` does not pair with the producer's release, so the slot may not be visible yet | correct | N4659 [atomics.order]/2 (synchronizes-with needs an acquire load) |
+| homework-4 | items[4].feedback.byKey.s3, .s4, explain.text | Read the slot before the head moves; the release store tells the producer the slot is free | correct | as above |
+| homework-4 | items[5] (h4-stall-count) | 40 ms / 250 µs = 160 requests due; the closed-loop client sent none on time, so its own timing hides all 160 | correct | sim: homework-4 items[5]; Tene (2015) |
+
+## Verdict counts
+
+231 rows: correct 218, wrong 2, imprecise 8, misleading 2, unverified 1 (the compiler download size and time in l15 screens[5].widget.how, an engine figure outside this audit).
+
+The `wrong` rows: l16 screens[6].explain.text (a race needs two writers) and l16 screens[8].explain.text (the reason unsigned subtraction survives the wrap). The `misleading` rows: l16 screens[4].explain.text (alignas makes the line stay put) and l16 screens[9] (a plain-counter ring presented as the two-core ring). Each is a finding in `docs/reviews/audit-systems-4.md`, as is every imprecise row; l17 quiz[3].options[1].why is folded into the l17 screens[9] finding.
