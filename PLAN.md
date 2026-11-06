@@ -259,9 +259,9 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 - [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (3.2 additions done 4 Nov)
 - [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
 
-### 5b. Concept audit (user priority, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
-- [ ] Audit arma, garch, coint (fixed in session V), then each Phase 2 course as its fix merges
-- [ ] Audit interview courses and Stages 2 and 3 read in earlier sessions
+### 5b. Concept audit by Fable, after all content is finished (user, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
+- [ ] Starts only when 2a drill packs and bank part 2, the performance-task retrofit and every second read and fix pass are done
+- [ ] Audit interview courses and Stages 2 and 3
 - [ ] Audit Stage 1, then Stage 0
 - [ ] Audit topic, stage and mock exams after their courses close
 - [ ] Every course closed under the convergence rule (at most one new `wrong` per three levels)

@@ -1,6 +1,6 @@
 # Concept audit (user priority, 6 Nov 2026: learning only what is correct comes first)
 
-Every level, review set, homework set and exam gets a concept audit by an Opus reader who has not seen that level's earlier reviews. It runs after the level's second read and fix pass have merged. It checks meaning, not arithmetic: definitions, methods, conventions and claims. The number scripts already cover arithmetic.
+Every level, review set, homework set and exam gets a concept audit by a Fable reader (model `fable`) who has not seen that level's earlier reviews. It runs only after all content is finished (user, 6 Nov): every second read and fix pass, the performance-task retrofit, drill packs 1 to 8 and bank part 2. It checks meaning, not arithmetic: definitions, methods, conventions and claims. The number scripts already cover arithmetic.
 
 ## Auditor brief (binding)
 
@@ -25,14 +25,12 @@ Concept fixes are applied by an Opus fixer, because applying a conceptual correc
 
 A course is closed only when an audit finds at most one new `wrong` per three levels that no earlier read found. Otherwise, after its fix pass merges, the course gets another blind audit by a fresh reader. The overlap counts per course are recorded in `docs/reports/concept-audit-log.md` (course, levels, audit round, wrong / imprecise / misleading, overlap counts, closed yes or no).
 
-## Order
+## Order (starts once all content is finished)
 
-1. Levels second-read and fixed this session (arma, garch, coint first; then each Phase 2 course as its fix merges).
-2. Interview courses and Stages 2 and 3 already read in earlier sessions.
-3. Stage 1, then Stage 0.
+1. Interview courses and Stages 2 and 3.
+2. Stage 1, then Stage 0.
+3. Performance tasks, drill packs and bank items, with the courses they draw on.
 4. Topic, stage and mock exams, after their courses close.
-
-New content (performance tasks, drill packs, bank part 2) is written only after the courses it draws on are closed, and each new item is audited the same way.
 
 ## Limits (stated plainly)
 

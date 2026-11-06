@@ -36,7 +36,7 @@ Also read the topic exams with no second-read file (the list file's last line) a
 
 ## Phase 2b: concept audit (user, 6 Nov: correctness first)
 
-Each course gets a blind Opus concept audit after its fix pass merges, per `docs/briefs/concept-audit.md`, with Opus fix passes and the convergence rule. Audits take priority over Phases 3 and 4, which start only for courses already closed.
+Deferred by the user (6 Nov): the blind concept audit (`docs/briefs/concept-audit.md`) runs on Fable once all content is finished, after Phases 2 to 4. Phases 3 and 4 do not wait for it. Meanwhile every fixer gives its own basis for each conceptual fix or disputes it.
 
 ## Phase 3: performance-task retrofit (only with over half the window left)
 
