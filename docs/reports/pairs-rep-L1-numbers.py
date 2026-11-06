@@ -109,9 +109,7 @@ lv.expect("l4", "quiz[0].widget.wrong[0].value", round(1.09 ** 12 - 1, 4))
 lv._rec(all(x[3] > 0 for k in (5, 20) for w in (0, 1) for x in runs[(k, w)]), "l4 no cycle with zero opened pairs (top 5 and 20)", "")
 
 # ---- l5
-lv.expect("l5", "screens[0].canvas.params.lines", round(sdT, 4)); lv.expect("l5", "screens[0].canvas.params.lines", round(prof[(2, 3)], 4))
-lv.expect("l5", "screens[0].canvas.params.lines", round(c * 100, 2)); lv.expect("l5", "screens[0].canvas.params.lines", round(e * 100, 2))
-lv._rec(sorted(k for k in range(20) if not BROKEN[k]) == [4, 7, 16], "l5 unbroken pairs are 4, 7 and 16", "")
+lv.expect("l5", "screens[0].canvas.params.lines", round(sdT, 4)); lv._rec(sorted(k for k in range(20) if not BROKEN[k]) == [4, 7, 16], "l5 unbroken pairs are 4, 7 and 16", "")
 lv.expect("l5", "screens[3].widget.answer", round(0.5 ** (1 / 8), 4))
 
 def placebo(form, tr, k, seed):
@@ -150,6 +148,15 @@ lv.expect("homework", "items[4].widget.answer", n5)
 lv.expect("homework", "items[5].widget.answer", round(1.0084 ** 12 - 1, 4))
 lv.expect("homework", "items[0].widget.tests[6].expect", str([list(p) for p in closest(P2016, 10, True)]))
 lv.expect("homework", "items[0].widget.tests[5].expect", str([list(p) for p in closest(P2016, 10, False)]))
+
+# ---- fix pass additions
+_Tt = T0
+_res = [trade(_Tt, _Tt, i, j, 0) for i, j in top20]
+lv.expect("l5", "screens[0].canvas.params.lines", round(trade(T0, T0, 2, 3, 0)[0], 4))
+lv.expect("l5", "screens[0].canvas.params.lines", round(sum(r[0] for r in _res) / 20 * 100, 2))
+_cl = mean(run(C, 20, 0), 1) / 6; _mi = mean(run(MID, 20, 0), 1) / 6
+lv.expect("l5", "screens[7].hints[2].text", round(_cl * 100, 3)); lv.expect("l5", "screens[7].hints[2].text", round(_mi * 100, 3))
+lv.expect("l4", "screens[4].prose", round(mean(run(C, 20, 1), 1) / 6 * 100, 3))
 
 check_code(lv)
 lv.report()

@@ -70,3 +70,16 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's scripts: `pairs-rep-L1-numbers.py` exit 0 (144 of 144), `pairs-rep-L2-numbers.py` exit 0 (131 of 131).
 
 ## Fix pass
+
+## Fix pass
+
+All 2 errors, 9 warnings and 18 notes applied by targeted edits (29 findings); of the two both-levels notes, the l6 and l7 starters fixed, the l2 and l5 starters declined, the numbers_lib import deferred. Every corrected figure recomputed from seed 2006 with my own code before writing.
+
+- Errors fixed (2): homework-2 items[6] re-keyed (`norm` no longer correct, its `why` and the feedback and explain say the base cancels in $p^{\text{out}}/p^{\text{in}}$ and only the monthly method changes the arithmetic); l5 screens[7] `wait` now "a bounce nobody could capture; its real cost, a day of convergence, is small and shown in lesson 9" (consistent with l9: 0.8159% against 0.7490%).
+- Warnings fixed (9): l5 hints[2], l9 screens[2] accept and hints[2], review-2 items[7] now "1.004 − 0.816 = 0.19" (l5 with "≈"); l10 screens[6] explain replaced with the cause, recomputed: from trades opening at day 1,512 only the 3 unbroken planted pairs (4, 7, 16) survive and hold 2.69 of the top 5 places; top 5 earn 1.19% against the top 20's 0.64% (cycles starting from day 1,260; 67 cycles); l9 screens[9] option and explain (bounce, a spread effect; half-spread still charged on real fills); l4 screens[2]; l2 screens[5] pointer; l1 quiz[2] "Four rules"; l2 `ddof1`/`rms` tolerance 5e-05.
+- Notes fixed (18 of 18 listed for L1 and L2): l5 console lines and the cycle-1 wording (recomputed: 2 trips, 0.1176; 13.58% both), homework-1 items[6], l5 screens[9] $1 \le n$, $\Pi > 0$, l5 screens[4], l4 screens[8] and screens[4] (0.753%), l2 screens[3] hint, l3 canvas cut (at 0, "SSD below 1"), l3 `pairs` byKey, l3 "The paper's one-partner rule", l7 accept (0.14036 − 0.08293) and screens[4] prose, l9 1.6886 (three places), l9 screens[0] explain, homework-2 items[3].
+- Starters: l6 `first_open` now returns "todo" and l7 `trade_pair` returns None, so no hidden test passes untouched. l2 (the no-loop check) and l5 (the float-type check) left as they are: the reviewer called l2 inherent and l5 would lose its return hint.
+- Deferred (1): the numbers_lib import warning is an engine item (the validator does not follow `pairs_rep_common.py`'s import).
+- Scripts: `pairs-rep-L1-numbers.py` (146 of 146) and `pairs-rep-L2-numbers.py` (139 of 139) extended for the changed figures; both exit 0.
+- Gates: validator 0 errors; voice scan 0 and 0; playthrough "All passed" desktop and mobile for l1, l2, l3, l4, l5, l6, l7, l9, l10 and sets review-2, homework-1, homework-2.
+- Graded answers changed: homework-2 items[6] (`norm` from correct to incorrect, so `month` alone is correct); wrong-answer tolerances only for l2 `ddof1`/`rms`.
