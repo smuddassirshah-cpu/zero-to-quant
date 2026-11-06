@@ -118,7 +118,7 @@ for d in big:
     E(L, f'screens[2].canvas.state.markers[{big.index(d)}].label', f'{100 * r[d]:+.2f}%'.replace('-', '−'))
 claim('three of five are rises', sum(r[d] > 0 for d in big) == 3)
 E(L, 'screens[2].feedback.byKey.falls', R(100 * r[1426], 2)); E(L, 'screens[2].feedback.byKey.falls', R(100 * r[1456], 2)); E(L, 'screens[2].feedback.byKey.falls', R(100 * r[1468], 2))
-E(L, 'screens[2].explain.text', 1468 - 1402)
+E(L, 'screens[2].explain.text', 1468 - 1402); E(L, 'screens[2].widget.options[2].why', 1468 - 1402)   # fix pass 15: five days within 66 days of each other
 # "five in one 66-day window would be very unlikely": exact chance for 5 random days out of 2,000
 cnt = sum(math.comb(min(66, 1999 - m), 4) for m in range(2000))
 claim('five random days within 66 days is very unlikely (< 1e-4)', cnt / math.comb(2000, 5) < 1e-4)
@@ -160,6 +160,7 @@ E(L, 'summary.formula.note', R(after_big, 3)); E(L, 'summary.formula.note', R(nB
 E(L, 'quiz[1].explain.text', round(100 * after_big)); E(L, 'quiz[1].explain.text', R(100 * nB['any'][2], 1))
 # regimes
 two('storm length', 1 / (1 - 0.95), 20); E(L, 'screens[5].widget.answer', 20)
+E(L, 'screens[5].feedback.byKey.leave', 1 / 0.05); E(L, 'screens[5].feedback.byKey.leave', 5)   # fix pass 17: the 5 is the exit chance read as days
 E(L, 'screens[5].widget.wrong[0].value', 95); E(L, 'screens[5].widget.wrong[1].value', 1 / 0.02); E(L, 'screens[5].widget.wrong[2].value', 5)
 E(L, 'quiz[0].widget.answer', round(1 / (1 - 0.9))); E(L, 'quiz[0].widget.wrong[0].value', 90); E(L, 'quiz[0].widget.wrong[1].value', 9)
 # ACF of returns, Ljung-Box
@@ -190,6 +191,9 @@ for v in bB[4:]:
 # "Within each half its blocks differ by less than 10%" (byKey.same) and "C's last four blocks agree to within 2%"
 stated(L, 'screens[8].feedback.byKey.same', 'less than 10%', max(bC[:4]) / min(bC[:4]) - 1 < 0.10 and max(bC[4:]) / min(bC[4:]) - 1 < 0.10)
 stated(L, 'screens[8].widget.options[3].why', 'within 2%', max(bC[4:]) / min(bC[4:]) - 1 < 0.02)
+# fix pass 1 and 2: the reworded claims, in points of daily sd
+E(L, 'screens[8].feedback.byKey.same', 0.07); claim("C's blocks stay within 0.07 points inside each half", 100 * (max(bC[:4]) - min(bC[:4])) <= 0.07 and 100 * (max(bC[4:]) - min(bC[4:])) <= 0.07)
+E(L, 'screens[8].widget.options[3].why', 0.03); claim("C's last four blocks agree to within 0.03 points", 100 * (max(bC[4:]) - min(bC[4:])) <= 0.03)
 # vol_range
 E(L, 'screens[9].prose', R(np.nanmin(v20B), 4)); E(L, 'screens[9].prose', R(np.nanmax(v20B), 4))
 E(L, 'screens[9].feedback.correct', R(100 * np.nanmin(v20C), 1)); E(L, 'screens[9].feedback.correct', R(100 * np.nanmax(v20C), 1))
@@ -427,6 +431,7 @@ E(L, 'quiz[2].widget.answer', R(20 / math.sqrt(120), 2)); E(L, 'quiz[2].widget.w
 
 # ================= review-1 =================
 L = 'review'
+E(L, 'items[0].feedback.byKey.three', R(1 / 0.03, 1)); E(L, 'items[0].feedback.byKey.three', 3)   # fix pass 17
 E(L, 'items[0].widget.answer', R(1 / 0.03, 1)); E(L, 'items[0].widget.wrong[1].value', 3)
 x10 = np.array([0] * 8 + [3, -3.0])
 E(L, 'items[2].widget.answer', exkurt(x10)); E(L, 'items[2].widget.wrong[0].value', exkurt(x10) + 3)

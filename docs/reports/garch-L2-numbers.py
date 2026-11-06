@@ -152,6 +152,7 @@ E(L, 'screens[4].explain.text', R(math.sqrt(e94[1999]), 4)); E(L, 'screens[4].ex
 e90 = ewma(rp, 0.90); tmax = int(np.argmax(s2p))
 print('EWMA(0.90)/truth at the storm peak', e90[tmax] / s2p[tmax], 'day', tmax)
 stated(L, 'screens[4].feedback.correct', 'almost a perfect match', abs(e90[tmax] / s2p[tmax] - 1) < 0.10)
+E(L, 'screens[4].explain.text', 'about 20% high') if abs(e90[tmax] / s2p[tmax] - 1.2) < 0.03 else claim('EWMA runs about 20% high in storms', False)   # fix pass 7
 E(L, 'screens[5].prose', R(math.sqrt(e94[1999]), 4)); E(L, 'screens[5].prose', R(math.sqrt(garch_variance(params, rp)[1999]), 4)); E(L, 'screens[5].prose', R(tv[1999], 4))
 # the pandas trap: his series includes today's square
 his = np.empty(2000); his[0] = rp[0] ** 2
@@ -174,7 +175,7 @@ ans = math.sqrt(0.94 * s15 ** 2 + 0.06 * 64)
 E(L, 'screens[10].widget.answer', R(ans / 100, 6)); two('l5 s10 key from the true EWMA', math.sqrt(ea[1501]) / 100, ans / 100, 1e-5)
 E(L, 'screens[10].widget.wrong[0].value', R(np.std(a8[1251:1501], ddof=1) / 100, 6))
 E(L, 'screens[10].widget.wrong[1].value', R(math.sqrt(0.94 * s15 ** 2 + 0.06 * 8) / 100, 6)); E(L, 'screens[10].widget.wrong[2].value', R(ans ** 2 / 100, 5))
-E(L, 'screens[10].hints[2].text', R(s15 ** 2, 4)); E(L, 'screens[10].hints[2].text', R(ans ** 2, 4)); E(L, 'screens[10].hints[2].text', R(ans, 4))
+E(L, 'screens[10].hints[2].text', R(s15 ** 2, 4)); E(L, 'screens[10].hints[2].text', R(ans ** 2, 4)); E(L, 'screens[10].hints[2].text', R(ans, 3))
 E(L, 'screens[10].feedback.correct', R(np.std(a8[1251:1501], ddof=1), 2))
 E(L, 'quiz[0].widget.answer', R(1 - 0.97 ** 10, 3)); E(L, 'quiz[0].widget.wrong[0].value', R(0.97 ** 10, 3)); E(L, 'quiz[0].widget.wrong[1].value', 0.3)
 E(L, 'quiz[1].widget.answer', 0.94 * 2.25 + 0.06); E(L, 'quiz[1].widget.wrong[0].value', 0.06 * 2.25 + 0.94); E(L, 'quiz[1].widget.wrong[1].value', R(math.sqrt(2.175), 2))
@@ -239,6 +240,7 @@ for i in range(1, 6):
 # is the match "because the start has faded"? The table starts from the true day-1,454 variance itself:
 two('l7 s3 the table start is the true variance', R(s2p[1454], 4), 3.2346)
 stated(L, 'screens[3].explain.text', 'because after 1,454 days the starting value has faded', False)
+E(L, 'screens[3].explain.text', 3.2346)   # fix pass 4: the table starts from the true variance
 E(L, 'screens[3].hints[2].text', R(0.08 * R(rp[1454], 4) ** 2, 4)); E(L, 'screens[3].hints[2].text', R(0.9 * R(s2p[1454], 4), 4))
 ell = lambda x, v: -0.5 * (math.log(2 * math.pi) + math.log(v) + x ** 2 / v)  # noqa: E731
 E(L, 'screens[4].widget.rows[0][3]', f'{ell(R(rp[1455], 4), R(rows[1], 4)):.3f}'.replace('-', '−'))
@@ -246,7 +248,7 @@ E(L, 'screens[4].widget.rows[1][3].answer', R(ell(R(rp[1456], 4), R(rows[2], 4))
 E(L, 'screens[4].hints[1].text', R(math.log(R(rows[2], 4)), 4)); E(L, 'screens[4].hints[1].text', R(R(rp[1456], 4) ** 2 / R(rows[2], 4), 4))
 E(L, 'screens[4].prose', R(math.log(2 * math.pi), 4))
 nll_true, nll_start, nll_fit = neg_loglik((0.02, 0.08, 0.90), rp), neg_loglik((0.05, 0.05, 0.90), rp), fit.fun
-E(L, 'screens[5].prose', R(nll_true, 4)); E(L, 'screens[5].feedback.correct', R(nll_true, 4)); E(L, 'screens[5].prose', R(rp.var(), 4))
+E(L, 'screens[5].prose', R(nll_true, 4)); E(L, 'screens[5].feedback.correct', R(nll_true, 4)); E(L, 'screens[5].prose', f'{rp.var():.4f}'); E(L, 'screens[5].prose', R(math.sqrt(rp.var()), 3))   # fix pass 27: the chart plots daily volatility, so the prose gives sqrt(1.0585) = 1.029
 E(L, 'screens[5].explain.text', R(nll_start, 4)); E(L, 'screens[5].explain.text', R(nll_start - nll_true, 1))
 two('profile: neg_loglik at the fit by two routes', nll_fit, neg_loglik(params, rp))
 prof = lv._file(L)[1]['screens'][6]['canvas']['params']['functions'][0]['points']
@@ -263,7 +265,10 @@ gv = garch_variance(params, rp)
 E(L, 'screens[7].explain.text', R(np.corrcoef(gv, s2p)[0, 1], 4)); E(L, 'screens[7].explain.text', R(corr[0.94], 4))
 E(L, 'screens[7].explain.text', R(math.sqrt(gv[1999]), 3)); E(L, 'screens[7].explain.text', R(tv[1999], 3))
 stated(L, 'screens[7].explain.text', "lesson 5's EWMA managed", np.corrcoef(gv, s2p)[0, 1] > max(corr.values()))
-E(L, 'screens[8].canvas.params.rows[0][5]', f'{-nll_fit:.2f}'.replace('-', '−')); E(L, 'screens[8].canvas.params.rows[1][4]', R(0.2461 + 0.2756, 4))
+E(L, 'screens[8].canvas.params.rows[0][4]', f'{-nll_fit:.2f}'.replace('-', '−'))   # fix pass 28: the alpha + beta column is gone, so the log-likelihood is column 4
+_p8 = lv._file(L)[1]['screens'][8]
+claim('l7 s8 table has 5 columns and every row has 5 cells', len(_p8['canvas']['params']['columns']) == 5 and all(len(x) == 5 for x in _p8['canvas']['params']['rows']))
+claim('l7 s8 hints[1] highlights the log-likelihood cell of the decimal row', _p8['canvas']['params']['columns'][4] == 'Log-likelihood' and _p8['hints'][1]['highlight'] == ['r1c4'])
 fd = fit_garch(r)                                  # CPython's decimal fit (the browser's is in the table)
 E(L, 'screens[8].explain.text', R(fd.x[1], 2)); E(L, 'screens[8].explain.text', R(fd.x[2], 2))
 dec_ll_pct = -neg_loglik(fd.x, r) - 2000 * math.log(100)  # the same fit's log-likelihood in % terms
@@ -354,13 +359,20 @@ E(L, 'items[3].widget.answer', R(0.05 / 0.02, 1)); E(L, 'items[3].widget.wrong[1
 E(L, 'items[3].explain.text', R(math.sqrt(252 * 2.5), 1))
 E(L, 'items[5].widget.answer', R(3 * 0.84 / 0.52, 2)); E(L, 'items[5].widget.wrong[1].value', R(3 * 0.6 / (1 - 1.2), 1))
 E(L, 'items[6].widget.answer', R(ell(2, 1), 3)); E(L, 'items[6].widget.wrong[1].value', R(-0.5 * (math.log(2 * math.pi) + 2), 3))
-E(L, 'items[7].prose', R(math.sqrt(0.02) * S252, 1)); E(L, 'items[7].widget.answer', R(S252 / 100, 4)); E(L, 'items[7].explain.text', 'sevenfold') if round(S252 / (math.sqrt(0.02) * S252)) == 7 else None
+# fix pass 21: omega 0.036, alpha 0.08, beta 0.90 (V_L = 1.8)
+VL7 = 0.036 / (1 - 0.08 - 0.90)
+E(L, 'items[7].prose', R(math.sqrt(0.036) * S252, 1)); E(L, 'items[7].prose', 0.036); E(L, 'items[7].widget.answer', R(math.sqrt(252 * VL7) / 100, 3))
+E(L, 'items[7].widget.accept', R(math.sqrt(252 * VL7), 2)); E(L, 'items[7].widget.accept', R(VL7, 1))
+E(L, 'items[7].widget.wrong[0].value', R(math.sqrt(0.036) * S252 / 100, 5)); E(L, 'items[7].widget.wrong[1].value', R(252 * VL7 / 100, 3))
+E(L, 'items[7].explain.text', R(VL7, 1)); E(L, 'items[7].explain.text', R(math.sqrt(VL7), 3)); E(L, 'items[7].explain.text', R(math.sqrt(252 * VL7), 2))
+E(L, 'items[7].explain.text', 'sevenfold') if round(math.sqrt(252 * VL7) / (math.sqrt(0.036) * S252)) == 7 else claim('sevenfold', False)
 dsd = 0.008 * math.sqrt(2)
 E(L, 'items[8].explain.text', R(dsd, 3)); E(L, 'items[8].explain.text', R(0.013 / R(dsd, 3), 1))
 E(L, 'items[8].widget.options[1].why', 'a quarter') if 0.22 < 2 * stats.norm.sf(0.013 / dsd) < 0.28 else claim('quarter of the time', False)
 E(L, 'items[8].widget.options[3].why', R(0.008 / math.sqrt(2), 3))
 E(L, 'items[9].widget.answer', R(math.sqrt(252 * 2) / 100, 4)); E(L, 'items[9].widget.wrong[0].value', R(2 * S252 / 100, 4))
 stated(L, 'items[9].explain.text', 'by six points', round(math.sqrt(504) - S252) == 6)
+E(L, 'items[9].explain.text', 'six and a half points') if round(2 * (math.sqrt(504) - S252)) == 13 else claim('six and a half points', False)   # fix pass 6
 
 # ================= homework-2 =================
 L = 'homework'
@@ -370,11 +382,16 @@ m_e, m_g = np.mean((ewma(rp, 0.94)[20:] - s2p[20:]) ** 2), np.mean((gv[20:] - s2
 E(L, 'items[2].widget.examples[0].expect', R(m_e, 6)); E(L, 'items[2].widget.examples[0].expect', R(m_g, 6))
 E(L, 'items[2].feedback.correct', R(m_e, 4)); E(L, 'items[2].feedback.correct', R(m_g, 4)); E(L, 'items[2].feedback.correct', 'eight times') if round(m_e / m_g) == 8 else None
 E(L, 'items[3].widget.answer', R(0.995 ** 252, 4)); E(L, 'items[3].explain.text', round(math.log(0.5) / math.log(0.995))); E(L, 'items[3].feedback.byKey.half', round(math.log(0.5) / math.log(0.995)))
-E(L, 'items[4].widget.answer', R(0.0121e-4, 10))
+# fix pass 24: a second share (B's parameters, seed 11), refitted in %
+rS = 100 * simulate_garch(2e-6, 0.08, 0.90, 2000, 11)[0]; fS = fit_garch(rS).x
+E(L, 'items[4].prose', R(fS[0], 4)); E(L, 'items[4].prose', R(fS[1], 4)); E(L, 'items[4].prose', R(fS[2], 4))
+E(L, 'items[4].widget.answer', R(R(fS[0], 4) * 1e-4, 10)); E(L, 'items[4].widget.accept', '0.00000251'); E(L, 'items[4].explain.text', '0.00000251')
+E(L, 'items[4].widget.wrong[0].value', R(R(fS[0], 4) * 1e-2, 6)); E(L, 'items[4].widget.wrong[1].value', R(fS[0], 4))
 rN = 100 * simulate_garch(2e-7, 0.06, 0.939, 2000, 3)[0]; fN = fit_garch(rN).x
 E(L, 'items[5].explain.text', R(fN[1] + fN[2], 4)); E(L, 'items[5].feedback.correct', R(pers, 3))
 E(L, 'items[5].feedback.correct', round(math.log(0.5) / math.log(pers))); E(L, 'items[5].feedback.correct', R(100 * math.sqrt(252 * VL) / 100, 2))
-E(L, 'items[6].prose', R(-nll_fit - (-2800.14), 0))
+# fix pass 24: homework-2 items[6] is now a scenario (decimal fit 0.31 and 0.22, % fit 0.07 and 0.91, log-likelihood 150 higher), not a fit
+E(L, 'items[6].prose', 150); E(L, 'items[6].widget.options[1].why', 150)
 E(L, 'items[7].model', round(math.log(0.5) / math.log(0.999))); E(L, 'items[7].model', R(math.sqrt(252 * 2), 1)); E(L, 'items[7].model', R(math.sqrt(2), 2))
 E(L, 'items[7].model', R(math.sqrt(252 * 1), 1)); E(L, 'items[7].model', R(math.sqrt(252 * 4), 1)); E(L, 'items[7].model', R(f1000[1] + f1000[2], 4))
 
