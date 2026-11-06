@@ -282,7 +282,7 @@ Auditor: Fable (model `fable`), blind to `docs/reviews/review-systems.md` and `d
 | l14-messages-on-the-wire.json | screens[4] | `send(&m)` sends each number in the CPU's byte order: 70,000 goes out as 70 11 01 00 on a little-endian CPU; the struct is 24 bytes | correct | sim L3:wire_bytes (`struct.pack('<I', 70000)`), sim L3:sizeof_msg (g++ gives 24) |
 | l14-messages-on-the-wire.json | screens[4].explain.text | "Padding and field order are also the compiler's choices, not the protocol's" | imprecise | Padding is the compiler's (ABI's) choice; the field order is the programmer's declaration order, which a C++ compiler may not change ([class.mem]/19); the same slip as l4 quiz[0] |
 | l14-messages-on-the-wire.json | screens[5] | `80 00 00 00` as a signed 4-byte field is -2^31; `ff ff ff ff` is 4,294,967,295 unsigned and -1 signed | correct | sim L3:wire_bytes |
-| l14-messages-on-the-wire.json | screens[6] | v = sum b_j 256^(k-1-j); `v = (v << 8) | byte` reads the most significant byte first | correct | derivation |
+| l14-messages-on-the-wire.json | screens[6] | v = sum b_j 256^(k-1-j); `v = (v << 8) \| byte` reads the most significant byte first | correct | derivation |
 | l14-messages-on-the-wire.json | screens[7].widget | `encode` and `decode` with put/get loops; 12 tests including extremes and a round trip | correct | sim L3:code_encode (g++ run; solution 12/12, starter fails) |
 | l14-messages-on-the-wire.json | screens[7].explain.text | The price "is stored as an unsigned pattern and cast back to a signed `int`, which restores the sign" | imprecise | For a value above INT_MAX the unsigned-to-int conversion is implementation-defined in C++17 ([conv.integral]/3) and modular only from C++20 (P0907R4); GCC and Clang document the modular result, so the code works, but the explanation should say so |
 | l14-messages-on-the-wire.json | screens[8] | 00 00 01 00 is 256 big-endian and 65,536 little-endian; ff ff ff 38 is -200; 00 00 2e e0 is 12,000 pence, £120; 3,000 bytes is 125 frames | correct | sim L3:wire_bytes |
@@ -306,4 +306,4 @@ Auditor: Fable (model `fable`), blind to `docs/reviews/review-systems.md` and `d
 
 ## Verdict counts
 
-277 claim rows: correct 253, imprecise 22, wrong 1, misleading 0, unverified 0. Every imprecise or wrong row is a numbered finding in `docs/reviews/audit-systems-1-3.md`.
+277 claim rows: correct 254, imprecise 22, wrong 1, misleading 0, unverified 0. Every imprecise or wrong row is a numbered finding in `docs/reviews/audit-systems-1-3.md`.
