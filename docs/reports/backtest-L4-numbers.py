@@ -28,6 +28,14 @@ def within(fid, path, value):
     return lv._rec(abs(a - value) <= t + 1e-12, f'{fid} {path} accepts {value!r}', f'key {a} tol {t}')
 
 
+def eq(fid, path, expected, tol=1e-9):
+    """The numeric value at path in file fid equals expected (exact fix, not either-or)."""
+    node = lv.files[fid]
+    for part in path.replace(']', '').replace('[', '.').split('.'):
+        node = node[int(part)] if part.isdigit() else node[part]
+    return lv._rec(abs(node - expected) <= tol, f'{fid} {path} == {expected!r}', f'found {node}')
+
+
 def se_daily(sr, years):
     srd = sr / R252
     return math.sqrt((1 + srd ** 2 / 2) / (252 * years)) * R252
@@ -77,6 +85,9 @@ E('l13', 'screens[8].explain.text', round(hs[1], 3))
 E('l13', 'screens[10].widget.options[2].text', round((0.2 + 0.3 + 1.4) / 3, 2))
 within('l13-locked-away', 'quiz[0].widget', 1260 - 252 - 10)
 within('l13-locked-away', 'quiz[2].widget', se_daily(0.0, 2))
+eq('l13-locked-away', 'screens[3].canvas.params.params.sigma', round(se_daily(0.55, 1), 1), 1e-9)
+eq('l13-locked-away', 'screens[3].widget.wrong[0].value', round(math.sqrt((1 + 0.55 ** 2 / 2) / 1), 2), 1e-9)   # yearly-return form
+eq('l13-locked-away', 'screens[3].widget.wrong[1].value', round(se_daily(0.55, 4), 1), 1e-9)                    # T = 4
 E('l13', 'screens[1].prose', '14 November 2022')
 E('l13', 'screens[6].canvas', str(held.index[0].date()))
 
@@ -151,18 +162,27 @@ E('l16', 'screens[2].explain.text', round(-g['cagr'](bh_out_e) * 100))
 within('l16-results-note', 'screens[5].widget', se_daily(1.863, 1))   # CONTENT: key 1.65 is the one-yearly-return SE
 E('l16', 'screens[5].explain.text', round(1.863 / se_daily(1.863, 1), 1))   # CONTENT: says 1.1
 E('l16', 'quiz[2].prose', round(se_daily(1.5, 1), 2))                      # CONTENT: says 1.35
-E('l16', 'quiz[2].explain.text', f'= {1.5 / se_daily(1.5, 1):.1f}$ standard errors')   # CONTENT: says 1.1
+E('l16', 'quiz[2].explain.text', f'= {1.5 / se_daily(1.5, 1):.1f}$ standard errors')
+eq('l16-results-note', 'screens[5].canvas.params.params.sigma', round(se_daily(1.863, 1), 3), 1e-9)
+eq('l16-results-note', 'screens[5].widget.wrong[0].value', round(math.sqrt(1 + 1.863 ** 2 / 2), 2), 1e-9)   # yearly-return form
+eq('l16-results-note', 'screens[5].widget.wrong[1].value', round(se_daily(1.863, 1) / R252, 3), 1e-9)       # per-day error
 
 # ---------- review-4 ----------
 within('review-4', 'items[0].widget', 1260 - 252 - 5)
-within('review-4', 'items[3].widget', sr_p(0.55))
-within('review-4', 'items[3].widget.wrong[0]', 252 * 0.1 / math.sqrt(0.99))   # CONTENT: 25.2 misses the slip's 25.33
+p1 = 0.5 + 0.5 / math.sqrt(253)           # hit rate for an annual Sharpe of exactly 1
+within('review-4', 'items[3].widget', p1)
+eq('review-4', 'items[3].widget.wrong[0].value', round(0.5 + 0.5 / math.sqrt(252 ** 2 + 1), 3), 1e-9)   # used 252, not its root
+eq('review-4', 'items[3].widget.wrong[1].value', round(0.5 + 1 / math.sqrt(253), 4), 1e-9)               # p - 0.5 set to 0.0629
+lv._rec(abs(sr_p(p1) - 1) < 1e-9, 'review-4 items[3]: sharpe at p1 is 1', f'{sr_p(p1)}')
 within('review-4', 'items[5].widget', 0.4 * 1.539)
 E('review', 'items[6].explain.text', round(2.24 * 0.451, 2))
 E('review', 'items[6].widget.options[1].text', round(1.42 * 0.345, 2))
 
 # ---------- homework-4 ----------
-within('homework-4', 'items[0].widget', se_daily(1.0, 2))     # CONTENT: key 0.87 is the two-yearly-return SE
+within('homework-4', 'items[0].widget', se_daily(1.0, 2))
+eq('homework-4', 'items[0].widget.wrong[0].value', round(math.sqrt((1 + 1.0 / 2) / 2), 2), 1e-9)   # yearly-return form
+eq('homework-4', 'items[0].widget.wrong[1].value', round(se_daily(1.0, 1), 1), 1e-9)               # T = 1
+eq('homework-4', 'items[0].widget.wrong[2].value', round(se_daily(1.0, 2) ** 2, 1), 1e-9)
 within('homework-4', 'items[1].widget', 1260 - 126 - 60)
 E('homework', 'items[1].widget.wrong[1].value', 1260 - 252 - 60)
 sr8 = [0.458, 0.547, 0.205, -0.42, -0.331, -0.126, 0.086, 0.048]

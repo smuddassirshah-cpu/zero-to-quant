@@ -31,6 +31,14 @@ def band(fid, path, typed):
     return within(fid, path, typed)
 
 
+def exact(fid, path, expected, tol=1e-9):
+    """The numeric value at path in file fid equals expected (exact fix, not either-or)."""
+    node = lv.files[fid]
+    for part in path.replace(']', '').replace('[', '.').split('.'):
+        node = node[int(part)] if part.isdigit() else node[part]
+    return lv._rec(abs(node - expected) <= tol, f'{fid} {path} == {expected!r}', f'found {node}')
+
+
 # ---------- engine figures from the lessons' own preludes ----------
 def ns(fid, i):
     w = json.load(open(os.path.join(BASE, fid + '.json')))['screens'][i]['widget']
@@ -147,7 +155,7 @@ E('l10', 'screens[4].hints[0].text', round(252 / 1259, 4))
 E('l10', 'screens[4].explain.text', round(cg / -dd.min(), 3))
 E('l10', 'screens[4].explain.text', round((eq.iloc[-1] / 1e6 - 1) * 100 / 5, 1))
 E('l10', 'screens[5].prose', -round((1 - eq.min() / eq.max()) * 100, 1))
-E('l10', 'screens[5].widget.options[2].text', -round((eq.max() / eq.min() - 1) * 100, 1))
+E('l10', 'screens[5].widget.options[2].text', round((eq.max() / eq.min() - 1) * 100, 1))
 E('l10', 'screens[5].explain.text', round((eq.max() / eq.min() - 1) * 100, -1))
 E('l10', 'screens[10].explain.text', round(uw / 21))
 E('l10', 'quiz[0].widget.wrong[0].value', round(200 / 300 - 1, 4))
@@ -218,8 +226,10 @@ E('l12', 'screens[11].widget.options[3].text', 0.66)
 within('l12-benchmark', 'quiz[1].widget', (0.05 - 1.2 * 0.04) * 252 / 100)
 E('l12', 'quiz[1].widget.wrong[0].value', round((0.05 - 0.04) * 252 / 100, 4))
 E('l12', 'quiz[2].widget.options[1].text', round(110 / 252, 2))
-E('l12', 'quiz[2].widget.options[2].text', round((110 + 52) / 252, 2))   # CONTENT: shows 0.65
-E('l12', 'quiz[2].widget.options[3].why', 162)                          # CONTENT: "140 non-losing days" (110 + 52 = 162)
+E('l12', 'quiz[2].widget.options[2].text', round((110 + 52) / 252, 2))
+E('l12', 'quiz[2].widget.options[2].why', 162)
+E('l12', 'quiz[2].widget.options[3].text', round(110 / 90, 2))
+E('l12', 'quiz[2].widget.options[3].why', 90)
 
 # ---------- review-3 ----------
 within('review-3', 'items[0].widget', 1.2 / 4 * R12)
@@ -229,19 +239,25 @@ E('review', 'items[1].widget.wrong[1].value', round(98 / 130 - 1, 4))
 within('review-3', 'items[2].widget', 1.2 - 0.5 * 252 * 0.0005 / 0.12)
 E('review', 'items[2].widget.wrong[0].value', 1.2 - 0.25 * 252 * 0.0005 / 0.12)
 E('review', 'items[2].widget.wrong[1].value', round(1.2 - 0.5 * 0.0005 / 0.12, 3))
-within('review-3', 'items[3].widget', (0.05 - 0.8 * 0.04) * 252 / 100)
-band('review-3', 'items[3].widget.wrong[1]', 0.0)            # CONTENT (wrong-band)
+within('review-3', 'items[3].widget', 0.012 * 252 / 100)
+exact('review-3', 'items[3].widget.wrong[0].value', 0.012 / 100, 1e-9)
+exact('review-3', 'items[3].widget.wrong[1].value', round(0.012 * R252 / 100, 4), 1e-9)
+band('review-3', 'items[3].widget.wrong[0]', 0.0)
+band('review-3', 'items[3].widget.wrong[1]', round(0.012 * R252, 1) / 100)
 se3 = math.sqrt((1 + 0.9 ** 2 / 504) / 3)
 within('review-3', 'items[5].widget', se3)
 E('review', 'items[5].widget.wrong[0].value', round(math.sqrt((1 + 0.81 / 2) / 3), 3))
 E('review', 'items[5].widget.wrong[1].value', round(se3 / R252, 4))
-band('review-3', 'items[5].widget.wrong[1]', 0.04)           # CONTENT (wrong-band)
+band('review-3', 'items[5].widget.wrong[1]', 0.04)
+exact('review-3', 'items[5].widget.wrong[1].tol.abs', 0.005)
+exact('l12-benchmark', 'screens[3].widget.wrong[0].tol.abs', 0.0002)
+exact('l9-sharpe', 'quiz[0].widget.wrong[1].tol.abs', 0.004)
 E('review', 'items[5].feedback.correct', round(0.9 / se3, 1))
 within('review-3', 'items[6].widget', (1.5 ** (252 / 1008) - 1) / 0.25)
 E('review', 'items[7].widget.options[0].text', round(1.2 * 252 * 0.00025 * 100, 1))
-within('review-3', 'items[8].widget', 99 / 180)
-E('review', 'items[8].widget.wrong[0].value', round(99 / 252, 4))
-E('review', 'items[8].widget.wrong[1].value', round((99 + 72) / 252, 4))
+within('review-3', 'items[8].widget', 4 / 7)
+exact('review-3', 'items[8].widget.wrong[0].value', 4 / 10)
+exact('review-3', 'items[8].widget.wrong[1].value', (4 + 3) / 10)
 
 # ---------- homework-3 ----------
 within('homework-3', 'items[1].widget', 1.8 * 252 * 0.0003)
