@@ -176,14 +176,15 @@ for p in sorted(toy, key=toy.get):
     if len(greedy) == 2:
         break
 check(greedy == [("B", "C"), ("D", "E")], "l3 screens[4]: the greedy one-partner rule keeps B-C then D-E (the course's key)")
-# EXPECTED_FAIL: the course calls the greedy rule "the paper's rule"; under the paper's nearest-partner rule the
-# first two pairs are B-C then A-B, the option the screen marks wrong. Corrected assert, ready to enable once
-# the content stops attributing the greedy rule to the paper:
-#   check(paper_rule == [("B", "C"), ("A", "B")], "l3 screens[4]: the paper's rule gives B-C then A-B")
-check(paper_rule == greedy,
-      "EXPECTED_FAIL l3 screens[4]/[5]/[6], review-1 items[4], homework-1 items[0]: the course's 'paper's one-partner rule' "
-      "(greedy, each share once) does not reproduce GGR's nearest-partner rule, which keeps B-C then A-B here "
-      "(ledger l3 screens[4].prose)")
+# Corrected claim (fix pass): the screen now calls the greedy rule "the one-pair-per-share variant" and says the
+# paper's nearest-partner rule, like our closest-overall rule, keeps A-B (feedback.byKey.all). Under the paper's
+# rule the first two pairs are B-C then A-B, so the variant and the paper part on this table.
+check(paper_rule == [("B", "C"), ("A", "B")],
+      "l3 screens[4] (corrected claim, fix pass): the paper's nearest-partner rule keeps B-C then A-B, which the "
+      "screen's byKey.all now says the paper allows (ledger l3 screens[4].prose)")
+check(paper_rule != greedy,
+      "l3 screens[4]/[6], review-1 items[4], homework-1 items[0] (corrected claim, fix pass): the one-pair-per-share "
+      "variant is not the paper's rule on this table, as the content now says (ledger l3 screens[4].prose)")
 # the two rules agree on the first formation year of the seeded panel (so the course's tests still pass there)
 D0 = ssd_matrix(normalise(close[:252]))
 i0, j0 = np.triu_indices(100, 1)
