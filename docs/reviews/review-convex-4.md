@@ -50,3 +50,12 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's script: `convex-L4-numbers.py` exit 0 (397 of 397 `numbers_lib` checks, 0 two-route failures, all 6 code widgets green).
 
 ## Fix pass
+
+All 16 findings applied by targeted edits; none disputed, none deferred. No number changed, so the author's script needs no new check.
+
+- Errors (3): l14 screens[7] now "with a minimum" and feedback "$s < 8$ makes $f$ fall at every step"; l17 quiz[3] feedback and explain now say a negative $\nu_1$ means buying some of asset 1 lowers the variance (recomputed: at 9% with $w_1$ forced to 0, $\nu_1 = -0.1152$; true optimum $w_1 = \tfrac{5}{42}$); l17 screens[8] explain restated to "without convexity, KKT is not sufficient: a passing point may be a saddle".
+- Same class found in l17 `q17-nonconvex` (option "At best a local optimum"): reworded to "Only a candidate ... local minimum, a saddle or a maximum", with the feedback, explain and two `why` lines to match. Brief line added to `docs/briefs/convex.md` after the l17 entry.
+- Warnings (7): l15 screens[4] "nearly twice as many once $\kappa$ is large"; l16 quiz[0] `root` byKey now names the dropped $\tfrac12$ (0.5 is $f'/(2f'')$); l16 screens[11] names the two assets; l17 formula note "when strong duality holds"; l17 screens[0] "to six decimal places"; homework-4 items[6] preconditioning wording, stopping rule (duality gap) and rubric[5].
+- Notes (6): l14 `osc` "ends up bouncing"; l15 ideas[1] "nearly twice ... for large $\kappa$"; l15 screens[8] curvature at most 12 on $[-1, 1]$; l17 screens[3] and review-4 items[8] £480k and £870k; homework-4 items[6] prompt "short of the optimum".
+- Gates: validator 0 errors; voice-scan 0 and 0 (7,786 scanned); `convex-L4-numbers.py` exit 0 (397 of 397, 0 failures, 6 code widgets green); playthrough "All passed" desktop and mobile for l14 to l17, review-4 and homework-4.
+- Graded answers changed: none to correct answers; l16 quiz[0] wrong `root` unchanged in value, its explanation changed; l17 quiz[3] correct option unchanged, its reading corrected.
