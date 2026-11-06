@@ -1208,3 +1208,9 @@ Raised later (convex level 1):
 Raised later (convex level 2):
 - [Should] `table` widget: AUTHORING section 3 says a cell may carry `wrong: [{ id, value }]` and "the key is that id", but the validator errors `feedback.byKey.<id>: the widget cannot return the key` for such an id (l6 vertex table, a swapped-rates slip on the $(5, 3)$ profit cell). Wanted: the validator collects cell `wrong` ids as keys, or the doc says they are not yet keys. Workaround: the slip is named in the hint and the generic feedback.
 - [Could] `plane` state patches merge `points` and `segments` by id, but a wrong answer's canvas patch had to replace the whole `polygons` list to redraw one region (l5 trap: the reversed "at least" rows flip the hedge region). Wanted: `polygons` keyed by id like the other lists. Workaround: the patch sends the full one-polygon list.
+
+Raised later (momentum-rep level 2):
+
+- `code` widget, `equal` and `isclose` on arrays holding NaN: NaN never equals NaN, so a test of `formation_returns` (NaN before month J + skip by design) cannot compare the array as it is. Wanted: an option such as `"nan": "equal"` that treats NaN as equal to NaN in element-wise comparisons. Workaround (l7): the call wraps the result in `np.nan_to_num(..., nan=-9.0)` and the `how` says NaN shows as −9.
+- `table` canvas and control `frames`: `rows` is a param, so a frame cannot swap a whole table (no skip against skip). Workaround (l10 explore): each frame patches `state.values` with all sixteen `r{i}c{j}` cells. Wanted: `state.rows` (or `frames` accepting a rows patch) for tables that switch panels.
+- Docs: `docs/LEVEL-BRIEF.md` says "look at the screenshots when you pass `--shots`", but `playthrough.mjs --shots` needs a folder argument and stops with "--shots needs a value" without one. Wanted: the brief shows `--shots <dir>`.

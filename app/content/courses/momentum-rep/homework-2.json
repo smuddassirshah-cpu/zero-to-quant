@@ -1,0 +1,406 @@
+{
+ "id": "homework-2",
+ "course": "momentum-rep",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-wml-all",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "rm-portfolios"
+   ],
+   "title": "Every K from one pass",
+   "prose": "`formation_returns` and `cohort_weights` are loaded; `wml` is not. Computing each K separately repeats the cohort weights four times. Compute them once, then build the composite for every K.",
+   "question": "Write `wml_all(r, J, Ks, skip=0)` returning a dict from each K to its composite return array, equal to `wml(r, J, K, skip)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\ndef momentum_panel(n=500, T=300, seed=2, c=0.015, e=0.03, d=0.006, nf=4, fsd=0.035,\n                   c_after=None, t_pub=300, crash=None):\n    TMAX, L = 480, 36\n    rng = np.random.default_rng(seed)\n    size = rng.normal(0.0, 1.0, n)                 # log size as a z-score\n    sig = 0.09 - 0.02 * np.tanh(size)              # small shares are noisier\n    beta = rng.uniform(0.5, 1.5, n)\n    lam = rng.standard_normal((n, nf))             # loadings on nf style factors\n    s = rng.standard_normal((TMAX + L, n))[:T + L] * sig   # news shocks, 36 months burn-in\n    m = (0.006 + 0.045 * rng.standard_normal(TMAX))[:T]    # market excess return\n    F = (fsd * rng.standard_normal((TMAX, nf)))[:T]        # factor returns\n    if crash is not None:                          # a bear market, then a rebound\n        m[crash - 12:crash] = -0.03; F[crash - 12:crash, 0] = -0.03\n        m[crash:crash + 3] = [0.12, 0.06, 0.04]; F[crash:crash + 3, 0] = [0.12, 0.06, 0.04]\n    ct = np.full(T, c)\n    if c_after is not None:\n        ct[t_pub:] = c_after                       # the effect after publication\n    cont = sum(s[L - k:L - k + T] for k in range(2, 13))   # lags 2 to 12: continuation\n    rev = sum(s[L - k:L - k + T] for k in range(13, 37))   # lags 13 to 36: reversal\n    idio = s[L:L + T] - e * s[L - 1:L - 1 + T] + ct[:, None] * cont - d * rev\n    r = 0.004 + beta * m[:, None] + F @ lam.T + idio\n    return r, size, m, F                           # r is (T, n) simple monthly returns\n\ndef formation_returns(r, J, skip=0):\n    T = r.shape[0]\n    c = np.vstack([np.zeros((1, r.shape[1])), np.cumsum(np.log1p(r), axis=0)])\n    f = np.full(r.shape, np.nan)\n    for t in range(J + skip, T):\n        f[t] = np.expm1(c[t - skip] - c[t - skip - J])\n    return f\n\ndef cohort_weights(f_t, q=10):\n    n = len(f_t)\n    rank = np.argsort(np.argsort(f_t, kind=\"stable\"), kind=\"stable\")\n    dec = rank * q // n\n    top, bot = dec == q - 1, dec == 0\n    return np.where(top, 1 / top.sum(), 0.0) - np.where(bot, 1 / bot.sum(), 0.0)\n\n",
+    "starter": "import numpy as np\n\ndef wml_all(r, J, Ks, skip=0):\n    # one pass of cohort weights, then every K\n    ...\n",
+    "solution": "import numpy as np\n\ndef wml_all(r, J, Ks, skip=0):\n    T = r.shape[0]\n    f = formation_returns(r, J, skip)\n    W = np.zeros(r.shape)\n    for s in range(J + skip, T):\n        W[s] = cohort_weights(f[s])\n    S = W @ r.T  # S[s, t]: cohort s in month t\n    out = {}\n    for K in Ks:\n        start = J + skip + K - 1\n        out[K] = np.array([S[t - K + 1:t + 1, t].mean()\n                           for t in range(start, T)])\n    return out\n",
+    "examples": [
+     {
+      "setup": "rs, *_ = momentum_panel(n=200, T=120)",
+      "call": "sorted(wml_all(rs, 3, [9, 3]).keys())",
+      "expect": "[3, 9]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rs, *_ = momentum_panel(n=200, T=120)",
+      "call": "np.round(wml_all(rs, 6, [3, 6, 12])[6][:5], 6).tolist()",
+      "expect": "[0.062426, 0.018609, -0.047488, -0.031557, -0.024267]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "rs, *_ = momentum_panel(n=200, T=120)",
+      "call": "round(float(wml_all(rs, 6, [3, 6, 12])[3].mean()), 8)",
+      "expect": "0.00924457",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "setup": "rs, *_ = momentum_panel(n=200, T=120)",
+      "call": "round(float(wml_all(rs, 6, [3, 6, 12])[12].mean()), 8)",
+      "expect": "0.00993323",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "setup": "rs, *_ = momentum_panel(n=200, T=120)",
+      "call": "[len(v) for v in wml_all(rs, 12, [3, 9], 1).values()]",
+      "expect": "[105, 99]",
+      "compare": "equal"
+     },
+     {
+      "setup": "rb, *_ = momentum_panel()",
+      "call": "round(float(wml_all(rb, 6, [6])[6].mean()), 8)",
+      "expect": "0.00963859",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "setup": "rb, *_ = momentum_panel()",
+      "call": "round(float(wml_all(rb, 12, [3], 1)[3].mean()), 8)",
+      "expect": "0.01347859",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "setup": "rs, *_ = momentum_panel(n=200, T=120)",
+      "call": "sorted(wml_all(rs, 3, [9, 3]).keys())",
+      "expect": "[3, 9]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests against the reference `wml` on `momentum_panel(n=200, T=120)` and the base panel, with and without the skip. The first run loads NumPy.",
+    "budget": 20000
+   },
+   "feedback": {
+    "correct": "Correct. One set of cohort weights serves every K.",
+    "generic": "Not quite. Each K's composite in month t averages cohorts t − K + 1 to t."
+   },
+   "explain": {
+    "text": "The matrix `W @ r.T` gives every cohort's return in every month at once. The K composite in month t is the mean of column t over rows t − K + 1 to t. That equals averaging the weights first, because the return is linear in the weights."
+   }
+  },
+  {
+   "id": "h-decile-series",
+   "difficulty": 4,
+   "skills": [
+    "rm-portfolios"
+   ],
+   "title": "All ten deciles, month by month",
+   "prose": "The composite trades only D1 and D10. A full check builds all ten equal-weighted decile composites. `formation_returns` and `wml` are loaded.",
+   "question": "Write `decile_spread_by_month(r, J, K)` returning one row per composite month and ten columns, D1 to D10. Rows start at month J + K − 1.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\ndef momentum_panel(n=500, T=300, seed=2, c=0.015, e=0.03, d=0.006, nf=4, fsd=0.035,\n                   c_after=None, t_pub=300, crash=None):\n    TMAX, L = 480, 36\n    rng = np.random.default_rng(seed)\n    size = rng.normal(0.0, 1.0, n)                 # log size as a z-score\n    sig = 0.09 - 0.02 * np.tanh(size)              # small shares are noisier\n    beta = rng.uniform(0.5, 1.5, n)\n    lam = rng.standard_normal((n, nf))             # loadings on nf style factors\n    s = rng.standard_normal((TMAX + L, n))[:T + L] * sig   # news shocks, 36 months burn-in\n    m = (0.006 + 0.045 * rng.standard_normal(TMAX))[:T]    # market excess return\n    F = (fsd * rng.standard_normal((TMAX, nf)))[:T]        # factor returns\n    if crash is not None:                          # a bear market, then a rebound\n        m[crash - 12:crash] = -0.03; F[crash - 12:crash, 0] = -0.03\n        m[crash:crash + 3] = [0.12, 0.06, 0.04]; F[crash:crash + 3, 0] = [0.12, 0.06, 0.04]\n    ct = np.full(T, c)\n    if c_after is not None:\n        ct[t_pub:] = c_after                       # the effect after publication\n    cont = sum(s[L - k:L - k + T] for k in range(2, 13))   # lags 2 to 12: continuation\n    rev = sum(s[L - k:L - k + T] for k in range(13, 37))   # lags 13 to 36: reversal\n    idio = s[L:L + T] - e * s[L - 1:L - 1 + T] + ct[:, None] * cont - d * rev\n    r = 0.004 + beta * m[:, None] + F @ lam.T + idio\n    return r, size, m, F                           # r is (T, n) simple monthly returns\n\ndef formation_returns(r, J, skip=0):\n    T = r.shape[0]\n    c = np.vstack([np.zeros((1, r.shape[1])), np.cumsum(np.log1p(r), axis=0)])\n    f = np.full(r.shape, np.nan)\n    for t in range(J + skip, T):\n        f[t] = np.expm1(c[t - skip] - c[t - skip - J])\n    return f\n\ndef cohort_weights(f_t, q=10):\n    n = len(f_t)\n    rank = np.argsort(np.argsort(f_t, kind=\"stable\"), kind=\"stable\")\n    dec = rank * q // n\n    top, bot = dec == q - 1, dec == 0\n    return np.where(top, 1 / top.sum(), 0.0) - np.where(bot, 1 / bot.sum(), 0.0)\n\ndef wml(r, J, K, skip=0):\n    T = r.shape[0]\n    f = formation_returns(r, J, skip)\n    W = np.zeros(r.shape)\n    for s in range(J + skip, T):\n        W[s] = cohort_weights(f[s])\n    out = []\n    for t in range(J + skip + K - 1, T):\n        out.append(W[t - K + 1:t + 1].mean(axis=0) @ r[t])\n    return np.array(out)\n",
+    "starter": "import numpy as np\n\ndef decile_spread_by_month(r, J, K):\n    # one row per composite month, one column per decile\n    ...\n",
+    "solution": "import numpy as np\n\ndef decile_spread_by_month(r, J, K):\n    T, n = r.shape\n    f = formation_returns(r, J)\n    D = np.zeros((T, 10, n))\n    for s in range(J, T):\n        rank = np.argsort(np.argsort(f[s], kind=\"stable\"), kind=\"stable\")\n        dec = rank * 10 // n\n        for k in range(10):\n            D[s, k, dec == k] = 1 / np.sum(dec == k)\n    out = []\n    for t in range(J + K - 1, T):\n        book = D[t - K + 1:t + 1].mean(axis=0)  # (10, n)\n        out.append(book @ r[t])\n    return np.array(out)\n",
+    "examples": [
+     {
+      "setup": "rs, *_ = momentum_panel(n=60, T=40)",
+      "call": "decile_spread_by_month(rs, 6, 6).shape[1]",
+      "expect": "10",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rs, *_ = momentum_panel(n=60, T=40)",
+      "call": "decile_spread_by_month(rs, 6, 6).shape[1]",
+      "expect": "10",
+      "compare": "equal"
+     },
+     {
+      "setup": "rs, *_ = momentum_panel(n=60, T=40)",
+      "call": "len(decile_spread_by_month(rs, 6, 6))",
+      "expect": "29",
+      "compare": "equal"
+     },
+     {
+      "setup": "rs, *_ = momentum_panel(n=60, T=40)",
+      "call": "np.round(decile_spread_by_month(rs, 6, 6)[:2], 6).tolist()",
+      "expect": "[[0.005585, 0.119315, 0.107605, 0.116398, 0.080617, 0.093291, 0.079, 0.099058, 0.04724, 0.057911], [0.042423, 0.012975, 0.002052, 0.054548, 0.016739, 0.023588, 0.032335, 0.044263, 0.021126, 0.035569]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "rs, *_ = momentum_panel(n=60, T=40)",
+      "call": "np.round(decile_spread_by_month(rs, 3, 3)[-1], 6).tolist()",
+      "expect": "[-0.040099, -0.012232, -0.036967, -0.022065, -0.018234, -0.027504, -0.059099, -0.06687, -0.001958, -0.027816]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "rs, *_ = momentum_panel(n=60, T=40); x = decile_spread_by_month(rs, 6, 6)",
+      "call": "bool(np.allclose(x[:, 9] - x[:, 0], wml(rs, 6, 6)))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on `momentum_panel(n=60, T=40)`: shape, values and that D10 − D1 equals `wml`. The first run loads NumPy."
+   },
+   "feedback": {
+    "correct": "Correct. Column 10 minus column 1 is the JT spread.",
+    "generic": "Not quite. Build each decile's equal weights per cohort, then average the K live cohorts."
+   },
+   "explain": {
+    "text": "Each cohort gives ten equal-weighted portfolios, one per decile. Averaging the K live cohorts and multiplying by month t's returns gives ten returns a month. D10 minus D1 reproduces `wml` exactly, which is the check."
+   }
+  },
+  {
+   "id": "h-pipeline-order",
+   "difficulty": 4,
+   "skills": [
+    "rm-portfolios"
+   ],
+   "title": "From panel to composite",
+   "prose": "Put the steps from returns panel to composite spread in order. Each step carries the check that must pass before the next. One line is a flawed step: leave it out.",
+   "question": "Order the steps and leave out the flawed one.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Load the panel; check shape (300, 500) and no NaN"
+     },
+     {
+      "id": "s2",
+      "text": "Compute formation returns; check the first J + skip rows are NaN"
+     },
+     {
+      "id": "s3",
+      "text": "Rank each month with a stable double argsort; check ranks run 0 to n − 1"
+     },
+     {
+      "id": "s4",
+      "text": "Cut deciles with rank × 10 // n; check the decile sizes sum to n"
+     },
+     {
+      "id": "s5",
+      "text": "Weight each cohort; check weights sum to 0 and gross to 2"
+     },
+     {
+      "id": "s6",
+      "text": "Average the K live cohorts; check the composite's gross is at most 2"
+     },
+     {
+      "id": "s7",
+      "text": "Multiply by month-t returns; check there are T − J − skip − K + 1 months"
+     },
+     {
+      "id": "d1",
+      "text": "Rank on months t − J + 1 to t for fresher data; no check needed",
+      "why": "That window contains month t, the month traded: look-ahead."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6",
+     "s7"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Each check catches its step's bug before it spreads.",
+    "generic": "Not quite. Each step needs the output of the one before it.",
+    "byKey": {
+     "d1": "You kept the look-ahead window. It includes month t, the month we trade."
+    }
+   },
+   "explain": {
+    "text": "Data, then formation, ranks, deciles, weights, composite and returns: each needs the last. The checks are cheap facts that fail loudly. The fresher window was look-ahead."
+   }
+  },
+  {
+   "id": "h-net-spread",
+   "difficulty": 3,
+   "skills": [
+    "rm-portfolios"
+   ],
+   "prose": "The 6/6 composite earns 0.964% a month gross and trades 0.577 per £1 a month, counting buys and sells. Costs are 25 bp per £1 traded.",
+   "question": "What is the net spread a month?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0082,
+    "tol": {
+     "abs": 5e-05
+    },
+    "unit": "%",
+    "accept": "0.964% − 0.577 × 0.25% = 0.820%",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.00892,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "gross",
+      "value": 0.00675,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. About 0.82% a month.",
+    "generic": "Not quite. Subtract turnover times 0.25%.",
+    "byKey": {
+     "half": "You used the one-sided turnover. Costs fall on buys and on sells.",
+     "gross": "You doubled the turnover. It already counts both buys and sells."
+    }
+   },
+   "explain": {
+    "text": "Cost is 0.577 × 0.25% = 0.144% a month. The net spread is 0.964% − 0.144% = 0.820%. Level 3 puts this in the note."
+   }
+  },
+  {
+   "id": "h-seed-range",
+   "difficulty": 4,
+   "skills": [
+    "rm-stats"
+   ],
+   "prose": "Seeds 1 to 7 of the base panel give 6/6 means between 0.37% and 1.46%. Our se is 0.35%. A colleague's free-data 6/6 is 0.60%.",
+   "question": "Which conclusion is sound?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "noise",
+      "text": "The 0.35-point gap to the paper is about one se, well inside the seed range: no story needed yet",
+      "correct": true
+     },
+     {
+      "id": "dead",
+      "text": "Momentum has died since 1989",
+      "why": "You read a one-se gap as a trend. Seeds alone move the cell by more than that."
+     },
+     {
+      "id": "bug",
+      "text": "Her code must have a bug",
+      "why": "You blamed her code for a gap smaller than the seed range. Check it, but the gap alone proves nothing."
+     },
+     {
+      "id": "best",
+      "text": "She should report seed 7's 1.46% instead",
+      "why": "You chose the best draw. Seeds are for measuring noise, not for picking results."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Size the gap in standard errors first."
+   },
+   "explain": {
+    "text": "(0.95 − 0.60) / 0.35 is about 1.0 standard error. The seed range spans about 3 standard errors. A gap that size needs no explanation beyond noise, though the data gaps still go in the note."
+   }
+  },
+  {
+   "id": "h-free-data",
+   "difficulty": 4,
+   "skills": [
+    "rm-data"
+   ],
+   "prose": "You rebuild JT's sample from yfinance: today's NYSE listings, adjusted prices, 1965 to 1989.",
+   "question": "Select all that apply: which changes bias the 6/6 spread?",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "dead",
+      "text": "Shares that delisted are missing",
+      "correct": true
+     },
+     {
+      "id": "delist",
+      "text": "Delisting returns are missing",
+      "correct": true
+     },
+     {
+      "id": "univ",
+      "text": "The universe holds today's survivors, not 1965's listings",
+      "correct": true
+     },
+     {
+      "id": "monthly",
+      "text": "Returns are built from month-end prices",
+      "why": "You flagged the method. Month-end prices give monthly returns, as CRSP does."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Three gaps, all from survivorship.",
+    "generic": "Not quite. Ask which shares and which months are missing."
+   },
+   "explain": {
+    "text": "Missing dead shares, missing delisting returns and a survivor universe each bias the spread. Building monthly returns from month-end prices is standard. All three biases go in the note."
+   }
+  },
+  {
+   "id": "h-method-note",
+   "difficulty": 5,
+   "skills": [
+    "rm-data",
+    "rm-portfolios"
+   ],
+   "title": "The data and method section",
+   "kind": "longform",
+   "prompt": "Write the \"Data and method\" section of your replication note, about 250 words. Cover the universe, the period and the generator. Then formation, the skip, deciles, weights and overlapping cohorts. End with the statistics and every difference from the paper.",
+   "model": "**Data.** We use a seeded panel, `momentum_panel(seed=2)`: 500 shares over 300 months. Month 0 stands for January 1965, so the panel spans 1965 to 1989. The paper uses CRSP monthly returns for NYSE and AMEX shares, including those that later delisted.\n\n**What the panel plants.** Each share's return has a market term, four style factors and its own news shocks. A shock moves the share by a further 1.5% of itself in each of months 2 to 12 (continuation). It reverses by 3% in month 1 and by 0.6% a month in months 13 to 36. So a spread of the paper's size is there by construction.\n\n**Formation.** In month $t$ we rank on the compounded return over months $t - J$ to $t - 1$. $J$ is 3, 6, 9 or 12. A second panel skips one month: $t - J - 1$ to $t - 2$. The paper skips one week. Shares without $J$ complete months sit out that ranking.\n\n**Portfolios.** Ranks use a stable double argsort; deciles are `rank * 10 // n`. Winners get $+1/n_{10}$, losers $-1/n_1$, so weights sum to 0 and gross to 2.\n\n**Overlapping cohorts.** A new cohort is formed each month and held $K$ months. The composite holds the average of the $K$ live cohorts and earns one return a month. The series starts in month $J + \\text{skip} + K - 1$: 289 months for 6/6.\n\n**Statistics.** Each cell reports the mean and $t = \\bar x / (s/\\sqrt n)$. A cell matches the paper within two standard errors, a rule set before any result.\n\n**Differences from the paper.** Our data is planted, not CRSP. It has no delisting returns, no bid-ask bounce, no January seasonality and no costs. We skip a month, not a week. So our match tests the code, not momentum.",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "Names our data: a seeded panel, 500 shares, 300 months for 1965 to 1989. Names the paper's: CRSP, NYSE and AMEX, dead shares included"
+    },
+    {
+     "points": 2,
+     "text": "States what the generator plants: continuation at lags 2 to 12, a one-month reversal, a slow reversal, factors and noise"
+    },
+    {
+     "points": 2,
+     "text": "Gives the formation window t − J to t − 1, the one-month skip, and the rule for incomplete histories"
+    },
+    {
+     "points": 2,
+     "text": "Describes deciles and weights (sum 0, gross 2), and the composite of K live cohorts with its start month"
+    },
+    {
+     "points": 2,
+     "text": "Lists the differences: planted data, no delisting returns, no costs, a month skipped not a week. Says the match tests the code"
+    }
+   ]
+  }
+ ]
+}
