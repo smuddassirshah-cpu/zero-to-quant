@@ -1307,3 +1307,7 @@ Raised later (algebra level 2):
 
 - `manipulate`: the validator requires the target to be reachable, so an exploration whose point is that the target can never be reached (the 15-puzzle with 14 and 15 swapped) cannot be built as a slide game. Wanted: `"target": null` or `"explore": true`, graded by a following question, with each state still a canvas patch. Workaround: the target is "blank home again" after a four-slide loop, a refused "swap 14 and 15" chip states the rule, and the next screen asks whether the board can be solved (algebra l9 screens 0 and 1).
 - `grid`: row and column heads are not tap targets, so "tap the four rotations" on a Cayley table cannot be asked of the heads. Wanted: head ids (`h-r2`, `h-c3`) in tap mode. Workaround: the learner taps cells inside the rotation block with the rest dimmed (algebra l5 screen 0) or a column of cells standing for the elements (l7 screen 0).
+
+Raised later (session U orchestrator, from review-algebra-3-4):
+
+- Validator: warn when a table screen's `feedback.byKey` key is an editable cell id (`r0c1`) and that cell has `wrong[]` entries. Since 576 the wrong id is the key; a cell-id key fires on every wrong answer except the slip, so the slip line is dead. algebra L3 and L4 had 13 such screens (fixed in their fix pass). Then scan every course for the pattern and list hits for a content fix pass.
