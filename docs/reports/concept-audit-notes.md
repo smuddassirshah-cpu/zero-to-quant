@@ -7,3 +7,4 @@ Decisions
 - The audit's scripts need scipy, statsmodels and sympy; the container had only numpy, so the session ran `python3 -m pip install scipy pandas statsmodels scikit-learn sympy`. A setup note for later sessions.
 
 Issues
+- Miss rate after the first three courses (mental-pressure, puzzles, game-theory, L1 to L3 each, 9 levels): audit-only conceptual findings 6, 3 and 5, so 4.7 per three levels, of which `wrong` 0, 1 and 0 (1 per 9 levels); the rest `imprecise`. The earlier reads had found 7, 3 and 10 conceptual findings, all fixed before the audit, so "review only" measures what the first read caught and the audit could not re-find, not a miss by the audit. "Both" is 0, 1 and 1. Reading: a single second read left about five imprecise claims and one wrong claim per nine levels in these courses, below the session V rate of 6 to 11 wrong per three levels for first reads of unreviewed courses.
