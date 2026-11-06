@@ -172,3 +172,7 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 - When an author runs low on context it hands back finished levels; the main session starts a fresh author for the rest (convex L3, pairs-rep L3, vector-calc L3 this session).
 - Brief errors found by authors and confirmed by second readers are corrected in the lessons; a brief is edited only by a one-line note where a fix pass was asked to (momentum-rep cohorts, convex L4 KKT).
 - Voice-scan gates run on the whole course folder, not the level's files: three courses (momentum-rep L1, complex L1 and L2, analysis L1 to L4) carried 39 long sentences past earlier gates; all fixed this session.
+
+Session U (6 Nov)
+- algebra homework-3 `items[6]` (`h-power-in-n`) proves $g^m \in N$ for $|G/N| = m$ instead of the brief's Euler or coset-product `order` item. Kept: both named proofs are already graded in l13 s5 and l11 s8, and the substitute is a sound exercise (review-algebra-3-4 finding 15).
+- Validator warning 584 (`[table-slip-key]`): a table `feedback.byKey` key on a cell id with `wrong[]` is dead; key on the wrong id. Raised after its third sighting (odes L4, algebra L1 to L2, algebra L3 to L4), per protocol 6.
