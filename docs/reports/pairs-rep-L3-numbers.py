@@ -419,5 +419,20 @@ for fid, doc in lv.files.items():
         lv._rec(sol == 0, f'{fid}{path} solution passes {len(w["tests"])} tests', '' if sol == 0 else f'{sol} failing')
         lv._rec(st > 0, f'{fid}{path} starter fails', '' if st > 0 else 'starter passes every test')
 
+# Fix pass: starters of l12 eg_pvalue and homework rolling_hit_rate fail every hidden test.
+for fid, path in (('l12-cointegration-selection', 'screens[7]'), ('homework-3', 'items[1]')):
+    for p_, w in _widgets(lv.files[fid]):
+        if p_.startswith(path):
+            lv._rec(run_tests(w, w['starter']) == len(w['tests']), f'{fid}{p_} starter fails every test', '')
+# Fix pass: the shortlist is chosen on the same formation year, so 5% understates its chance passes.
+chp = [p for p in cand0 if not planted([p])]
+rec(len(chp) == 30 and sum(p0[p] < 0.05 for p in chp) == 18 and sum(p0[p] < 0.01 for p in chp) == 10, "l12 shortlist: 18 of 30 chance pairs pass at 5%, 10 below 1%")
+rec(len(sig) - planted(sig) == 392 and len(sig) == 407, "l12 392 chance passes of 407")
+for f_, s_ in (("l12", "screens[9].explain.text"), ("l12", "screens[8].explain.text")):
+    rec("18 of the shortlist's 30" in lv.text(f_, s_) or "18 of the shortlist" in lv.text(f_, s_), f"{f_} {s_} states 18 of 30")
+rec("392" in lv.text("l12", "screens[4].explain.text"), "l12 screens[4] names the 392 chance passes")
+rec(round(pre * 6 * 100, 1) == 9.0 and "9.0%" in lv.text("homework", "items[3].explain.text"), "homework pre-break top 20 earns 9.0% a cycle")
+rec(abs(0.015011 / 1 - pre) < 5e-7 and round(100 * post / pre) == 42, "l15 survival test uses the 42% split")
+
 lv.check_wrongs()
 lv.report()
