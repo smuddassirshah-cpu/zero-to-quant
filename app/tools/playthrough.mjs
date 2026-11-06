@@ -213,17 +213,25 @@ const writtenLessons = () => {
 
 /* ---------- Static server on a free port ---------- */
 const freePort = () => new Promise((res, rej) => { const s = net.createServer(); s.unref(); s.on('error', rej); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); }); });
+/* ENGINE-BACKLOG 575: the free port is probed and released before python binds it, so parallel shards can pick the same one. A server that dies
+   (EADDRINUSE) is retried on a new port, and a "ready" answer only counts while our own process is still alive (it may have come from a sibling's server). */
 const startServer = async () => {
-  const port = await freePort();
-  const proc = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1', '--directory', APP], { stdio: ['ignore', 'ignore', 'pipe'] });
-  let err = ''; proc.stderr.on('data', d => { err += d; if (err.length > 4000) err = err.slice(-4000); });
-  const base = `http://127.0.0.1:${port}`;
-  for (let i = 0; i < 100; i++) {
-    if (proc.exitCode != null) die('the static server stopped: ' + err);
-    try { const r = await fetch(base + '/index.html'); if (r.ok) return { proc, base }; } catch { /* not up yet */ }
-    await new Promise(r => setTimeout(r, 100));
+  let err = '';
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const port = await freePort();
+    const proc = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1', '--directory', APP], { stdio: ['ignore', 'ignore', 'pipe'] });
+    err = ''; proc.stderr.on('data', d => { err += d; if (err.length > 4000) err = err.slice(-4000); });
+    const base = `http://127.0.0.1:${port}`;
+    let up = false;
+    for (let i = 0; i < 100 && proc.exitCode == null; i++) {
+      try { const r = await fetch(base + '/index.html'); if (r.ok) { await new Promise(r => setTimeout(r, 250)); up = proc.exitCode == null; break; } } catch { /* not up yet */ }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    if (up) return { proc, base };
+    if (proc.exitCode == null) { proc.kill(); die('the static server did not start'); }
+    await new Promise(r => setTimeout(r, 100 + Math.floor(Math.random() * 400)));   // stopped, usually EADDRINUSE: pick another port
   }
-  proc.kill(); die('the static server did not start');
+  die('the static server stopped on every port tried: ' + err);
 };
 
 /* ---------- Local CDN ---------- */
