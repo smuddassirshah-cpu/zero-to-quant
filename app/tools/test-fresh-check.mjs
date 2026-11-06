@@ -28,7 +28,11 @@ const check = (name, ok, detail = '') => { console.log(`${ok ? 'ok  ' : 'FAIL'} 
 
 let r = run(['--exam', 'a']);
 check('copied setup with changed constants hits (exit 1)', r.status === 1 && /exams\/a\.json:items\[0\]\s+<-\s+courses\/c1\/l1\.json:screens\[0\]/.test(r.stdout), r.stdout);
-check('hit line names the shared n-gram', /ngram "/.test(r.stdout), r.stdout);
+check("hit reports run length and share", /run (\d+), share [01](?:\.\d+)?/.test(r.stdout) && Number(r.stdout.match(/run (\d+)/)[1]) >= 8, r.stdout);
+check('--min-run above the shared run clears the hit', run(['--exam', 'a', '--min-run', '60']).status === 0);
+check('--min-share above the share clears the hit', run(['--exam', 'a', '--min-share', '1.01']).status === 0);
+const jh = JSON.parse(run(['--exam', 'a', '--json']).stdout)[0];
+check('json carries run, share and the run text', jh.run >= 8 && jh.share > 0 && jh.share <= 1 && jh.ngram.split(' ').length === Math.min(jh.run, 30), JSON.stringify(jh));
 r = run(['--exam', 'b']);
 check('shared stock phrase does not hit (exit 0)', r.status === 0, r.stdout);
 r = run(['--exam', 'c']);
