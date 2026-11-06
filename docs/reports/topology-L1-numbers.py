@@ -328,6 +328,33 @@ for p, shown in [(1, 2.0), (2, 3.1415928), (3, 3.5332781), (4, 3.7081506)]:
     E("homework", "items[7].explain.text", shown)
 E("homework", "items[7].explain.text", round(ns['ball_area'](2, 1), 4))
 
+# Fix pass (review-topology-1-2): the l4 norm chain as an inequality, every homework edge distance, the real p = 4 error.
+r2 = math.sqrt(2)
+chain_pts = [(1, 0), (0, 1), (-1, 0), (1, 1), (1, -1), (0.3, -0.7), (-2, 0.5), (0.6, 0.8), (5, 5)] + [(math.cos(k / 7), math.sin(k / 7)) for k in range(44)]
+for v_ in chain_pts:
+    z_ = (0, 0)
+    fv = abs(v_[0] + v_[1])
+    assert fv <= d1(v_, z_) + 1e-12, v_
+    assert d1(v_, z_) <= 2 * di(v_, z_) + 1e-12 and d1(v_, z_) <= r2 * d2(v_, z_) + 1e-12, v_
+assert not (2 * di((1, 0), (0, 0)) <= r2 * d2((1, 0), (0, 0))), 'old chain link would hold at (1, 0)'
+E("l4", "screens[6].prose", "d_1 \\le 2d_\\infty"); E("l4", "screens[6].prose", "d_1 \\le \\sqrt2")
+yh2 = (0.2, 0.1)
+edge_d = {(s_, t_): abs(s_ * yh2[0] + t_ * yh2[1] - 1) / r2 for s_ in (1, -1) for t_ in (1, -1)}
+assert sorted(round(v_, 4) for v_ in edge_d.values()) == [0.495, 0.6364, 0.7778, 0.9192], edge_d
+assert round(edge_d[(1, -1)] * r2, 9) == 0.9 and round(edge_d[(-1, 1)] * r2, 9) == 1.1 and round(edge_d[(-1, -1)] * r2, 9) == 1.3
+for v_ in (0.7, 0.9, 1.1, 1.3): E("homework", "items[2].explain.text", v_)
+hw1_ = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'content', 'courses', 'topology', 'homework-1.json')))
+assert 'distance to $x - y = 1$' in hw1_['items'][2]['feedback']['byKey']['other-edge']
+errs_ = [abs(ns['ball_area'](p, 20000) - ball_area_gamma(p)) for p in (1, 2, 3, 4)]
+assert max(errs_) < 2e-6 and max(errs_) > 1e-6, errs_
+E("homework", "items[7].explain.text", "2 \\times 10^{-6}")
+
+# Fix pass: review-1 explanations. The corner (1, 0) of the open diamond B_1(0, r) with r > 1 lies outside the open unit disc.
+for r_ in (1.01, 1.5, 3):
+    assert d1((1, 0), (0, 0)) < r_ and not d2((1, 0), (0, 0)) < 1
+floor_img = {math.floor(x_ / 1000) for x_ in range(-499, 500)}                # f(V) for V = (-0.5, 0.5), f = floor
+assert floor_img == {-1, 0}, floor_img
+
 lv.check_wrongs()
 for f_ in fails: print('FAIL', f_)
 if fails: sys.exit(1)
