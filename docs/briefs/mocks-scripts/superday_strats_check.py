@@ -188,15 +188,24 @@ rec(18 - 10 == 8 and 10 / 2 == 5, 'p4 distractors: 18 - 10 and 10 / 2')
 choice_rules('p4-poisson-thinning')
 allow('p4-poisson-thinning', 18, 2 / 3, 10, 6, 12, 1 / 3, 8, 5)
 
-# P5: E[max] = int 2 x phi(x) Phi(x) dx, scaled by 2%
-emax5 = 0.02 * simpson(lambda x: 2 * x * N01.pdf(x) * N01.cdf(x), -12, 12)
+# P5: E[max(X, Y)] for correlation 0.5 by Simpson over x of the closed-form conditional mean of max(x, rho x + c Z), scaled by 2%
+rho5, c5 = 0.5, math.sqrt(1 - 0.5 ** 2)
+
+
+def cond_max(x):  # E[max(x, b + c Z)] = x + (b - x) Phi(m) + c phi(m), m = (b - x) / c, b = rho x
+    m = (rho5 * x - x) / c5
+    return x + (rho5 * x - x) * N01.cdf(m) + c5 * N01.pdf(m)
+
+
+emax5 = 0.02 * simpson(lambda x: cond_max(x) * N01.pdf(x), -12, 12)
 eabs = 0.02 * simpson(lambda x: abs(x) * N01.pdf(x), -12, 12)
+emax_indep = 0.02 * simpson(lambda x: 2 * x * N01.pdf(x) * N01.cdf(x), -12, 12)
 key('p5-max-of-two-normals', emax5, tol=5e-7)
+wrong('p5-max-of-two-normals', 'no-correlation', emax_indep, tol=5e-7)
 wrong('p5-max-of-two-normals', 'abs-value', eabs, tol=5e-7)
 wrong('p5-max-of-two-normals', 'zero', 0)
-wrong('p5-max-of-two-normals', 'sigma', 0.02)
-all_wrongs('p5-max-of-two-normals', ['abs-value', 'zero', 'sigma'])
-allow('p5-max-of-two-normals', 2, 0.02, emax5 * 100, emax5)
+all_wrongs('p5-max-of-two-normals', ['no-correlation', 'abs-value', 'zero'])
+allow('p5-max-of-two-normals', 2, 0.02, 0.5, emax5 * 100, emax5, 0.00798, 0.80, 1)
 
 # ======================================================================== paper 2
 # R1: Black-Scholes at r = 0 by integrating the lognormal payoff, against the rule of thumb
@@ -223,18 +232,18 @@ opt('r2-parity-arbitrage', 'borrow £50: £1.10 now')
 choice_rules('r2-parity-arbitrage')
 allow('r2-parity-arbitrage', 52, 50, 7.20, 4.10, 0.98, 49, 0.10, 1.10, 3.10, 3.00)
 
-# R3: reprice a value with gamma 0.05 and theta -0.30 over one day: V(S, t) = 0.025 S^2 - 0.30 t + delta-hedged
-V = lambda s, t: F(1, 2) * F(5, 100) * s * s + F(-30, 100) * t
+# R3: reprice a value with gamma 0.04 and theta -0.40 over one day: V(S, t) = 0.02 S^2 - 0.40 t, delta-hedged
+V = lambda s, t: F(1, 2) * F(4, 100) * s * s + F(-40, 100) * t
 S0 = F(100)
-delta = F(5, 100) * S0
-pnl = 200 * (V(S0 + 4, 1) - V(S0, 0) - delta * 4)
-rec(pnl == 20, f'r3 repriced hedged P&L {pnl}')
+delta = F(4, 100) * S0
+pnl = 300 * (V(S0 + 5, 1) - V(S0, 0) - delta * 5)
+rec(pnl == 30, f'r3 repriced hedged P&L {pnl}')
 key('r3-gamma-theta', float(pnl))
-wrong('r3-gamma-theta', 'no-theta', float(200 * F(1, 2) * F(5, 100) * 16))
-wrong('r3-gamma-theta', 'no-half', float(200 * (F(5, 100) * 16 - F(3, 10))))
-wrong('r3-gamma-theta', 'theta-only', float(200 * F(-3, 10)))
+wrong('r3-gamma-theta', 'no-theta', float(300 * F(1, 2) * F(4, 100) * 25))
+wrong('r3-gamma-theta', 'no-half', float(300 * (F(4, 100) * 25 - F(4, 10))))
+wrong('r3-gamma-theta', 'theta-only', float(300 * F(-4, 10)))
 all_wrongs('r3-gamma-theta', ['no-theta', 'no-half', 'theta-only'])
-allow('r3-gamma-theta', 200, 0.05, 0.30, 4, 0.40, 0.10, 20, 16)
+allow('r3-gamma-theta', 300, 0.04, 0.40, 5, 0.50, 0.10, 30, 25)
 
 # R4: the scaled call spread's payoff at expiry equals the digital outside (99, 101)
 spread = lambda s: (max(s - 99, 0) - max(s - 101, 0)) / 2
@@ -273,36 +282,48 @@ rec(abs(0.0048 / 4 - 0.0012) < 1e-15 and abs(0.0048 / 64 - 0.000075) < 1e-15 and
 choice_rules('r6-convergence-order')
 allow('r6-convergence-order', 0.0048, 100, 400, 16, 0.0003, 0.0012, 0.000075, 0.0024, 64)
 
-# R7: sum the daily P&L 0.5 G S^2 (r_i^2 - s_imp^2 dt) over 21 days whose squared returns average s_real^2 dt
+# R7: Black-Scholes gamma at the money (r = 0) by the formula and by a second difference of the price, then the summed daily P&L
+S_, K_, sg_, T_ = 100.0, 100.0, 0.2, 1 / 12
+
+
+def bs_call(s, k, sg, t):
+    d1 = (math.log(s / k) + 0.5 * sg * sg * t) / (sg * math.sqrt(t))
+    return s * N01.cdf(d1) - k * N01.cdf(d1 - sg * math.sqrt(t))
+
+
+gam_formula = N01.pdf((0.5 * sg_ * sg_ * T_) / (sg_ * math.sqrt(T_))) / (S_ * sg_ * math.sqrt(T_))
+hh = 0.01
+gam_diff = (bs_call(S_ + hh, K_, sg_, T_) - 2 * bs_call(S_, K_, sg_, T_) + bs_call(S_ - hh, K_, sg_, T_)) / hh ** 2
+rec(abs(gam_formula - 0.0691) < 5e-5 and abs(gam_diff - gam_formula) < 1e-5 and round(gam_formula, 2) == 0.07,
+    f'r7 Black-Scholes gamma {gam_formula:.5f} by the formula, {gam_diff:.5f} by a second difference: 0.07 to two decimals')
 days = 21
 dt = (1 / 12) / days
-daily = [0.5 * 0.04 * 100 ** 2 * (0.25 ** 2 * dt - 0.2 ** 2 * dt) for _ in range(days)]
-rec(abs(sum(daily) - 0.375) < 1e-12, f'r7 summed P&L {sum(daily):.6f}')
-allow('r7-realised-vs-implied', 20, 25, 0.04, 100, 0.0625, 0.375, 12, 0.37, 0.38, 250)
+daily = [0.5 * 0.07 * 100 ** 2 * (0.25 ** 2 * dt - 0.2 ** 2 * dt) for _ in range(days)]
+rec(abs(sum(daily) - 0.65625) < 1e-12 and round(sum(daily), 2) == 0.66, f'r7 summed P&L {sum(daily):.6f}')
+allow('r7-realised-vs-implied', 20, 25, 0.07, 100, 0.0625, 0.04, 0.66, 0.65, 12, 250, 0)
 
 # ======================================================================== paper 3
-# S1: generator of f(t, w) = w^4 - a t w^2 + b t^2 on polynomials: d/dt + 1/2 d2/dw2, coefficients as Fractions
-def gen(poly):  # poly: {(i, j): c} for t^i w^j
-    out = {}
-    for (i, j), c in poly.items():
-        if i:
-            out[(i - 1, j)] = out.get((i - 1, j), 0) + c * i
-        if j >= 2:
-            out[(i, j - 2)] = out.get((i, j - 2), 0) + F(1, 2) * c * j * (j - 1)
-    return {k: v for k, v in out.items() if v != 0}
+# S1: E[f(t, W_t)] for f = (w + a t) e^{w - t/2} by Simpson over the normal density: it equals (1 + a) t, so only a = -1 keeps it at 0
+def mean_f(a, t):
+    sd = math.sqrt(t)
+    return simpson(lambda z: (sd * z + a * t) * math.exp(sd * z - t / 2) * N01.pdf(z), -14, 14, 40000)
 
 
-sols = [(a, b) for a in range(0, 20) for b in range(0, 20) if not gen({(0, 4): 1, (1, 2): -a, (2, 0): b})]
-rec(sols == [(6, 3)], f's1 the drift vanishes only at (a, b) = {sols}')
-key('s1-fourth-power', 6, 0)
-wrong('s1-fourth-power', 'no-half', 12, 0)
-wrong('s1-fourth-power', 'first-derivative', 4, 0)
-all_wrongs('s1-fourth-power', ['no-half', 'first-derivative'], 0)
-key('s1-fourth-power', 3, 1)
-wrong('s1-fourth-power', 'same-as-a', 6, 1)
-wrong('s1-fourth-power', 'no-two', 1.5, 1)
-all_wrongs('s1-fourth-power', ['same-as-a', 'no-two'], 1)
-allow('s1-fourth-power', 4, 6, 3, 12, 2, 1.5)
+sols = [a for a in range(-5, 6) if all(abs(mean_f(a, t)) < 1e-6 for t in (0.5, 1, 2, 3))]
+rec(sols == [-1], f's1 the mean stays 0 at t = 0.5, 1, 2, 3 only for a = {sols}')
+rec(all(abs(mean_f(a, 2) - (1 + a) * 2) < 1e-6 for a in (-2, 0, 1)), 's1 the mean is (1 + a) t')
+key('s1-exponential-correction', -1, 0)
+wrong('s1-exponential-correction', 'sign-slip', 1, 0)
+wrong('s1-exponential-correction', 'zero', 0, 0)
+all_wrongs('s1-exponential-correction', ['sign-slip', 'zero'], 0)
+sd2 = math.sqrt(2)
+we = simpson(lambda z: sd2 * z * math.exp(sd2 * z - 1) * N01.pdf(z), -14, 14, 40000)
+we_no = simpson(lambda z: sd2 * z * math.exp(sd2 * z) * N01.pdf(z), -14, 14, 40000)
+key('s1-exponential-correction', we, 1, tol=5e-4)
+wrong('s1-exponential-correction', 'independent', 0, 1)
+wrong('s1-exponential-correction', 'no-compensator', we_no, 1, 5e-4)
+all_wrongs('s1-exponential-correction', ['independent', 'no-compensator'], 1)
+allow('s1-exponential-correction', 1, 2, 0.5, 1)
 
 # S2: median of the lognormal by bisection on its CDF
 m_, s_ = math.log(40) + (0.10 - 0.08) * 2, 0.40 * math.sqrt(2)
@@ -325,7 +346,8 @@ key('s3-touch', touch, tol=5e-5)
 wrong('s3-touch', 'no-reflection', touch / 2, tol=5e-5)
 wrong('s3-touch', 'stays-below', 1 - touch, tol=5e-5)
 all_wrongs('s3-touch', ['no-reflection', 'stays-below'])
-allow('s3-touch', 2, 3, 1.5, touch, touch / 2, 1 - touch)
+rec(round(N01.cdf(1.5), 4) == 0.9332 and abs(2 * (1 - 0.9332) - touch) < 5e-4, f's3 the given Phi(1.5) = {N01.cdf(1.5):.5f} rounds to 0.9332 and gives {2 * (1 - 0.9332):.4f}')
+allow('s3-touch', 2, 3, 1.5, touch, touch / 2, 1 - touch, 0.9332)
 
 # S4: E[ln S_T] under Q by integrating ln of the lognormal; discount
 Elog = simpson(lambda z: (math.log(100) + (0.02 - 0.02) * 1 + 0.2 * z) * N01.pdf(z), -12, 12)
@@ -367,13 +389,20 @@ rec(run_py(w2['solution'], t2) == len(t2), f'c1 part 2 solution passes {len(t2)}
 rec(run_py(w2['starter'], t2) < len(t2), 'c1 part 2 starter fails a test')
 rec(len(t2) <= 15, f'c1 merged tests {len(t2)} <= 15')
 rec(run_py(w2['solution'], w1['examples'] + w2['examples']) == 4, 'c1 the examples pass')
+rec(w1['starter'] != w1['solution'] and 'raise' not in w1['starter'] and 'call' not in [l for l in w1['starter'].split('\n') if l.startswith('def ')][0],
+    'c1 the part 1 starter is a working call pricer with no checks and no flag')
 
 
-def crr_paths(S, K, T, r, sigma, n, barrier=None):
+def crr_args(call):
+    return eval(call.replace('crr_value', '_pack'), {'_pack': lambda *a, **k: (a, k)})
+
+
+def crr_paths(S, K, T, r, sigma, n, call=True, barrier=None):
     """route B: sum over every path of the tree with its risk-neutral weight (2^n paths)"""
     dt = T / n
     u = math.exp(sigma * math.sqrt(dt))
     p = (math.exp(r * dt) - 1 / u) / (u - 1 / u)
+    sign = 1 if call else -1
     tot = 0.0
     for path in itertools.product((0, 1), repeat=n):
         k, alive = 0, barrier is None or S > barrier
@@ -381,29 +410,51 @@ def crr_paths(S, K, T, r, sigma, n, barrier=None):
             k += 1 if step else -1
             alive = alive and (barrier is None or S * u ** k > barrier)
         ups = sum(path)
-        tot += p ** ups * (1 - p) ** (n - ups) * (max(S * u ** k - K, 0) if alive else 0)
+        tot += p ** ups * (1 - p) ** (n - ups) * (max(sign * (S * u ** k - K), 0) if alive else 0)
     return math.exp(-r * T) * tot
 
 
+ns1 = {}
+exec(w1['solution'], ns1)
 for t in t2:
-    m = re.fullmatch(r'crr_call\((.*)\)', t['call'])
-    args = eval('[' + m.group(1) + ']')
-    if t['compare'] == 'isclose' and args[5] <= 12:
-        b = crr_paths(*args)
+    a, k = crr_args(t['call'])
+    if t['compare'] == 'isclose' and a[5] <= 12:
+        b = crr_paths(*a, **k)
         rec(abs(b - float(t['expect'])) < 1e-9, f'c1 {t["call"]} = {b:.10f} by path enumeration')
+    if t['compare'] == 'isclose' and k.get('call') is False and 'barrier' not in k:
+        # put-call parity on the same tree: P = C - S + K e^{-rT}
+        S_, K_, T_, r_ = a[0], a[1], a[2], a[3]
+        c_ = ns1['crr_value'](*a)
+        rec(abs(float(t['expect']) - (c_ - S_ + K_ * math.exp(-r_ * T_))) < 1e-9, f'c1 {t["call"]} obeys put-call parity on the tree')
 bs1 = 100 * N01.cdf((math.log(1) + (0.05 + 0.02) * 1) / 0.2) - 100 * math.exp(-0.05) * N01.cdf((0.05 - 0.02) / 0.2)
-big = [t for t in t1 if t['call'] == 'crr_call(100, 100, 1, 0.05, 0.2, 1000)'][0]
+big = [t for t in t1 if t['call'] == 'crr_value(100, 100, 1, 0.05, 0.2, 1000)'][0]
 rec(abs(float(big['expect']) - bs1) < 0.005, f'c1 1,000 steps {float(big["expect"]):.4f} is within 0.005 of Black-Scholes {bs1:.4f}')
-rec(abs(float([t for t in t1 if 'crr_call(100, 0,' in t['call']][0]['expect']) - 100) < 1e-9, 'c1 a zero strike prices the stock, 100')
-same = [t for t in t2 if t['call'] == 'crr_call(100, 100, 1, 0.05, 0.2, 200, 1)'][0]
-ns = {}
-exec(w1['solution'], ns)
-rec(abs(float(same['expect']) - ns['crr_call'](100, 100, 1, 0.05, 0.2, 200)) < 1e-12, 'c1 a barrier at 1 changes nothing')
+same = [t for t in t2 if t['call'] == 'crr_value(100, 100, 1, 0.05, 0.2, 200, barrier=1)'][0]
+rec(abs(float(same['expect']) - ns1['crr_value'](100, 100, 1, 0.05, 0.2, 200)) < 1e-12, 'c1 a barrier at 1 changes nothing')
+rootb = [t for t in t2 if t['call'].endswith('50, barrier=100)')][0]
+rec(float(rootb['expect']) == 0.0, 'c1 a barrier at the start level kills the start: 0')
+ex_ = [t for t in w2['examples'] if '4, barrier=95' in t['call']][0]
+rec(abs(float(ex_['expect']) - crr_paths(100, 100, 1, 0.05, 0.2, 4, barrier=95)) < 5e-7
+    and abs(crr_paths(100, 100, 1, 0.05, 0.2, 4, barrier=95) - crr_paths(100, 100, 1, 0.05, 0.2, 4)) > 1, 'c1 the first part 2 example differs from the vanilla price by over 1')
 ns2 = {}
 exec(w2['solution'].replace('S * u ** j * d ** (n - j)', 'S * u ** (2 * j - n)').replace('S * u ** j * d ** (step - j)', 'S * u ** (2 * j - step)'), ns2)
-rec(all(abs(ns2['crr_call'](*eval('[' + re.fullmatch(r'crr_call\((.*)\)', t['call']).group(1) + ']')) - float(t['expect'])) < 1e-9
-        for t in w2['tests']), 'c1 another node formula, u ** (2j - n), gives the same barrier prices (no node sits on a barrier)')
-allow('c1-barrier-tree', 1000, 2, 1e-12, 1e-9)
+rec(all(abs(ns2['crr_value'](*crr_args(t['call'])[0], **crr_args(t['call'])[1]) - float(t['expect'])) < 1e-9
+        for t in w2['tests']), 'c1 another node formula, u ** (2j - n), gives the same barrier prices')
+allow('c1-barrier-tree', 1000, 2, 1e-12, 1e-9, 1, 0, 1.5)
+
+# planted wrong versions of C1: each must fail at least one hidden test
+sol2 = w2['solution']
+C1_WRONGS = {
+    'barrier checked at the last layer only': sol2.replace('if alive(S * u ** j * d ** (step - j)) else 0.0', ''),
+    'knocked out only strictly below the barrier': sol2.replace('price > barrier', 'price >= barrier'),
+    'root never checked': sol2.replace('if alive(S * u ** j * d ** (step - j)) else 0.0', 'if (step == 0 or alive(S * u ** j * d ** (step - j))) else 0.0'),
+    'p below 0 not checked': sol2.replace('if not 0 < p < 1:', 'if p >= 1:'),
+    'discounted once, at the end': sol2.replace('disc * (p * values[j + 1] + (1 - p) * values[j])', '(p * values[j + 1] + (1 - p) * values[j])').replace('return values[0]', 'return values[0] * disc'),
+    'put flag ignored': sol2.replace('sign = 1 if call else -1', 'sign = 1'),
+}
+rec('(step == 0 or' in C1_WRONGS['root never checked'] and C1_WRONGS['barrier checked at the last layer only'] != sol2, 'c1 the planted versions differ from the solution')
+for name, src in C1_WRONGS.items():
+    rec(src != sol2 and run_py(src, t2) < len(t2), f'c1 planted wrong "{name}" fails {len(t2) - run_py(src, t2)} of {len(t2)} tests')
 
 
 def run_cpp(src, tests):
@@ -427,6 +478,27 @@ rec(run_cpp(c2['solution'], c2['tests']) == len(c2['tests']), f'c2 C++ solution 
 rec(run_cpp(c2['starter'], c2['tests']) < len(c2['tests']), 'c2 the draft starter fails a test')
 rec(run_cpp(c2['solution'], c2['examples']) == len(c2['examples']), 'c2 the examples pass')
 rec('try' not in c2['solution'] and 'catch' not in c2['solution'], 'c2 uses no try or catch')
+with tempfile.TemporaryDirectory() as td:
+    open(os.path.join(td, 'm.cpp'), 'w').write(c2['solution'])
+    r_ = subprocess.run(['clang++', '-std=c++17', '-O1', '-fno-exceptions', '-Wall', '-c', os.path.join(td, 'm.cpp'), '-o', os.path.join(td, 'm.o')], capture_output=True, text=True)
+    rec(r_.returncode == 0 and not r_.stderr.strip(), 'c2 the solution compiles with clang++ -fno-exceptions and no warning', r_.stderr[:200])
+sol_c = c2['solution']
+LOOP = """    for (std::size_t i = 1; i < n; ++i)
+        if (vols[i] * vols[i] * T[i] < vols[i - 1] * vols[i - 1] * T[i - 1]) return -1.0;
+"""
+C2_WRONGS = {
+    'arbitrage checked only on the bracketing interval': sol_c.replace(LOOP, '').replace(
+        '    const double w = w0 +', '    if (w1 < w0) return -1.0;\n    const double w = w0 +'),
+    'total variance held flat after the last pillar': sol_c.replace(
+        'if (t >= T[n - 1]) return vols[n - 1];', 'if (t >= T[n - 1]) return std::sqrt(vols[n - 1] * vols[n - 1] * T[n - 1] / t);'),
+    'flat total variance treated as arbitrage': sol_c.replace('T[i] < vols[i - 1]', 'T[i] <= vols[i - 1]'),
+    'vols squared but not times T': sol_c.replace('const double w0 = vols[i - 1] * vols[i - 1] * T[i - 1];', 'const double w0 = vols[i - 1] * vols[i - 1];').replace(
+        'const double w1 = vols[i] * vols[i] * T[i];', 'const double w1 = vols[i] * vols[i];'),
+}
+for name, src in C2_WRONGS.items():
+    rec(src != sol_c, f'c2 planted version "{name}" differs from the solution')
+    rec(run_cpp(src, c2['tests']) < len(c2['tests']), f'c2 planted wrong "{name}" fails a test')
+
 
 
 def vol_b(T, v, t):
@@ -457,6 +529,15 @@ allow('f2-model-disagrees', 200)
 # ======================================================================== structure
 rec([p.get('minutes') for p in doc['parts'] if p['kind'] == 'paper'] == [30, 45, 30, 45, 15], 'papers 30, 45, 30, 45, 15 minutes')
 rec(sum(len(p.get('items', [])) for p in doc['parts']) == 20, '20 items')
+paper = {p['id']: p for p in doc['parts'] if p['kind'] == 'paper'}
+# stochastic: S1 two parts, S2, S3, S4 longform (marked at 7 of 10); coding: C1 three parts, C2 one item
+sto = paper['stochastic']
+rec(sto['pass'] == 0.6, 'stochastic pass 0.6')
+rec((1 + 1) / 4 < sto['pass'] and (1 + 1 + 0.5) / 4 >= sto['pass'] and (0.5 + 0.5 + 1) / 4 < sto['pass'], 'stochastic: S2 and S3 alone fail; S2, S3 and one part of S1 pass')
+cod = paper['coding']
+rec(cod['pass'] == 0.75, 'coding pass 0.75')
+rec(1.0 / 2 < cod['pass'] and (1 + 1 / 3) / 2 < cod['pass'] and (1 + 2 / 3) / 2 >= cod['pass'], 'coding: C1 alone and C2 with one part fail; C2 with two parts passes')
+rec(sum(it['pace'] for it in paper['coding']['items']) <= paper['coding']['minutes'] * 60 - 120, 'coding paces leave at least 120 s for the compiler start')
 rec(sum(1 for it in ITEM.values() if it.get('kind') == 'longform') == 4, 'four longform items')
 rec(all(sum(r['points'] for r in it['rubric']) == 10 for it in ITEM.values() if it.get('kind') == 'longform'), 'every rubric sums to 10')
 for it in ITEM.values():
@@ -465,6 +546,7 @@ for it in ITEM.values():
             rec(w.get('shuffle') is True, f'{it["id"]}: every choice shuffled')
 firms = ('Goldman', 'Morgan Stanley', 'JP Morgan', 'Citadel', 'Jane Street', 'Optiver')
 rec(not any(f in json.dumps(it) for it in ITEM.values() for f in firms), 'no firm named outside models and description')
+rec('Reported' in doc['models'] and 'JP Morgan' in doc['models'] and 'This mock is built from reports' in doc['description'], 'models and description state only the reported format')
 rec('Reported' in doc['models'] and 'Nov 2026' in doc['models'] and 'Nov 2026' in doc['description'], 'models and description say reported, Nov 2026')
 rec(len(doc['models']) <= 200, f'models is {len(doc["models"])} characters')
 

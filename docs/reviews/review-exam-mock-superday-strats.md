@@ -53,3 +53,36 @@ The section cites the firm entries in `prep.json` (Oct 2026) and `interview-gaps
 16. `f1-why-strats` [fit, 0] `rubric[5]` | design | "About 90 seconds, with no stock phrases" is not observable: a learner cannot tick "no stock phrases" against anything. | Rubric row 6. | "About 90 seconds, and no line that would fit any firm, such as 'I am passionate about markets'".
 
 Counts: wrong 1, misleading 3, coverage 1, design 11, voice 0, layout 0 (layout not checked: no screenshots taken; the report's 1280 and 390 px shots were not reread).
+
+## Fix pass
+
+Recomputed before writing (script routes in `docs/briefs/mocks-scripts/superday_strats_check.py`): P5 $2\%\sqrt{0.5/\pi} = 0.0079788$ by $\tfrac12 E|X - Y|$ and by Simpson over the closed-form conditional mean; R3 $300(\tfrac12 \times 0.04 \times 25 - 0.40) = 30$ (150, 180, $-120$ for the slips) and by repricing a quadratic value; R7 gamma 0.06907 by formula and by a second difference of the price, $\tfrac12 \times 0.07 \times 10^4 \times 0.0225/12 = 0.65625$; S1 drift $(a + 1)e^{W_t - t/2}$ so $a = -1$, with $E[f(t, W_t)] = (1 + a)t$ by Simpson for $t = 0.5, 1, 2, 3$, and $E[W_2 e^{W_2 - 1}] = 2$; S3 $2(1 - 0.9332) = 0.1336$; C1 barrier-95 example 8.456358446016743 (path enumeration 8.4563584460).
+
+1. Fixed. `models` and `description` (and the brief) now state only the reported format, as the review words them. `mock-superday-research` has the same opening and is outside this pass; the orchestrator may change it.
+2. Fixed by finding 3: the item was replaced, so the `no-two` line is gone. Each `byKey` line of the new S1 was re-derived.
+3. Fixed. S1 is now `s1-exponential-correction`: $(W_t + a\,t)e^{W_t - t/2}$, $a = -1$, then $E[W_2 e^{W_2 - 1}] = 2$, with the slips 1 and 0, and 0 and 5.4366 ($2e$). My grep of `app/content` finds no such item.
+4. Fixed. P5 gains correlation 0.5; key 0.007979 (0.80%), slips 0.011284 (correlation ignored), 0.015958, 0.
+5. Fixed. R3 is 300 calls, gamma 0.04, theta $-£0.40$, a £5 move; key £30.
+6. Fixed. C1 part 1 now starts from a working call pricer and asks for `call=True` and the checks; the function is `crr_value` (no content uses it; `crr_call` was the homework's). Tests: 3 call prices, 2 put prices, 3 raises (8), with put-call parity as the check's second route.
+7. Fixed. (a) The part 2 example and test 3 use barrier 95, 8.456358446016743 (example shows 8.456358), over 1 from the vanilla price. (b) A test puts the barrier at the start level, answer 0. (c) A raise test for $p < 0$. 8 and 7 tests, 15 merged. The check runs six planted wrong versions (last layer only, strictly below, root never checked, $p < 0$ unchecked, discounted once, put flag ignored), each failing at least one test (6, 1, 1, 1, 10 and 3 tests).
+8. Fixed, with the two sentences the review gives, in the question and the starter comment. The check runs the four planted C2 versions the review names; each fails a test.
+9. Fixed. The prompt sets rates 0 and gamma 0.07; key £0.656, "about £0.66"; the model adds that gain and cost cancel when realised equals implied; rubric row 4 reads £0.65 or £0.66.
+10. Fixed as the review words the rubric (price first, then the variance link; the strip of options named).
+11. Fixed. The question gives $\Phi(1.5) = 0.9332$.
+12. Fixed. `stochastic` `pass: 0.6`; the check shows S2 and S3 alone fail and S2, S3 and one part of S1 pass.
+13. Fixed. `coding` `pass: 0.75`; the check shows C1 alone and C2 with one part fail, C2 with two parts passes.
+14. Fixed by the second option: C1's `pace` is 1,320 s, so the paces sum to 2,520 s of 2,700 s and the paper stays at 45 minutes (165 in all).
+15. Fixed. The key reads "The barrier falls between node levels, which move with `n`" (58 characters against 42, 53 and 58).
+16. Fixed with the review's wording.
+
+Counts: fixed 16, disputed 0, deferred 0 (the research mock's opening is noted, not changed).
+
+Gates:
+
+- `python3 docs/briefs/mocks-scripts/superday_strats_check.py`: `numbers_lib: 231 of 231 checks passed`, exit 0.
+- Validator: 0 errors, no line names the mock.
+- Voice scan on a copy: 0 sentences of 20 words or more (475 scanned), 0 explanations over three sentences.
+- `fresh-check --exam mock-superday-strats --min-run 10`: 0 hits.
+- Playthrough with `--local-cdn`: ok, 25 items, scored 20 of 20, passed; mock checks ok. With `--mobile`: the same.
+- `readiness-sums`: OK.
+- Graded answers changed: P5 key, R3 key, S1 both keys and slips, C1 test values and function name. R7's rubric figure and S3's text changed, with no new numeric key.

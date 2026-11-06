@@ -100,20 +100,20 @@ P4 = item('p4-poisson-thinning', 4, ['dl-discrete'], ['poisson-thinning'], 240, 
           'Seeing 10 cancels says nothing about the rest, so the answer is $18 \\times \\tfrac13 = 6$. '
           'Summing over the total count with the binomial split gives 6 too.')
 
-# P5 expected larger of two N(0, 2%^2)
-sig = 0.02
-emax = sig / math.sqrt(math.pi)
+# P5 expected larger of two correlated N(0, 2%^2) returns
+sig, rho5 = 0.02, 0.5
+emax = sig * math.sqrt((1 - rho5) / math.pi)
 P5 = item('p5-max-of-two-normals', 4, ['rv-expect'], ['max-of-two-normals'], 240, 'The better of two days',
-          'Two independent daily returns are each normal with mean 0 and standard deviation 2%. '
+          'Two daily returns are jointly normal, each with mean 0 and standard deviation 2%, with correlation 0.5. '
           'What is the expected value of the larger one?',
-          numeric(round(emax, 6), 0.00005, wr5 := [('abs-value', 0.015958, 0.00005, 'You gave $E|X| = \\sigma\\sqrt{2/\\pi}$ for one return. The larger of two is half of $E|X - Y|$.'),
-                                                   ('zero', 0, 0.00005, 'You used symmetry on the larger one. The larger of two is above 0 on average.'),
-                                                   ('sigma', 0.02, 0.00005, 'You gave one standard deviation, a guess with no calculation.')],
-                  placeholder='per cent, two decimals', unit='%', accept='1.13% ($\\sigma/\\sqrt{\\pi} = 0.01128$)'),
+          numeric(round(emax, 6), 0.00005, wr5 := [('no-correlation', 0.011284, 0.00005, 'You ignored the correlation and used $2\\%/\\sqrt{\\pi}$. A positive correlation pulls the two returns together.'),
+                                                   ('abs-value', 0.015958, 0.00005, 'You gave $E|X| = \\sigma\\sqrt{2/\\pi}$ for one return. The larger of two is half of $E|X - Y|$.'),
+                                                   ('zero', 0, 0.00005, 'You used symmetry on the larger one. The larger of two is above 0 on average.')],
+                  placeholder='per cent, two decimals', unit='%', accept='0.80% ($\\sigma\\sqrt{(1 - \\rho)/\\pi} = 0.00798$)'),
           fb('$\\max(X, Y) = \\tfrac12(X + Y) + \\tfrac12|X - Y|$.', 'Write the larger as the mean plus half the gap.', wr5),
-          'Write $\\max(X, Y) = \\tfrac12(X + Y) + \\tfrac12|X - Y|$, and $X - Y$ has standard deviation $2\\%\\sqrt2$. '
-          'So $E[\\max] = \\tfrac12 \\times 2\\%\\sqrt2 \\times \\sqrt{2/\\pi} = 2\\%/\\sqrt{\\pi} \\approx 1.13\\%$. '
-          'Integrating $2x\\varphi(x)\\Phi(x)$ numerically agrees.')
+          'Write $\\max(X, Y) = \\tfrac12(X + Y) + \\tfrac12|X - Y|$. '
+          'The gap $X - Y$ has standard deviation $2\\%\\sqrt{2(1 - 0.5)} = 2\\%$, so $E|X - Y| = 2\\%\\sqrt{2/\\pi}$. '
+          'Then $E[\\max] = \\tfrac12 \\times 2\\% \\times \\sqrt{2/\\pi} = 2\\%\\sqrt{0.5/\\pi} \\approx 0.80\\%$.')
 
 # ======================================================================== paper 2: pricing
 # R1 at-the-money rule of thumb: S 250, vol 20%, T 0.25, r 0
@@ -152,20 +152,20 @@ R2 = item('r2-parity-arbitrage', 3, ['op-parity'], ['parity-arbitrage'], 240, 'A
           'At expiry the stock settles the options and repays the £50 owed, whatever the price.')
 
 # R3 gamma and theta P&L of a hedged book
-G3, TH3, dS3, n3 = F(5, 100), F(-30, 100), 4, 200
+G3, TH3, dS3, n3 = F(4, 100), F(-40, 100), 5, 300
 pnl3 = n3 * (F(1, 2) * G3 * dS3 ** 2 + TH3)
-assert pnl3 == 20
+assert pnl3 == 30
 R3 = item('r3-gamma-theta', 4, ['op-greeks'], ['gamma-theta-pnl'], 300, 'A hedged day',
-          'You hold 200 calls, delta hedged. Each call has gamma 0.05 per pound and theta $-£0.30$ a day. '
-          'Today the stock moves £4. Estimate the day\u2019s P&L of the hedged book, in pounds.',
-          numeric(20, 0.5, wr7 := [('no-theta', 80, 0.5, 'You left out the theta of $-£0.30$ a call.'),
-                                   ('no-half', 100, 0.5, 'You used $\\Gamma (\\Delta S)^2$ without the half.'),
-                                   ('theta-only', -60, 0.5, 'You counted the theta but not the gamma gain.')],
-                  placeholder='pounds', unit='£', accept='£20'),
-          fb('$\\tfrac12 \\Gamma (\\Delta S)^2 + \\Theta$ a call, times 200.', 'A hedged option earns $\\tfrac12 \\Gamma (\\Delta S)^2$ and pays its theta.', wr7),
-          'Each call earns $\\tfrac12 \\times 0.05 \\times 4^2 = £0.40$ from gamma and pays £0.30 of theta. '
-          'That is £0.10 a call, so £20 for 200. '
-          'Repricing a quadratic value with that gamma and theta over the day gives £20 too.')
+          'You hold 300 calls, delta hedged. Each call has gamma 0.04 per pound and theta $-£0.40$ a day. '
+          'Today the stock moves £5. Estimate the day’s P&L of the hedged book, in pounds.',
+          numeric(30, 0.5, wr7 := [('no-theta', 150, 0.5, 'You left out the theta of $-£0.40$ a call.'),
+                                   ('no-half', 180, 0.5, 'You used $\\Gamma (\\Delta S)^2$ without the half.'),
+                                   ('theta-only', -120, 0.5, 'You counted the theta but not the gamma gain.')],
+                  placeholder='pounds', unit='£', accept='£30'),
+          fb('$\\tfrac12 \\Gamma (\\Delta S)^2 + \\Theta$ a call, times 300.', 'A hedged option earns $\\tfrac12 \\Gamma (\\Delta S)^2$ and pays its theta.', wr7),
+          'Each call earns $\\tfrac12 \\times 0.04 \\times 5^2 = £0.50$ from gamma and pays £0.40 of theta. '
+          'That is £0.10 a call, so £30 for 300. '
+          'Repricing a quadratic value with that gamma and theta over the day gives £30 too.')
 
 # R4 digital from a call spread
 C99, C101 = F(540, 100), F(430, 100)
@@ -224,52 +224,55 @@ R6 = item('r6-convergence-order', 3, ['nm-fd'], ['convergence-order'], 180, 'A f
           'This holds once the steps are small enough for the leading term to dominate.')
 
 # R7 longform: realised against implied
-G7, S7, vr, vi, T7 = 0.04, 100, 0.25, 0.20, 1 / 12
+G7, S7, vr, vi, T7 = 0.07, 100, 0.25, 0.20, 1 / 12
 pnl7 = 0.5 * G7 * S7 ** 2 * (vr ** 2 - vi ** 2) * T7
-assert abs(pnl7 - 0.375) < 1e-12
+assert abs(pnl7 - 0.65625) < 1e-12
 R7 = longform(
     'r7-realised-vs-implied', 5, ['op-greeks', 'tp-bs'], ['realised-vs-implied'], 900, 'Where the P&L comes from',
     'Answer aloud first. Then write your answer down, in 250 words or fewer.\n\n'
     'You buy a one-month at-the-money call at 20% implied volatility and delta hedge it daily. '
     'The stock then realises 25% volatility. Explain where your P&L comes from. '
-    'Then estimate it for a call with gamma 0.04 per pound, with the stock at £100. Take one month as $1/12$ of a year.',
+    'Then estimate it for a call with the stock at £100. Rates are 0. Take gamma as constant at 0.07 per pound, about its Black-Scholes value. '
+    'Take one month as $1/12$ of a year.',
     '*An example answer. Your own words are the real answer.*\n\n'
     'Each day the hedged call earns from gamma and pays theta. The gamma gain is $\\tfrac12 \\Gamma (\\Delta S)^2$. '
     'Theta is set by the implied volatility, so it costs $\\tfrac12 \\Gamma S^2 \\sigma_{imp}^2 \\Delta t$ a day.\n\n'
     'Over the month the P&L is about $\\tfrac12 \\Gamma S^2 (\\sigma_{real}^2 - \\sigma_{imp}^2) T$. '
-    'Here that is $\\tfrac12 \\times 0.04 \\times 100^2 \\times (0.0625 - 0.04) \\times \\tfrac1{12}$. '
-    'That is about £0.375 a call.\n\n'
+    'Here that is $\\tfrac12 \\times 0.07 \\times 100^2 \\times (0.0625 - 0.04) \\times \\tfrac1{12}$. '
+    'That is about £0.66 a call.\n\n'
+    'When realised equals implied, the gain and the cost cancel on average. '
     'So I make money because realised volatility beat implied, whichever way the stock went.\n\n'
     'Two caveats. Gamma changes as the stock moves, so the result depends on the path. '
     'Daily hedging also adds noise around this average.',
     [(2, 'Splits the daily P&L into a gamma gain and a theta cost'),
      (2, 'Says theta is priced at the implied volatility, so the two cancel when realised equals implied'),
      (2, 'Gives $\\tfrac12 \\Gamma S^2 (\\sigma_{real}^2 - \\sigma_{imp}^2) T$, or the same in words'),
-     (2, 'Estimates about £0.375 a call (£0.37 or £0.38 is fine)'),
+     (2, 'Estimates about £0.66 a call (£0.65 or £0.66 is fine)'),
      (1, 'Says the sign does not depend on the direction of the stock'),
      (1, 'Names one caveat: gamma moves with the path, or hedging is discrete')])
 
 # ======================================================================== paper 3: stochastic calculus
-# S1 W^4 - a t W^2 + b t^2 martingale: drift 6W^2 - aW^2 - a t + 2 b t = 0
-a_, b_ = 6, 3
+# S1 (W + a t) e^{W - t/2} martingale: drift (a + 1) e^{W - t/2} = 0, so a = -1; then E[W_2 e^{W_2 - 1}] = 2
+a_, e2 = -1, 2
 S1i = parts_item(
-    's1-fourth-power', 4, ['it-calculus', 'it-martingale'], ['martingale-correction'], 360, 'Correct the fourth power',
-    '$W_t$ is a standard Brownian motion. You want $W_t^4 - a\\,t\\,W_t^2 + b\\,t^2$ to be a martingale, with $a$ and $b$ constants.',
+    's1-exponential-correction', 4, ['it-calculus', 'it-martingale'], ['exponential-martingale'], 360, 'Correct an exponential',
+    '$W_t$ is a standard Brownian motion. You want $(W_t + a\\,t)\\,e^{W_t - t/2}$ to be a martingale, with $a$ a constant.',
     [part('What must $a$ be?',
-          numeric(a_, 0, wr11 := [('no-half', 12, 0, 'You took the second derivative $12W^2$ without the half from It\u00f4\u2019s lemma.'),
-                                  ('first-derivative', 4, 0, 'You matched the $dW$ coefficient $4W^3$, not the $dt$ term.')],
-                  placeholder='a whole number', accept='6'),
-          fb('The $dt$ term of $d(W^4)$ is $6W^2$.', 'Apply It\u00f4\u2019s lemma and set the $W_t^2\\,dt$ terms of the drift to 0.', wr11),
-          'It\u00f4 gives $d(W^4) = 4W^3\\,dW + 6W^2\\,dt$. '
-          'The term $-a\\,tW^2$ adds $-aW^2\\,dt$ to the drift, so $a = 6$.'),
-     part('What must $b$ be?',
-          numeric(b_, 0, wr12 := [('same-as-a', 6, 0, 'You set $b = a$. The $t\\,dt$ term from $d(tW^2)$ is $-a\\,t\\,dt$, which $2b\\,t\\,dt$ must cancel.'),
-                                  ('no-two', 1.5, 0, 'You forgot that $d(t^2) = 2t\\,dt$.')],
-                  placeholder='a whole number', accept='3'),
-          fb('$2b = a$, so $b = 3$.', 'Collect the $t\\,dt$ terms of the drift.', wr12),
-          'The product rule gives $d(tW^2) = W^2\\,dt + 2tW\\,dW + t\\,dt$, leaving $-6t\\,dt$ in the drift. '
-          'Then $d(b\\,t^2) = 2bt\\,dt$ cancels it when $b = 3$. '
-          'Check: $E[W_t^4] = 3t^2$ and $E[tW_t^2] = t^2$, so $3t^2 - 6t^2 + 3t^2 = 0$.')])
+          numeric(a_, 0, wr11 := [('sign-slip', 1, 0, 'You solved $a - 1 = 0$. The drift is $(a + 1)e^{W_t - t/2}$, so the sign flips.'),
+                                  ('zero', 0, 0, 'You set $a = 0$, taking $W_t e^{W_t - t/2}$ as a martingale. It has drift $e^{W_t - t/2}$.')],
+                  placeholder='a whole number', accept='-1'),
+          fb('The drift is $(a + 1)e^{W_t - t/2}$.', 'Apply the product rule with $d(e^{W_t - t/2}) = e^{W_t - t/2}\\,dW_t$ and set the drift to 0.', wr11),
+          'Write $M = e^{W_t - t/2}$, so $dM = M\\,dW$. '
+          'The product rule gives $d[(W + at)M] = M(dW + a\\,dt) + (W + at)M\\,dW + M\\,dt$. '
+          'The $dt$ terms are $(a + 1)M\\,dt$, so $a = -1$.'),
+     part('Use that martingale to find $E[W_2\\,e^{W_2 - 1}]$.',
+          numeric(e2, 0.005, wr12 := [('independent', 0, 0.005, 'You treated $W_2$ and $e^{W_2 - 1}$ as independent, so the product has mean 0.'),
+                                      ('no-compensator', 5.4366, 0.005, 'You left out the factor $e^{-1}$ and found $E[W_2\\,e^{W_2}] = 2e$.')],
+                  placeholder='two decimals', accept='2 (within 0.005)'),
+          fb('$E[(W_2 - 2)e^{W_2 - 1}] = 0$ and $E[e^{W_2 - 1}] = 1$.', 'A martingale started at 0 has mean 0. Split it into two expectations.', wr12),
+          'The martingale $(W_t - t)e^{W_t - t/2}$ starts at 0, so $E[(W_2 - 2)e^{W_2 - 1}] = 0$. '
+          'Hence $E[W_2 e^{W_2 - 1}] = 2E[e^{W_2 - 1}] = 2$, since $e^{W_t - t/2}$ has mean 1. '
+          'Integrating against the normal density of $W_2$ gives the same.')])
 
 # S2 median of GBM
 S0g, mu, sg, Tg = 40, 0.10, 0.40, 2
@@ -292,7 +295,7 @@ a3, s3, T3 = 3, 2, 1
 touch = 2 * (1 - Phi(a3 / (s3 * math.sqrt(T3))))
 S3i = item('s3-touch', 4, ['it-bm'], ['reflection-touch'], 300, 'Touching a level',
            'A price follows Brownian motion with no drift and volatility £2 per square-root day. '
-           'What is the chance it touches £3 above today\u2019s level within one day? Give three decimals.',
+           'What is the chance it touches £3 above today\u2019s level within one day? Take $\\Phi(1.5) = 0.9332$. Give three decimals.',
            numeric(round(touch, 4), 0.001, wr13 := [('no-reflection', 0.0668, 0.0005, 'You gave the chance it ends above the level. Reflection doubles it.'),
                                                     ('stays-below', 0.8664, 0.0005, 'You gave the chance it never touches.')],
                    placeholder='three decimals', accept=f'{touch:.3f} (within 0.001)'),
@@ -323,17 +326,17 @@ S4i = longform(
     'So log contracts plus a hedge replicate realised variance. '
     'That is how a variance swap is priced from a strip of options.',
     [(2, 'Applies It\u00f4\u2019s lemma to $\\ln S$ and gets the $-\\tfrac12\\sigma^2$ term'),
-     (2, 'Uses the risk-neutral drift $r$, not a real-world drift'),
-     (1, 'States $E[\\ln S_T] = \\ln S_0 + (r - \\tfrac12\\sigma^2)T$'),
-     (2, f'Discounts to about {price4:.2f}'),
-     (2, 'Links realised variance to $2\\int dS/S - 2\\ln(S_T/S_0)$, a hedge plus log contracts'),
-     (1, 'Reasons aloud in order and ends with the number')])
+     (2, 'Uses the risk-neutral drift $r$ and states $E[\\ln S_T] = \\ln S_0 + (r - \\tfrac12\\sigma^2)T$'),
+     (1, f'Discounts to about {price4:.2f}'),
+     (2, 'Writes realised variance as $2\\int dS/S - 2\\ln(S_T/S_0)$'),
+     (2, 'Names the $dS/S$ term as a delta hedge. Names the log term as a static position, priced from a strip of options'),
+     (1, 'Gives the price before moving on to the variance link')])
 
 # ======================================================================== paper 4: coding
-CRR1 = '''import math
+CRR1 = """import math
 
 
-def crr_call(S, K, T, r, sigma, n):
+def crr_value(S, K, T, r, sigma, n, call=True):
     if n < 1:
         raise ValueError("need at least one step")
     dt = T / n
@@ -343,15 +346,16 @@ def crr_call(S, K, T, r, sigma, n):
     if not 0 < p < 1:
         raise ValueError("no risk-neutral probability")
     disc = math.exp(-r * dt)
-    values = [max(S * u ** j * d ** (n - j) - K, 0.0) for j in range(n + 1)]
+    sign = 1 if call else -1
+    values = [max(sign * (S * u ** j * d ** (n - j) - K), 0.0) for j in range(n + 1)]
     for step in range(n - 1, -1, -1):
         values = [disc * (p * values[j + 1] + (1 - p) * values[j]) for j in range(step + 1)]
     return values[0]
-'''
-CRR2 = '''import math
+"""
+CRR2 = """import math
 
 
-def crr_call(S, K, T, r, sigma, n, barrier=None):
+def crr_value(S, K, T, r, sigma, n, call=True, barrier=None):
     if n < 1:
         raise ValueError("need at least one step")
     dt = T / n
@@ -361,6 +365,7 @@ def crr_call(S, K, T, r, sigma, n, barrier=None):
     if not 0 < p < 1:
         raise ValueError("no risk-neutral probability")
     disc = math.exp(-r * dt)
+    sign = 1 if call else -1
 
     def alive(price):
         return barrier is None or price > barrier
@@ -368,22 +373,39 @@ def crr_call(S, K, T, r, sigma, n, barrier=None):
     values = []
     for j in range(n + 1):
         price = S * u ** j * d ** (n - j)
-        values.append(max(price - K, 0.0) if alive(price) else 0.0)
+        values.append(max(sign * (price - K), 0.0) if alive(price) else 0.0)
     for step in range(n - 1, -1, -1):
         values = [disc * (p * values[j + 1] + (1 - p) * values[j]) if alive(S * u ** j * d ** (step - j)) else 0.0
                   for j in range(step + 1)]
     return values[0]
-'''
-START1 = 'import math\n\n\ndef crr_call(S, K, T, r, sigma, n):\n    """European call on an n-step Cox-Ross-Rubinstein tree."""\n    ...\n'
-START2 = CRR1.replace('def crr_call(S, K, T, r, sigma, n):', 'def crr_call(S, K, T, r, sigma, n, barrier=None):\n    # TODO: worth 0 at every node at or below the barrier')
+"""
+START1 = """import math
+
+
+def crr_value(S, K, T, r, sigma, n):
+    # A European call on an n-step Cox-Ross-Rubinstein tree.
+    # Add call=True (False prices a put) and the two input checks.
+    dt = T / n
+    u = math.exp(sigma * math.sqrt(dt))
+    d = 1 / u
+    p = (math.exp(r * dt) - d) / (u - d)
+    disc = math.exp(-r * dt)
+    values = [max(S * u ** j * d ** (n - j) - K, 0.0) for j in range(n + 1)]
+    for step in range(n - 1, -1, -1):
+        values = [disc * (p * values[j + 1] + (1 - p) * values[j]) for j in range(step + 1)]
+    return values[0]
+"""
+START2 = CRR1.replace('def crr_value(S, K, T, r, sigma, n, call=True):', 'def crr_value(S, K, T, r, sigma, n, call=True, barrier=None):\n    # TODO: worth 0 at every node at or below the barrier')
 
 ns1, ns2 = {}, {}
 exec(CRR1, ns1)
 exec(CRR2, ns2)
-calls1 = ['crr_call(100, 100, 1, 0.05, 0.2, 1)', 'crr_call(100, 95, 0.5, 0.03, 0.25, 3)', 'crr_call(80, 90, 2, 0.01, 0.3, 50)',
-          'crr_call(100, 100, 1, 0.05, 0.2, 1000)', 'crr_call(100, 0, 1, 0.05, 0.2, 10)']
-calls2 = ['crr_call(100, 100, 1, 0.05, 0.2, 50, 105)', 'crr_call(100, 100, 1, 0.05, 0.2, 200, 1)', 'crr_call(100, 100, 1, 0.05, 0.2, 4, 90)',
-          'crr_call(100, 95, 0.5, 0.03, 0.25, 12, 92)', 'crr_call(100, 100, 1, 0.05, 0.2, 400, 95)', 'crr_call(80, 90, 2, 0.01, 0.3, 50, None)']
+calls1 = ['crr_value(100, 95, 0.5, 0.03, 0.25, 3)', 'crr_value(80, 90, 2, 0.01, 0.3, 50)', 'crr_value(100, 100, 1, 0.05, 0.2, 1000)',
+          'crr_value(100, 105, 1, 0.04, 0.25, 10, call=False)', 'crr_value(60, 55, 0.75, 0.02, 0.35, 7, call=False)']
+calls2 = ['crr_value(100, 100, 1, 0.05, 0.2, 50, barrier=105)', 'crr_value(100, 100, 1, 0.05, 0.2, 200, barrier=1)',
+          'crr_value(100, 100, 1, 0.05, 0.2, 4, barrier=95)', 'crr_value(100, 95, 0.5, 0.03, 0.25, 12, barrier=92)',
+          'crr_value(100, 100, 1, 0.05, 0.2, 400, barrier=95)', 'crr_value(80, 90, 2, 0.01, 0.3, 50, call=False, barrier=70)',
+          'crr_value(100, 100, 1, 0.05, 0.2, 50, barrier=100)']
 TOL = {'rel': 1e-9, 'abs': 1e-9}
 
 
@@ -392,44 +414,46 @@ def pytest_(call, ns):
 
 
 tests1 = [pytest_(c, ns1) for c in calls1] + [
-    {'call': 'crr_call(100, 100, 1, 0.05, 0.2, 0)', 'expect': 'ValueError', 'compare': 'raises'},
-    {'call': 'crr_call(100, 100, 1, 0.5, 0.01, 1)', 'expect': 'ValueError', 'compare': 'raises'}]
+    {'call': 'crr_value(100, 100, 1, 0.05, 0.2, 0)', 'expect': 'ValueError', 'compare': 'raises'},
+    {'call': 'crr_value(100, 100, 1, 0.5, 0.01, 1)', 'expect': 'ValueError', 'compare': 'raises'},
+    {'call': 'crr_value(100, 100, 1, -0.5, 0.01, 1)', 'expect': 'ValueError', 'compare': 'raises'}]
 tests2 = [pytest_(c, ns2) for c in calls2]
-ex1 = [dict(t, expect=f'{float(t["expect"]):.6f}') for t in tests1[:2]]
-ex2 = [dict(t, expect=f'{float(t["expect"]):.6f}') for t in tests2[2:4]]
+ex1 = [dict(tests1[i], expect=f'{float(tests1[i]["expect"]):.6f}') for i in (0, 3)]
+ex2 = [dict(tests2[i], expect=f'{float(tests2[i]["expect"]):.6f}') for i in (2, 3)]
 for e in ex1 + ex2:
     e['tol'] = {'abs': 5e-7}
 C1 = parts_item(
-    'c1-barrier-tree', 4, ['tp-multistep', 'cx-pricers'], ['barrier-tree', 'crr-tree'], 1500, 'A tree, then a barrier',
-    'Price a call on a binomial tree, then change it when the interviewer adds a barrier.',
-    [part('Write `crr_call(S, K, T, r, sigma, n)`, a European call on an `n`-step Cox-Ross-Rubinstein tree. '
-          'The up factor is $e^{\\sigma\\sqrt{\\Delta t}}$ and the down factor is its inverse. '
-          'The risk-neutral up chance makes the stock grow at rate $r$. '
-          'Raise `ValueError` if `n` is below 1, or if `p` is not strictly between 0 and 1.',
+    'c1-barrier-tree', 4, ['tp-multistep', 'cx-pricers'], ['barrier-tree', 'crr-tree'], 1320, 'A tree, then a barrier',
+    'Extend a binomial tree pricer, then change it when the interviewer adds a barrier.',
+    [part('Here is a working European call pricer on an `n`-step Cox-Ross-Rubinstein tree. '
+          'Add `call=True`, so that `call=False` prices a put, which pays $\\max(K - S_T, 0)$. '
+          'The risk-neutral up chance `p` must lie strictly between 0 and 1. '
+          'Raise `ValueError` if `n` is below 1 or `p` is outside that range.',
           {'kind': 'code', 'language': 'python', 'starter': START1, 'examples': ex1, 'tests': tests1, 'solution': CRR1,
            'how': f'Submit runs {len(tests1)} hidden tests. Prices are accepted within a relative and absolute 1e-9.'},
-          fb('Backward induction with the risk-neutral $p$, discounting one step at a time.',
-             'Build the payoffs at the last layer, then step back with $e^{-r\\Delta t}(p V_{up} + (1 - p) V_{down})$.'),
-          'Each step back discounts the risk-neutral average of the two children. '
-          'With 1,000 steps the price is within a few pence of Black-Scholes.'),
+          fb('Flip the sign inside the payoff for a put, and test `n` and `p` before stepping back.',
+             'Only the last layer’s payoff changes for a put. Check `n` first, then compute `p` and test it.'),
+          'A put pays $\\max(K - S, 0)$, so only the payoff at the last layer changes. '
+          'Put-call parity holds exactly on the tree, $P = C - S + Ke^{-rT}$. '
+          'With 1,000 steps the call is within a few pence of Black-Scholes.'),
      part('The interviewer adds a down-and-out barrier. Add `barrier=None`. '
           'The option is worth 0 at any node where the price is at or below `barrier`. That includes the start and the last layer.',
           {'kind': 'code', 'language': 'python', 'starter': START2, 'examples': ex2, 'tests': tests2, 'solution': CRR2,
            'how': f'Submit runs {len(tests1) + len(tests2)} hidden tests: the {len(tests1)} from part 1 and {len(tests2)} new ones. '
                   'Prices are accepted within a relative and absolute 1e-9.'},
           fb('Zero every node at or below the barrier as you step back.',
-             'Check each node\u2019s price against the barrier at every layer, not only at the end.'),
+             'Check each node’s price against the barrier at every layer, the start included, not only at the end.'),
           'A dead node passes 0 to its parents, so every path that touches the barrier pays nothing. '
-          'Checking only the last layer gives a European call with a cut payoff, not a barrier.'),
+          'Checking only the last layer gives a European option with a cut payoff, not a barrier.'),
      part('As you raise `n`, your barrier price jumps up and down instead of settling. Why?',
-          choice(rng, [('The barrier falls between node levels, and that gap changes with `n`', None),
+          choice(rng, [('The barrier falls between node levels, which move with `n`', None),
                        ('Floating-point rounding builds up over the many steps',
                         'You blamed the arithmetic. Rounding moves prices by about 1e-12, and the jumps are far larger.'),
                        ('The risk-neutral $p$ leaves the range 0 to 1 for large `n`',
                         'You expected $p$ to fail. As `n` grows, $p$ tends to one half.'),
                        ('A barrier option has no limit as `n` grows',
                         'You expected no limit. The price tends to the continuous-barrier value, slowly.')]),
-          fb('The tree\u2019s effective barrier is the node level just below it.',
+          fb('The tree’s effective barrier is the node level just below it.',
              'Look at where the barrier sits between the nodes of the tree.'),
           'The tree knocks out at the first node level at or below the barrier. '
           'That level moves as `n` changes, so the price saws. '
@@ -460,8 +484,8 @@ VOL_START = '''#include <cmath>
 // Fix it: interpolate total variance, vol * vol * T,
 // linearly in time, and return the vol that it implies.
 // Before the first pillar keep its vol; after the last, likewise.
-// Return -1.0 if total variance falls between two pillars
-// (a calendar arbitrage).
+// Return -1.0 if any pillar's total variance is below the one before it
+// (a calendar arbitrage), wherever t is. Equal is allowed.
 double vol_at(const std::vector<double>& T, const std::vector<double>& vols, double t) {
     const std::size_t n = T.size();
     if (t <= T[0]) return vols[0];
@@ -497,7 +521,8 @@ C2i = item('c2-variance-interpolation', 4, ['cx-pricers', 'tp-bs'], ['variance-i
            prose='A desk quotes implied vols at a few maturities, the pillars. A colleague\u2019s C++ draft reads off the vol between them. '
            'It interpolates the vols linearly in time.',
            question='Fix `vol_at(T, vols, t)` in C++. Interpolate total variance, $\\sigma^2 T$, linearly in time, and return the vol it implies. '
-           'Keep the end pillars\u2019 vols outside the range. Return -1.0 if total variance ever falls between pillars.',
+           'Keep the end pillars\u2019 vols outside the range. Return -1.0 if any pillar\u2019s total variance is below the one before it, wherever `t` is. '
+           'Equal total variances are allowed.',
            widget={'kind': 'code', 'language': 'cpp', 'starter': VOL_START, 'solution': VOL_SOL,
             'signature': 'double vol_at(const std::vector<double>&, const std::vector<double>&, double)',
             'examples': [dict(vol_tests[0], expect=round(vol_tests[0]['expect'], 6), tol={'abs': 5e-7}),
@@ -530,7 +555,7 @@ F1 = longform(
      (3, 'One piece of their own evidence with a number or an outcome'),
      (2, 'Names something hard about the role and how they handle it'),
      (1, 'Says why strats rather than trading or research'),
-     (1, 'About 90 seconds, with no stock phrases')])
+     (1, 'About 90 seconds, and no line that would fit any firm, such as "I am passionate about markets"')])
 F2 = longform(
     'f2-model-disagrees', 3, ['rk-behave'], ['model-versus-market'], 450, 'The trader disagrees',
     'Answer aloud first. Then write your answer down, in 200 words or fewer.\n\n'
@@ -556,10 +581,10 @@ doc = {
     'id': 'mock-superday-strats',
     'name': 'Strats superday',
     'style': 'strats',
-    'models': 'Reported, as of Nov 2026: strats and desk quant final rounds at Goldman Sachs, Morgan Stanley and JP Morgan. '
-              'Derivatives, stochastic calculus, probability, coding and fit.',
-    'description': 'This is the reported shape of a bank strats final-round day, as candidates described it by Nov 2026. '
-                   'Goldman Sachs, Morgan Stanley and JP Morgan report rounds like these. '
+    'models': 'Reported, as of Nov 2026: strats final rounds at Goldman Sachs and Morgan Stanley, quant research at JP Morgan. '
+              'Probability, coding, Greeks; stochastic calculus in older reports.',
+    'description': 'This mock is built from reports of bank strats final rounds, as candidates described them by Nov 2026. '
+                   'Goldman Sachs, Morgan Stanley and JP Morgan candidates report rounds like these. '
                    'There are five papers, each on its own clock. '
                    'They cover probability, derivatives pricing and risk, stochastic calculus, coding and fit. '
                    'Real rounds are spoken, so say each answer aloud before you type it. '
@@ -579,9 +604,9 @@ doc = {
          'items': [P1, P2, P3, P4, P5]},
         {'kind': 'paper', 'id': 'pricing', 'name': 'Derivatives pricing and risk', 'minutes': 45, 'scoring': SCORE, 'pass': 0.6,
          'items': [R1, R2, R3, R4, R5, R6, R7]},
-        {'kind': 'paper', 'id': 'stochastic', 'name': 'Stochastic calculus', 'minutes': 30, 'scoring': SCORE, 'pass': 0.5,
+        {'kind': 'paper', 'id': 'stochastic', 'name': 'Stochastic calculus', 'minutes': 30, 'scoring': SCORE, 'pass': 0.6,
          'items': [S1i, S2i, S3i, S4i]},
-        {'kind': 'paper', 'id': 'coding', 'name': 'Coding', 'minutes': 45, 'scoring': SCORE, 'pass': 0.5, 'items': [C1, C2i]},
+        {'kind': 'paper', 'id': 'coding', 'name': 'Coding', 'minutes': 45, 'scoring': SCORE, 'pass': 0.75, 'items': [C1, C2i]},
         {'kind': 'paper', 'id': 'fit', 'name': 'Fit and motivation', 'minutes': 15, 'scoring': SCORE, 'pass': 0.5, 'items': [F1, F2]},
         {'kind': 'check', 'id': 'derivation-aloud', 'name': 'I derived one result aloud to a listener, start to finish',
          'detail': 'Tick this only if someone heard every step and you read nothing from notes.'},
