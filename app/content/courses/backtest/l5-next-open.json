@@ -863,7 +863,7 @@
    "type": "explore",
    "difficulty": 1,
    "title": "Where the fill happens",
-   "prose": "The honest rule decides at the close and trades after. It can fill at that same close, or at the next open. In `make_bars()` half of each day's move happens overnight. The slider rebuilds the bars with a different overnight share; the closes stay the same.",
+   "prose": "The honest rule decides at the close and trades after. A close-to-close backtest fills it at that same close; a real order fills at the next open at the earliest. In `make_bars()` half of each day's move happens overnight. The slider rebuilds the bars with a different overnight share; the closes stay the same.",
    "canvas": {
     "kind": "bars",
     "params": {
@@ -933,7 +933,7 @@
       "step": 0.1,
       "start": 0.5,
       "decimals": 1,
-      "label": "Share of each move that happens overnight"
+      "label": "Overnight share"
      }
     ]
    },
@@ -1509,7 +1509,7 @@
      }
     ],
     "prelude": "import numpy as np, pandas as pd\n\ndef make_bars(n=1260, seed=2301, mu=0.0003, sigma=0.012, phi=0.06):\n    rng = np.random.default_rng(seed)\n    eps = sigma * rng.standard_normal(n)\n    r = np.empty(n)\n    prev = 0.0\n    for t in range(n):\n        r[t] = mu + phi * prev + eps[t]        # AR(1) log returns: weak momentum\n        prev = r[t] - mu\n    close = 100 * np.exp(np.cumsum(r))\n    prev_close = np.r_[100.0, close[:-1]]\n    gap = 0.5 * r + 0.002 * rng.standard_normal(n)   # half of each day's move is overnight\n    open_ = prev_close * np.exp(gap)\n    w = sigma * 0.5 * np.abs(rng.standard_normal((2, n)))\n    high = np.maximum(open_, close) * np.exp(w[0])\n    low = np.minimum(open_, close) * np.exp(-w[1])\n    volume = np.round(rng.lognormal(np.log(2e6), 0.3, n))\n    idx = pd.bdate_range(\"2019-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef hand_bars():\n    # six hand-made bars, Monday 4 March 2024 to Monday 11 March 2024\n    o = [100.0, 101.0, 99.5, 102.0, 103.0, 101.5]\n    c = [100.5, 100.0, 101.5, 102.5, 102.0, 103.0]\n    v = [1_000_000, 2_000_000, 500_000, 1_000_000, 4_000_000, 1_000_000]\n    return pd.DataFrame({\"open\": o, \"high\": [max(a, b) + 0.5 for a, b in zip(o, c)],\n                         \"low\": [min(a, b) - 0.5 for a, b in zip(o, c)], \"close\": c,\n                         \"volume\": [float(x) for x in v]},\n                        index=pd.bdate_range(\"2024-03-04\", periods=6))\n\ndef iso(index):\n    return [d.strftime(\"%Y-%m-%d\") for d in index]\n\n# level 1 pieces, already defined (as written in l3 and l4)\ndef momentum_signal(close, lookback):\n    \"\"\"+1, -1 or 0 at each bar: the sign of the lookback-day return, 0 where undefined.\"\"\"\n    return np.sign(close.pct_change(lookback)).fillna(0)\n\ndef target_positions(signal, max_units):\n    \"\"\"Whole shares to hold: signal times max_units, NaN as 0, capped at +/- max_units.\"\"\"\n    s = pd.Series(signal, dtype=float)\n    s = s.fillna(0).clip(-1, 1)           # no signal yet: hold nothing\n    return np.round(s * max_units).astype(int)\n\ndef orders_from_targets(targets):\n    \"\"\"Shares to trade each day: today's target minus yesterday's, from flat on day 0.\"\"\"\n    t = pd.Series(targets)\n    orders = t.diff()\n    orders.iloc[0] = t.iloc[0]            # day 0 builds its target from nothing\n    return orders\n\nclass Portfolio:\n    def __init__(self, cash):\n        self.cash = float(cash)\n        self.shares = 0\n\n    def fill(self, qty, price, cost=0.0):\n        \"\"\"Buy qty shares (sell if negative) at price, paying cost.\"\"\"\n        if qty == 0:\n            return                          # no trade, no cost\n        self.cash -= qty * price + cost     # a sale (qty < 0) raises cash\n        self.shares += qty\n\n    def equity(self, price):\n        \"\"\"Cash plus the shares marked at price.\"\"\"\n        return self.cash + self.shares * price\n\ndef sharpe(returns, periods=252):\n    \"\"\"Annualised Sharpe ratio: sqrt(periods) * mean / sample sd (as in l9).\"\"\"\n    r = pd.Series(returns, dtype=float).dropna()\n    if len(r) < 2:\n        return 0.0\n    sd = r.std(ddof=1)\n    if sd < 1e-12:                # no spread: rounding noise is not risk\n        return 0.0\n    return float(np.sqrt(periods) * r.mean() / sd)\n\ndef fill_at_next_open(orders, bars):\n    o = np.asarray(orders)[:-1]\n    t = np.flatnonzero(o != 0) + 1\n    return pd.Series(bars[\"open\"].to_numpy()[t], index=bars.index[t])\n\nclass _Spy(Portfolio):\n    log = []\n\n    def fill(self, qty, price, cost=0.0):\n        if qty != 0:\n            _Spy.log.append((int(qty), round(float(price), 6)))\n        super().fill(qty, price, cost)\n\ndef fills_seen(bars, targets):\n    # runs your backtest with a Portfolio that records every fill it is given\n    g = globals()\n    real = g[\"Portfolio\"]\n    _Spy.log = []\n    g[\"Portfolio\"] = _Spy\n    try:\n        backtest(bars, targets)\n    finally:\n        g[\"Portfolio\"] = real\n    return list(_Spy.log)\n",
-    "how": "Check runs 8 hidden tests on `hand_bars()` and `make_bars(60)`: every row of shares, cash and equity (rounded to 2 places), a run with no trades, a cost function, and a spy `Portfolio` that records each fill's price, which must be the next row's open. Compared with ==. `orders_from_targets`, `fill_at_next_open` and `Portfolio` are already defined."
+    "how": "Check runs 8 hidden tests on `hand_bars()` and `make_bars(60)`: every row of shares, cash and equity (rounded to 2 places), a run with no trades and a cost function. A spy `Portfolio` records each fill's price, which must be the next row's open. Compared with ==. `orders_from_targets`, `fill_at_next_open` and `Portfolio` are already defined."
    },
    "hints": [
     {
@@ -1698,7 +1698,7 @@
     "options": [
      {
       "id": "auction",
-      "text": "The order can be sent after the close, and the auction trades a large volume at one price.",
+      "text": "It is sent after the close, and the auction gives it one real price.",
       "correct": true
      },
      {
@@ -1733,15 +1733,15 @@
     },
     {
      "rung": "step",
-     "text": "The order exists in time, and the auction is one price at which many shares change hands."
+     "text": "The order exists in time, and the auction sets one real price for every order in it."
     }
    ],
    "feedback": {
-    "correct": "The order exists in time, and the auction gives one real, liquid price.",
+    "correct": "The order exists in time, and the auction gives it one real price.",
     "generic": "Not quite right. Ask whether the order could exist before the auction, and what the auction offers."
    },
    "explain": {
-    "text": "The order is placed after the close it reads and before the auction it fills in. The auction is a single price at which much of the morning's volume trades. It is still not free: costs come next lesson."
+    "text": "The order is placed after the close it reads and before the auction it fills in. The auction sets one price for every order in it, though a large order moves that price. It is still not free: costs come next lesson."
    }
   }
  ],
@@ -1762,7 +1762,7 @@
   {
    "id": "q-holiday",
    "difficulty": 2,
-   "prose": "A signal is computed at the close of Friday 22 April 2022. The next bar in the file is Tuesday 26 April, after the Easter holiday.",
+   "prose": "A signal is computed at the close of Friday 26 August 2022. The next bar in the file is Tuesday 30 August, after the August bank holiday.",
    "question": "Where does the order fill?",
    "widget": {
     "kind": "choice",
@@ -1850,7 +1850,7 @@
      {
       "id": "sm1",
       "text": "`signal.shift(-1) * r`",
-      "why": "You shifted the wrong way. `shift(-1)` pairs today's return with tomorrow's signal, a worse leak."
+      "why": "You shifted the wrong way. `shift(-1)` pairs today's return with tomorrow's signal, which is not known until tomorrow's close."
      }
     ]
    },

@@ -135,3 +135,64 @@ Notation across L1 and L2 is consistent: targets and orders in shares with sales
 - `fresh-check.mjs --file` on a course set still fails (seen again; already in the inbox), so set freshness was checked by grep.
 
 No engine change is needed for the content fixes above.
+
+
+## Fix pass
+
+Edits are targeted (string and object replacement at the named JSON paths; no file regenerated, no `course.json` or lesson id touched). Every corrected number was recomputed before writing; `docs/reports/backtest-L1-numbers.py` and `backtest-L2-numbers.py` now check the new values only (old wording must be absent, new wording present), so reverting a fix fails them.
+
+1. fixed. "four bars ahead" (pandas: 10-bar centred window at t spans t-5 to t+4).
+2. fixed. "nine bars ahead" (20-bar centred window spans t-10 to t+9).
+3. fixed. 337 of 1,260 (recomputed: `(v != v.shift(-1).fillna(0)).sum()` = 337).
+4. fixed. Friday 26 August 2022, Tuesday 30 August, after the August bank holiday. Basis: computus gives Easter 2022 = 17 April; the summer bank holiday is the last Monday of August (Banking and Financial Dealings Act 1971, Sch. 1), here Monday 29 August 2022. Script checks both.
+5. fixed. `shift(-1)` option now says tomorrow's signal is not known until tomorrow's close; recomputed Sharpe of `signal.shift(-1) * r` is 1.05 against 20.38, checked in the script.
+6. fixed. "about 1.6 times as many shares" in explanation and option why (recomputed 12.25m / 7.73m = 1.585, rounds to 1.6); 0.60 and 0.51 rechecked.
+7. fixed. "about every other day" (612 of 1,259 days, 48.6%).
+8. fixed. review-2 items[8] prose: next-open 0.57 now attributed to the vectorised rule (0.5656 from l5's sweep); engine 0.604 is not claimed.
+9. fixed. homework-2 items[7] `widget.prompt` now states the close fill, no costs and the £50m order against £20m a day.
+10. fixed. Wrong entry id `linear`, value 100,000 (recomputed: 0.012 x (Q/V) x 10^4 = 6 gives Q/V = 0.05, 100,000 shares); byKey key renamed to `linear` with the reader's text. Graded answer unchanged (5,000); one wrong-answer value changed (10,000 to 100,000).
+11. fixed. Basis: yfinance changed the `auto_adjust` default between releases (False to True in 0.2.51), so the lambda no longer passes it in the prose and the explanation says to pass it explicitly (`auto_adjust=False` in level 4).
+12. fixed. l5 screens[1] prose no longer offers the same-close fill as a real choice.
+13. fixed. Option, hint 2, correct feedback and explanation drop the "large volume" claim and keep only what `micro` l12 states (one uncross price for every order, which a large order still moves). Basis: micro l12 describes the uncross price, not a volume share, so nothing unverified remains in the text.
+14. fixed (method; prose made to state what the code does). l7 screens[4] now says "a careful engine caps ... and carries the rest"; screens[8] says this engine leaves the cap out, its largest test book (£10m, 10x the base 10,000 shares) flips about 200,000 shares, 10% of V = 2,000,000, so a cap would barely bite; summary idea no longer says "our engine". Basis: the `backtest_with_impact` solution never calls `capped_qty` (script asserts it) and the order layer is a diff of targets. The cap itself stays taught as a function (`capped_qty`, l7 screens[7], quiz) and as a pre-trade tool; wiring it into the engine would need a screen rewrite, deferred (see Deferred).
+15. fixed. screens[7] explanation and quiz[1] explanation as proposed; `slippage_bp(300, 2_000_000, 0.012)` = 1.47 bp, "about 1.5 bp".
+16. fixed. l8 screens[9] explain now says "A complete one also says what it does not cover".
+17. fixed. Engine B holds $10{,}000 \times 0.005 / \text{vol}$ shares (4,106 on make_bars, checked).
+18. fixed. screens[3] says it shows the cut form and that B fails both forms. Basis: the script runs B against the cut run and against the noise run separately; each differs from the full run on the first 250 rows.
+19. fixed. l1 screens[10] prose states the same fill prices and no costs; basis: a gap between runs sharing fills and costs can only come from the future or a bug, which is what the options assume.
+20. fixed. review-1 items[1] explanation names the option by its code.
+21. fixed (superseded by finding 35): homework-2 items[6] replaced, so the 0.82 against 0.57 sentence is gone.
+22. fixed. l7 screens[10] says "these same five years (l13 asks what that choice is worth)". Basis: l13 screens[0] picks lookback 2 on the same five years.
+23. fixed. l2 screens[0] no longer cites curriculum.md.
+24. fixed. l6 quiz[3] prose "after commission, before any spread". Graded answer unchanged.
+25. fixed. l3 screens[9] prose reworded; 5% of 2,000,000 = 100,000 unchanged.
+26. fixed. 1.17p over the best ask on average, the last 1,500 shares 3p over (recomputed: 600,190 / 6,000 = 100.03167).
+27. deferred. The edit is on l16 (level 4), outside this fix pass's files; the level 3 and 4 reader and fixer own it. Needed: the lines given in the finding, which also make l16 consistent with l2 screens[9]'s level-4 promise (now `lambda t, s, e` with no `auto_adjust` in the prose, `auto_adjust=False` named in the explanation).
+28. fixed. l6 screens[1] prose gains the sentence on 0.60 against l5's 0.57 (engine P&L in pounds over fixed 10,000 shares; recomputed 0.604 against 0.5656).
+29. fixed. l7 screens[4] explanation ends: the order must be target minus the shares actually held. Basis: with a partial fill, holding differs from yesterday's target, so target minus yesterday's target would over-order.
+30. fixed. l4 quiz[3]: short 120, £36.75 to £37.10, answer -42 (recomputed -120 x 0.35); wrong `sign` 42. Graded answer changed: +40 to -42.
+31. fixed. review-1 items[4]: third request returns the 2020 to 2022 MSFT file; 2018, 2019 and 2023 lost. Graded option text changed, key id unchanged.
+32. fixed. homework-1 items[7]: the interval is the changed input; correct option and wrong-option why rewritten. Graded answer text changed.
+33. fixed. review-2 items[2]: 72,000 on 800,000, 1.5%: sqrt(0.09) = 0.3, 0.0045, 45 bp; wrongs 13.5 and 450 (recomputed). Graded answer changed: 44.72 to 45.
+34. fixed. review-2 items[5]: 180,000 on 1,200,000 then 400,000: 120,000 and 40,000 filled, 20,000 left; wrongs 60,000 and 0 (recomputed). Graded answer changed: 100,000 to 20,000.
+35. fixed. review-2 items[3] (late leak passes cuts 100 and 200; script runs `late_engine`: True at 100 and 200, False at 350) and homework-2 items[6] (cost read from the fill row's close, invisible to the check). Option ids renamed to match. Graded answers changed in meaning (new setups), correct option still first.
+36. fixed. l3 screens[0] explanation is three sentences.
+37. fixed. All eleven sentences rewritten as proposed (L1 and L2 files only). The voice scan reports 0 sentences over 35 words and 0 long explanations in L1 and L2 (the 8 and 1 remaining tree-wide are L3, L4 and l14, not touched).
+38. fixed. Four choice sets shortened to near-equal lengths as proposed (l2 screens[6], l8 screens[9], review-2 items[8], homework-2 items[8]).
+39. fixed. "Close (£)" column removed from l4 screens 0, 3 and 4 and the closes added to the prose; no hint or byKey names a moved cell (checked: only screens 1 and 2 use cell ids, on other tables).
+40. fixed. l8 screens 1 to 3: dates "14 Apr", shares in thousands, equity in £k with the headers and values given (each value recomputed from the engine; script compares the whole tables).
+41. fixed. Label "Overnight share".
+42. fixed. l2 screens[4]: "Volume (000s)" with rounded values and "−1.2"; hint 2 updated.
+
+Method points (c): l7 "our engine caps" and its summary line now state what the engine does (finding 14); the l7 lookback choice is now labelled in-sample with a pointer to l13 (finding 22); the l16 ticker-only cache key is deferred (finding 27).
+
+### Deferred
+- Finding 27 (l16 screens[6], level 4 file).
+- Wiring `capped_qty` into `backtest_with_impact` so the order carries a leftover (finding 14, the other half of "make the code do what the prose claims"): needs orders as target minus holding in the engine layer, l3 order screens and a new l7 code solution with hidden tests, a screen-level rewrite. The lesson now teaches the correct method without it.
+
+### Gates
+- `python3 docs/reports/backtest-L1-numbers.py`: exit 0, 184 of 184. `python3 docs/reports/backtest-L2-numbers.py`: exit 0, 252 of 252 (checks now new-value only).
+- `VOICE_BASE=app/content/courses/backtest python3 docs/reviews/voice-scan.py 35`: 0 sentences over 35 words and 0 long explanations in L1 and L2 files (tree-wide leftovers are L3, L4 and l14, not touched).
+- `node tools/validate.mjs`: 0 errors.
+- Playthrough with `--local-cdn`, each alone, desktop and `--mobile`: l1 to l8, review-1, review-2, homework-1, homework-2, 24 of 24 exit 0, "All passed".
+- No code solution or starter was edited (only `how` text), so the CPython solution-passes and starter-fails state from the read is unchanged.

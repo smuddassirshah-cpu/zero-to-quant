@@ -94,12 +94,14 @@ E('l1', 'quiz[1].widget.answer', 20)
 # quiz[2]: a 10-bar centred window covers t-5..t+4 (four bars ahead, not five)
 m10 = ar.rolling(10, center=True).mean()
 claim('l1 quiz[2] centred 10-window at t covers t-5..t+4', m10[6] == np.mean(np.arange(1, 11)))
-stated('l1', 'quiz[2].feedback.correct', 'five bars ahead', False)   # FINDING: it reaches four bars ahead
+stated('l1', 'quiz[2].feedback.correct', 'five bars ahead', False)
+claim('l1 quiz[2] feedback now says four bars ahead (fix kept)', 'four bars ahead' in lv.text('l1', 'quiz[2].feedback.correct'))
 # quiz[3]: a shift(-1) on vector_targets(close, 3) disagrees on 337 of 1,260 bars, not 412
 v3 = np.sign(b.close.pct_change(3)).fillna(0)
 n_dis = int((v3 != v3.shift(-1).fillna(0)).sum())
 claim('l1 quiz[3] shift(-1) disagreement count is 337', n_dis == 337)
-E('l1', 'quiz[3].prose', n_dis)                                          # FINDING: the prose says 412
+E('l1', 'quiz[3].prose', n_dis)
+claim('l1 quiz[3] prose no longer says 412', '412' not in lv.text('l1', 'quiz[3].prose'))
 E('l1', 'quiz[3].prose', len(b))
 
 # ---------- l2 ----------
@@ -111,7 +113,7 @@ claim('l2 screens[1] network lines are l2 and l6 (1-based)', [i + 1 for i, l in 
 t4 = J('l2', 'screens[4].canvas.params.rows')
 bad = []
 for i, (d, o, h, lo, c, v) in enumerate(t4):
-    o, h, lo, v = float(o), float(h), float(lo), float(v.replace(',', ''))
+    o, h, lo, v = float(o), float(h), float(lo), float(v.replace('−', '-').replace(',', ''))   # volumes now in thousands
     c = float(c) if c else None
     why = []
     if i and d <= t4[i - 1][0]:
@@ -132,6 +134,7 @@ E('l2', 'screens[4].explain.text', 97.70)
 E('l2', 'screens[4].explain.text', 97.75)
 E('l2', 'screens[4].explain.text', 98.43)
 E('l2', 'screens[4].explain.text', 98.40)
+claim('l2 screens[4] volumes are in thousands, first row 2,424 and the planted row -1.2', (t4[0][5], t4[10][5]) == (f'{2424184 / 1000:,.0f}', '−1.2') and 'Volume (000s)' in J('l2', 'screens[4].canvas.params.columns'))
 claim('l2 screens[4] byKey.r8 high 99.47 above open and close', float(t4[8][2]) >= max(float(t4[8][1]), float(t4[8][4])))
 claim('l2 screens[4] row 4 skips one business day (7 Jan)', int(np.busday_count('2019-01-04', '2019-01-08')) == 2)
 # screens[5] byKey test-9: seven missing business days -> busday_count 8
@@ -190,19 +193,19 @@ for day, (q, p) in {1: (100, 50.10), 2: (0, 0), 3: (50, 49.70), 4: (-150, 50.60)
 claim('l4 ledger cash/shares/equity', ledger == [(4989.0, 100, 10029.0), (4989.0, 100, 9969.0), (2503.0, 150, 10033.0),
                                                    (10092.0, 0, 10092.0), (14171.0, -80, 10067.0), (14171.0, -80, 10107.0)])
 E('l4', 'screens[0].widget.rows[1][2].answer', ledger[0][0])
-E('l4', 'screens[0].widget.rows[1][5].answer', ledger[0][2])
-E('l4', 'screens[0].widget.rows[2][5].answer', ledger[1][2])
+E('l4', 'screens[0].widget.rows[1][4].answer', ledger[0][2])
+E('l4', 'screens[0].widget.rows[2][4].answer', ledger[1][2])
 E('l4', 'screens[0].explain.text', ledger[0][2] - ledger[1][2])          # equity fell £60
 E('l4', 'screens[1].widget.answer', (10_000 - 4989) / 100)               # 50.11
 E('l4', 'screens[1].feedback.byKey.fill', 4989 + 100 * 50.10)            # 9,999
 E('l4', 'screens[1].feedback.byKey.start', 4989 + 100 * 50.00)           # 9,989
 E('l4', 'screens[2].widget.answer', 4989 + 100 * 50.10 - 10_000)
 E('l4', 'screens[3].widget.rows[1][2].answer', ledger[2][0])
-E('l4', 'screens[3].widget.rows[1][5].answer', ledger[2][2])
+E('l4', 'screens[3].widget.rows[1][4].answer', ledger[2][2])
 E('l4', 'screens[3].widget.rows[2][2].answer', ledger[3][0])
 E('l4', 'screens[3].explain.text', ledger[3][2] - 10_000)                # £92
 E('l4', 'screens[4].widget.rows[1][2].answer', ledger[4][0])
-E('l4', 'screens[4].widget.rows[1][5].answer', ledger[4][2])
+E('l4', 'screens[4].widget.rows[1][4].answer', ledger[4][2])
 E('l4', 'screens[4].explain.text', -round(80 * 51.30, 2))                # -£4,104
 E('l4', 'screens[4].explain.text', ledger[3][2] - ledger[4][2])          # £25
 E('l4', 'screens[5].widget.answer', round(-80 * (50.80 - 51.30), 2))
@@ -216,9 +219,19 @@ E('l4', 'quiz[1].explain.text', 200 * 0.25 - 1)                          # £49
 qc = 20_000 + 100 * 40 - 2
 E('l4', 'quiz[2].widget.options[0].text', qc)
 E('l4', 'quiz[2].widget.options[0].text', qc - 100 * 40)
-# l4 quiz[3]: now a copy of screens[5]; review finding gives fresh numbers (-120 x 0.35 = -42). Either passes.
-claim('l4 quiz[3] answer: -80 x (50.80 - 51.30) now, or -120 x (37.10 - 36.75) after the fix',
-      J('l4', 'quiz[3].widget.answer') in (round(-80 * (50.80 - 51.30), 2), round(-120 * (37.10 - 36.75), 2)))
+# l4 quiz[3]: fresh numbers, -120 x (37.10 - 36.75) = -42 (new value only)
+q3 = round(-120 * (37.10 - 36.75), 2)
+claim('l4 quiz[3] answer is -120 x (37.10 - 36.75) = -42', J('l4', 'quiz[3].widget.answer') == q3 == -42)
+claim('l4 quiz[3] wrong sign value is +42', J('l4', 'quiz[3].widget.wrong[0].value') == -q3)
+E('l4', 'quiz[3].explain.text', -120)
+E('l4', 'quiz[3].explain.text', 37.10)
+E('l4', 'quiz[3].explain.text', 36.75)
+E('l4', 'quiz[3].feedback.byKey.sign', 0.35)
+# l4 closes moved from the tables into the prose (finding 39)
+for sc, days in ((0, (1, 2)), (3, (3, 4)), (4, (5,))):
+    for dd in days:
+        E('l4', f'screens[{sc}].prose', px[dd])
+    claim(f'l4 screens[{sc}] ledger has no Close column', 'Close (£)' not in J('l4', f'screens[{sc}].widget.columns'))
 
 # ---------- review-1 ----------
 E('review', 'items[0].widget.answer', sum(range(1, 251)))
@@ -233,7 +246,11 @@ E('review', 'items[7].widget.wrong[0].value', cs)
 E('review', 'items[7].widget.wrong[1].value', cs + 150 * 39.20)
 E('review', 'items[7].widget.wrong[2].value', cs - 150 * 40)
 E('review', 'items[7].explain.text', -150 * 39.20)
-stated('review', 'items[1].explain.text', 'Only the first', False)       # FINDING: names an option by place
+stated('review', 'items[1].explain.text', 'Only the first', False)
+claim('review-1 items[1] explain names the option by its code', 'np.sign(close.pct_change(5)).fillna(0)' in lv.text('review', 'items[1].explain.text'))
+# review-1 items[4]: MSFT 2020 to 2022 cached; the third request (MSFT 2018 to 2023) loses 2018, 2019 and 2023
+lost = sorted(set(range(2018, 2024)) - set(range(2020, 2023)))
+claim('review-1 items[4] years lost are 2018, 2019, 2023', lost == [2018, 2019, 2023] and all(str(y) in lv.text('review', 'items[4].explain.text') for y in lost))
 
 # ---------- homework-1 ----------
 sig = [np.nan, np.nan, 0.4, 0.4, -0.6, 1.3, 0]
@@ -253,7 +270,8 @@ E('homework', 'items[5].feedback.generic', c1)
 # items[4]: rolling(20, center=True) reads nine bars ahead, not ten
 ar40 = pd.Series(np.arange(40.0))
 claim('homework-1 items[4] centred 20-window at t covers t-10..t+9', ar40.rolling(20, center=True).mean()[20] == np.mean(np.arange(10, 30)))
-stated('homework', 'items[4].explain.text', 'reads ten bars ahead', False)   # FINDING: nine
+stated('homework', 'items[4].explain.text', 'reads ten bars ahead', False)
+claim('homework-1 items[4] explain now says nine bars ahead', 'nine bars ahead' in lv.text('homework', 'items[4].explain.text'))
 # items[0]: 14 trades on make_bars(60), so the £1 fee costs £14
 gh = {}
 exec(J('homework', 'items[0].widget.prelude'), gh)
