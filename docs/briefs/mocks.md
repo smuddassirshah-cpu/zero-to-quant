@@ -1181,3 +1181,118 @@ These supersede the figures above where they differ. The generator scripts in `d
 - `mock-superday-research`: `requires` is `["research-int/L4"]` only, so the prerequisite lists above are citations. `models` is two sentences. Paces: C1 1,350 s, C2 1,080 s, K1 1,080 s, K2 1,350 s, M5 360 s and M6 300 s, so the coding and case papers sum to 2,430 s of 2,700 s and the ML paper to 1,620 s of 1,800 s. M1 and M4 ask for two decimals and accept within 0.005. The K1 and K2 rubrics reward the reasoning with an approximate figure (standard error about 1.6 points, $z$ about 1.5, $t$ about 1.3), and the exact values stay in the model answers.
 - `mock-oa-quant-data`: Q3 is mean 3.0, standard deviation 10, 25 days, so $t = 1.5$ (slips 7.5 and 0.3). Q7 asks for one decimal place, accepts within 0.1 points and names the typed fraction 0.00142 as a slip. Each data task's `how` names the mistake that a late test exposes, and the starter docstrings are under 45 characters.
 
+
+## mock-oa-strats
+
+**What the real test is reported to contain.** The `firm-goldman-sachs` path in `content/prep.json` (`asOf` 2026-10) reports "a coding challenge and a short maths test". `docs/briefs/interview-gaps.md` gives the detail, from the HackerRank guides it cites (TechInterview, PracHub; reported, Nov 2026). Every candidate sits a 30-minute Software Fundamentals coding challenge. Strats candidates add a 22-minute maths challenge. One report gives 8 multiple-choice items on calculus, linear algebra and probability. Older reports give 2 coding and 9 maths questions in 3 hours. They add combinatorics, the binomial theorem and differential equations. The `oa-strats` stage path asks for the same two papers. No report gives negative marking, a pass mark or a calculator rule.
+
+**How it differs from the other mocks.** `mock-oa-code` sets two harder algorithm problems in 60 minutes, drawn from the pack `oa`. `mock-oa-quant-data` sets statistics and pandas data tasks. `mock-oa-sig` sets probability puzzles for traders. This mock sets two short Python problems on hash maps and windows, then eight maths questions. It draws nothing and shares no item, setup or figure with them.
+
+**File.** `app/content/exams/mock-oa-strats.json`, one file, fixed items, no versions. The bank holds no calculus or linear algebra families. So nothing can be drawn, and a resat repeats the items with shuffled options. The report raises an inbox bullet for calculus and linear algebra bank families.
+
+- `id`: `mock-oa-strats`. `name`: `Strats online assessment`. `style`: `strats`.
+- `models` (under 200 characters): `Reported, as of Nov 2026: the Goldman Sachs strats online test. A 30-minute coding paper, then 8 maths questions in 22 minutes.`
+- `requires`: `["ds/L2", "eigen/L1"]`.
+- `skills`: `{ "ds-hashing": "Hash maps", "ds-pointers": "Pointers and windows", "lm-chain": "Derivatives", "lm-limits": "Limits", "in-techniques": "Integration", "de-first": "First-order equations", "eg-eigen": "Eigenvalues", "eg-pd": "Positive definite matrices", "bayes": "Bayes' rule", "cc-count": "Counting" }`.
+
+**Description** (plain, each sentence under 20 words):
+
+> This is the reported format of a bank strats online test, as candidates described it by Nov 2026. A 30-minute coding paper comes first, with two short Python problems. Hidden tests include large inputs, so a slow answer fails them. Then a 22-minute maths paper has eight multiple-choice questions. They cover calculus, linear algebra and probability. Reports give no calculator rule, so sit the maths paper with a pen and paper only. Older reports give more questions over three hours. Use no search engine and no notes.
+
+**Parts.**
+
+| # | Paper `id`, name | Minutes | Items | Pass | `pace` sum |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `code`, Software fundamentals | 30 | 2 `code` (Python) | `pass: 0.5` (1 of 2) | 1,680 s |
+| 2 | `maths`, Maths | 22 | 8 `choice` | `pass: 0.625` (5 of 8) | 1,290 s |
+| 3 | check `no-calculator`, `I used no calculator on the maths paper`, detail `Tick this only if you worked every maths question by hand.` | | | | |
+| 4 | check `no-lookup`, `I used no search engine and no notes`, detail `Tick this only if you sat both papers without either.` | | | | |
+
+Both papers use `scoring: { "right": 1, "wrong": 0, "blank": 0 }` and free navigation, since no report gives negative marking or a locked order. The pass marks are the author's line, not a published cut-off (AUTHORING "Mock pass marks"). The attempt passes only when both papers pass and both checks are ticked. That is 10 items in 52 minutes.
+
+### Paper 1: software fundamentals (30 min, 2 `code` items)
+
+| Q | Diff | Tag | Skills | `pace` | Problem | Large test and what it stops |
+| --- | --- | --- | --- | --- | --- | --- |
+| C1 | 2 | `net-positions` | ds-hashing | 720 | `net_positions(fills)`. Each fill is a string `"ACCOUNT SIDE QTY"`, side `B` (adds) or `S` (subtracts). Return `[account, net]` pairs sorted by account, leaving out nets of zero | 100,000 fills over 50,000 accounts, built in `setup`: a search through a list of accounts is about $2.5 \times 10^9$ steps |
+| C2 | 3 | `fewest-days` | ds-pointers | 960 | `fewest_days(volumes, target)`. Positive whole volumes. Return the fewest neighbouring days whose volumes sum to at least `target`, or 0 if no block does | 200,000 days: checking every block is $2 \times 10^{10}$ steps |
+
+Each item has 10 to 12 hidden tests, `compare: "equal"`, two visible `examples`, a `how` line ("There are N hidden tests. Each answer must equal the expected value."), a `solution`, and a starter that returns an empty list or 0. Tests run small to large. C1 catches a sell that adds, a zero net left in, an unsorted result and a quantity read as text. C2 catches "more than" in place of "at least", a target no block reaches, and a one-day answer.
+
+### Paper 2: maths (22 min, 8 `choice` items)
+
+Every item is a `choice` with `shuffle: true`, four options of similar length, and a `why` on each distractor naming the action. Ramp: 2 at difficulty 2, 4 at 3, 2 at 4.
+
+| Q | Diff | Tag | Skill | `pace` | Question and key | Distractors, with the slip | Computed twice |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 2 | `chain-rule` | lm-chain | 120 | $f(x) = \ln(1 + 3x^2)$. $f'(1)$. Key $\tfrac32$ | $\tfrac14$ (left out the inner derivative), $6$ (differentiated only the inside), $\ln 4$ (gave $f(1)$) | $6x/(1+3x^2)$ at 1; and a central difference of $f$ at 1 with step $10^{-6}$ |
+| 2 | 2 | `eigenvalues-2x2` | eg-eigen | 120 | Eigenvalues of $\begin{pmatrix} 5 & 4 \\ 1 & 2 \end{pmatrix}$. Key 1 and 6 | 2 and 5 (read the diagonal), −1 and −6 (sign slip in $\lambda^2 - 7\lambda + 6$), 6 and 7 (gave the determinant and the trace) | Roots of the characteristic polynomial; and $A v = \lambda v$ checked for $v = (4, 1)$ and $(1, -1)$ |
+| 3 | 3 | `limit-series` | lm-limits | 150 | $\lim_{x \to 0} \dfrac{e^{2x} - 1 - 2x}{x^2}$. Key 2 | 4 (dropped the $\tfrac{1}{2!}$), $\tfrac12$ (wrote $x^2/2$, not $(2x)^2/2$), 0 (stopped at the first-order terms) | The series coefficient $2^2/2!$; and the quotient at $x = 10^{-4}$ in exact `Fraction` arithmetic on a 12-term series |
+| 4 | 3 | `probability-tree` | bayes | 150 | 60% of trades settle through route A and 40% through B. 2% of A's fail and 5% of B's. A trade fails. The chance it went through B. Key 0.625 | 0.375 (the chance of route A), 0.05 (the failure rate of B), 0.714 ($5/7$: compared the rates and ignored the split) | $0.02/0.032 = 5/8$; and counts out of 1,000 trades: 12 and 20 fail |
+| 5 | 3 | `by-parts` | in-techniques | 180 | $\int_1^e \tfrac{\ln x}{x^2}\,dx$. Key $1 - \tfrac{2}{e}$ | $1 - \tfrac1e$ (dropped the boundary term $-\tfrac{\ln x}{x}$), $\tfrac2e - 1$ (took $v = 1/x$, every sign flipped), $-\tfrac2e$ (left out the lower limit, $-1$) | The antiderivative $-\tfrac{\ln x}{x} - \tfrac1x$; and Simpson's rule with 2,000 strips |
+| 6 | 3 | `linear-ode` | de-first | 180 | $y' = 2y + 4$, $y(0) = 1$. $y(1)$. Key $3e^2 - 2$ | $e^2$ (dropped the constant term), $3e^2$ (dropped the steady state −2), $5e^2 - 4$ (steady state −4: did not divide by 2) | The closed form $3e^{2x} - 2$; and a fourth-order Runge-Kutta run with 10,000 steps |
+| 7 | 4 | `shared-book` | cc-count | 180 | Nine trades split at random into three books of three. The chance three named trades share a book. Key $\tfrac{1}{28}$ | $\tfrac19$ (independent picks of a book), $\tfrac{1}{84}$ (counted one book only), $\tfrac14$ (two named trades, not three) | $\tfrac28 \times \tfrac17$; and 10 of the 280 unordered splits, by enumeration |
+| 8 | 4 | `correlation-bound` | eg-pd | 210 | Corr(X, Y) = 0.8 and corr(Y, Z) = 0.8. The smallest possible corr(X, Z). Key 0.28 | 0.64 (multiplied the two), 0.6 (added them and took off 1), 0 (assumed two positive links force a positive one, but no further) | The bound $\rho_1\rho_2 - \sqrt{(1-\rho_1^2)(1-\rho_2^2)}$; and the determinant of the correlation matrix, zero at 0.28 and negative at 0.27 |
+
+`pace` sums to 1,290 s of 1,320 s. An explanation states the key and names no option by place.
+
+**Prerequisites** (cited; `requires` gates only `ds/L2` and `eigen/L1`): `ds` l4-frequencies and l6-sliding-window; `limits` l10-inside-function and L1; `integrals` l10-undo-product; `odes` l3-integrating-factor; `eigen` l2-characteristic and l7-covariance-psd; `conditional` l5-trees; `counting-chance` L2.
+
+### Generation, voice and acceptance
+
+**Scripts** (`docs/briefs/mocks-scripts/`): `mock-oa-strats_build.py` writes the exam and asserts each key two ways, as `Fraction`s or exact series. `mock-oa-strats_check.py` is the second route. It imports `app/tools/numbers_lib.py`, checks every key and `wrong` slip at its path and every number in prose, and runs `check_wrongs()` then `report()`. It runs each code solution on every hidden test in CPython and asserts each starter fails at least one. Both exit 0.
+
+**Freshness.** `node tools/fresh-check.mjs --exam mock-oa-strats --min-run 10` from `app/`; reused setups are rewritten (LaTeX skeleton hits are noise). A literal search of all content for each setup is run too. First drafts were replaced: the matrix of Q2 was in `eigen` l1 to l3, $x e^{2x}$ in `integrals` l10, $\ln(1 + x^2)$ in `integrals` l15, and the largest of several dice in `mock-oa-trader-2`.
+
+**Acceptance.** The shared "Common acceptance checks", with: validator 0 errors and no warning on this mock; the voice scan on a copy reports 0 and 0; both scripts exit 0; the playthrough green with and without `--mobile`; `node tools/readiness-sums.mjs` OK (or `--write` when only the generated mock block changes). Report at `docs/reports/exam-mock-oa-strats.md`; engine gaps under `Raised later (mock mock-oa-strats):` in `docs/BACKLOG-INBOX.md`.
+
+## mock-oa-code-hard
+
+**What the real test is reported to contain.** `content/prep.json` names this mock on the `oa-developer` stage path: "two to four algorithm problems against the clock, in Python or C++". That path asks for `graphs-dp`, `cpp` L1 to L4 and `coding-int`, and says "some developer tests are in C++ only". `docs/briefs/interview-plan.md` (d) models it on HRT and Citadel software tests: 3 problems in 90 minutes, Python or C++. `docs/briefs/interview-gaps.md` gives the detail from the pages it cites (Taro, QuantVault, 1point3acres, PracHub, TraderMath; reported, Nov 2026). HRT reports conflict: three easy-to-medium problems, a 70-minute test of four, or HackerRank of 70 to 150 minutes. Earlier HRT intern tests were C++ only. One Citadel prep guide gives LeetCode-medium problems for software roles. No report gives a pass mark or partial credit rules.
+
+**How it differs from the other mocks.** `mock-oa-code` draws two problems from the pack `oa` (windows, two pointers, greedy, heaps, stacks, binary search, digit DP, a DAG path), all in Python. This mock draws nothing from the pack `oa`, so the two share no item. It sets three problems a step harder: two heaps with an interval rule, Dijkstra on a state graph, and a DP over a held quantity in C++. `mock-oa-strats` and `mock-oa-quant-data` set short Python and data tasks; `mock-oa-sig` sets no code.
+
+**File.** `app/content/exams/mock-oa-code-hard.json`, one file, three fixed items, no versions. A drawn pool would need a new drill pack and an edit to `drills/index.json`. The report raises that as an inbox bullet.
+
+- `id`: `mock-oa-code-hard`. `name`: `Harder coding assessment`. `style`: `developer`.
+- `models` (under 200 characters): `Reported, as of Nov 2026: harder developer coding tests, as at Hudson River Trading and Citadel. Three problems in 90 minutes, one in C++.`
+- `requires`: `["coding-int/L4", "graphs-dp/L4", "cpp/L4"]`.
+- `skills`: `{ "ds-trees": "Trees and heaps", "ci-patterns": "Further patterns", "gd-paths": "Shortest paths", "gd-dp": "Dynamic programming", "cp-stl": "The standard library", "ci-timed": "Solving under time" }`.
+
+**Description** (plain, each sentence under 20 words):
+
+> This is a harder coding assessment for developer roles, in a format candidates reported by Nov 2026. You have three problems in 90 minutes. The first two are in Python and the third is in C++, as some reported tests are C++ only. Hidden tests include large inputs, so a slow answer fails them. A problem scores only when all its hidden tests pass. You pass the paper with two problems of the three. Reports differ: three or four problems, in 70 to 150 minutes. Read all three statements first, then start with the one you can finish. Use no search engine and no notes.
+
+**Parts.**
+
+| # | Part | Minutes | Items | Pass | `pace` sum |
+| --- | --- | --- | --- | --- | --- |
+| 1 | paper `code`, Three problems in ninety minutes | 90 | 3 `code` (2 Python, 1 C++) | `pass: 0.6` (2 of 3) | 5,100 s |
+| 2 | check `read-all`, `I read all three statements before I wrote any code`, detail `Tick this only if you chose your order of work before you started.` | | | | |
+| 3 | check `no-lookup`, `I used no search engine and no notes`, detail `Tick this only if you sat the whole paper without either.` | | | | |
+
+`scoring: { "right": 1, "wrong": 0, "blank": 0 }`, free navigation. The pass mark is the author's line, not a published cut-off. A code item is right only when every hidden test passes; the engine has no share-of-tests credit (as `mock-oa-code`). That leaves 300 s of the 90 minutes for reading.
+
+**The three problems.** Large inputs are built in hidden `setup` lines (Python) or `call` lambdas (C++) from one 64-bit linear congruential generator, $x \to 6364136223846793005x + 1442695040888963407 \bmod 2^{64}$, using the top 24 bits. Python, Pyodide and clang therefore see the same numbers, and the file stays small.
+
+| Q | Diff | Tag | Skills | `pace` | Problem | Large tests and what they stop |
+| --- | --- | --- | --- | --- | --- | --- |
+| H1 | 4 | `job-scheduling` | ds-trees, ci-patterns | 1500 | `busiest_worker(k, jobs)`: jobs `[arrive, length]` with distinct arrivals, in any order. Each takes the free worker with the lowest number, else waits for the earliest to free (lower number on a tie) and runs its full length. A worker free at `t` takes a job arriving at `t`. Return `[busiest, last_end]` | 100,000 jobs on 2,000 workers twice (light and heavy load), and 100,000 on one worker (closed form 200,000). A scan of every worker per job is $2 \times 10^8$ steps |
+| H2 | 4 | `voucher-route` | gd-paths, ci-timed | 1800 | `cheapest_with_voucher(n, links)`: one-way links `[u, v, cost]`, costs 0 or more; one voucher makes one link free. Least cost from 0 to `n - 1`, or -1 | 20,000 sites: a chain (closed form 99,990) and two seeded graphs of 100,000 links. Dijkstra once per freed link is $10^5$ runs |
+| H3 | 5 | `inventory-dp` | gd-dp, cp-stl, ci-timed | 1800 | C++ `long long best_cash(const std::vector<int>& prices, int cap)`: each day buy one share, sell one or wait; hold 0 to `cap`; start and end with none; the most cash | 200,000 days: alternating 1 and 1,000,000 with cap 1 (closed form $10^5 \times 999{,}999$), and two seeded runs with caps 50 and 100. Every answer passes $2^{31} - 1$, so an `int` total fails |
+
+Tests: H1 12 (9 small), H2 12 (9 small), H3 13 (10 small), each `compare: "equal"`, two visible examples, a `how` line ("There are N hidden tests. Each answer must equal the expected value.", then what the last tests use), a `solution`, and a starter that returns a constant. Python results are wrapped in `list(...)` so a tuple still compares equal.
+
+Small tests and the slips they catch. H1: a worker freed exactly at an arrival (a strict `<` fails), a waiting job given to the lowest number rather than the earliest to free, a delayed job's end taken from its arrival, and an unsorted list. H2: a route dear before the voucher (the cheapest plain route minus its dearest link fails), a voucher used on every link, links read both ways, an unreachable site and `n = 1`. H3: a cap of 0, falling prices, a single day, a cap that binds (a cap of 1 fails), and the sum of rises.
+
+**Keys** (from `mock-oa-code-hard_build.py`; the check recomputes each one). H1: `[1, 10]`, `[0, 0]`, `[0, 7]`, `[0, 6]`, `[0, 9]`, `[0, 7]`, `[0, 9]`, `[0, 21]`, `[1, 150]`, then `[182, 308657]`, `[1845, 466369]`, `[0, 200000]`. H2: 0, 0, −1, −1, 20, 0, 2, 0, 2, then 99,990, 1,213, 72. H3: 7, 0, 0, 4, 3, 0, 0, 18, 13, 16, then 99,999,900,000, 49,503,711,056, 49,667,371,055.
+
+**Prerequisites** (cited; `requires` gates `coding-int/L4`, `graphs-dp/L4` and `cpp/L4`): `ds` l17-always-the-smallest and l18-order-book-heaps; `coding-int` l1-merging-intervals and L4; `graphs-dp` l7-dijkstra and L4; `cpp` l14-vector and l16-algorithms.
+
+### Generation, voice and acceptance
+
+**Scripts** (`docs/briefs/mocks-scripts/`): `mock-oa-code-hard_build.py` writes the exam. It runs each Python reference and a Python port of the C++ recurrence on every case, and asserts each small case against a second method (a scan of every worker, Bellman-Ford with each link freed in turn, every buy, sell or wait sequence). `mock-oa-code-hard_check.py` is the second route. H1 uses a NumPy scan. H2 uses Dijkstra from 0 and on the reversed links to `n - 1`, then $\min(d_0[n-1], \min_{(u,v)} d_0[u] + d_n[v])$. H3 compiles the C++ with the local g++ (`-std=c++17 -O1`), with a NumPy DP and a $3^n$ brute force. It runs the starters and planted wrong versions: each fails at least one test. It checks every number in prose, then `check_wrongs()` and `report()`. Both exit 0.
+
+**Freshness.** `node tools/fresh-check.mjs --exam mock-oa-code-hard --min-run 10` from `app/`, and a literal search for each function name and setup. `graphs-dp` homework 2 has `cheapest_within` (a limit on steps), and `topic-1.8` has a profit with a fee and two trades. This mock's state (a voucher, a holding cap) and its names differ.
+
+**Acceptance.** The shared "Common acceptance checks", with: validator 0 errors and no warning on this mock; the voice scan on a copy 0 and 0; both scripts exit 0; the playthrough with `--local-cdn` green with and without `--mobile` (clang compiles H3 in the browser); `node tools/readiness-sums.mjs` OK. Report at `docs/reports/exam-mock-oa-code-hard.md`; engine gaps under `Raised later (mock mock-oa-code-hard):` in `docs/BACKLOG-INBOX.md`.
