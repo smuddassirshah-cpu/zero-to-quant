@@ -234,7 +234,7 @@ Superseded 5 Nov (census reconciliation): the ito L1 to L3, puzzles L1 to L4, mm
 - [x] momentum-rep L3 (session T: second read and fix pass in `docs/reviews/review-momentum-rep-2-3.md`)
 - [x] pairs-rep L1 (session T: second read and fix pass in `docs/reviews/review-pairs-rep-1-2.md`)
 - [x] pairs-rep L2 (session T: second read and fix pass in `docs/reviews/review-pairs-rep-1-2.md`)
-- [ ] pairs-rep L3
+- [x] pairs-rep L3 (session T: second read and fix pass in `docs/reviews/review-pairs-rep-3.md`)
 
 ### 4. Exams (pattern: `app/content/exams/topic-1.7.json`; brief pattern in `docs/reports/exam-1.8.md`)
 - [x] topic-0.1 to topic-0.5 (Stage 0 topic exams, written 27 Oct; census 5 Nov: 23, 26, 25, 20 and 22 items. "Never written" described the state before 27 Oct and is superseded.)
