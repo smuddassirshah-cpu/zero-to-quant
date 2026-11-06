@@ -114,13 +114,13 @@ def bisect(f, lo, hi, it=200):
 DICE = list(itertools.product(range(1, 7), repeat=2))
 
 # ======================================================================== Paper A
-# A1: enumerate the 36 rolls
+# A1: enumerate the 36 rolls (the question asks for a fraction or 4 decimal places)
 even_prod = [d for d in DICE if (d[0] * d[1]) % 2 == 0]
 both = [d for d in even_prod if (d[0] + d[1]) % 2 == 0]
 key('a-even-product', len(both) / len(even_prod))
 wrong('a-even-product', 'ignored-news', sum((a + b) % 2 == 0 for a, b in DICE) / 36)
 wrong('a-even-product', 'whole-table', len(both) / 36)
-allow('a-even-product', len(even_prod), len(both), 36, 1 / 3, 0.0005)
+allow('a-even-product', len(even_prod), len(both), 36, 1 / 3, 0.0005, 4)
 rec(len(even_prod) == 27 and len(both) == 9, 'a-even-product: 27 rolls with an even product, 9 with an even sum')
 
 # A2: the truncated series sum of n P(stop at roll n)
@@ -129,22 +129,44 @@ key('a-repeat-roll', round(e2, 9))
 wrong('a-repeat-roll', 'no-first', round(e2 - 1, 9))
 wrong('a-repeat-roll', 'one-pair', 36)
 
-# A3: a Markov chain on Ana's lead, -2 to 2
-P = np.zeros((5, 5))
-for i in (1, 2, 3):
-    P[i, i + 1], P[i, i - 1] = 0.6, 0.4
-P[0, 0] = P[4, 4] = 1
-Q = P[1:4, 1:4]
-Nf = np.linalg.inv(np.eye(3) - Q)
-win = (Nf @ P[1:4, 4])[1]
-dur = (Nf @ np.ones(3))[1]
-key('a-lead-by-two', round(float(win), 9), 0)
-key('a-lead-by-two', round(float(dur), 9), 1)
-wrong('a-lead-by-two', 'one-point', 0.6, 0)
-wrong('a-lead-by-two', 'two-straight', 0.6 * 0.6, 0)
-wrong('a-lead-by-two', 'two-points', 2, 1)
-wrong('a-lead-by-two', 'pairs-not-points', round(float(dur) / 2, 9), 1)
-allow('a-lead-by-two', 0.6 ** 2 + 0.4 ** 2, 0.4 ** 2, 1 - (0.6 ** 2 + 0.4 ** 2), 0.6, 0.4)
+# A3: a two-state chain (quiet, busy); fundamental matrix for the wait, an absorbing solve for the race, then a simulation
+T = np.array([[0.8, 0.2], [0.5, 0.0]])            # transient states: last hour quiet (Q), last hour busy with the one before not (B)
+Nf = np.linalg.inv(np.eye(2) - T)
+wait_q, wait_b = Nf @ np.ones(2)
+# race: Q -> L (two quiet in a row) 0.8, Q -> B 0.2; B -> W (two busy in a row) 0.5, B -> Q 0.5
+Rr = np.array([[0.8, 0.0], [0.0, 0.5]])           # columns L, W
+Qr = np.array([[0.0, 0.2], [0.5, 0.0]])
+absorb = np.linalg.inv(np.eye(2) - Qr) @ Rr
+win_q = absorb[0, 1]
+key('a-lead-by-two', round(float(wait_q), 9), 0)
+key('a-lead-by-two', round(float(win_q), 9), 1)
+wrong('a-lead-by-two', 'first-busy', 5, 0)
+wrong('a-lead-by-two', 'fresh-tries', 10, 0)
+wrong('a-lead-by-two', 'next-busy', 0.2, 1)
+wrong('a-lead-by-two', 'one-route', 0.1, 1)
+rec(abs(wait_b - 7) < 1e-9, f'a-lead-by-two: the wait from a busy hour is {wait_b:.4f}, 7')
+sim_n, sim_w, runs = 0, 0, 200000
+for _ in range(runs):
+    state, hours = 'Q', 0                           # the quiet hour just gone
+    while True:
+        hours += 1
+        busy = RNG.random() < (0.2 if state == 'Q' else 0.5)
+        if state == 'B' and busy:
+            break
+        state = 'B' if busy else 'Q'
+    sim_n += hours
+for _ in range(runs):
+    state = 'Q'
+    while True:
+        busy = RNG.random() < (0.2 if state == 'Q' else 0.5)
+        if state == 'Q' and not busy:
+            break
+        if state == 'B' and busy:
+            sim_w += 1
+            break
+        state = 'B' if busy else 'Q'
+rec(abs(sim_n / runs - wait_q) < 0.15 and abs(sim_w / runs - win_q) < 0.005, f'a-lead-by-two: simulation {sim_n / runs:.2f} hours and race {sim_w / runs:.4f}')
+allow('a-lead-by-two', 0.2, 0.8, 0.5, 12, 7, 1 / 9, float(win_q))
 
 # A4: every seating of ten labelled traders round a table, up to rotation (9! orders of the other nine)
 adj = tot = 0
@@ -160,12 +182,16 @@ rec(F(2, 10) == F(1, 5) and F(1, 9) == F(1, 9) and F(1, math.comb(10, 2)) == F(1
     'a-round-table: the distractors are 2/10, one seat of 9 and one pair of seats among 45')
 allow('a-round-table', 1 / p4, 2, 9, 10, 45, 5)
 
-# A5: Simpson on the area under min(1, 1/(2x))
-a5 = simpson(lambda x: min(1.0, 1 / (2 * x)) if x > 0 else 1.0, 0, 1)
-key('a-uniform-product', round(a5, 7))
-wrong('a-uniform-product', 'uniform-product', 0.5)
-wrong('a-uniform-product', 'curve-only', round(simpson(lambda x: 1 / (2 * x), 0.5, 1), 7))
-allow('a-uniform-product', 0.5)
+# A5: Simpson on the area of the quarter disc above the diagonal, then a simulation of the conditional chance
+tri = simpson(lambda x: math.sqrt(max(0.0, 1 - x * x)) - (1 - x), 0, 1)
+key('a-uniform-product', round(tri / 0.5, 7))
+pts = RNG.random((2000000, 2))
+cond = pts[pts.sum(axis=1) > 1]
+sim5 = float(((cond ** 2).sum(axis=1) < 1).mean())
+rec(abs(sim5 - tri / 0.5) < 0.002, f'a-uniform-product: simulated conditional chance {sim5:.4f}')
+wrong('a-uniform-product', 'ignored-news', round(simpson(lambda x: math.sqrt(max(0.0, 1 - x * x)), 0, 1), 7))
+wrong('a-uniform-product', 'not-divided', round(tri, 7))
+allow('a-uniform-product', 0.5, math.pi / 2 - 1, math.pi / 4, 4)
 
 # A6: a grid search for her maximin mix
 M = np.array([[2, -1], [-3, 4]])
@@ -182,22 +208,48 @@ wrong('a-quote-game', 'pure-maximin', float(M.min(axis=1).max()), 1)
 wrong('a-quote-game', 'half-half', float(min(0.5 * M[0, 0] + 0.5 * M[1, 0], 0.5 * M[0, 1] + 0.5 * M[1, 1])), 1)
 allow('a-quote-game', 2, -1, -3, 4, 0.3, -0.5, 0.50, 10, 7)
 
-# A7: count Ben's high totals, then sum the series over rounds
-hi = sum(a + b >= 9 for a, b in DICE)
-rec(hi == 10, f'a-six-or-nine: {hi} of 36 rolls total 9 or more')
-a7 = sum((5 / 6 * (36 - hi) / 36) ** k * (1 / 6) for k in range(400))
-key('a-six-or-nine', round(a7, 9))
-wrong('a-six-or-nine', 'six-each', round(sum((25 / 36) ** k * (1 / 6) for k in range(400)), 9))
-wrong('a-six-or-nine', 'at-once', round((1 / 6) / (1 / 6 + hi / 36), 9))
-rec(F(5, 6) * F(36 - hi, 36) == F(65, 108) and F(1, 6) / (1 - F(65, 108)) == F(18, 43), 'a-six-or-nine: 65/108 per round, 18/43 for Ana')
-allow('a-six-or-nine', hi, 36, 26, 65, 108, 18, 43, 9)
+# A7: every ordered fill of exactly 5 lots from slices of 1 and 2, weighted 0.6 and 0.4
+def compositions(total):
+    if total == 0:
+        yield ()
+        return
+    for step in (1, 2):
+        if step <= total:
+            for rest in compositions(total - step):
+                yield (step,) + rest
 
-# A8: the truncated sum over wins k before the third loss (negative binomial)
-e8 = sum(k * math.comb(k + 2, 2) * 0.6 ** k * 0.4 ** 3 for k in range(0, 400))
+
+a7 = sum(0.6 ** seq.count(1) * 0.4 ** seq.count(2) for seq in compositions(5))
+rec(len(list(compositions(5))) == 8, 'a-six-or-nine: 8 ordered ways to fill 5 lots')
+key('a-six-or-nine', round(a7, 9))
+wrong('a-six-or-nine', 'one-route', 0.6 ** 5)
+wrong('a-six-or-nine', 'tick-four', round(sum(0.6 ** s_.count(1) * 0.4 ** s_.count(2) for s_ in compositions(4)), 9))
+wrong('a-six-or-nine', 'long-run', round(1 / 1.4, 9))
+reach = 0
+for _ in range(400000):
+    tot = 0
+    while tot < 5:
+        tot += 1 if RNG.random() < 0.6 else 2
+    reach += tot == 5
+rec(abs(reach / 400000 - a7) < 0.004, f'a-six-or-nine: simulated landing chance {reach / 400000:.4f}')
+allow('a-six-or-nine', 0.6, 0.4, 0.76, 0.696, 0.7216, 0.71136, 1.4, 5)
+
+# A8: the truncated sum over wins k before the third loss (negative binomial), win chance 0.75
+e8 = sum(k * math.comb(k + 2, 2) * 0.75 ** k * 0.25 ** 3 for k in range(0, 800))
 key('a-third-loss', round(e8, 9))
 wrong('a-third-loss', 'all-bets', round(e8 + 3, 9))
-wrong('a-third-loss', 'first-loss', round(sum(k * 0.6 ** k * 0.4 for k in range(400)), 9))
-allow('a-third-loss', 0.6, 0.4, 1.5)
+wrong('a-third-loss', 'first-loss', round(sum(k * 0.75 ** k * 0.25 for k in range(800)), 9))
+sim8 = []
+for _ in range(100000):
+    wins = losses = 0
+    while losses < 3:
+        if RNG.random() < 0.75:
+            wins += 1
+        else:
+            losses += 1
+    sim8.append(wins)
+rec(abs(np.mean(sim8) - e8) < 0.05, f'a-third-loss: simulated mean {np.mean(sim8):.3f}')
+allow('a-third-loss', 0.75, 0.25, 3)
 
 # A9: best response by grid search against a rival on b(v) = v^2 / 2
 bids = np.linspace(0, 0.5, 500001)
@@ -208,24 +260,49 @@ wrong('a-all-pay', 'first-price', 0.8 / 2)
 wrong('a-all-pay', 'truthful', 0.8)
 allow('a-all-pay', 0.8, 1, 0.32)
 
-# A10: exact binomial sums and the normal curve
-pmf = [math.comb(100, k) * F(55, 100) ** k * F(45, 100) ** (100 - k) for k in range(101)]
-down = float(sum(pmf[:50]))
-key('a-edge-hundred', round(down, 4))
-wrong('a-edge-hundred', 'sure-profit', 0)
-sd = math.sqrt(100 * 0.55 * 0.45)
-wrong('a-edge-hundred', 'no-half', round(N01.cdf((50 - 55) / sd), 4))
-wrong('a-edge-hundred', 'level-counts', round(float(sum(pmf[:51])), 4))
-rec(abs(N01.cdf((49.5 - 55) / sd) - 0.13) < 0.005 and round((49.5 - 55) / sd, 2) == -1.11, 'a-edge-hundred: Phi(-1.11) is about 0.13')
-allow('a-edge-hundred', 100, 0.55, 0.45, 55, 49, 50, 49.5, -1.11, 0.13, sd, down, 1, 10)
+# A10: enumerate all 2^8 outcomes of eight bets of +3 at 0.3 and -1 at 0.7, then exact sums in Fractions
+ahead = level = four = F(0)
+for outs in itertools.product((0, 1), repeat=8):
+    k = sum(outs)
+    pr = F(3, 10) ** k * F(7, 10) ** (8 - k)
+    profit = 3 * k - (8 - k)
+    ahead += pr * (profit > 0)
+    level += pr * (profit >= 0)
+    four += pr * (k >= 4)
+key('a-edge-hundred', round(float(ahead), 9))
+wrong('a-edge-hundred', 'level-counts', round(float(level), 9))
+wrong('a-edge-hundred', 'four-wins', round(float(four), 9))
+pm = [math.comb(8, k) * F(3, 10) ** k * F(7, 10) ** (8 - k) for k in range(9)]
+rec(1 - sum(pm[:3]) == ahead and round(float(pm[0]), 4) == 0.0576 and round(float(pm[1]), 4) == 0.1977 and round(float(pm[2]), 4) == 0.2965,
+    'a-edge-hundred: 1 - P(0) - P(1) - P(2) and the three printed chances')
+rec(abs(0.3 * 3 - 0.7 * 1 - 0.2) < 1e-12, 'a-edge-hundred: the edge per bet is 0.20')
+sim10 = float(((RNG.random((400000, 8)) < 0.3).sum(axis=1) >= 3).mean())
+rec(abs(sim10 - float(ahead)) < 0.004, f'a-edge-hundred: simulated chance {sim10:.4f}')
+allow('a-edge-hundred', 8, 3, 0.3, 0.2, 9, 5, 3, float(pm[0]), float(pm[1]), float(pm[2]))
 
-# A11: Fractions over the four kinds of day
-b, h, fl = F(2, 100), F(9, 10), F(5, 100)
-w_break, w_norm = b * h * h, (1 - b) * fl * fl
-key('a-two-flags', round(float(w_break / (w_break + w_norm)), 9))
-wrong('a-two-flags', 'one-model', round(float(b * h / (b * h + (1 - b) * fl)), 9))
-wrong('a-two-flags', 'hits-squared-only', round(float(w_break / (w_break + (1 - b) * fl)), 9))
-allow('a-two-flags', 0.02, 0.9, 0.05, 0.98, float(w_break), float(w_norm), float(w_break + w_norm), 90, 5, 2)
+# A11: enumerate the broker and the four orders (the first three filled, filled, not filled)
+tot_seq, tot_fill = F(0), F(0)
+post_num = F(0)
+for pb, hit in ((F(2, 5), F(9, 10)), (F(3, 5), F(3, 5))):
+    lik3 = hit * hit * (1 - hit)
+    tot_seq += pb * lik3
+    tot_fill += pb * lik3 * hit
+    if hit == F(9, 10):
+        post_num = pb * lik3
+key('a-two-flags', round(float(tot_fill / tot_seq), 9))
+wrong('a-two-flags', 'ignored-orders', float(F(2, 5) * F(9, 10) + F(3, 5) * F(3, 5)))
+wrong('a-two-flags', 'sample-rate', round(2 / 3, 9))
+wrong('a-two-flags', 'who-careful', round(float(post_num / tot_seq), 9))
+rec(post_num / tot_seq == F(3, 11) and tot_fill / tot_seq == F(15, 22), 'a-two-flags: careful with chance 3/11, next fill 15/22')
+sim11 = []
+for _ in range(400000):
+    careful = RNG.random() < 0.4
+    hit = 0.9 if careful else 0.6
+    o = RNG.random(4) < hit
+    if o[0] and o[1] and not o[2]:
+        sim11.append(o[3])
+rec(abs(np.mean(sim11) - float(tot_fill / tot_seq)) < 0.01, f'a-two-flags: simulated next fill {np.mean(sim11):.4f}')
+allow('a-two-flags', 0.4, 0.6, 0.9, 0.1, 0.081, 0.144, 0.0324, 0.0864, 11, 15, 22, 0.8, 3, 8)
 
 # A12: enumerate X and the trader's type
 pbuy = F(0)
@@ -378,7 +455,7 @@ for t in w13['tests']:
 rec(ok13 == n13, f'r-as-of-code: the sorting route gives every expected dict ({ok13} of {n13})')
 rec(all(e['expect'] in [t['expect'] for t in w13['tests']] for e in w13['examples']), 'r-as-of-code: the example is a hidden test')
 rec(f'{n13} hidden tests' in w13['how'], f'r-as-of-code: how states {n13} tests')
-allow('r-as-of-code', 2015, 3, 20, 31, 2, 7)
+allow('r-as-of-code', 2015, 2016, 3, 20, 30, 31, 2, 7)
 
 # C15: the expected t, its tail by simulation, the months by bisection
 mean_t = lambda months: 0.5 * 4.0 * math.sqrt(months / 240)
@@ -404,9 +481,9 @@ checks = [p for p in doc['parts'] if p['kind'] == 'check']
 rec(list(papers) == ['probability', 'arithmetic', 'research', 'coding'], f'papers {list(papers)}')
 rec([c['id'] for c in checks] == ['zhou-probability', 'zetamac-50', 'mock-interviews', 'replication-github'], 'four checks, each from a Stage 3 exit line')
 A_items, C_items = papers['probability']['items'], papers['research']['items']
-rec(len(A_items) == 12 and sum(d['n'] for d in papers['probability']['draw']) == 6, 'paper A: 12 authored items and 6 drawn')
+rec(len(A_items) == 12 and sum(d['n'] for d in papers['probability']['draw']) == 8, 'paper A: 12 authored items and 8 drawn (6 probability, 1 brainteaser, 1 market-making)')
 rec(papers['probability']['pass'] == 0.8, 'paper A passes at 0.8, the Zhou 80%')
-rec(papers['probability']['minutes'] * 60 >= sum(it['pace'] for it in A_items) + 6 * 180, 'paper A: minutes cover the pace')
+rec(papers['probability']['minutes'] == 55 and papers['probability']['minutes'] * 60 >= sum(it['pace'] for it in A_items) + 6 * 180 + 180 + 120, 'paper A: 55 minutes cover the pace')
 ramp = [sum(it['difficulty'] == d for it in C_items) for d in (2, 3, 4, 5)]
 rec(len(C_items) == 15 and ramp == [3, 8, 3, 1], f'paper C: 15 items at the ramp {ramp}')
 rec(papers['research']['minutes'] == int(math.ceil(1.25 * sum(it['pace'] for it in C_items) / 60 / 5) * 5), 'paper C: minutes are 1.25 times the pace')
@@ -428,7 +505,8 @@ for p in papers.values():
         lo_, hi_ = (d['difficulty'], d['difficulty']) if isinstance(d['difficulty'], int) else d['difficulty']
         if src == 'bank':
             pool = [it for f in glob.glob(os.path.join(CDIR, 'bank', f'{name}-*.json')) for it in json.load(open(f))['items']
-                    if it['tags'][0] in d['tags'] and lo_ <= it['difficulty'] <= hi_]
+                    if ('tags' not in d or it['tags'][0] in d['tags']) and lo_ <= it['difficulty'] <= hi_]
+            rec(all(it['widget']['kind'] in ('numeric', 'choice') for it in pool if 'widget' in it), f'{p["id"]} draw {d["from"]}: every drawn item is auto-marked')
         else:
             pool = [x for f in glob.glob(os.path.join(CDIR, 'drills', f'{name}-*.json')) for x in [json.load(open(f))]
                     if lo_ <= x['difficulty'] <= hi_ and ('tags' not in d or set(d['tags']) & set(x.get('tags', []) + [x.get('pattern')]))]

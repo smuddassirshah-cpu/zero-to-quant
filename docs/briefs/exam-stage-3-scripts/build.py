@@ -86,7 +86,7 @@ A, C = [], []
 a1 = F(9, 27)
 A.append(item("a-even-product", 2, ["pz-conditioning"], ["dice-condition"], 75, "An even product",
     "Two fair dice are rolled. You are told only that the product of the faces is even.",
-    "What is the chance that their sum is even?",
+    "What is the chance that their sum is even? Give a fraction or 4 decimal places.",
     num(r(a1), 0.0005, [("ignored-news", 0.5, 0.0005), ("whole-table", r(F(9, 36)), 0.0005)],
         placeholder="fraction or decimal", accept="Any form equal to 1/3, or 0.3333 ± 0.0005"),
     fb("Nine of the 27 rolls with an even product have an even sum.", "List the rolls the news leaves, then count those with an even sum.",
@@ -107,26 +107,29 @@ A.append(item("a-repeat-roll", 2, ["pz-expectation"], ["repeat-wait"], 75, "Unti
     f"The first roll cannot match. After it, each roll matches the one before with chance $\\tfrac16$, whatever came earlier. "
     f"So we expect $1 + 6 = {a2}$ rolls."))
 
-# A3 a series that needs a lead of two
-p3, q3 = 0.6, 0.4
-a3w = p3 ** 2 / (p3 ** 2 + q3 ** 2)
-a3n = 2 / (p3 ** 2 + q3 ** 2)
-A.append(parts("a-lead-by-two", 3, ["pz-recursion"], ["win-by-two"], 180, "A lead of two",
-    "Two traders play a series of points for a bet. Ana wins each point with chance 0.6, independently. "
-    "The series ends as soon as one of them leads by two points.",
-    "Two questions on the series.",
-    [("What is the chance that Ana wins the series? Give 4 decimal places.",
-      num(r(a3w), 0.0005, [("one-point", 0.6, 0.0005), ("two-straight", 0.36, 0.0005)]),
-      fb("Play the points in pairs: $0.36$ against $0.16$.", "A pair of points either ends the series or brings it back to level.",
-         {"one-point": "You gave the chance of one point. A lead of two favours the stronger player further.",
-          "two-straight": "You counted only two wins in a row. After a split, the series is back where it started."})),
-     ("How many points do you expect the series to last? Give 4 decimal places.",
-      num(r(a3n), 0.0005, [("two-points", 2, 0.0005), ("pairs-not-points", r(1 / 0.52), 0.0005)]),
-      fb("Pairs of points, each ending the series with chance 0.52.", "Count the expected number of pairs, then turn pairs into points.",
-         {"two-points": "Two points end it only when one player takes both. A split, chance 0.48, starts it again.",
-          "pairs-not-points": "You counted pairs of points. Each pair is two points."}))],
-    f"A pair of points ends the series with chance $0.6^2 + 0.4^2 = 0.52$, and Ana takes it with $0.36$. "
-    f"So she wins with $0.36 / 0.52 \\approx {a3w:.4f}$. The series lasts $2 / 0.52 \\approx {a3n:.4f}$ points on average."))
+# A3 a watch that ends on two busy hours in a row (a two-state chain)
+a3, b3 = 0.2, 0.5                      # chance of busy after a quiet hour; of busy after a busy hour
+a3n = (1 + a3) / (a3 * b3)
+a3w = a3 * b3 / (1 - a3 * (1 - b3))
+A.append(parts("a-lead-by-two", 3, ["pz-recursion"], ["regime-chain"], 180, "Two busy hours",
+    "A venue's order flow is quiet or busy each hour. After a quiet hour, the next is busy with chance 0.2. "
+    "After a busy hour, the next is busy again with chance 0.5. The venue is quiet now.",
+    "Two questions on the hours to come.",
+    [("You watch until two busy hours come in a row. How many hours do you expect to watch, counting the last? Give a whole number.",
+      num(r(a3n), 0, [("first-busy", r(1 / a3), 0), ("fresh-tries", r(1 / (a3 * b3)), 0)]),
+      fb("From a quiet hour the wait is 12, and from a busy hour it is 7.",
+         "Write the expected wait after a quiet hour and after a busy hour, each in terms of the other.",
+         {"first-busy": "You counted the wait for the first busy hour. A second must follow it at once.",
+          "fresh-tries": "You took one over $0.2 \\times 0.5$, as if each hour began a fresh try. A failed try leaves you busy or quiet, so track which."})),
+     ("Count the quiet hour just gone. What is the chance that two busy hours in a row come before two quiet hours in a row? Give 4 decimal places.",
+      num(r(a3w), 0.0005, [("next-busy", a3, 0.0005), ("one-route", a3 * b3, 0.0005)]),
+      fb("From a quiet hour the race is won only through a busy one.",
+         "Let $w$ be the winning chance after a quiet hour and after a busy hour, and link the two.",
+         {"next-busy": "You gave the chance that the next hour is busy. A second busy hour must still follow.",
+          "one-route": "You counted busy then busy only. After busy then quiet the race is still open."}))],
+    f"Let $E_Q$ and $E_B$ be the expected hours still to watch after a quiet hour and after a busy hour. "
+    f"Then $E_Q = 1 + 0.8E_Q + 0.2E_B$ and $E_B = 1 + 0.5E_Q$, so $E_Q = {a3n:.0f}$. "
+    f"For the race, $w_Q = 0.2w_B$ and $w_B = 0.5 + 0.5w_Q$, so $w_Q = \\tfrac{{1}}{{9}} \\approx {a3w:.4f}$."))
 
 # A4 two people side by side at a round table
 a4 = F(2, 9)
@@ -143,17 +146,19 @@ A.append(item("a-round-table", 3, ["pz-symmetry"], ["seating-symmetry"], 90, "Si
     "Seat the first head anywhere; by symmetry her seat does not matter. The second head is then equally likely to take any of the 9 other seats. "
     "Two of those touch the first head's seat, so the chance is $\\tfrac29$."))
 
-# A5 the product of two uniforms
-a5 = 0.5 + 0.5 * math.log(2)
-A.append(item("a-uniform-product", 3, ["pz-geometry"], ["area-under-curve"], 150, "A product below one half",
-    "Draw $X$ and $Y$ independently and uniformly from $[0, 1]$.",
-    "What is $P(XY < \\tfrac12)$? Give 4 decimal places.",
-    num(r(a5), 0.0005, [("uniform-product", 0.5, 0.0005), ("curve-only", r(0.5 * math.log(2)), 0.0005)]),
-    fb("A strip of area one half, plus the area under a hyperbola.", "Split at $x = \\tfrac12$. Left of it every $y$ works; right of it $y < \\tfrac{1}{2x}$.",
-       {"uniform-product": "You treated $XY$ as uniform. A product of two uniforms piles up near 0.",
-        "curve-only": "You kept only the curved part. For $x \\le \\tfrac12$ every $y$ works, which adds $\\tfrac12$."}),
-    f"For $x \\le \\tfrac12$ every $y$ works, an area of $\\tfrac12$. For $x > \\tfrac12$ we need $y < \\tfrac{{1}}{{2x}}$, "
-    f"an area of $\\int_{{1/2}}^{{1}} \\tfrac{{1}}{{2x}}\\,dx = \\tfrac12 \\ln 2$. So the chance is $\\tfrac12 + \\tfrac12 \\ln 2 \\approx {a5:.4f}$."))
+# A5 a point past the diagonal and inside the circle
+a5 = math.pi / 2 - 1
+A.append(item("a-uniform-product", 3, ["pz-geometry"], ["area-in-square"], 150, "Past the diagonal",
+    "A point $(X, Y)$ is chosen uniformly in the unit square, and you are told that $X + Y > 1$.",
+    "What is the chance that $X^2 + Y^2 < 1$? Give 4 decimal places.",
+    num(r(a5), 0.0005, [("ignored-news", r(math.pi / 4), 0.0005), ("not-divided", r(math.pi / 4 - 0.5), 0.0005)]),
+    fb("A sliver of area $\\tfrac{\\pi}{4} - \\tfrac{1}{2}$ out of a triangle of area $\\tfrac{1}{2}$.",
+       "The news keeps the triangle above the diagonal. How much of the quarter disc lies there?",
+       {"ignored-news": "You gave the chance of landing in the quarter disc. The news cuts the square to the triangle above the diagonal.",
+        "not-divided": "You found the area of the part inside the circle. Divide by the triangle's area, one half."}),
+    f"Given $X + Y > 1$, the point is uniform on a triangle of area $\\tfrac{{1}}{{2}}$. "
+    f"The part inside the circle is the quarter disc, area $\\tfrac{{\\pi}}{{4}}$, less the lower triangle of area $\\tfrac{{1}}{{2}}$. "
+    f"So the chance is $(\\tfrac{{\\pi}}{{4}} - \\tfrac{{1}}{{2}}) / \\tfrac{{1}}{{2}} = \\tfrac{{\\pi}}{{2}} - 1 \\approx {a5:.4f}$."))
 
 # A6 a two-by-two game with no saddle point
 M6 = [[2, -1], [-3, 4]]
@@ -161,7 +166,7 @@ p6 = (M6[1][1] - M6[1][0]) / (M6[0][0] - M6[1][0] - M6[0][1] + M6[1][1])
 v6 = p6 * M6[0][0] + (1 - p6) * M6[1][0]
 q6 = (M6[1][1] - M6[0][1]) / (M6[0][0] - M6[0][1] - M6[1][0] + M6[1][1])
 half6 = min(0.5 * M6[0][0] + 0.5 * M6[1][0], 0.5 * M6[0][1] + 0.5 * M6[1][1])
-A.append(parts("a-quote-game", 3, ["gm-mixed"], ["two-by-two-mixed"], 180, "Tight or wide",
+A.append(parts("a-quote-game", 3, ["gm-mixed"], ["two-by-two-mixed"], 180, "A mix of two quotes",
     "A market maker plays a repeated game with an arbitrageur. Each round she quotes tight or wide, and he trades or waits. "
     "Her gain per round, in £, is his loss:\n\n| | Trade | Wait |\n|---|---|---|\n| Tight | 2 | −1 |\n| Wide | −3 | 4 |",
     "Two questions on her best mix.",
@@ -176,35 +181,37 @@ A.append(parts("a-quote-game", 3, ["gm-mixed"], ["two-by-two-mixed"], 180, "Tigh
          {"pure-maximin": "You gave the most she can guarantee with one pure quote. Mixing raises it.",
           "half-half": "You mixed half and half. Then he trades, and she loses £0.50 a round."}))],
     f"Against Trade her tight share $p$ earns $2p - 3(1 - p)$; against Wait it earns $-p + 4(1 - p)$. "
-    f"Setting them equal gives $10p = 7$, so $p = {p6:.1f}$. She then gains $2(0.7) - 3(0.3) = £{v6:.1f}$ a round whatever he does."))
+    f"Setting them equal gives $10p = 7$, so $p = {p6:.1f}$. She then gains $2(0.7) - 3(0.3) = £{v6:.2f}$ a round whatever he does."))
 
-# A7 a six against a high total
-pa7, pb7 = F(1, 6), F(10, 36)
-a7 = pa7 / (1 - (1 - pa7) * (1 - pb7))
-fair7 = F(1, 6) / (1 - F(25, 36))
-ratio7 = pa7 / (pa7 + pb7)
-A.append(item("a-six-or-nine", 3, ["pz-recursion"], ["first-to-succeed"], 150, "A six against a nine",
-    "Ana and Ben take turns, Ana first. Ana rolls one die and wins on a six. "
-    "Ben rolls two dice and wins on a total of 9 or more.",
-    "What is the chance that Ana wins? Give 4 decimal places.",
-    num(r(a7), 0.0005, [("six-each", r(fair7), 0.0005), ("at-once", r(ratio7), 0.0005)]),
-    fb("Ana's chance is $\\tfrac{18}{43}$.", "Find the chance a full round has no winner, then sum over rounds.",
-       {"six-each": "You gave the answer for a six on each side. Ben's total of 9 or more comes with chance $\\tfrac{10}{36}$.",
-        "at-once": "You weighed the two chances per turn as if they rolled at once. Ana rolls before Ben in every round."}),
-    f"Ben's two dice total 9 or more in 10 of 36 rolls. A round passes with no winner with chance $\\tfrac56 \\cdot \\tfrac{{26}}{{36}} = \\tfrac{{65}}{{108}}$. "
-    f"So $P = \\tfrac16 / (1 - \\tfrac{{65}}{{108}}) = \\tfrac{{18}}{{43}} \\approx {float(a7):.4f}$."))
+# A7 a parent order that must land exactly on 5 lots
+p7 = [1.0, 0.6]
+for n_ in range(2, 6):
+    p7.append(0.6 * p7[n_ - 1] + 0.4 * p7[n_ - 2])
+a7 = p7[5]
+A.append(item("a-six-or-nine", 3, ["pz-recursion"], ["landing-on-a-total"], 150, "Exactly five lots",
+    "A parent order is worked in slices. Each slice fills 1 lot with chance 0.6 or 2 lots with chance 0.4, independently. "
+    "After each slice, the lots filled so far are totalled.",
+    "What is the chance that the total is exactly 5 lots after some slice? Give 4 decimal places.",
+    num(r(a7), 0.0005, [("one-route", r(0.6 ** 5), 0.0005), ("tick-four", r(p7[4]), 0.0005), ("long-run", r(1 / 1.4), 0.0005)]),
+    fb("Land on 5 from 4 by one lot, or from 3 by two.", "The last slice came from 4 lots or from 3. Build the chances up from 1 lot.",
+       {"one-route": "You counted five single-lot slices only. Slices of 2 lots can land on 5 as well.",
+        "tick-four": "You gave the chance of landing on 4 lots. Take one more step of the recursion.",
+        "long-run": "You gave the long-run chance, one over the mean slice of 1.4 lots. At 5 lots it has not quite settled."}),
+    f"The last slice to land on $n$ lots came from $n - 1$ or $n - 2$, so $p_n = 0.6p_{{n-1}} + 0.4p_{{n-2}}$. "
+    f"With $p_0 = 1$ and $p_1 = 0.6$ this gives {p7[2]:.2f}, {p7[3]:.3f}, {p7[4]:.4f} and {p7[5]:.5f}. "
+    f"So the chance of landing on 5 lots is about {a7:.4f}."))
 
 # A8 wins before the third loss
-a8 = 3 * 0.6 / 0.4
+a8 = 3 * 0.75 / 0.25
 A.append(item("a-third-loss", 3, ["pz-expectation"], ["wins-before-losses"], 120, "Wins before the third loss",
-    "A trader takes one bet a day. Each bet wins with chance 0.6, independently. She stops for the month after her third losing bet.",
+    "A trader takes one bet a day. Each bet wins with chance 0.75, independently. She stops for the month after her third losing bet.",
     "How many winning bets do you expect before she stops?",
-    num(a8, 0.01, [("all-bets", 3 / 0.4, 0.01), ("first-loss", 0.6 / 0.4, 0.01)]),
-    fb("Three runs of wins, each with mean 1.5.", "Split the bets at each loss. How many wins come before one loss, on average?",
+    num(a8, 0.01, [("all-bets", 3 / 0.25, 0.01), ("first-loss", 0.75 / 0.25, 0.01)]),
+    fb("Three runs of wins, each with mean 3.", "Split the bets at each loss. How many wins come before one loss, on average?",
        {"all-bets": "You counted every bet, the three losses too. Only the wins are asked for.",
         "first-loss": "You counted the wins before the first loss only. She stops at the third."}),
-    f"Before each loss comes a run of wins with mean $\\tfrac{{0.6}}{{0.4}} = 1.5$. Three losses means three such runs. "
-    f"So we expect $3 \\times 1.5 = {a8}$ winning bets."))
+    f"Before each loss comes a run of wins with mean $\\tfrac{{0.75}}{{0.25}} = 3$. Three losses means three such runs. "
+    f"So we expect $3 \\times 3 = {a8:.0f}$ winning bets."))
 
 # A9 an all-pay auction
 v9 = 0.8
@@ -217,44 +224,49 @@ A.append(item("a-all-pay", 4, ["gm-auction"], ["all-pay-auction"], 210, "Everyon
     fb("The rule is $b(v) = v^2/2$.", "Bid as if your value were $w$: you win with chance $w$ and always pay $b(w)$.",
        {"first-price": "You used the first-price bid $v/2$. Here a loser pays too, so bids are lower.",
         "truthful": "You bid your value, as in a second-price auction. In an all-pay auction that loses money on every defeat."}),
-    f"Bidding as if your value were $w$ wins with chance $w$ and costs $b(w)$ for sure. So you maximise $vw - b(w)$. "
-    f"Truthful play needs $b'(v) = v$, so $b(v) = v^2/2$, and at $v = 0.8$ the bid is £{a9:.2f} million."))
+    f"Bidding as if your value were $w$ wins with chance $w$ and costs $b(w)$ for sure, so you maximise $vw - b(w)$. "
+    f"At $w = v$ the first-order condition gives $b'(v) = v$, so $b(v) = v^2/2$. At $v = 0.8$ the bid is £{a9:.2f} million."))
 
-# A10 an edge that still loses
-n10, p10 = 100, 0.55
+# A10 a skewed bet that is rarely ahead
+n10, p10, win10, lose10 = 8, 0.3, 3, 1
 pmf = [math.comb(n10, k) * p10 ** k * (1 - p10) ** (n10 - k) for k in range(n10 + 1)]
-a10 = sum(pmf[:50])
-flat10 = sum(pmf[:51])
-sd10 = math.sqrt(n10 * p10 * (1 - p10))
-nohalf10 = N.cdf((50 - 55) / sd10)
-A.append(item("a-edge-hundred", 4, ["pz-games"], ["edge-and-luck"], 180, "An edge over 100 bets",
-    "You take 100 independent £1 bets at evens. Each one wins with chance 0.55.",
-    "What is the chance that you finish down overall? Give 2 decimal places.",
-    num(r(a10), 0.005, [("sure-profit", 0, 0.002), ("no-half", r(nohalf10), 0.002), ("level-counts", r(flat10), 0.002)]),
-    fb("Down means at most 49 wins.", "Count wins, with mean 55. Being down means fewer than 50 of them.",
-       {"sure-profit": "You treated a positive edge as a sure profit. The luck over 100 bets is as large as the £10 edge.",
-        "no-half": "You cut the normal curve at exactly 50 wins. Down means at most 49, so cut at 49.5.",
-        "level-counts": "You counted finishing level as down. At exactly 50 wins you are flat."}),
-    f"Being down means at most 49 wins out of 100. The wins have mean 55 and sd $\\sqrt{{100 \\times 0.55 \\times 0.45}} \\approx {sd10:.2f}$. "
-    f"So $P(W \\le 49.5) \\approx \\Phi(-1.11) \\approx 0.13$, and the exact binomial sum gives {a10:.4f}."))
+need10 = next(k for k in range(n10 + 1) if win10 * k - lose10 * (n10 - k) > 0)
+a10 = sum(pmf[need10:])
+level10 = sum(pmf[need10 - 1:])
+four10 = sum(pmf[need10 + 1:])
+A.append(item("a-edge-hundred", 4, ["pz-games"], ["edge-and-luck"], 180, "Skewed bets",
+    "A strategy takes 8 independent bets. Each wins £3 with chance 0.3 and otherwise loses £1.",
+    "What is the chance that she finishes ahead overall? Give 4 decimal places.",
+    num(r(a10), 0.0005, [("level-counts", r(level10), 0.0005), ("four-wins", r(four10), 0.0005)]),
+    fb("Three wins or more, since $3k - (8 - k) > 0$ needs $k \\ge 3$.",
+       "Turn the profit into a count of wins, find the fewest that leave her ahead, then add that tail.",
+       {"level-counts": "You counted finishing level as ahead. Two wins leave her exactly even, so ahead needs three.",
+        "four-wins": "You asked for four wins. Three wins give $9 - 5 = £4$, which is already ahead."}),
+    f"With $k$ wins her profit is $3k - (8 - k) = 4k - 8$, so she is ahead when $k \\ge 3$. "
+    f"The chances of 0, 1 and 2 wins are {pmf[0]:.4f}, {pmf[1]:.4f} and {pmf[2]:.4f}. "
+    f"So she is ahead with chance about {a10:.4f}, though each bet has a positive edge of £0.20."))
 
-# A11 two independent flags
-base11, hit11, false11 = 0.02, 0.9, 0.05
-num11 = base11 * hit11 ** 2
-den11 = num11 + (1 - base11) * false11 ** 2
-a11 = num11 / den11
-one11 = base11 * hit11 / (base11 * hit11 + (1 - base11) * false11)
-half11 = num11 / (num11 + (1 - base11) * false11)
-A.append(item("a-two-flags", 4, ["pz-conditioning"], ["two-signals"], 180, "Two models agree",
-    "A regime break starts on 2% of days. Two models each flag 90% of break days and 5% of normal days. "
-    "Given the kind of day, the two models flag independently.",
-    "Both models flag today. What is the chance that a break has started? Give 4 decimal places.",
-    num(r(a11), 0.0005, [("one-model", r(one11), 0.0005), ("hits-squared-only", r(half11), 0.0005)]),
-    fb("Square both likelihoods, then compare the weights.", "Weigh a break day with two flags against a normal day with two flags.",
-       {"one-model": "You used one model's flag. The second flag multiplies both likelihoods again.",
-        "hits-squared-only": "You squared the 90% but left the 5% as it was. A normal day needs two false flags."}),
-    f"A break day with two flags has weight $0.02 \\times 0.9^2 = {num11:.4f}$. A normal day with two flags has $0.98 \\times 0.05^2 = {(1 - base11) * false11 ** 2:.5f}$. "
-    f"So the chance is ${num11:.4f} / {den11:.5f} \\approx {a11:.4f}$."))
+# A11 which broker is it: a posterior and then a prediction
+pc11, hit_c, hit_s = F(2, 5), F(9, 10), F(3, 5)
+lc11, ls11 = hit_c ** 2 * (1 - hit_c), hit_s ** 2 * (1 - hit_s)
+wc11, ws11 = pc11 * lc11, (1 - pc11) * ls11
+post_c11 = wc11 / (wc11 + ws11)
+a11 = post_c11 * hit_c + (1 - post_c11) * hit_s
+prior11 = pc11 * hit_c + (1 - pc11) * hit_s
+A.append(item("a-two-flags", 4, ["pz-conditioning"], ["broker-type"], 180, "Which broker is it?",
+    "A desk is sent one broker for the day. The broker is careful with chance 0.4 and sloppy with chance 0.6. "
+    "A careful broker fills each order at the quoted price with chance 0.9, a sloppy one with chance 0.6. "
+    "Given the broker, orders fill independently. Today's first three orders were filled, filled, not filled.",
+    "What is the chance that the fourth order is filled? Give 4 decimal places.",
+    num(r(a11), 0.0005, [("ignored-orders", r(prior11), 0.0005), ("sample-rate", r(F(2, 3)), 0.0005), ("who-careful", r(post_c11), 0.0005)]),
+    fb("Update the broker's type on all three orders, then weigh each type's fill chance.",
+       "Weigh a careful broker and a sloppy one by the chance of filled, filled, not filled.",
+       {"ignored-orders": "You used the prior mix of brokers. The three orders tell you more about who it is.",
+        "sample-rate": "You used the fill rate of the three orders. The broker's type, not the sample, sets the next chance.",
+        "who-careful": "You gave the chance that the broker is careful. The question asks about the next fill."}),
+    f"Filled, filled, not filled has chance $0.9^2 \\times 0.1 = {float(lc11):.3f}$ for a careful broker and $0.6^2 \\times 0.4 = {float(ls11):.3f}$ for a sloppy one. "
+    f"With the priors the weights are {float(wc11):.4f} and {float(ws11):.4f}, so the broker is careful with chance $\\tfrac{{3}}{{11}}$. "
+    f"The next order fills with chance $\\tfrac{{3}}{{11}}(0.9) + \\tfrac{{8}}{{11}}(0.6) = \\tfrac{{15}}{{22}} \\approx {float(a11):.4f}$."))
 
 # A12 a buyer who may know
 xs = range(1, 101)
@@ -283,7 +295,7 @@ A.append(parts("a-informed-buyer", 5, ["mg-update"], ["adverse-selection"], 300,
           "no-update": "You kept the prior. A buy is likelier when $X$ is high, so it moves fair value up.",
           "equal-weights": "You weighted the two kinds of buyer equally. Their weights are 0.25 and 0.225."})),
      ("On average, what is that one sale at 55 worth to you, in points? Give 2 decimal places.",
-      num(r(pnl12), 0.005, [("sign", r(-pnl12), 0.002), ("prior-value", 55 - prior12, 0.002)]),
+      num(r(pnl12), 0.005, [("sign", r(-pnl12), 0.005), ("prior-value", 55 - prior12, 0.002)]),
       fb("Sale price minus the new fair value.", "You sold at 55 something now worth your new fair value.",
          {"sign": "You gave the loss as a gain. You sold at 55 something now worth more.",
           "prior-value": "You valued the sale against the prior 50.5. The buy itself is news."}))],
@@ -293,7 +305,7 @@ A.append(parts("a-informed-buyer", 5, ["mg-update"], ["adverse-selection"], 300,
 # ======================================================================== Paper C: research papers (3.1)
 # C1 backfill
 o1 = [opt("a", "Backfill bias: the early records were chosen for being good.", correct=True),
-      opt("b", "Survivorship bias: dead funds have dropped out.", "You named the bias from funds that close. Here funds join with a chosen past."),
+      opt("b", "Survivorship bias: funds that closed have dropped out of the data.", "You named the bias from funds that close. Here funds join with a chosen past."),
       opt("c", "Look-ahead bias: returns are known before they happen.", "You named a timing leak. No trade here uses data from the future."),
       opt("d", "Data snooping: many rules were tried on one sample.", "You named a search over many rules. No rule was searched here.")]
 C.append(item("r-backfill", 2, ["rm-data"], ["backfill-bias"], 90, "A history that arrives late",
@@ -309,7 +321,7 @@ C.append(item("r-backfill", 2, ["rm-data"], ["backfill-bias"], 90, "A history th
 o2 = [opt("a", "The weights use month $t$'s return to trade month $t$.", correct=True),
       opt("b", "A 6-month window is too short to rank on.", "You questioned the window. Jegadeesh and Titman rank on 3 to 12 months; the bug is timing."),
       opt("c", "Summed returns should be compounded first.", "You looked at sums against products. That moves a few ranks, not 6% a month."),
-      opt("d", "The loser leg should be dropped.", "You changed the design. Dropping losers does not explain 6% a month.")]
+      opt("d", "The loser leg should be dropped, since shorting losers is costly.", "You changed the design. Dropping losers does not explain 6% a month.")]
 C.append(item("r-same-month", 2, ["rm-portfolios"], ["look-ahead-code"], 90, "Six per cent a month",
     "A colleague's momentum backtest earns 6% a month. `ret` holds monthly returns, one row a month. `rank_weights` "
     "sets +1 on winners and −1 on losers in each row.\n\n```python\nw = rank_weights(ret.rolling(6).sum())\npnl = (w * ret).sum(axis=1)\n```",
@@ -336,7 +348,7 @@ C.append(item("r-closed-funds", 2, ["rm-data"], ["survivorship-funds"], 90, "Onl
 
 # C4 Fama and French's June rule
 o4c = [opt("a", "The year ending March 2014", correct=True),
-       opt("b", "The year ending March 2015", "You took the latest year end. The rule uses the year ending in 2014, so the accounts are surely out."),
+       opt("b", "The year ending March 2015", "You took the latest year end. March 2015 falls in calendar 2015, and June may be too soon for those accounts."),
        opt("c", "The year ending December 2014", "You used a calendar year. This firm's years end in March."),
        opt("d", "The year ending March 2016", "You used accounts from after June 2015. That is look-ahead.")]
 C.append(item("r-june-book", 3, ["rm-paper"], ["point-in-time-accounts"], 120, "Book equity in June",
@@ -351,17 +363,18 @@ C.append(item("r-june-book", 3, ["rm-paper"], ["point-in-time-accounts"], 120, "
 # C5 which choices leak
 o5 = [opt("a", "Scale 2009 returns by each share's volatility over 1990 to 2024.", correct=True),
       opt("b", "Pick the holding period with the best Sharpe ratio over 1990 to 2024.", correct=True),
-      opt("c", "Trade only shares in the 2024 index, all the way back to 2010.", correct=True),
+      opt("c", "Use book equity for fiscal years ending December 2009.", correct=True),
       opt("d", "Choose pairs by their distance over 2009 only.", "You flagged a formation window. All of 2009 was known by January 2010."),
       opt("e", "Use book equity from fiscal years ending in 2008.", "You flagged old accounts. Fiscal 2008 accounts were public by 2010."),
-      opt("f", "Charge costs at the average 2009 bid-ask spread.", "You flagged a cost estimate. The 2009 spread was known before 2010.")]
+      opt("f", "Report results for 2010 to 2024 from signals set each month on past data.", "You flagged the reporting window. Results may run to 2024 if each signal used only earlier data.")]
 C.append(item("r-which-leak", 3, ["rm-extend", "pr-method"], ["look-ahead-plan"], 150, "What January 2010 knew",
     "A replication plan lists six choices for a test that starts trading in January 2010.",
     "Select all that apply: which choices use information that was not available in January 2010?",
     multi(o5),
-    fb("Three choices reach past 2009.", "For each choice, find the latest date whose data it needs."),
-    "The full-sample volatility, the holding period chosen on 1990 to 2024 and the 2024 index all use the future. "
-    "The pairs window, the 2008 accounts and the 2009 spread were all known by then. Each leaked choice flatters the backtest."))
+    fb("Three choices use data not public in January 2010.", "For each choice, find the latest date whose data it needs."),
+    "The full-sample volatility, the holding period from 1990 to 2024 and the December 2009 accounts all use the future. "
+    "Accounts for a December year end are not public until about March. "
+    "The 2009 pairs window, the 2008 accounts and a report to 2024 on past signals are all safe."))
 
 # C6 the order of an out-of-sample test
 C.append(item("r-pairs-oos-order", 3, ["pr-extend"], ["held-out-test"], 150, "A test on later years",
@@ -381,7 +394,7 @@ C.append(item("r-pairs-oos-order", 3, ["pr-extend"], ["held-out-test"], 150, "A 
     fb("Fix, match, freeze, run once, report.", "The held-out years may be used only once, after the code is frozen.",
        {"x1": "You tuned on the held-out years. Then they no longer test anything.",
         "x2": "You removed the bad years. That hides what the test should show.",
-        "left-out": "A step that belongs is missing. Each of rules, match, freeze, run and report is needed."}),
+        "left-out": "You left out a step that belongs. Rules, match, freeze, run and report are all needed."}),
     "Fix the rules first and prove the code by matching the paper. Freeze it, then spend the held-out years once. "
     "Tuning on them, or dropping years, turns the test back into a fit."))
 
@@ -391,7 +404,7 @@ c7 = g7 / t7
 C.append(item("r-turnover-cost", 3, ["rm-portfolios"], ["break-even-cost"], 150, "What costs leave",
     "A momentum book earns 1.1% a month before costs, per £1 long and £1 short. Each month it buys and sells shares worth £1.40 in all.",
     "What cost per £1 traded wipes out the return? Give it in % to 2 decimal places.",
-    num(r(c7, 8), 0.00005, [("twice", r(g7 / (2 * t7), 8), 0.00002), ("no-turnover", g7, 0.00002)], unit="%",
+    num(r(c7, 8), 0.00005, [("twice", r(g7 / (2 * t7), 8), 0.00005), ("no-turnover", g7, 0.00002)], unit="%",
         accept=f"0.79%: 1.1% / 1.4 ≈ {c7 * 100:.2f}%"),
     fb("Costs fall on the £1.40 traded each month.", "Set the monthly cost, £1.40 times the rate, equal to the 1.1% earned.",
        {"twice": "You charged each trade twice. The £1.40 already counts buys and sells.",
@@ -410,7 +423,7 @@ C.append(parts("r-t-bar", 3, ["rm-stats"], ["factor-t-bar"], 150, "A bar of thre
     "A new factor earns 0.45% a month, with sd 3.1%, over 360 months. The months are close to independent.",
     "Two questions on the evidence.",
     [("What is its $t$ statistic? Give 2 decimal places.",
-      num(r(t8), 0.005, [("no-root", r(m8 / s8), 0.002), ("years", r(m8 / (s8 / math.sqrt(30))), 0.002)]),
+      num(r(t8), 0.005, [("no-root", r(m8 / s8), 0.005), ("years", r(m8 / (s8 / math.sqrt(30))), 0.005)]),
       fb("Mean over its standard error.", "Divide the sd by $\\sqrt{360}$, then divide the mean by that.",
          {"no-root": "You divided by the sd, not the standard error. Divide the sd by $\\sqrt{360}$ first.",
           "years": "You counted years, not months. There are 360 monthly returns."})),
@@ -429,7 +442,7 @@ C.append(parts("r-small-share", 3, ["rm-portfolios"], ["weighting-scheme"], 150,
     "The tenth is worth £0.05 billion and returns 60%.",
     "Two figures for the month.",
     [("What is the decile's equal-weighted return? Give it in % to 1 decimal place.",
-      num(r(ew9, 8), 0.0005, [("big-only", 0.01, 0.0002), ("value-weighted", r(vw9, 8), 0.0002)], unit="%", accept=f"6.9%: (9 × 1% + 60%) / 10 = {ew9 * 100:.1f}%"),
+      num(r(ew9, 8), 0.0005, [("big-only", 0.01, 0.0002), ("value-weighted", r(vw9, 8), 0.0004)], unit="%", accept=f"6.9%: (9 × 1% + 60%) / 10 = {ew9 * 100:.1f}%"),
       fb("Each share counts one tenth.", "Average the ten returns, each with weight one tenth.",
          {"big-only": "You gave the nine large shares alone. The tenth share counts one tenth too.",
           "value-weighted": "You weighted by size. Equal weights give the small share a tenth of the decile."})),
@@ -445,7 +458,7 @@ C.append(parts("r-small-share", 3, ["rm-portfolios"], ["weighting-scheme"], 150,
 k10 = 0.21 / 0.84
 o10 = [opt("a", "A quarter of the effect survived, too little to tell from zero.", correct=True),
        opt("b", "Three quarters of the effect survived publication.", "You gave the share lost, $1 - 0.25$. The share kept is $0.21 / 0.84$."),
-       opt("c", "The effect is gone, so it was never real.", "You read a weak $t$ as proof. The in-sample match also stands."),
+       opt("c", "The effect vanished after publication, so it was never really there.", "You read a weak $t$ as proof. The in-sample match also stands."),
        opt("d", "The effect survived, since 0.21% is still positive.", "You ignored the noise. With $t = 0.7$, 0.21% cannot be told from zero.")]
 C.append(item("r-note-sentence", 3, ["rm-extend"], ["survival-note"], 150, "One plain sentence",
     "Your replication of a value strategy matches the paper on its years: 0.84% a month, $t = 3.2$. "
@@ -463,7 +476,7 @@ C.append(item("r-factor-alpha", 3, ["pr-extend"], ["factor-alpha"], 150, "Is it 
     "A pairs strategy earns 0.90% a month. Regressed on a short-term reversal factor, its beta is 0.35. "
     "The factor earns 1.40% a month over the same years.",
     "What is the pairs strategy's alpha, in % a month? Give 2 decimal places.",
-    num(r(c12, 8), 0.00005, [("whole-factor", r(r12 - f12, 8), 0.00002), ("scaled-own", r(r12 * (1 - b12), 8), 0.00002)], unit="%",
+    num(r(c12, 8), 0.00005, [("whole-factor", r(r12 - f12, 8), 0.00002), ("scaled-own", r(r12 * (1 - b12), 8), 0.00006)], unit="%",
         accept=f"0.41%: 0.90% − 0.35 × 1.40% = {c12 * 100:.2f}%"),
     fb("Subtract beta times the factor's return.", "Find how much of the 0.90% the factor explains, then take it away.",
        {"whole-factor": "You subtracted the whole factor return. Only the beta share, $0.35 \\times 1.40\\%$, is explained.",
@@ -479,7 +492,7 @@ C.append(item("r-best-of-twenty", 4, ["rm-stats"], ["best-of-many"], 210, "The b
     "You try 20 independent variants of a rule on 5 years of data. None has any edge. "
     "Each variant's annual Sharpe ratio estimate is then normal, with mean 0 and sd $1/\\sqrt{5}$.",
     "What is the chance that the best of the 20 shows a Sharpe ratio above 1? Give 2 decimal places.",
-    num(r(c11), 0.005, [("one-variant", r(p11), 0.002), ("added-chances", r(k11 * p11), 0.002)]),
+    num(r(c11), 0.005, [("one-variant", r(p11), 0.005), ("added-chances", r(k11 * p11), 0.005)]),
     fb("One minus the chance that all 20 stay below 1.", "Find the chance one variant beats 1, then the chance that none of the 20 does.",
        {"one-variant": "You gave the chance for one variant. The best of 20 has 20 tries at it.",
         "added-chances": "You added the 20 chances, which counts overlaps twice. Use $1 - (1 - p)^{20}$."}),
@@ -502,11 +515,11 @@ C.append(parts("r-false-share", 4, ["rm-stats"], ["false-discoveries"], 240, "Fa
          {"over-tested": "You divided by all 300 tested. Divide by the number that pass.",
           "null-rate": "You gave the chance that one null factor passes. The share also needs the real passes."})),
      ("With a bar of $t > 3$, what is that share? Give 4 decimal places.",
-      num(r(c16b), 0.00005, [("null-rate", r(1 - N.cdf(3)), 0.00002), ("over-tested", r(pass_null3 / 300), 0.00002)]),
+      num(r(c16b), 0.00005, [("null-rate", r(1 - N.cdf(3)), 0.00006), ("over-tested", r(pass_null3 / 300), 0.00002)]),
       fb("0.27 false passes against 69.15 real ones.", "Repeat the count with the bar at 3.",
          {"null-rate": "You gave the chance that one null factor passes. The share also needs the real passes.",
           "over-tested": "You divided by all 300 tested. Divide by the number that pass."}))],
-    f"At $t > 2$, $200 \\times {1 - N.cdf(2):.4f} \\approx {pass_null2:.2f}$ null factors pass beside $100 \\times \\Phi(1.5) \\approx {pass_real2:.2f}$ real ones, a false share of {c16a:.4f}. "
+    f"At $t > 2$, $200 \\times {1 - N.cdf(2):.5f} \\approx {pass_null2:.2f}$ null factors pass beside $100 \\times \\Phi(1.5) \\approx {pass_real2:.2f}$ real ones, a false share of {c16a:.4f}. "
     f"At $t > 3$ the nulls fall to {pass_null3:.2f} and the real ones to {pass_real3:.2f}, a share of {c16b:.4f}. "
     "The higher bar costs a quarter of the real factors but almost removes the false ones."))
 
@@ -544,8 +557,10 @@ C.append(item("r-as-of-code", 4, ["rm-data"], ["point-in-time-join"], 900, "What
      "how": "Check runs 7 hidden tests. Each compares your dict with the expected one exactly."},
     fb("Filter on the publication date, then keep the latest period per ticker.", "Some tests failed. Open the first one that failed below the editor.",
        {"error": "Your code stopped with an error. Read the first line of the message under the editor.",
+        "test-1": "Test 1 asks for 30 June 2015. AAA's 2015 accounts and CCC's came out in 2016, so leave them out.",
         "test-2": "Test 2 asks for 31 December 2015. BBB's restatement, published in September, replaces its June figure.",
         "test-3": "Test 3 is the day AAA's 2015 accounts come out. On or before `date` includes that day.",
+        "test-6": "Test 6 gives the reports in reverse order. Compare the dates; do not rely on the list order.",
         "test-7": "Test 7 restates an old period after a newer one is out. The latest `period_end` still wins."}),
     "Filter on `published <= date` first: that is the look-ahead guard. Then keep, per ticker, the largest `(period_end, published)` pair. "
     "ISO date strings sort in date order, so plain string comparison works."))
@@ -565,7 +580,7 @@ C.append(parts("r-oos-power", 5, ["rm-extend"], ["out-of-sample-power"], 360, "A
          {"halved-only": "You halved the mean but kept 240 months. With 120 months the standard error is $\\sqrt2$ times larger.",
           "full-mean": "You shortened the sample but kept the full mean. Only half the mean survives."})),
      ("Treat the out-of-sample $t$ as normal with that mean and sd 1. What is the chance that it exceeds 2? Give 2 decimal places.",
-      num(r(c15b), 0.005, [("nothing-survived", r(1 - N.cdf(2)), 0.002), ("below-two", r(N.cdf(2 - c15a)), 0.002)]),
+      num(r(c15b), 0.005, [("nothing-survived", r(1 - N.cdf(2)), 0.005), ("below-two", r(N.cdf(2 - c15a)), 0.002)]),
       fb("$1 - \\Phi(2 - 1.41)$.", "Standardise 2 against the expected $t$ from the first part.",
          {"nothing-survived": "You used a mean of 0, as if nothing survived. Centre on 1.41.",
           "below-two": "You gave the chance that $t$ falls below 2. The question asks for above."})),
@@ -584,7 +599,7 @@ CHECKS = [
      "Zhou's A Practical Guide to Quantitative Finance Interviews, the probability chapter. Work every problem without the solutions, "
      "under a clock, then mark yourself. Count a problem only if your first answer was right."),
     ("zetamac-50", "A Zetamac score of 50 or more",
-     "Default Zetamac settings, 120 seconds, typed answers. Use your best score from the last week. Paper B is the same pace with options to pick."),
+     "Default Zetamac settings, 120 seconds, typed answers. Use your best score from the last week, on Zetamac or the Today warm-up, which uses the same settings. Paper B is the same pace with options to pick."),
     ("mock-interviews", "Ten mock interviews done aloud, at least three with a stranger",
      "Each one is a full interview, spoken aloud with someone marking your reasoning. For a research role, one is an open case worked aloud "
      "in 45 minutes. For a developer role, one is a feed handler design you defend aloud."),
@@ -598,24 +613,26 @@ def minutes(items, factor, extra=0):
     return int(math.ceil(factor * (sum(it["pace"] for it in items) + extra) / 60 / 5) * 5)
 
 
-DRAW_A = [{"from": "bank/probability", "tags": ["waiting-for-hh", "who-wins", "ruin-in-interviews"], "difficulty": [3, 5], "n": 1},
-          {"from": "bank/probability", "tags": ["when-to-stop", "duels", "betting-on-sequences"], "difficulty": [3, 5], "n": 1},
+DRAW_A = [{"from": "bank/probability", "tags": ["waiting-for-hh", "betting-on-sequences", "ruin-in-interviews"], "difficulty": [3, 5], "n": 1},
+          {"from": "bank/probability", "tags": ["when-to-stop", "who-wins", "duels"], "difficulty": [3, 5], "n": 1},
           {"from": "bank/probability", "tags": ["broken-stick", "semicircle", "random-chords", "meeting"], "difficulty": [3, 5], "n": 1},
           {"from": "bank/probability", "tags": ["exceeding-one", "expected-distance", "largest-of-several", "buffon"], "difficulty": [3, 5], "n": 1},
           {"from": "bank/probability", "tags": ["kelly", "when-to-hedge", "doubling-up"], "difficulty": [3, 5], "n": 1},
-          {"from": "bank/probability", "tags": ["fair-from-biased", "cards-and-colours"], "difficulty": [3, 5], "n": 1}]
+          {"from": "bank/probability", "tags": ["fair-from-biased", "cards-and-colours"], "difficulty": [3, 5], "n": 1},
+          {"from": "bank/brainteasers", "difficulty": [3, 4], "n": 1},
+          {"from": "bank/market-making", "difficulty": [3, 4], "n": 1}]
 DRAW_D = [{"from": "drills/oa", "difficulty": 3, "n": 1},
           {"from": "drills/ci", "tags": ["pair-gaps", "digit-sum-pairs", "split-points"], "difficulty": 3, "n": 1}]
 ARITH = {"generator": "arith", "n": 80, "options": 4, "difficulty": 3, "skills": ["mp-speed"]}
 doc = {
     "id": "stage-3", "stage": 3, "name": "Stage 3 exit test",
     "description": "The exit test for Advanced, in four papers and four checks. "
-                   "The papers cover probability at interview pace, mental arithmetic, research papers and two coding problems in an hour. "
+                   "The papers cover probability, games and markets at interview pace, mental arithmetic, research papers and two coding problems. "
                    "The checks cover Zhou's probability chapter, Zetamac, your mock interviews and your replication. "
                    "Topics 3.2 and 3.4 are optional, so they sit in their own topic exams instead.",
     "parts": [
-        {"kind": "paper", "id": "probability", "name": "Paper A: probability and expected value at interview pace",
-         "minutes": minutes(A, 1.0, 6 * 180), "pass": 0.8, "items": A, "draw": DRAW_A},
+        {"kind": "paper", "id": "probability", "name": "Paper A: probability, games and markets at interview pace",
+         "minutes": minutes(A, 1.0, 6 * 180 + 180 + 120), "pass": 0.8, "items": A, "draw": DRAW_A},
         {"kind": "paper", "id": "arithmetic", "name": "Paper B: mental arithmetic at Zetamac pace",
          "minutes": 2, "scoring": {"right": 1, "wrong": -1, "blank": 0}, "passNet": 50, "navigation": "forward", "skip": False,
          "items": [ARITH]},
