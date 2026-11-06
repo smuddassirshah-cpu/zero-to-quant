@@ -56,3 +56,25 @@ Format: `item | severity | what is wrong | fix`. Severity: error = wrong number,
 - Author's script: `check_numbers.py` 244 of 244, exit 0.
 
 ## Fix pass
+
+## Fix pass
+
+All 15 findings handled by targeted edits to the exam file and its script; none disputed. Corrected numbers recomputed twice (closed form and the script's bisection).
+
+- 1 `e-monthly-from-annual` | fixed | Now 13.65% a year: $1.1365^{1/12} - 1 = 1.07198\%$, same $(1 + r)^{12}$ convention as momentum-rep l3; `simple` 13.65/12 = 1.1375% (typed 1.14 is 2.5e-5 away, inside 5e-5). 13.65 and 1.07% appear nowhere in the courses. The other 0.95% mentions are the paper's own 6/6 cell used as data in other items, not this item's answer, so no cue remains.
+- 2 `e-nw-hand` | fixed | Both wrong `tol.abs` 0.005. Bands 2.0606 to 2.0706 and 2.1723 to 2.1823 against the answer band 2.1590 to 2.1690, so no overlap (rule 581: validator 0 errors).
+- 3 `e-plan-checks` | fixed | Prose adds "The planted panel carries 1.00% a month."
+- 4 `e-survival-note` | fixed | Model replaced by the reviewer's eight sentences (one shortened to stay under 20 words); 35%, 0.15, 0.73, 0.16, 22%, -1.71 to +0.57 rechecked; rubric unchanged.
+- 5 `e-capital-code` | fixed | `tests[4]` and `tests[6]` replaced as suggested (expect [0.002, 0.02] and 0.02); the starter now fails all 7 hidden tests, checked one by one in the script.
+- 6 `e-capital-code` explain | fixed | "by our stated rule for 0 over 0".
+- 7 `e-gap-in-se` `over-sd` `tol.abs` 0.005; `e-survival-share` `points` 0.00015 | fixed | Typed 0.05 and 0.7 now trigger their slips; no overlap with the answers.
+- 8 `e-composite-code` `tests[0]` | fixed | Unseen case, expect [0.025, 0.015, -0.01] by hand. The stub starter passes `tests[5]` (too few cohorts, expect []) by design.
+- 9 `e-crash-beta` `sum` | fixed | Value 0.322; feedback already read "You added the two betas. The short leg's beta enters with a minus sign."
+- 10 `e-gap-in-se` explain | fixed | Ends at "That is inside the rule."
+- 11 | no change | Overlap defensible, as the reviewer says.
+- 12 `e-skip-event` | declined | Kept at d5 as the conceptual d5.
+- 13 shuffled line in `e-plan-checks` | fixed | "0.03% a month, t 0.11".
+- 14, 15 | no change | None required.
+- Script: `check_numbers.py` updated for 13.65, 1.14, 0.322, and extended with band checks for typed slips, the capital starter test by test, and the model's sentence count; 258 of 258, exit 0.
+- Gates: validator 0 errors, no topic-3.1 warning; voice scan 0 and 0; playthrough `--exam topic-3.1` passed 30 of 30, desktop and `--mobile`.
+- Graded answers changed: `e-monthly-from-annual` answer 0.95% to 1.07% (new numbers); wrong values changed for `simple` and `sum`; hidden tests changed in both code items.

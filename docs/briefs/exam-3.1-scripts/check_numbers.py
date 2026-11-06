@@ -82,18 +82,18 @@ for s in doc['skills']:
     ex._rec(any(s in i['skills'] for i in items if i.get('kind') != 'longform'), f'skill {s} tested by an auto item', '')
 
 # ------------------------------------------------------------------ difficulty 2
-# e-monthly-from-annual: bisection on (1 + r)^12 = 1.1201
+# e-monthly-from-annual: bisection on (1 + r)^12 = 1.1365
 lo, hi = 0.0, 0.02
 for _ in range(80):
     mid = (lo + hi) / 2
-    lo, hi = (mid, hi) if (1 + mid) ** 12 < 1.1201 else (lo, mid)
+    lo, hi = (mid, hi) if (1 + mid) ** 12 < 1.1365 else (lo, mid)
 m = lo
-assert abs(m - (math.exp(math.log(1.1201) / 12) - 1)) < 1e-12
+assert abs(m - (math.exp(math.log(1.1365) / 12) - 1)) < 1e-12
 key('e-monthly-from-annual', m)
-wrong('e-monthly-from-annual', 'simple', float(F('0.1201') / 12))
+wrong('e-monthly-from-annual', 'simple', float(F('0.1365') / 12))
 say('e-monthly-from-annual', 'explain.text', round(m * 100, 2))
-say('e-monthly-from-annual', 'explain.text', 1.00, fmt='1.00%')
-ex._rec(abs(round(m * 100, 2) - 0.95) < 1e-12, 'monthly rounds to 0.95%', '')
+say('e-monthly-from-annual', 'explain.text', 1.14, fmt='1.14%')
+ex._rec(abs(round(m * 100, 2) - 1.07) < 1e-12, 'monthly rounds to 1.07%', '')
 
 # e-pair-count: count the combinations
 n140 = sum(1 for _ in itertools.combinations(range(140), 2))
@@ -125,7 +125,7 @@ say('e-root-k', 'explain.text', 3)
 cb = float((F('0.7') - F('1.6')) * F('0.14'))
 key('e-crash-beta', cb)
 wrong('e-crash-beta', 'sign', -cb)
-wrong('e-crash-beta', 'sum', -float((F('0.7') + F('1.6')) * F('0.14')))
+wrong('e-crash-beta', 'sum', float((F('0.7') + F('1.6')) * F('0.14')))
 say('e-crash-beta', 'explain.text', -0.9)
 say('e-crash-beta', 'explain.text', 12.6)
 
@@ -417,6 +417,33 @@ say('e-survival-note', md, round(diff - 1.96 * se_n, 2))
 say('e-survival-note', md, round(diff + 1.96 * se_n, 2))
 ex._rec(diff - 1.96 * se_n < -gross and diff + 1.96 * se_n > 0, 'interval covers no fall and the whole effect', '')
 ex._rec(sum(r['points'] for r in node(P('e-survival-note'))['rubric']) == 10, 'rubric sums to 10', '')
+
+# fix pass: every wrong value, rounded as asked, lies inside its own tol and outside the answer band
+def _band(iid, wid, shown, decimals, part=None):
+    w = node(W(iid, part))
+    x = [y for y in w['wrong'] if y['id'] == wid][0]
+    r = round(shown, decimals)
+    ex._rec(abs(r - x['value']) <= x['tol']['abs'], f'{iid} {wid}: typed {r} lands in its band', '')
+    ex._rec(abs(r - w['answer']) > w['tol']['abs'], f'{iid} {wid}: typed {r} is outside the answer band', '')
+
+
+_band('e-monthly-from-annual', 'simple', 0.1365 / 12, 4)
+ex._rec(abs(0.0114 - node(W('e-monthly-from-annual'))['wrong'][0]['value']) <= 5e-5, 'typed 1.14 hits simple', '')
+_band('e-nw-hand', 'naive', 2.06559, 2)
+_band('e-nw-hand', 'unweighted', 2.17732, 2)
+ex._rec(abs(round(0.045763, 2) - node(W('e-gap-in-se'))['wrong'][0]['value']) <= node(W('e-gap-in-se'))['wrong'][0]['tol']['abs'], 'e-gap-in-se: typed 0.05 hits over-sd', '')
+pt = [x for x in node(W('e-survival-share'))['wrong'] if x['id'] == 'points'][0]
+ex._rec(abs(0.007 - pt['value']) <= pt['tol']['abs'], 'e-survival-share: typed 0.7% hits points', '')
+
+# the capital starter fails every hidden test, one by one
+wcap = node(W('e-capital-code'))
+sta = run_cases(wcap, wcap['starter'])
+ex._rec(not any(sta), f'e-capital-code: starter fails all {len(sta)} hidden tests', '')
+ex._rec(all(run_cases(wcap, wcap['solution'])), 'e-capital-code: solution passes all hidden tests', '')
+# the composite's first hidden test is unseen, by a hand route: (0.03 + 0.02)/2, (-0.01 + 0.04)/2, (0.0 - 0.02)/2
+ex._rec(wc['tests'][0]['call'] != wc['examples'][0]['call'], 'e-composite-code: tests[0] is not the example', '')
+ex._rec(np.allclose([(0.03 + 0.02) / 2, (-0.01 + 0.04) / 2, (0.0 - 0.02) / 2], [0.025, 0.015, -0.01]), 'composite tests[0] by hand', '')
+ex._rec(abs(0.60 * 0.25 - 0.15) < 1e-12 and len(node(P('e-survival-note'))['model'].split('. ')) <= 8, 'longform model has at most 8 sentences', '')
 
 ex.check_wrongs()
 ex.report()
