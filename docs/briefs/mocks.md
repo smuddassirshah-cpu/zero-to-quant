@@ -1296,3 +1296,163 @@ Small tests and the slips they catch. H1: a worker freed exactly at an arrival (
 **Freshness.** `node tools/fresh-check.mjs --exam mock-oa-code-hard --min-run 10` from `app/`, and a literal search for each function name and setup. `graphs-dp` homework 2 has `cheapest_within` (a limit on steps), and `topic-1.8` has a profit with a fee and two trades. This mock's state (a voucher, a holding cap) and its names differ.
 
 **Acceptance.** The shared "Common acceptance checks", with: validator 0 errors and no warning on this mock; the voice scan on a copy 0 and 0; both scripts exit 0; the playthrough with `--local-cdn` green with and without `--mobile` (clang compiles H3 in the browser); `node tools/readiness-sums.mjs` OK. Report at `docs/reports/exam-mock-oa-code-hard.md`; engine gaps under `Raised later (mock mock-oa-code-hard):` in `docs/BACKLOG-INBOX.md`.
+## mock-superday-strats
+
+**File.** `app/content/exams/mock-superday-strats.json`, one file, no versions, every item fixed. A superday is rehearsed a few times and its weight is in the follow-ups, as `mock-superday-trader` argues. The bank holds no derivatives, stochastic calculus or numerics family, and a draw from `bank/probability` could repeat an item another mock draws, so nothing is drawn. `content/prep.json` names this mock on `superday-strats` and on the firm paths `firm-jp-morgan`, `firm-goldman-sachs` and `firm-morgan-stanley` (all `asOf` 2026-10); no change is proposed.
+
+- `id`: `mock-superday-strats`. `name`: `Strats superday`. `style`: `strats`.
+- `models` (under 200 characters): `Reported, as of Nov 2026: strats and desk quant final rounds at Goldman Sachs, Morgan Stanley and JP Morgan. Derivatives, stochastic calculus, probability, coding and fit.`
+- `requires`: `["markov/L5", "options/L3", "trees/L4", "ito/L4", "numerics/L4", "cpp-pricing/L2"]`, the levels the papers draw on directly.
+- `skills`: `mc-walks`, `rv-joint`, `rv-expect`, `dl-discrete`, `tp-bs`, `op-parity`, `op-greeks`, `nm-mc`, `nm-fd`, `it-calculus`, `it-martingale`, `it-bm`, `it-pricing`, `tp-multistep`, `cx-pricers`, `rk-behave`, each with a short label.
+
+**What the real days are reported to contain** (from the firm entries in `prep.json`, as of Oct 2026, and `docs/briefs/interview-gaps.md`, snapshot 29 Oct 2026; all reported, none official). Goldman Sachs strats: a superday of three to five sessions with coding, design, behavioural and a probability block. Morgan Stanley strats: probability and expected value mixed with coding, Greeks and exotics, which option is cheaper under Black-Scholes, Python and C++. JP Morgan QR: Itô's lemma, whether $W_t^3$ is a martingale, whether practitioners use Black-Scholes, C++ class questions. `interview-plan.md` (d) asks for probability (30 min), derivatives and stochastic calculus (45 min) and coding (45 min); this mock splits the middle paper in two and adds a fit paper.
+
+**Description** (plain, each sentence under 20 words, firm names only here and in `models`):
+
+> This is the reported shape of a bank strats final-round day, as candidates described it by Nov 2026. Goldman Sachs, Morgan Stanley and JP Morgan report rounds like these. There are five papers, each on its own clock. They cover probability, derivatives pricing and risk, stochastic calculus, coding and fit. Real rounds are spoken, so say each answer aloud before you type it. Some questions have follow-ups that open one at a time. No calculator and no search engine are allowed, except to run your code. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.
+
+**Parts, in order** (every paper `scoring: { "right": 1, "wrong": 0, "blank": 0 }`, free navigation, `pass` as a share):
+
+| # | Paper `id`, name | Minutes | Items | Pass | `pace` sum |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `probability`, Probability | 30 | 5 (1 with `parts`) | `pass: 0.6` (3 of 5) | 1,320 s |
+| 2 | `pricing`, Derivatives pricing and risk | 45 | 7 (1 with `parts`, 1 `longform`) | `pass: 0.6` (5 of 7) | 2,310 s |
+| 3 | `stochastic`, Stochastic calculus | 30 | 4 (1 with `parts`, 1 `longform`) | `pass: 0.5` (2 of 4) | 1,760 s |
+| 4 | `coding`, Coding | 45 | 2 (Python with `parts`, C++) | `pass: 0.5` (1 of 2) | 2,700 s |
+| 5 | `fit`, Fit and motivation | 15 | 2 `longform` | `pass: 0.5` (1 of 2) | 900 s |
+| 6 | check `derivation-aloud`, `I derived one result aloud to a listener, start to finish`, detail `Tick this only if someone heard every step and you read nothing from notes.` | | | | |
+| 7 | check `no-lookup`, `I used no calculator, search engine or notes`, detail `Tick this only if you sat all five papers without them, apart from running your code.` | | | | |
+
+That is 20 items, 165 minutes, 4 `longform`. The attempt passes only when every paper passes and both checks are ticked. An item with parts earns its share of parts right.
+
+**Rules.** As `mock-superday-research`: every `choice` has `"shuffle": true` (option order from `random.Random(2611)`); every distractor's `why` starts "You" and names the action; no key sits between a times-ten pair or two equal slips; no key is far longer than its distractors; every `numeric` lists its named slips in `wrong` with a `feedback.byKey` line each. Every item has `skills`, `tags` (family first), `pace` and `difficulty`. No family tag, question text or setup repeats another mock (the check script asserts the first two, `fresh-check` the third).
+
+### Paper 1: probability (30 min, 5 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | `wrong` or distractors | Computed twice |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P1 | 4 | `ruin-with-drift` | `mc-walks`; markov `l10-gamblers-ruin`, `l19-optional-stopping` | `parts` (numeric, numeric), 420 | Up £1 with 0.6, down with 0.4, from £50, stop at £54 or £48. Part 1: chance £54 comes first, key $81/133 = 0.6090$ (tol 0.0005). Part 2: expected steps, key $1100/133 = 8.27$ (tol 0.01) | Part 1: 0.3333 (fair-game $2/6$), 0.6 (one step), 0.3910 (the lower stop). Part 2: 8 (fair rule $4 \times 2$), 1.65 (expected gain, not divided by the drift 0.2) | Ruin formula with $r = 2/3$ and Wald's identity; exact linear solves over the five inner states on `Fraction`s |
+| P2 | 4 | `orthant-correlation` | `rv-joint`; random-vars L5, eigen `l16-correlated-normals` | choice, 240 | Two jointly normal returns, correlation 0.5: chance both are positive. Key $1/3$ | $1/4$ (multiplied $\tfrac12 \times \tfrac12$), $3/8$ (a straight line from $1/4$ to $1/2$), $1/6$ (the sign of the correlation) | $1/4 + \arcsin(0.5)/(2\pi)$; Simpson on $\int_0^\infty \varphi(x)\Phi(\rho x/\sqrt{1 - \rho^2})\,dx$ |
+| P3 | 3 | `range-of-uniforms` | `rv-expect`; puzzles `l11-largest-of-several` | numeric, 180 | Four uniform arrivals in 60 minutes: expected first-to-last time. Key 36 | 48 (the last arrival), 30 (half the window), 45 ($(n - 1)/n$) | $60(n - 1)/(n + 1)$; exact polynomial integrals of $1 - x^4$ and $(1 - x)^4$ |
+| P4 | 4 | `poisson-thinning` | `dl-discrete`; markov `l16-arrivals` | choice, 240 | Messages at 18 a second, each a cancel with chance $2/3$; 10 cancels seen: expected other messages. Key 6 | 8 ($18 - 10$), 5 (half the cancels), 18 (the total rate) | $18 \times \tfrac13$; the sum over the total count $N$ with the binomial split |
+| P5 | 4 | `max-of-two-normals` | `rv-expect`; random-vars L3 | numeric (`%`), 240 | Larger of two independent $N(0, 2\%^2)$ returns, in expectation. Key $2\%/\sqrt\pi = 1.13\%$ (tol 0.005 points) | 1.60% ($E\lvert X \rvert$), 0 (symmetry), 2% (one standard deviation) | $\tfrac12 E\lvert X - Y \rvert$; Simpson on $2x\varphi(x)\Phi(x)$ |
+
+### Paper 2: derivatives pricing and risk (45 min, 7 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | `wrong` or distractors | Computed twice |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | 3 | `atm-approximation` | `tp-bs`; trees `l13-rules-of-thumb` | numeric (£), 150 | £250 stock, $r = 0$, three months, 20% vol, at the money. Key £9.97 (tol 0.1, so the rule's £10 counts) | 20 (a full year), 5 ($T$ for $\sqrt T$) | $0.4 S\sigma\sqrt T = 10$ and $250(2\Phi(0.05) - 1) = 9.9695$; Simpson on the lognormal payoff |
+| R2 | 3 | `parity-arbitrage` | `op-parity`; options `l9-put-call-parity` | choice, 240 | £52 stock, strike £50, call £7.20, put £4.10, discount factor 0.98. Key: sell the call, buy the put and the stock, borrow £49, £0.10 now | the reversed trade; no trade (compared $C$ with $P$); borrow £50 for £1.10 (strike, not its present value) | $C - P = 3.10$ against $S - 0.98K = 3.00$ on `Fraction`s; each trade's cash today and at expiry for three prices |
+| R3 | 4 | `gamma-theta-pnl` | `op-greeks`; trees `l18-gamma-and-hedging` | numeric (£), 300 | 200 hedged calls, gamma 0.05, theta $-£0.30$, a £4 move. Key £20 | 80 (no theta), 100 (no half), $-60$ (theta only) | $200(\tfrac12 \times 0.05 \times 16 - 0.30)$; repricing a quadratic value with that gamma and theta |
+| R4 | 3 | `digital-from-calls` | `op-greeks`, `tp-bs`; trees `l15-digitals` | numeric (£), 240 | Calls £5.40 at 99 and £4.30 at 101: digital above 100. Key £0.55 | 1.10 (no width), 0.45 (the digital put) | $(5.40 - 4.30)/2$ on `Fraction`s; the scaled call spread's payoff checked at expiry |
+| R5 | 3 | `mc-interval-paths` | `nm-mc`; numerics `l15-monte-carlo-error` | `parts` (numeric, numeric), 300 | 90,000 paths, payoff standard deviation £27, an interval of two standard errors. Part 1: half-width £0.18. Part 2: paths for £0.06, key 810,000 | Part 1: 0.09 (one standard error), 0.0006 (divided by $n$). Part 2: 270,000 (times 3), 900 (not squared) | $2 \times 27/300$ and $(54/0.06)^2$ on `Fraction`s; a float route and a bisection on $54/\sqrt n = 0.06$ |
+| R6 | 3 | `convergence-order` | `nm-fd`; numerics `l14-implicit-and-crank-nicolson` | choice, 180 | Crank-Nicolson error 0.0048 at 100 steps, second order: error at 400. Key 0.0003 | 0.0012 (first order), 0.000075 (third order), 0.0024 (halved) | $0.0048/16$; the order measured from $e(h) = ch^2$ at two step sizes |
+| R7 | 5 | `realised-vs-implied` | `op-greeks`, `tp-bs`; trees `l12-delta-hedging`, `l18-gamma-and-hedging` | `longform`, 900 | A hedged one-month call bought at 20%, realised 25%, gamma 0.04, stock £100: explain the P&L and estimate it. About £0.375 a call | | $\tfrac12 \times 0.04 \times 100^2 \times 0.0225/12$; the daily P&L summed over 21 days |
+
+R7 rubric (10): gamma gain and theta cost split (2); theta priced at implied, so the two cancel when realised equals implied (2); $\tfrac12\Gamma S^2(\sigma_r^2 - \sigma_i^2)T$ (2); about £0.375 (2); the sign does not depend on direction (1); one caveat, path-dependent gamma or discrete hedging (1).
+
+### Paper 3: stochastic calculus (30 min, 4 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | `wrong` or distractors | Computed twice |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| S1 | 4 | `martingale-correction` | `it-calculus`, `it-martingale`; ito `l6-ito-lemma`, `l13-martingale-or-not` | `parts` (numeric, numeric), 360 | $W_t^4 - a\,tW_t^2 + b\,t^2$ a martingale. Part 1: $a = 6$. Part 2: $b = 3$ | Part 1: 12 (no half), 4 (the $dW$ term). Part 2: 6 ($b = a$), 1.5 (dropped the 2 in $d(t^2)$) | Itô by hand; the generator $\partial_t + \tfrac12\partial_w^2$ applied to the polynomial on `Fraction`s, searched over $a, b \le 19$, vanishes only at $(6, 3)$ |
+| S2 | 3 | `gbm-median` | `it-bm`; ito `l4-gbm`, `l7-solving-gbm` | choice, 200 | GBM, drift 10%, vol 40%, £40, two years: the median. Key £41.63 | £48.86 (the mean), £35.48 (took off $\sigma^2$), £40.81 (one year) | $40e^{0.04}$; bisection on the lognormal CDF, and Simpson for the mean |
+| S3 | 4 | `reflection-touch` | `it-bm`; ito `l14-hitting-and-exit`, markov `l11-reflection` | numeric, 300 | Driftless, £2 per square-root day: chance of touching £3 up within a day. Key 0.1336 (tol 0.001) | 0.0668 (no reflection), 0.8664 (never touches) | $2(1 - \Phi(1.5))$; Simpson on the first-passage density to one day |
+| S4 | 5 | `log-contract` | `it-pricing`, `it-calculus`; ito `l11-prices-as-expectations`, `l16-pricing-in-a-minute` | `longform`, 900 | Price a payoff of $\ln S_T$ under Black-Scholes (spot 100, 2%, 20%, one year), then link it to variance. About 4.514 | | $e^{-0.02}(\ln 100 + 0)$; Simpson on $\ln S_T$ under the lognormal |
+
+S4 rubric (10): Itô on $\ln S$ with the $-\tfrac12\sigma^2$ term (2); risk-neutral drift $r$ (2); $E[\ln S_T]$ stated (1); discounted to about 4.51 (2); realised variance as $2\int dS/S - 2\ln(S_T/S_0)$, a hedge plus log contracts (2); in order, ending with the number (1).
+
+### Paper 4: coding (45 min, 2 items)
+
+**C1, `barrier-tree`** (difficulty 4, skills `tp-multistep`, `cx-pricers`, `pace` 1,500; draws on trees `l8-python-pricer`, ito `l12-barrier-option`). An item with `parts`, a requirement added part-way. Part 1, Python: `crr_call(S, K, T, r, sigma, n)`, a European call on a Cox-Ross-Rubinstein tree, raising `ValueError` for `n < 1` or a risk-neutral $p$ outside $(0, 1)$; 7 hidden tests (5 prices, 2 raises). Part 2, Python: add `barrier=None`, a down-and-out barrier checked at every node; 6 more tests, 13 in all. Part 3, choice: why the barrier price saws as `n` grows (the barrier sits between node levels); distractors rounding, $p$ leaving $(0, 1)$, no limit. The check runs the solution and starters on every test, recomputes each tree price with $n \le 12$ by summing over all $2^n$ paths, checks 1,000 steps against Black-Scholes (within 0.005), and reruns the barrier tests with a second node formula $Su^{2j - n}$ to show no node sits on a barrier.
+
+**C2, `variance-interpolation`** (difficulty 4, skills `cx-pricers`, `tp-bs`, `pace` 1,200; draws on opt-dash `l11-term-structure`, cpp-pricing L2). C++: fix a draft `vol_at(T, vols, t)` that interpolates vols, so it interpolates total variance $\sigma^2 T$, keeps the end pillars flat, and returns $-1.0$ on a calendar arbitrage. No exceptions are used. 9 hidden tests with `types`, built by g++ from the reference; the draft fails 5. The check recompiles both with g++ and recomputes every vol from piecewise-flat forward variance.
+
+### Paper 5: fit and motivation (15 min, 2 `longform`)
+
+Both difficulty 3, `rk-behave`, `pace` 450, draws on recruiting `l8-why-this-firm`, `l11-stories-that-answer`, `l13-the-final-round`. **F1, `why-strats`**: what draws you to a strats seat over trading or research. Rubric: one-sentence answer (1); two reasons tied to the work (2); own evidence with a number (3); something hard and how you handle it (2); why strats rather than the others (1); about 90 seconds (1). **F2, `model-versus-market`**: a trader says your price is wrong because the market disagrees. Rubric: treats the point as possibly right (1); asks which price, how far, since when (2); checks inputs before the model (2); names what the model leaves out (2); agrees an action and flags the gap (2); first person, under two minutes (1). Each model answer is labelled as an example.
+
+### Generation, voice and acceptance
+
+**Scripts** (in `docs/briefs/mocks-scripts/`): `superday_strats_build.py` (route A, writes the file; item constructors in `superday_lib.py`, which also stops the build on a sentence of 20 words or more), `superday_strats_check.py` (route B through `numbers_lib`: every key, every `wrong`, every number in prose, the option rules, the code items, `check_wrongs()` then `report()`, exit 0). Standard library and the local g++ only.
+
+**Acceptance.** The common checks (1 to 5), plus: validator 0 errors and no warning on this file; `fresh-check --exam mock-superday-strats --min-run 10` 0 hits; voice scan on a copy 0 and 0; the playthrough with and without `--mobile` passes every part, both code items by their solutions, and ticks every rubric point; screenshots at 1280 and 390 px of the start card, a `parts` item, a choice, a longform, both code items and the results page; `readiness-sums` OK after the mock's two status rows in `docs/readiness.md` read `exists` and `--write` refreshes the mock lists in `readiness.json`. Report at `docs/reports/exam-mock-superday-strats.md`; inbox bullets under `Raised later (mock mock-superday-strats):`.
+
+## mock-superday-developer
+
+**File.** `app/content/exams/mock-superday-developer.json`, one file, no versions, every item fixed, for the reason `mock-superday-strats` gives. The drill packs could feed a coding draw, but `mock-oa-code` and `mock-oa-code-hard` draw from them, and no item may be shared with another mock. `content/prep.json` names this mock on `superday-developer` only (no developer firm path carries it); no change is proposed.
+
+- `id`: `mock-superday-developer`. `name`: `Developer superday`. `style`: `developer`.
+- `models` (under 200 characters): `Reported, as of Nov 2026: developer and quant developer onsites at Hudson River Trading, Two Sigma and Jane Street. Algorithms, C++, concurrency, design and fit.`
+- `requires`: `["graphs-dp/L2", "coding-int/L4", "cpp/L5", "systems/L4"]`.
+- `skills`: `gd-paths`, `ci-timed`, `ci-design`, `cp-stl`, `cp-memory`, `cp-classes`, `sy-memory`, `sy-concurrency`, `sy-latency`, `sy-os`, `rk-behave`, each with a short label.
+
+**What the real days are reported to contain** (from `docs/briefs/interview-gaps.md`, snapshot 29 Oct 2026, and `interview-plan.md` (d); all reported). Hudson River Trading: live programming, then three to five final sessions; one intern final extends existing C++ trading code, with a design discussion; reported questions include a pool allocator, pointers and references, memory management, move semantics and operating systems. Two Sigma quant developer: two technical rounds of 45 to 60 minutes (graphs, dynamic programming), one behavioural, design in older reports. Jane Street software engineer: three long coding rounds with requirements added part-way, and one behavioural. The `superday-developer` prep path asks for harder coding with changing requirements, C++ depth, concurrency and systems.
+
+**Description** (plain, each sentence under 20 words, firm names only here and in `models`):
+
+> This is the reported shape of a quant developer final-round day, as candidates described it by Nov 2026. Hudson River Trading, Two Sigma and Jane Street report rounds like these. There are six papers, each on its own clock. Two are live coding rounds, and the second adds requirements part-way. Then come C++, concurrency and systems, a design round and fit. Real rounds are spoken, so talk through your code as you type. No search engine and no notes are allowed. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.
+
+**Parts, in order** (every paper `scoring: { "right": 1, "wrong": 0, "blank": 0 }`, free navigation, `pass` as a share):
+
+| # | Paper `id`, name | Minutes | Items | Pass | `pace` sum |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `round-one`, Coding round one | 45 | 1 Python `code` | `pass: 1` (the problem) | 1,500 s |
+| 2 | `round-two`, Coding round two | 45 | 1 with `parts` (C++ code, C++ code, choice) | `pass: 0.6` (2 of 3 parts) | 1,500 s |
+| 3 | `cpp`, C++ | 40 | 6 (1 `parts`, 4 choice, 1 C++ code) | `pass: 0.6` (4 of 6) | 2,360 s |
+| 4 | `systems`, Concurrency and systems | 25 | 5 (3 choice, 1 numeric, 1 `parts`) | `pass: 0.6` (3 of 5) | 1,180 s |
+| 5 | `design`, System design | 45 | 2 `longform` | `pass: 0.5` (1 of 2) | 2,700 s |
+| 6 | `fit`, Fit and motivation | 15 | 2 `longform` | `pass: 0.5` (1 of 2) | 900 s |
+| 7 | check `talked-aloud`, `I talked through both coding rounds aloud as I typed`, detail `Tick this only if you spoke at every step, as a live round needs.` | | | | |
+| 8 | check `no-lookup`, `I used no search engine, notes or AI help`, detail `Tick this only if you sat all six papers without them.` | | | | |
+
+That is 17 items, 215 minutes, 4 `longform`, 4 code widgets (1 Python, 3 C++). The attempt passes only when every paper passes and both checks are ticked.
+
+**C++ limits respected.** Every C++ item compiles under clang 21 in WebAssembly at `-O1` with libc++: no `try` or `catch` (sentinels such as -1.0 stand in for errors), no threads, no file system. The concurrency questions are choices about code the learner reads, not code they run; the check script runs that code natively with `-pthread`. `allocCheck` counts `operator new` in the pool item. Large tests are sized for the browser: the price store's largest test inserts 100,000 ticks and makes 100,000 queries (a first draft at 200,000 ran past 5 s in the playthrough).
+
+**Rules.** As `mock-superday-strats` (shuffle from `random.Random(2612)`, whys that start "You", no key between a times-ten pair or two equal slips, named slips in `wrong` with `byKey` lines, `skills`, `tags`, `pace`, `difficulty` on every item, no shared family tag, question or setup with another mock).
+
+### Paper 1: coding round one (45 min, 1 item)
+
+**A1, `hop-limited-path`** (difficulty 4, skills `gd-paths`, `ci-timed`, `pace` 1,500; draws on graphs-dp `l7-dijkstra`, `l9-arbitrage-cycle`, coding-int `l16-edge-cases-first`). Python: `cheapest_within(n, routes, src, dst, k)`, the cheapest total fee in at most `k` one-way transfers, else -1; `n` to 3,000, `routes` to 30,000, `k` possibly far above `n`. Reference: Bellman-Ford with each round reading only the last, capped at $n - 1$ rounds, stopping when nothing changes. 13 hidden tests, compared exactly: a four-account base case at $k = 3, 2, 1, 0$ (300, 350, 500, -1), `src == dst` (0), a trap where plain Dijkstra settles an account by a route with too many transfers (6 at $k = 2$, 3 at $k = 3$), unreachable (-1), a cycle with $k = 10^9$ (9), 30,000 seeded random routes at $k = 6$ and $k = 10^9$, and a 600-account chain with a direct route (599 at $k = 599$, 1,000 at $k = 598$). Route B: a Dijkstra over (account, transfers) states recomputes every expected value; a Dijkstra that keeps one cost per account fails the trap.
+
+### Paper 2: coding round two (45 min, 1 item with a requirement added)
+
+**B1, `asof-store`** (difficulty 5, skills `ci-design`, `cp-stl`, `pace` 1,500; draws on coding-int `l13-requirements-change`, cpp `l15-maps`). Part 1, C++: `PriceStore` with `insert(t, px)` (out of order, a repeat replaces), `asof(t)` (the latest price at or before `t`, else -1.0) and `size()`; 7 tests, one with 100,000 out-of-order ticks and 100,000 queries. Part 2, C++: add `asof_fresh(t, max_age)` and `erase_before(t)`; 7 more tests, 14 merged. Part 3, choice: why step back from `upper_bound(t)` rather than `lower_bound(t)` (only the first lands on a tick at exactly `t`); distractors "the same answer" (misses an exact tick), "faster" (both $O(\log n)$), "undefined on an empty map" (both return `end()`). Route B: a Python model on sorted lists with `bisect` recomputes all 14 values; g++ runs both solutions and both starters.
+
+### Paper 3: C++ (40 min, 6 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | Distractors or `wrong` | Checked by |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| K1 | 3 | `struct-padding` | `sy-memory`, `cp-memory`; systems `l4-object-layout` | `parts` (numeric, numeric), 300 | `struct Order { bool; double; int; char; }` on a 64-bit desktop. Part 1: 24. Part 2: smallest after reordering, 16 | Part 1: 14 (summed), 32 (8 each). Part 2: 14 (no tail padding), 24 (unchanged) | g++ `sizeof`, and the minimum over all 24 member orders |
+| K2 | 4 | `copy-or-move` | `cp-classes`, `cp-stl`; cpp `l19-moving-not-copying`, `l14-vector` | choice, 240 | A counting `Tick` pushed four ways after `reserve(4)`: copy constructor calls. Key 1 | 2 (the return copied), 3 (every `push_back`), 4 (every insertion) | g++ at `-O0`, `-O1`, `-fno-elide-constructors`, and clang++: 1 each time |
+| K3 | 3 | `shallow-copy` | `cp-memory`, `cp-classes`; cpp `l20-rule-of-five` | choice, 200 | A class owning `new double[n]` with a destructor and no copy: what goes wrong. Key: a double delete | nothing (deep copy assumed), does not compile, a leak | a counting `operator delete[]` sees one block deleted twice |
+| K4 | 4 | `dispatch-during-construction` | `cp-classes`; cpp `l21-virtual-dispatch` | choice, 240 | `name()` called in the constructors and destructors of a base and a derived class. Key `base tree tree base` | `tree tree tree tree`, `base tree base tree`, `tree tree` | g++ output |
+| K5 | 3 | `template-deduction` | `cp-classes`; cpp `l13-templates` | choice, 180 | `template <typename T> T clamp_to(T, T, T)`: which call fails. Key `clamp_to(101.5, 0, 100)` | explicit `<double>`, three doubles, three strings | `g++ -fsyntax-only` on each call: only the key fails |
+| K6 | 4 | `slot-pool` | `cp-memory`, `sy-latency`; systems `l15-no-allocation`, cpp `l23-own-smart-pointer` | C++ code, `allocCheck`, 1,200 | `SlotPool`: `acquire()` gives the most recently released slot, else the lowest unused, else -1; `release` ignores bad slots; no allocation after construction | | 11 tests; a Python model gives every value; g++ with a counting `operator new`; a `std::set` version fails the allocation test |
+
+### Paper 4: concurrency and systems (25 min, 5 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | Distractors or `wrong` | Checked by |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Y1 | 3 | `lost-updates` | `sy-concurrency`; systems `l7-data-races`, `l9-atomics` | choice, 200 | Two threads run `++hits` a million times each: which change gives exactly 2,000,000. Key `std::atomic<int>` | `volatile`, a sleep, a `static` local | native g++ `-pthread`: the atomic version ends at 2,000,000 in three runs |
+| Y2 | 4 | `release-acquire` | `sy-concurrency`; systems `l9-atomics` | choice, 240 | A release store read by a relaxed load: what can go wrong. Key: `ready` seen true with old `data` | nothing, spins forever, does not compile | no number |
+| Y3 | 3 | `lock-ordering` | `sy-concurrency`; systems `l8-locks-and-deadlock` | choice, 200 | `move_cash` locks source then destination; two threads move cash opposite ways and hang. Key `std::scoped_lock` on both | recursive mutexes, a sleep, reverse unlock order | native g++: 400,000 opposite transfers finish with the total kept |
+| Y4 | 4 | `cache-line-stride` | `sy-memory`; systems `l2-caches` | numeric, 240 | A 4,096 by 4,096 row-major `double` matrix summed by columns, 64-byte lines: lines loaded against row order. Key 8 | 64 (bytes in a line), 4,096 (row length) | an LRU simulation of a 256 by 256 matrix with 16 lines: 65,536 misses against 8,192 |
+| Y5 | 4 | `queue-sizing` | `sy-latency`; systems `l16-ring-buffer`, `l17-measuring-latency` | `parts` (numeric, numeric), 300 | 150,000 orders a second, 40 µs each. Part 1: 6 inside. Part 2: a power-of-two ring of four times that, 32 | Part 1: 6,000 (µs read as ms), 3,750 (divided). Part 2: 24 (not a power of two), 16 (rounded down) | Little's law; a replay of arrivals in nanoseconds has exactly 6 inside at every sample |
+
+### Paper 5: system design (45 min, 2 `longform`)
+
+**G1, `risk-gateway-design`** (difficulty 5, skills `sy-latency`, `sy-concurrency`, `ci-design`, `pace` 1,800; draws on systems `l15` to `l18`). Design the pre-trade risk check between strategies and one exchange: position, order-rate and price-band limits, 200,000 orders a second, at most 5 µs added at the 99th percentile; then how to test it. Rubric (10): the budget, one order every 5 µs (1); one pinned thread fed by a lock-free queue (2); preallocated flat state, no allocation (2); the three checks, open orders in the position check (2); limits updated without blocking the hot path (1); fails closed with a kill switch (1); replay against a reference and a latency gate from arrival times (1).
+
+**G2, `tail-latency-regression`** (difficulty 4, skills `sy-latency`, `sy-os`, `pace` 900; draws on systems `l17-measuring-latency`, `l11-processes`). The 99th percentile rose from 8 to 30 µs after a release and the median did not move: find the cause. Rubric (10): reads it as a rare slow event (2); three plausible causes (2); reproduces by replay on both builds (2); bisects the diff (1); times stages and counts faults, switches or cache misses (2); adds a latency gate (1).
+
+### Paper 6: fit and motivation (15 min, 2 `longform`)
+
+Both difficulty 3, `rk-behave`, `pace` 450; draws on recruiting `l8-why-this-firm`, `l11-stories-that-answer`, `l13-the-final-round`. **F1, `why-trading-systems`**: why build trading systems rather than software elsewhere; rubric as the strats F1 with "measured speed and concrete problems" as the reasons. **F2, `review-disagreement`**: a code review where you disagreed; rubric: the scene (1); both positions fairly (2); settled by evidence such as a test (2); the outcome honestly (2); what you do differently now (2); first person, under two minutes (1).
+
+### Generation, voice and acceptance
+
+**Scripts** (in `docs/briefs/mocks-scripts/`): `superday_developer_build.py` (route A; the C++ test values come from the references compiled by g++ with a counting `operator new` standing in for `allocCheck`), `superday_developer_check.py` (route B through `numbers_lib`, `check_wrongs()` then `report()`, exit 0), and `superday_lib.py`.
+
+**Acceptance.** As `mock-superday-strats`, for this file: validator 0 errors and no warning; `fresh-check --min-run 10` 0 hits; voice scan on a copy 0 and 0; the playthrough with and without `--mobile` passes both coding rounds, the pool item and every part; screenshots at 1280 and 390 px of the start card, each code item, a `parts` numeric item, a choice with a code block, a longform and the results page; `readiness-sums` OK once the mock's row in `docs/readiness.md` reads `exists`. Report at `docs/reports/exam-mock-superday-developer.md`; inbox bullets under `Raised later (mock mock-superday-developer):`.

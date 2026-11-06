@@ -391,7 +391,7 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 | --- | --- | --- |
 | `mock-oa-code` | exists |  |
 | `mock-oa-code-hard` | exists |  |
-| `mock-superday-developer` | gap: not yet written | live coding, C++ and design |
+| `mock-superday-developer` | exists |  |
 
 **Capstone:** an independent systems project, such as a feed handler or matching engine. The record holds repo link, rerun-from-clean result and defence notes. The user reviews it.
 
@@ -524,7 +524,7 @@ Plan: calculus, linear algebra, probability, options and pricing, with solid Pyt
 | `mock-oa-strats` | exists |  |
 | `mock-oa-code` | exists |  |
 | `mock-video` | gap: not yet written | behavioural and spoken video mock |
-| `mock-superday-strats` | gap: not yet written | derivatives, harder probability, coding |
+| `mock-superday-strats` | exists |  |
 
 **Capstone:** a small pricer or risk tool in C++ or Python with tests and a written error note. The record holds repo link, rerun-from-clean result and defence notes. The user reviews it.
 
@@ -651,7 +651,7 @@ Same learner as Strats, plus the pricing mathematics.
 | `mock-oa-strats` | exists | shared with Strats |
 | `mock-oa-code` | exists |  |
 | `mock-video` | gap: not yet written | shared with Strats |
-| `mock-superday-strats` | gap: not yet written | shared with Strats |
+| `mock-superday-strats` | exists |  |
 
 **Capstone:** a priced-and-validated option project with a derivation note. The record holds repo link, rerun-from-clean result and defence notes. The user reviews it.
 

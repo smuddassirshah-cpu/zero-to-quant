@@ -1,0 +1,1691 @@
+{
+  "id": "mock-superday-strats",
+  "name": "Strats superday",
+  "style": "strats",
+  "models": "Reported, as of Nov 2026: strats and desk quant final rounds at Goldman Sachs, Morgan Stanley and JP Morgan. Derivatives, stochastic calculus, probability, coding and fit.",
+  "description": "This is the reported shape of a bank strats final-round day, as candidates described it by Nov 2026. Goldman Sachs, Morgan Stanley and JP Morgan report rounds like these. There are five papers, each on its own clock. They cover probability, derivatives pricing and risk, stochastic calculus, coding and fit. Real rounds are spoken, so say each answer aloud before you type it. Some questions have follow-ups that open one at a time. No calculator and no search engine are allowed, except to run your code. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.",
+  "requires": [
+    "markov/L5",
+    "options/L3",
+    "trees/L4",
+    "ito/L4",
+    "numerics/L4",
+    "cpp-pricing/L2"
+  ],
+  "skills": {
+    "mc-walks": "Random walks and stopping",
+    "rv-joint": "Correlated variables",
+    "rv-expect": "Expected values",
+    "dl-discrete": "Poisson arrivals",
+    "tp-bs": "Black-Scholes",
+    "op-parity": "Parity and arbitrage",
+    "op-greeks": "Greeks and hedging",
+    "nm-mc": "Monte Carlo error",
+    "nm-fd": "Finite differences",
+    "it-calculus": "Itô calculus",
+    "it-martingale": "Martingales",
+    "it-bm": "Brownian motion",
+    "it-pricing": "Pricing by expectation",
+    "tp-multistep": "Binomial trees",
+    "cx-pricers": "Pricers in code",
+    "rk-behave": "Behavioural answers"
+  },
+  "parts": [
+    {
+      "kind": "paper",
+      "id": "probability",
+      "name": "Probability",
+      "minutes": 30,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.6,
+      "items": [
+        {
+          "id": "p1-drift-ruin",
+          "difficulty": 4,
+          "skills": [
+            "mc-walks"
+          ],
+          "tags": [
+            "ruin-with-drift",
+            "wald-identity"
+          ],
+          "pace": 420,
+          "title": "A walk with drift",
+          "prose": "A price moves up £1 with chance 0.6 or down £1 with chance 0.4 at each step, independently. It starts at £50. You stop when it reaches £54 or £48.",
+          "parts": [
+            {
+              "question": "Find the probability that £54 comes before £48. Give four decimals.",
+              "widget": {
+                "kind": "numeric",
+                "answer": 0.609,
+                "tol": {
+                  "abs": 0.0005
+                },
+                "placeholder": "four decimals",
+                "label": "Your answer",
+                "wrong": [
+                  {
+                    "id": "fair",
+                    "value": 0.3333,
+                    "tol": {
+                      "abs": 0.0005
+                    }
+                  },
+                  {
+                    "id": "one-step",
+                    "value": 0.6,
+                    "tol": {
+                      "abs": 0.0005
+                    }
+                  },
+                  {
+                    "id": "lower",
+                    "value": 0.391,
+                    "tol": {
+                      "abs": 0.0005
+                    }
+                  }
+                ],
+                "accept": "0.6090 (81/133, within 0.0005)"
+              },
+              "feedback": {
+                "correct": "The ratio $q/p = 2/3$ in the ruin formula gives $81/133$.",
+                "generic": "Write the ruin formula with $r = q/p$, from 2 steps above the floor.",
+                "byKey": {
+                  "fair": "You used the fair-game answer, 2 steps out of 6. The drift makes the top more likely.",
+                  "one-step": "You gave the chance of one up step, not of reaching the top first.",
+                  "lower": "You gave the chance of reaching £48 first."
+                }
+              },
+              "explain": {
+                "text": "With $r = q/p = 2/3$, $P = (1 - r^2)/(1 - r^6) = 81/133 \\approx 0.6090$. A linear solve over the five states between the stops gives the same value."
+              }
+            },
+            {
+              "question": "What is the expected number of steps until you stop? Give two decimals.",
+              "widget": {
+                "kind": "numeric",
+                "answer": 8.27,
+                "tol": {
+                  "abs": 0.01
+                },
+                "placeholder": "two decimals",
+                "label": "Your answer",
+                "wrong": [
+                  {
+                    "id": "fair-rule",
+                    "value": 8,
+                    "tol": {
+                      "abs": 0.01
+                    }
+                  },
+                  {
+                    "id": "no-drift",
+                    "value": 1.65,
+                    "tol": {
+                      "abs": 0.01
+                    }
+                  }
+                ],
+                "accept": "8.27 (1100/133, within 0.01)"
+              },
+              "feedback": {
+                "correct": "Wald: expected gain over drift per step.",
+                "generic": "Find the expected end point, then divide by the average gain per step.",
+                "byKey": {
+                  "fair-rule": "You used the fair-game rule, 4 times 2. A drift shortens the walk.",
+                  "no-drift": "You found the expected gain in pounds but did not divide by the drift of 0.2 a step."
+                }
+              },
+              "explain": {
+                "text": "The expected end point is $4P - 2(1 - P) = 220/133$ pounds above the start. Each step gains 0.2 on average, so $E[T] = (220/133)/0.2 = 1100/133 \\approx 8.27$. A linear solve for the expected steps from each state agrees."
+              }
+            }
+          ]
+        },
+        {
+          "id": "p2-orthant",
+          "difficulty": 4,
+          "skills": [
+            "rv-joint"
+          ],
+          "tags": [
+            "orthant-correlation"
+          ],
+          "pace": 240,
+          "title": "Both up",
+          "question": "Two daily returns are jointly normal with mean 0 and correlation 0.5. What is the chance that both are positive?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "$3/8$",
+                "why": "You moved a straight line from $1/4$ at no correlation to $1/2$ at full correlation."
+              },
+              {
+                "id": "b",
+                "text": "$1/3$",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "$1/4$",
+                "why": "You multiplied $1/2 \\times 1/2$, as if the two returns were independent."
+              },
+              {
+                "id": "d",
+                "text": "$1/6$",
+                "why": "You used a correlation of $-0.5$, a sign slip in the arcsine."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The arcsine rule: $1/4 + \\arcsin(\\rho)/(2\\pi)$.",
+            "generic": "Write one return as $\\rho X + \\sqrt{1 - \\rho^2} Z$ and look at angles."
+          },
+          "explain": {
+            "text": "The pair is a rotated standard normal, so the chance is an angle over $2\\pi$. That gives $1/4 + \\arcsin(0.5)/(2\\pi) = 1/4 + 1/12 = 1/3$. Integrating the joint density over the quadrant gives the same."
+          }
+        },
+        {
+          "id": "p3-first-last-gap",
+          "difficulty": 3,
+          "skills": [
+            "rv-expect"
+          ],
+          "tags": [
+            "range-of-uniforms"
+          ],
+          "pace": 180,
+          "title": "First to last",
+          "question": "Four orders arrive at independent uniform times in a 60-minute window. What is the expected time from the first arrival to the last, in minutes?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 36,
+            "tol": {
+              "abs": 0.05
+            },
+            "placeholder": "minutes",
+            "label": "Your answer",
+            "unit": "min",
+            "wrong": [
+              {
+                "id": "last-only",
+                "value": 48,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "half",
+                "value": 30,
+                "tol": {
+                  "abs": 0.05
+                }
+              },
+              {
+                "id": "three-quarters",
+                "value": 45,
+                "tol": {
+                  "abs": 0.05
+                }
+              }
+            ],
+            "accept": "36 minutes"
+          },
+          "feedback": {
+            "correct": "$E[\\max] - E[\\min] = 48 - 12$.",
+            "generic": "Find the expected last and first arrival times separately.",
+            "byKey": {
+              "last-only": "You gave the expected time of the last arrival, not its gap from the first.",
+              "half": "You took half the window. Even two arrivals are only a third of the window apart on average.",
+              "three-quarters": "You took $(n - 1)/n$ of the window. The right share is $(n - 1)/(n + 1)$."
+            }
+          },
+          "explain": {
+            "text": "The last of four uniform times has mean $\\tfrac45 \\times 60 = 48$, and the first has mean $\\tfrac15 \\times 60 = 12$. The gap is $36$ minutes, or $\\tfrac35$ of the window. Integrating $1 - x^4$ and $(1 - x)^4$ gives the same two means."
+          }
+        },
+        {
+          "id": "p4-poisson-thinning",
+          "difficulty": 4,
+          "skills": [
+            "dl-discrete"
+          ],
+          "tags": [
+            "poisson-thinning"
+          ],
+          "pace": 240,
+          "title": "Cancels and the rest",
+          "question": "Messages reach a matching engine as a Poisson stream, 18 a second. Each is a cancel with chance $2/3$, independently. In one second you count 10 cancels. How many other messages do you expect in that second?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "8",
+                "why": "You took the 10 cancels from the average of 18. The other messages do not depend on the cancels."
+              },
+              {
+                "id": "b",
+                "text": "6",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "18",
+                "why": "You gave the rate of all messages, not of the others."
+              },
+              {
+                "id": "d",
+                "text": "5",
+                "why": "You scaled the 10 cancels by one other message per two cancels, as if the split were fixed."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Thinning splits a Poisson stream into independent streams.",
+            "generic": "Split the messages into a cancel stream and a stream of the rest."
+          },
+          "explain": {
+            "text": "Cancels and the rest are independent Poisson streams, at 12 and 6 a second. Seeing 10 cancels says nothing about the rest, so the answer is $18 \\times \\tfrac13 = 6$. Summing over the total count with the binomial split gives 6 too."
+          }
+        },
+        {
+          "id": "p5-max-of-two-normals",
+          "difficulty": 4,
+          "skills": [
+            "rv-expect"
+          ],
+          "tags": [
+            "max-of-two-normals"
+          ],
+          "pace": 240,
+          "title": "The better of two days",
+          "question": "Two independent daily returns are each normal with mean 0 and standard deviation 2%. What is the expected value of the larger one?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.011284,
+            "tol": {
+              "abs": 5e-05
+            },
+            "placeholder": "per cent, two decimals",
+            "label": "Your answer",
+            "unit": "%",
+            "wrong": [
+              {
+                "id": "abs-value",
+                "value": 0.015958,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "zero",
+                "value": 0,
+                "tol": {
+                  "abs": 5e-05
+                }
+              },
+              {
+                "id": "sigma",
+                "value": 0.02,
+                "tol": {
+                  "abs": 5e-05
+                }
+              }
+            ],
+            "accept": "1.13% ($\\sigma/\\sqrt{\\pi} = 0.01128$)"
+          },
+          "feedback": {
+            "correct": "$\\max(X, Y) = \\tfrac12(X + Y) + \\tfrac12|X - Y|$.",
+            "generic": "Write the larger as the mean plus half the gap.",
+            "byKey": {
+              "abs-value": "You gave $E|X| = \\sigma\\sqrt{2/\\pi}$ for one return. The larger of two is half of $E|X - Y|$.",
+              "zero": "You used symmetry on the larger one. The larger of two is above 0 on average.",
+              "sigma": "You gave one standard deviation, a guess with no calculation."
+            }
+          },
+          "explain": {
+            "text": "Write $\\max(X, Y) = \\tfrac12(X + Y) + \\tfrac12|X - Y|$, and $X - Y$ has standard deviation $2\\%\\sqrt2$. So $E[\\max] = \\tfrac12 \\times 2\\%\\sqrt2 \\times \\sqrt{2/\\pi} = 2\\%/\\sqrt{\\pi} \\approx 1.13\\%$. Integrating $2x\\varphi(x)\\Phi(x)$ numerically agrees."
+          }
+        }
+      ]
+    },
+    {
+      "kind": "paper",
+      "id": "pricing",
+      "name": "Derivatives pricing and risk",
+      "minutes": 45,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.6,
+      "items": [
+        {
+          "id": "r1-atm-rule",
+          "difficulty": 3,
+          "skills": [
+            "tp-bs"
+          ],
+          "tags": [
+            "atm-approximation"
+          ],
+          "pace": 150,
+          "title": "A call in your head",
+          "question": "A stock trades at £250 and pays no dividend, and rates are 0. An at-the-money call has three months to run. Its implied volatility is 20%. Estimate the call price to the nearest 10p.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 9.97,
+            "tol": {
+              "abs": 0.1
+            },
+            "placeholder": "pounds",
+            "label": "Your answer",
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "full-year",
+                "value": 20,
+                "tol": {
+                  "abs": 0.1
+                }
+              },
+              {
+                "id": "used-T",
+                "value": 5,
+                "tol": {
+                  "abs": 0.1
+                }
+              }
+            ],
+            "accept": "£10.0 by the rule of thumb (£9.97 exactly), within 10p"
+          },
+          "feedback": {
+            "correct": "$0.4\\,S\\sigma\\sqrt{T} = £10$.",
+            "generic": "Use the at-the-money rule $C \\approx 0.4\\,S\\sigma\\sqrt{T}$.",
+            "byKey": {
+              "full-year": "You used a full year. Three months gives $\\sqrt{0.25} = 0.5$.",
+              "used-T": "You multiplied by $T = 0.25$, not by $\\sqrt{T} = 0.5$."
+            }
+          },
+          "explain": {
+            "text": "The rule $C \\approx 0.4\\,S\\sigma\\sqrt{T}$ gives $0.4 \\times 250 \\times 0.2 \\times 0.5 = £10$. Black-Scholes with $r = 0$ gives $250\\,(2\\Phi(0.05) - 1) = £9.97$. The 0.4 is $1/\\sqrt{2\\pi}$ rounded."
+          }
+        },
+        {
+          "id": "r2-parity-arbitrage",
+          "difficulty": 3,
+          "skills": [
+            "op-parity"
+          ],
+          "tags": [
+            "parity-arbitrage"
+          ],
+          "pace": 240,
+          "title": "A riskless profit",
+          "question": "A stock is at £52 and pays no dividend. One-year European options struck at £50 trade at £7.20 for the call and £4.10 for the put. The one-year discount factor is 0.98. Which trade locks in a riskless profit today?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "Sell the call, buy the put and the stock, and borrow £50: £1.10 now",
+                "why": "You borrowed the strike, not its present value. Repaying £50 a year later costs more than £50 today."
+              },
+              {
+                "id": "b",
+                "text": "No trade, because the call should cost more than the put when in the money",
+                "why": "You compared the call with the put, not $C - P$ with $S - K \\times 0.98$."
+              },
+              {
+                "id": "c",
+                "text": "Buy the call, sell the put, short the stock and lend £49: £0.10 now",
+                "why": "You reversed the trade. Buying the rich side loses the £0.10."
+              },
+              {
+                "id": "d",
+                "text": "Sell the call, buy the put and the stock, and borrow £49: £0.10 now",
+                "correct": true
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "$C - P = 3.10$ against $S - 0.98K = 3.00$.",
+            "generic": "Compare $C - P$ with $S$ minus the present value of the strike."
+          },
+          "explain": {
+            "text": "Parity says $C - P = S - 0.98 \\times 50 = 52 - 49 = £3.00$, but the market has $7.20 - 4.10 = £3.10$. So sell the call, buy the put and the stock, and borrow £49: cash today is $7.20 - 4.10 - 52 + 49 = £0.10$. At expiry the stock settles the options and repays the £50 owed, whatever the price."
+          }
+        },
+        {
+          "id": "r3-gamma-theta",
+          "difficulty": 4,
+          "skills": [
+            "op-greeks"
+          ],
+          "tags": [
+            "gamma-theta-pnl"
+          ],
+          "pace": 300,
+          "title": "A hedged day",
+          "question": "You hold 200 calls, delta hedged. Each call has gamma 0.05 per pound and theta $-£0.30$ a day. Today the stock moves £4. Estimate the day’s P&L of the hedged book, in pounds.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 20,
+            "tol": {
+              "abs": 0.5
+            },
+            "placeholder": "pounds",
+            "label": "Your answer",
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "no-theta",
+                "value": 80,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "no-half",
+                "value": 100,
+                "tol": {
+                  "abs": 0.5
+                }
+              },
+              {
+                "id": "theta-only",
+                "value": -60,
+                "tol": {
+                  "abs": 0.5
+                }
+              }
+            ],
+            "accept": "£20"
+          },
+          "feedback": {
+            "correct": "$\\tfrac12 \\Gamma (\\Delta S)^2 + \\Theta$ a call, times 200.",
+            "generic": "A hedged option earns $\\tfrac12 \\Gamma (\\Delta S)^2$ and pays its theta.",
+            "byKey": {
+              "no-theta": "You left out the theta of $-£0.30$ a call.",
+              "no-half": "You used $\\Gamma (\\Delta S)^2$ without the half.",
+              "theta-only": "You counted the theta but not the gamma gain."
+            }
+          },
+          "explain": {
+            "text": "Each call earns $\\tfrac12 \\times 0.05 \\times 4^2 = £0.40$ from gamma and pays £0.30 of theta. That is £0.10 a call, so £20 for 200. Repricing a quadratic value with that gamma and theta over the day gives £20 too."
+          }
+        },
+        {
+          "id": "r4-digital-spread",
+          "difficulty": 3,
+          "skills": [
+            "op-greeks",
+            "tp-bs"
+          ],
+          "tags": [
+            "digital-from-calls"
+          ],
+          "pace": 240,
+          "title": "A digital from calls",
+          "question": "Calls on one stock with one expiry trade at £5.40 for strike £99 and £4.30 for strike £101. Estimate the price of a digital call that pays £1 if the stock ends above £100.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.55,
+            "tol": {
+              "abs": 0.005
+            },
+            "placeholder": "pounds",
+            "label": "Your answer",
+            "unit": "£",
+            "wrong": [
+              {
+                "id": "no-width",
+                "value": 1.1,
+                "tol": {
+                  "abs": 0.005
+                }
+              },
+              {
+                "id": "digital-put",
+                "value": 0.45,
+                "tol": {
+                  "abs": 0.005
+                }
+              }
+            ],
+            "accept": "£0.55"
+          },
+          "feedback": {
+            "correct": "$(C(99) - C(101))/2$.",
+            "generic": "A digital is minus the slope of the call price in the strike.",
+            "byKey": {
+              "no-width": "You did not divide by the £2 between the strikes.",
+              "digital-put": "You gave $1 - 0.55$, the digital put with no discounting."
+            }
+          },
+          "explain": {
+            "text": "A call spread of 99 against 101, scaled by $1/2$, pays £1 above 101 and nothing below 99. So the digital is about $(5.40 - 4.30)/2 = £0.55$. This is $-\\partial C/\\partial K$ taken by a central difference."
+          }
+        },
+        {
+          "id": "r5-mc-error",
+          "difficulty": 3,
+          "skills": [
+            "nm-mc"
+          ],
+          "tags": [
+            "mc-interval-paths"
+          ],
+          "pace": 300,
+          "title": "How many paths",
+          "prose": "After 90,000 paths a Monte Carlo pricer reports £8.41. The discounted payoffs have sample standard deviation £27. Take a 95% interval as two standard errors either side.",
+          "parts": [
+            {
+              "question": "How wide is half of that interval, in pounds?",
+              "widget": {
+                "kind": "numeric",
+                "answer": 0.18,
+                "tol": {
+                  "abs": 0.0005
+                },
+                "placeholder": "pounds",
+                "label": "Your answer",
+                "unit": "£",
+                "wrong": [
+                  {
+                    "id": "one-se",
+                    "value": 0.09,
+                    "tol": {
+                      "abs": 0.0005
+                    }
+                  },
+                  {
+                    "id": "over-n",
+                    "value": 0.0006,
+                    "tol": {
+                      "abs": 5e-05
+                    }
+                  }
+                ],
+                "accept": "£0.18"
+              },
+              "feedback": {
+                "correct": "$2 \\times 27/\\sqrt{90000} = 2 \\times 0.09$.",
+                "generic": "The standard error of a mean is the standard deviation over $\\sqrt{n}$.",
+                "byKey": {
+                  "one-se": "You gave one standard error. The interval reaches two either side.",
+                  "over-n": "You divided by $n$, not by $\\sqrt{n}$."
+                }
+              },
+              "explain": {
+                "text": "The price is a mean of 90,000 payoffs, so its standard error is $27/300 = £0.09$. Two of them give a half-width of £0.18, so the interval is £8.23 to £8.59."
+              }
+            },
+            {
+              "question": "How many paths bring that half-width down to £0.06?",
+              "widget": {
+                "kind": "numeric",
+                "answer": 810000,
+                "tol": {
+                  "abs": 0.5
+                },
+                "placeholder": "paths",
+                "label": "Your answer",
+                "wrong": [
+                  {
+                    "id": "linear",
+                    "value": 270000,
+                    "tol": {
+                      "abs": 0.5
+                    }
+                  },
+                  {
+                    "id": "no-square",
+                    "value": 900,
+                    "tol": {
+                      "abs": 0.5
+                    }
+                  }
+                ],
+                "accept": "810,000 paths"
+              },
+              "feedback": {
+                "correct": "$(2 \\times 27/0.06)^2$.",
+                "generic": "Solve $2 \\times 27/\\sqrt{n} = 0.06$ for $n$.",
+                "byKey": {
+                  "linear": "You scaled the paths by 3. The error falls with $\\sqrt{n}$, so you need 9 times as many.",
+                  "no-square": "You found $2 \\times 27/0.06$ but did not square it."
+                }
+              },
+              "explain": {
+                "text": "Solve $54/\\sqrt{n} = 0.06$: $\\sqrt{n} = 900$, so $n = 810{,}000$. That is 9 times 90,000, because a third of the error needs 9 times the paths."
+              }
+            }
+          ]
+        },
+        {
+          "id": "r6-convergence-order",
+          "difficulty": 3,
+          "skills": [
+            "nm-fd"
+          ],
+          "tags": [
+            "convergence-order"
+          ],
+          "pace": 180,
+          "title": "A finer grid",
+          "question": "A Crank-Nicolson pricer has error 0.0048 with 100 time steps and 100 price steps. Its error is second order in the step. Roughly what is the error with 400 of each?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "0.000075",
+                "why": "You divided by 64, which is third order."
+              },
+              {
+                "id": "b",
+                "text": "0.0003",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "0.0024",
+                "why": "You halved the error, as if the steps had only doubled."
+              },
+              {
+                "id": "d",
+                "text": "0.0012",
+                "why": "You assumed first order, so you divided by 4."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Second order: a step 4 times smaller cuts the error 16 times.",
+            "generic": "Square the ratio of the step sizes."
+          },
+          "explain": {
+            "text": "The step falls by 4, and a second-order error falls by $4^2 = 16$. So $0.0048/16 = 0.0003$. This holds once the steps are small enough for the leading term to dominate."
+          }
+        },
+        {
+          "id": "r7-realised-vs-implied",
+          "difficulty": 5,
+          "skills": [
+            "op-greeks",
+            "tp-bs"
+          ],
+          "tags": [
+            "realised-vs-implied"
+          ],
+          "pace": 900,
+          "title": "Where the P&L comes from",
+          "kind": "longform",
+          "prompt": "Answer aloud first. Then write your answer down, in 250 words or fewer.\n\nYou buy a one-month at-the-money call at 20% implied volatility and delta hedge it daily. The stock then realises 25% volatility. Explain where your P&L comes from. Then estimate it for a call with gamma 0.04 per pound, with the stock at £100. Take one month as $1/12$ of a year.",
+          "model": "*An example answer. Your own words are the real answer.*\n\nEach day the hedged call earns from gamma and pays theta. The gamma gain is $\\tfrac12 \\Gamma (\\Delta S)^2$. Theta is set by the implied volatility, so it costs $\\tfrac12 \\Gamma S^2 \\sigma_{imp}^2 \\Delta t$ a day.\n\nOver the month the P&L is about $\\tfrac12 \\Gamma S^2 (\\sigma_{real}^2 - \\sigma_{imp}^2) T$. Here that is $\\tfrac12 \\times 0.04 \\times 100^2 \\times (0.0625 - 0.04) \\times \\tfrac1{12}$. That is about £0.375 a call.\n\nSo I make money because realised volatility beat implied, whichever way the stock went.\n\nTwo caveats. Gamma changes as the stock moves, so the result depends on the path. Daily hedging also adds noise around this average.",
+          "rubric": [
+            {
+              "points": 2,
+              "text": "Splits the daily P&L into a gamma gain and a theta cost"
+            },
+            {
+              "points": 2,
+              "text": "Says theta is priced at the implied volatility, so the two cancel when realised equals implied"
+            },
+            {
+              "points": 2,
+              "text": "Gives $\\tfrac12 \\Gamma S^2 (\\sigma_{real}^2 - \\sigma_{imp}^2) T$, or the same in words"
+            },
+            {
+              "points": 2,
+              "text": "Estimates about £0.375 a call (£0.37 or £0.38 is fine)"
+            },
+            {
+              "points": 1,
+              "text": "Says the sign does not depend on the direction of the stock"
+            },
+            {
+              "points": 1,
+              "text": "Names one caveat: gamma moves with the path, or hedging is discrete"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "paper",
+      "id": "stochastic",
+      "name": "Stochastic calculus",
+      "minutes": 30,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.5,
+      "items": [
+        {
+          "id": "s1-fourth-power",
+          "difficulty": 4,
+          "skills": [
+            "it-calculus",
+            "it-martingale"
+          ],
+          "tags": [
+            "martingale-correction"
+          ],
+          "pace": 360,
+          "title": "Correct the fourth power",
+          "prose": "$W_t$ is a standard Brownian motion. You want $W_t^4 - a\\,t\\,W_t^2 + b\\,t^2$ to be a martingale, with $a$ and $b$ constants.",
+          "parts": [
+            {
+              "question": "What must $a$ be?",
+              "widget": {
+                "kind": "numeric",
+                "answer": 6,
+                "tol": {
+                  "abs": 0
+                },
+                "placeholder": "a whole number",
+                "label": "Your answer",
+                "wrong": [
+                  {
+                    "id": "no-half",
+                    "value": 12,
+                    "tol": {
+                      "abs": 0
+                    }
+                  },
+                  {
+                    "id": "first-derivative",
+                    "value": 4,
+                    "tol": {
+                      "abs": 0
+                    }
+                  }
+                ],
+                "accept": "6"
+              },
+              "feedback": {
+                "correct": "The $dt$ term of $d(W^4)$ is $6W^2$.",
+                "generic": "Apply Itô’s lemma and set the $W_t^2\\,dt$ terms of the drift to 0.",
+                "byKey": {
+                  "no-half": "You took the second derivative $12W^2$ without the half from Itô’s lemma.",
+                  "first-derivative": "You matched the $dW$ coefficient $4W^3$, not the $dt$ term."
+                }
+              },
+              "explain": {
+                "text": "Itô gives $d(W^4) = 4W^3\\,dW + 6W^2\\,dt$. The term $-a\\,tW^2$ adds $-aW^2\\,dt$ to the drift, so $a = 6$."
+              }
+            },
+            {
+              "question": "What must $b$ be?",
+              "widget": {
+                "kind": "numeric",
+                "answer": 3,
+                "tol": {
+                  "abs": 0
+                },
+                "placeholder": "a whole number",
+                "label": "Your answer",
+                "wrong": [
+                  {
+                    "id": "same-as-a",
+                    "value": 6,
+                    "tol": {
+                      "abs": 0
+                    }
+                  },
+                  {
+                    "id": "no-two",
+                    "value": 1.5,
+                    "tol": {
+                      "abs": 0
+                    }
+                  }
+                ],
+                "accept": "3"
+              },
+              "feedback": {
+                "correct": "$2b = a$, so $b = 3$.",
+                "generic": "Collect the $t\\,dt$ terms of the drift.",
+                "byKey": {
+                  "same-as-a": "You set $b = a$. The $t\\,dt$ term from $d(tW^2)$ is $-a\\,t\\,dt$, which $2b\\,t\\,dt$ must cancel.",
+                  "no-two": "You forgot that $d(t^2) = 2t\\,dt$."
+                }
+              },
+              "explain": {
+                "text": "The product rule gives $d(tW^2) = W^2\\,dt + 2tW\\,dW + t\\,dt$, leaving $-6t\\,dt$ in the drift. Then $d(b\\,t^2) = 2bt\\,dt$ cancels it when $b = 3$. Check: $E[W_t^4] = 3t^2$ and $E[tW_t^2] = t^2$, so $3t^2 - 6t^2 + 3t^2 = 0$."
+              }
+            }
+          ]
+        },
+        {
+          "id": "s2-gbm-median",
+          "difficulty": 3,
+          "skills": [
+            "it-bm"
+          ],
+          "tags": [
+            "gbm-median"
+          ],
+          "pace": 200,
+          "title": "The middle outcome",
+          "question": "A stock follows geometric Brownian motion with drift 10% and volatility 40% a year. It is at £40 today. What is its median price in two years?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "£35.48",
+                "why": "You took off the whole variance, $\\sigma^2$, not half of it."
+              },
+              {
+                "id": "b",
+                "text": "£41.63",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "£48.86",
+                "why": "You gave the mean, $40e^{0.2}$. The median takes off half the variance."
+              },
+              {
+                "id": "d",
+                "text": "£40.81",
+                "why": "You used one year, not two."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The median is $S_0 e^{(\\mu - \\sigma^2/2)T}$.",
+            "generic": "The log price is normal; its median is its mean."
+          },
+          "explain": {
+            "text": "The log price is normal with mean $\\ln 40 + (0.10 - 0.08) \\times 2$, so the median is $40e^{0.04} = £41.63$. The mean is larger, $40e^{0.2} = £48.86$, because the distribution is skewed to the right."
+          }
+        },
+        {
+          "id": "s3-touch",
+          "difficulty": 4,
+          "skills": [
+            "it-bm"
+          ],
+          "tags": [
+            "reflection-touch"
+          ],
+          "pace": 300,
+          "title": "Touching a level",
+          "question": "A price follows Brownian motion with no drift and volatility £2 per square-root day. What is the chance it touches £3 above today’s level within one day? Give three decimals.",
+          "widget": {
+            "kind": "numeric",
+            "answer": 0.1336,
+            "tol": {
+              "abs": 0.001
+            },
+            "placeholder": "three decimals",
+            "label": "Your answer",
+            "wrong": [
+              {
+                "id": "no-reflection",
+                "value": 0.0668,
+                "tol": {
+                  "abs": 0.0005
+                }
+              },
+              {
+                "id": "stays-below",
+                "value": 0.8664,
+                "tol": {
+                  "abs": 0.0005
+                }
+              }
+            ],
+            "accept": "0.134 (within 0.001)"
+          },
+          "feedback": {
+            "correct": "$P(\\max \\ge a) = 2P(W_T \\ge a)$.",
+            "generic": "Use the reflection principle on the first touch.",
+            "byKey": {
+              "no-reflection": "You gave the chance it ends above the level. Reflection doubles it.",
+              "stays-below": "You gave the chance it never touches."
+            }
+          },
+          "explain": {
+            "text": "By reflection, $P(\\max \\ge 3) = 2P(X_1 \\ge 3) = 2(1 - \\Phi(1.5)) = 0.134$. Integrating the density of the first touching time up to one day gives the same."
+          }
+        },
+        {
+          "id": "s4-log-contract",
+          "difficulty": 5,
+          "skills": [
+            "it-pricing",
+            "it-calculus"
+          ],
+          "tags": [
+            "log-contract"
+          ],
+          "pace": 900,
+          "title": "A log contract",
+          "kind": "longform",
+          "prompt": "Answer aloud first. Then write your answer down, in 250 words or fewer.\n\nUnder Black-Scholes with no dividends, price a contract that pays $\\ln S_T$ at time $T$. Use a spot of 100, a rate of 2%, volatility of 20% and one year to run. Then say why a desk links this contract to variance.",
+          "model": "*An example answer. Your own words are the real answer.*\n\nUnder the pricing measure $dS = rS\\,dt + \\sigma S\\,dW$. Itô’s lemma on $\\ln S$ gives $d\\ln S = (r - \\tfrac12\\sigma^2)\\,dt + \\sigma\\,dW$. So $E[\\ln S_T] = \\ln S_0 + (r - \\tfrac12\\sigma^2)T$.\n\nHere $r - \\tfrac12\\sigma^2 = 0.02 - 0.02 = 0$, so the expectation is $\\ln 100 = 4.6052$. Discounting gives $e^{-0.02} \\times 4.6052 = 4.5140$.\n\nThe same lemma gives the variance link. Rearranged, $\\int_0^T \\sigma^2\\,dt = 2\\int_0^T dS/S - 2\\ln(S_T/S_0)$. The first term is a delta hedge, and the second is a short position in log contracts. So log contracts plus a hedge replicate realised variance. That is how a variance swap is priced from a strip of options.",
+          "rubric": [
+            {
+              "points": 2,
+              "text": "Applies Itô’s lemma to $\\ln S$ and gets the $-\\tfrac12\\sigma^2$ term"
+            },
+            {
+              "points": 2,
+              "text": "Uses the risk-neutral drift $r$, not a real-world drift"
+            },
+            {
+              "points": 1,
+              "text": "States $E[\\ln S_T] = \\ln S_0 + (r - \\tfrac12\\sigma^2)T$"
+            },
+            {
+              "points": 2,
+              "text": "Discounts to about 4.51"
+            },
+            {
+              "points": 2,
+              "text": "Links realised variance to $2\\int dS/S - 2\\ln(S_T/S_0)$, a hedge plus log contracts"
+            },
+            {
+              "points": 1,
+              "text": "Reasons aloud in order and ends with the number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "paper",
+      "id": "coding",
+      "name": "Coding",
+      "minutes": 45,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.5,
+      "items": [
+        {
+          "id": "c1-barrier-tree",
+          "difficulty": 4,
+          "skills": [
+            "tp-multistep",
+            "cx-pricers"
+          ],
+          "tags": [
+            "barrier-tree",
+            "crr-tree"
+          ],
+          "pace": 1500,
+          "title": "A tree, then a barrier",
+          "prose": "Price a call on a binomial tree, then change it when the interviewer adds a barrier.",
+          "parts": [
+            {
+              "question": "Write `crr_call(S, K, T, r, sigma, n)`, a European call on an `n`-step Cox-Ross-Rubinstein tree. The up factor is $e^{\\sigma\\sqrt{\\Delta t}}$ and the down factor is its inverse. The risk-neutral up chance makes the stock grow at rate $r$. Raise `ValueError` if `n` is below 1, or if `p` is not strictly between 0 and 1.",
+              "widget": {
+                "kind": "code",
+                "language": "python",
+                "starter": "import math\n\n\ndef crr_call(S, K, T, r, sigma, n):\n    \"\"\"European call on an n-step Cox-Ross-Rubinstein tree.\"\"\"\n    ...\n",
+                "examples": [
+                  {
+                    "call": "crr_call(100, 100, 1, 0.05, 0.2, 1)",
+                    "expect": "12.162285",
+                    "compare": "isclose",
+                    "tol": {
+                      "abs": 5e-07
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 95, 0.5, 0.03, 0.25, 3)",
+                    "expect": "10.802607",
+                    "compare": "isclose",
+                    "tol": {
+                      "abs": 5e-07
+                    }
+                  }
+                ],
+                "tests": [
+                  {
+                    "call": "crr_call(100, 100, 1, 0.05, 0.2, 1)",
+                    "expect": "12.162284964623943",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 95, 0.5, 0.03, 0.25, 3)",
+                    "expect": "10.802606876182967",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(80, 90, 2, 0.01, 0.3, 50)",
+                    "expect": "10.327650431781665",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 100, 1, 0.05, 0.2, 1000)",
+                    "expect": "10.448584103764572",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 0, 1, 0.05, 0.2, 10)",
+                    "expect": "99.99999999999987",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 100, 1, 0.05, 0.2, 0)",
+                    "expect": "ValueError",
+                    "compare": "raises"
+                  },
+                  {
+                    "call": "crr_call(100, 100, 1, 0.5, 0.01, 1)",
+                    "expect": "ValueError",
+                    "compare": "raises"
+                  }
+                ],
+                "solution": "import math\n\n\ndef crr_call(S, K, T, r, sigma, n):\n    if n < 1:\n        raise ValueError(\"need at least one step\")\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    p = (math.exp(r * dt) - d) / (u - d)\n    if not 0 < p < 1:\n        raise ValueError(\"no risk-neutral probability\")\n    disc = math.exp(-r * dt)\n    values = [max(S * u ** j * d ** (n - j) - K, 0.0) for j in range(n + 1)]\n    for step in range(n - 1, -1, -1):\n        values = [disc * (p * values[j + 1] + (1 - p) * values[j]) for j in range(step + 1)]\n    return values[0]\n",
+                "how": "Submit runs 7 hidden tests. Prices are accepted within a relative and absolute 1e-9."
+              },
+              "feedback": {
+                "correct": "Backward induction with the risk-neutral $p$, discounting one step at a time.",
+                "generic": "Build the payoffs at the last layer, then step back with $e^{-r\\Delta t}(p V_{up} + (1 - p) V_{down})$."
+              },
+              "explain": {
+                "text": "Each step back discounts the risk-neutral average of the two children. With 1,000 steps the price is within a few pence of Black-Scholes."
+              }
+            },
+            {
+              "question": "The interviewer adds a down-and-out barrier. Add `barrier=None`. The option is worth 0 at any node where the price is at or below `barrier`. That includes the start and the last layer.",
+              "widget": {
+                "kind": "code",
+                "language": "python",
+                "starter": "import math\n\n\ndef crr_call(S, K, T, r, sigma, n, barrier=None):\n    # TODO: worth 0 at every node at or below the barrier\n    if n < 1:\n        raise ValueError(\"need at least one step\")\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    p = (math.exp(r * dt) - d) / (u - d)\n    if not 0 < p < 1:\n        raise ValueError(\"no risk-neutral probability\")\n    disc = math.exp(-r * dt)\n    values = [max(S * u ** j * d ** (n - j) - K, 0.0) for j in range(n + 1)]\n    for step in range(n - 1, -1, -1):\n        values = [disc * (p * values[j + 1] + (1 - p) * values[j]) for j in range(step + 1)]\n    return values[0]\n",
+                "examples": [
+                  {
+                    "call": "crr_call(100, 100, 1, 0.05, 0.2, 4, 90)",
+                    "expect": "9.970523",
+                    "compare": "isclose",
+                    "tol": {
+                      "abs": 5e-07
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 95, 0.5, 0.03, 0.25, 12, 92)",
+                    "expect": "8.633350",
+                    "compare": "isclose",
+                    "tol": {
+                      "abs": 5e-07
+                    }
+                  }
+                ],
+                "tests": [
+                  {
+                    "call": "crr_call(100, 100, 1, 0.05, 0.2, 50, 105)",
+                    "expect": "0.0",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 100, 1, 0.05, 0.2, 200, 1)",
+                    "expect": "10.44059125985994",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 100, 1, 0.05, 0.2, 4, 90)",
+                    "expect": "9.970522921901265",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 95, 0.5, 0.03, 0.25, 12, 92)",
+                    "expect": "8.633349823242742",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(100, 100, 1, 0.05, 0.2, 400, 95)",
+                    "expect": "6.294388777084968",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "call": "crr_call(80, 90, 2, 0.01, 0.3, 50, None)",
+                    "expect": "10.327650431781665",
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  }
+                ],
+                "solution": "import math\n\n\ndef crr_call(S, K, T, r, sigma, n, barrier=None):\n    if n < 1:\n        raise ValueError(\"need at least one step\")\n    dt = T / n\n    u = math.exp(sigma * math.sqrt(dt))\n    d = 1 / u\n    p = (math.exp(r * dt) - d) / (u - d)\n    if not 0 < p < 1:\n        raise ValueError(\"no risk-neutral probability\")\n    disc = math.exp(-r * dt)\n\n    def alive(price):\n        return barrier is None or price > barrier\n\n    values = []\n    for j in range(n + 1):\n        price = S * u ** j * d ** (n - j)\n        values.append(max(price - K, 0.0) if alive(price) else 0.0)\n    for step in range(n - 1, -1, -1):\n        values = [disc * (p * values[j + 1] + (1 - p) * values[j]) if alive(S * u ** j * d ** (step - j)) else 0.0\n                  for j in range(step + 1)]\n    return values[0]\n",
+                "how": "Submit runs 13 hidden tests: the 7 from part 1 and 6 new ones. Prices are accepted within a relative and absolute 1e-9."
+              },
+              "feedback": {
+                "correct": "Zero every node at or below the barrier as you step back.",
+                "generic": "Check each node’s price against the barrier at every layer, not only at the end."
+              },
+              "explain": {
+                "text": "A dead node passes 0 to its parents, so every path that touches the barrier pays nothing. Checking only the last layer gives a European call with a cut payoff, not a barrier."
+              }
+            },
+            {
+              "question": "As you raise `n`, your barrier price jumps up and down instead of settling. Why?",
+              "widget": {
+                "kind": "choice",
+                "layout": "stack",
+                "shuffle": true,
+                "options": [
+                  {
+                    "id": "a",
+                    "text": "A barrier option has no limit as `n` grows",
+                    "why": "You expected no limit. The price tends to the continuous-barrier value, slowly."
+                  },
+                  {
+                    "id": "b",
+                    "text": "Floating-point rounding builds up over the many steps",
+                    "why": "You blamed the arithmetic. Rounding moves prices by about 1e-12, and the jumps are far larger."
+                  },
+                  {
+                    "id": "c",
+                    "text": "The risk-neutral $p$ leaves the range 0 to 1 for large `n`",
+                    "why": "You expected $p$ to fail. As `n` grows, $p$ tends to one half."
+                  },
+                  {
+                    "id": "d",
+                    "text": "The barrier falls between node levels, and that gap changes with `n`",
+                    "correct": true
+                  }
+                ]
+              },
+              "feedback": {
+                "correct": "The tree’s effective barrier is the node level just below it.",
+                "generic": "Look at where the barrier sits between the nodes of the tree."
+              },
+              "explain": {
+                "text": "The tree knocks out at the first node level at or below the barrier. That level moves as `n` changes, so the price saws. Choosing `n` so a node layer sits on the barrier fixes it."
+              }
+            }
+          ]
+        },
+        {
+          "id": "c2-variance-interpolation",
+          "difficulty": 4,
+          "skills": [
+            "cx-pricers",
+            "tp-bs"
+          ],
+          "tags": [
+            "variance-interpolation"
+          ],
+          "pace": 1200,
+          "title": "Fix the vol curve",
+          "prose": "A desk quotes implied vols at a few maturities, the pillars. A colleague’s C++ draft reads off the vol between them. It interpolates the vols linearly in time.",
+          "question": "Fix `vol_at(T, vols, t)` in C++. Interpolate total variance, $\\sigma^2 T$, linearly in time, and return the vol it implies. Keep the end pillars’ vols outside the range. Return -1.0 if total variance ever falls between pillars.",
+          "widget": {
+            "kind": "code",
+            "language": "cpp",
+            "starter": "#include <cmath>\n#include <vector>\n\n// A colleague's draft: it interpolates the vols themselves.\n// Fix it: interpolate total variance, vol * vol * T,\n// linearly in time, and return the vol that it implies.\n// Before the first pillar keep its vol; after the last, likewise.\n// Return -1.0 if total variance falls between two pillars\n// (a calendar arbitrage).\ndouble vol_at(const std::vector<double>& T, const std::vector<double>& vols, double t) {\n    const std::size_t n = T.size();\n    if (t <= T[0]) return vols[0];\n    if (t >= T[n - 1]) return vols[n - 1];\n    std::size_t i = 1;\n    while (T[i] < t) ++i;\n    return vols[i - 1] + (vols[i] - vols[i - 1]) * (t - T[i - 1]) / (T[i] - T[i - 1]);\n}\n",
+            "solution": "#include <cmath>\n#include <vector>\n\ndouble vol_at(const std::vector<double>& T, const std::vector<double>& vols, double t) {\n    const std::size_t n = T.size();\n    for (std::size_t i = 1; i < n; ++i)\n        if (vols[i] * vols[i] * T[i] < vols[i - 1] * vols[i - 1] * T[i - 1]) return -1.0;\n    if (t <= T[0]) return vols[0];\n    if (t >= T[n - 1]) return vols[n - 1];\n    std::size_t i = 1;\n    while (T[i] < t) ++i;\n    const double w0 = vols[i - 1] * vols[i - 1] * T[i - 1];\n    const double w1 = vols[i] * vols[i] * T[i];\n    const double w = w0 + (w1 - w0) * (t - T[i - 1]) / (T[i] - T[i - 1]);\n    return std::sqrt(w / t);\n}\n",
+            "signature": "double vol_at(const std::vector<double>&, const std::vector<double>&, double)",
+            "examples": [
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.25,
+                    1.0
+                  ],
+                  [
+                    0.2,
+                    0.25
+                  ],
+                  0.5
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": 0.234521,
+                "compare": "isclose",
+                "tol": {
+                  "abs": 5e-07
+                }
+              },
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    0.3,
+                    0.2
+                  ],
+                  0.75
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": -1.0,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              }
+            ],
+            "tests": [
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.25,
+                    1.0
+                  ],
+                  [
+                    0.2,
+                    0.25
+                  ],
+                  0.5
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": 0.2345207879911715,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              },
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.25,
+                    1.0
+                  ],
+                  [
+                    0.2,
+                    0.25
+                  ],
+                  1.0
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": 0.25,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              },
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.25,
+                    1.0
+                  ],
+                  [
+                    0.2,
+                    0.25
+                  ],
+                  0.1
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": 0.2,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              },
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.25,
+                    1.0
+                  ],
+                  [
+                    0.2,
+                    0.25
+                  ],
+                  3.0
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": 0.25,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              },
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    0.3,
+                    0.2
+                  ],
+                  0.75
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": -1.0,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              },
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.25,
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    0.3,
+                    0.26,
+                    0.24
+                  ],
+                  0.75
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": 0.24684678108764826,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              },
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.25,
+                    0.5,
+                    1.0
+                  ],
+                  [
+                    0.3,
+                    0.2,
+                    0.3
+                  ],
+                  0.1
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": -1.0,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              },
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    1.0
+                  ],
+                  [
+                    0.22
+                  ],
+                  0.5
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": 0.22,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              },
+              {
+                "call": "vol_at",
+                "args": [
+                  [
+                    0.5,
+                    2.0
+                  ],
+                  [
+                    0.4,
+                    0.2
+                  ],
+                  1.0
+                ],
+                "types": [
+                  "std::vector<double>",
+                  "std::vector<double>",
+                  "double"
+                ],
+                "expect": 0.28284271247461906,
+                "compare": "isclose",
+                "tol": {
+                  "rel": 1e-09,
+                  "abs": 1e-12
+                }
+              }
+            ],
+            "how": "Submit runs 9 hidden tests. Vols are accepted within a relative 1e-9."
+          },
+          "feedback": {
+            "correct": "Interpolating $\\sigma^2 T$ keeps forward variance positive between pillars.",
+            "generic": "Work with $w = \\sigma^2 T$ at each pillar, interpolate $w$, then return $\\sqrt{w/t}$."
+          },
+          "explain": {
+            "text": "Between 0.25 and 1 year the total variances are 0.01 and 0.0625. At half a year $w = 0.01 + 0.0525/3 = 0.0275$, so the vol is $\\sqrt{0.055} = 0.2345$, not the draft’s 0.2167. A falling $w$ means a negative forward variance, which no model can produce."
+          }
+        }
+      ]
+    },
+    {
+      "kind": "paper",
+      "id": "fit",
+      "name": "Fit and motivation",
+      "minutes": 15,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.5,
+      "items": [
+        {
+          "id": "f1-why-strats",
+          "difficulty": 3,
+          "skills": [
+            "rk-behave"
+          ],
+          "tags": [
+            "why-strats"
+          ],
+          "pace": 450,
+          "title": "Why strats",
+          "kind": "longform",
+          "prompt": "Answer aloud first. Then write your answer down, in 200 words or fewer.\n\nWhat draws you to a strats or desk quant seat, over trading or pure research?",
+          "model": "*An example answer. Your own words are the real answer.*\n\nI want to build the models a desk uses every day. Two things draw me. The work is maths turned into code that people rely on at once. And the feedback is direct: a trader tells you by lunch if a price is wrong.\n\nI tested this. In my project I priced barrier options three ways and found my tree was off by 2%. Tracking that down taught me more than the formula did.\n\nThe hard part is the pressure of a live desk. I handle it by testing small pieces first.\n\nResearch is slower to touch the business, and trading needs fast calls more than models. Strats sits where I am strongest.",
+          "rubric": [
+            {
+              "points": 1,
+              "text": "Gives a one-sentence answer first"
+            },
+            {
+              "points": 2,
+              "text": "Two reasons tied to the daily work, such as models in use and fast feedback"
+            },
+            {
+              "points": 3,
+              "text": "One piece of their own evidence with a number or an outcome"
+            },
+            {
+              "points": 2,
+              "text": "Names something hard about the role and how they handle it"
+            },
+            {
+              "points": 1,
+              "text": "Says why strats rather than trading or research"
+            },
+            {
+              "points": 1,
+              "text": "About 90 seconds, with no stock phrases"
+            }
+          ]
+        },
+        {
+          "id": "f2-model-disagrees",
+          "difficulty": 3,
+          "skills": [
+            "rk-behave"
+          ],
+          "tags": [
+            "model-versus-market"
+          ],
+          "pace": 450,
+          "title": "The trader disagrees",
+          "kind": "longform",
+          "prompt": "Answer aloud first. Then write your answer down, in 200 words or fewer.\n\nA trader says your model’s price is wrong because it disagrees with the market. Talk through how you respond.",
+          "model": "*An example answer. Your own words are the real answer.*\n\nI would start by taking it seriously, because the market is often right. I would ask which price, by how much, and since when.\n\nThen I would check the inputs before the model. Stale vols, a wrong dividend or a bad curve cause most gaps.\n\nIf the inputs are right, I would ask what the market knows that the model leaves out. A smile, a jump or a funding cost are common answers.\n\nI would agree a fix and a date with the trader. Meanwhile I would mark the gap so nobody trades on it blindly.\n\nOnce, my volatility fit was off at short dates. A trader spotted it, and we fixed the weighting together.",
+          "rubric": [
+            {
+              "points": 1,
+              "text": "Opens by treating the trader’s point as possibly right"
+            },
+            {
+              "points": 2,
+              "text": "Asks for specifics: which price, how far off and since when"
+            },
+            {
+              "points": 2,
+              "text": "Checks inputs, such as data, vols, dividends and curves, before the model"
+            },
+            {
+              "points": 2,
+              "text": "Names what the model may leave out, such as a smile or jumps"
+            },
+            {
+              "points": 2,
+              "text": "Agrees an action and a time with the trader, and flags the gap meanwhile"
+            },
+            {
+              "points": 1,
+              "text": "Speaks in the first person, under two minutes"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "check",
+      "id": "derivation-aloud",
+      "name": "I derived one result aloud to a listener, start to finish",
+      "detail": "Tick this only if someone heard every step and you read nothing from notes."
+    },
+    {
+      "kind": "check",
+      "id": "no-lookup",
+      "name": "I used no calculator, search engine or notes",
+      "detail": "Tick this only if you sat all five papers without them, apart from running your code."
+    }
+  ]
+}

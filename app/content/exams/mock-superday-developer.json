@@ -1,0 +1,1366 @@
+{
+  "id": "mock-superday-developer",
+  "name": "Developer superday",
+  "style": "developer",
+  "models": "Reported, as of Nov 2026: developer and quant developer onsites at Hudson River Trading, Two Sigma and Jane Street. Algorithms, C++, concurrency, design and fit.",
+  "description": "This is the reported shape of a quant developer final-round day, as candidates described it by Nov 2026. Hudson River Trading, Two Sigma and Jane Street report rounds like these. There are six papers, each on its own clock. Two are live coding rounds, and the second adds requirements part-way. Then come C++, concurrency and systems, a design round and fit. Real rounds are spoken, so talk through your code as you type. No search engine and no notes are allowed. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.",
+  "requires": [
+    "graphs-dp/L2",
+    "coding-int/L4",
+    "cpp/L5",
+    "systems/L4"
+  ],
+  "skills": {
+    "gd-paths": "Shortest paths",
+    "ci-timed": "Coding under the clock",
+    "ci-design": "Design in code",
+    "cp-stl": "The standard library",
+    "cp-memory": "Memory and ownership",
+    "cp-classes": "Classes and templates",
+    "sy-memory": "Memory and caches",
+    "sy-concurrency": "Concurrency",
+    "sy-latency": "Low latency",
+    "sy-os": "Operating systems",
+    "rk-behave": "Behavioural answers"
+  },
+  "parts": [
+    {
+      "kind": "paper",
+      "id": "round-one",
+      "name": "Coding round one",
+      "minutes": 45,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 1,
+      "items": [
+        {
+          "id": "a1-cheapest-within-hops",
+          "difficulty": 4,
+          "skills": [
+            "gd-paths",
+            "ci-timed"
+          ],
+          "tags": [
+            "hop-limited-path"
+          ],
+          "pace": 1500,
+          "title": "The cheapest route in k transfers",
+          "prose": "Cash moves between accounts numbered 0 to `n - 1`. Each entry of `routes` is a one-way transfer `[a, b, fee]`, with a whole-number fee in pence. Fees are at least 1.",
+          "question": "Write `cheapest_within(n, routes, src, dst, k)`. It returns the smallest total fee from `src` to `dst` in at most `k` transfers, else -1. `n` reaches 3,000 and `routes` 30,000, and `k` may be far larger than `n`.",
+          "widget": {
+            "kind": "code",
+            "language": "python",
+            "starter": "def cheapest_within(n, routes, src, dst, k):\n    \"\"\"Smallest total fee from src to dst in at most k transfers, or -1.\"\"\"\n    ...\n",
+            "solution": "def cheapest_within(n, routes, src, dst, k):\n    INF = float(\"inf\")\n    best = [INF] * n\n    best[src] = 0\n    for _ in range(min(k, n - 1)):\n        nxt = best[:]\n        changed = False\n        for a, b, fee in routes:\n            if best[a] + fee < nxt[b]:\n                nxt[b] = best[a] + fee\n                changed = True\n        best = nxt\n        if not changed:\n            break\n    return -1 if best[dst] == INF else best[dst]\n",
+            "examples": [
+              {
+                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 3)",
+                "expect": "300",
+                "compare": "equal"
+              },
+              {
+                "call": "cheapest_within(4, [[0, 1, 1], [1, 2, 1], [0, 2, 5], [2, 3, 1]], 0, 3, 2)",
+                "expect": "6",
+                "compare": "equal"
+              }
+            ],
+            "tests": [
+              {
+                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 3)",
+                "expect": "300",
+                "compare": "equal"
+              },
+              {
+                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 2)",
+                "expect": "350",
+                "compare": "equal"
+              },
+              {
+                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 1)",
+                "expect": "500",
+                "compare": "equal"
+              },
+              {
+                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 0, 3, 0)",
+                "expect": "-1",
+                "compare": "equal"
+              },
+              {
+                "call": "cheapest_within(4, [[0, 1, 100], [1, 2, 100], [2, 3, 100], [0, 3, 500], [0, 2, 250]], 2, 2, 0)",
+                "expect": "0",
+                "compare": "equal"
+              },
+              {
+                "call": "cheapest_within(4, [[0, 1, 1], [1, 2, 1], [0, 2, 5], [2, 3, 1]], 0, 3, 2)",
+                "expect": "6",
+                "compare": "equal"
+              },
+              {
+                "call": "cheapest_within(4, [[0, 1, 1], [1, 2, 1], [0, 2, 5], [2, 3, 1]], 0, 3, 3)",
+                "expect": "3",
+                "compare": "equal"
+              },
+              {
+                "call": "cheapest_within(5, [[0, 1, 4], [1, 0, 1], [3, 4, 2]], 0, 4, 10)",
+                "expect": "-1",
+                "compare": "equal"
+              },
+              {
+                "call": "cheapest_within(3, [[0, 1, 2], [1, 0, 2], [1, 2, 7]], 0, 2, 10 ** 9)",
+                "expect": "9",
+                "compare": "equal"
+              },
+              {
+                "setup": "import random; R = random.Random(11); routes = [[R.randrange(3000), R.randrange(3000), R.randint(1, 500)] for _ in range(30000)]",
+                "call": "cheapest_within(3000, routes, 0, 2999, 6)",
+                "expect": "607",
+                "compare": "equal"
+              },
+              {
+                "setup": "import random; R = random.Random(11); routes = [[R.randrange(3000), R.randrange(3000), R.randint(1, 500)] for _ in range(30000)]",
+                "call": "cheapest_within(3000, routes, 0, 2999, 10 ** 9)",
+                "expect": "500",
+                "compare": "equal"
+              },
+              {
+                "setup": "routes = [[i, i + 1, 1] for i in range(599)] + [[0, 599, 1000]]",
+                "call": "cheapest_within(600, routes, 0, 599, 599)",
+                "expect": "599",
+                "compare": "equal"
+              },
+              {
+                "setup": "routes = [[i, i + 1, 1] for i in range(599)] + [[0, 599, 1000]]",
+                "call": "cheapest_within(600, routes, 0, 599, 598)",
+                "expect": "1000",
+                "compare": "equal"
+              }
+            ],
+            "how": "Submit runs 13 hidden tests, compared exactly. Two use 30,000 random routes."
+          },
+          "feedback": {
+            "correct": "Bellman-Ford for at most $k$ rounds, each round from the last round’s costs.",
+            "generic": "Keep the cheapest cost to each account in at most $j$ transfers. Build round $j + 1$ from round $j$ only."
+          },
+          "explain": {
+            "text": "Round $j$ of Bellman-Ford holds the cheapest cost in at most $j$ transfers, if it reads only round $j - 1$. Plain Dijkstra settles account 2 at cost 2 on the trap test, a route with too many transfers. Capping the rounds at $n - 1$ and stopping when nothing changes keeps a huge $k$ fast."
+          }
+        }
+      ]
+    },
+    {
+      "kind": "paper",
+      "id": "round-two",
+      "name": "Coding round two",
+      "minutes": 45,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.6,
+      "items": [
+        {
+          "id": "b1-asof-store",
+          "difficulty": 5,
+          "skills": [
+            "ci-design",
+            "cp-stl"
+          ],
+          "tags": [
+            "asof-store"
+          ],
+          "pace": 1500,
+          "title": "A price store, then fresher prices",
+          "prose": "Build a small price store in C++, then extend it when the interviewer adds requirements.",
+          "parts": [
+            {
+              "question": "Write a C++ class `PriceStore` holding one price per timestamp. `insert(t, px)` stores a tick, and ticks may arrive out of order. A later insert at the same `t` replaces the price. `asof(t)` returns the price at the latest time at or before `t`, or -1.0. `size()` counts the stored ticks.",
+              "widget": {
+                "kind": "code",
+                "language": "cpp",
+                "starter": "#include <iterator>\n#include <map>\n\n// One price per timestamp. Ticks may arrive out of order.\nclass PriceStore {\npublic:\n    // Store a tick. A later insert at the same t replaces it.\n    void insert(long long t, double px) { (void)t; (void)px; }\n    // The price at the latest time at or before t, or -1.0 if none.\n    double asof(long long t) const { (void)t; return -1.0; }\n    // The number of stored ticks.\n    int size() const { return 0; }\n};\n",
+                "solution": "#include <iterator>\n#include <map>\n\nclass PriceStore {\npublic:\n    void insert(long long t, double px) { ticks_[t] = px; }\n    double asof(long long t) const {\n        auto it = ticks_.upper_bound(t);\n        if (it == ticks_.begin()) return -1.0;\n        return std::prev(it)->second;\n    }\n    int size() const { return static_cast<int>(ticks_.size()); }\n\nprivate:\n    std::map<long long, double> ticks_;\n};\n",
+                "examples": [
+                  {
+                    "setup": "PriceStore s; s.insert(10, 101.5); s.insert(5, 100.0);",
+                    "call": "s.asof(7)",
+                    "expect": 100.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(10, 101.5); s.insert(5, 100.0);",
+                    "call": "s.asof(4)",
+                    "expect": -1.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  }
+                ],
+                "tests": [
+                  {
+                    "setup": "PriceStore s; s.insert(10, 101.5); s.insert(5, 100.0);",
+                    "call": "s.asof(7)",
+                    "expect": 100.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(10, 101.5); s.insert(5, 100.0);",
+                    "call": "s.asof(10)",
+                    "expect": 101.5,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(10, 101.5); s.insert(5, 100.0);",
+                    "call": "s.asof(4)",
+                    "expect": -1.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(10, 101.5); s.insert(5, 100.0);",
+                    "call": "s.asof(1000)",
+                    "expect": 101.5,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(3, 1.0); s.insert(3, 2.0);",
+                    "call": "s.asof(3) + 10 * s.size()",
+                    "expect": 12.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s;",
+                    "call": "s.asof(0)",
+                    "expect": -1.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; for (long long i = 0; i < 100000; ++i) { long long t = (i * 7919) % 100000; s.insert(t * 10, 100.0 + t % 97); } double total = 0; for (long long q = 5; q < 1000000; q += 10) total += s.asof(q);",
+                    "call": "total",
+                    "expect": 14799685.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  }
+                ],
+                "how": "Submit runs 7 hidden tests. One inserts 100,000 ticks out of order and makes 100,000 queries."
+              },
+              "feedback": {
+                "correct": "An ordered map, and the tick before `upper_bound(t)`.",
+                "generic": "Keep the ticks sorted by time, and search for the first tick after `t`."
+              },
+              "explain": {
+                "text": "A `std::map` keeps the ticks sorted, so each insert and each query costs $O(\\log n)$. The tick just before `upper_bound(t)` is the latest one at or before `t`. A scan of every tick per query takes about $10^{10}$ steps on the large test."
+              }
+            },
+            {
+              "question": "The interviewer adds two requirements. `asof_fresh(t, max_age)` returns -1.0 when the latest tick at or before `t` is more than `max_age` older than `t`. `erase_before(t)` drops every tick strictly before `t`, so memory stays bounded.",
+              "widget": {
+                "kind": "code",
+                "language": "cpp",
+                "starter": "#include <iterator>\n#include <map>\n\nclass PriceStore {\npublic:\n    void insert(long long t, double px) { ticks_[t] = px; }\n    double asof(long long t) const {\n        auto it = ticks_.upper_bound(t);\n        if (it == ticks_.begin()) return -1.0;\n        return std::prev(it)->second;\n    }\n    int size() const { return static_cast<int>(ticks_.size()); }\n    // -1.0 if the latest tick at or before t is more than max_age old.\n    double asof_fresh(long long t, long long max_age) const { (void)t; (void)max_age; return -1.0; }\n    // Drop every tick strictly before t.\n    void erase_before(long long t) { (void)t; }\n\nprivate:\n    std::map<long long, double> ticks_;\n};\n",
+                "solution": "#include <iterator>\n#include <map>\n\nclass PriceStore {\npublic:\n    void insert(long long t, double px) { ticks_[t] = px; }\n    double asof(long long t) const {\n        auto it = ticks_.upper_bound(t);\n        if (it == ticks_.begin()) return -1.0;\n        return std::prev(it)->second;\n    }\n    int size() const { return static_cast<int>(ticks_.size()); }\n    double asof_fresh(long long t, long long max_age) const {\n        auto it = ticks_.upper_bound(t);\n        if (it == ticks_.begin()) return -1.0;\n        --it;\n        return t - it->first > max_age ? -1.0 : it->second;\n    }\n    void erase_before(long long t) { ticks_.erase(ticks_.begin(), ticks_.lower_bound(t)); }\n\nprivate:\n    std::map<long long, double> ticks_;\n};\n",
+                "examples": [
+                  {
+                    "setup": "PriceStore s; s.insert(100, 50.0); s.insert(130, 51.0);",
+                    "call": "s.asof_fresh(140, 15)",
+                    "expect": 51.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(100, 50.0); s.insert(130, 51.0);",
+                    "call": "s.asof_fresh(150, 15)",
+                    "expect": -1.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  }
+                ],
+                "tests": [
+                  {
+                    "setup": "PriceStore s; s.insert(100, 50.0); s.insert(130, 51.0);",
+                    "call": "s.asof_fresh(140, 15)",
+                    "expect": 51.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(100, 50.0); s.insert(130, 51.0);",
+                    "call": "s.asof_fresh(150, 15)",
+                    "expect": -1.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(100, 50.0); s.insert(130, 51.0);",
+                    "call": "s.asof_fresh(145, 15)",
+                    "expect": 51.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(100, 50.0); s.insert(130, 51.0); s.erase_before(130);",
+                    "call": "s.asof(129) * 1000 + s.size()",
+                    "expect": -999.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(100, 50.0); s.insert(130, 51.0); s.erase_before(130);",
+                    "call": "s.asof(130)",
+                    "expect": 51.0,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  },
+                  {
+                    "setup": "PriceStore s; s.insert(100, 50.0); s.insert(130, 51.0); s.erase_before(1000);",
+                    "call": "s.size()",
+                    "expect": 0,
+                    "compare": "equal"
+                  },
+                  {
+                    "setup": "PriceStore s; for (long long t = 0; t < 50000; ++t) { s.insert(t, t * 0.5); if (t % 1000 == 999) s.erase_before(t - 4999); }",
+                    "call": "s.size() + s.asof_fresh(49999, 0)",
+                    "expect": 29999.5,
+                    "compare": "isclose",
+                    "tol": {
+                      "rel": 1e-09,
+                      "abs": 1e-09
+                    }
+                  }
+                ],
+                "how": "Submit runs 14 hidden tests: the 7 from part 1 and 7 new ones."
+              },
+              "feedback": {
+                "correct": "The same search, then an age test; `erase` from `begin()` to `lower_bound(t)`.",
+                "generic": "Find the tick as `asof` does, then compare its age with `max_age`."
+              },
+              "explain": {
+                "text": "A tick exactly `max_age` old still counts, and one older does not. `erase(begin(), lower_bound(t))` removes exactly the ticks before `t`, keeping a tick at `t`. Each erased tick costs $O(1)$ amortised, so a sliding window stays cheap."
+              }
+            },
+            {
+              "question": "Why does `asof` step back from `upper_bound(t)` rather than from `lower_bound(t)`?",
+              "widget": {
+                "kind": "choice",
+                "layout": "stack",
+                "shuffle": true,
+                "options": [
+                  {
+                    "id": "a",
+                    "text": "`upper_bound` skips a tick at exactly `t`, so the step back lands on it",
+                    "correct": true
+                  },
+                  {
+                    "id": "b",
+                    "text": "`lower_bound` is undefined on an empty map",
+                    "why": "You expected an empty map to fail. Both return `end()` there."
+                  },
+                  {
+                    "id": "c",
+                    "text": "`upper_bound` is faster than `lower_bound` on a `std::map`",
+                    "why": "You picked by speed. Both are $O(\\log n)$ searches of the same tree."
+                  },
+                  {
+                    "id": "d",
+                    "text": "`lower_bound` would give the same answer for every `t`",
+                    "why": "You expected no difference. Stepping back from `lower_bound` misses a tick at exactly `t`."
+                  }
+                ]
+              },
+              "feedback": {
+                "correct": "The first tick after `t`, then one back.",
+                "generic": "Ask what each search returns when a tick sits exactly at `t`."
+              },
+              "explain": {
+                "text": "`lower_bound(t)` is the first tick at or after `t`; `upper_bound(t)` is the first strictly after. Only the step back from `upper_bound` lands on a tick at exactly `t`."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "paper",
+      "id": "cpp",
+      "name": "C++",
+      "minutes": 40,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.6,
+      "items": [
+        {
+          "id": "k1-struct-padding",
+          "difficulty": 3,
+          "skills": [
+            "sy-memory",
+            "cp-memory"
+          ],
+          "tags": [
+            "struct-padding"
+          ],
+          "pace": 300,
+          "title": "Bytes in an order",
+          "prose": "A typical 64-bit desktop build aligns `double` to 8 bytes and `int` to 4.\n\n```cpp\nstruct Order {\n    bool live;\n    double price;\n    int qty;\n    char side;\n};\n```",
+          "parts": [
+            {
+              "question": "What is `sizeof(Order)`?",
+              "widget": {
+                "kind": "numeric",
+                "answer": 24,
+                "tol": {
+                  "abs": 0
+                },
+                "placeholder": "bytes",
+                "label": "Your answer",
+                "wrong": [
+                  {
+                    "id": "summed",
+                    "value": 14,
+                    "tol": {
+                      "abs": 0
+                    }
+                  },
+                  {
+                    "id": "all-eight",
+                    "value": 32,
+                    "tol": {
+                      "abs": 0
+                    }
+                  }
+                ],
+                "accept": "24 bytes"
+              },
+              "feedback": {
+                "correct": "7 bytes of padding after `live`, 3 at the end.",
+                "generic": "Place each member at the next offset that is a multiple of its alignment.",
+                "byKey": {
+                  "summed": "You added the member sizes, 1 + 8 + 4 + 1, and left out the padding.",
+                  "all-eight": "You gave every member 8 bytes. The `int` and `char` can share one 8-byte block."
+                }
+              },
+              "explain": {
+                "text": "`live` sits at 0, then 7 bytes of padding put `price` at 8. `qty` is at 16 and `side` at 20, and the size rounds up to 24, a multiple of 8."
+              }
+            },
+            {
+              "question": "You reorder the members to make `Order` as small as possible. What is `sizeof(Order)` now?",
+              "widget": {
+                "kind": "numeric",
+                "answer": 16,
+                "tol": {
+                  "abs": 0
+                },
+                "placeholder": "bytes",
+                "label": "Your answer",
+                "wrong": [
+                  {
+                    "id": "no-tail",
+                    "value": 14,
+                    "tol": {
+                      "abs": 0
+                    }
+                  },
+                  {
+                    "id": "unchanged",
+                    "value": 24,
+                    "tol": {
+                      "abs": 0
+                    }
+                  }
+                ],
+                "accept": "16 bytes"
+              },
+              "feedback": {
+                "correct": "Largest first: 8 + 4 + 1 + 1, rounded up to 16.",
+                "generic": "Order the members from the largest alignment down.",
+                "byKey": {
+                  "no-tail": "You left out the tail padding. The size must be a multiple of 8.",
+                  "unchanged": "You kept the old size. Putting the `double` first removes the 7-byte gap."
+                }
+              },
+              "explain": {
+                "text": "With `price`, `qty`, `side`, `live` the members fill 14 bytes, rounded up to 16. Compiling all 24 orders of the four members gives 16 as the smallest."
+              }
+            }
+          ]
+        },
+        {
+          "id": "k2-copies-counted",
+          "difficulty": 4,
+          "skills": [
+            "cp-classes",
+            "cp-stl"
+          ],
+          "tags": [
+            "copy-or-move"
+          ],
+          "pace": 240,
+          "title": "Copies or moves",
+          "prose": "```cpp\nstruct Tick {\n    Tick() {}\n    Tick(const Tick&) { ++copies; }\n    Tick(Tick&&) noexcept { ++moves; }\n    static int copies, moves;\n};\nint Tick::copies = 0, Tick::moves = 0;\n\nTick make() { Tick t; return t; }\n\nint main() {\n    std::vector<Tick> v;\n    v.reserve(4);\n    Tick a;\n    v.push_back(a);\n    v.push_back(std::move(a));\n    v.push_back(make());\n    v.emplace_back();\n}\n```",
+          "question": "How many times does the copy constructor of `Tick` run in this program?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "2",
+                "why": "You counted the return from `make` as a copy. It is elided, or else moved."
+              },
+              {
+                "id": "b",
+                "text": "3",
+                "why": "You counted every `push_back` as a copy, the moved ones included."
+              },
+              {
+                "id": "c",
+                "text": "4",
+                "why": "You counted all four insertions. `emplace_back` builds in place."
+              },
+              {
+                "id": "d",
+                "text": "1",
+                "correct": true
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Only `push_back(a)` copies, since `a` is a named object.",
+            "generic": "Go line by line, and ask whether each argument is a named object or a temporary."
+          },
+          "explain": {
+            "text": "Only `push_back(a)` copies, so the count is 1. `std::move(a)` and the temporary from `make` bind to the move overload, and `emplace_back` builds in place. The `reserve(4)` means no reallocation moves elements."
+          }
+        },
+        {
+          "id": "k3-shallow-copy",
+          "difficulty": 3,
+          "skills": [
+            "cp-memory",
+            "cp-classes"
+          ],
+          "tags": [
+            "shallow-copy"
+          ],
+          "pace": 200,
+          "title": "One block, two owners",
+          "prose": "```cpp\nclass Series {\npublic:\n    explicit Series(int n) : data_(new double[n]()), n_(n) {}\n    ~Series() { delete[] data_; }\nprivate:\n    double* data_;\n    int n_;\n};\n\nvoid report() {\n    Series a(100);\n    Series b = a;\n}\n```",
+          "question": "What goes wrong when `report` returns?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "The block leaks, because neither destructor runs",
+                "why": "You thought the destructors are skipped. Both run at the end of the scope."
+              },
+              {
+                "id": "b",
+                "text": "It does not compile, since a class with a destructor cannot be copied",
+                "why": "You expected the compiler to refuse. It still writes a copy constructor."
+              },
+              {
+                "id": "c",
+                "text": "Nothing, because the copy gets its own block of 100 doubles",
+                "why": "You assumed the default copy is deep. It copies the pointer only."
+              },
+              {
+                "id": "d",
+                "text": "Both destructors delete the same block, a double delete",
+                "correct": true
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "The rule of three: a destructor that frees means you need a copy too.",
+            "generic": "Ask what the compiler-written copy constructor copies."
+          },
+          "explain": {
+            "text": "The default copy constructor copies `data_`, so `a` and `b` share one block. Both destructors run `delete[]` on it, which is undefined behaviour. Write a deep copy, or delete copying and keep a move."
+          }
+        },
+        {
+          "id": "k4-virtual-in-constructor",
+          "difficulty": 4,
+          "skills": [
+            "cp-classes"
+          ],
+          "tags": [
+            "dispatch-during-construction"
+          ],
+          "pace": 240,
+          "title": "What it prints",
+          "prose": "```cpp\n#include <iostream>\n#include <string>\n\nstruct Pricer {\n    Pricer() { std::cout << name() << \" \"; }\n    virtual ~Pricer() { std::cout << name() << \" \"; }\n    virtual std::string name() const { return \"base\"; }\n};\nstruct Tree : Pricer {\n    Tree() { std::cout << name() << \" \"; }\n    ~Tree() override { std::cout << name() << \" \"; }\n    std::string name() const override { return \"tree\"; }\n};\n\nint main() { Tree t; }\n```",
+          "question": "What does this program print?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "`tree tree tree tree`",
+                "why": "You expected the override to run inside the base constructor and destructor."
+              },
+              {
+                "id": "b",
+                "text": "`tree tree`",
+                "why": "You thought only the derived constructor and destructor print."
+              },
+              {
+                "id": "c",
+                "text": "`base tree tree base`",
+                "correct": true
+              },
+              {
+                "id": "d",
+                "text": "`base tree base tree`",
+                "why": "You ran the destructors in the order of construction, not the reverse."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Inside a base constructor or destructor, the object is still a base.",
+            "generic": "Ask what the dynamic type is while each constructor and destructor runs."
+          },
+          "explain": {
+            "text": "While `Pricer`’s constructor runs, the `Tree` part does not exist yet, so `name()` calls the base version. Destruction runs in reverse: `~Tree` sees a `Tree`, then `~Pricer` sees a base again."
+          }
+        },
+        {
+          "id": "k5-template-deduction",
+          "difficulty": 3,
+          "skills": [
+            "cp-classes"
+          ],
+          "tags": [
+            "template-deduction"
+          ],
+          "pace": 180,
+          "title": "One T, mixed types",
+          "prose": "```cpp\ntemplate <typename T>\nT clamp_to(T x, T lo, T hi) { return x < lo ? lo : (hi < x ? hi : x); }\n```",
+          "question": "Which call does not compile?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "`clamp_to(101.5, 0, 100)`",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "`clamp_to(std::string(\"m\"), std::string(\"a\"), std::string(\"z\"))`",
+                "why": "You expected strings to fail. They have `<`, so `T` is `std::string`."
+              },
+              {
+                "id": "c",
+                "text": "`clamp_to<double>(101.5, 0, 100)`",
+                "why": "You expected the explicit type to fail. Naming `T` lets 0 and 100 convert to `double`."
+              },
+              {
+                "id": "d",
+                "text": "`clamp_to(101.5, 0.0, 100.0)`",
+                "why": "You expected three doubles to fail. Each one deduces `T` as `double`."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Deduction gives `T = double` from 101.5 and `T = int` from 0, a conflict.",
+            "generic": "Deduce `T` from each argument separately and compare."
+          },
+          "explain": {
+            "text": "Each argument deduces `T` on its own, and deduction never converts. From 101.5 it gets `double` and from 0 it gets `int`, so the call fails. Naming `T` explicitly turns off deduction and lets the whole numbers convert."
+          }
+        },
+        {
+          "id": "k6-slot-pool",
+          "difficulty": 4,
+          "skills": [
+            "cp-memory",
+            "sy-latency"
+          ],
+          "tags": [
+            "slot-pool"
+          ],
+          "pace": 1200,
+          "title": "A pool that never allocates",
+          "prose": "A gateway keeps open orders in a fixed table and hands out rows by index. The hot path may not touch the heap.",
+          "question": "Write `SlotPool` in C++. `acquire()` returns the slot released most recently, else the lowest slot never used, else -1. `release(slot)` frees a slot, ignoring a free or out-of-range one. `in_use()` counts slots in use. Nothing after the constructor may allocate.",
+          "widget": {
+            "kind": "code",
+            "language": "cpp",
+            "allocCheck": true,
+            "starter": "#include <vector>\n\n// A fixed pool of slots 0 to capacity - 1, handed out by index.\n// No call after the constructor may allocate.\nclass SlotPool {\npublic:\n    explicit SlotPool(int capacity) { (void)capacity; }\n    // A free slot, or -1 when every slot is in use.\n    int acquire() { return -1; }\n    // Free a slot. A free or out-of-range slot is ignored.\n    void release(int slot) { (void)slot; }\n    // The number of slots in use.\n    int in_use() const { return 0; }\n};\n",
+            "solution": "#include <vector>\n\nclass SlotPool {\npublic:\n    explicit SlotPool(int capacity) : free_(capacity), used_(capacity, false), top_(capacity) {\n        for (int i = 0; i < capacity; ++i) free_[i] = capacity - 1 - i;\n    }\n    int acquire() {\n        if (top_ == 0) return -1;\n        const int s = free_[--top_];\n        used_[s] = true;\n        ++count_;\n        return s;\n    }\n    void release(int slot) {\n        if (slot < 0 || slot >= static_cast<int>(used_.size()) || !used_[slot]) return;\n        used_[slot] = false;\n        free_[top_++] = slot;\n        --count_;\n    }\n    int in_use() const { return count_; }\n\nprivate:\n    std::vector<int> free_;\n    std::vector<bool> used_;\n    int top_ = 0;\n    int count_ = 0;\n};\n",
+            "examples": [
+              {
+                "setup": "SlotPool p(3); int a = p.acquire(); int b = p.acquire(); int c = p.acquire();",
+                "call": "a * 100 + b * 10 + c",
+                "expect": 12,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(2); p.release(0); int x = p.acquire(); int y = p.acquire();",
+                "call": "x * 10 + y",
+                "expect": 2,
+                "compare": "equal"
+              }
+            ],
+            "tests": [
+              {
+                "setup": "SlotPool p(3); int a = p.acquire(); int b = p.acquire(); int c = p.acquire();",
+                "call": "a * 100 + b * 10 + c",
+                "expect": 12,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(2); p.acquire(); p.acquire();",
+                "call": "p.acquire()",
+                "expect": -1,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(2); p.release(0);",
+                "call": "p.acquire()",
+                "expect": 0,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(4); for (int i = 0; i < 4; ++i) p.acquire(); p.release(2); p.release(0); int x = p.acquire(); int y = p.acquire();",
+                "call": "x * 10 + y",
+                "expect": 2,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(5); p.acquire(); p.acquire(); p.release(1); int x = p.acquire(); int y = p.acquire();",
+                "call": "x * 10 + y",
+                "expect": 12,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(3); int a = p.acquire(); p.release(a); p.release(a); p.release(7); p.release(-1);",
+                "call": "p.in_use()",
+                "expect": 0,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(3); int a = p.acquire(); p.release(a); p.release(a); int x = p.acquire(); int y = p.acquire();",
+                "call": "x * 10 + y",
+                "expect": 1,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(10); for (int i = 0; i < 7; ++i) p.acquire(); p.release(3); p.release(5);",
+                "call": "p.in_use()",
+                "expect": 5,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(0);",
+                "call": "p.acquire()",
+                "expect": -1,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(1000); reset_alloc_count(); for (int r = 0; r < 100000; ++r) { int s = p.acquire(); int t = p.acquire(); p.release(s); p.release(t); }",
+                "call": "alloc_count()",
+                "expect": 0,
+                "compare": "equal"
+              },
+              {
+                "setup": "SlotPool p(100000); long long sum = 0; for (int i = 0; i < 100000; ++i) sum += p.acquire(); for (int i = 0; i < 100000; i += 2) p.release(i); for (int i = 0; i < 50000; ++i) sum += p.acquire();",
+                "call": "sum",
+                "expect": 7499900000,
+                "compare": "equal"
+              }
+            ],
+            "how": "Submit runs 11 hidden tests. One counts calls of `operator new` after its setup and expects 0."
+          },
+          "feedback": {
+            "correct": "A stack of free slots, filled in the constructor, with a flag per slot.",
+            "generic": "Preallocate a stack of free slot numbers, lowest on top. Push each released slot back on top."
+          },
+          "explain": {
+            "text": "Filling the stack with the highest slot at the bottom makes the never-used slots come out lowest first. A released slot goes on top, so it comes out next. The flag per slot stops a double release from handing one slot to two orders."
+          }
+        }
+      ]
+    },
+    {
+      "kind": "paper",
+      "id": "systems",
+      "name": "Concurrency and systems",
+      "minutes": 25,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.6,
+      "items": [
+        {
+          "id": "y1-lost-updates",
+          "difficulty": 3,
+          "skills": [
+            "sy-concurrency"
+          ],
+          "tags": [
+            "lost-updates"
+          ],
+          "pace": 200,
+          "title": "A counter two threads share",
+          "prose": "```cpp\nint hits = 0;\n\nvoid work() {\n    for (int i = 0; i < 1000000; ++i) ++hits;\n}\n// two threads run work() at the same time, then both are joined\n```",
+          "question": "Which change makes `hits` end at exactly 2,000,000?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "Declare it as `volatile int hits = 0;`",
+                "why": "You used `volatile`. It stops some optimisations but does not make `++` atomic."
+              },
+              {
+                "id": "b",
+                "text": "Make `hits` a `static` local inside `work`",
+                "why": "You moved the variable. Both threads still share one plain `int`."
+              },
+              {
+                "id": "c",
+                "text": "Sleep for a microsecond inside the loop",
+                "why": "You slowed the threads down. The race is still there, only rarer."
+              },
+              {
+                "id": "d",
+                "text": "Declare it as `std::atomic<int> hits{0};`",
+                "correct": true
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "An atomic `++` cannot interleave with another.",
+            "generic": "Ask whether `++hits` is one step or three: load, add, store."
+          },
+          "explain": {
+            "text": "`++hits` on a plain `int` is a load, an add and a store, so two threads can lose updates. A `std::atomic<int>` makes each increment one indivisible step, so the total is 2,000,000."
+          }
+        },
+        {
+          "id": "y2-relaxed-flag",
+          "difficulty": 4,
+          "skills": [
+            "sy-concurrency"
+          ],
+          "tags": [
+            "release-acquire"
+          ],
+          "pace": 240,
+          "title": "A flag without acquire",
+          "prose": "```cpp\nint data = 0;\nstd::atomic<bool> ready{false};\n\nvoid producer() {\n    data = 42;\n    ready.store(true, std::memory_order_release);\n}\n\nvoid consumer() {\n    while (!ready.load(std::memory_order_relaxed)) {}\n    use(data);\n}\n```",
+          "question": "The consumer’s load uses `memory_order_relaxed`. What can go wrong?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "It does not compile, since release and relaxed cannot be mixed",
+                "why": "You expected a compile error. Orders may be mixed; only the guarantee changes."
+              },
+              {
+                "id": "b",
+                "text": "The consumer can see `ready` true and still read the old `data`",
+                "correct": true
+              },
+              {
+                "id": "c",
+                "text": "The loop may spin forever, as a relaxed load never sees the store",
+                "why": "You expected the store to stay hidden. A relaxed load still sees it in time."
+              },
+              {
+                "id": "d",
+                "text": "Nothing, since any atomic flag orders the writes around it",
+                "why": "You expected every atomic to order other memory. Only release paired with acquire does."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "A release store is matched only by an acquire load.",
+            "generic": "Ask which load would make the write to `data` visible."
+          },
+          "explain": {
+            "text": "A release store publishes earlier writes only to a thread that reads the flag with acquire. With a relaxed load the read of `data` is not ordered after it, so it is a data race. Use `memory_order_acquire` in the loop."
+          }
+        },
+        {
+          "id": "y3-lock-order",
+          "difficulty": 3,
+          "skills": [
+            "sy-concurrency"
+          ],
+          "tags": [
+            "lock-ordering"
+          ],
+          "pace": 200,
+          "title": "Two books, two locks",
+          "prose": "```cpp\nvoid move_cash(Book& src, Book& dst, long pence) {\n    std::lock_guard<std::mutex> g1(src.m);\n    std::lock_guard<std::mutex> g2(dst.m);\n    src.cash -= pence;\n    dst.cash += pence;\n}\n// thread 1: move_cash(alpha, beta, 100);\n// thread 2: move_cash(beta, alpha, 50);\n```",
+          "question": "Now and then both threads stop for good. Which fix is sound?",
+          "widget": {
+            "kind": "choice",
+            "layout": "stack",
+            "shuffle": true,
+            "options": [
+              {
+                "id": "a",
+                "text": "Take both with one `std::scoped_lock lk(src.m, dst.m);`",
+                "correct": true
+              },
+              {
+                "id": "b",
+                "text": "Add a short sleep between the two locks",
+                "why": "You changed the timing. The opposite orders can still meet."
+              },
+              {
+                "id": "c",
+                "text": "Make both mutexes `std::recursive_mutex`",
+                "why": "You let a thread relock its own mutex. Here each thread waits for the other one’s."
+              },
+              {
+                "id": "d",
+                "text": "Unlock in the reverse of the order you locked",
+                "why": "You changed the release order. The hang happens while locking."
+              }
+            ]
+          },
+          "feedback": {
+            "correct": "Take both locks at once, or always in one global order.",
+            "generic": "Ask what each thread holds and what it waits for."
+          },
+          "explain": {
+            "text": "Thread 1 holds `alpha` and waits for `beta`, while thread 2 holds `beta` and waits for `alpha`. `std::scoped_lock` takes both with a deadlock-avoiding algorithm. A fixed order, such as by address, also works."
+          }
+        },
+        {
+          "id": "y4-column-sum",
+          "difficulty": 4,
+          "skills": [
+            "sy-memory"
+          ],
+          "tags": [
+            "cache-line-stride"
+          ],
+          "pace": 240,
+          "title": "Down the columns",
+          "prose": "A 4,096 by 4,096 matrix of `double` is stored row by row. Cache lines are 64 bytes. The cache holds far fewer lines than one column touches.",
+          "question": "You sum it column by column instead of row by row. About how many times as many cache lines are loaded?",
+          "widget": {
+            "kind": "numeric",
+            "answer": 8,
+            "tol": {
+              "abs": 0
+            },
+            "placeholder": "a whole number",
+            "label": "Your answer",
+            "wrong": [
+              {
+                "id": "bytes",
+                "value": 64,
+                "tol": {
+                  "abs": 0
+                }
+              },
+              {
+                "id": "row-length",
+                "value": 4096,
+                "tol": {
+                  "abs": 0
+                }
+              }
+            ],
+            "accept": "8 times"
+          },
+          "feedback": {
+            "correct": "Row order uses all 8 doubles of a line; column order uses one.",
+            "generic": "Count the lines loaded per element in each order."
+          },
+          "explain": {
+            "text": "Row by row, one 64-byte line serves 8 neighbouring doubles. Column by column, each access lands on a new line, which is evicted before its neighbours are read. So about 8 times as many lines are loaded, and a small cache simulation agrees."
+          }
+        },
+        {
+          "id": "y5-littles-law",
+          "difficulty": 4,
+          "skills": [
+            "sy-latency"
+          ],
+          "tags": [
+            "queue-sizing"
+          ],
+          "pace": 300,
+          "title": "How many inside",
+          "prose": "Orders reach a gateway at 150,000 a second. Each spends 40 µs inside it on average.",
+          "parts": [
+            {
+              "question": "On average, how many orders are inside the gateway at once?",
+              "widget": {
+                "kind": "numeric",
+                "answer": 6,
+                "tol": {
+                  "abs": 0.01
+                },
+                "placeholder": "orders",
+                "label": "Your answer",
+                "wrong": [
+                  {
+                    "id": "ms",
+                    "value": 6000,
+                    "tol": {
+                      "abs": 0.5
+                    }
+                  },
+                  {
+                    "id": "divided",
+                    "value": 3750,
+                    "tol": {
+                      "abs": 0.5
+                    }
+                  }
+                ],
+                "accept": "6 orders"
+              },
+              "feedback": {
+                "correct": "Little’s law: $L = \\lambda W = 150{,}000 \\times 0.00004$.",
+                "generic": "Multiply the arrival rate by the time each order stays.",
+                "byKey": {
+                  "ms": "You read 40 µs as 40 ms.",
+                  "divided": "You divided the rate by 40 instead of multiplying by 40 µs."
+                }
+              },
+              "explain": {
+                "text": "Little’s law gives $L = \\lambda W = 150{,}000 \\times 40 \\times 10^{-6} = 6$. A replay of arrivals every $1/150{,}000$ s, each staying 40 µs, has exactly 6 inside at any moment."
+              }
+            },
+            {
+              "question": "A ring buffer in front of the gateway should hold four times that average. It needs a power-of-two size for a fast index mask. What size do you choose?",
+              "widget": {
+                "kind": "numeric",
+                "answer": 32,
+                "tol": {
+                  "abs": 0
+                },
+                "placeholder": "slots",
+                "label": "Your answer",
+                "wrong": [
+                  {
+                    "id": "not-power",
+                    "value": 24,
+                    "tol": {
+                      "abs": 0
+                    }
+                  },
+                  {
+                    "id": "rounded-down",
+                    "value": 16,
+                    "tol": {
+                      "abs": 0
+                    }
+                  }
+                ],
+                "accept": "32 slots"
+              },
+              "feedback": {
+                "correct": "$4 \\times 6 = 24$, rounded up to 32.",
+                "generic": "Find four times the average, then the next power of two.",
+                "byKey": {
+                  "not-power": "You stopped at 24, which is not a power of two.",
+                  "rounded-down": "You rounded down, so the buffer holds less than four times the average."
+                }
+              },
+              "explain": {
+                "text": "Four times 6 is 24, and the next power of two is 32. Then the index is `i & 31` rather than a division."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "paper",
+      "id": "design",
+      "name": "System design",
+      "minutes": 45,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.5,
+      "items": [
+        {
+          "id": "g1-risk-gateway",
+          "difficulty": 5,
+          "skills": [
+            "sy-latency",
+            "sy-concurrency",
+            "ci-design"
+          ],
+          "tags": [
+            "risk-gateway-design"
+          ],
+          "pace": 1800,
+          "title": "Design a pre-trade risk check",
+          "kind": "longform",
+          "prompt": "Say it out loud before you type. Keep the written version to 350 words.\n\nDesign the pre-trade risk check between a firm’s strategies and one exchange. It checks every order against position, order-rate and price-band limits. Peak load is 200,000 orders a second. The check may add at most 5 µs at the 99th percentile. Say how you would build it, then how you would test it.",
+          "model": "*An example answer. Your own words are the real answer.*\n\nFirst the budget. At 200,000 orders a second, one arrives every 5 µs. So the check should take about 1 µs, or a queue builds and the tail grows.\n\nThe hot path is one thread pinned to a core. It reads orders from a lock-free queue, with no locks and no allocation. All state is preallocated: flat arrays indexed by a symbol id, sized at start-up.\n\nThree checks run in order. Position: the current position plus open orders plus this order, against the limit. Rate: a token bucket per strategy. Price band: the price within a set distance of a reference price.\n\nLimits change rarely. A control thread builds a new limits table and swaps a pointer to it atomically. The hot path never waits for it.\n\nIf the gateway cannot check an order, it rejects it. A kill switch blocks everything at once.\n\nTo test it, I replay a recorded day and compare every decision with a slow reference checker. I add edge cases, such as a fill that crosses a limit. I measure latency from each order’s arrival, as a histogram, so a stall is not hidden. The build fails if the 99th percentile passes 5 µs.",
+          "rubric": [
+            {
+              "points": 1,
+              "text": "Turns the load into a budget: one order every 5 µs"
+            },
+            {
+              "points": 2,
+              "text": "One pinned thread on the hot path, fed by a lock-free queue"
+            },
+            {
+              "points": 2,
+              "text": "Preallocated flat state and no allocation on the hot path"
+            },
+            {
+              "points": 2,
+              "text": "States the three checks correctly, with open orders in the position check"
+            },
+            {
+              "points": 1,
+              "text": "Updates limits without blocking the hot path"
+            },
+            {
+              "points": 1,
+              "text": "Fails closed, with a kill switch"
+            },
+            {
+              "points": 1,
+              "text": "Tests by replay against a reference, with a latency gate from arrival times"
+            }
+          ]
+        },
+        {
+          "id": "g2-tail-regression",
+          "difficulty": 4,
+          "skills": [
+            "sy-latency",
+            "sy-os"
+          ],
+          "tags": [
+            "tail-latency-regression"
+          ],
+          "pace": 900,
+          "title": "The tail got worse",
+          "kind": "longform",
+          "prompt": "Say it out loud before you type. Keep the written version to 250 words.\n\nAfter a release, a feed handler’s 99th percentile latency rose from 8 µs to 30 µs. Its median did not move. Talk through how you find the cause.",
+          "model": "*An example answer. Your own words are the real answer.*\n\nA flat median with a worse tail means most messages are fine. Something rare is slow.\n\nRare slow events are usually a heap allocation, a page fault, a lock or a log write. A code path for rare messages is another.\n\nI would reproduce it first. I replay a recorded feed into the old and new builds, on the same machine. I check how latency is measured, so a stall is not hidden by measuring only from when work starts.\n\nThen I bisect the release diff with that replay until one change moves the 99th percentile.\n\nInside the slow messages I time each stage. I count page faults and context switches, and use `perf` for cache misses.\n\nOnce it is fixed, the replay joins the build with a 99th percentile limit. Then it cannot return quietly.",
+          "rubric": [
+            {
+              "points": 2,
+              "text": "Reads a flat median and a worse tail as a rare slow event"
+            },
+            {
+              "points": 2,
+              "text": "Names at least three plausible causes, such as allocation, page faults, locks or logging"
+            },
+            {
+              "points": 2,
+              "text": "Reproduces with a recorded feed on both builds, on the same machine"
+            },
+            {
+              "points": 1,
+              "text": "Bisects the release diff"
+            },
+            {
+              "points": 2,
+              "text": "Times each stage and counts faults, switches or cache misses for the slow messages"
+            },
+            {
+              "points": 1,
+              "text": "Adds a latency gate so it cannot return quietly"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "paper",
+      "id": "fit",
+      "name": "Fit and motivation",
+      "minutes": 15,
+      "scoring": {
+        "right": 1,
+        "wrong": 0,
+        "blank": 0
+      },
+      "pass": 0.5,
+      "items": [
+        {
+          "id": "f1-why-trading-systems",
+          "difficulty": 3,
+          "skills": [
+            "rk-behave"
+          ],
+          "tags": [
+            "why-trading-systems"
+          ],
+          "pace": 450,
+          "title": "Why trading systems",
+          "kind": "longform",
+          "prompt": "Say it out loud before you type. Keep the written version to 200 words.\n\nWhat makes you want to build trading systems, rather than software somewhere else?",
+          "model": "*An example answer. Your own words are the real answer.*\n\nI like code where speed and correctness are both measured, every day.\n\nTwo things draw me. In trading a microsecond or a wrong fill has a price, so the work matters at once. And the problems are concrete: queues, caches and protocols, not only features.\n\nI tested this. I wrote a feed parser for a public data set. I cut its 99th percentile from 40 to 9 µs. Finding that one allocation taught me more than the course did.\n\nThe hard part is the care a live system needs. I handle it with small changes and tests that replay real data.\n\nA trading firm puts developers next to the people using the code, and I want that feedback.",
+          "rubric": [
+            {
+              "points": 1,
+              "text": "Gives a one-sentence answer first"
+            },
+            {
+              "points": 2,
+              "text": "Two reasons tied to the daily work, such as measured speed and concrete problems"
+            },
+            {
+              "points": 3,
+              "text": "One piece of their own evidence with a number or an outcome"
+            },
+            {
+              "points": 2,
+              "text": "Names something hard about the work and how they handle it"
+            },
+            {
+              "points": 1,
+              "text": "Says why a trading firm rather than elsewhere"
+            },
+            {
+              "points": 1,
+              "text": "About 90 seconds, with no stock phrases"
+            }
+          ]
+        },
+        {
+          "id": "f2-review-disagreement",
+          "difficulty": 3,
+          "skills": [
+            "rk-behave"
+          ],
+          "tags": [
+            "review-disagreement"
+          ],
+          "pace": 450,
+          "title": "A review that disagreed",
+          "kind": "longform",
+          "prompt": "Say it out loud before you type. Keep the written version to 200 words.\n\nTell me about a code review where you and the other person disagreed. What happened, and what did you learn?",
+          "model": "*An example answer. Your own words are the real answer.*\n\nOn a team project I wrote a cache for price lookups. A reviewer said it would serve stale prices after a restart.\n\nI disagreed at first, because my tests passed. I asked for a case that failed, and he described one.\n\nWe wrote that case as a test, and it failed. So he was right, and my tests had missed it.\n\nI fixed it by clearing the cache on start-up. We added the test to the suite.\n\nI learned to ask for a failing case early, rather than argue in comments. Now I do that when I review too.",
+          "rubric": [
+            {
+              "points": 1,
+              "text": "Sets the scene in one or two sentences"
+            },
+            {
+              "points": 2,
+              "text": "States the disagreement and both positions fairly"
+            },
+            {
+              "points": 2,
+              "text": "Settles it with evidence, such as a test, rather than by rank"
+            },
+            {
+              "points": 2,
+              "text": "Gives the outcome honestly, even if they were wrong"
+            },
+            {
+              "points": 2,
+              "text": "Names what they do differently now"
+            },
+            {
+              "points": 1,
+              "text": "Speaks in the first person, under two minutes"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "check",
+      "id": "talked-aloud",
+      "name": "I talked through both coding rounds aloud as I typed",
+      "detail": "Tick this only if you spoke at every step, as a live round needs."
+    },
+    {
+      "kind": "check",
+      "id": "no-lookup",
+      "name": "I used no search engine, notes or AI help",
+      "detail": "Tick this only if you sat all six papers without them."
+    }
+  ]
+}
