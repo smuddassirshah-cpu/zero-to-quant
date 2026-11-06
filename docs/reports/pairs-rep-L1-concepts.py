@@ -236,13 +236,29 @@ by_panel_d = (res_close - res_mid).reshape(150, 40).mean(1)
 se_mid = by_panel_mid.std(ddof=1) / math.sqrt(150)
 se_d = by_panel_d.std(ddof=1) / math.sqrt(150)
 print(f"random pairs on mids: mean {res_mid.mean():.4f} (se {se_mid:.4f}); closes - mids {by_panel_d.mean():.4f} (se {se_d:.4f})")
-# EXPECTED_FAIL: the course claims random pairs lose on average. The simulation gives a mean within 2.5 se of 0
-# and above the course's -0.0113 by many se. Corrected assert, ready to enable once the explain is reworded:
-#   check(abs(res_mid.mean()) < 2.5 * se_mid, "l5 screens[6]: random pairs on mids earn about 0 in expectation")
-check(res_mid.mean() < -2.5 * se_mid,
-      "EXPECTED_FAIL l5 screens[6].explain: 'random pairs lose a little because a pair that never reconverges is closed "
-      "at a loss': on fresh panels random pairs on mids earn about 0 in expectation; -1.13% is one cycle's noise "
-      "(ledger l5 screens[6].explain)")
+# Corrected claim (fix pass): the explain now says the 200-seed means are one cycle's draw on one panel and that
+# on fresh panels random pairs average within noise of 0. Fix-pass computation: pairs drawn from all 100 shares
+# (planted shares included, planted pairs excluded), default generator, one formation year and half a trading year.
+fx = []
+for seed in range(60):
+    c3, m3, _, _ = pairs_panel(seed=3000 + seed, days=378, break_day=300)
+    r3 = np.random.default_rng(seed + 1)
+    P3 = normalise(m3)
+    pp = []
+    while len(pp) < 40:
+        i, j = sorted(int(x) for x in r3.choice(100, 2, replace=False))
+        if j == i + 1 and i % 2 == 0 and i < 40:
+            continue
+        pp.append(trade_pair(P3[:252], P3[252:], i, j)[0])
+    fx.append(np.mean(pp))
+fx = np.array(fx); se_fx = fx.std(ddof=1) / math.sqrt(len(fx))
+print(f"fix pass: random pairs on mids over 60 fresh panels: mean {fx.mean():.4f} (se {se_fx:.4f})")
+_l5 = __import__("json").load(open(__import__("os").path.join(__import__("os").path.dirname(__import__("os").path.abspath(__file__)),
+      "..", "..", "app", "content", "courses", "pairs-rep", "l5-plan.json"), encoding="utf-8"))["screens"][6]["explain"]["text"]
+check(abs(res_mid.mean()) < 2.5 * se_mid and abs(fx.mean()) < 2.5 * se_fx and res_mid.mean() > -0.0113 + 2.5 * se_mid
+      and "lose a little" not in _l5 and "within noise of 0" in _l5,
+      "l5 screens[6].explain: random pairs on mids earn about 0 in expectation; -1.13% is one cycle's draw on one panel "
+      "(ledger l5 screens[6].explain) (corrected claim, fix pass)")
 check(by_panel_d.mean() > 2.5 * se_d,
       "l5 screens[7], homework-1 items[6]: the bounce lifts random pairs' same-day payoff on closes above mids (ledger l5 screens[7].explain)")
 # placebo: random pairs earn far less than planted pairs in the same cycle (the control-group reading)
