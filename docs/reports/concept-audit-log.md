@@ -18,3 +18,4 @@
 | puzzles | L4 to L5 | 2 | 0 | 3 | 0 | 3 | 9 (all fixed before round 2) | 0 | yes (round 2: 0 new wrong; fix pass 3 fixed, 0 disputed; gates green; course fully closed) |
 | systems | L4 | 2 | 0 | 7 | 1 | 7 | 10 (all fixed before round 2) | 1 | yes (round 2: 0 new wrong; fix pass 8 fixed, 0 disputed; q17-rank now names nearest rank, key unchanged; gates green; course fully closed) |
 | ito | L1 to L3 | 1 | 1 | 5 | 1 | 7 | 14 (all fixed before the audit) | 0 | yes (1 wrong is within the rule; fix pass 7 fixed, 0 disputed; gates green; L4 not yet audited) |
+| measure-prob | L1 to L3 | 1 | 0 | 4 | 0 | 3 | 18 (all fixed before the audit) | 1 | pending fix pass |
