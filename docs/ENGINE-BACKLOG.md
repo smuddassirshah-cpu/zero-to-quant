@@ -1589,3 +1589,12 @@ Status block (engine pass, session T, item 583):
 
 Status block (engine pass, item 584):
 - 584: done (warning only; validator 0 errors; both table tests pass).
+
+585. Done [Must]: `validate.mjs` warns `[shuffled-position]` when a `choice` or `multi` with `shuffle: true` has `explain`, an option `why`, a hint or a `feedback` line that names an option by place ("second option", "first answer", "top one", "the one above", "option B", "(c)"). Bare "the first" is not matched: it usually means the stem, and the first draft gave about 90 false hits. Covers lessons, reviews, homework, exams and bank through `checkItem`, parts and lesson screens (drills have no choice widgets). Test: `tools/test-validate-shuffled-position.mjs`. 14 hits, listed in `docs/reports/scan-positional-options.md`.
+586. Done [Should]: `validate.mjs` warns `[key-length]` for a `choice` key of 12 or more characters and over 1.5 times every distractor. 1,658 hits at the time, so the threshold needs a decision before a content pass.
+587. Done [Should]: `validate.mjs` warns `[multi-keys-uniform]` for an exam with four or more `multi` items that all have the same key count. 0 hits at the time. Tested with 585.
+
+Status block (engine pass, items 585 to 587):
+- 585: done (warning only; validator 0 errors; test passes).
+- 586: done (warning only).
+- 587: done (warning only).
