@@ -88,6 +88,7 @@ H1_SMALL = [
     (2, [[0, 3], [1, 3], [2, 3], [3, 3], [4, 3]]),
     (4, [[0, 1], [10, 1], [20, 1]]),
     (3, [[0, 100], [1, 1], [2, 1], [3, 1], [50, 100], [60, 5]]),
+    (2, [[0, 4], [1, 3], [2, 1]]),                      # two workers free together: the waiting job takes the lower number
 ]
 H1_EXAMPLES = [(2, [[0, 10], [1, 2], [2, 5]]), (2, [[0, 5], [1, 2], [5, 1]])]
 H1_BIG = [
@@ -182,7 +183,7 @@ def h2_big_links(seed, mod_cost):
 
 
 H2_BIG = [
-    ('L = [[i, i + 1, 5] for i in range(19999)]', 'cheapest_with_voucher(20000, L)', lambda: [[i, i + 1, 5] for i in range(19999)]),
+    ('L = [[i, i + 1, 5] for i in range(19998, -1, -1)]', 'cheapest_with_voucher(20000, L)', lambda: [[i, i + 1, 5] for i in range(19998, -1, -1)]),
     ('from itertools import accumulate; ' + py_lcg(11, 300000) + '; L = [[(X[3 * i] >> 40) % 20000, (X[3 * i + 1] >> 40) % 20000, (X[3 * i + 2] >> 40) % 1000] for i in range(100000)]',
      'cheapest_with_voucher(20000, L)', lambda: h2_big_links(11, 1000)),
     ('from itertools import accumulate; ' + py_lcg(13, 300000) + '; L = [[(X[3 * i] >> 40) % 20000, (X[3 * i + 1] >> 40) % 20000, (X[3 * i + 2] >> 40) % 40] for i in range(100000)]',
@@ -340,7 +341,7 @@ items = [
      'title': 'Jobs on numbered workers',
      'question': '`k` workers are numbered 0 to `k - 1`. `jobs[i] = [arrive, length]`, and no two jobs arrive at the same time. '
                  'Jobs are handled in order of arrival, though the list may come in any order. A job takes the free worker with '
-                 'the lowest number. If none is free, it waits for the worker that frees first (the lower number on a tie). '
+                 'the lowest number. If none is free, it waits in line for the next worker to come free. On a tie it takes the lower number. '
                  'It then starts and runs for its full length. A worker that frees at time `t` can take a job that arrives at `t`. '
                  'Write `busiest_worker(k, jobs)`, which returns `[busiest, last_end]`. `busiest` is the worker that ran the '
                  'most jobs, the lowest number on a tie. `last_end` is the time the last job ends. With no jobs it returns '
@@ -356,10 +357,10 @@ items = [
                          'Each job then costs $O(\\log k)$, where a scan of all workers costs $O(k)$ and stops on the large tests.'}},
     {'id': 'h2-voucher-route', 'difficulty': 4, 'skills': ['gd-paths', 'ci-timed'], 'tags': ['voucher-route', 'state-graph'], 'pace': 1800,
      'title': 'The cheapest route with one free link',
-     'question': 'Sites are numbered 0 to `n - 1`. `links[i] = [u, v, cost]` is a one-way link from site `u` to site `v`, and '
-                 '`cost` is a whole number, 0 or more. You hold one voucher, which makes one link of your route free. Write '
+     'question': 'Sites are numbered 0 to `n - 1`. `links[i] = [u, v, cost]` is a one-way link from site `u` to site `v`. '
+                 'Each `cost` is a whole number, 0 or more. You hold one voucher, which makes one link of your route free. Write '
                  '`cheapest_with_voucher(n, links)`. It returns the least total cost from site 0 to site `n - 1`, or -1 if '
-                 'that site cannot be reached. There may be 20,000 sites and 100,000 links.',
+                 'no route exists. There may be 20,000 sites and 100,000 links.',
      'widget': {'kind': 'code', 'language': 'python', 'starter': H2_START, 'examples': ex2, 'tests': t2,
                 'how': f'There are {len(t2)} hidden tests. Each answer must equal the expected value. '
                        'The last three use 20,000 sites. One small test fails a voucher spent on the cheapest plain route.',
@@ -381,7 +382,7 @@ items = [
                 'solution': H3_SOL},
      'feedback': {'correct': 'All the tests pass, including 200,000 days with a cap of 100.',
                   'generic': 'A hidden test failed. Check the cap, ending with no shares, and a total that passes 2,147,483,647.'},
-     'explain': {'text': 'Keep the best cash for each number of shares held, from 0 to `cap`, and update it once a day. '
+     'explain': {'text': 'Keep the best cash for each holding from 0 to `cap`, and update it once a day. '
                          'Holding $h$ comes from holding $h$, from $h - 1$ and a buy, or from $h + 1$ and a sale. '
                          'That is $O(n \\cdot \\text{cap})$ work, and the totals need a `long long`.'}},
 ]
@@ -390,14 +391,16 @@ exam = {
     'id': 'mock-oa-code-hard',
     'name': 'Harder coding assessment',
     'style': 'developer',
-    'models': 'Reported, as of Nov 2026: harder developer coding tests, as at Hudson River Trading and Citadel. Three problems in 90 minutes, one in C++.',
-    'description': 'This is a harder coding assessment for developer roles, in a format candidates reported by Nov 2026. '
+    'models': 'Reported, as of Nov 2026: developer coding tests at Hudson River Trading and Citadel. Three or four problems in 70 to 150 minutes, some in C++ only.',
+    'description': 'This is a harder coding assessment for developer roles, modelled on reported tests. '
                    'You have three problems in 90 minutes. '
                    'The first two are in Python and the third is in C++, as some reported tests are C++ only. '
                    'Hidden tests include large inputs, so a slow answer fails them. '
                    'A problem scores only when all its hidden tests pass. '
-                   'You pass the paper with two problems of the three. '
+                   'You pass the paper only with all three problems, so the C++ problem counts. '
+                   'The 90 minutes and the mix of languages are this mock\'s own design. '
                    'Reports differ: three or four problems, in 70 to 150 minutes. '
+                   'The pass line is illustrative, as firms do not publish cut-offs. '
                    'Read all three statements first, then start with the one you can finish. '
                    'Use no search engine and no notes.',
     'requires': ['coding-int/L4', 'graphs-dp/L4', 'cpp/L4'],
@@ -405,7 +408,7 @@ exam = {
                'gd-dp': 'Dynamic programming', 'cp-stl': 'The standard library', 'ci-timed': 'Solving under time'},
     'parts': [
         {'kind': 'paper', 'id': 'code', 'name': 'Three problems in ninety minutes', 'minutes': 90,
-         'scoring': {'right': 1, 'wrong': 0, 'blank': 0}, 'pass': 0.6, 'items': items},
+         'scoring': {'right': 1, 'wrong': 0, 'blank': 0}, 'pass': 1, 'items': items},
         {'kind': 'check', 'id': 'read-all', 'name': 'I read all three statements before I wrote any code',
          'detail': 'Tick this only if you chose your order of work before you started.'},
         {'kind': 'check', 'id': 'no-lookup', 'name': 'I used no search engine and no notes',

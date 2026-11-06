@@ -2,8 +2,8 @@
  "id": "mock-oa-code-hard",
  "name": "Harder coding assessment",
  "style": "developer",
- "models": "Reported, as of Nov 2026: harder developer coding tests, as at Hudson River Trading and Citadel. Three problems in 90 minutes, one in C++.",
- "description": "This is a harder coding assessment for developer roles, in a format candidates reported by Nov 2026. You have three problems in 90 minutes. The first two are in Python and the third is in C++, as some reported tests are C++ only. Hidden tests include large inputs, so a slow answer fails them. A problem scores only when all its hidden tests pass. You pass the paper with two problems of the three. Reports differ: three or four problems, in 70 to 150 minutes. Read all three statements first, then start with the one you can finish. Use no search engine and no notes.",
+ "models": "Reported, as of Nov 2026: developer coding tests at Hudson River Trading and Citadel. Three or four problems in 70 to 150 minutes, some in C++ only.",
+ "description": "This is a harder coding assessment for developer roles, modelled on reported tests. You have three problems in 90 minutes. The first two are in Python and the third is in C++, as some reported tests are C++ only. Hidden tests include large inputs, so a slow answer fails them. A problem scores only when all its hidden tests pass. You pass the paper only with all three problems, so the C++ problem counts. The 90 minutes and the mix of languages are this mock's own design. Reports differ: three or four problems, in 70 to 150 minutes. The pass line is illustrative, as firms do not publish cut-offs. Read all three statements first, then start with the one you can finish. Use no search engine and no notes.",
  "requires": [
   "coding-int/L4",
   "graphs-dp/L4",
@@ -28,7 +28,7 @@
     "wrong": 0,
     "blank": 0
    },
-   "pass": 0.6,
+   "pass": 1,
    "items": [
     {
      "id": "h1-busiest-worker",
@@ -43,7 +43,7 @@
      ],
      "pace": 1500,
      "title": "Jobs on numbered workers",
-     "question": "`k` workers are numbered 0 to `k - 1`. `jobs[i] = [arrive, length]`, and no two jobs arrive at the same time. Jobs are handled in order of arrival, though the list may come in any order. A job takes the free worker with the lowest number. If none is free, it waits for the worker that frees first (the lower number on a tie). It then starts and runs for its full length. A worker that frees at time `t` can take a job that arrives at `t`. Write `busiest_worker(k, jobs)`, which returns `[busiest, last_end]`. `busiest` is the worker that ran the most jobs, the lowest number on a tie. `last_end` is the time the last job ends. With no jobs it returns `[0, 0]`. There may be 2,000 workers and 100,000 jobs.",
+     "question": "`k` workers are numbered 0 to `k - 1`. `jobs[i] = [arrive, length]`, and no two jobs arrive at the same time. Jobs are handled in order of arrival, though the list may come in any order. A job takes the free worker with the lowest number. If none is free, it waits in line for the next worker to come free. On a tie it takes the lower number. It then starts and runs for its full length. A worker that frees at time `t` can take a job that arrives at `t`. Write `busiest_worker(k, jobs)`, which returns `[busiest, last_end]`. `busiest` is the worker that ran the most jobs, the lowest number on a tie. `last_end` is the time the last job ends. With no jobs it returns `[0, 0]`. There may be 2,000 workers and 100,000 jobs.",
      "widget": {
       "kind": "code",
       "language": "python",
@@ -107,6 +107,11 @@
         "compare": "equal"
        },
        {
+        "call": "list(busiest_worker(2, [[0, 4], [1, 3], [2, 1]]))",
+        "expect": "[0, 5]",
+        "compare": "equal"
+       },
+       {
         "setup": "from itertools import accumulate; X = list(accumulate(range(100000), lambda x, _: (x * 6364136223846793005 + 1442695040888963407) % 2**64, initial=7))[1:]; J = [[3 * i, 1 + (X[i] >> 40) % 9000] for i in range(100000)][::-1]",
         "call": "list(busiest_worker(2000, J))",
         "expect": "[182, 308657]",
@@ -128,7 +133,7 @@
         "budget": 4000
        }
       ],
-      "how": "There are 12 hidden tests. Each answer must equal the expected value. The last three use 100,000 jobs, two of them with 2,000 workers.",
+      "how": "There are 13 hidden tests. Each answer must equal the expected value. The last three use 100,000 jobs, two of them with 2,000 workers.",
       "solution": "import heapq\n\ndef busiest_worker(k, jobs):\n    free = list(range(k))\n    busy = []\n    count = [0] * k\n    last = 0\n    for arrive, length in sorted(jobs):\n        while busy and busy[0][0] <= arrive:\n            heapq.heappush(free, heapq.heappop(busy)[1])\n        if free:\n            w, start = heapq.heappop(free), arrive\n        else:\n            start, w = heapq.heappop(busy)\n        end = start + length\n        heapq.heappush(busy, (end, w))\n        count[w] += 1\n        last = max(last, end)\n    if not jobs:\n        return [0, 0]\n    best = min(range(k), key=lambda w: (-count[w], w))\n    return [best, last]\n"
      },
      "feedback": {
@@ -152,7 +157,7 @@
      ],
      "pace": 1800,
      "title": "The cheapest route with one free link",
-     "question": "Sites are numbered 0 to `n - 1`. `links[i] = [u, v, cost]` is a one-way link from site `u` to site `v`, and `cost` is a whole number, 0 or more. You hold one voucher, which makes one link of your route free. Write `cheapest_with_voucher(n, links)`. It returns the least total cost from site 0 to site `n - 1`, or -1 if that site cannot be reached. There may be 20,000 sites and 100,000 links.",
+     "question": "Sites are numbered 0 to `n - 1`. `links[i] = [u, v, cost]` is a one-way link from site `u` to site `v`. Each `cost` is a whole number, 0 or more. You hold one voucher, which makes one link of your route free. Write `cheapest_with_voucher(n, links)`. It returns the least total cost from site 0 to site `n - 1`, or -1 if no route exists. There may be 20,000 sites and 100,000 links.",
      "widget": {
       "kind": "code",
       "language": "python",
@@ -216,7 +221,7 @@
         "compare": "equal"
        },
        {
-        "setup": "L = [[i, i + 1, 5] for i in range(19999)]",
+        "setup": "L = [[i, i + 1, 5] for i in range(19998, -1, -1)]",
         "call": "cheapest_with_voucher(20000, L)",
         "expect": "99990",
         "compare": "equal",
@@ -357,7 +362,7 @@
       "generic": "A hidden test failed. Check the cap, ending with no shares, and a total that passes 2,147,483,647."
      },
      "explain": {
-      "text": "Keep the best cash for each number of shares held, from 0 to `cap`, and update it once a day. Holding $h$ comes from holding $h$, from $h - 1$ and a buy, or from $h + 1$ and a sale. That is $O(n \\cdot \\text{cap})$ work, and the totals need a `long long`."
+      "text": "Keep the best cash for each holding from 0 to `cap`, and update it once a day. Holding $h$ comes from holding $h$, from $h - 1$ and a buy, or from $h + 1$ and a sale. That is $O(n \\cdot \\text{cap})$ work, and the totals need a `long long`."
      }
     }
    ]

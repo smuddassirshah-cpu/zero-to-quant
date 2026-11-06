@@ -40,3 +40,11 @@ The `## mock-oa-strats` section matches its sources. `interview-gaps.md` gives t
 - The engine shows the checks after the papers; `no-calculator` covers only the maths paper, which the label says.
 
 Counts: wrong 0, misleading 0, coverage 0, design 3, voice 0, layout 0 (layout not checked: no screenshots taken; the report's 1280 and 440 px screenshots were not reread).
+
+## Fix pass
+
+- 1 fixed. `c2-fewest-days` replaced by `c2-longest-within`, `longest_within(volumes, limit)`: the most neighbouring days with a sum of at most `limit`, 0 when every day is over. Twelve tests (9 small, 3 large), keys as the reviewer gave them, each recomputed by a window, by prefix sums with `bisect` and by an all-runs brute force: 3, 0, 1, 0, 3, 2, 3, 2, 3, then 150,000, 99 and 199,999. Planted wrong versions ("less than", shortest in place of longest, days under the limit, no window moves left) each fail at least one test; the starter fails 10 of 12. Title, tag, question, feedback, explanation and brief row renamed; the brief's "catches" sentence rewritten.
+- 2 fixed. `parts[0].pass` is now 1 (both problems), so the difficulty-2 item alone cannot pass the code paper. The description says the line is illustrative. The pace sum stays 1,680 s of 1,800 s. Brief parts table updated; the check script asserts it.
+- 3 fixed. `requires` is `["ds/L2", "eigen/L2"]`; the brief's `requires` line and "cited" sentence updated; the check script asserts it.
+
+Gates: validator 0 errors, no line names `mock-oa-strats`; voice scan on the learner strings 0 sentences of 20 words or more and 0 dashes or exclamation marks (one 20-word explanation sentence was shortened); `mock-oa-strats_build.py` ALL AGREE and `_check.py` 193 of 193, exit 0; `fresh-check --exam mock-oa-strats --min-run 10` 0 hits; playthrough green with and without `--mobile` (10 of 10, passed); `readiness-sums.mjs` OK.

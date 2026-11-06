@@ -228,9 +228,11 @@ WRONG = {
         'zero kept': 'def net_positions(fills):\n    net = {}\n    for f in fills:\n        a, s, q = f.split()\n        net[a] = net.get(a, 0) + (int(q) if s == "B" else -int(q))\n    return [[a, n] for a, n in sorted(net.items())]\n',
         'unsorted': 'def net_positions(fills):\n    net = {}\n    for f in fills:\n        a, s, q = f.split()\n        net[a] = net.get(a, 0) + (int(q) if s == "B" else -int(q))\n    return [[a, n] for a, n in net.items() if n != 0]\n',
     },
-    'c2-fewest-days': {
-        'more than': 'def fewest_days(volumes, target):\n    best = len(volumes) + 1\n    left, total = 0, 0\n    for right, v in enumerate(volumes):\n        total += v\n        while total > target:\n            best = min(best, right - left + 1)\n            total -= volumes[left]\n            left += 1\n    return best if best <= len(volumes) else 0\n',
-        'no-block as n+1': 'def fewest_days(volumes, target):\n    best = len(volumes) + 1\n    left, total = 0, 0\n    for right, v in enumerate(volumes):\n        total += v\n        while total >= target:\n            best = min(best, right - left + 1)\n            total -= volumes[left]\n            left += 1\n    return best\n',
+    'c2-longest-within': {
+        'less than': 'def longest_within(volumes, limit):\n    best, left, total = 0, 0, 0\n    for right, v in enumerate(volumes):\n        total += v\n        while total >= limit:\n            total -= volumes[left]\n            left += 1\n        best = max(best, right - left + 1)\n    return best\n',
+        'shortest, not longest': 'def longest_within(volumes, limit):\n    best, left, total = len(volumes) + 1, 0, 0\n    for right, v in enumerate(volumes):\n        total += v\n        while total > limit:\n            total -= volumes[left]\n            left += 1\n        if right >= left:\n            best = min(best, right - left + 1)\n    return best if best <= len(volumes) else 0\n',
+        'days under the limit': 'def longest_within(volumes, limit):\n    return sum(1 for v in volumes if v <= limit)\n',
+        'window never moves left': 'def longest_within(volumes, limit):\n    total = 0\n    for k, v in enumerate(volumes):\n        total += v\n        if total > limit:\n            return k\n    return len(volumes)\n',
     },
 }
 
@@ -245,17 +247,16 @@ def brute_c1(fills):
     return out
 
 
-def brute_c2(vols, target):
+def brute_c2(vols, limit):
     best = 0
     for i in range(len(vols)):
         for j in range(i, len(vols)):
-            if sum(vols[i:j + 1]) >= target:
-                best = j - i + 1 if best == 0 else min(best, j - i + 1)
-                break
+            if sum(vols[i:j + 1]) <= limit:
+                best = max(best, j - i + 1)
     return best
 
 
-for iid, brute in (('c1-net-positions', brute_c1), ('c2-fewest-days', brute_c2)):
+for iid, brute in (('c1-net-positions', brute_c1), ('c2-longest-within', brute_c2)):
     w = items[iid]['widget']
     rec(w['language'] == 'python' and 3 <= len(w['tests']) <= 15, f'{iid}: Python, {len(w["tests"])} tests')
     rec(f'There are {len(w["tests"])} hidden tests.' in w['how'], f'{iid}: how line counts the tests')
@@ -276,7 +277,7 @@ for iid, brute in (('c1-net-positions', brute_c1), ('c2-fewest-days', brute_c2))
         fails = sum(1 for case in w['tests'] if not run_code(src, case)[0])
         rec(fails >= 1, f'{iid}: wrong version "{name}" fails {fails}')
 allow('c1-net-positions', 300, 100000, 7, 0)
-allow('c2-fewest-days', 200000)
+allow('c2-longest-within', 200000)
 
 # ---------------------------------------------------------------- every number in every learner-visible string
 SKIP = {'starter', 'solution', 'tests', 'examples', 'id', 'tags', 'skills', 'pace', 'difficulty', 'label', 'layout', 'kind', 'language'}
@@ -326,6 +327,9 @@ rec(doc['parts'][0]['minutes'] == 30 and doc['parts'][1]['minutes'] == 22, 'pape
 rec(len(doc['parts'][1]['items']) == 8 and len(doc['parts'][0]['items']) == 2, '8 maths and 2 code items')
 rec(sum(i['pace'] for i in doc['parts'][0]['items']) <= 1800 and sum(i['pace'] for i in doc['parts'][1]['items']) <= 1320, 'pace within each paper')
 rec(len(doc['models']) <= 200 and 'Reported, as of Nov 2026' in doc['models'], 'models: reported, Nov 2026, under 200 characters')
+
+rec(doc['parts'][0]['pass'] == 1, 'code paper: pass 1 (both problems), so the difficulty-2 item alone cannot pass it')
+rec(doc.get('requires') == ['ds/L2', 'eigen/L2'], 'requires: ds/L2 and eigen/L2')
 
 ex.check_wrongs()
 ex.report()
