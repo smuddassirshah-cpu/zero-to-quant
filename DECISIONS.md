@@ -163,3 +163,12 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 ### Completion scope and capstone projects (6 Nov, user)
 - The pilot (PLAN 2c item 12) is post-completion: the app can be completed without it. The rule stands that no end-to-end effectiveness claim is made before a pilot report exists.
 - Capstone projects proposed by the main session from the user's repositories: trader `prosperity4-alpha`, developer `OptionsMM` (user's completed project; its `scripts/reproduce.sh` rebuilds from a clean clone), researcher `momentum-rep` (unchanged), strats `one-option-three-ways` and strats-deriv `bs-pde-pricer` (both to build). Records stay `external: false` until the user, as reviewer, fills reviewer, date, rerun and defence.
+
+### Session T operating decisions (6 Nov, main session)
+- Number checks read the lesson JSON: level scripts use `app/tools/numbers_lib.py` (`Level`, `expect`, `check_wrongs`); the validator warns on a level script with no `numbers_lib` import and `Level(` (ENGINE-BACKLOG 573, 579). Older scripts (odes L1 to L3, complex L1 and L2, numerics L1 to L3) still warn; they are not rewritten.
+- Rule 581 is an error: a `wrong[]` value inside, or whose tolerance reaches, the answer's band can never fire. The 14 existing hits were fixed this session before the flip.
+- A level review without `pass` is a validator error (574).
+- Fix agents start only after their review merges; worktrees left idle are cleaned and the agent loses its base.
+- When an author runs low on context it hands back finished levels; the main session starts a fresh author for the rest (convex L3, pairs-rep L3, vector-calc L3 this session).
+- Brief errors found by authors and confirmed by second readers are corrected in the lessons; a brief is edited only by a one-line note where a fix pass was asked to (momentum-rep cohorts, convex L4 KKT).
+- Voice-scan gates run on the whole course folder, not the level's files: three courses (momentum-rep L1, complex L1 and L2, analysis L1 to L4) carried 39 long sentences past earlier gates; all fixed this session.

@@ -180,3 +180,13 @@ Session S (5 to 6 Nov, PLAN 2c item 9 and the odes, numerics, complex wave):
 - The odes brief's claim that critical damping (b = 4) settles fastest is false: b = 3 enters a 5% band at 1.56 against 2.37 (2.8% overshoot); l9 says so, the brief is unchanged.
 - complex L2's `docs/briefs/complex.md` complex-step error figure was measured against a double; corrected to 4e-15 (all 16 figures).
 
+
+Session T (6 Nov, waves 1 to 3):
+- Git ref drift: the session opened detached at the origin tip 84a8143; the local `claude/amazing-wright-d4mx7i` ref points at 3bc7ee8, a stale pre-squash line (50 ahead, 77 behind, unrelated histories; origin holds all its files with newer content). Moving the ref was refused by the auto-mode classifier, so the session worked detached and pushed `HEAD:claude/amazing-wright-d4mx7i`. The local ref is left as it was; the next session can do the same, or the user can reset that ref.
+- Fixed: `validate.mjs` ended with `process.exit()`, truncating large piped stdout, so `merge-wave.sh` sometimes read no error count ("validator failed errors"). Now `process.exitCode`.
+- 577 (log ticks in `plane`): playthrough green; rendered labels not eyeballed.
+- odes L4 review is capped at 10 items by the brief; numerics L3 requires odes/L4, so a 12-item review would cut repeated test-outs (AUTHORING section 11). Open for the user.
+- convex l9 screens[6] (added in the fix pass) warns "a problem screen without a canvas before the ladder ends"; not fixed.
+- momentum-rep `nw_t_by_hand` starter passes the lag-0 test (fails the others); pairs-rep l2 and l5 starters pass one test by construction.
+- complex L3 brief: l9 table cells "graded as expression" cannot be built (cells are text with an accept list).
+- Deferred engine items: `scatter` drag points have no `lockX` (stat-models); `space` curves cannot show direction (vector-calc L3); `derive` captions lack `sci()` (second sighting, convex L4); 19 wrong-versus-wrong overlap warnings remain (rule 581 companion, warning only).
