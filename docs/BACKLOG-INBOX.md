@@ -1290,3 +1290,6 @@ Raised later (exam topic-3.1):
 Raised later (algebra level 3):
 - [Could] `complex-map` points: when several points share an image (z^4 on the 12th roots sends four points to each of three places), each image draws its own label and the last one wins, so the w-plane shows a misleading "f(9)" at 1. Wanted: images that coincide drawn once with a combined label or a count badge ("×4"). Workaround: `imageLabel: ""` on every point, with the counts asked in the widget (l10 screens 1 and 2).
 - [Could] `grid` `rowHeads` and `colHeads` are params, so a `frames` control or a patch cannot reorder a Cayley table (rows by the cosets of one subgroup, then another). Wanted: heads (and the cell array) patchable in state, so one explore screen can switch the ordering. Workaround: a second screen with its own grid (l11 screens 1 and 2).
+
+Raised later (algebra level 4):
+- [Should] `plane` functions: in l17 screen 8 two curves `{ "id": "g", "expr": "x^2 + 2x + 2", "labelSide": "below" }` and `{ "id": "h", "expr": "x^2 - 2x + 2", ... }` beside `f` were not drawn at all at 440 or 1280 px, and the validator said nothing. Renaming them `q1`, `q2`, writing `2*x` and dropping `labelSide` drew both; the cause was not isolated. Wanted: the curve drawn, or a validator error naming the reason. Workaround: the renamed entries.
