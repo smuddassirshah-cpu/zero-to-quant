@@ -28,8 +28,22 @@ Interpolation: the two-point formula and its derivation (equal slopes), holding 
 
 ## Overlap with the earlier reads
 
-Filled after the ledger and findings above were committed (step 7). See the table below.
+Read after the ledger and the findings above were committed: `docs/reviews/review-research-int.md` (second read of 6 Nov with its fix pass and the L4 recheck) and `docs/reviews/answers-2026-11-04-research-int-4.md` (answer check of 4 Nov with its fix pass). Conceptual findings only (meaning, method, convention, sign, reasoning); number-freshness, test-strength, voice and layout findings are left out of the count.
+
+| | count | findings |
+|---|---|---|
+| audit only | 9 | 1 to 9 above |
+| earlier reads only | 6 | answers 1 (q19-count slip values swapped against their feedback), 3 (l18 hint "rounding step of 128", true step 512), 11 (q18-cost `p` feedback gave no route to 5), 12 (l16 explain "sort-free bracket search ... needs sorted times"); review 23 (l19 zero-price slippage "about -10,000" holds for a buy only), 24 (l18 rolling beta "in percent" against a unitless slope) |
+| both | 0 | |
+
+Earlier conceptual findings I missed, one line each: none are in the content I read. All six were applied by their fix passes before this audit (checked in the files: the hint reads 512, the `keep` why reads "10,000 basis points in size", the `p` feedback reads "You divided $np^2$ by $np$", `noprice` is 875, the l16 explain reads "needs the times in increasing order", the beta screen has no "in percent"), so a blind read could not find them. Related but opposite: review finding 14 added the id-7 rows to the l19 tiny file to enforce "first copy kept, then dropped"; finding 6 above says that enforcement teaches the loss the lesson's trap forbids, so the two reads disagree on the convention rather than overlap. Miss rate of the single earlier read on what is in the content now: 9 of 9 conceptual findings here were not raised there; the earlier reads were number and test checks by design, and 6 of their conceptual catches are fixed.
 
 ## Checks
 
-Filled in the Checks section below.
+- `node tools/validate.mjs 2>&1 | tail -3` (from `app/`): `O2 warnings: O2-long-sentence 709, O2-long-explain 48, O2-unshuffled-numeric 73, O2-no-slip 46, O2-prose-prompt 8, O2-explain-answer 615` / blank / `0 errors, 4274 warnings`. `content/manifest.json` restored with `git checkout` afterwards (not committed).
+- `VOICE_BASE=app/content/courses/research-int/ python3 docs/reviews/voice-scan.py 35 --summary`: `# explanations over three sentences: 0` / `# sentences scanned: 10349; over 35 words: 0`.
+- Number scripts for this level under `docs/reports`: none exist (`research-int-1-perf-numbers.py` is level 1). The author's committed level-4 recompute scripts live in `docs/briefs/research-int-scripts/` and were run from a scratch copy with the shipped CSVs as `data/`: `l4_data_tasks.py` ALL AGREE exit 0, `l4_aux.py` ALL AGREE exit 0, `l4_boot.py` ALL AGREE exit 0, `l4_sm_test.py` exit 0 (20,000-row error 1.2e-8). `l4_refs.py` reads a hard-coded path of another worktree and was not run.
+- Concepts script: `python3 -I docs/reports/research-int-L4-concepts.py` from the repo root: 70 checks, 65 pass, 5 marked `EXPECTED_FAIL` (findings 1, 3, 4, 6, 7), exit 1 until those findings are fixed. Monte Carlo sizes: 200,000 replications for the slope standard error, 20,000 for the repeated-x guard, 2,000 random queries for the interpolator, 2,000 bootstrap draws as the lesson, five sizes for the loop-against-vectorised draw.
+- Code items (solution against its tests, then the starter): l16 transfer 11/11 and 1/11; l17 `slope_by_town` 6/6 and 0/6; l18 `OnlineLine` 8/8 and 0/8; l19 `load_clean` 8/8 and 0/8, `vwap_by_symbol` 4/4 and 0/4, `slippage_model` 4/4 and 0/4; l20 `make_report` 8/8 and 0/8; homework `h4-value-at` 8/8 and 0/8, `h4-town-slopes` 10/10 and 0/10, `h4-online-ols` 6/6 and 0/6, `h4-clean-orders` 8/8 and 1/8 (the one pass is the input-unchanged test). None teaches a scaler, median or model fitted on test rows; the leak-related habits found are findings 2, 7 and 8.
+- Playthrough (from `app/`, `--local-cdn` on the scratch `pkgs` folder): `--set research-int/review-4 --set research-int/homework-4` tail: `browser relaunches: 0` / `All passed.` / exit 0. `--lesson research-int/l16-interpolating --lesson research-int/l20-writing-a-take-home` tail: `browser relaunches: 0` / `All passed.` / exit 0. No content changed, so these only confirm the files play.
+- Inbox: no engine or validator limit was hit; nothing appended to `docs/BACKLOG-INBOX.md`.
