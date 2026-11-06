@@ -1342,3 +1342,8 @@ Raised later (exam 3.4):
 - [Could] `app/tools/numbers_lib.py` `normalise` joins cycle notation `$(1\,2\,3)$` into the number 123, so the every-number pass fails on permutations. Wanted: split digits at `\,` in `normalise` (or a documented option). Workaround: the exam script replaces `\,` between digits with a space before reading tokens.
 - [Could] Freshness: all six clashes found here were setups in prose (a formula, an interval, a cycle), not numeric keys, and two came from the analysis course, which shares metric spaces with topology. The shared `tools/fresh.mjs` asked for under exam 1.10 should also compare formula strings in item prose, and should read the courses that share a topic's skills, not only the topic's own courses.
 - [Could] Process: the scratchpad named in `docs/LEVEL-BRIEF.md` is shared by parallel agents, and a scratch patch file of this task (`patch2.py`) was overwritten mid-task by the exam 1.11 agent. Wanted: the brief asks each agent to work in a subfolder named after its task.
+
+Raised later (session U orchestrator, protocol 6):
+
+- Validator warning: a `choice` or `multi` with `shuffle: true` whose `explain`, `why`, hint or feedback names an option by place ("the first", "the second option", "option B", "the last one"). Third sighting: review-exam-3.2, review-exam-1.10, review-exam-3.4. Run it over lessons, reviews, homework, exams, drills and bank; list hits in `docs/reports/scan-positional-options.md`.
+- Optional (two sightings, exams 1.10 and 3.4): warning when a choice key is more than 1.5 times the length of every distractor; and when every `multi` in an exam has the same number of keys.
