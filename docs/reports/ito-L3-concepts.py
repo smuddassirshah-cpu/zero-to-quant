@@ -142,14 +142,22 @@ check(abs(g["d1"] - 0.35) < 1e-12 and abs(g["d2"] - 0.15) < 1e-12 and abs(norm.c
 STq = 100 * np.exp(0.03 + 0.2 * W1)
 check(abs(np.mean(STq > 100) - norm.cdf(0.15)) < 0.002 and abs(np.mean(STq * (STq > 100)) - 100 * math.exp(0.05) * norm.cdf(0.35)) < 0.1, "mc_pricing: Q(S_T > K) = Phi(d2), E_Q[S_T 1] = S0 e^{rT} Phi(d1) (l11 screens[6])")
 
-# antithetic_not_always_half (EXPECTED_FAIL): the summary says antithetic pairs halve the standard error on the same draws.
+# antithetic_not_always_half (was EXPECTED_FAIL): the summary said antithetic pairs halve the standard error on the same draws.
 # At the money the ratio is 2.00; out of the money (homework-3 items[4]) it is 1.66.
 po, seo = mc_call(80, 85, 0.03, 0.35, 1, 100_000, 17); poa, seoa = mc_call(80, 85, 0.03, 0.35, 1, 100_000, 17, True)
 check(abs(seo - 0.0617) < 5e-5 and abs(seoa - 0.0372) < 5e-5 and abs((seo / seoa) ** 2 * 100_000 - 275_000) < 2000, "antithetic_not_always_half: 0.0617 -> 0.0372, worth 275,000 plain draws (homework-3 items[4])")
 check(abs(se / sea - 2) < 0.05, "antithetic_not_always_half: at the money the ratio is about 2 (l11 screens[3])")
-check(abs(seo / seoa - 2) < 0.05, "EXPECTED_FAIL antithetic_not_always_half: content says pairs halve the se on the same draws; out of the money the ratio is %.2f (l11 screens[3].prose, summary.ideas[1])" % (seo / seoa))
-# corrected assert, ready to enable once the summary says the halving is the ATM example, not a rule:
-# check(1.3 < seo / seoa < 1.9, "antithetic ratio depends on the payoff: 1.66 out of the money (l11 summary.ideas[1])")
+# Corrected claim (fix pass): the content now says the pairs halve the se for this call and cut it by less out of the money.
+# Own computation (Glasserman 4.2): on the same n draws the se ratio is sqrt(2 / (1 + rho)), rho = corr(payoff(z), payoff(-z)).
+# At the money rho is about -0.50 (ratio 2); for the l11 call at K = 120 and for homework-3 items[4] it is less than 2.
+def anti_ratio(S0, K, r, sig, T, n, seed):
+    zz = np.random.default_rng(seed).standard_normal(n)
+    pay = lambda v: np.maximum(S0 * np.exp((r - sig ** 2 / 2) * T + sig * math.sqrt(T) * v) - K, 0)
+    rho = np.corrcoef(pay(zz), pay(-zz))[0, 1]
+    return math.sqrt(2 / (1 + rho))
+r_atm = anti_ratio(100, 100, 0.05, 0.2, 1, 100_000, 11); r_120 = anti_ratio(100, 120, 0.05, 0.2, 1, 100_000, 11)
+check(abs(r_atm - se / sea) < 0.02 and abs(r_atm - 2) < 0.05 and 1.3 < seo / seoa < 1.9 and 1.3 < r_120 < 1.9,
+      "antithetic_not_always_half (corrected claim, fix pass): ratio %.2f at the money, %.2f at K = 120, %.2f for homework-3 items[4] (l11 screens[3].prose, summary.ideas[1])" % (r_atm, r_120, seo / seoa))
 
 # crr_convergence
 def crr(S0, K, r, sig, T, n):
