@@ -52,3 +52,17 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's script: `vector-calc-L3-numbers.py` exit 0 (183 of 183).
 
 ## Fix pass
+
+## Fix pass
+
+All 17 findings applied by targeted edits (1 error, 8 warnings, 8 notes); none disputed, none deferred. Each ruling verified: no continuous one-to-one map from a closed rectangle covers the sphere, so "one-to-one apart from a set of zero area" is right; the Black-Scholes link is a change of variables; $\iiint_{\text{half ball}} z\,dV = \tfrac{\pi}{4}$ and dropping the 2 of $\partial_z(z^2)$ gives it; divergence 2 times surface area 6 is 12.
+
+- l9 screens[10] `param` why and byKey: "one-to-one apart from a set of zero area" (error). Also screens[0] hint and explain ("starts at about a quarter turn"), screens[1] byKey `one` ("a pure bending only at radius 1").
+- l11 screens[1] explain, summary.ideas[0] and screens[2] box prose: bounded solid, $\mathbf F$ continuously differentiable on an open set containing $E$ (split into two sentences). Homework-3 items[6] model (d), rubric[3] and items[3] box prose: same wording; "does not apply" replaces "fails" (also l11 screens[8]).
+- l12 screens[2] prose and summary.ideas[0]: bounded, oriented, piecewise smooth $S$ with piecewise smooth boundary, $\mathbf F$ continuously differentiable on an open set containing $S$. screens[4]: open set containing $E$ and cap labelling. quiz[0]: $P(x, y)$, $Q(x, y)$. quiz[2] `curl`: "open simply connected region". Both summary notes now use $\mathbf F$, $\mathbf n$, $C$ in maths.
+- l10 screens[1]: sentence saying $\mathbf n$ points along $\mathbf r_u \times \mathbf r_v$, so the order of $u$ and $v$ chooses it.
+- l11 quiz `six` (12): kept, byKey now names the slip (divergence 2 times surface area 6). Homework-3 items[4]: wrong `whole` ($\pi$) replaced by `no-2` ($\tfrac{\pi}{4}$, dropped the 2), byKey renamed to match.
+- l11 screens[11]: "A later course turns Black-Scholes into this heat equation by a change of variables." l11 screens[8] `inf` why: "on it $|\mathbf F| = 1$". Review-3 items[8]: pointer to the source field of lesson 8.
+- Script: `docs/reports/vector-calc-L3-numbers.py` extended (`no-2` tex, $\pi/4$ by quadrature, $2 \times 6 = 12$); exit 0, 184 of 184.
+- Gates: validator 0 errors; voice-scan 0 and 0; playthrough "All passed" desktop and mobile for l9, l10, l11, l12 and sets review-3, homework-3.
+- Graded answers changed: none of the correct answers; wrong-answer entry `whole` ($\pi$) became `no-2` ($\tfrac{\pi}{4}$) in homework-3 items[4].
