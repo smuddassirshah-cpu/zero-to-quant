@@ -55,7 +55,11 @@ for a, s in zip(r.ineqlin.marginals, [-30, -10, 0]): two('marginal', a, s)
 # ---- l5 ----
 two('P(2,5)', 60 * 2 + 40 * 5, 320); E('l5', 'screens[0].widget.answer', 320); E('l5', 'screens[0].widget.wrong[0].value', 40 * 2 + 60 * 5); E('l5', 'screens[0].widget.wrong[1].value', 7)
 E('l5', 'screens[0].explain.text', 320); E('l5', 'screens[0].prose', 10); E('l5', 'screens[0].prose', 18); E('l5', 'screens[0].prose', 5)
-two('margin at (4,6)', 2 * 4 + 4 * 6, 32); E('l5', 'screens[2].feedback.correct', 32); E('l5', 'screens[2].feedback.correct', 36)
+two('margin at (4,6)', 2 * 4 + 4 * 6, 32); E('l5', 'screens[2].feedback.correct', 32); two('margin at (0,10)', 2 * 0 + 4 * 10, 40); E('l5', 'screens[2].feedback.correct', 40); two('line cuts (0,10)', 4 * 10 > 36, True)
+# l5 quiz[3]: g >= 2e is 2e - g <= 0; (g, e) = (2, 1.5) breaks the rule and satisfies the old keyed row e - 2g <= 0
+two('rule row', 2 * 1.5 - 2 <= 0, False); two('old row', 1.5 - 2 * 2 <= 0, True); two('key row on (g,e)=(4,1)', 2 * 1 - 4 <= 0, True)
+# l8 swap: 10 x 40 = 400, and 18 x 40 = 720
+two('swap 400', 10 * 40, 400); two('swap 720', 18 * 40, 720)
 E('l5', 'screens[3].widget.answer', '(1, 3, 1)'); E('l5', 'screens[4].widget.answer', '(0, 0, 1)')
 for s, sb in zip(np.array(b) - np.array(A) @ [4, 6], [0, 0, 1]): two('slack (4,6)', s, sb)
 # hedge
