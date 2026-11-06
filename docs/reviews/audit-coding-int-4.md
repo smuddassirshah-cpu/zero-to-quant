@@ -20,7 +20,31 @@ Every code item was run as written: l15 `best_plan` (DP equals a 27-plan brute f
 
 Filled after the findings above were committed, from `docs/reviews/review-coding-int.md` (level 4 section) and `docs/reviews/answers-2026-11-04-coding-int-4.md`.
 
-OVERLAP_TABLE
+Both earlier documents were read only after commit d39ab7d. The earlier reviews are a full-course second read (`review-coding-int.md`, 4 November 2026, with its fix pass) and an answer check of this level (`answers-2026-11-04-coding-int-4.md`, with its fix pass). Every conceptual finding they made at level 4 was applied in those fix passes before this audit read the files, so the audit read the corrected text; where a fix added a test or a line, the audit's script exercises it (noted below).
+
+| Count | Conceptual findings |
+|---|---|
+| Audit only | 5 (findings 1 to 5 above) |
+| Earlier review only | 11 (listed below, all applied before this audit) |
+| Both | 0 |
+
+Earlier review's conceptual findings at level 4 and why this audit did not raise them:
+
+- review-coding-int 11, l19 stage A tests let an `ends[i - 2]` solution pass: fixed by test 7 `[[0,0,2],[0,10,14],[0,20,24],[0,21,22]]`, which the audit's stage A run exercises; nothing left to find.
+- review-coding-int 15, partial credit taught by hidden test group while `mock-oa-code` scores only whole problems: fixed by the "Check the scoring rule first" lines in l15 and l17 and the mock sentence in l17 screens[9]; the audit ledger records those lines as correct against the mock file.
+- answers 1, l15 screens[8] optimum not unique at budget 60: fixed by the budget of 58; the audit's script now checks that 102 at 58 has exactly one plan.
+- answers 2, l15 screens[9] option d why "A full A fits in [28 minutes]": fixed to "Swapping A's partial for A's full fits in 55", which the audit verified (40 + 15 = 55).
+- answers 3, l19 quiz q-plan explain claimed only one option adds to 30: fixed to name both conditions; the audit found the explain correct as it now stands.
+- answers 4, l19 screens[3] hint said `[4, 6)` starts inside `[5, 7)`: fixed to "overlaps"; correct as read.
+- answers 7, homework-4 h4-zero-sum-cpp byKey.test-7 said the stretch starts at the second number: fixed; correct as read.
+- answers 8, l19 stage B and C tests let a total-overlap count, unsorted candidates and cancel-all-copies pass: fixed by tests B9, C14 and C15, which the audit's reference run exercises (stage C random streams also check the sorted-candidate rule).
+- answers 9, l17 screens[5] and h4-zero-sum-cpp tests let a prefix-only solution pass: fixed by tests 12; the audit checks the prefix-only version fails `[5, 3, -1, -2, 4, 7]` in h4-next-test and runs the added tests.
+- answers 11, h4-leaderboard reset-to-zero passed with no negative score: fixed by test 9 (scores 10, -5, -3), which the audit's independent board run covers.
+- answers note, h4-leaderboard part 2 "keep the 10 best" fails with negative deltas: fixed to "Keep the scores ordered, updating them on each change"; the audit ledger marks the option correct.
+
+Findings 1 to 5 of this audit are not in either earlier document: the answer check rated l16 screens[4] and l18 screens[8] "OK" on their keys without testing the `why` conditions (its mutant work was on the code items, not on the prose claims about the mutants), and neither read the l18 distractor against the screen's own explain.
+
+Miss-rate reading: the single earlier read found 11 conceptual items at this level and missed 5 that a blind read found; the blind read found none of the 11 because they had been fixed. The two reads overlap on nothing, so the union is 16 and neither read alone reached it.
 
 ## Checks
 

@@ -63,6 +63,10 @@ check(abs(12 / 6 - 2.0) < 1e-12 and abs(25 / 12 - 2.083) < 1e-3, 'l15 screens[4]
 # screen 8: budget 58 -> 102; screen 9: bank problems -> 75
 check(brute_plan(L15_PROBLEMS, 58) == 102, 'l15 screens[8] optimum at 58 minutes is 102')
 check(greedy_full(L15_PROBLEMS, 58) == 100, 'l15 screens[8] greedy still earns 100 at 58')
+plans102 = [ch for ch in itertools.product(range(3), repeat=3)
+            if sum((p[0] if c == 1 else p[2] if c == 2 else 0) for p, c in zip(L15_PROBLEMS, ch)) == 102
+            and sum((p[1] if c == 1 else p[3] if c == 2 else 0) for p, c in zip(L15_PROBLEMS, ch)) <= 58]
+check(plans102 == [(2, 0, 1)], 'l15 screens[8] the 102 plan at 58 is unique: P1 partial, P2 skip, P3 full')
 check(brute_plan([[50, 40, 20, 12], [60, 45, 25, 15]], 55) == 75, 'l15 screens[9] bank paper optimum 75')
 check(3 ** 3 == 27, 'l15 screens[8] explain 27 choices for three problems')
 
