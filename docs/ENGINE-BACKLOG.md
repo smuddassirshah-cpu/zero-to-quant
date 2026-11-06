@@ -1571,3 +1571,9 @@ Status block (engine pass, session T):
 
 Status block (engine pass, session T, items 578 to 580):
 - 578: done (test-numbers-lib passes, 10 real, 4 wrong). 579: done (8 warnings left, validator 0 errors, test-validate-why 12 passed). 580: done (numerics 0 and 0, stat-models 0 and 0, spot check caught).
+
+581. Done [Must, as a warning]: `validate.mjs` `wrongCannotFire` (numeric widgets and editable table cells, `grade.js` `within()` abs and rel). Flags a `wrong[]` value inside the answer tolerance, a wrong tolerance reaching it, and (as a warning) two overlapping wrong entries. Severity is `WRONG_FIRE_LEVEL = 'warning'` because 14 existing items are true hits; flip it to `'error'` after they are fixed. List in `docs/reports/engine-pass-T.md`. Test: `tools/test-validate-wrong-fire.mjs` (5 of 5).
+582. Done [Should]: `numbers_lib` `lv.check_wrongs(file=None)` asserts each numeric wrong value is outside its answer tolerance and prints "check by hand" for a `byKey` text stating a different number. Test added to `tools/test-numbers-lib.py`. LEVEL-BRIEF names it in the number-recompute step and adds the general-claim hypotheses rule to the quality bar.
+
+Status block (engine pass, session T, items 581 and 582):
+- 581: done as a warning (14 error-class hits in existing content, 19 wrong-wrong overlap warnings; validator 0 errors). 582: done (test-numbers-lib passes).

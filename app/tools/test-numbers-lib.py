@@ -25,6 +25,22 @@ assert abs(__import__('numbers_lib')._numbers(r'$\\frac{3}{4}$ and $\\dfrac{a}{b
 assert 3.0 in __import__('numbers_lib')._numbers(r'$\\tfrac{3}{4}$') and 4.0 in __import__('numbers_lib')._numbers(r'$\\tfrac{3}{4}$')
 good += fr
 assert normalise('£1{,}214 and −3') == '1214 and -3'
+# ENGINE-BACKLOG 582: check_wrongs on a synthetic file (clean wrong, in-tolerance wrong, byKey stating another number), then the real level
+sy = Level('odes', 3)
+sy.files = {'lx': {'screens': [{'widget': {'kind': 'numeric', 'answer': 10, 'tol': {'abs': 0.5}, 'wrong': [
+    {'id': 'clean', 'value': 12}, {'id': 'inside', 'value': 10.4}, {'id': 'rel', 'value': 15, 'tol': {'abs': 0.1}}]},
+    'feedback': {'byKey': {'clean': 'You added 3, giving 13.', 'inside': 'Near.', 'rel': 'You made 15.'}}}]}}
+with contextlib.redirect_stdout(io.StringIO()):
+    hand = sy.check_wrongs()
+res = {r[1].split('"')[1]: r[0] for r in sy.results}
+ok_w = res == {'clean': True, 'inside': False, 'rel': True} and len(hand) == 1 and '"clean"' in hand[0]
+print(f"{'PASS' if ok_w else 'FAIL'} check_wrongs: clean passes, in-tolerance fails, other-number byKey listed by hand")
+with contextlib.redirect_stdout(io.StringIO()):
+    real = Level('odes', 3)
+    real.check_wrongs()
+ok_w = ok_w and any(r[0] for r in real.results)
+if not ok_w:
+    sys.exit(1)
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
     bad = [

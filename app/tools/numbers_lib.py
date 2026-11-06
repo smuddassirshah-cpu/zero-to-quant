@@ -10,11 +10,17 @@ Use from docs/reports/<course>-L<n>-numbers.py:
     lv.expect("l11", "screens[5].widget.wrong[0].value", 0.25, fmt="{:.2f}")   # fmt: the exact text that must appear
     lv.expect("l12", "screens[2]", 7)                             # a path that ends on an object or list searches every string below it
     lv.expect("l12", "screens[*].prose", 7)                       # [*] joins every element
+    lv.check_wrongs()                                             # every numeric wrong[].value: outside the answer tolerance (ENGINE-BACKLOG 582)
     lv.report()                                                   # prints the count, exits 1 on any failure
 `file` is a lesson id or a unique prefix ("l10"), "review" or "homework". `lv.text(file, path)` returns the string
 (strings below an object or list are joined with newlines) for ad-hoc checks. Without `fmt` a number matches any token
 of equal value after normalisation (thousands commas, currency signs, LaTeX spacing and braces, U+2212, trailing zeros; a LaTeX fraction \\tfrac{3}{4}, \\frac{1}{2} or \\frac12 matches its value and its integers);
 a string value must appear verbatim in the raw or the normalised text.
+`lv.check_wrongs(file=None)` (one file, or the whole level) walks every widget or table cell with a numeric answer and a
+wrong[] list. Each numeric wrong value must lie outside the answer's tolerance, by the validator's rule 581 and grade.js within()
+(abs: |v-a| <= abs; rel: |v-a| <= |a|*rel; a wrong entry's own tol widens it, default abs 1e-9); a hit is a failed check. It also
+reads the feedback.byKey text for that wrong id on the same screen or item and prints "check by hand" (not a failure) when the
+text states numbers and none equals the wrong value. Call it in every number script, before report().
 """
 import json
 import os
@@ -140,6 +146,51 @@ class Level:
         else:
             ok = any(abs(x - value) <= 1e-9 * max(1.0, abs(value)) for x in _numbers(txt))
         return self._rec(ok, label, '' if ok else f'not found in: {txt[:120]!r}')
+
+    def check_wrongs(self, file=None):
+        """Assert no numeric wrong[] value lies inside its answer's tolerance; list byKey texts that state other numbers."""
+        def half(a, t):
+            t = {'abs': t} if isinstance(t, (int, float)) else (t or {})
+            return abs(a) * t['rel'] + 1e-12 if t.get('rel') is not None else (t.get('abs') or 0) + 1e-9
+        hand = []
+
+        def visit(node, path, fb, fid):
+            if isinstance(node, list):
+                for i, x in enumerate(node):
+                    visit(x, f'{path}[{i}]', fb, fid)
+                return
+            if not isinstance(node, dict):
+                return
+            if isinstance(node.get('feedback'), dict) and isinstance(node['feedback'].get('byKey'), dict):
+                fb = node['feedback']['byKey']
+            ans, wr = node.get('answer'), node.get('wrong')
+            if isinstance(ans, (int, float)) and not isinstance(ans, bool) and isinstance(wr, list):
+                ha = half(ans, node.get('tol'))
+                for i, w in enumerate(wr):
+                    v = w.get('value') if isinstance(w, dict) else None
+                    if not isinstance(v, (int, float)) or isinstance(v, bool):
+                        continue
+                    label = f'{fid} {path}.wrong[{i}] "{w.get("id")}" = {v!r} outside answer {ans!r} tolerance'
+                    d = abs(v - ans)
+                    if d <= ha:
+                        self._rec(False, label, f'inside the tolerance +-{ha:.6g}: graded correct, never fires')
+                    elif d <= ha + half(v, w.get('tol') or {'abs': 1e-9}):
+                        self._rec(False, label, 'its own tolerance reaches the answer tolerance')
+                    else:
+                        self._rec(True, label, '')
+                    t = fb.get(w.get('id')) if fb else None
+                    if isinstance(t, str):
+                        nums = _numbers(t)
+                        if nums and not any(abs(x - v) <= 1e-9 * max(1.0, abs(v)) for x in nums):
+                            hand.append(f'check by hand: {fid} byKey "{w.get("id")}" states {sorted(set(nums))[:6]} but wrong value is {v!r}')
+            for k, x in node.items():
+                visit(x, f'{path}.{k}' if path else k, fb, fid)
+        for fid, doc in self.files.items():
+            if file is None or fid == self._file(file)[0]:
+                visit(doc, '', None, fid)
+        for h in hand:
+            print(h)
+        return hand
 
     def _rec(self, ok, label, note):
         self.results.append((ok, label, note))
