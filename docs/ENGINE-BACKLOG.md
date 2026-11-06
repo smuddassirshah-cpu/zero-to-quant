@@ -1577,3 +1577,10 @@ Status block (engine pass, session T, items 578 to 580):
 
 Status block (engine pass, session T, items 581 and 582):
 - 581: done as a warning (14 error-class hits in existing content, 19 wrong-wrong overlap warnings; validator 0 errors). 582: done (test-numbers-lib passes).
+
+583. Done [Must]: `tools/playthrough.mjs` route check `gating` no longer takes the first written level 2 lesson of Stage 3 as its locked fixture. It lists the level 2 candidates (Stage 3, then Stage 2) and, on the fresh imported profile, takes the first for which `ZQ.prereq.lessonLocked` is true. Cause: `prereq.js` `advisory()` makes references into a course optional for the profile's role non-blocking under Strict, so `momentum-rep/l6-data-you-can-get` was not locked. Test change only; `prereq.js` untouched; downstream assertions unchanged.
+
+Design note (not a change, for the user to decide): under Strict, an in-course chain inside a course optional for the role is advisory (momentum-rep L2 opens before L1 is met for a trader). Decide whether in-course references should stay blocking.
+
+Status block (engine pass, session T, item 583):
+- 583: done (see report line in handback; routes-only gating passes).
