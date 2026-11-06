@@ -26,7 +26,15 @@ Every pure and mixed equilibrium in L1 was recomputed by enumeration, the indiff
 
 ## Overlap with the earlier review
 
-(filled after the blind pass: see below)
+Read after the blind pass was committed: `docs/reviews/review-game-theory.md` (3 errors, 11 warnings, 23 notes, with its fix pass applied before this audit, so the text audited here is the corrected text). Of its 37 findings, 11 are conceptual (meaning, hypothesis or reasoning rather than grading, tolerance, metadata, layout or style); the rest are mechanical or stylistic and are not counted.
+
+| | count | findings |
+|---|---|---|
+| Audit only | 5 | 1 (hw1 explain drops "strictly"), 2 (revenue equivalence without risk-neutrality and independence), 3 (l8 option c "wins only when"), 4 (l9 "shade by this" is the break-even shade), 6 (l12 equity formula is the river rule) |
+| Both | 1 | 5 (l11 screens[2]/[3]): the review's note on screens[2] ("two different unseen counts in one explanation") saw the same seam and reworded it; this audit finds the consequence, that the screens[3] key and verdict depend on which count is used, which the rewording left in place |
+| Review only | 10 | all fixed before this read, so none could be found here (listed below) |
+
+The earlier review's conceptual findings this audit did not raise, with why: l15 screens[4] option b (Kelly "holds only at even money", fixed to $p - q/b < p$); l13 screens[3] `byKey.r2c1` (wrong baseline in the jack-bluff indifference, fixed to the 2/3 line); l2 screens[8] rounds counted by pure dominance only (fixed to mixes); l7 weak deletion unflagged (fixed in screens[6]); l4 screens[7] "which equilibrium" (fixed, "mixed equilibrium"); l1 argmax (fixed); l3 quiz q3 "only ties keep a cell" (fixed); l6 screens[2] SPE definition (fixed); l9 screens[0] winner pays its bid (fixed); l13 screens[7] "called only by kings" (fixed to "may do either"). Each is confirmed correct in the ledger as the text now stands; none survived to be missed. The single-read miss rate this measures is therefore the review's: five conceptual imprecisions found here were not found by the first read, none of them `wrong`.
 
 ## Checks
 
