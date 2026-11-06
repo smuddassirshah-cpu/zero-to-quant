@@ -154,3 +154,8 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 - Trader lever taken: `game-theory/L2 -> graphs-dp/L4` and `brainteasers/L2 -> graphs-dp/L3` become diagnostics (`gate: false`); trader superday closure 465 to 422 lessons.
 - One capstone record per role (trader, researcher, developer, strats, strats-deriv) in `content/capstones.json`. Researcher: `momentum-rep` or an equivalent external project; the other four: a project the user names in the record. No role shows "ready" without a record marked `external: true`. The user is the reviewer and fills the records.
 - A verified `oa` drill counts toward the code performance task of the coding-int level it maps to.
+
+### Precision read (6 Nov, PLAN 2c item 9, user as maths reader)
+- Summary quantifiers are claims: a line true only under an unstated condition (integrability, finite mean, symmetric proposal, no arbitrage) states the condition in plain words, pedantic cases included (user ruled all 14 Loose rows fixed).
+- ito l13 keeps "martingale exactly when the drift is zero" with the lesson's own word "tame" for $E\int f_x^2\,ds < \infty$, without introducing "local martingale"; ito l17's equation is for European claims $g(S_T)$, with one sentence on American and path-dependent claims.
+- Route limits (`readiness-sums.mjs` LIMITED) are kept per level, not per course: pdes is limited by odes L4 and numerics L4.
