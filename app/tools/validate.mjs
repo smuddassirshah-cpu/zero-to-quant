@@ -110,7 +110,7 @@ const cppNumbers = (v) => (typeof v === 'number' && Number.isFinite(v)) || cppCo
 /* items 378, 425, 464: a case's tol is { rel, abs } (either or both, numbers 0 or more), for isclose */
 /* item 581: a wrong[] value the grader can never return. grade.js within(): rel is |v-a| <= |a|*rel, abs is |v-a| <= abs; the answer is graded first, so a wrong value inside
    the answer's tolerance is graded correct. WRONG_FIRE_LEVEL is "error" unless existing content must be downgraded. */
-const WRONG_FIRE_LEVEL = 'warning'; // 14 existing hits (docs/reports/engine-pass-T.md): flip to 'error' once fixed
+const WRONG_FIRE_LEVEL = 'error'; // error since session T: the 14 hits in docs/reports/engine-pass-T.md are fixed
 const halfWidth = (a, t) => { const o = typeof t === 'number' ? { abs: t } : (t || {}); return o.rel != null ? Math.abs(a) * o.rel + 1e-12 : (o.abs ?? 0) + 1e-9; };
 const wrongCannotFire = (file, where, answer, tolA, wrong) => {
   if (typeof answer !== 'number' || !Number.isFinite(answer) || !Array.isArray(wrong)) return;

@@ -46,3 +46,5 @@ Rule 581 (`wrongCannotFire` in app/tools/validate.mjs) runs as a warning (`WRONG
 - node app/tools/test-validate-wrong-fire.mjs: 5 of 5 (clean value, equal to answer, wrong tol reaching answer, two overlapping wrongs, two separate wrongs)
 - python3 app/tools/test-numbers-lib.py: pass (check_wrongs on a synthetic file and the real odes L3)
 - validator: 0 errors
+
+- 581: flipped to error by the main session after the 14 hits were fixed (docs/reports/fix-rule-581.md, review-stat-models-1-3 Fix pass, stat-models l11 plain tol).
