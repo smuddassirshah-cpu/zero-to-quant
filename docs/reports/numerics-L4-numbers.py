@@ -252,7 +252,7 @@ E('homework', 'items[3].explain.text', 25.3, 1 / (1 - .98 ** 2))
 zc = np.random.default_rng(0).standard_normal(100000)
 y = D * np.maximum(STz(zc) - 100, 0); x = D * STz(zc); bh = np.cov(y, x)[0, 1] / np.var(x, ddof=1); adj = y - bh * (x - 100)
 cv0, cse0 = adj.mean(), adj.std(ddof=1) / math.sqrt(1e5)
-E(L16, 'screens[5].prose', 0.67307, bh); E(L16, 'screens[5].prose', 10.4484, cv0); E(L16, 'screens[5].prose', 0.0178, cse0)
+E(L16, 'screens[5].prose', 0.67307, bh); E(L16, 'screens[5].prose', 10.4484, cv0); E(L16, 'screens[5].prose', 0.017764, cse0); E(L16, 'screens[5].prose', 0.046514, se0)
 E(L16, 'screens[5].widget.answer', 6.86, (se0 / cse0) ** 2); E(L16, 'screens[5].explain.text', 0.12, abs((cv0 - B) / cse0))
 check('cv seed 0 within 3 SE', abs(cv0 - B) < 3 * cse0, True, 0)
 z1 = np.random.default_rng(1).standard_normal(100000); y1 = D * np.maximum(STz(z1) - 100, 0); x1 = D * STz(z1)
@@ -262,7 +262,15 @@ CYa = Ez(lambda z: Y(z) * Y(-z)) - B * B
 E(L16, 'screens[6].prose', -0.501, CYa / VY); E(L16, 'screens[6].prose', 54.06, (VY + CYa) / 2); E(L16, 'screens[6].prose', 108.33, VY / 2)
 E(L16, 'screens[6].widget.answer', 2.0, (VY / 2) / ((VY + CYa) / 2), 0.01)
 R = lambda z: Y(z) - bstar * (X(z) - 100); VR = Ez(lambda z: R(z) ** 2) - B * B; CR = Ez(lambda z: R(z) * R(-z)) - B * B
-E(L16, 'screens[6].explain.text', 30.67, (VR + CR) / 2); check('VR = Var(Y)(1 - rho^2)', VR, VY * (1 - rho ** 2), 1e-6)
+check('VR = Var(Y)(1 - rho^2)', VR, VY * (1 - rho ** 2), 1e-6)
+# fix pass: pairs and the control, with b fitted to the pair averages (b = 2.507), leave a pair variance of 3.78
+Pp = lambda z: (Y(z) + Y(-z)) / 2; Qp = lambda z: (X(z) + X(-z)) / 2
+vP = Ez(lambda z: Pp(z) ** 2) - B * B; vQ = Ez(lambda z: (Qp(z) - 100) ** 2); cPQ = Ez(lambda z: Pp(z) * (Qp(z) - 100)) - B * 0
+bP = cPQ / vQ
+E(L16, 'screens[6].explain.text', 3.78, vP - cPQ ** 2 / vQ, 0.005)
+check('pair-fitted b', bP, 2.507, 0.001)
+# fix pass: per draw the antithetic variance is a quarter of plain
+check('anti per draw quarter', (VY + (Ez(lambda z: Y(z) * Y(-z)) - B * B)) / 2 / VY, 0.25, 0.001)
 za = np.random.default_rng(0).standard_normal(50000); ya = (D * np.maximum(STz(za) - 100, 0) + D * np.maximum(STz(-za) - 100, 0)) / 2
 E(L16, 'screens[6].explain.text', 10.4721, ya.mean()); E(L16, 'screens[6].explain.text', 0.0329, ya.std(ddof=1) / math.sqrt(50000))
 P = bs(100, 100, .05, .2, 1, 'put'); Str = B + P; Ys = lambda z: D * abs(STz(z) - 100)
@@ -331,7 +339,7 @@ E(L17, 'screens[5].canvas.params.rows', 5.1672, mp_); E(L17, 'screens[5].canvas.
 E(L17, 'screens[5].widget.answer', -0.17, (mp_ - BP) / msp, 0.005); check('put MC within 3 SE', abs(mp_ - BP) < 3 * msp, True, 0)
 check('put gl vs quad', glp, bs_quad(100, 95, .04, .3, .5, 'put'), 1e-10)
 off = {M: theta(100, 100, .05, .2, 1, 300, M, 200, .5, 2) - B for M in (390, 400, 420)}
-E(L17, 'screens[6].explain.text', 9.1, off[400] * 1e4); check('off grid flips sign', off[390] < 0 < off[400] and off[420] < 0, True, 0)
+E(L17, 'screens[6].explain.text', 9.1, off[400] * 1e4); E(L17, 'screens[6].explain.text', 0.0012, 0.00117, 5e-5); check('off grid flips sign', off[390] < 0 < off[400] and off[420] < 0, True, 0)
 for M in (390, 420):
     E(L17, 'screens[6].canvas.params.rows', round(off[M], 5))
 E(L17, 'quiz[0].explain.text', 0.035, 1.96 * cse0); E(L17, 'screens[9].widget.options[1].text', 0.035, 1.96 * cse0)
@@ -426,6 +434,23 @@ for ref, i, w in widgets:
     if all(bad):
         fails.append(f'{ref} #{i}: starter passes every test')
 print(f'code widgets checked: {len(widgets)}')
+
+# fix pass: monthly barrier shift for homework h4-shift, and no graded wrong value overlaps the answer under within()
+check('monthly H prime', 90 * math.exp(-0.5826 * 0.2 * math.sqrt(1 / 12)), 87.02, 0.005)
+check('daily H prime', 90 * math.exp(-0.5826 * 0.2 * math.sqrt(1 / 252)), 89.34, 0.005)
+_hw = json.load(open(os.path.join(HERE, '..', '..', 'app', 'content', 'courses', 'numerics', 'homework-4.json')))
+for _it in _hw['items']:
+    _w = _it.get('widget', {})
+    if _w.get('kind') == 'numeric' and 'answer' in _w:
+        _ta = _w['tol'].get('abs', 0)
+        for _x in _w.get('wrong', []):
+            _tx = _x['tol'].get('abs', 0)
+            check(_it['id'] + ' wrong ' + _x['id'] + ' not accepted as correct', abs(_x['value'] - _w['answer']) > _ta + 1e-9, True, 0)
+            check(_it['id'] + ' true answer not in wrong ' + _x['id'], abs(_w['answer'] - _x['value']) > _tx + 1e-9, True, 0)
+        if _it['id'] == 'h4-shift':
+            check('h4-shift monthly value', [x for x in _w['wrong'] if x['id'] == 'monthly'][0]['value'], 87.02, 0)
+        if _it['id'] == 'h4-weight':
+            check('h4-weight 0.488 not correct', abs(0.488 - _w['answer']) > _ta + 1e-9, True, 0)
 
 for f in fails:
     print('BAD', f)

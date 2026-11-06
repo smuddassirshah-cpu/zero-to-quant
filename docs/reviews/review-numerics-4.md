@@ -70,3 +70,27 @@ Both homework errors sit in a `wrong[]` value and its tolerance. The author scri
 - Validator: 0 errors, no warning on any L4 file.
 
 ## Fix pass
+
+22 items (3 errors, 4 warnings, 11 notes, 4 cross-course): 21 fixed, 0 declined, 1 deferred. Each changed number recomputed; `docs/reports/numerics-L4-numbers.py` now 215 of 215, exit 0. No L3 number changed, so the L3 script is untouched.
+
+- homework-4 h4-shift `monthly`: fixed. 90·e^(−0.5826 × 0.2 × √(1/12)) = 87.0231, so value 87.02, tol 0.01. The script asserts it.
+- homework-4 h4-weight: fixed. Answer 0.4879 tol 5e-5; `no-r` (0.488) tol 2e-5. The script now checks that no wrong value is accepted by the answer and the answer is in no wrong interval, for every numeric item.
+- l16 screens[5]: fixed. SEs shown as £0.046514 and £0.017764 in prose and table; accept, hint and explain use them (ratio 2.6185, square 6.857 = 6.86).
+- l16 screens[6] explain: fixed. "Fit $b$ to the pair averages and both together leave a pair variance of 3.78." Recomputed by `quad`: b = 2.5068, 54.057 − 20.0567²/8.0011 = 3.780.
+- l16 screens[0] `anti` why: fixed. Per draw a quarter of plain (54.06 / 216.66 = 0.25); script check added.
+- l17 screens[6] explain: fixed. Both K and S0 off node; kink and interpolation each about +0.0012 (½Γ × 0.25 × 0.5 = 0.00117); trap line widened to "strike or spot".
+- l13 screens[8] share test: fixed. Now `[abs(explicit_bs(100, 0, ...) - 100) < 1e-9, explicit_bs(100, 100, ...) > 10]` expects `[True, True]`, so the starter fails it. Test count unchanged at 7.
+- l13 screens[4] prose: fixed ("with N = 1,700 steps to stay stable, gives £10.4487").
+- l15 screens[3] `linear` why: fixed ("You squared the target but not s. Square the whole ratio s/0.01.").
+- l16 screens[8] feedback.correct and review-4 r4-anti explain: fixed ("are sure to help").
+- l17 screens[0], [1] console titles: fixed ("The pricers of l10, l14 and l16, and a CRR tree").
+- l17 screens[1] hints[1] highlight: fixed (l4, l10). hints[2]: fixed (smoothness, kink at an end).
+- l17 screens[7] `yes` why: fixed ("about 15 times", sentence shortened to stay under 20 words).
+- l17 screens[4] explain: fixed ("$-0.0010$").
+- l17 screens[5] Gauss-Legendre row: fixed ("$-5 \times 10^{-14}$").
+- l12 sign convention: fixed. One sentence on screens[1] prose: `odes` l16 writes y' = −λy with λ > 0 (Euler factor 1 − hλ); here y' = λy with λ < 0. Convention unchanged. Covers r4-implicit-euler.
+- l13 screens[9] explain: fixed (refinement settles and matches the closed form, odes l18).
+- l11 rk4/euler: fixed, not declined. The problem screen's prose said "given" and could suggest the odes path-returning versions. Added "unlike the `odes` versions they return only the final value, not the path". Closes the item deferred by review-odes-4.
+- Process note (two validator rules for wrong-value overlap and unasserted wrong values): deferred to the engine backlog. The numerics-L4 script now carries the overlap scan for homework-4 only.
+- Gates: validator 0 errors (no warning left on any L4 file); voice scan 0 and 0; playthrough "All passed" desktop and `--mobile` for l11, l12, l13, l15, l16, l17, review-4, homework-4 (`--local-cdn`).
+- Graded answers changed: h4-weight tolerance 1e-4 to 5e-5 (answer 0.4879 unchanged); wrong values changed: h4-shift `monthly` 86.98 to 87.02, h4-weight `no-r` tol; l13 share test expectation. No other graded answer changed.
