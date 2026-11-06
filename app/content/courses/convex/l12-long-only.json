@@ -1,0 +1,1297 @@
+{
+  "id": "l12-long-only",
+  "course": "convex",
+  "title": "Long-only portfolios as a quadratic programme",
+  "minutes": 15,
+  "objectives": [
+    "Solve a long-only portfolio as a quadratic programme and match a solver."
+  ],
+  "skills": [
+    "cv-qp"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Ask the solver",
+      "prose": "Lesson 11 found $(0, \\tfrac13, \\tfrac23)$ by hand. Here SciPy solves the same problem. `bounds` keeps every weight at or above 0, and the two dictionaries are the budget and the 10% target.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> S = np.diag([0.04, 0.09, 0.16])",
+            ">>> m = np.array([0.05, 0.08, 0.11])",
+            ">>> budget = {\"type\": \"eq\", \"fun\": lambda w: w.sum() - 1}",
+            ">>> target = {\"type\": \"ineq\", \"fun\": lambda w: w @ m - 0.10}",
+            ">>> res = minimize(lambda w: w @ S @ w, np.ones(3) / 3,",
+            "...     jac=lambda w: 2 * S @ w, method=\"SLSQP\",",
+            "...     bounds=[(0, None)] * 3, constraints=[budget, target],",
+            "...     options={\"ftol\": 1e-15})",
+            ">>> res.x.round(6)",
+            "array([0.      , 0.333333, 0.666667])",
+            ">>> res.fun",
+            "0.081111111111111"
+          ],
+          "title": "Python",
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "What volatility does the solver's portfolio have?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2848,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "28.48%: $\\sqrt{0.081111}$.",
+        "unit": "%",
+        "label": "Volatility",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 0.081111,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "avg",
+            "value": 0.366667,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "`res.fun` is the variance."
+        },
+        {
+          "rung": "point",
+          "text": "Take its square root.",
+          "highlight": [
+            "l12"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{0.081111} \\approx 0.2848$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\sqrt{0.081111} \\approx 28.480\\%$. The solver matches the hand answer to 6 places.",
+        "generic": "Not quite right. Take the square root of `res.fun`.",
+        "byKey": {
+          "var": "That is the variance, `res.fun`. Take its square root.",
+          "avg": "You averaged the volatilities. Use the variance the solver printed."
+        }
+      },
+      "explain": {
+        "text": "`res.x` is $(0, \\tfrac13, \\tfrac23)$ and `res.fun` is $\\tfrac{73}{900} \\approx 0.081111$, as in lesson 11. Its square root is 28.480%.",
+        "canvas": {
+          "highlight": [
+            "l10",
+            "l12"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "The bowl and the line",
+      "prose": "The bowl is the variance over $(w_1, w_2)$, with $w_3 = 1 - w_1 - w_2$. The curve on it is the 10% target line; its bold part is long-only. Slide $Q$ along the curve.",
+      "canvas": {
+        "kind": "space",
+        "params": {
+          "x": [
+            -0.2,
+            0.6
+          ],
+          "y": [
+            -0.2,
+            0.8
+          ],
+          "z": [
+            0,
+            0.33
+          ],
+          "height": 340,
+          "aspect": [
+            1,
+            1,
+            0.8
+          ],
+          "camera": {
+            "az": 25,
+            "el": 28
+          },
+          "axisLabels": [
+            "$w_1$",
+            "$w_2$",
+            "variance"
+          ],
+          "params": {
+            "a": 0.1
+          },
+          "surfaces": [
+            {
+              "id": "bowl",
+              "z": "0.04*x^2 + 0.09*y^2 + 0.16*(1 - x - y)^2",
+              "x": [
+                -0.2,
+                0.6
+              ],
+              "y": [
+                -0.2,
+                0.8
+              ],
+              "n": 22,
+              "shade": "height",
+              "opacity": 0.7
+            }
+          ],
+          "curves": [
+            {
+              "id": "line",
+              "x": "t",
+              "y": "1/3 - 2*t",
+              "z": "0.56*t^2 + (7/75)*t + 73/900",
+              "t": [
+                -0.2,
+                0.25
+              ],
+              "label": "10% target",
+              "colour": 4,
+              "labelAt": -0.18
+            },
+            {
+              "id": "lo",
+              "x": "t",
+              "y": "1/3 - 2*t",
+              "z": "0.56*t^2 + (7/75)*t + 73/900",
+              "t": [
+                0,
+                0.16666666666666666
+              ],
+              "width": "bold",
+              "colour": 2,
+              "label": "long-only",
+              "labelAt": 0.1
+            }
+          ],
+          "points": [
+            {
+              "id": "Q",
+              "at": "line",
+              "t": "a",
+              "label": "$Q$"
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "$\\mathbf{w}$ = ({{fixed(a, 2)}}, {{fixed(1/3 - 2*a, 2)}}, {{fixed(2/3 + a, 2)}}), variance {{fixed(0.56*a*a + 7/75*a + 73/900, 4)}}{{a < -0.001 ? ': short in asset 1' : (a > 0.1677 ? ': short in asset 2' : '')}}"
+        },
+        "controls": [
+          {
+            "bind": "a",
+            "min": -0.2,
+            "max": 0.25,
+            "step": 0.01,
+            "start": 0.1,
+            "label": "$w_1$ along the line"
+          }
+        ],
+        "maxHeight": 360
+      },
+      "question": "Where on the line is the variance lowest if shorting is allowed?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.083333,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "$w_1 = -\\tfrac{1}{12} \\approx -0.0833$.",
+        "label": "w1 at the lowest point",
+        "wrong": [
+          {
+            "id": "lo",
+            "value": 0,
+            "tol": {
+              "abs": 0.004
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the variance in the caption as $Q$ moves."
+        },
+        {
+          "rung": "point",
+          "text": "It keeps falling a little past the end of the bold part.",
+          "highlight": [
+            "lo"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The lowest point is at $w_1 = -\\tfrac{1}{12}$."
+        }
+      ],
+      "feedback": {
+        "correct": "At $w_1 = -\\tfrac{1}{12}$, with variance 0.077222, but that needs a short. The long-only part ends at $w_1 = 0$, the solver's answer.",
+        "generic": "Not quite right. Slide $Q$ past the bold part and find the lowest variance.",
+        "byKey": {
+          "lo": "That is the best long-only point. With shorting allowed the curve goes lower."
+        }
+      },
+      "explain": {
+        "text": "The lowest point of the curve is at $w_1 = -\\tfrac{1}{12}$, outside the bold part. The best bold point is its end, $w_1 = 0$.",
+        "canvas": {
+          "params": {
+            "a": -0.08
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A quadratic programme",
+      "prose": "A **quadratic programme** (QP) minimises $\\tfrac12\\mathbf{x}^T\\mathbf{Q}\\mathbf{x} + \\mathbf{q}^T\\mathbf{x}$ subject to linear equalities and inequalities. With $\\mathbf{Q}$ positive semidefinite it is convex, so KKT is necessary and sufficient.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Piece",
+            "Here"
+          ],
+          "rows": [
+            [
+              "objective",
+              "$\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$"
+            ],
+            [
+              "equality",
+              "$\\mathbf{1}^T\\mathbf{w} = 1$"
+            ],
+            [
+              "inequalities",
+              "$\\mathbf{m}^T\\mathbf{w} \\ge 0.10$ and $\\mathbf{w} \\ge \\mathbf{0}$"
+            ]
+          ]
+        }
+      },
+      "question": "For our portfolio, what are $\\mathbf{Q}$ and $\\mathbf{q}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "$\\mathbf{Q} = 2\\boldsymbol{\\Sigma}$, $\\mathbf{q} = \\mathbf{0}$",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "$\\mathbf{Q} = \\boldsymbol{\\Sigma}$, $\\mathbf{q} = \\mathbf{0}$",
+            "why": "$\\tfrac12\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$ is half the variance. To get $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$, $\\mathbf{Q} = 2\\boldsymbol{\\Sigma}$."
+          },
+          {
+            "id": "util",
+            "text": "$\\mathbf{Q} = 2\\boldsymbol{\\Sigma}$, $\\mathbf{q} = -\\mathbf{m}$",
+            "why": "Return is a constraint here, not part of the objective."
+          },
+          {
+            "id": "inv",
+            "text": "$\\mathbf{Q} = \\boldsymbol{\\Sigma}^{-1}$, $\\mathbf{q} = \\mathbf{0}$",
+            "why": "The objective uses $\\boldsymbol{\\Sigma}$ itself."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Match $\\tfrac12\\mathbf{w}^T\\mathbf{Q}\\mathbf{w}$ to $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$."
+        },
+        {
+          "rung": "point",
+          "text": "There is no linear term in the objective.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac12\\mathbf{Q} = \\boldsymbol{\\Sigma}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mathbf{Q} = 2\\boldsymbol{\\Sigma}$ and $\\mathbf{q} = \\mathbf{0}$. The return and the budget are linear constraints.",
+        "generic": "Not quite right. Match the objective term by term.",
+        "byKey": {
+          "half": "You dropped the factor of a half.",
+          "util": "That would add a return term to the objective.",
+          "inv": "The inverse appears in solutions, not in the objective."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac12\\mathbf{w}^T(2\\boldsymbol{\\Sigma})\\mathbf{w} = \\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$, and nothing is linear, so $\\mathbf{q} = \\mathbf{0}$. $\\boldsymbol{\\Sigma}$ is positive semidefinite, so the QP is convex."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A four-asset book",
+      "prose": "Now a correlated book: a bond and three equity books. Volatilities are 8%, 20%, 30% and 40%; returns are 3%, 5%, 8% and 11%. Correlations: $\\rho_{12} = -0.2$, $\\rho_{13} = 0$, $\\rho_{14} = \\rho_{24} = 0.1$, $\\rho_{23} = 0.3$, $\\rho_{34} = 0.5$. Long-only, a 40% cap each, an 8.5% target.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> vol = np.array([0.08, 0.20, 0.30, 0.40])",
+            ">>> m4 = np.array([0.03, 0.05, 0.08, 0.11])",
+            ">>> S4 = np.outer(vol, vol) * R      # R: the correlations",
+            ">>> np.linalg.eigvalsh(S4).round(4)",
+            "array([0.006 , 0.0328, 0.0615, 0.1961])",
+            ">>> res = minimize(..., bounds=[(0, 0.4)] * 4,",
+            "...     constraints=[budget, target_085])",
+            ">>> res.x.round(6)",
+            "array([0.      , 0.233333, 0.366667, 0.4     ])",
+            ">>> res.fun",
+            "0.062051111111111"
+          ],
+          "title": "Python",
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Which constraints are active at the solver's answer? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "bond",
+            "text": "bond $w_1 \\ge 0$",
+            "correct": true
+          },
+          {
+            "id": "cap4",
+            "text": "cap $w_4 \\le 0.4$",
+            "correct": true
+          },
+          {
+            "id": "target",
+            "text": "the 8.5% target",
+            "correct": true
+          },
+          {
+            "id": "budget",
+            "text": "the budget",
+            "correct": true
+          },
+          {
+            "id": "w2",
+            "text": "$w_2 \\ge 0$",
+            "why": "$w_2 \\approx 0.2333$ has room above 0."
+          },
+          {
+            "id": "cap3",
+            "text": "cap $w_3 \\le 0.4$",
+            "why": "$w_3 \\approx 0.3667$ is below its cap."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each weight with 0 and with 0.4."
+        },
+        {
+          "rung": "point",
+          "text": "The bond is at 0 and the last book at 0.4.",
+          "highlight": [
+            "l9"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "An equality such as the budget is always active."
+        }
+      ],
+      "feedback": {
+        "correct": "The bond is dropped and the 40% book sits at its cap. The variance is $\\tfrac{27923}{450000} \\approx 0.062051$, volatility 24.910%.",
+        "generic": "Not quite right. A limit is active when the weight sits exactly on it.",
+        "byKey": {
+          "w2": "$w_2 = 0.2333$ is strictly positive.",
+          "cap3": "$w_3 = 0.3667 < 0.4$."
+        }
+      },
+      "explain": {
+        "text": "$\\boldsymbol{\\Sigma}$ is positive definite, with eigenvalues about 0.0060, 0.0328, 0.0615 and 0.1961, so the QP is convex. The solver's point has $w_1 = 0$ and $w_4 = 0.4$ active.",
+        "canvas": {
+          "highlight": [
+            "l9"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Check it by KKT",
+      "prose": "With $w_1 = 0$ and $w_4 = 0.4$ active, stationarity $2\\boldsymbol{\\Sigma}\\mathbf{w} = \\lambda\\mathbf{1} + \\mu\\mathbf{m} + \\boldsymbol{\\nu} - \\boldsymbol{\\eta}$ keeps only $\\nu_1$ and $\\eta_4$. The table gives $2\\boldsymbol{\\Sigma}\\mathbf{w}$. Rows 2 and 3 fix $\\lambda$ and $\\mu$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Asset",
+            "w",
+            "(2Σw)ᵢ",
+            "mᵢ"
+          ],
+          "rows": [
+            [
+              "bond",
+              "0",
+              "0.001067",
+              "0.03"
+            ],
+            [
+              "equity 1",
+              "0.233333",
+              "0.038267",
+              "0.05"
+            ],
+            [
+              "equity 2",
+              "0.366667",
+              "0.122400",
+              "0.08"
+            ],
+            [
+              "equity 3",
+              "0.4 (cap)",
+              "0.175733",
+              "0.11"
+            ]
+          ]
+        }
+      },
+      "question": "Find $\\mu$, $\\lambda$, $\\nu_1$ and $\\eta_4$ to four places.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Multiplier",
+          "Value"
+        ],
+        "rows": [
+          [
+            "μ",
+            {
+              "edit": true,
+              "answer": 2.8044,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "λ",
+            {
+              "edit": true,
+              "answer": -0.102,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "ν₁",
+            {
+              "edit": true,
+              "answer": 0.0189,
+              "tol": {
+                "abs": 0.0005
+              }
+            }
+          ],
+          [
+            "η₄",
+            {
+              "edit": true,
+              "answer": 0.0308,
+              "tol": {
+                "abs": 0.0005
+              },
+              "wrong": [
+                {
+                  "id": "etasign",
+                  "value": -0.0308,
+                  "tol": {
+                    "abs": 0.0005
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract row 2 from row 3 so $\\lambda$ cancels."
+        },
+        {
+          "rung": "point",
+          "text": "$0.1224 - 0.038267 = 0.03\\mu$.",
+          "highlight": [
+            "r1",
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then $\\nu_1 = 0.001067 - \\lambda - 0.03\\mu$ and $\\eta_4 = \\lambda + 0.11\\mu - 0.175733$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mu \\approx 2.8044$, $\\lambda \\approx -0.1020$, $\\nu_1 \\approx 0.0189$ and $\\eta_4 = 0.0308$. Every inequality multiplier is positive, so the solver's point passes KKT.",
+        "generic": "Not quite right. Solve rows 2 and 3 first, then read $\\nu_1$ and $\\eta_4$ from rows 1 and 4.",
+        "byKey": {
+          "etasign": "$\\eta_4$ enters with a minus: $0.175733 = \\lambda + 0.11\\mu - \\eta_4$."
+        }
+      },
+      "explain": {
+        "text": "Rows 2 and 3 give $0.03\\mu = 0.084133$, so $\\mu = \\tfrac{631}{225}$ and $\\lambda = -\\tfrac{1147}{11250}$. Row 1 leaves $\\nu_1 = \\tfrac{17}{900}$ and row 4 leaves $\\eta_4 = \\tfrac{77}{2500}$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Out of reach",
+      "prose": "Before running a QP, check the target can be met. With a 40% cap, the best return fills the highest earners first. `linprog` with a zero objective is a pure feasibility check.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> lp = linprog(np.zeros(4), A_ub=[-m4], b_ub=[-0.09],",
+            "...     A_eq=[np.ones(4)], b_eq=[1],",
+            "...     bounds=[(0, 0.4)] * 4, method=\"highs\")",
+            ">>> lp.status",
+            "2"
+          ],
+          "title": "Python",
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "What is the highest return the capped book can reach?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.086,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "8.6%: $0.4 \\times 11\\% + 0.4 \\times 8\\% + 0.2 \\times 5\\%$.",
+        "unit": "%",
+        "label": "Best return",
+        "wrong": [
+          {
+            "id": "nocap",
+            "value": 0.11,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "short",
+            "value": 0.076,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Put as much as the cap allows into the best asset."
+        },
+        {
+          "rung": "point",
+          "text": "0.4 at 11%, 0.4 at 8%, and the last 0.2 at 5%.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.044 + 0.032 + 0.010$."
+        }
+      ],
+      "feedback": {
+        "correct": "8.6%, so a 9% target is infeasible and `linprog` returns status 2. Run it first: SLSQP does not report infeasibility cleanly.",
+        "generic": "Not quite right. Fill the highest returns up to the cap until the budget is spent.",
+        "byKey": {
+          "nocap": "You ignored the cap: 100% in the 40% book is not allowed.",
+          "short": "You left 20% uninvested. The budget puts the last 0.2 in the 5% book."
+        }
+      },
+      "explain": {
+        "text": "The best capped mix is $(0, 0.2, 0.4, 0.4)$, earning $0.044 + 0.032 + 0.010 = 8.6\\%$. Any target above that has no feasible point, so `linprog` says status 2.",
+        "canvas": {
+          "highlight": [
+            "l5"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Which way ineq points",
+      "prose": "A colleague writes the 10% target as `lambda w: 0.10 - w @ m`. SLSQP reports success, with the budget-only portfolio earning 6.672%.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> target = {\"type\": \"ineq\", \"fun\": lambda w: 0.10 - w @ m}",
+            ">>> res = minimize(..., constraints=[budget, target])",
+            ">>> res.success, res.x.round(4)",
+            "(True, array([0.5902, 0.2623, 0.1475]))",
+            ">>> res.x @ m",
+            "0.066721311"
+          ],
+          "title": "Python",
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "What does SciPy read their constraint as?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "Return at most 10%: `ineq` means `fun(w) >= 0`.",
+            "correct": true
+          },
+          {
+            "id": "atleast",
+            "text": "Return at least 10%.",
+            "why": "Then the answer would earn 10%. This one earns 6.672%."
+          },
+          {
+            "id": "equal",
+            "text": "Return exactly 10%.",
+            "why": "That needs `\"type\": \"eq\"`."
+          },
+          {
+            "id": "failed",
+            "text": "The solver failed.",
+            "why": "`res.success` is True: it solved the problem it was given."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read what `ineq` requires of `fun`."
+        },
+        {
+          "rung": "point",
+          "text": "SciPy's `ineq` means `fun(w) >= 0`.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.10 - \\mathbf{m}^T\\mathbf{w} \\ge 0$ is a ceiling on return."
+        }
+      ],
+      "feedback": {
+        "correct": "`{\\\"type\\\": \\\"ineq\\\", \\\"fun\\\": g}` means $g(\\mathbf{w}) \\ge 0$. So $0.10 - \\mathbf{m}^T\\mathbf{w} \\ge 0$ caps return at 10%, which the budget-only portfolio meets.",
+        "generic": "Not quite right. Check the return of the answer against the target.",
+        "byKey": {
+          "atleast": "You read `ineq` as `fun(w) <= 0`. SciPy reads `fun(w) >= 0`.",
+          "equal": "An equality needs the `eq` type.",
+          "failed": "The solver succeeded on the constraint as written."
+        }
+      },
+      "explain": {
+        "text": "Write the target as `w @ m - 0.10`, so the function is $\\ge 0$ when the target is met. Then check the answer's return against the target.",
+        "canvas": {
+          "highlight": [
+            "l6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A zero that is not quite zero",
+      "prose": "SLSQP returns $w_1 = -3 \\times 10^{-17}$ on one run and $10^{-10}$ on another. Bounds and equalities hold only to the solver's tolerance.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> res.x",
+            "array([-3.1e-17,  3.333333e-01,  6.666667e-01])",
+            ">>> res2.x",
+            "array([ 1.0e-10,  3.333333e-01,  6.666667e-01])"
+          ],
+          "title": "Python",
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "How do we read the active set?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "Round with a stated tolerance, such as $10^{-8}$: $w_1 = 0$ is active.",
+            "correct": true
+          },
+          {
+            "id": "broken",
+            "text": "The bound is broken, so the answer is wrong.",
+            "why": "$-3 \\times 10^{-17}$ is rounding, far below any trade size."
+          },
+          {
+            "id": "long",
+            "text": "$10^{-10}$ is a small long position, so $w_1 \\ge 0$ is slack.",
+            "why": "It is zero to the solver's tolerance. Treat it as active and check $\\nu_1 \\ge 0$."
+          },
+          {
+            "id": "ignore",
+            "text": "Ignore the bounds when reading the active set.",
+            "why": "The bounds are part of the active set."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each tiny weight with the solver's tolerance."
+        },
+        {
+          "rung": "point",
+          "text": "Both are far below $10^{-8}$.",
+          "highlight": [
+            "l2",
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Round them to 0 before reading which bounds bind."
+        }
+      ],
+      "feedback": {
+        "correct": "Both runs say $w_1 = 0$. State the tolerance, round, then check the multipliers of the active set.",
+        "generic": "Not quite right. Ask how close to 0 a weight must be to count as 0.",
+        "byKey": {
+          "broken": "A violation of $10^{-17}$ is floating-point noise.",
+          "long": "A weight of $10^{-10}$ is noise, not a position.",
+          "ignore": "Bounds can be active like any constraint."
+        }
+      },
+      "explain": {
+        "text": "Floating-point solvers return zeros as tiny numbers of either sign. Rounding with a stated tolerance gives $w_1 = 0$ on both runs."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A tighter cap",
+      "prose": "Re-run the four-asset book at an 8% target with a 35% cap. The bond comes back with a weight of 0.0062.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "lines": [
+            ">>> res = minimize(..., bounds=[(0, 0.35)] * 4,",
+            "...     constraints=[budget, target_08])",
+            ">>> res.x.round(6)",
+            "array([0.006241, 0.339598, 0.304161, 0.35    ])"
+          ],
+          "title": "Python",
+          "wrap": true
+        },
+        "state": {}
+      },
+      "question": "Is the bond's bound $w_1 \\ge 0$ active?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "No: 0.0062 is far above the tolerance, so $\\nu_1 = 0$ and the bond is a free asset.",
+            "correct": true
+          },
+          {
+            "id": "near",
+            "text": "Yes: the weight is nearly 0.",
+            "why": "Near is not active. 0.0062 is millions of times the tolerance."
+          },
+          {
+            "id": "cap",
+            "text": "Yes, because the cap binds.",
+            "why": "The cap is on the 40% book, not on the bond."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare 0.0062 with $10^{-8}$."
+        },
+        {
+          "rung": "point",
+          "text": "A weight that size is a real position.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Complementary slackness then gives $\\nu_1 = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "Not active. The exact answer has bond weight $\\tfrac{9}{1442} \\approx 0.006241$, with only the 35% cap on the last book binding.",
+        "generic": "Not quite right. Compare the weight with the tolerance, not with 1.",
+        "byKey": {
+          "near": "A small weight is still a free weight.",
+          "cap": "The cap limits a different asset."
+        }
+      },
+      "explain": {
+        "text": "The answer is about $(0.0062, 0.3396, 0.3042, 0.35)$: the cap binds and the bond is a small free holding. Its multiplier $\\nu_1$ is 0."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Tracking an index",
+      "prose": "A benchmark holds the four books at $\\mathbf{b} = (0.10, 0.30, 0.30, 0.30)$, but the mandate excludes the 40% book. The fund minimises $(\\mathbf{w} - \\mathbf{b})^T\\boldsymbol{\\Sigma}(\\mathbf{w} - \\mathbf{b})$ with $\\mathbf{w} \\ge \\mathbf{0}$, $w_4 = 0$ and the budget. The QP's answer is in the table.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "Book",
+            "Benchmark",
+            "Fund"
+          ],
+          "rows": [
+            [
+              "bond",
+              "0.10",
+              "0.2209"
+            ],
+            [
+              "equity 1 (20%)",
+              "0.30",
+              "0.2753"
+            ],
+            [
+              "equity 2 (30%)",
+              "0.30",
+              "0.5037"
+            ],
+            [
+              "equity 3 (40%)",
+              "0.30",
+              "0 (excluded)"
+            ]
+          ]
+        }
+      },
+      "question": "Which book takes most of the excluded 30%?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "Equity 2, the book most correlated with the excluded one",
+            "correct": true
+          },
+          {
+            "id": "bond",
+            "text": "The bond",
+            "why": "The bond gains about 0.12, less than equity 2's 0.20."
+          },
+          {
+            "id": "eq1",
+            "text": "Equity 1",
+            "why": "Its weight falls slightly, from 0.30 to 0.2753."
+          },
+          {
+            "id": "even",
+            "text": "All three equally",
+            "why": "The QP weighs each book by how well it mimics the missing one."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each fund weight with the benchmark."
+        },
+        {
+          "rung": "point",
+          "text": "Equity 2 rises from 0.30 to 0.5037.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\rho_{34} = 0.5$ is the largest correlation with the excluded book."
+        }
+      ],
+      "feedback": {
+        "correct": "Equity 2 rises by about 0.20. The tracking error left is about 10.317% a year, the cost of the exclusion.",
+        "generic": "Not quite right. Read the change from benchmark to fund for each book.",
+        "byKey": {
+          "bond": "The bond rises by 0.12.",
+          "eq1": "Equity 1 falls a little.",
+          "even": "The changes are 0.12, −0.025 and 0.20."
+        }
+      },
+      "explain": {
+        "text": "The fund is about $(0.2209, 0.2753, 0.5037, 0)$. Equity 2 replaces most of the excluded book because $\\rho_{34} = 0.5$, and tracking variance is about 0.010644."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The solver in code",
+      "prose": "Write `long_only_min_var(Sigma, m, target, cap=1.0)`. First run `linprog` with a zero objective to test that the target is reachable; raise `ValueError` if not. Then start SLSQP from the feasible point `lp.x` and return the weights.",
+      "question": "Complete the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\nS3 = np.diag([0.04, 0.09, 0.16])\nM3 = np.array([0.05, 0.08, 0.11])\n_v = np.array([0.08, 0.20, 0.30, 0.40])\n_R = np.array([[1, -0.2, 0, 0.1], [-0.2, 1, 0.3, 0.1], [0, 0.3, 1, 0.5], [0.1, 0.1, 0.5, 1]])\nS4 = np.outer(_v, _v) * _R\nM4 = np.array([0.03, 0.05, 0.08, 0.11])\n",
+        "starter": "import numpy as np\nfrom scipy.optimize import linprog, minimize\n\n\ndef long_only_min_var(Sigma, m, target, cap=1.0):\n    # minimise w @ Sigma @ w with sum(w) = 1, w @ m >= target, 0 <= w <= cap\n    # raise ValueError when linprog says the target is out of reach\n    pass\n",
+        "examples": [
+          {
+            "call": "long_only_min_var(S3, M3, 0.10)",
+            "expect": "[0, 1/3, 2/3]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "long_only_min_var(S3, M3, 0.10)",
+            "expect": "[0, 1/3, 2/3]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "long_only_min_var(S3, M3, 0.09, cap=0.45)",
+            "expect": "[7/60, 13/30, 0.45]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "long_only_min_var(S4, M4, 0.085, cap=0.4)",
+            "expect": "[0, 7/30, 11/30, 0.4]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "long_only_min_var(S4, M4, 0.08, cap=0.35)[0]",
+            "expect": "9/1442",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "w = long_only_min_var(S3, M3, 0.10)",
+            "call": "float(w @ S3 @ w)",
+            "expect": "73/900",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          },
+          {
+            "call": "long_only_min_var(S3, M3, 0.10, cap=0.5)",
+            "expect": "ValueError",
+            "compare": "raises"
+          },
+          {
+            "call": "long_only_min_var(S4, M4, 0.09, cap=0.4)",
+            "expect": "ValueError",
+            "compare": "raises"
+          }
+        ],
+        "solution": "import numpy as np\nfrom scipy.optimize import linprog, minimize\n\n\ndef long_only_min_var(Sigma, m, target, cap=1.0):\n    S = np.asarray(Sigma, dtype=float)\n    m = np.asarray(m, dtype=float)\n    n = len(m)\n    lp = linprog(np.zeros(n), A_ub=[-m], b_ub=[-target],\n                 A_eq=[np.ones(n)], b_eq=[1],\n                 bounds=[(0, cap)] * n, method=\"highs\")\n    if lp.status != 0:\n        raise ValueError(\"target out of reach\")\n    cons = [{\"type\": \"eq\", \"fun\": lambda w: w.sum() - 1},\n            {\"type\": \"ineq\", \"fun\": lambda w: w @ m - target}]\n    res = minimize(lambda w: w @ S @ w, lp.x, jac=lambda w: 2 * S @ w,\n                   method=\"SLSQP\", bounds=[(0, cap)] * n,\n                   constraints=cons,\n                   options={\"ftol\": 1e-15, \"maxiter\": 500})\n    return res.x\n",
+        "how": "Submit runs 7 hidden tests (S3, M3, S4 and M4 are defined for you). Weights are compared with math.isclose, absolute 1e-6; two cases must raise ValueError. The first run loads NumPy and SciPy: a few seconds from cache, longer on a first visit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The feasibility LP: `A_ub=[-m]`, `b_ub=[-target]`, `A_eq=[np.ones(n)]`, `b_eq=[1]`, `bounds=[(0, cap)] * n`."
+        },
+        {
+          "rung": "point",
+          "text": "SciPy's target dictionary is `lambda w: w @ m - target`."
+        },
+        {
+          "rung": "step",
+          "text": "Pass `options={\"ftol\": 1e-15}` so the weights are accurate to 6 places."
+        }
+      ],
+      "feedback": {
+        "correct": "All pass: $(0, \\tfrac13, \\tfrac23)$ at 10%, $(\\tfrac{7}{60}, \\tfrac{13}{30}, 0.45)$ at 9% with a 45% cap, and the four-asset book.",
+        "generic": "Not quite right. Check the sign of the target dictionary and the feasibility test."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Monthly rebalance",
+      "prose": "A long-only fund with position limits rebalances monthly with exactly this call. The risk team re-solves a small case by hand, as in lesson 11. A long-short book (`alpha` l13) drops the bounds and adds a gross limit $\\sum_i |w_i| \\le 2$.",
+      "question": "How does the gross limit reach a solver as linear constraints?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "Split $w_i = u_i - v_i$ with $u_i, v_i \\ge 0$ and require $\\sum_i (u_i + v_i) \\le 2$.",
+            "correct": true
+          },
+          {
+            "id": "abs",
+            "text": "Pass $\\sum_i |w_i| \\le 2$ as it is.",
+            "why": "It is convex but has corners, and an LP needs linear rows."
+          },
+          {
+            "id": "sq",
+            "text": "Use $\\sum_i w_i^2 \\le 2$ instead.",
+            "why": "That is a different limit: it caps the spread of weights, not gross exposure."
+          },
+          {
+            "id": "box",
+            "text": "Use bounds $-2 \\le w_i \\le 2$.",
+            "why": "That limits each name, not the total."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Lesson 4 rewrote an absolute value with two nonnegative parts."
+        },
+        {
+          "rung": "point",
+          "text": "$|w_i| = u_i + v_i$ when $w_i = u_i - v_i$ and one part is 0."
+        },
+        {
+          "rung": "step",
+          "text": "Then the gross limit is one linear row."
+        }
+      ],
+      "feedback": {
+        "correct": "This is lesson 4's absolute-value trick. At the optimum one of $u_i$, $v_i$ is 0, so $u_i + v_i = |w_i|$.",
+        "generic": "Not quite right. Look for a way to write $|w_i|$ with linear pieces.",
+        "byKey": {
+          "abs": "Corners are a problem for a smooth solver.",
+          "sq": "A squared limit changes the meaning.",
+          "box": "Box bounds limit names one at a time."
+        }
+      },
+      "explain": {
+        "text": "Splitting each weight into a long part and a short part makes $\\sum_i |w_i| \\le 2$ one linear row. The QP keeps its convex objective, so KKT still applies."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Minimum variance with linear limits is a quadratic programme with $\\mathbf{Q} = 2\\boldsymbol{\\Sigma}$, $\\mathbf{q} = \\mathbf{0}$: convex, so KKT certifies the answer.",
+      "Check feasibility with `linprog` first, then solve with SLSQP from that point. Read the active set with a stated tolerance.",
+      "SciPy's `ineq` means `fun(w) >= 0`: write a return target as `w @ m - target`."
+    ],
+    "formula": {
+      "name": "Quadratic programme",
+      "tex": "\\min_{\\mathbf{w}} \\tfrac12\\mathbf{w}^T\\mathbf{Q}\\mathbf{w} + \\mathbf{q}^T\\mathbf{w}\\ \\text{ s.t. }\\ \\mathbf{A}\\mathbf{w} \\le \\mathbf{b},\\ \\mathbf{E}\\mathbf{w} = \\mathbf{d}",
+      "note": "Convex when $\\mathbf{Q}$ is positive semidefinite."
+    },
+    "trap": "A target written as `0.10 - w @ m` caps return at 10%, and the solver reports success on the wrong problem."
+  },
+  "quiz": [
+    {
+      "id": "q12-ineq",
+      "difficulty": 2,
+      "prose": "We want a return of at least 7% in SciPy.",
+      "question": "Which dictionary encodes it?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "`{\"type\": \"ineq\", \"fun\": lambda w: w @ m - 0.07}`",
+            "correct": true
+          },
+          {
+            "id": "flip",
+            "text": "`{\"type\": \"ineq\", \"fun\": lambda w: 0.07 - w @ m}`",
+            "why": "That says return at most 7%."
+          },
+          {
+            "id": "eq",
+            "text": "`{\"type\": \"eq\", \"fun\": lambda w: w @ m - 0.07}`",
+            "why": "That forces exactly 7%."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "`ineq` means `fun(w) >= 0`, so write the target as return minus 7%.",
+        "generic": "Not quite right. Recall what `ineq` requires."
+      },
+      "explain": {
+        "text": "SciPy's `ineq` constraint holds when `fun(w) >= 0`. `w @ m - 0.07 >= 0` is a return of at least 7%."
+      }
+    },
+    {
+      "id": "q12-qp",
+      "difficulty": 3,
+      "prose": "A desk minimises $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} - 2\\mathbf{m}^T\\mathbf{w}$, a risk-return trade-off.",
+      "question": "As $\\tfrac12\\mathbf{w}^T\\mathbf{Q}\\mathbf{w} + \\mathbf{q}^T\\mathbf{w}$, what are $\\mathbf{Q}$ and $\\mathbf{q}$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "$\\mathbf{Q} = 2\\boldsymbol{\\Sigma}$, $\\mathbf{q} = -2\\mathbf{m}$",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "$\\mathbf{Q} = \\boldsymbol{\\Sigma}$, $\\mathbf{q} = -2\\mathbf{m}$",
+            "why": "You dropped the half in front of the quadratic term."
+          },
+          {
+            "id": "sign",
+            "text": "$\\mathbf{Q} = 2\\boldsymbol{\\Sigma}$, $\\mathbf{q} = 2\\mathbf{m}$",
+            "why": "The return term enters with a minus."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$\\tfrac12\\mathbf{w}^T(2\\boldsymbol{\\Sigma})\\mathbf{w} - 2\\mathbf{m}^T\\mathbf{w}$ matches.",
+        "generic": "Not quite right. Match the quadratic and the linear terms separately."
+      },
+      "explain": {
+        "text": "The half needs $\\mathbf{Q} = 2\\boldsymbol{\\Sigma}$, and the linear term is $-2\\mathbf{m}^T\\mathbf{w}$, so $\\mathbf{q} = -2\\mathbf{m}$."
+      }
+    },
+    {
+      "id": "q12-reach",
+      "difficulty": 3,
+      "prose": "Three assets return 4%, 6% and 9%. The fund is long-only with a 50% cap on each.",
+      "question": "What is the highest return it can reach?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.075,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "7.5%: $0.5 \\times 9\\% + 0.5 \\times 6\\%$.",
+        "unit": "%",
+        "wrong": [
+          {
+            "id": "nocap",
+            "value": 0.09,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$0.5 \\times 9\\% + 0.5 \\times 6\\% = 7.5\\%$. Any target above that is infeasible.",
+        "generic": "Not quite right. Fill the best assets up to the cap.",
+        "byKey": {
+          "nocap": "You ignored the 50% cap."
+        }
+      },
+      "explain": {
+        "text": "Half in the 9% asset and half in the 6% asset spends the budget: $4.5\\% + 3\\% = 7.5\\%$."
+      }
+    },
+    {
+      "id": "q12-tiny",
+      "difficulty": 2,
+      "prose": "SLSQP returns $\\mathbf{w} = (2 \\times 10^{-12}, 0.5, 0.5)$.",
+      "question": "Is $w_1 \\ge 0$ active?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "Yes: $2 \\times 10^{-12}$ is 0 to the solver's tolerance.",
+            "correct": true
+          },
+          {
+            "id": "no",
+            "text": "No: the weight is positive.",
+            "why": "A weight of $10^{-12}$ is noise, not a holding."
+          },
+          {
+            "id": "cant",
+            "text": "It cannot be told.",
+            "why": "Round with a stated tolerance and it can."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Treat it as 0, then check its multiplier is nonnegative.",
+        "generic": "Not quite right. Compare the weight with the solver's tolerance."
+      },
+      "explain": {
+        "text": "Solvers return zeros as tiny numbers. With a tolerance of $10^{-8}$, $w_1 = 0$ and its bound is active."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1312 @@
+{
+  "id": "l11-mean-variance-kkt",
+  "course": "convex",
+  "title": "Mean-variance by hand through KKT",
+  "minutes": 15,
+  "objectives": [
+    "Solve a constrained mean-variance problem through the KKT conditions by hand."
+  ],
+  "skills": [
+    "cv-duality",
+    "cv-qp"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Along the target line",
+      "prose": "Back to the three assets, now with a 10% target and no shorting. On the target line $w_2 = \\tfrac13 - 2w_1$ and $w_3 = \\tfrac23 + w_1$, so the variance is $V(w_1) = \\tfrac{14}{25}w_1^2 + \\tfrac{7}{75}w_1 + \\tfrac{73}{900}$. Long-only means $0 \\le w_1 \\le \\tfrac16$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -0.2,
+            0.25
+          ],
+          "y": [
+            0.07,
+            0.12
+          ],
+          "height": 280,
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "variance",
+          "functions": [
+            {
+              "id": "V",
+              "expr": "0.56*x^2 + (7/75)*x + 73/900",
+              "domain": [
+                -0.2,
+                0.25
+              ],
+              "label": "$V(w_1)$",
+              "colour": 6,
+              "labelAt": -0.14
+            },
+            {
+              "id": "Vf",
+              "expr": "0.56*x^2 + (7/75)*x + 73/900",
+              "domain": [
+                0,
+                0.16666666666666666
+              ],
+              "label": "long-only",
+              "colour": 1,
+              "labelAt": 0.15,
+              "labelSide": "below"
+            }
+          ],
+          "vlines": [
+            {
+              "id": "w1z",
+              "x": 0,
+              "label": "$w_1 = 0$"
+            },
+            {
+              "id": "w2z",
+              "x": 0.16666666666666666,
+              "label": "$w_2 = 0$"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "F",
+              "x": -0.08333333333333333,
+              "y": 0.07722222222222222,
+              "label": "free minimum",
+              "labelPos": "s",
+              "open": true
+            },
+            {
+              "id": "P",
+              "x": 0.1,
+              "y": 0.09604444444444445,
+              "drag": true,
+              "on": "Vf",
+              "label": "$P$"
+            }
+          ]
+        },
+        "maxHeight": 330,
+        "derive": {
+          "caption": "$\\mathbf{w}$ = ({{fixed(P.x, 3)}}, {{fixed(1/3 - 2*P.x, 3)}}, {{fixed(2/3 + P.x, 3)}}), variance {{fixed(P.y, 6)}}"
+        }
+      },
+      "question": "Drag $P$ to the lowest variance a long-only fund can reach.",
+      "widget": {
+        "kind": "drag-point",
+        "points": [
+          {
+            "id": "P",
+            "target": {
+              "on": "Vf",
+              "x": 0
+            },
+            "tol": 0.004
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Move $P$ the way the curve falls."
+        },
+        {
+          "rung": "point",
+          "text": "The curve keeps falling until $w_1 = -\\tfrac{1}{12}$, outside the bold part.",
+          "highlight": [
+            "F",
+            "w1z"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The bold part ends at $w_1 = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "$w_1 = 0$: the portfolio $(0, \\tfrac13, \\tfrac23)$ with variance $\\tfrac{73}{900} \\approx 0.081111$. The free minimum at $w_1 = -\\tfrac{1}{12}$ needs a short.",
+        "generic": "Not quite right. Drag $P$ downhill along the bold part.",
+        "byKey": {
+          "P": "Lower is to the left. The parabola keeps falling until $w_1 = -\\tfrac{1}{12}$, which is out of bounds."
+        }
+      },
+      "explain": {
+        "text": "$V$ falls all the way to the wall at $w_1 = 0$. The best long-only point is the end of the interval, with variance 0.081111.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The slope at the wall",
+      "prose": "At $w_1 = 0$ the curve still rises to the right. The fund would like to move left, but the wall stops it. Differentiate $V(w_1) = \\tfrac{14}{25}w_1^2 + \\tfrac{7}{75}w_1 + \\tfrac{73}{900}$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -0.2,
+            0.25
+          ],
+          "y": [
+            0.07,
+            0.12
+          ],
+          "height": 280,
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "variance",
+          "functions": [
+            {
+              "id": "V",
+              "expr": "0.56*x^2 + (7/75)*x + 73/900",
+              "domain": [
+                -0.2,
+                0.25
+              ],
+              "label": "$V(w_1)$",
+              "colour": 6,
+              "labelAt": -0.14
+            },
+            {
+              "id": "Vf",
+              "expr": "0.56*x^2 + (7/75)*x + 73/900",
+              "domain": [
+                0,
+                0.16666666666666666
+              ],
+              "label": "long-only",
+              "colour": 1,
+              "labelAt": 0.15,
+              "labelSide": "below"
+            }
+          ],
+          "vlines": [
+            {
+              "id": "w1z",
+              "x": 0,
+              "label": "$w_1 = 0$"
+            },
+            {
+              "id": "w2z",
+              "x": 0.16666666666666666,
+              "label": "$w_2 = 0$"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "F",
+              "x": -0.08333333333333333,
+              "y": 0.07722222222222222,
+              "label": "free minimum",
+              "labelPos": "s",
+              "open": true
+            },
+            {
+              "id": "P",
+              "x": 0,
+              "y": 0.0811111111111111,
+              "label": "$(0, 0.081111)$",
+              "labelPos": "e"
+            }
+          ],
+          "tangent": {
+            "f": "V",
+            "x": 0,
+            "length": 0.12
+          }
+        },
+        "maxHeight": 330
+      },
+      "question": "What is the slope $V'(0)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.093333,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.0933: $\\tfrac{7}{75}$.",
+        "label": "Slope at 0",
+        "wrong": [
+          {
+            "id": "flat",
+            "value": 0,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "value",
+            "value": 0.081111,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Differentiate term by term."
+        },
+        {
+          "rung": "point",
+          "text": "$V'(w_1) = \\tfrac{28}{25}w_1 + \\tfrac{7}{75}$.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $w_1 = 0$ only $\\tfrac{7}{75}$ is left."
+        }
+      ],
+      "feedback": {
+        "correct": "$V'(0) = \\tfrac{7}{75} \\approx 0.0933$. It measures how hard the wall $w_1 \\ge 0$ pushes back; KKT will name it $\\nu_1$.",
+        "generic": "Not quite right. Differentiate $V$ and set $w_1 = 0$.",
+        "byKey": {
+          "flat": "A minimum on a wall need not be flat. Here the slope is positive: moving left would help.",
+          "value": "That is $V(0)$, the height. The question asks for the slope."
+        }
+      },
+      "explain": {
+        "text": "$V'(w_1) = \\tfrac{28}{25}w_1 + \\tfrac{7}{75}$, so $V'(0) = \\tfrac{7}{75} \\approx 0.0933$. A positive slope at a lower wall says the bound binds.",
+        "canvas": {
+          "highlight": [
+            "P"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "KKT for a portfolio",
+      "prose": "For uncorrelated assets, $2\\boldsymbol{\\Sigma}\\mathbf{w}$ has entries $2\\sigma_i^2w_i$. So KKT reads, for each asset $$2\\sigma_i^2w_i = \\lambda + \\mu m_i + \\nu_i,\\qquad \\nu_i \\ge 0,\\qquad \\nu_iw_i = 0,$$ with the budget $\\mathbf{1}^T\\mathbf{w} = 1$, the target $\\mathbf{m}^T\\mathbf{w} \\ge r$, $\\mu \\ge 0$ and $\\mu(r - \\mathbf{m}^T\\mathbf{w}) = 0$.",
+      "question": "Asset 2 is held at $w_2 = \\tfrac13 > 0$. What is $\\nu_2$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "zero",
+            "text": "0",
+            "correct": true
+          },
+          {
+            "id": "nu1",
+            "text": "$\\tfrac{7}{75}$",
+            "why": "That is $\\nu_1$, the multiplier of the asset at zero."
+          },
+          {
+            "id": "any",
+            "text": "Any value $\\ge 0$",
+            "why": "Complementary slackness forces $\\nu_2w_2 = 0$, and $w_2 > 0$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$\\nu_2 = 0$: a weight strictly inside its bound has no push from the wall.",
+        "generic": "Not quite right. Use $\\nu_2w_2 = 0$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "8%: nothing at zero",
+      "prose": "At an 8% target the `multivar` answer is $\\mathbf{w} = (\\tfrac{9}{28}, \\tfrac{10}{28}, \\tfrac{9}{28})$, all positive, so every $\\nu_i = 0$. Rows 2 and 3 read $2(0.09)\\tfrac{10}{28} = \\lambda + 0.08\\mu$ and $2(0.16)\\tfrac{9}{28} = \\lambda + 0.11\\mu$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a1",
+              "label": "20% vol"
+            },
+            {
+              "id": "a2",
+              "label": "30% vol"
+            },
+            {
+              "id": "a3",
+              "label": "40% vol"
+            }
+          ],
+          "yLabel": "weight",
+          "yMin": 0,
+          "yMax": 0.8,
+          "showValues": true,
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "a1": 0.32142857142857145,
+            "a2": 0.35714285714285715,
+            "a3": 0.32142857142857145
+          }
+        },
+        "maxHeight": 300
+      },
+      "question": "Subtract row 2 from row 3. What is $\\mu$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.285714,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "1.2857: $\\tfrac97$.",
+        "label": "mu",
+        "wrong": [
+          {
+            "id": "lam",
+            "value": -0.038571,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "inv",
+            "value": 0.777778,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out both left sides as decimals."
+        },
+        {
+          "rung": "point",
+          "text": "They are $0.064286$ and $0.102857$.",
+          "highlight": [
+            "xa2",
+            "xa3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.038571 = 0.03\\mu$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mu = \\tfrac97 \\approx 1.2857 > 0$, so the target binds. Then $\\lambda = 0.064286 - 0.08\\mu = -\\tfrac{27}{700}$, the `multivar` values.",
+        "generic": "Not quite right. Subtract the rows so $\\lambda$ cancels, then divide by 0.03.",
+        "byKey": {
+          "lam": "That is $\\lambda$. The question asks for $\\mu$.",
+          "inv": "You divided the wrong way round: $\\mu = 0.038571 / 0.03$."
+        }
+      },
+      "explain": {
+        "text": "Row 3 minus row 2 gives $0.102857 - 0.064286 = 0.038571 = 0.03\\mu$, so $\\mu = \\tfrac97 \\approx 1.2857$. Every sign checks: $\\mu > 0$ and all weights positive."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "10%: a short appears",
+      "prose": "Raise the target to 10% and allow shorting. The same equations give $\\mathbf{w} = (-\\tfrac{1}{12}, \\tfrac12, \\tfrac{7}{12})$ and $\\mu = \\tfrac{29}{9}$: the free minimum from the first screen.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a1",
+              "label": "20% vol"
+            },
+            {
+              "id": "a2",
+              "label": "30% vol"
+            },
+            {
+              "id": "a3",
+              "label": "40% vol"
+            }
+          ],
+          "yLabel": "weight",
+          "yMin": -0.2,
+          "yMax": 0.8,
+          "showValues": true,
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "a1": -0.08333333333333333,
+            "a2": 0.5,
+            "a3": 0.5833333333333334
+          }
+        },
+        "maxHeight": 300
+      },
+      "question": "Which KKT condition fails for a long-only fund?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "Primal feasibility: $w_1 = -\\tfrac{1}{12} < 0$",
+            "correct": true
+          },
+          {
+            "id": "mu",
+            "text": "Dual feasibility: $\\mu < 0$",
+            "why": "$\\mu = \\tfrac{29}{9}$ is positive."
+          },
+          {
+            "id": "budget",
+            "text": "The budget",
+            "why": "$-\\tfrac{1}{12} + \\tfrac12 + \\tfrac{7}{12} = 1$."
+          },
+          {
+            "id": "stat",
+            "text": "Stationarity",
+            "why": "The weights were built to satisfy it."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the bars."
+        },
+        {
+          "rung": "point",
+          "text": "One weight is negative.",
+          "highlight": [
+            "xa1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Long-only needs $w_1 \\ge 0$, a primal constraint."
+        }
+      ],
+      "feedback": {
+        "correct": "$w_1 < 0$ breaks $w_1 \\ge 0$. KKT now needs a different active set, with $w_1$ held at 0.",
+        "generic": "Not quite right. Check each condition against the bars.",
+        "byKey": {
+          "mu": "$\\mu = \\tfrac{29}{9} > 0$ passes.",
+          "budget": "The weights sum to 1.",
+          "stat": "Stationarity holds by construction."
+        }
+      },
+      "explain": {
+        "text": "The shorting answer breaks $w_1 \\ge 0$, so it is not feasible for the fund. The next guess holds $w_1 = 0$ and asks for $\\nu_1 \\ge 0$.",
+        "canvas": {
+          "highlight": [
+            "xa1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Guess $w_1 = 0$",
+      "prose": "Hold $w_1 = 0$, so $w_2 = \\tfrac13$ and $w_3 = \\tfrac23$. Rows 2 and 3 read $0.06 = \\lambda + 0.08\\mu$ and $\\tfrac{16}{75} = \\lambda + 0.11\\mu$. Row 1 reads $0 = \\lambda + 0.05\\mu + \\nu_1$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a1",
+              "label": "20% vol"
+            },
+            {
+              "id": "a2",
+              "label": "30% vol"
+            },
+            {
+              "id": "a3",
+              "label": "40% vol"
+            }
+          ],
+          "yLabel": "weight",
+          "yMin": 0,
+          "yMax": 0.8,
+          "showValues": true,
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "a1": 0,
+            "a2": 0.3333333333333333,
+            "a3": 0.6666666666666666
+          }
+        },
+        "maxHeight": 300
+      },
+      "question": "Find $\\mu$, $\\lambda$ and $\\nu_1$ to four places, then check the sign.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "μ",
+            {
+              "edit": true,
+              "answer": 5.1111,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "λ",
+            {
+              "edit": true,
+              "answer": -0.3489,
+              "tol": {
+                "abs": 0.001
+              }
+            }
+          ],
+          [
+            "ν₁",
+            {
+              "edit": true,
+              "answer": 0.0933,
+              "tol": {
+                "abs": 0.0005
+              },
+              "wrong": [
+                {
+                  "id": "nusign",
+                  "value": -0.0933,
+                  "tol": {
+                    "abs": 0.0005
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "Is ν₁ ≥ 0?",
+            {
+              "edit": true,
+              "answer": "yes",
+              "accept": [
+                "y"
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Subtract row 2 from row 3 so $\\lambda$ cancels."
+        },
+        {
+          "rung": "point",
+          "text": "$\\tfrac{16}{75} - 0.06 = 0.153333 = 0.03\\mu$.",
+          "highlight": [
+            "xa1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Then $\\lambda = 0.06 - 0.08\\mu$ and $\\nu_1 = -\\lambda - 0.05\\mu$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mu = \\tfrac{46}{9} \\approx 5.1111$, $\\lambda = -\\tfrac{157}{450} \\approx -0.3489$ and $\\nu_1 = \\tfrac{7}{75} \\approx 0.0933 \\ge 0$. Every condition holds.",
+        "generic": "Not quite right. Solve rows 2 and 3 for $\\mu$ and $\\lambda$ first.",
+        "byKey": {
+          "nusign": "Row 1 is $0 = \\lambda + 0.05\\mu + \\nu_1$, so $\\nu_1 = -\\lambda - 0.05\\mu$, which is positive."
+        }
+      },
+      "explain": {
+        "text": "Subtracting the rows gives $0.03\\mu = \\tfrac{23}{150}$, so $\\mu = \\tfrac{46}{9}$ and $\\lambda = -\\tfrac{157}{450}$. Then $\\nu_1 = \\tfrac{7}{75} \\approx 0.0933$, the slope of $V$ at the wall."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Risk of the answer",
+      "prose": "So the long-only optimum at 10% is $\\mathbf{w} = (0, \\tfrac13, \\tfrac23)$, with variance $0.09 \\cdot \\tfrac19 + 0.16 \\cdot \\tfrac49 = \\tfrac{73}{900}$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a1",
+              "label": "20% vol"
+            },
+            {
+              "id": "a2",
+              "label": "30% vol"
+            },
+            {
+              "id": "a3",
+              "label": "40% vol"
+            }
+          ],
+          "yLabel": "weight",
+          "yMin": 0,
+          "yMax": 0.8,
+          "showValues": true,
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "a1": 0,
+            "a2": 0.3333333333333333,
+            "a3": 0.6666666666666666
+          }
+        },
+        "maxHeight": 300
+      },
+      "question": "What is its volatility?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2848,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "28.48%: $\\sqrt{73/900}$.",
+        "unit": "%",
+        "label": "Volatility",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 0.081111,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "avg",
+            "value": 0.366667,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Volatility is the square root of variance."
+        },
+        {
+          "rung": "point",
+          "text": "$\\tfrac{73}{900} \\approx 0.081111$.",
+          "highlight": [
+            "xa2",
+            "xa3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\sqrt{0.081111} \\approx 0.2848$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\sqrt{0.081111} \\approx 28.480\\%$, against 27.789% with shorting allowed.",
+        "generic": "Not quite right. Take the square root of the variance.",
+        "byKey": {
+          "var": "That is the variance. Take its square root.",
+          "avg": "You averaged the volatilities. For uncorrelated assets the variances add, weighted by $w_i^2$."
+        }
+      },
+      "explain": {
+        "text": "The variance is $0.01 + 0.071111 = 0.081111$, so the volatility is $\\sqrt{0.081111} \\approx 28.480\\%$. Banning the short costs about 0.7 points of volatility."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Clip and rescale",
+      "prose": "A colleague takes the shorting answer $(-\\tfrac{1}{12}, \\tfrac12, \\tfrac{7}{12})$, sets the short to 0 and divides by the new sum $\\tfrac{13}{12}$. That gives $(0, 0.4615, 0.5385)$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a1",
+              "label": "20% vol"
+            },
+            {
+              "id": "a2",
+              "label": "30% vol"
+            },
+            {
+              "id": "a3",
+              "label": "40% vol"
+            }
+          ],
+          "yLabel": "weight",
+          "yMin": 0,
+          "yMax": 0.8,
+          "showValues": true,
+          "decimals": 4,
+          "height": 240
+        },
+        "state": {
+          "values": {
+            "a1": 0,
+            "a2": 0.46153846153846156,
+            "a3": 0.5384615384615384
+          }
+        },
+        "maxHeight": 300
+      },
+      "question": "What is wrong with the clipped portfolio?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "It earns 9.615%, short of the 10% target.",
+            "correct": true
+          },
+          {
+            "id": "sum",
+            "text": "Its weights sum to 1.0833.",
+            "why": "That was before rescaling. After dividing by $\\tfrac{13}{12}$ they sum to 1.",
+            "canvas": {
+              "values": {
+                "a1": 0,
+                "a2": 0.5,
+                "a3": 0.5833
+              }
+            }
+          },
+          {
+            "id": "fine",
+            "text": "Nothing: it matches the KKT answer.",
+            "why": "KKT gives $(0, \\tfrac13, \\tfrac23)$. Clipping kept the old $\\lambda$ and $\\mu$, which belong to another active set.",
+            "canvas": {
+              "values": {
+                "a1": 0,
+                "a2": 0.3333,
+                "a3": 0.6667
+              }
+            }
+          },
+          {
+            "id": "risk",
+            "text": "Its variance is above the KKT answer's.",
+            "why": "It is lower, about 0.0656, only because it gives up return."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compute the clipped portfolio's return."
+        },
+        {
+          "rung": "point",
+          "text": "$0.08 \\times 0.4615 + 0.11 \\times 0.5385$.",
+          "highlight": [
+            "xa2",
+            "xa3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Compare it with 10%."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.08 \\times 0.4615 + 0.11 \\times 0.5385 = 9.615\\%$. In `multivar` l12, two assets clipped safely because the budget fixed the other weight; with three, the target breaks.",
+        "generic": "Not quite right. Check the clipped portfolio against every constraint.",
+        "byKey": {
+          "sum": "You read the weights before rescaling.",
+          "fine": "You assumed clipping keeps KKT. It keeps the old multipliers instead.",
+          "risk": "Lower variance here comes from missing the target."
+        }
+      },
+      "explain": {
+        "text": "Clipping changes the active set but keeps the old multipliers. KKT re-solves with $w_1 = 0$ and finds $(0, \\tfrac13, \\tfrac23)$, which hits 10% exactly.",
+        "canvas": {
+          "values": {
+            "a1": 0,
+            "a2": 0.3333,
+            "a3": 0.6667
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The weight formula",
+      "prose": "We derive the long-only weight of an uncorrelated asset from the KKT conditions.",
+      "question": "Put the derivation in order. Leave out the lines that do not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "f1",
+            "text": "Stationarity for asset $i$: $2\\sigma_i^2w_i = \\lambda + \\mu m_i + \\nu_i$."
+          },
+          {
+            "id": "f2",
+            "text": "Divide by $2\\sigma_i^2 > 0$: $w_i = \\dfrac{\\lambda + \\mu m_i + \\nu_i}{2\\sigma_i^2}$."
+          },
+          {
+            "id": "f3",
+            "text": "If $w_i > 0$, complementary slackness gives $\\nu_i = 0$, so $w_i = \\dfrac{\\lambda + \\mu m_i}{2\\sigma_i^2}$."
+          },
+          {
+            "id": "f4",
+            "text": "If $\\lambda + \\mu m_i < 0$, that would be negative, so $w_i = 0$ and $\\nu_i = -(\\lambda + \\mu m_i) \\ge 0$."
+          },
+          {
+            "id": "f5",
+            "text": "So $w_i = \\max\\big(0, \\tfrac{\\lambda + \\mu m_i}{2\\sigma_i^2}\\big)$, with $\\lambda$ and $\\mu$ fixed by the budget and the target."
+          },
+          {
+            "id": "d1",
+            "text": "Use the $\\lambda$ and $\\mu$ of the shorting solution in that formula.",
+            "why": "$\\lambda$ and $\\mu$ change with the active set. Keeping the old ones is the clip, which misses the target."
+          },
+          {
+            "id": "d2",
+            "text": "If $w_i = 0$ then $\\nu_i = 0$ as well.",
+            "why": "Complementary slackness needs only one of the two to be 0. At the wall $\\nu_i$ is usually positive."
+          }
+        ],
+        "answer": [
+          "f1",
+          "f2",
+          "f3",
+          "f4",
+          "f5"
+        ],
+        "same": [
+          [
+            "f3",
+            "f4"
+          ]
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from stationarity and divide."
+        },
+        {
+          "rung": "point",
+          "text": "Split into two cases: $w_i > 0$ and $w_i = 0$."
+        },
+        {
+          "rung": "step",
+          "text": "Complementary slackness decides $\\nu_i$ in each case."
+        }
+      ],
+      "feedback": {
+        "correct": "$w_i = \\max\\big(0, \\tfrac{\\lambda + \\mu m_i}{2\\sigma_i^2}\\big)$, but only with the $\\lambda$ and $\\mu$ of the right active set.",
+        "generic": "Not quite right. Start from stationarity, then split into the two cases.",
+        "byKey": {
+          "d1": "That is the clip-and-rescale trap.",
+          "d2": "At the wall $\\nu_i$ carries the push, so it need not be 0.",
+          "left-out": "You left out a step: stationarity, the division, a case or the conclusion."
+        }
+      },
+      "explain": {
+        "text": "At the 10% answer, $\\lambda + \\mu m_1 = -0.3489 + 5.1111 \\times 0.05 = -0.0933 < 0$, so $w_1 = 0$ with $\\nu_1 = 0.0933$. The formula looks like a clip, but its $\\lambda$ and $\\mu$ are re-solved."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A floor that does not bind",
+      "prose": "Swap the 10% target for a 6% floor, $\\mathbf{m}^T\\mathbf{w} \\ge 0.06$. The budget-only portfolio $(\\tfrac{36}{61}, \\tfrac{16}{61}, \\tfrac{9}{61})$ already earns 6.672%.",
+      "question": "What is $\\mu$ at the optimum?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0.0001
+        },
+        "accept": "0: the floor is slack.",
+        "label": "mu",
+        "wrong": [
+          {
+            "id": "eight",
+            "value": 1.285714,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Is the floor met with room to spare?"
+        },
+        {
+          "rung": "point",
+          "text": "6.672% > 6%, so $r - \\mathbf{m}^T\\mathbf{w} < 0$."
+        },
+        {
+          "rung": "step",
+          "text": "Complementary slackness: $\\mu(r - \\mathbf{m}^T\\mathbf{w}) = 0$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\mu = 0$: the floor is slack, so complementary slackness switches it off. The answer is the budget-only portfolio, variance $\\tfrac{36}{1525}$.",
+        "generic": "Not quite right. Check whether the floor binds at the budget-only portfolio.",
+        "byKey": {
+          "eight": "That is $\\mu$ at an 8% target, which binds. A 6% floor has room to spare."
+        }
+      },
+      "explain": {
+        "text": "$\\mu(0.06 - \\mathbf{m}^T\\mathbf{w}) = 0$ with $\\mathbf{m}^T\\mathbf{w} = 0.06672 > 0.06$ forces $\\mu = 0$. KKT is then the budget-only problem, with $\\lambda = \\tfrac{72}{1525}$."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "KKT weights in code",
+      "prose": "Write `kkt_weights(sig2, m, target, zero=())` for uncorrelated assets, holding the weights listed in `zero` at 0. Solve the budget and target rows for $\\lambda$ and $\\mu$ with `np.linalg.solve`, then return $(\\mathbf{w}, \\lambda, \\mu, \\boldsymbol{\\nu})$. `kkt_ok(w, nu)` says whether every weight and $\\nu_i$ is nonnegative.",
+      "question": "Complete both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\nS2 = [0.04, 0.09, 0.16]\nM = [0.05, 0.08, 0.11]\n",
+        "starter": "import numpy as np\n\n\ndef kkt_weights(sig2, m, target, zero=()):\n    # uncorrelated assets; the weights listed in zero are held at 0\n    # return (w, lam, mu, nu)\n    pass\n\n\ndef kkt_ok(w, nu, tol=1e-9):\n    # True only when every weight and every nu_i is at least -tol\n    pass\n",
+        "examples": [
+          {
+            "call": "np.round(kkt_weights(S2, M, 0.08)[0], 6).tolist()",
+            "expect": "[0.321429, 0.357143, 0.321429]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "np.round(kkt_weights(S2, M, 0.08)[0], 6).tolist()",
+            "expect": "[0.321429, 0.357143, 0.321429]",
+            "compare": "equal"
+          },
+          {
+            "call": "kkt_weights(S2, M, 0.08)[1]",
+            "expect": "-0.038571",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "kkt_weights(S2, M, 0.08)[2]",
+            "expect": "1.285714",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "kkt_weights(S2, M, 0.10, zero=(0,))[0]",
+            "expect": "[0, 1/3, 2/3]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "kkt_weights(S2, M, 0.10, zero=(0,))[2]",
+            "expect": "5.111111",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "kkt_weights(S2, M, 0.10, zero=(0,))[3][0]",
+            "expect": "0.093333",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "kkt_weights(S2, M, 0.10)[0][0]",
+            "expect": "-0.083333",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "setup": "w, lam, mu, nu = kkt_weights(S2, M, 0.10)",
+            "call": "kkt_ok(w, nu)",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "setup": "w, lam, mu, nu = kkt_weights(S2, M, 0.10, zero=(0,))",
+            "call": "kkt_ok(w, nu)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "w, lam, mu, nu = kkt_weights(S2, M, 0.08)",
+            "call": "kkt_ok(w, nu)",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "solution": "import numpy as np\n\n\ndef kkt_weights(sig2, m, target, zero=()):\n    sig2 = np.asarray(sig2, dtype=float)\n    m = np.asarray(m, dtype=float)\n    free = np.array([i not in zero for i in range(len(m))])\n    a = np.sum(1 / (2 * sig2[free]))\n    b = np.sum(m[free] / (2 * sig2[free]))\n    c = np.sum(m[free] ** 2 / (2 * sig2[free]))\n    lam, mu = np.linalg.solve([[a, b], [b, c]], [1.0, target])\n    w = np.where(free, (lam + mu * m) / (2 * sig2), 0.0)\n    nu = 2 * sig2 * w - lam - mu * m\n    return w, lam, mu, nu\n\n\ndef kkt_ok(w, nu, tol=1e-9):\n    return bool(np.all(np.asarray(w) >= -tol) and np.all(np.asarray(nu) >= -tol))\n",
+        "how": "Submit runs 10 hidden tests on the running portfolio (S2 and M are defined for you). Values are compared with math.isclose, absolute 1e-6; rounded weights exactly. The first run loads NumPy: a few seconds from cache, longer on a first visit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "For the free assets, $w_i = (\\lambda + \\mu m_i)/(2\\sigma_i^2)$."
+        },
+        {
+          "rung": "point",
+          "text": "Budget: $a\\lambda + b\\mu = 1$; target: $b\\lambda + c\\mu = r$, with $a = \\sum 1/(2\\sigma_i^2)$, $b = \\sum m_i/(2\\sigma_i^2)$, $c = \\sum m_i^2/(2\\sigma_i^2)$ over free assets."
+        },
+        {
+          "rung": "step",
+          "text": "$\\nu_i = 2\\sigma_i^2w_i - \\lambda - \\mu m_i$, which is 0 for free assets."
+        }
+      ],
+      "feedback": {
+        "correct": "Both pass: the 10% guess with $w_1 = 0$ is accepted with $\\nu_1 \\approx 0.093333$, and the shorting answer is rejected.",
+        "generic": "Not quite right. Check $a$, $b$ and $c$ use only the free assets."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "The quarterly rebalance",
+      "prose": "A long-only fund rebalances each quarter. The trader quotes the 10% portfolio: a third in the 30% asset and two thirds in the 40% asset. The 20% asset is empty. The empty name's multiplier is $\\nu_1 = \\tfrac{7}{75}$.",
+      "question": "About how much variance would a short of 0.01 in the empty name save?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.000933,
+        "tol": {
+          "abs": 2e-05
+        },
+        "accept": "0.000933: $0.01 \\times \\tfrac{7}{75}$.",
+        "label": "Variance saved",
+        "wrong": [
+          {
+            "id": "nu",
+            "value": 0.093333,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\nu_1$ is the rate at which variance falls as the wall moves."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply the rate by the size of the move."
+        },
+        {
+          "rung": "step",
+          "text": "$0.01 \\times 0.093333$."
+        }
+      ],
+      "feedback": {
+        "correct": "About $0.01 \\times \\tfrac{7}{75} \\approx 0.000933$. Lesson 13 checks this against the exact saving.",
+        "generic": "Not quite right. Multiply the multiplier by the size of the step.",
+        "byKey": {
+          "nu": "That is $\\nu_1$ itself. Multiply by the step of 0.01."
+        }
+      },
+      "explain": {
+        "text": "$\\nu_1$ is the rate at which variance falls as the wall $w_1 \\ge 0$ moves left. A step of 0.01 saves about $0.01 \\times 0.0933 = 0.000933$."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "For uncorrelated assets, KKT reads $2\\sigma_i^2w_i = \\lambda + \\mu m_i + \\nu_i$ with $\\nu_i \\ge 0$, $\\nu_iw_i = 0$, $\\mu \\ge 0$ and the target slack or binding.",
+      "Guess which weights sit at 0 and solve the budget and target rows for $\\lambda$ and $\\mu$. Then check every weight and every $\\nu_i$ is nonnegative.",
+      "At 10% long-only the answer is $(0, \\tfrac13, \\tfrac23)$, variance $\\tfrac{73}{900}$, with $\\nu_1 = \\tfrac{7}{75}$, the slope of the variance at the wall."
+    ],
+    "formula": {
+      "name": "Long-only weight",
+      "tex": "w_i = \\max\\Big(0, \\frac{\\lambda + \\mu m_i}{2\\sigma_i^2}\\Big)",
+      "note": "$\\lambda$ and $\\mu$ re-solved for the active set."
+    },
+    "trap": "Clipping a negative weight and rescaling keeps stale multipliers and misses the target."
+  },
+  "quiz": [
+    {
+      "id": "q11-mu-negative",
+      "difficulty": 2,
+      "prose": "Solving KKT with the 10% target active gives $\\mu = -0.4$.",
+      "question": "What does that say?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "The target is not binding: set $\\mu = 0$, drop it and solve again.",
+            "correct": true
+          },
+          {
+            "id": "fine",
+            "text": "The answer is fine: $\\mu$ may take either sign.",
+            "why": "$\\mu$ sits on an inequality, so it must be $\\ge 0$."
+          },
+          {
+            "id": "infeasible",
+            "text": "The target cannot be met.",
+            "why": "Infeasibility shows in primal feasibility, not in the sign of $\\mu$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A negative multiplier means the guess is wrong: that limit should not be active.",
+        "generic": "Not quite right. Recall the sign rule for inequality multipliers."
+      },
+      "explain": {
+        "text": "$\\mu \\ge 0$ is dual feasibility. A negative $\\mu$ means the target is not pushing, so the optimum earns more than the target and $\\mu = 0$."
+      }
+    },
+    {
+      "id": "q11-nu",
+      "difficulty": 3,
+      "prose": "With $w_1 = 0$ held, the rows for the other assets give $\\lambda = -0.30$ and $\\mu = 4$. Asset 1 has $m_1 = 0.05$.",
+      "question": "What is $\\nu_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.1,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.10: $0.30 - 0.05 \\times 4$.",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": -0.1,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\nu_1 = -\\lambda - 0.05\\mu = 0.30 - 0.20 = 0.10 \\ge 0$, so the guess passes.",
+        "generic": "Not quite right. Row 1 is $0 = \\lambda + 0.05\\mu + \\nu_1$.",
+        "byKey": {
+          "sign": "You solved $\\nu_1 = \\lambda + 0.05\\mu$. Move both terms across."
+        }
+      },
+      "explain": {
+        "text": "Row 1 reads $0 = -0.30 + 0.20 + \\nu_1$, so $\\nu_1 = 0.10$. It is positive, so holding $w_1$ at 0 is right."
+      }
+    },
+    {
+      "id": "q11-weight",
+      "difficulty": 3,
+      "prose": "An uncorrelated asset has $\\sigma_i^2 = 0.09$ and $m_i = 0.08$. At the optimum $\\lambda = -0.1$ and $\\mu = 2$, and the asset is held.",
+      "question": "What is $w_i$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.333333,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "0.3333: $0.06 / 0.18$.",
+        "wrong": [
+          {
+            "id": "no2",
+            "value": 0.666667,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "top",
+            "value": 0.06,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$w_i = (-0.1 + 0.16)/0.18 = \\tfrac13$.",
+        "generic": "Not quite right. Use $w_i = (\\lambda + \\mu m_i)/(2\\sigma_i^2)$.",
+        "byKey": {
+          "no2": "You divided by $\\sigma_i^2$. Stationarity has $2\\sigma_i^2$.",
+          "top": "That is $\\lambda + \\mu m_i$. Divide by $2\\sigma_i^2 = 0.18$."
+        }
+      },
+      "explain": {
+        "text": "$\\lambda + \\mu m_i = -0.1 + 0.16 = 0.06$ and $2\\sigma_i^2 = 0.18$. So $w_i = \\tfrac13$."
+      }
+    },
+    {
+      "id": "q11-clip",
+      "difficulty": 3,
+      "prose": "A shorting solution has one negative weight. A colleague sets it to 0 and rescales the rest to sum to 1.",
+      "question": "Why can this miss the optimum?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "It keeps the old $\\lambda$ and $\\mu$; the new active set needs them re-solved, so the target can be missed.",
+            "correct": true
+          },
+          {
+            "id": "never",
+            "text": "It never misses: rescaling keeps the return.",
+            "why": "Rescaling changes the return. In lesson 11 it fell to 9.615%."
+          },
+          {
+            "id": "only2",
+            "text": "It only fails for correlated assets.",
+            "why": "It failed for the three uncorrelated assets of this lesson."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Clipping is a new active set with stale multipliers. KKT re-solves the multipliers.",
+        "generic": "Not quite right. Ask what clipping does to the target."
+      },
+      "explain": {
+        "text": "Holding a weight at 0 changes which equations hold, so $\\lambda$ and $\\mu$ must be solved again. Rescaling alone gave 9.615%, short of the 10% target."
+      }
+    }
+  ]
+}

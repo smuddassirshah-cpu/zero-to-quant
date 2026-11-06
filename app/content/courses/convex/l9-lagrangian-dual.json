@@ -1,0 +1,1535 @@
+{
+  "id": "l9-lagrangian-dual",
+  "course": "convex",
+  "title": "The Lagrangian and the dual",
+  "minutes": 14,
+  "objectives": [
+    "Form a Lagrangian dual and prove weak duality."
+  ],
+  "skills": [
+    "cv-duality"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "A price on breaking the rule",
+      "prose": "Minimise $x^2$ subject to $x \\ge 1$. The answer is $x = 1$, with value 1. Now drop the rule and charge a price $\\lambda \\ge 0$ on the shortfall $1 - x$. We minimise $L(x, \\lambda) = x^2 + \\lambda(1 - x)$ instead. Slide $\\lambda$ and watch its lowest point.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              -1,
+              3
+            ],
+            "y": [
+              -1,
+              4
+            ],
+            "height": 260,
+            "grid": 1,
+            "xLabel": "$x$",
+            "yLabel": "value",
+            "params": {
+              "lam": 1
+            },
+            "functions": [
+              {
+                "id": "f",
+                "expr": "x^2",
+                "label": "$x^2$",
+                "dashed": true,
+                "colour": 4,
+                "labelAt": -0.8
+              },
+              {
+                "id": "L",
+                "expr": "x^2 + lam*(1 - x)",
+                "label": "$L(x, \\lambda)$",
+                "colour": 1,
+                "labelAt": 1.7
+              }
+            ],
+            "vlines": [
+              {
+                "id": "rule",
+                "x": 1,
+                "label": "$x = 1$"
+              }
+            ]
+          },
+          "state": {
+            "points": [
+              {
+                "id": "M",
+                "x": 0.5,
+                "y": 0.75,
+                "label": "lowest",
+                "labelPos": "s"
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              0,
+              4
+            ],
+            "y": [
+              -1,
+              1.5
+            ],
+            "height": 260,
+            "grid": 1,
+            "xLabel": "$\\lambda$",
+            "yLabel": "$g(\\lambda)$",
+            "functions": [
+              {
+                "id": "g",
+                "expr": "x - x^2/4",
+                "label": "$g(\\lambda)$",
+                "colour": 2,
+                "labelAt": 3.5
+              }
+            ],
+            "hlines": [
+              {
+                "id": "true",
+                "y": 1,
+                "label": "true answer 1"
+              }
+            ]
+          },
+          "state": {
+            "points": [
+              {
+                "id": "G",
+                "x": 1,
+                "y": 0.75
+              }
+            ]
+          }
+        },
+        "derive": {
+          "left:M.x": "lam/2",
+          "left:M.y": "lam - lam*lam/4",
+          "right:G.x": "lam",
+          "right:G.y": "lam - lam*lam/4",
+          "caption": "$\\lambda$ = {{fixed(lam, 1)}}: the lowest point of $L$ sits at $x$ = {{fixed(lam/2, 2)}}."
+        },
+        "controls": [
+          {
+            "bind": "left:lam",
+            "min": 0,
+            "max": 4,
+            "step": 0.1,
+            "start": 1,
+            "label": "price $\\lambda$"
+          }
+        ],
+        "maxHeight": 330
+      },
+      "question": "At $\\lambda = 1$, what is the lowest value of $L$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.75,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "0.75: at $x = 0.5$, $0.25 + 0.5$.",
+        "label": "Lowest L at lambda 1",
+        "wrong": [
+          {
+            "id": "true",
+            "value": 1,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "where",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the height of the lowest point, not its position."
+        },
+        {
+          "rung": "point",
+          "text": "At $\\lambda = 1$ the lowest point sits at $x = 0.5$.",
+          "highlight": [
+            "left:M"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.5^2 + 1 \\times (1 - 0.5) = 0.75$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.75, at $x = 0.5$. With the rule gone, $L$ dips below the true answer 1.",
+        "generic": "Not quite right. Set $\\lambda = 1$ and read the height of the lowest point of $L$.",
+        "byKey": {
+          "true": "1 is the answer with the rule. Without it, $L$ can go lower.",
+          "where": "0.5 is where the lowest point sits, $x = \\lambda/2$. Read its height."
+        }
+      },
+      "explain": {
+        "text": "At $\\lambda = 1$, $L = x^2 + 1 - x$ is lowest at $x = 0.5$, where it is 0.75. Every price tried gives a value at or below 1.",
+        "canvas": {
+          "left": {
+            "params": {
+              "lam": 1
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The best price",
+      "prose": "The lowest value of $L$ at price $\\lambda$ is the **dual function** $g(\\lambda) = \\min_x L(x, \\lambda)$. We found $g(1) = 0.75$. Each value of $g$ sits below the true answer 1, so each is a lower bound.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            4
+          ],
+          "y": [
+            -1,
+            1.5
+          ],
+          "height": 260,
+          "grid": 1,
+          "xLabel": "$\\lambda$",
+          "yLabel": "$g(\\lambda)$",
+          "params": {
+            "lam": 1
+          },
+          "functions": [
+            {
+              "id": "g",
+              "expr": "x - x^2/4",
+              "label": "$g(\\lambda)$",
+              "colour": 2,
+              "labelAt": 3.6
+            }
+          ],
+          "hlines": [
+            {
+              "id": "true",
+              "y": 1,
+              "label": "true answer 1"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "G",
+              "x": 1,
+              "y": 0.75,
+              "label": "bound"
+            }
+          ]
+        },
+        "derive": {
+          "G.x": "lam",
+          "G.y": "lam - lam*lam/4",
+          "caption": "$g$({{fixed(lam, 1)}}) = {{fixed(lam - lam*lam/4, 3)}}"
+        },
+        "maxHeight": 330
+      },
+      "question": "Slide $\\lambda$ to make the bound $g(\\lambda)$ as high as it goes.",
+      "widget": {
+        "kind": "slider",
+        "min": 0,
+        "max": 4,
+        "step": 0.1,
+        "start": 1,
+        "bind": "lam",
+        "answer": 2,
+        "tol": 0.05,
+        "wrong": [
+          {
+            "id": "low",
+            "from": 0,
+            "to": 1.95
+          },
+          {
+            "id": "high",
+            "from": 2.05,
+            "to": 4
+          }
+        ],
+        "label": "price lambda"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch the height of the point, not how far right it is."
+        },
+        {
+          "rung": "point",
+          "text": "$g(1)$ and $g(3)$ are both 0.75.",
+          "highlight": [
+            "G"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The peak sits halfway between 1 and 3."
+        }
+      ],
+      "feedback": {
+        "correct": "At $\\lambda = 2$ the bound is $g(2) = 1$, the true answer. Maximising $g$ over $\\lambda \\ge 0$ is the **dual problem**.",
+        "generic": "Not quite right. Move $\\lambda$ until the point on $g$ stops rising.",
+        "byKey": {
+          "low": "The bound is still rising there: $g(1) = 0.75$.",
+          "high": "Past 2 the bound falls again: $g(3) = 0.75$ and $g(4) = 0$."
+        }
+      },
+      "explain": {
+        "text": "$g(\\lambda) = \\lambda - \\lambda^2/4$ peaks at $\\lambda = 2$ with value 1. The best lower bound equals the true answer, so the bound is tight here.",
+        "canvas": {
+          "params": {
+            "lam": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Where the bound comes from",
+      "prose": "$L(x, \\lambda) = x^2 + \\lambda(1 - x)$ is a bowl in $x$. Its slope $2x - \\lambda$ is zero at $x = \\lambda/2$. Put that back into $L$ to get $g$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1,
+            3
+          ],
+          "y": [
+            -1,
+            4
+          ],
+          "height": 260,
+          "grid": 1,
+          "xLabel": "$x$",
+          "yLabel": "value",
+          "params": {
+            "lam": 1
+          },
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x^2",
+              "label": "$x^2$",
+              "dashed": true,
+              "colour": 4,
+              "labelAt": -0.8
+            },
+            {
+              "id": "L",
+              "expr": "x^2 + lam*(1 - x)",
+              "label": "$L(x, \\lambda)$",
+              "colour": 1,
+              "labelAt": 2.4
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "M",
+              "x": 0.5,
+              "y": 0.75,
+              "label": "lowest",
+              "labelPos": "s"
+            }
+          ]
+        },
+        "derive": {
+          "M.x": "lam/2",
+          "M.y": "lam - lam*lam/4",
+          "caption": "$\\lambda$ = {{fixed(lam, 1)}}: lowest point ({{fixed(lam/2, 2)}}, {{fixed(lam - lam*lam/4, 3)}})"
+        },
+        "controls": [
+          {
+            "bind": "lam",
+            "min": 0,
+            "max": 4,
+            "step": 0.1,
+            "start": 1,
+            "label": "price $\\lambda$"
+          }
+        ],
+        "maxHeight": 330
+      },
+      "question": "Give $g(\\lambda) = \\min_x L(x, \\lambda)$.",
+      "widget": {
+        "kind": "expression",
+        "answer": "\\lambda - \\frac{\\lambda^2}{4}",
+        "accept": [
+          "lambda - lambda^2/4",
+          "λ-λ^2/4",
+          "\\lambda-\\lambda^2/4"
+        ],
+        "wrong": [
+          {
+            "id": "where",
+            "tex": "\\frac{\\lambda}{2}"
+          },
+          {
+            "id": "cross",
+            "tex": "\\lambda + \\frac{\\lambda^2}{4}"
+          },
+          {
+            "id": "half",
+            "tex": "\\frac{\\lambda^2}{4}"
+          }
+        ],
+        "keyboard": "algebra"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Substitute $x = \\lambda/2$ into both terms of $L$."
+        },
+        {
+          "rung": "point",
+          "text": "$x^2 = \\lambda^2/4$ and $\\lambda(1 - x) = \\lambda - \\lambda^2/2$.",
+          "highlight": [
+            "M"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Add them: $\\lambda^2/4 + \\lambda - \\lambda^2/2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$g(\\lambda) = \\lambda - \\lambda^2/4$, the curve from the last screen.",
+        "generic": "Not quite right. Put $x = \\lambda/2$ into $x^2 + \\lambda(1 - x)$ and collect terms.",
+        "byKey": {
+          "where": "$\\lambda/2$ is where the minimum sits. $g$ is the value of $L$ there.",
+          "cross": "Check the cross term: $\\lambda(1 - \\lambda/2) = \\lambda - \\lambda^2/2$, which carries a minus.",
+          "half": "$\\lambda^2/4$ is the $x^2$ term alone. Add $\\lambda(1 - x)$ at $x = \\lambda/2$."
+        }
+      },
+      "explain": {
+        "text": "$g(\\lambda) = \\tfrac{\\lambda^2}{4} + \\lambda - \\tfrac{\\lambda^2}{2} = \\lambda - \\tfrac{\\lambda^2}{4}$. It matches the curve: $g(1) = 0.75$, $g(2) = 1$ and $g(4) = 0$.",
+        "canvas": {
+          "params": {
+            "lam": 2
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A saddle",
+      "prose": "Here is $L$ over both $x$ and $\\lambda$. In $x$ it is a bowl; in $\\lambda$ it is a straight line. The bold curve joins the lowest point of every slice. Slide $\\lambda$ to move the slice.",
+      "canvas": {
+        "kind": "space",
+        "params": {
+          "x": [
+            -1,
+            3
+          ],
+          "y": [
+            0,
+            4
+          ],
+          "z": [
+            -0.5,
+            9.5
+          ],
+          "height": 340,
+          "aspect": [
+            1,
+            1,
+            1
+          ],
+          "camera": {
+            "az": -70,
+            "el": 42
+          },
+          "axisLabels": [
+            "$x$",
+            "$\\lambda$",
+            "$L$"
+          ],
+          "params": {
+            "lam": 1
+          },
+          "surfaces": [
+            {
+              "id": "Ls",
+              "z": "x^2 + y*(1 - x)",
+              "x": [
+                -1,
+                3
+              ],
+              "y": [
+                0,
+                4
+              ],
+              "n": 22,
+              "shade": "height",
+              "opacity": 0.65
+            }
+          ],
+          "curves": [
+            {
+              "id": "mins",
+              "x": "t/2",
+              "y": "t",
+              "z": "t - t^2/4",
+              "t": [
+                0,
+                4
+              ],
+              "label": "lowest in $x$",
+              "width": "bold",
+              "colour": 2
+            },
+            {
+              "id": "slice",
+              "x": "t",
+              "y": "lam",
+              "z": "t^2 + lam*(1 - t)",
+              "t": [
+                -1,
+                3
+              ],
+              "label": "slice",
+              "colour": 4
+            }
+          ],
+          "points": [
+            {
+              "id": "S",
+              "p": [
+                1,
+                2,
+                1
+              ],
+              "label": "$(1, 2, 1)$"
+            }
+          ]
+        },
+        "state": {},
+        "derive": {
+          "caption": "Slice at $\\lambda$ = {{fixed(lam, 1)}}: lowest at $x$ = {{fixed(lam/2, 2)}}, height {{fixed(lam - lam*lam/4, 3)}}."
+        },
+        "controls": [
+          {
+            "bind": "lam",
+            "min": 0,
+            "max": 4,
+            "step": 0.1,
+            "start": 1,
+            "label": "slice $\\lambda$"
+          }
+        ],
+        "maxHeight": 360
+      },
+      "question": "Where do the minimum over $x$ and the maximum over $\\lambda$ meet?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "s",
+            "text": "$(x, \\lambda, L) = (1, 2, 1)$",
+            "correct": true
+          },
+          {
+            "id": "one",
+            "text": "$(0.5, 1, 0.75)$",
+            "why": "That is the lowest point of the slice at $\\lambda = 1$. Raising $\\lambda$ to 2 lifts it."
+          },
+          {
+            "id": "zero",
+            "text": "$(0, 0, 0)$",
+            "why": "At $\\lambda = 0$ the lowest point is $(0, 0, 0)$, the weakest bound, not the best."
+          },
+          {
+            "id": "four",
+            "text": "$(1, 4, 1)$",
+            "why": "At $\\lambda = 4$ the slice is lowest at $x = 2$, height 0. Height 1 is not its minimum."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Follow the bold curve and find its highest point."
+        },
+        {
+          "rung": "point",
+          "text": "The bold curve's height is $g(\\lambda)$.",
+          "highlight": [
+            "mins"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$g$ peaks at $\\lambda = 2$, where $x = \\lambda/2 = 1$."
+        }
+      ],
+      "feedback": {
+        "correct": "At $(1, 2, 1)$ the slice is lowest in $x$ and the bold curve is highest in $\\lambda$. This is a **saddle point** of $L$.",
+        "generic": "Not quite right. Find the top of the bold curve of slice minima.",
+        "byKey": {
+          "one": "At $\\lambda = 1$ the bound is 0.75. A higher price gives a better bound.",
+          "zero": "$\\lambda = 0$ gives the weakest bound, 0.",
+          "four": "At $\\lambda = 4$ the slice dips to 0 at $x = 2$."
+        }
+      },
+      "explain": {
+        "text": "Along the bold curve the height is $g(\\lambda)$, which peaks at $\\lambda = 2$ with height 1. There $x = 1$, the answer to the original problem.",
+        "canvas": {
+          "params": {
+            "lam": 2
+          },
+          "highlight": [
+            "S"
+          ]
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 2,
+      "title": "Weak duality",
+      "prose": "Every value of $g$ sat below the true answer 1. We prove it for any $f$: minimise $f(x)$ subject to $x \\ge 1$, written $1 - x \\le 0$.",
+      "question": "Put the proof in order. Leave out the lines that do not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "w1",
+            "text": "Take any feasible $x$, so $1 - x \\le 0$, and any price $\\lambda \\ge 0$."
+          },
+          {
+            "id": "w2",
+            "text": "$g(\\lambda) = \\min_z L(z, \\lambda) \\le L(x, \\lambda)$, because a minimum is at most any one value."
+          },
+          {
+            "id": "w3",
+            "text": "$\\lambda(1 - x) \\le 0$, because $\\lambda \\ge 0$ and $1 - x \\le 0$."
+          },
+          {
+            "id": "w4",
+            "text": "So $L(x, \\lambda) = f(x) + \\lambda(1 - x) \\le f(x)$."
+          },
+          {
+            "id": "w5",
+            "text": "So $g(\\lambda) \\le f(x)$ for every such pair, and in particular $g(\\lambda) \\le p^*$."
+          },
+          {
+            "id": "d1",
+            "text": "$f$ is convex, so the minimum of $L$ over $z$ is where its derivative is 0.",
+            "why": "Weak duality never uses convexity. The chain holds for any $f$."
+          },
+          {
+            "id": "d2",
+            "text": "$\\lambda(1 - x) = 0$ for every feasible $x$.",
+            "why": "That is complementary slackness at the optimum. For other pairs the term is negative."
+          }
+        ],
+        "answer": [
+          "w1",
+          "w2",
+          "w3",
+          "w4",
+          "w5"
+        ],
+        "same": [
+          [
+            "w2",
+            "w3"
+          ]
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Chain $g(\\lambda) \\le L(x, \\lambda) \\le f(x)$."
+        },
+        {
+          "rung": "point",
+          "text": "Each inequality uses one fact: what a minimum is, and the sign of the penalty."
+        },
+        {
+          "rung": "step",
+          "text": "The penalty $\\lambda(1 - x)$ is at most 0 for feasible $x$."
+        }
+      ],
+      "feedback": {
+        "correct": "$g(\\lambda) \\le L(x, \\lambda) \\le f(x)$: a minimum, then a sign. This is **weak duality**.",
+        "generic": "Not quite right. Start from the two choices, then chain the two inequalities.",
+        "byKey": {
+          "d1": "Convexity is not needed: the proof works for any $f$.",
+          "d2": "Equality holds only at the optimum, not for every pair.",
+          "left-out": "You left out a step: the choices, the minimum, the sign or the conclusion."
+        }
+      },
+      "explain": {
+        "text": "A minimum is at most any value, and a nonnegative price on a nonpositive shortfall is at most 0. So every $g(\\lambda)$ is a lower bound on $p^*$, whatever $f$ is."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Always concave",
+      "prose": "Each thin line is $L(x, \\lambda) = x^2 + \\lambda(1 - x)$ for one fixed $x$, drawn against $\\lambda$. Each is straight in $\\lambda$. The curve $g$ is their lower edge.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            4
+          ],
+          "y": [
+            -0.3,
+            1.8
+          ],
+          "height": 260,
+          "grid": 0.5,
+          "xLabel": "$\\lambda$",
+          "yLabel": "$L$",
+          "functions": [
+            {
+              "id": "x0",
+              "expr": "x",
+              "colour": 6,
+              "labelAvoid": false
+            },
+            {
+              "id": "x05",
+              "expr": "0.25 + 0.5*x",
+              "colour": 6,
+              "labelAvoid": false
+            },
+            {
+              "id": "x1",
+              "expr": "1 + 0*x",
+              "colour": 6,
+              "labelAvoid": false
+            },
+            {
+              "id": "x15",
+              "expr": "2.25 - 0.5*x",
+              "colour": 6,
+              "labelAvoid": false
+            },
+            {
+              "id": "x2",
+              "expr": "4 - x",
+              "colour": 6,
+              "labelAvoid": false
+            },
+            {
+              "id": "x25",
+              "expr": "6.25 - 1.5*x",
+              "colour": 6,
+              "labelAvoid": false
+            },
+            {
+              "id": "g",
+              "expr": "x - x^2/4",
+              "colour": 2,
+              "label": "$g(\\lambda)$",
+              "labelAt": 0.6,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 330
+      },
+      "question": "Why is $g(\\lambda)$ concave?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "It is the lowest of a family of straight lines in $\\lambda$.",
+            "correct": true
+          },
+          {
+            "id": "convexf",
+            "text": "Because $f(x) = x^2$ is convex.",
+            "why": "Convexity of $f$ is never used. A lower edge of lines is concave for any $f$."
+          },
+          {
+            "id": "bowl",
+            "text": "Because $L$ is a bowl in $\\lambda$.",
+            "why": "$L$ is a straight line in $\\lambda$. It is a bowl in $x$."
+          },
+          {
+            "id": "sign",
+            "text": "Because $\\lambda \\ge 0$.",
+            "why": "The sign of $\\lambda$ limits where we look, not the shape of $g$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Look at the shape of each thin line."
+        },
+        {
+          "rung": "point",
+          "text": "Each line is $x^2 + \\lambda(1 - x)$ with $x$ fixed: straight in $\\lambda$.",
+          "highlight": [
+            "x0",
+            "x2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "A lower edge of straight lines can only bend downwards."
+        }
+      ],
+      "feedback": {
+        "correct": "A minimum of lines is concave. So $g$ is concave for every problem, convex or not.",
+        "generic": "Not quite right. Ask what each thin line looks like as $\\lambda$ varies.",
+        "byKey": {
+          "convexf": "The lot-size problem later is not convex, and its $g$ is still concave.",
+          "bowl": "Fix $x$ and $L$ is linear in $\\lambda$.",
+          "sign": "The shape of $g$ does not depend on where $\\lambda$ may go."
+        }
+      },
+      "explain": {
+        "text": "A minimum of lines can only bend downwards, so $g$ is concave for every problem. Maximising a concave $g$ over $\\lambda \\ge 0$ is always a convex problem.",
+        "canvas": {
+          "highlight": [
+            "g"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The portfolio's dual",
+      "prose": "Back to the budget-only portfolio. $L = \\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} + \\nu(1 - \\mathbf{1}^T\\mathbf{w})$ is lowest at $\\mathbf{w} = \\tfrac{\\nu}{2}\\boldsymbol{\\Sigma}^{-1}\\mathbf{1}$. That gives $g(\\nu) = \\nu - \\tfrac{\\nu^2}{4}s$, with $s = \\mathbf{1}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{1} = \\tfrac{1525}{36} \\approx 42.3611$. Drag along $g$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.1
+          ],
+          "y": [
+            -0.008,
+            0.03
+          ],
+          "height": 260,
+          "grid": true,
+          "xLabel": "$\\nu$",
+          "yLabel": "$g(\\nu)$",
+          "functions": [
+            {
+              "id": "g",
+              "expr": "x - x^2*1525/144",
+              "label": "$g(\\nu)$",
+              "colour": 2,
+              "labelAt": 0.088
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 0.02,
+              "y": 0.01576388888888889,
+              "drag": true,
+              "on": "g",
+              "label": "$\\nu$"
+            }
+          ]
+        },
+        "derive": {
+          "caption": "$g$({{fixed(P.x, 4)}}) = {{fixed(P.x - P.x*P.x*1525/144, 6)}}"
+        },
+        "maxHeight": 330
+      },
+      "question": "What is the best bound $d^* = \\max_\\nu g(\\nu)$? Give 6 decimal places.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.023607,
+        "tol": {
+          "abs": 5e-06
+        },
+        "accept": "0.023607: $1/s = \\tfrac{36}{1525}$.",
+        "label": "Best dual bound",
+        "wrong": [
+          {
+            "id": "nustar",
+            "value": 0.047213,
+            "tol": {
+              "abs": 5e-06
+            }
+          },
+          {
+            "id": "s",
+            "value": 42.3611,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "at003",
+            "value": 0.020469,
+            "tol": {
+              "abs": 5e-06
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $g'(\\nu) = 1 - \\nu s/2 = 0$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\nu^* = 2/s = \\tfrac{72}{1525} \\approx 0.047213$.",
+          "highlight": [
+            "P"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$g(\\nu^*) = \\tfrac{2}{s} - \\tfrac{1}{s} = \\tfrac{1}{s}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$d^* = 1/s = \\tfrac{36}{1525} \\approx 0.023607$, the minimum variance from `multivar`. The dual reached it without solving for $\\mathbf{w}$.",
+        "generic": "Not quite right. Find where $g$ peaks, then read its height.",
+        "byKey": {
+          "nustar": "That is the best price $\\nu^* = 2/s$. Read the height $g(\\nu^*)$.",
+          "s": "That is $s$ itself. The bound is $1/s$.",
+          "at003": "That is $g(0.03)$: a lower bound, but not the best one."
+        }
+      },
+      "explain": {
+        "text": "$g$ peaks at $\\nu^* = \\tfrac{72}{1525} \\approx 0.047213$ with value $\\tfrac{36}{1525} \\approx 0.023607$. Any other price gives a weaker bound, such as $g(0.03) \\approx 0.020469$.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 0.047213,
+              "y": 0.023607
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Which way round",
+      "prose": "A colleague writes $x \\ge 1$ as $x - 1 \\le 0$ and forms $L = x^2 + \\lambda(x - 1)$. Their dual function is $-\\lambda - \\lambda^2/4$, the dashed curve. Its best value is 0, at $\\lambda = 0$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            4
+          ],
+          "y": [
+            -6,
+            1.6
+          ],
+          "height": 260,
+          "grid": 1,
+          "xLabel": "$\\lambda$",
+          "yLabel": "$g(\\lambda)$",
+          "functions": [
+            {
+              "id": "g",
+              "expr": "x - x^2/4",
+              "label": "from $1 - x \\le 0$",
+              "colour": 2,
+              "labelAt": 3.2
+            },
+            {
+              "id": "gw",
+              "expr": "-x - x^2/4",
+              "label": "from $x - 1 \\le 0$",
+              "colour": 5,
+              "dashed": true,
+              "labelAt": 2.6
+            }
+          ],
+          "hlines": [
+            {
+              "id": "true",
+              "y": 1,
+              "label": "true answer 1"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "W",
+              "x": 0,
+              "y": 0,
+              "label": "their best, 0",
+              "labelPos": "e"
+            }
+          ]
+        },
+        "maxHeight": 330
+      },
+      "question": "What has gone wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "$x - 1 \\le 0$ says $x \\le 1$. The rule $x \\ge 1$ in standard form is $1 - x \\le 0$.",
+            "correct": true
+          },
+          {
+            "id": "tight",
+            "text": "Nothing: 0 is the answer and the bound is tight.",
+            "why": "0 is the answer to $\\min x^2$ with $x \\le 1$. With $x \\ge 1$ the answer is 1.",
+            "canvas": {
+              "highlight": [
+                "gw",
+                "W"
+              ]
+            }
+          },
+          {
+            "id": "g1",
+            "text": "They should report $g(1) = 0.75$ from the solid curve.",
+            "why": "$g(1)$ is only a lower bound until $g$ is maximised: 1 at $\\lambda = 2$.",
+            "canvas": {
+              "highlight": [
+                "g"
+              ]
+            }
+          },
+          {
+            "id": "lin",
+            "text": "The method needs a linear objective.",
+            "why": "Any objective works. The fault is that the penalty falls on the wrong side of 1."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which values of $x$ does $\\lambda(x - 1)$ charge for?"
+        },
+        {
+          "rung": "point",
+          "text": "$\\lambda(x - 1) > 0$ only when $x > 1$, the allowed side.",
+          "highlight": [
+            "gw"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Standard form is $f_1(x) \\le 0$, so $f_1 = 1 - x$."
+        }
+      ],
+      "feedback": {
+        "correct": "The sign decides which side is charged. With $x - 1 \\le 0$ the price falls on $x > 1$, so the dual solves $\\min x^2$ with $x \\le 1$.",
+        "generic": "Not quite right. Check which side of 1 the term $\\lambda(x - 1)$ charges for.",
+        "byKey": {
+          "tight": "0 answers the problem with $x \\le 1$. The rule here is $x \\ge 1$.",
+          "g1": "$g(1) = 0.75$ is a bound, not the answer. Maximise $g$ first.",
+          "lin": "The objective is fine. The constraint was turned the wrong way."
+        }
+      },
+      "explain": {
+        "text": "Standard form is $f_1(x) \\le 0$ with $f_1 = 1 - x$. Then $\\lambda(1 - x) \\le 0$ for every feasible $x$, which is what weak duality needs.",
+        "canvas": {
+          "highlight": [
+            "gw"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A duality gap",
+      "prose": "A desk can trade 0 or 2 lots and needs at least 1. Minimise $x$ over $x \\in \\{0, 2\\}$ with $1 - x \\le 0$. Only $x = 2$ is feasible, so $p^* = 2$. The Lagrangian is $L = x + \\lambda(1 - x)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            2.5
+          ],
+          "y": [
+            -0.6,
+            2.6
+          ],
+          "height": 260,
+          "grid": 0.5,
+          "xLabel": "$\\lambda$",
+          "yLabel": "$L$",
+          "functions": [
+            {
+              "id": "l0",
+              "expr": "x",
+              "label": "$L(0, \\lambda) = \\lambda$",
+              "colour": 1,
+              "labelAt": 2.0
+            },
+            {
+              "id": "l2",
+              "expr": "2 - x",
+              "label": "$L(2, \\lambda) = 2 - \\lambda$",
+              "colour": 3,
+              "labelAt": 0.5
+            }
+          ],
+          "hlines": [
+            {
+              "id": "pstar",
+              "y": 2,
+              "label": "$p^* = 2$"
+            }
+          ]
+        },
+        "state": {},
+        "maxHeight": 330
+      },
+      "question": "Give $g(\\lambda) = \\min_{x \\in \\{0, 2\\}} L(x, \\lambda)$.",
+      "widget": {
+        "kind": "expression",
+        "answer": "\\min(\\lambda, 2 - \\lambda)",
+        "accept": [
+          "min(lambda, 2-lambda)",
+          "min(2-lambda, lambda)",
+          "min(λ, 2-λ)"
+        ],
+        "wrong": [
+          {
+            "id": "max",
+            "tex": "\\max(\\lambda, 2 - \\lambda)"
+          },
+          {
+            "id": "zero",
+            "tex": "\\lambda"
+          },
+          {
+            "id": "two",
+            "tex": "2 - \\lambda"
+          }
+        ],
+        "keyboard": "algebra"
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Work out $L(0, \\lambda)$ and $L(2, \\lambda)$ separately."
+        },
+        {
+          "rung": "point",
+          "text": "$L(0, \\lambda) = \\lambda$ and $L(2, \\lambda) = 2 - \\lambda$.",
+          "highlight": [
+            "l0",
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$g$ takes the smaller of the two."
+        }
+      ],
+      "feedback": {
+        "correct": "$g(\\lambda) = \\min(\\lambda, 2 - \\lambda)$ peaks at $\\lambda = 1$, so $d^* = 1$. The true answer is 2: a **duality gap** of 1.",
+        "generic": "Not quite right. $g$ is the smaller of $L$ at the two allowed lots.",
+        "byKey": {
+          "max": "$g$ is a minimum over $x$, so take the smaller line.",
+          "zero": "That is $L(0, \\lambda)$ alone. $x = 2$ is also allowed.",
+          "two": "That is $L(2, \\lambda)$ alone. $x = 0$ is also allowed."
+        }
+      },
+      "explain": {
+        "text": "The best bound is $d^* = 1$, below $p^* = 2$. The set $\\{0, 2\\}$ is not convex, so nothing promises a zero gap.",
+        "canvas": {
+          "points": {
+            "D": {
+              "x": 1,
+              "y": 1,
+              "label": "$d^* = 1$"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The dual in code",
+      "prose": "Write `dual_value(Sigma, nu)`, returning $g(\\nu) = \\nu - \\tfrac{\\nu^2}{4}\\mathbf{1}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{1}$ for the budget-only problem. Use `np.linalg.solve` rather than an inverse. Then `best_dual(Sigma)` returns $(\\nu^*, d^*) = (2/s, 1/s)$.",
+      "question": "Complete both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\n\ndef dual_value(Sigma, nu):\n    # g(nu) for min w @ Sigma @ w subject to sum(w) = 1\n    pass\n\n\ndef best_dual(Sigma):\n    # return (nu_star, d_star)\n    pass\n",
+        "examples": [
+          {
+            "call": "dual_value(np.diag([0.04, 0.09, 0.16]), 0.03)",
+            "expect": "0.020469",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "dual_value(np.diag([0.04, 0.09, 0.16]), 0.03)",
+            "expect": "0.020469",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "dual_value(np.diag([0.04, 0.09, 0.16]), 72 / 1525)",
+            "expect": "0.023607",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "dual_value(np.diag([0.04, 0.09, 0.16]), 0.0)",
+            "expect": "0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "dual_value(np.array([[0.04, 0.012], [0.012, 0.09]]), 0.03)",
+            "expect": "0.023099",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "dual_value(np.diag([0.04, 0.09, 0.16]), 0.1) <= 36 / 1525",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "best_dual(np.diag([0.04, 0.09, 0.16]))[0]",
+            "expect": "0.047213",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "best_dual(np.diag([0.04, 0.09, 0.16]))[1]",
+            "expect": "0.023607",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "best_dual(np.array([[0.04, 0.012], [0.012, 0.09]]))[1]",
+            "expect": "0.032604",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ],
+        "solution": "import numpy as np\n\n\ndef dual_value(Sigma, nu):\n    Sigma = np.asarray(Sigma, dtype=float)\n    one = np.ones(len(Sigma))\n    s = one @ np.linalg.solve(Sigma, one)\n    return nu - nu ** 2 * s / 4\n\n\ndef best_dual(Sigma):\n    Sigma = np.asarray(Sigma, dtype=float)\n    one = np.ones(len(Sigma))\n    s = one @ np.linalg.solve(Sigma, one)\n    return 2 / s, 1 / s\n",
+        "how": "Submit runs 8 hidden tests. Values are compared with math.isclose, absolute 1e-6, and one test checks the bound sits below the optimum. The first run loads NumPy: a few seconds from cache, longer on a first visit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$s$ is `one @ np.linalg.solve(Sigma, one)` with `one = np.ones(n)`."
+        },
+        {
+          "rung": "point",
+          "text": "$g(\\nu) = \\nu - \\nu^2 s/4$."
+        },
+        {
+          "rung": "step",
+          "text": "The peak is at $\\nu^* = 2/s$ with value $1/s$."
+        }
+      ],
+      "feedback": {
+        "correct": "Both pass. The correlated case gives $d^* = \\tfrac{216}{6625} \\approx 0.032604$.",
+        "generic": "Not quite right. Compare your $s$ with 42.3611 for the diagonal case."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "A bound with the answer",
+      "prose": "An execution solver splits a large order across venues. It reports a plan costing £10,450 and a dual bound of £10,400. By weak duality no plan costs less than the bound.",
+      "question": "At most how much could a better plan save, in £?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 50,
+        "tol": {
+          "abs": 0.5
+        },
+        "accept": "£50: 10,450 − 10,400.",
+        "unit": "£",
+        "label": "Most a better plan saves",
+        "wrong": [
+          {
+            "id": "zero",
+            "value": 0,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "bound",
+            "value": 10400,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Every plan costs at least the bound."
+        },
+        {
+          "rung": "point",
+          "text": "The best possible plan costs at least £10,400."
+        },
+        {
+          "rung": "step",
+          "text": "Subtract the bound from this plan's cost."
+        }
+      ],
+      "feedback": {
+        "correct": "£50, the **duality gap**. \\\"Within £50 of optimal\\\" is a statement about the gap. The last level uses it to sign off a solver.",
+        "generic": "Not quite right. Compare the plan's cost with the bound.",
+        "byKey": {
+          "zero": "The solver stopping does not prove the plan optimal. Only a zero gap does.",
+          "bound": "That is the bound itself. The saving is at most the gap."
+        }
+      },
+      "explain": {
+        "text": "Every plan costs at least £10,400, and this one costs £10,450. So the best plan saves at most £50, about 0.48% of the cost."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Pricing a constraint gives the Lagrangian $L = f_0 + \\sum_i \\lambda_i f_i$ with $\\lambda_i \\ge 0$. Its minimum over $\\mathbf{x}$ is the dual function $g(\\boldsymbol{\\lambda})$.",
+      "Weak duality: $g(\\boldsymbol{\\lambda}) \\le p^*$ for every $\\boldsymbol{\\lambda} \\ge \\mathbf{0}$, for any problem. $g$ is always concave.",
+      "The dual problem maximises $g$. For convex problems the best bound usually equals $p^*$; a non-convex set can leave a gap."
+    ],
+    "formula": {
+      "name": "Dual function",
+      "tex": "g(\\boldsymbol{\\lambda}) = \\min_{\\mathbf{x}} \\Big(f_0(\\mathbf{x}) + \\sum_i \\lambda_i f_i(\\mathbf{x})\\Big) \\le p^*",
+      "note": "Write each constraint as $f_i(\\mathbf{x}) \\le 0$ first."
+    },
+    "trap": "Writing $x \\ge 1$ as $x - 1 \\le 0$ prices the wrong side, and the dual answers a different problem."
+  },
+  "quiz": [
+    {
+      "id": "q9-bound",
+      "difficulty": 2,
+      "prose": "For $\\min x^2$ with $x \\ge 1$, the dual function is $g(\\lambda) = \\lambda - \\lambda^2/4$.",
+      "question": "What lower bound does the price $\\lambda = 3$ give?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.75,
+        "tol": {
+          "abs": 0.005
+        },
+        "accept": "0.75: $3 - 9/4$.",
+        "wrong": [
+          {
+            "id": "true",
+            "value": 1,
+            "tol": {
+              "abs": 0.005
+            }
+          },
+          {
+            "id": "lam",
+            "value": 3,
+            "tol": {
+              "abs": 0.005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$g(3) = 0.75$, below the true answer 1.",
+        "generic": "Not quite right. Substitute $\\lambda = 3$ into $g$.",
+        "byKey": {
+          "true": "1 is the true answer. Only $\\lambda = 2$ reaches it.",
+          "lam": "That is $\\lambda$. Evaluate $g(3)$."
+        }
+      },
+      "explain": {
+        "text": "$g(3) = 3 - 2.25 = 0.75$. Prices on both sides of 2 give the same weaker bound."
+      }
+    },
+    {
+      "id": "q9-concave",
+      "difficulty": 2,
+      "prose": "A problem has a feasible set that is not convex.",
+      "question": "What can we say about its dual function $g(\\lambda)$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "$g$ is still concave, and its maximum is a lower bound on $p^*$.",
+            "correct": true
+          },
+          {
+            "id": "convex",
+            "text": "$g$ is convex.",
+            "why": "$g$ is a minimum of functions linear in $\\lambda$, so it bends down."
+          },
+          {
+            "id": "equal",
+            "text": "$\\max g = p^*$ always.",
+            "why": "That is strong duality. Without convexity a gap can remain."
+          },
+          {
+            "id": "none",
+            "text": "$g$ cannot be formed.",
+            "why": "$g$ exists for any problem: minimise $L$ over the allowed $x$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Concavity of $g$ and weak duality need no convexity.",
+        "generic": "Not quite right. Recall how $g$ is built from $L$."
+      },
+      "explain": {
+        "text": "For each fixed $x$, $L$ is linear in $\\lambda$, and $g$ is their minimum. So $g$ is concave and $\\max g \\le p^*$ for any problem."
+      }
+    },
+    {
+      "id": "q9-sign",
+      "difficulty": 3,
+      "prose": "We want a lower bound for $\\min f(x)$ subject to $x \\ge 3$.",
+      "question": "Which Lagrangian gives one?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "$f(x) + \\lambda(3 - x)$ with $\\lambda \\ge 0$",
+            "correct": true
+          },
+          {
+            "id": "flip",
+            "text": "$f(x) + \\lambda(x - 3)$ with $\\lambda \\ge 0$",
+            "why": "That charges for $x > 3$, the allowed side, so it bounds the wrong problem."
+          },
+          {
+            "id": "any",
+            "text": "$f(x) + \\lambda(3 - x)$ with $\\lambda$ of any sign",
+            "why": "A negative $\\lambda$ rewards breaking the rule, and the bound fails."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Write $x \\ge 3$ as $3 - x \\le 0$ and price it with $\\lambda \\ge 0$.",
+        "generic": "Not quite right. Put the constraint in the form $f_1(x) \\le 0$ first."
+      },
+      "explain": {
+        "text": "With $3 - x \\le 0$ and $\\lambda \\ge 0$, the penalty is at most 0 on every feasible $x$. That is the step weak duality needs."
+      }
+    },
+    {
+      "id": "q9-gap",
+      "difficulty": 3,
+      "prose": "Lots of 0 or 3 must reach at least 2: minimise $x$ over $\\{0, 3\\}$ with $2 - x \\le 0$. Then $g(\\lambda) = \\min(2\\lambda, 3 - \\lambda)$.",
+      "question": "What is the duality gap $p^* - d^*$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "1: $p^* = 3$ and $d^* = 2$.",
+        "wrong": [
+          {
+            "id": "pstar",
+            "value": 3,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "dstar",
+            "value": 2,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$g$ peaks where $2\\lambda = 3 - \\lambda$, at $\\lambda = 1$, with $d^* = 2$. So the gap is $3 - 2 = 1$.",
+        "generic": "Not quite right. Find $p^*$ from the feasible lots and $d^*$ from the peak of $g$.",
+        "byKey": {
+          "pstar": "That is $p^*$ alone. Subtract the best bound.",
+          "dstar": "That is $d^*$, the best bound. The gap is $p^* - d^*$."
+        }
+      },
+      "explain": {
+        "text": "Only $x = 3$ is feasible, so $p^* = 3$; the best bound is $d^* = 2$. The gap is 1 because the set $\\{0, 3\\}$ is not convex."
+      }
+    }
+  ]
+}

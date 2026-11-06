@@ -1,0 +1,1527 @@
+{
+  "id": "l13-shadow-prices",
+  "course": "convex",
+  "title": "Multipliers as shadow prices",
+  "minutes": 14,
+  "objectives": [
+    "Read a multiplier as the value of relaxing a constraint, such as a position limit."
+  ],
+  "skills": [
+    "cv-duality",
+    "cv-qp"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Move the risk budget",
+      "prose": "The desk from level 2: maximise $60x + 40y$ with budget $x + y \\le 10$, risk $3x + y \\le R$ and liquidity $x \\le 5$. At $R = 18$ the best plan is $(4, 6)$, earning £480k. Slide $R$ and watch the best profit $v(R)$.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              -0.5,
+              8
+            ],
+            "y": [
+              -0.5,
+              11
+            ],
+            "height": 280,
+            "grid": 1,
+            "xTicks": "integer",
+            "yTicks": "integer",
+            "xLabel": "$x$ (£m in A)",
+            "yLabel": "$y$ (£m in B)",
+            "params": {
+              "R": 18
+            },
+            "functions": [
+              {
+                "id": "bud",
+                "expr": "10 - x",
+                "domain": [
+                  0,
+                  8
+                ],
+                "label": "budget",
+                "labelAt": 7,
+                "colour": 2
+              },
+              {
+                "id": "risk",
+                "expr": "R - 3*x",
+                "domain": [
+                  "0",
+                  "R/3"
+                ],
+                "label": "risk",
+                "colour": 3,
+                "labelAt": 4.7
+              }
+            ],
+            "vlines": [
+              {
+                "id": "liq",
+                "x": 5,
+                "label": "liquidity"
+              }
+            ]
+          },
+          "state": {
+            "points": [
+              {
+                "id": "A",
+                "x": 0,
+                "y": 0,
+                "hidden": true
+              },
+              {
+                "id": "B",
+                "x": 5,
+                "y": 0,
+                "hidden": true
+              },
+              {
+                "id": "C",
+                "x": 5,
+                "y": 0,
+                "hidden": true
+              },
+              {
+                "id": "D",
+                "x": 4,
+                "y": 6,
+                "hidden": true
+              },
+              {
+                "id": "E",
+                "x": 0,
+                "y": 10,
+                "hidden": true
+              },
+              {
+                "id": "O",
+                "x": 4,
+                "y": 6,
+                "label": "best",
+                "labelPos": "ne"
+              }
+            ],
+            "polygons": [
+              {
+                "id": "reg",
+                "points": [
+                  "A",
+                  "B",
+                  "C",
+                  "D",
+                  "E"
+                ],
+                "colour": 1
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              0,
+              30
+            ],
+            "y": [
+              0,
+              600
+            ],
+            "height": 280,
+            "grid": true,
+            "xLabel": "risk budget $R$",
+            "yLabel": "best profit (£k)",
+            "functions": [
+              {
+                "id": "v",
+                "expr": "min(40*x, 300 + 10*x, 500)",
+                "label": "$v(R)$",
+                "colour": 2,
+                "labelAt": 26
+              }
+            ]
+          },
+          "state": {
+            "points": [
+              {
+                "id": "V",
+                "x": 18,
+                "y": 480
+              }
+            ]
+          }
+        },
+        "derive": {
+          "let": {
+            "dx": "max(0, min((R - 10)/2, 5))"
+          },
+          "left:B.x": "min(R/3, 5)",
+          "left:C.x": "min(R/3, 5)",
+          "left:C.y": "max(0, min(R - 15, 5))",
+          "left:D.x": "dx",
+          "left:D.y": "min(R - 3*dx, 10 - dx)",
+          "left:E.y": "min(R, 10)",
+          "left:O.x": "dx",
+          "left:O.y": "min(R - 3*dx, 10 - dx)",
+          "right:V.x": "R",
+          "right:V.y": "min(40*R, 300 + 10*R, 500)",
+          "caption": "$R$ = {{fixed(R, 1)}}: best plan ({{fixed(dx, 2)}}, {{fixed(min(R - 3*dx, 10 - dx), 2)}}), profit £{{fixed(min(40*R, 300 + 10*R, 500), 1)}}k"
+        },
+        "controls": [
+          {
+            "bind": "left:R",
+            "min": 0,
+            "max": 30,
+            "step": 1,
+            "start": 18,
+            "label": "risk budget $R$"
+          }
+        ],
+        "maxHeight": 340
+      },
+      "question": "At $R = 19$, what is the best profit, in £k?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 490,
+        "tol": {
+          "abs": 0.5
+        },
+        "accept": "490: the plan (4.5, 5.5).",
+        "unit": "£k",
+        "label": "Best profit at R = 19",
+        "wrong": [
+          {
+            "id": "old",
+            "value": 480,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "line",
+            "value": 520,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Slide $R$ to 19 and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "The best plan moves along the budget line to $(4.5, 5.5)$.",
+          "highlight": [
+            "right:V"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$60 \\times 4.5 + 40 \\times 5.5 = 270 + 220$."
+        }
+      ],
+      "feedback": {
+        "correct": "£490k, from $(4.5, 5.5)$. One more risk unit is worth £10k here.",
+        "generic": "Not quite right. Move $R$ to 19 and read the best profit.",
+        "byKey": {
+          "old": "That is the profit at $R = 18$. One more unit changes it.",
+          "line": "You used the slope 40 from the start of the curve. Near 18 the slope is 10."
+        }
+      },
+      "explain": {
+        "text": "At $R = 19$ the corner of budget and risk is $(4.5, 5.5)$, earning £490k. The rise from 480 is 10 per unit, the risk row's dual price.",
+        "canvas": {
+          "left": {
+            "params": {
+              "R": 19
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "The slope is the price",
+      "prose": "The right plot is $v(R) = \\min(40R,\\ 300 + 10R,\\ 500)$: slope 40 below $R = 10$, 10 from 10 to 20, and 0 above 20. The tangent sits at $R = 18$.",
+      "canvas": {
+        "kind": "pair",
+        "left": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              -0.5,
+              8
+            ],
+            "y": [
+              -0.5,
+              11
+            ],
+            "height": 280,
+            "grid": 1,
+            "xTicks": "integer",
+            "yTicks": "integer",
+            "xLabel": "$x$ (£m in A)",
+            "yLabel": "$y$ (£m in B)",
+            "params": {
+              "R": 18
+            },
+            "functions": [
+              {
+                "id": "bud",
+                "expr": "10 - x",
+                "domain": [
+                  0,
+                  8
+                ],
+                "label": "budget",
+                "labelAt": 7,
+                "colour": 2
+              },
+              {
+                "id": "risk",
+                "expr": "R - 3*x",
+                "domain": [
+                  "0",
+                  "R/3"
+                ],
+                "label": "risk",
+                "colour": 3,
+                "labelAt": 4.7
+              }
+            ],
+            "vlines": [
+              {
+                "id": "liq",
+                "x": 5,
+                "label": "liquidity"
+              }
+            ]
+          },
+          "state": {
+            "points": [
+              {
+                "id": "A",
+                "x": 0,
+                "y": 0,
+                "hidden": true
+              },
+              {
+                "id": "B",
+                "x": 5,
+                "y": 0,
+                "hidden": true
+              },
+              {
+                "id": "C",
+                "x": 5,
+                "y": 0,
+                "hidden": true
+              },
+              {
+                "id": "D",
+                "x": 4,
+                "y": 6,
+                "hidden": true
+              },
+              {
+                "id": "E",
+                "x": 0,
+                "y": 10,
+                "hidden": true
+              },
+              {
+                "id": "O",
+                "x": 4,
+                "y": 6,
+                "label": "best",
+                "labelPos": "ne"
+              }
+            ],
+            "polygons": [
+              {
+                "id": "reg",
+                "points": [
+                  "A",
+                  "B",
+                  "C",
+                  "D",
+                  "E"
+                ],
+                "colour": 1
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "plane",
+          "params": {
+            "x": [
+              0,
+              30
+            ],
+            "y": [
+              0,
+              600
+            ],
+            "height": 280,
+            "grid": true,
+            "xLabel": "risk budget $R$",
+            "yLabel": "best profit (£k)",
+            "functions": [
+              {
+                "id": "v",
+                "expr": "min(40*x, 300 + 10*x, 500)",
+                "label": "$v(R)$",
+                "colour": 2,
+                "labelAt": 26
+              }
+            ]
+          },
+          "state": {
+            "points": [
+              {
+                "id": "V",
+                "x": 18,
+                "y": 480
+              }
+            ],
+            "tangent": {
+              "f": "v",
+              "x": 18,
+              "lengthPx": 120
+            }
+          }
+        },
+        "derive": {
+          "let": {
+            "dx": "max(0, min((R - 10)/2, 5))"
+          },
+          "left:B.x": "min(R/3, 5)",
+          "left:C.x": "min(R/3, 5)",
+          "left:C.y": "max(0, min(R - 15, 5))",
+          "left:D.x": "dx",
+          "left:D.y": "min(R - 3*dx, 10 - dx)",
+          "left:E.y": "min(R, 10)",
+          "left:O.x": "dx",
+          "left:O.y": "min(R - 3*dx, 10 - dx)",
+          "right:V.x": "R",
+          "right:V.y": "min(40*R, 300 + 10*R, 500)",
+          "caption": "$R$ = {{fixed(R, 1)}}: best plan ({{fixed(dx, 2)}}, {{fixed(min(R - 3*dx, 10 - dx), 2)}}), profit £{{fixed(min(40*R, 300 + 10*R, 500), 1)}}k"
+        },
+        "controls": [
+          {
+            "bind": "left:R",
+            "min": 0,
+            "max": 30,
+            "step": 1,
+            "start": 18,
+            "label": "risk budget $R$"
+          }
+        ],
+        "maxHeight": 340
+      },
+      "question": "What is the slope of $v$ at $R = 18$, in £k per risk unit?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 10,
+        "tol": {
+          "abs": 0.001
+        },
+        "accept": "10: the middle piece of $v$.",
+        "label": "Slope at 18",
+        "wrong": [
+          {
+            "id": "first",
+            "value": 40,
+            "tol": {
+              "abs": 0.001
+            }
+          },
+          {
+            "id": "budget",
+            "value": 30,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Find which piece of the minimum is active at 18."
+        },
+        {
+          "rung": "point",
+          "text": "At $R = 18$, $300 + 10R = 480$ is the smallest.",
+          "highlight": [
+            "right:v"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Its slope is 10."
+        }
+      ],
+      "feedback": {
+        "correct": "10, the dual price $y_2$ from lesson 8. A multiplier is the rate at which the best value moves as its limit is relaxed: a **shadow price**.",
+        "generic": "Not quite right. Read the slope of the piece that is active at 18.",
+        "byKey": {
+          "first": "40 is the slope below $R = 10$, where only risk binds.",
+          "budget": "30 is the budget's price, not the risk row's."
+        }
+      },
+      "explain": {
+        "text": "Between $R = 10$ and $R = 20$, $v(R) = 300 + 10R$, so each extra unit adds £10k. That is $y_2 = 10$, the risk row's dual price.",
+        "canvas": {
+          "right": {
+            "tangent": {
+              "f": "v",
+              "x": 18,
+              "lengthPx": 120
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "The budget's price",
+      "prose": "Now hold $R = 18$ and move the budget $B$ instead. At $B = 10$ its price is £30k per £m, the dual value $y_1 = 30$. Drag along $v(B)$ to see where that price holds.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            22
+          ],
+          "y": [
+            0,
+            800
+          ],
+          "height": 280,
+          "grid": true,
+          "xLabel": "budget $B$ (£m)",
+          "yLabel": "best profit (£k)",
+          "functions": [
+            {
+              "id": "vb",
+              "expr": "min(60*x, 100 + 40*x, 180 + 30*x, 720)",
+              "label": "$v(B)$",
+              "colour": 2,
+              "labelAt": 20
+            }
+          ],
+          "vlines": [
+            {
+              "id": "b10",
+              "x": 10,
+              "label": "$B = 10$"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P",
+              "x": 10,
+              "y": 480,
+              "drag": true,
+              "on": "vb",
+              "label": "$P$"
+            }
+          ]
+        },
+        "derive": {
+          "caption": "$B$ = {{fixed(P.x, 1)}}: best profit £{{fixed(P.y, 1)}}k"
+        },
+        "maxHeight": 330
+      },
+      "question": "For which budgets does the price of £30k per £m hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "From £8m to £18m",
+            "correct": true
+          },
+          {
+            "id": "ten",
+            "text": "From £0 to £10m",
+            "why": "Below £8m liquidity binds too, and the price rises to £40k."
+          },
+          {
+            "id": "risk",
+            "text": "From £10m to £20m",
+            "why": "That is the risk budget's range, not the cash budget's."
+          },
+          {
+            "id": "all",
+            "text": "For every budget",
+            "why": "Above £18m the budget goes slack and its price drops to 0."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Watch where the slope of $v(B)$ changes."
+        },
+        {
+          "rung": "point",
+          "text": "The kinks are at $B = 5$, 8 and 18.",
+          "highlight": [
+            "vb"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Between 8 and 18 each £1m adds £30k."
+        }
+      ],
+      "feedback": {
+        "correct": "From £8m to £18m. Below 8 liquidity binds and the price is £40k; above 18 the budget is slack and its price is 0.",
+        "generic": "Not quite right. Find the kinks either side of $B = 10$.",
+        "byKey": {
+          "ten": "The slope changes at £8m, not at 0.",
+          "risk": "Those numbers belong to the risk row.",
+          "all": "Every price has a range of validity."
+        }
+      },
+      "explain": {
+        "text": "$v(B) = \\min(60B,\\ 100 + 40B,\\ 180 + 30B,\\ 720)$, and the piece $180 + 30B$ is active from 8 to 18. Outside that range another set of limits binds and the price changes.",
+        "canvas": {
+          "points": {
+            "P": {
+              "x": 13
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A price on return",
+      "prose": "The same reading works on a portfolio. At an 8% target the best variance is $\\tfrac{9}{280} \\approx 0.032143$ and the target's multiplier is $\\mu = \\tfrac97 \\approx 1.2857$. The curve is the best variance against the target; the line is its tangent at 8%.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.07,
+            0.09
+          ],
+          "y": [
+            0.026,
+            0.04
+          ],
+          "height": 280,
+          "grid": true,
+          "xLabel": "target $r$",
+          "yLabel": "best variance",
+          "xFormat": "percent",
+          "functions": [
+            {
+              "id": "V",
+              "expr": "(3050*x^2 - 407*x)/63 + 3013/12600",
+              "label": "$V^*(r)$",
+              "colour": 2,
+              "labelAt": 0.075
+            }
+          ],
+          "vlines": [
+            {
+              "id": "r82",
+              "x": 0.082,
+              "label": "8.2%"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P8",
+              "x": 0.08,
+              "y": 0.03214285714285714,
+              "label": "8%",
+              "labelPos": "nw"
+            }
+          ],
+          "tangent": {
+            "f": "V",
+            "x": 0.08,
+            "lengthPx": 220
+          }
+        },
+        "maxHeight": 330
+      },
+      "question": "Use $\\mu$ to predict the rise in variance for an 8.2% target.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.002571,
+        "tol": {
+          "abs": 2e-05
+        },
+        "accept": "0.002571: $1.2857 \\times 0.002$.",
+        "label": "Predicted rise",
+        "wrong": [
+          {
+            "id": "pct",
+            "value": 0.257143,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "exact",
+            "value": 0.002765,
+            "tol": {
+              "abs": 5e-06
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\mu$ is the slope $dV^*/dr$ at 8%."
+        },
+        {
+          "rung": "point",
+          "text": "The step in the target is 0.002.",
+          "highlight": [
+            "V"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1.2857 \\times 0.002$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.2857 \\times 0.002 \\approx 0.002571$. The exact rise is 0.002765: the curve bends upwards, so the tangent undershoots.",
+        "generic": "Not quite right. Multiply $\\mu$ by the change in the target, as a decimal.",
+        "byKey": {
+          "pct": "You used 0.2 for the step. 8.2% minus 8% is 0.002.",
+          "exact": "That is the exact rise from re-solving. The prediction uses the slope alone."
+        }
+      },
+      "explain": {
+        "text": "The multiplier is the slope $dV^*/dr$ at 8%, so a step of 0.002 adds about 0.002571. Re-solving gives $\\tfrac{2749}{78750} \\approx 0.034908$, a rise of 0.002765, and volatility 18.684% against 17.928%.",
+        "canvas": {
+          "highlight": [
+            "r82"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Long-only at 10%",
+      "prose": "At 10% long-only, lesson 11 found $\\mu = \\tfrac{46}{9} \\approx 5.1111$ with variance $\\tfrac{73}{900} \\approx 0.081111$. Here the curve is the long-only frontier; past 9.588% the 20% asset is dropped.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.09,
+            0.11
+          ],
+          "y": [
+            0.05,
+            0.12
+          ],
+          "height": 280,
+          "grid": true,
+          "xLabel": "target $r$",
+          "yLabel": "best variance",
+          "xFormat": "percent",
+          "functions": [
+            {
+              "id": "Vf",
+              "expr": "(3050*x^2 - 407*x)/63 + 3013/12600",
+              "domain": [
+                0.09,
+                0.09588235294117647
+              ],
+              "colour": 2,
+              "label": "long-only $V^*(r)$",
+              "labelAt": 0.092,
+              "labelSide": "below"
+            },
+            {
+              "id": "V",
+              "expr": "0.09*(1 - (x - 0.08)/0.03)^2 + 0.16*((x - 0.08)/0.03)^2",
+              "domain": [
+                0.09588235294117647,
+                0.11
+              ],
+              "colour": 2
+            }
+          ],
+          "vlines": [
+            {
+              "id": "r101",
+              "x": 0.101,
+              "label": "10.1%"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P10",
+              "x": 0.1,
+              "y": 0.0811111111111111,
+              "label": "10%",
+              "labelPos": "nw"
+            }
+          ],
+          "tangent": {
+            "f": "V",
+            "x": 0.1,
+            "lengthPx": 200
+          }
+        },
+        "maxHeight": 330
+      },
+      "question": "Use $\\mu$ to predict the rise in variance for a 10.1% target.",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.005111,
+        "tol": {
+          "abs": 2e-05
+        },
+        "accept": "0.005111: $5.1111 \\times 0.001$.",
+        "label": "Predicted rise",
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 0.005389,
+            "tol": {
+              "abs": 5e-06
+            }
+          },
+          {
+            "id": "pct",
+            "value": 0.511111,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The step is 0.001."
+        },
+        {
+          "rung": "point",
+          "text": "Multiply by $\\mu = 5.1111$.",
+          "highlight": [
+            "V"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$5.1111 \\times 0.001$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\tfrac{46}{9} \\times 0.001 \\approx 0.005111$. Re-solving gives $(0, 0.3, 0.7)$ with variance 0.0865: a rise of 0.005389 and volatility 29.411%.",
+        "generic": "Not quite right. Multiply $\\mu$ by the step in the target.",
+        "byKey": {
+          "exact": "That is the exact rise. The prediction uses $\\mu$ alone.",
+          "pct": "The step is 0.001, not 0.1."
+        }
+      },
+      "explain": {
+        "text": "$\\mu \\times 0.001 \\approx 0.005111$ predicts the rise. The exact optimum $(0, 0.3, 0.7)$ has variance $0.0081 + 0.0784 = 0.0865$, so the rise is 0.005389.",
+        "canvas": {
+          "highlight": [
+            "r101"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Moving the wall",
+      "prose": "Lesson 11's transfer predicted that allowing $w_1 \\ge -0.01$ saves about $0.01 \\times \\tfrac{7}{75} \\approx 0.000933$ of variance. On the target line, $V(w_1) = \\tfrac{14}{25}w_1^2 + \\tfrac{7}{75}w_1 + \\tfrac{73}{900}$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -0.03,
+            0.03
+          ],
+          "y": [
+            0.0795,
+            0.0845
+          ],
+          "height": 280,
+          "grid": true,
+          "xLabel": "$w_1$",
+          "yLabel": "variance",
+          "functions": [
+            {
+              "id": "V",
+              "expr": "0.56*x^2 + (7/75)*x + 73/900",
+              "label": "$V(w_1)$",
+              "colour": 2,
+              "labelAt": 0.022
+            }
+          ],
+          "vlines": [
+            {
+              "id": "old",
+              "x": 0,
+              "label": "old wall"
+            },
+            {
+              "id": "new",
+              "x": -0.01,
+              "label": "new wall"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "P0",
+              "x": 0,
+              "y": 0.0811111111111111,
+              "label": "0.081111",
+              "labelPos": "se"
+            }
+          ],
+          "tangent": {
+            "f": "V",
+            "x": 0,
+            "lengthPx": 220
+          }
+        },
+        "maxHeight": 330
+      },
+      "question": "What is the exact saving, $V(0) - V(-0.01)$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.000877,
+        "tol": {
+          "abs": 5e-06
+        },
+        "accept": "0.000877: $0.081111 - 0.080234$.",
+        "label": "Exact saving",
+        "wrong": [
+          {
+            "id": "pred",
+            "value": 0.000933,
+            "tol": {
+              "abs": 5e-06
+            }
+          },
+          {
+            "id": "val",
+            "value": 0.080234,
+            "tol": {
+              "abs": 5e-06
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Evaluate $V(-0.01)$."
+        },
+        {
+          "rung": "point",
+          "text": "$0.56 \\times 0.0001 - 0.000933 + 0.081111$.",
+          "highlight": [
+            "new"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$V(-0.01) \\approx 0.080234$."
+        }
+      ],
+      "feedback": {
+        "correct": "$V(-0.01) \\approx 0.080234$, so the saving is 0.000877 against the predicted 0.000933. SLSQP with the bound moved gives 0.080234 too.",
+        "generic": "Not quite right. Evaluate $V$ at $-0.01$ and subtract from 0.081111.",
+        "byKey": {
+          "pred": "That is the multiplier's prediction. Evaluate $V$ at the new wall.",
+          "val": "That is $V(-0.01)$ itself. Subtract it from $V(0)$."
+        }
+      },
+      "explain": {
+        "text": "$V(-0.01) = 0.000056 - 0.000933 + 0.081111 = 0.080234$, a saving of 0.000877. The prediction overshoots slightly because the curve bends.",
+        "canvas": {
+          "points": {
+            "P1": {
+              "x": -0.01,
+              "y": 0.080234,
+              "label": "0.080234",
+              "labelPos": "s"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Any size of change",
+      "prose": "The risk team offers 5 more units, $R = 23$. A trader extends the shadow price, the dashed line: $480 + 5 \\times 10 = 530$. Recall that liquidity caps A at £5m.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            10,
+            30
+          ],
+          "y": [
+            350,
+            600
+          ],
+          "height": 280,
+          "grid": true,
+          "xLabel": "risk budget $R$",
+          "yLabel": "best profit (£k)",
+          "functions": [
+            {
+              "id": "v",
+              "expr": "min(40*x, 300 + 10*x, 500)",
+              "label": "$v(R)$",
+              "colour": 2,
+              "labelAt": 27,
+              "labelSide": "below"
+            },
+            {
+              "id": "lin",
+              "expr": "480 + 10*(x - 18)",
+              "domain": [
+                18,
+                26
+              ],
+              "label": "price 10 forever",
+              "dashed": true,
+              "colour": 5,
+              "labelAt": 25,
+              "labelSide": "below"
+            }
+          ],
+          "vlines": [
+            {
+              "id": "r20",
+              "x": 20,
+              "label": "$R = 20$"
+            },
+            {
+              "id": "r23",
+              "x": 23,
+              "label": "$R = 23$"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "S",
+              "x": 18,
+              "y": 480,
+              "label": "480",
+              "labelPos": "nw"
+            }
+          ],
+          "hide": [
+            "v"
+          ]
+        },
+        "maxHeight": 330
+      },
+      "question": "What is the best profit at $R = 23$, in £k?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 500,
+        "tol": {
+          "abs": 0.5
+        },
+        "accept": "500: liquidity binds from R = 20.",
+        "unit": "£k",
+        "label": "Best profit at R = 23",
+        "wrong": [
+          {
+            "id": "line",
+            "value": 530,
+            "tol": {
+              "abs": 0.5
+            },
+            "canvas": {
+              "hide": []
+            }
+          },
+          {
+            "id": "first",
+            "value": 680,
+            "tol": {
+              "abs": 0.5
+            },
+            "canvas": {
+              "hide": []
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Does the price of 10 hold all the way to 23?"
+        },
+        {
+          "rung": "point",
+          "text": "At $R = 20$ the plan reaches $x = 5$, the liquidity limit.",
+          "highlight": [
+            "r20"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From 20 on, more risk is worth nothing."
+        }
+      ],
+      "feedback": {
+        "correct": "£500k. The price of 10 holds only up to $R = 20$; from there liquidity binds and risk is worth nothing more.",
+        "generic": "Not quite right. Find where the price of 10 stops holding.",
+        "byKey": {
+          "line": "You used the shadow price for any size of change. It holds only to $R = 20$.",
+          "first": "You used the slope 40, which holds only below $R = 10$."
+        }
+      },
+      "explain": {
+        "text": "From 18 to 20 the price is 10, adding £20k. From 20 to 23 the price is 0, so the total is $480 + 20 = 500$.",
+        "canvas": {
+          "hide": [],
+          "highlight": [
+            "r20",
+            "r23"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "A slack limit",
+      "prose": "A shadow price is the rate of change of the best value. Think about which limits have room to spare at the optimum.",
+      "question": "Which limits have a shadow price of 0? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "liq",
+            "text": "Liquidity, at $R = 18$",
+            "correct": true
+          },
+          {
+            "id": "cap",
+            "text": "A 50% cap on each weight, at a 9% target",
+            "correct": true
+          },
+          {
+            "id": "bud",
+            "text": "The budget, at $R = 18$",
+            "why": "The budget binds, with price £30k per £m."
+          },
+          {
+            "id": "risk",
+            "text": "Risk, at $R = 18$",
+            "why": "Risk binds, with price £10k per unit."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "A slack limit has price 0."
+        },
+        {
+          "rung": "point",
+          "text": "At $(4, 6)$, liquidity has £1m spare."
+        },
+        {
+          "rung": "step",
+          "text": "At 9% the largest free weight is about 45.2%, under 50%."
+        }
+      ],
+      "feedback": {
+        "correct": "A limit with room to spare has price 0: relaxing it changes nothing. Liquidity has £1m spare, and the 9% portfolio's largest weight is 45.2%.",
+        "generic": "Not quite right. Check which limits hold with equality at the optimum.",
+        "byKey": {
+          "bud": "The budget is spent in full.",
+          "risk": "All 18 risk units are used."
+        }
+      },
+      "explain": {
+        "text": "Complementary slackness pairs a slack limit with a zero multiplier. The free 9% optimum $(\\tfrac{5}{42}, \\tfrac37, \\tfrac{19}{42})$ has every weight under 0.4524, so a 50% cap never binds."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Two sets of prices",
+      "prose": "Add lesson 6's redundant limit $2x + y \\le 14$, which also passes through $(4, 6)$. Three limits now meet at the corner. A certificate is any acceptable price vector $(y_1, y_2, y_3, y_4)$ that costs 480.",
+      "question": "Which price vectors certify 480? Select all that apply.",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$(30, 10, 0, 0)$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$(20, 0, 0, 20)$",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "$(25, 5, 0, 10)$",
+            "correct": true
+          },
+          {
+            "id": "d",
+            "text": "$(30, 10, 0, 20)$",
+            "why": "It is acceptable but costs $300 + 180 + 280 = 760$."
+          },
+          {
+            "id": "e",
+            "text": "$(40, 0, 0, 0)$",
+            "why": "Row A needs $y_1 + 3y_2 + y_3 + 2y_4 \\ge 60$; this gives 40."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check both dual rows, then the cost $10y_1 + 18y_2 + 5y_3 + 14y_4$."
+        },
+        {
+          "rung": "point",
+          "text": "Rows: $y_1 + 3y_2 + y_3 + 2y_4 \\ge 60$ and $y_1 + y_2 + y_4 \\ge 40$."
+        },
+        {
+          "rung": "step",
+          "text": "$(25, 5, 0, 10)$ is halfway between the first two."
+        }
+      ],
+      "feedback": {
+        "correct": "All three. At a degenerate corner the prices are not unique. $R = 17.99$ gives £479.9k, a rate of 10; $R = 18.01$ still gives £480k, a rate of 0.",
+        "generic": "Not quite right. Test each vector against both rows and the cost.",
+        "byKey": {
+          "d": "Acceptable but too expensive: 760.",
+          "e": "It fails row A."
+        }
+      },
+      "explain": {
+        "text": "Every mix of $(30, 10, 0, 0)$ and $(20, 0, 0, 20)$ certifies 480. The two one-sided rates for risk differ: 10 to the left of 18 and 0 to the right."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Shadow prices in code",
+      "prose": "Write `shadow_price(solve, level, h=1e-4)`, the central difference $\\tfrac{v(\\text{level} + h) - v(\\text{level} - h)}{2h}$ of the optimal value. Compare it with the multipliers: risk 10, budget 30, liquidity 0, and $\\mu = \\tfrac97$ and $\\tfrac{46}{9}$ for the portfolios.",
+      "question": "Complete the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\nfrom scipy.optimize import linprog, minimize\n\ndef desk_value(b):\n    r = linprog([-60, -40], A_ub=[[1, 1], [3, 1], [1, 0]], b_ub=b, method='highs')\n    return -r.fun\n\ndef mv_value(target, lb=None):\n    S = np.diag([0.04, 0.09, 0.16]); m = np.array([0.05, 0.08, 0.11])\n    cons = [{'type': 'eq', 'fun': lambda w: w.sum() - 1},\n            {'type': 'eq', 'fun': lambda w: w @ m - target}]\n    res = minimize(lambda w: w @ S @ w, np.array([0.0, 1/3, 2/3]), jac=lambda w: 2 * S @ w,\n                   method='SLSQP', bounds=[(lb, None)] * 3, constraints=cons,\n                   options={'ftol': 1e-15, 'maxiter': 500})\n    return res.fun\n",
+        "starter": "def shadow_price(solve, level, h=1e-4):\n    # solve(level) returns the optimal value at that constraint level\n    # return the central-difference rate of change\n    pass\n",
+        "examples": [
+          {
+            "call": "shadow_price(lambda x: x ** 2, 3)",
+            "expect": "6",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "shadow_price(lambda x: x ** 2, 3)",
+            "expect": "6",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "shadow_price(lambda x: x ** 3, 1, h=0.1)",
+            "expect": "3.01",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "shadow_price(lambda R: desk_value([10, R, 5]), 18)",
+            "expect": "10",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "shadow_price(lambda B: desk_value([B, 18, 5]), 10)",
+            "expect": "30",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "shadow_price(lambda L: desk_value([10, 18, L]), 5)",
+            "expect": "0",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "shadow_price(mv_value, 0.08)",
+            "expect": "9/7",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "call": "shadow_price(lambda r: mv_value(r, 0), 0.10)",
+            "expect": "46/9",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ],
+        "solution": "def shadow_price(solve, level, h=1e-4):\n    return (solve(level + h) - solve(level - h)) / (2 * h)\n",
+        "how": "Submit runs 7 hidden tests; desk_value(b) and mv_value(target, lb) are defined for you. Values are compared with math.isclose: absolute 1e-6 for the desk, 1e-4 and 1e-3 for the portfolios. The first run loads NumPy and SciPy: a few seconds from cache, longer on a first visit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Call `solve` twice, once each side of `level`."
+        },
+        {
+          "rung": "point",
+          "text": "Divide the difference by `2 * h`."
+        },
+        {
+          "rung": "step",
+          "text": "Use the `h` you are given, not a fixed step."
+        }
+      ],
+      "feedback": {
+        "correct": "All pass: the finite differences match the multipliers, 10, 30, 0, $\\tfrac97$ and $\\tfrac{46}{9}$.",
+        "generic": "Not quite right. Check the divisor is `2 * h`."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "What a cap costs",
+      "prose": "A risk manager asks what a 45% cap costs at a 9% target. KKT gives $\\lambda = -\\tfrac{473}{4500}$ and $\\mu = \\tfrac{103}{45}$, with $w_3 = 0.45$ at the cap. Row 3 reads $2(0.16)(0.45) = \\lambda + 0.11\\mu - \\eta_3$.",
+      "question": "What is the cap's multiplier $\\eta_3$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.002667,
+        "tol": {
+          "abs": 2e-05
+        },
+        "accept": "0.002667: $\\tfrac{1}{375}$.",
+        "label": "eta 3",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": -0.002667,
+            "tol": {
+              "abs": 2e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Move $\\eta_3$ to one side: $\\eta_3 = \\lambda + 0.11\\mu - 0.144$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\lambda \\approx -0.105111$ and $0.11\\mu \\approx 0.251778$."
+        },
+        {
+          "rung": "step",
+          "text": "$-0.105111 + 0.251778 - 0.144$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\eta_3 = \\tfrac{1}{375} \\approx 0.00267$: tiny. Lifting the cap moves variance from $\\tfrac{2243}{45000} \\approx 0.049844$ to $\\tfrac{157}{3150} \\approx 0.049841$, volatility 22.3259% against 22.3252%.",
+        "generic": "Not quite right. Solve row 3 for $\\eta_3$.",
+        "byKey": {
+          "sign": "$\\eta_3$ enters with a minus, so $\\eta_3 = \\lambda + 0.11\\mu - 0.144$, which is positive."
+        }
+      },
+      "explain": {
+        "text": "$-0.105111 + 0.251778 - 0.144 = 0.002667$. A limit that barely binds costs almost nothing, and the multiplier says so before anyone re-solves."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "A multiplier is the rate at which the best value changes as its limit is relaxed: a shadow price.",
+      "The price holds only while the active set stays the same. Past a kink it changes, and a curved frontier makes the prediction approximate.",
+      "A slack limit has price 0. At a degenerate corner the prices are not unique and the left and right rates differ."
+    ],
+    "formula": {
+      "name": "Shadow price",
+      "tex": "\\frac{dv^*}{db_i} = y_i^*",
+      "note": "Valid while the active set does not change."
+    },
+    "trap": "Extending a shadow price past its range: £530k predicted at R = 23, £500k in fact."
+  },
+  "quiz": [
+    {
+      "id": "q13-venue",
+      "difficulty": 2,
+      "prose": "In lesson 5's venue split, extra capacity at venue 2 has a shadow price of 0.15p a share.",
+      "question": "About how much does capacity for 1,000 more shares at venue 2 save, in pence?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 150,
+        "tol": {
+          "abs": 0.5
+        },
+        "accept": "150p: 1,000 × 0.15p.",
+        "unit": "p",
+        "wrong": [
+          {
+            "id": "rate",
+            "value": 0.15,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "1,000 × 0.15p = 150p, or £1.50. Those shares move from venue 3, which still has room.",
+        "generic": "Not quite right. Multiply the price by the number of shares.",
+        "byKey": {
+          "rate": "That is the price per share. Multiply by 1,000."
+        }
+      },
+      "explain": {
+        "text": "Each share moved from venue 3 (0.40p) to venue 2 (0.25p) saves 0.15p. For 1,000 shares that is 150p, inside the range where the price holds."
+      }
+    },
+    {
+      "id": "q13-vol",
+      "difficulty": 3,
+      "prose": "At an 8% target the variance is $\\tfrac{9}{280}$ (volatility 17.928%) and $\\mu = \\tfrac97 \\approx 1.2857$.",
+      "question": "About how fast does volatility rise per unit of target?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3.586,
+        "tol": {
+          "abs": 0.01
+        },
+        "accept": "3.586: $\\mu / (2\\sigma)$.",
+        "wrong": [
+          {
+            "id": "var",
+            "value": 1.285714,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\mu/(2\\sigma) = 1.2857 / 0.35857 \\approx 3.586$. $\\mu$ itself is the rate for variance, not volatility.",
+        "generic": "Not quite right. Volatility is $\\sqrt{V}$, so its rate is $\\tfrac{1}{2\\sqrt{V}}$ times $\\mu$.",
+        "byKey": {
+          "var": "You read $\\mu$ as the rate for volatility. It is the rate for variance."
+        }
+      },
+      "explain": {
+        "text": "$d\\sigma/dr = \\tfrac{1}{2\\sigma}\\,dV/dr = 1.2857 / (2 \\times 0.17928) \\approx 3.586$. So 0.2 points more target adds about 0.72 points of volatility."
+      }
+    },
+    {
+      "id": "q13-range",
+      "difficulty": 2,
+      "prose": "At $R = 18$ the risk row's shadow price is £10k per unit.",
+      "question": "Over which risk budgets does that price hold?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "ok",
+            "text": "From $R = 10$ to $R = 20$",
+            "correct": true
+          },
+          {
+            "id": "all",
+            "text": "Every $R$",
+            "why": "Below 10 the price is 40; above 20 it is 0."
+          },
+          {
+            "id": "up",
+            "text": "From $R = 18$ upwards",
+            "why": "It stops at 20, where liquidity binds."
+          },
+          {
+            "id": "near",
+            "text": "Only at $R = 18$ exactly",
+            "why": "It holds on the whole middle piece of $v(R)$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The active set stays the same from 10 to 20, so the price stays 10 there.",
+        "generic": "Not quite right. Find the kinks of $v(R)$."
+      },
+      "explain": {
+        "text": "$v(R) = 300 + 10R$ from $R = 10$ to $R = 20$. Outside that range another set of limits binds and the price changes."
+      }
+    }
+  ]
+}
