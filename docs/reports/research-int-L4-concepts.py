@@ -2,8 +2,8 @@
 
 Run from the repo root: python3 -I docs/reports/research-int-L4-concepts.py
 Every check is an assert naming its ledger row (docs/reports/audit-research-int-4-ledger.md).
-A check that fails because the content is wrong is marked EXPECTED_FAIL and keeps failing; the
-corrected assert sits in a comment beside it. All checks run; the script exits 1 if any failed.
+The five checks once marked EXPECTED_FAIL (findings 1, 3, 4, 6, 7) now assert the corrected claim as the
+content states it after the fix pass, read from the lesson files where they quote it. The script exits 1 if any failed.
 """
 import math, os, sys, warnings
 import numpy as np
@@ -49,9 +49,12 @@ for m, kw in (("slinear", {}), ("polynomial", {"order": 1}), ("nearest", {})):
     v = float(s.interpolate(method=m, **kw).iloc[1])
     if v in (103.0, 100.0):
         using.add(m)
-check("L16 q16-method 'only index or time read the stamps' (EXPECTED_FAIL: slinear, polynomial, nearest read the index)", using == set(),
-      f"EXPECTED_FAIL methods that read the index besides index/time: {sorted(using)}")
-# corrected, ready to enable: check("L16 q16-method fixed", using == {"slinear", "polynomial", "nearest"})
+import json as _json
+_L = lambda name: _json.load(open(os.path.join(ROOT, "app", "content", "courses", "research-int", name + ".json"), encoding="utf-8"))
+_l16 = _L("l16-interpolating"); _q16 = [q for q in _l16["quiz"] if q["id"] == "q16-method"][0]["explain"]["text"]
+check("L16 q16-method: the default linear ignores the stamps; index, values, time and the scipy methods read them (corrected claim, fix pass)",
+      using == {"slinear", "polynomial", "nearest"} and not _q16.startswith("Only") and "ignores the stamps" in _q16 and "scipy" in _q16
+      and "default `linear` ignores it" in _l16["screens"][6]["feedback"]["byKey"]["dates"], f"{sorted(using)} | {_q16}")
 # L16-4 linear interpolation uses the later point; a forward fill does not (derivation: the formula holds y1)
 y = pd.Series([100.0, np.nan, 112.0])
 check("L16 linear fill reads the later point, ffill reads only the past", float(y.interpolate().iloc[1]) == 106.0 and float(y.ffill().iloc[1]) == 100.0)
@@ -149,9 +152,11 @@ check("L18 centre-first numbers", abs(mm - 0.5) < 1e-12 and abs(a1 - 1) < 1e-12 
 # Finding 3: the distractor 'subtract c from y as well' is said to leave the huge x^2 sums. With x shifted too it does not: the fit is exact.
 xs = np.array([1e9 + 1, 1e9 + 2, 1e9 + 3]); cshift = 1e9
 m_both = sums_slope(3, (xs - cshift).sum(), (yv - cshift).sum(), ((xs - cshift) ** 2).sum(), ((xs - cshift) * (yv - cshift)).sum())
-check("L18 derive distractor x 'shifting y as well leaves the x^2 sums' (EXPECTED_FAIL: with x shifted too the slope is exact)", abs(m_both - 0.5) > 1e-6,
-      f"EXPECTED_FAIL slope with both columns shifted is {m_both}, exact; the why only holds for shifting y instead of x")
-# corrected, ready to enable: check("L18 derive distractor x fixed wording", abs(m_both - 0.5) < 1e-9)
+_den_y_only = 3 * (xs ** 2).sum() - xs.sum() ** 2  # x left raw, y shifted: the x^2 sums still cancel
+_l18 = _L("l18-updating-a-fit"); _dx = [ln for ln in _l18["screens"][8]["widget"]["lines"] if ln["id"] == "x"][0]
+check("L18 derive distractor x: shifting y instead of x leaves the x^2 sums (corrected claim, fix pass)",
+      abs(m_both - 0.5) < 1e-9 and _den_y_only == 0.0 and "instead of $x$" in _dx["text"] and "x^2" in _dx["why"],
+      f"both shifted {m_both}, y-only den {_den_y_only}, text {_dx['text']}")
 # L18-7 OnlineLine: den == 0 only when the sums are exact. Finding 4 (MC over repeated non-integer x)
 def coef(xy):
     n = len(xy); sx = sum(x for x, _ in xy); sy = sum(y for _, y in xy); sxx = sum(x * x for x, _ in xy); sxy = sum(x * y for x, y in xy)
@@ -164,10 +169,15 @@ for _ in range(20000):
     xv = float(rng.uniform(0.01, 10)); k = int(rng.integers(2, 6)); cc = coef([(xv, float(rng.normal())) for _ in range(k)])
     if not math.isnan(cc[1]):
         bad += 1; worst = max(worst, abs(cc[1]))
-check("L18 OnlineLine 'NaN when every x is equal' (EXPECTED_FAIL: den == 0 fails for about 28% of non-integer x)", bad == 0,
-      f"EXPECTED_FAIL {bad / 20000:.3f} of repeated-x cases return a number (largest slope {worst:.3g}) instead of NaN")
-# corrected, ready to enable (den <= 1e-12 * n * sxx):
-# def coef_fixed(xy): ... if n < 2 or den <= 1e-12 * n * sxx: return [nan, nan]; check("L18 OnlineLine guard fixed", bad_fixed == 0)
+_ns = {}; exec(_l18["screens"][5]["widget"]["solution"], _ns); _OL = _ns["OnlineLine"]; bad_fixed = 0
+for _ in range(20000):
+    xv = float(rng.uniform(0.01, 10)); k = int(rng.integers(2, 6)); _m = _OL()
+    for _ in range(k): _m.add(xv, float(rng.normal()))
+    bad_fixed += not math.isnan(_m.coef()[1])
+_m = _OL(); [_m.add(0.7, v) for v in (1, 2, 5)]
+check("L18 OnlineLine 'NaN when every x is equal' (to rounding): the shipped solution gives NaN in every case (corrected claim, fix pass)",
+      bad > 1000 and bad_fixed == 0 and math.isnan(_m.coef()[1]) and "rounding" in _l18["screens"][5]["widget"]["starter"],
+      f"raw den == 0 misses {bad / 20000:.3f}; shipped solution misses {bad_fixed}")
 # L18-8 the raw-sum class on x near 1e9 (Finding 5): the slope comes out wrong where the centred fit is exact
 check("L18 raw-sum class fails on x near 1e9 where centring is exact", math.isnan(coef(list(zip(xs, yv)))[1]) or abs(coef(list(zip(xs, yv)))[1] - 0.5) > 1e-3)
 # L18-9 remove a row never added: sums shift silently (sim)
@@ -197,9 +207,11 @@ check("L19 600 -> 585 -> 570, order of ids and prices immaterial on the file", l
 tiny = pd.DataFrame({"order_id": [7, 7], "price": [np.nan, 8.0]})
 kept_ids_then_prices = tiny.drop_duplicates("order_id").dropna(subset=["price"]).order_id.tolist()
 kept_prices_then_ids = tiny.dropna(subset=["price"]).drop_duplicates("order_id").order_id.tolist()
-check("L19 load_clean tiny case 'first copy kept even when its price is bad' (EXPECTED_FAIL: a recoverable order is dropped)", kept_ids_then_prices == [7],
-      f"EXPECTED_FAIL ids-then-prices keeps {kept_ids_then_prices}, prices-then-ids keeps {kept_prices_then_ids}")
-# corrected, ready to enable once the order is prices then ids: check("L19 tiny case keeps order 7", kept_prices_then_ids == [7])
+_l19 = _L("l19-timed-data-task"); _s2 = _l19["screens"][2]
+check("L19 load_clean tiny case: the first copy is the record, so order 7 with a blank first price is dropped, as stated (corrected claim, fix pass)",
+      kept_ids_then_prices == [] and kept_prices_then_ids == [7] and "first copy of an id is the record" in _s2["prose"]
+      and _s2["widget"]["tests"][6]["expect"] == "[3, [1, 2, 6], [10.0, 5.0, 12.0]]" and [c["id"] for c in _l19["screens"][6]["canvas"]["params"]["categories"]] == ["raw", "ids", "px"],
+      f"ids-then-prices keeps {kept_ids_then_prices}, prices-then-ids keeps {kept_prices_then_ids}")
 # L19-3 VWAP definition and the stated figures; leaving in -999 and repeats drags ALPHA to 46.3874
 def vw(d): return (d.price * d.qty).groupby(d.symbol).sum() / d.groupby("symbol").qty.sum()
 check("L19 VWAPs", np.allclose(vw(a).values, [50.0152, 120.0146, 8.0005], atol=5e-5) and abs(vw(o[o.price.notna()])["ALPHA"] - 46.3874) < 5e-5)
@@ -234,9 +246,13 @@ draws = np.sqrt((err[idx] ** 2).mean(axis=1)); lo, hi = np.percentile(draws, [2.
 check("L20 report numbers n 396, rmse 82.90, interval 77.45 to 88.22", len(p) == 396 and abs(np.sqrt((err ** 2).mean()) - 82.8998) < 5e-4 and abs(lo - 77.452) < 5e-3 and abs(hi - 88.225) < 5e-3)
 # Finding 7: repairing instead of dropping keeps 400 homes
 rep = h.copy(); rep.loc[rep.price_k > 5000, "price_k"] /= 1000
-check("L20 make_report drops four repairable rows (EXPECTED_FAIL: the level's rule is repair first, drop only what cannot be repaired)", len(p) == 400,
-      f"EXPECTED_FAIL dropped n={len(p)}, repaired n={len(rep)}, mean {rep.price_k.mean():.4f}, rmse {np.sqrt(((rep.price_k - rep.price_k.mean()) ** 2).mean()):.4f}")
-# corrected, ready to enable once the item repairs: check("L20 repaired report", len(rep) == 400 and abs(rep.price_k.mean() - 307.416) < 1e-3)
+_l20 = _L("l20-writing-a-take-home"); _l14 = _L("l14-house-price-case"); _pr = _l20["screens"][1]["prose"]
+_rep_rmse = float(np.sqrt(((rep.price_k - rep.price_k.mean()) ** 2).mean()))
+check("L20 make_report drops four repairable rows, and now says the repair exists and why it drops them (corrected claim, fix pass; full repair deferred)",
+      len(p) == 396 and len(rep) == 400 and abs(rep.price_k.mean() - 307.416) < 1e-3 and abs(_rep_rmse - 82.5785) < 1e-4
+      and "Dividing by 1,000 would repair them" in _pr and "396 rows of the house-price case" in _pr
+      and "_df[_df['price_k'] <= 5000]" in "".join(s.get("widget", {}).get("prelude", "") or "" for s in _l14["screens"]),
+      f"dropped n={len(p)}, repaired n={len(rep)}, mean {rep.price_k.mean():.4f}, rmse {_rep_rmse:.4f}")
 # Finding 8: the draws keep the mean fixed; recentring inside each resample moves the ends by about 0.1
 pi = p[idx]; d2r = np.sqrt(((pi - pi.mean(axis=1, keepdims=True)) ** 2).mean(axis=1)); lo2, hi2 = np.percentile(d2r, [2.5, 97.5])
 check("L20 recentred bootstrap differs from the fixed-mean one by under 0.2 (size of the imprecision)", 0.01 < max(abs(lo - lo2), abs(hi - hi2)) < 0.2, f"{lo2:.3f} {hi2:.3f}")

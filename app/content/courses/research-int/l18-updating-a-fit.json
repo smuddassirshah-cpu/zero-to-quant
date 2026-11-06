@@ -502,8 +502,8 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import numpy as np\n\nclass OnlineLine:\n    \"\"\"A straight-line fit kept as running sums.\"\"\"\n\n    def __init__(self):\n        self.n = 0\n        # Your code here: the other four sums\n\n    def add(self, x, y):\n        # Your code here\n        pass\n\n    def remove(self, x, y):\n        # Your code here\n        pass\n\n    def coef(self):\n        \"\"\"[intercept, slope] as floats, or [nan, nan] with fewer\n        than 2 rows or when every x is equal.\"\"\"\n        # Your code here\n        return [0.0, 0.0]\n",
-        "solution": "import numpy as np\n\nclass OnlineLine:\n    def __init__(self):\n        self.n = 0\n        self.sx = self.sy = self.sxx = self.sxy = 0.0\n\n    def add(self, x, y):\n        self.n += 1\n        self.sx += x\n        self.sy += y\n        self.sxx += x * x\n        self.sxy += x * y\n\n    def remove(self, x, y):\n        self.n -= 1\n        self.sx -= x\n        self.sy -= y\n        self.sxx -= x * x\n        self.sxy -= x * y\n\n    def coef(self):\n        n = self.n\n        den = n * self.sxx - self.sx ** 2\n        if n < 2 or den == 0:\n            return [float('nan'), float('nan')]\n        b = (n * self.sxy - self.sx * self.sy) / den\n        return [(self.sy - b * self.sx) / n, b]\n",
+        "starter": "import numpy as np\n\nclass OnlineLine:\n    \"\"\"A straight-line fit kept as running sums.\"\"\"\n\n    def __init__(self):\n        self.n = 0\n        # Your code here: the other four sums\n\n    def add(self, x, y):\n        # Your code here\n        pass\n\n    def remove(self, x, y):\n        # Your code here\n        pass\n\n    def coef(self):\n        \"\"\"[intercept, slope] as floats, or [nan, nan] with fewer\n        than 2 rows or when every x is equal (allow for rounding\n        in the sums).\"\"\"\n        # Your code here\n        return [0.0, 0.0]\n",
+        "solution": "import numpy as np\n\nclass OnlineLine:\n    def __init__(self):\n        self.n = 0\n        self.c = None  # shift, set to the first x seen\n        self.sx = self.sy = self.sxx = self.sxy = 0.0\n\n    def add(self, x, y):\n        if self.c is None:\n            self.c = float(x)\n        u = x - self.c\n        self.n += 1\n        self.sx += u\n        self.sy += y\n        self.sxx += u * u\n        self.sxy += u * y\n\n    def remove(self, x, y):\n        u = x - self.c\n        self.n -= 1\n        self.sx -= u\n        self.sy -= y\n        self.sxx -= u * u\n        self.sxy -= u * y\n\n    def coef(self):\n        n = self.n\n        den = n * self.sxx - self.sx ** 2\n        if n < 2 or den <= 1e-12 * n * self.sxx:\n            return [float('nan'), float('nan')]\n        b = (n * self.sxy - self.sx * self.sy) / den\n        return [(self.sy - b * self.sx) / n - b * self.c, b]\n",
         "examples": [
           {
             "setup": "m = OnlineLine(); [m.add(x, y) for x, y in [(1, 2), (2, 3), (3, 5), (4, 4)]]",
@@ -564,6 +564,12 @@
             "compare": "equal"
           },
           {
+            "setup": "m = OnlineLine(); [m.add(0.7, v) for v in (1, 2, 5)]",
+            "call": "bool(np.isnan(m.coef()[1]))",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
             "setup": "m = OnlineLine(); m.add(1, 2); m.add(3, 8)",
             "call": "m.coef()",
             "expect": "[-1.0, 3.0]",
@@ -573,7 +579,7 @@
             }
           }
         ],
-        "how": "Check runs 8 hidden tests. They check the four-point fit, then the fit after adding (5, 8) and after removing (1, 2). Two compare 200 seeded rows with `np.polyfit`, before and after 50 removals. Two cases must give NaN. A two-row fit must already give a line."
+        "how": "Check runs 9 hidden tests. They check the four-point fit, then the fit after adding (5, 8) and after removing (1, 2). Two compare 200 seeded rows with `np.polyfit`, before and after 50 removals. Three cases must give NaN; in one, three copies of $x = 0.7$ leave a rounding residue in the sums. A two-row fit must already give a line."
       },
       "hints": [
         {
@@ -594,7 +600,7 @@
         "generic": "Some tests failed. Five sums, remove as the reverse of add, and NaN when the slope is undefined."
       },
       "explain": {
-        "text": "Each call touches five numbers, however many rows came before. That is why a rolling fit over 250 days costs no more than one over 25."
+        "text": "Each call touches five numbers, however many rows came before. That is why a rolling fit over 250 days costs no more than one over 25. Store $x - c$ for a constant $c$ near the first $x$ you see, or the squared sums lose their digits on large $x$, as the next screen shows."
       }
     },
     {
@@ -745,7 +751,7 @@
           },
           {
             "id": "x",
-            "text": "Subtract $c$ from $y$ as well, so both columns are small.",
+            "text": "Subtract $c$ from $y$ instead of $x$, since $y$ is the column being fitted.",
             "why": "That leaves the huge $x^2$ sums, where the cancellation happens."
           }
         ],
@@ -777,7 +783,7 @@
         "correct": "$a = a' - mc$, with the slope unchanged.",
         "generic": "Not quite. Shift x, fit, then undo the shift in the intercept.",
         "byKey": {
-          "x": "You shifted y, which leaves the troublesome $x^2$ sums alone.",
+          "x": "You shifted $y$ instead of $x$, which leaves the troublesome $x^2$ sums alone.",
           "left-out": "You left out a step the derivation needs."
         }
       },
