@@ -74,3 +74,14 @@ The voice scan of the whole course lists four sentences over 20 words, all in L1
 - Author's script: `complex-L3-numbers.py` exit 0 (180 of 180 `numbers_lib` checks, 13 code widgets).
 
 ## Fix pass
+
+All 22 findings (2 errors, 10 warnings, 10 notes) and the 4 L1 and L2 voice notes applied by targeted edits; none disputed. Two of the 10 warnings and notes were widened slightly: the l11 `summary.ideas[1]` hypothesis was shortened ("Residue theorem, for $f$ analytic inside $\gamma$ bar poles") to stay under 20 words.
+
+- Errors fixed (2): homework-3 longform model (every $\varphi(0) = 1$; the $S_T$ version fails only $\varphi(-i)$, and point 3 now says no price comes out as $E[e^{(\alpha + 1)S_T}]$ is infinite; the rubric line lists checks generally and needed no change); Merton `test-1` byKey (forward $S_0e^{(r + \lambda\kappa)T} = 100e^{0.05 - 0.042463} = 100.7566$, about £100.76, too low; add $-\lambda\kappa$ to the drift). Recomputed two ways and added to `complex-L3-numbers.py`.
+- Warnings fixed (10): l13 and homework drift direction (three strings); homework `sd` byKey (2.5 used as the variance); argument principle hypotheses (l9 screens[10], homework items[0]); residue theorem hypotheses (l11 prose, summary); Jordan's lemma statement and ML bound (l11 prose, summary, homework items[6]); Fourier inversion integrability (l12 prose, summary note and idea); Carr-Madan moment condition (l13 explain, summary); l9 quiz[3] wording; l11 quiz[0] option and why ($\pi i$); l11 widget "screen 7".
+- Notes fixed (10): ML bound in l9 summary; "simple" in l10 summary (two); l11 formula name; l11 hint; l12 option why, "$u \approx 37$", "three screens ago", $e^{\ln 100 + 0.03 + \dots}$ (three strings), Uniform$(-1, 1)$ table row; review-3 items[1] explain.
+- L1 and L2 voice (4): homework-2 items[8], l1 screens[11], l6 screens[4] and [9] shortened; no numbers changed.
+- Deferred: none. Declined: none.
+- Scripts: `docs/reports/complex-L3-numbers.py` extended with the £100.76 two-way check; exit 0, 181 of 181.
+- Gates: validator 0 errors; voice scan 0 and 0 (6,046 sentences, whole folder); playthrough "All passed" desktop and `--mobile` with `--local-cdn` for l1, l6, l9 to l13, homework-2, homework-3, review-3.
+- Graded answers changed: none. Wrong-answer text changed in l11 quiz[0] option 2 (explanation only, no value); no graded values altered.
