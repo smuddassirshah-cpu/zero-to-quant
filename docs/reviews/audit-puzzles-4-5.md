@@ -64,3 +64,4 @@ Checks:
 - Validator: "0 errors, 4279 warnings" (O2-long-sentence 714); `content/manifest.json` restored.
 - `python3 -I docs/reports/puzzles-L4-concepts.py`: "puzzles L4 concepts: all checks passed", exit 0. `puzzles-L5-concepts.py`: exit 0.
 - Voice scan 35: 0 explanations over three sentences; 13318 sentences, 0 over 35 words.
+- Playthrough (from `app/`, `--local-cdn <PKGS>`): `--lesson puzzles/l21-kelly`, `puzzles/l23-doubling-up`, `puzzles/l24-mixed-set`, each plain and with `--mobile`: all six "browser relaunches: 0 / All passed." No set file changed.
