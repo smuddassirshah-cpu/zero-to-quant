@@ -95,3 +95,26 @@ Severity: wrong = a false statement or a wrong value; misleading = true but stee
 ## Engine item for the inbox
 
 - `tools/validate.mjs`, `table` widget: warn when an editable cell has `wrong[]` ids with no `byKey` line, and above all when `byKey` is keyed on that cell's id. In that case the cell-id line can never fire for the slip it names (finding 4: 13 screens in these two levels). The old workaround in the briefs and inbox bullets (key on `r{i}c{j}`) predates item 576. Other courses written under it probably have the same dead lines, so a course-wide scan is worth running. `docs/briefs/algebra.md` ("Known limits already in the inbox") still tells authors to key on the cell id, and needs the same correction.
+
+## Fix pass
+
+1. fixed: l13 s9 `cube` slip is now 25 (31^3 mod 33 = 25, recomputed), new `copy` slip 31, lines keyed `cube` and `copy`, `r1c1` removed.
+2. fixed: l16 s8 `round` why now reads $-x^2 - x + 1$, degree 2 (x^2 + 1 - x(2x + 1) = -x^2 - x + 1).
+3. fixed: l10 quiz[0] `diff` why says three positions share weight 1 (weights 1, 3, 1, 7, 3, 9, 1).
+4. fixed: all 12 listed table screens (the review says 13, its list has 12) re-keyed from cell id to wrong id; l11 s5 `r2`, `r2b`, `r2c` share one line and `accept: ["N"]` added to row 0; l12 s0 `unreduced5` to `unreduced11` and l13 s0 `raw4` to `raw6` get new lines. Validator accepts the keys. `docs/briefs/algebra.md` corrected (ENGINE-BACKLOG 576).
+5. fixed: l15 quiz[1] `odd` why now names shares at x = 1 and x = 4 (difference 3, no inverse mod 9).
+6. fixed: l15 s6 question now "from 1 to 12".
+7. fixed: homework-3 items[7] explain: $\langle 4 \rangle = \langle 2 \rangle$ has index 2 in $\mathbb{Z}_{10}$.
+8. fixed: l14 s5 `u4` line cites the other distributive law.
+9. fixed: l10 s10 prose now $(w_1 - w_2)(b - a)$. The generic line on that screen keeps $(a - b)$, where the sign does not affect the multiple-of-10 test.
+10. fixed: l11 s2 hint to `r2c7`, l13 s2 hint to `r2c3`; l14 s6 hint[1] highlight removed and `["A", "B", "Z"]` moved to hint[2]. This leaves one validator warning (point hint without highlight) on l14 s6, accepted because the canvas holds only matrices.
+11. fixed: `why` lines of l14 s2 `x0`, `x8`, `x9`, l14 quiz[1] `i3`, `i6`, `i8`, l15 s6 `n9`, `n4`, l17 s4 `x2`, `x4`, `x6` now start with the action ("You kept ...").
+12. fixed: l14 s2 prose now 60 words by whitespace count.
+13. fixed: l16 s7 hint[2] bracketed $(x + 1) \div 2x$.
+14. fixed: l13 s0 prose says "In row 2, each power ...".
+15. deferred: keep the `h-power-in-n` item; recording the substitution in DECISIONS is outside this fix scope (algebra L3 and L4 files only).
+
+Counts: fixed 14, disputed 0, deferred 1. Graded answers changed: 0 (l11 row 0 now also accepts N).
+Engine note: not actioned here (engine item for the inbox).
+Number scripts: `algebra-L3-numbers.py` (151 of 151) and `algebra-L4-numbers.py` (85 of 85) updated with the cube and copy slips, the `byKey.raw` path, the SEDOL weight count, the trap remainder and the Z_9 claim; both exit 0.
+Gates: validator 0 errors; voice scan 0 and 0; playthrough green with and without `--mobile` for l10 to l17, homework-3 and homework-4 (review-3 and review-4 unchanged).

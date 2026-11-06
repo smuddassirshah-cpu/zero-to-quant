@@ -188,6 +188,10 @@ two('l16 Z5 division (two routines)', (q5, r5), div_by_values([1, 2, 0, 1], [1, 
 claim('l16 Z5 table answers', [row[1]['answer'] for row in doc('l16')['screens'][7]['widget']['rows']] == [3, 1, 3, 3])
 claim('l16 (2x+1)(3x^2+x+3) + 3 = 6x^3 + 5x^2 + 7x + 6 = x^3 + 2x + 1 mod 5', pmul([1, 2], [3, 1, 3]) == [3, 7, 5, 6] and [(c + d) % 5 for c, d in zip(pmul([1, 2], [3, 1, 3]), [3, 0, 0, 0])] == [1, 2, 0, 1])
 two('l16 2^-1 mod 5', pow(2, -1, 5), 3, 3)
+trap = [a - b for a, b in zip([1, 0, 1], pmul([0, 1], [1, 2]) + [0])]
+two('l16 trap remainder for q = x is -x^2 - x + 1, degree 2', (trap, len(trim(trap)) - 1), ([1, -1, -1], 2), ([1, -1, -1], 2))
+claim('l16 trap remainder by hand: x^2 + 1 - x(2x + 1) = x^2 + 1 - 2x^2 - x', [1 - 0, 0 - 1, 1 - 2] == [1, -1, -1])
+T('l16', 'screens[8].widget.options[3].why', '-x^2 - x + 1')
 qz, rz = div_fraction([1, 0, 1], [1, 2])
 two('l16 x^2+1 over Q by 2x+1', (qz, rz), ([Fr(-1, 4), Fr(1, 2)], [Fr(5, 4)]))
 two('l16 x^3+1 by x^2+1', div_fraction([1, 0, 0, 1], [1, 0, 1]), ([0, 1], [1, -1]))
@@ -337,6 +341,11 @@ for fid, d in lv.files.items():
             if not ok:
                 fails.append(f'code {fid} {key}[{i}]')
 print(f'code widgets checked: {ncode}')
+
+# l15 quiz[1]: Z_9 two-share recovery needs x differences that are units mod 9
+claim('l15 Z_9 with shares at x = 1, 2, 3: every x difference (1, 2) is a unit, so two shares recover', all(math.gcd(d, 9) == 1 for d in (2 - 1, 3 - 2, 3 - 1)))
+claim('l15 Z_9 fails for shares at x = 1 and 4: 3 has no inverse mod 9', math.gcd(4 - 1, 9) != 1 and not any(3 * k % 9 == 1 for k in range(9)))
+T('l15', 'quiz[1].widget.options[3].why', 'x = 1$ and $x = 4')
 
 lv.check_wrongs()
 if fails:
