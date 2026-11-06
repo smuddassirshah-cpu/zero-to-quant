@@ -130,6 +130,8 @@ F0 = normalise(close[:252]); L0 = np.log(F0)
 p23 = coint(L0[:, 2], L0[:, 3])[1]; p23s = coint(np.log(5 * F0[:, 2]), L0[:, 3])[1]
 check(abs(p23 - p23s) < 1e-12, "l12 screens[7]: scaling a price adds a constant to its log, absorbed by the intercept (ledger l12 screens[7].explain)")
 # size on chance pairs (shares 40 to 99, independent random walks with shared market and industry factors)
+# Disputes read: 24 fresh panels, all 4,930 chance pairs each, the lesson's eg_pvalue: closes mean 366 chance
+# passes (size 0.074, se 22), mids 314 (0.064); per-panel sd 106, range 169 to 546 (sim8.py, disputes-pairs-rep)
 rej_c, rej_m, n_tests, per_panel = 0, 0, 0, []
 for seed in range(24):
     c2, m2, _, _, _ = pairs_panel(seed=60_000 + seed, days=252, break_frac=0.0)
@@ -145,9 +147,9 @@ size_c, size_m = rej_c / n_tests, rej_m / n_tests
 print(f"EG rejection rate on chance pairs at 5%: closes {size_c:.3f}, mids {size_m:.3f}; per panel min {min(per_panel):.3f} max {max(per_panel):.3f}")
 check(0.04 < size_m < 0.08, "l12 screens[4]: on mid prices the test rejects about 5% of chance pairs (ledger l12 screens[4].prose)")
 check(size_c > size_m and size_c < 0.10,
-      "l12 screens[4].explain: the closing bounce makes the test over-reject, but mildly (about 7%, not 8%) (ledger l12 screens[4].explain)")
+      "l12 screens[4].explain (corrected claim, fix pass): the short year and the closing bounce lift the false-alarm rate to about 7% (ledger l12 screens[4].explain)")
 check(max(per_panel) - min(per_panel) > 0.04,
-      "l12 screens[4].explain: tests sharing 100 shares are dependent, so one year's count swings well beyond 5% (ledger l12 screens[4].explain)")
+      "l12 screens[4].explain (corrected claim, fix pass): tests sharing 100 shares are dependent, so one year's count can sit far from 248 (ledger l12 screens[4].explain)")
 # power on planted pairs: well below 100% on one year, so a real relationship can fail
 rej, m = 0, 0
 for seed in range(20):
