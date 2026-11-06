@@ -1181,3 +1181,85 @@ These supersede the figures above where they differ. The generator scripts in `d
 - `mock-superday-research`: `requires` is `["research-int/L4"]` only, so the prerequisite lists above are citations. `models` is two sentences. Paces: C1 1,350 s, C2 1,080 s, K1 1,080 s, K2 1,350 s, M5 360 s and M6 300 s, so the coding and case papers sum to 2,430 s of 2,700 s and the ML paper to 1,620 s of 1,800 s. M1 and M4 ask for two decimals and accept within 0.005. The K1 and K2 rubrics reward the reasoning with an approximate figure (standard error about 1.6 points, $z$ about 1.5, $t$ about 1.3), and the exact values stay in the model answers.
 - `mock-oa-quant-data`: Q3 is mean 3.0, standard deviation 10, 25 days, so $t = 1.5$ (slips 7.5 and 0.3). Q7 asks for one decimal place, accepts within 0.1 points and names the typed fraction 0.00142 as a slip. Each data task's `how` names the mistake that a late test exposes, and the starter docstrings are under 45 characters.
 
+
+## mock-superday-strats
+
+**File.** `app/content/exams/mock-superday-strats.json`, one file, no versions, every item fixed. A superday is rehearsed a few times and its weight is in the follow-ups, as `mock-superday-trader` argues. The bank holds no derivatives, stochastic calculus or numerics family, and a draw from `bank/probability` could repeat an item another mock draws, so nothing is drawn. `content/prep.json` names this mock on `superday-strats` and on the firm paths `firm-jp-morgan`, `firm-goldman-sachs` and `firm-morgan-stanley` (all `asOf` 2026-10); no change is proposed.
+
+- `id`: `mock-superday-strats`. `name`: `Strats superday`. `style`: `strats`.
+- `models` (under 200 characters): `Reported, as of Nov 2026: strats and desk quant final rounds at Goldman Sachs, Morgan Stanley and JP Morgan. Derivatives, stochastic calculus, probability, coding and fit.`
+- `requires`: `["markov/L5", "options/L3", "trees/L4", "ito/L4", "numerics/L4", "cpp-pricing/L2"]`, the levels the papers draw on directly.
+- `skills`: `mc-walks`, `rv-joint`, `rv-expect`, `dl-discrete`, `tp-bs`, `op-parity`, `op-greeks`, `nm-mc`, `nm-fd`, `it-calculus`, `it-martingale`, `it-bm`, `it-pricing`, `tp-multistep`, `cx-pricers`, `rk-behave`, each with a short label.
+
+**What the real days are reported to contain** (from the firm entries in `prep.json`, as of Oct 2026, and `docs/briefs/interview-gaps.md`, snapshot 29 Oct 2026; all reported, none official). Goldman Sachs strats: a superday of three to five sessions with coding, design, behavioural and a probability block. Morgan Stanley strats: probability and expected value mixed with coding, Greeks and exotics, which option is cheaper under Black-Scholes, Python and C++. JP Morgan QR: Itô's lemma, whether $W_t^3$ is a martingale, whether practitioners use Black-Scholes, C++ class questions. `interview-plan.md` (d) asks for probability (30 min), derivatives and stochastic calculus (45 min) and coding (45 min); this mock splits the middle paper in two and adds a fit paper.
+
+**Description** (plain, each sentence under 20 words, firm names only here and in `models`):
+
+> This is the reported shape of a bank strats final-round day, as candidates described it by Nov 2026. Goldman Sachs, Morgan Stanley and JP Morgan report rounds like these. There are five papers, each on its own clock. They cover probability, derivatives pricing and risk, stochastic calculus, coding and fit. Real rounds are spoken, so say each answer aloud before you type it. Some questions have follow-ups that open one at a time. No calculator and no search engine are allowed, except to run your code. Orders and lengths differ by firm and office. Two checks at the end ask for what the app cannot see.
+
+**Parts, in order** (every paper `scoring: { "right": 1, "wrong": 0, "blank": 0 }`, free navigation, `pass` as a share):
+
+| # | Paper `id`, name | Minutes | Items | Pass | `pace` sum |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `probability`, Probability | 30 | 5 (1 with `parts`) | `pass: 0.6` (3 of 5) | 1,320 s |
+| 2 | `pricing`, Derivatives pricing and risk | 45 | 7 (1 with `parts`, 1 `longform`) | `pass: 0.6` (5 of 7) | 2,310 s |
+| 3 | `stochastic`, Stochastic calculus | 30 | 4 (1 with `parts`, 1 `longform`) | `pass: 0.5` (2 of 4) | 1,760 s |
+| 4 | `coding`, Coding | 45 | 2 (Python with `parts`, C++) | `pass: 0.5` (1 of 2) | 2,700 s |
+| 5 | `fit`, Fit and motivation | 15 | 2 `longform` | `pass: 0.5` (1 of 2) | 900 s |
+| 6 | check `derivation-aloud`, `I derived one result aloud to a listener, start to finish`, detail `Tick this only if someone heard every step and you read nothing from notes.` | | | | |
+| 7 | check `no-lookup`, `I used no calculator, search engine or notes`, detail `Tick this only if you sat all five papers without them, apart from running your code.` | | | | |
+
+That is 20 items, 165 minutes, 4 `longform`. The attempt passes only when every paper passes and both checks are ticked. An item with parts earns its share of parts right.
+
+**Rules.** As `mock-superday-research`: every `choice` has `"shuffle": true` (option order from `random.Random(2611)`); every distractor's `why` starts "You" and names the action; no key sits between a times-ten pair or two equal slips; no key is far longer than its distractors; every `numeric` lists its named slips in `wrong` with a `feedback.byKey` line each. Every item has `skills`, `tags` (family first), `pace` and `difficulty`. No family tag, question text or setup repeats another mock (the check script asserts the first two, `fresh-check` the third).
+
+### Paper 1: probability (30 min, 5 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | `wrong` or distractors | Computed twice |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P1 | 4 | `ruin-with-drift` | `mc-walks`; markov `l10-gamblers-ruin`, `l19-optional-stopping` | `parts` (numeric, numeric), 420 | Up £1 with 0.6, down with 0.4, from £50, stop at £54 or £48. Part 1: chance £54 comes first, key $81/133 = 0.6090$ (tol 0.0005). Part 2: expected steps, key $1100/133 = 8.27$ (tol 0.01) | Part 1: 0.3333 (fair-game $2/6$), 0.6 (one step), 0.3910 (the lower stop). Part 2: 8 (fair rule $4 \times 2$), 1.65 (expected gain, not divided by the drift 0.2) | Ruin formula with $r = 2/3$ and Wald's identity; exact linear solves over the five inner states on `Fraction`s |
+| P2 | 4 | `orthant-correlation` | `rv-joint`; random-vars L5, eigen `l16-correlated-normals` | choice, 240 | Two jointly normal returns, correlation 0.5: chance both are positive. Key $1/3$ | $1/4$ (multiplied $\tfrac12 \times \tfrac12$), $3/8$ (a straight line from $1/4$ to $1/2$), $1/6$ (the sign of the correlation) | $1/4 + \arcsin(0.5)/(2\pi)$; Simpson on $\int_0^\infty \varphi(x)\Phi(\rho x/\sqrt{1 - \rho^2})\,dx$ |
+| P3 | 3 | `range-of-uniforms` | `rv-expect`; puzzles `l11-largest-of-several` | numeric, 180 | Four uniform arrivals in 60 minutes: expected first-to-last time. Key 36 | 48 (the last arrival), 30 (half the window), 45 ($(n - 1)/n$) | $60(n - 1)/(n + 1)$; exact polynomial integrals of $1 - x^4$ and $(1 - x)^4$ |
+| P4 | 4 | `poisson-thinning` | `dl-discrete`; markov `l16-arrivals` | choice, 240 | Messages at 18 a second, each a cancel with chance $2/3$; 10 cancels seen: expected other messages. Key 6 | 8 ($18 - 10$), 5 (half the cancels), 18 (the total rate) | $18 \times \tfrac13$; the sum over the total count $N$ with the binomial split |
+| P5 | 4 | `max-of-two-normals` | `rv-expect`; random-vars L3 | numeric (`%`), 240 | Larger of two independent $N(0, 2\%^2)$ returns, in expectation. Key $2\%/\sqrt\pi = 1.13\%$ (tol 0.005 points) | 1.60% ($E\lvert X \rvert$), 0 (symmetry), 2% (one standard deviation) | $\tfrac12 E\lvert X - Y \rvert$; Simpson on $2x\varphi(x)\Phi(x)$ |
+
+### Paper 2: derivatives pricing and risk (45 min, 7 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | `wrong` or distractors | Computed twice |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| R1 | 3 | `atm-approximation` | `tp-bs`; trees `l13-rules-of-thumb` | numeric (£), 150 | £250 stock, $r = 0$, three months, 20% vol, at the money. Key £9.97 (tol 0.1, so the rule's £10 counts) | 20 (a full year), 5 ($T$ for $\sqrt T$) | $0.4 S\sigma\sqrt T = 10$ and $250(2\Phi(0.05) - 1) = 9.9695$; Simpson on the lognormal payoff |
+| R2 | 3 | `parity-arbitrage` | `op-parity`; options `l9-put-call-parity` | choice, 240 | £52 stock, strike £50, call £7.20, put £4.10, discount factor 0.98. Key: sell the call, buy the put and the stock, borrow £49, £0.10 now | the reversed trade; no trade (compared $C$ with $P$); borrow £50 for £1.10 (strike, not its present value) | $C - P = 3.10$ against $S - 0.98K = 3.00$ on `Fraction`s; each trade's cash today and at expiry for three prices |
+| R3 | 4 | `gamma-theta-pnl` | `op-greeks`; trees `l18-gamma-and-hedging` | numeric (£), 300 | 200 hedged calls, gamma 0.05, theta $-£0.30$, a £4 move. Key £20 | 80 (no theta), 100 (no half), $-60$ (theta only) | $200(\tfrac12 \times 0.05 \times 16 - 0.30)$; repricing a quadratic value with that gamma and theta |
+| R4 | 3 | `digital-from-calls` | `op-greeks`, `tp-bs`; trees `l15-digitals` | numeric (£), 240 | Calls £5.40 at 99 and £4.30 at 101: digital above 100. Key £0.55 | 1.10 (no width), 0.45 (the digital put) | $(5.40 - 4.30)/2$ on `Fraction`s; the scaled call spread's payoff checked at expiry |
+| R5 | 3 | `mc-interval-paths` | `nm-mc`; numerics `l15-monte-carlo-error` | `parts` (numeric, numeric), 300 | 90,000 paths, payoff standard deviation £27, an interval of two standard errors. Part 1: half-width £0.18. Part 2: paths for £0.06, key 810,000 | Part 1: 0.09 (one standard error), 0.0006 (divided by $n$). Part 2: 270,000 (times 3), 900 (not squared) | $2 \times 27/300$ and $(54/0.06)^2$ on `Fraction`s; a float route and a bisection on $54/\sqrt n = 0.06$ |
+| R6 | 3 | `convergence-order` | `nm-fd`; numerics `l14-implicit-and-crank-nicolson` | choice, 180 | Crank-Nicolson error 0.0048 at 100 steps, second order: error at 400. Key 0.0003 | 0.0012 (first order), 0.000075 (third order), 0.0024 (halved) | $0.0048/16$; the order measured from $e(h) = ch^2$ at two step sizes |
+| R7 | 5 | `realised-vs-implied` | `op-greeks`, `tp-bs`; trees `l12-delta-hedging`, `l18-gamma-and-hedging` | `longform`, 900 | A hedged one-month call bought at 20%, realised 25%, gamma 0.04, stock £100: explain the P&L and estimate it. About £0.375 a call | | $\tfrac12 \times 0.04 \times 100^2 \times 0.0225/12$; the daily P&L summed over 21 days |
+
+R7 rubric (10): gamma gain and theta cost split (2); theta priced at implied, so the two cancel when realised equals implied (2); $\tfrac12\Gamma S^2(\sigma_r^2 - \sigma_i^2)T$ (2); about £0.375 (2); the sign does not depend on direction (1); one caveat, path-dependent gamma or discrete hedging (1).
+
+### Paper 3: stochastic calculus (30 min, 4 items)
+
+| Item | Diff | Family | Skill, draws on | Kind, `pace` | Question and key | `wrong` or distractors | Computed twice |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| S1 | 4 | `martingale-correction` | `it-calculus`, `it-martingale`; ito `l6-ito-lemma`, `l13-martingale-or-not` | `parts` (numeric, numeric), 360 | $W_t^4 - a\,tW_t^2 + b\,t^2$ a martingale. Part 1: $a = 6$. Part 2: $b = 3$ | Part 1: 12 (no half), 4 (the $dW$ term). Part 2: 6 ($b = a$), 1.5 (dropped the 2 in $d(t^2)$) | Itô by hand; the generator $\partial_t + \tfrac12\partial_w^2$ applied to the polynomial on `Fraction`s, searched over $a, b \le 19$, vanishes only at $(6, 3)$ |
+| S2 | 3 | `gbm-median` | `it-bm`; ito `l4-gbm`, `l7-solving-gbm` | choice, 200 | GBM, drift 10%, vol 40%, £40, two years: the median. Key £41.63 | £48.86 (the mean), £35.48 (took off $\sigma^2$), £40.81 (one year) | $40e^{0.04}$; bisection on the lognormal CDF, and Simpson for the mean |
+| S3 | 4 | `reflection-touch` | `it-bm`; ito `l14-hitting-and-exit`, markov `l11-reflection` | numeric, 300 | Driftless, £2 per square-root day: chance of touching £3 up within a day. Key 0.1336 (tol 0.001) | 0.0668 (no reflection), 0.8664 (never touches) | $2(1 - \Phi(1.5))$; Simpson on the first-passage density to one day |
+| S4 | 5 | `log-contract` | `it-pricing`, `it-calculus`; ito `l11-prices-as-expectations`, `l16-pricing-in-a-minute` | `longform`, 900 | Price a payoff of $\ln S_T$ under Black-Scholes (spot 100, 2%, 20%, one year), then link it to variance. About 4.514 | | $e^{-0.02}(\ln 100 + 0)$; Simpson on $\ln S_T$ under the lognormal |
+
+S4 rubric (10): Itô on $\ln S$ with the $-\tfrac12\sigma^2$ term (2); risk-neutral drift $r$ (2); $E[\ln S_T]$ stated (1); discounted to about 4.51 (2); realised variance as $2\int dS/S - 2\ln(S_T/S_0)$, a hedge plus log contracts (2); in order, ending with the number (1).
+
+### Paper 4: coding (45 min, 2 items)
+
+**C1, `barrier-tree`** (difficulty 4, skills `tp-multistep`, `cx-pricers`, `pace` 1,500; draws on trees `l8-python-pricer`, ito `l12-barrier-option`). An item with `parts`, a requirement added part-way. Part 1, Python: `crr_call(S, K, T, r, sigma, n)`, a European call on a Cox-Ross-Rubinstein tree, raising `ValueError` for `n < 1` or a risk-neutral $p$ outside $(0, 1)$; 7 hidden tests (5 prices, 2 raises). Part 2, Python: add `barrier=None`, a down-and-out barrier checked at every node; 6 more tests, 13 in all. Part 3, choice: why the barrier price saws as `n` grows (the barrier sits between node levels); distractors rounding, $p$ leaving $(0, 1)$, no limit. The check runs the solution and starters on every test, recomputes each tree price with $n \le 12$ by summing over all $2^n$ paths, checks 1,000 steps against Black-Scholes (within 0.005), and reruns the barrier tests with a second node formula $Su^{2j - n}$ to show no node sits on a barrier.
+
+**C2, `variance-interpolation`** (difficulty 4, skills `cx-pricers`, `tp-bs`, `pace` 1,200; draws on opt-dash `l11-term-structure`, cpp-pricing L2). C++: fix a draft `vol_at(T, vols, t)` that interpolates vols, so it interpolates total variance $\sigma^2 T$, keeps the end pillars flat, and returns $-1.0$ on a calendar arbitrage. No exceptions are used. 9 hidden tests with `types`, built by g++ from the reference; the draft fails 5. The check recompiles both with g++ and recomputes every vol from piecewise-flat forward variance.
+
+### Paper 5: fit and motivation (15 min, 2 `longform`)
+
+Both difficulty 3, `rk-behave`, `pace` 450, draws on recruiting `l8-why-this-firm`, `l11-stories-that-answer`, `l13-the-final-round`. **F1, `why-strats`**: what draws you to a strats seat over trading or research. Rubric: one-sentence answer (1); two reasons tied to the work (2); own evidence with a number (3); something hard and how you handle it (2); why strats rather than the others (1); about 90 seconds (1). **F2, `model-versus-market`**: a trader says your price is wrong because the market disagrees. Rubric: treats the point as possibly right (1); asks which price, how far, since when (2); checks inputs before the model (2); names what the model leaves out (2); agrees an action and flags the gap (2); first person, under two minutes (1). Each model answer is labelled as an example.
+
+### Generation, voice and acceptance
+
+**Scripts** (in `docs/briefs/mocks-scripts/`): `superday_strats_build.py` (route A, writes the file; item constructors in `superday_lib.py`, which also stops the build on a sentence of 20 words or more), `superday_strats_check.py` (route B through `numbers_lib`: every key, every `wrong`, every number in prose, the option rules, the code items, `check_wrongs()` then `report()`, exit 0). Standard library and the local g++ only.
+
+**Acceptance.** The common checks (1 to 5), plus: validator 0 errors and no warning on this file; `fresh-check --exam mock-superday-strats --min-run 10` 0 hits; voice scan on a copy 0 and 0; the playthrough with and without `--mobile` passes every part, both code items by their solutions, and ticks every rubric point; screenshots at 1280 and 390 px of the start card, a `parts` item, a choice, a longform, both code items and the results page; `readiness-sums` OK after the mock's two status rows in `docs/readiness.md` read `exists` and `--write` refreshes the mock lists in `readiness.json`. Report at `docs/reports/exam-mock-superday-strats.md`; inbox bullets under `Raised later (mock mock-superday-strats):`.
