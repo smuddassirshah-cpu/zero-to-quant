@@ -142,7 +142,7 @@ items.append(item(
     choice([
         opt("ok", r"Yes: all three axioms hold, the triangle inequality included.", correct=True),
         opt("tri", r"No: the triangle inequality fails, since two hops add 1 twice.",
-            r"You counted the extra 1 as a cost to the left side. Two hops add 2 on the right and only 1 on the left."),
+            r"You read the inequality the wrong way round. The two hops add 2 to the right side, and the left side gains only 1."),
         opt("zero", r"No: $d(x, x)$ should be 0, and the $+1$ spoils it.",
             r"You missed the first case. $d(x, x) = 0$ by definition, and the $+1$ applies only to distinct points."),
         opt("small", r"No: a metric needs $d(x, y) \to 0$ as $y \to x$.",
@@ -188,7 +188,7 @@ items.append(item(
             r"You checked unions and intersections but not the whole space. $X$ itself must be open.")]),
     fb(r"It holds $\varnothing$ and $X$, and every union and intersection of two members is a member.",
        r"For each family, test every pair: its union and its intersection."),
-    r"In the first family, unions and intersections of pairs stay inside it. "
+    r"In $\{\varnothing, \{1\}, \{2\}, \{1, 2\}, \{1, 2, 3\}, X\}$, unions and intersections of pairs stay inside it. "
     r"The others miss $\{1, 2\}$, $\{2\}$ or $X$. "
     r"On a finite set pairs are enough, since longer unions and intersections build up from pairs."))
 
@@ -305,11 +305,11 @@ items.append(item(
     r"Which subgroup of $S_4$ is normal?",
     choice([
         opt("ok", r"$V = \{e, (1\,2)(3\,4), (1\,3)(2\,4), (1\,4)(2\,3)\}$", correct=True),
-        opt("four", r"$\langle (1\,2\,3\,4) \rangle$",
+        opt("four", r"$\{e, (1\,2\,3\,4), (1\,3)(2\,4), (1\,4\,3\,2)\}$",
             r"You took a cyclic subgroup of order 4 to be as good as $V$. Conjugating $(1\,2\,3\,4)$ by $(1\,2)$ gives $(2\,1\,3\,4)$, which is not in it."),
         opt("pair", r"$\{e, (1\,2)(3\,4)\}$",
             r"You conjugated only by elements that fix it. Conjugating by $(2\,3)$ gives $(1\,3)(2\,4)$, outside it."),
-        opt("three", r"$\langle (1\,2\,3) \rangle$",
+        opt("three", r"$\{e, (1\,2\,3), (1\,3\,2)\}$",
             r"You treated a subgroup of 3-cycles like the whole of $A_4$. Conjugating by $(3\,4)$ gives $(1\,2\,4)$, outside it.")]),
     fb(r"$V$ holds every product of two disjoint transpositions, so conjugation maps it to itself.",
        r"Conjugate a non-identity element of each subgroup by a transposition, and see if it stays."),
@@ -438,8 +438,9 @@ items.append(item(
     r"Each set is a subspace of $\mathbb{R}$. A subset of $\mathbb{R}$ is connected exactly when it is an interval.",
     r"Which sets are connected? Select all that apply.",
     choice([
-        opt("glued", r"$(-1, 0] \cup (0, 3)$", correct=True),
-        opt("image", r"$f([0, 5])$, for a continuous $f : [0, 5] \to \mathbb{R}$", correct=True),
+        opt("glued", r"$(-1, 0) \cup (0, 3)$",
+            r"You saw two intervals that meet at 0. The point 0 is missing, so the set splits there."),
+        opt("image", r"$f([0, 5])$, with $f$ continuous", correct=True),
         opt("rationals", r"$\mathbb{Q} \cap [0, 1]$",
             r"You saw no gaps between rationals. $\tfrac{\sqrt2}{2}$ is missing, and it splits the set into two open pieces."),
         opt("outside", r"$\{x : x^2 > 4\}$",
@@ -447,9 +448,9 @@ items.append(item(
         opt("point", r"$[0, 1] \cup \{2\}$",
             r"You thought one point cannot split a set. $\{2\}$ is open in the subspace, and so is $[0, 1]$.")],
         kind="multi"),
-    fb(r"$(-1, 0] \cup (0, 3) = (-1, 3)$, and a continuous image of the connected $[0, 5]$ is connected.",
+    fb(r"A continuous image of the connected $[0, 5]$ is connected.",
        r"Ask whether each set is an interval: does it hold every point between two of its points?"),
-    r"$(-1, 0] \cup (0, 3)$ is the interval $(-1, 3)$, and $f([0, 5])$ is connected because $[0, 5]$ is. "
+    r"$f([0, 5])$ is connected because $[0, 5]$ is, and $(-1, 0) \cup (0, 3)$ misses 0. "
     r"The rationals miss $\tfrac{\sqrt2}{2}$, and $\{x : x^2 > 4\}$ misses $[-2, 2]$. "
     r"In $[0, 1] \cup \{2\}$ the point 2 is open on its own, which gives a separation."))
 
@@ -465,14 +466,13 @@ items.append(item(
             r"You saw a bounded set and stopped. It is not closed: $(\tfrac1n, \tfrac1n)$ tends to $(0, 0)$, outside it."),
         opt("line", r"The line $\{(x, 2x) : x \in \mathbb{R}\}$",
             r"You saw a closed set and stopped. It is unbounded, and the balls $B(0, n)$ cover it with no finite subcover."),
-        opt("points", r"$\{(\tfrac1n, 0) : n \ge 1\}$",
-            r"You saw a bounded set of isolated points. Its limit $(0, 0)$ is missing, so it is not closed.")],
+        opt("points", r"$\{(\tfrac1n, 0) : n \ge 1\} \cup \{(0, 0)\}$", correct=True)],
         kind="multi"),
-    fb(r"The circle and the graph are closed and bounded. The graph is also the image of $[0, 2\pi]$ under a continuous map.",
+    fb(r"The circle, the graph and the points with their limit are closed and bounded.",
        r"Check each set for closed, then for bounded."),
     r"The circle is closed and bounded, and the graph is the image of the compact $[0, 2\pi]$ under $t \mapsto (t, \sin t)$. "
-    r"The open square and the points $(\tfrac1n, 0)$ each miss a limit point. "
-    r"The line is closed but unbounded."))
+    r"The points $(\tfrac1n, 0)$ with their limit $(0, 0)$ are closed and bounded too. "
+    r"The open square misses the limit $(0, 0)$ of $(\tfrac1n, \tfrac1n)$, and the line is unbounded."))
 
 # topology L3 (l11): a log metric on (0, infinity)
 items.append(item(
@@ -480,7 +480,7 @@ items.append(item(
     r"On $X = (0, \infty)$ put $d(x, y) = |\ln x - \ln y|$. It is a metric, because $\ln$ is one-to-one.",
     r"Is $(X, d)$ complete?",
     choice([
-        opt("ok", r"Yes: $\ln$ carries $(X, d)$ onto $\mathbb{R}$ with $|u - v|$, keeping distances, and $\mathbb{R}$ is complete.", correct=True),
+        opt("ok", r"Yes: $\ln$ maps $(X, d)$ onto $\mathbb{R}$ keeping distances, and $\mathbb{R}$ is complete.", correct=True),
         opt("recip", r"No: $x_n = \tfrac1n$ is Cauchy, and its limit 0 is not in $X$.",
             r"You measured with $|x - y|$. Here $d(\tfrac1n, \tfrac1m) = |\ln m - \ln n|$, which does not shrink."),
         opt("closed", r"No: $(0, \infty)$ is not closed in $\mathbb{R}$.",
@@ -522,8 +522,8 @@ items.append(parts(
     r"Two questions on the best P&L.",
     [(r"Why must $f$ attain a largest value on the budget set?",
       choice([
-          opt("ok", r"The circle is compact and $f$ is continuous, so $f$ of the circle is compact: closed and bounded in $\mathbb{R}$.", correct=True),
-          opt("bounded", r"$f$ is bounded on the circle.",
+          opt("ok", r"The circle is compact and $f$ is continuous, so $f$ of the circle is compact.", correct=True),
+          opt("bounded", r"$f$ is bounded on the circle, since $|x + 2y| \le 3$ there.",
               r"You stopped at bounded. A bounded function need not attain its supremum: $x$ on $(0, 1)$ never reaches 1."),
           opt("linear", r"Every linear function has a maximum.",
               r"You forgot the domain. On all of $\mathbb{R}^2$, $x + 2y$ has no maximum."),
@@ -551,14 +551,13 @@ items.append(item(
         line("c1", r"$H$ holds some $g^k$ with $k \ne 0$, and so its inverse $g^{-k}$. So $H$ holds a positive power of $g$."),
         line("c2", r"Let $m$ be the least positive integer with $g^m \in H$."),
         line("c3", r"$H$ is closed under products and inverses, so $\langle g^m \rangle \subseteq H$."),
-        line("c4", r"Take $h \in H$ and write $h = g^k$. Divide: $k = qm + r$ with $0 \le r < m$."),
-        line("c5", r"Then $g^r = g^k(g^m)^{-q}$ is a product of elements of $H$, so $g^r \in H$."),
-        line("c6", r"Since $m$ is least and $0 \le r < m$, $r = 0$. So $h = (g^m)^q$, and $H = \langle g^m \rangle$."),
+        line("c4", r"Take $h \in H$ and write $h = g^k$. Divide: $k = qm + r$ with $0 \le r < m$. Then $g^r = g^k(g^m)^{-q}$ is a product of elements of $H$, so $g^r \in H$."),
+        line("c5", r"Since $m$ is least and $0 \le r < m$, $r = 0$. So $h = (g^m)^q$, and $H = \langle g^m \rangle$."),
         line("d1", r"By Lagrange, $|H|$ divides $|G|$, and a group whose order divides a cyclic group's order is cyclic.",
              r"Lagrange limits sizes, not structure, and $G$ may be infinite. $\{e, (1\,2)(3\,4), (1\,3)(2\,4), (1\,4)(2\,3)\}$ has order 4, as $\mathbb{Z}_4$ does, and is not cyclic."),
         line("d2", r"Let $m$ be the least integer with $g^m \in H$.",
              r"Without the word positive there is no least one: $H$ holds $g^{-m}$, $g^{-2m}$ and so on.")],
-     "answer": ["c1", "c2", "c3", "c4", "c5", "c6"], "same": [["c3", "c4"]], "distractors": ["d1", "d2"]},
+     "answer": ["c1", "c2", "c3", "c4", "c5"], "same": [["c3", "c4"]], "distractors": ["d1", "d2"]},
     fb(r"The least positive power of $g$ in $H$ generates $H$, by the division trick.",
        r"Choose the least positive power of $g$ in $H$, then divide any exponent by it."),
     r"A non-trivial $H$ holds a least positive power $g^m$, and closure gives $\langle g^m \rangle \subseteq H$. "
@@ -587,7 +586,7 @@ items.append(item(
        r"Show the complement is open: round each $x$ with $f(x) \ne g(x)$, find an open set where they still differ."),
     r"Hausdorff gives disjoint open $U \ni f(x)$ and $V \ni g(x)$. "
     r"Continuity makes $W = f^{-1}(U) \cap g^{-1}(V)$ an open set round $x$, and on it $f$ and $g$ land in disjoint sets. "
-    r"So $X \setminus E$ is open; into an indiscrete two-point $Y$ the claim can fail."))
+    r"So $X \setminus E$ is open; without Hausdorff, two maps from $\mathbb{R}$ to an indiscrete $\{a, b\}$ can agree on $(0, \infty)$ only."))
 
 # algebra L3 (l12) with L2 (l7): possible image sizes
 items.append(item(
