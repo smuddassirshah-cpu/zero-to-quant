@@ -47,3 +47,21 @@ The five audit-only findings are of the kind a number-led second read does not t
 - `python3 -I docs/reports/puzzles-L5-concepts.py`: `l25 ok` to `l30 ok`, "puzzles L5 concepts: all checks passed", exit 0.
 - Playthrough (from `app/`, `--local-cdn <PKGS>`): `--set puzzles/review-4 --set puzzles/homework-4`: "browser relaunches: 0 / All passed."; `--set puzzles/review-5 --set puzzles/homework-5`: "browser relaunches: 0 / All passed."; `--lesson puzzles/l21-kelly`: "browser relaunches: 0 / All passed."; `--lesson puzzles/l28-duels`: "browser relaunches: 0 / All passed." No content was changed, so these only confirm the files play.
 - Engine or validator limits hit: none; no inbox bullets.
+
+## Fix pass
+
+1. fixed | basis: Williams 10.10(a): a bounded stopping time gives $E[X_\tau] = X_0$ for any martingale; with wealth bounded below (a finite bankroll, no credit) Fatou makes $X$ a non-negative supermartingale under stopping, so $E[X_\tau] \le X_0$ only; the ruin rule from £7 gives 0. Applied with one change to the audit's text: "finite bankroll" stays as the condition for "cannot raise" (without it the unlimited doubler is £1 up almost surely, as l23's own quiz explain says), and the fixed bet limit is added as the condition for equality. Edited l23 screens[5].prose, summary.ideas[1], l24 screens[3].hints[0] and [1] ("eight bets at most": £255 = 1 + 2 + ... + 128).
+2. fixed | basis: $2^{-n}(2^n - 1) = 1 - 2^{-n}$ (7/8, 127/128, 1023/1024 at n = 3, 7, 10, computed in fractions), equal to the win chance, so the cycle's mean is 0. Edited l23 screens[6] byKey.d1 and widget.lines[5].why.
+3. fixed | basis: Beta(1, 1) prior, posterior after 2 reds in 2 is Beta(3, 1), predictive mean $\int p^3 / \int p^2 = 3/4$; also 3/4 exactly for a flat prior on the red count in urns of 3, 4 and 10 drawn without replacement. Option c now "$\tfrac34$, by Laplace's rule of succession"; still a distractor, why unchanged.
+4. fixed | basis: Kelly (1956) at evens $f^* = p - q = 2p - 1$, which equals 1/2 at $p = 3/4$ (0.6 at 0.8, 0.8 at 0.9). Edited l21 quiz[1].explain.
+5. fixed | basis: wealth after 200 bets is monotone in the win count, whose median is 120, so the median is $1.2^{120} 0.8^{80} = e^{200g} = 56.1$ with $g = 0.02014$; the mean is $1.04^{200} = 2{,}550.7$ (the audit's "2,540" is low; the content says 2,550). Edited l21 screens[2].explain.
+
+Counts: 5 fixed, 0 disputed, 0 deferred. Graded answers changed: none (no key, `wrong[]` value or option correctness changed).
+
+Script: the seven content-claim checks in `puzzles-L4-concepts.py` now assert the corrected claims with the fixer's own computations (exact enumeration of a 12-bet bounded stopping rule giving 0, the eight-bet doubling cycle, $1 - 2^{-n}$ for n = 1 to 20, the Beta(1, 1) predictive, the root of $2p - 1 = 1/2$, the median and mean wealth), names and ledger references kept, each marked "(corrected claim, fix pass)". No other check touched.
+
+Checks:
+- Validator: "0 errors, 4279 warnings" (O2-long-sentence 714); `content/manifest.json` restored.
+- `python3 -I docs/reports/puzzles-L4-concepts.py`: "puzzles L4 concepts: all checks passed", exit 0. `puzzles-L5-concepts.py`: exit 0.
+- Voice scan 35: 0 explanations over three sentences; 13318 sentences, 0 over 35 words.
+- Playthrough (from `app/`, `--local-cdn <PKGS>`): `--lesson puzzles/l21-kelly`, `puzzles/l23-doubling-up`, `puzzles/l24-mixed-set`, each plain and with `--mobile`: all six "browser relaunches: 0 / All passed." No set file changed.
