@@ -13,4 +13,4 @@
 | puzzles | L4 to L5 | 1 | 2 | 2 | 1 | 5 | 4 (all fixed before the audit) | 0 | no: 2 wrong in 2 levels exceeds the rule; fix pass 5 fixed, 0 disputed, gates green; round 2 started |
 | research-int | L4 | 1 | 0 | 5 | 4 | 9 | 6 (all fixed before the audit) | 0 | yes (fix pass 8 fixed, 0 disputed, 1 deferred: l20 four pound-typed rows, see notes; gates green; course fully closed) |
 | systems | L4 | 1 | 2 | 7 | 2 | 10 | 0 | 1 | no: 2 wrong in 1 level exceeds the rule; fix pass then round 2 |
-| coding-int | L4 | 1 | 0 | 4 | 1 | 5 | 11 (all fixed before the audit) | 0 | pending fix pass |
+| coding-int | L4 | 1 | 0 | 4 | 1 | 5 | 11 (all fixed before the audit) | 0 | yes (fix pass 5 fixed, 0 disputed; gates green; course fully closed) |
