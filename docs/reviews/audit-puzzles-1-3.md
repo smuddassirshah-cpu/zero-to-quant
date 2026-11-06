@@ -30,11 +30,17 @@ Filled after the ledger and findings above were committed (blind rule), from `do
 
 | | count | items |
 |---|---|---|
-| Conceptual findings by this audit only | OVERLAP_AUDIT_ONLY |
-| Conceptual findings by the earlier review only | OVERLAP_REVIEW_ONLY |
-| By both | OVERLAP_BOTH |
+| Conceptual findings by this audit only | 3 | finding 1 (pig objective unstated), finding 2 (Monty Hall protocol unstated), finding 4 (ruin explanation: losing runs do not lengthen) |
+| Conceptual findings by the earlier review only | 3 | l3 screens[5] canvas (the biased-coin ladder reused the fair chain, edges 1/2); l13 quiz q-all-long `cube` why (named the wrong slip); l1 quiz q-product option c why ("It does not" denied a valid, slow method) |
+| By both | 1 | l15 screens[9] Wald statement: the review found it unstated and proposed the sentence now in the file; this audit finds that sentence drops the finite-mean hypothesis (finding 3) |
 
-OVERLAP_MISSED
+The earlier review's conceptual findings this audit did not raise, one line each on why:
+
+- l3 screens[5] canvas edges at 1/2 for a 2/3 coin: fixed before this read (the file now has edges 2/3 and 1/3 and the caption "Heads have chance 2/3 here", verified after the blind pass); the blind read covered canvas parameters only for captions, labels, tables, trees and bars, so a wrong edge weight in a graph canvas would have been a blind spot, raised in the inbox.
+- l13 q-all-long `cube` why: fixed before this read; the current why ("You gave each piece chance 3/4 of passing 1/4, then multiplied three times. The pieces are not independent.") is correct and in the ledger.
+- l1 q-product option c why: fixed before this read; the current why ("Adding all 36 works but is slow ...") is correct and in the ledger.
+
+The earlier review's other findings in L1 to L3 (the 6/14.7 "half" arithmetic, the 7.5 slip value, tags, pace, shuffle, tolerances, a code test that the starter passed, display widths, voice hits) are arithmetic, mechanical or style, outside this audit's scope, and all show as fixed in the file. Net: of the four conceptual findings that remain in the current content, the single read found one (the Wald location, with an incomplete fix) and missed three; the convergence rule's "at most one new wrong per three levels" is met (one new wrong, finding 4).
 
 ## Checks
 
