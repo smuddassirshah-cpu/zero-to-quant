@@ -98,29 +98,38 @@ two('budget-only var (SLSQP vs dual)', x_bud.fun, float(ds), 1e-9)
 lam_b, _, _ = mults(S3, M3, x_bud.x, [0, 1, 2]) if False else (None, None, None)
 two('budget multiplier = nu* (stationarity 2 S w = nu 1)', (2 * S3n @ x_bud.x)[0], float(nus), 1e-7)
 rnd('s 42.3611', s, 42.3611, 4); rnd('nu*', nus, 0.047213, 6); rnd('d*', ds, 0.023607, 6)
-E('l9', 'screens[6].prose', F(1525, 36), 42.3611); E('l9', 'screens[6].widget.answer', 0.023607)
-E('l9', 'screens[6].widget.wrong[0].value', 0.047213); E('l9', 'screens[6].widget.wrong[1].value', 42.3611); E('l9', 'screens[6].widget.wrong[2].value', 0.020469)
-E('l9', 'screens[6].explain.text', F(72, 1525), 0.047213, F(36, 1525), 0.023607, 0.020469); E('l9', 'screens[6].hints[1].text', 0.047213)
-E('l9', 'screens[6].feedback.correct', 0.023607)
+E('l9', 'screens[7].prose', F(1525, 36), 42.3611); E('l9', 'screens[7].widget.answer', 0.023607)
+E('l9', 'screens[7].widget.wrong[0].value', 0.047213); E('l9', 'screens[7].widget.wrong[1].value', 42.3611); E('l9', 'screens[7].widget.wrong[2].value', 0.020469)
+E('l9', 'screens[7].explain.text', F(72, 1525), 0.047213, F(36, 1525), 0.023607, 0.020469); E('l9', 'screens[7].hints[1].text', 0.047213)
+E('l9', 'screens[7].feedback.correct', 0.023607)
 gw = lambda l: -l - l * l / 4
 two('reversed g max', max(gw(l) for l in lam_grid), 0); two('reversed g num at 1', min(x * x + 1 * (x - 1) for x in np.linspace(-3, 3, 6001)), gw(1), 1e-6)
-E('l9', 'screens[7].prose', 0); E('l9', 'screens[7].widget.options[2].why', 1, 2); E('l9', 'screens[7].widget.options[2].text', 0.75); E('l9', 'screens[7].widget.options[1].why', 0, 1)
+E('l9', 'screens[8].prose', 0); E('l9', 'screens[8].widget.options[2].why', 1, 2); E('l9', 'screens[8].widget.options[2].text', 0.75); E('l9', 'screens[8].widget.options[1].why', 0, 1)
 # duality gap {0, 2}
 gg = [min(l, 2 - l) for l in lam_grid]; two('gap d*', max(gg), 1); two('gap argmax', lam_grid[int(np.argmax(gg))], 1)
 two('p*', min(x for x in (0, 2) if 1 - x <= 0), 2)
-E('l9', 'screens[8].prose', 2, 1); E('l9', 'screens[8].feedback.correct', 1, 2); E('l9', 'screens[8].explain.text', 1, 2)
+E('l9', 'screens[9].prose', 2, 1); E('l9', 'screens[9].feedback.correct', 1, 2); E('l9', 'screens[9].explain.text', 1, 2)
 # 2x2 correlated
 Sc = [[F(4, 100), F(12, 1000)], [F(12, 1000), F(9, 100)]]; det = Sc[0][0] * Sc[1][1] - Sc[0][1] ** 2
 sc = (Sc[0][0] + Sc[1][1] - 2 * Sc[0][1]) / det; two('2x2 s', sc, F(6625, 216))
 two('2x2 s num', np.ones(2) @ np.linalg.solve(np.array([[0.04, 0.012], [0.012, 0.09]]), np.ones(2)), float(sc))
 rnd('2x2 g(.03)', F(3, 100) - F(9, 10000) * sc / 4, 0.023099, 6); rnd('2x2 d*', 1 / sc, 0.032604, 6); two('2x2 d*', 1 / sc, F(216, 6625))
-E('l9', 'screens[9].feedback.correct', F(216, 6625), 0.032604)
+E('l9', 'screens[10].feedback.correct', F(216, 6625), 0.032604)
 two('transfer gap', 10450 - 10400, 50); rnd('gap pct', F(50, 10450) * 100, 0.48, 2)
-E('l9', 'screens[10].widget.answer', 50); E('l9', 'screens[10].widget.wrong[1].value', 10400); E('l9', 'screens[10].explain.text', 10400, 10450, 50, 0.48)
+E('l9', 'screens[11].widget.answer', 50); E('l9', 'screens[11].widget.wrong[1].value', 10400); E('l9', 'screens[11].explain.text', 10400, 10450, 50, 0.48)
 # quiz
 E('l9', 'quiz[0].widget.answer', float(g(F(3)))); E('l9', 'quiz[0].explain.text', 2.25, 0.75)
 qg = [min(2 * l, 3 - l) for l in lam_grid]; two('q gap d*', max(qg), 2); two('q gap', 3 - max(qg), 1)
 E('l9', 'quiz[3].widget.answer', 1); E('l9', 'quiz[3].widget.wrong[0].value', 3); E('l9', 'quiz[3].widget.wrong[1].value', 2)
+
+# fix pass: cross-term slip in l9 screens[2] (cross distractor), LP dual by the Lagrangian route (l9 screens[6]), l12 gross-limit wording
+two('cross slip', F(1, 4) + F(1, 2), F(3, 4))
+lp = linprog([-60, -40], A_ub=[[1, 1], [3, 1], [1, 0]], b_ub=[10, 18, 5], method='highs')
+lpd = linprog([10, 18, 5], A_ub=[[-1, -3, -1], [-1, -1, 0]], b_ub=[-60, -40], method='highs')
+two('desk LP primal', -lp.fun, 480); two('desk LP dual by Lagrangian route', lpd.fun, 480)
+two('x-bracket at dual opt', -60 + 30 + 3 * 10 + 0, 0); two('y-bracket at dual opt', -40 + 30 + 10, 0)
+two('l12 tol ratio', 0.0062 / 1e-8, 620000)
+two('x=2,lam=1 term', 1 * (1 - 2), -1)
 
 # ================= l10 =================
 def proj(c, a, b):
@@ -212,7 +221,7 @@ two('q w', (F(-1, 10) + 2 * F(8, 100)) / (2 * F(9, 100)), F(1, 3)); E('l11', 'qu
 rnd('q no2', (F(-1, 10) + F(16, 100)) / F(9, 100), 0.666667, 6); E('l11', 'quiz[2].widget.wrong[0].value', 0.666667)
 
 # ================= l12 =================
-two('hook var', vl, F(73, 900)); E('l12', 'screens[0].canvas.params.lines[11]', 0.081111111111111)
+two('hook var', vl, F(73, 900)); E('l12', 'screens[0].canvas.params.lines[11]', 0.081111)
 E('l12', 'screens[0].widget.answer', 0.2848); E('l12', 'screens[0].feedback.correct', 28.480)
 two('explore min', F(-1, 12), -0.0833333333, 1e-6); rnd('explore var', F(139, 1800), 0.077222, 6)
 E('l12', 'screens[1].widget.answer', -0.083333); E('l12', 'screens[1].feedback.correct', 0.077222)
@@ -231,7 +240,7 @@ rnd('vol4', math.sqrt(27923 / 450000) * 100, 24.910, 3)
 for a, b in zip(g4, [0.001067, 0.038267, 0.1224, 0.175733]): rnd('2Sw', a, b, 6)
 for v, sh, p in [(mu4, 2.8044, 4), (l4, -0.1020, 4), (res4[0], 0.0189, 4), (-res4[3], 0.0308, 4)]: rnd('l12 table', v, sh, p)
 E('l12', 'screens[3].canvas.params.lines[4]', 0.006, 0.0328, 0.0615, 0.1961); E('l12', 'screens[3].canvas.params.lines[8]', 0.233333, 0.366667, 0.4)
-E('l12', 'screens[3].canvas.params.lines[10]', 0.062051111111111); E('l12', 'screens[3].feedback.correct', F(27923, 450000), 0.062051, 24.910)
+E('l12', 'screens[3].canvas.params.lines[10]', 0.062051); E('l12', 'screens[3].feedback.correct', F(27923, 450000), 0.062051, 24.910)
 E('l12', 'screens[3].explain.text', 0.0060, 0.0328, 0.0615, 0.1961)
 E('l12', 'screens[4].canvas.params.rows[*]', 0.001067, 0.038267, 0.122400, 0.175733, 0.233333, 0.366667)
 E('l12', 'screens[4].widget.rows[0][1].answer', 2.8044); E('l12', 'screens[4].widget.rows[1][1].answer', -0.1020); E('l12', 'screens[4].widget.rows[2][1].answer', 0.0189); E('l12', 'screens[4].widget.rows[3][1].answer', 0.0308)
