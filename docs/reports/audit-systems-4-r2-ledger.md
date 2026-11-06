@@ -100,3 +100,53 @@ Scope: `l15-no-allocation`, `l16-ring-buffer`, `l17-measuring-latency`, `l18-fee
 | l16 | quiz[1].options.even.why | The counters meet only when empty; the slots coincide when full as well | correct | `sim: l16-full-ring` |
 | l16 | quiz[2] (q16-stall) | 2,048 slots | correct | `sim: q16-stall` |
 | l16 | quiz[3] (q16-owner) | The consumer alone writes `head_`; the producer reads it and writes `tail_` | correct | screen 5 and 6 design; Williams 7.2 |
+
+## l17-measuring-latency
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l17 | screens[0].widget, explain | Mean 19.9 µs; no request took that long; the mean describes a request that never happened | correct | `sim: l17-s0` |
+| l17 | screens[1].prose | Of 1,000 sorted requests the p99 is the value at position 990 | correct | nearest-rank rule, rank = ceil(0.99 × 1000) = 990 (Hyndman and Fan 1996, definition 1); `sim: l17-s2 hint` |
+| l17 | screens[1].widget, hints | The p99 first reads 1,000 at 11 slow requests, since 1,000 - k < 990 needs k ≥ 11 | correct | `sim: l17-s1` |
+| l17 | screens[1].derive.caption | p99 = 1,000 when k > 10 else 10 | correct | same |
+| l17 | screens[1].explain | The mean barely moves, from 19.9 to 20.9 | correct | `sim: l17-s1 explain` (20.89) |
+| l17 | screens[2].prose, widget | p50 at 500, p99 at 990, p99.9 at 999: 10, 10, 1,000; and 10 with one slow request | correct | `sim: l17-s2` |
+| l17 | screens[2].explain | The p99 shows 10 µs while 1% took 1,000; with a single slow request only the maximum would show it | correct | nearest rank with n = 1,000: p99.9 is rank 999, so only p100 reaches the one slow sample; `sim: l17-s2` |
+| l17 | screens[3].prose, console | Closed-loop client; one 50 ms reply; 875 of 2,000 sent late; the two percentile sets | correct | `sim: l17-s3 console` recomputed from `latencies.csv` (875 late; 40/50/248 and 49/48,821/49,911) |
+| l17 | screens[3].widget | Done minus intended shows what a queued request felt | correct | Tene, "How NOT to Measure Latency": measure from the intended start time; HdrHistogram `recordValueWithExpectedInterval` |
+| l17 | screens[3].options.same.why | The two reports differ by exactly the wait before sending | correct | (done - intended) - (done - sent) = sent - intended |
+| l17 | screens[3].explain | Waiting for each reply hides the delay: coordinated omission | correct | Tene, same talk |
+| l17 | screens[4].prose, docstring | Rank counts from 1; nearest rank = ceil(p n / 100); a closed-loop client sent each request when the previous reply arrived | correct | convention stated; consistent with the data file |
+| l17 | screens[4].widget.solution | The model solution returns both percentile sets and the true mean; the starter fails | correct | `sim: run_py` (11/11; starter fails); synthetic files recomputed by exact rank |
+| l17 | screens[4].hints[2] | `-(-permille * n // 1000)` is ceil in integers | correct | floor division identity ceil(a/b) = -((-a)//b) |
+| l17 | screens[4].explain | The true list holds the 50 ms stall, which is why its p99 is 48,821 µs | correct | `sim: l17-s3 console` (43.75% of requests were queued behind the stall) |
+| l17 | screens[5].widget | Quote both, the tail first | correct | Tene; the tail is what a trader loses on (screen's framing) |
+| l17 | screens[5].options.median.why | The median ignores exactly the requests the trader cares about | correct | p50 of the screen's data is 10 whatever the tail |
+| l17 | screens[5].options.max.why | One worst value can be a fluke; the percentiles show how often it happens | correct | a maximum is one sample; a percentile is a frequency statement |
+| l17 | screens[5].explain | The mean is a total divided by a count, and a few slow requests move it little | imprecise | on this very screen 1% of requests at 1,000 µs doubled the mean (10 to 19.9); what holds is that the mean stays far below the tail value |
+| l17 | screens[5].explain | The mean still helps for sizing capacity | correct | utilisation = arrival rate × mean service time (Little's law; Harchol-Balter, *Performance Modeling and Design of Computer Systems*, ch. 6) |
+| l17 | screens[6].prose, console | 0.999 × 1000 is 999 exactly; 99.9 / 100 × 1000 is 999.0000000000001 and ceil gives 1,000 | correct | `sim: l17-s6` (IEEE-754 doubles, Python) |
+| l17 | screens[6].widget | The correct p99.9 of 999 at 10 and one at 1,000 is 10 µs | correct | rank ceil(999) = 999; `sim: l17-s2` |
+| l17 | screens[6].explain | NumPy 2.0.2 with `inverted_cdf` reads position 1,000 here; work in integers or subtract 1e-9 before the ceil | correct | `sim: l17-s6 explain` (NumPy 2.5.3 gives 1000.0; same `_inverted_cdf` code path as 2.0.2: `n * q` in a double, then a strict fractional test); the 1e-9 guard is sound since a true fractional rank is a multiple of 0.001 for p to three decimals, far above a double's rounding error for n below 10^7 |
+| l17 | screens[7].prose, widget | Nearest rank r = ceil(p n / 100), rank 1 at p = 0; p95 of 40 is rank 38 | correct | Hyndman and Fan (1996) definition 1 (inverse empirical CDF), with the p = 0 clamp of the usual nearest-rank statement; `sim: l17-generalise` |
+| l17 | screens[7].explain | A rank that is not a whole number rounds up; rank always counts from the smallest | correct | same definition |
+| l17 | screens[8].prose | 64.4 × 250 / 100 is 161.00000000000003 in doubles, so an unguarded ceil gives 162 | correct | `sim: l17-s8` |
+| l17 | screens[8].widget.solution | percentile solution passes 15 tests (0, 100, exact and fractional ranks, the 64.4 boundary); the starter fails | correct | `sim: check_code_item l17-percentile` (c++17 and c++20); every expectation recomputed by exact rank |
+| l17 | screens[8].explain | The 1e-9 guard keeps a rank that is exactly whole from creeping up to the next one | correct | `sim: l17-s8` and the derivation above |
+| l17 | screens[9].prose | A clock read costs about 20 ns | correct | `clock_gettime(CLOCK_MONOTONIC)` through the vDSO is about 20 to 30 ns on current x86-64 Linux (Linux vDSO documentation; Gregg, *Systems Performance* 2nd ed., 6.6) |
+| l17 | screens[9].prose | In this app the clock ticks in 100 µs steps, so tests use supplied samples | correct | `app/js/screens/cpp-worker.js:249` serves `clock_time_get` from `performance.now()` in a Worker; Chromium clamps `performance.now()` to 100 µs when the page is not cross-origin isolated, and `app/run.sh` sets no COOP/COEP headers |
+| l17 | screens[9].prose | Timing one call alone adds about one read's worth, because the bracket holds the end of the first read and the start of the second; a batch pays it once | correct | derivation: each timestamp is taken part-way through its read, so the bracket spans the tail of read one and the head of read two, about one read; this is the empty-bracket overhead measured in Paoloni, Intel white paper "How to Benchmark Code Execution Times" (2010) |
+| l17 | screens[9].widget | 66.7% and 0.02 ns a call | correct | arithmetic of the stated model; `sim: l17-s9` |
+| l17 | screens[9].byKey.two-reads | 80% counts two whole reads | correct | 40 / 50; `sim: l17-s9 slip` |
+| l17 | screens[9].explain | Warm the code up first, then time batches and take the median | correct | Carruth, CppCon 2015 "Tuning C++: Benchmarks, and CPUs, and Compilers"; Google Benchmark repetitions with the median reported |
+| l17 | screens[10].widget | 1, 3, 4, 5 | correct | `sim: l17-drill` |
+| l17 | screens[11].widget | 1,000; 505; 1,000 | correct | `sim: l17-transfer` |
+| l17 | screens[11].hints[1], explain | Averaging two percentiles is not a percentile of anything; pool the samples, position 1,980 of 2,000; ship histograms, not percentiles | correct | Tene (percentiles cannot be averaged; HdrHistogram merges); `sim: l17-transfer` |
+| l17 | summary.ideas, formula | Tail first; r = ceil(p n / 100); work in integers at a boundary; measure from the intended send time | correct | rows above |
+| l17 | quiz[0] (q17-rank) | p75 of 3, 9, 4, 7, 5, 8, 6, 2, 10, 1 is 8 | imprecise | right by nearest rank (`sim: q17-rank`), but the item does not name the convention; linear interpolation (Hyndman and Fan type 7, NumPy's default) gives 7.75, and the slip 7 is also what type 1 at rank 7 would read |
+| l17 | quiz[1] (q17-closed) | The client's timing records almost nothing of the requests due in the stall; the stall appears as one slow request | correct | Tene; `sim: l17-s3` (one reply over 1 ms by the client's clock, 875 late) |
+| l17 | quiz[1].options.mean.why | Percentiles are unaffected too, which is the problem | correct | the queued requests are not in the sample at all, so every statistic of done - sent misses them |
+| l17 | quiz[2] (q17-mean) | 39 µs | correct | `sim: q17-mean` |
+| l17 | quiz[3] (q17-batch) | Time a batch with two reads after a warm-up | correct | rows for screen 9 |
+| l17 | quiz[3].options.each.why | Each bracket adds about 20 ns, twice the function | correct | stated model |
+| l17 | quiz[3].options.sleep.why | An idle CPU runs slower; warm it up instead | correct | an idle core sits in a C-state at a low P-state with cold caches and needs time to ramp (Intel SDM vol. 3B, ch. 15; Gregg 2nd ed. 6.4) |
