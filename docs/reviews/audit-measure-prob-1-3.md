@@ -72,3 +72,4 @@ Checks:
 - `node tools/validate.mjs`: `0 errors, 4295 warnings` (was 4288; the extra warnings are O2 sentence-length targets on the longer corrected lines); `content/manifest.json` restored.
 - `python3 -I docs/reports/measure-prob-L1-concepts.py`: exit 0, `0 failing checks`. `-L2-`: exit 0. `-L3-`: exit 0.
 - Voice scan 35: `explanations over three sentences: 0`, `sentences scanned: 8749; over 35 words: 0`.
+- Playthrough (from `app/`, `--local-cdn <PKGS>`), `--lesson measure-prob/l1-why-measure`, `l4-measurable-functions`, `l8-modes-of-convergence`: each `browser relaunches: 0`, `All passed.`, plain and with `--mobile`. No review or homework set changed.
