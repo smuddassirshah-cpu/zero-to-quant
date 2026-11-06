@@ -1,0 +1,383 @@
+{
+ "id": "homework-3",
+ "course": "pairs-rep",
+ "level": 3,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-compare-selection",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "pr-extend",
+    "pr-method"
+   ],
+   "prose": "Compare the two selection rules on one cycle. From the `n_candidates` closest pairs, distance keeps the closest `k`; Engle-Granger keeps the `k` lowest p-values. Trade distance picks with `trade_pair` and Engle-Granger picks with `trade_coint`.",
+   "question": "Write `compare_selection(close, start, n_candidates, k)` returning (planted by distance, planted by Engle-Granger, committed by distance, committed by Engle-Granger), returns to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\ndef pairs_panel(seed=2006, n_ind=10, per_ind=10, n_pairs=20, days=3024, half_life=8.0, ou_sd=0.008,\n                rw_sd=0.015, break_day=1512, break_frac=0.8, half_spread=0.005):\n    rng = np.random.default_rng(seed)\n    N = n_ind * per_ind\n    ind = np.repeat(np.arange(n_ind), per_ind)\n    mkt = np.cumsum(0.0003 + 0.010 * rng.standard_normal(days))\n    indf = np.cumsum(0.008 * rng.standard_normal((days, n_ind)), axis=0)\n    phi = 0.5 ** (1.0 / half_life)\n    u = np.cumsum(rw_sd * rng.standard_normal((days, N)), axis=0)        # unpaired: random walks\n    common = np.cumsum(rw_sd * rng.standard_normal((days, n_pairs)), axis=0)\n    eps = ou_sd * rng.standard_normal((days, 2 * n_pairs))\n    a = np.zeros((days, 2 * n_pairs))\n    for t in range(1, days):\n        a[t] = phi * a[t - 1] + eps[t]                                   # mean-reverting gaps\n    broken = rng.random(n_pairs) < break_frac\n    drift = np.cumsum(rw_sd * rng.standard_normal((days, 2 * n_pairs)), axis=0)\n    for k in range(n_pairs):\n        for j in (2 * k, 2 * k + 1):\n            x = common[:, k] + a[:, j]\n            if broken[k]:                                                # the pair stops co-moving\n                x = x + np.where(np.arange(days) >= break_day, drift[:, j] - drift[break_day, j], 0.0)\n            u[:, j] = x\n    pair_ind = np.repeat(np.arange(n_ind), 2)[:n_pairs]\n    ind[:2 * n_pairs] = np.repeat(pair_ind, 2)                           # two planted pairs an industry\n    logp = np.log(50.0) + mkt[:, None] + indf[:, ind] + u\n    mid = np.exp(logp)\n    bounce = np.where(rng.random((days, N)) < 0.5, 1 + half_spread, 1 - half_spread)\n    close = mid * bounce                                                 # closes at bid or ask\n    return close, mid, ind, broken\n\n\ndef normalise(P):\n    P = np.asarray(P, dtype=float)\n    return P / P[0]\n\n\ndef ssd_matrix(Pn):\n    G = Pn.T @ Pn\n    d = np.diag(G)\n    return d[:, None] + d[None, :] - 2 * G\n\n\ndef top_pairs(Pn, k):\n    D = ssd_matrix(Pn)\n    i, j = np.triu_indices(D.shape[0], 1)\n    order = np.argsort(D[i, j], kind=\"stable\")[:k]\n    return [(int(i[o]), int(j[o])) for o in order]\n\n\ndef trade_pair(form, trade, i, j, wait=0, open_at=2.0):\n    sd = float(np.std(form[:, i] - form[:, j]))\n    a, b = trade[:, i].tolist(), trade[:, j].tolist()\n    n = len(a)\n    payoff, opened, t = 0.0, False, 0\n    while t < n:\n        s = a[t] - b[t]\n        if sd > 0 and abs(s) > open_at * sd and t + wait < n - 1:\n            side = 1 if s > 0 else -1          # +1: i is dearer, so short i and buy j\n            to = t + wait\n            tc = next((u for u in range(t + 1, n) if (a[u] - b[u]) * side <= 0), None)\n            tx = n - 1 if tc is None else min(tc + wait, n - 1)\n            ri = (a[tx] - a[to]) / a[to]\n            rj = (b[tx] - b[to]) / b[to]\n            payoff += side * (rj - ri)\n            opened = True\n            t = tx + 1\n            continue\n        t += 1\n    return payoff, opened\n\n\ndef trade_trips(form, trade, i, j, wait=0, open_at=2.0):\n    \"\"\"Every round trip of trade_pair as (open day, close day, converged, payoff).\"\"\"\n    sd = float(np.std(form[:, i] - form[:, j]))\n    a, b = trade[:, i].tolist(), trade[:, j].tolist()\n    n = len(a)\n    trips, t = [], 0\n    while t < n:\n        s = a[t] - b[t]\n        if sd > 0 and abs(s) > open_at * sd and t + wait < n - 1:\n            side = 1 if s > 0 else -1\n            to = t + wait\n            tc = next((u for u in range(t + 1, n) if (a[u] - b[u]) * side <= 0), None)\n            tx = n - 1 if tc is None else min(tc + wait, n - 1)\n            pay = side * ((b[tx] - b[to]) / b[to] - (a[tx] - a[to]) / a[to])\n            trips.append((to, tx, tc is not None, pay))\n            t = tx + 1\n            continue\n        t += 1\n    return trips\n\n\ndef cycle_return(close, start, k, wait=0, open_at=2.0):\n    \"\"\"(committed, employed, opened) for the k closest pairs of the cycle from day start.\"\"\"\n    Pn = normalise(close[start:start + 378])\n    form, trade = Pn[:252], Pn[252:]\n    res = [trade_pair(form, trade, i, j, wait, open_at) for i, j in top_pairs(form, k)]\n    total = sum(p for p, _ in res)\n    n = sum(1 for _, o in res if o)\n    return total / k, (total / n if n else 0.0), n\n\n\ndef run(close, k, wait=0, step=21, open_at=2.0):\n    \"\"\"[(start, committed return over the six trading months)] for every cycle.\"\"\"\n    return [(s, cycle_return(close, s, k, wait, open_at)[0]) for s in range(0, close.shape[0] - 378 + 1, step)]\n\n\ndef hedge_ratio(y, x):\n    \"\"\"OLS of y on x with an intercept: return (beta, alpha), each to 6 places.\"\"\"\n    beta, alpha = np.polyfit(x, y, 1)\n    return round(float(beta), 6), round(float(alpha), 6)\n\n\ndef eg_decision(y, x, alpha=0.05):\n    \"\"\"Return (statistic, p-value, reject) from coint(y, x).\"\"\"\n    from statsmodels.tsa.stattools import coint\n    stat, p, crit = coint(y, x)\n    return round(float(stat), 4), round(float(p), 4), bool(p < alpha)\n\n\ndef half_life(s):\n    \"\"\"Half-life in days from the regression ds_t = a + b * s_(t-1); math.inf when b >= 0.\"\"\"\n    import math\n    s = np.asarray(s, dtype=float)\n    ds = np.diff(s)\n    X = np.column_stack([np.ones(len(ds)), s[:-1]])\n    a, b = np.linalg.lstsq(X, ds, rcond=None)[0]\n    if b >= 0:\n        return math.inf\n    return math.log(0.5) / math.log(1 + b)\n\n\ndef positions(z, entry=2.0, exit=0.0, stop=4.0):\n    \"\"\"+1 long the spread (long y, short beta x), -1 short, 0 flat; decided at each day's close.\"\"\"\n    pos = np.zeros(len(z)); cur = 0\n    for t in range(len(z)):\n        zt = z[t]\n        if np.isnan(zt): cur = 0\n        elif cur == 0:\n            if entry <= zt < stop: cur = -1\n            elif -stop < zt <= -entry: cur = 1\n        elif cur == 1 and (zt >= -exit or zt <= -stop): cur = 0\n        elif cur == -1 and (zt <= exit or zt >= stop): cur = 0\n        pos[t] = cur\n    return pos\n\n\ndef trade_coint(form, trade, i, j, entry=2.0):\n    \"\"\"Trade the residual z-score of log i on log j: long or short 1 pound of i against beta pounds of j.\n    Opens at |z| >= entry, closes when z crosses 0 or on the last day; returns (payoff, opened).\"\"\"\n    beta, alpha = hedge_ratio(np.log(form[:, i]), np.log(form[:, j]))\n    res = np.log(form[:, i]) - alpha - beta * np.log(form[:, j])\n    sd = float(np.std(res))\n    z = (np.log(trade[:, i]) - alpha - beta * np.log(trade[:, j])) / sd\n    pos = positions(z, entry, 0.0, np.inf)\n    pos[-1] = 0\n    a, b = trade[:, i], trade[:, j]\n    payoff, t0, side = 0.0, None, 0\n    for t in range(len(pos)):\n        if side == 0 and pos[t] != 0:\n            side, t0 = int(pos[t]), t\n        elif side != 0 and pos[t] != side:\n            payoff += side * ((a[t] / a[t0] - 1) - beta * (b[t] / b[t0] - 1))\n            side = 0\n            if pos[t] != 0:\n                side, t0 = int(pos[t]), t\n    return float(payoff), bool(np.any(pos != 0))\n\nclose, mid, ind, broken = pairs_panel()\n",
+    "starter": "import numpy as np\n\ndef compare_selection(close, start, n_candidates, k):\n    \"\"\"(planted by distance, planted by Engle-Granger, committed by distance, committed by Engle-Granger).\"\"\"\n    raise NotImplementedError\n",
+    "solution": "import numpy as np\n\ndef compare_selection(close, start, n_candidates, k):\n    \"\"\"(planted by distance, planted by Engle-Granger, committed by distance, committed by Engle-Granger).\"\"\"\n    Pn = normalise(close[start:start + 378])\n    form, trade = Pn[:252], Pn[252:]\n    cand = top_pairs(form, n_candidates)\n    L = np.log(form)\n    p = [eg_decision(L[:, i], L[:, j])[1] for i, j in cand]\n    eg = [cand[o] for o in np.argsort(p, kind=\"stable\")[:k]]\n    dist = cand[:k]\n    planted = lambda prs: sum(1 for i, j in prs if j == i + 1 and i % 2 == 0 and i < 40)\n    r_d = sum(trade_pair(form, trade, i, j)[0] for i, j in dist) / k\n    r_c = sum(trade_coint(form, trade, i, j)[0] for i, j in eg) / k\n    return planted(dist), planted(eg), round(r_d, 4), round(r_c, 4)\n",
+    "examples": [
+     {
+      "call": "list(compare_selection(close, 0, 50, 20))",
+      "expect": "[20, 10, 0.1424, 0.1283]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(compare_selection(close, 0, 50, 20))",
+      "expect": "[20, 10, 0.1424, 0.1283]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "list(compare_selection(close, 2016, 50, 20))",
+      "expect": "[3, 3, 0.0722, 0.0732]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "list(compare_selection(close, 0, 50, 5))",
+      "expect": "[5, 5, 0.1136, 0.1819]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "list(compare_selection(close, 1134, 50, 20))",
+      "expect": "[16, 11, 0.0766, 0.0441]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "list(compare_selection(close, 0, 20, 20))[:2]",
+      "expect": "[20, 20]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on cycles from days 0, 1,134 and 2,016. `trade_pair`, `trade_coint`, `top_pairs`, `normalise` and `eg_decision` are loaded. The first run loads statsmodels, which takes 20 to 40 seconds; each test then takes a second or two.",
+    "budget": 40000
+   },
+   "feedback": {
+    "correct": "Correct. Both rules, one cycle.",
+    "generic": "Not quite. Check the candidate list, the stable sort and which trading rule each selection uses."
+   },
+   "explain": {
+    "text": "At start 0 distance keeps 20 planted pairs and Engle-Granger 10, earning 14.24% against 12.83%. At start 2,016 both keep 3, earning 7.22% and 7.32%. With k = 5 at start 0, Engle-Granger's wider spreads earn 18.19% against 11.36%."
+   }
+  },
+  {
+   "id": "h-rolling-hit",
+   "difficulty": 4,
+   "skills": [
+    "pr-extend"
+   ],
+   "prose": "A pairs book's hit rate here is the share of cycles with a positive committed return. A desk watches it over the last `window` cycles.",
+   "question": "Write `rolling_hit_rate(results, window)`: one share for each full trailing window, oldest first, to 4 places.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "Y = [0.117286, 0.069478, 0.084906, 0.038247, 0.048248, 0.049567, 0.076782, 0.088288, 0.085918, 0.053991, 0.103198, 0.029483, 0.028437, 0.002007, 0.054263, 0.011787, 0.062154, 0.008582, 0.036991, -0.010622, -0.011277, 0.055573]\n",
+    "starter": "def rolling_hit_rate(results, window):\n    \"\"\"Share of positive cycles in each trailing window, to 4 places.\"\"\"\n    out = []\n    for t in range(len(results)):\n        ...\n    return out\n",
+    "solution": "def rolling_hit_rate(results, window):\n    \"\"\"Share of positive cycles in each trailing window, to 4 places.\"\"\"\n    return [round(sum(1 for r in results[t - window + 1:t + 1] if r > 0) / window, 4)\n            for t in range(window - 1, len(results))]\n",
+    "examples": [
+     {
+      "call": "rolling_hit_rate([0.1, -0.2, 0.3, 0.0], 2)",
+      "expect": "[0.5, 0.5, 0.5]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "rolling_hit_rate([0.1, -0.2, 0.3, 0.0], 2)",
+      "expect": "[0.5, 0.5, 0.5]",
+      "compare": "equal"
+     },
+     {
+      "call": "rolling_hit_rate([0.1, 0.2, 0.3], 3)",
+      "expect": "[1.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "rolling_hit_rate([0.1, -0.1, -0.1], 3)",
+      "expect": "[0.3333]",
+      "compare": "equal"
+     },
+     {
+      "call": "rolling_hit_rate([0.1, 0.2], 3)",
+      "expect": "[]",
+      "compare": "equal"
+     },
+     {
+      "call": "rolling_hit_rate(Y, 6)",
+      "expect": "[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.8333, 0.6667, 0.6667]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests on four toy lists and on `Y`, the top 20's 22 waited cycles. A return of exactly 0 is not a hit."
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Count positive returns in each full window of the last `window` cycles."
+   },
+   "explain": {
+    "text": "On the 22 waited cycles the hit rate is 1.0 until the last three windows. Those fall to 0.83 and 0.67. A falling hit rate is the alarm l11's transfer screen described."
+   }
+  },
+  {
+   "id": "h-oos-order",
+   "difficulty": 4,
+   "skills": [
+    "pr-extend"
+   ],
+   "prose": "Put the out-of-sample extension in order, from locking the data to the reported survival share. Two lines do not belong.",
+   "question": "Order the steps and leave out the two that break the protocol.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Fix the split first, years 1 to 6 in and 7 to 12 out, so no result can move it"
+     },
+     {
+      "id": "s2",
+      "text": "Sweep thresholds and k on cycles that end by day 1,512 only, so the held-out years stay unseen"
+     },
+     {
+      "id": "s3",
+      "text": "Choose the setting on the in-sample grid, and record the choice before looking further"
+     },
+     {
+      "id": "s4",
+      "text": "Run the chosen setting once on cycles that start trading on day 1,512 or later"
+     },
+     {
+      "id": "s5",
+      "text": "Report out of sample over in sample as the share that survived, beside the paper's own setting"
+     },
+     {
+      "id": "d1",
+      "text": "Rerun the sweep on years 7 to 12 and keep its best cell",
+      "why": "Choosing on the held-out years makes them in sample."
+     },
+     {
+      "id": "d2",
+      "text": "Move the split to the day where the two halves look most alike",
+      "why": "A split chosen from the results is a hidden setting."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Lock, sweep, choose, one look, report.",
+    "generic": "Not quite. The split comes first and the held-out years are looked at once.",
+    "byKey": {
+     "d1": "That chooses on the held-out years, which makes them in sample.",
+     "d2": "That picks the split from the results, a hidden setting.",
+     "left-out": "Every protocol step belongs; only the two flawed lines go."
+    }
+   },
+   "explain": {
+    "text": "The split is fixed first and the sweep sees only years 1 to 6. The chosen setting then runs once. Our chosen setting kept 28% of its return, and the paper's own 42%."
+   }
+  },
+  {
+   "id": "h-mix",
+   "difficulty": 4,
+   "skills": [
+    "pr-extend",
+    "pr-returns"
+   ],
+   "prose": "After the break, an unbroken planted pair earns 10.45% a cycle on average and a chance pair 2.37%. A cycle's top 20 hold 3 unbroken pairs and 17 chance pairs.",
+   "question": "What committed return does that mix imply for the cycle?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0358,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "%",
+    "placeholder": "a number",
+    "accept": "3.58% = (3 × 10.45% + 17 × 2.37%) / 20",
+    "wrong": [
+     {
+      "id": "avg",
+      "value": 0.0641,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "emp3",
+      "value": 0.2388,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. About 3.58%.",
+    "generic": "Not quite. Weight each payoff by its count and divide by 20.",
+    "byKey": {
+     "avg": "You averaged the two payoffs equally. Weight them by 3 and 17.",
+     "emp3": "You divided by the 3 unbroken pairs. Committed capital divides by all 20."
+    }
+   },
+   "explain": {
+    "text": "(3 × 0.1045 + 17 × 0.0237) / 20 = 0.0358 a cycle. Before the break, 20 planted pairs earned about 9.9% each. The mix of pairs, not the rule, moved the return."
+   }
+  },
+  {
+   "id": "h-industry-tests",
+   "difficulty": 3,
+   "skills": [
+    "pr-extend",
+    "pr-method"
+   ],
+   "prose": "Our panel has 10 industries of 10 shares. A researcher tests only pairs within an industry for cointegration, at 5%.",
+   "question": "If no pair were cointegrated, how many would pass by chance on average?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 22.5,
+    "tol": {
+     "abs": 0.05
+    },
+    "unit": "",
+    "placeholder": "a number",
+    "accept": "22.5 = 10 × 45 × 0.05",
+    "wrong": [
+     {
+      "id": "all",
+      "value": 247.5,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "one",
+      "value": 2.25,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. 22.5.",
+    "generic": "Not quite. Count the within-industry pairs, then multiply by 0.05.",
+    "byKey": {
+     "all": "That is for all 4,950 pairs.",
+     "one": "That is one industry's 45 pairs."
+    }
+   },
+   "explain": {
+    "text": "Each industry has 10 × 9 / 2 = 45 pairs, so 450 in all, and 450 × 0.05 = 22.5. Restricting to an economic link cuts the chance passes elevenfold."
+   }
+  },
+  {
+   "id": "h-factor-design",
+   "difficulty": 4,
+   "skills": [
+    "pr-extend",
+    "pr-returns"
+   ],
+   "prose": "You want the pairs book's market beta and alpha, with an honest t statistic. You have 127 overlapping six-month cycles, one starting each month.",
+   "question": "Which design is sound?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "a",
+      "text": "Regress one cycle in six, 22 that do not overlap, or all 127 with Newey-West errors",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "Regress all 127 with plain OLS errors",
+      "why": "Neighbouring cycles share five months, so plain errors are too small."
+     },
+     {
+      "id": "c",
+      "text": "Regress the market on the pairs returns",
+      "why": "That reverses the question: we ask how the market explains the book."
+     },
+     {
+      "id": "d",
+      "text": "Use only the cycles after the break, which matter most",
+      "why": "Choosing the sample after seeing it biases the estimate."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Correct.",
+    "generic": "Not quite. Overlapping cycles are not independent."
+   },
+   "explain": {
+    "text": "Non-overlapping cycles or Newey-West errors both handle the shared months. On our 22 cycles β is 0.053 and the alpha's t is 7.11. Plain OLS on all 127 gives 13.48."
+   }
+  },
+  {
+   "id": "h-note",
+   "difficulty": 5,
+   "skills": [
+    "pr-extend",
+    "pr-returns",
+    "pr-method"
+   ],
+   "kind": "longform",
+   "prompt": "Write the one-page replication note for this course. Follow the section order of Writing the note, give the key figures and end with what changes on real data.",
+   "model": "**Question.** Do the distance-method pairs profits of Gatev, Goetzmann and Rouwenhorst (2006) replicate, and how much survives after publication?\n\n**Data.** A seeded panel of 100 shares over 3,024 days, from `pairs_panel(seed=2006)`. It plants 20 mean-reverting pairs with a half-life of 8 days. From day 1,512, 17 of them stop co-moving. Closes sit at the bid or the ask, half a per cent from the mid. We have no CRSP, so we plant the mechanism and check that our code finds it.\n\n**Method.** Each month we normalise prices to 1 at the start of a 12-month formation year. We rank all 4,950 pairs by the sum of squared differences and trade the closest 20 for six months. A pair opens beyond 2 formation sds, £1 long the cheaper and £1 short the dearer. It closes when the prices cross or on the last day, and may reopen. We report committed and employed capital, same day and with a one-day wait.\n\n**Results.** The conservative cell, top 20 with the wait on committed capital, earns 0.75% a month, 9.4% a year. That sits inside the paper's \"up to 11%\", by design. Same-day fills on closes earn 1.00%, partly bounce. The break-even cost is about 0.67% per £1 trade.\n\n**The decline.** Across the planted break the waited return falls from 1.14% to 0.48% a month. Only 54% of trades close at a crossing after the break, against 77% before. This matches Do and Faff (2010), who trace the decline to fewer pairs converging.\n\n**Alternatives and risk.** Engle-Granger selection from the 50 closest pairs earns 0.63% a month on 22 cycles, against 1.05% for distance. Its p-values pass many chance pairs. The market beta is 0.053 with alpha t 7.11, but the break shows a risk beta cannot see.\n\n**Out of sample.** With the paper's rules unchanged, 42% of the effect survived into years 7 to 12. Our best in-sample setting kept 28%.\n\n**What failed.** Nothing tuned survived well, and the seeded panel cannot speak for markets.\n\n**Real data.** Thousands of shares give millions of pairs. Delistings, corporate actions and dividends must be handled. Short legs pay fees and face recalls. Spreads vary by share and year. Pairs break for reasons no seed imitates, and nobody hands us the list of true pairs.",
+   "rubric": [
+    {
+     "points": 1,
+     "text": "Names the paper and states the question, including how much survived"
+    },
+    {
+     "points": 1,
+     "text": "Describes the seeded panel, what it plants and why it is used"
+    },
+    {
+     "points": 2,
+     "text": "States the method precisely: normalisation, distance, top 20, 2 sd, crossings, the wait, both capitals"
+    },
+    {
+     "points": 2,
+     "text": "Leads the results with the conservative cell and gives costs or the break-even"
+    },
+    {
+     "points": 2,
+     "text": "Reports the decline with its cause and the share that survived out of sample",
+     "required": true
+    },
+    {
+     "points": 2,
+     "text": "Covers what failed and at least four things that change on real data, with no claim about real markets"
+    }
+   ]
+  }
+ ]
+}
