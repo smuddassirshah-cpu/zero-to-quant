@@ -28,9 +28,15 @@ Cross-course references in the text (fin-ml l9 for the Kelly rule, conditional l
 
 ## Overlap with the earlier review
 
-Filled in after the commit of the ledger and findings above: see the table at the end of this section.
+Read after the commit of the ledger and findings above: `docs/reviews/review-puzzles.md` (second read of the whole course plus its fix pass, 35 items, all fixed). Every one of its findings had been applied before this audit, so the content audited here is the post-fix course: "both" can only count findings that survived the fix pass, and none did. Its items on levels 4 and 5 that are conceptual (reasoning in a `why` or an explain, or the name of a method) are listed under "review only"; the rest of its L4 and L5 items were mechanical (shuffle on l19 s8, l21 q-half-share and l23 s5; pace on 79 items; the precision asked in l23 s2; display width in l30 s5) and are not counted.
 
-OVERLAP_PLACEHOLDER
+| Conceptual findings | Count | Items |
+|---|---:|---|
+| Audit only | 5 | 1 to 5 above (optional stopping stated with "finite bankroll" as the hypothesis, in l23 s5, its summary and the l24 s3 hints; "the product stays 1" in l23 s6; "2/3 by Laplace's rule" in l24 s7; "even a large edge stakes less than half" in l21 q1; "wealth grows like e^{gn}, the mean return overstates it" in l21 s2) |
+| Review only | 4 | l28 s0 wrong `b` why (the slip 2/3 comes from using B's miss alone as the restart chance, not from "both miss with 2/3"); l30 s5 options b and c (option c's why named a slip that gives 1/2, not 5/6; replaced by 2/3 as the continuous answer at n = 1); l19 s11 explain (the second-price auction is solved by dominance, not "backward induction"); l25 q-two-headed option c why (1/(2pq) at pq = 0 is infinite, not 2; the slip that gives 2 is the fair-coin wait). All four were fixed before this audit and the fixed text was verified in the ledger (l28 s0, l30 s5, l19 s11, l25 q1 rows), so none was missed by this read: they were no longer in the content. |
+| Both | 0 | none survived the fix pass |
+
+The five audit-only findings are of the kind a number-led second read does not target: a hypothesis dropped from a theorem statement (1), a numerically false line inside a feedback that reaches the right conclusion (2), a named rule given a wrong value in a distractor (3), a true-in-the-instance sentence phrased as a general law (4), and a typical-path growth rate described as the mean (5). The review's method statement says every number was recomputed and every `wrong` value re-derived from its `why`; findings 2 and 3 are inside a `why` and an option text respectively but are not keyed values, which is where that method stops.
 
 ## Checks
 
