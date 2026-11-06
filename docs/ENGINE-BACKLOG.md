@@ -1598,3 +1598,7 @@ Status block (engine pass, items 585 to 587):
 - 585: done (warning only; validator 0 errors; test passes).
 - 586: done (warning only).
 - 587: done (warning only).
+588. Done [Must]: `tools/fresh-check.mjs` (`--exam <id> | --drill <id> | --bank <file> | --all-exams`, `--threshold`, `--json`). Compares prose, question and widget prompt text (numbers to a placeholder, KaTeX stripped) of each target item against every lesson screen, quiz, review, homework, exam, drill and bank item, and reports a shared 8-token n-gram or a 5-shingle Jaccard at or above 0.5; n-grams in more than 20 units are boilerplate; exit 1 on any hit. Test: `tools/test-fresh-check.mjs` (7 of 7). Calibration: pre-fix 0.6 item [6] and pre-fix 1.10 item [12] hit; 1.10 item [13] (integrand changed only) does not. Scan: `docs/reports/scan-freshness.md`.
+
+Status block (engine pass, item 588):
+- 588: done (new tool and test; validator 0 errors).
