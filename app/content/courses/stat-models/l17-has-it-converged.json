@@ -2914,7 +2914,7 @@
      },
      {
       "id": "x",
-      "text": "The noise has variance $\\rho^2 + 1$, adding the two coefficients",
+      "text": "The noise has variance $\\rho^2 + 1$, squaring $\\rho$ and 1",
       "why": "Variances add as squares of the coefficients times $1 - \\rho^2$ each: $\\rho^2(1 - \\rho^2) + (1 - \\rho^2)$."
      }
     ],
@@ -2947,7 +2947,7 @@
     "correct": "$\\phi = \\rho^2$: at $\\rho = 0.97$ each step keeps 94% of the last value.",
     "generic": "Not quite right. Substitute, then add the variances.",
     "byKey": {
-     "x": "You added the coefficients, not their squared contributions to the variance.",
+     "x": "You dropped the factor $1 - \\rho^2$ that each noise term carries.",
      "left-out": "Every true line is needed."
     }
    },
@@ -2959,7 +2959,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "How many draws are they worth",
-   "prose": "Correlated draws carry less information. For an AR(1) chain the variance of the chain mean grows by $(1 + \\phi)/(1 - \\phi)$. So the **effective sample size** is $n(1 - \\phi)/(1 + \\phi)$. A simulation of 4,000 chains of 2,000 at $\\phi = 0.9$ gave an inflation of 19.5.",
+   "prose": "Correlated draws carry less information. For an AR(1) chain the variance of the chain mean grows by $(1 + \\phi)/(1 - \\phi)$. So the **effective sample size** is $n(1 - \\phi)/(1 + \\phi)$. A simulation of 4,000 chains of 2,000 at $\\phi = 0.9$ gave an inflation of 19.5. For Metropolis chains, whose autocorrelation decays slowly, the lag-1 rule overstates it.",
    "canvas": {
     "kind": "series",
     "params": {
@@ -3835,9 +3835,9 @@
    "question": "What is the effective sample size of 2,000 draws at $\\phi = 0.9$?",
    "widget": {
     "kind": "numeric",
-    "answer": 105.3,
+    "answer": 105.26,
     "tol": {
-     "abs": 0.2
+     "abs": 0.3
     },
     "unit": "",
     "accept": "105.3: $2000/19$.",
@@ -3889,7 +3889,7 @@
    "type": "ladder",
    "difficulty": 3,
    "title": "Centring the predictor",
-   "prose": "D1s's posterior correlation of $-0.971$ is why lesson 16's chains crawl. Centre leverage at $\\bar L = 0.4534$: $\\eta = \\alpha + \\beta_1(L - \\bar L)$. The grid's correlation falls to $-0.750$, the MLE's from $-0.976$ to $-0.776$. The console reruns lesson 16's sampler both ways.",
+   "prose": "D1s's posterior correlation of $-0.971$ is why lesson 16's chains crawl. Centre leverage at $\\bar L = 0.4534$: $\\eta = \\alpha + \\beta_1(L - \\bar L)$. The grid's correlation falls to $-0.750$, the MLE's from $-0.976$ to $-0.776$. The console reruns lesson 16's sampler both ways, with steps $(0.8, 3.5)$ when centred.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -3901,7 +3901,7 @@
      ]
     },
     "state": {
-     "caption": "Uncentred: step 1.0. Centred: steps (0.8, 3.5) for $(\\alpha, \\beta_1)$."
+     "caption": "Uncentred: step 1.0. Centred: steps (0.8, 3.5). ESS by the lag-1 rule, which flatters Metropolis chains."
     }
    },
    "question": "How many times more effective draws of $\\beta_1$ does the centred run give?",
@@ -3946,7 +3946,7 @@
     }
    ],
    "feedback": {
-    "correct": "About 6.4 times: same data, same number of steps.",
+    "correct": "About 6.4 times. Centring alone, at step 1.0, gives only 217: it lets each coefficient take its own step.",
     "generic": "Not quite right. Divide the centred ESS of $\\beta_1$ by the uncentred one.",
     "byKey": {
      "b0": "That is the ratio for the intercepts, which are different parameters here.",
@@ -3954,7 +3954,7 @@
     }
    },
    "explain": {
-    "text": "$1255/195 = 6.44$. The uncentred run also fails split $\\hat R < 1.01$ (1.0141), while the centred one passes (1.0020)."
+    "text": "$1255/195 = 6.44$, with the steps changed as well. The uncentred run at step 1.0 fails split $\\hat R < 1.01$ (1.0141). The centred run at steps $(0.8, 3.5)$ passes (1.0020)."
    }
   },
   {
@@ -4843,7 +4843,7 @@
     }
    },
    "explain": {
-    "text": "The halves differ in mean, so split $\\hat R = 1.2362$ while plain $\\hat R = 0.9996$. Modern practice asks for split $\\hat R < 1.01$ (Vehtari and others, 2021); the older rule was 1.1."
+    "text": "The halves differ in mean, so split $\\hat R = 1.2362$ while plain $\\hat R = 0.9996$. Vehtari and others (2021) ask for rank-normalised split $\\hat R < 1.01$; the older rule was 1.1."
    }
   },
   {
@@ -5685,7 +5685,9 @@
      "yLabel": "$x_t$",
      "height": 230
     },
-    "state": {}
+    "state": {
+     "caption": "The last screen's chains. A chain stuck in one mode can look calmer still."
+    }
    },
    "question": "Has it converged?",
    "widget": {
@@ -5861,15 +5863,15 @@
      ]
     },
     "state": {
-     "caption": "Uncentred: step 1.0. Centred: steps (0.8, 3.5) for $(\\alpha, \\beta_1)$."
+     "caption": "Uncentred: step 1.0. Centred: steps (0.8, 3.5). ESS by the lag-1 rule, which flatters Metropolis chains."
     }
    },
    "question": "Complete `four_chains` and `converged`.",
    "widget": {
     "kind": "code",
     "language": "python",
-    "starter": "import numpy as np\n\n\ndef rhat(chains):\n    c = np.asarray(chains, dtype=float)\n    m, n = c.shape\n    W = c.var(axis=1, ddof=1).mean()\n    B = n * c.mean(axis=1).var(ddof=1)\n    return float(np.sqrt(((n - 1) / n * W + B / n) / W))\n\n\ndef split_rhat(chains):\n    c = np.asarray(chains, dtype=float)\n    h = c.shape[1] // 2\n    return rhat(np.vstack([c[:, :h], c[:, c.shape[1] - h:]]))\n\n\ndef ess_ar1(chain):\n    x = np.asarray(chain, dtype=float)\n    d = x - x.mean()\n    phi = (d[:-1] @ d[1:]) / (d @ d)\n    return float(len(x) * (1 - phi) / (1 + phi))\n\n\ndef metropolis(log_post, start, step, n, seed):\n    rng = np.random.default_rng(seed)\n    x = np.array(start, dtype=float)\n    lp, chain, acc = log_post(x), np.empty((n, len(x))), 0\n    for t in range(n):\n        z, u = rng.standard_normal(len(x)), rng.uniform()\n        prop = x + step * z\n        lp_new = log_post(prop)\n        if np.log(u) < lp_new - lp:\n            x, lp, acc = prop, lp_new, acc + 1\n        chain[t] = x\n    return chain, acc / n\n\n\ndef log_post_logistic(beta, X, y, prior_sd):\n    eta = X @ beta\n    return float(np.sum(y * eta - np.logaddexp(0, eta)) - beta @ beta / (2 * prior_sd ** 2))\n\n\ndef four_chains(X, y, starts, n, step, seeds, burn):\n    \"\"\"One chain per start and seed; return draws after burn, shape (m, n - burn, d).\"\"\"\n    ...\n\n\ndef converged(chains, tol=1.01):\n    \"\"\"True when plain R-hat is below tol for every coordinate.\"\"\"\n    ...\n",
-    "solution": "import numpy as np\n\n\ndef rhat(chains):\n    c = np.asarray(chains, dtype=float)\n    m, n = c.shape\n    W = c.var(axis=1, ddof=1).mean()\n    B = n * c.mean(axis=1).var(ddof=1)\n    return float(np.sqrt(((n - 1) / n * W + B / n) / W))\n\n\ndef split_rhat(chains):\n    c = np.asarray(chains, dtype=float)\n    h = c.shape[1] // 2\n    return rhat(np.vstack([c[:, :h], c[:, c.shape[1] - h:]]))\n\n\ndef ess_ar1(chain):\n    x = np.asarray(chain, dtype=float)\n    d = x - x.mean()\n    phi = (d[:-1] @ d[1:]) / (d @ d)\n    return float(len(x) * (1 - phi) / (1 + phi))\n\n\ndef metropolis(log_post, start, step, n, seed):\n    rng = np.random.default_rng(seed)\n    x = np.array(start, dtype=float)\n    lp, chain, acc = log_post(x), np.empty((n, len(x))), 0\n    for t in range(n):\n        z, u = rng.standard_normal(len(x)), rng.uniform()\n        prop = x + step * z\n        lp_new = log_post(prop)\n        if np.log(u) < lp_new - lp:\n            x, lp, acc = prop, lp_new, acc + 1\n        chain[t] = x\n    return chain, acc / n\n\n\ndef log_post_logistic(beta, X, y, prior_sd):\n    eta = X @ beta\n    return float(np.sum(y * eta - np.logaddexp(0, eta)) - beta @ beta / (2 * prior_sd ** 2))\n\n\ndef four_chains(X, y, starts, n, step, seeds, burn):\n    lp = lambda b: log_post_logistic(b, X, y, 10.0)\n    return np.array([metropolis(lp, s0, step, n, sd)[0][burn:] for s0, sd in zip(starts, seeds)])\n\n\ndef converged(chains, tol=1.01):\n    return all(rhat(chains[:, :, j]) < tol for j in range(chains.shape[2]))\n",
+    "starter": "import numpy as np\n\n\ndef rhat(chains):\n    c = np.asarray(chains, dtype=float)\n    m, n = c.shape\n    W = c.var(axis=1, ddof=1).mean()\n    B = n * c.mean(axis=1).var(ddof=1)\n    return float(np.sqrt(((n - 1) / n * W + B / n) / W))\n\n\ndef split_rhat(chains):\n    c = np.asarray(chains, dtype=float)\n    h = c.shape[1] // 2\n    return rhat(np.vstack([c[:, :h], c[:, c.shape[1] - h:]]))\n\n\ndef ess_ar1(chain):\n    x = np.asarray(chain, dtype=float)\n    d = x - x.mean()\n    phi = (d[:-1] @ d[1:]) / (d @ d)\n    return float(len(x) * (1 - phi) / (1 + phi))\n\n\ndef metropolis(log_post, start, step, n, seed):\n    rng = np.random.default_rng(seed)\n    x = np.array(start, dtype=float)\n    lp, chain, acc = log_post(x), np.empty((n, len(x))), 0\n    for t in range(n):\n        z, u = rng.standard_normal(len(x)), rng.uniform()\n        prop = x + step * z\n        lp_new = log_post(prop)\n        if np.log(u) < lp_new - lp:\n            x, lp, acc = prop, lp_new, acc + 1\n        chain[t] = x\n    return chain, acc / n\n\n\ndef log_post_logistic(beta, X, y, prior_sd):\n    eta = X @ beta\n    return float(np.sum(y * eta - np.logaddexp(0, eta)) - beta @ beta / (2 * prior_sd ** 2))\n\n\ndef four_chains(X, y, starts, n, step, seeds, burn):\n    \"\"\"One chain per start and seed; return draws after burn, shape (m, n - burn, d).\"\"\"\n    ...\n\n\ndef converged(chains, tol=1.01):\n    \"\"\"True when split R-hat is below tol for every coordinate.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\n\ndef rhat(chains):\n    c = np.asarray(chains, dtype=float)\n    m, n = c.shape\n    W = c.var(axis=1, ddof=1).mean()\n    B = n * c.mean(axis=1).var(ddof=1)\n    return float(np.sqrt(((n - 1) / n * W + B / n) / W))\n\n\ndef split_rhat(chains):\n    c = np.asarray(chains, dtype=float)\n    h = c.shape[1] // 2\n    return rhat(np.vstack([c[:, :h], c[:, c.shape[1] - h:]]))\n\n\ndef ess_ar1(chain):\n    x = np.asarray(chain, dtype=float)\n    d = x - x.mean()\n    phi = (d[:-1] @ d[1:]) / (d @ d)\n    return float(len(x) * (1 - phi) / (1 + phi))\n\n\ndef metropolis(log_post, start, step, n, seed):\n    rng = np.random.default_rng(seed)\n    x = np.array(start, dtype=float)\n    lp, chain, acc = log_post(x), np.empty((n, len(x))), 0\n    for t in range(n):\n        z, u = rng.standard_normal(len(x)), rng.uniform()\n        prop = x + step * z\n        lp_new = log_post(prop)\n        if np.log(u) < lp_new - lp:\n            x, lp, acc = prop, lp_new, acc + 1\n        chain[t] = x\n    return chain, acc / n\n\n\ndef log_post_logistic(beta, X, y, prior_sd):\n    eta = X @ beta\n    return float(np.sum(y * eta - np.logaddexp(0, eta)) - beta @ beta / (2 * prior_sd ** 2))\n\n\ndef four_chains(X, y, starts, n, step, seeds, burn):\n    lp = lambda b: log_post_logistic(b, X, y, 10.0)\n    return np.array([metropolis(lp, s0, step, n, sd)[0][burn:] for s0, sd in zip(starts, seeds)])\n\n\ndef converged(chains, tol=1.01):\n    return all(split_rhat(chains[:, :, j]) < tol for j in range(chains.shape[2]))\n",
     "budget": 10000,
     "examples": [
      {
@@ -5930,7 +5932,7 @@
     },
     {
      "rung": "step",
-     "text": "`converged` checks `rhat(chains[:, :, j]) < tol` for each column `j`."
+     "text": "`converged` checks `split_rhat(chains[:, :, j]) < tol` for each column `j`."
     }
    ],
    "feedback": {
@@ -5957,7 +5959,7 @@
      ]
     },
     "state": {
-     "caption": "Uncentred: step 1.0. Centred: steps (0.8, 3.5) for $(\\alpha, \\beta_1)$."
+     "caption": "Uncentred: step 1.0. Centred: steps (0.8, 3.5). ESS by the lag-1 rule, which flatters Metropolis chains."
     }
    },
    "question": "What should the validator ask for first?",
@@ -6047,9 +6049,9 @@
      },
      {
       "id": "nob",
-      "value": 1.0,
+      "value": 0.999,
       "tol": {
-       "abs": 0.0001
+       "abs": 0.0005
       }
      }
     ]
