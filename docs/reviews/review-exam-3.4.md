@@ -70,3 +70,21 @@ Format: `n. item [index] path | severity | problem | evidence | fix`. Severities
 ## Engine
 
 Feedback or an explanation that names a shuffled option by place is now seen three times in `docs/reviews` (review-exam-3.2 finding 11, review-exam-1.10 finding 2, finding 1 here). By SESSION PROTOCOL 6 it should become a validator warning before the next wave: on a `choice` or `multi` with `shuffle: true`, warn when its item's `explain.text` or `feedback` holds "first", "second", "third", "last", "above" or "below" followed within three words by "option", "one", "family", "answer" or "choice", or an option letter "(A)" to "(E)". A key longer than 1.5 times every distractor (findings 2 to 4 here, review-exam-1.10 finding 3) is seen twice and could join it as a second warning.
+
+## Fix pass
+
+- 1 fixed: `e-four-point-topology` explanation now names the family by its set, not by place.
+- 2 fixed: `e-normal-in-s4` distractors `four` and `three` are now written as sets; `pair` stays. Key 37 characters against 45, 28 and 10. `why` lines unchanged and still hold.
+- 3 fixed: `e-log-metric` key shortened to "Yes: $\ln$ maps $(X, d)$ onto $\mathbb{R}$ keeping distances, and $\mathbb{R}$ is complete."
+- 4 fixed: `e-max-on-circle` key shortened; `bounded` lengthened with $|x + 2y| \le 3$ (recomputed: by Cauchy-Schwarz $|x + 2y| \le \sqrt5 < 3$ on the circle, so the claim is true).
+- 5 fixed: key counts are now 2, 2, 2, 1, 3, 2, 2. `e-connected-subsets` has one key (`image`); `glued` is now $(-1, 0) \cup (0, 3)$ with a `why`. `e-compact-subsets` has three keys; `points` is now $\{(\tfrac1n, 0)\} \cup \{(0, 0)\}$, closed and bounded (recomputed on 2,000 points). Feedback and explanations updated as suggested. `check_numbers.py` updated for both keys.
+- 6 fixed, with a variation on the suggested fix: the reviewer's route (word "Conversely", no `same`) would still reject c4 c5 c3. Instead `c4` and `c5` are merged into one line (divide, then show $g^r \in H$), and `same: [["c3", "c4"]]` now covers the only free pair, so every valid order is accepted and no invalid one. A set holding c3, c4 and c5 separately would also accept c5 before c4, which is invalid. Answer is c1 to c5; `check_numbers.py` asserts it.
+- 7 fixed: `e-jump-metric` `tri` `why` rewritten as suggested.
+- 8 fixed: `e-equaliser-closed` explanation sentence 3 rewritten as suggested (one map constant $a$, the other $a$ for $x > 0$ and $b$ for $x \le 0$; recomputed, $(0, \infty)$ is not closed).
+- 9 disputed as optional: no change. The generalisation from $\mathbb{Z}$ to any cyclic group, with two new flawed lines, is already a step up, and the ramp stays 6, 15, 6, 3 (20, 50, 20, 10%).
+- 10: no change needed, as the reviewer found.
+- 0 deferred.
+- `check_numbers.py` now also checks the whole numbers up to 10 the reviewer checked by hand (3 and 4 transpositions, $1 + 3 = 4$, images 1 and 7, 10 splits with 2 orders each, 7 zero divisors and 6 units, kernel and image sizes, order of 2 mod 17), and its `correct_id` accepts a one-key multi.
+- Graded answers changed: `e-connected-subsets` key (glued dropped), `e-compact-subsets` key (points added), `e-cyclic-subgroups-proof` answer (five lines, not six).
+
+Gates: validator 0 errors, no topic-3.4 line; voice scan on a copy 0 sentences over 20 words, 0 explanations over three, 711 sentences; `check_numbers.py` 321 of 321, exit 0; `fresh.py` exit 0, no algebra or topology hit; playthrough with `--local-cdn` green with and without `--mobile` (30 of 30, 39 items).

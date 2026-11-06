@@ -94,7 +94,7 @@ def correct_id(iid, want, part=None):
     rec(got == want, f'{iid}{"" if part is None else f" part {part}"} correct options {got} = {want}')
     rec(w.get('shuffle') is True, f'{iid}{"" if part is None else f" part {part}"} shuffle true')
     rec(all(o.get('why') for o in w['options'] if not o.get('correct')), f'{iid} every distractor has a why')
-    if len(want) > 1:
+    if len(want) > 1 or w['kind'] == 'multi':
         rec(w['kind'] == 'multi' and 'Select all that apply' in node(P(iid, part)).get('question', ''),
             f'{iid}: multi with "Select all that apply"')
 
@@ -536,11 +536,17 @@ allow(iid, 3, 4, 7)
 # ------------------------------------------------------------------ e-connected-subsets
 iid = 'e-connected-subsets'
 rec(0 < math.sqrt(2) / 2 < 1, f'{iid}: sqrt(2)/2 lies in (0, 1) and is irrational')
-correct_id(iid, ['glued', 'image'])
+correct_id(iid, ['image'])
+inGlued = lambda x: (-1 < x < 0) or (0 < x < 3)
+rec(opt_text(iid, 'glued') == r'$(-1, 0) \cup (0, 3)$' and inGlued(-0.5) and inGlued(0.5) and not inGlued(0),
+    f'{iid}: the glued set holds points either side of 0 but not 0, so it is not an interval')
 
 # ------------------------------------------------------------------ e-compact-subsets
 iid = 'e-compact-subsets'
-correct_id(iid, ['circle', 'graph'])
+correct_id(iid, ['circle', 'graph', 'points'])
+pts = [(1 / n, 0) for n in range(1, 2001)] + [(0, 0)]
+rec(max(math.hypot(x, y) for x, y in pts) == 1.0 and math.hypot(*pts[1999]) < 1 / 1999 + 1e-12,
+    f'{iid}: the points (1/n, 0) with (0, 0) are bounded and contain their only limit point')
 rec(math.hypot(1 / 10 ** 6, 1 / 10 ** 6) < 1e-5, f'{iid}: (1/n, 1/n) tends to (0, 0)')
 
 # ------------------------------------------------------------------ e-log-metric
@@ -579,7 +585,7 @@ allow(iid, round(1000 * best), 5)
 # ------------------------------------------------------------------ e-cyclic-subgroups-proof
 iid = 'e-cyclic-subgroups-proof'
 w = node(W(iid))
-rec(w['answer'] == ['c1', 'c2', 'c3', 'c4', 'c5', 'c6'] and w['same'] == [['c3', 'c4']] and w['distractors'] == ['d1', 'd2']
+rec(w['answer'] == ['c1', 'c2', 'c3', 'c4', 'c5'] and w['same'] == [['c3', 'c4']] and w['distractors'] == ['d1', 'd2']
     and all(l.get('why') for l in w['lines'] if l['id'] in w['distractors']), f'{iid}: order, same set and distractors with why')
 ok_cyc = True
 for n in range(1, 13):
@@ -770,6 +776,32 @@ for it_ in items:
             if not any(abs(v - a_) < half * (1 - 1e-9) + 1e-12 for a_ in vals):
                 bad.append(t)
     ex._rec(not bad, f'{iid}: every stated number matches route B', f'unmatched {sorted(set(bad))}' if bad else '')
+
+# ------------------------------------------------------------------ whole numbers up to 10 (stated as structure above)
+iid = 'e-even-or-odd'
+cyc_len = lambda c: len(c) - 1                        # a k-cycle is k - 1 transpositions
+S6all = all_perms(6)
+c4 = next(p for p in S6all if sorted(len(c) for c in cycles(p)) == [4])
+c5 = next(p for p in S6all if sorted(len(c) for c in cycles(p)) == [5])
+c24 = next(p for p in S6all if sorted(len(c) for c in cycles(p)) == [2, 4])
+rec(sign(c4) == -1 and sum(cyc_len(c) for c in cycles(c4)) == 3, f'{iid}: a 4-cycle is 3 transpositions, so odd')
+rec(sign(c5) == 1 and sum(cyc_len(c) for c in cycles(c5)) == 4, f'{iid}: a 5-cycle is 4 transpositions, so even')
+rec(sign(c24) == 1 and sum(cyc_len(c) for c in cycles(c24)) == 1 + 3 == 4, f'{iid}: (2-cycle)(4-cycle) is 1 + 3 = 4 transpositions')
+iid = 'e-order-three-s6'
+splits = sum(1 for t in itertools.combinations(range(6), 3) if 0 in t)     # triples containing point 0, the other is fixed
+rec(splits == 10 and math.comb(6, 3) // 2 == 10 and 2 * 2 * 10 == 40 and math.comb(6, 3) * 2 == 40,
+    f'{iid}: 10 ways to split 6 points into two triples, 2 cyclic orders each, 40 products')
+iid = 'e-image-sizes'
+rec(math.gcd(28, 21) == 7 and [d for d in range(1, 8) if 7 % d == 0] == [1, 7], f'{iid}: gcd(28, 21) = 7 leaves 1 and 7')
+iid = 'e-zero-divisors-z14'
+zd = [a for a in range(1, 14) if math.gcd(a, 14) > 1]
+rec(len(zd) == 7 and 13 - len(zd) == 6 and sum(1 for a in range(1, 14) if a % 2 == 0) == 6, f'{iid}: 7 zero divisors, 6 units, 6 even residues among 13')
+iid = 'e-hom-z18-z12'
+kz = [x for x in range(18) if 2 * x % 12 == 0]
+rec(kz == [0, 6, 12] and len({2 * x % 12 for x in range(18)}) == 6 and 18 // len(kz) == 6, f'{iid}: kernel {kz}, image size 6')
+iid = 'e-units-mod-17'
+rec(pow(2, 4, 17) == 16 and pow(2, 8, 17) == 1 and 16 // math.gcd(8, 16) == 2 and sum(1 for k in range(1, 17) if math.gcd(k, 16) == 1) == 8,
+    f'{iid}: 2^4 = -1, ord 2 = 8, 8 generators')
 
 ex.check_wrongs()
 ex.report()
