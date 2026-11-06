@@ -1,0 +1,1195 @@
+{
+  "id": "l17-checking-a-solver",
+  "course": "convex",
+  "title": "Checking a solver against theory",
+  "minutes": 15,
+  "objectives": [
+    "Check a solver’s answer with the KKT conditions and the duality gap."
+  ],
+  "skills": [
+    "cv-duality",
+    "cv-descent"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "It says success",
+      "prose": "A colleague's optimiser returns $\\mathbf{w} = (0.01, 0.3133, 0.6767)$ for the long-only 10% problem of lesson 11, with $\\boldsymbol{\\Sigma} = \\operatorname{diag}(0.04, 0.09, 0.16)$ and $\\mathbf{m} = (0.05, 0.08, 0.11)$. Before trusting it, we check it.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Colleague's run",
+          "wrap": true,
+          "lines": [
+            ">>> res.success, res.message",
+            "(True, 'Optimization terminated successfully')",
+            ">>> res.x.round(4)",
+            "array([0.01  , 0.3133, 0.6767])"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Fill in the three checks.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "Quantity",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Budget $\\mathbf{1}^T\\mathbf{w}$",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 5e-05
+              }
+            }
+          ],
+          [
+            "Return $\\mathbf{m}^T\\mathbf{w}$",
+            {
+              "edit": true,
+              "answer": 0.100001,
+              "tol": {
+                "abs": 5e-06
+              },
+              "wrong": [
+                {
+                  "id": "pct",
+                  "value": 10.0001,
+                  "tol": {
+                    "abs": 0.001
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "Variance $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$",
+            {
+              "edit": true,
+              "answer": 0.082106,
+              "tol": {
+                "abs": 5e-06
+              },
+              "wrong": [
+                {
+                  "id": "opt",
+                  "value": 0.081111,
+                  "tol": {
+                    "abs": 5e-06
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Add the weights; then $0.05(0.01) + 0.08(0.3133) + 0.11(0.6767)$."
+        },
+        {
+          "rung": "point",
+          "text": "With a diagonal $\\boldsymbol{\\Sigma}$, the variance is $\\sum_i \\sigma_i^2 w_i^2$.",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.04(0.0001) + 0.09(0.3133^2) + 0.16(0.6767^2)$."
+        }
+      ],
+      "feedback": {
+        "correct": "Budget 1, return 0.100001 (10.0001%), variance 0.082106. It is feasible.",
+        "generic": "Not quite right. Use the formulas in the hints, to six places.",
+        "byKey": {
+          "pct": "Write the return as a decimal: 0.100001, not 10.0001.",
+          "opt": "0.081111 is the true optimum's variance. Compute it for the colleague's weights."
+        }
+      },
+      "explain": {
+        "text": "The weights sum to 1 and earn 10.0001%, so the answer is feasible. Its variance is 0.082106. Feasible is not the same as optimal, which needs the other KKT checks.",
+        "canvas": {
+          "tone": {
+            "l2": "ok"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "Stationarity",
+      "prose": "All three weights are positive, so every $\\nu_i = 0$ and stationarity reads $2\\sigma_i^2 w_i = \\lambda + \\mu m_i$ for each asset. Three equations, two unknowns: `np.linalg.lstsq` fits $\\lambda \\approx -0.1964$ and $\\mu \\approx 3.5957$. The table shows the fit.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "asset",
+            "$2\\sigma_i^2w_i$",
+            "fit $\\lambda + \\mu m_i$",
+            "residual"
+          ],
+          "rows": [
+            [
+              "1",
+              "0.0008",
+              "−0.0166",
+              "0.0174"
+            ],
+            [
+              "2",
+              "0.0564",
+              "0.0912",
+              "?"
+            ],
+            [
+              "3",
+              "0.2165",
+              "0.1991",
+              "0.0174"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the residual for asset 2?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.0349,
+        "tol": {
+          "abs": 0.0002
+        },
+        "accept": "about -0.0349",
+        "wrong": [
+          {
+            "id": "abs",
+            "value": 0.0349,
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "id": "half",
+            "value": -0.0174,
+            "tol": {
+              "abs": 0.0002
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Residual = left side minus the fit."
+        },
+        {
+          "rung": "point",
+          "text": "$0.0564 - 0.0912$.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About $-0.0349$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.0564 - 0.0912 \\approx -0.0349$. The residuals $(0.0174, -0.0349, 0.0174)$ are far from 0.",
+        "generic": "Not quite right. Subtract the fitted value from $2\\sigma_2^2w_2$.",
+        "byKey": {
+          "abs": "You dropped the sign. The left side is below the fit, so the residual is negative.",
+          "half": "That is the size of the residual in rows 1 and 3. Row 2 is about twice as far off."
+        }
+      },
+      "explain": {
+        "text": "The residuals are about $(0.0174, -0.0349, 0.0174)$, so no $\\lambda$ and $\\mu$ make stationarity hold. The answer is feasible but not optimal. Its variance 0.082106 is 0.000995 above the true 0.081111.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "The checklist",
+      "prose": "For a convex problem, a point is optimal when it passes all five, to a stated tolerance:\n\n1. Primal feasibility: every constraint holds.\n2. Dual feasibility: inequality multipliers are nonnegative.\n3. Stationarity: the residual of $2\\boldsymbol{\\Sigma}\\mathbf{w} = \\lambda\\mathbf{1} + \\mu\\mathbf{m} + \\boldsymbol{\\nu} - \\boldsymbol{\\eta}$ is near 0.\n4. Complementary slackness: a multiplier is 0 unless its limit binds.\n5. Duality gap: objective minus dual value is near 0.",
+      "question": "Which check did the colleague's answer fail?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "stat",
+            "text": "Stationarity",
+            "correct": true
+          },
+          {
+            "id": "primal",
+            "text": "Primal feasibility",
+            "why": "The budget is 1 and the return is 10.0001%, so every constraint holds."
+          },
+          {
+            "id": "dual",
+            "text": "Dual feasibility",
+            "why": "All weights are positive, so every $\\nu_i = 0$, and the fitted $\\mu \\approx 3.5957$ is positive."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Stationarity: the residual is about 0.0349, not 0.",
+        "generic": "Not quite right. Run down the list with the numbers we found."
+      },
+      "explain": {
+        "text": "Feasibility and the signs pass, but no multipliers fit the stationarity rows. A nonzero gap would show the same failure."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A certificate for a linear programme",
+      "prose": "Level 2's desk earns 480 at $(4, 6)$ with limits $\\mathbf{b} = (10, 18, 5)$. HiGHS also returns the prices $\\mathbf{y} = (30, 10, 0)$. If $\\mathbf{y}$ is dual feasible and $\\mathbf{b}^T\\mathbf{y}$ equals 480, nothing can beat 480.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "wrap": true,
+          "lines": [
+            ">>> res = linprog([-60, -40], A_ub=[[1, 1], [3, 1], [1, 0]],",
+            "...               b_ub=[10, 18, 5], method=\"highs\")",
+            ">>> res.x, -res.fun",
+            "(array([4., 6.]), 480.0)",
+            ">>> -res.ineqlin.marginals",
+            "array([30., 10., -0.])"
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is $\\mathbf{b}^T\\mathbf{y}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 480,
+        "tol": {
+          "abs": 0.5
+        },
+        "accept": "480",
+        "wrong": [
+          {
+            "id": "partial",
+            "value": 300,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "neg",
+            "value": -480,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$10 \\times 30 + 18 \\times 10 + 5 \\times 0$."
+        },
+        {
+          "rung": "point",
+          "text": "$300 + 180 + 0$.",
+          "highlight": [
+            "l6"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "480."
+        }
+      ],
+      "feedback": {
+        "correct": "$300 + 180 + 0 = 480$: the gap is 0, so 480 is certified optimal.",
+        "generic": "Not quite right. Multiply each limit by its price and add.",
+        "byKey": {
+          "partial": "That is only the budget's share. Add the risk limit's 180.",
+          "neg": "HiGHS's marginals are negative for a maximisation written as a minimisation. The prices are positive."
+        }
+      },
+      "explain": {
+        "text": "The dual value $10 \\cdot 30 + 18 \\cdot 10 + 5 \\cdot 0 = 480$ matches the plan's 480. By weak duality no plan earns more than a dual-feasible bound. So the gap of 0 certifies the plan.",
+        "canvas": {
+          "highlight": [
+            "l4",
+            "l6"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A bound from any dual point",
+      "prose": "For the portfolio, level 3's dual function is $g = -\\tfrac14\\mathbf{c}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{c} + \\lambda + \\mu r$, with $\\mathbf{c} = \\lambda\\mathbf{1} + \\mu\\mathbf{m} + \\boldsymbol{\\nu}$. Weak duality: any $\\mu \\ge 0$, $\\boldsymbol{\\nu} \\ge \\mathbf{0}$ gives $g \\le$ the optimal variance. The shorting problem's multipliers are such a point.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "multipliers",
+            "dual feasible?",
+            "$g$"
+          ],
+          "rows": [
+            [
+              "shorting: $\\lambda = -\\tfrac{151}{900}$, $\\mu = \\tfrac{29}{9}$, $\\boldsymbol{\\nu} = \\mathbf{0}$",
+              "yes",
+              "0.077222"
+            ],
+            [
+              "exact: $\\lambda = -\\tfrac{157}{450}$, $\\mu = \\tfrac{46}{9}$, $\\nu_1 = \\tfrac{7}{75}$",
+              "yes",
+              "0.081111"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "With only that point, at most how far above optimal is the colleague's variance 0.082106?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.004884,
+        "tol": {
+          "abs": 5e-06
+        },
+        "accept": "0.082106 - 0.077222 = 0.004884",
+        "wrong": [
+          {
+            "id": "exact",
+            "value": 0.000995,
+            "tol": {
+              "abs": 5e-06
+            }
+          },
+          {
+            "id": "sum",
+            "value": 0.159328,
+            "tol": {
+              "abs": 1e-05
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The optimum lies between 0.077222 and 0.082106."
+        },
+        {
+          "rung": "point",
+          "text": "Subtract the bound from the colleague's variance.",
+          "highlight": [
+            "r0"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.082106 - 0.077222$."
+        }
+      ],
+      "feedback": {
+        "correct": "$0.082106 - 0.077222 = 0.004884$. The exact multipliers tighten this to 0.000995.",
+        "generic": "Not quite right. Subtract the shorting bound from the colleague's variance.",
+        "byKey": {
+          "exact": "0.000995 uses the exact multipliers. The question asks what the shorting point alone certifies.",
+          "sum": "You added the two. The gap bound is a difference."
+        }
+      },
+      "explain": {
+        "text": "Every dual-feasible point puts a floor under the optimum. The shorting point's floor 0.077222 certifies the excess is at most 0.004884. The exact multipliers give $g = \\tfrac{73}{900} \\approx 0.081111$, so the true excess is 0.000995.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              1
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Only dual-feasible points count",
+      "prose": "A junior analyst plugs $\\lambda = -0.1$, $\\mu = 2.5$ and $\\boldsymbol{\\nu} = (0, 0, -0.1)$ into $g$ and gets 0.109527. She concludes no long-only 10% portfolio has variance below 0.1095.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "multipliers",
+            "dual feasible?",
+            "$g$"
+          ],
+          "rows": [
+            [
+              "shorting: $\\lambda = -\\tfrac{151}{900}$, $\\mu = \\tfrac{29}{9}$, $\\boldsymbol{\\nu} = \\mathbf{0}$",
+              "yes",
+              "0.077222"
+            ],
+            [
+              "exact: $\\lambda = -\\tfrac{157}{450}$, $\\mu = \\tfrac{46}{9}$, $\\nu_1 = \\tfrac{7}{75}$",
+              "yes",
+              "0.081111"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Is that bound valid?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: $\\nu_3 < 0$, so the point is not dual feasible and weak duality says nothing",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: any multipliers give a lower bound",
+            "why": "Weak duality needs $\\mu \\ge 0$ and $\\boldsymbol{\\nu} \\ge \\mathbf{0}$. A negative $\\nu_3$ breaks it."
+          },
+          {
+            "id": "close",
+            "text": "Yes, because $\\mu \\ge 0$",
+            "why": "$\\mu$ is fine, but every $\\nu_i$ must be at least 0 too, and $\\nu_3 = -0.1$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which multipliers may enter the bound?"
+        },
+        {
+          "rung": "point",
+          "text": "Inequality multipliers must be at least 0.",
+          "highlight": [
+            "r1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\nu_3 = -0.1$ fails that."
+        }
+      ],
+      "feedback": {
+        "correct": "Right: a negative $\\nu_3$ voids the bound. Indeed $(0, \\tfrac13, \\tfrac23)$ has variance only 0.081111.",
+        "generic": "Not quite right. Check the signs of the inequality multipliers.",
+        "byKey": {
+          "yes": "You used multipliers with the wrong sign. Weak duality needs every inequality multiplier at least 0.",
+          "close": "You checked $\\mu$ only. Every $\\nu_i$ must be at least 0 as well."
+        }
+      },
+      "explain": {
+        "text": "Weak duality holds for $\\mu \\ge 0$ and $\\boldsymbol{\\nu} \\ge \\mathbf{0}$ only. With $\\nu_3 < 0$ the Lagrangian can sit above the objective on the feasible set, and 0.109527 is above the feasible 0.081111. That is why the checker tests the signs before it trusts a gap."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "The procedure",
+      "prose": "We turn the checklist into a procedure a script can run on any long-only answer.",
+      "question": "Put the steps in order. Leave out the lines that do not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "p1",
+            "text": "Check the budget, the target and the bounds, each to a stated tolerance."
+          },
+          {
+            "id": "p2",
+            "text": "Mark the active set: weights at 0 or at a cap, within the tolerance."
+          },
+          {
+            "id": "p3",
+            "text": "Fit $\\lambda$ and $\\mu$ by least squares on the stationarity rows of the free weights."
+          },
+          {
+            "id": "p4",
+            "text": "Read off $\\nu_i$ and $\\eta_i$ on the active rows and check they are at least 0."
+          },
+          {
+            "id": "p5",
+            "text": "Compute the dual value $g$ and the gap, objective minus $g$."
+          },
+          {
+            "id": "p6",
+            "text": "Sign off only if every residual and the gap are below the threshold."
+          },
+          {
+            "id": "d1",
+            "text": "Accept the answer if the solver reports success.",
+            "why": "A success flag says the solver stopped cleanly, not that it solved the problem you meant."
+          },
+          {
+            "id": "d2",
+            "text": "Fit $\\lambda$ and $\\mu$ on every row, including weights held at 0.",
+            "why": "Rows at a bound carry their own $\\nu_i$. Forcing them into the fit spoils $\\lambda$ and $\\mu$."
+          }
+        ],
+        "answer": [
+          "p1",
+          "p2",
+          "p3",
+          "p4",
+          "p5",
+          "p6"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Feasibility comes first: a gap means nothing for an infeasible point."
+        },
+        {
+          "rung": "point",
+          "text": "The active set decides which rows fit the multipliers."
+        },
+        {
+          "rung": "step",
+          "text": "Signs, then the gap, then the decision."
+        }
+      ],
+      "feedback": {
+        "correct": "That is the checker: feasibility, active set, multipliers, signs, gap, decision.",
+        "generic": "Not quite right. Feasibility first; multipliers from the free rows only.",
+        "byKey": {
+          "d1": "You trusted the flag. The next screen shows a run that reports success on the wrong problem.",
+          "d2": "You fitted the multipliers on every row. Rows at a bound carry their own multiplier."
+        }
+      },
+      "explain": {
+        "text": "Feasibility comes first, since a gap is only meaningful at a feasible point. The active set picks the rows that fix $\\lambda$ and $\\mu$. The other rows give $\\nu_i$ or $\\eta_i$, whose signs we check before the gap."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "It said success",
+      "prose": "Level 3's sign slip again: the target is written `0.10 - w @ m`, so SLSQP enforces a return of at most 10%. It reports success and returns the budget-only portfolio, earning 6.672%.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "Python",
+          "wrap": true,
+          "lines": [
+            ">>> target = {\"type\": \"ineq\", \"fun\": lambda w: 0.10 - w @ m}",
+            ">>> res = minimize(..., constraints=[budget, target])",
+            ">>> res.success",
+            "True",
+            ">>> res.x.round(4), res.x @ m",
+            "(array([0.5902, 0.2623, 0.1475]), 0.06672)"
+          ]
+        },
+        "state": {
+          "tone": {
+            "l1": "err"
+          }
+        }
+      },
+      "question": "What should the desk conclude?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "infeasible",
+            "text": "The answer fails primal feasibility on the real target, so it is rejected",
+            "correct": true
+          },
+          {
+            "id": "ok",
+            "text": "Success means the optimum was found, so use it",
+            "why": "The flag says SLSQP solved the problem it was given. That problem had the wrong constraint."
+          },
+          {
+            "id": "better",
+            "text": "It has lower variance than 0.081111, so it is a better answer",
+            "why": "Lower variance is easy when the 10% target is dropped. It earns only 6.672%."
+          },
+          {
+            "id": "rerun",
+            "text": "Rerun SLSQP from another start until it agrees",
+            "why": "Every start solves the same wrong problem. The check against the real constraint finds the error."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check the answer against the problem you meant, not the one in the code."
+        },
+        {
+          "rung": "point",
+          "text": "The real target is $\\mathbf{m}^T\\mathbf{w} \\ge 0.10$.",
+          "highlight": [
+            "l6",
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.06672 < 0.10$."
+        }
+      ],
+      "feedback": {
+        "correct": "Right. $\\mathbf{m}^T\\mathbf{w} = 0.06672$ misses the 10% target, so check 1 fails at once.",
+        "generic": "Not quite right. Run the first check against the real constraint.",
+        "byKey": {
+          "ok": "You trusted the flag. It reports how the solver stopped, not whether the constraint was right.",
+          "better": "You compared variances across different problems. Only feasible answers can be compared.",
+          "rerun": "You blamed the start. The constraint is wrong, so every start agrees on the wrong answer."
+        }
+      },
+      "explain": {
+        "text": "The flag says SLSQP stopped cleanly on the problem it was given. The independent check uses the real constraint, and 6.672% fails it. Checks must come from the specification, never from the solver's own report.",
+        "canvas": {
+          "tone": {
+            "l6": "err"
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A weight at zero with a zero multiplier",
+      "prose": "At a target of $\\tfrac{163}{1700} \\approx 9.588\\%$ the long-only optimum is $(0, \\tfrac{8}{17}, \\tfrac{9}{17})$, with $\\lambda = -\\tfrac{12}{85}$ and $\\mu = \\tfrac{48}{17}$. Row 1 gives $\\nu_1 = 2(0.04)(0) - \\lambda - 0.05\\mu$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a1",
+              "label": "20% asset"
+            },
+            {
+              "id": "a2",
+              "label": "30% asset"
+            },
+            {
+              "id": "a3",
+              "label": "40% asset"
+            }
+          ],
+          "yLabel": "weight",
+          "showValues": true,
+          "decimals": 4
+        },
+        "state": {
+          "values": {
+            "a1": 0,
+            "a2": 0.4706,
+            "a3": 0.5294
+          }
+        },
+        "maxHeight": 220
+      },
+      "question": "What is $\\nu_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0",
+        "wrong": [
+          {
+            "id": "ten",
+            "value": 0.0933,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "lam",
+            "value": 0.1412,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$-\\lambda = \\tfrac{12}{85}$."
+        },
+        {
+          "rung": "point",
+          "text": "$0.05\\mu = 0.05 \\times \\tfrac{48}{17} = \\tfrac{12}{85}$.",
+          "highlight": [
+            "a1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "They cancel."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\nu_1 = \\tfrac{12}{85} - \\tfrac{12}{85} = 0$: the weight and its multiplier are both 0.",
+        "generic": "Not quite right. Compute $-\\lambda - 0.05\\mu$ with the fractions given.",
+        "byKey": {
+          "ten": "$\\tfrac{7}{75}$ is $\\nu_1$ at the 10% target. Here the target is 9.588%.",
+          "lam": "You kept $-\\lambda$ and dropped $-0.05\\mu$, which cancels it."
+        }
+      },
+      "explain": {
+        "text": "Both $w_1 = 0$ and $\\nu_1 = 0$, so the active-set guess is ambiguous. Treating asset 1 as free or as held at 0 both pass, so a zero multiplier is no failure. For a nonconvex problem, passing KKT would certify only a local optimum (lesson 3).",
+        "canvas": {
+          "highlight": [
+            "a1"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A checker in code",
+      "prose": "Write `check_portfolio(Sigma, m, target, w, cap=None, tol=1e-6)` for a long-only book. Treat the budget and the target as active, and fit $\\lambda$ and $\\mu$ with `np.linalg.lstsq` on the free rows. Return a dict: `feasible`, `lam`, `mu`, `nu`, `eta`, `stationarity` (largest free residual), `signs_ok`, `gap`.",
+      "question": "Complete the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\nS3 = np.diag([0.04, 0.09, 0.16])\nM3 = np.array([0.05, 0.08, 0.11])\n_v = np.array([0.08, 0.20, 0.30, 0.40])\n_R = np.array([[1, -0.2, 0, 0.1], [-0.2, 1, 0.3, 0.1], [0, 0.3, 1, 0.5], [0.1, 0.1, 0.5, 1]])\nS4 = np.outer(_v, _v) * _R\nM4 = np.array([0.03, 0.05, 0.08, 0.11])\nW_OPT = np.array([0, 1 / 3, 2 / 3])\nW_COLL = np.array([0.01, 0.3133, 0.6767])\nW_FLIP = np.array([36, 16, 9]) / 61\nW4 = np.array([0, 7 / 30, 11 / 30, 0.4])\n",
+        "starter": "import numpy as np\n\n\ndef check_portfolio(Sigma, m, target, w, cap=None, tol=1e-6):\n    # long-only: sum(w) = 1, w @ m >= target, 0 <= w (<= cap if given)\n    # return a dict with feasible, lam, mu, nu, eta, stationarity, signs_ok, gap\n    pass\n",
+        "examples": [
+          {
+            "call": "check_portfolio(S3, M3, 0.10, W_OPT)['feasible']",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "check_portfolio(S3, M3, 0.10, W_FLIP)['feasible']",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "check_portfolio(S3, M3, 0.10, W_OPT)['feasible']",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(check_portfolio(S3, M3, 0.10, W_OPT)['gap']) < 1e-9",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "check_portfolio(S3, M3, 0.10, W_OPT)['signs_ok']",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "check_portfolio(S3, M3, 0.10, W_OPT)['nu'][0]",
+            "expect": "7 / 75",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "check_portfolio(S3, M3, 0.10, W_OPT)['mu']",
+            "expect": "46 / 9",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "check_portfolio(S3, M3, 0.10, W_COLL)['feasible']",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "check_portfolio(S3, M3, 0.10, W_COLL)['stationarity']",
+            "expect": "0.034852",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "check_portfolio(S3, M3, 0.10, W_FLIP)['feasible']",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "check_portfolio(S4, M4, 0.085, W4, cap=0.4)['signs_ok']",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(check_portfolio(S4, M4, 0.085, W4, cap=0.4)['gap']) < 1e-9",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "check_portfolio(S4, M4, 0.085, W4, cap=0.4)['eta'][3]",
+            "expect": "0.0308",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "check_portfolio(S4, M4, 0.085, W4)['feasible']",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "check_portfolio(S4, M4, 0.085, W4, cap=0.35)['feasible']",
+            "expect": "False",
+            "compare": "equal"
+          }
+        ],
+        "solution": "import numpy as np\n\n\ndef check_portfolio(Sigma, m, target, w, cap=None, tol=1e-6):\n    S = np.asarray(Sigma, dtype=float)\n    m = np.asarray(m, dtype=float)\n    w = np.asarray(w, dtype=float)\n    feasible = bool(abs(w.sum() - 1) <= tol and w @ m >= target - tol and np.all(w >= -tol)\n                    and (cap is None or np.all(w <= cap + tol)))\n    low = w <= tol\n    high = np.zeros(len(w), bool) if cap is None else w >= cap - tol\n    free = ~low & ~high\n    g = 2 * S @ w\n    A = np.column_stack([np.ones(len(w)), m])\n    lam, mu = np.linalg.lstsq(A[free], g[free], rcond=None)[0]\n    r = g - lam - mu * m\n    nu = np.where(low, r, 0.0)\n    eta = np.where(high, -r, 0.0)\n    stat = float(np.abs(r[free]).max()) if free.any() else 0.0\n    signs_ok = bool(mu >= -tol and np.all(nu >= -tol) and np.all(eta >= -tol))\n    c = lam + mu * m + nu - eta\n    dual = -0.25 * c @ np.linalg.solve(S, c) + lam + mu * target - (0.0 if cap is None else cap * eta.sum())\n    return {\"feasible\": feasible, \"lam\": float(lam), \"mu\": float(mu), \"nu\": nu, \"eta\": eta,\n            \"stationarity\": stat, \"signs_ok\": signs_ok, \"gap\": float(w @ S @ w - dual)}\n",
+        "how": "Submit runs 13 hidden tests on the exact optimum, the colleague's answer, the flipped-sign answer and the four-asset book. S3, M3, S4, M4 and the W arrays are defined for you. Numbers are compared with math.isclose, absolute 1e-9 or 1e-6. The first run loads NumPy: a few seconds from cache, longer on a first visit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Active rows: $w_i \\le$ `tol` (a $\\nu_i$) and, with a cap, $w_i \\ge$ cap minus `tol` (an $\\eta_i$)."
+        },
+        {
+          "rung": "point",
+          "text": "Residual $r = 2\\boldsymbol{\\Sigma}\\mathbf{w} - \\lambda - \\mu\\mathbf{m}$; $\\nu_i = r_i$ on rows at 0, $\\eta_i = -r_i$ on capped rows."
+        },
+        {
+          "rung": "step",
+          "text": "Dual value: $-\\tfrac14\\mathbf{c}^T\\boldsymbol{\\Sigma}^{-1}\\mathbf{c} + \\lambda + \\mu r - \\text{cap}\\sum_i\\eta_i$ with $\\mathbf{c} = \\lambda\\mathbf{1} + \\mu\\mathbf{m} + \\boldsymbol{\\nu} - \\boldsymbol{\\eta}$."
+        }
+      ],
+      "feedback": {
+        "correct": "All pass. The optimum has gap 0 and $\\nu_1 = \\tfrac{7}{75}$, and the colleague's residual is 0.034852. The four-asset cap multiplier is 0.0308.",
+        "generic": "Not quite right. Fit the multipliers on the free rows only, and check feasibility first."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Solve, then check",
+      "prose": "Now wire it up. `solve_and_check(Sigma, m, target, cap=None)` runs SLSQP on the long-only problem, then passes the answer to `check_portfolio` (defined for you) and returns both. The check is what the desk logs.",
+      "question": "Complete the function.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\nS3 = np.diag([0.04, 0.09, 0.16])\nM3 = np.array([0.05, 0.08, 0.11])\n_v = np.array([0.08, 0.20, 0.30, 0.40])\n_R = np.array([[1, -0.2, 0, 0.1], [-0.2, 1, 0.3, 0.1], [0, 0.3, 1, 0.5], [0.1, 0.1, 0.5, 1]])\nS4 = np.outer(_v, _v) * _R\nM4 = np.array([0.03, 0.05, 0.08, 0.11])\nW_OPT = np.array([0, 1 / 3, 2 / 3])\nW_COLL = np.array([0.01, 0.3133, 0.6767])\nW_FLIP = np.array([36, 16, 9]) / 61\nW4 = np.array([0, 7 / 30, 11 / 30, 0.4])\ndef check_portfolio(Sigma, m, target, w, cap=None, tol=1e-6):\n    S = np.asarray(Sigma, dtype=float)\n    m = np.asarray(m, dtype=float)\n    w = np.asarray(w, dtype=float)\n    feasible = bool(abs(w.sum() - 1) <= tol and w @ m >= target - tol and np.all(w >= -tol)\n                    and (cap is None or np.all(w <= cap + tol)))\n    low = w <= tol\n    high = np.zeros(len(w), bool) if cap is None else w >= cap - tol\n    free = ~low & ~high\n    g = 2 * S @ w\n    A = np.column_stack([np.ones(len(w)), m])\n    lam, mu = np.linalg.lstsq(A[free], g[free], rcond=None)[0]\n    r = g - lam - mu * m\n    nu = np.where(low, r, 0.0)\n    eta = np.where(high, -r, 0.0)\n    stat = float(np.abs(r[free]).max()) if free.any() else 0.0\n    signs_ok = bool(mu >= -tol and np.all(nu >= -tol) and np.all(eta >= -tol))\n    c = lam + mu * m + nu - eta\n    dual = -0.25 * c @ np.linalg.solve(S, c) + lam + mu * target - (0.0 if cap is None else cap * eta.sum())\n    return {\"feasible\": feasible, \"lam\": float(lam), \"mu\": float(mu), \"nu\": nu, \"eta\": eta,\n            \"stationarity\": stat, \"signs_ok\": signs_ok, \"gap\": float(w @ S @ w - dual)}\n",
+        "starter": "import numpy as np\nfrom scipy.optimize import minimize\n\n\ndef solve_and_check(Sigma, m, target, cap=None):\n    # SLSQP: minimise w @ Sigma @ w, sum(w) = 1, w @ m >= target, 0 <= w <= cap\n    # return (w, check_portfolio(Sigma, m, target, w, cap))\n    pass\n",
+        "examples": [
+          {
+            "call": "solve_and_check(S3, M3, 0.10)[0]",
+            "expect": "[0, 1/3, 2/3]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "solve_and_check(S3, M3, 0.10)[0]",
+            "expect": "[0, 1/3, 2/3]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "solve_and_check(S3, M3, 0.10)[1]['feasible']",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "solve_and_check(S3, M3, 0.10)[1]['signs_ok']",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "abs(solve_and_check(S3, M3, 0.10)[1]['gap']) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "call": "solve_and_check(S3, M3, 0.09, cap=0.45)[0]",
+            "expect": "[7/60, 13/30, 0.45]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "abs(solve_and_check(S4, M4, 0.085, cap=0.4)[1]['gap']) < 1e-6",
+            "expect": "True",
+            "compare": "equal"
+          }
+        ],
+        "solution": "import numpy as np\nfrom scipy.optimize import minimize\n\n\ndef solve_and_check(Sigma, m, target, cap=None):\n    S = np.asarray(Sigma, dtype=float)\n    m = np.asarray(m, dtype=float)\n    n = len(m)\n    cons = [{\"type\": \"eq\", \"fun\": lambda w: w.sum() - 1},\n            {\"type\": \"ineq\", \"fun\": lambda w: w @ m - target}]\n    res = minimize(lambda w: w @ S @ w, np.ones(n) / n, jac=lambda w: 2 * S @ w,\n                   method=\"SLSQP\", bounds=[(0, cap)] * n, constraints=cons,\n                   options={\"ftol\": 1e-15, \"maxiter\": 500})\n    return res.x, check_portfolio(S, m, target, res.x, cap)\n",
+        "how": "Submit runs 6 hidden tests: the 10% book, the 9% book under a 45% cap, and the four-asset book. Weights are compared with math.isclose, absolute 1e-6; the gap must be below 1e-6. The first run loads NumPy and SciPy: a few seconds from cache, longer on a first visit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Use the budget as an `eq` constraint and `w @ m - target` as an `ineq` constraint."
+        },
+        {
+          "rung": "point",
+          "text": "Bounds are `[(0, cap)] * n`; `cap=None` means no upper bound."
+        },
+        {
+          "rung": "step",
+          "text": "Set `options={\"ftol\": 1e-15}` so the gap falls below $10^{-6}$."
+        }
+      ],
+      "feedback": {
+        "correct": "All pass: SLSQP's answers are feasible, the signs hold and every gap is below $10^{-6}$.",
+        "generic": "Not quite right. Check the sign of the target constraint: `w @ m - target`."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Signing off a book",
+      "prose": "A desk logs every production optimisation with its feasibility error, KKT residual and duality gap. The model validation note fixes the tolerances in advance: $10^{-6}$ for each. This morning's rebalance logs feasibility error $2 \\times 10^{-9}$, stationarity residual $4 \\times 10^{-7}$ and gap $3 \\times 10^{-5}$.",
+      "question": "Should the risk team sign off the trades?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "no",
+            "text": "No: the gap is above its tolerance, so the answer is not certified",
+            "correct": true
+          },
+          {
+            "id": "yes",
+            "text": "Yes: it is feasible and the residual is tiny",
+            "why": "Two checks pass, but the gap of $3 \\times 10^{-5}$ is thirty times its tolerance."
+          },
+          {
+            "id": "loosen",
+            "text": "Yes, after raising the gap tolerance to $10^{-4}$",
+            "why": "Tolerances are fixed before the run. Moving them afterwards defeats the note."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each logged number with its tolerance."
+        },
+        {
+          "rung": "point",
+          "text": "$3 \\times 10^{-5}$ against $10^{-6}$."
+        },
+        {
+          "rung": "step",
+          "text": "One check fails."
+        }
+      ],
+      "feedback": {
+        "correct": "Right. The gap fails, so the run is re-solved or investigated before any trade.",
+        "generic": "Not quite right. Every check must pass its stated tolerance.",
+        "byKey": {
+          "yes": "You passed it on two checks of three. The gap is part of the certificate.",
+          "loosen": "You moved the tolerance after seeing the result. The note sets it in advance."
+        }
+      },
+      "explain": {
+        "text": "Feasibility and stationarity pass, but the gap of $3 \\times 10^{-5}$ is thirty times the $10^{-6}$ tolerance. The book is not certified, so it is re-solved before trading. Fixing tolerances in advance is what makes the log a real control."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Five checks certify a solver's answer to a stated tolerance. They are primal and dual feasibility, stationarity, complementary slackness and the duality gap.",
+      "Multipliers come from least squares on the stationarity rows of the free weights. Rows at a bound give $\\nu_i$ or $\\eta_i$, which must be at least 0.",
+      "Any dual-feasible point gives a floor. The shorting multipliers bound the colleague's excess by 0.004884; the exact ones show it is 0.000995."
+    ],
+    "formula": {
+      "name": "Duality gap",
+      "tex": "\\text{gap} = f_0(\\mathbf{x}) - g(\\boldsymbol{\\lambda}, \\boldsymbol{\\nu}) \\ge f_0(\\mathbf{x}) - p^*",
+      "note": "Valid only for dual-feasible multipliers; zero at a convex optimum."
+    },
+    "trap": "A success flag only says the solver stopped cleanly on the problem it was given. Check the answer against the real constraints."
+  },
+  "quiz": [
+    {
+      "id": "q17-rounded",
+      "difficulty": 2,
+      "prose": "A solver's output is rounded to $(0, 0.333, 0.667)$ for the 10% long-only problem. Its variance is 0.081162 and it earns 10.001%; the optimum is $\\tfrac{73}{900} \\approx 0.081111$.",
+      "question": "At which gap tolerance does it pass?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "e3",
+            "text": "$10^{-3}$ but not $10^{-6}$",
+            "correct": true
+          },
+          {
+            "id": "both",
+            "text": "Both $10^{-3}$ and $10^{-6}$",
+            "why": "The gap is about $5.1 \\times 10^{-5}$, above $10^{-6}$."
+          },
+          {
+            "id": "neither",
+            "text": "Neither",
+            "why": "$5.1 \\times 10^{-5}$ is below $10^{-3}$, so the looser tolerance passes."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "The gap is $0.081162 - 0.081111 \\approx 0.000051$: inside $10^{-3}$, outside $10^{-6}$.",
+        "generic": "Not quite right. Subtract the optimum's variance."
+      },
+      "explain": {
+        "text": "The gap is about 0.000051. Rounding to three places costs that much, so a $10^{-6}$ tolerance needs the unrounded weights."
+      }
+    },
+    {
+      "id": "q17-nonconvex",
+      "difficulty": 3,
+      "prose": "A checker finds that a point passes every KKT condition. But the objective is not convex.",
+      "question": "What has been certified?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "local",
+            "text": "At best a local optimum: without convexity KKT does not certify a global one",
+            "correct": true
+          },
+          {
+            "id": "global",
+            "text": "The global optimum",
+            "why": "That needs convexity. A nonconvex problem can pass KKT at a local minimum or a saddle."
+          },
+          {
+            "id": "nothing",
+            "text": "Nothing at all",
+            "why": "Feasibility and stationarity still hold, so it is a genuine KKT point."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Right: without convexity, KKT points need not be global minima.",
+        "generic": "Not quite right. Recall what convexity added in lesson 3."
+      },
+      "explain": {
+        "text": "For a convex problem a KKT point is global, as lesson 3 showed. Without convexity it may be a local minimum or a saddle. The dual bound may also sit strictly below the optimum."
+      }
+    },
+    {
+      "id": "q17-lpbound",
+      "difficulty": 2,
+      "prose": "A maximising linear programme has a feasible plan earning 470. A dual-feasible price vector $\\mathbf{y}$ has $\\mathbf{b}^T\\mathbf{y} = 490$.",
+      "question": "At most how far below the optimum is the plan?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 20,
+        "tol": {
+          "abs": 0.5
+        },
+        "wrong": [
+          {
+            "id": "neg",
+            "value": -20,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "sum",
+            "value": 960,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$490 - 470 = 20$: the optimum lies between 470 and 490.",
+        "generic": "Not quite right. Subtract the plan's value from the bound.",
+        "byKey": {
+          "neg": "The bound is above the plan for a maximisation, so the gap is positive.",
+          "sum": "You added. The gap is a difference."
+        }
+      },
+      "explain": {
+        "text": "Weak duality puts the optimum between 470 and 490. So the plan is at most 20 below it."
+      }
+    },
+    {
+      "id": "q17-signs",
+      "difficulty": 3,
+      "prose": "On the stationarity rows of a long-only answer, the checker recovers $\\mu = 5.11$ and, for the asset held at 0, $\\nu_1 = -0.02$. The budget and target hold.",
+      "question": "Which condition fails?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "dualf",
+            "text": "Dual feasibility: $\\nu_1$ must be at least 0",
+            "correct": true
+          },
+          {
+            "id": "cs",
+            "text": "Complementary slackness",
+            "why": "$w_1 = 0$, so $\\nu_1 w_1 = 0$ holds whatever $\\nu_1$ is."
+          },
+          {
+            "id": "primal",
+            "text": "Primal feasibility",
+            "why": "The budget and target hold, and the weight 0 is allowed."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "A negative $\\nu_1$ says the variance would fall by shorting asset 1: the guess $w_1 = 0$ is wrong.",
+        "generic": "Not quite right. Look at the sign of the multiplier."
+      },
+      "explain": {
+        "text": "$\\nu_1 < 0$ breaks dual feasibility. It means moving $w_1$ below 0 would lower the variance, so long-only wants it above 0 instead. Re-solve with asset 1 free."
+      }
+    }
+  ]
+}

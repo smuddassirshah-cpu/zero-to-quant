@@ -1,0 +1,1421 @@
+{
+  "id": "l16-newton-for-minimising",
+  "course": "convex",
+  "title": "Newton’s method for minimising",
+  "minutes": 15,
+  "objectives": [
+    "Minimise with Newton’s method and see quadratic convergence near the optimum."
+  ],
+  "skills": [
+    "cv-descent"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Fit a bowl, jump to its bottom",
+      "prose": "Minimise $f(x) = x - \\ln x$, whose minimum is at $x = 1$. At a point $x_k$ the dashed curve is the quadratic model $q(x) = f(x_k) + f'(x_k)(x - x_k) + \\tfrac12 f''(x_k)(x - x_k)^2$. The caption gives the model's lowest point.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.0,
+            2.3
+          ],
+          "y": [
+            0.3,
+            2.3
+          ],
+          "grid": true,
+          "height": 280,
+          "xLabel": "$x$",
+          "yLabel": "",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x - ln(x)",
+              "domain": [
+                0.02,
+                2.3
+              ],
+              "label": "$f(x) = x - \\ln x$",
+              "colour": 6,
+              "labelAt": 1.9
+            },
+            {
+              "id": "q",
+              "expr": "a - ln(a) + (1 - 1/a)*(x - a) + 0.5*(x - a)^2/(a^2)",
+              "label": "model $q$",
+              "colour": 1,
+              "dashed": true,
+              "labelAt": 0.345
+            }
+          ],
+          "params": {
+            "a": 0.5
+          }
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 0.5,
+              "y": 1.1931471805599454,
+              "label": "$x_k$",
+              "labelPos": "ne",
+              "tap": false
+            },
+            {
+              "id": "M",
+              "x": 0.75,
+              "y": 1.0681471805599454,
+              "label": "model min",
+              "labelPos": "s",
+              "tap": false
+            }
+          ]
+        },
+        "derive": {
+          "A.x": "a",
+          "A.y": "a - ln(a)",
+          "M.x": "2*a - a*a",
+          "M.y": "a - ln(a) - 0.5*pow(a - 1, 2)",
+          "caption": "$x_k$ = {{fixed(a, 4)}}: the model's minimum is at {{fixed(2*a - a*a, 4)}}"
+        },
+        "maxHeight": 300,
+        "controls": [
+          {
+            "bind": "a",
+            "min": 0.3,
+            "max": 2.5,
+            "step": 0.0025,
+            "start": 0.5,
+            "label": "$x_k$",
+            "decimals": 4
+          }
+        ]
+      },
+      "question": "Start at $x_0 = 0.5$ and jump to the model's minimum. Move $x_k$ there and jump again. What is $x_2$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9375,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "15/16 = 0.9375",
+        "wrong": [
+          {
+            "id": "one",
+            "value": 0.75,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "start",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "At $x_k = 0.5$ the caption gives the first jump."
+        },
+        {
+          "rung": "point",
+          "text": "The first jump lands on 0.75. Slide $x_k$ to 0.75.",
+          "highlight": [
+            "M",
+            "A"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From 0.75 the model's minimum is at $2(0.75) - 0.75^2$."
+        }
+      ],
+      "feedback": {
+        "correct": "$x_1 = 0.75$, then $x_2 = 0.9375$. Two jumps and the error is already $\\tfrac{1}{16}$.",
+        "generic": "Not quite right. Read the model's minimum, move $x_k$ there, and read it again.",
+        "byKey": {
+          "one": "That is $x_1$. Move $x_k$ to 0.75 and jump once more.",
+          "start": "That is the start. Read the model's minimum from the caption."
+        }
+      },
+      "explain": {
+        "text": "From 0.5 the model's minimum is 0.75; from 0.75 it is 0.9375. Each jump lands on $2x_k - x_k^2$. The model hugs $f$ more tightly as $x_k$ nears 1.",
+        "canvas": {
+          "params": {
+            "a": 0.75
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "How the error falls",
+      "prose": "Keep jumping: $x_k = 0.5, 0.75, 0.9375, \\tfrac{255}{256}, \\tfrac{65535}{65536}$. The errors $1 - x_k$ are $0.5, 0.25, 0.0625, 0.00390625$ and about $1.53 \\times 10^{-5}$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$k$",
+            "$x_k$",
+            "$1 - x_k$"
+          ],
+          "rows": [
+            [
+              "0",
+              "0.5",
+              "0.5"
+            ],
+            [
+              "1",
+              "0.75",
+              "0.25"
+            ],
+            [
+              "2",
+              "0.9375",
+              "0.0625"
+            ],
+            [
+              "3",
+              "0.99609375",
+              "0.00390625"
+            ],
+            [
+              "4",
+              "0.999985",
+              "$1.53 \\times 10^{-5}$"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "Which rule links each error to the one before?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "sq",
+            "text": "It is the square of the last: $1 - x_{k+1} = (1 - x_k)^2$",
+            "correct": true
+          },
+          {
+            "id": "half",
+            "text": "It is half the last",
+            "why": "0.5 to 0.25 is half, but 0.25 to 0.0625 is a quarter. The ratio itself shrinks."
+          },
+          {
+            "id": "quarter",
+            "text": "It is a quarter of the last",
+            "why": "0.25 to 0.0625 is a quarter, but 0.0625 to 0.0039 is a sixteenth. No fixed ratio fits."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare $0.25^2$ with 0.0625."
+        },
+        {
+          "rung": "point",
+          "text": "And $0.0625^2$ with 0.00390625.",
+          "highlight": [
+            "r2",
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "From $x_{k+1} = 2x_k - x_k^2$: $1 - x_{k+1} = (1 - x_k)^2$."
+        }
+      ],
+      "feedback": {
+        "correct": "Each error is the square of the last, so the correct digits double each step.",
+        "generic": "Not quite right. Check whether any fixed ratio fits every row.",
+        "byKey": {
+          "half": "You took the first ratio as the rule. The later ratios are smaller.",
+          "quarter": "You took one ratio as the rule. No fixed ratio fits every row."
+        }
+      },
+      "explain": {
+        "text": "$1 - (2x - x^2) = (1 - x)^2$ exactly, so the errors square: 0.5, 0.25, 0.0625, 0.00390625. That is **quadratic convergence**. Linear convergence in lesson 15 gained a fixed number of digits per step; this doubles them.",
+        "canvas": {
+          "highlight": {
+            "cols": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Newton's method",
+      "prose": "Setting $q'(x) = 0$ gives the jump $$x_{k+1} = x_k - \\frac{f'(x_k)}{f''(x_k)},\\qquad \\mathbf{x}_{k+1} = \\mathbf{x}_k - \\mathbf{H}^{-1}\\nabla f(\\mathbf{x}_k)$$ in one and in many variables. This is **Newton's method** for minimising. It is the root finder of `taylor` l3 and `numerics` l5, applied to $f'$.",
+      "question": "Newton for minimising $f$ is Newton's root finder applied to which function?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "fp",
+            "text": "$f'$, since a minimum is a zero of the derivative",
+            "correct": true
+          },
+          {
+            "id": "f",
+            "text": "$f$ itself",
+            "why": "A zero of $f$ is where it crosses 0, not where it is lowest. $x - \\ln x$ never crosses 0."
+          },
+          {
+            "id": "fpp",
+            "text": "$f''$",
+            "why": "A zero of $f''$ is an inflection point. The minimum is where $f' = 0$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Right: we solve $f'(x) = 0$, so the tangent is to $f'$ and its slope is $f''$.",
+        "generic": "Not quite right. Where is $f$ lowest?"
+      },
+      "explain": {
+        "text": "The root finder solves $g(x) = 0$ by $x - g/g'$. With $g = f'$ that is $x - f'/f''$, the minimising step."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Against descent",
+      "prose": "Descent with $s = 0.25$ on the same $f$ needs 44 steps to get within $10^{-6}$ of the minimum. Near 1 its error shrinks by about $1 - 0.25f''(1) = 0.75$ a step. Newton's first four errors are in the table.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "$k$",
+            "Newton error $1 - x_k$"
+          ],
+          "rows": [
+            [
+              "0",
+              "0.5"
+            ],
+            [
+              "1",
+              "0.25"
+            ],
+            [
+              "2",
+              "0.0625"
+            ],
+            [
+              "3",
+              "0.00390625"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "How many Newton steps get within $10^{-6}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 5,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "5",
+        "wrong": [
+          {
+            "id": "four",
+            "value": 4,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "descent",
+            "value": 44,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Square the last error."
+        },
+        {
+          "rung": "point",
+          "text": "$0.00390625^2 \\approx 1.53 \\times 10^{-5}$, still above $10^{-6}$.",
+          "highlight": [
+            "r3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "One more squaring gives about $2.3 \\times 10^{-10}$."
+        }
+      ],
+      "feedback": {
+        "correct": "Five: step 4 leaves $1.53 \\times 10^{-5}$ and step 5 leaves $2.3 \\times 10^{-10}$. Descent needs 44.",
+        "generic": "Not quite right. Square the error until it falls below $10^{-6}$.",
+        "byKey": {
+          "four": "After four steps the error is $1.53 \\times 10^{-5}$, above $10^{-6}$. One more step is needed.",
+          "descent": "44 is the descent count. Newton squares its error each step."
+        }
+      },
+      "explain": {
+        "text": "The errors run $0.5, 0.25, 0.0625, 0.0039, 1.5 \\times 10^{-5}, 2.3 \\times 10^{-10}$, so 5 steps. Descent's fixed ratio 0.75 needs 44. Near the optimum Newton wins by a mile.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              3
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "A quadratic in one step",
+      "prose": "On a quadratic with positive definite Hessian the model is the function itself. So one Newton step lands on the minimum whatever $\\kappa$ is. On lesson 14's penalised portfolio, $\\mathbf{H} = \\operatorname{diag}(0.2, 0.45, 0.8)$, one step from $\\mathbf{w} = \\mathbf{0}$ gives $\\mathbf{H}^{-1}\\mathbf{m} = (0.25, 0.1778, 0.1375)$.",
+      "canvas": {
+        "kind": "bars",
+        "params": {
+          "categories": [
+            {
+              "id": "a1",
+              "label": "20% asset"
+            },
+            {
+              "id": "a2",
+              "label": "30% asset"
+            },
+            {
+              "id": "a3",
+              "label": "40% asset"
+            }
+          ],
+          "yLabel": "weight after one Newton step",
+          "showValues": true,
+          "decimals": 4
+        },
+        "state": {
+          "values": {
+            "a1": 0.25,
+            "a2": 0.1778,
+            "a3": 0.1375
+          }
+        },
+        "maxHeight": 240
+      },
+      "question": "For comparison, how many best-step descent steps cut this problem's error by $10^6$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 28,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "28",
+        "wrong": [
+          {
+            "id": "newton",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "onelmax",
+            "value": 49,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\kappa = 0.8/0.2$."
+        },
+        {
+          "rung": "point",
+          "text": "$\\kappa = 4$, so $\\rho = \\tfrac35$.",
+          "highlight": [
+            "a1",
+            "a3"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\lceil 13.8155/\\ln\\tfrac53 \\rceil$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\kappa = 4$ gives 28 descent steps; Newton needs one.",
+        "generic": "Not quite right. Find $\\kappa = \\lambda_{\\max}/\\lambda_{\\min}$, then use lesson 15's count.",
+        "byKey": {
+          "newton": "One step is Newton. The question asks for best-step descent.",
+          "onelmax": "49 is the count for $s = 1/\\lambda_{\\max}$. The best step needs 28."
+        }
+      },
+      "explain": {
+        "text": "$\\kappa = 0.8/0.2 = 4$ and $\\lceil 13.8155/0.5108 \\rceil = 28$. Newton divides by the curvature in every direction, so $\\kappa$ does not slow it.",
+        "canvas": {
+          "highlight": [
+            "a3"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "The price of a step",
+      "prose": "A Newton step solves $\\mathbf{H}\\mathbf{d} = \\nabla f$, about $n^3/3$ operations for $n$ assets. A gradient costs about $n^2$. Never form $\\mathbf{H}^{-1}$: a solve is cheaper and more accurate.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "assets $n$",
+            "gradient, $n^2$",
+            "Newton solve, $n^3/3$"
+          ],
+          "rows": [
+            [
+              "10",
+              "100",
+              "333"
+            ],
+            [
+              "40",
+              "1,600",
+              "21,333"
+            ],
+            [
+              "300",
+              "90,000",
+              "9,000,000"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "With 300 assets, one Newton step costs about as much as how many gradients?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 100,
+        "tol": {
+          "abs": 0.5
+        },
+        "accept": "100, that is n/3",
+        "wrong": [
+          {
+            "id": "ncube",
+            "value": 300,
+            "tol": {
+              "abs": 0.5
+            }
+          },
+          {
+            "id": "sq",
+            "value": 90000,
+            "tol": {
+              "abs": 0.5
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the two costs in the last row."
+        },
+        {
+          "rung": "point",
+          "text": "$9{,}000{,}000 / 90{,}000$.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The ratio is $n/3$."
+        }
+      ],
+      "feedback": {
+        "correct": "$9{,}000{,}000 / 90{,}000 = 100$, that is $n/3$.",
+        "generic": "Not quite right. Divide the Newton cost by the gradient cost.",
+        "byKey": {
+          "ncube": "You divided $n^3$ by $n^2$ and forgot the 3.",
+          "sq": "That is the gradient cost itself. The question asks for the ratio."
+        }
+      },
+      "explain": {
+        "text": "The ratio is $\\tfrac{n^3/3}{n^2} = n/3 = 100$. So Newton beats descent when it saves more than about $n/3$ steps. For a few dozen assets it almost always does.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Sizing a bet",
+      "prose": "A bet pays 2 to 1 and wins with probability 0.4. Staking a fraction $f$ grows log wealth by $g(f) = 0.4\\ln(1 + 2f) + 0.6\\ln(1 - f)$ a bet. Maximise it: $f_{k+1} = f_k - g'(f_k)/g''(f_k)$, with $g'(0) = 0.2$ and $g''(0) = -2.2$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -0.2,
+            0.45
+          ],
+          "y": [
+            -0.03,
+            0.016
+          ],
+          "grid": true,
+          "height": 260,
+          "xLabel": "fraction $f$",
+          "yLabel": "growth",
+          "functions": [
+            {
+              "id": "g",
+              "expr": "0.4*ln(1 + 2*x) + 0.6*ln(1 - x)",
+              "domain": [
+                -0.2,
+                0.45
+              ],
+              "label": "$g(f)$",
+              "colour": 1,
+              "labelAt": 0.33
+            }
+          ],
+          "vlines": [
+            {
+              "id": "kf",
+              "x": 0.1,
+              "label": "$f^*$"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "s0",
+              "x": 0,
+              "y": 0,
+              "label": "$f_0 = 0$",
+              "labelPos": "se",
+              "tap": false
+            }
+          ]
+        },
+        "maxHeight": 280
+      },
+      "question": "What is $f_1$, starting from $f_0 = 0$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.0909,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "1/11, about 0.0909",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": -0.0909,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "grad",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$f_1 = 0 - \\tfrac{0.2}{-2.2}$."
+        },
+        {
+          "rung": "point",
+          "text": "Dividing by a negative curvature turns the sign.",
+          "highlight": [
+            "s0",
+            "kf"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$\\tfrac{0.2}{2.2} = \\tfrac{1}{11}$."
+        }
+      ],
+      "feedback": {
+        "correct": "$f_1 = \\tfrac{1}{11} \\approx 0.0909$. Then 0.099951 and 0.0999999987: the Kelly fraction $f^* = 0.1$.",
+        "generic": "Not quite right. Compute $0 - 0.2/(-2.2)$.",
+        "byKey": {
+          "sign": "You lost the minus sign of $g''$. Dividing by $-2.2$ moves $f$ up the hill.",
+          "grad": "That is a gradient step with $s = 1$. Newton divides by the curvature."
+        }
+      },
+      "explain": {
+        "text": "Newton gives 0.090909, 0.099951 and 0.0999999987, so $f^* = 0.1$, the Kelly fraction $p - (1 - p)/b = 0.4 - 0.3$. The growth there is $g(0.1) \\approx 0.009712$ a bet. Three steps from a cold start give eight correct digits.",
+        "canvas": {
+          "points": {
+            "s0": {
+              "x": 0.1,
+              "y": 0.009712,
+              "label": "$f^*$"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Deriving the step",
+      "prose": "We derive Newton's step from the second-order Taylor model at $x_k$, for $f''(x_k) > 0$.",
+      "question": "Put the derivation in order. Leave out the lines that do not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "n1",
+            "text": "Taylor: $f(x) \\approx q(x) = f(x_k) + f'(x_k)(x - x_k) + \\tfrac12 f''(x_k)(x - x_k)^2$."
+          },
+          {
+            "id": "n2",
+            "text": "Differentiate the model: $q'(x) = f'(x_k) + f''(x_k)(x - x_k)$."
+          },
+          {
+            "id": "n3",
+            "text": "Since $f''(x_k) > 0$ the model is a convex parabola, so its minimum is where $q'(x) = 0$."
+          },
+          {
+            "id": "n4",
+            "text": "Solve $f'(x_k) + f''(x_k)(x - x_k) = 0$: $x_{k+1} = x_k - f'(x_k)/f''(x_k)$."
+          },
+          {
+            "id": "d1",
+            "text": "Set $q(x) = 0$ and solve for $x$.",
+            "why": "That finds where the model crosses 0, the root-finding habit. We want the model's lowest point."
+          },
+          {
+            "id": "d2",
+            "text": "Drop the quadratic term, since it is small near $x_k$.",
+            "why": "Without it the model is a line, which has no minimum. The curvature is what sets the step length."
+          }
+        ],
+        "answer": [
+          "n1",
+          "n2",
+          "n3",
+          "n4"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Start from the model, then find where it is lowest."
+        },
+        {
+          "rung": "point",
+          "text": "The lowest point of a convex parabola is where its slope is 0."
+        },
+        {
+          "rung": "step",
+          "text": "Solve that linear equation for $x$."
+        }
+      ],
+      "feedback": {
+        "correct": "That is Newton's step: minimise the quadratic model, which needs $f''(x_k) > 0$.",
+        "generic": "Not quite right. Minimise the model; do not find its zero.",
+        "byKey": {
+          "d1": "You looked for a zero of the model. We want its minimum, where $q' = 0$.",
+          "d2": "You dropped the curvature term. Then the model is a line with no lowest point."
+        }
+      },
+      "explain": {
+        "text": "The model's slope is $f'(x_k) + f''(x_k)(x - x_k)$, and it vanishes at $x_k - f'(x_k)/f''(x_k)$. In $n$ variables the same steps give $\\mathbf{x}_k - \\mathbf{H}^{-1}\\nabla f$. The condition $f'' > 0$ is what makes it a minimum."
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Newton on the wrong function",
+      "prose": "Omar remembers Newton from `taylor` l3 and runs $x_{k+1} = x_k - f(x_k)/f'(x_k)$ on $f(x) = x - \\ln x$ from 0.5. He gets 1.6931, then $-1.1564$, and the next step takes the log of a negative number.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.4,
+            2.3
+          ],
+          "y": [
+            -1.2,
+            2.6
+          ],
+          "grid": true,
+          "height": 280,
+          "xLabel": "$x$",
+          "yLabel": "",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x - ln(x)",
+              "domain": [
+                0.02,
+                2.3
+              ],
+              "label": "$x - \\ln x$",
+              "colour": 6,
+              "labelAt": 2
+            },
+            {
+              "id": "t0",
+              "expr": "1.6931471805599454 - x",
+              "domain": [
+                0.3,
+                1.8
+              ],
+              "colour": 2,
+              "dashed": true,
+              "label": "tangent at 0.5",
+              "labelAt": 1.4
+            },
+            {
+              "id": "t1",
+              "expr": "1.1666 + 0.40938*(x - 1.6931)",
+              "domain": [
+                -1.3,
+                2.2
+              ],
+              "colour": 2,
+              "dashed": true,
+              "label": "tangent at 1.69",
+              "labelAt": -0.8
+            }
+          ],
+          "vlines": [
+            {
+              "id": "b",
+              "x": 0,
+              "label": "$x = 0$"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "z",
+              "y": 0,
+              "label": "",
+              "dashed": false
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "x0",
+              "x": 0.5,
+              "y": 0,
+              "label": "0.5",
+              "labelPos": "s",
+              "tap": false
+            },
+            {
+              "id": "x1",
+              "x": 1.6931,
+              "y": 0,
+              "label": "1.69",
+              "labelPos": "s",
+              "tap": false
+            },
+            {
+              "id": "x2",
+              "x": -1.1564,
+              "y": 0,
+              "label": "−1.16",
+              "labelPos": "s",
+              "tap": false
+            }
+          ]
+        },
+        "maxHeight": 300
+      },
+      "question": "What went wrong?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "root",
+            "text": "He looked for a zero of $f$, and $x - \\ln x$ has none: its lowest value is 1",
+            "correct": true
+          },
+          {
+            "id": "far",
+            "text": "He started too far from the minimum",
+            "why": "No start helps: $x - \\ln x \\ge 1$ everywhere, so the root finder has nothing to find."
+          },
+          {
+            "id": "slow",
+            "text": "Newton needs more steps on this function",
+            "why": "More steps cannot help. The iteration left the domain at step 2."
+          },
+          {
+            "id": "damp",
+            "text": "He needed a damped step",
+            "why": "Damping keeps a minimiser in the domain. This iteration is aimed at the wrong target, a zero of $f$."
+          }
+        ],
+        "shuffle": true
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Which equation does $x - f/f'$ solve?"
+        },
+        {
+          "rung": "point",
+          "text": "It solves $f(x) = 0$. Is $x - \\ln x$ ever 0?",
+          "highlight": [
+            "t0",
+            "t1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Its minimum value is $f(1) = 1$, so it is never 0."
+        }
+      ],
+      "feedback": {
+        "correct": "Right. Minimising needs $x - f'/f''$, the root finder applied to $f'$.",
+        "generic": "Not quite right. Ask which equation the root finder is solving.",
+        "byKey": {
+          "far": "You blamed the start. No start works, since $f$ has no zero.",
+          "slow": "You blamed the step count. The iteration is chasing a zero that does not exist.",
+          "damp": "You reached for damping. The target is wrong, not the step length."
+        }
+      },
+      "explain": {
+        "text": "$x - f/f'$ hunts for $f = 0$, and $x - \\ln x$ is at least 1, so the tangents run off to $-1.1564$. The minimising step $x - f'/f''$ from 0.5 gives 0.75 instead. Newton for minimising is Newton for roots on $f'$.",
+        "canvas": {
+          "highlight": [
+            "t1",
+            "x2"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "A start too far away",
+      "prose": "Now run the right iteration, $x_{k+1} = 2x_k - x_k^2$, from $x_0 = 2.5$. The model at 2.5 is drawn.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.4,
+            2.6
+          ],
+          "y": [
+            0.2,
+            2.4
+          ],
+          "grid": true,
+          "height": 280,
+          "xLabel": "$x$",
+          "yLabel": "",
+          "functions": [
+            {
+              "id": "f",
+              "expr": "x - ln(x)",
+              "domain": [
+                0.02,
+                2.6
+              ],
+              "label": "$f(x) = x - \\ln x$",
+              "colour": 6,
+              "labelAt": 1.9
+            },
+            {
+              "id": "q",
+              "expr": "a - ln(a) + (1 - 1/a)*(x - a) + 0.5*(x - a)^2/(a^2)",
+              "label": "model $q$",
+              "colour": 1,
+              "dashed": true,
+              "labelAt": -0.7999999999999999
+            }
+          ],
+          "params": {
+            "a": 2.5
+          },
+          "vlines": [
+            {
+              "id": "b",
+              "x": 0,
+              "label": "$x = 0$"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 2.5,
+              "y": 1.583709268125845,
+              "label": "$x_k$",
+              "labelPos": "ne",
+              "tap": false
+            },
+            {
+              "id": "M",
+              "x": -1.25,
+              "y": 0.4587092681258449,
+              "label": "model min",
+              "labelPos": "s",
+              "tap": false
+            }
+          ]
+        },
+        "derive": {
+          "A.x": "a",
+          "A.y": "a - ln(a)",
+          "M.x": "2*a - a*a",
+          "M.y": "a - ln(a) - 0.5*pow(a - 1, 2)",
+          "caption": "$x_k$ = {{fixed(a, 4)}}: the model's minimum is at {{fixed(2*a - a*a, 4)}}"
+        },
+        "maxHeight": 300
+      },
+      "question": "What is $x_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -1.25,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "-1.25",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 1.25,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "step",
+            "value": 3.75,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$2(2.5) - 2.5^2$."
+        },
+        {
+          "rung": "point",
+          "text": "$5 - 6.25$.",
+          "highlight": [
+            "M",
+            "b"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "It is below 0, outside the domain of $\\ln$."
+        }
+      ],
+      "feedback": {
+        "correct": "$x_1 = -1.25$, where $\\ln x$ is not defined. From $x_0 = 2$ the step lands on 0, the boundary.",
+        "generic": "Not quite right. Compute $2x_0 - x_0^2$ at $x_0 = 2.5$.",
+        "byKey": {
+          "sign": "$5 - 6.25$ is negative: the step overshoots past 0.",
+          "step": "3.75 is the step length $f'/f''$. Subtract it from 2.5."
+        }
+      },
+      "explain": {
+        "text": "Far from the optimum the model is too flat, so its minimum lies past 0, at $-1.25$. A **damped** step halves $t$ in $x_k - t\\,f'/f''$ until $f$ falls: $t = \\tfrac12$ gives 0.625, and $f$ falls from 1.584 to 1.095. Near the optimum $t = 1$ passes again and quadratic convergence returns.",
+        "canvas": {
+          "highlight": [
+            "M",
+            "b"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Newton in code",
+      "prose": "Write `newton_minimise(grad, hess, x0)`: stop when $\\lVert\\nabla f\\rVert \\le$ `tol`, else solve $\\mathbf{H}\\mathbf{d} = \\nabla f$ with `np.linalg.solve` (never `inv`) and step to $\\mathbf{x} - \\mathbf{d}$. Return the point and the number of steps. Then `newton_damped` for scalars halves $t$ until $f(x - td) \\le f(x)$.",
+      "question": "Complete both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import math\nimport numpy as np\nG = lambda x: 1 - 1 / x\nHH = lambda x: 1 / x ** 2\nF = lambda x: x - math.log(x) if x > 0 else math.inf\nKG = lambda f: -(0.8 / (1 + 2 * f) - 0.6 / (1 - f))\nKH = lambda f: 1.6 / (1 + 2 * f) ** 2 + 0.6 / (1 - f) ** 2\nH3 = np.diag([0.2, 0.45, 0.8])\nM3 = np.array([0.05, 0.08, 0.11])\n",
+        "starter": "import numpy as np\n\n\ndef newton_minimise(grad, hess, x0, tol=1e-12, max_iter=50):\n    # stop when the gradient's size is at most tol; else solve H d = g, step x - d\n    # return (x, number of steps taken); x is a float when x0 is a number\n    pass\n\n\ndef newton_damped(f, grad, hess, x0, tol=1e-12, max_iter=50):\n    # scalar x: as above, but halve t until f(x - t * d) <= f(x)\n    pass\n",
+        "examples": [
+          {
+            "call": "newton_minimise(G, HH, 0.5)[0]",
+            "expect": "1",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "newton_minimise(G, HH, 0.5)[1]",
+            "expect": "6",
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "call": "newton_minimise(G, HH, 0.5)[0]",
+            "expect": "1",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "newton_minimise(G, HH, 0.5)[1]",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "newton_minimise(KG, KH, 0.0)[0]",
+            "expect": "0.1",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "call": "newton_minimise(KG, KH, 0.0)[1]",
+            "expect": "4",
+            "compare": "equal"
+          },
+          {
+            "call": "newton_minimise(lambda w: H3 @ w - M3, lambda w: H3, np.zeros(3))[0]",
+            "expect": "[0.25, 0.177778, 0.1375]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "newton_minimise(lambda w: H3 @ w - M3, lambda w: H3, np.zeros(3))[1]",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "newton_damped(F, G, HH, 2.5)[0]",
+            "expect": "1",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "newton_damped(F, G, HH, 2.5)[1]",
+            "expect": "6",
+            "compare": "equal"
+          },
+          {
+            "call": "newton_damped(F, G, HH, 2.0)[1]",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "newton_damped(F, G, HH, 0.5)[1]",
+            "expect": "6",
+            "compare": "equal"
+          }
+        ],
+        "solution": "import numpy as np\n\n\ndef newton_minimise(grad, hess, x0, tol=1e-12, max_iter=50):\n    scalar = np.ndim(x0) == 0\n    x = np.atleast_1d(np.asarray(x0, dtype=float))\n    k = 0\n    while k < max_iter:\n        g = np.atleast_1d(np.asarray(grad(x[0] if scalar else x), dtype=float))\n        if np.linalg.norm(g) <= tol:\n            break\n        H = np.atleast_2d(np.asarray(hess(x[0] if scalar else x), dtype=float))\n        x = x - np.linalg.solve(H, g)\n        k += 1\n    return (float(x[0]) if scalar else x), k\n\n\ndef newton_damped(f, grad, hess, x0, tol=1e-12, max_iter=50):\n    x = float(x0)\n    k = 0\n    while k < max_iter:\n        g = grad(x)\n        if abs(g) <= tol:\n            break\n        d = g / hess(x)\n        t = 1.0\n        while not f(x - t * d) <= f(x):\n            t /= 2\n        x = x - t * d\n        k += 1\n    return x, k\n",
+        "how": "Submit runs 10 hidden tests. G and HH are the derivatives of x - ln x, and F is x - ln x (infinite for x <= 0). KG and KH are the Kelly bet as a minimisation. H3 and M3 are the penalised portfolio. Points are compared with math.isclose (absolute 1e-12, 1e-9 or 1e-6), step counts exactly. The first run loads NumPy: a few seconds from cache, longer on a first visit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Check the gradient first, then step: a run that starts at the optimum takes 0 steps."
+        },
+        {
+          "rung": "point",
+          "text": "For a number, wrap it with `np.atleast_1d` and `np.atleast_2d`, and return `float(x[0])`."
+        },
+        {
+          "rung": "step",
+          "text": "In the damped loop, `not f(x - t * d) <= f(x)` also catches `inf` outside the domain."
+        }
+      ],
+      "feedback": {
+        "correct": "All pass. Plain Newton takes 6 steps on $x - \\ln x$, 4 on the Kelly bet and 1 on the quadratic. The damped run from 2.5 takes 6.",
+        "generic": "Not quite right. Test the gradient before each step, and count only steps taken."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Risk parity by Newton",
+      "prose": "Risk parity sizes assets so each adds the same risk. For uncorrelated assets, minimise $\\tfrac12\\sigma_i^2x_i^2 - \\tfrac12\\ln x_i$ for each asset, then scale the $x_i$ to sum to 1. For the 20% asset, $f'(x) = 0.04x - 0.5/x$ and $f''(x) = 0.04 + 0.5/x^2$.",
+      "question": "What is Newton's first step from $x = 1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.8519,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "1 + 0.46/0.54, about 1.8519",
+        "wrong": [
+          {
+            "id": "sign",
+            "value": 0.1481,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "descent",
+            "value": 1.46,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$f'(1) = -0.46$ and $f''(1) = 0.54$."
+        },
+        {
+          "rung": "point",
+          "text": "$x_1 = 1 - (-0.46)/0.54$."
+        },
+        {
+          "rung": "step",
+          "text": "$1 + 0.8519$."
+        }
+      ],
+      "feedback": {
+        "correct": "$x_1 = 1 + 0.46/0.54 \\approx 1.8519$. The run reaches $\\sqrt{12.5} \\approx 3.5355$, to four places, in four more steps.",
+        "generic": "Not quite right. Compute $1 - f'(1)/f''(1)$.",
+        "byKey": {
+          "sign": "You added the step the wrong way. $f'(1) < 0$, so $x$ must rise.",
+          "descent": "That is a gradient step with $s = 1$. Newton divides by the curvature 0.54."
+        }
+      },
+      "explain": {
+        "text": "The iterates run 1.8519, 2.9064, 3.4687, 3.5349 towards $\\sqrt{0.5/0.04} \\approx 3.5355$; the 40% asset gives 1.7678. Scaled, the weights are $(\\tfrac23, \\tfrac13)$, each inversely proportional to volatility. Desks solve risk parity and Kelly sizing this way, and logistic regression's IRLS fit is Newton too."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "Newton minimises the quadratic model at each point: $\\mathbf{x}_{k+1} = \\mathbf{x}_k - \\mathbf{H}^{-1}\\nabla f$, the root finder applied to $\\nabla f$.",
+      "Near a minimum where $f'' > 0$ the error roughly squares each step: 0.5, 0.25, 0.0625 here. Five steps do what descent needs 44 for.",
+      "A positive definite quadratic takes one step. Each step costs a solve of about $n^3/3$, and far from the optimum it may need halving."
+    ],
+    "formula": {
+      "name": "Newton step",
+      "tex": "\\mathbf{x}_{k+1} = \\mathbf{x}_k - \\mathbf{H}(\\mathbf{x}_k)^{-1}\\nabla f(\\mathbf{x}_k)",
+      "note": "Solve H d = grad f; never form the inverse."
+    },
+    "trap": "Running the root finder on f instead of f' fails. Since x - ln x has no zero, the iteration leaves the domain."
+  },
+  "quiz": [
+    {
+      "id": "q16-step",
+      "difficulty": 2,
+      "prose": "Minimise $f(x) = e^x - 2x$ by Newton from $x_0 = 0$. Here $f'(0) = -1$ and $f''(0) = 1$.",
+      "question": "What is $x_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "sign",
+            "value": -1,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "root",
+            "value": 0.5,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$x_1 = 0 - (-1)/1 = 1$. The minimum is at $\\ln 2 \\approx 0.6931$.",
+        "generic": "Not quite right. Compute $x_0 - f'(x_0)/f''(x_0)$.",
+        "byKey": {
+          "sign": "You added $f'/f''$. Newton subtracts it.",
+          "root": "That is $f(0)/(f(0) - f'(0))$, not the step. Use $f'/f''$."
+        }
+      },
+      "explain": {
+        "text": "$x_1 = 0 - (-1)/1 = 1$, past the minimum at $\\ln 2 \\approx 0.6931$. The next steps close in quadratically."
+      }
+    },
+    {
+      "id": "q16-quartic",
+      "difficulty": 2,
+      "prose": "Newton on $f(x) = x^4$ gives $x_{k+1} = x_k - \\dfrac{4x_k^3}{12x_k^2}$.",
+      "question": "Starting from $x_0 = 0.9$, what is $x_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.6,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "third",
+            "value": 0.3,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "same",
+            "value": 0.9,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$x_1 = 0.9 - 0.3 = 0.6$: Newton multiplies by $\\tfrac23$ each step here.",
+        "generic": "Not quite right. Simplify $\\tfrac{4x^3}{12x^2} = \\tfrac{x}{3}$.",
+        "byKey": {
+          "third": "You kept only the step $x/3$. Subtract it from $x$.",
+          "same": "The step is not zero: $x/3 = 0.3$."
+        }
+      },
+      "explain": {
+        "text": "The step is $x/3$, so $x_{k+1} = \\tfrac23 x_k$ and $x_1 = 0.6$. Since $f''(0) = 0$, convergence is only linear."
+      }
+    },
+    {
+      "id": "q16-saddle",
+      "difficulty": 3,
+      "prose": "Newton runs on $f(x) = \\tfrac14x^4 - \\tfrac12x^2$, which has minima at $\\pm 1$ and a maximum at 0. From $x_0 = 0.3$, $f''(0.3) = -0.73 < 0$, and the first step gives $-0.074$.",
+      "question": "Where is the iteration heading?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "max",
+            "text": "To the maximum at 0",
+            "correct": true
+          },
+          {
+            "id": "min",
+            "text": "To the minimum at $-1$",
+            "why": "From $-0.074$ the next step gives 0.0008. It closes in on 0."
+          },
+          {
+            "id": "plus",
+            "text": "To the minimum at 1",
+            "why": "The first step went the other way, to $-0.074$. Negative curvature reverses the step."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Newton solves $f' = 0$, and 0 is a zero of $f'$. With $f'' < 0$ the model is a cap, so the step climbs.",
+        "generic": "Not quite right. Look at the sign of $f''$ at the start."
+      },
+      "explain": {
+        "text": "With $f'' < 0$ the quadratic model is an upside-down parabola, and its stationary point is a maximum. The iterates $-0.074$, 0.0008 head for 0. A minimiser must check $f'' > 0$ or fall back to descent."
+      }
+    },
+    {
+      "id": "q16-digits",
+      "difficulty": 3,
+      "prose": "Near a minimum Newton's error obeys $e_{k+1} \\approx e_k^2$. The error now is $10^{-3}$.",
+      "question": "About how many correct decimal places after two more steps?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 12,
+        "tol": {
+          "abs": 0
+        },
+        "wrong": [
+          {
+            "id": "linear",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "one",
+            "value": 6,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$10^{-3} \\to 10^{-6} \\to 10^{-12}$: about 12 places.",
+        "generic": "Not quite right. Square the error twice.",
+        "byKey": {
+          "linear": "You added one place a step. Newton doubles them.",
+          "one": "That is after one step, $10^{-6}$. Square once more."
+        }
+      },
+      "explain": {
+        "text": "Squaring $10^{-3}$ gives $10^{-6}$, and squaring again gives $10^{-12}$. The number of correct places doubles each step, from 3 to 6 to 12."
+      }
+    }
+  ]
+}
