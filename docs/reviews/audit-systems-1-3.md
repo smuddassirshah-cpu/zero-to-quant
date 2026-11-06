@@ -113,3 +113,4 @@ Graded answers changed: none in value. l6 screens[7] keeps the key 3 because the
 - `node tools/validate.mjs 2>&1 | tail -3` (from app/): `0 errors, 4274 warnings` (advisory O2 warnings; was 4267); `content/manifest.json` restored with `git checkout`.
 - `python3 -I docs/reports/systems-L1-concepts.py`: 66 checks passed, exit 0; L2: 45 passed, exit 0; L3: 32 passed, exit 0. No script changed.
 - `VOICE_BASE=app/content/courses/systems/ python3 docs/reviews/voice-scan.py 35 --summary`: explanations over three sentences 0; sentences over 35 words 0 (9,490 scanned).
+- Playthrough (from app/, `--local-cdn <PKGS>`), lessons l1, l2, l3, l4, l6, l7, l9, l13, l14 and sets homework-1, homework-2, review-3 in one run: desktop `browser relaunches: 0 / All passed.` (9 lessons quiz 4/4, homework-1 and homework-2 33 of 33 marks, review-3 9 of 9); `--mobile` `browser relaunches: 0 / All passed.`
