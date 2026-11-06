@@ -99,3 +99,51 @@ Two limitations, both raised in `docs/BACKLOG-INBOX.md` under "Raised later (rev
 
 - Shown arithmetic is not recomputed (seen again: reviews arma, garch, alpha 3 to 4 and coint 1 to 3 found the same class): l4 `quiz[2]` writes $1.38/0.45 \approx 3.05$ (it is 3.07) and homework-2 `items[5]` $(0.0465/0.0178)^2 = 6.86$ (it is 6.82), each the unrounded result on rounded inputs. The class is past protocol 6's threshold of three, so it should become a validator rule before the next wave.
 - A `console` canvas with `numbers: true` is cited by line number in prose, hints and feedback, and nothing checks the citation: l5 `screens[5]` cites lines 2 and 3 for the calls on lines 3 and 5, while its own hint says line 3 (finding 8). A validator list of "line N" citations beside the text of line N would catch it.
+
+## Fix pass
+
+Status per finding (36 fixed, 0 disputed, 0 deferred; the two engine items are deferred, already in the inbox). Edits touch L1 and L2 files only (l1 to l8, review-1, review-2, homework-1, homework-2). Voice hits in L3 and L4 files were left to their own reader.
+
+Basis for finding 1 (conceptual, direction of the bias), by my own computation with a SciPy `brentq` Black-Scholes at $S = 100$, $K = 125$, $r = 5\%$, $T = 1/12$: a true 18.3% vol prices this call at £0.00002, so a near-zero mid (1e-6) implies 16.0% and 1e-4 implies 19.9%, but the filled mid £0.02 (0.01 / 0.03) implies 30.4% (30.5% with the chain's $q = 1\%$), against a true 18.3%. The £0.01 floor is far above the true price, so the fake vol is too high. All 11 wing zero bids on the chain behave this way (`hi_cnt == len(zb)` in the L1 script).
+
+1. fixed: l2 `screens[5].explain.text` now "fakes a high vol", with 30.5% against 18.3%.
+2. fixed: l2 `options[3].why` rewritten (relative spread 1.995 for the 3m 95 call, 1 for 0.01 / 0.03).
+3. fixed: homework-1 `items[7].model` (usually too high, 30.5% against 18.3%, split to two sentences for the 35-word gate) and `rubric[5]`.
+4. fixed: l4 `screens[3].prose` (about 6% of the mid; at least £0.05 in the wings).
+5. fixed: l5 `screens[4].widget.wrong[1].value` is -0.995 (99.005 - 100).
+6. fixed: review-2 `items[1].widget.wrong[0].value` is 3.8442 (50 - 46.1558).
+7. fixed: l6 `quiz[0]`: `half` is 10.53, new `half-nodisc` 11.07 with its `byKey` line.
+8. fixed: l5 `screens[5]` prose, question, `options[3].why` and `byKey.percent` cite lines 3 and 5.
+9. fixed: review-1 `items[6].options[2].why` (checked: `ivol(0.0, ...)` is NaN).
+10. fixed: l8 `summary.ideas[1]` and homework-2 `items[6].model` say 0.03p (smallest premium 0.0297 - 0.0296 on the grid).
+11. fixed: l1 hint, explain and quiz key ("never pays more"; checked: the 100 and 105 calls both pay 0 at $S_T = 80$).
+12. fixed: l3 `screens[5].explain.text` states £104.08 and the 104 strike looking 4% out of the money.
+13. fixed: l6 `screens[8].prose` and `summary.ideas[1]` (at the money only; checked: the error alternates at K = 100, not at 90, 95, 105).
+14. fixed: l6 `quiz[2].options[2].why` (0.5022 to 0.5034 on 500 steps, recomputed).
+15. fixed: l6 `screens[7].explain.text` uses $|r - q|$.
+16. fixed: l6 `quiz[3].explain.text` (time value against interest on the strike; Hull, Options, Futures and Other Derivatives, early exercise of American puts).
+17. fixed: l6 `screens[9].byKey.same` (in-the-money puts and longer expiries; checked vp[120] > vp[95] > vp[80]).
+18. fixed: l4 `quiz[3].options[2].why` (wings only; checked: mid vol above the average for the 3m 125 call, below it for the 1y 105 call).
+19. fixed: l4 `quiz[2]` explain and accept say 3.1 (1.38/0.45 = 3.067; key 3.055 with tol 0.05 still accepts both).
+20. fixed: homework-1 `items[4]`: `wrong[1]` `1y` and its `byKey` removed; `no-T` line reworded (validator overlap warning gone).
+21. fixed: homework-1 `items[1].explain.text` (up to 20p, three-month 120 put furthest).
+22. fixed: homework-2 `items[5]` is the put (SE £0.0274, CV £0.0178): answer 238000 (computed 238,165), `linear` 154000 (153,933), explain 2.37 from the rounded figures.
+23. fixed: l2 `screens[1].hints[1]` ("0.85 or less and 1.1 or more").
+24. fixed: l8 `screens[5].explain.text` (about 5,000 and 13,500 times; 18 ms / 3.7 µs = 4,865, 50 ms / 3.7 µs = 13,514) and `byKey.bs`.
+25. fixed: review-1 `items[1]` now the one-month 80 call (19.42 / 33.02, mid 26.22, spread 13.60, relative 0.519).
+26. fixed: homework-1 `items[5]`: price at 17.83% is £0.028 (computed 0.0278), 0.7p below the mid.
+27. fixed: homework-1 `items[6]`: answer 0.01508 (computed 0.015076), `flat` 0.014517 (computed 0.0145167; the review's 0.014516 was truncated, same band), `level` 0.02508.
+28. fixed: review-2 `items[3]` (American put £6.09 against £5.5695 and £5.5735) and `items[5]` (SE 0.0329, `all` 0.0233, `n` 0.000147).
+29. fixed: review-2 `items[4]` (answer 0.0158, `linear` 0.005).
+30. fixed: l6 `screens[0].canvas.maxHeight` 330.
+31. fixed: l3 `screens[0]` `labelAt` 136 (first function only).
+32. fixed: seven `how` lines (homework-2 x2, l5, l6, l7, l8 x2) split under 35 words.
+33. fixed: 15 key texts shortened (validator: no `[key-length]` hits left in L1 and L2).
+34. fixed: l6 `screens[2]` (states 0.5252) and `quiz[1]` (£10.4503), l8 `screens[9]` (4.1%, computed 0.0012/0.0296), review-2 `items[1]`, homework-2 `items[1]`.
+35. fixed: l7 `screens[1].options[1].why` (2,500 and 10,000 paths).
+36. fixed: l6 `screens[9].explain.text` now cites level 4 (l16).
+Engine items: deferred, in the inbox.
+
+Graded answers changed: homework-1 `items[5]` (now a different question, key "About £0.028"), `items[6]` (0.01508), review-1 `items[1]` (same key, new quote), review-2 `items[3]` (key "About £6.09"), `items[4]` (0.0158), `items[5]` (0.0329), homework-2 `items[5]` (238000); wrong-slip values changed: l5 `no-disc` -0.995, review-2 `no-q` 3.8442, l6 `half` 10.53.
+
+Gates: `opt-dash-L1-numbers.py` exit 0 (344 of 344), `opt-dash-L2-numbers.py` exit 0 (307 of 307); the old-or-new checks are now `must` (fail if a fix is reverted) or `stated(..., False)` guards. Voice scan: 0 sentences over 35 words and 0 explanations over three in L1 and L2 files. Validator: 0 errors. Playthrough, desktop and `--mobile`, all green: l1 to l8, review-1, review-2, homework-1, homework-2.

@@ -314,7 +314,7 @@
     "options": [
      {
       "id": "no",
-      "text": "No: every MC difference sits inside two standard errors, and every tree difference is under half a penny",
+      "text": "No: each sits inside its two-error bar",
       "correct": true
      },
      {
@@ -499,7 +499,7 @@
     "options": [
      {
       "id": "now",
-      "text": "Exercising today beats holding, so the put is worth its exercise value, $120 - 100$",
+      "text": "Exercising today beats holding",
       "correct": true
      },
      {
@@ -652,7 +652,7 @@
      }
     ],
     "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\nimport numpy as np\nfrom math import exp, sqrt\n\n\ndef crr_price(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    \"\"\"CRR binomial price with n steps and dividend yield q.\"\"\"\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    p = (exp((r - q) * dt) - d) / (u - d)\n    if not 0 <= p <= 1:\n        raise ValueError(f\"p = {p:.4f} is outside [0, 1]: use more steps\")\n    disc = exp(-r * dt)\n\n    def payoff(s):\n        return np.maximum(s - K, 0.0) if kind == \"call\" else np.maximum(K - s, 0.0)\n\n    j = np.arange(n + 1)\n    v = payoff(S * u ** j * d ** (n - j))          # the n + 1 leaves\n    for i in range(n - 1, -1, -1):                 # step back to today\n        v = disc * (p * v[1:] + (1 - p) * v[:-1])\n        if american:                               # exercise at step i?\n            j = np.arange(i + 1)\n            v = np.maximum(v, payoff(S * u ** j * d ** (i - j)))\n    return float(v[0])\n\nimport numpy as np\nfrom math import exp, sqrt\n\n\ndef mc_price(S, K, r, sigma, T, kind=\"call\", n_paths=100_000, seed=0,\n             antithetic=True, q=0.0):\n    \"\"\"Monte Carlo price and standard error of a European option.\"\"\"\n    rng = np.random.default_rng(seed)\n    m = n_paths // 2 if antithetic else n_paths    # independent samples\n    if m < 2:\n        raise ValueError(\"a standard error needs two independent samples\")\n    z = rng.standard_normal(m)                     # every normal in one call\n    drift = (r - q - sigma ** 2 / 2) * T\n    vol = sigma * sqrt(T)\n\n    def disc_payoff(z):\n        s_T = S * np.exp(drift + vol * z)\n        pay = np.maximum(s_T - K, 0.0) if kind == \"call\" else np.maximum(K - s_T, 0.0)\n        return exp(-r * T) * pay\n\n    if antithetic:\n        y = (disc_payoff(z) + disc_payoff(-z)) / 2  # one average per pair\n    else:\n        y = disc_payoff(z)\n    return float(y.mean()), float(y.std(ddof=1) / sqrt(m))\n",
-    "how": "Check runs 10 hidden tests on a 3 by 2 grid with 200 steps and 20,000 paths, seed 1: the columns, the shape, the row order (expiries outer, strikes inner), each price column rounded to 6 places (==), Monte Carlo within 3 errors, and American at least European. `bs_price`, `crr_price` and `mc_price` are already defined. The first run loads NumPy and pandas, which takes 10 to 30 seconds."
+    "how": "Check runs 10 hidden tests on a 3 by 2 grid with 200 steps and 20,000 paths, seed 1. They cover the columns, the shape, the row order (expiries outer, strikes inner), each price column rounded to 6 places (==), Monte Carlo within 3 errors, and American at least European. `bs_price`, `crr_price` and `mc_price` are already defined. The first run loads NumPy and pandas, which takes 10 to 30 seconds."
    },
    "hints": [
     {
@@ -761,11 +761,11 @@
     "generic": "Not quite right. Scale each per-price time to 130 quotes.",
     "byKey": {
      "mc": "Monte Carlo is the second most expensive here: 2.3 s for the chain.",
-     "bs": "The formula is the cheapest by four orders of magnitude."
+     "bs": "The formula is the cheapest by more than three orders of magnitude."
     }
    },
    "explain": {
-    "text": "The formula is 10,000 times cheaper than either alternative, so the dashboard uses it wherever it is exact. The tree runs only where early exercise matters. Monte Carlo is a check here, and the pricer of last resort for exotic payoffs."
+    "text": "The formula is about 5,000 times cheaper than Monte Carlo and 13,500 times cheaper than the tree, so the dashboard uses it wherever it is exact. The tree runs only where early exercise matters. Monte Carlo is a check here, and the pricer of last resort for exotic payoffs."
    }
   },
   {
@@ -845,7 +845,7 @@
      }
     ],
     "prelude": "import pandas as pd\n\ndef hand_grid():\n    # six rows of the 500-step, 100,000-path grid, rounded to 6 places\n    return pd.DataFrame([[90.0, 0.25, 0.580048, 0.580135, 0.588991, 0.578911, 0.005972], [100.0, 0.25, 3.481505, 3.479517, 3.56472, 3.491167, 0.011974], [110.0, 0.25, 10.020796, 10.021434, 10.414423, 10.018888, 0.006892], [90.0, 1.0, 2.506289, 2.505537, 2.641411, 2.50814, 0.015751], [100.0, 1.0, 5.944257, 5.940318, 6.365355, 5.960856, 0.020964], [110.0, 1.0, 11.23274, 11.23498, 12.280082, 11.242196, 0.018528]],\n                        columns=['K', 'T', 'bs', 'tree_eu', 'tree_am_put', 'mc', 'mc_se'])\n\ndef tidy(flags):\n    return [(float(k), float(t), c, round(float(d), 6), why) for k, t, c, d, why in flags.itertuples(index=False)]\n",
-    "how": "Check runs 7 hidden tests on `hand_grid()`, six rows of the grid above (already defined): the clean grid, three planted bugs (a Monte Carlo price 5p off, an American put below its European one, a tree 3p off), a wider tolerance, and a grid with no premium. Flags are compared as tuples, `diff` rounded to 6 places. The first run loads pandas."
+    "how": "Check runs 7 hidden tests on `hand_grid()`, six rows of the grid above (already defined). They use the clean grid, three planted bugs (a Monte Carlo price 5p off, an American put below its European one, a tree 3p off), a wider tolerance, and a grid with no premium. Flags are compared as tuples, `diff` rounded to 6 places. The first run loads pandas."
    },
    "hints": [
     {
@@ -918,7 +918,7 @@
     "options": [
      {
       "id": "neither",
-      "text": "Neither: the MC gap is half an error, and the £1.05 is the American premium",
+      "text": "Neither: one is noise, one is value",
       "correct": true
      },
      {
@@ -988,7 +988,7 @@
     "options": [
      {
       "id": "flag",
-      "text": "Flag it as a pricer error: 3.5 errors is beyond the allowance",
+      "text": "A pricer error: 3.5 errors is too many",
       "correct": true
      },
      {
@@ -1095,14 +1095,14 @@
     }
    },
    "explain": {
-    "text": "Only about one path in 90 ends below £80, so the estimate rests on few payoffs. The error is small in pence but large against the price, and wing vols are sensitive to it. The dashboard's pricer panel shows these errors beside every price, as the trade ticket did."
+    "text": "Only about one path in 90 ends below £80, so the estimate rests on few payoffs. The error is small in pence but 4.1% of the price, and wing vols are sensitive to it. The dashboard's pricer panel shows these errors beside every price, as the trade ticket did."
    }
   }
  ],
  "summary": {
   "ideas": [
    "On European puts the three pricers agree: the 500-step tree within 0.4p and Monte Carlo within 1.3 standard errors of Black-Scholes on every cell of the grid.",
-   "The American put differs by the early-exercise premium, real value from 3p to £2.18 on our grid, which no European formula can give.",
+   "The American put differs by the early-exercise premium, real value from 0.03p to £2.18 on our grid, which no European formula can give.",
    "`flag_differences` judges each gap against its allowance: three errors for Monte Carlo, a penny for the tree, and American at least European."
   ],
   "formula": {
@@ -1192,7 +1192,7 @@
     "options": [
      {
       "id": "transpose",
-      "text": "The transposed frame: columns become rows",
+      "text": "The transposed frame",
       "correct": true
      },
      {

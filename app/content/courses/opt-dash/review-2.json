@@ -69,7 +69,7 @@
     "wrong": [
      {
       "id": "no-q",
-      "value": 3.0779,
+      "value": 3.8442,
       "tol": {
        "abs": 0.001
       }
@@ -92,7 +92,7 @@
     }
    },
    "explain": {
-    "text": "$50e^{-0.06} = 47.0882$ and $50e^{-0.08} = 46.1558$. With the yield close to the rate, the forward is close to the strike, so $C - P$ is small."
+    "text": "$50e^{-0.06} = 47.0882$ and $50e^{-0.08} = 46.1558$, so $C - P = \\text{£}0.9324$. With the yield close to the rate, the forward is close to the strike, so $C - P$ is small."
    }
   },
   {
@@ -138,35 +138,35 @@
    "skills": [
     "od-pricers"
    ],
-   "prose": "A colleague's American put on a tree takes $\\max(K - S, 0)$ at the leaves and nowhere else.",
-   "question": "What does it price?",
+   "prose": "A colleague's tree takes $\\max(K - S, 0)$ at the leaves and nowhere else. On 500 steps it prices the one-year at-the-money put ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $q = 0$) at £5.5695 and calls it American.",
+   "question": "What should an American put show instead?",
    "widget": {
     "kind": "choice",
     "layout": "stack",
     "options": [
      {
-      "id": "euro",
-      "text": "The European put",
+      "id": "am",
+      "text": "About £6.09",
       "correct": true
      },
      {
-      "id": "am",
-      "text": "The American put",
+      "id": "same",
+      "text": "£5.5695: the leaves' max covers exercise",
       "why": "The leaves' max is the payoff. Early exercise needs the max at every earlier node."
      },
      {
       "id": "bs",
-      "text": "Black-Scholes exactly",
-      "why": "It is a European tree, close to Black-Scholes but with discretisation error."
+      "text": "£5.5735, the Black-Scholes price",
+      "why": "That is the European formula. The tree sits near it because the tree is European too."
      }
     ]
    },
    "feedback": {
-    "correct": "With no check before expiry, the tree is European.",
+    "correct": "About £6.09: the exercise check at every node adds the premium.",
     "generic": "Not quite right. Ask where the holder may exercise in that code."
    },
    "explain": {
-    "text": "An American tree keeps $\\max(\\text{hold}, K - S)$ at every node. Without that, no node exercises early, so the price is the European one: £3.9057 for our six-month put."
+    "text": "An American tree keeps $\\max(\\text{hold}, K - S)$ at every node. Without that, no node exercises early and the price is European, £5.5695. With the check the same 500 steps give £6.09."
    }
   },
   {
@@ -175,35 +175,36 @@
    "skills": [
     "od-pricers"
    ],
-   "prose": "A Monte Carlo price has standard error £0.05 with 40,000 paths.",
-   "question": "How many paths give an error of £0.02?",
+   "prose": "A Monte Carlo price has standard error £0.05 with 40,000 paths, which take 0.1 s. The desk allows one second per price.",
+   "question": "What is the smallest error it can reach in that second, in £?",
    "widget": {
     "kind": "numeric",
-    "answer": 250000,
+    "answer": 0.0158,
     "tol": {
-     "rel": 0.01
+     "abs": 0.0003
     },
-    "accept": "250,000: $40{,}000 \\times (0.05/0.02)^2 = 40{,}000 \\times 6.25$.",
-    "label": "Paths",
+    "accept": "£0.0158: ten times the paths, $0.05/\\sqrt{10}$.",
+    "unit": "£",
+    "label": "Standard error",
     "wrong": [
      {
       "id": "linear",
-      "value": 100000,
+      "value": 0.005,
       "tol": {
-       "abs": 100
+       "abs": 0.0003
       }
      }
     ]
    },
    "feedback": {
-    "correct": "250,000 paths.",
-    "generic": "Not quite right. The paths scale with the square of the error ratio.",
+    "correct": "£0.0158.",
+    "generic": "Not quite right. Ten times the paths changes the error by the square root of ten.",
     "byKey": {
-     "linear": "You scaled the paths with the error. They scale with its square."
+     "linear": "You divided the error by 10. Ten times the paths divides it by $\\sqrt{10} = 3.16$."
     }
    },
    "explain": {
-    "text": "The error must fall by 2.5 times, so the paths grow by $2.5^2 = 6.25$ times: 250,000. Pairs or a control variate would need fewer."
+    "text": "One second buys 400,000 paths, ten times as many. The error falls by $\\sqrt{10} = 3.16$, to £0.0158. Halving it again would take four seconds."
    }
   },
   {
@@ -212,35 +213,44 @@
    "skills": [
     "od-pricers"
    ],
-   "prose": "An antithetic Monte Carlo run uses 50,000 draws of $Z$ and both $Z$ and $-Z$.",
-   "question": "Which $n$ goes into $s/\\sqrt n$?",
+   "prose": "An antithetic run with `n_paths = 100_000` gives 50,000 pair averages whose sample standard deviation is £7.36.",
+   "question": "What is the standard error of the price, in £?",
    "widget": {
-    "kind": "choice",
-    "layout": "stack",
-    "options": [
+    "kind": "numeric",
+    "answer": 0.0329,
+    "tol": {
+     "abs": 0.0002
+    },
+    "accept": "£0.0329: $7.36/\\sqrt{50{,}000}$.",
+    "unit": "£",
+    "label": "Standard error",
+    "wrong": [
      {
-      "id": "50k",
-      "text": "50,000, with $s$ the spread of the pair averages",
-      "correct": true
+      "id": "all",
+      "value": 0.0233,
+      "tol": {
+       "abs": 0.0002
+      }
      },
      {
-      "id": "100k",
-      "text": "100,000, with $s$ the spread of all payoffs",
-      "why": "The two payoffs in a pair share one draw, so they are not independent samples."
-     },
-     {
-      "id": "25k",
-      "text": "25,000, half the draws",
-      "why": "Each draw makes one pair. There are 50,000 pairs."
+      "id": "n",
+      "value": 0.000147,
+      "tol": {
+       "abs": 2e-05
+      }
      }
     ]
    },
    "feedback": {
-    "correct": "50,000 pair averages.",
-    "generic": "Not quite right. Count the independent samples."
+    "correct": "£0.0329.",
+    "generic": "Not quite right. Count the independent samples: the pair averages.",
+    "byKey": {
+     "all": "You divided by $\\sqrt{100{,}000}$. The 50,000 pair averages are the independent samples.",
+     "n": "You divided by $n$, not $\\sqrt n$."
+    }
    },
    "explain": {
-    "text": "The pairs are independent of each other; their members are not. So $n = 50{,}000$ and $s$ is the spread of the pair averages: £0.0329 for our call, not £0.0466."
+    "text": "The pairs are independent of each other; their members are not. So $n = 50{,}000$ and $\\text{SE} = 7.36/223.6 = \\text{£}0.0329$, as in l7."
    }
   },
   {
@@ -257,7 +267,7 @@
     "options": [
      {
       "id": "error",
-      "text": "A pricer error: an American put cannot be worth less than its European twin",
+      "text": "A pricer error",
       "correct": true
      },
      {
@@ -294,7 +304,7 @@
     "options": [
      {
       "id": "bug",
-      "text": "The tree has a bug: with no yield an American call is never exercised early",
+      "text": "The tree has a bug",
       "correct": true
      },
      {

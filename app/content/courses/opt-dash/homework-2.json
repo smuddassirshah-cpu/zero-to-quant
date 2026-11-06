@@ -68,7 +68,7 @@
      }
     ],
     "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n\nimport numpy as np\nfrom math import exp, sqrt\n\n\ndef crr_price(S, K, r, sigma, T, n, kind=\"call\", american=False, q=0.0):\n    \"\"\"CRR binomial price with n steps and dividend yield q.\"\"\"\n    dt = T / n\n    u = exp(sigma * sqrt(dt))\n    d = 1 / u\n    p = (exp((r - q) * dt) - d) / (u - d)\n    if not 0 <= p <= 1:\n        raise ValueError(f\"p = {p:.4f} is outside [0, 1]: use more steps\")\n    disc = exp(-r * dt)\n\n    def payoff(s):\n        return np.maximum(s - K, 0.0) if kind == \"call\" else np.maximum(K - s, 0.0)\n\n    j = np.arange(n + 1)\n    v = payoff(S * u ** j * d ** (n - j))          # the n + 1 leaves\n    for i in range(n - 1, -1, -1):                 # step back to today\n        v = disc * (p * v[1:] + (1 - p) * v[:-1])\n        if american:                               # exercise at step i?\n            j = np.arange(i + 1)\n            v = np.maximum(v, payoff(S * u ** j * d ** (i - j)))\n    return float(v[0])\n",
-    "how": "Check runs 8 hidden tests: three European options within 0.05p to 0.1p of `bs_price`, two American puts within 0.2p of a 5,000-step tree (£4.0038 and £6.0902), a check that 20 extrapolated steps beat 20 plain steps, one value to 4 places, and a one-step smoothed tree, which is Black-Scholes itself. The first run loads NumPy."
+    "how": "Check runs 8 hidden tests. Three European options must sit within 0.05p to 0.1p of `bs_price`, and two American puts within 0.2p of a 5,000-step tree (£4.0038 and £6.0902). The others test that 20 extrapolated steps beat 20 plain steps, one value to 4 places, and a one-step smoothed tree, which is Black-Scholes itself. The first run loads NumPy."
    },
    "feedback": {
     "correct": "Your extrapolated tree is within a fifth of a penny at 50 steps, where the plain tree misses by 2p.",
@@ -117,7 +117,7 @@
     }
    },
    "explain": {
-    "text": "The 20-step tree misses by +6.5p and the 40-step by −1.5p: the error changed sign, so it is not $a/n$. Extrapolating a zig-zag throws the estimate 9.6p off. That is why `richardson_tree` smooths the last step first."
+    "text": "The 20-step tree misses by +6.5p and the 40-step by −1.5p: the error changed sign, so it is not $a/n$. Extrapolating that zig-zag gives £3.8081, 9.6p off. That is why `richardson_tree` smooths the last step first."
    }
   },
   {
@@ -174,7 +174,7 @@
      }
     ],
     "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n",
-    "how": "Check runs 6 hidden tests: two seeded values to 6 places, three deltas within 0.005 of the closed form (one with a yield, one out of the money), and a tiny bump that still agrees with $h = 0.01$. Draw `n_paths` normals in one call; no antithetic pairs. The first run loads NumPy."
+    "how": "Check runs 6 hidden tests: two seeded values to 6 places and three deltas within 0.005 of the closed form, one with a yield and one out of the money. The last checks that a tiny bump still agrees with $h = 0.01$. Draw `n_paths` normals in one call; no antithetic pairs. The first run loads NumPy."
    },
    "feedback": {
     "correct": "Your delta is 0.6360 against 0.6368, and it is stable for any bump.",
@@ -291,20 +291,20 @@
    "skills": [
     "od-pricers"
    ],
-   "prose": "For our one-year call at 100,000 paths, seed 0: plain Monte Carlo gives a standard error of £0.0465 and the control variate £0.0178.",
+   "prose": "For our one-year put at 100,000 paths, seed 0: plain Monte Carlo gives a standard error of £0.0274 and the control variate £0.0178.",
    "question": "How many plain paths would match the control variate's error?",
    "widget": {
     "kind": "numeric",
-    "answer": 686000,
+    "answer": 238000,
     "tol": {
      "rel": 0.02
     },
-    "accept": "About 686,000: $100{,}000 \\times (0.0465/0.0178)^2$.",
+    "accept": "About 238,000: $100{,}000 \\times (0.0274/0.0178)^2 \\approx 237{,}000$, or 238,000 unrounded.",
     "label": "Paths",
     "wrong": [
      {
       "id": "linear",
-      "value": 261000,
+      "value": 154000,
       "tol": {
        "abs": 5000
       }
@@ -312,14 +312,14 @@
     ]
    },
    "feedback": {
-    "correct": "About 686,000 paths: the control is worth 6.9 times the paths.",
+    "correct": "About 238,000 paths: for the put the control is worth 2.4 times the paths.",
     "generic": "Not quite right. Square the ratio of the errors.",
     "byKey": {
      "linear": "You scaled the paths with the error ratio. They scale with its square."
     }
    },
    "explain": {
-    "text": "$(0.0465/0.0178)^2 = 6.86$, so about 686,000 plain paths. The control costs one more array and one covariance. That is the trade a desk makes on every Monte Carlo price."
+    "text": "$(0.0274/0.0178)^2 \\approx 2.37$, so about 238,000 plain paths. The put gains less than the call's 6.9 times, because its plain error is smaller to start with. By parity the control leaves the call and the put the same error."
    }
   },
   {
@@ -331,7 +331,7 @@
    "title": "Two suspicious prices",
    "kind": "longform",
    "prompt": "A colleague's report on the one-year at-the-money put ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $q = 0$) shows two results. (a) Their Monte Carlo \"American put\" exercises on the first monthly date when the share is below £100, and prices at £3.20 ± £0.01, below the European £5.57. (b) Their 50-step tree prices the matching one-year call 4p below Black-Scholes's £10.45. Explain each result, say what each pricer can and cannot do, and write the pricer section of the dashboard's results note.",
-   "model": "**(a) The Monte Carlo put.** £3.20 ± £0.01 is about 240 errors below £5.57, so it is not noise. An American value is the best exercise rule; any fixed rule gives a lower bound. \"Exercise the first time it is in the money\" is a poor rule: it cashes in a few pence just below the strike and gives up the time value. So it is worth less than never exercising early, the European put. The 500-step tree gives the American put £6.09, a premium of 52p over £5.57. Plain Monte Carlo simulates forward and cannot see the hold value at each date; American options need a tree, or a regression method such as Longstaff-Schwartz.\n\n**(b) The tree.** 50 steps give £10.4107, 3.99p below £10.4506. CRR error shrinks like $1/n$ and alternates with the parity of $n$: 51 steps give +3.4p, 100 steps −2.0p, 500 steps −0.4p. So 4p is discretisation error, not a bug: average $n$ and $n + 1$, use more steps, or smooth the last step and extrapolate.\n\n**What each pricer can do.** Black-Scholes is exact and fast (3.7 µs) for European options under its model, and has no early exercise. The tree prices European and American options, with error falling like $1/n$ and cost like $n^2$ (50 ms at 500 steps). Monte Carlo handles any European or path-dependent payoff, always with a standard error that falls like $1/\\sqrt n$; it cannot price early exercise without a regression step.\n\n**Results note, Pricers.** \"Three pricers were compared on puts at strikes 80 to 120 and expiries 0.25, 0.5 and 1 year ($S = 100$, $r = 5\\%$, $q = 1\\%$, $\\sigma = 20\\%$). On European prices the 500-step tree agreed with Black-Scholes within 0.4p, and Monte Carlo (100,000 antithetic paths, seed 0) within 1.3 standard errors in every cell. American puts exceeded European ones by 3p to £2.18, largest deep in the money and long-dated. What failed: a forward Monte Carlo with a fixed exercise rule priced the American put at £3.20, below the European; and a 50-step tree missed by 4p, fixed by more steps.\"",
+   "model": "**(a) The Monte Carlo put.** £3.20 ± £0.01 is about 240 errors below £5.57, so it is not noise. An American value is the best exercise rule; any fixed rule gives a lower bound. \"Exercise the first time it is in the money\" is a poor rule: it cashes in a few pence just below the strike and gives up the time value. So it is worth less than never exercising early, the European put. The 500-step tree gives the American put £6.09, a premium of 52p over £5.57. Plain Monte Carlo simulates forward and cannot see the hold value at each date; American options need a tree, or a regression method such as Longstaff-Schwartz.\n\n**(b) The tree.** 50 steps give £10.4107, 3.99p below £10.4506. CRR error shrinks like $1/n$ and alternates with the parity of $n$: 51 steps give +3.4p, 100 steps −2.0p, 500 steps −0.4p. So 4p is discretisation error, not a bug: average $n$ and $n + 1$, use more steps, or smooth the last step and extrapolate.\n\n**What each pricer can do.** Black-Scholes is exact and fast (3.7 µs) for European options under its model, and has no early exercise. The tree prices European and American options, with error falling like $1/n$ and cost like $n^2$ (50 ms at 500 steps). Monte Carlo handles any European or path-dependent payoff, always with a standard error that falls like $1/\\sqrt n$; it cannot price early exercise without a regression step.\n\n**Results note, Pricers.** \"Three pricers were compared on puts at strikes 80 to 120 and expiries 0.25, 0.5 and 1 year ($S = 100$, $r = 5\\%$, $q = 1\\%$, $\\sigma = 20\\%$). On European prices the 500-step tree agreed with Black-Scholes within 0.4p, and Monte Carlo (100,000 antithetic paths, seed 0) within 1.3 standard errors in every cell. American puts exceeded European ones by 0.03p to £2.18, largest deep in the money and long-dated. What failed: a forward Monte Carlo with a fixed exercise rule priced the American put at £3.20, below the European; and a 50-step tree missed by 4p, fixed by more steps.\"",
    "rubric": [
     {
      "points": 1,

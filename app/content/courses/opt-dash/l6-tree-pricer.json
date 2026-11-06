@@ -18,6 +18,7 @@
    "prose": "The trees course priced a six-month put on £100, struck at £95, with $\\sigma = 25\\%$ and $r = 4\\%$. With 500 steps: European £3.91, American £4.01. Here is the same put on four steps. Each node shows the share price, then the value of holding on.",
    "canvas": {
     "kind": "graph",
+    "maxHeight": 330,
     "params": {
      "nodes": [
       {
@@ -690,7 +691,7 @@
     }
    },
    "explain": {
-    "text": "$p$ is set so that $pu + (1-p)d = e^{(r-q)\\Delta t}$: the share grows at $r - q$ under the tree's probabilities. Discounting stays at $r$, because cash still earns $r$. That one change gives the tree a dividend yield."
+    "text": "$p = 0.5252$ is set so that $pu + (1-p)d = e^{(r-q)\\Delta t}$: the share grows at $r - q$ under the tree's probabilities. Discounting stays at $r$, because cash still earns $r$. That one change gives the tree a dividend yield."
    }
   },
   {
@@ -796,7 +797,7 @@
      }
     ],
     "prelude": "from math import erf, exp, log, sqrt\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef bs_price(S, K, r, sigma, T, kind=\"call\", q=0.0):\n    \"\"\"Black-Scholes price of a European option, dividend yield q.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(f\"kind must be 'call' or 'put', not {kind!r}\")\n    if T <= 0:                          # at expiry: intrinsic value\n        return float(max(S - K, 0.0) if kind == \"call\" else max(K - S, 0.0))\n    F = S * exp((r - q) * T)            # the forward\n    D = exp(-r * T)                     # the discount factor\n    if sigma <= 0:                      # no randomness: the forward payoff\n        return D * (max(F - K, 0.0) if kind == \"call\" else max(K - F, 0.0))\n    d1 = (log(S / K) + (r - q + sigma ** 2 / 2) * T) / (sigma * sqrt(T))\n    d2 = d1 - sigma * sqrt(T)\n    if kind == \"call\":\n        return S * exp(-q * T) * norm_cdf(d1) - K * D * norm_cdf(d2)\n    return K * D * norm_cdf(-d2) - S * exp(-q * T) * norm_cdf(-d1)\n",
-    "how": "Check runs 11 hidden tests: the trees course's £3.91 and £4.01, the 500 and 501-step calls to 4 places, one-step trees, an American call with and without a yield, agreement with `bs_price` (already defined) within half a penny at $q = 1\\%$, and a step too large. The first run loads NumPy, which takes 10 to 20 seconds; a pure Python loop passes too."
+    "how": "Check runs 11 hidden tests: the trees course's £3.91 and £4.01, the 500 and 501-step calls to 4 places, and one-step trees. Then an American call with and without a yield, agreement with `bs_price` (already defined) within half a penny at $q = 1\\%$, and a step too large. The first run loads NumPy, which takes 10 to 20 seconds; a pure Python loop passes too."
    },
    "hints": [
     {
@@ -1239,14 +1240,14 @@
     }
    },
    "explain": {
-    "text": "Cash grows 5.1% in the step but the share can rise only 1.0%, so even the up node loses to cash. The weights would be 3.06 and −2.06: an arbitrage, not a price. The tree needs $\\sigma\\sqrt{\\Delta t} > (r - q)\\Delta t$, which more steps always give."
+    "text": "Cash grows 5.1% in the step but the share can rise only 1.0%, so even the up node loses to cash. The weights would be 3.06 and −2.06: an arbitrage, not a price. The tree needs $\\sigma\\sqrt{\\Delta t} > |r - q|\\Delta t$, which more steps always give."
    }
   },
   {
    "type": "generalise",
    "difficulty": 2,
    "title": "The American rule",
-   "prose": "Your tree, as rules. With $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$ and $p = \\frac{e^{(r-q)\\Delta t} - d}{u - d}$, each node keeps $$V = \\max\\left(e^{-r\\Delta t}\\left[pV_{\\text{up}} + (1-p)V_{\\text{down}}\\right],\\ \\text{exercise value}\\right).$$ Odd and even trees bracket the limit, and the error shrinks like $1/n$.",
+   "prose": "Your tree, as rules. With $u = e^{\\sigma\\sqrt{\\Delta t}}$, $d = 1/u$ and $p = \\frac{e^{(r-q)\\Delta t} - d}{u - d}$, each node keeps $$V = \\max\\left(e^{-r\\Delta t}\\left[pV_{\\text{up}} + (1-p)V_{\\text{down}}\\right],\\ \\text{exercise value}\\right).$$ At the money odd and even trees bracket the limit; away from it the error still shrinks like $1/n$ but wanders.",
    "question": "On a share with no yield, when does the tree exercise an American call early?",
    "widget": {
     "kind": "choice",
@@ -1254,7 +1255,7 @@
     "options": [
      {
       "id": "never",
-      "text": "Never: holding beats $S - K$ at every node, so the American call equals the European",
+      "text": "Never: it equals the European call",
       "correct": true
      },
      {
@@ -1312,7 +1313,7 @@
     "options": [
      {
       "id": "high",
-      "text": "Overstates it, by 0.4 vol points: it reads the early-exercise premium as extra volatility",
+      "text": "Overstates it, by about 0.4 vol points",
       "correct": true
      },
      {
@@ -1354,12 +1355,12 @@
     "generic": "Not quite right. Ask what Black-Scholes must change to reach the higher American price.",
     "byKey": {
      "low": "Price rises with vol, so matching a higher price takes a higher vol.",
-     "same": "0.4 vol points is a real error on a surface, larger in the wings and for longer expiries.",
+     "same": "0.4 vol points is a real error on a surface, and it grows for in-the-money puts and longer expiries.",
      "calls": "With no yield the American call has no premium; the put does."
     }
    },
    "explain": {
-    "text": "Black-Scholes has no early exercise, so it explains the extra 10p with volatility: 25.4%. A surface built this way is too high where the premium is large. Level 3's real-data note backs out vols with the tree, or uses out-of-the-money options, where the premium is small.",
+    "text": "Black-Scholes has no early exercise, so it explains the extra 10p with volatility: 25.4%. A surface built this way is too high where the premium is large. Level 4's real-data note (l16) backs out vols with the tree, or uses out-of-the-money options, where the premium is small.",
     "canvas": {
      "highlight": {
       "rows": [
@@ -1373,7 +1374,7 @@
  "summary": {
   "ideas": [
    "`crr_price` grows the share at $r - q$ in $p$, discounts at $r$, and for American options keeps $\\max(\\text{hold}, \\text{exercise})$ at every node.",
-   "Odd and even trees bracket Black-Scholes: 500 and 501 steps give £10.4466 and £10.4541 for the £10.4506 call, and their average £10.4503.",
+   "At the money, odd and even trees bracket Black-Scholes: 500 and 501 steps give £10.4466 and £10.4541 for the £10.4506 call, and their average £10.4503.",
    "The six-month 95 put is worth £3.91 European and £4.01 American; a yield gives deep in-the-money calls a premium too (£30.39 against £29.50 at 5%)."
   ],
   "formula": {
@@ -1408,6 +1409,13 @@
      },
      {
       "id": "half",
+      "value": 10.53,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "half-nodisc",
       "value": 11.07,
       "tol": {
        "abs": 0.01
@@ -1420,7 +1428,8 @@
     "generic": "Not quite right. Weight the up payoff by $p$, then discount one year.",
     "byKey": {
      "nodisc": "You forgot to discount: $0.5775 \\times 22.14 = 12.79$ is paid in a year.",
-     "half": "You used $p = 0.5$. The tree's $p$ is 0.5775."
+     "half": "You used $p = 0.5$. The tree's $p$ is 0.5775.",
+    "half-nodisc": "You used $p = 0.5$ and did not discount. The tree's $p$ is 0.5775, and the payoff is a year away."
     }
    },
    "explain": {
@@ -1459,7 +1468,7 @@
     }
    },
    "explain": {
-    "text": "500 steps miss by −0.40p and 501 by +0.35p. Their average misses by −0.03p, better than either tree alone."
+    "text": "500 steps miss by −0.40p and 501 by +0.35p. Their average, £10.4503, misses by −0.03p, better than either tree alone."
    }
   },
   {
@@ -1484,7 +1493,7 @@
      {
       "id": "raise",
       "text": "A `ValueError`, because $p$ leaves $[0, 1]$",
-      "why": "$p$ moves from 0.5252 to 0.5378 per quarter here, still inside $[0, 1]$. The bug is silent."
+      "why": "$p$ moves from 0.5022 to 0.5034 on 500 steps, still inside $[0, 1]$. The bug is silent."
      }
     ]
    },
@@ -1527,7 +1536,7 @@
     "generic": "Not quite right. Think about how much waiting is worth with less time left."
    },
    "explain": {
-    "text": "Holding is worth the chance of a further fall plus the interest given up. Both shrink as expiry nears, so exercise wins at ever higher prices. At expiry every price below £95 is exercised."
+    "text": "Waiting keeps the put's time value; exercising now earns interest on the £95. With less time left the time value is smaller, so exercise wins at ever higher prices. At expiry every price below £95 is exercised."
    }
   }
  ]
