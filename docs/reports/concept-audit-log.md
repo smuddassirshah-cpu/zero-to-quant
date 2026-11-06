@@ -7,3 +7,4 @@
 | game-theory | L1 to L3 | 1 | 0 | 6 | 0 | 5 | 10 (all fixed before the audit) | 1 | yes (fix pass 6 fixed, 0 disputed; one key changed, l11 pot odds, recomputed by the orchestrator; gates green) |
 | brainteasers | L1 to L3 | 1 | 0 | 4 | 0 | 4 | 13 (all fixed before the audit) | 0 | yes (fix pass 4 fixed, 0 disputed; gates green) |
 | coding-int | L1 to L3 | 1 | 1 | 5 | 0 | 5 | 5 (all fixed before the audit) | 1 | pending fix pass |
+| systems | L1 to L3 | 1 | 1 | 21 | 0 | 22 | 7 (all fixed before the audit) | 0 | pending fix pass |
