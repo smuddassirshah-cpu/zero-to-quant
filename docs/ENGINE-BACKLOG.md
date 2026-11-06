@@ -1607,3 +1607,8 @@ Status block (engine pass, item 588):
 
 Status block (engine pass, item 589):
 - 589: done (see handback for playthrough results).
+
+590. Done [Must]: rubric rows in the exam marking step took no click when a neighbouring row held a KaTeX fraction. KaTeX gives a fraction an invisible strut that reaches above its own row, so a click on the row above landed on it (the mock-video playthrough with `--local-cdn` timed out on the first rubric row, "subtree intercepts pointer events"; a real learner clicking the lower half of that row hit the wrong row). `css/widgets.css`: `.wd-rb .katex { pointer-events: none; }`, so the label takes every click. No engine JS or content change. Gates: `--exam mock-video` with and without `--local-cdn`, with and without `--mobile`, plus mock-superday-trader, topic-3.4 and mock-superday-developer.
+
+Status block (engine pass, item 590):
+- 590: done.
