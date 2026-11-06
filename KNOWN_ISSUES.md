@@ -190,3 +190,6 @@ Session T (6 Nov, waves 1 to 3):
 - momentum-rep `nw_t_by_hand` starter passes the lag-0 test (fails the others); pairs-rep l2 and l5 starters pass one test by construction.
 - complex L3 brief: l9 table cells "graded as expression" cannot be built (cells are text with an accept list).
 - Deferred engine items: `scatter` drag points have no `lockX` (stat-models); `space` curves cannot show direction (vector-calc L3); `derive` captions lack `sci()` (second sighting, convex L4); 19 wrong-versus-wrong overlap warnings remain (rule 581 companion, warning only).
+- (open, user) Under Strict, `prereq.js` `advisory()` makes every reference into a course optional for the role non-blocking, including a course's implicit in-course chain: momentum-rep L2 opens before L1 is met for a trader profile. Decide whether in-course references stay blocking (ENGINE-BACKLOG 583 design note).
+- Session T shards ran at 77ec3b3; later merges (vector-calc L3 and topic-3.1 fix passes, 583) were played through in their own passes and by `--routes-only` at ff41b0f; shard 1 rerun at ff41b0f started at close (result in PROGRESS if it finished).
+- The validator warning count rose to about 2,277 (rule 581 companion overlaps, new O2 hits in new levels); errors 0.
