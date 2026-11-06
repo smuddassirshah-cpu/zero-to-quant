@@ -108,6 +108,22 @@ const cppExpect = (v) => cppValue(v) || cppComplex(v) || (Array.isArray(v) && v.
 const cppValue = (v) => (typeof v === 'number' && Number.isFinite(v)) || typeof v === 'boolean' || typeof v === 'string' || (Array.isArray(v) && v.every(cppValue));
 const cppNumbers = (v) => (typeof v === 'number' && Number.isFinite(v)) || cppComplex(v) || (Array.isArray(v) && v.every(cppNumbers));
 /* items 378, 425, 464: a case's tol is { rel, abs } (either or both, numbers 0 or more), for isclose */
+/* item 581: a wrong[] value the grader can never return. grade.js within(): rel is |v-a| <= |a|*rel, abs is |v-a| <= abs; the answer is graded first, so a wrong value inside
+   the answer's tolerance is graded correct. WRONG_FIRE_LEVEL is "error" unless existing content must be downgraded. */
+const WRONG_FIRE_LEVEL = 'warning'; // 14 existing hits (docs/reports/engine-pass-T.md): flip to 'error' once fixed
+const halfWidth = (a, t) => { const o = typeof t === 'number' ? { abs: t } : (t || {}); return o.rel != null ? Math.abs(a) * o.rel + 1e-12 : (o.abs ?? 0) + 1e-9; };
+const wrongCannotFire = (file, where, answer, tolA, wrong) => {
+  if (typeof answer !== 'number' || !Number.isFinite(answer) || !Array.isArray(wrong)) return;
+  const ha = halfWidth(answer, tolA), put = WRONG_FIRE_LEVEL === 'error' ? err : warn, seen = [];
+  wrong.forEach((x, i) => {
+    if (!x || typeof x.value !== 'number' || !Number.isFinite(x.value)) return;
+    const hw = halfWidth(x.value, x.tol ?? { abs: 1e-9 }), d = Math.abs(x.value - answer);
+    if (d <= ha) put(file, `${where}.wrong[${i}]`, `wrong value ${x.value} lies inside the answer ${answer} tolerance (+-${+ha.toPrecision(6)}), so it is graded correct and "${x.id}" can never fire`);
+    else if (d <= ha + hw) put(file, `${where}.wrong[${i}]`, `wrong "${x.id}" (${x.value} +-${+hw.toPrecision(6)}) overlaps the answer ${answer} tolerance (+-${+ha.toPrecision(6)}); the overlap is graded correct`);
+    seen.forEach(([j, y, hy]) => { if (Math.abs(x.value - y.value) <= hw + hy) warn(file, `${where}.wrong[${i}]`, `wrong "${x.id}" overlaps wrong[${j}] "${y.id}"; the earlier entry takes the key where they overlap`); });
+    seen.push([i, x, hw]);
+  });
+};
 const tolCase = (file, at, t) => {
   if (t.tol == null) return;
   if (!(isObj(t.tol) && (typeof t.tol.rel === 'number' || typeof t.tol.abs === 'number') && Object.values(t.tol).every(v => typeof v === 'number' && v >= 0))) err(file, `${at}.tol`, 'tol is { "rel": r } or { "abs": x } (or both), for compare: "isclose"');
@@ -404,6 +420,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
     case 'numeric':
       if ((typeof w.answer !== 'number' || !Number.isFinite(w.answer)) && !(typeof w.answer === 'string' && /^\{\{\s*carry\.[A-Za-z0-9_.]+\s*\}\}$/.test(w.answer))) err(file, `${where}.answer`, 'numeric answer must be a number (or one {{carry.name}} placeholder)');
       tol(w.tol, `${where}.tol`);
+      wrongCannotFire(file, where, w.answer, w.tol, w.wrong);
       ids(w.wrong, 'wrong').forEach(k => keys.add(String(k)));
       (w.wrong || []).forEach((x, i) => { if (typeof x.value !== 'number') err(file, `${where}.wrong[${i}].value`, 'must be a number'); if (x.tol) tol(x.tol, `${where}.wrong[${i}].tol`); });
       text(w.accept, `${where}.accept`);
@@ -627,7 +644,7 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
     case 'table': {
       if (!Array.isArray(w.columns) || !Array.isArray(w.rows)) { err(file, where, 'table needs columns and rows'); break; }
       let editable = 0;
-      w.rows.forEach((r, i) => (r || []).forEach((c, j) => { if (isObj(c) && c.edit) { editable++; keys.add(`r${i}c${j}`); keys.add(`r${i + 1}c${j + 1}`); if (Array.isArray(c.wrong)) c.wrong.forEach(x => { if (isObj(x) && typeof x.id === 'string') keys.add(x.id); }); /* item 576: a cell's own wrong id is the key table.js returns */ if (typeof c.answer === 'string' && c.answer.trim() && !Number.isFinite(+c.answer)) { if (c.accept != null && !(Array.isArray(c.accept) && c.accept.every(x => typeof x === 'string'))) err(file, `${where}.rows[${i}][${j}].accept`, 'accept is a list of other spellings'); return; } /* item 118: a text answer, graded ignoring case */ if (typeof c.answer !== 'number') err(file, `${where}.rows[${i}][${j}].answer`, 'editable cell needs a numeric answer, or a text one such as "True"'); if (c.tol) tol(c.tol, `${where}.rows[${i}][${j}].tol`); else err(file, `${where}.rows[${i}][${j}].tol`, 'editable cell needs a tol'); } }));
+      w.rows.forEach((r, i) => (r || []).forEach((c, j) => { if (isObj(c) && c.edit) { editable++; keys.add(`r${i}c${j}`); keys.add(`r${i + 1}c${j + 1}`); if (Array.isArray(c.wrong)) c.wrong.forEach(x => { if (isObj(x) && typeof x.id === 'string') keys.add(x.id); }); /* item 576: a cell's own wrong id is the key table.js returns */ if (typeof c.answer === 'string' && c.answer.trim() && !Number.isFinite(+c.answer)) { if (c.accept != null && !(Array.isArray(c.accept) && c.accept.every(x => typeof x === 'string'))) err(file, `${where}.rows[${i}][${j}].accept`, 'accept is a list of other spellings'); return; } /* item 118: a text answer, graded ignoring case */ if (typeof c.answer !== 'number') err(file, `${where}.rows[${i}][${j}].answer`, 'editable cell needs a numeric answer, or a text one such as "True"'); wrongCannotFire(file, `${where}.rows[${i}][${j}]`, c.answer, c.tol, c.wrong); if (c.tol) tol(c.tol, `${where}.rows[${i}][${j}].tol`); else err(file, `${where}.rows[${i}][${j}].tol`, 'editable cell needs a tol'); } }));
       if (!editable) err(file, `${where}.rows`, 'no editable cell');
       break;
     }
