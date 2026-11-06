@@ -43,3 +43,27 @@ All from `app/` unless said; content unchanged by this audit, so the playthrough
 - `python3 -I docs/reports/mental-pressure-L4-concepts.py` (repo root): `34 of 34 checks passed`, exit 0; it also prints the six rows where more than one rule of the taxonomy fits (all agreeing on the next term).
 - `node tools/playthrough.mjs --set mental-pressure/review-4 --set mental-pressure/homework-4 --local-cdn <PKGS> 2>&1 | tail -3`: `browser relaunches: 0` / `All passed.`
 - `node tools/playthrough.mjs --lesson mental-pressure/l13-negative-marking --lesson mental-pressure/l16-harder-sequences --local-cdn <PKGS> 2>&1 | tail -3`: `browser relaunches: 0` / `All passed.`
+
+## Fix pass
+
+Opus fixer, 6 Nov 2026. Targeted string edits only; no lesson id, `course.json`, engine or L1 to L3 file touched; the concepts script is unchanged.
+
+1. fixed | basis: answering at confidence $p$ with penalty $w$ earns $p - (1-p)w > 0$ iff $p > w/(1+w)$, so $\tfrac12$ at $w = 1$ and $\tfrac14$ at $w = \tfrac13$; a blind guess among $k$ is $\tfrac1k - w\tfrac{k-1}{k} \ge 0$ iff $w \le \tfrac{1}{k-1}$ (five options at −1/3 give $-\tfrac1{15}$). l13 s[7] prose, summary.ideas[1], s[11] options "half" and "rule" as proposed; s[11].explain "the −1/3 rule" now "the fair penalty" to match.
+2. fixed | basis: $80 \times \tfrac{2-4}{4} = -40$, $p^* = \tfrac12$, $48 - 12 = 36$, $64 \times 0.8 - 8 = 43.2$ and $2p - 1 = 0.4 \Rightarrow p = 0.7$ each need $w = 1$; the five row labels now say "+1 and −1". Keys unchanged.
+3. fixed | basis: with $m$ questions unreached at the end, guessing earns $\min(m, 3) \times 0.8$ against 0.8 for solving, 0 when $m = 0$; 80 questions at 6 s are exactly 480 s, so in s[4] the clock binds. l13 s[4].explain third sentence now "So the trade gains 1.6, since 80 questions at 6 s use all 8 minutes." (merged rather than appended, to keep three sentences); summary.ideas[2] and homework-4 items[5].prose as proposed; review-4 items[1].prose gains "The clock will end the sitting with questions unreached." Keys unchanged.
+4. fixed | basis: runs-free count $a_n = a_{n-1} + a_{n-2} + a_{n-3}$ from 1, 2, 4 gives $a_{10} = 504$, so a run of three heads in ten flips is $\tfrac{520}{1024}$; in three flips it is $\tfrac18$. Row label and the s[10] explain ("Three heads in three flips is $\tfrac18$") now name three flips.
+5. fixed, with a different example | basis: in Python `1 - (5/6)**6 == 31031/46656` is True, so the proposed example does not split; the binomial sum $\sum_{k=1}^{6}\binom6k(\tfrac16)^k(\tfrac56)^{6-k}$ gives 0.6651020233196161 against 0.6651020233196159. Second sentence now "Floats can split a tie reached by two routes: summing the binomial terms for at least one 6 in six rolls misses `1 - (5/6)**6` in the last bit." (`l14_float_tie` still holds: the three routes give more than one value.)
+6. fixed | basis: 5, 7, 11, 19, 35 fits doubling gaps and $\times 2 - 3$ (both 67); 2, 3, 5, 9, 17 fits doubling gaps and $\times 2 - 1$ (both 33); 12, 21, 23, 32, 34, 43 gives 45 by reverse-then-+2 and by +9, +2 alternating; 81, 27, 9, 3 gives 1 by ratio and gap ratio. l16 s[6] and s[10] prose as proposed. homework-4 items[3].prose keeps "one clear rule": `l16_one_clear_rule_claims` confirms each of its rows fits one rule.
+7. fixed | basis: trials to first success have mean $1/p = 6$, failures before it $(1-p)/p = 5$. homework-4 items[2] row and byKey.r2c1 as proposed; also l15 s[10] row 2 (same wording, typed key 6) now reads "up to and including the first 6".
+8. fixed | basis: $1 - \prod(1 - p_i)$ needs independence; without it the union of ten events of chance $\tfrac1{10}$ lies in $[\tfrac1{10}, 1]$. Line text gains ", independently"; order unchanged ($0.651 > 0.642 > 0.023$).
+9. fixed (hedged) | basis: no source for vendor keying practice; parsimony is the content's own argument, and l17 section A's feedback names the reverse operation, a misplaced point and a slipped digit as its distractors. l16 options[3].why and byKey.twist now "A test keys one rule, and the rule with fewer parts is the safer bet. Nothing in three terms favours the twist."; homework-4 items[4].explain last sentence now "Section A of the full battery uses the same three near misses."
+10. fixed | basis: l17 s[2].prose sets section A forward only, and s[8].explain says a forward-only section has nothing to recheck. s[8].prose as proposed.
+
+Counts: 10 fixed, 0 disputed, 0 deferred. Graded answers changed: none (keys, `wrong[]` values and tolerances untouched; only labels, prose, feedback and explain text).
+
+### Checks after the fix pass
+
+- `node tools/validate.mjs 2>&1 | tail -1` (app/): `0 errors, 4279 warnings`; `content/manifest.json` restored.
+- `python3 -I docs/reports/mental-pressure-L4-concepts.py` (repo root): `34 of 34 checks passed`, exit 0.
+- `VOICE_BASE=app/content/courses/mental-pressure/ python3 docs/reviews/voice-scan.py 35 --summary`: `explanations over three sentences: 0`, `over 35 words: 0`.
+- `node tools/playthrough.mjs --lesson mental-pressure/<l13 to l17> --set mental-pressure/review-4 --set mental-pressure/homework-4 --local-cdn <PKGS>` (app/), plain and with `--mobile`: each `browser relaunches: 0` / `All passed.`
