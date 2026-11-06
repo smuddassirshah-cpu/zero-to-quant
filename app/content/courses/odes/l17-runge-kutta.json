@@ -1,0 +1,2033 @@
+{
+  "id": "l17-runge-kutta",
+  "course": "odes",
+  "title": "Runge-Kutta",
+  "minutes": 15,
+  "objectives": [
+    "Implement fourth-order Runge-Kutta and compare its error with Euler’s."
+  ],
+  "skills": [
+    "de-numeric"
+  ],
+  "screens": [
+    {
+      "type": "problem",
+      "difficulty": 1,
+      "title": "Measure the slope halfway",
+      "prose": "Euler uses the slope at the start of a step. Try this instead: take half an Euler step, read the slope there, and use that slope for the whole step. On $y' = y$ from $y = 1$ with $h = 0.1$, the half step reaches 1.05.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.11
+          ],
+          "y": [
+            0.995,
+            1.115
+          ],
+          "xLabel": "$t$",
+          "height": 240,
+          "functions": [
+            {
+              "id": "ex",
+              "expr": "exp(x)",
+              "label": "$e^t$",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 0.03
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "S",
+              "x": 0,
+              "y": 1,
+              "label": "start"
+            },
+            {
+              "id": "M",
+              "x": 0.05,
+              "y": 1.05,
+              "label": "half step",
+              "labelPos": "nw"
+            }
+          ],
+          "segments": [
+            {
+              "id": "eu",
+              "from": [
+                0,
+                1
+              ],
+              "to": [
+                0.1,
+                1.1
+              ],
+              "colour": 3,
+              "label": "Euler"
+            },
+            {
+              "id": "half",
+              "from": [
+                0,
+                1
+              ],
+              "to": [
+                0.05,
+                1.05
+              ],
+              "dashed": true,
+              "colour": 4
+            },
+            {
+              "id": "mid",
+              "from": [
+                0,
+                1
+              ],
+              "to": [
+                0.1,
+                1.105
+              ],
+              "colour": 1,
+              "label": "midpoint"
+            }
+          ],
+          "hide": [
+            "mid"
+          ]
+        }
+      },
+      "question": "What is $y_1$ after one midpoint step?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.105,
+        "tol": {
+          "abs": 5e-05
+        },
+        "accept": "1.105: $1 + 0.1 \\times 1.05$",
+        "wrong": [
+          {
+            "id": "euler",
+            "value": 1.1,
+            "tol": {
+              "abs": 0.0001
+            }
+          },
+          {
+            "id": "half",
+            "value": 1.05,
+            "tol": {
+              "abs": 0.0001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The slope at the half step is $y = 1.05$."
+        },
+        {
+          "rung": "point",
+          "text": "Use that slope for the whole step of 0.1.",
+          "highlight": [
+            "M"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 + 0.1 \\times 1.05 = 1.105$."
+        }
+      ],
+      "feedback": {
+        "correct": "$1 + 0.1 \\times 1.05 = 1.105$.",
+        "generic": "Not quite right. Read the slope at the half step, then take a full step with it.",
+        "byKey": {
+          "euler": "That uses the slope at the start, which is Euler. Use the slope at the half step.",
+          "half": "That is where the half step lands. Use its slope, 1.05, for a full step from 1."
+        }
+      },
+      "explain": {
+        "text": "The slope at the half step is 1.05, so $y_1 = 1 + 0.1 \\times 1.05 = 1.105$. Ten such steps give 2.714081 at $t = 1$: an error of 0.004201, against Euler's 0.124539.",
+        "canvas": {
+          "hide": [],
+          "highlight": [
+            "mid"
+          ]
+        }
+      }
+    },
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Four slopes",
+      "prose": "**Runge-Kutta** (RK4) reads four slopes a step: $k_1 = f(t, y)$, $k_2 = f(t + \\tfrac h2, y + \\tfrac h2 k_1)$, $k_3 = f(t + \\tfrac h2, y + \\tfrac h2 k_2)$ and $k_4 = f(t + h, y + hk_3)$. It steps with the mean $\\tfrac16(k_1 + 2k_2 + 2k_3 + k_4)$. Slide $h$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            1.05
+          ],
+          "y": [
+            0.9,
+            2.9
+          ],
+          "xLabel": "$t$",
+          "height": 240,
+          "functions": [
+            {
+              "id": "ex",
+              "expr": "exp(x)",
+              "label": "$e^t$",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 0.3
+            },
+            {
+              "id": "E",
+              "expr": "(1+h)^floor(x/h)*(1+(x-h*floor(x/h)))",
+              "label": "Euler",
+              "colour": 3,
+              "labelSide": "below",
+              "labelAt": 0.8
+            },
+            {
+              "id": "K",
+              "expr": "(1+h+h^2/2+h^3/6+h^4/24)^floor(x/h)*(1+((1+h+h^2/2+h^3/6+h^4/24)-1)*(x-h*floor(x/h))/h)",
+              "label": "RK4",
+              "colour": 1,
+              "labelAt": 0.6
+            }
+          ],
+          "params": {
+            "h": 0.5
+          }
+        },
+        "state": {},
+        "controls": [
+          {
+            "bind": "h",
+            "stops": [
+              0.5,
+              0.25,
+              0.1
+            ],
+            "start": 0.5,
+            "label": "step $h$"
+          }
+        ],
+        "derive": {
+          "caption": "At $t = 1$: Euler {{fixed(pow(1 + h, round(1/h)), 6)}}, RK4 {{fixed(pow(1 + h + h*h/2 + h*h*h/6 + h*h*h*h/24, round(1/h)), 6)}}, $e$ = 2.718282"
+        }
+      },
+      "question": "With $h = 0.5$, what does RK4 give at $t = 1$, to 4 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2.7173,
+        "tol": {
+          "abs": 5e-05
+        },
+        "accept": "2.7173: $1.6484375^2$",
+        "wrong": [
+          {
+            "id": "euler",
+            "value": 2.25,
+            "tol": {
+              "abs": 0.001
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Set $h = 0.5$ and read the caption."
+        },
+        {
+          "rung": "point",
+          "text": "One RK4 step on $y' = y$ multiplies by $1 + h + \\tfrac{h^2}{2} + \\tfrac{h^3}{6} + \\tfrac{h^4}{24}$.",
+          "highlight": [
+            "K"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At $h = 0.5$ that is 1.6484375; squared, 2.7173."
+        }
+      ],
+      "feedback": {
+        "correct": "$1.6484375^2 = 2.7173$, against Euler's 2.25.",
+        "generic": "Not quite right. Read RK4's value, not Euler's.",
+        "byKey": {
+          "euler": "That is Euler's two steps. RK4's two steps land far closer to $e$."
+        }
+      },
+      "explain": {
+        "text": "Two RK4 steps of 0.5 give 2.7173, within 0.001 of $e$. Euler's two steps give 2.25. Four slopes a step buy a great deal.",
+        "canvas": {
+          "params": {
+            "h": 0.5
+          }
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Four slopes by hand",
+      "prose": "Take one RK4 step on $y' = y$ from $y = 1$ with $h = 0.1$. Here $f(t, y) = y$, so each slope is the $y$ it is read at. Then $y_1 = 1 + \\tfrac{0.1}{6}(k_1 + 2k_2 + 2k_3 + k_4)$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            0.11
+          ],
+          "y": [
+            0.995,
+            1.115
+          ],
+          "xLabel": "$t$",
+          "height": 200,
+          "functions": [
+            {
+              "id": "ex",
+              "expr": "exp(x)",
+              "label": "$e^t$",
+              "dashed": true,
+              "colour": 2,
+              "labelAt": 0.03
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "S",
+              "x": 0,
+              "y": 1,
+              "label": "start"
+            }
+          ]
+        }
+      },
+      "question": "Fill in the four slopes and $y_1$.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "quantity",
+          "value"
+        ],
+        "rows": [
+          [
+            "$k_1$",
+            {
+              "edit": true,
+              "answer": 1,
+              "tol": {
+                "abs": 5e-05
+              }
+            }
+          ],
+          [
+            "$k_2$",
+            {
+              "edit": true,
+              "answer": 1.05,
+              "tol": {
+                "abs": 5e-05
+              }
+            }
+          ],
+          [
+            "$k_3$",
+            {
+              "edit": true,
+              "answer": 1.0525,
+              "tol": {
+                "abs": 5e-05
+              }
+            }
+          ],
+          [
+            "$k_4$",
+            {
+              "edit": true,
+              "answer": 1.10525,
+              "tol": {
+                "abs": 5e-05
+              }
+            }
+          ],
+          [
+            "$y_1$",
+            {
+              "edit": true,
+              "answer": 1.1051708,
+              "tol": {
+                "abs": 1e-07
+              }
+            }
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$k_1 = 1$ and $k_2 = 1 + 0.05 \\times 1$."
+        },
+        {
+          "rung": "point",
+          "text": "$k_3 = 1 + 0.05k_2$ and $k_4 = 1 + 0.1k_3$.",
+          "highlight": [
+            "ex"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$1 + \\tfrac{0.1}{6}(1 + 2.1 + 2.105 + 1.10525) = 1.1051708$."
+        }
+      ],
+      "feedback": {
+        "correct": "1, 1.05, 1.0525, 1.10525, then $y_1 = 1.1051708$.",
+        "generic": "Not quite right. Each slope uses the one before it.",
+        "byKey": {
+          "r2c1": "$k_3$ is read at $y + \\tfrac h2 k_2 = 1 + 0.05 \\times 1.05$.",
+          "r3c1": "$k_4$ takes a full step with $k_3$: $1 + 0.1 \\times 1.0525$.",
+          "r4c1": "The weights are 1, 2, 2, 1 over 6: $1 + \\tfrac{0.1}{6} \\times 6.31025$."
+        }
+      },
+      "explain": {
+        "text": "The weighted mean is $6.31025/6$, so $y_1 = 1.1051708333$. That is $1 + h + \\tfrac{h^2}{2} + \\tfrac{h^3}{6} + \\tfrac{h^4}{24}$ at $h = 0.1$: the Taylor series of $e^h$ to $h^4$ (taylor lesson 6)."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "Fourth order",
+      "prose": "Ten RK4 steps of 0.1 reach 2.7182797, an error of $2.084 \\times 10^{-6}$. Twenty steps of 0.05 err by $1.358 \\times 10^{-7}$. The chart plots $\\log_{10}$ of each error against the step, on a log axis.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0.008,
+            0.15
+          ],
+          "y": [
+            -10,
+            0
+          ],
+          "xScale": "log",
+          "xAxis": "bottom",
+          "yTicks": "integer",
+          "xLabel": "step $h$",
+          "yLabel": "$\\log_{10}$ error",
+          "height": 260,
+          "functions": [
+            {
+              "id": "s1",
+              "expr": "ln(1.25*x)/ln(10)",
+              "label": "Euler, slope 1",
+              "dashed": true,
+              "colour": 3
+            },
+            {
+              "id": "s4",
+              "expr": "ln(0.0208*x^4)/ln(10)",
+              "label": "RK4, slope 4",
+              "dashed": true,
+              "colour": 1,
+              "labelSide": "below"
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "e0",
+              "x": 0.1,
+              "y": -0.905,
+              "label": "",
+              "colour": 3
+            },
+            {
+              "id": "e1",
+              "x": 0.05,
+              "y": -1.187,
+              "label": "",
+              "colour": 3
+            },
+            {
+              "id": "e2",
+              "x": 0.025,
+              "y": -1.479,
+              "label": "",
+              "colour": 3
+            },
+            {
+              "id": "e3",
+              "x": 0.0125,
+              "y": -1.775,
+              "label": "",
+              "colour": 3
+            },
+            {
+              "id": "k0",
+              "x": 0.1,
+              "y": -5.681,
+              "label": "",
+              "colour": 1
+            },
+            {
+              "id": "k1",
+              "x": 0.05,
+              "y": -6.867,
+              "label": "",
+              "colour": 1
+            },
+            {
+              "id": "k2",
+              "x": 0.025,
+              "y": -8.062,
+              "label": "",
+              "colour": 1
+            },
+            {
+              "id": "k3",
+              "x": 0.0125,
+              "y": -9.262,
+              "label": "",
+              "colour": 1
+            }
+          ]
+        }
+      },
+      "question": "By what factor did halving the step cut RK4's error?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15.35,
+        "tol": {
+          "abs": 0.08
+        },
+        "accept": "15.35: $2.084 \\times 10^{-6}/1.358 \\times 10^{-7}$",
+        "wrong": [
+          {
+            "id": "first",
+            "value": 2,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "ideal",
+            "value": 16,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Divide the error at 0.1 by the error at 0.05."
+        },
+        {
+          "rung": "point",
+          "text": "$2.084 \\times 10^{-6}/1.358 \\times 10^{-7}$.",
+          "highlight": [
+            "k0",
+            "k1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "That is 15.35."
+        }
+      ],
+      "feedback": {
+        "correct": "15.35, close to $2^4 = 16$.",
+        "generic": "Not quite right. Divide the two errors.",
+        "byKey": {
+          "first": "A factor of 2 is Euler's first order. RK4's errors fall far faster.",
+          "ideal": "16 is $2^4$, the ideal. The measured ratio is 15.35, close to it."
+        }
+      },
+      "explain": {
+        "text": "$2.084 \\times 10^{-6}/1.358 \\times 10^{-7} = 15.35$, close to $16 = 2^4$. The RK4 points fall with slope 4: **fourth order**.",
+        "canvas": {
+          "highlight": [
+            "s4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Cost against accuracy",
+      "prose": "RK4 costs four evaluations of $f$ a step; Euler costs one. Euler needs 100,000 steps to bring the error down to $1.36 \\times 10^{-5}$. RK4 does better with ten steps.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            2,
+            200000
+          ],
+          "y": [
+            -7,
+            0
+          ],
+          "xScale": "log",
+          "xAxis": "bottom",
+          "yTicks": "integer",
+          "xLabel": "evaluations of $f$",
+          "yLabel": "$\\log_{10}$ error",
+          "height": 250
+        },
+        "state": {
+          "points": [
+            {
+              "id": "u0",
+              "x": 10,
+              "y": -0.905,
+              "label": "",
+              "colour": 3
+            },
+            {
+              "id": "u1",
+              "x": 100,
+              "y": -1.871,
+              "label": "",
+              "colour": 3
+            },
+            {
+              "id": "u2",
+              "x": 1000,
+              "y": -2.867,
+              "label": "",
+              "colour": 3
+            },
+            {
+              "id": "u3",
+              "x": 10000,
+              "y": -3.867,
+              "label": "",
+              "colour": 3
+            },
+            {
+              "id": "u4",
+              "x": 100000,
+              "y": -4.867,
+              "label": "Euler",
+              "colour": 3
+            },
+            {
+              "id": "v0",
+              "x": 4,
+              "y": -2.002,
+              "label": "",
+              "colour": 1
+            },
+            {
+              "id": "v1",
+              "x": 8,
+              "y": -3.029,
+              "label": "",
+              "colour": 1
+            },
+            {
+              "id": "v2",
+              "x": 20,
+              "y": -4.513,
+              "label": "",
+              "colour": 1
+            },
+            {
+              "id": "v3",
+              "x": 40,
+              "y": -5.681,
+              "label": "RK4",
+              "colour": 1
+            },
+            {
+              "id": "v4",
+              "x": 80,
+              "y": -6.867,
+              "label": "",
+              "colour": 1
+            }
+          ]
+        }
+      },
+      "question": "How many times fewer evaluations does RK4 use?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 2500,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "2500: $100{,}000/40$",
+        "wrong": [
+          {
+            "id": "steps",
+            "value": 10000,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Ten RK4 steps cost how many evaluations?"
+        },
+        {
+          "rung": "point",
+          "text": "$10 \\times 4 = 40$.",
+          "highlight": [
+            "v3",
+            "u4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$100{,}000/40 = 2{,}500$."
+        }
+      ],
+      "feedback": {
+        "correct": "$100{,}000/40 = 2{,}500$.",
+        "generic": "Not quite right. Count evaluations, not steps.",
+        "byKey": {
+          "steps": "That compares steps. RK4's ten steps cost 40 evaluations."
+        }
+      },
+      "explain": {
+        "text": "Ten RK4 steps cost 40 evaluations and err by $2.08 \\times 10^{-6}$. Euler spends 100,000 for $1.36 \\times 10^{-5}$, so RK4 is 2,500 times cheaper and still more accurate. Order beats cost per step.",
+        "canvas": {
+          "highlight": [
+            "v3",
+            "u4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Round the centre again",
+      "prose": "Lesson 16's centre: $x' = y$, $y' = -x$ from $(1, 0)$, 63 steps of 0.1. Euler spiralled out to radius 1.3681. RK4 takes the same 63 steps.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.6,
+            1.6
+          ],
+          "y": [
+            -1.6,
+            1.6
+          ],
+          "equal": true,
+          "height": 260,
+          "field": {
+            "id": "F",
+            "P": "y",
+            "Q": "-x",
+            "normalise": true
+          },
+          "functions": [
+            {
+              "id": "E",
+              "points": [
+                [
+                  1.0,
+                  0.0
+                ],
+                [
+                  1.0,
+                  -0.1
+                ],
+                [
+                  0.99,
+                  -0.2
+                ],
+                [
+                  0.97,
+                  -0.299
+                ],
+                [
+                  0.9401,
+                  -0.396
+                ],
+                [
+                  0.9005,
+                  -0.49
+                ],
+                [
+                  0.8515,
+                  -0.5801
+                ],
+                [
+                  0.7935,
+                  -0.6652
+                ],
+                [
+                  0.727,
+                  -0.7446
+                ],
+                [
+                  0.6525,
+                  -0.8173
+                ],
+                [
+                  0.5708,
+                  -0.8825
+                ],
+                [
+                  0.4825,
+                  -0.9396
+                ],
+                [
+                  0.3886,
+                  -0.9878
+                ],
+                [
+                  0.2898,
+                  -1.0267
+                ],
+                [
+                  0.1871,
+                  -1.0557
+                ],
+                [
+                  0.0816,
+                  -1.0744
+                ],
+                [
+                  -0.0259,
+                  -1.0825
+                ],
+                [
+                  -0.1341,
+                  -1.08
+                ],
+                [
+                  -0.2421,
+                  -1.0665
+                ],
+                [
+                  -0.3488,
+                  -1.0423
+                ],
+                [
+                  -0.453,
+                  -1.0075
+                ],
+                [
+                  -0.5538,
+                  -0.9622
+                ],
+                [
+                  -0.65,
+                  -0.9068
+                ],
+                [
+                  -0.7407,
+                  -0.8418
+                ],
+                [
+                  -0.8248,
+                  -0.7677
+                ],
+                [
+                  -0.9016,
+                  -0.6852
+                ],
+                [
+                  -0.9701,
+                  -0.5951
+                ],
+                [
+                  -1.0296,
+                  -0.4981
+                ],
+                [
+                  -1.0794,
+                  -0.3951
+                ],
+                [
+                  -1.119,
+                  -0.2871
+                ],
+                [
+                  -1.1477,
+                  -0.1753
+                ],
+                [
+                  -1.1652,
+                  -0.0605
+                ],
+                [
+                  -1.1712,
+                  0.056
+                ],
+                [
+                  -1.1656,
+                  0.1732
+                ],
+                [
+                  -1.1483,
+                  0.2897
+                ],
+                [
+                  -1.1193,
+                  0.4046
+                ],
+                [
+                  -1.0789,
+                  0.5165
+                ],
+                [
+                  -1.0272,
+                  0.6244
+                ],
+                [
+                  -0.9648,
+                  0.7271
+                ],
+                [
+                  -0.8921,
+                  0.8236
+                ],
+                [
+                  -0.8097,
+                  0.9128
+                ],
+                [
+                  -0.7185,
+                  0.9938
+                ],
+                [
+                  -0.6191,
+                  1.0656
+                ],
+                [
+                  -0.5125,
+                  1.1275
+                ],
+                [
+                  -0.3998,
+                  1.1788
+                ],
+                [
+                  -0.2819,
+                  1.2187
+                ],
+                [
+                  -0.16,
+                  1.2469
+                ],
+                [
+                  -0.0353,
+                  1.2629
+                ],
+                [
+                  0.091,
+                  1.2665
+                ],
+                [
+                  0.2176,
+                  1.2574
+                ],
+                [
+                  0.3434,
+                  1.2356
+                ],
+                [
+                  0.4669,
+                  1.2013
+                ],
+                [
+                  0.587,
+                  1.1546
+                ],
+                [
+                  0.7025,
+                  1.0959
+                ],
+                [
+                  0.8121,
+                  1.0256
+                ],
+                [
+                  0.9147,
+                  0.9444
+                ],
+                [
+                  1.0091,
+                  0.853
+                ],
+                [
+                  1.0944,
+                  0.752
+                ],
+                [
+                  1.1696,
+                  0.6426
+                ],
+                [
+                  1.2339,
+                  0.5256
+                ],
+                [
+                  1.2864,
+                  0.4023
+                ],
+                [
+                  1.3266,
+                  0.2736
+                ],
+                [
+                  1.354,
+                  0.141
+                ],
+                [
+                  1.3681,
+                  0.0056
+                ]
+              ],
+              "label": "Euler",
+              "colour": 3
+            },
+            {
+              "id": "K",
+              "points": [
+                [
+                  1.0,
+                  0.0
+                ],
+                [
+                  0.995,
+                  -0.0998
+                ],
+                [
+                  0.9801,
+                  -0.1987
+                ],
+                [
+                  0.9553,
+                  -0.2955
+                ],
+                [
+                  0.9211,
+                  -0.3894
+                ],
+                [
+                  0.8776,
+                  -0.4794
+                ],
+                [
+                  0.8253,
+                  -0.5646
+                ],
+                [
+                  0.7648,
+                  -0.6442
+                ],
+                [
+                  0.6967,
+                  -0.7174
+                ],
+                [
+                  0.6216,
+                  -0.7833
+                ],
+                [
+                  0.5403,
+                  -0.8415
+                ],
+                [
+                  0.4536,
+                  -0.8912
+                ],
+                [
+                  0.3624,
+                  -0.932
+                ],
+                [
+                  0.2675,
+                  -0.9636
+                ],
+                [
+                  0.17,
+                  -0.9854
+                ],
+                [
+                  0.0707,
+                  -0.9975
+                ],
+                [
+                  -0.0292,
+                  -0.9996
+                ],
+                [
+                  -0.1288,
+                  -0.9917
+                ],
+                [
+                  -0.2272,
+                  -0.9738
+                ],
+                [
+                  -0.3233,
+                  -0.9463
+                ],
+                [
+                  -0.4161,
+                  -0.9093
+                ],
+                [
+                  -0.5048,
+                  -0.8632
+                ],
+                [
+                  -0.5885,
+                  -0.8085
+                ],
+                [
+                  -0.6663,
+                  -0.7457
+                ],
+                [
+                  -0.7374,
+                  -0.6755
+                ],
+                [
+                  -0.8011,
+                  -0.5985
+                ],
+                [
+                  -0.8569,
+                  -0.5155
+                ],
+                [
+                  -0.9041,
+                  -0.4274
+                ],
+                [
+                  -0.9422,
+                  -0.335
+                ],
+                [
+                  -0.971,
+                  -0.2393
+                ],
+                [
+                  -0.99,
+                  -0.1411
+                ],
+                [
+                  -0.9991,
+                  -0.0416
+                ],
+                [
+                  -0.9983,
+                  0.0584
+                ],
+                [
+                  -0.9875,
+                  0.1577
+                ],
+                [
+                  -0.9668,
+                  0.2555
+                ],
+                [
+                  -0.9365,
+                  0.3508
+                ],
+                [
+                  -0.8968,
+                  0.4425
+                ],
+                [
+                  -0.8481,
+                  0.5298
+                ],
+                [
+                  -0.791,
+                  0.6119
+                ],
+                [
+                  -0.7259,
+                  0.6878
+                ],
+                [
+                  -0.6536,
+                  0.7568
+                ],
+                [
+                  -0.5748,
+                  0.8183
+                ],
+                [
+                  -0.4903,
+                  0.8716
+                ],
+                [
+                  -0.4008,
+                  0.9162
+                ],
+                [
+                  -0.3073,
+                  0.9516
+                ],
+                [
+                  -0.2108,
+                  0.9775
+                ],
+                [
+                  -0.1122,
+                  0.9937
+                ],
+                [
+                  -0.0124,
+                  0.9999
+                ],
+                [
+                  0.0875,
+                  0.9962
+                ],
+                [
+                  0.1865,
+                  0.9825
+                ],
+                [
+                  0.2837,
+                  0.9589
+                ],
+                [
+                  0.378,
+                  0.9258
+                ],
+                [
+                  0.4685,
+                  0.8835
+                ],
+                [
+                  0.5544,
+                  0.8323
+                ],
+                [
+                  0.6347,
+                  0.7728
+                ],
+                [
+                  0.7087,
+                  0.7055
+                ],
+                [
+                  0.7756,
+                  0.6313
+                ],
+                [
+                  0.8347,
+                  0.5507
+                ],
+                [
+                  0.8855,
+                  0.4646
+                ],
+                [
+                  0.9275,
+                  0.3739
+                ],
+                [
+                  0.9602,
+                  0.2794
+                ],
+                [
+                  0.9833,
+                  0.1822
+                ],
+                [
+                  0.9965,
+                  0.0831
+                ],
+                [
+                  0.9999,
+                  -0.0168
+                ]
+              ],
+              "label": "RK4",
+              "colour": 1
+            }
+          ]
+        },
+        "state": {
+          "caption": "Orange: Euler's 63 steps. Blue: RK4's 63 steps."
+        }
+      },
+      "question": "What radius does RK4 reach after 63 steps?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "0.9999996: it loses 4 parts in 10 million",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "1.3681, like Euler",
+            "why": "Euler's tangent steps leave the circle every time. RK4's four slopes follow it closely."
+          },
+          {
+            "id": "c",
+            "text": "Exactly 1",
+            "why": "RK4 is not exact here. Its factor per step has modulus just below 1."
+          },
+          {
+            "id": "d",
+            "text": "1.0000004",
+            "why": "RK4's small error shrinks this orbit; it does not grow it."
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare the two paths on the chart."
+        },
+        {
+          "rung": "point",
+          "text": "RK4's path sits on the unit circle at this scale.",
+          "highlight": [
+            "K"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Its factor per step has modulus $1 - 6.9 \\times 10^{-9}$."
+        }
+      ],
+      "feedback": {
+        "correct": "0.9999996, against Euler's 1.3681.",
+        "generic": "Not quite right. Look at where RK4's path ends."
+      },
+      "explain": {
+        "text": "RK4's factor per step has modulus $1 - 6.9 \\times 10^{-9}$, so 63 steps leave 0.9999996. At the chart's scale its path is the circle; Euler's ends at 1.3681.",
+        "canvas": {
+          "highlight": [
+            "K"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "One letter wrong",
+      "prose": "This step runs. On $y' = y$ with $h = 0.1$ it gives 2.71613 at $t = 1$, which looks plausible. But its measured order over $h$ = 0.1 down to 0.0125 is 1.98, not 4.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "rk4.py",
+          "lines": [
+            "def rk4_step(f, t, y, h):",
+            "    k1 = f(t, y)",
+            "    k2 = f(t + h/2, y + h/2*k1)",
+            "    k3 = f(t + h/2, y + h/2*k1)",
+            "    k4 = f(t + h, y + h*k3)",
+            "    return y + h/6*(k1 + 2*k2 + 2*k3 + k4)",
+            ">>> observed_order(errs, hs)",
+            "1.979"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Tap the line that breaks fourth order.",
+      "widget": {
+        "kind": "tap-regions",
+        "answer": [
+          "l4"
+        ],
+        "max": 1,
+        "only": [
+          "l1",
+          "l2",
+          "l3",
+          "l4",
+          "l5",
+          "l6"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Compare each line with the formula for $k_1$ to $k_4$."
+        },
+        {
+          "rung": "point",
+          "text": "Which slope should $k_3$ be built from?",
+          "highlight": [
+            "l4"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$k_3$ should use `y + h/2*k2`; line 4 uses `k1`."
+        }
+      ],
+      "feedback": {
+        "correct": "Line 4: $k_3$ must use $k_2$.",
+        "generic": "Not quite right. Check which earlier slope each $k$ uses.",
+        "byKey": {
+          "l3": "That line is right: $k_2$ is built from $k_1$.",
+          "l5": "$k_4$ should use $k_3$ with a full step, and it does.",
+          "l6": "The weights 1, 2, 2, 1 over 6 are right. The slip is earlier, and it still runs."
+        }
+      },
+      "explain": {
+        "text": "$k_3$ must use $k_2$, as in `y + h/2*k2`. With $k_1$ the step matches Taylor only to $h^2$, so the order falls to about 2. Code that runs and looks close can still be wrong: measure its order.",
+        "canvas": {
+          "highlight": [
+            "l4"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "RK4 has a limit too",
+      "prose": "On $y' = -\\lambda y$ one RK4 step multiplies by $R(z) = 1 - z + \\tfrac{z^2}{2} - \\tfrac{z^3}{6} + \\tfrac{z^4}{24}$, where $z = h\\lambda$. At $z = 2.5$ the factor is 0.6484; at $z = 3$ it is 1.375. The chart marks where $|R| = 1$: $z = 2.7853$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            3.2
+          ],
+          "y": [
+            0,
+            1.6
+          ],
+          "xLabel": "$z = h\\lambda$",
+          "height": 220,
+          "functions": [
+            {
+              "id": "g",
+              "expr": "abs(1 - x + x^2/2 - x^3/6 + x^4/24)",
+              "label": "$|R(z)|$"
+            }
+          ],
+          "hlines": [
+            {
+              "id": "one",
+              "y": 1,
+              "label": "1"
+            }
+          ],
+          "vlines": [
+            {
+              "id": "lim",
+              "x": 2.7853,
+              "label": "2.7853"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the largest stable $h$ for $y' = -10y$ with RK4?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.2785,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "0.2785: $2.7853/10$",
+        "wrong": [
+          {
+            "id": "euler",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Stability needs $z = 10h < 2.7853$."
+        },
+        {
+          "rung": "point",
+          "text": "Divide by $\\lambda = 10$.",
+          "highlight": [
+            "lim"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$h < 0.2785$."
+        }
+      ],
+      "feedback": {
+        "correct": "$h < 2.7853/10 = 0.2785$.",
+        "generic": "Not quite right. Divide the limit on $z$ by $\\lambda$.",
+        "byKey": {
+          "euler": "That is Euler's limit, $2/\\lambda$. RK4's limit on $z$ is 2.7853."
+        }
+      },
+      "explain": {
+        "text": "$h\\lambda < 2.7853$ gives $h < 0.2785$ for $\\lambda = 10$, about 1.4 times Euler's limit. On a linear equation each RK4 step is exactly this polynomial, so the limit is exact.",
+        "canvas": {
+          "highlight": [
+            "lim"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Order, cost, stability",
+      "prose": "A method of **order** $p$ has error about $Ch^p$ at a fixed time. Halving $h$ divides the error by $2^p$. Euler is order 1, with one evaluation a step. RK4 is order 4, with four: $$y_{n+1} = y_n + \\tfrac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4).$$ Each also has a stability limit on $h\\lambda$.",
+      "question": "Halving $h$ divides a method's error by 8. What is its order $p$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 3,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "3: $2^3 = 8$",
+        "wrong": [
+          {
+            "id": "eight",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Halving divides the error by $2^p$."
+        },
+        {
+          "rung": "point",
+          "text": "Solve $2^p = 8$."
+        },
+        {
+          "rung": "step",
+          "text": "$p = 3$."
+        }
+      ],
+      "feedback": {
+        "correct": "$2^3 = 8$, so $p = 3$.",
+        "generic": "Not quite right. Solve $2^p = 8$.",
+        "byKey": {
+          "eight": "8 is the factor, $2^p$. The order is the power, $p$."
+        }
+      },
+      "explain": {
+        "text": "Halving $h$ divides $Ch^p$ by $2^p$, and $2^3 = 8$. So the method is of order 3."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "RK4 in NumPy",
+      "prose": "Write `rk4_step` from the four slopes, then `rk4` with the same shape as lesson 16's `euler`. The tests include lesson 7's oscillator $y'' + 2y' + 5y = 0$, as a system from $(1, 0)$. Seven steps reach 0.014164 within $5 \\times 10^{-5}$; five steps do not.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "numpy",
+          "lines": [
+            ">>> rk4_step(lambda t, y: y, 0, 1.0, 0.1)",
+            "1.1051708333333332",
+            ">>> rk4(lambda t, y: y, 0, 1.0, 0.1, 10)[1][-1]",
+            "2.7182797441351627"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `rk4_step` and `rk4`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\n\ndef rk4_step(f, t, y, h):\n    \"\"\"One RK4 step of y' = f(t, y) from (t, y).\"\"\"\n    ...\n\ndef rk4(f, t0, y0, h, n):\n    \"\"\"n RK4 steps. Returns arrays t and y, as euler did.\"\"\"\n    ...\n",
+        "solution": "import numpy as np\n\ndef rk4_step(f, t, y, h):\n    \"\"\"One RK4 step of y' = f(t, y) from (t, y).\"\"\"\n    k1 = np.asarray(f(t, y))\n    k2 = np.asarray(f(t + h / 2, y + h / 2 * k1))\n    k3 = np.asarray(f(t + h / 2, y + h / 2 * k2))\n    k4 = np.asarray(f(t + h, y + h * k3))\n    return y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4)\n\ndef rk4(f, t0, y0, h, n):\n    \"\"\"n RK4 steps. Returns arrays t and y, as euler did.\"\"\"\n    t = t0 + h * np.arange(n + 1)\n    y = np.zeros((n + 1,) + np.shape(y0))\n    y[0] = y0\n    for k in range(n):\n        y[k + 1] = rk4_step(f, t[k], y[k], h)\n    return t, y\n",
+        "examples": [
+          {
+            "call": "float(rk4_step(lambda t, y: y, 0, 1.0, 0.1))",
+            "expect": "1.1051708333333332",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-10
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "float(rk4_step(lambda t, y: y, 0, 1.0, 0.1))",
+            "expect": "1.1051708333333332",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-10
+            }
+          },
+          {
+            "call": "float(rk4(lambda t, y: y, 0, 1.0, 0.1, 10)[1][-1])",
+            "expect": "2.7182797441351627",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "len(rk4(lambda t, y: y, 0, 1.0, 0.1, 10)[0])",
+            "expect": "11",
+            "compare": "equal"
+          },
+          {
+            "call": "float(rk4(lambda t, y: t**3, 0, 0.0, 0.5, 2)[1][-1])",
+            "expect": "0.25",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-12
+            }
+          },
+          {
+            "setup": "osc = lambda t, z: np.array([z[1], -2*z[1] - 5*z[0]]); EX = np.exp(-1)*(np.cos(2) + 0.5*np.sin(2))",
+            "call": "float(rk4(osc, 0, np.array([1.0, 0.0]), 1/7, 7)[1][-1][0])",
+            "expect": "0.014123028543959165",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "setup": "osc = lambda t, z: np.array([z[1], -2*z[1] - 5*z[0]]); EX = np.exp(-1)*(np.cos(2) + 0.5*np.sin(2))",
+            "call": "bool(abs(rk4(osc, 0, np.array([1.0, 0.0]), 1/7, 7)[1][-1][0] - EX) < 5e-5)",
+            "expect": "True",
+            "compare": "equal"
+          },
+          {
+            "setup": "osc = lambda t, z: np.array([z[1], -2*z[1] - 5*z[0]]); EX = np.exp(-1)*(np.cos(2) + 0.5*np.sin(2))",
+            "call": "bool(abs(rk4(osc, 0, np.array([1.0, 0.0]), 1/5, 5)[1][-1][0] - EX) < 5e-5)",
+            "expect": "False",
+            "compare": "equal"
+          },
+          {
+            "call": "float(np.hypot(*rk4(lambda t, z: np.array([z[1], -z[0]]), 0, np.array([1.0, 0.0]), 0.1, 63)[1][-1]))",
+            "expect": "0.9999995630469712",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          },
+          {
+            "call": "float(rk4_step(lambda t, y: -10*y, 0, 1.0, 0.3))",
+            "expect": "1.375",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Values must be within absolute 1e-9 (1e-10 for one step, 1e-12 for $\\int t^3$). Two yes-or-no checks compare with lesson 7's closed form. The first run loads NumPy, which takes a few seconds."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Build `k1` to `k4` exactly as on the explore screen."
+        },
+        {
+          "rung": "point",
+          "text": "`k3` uses `y + h/2*k2`, and `k4` uses `y + h*k3` at `t + h`.",
+          "highlight": [
+            "l1"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "`rk4` is lesson 16's loop with `rk4_step` in place of the Euler update."
+        }
+      ],
+      "feedback": {
+        "correct": "All nine pass: one step, ten steps, the oscillator and the centre.",
+        "generic": "Not quite right. Read the failing row; a $k$ built from the wrong slope fails the order quietly."
+      },
+      "explain": {
+        "text": "RK4 is exact for $y' = t^3$ because its weights are Simpson's rule. Seven steps on the oscillator land within $5 \\times 10^{-5}$ of 0.014164, where Euler would need about 16,000."
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "The production tool",
+      "prose": "SciPy's `solve_ivp` uses an adaptive RK45 pair by default. It shrinks the step until each step's error estimate meets `rtol` and `atol`; `numerics` lesson 11 builds that control. Here we only check it against the closed form.",
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "scipy",
+          "lines": [
+            ">>> f = lambda t, z: [z[1], -2*z[1] - 5*z[0]]",
+            ">>> sol = solve_ivp(f, (0, 1), [1, 0], rtol=1e-10, atol=1e-12)",
+            ">>> sol.y[0, -1]",
+            "0.014164048945...",
+            ">>> np.exp(-1)*(np.cos(2) + 0.5*np.sin(2))",
+            "0.014164048945404822"
+          ]
+        },
+        "state": {}
+      },
+      "question": "Complete `oscillator_ivp`.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "import numpy as np\nfrom scipy.integrate import solve_ivp\n\ndef oscillator_ivp(t_end, rtol=1e-10, atol=1e-12):\n    \"\"\"y(t_end) for y'' + 2y' + 5y = 0, y(0) = 1, y'(0) = 0, by solve_ivp.\"\"\"\n    ...\n",
+        "solution": "import numpy as np\nfrom scipy.integrate import solve_ivp\n\ndef oscillator_ivp(t_end, rtol=1e-10, atol=1e-12):\n    \"\"\"y(t_end) for y'' + 2y' + 5y = 0, y(0) = 1, y'(0) = 0, by solve_ivp.\"\"\"\n    f = lambda t, z: [z[1], -2 * z[1] - 5 * z[0]]\n    sol = solve_ivp(f, (0, t_end), [1.0, 0.0], rtol=rtol, atol=atol)\n    return float(sol.y[0, -1])\n",
+        "examples": [
+          {
+            "call": "oscillator_ivp(1)",
+            "expect": "0.01416404894540483",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "oscillator_ivp(1)",
+            "expect": "0.01416404894540483",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          },
+          {
+            "call": "oscillator_ivp(2)",
+            "expect": "-0.13967208459371888",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          },
+          {
+            "call": "oscillator_ivp(0.5)",
+            "expect": "0.5828988897947462",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          },
+          {
+            "call": "oscillator_ivp(3)",
+            "expect": "0.04084842445031795",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-08
+            }
+          }
+        ],
+        "how": "Check runs 4 hidden tests against the closed form $e^{-t}(\\cos 2t + \\tfrac12\\sin 2t)$, each within absolute 1e-8. **The first run loads NumPy and SciPy.** That took about 2 seconds from a local cache here; expect 5 to 20 seconds over a home connection. Later runs are quick."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Write the oscillator as a system $z = (y, y')$."
+        },
+        {
+          "rung": "point",
+          "text": "`solve_ivp(f, (0, t_end), [1.0, 0.0], rtol=rtol, atol=atol)`.",
+          "highlight": [
+            "l2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "Return `float(sol.y[0, -1])`, the last value of $y$."
+        }
+      ],
+      "feedback": {
+        "correct": "All four agree with the closed form to $10^{-8}$.",
+        "generic": "Not quite right. Pass `rtol` and `atol`, and return the first component at the last time."
+      },
+      "explain": {
+        "text": "With `rtol=1e-10` the adaptive step keeps the error near $10^{-11}$. Testing against the closed form, not against another `solve_ivp` run, is what makes the check mean something."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Choosing a scheme",
+      "prose": "A spread reverts fast: $x' = -40(x - \\theta)$, priced over one year with equal steps. A scheme must be stable at every step. So $h\\lambda$ must stay under its limit: 2 for Euler, 2.7853 for RK4.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            3.2
+          ],
+          "y": [
+            0,
+            1.6
+          ],
+          "xLabel": "$z = h\\lambda$",
+          "height": 200,
+          "functions": [
+            {
+              "id": "g",
+              "expr": "abs(1 - x + x^2/2 - x^3/6 + x^4/24)",
+              "label": "RK4"
+            },
+            {
+              "id": "e",
+              "expr": "abs(1 - x)",
+              "label": "Euler",
+              "colour": 3
+            }
+          ],
+          "hlines": [
+            {
+              "id": "one",
+              "y": 1,
+              "label": "1"
+            }
+          ]
+        },
+        "state": {}
+      },
+      "question": "What is the fewest RK4 steps over the year that stay stable?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 15,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "15: $40/2.7853 = 14.36$, rounded up",
+        "wrong": [
+          {
+            "id": "euler",
+            "value": 20,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "floor",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "With $n$ steps, $h = 1/n$ and $z = 40/n$."
+        },
+        {
+          "rung": "point",
+          "text": "Need $40/n < 2.7853$, so $n > 14.36$.",
+          "highlight": [
+            "g"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The fewest whole steps is 15."
+        }
+      ],
+      "feedback": {
+        "correct": "$n > 40/2.7853 = 14.36$, so 15 steps.",
+        "generic": "Not quite right. Solve $40/n < 2.7853$ for whole $n$.",
+        "byKey": {
+          "euler": "That is Euler's count, $n > 40/2$. RK4's limit is larger.",
+          "floor": "Fourteen steps make $z = 2.857$, just past the limit. Round up."
+        }
+      },
+      "explain": {
+        "text": "$40/n < 2.7853$ needs $n > 14.36$, so 15 steps; Euler needs more than 20. A production pricer weighs order, cost per step and stability together. That is this trade.",
+        "canvas": {
+          "highlight": [
+            "g"
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "RK4 reads four slopes a step and weights them 1, 2, 2, 1. On $y' = y$ it matches the Taylor series to $h^4$.",
+      "Its error is about $Ch^4$: halve the step and the error falls by about 16. Four evaluations a step pay for themselves.",
+      "It is stable on $y' = -\\lambda y$ only for $h\\lambda < 2.7853$; order does not remove the limit."
+    ],
+    "formula": {
+      "name": "RK4",
+      "tex": "y_{n+1} = y_n + \\tfrac{h}{6}(k_1 + 2k_2 + 2k_3 + k_4)",
+      "note": "$k_2, k_3$ at the half step, $k_4$ at the full step."
+    },
+    "trap": "A slip such as $k_1$ in place of $k_2$ still runs and looks close; only the measured order exposes it."
+  },
+  "quiz": [
+    {
+      "id": "q-step",
+      "difficulty": 2,
+      "question": "One RK4 step on $y' = -y$ from $y = 1$ with $h = 0.1$. What is $y_1$, to 6 decimal places?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.904838,
+        "tol": {
+          "abs": 5e-07
+        },
+        "accept": "0.904838: $1 - 0.1 + 0.005 - 0.000167 + 0.000004$",
+        "wrong": [
+          {
+            "id": "euler",
+            "value": 0.9,
+            "tol": {
+              "abs": 1e-05
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$1 - h + \\tfrac{h^2}{2} - \\tfrac{h^3}{6} + \\tfrac{h^4}{24} = 0.904838$.",
+        "generic": "Not quite right. Use the Taylor factor with $-h$.",
+        "byKey": {
+          "euler": "That is one Euler step, $1 - h$. RK4 adds the terms up to $h^4$."
+        }
+      },
+      "explain": {
+        "text": "One RK4 step on a linear equation multiplies by the Taylor factor: $1 - 0.1 + 0.005 - 0.000167 + 0.000004 = 0.904838$."
+      }
+    },
+    {
+      "id": "q-mid",
+      "difficulty": 2,
+      "question": "One midpoint step on $y' = y$ from $y = 1$ with $h = 0.2$. What is $y_1$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1.22,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "1.22: $1 + 0.2 \\times 1.1$",
+        "wrong": [
+          {
+            "id": "euler",
+            "value": 1.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "The half step reaches 1.1, so $y_1 = 1 + 0.2 \\times 1.1 = 1.22$.",
+        "generic": "Not quite right. Take half a step first.",
+        "byKey": {
+          "euler": "That uses the starting slope. The midpoint method uses the slope at 1.1."
+        }
+      },
+      "explain": {
+        "text": "The half step reaches $1 + 0.1 = 1.1$, whose slope is 1.1. So $y_1 = 1 + 0.2 \\times 1.1 = 1.22$."
+      }
+    },
+    {
+      "id": "q-ratio",
+      "difficulty": 3,
+      "question": "RK4's error at $t = 1$ is $3.2 \\times 10^{-6}$ with step $h$. Roughly what is it with $h/2$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "$2 \\times 10^{-7}$",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "$8 \\times 10^{-7}$",
+            "why": "That divides by 4, a second-order method."
+          },
+          {
+            "id": "c",
+            "text": "$1.6 \\times 10^{-6}$",
+            "why": "That divides by 2, Euler's first order."
+          },
+          {
+            "id": "d",
+            "text": "$3.2 \\times 10^{-6}$",
+            "why": "A smaller step always cuts RK4's error here."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$3.2 \\times 10^{-6}/16 = 2 \\times 10^{-7}$.",
+        "generic": "Not quite right. RK4 is fourth order."
+      },
+      "explain": {
+        "text": "Fourth order means halving $h$ divides the error by $2^4 = 16$. So $3.2 \\times 10^{-6}$ becomes about $2 \\times 10^{-7}$."
+      }
+    },
+    {
+      "id": "q-unstable",
+      "difficulty": 3,
+      "question": "RK4 on $y' = -10y$ with $h = 0.3$. What happens?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "Each step multiplies by 1.375, so it grows",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "It decays accurately, because RK4 is fourth order",
+            "why": "Order is about small $h$. At $h\\lambda = 3$ the step is past RK4's limit of 2.7853."
+          },
+          {
+            "id": "c",
+            "text": "Each step multiplies by $-2$, as Euler's does",
+            "why": "That is Euler's factor $1 - 3$. RK4's is $R(-3) = 1.375$."
+          },
+          {
+            "id": "d",
+            "text": "It is exact, because the equation is linear",
+            "why": "Linear means the factor is an exact polynomial, not that it equals $e^{-3}$."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "$R(-3) = 1.375 > 1$: it grows.",
+        "generic": "Not quite right. Compute $h\\lambda$ and compare with 2.7853."
+      },
+      "explain": {
+        "text": "$h\\lambda = 3$ is past 2.7853. The factor is $1 - 3 + 4.5 - 4.5 + 3.375 = 1.375$, so each step grows the solution."
+      }
+    }
+  ]
+}
