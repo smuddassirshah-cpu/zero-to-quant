@@ -1,0 +1,1435 @@
+{
+ "id": "l2-open-balls",
+ "course": "topology",
+ "title": "Open balls and open sets",
+ "minutes": 15,
+ "objectives": [
+  "Prove that open balls are open and that unions of open sets are open."
+ ],
+ "skills": [
+  "tg-metric",
+  "tg-open"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Room to move",
+   "prose": "The point $y = (0.3, 0.4)$ sits inside the unit ball $B(0, 1)$. Pick a metric with the first control. Grow the small ball $B(y, s)$ until it just fits inside.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.2,
+      1.2
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "equal": true,
+     "height": 300,
+     "grid": 0.5,
+     "xLabel": "",
+     "yLabel": "",
+     "params": {
+      "s": 0.1
+     },
+     "functions": [
+      {
+       "id": "b2",
+       "contour": "sqrt(x^2 + y^2)",
+       "levels": [
+        1
+       ],
+       "colour": 1,
+       "levelLabels": false
+      },
+      {
+       "id": "b1",
+       "contour": "abs(x) + abs(y)",
+       "levels": [
+        1
+       ],
+       "colour": 2,
+       "levelLabels": false
+      },
+      {
+       "id": "bi",
+       "contour": "max(abs(x), abs(y))",
+       "levels": [
+        1
+       ],
+       "colour": 3,
+       "levelLabels": false
+      },
+      {
+       "id": "s2",
+       "contour": "sqrt((x - 0.3)^2 + (y - 0.4)^2) / s",
+       "levels": [
+        1
+       ],
+       "colour": 1,
+       "levelLabels": false
+      },
+      {
+       "id": "s1",
+       "contour": "(abs(x - 0.3) + abs(y - 0.4)) / s",
+       "levels": [
+        1
+       ],
+       "colour": 2,
+       "levelLabels": false
+      },
+      {
+       "id": "si",
+       "contour": "max(abs(x - 0.3), abs(y - 0.4)) / s",
+       "levels": [
+        1
+       ],
+       "colour": 3,
+       "levelLabels": false
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "y",
+       "x": 0.3,
+       "y": 0.4,
+       "label": "$y$",
+       "tap": false
+      }
+     ],
+     "hide": [
+      "b1",
+      "bi",
+      "s1",
+      "si"
+     ]
+    },
+    "derive": {
+     "caption": "$s$ = {{fixed(s, 2)}}"
+    },
+    "controls": [
+     {
+      "label": "Metric",
+      "frames": [
+       {
+        "hide": [
+         "b1",
+         "bi",
+         "s1",
+         "si"
+        ]
+       },
+       {
+        "hide": [
+         "b2",
+         "bi",
+         "s2",
+         "si"
+        ]
+       },
+       {
+        "hide": [
+         "b2",
+         "b1",
+         "s2",
+         "s1"
+        ]
+       }
+      ],
+      "frameLabels": [
+       "d₂",
+       "d₁",
+       "d∞"
+      ]
+     },
+     {
+      "bind": "s",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.01,
+      "start": 0.1,
+      "label": "$s$"
+     }
+    ]
+   },
+   "question": "For each metric, what is the largest $s$ with $B(y, s) \\subseteq B(0, 1)$?",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Metric",
+     "$d(0, y)$",
+     "Largest $s$"
+    ],
+    "rows": [
+     [
+      "$d_2$",
+      "0.5",
+      {
+       "edit": true,
+       "answer": 0.5,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ],
+     [
+      "$d_1$",
+      "0.7",
+      {
+       "edit": true,
+       "answer": 0.3,
+       "tol": {
+        "abs": 0.005
+       },
+       "wrong": [
+        {
+         "id": "d1-dist",
+         "value": 0.7,
+         "tol": {
+          "abs": 0.005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$d_\\infty$",
+      "0.4",
+      {
+       "edit": true,
+       "answer": 0.6,
+       "tol": {
+        "abs": 0.005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slide $s$ until the small ball touches the big one."
+    },
+    {
+     "rung": "step",
+     "text": "Each time the fit is $1 - d(0, y)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The room is always 1 minus the distance already used.",
+    "generic": "Not quite. Grow the small ball in each metric until it touches.",
+    "byKey": {
+     "d1-dist": "0.7 is how far $y$ is from 0 in $d_1$. The room left is $1 - 0.7$."
+    }
+   },
+   "explain": {
+    "text": "The fits are 0.5 in $d_2$, 0.3 in $d_1$ and 0.6 in $d_\\infty$. Each is $1 - d(0, y)$: the radius minus the distance already used.",
+    "canvas": {
+     "params": {
+      "s": 0.5
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "A radius that always works",
+   "prose": "A set $U$ is **open** when every point of $U$ has some ball $B(y, s)$, with $s > 0$, inside $U$. Take $y \\in B(x, r)$ in any metric space, and write $d$ for $d(x, y)$.",
+   "question": "Give a radius $s$, in terms of $r$ and $d$, with $B(y, s) \\subseteq B(x, r)$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "r-d",
+    "accept": [
+     "r - d",
+     "-d+r"
+    ],
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "same",
+      "tex": "r"
+     },
+     {
+      "id": "dist",
+      "tex": "d"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The hook's answers were all $1 - d(0, y)$."
+    },
+    {
+     "rung": "step",
+     "text": "Replace 1 by $r$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $s = r - d(x, y)$, positive because $d(x, y) < r$.",
+    "generic": "Not quite. The room left is the radius minus the distance used.",
+    "byKey": {
+     "same": "Radius $r$ round $y$ reaches past $x$'s ball on the far side.",
+     "dist": "$d$ is the distance used up, not the room left."
+    }
+   },
+   "explain": {
+    "text": "From $y$ we have used $d(x, y)$ of the radius $r$. So $s = r - d$ is the room left, and it is positive."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "Open balls are open",
+   "prose": "Now the proof, in any metric space. Two lines are tempting but flawed.",
+   "question": "Put the proof in order. Move the two flawed lines to Left out.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Let $y \\in B(x, r)$, so $d(x, y) < r$."
+     },
+     {
+      "id": "o2",
+      "text": "Put $s = r - d(x, y)$, which is positive."
+     },
+     {
+      "id": "o3",
+      "text": "Let $d(y, z) < s$. By the triangle inequality, $d(x, z) \\le d(x, y) + d(y, z)$."
+     },
+     {
+      "id": "o4",
+      "text": "So $d(x, z) < d(x, y) + s = r$. Hence $B(y, s) \\subseteq B(x, r)$, and the ball is open. $\\blacksquare$"
+     },
+     {
+      "id": "d1",
+      "text": "Put $s = r$.",
+      "why": "Take $y = (0.9, 0)$ in the unit disc. $B(y, 1)$ reaches $(1.8, 0)$, outside the disc."
+     },
+     {
+      "id": "d2",
+      "text": "Put $s = d(x, y)$.",
+      "why": "Near the edge $d(x, y)$ is nearly $r$. At $y = (0.9, 0)$ the ball of radius 0.9 reaches $(1.8, 0)$."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Choose the radius before testing a point $z$."
+    },
+    {
+     "rung": "point",
+     "text": "The radius is the one you just found."
+    },
+    {
+     "rung": "step",
+     "text": "Point, radius, triangle inequality, conclusion."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The triangle inequality does the work.",
+    "generic": "Not quite. Fix $y$, choose $s$, then test any $z$ within $s$ of $y$.",
+    "byKey": {
+     "d1": "You kept the same radius. Near the edge that ball sticks out.",
+     "d2": "You used the distance from the centre. It is largest exactly where the room is smallest.",
+     "left-out": "You left out a line the proof needs."
+    }
+   },
+   "explain": {
+    "text": "Choose $s = r - d(x, y)$. Any $z$ within $s$ of $y$ has $d(x, z) < d(x, y) + s = r$ by the triangle inequality. So every point of the ball has a ball inside it."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Is that the biggest fit?",
+   "prose": "In the plane with $d_2$, take $y \\in B(x, r)$ and $s = r - d(x, y)$. Could a larger radius $s' > s$ also fit?",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.2,
+      1.2
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "equal": true,
+     "height": 280,
+     "grid": 0.5,
+     "xLabel": "",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "b2",
+       "contour": "sqrt(x^2 + y^2)",
+       "levels": [
+        1
+       ],
+       "colour": 1,
+       "levelLabels": false
+      },
+      {
+       "id": "s2",
+       "contour": "sqrt((x - 0.3)^2 + (y - 0.4)^2)",
+       "levels": [
+        0.5
+       ],
+       "colour": 2,
+       "levelLabels": false
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "y",
+       "x": 0.3,
+       "y": 0.4,
+       "label": "$y$",
+       "tap": false
+      },
+      {
+       "id": "w",
+       "x": 0.6,
+       "y": 0.8,
+       "label": "$w$",
+       "tap": false
+      }
+     ],
+     "segments": [
+      {
+       "id": "ray",
+       "from": [
+        0,
+        0
+       ],
+       "to": [
+        0.6,
+        0.8
+       ],
+       "colour": 4,
+       "dashed": true
+      }
+     ]
+    }
+   },
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "No. Along the ray from $x$ through $y$, $B(y, s')$ holds points at distance $d(x, y) + t$ for $t < s'$, some above $r$.",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes. The boundary is curved, so there is always a little extra room.",
+      "why": "You looked away from the ray. Along the ray through $y$ the boundary is met at distance exactly $s$."
+     },
+     {
+      "id": "double",
+      "text": "Yes, up to $2s$, by the triangle inequality.",
+      "why": "The triangle inequality gives an upper bound on $d(x, z)$. It cannot grant extra room."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Walk from $y$ straight away from $x$."
+    },
+    {
+     "rung": "point",
+     "text": "The ball first meets the circle at $w$.",
+     "highlight": [
+      "w",
+      "ray"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$w$ is $s$ from $y$ and $r$ from $x$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. In a normed space $r - d(x, y)$ is the exact fit.",
+    "generic": "Not quite. Follow the ray from $x$ through $y$."
+   },
+   "explain": {
+    "text": "Along the ray, $d(x, z) = d(x, y) + d(y, z)$ exactly. So any radius past $s$ leaves the ball. In a general metric space the fit can be larger, as the discrete metric will show."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A disc inside a diamond",
+   "prose": "Now mix metrics. Find the largest Euclidean ball $B_2(y, s)$ round $y = (0.3, 0.4)$ inside the taxicab ball $B_1(0, 1)$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.2,
+      1.2
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "equal": true,
+     "height": 300,
+     "grid": 0.5,
+     "xLabel": "",
+     "yLabel": "",
+     "params": {
+      "s": 0.3
+     },
+     "functions": [
+      {
+       "id": "b1",
+       "contour": "abs(x) + abs(y)",
+       "levels": [
+        1
+       ],
+       "colour": 2,
+       "levelLabels": false
+      },
+      {
+       "id": "s2",
+       "contour": "sqrt((x - 0.3)^2 + (y - 0.4)^2) / s",
+       "levels": [
+        1
+       ],
+       "colour": 1,
+       "levelLabels": false
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "y",
+       "x": 0.3,
+       "y": 0.4,
+       "label": "$y$",
+       "tap": false
+      }
+     ],
+     "segments": [
+      {
+       "id": "perp",
+       "from": [
+        0.3,
+        0.4
+       ],
+       "to": [
+        0.45,
+        0.55
+       ],
+       "colour": 4,
+       "dashed": true
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$s$ = {{fixed(s, 3)}}"
+    },
+    "controls": [
+     {
+      "bind": "s",
+      "min": 0.05,
+      "max": 0.6,
+      "step": 0.001,
+      "start": 0.3,
+      "label": "$s$"
+     }
+    ]
+   },
+   "question": "What is the largest such $s$? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2121,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "accept": "0.2121: $\\tfrac{0.3}{\\sqrt2}$, the distance to the line $x + y = 1$.",
+    "wrong": [
+     {
+      "id": "taxi",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "disc",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The nearest edge is $x + y = 1$."
+    },
+    {
+     "rung": "point",
+     "text": "The dashed segment meets that edge at a right angle.",
+     "highlight": [
+      "perp"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Distance to $x + y = 1$ is $\\tfrac{|0.3 + 0.4 - 1|}{\\sqrt2}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $\\tfrac{0.3}{\\sqrt2} \\approx 0.2121$.",
+    "generic": "Not quite. Measure the straight-line distance to the edge $x + y = 1$.",
+    "byKey": {
+     "taxi": "0.3 is the taxicab room, $1 - d_1(0, y)$. A Euclidean ball is round, so it touches the edge sooner.",
+     "disc": "0.5 is the room inside the Euclidean disc. The diamond is smaller."
+    }
+   },
+   "explain": {
+    "text": "The straight-line distance from $(0.3, 0.4)$ to $x + y = 1$ is $\\tfrac{0.3}{\\sqrt2} \\approx 0.2121$. So every point of a $d_1$-open set has a $d_2$ ball inside, and the reverse holds too.",
+    "canvas": {
+     "params": {
+      "s": 0.2121
+     }
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Equivalent metrics, same open sets",
+   "prose": "Suppose $a\\,d(x, y) \\le d'(x, y) \\le b\\,d(x, y)$ for all $x, y$, with constants $a, b > 0$. We show a $d$-open set $U$ is $d'$-open.",
+   "question": "Put the proof in order. Move the flawed line to Left out.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Let $x \\in U$. Since $U$ is $d$-open, $B_d(x, r) \\subseteq U$ for some $r > 0$."
+     },
+     {
+      "id": "o2",
+      "text": "If $d'(x, y) < ar$, then $d(x, y) \\le \\tfrac{d'(x, y)}{a} < r$, using $a\\,d \\le d'$."
+     },
+     {
+      "id": "o3",
+      "text": "So $B_{d'}(x, ar) \\subseteq B_d(x, r) \\subseteq U$, and $U$ is $d'$-open."
+     },
+     {
+      "id": "o4",
+      "text": "Likewise $d' \\le b\\,d$ gives $B_d(x, \\tfrac{r}{b}) \\subseteq B_{d'}(x, r)$, so $d'$-open sets are $d$-open. $\\blacksquare$"
+     },
+     {
+      "id": "d1",
+      "text": "So $B_{d'}(x, r) \\subseteq B_d(x, r)$, since $d' \\ge a\\,d$.",
+      "why": "You dropped the constant. With $a < 1$, $d'(x, y) < r$ allows $d(x, y)$ up to $\\tfrac{r}{a}$, past $r$."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Shrink the radius by the factor $a$."
+    },
+    {
+     "rung": "step",
+     "text": "Ball in $U$, the inequality, the inclusion, then the other direction."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Each ball of one metric holds a ball of the other.",
+    "generic": "Not quite. Start from the $d$-ball inside $U$.",
+    "byKey": {
+     "d1": "You kept radius $r$ in the new metric. The constant $a$ must shrink it.",
+     "left-out": "You left out a line the proof needs."
+    }
+   },
+   "explain": {
+    "text": "A $d'$-ball of radius $ar$ sits inside the $d$-ball of radius $r$. A $d$-ball of radius $\\tfrac{r}{b}$ sits inside the $d'$-ball. With l1's $d_\\infty \\le d_2 \\le d_1 \\le 2d_\\infty$, all three metrics on the plane have the same open sets."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Unions of open sets",
+   "prose": "Let $\\{U_\\alpha\\}$ be any family of open sets, possibly infinite. One line is tempting but flawed.",
+   "question": "Put the proof that $\\bigcup_\\alpha U_\\alpha$ is open in order. Move the flawed line to Left out.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "Let $x \\in \\bigcup_\\alpha U_\\alpha$."
+     },
+     {
+      "id": "o2",
+      "text": "Then $x \\in U_\\beta$ for some one member $U_\\beta$."
+     },
+     {
+      "id": "o3",
+      "text": "$U_\\beta$ is open, so $B(x, r) \\subseteq U_\\beta$ for some $r > 0$."
+     },
+     {
+      "id": "o4",
+      "text": "And $U_\\beta \\subseteq \\bigcup_\\alpha U_\\alpha$, so $B(x, r)$ lies in the union. $\\blacksquare$"
+     },
+     {
+      "id": "d1",
+      "text": "Take $r$ to be the smallest of the radii of all the members.",
+      "why": "Infinitely many radii may have no smallest positive one: $\\tfrac1n$ shrinks to 0. One member is enough."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A point of the union lies in at least one member."
+    },
+    {
+     "rung": "step",
+     "text": "That member's ball already lies in the union."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. One member supplies the ball.",
+    "generic": "Not quite. Pick one member that holds $x$.",
+    "byKey": {
+     "d1": "You tried to use every member at once. The smallest of infinitely many radii can be 0.",
+     "left-out": "You left out a line the proof needs."
+    }
+   },
+   "explain": {
+    "text": "A point of the union lies in one member $U_\\beta$. Its ball inside $U_\\beta$ is inside the union. No minimum over the family is needed, so any union works."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Two open sets at once",
+   "prose": "Let $x \\in U_1 \\cap U_2$, both open, with $B(x, r_1) \\subseteq U_1$ and $B(x, r_2) \\subseteq U_2$.",
+   "question": "Give a radius $r$ with $B(x, r) \\subseteq U_1 \\cap U_2$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\min(r_1, r_2)",
+    "accept": [
+     "min(r_1, r_2)",
+     "min(r_1,r_2)"
+    ],
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "max",
+      "tex": "\\max(r_1, r_2)"
+     },
+     {
+      "id": "sum",
+      "tex": "r_1+r_2"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The ball must fit inside both."
+    },
+    {
+     "rung": "step",
+     "text": "Take the smaller radius."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The smaller ball fits inside both.",
+    "generic": "Not quite. Which radius fits inside both sets?",
+    "byKey": {
+     "max": "The larger ball fits in one set but may stick out of the other.",
+     "sum": "Adding radii gives a bigger ball, which fits in neither for sure."
+    }
+   },
+   "explain": {
+    "text": "$B(x, \\min(r_1, r_2))$ lies in both balls, so in both sets. For finitely many sets the minimum of finitely many positive radii is still positive."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Infinitely many at once",
+   "prose": "Now intersect infinitely many: $\\bigcap_{n \\ge 1} B_2(0, 1 + \\tfrac1n)$. Slide $n$ and watch the balls close in.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -2.1,
+      2.1
+     ],
+     "y": [
+      -2.1,
+      2.1
+     ],
+     "equal": true,
+     "height": 300,
+     "grid": 1,
+     "xLabel": "",
+     "yLabel": "",
+     "params": {
+      "n": 1
+     },
+     "functions": [
+      {
+       "id": "bn",
+       "contour": "sqrt(x^2 + y^2) / (1 + 1/n)",
+       "levels": [
+        1
+       ],
+       "colour": 1,
+       "levelLabels": false
+      },
+      {
+       "id": "unit",
+       "contour": "sqrt(x^2 + y^2)",
+       "levels": [
+        1
+       ],
+       "colour": 2,
+       "dashed": true,
+       "levelLabels": false
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "e",
+       "x": 1,
+       "y": 0,
+       "label": "(1, 0)",
+       "tap": false
+      }
+     ]
+    },
+    "derive": {
+     "caption": "$n$ = {{n}}: radius {{fixed(1 + 1/n, 3)}}"
+    },
+    "controls": [
+     {
+      "bind": "n",
+      "min": 1,
+      "max": 50,
+      "step": 1,
+      "start": 1,
+      "label": "$n$"
+     }
+    ]
+   },
+   "question": "Is the intersection open?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "No. It is the closed disc, and $(1, 0)$ lies in it with no ball inside.",
+      "correct": true
+     },
+     {
+      "id": "open",
+      "text": "Yes. An intersection of open sets is open.",
+      "why": "That holds for finitely many. Here the radii $1 + \\tfrac1n$ shrink to 1, and no minimum is left."
+     },
+     {
+      "id": "disc",
+      "text": "It is the open unit disc, so yes.",
+      "why": "$(1, 0)$ has $d_2 = 1 < 1 + \\tfrac1n$ for every $n$, so it is in the intersection."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is $(1, 0)$ in every ball?"
+    },
+    {
+     "rung": "point",
+     "text": "Every ball reaches past $(1, 0)$.",
+     "highlight": [
+      "e"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Any ball round $(1, 0)$ contains points at distance above 1."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Infinite intersections can close up.",
+    "generic": "Not quite. Check the point $(1, 0)$."
+   },
+   "explain": {
+    "text": "A point is in every ball exactly when $d_2 \\le 1$, so the intersection is the closed unit disc. Round $(1, 0)$ every ball holds points with $d_2 > 1$. `analysis` l23 met the same thing on the line.",
+    "canvas": {
+     "params": {
+      "n": 50
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Same radius, same fit?",
+   "prose": "A learner writes: \"For $y \\in B(x, r)$, the ball $B(y, r)$ has the same size. So it fits inside $B(x, r)$.\"",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.2,
+      2.2
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "equal": true,
+     "height": 260,
+     "grid": 0.5,
+     "xLabel": "",
+     "yLabel": "",
+     "functions": [
+      {
+       "id": "big",
+       "contour": "sqrt(x^2 + y^2)",
+       "levels": [
+        1
+       ],
+       "colour": 1,
+       "levelLabels": false
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "y",
+       "x": 0.9,
+       "y": 0,
+       "label": "$y$",
+       "tap": false
+      }
+     ]
+    }
+   },
+   "question": "Take the unit disc and $y = (0.9, 0)$. What is wrong with the argument?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$B(y, 1)$ reaches $(1.8, 0)$, outside the disc. Same size does not mean inside.",
+      "correct": true
+     },
+     {
+      "id": "fine",
+      "text": "Nothing: two balls of the same radius always nest.",
+      "why": "You treated equal size as inclusion. The balls have different centres, so one can stick out of the other.",
+      "canvas": {
+       "functions": [
+        {
+         "id": "same",
+         "contour": "sqrt((x - 0.9)^2 + y^2)",
+         "levels": [
+          1
+         ],
+         "colour": 2,
+         "levelLabels": false
+        }
+       ]
+      }
+     },
+     {
+      "id": "radius",
+      "text": "It works once $r$ is replaced by $\\tfrac{r}{2}$.",
+      "why": "At $y = (0.9, 0)$ the room left is $0.1$, far below $\\tfrac12$. The radius must depend on $y$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Draw $B(y, 1)$ in your head."
+    },
+    {
+     "rung": "point",
+     "text": "$y$ is only 0.1 from the edge.",
+     "highlight": [
+      "y"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$B(y, 1)$ holds $(1.8, 0)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The fit must shrink near the edge.",
+    "generic": "Not quite. Where does $B(y, 1)$ reach?",
+    "byKey": {
+     "fine": "You assumed a ball of the same radius fits. Moved off-centre, it sticks out past the edge."
+    }
+   },
+   "explain": {
+    "text": "$B((0.9, 0), 1)$ reaches $(1.8, 0)$. The radius that fits is $1 - 0.9 = 0.1$. It depends on how close $y$ is to the edge.",
+    "canvas": {
+     "functions": [
+      {
+       "id": "same",
+       "contour": "sqrt((x - 0.9)^2 + y^2)",
+       "levels": [
+        1
+       ],
+       "colour": 2,
+       "levelLabels": false
+      },
+      {
+       "id": "fit",
+       "contour": "sqrt((x - 0.9)^2 + y^2)",
+       "levels": [
+        0.1
+       ],
+       "colour": 3,
+       "levelLabels": false
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The discrete metric",
+   "prose": "On any set $X$ the discrete metric is $d(x, y) = 1$ for $x \\ne y$ and 0 for $x = y$. So $B(x, 1) = \\{x\\}$, while $B(x, 1.01) = X$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Ball",
+      "Points in it"
+     ],
+     "rows": [
+      [
+       "$B(x, 0.5)$",
+       "$\\{x\\}$"
+      ],
+      [
+       "$B(x, 1)$",
+       "$\\{x\\}$"
+      ],
+      [
+       "$B(x, 1.01)$",
+       "all of $X$"
+      ]
+     ],
+     "align": "center"
+    },
+    "state": {}
+   },
+   "question": "Which sets of $X$ are open in the discrete metric?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Every set: each point $x$ of a set $A$ has $B(x, 1) = \\{x\\} \\subseteq A$.",
+      "correct": true
+     },
+     {
+      "id": "balls",
+      "text": "Only $\\varnothing$, the singletons and $X$, the balls themselves.",
+      "why": "You listed the balls. Unions of open sets are open, and every set is a union of singletons."
+     },
+     {
+      "id": "none",
+      "text": "Only $\\varnothing$ and $X$, since balls jump from a point to everything.",
+      "why": "The jump is in radius, not in sets. Radius 1 gives a singleton, which is open."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which ball round $x$ is as small as possible?"
+    },
+    {
+     "rung": "point",
+     "text": "$B(x, 1)$ is a single point.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A singleton fits inside any set holding $x$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Every subset is open.",
+    "generic": "Not quite. Use the ball $B(x, 1) = \\{x\\}$."
+   },
+   "explain": {
+    "text": "Every singleton is the ball $B(x, 1)$, so it is open. Any set is a union of singletons, hence open. Here the largest fit can exceed $r - d(x, y)$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Room inside a risk limit",
+   "prose": "Two desks hold exposures $x = (\\text{£}0.3\\text{m}, \\text{£}0.4\\text{m})$. Limit A caps each desk: $|x_k| < \\text{£}1\\text{m}$, an open $d_\\infty$ ball. Limit B caps the total: $|x_1| + |x_2| < \\text{£}1\\text{m}$, an open $d_1$ ball.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -1.2,
+      1.2
+     ],
+     "y": [
+      -1.2,
+      1.2
+     ],
+     "equal": true,
+     "height": 280,
+     "grid": 0.5,
+     "xLabel": "Desk 1 (£m)",
+     "yLabel": "Desk 2 (£m)",
+     "functions": [
+      {
+       "id": "bi",
+       "contour": "max(abs(x), abs(y))",
+       "levels": [
+        1
+       ],
+       "colour": 3,
+       "levelLabels": false
+      },
+      {
+       "id": "b1",
+       "contour": "abs(x) + abs(y)",
+       "levels": [
+        1
+       ],
+       "colour": 2,
+       "levelLabels": false
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "x",
+       "x": 0.3,
+       "y": 0.4,
+       "label": "$x$",
+       "tap": false
+      }
+     ]
+    }
+   },
+   "question": "How far, in £m, can the exposures move in any direction and stay inside each limit? Use that limit's own metric.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Limit",
+     "Metric",
+     "Room (£m)"
+    ],
+    "rows": [
+     [
+      "A: each desk",
+      "$d_\\infty$",
+      {
+       "edit": true,
+       "answer": 0.6,
+       "tol": {
+        "abs": 0.005
+       },
+       "wrong": [
+        {
+         "id": "used",
+         "value": 0.4,
+         "tol": {
+          "abs": 0.005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "B: total",
+      "$d_1$",
+      {
+       "edit": true,
+       "answer": 0.3,
+       "tol": {
+        "abs": 0.005
+       },
+       "wrong": [
+        {
+         "id": "used1",
+         "value": 0.7,
+         "tol": {
+          "abs": 0.005
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The room is the limit minus the distance already used."
+    },
+    {
+     "rung": "point",
+     "text": "$x$ has $d_\\infty = 0.4$ and $d_1 = 0.7$.",
+     "highlight": [
+      "x"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$1 - 0.4$ and $1 - 0.7$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. £0.6m of room under limit A, £0.3m under limit B.",
+    "generic": "Not quite. Subtract the exposure already used from £1m.",
+    "byKey": {
+     "used": "£0.4m is the larger exposure, already used. The room is what is left.",
+     "used1": "£0.7m is the total already used. The room left is £0.3m."
+    }
+   },
+   "explain": {
+    "text": "Limit A leaves $1 - 0.4 = 0.6$, so £0.6m in any direction, and limit B leaves $1 - 0.7 = 0.3$, so £0.3m of combined moves. Both limit sets are open, so a position strictly inside always has some room."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A set is open when each of its points has a ball $B(y, s)$, $s > 0$, inside it. For $y \\in B(x, r)$ the radius $s = r - d(x, y)$ works, by the triangle inequality.",
+   "Any union of open sets is open, and so is a finite intersection, with radius $\\min(r_1, r_2)$. An infinite intersection can fail: $\\bigcap B_2(0, 1 + \\tfrac1n)$ is the closed disc.",
+   "If $a\\,d \\le d' \\le b\\,d$ with $a, b > 0$, the two metrics have the same open sets; $d_1$, $d_2$ and $d_\\infty$ on $\\mathbb{R}^n$ do. In the discrete metric every set is open."
+  ],
+  "formula": {
+   "name": "The radius that fits",
+   "tex": "y \\in B(x, r) \\implies B\\big(y, r - d(x, y)\\big) \\subseteq B(x, r)",
+   "note": "The triangle inequality gives $d(x, z) < d(x, y) + s = r$."
+  },
+  "trap": "A ball round $y$ of the same radius $r$ need not fit inside $B(x, r)$. At $(0.9, 0)$ in the unit disc only 0.1 fits."
+ },
+ "quiz": [
+  {
+   "id": "q-square-room",
+   "difficulty": 2,
+   "prose": "In $d_\\infty$ take the unit ball $B_\\infty(0, 1)$, the open square, and the point $y = (0.2, 0.5)$.",
+   "question": "What is the largest $s$ with $B_\\infty(y, s) \\subseteq B_\\infty(0, 1)$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "accept": "0.5: $1 - \\max(0.2, 0.5)$.",
+    "wrong": [
+     {
+      "id": "taxi",
+      "value": 0.3,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "small",
+      "value": 0.8,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. The top edge is 0.5 away.",
+    "generic": "Not quite. Find $d_\\infty(0, y)$ first.",
+    "byKey": {
+     "taxi": "0.3 is $1 - d_1(0, y)$. The square's room uses $d_\\infty$.",
+     "small": "0.8 is the room to the side edge. The top edge is nearer."
+    }
+   },
+   "explain": {
+    "text": "$d_\\infty(0, y) = \\max(0.2, 0.5) = 0.5$, so $s = 1 - 0.5 = 0.5$. The top edge $y_2 = 1$ is the nearest."
+   }
+  },
+  {
+   "id": "q-open-line",
+   "difficulty": 2,
+   "prose": "Subsets of $\\mathbb{R}$ with the usual metric.",
+   "question": "Which sets are open? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "a",
+      "text": "$(0, 1)$",
+      "correct": true
+     },
+     {
+      "id": "b",
+      "text": "$[0, 1)$",
+      "why": "Every ball round 0 holds negative numbers, which are not in the set."
+     },
+     {
+      "id": "c",
+      "text": "$(0, \\infty)$",
+      "correct": true
+     },
+     {
+      "id": "d",
+      "text": "$\\{0\\}$",
+      "why": "A single point holds no interval round itself in the usual metric."
+     },
+     {
+      "id": "e",
+      "text": "$\\mathbb{R}$",
+      "correct": true
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. Three of the five.",
+    "generic": "Not quite. Look for a point with no interval round it inside the set."
+   },
+   "explain": {
+    "text": "$(0, 1)$, $(0, \\infty)$ and $\\mathbb{R}$ give each point an interval inside. $[0, 1)$ fails at 0 and $\\{0\\}$ fails at 0."
+   }
+  },
+  {
+   "id": "q-union-closed",
+   "difficulty": 3,
+   "prose": "Each $[\\tfrac1n, 1 - \\tfrac1n]$ for $n \\ge 3$ is a closed interval.",
+   "question": "What is $\\bigcup_{n \\ge 3} [\\tfrac1n, 1 - \\tfrac1n]$, and is it open?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$(0, 1)$, which is open",
+      "correct": true
+     },
+     {
+      "id": "closed",
+      "text": "$[0, 1]$, which is closed",
+      "why": "0 lies in no member, since $\\tfrac1n > 0$ for every $n$."
+     },
+     {
+      "id": "rule",
+      "text": "A closed set, since a union of closed sets is closed",
+      "why": "That holds for finitely many. Infinitely many closed sets can union to an open set."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. Every point of $(0, 1)$ is caught by some member.",
+    "generic": "Not quite. Which points of $[0, 1]$ lie in some member?"
+   },
+   "explain": {
+    "text": "Each $x \\in (0, 1)$ lies in $[\\tfrac1n, 1 - \\tfrac1n]$ once $n$ is large, while 0 and 1 never do. So the union is $(0, 1)$, which is open."
+   }
+  },
+  {
+   "id": "q-two-balls",
+   "difficulty": 3,
+   "prose": "A point $y$ lies in $B(x_1, r_1) \\cap B(x_2, r_2)$, with $d_1 = d(x_1, y)$ and $d_2 = d(x_2, y)$.",
+   "question": "Which radius $s$ is sure to give $B(y, s)$ inside the intersection?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$\\min(r_1 - d_1, r_2 - d_2)$",
+      "correct": true
+     },
+     {
+      "id": "minr",
+      "text": "$\\min(r_1, r_2)$",
+      "why": "You kept the radii of the big balls. Room round $y$ must subtract the distance already used."
+     },
+     {
+      "id": "max",
+      "text": "$\\max(r_1 - d_1, r_2 - d_2)$",
+      "why": "The larger room fits one ball but may stick out of the other."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. Room in each ball, then the smaller.",
+    "generic": "Not quite. Find the room inside each ball first."
+   },
+   "explain": {
+    "text": "$B(y, r_k - d_k)$ fits inside $B(x_k, r_k)$ for each $k$. The smaller of the two radii fits inside both."
+   }
+  }
+ ]
+}

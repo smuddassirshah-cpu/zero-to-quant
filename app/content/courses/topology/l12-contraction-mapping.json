@@ -1,0 +1,1382 @@
+{
+ "id": "l12-contraction-mapping",
+ "course": "topology",
+ "title": "The contraction mapping theorem",
+ "minutes": 15,
+ "objectives": [
+  "Prove the contraction mapping theorem without notes."
+ ],
+ "skills": [
+  "tg-complete"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two starts, one destination",
+   "prose": "Apply $T(x) = 0.5x + 1$ again and again. Drag the two starts $a$ and $b$; the arcs show four steps from each.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": -1,
+     "max": 11,
+     "step": 1
+    },
+    "state": {
+     "points": [
+      {
+       "id": "a",
+       "x": 0,
+       "label": "a",
+       "drag": true
+      },
+      {
+       "id": "b",
+       "x": 10,
+       "label": "b",
+       "drag": true
+      },
+      {
+       "id": "fix",
+       "x": 2,
+       "label": "2",
+       "colour": 3
+      }
+     ],
+     "arrows": [
+      {
+       "id": "a1",
+       "from": 0,
+       "to": 1
+      },
+      {
+       "id": "a2",
+       "from": 1,
+       "to": 1.5
+      },
+      {
+       "id": "a3",
+       "from": 1.5,
+       "to": 1.75
+      },
+      {
+       "id": "a4",
+       "from": 1.75,
+       "to": 1.875
+      },
+      {
+       "id": "b1",
+       "from": 10,
+       "to": 6,
+       "side": "below"
+      },
+      {
+       "id": "b2",
+       "from": 6,
+       "to": 4,
+       "side": "below"
+      },
+      {
+       "id": "b3",
+       "from": 4,
+       "to": 3,
+       "side": "below"
+      },
+      {
+       "id": "b4",
+       "from": 3,
+       "to": 2.5,
+       "side": "below"
+      }
+     ]
+    },
+    "derive": {
+     "let": {
+      "a1v": "0.5*a.x + 1",
+      "a2v": "0.5*a1v + 1",
+      "a3v": "0.5*a2v + 1",
+      "a4v": "0.5*a3v + 1",
+      "b1v": "0.5*b.x + 1",
+      "b2v": "0.5*b1v + 1",
+      "b3v": "0.5*b2v + 1",
+      "b4v": "0.5*b3v + 1"
+     },
+     "a1.from": "a.x",
+     "a1.to": "a1v",
+     "a2.from": "a1v",
+     "a2.to": "a2v",
+     "a3.from": "a2v",
+     "a3.to": "a3v",
+     "a4.from": "a3v",
+     "a4.to": "a4v",
+     "b1.from": "b.x",
+     "b1.to": "b1v",
+     "b2.from": "b1v",
+     "b2.to": "b2v",
+     "b3.from": "b2v",
+     "b3.to": "b3v",
+     "b4.from": "b3v",
+     "b4.to": "b4v",
+     "caption": "After 3 steps: {{fixed(a3v, 4)}} and {{fixed(b3v, 4)}}, gap {{fixed(abs(b3v - a3v), 4)}}"
+    }
+   },
+   "question": "With the starts at 0 and 10, what is the gap between the two iterates after three steps?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.25,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "accept": "1.25: $3 - 1.75$, which is $10 \\times 0.5^3$.",
+    "wrong": [
+     {
+      "id": "two",
+      "value": 2.5,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "four",
+      "value": 0.625,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "From 0: 1, 1.5, 1.75. From 10: 6, 4, 3."
+    },
+    {
+     "rung": "step",
+     "text": "Each step halves the gap: $10 \\to 5 \\to 2.5 \\to 1.25$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The gap halves each step, and both head to 2.",
+    "generic": "Not quite. Iterate three times from each start.",
+    "byKey": {
+     "two": "2.5 is the gap after two steps. Take one more.",
+     "four": "0.625 is the gap after four steps."
+    }
+   },
+   "explain": {
+    "text": "From 0 the iterates are 1, 1.5, 1.75, 1.875; from 10 they are 6, 4, 3, 2.5. The gap $10 \\times 0.5^n$ halves each step, to 1.25 after three, and both runs approach the fixed point 2.",
+    "canvas": {
+     "points": {
+      "a": {
+       "x": 0
+      },
+      "b": {
+       "x": 10
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Contractions and Banach's theorem",
+   "prose": "$T : X \\to X$ is a **contraction** when $d(T(x), T(y)) \\le q\\,d(x, y)$ for all $x, y$, with one fixed $q < 1$. **Banach's theorem:** on a non-empty complete metric space, a contraction has exactly one fixed point $x^*$. The iterates $x_n = T(x_{n-1})$ from any $x_0$ converge to it, and $$d(x_n, x^*) \\le \\frac{q^n}{1 - q}\\,d(x_1, x_0).$$",
+   "question": "What is the smallest constant $q$ for $T(x) = 0.5x + 1$ on $\\mathbb{R}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "grid",
+    "shuffle": true,
+    "options": [
+     {
+      "id": "ok",
+      "text": "$0.5$",
+      "correct": true
+     },
+     {
+      "id": "one",
+      "text": "$1.5$",
+      "why": "You added the shift. $|T(x) - T(y)| = 0.5|x - y|$: the $+1$ cancels."
+     },
+     {
+      "id": "two",
+      "text": "$2$",
+      "why": "You took the fixed point. The constant is the stretch factor, 0.5."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute $|T(x) - T(y)|$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $q = 0.5$.",
+    "generic": "Not quite. The shift cancels in $T(x) - T(y)$."
+   },
+   "explain": {
+    "text": "$|T(x) - T(y)| = 0.5|x - y|$, so $q = 0.5$. $\\mathbb{R}$ is complete, so the theorem gives one fixed point, $x^* = 2$."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Step 1: the iterates are Cauchy",
+   "prose": "Let $T$ be a contraction with constant $q < 1$ and $x_n = T(x_{n-1})$. Every line carries its reason. Two lines are tempting but flawed.",
+   "question": "Put the argument in order. Move the two flawed lines to Left out.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "g1",
+      "text": "$d(x_{n+1}, x_n) = d(T(x_n), T(x_{n-1})) \\le q\\,d(x_n, x_{n-1})$, by the contraction property."
+     },
+     {
+      "id": "g2",
+      "text": "So $d(x_{n+1}, x_n) \\le q^n d(x_1, x_0)$, by induction on $n$."
+     },
+     {
+      "id": "g3",
+      "text": "For $m > n$, $d(x_m, x_n) \\le \\sum_{k=n}^{m-1} d(x_{k+1}, x_k)$, by the triangle inequality."
+     },
+     {
+      "id": "g4",
+      "text": "$\\le \\sum_{k=n}^{\\infty} q^k d(x_1, x_0) = \\tfrac{q^n}{1 - q}d(x_1, x_0)$, a geometric series since $q < 1$."
+     },
+     {
+      "id": "g5",
+      "text": "The bound tends to 0 as $n \\to \\infty$, whatever $m$ is, so $(x_n)$ is Cauchy."
+     },
+     {
+      "id": "d1",
+      "text": "$(x_n)$ is bounded, so it converges.",
+      "why": "Bounded sequences need not converge: $(-1)^n$ is bounded. And we want Cauchy, which needs a uniform bound on $d(x_m, x_n)$."
+     },
+     {
+      "id": "d2",
+      "text": "$d(x_{n+1}, x_n) \\to 0$, so $(x_n)$ is Cauchy.",
+      "why": "This is the harmonic trap of `analysis` l10: $\\sqrt n$ has steps tending to 0 yet diverges. The geometric bound is what saves us."
+     }
+    ],
+    "answer": [
+     "g1",
+     "g2",
+     "g3",
+     "g4",
+     "g5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Bound one step, then many steps."
+    },
+    {
+     "rung": "point",
+     "text": "Small steps alone are not enough."
+    },
+    {
+     "rung": "step",
+     "text": "One step, induction, triangle inequality, geometric series, Cauchy."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The geometric series makes the tail small.",
+    "generic": "Not quite. Start with one step of the iteration.",
+    "byKey": {
+     "d1": "You used boundedness. It does not give convergence, nor Cauchy.",
+     "d2": "You stopped at steps tending to 0, the harmonic trap. The steps must shrink geometrically.",
+     "left-out": "You left out a line the argument needs."
+    }
+   },
+   "explain": {
+    "text": "Each step shrinks by $q$, so steps are at most $q^n d(x_1, x_0)$. Summing a geometric tail bounds $d(x_m, x_n)$ by $\\tfrac{q^n}{1 - q}d(x_1, x_0)$, which tends to 0. That is the Cauchy condition."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Step 2: limit, fixed, unique",
+   "prose": "Now use completeness. The last two lines are independent, so they may come in either order.",
+   "question": "Put the argument in order.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "h1",
+      "text": "$X$ is complete and $(x_n)$ is Cauchy, so $x_n \\to x^*$ for some $x^* \\in X$."
+     },
+     {
+      "id": "h2",
+      "text": "$T$ is continuous, since it is Lipschitz: $d(T(x), T(y)) \\le q\\,d(x, y)$."
+     },
+     {
+      "id": "h3",
+      "text": "So $T(x^*) = \\lim T(x_n) = \\lim x_{n+1} = x^*$: $x^*$ is a fixed point."
+     },
+     {
+      "id": "h4",
+      "text": "Unique: if $T(y^*) = y^*$, then $d(x^*, y^*) \\le q\\,d(x^*, y^*)$ with $q < 1$, so $d(x^*, y^*) = 0$."
+     },
+     {
+      "id": "h5",
+      "text": "Error bound: let $m \\to \\infty$ in $d(x_m, x_n) \\le \\tfrac{q^n}{1 - q}d(x_1, x_0)$. $\\blacksquare$"
+     }
+    ],
+    "answer": [
+     "h1",
+     "h2",
+     "h3",
+     "h4",
+     "h5"
+    ],
+    "same": [
+     [
+      "h4",
+      "h5"
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Completeness first, then continuity."
+    },
+    {
+     "rung": "step",
+     "text": "Limit, continuity, fixed, then uniqueness and the bound in either order."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. That is the whole theorem.",
+    "generic": "Not quite. Get the limit from completeness first."
+   },
+   "explain": {
+    "text": "Completeness supplies the limit $x^*$, and continuity of $T$ makes it fixed. Two fixed points would be closer than themselves, so there is one. Letting $m \\to \\infty$ in the Cauchy bound gives the error bound."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The bound as a formula",
+   "prose": "The a priori bound uses only $q$, the step count $n$ and the first move $d = d(x_1, x_0)$.",
+   "question": "Write the bound on $d(x_n, x^*)$ in terms of $q$, $n$ and $d$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{q^n}{1-q}d",
+    "accept": [
+     "q^n d/(1-q)",
+     "d q^n/(1-q)"
+    ],
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "noseries",
+      "tex": "q^n d"
+     },
+     {
+      "id": "plus",
+      "tex": "\\frac{q^n}{1+q}d"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "It is the sum of the geometric tail from $q^n$."
+    },
+    {
+     "rung": "step",
+     "text": "$q^n + q^{n+1} + \\dots = \\tfrac{q^n}{1 - q}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $\\tfrac{q^n}{1 - q}d$.",
+    "generic": "Not quite. Sum the geometric tail from step $n$.",
+    "byKey": {
+     "noseries": "$q^n d$ bounds only the $n$th step. The distance to $x^*$ adds every later step.",
+     "plus": "The geometric series has $1 - q$ below, not $1 + q$."
+    }
+   },
+   "explain": {
+    "text": "The distance to $x^*$ is at most the sum of all later steps, $\\sum_{k \\ge n} q^k d = \\tfrac{q^n}{1 - q}d$. It needs no knowledge of $x^*$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "How many steps, before starting",
+   "prose": "For the hook from $x_0 = 0$: $q = 0.5$ and $d(x_1, x_0) = 1$. The **a priori** count is the smallest $n$ whose bound is below the tolerance.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$n$",
+      "$\\tfrac{0.5^n}{0.5} \\cdot 1$"
+     ],
+     "rows": [
+      [
+       "19",
+       "3.8 × 10⁻⁶"
+      ],
+      [
+       "20",
+       "1.9 × 10⁻⁶"
+      ],
+      [
+       "21",
+       "?"
+      ]
+     ],
+     "align": "center"
+    },
+    "state": {}
+   },
+   "question": "What is the smallest $n$ with $\\tfrac{q^n}{1 - q}d(x_1, x_0) < 10^{-6}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 21,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "21: $2 \\times 0.5^{21} \\approx 9.5 \\times 10^{-7}$.",
+    "wrong": [
+     {
+      "id": "noseries",
+      "value": 20
+     },
+     {
+      "id": "log",
+      "value": 6
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The bound is $2 \\times 0.5^n$."
+    },
+    {
+     "rung": "step",
+     "text": "$n \\ge \\tfrac{\\ln(5 \\times 10^{-7})}{\\ln 0.5} \\approx 20.9$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. 21 steps, promised before any work.",
+    "generic": "Not quite. Solve $2 \\times 0.5^n < 10^{-6}$.",
+    "byKey": {
+     "noseries": "20 gives $1.9 \\times 10^{-6}$, still above the tolerance.",
+     "log": "You took $\\log_{10}$ of the tolerance. The base of the shrinking is 0.5, not 10."
+    }
+   },
+   "explain": {
+    "text": "$2 \\times 0.5^{20} \\approx 1.9 \\times 10^{-6}$ and $2 \\times 0.5^{21} \\approx 9.5 \\times 10^{-7}$. So 21 steps suffice, matching $\\lceil \\ln(10^{-6}(1 - q)/d) / \\ln q \\rceil$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A contraction in one metric only",
+   "prose": "Take $T(\\mathbf{x}) = \\mathbf{A}\\mathbf{x} + \\mathbf{b}$ on $\\mathbb{R}^2$ with $\\mathbf{A} = \\begin{pmatrix} 0.6 & 0.6 \\\\ 0 & 0.3 \\end{pmatrix}$, $\\mathbf{b} = (1, 1)$. The best $d_\\infty$ constant is the largest row sum of $|\\mathbf{A}|$; the best $d_1$ constant, the largest column sum.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.3,
+      5.2
+     ],
+     "y": [
+      -0.3,
+      2
+     ],
+     "height": 240,
+     "grid": 1,
+     "xTicks": "integer",
+     "params": {
+      "X0": 0,
+      "Y0": 0
+     }
+    },
+    "state": {
+     "points": [
+      {
+       "id": "q0",
+       "x": 0,
+       "y": 0,
+       "label": "$x_0$",
+       "tap": false
+      },
+      {
+       "id": "q1",
+       "x": 1.0,
+       "y": 1.0,
+       "tap": false,
+       "label": "$x_1$"
+      },
+      {
+       "id": "q2",
+       "x": 2.2,
+       "y": 1.3,
+       "tap": false,
+       "label": "$x_2$"
+      },
+      {
+       "id": "q3",
+       "x": 3.1,
+       "y": 1.39,
+       "tap": false,
+       "label": "$x_3$"
+      },
+      {
+       "id": "q4",
+       "x": 3.694,
+       "y": 1.417,
+       "tap": false
+      },
+      {
+       "id": "q5",
+       "x": 4.0666,
+       "y": 1.4251,
+       "tap": false
+      },
+      {
+       "id": "q6",
+       "x": 4.295,
+       "y": 1.4275,
+       "tap": false
+      },
+      {
+       "id": "q7",
+       "x": 4.4335,
+       "y": 1.4283,
+       "tap": false
+      },
+      {
+       "id": "q8",
+       "x": 4.5171,
+       "y": 1.4285,
+       "tap": false
+      },
+      {
+       "id": "star",
+       "x": 4.6429,
+       "y": 1.4286,
+       "label": "$x^*$",
+       "colour": 3,
+       "tap": false
+      }
+     ],
+     "segments": [
+      {
+       "id": "s1",
+       "from": [
+        0.0,
+        0.0
+       ],
+       "to": [
+        1.0,
+        1.0
+       ],
+       "colour": 1,
+       "dashed": true
+      },
+      {
+       "id": "s2",
+       "from": [
+        1.0,
+        1.0
+       ],
+       "to": [
+        2.2,
+        1.3
+       ],
+       "colour": 1,
+       "dashed": true
+      },
+      {
+       "id": "s3",
+       "from": [
+        2.2,
+        1.3
+       ],
+       "to": [
+        3.1,
+        1.39
+       ],
+       "colour": 1,
+       "dashed": true
+      },
+      {
+       "id": "s4",
+       "from": [
+        3.1,
+        1.39
+       ],
+       "to": [
+        3.694,
+        1.417
+       ],
+       "colour": 1,
+       "dashed": true
+      },
+      {
+       "id": "s5",
+       "from": [
+        3.694,
+        1.417
+       ],
+       "to": [
+        4.0666,
+        1.4251
+       ],
+       "colour": 1,
+       "dashed": true
+      },
+      {
+       "id": "s6",
+       "from": [
+        4.0666,
+        1.4251
+       ],
+       "to": [
+        4.295,
+        1.4275
+       ],
+       "colour": 1,
+       "dashed": true
+      },
+      {
+       "id": "s7",
+       "from": [
+        4.295,
+        1.4275
+       ],
+       "to": [
+        4.4335,
+        1.4283
+       ],
+       "colour": 1,
+       "dashed": true
+      },
+      {
+       "id": "s8",
+       "from": [
+        4.4335,
+        1.4283
+       ],
+       "to": [
+        4.5171,
+        1.4285
+       ],
+       "colour": 1,
+       "dashed": true
+      }
+     ]
+    },
+    "derive": {
+     "let": {
+      "x1": "0.6*X0 + 0.6*Y0 + 1",
+      "y1": "0.3*Y0 + 1",
+      "x2": "0.6*x1 + 0.6*y1 + 1",
+      "y2": "0.3*y1 + 1",
+      "x3": "0.6*x2 + 0.6*y2 + 1",
+      "y3": "0.3*y2 + 1",
+      "x4": "0.6*x3 + 0.6*y3 + 1",
+      "y4": "0.3*y3 + 1",
+      "x5": "0.6*x4 + 0.6*y4 + 1",
+      "y5": "0.3*y4 + 1",
+      "x6": "0.6*x5 + 0.6*y5 + 1",
+      "y6": "0.3*y5 + 1",
+      "x7": "0.6*x6 + 0.6*y6 + 1",
+      "y7": "0.3*y6 + 1",
+      "x8": "0.6*x7 + 0.6*y7 + 1",
+      "y8": "0.3*y7 + 1"
+     },
+     "q0.x": "X0",
+     "q0.y": "Y0",
+     "q1.x": "x1",
+     "q1.y": "y1",
+     "s1.from": "[X0, Y0]",
+     "s1.to": "[x1, y1]",
+     "q2.x": "x2",
+     "q2.y": "y2",
+     "s2.from": "[x1, y1]",
+     "s2.to": "[x2, y2]",
+     "q3.x": "x3",
+     "q3.y": "y3",
+     "s3.from": "[x2, y2]",
+     "s3.to": "[x3, y3]",
+     "q4.x": "x4",
+     "q4.y": "y4",
+     "s4.from": "[x3, y3]",
+     "s4.to": "[x4, y4]",
+     "q5.x": "x5",
+     "q5.y": "y5",
+     "s5.from": "[x4, y4]",
+     "s5.to": "[x5, y5]",
+     "q6.x": "x6",
+     "q6.y": "y6",
+     "s6.from": "[x5, y5]",
+     "s6.to": "[x6, y6]",
+     "q7.x": "x7",
+     "q7.y": "y7",
+     "s7.from": "[x6, y6]",
+     "s7.to": "[x7, y7]",
+     "q8.x": "x8",
+     "q8.y": "y8",
+     "s8.from": "[x7, y7]",
+     "s8.to": "[x8, y8]",
+     "caption": "$x_8$ = ({{fixed(x8, 4)}}, {{fixed(y8, 4)}}); $x^*$ = (4.6429, 1.4286)"
+    },
+    "controls": [
+     {
+      "bind": "X0",
+      "min": 0,
+      "max": 5,
+      "step": 0.1,
+      "start": 0,
+      "label": "$x_0$ first"
+     },
+     {
+      "bind": "Y0",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "start": 0,
+      "label": "$x_0$ second"
+     }
+    ]
+   },
+   "question": "Fill in the constants and the fixed point.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "constant in $d_\\infty$",
+      {
+       "edit": true,
+       "answer": 1.2,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "col",
+         "value": 0.9,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "constant in $d_1$",
+      {
+       "edit": true,
+       "answer": 0.9,
+       "tol": {
+        "abs": 0.0005
+       },
+       "wrong": [
+        {
+         "id": "row",
+         "value": 1.2,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "$x^*$, first coordinate",
+      {
+       "edit": true,
+       "answer": 4.6429,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ],
+     [
+      "$x^*$, second coordinate",
+      {
+       "edit": true,
+       "answer": 1.4286,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Rows: $0.6 + 0.6$ and $0.3$. Columns: $0.6$ and $0.6 + 0.3$."
+    },
+    {
+     "rung": "point",
+     "text": "The iterates head to $x^*$; read the caption.",
+     "highlight": [
+      "star"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Solve $y = 0.3y + 1$, then $x = 0.6x + 0.6y + 1$. The spectral view is `odes` l12."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Not a contraction in $d_\\infty$, but one in $d_1$.",
+    "generic": "Not quite. Sum rows for $d_\\infty$ and columns for $d_1$.",
+    "byKey": {
+     "col": "0.9 is the column sum, the $d_1$ constant. $d_\\infty$ uses rows.",
+     "row": "1.2 is the row sum, the $d_\\infty$ constant. $d_1$ uses columns."
+    }
+   },
+   "explain": {
+    "text": "The constant is 1.2 in $d_\\infty$ but 0.9 in $d_1$ and about 0.8762 in $d_2$, so Banach applies. The fixed point is $(\\tfrac{65}{14}, \\tfrac{10}{7}) \\approx (4.6429, 1.4286)$. The $d_1$ bound promises $10^{-6}$ after 160 steps; 31 suffice: eigenvalues 0.6 and 0.3 set the rate."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Dropping a hypothesis",
+   "prose": "Each hypothesis matters: a complete space, a single $q < 1$, and $T$ mapping the space into itself.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Map",
+      "Space",
+      "Fixed point?"
+     ],
+     "rows": [
+      [
+       "$\\tfrac x2$",
+       "$(0, 1]$",
+       "none"
+      ],
+      [
+       "$x + \\tfrac1x$",
+       "$[1, \\infty)$",
+       "none"
+      ],
+      [
+       "$\\cos x$",
+       "$[0, 2]$",
+       "yes, 0.739"
+      ],
+      [
+       "$0.5x + 1$",
+       "$\\mathbb{R}$",
+       "yes, 2"
+      ]
+     ],
+     "align": "center"
+    },
+    "state": {}
+   },
+   "question": "Which maps satisfy every hypothesis of the theorem? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "options": [
+     {
+      "id": "half",
+      "text": "$T(x) = \\tfrac x2$ on $(0, 1]$",
+      "why": "A contraction with $q = \\tfrac12$, but $(0, 1]$ is not complete: the iterates head to the missing 0."
+     },
+     {
+      "id": "inv",
+      "text": "$T(x) = x + \\tfrac1x$ on $[1, \\infty)$",
+      "why": "$|T(x) - T(y)| < |x - y|$, but the ratio tends to 1, so no single $q < 1$ works. $T(1) = 2$, $T(2) = 2.5$, and no fixed point exists."
+     },
+     {
+      "id": "cos",
+      "text": "$T(x) = \\cos x$ on $[0, 2]$",
+      "why": "$\\cos 2 \\approx -0.42$ is outside $[0, 2]$, so $T$ does not map the space into itself. It has a fixed point anyway."
+     },
+     {
+      "id": "ok",
+      "text": "$T(x) = 0.5x + 1$ on $\\mathbb{R}$",
+      "correct": true
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Check completeness, a single $q < 1$, and $T(X) \\subseteq X$ for each."
+    },
+    {
+     "rung": "point",
+     "text": "$\\cos x$ has a fixed point, but is that because of the theorem?",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Only the last map passes all three."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Each of the others drops one hypothesis.",
+    "generic": "Not quite. Test the three hypotheses on each map.",
+    "byKey": {
+     "cos": "You accepted $\\cos$ on $[0, 2]$ because it has a fixed point. The hypotheses are sufficient, not necessary: $\\cos 2 < 0$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac x2$ on $(0, 1]$ loses completeness; $x + \\tfrac1x$ has no single $q < 1$; $\\cos$ on $[0, 2]$ leaves the interval. Only $0.5x + 1$ on $\\mathbb{R}$ passes, and the third shows a fixed point can exist without the theorem."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The ends of the range of $q$",
+   "prose": "Two extreme maps on $\\mathbb{R}$: a constant map $T(x) = c$, and the identity $T(x) = x$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Map",
+      "Best $q$",
+      "Fixed points"
+     ],
+     "rows": [
+      [
+       "$T(x) = c$",
+       "0",
+       "?"
+      ],
+      [
+       "$T(x) = x$",
+       "1",
+       "?"
+      ]
+     ],
+     "align": "center"
+    },
+    "state": {}
+   },
+   "question": "Which statement is right?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The constant map reaches its one fixed point $c$ in one step. The identity fixes every point, so uniqueness fails at $q = 1$.",
+      "correct": true
+     },
+     {
+      "id": "noq0",
+      "text": "$q = 0$ is not allowed, so the constant map is no contraction.",
+      "why": "Any $q$ with $0 \\le q < 1$ is allowed. With $q = 0$ the bound says $x_1 = x^*$."
+     },
+     {
+      "id": "id",
+      "text": "The identity has no fixed point, since nothing moves.",
+      "why": "Nothing moving is exactly what a fixed point is: every $x$ has $T(x) = x$."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where does one step of $T(x) = c$ land?"
+    },
+    {
+     "rung": "step",
+     "text": "For the identity, which points satisfy $T(x) = x$?"
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The theorem needs $q < 1$ strictly.",
+    "generic": "Not quite. Find the fixed points of each map."
+   },
+   "explain": {
+    "text": "With $q = 0$, $x_1 = c = x^*$ after one step. With $q = 1$ the identity fixes everything, so uniqueness fails. The strict $q < 1$ is what forces one fixed point."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Iterating by machine",
+   "prose": "Write `iterate(T, x0, n)`, returning the list $[x_0, x_1, \\dots, x_n]$. Then write `apriori_steps(q, d01, tol)`: the smallest $n$ with $\\tfrac{q^n}{1 - q}d_{01} <$ `tol`. Raise `ValueError` for $q \\ge 1$, where the theorem says nothing.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> iterate(lambda x: 0.5 * x + 1, 0, 4)",
+      "[0, 1.0, 1.5, 1.75, 1.875]",
+      ">>> apriori_steps(0.5, 1, 1e-6)",
+      "21"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete both functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\n",
+    "starter": "def iterate(T, x0, n):\n    \"\"\"[x0, T(x0), ..., T^n(x0)].\"\"\"\n    ...\n\ndef apriori_steps(q, d01, tol):\n    \"\"\"Smallest n with q**n / (1 - q) * d01 < tol.\"\"\"\n    ...\n",
+    "solution": "def iterate(T, x0, n):\n    \"\"\"[x0, T(x0), ..., T^n(x0)].\"\"\"\n    xs = [x0]\n    for _ in range(n):\n        xs.append(T(xs[-1]))\n    return xs\n\ndef apriori_steps(q, d01, tol):\n    \"\"\"Smallest n with q**n / (1 - q) * d01 < tol.\"\"\"\n    if q >= 1:\n        raise ValueError(\"not a contraction\")\n    n = 0\n    while q ** n / (1 - q) * d01 >= tol:\n        n += 1\n    return n\n",
+    "examples": [
+     {
+      "call": "iterate(lambda x: 0.5 * x + 1, 0, 4)",
+      "expect": "[0, 1.0, 1.5, 1.75, 1.875]",
+      "compare": "equal"
+     },
+     {
+      "call": "apriori_steps(0.5, 1, 1e-6)",
+      "expect": "21",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "iterate(lambda x: 0.5 * x + 1, 0, 4)",
+      "expect": "[0, 1.0, 1.5, 1.75, 1.875]",
+      "compare": "equal"
+     },
+     {
+      "call": "iterate(lambda x: 0.5 * x + 1, 10, 2)",
+      "expect": "[10, 6.0, 4.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "iterate(math.cos, 1.0, 0)",
+      "expect": "[1.0]",
+      "compare": "equal"
+     },
+     {
+      "call": "apriori_steps(0.5, 1, 1e-6)",
+      "expect": "21",
+      "compare": "equal"
+     },
+     {
+      "call": "apriori_steps(math.sin(1), 1 - math.cos(1), 1e-6)",
+      "expect": "87",
+      "compare": "equal"
+     },
+     {
+      "call": "apriori_steps(1.02 / 1.06, 5 / 1.06, 0.01)",
+      "expect": "246",
+      "compare": "equal"
+     },
+     {
+      "call": "apriori_steps(1, 1, 0.01)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Check runs 7 hidden tests, compared exactly: three iterations and a ValueError at $q = 1$. Three step counts are 21 for the hook, 87 for cosine and 246 for the Gordon map. The first Check starts Python in the browser, about 4 s once."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count up from $n = 0$ while the bound is still at or above `tol`."
+    },
+    {
+     "rung": "step",
+     "text": "Check $q \\ge 1$ before the loop, or it never ends."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. The counts match the screens.",
+    "generic": "Not quite. Use a strict `<` for the stop and raise for $q \\ge 1$."
+   },
+   "explain": {
+    "text": "The loop stops at the first $n$ with a bound below the tolerance. Without the check, $q = 1$ would loop for ever, since the bound never shrinks."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A dividend stock as a fixed point",
+   "prose": "A stock pays £5 next year, dividends grow 2% a year, and we discount at 6%. Its value solves $V = T(V) = \\tfrac{5 + 1.02V}{1.06}$, a contraction with $q = \\tfrac{1.02}{1.06} \\approx 0.9623$. The fixed point is the Gordon price $\\tfrac{5}{0.06 - 0.02} = \\text{£}125$ (`odes` l14). From 0 the iterates are £4.72, £9.26, £13.62.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$n$",
+      "$V_n$ (£)",
+      "$125 - V_n$ (£)"
+     ],
+     "rows": [
+      [
+       "1",
+       "4.72",
+       "120.28"
+      ],
+      [
+       "2",
+       "9.26",
+       "115.74"
+      ],
+      [
+       "3",
+       "13.62",
+       "111.38"
+      ]
+     ],
+     "align": "center"
+    },
+    "state": {}
+   },
+   "question": "How many steps from 0 does the a priori bound need for an error below £0.01?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 246,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "246: $\\tfrac{q^n}{1 - q} \\cdot \\tfrac{5}{1.06} = 125q^n < 0.01$.",
+    "wrong": [
+     {
+      "id": "off",
+      "value": 245
+     },
+     {
+      "id": "hook",
+      "value": 21
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$d(V_1, V_0) = \\tfrac{5}{1.06}$, and $\\tfrac{1}{1 - q} \\cdot \\tfrac{5}{1.06} = 125$."
+    },
+    {
+     "rung": "step",
+     "text": "Solve $125 q^n < 0.01$: $n > \\tfrac{\\ln(0.00008)}{\\ln q} \\approx 245.2$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Here the bound is exact: the error is $125q^n$.",
+    "generic": "Not quite. The bound simplifies to $125q^n$.",
+    "byKey": {
+     "off": "At 245 steps $125q^{245} \\approx 0.0101$, still above £0.01.",
+     "hook": "21 was the hook's count with $q = 0.5$. Here $q \\approx 0.96$ shrinks slowly."
+    }
+   },
+   "explain": {
+    "text": "The bound is $125q^n$, and since $V_n = 125(1 - q^n)$ the true error equals it. $125q^{246} < 0.01 < 125q^{245}$, so 246 steps. The contraction guarantees the price is unique."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "When growth beats the discount",
+   "prose": "Now let dividends grow 7% a year, still discounted at 6%: $T(V) = \\tfrac{5 + 1.07V}{1.06}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$n$",
+      "$V_n$ (£)"
+     ],
+     "rows": [
+      [
+       "1",
+       "4.72"
+      ],
+      [
+       "10",
+       "49.2"
+      ],
+      [
+       "100",
+       "779"
+      ]
+     ],
+     "align": "center"
+    },
+    "state": {}
+   },
+   "question": "What does contraction language say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$q = \\tfrac{1.07}{1.06} > 1$, so $T$ is no contraction and the iteration runs away: the model needs $g < r$.",
+      "correct": true
+     },
+     {
+      "id": "slow",
+      "text": "It converges, only more slowly.",
+      "why": "With $q > 1$ each step stretches gaps. $V_n$ grows without bound."
+     },
+     {
+      "id": "neg",
+      "text": "The fixed point $\\tfrac{5}{0.06 - 0.07} = -\\text{£}500$ is the price.",
+      "why": "That fixed point exists but repels the iterates; a negative price is meaningless here."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compute $q$."
+    },
+    {
+     "rung": "step",
+     "text": "$1.07 / 1.06 \\approx 1.0094$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $g < r$ is the contraction condition.",
+    "generic": "Not quite. Is $q$ below 1?"
+   },
+   "explain": {
+    "text": "$q = \\tfrac{1.07}{1.06} \\approx 1.0094 > 1$, so gaps grow and the iterates diverge. The Gordon model's condition $g < r$ is exactly $q < 1$."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A contraction has $d(T(x), T(y)) \\le q\\,d(x, y)$ with one $q < 1$. On a non-empty complete space it has exactly one fixed point, and iterates from any start converge to it.",
+   "The proof: steps shrink like $q^n$, so a geometric tail makes the iterates Cauchy. Completeness gives a limit, continuity makes it fixed, and $q < 1$ makes it unique.",
+   "The a priori bound $d(x_n, x^*) \\le \\tfrac{q^n}{1 - q}d(x_1, x_0)$ counts steps in advance: 21 for $0.5x + 1$ at $10^{-6}$. Drop completeness, the single $q$ or $T(X) \\subseteq X$ and the theorem can fail."
+  ],
+  "formula": {
+   "name": "A priori bound",
+   "tex": "d(x_n, x^*) \\le \\dfrac{q^n}{1 - q}\\, d(x_1, x_0)",
+   "note": "Needs $q < 1$ and a complete space mapped into itself."
+  },
+  "trap": "Steps tending to 0 do not make a sequence Cauchy; the geometric bound $q^n$ does. And a fixed point can exist without the hypotheses."
+ },
+ "quiz": [
+  {
+   "id": "q-incomplete",
+   "difficulty": 2,
+   "prose": "$T(x) = \\tfrac x2$ on $(0, 1]$.",
+   "question": "Which hypothesis fails?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Completeness: the iterates head to 0, outside $(0, 1]$",
+      "correct": true
+     },
+     {
+      "id": "q",
+      "text": "The single constant $q < 1$",
+      "why": "$q = \\tfrac12$ works for every pair."
+     },
+     {
+      "id": "into",
+      "text": "$T$ maps the space into itself",
+      "why": "$\\tfrac x2 \\in (0, \\tfrac12] \\subseteq (0, 1]$."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. No fixed point in $(0, 1]$.",
+    "generic": "Not quite. Where do the iterates go?"
+   },
+   "explain": {
+    "text": "$\\tfrac x2$ is a contraction mapping $(0, 1]$ into itself. The iterates tend to 0, which is missing, so completeness fails and there is no fixed point."
+   }
+  },
+  {
+   "id": "q-no-single-q",
+   "difficulty": 3,
+   "prose": "$T(x) = x + \\tfrac1x$ on $[1, \\infty)$ satisfies $|T(x) - T(y)| = |x - y|\\,(1 - \\tfrac{1}{xy})$.",
+   "question": "Why does the theorem not apply?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$1 - \\tfrac{1}{xy} \\to 1$ for large $x, y$, so no single $q < 1$ bounds it",
+      "correct": true
+     },
+     {
+      "id": "complete",
+      "text": "$[1, \\infty)$ is not complete",
+      "why": "It is closed in $\\mathbb{R}$, so complete."
+     },
+     {
+      "id": "into",
+      "text": "$T$ leaves $[1, \\infty)$",
+      "why": "$x + \\tfrac1x \\ge 2$ for $x \\ge 1$, inside the space."
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. Shrinking every gap is not enough.",
+    "generic": "Not quite. Look at the ratio for large $x$ and $y$."
+   },
+   "explain": {
+    "text": "The ratio $1 - \\tfrac{1}{xy}$ is below 1 but tends to 1. So $T$ shrinks every gap yet has no constant $q < 1$, and indeed $x + \\tfrac1x = x$ has no solution."
+   }
+  },
+  {
+   "id": "q-apriori-bound",
+   "difficulty": 3,
+   "prose": "A contraction has $q = 0.8$ and first move $d(x_1, x_0) = 0.4$.",
+   "question": "What bound does the theorem give on $d(x_{10}, x^*)$? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2147,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "accept": "0.2147: $\\tfrac{0.8^{10}}{0.2} \\times 0.4$.",
+    "wrong": [
+     {
+      "id": "noseries",
+      "value": 0.0429,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "plus",
+      "value": 0.0239,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. $2 \\times 0.8^{10} \\approx 0.2147$.",
+    "generic": "Not quite. Use $\\tfrac{q^n}{1 - q}d$.",
+    "byKey": {
+     "noseries": "$0.8^{10} \\times 0.4$ bounds only step 10. Divide by $1 - q = 0.2$.",
+     "plus": "You divided by $1 + q$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{0.8^{10}}{1 - 0.8} \\times 0.4 = 2 \\times 0.8^{10} \\approx 0.2147$. A slow contraction gives a loose bound early on."
+   }
+  }
+ ]
+}
