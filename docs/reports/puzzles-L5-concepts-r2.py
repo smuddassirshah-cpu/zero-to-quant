@@ -475,18 +475,40 @@ check(close(2 * 100 / 3, 66.6667, 5e-5) and close(67.165 - 66.667, 0.5, 0.01), f
 # The raw maximum (the "60" option) has lower variance than the max-based unbiased
 # estimate: Var(m) = (k/(k+1))^2 Var(m + m/k - 1). It is the least noisy of the
 # UNBIASED estimates (and the UMVUE), not of the three options.
-check(v_max_est <= v_raw_max, f'{L26}:screens[3].feedback.correct EXPECTED_FAIL: the max-based estimate is not less noisy than the raw maximum (Var ratio {float(v_max_est / v_raw_max):.3f}); it is the least noisy UNBIASED one', expected_fail=True)
-# corrected assert, ready to enable once the text says "the least noisy of the fair estimates":
-# check(v_max_est < v_mean_est and v_raw_max < v_max_est, f'{L26}:screens[3].feedback.correct max-based is the least noisy unbiased estimate; the raw maximum is less noisy but biased')
+# Fix pass: the text now reads "74: fair on average, and the least noisy of the fair
+# estimates. The bare 60 varies less but sits below $N$ on average." Exhaustive over
+# every sample of 4 from 1..30 (and 1..10): among the unbiased candidates (m + m/k - 1,
+# 2*mean - 1) the max-based one has the smaller variance; the raw maximum m has smaller
+# variance still, Var(m) = (k/(k+1))^2 Var(m + m/k - 1) = 16/25 of it, but E[m] < N.
+_fx = json.load(open(ROOT + L26))['screens'][3]['feedback']['correct']
+_ok2 = 'least noisy of the fair estimates' in _fx and 'varies less' in _fx
+for _N in (10, 30):
+    _s = all_samples(_N, 4)
+    _vmx = var_of([max(t) + F(max(t), 4) - 1 for t in _s]); _vmn = var_of([2 * F(sum(t), 4) - 1 for t in _s]); _vraw = var_of([F(max(t)) for t in _s])
+    _ok2 = _ok2 and _vmx < _vmn and _vraw < _vmx and _vraw / _vmx == F(16, 25) and F(sum(max(t) for t in _s), len(_s)) < _N
+check(_ok2, f'{L26}:screens[3].feedback.correct EXPECTED_FAIL: the max-based estimate is not less noisy than the raw maximum (Var ratio {float(v_max_est / v_raw_max):.3f}); it is the least noisy UNBIASED one (corrected claim, fix pass): least noisy of the fair estimates; the bare maximum varies less (ratio 16/25) but is biased low, N = 10 and 30 exhaustive')
 
 # Finding 3: l27 summary.ideas[2] "After conditioning on a total or a maximum, the dice
 # are no longer independent or uniform." Given a total the first die IS uniform on its
 # feasible range (for total 7, uniform on 1..6 exactly as before); only given the
 # maximum is the other die non-uniform.
 dist_given_7 = {a: cond(lambda r, a=a: r[0] == a, lambda r: sum(r) == 7) for a in range(1, 7)}
-check(len(set(dist_given_7.values())) > 1, f'{L27}:summary.ideas[2] EXPECTED_FAIL: given total 7 each die is still uniform on 1..6 ({dict((k, str(v)) for k, v in dist_given_7.items())}); only the maximum makes the other die non-uniform', expected_fail=True)
-# corrected assert, ready to enable once the text says "no longer independent; given the maximum the other die is not even uniform":
-# check(len(set(dist_given_7.values())) == 1 and len(set(dist_other_given_max5.values())) > 1 and not joint_indep(lambda r: sum(r) == 7), f'{L27}:summary.ideas[2] dependent given a total; non-uniform only given the maximum')
+# Fix pass: the text now reads "After conditioning on a total or a maximum the dice are
+# no longer independent; given the maximum, the other die is not even uniform." For every
+# total 2..12 the first die is uniform on its feasible range; for every maximum 2..6 the
+# other die is not uniform; dependence holds given each total 3..11 and each maximum 2..6.
+_ix = json.load(open(ROOT + L27))['summary']['ideas'][2].lower()
+_ok3 = 'independent or uniform' not in _ix and 'no longer independent' in _ix and 'given the maximum' in _ix and 'not even uniform' in _ix
+for _t in range(2, 13):
+    _rng = [a for a in range(1, 7) if 1 <= _t - a <= 6]
+    _ok3 = _ok3 and all(cond(lambda r, a=a: r[0] == a, lambda r, t=_t: sum(r) == t) == F(1, len(_rng)) for a in _rng)
+    if 3 <= _t <= 11:
+        _ok3 = _ok3 and not joint_indep(lambda r, t=_t: sum(r) == t)
+for _m in range(2, 7):
+    _oth = lambda r, m=_m: r[1] if r[0] == m else r[0]
+    _d = {b: cond(lambda r, b=b, o=_oth: o(r) == b, lambda r, m=_m: max(r) == m) for b in range(1, _m + 1)}
+    _ok3 = _ok3 and len(set(_d.values())) > 1 and not joint_indep(lambda r, m=_m: max(r) == _m)
+check(_ok3 and len(set(dist_given_7.values())) == 1, f'{L27}:summary.ideas[2] EXPECTED_FAIL: given total 7 each die is still uniform on 1..6 ({dict((k, str(v)) for k, v in dist_given_7.items())}); only the maximum makes the other die non-uniform (corrected claim, fix pass): dependent given a total or a maximum; uniform on its range given any total; non-uniform given any maximum 2..6')
 
 print(f'\n{N_CHECKS} checks run (puzzles L5, round 2); {len(FAILS)} EXPECTED_FAIL')
 for f_ in FAILS:
