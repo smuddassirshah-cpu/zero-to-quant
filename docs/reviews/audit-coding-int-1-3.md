@@ -59,3 +59,25 @@ Test-strength findings (the review's errors 1 to 5 and warnings 9, 10, 12, 19: p
   - `--lesson coding-int/l1-merging-intervals`: `ok coding-int/l1-merging-intervals 14 checks, 25.0 s, quiz 4/4` / `All passed.`
   - `--lesson coding-int/l10-matching-engine`: `ok coding-int/l10-matching-engine 16 checks, 23.9 s, quiz 4/4` / `All passed.`
   - `--lesson coding-int/l11-lru-cache`: `ok coding-int/l11-lru-cache 15 checks, 21.4 s, quiz 4/4` / `All passed.`
+
+## Fix pass
+
+Opus fixer, 6 Nov 2026. Each correction was re-derived before editing; Python claims were run with python3 (`scratchpad/fix-coding-int/verify.py`). The earlier interrupted fixer's diff was read but not applied as it stood: finding 3 and finding 4 are worded differently here (reasons below).
+
+1. fixed | basis: a trie walk reads one node per letter of the prefix (measured 3 steps for `ABC` on 4,000 symbols), while `bisect_left` makes ceil(log2 4000) = 12 comparisons (log2 4000 = 11.97). The why now says both.
+2. fixed | basis: in sorted order every prefix is one contiguous run (`bisect_left(p)` to `bisect_right(p + '￿')` equals the `startswith` filter on 4,000 random symbols), so listing k matches is O(log n + k) either way; a sorted-list insert shifts O(n) entries against L trie steps, and a `?` branches. Last sentence replaced as the audit proposed.
+3. fixed | basis: on 200 random feeds with skipping numbers both XOR and 2 x sum(set) - sum(all) recover the lost number, but only the second needs the set; with consecutive 1..N the closed form N(N + 1) - sum(all) needs none (437 recovered from 1..1000). Prose now says "The numbers can skip, so which ones occur is not known in advance." I left out the earlier draft's "and restart": a reused number appears four times, which breaks the distinct-sum method ([5, 5, 6, 6, 5, 5, 7] gives -3, XOR gives 7) and would contradict the why's "That works". Why: "That works, but the numbers are not known in advance, so finding the distinct ones needs a set: $O(n)$ memory again."
+4. fixed | basis: counted node visits for `????` grow with the book (273, 1,585 and 4,681 visits for 100, 1,000 and 4,096 tickers) while `AAAA` stays at 5. Prose now limits the length-only bound to `add`, `remove`, `has` and `longest_listed`, and says `count_match` "may branch at each `?`, but it must follow the pattern down the trie, never scan every listed ticker". I did not use the audit's "never scan every listed ticker" alone, since `????` over a full book visits every ticker's path anyway; what is ruled out is the scan. Explain: "so `count_match` visits only the nodes that still fit the pattern instead of scanning every ticker." byKey.test-9 kept.
+5. fixed | basis: python3 gives `eval('-(2*350+100)/3')` = -266.6666666666667 (true division), `//` gives -267, truncation -266 (PyRef 6.7). Why: "plain `eval` gives line 1 as the float $-266.67$, not the truncated whole number the statement wants"; byKey.b: "its `/` returns a float for line 1". Option d ("They differ on negative division") stays true: -266.67 against -266.
+6. fixed | basis: python3 keeps `{101, 99, 100}` in insertion order and `min` returns 99 by scanning the keys (dicts keep insertion order since 3.7). Why: "A plain dict keeps insertion order, not price order, so `min(asks)` scans every level."
+
+Counts: fixed 6, disputed 0, deferred 0. No graded answer changed (only why, prose, explain and byKey text).
+
+Dispute on the scripts (the checks, not the findings): the three by-design checks hard-code the pre-fix claim and do not read the content, so no content edit can make them pass. `L1 l2 s9 o1.why` asserts `abs(trie_walk_steps(root, '012') - 12) <= 2`, but the walk is 3 steps; `L1 h1 i1 prose` asserts `vb <= 2 * vs`, but the visits are 4,681 against 273; `L2 l7 s9 o1.why` asserts `eval('-(2*350+100)/3') == -267`, but it is -266.67. Each is a true statement of the old content's error. Per the brief the scripts are left as they are; they still exit 1 with exactly these failures, and every other check passes.
+
+### Checks
+
+- Validator (from `app/`): `0 errors, 4271 warnings` (O2 only); `content/manifest.json` restored.
+- Concepts scripts: L1 exit 1 (only the two hard-coded checks above fail), L2 exit 1 (only the one hard-coded check fails), L3 exit 0 (0 failures).
+- Numbers script `coding-int-1-perf-numbers.py`: exit 1, 1 failure, unrelated to this pass: the wall-clock check "a scan per query fails the 5 s limit" times the scan on the first 50,000 steps and got 4.83 s and 4.84 s on two runs (load average 0.6, 4 cores). I timed the whole test 9 with the script's own scan class: 15.4 s with the right answer [366061, 5244, 27956], three times the 5 s limit, so the test still rejects a scan. No test, postlude or limit was edited; the script is left as it is.
+- Voice scan (gate 35): explanations over three sentences 0; over 35 words 0 (10,765 sentences).
