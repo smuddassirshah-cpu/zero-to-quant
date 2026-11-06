@@ -1,0 +1,446 @@
+{
+ "id": "homework-4",
+ "course": "linear-maps",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-perp-invariant",
+   "difficulty": 4,
+   "skills": [
+    "lx-spectral",
+    "lx-inner"
+   ],
+   "title": "Invariant complements",
+   "prose": "Let $T$ be self-adjoint on a finite-dimensional inner product space $V$, and let $U$ be a subspace with $TU \\subseteq U$. Prove that $TU^\\perp \\subseteq U^\\perp$. This is the invariance step of the spectral theorem, with $U = \\operatorname{span}(\\mathbf{q}_1)$.",
+   "question": "Put the lines in order. One line does not belong: move it to Left out.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "p1",
+      "text": "Let $\\mathbf{w} \\in U^\\perp$; we show $T\\mathbf{w} \\in U^\\perp$."
+     },
+     {
+      "id": "p2",
+      "text": "Take any $\\mathbf{u} \\in U$. Then $\\langle \\mathbf{u}, T\\mathbf{w} \\rangle = \\langle T\\mathbf{u}, \\mathbf{w} \\rangle$, since $T = T^*$."
+     },
+     {
+      "id": "p3",
+      "text": "$T\\mathbf{u} \\in U$, because $U$ is invariant, and $\\mathbf{w} \\perp U$, so $\\langle T\\mathbf{u}, \\mathbf{w} \\rangle = 0$."
+     },
+     {
+      "id": "p4",
+      "text": "So $T\\mathbf{w}$ is orthogonal to every $\\mathbf{u} \\in U$: $T\\mathbf{w} \\in U^\\perp$. $\\blacksquare$"
+     },
+     {
+      "id": "x1",
+      "text": "$\\langle \\mathbf{u}, T\\mathbf{w} \\rangle = 0$, because $T\\mathbf{w}$ is an eigenvector.",
+      "why": "Nothing says $\\mathbf{w}$ or $T\\mathbf{w}$ is an eigenvector. The proof needs only $T = T^*$ and $TU \\subseteq U$."
+     }
+    ],
+    "answer": [
+     "p1",
+     "p2",
+     "p3",
+     "p4"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "feedback": {
+    "correct": "Right. Move $T$ across with self-adjointness, then use invariance of $U$.",
+    "generic": "Not quite right. Start with $\\mathbf{w} \\in U^\\perp$ and test $T\\mathbf{w}$ against any $\\mathbf{u} \\in U$.",
+    "byKey": {
+     "x1": "You assumed an eigenvector. The step works for any $\\mathbf{w} \\in U^\\perp$, using $T = T^*$.",
+     "left-out": "You left out a line the proof needs."
+    }
+   },
+   "explain": {
+    "text": "$\\langle \\mathbf{u}, T\\mathbf{w} \\rangle = \\langle T\\mathbf{u}, \\mathbf{w} \\rangle$ moves $T$ onto $\\mathbf{u}$. Invariance keeps $T\\mathbf{u}$ in $U$, which is orthogonal to $\\mathbf{w}$. So $T\\mathbf{w} \\perp U$."
+   }
+  },
+  {
+   "id": "h-deflation",
+   "difficulty": 5,
+   "skills": [
+    "lx-spectral"
+   ],
+   "title": "Spectral theorem by deflation",
+   "prose": "The induction in the spectral theorem is an algorithm. Find the top eigenpair by power iteration, then work in the orthogonal complement of the vectors found so far. Repeat until $n$ vectors are found. The test matrices are symmetric with eigenvalues $\\ge 0$, so the largest eigenvalue is also the largest in size.",
+   "question": "Complete `spectral_by_deflation(A, iters, seed)`. Return `(vals, Q)`: the eigenvalues in the order found and the matrix whose columns are the unit eigenvectors.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef spectral_by_deflation(A, iters, seed):\n    A = np.array(A, dtype=float)\n    n = A.shape[0]\n    rng = np.random.default_rng(seed)\n    vals, vecs = [], []\n    for k in range(n):\n        x = rng.standard_normal(n)\n        for _ in range(iters):\n            x = A @ x\n            x = x / np.linalg.norm(x)\n        vals.append(float(x @ A @ x))\n        vecs.append(x)\n    return vals, np.column_stack(vecs)\n",
+    "solution": "import numpy as np\n\ndef spectral_by_deflation(A, iters, seed):\n    A = np.array(A, dtype=float)\n    n = A.shape[0]\n    rng = np.random.default_rng(seed)\n    Q = np.zeros((n, 0))\n    vals = []\n    for k in range(n):\n        x = rng.standard_normal(n)\n        for _ in range(iters):\n            # stay in the complement of the vectors found\n            x = x - Q @ (Q.T @ x)\n            x = A @ x\n            x = x - Q @ (Q.T @ x)\n            x = x / np.linalg.norm(x)\n        vals.append(float(x @ A @ x))\n        Q = np.column_stack([Q, x])\n    return vals, Q\n",
+    "examples": [
+     {
+      "call": "np.round(spectral_by_deflation([[1, 0.5, 0.5], [0.5, 1, 0.5], [0.5, 0.5, 1]], 500, 0)[0], 6).tolist()",
+      "expect": "[2.0, 0.5, 0.5]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "np.round(spectral_by_deflation([[1, 0.5, 0.5], [0.5, 1, 0.5], [0.5, 0.5, 1]], 500, 0)[0], 6).tolist()",
+      "expect": "[2.0, 0.5, 0.5]",
+      "compare": "equal"
+     },
+     {
+      "setup": "C = np.array([[1, 0.5, 0.5], [0.5, 1, 0.5], [0.5, 0.5, 1]]); w, Q = spectral_by_deflation(C, 500, 0)",
+      "call": "bool(np.allclose(Q.T @ Q, np.eye(3), atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(3); X = rng.standard_normal((4, 4)); S = X @ X.T; w, Q = spectral_by_deflation(S, 1000, 1)",
+      "call": "bool(np.allclose(sorted(w), np.linalg.eigh(S)[0], atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(3); X = rng.standard_normal((4, 4)); S = X @ X.T; w, Q = spectral_by_deflation(S, 1000, 1)",
+      "call": "bool(np.allclose(S @ Q, Q @ np.diag(w), atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rng = np.random.default_rng(3); X = rng.standard_normal((4, 4)); S = X @ X.T; w, Q = spectral_by_deflation(S, 1000, 1)",
+      "call": "bool(np.allclose(Q.T @ Q, np.eye(4), atol=1e-6))",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 5 hidden tests. Two use the equicorrelated matrix with $\\rho = 0.5$: its eigenvalues and $\\mathbf{Q}^T\\mathbf{Q} = \\mathbf{I}$. Three use a seeded random $4 \\times 4$ matrix $\\mathbf{S} = \\mathbf{X}\\mathbf{X}^T$ with distinct eigenvalues. They check its eigenvalues against `np.linalg.eigh`, then $\\mathbf{S}\\mathbf{Q} = \\mathbf{Q}\\boldsymbol{\\Lambda}$ and orthonormal columns. Each comparison uses `np.allclose` with `atol=1e-6`. The first run loads NumPy, which takes a few seconds."
+   },
+   "feedback": {
+    "correct": "Right. Projecting out the found vectors keeps each search inside the complement, as the induction does.",
+    "generic": "Some tests failed. Read the first failing row.",
+    "byKey": {
+     "test-1": "You found the top eigenvalue 2 three times. Remove the found directions with `x - Q @ (Q.T @ x)` before and after each multiplication.",
+     "test-2": "Your columns are not orthonormal. Each new search must stay orthogonal to the vectors found so far.",
+     "error": "Your code stopped with an error. Start `Q` as `np.zeros((n, 0))` so that `Q.T @ x` works when nothing is found yet."
+    }
+   },
+   "explain": {
+    "text": "Each search stays in the complement of the found vectors, projected back after every multiplication. That complement is invariant by symmetry, so power iteration there finds the next eigenpair. It is the proof's induction, run on numbers.\n\n```python\nx = x - Q @ (Q.T @ x)\nx = A @ x\nx = x - Q @ (Q.T @ x)\n```"
+   }
+  },
+  {
+   "id": "h-blocks-table",
+   "difficulty": 4,
+   "skills": [
+    "lx-jordan"
+   ],
+   "title": "Blocks from kernel dimensions",
+   "prose": "For the eigenvalue 3 of a $7 \\times 7$ matrix, $d_k = \\dim\\ker(\\mathbf{X} - 3\\mathbf{I})^k$ is $(3, 5, 6, 7, 7, 7, 7)$.",
+   "question": "Fill in how many Jordan blocks for 3 have each size.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Block size",
+     "Number of blocks"
+    ],
+    "rows": [
+     [
+      "1",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "2",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       },
+       "wrong": [
+        {
+         "id": "atleast",
+         "value": 2,
+         "tol": {
+          "abs": 0
+         }
+        }
+       ]
+      }
+     ],
+     [
+      "3",
+      {
+       "edit": true,
+       "answer": 0,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ],
+     [
+      "4",
+      {
+       "edit": true,
+       "answer": 1,
+       "tol": {
+        "abs": 0
+       }
+      }
+     ]
+    ]
+   },
+   "feedback": {
+    "correct": "Right. Sizes 4, 2 and 1, adding to 7.",
+    "generic": "Not quite right. First find the counts of size at least $k$: $d_k - d_{k-1}$ is 3, 2, 1, 1, 0.",
+    "byKey": {
+     "atleast": "2 is the number of blocks of size at least 2. Exactly size 2 is $2 - 1 = 1$."
+    }
+   },
+   "explain": {
+    "text": "At least $k$: 3, 2, 1, 1, 0 for $k = 1, \\dots, 5$. The number of size exactly $k$ is the drop: $3 - 2$, $2 - 1$, $1 - 1$ and $1 - 0$ for sizes 1 to 4. So one block each of sizes 1, 2 and 4, and $4 + 2 + 1 = 7$."
+   }
+  },
+  {
+   "id": "h-similar",
+   "difficulty": 3,
+   "skills": [
+    "lx-jordan"
+   ],
+   "title": "Similar or not",
+   "prose": "$\\mathbf{X}$ and $\\mathbf{Y}$ are $5 \\times 5$ with the single eigenvalue 1. For $\\mathbf{X}$, $d = (2, 4, 5, 5, 5)$; for $\\mathbf{Y}$, $d = (2, 3, 4, 5, 5)$. Both have characteristic polynomial $(\\lambda - 1)^5$ and two independent eigenvectors.",
+   "question": "Are $\\mathbf{X}$ and $\\mathbf{Y}$ similar?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: $\\mathbf{X}$ has blocks 3, 2 and $\\mathbf{Y}$ has blocks 4, 1",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: same polynomial and same number of eigenvectors",
+      "why": "Those fix 5 and 2 blocks, but 5 splits as $3 + 2$ or $4 + 1$."
+     },
+     {
+      "id": "d1",
+      "text": "Yes: $d_1 = 2$ for both",
+      "why": "$d_1$ counts the blocks only; $d_2$ differs, 4 against 3."
+     },
+     {
+      "id": "p",
+      "text": "Only if some $\\mathbf{P}$ is found",
+      "why": "The $d_k$ are the same for similar matrices; differing $d_k$ settle it."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Right. Different Jordan forms, so not similar.",
+    "generic": "Not quite right. Read the block sizes from each $d$.",
+    "byKey": {
+     "yes": "You used the trap of l19. Two blocks can be 3, 2 or 4, 1; $d_2$ tells them apart."
+    }
+   },
+   "explain": {
+    "text": "For $\\mathbf{X}$ the counts of size at least $k$ are 2, 2, 1, so blocks 3 and 2. For $\\mathbf{Y}$ they are 2, 1, 1, 1, so blocks 4 and 1. Different Jordan forms mean the matrices are not similar."
+   }
+  },
+  {
+   "id": "h-annihilating",
+   "difficulty": 3,
+   "skills": [
+    "lx-spectral"
+   ],
+   "title": "An annihilating polynomial",
+   "prose": "Take $\\mathbf{A} = \\operatorname{diag}(2, 2, 5)$ and $\\mathbf{v} = (1, 1, 1)$. Then $\\mathbf{A}\\mathbf{v} = (2, 2, 5)$ and $\\mathbf{A}^2\\mathbf{v} = (4, 4, 25)$.",
+   "question": "What is the lowest-degree monic $p(z)$ with $p(\\mathbf{A})\\mathbf{v} = \\mathbf{0}$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "z^2-7z+10",
+    "accept": [
+     "z^2-7z+10",
+     "z^2 - 7z + 10",
+     "(z-2)(z-5)"
+    ],
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "char",
+      "tex": "z^3-9z^2+24z-20"
+     },
+     {
+      "id": "sign",
+      "tex": "z^2+7z+10"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. $(4, 4, 25) - 7(2, 2, 5) + 10(1, 1, 1) = \\mathbf{0}$, so $p(z) = (z - 2)(z - 5)$.",
+    "generic": "Not quite right. $\\mathbf{v}, \\mathbf{A}\\mathbf{v}, \\mathbf{A}^2\\mathbf{v}$ has only two distinct rows of entries. Find $a, b$ with $\\mathbf{A}^2\\mathbf{v} = a\\mathbf{A}\\mathbf{v} + b\\mathbf{v}$.",
+    "byKey": {
+     "char": "That is the characteristic polynomial $(z - 2)^2(z - 5)$. The list already depends at degree 2.",
+     "sign": "Check the signs: $4 - 7 \\cdot 2 + 10 = 0$ needs $-7z$."
+    }
+   },
+   "explain": {
+    "text": "From the first and third entries, $4 = 2a + b$ and $25 = 5a + b$, so $a = 7$ and $b = -10$. Then $p(z) = z^2 - 7z + 10 = (z - 2)(z - 5)$. Degree 2 is below 3, because $\\mathbf{v}$ has parts in only two eigenspaces."
+   }
+  },
+  {
+   "id": "h-hump",
+   "difficulty": 4,
+   "skills": [
+    "lx-jordan"
+   ],
+   "title": "A faster hump",
+   "prose": "A two-state model has $\\mathbf{x}_{t+1} = \\mathbf{A}\\mathbf{x}_t$ with $\\mathbf{A} = \\begin{pmatrix}0.8&1\\\\0&0.8\\end{pmatrix}$. A shock to the second state reaches the first as the top-right entry of $\\mathbf{A}^t$, $t \\cdot 0.8^{t-1}$.",
+   "question": "What is the peak of this response, to 3 decimal places?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2.048,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "accept": "2.048, reached at t = 4 and t = 5",
+    "wrong": [
+     {
+      "id": "four",
+      "value": 0.4096,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "start",
+      "value": 1,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "t3",
+      "value": 1.92,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. $4 \\times 0.8^3 = 5 \\times 0.8^4 = 2.048$.",
+    "generic": "Not quite right. Neighbours have ratio $\\tfrac{t+1}{t} \\times 0.8$; find where it crosses 1.",
+    "byKey": {
+     "four": "$0.4096 = 0.8^4$ is the decay alone. Multiply by $t = 5$.",
+     "start": "1 is the first response, at $t = 1$; it keeps rising.",
+     "t3": "$1.92 = 3 \\times 0.8^2$ is $t = 3$, still rising."
+    }
+   },
+   "explain": {
+    "text": "The ratio $\\tfrac{t+1}{t} \\times 0.8$ equals 1 at $t = 4$, so $t = 4$ and $t = 5$ tie. Both give $4 \\times 0.512 = 2.048$. With $0.8$ in place of $0.9$ the hump is lower and earlier than in l18."
+   }
+  },
+  {
+   "id": "h-weighted-adjoint",
+   "difficulty": 3,
+   "skills": [
+    "lx-spectral",
+    "lx-inner"
+   ],
+   "title": "A weighted adjoint",
+   "prose": "On $\\mathbb{R}^2$ take $\\langle \\mathbf{x}, \\mathbf{y} \\rangle = x_1y_1 + 3x_2y_2 = \\mathbf{x}^T\\mathbf{W}\\mathbf{y}$ with $\\mathbf{W} = \\operatorname{diag}(1, 3)$. Let $T$ have the symmetric matrix $\\mathbf{T} = \\begin{pmatrix}1&2\\\\2&1\\end{pmatrix}$. Its adjoint for this inner product has matrix $\\mathbf{W}^{-1}\\mathbf{T}^T\\mathbf{W}$.",
+   "question": "What is the top-right entry of the adjoint's matrix?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6,
+    "tol": {
+     "abs": 0.001
+    },
+    "placeholder": "a number",
+    "accept": "6",
+    "wrong": [
+     {
+      "id": "plain",
+      "value": 2,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "inv",
+      "value": 0.6667,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. $\\mathbf{W}^{-1}\\mathbf{T}^T\\mathbf{W} = \\begin{pmatrix}1&6\\\\0.6667&1\\end{pmatrix}$, so $T$ is not self-adjoint here.",
+    "generic": "Not quite right. $\\mathbf{T}^T\\mathbf{W}$ multiplies column 2 by 3; $\\mathbf{W}^{-1}$ then divides row 2 by 3.",
+    "byKey": {
+     "plain": "2 is the entry of $\\mathbf{T}$ itself. That is the adjoint only for an orthonormal basis.",
+     "inv": "$\\tfrac23 \\approx 0.6667$ is the bottom-left entry. The top-right is $2 \\times 3 = 6$."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{T}^T\\mathbf{W} = \\begin{pmatrix}1&6\\\\2&3\\end{pmatrix}$, and $\\mathbf{W}^{-1}$ divides row 2 by 3, giving $\\begin{pmatrix}1&6\\\\0.6667&1\\end{pmatrix}$. The top-right entry is 6. The adjoint differs from $\\mathbf{T}$, so a symmetric matrix need not be self-adjoint for a weighted inner product."
+   }
+  },
+  {
+   "id": "h-spectral-longform",
+   "performance": "derivation",
+   "difficulty": 5,
+   "skills": [
+    "lx-spectral"
+   ],
+   "title": "The spectral theorem without notes",
+   "kind": "longform",
+   "prompt": "Prove the spectral theorem for real symmetric matrices without notes. Let $\\mathbf{A}$ be a real $n \\times n$ matrix. Show that $\\mathbf{A}$ is symmetric exactly when $\\mathbb{R}^n$ has an orthonormal basis of eigenvectors of $\\mathbf{A}$. Give a reason for every line.",
+   "model": "**Theorem.** Let $\\mathbf{A}$ be a real $n \\times n$ matrix. It is symmetric if and only if $\\mathbb{R}^n$ has an orthonormal basis of its eigenvectors. Equivalently, $\\mathbf{A} = \\mathbf{Q}\\boldsymbol{\\Lambda}\\mathbf{Q}^T$ with $\\mathbf{Q}^T\\mathbf{Q} = \\mathbf{I}$ and $\\boldsymbol{\\Lambda}$ diagonal.\n\n**Symmetric implies an orthonormal eigenbasis.** We prove it by induction on $n$, for any self-adjoint operator on a real inner product space of dimension $n$. A symmetric matrix is self-adjoint for the dot product.\n\n*Base case.* For $n = 1$, every vector is an eigenvector. Any unit vector is an orthonormal eigenbasis.\n\n*Step.* Let $n > 1$ and assume the claim in dimension $n - 1$.\n\n1. **A real eigenvalue.** View $\\mathbf{A}$ as a complex matrix. Every operator on a non-zero finite-dimensional complex space has an eigenvalue (Axler 5.19), so $\\mathbf{A}\\mathbf{z} = \\lambda\\mathbf{z}$ for some $\\mathbf{z} \\ne \\mathbf{0}$ in $\\mathbb{C}^n$. As a complex matrix $\\mathbf{A}$ is self-adjoint, since $\\mathbf{A}^* = \\bar{\\mathbf{A}}^T = \\mathbf{A}$. So $\\lambda$ is real (Axler 7.12): $\\lambda\\|\\mathbf{z}\\|^2 = \\langle \\mathbf{A}\\mathbf{z}, \\mathbf{z} \\rangle = \\langle \\mathbf{z}, \\mathbf{A}\\mathbf{z} \\rangle = \\bar\\lambda\\|\\mathbf{z}\\|^2$.\n2. **A real unit eigenvector.** $\\mathbf{A} - \\lambda\\mathbf{I}$ is a real matrix that is not injective on $\\mathbb{C}^n$, so its rank is below $n$. By rank-nullity over $\\mathbb{R}$ it has a non-zero real kernel vector $\\mathbf{x}$. Set $\\mathbf{q}_1 = \\mathbf{x} / \\|\\mathbf{x}\\|$, so $\\mathbf{A}\\mathbf{q}_1 = \\lambda\\mathbf{q}_1$ and $\\|\\mathbf{q}_1\\| = 1$.\n3. **The complement.** Let $U = \\mathbf{q}_1^\\perp$. Since $\\mathbb{R}^n = \\operatorname{span}(\\mathbf{q}_1) \\oplus U$, $\\dim U = n - 1$.\n4. **Invariance.** For $\\mathbf{u} \\in U$, $$\\langle \\mathbf{A}\\mathbf{u}, \\mathbf{q}_1 \\rangle = \\langle \\mathbf{u}, \\mathbf{A}^T\\mathbf{q}_1 \\rangle = \\langle \\mathbf{u}, \\mathbf{A}\\mathbf{q}_1 \\rangle = \\lambda\\langle \\mathbf{u}, \\mathbf{q}_1 \\rangle = 0,$$ using $\\mathbf{A}^T = \\mathbf{A}$. So $\\mathbf{A}\\mathbf{u} \\in U$: $U$ is invariant.\n5. **The restriction.** Let $T = \\mathbf{A}|_U \\in \\mathcal{L}(U)$, with the inner product $U$ inherits. For $\\mathbf{u}, \\mathbf{u}' \\in U$, $\\langle T\\mathbf{u}, \\mathbf{u}' \\rangle = \\langle \\mathbf{A}\\mathbf{u}, \\mathbf{u}' \\rangle = \\langle \\mathbf{u}, \\mathbf{A}\\mathbf{u}' \\rangle = \\langle \\mathbf{u}, T\\mathbf{u}' \\rangle$. So $T$ is self-adjoint.\n6. **Induction.** $\\dim U = n - 1$, so by hypothesis $U$ has an orthonormal basis $\\mathbf{q}_2, \\dots, \\mathbf{q}_n$ of eigenvectors of $T$, hence of $\\mathbf{A}$.\n7. **Assembling.** $\\mathbf{q}_1$ is a unit vector orthogonal to every $\\mathbf{q}_j \\in U$. So $(\\mathbf{q}_1, \\dots, \\mathbf{q}_n)$ is orthonormal, hence independent, and $n$ long: an orthonormal basis of $\\mathbb{R}^n$ of eigenvectors. With $\\mathbf{Q} = (\\mathbf{q}_1 \\cdots \\mathbf{q}_n)$ and $\\boldsymbol{\\Lambda} = \\operatorname{diag}(\\lambda_1, \\dots, \\lambda_n)$, $\\mathbf{A}\\mathbf{Q} = \\mathbf{Q}\\boldsymbol{\\Lambda}$ and $\\mathbf{Q}^T\\mathbf{Q} = \\mathbf{I}$, so $\\mathbf{A} = \\mathbf{Q}\\boldsymbol{\\Lambda}\\mathbf{Q}^T$.\n\n**The converse.** If $\\mathbf{A} = \\mathbf{Q}\\boldsymbol{\\Lambda}\\mathbf{Q}^T$ with $\\boldsymbol{\\Lambda}$ diagonal, then $\\mathbf{A}^T = (\\mathbf{Q}^T)^T\\boldsymbol{\\Lambda}^T\\mathbf{Q}^T = \\mathbf{Q}\\boldsymbol{\\Lambda}\\mathbf{Q}^T = \\mathbf{A}$. $\\blacksquare$\n\nCheck: $\\begin{pmatrix}2&1&1\\\\1&2&1\\\\1&1&2\\end{pmatrix}$ has $\\mathbf{q}_1 = \\tfrac{1}{\\sqrt3}(1, 1, 1)$ for 4, and $U$ is the plane $u_1 + u_2 + u_3 = 0$, where $\\mathbf{A}$ is the identity.",
+   "rubric": [
+    {
+     "points": 1,
+     "text": "Induction: sets up induction on $n$ and handles $n = 1$."
+    },
+    {
+     "points": 2,
+     "text": "Real eigenvalue: gets a complex eigenvalue from Axler 5.19, and proves it real because $\\mathbf{A}$ is self-adjoint."
+    },
+    {
+     "points": 1,
+     "text": "Normalisation: finds a real kernel vector of $\\mathbf{A} - \\lambda\\mathbf{I}$ by its rank and normalises it to $\\mathbf{q}_1$."
+    },
+    {
+     "points": 1,
+     "text": "Complement: states $\\dim \\mathbf{q}_1^\\perp = n - 1$, from $\\mathbb{R}^n = \\operatorname{span}(\\mathbf{q}_1) \\oplus \\mathbf{q}_1^\\perp$."
+    },
+    {
+     "points": 2,
+     "text": "Invariance: shows $\\langle \\mathbf{A}\\mathbf{u}, \\mathbf{q}_1 \\rangle = \\langle \\mathbf{u}, \\mathbf{A}\\mathbf{q}_1 \\rangle = 0$, naming symmetry as the reason.",
+     "required": true
+    },
+    {
+     "points": 1,
+     "text": "Restriction: shows $\\mathbf{A}$ restricted to $\\mathbf{q}_1^\\perp$ is self-adjoint for the inherited inner product."
+    },
+    {
+     "points": 1,
+     "text": "Assembling: applies the hypothesis to $\\mathbf{q}_1^\\perp$ and adds $\\mathbf{q}_1$ to get an orthonormal eigenbasis of $\\mathbb{R}^n$."
+    },
+    {
+     "points": 1,
+     "text": "Converse: shows $\\mathbf{A} = \\mathbf{Q}\\boldsymbol{\\Lambda}\\mathbf{Q}^T$ gives $\\mathbf{A}^T = \\mathbf{A}$."
+    }
+   ]
+  }
+ ]
+}
