@@ -17,6 +17,13 @@ good = [
     lv.expect(T, 'screens[3].explain', -1.5, fmt='{:.1f}'),       # exact text
     lv.expect(T, 'screens[3]', 5.3333),                           # search below an object
 ]
+cv = Level('convex', 1)
+fr = [
+    cv.expect('l4', 'screens', 0.5), cv.expect('l4', 'screens', 0.095),    # \\tfrac12 and a decimal
+]
+assert abs(__import__('numbers_lib')._numbers(r'$\\frac{3}{4}$ and $\\dfrac{a}{b}$')[-1] - 0.75) < 1e-12
+assert 3.0 in __import__('numbers_lib')._numbers(r'$\\tfrac{3}{4}$') and 4.0 in __import__('numbers_lib')._numbers(r'$\\tfrac{3}{4}$')
+good += fr
 assert normalise('£1{,}214 and −3') == '1214 and -3'
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):

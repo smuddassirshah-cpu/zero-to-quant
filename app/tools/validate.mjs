@@ -1774,10 +1774,10 @@ Object.keys(C.courses || {}).forEach(cid => {
       if (kind === 'review' && sr.data && sr.data.pass == null) err(sf, 'pass', 'a level review needs a pass share (for example "pass": 0.8; node tools/write-review-pass.mjs writes the default)');
     });
     guard(file, () => perfLevel(file, cid, lv.n, objs, lessonsWritten, sets));
-    /* ENGINE-BACKLOG 573: a written level's number script must read the lesson JSON through numbers_lib (a missing script is out of scope here) */
+    /* ENGINE-BACKLOG 573: a written level's number script must import numbers_lib and read the lesson JSON through numbers_lib (a missing script is out of scope here) */
     if (lessonsWritten && sets.review && sets.homework) {
       const nf = path.join(APP, '..', 'docs', 'reports', `${cid}-L${lv.n}-numbers.py`);
-      if (fs.existsSync(nf)) { const t = fs.readFileSync(nf, 'utf8'); if (!/\bLevel\(/.test(t) || !/\.expect\(/.test(t)) warn(nf, '', 'the number script never uses numbers_lib (Level( and expect( ): it does not check the stated numbers in the lesson JSON'); }
+      if (fs.existsSync(nf)) { const t = fs.readFileSync(nf, 'utf8'); if (!/\bLevel\(/.test(t) || !/(^|\n)\s*(from\s+numbers_lib\s+import|import\s+numbers_lib)/.test(t)) warn(nf, '', 'the number script never uses numbers_lib (an import of numbers_lib and Level(): it does not check the stated numbers in the lesson JSON'); }
     }
   });
   listJSON(dir).forEach(f => {
