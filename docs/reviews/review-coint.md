@@ -70,3 +70,39 @@ Notation and numbers carry across the three levels: $\hat u_t$ for the residual,
 3. [Could] `number-line`: with six labelled points the labels shrink to about 8 px at 440 px and collide (l4 `screens[5]`, finding 17). Wanted: stagger or drop labels that overlap at the current width, or a validator warning for more than four labelled points on one line.
 
 The `claim_text` helper used by the three scripts is the one the arma and garch reviews already asked `numbers_lib` to provide; it is not raised again.
+
+## Fix pass
+
+Basis lines give, for each conceptual finding, my own check: a simulation in `docs/reports/coint-L<n>-numbers.py`, a derivation, or a named source.
+
+1. fixed. Basis: simulation, median $R^2$ 0.171 at 500 days (seeds 0 to 999) and 0.183 at 2,000 (seeds 0 to 499); derivation, the OLS slope's standard error is $\sigma_e/\sqrt{\sum (x-\bar x)^2}$, which falls like $1/\sqrt n$ while the slope stays random (Hamilton ch. 18, spurious regression).
+2. fixed. Basis: derivation, in `make_pair` $y = 5 + 1.5x + u$ has noise in $y$ only, so $y$ on $x$ is not attenuated (250-day slope 1.8033) while $x$ on $y$ is; $1.8033/0.847 = 2.129$ recomputed.
+3. fixed. Basis: simulation, 1,000 seeded unrelated pairs, 51 statistics below −3.34 (5.1%) and 146 below −2.86; answer $2000 \times 0.095 = 190$, counts 292 and 102. review-1 `items[7]` keys changed to 190 and 102.
+4. fixed. Basis: arithmetic, $2 \times (120 + 80) \times 0.0004 = 0.160$; `full` value now 0.16.
+5. fixed. Basis: MacKinnon (2010) asymptotic values for two series with a constant, −3.90, −3.34, −3.05 (statsmodels table); `coint` on 500 days gives −3.9185, −3.3484, −3.0530 (run).
+6. fixed. Basis: arithmetic, 1.4744 × 0.6753 = 0.99566, 0.6931/0.0521 = 13.30, 0.6931/0.0452 = 15.33, ln 0.97 = −0.030459 and 0.6931/0.03046 = 22.75.
+7. fixed. Basis: derivation, the AR(1) long-run sd is $\sigma/\sqrt{1-\phi^2}$ with $\phi = 0.5^{1/h}$: 2.03σ at h = 5 and 6.61σ at h = 60, so equal sds need rescaling.
+8. fixed. Basis: run, `adfuller(10*g)[0] == adfuller(g)[0]` (the statistic is scale-invariant); a wrong $\beta$ leaves part of $x$'s walk in the gap (Engle and Granger 1987).
+9. fixed. Basis: simulation, 96.3% of 1,000 seeded 1,000-day walks give $b < 0$; Dickey-Fuller downward bias (Hamilton ch. 17).
+10. fixed. Basis: the item's prose names no sample length.
+11. fixed. Basis: run, residual sd over mean price 3.47% (share pair) against 1.55% (pair C); break-even is gross P&L over P&L per bp, 125.1 bp recomputed. Written as 3.5% and 1.6%.
+12. fixed. `per` tolerance now ±0.05; 0.48 to 0.58 excludes 59.1 and 11.8.
+13. fixed. Basis: $1 - 0.9492^{10} = 0.406$.
+14. fixed. Basis: `make_two_walks` sums zero-mean shocks, so there is no drift term.
+15. fixed, split into three sentences, none over 35 words.
+16. fixed, split into two sentences.
+17. fixed. `eg1` and `eg10` removed from l4 `screens[5]`; screens 2 to 4 and 8 keep all four.
+18. fixed. Wording rewritten; key 8 unchanged ($0.8\sqrt{100}$).
+19. fixed. Basis: MacKinnon (2010) via statsmodels, Engle-Granger 500-day values −3.9185, −3.3484, −3.0530 and ADF-with-constant 1% value −3.4435 (`mackinnoncrit`); −3.60 lies between −3.92 and −3.35 and below −3.44. Key text now "reject at 5% and 10%, not 1%".
+20. fixed. Basis: simulation, TLS of `make_pair(3, 250)` with $x$ in pence, times 100, gives 1.80 (y on x slope 1.8033); 2.06 in pounds.
+21. fixed.
+
+Engine 1 to 3: deferred, already in the inbox. Outside the review: homework-2 `items[6]` model says noise in "each regression's right-hand leg" pulls its slope towards zero, the same misplacement as finding 2; not changed, noted for the next pass.
+
+### Gates
+
+Number scripts: L1 214 of 214, L2 266 of 266, L3 246 of 246, all exit 0. Voice scan 0 sentences over 35 words, 0 explanations over three. Validator 0 errors. Playthrough: l1 and l3 green desktop and mobile at hand-back; l4, l5, l7, l12, review-1, review-2, homework-1 to 3 were still running (loaded machine) and are NOT yet confirmed.
+
+Found in fix pass: homework-2 `items[6]` model said noise in "each regression's right-hand leg" pulls its slope towards zero, the same misplacement as finding 2 (in the lesson generator the noise is in $y$ only). Fixed: now says the direct and inverted slopes differ by $1/R^2 = 3.39$. Basis: derivation, slope(y on x) times slope(x on y) = $R^2$, so inverted/direct = $1/R^2$; $R^2 = 0.62/2.10 = 0.2952$, $1/R^2 = 3.387$. Check added to coint-L2-numbers.py.
+
+Final gates: playthrough 22 of 22 green (l1, l3, l4, l5, l7, l12, review-1, review-2, homework-1, homework-2, homework-3, each desktop and --mobile, --local-cdn). Number scripts L1 214/214, L2 268/268, L3 246/246. Validator 0 errors, voice scan 0 and 0.

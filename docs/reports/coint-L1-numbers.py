@@ -302,6 +302,14 @@ s286, s334 = r(100 * (stats0 < -2.86).mean(), 1), r(100 * (stats0 < -3.34).mean(
 lv.expect('review', 'items[7].widget.answer', round(2000 * (s286 - s334) / 100))
 lv.expect('review', 'items[7].widget.wrong[0].value', round(2000 * s286 / 100))
 lv.expect('review', 'items[7].widget.wrong[1].value', round(2000 * s334 / 100))
+lv.expect('review', 'items[7].explain.text', round(2000 * s286 / 100)); lv.expect('review', 'items[7].explain.text', round(2000 * s334 / 100))
+lv.expect('review', 'items[7].feedback.correct', round(2000 * s334 / 100)); lv.expect('review', 'items[7].widget.accept', round(2000 * (s286 - s334) / 100))
+claim(s334 == 5.1 and round(2000 * (s286 - s334) / 100) == 190, 'review-1 items[7] keys use 5.1% and 190', f'{s334}, {round(2000 * (s286 - s334) / 100)}')
+mk = coint(B, A)[2]; adf1 = adfuller(res, regression='c')  # placeholder to keep names defined
+from statsmodels.tsa.adfvalues import mackinnoncrit
+adf1pc = mackinnoncrit(N=1, regression='c', nobs=500)[0]
+claim(abs(adf1pc - (-3.44)) < 0.005 and mk[0] < -3.60 < mk[1], 'review-1 items[6]: -3.60 is between EG 1% and 5% (500 days) and below ADF 1% -3.44', f'{mk}, ADF 1% {adf1pc:.4f}')
+claim(-3.60 > mk[0] and -3.60 < mk[1] and -3.60 < mk[2], 'review-1 items[6]: rejects at 5% and 10% but not 1%')
 claim_text('review', 'items[1].explain.text', '500 residuals', '500' in lv.text('review', 'items[1].prose'),
            'explanation names a sample of 500', 'the prose gives no sample length')
 
