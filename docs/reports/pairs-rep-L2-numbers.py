@@ -2,6 +2,7 @@
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pairs_rep_common import *  # noqa: F401,F403
+from numbers_lib import Level  # noqa: E402  (explicit, for the validator rule 579)
 
 lv = Level("pairs-rep", 2)
 C = CLOSE
