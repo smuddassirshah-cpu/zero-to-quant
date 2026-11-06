@@ -264,7 +264,7 @@ chk(f, 'screens[1].widget.wrong[0].value', math.log(0.5), 4); chk(f, 'screens[1]
 chk(f, 'screens[2].widget.answer', -ll12(*b12) / 12, 4)
 chk(f, 'screens[3].widget.answer', math.exp(0.1 * B1), 4); chk(f, 'screens[3].widget.wrong[0].value', 0.1 * B1, 4)
 chk(f, 'screens[3].widget.wrong[1].value', math.exp(B1), 0); chk(f, 'screens[3].explain', 0.1 * B1, 6)
-chk(f, 'screens[4].widget.answer', p(0.5), 4); chk(f, 'screens[4].widget.wrong[0].value', (B0 + B1 * 0.5) / 100, 6)
+chk(f, 'screens[4].widget.answer', p(0.5), 4); chk(f, 'screens[4].widget.wrong[0].value', B0 + B1 * 0.5, 4)
 chk(f, 'screens[4].widget.wrong[1].value', math.exp(B0 + B1 * 0.5), 4); chk(f, 'screens[4].hints', B0 + B1 * 0.5, 6)
 chk(f, 'screens[4].feedback', p(0.7) * 100, 2); chk(f, 'screens[4].explain', -B0 / B1, 4); chk(f, 'screens[4].explain', B0 + B1 * 0.5, 4)
 chk(f, 'screens[5].widget.answer', me(0.5), 4); chk(f, 'screens[5].widget.wrong[1].value', B1 * 0.25, 2); chk(f, 'screens[5].hints', p(0.5), 4)

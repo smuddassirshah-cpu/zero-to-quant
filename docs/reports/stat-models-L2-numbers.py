@@ -181,7 +181,7 @@ chk(f, 'screens[3].prose', 8 * math.sqrt(2 / 200), 1); chk(f, 'screens[3].prose'
 chk(f, 'screens[4].widget.answer', sdD, 4); chk(f, 'screens[4].widget.wrong[0].value', sdD ** 2, 1); chk(f, 'screens[4].widget.wrong[1].value', math.sqrt(2 * 64 * 0.8), 3)
 chk(f, 'screens[4].widget.wrong[2].value', 8 * math.sqrt(2), 4); chk(f, 'screens[4].canvas', 8 * math.sqrt(2), 2)
 chk(f, 'screens[5].widget.answer', math.ceil(npairs)); chk(f, 'screens[5].widget.accept', npairs, 2); chk(f, 'screens[5].feedback', 100 * pow200p, 1); chk(f, 'screens[5].widget.wrong[1].value', math.ceil(2 * npairs))
-chk(f, 'screens[6].hints', 100 * pow200, 0)
+pwx = (1 - Z.cdf((1.959964 * 0.8 - 1) / (sdD / math.sqrt(200)))) + Z.cdf((-1.959964 * 0.8 - 1) / (sdD / math.sqrt(200))); chk(f, 'screens[6].hints', 100 * pwx, 0); chk(f, 'screens[6].explain', 100 * pwx, 0); chk(f, 'screens[6].explain', 0.8, 1); chk(f, 'screens[6].explain', sdD / math.sqrt(200), 2)
 for v in (n_arm(1, 8), n_arm(1, 8, r=0.8), n_arm(2, 8), n_arm(1, 8, p=0.9), n_arm(1, 8, a=0.01)):
     chk(f, 'screens[8].widget.how', v)
 chk(f, 'quiz[1].widget.answer', n_arm(2, 8)); chk(f, 'quiz[1].widget.accept', n1 / 4, 1)
@@ -218,4 +218,5 @@ chk(f, 'items[4].widget.answer', 70 / 9, 4); chk(f, 'items[4].feedback', SM['hwF
 chk(f, 'items[6].widget.answer', asn1, 2); chk(f, 'items[6].widget.wrong[1].value', (0.8 * Lb + 0.2 * Ub) / 0.03125, 2)
 rng30 = np.random.default_rng(9); S30 = np.cumsum(rng30.standard_normal((200000, 30)), 1) / np.sqrt(np.arange(1, 31))
 chk(f, 'items[2].model', 100 * float((np.abs(S30) > 1.959964).any(1).mean()), 0)
+lv.expect('homework', 'items[0].widget.how', 0.0831)  # exact two-look rate: bivariate normal, rho = 1/sqrt(2); simulation gives 0.0826
 lv.report()

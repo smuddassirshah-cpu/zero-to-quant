@@ -137,13 +137,13 @@ t1 = on.mean() / (on.std(ddof=1) / math.sqrt(10)); agree(t_two(t1, 9), SM['t1'],
 f = 'l11'
 chk(f, 'screens[0].prose', d0, 3); chk(f, 'screens[0].explain', 0.562, 3); chk(f, 'screens[0].widget.accept', p1, 4); chk(f, 'screens[0].widget.wrong[1].value', p2, 3)
 chk(f, 'screens[1].widget.answer', math.comb(20, 10)); chk(f, 'screens[1].widget.wrong[0].value', math.factorial(10)); chk(f, 'screens[1].widget.wrong[1].value', 2 ** 20); chk(f, 'screens[1].explain', p2, 4)
-chk(f, 'screens[2].prose', cmc); chk(f, 'screens[2].widget.answer', (cmc + 1) / 100001, 4); chk(f, 'screens[2].widget.wrong[0].value', cmc / 100000, 5); chk(f, 'screens[2].explain', tP, 4); chk(f, 'screens[2].explain', pP, 4)
+chk(f, 'screens[2].prose', cmc); chk(f, 'screens[2].widget.answer', (cmc + 1) / 100001, 5); chk(f, 'screens[2].widget.wrong[0].value', cmc / 100000, 5); chk(f, 'screens[2].explain', tP, 4); chk(f, 'screens[2].explain', pP, 4)
 chk(f, 'screens[3].prose', s2, 5); chk(f, 'screens[3].widget.answer', nsd, 4); chk(f, 'screens[3].widget.wrong[0].value', s2 * 0.2, 4); chk(f, 'screens[3].widget.wrong[1].value', math.sqrt(s2 * 0.1), 4)
 chk(f, 'screens[3].feedback', float(dmc.std()), 4); chk(f, 'screens[3].explain', d0 / nsd, 2)
 chk(f, 'screens[5].canvas', cnt5 / 252, 4); chk(f, 'screens[5].canvas', welch(a5, b5)[1], 3); chk(f, 'screens[5].explain', cnt5)
 chk(f, 'screens[6].canvas', SM['block'][0], 4); chk(f, 'screens[6].canvas', SM['block'][1], 3)
 chk(f, 'screens[7].widget.answer', 1 / 100, 2); chk(f, 'screens[7].widget.wrong[0].value', 1 / 99, 4)
-chk(f, 'screens[8].prose', (cs + 1) / 100001, 3); chk(f, 'screens[8].prose', t_two(t1, 9), 3)
+import itertools; _pat = np.array(list(itertools.product([-1, 1], repeat=10))); _ex = float(np.mean(np.abs((_pat * on).mean(1)) >= abs(on.mean()) - 1e-12)); chk(f, 'screens[8].prose', _ex, 3); chk(f, 'screens[8].prose', t_two(t1, 9), 3)
 chk(f, 'screens[9].explain', math.comb(30, 15)); chk(f, 'quiz[0].widget.answer', 1 / 200, 3)
 # planted block example (periodic signal, seed 3) recomputed with the lesson's code
 

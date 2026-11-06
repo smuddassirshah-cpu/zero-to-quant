@@ -67,3 +67,14 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's scripts: `stat-models-L1-numbers.py` exit 0 (266 of 266), `stat-models-L2-numbers.py` exit 0 (164 of 164), `stat-models-L3-numbers.py` exit 0 (157 of 157).
 
 ## Fix pass
+
+All 28 error and warning findings and all 10 notes handled by targeted edits; none disputed, none deferred except the engine item. Every corrected number recomputed and added to the author's scripts.
+
+- L1 fixed (8): l5 screens[8] and quiz[0] (binary deviance: only the fitted total depends on the $\hat\mu_j$; `good` why now names the count-data slip); homework-1 $e^{4.502776}$; l2 `eta` wrong value -0.011058 to -1.1058 (tol 0.0005); l2 quiz[1] summed loss; l4 starter keeps `beta` so it fails all 7 tests; l1, l2, l5 notes.
+- L2 fixed (6): l7 SSB wording; l8 screens[6] explain and hint (disputed nothing: recomputed power 0.0562 = P(Z > (1.568 - 1)/0.358) plus a negligible far tail, stated as about 6% because the unpaired test's SE of 0.8 bps is twice the true 0.36); homework-2 0.0835 to 0.0831 (text and test); l8 randomise test 7 now wraps in `list(...)`; l8 accept line. Report note on 23.9% and 8.31% needs no content change.
+- L3 fixed (12): l10 `c` 0.0167 to 0.0333; l10 ties and "more powerful" wording; l13 bootstrap sentence, bisquare conditions, huber scale label, drag wording with tol 0.01 to 0.04; review-3 `ranks`; homework-3 "15- to 40-day"; l11 sign-flip 0.268 and `half` byKey. Report `stat-models-3.md` 342 corrected to 329.
+- rule 581 (3 fixed): l11 screens[2] question now asks for 5 decimal places, answer 0.20917 tol 5e-6, so `plain` 0.20916 falls outside; l11 screens[7] asks for 4 decimal places, tol 4e-5, so 0.0101 falls outside; review-3 items[1] asks for 6 decimal places, tol 2e-6, so 0.002004 falls outside. The true answers (20,917/100,001 = 0.2091679; 0.01; 0.002) stay accepted.
+- Deferred (engine item, 1): `scatter` drag points have no `lockX`; raise in the inbox.
+- Scripts: L1 (eta -1.1058), L2 (unpaired-analysis power 5.6%, 0.0831), L3 (exact 1,024 sign patterns, 5 dp answer) extended; all three exit 0 (266, 168, 157 checks).
+- Gates: validator 0 errors; voice scan 0 and 0; playthrough "All passed" desktop and mobile for l1, l2, l4, l5, l7, l8, l10, l11, l13, homework-1, -2, -3, review-3.
+- Graded answers changed: l11 screens[2] answer 0.2092 to 0.20917 with tol 0.0002 to 5e-6; l11 screens[7] and review-3 items[1] tolerances tightened; l13 screens[5] tol widened to 0.04; homework-2 test expect 0.0835 to 0.0831; wrong values l2 `eta`, l10 `c` changed.
