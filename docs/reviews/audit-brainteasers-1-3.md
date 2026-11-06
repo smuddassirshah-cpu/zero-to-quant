@@ -67,3 +67,18 @@ Miss rate of the single read on what survived it: the second read plus fix pass 
 - Number scripts: no `docs/reports/brainteasers-L<n>-numbers.py` exists in the repo (the author and reader scripts lived in scratchpad folders named in the review); so none run. Every stated number met in this audit was recomputed inside the concepts scripts instead.
 - Concepts scripts (`python3 -I` from the repo root): `docs/reports/brainteasers-L1-concepts.py` exit 0, 103 checks (30 s); `docs/reports/brainteasers-L2-concepts.py` exit 0, 79 checks (3 min 46 s, the 81^3 hat-strategy enumeration); `docs/reports/brainteasers-L3-concepts.py` exit 0, 71 checks (under 1 s).
 - Playthrough (from `app/`, with `--local-cdn <pkgs>`): `--set brainteasers/review-1 --set brainteasers/homework-1`: `browser relaunches: 0 / All passed.`; review-2 and homework-2: `All passed.`; review-3 and homework-3: `All passed.`; `--lesson brainteasers/l1-what-stays-the-same`, `l8-prisoners-and-boxes`, `l15-numbers-to-know`: `All passed.` each, with and without `--mobile`. No content was changed, so this only confirms the audited files play.
+
+## Fix pass
+
+1. fixed | basis: a strictly falling real sequence need not stop (1/n); termination needs values in the non-negative integers, which forces at most I(start) moves. Applied to screens[7].prose and summary.ideas[2] as proposed.
+2. fixed | basis: with coordinates 0, 1, 2 the even-sum count is (3^3 + 1^3)/2 = 14 and the corner (0, 0, 0) is even, the centre (1, 1, 1) odd; with 1, 2, 3 it is (27 - 1)/2 = 13 and the labels flip. Caption and hints[1] now fix the 0, 1, 2 numbering.
+3. fixed | basis: if 6 or 8 walks back, the plan still has the 8 trip, a return of at least 6, two more trips over of at least 3 and a return of at least 1: 8 + 6 + 3 + 3 + 1 = 21 > 18; otherwise the other trips over are both {1, 3} and the returns are one each of 1 and 3: 8 + 3 + 3 + 1 + 3 = 18. lines[3] and explain.text now state the sub-case (my own wording, same content as proposed).
+4. fixed | basis: escort a+z, a, a+y, a, a+b costs z + 2a + y + b; shuttle a+b, a, y+z, b, a+b costs z + a + 3b; difference 2b - a - y. Checks: 1, 3, 4, 9 gives 18 and 19; 1, 3, 6, 8 gives 19 and 18; 1, 4, 5, 6 gives 17 and 19, all matching the screens. Applied to screens[6].prose as proposed.
+
+Counts: fixed 4, disputed 0, deferred 0. No graded answer changed.
+
+Checks after the fix:
+- Validator (from `app/`): `0 errors, 4262 warnings`; `content/manifest.json` unchanged.
+- Concepts scripts (`python3 -I`, repo root): L1 exit 0 (103 checks), L2 exit 0 (79 checks), L3 exit 0 (71 checks). No numbers scripts exist for this course.
+- Voice: `sentences scanned: 9313; over 35 words: 0`, `explanations over three sentences: 0`.
+- Playthrough (`--local-cdn <pkgs>`), plain and `--mobile`: l1-what-stays-the-same (16 checks, quiz 4/4), l2-colouring-boards (15 checks, quiz 3/3), l11-crossings-and-schedules (15 checks, quiz 3/3): `All passed.` each, both modes.
