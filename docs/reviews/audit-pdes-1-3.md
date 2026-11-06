@@ -28,8 +28,48 @@ Level 1: the classification convention ($Au_{xx} + Bu_{xy} + Cu_{yy}$, sign of $
 
 ## Overlap with the earlier review
 
-(filled after the blind pass was committed; see below)
+Read after the blind pass was committed (commit d80e939): `docs/reviews/review-pdes.md` (4 errors, 11 warnings, 8 notes) and the three answer checks `docs/reviews/answers-3.2-pdes-1.md` (3 errors, 5 warnings, 8 notes), `-2.md` (5 errors, 13 warnings, 9 notes, 3 recheck items) and `-3.md` (3 errors, 14 warnings, 12 notes, 4 recheck fixes). Every one of their findings has a fix-pass line and the fixes are in the files audited here, so the text I read is the corrected text. Of their 92 findings, 21 are conceptual (meaning, hypothesis, convention or reasoning rather than a number, a tolerance, grading, metadata, repeats of lesson numbers, option lengths, layout or style); the rest are not counted.
+
+| | conceptual findings |
+|---|---|
+| by this audit only | 7 (findings 1 to 7) |
+| by the earlier reads only | 21 |
+| by both | 0 |
+
+The earlier reads' 21 conceptual findings, each already fixed before this read, with the ledger row that checks the corrected text:
+
+- review-pdes error 2 (h-colleague half-step factor $1/(1 + 4\lambda s^2)$): fixed to $1/(1 + 2\lambda s^2)$; ledger homework-3 h-colleague model 2, 3 (`sim: L3 "homework-3 h-colleague model 2, 3"`).
+- review-pdes error 3 (l4 d1 why conflated heat with energy): fixed; ledger l4 screens[3].lines d1, d2 (sympy check of the insulated case).
+- review-pdes warning 5 (q-blow factor $-1.34$ holds only for $N = 10$): fixed, $N = 10$ now stated; ledger l8 quiz q-blow.
+- review-pdes warning 7 ($-0.277$ is gamma, not a second difference in $x$): fixed; ledger homework-3 h-colleague (gamma at 99.5 recomputed).
+- review-pdes warning 11 (h-unstable: which entry goes negative): fixed; ledger homework-1 h-unstable (step recomputed).
+- review-pdes note 16 (0.0042 is two quantities): fixed with "four terms fall short by 0.0042" and "a different quantity"; ledger l8 screens[6], homework-2 h-colleague-terms.
+- review-pdes note 17 (l3 s10 "with a drift added"): fixed to "after lesson 9 removes the drift and the discount"; ledger l3 screens[10].
+- review-pdes note 20 (Vasicek with a random rate needs the $e^{-\int r}$ argument): fixed, the sentence is present; ledger l11 screens[7].
+- answers-1 error 1 (h-gauss-general `half` feedback: wrong slip named): fixed ($4Dt$ for $2Dt$); ledger homework-1 h-gauss-general.
+- answers-1 error 3 (l3 s0 slider feedback said halved, the slip is doubled): fixed, id `double-t`; ledger l3 screens[0].
+- answers-1 note 9 (l2 s0 `three` feedback "gap of 75"): fixed to "3 times 25"; ledger l2 screens[0].
+- answers-2 error 4 ("46.84 is right to two places" false): removed by the rewrite to start 80 (37.47 is right to two places); ledger homework-2 h-colleague-terms model 3 (`sim: L2 "model 3"`).
+- answers-2 warning 13 (r-parseval `no-factor` 0.0625 named no slip): fixed to 0.1028, the remainder over 16; ledger review-2 r-parseval.
+- answers-2 warning 17 ("largest stable time step" is only the bound; $-0.9511$ is not "the edge"): fixed to "the step that keeps $\lambda \le \tfrac12$", "close to $1 - 4\lambda$", "just inside the safe bound", "the largest step the bound guarantees"; ledger l8 screens[4], [5], quiz q-dt, review-2 r-stable-step, and the finite-grid note on l8 summary.
+- answers-3 error 1 (h-r0-sigma `inverse`: "30% multiplies by 2.25"): rewritten with 16% and 24% = 16% x 1.5; ledger homework-3 h-r0-sigma.
+- answers-3 error 3 (l12 s7 `same`: interpolation "adds on top"): fixed to "£0.0188 in all ... interpolation alone about £0.017"; ledger l12 screens[7].
+- answers-3 warning 8 (r-agree conflicted with the lesson's halving-sequence rule): fixed by rewording the question to the error alone; ledger review-3 r-agree.
+- answers-3 warning 14 (S-grid check "supports nothing"): fixed to "£10.4500, £0.0006 below"; ledger l12 screens[8] (independent S-grid solver agrees).
+- answers-3 warning 15 (off-node Richardson "works less well" with the wrong reason): fixed to the cell-position reason and $-0.0012$; ledger l12 screens[9] (recomputed).
+- answers-3 warning 27 (ratio "about 4" holds only for this option and these grids): fixed with "for this option"; ledger l12 screens[3], quiz q-order.
+- answers-3 note 25 (error sign convention inconsistent): fixed by saying "below" and "above" in words; ledger l12 screens[4], [7], review-3 r-rich.
+
+None of these was missed: each was absent from the text read. Convergence rule: this audit found 0 `wrong`, so the course meets "at most one new wrong per three levels" on this round.
 
 ## Checks
 
-(filled after the runs; see below)
+All from `app/` with the scratchpad `pkgs` as `--local-cdn`, after the ledger and findings were committed; no content file was changed.
+
+- `node tools/validate.mjs 2>&1 | tail -3`: `0 errors, 4288 warnings` (the O2 advisory lines); `content/manifest.json` restored with `git checkout` afterwards, `git status` clean.
+- `VOICE_BASE=app/content/courses/pdes/ python3 docs/reviews/voice-scan.py 35 --summary`: `# explanations over three sentences: 0`; `# sentences scanned: 5631; over 35 words: 0`.
+- Existing numbers scripts: none named `pdes*numbers*.py` under `docs/reports` or `docs/briefs`; the exam folder `docs/briefs/exam-3.2-scripts/check_pdes.py` (read-only, `PYTHONPATH=docs/briefs/exam-3.2-scripts python3 -I ...`) ran with exit 0.
+- Concepts scripts (`python3 -I` from the repo root): `docs/reports/pdes-L1-concepts.py` exit 0 (4.6 s), `pdes-L2-concepts.py` exit 0 (6.4 s), `pdes-L3-concepts.py` exit 0 (7.4 s); each also runs every code widget of its level (solution passes all hidden tests, starter fails). No check is marked `EXPECTED_FAIL`: the seven findings are hypotheses, reasons and a modelling assumption, which the scripts document (the drifted corridor value) but which no number in the content contradicts.
+- Playthrough sets: `node tools/playthrough.mjs --set pdes/review-1 --set pdes/homework-1 --local-cdn <pkgs>`: `browser relaunches: 0`, `All passed.`; the same for `review-2`/`homework-2` and `review-3`/`homework-3`: `All passed.`
+- Playthrough lessons: `--lesson pdes/l4-boundary-conditions`, `pdes/l8-heat-on-a-rod`, `pdes/l12-four-decimal-pricer`: each `browser relaunches: 0`, `All passed.`
+- Inbox: no engine or validator limit was hit, so nothing was appended to `docs/BACKLOG-INBOX.md`.
