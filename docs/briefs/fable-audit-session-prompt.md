@@ -16,6 +16,6 @@ Per course, as `concept-audit.md` says:
 
 Waves of at most two agents, so the content sessions keep most of the usage window. Start a wave only with more than half the window left, and stop starting work once under half remains. Never merge during a playthrough. Do not edit PLAN.md, PROGRESS.md, NEXT_PROMPT.md, DECISIONS.md or course.json. Put state in `docs/reports/concept-audit-log.md`, and put new decisions or issues in `docs/reports/concept-audit-notes.md`. Engine limits go to `docs/BACKLOG-INBOX.md` under `Raised later (audit <course>):`.
 
-Report the miss rate after the first three courses: audit-only conceptual findings per three levels, against the earlier read.
+Report the miss rate after the first three courses: audit-only conceptual findings per three levels, against the earlier read. For the go or stop decision, classify each audit-only finding as `serious` (a learner would carry away a wrong definition, theorem, method, convention or graded answer, or code that teaches a wrong method) or `minor` (wording, rounding, precision that changes no understanding). Write a `## Verdict` section in `docs/reports/concept-audit-next.md` with: levels audited, serious audit-only findings (each in one line with file and path), minor count, serious per three levels. Do not judge the threshold yourself; the content session does.
 
 Before ending: commit, push `claude/fable-audit`, and write `docs/reports/concept-audit-next.md`. Under 250 words: courses closed, open, next, and the miss rate so far. Print it.
