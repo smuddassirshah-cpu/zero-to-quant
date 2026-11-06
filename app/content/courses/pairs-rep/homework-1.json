@@ -1,0 +1,387 @@
+{
+ "id": "homework-1",
+ "course": "pairs-rep",
+ "level": 1,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-form-pairs",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "pr-method"
+   ],
+   "prose": "Write the selection step for any cycle. Normalise the 252 formation days from `start`. Return the `k` closest pairs, closest first, as `(i, j)` with `i < j`. With `one_partner=True` use the paper's rule; otherwise keep the closest pairs overall. `normalise`, `ssd_matrix` and the panel `close` are loaded.",
+   "question": "Complete `form_pairs(close, start, k, one_partner)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\ndef pairs_panel(seed=2006, n_ind=10, per_ind=10, n_pairs=20, days=3024, half_life=8.0, ou_sd=0.008,\n                rw_sd=0.015, break_day=1512, break_frac=0.8, half_spread=0.005):\n    rng = np.random.default_rng(seed)\n    N = n_ind * per_ind\n    ind = np.repeat(np.arange(n_ind), per_ind)\n    mkt = np.cumsum(0.0003 + 0.010 * rng.standard_normal(days))\n    indf = np.cumsum(0.008 * rng.standard_normal((days, n_ind)), axis=0)\n    phi = 0.5 ** (1.0 / half_life)\n    u = np.cumsum(rw_sd * rng.standard_normal((days, N)), axis=0)        # unpaired: random walks\n    common = np.cumsum(rw_sd * rng.standard_normal((days, n_pairs)), axis=0)\n    eps = ou_sd * rng.standard_normal((days, 2 * n_pairs))\n    a = np.zeros((days, 2 * n_pairs))\n    for t in range(1, days):\n        a[t] = phi * a[t - 1] + eps[t]                                   # mean-reverting gaps\n    broken = rng.random(n_pairs) < break_frac\n    drift = np.cumsum(rw_sd * rng.standard_normal((days, 2 * n_pairs)), axis=0)\n    for k in range(n_pairs):\n        for j in (2 * k, 2 * k + 1):\n            x = common[:, k] + a[:, j]\n            if broken[k]:                                                # the pair stops co-moving\n                x = x + np.where(np.arange(days) >= break_day, drift[:, j] - drift[break_day, j], 0.0)\n            u[:, j] = x\n    pair_ind = np.repeat(np.arange(n_ind), 2)[:n_pairs]\n    ind[:2 * n_pairs] = np.repeat(pair_ind, 2)                           # two planted pairs an industry\n    logp = np.log(50.0) + mkt[:, None] + indf[:, ind] + u\n    mid = np.exp(logp)\n    bounce = np.where(rng.random((days, N)) < 0.5, 1 + half_spread, 1 - half_spread)\n    close = mid * bounce                                                 # closes at bid or ask\n    return close, mid, ind, broken\n\n\ndef normalise(P):\n    P = np.asarray(P, dtype=float)\n    return P / P[0]\n\n\ndef ssd_matrix(Pn):\n    G = Pn.T @ Pn\n    d = np.diag(G)\n    return d[:, None] + d[None, :] - 2 * G\n\nclose, mid, ind, broken = pairs_panel()\n",
+    "starter": "import numpy as np\n\ndef form_pairs(close, start, k, one_partner=False):\n    \"\"\"The k closest pairs of the formation year starting at day start.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef form_pairs(close, start, k, one_partner=False):\n    \"\"\"The k closest pairs of the formation year starting at day start.\"\"\"\n    Pn = normalise(close[start:start + 252])\n    D = ssd_matrix(Pn)\n    i, j = np.triu_indices(D.shape[0], 1)\n    order = np.argsort(D[i, j], kind=\"stable\")\n    used, out = set(), []\n    for o in order:\n        a, b = int(i[o]), int(j[o])\n        if one_partner and (a in used or b in used):\n            continue\n        out.append((a, b))\n        used |= {a, b}\n        if len(out) == k:\n            break\n    return out\n",
+    "examples": [
+     {
+      "call": "[list(p) for p in form_pairs(close, 0, 3)]",
+      "expect": "[[2, 3], [38, 39], [26, 27]]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[list(p) for p in form_pairs(close, 0, 3)]",
+      "expect": "[[2, 3], [38, 39], [26, 27]]",
+      "compare": "equal"
+     },
+     {
+      "call": "[list(p) for p in form_pairs(close, 0, 20)]",
+      "expect": "[[2, 3], [38, 39], [26, 27], [0, 1], [30, 31], [36, 37], [18, 19], [28, 29], [8, 9], [12, 13], [20, 21], [10, 11], [14, 15], [34, 35], [22, 23], [16, 17], [24, 25], [32, 33], [6, 7], [4, 5]]",
+      "compare": "equal"
+     },
+     {
+      "call": "[list(p) for p in form_pairs(close, 0, 20, True)]",
+      "expect": "[[2, 3], [38, 39], [26, 27], [0, 1], [30, 31], [36, 37], [18, 19], [28, 29], [8, 9], [12, 13], [20, 21], [10, 11], [14, 15], [34, 35], [22, 23], [16, 17], [24, 25], [32, 33], [6, 7], [4, 5]]",
+      "compare": "equal"
+     },
+     {
+      "call": "[list(p) for p in form_pairs(close, 1134, 20)]",
+      "expect": "[[24, 25], [4, 5], [2, 3], [38, 39], [20, 21], [32, 33], [30, 31], [0, 1], [8, 9], [16, 17], [34, 35], [94, 96], [26, 27], [10, 11], [14, 73], [28, 29], [18, 19], [77, 79], [36, 37], [42, 46]]",
+      "compare": "equal"
+     },
+     {
+      "call": "[list(p) for p in form_pairs(close, 1134, 20, True)]",
+      "expect": "[[24, 25], [4, 5], [2, 3], [38, 39], [20, 21], [32, 33], [30, 31], [0, 1], [8, 9], [16, 17], [34, 35], [94, 96], [26, 27], [10, 11], [14, 73], [28, 29], [18, 19], [77, 79], [36, 37], [42, 46]]",
+      "compare": "equal"
+     },
+     {
+      "call": "[list(p) for p in form_pairs(close, 2016, 10)]",
+      "expect": "[[32, 33], [14, 15], [8, 9], [41, 70], [80, 98], [71, 95], [50, 55], [77, 96], [41, 59], [81, 93]]",
+      "compare": "equal"
+     },
+     {
+      "call": "[list(p) for p in form_pairs(close, 2016, 10, True)]",
+      "expect": "[[32, 33], [14, 15], [8, 9], [41, 70], [80, 98], [71, 95], [50, 55], [77, 96], [81, 93], [74, 92]]",
+      "compare": "equal"
+     },
+     {
+      "call": "len(set(s for p in form_pairs(close, 1512, 20, True) for s in p))",
+      "expect": "40",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 8 hidden tests: three cycle starts under both rules, and a check that one-partner never reuses a share. Loading NumPy takes a few seconds the first time.",
+    "budget": 30000
+   },
+   "feedback": {
+    "correct": "Correct. Selection now works for any cycle and either rule.",
+    "generic": "Not quite. Normalise the 252 days from `start`, rank the upper triangle and, for the one-partner rule, skip used shares."
+   },
+   "explain": {
+    "text": "At starts 0 and 1,134 the two rules give the same 20 pairs, because no share repeats. At 2,016 the closest-overall list reuses shares and the rules part. That is why the late test separates them."
+   }
+  },
+  {
+   "id": "h-spread-stats",
+   "difficulty": 4,
+   "skills": [
+    "pr-method"
+   ],
+   "prose": "One function to describe a pair over formation. `Pn` holds normalised formation prices, one column per share. The spread is column `i` minus column `j`; the sd divides by n.",
+   "question": "Complete `spread_stats(Pn, i, j)`, returning `(ssd, sd, max_abs_over_sd)` as floats.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\ndef pairs_panel(seed=2006, n_ind=10, per_ind=10, n_pairs=20, days=3024, half_life=8.0, ou_sd=0.008,\n                rw_sd=0.015, break_day=1512, break_frac=0.8, half_spread=0.005):\n    rng = np.random.default_rng(seed)\n    N = n_ind * per_ind\n    ind = np.repeat(np.arange(n_ind), per_ind)\n    mkt = np.cumsum(0.0003 + 0.010 * rng.standard_normal(days))\n    indf = np.cumsum(0.008 * rng.standard_normal((days, n_ind)), axis=0)\n    phi = 0.5 ** (1.0 / half_life)\n    u = np.cumsum(rw_sd * rng.standard_normal((days, N)), axis=0)        # unpaired: random walks\n    common = np.cumsum(rw_sd * rng.standard_normal((days, n_pairs)), axis=0)\n    eps = ou_sd * rng.standard_normal((days, 2 * n_pairs))\n    a = np.zeros((days, 2 * n_pairs))\n    for t in range(1, days):\n        a[t] = phi * a[t - 1] + eps[t]                                   # mean-reverting gaps\n    broken = rng.random(n_pairs) < break_frac\n    drift = np.cumsum(rw_sd * rng.standard_normal((days, 2 * n_pairs)), axis=0)\n    for k in range(n_pairs):\n        for j in (2 * k, 2 * k + 1):\n            x = common[:, k] + a[:, j]\n            if broken[k]:                                                # the pair stops co-moving\n                x = x + np.where(np.arange(days) >= break_day, drift[:, j] - drift[break_day, j], 0.0)\n            u[:, j] = x\n    pair_ind = np.repeat(np.arange(n_ind), 2)[:n_pairs]\n    ind[:2 * n_pairs] = np.repeat(pair_ind, 2)                           # two planted pairs an industry\n    logp = np.log(50.0) + mkt[:, None] + indf[:, ind] + u\n    mid = np.exp(logp)\n    bounce = np.where(rng.random((days, N)) < 0.5, 1 + half_spread, 1 - half_spread)\n    close = mid * bounce                                                 # closes at bid or ask\n    return close, mid, ind, broken\n\n\ndef normalise(P):\n    P = np.asarray(P, dtype=float)\n    return P / P[0]\n\nclose, mid, ind, broken = pairs_panel()\n",
+    "starter": "import numpy as np\n\ndef spread_stats(Pn, i, j):\n    \"\"\"(SSD, sd, largest |spread| in sds) of the pair over formation.\"\"\"\n    s = ...\n    sd = ...\n    return ...\n",
+    "solution": "import numpy as np\n\ndef spread_stats(Pn, i, j):\n    \"\"\"(SSD, sd, largest |spread| in sds) of the pair over formation.\"\"\"\n    s = Pn[:, i] - Pn[:, j]\n    sd = float(np.std(s))\n    return float(np.sum(s ** 2)), sd, float(np.max(np.abs(s)) / sd)\n",
+    "examples": [
+     {
+      "call": "[round(x, 6) for x in spread_stats(np.array([[1.0, 1.0], [1.02, 1.0], [1.0, 1.02], [1.03, 1.01]]), 0, 1)]",
+      "expect": "[0.0012, 0.016583, 1.206045]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[round(x, 6) for x in spread_stats(np.array([[1.0, 1.0], [1.02, 1.0], [1.0, 1.02], [1.03, 1.01]]), 0, 1)]",
+      "expect": "[0.0012, 0.016583, 1.206045]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "[round(x, 6) for x in spread_stats(normalise(close[:252]), 2, 3)]",
+      "expect": "[0.111734, 0.020972, 2.731885]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "[round(x, 6) for x in spread_stats(normalise(close[:252]), 0, 1)]",
+      "expect": "[0.177804, 0.022726, 3.200615]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "spread_stats(normalise(close[:252]), 3, 2)[0] == spread_stats(normalise(close[:252]), 2, 3)[0]",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests: a toy pair, two pairs of the first formation year, and swapped shares.",
+    "budget": 30000
+   },
+   "feedback": {
+    "correct": "Correct. Three numbers describe a pair before it trades.",
+    "generic": "Not quite. Build the spread, take np.std with its default, and divide the largest absolute spread by it."
+   },
+   "explain": {
+    "text": "For pair (2, 3) the SSD is 0.1117, the sd 0.0210, and the spread reached 2.73 sds during formation. A pair whose spread never passed 2 sd in formation may still trade later."
+   }
+  },
+  {
+   "id": "h-order",
+   "difficulty": 3,
+   "skills": [
+    "pr-method"
+   ],
+   "prose": "From raw prices to the list of pairs a desk trades for the next six months.",
+   "question": "Put the steps in order. Leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Keep shares that traded every day of the formation year, so every path is complete"
+     },
+     {
+      "id": "s2",
+      "text": "Build total-return indices, so dividends do not look like divergences"
+     },
+     {
+      "id": "s3",
+      "text": "Divide each index by its first value, so every path starts at 1"
+     },
+     {
+      "id": "s4",
+      "text": "Compute the SSD of every pair, the distance between paths"
+     },
+     {
+      "id": "s5",
+      "text": "Rank the pairs and keep the k closest, one partner per share in the paper"
+     },
+     {
+      "id": "s6",
+      "text": "Record each pair's formation spread sd, which fixes its 2 sd trigger"
+     },
+     {
+      "id": "x1",
+      "text": "Re-estimate each sd on the first month of trading, to match current volatility",
+      "why": "That uses trading-period prices to set the trigger: look-ahead."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5",
+     "s6"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Each step needs the one before.",
+    "generic": "Not quite. Data first, then normalise, measure, select and fix the trigger.",
+    "byKey": {
+     "x1": "You re-estimated the sd on trading data. That is look-ahead.",
+     "left-out": "Every step except the re-estimate belongs."
+    }
+   },
+   "explain": {
+    "text": "Clean data, then total returns, then normalisation, then distance, selection and the trigger. Everything is fixed at the end of formation; nothing uses trading prices."
+   }
+  },
+  {
+   "id": "h-distance-vs-coint",
+   "difficulty": 5,
+   "skills": [
+    "pr-method",
+    "pr-extend"
+   ],
+   "question": "Answer a sceptic.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "A colleague says: \"The distance method is just cointegration done badly.\" Reply in about 300 words. Say what each method assumes and why the closest pair may not trade. Say what our planted panel can and cannot tell us.",
+    "model": "**What each method assumes.** The distance method assumes two shares' normalised total-return paths should coincide. It fixes the hedge at £1 long and £1 short, a ratio of 1. It estimates nothing but the spread's sd. Cointegration (Engle-Granger) assumes some linear combination of the two log prices is stationary. It estimates the hedge ratio and then tests the residual for a unit root.\n\n**Is distance cointegration done badly?** Partly. If two normalised prices stay close, their difference is small and often mean-reverting. So close pairs are often cointegrated with a ratio near 1. But distance never tests stationarity. Two random walks that wandered together for a year can be the closest pairs by chance. In our panel only 3 of the 20 closest pairs are planted in the year starting on day 2,016. Distance also cannot pick a pair whose fair ratio is far from 1.\n\n**Why the closest pair may not trade.** Distance rewards pairs whose spread barely moves. A very quiet spread may never cross 2 formation sds in the trading period. Our fifth closest pair in the first year never opened and earned 0. Cointegration can choose a pair with a wide but stationary spread that trades often.\n\n**What the planted panel can tell us.** It knows the true pairs, so we can check that selection finds them (20 of 20 in year 1). It plants a bid-ask bounce and a break, so we can test the wait rule and the decline.\n\n**What it cannot.** It has no delistings, dividends, short-sale costs or real spreads. Its pairs are either perfectly planted or random walks, so it says nothing about how often real pairs are cointegrated. Profits here exist because we planted them.\n\n**Verdict.** Distance is a cheaper, assumption-light screen, not a broken test. It trades a narrower set of pairs. Level 3 compares the two directly.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Distance: equal normalised paths, hedge ratio fixed at 1, only the spread sd estimated"
+     },
+     {
+      "points": 2,
+      "text": "Cointegration: a stationary combination with an estimated hedge ratio and a unit-root test"
+     },
+     {
+      "points": 2,
+      "text": "Overlap and difference: close pairs are often cointegrated near 1; distance never tests stationarity and picks chance pairs"
+     },
+     {
+      "points": 2,
+      "text": "Why the closest pair may not trade: a quiet spread never reaches 2 sd, with an example"
+     },
+     {
+      "points": 2,
+      "text": "What the panel can show (true pairs known, bounce, break) and cannot (no real costs, delistings or real co-movement)"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your answer with the model and mark it against the rubric.",
+    "generic": "Compare your answer with the model and mark it against the rubric."
+   },
+   "explain": {
+    "text": "Distance fixes the hedge at 1 and never tests stationarity; cointegration estimates both. The closest pair can be too quiet to trade. Our panel can check the code, not the strategy on real data."
+   }
+  },
+  {
+   "id": "h-top5-open",
+   "difficulty": 4,
+   "skills": [
+    "pr-returns"
+   ],
+   "prose": "In our first cycle the top 5 pairs earn 11.36% on committed capital and 14.20% on employed capital.",
+   "question": "How many of the 5 pairs opened?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4,
+    "tol": {
+     "abs": 0
+    },
+    "unit": "",
+    "placeholder": "a number",
+    "accept": "4: 14.20 / 11.36 = 1.25 = 5 / 4",
+    "wrong": [
+     {
+      "id": "five",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. 5 / 4 = 1.25.",
+    "generic": "Not quite. Employed over committed equals k over n.",
+    "byKey": {
+     "five": "If all 5 had opened, the two returns would be equal.",
+     "three": "5 / 3 = 1.67, larger than the ratio here."
+    }
+   },
+   "explain": {
+    "text": "Employed / committed = k / n, and 14.20 / 11.36 = 1.25 = 5 / 4. So 4 pairs opened; the fifth closest never diverged by 2 sd."
+   }
+  },
+  {
+   "id": "h-annual-employed",
+   "difficulty": 3,
+   "skills": [
+    "pr-returns"
+   ],
+   "prose": "With the one-day wait our top 20 earn 0.84% a month on employed capital.",
+   "question": "Rounded to 0.84% a month, what is that as a compounded annual return?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1056,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "%",
+    "placeholder": "a number",
+    "accept": "10.56% = 1.0084¹² − 1",
+    "wrong": [
+     {
+      "id": "simple",
+      "value": 0.1008,
+      "tol": {
+       "abs": 0.0003
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. About 10.6%.",
+    "generic": "Not quite. Compound twelve months.",
+    "byKey": {
+     "simple": "10.08% multiplies by 12 without compounding."
+    }
+   },
+   "explain": {
+    "text": "1.0084¹² − 1 = 0.1056. It is a payoff per opened pair on a zero-cost position. It is not comparable with a fund's return on capital."
+   }
+  },
+  {
+   "id": "h-checks",
+   "difficulty": 4,
+   "skills": [
+    "pr-method",
+    "pr-extend"
+   ],
+   "prose": "A replication log shows three lines. Cycle 1: top 20 all planted. Committed 14.24%, employed 14.99%. Random pairs: −1.00% a cycle on closes, −1.13% on mids.",
+   "question": "Which conclusions does the log support? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "sel",
+      "text": "Selection finds the planted pairs in cycle 1",
+      "correct": true
+     },
+     {
+      "id": "alg",
+      "text": "The committed and employed figures are consistent with 19 of 20 pairs opening",
+      "correct": true
+     },
+     {
+      "id": "bounce",
+      "text": "The bounce lifts even random pairs a little",
+      "correct": true
+     },
+     {
+      "id": "real",
+      "text": "The strategy will earn 14% every six months on real data",
+      "why": "The panel plants the pairs; real data need not have them."
+     },
+     {
+      "id": "nocost",
+      "text": "Costs do not matter",
+      "why": "No cost has been charged yet."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Correct. Three conclusions follow; two do not.",
+    "generic": "Not quite. Keep to what the seeded log shows."
+   },
+   "explain": {
+    "text": "14.99 / 14.24 = 1.053 = 20 / 19, so 19 pairs opened. The placebo gap of 0.13 points is bounce. Nothing here speaks to real data or costs."
+   }
+  }
+ ]
+}
