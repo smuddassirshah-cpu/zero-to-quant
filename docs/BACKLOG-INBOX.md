@@ -1331,3 +1331,9 @@ Raised later (exam 1.10):
 - [Should] Topic exams: the validator checks skill coverage but not level coverage, so "every level has an item on a skill first met there" is checked by hand in each exam's script (`docs/briefs/exam-1.10-scripts/check_numbers.py` derives first-met skills from `course.json` and the lesson files). Wanted: a validator warning per level whose new skills no auto-graded exam item tests.
 - [Should] Freshness: each exam writes its own `fresh.py` with hand-picked tokens. A clash on a key that follows from the setup (any $x^3 + kx$ on $[0, 2]$ gives $c = 2/\sqrt3 = 1.1547$, the key of limits l17) is caught only if the author lists that key. Wanted: a shared `tools/fresh.mjs` that compares every numeric key and `wrong` value of an exam with every key in the topic's lessons, reviews and homework.
 - [Could] `expression` with a matrix answer in an exam: the question carries no hint of how to enter a matrix (the MathLive matrix template or `[[a, b], [c, d]]`), and the exam screen shows none. Wanted: a short format line under the field when the answer is a `pmatrix`.
+
+Raised later (exam 0.6):
+- [Could] Playthrough: `--exam` prints "25 items" for topic-0.6, which has 24 items, one of them in two parts. Wanted: count items, and give parts separately ("24 items, 25 graded answers"). Workaround: none needed; the score line (24 of 24) is right.
+
+Raised later (exam 2.6):
+- [Could] `table`: an editable numeric cell is about 70 px wide at 440 px, so a placeholder such as "number" shows as "numbe" (topic-2.6 ANOVA table, five cells in a row of five columns). Wanted: the placeholder is clipped with an ellipsis or the cell grows to fit it. Workaround: leave `placeholder` out, so the cell shows "?".
