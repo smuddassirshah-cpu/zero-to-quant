@@ -45,3 +45,20 @@ Warning tag `[table-slip-key]`. 43 hits: algebra 27, linear-maps 10, exams 4 (to
 - content/exams/topic-2.3.json  items[15].feedback.byKey.r2c1 re-key to "global-calmar"
 - content/exams/topic-2.3.json  items[17].feedback.byKey.r1c1 re-key to "no-half"
 - content/exams/topic-2.3.json  items[17].feedback.byKey.r2c1 re-key to "vega-scale"
+
+## Fix pass
+
+Re-keyed (line described the slip, moved to the wrong id; 13 keys):
+- linear-maps l4 screens[5]: r1c2 to deg, r3c2 to all, r4c2 to one.
+- linear-maps l7 screens[0]: r0c3 to all, r1c3 to dom, r2c3 to two.
+- linear-maps l8 screens[0]: r2c2 to row, r1c3 to deg.
+- linear-maps l9 screens[0]: r1c1 to coupon, r2c1 to coupon3.
+- exam topic-2.3 items[15]: r0c1 to global-range.
+- exam topic-2.3 items[17]: r1c1 to no-half, r2c1 to vega-scale.
+
+Added a slip line, generic line kept (3 deliberate generic lines, still warned):
+- odes l1 screens[10]: r1c2 kept, added "simple" (1050 from simple interest).
+- odes l12 screens[1]: r1c2 kept, added "minus" (-3 from reading bc as +4).
+- exam topic-2.3 items[15]: r2c1 kept, added "global-calmar" (18.4 / 19.0).
+
+No answer, tolerance or wrong value changed. Validator 0 errors; playthroughs green with and without --mobile.
