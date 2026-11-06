@@ -159,3 +159,7 @@ Readiness contract sign-off (user, 5 Nov; PLAN 2c item 2)
 - Summary quantifiers are claims: a line true only under an unstated condition (integrability, finite mean, symmetric proposal, no arbitrage) states the condition in plain words, pedantic cases included (user ruled all 14 Loose rows fixed).
 - ito l13 keeps "martingale exactly when the drift is zero" with the lesson's own word "tame" for $E\int f_x^2\,ds < \infty$, without introducing "local martingale"; ito l17's equation is for European claims $g(S_T)$, with one sentence on American and path-dependent claims.
 - Route limits (`readiness-sums.mjs` LIMITED) are kept per level, not per course: pdes is limited by odes L4 and numerics L4.
+
+### Completion scope and capstone projects (6 Nov, user)
+- The pilot (PLAN 2c item 12) is post-completion: the app can be completed without it. The rule stands that no end-to-end effectiveness claim is made before a pilot report exists.
+- Capstone projects proposed by the main session from the user's repositories: trader `prosperity4-alpha`, developer `OptionsMM` (user's completed project; its `scripts/reproduce.sh` rebuilds from a clean clone), researcher `momentum-rep` (unchanged), strats `one-option-three-ways` and strats-deriv `bs-pde-pricer` (both to build). Records stay `external: false` until the user, as reviewer, fills reviewer, date, rerun and defence.

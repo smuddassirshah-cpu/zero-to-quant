@@ -8,7 +8,7 @@ A. Protocol 6 first (engine-dev, one agent, before any content agent): the two s
 
 B. Wave of two, worktrees, `merge-wave.sh`: content-author odes L4; content-author numerics L4 ("One option, three ways"). Each uses the A helper. Then per level a second read and a Sonnet fix pass (protocol 4, 5). On merge, `readiness-sums.mjs` fails on LIMITED: empty pdes's list, run `--write`, and drop "Route limited" from `docs/readiness.md` lines 553 and 620.
 
-C. Item 12 pilot prep: a one-page observation sheet in `docs/pilot/` (stalls, delayed retention, unseen problem, explanation aloud, out-of-app task) and a learner brief. Do not tick item 12.
+C. Capstones: the user reviews trader (prosperity4-alpha) and developer (OptionsMM) records; scope strats and strats-deriv projects (DECISIONS "Completion scope"). Item 12 is post-completion.
 
 Context: the odes brief's "b = 4 settles fastest" is false (l9 teaches b = 3); numerics L3 requires odes/L4 (recheck numerics l11, l12 after odes L4). The user owes the capstone records.
 
