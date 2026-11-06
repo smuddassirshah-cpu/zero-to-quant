@@ -18,7 +18,7 @@ Every lesson has a trap, an edge case, a transfer screen and names Gatev, Goetzm
 
 ## Gates
 
-1. Validator: `node tools/validate.mjs` 0 errors; no warnings on pairs-rep files (only "not yet written" for levels 2 and 3).
+1. Validator: `node tools/validate.mjs` 0 errors; no warnings on pairs-rep files (only "not yet written" for levels 2 and 3). After the main session's note on rule 581, a scratch check found no `wrong[]` value inside its answer's band; three general statements in l2 and l3 were qualified (committed with level 2).
 2. Voice scan (`VOICE_BASE=app/content/courses/pairs-rep/`): 0 sentences over 20 words, 0 explanations over three sentences.
 3. Numbers: `docs/reports/pairs-rep-L1-numbers.py` exits 0, 144 of 144 checks (it imports `docs/reports/pairs_rep_common.py`, an independent second implementation: pairwise-difference SSDs, tuple sorting, a day-by-day trading state machine; plus every code widget run in CPython: solution passes all hidden tests, starter fails at least one).
 4. Playthrough with `--local-cdn` (this session's pkgs): every lesson, review-1 and homework-1 green at desktop and with `--mobile`. Screenshots looked at (series frames, pair windows, bars cut, scatter, tables at 440 px); one fault fixed (the l5 explore first plotted six price lines whose hidden series still set the y range, so the break was hard to see; it now plots each pair's log gap).
