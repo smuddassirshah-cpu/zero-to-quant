@@ -56,3 +56,12 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's scripts: `convex-L1-numbers.py` exit 0 (177 of 177, 0 two-route failures), `convex-L2-numbers.py` exit 0 (128 of 128, 0 two-route failures).
 
 ## Fix pass
+
+All 16 findings applied by targeted edits (4 errors, 6 warnings, 6 notes); none declined, none deferred. Every corrected relation recomputed before writing.
+
+- Errors (4): l5 quiz[3] key now `2e - g \le 0` (g = 2, e = 1.5 breaks the rule and met the old row; g = 4, e = 1 meets the new one), `ratio` becomes `e - 2g \le 0` with a why naming the misplaced 2, `flip` becomes `g - 2e \le 0`; l5 screens[2] now says the line cuts off (0, 10), which uses 40 units, while (4, 6) uses 32; l1 screens[6] "flipping" now says the set need not be convex; l4 summary now says a level set need not be convex.
+- Warnings (6): l3 `xonly` names both partials ($2x = 3$, $2y = 0$); l4 screens[5] and homework-1 items[8] state the claim about this level set only; l6 screens[7] no longer cites Level 1; l8 `swap` explains 10 x 40 = 400 and 18 x 40 = 720; l8 screens[7] states the true converse.
+- Notes (6): l1 quiz[2] "misses its midpoints"; l8 screens[0] and screens[6] wording; l6 "at least as many limits" and "no optimum or a whole line of them"; homework-2 "fractions of a contract". Also homework-1 `why` "need not be convex" for the same quantifier.
+- Scripts: `convex-L2-numbers.py` extended with the (0, 10) margin of 40, the quiz row check and the 10 x 40 and 18 x 40 swap values; `convex-L1-numbers.py` needs no change. Both exit 0 (177 of 177, 128 of 128, 0 two-route failures).
+- Gates: validator 0 errors; voice scan 0 and 0; playthrough "All passed" desktop and mobile for l1, l3, l4, l5, l6, l8, homework-1 and homework-2.
+- Graded answers changed: l5 quiz[3] correct option (row `2e - g \le 0`); wrong-answer values `ratio` and `flip` rewritten.
