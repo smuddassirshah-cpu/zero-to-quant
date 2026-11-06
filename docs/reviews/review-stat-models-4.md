@@ -56,3 +56,14 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Author's script: `stat-models-L4-numbers.py` exit 0 (271 of 271).
 
 ## Fix pass
+
+All 23 findings (4 errors, 10 warnings, 9 notes) applied by targeted edits; none disputed, none deferred. Every figure recomputed with seeded chains of my own and added to `docs/reports/stat-models-L4-numbers.py` (now 280 checks, exit 0).
+
+- Error l16 quiz[2] fixed: six seeds, 18,000 draws, start (-8, 12.8) give $\beta_1$ ESS by Geyer's sequence of 7 (step 0.05), 65, 152, 278, 338 (2.5) and 291 (5). Correct option is now "Step 5 mixes far better than step 0.05, though it accepts only 5%"; `small` and `big` whys and byKeys name their real slips; explain states the counts and conditions (Geyer, D1s only).
+- Error homework-4 model fixed: the 195 to 1,255 rise is attributed to centring plus the steps $(0.8, 3.5)$; centring alone at step 1.0 gives 217 (checked, four chains, seeds 1 to 4). Warning l17 screens[5] feedback, prose and explain and homework-4 items[0] how and explain fixed likewise; the homework explain now states seed 7, step 1.0: uncentred 1.0447, centred 1.0274 (rerun).
+- Errors l18 quiz[1] feedback 0.5732 to 0.5731 ($53.31/93.02 = 0.573103$) and screens[0] hint 0.669 to 0.668 ($0.66849$).
+- ESS ruling: kept the lag-1 rule for the l17 console and said so (three captions: "ESS by the lag-1 rule, which flatters Metropolis chains"; screens[4] prose notes it overstates for slowly mixing Metropolis chains). l16 screens[9] Monte Carlo errors now 0.15 and 0.23 by Geyer's sequence (computed 0.1487 and 0.2346), with the fixed sampler and seed stated.
+- Warnings fixed: l14 `scale` view y to [0, 0.03]; l14 `bin` byKey (divisor 51); l17 `converged` uses split $\hat R$ (docstring, solution, hint; tests unchanged and green); l17 `nob` 1.0 to 0.999, tol 0.0005 ($\sqrt{0.998} = 0.9990$); l17 screens[3] line and byKey `x`; l17 screens[4] answer 105.3 tol 0.2 to 105.26 tol 0.3; l18 screens[8] canvas now the seed-101 table (estimates as given, $\hat\mu = -0.8003$, x range -6 to 10, derives rewritten).
+- Notes fixed: l14 Gamma(7, rate 16) wording; l15 "usually 13"; l16 grid "to the digits shown", $5 \times 10^{-324}$ hint, "five Monte Carlo standard errors", "MLE plug-in"; l17 screens[7] caption, Vehtari wording; l18 "agree within 0.02".
+- Gates: validator 0 errors; voice scan 0 and 0; numbers script exit 0; playthrough "All passed" desktop and `--mobile` for l14, l15, l16, l17, l18 and homework-4 (review-4 unchanged).
+- Graded answers changed: l16 quiz[2] correct option (now "Step 5 mixes far better..."); l17 screens[4] 105.3 to 105.26 (tol 0.3); wrong-answer value l17 quiz[0] `nob` 1.0 to 0.999.

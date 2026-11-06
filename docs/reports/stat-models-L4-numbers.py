@@ -240,7 +240,7 @@ agree(rhat(hand), math.sqrt(1.95), 1e-12, 'sqrt 1.95'); E('l17', 'screens[2].exp
 agree([rows[0][1]['wrong'][0]['value'], rows[1][1]['wrong'][0]['value'], rows[3][1]['wrong'][0]['value']], [hand.var(1).mean(), hand.mean(1).var(ddof=1), 1.95], 1e-9, 'hand table wrongs')
 for phi, ans in [(0.9, 105.3), (0.5, 667), (0.9409, 61)]:
     agree(round(2000 * (1 - phi) / (1 + phi), 1 if phi == 0.9 else 0), ans, 1e-9, f'ESS phi {phi}')
-E('l17', 'screens[4].widget.answer', 105.3); E('l17', 'screens[4].widget.wrong[0].value', 200); E('l17', 'screens[4].widget.wrong[1].value', round(2000 / 1.9, 1))
+E('l17', 'screens[4].widget.answer', 105.26); E('l17', 'screens[4].widget.wrong[0].value', 200); E('l17', 'screens[4].widget.wrong[1].value', round(2000 / 1.9, 1))
 E('l17', 'screens[4].explain.text', 667); E('l17', 'screens[4].explain.text', 61); E('l17', 'screens[4].explain.text', 0.9409)
 rr = np.random.default_rng(4); R_, n_ = 4000, 2000; Xa = np.empty((R_, n_)); Xa[:, 0] = rr.standard_normal(R_); Zs = rr.standard_normal((R_, n_))
 for t in range(1, n_):
@@ -400,6 +400,45 @@ def run_case(src, t):
         return close(got, want, t.get('tol'))
     except Exception:
         return False
+
+
+# ---------------------------------------------------------------- fix pass (second reader's rulings)
+def geyer_ess(x_):
+    """Effective sample size by Geyer's initial positive sequence (pairs of autocorrelations while positive)."""
+    x_ = np.asarray(x_, float) - np.mean(x_); n0 = len(x_); f_ = np.fft.rfft(x_, 2 * n0); ac = np.fft.irfft(f_ * np.conj(f_))[:n0]; ac /= ac[0]; tot = -1.0
+    for k_ in range(0, n0 - 1, 2):
+        g_ = ac[k_] + ac[k_ + 1]
+        if g_ < 0:
+            break
+        tot += 2 * g_
+    return n0 / tot
+
+
+# l16 quiz[2]: beta1 ESS by step, six seeds, 18,000 draws after 2,000 burn-in, start (-8, 12.8)
+mean_ess = {}
+for s_ in (0.05, 0.5, 1.0, 5.0, 2.5):
+    mean_ess[s_] = float(np.mean([geyer_ess(metropolis(lpl, [-8, 12.8], s_, 20000, sd_)[0][2000:, 1]) for sd_ in range(1, 7)]))
+print('mean beta1 ESS by step (Geyer):', {k_: round(v_) for k_, v_ in mean_ess.items()})
+agree([mean_ess[0.05], mean_ess[1.0], mean_ess[5.0], mean_ess[2.5]], [7, 152, 291, 338], [3, 15, 15, 15], 'l16 quiz[2] ESS by step')
+agree(mean_ess[0.5], 65, 8, 'l16 quiz[2] ESS at 0.5')
+if not (mean_ess[0.05] < mean_ess[0.5] < mean_ess[1.0] < mean_ess[5.0] < mean_ess[2.5]):
+    BAD.append('l16 step ranking')
+for txt_ in ('about 7 effective', '65 at 0.5', '150 at 1.0', '290 at 5'):
+    assert txt_ in lv.text('l16', 'quiz[2].explain.text'), txt_
+E('l16', 'quiz[2].widget.options[1].why', 7); E('l16', 'quiz[2].widget.options[2].why', 290); E('l16', 'quiz[2].widget.options[2].why', 340)
+# l16 screens[9]: Monte Carlo standard errors of the seed-1 chain by Geyer (0.15 and 0.23)
+mcse = [float(ch1[2000:, j_].std() / math.sqrt(geyer_ess(ch1[2000:, j_]))) for j_ in range(2)]
+agree(np.round(mcse, 2), [0.15, 0.23], 1e-9, 'l16 MCSE by Geyer')
+E('l16', 'screens[9].widget.how', 0.15); E('l16', 'screens[9].widget.how', 0.23)
+# l17: centring alone at step 1.0 (starts and seeds as the screen) gives beta1 ESS 217 by the lag-1 rule
+chc = np.array([metropolis(lambda bb_: lpl(bb_, Xc), s0, 1.0, 5000, k_ + 1)[0][1000:] for k_, s0 in enumerate(starts)])
+agree(round(sum(ess_ar1(cc[:, 1]) for cc in chc)), 217, 1, 'l17 centred at step 1.0, beta1 ESS (lag-1)')
+E('l17', 'screens[5].feedback.correct', 217)
+# l17 quiz[0] nob: leaving out B gives sqrt(0.998 * 2 / 2) = 0.9990
+agree(round(math.sqrt(0.998), 4), 0.999, 1e-9, 'nob'); E('l17', 'quiz[0].widget.wrong[1].value', 0.999)
+# l18 quiz[1] and hint
+agree([round(53.31 / 93.02, 4), round((206 + 0.5417 * 43) / 343, 3)], [0.5731, 0.668], 1e-9, 'l18 0.5731 and 0.668')
+E('l18', 'quiz[1].feedback.correct', 0.5731); E('l18', 'screens[0].hints[2].text', 0.668)
 
 
 ncode = 0
