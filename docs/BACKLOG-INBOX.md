@@ -1276,3 +1276,7 @@ Raised later (vector-calc level 1):
 
 - `plane` polyline function entries (`points: [[x, y], ...]`): `label` with `labelAt` is not placed at the given x; the three walk labels in l2 screen 11 all piled up near the left end, over the paths. Wanted: `labelAt` honoured on a polyline as on an `expr` curve. Workaround: no curve labels, and a caption naming the colours ("Blue: n = 4 ...").
 - `space` `fields`: arrows are drawn only on an n by n by n grid. For work along a space curve (l3 screen 8, $\mathbf F = (y, z, x)$ on the helix) we wanted the arrows at points of the curve, for example `fields: [{ F, along: "h", n: 12 }]`, so the learner sees $\mathbf F$ against $\mathbf r'$. Workaround: a normalised 4 by 4 by 4 grid beside the bold curve.
+
+Raised later (vector-calc level 3):
+
+- `space` `curves`: no direction marker on a curve. Stokes (l12 screens 0, 2 and 9) needs the boundary's orientation shown (counterclockwise seen from above, or clockwise in the trap). Wanted: `arrow: true` (or `arrows: n`) on a curve entry, drawing small arrowheads along it in the direction of increasing `t`. Workaround: a short `vectors` entry tangent to the curve at one point, from a `points` entry.
