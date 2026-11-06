@@ -94,3 +94,6 @@ Both homework errors sit in a `wrong[]` value and its tolerance. The author scri
 - Process note (two validator rules for wrong-value overlap and unasserted wrong values): deferred to the engine backlog. The numerics-L4 script now carries the overlap scan for homework-4 only.
 - Gates: validator 0 errors (no warning left on any L4 file); voice scan 0 and 0; playthrough "All passed" desktop and `--mobile` for l11, l12, l13, l15, l16, l17, review-4, homework-4 (`--local-cdn`).
 - Graded answers changed: h4-weight tolerance 1e-4 to 5e-5 (answer 0.4879 unchanged); wrong values changed: h4-shift `monthly` 86.98 to 87.02, h4-weight `no-r` tol; l13 share test expectation. No other graded answer changed.
+
+### Main-session note
+- h4-weight: true answer 0.4879 and the no-r slip 0.488 are both exact, so an unstated precision graded a 3-place rounding of the right answer as the slip. Question now asks "to 4 decimal places".
