@@ -42,6 +42,8 @@ Deferred by the user (6 Nov): the blind concept audit (`docs/briefs/concept-audi
 
 `app/tools/perf-pending.json` lists 108 grandfathered levels. Retrofit order from DECISIONS "Performance tasks": interview courses and Stages 2 and 3 first. One item per level, not a level rewrite; one content agent per course, up to three levels; each task second-read with its level's next read or by a dedicated reader. Prune with `perf-pending.mjs --prune`.
 
+Conflict rule (6 Nov): before retrofitting a course, `git fetch origin claude/fable-audit` and skip any course that branch has touched or lists as open in `docs/reports/concept-audit-log.md`; retrofit it after that course closes and the branch merges.
+
 ## Phase 4: drills and bank (only with over half the window left)
 
 Drill packs 1 to 8 and bank part 2 (PLAN 2a), with the new freshness gate.
