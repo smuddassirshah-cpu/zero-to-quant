@@ -1584,3 +1584,8 @@ Design note (not a change, for the user to decide): under Strict, an in-course c
 
 Status block (engine pass, session T, item 583):
 - 583: done (see report line in handback; routes-only gating passes).
+
+584. Done [Should]: `validate.mjs` warns `[table-slip-key]` when a table `feedback.byKey` key is an editable cell id (`r0c1`, zero-based) and that cell has `wrong[]` entries (`table.js` returns the wrong id, so the line never fires for the slip). Message names file, path, cell id and the wrong ids to re-key to. Shared by every `checkFeedback` caller (lessons, reviews, homework, exams, drills, bank). Test: `tools/test-validate-table-slip-key.mjs` (4 of 4). Hits (43 at the time) listed in `docs/reports/scan-table-slip-keys.md`.
+
+Status block (engine pass, item 584):
+- 584: done (warning only; validator 0 errors; both table tests pass).
