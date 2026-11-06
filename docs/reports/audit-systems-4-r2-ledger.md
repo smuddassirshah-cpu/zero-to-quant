@@ -150,3 +150,85 @@ Scope: `l15-no-allocation`, `l16-ring-buffer`, `l17-measuring-latency`, `l18-fee
 | l17 | quiz[3] (q17-batch) | Time a batch with two reads after a warm-up | correct | rows for screen 9 |
 | l17 | quiz[3].options.each.why | Each bracket adds about 20 ns, twice the function | correct | stated model |
 | l17 | quiz[3].options.sleep.why | An idle CPU runs slower; warm it up instead | correct | an idle core sits in a C-state at a low P-state with cold caches and needs time to ramp (Intel SDM vol. 3B, ch. 15; Gregg 2nd ed. 6.4) |
+
+## l18-feed-handler
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l18 | screens[0].widget.answer | Ring, decode, sequence check, book, strategy, send | correct | the sequence number is a decoded field, and a stale frame must be rejected before it touches the book; standard handler layout (Nasdaq ITCH over MoldUDP64 handler design) |
+| l18 | screens[0].lines.d1.why | A file write is a system call that can take microseconds; log from another thread | correct | `write(2)` is a system call (about 1 µs plus the page-cache copy; Gregg, *Systems Performance* 2nd ed., 8.3); off-hot-path logging is the standard practice (Cook, CppCon 2017, "When a Microsecond Is an Eternity") |
+| l18 | screens[0].lines.d2.why | An allocation on every message adds cost and a rare slow case | correct | l15 rows |
+| l18 | screens[0].hints[1], byKey.s3 | The sequence check comes before the book, so a stale frame never changes it | correct | same as the answer row |
+| l18 | screens[1].frames, widget | Stages 1,000, 200, 0, 300, 500, 500 ns; the card-to-ring stage is 40% of 2,500 | correct | `sim: l18-s1` |
+| l18 | screens[1].explain | On the kernel path the card-to-ring hop would take about 10 µs, over three times the 3 µs target | correct | order-of-magnitude figures: the kernel socket receive path runs 5 to 15 µs against about 1 µs with kernel bypass (Solarflare OpenOnload and Mellanox VMA published latencies; DPDK); 10 / 3 > 3, `sim: l18-s1 explain` |
+| l18 | screens[2].prose | A stall such as a page fault or a context switch can take 5 µs | correct | a minor fault or a context switch runs 1 to 5 µs on current Linux (Gregg 2nd ed., 6.4 and 7.3) |
+| l18 | screens[2].widget, explain | 2,500; 500 slack; 2,700 with four allocations; 7,500 with one 5 µs stall; the budget must hold for the worst message | correct | `sim: l18-s2`; tail-latency framing (l17) |
+| l18 | screens[3].widget | 201 levels; 1,608; 16,384; 18,032 bytes | correct | `sim: l18-s3` |
+| l18 | screens[3].explain | 18,032 bytes fits a 32 KiB L1 with room to spare; scanning 201 levels is cheap; a cached best price removes the scan | correct | 18,032 < 32,768; 201 ints are 804 bytes, 13 lines, a few hundred ns at most in L1; best-price caching is standard |
+| l18 | screens[4].prose | Apply a frame at or above the expected number, count the skipped numbers as a gap, drop a frame below it | correct | the lesson's stated policy; `sim: l18-s4` |
+| l18 | screens[4].widget, byKey | 1A, 2A, 4A, 5A applied; 1B, 2B, 4B, 5B duplicates; 3B below the expected 5 | correct | `sim: l18-s4` (gap 1) |
+| l18 | screens[4].explain | A better handler would hold 4A briefly and wait for 3 | correct | A/B arbitration with a short gap timer is the standard design (CME MDP 3.0 and Nasdaq MoldUDP64 feed-handler guidance) |
+| l18 | screens[5].widget | `std::unordered_map` allocates nodes and rehashes at unpredictable times | correct | [unord.req]: node-based, rehash when the load factor would pass `max_load_factor`; libstdc++ and libc++ allocate one node per element |
+| l18 | screens[5].options.avg.why, order.why, thread.why | Its average is fine; it does not sort; one thread can use it | correct | [unord.req] (average O(1), no ordering); [res.on.data.races] |
+| l18 | screens[5].explain | Every insert may allocate a node and may trigger a rehash of the whole table; both land on one message; an array by id or a preallocated table has neither | correct | same clauses; `reserve` on the map avoids the rehash but not the node |
+| l18 | screens[6].prose | A stream read can end mid-frame and one read can hold several; a gap is judged only on a whole frame | correct | TCP is a byte stream with no message boundaries (RFC 9293 §3.1; Stevens, UNP 3rd ed., 1.4) |
+| l18 | screens[6].widget, explain | 2 and 2 left; 1 and 18 left; 4 and 2 left; seven in all | correct | `sim: l18-s6` |
+| l18 | screens[7].prose, widget | seq < expected: drop; seq > expected: count the gap and apply | correct | the lesson's stated policy; `sim: l18-s4`, `q18-gap`; see the explain row |
+| l18 | screens[7].options.stop.why | Waiting stalls every later message; this policy counts and moves on | correct | the stated policy; the trade-off is named in homework-4 h4-handler-aloud §6 |
+| l18 | screens[7].explain | A larger number is new data, so it is applied; the skipped numbers are counted for a later repair; a smaller number is dropped | misleading | applying increments past a gap leaves the book missing updates (an unseen add, a cancel for it), and the pipeline then runs the strategy on that book; real handlers mark the book stale and recover by retransmission or snapshot before trading on it (Nasdaq MoldUDP64 re-request; CME MDP 3.0 market recovery). Homework-4's own model answer says "The gap is repaired from a snapshot"; the lesson never says the book cannot be trusted until then |
+| l18 | screens[8].prose | The starter keeps the book in `std::map`, applies only adds and ignores sequence numbers | correct | starter code; `sim: l18-handler` starter fails t3, t4, t6, t7 and t13 |
+| l18 | screens[8].widget.solution | The Handler solution passes 15 tests and allocates nothing in `feed`; expectations follow the contract | correct | `sim: check_code_item l18-handler` (c++17 and c++20); every expectation recomputed by a Python model of the contract |
+| l18 | screens[8].explain | The map allocates a node per price level, so the starter fails the count; a 24-byte buffer carries a partial frame between reads; the sequence check runs on each whole frame | correct | [map.overview] node-based; `sim: l18-handler` (starter fails t13) |
+| l18 | screens[9].widget | 2,000; 2,150; 3.6 MB; 37; 12 | correct | `sim: l18-drill` (MB decimal) |
+| l18 | screens[10].widget, explain | 901,600 bytes; 880.5 KiB; 28 caches of 32 KiB; no longer fits L1 but fits a large L2; each message touches one instrument's slice | correct | `sim: l18-transfer`; L2 is 1 to 2 MiB a core on current server parts |
+| l18 | summary | Pipeline with a budget; arrays by price and id; gap above, drop below, partial frame waits; judging by the average message is the trap | correct | rows above |
+| l18 | quiz[0] (q18-budget) | 1,500 ns, 500 ns of slack against 2 µs | correct | `sim: q18-budget` |
+| l18 | quiz[1] (q18-gap) | Expecting 10, a frame 14 adds 4 to the gap count and 15 is expected next | correct | `sim: q18-gap` and the Handler model |
+| l18 | quiz[2] (q18-orders) | 32,768 bytes, exactly 32 KiB, the whole of a typical L1 | correct | `sim: q18-orders`; 32 KiB L1D on most x86 cores of the last decade (48 KiB on the newest) |
+| l18 | quiz[3] (q18-stale) | A frame below the expected number is dropped; resetting the expected number would replay old data | correct | the stated policy; `sim: l18-s4` |
+
+## review-4
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| review-4 | r4-allocating-lines | `emplace_back` on an empty vector, `new double[3]` and `std::string s(64, 'y')` allocate; a plain array, `std::array` and an empty vector do not | correct | `sim: l15-alloc t10, t11, t12, t1, t8, t9` (64 chars exceed both the libstdc++ 15 and the libc++ 22 SSO) |
+| review-4 | r4-pool-order | After releasing 2, 3, 1 the free list reads 1, 3, 2 and allocate returns 1 | correct | `sim: r4-pool-order` |
+| review-4 | r4-alloc-bill | 18 ms | correct | `sim: r4-alloc-bill` |
+| review-4 | r4-ring-counters | 15 items, slot 21 (85 & 31) | correct | `sim: r4-ring-counters` |
+| review-4 | r4-ring-order | The third pop returns 40; the refused 30 was never stored | correct | `sim: r4-ring-order` |
+| review-4 | r4-mean-p99 | Mean 38.1 µs; p99 (position 990) 400 µs | correct | `sim: r4-mean-p99`; convention stated in the row label |
+| review-4 | r4-p60 | p60 by nearest rank is 6 (rank 5); rounding 4.8 down reads 5 | correct | `sim: r4-p60`; convention stated |
+| review-4 | r4-budget | 2,900 ns | correct | 2,600 + 6 × 50 |
+| review-4 | r4-two-reads | 31 + 41 = 72 bytes is 3 frames with nothing left | correct | `sim: r4-two-reads` |
+
+## homework-4
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| homework-4 | h4-latency-hist.prose | Keeping every sample would allocate | imprecise | a fixed array of samples sized up front allocates nothing either (the lesson's own rule); what forces allocation is an unbounded, growing store of samples |
+| homework-4 | h4-latency-hist.prose | A power-of-two bucket histogram does not allocate; a sample of ns goes in bucket floor(log2 ns) | correct | `sim: h4-latency-hist prose` (bucket = bit_length - 1 for ns ≥ 1, clamped to 39 as the starter comment says); HdrHistogram README (fixed-size histogram, no allocation on record) |
+| homework-4 | h4-latency-hist.widget.solution | The solution passes 15 tests with 0 allocations in `record`; the starter fails | correct | `sim: check_code_item h4-hist` (c++17 and c++20); expectations recomputed by the bucket model; the starter fails on the percentiles (its `record` allocates nothing either) |
+| homework-4 | h4-latency-hist.explain | 10 ns is bucket 3 (8 to 15), upper bound 16; the walk adds bucket counts to the nearest rank and returns 2^(b+1); the array was sized at construction | correct | `sim: h4-latency-hist explain` |
+| homework-4 | h4-sizing parts 1 to 4 | 3,000 slots; 60,000 bytes (58.6 KiB); 512 slots; 12,288 bytes | correct | `sim: h4-sizing parts 1 to 4` |
+| homework-4 | h4-sizing part 5 question | "Which of these fits a 32,768-byte L1 and so stays resident?" | imprecise | fitting L1 is necessary, not sufficient: residency also depends on the code, the other data a message touches and set associativity (Hennessy and Patterson, CA:AQA 6th ed., B.1 to B.3); the `all` option's own `why` says "What is touched is what matters" |
+| homework-4 | h4-sizing part 5 options and explain | Ring 12,288 fits; pool 27,232 over; both 39,520 over; even the 2,400 live slots, 48,000 bytes, exceed L1 | correct | `sim: h4-sizing part 5 why lines` |
+| homework-4 | h4-handler-aloud.model §1 | Pipeline with a 4 µs target: 1,200 + 250 + 350 + 600 + 600 = 3,000 ns, 1,000 ns slack | correct | `sim: h4-handler-aloud model` |
+| homework-4 | h4-handler-aloud.model §2 | Every allocation is about 50 ns and a rare slow case; take memory up front; prove it with a reset count and an assert of 0 | correct | l15 rows |
+| homework-4 | h4-handler-aloud.model §3 | Below expected is dropped; above adds the skipped numbers to a gap count; the gap is repaired from a snapshot; partial frames wait | correct | the policy with the recovery step the lesson lacks (see l18 screens[7].explain) |
+| homework-4 | h4-handler-aloud.model §4 | A £4 range in pennies is 401 levels a side; 401 × 2 × 4 + 1,024 × 16 is about 20 KB, inside a 32 KiB L1; sized at start so nothing rehashes; `unordered_map` allocates and rehashes unpredictably | correct | `sim: h4-handler-aloud model` (19,592 bytes); [unord.req] |
+| homework-4 | h4-handler-aloud.model §5 | Time from the intended send time, never from a late send; quote p99 and p99.9 first; time batches after a warm-up | correct | Tene; l17 rows |
+| homework-4 | h4-handler-aloud.model §6 | Counting a gap and moving on keeps delay low but loses frames the other feed may hold; a short hold recovers some at a latency cost | correct | A/B arbitration trade-off (CME MDP 3.0 arbitration guidance) |
+| homework-4 | h4-handler-aloud.rubric | Six criteria summing to 10, matching the model's six points | correct | 2 + 2 + 2 + 2 + 1 + 1 = 10 |
+| homework-4 | h4-two-hosts parts 1 to 3 | 410; 800 (position 1,980 of 2,000 is slow with 40 slow); 20 with 15 slow; host B alone still 800 | correct | `sim: h4-two-hosts parts 1 to 3` |
+| homework-4 | h4-two-hosts part 4 | Pool the samples (or merge histograms with the same buckets) and read the percentile once | correct | Tene; HdrHistogram `add` |
+| homework-4 | h4-two-hosts part 4 options.avg.why | The average is a number no request had, and it moves the wrong way as hosts differ in size | imprecise | the first half holds (`sim`); "moves the wrong way" is unexplained: the fault is that an unweighted average ignores how many requests each host served, so a quiet slow host weighs as much as a busy fast one |
+| homework-4 | h4-two-hosts part 4 options.max.why, mid.why | The larger p99 overstates the last case (0.75% slow); medians say nothing about the tail | correct | `sim: h4-two-hosts part 3` |
+| homework-4 | h4-pop-order.widget.answer | pop: load head relaxed; return false if head == tail(acquire); read slot; store head release; return true | correct | Williams 5.3.3, 7.2; `sim: spsc-ok` |
+| homework-4 | h4-pop-order.lines.d1.why | A relaxed head store can become visible before the slot is read, so the producer could overwrite the slot first | correct | [atomics.order]; `sim: spsc-h4-pop-order-d1` (TSan reports the slot race) |
+| homework-4 | h4-pop-order.lines.d3.why | A relaxed tail load does not pair with the producer's release, so the slot may not be visible yet | correct | [atomics.order]/2 (synchronizes-with needs an acquire load); `sim: spsc-h4-pop-order-d3` (TSan reports the slot race) |
+| homework-4 | h4-pop-order.explain, byKey.s4 | The acquire load of `tail_` pairs with the producer's release; the release store of `head_ + 1` tells the producer the slot is free | correct | same; the producer's acquire load of `head_` (l16 screens[5]) completes the pairing |
+| homework-4 | h4-stall-count | 160 requests were due in 40 ms at one every 250 µs; the client's own timing hides all of them | correct | `sim: h4-stall-count`; Tene |
+
+## Verdict counts
+
+197 rows: correct 189, imprecise 7, misleading 1, wrong 0, unverified 0.
