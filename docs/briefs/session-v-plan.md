@@ -11,6 +11,10 @@ Scope is ordered by value. Do the phases in order; within a phase, run waves of 
 - Freshness: every new exam reused lesson setups. Grep `app/content` for each new item's key nouns and function names, and run `fresh-check.mjs --min-run 10`.
 - Sentences: 20 words is a target; the gate is 35 (DECISIONS 6 Nov).
 
+## Audit branch (6 Nov)
+
+Merge `origin/claude/fable-audit` with `app/tools/merge-wave.sh` at session start and at close (never during a shard), and fold its `docs/reports/concept-audit-notes.md` into DECISIONS and KNOWN_ISSUES.
+
 ## Phase 1: engine pass (before any content wave; protocol 6)
 
 Two engine agents in parallel, disjoint files. Each numbers its items from the tail of `docs/ENGINE-BACKLOG.md` (590 was the last), documents author-facing changes in AUTHORING.md, adds tests, and runs `--all --shard i/4 --local-cdn` where the change touches rendering or grading.

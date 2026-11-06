@@ -2,9 +2,11 @@ Read CLAUDE.md, then `docs/briefs/concept-audit.md` (binding), DECISIONS "Correc
 
 Git: `git fetch origin claude/amazing-wright-d4mx7i`, then `git checkout -B claude/fable-audit origin/claude/amazing-wright-d4mx7i` (if `origin/claude/fable-audit` exists, check that out instead and rebase it onto `origin/claude/amazing-wright-d4mx7i`; never reset). Work and push only on `claude/fable-audit` (`git push -u origin claude/fable-audit`). Never push to `claude/amazing-wright-d4mx7i`: the content session merges your branch. Build the local CDN in the background first: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`.
 
+One at a time: after fetching, if the newest commit on `origin/claude/fable-audit` is under two hours old and did not touch `docs/reports/concept-audit-next.md`, another audit session is still running: stop at once, change nothing, and say so in one line. Otherwise you are the only audit session.
+
 Resume: if `docs/reports/concept-audit-next.md` exists on the branch, read it and `docs/reports/concept-audit-log.md` first and continue from them: finish open courses (fix passes, re-audits) before starting new ones. The same prompt is pasted for every audit session.
 
-Scope: a content session is second-reading and fixing other courses in parallel. To avoid conflicting edits, audit only courses with no entry in `docs/reports/unread-levels-session-u.txt`, and no course a commit on `origin/claude/amazing-wright-d4mx7i` touched in the last day. Order: interview courses and Stage 3, then Stage 2, Stage 1, Stage 0. Exams come after their courses close.
+Scope (you come up behind the content sessions and never get in their way): a course is eligible when (a) every level has a second read on record (for a course in `docs/reports/unread-levels-session-u.txt`, its `docs/reviews/review-<course>*.md` files have a `## Fix pass` on `origin/claude/amazing-wright-d4mx7i`), and (b) no commit on `origin/claude/amazing-wright-d4mx7i` touched the course folder in the last 24 hours. A closed course that gains commits on `origin/claude/amazing-wright-d4mx7i` after its close (a performance task, a fix) reopens for a delta audit of the changed files only. Drill packs and bank files are eligible on the same rules once their source courses are closed. If nothing is eligible, write one line to `docs/reports/concept-audit-next.md`, push, and stop. Order: interview courses and Stage 3, then Stage 2, Stage 1, Stage 0. Exams come after their courses close.
 
 Per course, as `concept-audit.md` says:
 1. One auditor (Agent tool, `model: "fable"`, own worktree) per course, up to three levels, blind to earlier reviews until its ledger is written. Output: `docs/reviews/audit-<course>-<levels>.md`, a ledger and a concepts script.
@@ -12,7 +14,7 @@ Per course, as `concept-audit.md` says:
 3. Gates per course: validator 0 errors; number and concepts scripts exit 0; `voice-scan.py 35` 0 and 0; playthrough of changed files with and without `--mobile`, with `--local-cdn`.
 4. Record the round in `docs/reports/concept-audit-log.md`. Re-audit with a fresh Fable reader until the convergence rule closes the course.
 
-Waves of three or four agents. Start a wave only with more than half the usage window left. Never merge during a playthrough. Do not edit PLAN.md, PROGRESS.md, NEXT_PROMPT.md, DECISIONS.md or course.json. Put state in `docs/reports/concept-audit-log.md`, and put new decisions or issues in `docs/reports/concept-audit-notes.md`. Engine limits go to `docs/BACKLOG-INBOX.md` under `Raised later (audit <course>):`.
+Waves of at most two agents, so the content sessions keep most of the usage window. Start a wave only with more than half the window left, and stop starting work once under half remains. Never merge during a playthrough. Do not edit PLAN.md, PROGRESS.md, NEXT_PROMPT.md, DECISIONS.md or course.json. Put state in `docs/reports/concept-audit-log.md`, and put new decisions or issues in `docs/reports/concept-audit-notes.md`. Engine limits go to `docs/BACKLOG-INBOX.md` under `Raised later (audit <course>):`.
 
 Report the miss rate after the first three courses: audit-only conceptual findings per three levels, against the earlier read.
 
