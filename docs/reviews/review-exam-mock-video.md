@@ -75,3 +75,35 @@ Format: `n. paper [path] | severity | problem | evidence | fix`. Severities: wro
 - A per-paper track flag, so a track's technical paper counts only for that track (finding 1).
 - The longform marking step after a paper submits, outside its clock (finding 8). This is part of the known bug's fix.
 - Minor: the marking panel says "Tick each point your working shows" on an aloud item; "your answer shows" would fit a spoken answer.
+
+## Fix pass
+
+I recomputed every number before writing it. Fractions, Decimal and brute force over all 2^12 flips agree: clocks 150, 150, 150, 120, 120 s (690 s); medians 23 and 15 inside the 25-minute limit; $(10+4)/6 = 14/6 \approx 2.33$, the loss at 2.50 is $1/6 \approx 17$p, $600/6 = 100$; $99 \times 0.25 = 24.75$. Models now run 195, 185, 194, 115 and 113 words (90, 85, 90, 53, 52 s at 130 words a minute). Common ground for the technical prompts: `closure.mjs --target mock-video` gives only `recruiting`; the seven paths' own references add random-vars level 2 on every path (`puzzles/level-1` and `mm-games` require it for JP Morgan, Goldman Sachs and IMC). Both technical prompts therefore use expected value and indicators only.
+
+Status: fixed 12, disputed 0, deferred 2 (finding 8, and the bank draw in finding 13; the engine track field in finding 1 stays in the inbox).
+
+1. Coverage: fixed in content. Prompts 4 and 5 now draw on random variables expectation only (a die game, head-then-head pairs), reached by every path.
+2. Description "Both state every fact they need": fixed. Replaced by "Prompts 4 and 5 are our own short technical prompts ... They need only expected value, from the random variables course." The report's matching claim is corrected.
+3. Prompt 1 median above the limit: fixed, 23 minutes to 15; the check script asserts both medians are at most the limit.
+4. Technical model label: fixed. Prompts 4 and 5 read "Match its order and its numbers."; the check script keys the label on the kind of prompt.
+5. Behavioural models too short: fixed, 195, 185 and 194 words (90, 85, 90 s); both scripts assert 85 to 105 s for 120 s prompts, and every model within the answer time at 150 words a minute.
+6. Paper names: fixed. "Prompt 2: behavioural", "Prompt 3: behavioural", "Prompt 4: technical", "Prompt 5: technical"; both scripts assert the name shows only the kind.
+7. Start-the-clock cue: fixed. "When the paper clock shows 2:00 (1:30), press Start the clock and speak." Both scripts check the string.
+8. Zero-slack clocks and the marking step: deferred (engine). The inbox bullet for marking in exam papers stands; the description line about marking after the paper waits for that change.
+9. `models` and the 90 s claim: fixed. `models` states the reported format and "some platforms add technical ones"; the description calls prompts 4 and 5 our own.
+10. Pass line is ours: fixed, "This pass line is ours; firms do not publish one."
+11. Prompt 4 rubric versus prompt: fixed by replacing the prompt. Every content row now has a key noun in its prompt, asserted by both scripts (the review's script gap).
+12. Prompt 5 repeats "A million prices": fixed by replacing the topic; no binary search content remains. The report's freshness line is corrected.
+13. Bank `video-answer` overlap: docs fixed (report and brief name the family); drawing from the bank is deferred to the inbox as the review proposes.
+14. Prompt 2 fund story: fixed, "two small-cap shares", "added two daily returns"; the table still shows 0% for +10% then -10% added.
+
+New script checks: story numbers agree (prompt 1 medians and weekly total, prompt 3 hours), key noun per rubric row, model length at 150 words a minute and the 85 to 105 s budget, label per kind, paper names, clock cue, description and `models` claims.
+
+Gates:
+
+- Validator: 0 errors, 3978 warnings, none names `mock-video`.
+- Voice scan on a copy: 0 sentences over 20 words, 0 explanations over three sentences; no exclamation mark, no em-dash.
+- `mock_video_build.py` asserts pass; `mock_video_check.py` 211 of 211, exit 0.
+- `fresh-check.mjs --exam mock-video --min-run 10`: 0 hits.
+- Playthrough `--exam mock-video`: 5 of 5, passed, mock checks ok; with `--mobile`: same.
+- `readiness-sums.mjs`: OK.
