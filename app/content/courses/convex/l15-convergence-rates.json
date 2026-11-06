@@ -1,0 +1,1406 @@
+{
+  "id": "l15-convergence-rates",
+  "course": "convex",
+  "title": "How fast descent converges",
+  "minutes": 14,
+  "objectives": [
+    "Link descent’s convergence rate to the condition number of the Hessian."
+  ],
+  "skills": [
+    "cv-descent"
+  ],
+  "screens": [
+    {
+      "type": "explore",
+      "difficulty": 1,
+      "title": "Two bowls, one start",
+      "prose": "Two bowls start the same distance from their minimum. One has $\\kappa = \\lambda_{\\max}/\\lambda_{\\min} = 2$, the other $\\kappa = 100$. Each uses its best fixed step from lesson 14. The plot shows each error, relative to the start, on a log scale.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            760
+          ],
+          "y": [
+            1e-08,
+            2
+          ],
+          "yScale": "log",
+          "grid": true,
+          "height": 280,
+          "xLabel": "step $k$",
+          "yLabel": "error",
+          "functions": [
+            {
+              "id": "e2",
+              "expr": "(1/3)^x",
+              "label": "$\\kappa = 2$",
+              "colour": 2,
+              "labelAt": 6
+            },
+            {
+              "id": "e100",
+              "expr": "(99/101)^x",
+              "label": "$\\kappa = 100$",
+              "colour": 1,
+              "labelAt": 330
+            }
+          ],
+          "hlines": [
+            {
+              "id": "tol",
+              "y": 1e-06,
+              "label": "$10^{-6}$"
+            }
+          ],
+          "params": {
+            "k": 0
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v",
+              "x": 0,
+              "label": "$k$"
+            }
+          ]
+        },
+        "derive": {
+          "v.x": "k",
+          "caption": "Step {{k}}: error × 10⁶ is {{fixed(pow(1/3, k) * 1e6, 3)}} for κ = 2 and {{fixed(pow(99/101, k) * 1e6, 3)}} for κ = 100"
+        },
+        "maxHeight": 300,
+        "controls": [
+          {
+            "bind": "k",
+            "min": 0,
+            "max": 760,
+            "step": 1,
+            "start": 0,
+            "label": "Step $k$",
+            "decimals": 0
+          }
+        ]
+      },
+      "question": "Slide $k$. At which step does the $\\kappa = 100$ error first fall below $10^{-6}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 691,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "691",
+        "wrong": [
+          {
+            "id": "fast",
+            "value": 13,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "early",
+            "value": 690,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "onelmax",
+            "value": 1375,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Read the caption: you want the $\\kappa = 100$ figure below 1.000."
+        },
+        {
+          "rung": "point",
+          "text": "The blue line crosses $10^{-6}$ near the right of the plot.",
+          "highlight": [
+            "tol",
+            "e100"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "At step 690 the figure is just above 1; at 691 it is below."
+        }
+      ],
+      "feedback": {
+        "correct": "691 steps, against 13 for $\\kappa = 2$. Fifty times the condition number costs about fifty times the steps.",
+        "generic": "Not quite right. Slide until the $\\kappa = 100$ figure in the caption drops below 1.000.",
+        "byKey": {
+          "fast": "13 is the $\\kappa = 2$ bowl. The question asks about $\\kappa = 100$.",
+          "early": "At step 690 the error is still about $1.015 \\times 10^{-6}$. One more step takes it under.",
+          "onelmax": "That is the count for the step $1/\\lambda_{\\max}$. Here each bowl uses its best step."
+        }
+      },
+      "explain": {
+        "text": "The $\\kappa = 2$ error is below $10^{-6}$ after 13 steps; the $\\kappa = 100$ error needs 691. Both lines are straight on a log scale. Only their slopes differ.",
+        "canvas": {
+          "params": {
+            "k": 691
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 2,
+      "title": "The ratio per step",
+      "prose": "A straight line on a log scale means each step multiplies the error by the same ratio $\\rho$. The $\\kappa = 100$ bowl has eigenvalues 1 and 100, and its best step is $s = \\tfrac{2}{101}$.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            760
+          ],
+          "y": [
+            1e-08,
+            2
+          ],
+          "yScale": "log",
+          "grid": true,
+          "height": 280,
+          "xLabel": "step $k$",
+          "yLabel": "error",
+          "functions": [
+            {
+              "id": "e2",
+              "expr": "(1/3)^x",
+              "label": "$\\kappa = 2$",
+              "colour": 2,
+              "labelAt": 6
+            },
+            {
+              "id": "e100",
+              "expr": "(99/101)^x",
+              "label": "$\\kappa = 100$",
+              "colour": 1,
+              "labelAt": 330
+            }
+          ],
+          "hlines": [
+            {
+              "id": "tol",
+              "y": 1e-06,
+              "label": "$10^{-6}$"
+            }
+          ],
+          "params": {
+            "k": 100
+          }
+        },
+        "state": {
+          "vlines": [
+            {
+              "id": "v",
+              "x": 100,
+              "label": "$k$"
+            }
+          ]
+        },
+        "derive": {
+          "v.x": "k",
+          "caption": "Step {{k}}: error × 10⁶ is {{fixed(pow(1/3, k) * 1e6, 3)}} for κ = 2 and {{fixed(pow(99/101, k) * 1e6, 3)}} for κ = 100"
+        },
+        "maxHeight": 300
+      },
+      "question": "What is $\\rho = |1 - s\\lambda_{\\min}|$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.9802,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "99/101, about 0.9802",
+        "wrong": [
+          {
+            "id": "onelmax",
+            "value": 0.99,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "comp",
+            "value": 0.0198,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$1 - \\tfrac{2}{101} \\times 1$."
+        },
+        {
+          "rung": "point",
+          "text": "That is $\\tfrac{99}{101}$.",
+          "highlight": [
+            "e100"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "The steep factor $1 - \\tfrac{200}{101} = -\\tfrac{99}{101}$ has the same size."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\rho = \\tfrac{99}{101} \\approx 0.9802$. The steep factor is $-\\tfrac{99}{101}$: the same size.",
+        "generic": "Not quite right. Compute $1 - \\tfrac{2}{101}$.",
+        "byKey": {
+          "onelmax": "0.99 is $1 - 1/\\kappa$, the ratio for $s = 1/\\lambda_{\\max}$. The best step does a little better.",
+          "comp": "That is $1 - \\rho$, the share removed each step. The ratio is what is left."
+        }
+      },
+      "explain": {
+        "text": "$\\rho = 1 - \\tfrac{2}{101} = \\tfrac{99}{101} \\approx 0.9802$. The error after $k$ steps is $\\rho^k$. Solving $\\rho^k \\le 10^{-6}$ gives 691.",
+        "canvas": {
+          "highlight": [
+            "e100"
+          ]
+        }
+      }
+    },
+    {
+      "type": "generalise",
+      "difficulty": 2,
+      "title": "Rate and count",
+      "prose": "Take a quadratic with positive definite Hessian and the best fixed step. Every step multiplies the error by the same ratio. $$\\rho = \\frac{\\kappa - 1}{\\kappa + 1}$$ To cut it by $10^6$ takes $\\left\\lceil \\ln(10^6) \\big/ \\ln\\tfrac{\\kappa + 1}{\\kappa - 1} \\right\\rceil$ steps, about $\\tfrac{\\kappa}{2}\\ln 10^6 \\approx 6.9\\kappa$ for large $\\kappa$. So the count grows in proportion to $\\kappa$.",
+      "question": "About how many steps does a bowl with $\\kappa = 1000$ need?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 6908,
+        "tol": {
+          "rel": 0.01
+        },
+        "accept": "about 6,908",
+        "wrong": [
+          {
+            "id": "onelmax",
+            "value": 13809,
+            "tol": {
+              "abs": 50
+            }
+          },
+          {
+            "id": "log10",
+            "value": 3000,
+            "tol": {
+              "abs": 50
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "About $500 \\times 13.8155 \\approx 6{,}908$ steps.",
+        "generic": "Not quite right. Use $\\tfrac{\\kappa}{2}\\ln 10^6$.",
+        "byKey": {
+          "onelmax": "That is the count for $s = 1/\\lambda_{\\max}$, about $\\kappa\\ln 10^6$. The best step halves it.",
+          "log10": "You used $\\log_{10} 10^6 = 6$. The formula needs the natural log, 13.8155."
+        }
+      },
+      "explain": {
+        "text": "$\\tfrac{1000}{2} \\times \\ln 10^6 = 500 \\times 13.8155 \\approx 6{,}908$. The exact count from the formula is also 6,908."
+      }
+    },
+    {
+      "type": "derive",
+      "difficulty": 3,
+      "title": "Where the rate comes from",
+      "prose": "We derive $\\rho$ for a quadratic whose Hessian has eigenvalues $0 < \\lambda_{\\min} \\le \\lambda_{\\max}$.",
+      "question": "Put the derivation in order. Leave out the lines that do not belong.",
+      "widget": {
+        "kind": "order",
+        "lines": [
+          {
+            "id": "r1",
+            "text": "One step multiplies the two errors by $1 - s\\lambda_{\\min}$ and $1 - s\\lambda_{\\max}$."
+          },
+          {
+            "id": "r2",
+            "text": "The slower part sets the pace: $\\rho(s) = \\max(|1 - s\\lambda_{\\min}|, |1 - s\\lambda_{\\max}|)$."
+          },
+          {
+            "id": "r3",
+            "text": "Raising $s$ shrinks the first factor and, past a point, grows the second. So the best $s$ makes them equal in size."
+          },
+          {
+            "id": "r4",
+            "text": "So $1 - s\\lambda_{\\min} = s\\lambda_{\\max} - 1$, which gives $s = \\dfrac{2}{\\lambda_{\\min} + \\lambda_{\\max}}$."
+          },
+          {
+            "id": "r5",
+            "text": "Substitute: $\\rho = 1 - \\dfrac{2\\lambda_{\\min}}{\\lambda_{\\min} + \\lambda_{\\max}} = \\dfrac{\\lambda_{\\max} - \\lambda_{\\min}}{\\lambda_{\\max} + \\lambda_{\\min}}$."
+          },
+          {
+            "id": "r6",
+            "text": "Divide top and bottom by $\\lambda_{\\min}$: $\\rho = \\dfrac{\\kappa - 1}{\\kappa + 1}$."
+          },
+          {
+            "id": "d1",
+            "text": "The faster part sets the pace: $\\rho(s) = \\min(|1 - s\\lambda_{\\min}|, |1 - s\\lambda_{\\max}|)$.",
+            "why": "The error is small only when both parts are small. The slower part decides."
+          },
+          {
+            "id": "d2",
+            "text": "Set $1 - s\\lambda_{\\min} = 1 - s\\lambda_{\\max}$.",
+            "why": "That forces $s = 0$. The factors must be equal in size with opposite signs."
+          }
+        ],
+        "answer": [
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r5",
+          "r6"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The worse factor decides the rate."
+        },
+        {
+          "rung": "point",
+          "text": "Balance the two sizes: one factor positive, one negative."
+        },
+        {
+          "rung": "step",
+          "text": "Then write $\\rho$ in terms of $\\kappa$."
+        }
+      ],
+      "feedback": {
+        "correct": "That is the rate: balance the two factors, then divide by $\\lambda_{\\min}$.",
+        "generic": "Not quite right. The slower part sets the rate, and the best step balances the two sizes.",
+        "byKey": {
+          "d1": "You let the faster part set the pace. The slower part decides when the error is small.",
+          "d2": "You set the factors equal with the same sign. That only holds at $s = 0$."
+        }
+      },
+      "explain": {
+        "text": "The best step balances $1 - s\\lambda_{\\min}$ against $s\\lambda_{\\max} - 1$. That gives $s = 2/(\\lambda_{\\min} + \\lambda_{\\max})$ and $\\rho = (\\kappa - 1)/(\\kappa + 1)$. On the $\\kappa = 10$ bowl of lesson 14, $\\rho = \\tfrac{9}{11}$."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 2,
+      "title": "A table of counts",
+      "prose": "With $s = 1/\\lambda_{\\max}$ the steep part goes at once, but the slow part shrinks by only $1 - 1/\\kappa$ a step. The table counts steps to cut the error by $10^6$, from a start along the slow direction.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            140
+          ],
+          "y": [
+            1e-07,
+            2
+          ],
+          "yScale": "log",
+          "grid": true,
+          "height": 240,
+          "xLabel": "step $k$",
+          "yLabel": "error",
+          "functions": [
+            {
+              "id": "best",
+              "expr": "(9/11)^x",
+              "label": "best step",
+              "colour": 1,
+              "labelAt": 30
+            },
+            {
+              "id": "one",
+              "expr": "0.9^x",
+              "label": "$1/\\lambda_{\\max}$",
+              "colour": 2,
+              "labelAt": 100
+            }
+          ],
+          "hlines": [
+            {
+              "id": "tol",
+              "y": 1e-06,
+              "label": "$10^{-6}$"
+            }
+          ]
+        },
+        "state": {
+          "caption": "$\\kappa = 10$: the two ways of choosing the step"
+        },
+        "maxHeight": 260
+      },
+      "question": "Fill in the $\\kappa = 10$ row.",
+      "widget": {
+        "kind": "table",
+        "columns": [
+          "$\\kappa$",
+          "best step",
+          "$s = 1/\\lambda_{\\max}$"
+        ],
+        "rows": [
+          [
+            "2",
+            "13",
+            "20"
+          ],
+          [
+            "4",
+            "28",
+            "49"
+          ],
+          [
+            "10",
+            {
+              "edit": true,
+              "answer": 69,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "floor1",
+                  "value": 68,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            },
+            {
+              "edit": true,
+              "answer": 132,
+              "tol": {
+                "abs": 0
+              },
+              "wrong": [
+                {
+                  "id": "floor2",
+                  "value": 131,
+                  "tol": {
+                    "abs": 0
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            "39",
+            "270",
+            "532"
+          ],
+          [
+            "100",
+            "691",
+            "1,375"
+          ]
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Best step: $\\rho = \\tfrac{9}{11}$; with $1/\\lambda_{\\max}$: $1 - \\tfrac{1}{10} = 0.9$."
+        },
+        {
+          "rung": "point",
+          "text": "Divide $\\ln 10^6 = 13.8155$ by $\\ln\\tfrac{11}{9} = 0.2007$ and by $\\ln\\tfrac{10}{9} = 0.1054$.",
+          "highlight": [
+            "best",
+            "one"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "68.85 and 131.13; round each up."
+        }
+      ],
+      "feedback": {
+        "correct": "69 and 132. The step $1/\\lambda_{\\max}$ needs about twice as many, for every $\\kappa$.",
+        "generic": "Not quite right. Divide 13.8155 by $\\ln(1/\\rho)$ and round up.",
+        "byKey": {
+          "floor1": "You rounded 68.85 down. After 68 steps the error is still above $10^{-6}$.",
+          "floor2": "You rounded 131.13 down. After 131 steps the error is still above $10^{-6}$."
+        }
+      },
+      "explain": {
+        "text": "$13.8155/0.2007 = 68.85$, so 69; $13.8155/0.1054 = 131.13$, so 132. The column for $1/\\lambda_{\\max}$ is close to twice the best-step column."
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Linear convergence",
+      "prose": "The $\\kappa = 10$ bowl with its best step has error $\\rho^k$ with $\\rho = \\tfrac{9}{11}$. On a log scale that is a straight line, and its slope is $\\ln\\rho$ per step. A straight line here is called **linear convergence**: a fixed number of digits gained per step.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            0,
+            40
+          ],
+          "y": [
+            0.0001,
+            2
+          ],
+          "yScale": "log",
+          "grid": true,
+          "height": 260,
+          "xLabel": "step $k$",
+          "yLabel": "error",
+          "functions": [
+            {
+              "id": "e10",
+              "expr": "(9/11)^x",
+              "label": "$(\\tfrac{9}{11})^k$",
+              "colour": 1,
+              "labelAt": 20
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "q0",
+              "x": 0,
+              "y": 1.0,
+              "tap": false
+            },
+            {
+              "id": "q4",
+              "x": 4,
+              "y": 0.44812512806502297,
+              "tap": false
+            },
+            {
+              "id": "q8",
+              "x": 8,
+              "y": 0.20081613040329327,
+              "tap": false
+            },
+            {
+              "id": "q12",
+              "x": 12,
+              "y": 0.08999075415449814,
+              "tap": false
+            },
+            {
+              "id": "q16",
+              "x": 16,
+              "y": 0.04032711823015248,
+              "tap": false
+            },
+            {
+              "id": "q20",
+              "x": 20,
+              "y": 0.018071595021380404,
+              "tap": false
+            },
+            {
+              "id": "q24",
+              "x": 24,
+              "y": 0.008098335833295325,
+              "tap": false
+            },
+            {
+              "id": "q28",
+              "x": 28,
+              "y": 0.0036290677824090327,
+              "tap": false
+            },
+            {
+              "id": "q32",
+              "x": 32,
+              "y": 0.0016262764647486966,
+              "tap": false
+            },
+            {
+              "id": "q36",
+              "x": 36,
+              "y": 0.0007287753490346425,
+              "tap": false
+            },
+            {
+              "id": "q40",
+              "x": 40,
+              "y": 0.00032658254661678104,
+              "tap": false
+            }
+          ]
+        },
+        "maxHeight": 280
+      },
+      "question": "What is the slope $\\ln\\rho$ of the line?",
+      "widget": {
+        "kind": "numeric",
+        "answer": -0.2007,
+        "tol": {
+          "abs": 0.0005
+        },
+        "accept": "ln(9/11), about -0.2007",
+        "wrong": [
+          {
+            "id": "rate",
+            "value": 0.8182,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "log10",
+            "value": -0.0872,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$\\ln\\tfrac{9}{11} = \\ln 9 - \\ln 11$."
+        },
+        {
+          "rung": "point",
+          "text": "$2.1972 - 2.3979$.",
+          "highlight": [
+            "e10"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "About $-0.2007$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\ln\\tfrac{9}{11} \\approx -0.2007$: each step gains $0.2007/\\ln 10 \\approx 0.087$ of a decimal digit.",
+        "generic": "Not quite right. Take the natural log of $\\tfrac{9}{11}$.",
+        "byKey": {
+          "rate": "That is $\\rho$ itself. The slope of $\\ln(\\text{error})$ is $\\ln\\rho$.",
+          "log10": "That is $\\log_{10}\\rho$. The slope of $\\ln(\\text{error})$ uses the natural log."
+        }
+      },
+      "explain": {
+        "text": "$\\ln(\\rho^k) = k\\ln\\rho$, a line with slope $\\ln\\tfrac{9}{11} \\approx -0.2007$. Fitting that slope to real errors is how we read a rate off a run.",
+        "canvas": {
+          "highlight": [
+            "e10"
+          ]
+        }
+      }
+    },
+    {
+      "type": "trap",
+      "difficulty": 3,
+      "title": "Reading the diagonal",
+      "prose": "Two assets have equal 20% volatility and correlation 0.95. Ines sees the diagonal of $\\boldsymbol{\\Sigma}$, 0.04 and 0.04, ratio 1, and expects descent to fly. The contours of $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w}$ are drawn.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.6,
+            1.6
+          ],
+          "y": [
+            -1.6,
+            1.6
+          ],
+          "equal": true,
+          "grid": false,
+          "xLabel": "$w_1$",
+          "yLabel": "$w_2$",
+          "functions": [
+            {
+              "id": "lv",
+              "contour": "0.04*(x^2 + 1.9*x*y + y^2)",
+              "levels": [
+                0.0005,
+                0.002,
+                0.005,
+                0.01
+              ],
+              "colour": "muted",
+              "labelAvoid": false,
+              "levelLabels": false
+            }
+          ]
+        },
+        "state": {
+          "vectors": [
+            {
+              "id": "fast",
+              "from": [
+                0,
+                0
+              ],
+              "v": [
+                0.9,
+                0.9
+              ],
+              "label": "fast",
+              "colour": 2
+            },
+            {
+              "id": "slow",
+              "from": [
+                0,
+                0
+              ],
+              "v": [
+                0.9,
+                -0.9
+              ],
+              "label": "slow",
+              "colour": 1
+            }
+          ]
+        },
+        "maxHeight": 300
+      },
+      "question": "What is $\\kappa$ for this $\\boldsymbol{\\Sigma}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 39,
+        "tol": {
+          "abs": 0.01
+        },
+        "accept": "39",
+        "wrong": [
+          {
+            "id": "diagonal",
+            "value": 1,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "big",
+            "value": 1.95,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The eigenvalues of $0.04\\begin{pmatrix}1 & 0.95\\\\ 0.95 & 1\\end{pmatrix}$ are $0.04(1 \\pm 0.95)$."
+        },
+        {
+          "rung": "point",
+          "text": "Along $(1, 1)$ the curvature is high; along $(1, -1)$ it is low.",
+          "highlight": [
+            "slow",
+            "fast"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$0.078/0.002$."
+        }
+      ],
+      "feedback": {
+        "correct": "$\\kappa = 0.078/0.002 = 39$. The valley runs along $(1, -1)$, the long-short mix.",
+        "generic": "Not quite right. Find the eigenvalues, not the diagonal.",
+        "byKey": {
+          "diagonal": "You read $\\kappa$ from the diagonal. The correlation tilts the bowl, so use the eigenvalues.",
+          "big": "1.95 is $1 + 0.95$, one factor of $\\lambda_{\\max}$. Divide $0.078$ by $0.002$."
+        }
+      },
+      "explain": {
+        "text": "The eigenvalues are $0.04 \\times 1.95 = 0.078$ along $(1, 1)$ and $0.04 \\times 0.05 = 0.002$ along $(1, -1)$. So $\\kappa = 39$ although the diagonal is flat. The slow direction is the long-short spread, as in `eigen` l6.",
+        "canvas": {
+          "highlight": [
+            "slow"
+          ]
+        }
+      }
+    },
+    {
+      "type": "ladder",
+      "difficulty": 3,
+      "title": "Scale alone, then rescale",
+      "prose": "Now two uncorrelated assets with 20% and 40% volatility: $\\boldsymbol{\\Sigma} = \\operatorname{diag}(0.04, 0.16)$, so $\\kappa = 4$ from scale alone. Measure each weight in risk units, $u_i = \\sigma_i w_i$. Then $\\mathbf{w}^T\\boldsymbol{\\Sigma}\\mathbf{w} = u_1^2 + u_2^2$, a round bowl.",
+      "canvas": {
+        "kind": "plane",
+        "params": {
+          "x": [
+            -1.6,
+            1.6
+          ],
+          "y": [
+            -1.6,
+            1.6
+          ],
+          "equal": true,
+          "grid": false,
+          "xLabel": "$u_1$",
+          "yLabel": "$u_2$",
+          "functions": [
+            {
+              "id": "lv",
+              "contour": "x^2 + y^2",
+              "levels": [
+                0.25,
+                1,
+                2.25
+              ],
+              "colour": "muted",
+              "labelAvoid": false,
+              "levelLabels": false
+            }
+          ]
+        },
+        "state": {
+          "points": [
+            {
+              "id": "A",
+              "x": 1,
+              "y": 0.8,
+              "label": "start",
+              "labelPos": "ne",
+              "tap": false
+            },
+            {
+              "id": "O",
+              "x": 0,
+              "y": 0,
+              "label": "min",
+              "labelPos": "sw",
+              "tap": false
+            }
+          ],
+          "segments": [
+            {
+              "id": "one",
+              "from": "A",
+              "to": "O",
+              "colour": "manip",
+              "arrow": true
+            }
+          ]
+        },
+        "maxHeight": 280
+      },
+      "question": "In the $u$ variables, how many steps of $s = 1/\\lambda_{\\max}$ reach the minimum exactly?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 1,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "1",
+        "wrong": [
+          {
+            "id": "best",
+            "value": 28,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "none",
+            "value": 0,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The Hessian of $u_1^2 + u_2^2$ is $2\\mathbf{I}$."
+        },
+        {
+          "rung": "point",
+          "text": "Both factors are $1 - s \\times 2$.",
+          "highlight": [
+            "one"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "With $s = \\tfrac12$ both factors are 0."
+        }
+      ],
+      "feedback": {
+        "correct": "One step. With $\\kappa = 1$ every factor is $1 - s\\lambda = 0$, so descent lands at once.",
+        "generic": "Not quite right. Work out $1 - s\\lambda$ with $\\lambda = 2$ and $s = \\tfrac12$.",
+        "byKey": {
+          "best": "28 steps is the best-step count for $\\kappa = 4$. The rescaling has removed the 4.",
+          "none": "The start is not the minimum, so at least one step is needed."
+        }
+      },
+      "explain": {
+        "text": "In risk units the Hessian is $2\\mathbf{I}$, so $\\kappa = 1$ and $s = \\tfrac12$ makes every factor 0. Rescaling by the volatilities is a diagonal **preconditioner**. It fixes scale, but not correlation.",
+        "canvas": {
+          "highlight": [
+            "one"
+          ]
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "When there is no kappa",
+      "prose": "The curvature of $x^4$ falls to 0 at its minimum. Then there is no $\\kappa$ and no fixed ratio. Take a convex $f$ with curvature at most $L$, and $s = 1/L$. The guarantee is $$f(\\mathbf{x}_k) - f^* \\le \\frac{L\\lVert\\mathbf{x}_0 - \\mathbf{x}^*\\rVert^2}{2k}.$$ The table runs $x^4$ from 1 with $s = \\tfrac{1}{12}$.",
+      "canvas": {
+        "kind": "table",
+        "params": {
+          "columns": [
+            "step $k$",
+            "$f(x_k) = x_k^4$"
+          ],
+          "rows": [
+            [
+              "10",
+              "0.01234"
+            ],
+            [
+              "100",
+              "0.000204"
+            ],
+            [
+              "1,000",
+              "$2.2 \\times 10^{-6}$"
+            ]
+          ]
+        },
+        "state": {}
+      },
+      "question": "With $L = 1$ and $\\lVert\\mathbf{x}_0 - \\mathbf{x}^*\\rVert = 1$, how many steps does the guarantee need to reach $10^{-6}$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 500000,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "500,000",
+        "wrong": [
+          {
+            "id": "half",
+            "value": 1000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "linear",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "Solve $\\dfrac{1}{2k} \\le 10^{-6}$."
+        },
+        {
+          "rung": "point",
+          "text": "$k \\ge \\dfrac{1}{2 \\times 10^{-6}}$.",
+          "highlight": [
+            "r2"
+          ]
+        },
+        {
+          "rung": "step",
+          "text": "$k \\ge 500{,}000$."
+        }
+      ],
+      "feedback": {
+        "correct": "$k \\ge 1/(2 \\times 10^{-6}) = 500{,}000$. A strongly convex bowl with small $\\kappa$ needs tens of steps.",
+        "generic": "Not quite right. Set $1/(2k)$ equal to $10^{-6}$.",
+        "byKey": {
+          "half": "You dropped the 2 in the denominator: $1/(2k)$, not $1/k$.",
+          "linear": "14 is about $\\ln 10^6$, the scale of a linear rate. Here the bound falls only like $1/k$."
+        }
+      },
+      "explain": {
+        "text": "$1/(2k) \\le 10^{-6}$ needs $k \\ge 500{,}000$. In the table each tenfold rise in steps cuts $f$ by less than a hundredfold. That is sublinear convergence: no fixed number of digits per step.",
+        "canvas": {
+          "highlight": {
+            "rows": [
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "problem",
+      "difficulty": 3,
+      "title": "Counts and rates in code",
+      "prose": "Write `steps_needed(kappa, eps, best=True)`: the fewest steps with $\\rho^k \\le \\varepsilon$, using the best-step $\\rho$ or, with `best=False`, $1 - 1/\\kappa$. Then write `observed_rate(errors)`, which fits $\\ln(\\text{error})$ against $k$ with `np.polyfit` and returns $e^{\\text{slope}}$.",
+      "question": "Complete both functions.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\n_lam = np.array([1.0, 10.0])\n_x = np.array([1.0, 1.0])\nRUN10 = []\nfor _ in range(20):\n    RUN10.append(float(np.linalg.norm(_x)))\n    _x = _x - (2 / 11) * _lam * _x\n",
+        "starter": "import math\nimport numpy as np\n\n\ndef steps_needed(kappa, eps, best=True):\n    # fewest steps k with rho ** k <= eps\n    # rho = (kappa - 1) / (kappa + 1) if best, else 1 - 1 / kappa\n    pass\n\n\ndef observed_rate(errors):\n    # fit log(error) against k with np.polyfit; return exp(slope)\n    pass\n",
+        "examples": [
+          {
+            "call": "steps_needed(2, 1e-6)",
+            "expect": "13",
+            "compare": "equal"
+          },
+          {
+            "call": "observed_rate(RUN10)",
+            "expect": "9 / 11",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "steps_needed(2, 1e-6)",
+            "expect": "13",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(4, 1e-6)",
+            "expect": "28",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(10, 1e-6)",
+            "expect": "69",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(39, 1e-6)",
+            "expect": "270",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(100, 1e-6)",
+            "expect": "691",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(2, 1e-6, best=False)",
+            "expect": "20",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(4, 1e-6, best=False)",
+            "expect": "49",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(10, 1e-6, best=False)",
+            "expect": "132",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(39, 1e-6, best=False)",
+            "expect": "532",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(100, 1e-6, best=False)",
+            "expect": "1375",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(1, 1e-6)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "steps_needed(1, 1e-6, best=False)",
+            "expect": "1",
+            "compare": "equal"
+          },
+          {
+            "call": "observed_rate(RUN10)",
+            "expect": "9 / 11",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-06
+            }
+          },
+          {
+            "call": "observed_rate([1, 0.5, 0.25, 0.125])",
+            "expect": "0.5",
+            "compare": "isclose",
+            "tol": {
+              "abs": 1e-09
+            }
+          }
+        ],
+        "solution": "import math\nimport numpy as np\n\n\ndef steps_needed(kappa, eps, best=True):\n    rho = (kappa - 1) / (kappa + 1) if best else 1 - 1 / kappa\n    if rho <= 0:\n        return 1\n    return math.ceil(math.log(1 / eps) / math.log(1 / rho))\n\n\ndef observed_rate(errors):\n    k = np.arange(len(errors))\n    slope = np.polyfit(k, np.log(errors), 1)[0]\n    return float(np.exp(slope))\n",
+        "how": "Submit runs 14 hidden tests: the ten counts of the table, kappa = 1 both ways, and two fitted rates. RUN10, defined for you, is a run of the kappa = 10 bowl. Counts must match exactly; rates are compared with math.isclose, absolute 1e-6. The first run loads NumPy: a few seconds from cache, longer on a first visit."
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "$k = \\lceil \\ln(1/\\varepsilon)/\\ln(1/\\rho) \\rceil$."
+        },
+        {
+          "rung": "point",
+          "text": "When $\\kappa = 1$, $\\rho = 0$: one step is enough, so return 1."
+        },
+        {
+          "rung": "step",
+          "text": "`np.polyfit(k, np.log(errors), 1)[0]` is the slope."
+        }
+      ],
+      "feedback": {
+        "correct": "All pass: 13 to 691 with the best step, 20 to 1,375 without it, and the fitted rate $\\tfrac{9}{11}$.",
+        "generic": "Not quite right. Check the $\\kappa = 1$ case and that you round up."
+      }
+    },
+    {
+      "type": "transfer",
+      "difficulty": 3,
+      "title": "Shrinking the covariance",
+      "prose": "A covariance estimated from highly correlated stocks is ill-conditioned, so a first-order optimiser crawls along the long-short direction. Desks shrink the estimate towards its diagonal, as ridge shrinks coefficients in `stat-learning` l7. Shrinking the correlated pair halfway cuts its correlation from 0.95 to 0.475.",
+      "question": "With the best step, how many steps now cut the error by $10^6$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 19,
+        "tol": {
+          "abs": 0
+        },
+        "accept": "19",
+        "wrong": [
+          {
+            "id": "noshrink",
+            "value": 270,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "floor",
+            "value": 18,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "hints": [
+        {
+          "rung": "nudge",
+          "text": "The eigenvalues are $0.04(1 \\pm 0.475)$, so $\\kappa = 1.475/0.525 \\approx 2.81$."
+        },
+        {
+          "rung": "point",
+          "text": "For an equal-volatility pair with positive correlation, $\\rho = \\tfrac{\\kappa - 1}{\\kappa + 1}$ equals the correlation: 0.475."
+        },
+        {
+          "rung": "step",
+          "text": "$13.8155/\\ln(1/0.475) = 18.56$; round up."
+        }
+      ],
+      "feedback": {
+        "correct": "19 steps, against 270 before shrinking. The shrunk $\\kappa$ is about 2.81.",
+        "generic": "Not quite right. Find $\\kappa$ from $0.04(1 \\pm 0.475)$, then $\\rho$, then the count.",
+        "byKey": {
+          "noshrink": "270 is the count for the unshrunk pair, with correlation 0.95.",
+          "floor": "You rounded 18.56 down. After 18 steps the error is still above $10^{-6}$."
+        }
+      },
+      "explain": {
+        "text": "For equal volatilities and a correlation $c > 0$, $\\kappa = (1 + c)/(1 - c)$, so $\\rho = c$. At $c = 0.475$, $\\lceil 13.8155/0.7444 \\rceil = 19$ steps. Desks precondition, shrink the covariance, or use Newton's method, the next lesson."
+      }
+    }
+  ],
+  "summary": {
+    "ideas": [
+      "On a positive definite quadratic with the best fixed step, the error shrinks by $\\rho = (\\kappa - 1)/(\\kappa + 1)$ a step. That is linear convergence: a straight line on a log scale.",
+      "Cutting the error by $10^6$ takes about $\\tfrac{\\kappa}{2}\\ln 10^6$ steps: 13 at $\\kappa = 2$, 691 at 100. The step $s = 1/\\lambda_{\\max}$ takes about twice as many.",
+      "$\\kappa$ comes from the eigenvalues, not the diagonal. Correlated assets give a slow long-short valley; rescaling or shrinkage lowers $\\kappa$."
+    ],
+    "formula": {
+      "name": "Best-step rate",
+      "tex": "\\rho = \\dfrac{\\kappa - 1}{\\kappa + 1},\\qquad k \\approx \\dfrac{\\kappa}{2}\\ln\\dfrac{1}{\\varepsilon}",
+      "note": "Without strong convexity the guarantee falls only like 1/k."
+    },
+    "trap": "Reading the condition number from the diagonal: two equal variances with correlation 0.95 have diagonal ratio 1 but kappa = 39."
+  },
+  "quiz": [
+    {
+      "id": "q15-kappa",
+      "difficulty": 2,
+      "prose": "A Hessian has eigenvalues 0.5 and 20.",
+      "question": "What is its condition number $\\kappa$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 40,
+        "tol": {
+          "abs": 0.01
+        },
+        "wrong": [
+          {
+            "id": "flip",
+            "value": 0.025,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "diff",
+            "value": 19.5,
+            "tol": {
+              "abs": 0.01
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$20/0.5 = 40$.",
+        "generic": "Not quite right. Divide $\\lambda_{\\max}$ by $\\lambda_{\\min}$.",
+        "byKey": {
+          "flip": "You divided $\\lambda_{\\min}$ by $\\lambda_{\\max}$. $\\kappa$ is at least 1.",
+          "diff": "You subtracted. $\\kappa$ is a ratio."
+        }
+      },
+      "explain": {
+        "text": "$\\kappa = \\lambda_{\\max}/\\lambda_{\\min} = 20/0.5 = 40$."
+      }
+    },
+    {
+      "id": "q15-rho",
+      "difficulty": 2,
+      "prose": "A bowl has $\\kappa = 9$ and descent uses the best fixed step.",
+      "question": "By what ratio $\\rho$ does the error shrink each step?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 0.8,
+        "tol": {
+          "abs": 0.0005
+        },
+        "wrong": [
+          {
+            "id": "onelmax",
+            "value": 0.8889,
+            "tol": {
+              "abs": 0.0005
+            }
+          },
+          {
+            "id": "comp",
+            "value": 0.2,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\rho = \\tfrac{9 - 1}{9 + 1} = 0.8$.",
+        "generic": "Not quite right. Use $\\rho = (\\kappa - 1)/(\\kappa + 1)$.",
+        "byKey": {
+          "onelmax": "$\\tfrac89$ is $1 - 1/\\kappa$, the ratio for $s = 1/\\lambda_{\\max}$.",
+          "comp": "That is $1 - \\rho$, the share removed each step."
+        }
+      },
+      "explain": {
+        "text": "$\\rho = \\tfrac{8}{10} = 0.8$. Cutting the error by $10^6$ then takes $\\lceil 13.8155/0.2231 \\rceil = 62$ steps."
+      }
+    },
+    {
+      "id": "q15-backout",
+      "difficulty": 3,
+      "prose": "A best-step descent run shrinks its error by 0.9 a step.",
+      "question": "What is $\\kappa$?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 19,
+        "tol": {
+          "abs": 0.01
+        },
+        "wrong": [
+          {
+            "id": "onelmax",
+            "value": 10,
+            "tol": {
+              "abs": 0.01
+            }
+          },
+          {
+            "id": "inv",
+            "value": 1.1111,
+            "tol": {
+              "abs": 0.0005
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "$\\kappa = (1 + \\rho)/(1 - \\rho) = 1.9/0.1 = 19$.",
+        "generic": "Not quite right. Solve $\\rho = (\\kappa - 1)/(\\kappa + 1)$ for $\\kappa$.",
+        "byKey": {
+          "onelmax": "10 solves $1 - 1/\\kappa = 0.9$, the ratio for $s = 1/\\lambda_{\\max}$. The run used the best step.",
+          "inv": "$1/0.9$ is not $\\kappa$. Solve $0.9 = (\\kappa - 1)/(\\kappa + 1)$."
+        }
+      },
+      "explain": {
+        "text": "From $0.9(\\kappa + 1) = \\kappa - 1$ we get $0.1\\kappa = 1.9$, so $\\kappa = 19$."
+      }
+    },
+    {
+      "id": "q15-shrink",
+      "difficulty": 3,
+      "prose": "A covariance estimate has $\\kappa = 39$ and descent is slow.",
+      "question": "Which change lowers $\\kappa$?",
+      "widget": {
+        "kind": "choice",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "shrink",
+            "text": "Shrink the estimate towards its diagonal",
+            "correct": true
+          },
+          {
+            "id": "double",
+            "text": "Multiply every entry by 2",
+            "why": "That doubles both eigenvalues, so their ratio is unchanged."
+          },
+          {
+            "id": "step",
+            "text": "Use a larger fixed step",
+            "why": "The step does not change $\\boldsymbol{\\Sigma}$, so $\\kappa$ stays 39. Past $2/\\lambda_{\\max}$ the run diverges."
+          }
+        ],
+        "shuffle": true
+      },
+      "feedback": {
+        "correct": "Shrinking pulls the correlation towards 0, which lifts the small eigenvalue and lowers the large one.",
+        "generic": "Not quite right. Ask what moves the eigenvalues apart or together."
+      },
+      "explain": {
+        "text": "Shrinking towards the diagonal cuts the correlation, so the eigenvalues $\\sigma^2(1 \\pm c)$ move together. Scaling every entry leaves their ratio alone."
+      }
+    }
+  ]
+}
