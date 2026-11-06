@@ -50,3 +50,26 @@ Overlap counts for `docs/reports/concept-audit-log.md`: audit only 7, review onl
 - Playthrough (from `app/`, `--local-cdn <pkgs>`): `--set pairs-rep/review-1 --set pairs-rep/homework-1`, `--set pairs-rep/review-2 --set pairs-rep/homework-2`, `--set pairs-rep/review-3 --set pairs-rep/homework-3`: each ends "browser relaunches: 0 / All passed."; `--lesson pairs-rep/l3-closest-pairs`, `--lesson pairs-rep/l7-closing`, `--lesson pairs-rep/l12-cointegration-selection`: each "All passed.". No content was changed.
 - Paper text: `www.nber.org`, `papers.ssrn.com`, `academic.oup.com`, `repec.som.yale.edu` and the other paper hosts are outside this session's allowed network, so GGR could not be fetched; citations are from the auditor's reading of the published version and the two normalisation-base rows stay `unverified`.
 - Inbox: no engine or validator limit was hit, so nothing was added to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+Opus fix pass, 6 November 2026. Paper text: a web search found the paper's wording "choose a matching partner for each stock by finding the security that minimizes the sum of squared deviations" quoted in secondary sources (QuantConnect, Hudson & Thames) and a full-text copy on `stat.wharton.upenn.edu`, but that host, `www.scribd.com` and `ideas.repec.org` do not resolve from this session, so no primary text of GGR was read. Simulations: `scratchpad/fix-pairs-rep/sim5.py` and `sim8.py` (the course's own generator and `trade_pair`, fresh seeds).
+
+1. disputed: unverified | basis: could establish only that secondary sources quote GGR as choosing "a matching partner for each stock"; could not read §2.1 to confirm whether a share may sit in two of the top pairs or whether nominated pairs are then ranked, so the course's "one-partner rule" is not shown wrong; not applied; the L1 concepts check "l3 screens[4]" stays EXPECTED_FAIL.
+2. disputed: unverified | basis: depends wholly on finding 1's reading of §2.1, which could not be checked; review-1 items[4] key left as is.
+3. disputed: unverified | basis: as finding 1; homework-1 items[0] and items[2] and the `one_partner=True` tests left as is.
+4. disputed: unverified | basis: whether GGR re-base at the trading start needs §2.2 and Figure 1, not reachable; l2 quiz[1] itself makes no claim about the paper, so the only claim at stake (l10 screens[3] `norm`, homework-2 items[6]) cannot be settled; left as is.
+5. fixed | basis: own Monte Carlo, 120 fresh panels of 40 random pairs from all 100 shares on mids: mean +0.0064 (se 0.0049), 41% of panels negative; the course's 200 seeds redraw pairs on one panel, so -0.0113 is one draw; for a random-walk spread the payoff to any stopping rule has mean 0 (optional stopping). l5 screens[6].explain reworded; l5 screens[7].explain "though they still lose overall" changed to "though this cycle's draw is still negative" (same root cause). L1 concepts check rewritten as the corrected claim with a second computation (60 fresh panels, mean -0.0010, se 0.0066).
+6. fixed | basis: a fill at the bid or the ask pays half the quoted spread relative to the mid; the lesson's own screens[9] charges "half the bid-ask spread, 0.10%, on each trade". l9 screens[6].options[1].why now "Every buy and every sell pays half the spread and a commission."
+7. fixed | basis: the course's own l3 screens[10] says the industry-restricted run is the paper's robustness check, and secondary sources describe the headline matching over all stocks; our unrestricted matching is therefore not a gap source. l10 screens[3].options[2] text changed; key, hints and explain unchanged.
+8. disputed: own computation, 10 fresh panels of 700 chance pairs each (planted pairs excluded), `coint(trend='c', autolag='aic')` on log normalised formation prices: size 0.079 on closes and 0.069 on mids, so over-rejection alone predicts about 0.079 × 4,950 = 391 chance passes against the 392 seen; the per-panel range (0.047 to 0.111) shows the dependence the auditor names, but the course's stated cause, over-rejection on a short noisy year, accounts for essentially all the gap here. Text left as is; L3 check unchanged.
+
+Counts: fixed 3 (5, 6, 7), disputed 5 (1, 2, 3, 4 unverified; 8 on computation), deferred 0. Graded answers changed: none (only an explain, a `why` and an option's text; no key, `wrong[]`, test or `correct` flag moved).
+
+### Checks
+
+- Validator (from `app/`): "0 errors, 4289 warnings" (no new error; `content/manifest.json` restored).
+- Voice: `VOICE_BASE=app/content/courses/pairs-rep/ python3 docs/reviews/voice-scan.py 35 --summary`: explanations over three sentences 0; over 35 words 0.
+- Concepts: L1 exit 1, only "EXPECTED_FAIL l3 screens[4]/[5]/[6], review-1 items[4], homework-1 items[0]" failing (finding 1, disputed: unverified, left as is); the l5 screens[6] check now passes as the corrected claim. L2 exit 0. L3 exit 0.
+- Numbers: L1 exit 0 (146 of 146), L2 exit 0 (139 of 139), L3 exit 0 (479 of 479). No hard-coded number changed.
+- Playthrough (from `app/`, `--local-cdn <pkgs>`, desktop and `--mobile`): lessons l5-plan, l9-bid-ask-bounce, l10-matching-results; results in the second commit's line below.
