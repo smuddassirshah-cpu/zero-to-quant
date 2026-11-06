@@ -103,13 +103,39 @@ def cover_disjoint(eps):
     return all(ivs[i][1] < ivs[i + 1][0] for i in range(len(ivs) - 1))
 
 
+def cover_union_vs_sum(eps):
+    """Length of the union of the listed cover intervals (merged), against the sum of
+    their lengths and against eps. Subadditivity: union <= sum <= eps, overlaps or not."""
+    e = eps
+    qs = [0.0, 1.0]
+    for d in range(2, int(4 / eps) + 2):
+        for n in range(1, d):
+            if math.gcd(n, d) == 1:
+                qs.append(n / d)
+    ivs = sorted((q - e * 2.0 ** -(j + 2), q + e * 2.0 ** -(j + 2)) for j, q in enumerate(qs))
+    total = math.fsum(b - a for a, b in ivs)
+    union, (lo, hi) = 0.0, ivs[0]
+    for a, b in ivs[1:]:
+        if a <= hi:
+            hi = max(hi, b)
+        else:
+            union += hi - lo
+            lo, hi = a, b
+    union += hi - lo
+    return union, total, e
+
+
+# Corrected claim (fix pass): l1 screens[3].hints[1] now says "countable subadditivity: the cover's
+# chance is at most the sum of its lengths, overlaps or not". The intervals overlap, and the union
+# is at most the sum (the overlaps are too thin for floats to resolve beyond eps = 0.5), which is at most eps.
+l1_hint = load('l1-why-measure')['screens'][3]['hints'][1]['text']
+check('countable subadditivity' in l1_hint and 'countable additivity' not in l1_hint,
+      'l1-cover-overlap: hint names countable subadditivity (corrected claim, fix pass)')
 for eps in (0.5, 0.05, 0.01):
-    # EXPECTED_FAIL: the cover intervals are not disjoint, so "countable additivity on the lengths"
-    # (l1 screens[3].hints[1]) is not the step; countable subadditivity is.
-    # Corrected assert, ready to enable:
-    # check(not cover_disjoint(eps), f'l1-cover-overlap eps={eps}: cover intervals overlap, use subadditivity')
-    check(cover_disjoint(eps),
-          f'EXPECTED_FAIL l1-cover-overlap eps={eps}: hint says additivity, but the cover intervals overlap')
+    u, tot, e = cover_union_vs_sum(eps)
+    check(not cover_disjoint(eps) and u <= tot * (1 + 1e-12) and tot <= e * (1 + 1e-12),
+          f'l1-cover-overlap eps={eps}: intervals overlap, union {float(u):.6f} <= sum {float(tot):.6f} <= eps '
+          f'(corrected claim, fix pass)')
 
 # l1-cantor-stage
 check(Fraction(2, 3) ** 10 == Fraction(1024, 59049), 'l1-cantor-stage: (2/3)^10 = 1024/59049')
