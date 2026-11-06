@@ -1,0 +1,1189 @@
+{
+ "id": "l15-monte-carlo-error",
+ "course": "numerics",
+ "title": "Monte Carlo and its error",
+ "minutes": 15,
+ "objectives": [
+  "Estimate a Monte Carlo price with its standard error, and see the $1/\\sqrt{n}$ rate."
+ ],
+ "skills": [
+  "nm-mc"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Two thousand futures",
+   "prose": "Each path is the log price of our share over a year, in 50 steps of the risk-neutral model. The panel below shows each path's discounted call payoff. The last panel is the running mean of those payoffs, path by path. Draw new paths and watch the mean settle.",
+   "canvas": {
+    "kind": "walk",
+    "params": {
+     "model": "normal",
+     "steps": 50,
+     "start": 4.60517,
+     "mu": 0.0006,
+     "sigma": 0.028284,
+     "paths": 2000,
+     "drawn": 30,
+     "stopAt": 50,
+     "sim": {
+      "seed": 5
+     },
+     "r": 0.05,
+     "T": 1,
+     "K": 100,
+     "y": [
+      4.0,
+      5.3
+     ],
+     "height": 220,
+     "overlayHeight": 70,
+     "yLabel": "Log price $\\ln S$",
+     "xLabel": "Step (50 make a year)",
+     "overlays": [
+      {
+       "id": "pay",
+       "expr": "exp(-r*T)*max(exp(x) - K, 0)",
+       "label": "Discounted payoff",
+       "y": [
+        0,
+        60
+       ]
+      }
+     ]
+    },
+    "state": {
+     "showStopped": "pay"
+    },
+    "derive": {
+     "caption": "Mean of {{values.paths}} discounted payoffs: £{{fixed(values.stoppedPay, 2)}}, standard error £{{fixed(values.stoppedPaySE, 3)}}."
+    },
+    "controls": [
+     {
+      "reseed": true,
+      "label": "New paths"
+     }
+    ]
+   },
+   "question": "Read the caption. About how large is the standard error with all 2,000 paths?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.33,
+    "tol": {
+     "abs": 0.03
+    },
+    "unit": "£",
+    "accept": "about £0.33, near 14.72 / √2,000 = 0.329",
+    "wrong": [
+     {
+      "id": "price",
+      "value": 10.45,
+      "tol": {
+       "abs": 0.6
+      }
+     },
+     {
+      "id": "sd",
+      "value": 14.72,
+      "tol": {
+       "abs": 1.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The caption gives the mean, then the standard error."
+    },
+    {
+     "rung": "point",
+     "text": "It is a few tens of pence.",
+     "highlight": [
+      "stopped-pay"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "About £0.33: the price is known only to within tens of pence.",
+    "generic": "Not quite right. Read the second number in the caption.",
+    "byKey": {
+     "price": "That is the price estimate. The question asks for its standard error.",
+     "sd": "That is the spread of one payoff. The mean of 2,000 is much tighter."
+    }
+   },
+   "explain": {
+    "text": "The caption's error is close to $14.72/\\sqrt{2{,}000} = 0.329$. New paths move the mean by about that much. To halve it we need four times the paths."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "The rate",
+   "prose": "The discounted payoffs $Y$ of our call have exact standard deviation $s = 14.7194$, from $E[Y^2]$ in closed form. `opt-dash` l7 measured 14.71. The **standard error** of a mean of $n$ independent payoffs is $\\tfrac{s}{\\sqrt n}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      30,
+      3000000
+     ],
+     "y": [
+      0.005,
+      5
+     ],
+     "xScale": "log",
+     "yScale": "log",
+     "height": 270,
+     "xLabel": "Paths $n$",
+     "yLabel": "Standard error (£)",
+     "functions": [
+      {
+       "id": "se",
+       "expr": "14.7194/sqrt(x)",
+       "label": "$s/\\sqrt n$",
+       "labelAt": 3000,
+       "labelSide": "above"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "p",
+       "y": 0.01,
+       "label": "£0.01"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "n0",
+       "x": 100,
+       "y": 1.47194
+      },
+      {
+       "id": "n1",
+       "x": 1000,
+       "y": 0.46547
+      },
+      {
+       "id": "n2",
+       "x": 10000,
+       "y": 0.14719
+      },
+      {
+       "id": "n3",
+       "x": 100000,
+       "y": 0.04655
+      }
+     ]
+    }
+   },
+   "question": "Fill in the standard error for each number of paths.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Paths $n$",
+     "Standard error (£)"
+    ],
+    "rows": [
+     [
+      "100",
+      {
+       "edit": true,
+       "answer": 1.472,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "1,000",
+      {
+       "edit": true,
+       "answer": 0.465,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "10,000",
+      {
+       "edit": true,
+       "answer": 0.147,
+       "tol": {
+        "abs": 0.001
+       }
+      }
+     ],
+     [
+      "100,000",
+      {
+       "edit": true,
+       "answer": 0.0465,
+       "tol": {
+        "abs": 0.0001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide 14.7194 by the square root of each $n$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sqrt{100} = 10$, so the first is 1.472.",
+     "highlight": [
+      "n0",
+      "n1",
+      "n2",
+      "n3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Each tenfold rise in $n$ divides the error by $\\sqrt{10} = 3.16$."
+    }
+   ],
+   "feedback": {
+    "correct": "£1.472, £0.465, £0.147 and £0.0465.",
+    "generic": "Not quite right. Compute $14.7194/\\sqrt n$ for each row."
+   },
+   "explain": {
+    "text": "$14.7194/10 = 1.472$, $14.7194/31.62 = 0.465$, $14.7194/100 = 0.147$ and $14.7194/316.2 = 0.0465$. Each line of the table costs ten times the last. Each buys only a factor of 3.16."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Slope on log axes",
+   "prose": "On log axes, $\\text{SE} = s\\,n^{-1/2}$ is a straight line: $\\log \\text{SE} = \\log s - \\tfrac12\\log n$. This holds whatever the payoff and whatever the number of shares the option depends on.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      30,
+      3000000
+     ],
+     "y": [
+      0.005,
+      5
+     ],
+     "xScale": "log",
+     "yScale": "log",
+     "height": 270,
+     "xLabel": "Paths $n$",
+     "yLabel": "Standard error (£)",
+     "functions": [
+      {
+       "id": "se",
+       "expr": "14.7194/sqrt(x)",
+       "label": "$s/\\sqrt n$",
+       "labelAt": 3000,
+       "labelSide": "above"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "p",
+       "y": 0.01,
+       "label": "£0.01"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "n0",
+       "x": 100,
+       "y": 1.47194
+      },
+      {
+       "id": "n1",
+       "x": 1000,
+       "y": 0.46547
+      },
+      {
+       "id": "n2",
+       "x": 10000,
+       "y": 0.14719
+      },
+      {
+       "id": "n3",
+       "x": 100000,
+       "y": 0.04655
+      }
+     ]
+    }
+   },
+   "question": "What is the slope of the line?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "−0.5",
+    "wrong": [
+     {
+      "id": "pos",
+      "value": 0.5,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "one",
+      "value": -1,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the exponent of $n$."
+    },
+    {
+     "rung": "point",
+     "text": "Two decades of $n$ drop the error one decade.",
+     "highlight": [
+      "se"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-1/2$."
+    }
+   ],
+   "feedback": {
+    "correct": "Slope $-\\tfrac12$: the Monte Carlo rate.",
+    "generic": "Not quite right. Take logs of $s\\,n^{-1/2}$.",
+    "byKey": {
+     "pos": "The error falls as $n$ grows, so the slope is negative.",
+     "one": "A slope of $-1$ would be an error like $1/n$. Ours is $1/\\sqrt n$."
+    }
+   },
+   "explain": {
+    "text": "The slope is $-\\tfrac12$: from 100 to 10,000 paths the error falls from £1.472 to £0.147. The rate does not depend on dimension. That is Monte Carlo's strength and its cost."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The cost of a penny",
+   "prose": "A desk wants the call's price to a standard error of £0.01. Solve $s/\\sqrt n = 0.01$ for $n$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      30,
+      3000000
+     ],
+     "y": [
+      0.005,
+      5
+     ],
+     "xScale": "log",
+     "yScale": "log",
+     "height": 270,
+     "xLabel": "Paths $n$",
+     "yLabel": "Standard error (£)",
+     "functions": [
+      {
+       "id": "se",
+       "expr": "14.7194/sqrt(x)",
+       "label": "$s/\\sqrt n$",
+       "labelAt": 3000,
+       "labelSide": "above"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "p",
+       "y": 0.01,
+       "label": "£0.01"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "n0",
+       "x": 100,
+       "y": 1.47194
+      },
+      {
+       "id": "n1",
+       "x": 1000,
+       "y": 0.46547
+      },
+      {
+       "id": "n2",
+       "x": 10000,
+       "y": 0.14719
+      },
+      {
+       "id": "n3",
+       "x": 100000,
+       "y": 0.04655
+      }
+     ]
+    }
+   },
+   "question": "How many plain paths does that take?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2166609,
+    "tol": {
+     "rel": 0.005
+    },
+    "accept": "about 2.17 million: (14.7194 / 0.01)²",
+    "wrong": [
+     {
+      "id": "no-square",
+      "value": 1472,
+      "tol": {
+       "rel": 0.01
+      }
+     },
+     {
+      "id": "linear",
+      "value": 147194,
+      "tol": {
+       "rel": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\sqrt n = s/0.01$."
+    },
+    {
+     "rung": "point",
+     "text": "$s/0.01 = 1{,}471.94$.",
+     "highlight": [
+      "p"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Square it: about 2.17 million."
+    }
+   ],
+   "feedback": {
+    "correct": "About 2.17 million paths for a penny.",
+    "generic": "Not quite right. Square $s/0.01$.",
+    "byKey": {
+     "no-square": "You solved for $\\sqrt n$. Square it to get $n$.",
+     "linear": "You divided $s$ by the error and scaled by 100. The paths grow with the square."
+    }
+   },
+   "explain": {
+    "text": "With the unrounded $s = 14.719404$, $n = (s/0.01)^2$ rounds up to 2,166,609. Each extra digit costs a hundred times the paths. That is why l16 cuts $s$ instead of raising $n$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Ten times the paths",
+   "prose": "A run of 10,000 paths gives a standard error of £0.147. A colleague says ten times the paths will give ten times the accuracy.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      30,
+      3000000
+     ],
+     "y": [
+      0.005,
+      5
+     ],
+     "xScale": "log",
+     "yScale": "log",
+     "height": 270,
+     "xLabel": "Paths $n$",
+     "yLabel": "Standard error (£)",
+     "functions": [
+      {
+       "id": "se",
+       "expr": "14.7194/sqrt(x)",
+       "label": "$s/\\sqrt n$",
+       "labelAt": 3000,
+       "labelSide": "above"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "p",
+       "y": 0.01,
+       "label": "£0.01"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "n0",
+       "x": 100,
+       "y": 1.47194
+      },
+      {
+       "id": "n1",
+       "x": 1000,
+       "y": 0.46547
+      },
+      {
+       "id": "n2",
+       "x": 10000,
+       "y": 0.14719
+      },
+      {
+       "id": "n3",
+       "x": 100000,
+       "y": 0.04655
+      }
+     ]
+    }
+   },
+   "question": "What is the standard error with 100,000 paths?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0465,
+    "tol": {
+     "abs": 0.0005
+    },
+    "unit": "£",
+    "accept": "£0.0465 = 0.147 / √10",
+    "wrong": [
+     {
+      "id": "tenfold",
+      "value": 0.0147,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "same",
+      "value": 0.147,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The error is $s/\\sqrt n$."
+    },
+    {
+     "rung": "point",
+     "text": "Ten times $n$ divides the error by $\\sqrt{10}$.",
+     "highlight": [
+      "n2",
+      "n3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$0.147/3.16$."
+    }
+   ],
+   "feedback": {
+    "correct": "£0.0465: ten times the paths buys a factor of 3.16.",
+    "generic": "Not quite right. Divide by $\\sqrt{10}$, not by 10.",
+    "byKey": {
+     "tenfold": "You divided by 10. The error falls with $\\sqrt n$, so ten times the paths divides it by 3.16. A tenfold cut needs 100 times the paths."
+    }
+   },
+   "explain": {
+    "text": "$0.147/\\sqrt{10} = 0.0465$. A tenfold cut in the error needs 100 times the paths, to 1,000,000. Accuracy is bought with the square of the effort."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A band, not a bound",
+   "prose": "With seed 0 and 100,000 plain paths our pricer gives £10.4362 with standard error £0.0465, $-0.31$ SE from £10.4506. A **95% interval** is $\\hat c \\pm 1.96\\,\\text{SE}$. Seed 1 gives £10.3578 with standard error £0.0464.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Seed",
+      "Price",
+      "SE",
+      "Distance"
+     ],
+     "rows": [
+      [
+       "0",
+       "£10.4362",
+       "£0.0465",
+       "−0.31 SE"
+      ],
+      [
+       "1",
+       "£10.3578",
+       "£0.0464",
+       "−2.00 SE"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the lower end of seed 0's 95% interval?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.345,
+    "tol": {
+     "abs": 0.0006
+    },
+    "unit": "£",
+    "accept": "£10.3450 = 10.4362 − 1.96 × 0.0465",
+    "wrong": [
+     {
+      "id": "one-se",
+      "value": 10.3896,
+      "tol": {
+       "abs": 0.0006
+      }
+     },
+     {
+      "id": "two-sided",
+      "value": 10.2538,
+      "tol": {
+       "abs": 0.0006
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Multiply the standard error by 1.96."
+    },
+    {
+     "rung": "point",
+     "text": "$1.96 \\times 0.0465 = 0.0912$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$10.4362 - 0.0912$."
+    }
+   ],
+   "feedback": {
+    "correct": "£10.3450, so the interval holds £10.4506.",
+    "generic": "Not quite right. Subtract $1.96 \\times$ SE from the price.",
+    "byKey": {
+     "one-se": "You subtracted one standard error. A 95% interval reaches 1.96 of them.",
+     "two-sided": "You used $2 \\times 1.96$. The 1.96 already covers one side."
+    }
+   },
+   "explain": {
+    "text": "$10.4362 - 1.96 \\times 0.0465 = 10.3450$, so seed 0's interval covers £10.4506. Seed 1 is $-2.00$ SE away, and its interval just misses. A 95% interval misses in one run in 20, as `opt-dash` l7's 200 runs showed."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Noise or bias",
+   "prose": "A down-and-out call ($H = 90$, otherwise our call) dies if the share touches £90. Watched continuously it is worth £8.6655 in closed form (`ito` l12). Our simulation can only check the barrier on its dates; each row used 200,000 paths, seed 0. The last column is the Broadie-Glasserman closed form with the shifted barrier $He^{-0.5826\\sigma\\sqrt{\\Delta t}}$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Barrier checked",
+      "Simulated (SE)",
+      "Shifted closed form"
+     ],
+     "rows": [
+      [
+       "12 monthly dates",
+       "£9.572 (0.033)",
+       "£9.580"
+      ],
+      [
+       "52 weekly dates",
+       "£9.152 (0.033)",
+       "£9.174"
+      ],
+      [
+       "252 daily dates",
+       "£8.936 (0.033)",
+       "£8.914"
+      ],
+      [
+       "Continuous",
+       "none",
+       "£8.6655"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "The desk reruns the monthly check with 20 million paths. Where does the estimate settle?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "bias",
+      "text": "Near £9.58, with a band ten times narrower",
+      "correct": true
+     },
+     {
+      "id": "true",
+      "text": "Near £8.6655, because more paths remove the error",
+      "why": "You treated the gap as noise. Checking only 12 dates misses touches between them, and no number of paths sees those."
+     },
+     {
+      "id": "same",
+      "text": "Exactly £9.572 again",
+      "why": "You assumed the same answer. New paths move the estimate within its band of a few pence."
+     },
+     {
+      "id": "between",
+      "text": "Halfway between £9.572 and £8.6655",
+      "why": "You split the difference. Paths cut noise; only more dates cut monitoring bias."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a path miss when it is only checked monthly?"
+    },
+    {
+     "rung": "point",
+     "text": "The monthly price is above the continuous one because touches between dates go unseen.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "More paths shrink the band around the monthly value, about £9.58."
+    }
+   ],
+   "feedback": {
+    "correct": "Monitoring is a bias, not noise.",
+    "generic": "Not quite right. Ask which error paths can cut.",
+    "byKey": {
+     "true": "You expected paths to fix monitoring. The monthly option is a different, dearer contract from the continuous one."
+    }
+   },
+   "explain": {
+    "text": "A hundred times the paths divides the band by ten, around the monthly value near £9.58. The gap to £8.6655 comes from the 12 dates, and only more dates shrink it. The shifted closed form agrees: £9.580, £9.174 and £8.914."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Why simulate at all",
+   "prose": "The rule: plain Monte Carlo errs like $$\\frac{s}{\\sqrt n}$$ in any dimension. A trapezium grid with $n$ points in $d$ dimensions has spacing $h \\propto n^{-1/d}$, so it errs like $h^2 \\propto n^{-2/d}$. Once $d > 4$ the grid falls behind. Baskets and path-dependent options live in many dimensions, so they are simulated.",
+   "question": "An Asian option with 12 fixings is a 12-dimensional integral. How does a trapezium grid with $n$ points err?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "six",
+      "text": "Like $n^{-1/6}$",
+      "correct": true
+     },
+     {
+      "id": "two",
+      "text": "Like $n^{-2}$",
+      "why": "You used the one-dimensional rate. In 12 dimensions the spacing is only $n^{-1/12}$."
+     },
+     {
+      "id": "half",
+      "text": "Like $n^{-1/2}$",
+      "why": "That is Monte Carlo's rate. The grid's rate worsens with dimension."
+     },
+     {
+      "id": "twelve",
+      "text": "Like $n^{-1/12}$",
+      "why": "That is the spacing $h$. The trapezium error is $h^2$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$n^{-2/12} = n^{-1/6}$, far slower than $n^{-1/2}$.",
+    "generic": "Not quite right. Put $d = 12$ into $n^{-2/d}$."
+   },
+   "explain": {
+    "text": "With $d = 12$ the error is $n^{-2/12} = n^{-1/6}$. A tenfold cut needs a million times the points. Monte Carlo needs 100 times, in any dimension."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The pricer and its error",
+   "prose": "Write `mc_call`. Draw every normal in one call to `default_rng(seed)`, as `opt-dash` l7 did, so the hidden tests can expect exact numbers. Use `ddof=1` for the sample standard deviation. Then write `paths_for_error(s, target)`, rounding up.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Ours"
+     ],
+     "rows": [
+      [
+       "`mc_call(100, 100, 0.05, 0.2, 1, 100_000, 0)`",
+       "(£10.436163, £0.046514)"
+      ],
+      [
+       "`mc_call(..., n=1, ...)`",
+       "raises `ValueError`"
+      ],
+      [
+       "`paths_for_error(14.7194, 0.01)`",
+       "2,166,608"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `mc_call` and `paths_for_error`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\ndef mc_call(S0, K, r, sigma, T, n, seed):\n    \"\"\"Plain Monte Carlo price of a European call, and its standard error.\"\"\"\n    ...\n\ndef paths_for_error(s, target):\n    \"\"\"Paths needed for a standard error of at most target.\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef mc_call(S0, K, r, sigma, T, n, seed):\n    \"\"\"Plain Monte Carlo price of a European call, and its standard error.\"\"\"\n    if n < 2:\n        raise ValueError(\"a standard error needs at least two paths\")\n    z = np.random.default_rng(seed).standard_normal(n)   # every normal at once\n    ST = S0 * np.exp((r - sigma ** 2 / 2) * T + sigma * math.sqrt(T) * z)\n    y = math.exp(-r * T) * np.maximum(ST - K, 0.0)        # discounted payoffs\n    return float(y.mean()), float(y.std(ddof=1) / math.sqrt(n))\n\ndef paths_for_error(s, target):\n    \"\"\"Paths needed for a standard error of at most target.\"\"\"\n    return math.ceil((s / target) ** 2)\n",
+    "examples": [
+     {
+      "call": "paths_for_error(20, 0.5)",
+      "expect": "1600",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "list(mc_call(100, 100, 0.05, 0.2, 1, 100_000, 0))",
+      "expect": "[10.4361628282, 0.0465140620]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "list(mc_call(100, 100, 0.05, 0.2, 1, 100_000, 1))",
+      "expect": "[10.3577576442, 0.0464222230]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "abs(mc_call(110, 100, 0.03, 0.25, 0.5, 200_000, 7)[0] - 14.46696108) < 3 * mc_call(110, 100, 0.03, 0.25, 0.5, 200_000, 7)[1]",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "mc_call(100, 100, 0.05, 0.2, 1, 1, 0)",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "len(mc_call(100, 100, 0.05, 0.2, 1, 2, 0))",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "paths_for_error(14.7194, 0.01)",
+      "expect": "2166608",
+      "compare": "equal"
+     },
+     {
+      "call": "paths_for_error(5.6106, 0.01)",
+      "expect": "314789",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests with NumPy. Seeded results must match ours within 1e-8, one path must raise ValueError, and the path counts must be exact."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`z = np.random.default_rng(seed).standard_normal(n)` draws every normal at once."
+    },
+    {
+     "rung": "point",
+     "text": "The error is `y.std(ddof=1) / math.sqrt(n)`.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "For the count, `math.ceil((s / target) ** 2)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your pricer reports a price with its error, and refuses one path.",
+    "generic": "Not quite right. Check seed 0 against the table first."
+   },
+   "explain": {
+    "text": "One call to `standard_normal(n)` fixes the stream, so the same seed gives the same price. With $n = 1$ the sample spread divides by $n - 1 = 0$, so the code refuses. The count rounds up because a fraction of a path is still a path."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A quote to a penny",
+   "prose": "A structurer quotes an exotic from 50,000 paths with a standard error of £0.04. The client wants the price to within a standard error of £0.01.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      30,
+      3000000
+     ],
+     "y": [
+      0.005,
+      5
+     ],
+     "xScale": "log",
+     "yScale": "log",
+     "height": 270,
+     "xLabel": "Paths $n$",
+     "yLabel": "Standard error (£)",
+     "functions": [
+      {
+       "id": "se",
+       "expr": "14.7194/sqrt(x)",
+       "label": "$s/\\sqrt n$",
+       "labelAt": 3000,
+       "labelSide": "above"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "p",
+       "y": 0.01,
+       "label": "£0.01"
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "n0",
+       "x": 100,
+       "y": 1.47194
+      },
+      {
+       "id": "n1",
+       "x": 1000,
+       "y": 0.46547
+      },
+      {
+       "id": "n2",
+       "x": 10000,
+       "y": 0.14719
+      },
+      {
+       "id": "n3",
+       "x": 100000,
+       "y": 0.04655
+      }
+     ]
+    }
+   },
+   "question": "How many plain paths does that need?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 800000,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "800,000 = 50,000 × (0.04 / 0.01)²",
+    "wrong": [
+     {
+      "id": "fourfold",
+      "value": 200000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "tenfold",
+      "value": 500000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The error must fall by a factor of 4."
+    },
+    {
+     "rung": "point",
+     "text": "The paths grow with the square of that factor.",
+     "highlight": [
+      "p"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$50{,}000 \\times 16$."
+    }
+   ],
+   "feedback": {
+    "correct": "800,000 paths: 16 times the work.",
+    "generic": "Not quite right. Multiply 50,000 by $(0.04/0.01)^2$.",
+    "byKey": {
+     "fourfold": "You scaled the paths by 4. A fourfold cut in the error needs 16 times the paths.",
+     "tenfold": "You took ten times the paths. The factor needed is $4^2 = 16$."
+    }
+   },
+   "explain": {
+    "text": "$(0.04/0.01)^2 = 16$, so 800,000 paths. If that is too slow, the structurer needs a better estimator, not more paths. That is l16."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A Monte Carlo price comes with a standard error $s/\\sqrt n$; for our call $s = 14.7194$, so 100,000 paths give £0.0465.",
+   "The error falls like $n^{-1/2}$ in any dimension. A penny costs 2.17 million plain paths; a grid loses once $d > 4$.",
+   "Paths cut noise, not bias: a barrier checked monthly stays near £9.58, however many paths, against £8.6655."
+  ],
+  "formula": {
+   "name": "Standard error",
+   "tex": "\\text{SE} = \\dfrac{s}{\\sqrt n},\\qquad n = \\left(\\dfrac{s}{\\text{target}}\\right)^2",
+   "note": "Ten times the paths divides the error by 3.16."
+  },
+  "trap": "Ten times the paths gives only $\\sqrt{10} \\approx 3.16$ times the accuracy."
+ },
+ "quiz": [
+  {
+   "id": "q-one-path",
+   "difficulty": 2,
+   "prose": "A pricer is called with $n = 1$ path.",
+   "question": "What should it do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "raise",
+      "text": "Refuse with an error: one payoff has no spread to measure",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "Return the payoff with a standard error of 0",
+      "why": "You used `ddof=0`. One draw has zero sample spread, which claims a perfect price."
+     },
+     {
+      "id": "payoff",
+      "text": "Return the payoff as its own standard error",
+      "why": "You guessed a spread. With one payoff nothing measures it."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "With `ddof=1` the spread divides by $n - 1 = 0$.",
+    "generic": "Not quite right. Ask what a standard error needs."
+   },
+   "explain": {
+    "text": "The sample standard deviation with `ddof=1` divides by $n - 1$, which is 0. A standard error needs at least two independent payoffs. So the pricer raises `ValueError`."
+   }
+  },
+  {
+   "id": "q-scale",
+   "difficulty": 3,
+   "prose": "A pricer shows a standard error of £0.30 after 2,500 paths.",
+   "question": "How many paths give a standard error of £0.05?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 90000,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "90,000 = 2,500 × 6²",
+    "wrong": [
+     {
+      "id": "six",
+      "value": 15000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "root",
+      "value": 6124,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "90,000: the error falls six times, the paths rise 36 times.",
+    "generic": "Not quite right. Square the ratio $0.30/0.05$.",
+    "byKey": {
+     "six": "You scaled the paths by 6. The paths rise with the square of the ratio.",
+     "root": "You took a square root. Square the ratio instead."
+    }
+   },
+   "explain": {
+    "text": "$0.30/0.05 = 6$ and $6^2 = 36$, so $2{,}500 \\times 36 = 90{,}000$ paths."
+   }
+  },
+  {
+   "id": "q-dimension",
+   "difficulty": 3,
+   "prose": "A basket option on 8 shares is an 8-dimensional integral.",
+   "question": "Which method's error falls faster as the work $n$ grows?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mc",
+      "text": "Monte Carlo, like $n^{-1/2}$",
+      "correct": true
+     },
+     {
+      "id": "grid",
+      "text": "A trapezium grid, like $n^{-2}$",
+      "why": "You used the one-dimensional rate. In 8 dimensions the grid errs like $n^{-2/8}$."
+     },
+     {
+      "id": "tie",
+      "text": "They tie: both are $n^{-1/2}$",
+      "why": "They tie only at $d = 4$. At $d = 8$ the grid errs like $n^{-1/4}$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$n^{-1/2}$ beats $n^{-1/4}$.",
+    "generic": "Not quite right. Put $d = 8$ into $n^{-2/d}$."
+   },
+   "explain": {
+    "text": "The grid errs like $n^{-2/8} = n^{-1/4}$ and Monte Carlo like $n^{-1/2}$. Above four dimensions simulation wins."
+   }
+  }
+ ]
+}

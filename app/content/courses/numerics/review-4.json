@@ -1,0 +1,416 @@
+{
+ "id": "review-4",
+ "course": "numerics",
+ "level": 4,
+ "pass": 0.8,
+ "items": [
+  {
+   "id": "r4-limit-150",
+   "difficulty": 2,
+   "skills": [
+    "nm-fd"
+   ],
+   "prose": "An explicit grid for our call uses $M = 150$ price steps, $\\sigma = 20\\%$, $r = 5\\%$ and $T = 1$.",
+   "question": "What is the smallest $N$ the bound $\\Delta\\tau \\le 1/(\\sigma^2M^2 + r)$ allows?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 901,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "901, since 0.04 × 22,500 + 0.05 = 900.05",
+    "wrong": [
+     {
+      "id": "down",
+      "value": 900,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "linear",
+      "value": 7,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$900.05$ rounds up to 901.",
+    "generic": "Not quite right. Compute $\\sigma^2M^2 + r$ and round up.",
+    "byKey": {
+     "down": "You rounded 900.05 down; $N = 900$ is just over the bound.",
+     "linear": "You used $\\sigma^2M$. The bound has $M^2$."
+    }
+   },
+   "explain": {
+    "text": "$0.04 \\times 150^2 + 0.05 = 900.05$, so $N \\ge 901$. That is 2.25 times the 401 steps of $M = 100$."
+   }
+  },
+  {
+   "id": "r4-predict-ds",
+   "difficulty": 3,
+   "skills": [
+    "nm-fd"
+   ],
+   "prose": "The explicit grid errs by $-0.0078$ at $\\Delta S = 2$. Its error is mostly the $\\Delta S^2$ term.",
+   "question": "Predict the error at $\\Delta S = 0.5$, with a time step small enough to be stable.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.00049,
+    "tol": {
+     "abs": 6e-05
+    },
+    "unit": "£",
+    "accept": "about −0.00049 = −0.0078 / 16",
+    "wrong": [
+     {
+      "id": "quarter",
+      "value": -0.00195,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A sixteenth of $-0.0078$.",
+    "generic": "Not quite right. $\\Delta S$ falls by 4, so the error falls by $4^2$.",
+    "byKey": {
+     "quarter": "You divided by 4. The step fell fourfold, so the error falls sixteenfold."
+    }
+   },
+   "explain": {
+    "text": "Quartering $\\Delta S$ divides a $\\Delta S^2$ error by 16: $-0.0078/16 = -0.00049$. The grid with $M = 400$ and $N = 6{,}401$ gives $-0.00045$. It needs 6,401 steps, which is why l14 steps implicitly."
+   }
+  },
+  {
+   "id": "r4-cn-ring",
+   "difficulty": 3,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "Crank-Nicolson runs with long time steps, so $\\nu = 50$ at the strike.",
+   "question": "What happens to the sharpest wiggle of the payoff's kink?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ring",
+      "text": "It flips sign each step and barely shrinks: factor $-0.980$",
+      "correct": true
+     },
+     {
+      "id": "grow",
+      "text": "It grows without bound",
+      "why": "You treated Crank-Nicolson like explicit. Its factor stays inside $(-1, 1)$ for every $\\nu$."
+     },
+     {
+      "id": "die",
+      "text": "It dies at once, as with implicit Euler",
+      "why": "You used implicit Euler's factor, $1/(1 + 4\\nu)$. Crank-Nicolson's tends to $-1$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$-99/101 = -0.980$: ringing.",
+    "generic": "Not quite right. Compute $\\tfrac{1 - 2\\nu}{1 + 2\\nu}$ at $\\nu = 50$."
+   },
+   "explain": {
+    "text": "$\\tfrac{1 - 100}{1 + 100} = -0.980$. The mode alternates in sign and loses only 2% a step. Gamma at the strike shows it first."
+   }
+  },
+  {
+   "id": "r4-thomas",
+   "difficulty": 2,
+   "skills": [
+    "nm-fd"
+   ],
+   "prose": "Each implicit step solves a tridiagonal system with $M - 1 = 399$ unknowns.",
+   "question": "How does the Thomas algorithm's work grow with $M$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "lin",
+      "text": "Like $M$: one elimination and one substitution per row",
+      "correct": true
+     },
+     {
+      "id": "cube",
+      "text": "Like $M^3$, as Gaussian elimination",
+      "why": "You used the dense cost. A tridiagonal row has one entry to clear, not $M$."
+     },
+     {
+      "id": "sq",
+      "text": "Like $M^2$",
+      "why": "You counted a full row per elimination. Only two entries change in each row."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "About $3M$ operations a step.",
+    "generic": "Not quite right. Count the entries Thomas touches per row."
+   },
+   "explain": {
+    "text": "Thomas clears one sub-diagonal entry per row and back-substitutes once per row. The work is about $3M$, against $M^3/3$ for a dense solve. So an implicit step costs little more than an explicit one."
+   }
+  },
+  {
+   "id": "r4-paths",
+   "difficulty": 2,
+   "skills": [
+    "nm-mc"
+   ],
+   "prose": "A Monte Carlo pricer shows a standard error of £0.12 after 40,000 paths.",
+   "question": "How many paths give a standard error of £0.03?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 640000,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "640,000 = 40,000 × 4²",
+    "wrong": [
+     {
+      "id": "four",
+      "value": 160000,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "root",
+      "value": 80000,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A fourfold cut costs 16 times the paths.",
+    "generic": "Not quite right. Square the ratio $0.12/0.03$.",
+    "byKey": {
+     "four": "You scaled the paths by 4. Square the ratio.",
+     "root": "You scaled by $2$. The ratio is 4 and its square is 16."
+    }
+   },
+   "explain": {
+    "text": "$0.12/0.03 = 4$ and $4^2 = 16$, so $40{,}000 \\times 16 = 640{,}000$ paths."
+   }
+  },
+  {
+   "id": "r4-bias",
+   "difficulty": 3,
+   "skills": [
+    "nm-mc"
+   ],
+   "prose": "A down-and-out call checked at 52 weekly dates simulates at £9.152 (SE £0.033). With the barrier watched continuously it is worth £8.6655.",
+   "question": "What do ten times the paths do?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "band",
+      "text": "Shrink the band around £9.15 by $\\sqrt{10}$; the gap to £8.6655 stays",
+      "correct": true
+     },
+     {
+      "id": "close",
+      "text": "Close the gap to £8.6655",
+      "why": "You treated monitoring as noise. Only more monitoring dates close that gap."
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing, since the estimate is already exact",
+      "why": "You read the SE as zero. It is £0.033, and it falls with more paths."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Paths cut noise; dates cut bias.",
+    "generic": "Not quite right. Separate the noise from the bias."
+   },
+   "explain": {
+    "text": "Ten times the paths cuts the SE to about £0.010, around £9.15. The weekly contract differs from the continuous one by about £0.49. The Broadie-Glasserman shift predicts £9.174 for it."
+   }
+  },
+  {
+   "id": "r4-vrf",
+   "difficulty": 3,
+   "skills": [
+    "nm-mc"
+   ],
+   "prose": "A control variate has correlation $\\rho = 0.95$ with the payoff.",
+   "question": "What is the variance-reduction factor?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.26,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "10.26 = 1 / (1 − 0.9025)",
+    "wrong": [
+     {
+      "id": "nosq",
+      "value": 20,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "rho2",
+      "value": 0.9025,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About ten times fewer paths for the same error.",
+    "generic": "Not quite right. Compute $1/(1 - \\rho^2)$.",
+    "byKey": {
+     "nosq": "You used $1/(1 - \\rho)$. Square $\\rho$.",
+     "rho2": "That is $\\rho^2$, the share removed. Take $1/(1 - \\rho^2)$."
+    }
+   },
+   "explain": {
+    "text": "$1/(1 - 0.9025) = 10.26$. From $\\rho = 0.9245$ (factor 6.88) to 0.95, the factor rises by half again."
+   }
+  },
+  {
+   "id": "r4-anti",
+   "difficulty": 3,
+   "skills": [
+    "nm-mc"
+   ],
+   "prose": "Antithetic pairs average the payoffs at $z$ and $-z$.",
+   "question": "For which payoff do the pairs make the estimate worse than independent paths?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "straddle",
+      "text": "A straddle, $|S_T - K|$",
+      "correct": true
+     },
+     {
+      "id": "put",
+      "text": "A put",
+      "why": "A put falls as $z$ rises, so its pair is negatively correlated and the pairs help."
+     },
+     {
+      "id": "call",
+      "text": "A call",
+      "why": "You picked our call. Its pair correlation is $-0.501$, so the pairs halve the variance."
+     },
+     {
+      "id": "digital",
+      "text": "A digital call, paying £1 if $S_T > K$",
+      "why": "A digital is monotone in $z$, so its pairs move against each other."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The straddle pays on both sides, so its pairs agree.",
+    "generic": "Not quite right. Look for a payoff that rises on both sides of $K$."
+   },
+   "explain": {
+    "text": "A straddle's pair correlation is $+0.645$, giving efficiency 0.61. Pairs help only payoffs that move one way with $z$. The call, put and digital all do."
+   }
+  },
+  {
+   "id": "r4-kink",
+   "difficulty": 3,
+   "skills": [
+    "nm-quadrature"
+   ],
+   "prose": "Gauss-Legendre prices our call to $-2.6 \\times 10^{-13}$ on $[z^*, 8]$.",
+   "question": "Why integrate from $z^* = -0.15$ rather than from $-8$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "kink",
+      "text": "The payoff's kink is at $z^*$; on $[z^*, 8]$ the integrand is smooth",
+      "correct": true
+     },
+     {
+      "id": "zero",
+      "text": "The integrand is zero below $z^*$, so it only saves time",
+      "why": "Saving time is a side effect. With the kink inside, 32 nodes still err by about £0.12."
+     },
+     {
+      "id": "tail",
+      "text": "The tail below $-8$ would otherwise be lost",
+      "why": "You confused the two ends. The cut at $z = 8$ is the truncation; $z^*$ removes the kink."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "A kink at an end point, not inside, keeps Gauss fast.",
+    "generic": "Not quite right. Ask where the payoff is not smooth."
+   },
+   "explain": {
+    "text": "Gauss-Legendre is exact for polynomials, so it is fast on smooth integrands. A kink inside the interval drops it to slow, ragged convergence, as l10's trap showed. Starting at $z^*$ puts the kink at an end."
+   }
+  },
+  {
+   "id": "r4-implicit-euler",
+   "difficulty": 2,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "Recall l12: implicit Euler on $y' = \\lambda y$ multiplies $y$ by $\\tfrac{1}{1 - h\\lambda}$ each step.",
+   "question": "What is the factor at $h\\lambda = -40$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.0244,
+    "tol": {
+     "abs": 0.0002
+    },
+    "accept": "0.0244 = 1/41",
+    "wrong": [
+     {
+      "id": "explicit",
+      "value": -39,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.0256,
+      "tol": {
+       "abs": 0.0002
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1/41 = 0.0244$: the mode dies at once.",
+    "generic": "Not quite right. Compute $1/(1 - (-40))$.",
+    "byKey": {
+     "explicit": "That is explicit Euler, $1 + h\\lambda$. Implicit divides instead.",
+     "sign": "You computed $1/39$. Subtract $h\\lambda = -40$ from 1."
+    }
+   },
+   "explain": {
+    "text": "$1/(1 + 40) = 0.0244$. Implicit Euler damps stiff modes at any step. On a grid that is $\\theta = 1$, the implicit scheme of l14."
+   }
+  }
+ ]
+}

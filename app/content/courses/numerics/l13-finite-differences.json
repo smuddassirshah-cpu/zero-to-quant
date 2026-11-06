@@ -1,0 +1,6760 @@
+{
+ "id": "l13-finite-differences",
+ "course": "numerics",
+ "title": "Finite differences for a pricing equation",
+ "minutes": 15,
+ "objectives": [
+  "Replace derivatives with differences on a grid and solve the Black-Scholes equation explicitly."
+ ],
+ "skills": [
+  "nm-fd"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Three nodes",
+   "prose": "We price the standard call ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$) on a mesh. Columns are share prices $S_j = 2j$ and rows are time levels. The bottom row is the payoff at expiry. The ringed node is $V$ at $S = 100$, one time step later.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 7,
+     "lattice": true,
+     "rowHeads": [
+      "n = 2",
+      "n = 1",
+      "n = 0"
+     ],
+     "colHeads": [
+      "94",
+      "96",
+      "98",
+      "100",
+      "102",
+      "104",
+      "106"
+     ],
+     "colLabel": "Share price S",
+     "rowLabel": "Time level",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "?",
+       "",
+       "",
+       ""
+      ],
+      [
+       "0",
+       "0",
+       "0",
+       "0",
+       "2",
+       "4",
+       "6"
+      ]
+     ]
+    },
+    "state": {
+     "outline": [
+      "r2c4"
+     ]
+    }
+   },
+   "question": "An update uses central differences in $S$ on the row below the ring. Tap the three nodes it reads, from low $S$ to high.",
+   "widget": {
+    "kind": "tap-regions",
+    "ordered": true,
+    "answer": [
+     "r3c3",
+     "r3c4",
+     "r3c5"
+    ],
+    "countWord": "nodes",
+    "wrong": [
+     {
+      "id": "same-level",
+      "set": [
+       "r2c3",
+       "r2c4",
+       "r2c5"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "A central difference at $S = 100$ needs one neighbour on each side."
+    },
+    {
+     "rung": "point",
+     "text": "Stay on the payoff row, one level below the ring.",
+     "highlight": [
+      "r3c3",
+      "r3c4",
+      "r3c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Tap 98, 100 and 102 on the bottom row."
+    }
+   ],
+   "feedback": {
+    "correct": "The update reads $V$ at 98, 100 and 102 on the known row.",
+    "generic": "Not quite right. Tap three nodes on the bottom row, centred under the ring, from left to right.",
+    "byKey": {
+     "same-level": "You tapped the ring's own level. Those values are unknown until the step is done; reading them is the implicit scheme of l14.",
+     "r2c3": "That node sits on the ring's own level, which is not known yet. Read the row below.",
+     "r2c5": "That node sits on the ring's own level, which is not known yet. Read the row below.",
+     "r1c4": "That node is later still. A step can only read values already computed.",
+     "r3c2": "You went two price steps out. A central difference uses the nearest neighbour on each side.",
+     "r3c6": "You went two price steps out. A central difference uses the nearest neighbour on each side.",
+     "order": "Those are the right three nodes. Tap them from low $S$ to high."
+    }
+   },
+   "explain": {
+    "text": "$V_{SS}$ and $V_S$ at $S = 100$ need the neighbours at 98 and 102. On the known row their values are 0, 0 and 2. So the new value is a weighted sum of three known numbers.",
+    "canvas": {
+     "shade": {
+      "read": [
+       "r3c3",
+       "r3c4",
+       "r3c5"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "The grid chases the formula",
+   "prose": "Repeating that update fills the mesh row by row. The solid line is our grid, with $M = 100$ price steps and $N = 500$ time steps. The dashed curve is the Black-Scholes formula from `trees` l10. Step through the time to expiry $\\tau$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      60,
+      140
+     ],
+     "y": [
+      0,
+      45
+     ],
+     "height": 280,
+     "xLabel": "Share price $S$",
+     "yLabel": "Call value $V$ (£)",
+     "params": {
+      "tau": 1.0
+     },
+     "functions": [
+      {
+       "id": "bs",
+       "expr": "x*Phi((ln(x/100) + (0.05 + 0.02)*tau)/(0.2*sqrt(tau))) - 100*exp(-0.05*tau)*Phi((ln(x/100) + (0.05 - 0.02)*tau)/(0.2*sqrt(tau)))",
+       "label": "formula",
+       "dashed": true,
+       "labelAt": 75,
+       "labelSide": "above"
+      },
+      {
+       "id": "fd",
+       "points": [],
+       "colour": 2,
+       "label": "grid",
+       "labelAt": 130
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "tau": 0.002
+     },
+     "functions": [
+      {
+       "id": "fd",
+       "points": [
+        [
+         60.0,
+         0.0
+        ],
+        [
+         62.0,
+         0.0
+        ],
+        [
+         64.0,
+         0.0
+        ],
+        [
+         66.0,
+         0.0
+        ],
+        [
+         68.0,
+         0.0
+        ],
+        [
+         70.0,
+         0.0
+        ],
+        [
+         72.0,
+         0.0
+        ],
+        [
+         74.0,
+         0.0
+        ],
+        [
+         76.0,
+         0.0
+        ],
+        [
+         78.0,
+         0.0
+        ],
+        [
+         80.0,
+         0.0
+        ],
+        [
+         82.0,
+         0.0
+        ],
+        [
+         84.0,
+         0.0
+        ],
+        [
+         86.0,
+         0.0
+        ],
+        [
+         88.0,
+         0.0
+        ],
+        [
+         90.0,
+         0.0
+        ],
+        [
+         92.0,
+         0.0
+        ],
+        [
+         94.0,
+         0.0
+        ],
+        [
+         96.0,
+         0.0
+        ],
+        [
+         98.0,
+         0.0
+        ],
+        [
+         100.0,
+         0.205
+        ],
+        [
+         102.0,
+         2.01
+        ],
+        [
+         104.0,
+         4.01
+        ],
+        [
+         106.0,
+         6.01
+        ],
+        [
+         108.0,
+         8.01
+        ],
+        [
+         110.0,
+         10.01
+        ],
+        [
+         112.0,
+         12.01
+        ],
+        [
+         114.0,
+         14.01
+        ],
+        [
+         116.0,
+         16.01
+        ],
+        [
+         118.0,
+         18.01
+        ],
+        [
+         120.0,
+         20.01
+        ],
+        [
+         122.0,
+         22.01
+        ],
+        [
+         124.0,
+         24.01
+        ],
+        [
+         126.0,
+         26.01
+        ],
+        [
+         128.0,
+         28.01
+        ],
+        [
+         130.0,
+         30.01
+        ],
+        [
+         132.0,
+         32.01
+        ],
+        [
+         134.0,
+         34.01
+        ],
+        [
+         136.0,
+         36.01
+        ],
+        [
+         138.0,
+         38.01
+        ],
+        [
+         140.0,
+         40.01
+        ]
+       ]
+      }
+     ],
+     "caption": "$\\tau = 0.002$ after 1 step: grid £0.2050 at $S = 100$, formula £0.3618."
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "params": {
+         "tau": 0.002
+        },
+        "functions": [
+         {
+          "id": "fd",
+          "points": [
+           [
+            60.0,
+            0.0
+           ],
+           [
+            62.0,
+            0.0
+           ],
+           [
+            64.0,
+            0.0
+           ],
+           [
+            66.0,
+            0.0
+           ],
+           [
+            68.0,
+            0.0
+           ],
+           [
+            70.0,
+            0.0
+           ],
+           [
+            72.0,
+            0.0
+           ],
+           [
+            74.0,
+            0.0
+           ],
+           [
+            76.0,
+            0.0
+           ],
+           [
+            78.0,
+            0.0
+           ],
+           [
+            80.0,
+            0.0
+           ],
+           [
+            82.0,
+            0.0
+           ],
+           [
+            84.0,
+            0.0
+           ],
+           [
+            86.0,
+            0.0
+           ],
+           [
+            88.0,
+            0.0
+           ],
+           [
+            90.0,
+            0.0
+           ],
+           [
+            92.0,
+            0.0
+           ],
+           [
+            94.0,
+            0.0
+           ],
+           [
+            96.0,
+            0.0
+           ],
+           [
+            98.0,
+            0.0
+           ],
+           [
+            100.0,
+            0.205
+           ],
+           [
+            102.0,
+            2.01
+           ],
+           [
+            104.0,
+            4.01
+           ],
+           [
+            106.0,
+            6.01
+           ],
+           [
+            108.0,
+            8.01
+           ],
+           [
+            110.0,
+            10.01
+           ],
+           [
+            112.0,
+            12.01
+           ],
+           [
+            114.0,
+            14.01
+           ],
+           [
+            116.0,
+            16.01
+           ],
+           [
+            118.0,
+            18.01
+           ],
+           [
+            120.0,
+            20.01
+           ],
+           [
+            122.0,
+            22.01
+           ],
+           [
+            124.0,
+            24.01
+           ],
+           [
+            126.0,
+            26.01
+           ],
+           [
+            128.0,
+            28.01
+           ],
+           [
+            130.0,
+            30.01
+           ],
+           [
+            132.0,
+            32.01
+           ],
+           [
+            134.0,
+            34.01
+           ],
+           [
+            136.0,
+            36.01
+           ],
+           [
+            138.0,
+            38.01
+           ],
+           [
+            140.0,
+            40.01
+           ]
+          ]
+         }
+        ],
+        "caption": "$\\tau = 0.002$ after 1 step: grid £0.2050 at $S = 100$, formula £0.3618."
+       },
+       {
+        "params": {
+         "tau": 0.1
+        },
+        "functions": [
+         {
+          "id": "fd",
+          "points": [
+           [
+            60.0,
+            0.0
+           ],
+           [
+            62.0,
+            0.0
+           ],
+           [
+            64.0,
+            0.0
+           ],
+           [
+            66.0,
+            0.0
+           ],
+           [
+            68.0,
+            0.0
+           ],
+           [
+            70.0,
+            0.0
+           ],
+           [
+            72.0,
+            0.0
+           ],
+           [
+            74.0,
+            0.0
+           ],
+           [
+            76.0,
+            0.0
+           ],
+           [
+            78.0,
+            0.0001
+           ],
+           [
+            80.0,
+            0.0005
+           ],
+           [
+            82.0,
+            0.002
+           ],
+           [
+            84.0,
+            0.007
+           ],
+           [
+            86.0,
+            0.0214
+           ],
+           [
+            88.0,
+            0.058
+           ],
+           [
+            90.0,
+            0.1402
+           ],
+           [
+            92.0,
+            0.305
+           ],
+           [
+            94.0,
+            0.6009
+           ],
+           [
+            96.0,
+            1.0802
+           ],
+           [
+            98.0,
+            1.7876
+           ],
+           [
+            100.0,
+            2.7481
+           ],
+           [
+            102.0,
+            3.9608
+           ],
+           [
+            104.0,
+            5.4006
+           ],
+           [
+            106.0,
+            7.0263
+           ],
+           [
+            108.0,
+            8.7915
+           ],
+           [
+            110.0,
+            10.653
+           ],
+           [
+            112.0,
+            12.576
+           ],
+           [
+            114.0,
+            14.5356
+           ],
+           [
+            116.0,
+            16.5155
+           ],
+           [
+            118.0,
+            18.506
+           ],
+           [
+            120.0,
+            20.5018
+           ],
+           [
+            122.0,
+            22.5
+           ],
+           [
+            124.0,
+            24.4992
+           ],
+           [
+            126.0,
+            26.4989
+           ],
+           [
+            128.0,
+            28.4988
+           ],
+           [
+            130.0,
+            30.4988
+           ],
+           [
+            132.0,
+            32.4988
+           ],
+           [
+            134.0,
+            34.4988
+           ],
+           [
+            136.0,
+            36.4988
+           ],
+           [
+            138.0,
+            38.4988
+           ],
+           [
+            140.0,
+            40.4988
+           ]
+          ]
+         }
+        ],
+        "caption": "$\\tau = 0.1$ after 50 steps: grid £2.7481 at $S = 100$, formula £2.7737."
+       },
+       {
+        "params": {
+         "tau": 0.5
+        },
+        "functions": [
+         {
+          "id": "fd",
+          "points": [
+           [
+            60.0,
+            0.0009
+           ],
+           [
+            62.0,
+            0.0022
+           ],
+           [
+            64.0,
+            0.0049
+           ],
+           [
+            66.0,
+            0.0102
+           ],
+           [
+            68.0,
+            0.0202
+           ],
+           [
+            70.0,
+            0.0379
+           ],
+           [
+            72.0,
+            0.0678
+           ],
+           [
+            74.0,
+            0.1158
+           ],
+           [
+            76.0,
+            0.1897
+           ],
+           [
+            78.0,
+            0.2989
+           ],
+           [
+            80.0,
+            0.4541
+           ],
+           [
+            82.0,
+            0.6675
+           ],
+           [
+            84.0,
+            0.9511
+           ],
+           [
+            86.0,
+            1.3173
+           ],
+           [
+            88.0,
+            1.7772
+           ],
+           [
+            90.0,
+            2.3405
+           ],
+           [
+            92.0,
+            3.0145
+           ],
+           [
+            94.0,
+            3.8043
+           ],
+           [
+            96.0,
+            4.7121
+           ],
+           [
+            98.0,
+            5.7375
+           ],
+           [
+            100.0,
+            6.8775
+           ],
+           [
+            102.0,
+            8.1271
+           ],
+           [
+            104.0,
+            9.4795
+           ],
+           [
+            106.0,
+            10.9265
+           ],
+           [
+            108.0,
+            12.4592
+           ],
+           [
+            110.0,
+            14.0683
+           ],
+           [
+            112.0,
+            15.7445
+           ],
+           [
+            114.0,
+            17.4788
+           ],
+           [
+            116.0,
+            19.2628
+           ],
+           [
+            118.0,
+            21.0887
+           ],
+           [
+            120.0,
+            22.9496
+           ],
+           [
+            122.0,
+            24.8393
+           ],
+           [
+            124.0,
+            26.7526
+           ],
+           [
+            126.0,
+            28.6849
+           ],
+           [
+            128.0,
+            30.6324
+           ],
+           [
+            130.0,
+            32.592
+           ],
+           [
+            132.0,
+            34.5612
+           ],
+           [
+            134.0,
+            36.5377
+           ],
+           [
+            136.0,
+            38.5199
+           ],
+           [
+            138.0,
+            40.5066
+           ],
+           [
+            140.0,
+            42.4967
+           ]
+          ]
+         }
+        ],
+        "caption": "$\\tau = 0.5$ after 250 steps: grid £6.8775 at $S = 100$, formula £6.8887."
+       },
+       {
+        "params": {
+         "tau": 1.0
+        },
+        "functions": [
+         {
+          "id": "fd",
+          "points": [
+           [
+            60.0,
+            0.0551
+           ],
+           [
+            62.0,
+            0.0891
+           ],
+           [
+            64.0,
+            0.1392
+           ],
+           [
+            66.0,
+            0.2105
+           ],
+           [
+            68.0,
+            0.3089
+           ],
+           [
+            70.0,
+            0.4409
+           ],
+           [
+            72.0,
+            0.6137
+           ],
+           [
+            74.0,
+            0.8344
+           ],
+           [
+            76.0,
+            1.1103
+           ],
+           [
+            78.0,
+            1.4484
+           ],
+           [
+            80.0,
+            1.8551
+           ],
+           [
+            82.0,
+            2.3361
+           ],
+           [
+            84.0,
+            2.8963
+           ],
+           [
+            86.0,
+            3.5394
+           ],
+           [
+            88.0,
+            4.268
+           ],
+           [
+            90.0,
+            5.0836
+           ],
+           [
+            92.0,
+            5.9865
+           ],
+           [
+            94.0,
+            6.976
+           ],
+           [
+            96.0,
+            8.0504
+           ],
+           [
+            98.0,
+            9.2071
+           ],
+           [
+            100.0,
+            10.4428
+           ],
+           [
+            102.0,
+            11.7536
+           ],
+           [
+            104.0,
+            13.1351
+           ],
+           [
+            106.0,
+            14.5828
+           ],
+           [
+            108.0,
+            16.0918
+           ],
+           [
+            110.0,
+            17.6573
+           ],
+           [
+            112.0,
+            19.2742
+           ],
+           [
+            114.0,
+            20.938
+           ],
+           [
+            116.0,
+            22.6441
+           ],
+           [
+            118.0,
+            24.388
+           ],
+           [
+            120.0,
+            26.1657
+           ],
+           [
+            122.0,
+            27.9734
+           ],
+           [
+            124.0,
+            29.8077
+           ],
+           [
+            126.0,
+            31.6651
+           ],
+           [
+            128.0,
+            33.543
+           ],
+           [
+            130.0,
+            35.4387
+           ],
+           [
+            132.0,
+            37.3497
+           ],
+           [
+            134.0,
+            39.2741
+           ],
+           [
+            136.0,
+            41.21
+           ],
+           [
+            138.0,
+            43.1557
+           ],
+           [
+            140.0,
+            45.11
+           ]
+          ]
+         }
+        ],
+        "caption": "$\\tau = 1.0$ after 500 steps: grid £10.4428 at $S = 100$, formula £10.4506."
+       }
+      ],
+      "frameLabels": [
+       "τ = 0.002",
+       "τ = 0.1",
+       "τ = 0.5",
+       "τ = 1"
+      ],
+      "label": "Time to expiry"
+     }
+    ]
+   },
+   "question": "At $\\tau = 1$, what price does the grid give at $S = 100$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 10.4428,
+    "tol": {
+     "abs": 6e-05
+    },
+    "unit": "£",
+    "accept": "£10.4428 (the formula says £10.4506)",
+    "wrong": [
+     {
+      "id": "formula",
+      "value": 10.4506,
+      "tol": {
+       "abs": 6e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Move the control to $\\tau = 1$ and read the caption."
+    }
+   ],
+   "feedback": {
+    "correct": "The grid gives £10.4428 against the formula's £10.4506.",
+    "generic": "Not quite right. Read the grid's value in the caption at $\\tau = 1$.",
+    "byKey": {
+     "formula": "That is the formula's price. The caption gives the grid's price first."
+    }
+   },
+   "explain": {
+    "text": "After 500 steps the grid gives £10.442791 at $S = 100$ against £10.450584. The error is $-0.0078$, less than a penny. The kink of the payoff is smoothed out within the first few steps.",
+    "canvas": {
+     "params": {
+      "tau": 1.0
+     },
+     "functions": [
+      {
+       "id": "fd",
+       "points": [
+        [
+         60.0,
+         0.0551
+        ],
+        [
+         62.0,
+         0.0891
+        ],
+        [
+         64.0,
+         0.1392
+        ],
+        [
+         66.0,
+         0.2105
+        ],
+        [
+         68.0,
+         0.3089
+        ],
+        [
+         70.0,
+         0.4409
+        ],
+        [
+         72.0,
+         0.6137
+        ],
+        [
+         74.0,
+         0.8344
+        ],
+        [
+         76.0,
+         1.1103
+        ],
+        [
+         78.0,
+         1.4484
+        ],
+        [
+         80.0,
+         1.8551
+        ],
+        [
+         82.0,
+         2.3361
+        ],
+        [
+         84.0,
+         2.8963
+        ],
+        [
+         86.0,
+         3.5394
+        ],
+        [
+         88.0,
+         4.268
+        ],
+        [
+         90.0,
+         5.0836
+        ],
+        [
+         92.0,
+         5.9865
+        ],
+        [
+         94.0,
+         6.976
+        ],
+        [
+         96.0,
+         8.0504
+        ],
+        [
+         98.0,
+         9.2071
+        ],
+        [
+         100.0,
+         10.4428
+        ],
+        [
+         102.0,
+         11.7536
+        ],
+        [
+         104.0,
+         13.1351
+        ],
+        [
+         106.0,
+         14.5828
+        ],
+        [
+         108.0,
+         16.0918
+        ],
+        [
+         110.0,
+         17.6573
+        ],
+        [
+         112.0,
+         19.2742
+        ],
+        [
+         114.0,
+         20.938
+        ],
+        [
+         116.0,
+         22.6441
+        ],
+        [
+         118.0,
+         24.388
+        ],
+        [
+         120.0,
+         26.1657
+        ],
+        [
+         122.0,
+         27.9734
+        ],
+        [
+         124.0,
+         29.8077
+        ],
+        [
+         126.0,
+         31.6651
+        ],
+        [
+         128.0,
+         33.543
+        ],
+        [
+         130.0,
+         35.4387
+        ],
+        [
+         132.0,
+         37.3497
+        ],
+        [
+         134.0,
+         39.2741
+        ],
+        [
+         136.0,
+         41.21
+        ],
+        [
+         138.0,
+         43.1557
+        ],
+        [
+         140.0,
+         45.11
+        ]
+       ]
+      }
+     ],
+     "caption": "$\\tau = 1.0$ after 500 steps: grid £10.4428 at $S = 100$, formula £10.4506."
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Differences for derivatives",
+   "prose": "The mesh solves the **Black-Scholes equation**, written in time to expiry $\\tau = T - t$. $$V_\\tau = \\tfrac12\\sigma^2S^2V_{SS} + rSV_S - rV,\\qquad V(S, 0) = (S - K)^+.$$ We only solve it here; `ito` l9 derives it by hedging with Itô's lemma. The edges are $V(0, \\tau) = 0$ and $V(S_{\\max}, \\tau) = S_{\\max} - Ke^{-r\\tau}$.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 7,
+     "lattice": true,
+     "rowHeads": [
+      "n = 2",
+      "n = 1",
+      "n = 0"
+     ],
+     "colHeads": [
+      "94",
+      "96",
+      "98",
+      "100",
+      "102",
+      "104",
+      "106"
+     ],
+     "colLabel": "Share price S",
+     "rowLabel": "Time level",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "?",
+       "",
+       "",
+       ""
+      ],
+      [
+       "0",
+       "0",
+       "0",
+       "0",
+       "2",
+       "4",
+       "6"
+      ]
+     ]
+    },
+    "state": {
+     "outline": [
+      "r2c4"
+     ],
+     "shade": {
+      "read": [
+       "r3c3",
+       "r3c4",
+       "r3c5"
+      ]
+     }
+    }
+   },
+   "question": "Which difference stands in for $V_{SS}$ at node $j$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "second",
+      "text": "$\\dfrac{V_{j+1} - 2V_j + V_{j-1}}{\\Delta S^2}$",
+      "correct": true
+     },
+     {
+      "id": "slope",
+      "text": "$\\dfrac{V_{j+1} - V_{j-1}}{2\\Delta S}$",
+      "why": "You picked the central difference for $V_S$, the slope. $V_{SS}$ is the change in slope."
+     },
+     {
+      "id": "one",
+      "text": "$\\dfrac{V_{j+1} - V_j}{\\Delta S^2}$",
+      "why": "You divided one first difference by $\\Delta S^2$. A second derivative needs both $V_{j+1} - V_j$ and $V_j - V_{j-1}$."
+     },
+     {
+      "id": "scale",
+      "text": "$\\dfrac{V_{j+1} - 2V_j + V_{j-1}}{2\\Delta S}$",
+      "why": "You kept the right numerator but divided by $2\\Delta S$. A second difference divides by $\\Delta S^2$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$V_{SS}$ is the rate of change of the slope."
+    },
+    {
+     "rung": "point",
+     "text": "Take the slope on each side of node $j$, then their difference.",
+     "highlight": [
+      "r3c3",
+      "r3c4",
+      "r3c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\big(\\tfrac{V_{j+1} - V_j}{\\Delta S} - \\tfrac{V_j - V_{j-1}}{\\Delta S}\\big)/\\Delta S$."
+    }
+   ],
+   "feedback": {
+    "correct": "That is the second difference, exact for quadratics.",
+    "generic": "Not quite right. Write the slope on each side of $j$ and difference them."
+   },
+   "explain": {
+    "text": "The slopes on each side are $(V_{j+1} - V_j)/\\Delta S$ and $(V_j - V_{j-1})/\\Delta S$. Their difference over $\\Delta S$ is the second difference. With $V_S \\approx (V_{j+1} - V_{j-1})/(2\\Delta S)$ and a forward step in $\\tau$, the update is **explicit**: it needs only the known row.",
+    "canvas": {
+     "shade": {
+      "read": [
+       "r3c3",
+       "r3c4",
+       "r3c5"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One step by hand",
+   "prose": "Put the differences in and collect terms. With $S_j = j\\Delta S$, $$V_j^{n+1} = a_jV_{j-1}^n + (1 + b_j)V_j^n + c_jV_{j+1}^n,$$ where $a_j = \\tfrac12\\Delta\\tau(\\sigma^2j^2 - rj)$, $b_j = -\\Delta\\tau(\\sigma^2j^2 + r)$ and $c_j = \\tfrac12\\Delta\\tau(\\sigma^2j^2 + rj)$. Take $S_{\\max} = 200$, $M = 100$ and $N = 500$, so $\\Delta S = 2$ and $\\Delta\\tau = 0.002$.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 7,
+     "lattice": true,
+     "rowHeads": [
+      "n = 2",
+      "n = 1",
+      "n = 0"
+     ],
+     "colHeads": [
+      "94",
+      "96",
+      "98",
+      "100",
+      "102",
+      "104",
+      "106"
+     ],
+     "colLabel": "Share price S",
+     "rowLabel": "Time level",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "?",
+       "",
+       "",
+       ""
+      ],
+      [
+       "0",
+       "0",
+       "0",
+       "0",
+       "2",
+       "4",
+       "6"
+      ]
+     ]
+    },
+    "state": {
+     "outline": [
+      "r2c4"
+     ],
+     "shade": {
+      "read": [
+       "r3c3",
+       "r3c4",
+       "r3c5"
+      ]
+     }
+    }
+   },
+   "question": "Fill in the coefficients at $j = 50$ and the new $V_{50}$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Quantity",
+     "Value"
+    ],
+    "rows": [
+     [
+      "$a_{50}$",
+      {
+       "edit": true,
+       "answer": 0.0975,
+       "tol": {
+        "abs": 5e-05
+       }
+      }
+     ],
+     [
+      "$1 + b_{50}$",
+      {
+       "edit": true,
+       "answer": 0.7999,
+       "tol": {
+        "abs": 5e-05
+       }
+      }
+     ],
+     [
+      "$c_{50}$",
+      {
+       "edit": true,
+       "answer": 0.1025,
+       "tol": {
+        "abs": 5e-05
+       }
+      }
+     ],
+     [
+      "$V_{50}$ after one step",
+      {
+       "edit": true,
+       "answer": 0.205,
+       "tol": {
+        "abs": 0.0005
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At $j = 50$: $\\sigma^2j^2 = 0.04 \\times 2{,}500 = 100$ and $rj = 2.5$."
+    },
+    {
+     "rung": "point",
+     "text": "Then $a_{50} = \\tfrac12 \\times 0.002 \\times 97.5$.",
+     "highlight": [
+      "r3c3",
+      "r3c4",
+      "r3c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$a = 0.0975$, $1 + b = 1 - 0.002 \\times 100.05$, $c = 0.1025$; the known row is 0, 0, 2."
+    }
+   ],
+   "feedback": {
+    "correct": "$V_{50} = 0.1025 \\times 2 = 0.2050$ after one step.",
+    "generic": "Not quite right. Keep the $\\tfrac12$ in $a_j$ and $c_j$, and write the centre weight as $1 + b_{50}$, not $b_{50}$."
+   },
+   "explain": {
+    "text": "$a = 0.001 \\times 97.5 = 0.0975$, $c = 0.001 \\times 102.5 = 0.1025$ and $1 + b = 1 - 0.002 \\times 100.05 = 0.7999$. The new value is $0.0975 \\times 0 + 0.7999 \\times 0 + 0.1025 \\times 2 = 0.2050$. The three weights sum to $1 - r\\Delta\\tau = 0.9999$.",
+    "canvas": {
+     "cells": {
+      "r2c4": "0.205"
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Where the error comes from",
+   "prose": "The full march gave £10.442791 against the formula's £10.450584: an error of $-0.0078$. The curves show the grid's error across $S$, in pence. Halving $\\Delta S$ to 1 ($M = 200$) needs $N = 1{,}700$ time steps, as we see next, and gives £10.4487.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      70,
+      130
+     ],
+     "y": [
+      -1,
+      0.2
+     ],
+     "height": 260,
+     "xAxis": "bottom",
+     "xLabel": "Share price $S$",
+     "yLabel": "Grid minus formula (pence)",
+     "functions": [
+      {
+       "id": "e1",
+       "points": [
+        [
+         70.0,
+         -0.0533
+        ],
+        [
+         72.0,
+         -0.114
+        ],
+        [
+         74.0,
+         -0.1857
+        ],
+        [
+         76.0,
+         -0.2657
+        ],
+        [
+         78.0,
+         -0.3507
+        ],
+        [
+         80.0,
+         -0.4367
+        ],
+        [
+         82.0,
+         -0.5201
+        ],
+        [
+         84.0,
+         -0.5974
+        ],
+        [
+         86.0,
+         -0.6654
+        ],
+        [
+         88.0,
+         -0.7218
+        ],
+        [
+         90.0,
+         -0.7651
+        ],
+        [
+         92.0,
+         -0.7943
+        ],
+        [
+         94.0,
+         -0.8096
+        ],
+        [
+         96.0,
+         -0.8113
+        ],
+        [
+         98.0,
+         -0.8007
+        ],
+        [
+         100.0,
+         -0.7792
+        ],
+        [
+         102.0,
+         -0.7485
+        ],
+        [
+         104.0,
+         -0.7105
+        ],
+        [
+         106.0,
+         -0.667
+        ],
+        [
+         108.0,
+         -0.6197
+        ],
+        [
+         110.0,
+         -0.5703
+        ],
+        [
+         112.0,
+         -0.5201
+        ],
+        [
+         114.0,
+         -0.4703
+        ],
+        [
+         116.0,
+         -0.4219
+        ],
+        [
+         118.0,
+         -0.3756
+        ],
+        [
+         120.0,
+         -0.332
+        ],
+        [
+         122.0,
+         -0.2915
+        ],
+        [
+         124.0,
+         -0.2541
+        ],
+        [
+         126.0,
+         -0.2201
+        ],
+        [
+         128.0,
+         -0.1894
+        ],
+        [
+         130.0,
+         -0.1619
+        ]
+       ],
+       "colour": 2,
+       "label": "$\\Delta S = 2$",
+       "labelAt": 100,
+       "labelSide": "below"
+      },
+      {
+       "id": "e2",
+       "points": [
+        [
+         70.0,
+         -0.0201
+        ],
+        [
+         71.0,
+         -0.0275
+        ],
+        [
+         72.0,
+         -0.0355
+        ],
+        [
+         73.0,
+         -0.0441
+        ],
+        [
+         74.0,
+         -0.0532
+        ],
+        [
+         75.0,
+         -0.0627
+        ],
+        [
+         76.0,
+         -0.0726
+        ],
+        [
+         77.0,
+         -0.0827
+        ],
+        [
+         78.0,
+         -0.0929
+        ],
+        [
+         79.0,
+         -0.1031
+        ],
+        [
+         80.0,
+         -0.1131
+        ],
+        [
+         81.0,
+         -0.123
+        ],
+        [
+         82.0,
+         -0.1325
+        ],
+        [
+         83.0,
+         -0.1416
+        ],
+        [
+         84.0,
+         -0.1501
+        ],
+        [
+         85.0,
+         -0.1581
+        ],
+        [
+         86.0,
+         -0.1653
+        ],
+        [
+         87.0,
+         -0.1719
+        ],
+        [
+         88.0,
+         -0.1777
+        ],
+        [
+         89.0,
+         -0.1827
+        ],
+        [
+         90.0,
+         -0.1868
+        ],
+        [
+         91.0,
+         -0.1901
+        ],
+        [
+         92.0,
+         -0.1926
+        ],
+        [
+         93.0,
+         -0.1943
+        ],
+        [
+         94.0,
+         -0.1951
+        ],
+        [
+         95.0,
+         -0.1952
+        ],
+        [
+         96.0,
+         -0.1946
+        ],
+        [
+         97.0,
+         -0.1932
+        ],
+        [
+         98.0,
+         -0.1912
+        ],
+        [
+         99.0,
+         -0.1885
+        ],
+        [
+         100.0,
+         -0.1853
+        ],
+        [
+         101.0,
+         -0.1816
+        ],
+        [
+         102.0,
+         -0.1775
+        ],
+        [
+         103.0,
+         -0.173
+        ],
+        [
+         104.0,
+         -0.1681
+        ],
+        [
+         105.0,
+         -0.1629
+        ],
+        [
+         106.0,
+         -0.1575
+        ],
+        [
+         107.0,
+         -0.1519
+        ],
+        [
+         108.0,
+         -0.1462
+        ],
+        [
+         109.0,
+         -0.1403
+        ],
+        [
+         110.0,
+         -0.1344
+        ],
+        [
+         111.0,
+         -0.1285
+        ],
+        [
+         112.0,
+         -0.1226
+        ],
+        [
+         113.0,
+         -0.1168
+        ],
+        [
+         114.0,
+         -0.111
+        ],
+        [
+         115.0,
+         -0.1053
+        ],
+        [
+         116.0,
+         -0.0997
+        ],
+        [
+         117.0,
+         -0.0943
+        ],
+        [
+         118.0,
+         -0.089
+        ],
+        [
+         119.0,
+         -0.0839
+        ],
+        [
+         120.0,
+         -0.0789
+        ],
+        [
+         121.0,
+         -0.0742
+        ],
+        [
+         122.0,
+         -0.0696
+        ],
+        [
+         123.0,
+         -0.0652
+        ],
+        [
+         124.0,
+         -0.0609
+        ],
+        [
+         125.0,
+         -0.0569
+        ],
+        [
+         126.0,
+         -0.0531
+        ],
+        [
+         127.0,
+         -0.0495
+        ],
+        [
+         128.0,
+         -0.046
+        ],
+        [
+         129.0,
+         -0.0427
+        ],
+        [
+         130.0,
+         -0.0396
+        ]
+       ],
+       "colour": 3,
+       "label": "$\\Delta S = 1$",
+       "labelAt": 118,
+       "labelSide": "above"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "z",
+       "y": 0
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the error at $S = 100$ on the finer grid, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.0019,
+    "tol": {
+     "abs": 0.0001
+    },
+    "unit": "£",
+    "accept": "−£0.0019, from 10.4487 − 10.4506",
+    "wrong": [
+     {
+      "id": "old",
+      "value": -0.0078,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "half",
+      "value": -0.0039,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.0019,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the formula's price from the finer grid's price."
+    },
+    {
+     "rung": "point",
+     "text": "The finer grid gives £10.4487.",
+     "highlight": [
+      "e2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$10.4487 - 10.4506$."
+    }
+   ],
+   "feedback": {
+    "correct": "About $-0.0019$: a quarter of the old error.",
+    "generic": "Not quite right. Take the finer grid's price minus £10.4506.",
+    "byKey": {
+     "old": "That is the coarse grid's error. Use the finer grid's £10.4487.",
+     "half": "You halved the old error, as a first-order method would. Compute it from the finer price instead.",
+     "sign": "You took the formula minus the grid. The grid is still below the formula."
+    }
+   },
+   "explain": {
+    "text": "$10.448730 - 10.450584 = -0.0019$, about a quarter of $-0.0078$. Halving $\\Delta S$ quartered the error, so the $\\Delta S^2$ term dominates. The error is largest near the strike, where the payoff had its kink."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Too long a step",
+   "prose": "Each new value is a weighted sum of three old ones. The centre weight $1 + b_j$ stays non-negative only if $\\Delta\\tau(\\sigma^2j^2 + r) \\le 1$. Taking $j = M$ as a safe bound gives $$\\Delta\\tau \\le \\frac{1}{\\sigma^2M^2 + r}.$$ Step through $N$ and watch the top of the grid.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      200
+     ],
+     "y": [
+      -20,
+      120
+     ],
+     "height": 280,
+     "xLabel": "Share price $S$",
+     "yLabel": "Call value $V$ (£)",
+     "params": {
+      "tau": 1.0
+     },
+     "functions": [
+      {
+       "id": "bs",
+       "expr": "x*Phi((ln(x/100) + (0.05 + 0.02)*tau)/(0.2*sqrt(tau))) - 100*exp(-0.05*tau)*Phi((ln(x/100) + (0.05 - 0.02)*tau)/(0.2*sqrt(tau)))",
+       "label": "formula",
+       "dashed": true,
+       "labelAt": 40,
+       "labelSide": "above"
+      },
+      {
+       "id": "fd",
+       "points": [],
+       "colour": 2,
+       "label": "grid",
+       "labelAt": 170
+      }
+     ]
+    },
+    "state": {
+     "functions": [
+      {
+       "id": "fd",
+       "points": [
+        [
+         0.0,
+         0.0
+        ],
+        [
+         2.0,
+         0.0
+        ],
+        [
+         4.0,
+         0.0
+        ],
+        [
+         6.0,
+         0.0
+        ],
+        [
+         8.0,
+         0.0
+        ],
+        [
+         10.0,
+         0.0
+        ],
+        [
+         12.0,
+         0.0
+        ],
+        [
+         14.0,
+         0.0
+        ],
+        [
+         16.0,
+         0.0
+        ],
+        [
+         18.0,
+         0.0
+        ],
+        [
+         20.0,
+         0.0
+        ],
+        [
+         22.0,
+         0.0
+        ],
+        [
+         24.0,
+         0.0
+        ],
+        [
+         26.0,
+         0.0
+        ],
+        [
+         28.0,
+         0.0
+        ],
+        [
+         30.0,
+         0.0
+        ],
+        [
+         32.0,
+         0.0
+        ],
+        [
+         34.0,
+         0.0
+        ],
+        [
+         36.0,
+         0.0
+        ],
+        [
+         38.0,
+         0.0
+        ],
+        [
+         40.0,
+         0.0
+        ],
+        [
+         42.0,
+         0.0
+        ],
+        [
+         44.0,
+         0.0
+        ],
+        [
+         46.0,
+         0.0
+        ],
+        [
+         48.0,
+         0.001
+        ],
+        [
+         50.0,
+         0.002
+        ],
+        [
+         52.0,
+         0.012
+        ],
+        [
+         54.0,
+         -0.301
+        ],
+        [
+         56.0,
+         14.057
+        ],
+        [
+         58.0,
+         -60.0
+        ],
+        [
+         60.0,
+         260.0
+        ],
+        [
+         62.0,
+         -60.0
+        ],
+        [
+         64.0,
+         260.0
+        ],
+        [
+         66.0,
+         -60.0
+        ],
+        [
+         68.0,
+         260.0
+        ],
+        [
+         70.0,
+         -60.0
+        ],
+        [
+         72.0,
+         260.0
+        ],
+        [
+         74.0,
+         -60.0
+        ],
+        [
+         76.0,
+         260.0
+        ],
+        [
+         78.0,
+         -60.0
+        ],
+        [
+         80.0,
+         260.0
+        ],
+        [
+         82.0,
+         -60.0
+        ],
+        [
+         84.0,
+         260.0
+        ],
+        [
+         86.0,
+         -60.0
+        ],
+        [
+         88.0,
+         260.0
+        ],
+        [
+         90.0,
+         -60.0
+        ],
+        [
+         92.0,
+         260.0
+        ],
+        [
+         94.0,
+         -60.0
+        ],
+        [
+         96.0,
+         260.0
+        ],
+        [
+         98.0,
+         -60.0
+        ],
+        [
+         100.0,
+         260.0
+        ],
+        [
+         102.0,
+         -60.0
+        ],
+        [
+         104.0,
+         260.0
+        ],
+        [
+         106.0,
+         -60.0
+        ],
+        [
+         108.0,
+         260.0
+        ],
+        [
+         110.0,
+         -60.0
+        ],
+        [
+         112.0,
+         260.0
+        ],
+        [
+         114.0,
+         -60.0
+        ],
+        [
+         116.0,
+         260.0
+        ],
+        [
+         118.0,
+         -60.0
+        ],
+        [
+         120.0,
+         260.0
+        ],
+        [
+         122.0,
+         -60.0
+        ],
+        [
+         124.0,
+         260.0
+        ],
+        [
+         126.0,
+         -60.0
+        ],
+        [
+         128.0,
+         260.0
+        ],
+        [
+         130.0,
+         -60.0
+        ],
+        [
+         132.0,
+         260.0
+        ],
+        [
+         134.0,
+         -60.0
+        ],
+        [
+         136.0,
+         260.0
+        ],
+        [
+         138.0,
+         -60.0
+        ],
+        [
+         140.0,
+         260.0
+        ],
+        [
+         142.0,
+         -60.0
+        ],
+        [
+         144.0,
+         260.0
+        ],
+        [
+         146.0,
+         -60.0
+        ],
+        [
+         148.0,
+         260.0
+        ],
+        [
+         150.0,
+         -60.0
+        ],
+        [
+         152.0,
+         260.0
+        ],
+        [
+         154.0,
+         -60.0
+        ],
+        [
+         156.0,
+         260.0
+        ],
+        [
+         158.0,
+         -60.0
+        ],
+        [
+         160.0,
+         260.0
+        ],
+        [
+         162.0,
+         -60.0
+        ],
+        [
+         164.0,
+         260.0
+        ],
+        [
+         166.0,
+         -60.0
+        ],
+        [
+         168.0,
+         260.0
+        ],
+        [
+         170.0,
+         -60.0
+        ],
+        [
+         172.0,
+         260.0
+        ],
+        [
+         174.0,
+         -60.0
+        ],
+        [
+         176.0,
+         260.0
+        ],
+        [
+         178.0,
+         -60.0
+        ],
+        [
+         180.0,
+         260.0
+        ],
+        [
+         182.0,
+         -60.0
+        ],
+        [
+         184.0,
+         260.0
+        ],
+        [
+         186.0,
+         -60.0
+        ],
+        [
+         188.0,
+         260.0
+        ],
+        [
+         190.0,
+         -60.0
+        ],
+        [
+         192.0,
+         260.0
+        ],
+        [
+         194.0,
+         -60.0
+        ],
+        [
+         196.0,
+         260.0
+        ],
+        [
+         198.0,
+         -60.0
+        ],
+        [
+         200.0,
+         104.877
+        ]
+       ]
+      }
+     ],
+     "caption": "$N = 250$: the price at $S = 100$ is $4.5 \\times 10^{30}$."
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "functions": [
+         {
+          "id": "fd",
+          "points": [
+           [
+            0.0,
+            0.0
+           ],
+           [
+            2.0,
+            0.0
+           ],
+           [
+            4.0,
+            0.0
+           ],
+           [
+            6.0,
+            0.0
+           ],
+           [
+            8.0,
+            0.0
+           ],
+           [
+            10.0,
+            0.0
+           ],
+           [
+            12.0,
+            0.0
+           ],
+           [
+            14.0,
+            0.0
+           ],
+           [
+            16.0,
+            0.0
+           ],
+           [
+            18.0,
+            0.0
+           ],
+           [
+            20.0,
+            0.0
+           ],
+           [
+            22.0,
+            0.0
+           ],
+           [
+            24.0,
+            0.0
+           ],
+           [
+            26.0,
+            0.0
+           ],
+           [
+            28.0,
+            0.0
+           ],
+           [
+            30.0,
+            0.0
+           ],
+           [
+            32.0,
+            0.0
+           ],
+           [
+            34.0,
+            0.0
+           ],
+           [
+            36.0,
+            0.0
+           ],
+           [
+            38.0,
+            0.0
+           ],
+           [
+            40.0,
+            0.0
+           ],
+           [
+            42.0,
+            0.0
+           ],
+           [
+            44.0,
+            0.0
+           ],
+           [
+            46.0,
+            0.0
+           ],
+           [
+            48.0,
+            0.001
+           ],
+           [
+            50.0,
+            0.002
+           ],
+           [
+            52.0,
+            0.012
+           ],
+           [
+            54.0,
+            -0.301
+           ],
+           [
+            56.0,
+            14.057
+           ],
+           [
+            58.0,
+            -60.0
+           ],
+           [
+            60.0,
+            260.0
+           ],
+           [
+            62.0,
+            -60.0
+           ],
+           [
+            64.0,
+            260.0
+           ],
+           [
+            66.0,
+            -60.0
+           ],
+           [
+            68.0,
+            260.0
+           ],
+           [
+            70.0,
+            -60.0
+           ],
+           [
+            72.0,
+            260.0
+           ],
+           [
+            74.0,
+            -60.0
+           ],
+           [
+            76.0,
+            260.0
+           ],
+           [
+            78.0,
+            -60.0
+           ],
+           [
+            80.0,
+            260.0
+           ],
+           [
+            82.0,
+            -60.0
+           ],
+           [
+            84.0,
+            260.0
+           ],
+           [
+            86.0,
+            -60.0
+           ],
+           [
+            88.0,
+            260.0
+           ],
+           [
+            90.0,
+            -60.0
+           ],
+           [
+            92.0,
+            260.0
+           ],
+           [
+            94.0,
+            -60.0
+           ],
+           [
+            96.0,
+            260.0
+           ],
+           [
+            98.0,
+            -60.0
+           ],
+           [
+            100.0,
+            260.0
+           ],
+           [
+            102.0,
+            -60.0
+           ],
+           [
+            104.0,
+            260.0
+           ],
+           [
+            106.0,
+            -60.0
+           ],
+           [
+            108.0,
+            260.0
+           ],
+           [
+            110.0,
+            -60.0
+           ],
+           [
+            112.0,
+            260.0
+           ],
+           [
+            114.0,
+            -60.0
+           ],
+           [
+            116.0,
+            260.0
+           ],
+           [
+            118.0,
+            -60.0
+           ],
+           [
+            120.0,
+            260.0
+           ],
+           [
+            122.0,
+            -60.0
+           ],
+           [
+            124.0,
+            260.0
+           ],
+           [
+            126.0,
+            -60.0
+           ],
+           [
+            128.0,
+            260.0
+           ],
+           [
+            130.0,
+            -60.0
+           ],
+           [
+            132.0,
+            260.0
+           ],
+           [
+            134.0,
+            -60.0
+           ],
+           [
+            136.0,
+            260.0
+           ],
+           [
+            138.0,
+            -60.0
+           ],
+           [
+            140.0,
+            260.0
+           ],
+           [
+            142.0,
+            -60.0
+           ],
+           [
+            144.0,
+            260.0
+           ],
+           [
+            146.0,
+            -60.0
+           ],
+           [
+            148.0,
+            260.0
+           ],
+           [
+            150.0,
+            -60.0
+           ],
+           [
+            152.0,
+            260.0
+           ],
+           [
+            154.0,
+            -60.0
+           ],
+           [
+            156.0,
+            260.0
+           ],
+           [
+            158.0,
+            -60.0
+           ],
+           [
+            160.0,
+            260.0
+           ],
+           [
+            162.0,
+            -60.0
+           ],
+           [
+            164.0,
+            260.0
+           ],
+           [
+            166.0,
+            -60.0
+           ],
+           [
+            168.0,
+            260.0
+           ],
+           [
+            170.0,
+            -60.0
+           ],
+           [
+            172.0,
+            260.0
+           ],
+           [
+            174.0,
+            -60.0
+           ],
+           [
+            176.0,
+            260.0
+           ],
+           [
+            178.0,
+            -60.0
+           ],
+           [
+            180.0,
+            260.0
+           ],
+           [
+            182.0,
+            -60.0
+           ],
+           [
+            184.0,
+            260.0
+           ],
+           [
+            186.0,
+            -60.0
+           ],
+           [
+            188.0,
+            260.0
+           ],
+           [
+            190.0,
+            -60.0
+           ],
+           [
+            192.0,
+            260.0
+           ],
+           [
+            194.0,
+            -60.0
+           ],
+           [
+            196.0,
+            260.0
+           ],
+           [
+            198.0,
+            -60.0
+           ],
+           [
+            200.0,
+            104.877
+           ]
+          ]
+         }
+        ],
+        "caption": "$N = 250$: the price at $S = 100$ is $4.5 \\times 10^{30}$."
+       },
+       {
+        "functions": [
+         {
+          "id": "fd",
+          "points": [
+           [
+            0.0,
+            0.0
+           ],
+           [
+            2.0,
+            0.0
+           ],
+           [
+            4.0,
+            0.0
+           ],
+           [
+            6.0,
+            0.0
+           ],
+           [
+            8.0,
+            0.0
+           ],
+           [
+            10.0,
+            0.0
+           ],
+           [
+            12.0,
+            0.0
+           ],
+           [
+            14.0,
+            0.0
+           ],
+           [
+            16.0,
+            0.0
+           ],
+           [
+            18.0,
+            0.0
+           ],
+           [
+            20.0,
+            0.0
+           ],
+           [
+            22.0,
+            0.0
+           ],
+           [
+            24.0,
+            0.0
+           ],
+           [
+            26.0,
+            0.0
+           ],
+           [
+            28.0,
+            0.0
+           ],
+           [
+            30.0,
+            0.0
+           ],
+           [
+            32.0,
+            0.0
+           ],
+           [
+            34.0,
+            0.0
+           ],
+           [
+            36.0,
+            0.0
+           ],
+           [
+            38.0,
+            0.0
+           ],
+           [
+            40.0,
+            0.0
+           ],
+           [
+            42.0,
+            0.0
+           ],
+           [
+            44.0,
+            0.0
+           ],
+           [
+            46.0,
+            0.0
+           ],
+           [
+            48.0,
+            0.001
+           ],
+           [
+            50.0,
+            0.003
+           ],
+           [
+            52.0,
+            0.005
+           ],
+           [
+            54.0,
+            0.01
+           ],
+           [
+            56.0,
+            0.018
+           ],
+           [
+            58.0,
+            0.032
+           ],
+           [
+            60.0,
+            0.055
+           ],
+           [
+            62.0,
+            0.089
+           ],
+           [
+            64.0,
+            0.138
+           ],
+           [
+            66.0,
+            0.21
+           ],
+           [
+            68.0,
+            0.308
+           ],
+           [
+            70.0,
+            0.44
+           ],
+           [
+            72.0,
+            0.613
+           ],
+           [
+            74.0,
+            0.833
+           ],
+           [
+            76.0,
+            1.109
+           ],
+           [
+            78.0,
+            1.448
+           ],
+           [
+            80.0,
+            1.854
+           ],
+           [
+            82.0,
+            2.336
+           ],
+           [
+            84.0,
+            2.896
+           ],
+           [
+            86.0,
+            3.537
+           ],
+           [
+            88.0,
+            4.316
+           ],
+           [
+            90.0,
+            4.323
+           ],
+           [
+            92.0,
+            17.554
+           ],
+           [
+            94.0,
+            -60.0
+           ],
+           [
+            96.0,
+            260.0
+           ],
+           [
+            98.0,
+            -60.0
+           ],
+           [
+            100.0,
+            260.0
+           ],
+           [
+            102.0,
+            -60.0
+           ],
+           [
+            104.0,
+            260.0
+           ],
+           [
+            106.0,
+            -60.0
+           ],
+           [
+            108.0,
+            260.0
+           ],
+           [
+            110.0,
+            -60.0
+           ],
+           [
+            112.0,
+            260.0
+           ],
+           [
+            114.0,
+            -60.0
+           ],
+           [
+            116.0,
+            260.0
+           ],
+           [
+            118.0,
+            -60.0
+           ],
+           [
+            120.0,
+            260.0
+           ],
+           [
+            122.0,
+            -60.0
+           ],
+           [
+            124.0,
+            260.0
+           ],
+           [
+            126.0,
+            -60.0
+           ],
+           [
+            128.0,
+            260.0
+           ],
+           [
+            130.0,
+            -60.0
+           ],
+           [
+            132.0,
+            260.0
+           ],
+           [
+            134.0,
+            -60.0
+           ],
+           [
+            136.0,
+            260.0
+           ],
+           [
+            138.0,
+            -60.0
+           ],
+           [
+            140.0,
+            260.0
+           ],
+           [
+            142.0,
+            -60.0
+           ],
+           [
+            144.0,
+            260.0
+           ],
+           [
+            146.0,
+            -60.0
+           ],
+           [
+            148.0,
+            260.0
+           ],
+           [
+            150.0,
+            -60.0
+           ],
+           [
+            152.0,
+            260.0
+           ],
+           [
+            154.0,
+            -60.0
+           ],
+           [
+            156.0,
+            260.0
+           ],
+           [
+            158.0,
+            -60.0
+           ],
+           [
+            160.0,
+            260.0
+           ],
+           [
+            162.0,
+            -60.0
+           ],
+           [
+            164.0,
+            260.0
+           ],
+           [
+            166.0,
+            -60.0
+           ],
+           [
+            168.0,
+            260.0
+           ],
+           [
+            170.0,
+            -60.0
+           ],
+           [
+            172.0,
+            260.0
+           ],
+           [
+            174.0,
+            -60.0
+           ],
+           [
+            176.0,
+            260.0
+           ],
+           [
+            178.0,
+            -60.0
+           ],
+           [
+            180.0,
+            260.0
+           ],
+           [
+            182.0,
+            -60.0
+           ],
+           [
+            184.0,
+            260.0
+           ],
+           [
+            186.0,
+            -60.0
+           ],
+           [
+            188.0,
+            260.0
+           ],
+           [
+            190.0,
+            -60.0
+           ],
+           [
+            192.0,
+            260.0
+           ],
+           [
+            194.0,
+            -60.0
+           ],
+           [
+            196.0,
+            260.0
+           ],
+           [
+            198.0,
+            -60.0
+           ],
+           [
+            200.0,
+            104.877
+           ]
+          ]
+         }
+        ],
+        "caption": "$N = 300$: the price at $S = 100$ is 379,169."
+       },
+       {
+        "functions": [
+         {
+          "id": "fd",
+          "points": [
+           [
+            0.0,
+            0.0
+           ],
+           [
+            2.0,
+            0.0
+           ],
+           [
+            4.0,
+            0.0
+           ],
+           [
+            6.0,
+            0.0
+           ],
+           [
+            8.0,
+            0.0
+           ],
+           [
+            10.0,
+            0.0
+           ],
+           [
+            12.0,
+            0.0
+           ],
+           [
+            14.0,
+            0.0
+           ],
+           [
+            16.0,
+            0.0
+           ],
+           [
+            18.0,
+            0.0
+           ],
+           [
+            20.0,
+            0.0
+           ],
+           [
+            22.0,
+            0.0
+           ],
+           [
+            24.0,
+            0.0
+           ],
+           [
+            26.0,
+            0.0
+           ],
+           [
+            28.0,
+            0.0
+           ],
+           [
+            30.0,
+            0.0
+           ],
+           [
+            32.0,
+            0.0
+           ],
+           [
+            34.0,
+            0.0
+           ],
+           [
+            36.0,
+            0.0
+           ],
+           [
+            38.0,
+            0.0
+           ],
+           [
+            40.0,
+            0.0
+           ],
+           [
+            42.0,
+            0.0
+           ],
+           [
+            44.0,
+            0.0
+           ],
+           [
+            46.0,
+            0.001
+           ],
+           [
+            48.0,
+            0.001
+           ],
+           [
+            50.0,
+            0.003
+           ],
+           [
+            52.0,
+            0.005
+           ],
+           [
+            54.0,
+            0.01
+           ],
+           [
+            56.0,
+            0.018
+           ],
+           [
+            58.0,
+            0.032
+           ],
+           [
+            60.0,
+            0.055
+           ],
+           [
+            62.0,
+            0.089
+           ],
+           [
+            64.0,
+            0.139
+           ],
+           [
+            66.0,
+            0.21
+           ],
+           [
+            68.0,
+            0.308
+           ],
+           [
+            70.0,
+            0.44
+           ],
+           [
+            72.0,
+            0.613
+           ],
+           [
+            74.0,
+            0.834
+           ],
+           [
+            76.0,
+            1.11
+           ],
+           [
+            78.0,
+            1.448
+           ],
+           [
+            80.0,
+            1.855
+           ],
+           [
+            82.0,
+            2.336
+           ],
+           [
+            84.0,
+            2.896
+           ],
+           [
+            86.0,
+            3.539
+           ],
+           [
+            88.0,
+            4.268
+           ],
+           [
+            90.0,
+            5.084
+           ],
+           [
+            92.0,
+            5.987
+           ],
+           [
+            94.0,
+            6.977
+           ],
+           [
+            96.0,
+            8.051
+           ],
+           [
+            98.0,
+            9.208
+           ],
+           [
+            100.0,
+            10.444
+           ],
+           [
+            102.0,
+            11.755
+           ],
+           [
+            104.0,
+            13.136
+           ],
+           [
+            106.0,
+            14.584
+           ],
+           [
+            108.0,
+            16.093
+           ],
+           [
+            110.0,
+            17.658
+           ],
+           [
+            112.0,
+            19.275
+           ],
+           [
+            114.0,
+            20.939
+           ],
+           [
+            116.0,
+            22.645
+           ],
+           [
+            118.0,
+            24.389
+           ],
+           [
+            120.0,
+            26.166
+           ],
+           [
+            122.0,
+            27.974
+           ],
+           [
+            124.0,
+            29.809
+           ],
+           [
+            126.0,
+            31.657
+           ],
+           [
+            128.0,
+            33.599
+           ],
+           [
+            130.0,
+            35.076
+           ],
+           [
+            132.0,
+            39.598
+           ],
+           [
+            134.0,
+            25.894
+           ],
+           [
+            136.0,
+            117.568
+           ],
+           [
+            138.0,
+            -60.0
+           ],
+           [
+            140.0,
+            260.0
+           ],
+           [
+            142.0,
+            -60.0
+           ],
+           [
+            144.0,
+            260.0
+           ],
+           [
+            146.0,
+            -60.0
+           ],
+           [
+            148.0,
+            260.0
+           ],
+           [
+            150.0,
+            -60.0
+           ],
+           [
+            152.0,
+            260.0
+           ],
+           [
+            154.0,
+            -60.0
+           ],
+           [
+            156.0,
+            260.0
+           ],
+           [
+            158.0,
+            -60.0
+           ],
+           [
+            160.0,
+            260.0
+           ],
+           [
+            162.0,
+            -60.0
+           ],
+           [
+            164.0,
+            260.0
+           ],
+           [
+            166.0,
+            -60.0
+           ],
+           [
+            168.0,
+            260.0
+           ],
+           [
+            170.0,
+            -60.0
+           ],
+           [
+            172.0,
+            260.0
+           ],
+           [
+            174.0,
+            -60.0
+           ],
+           [
+            176.0,
+            260.0
+           ],
+           [
+            178.0,
+            -60.0
+           ],
+           [
+            180.0,
+            260.0
+           ],
+           [
+            182.0,
+            -60.0
+           ],
+           [
+            184.0,
+            260.0
+           ],
+           [
+            186.0,
+            -60.0
+           ],
+           [
+            188.0,
+            260.0
+           ],
+           [
+            190.0,
+            -60.0
+           ],
+           [
+            192.0,
+            260.0
+           ],
+           [
+            194.0,
+            -60.0
+           ],
+           [
+            196.0,
+            260.0
+           ],
+           [
+            198.0,
+            -60.0
+           ],
+           [
+            200.0,
+            104.877
+           ]
+          ]
+         }
+        ],
+        "caption": "$N = 330$: £10.4439 at $S = 100$, but the grid reaches $7.5 \\times 10^{14}$ near the top."
+       },
+       {
+        "functions": [
+         {
+          "id": "fd",
+          "points": [
+           [
+            0.0,
+            0.0
+           ],
+           [
+            2.0,
+            0.0
+           ],
+           [
+            4.0,
+            0.0
+           ],
+           [
+            6.0,
+            0.0
+           ],
+           [
+            8.0,
+            0.0
+           ],
+           [
+            10.0,
+            0.0
+           ],
+           [
+            12.0,
+            0.0
+           ],
+           [
+            14.0,
+            0.0
+           ],
+           [
+            16.0,
+            0.0
+           ],
+           [
+            18.0,
+            0.0
+           ],
+           [
+            20.0,
+            0.0
+           ],
+           [
+            22.0,
+            0.0
+           ],
+           [
+            24.0,
+            0.0
+           ],
+           [
+            26.0,
+            0.0
+           ],
+           [
+            28.0,
+            0.0
+           ],
+           [
+            30.0,
+            0.0
+           ],
+           [
+            32.0,
+            0.0
+           ],
+           [
+            34.0,
+            0.0
+           ],
+           [
+            36.0,
+            0.0
+           ],
+           [
+            38.0,
+            0.0
+           ],
+           [
+            40.0,
+            0.0
+           ],
+           [
+            42.0,
+            0.0
+           ],
+           [
+            44.0,
+            0.0
+           ],
+           [
+            46.0,
+            0.001
+           ],
+           [
+            48.0,
+            0.001
+           ],
+           [
+            50.0,
+            0.003
+           ],
+           [
+            52.0,
+            0.005
+           ],
+           [
+            54.0,
+            0.01
+           ],
+           [
+            56.0,
+            0.019
+           ],
+           [
+            58.0,
+            0.033
+           ],
+           [
+            60.0,
+            0.055
+           ],
+           [
+            62.0,
+            0.089
+           ],
+           [
+            64.0,
+            0.139
+           ],
+           [
+            66.0,
+            0.21
+           ],
+           [
+            68.0,
+            0.309
+           ],
+           [
+            70.0,
+            0.441
+           ],
+           [
+            72.0,
+            0.614
+           ],
+           [
+            74.0,
+            0.834
+           ],
+           [
+            76.0,
+            1.11
+           ],
+           [
+            78.0,
+            1.448
+           ],
+           [
+            80.0,
+            1.855
+           ],
+           [
+            82.0,
+            2.336
+           ],
+           [
+            84.0,
+            2.896
+           ],
+           [
+            86.0,
+            3.539
+           ],
+           [
+            88.0,
+            4.268
+           ],
+           [
+            90.0,
+            5.084
+           ],
+           [
+            92.0,
+            5.987
+           ],
+           [
+            94.0,
+            6.976
+           ],
+           [
+            96.0,
+            8.05
+           ],
+           [
+            98.0,
+            9.207
+           ],
+           [
+            100.0,
+            10.443
+           ],
+           [
+            102.0,
+            11.754
+           ],
+           [
+            104.0,
+            13.135
+           ],
+           [
+            106.0,
+            14.583
+           ],
+           [
+            108.0,
+            16.092
+           ],
+           [
+            110.0,
+            17.657
+           ],
+           [
+            112.0,
+            19.274
+           ],
+           [
+            114.0,
+            20.938
+           ],
+           [
+            116.0,
+            22.644
+           ],
+           [
+            118.0,
+            24.388
+           ],
+           [
+            120.0,
+            26.166
+           ],
+           [
+            122.0,
+            27.973
+           ],
+           [
+            124.0,
+            29.808
+           ],
+           [
+            126.0,
+            31.665
+           ],
+           [
+            128.0,
+            33.543
+           ],
+           [
+            130.0,
+            35.439
+           ],
+           [
+            132.0,
+            37.35
+           ],
+           [
+            134.0,
+            39.274
+           ],
+           [
+            136.0,
+            41.21
+           ],
+           [
+            138.0,
+            43.156
+           ],
+           [
+            140.0,
+            45.11
+           ],
+           [
+            142.0,
+            47.071
+           ],
+           [
+            144.0,
+            49.039
+           ],
+           [
+            146.0,
+            51.012
+           ],
+           [
+            148.0,
+            52.989
+           ],
+           [
+            150.0,
+            54.97
+           ],
+           [
+            152.0,
+            56.954
+           ],
+           [
+            154.0,
+            58.941
+           ],
+           [
+            156.0,
+            60.93
+           ],
+           [
+            158.0,
+            62.921
+           ],
+           [
+            160.0,
+            64.913
+           ],
+           [
+            162.0,
+            66.907
+           ],
+           [
+            164.0,
+            68.902
+           ],
+           [
+            166.0,
+            70.897
+           ],
+           [
+            168.0,
+            72.894
+           ],
+           [
+            170.0,
+            74.891
+           ],
+           [
+            172.0,
+            76.888
+           ],
+           [
+            174.0,
+            78.886
+           ],
+           [
+            176.0,
+            80.885
+           ],
+           [
+            178.0,
+            82.883
+           ],
+           [
+            180.0,
+            84.882
+           ],
+           [
+            182.0,
+            86.881
+           ],
+           [
+            184.0,
+            88.88
+           ],
+           [
+            186.0,
+            90.88
+           ],
+           [
+            188.0,
+            92.879
+           ],
+           [
+            190.0,
+            94.879
+           ],
+           [
+            192.0,
+            96.878
+           ],
+           [
+            194.0,
+            98.878
+           ],
+           [
+            196.0,
+            100.878
+           ],
+           [
+            198.0,
+            102.877
+           ],
+           [
+            200.0,
+            104.877
+           ]
+          ]
+         }
+        ],
+        "caption": "$N = 500$: £10.4428 at $S = 100$; the largest value is £104.88, at $S_{\\max}$."
+       }
+      ],
+      "frameLabels": [
+       "N = 250",
+       "N = 300",
+       "N = 330",
+       "N = 500"
+      ],
+      "label": "Time steps"
+     }
+    ]
+   },
+   "question": "With $M = 100$ and $T = 1$, what is the smallest $N$ this bound allows?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 401,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "401, since 0.04 × 100² + 0.05 = 400.05",
+    "wrong": [
+     {
+      "id": "down",
+      "value": 400,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "no-square",
+      "value": 5,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "$\\Delta\\tau = 1/N$, so the bound says $N \\ge \\sigma^2M^2 + r$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sigma^2M^2 = 0.04 \\times 10{,}000 = 400$.",
+     "highlight": [
+      "fd"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$N \\ge 400.05$, and $N$ is a whole number."
+    }
+   ],
+   "feedback": {
+    "correct": "$N \\ge 400.05$, so 401.",
+    "generic": "Not quite right. Compute $\\sigma^2M^2 + r$ and round up.",
+    "byKey": {
+     "down": "You rounded 400.05 down. With $N = 400$, $\\Delta\\tau = 0.0025$ is just over the bound.",
+     "no-square": "You used $\\sigma^2M$. The weight grows like $j^2$, so square $M$."
+    }
+   },
+   "explain": {
+    "text": "$\\sigma^2M^2 + r = 400.05$, so $N \\ge 401$. With $N = 300$ the price is 379,169 and with $N = 250$ it is $4.5 \\times 10^{30}$. The blow-up starts at the top of the grid, where $\\sigma^2j^2$ is largest.",
+    "canvas": {
+     "functions": [
+      {
+       "id": "fd",
+       "points": [
+        [
+         0.0,
+         0.0
+        ],
+        [
+         2.0,
+         0.0
+        ],
+        [
+         4.0,
+         0.0
+        ],
+        [
+         6.0,
+         0.0
+        ],
+        [
+         8.0,
+         0.0
+        ],
+        [
+         10.0,
+         0.0
+        ],
+        [
+         12.0,
+         0.0
+        ],
+        [
+         14.0,
+         0.0
+        ],
+        [
+         16.0,
+         0.0
+        ],
+        [
+         18.0,
+         0.0
+        ],
+        [
+         20.0,
+         0.0
+        ],
+        [
+         22.0,
+         0.0
+        ],
+        [
+         24.0,
+         0.0
+        ],
+        [
+         26.0,
+         0.0
+        ],
+        [
+         28.0,
+         0.0
+        ],
+        [
+         30.0,
+         0.0
+        ],
+        [
+         32.0,
+         0.0
+        ],
+        [
+         34.0,
+         0.0
+        ],
+        [
+         36.0,
+         0.0
+        ],
+        [
+         38.0,
+         0.0
+        ],
+        [
+         40.0,
+         0.0
+        ],
+        [
+         42.0,
+         0.0
+        ],
+        [
+         44.0,
+         0.0
+        ],
+        [
+         46.0,
+         0.0
+        ],
+        [
+         48.0,
+         0.001
+        ],
+        [
+         50.0,
+         0.003
+        ],
+        [
+         52.0,
+         0.005
+        ],
+        [
+         54.0,
+         0.01
+        ],
+        [
+         56.0,
+         0.018
+        ],
+        [
+         58.0,
+         0.032
+        ],
+        [
+         60.0,
+         0.055
+        ],
+        [
+         62.0,
+         0.089
+        ],
+        [
+         64.0,
+         0.138
+        ],
+        [
+         66.0,
+         0.21
+        ],
+        [
+         68.0,
+         0.308
+        ],
+        [
+         70.0,
+         0.44
+        ],
+        [
+         72.0,
+         0.613
+        ],
+        [
+         74.0,
+         0.833
+        ],
+        [
+         76.0,
+         1.109
+        ],
+        [
+         78.0,
+         1.448
+        ],
+        [
+         80.0,
+         1.854
+        ],
+        [
+         82.0,
+         2.336
+        ],
+        [
+         84.0,
+         2.896
+        ],
+        [
+         86.0,
+         3.537
+        ],
+        [
+         88.0,
+         4.316
+        ],
+        [
+         90.0,
+         4.323
+        ],
+        [
+         92.0,
+         17.554
+        ],
+        [
+         94.0,
+         -60.0
+        ],
+        [
+         96.0,
+         260.0
+        ],
+        [
+         98.0,
+         -60.0
+        ],
+        [
+         100.0,
+         260.0
+        ],
+        [
+         102.0,
+         -60.0
+        ],
+        [
+         104.0,
+         260.0
+        ],
+        [
+         106.0,
+         -60.0
+        ],
+        [
+         108.0,
+         260.0
+        ],
+        [
+         110.0,
+         -60.0
+        ],
+        [
+         112.0,
+         260.0
+        ],
+        [
+         114.0,
+         -60.0
+        ],
+        [
+         116.0,
+         260.0
+        ],
+        [
+         118.0,
+         -60.0
+        ],
+        [
+         120.0,
+         260.0
+        ],
+        [
+         122.0,
+         -60.0
+        ],
+        [
+         124.0,
+         260.0
+        ],
+        [
+         126.0,
+         -60.0
+        ],
+        [
+         128.0,
+         260.0
+        ],
+        [
+         130.0,
+         -60.0
+        ],
+        [
+         132.0,
+         260.0
+        ],
+        [
+         134.0,
+         -60.0
+        ],
+        [
+         136.0,
+         260.0
+        ],
+        [
+         138.0,
+         -60.0
+        ],
+        [
+         140.0,
+         260.0
+        ],
+        [
+         142.0,
+         -60.0
+        ],
+        [
+         144.0,
+         260.0
+        ],
+        [
+         146.0,
+         -60.0
+        ],
+        [
+         148.0,
+         260.0
+        ],
+        [
+         150.0,
+         -60.0
+        ],
+        [
+         152.0,
+         260.0
+        ],
+        [
+         154.0,
+         -60.0
+        ],
+        [
+         156.0,
+         260.0
+        ],
+        [
+         158.0,
+         -60.0
+        ],
+        [
+         160.0,
+         260.0
+        ],
+        [
+         162.0,
+         -60.0
+        ],
+        [
+         164.0,
+         260.0
+        ],
+        [
+         166.0,
+         -60.0
+        ],
+        [
+         168.0,
+         260.0
+        ],
+        [
+         170.0,
+         -60.0
+        ],
+        [
+         172.0,
+         260.0
+        ],
+        [
+         174.0,
+         -60.0
+        ],
+        [
+         176.0,
+         260.0
+        ],
+        [
+         178.0,
+         -60.0
+        ],
+        [
+         180.0,
+         260.0
+        ],
+        [
+         182.0,
+         -60.0
+        ],
+        [
+         184.0,
+         260.0
+        ],
+        [
+         186.0,
+         -60.0
+        ],
+        [
+         188.0,
+         260.0
+        ],
+        [
+         190.0,
+         -60.0
+        ],
+        [
+         192.0,
+         260.0
+        ],
+        [
+         194.0,
+         -60.0
+        ],
+        [
+         196.0,
+         260.0
+        ],
+        [
+         198.0,
+         -60.0
+        ],
+        [
+         200.0,
+         104.877
+        ]
+       ]
+      }
+     ],
+     "caption": "$N = 300$: the price at $S = 100$ is 379,169."
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Finer in S, same in time",
+   "prose": "A colleague wants more accuracy. She halves $\\Delta S$ to 1 ($M = 200$) and keeps $N = 500$ time steps, which was stable before.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      200
+     ],
+     "y": [
+      -20,
+      120
+     ],
+     "height": 280,
+     "xLabel": "Share price $S$",
+     "yLabel": "Call value $V$ (£)",
+     "params": {
+      "tau": 1.0
+     },
+     "functions": [
+      {
+       "id": "bs",
+       "expr": "x*Phi((ln(x/100) + (0.05 + 0.02)*tau)/(0.2*sqrt(tau))) - 100*exp(-0.05*tau)*Phi((ln(x/100) + (0.05 - 0.02)*tau)/(0.2*sqrt(tau)))",
+       "label": "formula",
+       "dashed": true,
+       "labelAt": 40,
+       "labelSide": "above"
+      },
+      {
+       "id": "fd",
+       "points": [],
+       "colour": 2,
+       "label": "grid",
+       "labelAt": 170
+      }
+     ]
+    },
+    "state": {
+     "functions": [
+      {
+       "id": "fd",
+       "points": []
+      }
+     ],
+     "caption": "Formula at $\\tau = 1$. The finer grid is not drawn yet."
+    }
+   },
+   "question": "What does her grid give at $S = 100$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "better",
+      "text": "About £10.4487, closer to the formula",
+      "why": "You expected the finer grid to be more accurate. The safe step shrinks like $1/M^2$, and $N = 500$ is now far too few.",
+      "canvas": {
+       "functions": [
+        {
+         "id": "fd",
+         "points": [
+          [
+           0.0,
+           0.0
+          ],
+          [
+           1.0,
+           -60.0
+          ],
+          [
+           2.0,
+           260.0
+          ],
+          [
+           3.0,
+           -60.0
+          ],
+          [
+           4.0,
+           260.0
+          ],
+          [
+           5.0,
+           -60.0
+          ],
+          [
+           6.0,
+           260.0
+          ],
+          [
+           7.0,
+           -60.0
+          ],
+          [
+           8.0,
+           260.0
+          ],
+          [
+           9.0,
+           -60.0
+          ],
+          [
+           10.0,
+           260.0
+          ],
+          [
+           11.0,
+           -60.0
+          ],
+          [
+           12.0,
+           260.0
+          ],
+          [
+           13.0,
+           -60.0
+          ],
+          [
+           14.0,
+           260.0
+          ],
+          [
+           15.0,
+           -60.0
+          ],
+          [
+           16.0,
+           260.0
+          ],
+          [
+           17.0,
+           -60.0
+          ],
+          [
+           18.0,
+           260.0
+          ],
+          [
+           19.0,
+           -60.0
+          ],
+          [
+           20.0,
+           260.0
+          ],
+          [
+           21.0,
+           -60.0
+          ],
+          [
+           22.0,
+           260.0
+          ],
+          [
+           23.0,
+           -60.0
+          ],
+          [
+           24.0,
+           260.0
+          ],
+          [
+           25.0,
+           -60.0
+          ],
+          [
+           26.0,
+           260.0
+          ],
+          [
+           27.0,
+           -60.0
+          ],
+          [
+           28.0,
+           260.0
+          ],
+          [
+           29.0,
+           -60.0
+          ],
+          [
+           30.0,
+           260.0
+          ],
+          [
+           31.0,
+           -60.0
+          ],
+          [
+           32.0,
+           260.0
+          ],
+          [
+           33.0,
+           -60.0
+          ],
+          [
+           34.0,
+           260.0
+          ],
+          [
+           35.0,
+           -60.0
+          ],
+          [
+           36.0,
+           260.0
+          ],
+          [
+           37.0,
+           -60.0
+          ],
+          [
+           38.0,
+           260.0
+          ],
+          [
+           39.0,
+           -60.0
+          ],
+          [
+           40.0,
+           260.0
+          ],
+          [
+           41.0,
+           -60.0
+          ],
+          [
+           42.0,
+           260.0
+          ],
+          [
+           43.0,
+           -60.0
+          ],
+          [
+           44.0,
+           260.0
+          ],
+          [
+           45.0,
+           -60.0
+          ],
+          [
+           46.0,
+           260.0
+          ],
+          [
+           47.0,
+           -60.0
+          ],
+          [
+           48.0,
+           260.0
+          ],
+          [
+           49.0,
+           -60.0
+          ],
+          [
+           50.0,
+           260.0
+          ],
+          [
+           51.0,
+           -60.0
+          ],
+          [
+           52.0,
+           260.0
+          ],
+          [
+           53.0,
+           -60.0
+          ],
+          [
+           54.0,
+           260.0
+          ],
+          [
+           55.0,
+           -60.0
+          ],
+          [
+           56.0,
+           260.0
+          ],
+          [
+           57.0,
+           -60.0
+          ],
+          [
+           58.0,
+           260.0
+          ],
+          [
+           59.0,
+           -60.0
+          ],
+          [
+           60.0,
+           260.0
+          ],
+          [
+           61.0,
+           -60.0
+          ],
+          [
+           62.0,
+           260.0
+          ],
+          [
+           63.0,
+           -60.0
+          ],
+          [
+           64.0,
+           260.0
+          ],
+          [
+           65.0,
+           -60.0
+          ],
+          [
+           66.0,
+           260.0
+          ],
+          [
+           67.0,
+           -60.0
+          ],
+          [
+           68.0,
+           260.0
+          ],
+          [
+           69.0,
+           -60.0
+          ],
+          [
+           70.0,
+           260.0
+          ],
+          [
+           71.0,
+           -60.0
+          ],
+          [
+           72.0,
+           260.0
+          ],
+          [
+           73.0,
+           -60.0
+          ],
+          [
+           74.0,
+           260.0
+          ],
+          [
+           75.0,
+           -60.0
+          ],
+          [
+           76.0,
+           260.0
+          ],
+          [
+           77.0,
+           -60.0
+          ],
+          [
+           78.0,
+           260.0
+          ],
+          [
+           79.0,
+           -60.0
+          ],
+          [
+           80.0,
+           260.0
+          ],
+          [
+           81.0,
+           -60.0
+          ],
+          [
+           82.0,
+           260.0
+          ],
+          [
+           83.0,
+           -60.0
+          ],
+          [
+           84.0,
+           260.0
+          ],
+          [
+           85.0,
+           -60.0
+          ],
+          [
+           86.0,
+           260.0
+          ],
+          [
+           87.0,
+           -60.0
+          ],
+          [
+           88.0,
+           260.0
+          ],
+          [
+           89.0,
+           -60.0
+          ],
+          [
+           90.0,
+           260.0
+          ],
+          [
+           91.0,
+           -60.0
+          ],
+          [
+           92.0,
+           260.0
+          ],
+          [
+           93.0,
+           -60.0
+          ],
+          [
+           94.0,
+           260.0
+          ],
+          [
+           95.0,
+           -60.0
+          ],
+          [
+           96.0,
+           260.0
+          ],
+          [
+           97.0,
+           -60.0
+          ],
+          [
+           98.0,
+           260.0
+          ],
+          [
+           99.0,
+           -60.0
+          ],
+          [
+           100.0,
+           260.0
+          ],
+          [
+           101.0,
+           -60.0
+          ],
+          [
+           102.0,
+           260.0
+          ],
+          [
+           103.0,
+           -60.0
+          ],
+          [
+           104.0,
+           260.0
+          ],
+          [
+           105.0,
+           -60.0
+          ],
+          [
+           106.0,
+           260.0
+          ],
+          [
+           107.0,
+           -60.0
+          ],
+          [
+           108.0,
+           260.0
+          ],
+          [
+           109.0,
+           -60.0
+          ],
+          [
+           110.0,
+           260.0
+          ],
+          [
+           111.0,
+           -60.0
+          ],
+          [
+           112.0,
+           260.0
+          ],
+          [
+           113.0,
+           -60.0
+          ],
+          [
+           114.0,
+           260.0
+          ],
+          [
+           115.0,
+           -60.0
+          ],
+          [
+           116.0,
+           260.0
+          ],
+          [
+           117.0,
+           -60.0
+          ],
+          [
+           118.0,
+           260.0
+          ],
+          [
+           119.0,
+           -60.0
+          ],
+          [
+           120.0,
+           260.0
+          ],
+          [
+           121.0,
+           -60.0
+          ],
+          [
+           122.0,
+           260.0
+          ],
+          [
+           123.0,
+           -60.0
+          ],
+          [
+           124.0,
+           260.0
+          ],
+          [
+           125.0,
+           -60.0
+          ],
+          [
+           126.0,
+           260.0
+          ],
+          [
+           127.0,
+           -60.0
+          ],
+          [
+           128.0,
+           260.0
+          ],
+          [
+           129.0,
+           -60.0
+          ],
+          [
+           130.0,
+           260.0
+          ],
+          [
+           131.0,
+           -60.0
+          ],
+          [
+           132.0,
+           260.0
+          ],
+          [
+           133.0,
+           -60.0
+          ],
+          [
+           134.0,
+           260.0
+          ],
+          [
+           135.0,
+           -60.0
+          ],
+          [
+           136.0,
+           260.0
+          ],
+          [
+           137.0,
+           -60.0
+          ],
+          [
+           138.0,
+           260.0
+          ],
+          [
+           139.0,
+           -60.0
+          ],
+          [
+           140.0,
+           260.0
+          ],
+          [
+           141.0,
+           -60.0
+          ],
+          [
+           142.0,
+           260.0
+          ],
+          [
+           143.0,
+           -60.0
+          ],
+          [
+           144.0,
+           260.0
+          ],
+          [
+           145.0,
+           -60.0
+          ],
+          [
+           146.0,
+           260.0
+          ],
+          [
+           147.0,
+           -60.0
+          ],
+          [
+           148.0,
+           260.0
+          ],
+          [
+           149.0,
+           -60.0
+          ],
+          [
+           150.0,
+           260.0
+          ],
+          [
+           151.0,
+           -60.0
+          ],
+          [
+           152.0,
+           260.0
+          ],
+          [
+           153.0,
+           -60.0
+          ],
+          [
+           154.0,
+           260.0
+          ],
+          [
+           155.0,
+           -60.0
+          ],
+          [
+           156.0,
+           260.0
+          ],
+          [
+           157.0,
+           -60.0
+          ],
+          [
+           158.0,
+           260.0
+          ],
+          [
+           159.0,
+           -60.0
+          ],
+          [
+           160.0,
+           260.0
+          ],
+          [
+           161.0,
+           -60.0
+          ],
+          [
+           162.0,
+           260.0
+          ],
+          [
+           163.0,
+           -60.0
+          ],
+          [
+           164.0,
+           260.0
+          ],
+          [
+           165.0,
+           -60.0
+          ],
+          [
+           166.0,
+           260.0
+          ],
+          [
+           167.0,
+           -60.0
+          ],
+          [
+           168.0,
+           260.0
+          ],
+          [
+           169.0,
+           -60.0
+          ],
+          [
+           170.0,
+           260.0
+          ],
+          [
+           171.0,
+           -60.0
+          ],
+          [
+           172.0,
+           260.0
+          ],
+          [
+           173.0,
+           -60.0
+          ],
+          [
+           174.0,
+           260.0
+          ],
+          [
+           175.0,
+           -60.0
+          ],
+          [
+           176.0,
+           260.0
+          ],
+          [
+           177.0,
+           -60.0
+          ],
+          [
+           178.0,
+           260.0
+          ],
+          [
+           179.0,
+           -60.0
+          ],
+          [
+           180.0,
+           260.0
+          ],
+          [
+           181.0,
+           -60.0
+          ],
+          [
+           182.0,
+           260.0
+          ],
+          [
+           183.0,
+           -60.0
+          ],
+          [
+           184.0,
+           260.0
+          ],
+          [
+           185.0,
+           -60.0
+          ],
+          [
+           186.0,
+           260.0
+          ],
+          [
+           187.0,
+           -60.0
+          ],
+          [
+           188.0,
+           260.0
+          ],
+          [
+           189.0,
+           -60.0
+          ],
+          [
+           190.0,
+           260.0
+          ],
+          [
+           191.0,
+           -60.0
+          ],
+          [
+           192.0,
+           260.0
+          ],
+          [
+           193.0,
+           -60.0
+          ],
+          [
+           194.0,
+           260.0
+          ],
+          [
+           195.0,
+           -60.0
+          ],
+          [
+           196.0,
+           260.0
+          ],
+          [
+           197.0,
+           -60.0
+          ],
+          [
+           198.0,
+           260.0
+          ],
+          [
+           199.0,
+           -60.0
+          ],
+          [
+           200.0,
+           104.877
+          ]
+         ]
+        }
+       ],
+       "caption": "$M = 200$, $N = 500$: the grid has blown up."
+      }
+     },
+     {
+      "id": "same",
+      "text": "About £10.4428, as before",
+      "why": "Halving $\\Delta S$ changes every weight. A step that was safe at $M = 100$ need not be safe at $M = 200$."
+     },
+     {
+      "id": "blow",
+      "text": "A number near $4 \\times 10^{277}$: the march blows up",
+      "correct": true
+     },
+     {
+      "id": "error",
+      "text": "NumPy stops with an overflow error",
+      "why": "NumPy only warns on overflow and carries on. The grid returns a huge number, so a check has to catch it."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Apply the bound with $M = 200$."
+    },
+    {
+     "rung": "point",
+     "text": "$\\sigma^2M^2 + r = 0.04 \\times 40{,}000 + 0.05$.",
+     "highlight": [
+      "bs"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The bound needs $N \\ge 1{,}601$, and she used 500."
+    }
+   ],
+   "feedback": {
+    "correct": "Right: the bound needs $N \\ge 1{,}601$.",
+    "generic": "Not quite right. Check her step against the bound at $M = 200$.",
+    "byKey": {
+     "better": "You trusted the finer price grid to be better. The time step must shrink with it, by a factor of four."
+    }
+   },
+   "explain": {
+    "text": "With $M = 200$ the bound needs $N \\ge 1{,}600.05$, so $N \\ge 1{,}601$. At $N = 500$ her price is $4.1 \\times 10^{277}$. Halving $\\Delta S$ means quartering $\\Delta\\tau$.",
+    "canvas": {
+     "functions": [
+      {
+       "id": "fd",
+       "points": [
+        [
+         0.0,
+         0.0
+        ],
+        [
+         1.0,
+         -60.0
+        ],
+        [
+         2.0,
+         260.0
+        ],
+        [
+         3.0,
+         -60.0
+        ],
+        [
+         4.0,
+         260.0
+        ],
+        [
+         5.0,
+         -60.0
+        ],
+        [
+         6.0,
+         260.0
+        ],
+        [
+         7.0,
+         -60.0
+        ],
+        [
+         8.0,
+         260.0
+        ],
+        [
+         9.0,
+         -60.0
+        ],
+        [
+         10.0,
+         260.0
+        ],
+        [
+         11.0,
+         -60.0
+        ],
+        [
+         12.0,
+         260.0
+        ],
+        [
+         13.0,
+         -60.0
+        ],
+        [
+         14.0,
+         260.0
+        ],
+        [
+         15.0,
+         -60.0
+        ],
+        [
+         16.0,
+         260.0
+        ],
+        [
+         17.0,
+         -60.0
+        ],
+        [
+         18.0,
+         260.0
+        ],
+        [
+         19.0,
+         -60.0
+        ],
+        [
+         20.0,
+         260.0
+        ],
+        [
+         21.0,
+         -60.0
+        ],
+        [
+         22.0,
+         260.0
+        ],
+        [
+         23.0,
+         -60.0
+        ],
+        [
+         24.0,
+         260.0
+        ],
+        [
+         25.0,
+         -60.0
+        ],
+        [
+         26.0,
+         260.0
+        ],
+        [
+         27.0,
+         -60.0
+        ],
+        [
+         28.0,
+         260.0
+        ],
+        [
+         29.0,
+         -60.0
+        ],
+        [
+         30.0,
+         260.0
+        ],
+        [
+         31.0,
+         -60.0
+        ],
+        [
+         32.0,
+         260.0
+        ],
+        [
+         33.0,
+         -60.0
+        ],
+        [
+         34.0,
+         260.0
+        ],
+        [
+         35.0,
+         -60.0
+        ],
+        [
+         36.0,
+         260.0
+        ],
+        [
+         37.0,
+         -60.0
+        ],
+        [
+         38.0,
+         260.0
+        ],
+        [
+         39.0,
+         -60.0
+        ],
+        [
+         40.0,
+         260.0
+        ],
+        [
+         41.0,
+         -60.0
+        ],
+        [
+         42.0,
+         260.0
+        ],
+        [
+         43.0,
+         -60.0
+        ],
+        [
+         44.0,
+         260.0
+        ],
+        [
+         45.0,
+         -60.0
+        ],
+        [
+         46.0,
+         260.0
+        ],
+        [
+         47.0,
+         -60.0
+        ],
+        [
+         48.0,
+         260.0
+        ],
+        [
+         49.0,
+         -60.0
+        ],
+        [
+         50.0,
+         260.0
+        ],
+        [
+         51.0,
+         -60.0
+        ],
+        [
+         52.0,
+         260.0
+        ],
+        [
+         53.0,
+         -60.0
+        ],
+        [
+         54.0,
+         260.0
+        ],
+        [
+         55.0,
+         -60.0
+        ],
+        [
+         56.0,
+         260.0
+        ],
+        [
+         57.0,
+         -60.0
+        ],
+        [
+         58.0,
+         260.0
+        ],
+        [
+         59.0,
+         -60.0
+        ],
+        [
+         60.0,
+         260.0
+        ],
+        [
+         61.0,
+         -60.0
+        ],
+        [
+         62.0,
+         260.0
+        ],
+        [
+         63.0,
+         -60.0
+        ],
+        [
+         64.0,
+         260.0
+        ],
+        [
+         65.0,
+         -60.0
+        ],
+        [
+         66.0,
+         260.0
+        ],
+        [
+         67.0,
+         -60.0
+        ],
+        [
+         68.0,
+         260.0
+        ],
+        [
+         69.0,
+         -60.0
+        ],
+        [
+         70.0,
+         260.0
+        ],
+        [
+         71.0,
+         -60.0
+        ],
+        [
+         72.0,
+         260.0
+        ],
+        [
+         73.0,
+         -60.0
+        ],
+        [
+         74.0,
+         260.0
+        ],
+        [
+         75.0,
+         -60.0
+        ],
+        [
+         76.0,
+         260.0
+        ],
+        [
+         77.0,
+         -60.0
+        ],
+        [
+         78.0,
+         260.0
+        ],
+        [
+         79.0,
+         -60.0
+        ],
+        [
+         80.0,
+         260.0
+        ],
+        [
+         81.0,
+         -60.0
+        ],
+        [
+         82.0,
+         260.0
+        ],
+        [
+         83.0,
+         -60.0
+        ],
+        [
+         84.0,
+         260.0
+        ],
+        [
+         85.0,
+         -60.0
+        ],
+        [
+         86.0,
+         260.0
+        ],
+        [
+         87.0,
+         -60.0
+        ],
+        [
+         88.0,
+         260.0
+        ],
+        [
+         89.0,
+         -60.0
+        ],
+        [
+         90.0,
+         260.0
+        ],
+        [
+         91.0,
+         -60.0
+        ],
+        [
+         92.0,
+         260.0
+        ],
+        [
+         93.0,
+         -60.0
+        ],
+        [
+         94.0,
+         260.0
+        ],
+        [
+         95.0,
+         -60.0
+        ],
+        [
+         96.0,
+         260.0
+        ],
+        [
+         97.0,
+         -60.0
+        ],
+        [
+         98.0,
+         260.0
+        ],
+        [
+         99.0,
+         -60.0
+        ],
+        [
+         100.0,
+         260.0
+        ],
+        [
+         101.0,
+         -60.0
+        ],
+        [
+         102.0,
+         260.0
+        ],
+        [
+         103.0,
+         -60.0
+        ],
+        [
+         104.0,
+         260.0
+        ],
+        [
+         105.0,
+         -60.0
+        ],
+        [
+         106.0,
+         260.0
+        ],
+        [
+         107.0,
+         -60.0
+        ],
+        [
+         108.0,
+         260.0
+        ],
+        [
+         109.0,
+         -60.0
+        ],
+        [
+         110.0,
+         260.0
+        ],
+        [
+         111.0,
+         -60.0
+        ],
+        [
+         112.0,
+         260.0
+        ],
+        [
+         113.0,
+         -60.0
+        ],
+        [
+         114.0,
+         260.0
+        ],
+        [
+         115.0,
+         -60.0
+        ],
+        [
+         116.0,
+         260.0
+        ],
+        [
+         117.0,
+         -60.0
+        ],
+        [
+         118.0,
+         260.0
+        ],
+        [
+         119.0,
+         -60.0
+        ],
+        [
+         120.0,
+         260.0
+        ],
+        [
+         121.0,
+         -60.0
+        ],
+        [
+         122.0,
+         260.0
+        ],
+        [
+         123.0,
+         -60.0
+        ],
+        [
+         124.0,
+         260.0
+        ],
+        [
+         125.0,
+         -60.0
+        ],
+        [
+         126.0,
+         260.0
+        ],
+        [
+         127.0,
+         -60.0
+        ],
+        [
+         128.0,
+         260.0
+        ],
+        [
+         129.0,
+         -60.0
+        ],
+        [
+         130.0,
+         260.0
+        ],
+        [
+         131.0,
+         -60.0
+        ],
+        [
+         132.0,
+         260.0
+        ],
+        [
+         133.0,
+         -60.0
+        ],
+        [
+         134.0,
+         260.0
+        ],
+        [
+         135.0,
+         -60.0
+        ],
+        [
+         136.0,
+         260.0
+        ],
+        [
+         137.0,
+         -60.0
+        ],
+        [
+         138.0,
+         260.0
+        ],
+        [
+         139.0,
+         -60.0
+        ],
+        [
+         140.0,
+         260.0
+        ],
+        [
+         141.0,
+         -60.0
+        ],
+        [
+         142.0,
+         260.0
+        ],
+        [
+         143.0,
+         -60.0
+        ],
+        [
+         144.0,
+         260.0
+        ],
+        [
+         145.0,
+         -60.0
+        ],
+        [
+         146.0,
+         260.0
+        ],
+        [
+         147.0,
+         -60.0
+        ],
+        [
+         148.0,
+         260.0
+        ],
+        [
+         149.0,
+         -60.0
+        ],
+        [
+         150.0,
+         260.0
+        ],
+        [
+         151.0,
+         -60.0
+        ],
+        [
+         152.0,
+         260.0
+        ],
+        [
+         153.0,
+         -60.0
+        ],
+        [
+         154.0,
+         260.0
+        ],
+        [
+         155.0,
+         -60.0
+        ],
+        [
+         156.0,
+         260.0
+        ],
+        [
+         157.0,
+         -60.0
+        ],
+        [
+         158.0,
+         260.0
+        ],
+        [
+         159.0,
+         -60.0
+        ],
+        [
+         160.0,
+         260.0
+        ],
+        [
+         161.0,
+         -60.0
+        ],
+        [
+         162.0,
+         260.0
+        ],
+        [
+         163.0,
+         -60.0
+        ],
+        [
+         164.0,
+         260.0
+        ],
+        [
+         165.0,
+         -60.0
+        ],
+        [
+         166.0,
+         260.0
+        ],
+        [
+         167.0,
+         -60.0
+        ],
+        [
+         168.0,
+         260.0
+        ],
+        [
+         169.0,
+         -60.0
+        ],
+        [
+         170.0,
+         260.0
+        ],
+        [
+         171.0,
+         -60.0
+        ],
+        [
+         172.0,
+         260.0
+        ],
+        [
+         173.0,
+         -60.0
+        ],
+        [
+         174.0,
+         260.0
+        ],
+        [
+         175.0,
+         -60.0
+        ],
+        [
+         176.0,
+         260.0
+        ],
+        [
+         177.0,
+         -60.0
+        ],
+        [
+         178.0,
+         260.0
+        ],
+        [
+         179.0,
+         -60.0
+        ],
+        [
+         180.0,
+         260.0
+        ],
+        [
+         181.0,
+         -60.0
+        ],
+        [
+         182.0,
+         260.0
+        ],
+        [
+         183.0,
+         -60.0
+        ],
+        [
+         184.0,
+         260.0
+        ],
+        [
+         185.0,
+         -60.0
+        ],
+        [
+         186.0,
+         260.0
+        ],
+        [
+         187.0,
+         -60.0
+        ],
+        [
+         188.0,
+         260.0
+        ],
+        [
+         189.0,
+         -60.0
+        ],
+        [
+         190.0,
+         260.0
+        ],
+        [
+         191.0,
+         -60.0
+        ],
+        [
+         192.0,
+         260.0
+        ],
+        [
+         193.0,
+         -60.0
+        ],
+        [
+         194.0,
+         260.0
+        ],
+        [
+         195.0,
+         -60.0
+        ],
+        [
+         196.0,
+         260.0
+        ],
+        [
+         197.0,
+         -60.0
+        ],
+        [
+         198.0,
+         260.0
+        ],
+        [
+         199.0,
+         -60.0
+        ],
+        [
+         200.0,
+         104.877
+        ]
+       ]
+      }
+     ],
+     "caption": "$M = 200$, $N = 500$: the grid has blown up."
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Why the step is so small",
+   "prose": "The rule you used: an explicit step is safe while $$\\Delta\\tau \\le \\frac{1}{\\sigma^2M^2 + r} \\approx \\frac{\\Delta S^2}{\\sigma^2S_{\\max}^2}.$$ This is l12's stiffness again. The grid's fastest modes decay at rates like $\\sigma^2S^2/\\Delta S^2$, and the explicit step must keep up with them. Those modes are mesh noise we never wanted.",
+   "question": "Triple the price steps to $M = 300$. How many time steps does the bound need?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "nine",
+      "text": "About nine times as many: $N \\ge 3{,}601$",
+      "correct": true
+     },
+     {
+      "id": "three",
+      "text": "Three times as many: $N \\ge 1{,}201$",
+      "why": "You scaled $N$ with $M$. The bound has $M^2$, so tripling $M$ multiplies $N$ by nine."
+     },
+     {
+      "id": "same",
+      "text": "The same: $N \\ge 401$",
+      "why": "You treated the time step as fixed. Finer price steps make the fast modes faster."
+     },
+     {
+      "id": "root",
+      "text": "About $\\sqrt3$ times as many: $N \\ge 694$",
+      "why": "You took a square root. The bound grows with the square of $M$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$0.04 \\times 300^2 + 0.05 = 3{,}600.05$, so 3,601.",
+    "generic": "Not quite right. Put $M = 300$ into $\\sigma^2M^2 + r$."
+   },
+   "explain": {
+    "text": "$\\sigma^2M^2 + r = 3{,}600.05$, so $N \\ge 3{,}601$. The work is $M \\times N$, so tripling $M$ costs 27 times as much. That cost is why l14 steps implicitly."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "The explicit pricer",
+   "prose": "Write the march in NumPy. Update every interior node at once with slices, then reset the two edges. Return the price at `S0` by linear interpolation with `np.interp`. Also write `stable` for the bound.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Check",
+      "Ours"
+     ],
+     "rows": [
+      [
+       "$M = 100$, $N = 500$",
+       "£10.442791"
+      ],
+      [
+       "Strike 0, so the call is the share",
+       "£100"
+      ],
+      [
+       "`stable(200, 500, 0.2, 0.05)`",
+       "False"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `explicit_bs` and `stable`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\ndef explicit_bs(S0, K, r, sigma, T, Smax, M, N):\n    \"\"\"Explicit finite differences for a European call.\"\"\"\n    dS, dt = Smax / M, T / N\n    j = np.arange(M + 1)\n    S = j * dS\n    V = np.maximum(S - K, 0.0)            # payoff at tau = 0\n    # the coefficients a, b and c at every node j\n    ...\n    for n in range(N):\n        ...                               # interior nodes, then the edges\n    return float(np.interp(S0, S, V))\n\ndef stable(M, N, sigma, r, T=1.0):\n    \"\"\"True when dt <= 1 / (sigma^2 M^2 + r).\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef explicit_bs(S0, K, r, sigma, T, Smax, M, N):\n    \"\"\"Explicit finite differences for a European call.\"\"\"\n    dS, dt = Smax / M, T / N\n    j = np.arange(M + 1)\n    S = j * dS\n    V = np.maximum(S - K, 0.0)            # payoff at tau = 0\n    a = 0.5 * dt * (sigma ** 2 * j ** 2 - r * j)\n    b = -dt * (sigma ** 2 * j ** 2 + r)\n    c = 0.5 * dt * (sigma ** 2 * j ** 2 + r * j)\n    for n in range(N):\n        # the right side is built from the old row before V changes\n        V[1:-1] = a[1:-1] * V[:-2] + (1 + b[1:-1]) * V[1:-1] + c[1:-1] * V[2:]\n        V[0] = 0.0\n        V[-1] = Smax - K * math.exp(-r * (n + 1) * dt)\n    return float(np.interp(S0, S, V))\n\ndef stable(M, N, sigma, r, T=1.0):\n    \"\"\"True when dt <= 1 / (sigma^2 M^2 + r).\"\"\"\n    return T / N <= 1 / (sigma ** 2 * M ** 2 + r)\n",
+    "examples": [
+     {
+      "call": "round(explicit_bs(100, 100, 0.05, 0.2, 1, 200, 50, 200), 6)",
+      "expect": "10.416092",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "explicit_bs(100, 100, 0.05, 0.2, 1, 200, 100, 500)",
+      "expect": "10.442791444",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "explicit_bs(110, 100, 0.05, 0.2, 1, 200, 100, 500)",
+      "expect": "17.65725084",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "explicit_bs(100, 100, 0.05, 0.2, 1, 200, 50, 200)",
+      "expect": "10.416091888",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "explicit_bs(100, 0, 0.05, 0.2, 1, 200, 100, 500)",
+      "expect": "100.0",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-09
+      }
+     },
+     {
+      "call": "abs(explicit_bs(100, 100, 0.05, 0.2, 1, 200, 100, 300)) > 1e5",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "[stable(100, 401, 0.2, 0.05), stable(100, 400, 0.2, 0.05)]",
+      "expect": "[True, False]",
+      "compare": "equal"
+     },
+     {
+      "call": "[stable(200, 500, 0.2, 0.05), stable(200, 1601, 0.2, 0.05)]",
+      "expect": "[False, True]",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 7 hidden tests with NumPy, no SciPy. Prices must be within 1e-6 of ours, the strike-0 call must return £100, and N = 300 must blow up."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build the arrays `a`, `b`, `c` from `j` once, before the loop."
+    },
+    {
+     "rung": "point",
+     "text": "Inside the loop: `V[1:-1] = a[1:-1] * V[:-2] + (1 + b[1:-1]) * V[1:-1] + c[1:-1] * V[2:]`.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then `V[0] = 0` and `V[-1] = Smax - K * math.exp(-r * (n + 1) * dt)`."
+    }
+   ],
+   "feedback": {
+    "correct": "Your march matches ours to $10^{-6}$ and blows up where it should.",
+    "generic": "Not quite right. Compare your first step with the hand step: $V_{50} = 0.2050$."
+   },
+   "explain": {
+    "text": "NumPy builds the right side from the old row first, so one line updates every node. The share ($K = 0$) is linear in $S$, so the grid returns it exactly. At $N = 300$ the march breaks the bound and explodes."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Trusting a grid",
+   "prose": "A desk prices a barrier option on this grid, because no formula fits it. Before quoting, it prices the plain European call on the same grid: same $M$, $N$ and $S_{\\max}$. The grid gives £10.4428 against the formula's £10.4506.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Option",
+      "Grid",
+      "Formula"
+     ],
+     "rows": [
+      [
+       "European call",
+       "£10.4428",
+       "£10.4506"
+      ],
+      [
+       "Down-and-out call",
+       "to quote",
+       "none"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What does the European check tell the desk?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "allow",
+      "text": "These settings err by about £0.008, so the barrier quote needs that allowance or a finer grid",
+      "correct": true
+     },
+     {
+      "id": "nothing",
+      "text": "Nothing, because the barrier has no formula to compare with",
+      "why": "You treated the two prices as unrelated. Both come from the same differences and steps. A grid that misses a known price misses an unknown one too."
+     },
+     {
+      "id": "bug",
+      "text": "The grid has a bug and must be thrown away",
+      "why": "You read a small, predicted error as a bug. A $\\Delta S^2$ error of under a penny is what this mesh should give."
+     },
+     {
+      "id": "node",
+      "text": "Only the node at $S = 100$ needs checking",
+      "why": "You checked one node. At $N = 330$ that node looked right while the top of the grid had exploded."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does the European test measure about the grid itself?"
+    },
+    {
+     "rung": "point",
+     "text": "The difference is the grid's error at these settings.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Carry that error, or refine until it is small enough."
+    }
+   ],
+   "feedback": {
+    "correct": "The European is the grid's calibration check.",
+    "generic": "Not quite right. Ask what the European price says about the settings."
+   },
+   "explain": {
+    "text": "The European check measures the error of these settings, about £0.008 here. A grid is trusted only once it reproduces the closed form, the habit of `odes` l18. The barrier is then quoted with that allowance, or on a finer grid."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The grid replaces $V_{SS}$, $V_S$ and $V_\\tau$ by differences; each explicit step is a weighted sum of three known nodes.",
+   "The error is mostly $\\Delta S^2$: $-0.0078$ at $\\Delta S = 2$ and $-0.0019$ at $\\Delta S = 1$.",
+   "The explicit step is safe only while $\\Delta\\tau \\le 1/(\\sigma^2M^2 + r)$, so halving $\\Delta S$ quarters $\\Delta\\tau$."
+  ],
+  "formula": {
+   "name": "Explicit update",
+   "tex": "V_j^{n+1} = a_jV_{j-1}^n + (1 + b_j)V_j^n + c_jV_{j+1}^n,\\quad \\Delta\\tau \\le \\dfrac{1}{\\sigma^2M^2 + r}",
+   "note": "Refine $S$ and the time step must shrink with its square."
+  },
+  "trap": "Refining the price grid while keeping the time step makes the explicit march explode."
+ },
+ "quiz": [
+  {
+   "id": "q-limit-50",
+   "difficulty": 2,
+   "prose": "An explicit grid uses $M = 50$ price steps for our call ($\\sigma = 20\\%$, $r = 5\\%$, $T = 1$).",
+   "question": "What is the smallest $N$ the bound $\\Delta\\tau \\le 1/(\\sigma^2M^2 + r)$ allows?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 101,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "101, since 0.04 × 2,500 + 0.05 = 100.05",
+    "wrong": [
+     {
+      "id": "down",
+      "value": 100,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "m100",
+      "value": 401,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$100.05$ rounds up to 101.",
+    "generic": "Not quite right. Compute $0.04 \\times 50^2 + 0.05$ and round up.",
+    "byKey": {
+     "down": "You rounded 100.05 down. $N = 100$ gives a step just over the bound.",
+     "m100": "That is the limit for $M = 100$. Halving $M$ quarters it."
+    }
+   },
+   "explain": {
+    "text": "$\\sigma^2M^2 + r = 0.04 \\times 2{,}500 + 0.05 = 100.05$, so $N \\ge 101$. Halving $M$ from 100 quarters the 401 steps needed."
+   }
+  },
+  {
+   "id": "q-one-node",
+   "difficulty": 3,
+   "prose": "At $N = 330$ the explicit grid ($M = 100$) prices our call at £10.4439, close to £10.4506. The largest value on the grid is $7.5 \\times 10^{14}$.",
+   "question": "Is the £10.4439 usable?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: the march is unstable, and the growth will reach $S = 100$",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: only the price at $S = 100$ is needed",
+      "why": "You checked one node. The error grows every step and spreads down from the top rows."
+     },
+     {
+      "id": "cut",
+      "text": "Yes, if the top rows are cut off",
+      "why": "You treated the blow-up as an edge effect. It is the scheme amplifying noise, and it spreads to every node."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Check the whole grid, not one node.",
+    "generic": "Not quite right. Ask what $7.5 \\times 10^{14}$ says about the scheme."
+   },
+   "explain": {
+    "text": "$N = 330$ breaks the bound $N \\ge 401$, so errors grow by a factor every step. They start at the top, where $\\sigma^2j^2$ is largest, and have not yet reached $S = 100$. At $N = 300$ the same price is 379,169."
+   }
+  },
+  {
+   "id": "q-share",
+   "difficulty": 2,
+   "prose": "A call struck at $K = 0$ pays $S_T$: it is the share itself.",
+   "question": "What does `explicit_bs(100, 0, 0.05, 0.2, 1, 200, 100, 500)` return?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 100,
+    "tol": {
+     "abs": 0.001
+    },
+    "unit": "£",
+    "accept": "£100, up to rounding",
+    "wrong": [
+     {
+      "id": "call",
+      "value": 10.4428,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "disc",
+      "value": 95.1229,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Exactly the share price, £100.",
+    "generic": "Not quite right. Put $V = S$ into the equation.",
+    "byKey": {
+     "call": "That is the struck call. With $K = 0$ the payoff is the share.",
+     "disc": "You discounted the share. Its value today is its price, £100."
+    }
+   },
+   "explain": {
+    "text": "$V = S$ is linear, so the second difference is 0 and $rSV_S - rV = 0$. Every step returns the same row: £100 up to rounding. A forward, $S - Ke^{-r\\tau}$, is linear too; its only error, $2.4 \\times 10^{-4}$, comes from the time step."
+   }
+  }
+ ]
+}

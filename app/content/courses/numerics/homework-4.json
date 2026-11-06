@@ -1,0 +1,416 @@
+{
+ "id": "homework-4",
+ "course": "numerics",
+ "level": 4,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h4-weight",
+   "difficulty": 3,
+   "skills": [
+    "nm-fd"
+   ],
+   "prose": "An explicit grid has $S_{\\max} = 200$, $M = 100$ and $N = 500$, so $\\Delta\\tau = 0.002$, with $\\sigma = 20\\%$ and $r = 5\\%$.",
+   "question": "What is the centre weight $1 + b_j$ at $j = 80$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4879,
+    "tol": {
+     "abs": 0.0001
+    },
+    "accept": "0.4879 = 1 − 0.002 × (256 + 0.05)",
+    "wrong": [
+     {
+      "id": "b",
+      "value": -0.5121,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "no-r",
+      "value": 0.488,
+      "tol": {
+       "abs": 3e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$1 - 0.002 \\times 256.05 = 0.4879$.",
+    "generic": "Not quite right. Compute $\\sigma^2j^2 = 0.04 \\times 6{,}400$ first.",
+    "byKey": {
+     "b": "That is $b_{80}$. The centre weight is $1 + b_{80}$.",
+     "no-r": "You left out $r$ in $\\sigma^2j^2 + r$."
+    }
+   },
+   "explain": {
+    "text": "$\\sigma^2j^2 = 256$, so $1 + b_{80} = 1 - 0.002 \\times 256.05 = 0.4879$. At $j = 99$ it is only 0.2158, and at $N = 400$ it is 0.0198. Below $N = 393$ it turns negative near the top."
+   }
+  },
+  {
+   "id": "h4-stability-order",
+   "difficulty": 4,
+   "skills": [
+    "nm-fd",
+    "nm-stability"
+   ],
+   "prose": "Derive the explicit scheme's safe step from its weights, for our call ($\\sigma = 20\\%$, $r = 5\\%$).",
+   "question": "Put the lines in order. Leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "o1",
+      "text": "The step is $V_j^{n+1} = a_jV_{j-1}^n + (1 + b_j)V_j^n + c_jV_{j+1}^n$, and the weights sum to $1 - r\\Delta\\tau$."
+     },
+     {
+      "id": "o2",
+      "text": "Here $a_j, c_j > 0$ for $j \\ge 2$, and $a_1$ multiplies $V_0 = 0$."
+     },
+     {
+      "id": "o3",
+      "text": "So if $1 + b_j \\ge 0$ too, each new value is a weighted average of old ones, times $1 - r\\Delta\\tau$."
+     },
+     {
+      "id": "o4",
+      "text": "Then $\\max_j|V_j^{n+1}| \\le \\max_j|V_j^n|$: errors cannot grow."
+     },
+     {
+      "id": "o5",
+      "text": "$1 + b_j \\ge 0$ means $\\Delta\\tau(\\sigma^2j^2 + r) \\le 1$, hardest at the top; $j = M$ gives $\\Delta\\tau \\le 1/(\\sigma^2M^2 + r)$."
+     },
+     {
+      "id": "d1",
+      "text": "The weights sum to less than 1, so the scheme is stable for every $\\Delta\\tau$.",
+      "why": "You read the sum as enough. With a negative centre weight the sum stays below 1, yet errors grow: at $N = 300$ the price is 379,169."
+     }
+    ],
+    "answer": [
+     "o1",
+     "o2",
+     "o3",
+     "o4",
+     "o5"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "feedback": {
+    "correct": "Non-negative weights make each step an average, so nothing grows.",
+    "generic": "Not quite right. Show the weights are non-negative, then bound the maximum.",
+    "byKey": {
+     "d1": "You used the sum of the weights alone. Signs matter: a negative weight amplifies alternating errors."
+    }
+   },
+   "explain": {
+    "text": "With every weight non-negative, a step averages old values and shrinks the maximum. The centre weight is the one that can turn negative, at large $j$. That gives $\\Delta\\tau \\le 1/(\\sigma^2M^2 + r)$, so $N \\ge 401$ for $M = 100$."
+   }
+  },
+  {
+   "id": "h4-theta-factor",
+   "difficulty": 4,
+   "skills": [
+    "nm-stability"
+   ],
+   "prose": "In l14, a wiggle of frequency $\\omega$ is multiplied by about $-z$ under $\\Delta\\tau\\mathbf L$, with $z = 4\\nu\\sin^2(\\omega/2)$. The $\\theta$-scheme puts a share $\\theta$ of $\\mathbf L\\mathbf V$ on the new level: $(1 + \\theta z)V^{n+1} = (1 - (1 - \\theta)z)V^n$.",
+   "question": "Write the $\\theta$-scheme's factor $V^{n+1}/V^n$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{1-(1-\\theta)z}{1+\\theta z}",
+    "accept": [
+     "(1-(1-\\theta)z)/(1+\\theta z)",
+     "(1-z+\\theta z)/(1+\\theta z)"
+    ],
+    "wrong": [
+     {
+      "id": "flip",
+      "tex": "\\frac{1+\\theta z}{1-(1-\\theta)z}"
+     },
+     {
+      "id": "cn",
+      "tex": "\\frac{1-z/2}{1+z/2}"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "feedback": {
+    "correct": "It gives $1 - z$ at $\\theta = 0$, $\\tfrac{1}{1 + z}$ at 1 and Crank-Nicolson's at $\\tfrac12$.",
+    "generic": "Not quite right. Divide both sides by $V^n$, then by $1 + \\theta z$.",
+    "byKey": {
+     "flip": "You inverted the ratio. The new level carries $1 + \\theta z$.",
+     "cn": "That is the case $\\theta = \\tfrac12$. Keep $\\theta$ general."
+    }
+   },
+   "explain": {
+    "text": "The factor is $\\tfrac{1 - (1 - \\theta)z}{1 + \\theta z}$. For $\\theta \\ge \\tfrac12$ it stays in $(-1, 1]$ for every $z > 0$. As $z \\to \\infty$ it tends to $-(1 - \\theta)/\\theta$, which is $-1$ for Crank-Nicolson and 0 for implicit."
+   }
+  },
+  {
+   "id": "h4-control-paths",
+   "difficulty": 4,
+   "skills": [
+    "nm-mc"
+   ],
+   "prose": "A plain estimate needs 1,000,000 paths for its target error. A control with a known mean has $\\rho = 0.98$ with the payoff.",
+   "question": "How many controlled paths reach the same error?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 39600,
+    "tol": {
+     "abs": 1
+    },
+    "accept": "39,600 = 1,000,000 × (1 − 0.98²)",
+    "wrong": [
+     {
+      "id": "nosq",
+      "value": 20000,
+      "tol": {
+       "abs": 1
+      }
+     },
+     {
+      "id": "rho2",
+      "value": 960400,
+      "tol": {
+       "abs": 1
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "A factor of 25 fewer paths.",
+    "generic": "Not quite right. Multiply by $1 - \\rho^2$.",
+    "byKey": {
+     "nosq": "You multiplied by $1 - \\rho$. Use $1 - \\rho^2$.",
+     "rho2": "You multiplied by $\\rho^2$. What is left is $1 - \\rho^2$."
+    }
+   },
+   "explain": {
+    "text": "$1 - 0.98^2 = 0.0396$, so $1{,}000{,}000 \\times 0.0396 = 39{,}600$ paths, a factor of 25.3."
+   }
+  },
+  {
+   "id": "h4-shift",
+   "difficulty": 4,
+   "skills": [
+    "nm-mc"
+   ],
+   "prose": "Broadie and Glasserman correct a barrier checked every $\\Delta t$ by pricing a continuous barrier at $He^{-0.5826\\sigma\\sqrt{\\Delta t}}$. Take $H = 90$, $\\sigma = 20\\%$ and daily checks, $\\Delta t = 1/252$.",
+   "question": "What is the shifted barrier?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 89.34,
+    "tol": {
+     "abs": 0.01
+    },
+    "unit": "£",
+    "accept": "£89.34 = 90 × e^(−0.00734)",
+    "wrong": [
+     {
+      "id": "up",
+      "value": 90.66,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "monthly",
+      "value": 86.98,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "£89.34: the daily barrier acts lower than £90.",
+    "generic": "Not quite right. Compute $0.5826 \\times 0.2 \\times \\sqrt{1/252}$ first.",
+    "byKey": {
+     "up": "You shifted the barrier up. Missed touches make a down barrier act lower.",
+     "monthly": "That uses monthly checks, $\\Delta t = 1/12$."
+    }
+   },
+   "explain": {
+    "text": "$0.5826 \\times 0.2/\\sqrt{252} = 0.00734$, so $90e^{-0.00734} = 89.34$. A lower barrier knocks out fewer paths, so the daily option is dearer than the continuous one: £8.914 against £8.6655."
+   }
+  },
+  {
+   "id": "h4-gauss-degree",
+   "difficulty": 3,
+   "skills": [
+    "nm-quadrature"
+   ],
+   "prose": "Gauss-Legendre with $n$ nodes is exact for every polynomial up to degree $2n - 1$.",
+   "question": "Up to what degree is the 32-node rule of l17 exact?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 63,
+    "tol": {
+     "abs": 0
+    },
+    "accept": "63 = 2 × 32 − 1",
+    "wrong": [
+     {
+      "id": "n",
+      "value": 32,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "twon",
+      "value": 64,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Degree 63.",
+    "generic": "Not quite right. Use $2n - 1$.",
+    "byKey": {
+     "n": "That is the node count. Each node buys two degrees.",
+     "twon": "Off by one: $2n$ itself is not integrated exactly."
+    }
+   },
+   "explain": {
+    "text": "$2 \\times 32 - 1 = 63$. On the smooth piece $[z^*, 8]$ the integrand is close to a polynomial of that degree, so the error is $10^{-13}$."
+   }
+  },
+  {
+   "id": "h4-price-report",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "nm-fd",
+    "nm-quadrature",
+    "nm-mc"
+   ],
+   "prose": "The exit task, on fresh options. Write `price_report`. Each method refines itself until its own error estimate is below `tol`. It reports the price, the estimate and the work done. The docstring fixes the settings. The tests use the half-year 95 put ($r = 4\\%$, $\\sigma = 30\\%$) and a one-year 120 call ($r = 5\\%$, $\\sigma = 20\\%$), with `tol` = 0.005.",
+   "question": "Complete `price_report`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef thomas(a, b, c, d):\n    \"\"\"Solve a tridiagonal system: a below, b on, c above the diagonal.\"\"\"\n    n = len(d)\n    a, b, c, d = (list(map(float, v)) for v in (a, b, c, d))\n    cp, dp = [0.0] * n, [0.0] * n\n    cp[0], dp[0] = c[0] / b[0], d[0] / b[0]\n    for k in range(1, n):\n        m = b[k] - a[k] * cp[k - 1]\n        cp[k] = c[k] / m\n        dp[k] = (d[k] - a[k] * dp[k - 1]) / m\n    x = [0.0] * n\n    x[-1] = dp[-1]\n    for k in range(n - 2, -1, -1):\n        x[k] = dp[k] - cp[k] * x[k + 1]\n    return np.array(x)\n\n\ndef price_report(S0, K, r, sigma, T, kind, tol):\n    \"\"\"Price a European call or put three ways, each refined until its own\n    error estimate is below tol. Return {\"fd\": (price, error, M * N),\n    \"quad\": (price, error, nodes), \"mc\": (price, SE, paths)}.\n    Grid: Crank-Nicolson, two implicit steps first, Smax = 2 * S0, from\n    M = 40, N = 20, doubling both until two prices differ by under tol;\n    report the last difference over 3. Quadrature: Gauss-Legendre from\n    4 nodes, doubling until two prices differ by under tol; report that\n    difference. Monte Carlo: the share as control, seed 0, from 10,000\n    paths, doubling until SE < tol.\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\n\ndef thomas(a, b, c, d):\n    \"\"\"Solve a tridiagonal system: a below, b on, c above the diagonal.\"\"\"\n    n = len(d)\n    a, b, c, d = (list(map(float, v)) for v in (a, b, c, d))\n    cp, dp = [0.0] * n, [0.0] * n\n    cp[0], dp[0] = c[0] / b[0], d[0] / b[0]\n    for k in range(1, n):\n        m = b[k] - a[k] * cp[k - 1]\n        cp[k] = c[k] / m\n        dp[k] = (d[k] - a[k] * dp[k - 1]) / m\n    x = [0.0] * n\n    x[-1] = dp[-1]\n    for k in range(n - 2, -1, -1):\n        x[k] = dp[k] - cp[k] * x[k + 1]\n    return np.array(x)\n\n\ndef cn_price(S0, K, r, sigma, T, kind, Smax, M, N, implicit_start=2):\n    dS, dt = Smax / M, T / N\n    j = np.arange(M + 1)\n    S = j * dS\n    V = np.maximum(S - K, 0.0) if kind == \"call\" else np.maximum(K - S, 0.0)\n    al = 0.5 * (sigma ** 2 * j ** 2 - r * j)[1:-1]\n    be = -(sigma ** 2 * j ** 2 + r)[1:-1]\n    ga = 0.5 * (sigma ** 2 * j ** 2 + r * j)[1:-1]\n    for n in range(N):\n        th = 1.0 if n < implicit_start else 0.5\n        disc = K * math.exp(-r * (n + 1) * dt)\n        lo, hi = (0.0, Smax - disc) if kind == \"call\" else (disc, 0.0)\n        rhs = V[1:-1] + (1 - th) * dt * (al * V[:-2] + be * V[1:-1] + ga * V[2:])\n        rhs[0] += th * dt * al[0] * lo           # the new edge values move\n        rhs[-1] += th * dt * ga[-1] * hi         # to the right side\n        inner = thomas(-th * dt * al, 1 - th * dt * be, -th * dt * ga, rhs)\n        V = np.concatenate(([lo], inner, [hi]))\n    return float(np.interp(S0, S, V))\n\n\ndef gl_price(S0, K, r, sigma, T, kind, n, zmax=8):\n    m, s = (r - sigma ** 2 / 2) * T, sigma * math.sqrt(T)\n    zs = (math.log(K / S0) - m) / s               # the kink, at a node end\n    a, b = (zs, zmax) if kind == \"call\" else (-zmax, zs)\n    x, w = np.polynomial.legendre.leggauss(n)\n    z = (b - a) / 2 * x + (a + b) / 2\n    ST = S0 * np.exp(m + s * z)\n    pay = ST - K if kind == \"call\" else K - ST\n    phi = np.exp(-z ** 2 / 2) / math.sqrt(2 * math.pi)\n    return math.exp(-r * T) * (b - a) / 2 * float(np.sum(w * pay * phi))\n\n\ndef mc_price(S0, K, r, sigma, T, kind, n, seed=0):\n    z = np.random.default_rng(seed).standard_normal(n)\n    ST = S0 * np.exp((r - sigma ** 2 / 2) * T + sigma * math.sqrt(T) * z)\n    pay = np.maximum(ST - K, 0.0) if kind == \"call\" else np.maximum(K - ST, 0.0)\n    y = math.exp(-r * T) * pay\n    x = math.exp(-r * T) * ST                      # control, mean S0\n    b = np.cov(y, x)[0, 1] / np.var(x, ddof=1)\n    a = y - b * (x - S0)\n    return float(a.mean()), float(a.std(ddof=1) / math.sqrt(n))\n\ndef price_report(S0, K, r, sigma, T, kind, tol):\n    \"\"\"Refine each method until its own error estimate is below tol.\"\"\"\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    Smax, M, N = 2 * S0, 40, 20                    # S0 on a node; K too, here\n    old = cn_price(S0, K, r, sigma, T, kind, Smax, M, N)\n    while True:\n        M, N = 2 * M, 2 * N\n        new = cn_price(S0, K, r, sigma, T, kind, Smax, M, N)\n        if abs(new - old) < tol:\n            break\n        old = new\n    fd = (new, abs(new - old) / 3, M * N)          # the error quarters\n    n = 4\n    old = gl_price(S0, K, r, sigma, T, kind, n)\n    while True:\n        n *= 2\n        new = gl_price(S0, K, r, sigma, T, kind, n)\n        if abs(new - old) < tol:\n            break\n        old = new\n    quad = (new, abs(new - old), n)\n    paths = 10_000\n    while True:\n        price, se = mc_price(S0, K, r, sigma, T, kind, paths, 0)\n        if se < tol:\n            break\n        paths *= 2\n    return {\"fd\": fd, \"quad\": quad, \"mc\": (price, se, paths)}\n",
+    "examples": [
+     {
+      "call": "sorted(price_report(100, 100, 0.05, 0.2, 1, 'call', 0.01))",
+      "expect": "['fd', 'mc', 'quad']",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rep = price_report(100, 95, 0.04, 0.3, 0.5, 'put', 0.005)",
+      "call": "abs(rep['fd'][0] - 5.170208971851125) < 0.005",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rep = price_report(100, 95, 0.04, 0.3, 0.5, 'put', 0.005)",
+      "call": "abs(rep['fd'][0] - 5.170208971851125) < 2 * rep['fd'][1] + 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rep = price_report(100, 95, 0.04, 0.3, 0.5, 'put', 0.005)",
+      "call": "abs(rep['quad'][0] - 5.170208971851125) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rep = price_report(100, 95, 0.04, 0.3, 0.5, 'put', 0.005)",
+      "call": "rep['mc'][1] < 0.005 and abs(rep['mc'][0] - 5.170208971851125) < 3 * rep['mc'][1]",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rep = price_report(100, 120, 0.05, 0.2, 1, 'call', 0.005)",
+      "call": "abs(rep['fd'][0] - 3.2474774165608125) < 0.005",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rep = price_report(100, 120, 0.05, 0.2, 1, 'call', 0.005)",
+      "call": "abs(rep['fd'][0] - 3.2474774165608125) < 2 * rep['fd'][1] + 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rep = price_report(100, 120, 0.05, 0.2, 1, 'call', 0.005)",
+      "call": "abs(rep['quad'][0] - 3.2474774165608125) < 1e-6",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rep = price_report(100, 120, 0.05, 0.2, 1, 'call', 0.005)",
+      "call": "rep['mc'][1] < 0.005 and abs(rep['mc'][0] - 3.2474774165608125) < 3 * rep['mc'][1]",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "rep = price_report(100, 120, 0.05, 0.2, 1, 'call', 0.005)",
+      "call": "all(isinstance(rep[k][2], int) and rep[k][2] > 0 for k in ('fd', 'quad', 'mc'))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "call": "price_report(100, 100, 0.05, 0.2, 1, 'swap', 0.01)",
+      "expect": "ValueError",
+      "compare": "raises"
+     }
+    ],
+    "how": "Submit runs 10 hidden tests with NumPy, no SciPy, each under a few seconds. Each price must be within tol of Black-Scholes, or 3 SE for Monte Carlo. The grid's estimate must be honest, and a bad kind must raise ValueError."
+   },
+   "feedback": {
+    "correct": "Three prices, each with an error it measured itself.",
+    "generic": "Not quite right. Get one method right at a time, starting with the grid."
+   },
+   "explain": {
+    "text": "For the put the grid stops at $M = 320$ with error $-9.4 \\times 10^{-4}$, matching its estimate. Quadrature stops at 16 nodes, and Monte Carlo at 2,560,000 paths with SE £0.0036. The work counts show the cost of each method's accuracy."
+   }
+  },
+  {
+   "id": "h4-validation-note",
+   "difficulty": 5,
+   "skills": [
+    "nm-fd",
+    "nm-quadrature",
+    "nm-mc"
+   ],
+   "kind": "longform",
+   "prompt": "Write the model validation note for the three prices of the standard call ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$). Give the three numbers. For each, give its error's source, size, how it was measured and how it scales with cost. Say why the Monte Carlo figure is a band and the others are bounds. Name the one check you would add before the pricer goes live.",
+   "model": "**Validation note: one-year at-the-money call** ($S = K = 100$, $r = 5\\%$, $\\sigma = 20\\%$, $T = 1$; Black-Scholes £10.450584).\n\n**Grid.** Crank-Nicolson with two implicit steps first, $S_{\\max} = 200$, $M = 400$, $N = 200$: £10.449920, an error of $-6.6 \\times 10^{-4}$. The error is discretisation, $O(\\Delta S^2 + \\Delta\\tau^2)$. We measured it by refinement: $-2.65 \\times 10^{-3}$, $-6.64 \\times 10^{-4}$, $-1.66 \\times 10^{-4}$ as both steps halve, a ratio of 4 each time. Its sign and size are predictable, so it is a bound. Doubling $M$ and $N$ costs four times the work and quarters the error. The strike sits on a node; off a node the pattern breaks. $S_{\\max}$ adds a tiny truncation.\n\n**Quadrature.** Gauss-Legendre with 32 nodes on $[z^*, 8]$: £10.450583572185, an error of $-2.6 \\times 10^{-13}$. The kink is an end point, so the rule error falls faster than any power of the nodes. What is left is the cut at $z = 8$. We measured it by doubling the nodes. It needs a known density, which we have here.\n\n**Monte Carlo.** 100,000 paths, seed 0, the discounted share as control: £10.4484 with standard error £0.0178. The error is statistical, $s/\\sqrt n$, with $s$ cut from 14.72 to 5.61 by the control (factor 6.88). It is a band, not a bound. The 95% interval is £10.4484 $\\pm$ £0.035; seed 1 lands 1.30 SE below. Four times the paths halves it.\n\n**Why a band.** The grid and quadrature errors are deterministic: same settings, same error, with a known sign and rate. The Monte Carlo error is random. A new seed moves the price, so we can only give a range and its probability.\n\n**Before going live.** Check gamma from the grid against the formula's 0.018762 at $S = 100$ with the production step count. Price is a weak test of ringing; gamma catches it, as $N = 10$ showed (1.2526).",
+   "rubric": [
+    {
+     "points": 2,
+     "text": "States all three prices with their errors: £10.449920 ($-6.6 \\times 10^{-4}$), £10.450583572185 ($-2.6 \\times 10^{-13}$), £10.4484 (SE £0.0178)."
+    },
+    {
+     "points": 2,
+     "text": "Grid: discretisation $O(\\Delta S^2 + \\Delta\\tau^2)$, measured by refinement with the ratio of 4, and the strike on a node."
+    },
+    {
+     "points": 2,
+     "text": "Quadrature: kink as an end point, rule error faster than any power, truncation at $z = 8$, measured by doubling nodes."
+    },
+    {
+     "points": 2,
+     "text": "Monte Carlo: $s/\\sqrt n$, with $s$ cut by the control (factor 6.88). The 95% band is $\\pm$£0.035, halved by four times the paths."
+    },
+    {
+     "points": 1,
+     "text": "Explains why the Monte Carlo figure is a band and the others are bounds: random against deterministic error."
+    },
+    {
+     "points": 1,
+     "text": "Names one concrete check before going live. Examples: gamma from the grid against 0.018762, a second seed, an off-node strike."
+    }
+   ]
+  }
+ ]
+}

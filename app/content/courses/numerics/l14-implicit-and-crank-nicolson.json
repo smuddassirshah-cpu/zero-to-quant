@@ -1,0 +1,2223 @@
+{
+ "id": "l14-implicit-and-crank-nicolson",
+ "course": "numerics",
+ "title": "Explicit, implicit and Crank-Nicolson",
+ "minutes": 15,
+ "objectives": [
+  "Compare the stability and error of explicit, implicit and Crank-Nicolson schemes."
+ ],
+ "skills": [
+  "nm-fd",
+  "nm-stability"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "Growth per step",
+   "prose": "Each scheme multiplies a wiggle of frequency $\\omega$ on the grid by a factor every step. The curves are those factors; a factor outside $[-1, 1]$ grows. $\\nu = \\tfrac{\\sigma^2S^2\\Delta\\tau}{2\\Delta S^2}$ measures the step against the mesh: l13's bound $\\sigma^2j^2\\Delta\\tau \\le 1$ is $\\nu \\le \\tfrac12$. Slide $\\nu$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3.1416
+     ],
+     "y": [
+      -3,
+      1.3
+     ],
+     "height": 280,
+     "xLabel": "Frequency $\\omega$",
+     "yLabel": "Factor per step",
+     "params": {
+      "nu": 0.6
+     },
+     "functions": [
+      {
+       "id": "ex",
+       "expr": "1 - 4*nu*sin(x/2)^2",
+       "label": "explicit",
+       "labelAt": 0.9,
+       "labelSide": "below"
+      },
+      {
+       "id": "im",
+       "expr": "1/(1 + 4*nu*sin(x/2)^2)",
+       "colour": 2,
+       "label": "implicit",
+       "labelAt": 2.4,
+       "labelSide": "above"
+      },
+      {
+       "id": "cn",
+       "expr": "(1 - 2*nu*sin(x/2)^2)/(1 + 2*nu*sin(x/2)^2)",
+       "colour": 3,
+       "label": "Crank-Nicolson",
+       "labelAt": 2.0,
+       "labelSide": "below"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "up",
+       "y": 1,
+       "label": "+1"
+      },
+      {
+       "id": "dn",
+       "y": -1,
+       "label": "−1"
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "nu": 0.6
+     }
+    },
+    "derive": {
+     "caption": "$\\nu$ = {{nu}}. At $\\omega = \\pi$: explicit {{fixed(1 - 4*nu, 3)}}, implicit {{fixed(1/(1 + 4*nu), 3)}}, Crank-Nicolson {{fixed((1 - 2*nu)/(1 + 2*nu), 3)}}."
+    },
+    "controls": [
+     {
+      "bind": "nu",
+      "stops": [
+       0.1,
+       0.25,
+       0.4,
+       0.5,
+       0.6,
+       1,
+       2,
+       5,
+       20,
+       80
+      ],
+      "start": 0.6,
+      "label": "$\\nu$"
+     }
+    ]
+   },
+   "question": "What is the largest $\\nu$ at which the explicit factor stays inside $[-1, 1]$ at every frequency?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.5,
+    "tol": {
+     "abs": 0.001
+    },
+    "accept": "0.5: at ω = π the factor is 1 − 4ν",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 1,
+      "tol": {
+       "abs": 0.001
+      }
+     },
+     {
+      "id": "quarter",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Watch the explicit curve at the right edge, $\\omega = \\pi$."
+    },
+    {
+     "rung": "point",
+     "text": "There the factor is $1 - 4\\nu$.",
+     "highlight": [
+      "ex",
+      "dn"
+     ]
+    }
+   ],
+   "feedback": {
+    "correct": "$1 - 4\\nu \\ge -1$ gives $\\nu \\le \\tfrac12$.",
+    "generic": "Not quite right. Find where $1 - 4\\nu$ reaches $-1$.",
+    "byKey": {
+     "one": "At $\\nu = 1$ the factor at $\\omega = \\pi$ is $-3$: far outside.",
+     "quarter": "At $\\nu = 0.25$ the factor is 0, still inside. The edge comes later."
+    }
+   },
+   "explain": {
+    "text": "At $\\omega = \\pi$ the explicit factor is $1 - 4\\nu$, which reaches $-1$ at $\\nu = \\tfrac12$. The implicit factor stays in $(0, 1]$ for every $\\nu$. Crank-Nicolson stays in $(-1, 1]$ but heads for $-1$ as $\\nu$ grows.",
+    "canvas": {
+     "params": {
+      "nu": 0.5
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The theta-scheme",
+   "prose": "Write l13's step as $\\mathbf V^{n+1} = \\mathbf V^n + \\Delta\\tau\\mathbf L\\mathbf V^n$, with $\\mathbf L$ the tridiagonal matrix of differences. The **$\\theta$-scheme** takes $\\mathbf L\\mathbf V$ partly at the new level: $$(\\mathbf I - \\theta\\Delta\\tau\\mathbf L)\\mathbf V^{n+1} = (\\mathbf I + (1 - \\theta)\\Delta\\tau\\mathbf L)\\mathbf V^n.$$ $\\theta = 0$ is explicit, $\\theta = 1$ implicit and $\\theta = \\tfrac12$ **Crank-Nicolson**.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      3.1416
+     ],
+     "y": [
+      -3,
+      1.3
+     ],
+     "height": 280,
+     "xLabel": "Frequency $\\omega$",
+     "yLabel": "Factor per step",
+     "params": {
+      "nu": 20
+     },
+     "functions": [
+      {
+       "id": "ex",
+       "expr": "1 - 4*nu*sin(x/2)^2",
+       "label": "explicit",
+       "labelAt": 0.9,
+       "labelSide": "below"
+      },
+      {
+       "id": "im",
+       "expr": "1/(1 + 4*nu*sin(x/2)^2)",
+       "colour": 2,
+       "label": "implicit",
+       "labelAt": 2.4,
+       "labelSide": "above"
+      },
+      {
+       "id": "cn",
+       "expr": "(1 - 2*nu*sin(x/2)^2)/(1 + 2*nu*sin(x/2)^2)",
+       "colour": 3,
+       "label": "Crank-Nicolson",
+       "labelAt": 2.0,
+       "labelSide": "below"
+      }
+     ],
+     "hlines": [
+      {
+       "id": "up",
+       "y": 1,
+       "label": "+1"
+      },
+      {
+       "id": "dn",
+       "y": -1,
+       "label": "−1"
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "nu": 20
+     }
+    },
+    "derive": {
+     "caption": "$\\nu$ = {{nu}}. At $\\omega = \\pi$: explicit {{fixed(1 - 4*nu, 3)}}, implicit {{fixed(1/(1 + 4*nu), 3)}}, Crank-Nicolson {{fixed((1 - 2*nu)/(1 + 2*nu), 3)}}."
+    },
+    "controls": [
+     {
+      "bind": "nu",
+      "stops": [
+       0.1,
+       0.25,
+       0.4,
+       0.5,
+       0.6,
+       1,
+       2,
+       5,
+       20,
+       80
+      ],
+      "start": 20,
+      "label": "$\\nu$"
+     }
+    ]
+   },
+   "question": "At $\\nu = 20$, which factor sits nearest $-1$ at $\\omega = \\pi$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "cn",
+      "text": "Crank-Nicolson, at $-0.951$",
+      "correct": true
+     },
+     {
+      "id": "im",
+      "text": "Implicit, at $0.012$",
+      "why": "You read the implicit curve. It is near 0 at high frequency: those modes die at once."
+     },
+     {
+      "id": "ex",
+      "text": "Explicit, at $-79$",
+      "why": "You picked the explicit factor. It is far below $-1$: that scheme has blown up."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Read the caption at $\\nu = 20$."
+    },
+    {
+     "rung": "point",
+     "text": "Crank-Nicolson's factor is $\\tfrac{1 - 2\\nu}{1 + 2\\nu}$ at $\\omega = \\pi$.",
+     "highlight": [
+      "cn"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1 - 40}{1 + 40} = -0.951$."
+    }
+   ],
+   "feedback": {
+    "correct": "$-39/41 = -0.951$: stable, but barely damped.",
+    "generic": "Not quite right. Compare the three values in the caption."
+   },
+   "explain": {
+    "text": "Crank-Nicolson's factor is $-39/41 = -0.951$ at $\\nu = 20$. The sharpest wiggles flip sign every step and shrink only 5% a step. That is l12's trapezoidal ringing, on a grid."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Three unknowns a row",
+   "prose": "With $\\theta > 0$ the equation at the ringed node also holds $\\mathbf L\\mathbf V$ on its own, new level. Those new values are unknown until the step is solved.",
+   "canvas": {
+    "kind": "grid",
+    "params": {
+     "rows": 3,
+     "cols": 7,
+     "lattice": true,
+     "rowHeads": [
+      "n = 2",
+      "n = 1",
+      "n = 0"
+     ],
+     "colHeads": [
+      "94",
+      "96",
+      "98",
+      "100",
+      "102",
+      "104",
+      "106"
+     ],
+     "colLabel": "Share price S",
+     "rowLabel": "Time level",
+     "cells": [
+      [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       ""
+      ],
+      [
+       "",
+       "",
+       "",
+       "?",
+       "",
+       "",
+       ""
+      ],
+      [
+       "0",
+       "0",
+       "0",
+       "0",
+       "2",
+       "4",
+       "6"
+      ]
+     ]
+    },
+    "state": {
+     "outline": [
+      "r2c4"
+     ],
+     "shade": {
+      "known": [
+       "r3c3",
+       "r3c4",
+       "r3c5"
+      ]
+     }
+    }
+   },
+   "question": "Tap the unknown nodes in the ring's equation, from low $S$ to high.",
+   "widget": {
+    "kind": "tap-regions",
+    "ordered": true,
+    "answer": [
+     "r2c3",
+     "r2c4",
+     "r2c5"
+    ],
+    "countWord": "nodes",
+    "only": [
+     "row1",
+     "row2"
+    ],
+    "wrong": [
+     {
+      "id": "known",
+      "set": [
+       "r3c3",
+       "r3c4",
+       "r3c5"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The unknowns sit on the ring's own level."
+    },
+    {
+     "rung": "point",
+     "text": "The second difference at the ring needs its two neighbours.",
+     "highlight": [
+      "r2c3",
+      "r2c4",
+      "r2c5"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Tap 98, 100 and 102 on the middle row."
+    }
+   ],
+   "feedback": {
+    "correct": "Each equation couples a node to its two neighbours on the new level.",
+    "generic": "Not quite right. Tap the ring and its two neighbours, left to right.",
+    "byKey": {
+     "r1c4": "That node is a step later still. It is not in this step's equations.",
+     "r2c2": "You went two price steps out. The second difference uses the nearest neighbours only.",
+     "r2c6": "You went two price steps out. The second difference uses the nearest neighbours only.",
+     "order": "Right nodes. Tap them from low $S$ to high."
+    }
+   },
+   "explain": {
+    "text": "The ring's equation holds $V_{49}$, $V_{50}$ and $V_{51}$ at the new level. Every row does the same, so a step is one system of $M - 1$ equations. Its matrix $\\mathbf I - \\theta\\Delta\\tau\\mathbf L$ is tridiagonal.",
+    "canvas": {
+     "shade": {
+      "unknown": [
+       "r2c3",
+       "r2c4",
+       "r2c5"
+      ],
+      "known": [
+       "r3c3",
+       "r3c4",
+       "r3c5"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Solving a tridiagonal system",
+   "prose": "A tridiagonal system needs no general solver. The **Thomas algorithm** clears the one entry below each pivot, top to bottom. Then it substitutes back from the last row. Here is a 4 by 4 system with its right side after the bar.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         2,
+         -1,
+         0,
+         0,
+         1
+        ],
+        [
+         -1,
+         2,
+         -1,
+         0,
+         0
+        ],
+        [
+         0,
+         -1,
+         2,
+         -1,
+         0
+        ],
+        [
+         0,
+         0,
+         -1,
+         2,
+         1
+        ]
+       ],
+       "label": "$[\\mathbf A \\mid \\mathbf d]$",
+       "bar": 4
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Eliminate below the diagonal, then substitute back.",
+   "widget": {
+    "kind": "manipulate",
+    "start": "s0",
+    "target": "s4",
+    "states": {
+     "s0": {
+      "tex": "b_1 = 2",
+      "ops": [
+       {
+        "label": "$R_2 \\to R_2 + \\tfrac12R_1$",
+        "to": "s1"
+       },
+       {
+        "label": "Swap $R_1$ and $R_2$",
+        "reject": true,
+        "why": "No swap is needed: each pivot is the largest entry in its column. A swap would also break the tridiagonal shape."
+       }
+      ],
+      "canvas": {
+       "rows": {
+        "A": [
+         [
+          2,
+          -1,
+          0,
+          0,
+          1
+         ],
+         [
+          -1,
+          2,
+          -1,
+          0,
+          0
+         ],
+         [
+          0,
+          -1,
+          2,
+          -1,
+          0
+         ],
+         [
+          0,
+          0,
+          -1,
+          2,
+          1
+         ]
+        ]
+       }
+      }
+     },
+     "s1": {
+      "tex": "b'_2 = \\tfrac32",
+      "ops": [
+       {
+        "label": "$R_3 \\to R_3 + \\tfrac23R_2$",
+        "to": "s2"
+       },
+       {
+        "label": "Back substitute now",
+        "reject": true,
+        "why": "Rows 3 and 4 still have entries below the diagonal. Finish the forward sweep first."
+       }
+      ],
+      "canvas": {
+       "rows": {
+        "A": [
+         [
+          2,
+          -1,
+          0,
+          0,
+          1
+         ],
+         [
+          0,
+          "$\\tfrac32$",
+          -1,
+          0,
+          "$\\tfrac12$"
+         ],
+         [
+          0,
+          -1,
+          2,
+          -1,
+          0
+         ],
+         [
+          0,
+          0,
+          -1,
+          2,
+          1
+         ]
+        ]
+       },
+       "rowOp": {
+        "from": 0,
+        "to": 1,
+        "k": 0.5,
+        "label": "$R_2 \\to R_2 + \\tfrac12R_1$"
+       }
+      }
+     },
+     "s2": {
+      "tex": "b'_3 = \\tfrac43",
+      "ops": [
+       {
+        "label": "$R_4 \\to R_4 + \\tfrac34R_3$",
+        "to": "s3"
+       }
+      ],
+      "canvas": {
+       "rows": {
+        "A": [
+         [
+          2,
+          -1,
+          0,
+          0,
+          1
+         ],
+         [
+          0,
+          "$\\tfrac32$",
+          -1,
+          0,
+          "$\\tfrac12$"
+         ],
+         [
+          0,
+          0,
+          "$\\tfrac43$",
+          -1,
+          "$\\tfrac13$"
+         ],
+         [
+          0,
+          0,
+          -1,
+          2,
+          1
+         ]
+        ]
+       },
+       "rowOp": {
+        "from": 1,
+        "to": 2,
+        "k": 0.6667,
+        "label": "$R_3 \\to R_3 + \\tfrac23R_2$"
+       }
+      }
+     },
+     "s3": {
+      "tex": "b'_4 = \\tfrac54,\\ x_4 = 1",
+      "ops": [
+       {
+        "label": "Back substitute: $x_4$, then $x_3$, $x_2$, $x_1$",
+        "to": "s4"
+       }
+      ],
+      "canvas": {
+       "rows": {
+        "A": [
+         [
+          2,
+          -1,
+          0,
+          0,
+          1
+         ],
+         [
+          0,
+          "$\\tfrac32$",
+          -1,
+          0,
+          "$\\tfrac12$"
+         ],
+         [
+          0,
+          0,
+          "$\\tfrac43$",
+          -1,
+          "$\\tfrac13$"
+         ],
+         [
+          0,
+          0,
+          0,
+          "$\\tfrac54$",
+          "$\\tfrac54$"
+         ]
+        ]
+       },
+       "rowOp": {
+        "from": 2,
+        "to": 3,
+        "k": 0.75,
+        "label": "$R_4 \\to R_4 + \\tfrac34R_3$"
+       }
+      }
+     },
+     "s4": {
+      "tex": "\\mathbf x = (1, 1, 1, 1)",
+      "canvas": {
+       "rows": {
+        "A": [
+         [
+          1,
+          0,
+          0,
+          0,
+          1
+         ],
+         [
+          0,
+          1,
+          0,
+          0,
+          1
+         ],
+         [
+          0,
+          0,
+          1,
+          0,
+          1
+         ],
+         [
+          0,
+          0,
+          0,
+          1,
+          1
+         ]
+        ]
+       }
+      }
+     }
+    }
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Row 2 has $-1$ below the pivot 2. Add half of row 1."
+    },
+    {
+     "rung": "point",
+     "text": "Each new pivot is used to clear the entry below it.",
+     "highlight": [
+      "A-0-0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Then $x_4 = 1$, and each row above gives one more unknown."
+    }
+   ],
+   "feedback": {
+    "correct": "Pivots 2, 1.5, 1.33 and 1.25, then $x = (1, 1, 1, 1)$.",
+    "generic": "Not quite right. Clear one sub-diagonal entry at a time, from the top."
+   },
+   "explain": {
+    "text": "Each elimination touches one row and two entries, so the sweep costs about $3M$ operations. The pivots 2, 1.5, 1.33 and 1.25 never approach 0, so no row swap is needed. A dense solver would cost about $M^3/3$.",
+    "canvas": {
+     "rows": {
+      "A": [
+       [
+        1,
+        0,
+        0,
+        0,
+        1
+       ],
+       [
+        0,
+        1,
+        0,
+        0,
+        1
+       ],
+       [
+        0,
+        0,
+        1,
+        0,
+        1
+       ],
+       [
+        0,
+        0,
+        0,
+        1,
+        1
+       ]
+      ]
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The algorithm in order",
+   "prose": "Write the sweep for $n$ rows, with $a_k$ below, $b_k$ on and $c_k$ above the diagonal in row $k$. Primes mark the updated pivots and right sides.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         2,
+         -1,
+         0,
+         0,
+         1
+        ],
+        [
+         0,
+         "$\\tfrac32$",
+         -1,
+         0,
+         "$\\tfrac12$"
+        ],
+        [
+         0,
+         0,
+         "$\\tfrac43$",
+         -1,
+         "$\\tfrac13$"
+        ],
+        [
+         0,
+         0,
+         0,
+         "$\\tfrac54$",
+         "$\\tfrac54$"
+        ]
+       ],
+       "label": "$[\\mathbf A \\mid \\mathbf d]$",
+       "bar": 4
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Put the steps of the Thomas algorithm in order. Leave out the step that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "s1",
+      "text": "Keep row 1: $b'_1 = b_1$, $d'_1 = d_1$."
+     },
+     {
+      "id": "s2",
+      "text": "For $k = 2$ to $n$, find the multiplier $m_k = a_k/b'_{k-1}$."
+     },
+     {
+      "id": "s3",
+      "text": "Update $b'_k = b_k - m_kc_{k-1}$ and $d'_k = d_k - m_kd'_{k-1}$."
+     },
+     {
+      "id": "s4",
+      "text": "Set $x_n = d'_n/b'_n$."
+     },
+     {
+      "id": "s5",
+      "text": "For $k = n - 1$ down to 1, set $x_k = (d'_k - c_kx_{k+1})/b'_k$."
+     },
+     {
+      "id": "d1",
+      "text": "Before each elimination, swap in the row with the largest entry in the column.",
+      "why": "You added partial pivoting. A diagonally dominant tridiagonal matrix keeps its pivots away from 0, so Thomas never swaps. A swap would also break the band."
+     }
+    ],
+    "answer": [
+     "s1",
+     "s2",
+     "s3",
+     "s4",
+     "s5"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Forward elimination comes before back substitution."
+    },
+    {
+     "rung": "point",
+     "text": "Inside the forward loop, the multiplier comes before the updates it uses.",
+     "highlight": [
+      "A-3-3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The back sweep starts from the last row."
+    }
+   ],
+   "feedback": {
+    "correct": "Forward sweep, then back substitution, with no swaps.",
+    "generic": "Not quite right. Sweep down to find the pivots, then up to find $x$.",
+    "byKey": {
+     "d1": "You added a row swap. $\\mathbf I - \\theta\\Delta\\tau\\mathbf L$ is diagonally dominant, so its pivots never vanish."
+    }
+   },
+   "explain": {
+    "text": "The forward loop finds each pivot $b'_k$ and right side $d'_k$. The back loop needs only $c_k$ and the next $x$. The diagonal $1 + \\theta\\Delta\\tau(\\sigma^2j^2 + r)$ beats the off-diagonals, so pivoting is never needed."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Errors on one table",
+   "prose": "We priced the standard call with the implicit scheme and with Crank-Nicolson, $S_{\\max} = 200$. Each entry is the grid price minus £10.450584.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Grid",
+      "Implicit",
+      "Crank-Nicolson"
+     ],
+     "rows": [
+      [
+       "$M = 100$, $N = 25$",
+       "−0.0519",
+       "−0.00950"
+      ],
+      [
+       "$M = 100$, $N = 50$",
+       "−0.0309",
+       "−0.00980"
+      ],
+      [
+       "$M = 100$, $N = 100$",
+       "−0.0204",
+       "−0.00987"
+      ],
+      [
+       "$M = 200$, $N = 200$",
+       "",
+       "−0.00246"
+      ],
+      [
+       "$M = 400$, $N = 400$",
+       "",
+       "−0.000616"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which error orders fit the table?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "right",
+      "text": "Implicit $O(\\Delta\\tau + \\Delta S^2)$, Crank-Nicolson $O(\\Delta\\tau^2 + \\Delta S^2)$",
+      "correct": true
+     },
+     {
+      "id": "both1",
+      "text": "Both $O(\\Delta\\tau + \\Delta S^2)$",
+      "why": "You gave Crank-Nicolson a first-order time error. Its column barely moves as $N$ doubles, so its $\\Delta\\tau$ term is tiny."
+     },
+     {
+      "id": "swap",
+      "text": "Implicit $O(\\Delta\\tau^2 + \\Delta S^2)$, Crank-Nicolson $O(\\Delta\\tau + \\Delta S^2)$",
+      "why": "You swapped the two. The implicit column is the one that moves with $N$."
+     },
+     {
+      "id": "space",
+      "text": "Both $O(\\Delta S^2)$, with no time error",
+      "why": "You ignored the implicit column. It changes from $-0.0519$ to $-0.0204$ as $N$ grows, at fixed $M$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "At $M = 100$ the space error is about $-0.0099$, the Crank-Nicolson column."
+    },
+    {
+     "rung": "point",
+     "text": "Take $-0.0099$ away from each implicit entry.",
+     "highlight": [
+      "c1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The remainders are $-0.042$, $-0.021$ and $-0.0105$."
+    }
+   ],
+   "feedback": {
+    "correct": "Implicit is first order in time; Crank-Nicolson is second order in both.",
+    "generic": "Not quite right. Separate the space error from the time error first."
+   },
+   "explain": {
+    "text": "Taking away the space error, about $-0.0099$, implicit leaves $-0.042$, $-0.021$ and $-0.0105$: halving with $\\Delta\\tau$. Crank-Nicolson's column is the $\\Delta S^2$ error alone. Doubling $M$ and $N$ together divides it by 4.0, to $-0.00246$ and then $-0.000616$."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Ringing at the kink",
+   "prose": "Crank-Nicolson is second order and stable at any step. A desk runs it with $M = 400$ ($\\Delta S = 0.5$) and only $N = 10$ steps, so $\\nu = 80$ at the strike. It reads gamma, the second difference of $V$, at $S = 100$. Step through the schemes.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      94,
+      106
+     ],
+     "y": [
+      -0.5,
+      1.4
+     ],
+     "height": 270,
+     "xLabel": "Share price $S$",
+     "yLabel": "Gamma $V_{SS}$",
+     "functions": [
+      {
+       "id": "bsg",
+       "expr": "exp(-((ln(x/100) + 0.07)/0.2)^2/2)/(sqrt(2*pi)*x*0.2)",
+       "dashed": true,
+       "label": "formula",
+       "labelAt": 96,
+       "labelSide": "above"
+      },
+      {
+       "id": "g",
+       "points": [
+        [
+         94.0,
+         0.02047
+        ],
+        [
+         94.5,
+         0.02204
+        ],
+        [
+         95.0,
+         0.02467
+        ],
+        [
+         95.5,
+         0.02834
+        ],
+        [
+         96.0,
+         0.03265
+        ],
+        [
+         96.5,
+         0.03636
+        ],
+        [
+         97.0,
+         0.03677
+        ],
+        [
+         97.5,
+         0.02874
+        ],
+        [
+         98.0,
+         0.00322
+        ],
+        [
+         98.5,
+         -0.05498
+        ],
+        [
+         99.0,
+         -0.17039
+        ],
+        [
+         99.5,
+         -0.38151
+        ],
+        [
+         100.0,
+         1.25264
+        ],
+        [
+         100.5,
+         -0.37269
+        ],
+        [
+         101.0,
+         -0.16439
+        ],
+        [
+         101.5,
+         -0.05413
+        ],
+        [
+         102.0,
+         5e-05
+        ],
+        [
+         102.5,
+         0.02341
+        ],
+        [
+         103.0,
+         0.03077
+        ],
+        [
+         103.5,
+         0.03058
+        ],
+        [
+         104.0,
+         0.0274
+        ],
+        [
+         104.5,
+         0.02356
+        ],
+        [
+         105.0,
+         0.02013
+        ],
+        [
+         105.5,
+         0.01745
+        ],
+        [
+         106.0,
+         0.01556
+        ]
+       ],
+       "colour": 2,
+       "label": "Crank-Nicolson",
+       "labelAt": 103
+      }
+     ]
+    },
+    "state": {
+     "caption": "Crank-Nicolson, $N = 10$: price £10.2767, gamma at $S = 100$ is 1.2526."
+    },
+    "controls": [
+     {
+      "frames": [
+       {
+        "functions": [
+         {
+          "id": "g",
+          "points": [
+           [
+            94.0,
+            0.02047
+           ],
+           [
+            94.5,
+            0.02204
+           ],
+           [
+            95.0,
+            0.02467
+           ],
+           [
+            95.5,
+            0.02834
+           ],
+           [
+            96.0,
+            0.03265
+           ],
+           [
+            96.5,
+            0.03636
+           ],
+           [
+            97.0,
+            0.03677
+           ],
+           [
+            97.5,
+            0.02874
+           ],
+           [
+            98.0,
+            0.00322
+           ],
+           [
+            98.5,
+            -0.05498
+           ],
+           [
+            99.0,
+            -0.17039
+           ],
+           [
+            99.5,
+            -0.38151
+           ],
+           [
+            100.0,
+            1.25264
+           ],
+           [
+            100.5,
+            -0.37269
+           ],
+           [
+            101.0,
+            -0.16439
+           ],
+           [
+            101.5,
+            -0.05413
+           ],
+           [
+            102.0,
+            5e-05
+           ],
+           [
+            102.5,
+            0.02341
+           ],
+           [
+            103.0,
+            0.03077
+           ],
+           [
+            103.5,
+            0.03058
+           ],
+           [
+            104.0,
+            0.0274
+           ],
+           [
+            104.5,
+            0.02356
+           ],
+           [
+            105.0,
+            0.02013
+           ],
+           [
+            105.5,
+            0.01745
+           ],
+           [
+            106.0,
+            0.01556
+           ]
+          ],
+          "label": "Crank-Nicolson"
+         }
+        ],
+        "view": {
+         "x": [
+          94,
+          106
+         ],
+         "y": [
+          -0.5,
+          1.4
+         ]
+        },
+        "caption": "Crank-Nicolson, $N = 10$: price £10.2767, gamma at $S = 100$ is 1.2526."
+       },
+       {
+        "functions": [
+         {
+          "id": "g",
+          "points": [
+           [
+            94.0,
+            0.02193
+           ],
+           [
+            94.5,
+            0.02181
+           ],
+           [
+            95.0,
+            0.02168
+           ],
+           [
+            95.5,
+            0.02153
+           ],
+           [
+            96.0,
+            0.02136
+           ],
+           [
+            96.5,
+            0.02118
+           ],
+           [
+            97.0,
+            0.02099
+           ],
+           [
+            97.5,
+            0.02078
+           ],
+           [
+            98.0,
+            0.02056
+           ],
+           [
+            98.5,
+            0.02033
+           ],
+           [
+            99.0,
+            0.02009
+           ],
+           [
+            99.5,
+            0.01983
+           ],
+           [
+            100.0,
+            0.01957
+           ],
+           [
+            100.5,
+            0.0193
+           ],
+           [
+            101.0,
+            0.01901
+           ],
+           [
+            101.5,
+            0.01872
+           ],
+           [
+            102.0,
+            0.01843
+           ],
+           [
+            102.5,
+            0.01812
+           ],
+           [
+            103.0,
+            0.01781
+           ],
+           [
+            103.5,
+            0.01749
+           ],
+           [
+            104.0,
+            0.01717
+           ],
+           [
+            104.5,
+            0.01685
+           ],
+           [
+            105.0,
+            0.01652
+           ],
+           [
+            105.5,
+            0.01619
+           ],
+           [
+            106.0,
+            0.01586
+           ]
+          ],
+          "label": "implicit"
+         }
+        ],
+        "view": {
+         "x": [
+          94,
+          106
+         ],
+         "y": [
+          0.012,
+          0.024
+         ]
+        },
+        "caption": "Implicit, $N = 10$: price £10.3457, gamma 0.01957."
+       },
+       {
+        "functions": [
+         {
+          "id": "g",
+          "points": [
+           [
+            94.0,
+            0.02133
+           ],
+           [
+            94.5,
+            0.02119
+           ],
+           [
+            95.0,
+            0.02103
+           ],
+           [
+            95.5,
+            0.02084
+           ],
+           [
+            96.0,
+            0.02065
+           ],
+           [
+            96.5,
+            0.02043
+           ],
+           [
+            97.0,
+            0.02021
+           ],
+           [
+            97.5,
+            0.01999
+           ],
+           [
+            98.0,
+            0.01978
+           ],
+           [
+            98.5,
+            0.01958
+           ],
+           [
+            99.0,
+            0.01941
+           ],
+           [
+            99.5,
+            0.01924
+           ],
+           [
+            100.0,
+            0.01904
+           ],
+           [
+            100.5,
+            0.01872
+           ],
+           [
+            101.0,
+            0.01837
+           ],
+           [
+            101.5,
+            0.01803
+           ],
+           [
+            102.0,
+            0.01772
+           ],
+           [
+            102.5,
+            0.01743
+           ],
+           [
+            103.0,
+            0.01715
+           ],
+           [
+            103.5,
+            0.01687
+           ],
+           [
+            104.0,
+            0.01659
+           ],
+           [
+            104.5,
+            0.0163
+           ],
+           [
+            105.0,
+            0.01601
+           ],
+           [
+            105.5,
+            0.01572
+           ],
+           [
+            106.0,
+            0.01541
+           ]
+          ],
+          "label": "CN, 2 implicit first"
+         }
+        ],
+        "view": {
+         "x": [
+          94,
+          106
+         ],
+         "y": [
+          0.012,
+          0.024
+         ]
+        },
+        "caption": "Two implicit steps, then Crank-Nicolson: price £10.4324, gamma 0.01904."
+       }
+      ],
+      "frameLabels": [
+       "Crank-Nicolson",
+       "Implicit",
+       "CN with 2 implicit"
+      ],
+      "label": "Scheme"
+     }
+    ]
+   },
+   "question": "The formula's gamma is 0.018762. Which grid gamma do you trust?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "rann",
+      "text": "Two implicit steps, then Crank-Nicolson: 0.01904",
+      "correct": true
+     },
+     {
+      "id": "cn",
+      "text": "Crank-Nicolson: 1.2526, since it is second order and unconditionally stable",
+      "why": "You read unconditionally stable as smooth. At $\\nu = 80$ the sharpest modes have factor $-0.988$, so the kink rings for every step."
+     },
+     {
+      "id": "im",
+      "text": "Implicit: 0.01957, since it never rings",
+      "why": "Implicit does not ring, but its first-order step leaves a gamma 4% high and a price £0.105 short."
+     },
+     {
+      "id": "none",
+      "text": "None of them: ten steps are always too few",
+      "why": "Ten steps suffice once the first two are implicit: the price is £10.4324 and gamma is within 1.5%."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Compare each grid gamma with 0.018762."
+    },
+    {
+     "rung": "point",
+     "text": "Crank-Nicolson's factor at $\\nu = 80$ is close to $-1$.",
+     "highlight": [
+      "g"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Damping the first steps removes the kink's sharp modes."
+    }
+   ],
+   "feedback": {
+    "correct": "Two implicit steps damp the kink; Crank-Nicolson then keeps its accuracy.",
+    "generic": "Not quite right. Compare each gamma with 0.018762.",
+    "byKey": {
+     "cn": "You trusted \"unconditionally stable\" to mean smooth. Stable only means the ringing does not grow."
+    }
+   },
+   "explain": {
+    "text": "Crank-Nicolson's gamma is 1.2526, 67 times too big, and its price is £10.2767. Two implicit Euler steps first kill the sharp modes: gamma 0.01904 and price £10.4324. This is the idea behind Rannacher's start.",
+    "canvas": {
+     "functions": [
+      {
+       "id": "g",
+       "points": [
+        [
+         94.0,
+         0.02133
+        ],
+        [
+         94.5,
+         0.02119
+        ],
+        [
+         95.0,
+         0.02103
+        ],
+        [
+         95.5,
+         0.02084
+        ],
+        [
+         96.0,
+         0.02065
+        ],
+        [
+         96.5,
+         0.02043
+        ],
+        [
+         97.0,
+         0.02021
+        ],
+        [
+         97.5,
+         0.01999
+        ],
+        [
+         98.0,
+         0.01978
+        ],
+        [
+         98.5,
+         0.01958
+        ],
+        [
+         99.0,
+         0.01941
+        ],
+        [
+         99.5,
+         0.01924
+        ],
+        [
+         100.0,
+         0.01904
+        ],
+        [
+         100.5,
+         0.01872
+        ],
+        [
+         101.0,
+         0.01837
+        ],
+        [
+         101.5,
+         0.01803
+        ],
+        [
+         102.0,
+         0.01772
+        ],
+        [
+         102.5,
+         0.01743
+        ],
+        [
+         103.0,
+         0.01715
+        ],
+        [
+         103.5,
+         0.01687
+        ],
+        [
+         104.0,
+         0.01659
+        ],
+        [
+         104.5,
+         0.0163
+        ],
+        [
+         105.0,
+         0.01601
+        ],
+        [
+         105.5,
+         0.01572
+        ],
+        [
+         106.0,
+         0.01541
+        ]
+       ],
+       "label": "CN, 2 implicit first"
+      }
+     ],
+     "view": {
+      "x": [
+       94,
+       106
+      ],
+      "y": [
+       0.012,
+       0.024
+      ]
+     },
+     "caption": "Two implicit steps, then Crank-Nicolson: price £10.4324, gamma 0.01904."
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Crank-Nicolson's factor",
+   "prose": "Put a wiggle $e^{\\mathrm{i}j\\omega}$ into the scheme. $\\Delta\\tau\\mathbf L$ multiplies it by about $-z$, with $z = 4\\nu\\sin^2(\\omega/2)$. So explicit gives $1 - z$ and implicit $\\tfrac{1}{1 + z}$. Crank-Nicolson puts half of $\\mathbf L\\mathbf V$ on each level: $(1 + \\tfrac z2)V^{n+1} = (1 - \\tfrac z2)V^n$.",
+   "question": "Write Crank-Nicolson's factor $V^{n+1}/V^n$ in terms of $z$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{1-z/2}{1+z/2}",
+    "accept": [
+     "(1-z/2)/(1+z/2)",
+     "(2-z)/(2+z)",
+     "(1-0.5z)/(1+0.5z)"
+    ],
+    "wrong": [
+     {
+      "id": "avg",
+      "tex": "\\frac{1}{2}(1-z)+\\frac{1}{2}\\cdot\\frac{1}{1+z}"
+     },
+     {
+      "id": "flip",
+      "tex": "\\frac{1+z/2}{1-z/2}"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide both sides by $V^n$."
+    },
+    {
+     "rung": "point",
+     "text": "Then divide by $1 + \\tfrac z2$."
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac{1 - z/2}{1 + z/2}$."
+    }
+   ],
+   "feedback": {
+    "correct": "That is the factor you saw head for $-1$.",
+    "generic": "Not quite right. Solve $(1 + \\tfrac z2)V^{n+1} = (1 - \\tfrac z2)V^n$ for the ratio.",
+    "byKey": {
+     "avg": "You averaged the two factors. The scheme averages $\\mathbf L\\mathbf V$ across the levels instead.",
+     "flip": "You inverted the ratio. The new level carries $1 + \\tfrac z2$."
+    }
+   },
+   "explain": {
+    "text": "The ratio is $\\tfrac{1 - z/2}{1 + z/2}$, below 1 in size for every $z > 0$, so the scheme is stable at any step. As $z \\to \\infty$ it tends to $-1$, which is the ringing. Explicit is $O(\\Delta\\tau + \\Delta S^2)$ and so is implicit; Crank-Nicolson is $O(\\Delta\\tau^2 + \\Delta S^2)$."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Thomas in code",
+   "prose": "Write the Thomas algorithm. Plain Python loops over lists are fine here: the system is tridiagonal, so the work is only about $3n$ steps. Return a NumPy array. The hidden tests compare your answer with `np.linalg.solve` on random diagonally dominant systems.",
+   "canvas": {
+    "kind": "matrix",
+    "params": {
+     "matrices": [
+      {
+       "id": "A",
+       "rows": [
+        [
+         2,
+         -1,
+         0,
+         0,
+         1
+        ],
+        [
+         -1,
+         2,
+         -1,
+         0,
+         0
+        ],
+        [
+         0,
+         -1,
+         2,
+         -1,
+         0
+        ],
+        [
+         0,
+         0,
+         -1,
+         2,
+         1
+        ]
+       ],
+       "label": "$[\\mathbf A \\mid \\mathbf d]$",
+       "bar": 4
+      }
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `thomas(a, b, c, d)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\n\ndef thomas(a, b, c, d):\n    \"\"\"Solve a tridiagonal system: a below, b on, c above the diagonal.\n    a[0] and c[-1] are not used.\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\n\ndef thomas(a, b, c, d):\n    \"\"\"Solve a tridiagonal system: a below, b on, c above the diagonal.\n    a[0] and c[-1] are not used.\"\"\"\n    n = len(d)\n    a, b, c, d = (list(map(float, v)) for v in (a, b, c, d))\n    cp, dp = [0.0] * n, [0.0] * n\n    cp[0], dp[0] = c[0] / b[0], d[0] / b[0]\n    for k in range(1, n):                  # forward elimination\n        m = b[k] - a[k] * cp[k - 1]\n        cp[k] = c[k] / m\n        dp[k] = (d[k] - a[k] * dp[k - 1]) / m\n    x = [0.0] * n\n    x[-1] = dp[-1]\n    for k in range(n - 2, -1, -1):         # back substitution\n        x[k] = dp[k] - cp[k] * x[k + 1]\n    return np.array(x)\n",
+    "examples": [
+     {
+      "call": "thomas([0, -1, -1, -1], [2, 2, 2, 2], [-1, -1, -1, 0], [1, 0, 0, 1])",
+      "expect": "[1.0, 1.0, 1.0, 1.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     }
+    ],
+    "tests": [
+     {
+      "call": "thomas([0, -1, -1, -1], [2, 2, 2, 2], [-1, -1, -1, 0], [1, 0, 0, 1])",
+      "expect": "[1.0, 1.0, 1.0, 1.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "setup": "import numpy as np; rng = np.random.default_rng(1); n = 6; a = rng.uniform(-1, 0, n); c = rng.uniform(-1, 0, n); b = 2.5 + rng.uniform(0, 1, n); d = rng.normal(size=n); A = np.diag(b) + np.diag(a[1:], -1) + np.diag(c[:-1], 1)",
+      "call": "thomas(a, b, c, d)",
+      "expect": "np.linalg.solve(A, d)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-10
+      }
+     },
+     {
+      "setup": "import numpy as np; rng = np.random.default_rng(2); n = 50; a = rng.uniform(-1, 0, n); c = rng.uniform(-1, 0, n); b = 2.5 + rng.uniform(0, 1, n); d = rng.normal(size=n); A = np.diag(b) + np.diag(a[1:], -1) + np.diag(c[:-1], 1)",
+      "call": "thomas(a, b, c, d)",
+      "expect": "np.linalg.solve(A, d)",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-10
+      }
+     },
+     {
+      "call": "thomas([0.0], [4.0], [0.0], [2.0])",
+      "expect": "[0.5]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-12
+      }
+     },
+     {
+      "setup": "import numpy as np",
+      "call": "type(thomas([0, 1], [3, 3], [1, 0], [4, 4])).__name__",
+      "expect": "'ndarray'",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 5 hidden tests with NumPy. Each solution must be within 1e-10 of np.linalg.solve, including a 50 by 50 system and a single equation."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Store the updated pivots and right sides in two lists, `cp = c/b'` and `dp = d'/b'`."
+    },
+    {
+     "rung": "point",
+     "text": "Forward: `m = b[k] - a[k] * cp[k - 1]`, then `cp[k] = c[k] / m` and `dp[k] = (d[k] - a[k] * dp[k - 1]) / m`.",
+     "highlight": [
+      "A-0-0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Backward: `x[k] = dp[k] - cp[k] * x[k + 1]`, from the second-last row up."
+    }
+   ],
+   "feedback": {
+    "correct": "Your solver matches `np.linalg.solve` in about $3n$ steps.",
+    "generic": "Not quite right. Test it on the 4 by 4 system first: the answer is all ones."
+   },
+   "explain": {
+    "text": "Dividing each row by its pivot as you go stores $c'_k$ and $d'_k$ directly. The back sweep then needs one multiply and one subtract a row. For $M = 400$ that is about 1,200 operations, against 21 million for a dense solve."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "One scheme, three settings",
+   "prose": "Now the pricer. Each step builds the right side $(\\mathbf I + (1 - \\theta)\\Delta\\tau\\mathbf L)\\mathbf V^n$ with slices, adds the top edge's term, and calls `thomas` for the interior. The first `implicit_start` steps use $\\theta = 1$. Your `thomas` is in the starter.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Call",
+      "Price"
+     ],
+     "rows": [
+      [
+       "$\\theta = 1$, $M = 100$, $N = 25$",
+       "£10.398664"
+      ],
+      [
+       "$\\theta = 0.5$, $M = 100$, $N = 100$",
+       "£10.440710"
+      ],
+      [
+       "$\\theta = 0$, $M = 100$, $N = 500$",
+       "£10.442791"
+      ],
+      [
+       "$\\theta = 0.5$, $M = 400$, $N = 10$, two implicit",
+       "£10.432399"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `theta_bs`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef thomas(a, b, c, d):\n    \"\"\"Solve a tridiagonal system: a below, b on, c above the diagonal.\n    a[0] and c[-1] are not used.\"\"\"\n    n = len(d)\n    a, b, c, d = (list(map(float, v)) for v in (a, b, c, d))\n    cp, dp = [0.0] * n, [0.0] * n\n    cp[0], dp[0] = c[0] / b[0], d[0] / b[0]\n    for k in range(1, n):                  # forward elimination\n        m = b[k] - a[k] * cp[k - 1]\n        cp[k] = c[k] / m\n        dp[k] = (d[k] - a[k] * dp[k - 1]) / m\n    x = [0.0] * n\n    x[-1] = dp[-1]\n    for k in range(n - 2, -1, -1):         # back substitution\n        x[k] = dp[k] - cp[k] * x[k + 1]\n    return np.array(x)\n\n\ndef theta_bs(S0, K, r, sigma, T, Smax, M, N, theta, implicit_start=0):\n    \"\"\"theta = 0 explicit, 1 implicit, 0.5 Crank-Nicolson. The first\n    implicit_start steps use theta = 1. Returns the price at S0.\"\"\"\n    dS, dt = Smax / M, T / N\n    j = np.arange(M + 1)\n    S = j * dS\n    V = np.maximum(S - K, 0.0)\n    ...\n    return float(np.interp(S0, S, V))\n",
+    "solution": "import math\nimport numpy as np\n\n\ndef thomas(a, b, c, d):\n    \"\"\"Solve a tridiagonal system: a below, b on, c above the diagonal.\n    a[0] and c[-1] are not used.\"\"\"\n    n = len(d)\n    a, b, c, d = (list(map(float, v)) for v in (a, b, c, d))\n    cp, dp = [0.0] * n, [0.0] * n\n    cp[0], dp[0] = c[0] / b[0], d[0] / b[0]\n    for k in range(1, n):                  # forward elimination\n        m = b[k] - a[k] * cp[k - 1]\n        cp[k] = c[k] / m\n        dp[k] = (d[k] - a[k] * dp[k - 1]) / m\n    x = [0.0] * n\n    x[-1] = dp[-1]\n    for k in range(n - 2, -1, -1):         # back substitution\n        x[k] = dp[k] - cp[k] * x[k + 1]\n    return np.array(x)\n\n\ndef theta_bs(S0, K, r, sigma, T, Smax, M, N, theta, implicit_start=0):\n    dS, dt = Smax / M, T / N\n    j = np.arange(M + 1)\n    S = j * dS\n    V = np.maximum(S - K, 0.0)\n    al = 0.5 * (sigma ** 2 * j ** 2 - r * j)[1:-1]     # L, per unit time\n    be = -(sigma ** 2 * j ** 2 + r)[1:-1]\n    ga = 0.5 * (sigma ** 2 * j ** 2 + r * j)[1:-1]\n    for n in range(N):\n        th = 1.0 if n < implicit_start else theta\n        top = Smax - K * math.exp(-r * (n + 1) * dt)\n        LV = al * V[:-2] + be * V[1:-1] + ga * V[2:]\n        rhs = V[1:-1] + (1 - th) * dt * LV\n        rhs[-1] += th * dt * ga[-1] * top           # boundary into the system\n        V = np.concatenate(([0.0], thomas(-th * dt * al, 1 - th * dt * be,\n                                          -th * dt * ga, rhs), [top]))\n    return float(np.interp(S0, S, V))\n",
+    "examples": [
+     {
+      "call": "round(theta_bs(100, 100, 0.05, 0.2, 1, 200, 100, 25, 1.0), 6)",
+      "expect": "10.398664",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "theta_bs(100, 100, 0.05, 0.2, 1, 200, 100, 25, 1.0)",
+      "expect": "10.398663728",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "theta_bs(100, 100, 0.05, 0.2, 1, 200, 100, 100, 0.5)",
+      "expect": "10.440710244",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "theta_bs(100, 100, 0.05, 0.2, 1, 200, 100, 500, 0.0)",
+      "expect": "10.442791444",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "theta_bs(100, 100, 0.05, 0.2, 1, 200, 400, 10, 0.5)",
+      "expect": "10.276726325",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "theta_bs(100, 100, 0.05, 0.2, 1, 200, 400, 10, 0.5, implicit_start=2)",
+      "expect": "10.432399088",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "theta_bs(110, 100, 0.05, 0.2, 1, 200, 100, 100, 1.0)",
+      "expect": "17.64630937",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "how": "Submit runs 6 hidden tests with NumPy, no SciPy. Each price must be within 1e-6 of ours; each runs in well under a second."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build $\\Delta\\tau\\mathbf L\\mathbf V$ on the interior from `V[:-2]`, `V[1:-1]` and `V[2:]`, as in l13."
+    },
+    {
+     "rung": "point",
+     "text": "The system has sub-diagonal $-\\theta\\Delta\\tau\\alpha_j$, diagonal $1 - \\theta\\Delta\\tau\\beta_j$ and super-diagonal $-\\theta\\Delta\\tau\\gamma_j$.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The new top value enters the last equation: add $\\theta\\Delta\\tau\\gamma_{M-1}V_M^{n+1}$ to its right side."
+    }
+   ],
+   "feedback": {
+    "correct": "One function now gives all three schemes.",
+    "generic": "Not quite right. Check $\\theta = 0$ first: it must match l13's £10.442791."
+   },
+   "explain": {
+    "text": "With $\\theta = 0$ the system is the identity, so the code reduces to l13's march. The top edge is known at the new level, so its term moves to the right side. The bottom edge is 0 and adds nothing."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Gamma on a risk report",
+   "prose": "A risk system reports gamma from a Crank-Nicolson pricer. To save time one night, it cuts the steps from 200 to 10 on the same $M = 400$ grid. The at-the-money gamma comes back as 1.2526; the formula says 0.018762.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Run",
+      "Price",
+      "Gamma at 100"
+     ],
+     "rows": [
+      [
+       "Formula",
+       "£10.4506",
+       "0.018762"
+      ],
+      [
+       "CN, $N = 10$",
+       "£10.2767",
+       "1.2526"
+      ],
+      [
+       "CN, two implicit first",
+       "£10.4324",
+       "0.01904"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "By what factor is the Crank-Nicolson gamma too large?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 66.8,
+    "tol": {
+     "abs": 0.2
+    },
+    "accept": "66.8, from 1.2526 / 0.018762",
+    "wrong": [
+     {
+      "id": "diff",
+      "value": 1.2338,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "inv",
+      "value": 0.015,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the grid gamma by the formula's."
+    },
+    {
+     "rung": "point",
+     "text": "1.2526 / 0.018762.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "About 67."
+    }
+   ],
+   "feedback": {
+    "correct": "About 67 times too large: a hedge sized on it would be badly wrong.",
+    "generic": "Not quite right. Divide 1.2526 by 0.018762.",
+    "byKey": {
+     "diff": "You subtracted. The question asks for the ratio.",
+     "inv": "You divided the other way. The grid's gamma is the bigger one."
+    }
+   },
+   "explain": {
+    "text": "1.2526/0.018762 = 66.8, while the price is off by only £0.17. Production pricers start with a few implicit steps and report gamma from the grid. Gamma, not price, is the test that catches ringing."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The $\\theta$-scheme solves $(\\mathbf I - \\theta\\Delta\\tau\\mathbf L)\\mathbf V^{n+1} = (\\mathbf I + (1 - \\theta)\\Delta\\tau\\mathbf L)\\mathbf V^n$, a tridiagonal system per step, by Thomas in about $3M$ operations.",
+   "Explicit needs $\\nu \\le \\tfrac12$; implicit is stable for any step but first order in time; Crank-Nicolson is stable and $O(\\Delta\\tau^2 + \\Delta S^2)$.",
+   "Crank-Nicolson's factor tends to $-1$ for large $\\nu$, so a kink rings; a few implicit steps first fix it."
+  ],
+  "formula": {
+   "name": "Amplification factors",
+   "tex": "1 - z,\\quad \\dfrac{1}{1 + z},\\quad \\dfrac{1 - z/2}{1 + z/2},\\qquad z = 4\\nu\\sin^2\\tfrac{\\omega}{2}",
+   "note": "Explicit, implicit, Crank-Nicolson."
+  },
+  "trap": "Unconditionally stable is not smooth: Crank-Nicolson with long steps rings at the strike, and gamma shows it."
+ },
+ "quiz": [
+  {
+   "id": "q-ratio",
+   "difficulty": 2,
+   "prose": "Crank-Nicolson errs by $-0.00246$ at $M = N = 200$ and by $-0.000616$ at $M = N = 400$.",
+   "question": "What is the ratio of the two errors?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 4.0,
+    "tol": {
+     "abs": 0.05
+    },
+    "accept": "4.0, so second order in both steps",
+    "wrong": [
+     {
+      "id": "half",
+      "value": 0.25,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "two",
+      "value": 2,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "4.0: halving both steps quarters the error.",
+    "generic": "Not quite right. Divide $-0.00246$ by $-0.000616$.",
+    "byKey": {
+     "half": "You divided the other way. Put the coarse error on top.",
+     "two": "A ratio of 2 would mean first order. Recompute the division."
+    }
+   },
+   "explain": {
+    "text": "$0.00246/0.000616 = 4.0$. Halving $\\Delta S$ and $\\Delta\\tau$ together quarters both terms of $O(\\Delta\\tau^2 + \\Delta S^2)$."
+   }
+  },
+  {
+   "id": "q-agree",
+   "difficulty": 3,
+   "prose": "With $M = 100$ and $N = 500$, $\\nu \\le 0.4$ at every node. The three schemes give £10.4428 (explicit), £10.4386 (implicit) and £10.4407 (Crank-Nicolson).",
+   "question": "Why do they agree so closely?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "small",
+      "text": "With $\\nu \\le \\tfrac12$ every factor is close to the others, and the shared $\\Delta S^2$ error dominates",
+      "correct": true
+     },
+     {
+      "id": "luck",
+      "text": "By luck: different schemes usually disagree by pounds",
+      "why": "You expected a large gap. The schemes differ only through their time error, which is small at $\\Delta\\tau = 0.002$."
+     },
+     {
+      "id": "exact",
+      "text": "All three are exact at this step",
+      "why": "You read agreement as exactness. All three are about £0.01 below £10.4506, the space error they share."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "The differences live where $\\nu$ is large.",
+    "generic": "Not quite right. Ask which error the three schemes share."
+   },
+   "explain": {
+    "text": "At small $\\nu$ the three factors nearly coincide on the modes that matter. All three carry the same $\\Delta S^2$ error, about $-0.01$. The schemes part company only when $\\nu$ is large."
+   }
+  },
+  {
+   "id": "q-cn-limit",
+   "difficulty": 3,
+   "prose": "At the strike of the $N = 10$ run, $\\nu = 80$.",
+   "question": "What is Crank-Nicolson's factor at $\\omega = \\pi$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.9876,
+    "tol": {
+     "abs": 0.0005
+    },
+    "accept": "−0.9876 = (1 − 160)/(1 + 160)",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 0.9876,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "implicit",
+      "value": 0.0031,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$-159/161 = -0.9876$.",
+    "generic": "Not quite right. Use $\\tfrac{1 - 2\\nu}{1 + 2\\nu}$ at $\\nu = 80$.",
+    "byKey": {
+     "sign": "You lost the minus sign. The factor is negative, so the mode flips every step.",
+     "implicit": "That is the implicit factor $1/(1 + 4\\nu)$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac{1 - 160}{1 + 160} = -0.9876$. The mode flips sign each step and shrinks only 1.2% a step. After ten steps 88% of it is still there."
+   }
+  }
+ ]
+}

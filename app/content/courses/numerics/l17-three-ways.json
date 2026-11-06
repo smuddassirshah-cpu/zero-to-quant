@@ -1,0 +1,1019 @@
+{
+ "id": "l17-three-ways",
+ "course": "numerics",
+ "title": "One option, three numerical prices",
+ "minutes": 15,
+ "objectives": [
+  "Price one European option by finite differences, quadrature and Monte Carlo, and explain each error."
+ ],
+ "skills": [
+  "nm-fd",
+  "nm-quadrature",
+  "nm-mc"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "One call, four prices",
+   "prose": "The standard call, priced by your own code. Crank-Nicolson takes two implicit steps first, with $S_{\\max} = 200$, $M = 400$ and $N = 200$. Gauss-Legendre uses 32 nodes on $[z^*, 8]$. Monte Carlo uses the share as control. The 500-step tree is a fourth check.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Your pricers from l10, l14, l16 and trees l9",
+     "lines": [
+      ">>> bs_price(100, 100, 0.05, 0.2, 1)",
+      "10.450583572185565",
+      ">>> cn_price(100, 100, 0.05, 0.2, 1, \"call\", 200, 400, 200)",
+      "10.449919918096366",
+      ">>> gl_price(100, 100, 0.05, 0.2, 1, \"call\", 32)",
+      "10.450583572185309",
+      ">>> mc_price(100, 100, 0.05, 0.2, 1, \"call\", 100_000, 0)",
+      "(10.448367800848034, 0.017763955941256515)",
+      ">>> crr(100, 100, 0.05, 0.2, 1, 500)",
+      "10.446585136446535"
+     ],
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Gauss-Legendre is off by only $-2.6 \\times 10^{-13}$. Fill in the other errors against Black-Scholes, in pounds.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Method",
+     "Price",
+     "Error (£)"
+    ],
+    "rows": [
+     [
+      "Grid",
+      "£10.449920",
+      {
+       "edit": true,
+       "answer": -0.000664,
+       "tol": {
+        "abs": 2e-05
+       }
+      }
+     ],
+     [
+      "Simulation",
+      "£10.4484",
+      {
+       "edit": true,
+       "answer": -0.0022,
+       "tol": {
+        "abs": 0.0001
+       }
+      }
+     ],
+     [
+      "Tree",
+      "£10.446585",
+      {
+       "edit": true,
+       "answer": -0.004,
+       "tol": {
+        "abs": 0.0001
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract £10.450584 from each price."
+    },
+    {
+     "rung": "point",
+     "text": "Crank-Nicolson: $10.449920 - 10.450584$.",
+     "highlight": [
+      "l4",
+      "l8",
+      "l10"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Keep the signs: every one is below the formula."
+    }
+   ],
+   "feedback": {
+    "correct": "$-0.00066$, $-0.0022$ and $-0.0040$: all under half a penny.",
+    "generic": "Not quite right. Take each price minus £10.450584, keeping the sign."
+   },
+   "explain": {
+    "text": "Crank-Nicolson errs by $-6.6 \\times 10^{-4}$, Monte Carlo by $-0.0022$ and the tree by $-0.0040$. Gauss-Legendre is off by $-2.6 \\times 10^{-13}$. Each number carries a different kind of error."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "Four kinds of error",
+   "prose": "Each method errs for its own reason, at its own rate. A price is reported with its error, so we need to know which is which.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Your pricers from l10, l14, l16 and trees l9",
+     "lines": [
+      ">>> bs_price(100, 100, 0.05, 0.2, 1)",
+      "10.450583572185565",
+      ">>> cn_price(100, 100, 0.05, 0.2, 1, \"call\", 200, 400, 200)",
+      "10.449919918096366",
+      ">>> gl_price(100, 100, 0.05, 0.2, 1, \"call\", 32)",
+      "10.450583572185309",
+      ">>> mc_price(100, 100, 0.05, 0.2, 1, \"call\", 100_000, 0)",
+      "(10.448367800848034, 0.017763955941256515)",
+      ">>> crr(100, 100, 0.05, 0.2, 1, 500)",
+      "10.446585136446535"
+     ],
+     "compact": true
+    },
+    "state": {}
+   },
+   "question": "Match each method to its error.",
+   "widget": {
+    "kind": "place",
+    "mode": "assign",
+    "tokens": [
+     {
+      "id": "t-fd",
+      "text": "Discretisation, $O(\\Delta S^2 + \\Delta\\tau^2)$"
+     },
+     {
+      "id": "t-gl",
+      "text": "Cutting $z$ at 8, plus a rule error that falls faster than any power"
+     },
+     {
+      "id": "t-mc",
+      "text": "Statistical, $s/\\sqrt n$, stated as a band"
+     },
+     {
+      "id": "t-tr",
+      "text": "Discretisation, order $1/n$, with an even-odd zigzag"
+     }
+    ],
+    "slots": [
+     {
+      "id": "fd",
+      "label": "Crank-Nicolson",
+      "accepts": [
+       "t-fd"
+      ]
+     },
+     {
+      "id": "gl",
+      "label": "Gauss-Legendre",
+      "accepts": [
+       "t-gl"
+      ]
+     },
+     {
+      "id": "mc",
+      "label": "Monte Carlo",
+      "accepts": [
+       "t-mc"
+      ]
+     },
+     {
+      "id": "tr",
+      "label": "Tree",
+      "accepts": [
+       "t-tr"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Which method uses random numbers?"
+    },
+    {
+     "rung": "point",
+     "text": "The tree's error halves with the steps; the grid's quarters.",
+     "highlight": [
+      "l6"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Gauss-Legendre is exact for polynomials once the kink is an end point."
+    }
+   ],
+   "feedback": {
+    "correct": "Each method has its own error source and rate.",
+    "generic": "Not quite right. Ask what each method approximates."
+   },
+   "explain": {
+    "text": "The grid and the tree both discretise, at rates $\\Delta^2$ and $1/n$. Quadrature on a smooth piece converges faster than any power, leaving the cut at $z = 8$. Monte Carlo alone has a random error, quoted as a band, not a bound."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The grid's error",
+   "prose": "Refine the Crank-Nicolson grid, halving $\\Delta S$ and $\\Delta\\tau$ together.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$M$",
+      "$N$",
+      "Error"
+     ],
+     "rows": [
+      [
+       "200",
+       "100",
+       "$-2.65 \\times 10^{-3}$"
+      ],
+      [
+       "400",
+       "200",
+       "$-6.64 \\times 10^{-4}$"
+      ],
+      [
+       "800",
+       "400",
+       "$-1.66 \\times 10^{-4}$"
+      ],
+      [
+       "1,600",
+       "800",
+       "?"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Predict the error at $M = 1{,}600$, $N = 800$, in units of $10^{-5}$.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -4.15,
+    "tol": {
+     "abs": 0.05
+    },
+    "accept": "−4.15: a quarter of −16.6",
+    "wrong": [
+     {
+      "id": "half",
+      "value": -8.3,
+      "tol": {
+       "abs": 0.05
+      }
+     },
+     {
+      "id": "sign",
+      "value": 4.15,
+      "tol": {
+       "abs": 0.05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each row is a quarter of the one above."
+    },
+    {
+     "rung": "point",
+     "text": "$-1.66 \\times 10^{-4}/4$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-4.15 \\times 10^{-5}$."
+    }
+   ],
+   "feedback": {
+    "correct": "The grid gives $-4.15 \\times 10^{-5}$, as predicted.",
+    "generic": "Not quite right. Divide $-16.6$ by 4.",
+    "byKey": {
+     "half": "You halved it, as a first-order method would. This grid is second order in both steps.",
+     "sign": "The grid stays below the formula, so the error stays negative."
+    }
+   },
+   "explain": {
+    "text": "$-1.66 \\times 10^{-4}/4 = -4.15 \\times 10^{-5}$, and the grid gives $-4.15 \\times 10^{-5}$. A sign and a size that quarter on each refinement are the grid's signature. A bound comes from that pattern."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The simulation's error",
+   "prose": "Monte Carlo's error is not a bound but a band. Seed 0 gave £10.4484 with SE £0.0178. Seed 1 gives £10.4275 with SE £0.0177.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Seed",
+      "Price",
+      "SE"
+     ],
+     "rows": [
+      [
+       "0",
+       "£10.4484",
+       "£0.0178"
+      ],
+      [
+       "1",
+       "£10.4275",
+       "£0.0177"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many standard errors is seed 1 from £10.450584?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1.3,
+    "tol": {
+     "abs": 0.02
+    },
+    "accept": "−1.30 SE",
+    "wrong": [
+     {
+      "id": "sign",
+      "value": 1.3,
+      "tol": {
+       "abs": 0.02
+      }
+     },
+     {
+      "id": "pounds",
+      "value": -0.023,
+      "tol": {
+       "abs": 0.001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract £10.450584 from the price."
+    },
+    {
+     "rung": "point",
+     "text": "$10.4275 - 10.4506 = -0.0230$.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide by 0.0177."
+    }
+   ],
+   "feedback": {
+    "correct": "About $-1.30$ SE: a normal miss for a 95% band.",
+    "generic": "Not quite right. Divide the miss by the standard error.",
+    "byKey": {
+     "sign": "Seed 1 is below the formula, so the distance is negative.",
+     "pounds": "That is the miss in pounds. Divide it by the SE."
+    }
+   },
+   "explain": {
+    "text": "$(10.4275 - 10.4506)/0.0177 = -1.30$. Seed 0 sat at $-0.12$ SE. Both are inside $\\pm 1.96$, so neither run contradicts the formula."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "The tree, a fourth check",
+   "prose": "The CRR tree of `trees` l9 is a fourth check, not one of our three methods. Its errors are $-0.0040$ at 500 steps, $-0.0020$ at 1,000 and $+0.0018$ at 1,001.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Steps",
+      "Price",
+      "Error"
+     ],
+     "rows": [
+      [
+       "500",
+       "£10.446585",
+       "−0.0040"
+      ],
+      [
+       "1,000",
+       "£10.448584",
+       "−0.0020"
+      ],
+      [
+       "1,001",
+       "£10.452335",
+       "+0.0018"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Predict the error at 2,000 steps.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.001,
+    "tol": {
+     "abs": 0.0001
+    },
+    "unit": "£",
+    "accept": "−£0.0010: half of −0.0020",
+    "wrong": [
+     {
+      "id": "quarter",
+      "value": -0.0005,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "odd",
+      "value": 0.0009,
+      "tol": {
+       "abs": 0.0001
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "From 500 to 1,000 steps the error halved."
+    },
+    {
+     "rung": "point",
+     "text": "An even tree stays on the low side.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$-0.0020/2$."
+    }
+   ],
+   "feedback": {
+    "correct": "The 2,000-step tree errs by $-0.0010$.",
+    "generic": "Not quite right. Halve the 1,000-step error.",
+    "byKey": {
+     "quarter": "You quartered it, as for the grid. The tree is first order: the error halves.",
+     "odd": "That is the odd-step side of the zigzag. 2,000 is even."
+    }
+   },
+   "explain": {
+    "text": "The 2,000-step tree errs by -0.0010, half of $-0.0020$. Even trees sit below, odd ones above, as in `trees` l9. A tree estimate needs two neighbours, not one."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A second option",
+   "prose": "Does the pattern hold? A half-year put, $K = 95$, $S = 100$, $r = 4\\%$, $\\sigma = 30\\%$, with the same settings. The Monte Carlo control is still the share, now with $\\hat b$ negative.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Method",
+      "Price",
+      "Error"
+     ],
+     "rows": [
+      [
+       "Black-Scholes",
+       "£5.170209",
+       "0"
+      ],
+      [
+       "Crank-Nicolson",
+       "£5.169608",
+       "−0.000601"
+      ],
+      [
+       "Gauss-Legendre, 32 nodes",
+       "£5.170208971851",
+       "$-4 \\times 10^{-14}$"
+      ],
+      [
+       "Monte Carlo, seed 0",
+       "£5.1672 (SE £0.0181)",
+       "−0.0030"
+      ],
+      [
+       "Tree, 1,000 steps",
+       "£5.170502",
+       "+0.000293"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "How many standard errors is the Monte Carlo put from Black-Scholes?",
+   "widget": {
+    "kind": "numeric",
+    "answer": -0.17,
+    "tol": {
+     "abs": 0.02
+    },
+    "accept": "−0.17 SE",
+    "wrong": [
+     {
+      "id": "pounds",
+      "value": -0.003,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "sign",
+      "value": 0.17,
+      "tol": {
+       "abs": 0.02
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide the Monte Carlo error by its standard error."
+    },
+    {
+     "rung": "point",
+     "text": "$-0.0030/0.0181$.",
+     "highlight": [
+      "r3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "A small fraction of one SE."
+    }
+   ],
+   "feedback": {
+    "correct": "Well inside the band.",
+    "generic": "Not quite right. Divide $-0.0030$ by 0.0181.",
+    "byKey": {
+     "pounds": "That is the error in pounds. Divide it by the SE.",
+     "sign": "The simulated put is below the formula, so the distance is negative."
+    }
+   },
+   "explain": {
+    "text": "$-0.0030/0.0181 = -0.17$ SE. The grid again errs by about $-6 \\times 10^{-4}$, Gauss-Legendre by almost nothing. The tree is above, by $3 \\times 10^{-4}$ at 1,000 steps."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "The strike between nodes",
+   "prose": "A colleague widens the grid to $S_{\\max} = 300$ for safety and refines it, with $N = 200$ throughout. With $M = 400$, $\\Delta S = 0.75$, so $K = 100$ falls between nodes.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "$M$",
+      "$\\Delta S$",
+      "$K/\\Delta S$",
+      "Error"
+     ],
+     "rows": [
+      [
+       "390",
+       "0.769",
+       "130",
+       "−0.00151"
+      ],
+      [
+       "400",
+       "0.75",
+       "133.3",
+       "+0.00091"
+      ],
+      [
+       "420",
+       "0.714",
+       "140",
+       "−0.00131"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why does the finer grid at $M = 400$ flip the sign of the error?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "kink",
+      "text": "The payoff's kink lies between nodes, so the start values misplace it",
+      "correct": true
+     },
+     {
+      "id": "round",
+      "text": "Rounding error grows with $M$",
+      "why": "You blamed rounding. It is about $10^{-13}$ here, far below these errors."
+     },
+     {
+      "id": "smax",
+      "text": "A wider $S_{\\max}$ always moves the price up",
+      "why": "You blamed the boundary. At $M = 390$ and 420, with the same $S_{\\max}$, the error is negative."
+     },
+     {
+      "id": "stable",
+      "text": "Crank-Nicolson is unstable at $M = 400$",
+      "why": "You suspected instability. Crank-Nicolson is stable at every step; the error stays below a penny."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Look at the column $K/\\Delta S$."
+    },
+    {
+     "rung": "point",
+     "text": "Only at $M = 400$ is the strike not a node.",
+     "highlight": [
+      "c2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The kink in the payoff is then smeared between two nodes, as in l9."
+    }
+   ],
+   "feedback": {
+    "correct": "Put the strike on a node, or the clean $\\Delta S^2$ pattern is lost.",
+    "generic": "Not quite right. Compare $K/\\Delta S$ across the rows.",
+    "byKey": {
+     "smax": "You blamed $S_{\\max}$. The two neighbouring rows share it and keep the negative sign."
+    }
+   },
+   "explain": {
+    "text": "At $M = 400$ the strike sits a third of the way between nodes, and the error jumps to $+9.1 \\times 10^{-4}$. Refining no longer shrinks the error steadily, so the halve-and-quarter check fails. This is l9's kink again: put it on a node."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "What validates a pricer",
+   "prose": "The rule: report each price with its error, measured its own way. $$\\text{grid: refine, expect a quarter;}\\quad \\text{quadrature: double the nodes;}\\quad \\text{Monte Carlo: } \\hat c \\pm 1.96\\,\\text{SE}.$$ All four prices agree to the penny.",
+   "question": "Is agreement to the penny a good test of the pricers?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "no",
+      "text": "No: every method here is far better than a penny; the test is each error against its own prediction",
+      "correct": true
+     },
+     {
+      "id": "yes",
+      "text": "Yes: four methods agreeing cannot all be wrong",
+      "why": "You trusted agreement. A penny is ten times the grid's error, so it would miss a grid bug of half a penny."
+     },
+     {
+      "id": "mc",
+      "text": "Only if Monte Carlo is run with more paths",
+      "why": "You put the doubt on Monte Carlo. The question is about what any penny-level check can catch."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Validate each error against its prediction.",
+    "generic": "Not quite right. Ask what a penny test could miss."
+   },
+   "explain": {
+    "text": "The grid errs by $6.6 \\times 10^{-4}$ and quadrature by $10^{-13}$, so a penny hides real bugs. The test is that each error has the predicted size and rate. Monte Carlo is checked against its band."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Three prices in one function",
+   "prose": "Write `three_prices` for a call or a put. The put's grid edges are $V(0, \\tau) = Ke^{-r\\tau}$ and $V(S_{\\max}, \\tau) = 0$; its quadrature runs from $-8$ to $z^*$. Use the share as the Monte Carlo control for both. `thomas` is in the starter.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Option",
+      "fd",
+      "quad",
+      "mc (SE)"
+     ],
+     "rows": [
+      [
+       "Call",
+       "10.449920",
+       "10.4505835722",
+       "10.4484 (0.0178)"
+      ],
+      [
+       "Put",
+       "5.169608",
+       "5.1702089719",
+       "5.1672 (0.0181)"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `three_prices`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import math\nimport numpy as np\n\n\ndef thomas(a, b, c, d):\n    \"\"\"Solve a tridiagonal system: a below, b on, c above the diagonal.\"\"\"\n    n = len(d)\n    a, b, c, d = (list(map(float, v)) for v in (a, b, c, d))\n    cp, dp = [0.0] * n, [0.0] * n\n    cp[0], dp[0] = c[0] / b[0], d[0] / b[0]\n    for k in range(1, n):\n        m = b[k] - a[k] * cp[k - 1]\n        cp[k] = c[k] / m\n        dp[k] = (d[k] - a[k] * dp[k - 1]) / m\n    x = [0.0] * n\n    x[-1] = dp[-1]\n    for k in range(n - 2, -1, -1):\n        x[k] = dp[k] - cp[k] * x[k + 1]\n    return np.array(x)\n\n\ndef three_prices(S0, K, r, sigma, T, kind):\n    \"\"\"Price a European call or put three ways. Return a dict with\n    \"fd\" (Crank-Nicolson, Smax = 200, M = 400, N = 200, two implicit\n    steps first), \"quad\" (Gauss-Legendre, 32 nodes, from the kink to\n    z = 8), \"mc\" and \"mc_se\" (100,000 paths, seed 0, the discounted\n    share as control).\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\n\ndef thomas(a, b, c, d):\n    \"\"\"Solve a tridiagonal system: a below, b on, c above the diagonal.\"\"\"\n    n = len(d)\n    a, b, c, d = (list(map(float, v)) for v in (a, b, c, d))\n    cp, dp = [0.0] * n, [0.0] * n\n    cp[0], dp[0] = c[0] / b[0], d[0] / b[0]\n    for k in range(1, n):\n        m = b[k] - a[k] * cp[k - 1]\n        cp[k] = c[k] / m\n        dp[k] = (d[k] - a[k] * dp[k - 1]) / m\n    x = [0.0] * n\n    x[-1] = dp[-1]\n    for k in range(n - 2, -1, -1):\n        x[k] = dp[k] - cp[k] * x[k + 1]\n    return np.array(x)\n\n\ndef cn_price(S0, K, r, sigma, T, kind, Smax, M, N, implicit_start=2):\n    dS, dt = Smax / M, T / N\n    j = np.arange(M + 1)\n    S = j * dS\n    V = np.maximum(S - K, 0.0) if kind == \"call\" else np.maximum(K - S, 0.0)\n    al = 0.5 * (sigma ** 2 * j ** 2 - r * j)[1:-1]\n    be = -(sigma ** 2 * j ** 2 + r)[1:-1]\n    ga = 0.5 * (sigma ** 2 * j ** 2 + r * j)[1:-1]\n    for n in range(N):\n        th = 1.0 if n < implicit_start else 0.5\n        disc = K * math.exp(-r * (n + 1) * dt)\n        lo, hi = (0.0, Smax - disc) if kind == \"call\" else (disc, 0.0)\n        rhs = V[1:-1] + (1 - th) * dt * (al * V[:-2] + be * V[1:-1] + ga * V[2:])\n        rhs[0] += th * dt * al[0] * lo           # the new edge values move\n        rhs[-1] += th * dt * ga[-1] * hi         # to the right side\n        inner = thomas(-th * dt * al, 1 - th * dt * be, -th * dt * ga, rhs)\n        V = np.concatenate(([lo], inner, [hi]))\n    return float(np.interp(S0, S, V))\n\n\ndef gl_price(S0, K, r, sigma, T, kind, n, zmax=8):\n    m, s = (r - sigma ** 2 / 2) * T, sigma * math.sqrt(T)\n    zs = (math.log(K / S0) - m) / s               # the kink, at a node end\n    a, b = (zs, zmax) if kind == \"call\" else (-zmax, zs)\n    x, w = np.polynomial.legendre.leggauss(n)\n    z = (b - a) / 2 * x + (a + b) / 2\n    ST = S0 * np.exp(m + s * z)\n    pay = ST - K if kind == \"call\" else K - ST\n    phi = np.exp(-z ** 2 / 2) / math.sqrt(2 * math.pi)\n    return math.exp(-r * T) * (b - a) / 2 * float(np.sum(w * pay * phi))\n\n\ndef mc_price(S0, K, r, sigma, T, kind, n, seed=0):\n    z = np.random.default_rng(seed).standard_normal(n)\n    ST = S0 * np.exp((r - sigma ** 2 / 2) * T + sigma * math.sqrt(T) * z)\n    pay = np.maximum(ST - K, 0.0) if kind == \"call\" else np.maximum(K - ST, 0.0)\n    y = math.exp(-r * T) * pay\n    x = math.exp(-r * T) * ST                      # control, mean S0\n    b = np.cov(y, x)[0, 1] / np.var(x, ddof=1)\n    a = y - b * (x - S0)\n    return float(a.mean()), float(a.std(ddof=1) / math.sqrt(n))\n\n\ndef three_prices(S0, K, r, sigma, T, kind):\n    if kind not in (\"call\", \"put\"):\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    mc, se = mc_price(S0, K, r, sigma, T, kind, 100_000, 0)\n    return {\"fd\": cn_price(S0, K, r, sigma, T, kind, 200, 400, 200),\n            \"quad\": gl_price(S0, K, r, sigma, T, kind, 32),\n            \"mc\": mc, \"mc_se\": se}\n",
+    "examples": [
+     {
+      "call": "sorted(three_prices(100, 100, 0.05, 0.2, 1, 'call'))",
+      "expect": "['fd', 'mc', 'mc_se', 'quad']",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "d = three_prices(100, 100, 0.05, 0.2, 1, 'call')",
+      "call": "d['fd']",
+      "expect": "10.449919918",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "d = three_prices(100, 100, 0.05, 0.2, 1, 'call')",
+      "call": "abs(d['quad'] - 10.450583572185565) < 1e-10",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "d = three_prices(100, 100, 0.05, 0.2, 1, 'call')",
+      "call": "[d['mc'], d['mc_se']]",
+      "expect": "[10.4483678008, 0.0177639559]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "setup": "d = three_prices(100, 100, 0.05, 0.2, 1, 'call')",
+      "call": "abs(d['mc'] - 10.450583572185565) < 3 * d['mc_se']",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "d = three_prices(100, 95, 0.04, 0.3, 0.5, 'put')",
+      "call": "d['fd']",
+      "expect": "5.16960781",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "setup": "d = three_prices(100, 95, 0.04, 0.3, 0.5, 'put')",
+      "call": "abs(d['quad'] - 5.170208971851125) < 1e-10",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "d = three_prices(100, 95, 0.04, 0.3, 0.5, 'put')",
+      "call": "[d['mc'], d['mc_se']]",
+      "expect": "[5.1671762982, 0.0181453954]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "three_prices(100, 100, 0.05, 0.2, 1, 'digital')",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "sorted(three_prices(100, 100, 0.05, 0.2, 1, 'call'))",
+      "expect": "['fd', 'mc', 'mc_se', 'quad']",
+      "compare": "equal"
+     }
+    ],
+    "how": "Submit runs 9 hidden tests with NumPy, no SciPy. The grid must match ours within 1e-6, quadrature Black-Scholes within 1e-10, and Monte Carlo our seeded values within 1e-8."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Write three helpers: one per method, each with a `kind` argument."
+    },
+    {
+     "rung": "point",
+     "text": "For a put, the bottom edge enters the first equation: add $\\theta\\Delta\\tau\\alpha_1 Ke^{-r\\tau}$ to its right side.",
+     "highlight": [
+      "r1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Raise `ValueError` before any work when `kind` is not \"call\" or \"put\"."
+    }
+   ],
+   "feedback": {
+    "correct": "One function now prices an option three ways.",
+    "generic": "Not quite right. Get the call right first, then the put's edges."
+   },
+   "explain": {
+    "text": "The put changes only the grid's edges, the quadrature interval and the simulated payoff. Each method's settings fix its error, which the tests pin down. The control works for the put with $\\hat b < 0$."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "A model validation note",
+   "prose": "A validation team writes a note for the three pricers. For each method it records the number and its error estimate. It also says how the error was measured and how it scales. Desks keep all three, because each fails differently.",
+   "question": "Select all that apply: which lines belong in the note?",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "grid",
+      "text": "Grid: £10.449920, error $-6.6 \\times 10^{-4}$ from refinement, quartering as both steps halve",
+      "correct": true
+     },
+     {
+      "id": "mc",
+      "text": "Monte Carlo: £10.4484 $\\pm$ £0.035 at 95%, a band that halves with four times the paths",
+      "correct": true
+     },
+     {
+      "id": "fails",
+      "text": "Where each fails: grids in high dimension, quadrature without a density, Monte Carlo at the penny",
+      "correct": true
+     },
+     {
+      "id": "digits",
+      "text": "Monte Carlo: £10.448368, quoted to six decimals",
+      "why": "You quoted digits the band does not support. With $\\pm$£0.035, the third decimal is already noise."
+     },
+     {
+      "id": "penny",
+      "text": "All three agree to the penny, so no further test is needed",
+      "why": "You took agreement as validation. A penny is far coarser than the grid's and quadrature's errors."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each line should give a number with its error and how it scales."
+    },
+    {
+     "rung": "point",
+     "text": "A Monte Carlo price comes with a band, not extra digits."
+    },
+    {
+     "rung": "step",
+     "text": "Three lines belong."
+    }
+   ],
+   "feedback": {
+    "correct": "Number, error, measurement and scaling, method by method.",
+    "generic": "Not quite right. Keep the lines that state an error and how it was measured."
+   },
+   "explain": {
+    "text": "The grid line gives its error and rate, and the Monte Carlo line its band. The last says where each method breaks, which is why desks keep all three. Six decimals or a penny test would hide the real errors."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "The standard call: grid £10.449920 ($-6.6 \\times 10^{-4}$), quadrature £10.450583572185 ($-2.6 \\times 10^{-13}$), Monte Carlo £10.4484 (SE £0.0178).",
+   "The grid's error quarters with refinement, quadrature's vanishes with the nodes, and Monte Carlo's is a band.",
+   "A penny is not a test: check each error against its own prediction, with the strike on a node."
+  ],
+  "formula": {
+   "name": "How each error scales",
+   "tex": "\\text{grid } O(\\Delta S^2 + \\Delta\\tau^2),\\quad \\text{Gauss: faster than any power},\\quad \\text{MC } \\dfrac{s}{\\sqrt n}",
+   "note": "The tree, a fourth check, is $O(1/n)$ with a zigzag."
+  },
+  "trap": "A strike between nodes flips the grid's error and breaks its clean refinement pattern."
+ },
+ "quiz": [
+  {
+   "id": "q-digits",
+   "difficulty": 2,
+   "prose": "Monte Carlo gives £10.4484 with SE £0.0178.",
+   "question": "How should the price be quoted?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "band",
+      "text": "£10.45 $\\pm$ £0.035 at 95%",
+      "correct": true
+     },
+     {
+      "id": "four",
+      "text": "£10.4484, good to the fourth decimal",
+      "why": "You read the last digits as accurate. A 95% band of $\\pm$£0.035 makes the fourth decimal noise."
+     },
+     {
+      "id": "one",
+      "text": "£10, since simulation is rough",
+      "why": "You threw away real information. The band is a few pence wide, not pounds."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Quote the band with the price.",
+    "generic": "Not quite right. Work out $1.96 \\times$ SE."
+   },
+   "explain": {
+    "text": "$1.96 \\times 0.0178 = 0.035$, so the price is £10.45 give or take 3.5p. The fourth decimal of £10.4484 means nothing."
+   }
+  },
+  {
+   "id": "q-basket",
+   "difficulty": 3,
+   "prose": "A desk must price a European basket on 10 shares.",
+   "question": "Which of the three methods still works well?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "mc",
+      "text": "Monte Carlo",
+      "correct": true
+     },
+     {
+      "id": "fd",
+      "text": "The finite-difference grid",
+      "why": "You kept the grid. In 10 dimensions a grid of 100 nodes a side has $10^{20}$ nodes."
+     },
+     {
+      "id": "quad",
+      "text": "Gauss-Legendre quadrature",
+      "why": "You kept quadrature. A product rule in 10 dimensions needs $32^{10}$ nodes."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Only Monte Carlo's rate ignores dimension.",
+    "generic": "Not quite right. Count the nodes a grid needs in 10 dimensions."
+   },
+   "explain": {
+    "text": "A grid or product rule needs a node count that grows like a power of 10 dimensions. Monte Carlo still errs like $s/\\sqrt n$. So baskets are simulated."
+   }
+  },
+  {
+   "id": "q-zigzag",
+   "difficulty": 2,
+   "prose": "The 1,000-step tree errs by $-0.0020$ and the 1,001-step tree by $+0.0018$.",
+   "question": "What does this say?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "zig",
+      "text": "The tree's error zigzags with even and odd steps, so one tree is not a reliable estimate",
+      "correct": true
+     },
+     {
+      "id": "bug",
+      "text": "One of the two trees has a bug",
+      "why": "You read the flip as a bug. Even and odd trees put the strike differently among the leaves, as in `trees` l9."
+     },
+     {
+      "id": "conv",
+      "text": "The tree has converged to within $10^{-4}$",
+      "why": "You compared the trees with each other. Each is about £0.002 from the formula."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Average neighbours, or quote both.",
+    "generic": "Not quite right. Compare the signs."
+   },
+   "explain": {
+    "text": "Even trees sit below and odd trees above, both about $2/n$ pounds away. Averaging 1,000 and 1,001 steps gives an error near $-10^{-4}$. A single tree hides that zigzag."
+   }
+  }
+ ]
+}
