@@ -1,0 +1,1806 @@
+{
+ "id": "l11-step-size",
+ "course": "numerics",
+ "title": "Step size and error order",
+ "minutes": 15,
+ "objectives": [
+  "Measure a solver’s error order from a log-log plot, and choose a step for a tolerance."
+ ],
+ "skills": [
+  "nm-quadrature",
+  "nm-stability"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "prose": "In the CIR model a zero-coupon bond is $P = A(\\tau)e^{-B(\\tau)r}$, where $B' = 1 - \\kappa B - \\tfrac12\\sigma^2B^2$ and $(\\ln A)' = -\\kappa\\theta B$, both starting at 0. With $\\kappa = 0.5$, $\\theta = 4\\%$, $\\sigma = 10\\%$, the closed form gives $B(5) = 1.812959$. The plot shows Euler's and RK4's errors in $B(5)$ for $n = 5$ to 40 steps.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.6,
+      1.7
+     ],
+     "y": [
+      -7.5,
+      -0.5
+     ],
+     "height": 260,
+     "xStep": 0.2,
+     "yStep": 1,
+     "xAxis": "bottom",
+     "xLabel": "$\\log_{10} n$",
+     "yLabel": "$\\log_{10}$ error in $B(5)$",
+     "functions": [
+      {
+       "id": "eu",
+       "points": [
+        [
+         0.699,
+         -1.0159
+        ],
+        [
+         1.0,
+         -1.3069
+        ],
+        [
+         1.301,
+         -1.6068
+        ],
+        [
+         1.6021,
+         -1.908
+        ]
+       ],
+       "label": "Euler",
+       "labelAt": 1.2
+      },
+      {
+       "id": "rk",
+       "points": [
+        [
+         0.699,
+         -3.4574
+        ],
+        [
+         1.0,
+         -4.7559
+        ],
+        [
+         1.301,
+         -6.0068
+        ],
+        [
+         1.6021,
+         -7.2343
+        ]
+       ],
+       "colour": 2,
+       "label": "RK4",
+       "labelAt": 1.2
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "e0",
+       "x": 0.699,
+       "y": -1.0159,
+       "tap": false
+      },
+      {
+       "id": "e1",
+       "x": 1.0,
+       "y": -1.3069,
+       "tap": false
+      },
+      {
+       "id": "e2",
+       "x": 1.301,
+       "y": -1.6068,
+       "tap": false
+      },
+      {
+       "id": "e3",
+       "x": 1.6021,
+       "y": -1.908,
+       "tap": false
+      },
+      {
+       "id": "r0",
+       "x": 0.699,
+       "y": -3.4574,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r1",
+       "x": 1.0,
+       "y": -4.7559,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r2",
+       "x": 1.301,
+       "y": -6.0068,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r3",
+       "x": 1.6021,
+       "y": -7.2343,
+       "tap": false,
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "Read each method's slope from its first and last points.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Method",
+     "Errors at $n = 5$ and 40",
+     "Slope"
+    ],
+    "rows": [
+     [
+      "Euler",
+      "0.0964, 0.0124",
+      {
+       "edit": true,
+       "answer": -0.99,
+       "tol": {
+        "abs": 0.02
+       }
+      }
+     ],
+     [
+      "RK4",
+      "$3.49 \\times 10^{-4}$, $5.83 \\times 10^{-8}$",
+      {
+       "edit": true,
+       "answer": -4.18,
+       "tol": {
+        "abs": 0.03
+       }
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Slope is the change in $\\log_{10}$ error over $\\log_{10} 8 = 0.903$."
+    },
+    {
+     "rung": "point",
+     "text": "Euler: $\\log_{10}(0.0124/0.0964) = -0.891$.",
+     "highlight": [
+      "eu",
+      "rk"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Euler: $-0.891/0.903 = -0.99$. RK4: $\\log_{10}(5.83 \\times 10^{-8}/3.49 \\times 10^{-4}) = -3.78$, so $-4.18$."
+    }
+   ],
+   "feedback": {
+    "correct": "About $-1$ for Euler and $-4.2$ for RK4: orders 1 and 4.",
+    "generic": "Not quite right. Divide the drop in $\\log_{10}$ error by 0.903.",
+    "byKey": {
+     "r0c2": "Use $\\log_{10}(0.0124/0.0964)$ over 0.903.",
+     "r1c2": "Use $\\log_{10}(5.83 \\times 10^{-8}/3.49 \\times 10^{-4})$ over 0.903."
+    }
+   },
+   "explain": {
+    "text": "Euler's line falls with slope $-0.99$ and RK4's with $-4.18$, close to their orders 1 and 4. The price is £79.1020 with $r_0 = 6\\%$. `odes` showed these orders; here we use them to choose steps."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "A method of order $p$ makes an error like $h^{p+1}$ in each step: the **local error**. Over $T/h$ steps these add up to the **global error** at the end.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.6,
+      1.7
+     ],
+     "y": [
+      -7.5,
+      -0.5
+     ],
+     "height": 260,
+     "xStep": 0.2,
+     "yStep": 1,
+     "xAxis": "bottom",
+     "xLabel": "$\\log_{10} n$",
+     "yLabel": "$\\log_{10}$ error in $B(5)$",
+     "functions": [
+      {
+       "id": "eu",
+       "points": [
+        [
+         0.699,
+         -1.0159
+        ],
+        [
+         1.0,
+         -1.3069
+        ],
+        [
+         1.301,
+         -1.6068
+        ],
+        [
+         1.6021,
+         -1.908
+        ]
+       ],
+       "label": "Euler",
+       "labelAt": 1.2
+      },
+      {
+       "id": "rk",
+       "points": [
+        [
+         0.699,
+         -3.4574
+        ],
+        [
+         1.0,
+         -4.7559
+        ],
+        [
+         1.301,
+         -6.0068
+        ],
+        [
+         1.6021,
+         -7.2343
+        ]
+       ],
+       "colour": 2,
+       "label": "RK4",
+       "labelAt": 1.2
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "e0",
+       "x": 0.699,
+       "y": -1.0159,
+       "tap": false
+      },
+      {
+       "id": "e1",
+       "x": 1.0,
+       "y": -1.3069,
+       "tap": false
+      },
+      {
+       "id": "e2",
+       "x": 1.301,
+       "y": -1.6068,
+       "tap": false
+      },
+      {
+       "id": "e3",
+       "x": 1.6021,
+       "y": -1.908,
+       "tap": false
+      },
+      {
+       "id": "r0",
+       "x": 0.699,
+       "y": -3.4574,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r1",
+       "x": 1.0,
+       "y": -4.7559,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r2",
+       "x": 1.301,
+       "y": -6.0068,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r3",
+       "x": 1.6021,
+       "y": -7.2343,
+       "tap": false,
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "How does the global error of an order-$p$ method scale?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Like $h^p$: $T/h$ steps of size $h^{p+1}$",
+      "correct": true
+     },
+     {
+      "id": "local",
+      "text": "Like $h^{p+1}$, the same as one step",
+      "why": "There are $T/h$ steps, so the errors add to one power less."
+     },
+     {
+      "id": "const",
+      "text": "It does not depend on $h$",
+      "why": "The plot shows it falling with $n$."
+     },
+     {
+      "id": "sq",
+      "text": "Like $h^{2p}$",
+      "why": "Errors add, they do not multiply."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "How many steps are there?"
+    },
+    {
+     "rung": "point",
+     "text": "$T/h$ steps, each adding about $h^{p+1}$.",
+     "highlight": [
+      "rk"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$\\tfrac Th \\times h^{p+1} = Th^p$."
+    }
+   ],
+   "feedback": {
+    "correct": "Global error like $h^p$.",
+    "generic": "Not quite right. Multiply the local error by the number of steps."
+   },
+   "explain": {
+    "text": "$T/h$ local errors of size $h^{p+1}$ add to about $h^p$. So RK4's local error is like $h^5$ and its global error like $h^4$. The orders on the plot are global ones."
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 2,
+   "prose": "From RK4's error at $n = 10$, $1.75 \\times 10^{-5}$ with $h = 0.5$, we get $C = \\text{error}/h^4 \\approx 2.81 \\times 10^{-4}$. The line is the predicted error $C(5/n)^4$. Change $n$ until the prediction drops below the dashed tolerance, $10^{-8}$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.9,
+      2.1
+     ],
+     "y": [
+      -10,
+      -4
+     ],
+     "height": 240,
+     "xStep": 0.2,
+     "yStep": 1,
+     "xAxis": "bottom",
+     "xLabel": "$\\log_{10} n$",
+     "yLabel": "$\\log_{10}$ predicted error",
+     "params": {
+      "n": 10
+     },
+     "functions": [
+      {
+       "id": "m",
+       "expr": "log10(0.000280683*(5/10^x)^4)",
+       "label": "$C(5/n)^4$",
+       "labelAt": 1.2
+      }
+     ],
+     "hlines": [
+      {
+       "id": "tol",
+       "y": -8,
+       "label": "tolerance $10^{-8}$",
+       "dashed": true
+      }
+     ]
+    },
+    "state": {
+     "params": {
+      "n": 10
+     },
+     "points": [
+      {
+       "id": "P",
+       "x": 1,
+       "y": -4.756
+      }
+     ]
+    },
+    "derive": {
+     "P.x": "log10(n)",
+     "P.y": "log10(0.000280683*pow(5/n, 4))",
+     "caption": "n = {{n}}, h = {{fixed(5/n, 4)}}: predicted error {{(0.000280683*pow(5/n, 4)).toExponential(2)}}."
+    },
+    "controls": [
+     {
+      "bind": "n",
+      "min": 10,
+      "max": 100,
+      "step": 1,
+      "start": 10,
+      "label": "$n$"
+     }
+    ]
+   },
+   "question": "What is the smallest $n$ whose predicted error is below $10^{-8}$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 65,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "w64",
+      "value": 64,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "w60",
+      "value": 60,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $C h^4 = 10^{-8}$ for $h$."
+    },
+    {
+     "rung": "point",
+     "text": "$h = (10^{-8} / 2.81 \\times 10^{-4})^{1/4} \\approx 0.0773$.",
+     "highlight": [
+      "P",
+      "tol"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$5 / 0.0773 = 64.7$, so round up to 65."
+    }
+   ],
+   "feedback": {
+    "correct": "65 steps; the real error there is $8.2 \\times 10^{-9}$.",
+    "generic": "Not quite right. Find where the caption first drops below $10^{-8}$.",
+    "byKey": {
+     "w64": "At 64 the prediction is $1.05 \\times 10^{-8}$, just above.",
+     "w60": "At 60 it is $1.35 \\times 10^{-8}$."
+    }
+   },
+   "explain": {
+    "text": "$h = (10^{-8}/C)^{1/4} = 0.0773$ gives $n = 65$. Running RK4 with 65 steps gives a true error of $8.2 \\times 10^{-9}$, as planned. One run and the order were enough to choose the step.",
+    "canvas": {
+     "params": {
+      "n": 65
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "prose": "With no closed form, two runs estimate the error. If $y_h$ has error $Ch^p$, then $y_{h/2}$ has error about $\\tfrac{y_h - y_{h/2}}{2^p - 1}$. RK4 gives $B(5) = 1.81294125$ with $n = 10$ and $1.81295781$ with $n = 20$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.6,
+      1.7
+     ],
+     "y": [
+      -7.5,
+      -0.5
+     ],
+     "height": 260,
+     "xStep": 0.2,
+     "yStep": 1,
+     "xAxis": "bottom",
+     "xLabel": "$\\log_{10} n$",
+     "yLabel": "$\\log_{10}$ error in $B(5)$",
+     "functions": [
+      {
+       "id": "eu",
+       "points": [
+        [
+         0.699,
+         -1.0159
+        ],
+        [
+         1.0,
+         -1.3069
+        ],
+        [
+         1.301,
+         -1.6068
+        ],
+        [
+         1.6021,
+         -1.908
+        ]
+       ],
+       "label": "Euler",
+       "labelAt": 1.2
+      },
+      {
+       "id": "rk",
+       "points": [
+        [
+         0.699,
+         -3.4574
+        ],
+        [
+         1.0,
+         -4.7559
+        ],
+        [
+         1.301,
+         -6.0068
+        ],
+        [
+         1.6021,
+         -7.2343
+        ]
+       ],
+       "colour": 2,
+       "label": "RK4",
+       "labelAt": 1.2
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "e0",
+       "x": 0.699,
+       "y": -1.0159,
+       "tap": false
+      },
+      {
+       "id": "e1",
+       "x": 1.0,
+       "y": -1.3069,
+       "tap": false
+      },
+      {
+       "id": "e2",
+       "x": 1.301,
+       "y": -1.6068,
+       "tap": false
+      },
+      {
+       "id": "e3",
+       "x": 1.6021,
+       "y": -1.908,
+       "tap": false
+      },
+      {
+       "id": "r0",
+       "x": 0.699,
+       "y": -3.4574,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r1",
+       "x": 1.0,
+       "y": -4.7559,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r2",
+       "x": 1.301,
+       "y": -6.0068,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r3",
+       "x": 1.6021,
+       "y": -7.2343,
+       "tap": false,
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "Estimate the error of the $n = 20$ value, times $10^6$.",
+   "widget": {
+    "kind": "numeric",
+    "answer": -1.1,
+    "tol": {
+     "abs": 0.02
+    },
+    "wrong": [
+     {
+      "id": "noscale",
+      "value": -16.6,
+      "tol": {
+       "abs": 0.2
+      }
+     },
+     {
+      "id": "true",
+      "value": -0.984,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract the $n = 20$ value from the $n = 10$ value."
+    },
+    {
+     "rung": "point",
+     "text": "The difference is about $-1.66 \\times 10^{-5}$.",
+     "highlight": [
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Divide by $2^4 - 1 = 15$: $-1.10 \\times 10^{-6}$."
+    }
+   ],
+   "feedback": {
+    "correct": "About $-1.10 \\times 10^{-6}$, against the true $-9.84 \\times 10^{-7}$.",
+    "generic": "Not quite right. Take the difference of the two runs and divide by 15.",
+    "byKey": {
+     "noscale": "You forgot to divide by $2^4 - 1 = 15$.",
+     "true": "That is the true error, which we would not know without the closed form."
+    }
+   },
+   "explain": {
+    "text": "$(y_{10} - y_{20})/15 \\approx -1.10 \\times 10^{-6}$, within 12% of the true $-9.84 \\times 10^{-7}$. That is good enough to choose a step. It is Richardson's idea again, now for time steps."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "prose": "$y' = y^2$ from $y(0) = 1$ has $y = \\tfrac{1}{1 - t}$, which steepens towards $t = 1$. An adaptive RK4 controller compares one step of $h$ with two of $\\tfrac h2$. It accepts when their gap over 15 is below $10^{-8}\\max(1, |y|)$. The dots are its accepted steps up to $t = 0.95$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      21
+     ],
+     "height": 260,
+     "xLabel": "$t$",
+     "functions": [
+      {
+       "id": "y",
+       "expr": "1/(1 - x)",
+       "domain": [
+        0,
+        0.95
+       ],
+       "label": "$1/(1 - t)$",
+       "labelAt": 0.5
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "s0",
+       "x": 0.0,
+       "y": 1.0,
+       "tap": false
+      },
+      {
+       "id": "s1",
+       "x": 0.06864,
+       "y": 1.0737,
+       "tap": false
+      },
+      {
+       "id": "s2",
+       "x": 0.14001,
+       "y": 1.1628,
+       "tap": false
+      },
+      {
+       "id": "s3",
+       "x": 0.20618,
+       "y": 1.2597,
+       "tap": false
+      },
+      {
+       "id": "s4",
+       "x": 0.26727,
+       "y": 1.3648,
+       "tap": false
+      },
+      {
+       "id": "s5",
+       "x": 0.32366,
+       "y": 1.4786,
+       "tap": false
+      },
+      {
+       "id": "s6",
+       "x": 0.37571,
+       "y": 1.6018,
+       "tap": false
+      },
+      {
+       "id": "s7",
+       "x": 0.42375,
+       "y": 1.7354,
+       "tap": false
+      },
+      {
+       "id": "s8",
+       "x": 0.4681,
+       "y": 1.8801,
+       "tap": false
+      },
+      {
+       "id": "s9",
+       "x": 0.50903,
+       "y": 2.0368,
+       "tap": false
+      },
+      {
+       "id": "s10",
+       "x": 0.54682,
+       "y": 2.2066,
+       "tap": false
+      },
+      {
+       "id": "s11",
+       "x": 0.58169,
+       "y": 2.3906,
+       "tap": false
+      },
+      {
+       "id": "s12",
+       "x": 0.61388,
+       "y": 2.5899,
+       "tap": false
+      },
+      {
+       "id": "s13",
+       "x": 0.6436,
+       "y": 2.8058,
+       "tap": false
+      },
+      {
+       "id": "s14",
+       "x": 0.67103,
+       "y": 3.0398,
+       "tap": false
+      },
+      {
+       "id": "s15",
+       "x": 0.69634,
+       "y": 3.2932,
+       "tap": false
+      },
+      {
+       "id": "s16",
+       "x": 0.71971,
+       "y": 3.5677,
+       "tap": false
+      },
+      {
+       "id": "s17",
+       "x": 0.74128,
+       "y": 3.8652,
+       "tap": false
+      },
+      {
+       "id": "s18",
+       "x": 0.76119,
+       "y": 4.1875,
+       "tap": false
+      },
+      {
+       "id": "s19",
+       "x": 0.77957,
+       "y": 4.5366,
+       "tap": false
+      },
+      {
+       "id": "s20",
+       "x": 0.79653,
+       "y": 4.9148,
+       "tap": false
+      },
+      {
+       "id": "s21",
+       "x": 0.81219,
+       "y": 5.3246,
+       "tap": false
+      },
+      {
+       "id": "s22",
+       "x": 0.82664,
+       "y": 5.7685,
+       "tap": false
+      },
+      {
+       "id": "s23",
+       "x": 0.83999,
+       "y": 6.2494,
+       "tap": false
+      },
+      {
+       "id": "s24",
+       "x": 0.8523,
+       "y": 6.7705,
+       "tap": false
+      },
+      {
+       "id": "s25",
+       "x": 0.86367,
+       "y": 7.3349,
+       "tap": false
+      },
+      {
+       "id": "s26",
+       "x": 0.87416,
+       "y": 7.9465,
+       "tap": false
+      },
+      {
+       "id": "s27",
+       "x": 0.88384,
+       "y": 8.609,
+       "tap": false
+      },
+      {
+       "id": "s28",
+       "x": 0.89278,
+       "y": 9.3267,
+       "tap": false
+      },
+      {
+       "id": "s29",
+       "x": 0.90103,
+       "y": 10.1043,
+       "tap": false
+      },
+      {
+       "id": "s30",
+       "x": 0.90865,
+       "y": 10.9468,
+       "tap": false
+      },
+      {
+       "id": "s31",
+       "x": 0.91568,
+       "y": 11.8594,
+       "tap": false
+      },
+      {
+       "id": "s32",
+       "x": 0.92217,
+       "y": 12.8482,
+       "tap": false
+      },
+      {
+       "id": "s33",
+       "x": 0.92816,
+       "y": 13.9194,
+       "tap": false
+      },
+      {
+       "id": "s34",
+       "x": 0.93369,
+       "y": 15.0799,
+       "tap": false
+      },
+      {
+       "id": "s35",
+       "x": 0.93879,
+       "y": 16.3371,
+       "tap": false
+      },
+      {
+       "id": "s36",
+       "x": 0.9435,
+       "y": 17.6992,
+       "tap": false
+      },
+      {
+       "id": "s37",
+       "x": 0.94785,
+       "y": 19.1748,
+       "tap": false
+      },
+      {
+       "id": "s38",
+       "x": 0.95,
+       "y": 20.0,
+       "tap": false
+      }
+     ]
+    }
+   },
+   "question": "It took 38 accepted steps and 1 rejected. Each try costs 3 RK4 steps of 4 evaluations. How many evaluations in all?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 468,
+    "tol": {
+     "abs": 0
+    },
+    "wrong": [
+     {
+      "id": "acc",
+      "value": 456,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "one",
+      "value": 156,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Count the tries: accepted plus rejected."
+    },
+    {
+     "rung": "point",
+     "text": "39 tries, each costing $3 \\times 4 = 12$ evaluations.",
+     "highlight": [
+      "s38"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$39 \\times 12 = 468$."
+    }
+   ],
+   "feedback": {
+    "correct": "468 evaluations, for a final relative error of $2.4 \\times 10^{-8}$.",
+    "generic": "Not quite right. Multiply 39 tries by 12.",
+    "byKey": {
+     "acc": "You left out the rejected try, which still cost 12 evaluations.",
+     "one": "Each try is three RK4 steps, not one."
+    }
+   },
+   "explain": {
+    "text": "$39 \\times 12 = 468$. The steps shrink from 0.069 to 0.0022 as the curve steepens. Fixed-step RK4 needs about 400 steps, 1,600 evaluations, for $7 \\times 10^{-8}$."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "prose": "The controller's error estimate $\\delta$ behaves like $Ch^{p+1}$ for one step. It wants the next step's estimate to equal the tolerance $\\tau$. RK4 has $p = 4$.",
+   "question": "What new step $h_{\\text{new}}$ makes $Ch_{\\text{new}}^{5} = \\tau$, in terms of $h$, $\\tau$ and $\\delta$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "h\\left(\\frac{\\tau}{\\delta}\\right)^{\\frac{1}{5}}",
+    "accept": [
+     "h*(tau/delta)^(1/5)",
+     "h(\\tau/\\delta)^{1/5}"
+    ],
+    "wrong": [
+     {
+      "id": "four",
+      "tex": "h\\left(\\frac{\\tau}{\\delta}\\right)^{\\frac{1}{4}}"
+     },
+     {
+      "id": "flip",
+      "tex": "h\\left(\\frac{\\delta}{\\tau}\\right)^{\\frac{1}{5}}"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Divide $Ch_{\\text{new}}^5 = \\tau$ by $Ch^5 = \\delta$."
+    },
+    {
+     "rung": "point",
+     "text": "$(h_{\\text{new}}/h)^5 = \\tau/\\delta$."
+    },
+    {
+     "rung": "step",
+     "text": "Take the fifth root and multiply by $h$."
+    }
+   ],
+   "feedback": {
+    "correct": "$h_{\\text{new}} = h(\\tau/\\delta)^{1/5}$.",
+    "generic": "Not quite right. Divide the two equations to remove $C$.",
+    "byKey": {
+     "four": "The local error is $h^{p+1} = h^5$, so the root is the fifth.",
+     "flip": "A big error estimate must shrink the step, so $\\delta$ goes below."
+    }
+   },
+   "explain": {
+    "text": "Dividing removes $C$: $(h_{\\text{new}}/h)^5 = \\tau/\\delta$. In practice a safety factor 0.9 multiplies it, and the change is kept between $0.2h$ and $5h$. That is the rule the dots on the last screen followed."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "prose": "A colleague budgets RK4 runs with the rule \"halving the step halves the error\". They need an error 16 times smaller than one run gave.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.6,
+      1.7
+     ],
+     "y": [
+      -7.5,
+      -0.5
+     ],
+     "height": 260,
+     "xStep": 0.2,
+     "yStep": 1,
+     "xAxis": "bottom",
+     "xLabel": "$\\log_{10} n$",
+     "yLabel": "$\\log_{10}$ error in $B(5)$",
+     "functions": [
+      {
+       "id": "eu",
+       "points": [
+        [
+         0.699,
+         -1.0159
+        ],
+        [
+         1.0,
+         -1.3069
+        ],
+        [
+         1.301,
+         -1.6068
+        ],
+        [
+         1.6021,
+         -1.908
+        ]
+       ],
+       "label": "Euler",
+       "labelAt": 1.2
+      },
+      {
+       "id": "rk",
+       "points": [
+        [
+         0.699,
+         -3.4574
+        ],
+        [
+         1.0,
+         -4.7559
+        ],
+        [
+         1.301,
+         -6.0068
+        ],
+        [
+         1.6021,
+         -7.2343
+        ]
+       ],
+       "colour": 2,
+       "label": "RK4",
+       "labelAt": 1.2
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "e0",
+       "x": 0.699,
+       "y": -1.0159,
+       "tap": false
+      },
+      {
+       "id": "e1",
+       "x": 1.0,
+       "y": -1.3069,
+       "tap": false
+      },
+      {
+       "id": "e2",
+       "x": 1.301,
+       "y": -1.6068,
+       "tap": false
+      },
+      {
+       "id": "e3",
+       "x": 1.6021,
+       "y": -1.908,
+       "tap": false
+      },
+      {
+       "id": "r0",
+       "x": 0.699,
+       "y": -3.4574,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r1",
+       "x": 1.0,
+       "y": -4.7559,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r2",
+       "x": 1.301,
+       "y": -6.0068,
+       "tap": false,
+       "colour": 2
+      },
+      {
+       "id": "r3",
+       "x": 1.6021,
+       "y": -7.2343,
+       "tap": false,
+       "colour": 2
+      }
+     ]
+    }
+   },
+   "question": "How many times more steps does RK4 really need?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2,
+    "tol": {
+     "abs": 0.01
+    },
+    "wrong": [
+     {
+      "id": "euler",
+      "value": 16,
+      "tol": {
+       "abs": 0.01
+      }
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "RK4's error falls like $h^4$."
+    },
+    {
+     "rung": "point",
+     "text": "Halving $h$ divides the error by 16.",
+     "highlight": [
+      "rk"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So twice the steps suffice."
+    }
+   ],
+   "feedback": {
+    "correct": "Twice the steps: $2^4 = 16$.",
+    "generic": "Not quite right. Use RK4's order, 4.",
+    "byKey": {
+     "euler": "That is Euler's rule, order 1. For RK4 it pays eight times too much.",
+     "four": "That would be right for a second-order method."
+    }
+   },
+   "explain": {
+    "text": "For RK4, halving $h$ divides the error by about 16, so 2 times the steps give 16 times less error. The halving rule asks for 16 times the steps, eight times too many. Budget with the method's own order."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "prose": "Write the step chooser and the controller. `rk4` and `euler` are given. In `adaptive_rk4`, accept when the estimate is below `tol * max(1, |y|)`, and keep the extrapolated value $y_{h/2} + (y_{h/2} - y_h)/15$. Then set $h \\leftarrow 0.9h(\\text{tol}/\\delta)^{1/5}$, kept between $0.2h$ and $5h$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0,
+      1
+     ],
+     "y": [
+      0,
+      21
+     ],
+     "height": 220,
+     "xLabel": "$t$",
+     "functions": [
+      {
+       "id": "y",
+       "expr": "1/(1 - x)",
+       "domain": [
+        0,
+        0.95
+       ],
+       "label": "$1/(1 - t)$",
+       "labelAt": 0.5
+      }
+     ]
+    },
+    "state": {
+     "points": [
+      {
+       "id": "s0",
+       "x": 0.0,
+       "y": 1.0,
+       "tap": false
+      },
+      {
+       "id": "s1",
+       "x": 0.06864,
+       "y": 1.0737,
+       "tap": false
+      },
+      {
+       "id": "s2",
+       "x": 0.14001,
+       "y": 1.1628,
+       "tap": false
+      },
+      {
+       "id": "s3",
+       "x": 0.20618,
+       "y": 1.2597,
+       "tap": false
+      },
+      {
+       "id": "s4",
+       "x": 0.26727,
+       "y": 1.3648,
+       "tap": false
+      },
+      {
+       "id": "s5",
+       "x": 0.32366,
+       "y": 1.4786,
+       "tap": false
+      },
+      {
+       "id": "s6",
+       "x": 0.37571,
+       "y": 1.6018,
+       "tap": false
+      },
+      {
+       "id": "s7",
+       "x": 0.42375,
+       "y": 1.7354,
+       "tap": false
+      },
+      {
+       "id": "s8",
+       "x": 0.4681,
+       "y": 1.8801,
+       "tap": false
+      },
+      {
+       "id": "s9",
+       "x": 0.50903,
+       "y": 2.0368,
+       "tap": false
+      },
+      {
+       "id": "s10",
+       "x": 0.54682,
+       "y": 2.2066,
+       "tap": false
+      },
+      {
+       "id": "s11",
+       "x": 0.58169,
+       "y": 2.3906,
+       "tap": false
+      },
+      {
+       "id": "s12",
+       "x": 0.61388,
+       "y": 2.5899,
+       "tap": false
+      },
+      {
+       "id": "s13",
+       "x": 0.6436,
+       "y": 2.8058,
+       "tap": false
+      },
+      {
+       "id": "s14",
+       "x": 0.67103,
+       "y": 3.0398,
+       "tap": false
+      },
+      {
+       "id": "s15",
+       "x": 0.69634,
+       "y": 3.2932,
+       "tap": false
+      },
+      {
+       "id": "s16",
+       "x": 0.71971,
+       "y": 3.5677,
+       "tap": false
+      },
+      {
+       "id": "s17",
+       "x": 0.74128,
+       "y": 3.8652,
+       "tap": false
+      },
+      {
+       "id": "s18",
+       "x": 0.76119,
+       "y": 4.1875,
+       "tap": false
+      },
+      {
+       "id": "s19",
+       "x": 0.77957,
+       "y": 4.5366,
+       "tap": false
+      },
+      {
+       "id": "s20",
+       "x": 0.79653,
+       "y": 4.9148,
+       "tap": false
+      },
+      {
+       "id": "s21",
+       "x": 0.81219,
+       "y": 5.3246,
+       "tap": false
+      },
+      {
+       "id": "s22",
+       "x": 0.82664,
+       "y": 5.7685,
+       "tap": false
+      },
+      {
+       "id": "s23",
+       "x": 0.83999,
+       "y": 6.2494,
+       "tap": false
+      },
+      {
+       "id": "s24",
+       "x": 0.8523,
+       "y": 6.7705,
+       "tap": false
+      },
+      {
+       "id": "s25",
+       "x": 0.86367,
+       "y": 7.3349,
+       "tap": false
+      },
+      {
+       "id": "s26",
+       "x": 0.87416,
+       "y": 7.9465,
+       "tap": false
+      },
+      {
+       "id": "s27",
+       "x": 0.88384,
+       "y": 8.609,
+       "tap": false
+      },
+      {
+       "id": "s28",
+       "x": 0.89278,
+       "y": 9.3267,
+       "tap": false
+      },
+      {
+       "id": "s29",
+       "x": 0.90103,
+       "y": 10.1043,
+       "tap": false
+      },
+      {
+       "id": "s30",
+       "x": 0.90865,
+       "y": 10.9468,
+       "tap": false
+      },
+      {
+       "id": "s31",
+       "x": 0.91568,
+       "y": 11.8594,
+       "tap": false
+      },
+      {
+       "id": "s32",
+       "x": 0.92217,
+       "y": 12.8482,
+       "tap": false
+      },
+      {
+       "id": "s33",
+       "x": 0.92816,
+       "y": 13.9194,
+       "tap": false
+      },
+      {
+       "id": "s34",
+       "x": 0.93369,
+       "y": 15.0799,
+       "tap": false
+      },
+      {
+       "id": "s35",
+       "x": 0.93879,
+       "y": 16.3371,
+       "tap": false
+      },
+      {
+       "id": "s36",
+       "x": 0.9435,
+       "y": 17.6992,
+       "tap": false
+      },
+      {
+       "id": "s37",
+       "x": 0.94785,
+       "y": 19.1748,
+       "tap": false
+      },
+      {
+       "id": "s38",
+       "x": 0.95,
+       "y": 20.0,
+       "tap": false
+      }
+     ]
+    }
+   },
+   "question": "Complete `steps_for_tol` and `adaptive_rk4`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\ndef rk4(f, t0, y0, h, n):\n    t, y = t0, np.array(y0, dtype=float)\n    for _ in range(n):\n        k1 = f(t, y); k2 = f(t + h / 2, y + h / 2 * k1); k3 = f(t + h / 2, y + h / 2 * k2); k4 = f(t + h, y + h * k3)\n        y = y + h / 6 * (k1 + 2 * k2 + 2 * k3 + k4); t += h\n    return y\ndef euler(f, t0, y0, h, n):\n    t, y = t0, np.array(y0, dtype=float)\n    for _ in range(n):\n        y = y + h * f(t, y); t += h\n    return y\n",
+    "starter": "import numpy as np\n\n# rk4(f, t0, y0, h, n) and euler(f, t0, y0, h, n) are provided; both return y at t0 + n*h.\n\ndef steps_for_tol(method, f, y0, T, exact, tol, p):\n    \"\"\"Run method with n0 = 10 steps, read C = error / h**p from the first\n    component, and return the smallest n with C * (T / n)**p <= tol.\"\"\"\n    ...\n\ndef adaptive_rk4(f, t0, y0, T, tol, h=0.1):\n    \"\"\"Step-doubling RK4. Return (y at T, accepted steps).\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef steps_for_tol(method, f, y0, T, exact, tol, p):\n    h = T / 10\n    err = abs(np.atleast_1d(method(f, 0.0, y0, h, 10))[0] - exact)\n    C = err / h ** p\n    return math.ceil(T / (tol / C) ** (1 / p))\n\ndef adaptive_rk4(f, t0, y0, T, tol, h=0.1):\n    t, y, accepted = t0, np.array(y0, dtype=float), 0\n    while t < T - 1e-15:\n        h = min(h, T - t)\n        big = rk4(f, t, y, h, 1)\n        half = rk4(f, t + h / 2, rk4(f, t, y, h / 2, 1), h / 2, 1)\n        err = float(np.max(np.abs(half - big))) / 15\n        scale = tol * max(1.0, float(np.max(np.abs(half))))\n        if err <= scale:\n            t += h\n            y = half + (half - big) / 15\n            accepted += 1\n        h = h * (5.0 if err == 0 else min(5.0, max(0.2, 0.9 * (scale / err) ** 0.2)))\n    return y, accepted\n",
+    "examples": [
+     {
+      "setup": "cir = lambda t, y: np.array([1 - 0.5 * y[0] - 0.005 * y[0] ** 2, -0.02 * y[0]]); B5 = 1.8129587938297693",
+      "call": "steps_for_tol(rk4, cir, [0.0, 0.0], 5.0, B5, 1e-8, 4)",
+      "expect": "65",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "cir = lambda t, y: np.array([1 - 0.5 * y[0] - 0.005 * y[0] ** 2, -0.02 * y[0]]); B5 = 1.8129587938297693",
+      "call": "steps_for_tol(rk4, cir, [0.0, 0.0], 5.0, B5, 1e-8, 4)",
+      "expect": "65",
+      "compare": "equal"
+     },
+     {
+      "setup": "cir = lambda t, y: np.array([1 - 0.5 * y[0] - 0.005 * y[0] ** 2, -0.02 * y[0]]); B5 = 1.8129587938297693",
+      "call": "abs(rk4(cir, 0.0, [0.0, 0.0], 5.0 / steps_for_tol(rk4, cir, [0.0, 0.0], 5.0, B5, 1e-8, 4), steps_for_tol(rk4, cir, [0.0, 0.0], 5.0, B5, 1e-8, 4))[0] - B5) < 1e-8",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "cir = lambda t, y: np.array([1 - 0.5 * y[0] - 0.005 * y[0] ** 2, -0.02 * y[0]]); B5 = 1.8129587938297693",
+      "call": "steps_for_tol(euler, cir, [0.0, 0.0], 5.0, B5, 1e-3, 1)",
+      "expect": "494",
+      "compare": "equal"
+     },
+     {
+      "call": "float(adaptive_rk4(lambda t, y: y * y, 0.0, [1.0], 0.95, 1e-8)[0][0])",
+      "expect": "20.0",
+      "compare": "isclose",
+      "tol": {
+       "rel": 1e-06
+      }
+     },
+     {
+      "call": "30 <= adaptive_rk4(lambda t, y: y * y, 0.0, [1.0], 0.95, 1e-8)[1] <= 45",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "cir = lambda t, y: np.array([1 - 0.5 * y[0] - 0.005 * y[0] ** 2, -0.02 * y[0]]); B5 = 1.8129587938297693",
+      "call": "float(adaptive_rk4(cir, 0.0, [0.0, 0.0], 5.0, 1e-10)[0][0])",
+      "expect": "B5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     }
+    ],
+    "how": "Submit runs 6 hidden tests with NumPy. The step counts must be 65 for RK4 and 494 for Euler, and 65 steps must meet 1e-8. On y' = y² the value must be within 1e-6 relative of 20, with 30 to 45 accepted steps. The CIR B(5) must be within 1e-8."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`steps_for_tol`: `h = T / 10`, error from one run, `C = err / h**p`, then `ceil(T / (tol / C)**(1/p))`."
+    },
+    {
+     "rung": "point",
+     "text": "In the controller, `big = rk4(f, t, y, h, 1)` and `half` is two calls with `h / 2`.",
+     "highlight": [
+      "s38"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "`err = max|half - big| / 15`; accept if `err <= tol * max(1, max|half|)`, then update `h` whether or not you accepted."
+    }
+   ],
+   "feedback": {
+    "correct": "Both pass: 65 steps, and 38 accepted steps on $y' = y^2$.",
+    "generic": "Not quite right. Check `steps_for_tol` on the CIR example first."
+   },
+   "explain": {
+    "text": "One run of 10 steps fixes $C$, and the order turns it into 65 steps for $10^{-8}$. The controller takes 38 accepted steps on $y' = y^2$, small where the curve is steep. Its per-step tolerance of $10^{-8}$ ends as $2.4 \\times 10^{-8}$ globally."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "prose": "A pricing library values a book of CIR bonds by ODE each night. A model validator must be able to rerun any price and get the same number.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Practice",
+      "Rerun gives same price"
+     ],
+     "rows": [
+      [
+       "Fixed step chosen from order and tolerance, logged",
+       "yes"
+      ],
+      [
+       "Adaptive solver, settings not logged",
+       "not always"
+      ]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What should the library record with each price?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "The method, its order, the tolerance and the step count used",
+      "correct": true
+     },
+     {
+      "id": "price",
+      "text": "Only the price",
+      "why": "Without the step and method, the validator cannot reproduce or bound the error."
+     },
+     {
+      "id": "time",
+      "text": "The run time",
+      "why": "Run time says nothing about accuracy."
+     },
+     {
+      "id": "none",
+      "text": "Nothing: ODE solvers are exact",
+      "why": "Every solver has an error of order $h^p$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What does a rerun need to repeat the same arithmetic?"
+    },
+    {
+     "rung": "point",
+     "text": "The method and the step fix the result.",
+     "highlight": [
+      "r0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The order and tolerance say how accurate it should be."
+    }
+   ],
+   "feedback": {
+    "correct": "Method, order, tolerance and steps.",
+    "generic": "Not quite right. The validator needs to repeat and bound the computation."
+   },
+   "explain": {
+    "text": "With the method and step count logged, a rerun reproduces the price to the last digit. With the order and tolerance, the validator can check the error with one more run at half the step. That is model risk control in two lines of a log."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "An order-$p$ method errs by about $h^{p+1}$ per step and $Ch^p$ at the end. Read $p$ as the slope of a log-log plot.",
+   "One run fixes $C$, so the step for a tolerance is $h = (\\text{tol}/C)^{1/p}$: 65 RK4 steps for $10^{-8}$ in $B(5)$.",
+   "An adaptive controller compares a step with two half steps and sets $h_{\\text{new}} = 0.9h(\\text{tol}/\\delta)^{1/5}$."
+  ],
+  "formula": {
+   "name": "Step for a tolerance",
+   "tex": "h = \\left(\\dfrac{\\text{tol}}{C}\\right)^{1/p}, \\qquad C = \\dfrac{e_h}{h^p}",
+   "note": "Richardson estimate of the error: $\\tfrac{y_h - y_{h/2}}{2^p - 1}$."
+  },
+  "trap": "Halving the step halves the error only for a first-order method: for RK4 it cuts it by 16."
+ },
+ "quiz": [
+  {
+   "id": "q-local-global",
+   "difficulty": 3,
+   "prose": "The adaptive controller kept each step's error estimate below $10^{-8}$ relative.",
+   "question": "What was the final relative error at $t = 0.95$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "About $2.4 \\times 10^{-8}$: local errors add up",
+      "correct": true
+     },
+     {
+      "id": "same",
+      "text": "At most $10^{-8}$, the tolerance",
+      "why": "The tolerance is per step; 38 steps' errors accumulate and grow along the solution."
+     },
+     {
+      "id": "zero",
+      "text": "Zero, thanks to extrapolation",
+      "why": "Extrapolation shrinks each step's error; it does not remove it."
+     },
+     {
+      "id": "huge",
+      "text": "About $10^{-4}$",
+      "why": "It was $2.4 \\times 10^{-8}$, close to the tolerance."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$2.4 \\times 10^{-8}$.",
+    "generic": "Not quite right. A local tolerance is not a global error."
+   },
+   "explain": {
+    "text": "Each step's error is below $10^{-8}$, but they add and are amplified as $y$ grows. The end error is $2.4 \\times 10^{-8}$. Set the tolerance below the global error you need."
+   }
+  },
+  {
+   "id": "q-floor",
+   "difficulty": 3,
+   "prose": "Halving the RK4 step keeps cutting the error by 16 until about $10^{-14}$, then the log-log line flattens.",
+   "question": "Why?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Rounding error, which grows with the number of steps, takes over",
+      "correct": true
+     },
+     {
+      "id": "order",
+      "text": "RK4 becomes first order at small $h$",
+      "why": "Its truncation error keeps falling like $h^4$; rounding hides it."
+     },
+     {
+      "id": "exact",
+      "text": "The answer became exact",
+      "why": "The error stops falling, it does not reach zero."
+     },
+     {
+      "id": "bug",
+      "text": "The code has a bug",
+      "why": "This floor appears in correct code: it is level 1's V again."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Rounding sets a floor near $10^{-15}$.",
+    "generic": "Not quite right. Recall level 1's bump-size V."
+   },
+   "explain": {
+    "text": "Each step adds a rounding error near $\\epsilon$, and more steps add more. Below the floor, smaller steps only add rounding. Measure orders on the straight part of the line."
+   }
+  },
+  {
+   "id": "q-euler-budget",
+   "difficulty": 2,
+   "prose": "Euler's method gives error 0.0493 with 10 steps.",
+   "question": "About how many steps give error 0.001?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 493,
+    "tol": {
+     "abs": 2
+    },
+    "wrong": [
+     {
+      "id": "sq",
+      "value": 70,
+      "tol": {
+       "abs": 2
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "About 493: Euler's error falls like $1/n$.",
+    "generic": "Not quite right. Euler is first order: the error is proportional to $h$.",
+    "byKey": {
+     "sq": "That uses a square root, as for a second-order method."
+    }
+   },
+   "explain": {
+    "text": "$0.0493/0.001 = 49.3$ times more steps, so about 493. RK4 already beats it with 10 steps, at $1.75 \\times 10^{-5}$. Order matters more than step count."
+   }
+  }
+ ]
+}
