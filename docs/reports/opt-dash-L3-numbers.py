@@ -209,10 +209,19 @@ p125 = bs(S, 125, r, true_iv(125, T3), T3, 'put', q)
 lv.expect(L10, 'quiz[3].explain.text', round(p125, 2))                                                # finding: content says £23.80
 lv.expect(L10, 'quiz[3].explain.text', round(bounds('put', 125, T3)[0], 2))                          # finding: content says £24.63
 lv.expect(L10, 'quiz[2].explain.text', 'LinAlgError')                                               # finding: lstsq raises, not NaN
-x = np.array([-0.4, -0.2, 0.0, 0.2, 0.4]); y = np.array([.26, .23, .2, .2, .25]); w = np.array([1, 4, 9, 4, 1.])
-b_exact = float(np.sum(w * x * y) / np.sum(w * x * x))
+# new numbers written by the fix pass
+w1, w2 = .4 ** 2 / 12, .26 ** 2 * 2 / 12
+lv._rec(round((w1 - w2) * 12, 4) == 0.0248 and round(sqrt((w1 - w2) * 12) * 100) == 16 and round(.26 * 2 - .4, 2) == 0.12, 'l11 s5 forward variance size 0.0248, root 16%, vol-additive slip 0.12', '')
+lv.expect(L11, 'screens[5].widget.options[2].why', round(w2, 5)); lv.expect(L11, 'screens[5].widget.options[2].why', round(w1, 5))
+vg = vega(S, 125, r, true_iv(125, T3), T3, q)
+lv._rec(abs(.05 / vg - 0.0326) < 5e-4 and 1.5 < vg < 1.6 and round(p125 - (125 * exp(-r * T3) - 100 * exp(-q * T3)), 2) == 0.04, 'l10 quiz[3] 125 put: vega 1.53, 5p is 3.3 vol points, time value about 4p', f'vega {vg}')
+lv._rec(abs(S * exp((r - q) * 1.0) - 104.08) < 5e-3, 'homework-3 items[6] one-year forward 104.08', '')
+x = np.array([-0.4, -0.2, 0.0, 0.2, 0.4]); y = np.array([.26, .23, .2, .205, .25]); w = np.array([1, 4, 9, 4, 1.])
+X = np.column_stack([np.ones(5), x, x * x]) * np.sqrt(w)[:, None]
+cf = np.linalg.lstsq(X, y * np.sqrt(w), rcond=None)[0]
 t4 = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'content', 'courses', 'opt-dash', 'l10-smile.json')))['screens'][8]['widget']['tests'][4]
-lv._rec(abs(abs(b_exact * 1e4 - round(b_exact * 1e4)) - 0.5) > 1e-6 or 'tol' in t4, 'l10 s8 test 4: a rounding tie (b = -0.04375) needs a tol', f'b = {b_exact}')   # finding
+lv._rec(all(abs(abs(c * 1e4 - round(c * 1e4)) - 0.5) > 1e-3 for c in cf), 'l10 s8 test 4: no coefficient sits on a rounding tie at 4 places', f'coef = {list(cf)}')
+lv._rec(t4['expect'] == str([round(float(c), 4) for c in cf]) and '0.205' in t4['call'] and 'tol' not in t4, 'l10 s8 test 4 expects the recomputed weighted fit [0.2014, -0.0375, 0.3482] on the new input', t4['expect'])
 sw = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'content', 'courses', 'opt-dash', 'l10-smile.json')))['screens'][2]['widget']
 rms = lambda b, c: sqrt(np.mean((o3.iv.values - (0.2001 + b * o3.m.values + c * o3.m.values ** 2)) ** 2)) * 100
 wst = max(rms(b, c) for b in np.arange(sw['answer']['b'] - sw['tol']['b'], sw['answer']['b'] + sw['tol']['b'] + 1e-9, 0.005)

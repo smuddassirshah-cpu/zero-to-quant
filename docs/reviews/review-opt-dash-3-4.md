@@ -128,3 +128,64 @@ Notation in L3 and L4 matches L1 and L2: $S$, $K$, $r$, $q$ as a continuous yiel
 3. `fresh-check.mjs --file content/courses/<c>/<set>.json --no-code` runs, but matches every item against itself (share 1, Jaccard 1), so all hits are noise. Without `--no-code` it exits ENOENT (`content/exams/<set>.json`), as reviews of backtest and alpha found. Wanted: skip same-file, same-item pairs and read code from the given file.
 4. Console canvas at 440 px clips lines past about 44 characters with no wrap or scroll cue (findings 44 and 45; also over 44 characters in l9 `screens[8]`, l13 `screens[3]`, `[6]`, `[9]`, l14 `[4]`, `[9]`, l15 `[3]`, `[8]`, l16 `[1]`, `[2]`, `[6]`, homework-3 `items[0]`, homework-4 `items[0]`, `[1]`). Wanted: a validator warning for console lines over 44 characters, or wrapping with a hanging indent.
 5. A test that compares a rounded float at a decimal tie passes in Pyodide and fails in CPython (finding 4); the playthrough cannot see it. Wanted: a committed CPython runner for code widgets (solution passes every test and example, starter fails one), so authors and readers stop rebuilding one per level. This review's runner is in the scratchpad `read-opt-dash-3-4/runcode.py` and could be the start.
+
+## Fix pass
+
+Each conceptual finding carries my own basis, recomputed in CPython before writing.
+
+1. fixed: l9 `screens[5].feedback.byKey.q3` (25.7%; bisection at $q = 0.01$).
+2. fixed: l10 `quiz[3].explain.text` (£23.73; zero-vol £23.70; vega 1.53, so 5p is 3.3 points).
+3. fixed: l10 `quiz[2].explain.text`. Basis: NumPy `lstsq` on a NaN row raises `LinAlgError`, run here.
+4. fixed differently: not a `tol`; the test input changed so no tie occurs (ivs `[0.26, 0.23, 0.2, 0.205, 0.25]`, weights `[1, 4, 9, 4, 1]`), expected `[0.2014, -0.0375, 0.3482]` (unrounded 2014.29, -375.0, 3482.14 in units of 1e-4). CPython: solution passes all 9 tests, starter fails all 9. The number script now checks there is no tie and the new expect.
+5. fixed: l11 `screens[5]` options 1 and 2 (forward variance size 0.0248, root 0.157; vol-additive slip 0.12).
+6. fixed: l12 `quiz[1].widget.options[3].why` (0.0107).
+7. fixed: l12 `screens[3].widget.options[0].text` and `options[1].why`.
+8. fixed: l13 `screens[5].feedback.byKey.smallest`. Actual agreement at $h = 10^{-6}$: 10.45058293535493, 10.450583572185565, 10.450584209016228, so 7 digits.
+9. fixed: review-4 `items[2].widget.options[0].text` (no digit claim; $h^2\Gamma = 1.9 \times 10^{-16}$ at $h = 10^{-7}$, where the prices agree to 8 digits; the key is now far shorter).
+10. fixed: review-4 `items[5]` `wrong[1].value` 3.4333 and `byKey.swapped` (5.9667, gap 3.4333).
+11. fixed: review-4 `items[1]`: answer 0.6367 (exact 0.636745; 0.63675 from the 4-place prices, a tie, so `accept` and `explain` say so). Tol 0.0006 unchanged; the `forward` wrong 0.6461 and `no-half` 1.2735 stay outside it.
+12. fixed: l16 `screens[7].widget.options[0].text` (jump to 2819, then `ZeroDivisionError`; vega underflows to exactly 0 there).
+13. fixed: l16 `screens[4]` option 0, option 3 `why`, `explain`. Implied $q$ by expiry, sorted: 0.00855, 0.00960, 0.01002, 0.01031, 0.01110; the median is the three-month value (checked in the script).
+14. fixed: l11 `screens[8]`: `explain.text`, and `lines[1]` now 0.28722813232690136 (CPython `repr`).
+15. fixed: l14 `screens[8]` `prose`, `question`, `explain.text`. Basis: a long call with $\Delta$ shares short and cash $\Delta S - C$ earning $r$ has $d\Pi = \Theta\,dt + \tfrac12\Gamma\,dS^2 + r(\Delta S - C)\,dt$. The Black-Scholes equation $\Theta + rS\Delta + \tfrac12\sigma^2S^2\Gamma = rC$ (Hull, "The Greek letters", the relation among delta, theta and gamma) turns this into $d\Pi = \tfrac12\Gamma(dS^2 - \sigma^2S^2dt)$. Numbers: PDE residual 2e-16; cash 53.2325 earns 0.7292p a day; $\sqrt{2(0.017573 - 0.007292)/0.018762} = 1.04685 = 0.2 \times 100 \times \sqrt{1/365}$. trees l12 carries the same cash of −£53.23 with interest and states no break-even, so nothing there conflicts. The graded answer stays 1.37 because the question now says "Ignoring that interest".
+16. fixed: homework-4 `items[2].explain.text`, same basis as 15. The ordered derivation (which takes $r = q = 0$) is unaffected.
+17. fixed: l12 `screens[8].explain.text`.
+18. fixed: l10 `screens[2].widget.tol` now b 0.01, c 0.03 (worst accepted miss 0.47 points); `feedback.correct` says half a vol point.
+19. fixed: l9 `screens[5].explain.text` (£3.882).
+20. fixed: l13 `screens[1].hints[2].text` (0.1 to 0.9 from £95 to £105; deltas 0.113, 0.528, 0.901).
+21. fixed: l14 `screens[5].hints[2].text`.
+22. fixed: l16 `screens[1].explain.text`.
+23. fixed: homework-3 `items[6].widget.model` bullet (0.34-point shift; forward 104.08 checked).
+24. fixed: l16 `screens[9].feedback.byKey.divide`.
+25. fixed: l12 `screens[9].widget.options[0].text`.
+26. fixed: l15 `screens[6].widget.options[0].text`.
+27. fixed: l15 `screens[10].widget.options[0].text`.
+28. fixed: l16 `screens[8].widget.options[0].text`.
+29. fixed: l16 `screens[10].widget.options[0].text`.
+30. fixed: homework-3 `items[6].widget.model` (split into two sentences).
+31. fixed: homework-4 `items[1].widget.how`.
+32. fixed: l13 `screens[3].widget.how`.
+33. fixed: l13 `screens[6].widget.how`.
+34. fixed: l13 `screens[9].widget.how`.
+35. fixed: l14 `screens[4].widget.how`.
+36. fixed: l14 `screens[9].widget.how`.
+37. fixed: l15 `screens[3].widget.how`.
+38. fixed: l15 `screens[8].widget.how`.
+39. fixed: l16 `screens[2].widget.how`.
+40. fixed: l16 `screens[6].widget.how`.
+41. fixed: homework-4 `items[0].explain.text`.
+42. fixed: l15 `screens[0].explain.text`.
+43. fixed: l16 `screens[8].explain.text`.
+44. fixed: l16 `screens[10].canvas.params.lines` (residual line split); `hints[1].highlight` is `l5`, `l6`.
+45. fixed: l16 `screens[0].canvas.params.lines` (17 lines, none over 44 characters); `hints[1].highlight` and `explain.canvas.shade.log` are `l2`, `l3`, `l4`.
+46. fixed: l9 `screens[0].prose` (43 halvings for $10^{-12}$: $(5 - 0.0001)/2^{43} < 10^{-12} < (5 - 0.0001)/2^{42}$).
+47. fixed: l11 `screens[5].explain.text` and review-3 `items[6].prose`. Basis: Gatheral, "The Volatility Surface", the calendar condition is stated at fixed $k = \ln(K/F)$; l12 and l15 already say so.
+48. fixed: l16 `screens[0].prose`.
+49. fixed: review-3 `items[2]` (one-month 120 put, mid £19.525, bound £19.584, 5.9p below; $120e^{-0.05/12}$ is about £119.50).
+50. fixed: review-3 `items[8]` (two-month £75 put, fit 30.1%, planted 30.4%, in-range errors −0.12 to +0.02, £75 is 0.32 low).
+
+Engine 1 (shuffle): `"shuffle": false` added to l11 `screens[6].widget` (ordered numeric options). The runtime now shuffles by default, so the other `choice` and `multi` widgets need no field; no `[shuffled-position]` hit in L3 or L4. The validator rule `O2-unshuffled-numeric` in `app/tools/o2-rules.mjs` still tests `w.shuffle !== true`, so it still warns on l11 `screens[6]` despite `shuffle: false`: deferred, an engine item (it should accept `shuffle: false`). Engine 2 to 5: deferred, already in the inbox.
+
+Numbers: `docs/reports/opt-dash-L3-numbers.py` 346 of 346 and `docs/reports/opt-dash-L4-numbers.py` 241 of 241, both exit 0. New checks: l10 test 4 has no tie and the new expect (replacing the tol check), forward variance 0.0248 with 16% and 0.12, the 125 put's vega and time value, forward 104.08, the Black-Scholes equation residual, £63.68 and £10.45 in l14 `screens[8]`, homework-4 £53.23 and £1.05, review-4 5.9667, 3.4333, 1.9e-16 and the 0.6367 central difference. The l16 summary-line checks moved to `lines[4]`.
+
+Gates: validator 0 errors (the one L3/L4 `O2-unshuffled-numeric` warning on l11 `screens[6]` remains, engine item above); voice scan 0 sentences over 35 words and 0 explanations over three sentences; both number scripts exit 0; `playthrough` green with and without `--mobile` (24 of 24 runs: l9 to l16, review-3, review-4, homework-3, homework-4, `--local-cdn`); l10 `screens[8]` in CPython: solution passes 9 of 9, starter fails 9 of 9.

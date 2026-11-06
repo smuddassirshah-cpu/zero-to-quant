@@ -17,23 +17,29 @@
       "type": "problem",
       "difficulty": 1,
       "title": "One run, every panel",
-      "prose": "Here is everything you built across four levels, run on the seeded chain. It covers cleaning, pricers, smiles and surface, Greeks, the P&L explain and arbitrage checks. This is the dashboard's printed summary.",
+      "prose": "Here is everything you built across four levels, run on the seeded chain. It covers cleaning, pricers, smiles and surface, Greeks, the P&L explain and arbitrage checks. This is the dashboard's printed summary. It backs out $q$ for each expiry, as in l3, so its smile and term numbers differ a little from level 3's, which used $q = 1\\%$.",
       "canvas": {
         "kind": "console",
         "params": {
           "title": "Terminal",
           "lines": [
             "$ python dashboard.py",
-            "chain    130 quotes, kept 102 (zero bid 15, crossed 2,",
+            "chain    130 quotes, kept 102",
+            "         (zero bid 15, crossed 2,",
             "         stale 2, wide 9)",
             "forward  1y 104.12, q 0.96%",
-            "pricers  tree within 0.0098 of BS, MC within 0.7 se,",
+            "pricers  tree within 0.0098 of BS,",
+            "         MC within 0.7 se,",
             "         American put premium up to 1.0438",
-            "smile    1m: 4 OTM quotes, a 0.1857 b -0.0789 c 0.0835",
+            "smile    1m: 4 OTM quotes,",
+            "         a 0.1857 b -0.0789 c 0.0835",
             "term     ATM vol 0.1854 (1m) to 0.2192 (1y)",
-            "greeks   3m £100 call: delta 0.5580 gamma 0.0390",
-            "explain  explained 1.3636 actual 1.3556 residual -0.0080",
-            "arb      butterfly raw 4, fitted 0; calendar 0"
+            "greeks   3m £100 call: delta 0.5580",
+            "         gamma 0.0390",
+            "explain  explained 1.3636 actual 1.3556",
+            "         residual -0.0080",
+            "arb      butterfly raw 4, fitted 0;",
+            "         calendar 0"
           ]
         },
         "state": {}
@@ -75,7 +81,8 @@
           "text": "130 quotes came in and 102 were kept.",
           "highlight": [
             "l2",
-            "l3"
+            "l3",
+            "l4"
           ]
         },
         {
@@ -98,7 +105,8 @@
           "shade": {
             "log": [
               "l2",
-              "l3"
+              "l3",
+              "l4"
             ]
           }
         }
@@ -173,7 +181,7 @@
         }
       },
       "explain": {
-        "text": "Cleaning feeds the forwards, and the forwards centre every smile. The smiles make the surface, which supplies every Greek's vol. The arbitrage checks read both the raw mids and the fitted surface. The pricer comparison stands beside the chain and can run at any point."
+        "text": "Cleaning feeds the forwards, and the forwards centre every smile. The smiles make the surface, which supplies every Greek's vol; the checks read the raw mids and the surface. The pricer comparison needs only the forwards' median $q$, so it can run any time after them."
       },
       "canvas": {
         "kind": "console",
@@ -279,7 +287,7 @@
             "expect": "21"
           }
         ],
-        "how": "Check runs 11 hidden tests on `make_chain()`: the eight keys, the cleaning counts, five expiries in the term structure, the one-year ATM vol, a delta and a vol from the Greeks table, the explain, the arbitrage counts, the pricer grid's shape, and a one-expiry chain. Values are rounded to 4 places. The first run loads NumPy and pandas, which takes about 15 seconds.",
+        "how": "Check runs 11 hidden tests on `make_chain()`: the eight keys, the cleaning counts, five expiries in the term structure and the one-year ATM vol. Then a delta and a vol from the Greeks table, the explain, the arbitrage counts, the pricer grid's shape, and a one-expiry chain. Values are rounded to 4 places. The first run loads NumPy and pandas, which takes about 15 seconds.",
         "budget": 20000
       },
       "hints": [
@@ -412,7 +420,7 @@
         "options": [
           {
             "id": "all",
-            "text": "Everything downstream of cleaning: forwards, smiles, surface, Greeks, explain and checks",
+            "text": "Every panel, the pricers too through the median $q$",
             "correct": true
           },
           {
@@ -428,7 +436,7 @@
           {
             "id": "pricers",
             "text": "Only the pricer panel",
-            "why": "The pricer panel uses a flat vol and fixed strikes. It is the one panel that does not change."
+            "why": "The pricer panel reads the chain only through the median $q$, and here the three-month $q$ is that median. Every other panel reads the three-month smile directly."
           }
         ]
       },
@@ -437,7 +445,7 @@
         "generic": "Not quite right. Follow the arrows from the quote."
       },
       "explain": {
-        "text": "A quote feeds the three-month forward, smile and surface node, and the Greeks and checks read the surface. That is why the dashboard is one function run from the raw chain. Caching a half-updated panel is how dashboards end up quoting two different surfaces."
+        "text": "A quote feeds the three-month forward, $q$, smile and surface node; the Greeks and checks read the surface, and the pricers the median $q$. That is why the dashboard is one function run from the raw chain. Caching a half-updated panel is how dashboards end up quoting two different surfaces."
       }
     },
     {
@@ -613,7 +621,7 @@
             "expect": "True"
           }
         ],
-        "how": "Check runs 10 hidden tests: the eight headings in order, the title line, the cleaning counts, the P&L residual, one bullet per failure, the `ValueError` message for no failures, another chain's counts, and the arbitrage line. Pure Python: nothing to load."
+        "how": "Check runs 10 hidden tests: the eight headings in order, the title line, the cleaning counts, the P&L residual and one bullet per failure. Then the `ValueError` message for no failures, another chain's counts, and the arbitrage line. Pure Python: nothing to load."
       },
       "hints": [
         {
@@ -655,7 +663,7 @@
         "options": [
           {
             "id": "newton",
-            "text": "Plain Newton from $\\sigma = 0.2$ gave NaN on the one-month £75 call, where vega is nearly 0. The bracketed fallback found 0.4865",
+            "text": "Plain Newton from $\\sigma = 0.2$ jumped to 2819 on the one-month £75 call, where vega is nearly 0, then divided by zero. The bracketed fallback found 0.4865",
             "correct": true
           },
           {
@@ -719,7 +727,7 @@
         "options": [
           {
             "id": "recompute",
-            "text": "Keep it only for comparison: recompute every vol from bid and ask with your own solver, forward and rate",
+            "text": "Recompute every vol from bid and ask; keep the vendor's only as a check",
             "correct": true
           },
           {
@@ -758,7 +766,7 @@
         "generic": "Not quite right. Which choice keeps every number in one model?"
       },
       "explain": {
-        "text": "The rest of the pipeline is unchanged once the columns match: `T` in years from the quote's timestamp to expiry, `type`, `bid`, `ask`, `volume` and `age_min`. Take $r$ from a rate curve per expiry. US single-stock options are American. Back out vols with the tree of l6, or use OTM options, whose early-exercise premium is small."
+        "text": "The rest of the pipeline is unchanged once the columns match: `T` in years from the quote's timestamp to expiry, `type`, `bid`, `ask`, `volume` and `age_min`. Take $r$ from a rate curve per expiry. US single-stock options are American, so back out vols with the tree of l6, or use OTM options, whose early-exercise premium is small."
       }
     },
     {
@@ -837,7 +845,8 @@
         "correct": "2,720 dollars.",
         "generic": "Not quite right. Multiply the BTC price by the index price.",
         "byKey": {
-          "raw": "That is still in BTC. The pricers need the price in the same units as the strike."
+          "raw": "That is still in BTC. The pricers need the price in the same units as the strike.",
+          "divide": "You divided by the index price. Multiply instead: $0.0425 \\times 64{,}000 = 2{,}720$."
         }
       },
       "explain": {
@@ -858,7 +867,8 @@
             "........................................",
             "40 passed",
             "$ python dashboard.py | grep explain",
-            "explain  explained 1.3636 actual 1.3556 residual -0.0080"
+            "explain  explained 1.3636 actual 1.3556",
+            "         residual -0.0080"
           ]
         },
         "state": {}
@@ -870,7 +880,7 @@
         "options": [
           {
             "id": "model",
-            "text": "Black-Scholes Greeks at a fixed smile. They miss cross terms like vanna, and how the smile moves with spot",
+            "text": "Cross terms such as vanna, and the smile moving with spot",
             "correct": true
           },
           {
@@ -899,7 +909,8 @@
           "rung": "point",
           "text": "Where did l14 say the residual came from?",
           "highlight": [
-            "l5"
+            "l5",
+            "l6"
           ]
         },
         {

@@ -136,6 +136,9 @@ lv.expect(L14, 'screens[8].explain.text', round(.2 * 100 * sqrt(1 / 365), 2))
 lv._rec(abs(sqrt(2 * (-g['theta'] / 365 - cash * .05 / 365) / g['gamma']) - .2 * 100 * sqrt(1 / 365)) < 1e-9, 'l14 s8 with interest on the hedge cash the break-even is exactly sigma S sqrt(dt)', '')
 lv.expect(L14, 'screens[8].explain.text', round(cash, 2))                                           # finding: the hedge's cash and its interest are missing
 lv.expect(L14, 'screens[8].explain.text', '{:.2f}p'.format(cash * .05 / 365 * 100))
+lv._rec(abs(g['theta'] + .05 * 100 * g['delta'] + .5 * .2 ** 2 * 100 ** 2 * g['gamma'] - .05 * C0) < 1e-9, 'l14 s8 Black-Scholes equation (Hull ch. 15): theta + r S delta + sigma^2 S^2 gamma / 2 = r C, so the hedge with interest earns gamma (dS^2 - sigma^2 S^2 dt) / 2', '')
+lv.expect(L14, 'screens[8].explain.text', round(g['delta'] * 100, 2)); lv.expect(L14, 'screens[8].explain.text', round(C0, 2)); lv.expect(L14, 'screens[8].explain.text', round(be, 2))
+lv.expect(H, 'items[2].explain.text', round(cash, 2)); lv.expect(H, 'items[2].explain.text', round(be, 2))
 lv.expect(L14, 'screens[9].canvas.params.lines[1]', round(a2 - e2, 4))
 lv.expect(L14, 'screens[9].explain.text', '0.0000'); lv._rec(abs(explain(100, 100, .05, .2, 1, 0, 0, 1 / 365)[2] - g['theta'] / 365) < 5e-5, 'l14 s9 quiet-day residual rounds to 0.0000', '')
 van = -phi(g['d1']) * g['d2'] / .2
@@ -214,7 +217,7 @@ def implied_forward(dT, T):
     return float(np.median(w.index + exp(.05 * T) * (w['call'] - w['put'])))
 qT = {T: .05 - log(implied_forward(clean[np.isclose(clean['T'], T)], T) / 100) / T for T in Ts}
 lv.expect(L16, 'screens[0].widget.answer', len(raw) - len(clean))
-lv.expect(L16, 'screens[0].canvas.params.lines[3]', round(100 * exp(.05 - qT[1.0]), 2)); lv.expect(L16, 'screens[0].canvas.params.lines[3]', '{:.2f}%'.format(qT[1.0] * 100))
+lv.expect(L16, 'screens[0].canvas.params.lines[4]', round(100 * exp(.05 - qT[1.0]), 2)); lv.expect(L16, 'screens[0].canvas.params.lines[4]', '{:.2f}%'.format(qT[1.0] * 100))
 lv._rec(float(np.median(list(qT.values()))) == qT[.25], 'l16 s4 the three-month q is the median q the pricer panel uses', '')
 lv.expect(L16, 'screens[4].widget.options[3].why', 'median')                                          # finding: the pricer panel also changes
 c75 = clean[np.isclose(clean['T'], 1 / 12) & (clean.strike == 75) & (clean.type == 'call')].mid.iloc[0]
@@ -264,5 +267,9 @@ lv.expect(H, 'items[4].feedback.byKey.bias', round(sqrt(2) * .033 / .02, 1))
 lv.expect(H, 'items[5].widget.answer', round(sqrt(.26 ** 2 * .25 / .5), 4)); lv.expect(H, 'items[5].explain.text', round(.26 ** 2 * .25, 4))
 lv.expect(H, 'items[6].widget.model', round(100 * exp(.05 - qT[1.0]), 2))
 
+lv._rec(round(12.10 / 3 + 2 * 2.90 / 3, 4) == 5.9667 and round(9.40 - (12.10 / 3 + 2 * 2.90 / 3), 4) == 3.4333, 'review-4 items[5] swapped weights: 5.9667 and gap 3.4333', '')
+h = 1e-7; p3 = [bs(100 + k * h, 100, .05, .2, 1) for k in (-1, 0, 1)]
+lv._rec(abs(g['gamma'] * h * h - 1.9e-16) < 1e-17, 'review-4 items[2] true second difference h^2 gamma = 1.9e-16 at h = 1e-7', '')
+lv._rec(round(bs(101, 100, .05, .2, 1), 4) == 11.0967 and round(bs(99, 100, .05, .2, 1), 4) == 9.8232 and abs((11.0967 - 9.8232) / 2 - 0.63675) < 1e-9 and abs(.636745 - 0.6367) < 1e-4 and abs((11.0967 - 9.8232) / 2 - g['delta']) < 1.5e-4, 'review-4 items[1] central difference 0.6367, within 0.0001 of 0.6368', '')
 lv.check_wrongs()
 lv.report()
