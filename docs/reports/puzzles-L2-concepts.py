@@ -213,7 +213,7 @@ def check_ruin():
 
 
 def check_ruin_conditional():
-    """l10 screens[8] explain: with an edge, winning runs get shorter and losing runs longer (3 -> 10)."""
+    """l10 screens[8] explain: with an edge, both winning and losing runs get shorter, and winning runs dominate (3 -> 10)."""
     def cond_durations(k, N, p):
         # h-transform: E[T | win] from the chain conditioned to hit N
         P = {j: float(ruin_prob(j, N, p)) for j in range(N + 1)}
@@ -239,11 +239,9 @@ def check_ruin_conditional():
     w5, l5 = cond_durations(3, 10, F(1, 2))
     w6, l6 = cond_durations(3, 10, F(3, 5))
     assert abs(w5 - (100 - 9) / 3) < 1e-9, "ruin_conditional: fair E[T | win] = (N^2 - k^2)/3"
-    # Content claim (l10 screens[8].explain): "The edge shortens winning runs but lengthens the losing ones it rescues".
-    # This assert encodes that sentence and FAILS: both conditional durations fall (finding 4 in audit-puzzles-1-3.md).
-    # After the fix pass replaces the sentence, replace this assert with:
-    #     assert w6 < w5 and l6 < l5 and 0.7161 * w6 > 0.3 * w5
-    assert w6 < w5 and l6 > l5, f"ruin_conditional (FINDING 4, l10 screens[8].explain): the content says the edge lengthens losing runs; exact h-transform gives E[T|win] {w5:.2f} -> {w6:.2f} and E[T|lose] {l5:.2f} -> {l6:.2f}, both shorter"
+    # Content (l10 screens[8].explain, after the audit fix pass): "The edge shortens both the winning runs and the
+    # losing ones, but far more runs are now the long winning kind."
+    assert w6 < w5 and l6 < l5 and 0.7161 * w6 > 0.3 * w5, f"ruin_conditional: E[T|win] {w5:.2f} -> {w6:.2f}, E[T|lose] {l5:.2f} -> {l6:.2f}"
 
 
 # ------------------------------------------------------------- l11: order statistics
