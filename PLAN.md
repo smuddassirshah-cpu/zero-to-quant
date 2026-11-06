@@ -243,7 +243,7 @@ Superseded 5 Nov (census reconciliation): the ito L1 to L3, puzzles L1 to L4, mm
 - [x] topic-2.2 (arma, garch, coint)
 - [x] topic-2.3 (backtest, alpha, opt-dash)
 - [x] topic-2.4 (contests)
-- [ ] topic-3.1 (momentum-rep, pairs-rep; also in 2a order item 8)
+- [x] topic-3.1 (momentum-rep, pairs-rep; also in 2a order item 8) (session T: 30 items; `docs/reports/exam-3.1.md`; second read and fix pass in `docs/reviews/review-exam-3.1.md`)
 Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams" (ticked there) and were removed; topic-3.5 is in 2a Phase 4.
 - [ ] Breadth exams: topic-0.6, topic-1.10, topic-1.11, topic-2.5, topic-2.6, topic-3.4; topic-3.2 covers ito, measure-prob and pdes; topic-1.5 is at the 30-item cap, so the markov gap level packs into multi-part items
 - [ ] stage-1, stage-2, stage-3 exams (pattern: `app/content/exams/stage-0.json`)
