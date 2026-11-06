@@ -1,0 +1,362 @@
+{
+ "id": "homework-2",
+ "course": "pairs-rep",
+ "level": 2,
+ "dueDays": 7,
+ "items": [
+  {
+   "id": "h-full-run",
+   "difficulty": 5,
+   "skills": [
+    "pr-returns"
+   ],
+   "prose": "Run the whole replication: every formation start 0, 21, 42, ... that fits a 378-day cycle (127 cycles). `cycle_return(close, start, k, wait)` is loaded and returns (committed, employed, opened). Return the four monthly committed means.",
+   "question": "Complete `full_results(close)`, a dict keyed by `(k, wait)` for k in (5, 20) and wait in (0, 1).",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\ndef pairs_panel(seed=2006, n_ind=10, per_ind=10, n_pairs=20, days=3024, half_life=8.0, ou_sd=0.008,\n                rw_sd=0.015, break_day=1512, break_frac=0.8, half_spread=0.005):\n    rng = np.random.default_rng(seed)\n    N = n_ind * per_ind\n    ind = np.repeat(np.arange(n_ind), per_ind)\n    mkt = np.cumsum(0.0003 + 0.010 * rng.standard_normal(days))\n    indf = np.cumsum(0.008 * rng.standard_normal((days, n_ind)), axis=0)\n    phi = 0.5 ** (1.0 / half_life)\n    u = np.cumsum(rw_sd * rng.standard_normal((days, N)), axis=0)        # unpaired: random walks\n    common = np.cumsum(rw_sd * rng.standard_normal((days, n_pairs)), axis=0)\n    eps = ou_sd * rng.standard_normal((days, 2 * n_pairs))\n    a = np.zeros((days, 2 * n_pairs))\n    for t in range(1, days):\n        a[t] = phi * a[t - 1] + eps[t]                                   # mean-reverting gaps\n    broken = rng.random(n_pairs) < break_frac\n    drift = np.cumsum(rw_sd * rng.standard_normal((days, 2 * n_pairs)), axis=0)\n    for k in range(n_pairs):\n        for j in (2 * k, 2 * k + 1):\n            x = common[:, k] + a[:, j]\n            if broken[k]:                                                # the pair stops co-moving\n                x = x + np.where(np.arange(days) >= break_day, drift[:, j] - drift[break_day, j], 0.0)\n            u[:, j] = x\n    pair_ind = np.repeat(np.arange(n_ind), 2)[:n_pairs]\n    ind[:2 * n_pairs] = np.repeat(pair_ind, 2)                           # two planted pairs an industry\n    logp = np.log(50.0) + mkt[:, None] + indf[:, ind] + u\n    mid = np.exp(logp)\n    bounce = np.where(rng.random((days, N)) < 0.5, 1 + half_spread, 1 - half_spread)\n    close = mid * bounce                                                 # closes at bid or ask\n    return close, mid, ind, broken\n\n\ndef normalise(P):\n    P = np.asarray(P, dtype=float)\n    return P / P[0]\n\n\ndef ssd_matrix(Pn):\n    G = Pn.T @ Pn\n    d = np.diag(G)\n    return d[:, None] + d[None, :] - 2 * G\n\n\ndef top_pairs(Pn, k):\n    D = ssd_matrix(Pn)\n    i, j = np.triu_indices(D.shape[0], 1)\n    order = np.argsort(D[i, j], kind=\"stable\")[:k]\n    return [(int(i[o]), int(j[o])) for o in order]\n\n\ndef trade_pair(form, trade, i, j, wait=0, open_at=2.0):\n    sd = float(np.std(form[:, i] - form[:, j]))\n    a, b = trade[:, i].tolist(), trade[:, j].tolist()\n    n = len(a)\n    payoff, opened, t = 0.0, False, 0\n    while t < n:\n        s = a[t] - b[t]\n        if sd > 0 and abs(s) > open_at * sd and t + wait < n - 1:\n            side = 1 if s > 0 else -1          # +1: i is dearer, so short i and buy j\n            to = t + wait\n            tc = next((u for u in range(t + 1, n) if (a[u] - b[u]) * side <= 0), None)\n            tx = n - 1 if tc is None else min(tc + wait, n - 1)\n            ri = (a[tx] - a[to]) / a[to]\n            rj = (b[tx] - b[to]) / b[to]\n            payoff += side * (rj - ri)\n            opened = True\n            t = tx + 1\n            continue\n        t += 1\n    return payoff, opened\n\nclose, mid, ind, broken = pairs_panel()\n\n\ndef cycle_return(close, start, k, wait=0):\n    Pn = normalise(close[start:start + 378])\n    form, trade = Pn[:252], Pn[252:]\n    res = [trade_pair(form, trade, i, j, wait) for i, j in top_pairs(form, k)]\n    total = sum(p for p, _ in res)\n    n = sum(1 for _, o in res if o)\n    return total / k, (total / n if n else 0.0), n\n",
+    "starter": "import numpy as np\n\ndef full_results(close):\n    \"\"\"{(k, wait): mean monthly committed return over all cycles}.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef full_results(close):\n    \"\"\"{(k, wait): mean monthly committed return over all cycles}.\"\"\"\n    starts = range(0, close.shape[0] - 378 + 1, 21)\n    out = {}\n    for k in (5, 20):\n        for w in (0, 1):\n            out[(k, w)] = float(np.mean([cycle_return(close, s, k, w)[0] for s in starts])) / 6\n    return out\n",
+    "examples": [
+     {
+      "call": "sorted(full_results(close[:600]).keys())",
+      "expect": "[(5, 0), (5, 1), (20, 0), (20, 1)]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "sorted(full_results(close[:600]).keys())",
+      "expect": "[(5, 0), (5, 1), (20, 0), (20, 1)]",
+      "compare": "equal"
+     },
+     {
+      "call": "{k: round(v, 6) for k, v in full_results(close).items()}",
+      "expect": "{(5, 0): 0.013699, (5, 1): 0.010097, (20, 0): 0.010038, (20, 1): 0.007531}",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     },
+     {
+      "call": "round(full_results(close[:399])[(20, 0)] * 6, 6)",
+      "expect": "0.119189",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      }
+     }
+    ],
+    "how": "Submit runs 3 hidden tests: the keys, the four full-run means, and a short panel. The full run may take a minute.",
+    "budget": 120000
+   },
+   "feedback": {
+    "correct": "Correct. These are our main table's committed cells.",
+    "generic": "Not quite. Loop over all 127 starts for each (k, wait), average and divide by 6."
+   },
+   "explain": {
+    "text": "The four cells are 1.37%, 1.01%, 1.00% and 0.75% a month. The wait lowers both portfolios. The top-20 wait cell, 0.75%, compounds to about 9.4% a year."
+   }
+  },
+  {
+   "id": "h-blotter",
+   "difficulty": 4,
+   "skills": [
+    "pr-trading"
+   ],
+   "prose": "A blotter lists every trade of one pair. Open beyond 2 formation sds. Close at the first sign change or on the last day. Resume the day after the exit, and fill a day late with `wait = 1`. Side is +1 when i is dearer (short i), −1 otherwise.",
+   "question": "Complete `blotter(form, trade, i, j, wait=0)`, returning a list of `(open_day, close_day, side, payoff)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\ndef pairs_panel(seed=2006, n_ind=10, per_ind=10, n_pairs=20, days=3024, half_life=8.0, ou_sd=0.008,\n                rw_sd=0.015, break_day=1512, break_frac=0.8, half_spread=0.005):\n    rng = np.random.default_rng(seed)\n    N = n_ind * per_ind\n    ind = np.repeat(np.arange(n_ind), per_ind)\n    mkt = np.cumsum(0.0003 + 0.010 * rng.standard_normal(days))\n    indf = np.cumsum(0.008 * rng.standard_normal((days, n_ind)), axis=0)\n    phi = 0.5 ** (1.0 / half_life)\n    u = np.cumsum(rw_sd * rng.standard_normal((days, N)), axis=0)        # unpaired: random walks\n    common = np.cumsum(rw_sd * rng.standard_normal((days, n_pairs)), axis=0)\n    eps = ou_sd * rng.standard_normal((days, 2 * n_pairs))\n    a = np.zeros((days, 2 * n_pairs))\n    for t in range(1, days):\n        a[t] = phi * a[t - 1] + eps[t]                                   # mean-reverting gaps\n    broken = rng.random(n_pairs) < break_frac\n    drift = np.cumsum(rw_sd * rng.standard_normal((days, 2 * n_pairs)), axis=0)\n    for k in range(n_pairs):\n        for j in (2 * k, 2 * k + 1):\n            x = common[:, k] + a[:, j]\n            if broken[k]:                                                # the pair stops co-moving\n                x = x + np.where(np.arange(days) >= break_day, drift[:, j] - drift[break_day, j], 0.0)\n            u[:, j] = x\n    pair_ind = np.repeat(np.arange(n_ind), 2)[:n_pairs]\n    ind[:2 * n_pairs] = np.repeat(pair_ind, 2)                           # two planted pairs an industry\n    logp = np.log(50.0) + mkt[:, None] + indf[:, ind] + u\n    mid = np.exp(logp)\n    bounce = np.where(rng.random((days, N)) < 0.5, 1 + half_spread, 1 - half_spread)\n    close = mid * bounce                                                 # closes at bid or ask\n    return close, mid, ind, broken\n\n\ndef normalise(P):\n    P = np.asarray(P, dtype=float)\n    return P / P[0]\n\nclose, mid, ind, broken = pairs_panel()\n",
+    "starter": "import numpy as np\n\ndef blotter(form, trade, i, j, wait=0):\n    \"\"\"Every trade of pair (i, j): (open_day, close_day, side, payoff).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\n\ndef blotter(form, trade, i, j, wait=0):\n    \"\"\"Every trade of pair (i, j): (open_day, close_day, side, payoff).\"\"\"\n    sd = float(np.std(form[:, i] - form[:, j]))\n    a, b = trade[:, i].tolist(), trade[:, j].tolist()\n    n, t, out = len(a), 0, []\n    while t < n:\n        s = a[t] - b[t]\n        if sd > 0 and abs(s) > 2 * sd and t + wait < n - 1:\n            side = 1 if s > 0 else -1\n            to = t + wait\n            tc = next((u for u in range(t + 1, n) if (a[u] - b[u]) * side <= 0), None)\n            tx = n - 1 if tc is None else min(tc + wait, n - 1)\n            pnl = side * ((b[tx] - b[to]) / b[to] - (a[tx] - a[to]) / a[to])\n            out.append((to, tx, side, pnl))\n            t = tx + 1\n            continue\n        t += 1\n    return out\n",
+    "examples": [
+     {
+      "call": "[[a, b, c, round(p, 6)] for a, b, c, p in blotter(Pn[:252], Pn[252:], 2, 3)]",
+      "expect": "[[28, 43, -1, 0.057428], [50, 58, 1, 0.048284], [86, 97, -1, 0.051462], [116, 125, 1, 0.064589]]",
+      "compare": "isclose",
+      "setup": "Pn = normalise(close[:378])"
+     }
+    ],
+    "tests": [
+     {
+      "call": "[[a, b, c, round(p, 6)] for a, b, c, p in blotter(Pn[:252], Pn[252:], 2, 3)]",
+      "expect": "[[28, 43, -1, 0.057428], [50, 58, 1, 0.048284], [86, 97, -1, 0.051462], [116, 125, 1, 0.064589]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      },
+      "setup": "Pn = normalise(close[:378])"
+     },
+     {
+      "call": "[[a, b, c, round(p, 6)] for a, b, c, p in blotter(Pn[:252], Pn[252:], 2, 3, wait=1)]",
+      "expect": "[[29, 44, -1, 0.043369], [51, 59, 1, 0.01859], [87, 98, -1, 0.043682], [117, 125, 1, 0.065733]]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      },
+      "setup": "Pn = normalise(close[:378])"
+     },
+     {
+      "call": "blotter(Pn[:252], Pn[252:], 30, 31)",
+      "expect": "[]",
+      "compare": "equal",
+      "setup": "Pn = normalise(close[:378])"
+     },
+     {
+      "call": "round(sum(p for *_, p in blotter(Pn[:252], Pn[252:], 38, 39)), 6)",
+      "expect": "0.117743",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-06
+      },
+      "setup": "Pn = normalise(close[:378])"
+     }
+    ],
+    "how": "Submit runs 4 hidden tests: one pair with and without the wait, a silent pair, another pair's total.",
+    "budget": 30000
+   },
+   "feedback": {
+    "correct": "Correct. The blotter matches lesson 7's table.",
+    "generic": "Not quite. Record each trade's open day, exit day, side and payoff, and resume after the exit."
+   },
+   "explain": {
+    "text": "Pair (2, 3) trades four times: days 28 to 43, 50 to 58, 86 to 97 and 116 to 125. With the wait each trade starts a day later and the total falls from 0.2218 to 0.1714."
+   }
+  },
+  {
+   "id": "h-trade-life",
+   "difficulty": 3,
+   "skills": [
+    "pr-trading"
+   ],
+   "prose": "The life of one trade, from formation to the booked payoff.",
+   "question": "Put the steps in order. Leave out the one that does not belong.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "a1",
+      "text": "Compute the spread's sd over formation, which fixes the trigger before trading"
+     },
+     {
+      "id": "a2",
+      "text": "On a trading day the spread passes 2 sd: the signal"
+     },
+     {
+      "id": "a3",
+      "text": "With the wait, fill the next day: buy £1 of the cheaper leg, sell £1 of the dearer"
+     },
+     {
+      "id": "a4",
+      "text": "Hold until the spread changes sign, or the last trading day"
+     },
+     {
+      "id": "a5",
+      "text": "Close both legs, a day late with the wait, and book long return minus short return"
+     },
+     {
+      "id": "x1",
+      "text": "Close as soon as the spread is back inside 2 sd, to lock in the gain",
+      "why": "The paper closes at the crossing; the band exit books only part of the move."
+     }
+    ],
+    "answer": [
+     "a1",
+     "a2",
+     "a3",
+     "a4",
+     "a5"
+    ],
+    "distractors": [
+     "x1"
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. Trigger, signal, fill, hold, close.",
+    "generic": "Not quite. The trigger is fixed first and the close comes at the crossing.",
+    "byKey": {
+     "x1": "You closed at the band. The paper waits for the crossing.",
+     "left-out": "Every step but the band exit belongs."
+    }
+   },
+   "explain": {
+    "text": "The sd is fixed before trading. A signal opens a £1-a-side position, filled a day late with the wait. It closes at the crossing or on the last day, and the payoff is long return minus short return."
+   }
+  },
+  {
+   "id": "h-wait-note",
+   "difficulty": 5,
+   "skills": [
+    "pr-trading",
+    "pr-returns"
+   ],
+   "question": "Explain the one-day wait to a sceptic.",
+   "widget": {
+    "kind": "longform",
+    "prompt": "In about 300 words: why does waiting one day lower the return? What does that say about the same-day result? How would you present both figures to a sceptical reader? Use our numbers.",
+    "model": "**What the wait does.** Our closes sit at the bid or the ask, half a per cent from the mid. A coin decides which, each day. A share that closes at its bid looks cheap, so it tends to trigger a buy. Trading at that same close books a rebound to the mid that nobody could have bought: the bid-ask bounce. Waiting a day fills at the next close, a fresh draw, so the bounce is no longer captured on average.\n\n**Why the return falls.** Two effects. First, the bounce is removed. On mid prices the top 20 earn 0.82% a month against 1.00% on closes. So about 0.19 points was bounce. Second, each open and close loses a day of convergence. On mids the wait costs another 0.07 points. Together they take the top 20 from 1.00% to 0.75% a month.\n\n**What it says about the same-day result.** The same-day number overstates what a trader could earn, by about a quarter of the same-day figure here. It is not wrong as arithmetic; it answers a question no trader can act on.\n\n**How to present both.** Lead with the waited, committed, top-20 figure: 0.75% a month, about 9.4% a year, before costs. Put the same-day figure beside it, labelled as including the bounce. Add the mid-price run, which splits the gap into bounce and lost convergence. Then costs: about 1.69 round trips per pair per cycle, four trades each, so break-even near 0.67% a trade. Say that the panel was seeded and tuned to the paper's range, so these are checks of method, not forecasts.\n\n**For the sceptic.** The paper reports that waiting a day cuts returns materially but leaves them positive. Ours do the same, for the reason the paper gives.",
+    "rubric": [
+     {
+      "points": 2,
+      "text": "Explains the bounce: closes at the bid or ask, a same-day fill books a rebound nobody could buy"
+     },
+     {
+      "points": 2,
+      "text": "Names the second effect: a day of convergence lost on each open and close, with the mid-price comparison"
+     },
+     {
+      "points": 2,
+      "text": "Quotes our figures correctly: same-day, mid and waited monthly returns"
+     },
+     {
+      "points": 2,
+      "text": "Presents the waited, committed figure first, the same-day figure labelled, and costs with a break-even"
+     },
+     {
+      "points": 2,
+      "text": "States the limit: a seeded, tuned panel checks the method, not real profits"
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Compare your answer with the model and mark it against the rubric.",
+    "generic": "Compare your answer with the model and mark it against the rubric."
+   },
+   "explain": {
+    "text": "The wait removes the bounce and costs a day of convergence. The same-day figure overstates what is tradable. Lead with the waited figure and show the split."
+   }
+  },
+  {
+   "id": "h-net",
+   "difficulty": 4,
+   "skills": [
+    "pr-returns"
+   ],
+   "prose": "With the wait our top 20 earn 4.52% per pair per cycle, gross, from 1.69 round trips per pair.",
+   "question": "At a cost of 0.2% per trade, what is the net monthly committed return?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.00528,
+    "tol": {
+     "abs": 0.0001
+    },
+    "unit": "%",
+    "placeholder": "a number",
+    "accept": "0.53% = (4.52% − 4 × 0.2% × 1.69) / 6",
+    "wrong": [
+     {
+      "id": "cycle",
+      "value": 0.0317,
+      "tol": {
+       "abs": 0.0003
+      }
+     },
+     {
+      "id": "once",
+      "value": 0.0072,
+      "tol": {
+       "abs": 5e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. About 0.53% a month.",
+    "generic": "Not quite. Subtract 4 × 0.2% × trips from the cycle return, then divide by 6.",
+    "byKey": {
+     "cycle": "That is per six-month cycle. Divide by 6.",
+     "once": "You charged one trade per pair."
+    }
+   },
+   "explain": {
+    "text": "Costs per pair per cycle are 4 × 0.2% × 1.69 = 1.35%. Net is 3.17% a cycle, or 0.53% a month."
+   }
+  },
+  {
+   "id": "h-ticket",
+   "difficulty": 3,
+   "skills": [
+    "pr-trading"
+   ],
+   "prose": "A desk trades £1m a side. The short leg's price is £23.10.",
+   "question": "How many shares does the short ticket sell, to the nearest share?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 43290,
+    "tol": {
+     "abs": 1
+    },
+    "unit": "",
+    "placeholder": "a number",
+    "accept": "43,290 = £1,000,000 / £23.10",
+    "wrong": [
+     {
+      "id": "units",
+      "value": 0.04329,
+      "tol": {
+       "abs": 1e-05
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Correct. About 43,290 shares.",
+    "generic": "Not quite. Divide £1m by the price.",
+    "byKey": {
+     "units": "That is shares per pound."
+    }
+   },
+   "explain": {
+    "text": "£1,000,000 / £23.10 = 43,290 shares. The long ticket buys £1m of the other leg at its own price."
+   }
+  },
+  {
+   "id": "h-gaps",
+   "difficulty": 4,
+   "skills": [
+    "pr-returns",
+    "pr-extend"
+   ],
+   "prose": "Our replication differs from the paper in several known ways.",
+   "question": "Which of these would change our monthly figure even on the paper's own trades? Select all that apply.",
+   "widget": {
+    "kind": "multi",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "month",
+      "text": "Dividing a cycle's return by 6 instead of compounding daily returns within each month",
+      "correct": true
+     },
+     {
+      "id": "norm",
+      "text": "Normalising once at formation start for the whole trading period",
+      "correct": true
+     },
+     {
+      "id": "seed",
+      "text": "Using seed 2006",
+      "why": "The seed picks the data; on the paper's own trades it plays no part."
+     },
+     {
+      "id": "rule",
+      "text": "Opening at 2 sd",
+      "why": "That is the paper's own rule."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Correct. Two method differences.",
+    "generic": "Not quite. Keep the choices that change the arithmetic on the same trades."
+   },
+   "explain": {
+    "text": "The monthly method and the normalisation change how the same trades become a monthly figure. The seed and the 2 sd rule do not."
+   }
+  }
+ ]
+}

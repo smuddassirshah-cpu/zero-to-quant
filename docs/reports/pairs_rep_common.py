@@ -137,7 +137,28 @@ def _close(a, b, rel=1e-9, ab=1e-12):
     return a == b
 
 
-def _run_tests(w, src):
+class _Slow(Exception):
+    pass
+
+
+def _alarm(*_):
+    raise _Slow()
+
+
+def _run_tests(w, src, limit=120):
+    """Failing test count; a run past `limit` seconds counts every test as failed."""
+    import signal
+    signal.signal(signal.SIGALRM, _alarm)
+    signal.alarm(limit)
+    try:
+        return _run_tests_inner(w, src)
+    except _Slow:
+        return len(w['tests'])
+    finally:
+        signal.alarm(0)
+
+
+def _run_tests_inner(w, src):
     ns = {'__learner_source__': src}
     exec(w.get('prelude', ''), ns)
     exec(src, ns)
