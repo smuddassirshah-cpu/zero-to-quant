@@ -65,3 +65,27 @@ Format: `n. item [index] path | severity | problem | evidence | fix`. Severities
 - Coverage: 4 (findings 8 to 11; 9 is optional and 11 needs no change).
 - Voice: 0. Layout: 0.
 - Author's scripts: `check_numbers.py` 327 of 327, exit 0; `fresh.py` clean in both courses. Validator 0 errors, no topic-1.10 warning. No engine change needed.
+
+## Fix pass
+
+Recomputed before writing: 1.2424 from 4-place logs (0.6931 + 0.5493); 0.38/12 = 0.0316667; cubes 0.125, 1, 3.375, 8 give U = 6.25, L = 2.25, midpoints 3.875, U - L = 16/n so 1601 (1600 exact, width 1/n gives 8/n so 801); F'(2) = 12/65 - 1/5 = -1/65 = -0.0153846, no-chain -12/65, upper-only 12/65; f2 = (2, 2, 1), norm 3, root-norm 6.7082, no-sub 4.2426. All agree with the review.
+
+1. Fixed: `e-three-one-rearrange` part 1 `tol.abs` 0.0001; 1.2424 and 1.2425 in band, 1.2426 out; case added to `check_numbers.py`.
+2. Fixed: `e-weighted-adjoint` explain now shows the matrix instead of "the first matrix".
+3. Fixed: `e-root-recursion` part 0 option texts shortened (visible lengths: key 37, distractors 31 to 36).
+4. Fixed: `e-which-converge` `term` why rewritten as bounded-terms slip.
+5. Fixed: `e-mvt-quartic` explain states $x \ne y$ in $[0, 2]$.
+6. Fixed: `e-cube-delta` `at-a` `tol.abs` 0.0005; 0.0317 and 0.032 caught (check added).
+7. Fixed: title "unit-norm portfolio"; rubric row 1 notes another complete route earns rows 1 to 3.
+8. Fixed: `e-upper-sum-square` now $x^3$ on $[0, 2]$ with keys 6.25 and 1601; wrongs 2.25, 3.875, 1600, 801.
+9. Fixed: `e-ftc-both-limits` now $\int_x^{x^3} \tfrac{dt}{1 + t^2}$, key -0.0153846; wrongs -0.1846154 and 0.1846154.
+10. Fixed: `e-taxicab` replaced by `e-gram-schmidt-step` (d2, `lx-inner`, tag `gram-schmidt`, pace 60, linear-maps L3); ramp 6, 15, 6, 3 unchanged; pace now 5,235 s; by course analysis 17, linear-maps 13 (L3 now 3, analysis L5 4). `fresh.py` tokens updated; no hit in either course for the new setups.
+11. No change, as the review said.
+
+Counts: 10 fixed, 0 disputed, 0 deferred. Graded answers changed: items 8, 9 (keys and wrongs) and 10 (new item); band widths changed on items 1 and 6.
+
+Scripts: `build.py` regenerated the exam; `check_numbers.py` 330 of 330, exit 0, calls `check_wrongs()` then `report()`; `fresh.py` runs clean.
+
+Voice job: 9 sentences over 20 words in `linear-maps` levels 1 to 3 split or tightened, no number or graded field changed: `homework-1` items[3].prose and items[8].model, `l4` screens[10], `l5` screens[5] and screens[10] explain, `l8` screens[9] how, `l9` screens[10], `l13` screens[8], `l14` screens[8]. Voice scan: 0 sentences over 20 words, 0 explanations over three sentences.
+
+Gates: validator 0 errors, no topic-1.10 warnings; playthrough `--exam topic-1.10` green with and without `--mobile` (30 of 30); `--lesson` l4, l5, l8, l9, l13, l14 and `--set linear-maps/homework-1` green with and without `--mobile`.

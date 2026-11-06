@@ -158,7 +158,7 @@ ex._rec(dict(ramp) == {2: 6, 3: 15, 4: 6, 5: 3}, f'ramp {dict(ramp)} = 6, 15, 6,
 pace = sum(i['pace'] for i in items)
 ex._rec(pace / 60 < doc['minutes'], f'pace {pace} s inside {doc["minutes"]} minutes', '')
 by_course = Counter('analysis' if all(s.startswith('an-') for s in i['skills']) else 'linear-maps' for i in items)
-ex._rec(by_course == {'analysis': 18, 'linear-maps': 12}, f'by course {dict(by_course)}', '')
+ex._rec(by_course == {'analysis': 17, 'linear-maps': 13}, f'by course {dict(by_course)}', '')
 ex._rec(all(all(s.startswith('an-') for s in i['skills']) or all(s.startswith('lx-') for s in i['skills']) for i in items),
         'no item mixes the two courses', '')
 for s in doc['skills']:
@@ -217,13 +217,18 @@ allow('e-halvings-width', 0.001, 3000, 2048, 4096, 11.55, float(F(3, 4096)), flo
 ex._rec(round(float(F(3, 4096)), 5) == 0.00073 and round(float(F(3, 2048)), 4) == 0.0015, 'e-halvings-width: 0.00073 and 0.0015', '')
 say('e-halvings-width', 'explain.text', 12)
 
-# e-taxicab
-p_, q_ = np.array([-1, 3]), np.array([5, -5])
-key('e-taxicab', float(np.abs(p_ - q_).sum()), tol=0)
-wrong('e-taxicab', 'euclid', float(np.linalg.norm(p_ - q_)))
-wrong('e-taxicab', 'max', float(np.abs(p_ - q_).max()))
-allow('e-taxicab', 5, 3, 6, 8, 10, 14)
-say('e-taxicab', 'explain.text', 14)
+# e-gram-schmidt-step: orthonormalise with QR, and project by least squares; then both wrong routes
+gv1, gv2 = np.array([1.0, -2.0, 2.0]), np.array([3.0, 0.0, 3.0])
+Qg, Rg = np.linalg.qr(np.column_stack([gv1, gv2]))
+coef_ls = np.linalg.lstsq(gv1.reshape(3, 1), gv2, rcond=None)[0][0]
+f2 = gv2 - coef_ls * gv1
+ex._rec(abs(coef_ls - 1) < 1e-12 and np.allclose(f2, [2, 2, 1]) and abs(f2 @ gv1) < 1e-12,
+        'e-gram-schmidt-step: coefficient 9/9 = 1, f2 = (2, 2, 1), orthogonal to v1', '')
+key('e-gram-schmidt-step', float(abs(Rg[1, 1])), tol=1e-9)
+key('e-gram-schmidt-step', float(np.linalg.norm(f2)), tol=1e-9)
+wrong('e-gram-schmidt-step', 'root-norm', float(np.linalg.norm(gv2 - (gv2 @ gv1 / np.linalg.norm(gv1)) * gv1)))
+wrong('e-gram-schmidt-step', 'no-sub', float(np.linalg.norm(gv2)))
+allow('e-gram-schmidt-step', 9, 3, 18, 6.71, 4, 1)
 
 # e-subspace-r3: random closure tests on each set
 rng = np.random.default_rng(110)
@@ -311,6 +316,8 @@ wrong('e-cube-delta', 'at-left', float(fac.min().round()), part=0)
 dlt = min(1, 0.38 / 19)
 key('e-cube-delta', dlt, part=1)
 wrong('e-cube-delta', 'at-a', 0.38 / 12, part=1)
+_a = [x_ for x_ in node(W('e-cube-delta', 1))['wrong'] if x_['id'] == 'at-a'][0]
+ex._rec(all(abs(v_ - _a['value']) <= _a['tol']['abs'] for v_ in (0.0317, 0.032, 0.031667)), 'e-cube-delta: at-a band catches 0.0317 and 0.032', '')
 wrong('e-cube-delta', 'max', max(1, 0.38 / 19), part=1)
 xs = np.linspace(2 - dlt, 2 + dlt, 100001)[1:-1]
 ex._rec(np.all(np.abs(xs ** 3 - 8) < 0.38), 'e-cube-delta: |x^3 - 8| < 0.38 on (1.98, 2.02)', '')
@@ -335,8 +342,8 @@ ex._rec(np.all(np.abs(fM(pairs[:, 0]) - fM(pairs[:, 1])) <= Mx * np.abs(pairs[:,
 allow('e-mvt-quartic', slope, 18, c_, fM(2), 33, 32, 8)
 say('e-mvt-quartic', 'explain.text', 1.2599)
 
-# e-upper-sum-square: sup and inf on each piece by dense sampling; exact gap search
-def sums(n, f=lambda x: x * x, a0=0.0, b0=2.0, k=2001):
+# e-upper-sum-square: x^3 on [0, 2]; sup and inf on each piece by dense sampling; exact gap search
+def sums(n, f=lambda x: x ** 3, a0=0.0, b0=2.0, k=2001):
     U = L_ = 0.0
     edges = np.linspace(a0, b0, n + 1)
     for lo, hi in zip(edges, edges[1:]):
@@ -349,38 +356,38 @@ def sums(n, f=lambda x: x * x, a0=0.0, b0=2.0, k=2001):
 U4, L4 = sums(4)
 key('e-upper-sum-square', U4, part=0)
 wrong('e-upper-sum-square', 'lower', L4, part=0)
-wrong('e-upper-sum-square', 'mid', sum((0.25 + 0.5 * k) ** 2 * 0.5 for k in range(4)), part=0)
+wrong('e-upper-sum-square', 'mid', sum((0.25 + 0.5 * k) ** 3 * 0.5 for k in range(4)), part=0)
 
 
 def gap(n):
-    return sum((F(2 * k, n) ** 2 - F(2 * (k - 1), n) ** 2) * F(2, n) for k in range(1, n + 1))
+    return sum((F(2 * k, n) ** 3 - F(2 * (k - 1), n) ** 3) * F(2, n) for k in range(1, n + 1))
 
 
-ex._rec(gap(4) == F(2) and abs(float(gap(4)) - (U4 - L4)) < 1e-9, 'e-upper-sum-square: U - L = 2 at n = 4, both routes', '')
-n_ul = next(n for n in range(790, 900) if gap(n) < F(1, 100))
+ex._rec(gap(4) == F(4) and abs(float(gap(4)) - (U4 - L4)) < 1e-9, 'e-upper-sum-square: U - L = 4 at n = 4, both routes', '')
+n_ul = next(n for n in range(1590, 1700) if gap(n) < F(1, 100))
 key('e-upper-sum-square', n_ul, part=1, tol=0)
 wrong('e-upper-sum-square', 'at-bound', n_ul - 1, part=1)
-ex._rec(gap(800) == F(1, 100), 'e-upper-sum-square: gap exactly 0.01 at n = 800', '')
-wrong('e-upper-sum-square', 'no-width', next(n for n in range(1, 900) if F(4, n) < F(1, 100)), part=1)
-allow('e-upper-sum-square', 0.5, 0.25, 2.25, U4, L4, 0.01, 800, 801, 1)
-say('e-upper-sum-square', 'explain.text', 3.75)
+ex._rec(gap(1600) == F(1, 100) and gap(n_ul) < F(1, 100), 'e-upper-sum-square: gap exactly 0.01 at n = 1600', '')
+wrong('e-upper-sum-square', 'no-width', next(n for n in range(1, 1700) if F(8, n) < F(1, 100)), part=1)
+allow('e-upper-sum-square', 0.5, 0.125, 3.375, 2.25, U4, L4, 0.01, 1600, 1601, 16, 1)
+say('e-upper-sum-square', 'explain.text', 6.25)
 
-# e-ftc-both-limits: F by composite Simpson, then a central difference
+# e-ftc-both-limits: F(x) = integral from x to x^3, by composite Simpson, then a central difference
 def simpson(f, lo, hi, n=2000):
     h = (hi - lo) / n
     s = f(lo) + f(hi) + sum((4 if k % 2 else 2) * f(lo + k * h) for k in range(1, n))
     return s * h / 3
 
 
-Ff = lambda x: simpson(lambda t: 1 / (1 + t * t), x, x * x)  # noqa: E731
+Ff = lambda x: simpson(lambda t: 1 / (1 + t * t), x, x ** 3)  # noqa: E731
 hh = 1e-4
 dF = (Ff(2 + hh) - Ff(2 - hh)) / (2 * hh)
 key('e-ftc-both-limits', dF, tol=1e-6)
-ex._rec(abs(dF - 3 / 85) < 1e-7, f'e-ftc-both-limits: numerical F\'(2) = {dF:.8f} = 3/85', '')
-wrong('e-ftc-both-limits', 'no-chain', 1 / (1 + 16) - 1 / (1 + 4))
-wrong('e-ftc-both-limits', 'upper-only', 4 / 17)
-allow('e-ftc-both-limits', 3 / 85, 4, 17, 5, 85, 3)
-say('e-ftc-both-limits', 'explain.text', 0.0353)
+ex._rec(abs(dF + 1 / 65) < 1e-7, f'e-ftc-both-limits: numerical F\'(2) = {dF:.8f} = -1/65', '')
+wrong('e-ftc-both-limits', 'no-chain', 1 / (1 + 8 ** 2) - 1 / (1 + 2 ** 2))
+wrong('e-ftc-both-limits', 'upper-only', 12 / 65)
+allow('e-ftc-both-limits', 1 / 65, 12 / 65, 12, 65, 5, 3)
+say('e-ftc-both-limits', 'explain.text', '0.0154')
 
 # e-closed-sets: a sequence check for each set that is not closed
 ex._rec(1 / 10 ** 6 > 0 and all(0 < 1 / n <= 1 for n in range(1, 1000)), 'e-closed-sets: 1/n lies in (0, 1] and tends to 0', '')
@@ -577,6 +584,10 @@ for mm in (1, 2, 5, 40):
     ex._rec(abs(math.fsum(1 / (2 * j - 1) for j in range(1, 3 * mm + 1)) - (H(6 * mm) - H(3 * mm) / 2)) < 1e-12,
             f'e-three-one-rearrange: odd sum = H_6m - H_3m/2 at m = {mm}', '')
 correct_id('e-three-one-rearrange', 'ok', part=0)
+_w = node(W('e-three-one-rearrange', 1))
+ex._rec(all(abs(v_ - _w['answer']) <= _w['tol']['abs'] for v_ in (1.2424, 1.2425)) and abs(1.2426 - _w['answer']) > _w['tol']['abs']
+        and abs(round(math.log(2), 4) + round(0.5 * math.log(3), 4) - _w['answer']) <= _w['tol']['abs'],
+        'e-three-one-rearrange: 4-place intermediate logs (1.2424) and 1.2425 are inside the band, 1.2426 is not', '')
 allow('e-three-one-rearrange', S_m, 11, 1, two_one)
 say('e-three-one-rearrange', 'explain.text', 1.2425)
 
@@ -610,7 +621,7 @@ LEVEL = {   # item -> (course, level of the lesson it is pitched at)
     'e-telescope-gap-three': ('analysis', 3), 'e-which-converge': ('analysis', 3), 'e-three-one-rearrange': ('analysis', 3),
     'e-halvings-width': ('analysis', 4), 'e-cube-delta': ('analysis', 4), 'e-mvt-quartic': ('analysis', 4),
     'e-uniform-peak': ('analysis', 4),
-    'e-upper-sum-square': ('analysis', 5), 'e-ftc-both-limits': ('analysis', 5), 'e-taxicab': ('analysis', 5),
+    'e-upper-sum-square': ('analysis', 5), 'e-ftc-both-limits': ('analysis', 5), 'e-gram-schmidt-step': ('linear-maps', 3),
     'e-closed-sets': ('analysis', 5), 'e-compact-bounded': ('analysis', 5),
     'e-subspace-r3': ('linear-maps', 1), 'e-coords-new-basis': ('linear-maps', 1),
     'e-antisym-map': ('linear-maps', 2), 'e-matrix-of-map': ('linear-maps', 2), 'e-idempotent-split': ('linear-maps', 2),

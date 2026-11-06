@@ -146,21 +146,29 @@ items.append(item(
     "The width after $n$ halvings is $\\tfrac{3}{2^n}$, so we need $2^n > 3000$. "
     "$2^{11} = 2048$ is too small and $2^{12} = 4096$ is enough. So 12 halvings."))
 
-# analysis L5 (l22): the taxicab metric
-dx, dy = abs(-1 - 5), abs(3 - (-5))
+# linear-maps L3 (l13): one Gram-Schmidt step
+gv1, gv2 = (1, -2, 2), (3, 0, 3)
+gdot = sum(x * y for x, y in zip(gv1, gv2))
+gnn = sum(x * x for x in gv1)
+gcoef = gdot / gnn
+gf = [y - gcoef * x for x, y in zip(gv1, gv2)]
+g_key = math.sqrt(sum(x * x for x in gf))
+g_root = math.sqrt(sum((y - gdot / math.sqrt(gnn) * x) ** 2 for x, y in zip(gv1, gv2)))
+g_nosub = math.sqrt(sum(y * y for y in gv2))
 items.append(item(
-    "e-taxicab", 2, ["an-metric"], ["metric-distance"], 45, "A distance that adds the gaps",
-    "In the plane take $p = (-1, 3)$ and $q = (5, -5)$. The taxicab metric is $d_1(x, y) = |x_1 - y_1| + |x_2 - y_2|$.",
-    "What is $d_1(p, q)$?",
-    num(dx + dy, 0, [("euclid", math.hypot(dx, dy), 0), ("max", max(dx, dy), 0)], placeholder="a whole number",
-        label="Distance"),
-    fb("$|-1 - 5| + |3 + 5| = 6 + 8 = 14$.",
-       "Add the gaps in each coordinate.",
-       {"euclid": "That is the straight-line distance, $\\sqrt{6^2 + 8^2} = 10$. The taxicab metric adds the gaps.",
-        "max": "That is the largest gap. The taxicab metric adds both gaps."}),
-    "The coordinate gaps are 6 and 8, and the taxicab metric adds them to give 14. "
-    "The straight-line metric gives 10 and the largest-gap metric gives 8. "
-    "Always $d_\\infty \\le d_2 \\le d_1$, and here $8 \\le 10 \\le 14$."))
+    "e-gram-schmidt-step", 2, ["lx-inner"], ["gram-schmidt"], 60, "One Gram-Schmidt step",
+    "In $\\mathbb{R}^3$ with the dot product, take $\\mathbf{v}_1 = (1, -2, 2)$ and $\\mathbf{v}_2 = (3, 0, 3)$.",
+    "Gram-Schmidt replaces $\\mathbf{v}_2$ by $\\mathbf{f}_2 = \\mathbf{v}_2 - \\tfrac{\\langle \\mathbf{v}_2, \\mathbf{v}_1 \\rangle}{\\langle \\mathbf{v}_1, \\mathbf{v}_1 \\rangle}\\mathbf{v}_1$. "
+    "What is $\\|\\mathbf{f}_2\\|$? Give 2 decimal places.",
+    num(r(g_key), 0.005, [("root-norm", r(g_root), 0.005), ("no-sub", r(g_nosub), 0.005)], placeholder="a decimal",
+        label="Length"),
+    fb("The coefficient is $\\tfrac99 = 1$, so $\\mathbf{f}_2 = (2, 2, 1)$ and $\\|\\mathbf{f}_2\\| = 3$.",
+       "Subtract the part of $\\mathbf{v}_2$ along $\\mathbf{v}_1$, then take the length.",
+       {"root-norm": "You divided by $\\|\\mathbf{v}_1\\| = 3$, not by $\\langle \\mathbf{v}_1, \\mathbf{v}_1 \\rangle = 9$, and got 6.71.",
+        "no-sub": "That is $\\|\\mathbf{v}_2\\| = \\sqrt{18}$. Subtract the part along $\\mathbf{v}_1$ first."}),
+    "The coefficient is $\\tfrac99 = 1$, so $\\mathbf{f}_2 = (2, 2, 1)$. "
+    "It is orthogonal to $\\mathbf{v}_1$, since $2 - 4 + 2 = 0$. "
+    "Its length is $\\sqrt{4 + 4 + 1} = 3$."))
 
 # linear-maps L1 (l2): a subspace of R^3
 items.append(item(
@@ -240,12 +248,12 @@ items.append(parts(
     "Two questions on the limit of $(a_n)$.",
     [("What must the proof establish before it solves $L = \\sqrt{3L + 10}$?",
       choice([
-          opt("ok", "That $(a_n)$ is increasing and bounded above, both by induction", correct=True),
-          opt("root", "That $L = 5$ solves the equation",
+          opt("ok", "That $(a_n)$ rises and is bounded above", correct=True),
+          opt("root", "That $L = 5$ solves the limit equation",
               "You solved before knowing a limit exists. A root of $L = f(L)$ says nothing about a divergent sequence."),
-          opt("steps", "That $a_{n+1} - a_n \\to 0$",
+          opt("steps", "That the steps $a_{n+1} - a_n$ tend to 0",
               "You relied on shrinking steps. They do not force convergence, as the harmonic sums show."),
-          opt("positive", "That every $a_n$ is positive",
+          opt("positive", "That every term $a_n$ is positive",
               "You checked one bound only. Positivity helps choose the root but gives no limit.")]),
       fb("Monotone and bounded gives a limit $L$. Only then may we pass to the limit in the recursion.",
          "What does the monotone convergence theorem need?")),
@@ -268,7 +276,7 @@ items.append(item(
         opt("root-n", "$\\sum \\tfrac{1}{\\sqrt n}$",
             "You saw the terms tend to 0. That is not enough: this is a $p$-series with $p = \\tfrac12 \\le 1$."),
         opt("term", "$\\sum \\tfrac{2n}{5n + 1}$",
-            "You compared it with a convergent series. Its terms tend to $\\tfrac25$, not 0, so it diverges."),
+            "You saw terms that stay below $\\tfrac25$. Bounded terms are not enough: they tend to $\\tfrac25$, not 0, so it diverges."),
         opt("early", "$\\sum \\tfrac{(n + 1)!}{4^n}$",
             "You judged by the first ratios, which are at most 1. The ratio is $\\tfrac{n + 2}{4}$, which grows without bound.")],
         kind="multi"),
@@ -292,7 +300,7 @@ items.append(parts(
          {"at-a": "You evaluated at $x = 2$ and got 12. The bound must hold across $(1, 3)$, where the factor rises towards 19.",
           "at-left": "You took the left end, where the factor is 7. It rises on $(1, 3)$, so its supremum is at $x = 3$."})),
      ("With $\\delta = \\min(1, \\tfrac{\\varepsilon}{K})$, what is $\\delta$ for $\\varepsilon = 0.38$?",
-      num(r(d_key), 0.00005, [("at-a", r(0.38 / 12), 0.0001), ("max", 1, 0.00005)], placeholder="a decimal",
+      num(r(d_key), 0.00005, [("at-a", r(0.38 / 12), 0.0005), ("max", 1, 0.00005)], placeholder="a decimal",
           label="delta"),
       fb("$\\min(1, \\tfrac{0.38}{19}) = 0.02$.",
          "Divide $\\varepsilon$ by $K$, then compare with 1.",
@@ -322,47 +330,47 @@ items.append(parts(
          {"mean-slope": "You used the mean slope, 9. The bound needs the largest $|f'|$ on the interval.",
           "no-plus": "You dropped the $+1$ in $f'$. $f'(2) = 32 + 1$."}))],
     "The mean slope is $\\tfrac{18 - 0}{2} = 9$, and $4c^3 + 1 = 9$ gives $c = \\sqrt[3]{2} = 1.2599$. "
-    "For any $x$ and $y$ the theorem gives $f(x) - f(y) = f'(\\xi)(x - y)$ with $\\xi$ between them. "
+    "For $x \\ne y$ in $[0, 2]$ the theorem gives $f(x) - f(y) = f'(\\xi)(x - y)$ with $\\xi$ between them. "
     "So $M = \\sup |f'| = 33$ works."))
 
-# analysis L5 (l20): upper and lower sums of x^2 on [0, 2]
-U4 = 0.5 * sum((k * 0.5) ** 2 for k in range(1, 5))
-L4 = 0.5 * sum((k * 0.5) ** 2 for k in range(0, 4))
-M4 = 0.5 * sum(((k + 0.5) * 0.5) ** 2 for k in range(0, 4))
+# analysis L5 (l20): upper and lower sums of x^3 on [0, 2]
+U4 = 0.5 * sum((k * 0.5) ** 3 for k in range(1, 5))
+L4 = 0.5 * sum((k * 0.5) ** 3 for k in range(0, 4))
+M4 = 0.5 * sum(((k + 0.5) * 0.5) ** 3 for k in range(0, 4))
 items.append(parts(
     "e-upper-sum-square", 3, ["an-calculus"], ["upper-lower-sums"], 150, "Upper and lower sums",
-    "Split $[0, 2]$ into $n$ equal pieces and let $f(x) = x^2$. On each piece $f$ rises, so its supremum is at the right end.",
+    "Split $[0, 2]$ into $n$ equal pieces and let $f(x) = x^3$. On each piece $f$ rises, so its supremum is at the right end.",
     "Two questions on the upper and lower sums.",
     [("What is $U(f, P)$ for $n = 4$? Give 2 decimal places.",
       num(U4, 0.005, [("lower", L4, 0.005), ("mid", M4, 0.005)], placeholder="a decimal", label="U"),
-      fb("$0.5(0.25 + 1 + 2.25 + 4) = 3.75$.",
+      fb("$0.5(0.125 + 1 + 3.375 + 8) = 6.25$.",
          "Multiply the width 0.5 by the sum of $f$ at the right ends.",
          {"lower": "You used left ends. That is the lower sum $L$; $U$ takes the supremum on each piece.",
           "mid": "You used midpoints. That is a Riemann sum, not the upper sum."})),
      ("$U - L$ telescopes to $\\big(f(2) - f(0)\\big)\\tfrac{2}{n}$. What is the smallest $n$ with $U - L < 0.01$?",
-      num(801, 0, [("at-bound", 800, 0), ("no-width", 401, 0)], placeholder="a whole number", label="n"),
-      fb("$\\tfrac{8}{n} < 0.01$ needs $n > 800$, so $n = 801$.",
+      num(1601, 0, [("at-bound", 1600, 0), ("no-width", 801, 0)], placeholder="a whole number", label="n"),
+      fb("$\\tfrac{16}{n} < 0.01$ needs $n > 1600$, so $n = 1601$.",
          "Simplify $U - L$ to a constant over $n$.",
-         {"at-bound": "At $n = 800$, $U - L = 0.01$ exactly. The gap must be strictly below.",
-          "no-width": "You used width $\\tfrac1n$. The pieces have width $\\tfrac2n$, so $U - L = \\tfrac8n$."}))],
-    "With width $\\tfrac12$, $U = \\tfrac12(0.25 + 1 + 2.25 + 4) = 3.75$ and $L = 1.75$. "
-    "In general the terms telescope, so $U - L = \\tfrac{8}{n}$. That is below 0.01 from $n = 801$."))
+         {"at-bound": "At $n = 1600$, $U - L = 0.01$ exactly. The gap must be strictly below.",
+          "no-width": "You used width $\\tfrac1n$. The pieces have width $\\tfrac2n$, so $U - L = \\tfrac{16}{n}$."}))],
+    "With width $\\tfrac12$, $U = \\tfrac12(0.125 + 1 + 3.375 + 8) = 6.25$ and $L = 2.25$. "
+    "In general the terms telescope, so $U - L = \\tfrac{16}{n}$. That is below 0.01 from $n = 1601$."))
 
 # analysis L5 (l21): FTC with both limits moving
-ftc = 2 * 2 / (1 + 2 ** 4) - 1 / (1 + 2 ** 2)
+ftc = 3 * 2 ** 2 / (1 + 2 ** 6) - 1 / (1 + 2 ** 2)
 items.append(item(
     "e-ftc-both-limits", 3, ["an-calculus"], ["ftc-chain"], 120, "Both limits move",
-    "Let $F(x) = \\int_x^{x^2} \\tfrac{dt}{1 + t^2}$ for $x > 0$.",
+    "Let $F(x) = \\int_x^{x^3} \\tfrac{dt}{1 + t^2}$ for $x > 0$.",
     "What is $F'(2)$? Give 4 decimal places.",
-    num(r(ftc), 0.00005, [("no-chain", r(1 / 17 - 1 / 5), 0.00005), ("upper-only", r(4 / 17), 0.00005)],
-        placeholder="a decimal", label="F'(2)", accept="4/17 - 1/5 = 3/85 = 0.0353"),
-    fb("$\\tfrac{4}{17} - \\tfrac15 = \\tfrac{3}{85} = 0.0353$.",
+    num(r(ftc), 0.00005, [("no-chain", r(1 / 65 - 1 / 5), 0.00005), ("upper-only", r(12 / 65), 0.00005)],
+        placeholder="a decimal", label="F'(2)", accept="12/65 - 1/5 = -1/65 = -0.0154"),
+    fb("$\\tfrac{12}{65} - \\tfrac15 = -\\tfrac{1}{65} = -0.0154$.",
        "Split at a fixed point and apply the fundamental theorem to each piece.",
-       {"no-chain": "You left out the chain rule and got $-0.1412$. The upper limit $x^2$ brings a factor $2x$.",
-        "upper-only": "You dropped the lower limit and got 0.2353. It moves too, and contributes $-\\tfrac{1}{1 + x^2}$."}),
-    "Write $F(x) = G(x^2) - G(x)$ with $G(u) = \\int_0^u \\tfrac{dt}{1 + t^2}$, so $G'(u) = \\tfrac{1}{1 + u^2}$ by part one. "
-    "Then $F'(x) = \\tfrac{2x}{1 + x^4} - \\tfrac{1}{1 + x^2}$. "
-    "At 2 that is $\\tfrac{4}{17} - \\tfrac15 = \\tfrac{3}{85} = 0.0353$."))
+       {"no-chain": "You left out the chain rule and got $-0.1846$. The upper limit $x^3$ brings a factor $3x^2$.",
+        "upper-only": "You dropped the lower limit and got 0.1846. It moves too, and contributes $-\\tfrac{1}{1 + x^2}$."}),
+    "Write $F(x) = G(x^3) - G(x)$ with $G(u) = \\int_0^u \\tfrac{dt}{1 + t^2}$, so $G'(u) = \\tfrac{1}{1 + u^2}$ by part one. "
+    "Then $F'(x) = \\tfrac{3x^2}{1 + x^6} - \\tfrac{1}{1 + x^2}$. "
+    "At 2 that is $\\tfrac{12}{65} - \\tfrac15 = -\\tfrac{1}{65} = -0.0154$."))
 
 # analysis L5 (l23): closed sets
 items.append(item(
@@ -473,7 +481,7 @@ items.append(item(
     fb("$\\mathbf{W}\\mathbf{T} = \\begin{pmatrix}3&3\\\\3&2\\end{pmatrix}$ is symmetric.",
        "Write $\\langle \\mathbf{T}\\mathbf{x}, \\mathbf{y} \\rangle = \\langle \\mathbf{x}, \\mathbf{T}\\mathbf{y} \\rangle$ with $\\mathbf{W}$ and compare."),
     "Self-adjoint means $\\mathbf{x}^T\\mathbf{T}^T\\mathbf{W}\\mathbf{y} = \\mathbf{x}^T\\mathbf{W}\\mathbf{T}\\mathbf{y}$ for all $\\mathbf{x}, \\mathbf{y}$. "
-    "So $\\mathbf{W}\\mathbf{T}$ must be symmetric, and only the first matrix gives that. "
+    "So $\\mathbf{W}\\mathbf{T}$ must be symmetric, and only $\\begin{pmatrix}1&1\\\\3&2\\end{pmatrix}$ gives that. "
     "The adjoint depends on the inner product, not on the matrix alone."))
 
 # linear-maps L4 (l19): Jordan blocks from kernel dimensions
@@ -665,7 +673,7 @@ items.append(parts(
       fb("The even reciprocals up to $\\tfrac{1}{6m}$ sum to $\\tfrac12 H_{3m}$; take them from $H_{6m}$.",
          "The odd reciprocals are all the reciprocals minus the even ones.")),
      ("The negatives used are $\\tfrac12 + \\cdots + \\tfrac{1}{2m} = \\tfrac12 H_m$. What is the new sum? Give 4 decimal places.",
-      num(r(new_sum), 0.00005, [("same", r(math.log(2)), 0.00005), ("two-one", r(1.5 * math.log(2)), 0.00005)],
+      num(r(new_sum), 0.0001, [("same", r(math.log(2)), 0.00005), ("two-one", r(1.5 * math.log(2)), 0.00005)],
           placeholder="a decimal", label="Sum", accept="ln 2 + (1/2) ln 3 = 1.2425"),
       fb("$\\ln 6m - \\tfrac12 \\ln 3m - \\tfrac12 \\ln m \\to \\ln 2 + \\tfrac12 \\ln 3 = 1.2425$.",
          "Replace each $H$ by $\\ln n + \\gamma$; the $\\gamma$ terms cancel.",
@@ -702,7 +710,7 @@ items.append(item(
 # linear-maps L4 (l17): the top eigenvalue is the largest quadratic form (self-marked)
 items.append({
     "id": "e-rayleigh-proof", "difficulty": 5, "skills": ["lx-spectral"], "tags": ["rayleigh-proof"], "pace": 600,
-    "title": "The largest variance of a unit portfolio",
+    "title": "The largest variance of a unit-norm portfolio",
     "kind": "longform",
     "prompt": "Let $\\mathbf{A}$ be a real symmetric $n \\times n$ matrix with eigenvalues $\\lambda_1 \\ge \\lambda_2 \\ge \\cdots \\ge \\lambda_n$.\n\n"
               "(a) Prove that $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} \\le \\lambda_1$ for every unit vector $\\mathbf{x}$, with equality at a unit eigenvector for $\\lambda_1$.\n\n"
@@ -722,7 +730,7 @@ items.append({
              "**(b)** A covariance matrix is symmetric, so (a) applies. "
              "The largest value is the top eigenvalue, 0.04, along its eigenvector. That is a standard deviation of 20%.",
     "rubric": [
-        {"points": 2, "text": "Invokes the spectral theorem for an orthonormal eigenbasis, naming symmetry as the reason"},
+        {"points": 2, "text": "Invokes the spectral theorem for an orthonormal eigenbasis, naming symmetry as the reason (another complete route also earns rows 1 to 3)"},
         {"points": 2, "text": "Expands $\\mathbf{x}$ in that basis and shows $\\sum c_i^2 = 1$ by orthonormality"},
         {"points": 2, "text": "Shows $\\mathbf{x}^T\\mathbf{A}\\mathbf{x} = \\sum \\lambda_i c_i^2$, with the cross terms vanishing"},
         {"points": 2, "text": "Bounds the sum by $\\lambda_1$ using $c_i^2 \\ge 0$ and $\\sum c_i^2 = 1$"},
