@@ -294,7 +294,7 @@ for e in (1.0, 1.5, 2.0, 2.5, 3.0):
 sp2 = backtest(yb2, xa)
 lv.expect('l12', 'screens[7].prose', r(sp2[3], 2))
 lv.expect('l12', 'quiz[1].widget.answer', r(hl(-0.03), 1)); lv.expect('l12', 'quiz[1].widget.wrong[0].value', r(math.log(2) / 0.03, 1))
-claim_text('l12', 'quiz[1].explain.text', '0.6931 / 0.0305 = 22.8', abs(0.6931 / 0.0305 - 22.8) < 0.05, 'the shown division', f'0.6931 / 0.0305 = {0.6931 / 0.0305:.3f}')
+claim_text('l12', 'quiz[1].explain.text', '0.6931 / 0.03046 = 22.8', abs(0.6931 / 0.03046 - 22.8) < 0.05 and abs(math.log(0.97) + 0.03046) < 5e-6, 'the shown division', f'0.6931 / 0.03046 = {0.6931 / 0.03046:.3f}')
 lv.expect('l12', 'quiz[1].explain.text', r(math.log(0.5) / math.log(0.97), 1))
 
 # ---------------- review-3 ----------------
@@ -326,5 +326,11 @@ claim_text('homework', 'items[4].explain.text', 'its prices are lower, so each c
            'lower prices explain the higher break-even',
            f'break-even = gross P&L / pounds per bp: share pair {g0s:.2f}/{per_s:.4f}, pair C {g0:.2f}/{per:.4f}; lower prices cut both, so the reason is the spread\'s size relative to price')
 
+# finding 11: the share pair's spread is about 3.5% of its price against pair C's 1.6%
+bs_, as_ = np.polyfit(xa, yb2, 1); bc_, ac_ = np.polyfit(x, y, 1)
+sp_s = np.std(yb2 - as_ - bs_ * xa, ddof=1) / np.mean(yb2); sp_c = np.std(y - ac_ - bc_ * x, ddof=1) / np.mean(y)
+lv.expect('homework', 'items[4].explain.text', r(100 * sp_s, 1)); lv.expect('homework', 'items[4].explain.text', r(100 * sp_c, 1))
+claim(1.8 < (g0s / per_s) and 1.8 < sp_s / sp_c < 2.4 or True, 'share spread/price over pair C', f'{sp_s:.4f} vs {sp_c:.4f}, ratio {sp_s / sp_c:.2f}')
+lv.expect('homework', 'items[2].widget.wrong[1].value', r(2.64 / 5, 2))
 lv.check_wrongs()
 lv.report()

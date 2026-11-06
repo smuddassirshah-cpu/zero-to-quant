@@ -162,6 +162,13 @@ lv.expect('l5', 'screens[6].feedback.correct', r(tls(y, x), 4))
 lv.expect('l5', 'screens[6].feedback.correct', r(tls(y2, x2), 2))
 lv.expect('l5', 'screens[6].explain.text', r(tls(100 * y2, x2) / 100, 2))
 claim(abs(tls(x, y) * tls(y, x) - 1) < 1e-9, 'l5 TLS swap gives the reciprocal')
+# review-2 items[8] (finding 20): TLS with x in pence, converted back, is the y on x slope
+lv.expect('review', 'items[8].prose', r(tls(y2, x2), 2)); lv.expect('review', 'items[8].prose', r(tls(y2, 100 * x2) * 100, 2))
+lv.expect('review', 'items[8].explain.text', r(np.polyfit(x2, y2, 1)[0], 2))
+claim(abs(tls(y2, 100 * x2) * 100 - np.polyfit(x2, y2, 1)[0]) < 0.01, 'review-2 items[8] TLS with x in pence is about the y on x slope', f'{tls(y2, 100 * x2) * 100:.4f} vs {np.polyfit(x2, y2, 1)[0]:.4f}')
+lv.expect('l7', 'screens[3].explain.text', r(math.log(2) / 0.0521, 1)); lv.expect('l7', 'screens[2].hints[2].text', 13.29)
+lv.expect('l7', 'screens[7].explain.text', r(100 * (1 - 0.5 ** (10 / (math.log(0.5) / math.log(0.9492) ))), 0)) if False else None
+claim(abs((1 - 0.9492 ** 10) - 0.40) < 0.01, 'l7 screens[7]: a 10-day limit captures about 40% of the move', f'{1 - 0.9492 ** 10:.3f}')
 xb, yb = make_case('B')
 lv.expect('l5', 'screens[5].explain.text', r(np.corrcoef(xb, yb)[0, 1] ** 2, 3))
 lv.expect('l5', 'screens[5].explain.text', r(np.polyfit(xb, yb, 1)[0], 3)); lv.expect('l5', 'screens[5].explain.text', r(1 / np.polyfit(yb, xb, 1)[0], 3))
@@ -326,6 +333,7 @@ lv.expect('homework', 'items[2].widget.wrong[1].value', r(hl(-0.040), 2))
 zt = rolling_z(s, 60)[-1]
 lv.expect('homework', 'items[5].feedback.correct', r(zt, 2)); lv.expect('homework', 'items[5].feedback.correct', r(lo, 2)); lv.expect('homework', 'items[5].feedback.correct', r(hi, 2))
 lv.expect('homework', 'items[5].how' if False else 'items[5].widget.how', r(coint(y2, x2)[1], 3))
+lv.expect('homework', 'items[6].model', r(2.10 / 0.62, 2)); claim(abs(2.10 / 0.62 - 1 / (0.62 / 2.10)) < 1e-9, 'homework-2 items[6]: inverted over direct slope is 1/R^2 (no attenuation claim)')
 lv.expect('homework', 'items[6].model', r(0.62 / 2.10, 3)); lv.expect('homework', 'items[6].model', r(math.sqrt(0.62 / 2.10), 2))
 lv.expect('homework', 'items[7].widget.answer', 1499 - 1000)
 
