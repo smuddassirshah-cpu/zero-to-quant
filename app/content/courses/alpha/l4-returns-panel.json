@@ -772,7 +772,7 @@
    "type": "ladder",
    "difficulty": 2,
    "title": "Long and back",
-   "prose": "`ret.stack()` turns the wide frame into a long one (one row per date and share) and drops NaN cells. `unstack()` turns it back. A share that died has no long rows after its last day.",
+   "prose": "`ret.stack()` turns the wide frame into a long one (one row per date and share) and, in the pandas here (2.2), drops NaN cells. `unstack()` turns it back. A share that died has no long rows after its last day.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -838,7 +838,7 @@
     "generic": "Not quite right. Think about what `unstack` puts where the long frame has no row."
    },
    "explain": {
-    "text": "Long form simply has no row where wide form has NaN, so 235,497 rows equal the listed cells. Unstacking restores the NaN. In pandas 3, `stack()` keeps NaN cells unless you drop them, so `to_long` drops them itself.",
+    "text": "Long form simply has no row where wide form has NaN, so 235,497 rows equal the listed cells. Unstacking restores the NaN. pandas 3 keeps NaN cells in `stack()`, so `to_long` drops them itself rather than relying on it.",
     "canvas": {
      "lines": [
       ">>> long = ret.stack()       # NaN cells dropped",
@@ -927,7 +927,7 @@
       "compare": "equal"
      }
     ],
-    "how": "Check runs 8 hidden tests: share B with $h = 1$ and 5, the death inside the window, `ValueError` for $h = 0$, agreement with a slow loop on `small` (values and NaN), a spy that rewrites every return up to row 100 (rows from 100 on must not move), and the empty tail for $h = 21$. NaN is compared as −9. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
+    "how": "Check runs 8 hidden tests: share B with $h = 1$ and 5, the death inside the window, `ValueError` for $h = 0$, and agreement with a slow loop on `small` (values and NaN). A spy rewrites every return up to row 100 (rows from 100 on must not move), and the last test checks the empty tail for $h = 21$. NaN is compared as −9. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
     "prelude": "import numpy as np\nimport pandas as pd\n\nimport numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef _loop_fwd(ret, h):\n    \"\"\"A slow, direct forward return, for checking.\"\"\"\n    out = pd.DataFrame(np.nan, index=ret.index, columns=ret.columns)\n    for j, c in enumerate(ret.columns):\n        x = ret[c].values\n        for t in range(len(x) - h):\n            w = x[t + 1:t + h + 1]\n            w = w[~np.isnan(w)]\n            if len(w):\n                out.iloc[t, j] = np.prod(1 + w) - 1\n    return out\n\ndef spy_ret(ret, cut, value):\n    \"\"\"A copy of ret with every return up to and including row cut set to value.\"\"\"\n    q = ret.copy()\n    q.iloc[:cut + 1] = value\n    return q\n\nsmall = make_panel(30, 300, 5)\n"
    },
    "hints": [
@@ -1031,7 +1031,7 @@
       "compare": "equal"
      }
     ],
-    "how": "Check runs 7 hidden tests: the frame shown (rows, columns and index), the shape of `small` in long form, no NaN values, its first rows as ISO dates, and a round trip back to wide form with `pivot`. Compared with ==. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
+    "how": "Check runs 7 hidden tests: the frame shown (rows, columns and index), the shape of `small` in long form and no NaN values. The rest check its first rows as ISO dates and a round trip back to wide form with `pivot`. Compared with ==. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
     "prelude": "import numpy as np\nimport pandas as pd\n\nimport numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef _loop_fwd(ret, h):\n    \"\"\"A slow, direct forward return, for checking.\"\"\"\n    out = pd.DataFrame(np.nan, index=ret.index, columns=ret.columns)\n    for j, c in enumerate(ret.columns):\n        x = ret[c].values\n        for t in range(len(x) - h):\n            w = x[t + 1:t + h + 1]\n            w = w[~np.isnan(w)]\n            if len(w):\n                out.iloc[t, j] = np.prod(1 + w) - 1\n    return out\n\ndef spy_ret(ret, cut, value):\n    \"\"\"A copy of ret with every return up to and including row cut set to value.\"\"\"\n    q = ret.copy()\n    q.iloc[:cut + 1] = value\n    return q\n\nsmall = make_panel(30, 300, 5)\n"
    },
    "hints": [
@@ -1067,7 +1067,7 @@
    "type": "trap",
    "difficulty": 2,
    "title": "One day too early",
-   "prose": "Two versions of a five-day forward return, tested with a signal made from each share's past five-day return. On 249 weekly dates the rank IC (lesson 9) is −0.0243 with one version and +0.1697 with the other: a t statistic of 32.",
+   "prose": "Two versions of a five-day forward return, tested with a signal made from each share's past five-day return. On 250 weekly dates the rank IC (lesson 9) is −0.0242 with one version and +0.1694 with the other: a t statistic of 32.",
    "canvas": {
     "kind": "console",
     "params": {
@@ -1076,8 +1076,8 @@
       "a = forward_returns(ret, 5)",
       "b = (1 + ret).rolling(5).apply(np.prod).shift(-4) - 1",
       "",
-      "IC with a: -0.0243   t = -4.5",
-      "IC with b:  0.1697   t = 32.4"
+      "IC with a: -0.0242   t = -4.5",
+      "IC with b:  0.1694   t = 32.5"
      ]
     },
     "state": {
@@ -1135,13 +1135,13 @@
     "correct": "One shared day is enough to fake a strong signal.",
     "generic": "Not quite right. List the days row $t$ covers in each version.",
     "byKey": {
-     "good": "The true IC is −0.0243: past winners slightly reverse. The +0.17 comes from sharing day $t$.",
+     "good": "The true IC is −0.0242: past winners slightly reverse. The +0.17 comes from sharing day $t$.",
      "prod": "The product is fine. The window is off by one day.",
      "rolling": "The rolling window is trailing; the shift is one day short."
     }
    },
    "explain": {
-    "text": "Version b overlaps the signal on day $t$, so the IC jumps from −0.02 to +0.17. The lesson's spy catches it: rewrite returns up to row $t$ and row $t$'s forward return must not move. Momentum leaks less this way, 0.0334 against 0.0366, because it skips the last month.",
+    "text": "Version b overlaps the signal on day $t$, so the IC jumps from −0.02 to +0.17. The lesson's spy catches it: rewrite returns up to row $t$ and row $t$'s forward return must not move. Momentum leaks less this way, 0.0334 against 0.0356, because it skips the last month.",
     "canvas": {
      "tone": {
       "l2": "err",

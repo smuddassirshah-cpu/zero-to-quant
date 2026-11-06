@@ -148,6 +148,7 @@ E(L6, 'screens[7].widget.options', R(-math.log(60.40 / 120.00), 2)); E(L6, 'scre
 E(L6, 'screens[8].widget.answer', R(math.log(0.5) / math.log(0.9), 2)); E(L6, 'screens[8].widget.wrong[0].value', R(math.log(0.9) / math.log(0.5), 3)); E(L6, 'screens[8].widget.wrong[1].value', 0.5 / 0.1)
 E(L6, 'quiz[3].widget.answer', R(0.8 ** 5, 4)); E(L6, 'quiz[3].widget.wrong[0].value', 1 - 5 * 0.2)
 stated(L6, 'quiz[3].explain.text', 'Half went in the first three days', 1 - 0.8 ** 3 >= 0.5)
+E(L6, 'quiz[3].explain.text', R(0.8 ** 3, 2)); claim('0.8^3 = 0.512 is left, 48.8% went (stated as about half)', R(1 - 0.8 ** 3, 3) == 0.488)
 
 # ---------- l7 ----------
 L7 = 'l7'
@@ -228,7 +229,7 @@ pr8 = lv.text(RV, 'items[8].prose')
 if 'keeps 70% of itself' in pr8:
     E(RV, 'items[8].widget.answer', R(math.log(0.5) / math.log(0.7), 3)); E(RV, 'items[8].widget.wrong[0].value', R(0.5 / 0.3, 3))
 elif 'half of itself every 2 days' in pr8:
-    E(RV, 'items[8].widget.answer', R(math.sqrt(0.5), 4)); E(RV, 'items[8].widget.wrong[0].value', 0.75)
+    E(RV, 'items[8].widget.answer', R(math.sqrt(0.5), 4)); E(RV, 'items[8].widget.wrong[0].value', 0.75); E(RV, 'items[8].explain.text', R(math.log(0.5) / math.log(math.sqrt(0.5)), 0))
 else:
     claim('review-2 items[8] prose recognised', False)
 
@@ -245,12 +246,17 @@ E(HW, 'items[4].widget.wrong[1].value', R(sg[0] - (sg @ bb) / (bb @ bb) * bb[0],
 E(HW, 'items[5].prose', R(100 * (1 - R(intl[0], 4) / R(im[0], 4)), 0))
 need = int(re.search(r'needs (\d+) returns', lv.text(HW, 'items[6].prose')).group(1))
 E(HW, 'items[6].widget.answer', need + 21 - 1); E(HW, 'items[6].widget.wrong[1].value', need + 21)
+E(HW, 'items[6].explain.text', need); E(HW, 'items[6].explain.text', need + 20); E(HW, 'items[6].explain.text', (200 + 20) - (need + 20)); E(HW, 'items[6].widget.wrong[0].value', need)
+claim('150-return rule: first score 170 days after L', need == 150 and need + 20 == 170)
 E(HW, 'items[3].model', R(ics[5][0], 4)); E(HW, 'items[3].model', R(ics[5][1], 2))
 # the time-series z-score look-ahead pushes the reversal IC up on our panel
 ts = lambda x: (x - x.mean()) / x.std()
 claim('per-share whole-history z-score raises reversal IC', ic(ts(rv), f5, weekly)[0] > ics[5][0])
 # continuity: level 3 (l9) and level 1 (l3, l4) report momentum IC 0.0334 with forward_returns; level 2 reports 0.0325
 fr21 = ns['forward_returns'](ret, 21) if 'forward_returns' in ns else None
+if fr21 is not None:
+    ic_fr = ic(mom, fr21, monthly)[0]
+    E(L5, 'screens[6].prose', R(ic_fr, 4)); claim('level 2 IC 0.0325 (summed log) differs from forward_returns IC 0.0334', R(im[0], 4) == 0.0325 and R(ic_fr, 4) == 0.0334)
 lv.check_wrongs()
 for f in fails:
     print('BAD', f)

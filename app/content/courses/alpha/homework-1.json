@@ -85,7 +85,7 @@
       "compare": "equal"
      }
     ],
-    "how": "Check runs 8 hidden tests on a six-day hand panel with a split (A), a late listing (B), a death at −80% (C) and an illiquid share (D), with `window=2`; the same panel with a daily volume frame; and `small` with the default 60-day window (nothing kept in the first 60 rows, the count kept, the mean return a year). NaN is compared as −9. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
+    "how": "Check runs 8 hidden tests on a six-day hand panel with `window=2`: a split (A), a late listing (B), a death at −80% (C) and an illiquid share (D). It repeats that panel with a daily volume frame, then runs `small` with the default 60-day window (nothing kept in the first 60 rows, the count kept, the mean return a year). NaN is compared as −9. The first run loads NumPy and pandas, which takes 10 to 20 seconds; later runs are quick.",
     "prelude": "import numpy as np\nimport pandas as pd\n\nimport numpy as np, pandas as pd\n\ndef make_panel(n_stocks=200, n_days=1260, seed=2310):\n    \"\"\"Seeded stand-in for a few years of daily data on a share universe.\"\"\"\n    rng = np.random.default_rng(seed)\n    names = [f\"S{i:03d}\" for i in range(n_stocks)]\n    dates = pd.bdate_range(\"2019-01-02\", periods=n_days)\n    sector = rng.integers(0, 5, n_stocks)\n    beta = 0.6 + 0.8 * rng.random(n_stocks)\n    mkt = 0.0003 + 0.010 * rng.standard_normal(n_days)\n    sec = 0.005 * rng.standard_normal((n_days, 5))\n    z_mu = rng.standard_normal((n_days, n_stocks))\n    z_tr = rng.standard_normal((n_days, n_stocks))\n    idio = 0.015 * rng.standard_normal((n_days, n_stocks))\n    mu = np.zeros(n_stocks); u = np.zeros(n_stocks)\n    ret = np.empty((n_days, n_stocks))\n    k = 0.0004 * np.sqrt(1 - 0.995 ** 2)\n    for t in range(n_days):\n        mu = 0.995 * mu + k * z_mu[t]              # slow drift: momentum\n        u_new = 0.8 * u + 0.006 * z_tr[t]          # transient part: reversal\n        ret[t] = beta * mkt[t] + sec[t, sector] + mu + idio[t] + (u_new - u)\n        u = u_new\n    # listings and delistings: 10% list late, 10% die (last day -50% to -100%)\n    listed = np.ones((n_days, n_stocks), bool)\n    late = rng.choice(n_stocks, n_stocks // 10, replace=False)\n    for j in late:\n        listed[: rng.integers(60, n_days // 2), j] = False\n    dead = rng.choice(np.setdiff1d(np.arange(n_stocks), late), n_stocks // 10, replace=False)\n    for j in dead:\n        d = rng.integers(n_days // 4, n_days - 20)\n        ret[d, j] = np.log(1 - rng.uniform(0.5, 1.0) + 1e-4)\n        listed[d + 1 :, j] = False\n    ret = np.where(listed, ret, np.nan)\n    simple = np.expm1(ret)\n    # dividends: half the shares pay 0.5% a quarter; splits: 15 two-for-one\n    div_yield = np.zeros((n_days, n_stocks))\n    payers = rng.random(n_stocks) < 0.5\n    div_yield[63::63, :] = np.where(payers, 0.005, 0.0)\n    split = np.ones((n_days, n_stocks))\n    for j in rng.choice(n_stocks, 15, replace=False):\n        split[rng.integers(100, n_days - 100), j] = 2.0\n    price_ret = (1 + np.nan_to_num(simple)) / (1 + div_yield) - 1\n    start = rng.uniform(20, 200, n_stocks)\n    adj_close = start * np.cumprod(1 + price_ret, axis=0)    # split-adjusted, no dividends\n    later = np.cumprod(split[::-1], axis=0)[::-1]              # splits on or after each day\n    raw_close = adj_close * np.vstack([later[1:], np.ones(n_stocks)])\n    # spreads and volume: bigger names are cheaper to trade\n    size = rng.lognormal(0, 1, n_stocks)\n    half_spread_bp = np.clip(8 / np.sqrt(size), 1, 30)\n    adv_gbp = 2e7 * size\n    F = lambda a: pd.DataFrame(a, index=dates, columns=names)\n    return {\"ret\": F(simple), \"raw_close\": F(np.where(listed, raw_close, np.nan)),\n            \"adj_close\": F(np.where(listed, adj_close, np.nan)),\n            \"dividend\": F(np.where(listed, div_yield * raw_close, 0.0)),\n            \"split\": F(split), \"listed\": F(listed),\n            \"sector\": pd.Series(sector, index=names), \"beta\": pd.Series(beta, index=names),\n            \"half_spread_bp\": pd.Series(half_spread_bp, index=names),\n            \"adv_gbp\": pd.Series(adv_gbp, index=names)}\n\ndef daily_volume_gbp(p):\n    \"\"\"Each day's £ volume: p[\"volume_gbp\"] if the panel has one, else adv_gbp on every listed day.\"\"\"\n    vol = p[\"volume_gbp\"] if \"volume_gbp\" in p else p[\"listed\"] * p[\"adv_gbp\"]\n    return vol.where(p[\"listed\"])\n\ndef universe_mask(p, min_adv_gbp=5e6, window=60):\n    adv = daily_volume_gbp(p).rolling(window, min_periods=window).mean()\n    return p[\"listed\"] & (adv >= min_adv_gbp)\n\ndef total_return(raw_close, split, dividend):\n    return split * (raw_close + dividend) / raw_close.shift(1) - 1\n\nsmall = make_panel(30, 300, 5)\n"
    },
    "feedback": {
@@ -238,45 +238,45 @@
    "skills": [
     "al-universe"
    ],
-   "prose": "A share closes at £96. The next day it splits three for one, pays £0.40 per new share and closes at £31.60.",
-   "question": "What is that day's total return, in %?",
+   "prose": "A share closes at £96. The next day it splits three for one and closes at £31.60.",
+   "question": "What cash dividend per new share that day would make the holder's total return exactly 0, in £?",
    "widget": {
     "kind": "numeric",
-    "answer": 0.0,
+    "answer": 0.4,
     "tol": {
-     "abs": 5e-05
+     "abs": 0.005
     },
-    "label": "Total return",
-    "accept": "0%: $3 \\times (31.60 + 0.40)/96 - 1 = 0$.",
+    "label": "Dividend per new share (£)",
+    "accept": "£0.40: $3 \\times (31.60 + D)/96 = 1$ gives $D = 32 - 31.60$.",
     "placeholder": "decimal",
-    "unit": "%",
+    "unit": "£",
     "wrong": [
      {
-      "id": "nodiv",
-      "value": -0.0125,
+      "id": "old",
+      "value": 1.2,
       "tol": {
-       "abs": 5e-05
+       "abs": 0.005
       }
      },
      {
       "id": "raw",
-      "value": -0.670833,
+      "value": 64.4,
       "tol": {
-       "abs": 0.0005
+       "abs": 0.005
       }
      }
     ]
    },
    "feedback": {
-    "correct": "0%: three shares at £31.60 plus £1.20 cash is £96.",
-    "generic": "Not quite right. Multiply by 3 and add the dividend per new share.",
+    "correct": "£0.40: three shares at £31.60 plus £1.20 cash is £96.",
+    "generic": "Not quite right. One old share at £96 is three new shares at £32 each.",
     "byKey": {
-     "nodiv": "You left out the £0.40 a share in cash.",
-     "raw": "That is the raw-close change; the holder has three shares."
+     "old": "£1.20 is the cash on the three new shares together. Per new share it is £0.40.",
+     "raw": "You ignored the split. The holder has three shares, so the gap is $96/3 - 31.60$."
     }
    },
    "explain": {
-    "text": "Three new shares worth £31.60 each, plus £0.40 cash on each, total £96. The holder's wealth did not change."
+    "text": "Before the split one share is worth £96, or £32 for each of the three new shares. At £31.60 each, a dividend of £0.40 per new share fills the gap. Any other dividend moves the total return away from 0."
    }
   },
   {
@@ -306,9 +306,9 @@
      },
      {
       "id": "forty",
-      "value": 40,
+      "value": 9.6,
       "tol": {
-       "abs": 0.5
+       "abs": 0.3
       }
      }
     ]
@@ -318,7 +318,7 @@
     "generic": "Not quite right. Solve $0.024 = (k/400) \\times 0.6$ for $k$.",
     "byKey": {
      "pct": "That is the fraction $k/N$. Multiply by 400 shares.",
-     "forty": "You left out the 60% loss: $k = 0.024 \\times 400 / 0.6$."
+     "forty": "You left out the 60% loss: $0.024 \\times 400 = 9.6$ is the count at a 100% loss. Divide by 0.6 as well."
     }
    },
    "explain": {
@@ -369,7 +369,7 @@
     "generic": "Not quite right. For each line, find the first and last day row $t$ covers."
    },
    "explain": {
-    "text": "A forward window must start on $t + 1$. Lines a and b both cover $t + 1$ to $t + 21$; c and d include day $t$. Note that both sum only days that exist, unlike `forward_returns`, which also blanks the last $h$ rows."
+    "text": "A forward window must start on $t + 1$. The two right lines cover $t + 1$ to $t + 21$; the two others that look ahead include day $t$. Both right lines also give NaN for a window with a missing day, so a death inside it is lost; `forward_returns` compounds the days that exist."
    }
   },
   {
@@ -382,7 +382,7 @@
    "widget": {
     "kind": "longform",
     "prompt": "A colleague's momentum study uses the 200 largest shares today, monthly returns from raw closes, and only shares with a full price history from 2019 to 2023. It reports a top-minus-bottom return of 14% a year. Name each bias, say which way each pushes the reported number (or why the direction is unclear), and write the data paragraph of an honest note for the same study on `make_panel()`.",
-    "model": "**Bias 1: today's 200 largest.** The list is chosen with data from the end of the study. Shares are large today partly because they rose, so the sample is full of winners chosen with hindsight. Every fifth's return is pushed up. A past loser that is large today must have recovered strongly, so the bottom fifth is flattered too: the direction for the spread is unclear, and only a rerun can say.\n\n**Bias 2: raw closes.** Every split shows as a fake −50% month and dividends are missing. A split share's 12-month return looks about 50% lower, so it is ranked into the bottom fifth for a year, and a split inside a forward month shows a fake crash. These are large errors of unknown sign. Missing dividends lower every fifth's return by its yield, about 2% a year for a payer of 0.5% a quarter.\n\n**Bias 3: full histories only.** This drops every share that died, with its delisting loss, and every late listing. On `make_panel()` it raises the top fifth by about 2 points a year (20.68% against 18.66%) and lowers the spread slightly (11.02% against 11.88%), because deaths there are random. In real markets deaths cluster among past losers, so dropping them flatters the bottom fifth and shrinks the spread further.\n\n**Verdict.** The 14% cannot be trusted in either direction. Rerun the study on a point-in-time universe with total returns and the dead kept.\n\n**Data paragraph.** *Seeded `make_panel()`, seed 2310: 200 shares over 1,260 trading days from 2 January 2019. Universe on each date: listed that day, with a trailing 60-day mean £ volume of at least £5m; the first usable date is 26 March 2019, and the universe holds 165 to 180 shares. Returns are total returns from raw closes, split ratios and cash dividends ($1 + R_t = s_t (P_t + D_t)/P_{t-1}$): 14 splits in the prices and quarterly dividends on 110 shares. 20 shares delisted; each stays in to its last day with its delisting return (−54.9% to −93.5%), none missing. 20 shares listed late and join on their 60th trading day. A return is kept when the share was in the universe the day before. Forward returns start the day after the signal date, checked by a spy test.*",
+    "model": "**Bias 1: today's 200 largest.** The list is chosen with data from the end of the study. Shares are large today partly because they rose, so the sample is full of winners chosen with hindsight. Every fifth's return is pushed up. A past loser that is large today must have recovered strongly, so the bottom fifth is flattered too: the direction for the spread is unclear, and only a rerun can say.\n\n**Bias 2: raw closes.** Every split shows as a fake −50% month and dividends are missing. A split share's 12-month return looks about 50% lower, so it is ranked into the bottom fifth for a year, and a split inside a forward month shows a fake crash. These are large errors of unknown sign. Missing dividends lower every fifth's return by its yield, about 2% a year for a payer of 0.5% a quarter.\n\n**Bias 3: full histories only.** This drops every share that died, with its delisting loss, and every late listing. On `make_panel()` it keeps 160 shares and raises both fifths: the top from 18.66% to 21.40% a year, the bottom from 6.78% to 8.43%. So the spread moves from 11.88% to 12.97%. Deaths there are random; in real markets they cluster among past losers, so dropping them flatters the bottom fifth most and can shrink the spread.\n\n**Verdict.** The 14% cannot be trusted in either direction. Rerun the study on a point-in-time universe with total returns and the dead kept.\n\n**Data paragraph.** *Seeded `make_panel()`, seed 2310: 200 shares over 1,260 trading days from 2 January 2019. Universe on each date: listed that day, with a trailing 60-day mean £ volume of at least £5m; the first usable date is 26 March 2019, and the universe holds 165 to 180 shares. Returns are total returns from raw closes, split ratios and cash dividends ($1 + R_t = s_t (P_t + D_t)/P_{t-1}$): 14 splits in the prices and quarterly dividends on 110 shares. 20 shares delisted; each stays in to its last day with its delisting return (−54.9% to −93.5%), none missing. 20 shares listed late: 19 join on their 60th trading day, and S073, at £3.3m a day, never passes the filter. A return is kept when the share was in the universe the day before. Forward returns start the day after the signal date, checked by a spy test.*",
     "rubric": [
      {
       "points": 2,
@@ -394,7 +394,7 @@
      },
      {
       "points": 2,
-      "text": "Full histories only: survivorship bias from dropping the dead (and late listings), with a direction: long side up about 2 points here, spread down, more so when deaths cluster among losers"
+      "text": "Full histories only: survivorship bias from dropping the dead and the late listings. Every fifth's return is pushed up (the top by about 2.7 points here); the spread's direction is unclear (up 1.1 points on this panel, down when deaths cluster among losers)"
      },
      {
       "points": 1,
@@ -411,7 +411,7 @@
     "generic": "Compare your answer with the model and mark it against the rubric."
    },
    "explain": {
-    "text": "Each bias has a mechanism and a direction, and two of the three have no safe direction for the spread. That is why the honest response is a rerun with a data paragraph a reviewer can check, not a corrected number."
+    "text": "Each bias has a mechanism and pushes the mean return one way, but none has a safe direction for the spread. That is why the honest response is a rerun with a data paragraph a reviewer can check, not a corrected number."
    }
   }
  ]
