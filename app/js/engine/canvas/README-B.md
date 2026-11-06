@@ -50,7 +50,7 @@ Coordinate plane with functions (JS expressions), points, segments, tangents, ar
 - `xTicks: "integer"` and `yTicks: "integer"` keep whole-number ticks only, for sequence plots on small ranges.
 - `xStep` and `yStep` put a tick and a grid line at every multiple of the step (90 for a degree axis, 3 for months).
 - Points outside the `x` and `y` ranges are not drawn; when a point or curve sits under the x-axis title near y = 0, the title moves below the axis.
-- `yScale: "log"` (a positive `y` range): log-price charts, ticks at 1, 2 and 5 times powers of ten; `money: "£"` labels them as prices (£10, £20, £50). Points and functions use the same scale; areas under curves are for linear scales.
+- `yScale: "log"` (a positive `y` range): log-price charts, ticks at 1, 2 and 5 times powers of ten; `money: "£"` labels them as prices (£10, £20, £50). Log tick labels are plain digits from 0.001 to 99 999 and powers of ten outside it (10⁻⁶, 2×10⁻⁶, 10⁸); over a very wide range only every nth power of ten is kept, so labels never collide or print as 0 (item 577). Points and functions use the same scale; areas under curves are for linear scales.
   - `expr` uses `x`, numbers, `+ - * / ^`, `sin cos tan exp ln log sqrt abs min max floor ceil pi e`, and any name in `params`.
   - Paths break at NaN, at asymptotes and at jumps.
 - `params: { a: 1 }` are the expression parameters.
