@@ -87,3 +87,4 @@ Scripts: the two EXPECTED_FAIL asserts were replaced by the corrected claims wit
 - Validator: `0 errors, 4290 warnings` (was 4279; new warnings are long-sentence and long-explain advisories); `content/manifest.json` restored.
 - Concepts and numbers scripts (`python3 -I`): `ito-L1-concepts.py` exit 0, `ito-L2-concepts.py` exit 0, `ito-L3-concepts.py` exit 0, `ito-2-perf-numbers.py` exit 0.
 - Voice: explanations over three sentences 0; over 35 words 0 (7802 sentences).
+- Playthrough (from `app/`, `--local-cdn <pkgs>`), plain and `--mobile`: lessons l2-normal-increments, l4-gbm, l5-integrating-noise, l8-fair-games, l11-prices-as-expectations, l12-barrier-option (quiz 4/4 each), sets review-1 (9 of 9) and homework-3 (36 of 36): browser relaunches 0, All passed, both runs.
