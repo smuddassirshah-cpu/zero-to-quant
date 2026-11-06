@@ -80,3 +80,42 @@ Notation in L3 and L4 matches L2 and L5: $S_n$ for partial sums, the Cauchy cond
 No engine change is needed for these fixes. Two process items go to the inbox:
 - A second valid order in an `order` item cannot be caught by any tool: 2 of the 23 order items here (findings 3 and 4) accept only one of two correct proofs.
 - A numeric slip whose `byKey` names a computation that gives a different number (findings 7, 8 and 9) is the third sighting in this read alone; `check_wrongs` prints all three, but among 43 benign "check by hand" lines.
+
+## Fix pass
+
+Status per finding (27 fixed, 0 disputed, 0 deferred), plus finding 34 of review-analysis-1-2 (fixed). All files edited by targeted JSON-path replacement (indent and key order preserved). Every corrected number recomputed first: sqrt(100) = 10 and first n with 1/n^2 < 0.01 is 11; first n with 1/n < 0.01 is 101, with 1/(n+1) < 0.01 is 100, with 1/(n+1) < 0.001 is 1000; S_1 = 3/4 and S_2 = 21/20 for 3/(k(k+3)); (n+2)/n^2 > (n+3)/(n+1)^2 since the difference of cross products is n^2 + 5n + 2 > 0.
+
+1. fixed: l13 `screens[8].feedback.byKey.ast`. Basis: the alternating series test needs a_n >= a_{n+1} for all n (Abbott 2.7.3, Rudin 3.43); in the trap a_{2n} - a_{2n+1} = 1/n^2 - 1/(n+1) < 0 for n >= 2 (a_4 = 1/4 < 1/3 = a_5), while a_{2n+1} - a_{2n+2} >= 0 always (checked in the L3 script).
+2. fixed: l16 `screens[6].feedback.byKey.d1`. Basis: limits preserve <= (Abbott 2.3.4 order limit theorem), so f(c) <= 0 rules out f(c) > 0 only; the o2 line (case 1) rules out f(c) < 0.
+3. fixed: l12 `screens[6].widget.same` [p3, p4] and `hints[2]`. Basis: p4 uses only r and N (p1, p2), not the bound of p3, so both orders are valid proofs; `same` per AUTHORING `order`.
+4. fixed: l11 `screens[4].widget.same` [t2, t3], `hints[2]`, `screens[5].prose`. Basis: t3 (S_{n-1} -> S) needs only t1; t2 is an algebraic identity.
+5. fixed: l11 `summary.formula.note` and `quiz[0].explain.text` now "can change the sum, never whether it converges". Basis: counterexample a_1 += 1, a_2 -= 1 leaves the sum unchanged; convergence is unaffected since S_n changes by a constant for n >= the last changed index (Abbott, section 2.7, infinite series; the tail argument follows from the Cauchy criterion for series).
+6. fixed: l17 `summary.formula.note`. Basis: Fermat's theorem (Rudin, Theorem 5.8; Abbott, section 5.2, Interior Extremum Theorem) gives f' = 0 only where f is differentiable; |x| on [-1, 1] has its minimum at the corner 0.
+7. fixed: l11 `screens[2].feedback.byKey.sq`.
+8. fixed: l13 `quiz[3].widget.wrong[1].value` 999 to 1000 (graded slip value changed; script checks 1000 exactly).
+9. fixed: review-3 `items[2].feedback.byKey.double`.
+10. fixed: review-3 `items[0].feedback.byKey.two`.
+11. fixed: l11 `quiz[3].widget.options[1].why`. Basis: sum from n = 2 of 1/(n(n-1)) telescopes to 1, and a_1 = 1 gives 2.
+12. fixed: l13 `quiz[2].explain.text`. Basis: alternating series test needs only a_{n+1} <= a_n and a_n -> 0 (Abbott 2.7.3); constant sizes fail the second.
+13. fixed: l15 `screens[0].hints[2]`, `screens[0].explain.text`, homework-4 `items[8].model` (b). Basis: x < 2 + delta gives x^2 < (2 + delta)^2 <= 4.1 on the open window, so the condition is non-strict.
+14. fixed: l15 `screens[11]` prose, accept, explain made non-strict (hint already was). Basis: error <= 0.6 delta <= 0.03 iff delta <= 0.05.
+15. fixed: l15 `screens[10].explain.text`, homework-4 `items[8].model` last paragraph. Basis: the largest working delta is a^2 eps/(1 + a eps) for 1/x (|1/(a - d) - 1/a| = eps at the left end) and sqrt(a^2 + eps) - |a| = eps/(sqrt(a^2 + eps) + |a|) for x^2; both checked by bisection in the L4 script (four values of a).
+16. fixed: l18 `screens[8].explain.text`. Basis: f(x) = x on [0, 1] is continuous and differentiable, f(a) != f(b), and f' = 1 never vanishes (Abbott 5.3.1 Rolle).
+17. fixed: l16 `screens[2].prose`. Basis: for f(a) > f(b) apply the theorem to y - f, which is negative at a and positive at b.
+18. fixed: l19 `screens[10].widget.how` (the L4 script confirms the test count 12 still matches).
+19. fixed: l12 `screens[9].feedback.byKey.r3`.
+20. fixed: homework-4 `items[3].prose` "by contradiction" (the model proof assumes the negation and derives s4's contradiction).
+21. fixed: homework-3 `items[2]` now 3/(k(k+3)) (graded answer changed to 11/6 - 1/(n+1) - 1/(n+2) - 1/(n+3); wrong ids and all feedback replaced as specified). Recomputed S_n exactly for n <= 60 in the L3 script.
+22. fixed: review-3 `items[3]` uses (n+2)/n^2 throughout (answer ids unchanged, no graded value changes). Decreasing proved above; script checks n <= 3000.
+23. fixed: l19 `quiz[0].explain.text` drops the l20 forward reference.
+24. fixed: l19 `screens[4].widget.wrong[2].tol.abs` 0.0002; the validator overlap warning is gone and the script checks the bands are disjoint.
+25. fixed: l12 `screens[11].explain.text` and l13 `screens[10].explain.text` now state 0.00083 and 7485; both `O2-explain-answer` warnings gone.
+26. fixed: l14 `quiz[3].feedback.byKey` ln2 and half added; `O2-no-slip` gone.
+27. fixed: l13 `screens[8].widget.options[0].text` and l14 `screens[9].widget.options[0].text` shortened as specified; the l14 question still names the target 1.5, and pi^2/8 = 1.2337 is checked in the L3 script.
+34 (from review-analysis-1-2 finding 34): fixed: l11 `screens[1].prose` last sentence now "Such a sum is **telescoping**, like the bound in Cauchy sequences."
+
+Graded answers changed: homework-3 `items[2]` (new series and answer); l13 `quiz[3]` wrong value 999 to 1000. Grading rule widened: l11 `screens[4]` and l12 `screens[6]` now accept both valid proof orders (`same`, no restructure needed).
+
+Number scripts: `docs/reports/analysis-L3-numbers.py` exit 0 (347 of 347), `analysis-L4-numbers.py` exit 0 (211 of 211); new checks added for every new number and for each fixed text (NEW value only: `E('l13', 'quiz[3].widget.wrong[1].value', 1000)` was already strict).
+Voice scan: 0 sentences over 35 words, 0 explanations over three sentences. Validator: 0 errors (warnings 4179 to 4148; L3 and L4 O2-explain-answer, O2-no-slip and overlap warnings gone).
+Playthrough (with `--local-cdn`): `--lesson analysis/l11` to `l19` and `--set analysis/review-3`, `homework-3`, `homework-4`, desktop and `--mobile`: 24 of 24 runs "All passed". review-4 is unchanged and was not re-run.
