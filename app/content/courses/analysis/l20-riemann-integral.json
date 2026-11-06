@@ -1,0 +1,1709 @@
+{
+ "id": "l20-riemann-integral",
+ "course": "analysis",
+ "title": "The Riemann integral defined",
+ "minutes": 15,
+ "objectives": [
+  "Define the Riemann integral with upper and lower sums, and prove that continuous functions are integrable."
+ ],
+ "skills": [
+  "an-calculus"
+ ],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Trap the area",
+   "prose": "Cut $[0, 1]$ into four pieces of width $\\tfrac14$. On each piece take the largest and the smallest value of $x^2$. The tall rectangles cover the area under the curve; the short ones sit inside it.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.08,
+      1.08
+     ],
+     "y": [
+      -0.1,
+      1.3
+     ],
+     "grid": true,
+     "xStep": 0.25,
+     "height": 260,
+     "xLabel": "$x$",
+     "yLabel": "$y$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2",
+       "domain": [
+        0,
+        1
+       ],
+       "label": "$x^2$",
+       "labelAt": 0.62,
+       "labelSide": "above"
+      }
+     ],
+     "params": {
+      "n": 4
+     }
+    },
+    "state": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "right",
+       "colour": 2
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "left",
+       "colour": 1
+      }
+     ],
+     "caption": "Tall rectangles from the largest values, short ones from the smallest."
+    }
+   },
+   "question": "Fill in the upper sum $U$ and the lower sum $L$.",
+   "widget": {
+    "kind": "table",
+    "columns": [
+     "Piece",
+     "largest $x^2$",
+     "smallest $x^2$"
+    ],
+    "rows": [
+     [
+      "$[0, \\tfrac14]$",
+      "$\\tfrac{1}{16}$",
+      "0"
+     ],
+     [
+      "$[\\tfrac14, \\tfrac12]$",
+      "$\\tfrac{4}{16}$",
+      "$\\tfrac{1}{16}$"
+     ],
+     [
+      "$[\\tfrac12, \\tfrac34]$",
+      "$\\tfrac{9}{16}$",
+      "$\\tfrac{4}{16}$"
+     ],
+     [
+      "$[\\tfrac34, 1]$",
+      "1",
+      "$\\tfrac{9}{16}$"
+     ],
+     [
+      "Sum times $\\tfrac14$",
+      {
+       "edit": true,
+       "answer": 0.46875,
+       "tol": {
+        "abs": 0.0005
+       },
+       "placeholder": "?",
+       "wrong": [
+        {
+         "id": "no-width",
+         "value": 1.875,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      },
+      {
+       "edit": true,
+       "answer": 0.21875,
+       "tol": {
+        "abs": 0.0005
+       },
+       "placeholder": "?",
+       "wrong": [
+        {
+         "id": "no-width-l",
+         "value": 0.875,
+         "tol": {
+          "abs": 0.0005
+         }
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Add the four largest values, then multiply by the width $\\tfrac14$."
+    },
+    {
+     "rung": "point",
+     "text": "The largest values add to $\\tfrac{30}{16}$ and the smallest to $\\tfrac{14}{16}$.",
+     "highlight": [
+      "U-3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$U = \\tfrac{30}{16} \\times \\tfrac14 = \\tfrac{15}{32}$ and $L = \\tfrac{14}{16} \\times \\tfrac14 = \\tfrac{7}{32}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $U = \\tfrac{15}{32} = 0.46875$ and $L = \\tfrac{7}{32} = 0.21875$.",
+    "generic": "Not quite right. Each sum is the heights added, times the width $\\tfrac14$.",
+    "byKey": {
+     "no-width": "You added the four tops, $\\tfrac{30}{16}$, but did not multiply by the width $\\tfrac14$.",
+     "no-width-l": "You added the four bottoms, $\\tfrac{14}{16}$, but did not multiply by the width $\\tfrac14$."
+    }
+   },
+   "explain": {
+    "text": "The tall rectangles give $U = \\tfrac{15}{32} = 0.46875$ and the short ones $L = \\tfrac{7}{32} = 0.21875$. The area under $x^2$ lies between them. The gap, $\\tfrac14$, is the area of the slivers between the two.",
+    "canvas": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "right",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 5
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "left",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 5
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "More pieces",
+   "prose": "A **partition** $P$ of $[a, b]$ is a finite list $a = x_0 < x_1 < \\dots < x_n = b$. The **upper sum** $U(f, P)$ uses the supremum of $f$ on each piece, the **lower sum** $L(f, P)$ the infimum. Move $n$, the number of equal pieces.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.08,
+      1.08
+     ],
+     "y": [
+      -0.1,
+      1.3
+     ],
+     "grid": true,
+     "xStep": 0.25,
+     "height": 260,
+     "xLabel": "$x$",
+     "yLabel": "$y$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2",
+       "domain": [
+        0,
+        1
+       ],
+       "label": "$x^2$",
+       "labelAt": 0.62,
+       "labelSide": "above"
+      }
+     ],
+     "params": {
+      "n": 4
+     }
+    },
+    "state": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "right",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 4
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "left",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 4
+      }
+     ],
+     "params": {
+      "n": 4
+     }
+    },
+    "derive": {
+     "U.n": "n",
+     "L.n": "n",
+     "caption": "$n$ = {{n}} pieces, each of width {{fixed(1/n, 4)}}."
+    },
+    "controls": [
+     {
+      "bind": "n",
+      "min": 1,
+      "max": 50,
+      "step": 1,
+      "start": 4,
+      "label": "Pieces $n$",
+      "decimals": 0
+     }
+    ]
+   },
+   "question": "What is $U - L$ for $n = 10$ equal pieces?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "accept": "0.1: $U = 0.385$ and $L = 0.285$.",
+    "wrong": [
+     {
+      "id": "square",
+      "value": 0.01,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "upper",
+      "value": 0.385,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Set $n = 10$ and read both sums."
+    },
+    {
+     "rung": "point",
+     "text": "$U = 0.385$ and $L = 0.285$ there.",
+     "highlight": [
+      "U",
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Subtract: $0.385 - 0.285$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $U = 0.385$ and $L = 0.285$ at $n = 10$, a gap of 0.1.",
+    "generic": "Not quite right. Set the slider to 10 and subtract the lower sum from the upper sum.",
+    "byKey": {
+     "square": "You squared the width. The gap is the width itself, 0.1.",
+     "upper": "You gave $U$ alone. Subtract $L = 0.285$."
+    }
+   },
+   "explain": {
+    "text": "Each sliver has height $f(x_k) - f(x_{k-1})$ and width $\\tfrac1n$. The heights telescope to $f(1) - f(0) = 1$, so $U - L = \\tfrac1{10} = 0.1$.",
+    "canvas": {
+     "params": {
+      "n": 10
+     },
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 10,
+       "rule": "right",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 4
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 10,
+       "rule": "left",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 4
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 2,
+   "title": "The gap in general",
+   "prose": "Summing squares gives, for $x^2$ on $[0, 1]$ with $n$ equal pieces, $$U_n = \\frac{(n+1)(2n+1)}{6n^2}, \\qquad L_n = \\frac{(n-1)(2n-1)}{6n^2}.$$",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.08,
+      1.08
+     ],
+     "y": [
+      -0.1,
+      1.3
+     ],
+     "grid": true,
+     "xStep": 0.25,
+     "height": 260,
+     "xLabel": "$x$",
+     "yLabel": "$y$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2",
+       "domain": [
+        0,
+        1
+       ],
+       "label": "$x^2$",
+       "labelAt": 0.62,
+       "labelSide": "above"
+      }
+     ],
+     "params": {
+      "n": 4
+     }
+    },
+    "state": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "right",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 4
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "left",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 4
+      }
+     ],
+     "caption": "$n = 4$: $U_4 = \\tfrac{15}{32}$ and $L_4 = \\tfrac{7}{32}$."
+    }
+   },
+   "question": "Simplify $U_n - L_n$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{1}{n}",
+    "accept": [
+     "1/n"
+    ],
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "two",
+      "tex": "\\frac{2}{n}"
+     },
+     {
+      "id": "sq",
+      "tex": "\\frac{1}{n^2}"
+     },
+     {
+      "id": "third",
+      "tex": "\\frac{1}{3}"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Expand both numerators."
+    },
+    {
+     "rung": "point",
+     "text": "$(n+1)(2n+1) = 2n^2 + 3n + 1$ and $(n-1)(2n-1) = 2n^2 - 3n + 1$.",
+     "highlight": [
+      "U",
+      "L"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The difference is $6n$; divide by $6n^2$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $U_n - L_n = \\tfrac{6n}{6n^2} = \\tfrac1n$.",
+    "generic": "Not quite right. Subtract the numerators first: the $2n^2$ and the 1 cancel.",
+    "byKey": {
+     "two": "You doubled the gap. The numerators differ by $6n$, not $12n$.",
+     "sq": "You divided by $n$ once too often. $\\tfrac{6n}{6n^2} = \\tfrac1n$.",
+     "third": "That is the area, which both sums approach. The question asks for their gap."
+    }
+   },
+   "explain": {
+    "text": "The numerators differ by $(2n^2 + 3n + 1) - (2n^2 - 3n + 1) = 6n$. So $U_n - L_n = \\tfrac{6n}{6n^2} = \\tfrac1n$, as the slider showed. Both sums squeeze $\\tfrac13$, since $U_n = \\tfrac13 + \\tfrac1{2n} + \\tfrac1{6n^2}$ and $L_n = \\tfrac13 - \\tfrac1{2n} + \\tfrac1{6n^2}$."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Fine enough",
+   "prose": "Call a partition good enough when its sums are within 0.01 of each other. For equal pieces, the gap is $U_n - L_n = \\tfrac1n$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.08,
+      1.08
+     ],
+     "y": [
+      -0.1,
+      1.3
+     ],
+     "grid": true,
+     "xStep": 0.25,
+     "height": 260,
+     "xLabel": "$x$",
+     "yLabel": "$y$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2",
+       "domain": [
+        0,
+        1
+       ],
+       "label": "$x^2$",
+       "labelAt": 0.62,
+       "labelSide": "above"
+      }
+     ],
+     "params": {
+      "n": 4
+     }
+    },
+    "state": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 20,
+       "rule": "right",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 4
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 20,
+       "rule": "left",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 4
+      }
+     ],
+     "params": {
+      "n": 20
+     },
+     "caption": "$n = 20$: the gap is $\\tfrac1{20} = 0.05$, still too wide."
+    }
+   },
+   "question": "What is the smallest $n$ with $U_n - L_n < 0.01$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 101,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "101: $\\tfrac1n < 0.01$ means $n > 100$.",
+    "wrong": [
+     {
+      "id": "equal",
+      "value": 100,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "sqrt",
+      "value": 10,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Solve $\\tfrac1n < 0.01$."
+    },
+    {
+     "rung": "point",
+     "text": "That is $n > 100$.",
+     "highlight": [
+      "U"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$n = 100$ gives exactly 0.01, which is not below it."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $n = 101$ gives $U - L = \\tfrac1{101} \\approx 0.0099$.",
+    "generic": "Not quite right. Solve $\\tfrac1n < 0.01$ for the first whole number $n$.",
+    "byKey": {
+     "equal": "At $n = 100$ the gap is exactly 0.01. The inequality is strict, so take one more.",
+     "sqrt": "You solved $\\tfrac1{n^2} < 0.01$. The gap is $\\tfrac1n$, not $\\tfrac1{n^2}$."
+    }
+   },
+   "explain": {
+    "text": "$\\tfrac1n < 0.01$ means $n > 100$, so the first whole number is 101. For every $\\varepsilon > 0$ some $n$ works, by Archimedes (l4). That is exactly the test for integrability.",
+    "canvas": {
+     "params": {
+      "n": 50
+     },
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 50,
+       "rule": "right",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 4
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 50,
+       "rule": "left",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 4
+      }
+     ],
+     "caption": "$n = 50$: the gap is 0.02."
+    }
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "The Riemann integral",
+   "prose": "On a piece let $M_k = \\sup f$ and $m_k = \\inf f$. Then $$U(f, P) = \\sum_k M_k\\,\\Delta x_k, \\quad L(f, P) = \\sum_k m_k\\,\\Delta x_k.$$ A bounded $f$ is **integrable** when $\\inf_P U = \\sup_P L$, and this value is $\\int_a^b f$. Equivalently, for every $\\varepsilon > 0$ some $P$ has $U - L < \\varepsilon$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.08,
+      1.08
+     ],
+     "y": [
+      -0.1,
+      1.3
+     ],
+     "grid": true,
+     "xStep": 0.25,
+     "height": 260,
+     "xLabel": "$x$",
+     "yLabel": "$y$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "x^2",
+       "domain": [
+        0,
+        1
+       ],
+       "label": "$x^2$",
+       "labelAt": 0.62,
+       "labelSide": "above"
+      }
+     ],
+     "params": {
+      "n": 4
+     }
+    },
+    "state": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 2,
+       "rule": "right",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 4
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 2,
+       "rule": "left",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 4
+      }
+     ],
+     "params": {
+      "n": 2
+     },
+     "caption": "Two pieces."
+    }
+   },
+   "question": "Add points to $P$, making a finer partition $Q$. What happens to the sums?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$L$ rises or stays, and $U$ falls or stays.",
+      "correct": true
+     },
+     {
+      "id": "up",
+      "text": "Both sums rise, since there are more rectangles.",
+      "why": "You counted rectangles. More pieces are thinner, so the total width stays $b - a$."
+     },
+     {
+      "id": "exact",
+      "text": "Both sums become equal to the integral.",
+      "why": "Extra points narrow the gap but rarely close it. For $x^2$ the gap is still $\\tfrac1n$."
+     },
+     {
+      "id": "free",
+      "text": "Either sum can move either way.",
+      "why": "Splitting a piece replaces one supremum by two over smaller sets. Each is at most the old one, so $U$ cannot rise."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Split one piece in two. Compare the old supremum with the two new ones."
+    },
+    {
+     "rung": "point",
+     "text": "A supremum over a smaller set is at most the supremum over the larger set.",
+     "highlight": [
+      "U-1"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So each new top is at most the old top, and each new bottom at least the old bottom."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Refining can only tighten the trap.",
+    "generic": "Not quite right. Ask how large a supremum over half a piece can be, compared with the whole piece."
+   },
+   "explain": {
+    "text": "Split a piece at $t$. The supremum over each half is at most $M_k$, so the two new rectangles fit under the old one. So $L(f, P) \\le L(f, Q) \\le U(f, Q) \\le U(f, P)$ for every refinement $Q$.",
+    "canvas": {
+     "params": {
+      "n": 4
+     },
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "right",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 4
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 4,
+       "rule": "left",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 4
+      }
+     ],
+     "caption": "Four pieces: $U$ fell from 0.625 to 0.46875 and $L$ rose from 0.125 to 0.21875."
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 2,
+   "title": "A falling curve",
+   "prose": "Now take $f(x) = \\tfrac1x$ on $[1, 2]$ with four equal pieces, ends $1, \\tfrac54, \\tfrac32, \\tfrac74, 2$. For $x^2$, the largest value on each piece sat at its right end.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      0.9,
+      2.1
+     ],
+     "y": [
+      -0.08,
+      1.15
+     ],
+     "grid": true,
+     "xStep": 0.25,
+     "height": 250,
+     "xLabel": "$x$",
+     "yLabel": "$y$",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "1/x",
+       "domain": [
+        1,
+        2
+       ],
+       "label": "$\\tfrac1x$",
+       "labelAt": 1.9
+      }
+     ]
+    },
+    "state": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 1,
+       "to": 2,
+       "n": 4,
+       "rule": "left",
+       "colour": 2
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 1,
+       "to": 2,
+       "n": 4,
+       "rule": "right",
+       "colour": 1
+      }
+     ]
+    }
+   },
+   "question": "What is the upper sum $U$? Give four decimal places.",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7595,
+    "tol": {
+     "abs": 0.0001
+    },
+    "placeholder": "a decimal",
+    "accept": "0.7595: $\\tfrac14(1 + \\tfrac45 + \\tfrac23 + \\tfrac47) = \\tfrac{319}{420}$.",
+    "wrong": [
+     {
+      "id": "right-ends",
+      "value": 0.6345,
+      "tol": {
+       "abs": 0.0001
+      }
+     },
+     {
+      "id": "no-width",
+      "value": 3.0381,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Where on a piece is $\\tfrac1x$ largest?"
+    },
+    {
+     "rung": "point",
+     "text": "It falls, so the largest value is at the left end.",
+     "highlight": [
+      "U-0"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$U = \\tfrac14(1 + \\tfrac45 + \\tfrac23 + \\tfrac47)$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $U = \\tfrac{319}{420} \\approx 0.7595$, from the left ends.",
+    "generic": "Not quite right. Use the left end of each piece, where $\\tfrac1x$ is largest, and multiply by $\\tfrac14$.",
+    "byKey": {
+     "right-ends": "You used right ends, as for $x^2$. For a falling curve that gives $\\tfrac{533}{840} \\approx 0.6345$, the lower sum.",
+     "no-width": "You added the heights, $\\tfrac{319}{105}$, but did not multiply by the width $\\tfrac14$."
+    }
+   },
+   "explain": {
+    "text": "$U$ takes the supremum on each piece, wherever it sits; for a falling $f$ that is the left end. So $U = \\tfrac{319}{420} \\approx 0.7595$ and $L = \\tfrac{533}{840} \\approx 0.6345$. Their gap is $\\tfrac14(f(1) - f(2)) = \\tfrac18$, and $\\ln 2 \\approx 0.6931$ lies between.",
+    "canvas": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 1,
+       "to": 2,
+       "n": 4,
+       "rule": "left",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 4
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 1,
+       "to": 2,
+       "n": 4,
+       "rule": "right",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 4
+      }
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "A function with no area",
+   "prose": "The Dirichlet function on $[0, 1]$ is $f(x) = 1$ for rational $x$ and $f(x) = 0$ otherwise. It is bounded. By density (l4), every piece of every partition holds both rationals and irrationals.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.08,
+      1.08
+     ],
+     "y": [
+      -0.2,
+      1.3
+     ],
+     "grid": true,
+     "xStep": 0.25,
+     "height": 220,
+     "xLabel": "$x$",
+     "yLabel": "$y$",
+     "functions": [
+      {
+       "id": "q",
+       "expr": "1",
+       "domain": [
+        0,
+        1
+       ],
+       "dashed": true,
+       "label": "on $\\mathbb{Q}$",
+       "labelAt": 0.5,
+       "colour": 2
+      },
+      {
+       "id": "r",
+       "expr": "0",
+       "domain": [
+        0,
+        1
+       ],
+       "dashed": true,
+       "label": "off $\\mathbb{Q}$",
+       "labelAt": 0.5,
+       "labelSide": "above",
+       "colour": 1
+      }
+     ]
+    },
+    "state": {
+     "vlines": [
+      {
+       "id": "a",
+       "x": 0.4,
+       "label": ""
+      },
+      {
+       "id": "b",
+       "x": 0.6,
+       "label": ""
+      }
+     ],
+     "caption": "Any piece, such as $[0.4, 0.6]$, meets both dashed lines."
+    }
+   },
+   "question": "What are $U(f, P)$ and $L(f, P)$ for any partition $P$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$U = 1$ and $L = 0$, so $f$ is not integrable.",
+      "correct": true
+     },
+     {
+      "id": "half",
+      "text": "$U = L = \\tfrac12$, since the rationals are half the points.",
+      "why": "You weighed the rationals as half. The sums use the sup and inf on each piece, and those are 1 and 0."
+     },
+     {
+      "id": "zero",
+      "text": "$U = L = 0$, since the rationals are countable.",
+      "why": "Countable sets are small (l5), but upper sums cannot see that. Each piece still has supremum 1."
+     },
+     {
+      "id": "fine",
+      "text": "$U - L$ shrinks as the partition gets finer.",
+      "why": "Finer pieces still hold rationals and irrationals, by density. Each piece keeps $M_k = 1$ and $m_k = 0$."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Pick any piece. Does it hold a rational? An irrational?"
+    },
+    {
+     "rung": "point",
+     "text": "Density gives both in every interval.",
+     "highlight": [
+      "a",
+      "b"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "So $M_k = 1$ and $m_k = 0$ on every piece; multiply by the widths and add."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $U = 1$ and $L = 0$ for every $P$, so $\\inf U = 1 \\ne 0 = \\sup L$.",
+    "generic": "Not quite right. Find the supremum and infimum of $f$ on one piece, then sum over the pieces."
+   },
+   "explain": {
+    "text": "Every piece has $M_k = 1$ and $m_k = 0$, so $U = \\sum_k \\Delta x_k = 1$ and $L = 0$. No refinement narrows the gap. Bounded is not enough: the Riemann integral needs $f$ to vary less on small pieces."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "One delta for every point",
+   "prose": "$f$ is **uniformly continuous** on $A$ if for every $\\varepsilon > 0$ there is $\\delta > 0$ with $|x - y| < \\delta \\Rightarrow |f(x) - f(y)| < \\varepsilon$, for all $x, y \\in A$ at once. For $x^2$ on $[0, 1]$, $$|x^2 - y^2| = |x - y|\\,|x + y| \\le 2|x - y|.$$",
+   "question": "What is the largest $\\delta$ this bound gives, as a formula in $\\varepsilon$?",
+   "widget": {
+    "kind": "expression",
+    "answer": "\\frac{\\varepsilon}{2}",
+    "accept": [
+     "\\varepsilon/2"
+    ],
+    "keyboard": "algebra",
+    "wrong": [
+     {
+      "id": "times",
+      "tex": "2\\varepsilon"
+     },
+     {
+      "id": "same",
+      "tex": "\\varepsilon"
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "We need $2|x - y| < \\varepsilon$."
+    },
+    {
+     "rung": "point",
+     "text": "That holds when $|x - y| < \\tfrac{\\varepsilon}{2}$."
+    },
+    {
+     "rung": "step",
+     "text": "So $\\delta = \\tfrac{\\varepsilon}{2}$, the same for every $x$ and $y$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. $\\delta = \\tfrac{\\varepsilon}{2}$, and it does not depend on where we are.",
+    "generic": "Not quite right. Solve $2|x - y| < \\varepsilon$ for $|x - y|$.",
+    "byKey": {
+     "times": "You multiplied by 2. The window must shrink to beat the factor 2: divide.",
+     "same": "With $\\delta = \\varepsilon$ the bound gives only $|x^2 - y^2| < 2\\varepsilon$."
+    }
+   },
+   "explain": {
+    "text": "$|x - y| < \\tfrac{\\varepsilon}{2}$ gives $|x^2 - y^2| \\le 2|x - y| < \\varepsilon$. One $\\delta$ serves every point, because $|x + y| \\le 2$ on $[0, 1]$. On all of $\\mathbb{R}$ the factor $|x + y|$ is unbounded, and no single $\\delta$ works."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Continuous on a closed interval",
+   "prose": "Theorem: a continuous $f$ on $[a, b]$ is uniformly continuous. The proof is by contradiction, with Bolzano-Weierstrass (l9). Two lines are flawed.",
+   "question": "Put the proof in order. Move the two flawed lines to Left out.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "u1",
+      "text": "Suppose not. Then some $\\varepsilon_0 > 0$ beats every $\\delta = \\tfrac1n$: there are $x_n, y_n \\in [a, b]$ with $|x_n - y_n| < \\tfrac1n$ and $|f(x_n) - f(y_n)| \\ge \\varepsilon_0$."
+     },
+     {
+      "id": "u2",
+      "text": "$(x_n)$ is bounded, so a subsequence $x_{n_k} \\to c$ by Bolzano-Weierstrass, and $c \\in [a, b]$ because the interval is closed."
+     },
+     {
+      "id": "u3",
+      "text": "By the triangle inequality, $|y_{n_k} - c| \\le |y_{n_k} - x_{n_k}| + |x_{n_k} - c|$, which is below $\\tfrac1{n_k} + |x_{n_k} - c|$. So $y_{n_k} \\to c$ too."
+     },
+     {
+      "id": "u4",
+      "text": "$f$ is continuous at $c$, so $f(x_{n_k}) \\to f(c)$ and $f(y_{n_k}) \\to f(c)$."
+     },
+     {
+      "id": "u5",
+      "text": "So $|f(x_{n_k}) - f(y_{n_k})| \\to 0$, against $|f(x_{n_k}) - f(y_{n_k})| \\ge \\varepsilon_0$ for every $k$. Contradiction. $\\blacksquare$"
+     },
+     {
+      "id": "d1",
+      "text": "Take $\\delta = \\tfrac{\\varepsilon}{2}$, as for $x^2$.",
+      "why": "That $\\delta$ came from $|x + y| \\le 2$, a fact about $x^2$. A general $f$ has no such formula, so the proof argues by contradiction."
+     },
+     {
+      "id": "d2",
+      "text": "By Bolzano-Weierstrass, $(x_n)$ itself converges to some $c$.",
+      "why": "Bolzano-Weierstrass gives a convergent subsequence, not convergence of the whole sequence."
+     }
+    ],
+    "answer": [
+     "u1",
+     "u2",
+     "u3",
+     "u4",
+     "u5"
+    ],
+    "distractors": [
+     "d1",
+     "d2"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Start by negating uniform continuity."
+    },
+    {
+     "rung": "point",
+     "text": "The negation: one $\\varepsilon_0$ beats every $\\delta = \\tfrac1n$, at some pair of points."
+    },
+    {
+     "rung": "step",
+     "text": "Extract a subsequence of the $x_n$, show the partners $y_{n_k}$ follow it, then use continuity at the limit."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. Negate, extract, drag the partner along, then let continuity clash with $\\varepsilon_0$.",
+    "generic": "Not quite right. The order is: negate, extract a subsequence, show $y_{n_k}$ has the same limit, use continuity, contradict.",
+    "byKey": {
+     "d1": "You used the formula from $x^2$. A general $f$ gives no formula; the proof works by contradiction instead.",
+     "d2": "You let the whole sequence converge. Only a subsequence is promised.",
+     "left-out": "You left out a line the proof needs. Only the two flawed lines go to Left out."
+    }
+   },
+   "explain": {
+    "text": "Closed and bounded enter through Bolzano-Weierstrass and $c \\in [a, b]$. Continuity at the one point $c$ then controls both partner sequences. On $(0, 1]$ the argument fails for $\\tfrac1x$, since the limit $c = 0$ is outside."
+   }
+  },
+  {
+   "type": "derive",
+   "difficulty": 3,
+   "title": "Continuous functions are integrable",
+   "prose": "Let $f$ be continuous on $[a, b]$ and let $\\varepsilon > 0$. We build a partition $P$ with $U(f, P) - L(f, P) < \\varepsilon$. One line is flawed.",
+   "question": "Put the proof in order. Move the flawed line to Left out.",
+   "widget": {
+    "kind": "order",
+    "lines": [
+     {
+      "id": "i1",
+      "text": "By uniform continuity, choose $\\delta > 0$ such that $|x - y| < \\delta$ implies $|f(x) - f(y)| < \\tfrac{\\varepsilon}{b - a}$."
+     },
+     {
+      "id": "i2",
+      "text": "Take any partition $P$ whose pieces all have width less than $\\delta$."
+     },
+     {
+      "id": "i3",
+      "text": "On each piece $f$ attains $M_k$ and $m_k$ (l17) at two points less than $\\delta$ apart, so $M_k - m_k < \\tfrac{\\varepsilon}{b - a}$."
+     },
+     {
+      "id": "i4",
+      "text": "So $U(f, P) - L(f, P)$ equals $\\sum_k (M_k - m_k)\\,\\Delta x_k$, which is less than $\\tfrac{\\varepsilon}{b - a}\\sum_k \\Delta x_k = \\varepsilon$. $\\blacksquare$"
+     },
+     {
+      "id": "d1",
+      "text": "Choose a $\\delta_k$ at each point $x_k$, from continuity there.",
+      "why": "Pointwise choices can shrink towards 0 across the interval, so no one mesh need work. Uniform continuity gives one $\\delta$ for every piece."
+     }
+    ],
+    "answer": [
+     "i1",
+     "i2",
+     "i3",
+     "i4"
+    ],
+    "distractors": [
+     "d1"
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "First fix one $\\delta$ for the whole interval."
+    },
+    {
+     "rung": "point",
+     "text": "A mesh below $\\delta$ puts the top and bottom of each piece within $\\tfrac{\\varepsilon}{b - a}$."
+    },
+    {
+     "rung": "step",
+     "text": "Sum $(M_k - m_k)\\,\\Delta x_k$; the widths add to $b - a$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. One $\\delta$, a fine enough mesh, and the widths add to $b - a$.",
+    "generic": "Not quite right. Fix $\\delta$, choose the mesh, bound each piece, then add.",
+    "byKey": {
+     "d1": "You chose $\\delta$ point by point. Those can shrink towards 0; the proof needs one $\\delta$ for all pieces.",
+     "left-out": "You left out a line the proof needs. Only the flawed line goes to Left out."
+    }
+   },
+   "explain": {
+    "text": "For $x^2$ on $[0, 1]$ with $\\varepsilon = 0.01$, this route takes $\\delta = 0.005$, so $n \\ge 201$ equal pieces. The exact gap $\\tfrac1n$ needs only $n = 101$. A proof needs a bound that works, not the best one."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Upper and lower sums as code",
+   "prose": "Write `upper_lower(f, a, b, n, increasing)` for a monotone $f$ on $[a, b]$ with $n$ equal pieces. Return the pair $(U, L)$. When `increasing` is true the tops are at the right ends; otherwise at the left ends. With `Fraction` inputs the answer is exact.",
+   "canvas": {
+    "kind": "console",
+    "params": {
+     "title": "Expected",
+     "lines": [
+      ">>> upper_lower(lambda x: x*x, Fraction(0), Fraction(1), 4, True)",
+      "(Fraction(15, 32), Fraction(7, 32))",
+      ">>> upper_lower(lambda x: 1/x, Fraction(1), Fraction(2), 4, False)",
+      "(Fraction(319, 420), Fraction(533, 840))"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete the function.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from fractions import Fraction\n\ndef upper_lower(f, a, b, n, increasing):\n    \"\"\"(U, L) for a monotone f on [a, b] with n equal pieces.\"\"\"\n    ...\n",
+    "solution": "from fractions import Fraction\n\ndef upper_lower(f, a, b, n, increasing):\n    \"\"\"(U, L) for a monotone f on [a, b] with n equal pieces.\"\"\"\n    w = (b - a) / n\n    xs = [a + k * w for k in range(n + 1)]\n    left = sum(f(x) for x in xs[:-1]) * w\n    right = sum(f(x) for x in xs[1:]) * w\n    if increasing:          # tops at the right ends\n        return (right, left)\n    return (left, right)    # falling: tops at the left ends\n",
+    "examples": [
+     {
+      "setup": "from fractions import Fraction",
+      "call": "upper_lower(lambda x: x*x, Fraction(0), Fraction(1), 4, True)",
+      "expect": "(Fraction(15, 32), Fraction(7, 32))",
+      "compare": "equal"
+     },
+     {
+      "setup": "from fractions import Fraction",
+      "call": "upper_lower(lambda x: 1/x, Fraction(1), Fraction(2), 4, False)",
+      "expect": "(Fraction(319, 420), Fraction(533, 840))",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "from fractions import Fraction",
+      "call": "upper_lower(lambda x: x*x, Fraction(0), Fraction(1), 4, True)",
+      "expect": "(Fraction(15, 32), Fraction(7, 32))",
+      "compare": "equal"
+     },
+     {
+      "setup": "from fractions import Fraction",
+      "call": "upper_lower(lambda x: x*x, Fraction(0), Fraction(1), 10, True)",
+      "expect": "(Fraction(77, 200), Fraction(57, 200))",
+      "compare": "equal"
+     },
+     {
+      "setup": "from fractions import Fraction",
+      "call": "upper_lower(lambda x: 1/x, Fraction(1), Fraction(2), 4, False)",
+      "expect": "(Fraction(319, 420), Fraction(533, 840))",
+      "compare": "equal"
+     },
+     {
+      "setup": "from fractions import Fraction",
+      "call": "upper_lower(lambda x: x, Fraction(0), Fraction(2), 8, True)",
+      "expect": "(Fraction(9, 4), Fraction(7, 4))",
+      "compare": "equal"
+     },
+     {
+      "setup": "from fractions import Fraction",
+      "call": "upper_lower(lambda x: -x, Fraction(0), Fraction(1), 2, False)",
+      "expect": "(Fraction(-1, 4), Fraction(-3, 4))",
+      "compare": "equal"
+     },
+     {
+      "setup": "from fractions import Fraction",
+      "call": "upper_lower(lambda x: x*x, Fraction(0), Fraction(1), 1, True)",
+      "expect": "(Fraction(1), Fraction(0))",
+      "compare": "equal"
+     },
+     {
+      "setup": "from fractions import Fraction",
+      "call": "all(upper_lower(lambda x: x*x, Fraction(0), Fraction(1), n, True)[0] - upper_lower(lambda x: x*x, Fraction(0), Fraction(1), n, True)[1] == Fraction(1, n) for n in range(1, 30))",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "from fractions import Fraction",
+      "call": "isinstance(upper_lower(lambda x: x*x, Fraction(0), Fraction(1), 3, True)[0], Fraction)",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "from fractions import Fraction",
+      "call": "list(upper_lower(lambda x: x**3, 0.0, 1.0, 2, True))",
+      "expect": "[0.5625, 0.0625]",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 9 hidden tests. Eight compare exactly. They cover x^2 with 1, 4 and 10 pieces, 1/x and -x falling, and x on [0, 2]. Two more check the gap 1/n up to n = 29 and a Fraction result. One checks float inputs with math.isclose."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Build the end points $a + kw$ with $w = \\tfrac{b - a}{n}$."
+    },
+    {
+     "rung": "point",
+     "text": "Sum $f$ over the left ends and over the right ends, each times $w$.",
+     "highlight": [
+      "l3",
+      "l4"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Rising: $U$ is the right-end sum. Falling: $U$ is the left-end sum."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. For a monotone $f$ the tops and bottoms sit at the ends of each piece.",
+    "generic": "Not quite right. Check which end gives the top when `increasing` is false, and that you multiply by the width."
+   },
+   "explain": {
+    "text": "For a monotone $f$, each piece's supremum and infimum are at its two ends. So one list of end points gives both sums. A function that turns inside a piece needs its turning point as well (homework)."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Averaging a price path",
+   "prose": "An Asian option pays on the average price over a year, $\\int_0^1 S_t\\,dt$. Desks approximate it with 250 daily fixings. Take a path rising steadily from £100 to £110 over the year.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.04,
+      1.04
+     ],
+     "y": [
+      98,
+      111.5
+     ],
+     "grid": true,
+     "xStep": 0.25,
+     "height": 230,
+     "xLabel": "$t$ (years)",
+     "yLabel": "price (£)",
+     "xAxis": "bottom",
+     "functions": [
+      {
+       "id": "f",
+       "expr": "100 + 10*x",
+       "domain": [
+        0,
+        1
+       ],
+       "label": "$S_t$",
+       "labelAt": 0.3
+      }
+     ]
+    },
+    "state": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 10,
+       "rule": "right",
+       "colour": 2
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 10,
+       "rule": "left",
+       "colour": 1
+      }
+     ],
+     "caption": "Ten fixings drawn; the desk uses 250."
+    }
+   },
+   "question": "With 250 fixings, by how much do the upper and lower sums differ?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.04,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "pounds",
+    "accept": "£0.04: $10 \\times \\tfrac{1}{250}$.",
+    "unit": "£",
+    "wrong": [
+     {
+      "id": "rise",
+      "value": 10,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "square",
+      "value": 0.00016,
+      "tol": {
+       "abs": 1e-05
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The path rises, so each top sits at the right end of its day."
+    },
+    {
+     "rung": "point",
+     "text": "As for $x^2$, the slivers stack to the whole rise, £10, over a width of $\\tfrac1{250}$.",
+     "highlight": [
+      "U-9"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$U - L = 10 \\times \\tfrac1{250}$."
+    }
+   ],
+   "feedback": {
+    "correct": "Right. £0.04, from $\\tfrac{10 \\times 1}{250}$.",
+    "generic": "Not quite right. The gap is the total rise times the width of one piece.",
+    "byKey": {
+     "rise": "You gave the whole rise, £10. The slivers each have width $\\tfrac1{250}$.",
+     "square": "You divided by 250 twice. The rise stacks into one column of width $\\tfrac1{250}$."
+    }
+   },
+   "explain": {
+    "text": "For a rising path the gap telescopes to $(S_1 - S_0) \\times \\tfrac1n = 10 \\times \\tfrac1{250} = \\text{£}0.04$. The true average lies inside that band. Integrability is why finer monitoring converges to one price for every continuous path.",
+    "canvas": {
+     "riemann": [
+      {
+       "id": "U",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 10,
+       "rule": "right",
+       "colour": 2,
+       "showSum": true,
+       "sumLabel": "$U$",
+       "dp": 2
+      },
+      {
+       "id": "L",
+       "f": "f",
+       "from": 0,
+       "to": 1,
+       "n": 10,
+       "rule": "left",
+       "colour": 1,
+       "showSum": true,
+       "sumLabel": "$L$",
+       "dp": 2
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A partition cuts $[a, b]$ into pieces. $U(f, P)$ uses the supremum on each piece and $L(f, P)$ the infimum. For bounded $f$, refining never lowers $L$ or raises $U$.",
+   "$f$ is integrable when $\\inf U = \\sup L$: for each $\\varepsilon$ some $P$ has $U - L < \\varepsilon$. For $x^2$ on $[0, 1]$, $U_n - L_n = \\tfrac1n$; the Dirichlet function keeps $U = 1$, $L = 0$.",
+   "Continuous on $[a, b]$ means uniformly continuous, by Bolzano-Weierstrass. A mesh below $\\delta$ then makes $U - L < \\varepsilon$."
+  ],
+  "formula": {
+   "name": "Integrability criterion",
+   "tex": "\\forall \\varepsilon > 0\\ \\exists P:\\ U(f, P) - L(f, P) < \\varepsilon",
+   "note": "Then $\\int_a^b f = \\inf_P U(f, P) = \\sup_P L(f, P)$."
+  },
+  "trap": "The upper sum takes each piece's top wherever it sits. That is the right end for a rising $f$, the left end for a falling one."
+ },
+ "quiz": [
+  {
+   "id": "q-crude",
+   "difficulty": 3,
+   "prose": "The integrability proof, for $x^2$ on $[0, 1]$, takes $\\delta = \\tfrac{\\varepsilon}{2}$ and pieces narrower than $\\delta$.",
+   "question": "With $\\varepsilon = 0.01$, what is the smallest number of equal pieces this route asks for?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 201,
+    "tol": {
+     "abs": 0
+    },
+    "placeholder": "a whole number",
+    "accept": "201: width $\\tfrac1n < 0.005$ needs $n > 200$.",
+    "wrong": [
+     {
+      "id": "strict",
+      "value": 200,
+      "tol": {
+       "abs": 0
+      }
+     },
+     {
+      "id": "exact",
+      "value": 101,
+      "tol": {
+       "abs": 0
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. 201 pieces, about twice the 101 the exact gap needs.",
+    "generic": "Not quite right. Solve $\\tfrac1n < 0.005$.",
+    "byKey": {
+     "strict": "At $n = 200$ the width is exactly 0.005, not below $\\delta$.",
+     "exact": "That is the exact gap's answer. The proof's cruder bound $U - L \\le \\tfrac2n$ asks for more."
+    }
+   },
+   "explain": {
+    "text": "Pieces of width $\\tfrac1n < 0.005$ need $n > 200$, so $n = 201$. The exact gap $\\tfrac1n$ is below 0.01 from $n = 101$. The proof's bound is safe, not sharp."
+   }
+  },
+  {
+   "id": "q-spike",
+   "difficulty": 3,
+   "prose": "Let $f(x) = 1$ at $x = \\tfrac12$ and $f(x) = 0$ elsewhere on $[0, 1]$.",
+   "question": "Is $f$ integrable?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "Yes, with integral 0.",
+      "correct": true
+     },
+     {
+      "id": "disc",
+      "text": "No, because it is not continuous.",
+      "why": "You read 'not continuous' as 'not integrable'. Continuity is enough, not needed."
+     },
+     {
+      "id": "one",
+      "text": "Yes, with integral 1, the height of the spike.",
+      "why": "You used the spike's height. Its piece has width $\\tfrac1n$, which shrinks to 0."
+     },
+     {
+      "id": "dir",
+      "text": "No: as for the Dirichlet function, $U = 1$ for every partition.",
+      "why": "Only pieces touching $\\tfrac12$ have top 1. Their widths add to at most $\\tfrac2n$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Right. $L = 0$ and $U \\le \\tfrac2n$, so both squeeze 0.",
+    "generic": "Not quite right. Find the tops of the pieces that do not touch $\\tfrac12$."
+   },
+   "explain": {
+    "text": "Every piece has infimum 0, so $L = 0$. Only the one or two pieces touching $\\tfrac12$ have top 1, so $U \\le \\tfrac2n$. Hence $\\inf U = \\sup L = 0$."
+   }
+  },
+  {
+   "id": "q-linear",
+   "difficulty": 2,
+   "prose": "Take $f(x) = x$ on $[0, 1]$ with five equal pieces.",
+   "question": "What is the upper sum $U$?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.6,
+    "tol": {
+     "abs": 0.0005
+    },
+    "placeholder": "a decimal",
+    "accept": "0.6: $(0.2 + 0.4 + 0.6 + 0.8 + 1) \\times 0.2$.",
+    "wrong": [
+     {
+      "id": "left",
+      "value": 0.4,
+      "tol": {
+       "abs": 0.0005
+      }
+     },
+     {
+      "id": "no-width",
+      "value": 3,
+      "tol": {
+       "abs": 0.0005
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Right. $U = 0.6$ and $L = 0.4$, a gap of $\\tfrac15$.",
+    "generic": "Not quite right. Use the right end of each piece and multiply by 0.2.",
+    "byKey": {
+     "left": "You used the left ends, which give the lower sum for a rising $f$.",
+     "no-width": "You added the five tops but did not multiply by the width 0.2."
+    }
+   },
+   "explain": {
+    "text": "$f$ rises, so the tops are at the right ends $0.2, 0.4, \\dots, 1$. They add to 3, and $3 \\times 0.2 = 0.6$. The area $\\tfrac12$ lies between $L = 0.4$ and $U = 0.6$."
+   }
+  },
+  {
+   "id": "q-any-two",
+   "difficulty": 3,
+   "prose": "$P$ and $Q$ are any two partitions of $[a, b]$, and $f$ is bounded.",
+   "question": "Which inequality always holds?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$L(f, P) \\le U(f, Q)$",
+      "correct": true
+     },
+     {
+      "id": "fewer",
+      "text": "$U(f, P) \\le U(f, Q)$ when $P$ has fewer points",
+      "why": "Fewer points usually means a larger $U$. And without $P \\subseteq Q$, the two need not compare at all."
+     },
+     {
+      "id": "same",
+      "text": "$L(f, P) = L(f, Q)$ when both have $n$ pieces",
+      "why": "Pieces of different sizes give different sums. Only refinement gives a comparison."
+     },
+     {
+      "id": "flip",
+      "text": "$U(f, P) \\le L(f, Q)$",
+      "why": "You flipped the trap. Tops sit above bottoms, so upper sums are the larger."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Right. Every lower sum lies below every upper sum.",
+    "generic": "Not quite right. Compare both with the common refinement $P \\cup Q$."
+   },
+   "explain": {
+    "text": "Let $R = P \\cup Q$, which refines both. Then $L(f, P) \\le L(f, R) \\le U(f, R) \\le U(f, Q)$. So $\\sup L \\le \\inf U$ for every bounded $f$, and integrable means they meet."
+   }
+  }
+ ]
+}
