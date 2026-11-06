@@ -1,0 +1,677 @@
+{
+ "id": "l10-rank-tests",
+ "course": "stat-models",
+ "title": "Rank tests",
+ "minutes": 14,
+ "objectives": ["Use the Wilcoxon and Mann-Whitney tests when returns are far from normal."],
+ "skills": ["sm-nonpar"],
+ "screens": [
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Which strategy is better",
+   "prose": "Twelve days of daily returns, in %, for strategy A (blue) and strategy B (orange). Look at the dots before any numbers.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {"min": -0.5, "max": 7, "step": 0.5},
+    "state": {
+     "points": [
+      {"id": "a0", "x": 0.42, "colour": 1},
+      {"id": "a1", "x": 0.15, "colour": 1},
+      {"id": "a2", "x": -0.08, "colour": 1},
+      {"id": "a3", "x": 0.31, "colour": 1},
+      {"id": "a4", "x": 0.27, "colour": 1},
+      {"id": "a5", "x": -0.12, "colour": 1},
+      {"id": "a6", "x": 0.36, "colour": 1},
+      {"id": "a7", "x": 0.22, "colour": 1},
+      {"id": "a8", "x": 0.05, "colour": 1},
+      {"id": "a9", "x": 0.48, "colour": 1},
+      {"id": "a10", "x": -0.03, "colour": 1},
+      {"id": "a11", "x": 0.19, "colour": 1},
+      {"id": "b0", "x": -0.21, "colour": 2},
+      {"id": "b1", "x": 0.04, "colour": 2},
+      {"id": "b2", "x": -0.35, "colour": 2},
+      {"id": "b3", "x": 0.1, "colour": 2},
+      {"id": "b4", "x": -0.18, "colour": 2},
+      {"id": "b5", "x": 6.5, "colour": 2},
+      {"id": "b6", "x": -0.27, "colour": 2},
+      {"id": "b7", "x": 0.02, "colour": 2},
+      {"id": "b8", "x": -0.09, "colour": 2},
+      {"id": "b9", "x": -0.4, "colour": 2},
+      {"id": "b10", "x": 0.07, "colour": 2},
+      {"id": "b11", "x": -0.15, "colour": 2}
+     ]
+    }
+   },
+   "question": "On a typical day, which strategy does better?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "a", "text": "A: most of its days sit to the right of most of B's", "correct": true},
+     {"id": "b", "text": "B: its mean is higher", "why": "B's mean, 0.423%, is pulled up by one 6.5% day. On the other eleven days B mostly lost."},
+     {"id": "same", "text": "They are about the same", "why": "Eleven of B's twelve days sit below almost every A day."}
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Ignore the far-right dot for a moment."},
+    {"rung": "point", "text": "B's other eleven days run from $-0.40$ to 0.10."},
+    {"rung": "step", "text": "A's days run from $-0.12$ to 0.48."}
+   ],
+   "feedback": {"correct": "A wins on a typical day; B's mean rests on one day.", "generic": "Not quite. Compare where most of each strategy's dots sit."},
+   "explain": {
+    "text": "The means say B: 0.423% against 0.185%, and Welch's $t = -0.4276$ ($p = 0.677$) leans B's way. One 6.5% day decides both. A test that looks at order, not size, sees what your eye saw.",
+    "canvas": {
+     "highlight": ["b5"]
+    }
+   }
+  },
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "A rank cannot grow",
+   "prose": "Replace each return by its place in the pooled order of all 24 days: its **rank**. Drag B's big day left and right and watch its rank and B's mean.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {"min": -0.5, "max": 7, "step": 0.5},
+    "state": {
+     "points": [
+      {"id": "a0", "x": 0.42, "colour": 1},
+      {"id": "a1", "x": 0.15, "colour": 1},
+      {"id": "a2", "x": -0.08, "colour": 1},
+      {"id": "a3", "x": 0.31, "colour": 1},
+      {"id": "a4", "x": 0.27, "colour": 1},
+      {"id": "a5", "x": -0.12, "colour": 1},
+      {"id": "a6", "x": 0.36, "colour": 1},
+      {"id": "a7", "x": 0.22, "colour": 1},
+      {"id": "a8", "x": 0.05, "colour": 1},
+      {"id": "a9", "x": 0.48, "colour": 1},
+      {"id": "a10", "x": -0.03, "colour": 1},
+      {"id": "a11", "x": 0.19, "colour": 1},
+      {"id": "b0", "x": -0.21, "colour": 2},
+      {"id": "b1", "x": 0.04, "colour": 2},
+      {"id": "b2", "x": -0.35, "colour": 2},
+      {"id": "b3", "x": 0.1, "colour": 2},
+      {"id": "b4", "x": -0.18, "colour": 2},
+      {"id": "b5", "x": 6.5, "colour": 2, "drag": true, "label": "big day"},
+      {"id": "b6", "x": -0.27, "colour": 2},
+      {"id": "b7", "x": 0.02, "colour": 2},
+      {"id": "b8", "x": -0.09, "colour": 2},
+      {"id": "b9", "x": -0.4, "colour": 2},
+      {"id": "b10", "x": 0.07, "colour": 2},
+      {"id": "b11", "x": -0.15, "colour": 2}
+     ]
+    },
+    "derive": {
+     "caption": "The big day is at {{fixed(b5.x, 2)}}%: rank {{(b5.x > 0.42) + (b5.x > 0.15) + (b5.x > -0.08) + (b5.x > 0.31) + (b5.x > 0.27) + (b5.x > -0.12) + (b5.x > 0.36) + (b5.x > 0.22) + (b5.x > 0.05) + (b5.x > 0.48) + (b5.x > -0.03) + (b5.x > 0.19) + (b5.x > -0.21) + (b5.x > 0.04) + (b5.x > -0.35) + (b5.x > 0.1) + (b5.x > -0.18) + (b5.x > -0.27) + (b5.x > 0.02) + (b5.x > -0.09) + (b5.x > -0.4) + (b5.x > 0.07) + (b5.x > -0.15) + 1}} of 24. B's mean is {{fixed((-0.21 + 0.04 + -0.35 + 0.1 + -0.18 + -0.27 + 0.02 + -0.09 + -0.4 + 0.07 + -0.15 + b5.x)/12, 3)}}%."
+    }
+   },
+   "question": "As you drag the big day from 6.5% down to 0.5%, what happens?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "rank", "text": "Its rank stays 24 while B's mean falls by half a point", "correct": true},
+     {
+      "id": "both",
+      "text": "Both its rank and B's mean fall steadily",
+      "why": "The rank only changes when the day passes another day. Above 0.48 it stays the largest."
+     },
+     {"id": "mean", "text": "B's mean stays fixed", "why": "The mean moves with every bit of the drag: one day is a twelfth of it."}
+    ]
+   },
+   "feedback": {"correct": "The rank caps the day's influence: 24 is as big as it gets.", "generic": "Not quite. Watch the caption as you drag."},
+   "explain": {
+    "text": "From 6.5 down to 0.5, B's mean falls from 0.423% to $-0.077$%, but the day's rank stays 24. A **rank test** uses only the ranks, so one wild day counts as just the largest.",
+    "canvas": {
+     "points": {
+      "b5": {"x": 0.5}
+     }
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Rank sums and U",
+   "prose": "Ranking the 24 days gives A a rank sum of 195. The **Mann-Whitney** statistic is $U_A = R_A - \\frac{m(m + 1)}{2}$, the number of (A day, B day) pairs in which A's day is larger. $U_A + U_B = mn$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Strategy", "Ranks of its 12 days", "Rank sum"],
+     "rows": [
+      ["A", "22, 16, 9, 20, 19, 7, 21, 18, 13, 23, 10, 17", "195"],
+      ["B", "4, 12, 2, 15, 5, 24, 3, 11, 8, 1, 14, 6", "105"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill in $U_A$ and $U_B$.",
+   "widget": {
+    "kind": "table",
+    "columns": ["Strategy", "Rank sum", "$U$"],
+    "rows": [
+     [
+      "A",
+      "195",
+      {
+       "edit": true,
+       "answer": 117,
+       "tol": {"abs": 0}
+      }
+     ],
+     [
+      "B",
+      "105",
+      {
+       "edit": true,
+       "answer": 27,
+       "tol": {"abs": 0}
+      }
+     ]
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "$m = 12$, so subtract $12 \\times 13/2 = 78$."},
+    {"rung": "point", "text": "$U_A = 195 - 78 = 117$."},
+    {"rung": "step", "text": "$U_B = 144 - 117 = 27$, or $105 - 78$."}
+   ],
+   "feedback": {
+    "correct": "$U_A = 117$ and $U_B = 27$: A wins 117 of the 144 pairs.",
+    "generic": "Not quite right. Subtract 78 from each rank sum.",
+    "byKey": {
+     "r0c2": "$U_A = 195 - 12 \\times 13/2 = 117$. If you wrote 195, you skipped the subtraction.",
+     "r1c2": "$U_B = 105 - 78 = 27$, and $117 + 27 = 144 = 12 \\times 12$."
+    }
+   },
+   "explain": {
+    "text": "$U_A = 117$, $U_B = 27$. Counting all 2,704,156 ways to split the 24 ranks, the exact two-sided $p$ is 0.00829. The normal approximation with continuity correction gives 0.0102."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "What U measures",
+   "prose": "$U_A$ counts the pairs in which an A day beats a B day, out of $mn = 144$ pairs. So $U_A/(mn)$ estimates $P(X_A > X_B)$ for a random day of each.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Strategy", "Ranks of its 12 days", "Rank sum"],
+     "rows": [
+      ["A", "22, 16, 9, 20, 19, 7, 21, 18, 13, 23, 10, 17", "195"],
+      ["B", "4, 12, 2, 15, 5, 24, 3, 11, 8, 1, 14, 6", "105"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the chance that a random A day beats a random B day?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8125,
+    "tol": {"abs": 0.0005},
+    "unit": "%",
+    "accept": "81.25%: $117/144$.",
+    "label": "P(A beats B)",
+    "wrong": [
+     {
+      "id": "b",
+      "value": 0.1875,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "ranks",
+      "value": 0.65,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Divide $U_A$ by the number of pairs."},
+    {"rung": "point", "text": "$mn = 12 \\times 12 = 144$."},
+    {"rung": "step", "text": "$117/144 = 0.8125$."}
+   ],
+   "feedback": {
+    "correct": "81.25%: A beats B on a typical pairing four times in five.",
+    "generic": "Not quite right. Divide 117 by 144.",
+    "byKey": {"b": "That is $U_B/144$, the chance B wins.", "ranks": "You divided the rank sum by 300, the sum of all ranks. Use $U_A/(mn)$."}
+   },
+   "explain": {"text": "$117/144 = 0.8125$. This is the probability a risk committee can read directly: on a typical day A beats B."}
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Does it test the medians",
+   "prose": "A colleague says: \"Mann-Whitney tests whether the two medians are equal.\" Consider strategy C with days $-1, -1, 0, 3, 3$ and D with $-3, -3, 0, 1, 1$.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {"min": -3.5, "max": 3.5, "step": 1},
+    "state": {
+     "points": [
+      {"id": "c1", "x": -1, "colour": 1, "label": "C"},
+      {"id": "c2", "x": 0.05, "colour": 1},
+      {"id": "c3", "x": 3, "colour": 1, "label": "C"},
+      {"id": "d1", "x": -3, "colour": 2, "label": "D"},
+      {"id": "d2", "x": -0.05, "colour": 2},
+      {"id": "d3", "x": 1, "colour": 2, "label": "D"}
+     ]
+    }
+   },
+   "question": "Both medians are 0. What does Mann-Whitney test, then?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "shift", "text": "Whether one distribution tends to sit above the other, $P(X > Y) \\ne \\tfrac12$", "correct": true},
+     {
+      "id": "median",
+      "text": "Whether the medians differ, so here it finds nothing",
+      "why": "C beats D in 16.5 of 25 pairs (a tie counts a half). Equal medians do not make $P(C > D) = \\tfrac12$."
+     },
+     {"id": "mean", "text": "Whether the means differ", "why": "It uses ranks only; the means play no part."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Count the pairs where a C day beats a D day."},
+    {"rung": "point", "text": "C's 3s beat every D day; D's $-3$s lose to every C day."},
+    {"rung": "step", "text": "$U_C = 16.5$ of 25, so $P(C > D) = 0.66$."}
+   ],
+   "feedback": {
+    "correct": "It tests a tendency to sit higher, not the medians.",
+    "generic": "Not quite. Equal medians can still differ in $P(X > Y)$.",
+    "byKey": {"median": "You read it as a median test. It compares every pair of days, not two middle values."}
+   },
+   "explain": {
+    "text": "Here $U_C = 16.5$ of 25 pairs although both medians are 0. Only when the two distributions have the same shape does a shift in $P(X > Y)$ mean a shift in median."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "One strategy against zero",
+   "prose": "The **Wilcoxon signed-rank** test asks whether one strategy's days are centred above 0. Rank the absolute returns, then add the negative days' ranks: $W^-$. A has three losing days: $-0.08$, $-0.12$ and $-0.03$.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {"min": -0.5, "max": 7, "step": 0.5},
+    "state": {
+     "points": [
+      {"id": "a0", "x": 0.42, "colour": 1},
+      {"id": "a1", "x": 0.15, "colour": 1},
+      {"id": "a2", "x": -0.08, "colour": 1},
+      {"id": "a3", "x": 0.31, "colour": 1},
+      {"id": "a4", "x": 0.27, "colour": 1},
+      {"id": "a5", "x": -0.12, "colour": 1},
+      {"id": "a6", "x": 0.36, "colour": 1},
+      {"id": "a7", "x": 0.22, "colour": 1},
+      {"id": "a8", "x": 0.05, "colour": 1},
+      {"id": "a9", "x": 0.48, "colour": 1},
+      {"id": "a10", "x": -0.03, "colour": 1},
+      {"id": "a11", "x": 0.19, "colour": 1},
+      {"id": "b0", "x": -0.21, "colour": 2},
+      {"id": "b1", "x": 0.04, "colour": 2},
+      {"id": "b2", "x": -0.35, "colour": 2},
+      {"id": "b3", "x": 0.1, "colour": 2},
+      {"id": "b4", "x": -0.18, "colour": 2},
+      {"id": "b5", "x": 6.5, "colour": 2},
+      {"id": "b6", "x": -0.27, "colour": 2},
+      {"id": "b7", "x": 0.02, "colour": 2},
+      {"id": "b8", "x": -0.09, "colour": 2},
+      {"id": "b9", "x": -0.4, "colour": 2},
+      {"id": "b10", "x": 0.07, "colour": 2},
+      {"id": "b11", "x": -0.15, "colour": 2}
+     ]
+    }
+   },
+   "question": "What is $W^-$ for A?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 8,
+    "tol": {"abs": 0},
+    "unit": "",
+    "accept": "8: the three losses rank 3, 4 and 1 among A's absolute returns.",
+    "label": "W minus",
+    "wrong": [
+     {
+      "id": "plus",
+      "value": 70,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "count",
+      "value": 3,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Sort A's absolute returns from smallest."},
+    {"rung": "point", "text": "0.03, 0.05, 0.08, 0.12, 0.15, ...: ranks 1, 2, 3, 4, 5."},
+    {"rung": "step", "text": "The losses have ranks 1, 3 and 4: $W^- = 8$."}
+   ],
+   "feedback": {
+    "correct": "$W^- = 8$ and $W^+ = 70$.",
+    "generic": "Not quite right. Rank the absolute returns, then add the ranks of the negative days.",
+    "byKey": {"plus": "That is $W^+$, the positive days' ranks.", "count": "That is the number of losing days, the sign test's count."}
+   },
+   "explain": {
+    "text": "$W^+ = 70$, $W^- = 8$, exact $p = 0.0122$ over the 4,096 sign patterns. B gives $p = 0.233$ (its $t$-test 0.461): its one big day cannot outvote eleven small losses."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Back to the execution test",
+   "prose": "On lesson 9's 200 stock-days, three tests of B against A: the sign test gave 0.0194, the paired $t$ 0.00579. The Wilcoxon signed-rank test on the 200 differences gives 0.00484.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Test", "Uses", "$p$"],
+     "rows": [
+      ["Sign test", "signs only", "0.0194"],
+      ["Wilcoxon signed-rank", "signs and ranks of sizes", "0.00484"],
+      ["Paired $t$", "signs and sizes, assumes normal", "0.00579"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Why is the sign test's $p$ the largest?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "info", "text": "It throws away the sizes of the differences, so it has the least information", "correct": true},
+     {"id": "wrong", "text": "It is the wrong test for paired data", "why": "It is a valid paired test. It just ignores how big each difference is."},
+     {"id": "tails", "text": "Fat tails make it lose power", "why": "Fat tails hurt the $t$-test, not the sign test; the sign test ignores sizes entirely."}
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Look at the middle column."},
+    {"rung": "point", "text": "The sign test keeps only whether each difference is negative."},
+    {"rung": "step", "text": "Throwing away sizes throws away information."}
+   ],
+   "feedback": {"correct": "Least information, least power.", "generic": "Not quite right. Compare what each test uses."},
+   "explain": {
+    "text": "The signed-rank test keeps the order of the sizes but not their values. So a few huge days cannot dominate. With fat tails ($t_4$ noise) it is a little more powerful here than the $t$-test."
+   }
+  },
+  {
+   "type": "generalise",
+   "difficulty": 2,
+   "title": "Ties and tiny samples",
+   "prose": "Rank tests need a rule for **ties**: tied values share the average of the ranks they span. Two days tied for ranks 5 and 6 each get 5.5. Small samples have few rank patterns: 3 against 3 has only $\\binom{6}{3} = 20$ splits.",
+   "question": "With 3 days against 3, what is the smallest possible two-sided $p$-value?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.1,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.1: the two most extreme splits out of 20, $2/20$.",
+    "label": "Smallest p",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.05,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "c",
+      "value": 0.0167,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$2/20 = 0.1$: no 3-against-3 result can be significant at 5%.",
+    "generic": "Not quite right. Two of the 20 splits are as extreme as possible.",
+    "byKey": {
+     "one": "That is one-sided, $1/20$. Two-sided counts both extremes.",
+     "c": "You used $\\binom{6}{3} \\times 3 = 60$ splits. There are 20."
+    }
+   },
+   "explain": {"text": "All three A days on top, or all three at the bottom: 2 of 20 equally likely splits. So $p \\ge 0.1$ whatever the data."}
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "U and its exact p in code",
+   "prose": "Compute $U$ with `scipy.stats.rankdata`, which averages ties. Then the exact null distribution of $U$. Walk up the pooled ranks, counting the ways to give $k$ of them to $a$ for each total $U$.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Strategy", "Ranks of its 12 days", "Rank sum"],
+     "rows": [
+      ["A", "22, 16, 9, 20, 19, 7, 21, 18, 13, 23, 10, 17", "195"],
+      ["B", "4, 12, 2, 15, 5, 24, 3, 11, 8, 1, 14, 6", "105"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "Complete `rank_sum_u` and `mw_exact_p`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.stats import rankdata\n\n\ndef rank_sum_u(a, b):\n    \"\"\"U for sample a, with average ranks for ties.\"\"\"\n    ...\n\n\ndef mw_exact_p(a, b):\n    \"\"\"Exact two-sided Mann-Whitney p for small samples without ties.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom scipy.stats import rankdata\n\n\ndef rank_sum_u(a, b):\n    r = rankdata(np.r_[a, b])\n    m = len(a)\n    return float(r[:m].sum() - m * (m + 1) / 2)\n\n\ndef mw_exact_p(a, b):\n    m, n = len(a), len(b)\n    # ways[k][u]: ways for k of the first i ranks to be a's with U-count u\n    from math import comb\n    f = np.zeros((m + 1, m * n + 1))\n    f[0, 0] = 1\n    for i in range(m + n):\n        g = f.copy()\n        for k in range(1, m + 1):\n            # rank i + 1 goes to a: it beats the (i - (k - 1)) b values below it\n            beat = i - (k - 1)\n            if 0 <= beat <= n:\n                g[k, beat:] += f[k - 1, :m * n + 1 - beat]\n        f = g\n    dist = f[m] / comb(m + n, m)\n    u = rank_sum_u(a, b)\n    lo = min(u, m * n - u)\n    p = 2 * dist[:int(lo) + 1].sum()\n    return float(min(1.0, p))\n",
+    "examples": [
+     {
+      "call": "rank_sum_u([0.42, 0.15], [-0.21, 6.5])",
+      "expect": "2.0",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "a = [0.42, 0.15, -0.08, 0.31, 0.27, -0.12, 0.36, 0.22, 0.05, 0.48, -0.03, 0.19]; b = [-0.21, 0.04, -0.35, 0.1, -0.18, 6.5, -0.27, 0.02, -0.09, -0.4, 0.07, -0.15]",
+      "call": "rank_sum_u(a, b)",
+      "expect": "117.0",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "a = [0.42, 0.15, -0.08, 0.31, 0.27, -0.12, 0.36, 0.22, 0.05, 0.48, -0.03, 0.19]; b = [-0.21, 0.04, -0.35, 0.1, -0.18, 6.5, -0.27, 0.02, -0.09, -0.4, 0.07, -0.15]",
+      "call": "rank_sum_u(b, a)",
+      "expect": "27.0",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "call": "rank_sum_u([1, 2, 2], [2, 3])",
+      "expect": "1.0",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "a = [0.42, 0.15, -0.08, 0.31, 0.27, -0.12, 0.36, 0.22, 0.05, 0.48, -0.03, 0.19]; b = [-0.21, 0.04, -0.35, 0.1, -0.18, 6.5, -0.27, 0.02, -0.09, -0.4, 0.07, -0.15]",
+      "call": "round(mw_exact_p(a, b), 6)",
+      "expect": "0.008293",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "call": "mw_exact_p([0.3, 1.2, 0.8, 2.0], [0.1, -0.4, 0.5, 0.0, -1.1])",
+      "expect": "0.031746031746031744",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "call": "mw_exact_p([1, 2, 3], [4, 5, 6])",
+      "expect": "0.1",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     }
+    ],
+    "how": "Check runs 6 hidden tests. Three check $U$, including a case with ties. Three check exact $p$-values against `mannwhitneyu(..., method='exact')` in Pyodide: 0.008293 for the strategies. Each runs in well under a second. The first run loads NumPy and SciPy, about 10 seconds."
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "`rankdata(np.r_[a, b])`, then the first `len(a)` ranks."
+    },
+    {"rung": "point", "text": "In the count, giving the next rank to $a$ adds the number of $b$ ranks already placed to $U$."},
+    {"rung": "step", "text": "Two-sided: double the lower tail at $\\min(U, mn - U)$, capped at 1."}
+   ],
+   "feedback": {"correct": "$U = 117$ and the exact $p = 0.008293$, as scipy says.", "generic": "Some tests failed. Check the tie rule and the doubling of the tail."},
+   "explain": {
+    "text": "The count is a dynamic programme over ranks: 2,704,156 splits never have to be listed. A tie forces a different null, which is why the exact routine refuses ties."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Which wins on a typical day",
+   "prose": "A risk committee compares two strategies' daily P&L over a quarter. Strategy B's mean is higher, entirely because of one day it caught a takeover.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {"min": -0.5, "max": 7, "step": 0.5},
+    "state": {
+     "points": [
+      {"id": "a0", "x": 0.42, "colour": 1},
+      {"id": "a1", "x": 0.15, "colour": 1},
+      {"id": "a2", "x": -0.08, "colour": 1},
+      {"id": "a3", "x": 0.31, "colour": 1},
+      {"id": "a4", "x": 0.27, "colour": 1},
+      {"id": "a5", "x": -0.12, "colour": 1},
+      {"id": "a6", "x": 0.36, "colour": 1},
+      {"id": "a7", "x": 0.22, "colour": 1},
+      {"id": "a8", "x": 0.05, "colour": 1},
+      {"id": "a9", "x": 0.48, "colour": 1},
+      {"id": "a10", "x": -0.03, "colour": 1},
+      {"id": "a11", "x": 0.19, "colour": 1},
+      {"id": "b0", "x": -0.21, "colour": 2},
+      {"id": "b1", "x": 0.04, "colour": 2},
+      {"id": "b2", "x": -0.35, "colour": 2},
+      {"id": "b3", "x": 0.1, "colour": 2},
+      {"id": "b4", "x": -0.18, "colour": 2},
+      {"id": "b5", "x": 6.5, "colour": 2},
+      {"id": "b6", "x": -0.27, "colour": 2},
+      {"id": "b7", "x": 0.02, "colour": 2},
+      {"id": "b8", "x": -0.09, "colour": 2},
+      {"id": "b9", "x": -0.4, "colour": 2},
+      {"id": "b10", "x": 0.07, "colour": 2},
+      {"id": "b11", "x": -0.15, "colour": 2}
+     ]
+    }
+   },
+   "question": "What should the committee be told?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "both", "text": "B's mean is higher, but A wins on a typical day: $P(A > B) = 0.81$, Mann-Whitney $p = 0.008$", "correct": true},
+     {"id": "b", "text": "B is better: its mean is higher", "why": "The mean answers \"which made more in total\", and that rests on one day."},
+     {
+      "id": "drop",
+      "text": "Drop B's big day and compare means",
+      "why": "Dropping a day after seeing it is a choice made from the result. The rank test needs no such choice."
+     },
+     {"id": "none", "text": "No difference: the $t$-test gives $p = 0.68$", "why": "The $t$-test is swamped by one day's variance; the ranks show a clear pattern."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Two different questions: total P&L, or a typical day."},
+    {"rung": "point", "text": "The rank test answers the typical day."},
+    {"rung": "step", "text": "Report both, with $P(A > B)$."}
+   ],
+   "feedback": {
+    "correct": "Two questions, two answers, both reported.",
+    "generic": "Not quite. Separate the total from the typical day.",
+    "byKey": {"drop": "You dropped the day by hand. A rank test downweights it by a rule fixed in advance."}
+   },
+   "explain": {
+    "text": "The mean asks about the total, which one takeover day decided. The rank test asks which strategy wins on a typical day, often the committee's real question."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "Ranks cap a wild day's influence: B's 6.5% day counts as rank 24 and no more.",
+   "Mann-Whitney's $U_A$ counts the pairs A wins; $U_A/(mn) = 0.8125$ estimates $P(A > B)$, and $p = 0.00829$.",
+   "Wilcoxon's signed-rank test centres one sample on 0; it uses more than the sign test and less than the $t$-test."
+  ],
+  "formula": {
+   "name": "Mann-Whitney",
+   "tex": "U_A = R_A - \\frac{m(m + 1)}{2}, \\qquad U_A + U_B = mn",
+   "note": "Ties take average ranks; tiny samples cannot reach small $p$."
+  },
+  "trap": "Mann-Whitney is not a test of medians: it tests whether one distribution tends to sit above the other."
+ },
+ "quiz": [
+  {
+   "id": "q-ties",
+   "difficulty": 2,
+   "prose": "Pooled returns sorted: $-0.2, 0.1, 0.3, 0.3, 0.5$.",
+   "question": "What rank does each 0.3 get?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.5,
+    "tol": {"abs": 0.001},
+    "unit": "",
+    "accept": "3.5: they span ranks 3 and 4.",
+    "label": "Rank",
+    "wrong": [
+     {
+      "id": "three",
+      "value": 3,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "four",
+      "value": 4,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "Each gets $(3 + 4)/2 = 3.5$.",
+    "generic": "Not quite right. Ties share the average of the ranks they span.",
+    "byKey": {"three": "You gave both the lower rank.", "four": "You gave both the upper rank."}
+   },
+   "explain": {"text": "The two tied values occupy places 3 and 4, so each gets 3.5; the rank sum is unchanged."}
+  },
+  {
+   "id": "q-drop-day",
+   "difficulty": 3,
+   "prose": "An analyst sees B's 6.5% day, deletes it, and runs a $t$-test on the rest: B now looks clearly worse.",
+   "question": "What is the problem?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "post", "text": "The deletion was chosen after seeing the data, so the $p$-value no longer means what it says", "correct": true},
+     {"id": "ok", "text": "None: the day was an outlier", "why": "It may be a real day. Choosing what to delete from the result biases the test."},
+     {"id": "n", "text": "Only that the sample shrinks to 23 days", "why": "The smaller sample is the least of it; the choice itself is the problem."}
+    ]
+   },
+   "feedback": {"correct": "A data-driven deletion.", "generic": "Not quite right. Ask when the rule was chosen."},
+   "explain": {"text": "A rank test fixes its treatment of extremes in advance. Deleting by eye after seeing the result is a forking path."}
+  },
+  {
+   "id": "q-u",
+   "difficulty": 2,
+   "prose": "Two samples of 10 days each give $U_X = 70$.",
+   "question": "What is the estimated chance that a random X day beats a random Y day?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7,
+    "tol": {"abs": 0.0005},
+    "unit": "%",
+    "accept": "70%: $70/100$.",
+    "label": "P(X beats Y)",
+    "wrong": [
+     {
+      "id": "y",
+      "value": 0.3,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$70/100 = 0.7$.",
+    "generic": "Not quite right. Divide $U$ by $mn$.",
+    "byKey": {"y": "That is the chance Y wins."}
+   },
+   "explain": {"text": "$U_X/(mn) = 70/100 = 0.7$."}
+  }
+ ]
+}

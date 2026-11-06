@@ -1,0 +1,1153 @@
+{
+ "id": "l13-robust-estimates",
+ "course": "stat-models",
+ "title": "Robust estimates",
+ "minutes": 15,
+ "objectives": ["Use medians, trimmed means and robust regression when outliers dominate."],
+ "skills": ["sm-nonpar"],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "One month moves the mean",
+   "prose": "A fund's nine monthly returns, in %. One month a single position paid off: 25%. Drag that month and watch three summaries of a typical month.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": -1,
+     "max": 26,
+     "step": 1,
+     "labels": [0, 5, 10, 15, 20, 25]
+    },
+    "state": {
+     "points": [
+      {"id": "f0", "x": 1.2},
+      {"id": "f1", "x": 0.8},
+      {"id": "f2", "x": -0.5},
+      {"id": "f3", "x": 1.5},
+      {"id": "f4", "x": 0.9},
+      {"id": "f5", "x": 1.1},
+      {"id": "f6", "x": -0.2},
+      {"id": "f7", "x": 0.7},
+      {"id": "p", "x": 25.0, "drag": true, "label": "big month", "colour": 2}
+     ]
+    },
+    "derive": {
+     "caption": "Mean {{fixed((5.5 + p.x)/9, 3)}}%, median {{fixed(min(max(p.x, 0.8), 0.9), 3)}}%, 20% trimmed mean {{fixed((5.5 + p.x - min(p.x, -0.5) - max(p.x, 1.5))/7, 3)}}%"
+    }
+   },
+   "question": "With the big month at 25%, what is the mean monthly return?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 3.389,
+    "tol": {"abs": 0.002},
+    "unit": "",
+    "accept": "3.389%: $(5.5 + 25)/9$.",
+    "label": "Mean (%)",
+    "wrong": [
+     {
+      "id": "median",
+      "value": 0.9,
+      "tol": {"abs": 0.001}
+     },
+     {
+      "id": "eight",
+      "value": 0.6875,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "3.389%, while the median sits at 0.9%.",
+    "generic": "Not quite right. Add the eight other months, 5.5, to 25 and divide by 9.",
+    "byKey": {"median": "That is the median.", "eight": "You averaged the other eight months only."}
+   },
+   "explain": {
+    "text": "At 25% the mean is 3.389% and follows the big month wherever you drag it. The median stays between 0.8 and 0.9. Set the month to 1.0 and the mean falls to 0.722%."
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "How far can one month drag",
+   "prose": "Replace the 25% month by an ordinary 1.0%.",
+   "canvas": {
+    "kind": "number-line",
+    "params": {
+     "min": -1,
+     "max": 26,
+     "step": 1,
+     "labels": [0, 5, 10, 15, 20, 25]
+    },
+    "state": {
+     "points": [
+      {"id": "f0", "x": 1.2},
+      {"id": "f1", "x": 0.8},
+      {"id": "f2", "x": -0.5},
+      {"id": "f3", "x": 1.5},
+      {"id": "f4", "x": 0.9},
+      {"id": "f5", "x": 1.1},
+      {"id": "f6", "x": -0.2},
+      {"id": "f7", "x": 0.7},
+      {"id": "p", "x": 1.0, "drag": false, "label": "big month", "colour": 2}
+     ]
+    },
+    "derive": {
+     "caption": "Mean {{fixed((5.5 + p.x)/9, 3)}}%, median {{fixed(min(max(p.x, 0.8), 0.9), 3)}}%, 20% trimmed mean {{fixed((5.5 + p.x - min(p.x, -0.5) - max(p.x, 1.5))/7, 3)}}%"
+    }
+   },
+   "question": "What is the mean now?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.7222,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.722%: $(5.5 + 1.0)/9$.",
+    "label": "Mean (%)",
+    "wrong": [
+     {
+      "id": "old",
+      "value": 3.389,
+      "tol": {"abs": 0.002}
+     },
+     {
+      "id": "med",
+      "value": 0.9,
+      "tol": {"abs": 0.001}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "The eight fixed months sum to 5.5."},
+    {"rung": "point", "text": "$5.5 + 1.0 = 6.5$."},
+    {"rung": "step", "text": "$6.5/9 = 0.722$."}
+   ],
+   "feedback": {
+    "correct": "0.722%: one month had moved the mean by 2.7 points.",
+    "generic": "Not quite right. Compute $(5.5 + 1.0)/9$.",
+    "byKey": {"old": "That was with the 25% month.", "med": "That is the median, which did not move."}
+   },
+   "explain": {
+    "text": "The mean is now 0.722%. The **breakdown point** is the share of data that can be moved arbitrarily far before an estimate follows. The mean's is 0, as one month suffices; the median's is one half."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Trim the ends",
+   "prose": "A 20% trimmed mean cuts 20% from each end before averaging: with $n = 9$, $\\lfloor 0.2 \\times 9 \\rfloor = 1$ month from each end.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Month", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+     "rows": [
+      ["Return (%)", "1.2", "0.8", "-0.5", "1.5", "0.9", "1.1", "-0.2", "0.7", "25.0"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the 20% trimmed mean of the nine months?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.8571,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.857%: drop $-0.5$ and 25.0, then $6.0/7$.",
+    "label": "Trimmed mean (%)",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 3.875,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "nine",
+      "value": 0.6667,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Sort and drop the smallest and largest."},
+    {"rung": "point", "text": "Left: $-0.2, 0.7, 0.8, 0.9, 1.1, 1.2, 1.5$, summing to 6.0."},
+    {"rung": "step", "text": "$6.0/7 = 0.857$."}
+   ],
+   "feedback": {
+    "correct": "0.857%, close to the median.",
+    "generic": "Not quite right. Drop one month from each end, then average seven.",
+    "byKey": {"one": "You dropped only the lowest month. Trim both ends.", "nine": "You divided the seven-month sum by 9."}
+   },
+   "explain": {"text": "`scipy.stats.trim_mean(x, 0.2)` gives 0.857 too. Huber's M-estimate, which shrinks rather than cuts, gives 0.93."}
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "A robust spread",
+   "prose": "The median absolute deviation (MAD) is the median of $|x_j - \\text{median}|$. Scaled by 1.4826, it estimates $\\sigma$ for normal data. The median is 0.9 and the sorted absolute deviations are 0.0, 0.1, 0.2, 0.2, 0.3, 0.6, 1.1, 1.4, 24.1.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": ["Month", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+     "rows": [
+      ["Return (%)", "1.2", "0.8", "-0.5", "1.5", "0.9", "1.1", "-0.2", "0.7", "25.0"]
+     ]
+    },
+    "state": {}
+   },
+   "question": "What is the scaled MAD?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.4448,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.4448: median deviation 0.3, times 1.4826.",
+    "label": "Scaled MAD (%)",
+    "wrong": [
+     {
+      "id": "raw",
+      "value": 0.3,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "sd",
+      "value": 8.13,
+      "tol": {"abs": 0.005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "The middle of the nine sorted deviations."},
+    {"rung": "point", "text": "The fifth is 0.3."},
+    {"rung": "step", "text": "$0.3 \\times 1.4826 = 0.4448$."}
+   ],
+   "feedback": {
+    "correct": "0.4448%, against a standard deviation of 8.130%.",
+    "generic": "Not quite right. Take the middle deviation and scale it.",
+    "byKey": {"raw": "That is the raw MAD. Scale by 1.4826 to compare with an SD.", "sd": "That is the ordinary SD, inflated by the one month."}
+   },
+   "explain": {"text": "One month inflates the SD to 8.130% while the scaled MAD says 0.4448%. `median_abs_deviation(x, scale='normal')` agrees."}
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "Bootstrapping the mean",
+   "prose": "Bootstrap the mean as in `estimation` lesson 11: each run draws 9 months with replacement and averages them. Run 1,000 resamples.",
+   "canvas": {
+    "kind": "bars",
+    "params": {
+     "bins": {"min": -0.5, "max": 13, "width": 0.25},
+     "xLabel": "Mean of a resample (%)",
+     "yLabel": "Resamples",
+     "height": 230,
+     "params": {
+      "x": [1.2, 0.8, -0.5, 1.5, 0.9, 1.1, -0.2, 0.7, 25.0]
+     },
+     "sim": {
+      "trials": [10, 100, 1000],
+      "outcome": "mean(9, pick(x))",
+      "seed": 13
+     }
+    },
+    "state": {"ran": 0}
+   },
+   "question": "What is the chance that a resample holds no copy of the 25% month?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.3464,
+    "tol": {"abs": 0.0005},
+    "unit": "%",
+    "accept": "34.64%: $(8/9)^9$.",
+    "label": "P(no 25%)",
+    "wrong": [
+     {
+      "id": "one",
+      "value": 0.3897,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "ninth",
+      "value": 0.8889,
+      "tol": {"abs": 0.0005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Each draw misses the big month with probability 8/9."},
+    {"rung": "point", "text": "Nine independent draws."},
+    {"rung": "step", "text": "$(8/9)^9 = 0.3464$."}
+   ],
+   "feedback": {
+    "correct": "$(8/9)^9 = 34.64\\%$; one copy 38.97%, two 19.49%, three 5.68%.",
+    "generic": "Not quite right. Raise 8/9 to the ninth power.",
+    "byKey": {"one": "That is the chance of exactly one copy.", "ninth": "That is one draw. A resample has nine."}
+   },
+   "explain": {
+    "text": "The histogram splits into clusters by the number of copies of 25: none (34.6%), one (39.0%), two (19.5%), three (5.7%). The bootstrap SD is about 2.555, faithfully reporting an unstable mean. Bootstrapping the median, in the code screen, gives a tight cluster.",
+    "canvas": {"ran": 1000}
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 3,
+   "title": "A beta and one wild day",
+   "prose": "Sixty days of market and stock returns. On day 40 the market rose 0.85% but a takeover rumour sent the stock up 25%. OLS gives $\\hat\\beta = 1.584$; the true beta was 1.2. Tukey's bisquare fit (dashed) gives 1.143. Drag day 40.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [-1.47, -1.22],
+      [-0.42, -0.65],
+      [-0.04, 1.54],
+      [0.39, -0.35],
+      [-1.03, -1.5],
+      [1.19, 1.84],
+      [0.22, 0.62],
+      [-0.53, -1.84],
+      [-1.53, -0.67],
+      [-0.67, -0.85],
+      [0.7, -0.48],
+      [0.54, 0.74],
+      [0.88, 1.08],
+      [-0.52, -2.66],
+      [0.76, 1.93],
+      [-0.2, 0.13],
+      [1.45, 1.14],
+      [0.1, -0.34],
+      [-0.99, -0.97],
+      [-0.31, -0.49],
+      [0.23, 0.24],
+      [0.32, -0.48],
+      [0.51, 1.4],
+      [-0.38, -0.38],
+      [0.2, -0.93],
+      [1.17, 0.51],
+      [1.06, 2.03],
+      [0.44, 0.21],
+      [0.72, 1.57],
+      [-1.6, -2.31],
+      [0.27, 1.04],
+      [0.1, 0.71],
+      [-0.34, -0.72],
+      [0.23, -0.33],
+      [-0.59, -0.27],
+      [-0.21, 0.02],
+      [0.32, -0.41],
+      [-0.31, -1.95],
+      [0.21, 1.59],
+      [0.85, 25.0],
+      [-1.4, -1.63],
+      [-0.56, -0.22],
+      [-1.86, -2.59],
+      [0.88, 2.52],
+      [0.96, 0.17],
+      [0.63, 1.78],
+      [0.65, 0.27],
+      [-0.45, -1.68],
+      [1.53, 1.86],
+      [0.92, 0.84],
+      [-2.71, -2.49],
+      [0.39, 1.25],
+      [0.86, -0.75],
+      [-1.2, -0.72],
+      [0.89, 1.65],
+      [-0.76, 1.24],
+      [-1.0, -1.31],
+      [-0.64, -3.02],
+      [1.23, 2.09],
+      [-0.22, -0.07]
+     ],
+     "x": "Market return (%)",
+     "y": "Stock return (%)",
+     "fit": true,
+     "fitLabel": "auto",
+     "height": 300,
+     "yRange": [-8, 44],
+     "xRange": [-3, 2],
+     "drag": ["p39"]
+    },
+    "state": {
+     "lines": [
+      {"id": "tukey", "m": 1.142954, "b": 0.005175, "label": "bisquare", "colour": 2, "dashed": true}
+     ]
+    },
+    "derive": {
+     "caption": "Day 40 sits {{fixed((p39.y - 0.005175 - 1.142954*p39.x)/0.88977, 1)}} scale units above the bisquare line."
+    }
+   },
+   "question": "Drag day 40 to a stock return of 40%. What slope does the OLS fit show?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1.854,
+    "tol": {"abs": 0.01},
+    "unit": "",
+    "accept": "1.854, from the fitted line's equation.",
+    "label": "OLS slope",
+    "wrong": [
+     {
+      "id": "start",
+      "value": 1.584,
+      "tol": {"abs": 0.005}
+     },
+     {
+      "id": "tukey",
+      "value": 1.143,
+      "tol": {"abs": 0.005}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Drag the top point up."},
+    {"rung": "point", "text": "Read the slope in the OLS label."},
+    {"rung": "step", "text": "About 1.85."}
+   ],
+   "feedback": {
+    "correct": "1.854: one day moves OLS from 1.278 (at 8%) to 1.854 (at 40%). The bisquare line does not move.",
+    "generic": "Not quite. Move day 40 to 40% and read the OLS slope.",
+    "byKey": {"start": "That is the OLS slope with day 40 at 25%.", "tukey": "That is the bisquare slope, which ignores day 40 wherever it is."}
+   },
+   "explain": {
+    "text": "OLS slopes 1.278 at 8%, 1.404 at 15% and 1.854 at 40%. The bisquare fit gives day 40 weight 0, so it drops out of the fitting equations. The caption shows day 40 at least 7 scale units from that line throughout.",
+    "canvas": {
+     "points": {
+      "p39": {"y": 40}
+     }
+    }
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "Just delete it",
+   "prose": "A colleague says: \"Day 40 is obviously an error. Delete it and run OLS.\" Without day 40, OLS gives $\\hat\\beta = 1.151$.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [-1.47, -1.22],
+      [-0.42, -0.65],
+      [-0.04, 1.54],
+      [0.39, -0.35],
+      [-1.03, -1.5],
+      [1.19, 1.84],
+      [0.22, 0.62],
+      [-0.53, -1.84],
+      [-1.53, -0.67],
+      [-0.67, -0.85],
+      [0.7, -0.48],
+      [0.54, 0.74],
+      [0.88, 1.08],
+      [-0.52, -2.66],
+      [0.76, 1.93],
+      [-0.2, 0.13],
+      [1.45, 1.14],
+      [0.1, -0.34],
+      [-0.99, -0.97],
+      [-0.31, -0.49],
+      [0.23, 0.24],
+      [0.32, -0.48],
+      [0.51, 1.4],
+      [-0.38, -0.38],
+      [0.2, -0.93],
+      [1.17, 0.51],
+      [1.06, 2.03],
+      [0.44, 0.21],
+      [0.72, 1.57],
+      [-1.6, -2.31],
+      [0.27, 1.04],
+      [0.1, 0.71],
+      [-0.34, -0.72],
+      [0.23, -0.33],
+      [-0.59, -0.27],
+      [-0.21, 0.02],
+      [0.32, -0.41],
+      [-0.31, -1.95],
+      [0.21, 1.59],
+      [0.85, 25.0],
+      [-1.4, -1.63],
+      [-0.56, -0.22],
+      [-1.86, -2.59],
+      [0.88, 2.52],
+      [0.96, 0.17],
+      [0.63, 1.78],
+      [0.65, 0.27],
+      [-0.45, -1.68],
+      [1.53, 1.86],
+      [0.92, 0.84],
+      [-2.71, -2.49],
+      [0.39, 1.25],
+      [0.86, -0.75],
+      [-1.2, -0.72],
+      [0.89, 1.65],
+      [-0.76, 1.24],
+      [-1.0, -1.31],
+      [-0.64, -3.02],
+      [1.23, 2.09],
+      [-0.22, -0.07]
+     ],
+     "x": "Market return (%)",
+     "y": "Stock return (%)",
+     "fit": true,
+     "fitLabel": "auto",
+     "height": 300,
+     "yRange": [-8, 44],
+     "xRange": [-3, 2]
+    },
+    "state": {
+     "lines": [
+      {"id": "tukey", "m": 1.142954, "b": 0.005175, "label": "bisquare", "colour": 2, "dashed": true}
+     ]
+    },
+    "derive": {
+     "caption": "Day 40 sits {{fixed((p39.y - 0.005175 - 1.142954*p39.x)/0.88977, 1)}} scale units above the bisquare line."
+    }
+   },
+   "question": "What is wrong with deleting the day by hand?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "rule", "text": "The rule \"drop what looks odd\" is chosen after seeing the result, and the day may be real", "correct": true},
+     {"id": "ok", "text": "Nothing: 1.151 is close to the truth", "why": "It happens to work here. Next time the odd-looking day may be the one that matters."},
+     {"id": "n", "text": "Only that 59 days are too few", "why": "Sample size is not the issue; the choice made from the data is."},
+     {"id": "lev", "text": "It removes a leverage point", "why": "Day 40 has an ordinary market move; it is an outlier in $y$, not a leverage point."}
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {"rung": "nudge", "text": "When was the rule \"delete it\" chosen?"},
+    {"rung": "point", "text": "After looking at the fit."},
+    {"rung": "step", "text": "A robust method states its rule in advance."}
+   ],
+   "feedback": {
+    "correct": "A rule fixed after seeing the data is not a rule.",
+    "generic": "Not quite. Ask when the deletion was decided.",
+    "byKey": {"ok": "You judged by the answer. A rule must not depend on whether you like the result."}
+   },
+   "explain": {
+    "text": "A takeover rumour is a real day. The bisquare fit downweights extreme residuals by a stated rule, $c = 4.685$ scale units, fixed before the data were seen."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The median of all slopes",
+   "prose": "Theil-Sen takes the slope through every pair of days and reports their median. Pairs with the same market return have no slope.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [-1.47, -1.22],
+      [-0.42, -0.65],
+      [-0.04, 1.54],
+      [0.39, -0.35],
+      [-1.03, -1.5],
+      [1.19, 1.84],
+      [0.22, 0.62],
+      [-0.53, -1.84],
+      [-1.53, -0.67],
+      [-0.67, -0.85],
+      [0.7, -0.48],
+      [0.54, 0.74],
+      [0.88, 1.08],
+      [-0.52, -2.66],
+      [0.76, 1.93],
+      [-0.2, 0.13],
+      [1.45, 1.14],
+      [0.1, -0.34],
+      [-0.99, -0.97],
+      [-0.31, -0.49],
+      [0.23, 0.24],
+      [0.32, -0.48],
+      [0.51, 1.4],
+      [-0.38, -0.38],
+      [0.2, -0.93],
+      [1.17, 0.51],
+      [1.06, 2.03],
+      [0.44, 0.21],
+      [0.72, 1.57],
+      [-1.6, -2.31],
+      [0.27, 1.04],
+      [0.1, 0.71],
+      [-0.34, -0.72],
+      [0.23, -0.33],
+      [-0.59, -0.27],
+      [-0.21, 0.02],
+      [0.32, -0.41],
+      [-0.31, -1.95],
+      [0.21, 1.59],
+      [0.85, 25.0],
+      [-1.4, -1.63],
+      [-0.56, -0.22],
+      [-1.86, -2.59],
+      [0.88, 2.52],
+      [0.96, 0.17],
+      [0.63, 1.78],
+      [0.65, 0.27],
+      [-0.45, -1.68],
+      [1.53, 1.86],
+      [0.92, 0.84],
+      [-2.71, -2.49],
+      [0.39, 1.25],
+      [0.86, -0.75],
+      [-1.2, -0.72],
+      [0.89, 1.65],
+      [-0.76, 1.24],
+      [-1.0, -1.31],
+      [-0.64, -3.02],
+      [1.23, 2.09],
+      [-0.22, -0.07]
+     ],
+     "x": "Market return (%)",
+     "y": "Stock return (%)",
+     "fit": true,
+     "fitLabel": "auto",
+     "height": 300,
+     "yRange": [-8, 44],
+     "xRange": [-3, 2]
+    },
+    "state": {
+     "lines": [
+      {"id": "tukey", "m": 1.142954, "b": 0.005175, "label": "bisquare", "colour": 2, "dashed": true}
+     ]
+    },
+    "derive": {
+     "caption": "Day 40 sits {{fixed((p39.y - 0.005175 - 1.142954*p39.x)/0.88977, 1)}} scale units above the bisquare line."
+    }
+   },
+   "question": "How many pairs of days are there among 60?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 1770,
+    "tol": {"abs": 0},
+    "unit": "",
+    "accept": "1,770: $\\binom{60}{2}$.",
+    "label": "Pairs",
+    "wrong": [
+     {
+      "id": "ord",
+      "value": 3540,
+      "tol": {"abs": 0}
+     },
+     {
+      "id": "used",
+      "value": 1764,
+      "tol": {"abs": 0}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Choose 2 of 60."},
+    {"rung": "point", "text": "$60 \\times 59/2$."},
+    {"rung": "step", "text": "1,770."}
+   ],
+   "feedback": {
+    "correct": "1,770 pairs; 6 share a market return, so 1,764 slopes.",
+    "generic": "Not quite right. Count unordered pairs.",
+    "byKey": {"ord": "You counted ordered pairs.", "used": "That is the slopes that exist; the question asks for all pairs."}
+   },
+   "explain": {"text": "The median of the 1,764 slopes is 1.2346, close to the true 1.2. One day can shift at most a few dozen slopes, so the median barely moves."}
+  },
+  {
+   "type": "problem",
+   "difficulty": 3,
+   "title": "Robust estimates in code",
+   "prose": "Write the scaled MAD, a trimmed mean, and the bisquare fit by IRLS. Start from OLS and set the scale to median$(|r|)/0.6745$, exactly `norm.ppf(0.75)`. Weight each day by $(1 - u^2)^2$ for $|u| = |r|/(cs) < 1$ and 0 beyond, then refit.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [-1.47, -1.22],
+      [-0.42, -0.65],
+      [-0.04, 1.54],
+      [0.39, -0.35],
+      [-1.03, -1.5],
+      [1.19, 1.84],
+      [0.22, 0.62],
+      [-0.53, -1.84],
+      [-1.53, -0.67],
+      [-0.67, -0.85],
+      [0.7, -0.48],
+      [0.54, 0.74],
+      [0.88, 1.08],
+      [-0.52, -2.66],
+      [0.76, 1.93],
+      [-0.2, 0.13],
+      [1.45, 1.14],
+      [0.1, -0.34],
+      [-0.99, -0.97],
+      [-0.31, -0.49],
+      [0.23, 0.24],
+      [0.32, -0.48],
+      [0.51, 1.4],
+      [-0.38, -0.38],
+      [0.2, -0.93],
+      [1.17, 0.51],
+      [1.06, 2.03],
+      [0.44, 0.21],
+      [0.72, 1.57],
+      [-1.6, -2.31],
+      [0.27, 1.04],
+      [0.1, 0.71],
+      [-0.34, -0.72],
+      [0.23, -0.33],
+      [-0.59, -0.27],
+      [-0.21, 0.02],
+      [0.32, -0.41],
+      [-0.31, -1.95],
+      [0.21, 1.59],
+      [0.85, 25.0],
+      [-1.4, -1.63],
+      [-0.56, -0.22],
+      [-1.86, -2.59],
+      [0.88, 2.52],
+      [0.96, 0.17],
+      [0.63, 1.78],
+      [0.65, 0.27],
+      [-0.45, -1.68],
+      [1.53, 1.86],
+      [0.92, 0.84],
+      [-2.71, -2.49],
+      [0.39, 1.25],
+      [0.86, -0.75],
+      [-1.2, -0.72],
+      [0.89, 1.65],
+      [-0.76, 1.24],
+      [-1.0, -1.31],
+      [-0.64, -3.02],
+      [1.23, 2.09],
+      [-0.22, -0.07]
+     ],
+     "x": "Market return (%)",
+     "y": "Stock return (%)",
+     "fit": true,
+     "fitLabel": "auto",
+     "height": 300,
+     "yRange": [-8, 44],
+     "xRange": [-3, 2]
+    },
+    "state": {
+     "lines": [
+      {"id": "tukey", "m": 1.142954, "b": 0.005175, "label": "bisquare", "colour": 2, "dashed": true}
+     ]
+    },
+    "derive": {
+     "caption": "Day 40 sits {{fixed((p39.y - 0.005175 - 1.142954*p39.x)/0.88977, 1)}} scale units above the bisquare line."
+    }
+   },
+   "question": "Complete the three functions.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nfrom scipy.stats import norm\n\n\ndef mad_scale(x):\n    ...\n\n\ndef trimmed_mean(x, prop):\n    ...\n\n\ndef bisquare_fit(X, y, c=4.685, tol=1e-12, max_iter=500):\n    \"\"\"Return (beta, weights), by IRLS from the OLS fit.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nfrom scipy.stats import norm\n\n\ndef mad_scale(x):\n    x = np.asarray(x, dtype=float)\n    return np.median(np.abs(x - np.median(x))) / norm.ppf(0.75)\n\n\ndef trimmed_mean(x, prop):\n    x = np.sort(np.asarray(x, dtype=float))\n    k = int(prop * len(x))\n    return x[k:len(x) - k].mean()\n\n\ndef bisquare_fit(X, y, c=4.685, tol=1e-12, max_iter=500):\n    X, y = np.asarray(X, dtype=float), np.asarray(y, dtype=float)\n    beta = np.linalg.lstsq(X, y, rcond=None)[0]\n    for _ in range(max_iter):\n        r = y - X @ beta\n        s = np.median(np.abs(r)) / norm.ppf(0.75)\n        u = r / (c * s)\n        w = np.where(np.abs(u) < 1, (1 - u ** 2) ** 2, 0.0)\n        new = np.linalg.solve(X.T @ (w[:, None] * X), X.T @ (w * y))\n        if np.max(np.abs(new - beta)) < tol:\n            return new, w\n        beta = new\n    return beta, w\n",
+    "examples": [
+     {
+      "call": "round(float(trimmed_mean([1.2, 0.8, -0.5, 1.5, 0.9, 1.1, -0.2, 0.7, 25.0], 0.2)), 4)",
+      "expect": "0.8571",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "x = [1.2, 0.8, -0.5, 1.5, 0.9, 1.1, -0.2, 0.7, 25.0]",
+      "call": "float(mad_scale(x))",
+      "expect": "0.4447806655516805",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "x = [1.2, 0.8, -0.5, 1.5, 0.9, 1.1, -0.2, 0.7, 25.0]",
+      "call": "float(trimmed_mean(x, 0.2))",
+      "expect": "0.8571428571428571",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "x = [1.2, 0.8, -0.5, 1.5, 0.9, 1.1, -0.2, 0.7, 25.0]",
+      "call": "float(trimmed_mean(x, 0.0))",
+      "expect": "3.388888888888889",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "rng = np.random.default_rng(83); m = np.round(rng.normal(0, 1, 60), 2); y = np.round(0.02 + 1.2 * m + rng.normal(0, 0.8, 60), 2); y[39] = 25.0; X = np.column_stack([np.ones(60), m])",
+      "call": "bisquare_fit(X, y)[0].tolist()",
+      "expect": "[0.005174627480889685, 1.1429544064430013]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-05}
+     },
+     {
+      "setup": "rng = np.random.default_rng(83); m = np.round(rng.normal(0, 1, 60), 2); y = np.round(0.02 + 1.2 * m + rng.normal(0, 0.8, 60), 2); y[39] = 25.0; X = np.column_stack([np.ones(60), m])",
+      "call": "float(bisquare_fit(X, y)[1][39])",
+      "expect": "0.0",
+      "compare": "isclose",
+      "tol": {"abs": 1e-12}
+     },
+     {
+      "setup": "rng = np.random.default_rng(83); m = np.round(rng.normal(0, 1, 60), 2); y = np.round(0.02 + 1.2 * m + rng.normal(0, 0.8, 60), 2); y[39] = 25.0; X = np.column_stack([np.ones(60), m])",
+      "call": "bool(bisquare_fit(X, y)[1].min() >= 0 and bisquare_fit(X, y)[1].max() <= 1)",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 6 hidden tests. Three check the scaled MAD and trimmed means of the fund months. Three check the bisquare fit on the 60 days (seed 83) against statsmodels' `RLM`, and weight 0 on day 40. The first run loads NumPy and SciPy, about 10 seconds."
+   },
+   "hints": [
+    {"rung": "nudge", "text": "`int(prop * len(x))` values come off each end of the sorted array."},
+    {"rung": "point", "text": "In the loop: residuals, scale, `u = r / (c * s)`, weights."},
+    {
+     "rung": "step",
+     "text": "Weighted solve: `np.linalg.solve(X.T @ (w[:, None] * X), X.T @ (w * y))`."
+    }
+   ],
+   "feedback": {"correct": "$(0.005175, 1.142954)$ with day 40 at weight 0.", "generic": "Some tests failed. Check the scale and that weights beyond $c$ are exactly 0."},
+   "explain": {
+    "text": "The scale settles at 0.88977, so day 40's residual of about 24 is 27 scale units out. Its weight is exactly 0. The bisquare line is then OLS on the other days, reweighted."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "statsmodels agrees",
+   "prose": "statsmodels fits both: `sm.RLM(y, X, M=sm.robust.norms.TukeyBiweight()).fit(conv='coefs', tol=1e-13)`, and the same with `HuberT()`. The first run loads statsmodels, which takes 20 to 40 seconds.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [-1.47, -1.22],
+      [-0.42, -0.65],
+      [-0.04, 1.54],
+      [0.39, -0.35],
+      [-1.03, -1.5],
+      [1.19, 1.84],
+      [0.22, 0.62],
+      [-0.53, -1.84],
+      [-1.53, -0.67],
+      [-0.67, -0.85],
+      [0.7, -0.48],
+      [0.54, 0.74],
+      [0.88, 1.08],
+      [-0.52, -2.66],
+      [0.76, 1.93],
+      [-0.2, 0.13],
+      [1.45, 1.14],
+      [0.1, -0.34],
+      [-0.99, -0.97],
+      [-0.31, -0.49],
+      [0.23, 0.24],
+      [0.32, -0.48],
+      [0.51, 1.4],
+      [-0.38, -0.38],
+      [0.2, -0.93],
+      [1.17, 0.51],
+      [1.06, 2.03],
+      [0.44, 0.21],
+      [0.72, 1.57],
+      [-1.6, -2.31],
+      [0.27, 1.04],
+      [0.1, 0.71],
+      [-0.34, -0.72],
+      [0.23, -0.33],
+      [-0.59, -0.27],
+      [-0.21, 0.02],
+      [0.32, -0.41],
+      [-0.31, -1.95],
+      [0.21, 1.59],
+      [0.85, 25.0],
+      [-1.4, -1.63],
+      [-0.56, -0.22],
+      [-1.86, -2.59],
+      [0.88, 2.52],
+      [0.96, 0.17],
+      [0.63, 1.78],
+      [0.65, 0.27],
+      [-0.45, -1.68],
+      [1.53, 1.86],
+      [0.92, 0.84],
+      [-2.71, -2.49],
+      [0.39, 1.25],
+      [0.86, -0.75],
+      [-1.2, -0.72],
+      [0.89, 1.65],
+      [-0.76, 1.24],
+      [-1.0, -1.31],
+      [-0.64, -3.02],
+      [1.23, 2.09],
+      [-0.22, -0.07]
+     ],
+     "x": "Market return (%)",
+     "y": "Stock return (%)",
+     "fit": true,
+     "fitLabel": "auto",
+     "height": 300,
+     "yRange": [-8, 44],
+     "xRange": [-3, 2]
+    },
+    "state": {
+     "lines": [
+      {"id": "tukey", "m": 1.142954, "b": 0.005175, "label": "bisquare", "colour": 2, "dashed": true}
+     ]
+    },
+    "derive": {
+     "caption": "Day 40 sits {{fixed((p39.y - 0.005175 - 1.142954*p39.x)/0.88977, 1)}} scale units above the bisquare line."
+    }
+   },
+   "question": "Complete `rlm_fits`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import numpy as np\nimport statsmodels.api as sm\n\n\ndef rlm_fits(X, y):\n    \"\"\"Return (Tukey params, Huber params, Huber weight on day 40).\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nimport statsmodels.api as sm\n\n\ndef rlm_fits(X, y):\n    t = sm.RLM(y, X, M=sm.robust.norms.TukeyBiweight()).fit(conv='coefs', tol=1e-13)\n    h = sm.RLM(y, X, M=sm.robust.norms.HuberT()).fit(conv='coefs', tol=1e-13)\n    return t.params, h.params, h.weights[39]\n",
+    "examples": [
+     {
+      "setup": "rng = np.random.default_rng(83); m = np.round(rng.normal(0, 1, 60), 2); y = np.round(0.02 + 1.2 * m + rng.normal(0, 0.8, 60), 2); y[39] = 25.0; X = np.column_stack([np.ones(60), m])",
+      "call": "[round(v, 4) for v in rlm_fits(X, y)[0].tolist()]",
+      "expect": "[0.0052, 1.143]",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "rng = np.random.default_rng(83); m = np.round(rng.normal(0, 1, 60), 2); y = np.round(0.02 + 1.2 * m + rng.normal(0, 0.8, 60), 2); y[39] = 25.0; X = np.column_stack([np.ones(60), m])",
+      "call": "rlm_fits(X, y)[0].tolist()",
+      "expect": "[0.005174627480889685, 1.1429544064430013]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "rng = np.random.default_rng(83); m = np.round(rng.normal(0, 1, 60), 2); y = np.round(0.02 + 1.2 * m + rng.normal(0, 0.8, 60), 2); y[39] = 25.0; X = np.column_stack([np.ones(60), m])",
+      "call": "rlm_fits(X, y)[1].tolist()",
+      "expect": "[0.026846337400840907, 1.1679356624239206]",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     },
+     {
+      "setup": "rng = np.random.default_rng(83); m = np.round(rng.normal(0, 1, 60), 2); y = np.round(0.02 + 1.2 * m + rng.normal(0, 0.8, 60), 2); y[39] = 25.0; X = np.column_stack([np.ones(60), m])",
+      "call": "float(rlm_fits(X, y)[2])",
+      "expect": "0.05027418241684588",
+      "compare": "isclose",
+      "tol": {"abs": 1e-06}
+     }
+    ],
+    "how": "Check runs 3 hidden tests against statsmodels values computed once in Pyodide, within $10^{-6}$. They cover both fits and Huber's weight on day 40. The first run loads statsmodels, which takes 20 to 40 seconds.",
+    "budget": 60000
+   },
+   "hints": [
+    {"rung": "nudge", "text": "`M=` chooses the weight function."},
+    {"rung": "point", "text": "`conv='coefs'` stops on the coefficients; `tol=1e-13` makes it tight."},
+    {"rung": "step", "text": "Huber's weights are in `.weights`; day 40 is index 39."}
+   ],
+   "feedback": {
+    "correct": "Tukey 1.142954, Huber 1.167936, with Huber's weight on day 40 at 0.0503.",
+    "generic": "Some tests failed. Fit two `RLM` models and return their params and Huber's weight 39."
+   },
+   "explain": {"text": "Huber never sets a weight to 0: day 40 keeps 0.0503 and nudges the slope to 1.1679. The bisquare's redescending weight ignores it entirely."}
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "Sizing a hedge",
+   "prose": "A desk holds £5m of the stock and hedges its market exposure by selling the index: beta times £5m. OLS says 1.583828, the bisquare fit 1.142954.",
+   "canvas": {
+    "kind": "scatter",
+    "params": {
+     "points": [
+      [-1.47, -1.22],
+      [-0.42, -0.65],
+      [-0.04, 1.54],
+      [0.39, -0.35],
+      [-1.03, -1.5],
+      [1.19, 1.84],
+      [0.22, 0.62],
+      [-0.53, -1.84],
+      [-1.53, -0.67],
+      [-0.67, -0.85],
+      [0.7, -0.48],
+      [0.54, 0.74],
+      [0.88, 1.08],
+      [-0.52, -2.66],
+      [0.76, 1.93],
+      [-0.2, 0.13],
+      [1.45, 1.14],
+      [0.1, -0.34],
+      [-0.99, -0.97],
+      [-0.31, -0.49],
+      [0.23, 0.24],
+      [0.32, -0.48],
+      [0.51, 1.4],
+      [-0.38, -0.38],
+      [0.2, -0.93],
+      [1.17, 0.51],
+      [1.06, 2.03],
+      [0.44, 0.21],
+      [0.72, 1.57],
+      [-1.6, -2.31],
+      [0.27, 1.04],
+      [0.1, 0.71],
+      [-0.34, -0.72],
+      [0.23, -0.33],
+      [-0.59, -0.27],
+      [-0.21, 0.02],
+      [0.32, -0.41],
+      [-0.31, -1.95],
+      [0.21, 1.59],
+      [0.85, 25.0],
+      [-1.4, -1.63],
+      [-0.56, -0.22],
+      [-1.86, -2.59],
+      [0.88, 2.52],
+      [0.96, 0.17],
+      [0.63, 1.78],
+      [0.65, 0.27],
+      [-0.45, -1.68],
+      [1.53, 1.86],
+      [0.92, 0.84],
+      [-2.71, -2.49],
+      [0.39, 1.25],
+      [0.86, -0.75],
+      [-1.2, -0.72],
+      [0.89, 1.65],
+      [-0.76, 1.24],
+      [-1.0, -1.31],
+      [-0.64, -3.02],
+      [1.23, 2.09],
+      [-0.22, -0.07]
+     ],
+     "x": "Market return (%)",
+     "y": "Stock return (%)",
+     "fit": true,
+     "fitLabel": "auto",
+     "height": 300,
+     "yRange": [-8, 44],
+     "xRange": [-3, 2]
+    },
+    "state": {
+     "lines": [
+      {"id": "tukey", "m": 1.142954, "b": 0.005175, "label": "bisquare", "colour": 2, "dashed": true}
+     ]
+    },
+    "derive": {
+     "caption": "Day 40 sits {{fixed((p39.y - 0.005175 - 1.142954*p39.x)/0.88977, 1)}} scale units above the bisquare line."
+    }
+   },
+   "question": "How much more index, in pounds, does the OLS hedge sell than the bisquare hedge?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 2204370,
+    "tol": {"abs": 100},
+    "unit": "£",
+    "accept": "£2,204,370: $5{,}000{,}000 \\times (1.583828 - 1.142954)$.",
+    "label": "Extra index sold",
+    "wrong": [
+     {
+      "id": "ols",
+      "value": 7919140,
+      "tol": {"abs": 100}
+     },
+     {
+      "id": "rob",
+      "value": 5714770,
+      "tol": {"abs": 100}
+     }
+    ]
+   },
+   "hints": [
+    {"rung": "nudge", "text": "Each hedge is beta times £5m."},
+    {"rung": "point", "text": "The difference in betas is 0.440874."},
+    {
+     "rung": "step",
+     "text": "$0.440874 \\times 5{,}000{,}000$."
+    }
+   ],
+   "feedback": {
+    "correct": "£2.2m of extra index: the OLS hedge is about a third too big against the true beta of 1.2.",
+    "generic": "Not quite right. Multiply the difference in betas by £5m.",
+    "byKey": {"ols": "That is the whole OLS hedge.", "rob": "That is the whole bisquare hedge."}
+   },
+   "explain": {
+    "text": "OLS would sell £7.92m of index, the bisquare £5.71m: £2,204,370 more. Against a true beta of 1.2, OLS over-hedges by about a third, so a robust fit is the desk's default."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "One month moves the mean (breakdown point 0) but not the median (one half): 3.389% against 0.9%.",
+   "Trimmed means, the scaled MAD and M-estimates give typical values and spreads that one wild day cannot drag.",
+   "Robust regression: the bisquare fit gives a takeover day weight 0, a beta of 1.143 against OLS's 1.584."
+  ],
+  "formula": {
+   "name": "Tukey's bisquare weight",
+   "tex": "w(u) = (1 - u^2)^2 \\text{ for } |u| < 1, \\; 0 \\text{ otherwise}, \\quad u = \\frac{r}{c\\,s}",
+   "note": "$c = 4.685$, $s = \\text{median}|r|/0.6745$."
+  },
+  "trap": "Deleting an outlier by hand after seeing the fit: state a robust rule in advance instead."
+ },
+ "quiz": [
+  {
+   "id": "q-break",
+   "difficulty": 2,
+   "prose": "Of 20 daily returns, 11 are replaced by arbitrary garbage values.",
+   "question": "Which estimate can still be trusted?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "none", "text": "None of the usual ones: past half the data, even the median breaks down", "correct": true},
+     {"id": "median", "text": "The median, which is robust", "why": "The median's breakdown point is one half; with 11 of 20 corrupted it can be anywhere."},
+     {"id": "trim", "text": "The 20% trimmed mean", "why": "It cuts 4 from each end; 11 bad values cannot all be trimmed."}
+    ]
+   },
+   "feedback": {"correct": "Beyond half, no estimate survives.", "generic": "Not quite right. Compare 11 of 20 with each breakdown point."},
+   "explain": {"text": "Breakdown points cap at one half: with most of the data corrupt, the corruption is the data."}
+  },
+  {
+   "id": "q-leverage",
+   "difficulty": 3,
+   "prose": "On one day the market fell 6% and the stock 12%. Both are far beyond every other day, but in line with a beta of 2.",
+   "question": "Why can this day pull OLS without looking odd in the residuals?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {"id": "lev", "text": "It is a leverage point: its extreme $x$ lets it drag the line towards itself", "correct": true},
+     {"id": "noise", "text": "It is just noise", "why": "Its $x$ is far from the rest, which gives it outsized influence on the slope."},
+     {"id": "no", "text": "It cannot pull OLS: its residual is small", "why": "Its residual is small because the line has moved to it."}
+    ]
+   },
+   "feedback": {"correct": "High leverage hides in small residuals.", "generic": "Not quite right. Think about how far its $x$ is from the others."},
+   "explain": {"text": "A point far out in $x$ pulls the line towards itself, so its own residual looks ordinary. Check leverage as well as residuals."}
+  },
+  {
+   "id": "q-mad",
+   "difficulty": 2,
+   "prose": "Five returns: 0.1, 0.4, 0.5, 0.7, 9.0.",
+   "question": "What is the raw MAD (unscaled)?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 0.2,
+    "tol": {"abs": 0.0005},
+    "unit": "",
+    "accept": "0.2: median 0.5; deviations 0.4, 0.1, 0, 0.2, 8.5; their median is 0.2.",
+    "label": "MAD",
+    "wrong": [
+     {
+      "id": "scaled",
+      "value": 0.2965,
+      "tol": {"abs": 0.0005}
+     },
+     {
+      "id": "mean",
+      "value": 1.84,
+      "tol": {"abs": 0.005}
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "0.2.",
+    "generic": "Not quite right. Median of the absolute deviations from the median.",
+    "byKey": {"scaled": "That is scaled by 1.4826.", "mean": "That is the mean absolute deviation."}
+   },
+   "explain": {"text": "Median 0.5; absolute deviations 0.4, 0.1, 0.0, 0.2, 8.5; their median is 0.2."}
+  }
+ ]
+}
