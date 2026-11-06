@@ -1,0 +1,1433 @@
+{
+ "id": "l5-linear-programmes",
+ "course": "convex",
+ "title": "Linear programmes",
+ "minutes": 14,
+ "objectives": [
+  "Write a trading or allocation problem as a linear programme."
+ ],
+ "skills": [
+  "cv-lp"
+ ],
+ "screens": [
+  {
+   "type": "explore",
+   "difficulty": 1,
+   "title": "The desk problem",
+   "prose": "A fund puts $x$ and $y$ (£m) into strategies A and B. It expects £60k and £40k of profit a year per £m. It has at most £10m. A uses 3 risk units per £m and B one, with 18 available. At most £5m fits in A. Drag P around the shaded plans.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      11
+     ],
+     "y": [
+      -0.5,
+      12.5
+     ],
+     "height": 300,
+     "grid": 2,
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "xLabel": "$x$ (£m in A)",
+     "yLabel": "$y$ (£m in B)",
+     "functions": [
+      {
+       "id": "bud",
+       "expr": "10 - x",
+       "domain": [
+        0,
+        10.5
+       ],
+       "label": "budget",
+       "labelAt": 8.5,
+       "colour": 2
+      },
+      {
+       "id": "risk",
+       "expr": "18 - 3*x",
+       "domain": [
+        2,
+        6
+       ],
+       "label": "risk",
+       "labelAt": 5.8,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "polygons": [
+      {
+       "id": "region",
+       "points": [
+        [
+         0,
+         0
+        ],
+        [
+         5,
+         0
+        ],
+        [
+         5,
+         3
+        ],
+        [
+         4,
+         6
+        ],
+        [
+         0,
+         10
+        ]
+       ],
+       "colour": 1
+      }
+     ],
+     "vlines": [
+      {
+       "id": "liq",
+       "x": 5,
+       "label": "liquidity"
+      }
+     ],
+     "points": [
+      {
+       "id": "P",
+       "x": 1,
+       "y": 2,
+       "drag": true,
+       "snap": 0.5,
+       "label": "P"
+      }
+     ]
+    },
+    "derive": {
+     "caption": "P = ({{fixed(P.x, 1)}}, {{fixed(P.y, 1)}}): profit £{{fixed(60*P.x + 40*P.y, 0)}}k, {{(P.x + P.y > 10.0001 ? 'outside: over budget' : (3*P.x + P.y > 18.0001 ? 'outside: over the risk budget' : (P.x > 5.0001 ? 'outside: over the liquidity limit' : (P.x < -0.0001 || P.y < -0.0001 ? 'outside: negative' : 'inside'))))}}."
+    },
+    "maxHeight": 330
+   },
+   "question": "Drag P to $(2, 5)$. What profit does that plan earn, in £k a year?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 320,
+    "tol": {
+     "abs": 0.5
+    },
+    "accept": "£320k: $60 \\times 2 + 40 \\times 5$.",
+    "unit": "£k",
+    "label": "Profit",
+    "wrong": [
+     {
+      "id": "swap",
+      "value": 380,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "sum",
+      "value": 7,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Profit is $60x + 40y$ in £k."
+    },
+    {
+     "rung": "point",
+     "text": "$60 \\times 2 = 120$ and $40 \\times 5 = 200$.",
+     "highlight": [
+      "P"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$120 + 200 = 320$."
+    }
+   ],
+   "feedback": {
+    "correct": "£320k. Drag P across a line and the caption names the limit it breaks.",
+    "generic": "Not quite right. Compute $60x + 40y$ at $x = 2$, $y = 5$.",
+    "byKey": {
+     "swap": "You swapped the rates: $40 \\times 2 + 60 \\times 5 = 380$. A earns 60 per £m.",
+     "sum": "You added the £m. Profit weights each by its rate."
+    }
+   },
+   "explain": {
+    "text": "$60 \\times 2 + 40 \\times 5 = 320$, so the plan earns £320k a year. It sits inside every limit; plans outside the shading break at least one.",
+    "canvas": {
+     "points": {
+      "P": {
+       "x": 2,
+       "y": 5
+      }
+     }
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 1,
+   "title": "Each limit is a line",
+   "prose": "Each sentence of the story is one straight line on the picture, with the allowed plans on one side.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      11
+     ],
+     "y": [
+      -0.5,
+      12.5
+     ],
+     "height": 300,
+     "grid": 2,
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "xLabel": "$x$ (£m in A)",
+     "yLabel": "$y$ (£m in B)",
+     "functions": [
+      {
+       "id": "bud",
+       "expr": "10 - x",
+       "domain": [
+        0,
+        10.5
+       ],
+       "label": "budget",
+       "labelAt": 8.5,
+       "colour": 2
+      },
+      {
+       "id": "risk",
+       "expr": "18 - 3*x",
+       "domain": [
+        2,
+        6
+       ],
+       "label": "risk",
+       "labelAt": 5.8,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "polygons": [
+      {
+       "id": "region",
+       "points": [
+        [
+         0,
+         0
+        ],
+        [
+         5,
+         0
+        ],
+        [
+         5,
+         3
+        ],
+        [
+         4,
+         6
+        ],
+        [
+         0,
+         10
+        ]
+       ],
+       "colour": 1
+      }
+     ],
+     "vlines": [
+      {
+       "id": "liq",
+       "x": 5,
+       "label": "liquidity"
+      }
+     ]
+    },
+    "maxHeight": 330
+   },
+   "question": "Match each limit to its line.",
+   "widget": {
+    "kind": "place",
+    "mode": "assign",
+    "tokens": [
+     {
+      "id": "t1",
+      "text": "At most £10m in all"
+     },
+     {
+      "id": "t2",
+      "text": "3 risk units per £m of A, one per £m of B, 18 available"
+     },
+     {
+      "id": "t3",
+      "text": "At most £5m in A"
+     }
+    ],
+    "slots": [
+     {
+      "id": "s1",
+      "label": "$x + y = 10$",
+      "accepts": [
+       "t1"
+      ]
+     },
+     {
+      "id": "s2",
+      "label": "$3x + y = 18$",
+      "accepts": [
+       "t2"
+      ]
+     },
+     {
+      "id": "s3",
+      "label": "$x = 5$",
+      "accepts": [
+       "t3"
+      ]
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The budget adds the two amounts."
+    },
+    {
+     "rung": "point",
+     "text": "Risk weights A by 3.",
+     "highlight": [
+      "bud",
+      "risk",
+      "liq"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Liquidity mentions A only, so it is a vertical line."
+    }
+   ],
+   "feedback": {
+    "correct": "The amounts $x$ and $y$ are the **decision variables** and $60x + 40y$ is a **linear objective**. The limits are **linear constraints**. The plans meeting all of them form the **feasible region**.",
+    "generic": "Not quite right. Read each sentence for which amounts it involves and with what weights.",
+    "byKey": {
+     "t1": "The total of $x$ and $y$ is the budget line $x + y = 10$.",
+     "t2": "Risk weights A by 3: $3x + y = 18$.",
+     "t3": "Only A is limited by liquidity: $x = 5$."
+    }
+   },
+   "explain": {
+    "text": "The limits are $x + y \\le 10$, $3x + y \\le 18$ and $x \\le 5$. With $x, y \\ge 0$ they cut out the pentagon, the **feasible region**.",
+    "canvas": {
+     "highlight": [
+      "region"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "From words to a constraint",
+   "prose": "A new limit: each £m of A uses 2 units of margin and each £m of B uses 4. The desk has 36 units.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      11
+     ],
+     "y": [
+      -0.5,
+      12.5
+     ],
+     "height": 300,
+     "grid": 2,
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "xLabel": "$x$ (£m in A)",
+     "yLabel": "$y$ (£m in B)",
+     "functions": [
+      {
+       "id": "bud",
+       "expr": "10 - x",
+       "domain": [
+        0,
+        10.5
+       ],
+       "label": "budget",
+       "labelAt": 8.5,
+       "colour": 2
+      },
+      {
+       "id": "risk",
+       "expr": "18 - 3*x",
+       "domain": [
+        2,
+        6
+       ],
+       "label": "risk",
+       "labelAt": 5.8,
+       "colour": 3
+      },
+      {
+       "id": "mar",
+       "expr": "(36 - 2*x)/4",
+       "domain": [
+        0,
+        11
+       ],
+       "label": "margin",
+       "dashed": true,
+       "labelAt": 1.2,
+       "colour": 4
+      }
+     ]
+    },
+    "state": {
+     "polygons": [
+      {
+       "id": "region",
+       "points": [
+        [
+         0,
+         0
+        ],
+        [
+         5,
+         0
+        ],
+        [
+         5,
+         3
+        ],
+        [
+         4,
+         6
+        ],
+        [
+         0,
+         10
+        ]
+       ],
+       "colour": 1
+      }
+     ],
+     "vlines": [
+      {
+       "id": "liq",
+       "x": 5,
+       "label": "liquidity"
+      }
+     ]
+    },
+    "maxHeight": 330
+   },
+   "question": "Write the margin used by a plan $(x, y)$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "2x+4y",
+    "accept": [
+     "2x + 4y",
+     "4y+2x"
+    ],
+    "wrong": [
+     {
+      "id": "swap",
+      "tex": "4x+2y"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Each £m of A uses 2 units."
+    },
+    {
+     "rung": "point",
+     "text": "Each £m of B uses 4 units.",
+     "highlight": [
+      "mar"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Margin used is $2x + 4y$, and the limit is $2x + 4y \\le 36$."
+    }
+   ],
+   "feedback": {
+    "correct": "$2x + 4y \\le 36$. It passes outside the pentagon here: at $(4, 6)$ it uses $8 + 24 = 32$.",
+    "generic": "Not quite right. Multiply each amount by its units per £m and add.",
+    "byKey": {
+     "swap": "You attached the 4 to $x$. A uses 2 units per £m and B uses 4."
+    }
+   },
+   "explain": {
+    "text": "Units per £m times £m, added over the strategies: $2x + 4y$. The limit is $2x + 4y \\le 36$, the dashed line.",
+    "canvas": {
+     "highlight": [
+      "mar"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "The general form",
+   "prose": "Every such problem reads $\\max \\mathbf{c}^T\\mathbf{x}$ subject to $\\mathbf{A}\\mathbf{x} \\le \\mathbf{b}$, $\\mathbf{x} \\ge \\mathbf{0}$. Here $\\mathbf{c} = (60, 40)$, $\\mathbf{b} = (10, 18, 5)$, and each row of $\\mathbf{A}$ is one limit.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      11
+     ],
+     "y": [
+      -0.5,
+      12.5
+     ],
+     "height": 300,
+     "grid": 2,
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "xLabel": "$x$ (£m in A)",
+     "yLabel": "$y$ (£m in B)",
+     "functions": [
+      {
+       "id": "bud",
+       "expr": "10 - x",
+       "domain": [
+        0,
+        10.5
+       ],
+       "label": "budget",
+       "labelAt": 8.5,
+       "colour": 2
+      },
+      {
+       "id": "risk",
+       "expr": "18 - 3*x",
+       "domain": [
+        2,
+        6
+       ],
+       "label": "risk",
+       "labelAt": 5.8,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "polygons": [
+      {
+       "id": "region",
+       "points": [
+        [
+         0,
+         0
+        ],
+        [
+         5,
+         0
+        ],
+        [
+         5,
+         3
+        ],
+        [
+         4,
+         6
+        ],
+        [
+         0,
+         10
+        ]
+       ],
+       "colour": 1
+      }
+     ],
+     "vlines": [
+      {
+       "id": "liq",
+       "x": 5,
+       "label": "liquidity"
+      }
+     ]
+    },
+    "maxHeight": 330
+   },
+   "question": "What is the first column of $\\mathbf{A}$, the coefficients of $x$ in the three limits?",
+   "widget": {
+    "kind": "expression",
+    "answer": "(1, 3, 1)",
+    "accept": [
+     "(1,3,1)"
+    ],
+    "wrong": [
+     {
+      "id": "row",
+      "tex": "(1, 1)"
+     },
+     {
+      "id": "ycol",
+      "tex": "(1, 1, 0)"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "List the coefficient of $x$ in budget, risk and liquidity, in that order."
+    },
+    {
+     "rung": "point",
+     "text": "Budget 1, risk 3, liquidity 1.",
+     "highlight": [
+      "bud",
+      "risk",
+      "liq"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The column is $(1, 3, 1)$; the $y$ column is $(1, 1, 0)$."
+    }
+   ],
+   "feedback": {
+    "correct": "$(1, 3, 1)$. So $\\mathbf{A} = \\begin{pmatrix}1 & 1\\\\ 3 & 1\\\\ 1 & 0\\end{pmatrix}$, one row per limit, one column per variable.",
+    "generic": "Not quite right. Read down the $x$ coefficients of the three limits.",
+    "byKey": {
+     "row": "That is the first row, the budget. A column runs down the limits.",
+     "ycol": "That is the $y$ column: liquidity has no $y$.",
+     "length": "Give one number per limit: three entries."
+    }
+   },
+   "explain": {
+    "text": "$\\mathbf{A} = \\begin{pmatrix}1 & 1\\\\ 3 & 1\\\\ 1 & 0\\end{pmatrix}$, so $\\mathbf{A}\\mathbf{x} \\le \\mathbf{b}$ stacks the three limits. Its first column holds what one £m of A uses of each limit."
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "Slack",
+   "prose": "A **slack** variable measures room left: $s_1 = 10 - x - y$, $s_2 = 18 - 3x - y$, $s_3 = 5 - x$, each $\\ge 0$. Each inequality becomes an equality with $s \\ge 0$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      11
+     ],
+     "y": [
+      -0.5,
+      12.5
+     ],
+     "height": 300,
+     "grid": 2,
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "xLabel": "$x$ (£m in A)",
+     "yLabel": "$y$ (£m in B)",
+     "functions": [
+      {
+       "id": "bud",
+       "expr": "10 - x",
+       "domain": [
+        0,
+        10.5
+       ],
+       "label": "budget",
+       "labelAt": 8.5,
+       "colour": 2
+      },
+      {
+       "id": "risk",
+       "expr": "18 - 3*x",
+       "domain": [
+        2,
+        6
+       ],
+       "label": "risk",
+       "labelAt": 5.8,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "polygons": [
+      {
+       "id": "region",
+       "points": [
+        [
+         0,
+         0
+        ],
+        [
+         5,
+         0
+        ],
+        [
+         5,
+         3
+        ],
+        [
+         4,
+         6
+        ],
+        [
+         0,
+         10
+        ]
+       ],
+       "colour": 1
+      }
+     ],
+     "vlines": [
+      {
+       "id": "liq",
+       "x": 5,
+       "label": "liquidity"
+      }
+     ],
+     "points": [
+      {
+       "id": "V",
+       "x": 4,
+       "y": 6,
+       "label": "(4, 6)",
+       "labelPos": "e"
+      }
+     ]
+    },
+    "maxHeight": 330
+   },
+   "question": "Give the slacks $(s_1, s_2, s_3)$ at the plan $(4, 6)$.",
+   "widget": {
+    "kind": "expression",
+    "answer": "(0, 0, 1)",
+    "accept": [
+     "(0,0,1)"
+    ],
+    "wrong": [
+     {
+      "id": "used",
+      "tex": "(10, 18, 4)"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Subtract what the plan uses from each limit."
+    },
+    {
+     "rung": "point",
+     "text": "Budget $10 - 10$, risk $18 - 18$, liquidity $5 - 4$.",
+     "highlight": [
+      "V"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$(0, 0, 1)$: budget and risk are used up."
+    }
+   ],
+   "feedback": {
+    "correct": "$(0, 0, 1)$. Budget and risk are **active** at $(4, 6)$; £1m of liquidity room is unused.",
+    "generic": "Not quite right. Compute $b_i$ minus what the plan uses of limit $i$.",
+    "byKey": {
+     "used": "Those are the amounts used, not the room left.",
+     "length": "Give three slacks, one per limit."
+    }
+   },
+   "explain": {
+    "text": "$s_1 = 10 - 4 - 6 = 0$, $s_2 = 18 - 12 - 6 = 0$ and $s_3 = 5 - 4 = 1$. A zero slack marks a limit the plan presses against.",
+    "canvas": {
+     "highlight": [
+      "V",
+      "bud",
+      "risk"
+     ]
+    }
+   }
+  },
+  {
+   "type": "ladder",
+   "difficulty": 2,
+   "title": "An execution problem",
+   "prose": "A trader must buy exactly 10,000 shares across three venues. Let $a$, $b$, $c$ be the shares sent to each.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Venue",
+      "Fee per share",
+      "Capacity"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.30p",
+       "4,000"
+      ],
+      [
+       "2",
+       "0.25p",
+       "3,000"
+      ],
+      [
+       "3",
+       "0.40p",
+       "6,000"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Which linear programme describes the cheapest split?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$\\min 0.30a + 0.25b + 0.40c$ s.t. $a + b + c = 10{,}000$, $0 \\le a \\le 4{,}000$, $0 \\le b \\le 3{,}000$, $0 \\le c \\le 6{,}000$",
+      "correct": true
+     },
+     {
+      "id": "le",
+      "text": "$\\min 0.30a + 0.25b + 0.40c$ s.t. $a + b + c \\le 10{,}000$ and the capacities",
+      "why": "With $\\le$ the cheapest plan buys nothing. The order must be filled: an equality."
+     },
+     {
+      "id": "max",
+      "text": "$\\max 0.30a + 0.25b + 0.40c$ s.t. $a + b + c = 10{,}000$ and the capacities",
+      "why": "That finds the most expensive split. Fees are to be minimised."
+     }
+    ],
+    "shuffle": true
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "What must the three amounts add to?"
+    },
+    {
+     "rung": "point",
+     "text": "Exactly 10,000: an equality, not a limit.",
+     "highlight": [
+      "r0",
+      "r1",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Minimise fees, with an equality for the total and bounds for the capacities."
+    }
+   ],
+   "feedback": {
+    "correct": "An equality for the total and a bound per venue. The problem has three variables and is still linear.",
+    "generic": "Not quite right. The order must be filled exactly, at the lowest fees.",
+    "byKey": {
+     "le": "That allows $a = b = c = 0$, which costs nothing and fills nothing.",
+     "max": "Maximising fees is the wrong direction."
+    }
+   },
+   "explain": {
+    "text": "The total is an equality row and each capacity is a bound $0 \\le a_i \\le u_i$. The objective is the fee bill in pence, to be minimised."
+   }
+  },
+  {
+   "type": "trap",
+   "difficulty": 3,
+   "title": "At least, not at most",
+   "prose": "A hedge buys $a$ and $b$ futures costing £1.0k and £1.5k each. They cover $(2, 1)$ and $(1, 3)$ of two risk factors per contract, and the book needs at least $(8, 9)$. Minimise $1.0a + 1.5b$ (£k).",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      10
+     ],
+     "y": [
+      -0.5,
+      10
+     ],
+     "height": 280,
+     "grid": 1,
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "xLabel": "$a$ (contracts)",
+     "yLabel": "$b$ (contracts)",
+     "functions": [
+      {
+       "id": "f1",
+       "expr": "8 - 2*x",
+       "domain": [
+        0,
+        4.2
+       ],
+       "label": "$2a + b = 8$",
+       "labelAt": 3.7,
+       "colour": 2
+      },
+      {
+       "id": "f2",
+       "expr": "(9 - x)/3",
+       "domain": [
+        0,
+        10
+       ],
+       "label": "$a + 3b = 9$",
+       "labelAt": 8,
+       "colour": 3
+      }
+     ]
+    },
+    "state": {
+     "polygons": [
+      {
+       "id": "cover",
+       "points": [
+        [
+         0,
+         8
+        ],
+        [
+         3,
+         2
+        ],
+        [
+         9,
+         0
+        ],
+        [
+         10,
+         0
+        ],
+        [
+         10,
+         10
+        ],
+        [
+         0,
+         10
+        ]
+       ],
+       "colour": 1
+      }
+     ],
+     "points": [
+      {
+       "id": "H1",
+       "x": 0,
+       "y": 8,
+       "label": "(0, 8)",
+       "labelPos": "e"
+      },
+      {
+       "id": "H2",
+       "x": 3,
+       "y": 2,
+       "label": "(3, 2)",
+       "labelPos": "ne"
+      },
+      {
+       "id": "H3",
+       "x": 9,
+       "y": 0,
+       "label": "(9, 0)",
+       "labelPos": "n"
+      }
+     ]
+    },
+    "maxHeight": 330
+   },
+   "question": "What does the cheapest hedge cost, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 6000,
+    "tol": {
+     "abs": 0.5
+    },
+    "accept": "£6,000, at $(a, b) = (3, 2)$.",
+    "unit": "£",
+    "label": "Cost of the cheapest hedge",
+    "wrong": [
+     {
+      "id": "flip",
+      "value": 0,
+      "tol": {
+       "abs": 0.5
+      },
+      "canvas": {
+       "polygons": [
+        {
+         "id": "cover",
+         "points": [
+          [
+           0,
+           0
+          ],
+          [
+           4,
+           0
+          ],
+          [
+           3,
+           2
+          ],
+          [
+           0,
+           3
+          ]
+         ],
+         "colour": 4
+        }
+       ],
+       "caption": "With $\\le$ rows the region is this small corner, and $(0, 0)$ costs nothing."
+      }
+     },
+     {
+      "id": "corner",
+      "value": 9000,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "corner2",
+      "value": 12000,
+      "tol": {
+       "abs": 0.5
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "The rows are $2a + b \\ge 8$ and $a + 3b \\ge 9$."
+    },
+    {
+     "rung": "point",
+     "text": "The region is unbounded upwards; its corners are $(0, 8)$, $(3, 2)$ and $(9, 0)$.",
+     "highlight": [
+      "H1",
+      "H2",
+      "H3"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "Costs: £12k, £6k and £9k."
+    }
+   ],
+   "feedback": {
+    "correct": "£6,000 at $(3, 2)$. \"At least\" rows point away from the origin, so doing nothing is not allowed.",
+    "generic": "Not quite right. Price the three corners of the region where both cover rows hold.",
+    "byKey": {
+     "flip": "You wrote the rows with $\\le$, so buying nothing \"wins\" at £0. The book needs at least $(8, 9)$ of cover.",
+     "corner": "£9,000 is the corner $(9, 0)$. The corner $(3, 2)$ is cheaper.",
+     "corner2": "£12,000 is the corner $(0, 8)$. Mixing both contracts is cheaper."
+    }
+   },
+   "explain": {
+    "text": "Solving $2a + b = 8$ and $a + 3b = 9$ gives $(3, 2)$, costing $3 + 3 = 6$, so £6,000. With the rows reversed the region flips to the corner at the origin, and the \"best\" hedge buys nothing.",
+    "canvas": {
+     "highlight": [
+      "H2"
+     ]
+    }
+   }
+  },
+  {
+   "type": "problem",
+   "difficulty": 2,
+   "title": "No best plan",
+   "prose": "Drop the budget and the risk limit and keep only $x \\le 5$ with $x, y \\ge 0$. Maximise $60x + 40y$.",
+   "canvas": {
+    "kind": "plane",
+    "params": {
+     "x": [
+      -0.5,
+      11
+     ],
+     "y": [
+      -0.5,
+      12.5
+     ],
+     "height": 260,
+     "grid": 2,
+     "xTicks": "integer",
+     "yTicks": "integer",
+     "xLabel": "$x$",
+     "yLabel": "$y$"
+    },
+    "state": {
+     "polygons": [
+      {
+       "id": "strip",
+       "points": [
+        [
+         0,
+         0
+        ],
+        [
+         5,
+         0
+        ],
+        [
+         5,
+         12.5
+        ],
+        [
+         0,
+         12.5
+        ]
+       ],
+       "colour": 1
+      }
+     ],
+     "vlines": [
+      {
+       "id": "liq",
+       "x": 5,
+       "label": "liquidity"
+      }
+     ],
+     "caption": "The strip runs up for ever."
+    },
+    "maxHeight": 330
+   },
+   "question": "What is the best profit?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "unb",
+      "text": "There is none: profit grows without limit as $y$ grows.",
+      "correct": true
+     },
+     {
+      "id": "x5",
+      "text": "£300k, at $(5, 0)$.",
+      "why": "You assumed $y = 0$. Nothing stops $y$ from growing."
+     },
+     {
+      "id": "old",
+      "text": "£480k, at $(4, 6)$.",
+      "why": "That needed the budget and the risk limit, which are gone."
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Is anything limiting $y$?"
+    },
+    {
+     "rung": "point",
+     "text": "Every extra £m in B adds £40k.",
+     "highlight": [
+      "strip"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "The problem is **unbounded**."
+    }
+   ],
+   "feedback": {
+    "correct": "Unbounded: no plan is best. Add $x + y \\ge 12$ to the full desk instead and no plan is feasible at all.",
+    "generic": "Not quite right. Check whether any limit stops $y$.",
+    "byKey": {
+     "x5": "$(5, 100)$ earns £4,300k. There is always a better plan.",
+     "old": "Without the budget and risk limits $(4, 6)$ is not special."
+    }
+   },
+   "explain": {
+    "text": "With only $x \\le 5$ the profit $60x + 40y$ grows without bound in $y$: the LP is **unbounded**. With $x + y \\ge 12$ and $x + y \\le 10$ together it is **infeasible**."
+   }
+  },
+  {
+   "type": "transfer",
+   "difficulty": 3,
+   "title": "The cheapest split",
+   "prose": "Back to the 10,000 shares. The cheapest fee is at venue 2, then venue 1, then venue 3.",
+   "canvas": {
+    "kind": "table",
+    "params": {
+     "columns": [
+      "Venue",
+      "Fee per share",
+      "Capacity"
+     ],
+     "rows": [
+      [
+       "1",
+       "0.30p",
+       "4,000"
+      ],
+      [
+       "2",
+       "0.25p",
+       "3,000"
+      ],
+      [
+       "3",
+       "0.40p",
+       "6,000"
+      ]
+     ],
+     "align": [
+      "left",
+      "right",
+      "right"
+     ]
+    },
+    "state": {}
+   },
+   "question": "Fill the cheapest venues first. What is the total fee bill, in pounds?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 31.5,
+    "tol": {
+     "abs": 0.005
+    },
+    "accept": "£31.50: $3{,}000 \\times 0.25 + 4{,}000 \\times 0.30 + 3{,}000 \\times 0.40 = 3{,}150$p.",
+    "unit": "£",
+    "label": "Total fees",
+    "wrong": [
+     {
+      "id": "pence",
+      "value": 3150,
+      "tol": {
+       "abs": 0.5
+      }
+     },
+     {
+      "id": "cheap",
+      "value": 25,
+      "tol": {
+       "abs": 0.005
+      }
+     },
+     {
+      "id": "all3",
+      "value": 40,
+      "tol": {
+       "abs": 0.005
+      }
+     }
+    ]
+   },
+   "hints": [
+    {
+     "rung": "nudge",
+     "text": "Venue 2 takes 3,000 at 0.25p; venue 1 takes 4,000 at 0.30p."
+    },
+    {
+     "rung": "point",
+     "text": "That leaves 3,000 for venue 3 at 0.40p.",
+     "highlight": [
+      "r1",
+      "r0",
+      "r2"
+     ]
+    },
+    {
+     "rung": "step",
+     "text": "$750 + 1{,}200 + 1{,}200 = 3{,}150$p, which is £31.50."
+    }
+   ],
+   "feedback": {
+    "correct": "3,150p, £31.50, with the split $(4{,}000, 3{,}000, 3{,}000)$. Lesson 6 shows why this is a corner, and lesson 7 solves it in code.",
+    "generic": "Not quite right. Fill venue 2, then venue 1, then put the rest at venue 3.",
+    "byKey": {
+     "pence": "3,150 is the bill in pence. In pounds it is £31.50.",
+     "cheap": "£25 would need all 10,000 at 0.25p, but venue 2 takes only 3,000.",
+     "all3": "£40 sends all 10,000 to the dearest venue."
+    }
+   },
+   "explain": {
+    "text": "$3{,}000 \\times 0.25 = 750$p, $4{,}000 \\times 0.30 = 1{,}200$p and $3{,}000 \\times 0.40 = 1{,}200$p. The total is 3,150p, or £31.50."
+   }
+  }
+ ],
+ "summary": {
+  "ideas": [
+   "A linear programme has decision variables, a linear objective and linear constraints. The plans meeting every constraint form the feasible region.",
+   "In matrix form it is $\\max \\mathbf{c}^T\\mathbf{x}$ subject to $\\mathbf{A}\\mathbf{x} \\le \\mathbf{b}$, $\\mathbf{x} \\ge \\mathbf{0}$, with one row of $\\mathbf{A}$ per limit. Slacks are $\\mathbf{b} - \\mathbf{A}\\mathbf{x} \\ge \\mathbf{0}$.",
+   "An \"at least\" row becomes $\\le$ after multiplying by $-1$. A programme can be unbounded or infeasible."
+  ],
+  "formula": {
+   "name": "Linear programme",
+   "tex": "\\max \\mathbf{c}^T\\mathbf{x} \\ \\text{s.t.}\\ \\mathbf{A}\\mathbf{x} \\le \\mathbf{b},\\ \\mathbf{x} \\ge \\mathbf{0}",
+   "note": "The desk: $\\mathbf{c} = (60, 40)$, $\\mathbf{b} = (10, 18, 5)$."
+  },
+  "trap": "Writing an \"at least\" cover row with $\\le$ makes buying nothing look optimal."
+ },
+ "quiz": [
+  {
+   "id": "q5-swap",
+   "difficulty": 3,
+   "prose": "A colleague writes the risk limit as $x + 3y \\le 18$, attaching the 3 to the wrong strategy. The best plan becomes $(5, \\tfrac{13}{3})$.",
+   "question": "What profit does that plan report, in £k?",
+   "widget": {
+    "kind": "numeric",
+    "answer": 473.33,
+    "tol": {
+     "abs": 0.01
+    },
+    "accept": "£473.33k: $300 + 40 \\times \\tfrac{13}{3}$.",
+    "unit": "£k",
+    "label": "Reported profit",
+    "wrong": [
+     {
+      "id": "right",
+      "value": 480,
+      "tol": {
+       "abs": 0.01
+      }
+     }
+    ]
+   },
+   "feedback": {
+    "correct": "$60 \\times 5 + 40 \\times \\tfrac{13}{3} = 300 + 173.33 = 473.33$.",
+    "generic": "Not quite right. Substitute $x = 5$, $y = \\tfrac{13}{3}$ into $60x + 40y$.",
+    "byKey": {
+     "right": "£480k is the right model's answer. The swapped row moves the optimum to $(5, \\tfrac{13}{3})$."
+    }
+   },
+   "explain": {
+    "text": "With $x + 3y \\le 18$ the corner is $x = 5$, $y = \\tfrac{13}{3}$, earning £473.33k. The plan also breaks the real risk limit: $3 \\times 5 + \\tfrac{13}{3} > 18$."
+   }
+  },
+  {
+   "id": "q5-infeasible",
+   "difficulty": 2,
+   "prose": "The desk adds a rule: invest at least £12m, $x + y \\ge 12$, while keeping the budget $x + y \\le 10$.",
+   "question": "What happens to the linear programme?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "inf",
+      "text": "It is infeasible: no plan meets both rules.",
+      "correct": true
+     },
+     {
+      "id": "unb",
+      "text": "It is unbounded.",
+      "why": "Unbounded means plans with ever larger profit. Here there is no plan at all."
+     },
+     {
+      "id": "same",
+      "text": "The optimum stays at $(4, 6)$.",
+      "why": "$(4, 6)$ invests £10m, below the new floor of £12m."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "Infeasible: $x + y$ cannot be both at least 12 and at most 10.",
+    "generic": "Not quite right. Can any plan satisfy both rows?"
+   },
+   "explain": {
+    "text": "The two rows contradict each other, so the feasible region is empty. A solver reports infeasible rather than a plan."
+   }
+  },
+  {
+   "id": "q5-slack",
+   "difficulty": 2,
+   "prose": "Take the plan $(5, 3)$ on the desk problem.",
+   "question": "What are its slacks $(s_1, s_2, s_3)$ for budget, risk and liquidity?",
+   "widget": {
+    "kind": "expression",
+    "answer": "(2, 0, 0)",
+    "accept": [
+     "(2,0,0)"
+    ],
+    "wrong": [
+     {
+      "id": "used",
+      "tex": "(8, 18, 5)"
+     }
+    ],
+    "keyboard": "algebra"
+   },
+   "feedback": {
+    "correct": "$(2, 0, 0)$: risk and liquidity are active, £2m of budget is unused.",
+    "generic": "Not quite right. Subtract what the plan uses from each limit.",
+    "byKey": {
+     "used": "Those are the amounts used.",
+     "length": "Give three slacks."
+    }
+   },
+   "explain": {
+    "text": "$10 - 8 = 2$, $18 - 15 - 3 = 0$ and $5 - 5 = 0$."
+   }
+  },
+  {
+   "id": "q5-atleast",
+   "difficulty": 3,
+   "prose": "A pension scheme must hold at least £2m of gilts, $g$. It must also hold at least twice as much in gilts as in equities, $e$.",
+   "question": "Which pair of rows says this in the form $\\mathbf{A}\\mathbf{x} \\le \\mathbf{b}$?",
+   "widget": {
+    "kind": "choice",
+    "layout": "stack",
+    "options": [
+     {
+      "id": "ok",
+      "text": "$-g \\le -2$ and $e - 2g \\le 0$",
+      "correct": true
+     },
+     {
+      "id": "flip",
+      "text": "$g \\le 2$ and $2g - e \\le 0$",
+      "why": "You kept the directions of \"at most\". Multiply an \"at least\" row by $-1$ to turn it round."
+     },
+     {
+      "id": "ratio",
+      "text": "$-g \\le -2$ and $g - 2e \\le 0$",
+      "why": "That says gilts are at most twice equities. The rule is $g \\ge 2e$."
+     }
+    ],
+    "shuffle": true
+   },
+   "feedback": {
+    "correct": "$g \\ge 2$ becomes $-g \\le -2$, and $g \\ge 2e$ becomes $e - 2g \\le 0$.",
+    "generic": "Not quite right. Write each rule with $\\ge$ first, then multiply by $-1$."
+   },
+   "explain": {
+    "text": "An \"at least\" row $\\mathbf{a}^T\\mathbf{x} \\ge \\beta$ is $-\\mathbf{a}^T\\mathbf{x} \\le -\\beta$. Getting the direction wrong flips the region, as the hedge showed."
+   }
+  }
+ ]
+}
