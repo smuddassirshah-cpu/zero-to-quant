@@ -172,3 +172,93 @@ Files: `app/content/courses/research-int/` l16 to l20, review-4, homework-4. Scr
 | l19 | quiz[1] | (2,000 + 6,240)/800 = 10.30; the mean of prices 10.20 ignores the share counts | correct | sim: concepts:L19 fills VWAP |
 | l19 | quiz[2] | drop_duplicates compares every column by default, finds non-adjacent rows, needs no sort | correct | pd docs DataFrame.drop_duplicates; sim: concepts:L19 drop_duplicates semantics |
 | l19 | quiz[3] | A seller at 49.80 against 50.00: -1 x (49.80 - 50)/50 x 1e4 = +40 bp | correct | sim: concepts:L19 sign of slippage |
+
+## l20-writing-a-take-home.json
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l20 | summary.ideas[0] | A take-home answers one question against a baseline, with one number, its interval and its limits | correct | report structure convention (consistent with l13 baseline-first) |
+| l20 | summary.ideas[1] | A reviewer must be able to rerun it: fixed seed, relative paths, listed versions, every number printed | correct | reproducibility practice; numpy Generator has no cross-version stream guarantee (np docs), so versions are needed |
+| l20 | summary.ideas[2], trap | A notebook that ran once is not shown to be reproducible; restart and run from a clean start | correct | hidden kernel state; reasoning |
+| l20 | summary.formula | Bootstrap interval = [q2.5, q97.5] of the statistic over seeded resamples | correct | percentile method (ET ch. 13) |
+| l20 | screens[0].lines, explain | Summary, data with counts, method with baseline, result with interval, limits, rerun; code behind | correct | report convention; reasoning |
+| l20 | screens[1].prose, starter | houses.csv has 400 homes; four prices typed in pounds; drop prices above 5000 | misleading | the four rows are repairable (divide by 1000 gives 319.2, 350.9, 274.2, 362.9, inside the 85 to 540 range) and l19's own rule is repair first, drop only what cannot be repaired; sim: concepts:L20 four prices typed in pounds, concepts:L20 make_report drops four repairable rows (EXPECTED_FAIL) |
+| l20 | screens[1].starter | rmse is the root mean square of price minus its mean (the mean baseline) | correct | definition; sim: concepts:L20 report numbers |
+| l20 | screens[1].starter, solution | lo and hi are the 2.5th and 97.5th percentiles of n_boot bootstrap draws of that rmse, resampling the errors | imprecise | the errors keep the full-sample mean fixed inside every resample; recomputing the statistic per resample (ET ch. 6, the plug-in principle) recentres and moves the ends by about 0.1 (77.36 to 88.10 against 77.45 to 88.22); sim: concepts:L20 recentred bootstrap differs |
+| l20 | screens[1].solution, tests | Sort by id, seeded rng.integers index draws, percentile; same seed twice equal, seed 1 differs, shuffled rows equal | correct | harness: solution 8/8, starter 0/8; sim: concepts:L20 sort by price changes the interval; shuffled rows sorted by id do not |
+| l20 | screens[1].explain | The mean baseline misses by 82.90k; interval 77.45k to 88.22k; the same seed returns the same draws | correct | sim: concepts:L20 report numbers; np docs default_rng |
+| l20 | screens[2].options.again, later | Same seed and code run again, or on another day, give identical draws | imprecise | identical with the same numpy version; the Generator carries no cross-version stream guarantee (np docs, "No Compatibility Guarantee"), which the lesson's checklist covers only on screens[4] |
+| l20 | screens[2].options.loop, explain | Loop and vectorised forms with the same seed read the same stream in the same order | correct | sim: concepts:L20 loop equals vectorised draws (n 5, 7, 396, 1000 and a 2^31 range) |
+| l20 | screens[2].options.other, none why | A new seed starts a new stream; no seed starts from fresh entropy | correct | np docs default_rng(None) seeds from OS entropy; sim: concepts:L20 a different seed changes the draws |
+| l20 | screens[3].prose, widget | Width 88.22 - 77.45 = 10.77; about four standard deviations of the draws (sd 2.76) | correct | normal 95% width is 3.92 sd; sim: concepts:L20 width and sd |
+| l20 | screens[3].byKey.half, sd | 5.39 is the half-width; 2.76 is one sd | correct | arithmetic |
+| l20 | screens[4].options.seed, path, ver, print | Seed fixed before looking at results; relative paths; versions listed; every quoted number printed | correct | reproducibility practice; np docs on versions |
+| l20 | screens[4].options.pick.why, explain | Choosing the seed that gave the narrowest interval is tuning the seed to the answer | correct | selection on the randomness is a garden-of-forking-paths bias (ET ch. 17 spirit) |
+| l20 | screens[4].options.state.why | Hidden kernel state is the problem; a rerun starts with no memory | correct | reasoning |
+| l20 | screens[5].options.clean, explain | One run proves nothing; rerun from a clean start, in a new folder if possible | correct | reasoning |
+| l20 | screens[5].options.ran, saved, never why | One run carried the machine's state; saved output proves nothing; top to bottom with a seed can be reproducible | correct | reasoning |
+| l20 | screens[6].options.pos, explain | Draws pick positions 0 to 395, so a re-sort puts different homes at those positions; sort by id first | correct | rng.integers draws indices; sim: concepts:L20 sort by price changes the interval |
+| l20 | screens[6].options.seed, clock, ignore why | The seed still fixes the positions; a seeded generator reads no clock; a stable sort removes the dependence | correct | np docs; sim as above |
+| l20 | screens[7].options.five | One question, one baseline, an interval, the limits, a rerun script | correct | report convention |
+| l20 | screens[7].options.many.why | The best of many models with R^2 on all the data needs a held-out test | correct | selection bias (ET ch. 17; Hastie et al. 7.10.2) |
+| l20 | screens[7].options.point.why | The interval is what lets a reviewer trust the number | correct | reasoning |
+| l20 | screens[8].hints, explain | Interval = slope +- 1.96 SE: 1.1468 to 1.3374; a planted 1.2 sits inside | correct | normal approximation, t(568) = 1.964 (W 4.3); sim: concepts:L20 slope interval |
+| l20 | screens[8].byKey.one, upper | One SE gives 1.1935; the upper end is 1.3374 | correct | arithmetic |
+| l20 | screens[9].options.hidden, explain | A number that cannot be reproduced points to a path, version or seed not in the file | correct | reasoning |
+| l20 | screens[9].options.random.why | Least squares has no randomness; a difference means a different input | correct | deterministic at two decimals (BLAS order effects are at 1e-15) |
+| l20 | screens[9].options.round.why | The script prints more digits than the text shows | correct | reasoning |
+| l20 | quiz[0] | Width 52.8 - 41.2 = 11.6 | correct | arithmetic |
+| l20 | quiz[1] | default_rng(42) repeats the draws; default_rng(), a clock seed and an unseeded sample do not | correct | np docs default_rng |
+| l20 | quiz[2] | A relative path moves with the project; absolute, home and typed paths do not | correct | reasoning |
+| l20 | quiz[3] | About 50 of 2,000 draws fall below the 2.5th percentile, and 50 above the 97.5th | correct | definition of the percentile; sim: concepts:L20 width and sd (exactly 50 below) |
+
+## review-4.json
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| review-4 | items[0] | Sorted, 4 is halfway between (3, 26) and (5, 50): 38; the first two listed give 42.5 | correct | sim: concepts:R4 interp keys |
+| review-4 | items[1] | Time 2 is 2/8 of the way from 0 to 8: 53; by position 56 | correct | sim: concepts:R4 interp keys |
+| review-4 | items[2] | Slopes more than two SE from zero: P, S, T, U (ratios 2.7, -0.5, 1.7, -2.3, 2.3, 2.1) | correct | sim: concepts:R4 slope ratios; the two-SE rule is the normal approximation of the t-test (W 4.2), fine at 20 and 60 days |
+| review-4 | items[2].byKey.big, all | T with 20 days still passes; most non-zero slopes sit within noise | correct | 0.090/0.0388 = 2.32 > t(18) 2.10 |
+| review-4 | items[3].options.ok, explain | np.cov(g.mkt, g.ret)[0, 1] / g.mkt.var() per group with a len > 2 guard; both divide by n - 1 | correct | np docs cov (bias False), pd docs Series.var (ddof 1); sim: concepts:R4 np.cov/np.var ratio |
+| review-4 | items[3].options.ddof.why | np.cov over np.var mixes n - 1 and n, so every beta is off by n/(n - 1) | correct | np docs var (ddof 0); sim: concepts:R4 np.cov/np.var ratio |
+| review-4 | items[3].options.pool, last why | Reading rets instead of g gives one pooled beta; a loop that overwrites keeps the last | correct | reasoning |
+| review-4 | items[4] | Sums 5, 20, 30, 90, 141 give 2.1; before the point 2.2 | correct | sim: concepts:L18 running-sum keys |
+| review-4 | items[5] | Sums 4, 22, 34, 126, 197 give 2.0; leaving the point in gives 1.5 | correct | sim: concepts:L18 running-sum keys |
+| review-4 | items[6] | Naive variance of 1e8 + 1..4 in float64 returns 2.6667 against a true 1.6667; centring avoids it | correct | sim: concepts:R4 naive variance 1e8 case (ulp at 1e16 is 2); Hi 1.9 |
+| review-4 | items[6].byKey.zero | Here the rounding leaves a wrong non-zero number, not total loss | correct | sim as above |
+| review-4 | items[7] | 800 - 20 repeats = 780; 31 of the 36 bad prices remain; 749 | correct | union of removals 20 + 36 - 5 = 51, order-independent; sim: concepts:R4 rows left 749 |
+| review-4 | items[8] | 0.4 + 1.35 ln 8 = 3.2072 bp; 8 without the log gives 11.2; ln 800 gives 9.424 | correct | sim: concepts:L19 predictions |
+| review-4 | items[9].options | A saved input with a hash, cleaning in code, printed counts and a written run order keep cleaning repeatable; fresh downloads and hand edits do not | correct | reproducibility practice; reasoning |
+
+## homework-4.json
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| homework-4 | items[0].starter, solution | regrid: drop NA, sort by minute, grid every step from first to last quote, np.interp on minute; longest_gap from diff of the quotes with a rate | correct | np docs interp (increasing xp); harness: solution 8/8, starter 0/8 |
+| homework-4 | items[0].explain | 14 NA rows leave 186 quotes from minute 5 to 479; a 30-minute grid has 16 points; longest gap 14; counting NA rows as quotes would show 12 | correct | sim: concepts:H4 rates-gaps counts and gaps |
+| homework-4 | items[0].feedback.generic | Keep the grid inside the data | correct | grid runs first to last quote, so no extrapolation |
+| homework-4 | items[1].starter | se is the standard error of the slope, t = slope/se; fewer than 5 rows gives NaN | correct | W 2.5 eq. 2.57 with sigma hat on n - 2 df; guard is a stated convention |
+| homework-4 | items[1].solution | s^2 = RSS/(n - 2), se = sqrt(s^2/Sxx), groupby.apply returning a Series per lake | correct | W 2.5; harness: solution 10/10, starter 0/10; sim: concepts:H4 lakes (hand SE equals statsmodels) |
+| homework-4 | items[1].starter trending | Lakes with abs(t) above 2, largest first | correct | rule of thumb, t(38) crit 2.02 (W 4.2); sim: concepts:H4 lakes order Ard, Gill, Isla, Esk, Fyne, Dee |
+| homework-4 | items[1].explain | Six lakes have abs(t) > 2, Ard leads at -9.28; Tarn keeps n = 4 with no slope | correct | sim: concepts:H4 lakes |
+| homework-4 | items[2].prose, starter | Keep P = (X'X)^-1 and b; start from P = 1e8 I, a tiny ridge, so no special first rows | correct | P0 = (lambda I)^-1 with lambda = 1e-8 is ridge (H 10.3, regularised initialisation); sim: concepts:H4 ridge start equals OLS to 1e-6 |
+| homework-4 | items[2].starter add | P -= (Px)(Px)'/(1 + x'Px); b += P x (y - x'b) with the updated P | correct | Sherman-Morrison and RLS (H 10.2); sim: concepts:L18 rank-one update equals refit |
+| homework-4 | items[2].starter remove | P += (Px)(Px)'/(1 - x'Px); b -= P x (y - x'b) with the updated P | correct | derivation: b' = P'(c - xy) = b - P' x (y - x'b); sim: concepts:H4 downdate equals refit |
+| homework-4 | items[2].solution, tests | Exact against lstsq after 200 rows, 50 removals and 20,000 rows within 1e-6 | correct | harness: solution 6/6, starter 0/6; sim: concepts:H4 20,000 rank-one updates |
+| homework-4 | items[2].explain | Each add and remove touches p^2 numbers; a refit reads every earlier row again | correct | O(p^2) against O(np^2) |
+| homework-4 | items[3].model | 851 rows left; interval 0.71 to 1.19 from 0.95 +- 1.96 x 0.12; 5,000 shares cost 0.30 + 0.95 ln 50 = 4.02 bp | correct | sim: concepts:H4 writeup numbers |
+| homework-4 | items[3].model Limits | One day and three symbols; a straight line in ln size is assumed; no market-impact model | correct | reasoning (external validity, functional form) |
+| homework-4 | items[3].rubric | Counts, interval, worked prediction, two limits, rerun with seed and version | correct | matches the model answer |
+| homework-4 | items[4] | X: 20,160/1,000 = 20.16; Z: 44,170/800 = 55.2125 | correct | sim: concepts:H4 vwap table |
+| homework-4 | items[5].prose, starter | A later row for an id replaces the earlier one; an id whose last row is CANCELLED goes; the input frame must not change | correct | convention stated (opposite of l19, each stated); on the file the later row is also the later time (sim: concepts:H4 fills) |
+| homework-4 | items[5].solution | strip, lower, map side; '2k' to 2000 by replacing k with 000; strip the pound sign; seconds from HH:MM:SS; drop_duplicates keep='last'; drop CANCELLED; work on a copy | correct | harness: solution 8/8, starter 1/8; pd docs drop_duplicates keep; str.replace regex False |
+| homework-4 | items[5].explain | The last row wins as a correction is a later row; a CANCELLED last row removes the order, leaving 370 of 380 ids | correct | harness test 0; sim: concepts:H4 fills (380 ids, 10 cancelled) |
+| homework-4 | items[6].lines a to d | Normal equations n a + b sum x = sum y, a sum x + b sum xx = sum xy; eliminate a; b = (n sum xy - sum x sum y)/(n sum xx - (sum x)^2) | correct | W App. 2A; sim: concepts:L18 sums equal polyfit |
+| homework-4 | items[6].lines.x.why | sum xy / sum xx is the slope through the origin | correct | regression through the origin (W 2.6, eq. 2.66) |
+| homework-4 | items[6].explain | Each sum updates by one addition, so a row arrives or leaves cheaply | correct | derivation |
+| homework-4 | items[7] | Sxx = 50 x 2,499/12 = 10,412.5; SE = 2.0/102.04 = 0.0196; sqrt(50) and 50 are the wrong divisors | correct | sim: concepts:H4 SE fifty days; W Thm 2.2 |
+
+## Verdict counts
+
+Rows: 222. correct 211, wrong 0, imprecise 7, misleading 4, unverified 0. The seven imprecise and four misleading rows map to findings 1 to 9 of docs/reviews/audit-research-int-4.md (findings 1 and 6 each cover two rows).
