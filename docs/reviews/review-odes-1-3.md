@@ -61,3 +61,14 @@ Format: `path | screen/item | severity | what is wrong | fix`. Severity: error =
 - Warnings: 12.
 - Notes: 9.
 - Author's scripts: `odes-L1-numbers.py` exit 0 (0 failures), `odes-L2-numbers.py` exit 0 (0 failures), `odes-L3-numbers.py` exit 0 (0 failures).
+
+## Fix pass
+
+All 26 findings applied by targeted edits; none disputed, none deferred. Each corrected number recomputed twice and added to the author's scripts.
+
+- L1 fixed (8): l5 `lin` 3 to 1.5 and byKey (1.5 = (6 - 4.5)/(0.5 x 2)); review-1 `sign` and `wrongratio` byKeys; homework-1 `add` byKey, `cos` 1.0 to 0.3679 ($e^{-1}$) and byKey; l3, l4, l5 (two) wording notes.
+- L2 fixed (4 plus 1 note): l9 0.198 to 0.197 ($e^{-1.6223} = 0.19744$; no repeats elsewhere); l8 $y_p = 100 + t + c$; l7 Euler justification; l9 screens[4] overshoot wording. The `docs/reports/odes-L2.md` note needs no content change.
+- L3 fixed (13): l12 "any nudge" in screens[7] and summary note; l13 `crash` why; l11 tangent claim; l12 `neg` -1.75 to -6.5; l13 `swap` matrix to (-0.5, -1; 0.75, -0.25); l10 "to 6 places"; review-3 lesson pointer; l11 eigenvector wording; l13 `c` why; l12 canvas label; l13 "time units" (option, feedback, explain).
+- Scripts: `odes-L1-numbers.py` (1.5, 0.3679, 2.0), `odes-L2-numbers.py` (0.197) and `odes-L3-numbers.py` (-6.5, swap matrix entries) extended; all three exit 0.
+- Gates: validator 0 errors; playthrough "All passed" desktop and mobile for l3, l4, l5, l7, l8, l9, l10, l11, l12, l13 and sets review-1, review-3, homework-1.
+- Graded answers changed: none to the correct answers; wrong-answer values `lin`, `cos` (homework-1) and `neg` (l12) changed.

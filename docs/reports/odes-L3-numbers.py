@@ -135,5 +135,10 @@ check("spreads diff half-life", 0.1733, math.log(2) / 4, 0.1733, 0.00005)
 check("spreads sum rate", 2, 2, float((np.array([[-1, 3], [3, -1]]) @ [1, 1])[0]), 1e-12)
 check("spreads diff rate", -4, -4, float((np.array([[-1, 3], [3, -1]]) @ [1, -1])[0]), 1e-12)
 
+check("l12 neg slip tau - 4Delta", -6.5, -2.5 - 4 * 1, float(-2.5 - 4 * np.linalg.det(np.array([[0, 1], [-1, -2.5]]))), 1e-12)
+Jsw = np.array([[1 - 0.5 * 3, -0.5 * 2], [0.25 * 3, -0.75 + 0.25 * 2]])
+check("l13 swap J(2,3) entries", -0.25, -0.75 + 0.25 * 2, float(Jsw[1, 1]), 1e-12)
+check("l13 swap J(2,3) top-left", -0.5, 1 - 0.5 * 3, float(Jsw[0, 0]), 1e-12)
+
 print(f"\n{len(fails)} failures" + (": " + ", ".join(fails) if fails else ""))
 sys.exit(1 if fails else 0)

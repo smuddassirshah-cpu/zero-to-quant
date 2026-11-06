@@ -110,5 +110,7 @@ check("h-slow-root b", 8.5, (0.25 + 4) / 0.5, float(-np.roots([1, 8.5, 4]).sum()
 check("longform lag zeta=0.25", 1, 2 * 0.25 / 0.5, 1.0, 1e-12)
 check("longform peak time", 6.49, math.pi / (0.5 * math.sqrt(1 - 0.0625)), 6.49, 0.005)
 
+check("l9 shrink per period", 0.197, math.exp(-0.5 * 2 * math.pi / math.sqrt(3.75)), math.exp(-0.5 * 3.2446), 0.0005)
+
 print(f"\n{len(fails)} failures" + (": " + ", ".join(fails) if fails else ""))
 sys.exit(1 if fails else 0)

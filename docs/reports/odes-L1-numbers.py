@@ -123,5 +123,9 @@ check("fit_kappa planted 0.5", 0.5, -np.polyfit(t, np.log(np.abs(r - 0.04)), 1)[
 t = np.linspace(0, 2, 9); r = 0.05 - 0.03 * np.exp(-2 * t)
 check("fit_kappa planted 2", 2.0, -np.polyfit(t, np.log(np.abs(r - 0.05)), 1)[0], 2.0, 1e-9)
 
+check("l5 straight-line slip", 1.5, (6 - 4.5) / (0.5 * (6 - 4)), 1.5 / 1.0, 1e-12)
+check("h-sep-cos wrong cos (fit)", 0.3679, math.exp(math.cos(math.pi / 2) - 1), math.exp(-1.0), 0.00005)
+check("h-sep-cos add slip y=1+sin t", 2.0, 1 + math.sin(math.pi / 2), 2.0, 1e-12)
+
 print(f"\n{len(fails)} failures" + (": " + ", ".join(fails) if fails else ""))
 sys.exit(1 if fails else 0)
