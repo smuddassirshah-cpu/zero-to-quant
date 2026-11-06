@@ -122,3 +122,94 @@ Files: `app/content/courses/systems/l15-no-allocation.json`, `l16-ring-buffer.js
 | l16 | quiz[1].widget.options[3].why | "They meet when empty and when full" | imprecise | with growing counters the counters are equal only when empty; it is the slots that coincide when full as well (screens[7]). "They" reads as the counters in an item about counters |
 | l16 | quiz[2] | 5 ms at 400,000 a second is 2,000 messages, next power of two 2,048 | correct | sim: l16 quiz[2] |
 | l16 | quiz[3] | The consumer alone writes `head_`; the producer reads it | correct | Williams §7.2 |
+
+## l17-measuring-latency
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l17 | objectives[0] | Latency is reported as percentiles; the mean misleads | correct | Tene (2015); Dean and Barroso, *The Tail at Scale* (CACM 2013) |
+| l17 | screens[0].explain.text | Mean 19.9 µs; not one request took that long; "the mean describes a request that never happened" | correct | derivation; sim: l17 screens[0] |
+| l17 | screens[1].prose | Out of 1,000 sorted requests the p99 is the value at position 990 (nearest-rank convention, stated once where it first matters) | correct (convention stated) | nearest-rank method, rank ⌈p n / 100⌉ (Hyndman and Fan 1996 Type 1, inverted CDF); NumPy's default linear interpolation would read 19.9 here; the lesson says which it uses |
+| l17 | screens[1].widget.accept, hints[2], explain.text | The p99 first reads 1,000 µs at 11 slow requests; the mean moves from 19.9 to 20.9 | correct | sim: l17 screens[1] and explain |
+| l17 | screens[1].feedback.byKey.ten, .one | With 10 slow position 990 is fast; one slow sits at position 1,000 | correct | derivation |
+| l17 | screens[2].prose, widget.rows, explain.text | p50 10, p99 10, p99.9 1,000; with one slow only the maximum shows it | correct | sim: l17 screens[2] |
+| l17 | screens[3].prose | A closed-loop client (send, wait, send) delays the requests due during a stall; two reports of one run | correct | Tene (2015), coordinated omission; HdrHistogram `recordValueWithExpectedInterval` |
+| l17 | screens[3].canvas | done − sent: p50 40, p99 50, p99.9 248; done − intended: 49, 48,821, 49,911; 875 of 2,000 sent late | correct | sim: l17 screens[3] canvas (recomputed from latencies.csv) |
+| l17 | screens[3].widget.options[0], explain.text | Done minus intended shows what a queued request felt; waiting for each reply hides the delay: coordinated omission | correct | Tene (2015) |
+| l17 | screens[3].widget.options[1].why, feedback.byKey.sent | The client sent late because it was waiting; that wait is missing | correct | derivation: sent − intended is the wait |
+| l17 | screens[3].widget.options[2].why | They differ by exactly the time each request waited to be sent | correct | (done − intended) − (done − sent) = sent − intended; sim: l17 screens[3] options[2].why |
+| l17 | screens[3].widget.options[3].why | 875 of 2,000 were delayed, not one outlier | correct | sim: 875 rows have sent > intended |
+| l17 | screens[4].widget.starter docstring | rank = ceil(p n / 100) nearest rank; closed-loop client sent each request when the previous reply arrived | correct | method statement; CSV consistent (one intended every 100 µs) |
+| l17 | screens[4].widget.solution | Integer ceiling `-(-permille * n // 1000)`, both lists, true mean 10,584.622 | correct | sim: l17 screens[4] solution passes 11 tests; starter fails |
+| l17 | screens[4].widget.tests[7..10] | 77 rows: p99 and p99.9 both rank 77 (86); 1,000 rows p99.9 rank 999 (1008); 78 rows p50 rank 39 (48) | correct | sim: l17 screens[4] tests[7..10] (37 is coprime to 77, 1000 and 78, so the values are permutations) |
+| l17 | screens[4].hints[1].text, hints[2].text | Rank ⌈p n / 100⌉ counting from 1; use integers for the rank | correct | avoids the float boundary of screens[6] |
+| l17 | screens[4].explain.text | The true list has the 50 ms stall inside it, which is why its p99 is 48,821 µs | correct | sim: one reply about 50 ms; about 500 requests due during it plus the catch-up backlog push 875 past rank 1,980 |
+| l17 | screens[5].widget.options[0], explain.text | Quote both, tail first; the mean is a total over a count and a few slow requests move it little; the mean still helps for sizing capacity | correct | Tene (2015); the mean × arrival rate is the average concurrency (Little's law), which is the capacity use |
+| l17 | screens[5].widget.options[1].why, options[2].why, options[3].why | The mean describes no request; the median ignores the tail; one maximum can be a fluke, percentiles show how often | correct | derivation; Dean and Barroso (2013) |
+| l17 | screens[6].prose, canvas | 0.999 × 1,000 = 999 exactly; 99.9 / 100 × 1,000 in a double is 999.0000000000001 and `ceil` gives 1,000 | correct | IEEE 754 binary64; sim: l17 screens[6] (Python and C++ doubles agree) |
+| l17 | screens[6].widget.accept, explain.text | The correct p99.9 of 999 fast and one slow is 10 µs (rank 999); the float reads rank 1,000 | correct | sim: l17 screens[2] row 3 and screens[6] |
+| l17 | screens[6].explain.text | NumPy 2.0.2 with `inverted_cdf` does the same | correct (checked on NumPy 2.5.3, the same code path) | sim: l17 screens[6] explain (NumPy inverted_cdf gives 1000.0); NumPy computes `q / 100 * n` in floating point |
+| l17 | screens[6].explain.text | Work in integers, or subtract 1e-9 before the `ceil` | correct | the integer form is exact; the 1e-9 guard is a convention safe while p n / 100 has no fractional part below 1e-9 (true for p with few decimals and n below 1e6) |
+| l17 | screens[7].prose | Nearest rank r = ⌈p n / 100⌉ counted from 1, rank 1 for p = 0; report the tail first; measure from the intended send time | correct | nearest-rank method (Hyndman and Fan Type 1); Tene |
+| l17 | screens[7].widget.options[0], explain.text | p95 of 40 samples is rank 38, an exact integer so no rounding up; rank counts from the smallest | correct | 0.95 × 40 = 38; sim |
+| l17 | screens[7].widget.options[1..3].why | Rank 39 added one; rank 2 used the 5% left over; 95 is a percentage not a rank | correct | each names the learner's error |
+| l17 | screens[8].prose | 64.4 × 250 / 100 is 161.00000000000003 in doubles, so an unguarded `ceil` gives 162 | correct | sim: l17 screens[8] (Python and C++) |
+| l17 | screens[8].widget.solution | Sort a copy, rank = ceil(p n / 100 − 1e-9) clamped to [1, n], return `samples[rank − 1]` | correct | sim: l17 screens[8] percentile passes 15 tests (c++17, c++20); starter fails |
+| l17 | screens[8].explain.text | The 1e-9 guard keeps a rank that is exactly whole from creeping up | correct | as screens[6] |
+| l17 | screens[9].prose | A clock read costs about 20 ns; in this app the clock ticks in 100 µs steps | correct | `clock_gettime` via the vDSO is about 20 to 25 ns on Linux x86-64; browsers coarsen `performance.now()` to 100 µs without cross-origin isolation (W3C HR-Time, Chrome) |
+| l17 | screens[9].prose, hints[0], feedback.byKey.r0c1, explain.text | "Timing one 10 ns call alone adds two reads to it": the call reads as 50 ns and the clock is 80% of it | imprecise | the bracket `t0 = now(); f(); t1 = now();` measures from the instant the first read captures its timestamp to the instant the second does, which contains the tail of the first read and the head of the second: about one read's cost, not two (Paoloni 2010 §3.1 measures the overhead as the delta of two back-to-back reads, about one read; Agner Fog, *Optimizing software in C++* §16.1). The screen's model is stated and the table keys follow it, but a learner carries away "two reads inside the measurement" |
+| l17 | screens[9].explain.text | In a batch of 1,000 the two reads add 0.04 ns a call; warm up first, time batches, take the median | correct (the batch conclusion holds under either overhead model) | derivation 40 / 1,000; warm-up and batching are standard (Paoloni 2010 §3.2; Google Benchmark) |
+| l17 | screens[10].widget.rows, explain.text | Sorted 1 to 5: p20 rank 1, p50 rank 3 (2.5 rounds up), p80 rank 4, p100 rank 5 | correct | sim: l17 screens[10] |
+| l17 | screens[11].widget.rows, explain.text | Host B p99 1,000; average of the two p99 values 505, a number no request had; pooled p99 is position 1,980 of 2,000, slow, 1,000 µs | correct | sim: l17 screens[11] |
+| l17 | screens[11].hints[1].text | Averaging two percentiles is not a percentile of anything | correct | Tene (2015): percentiles do not average; sim: l17 screens[11] hints[1] |
+| l17 | screens[11].explain.text | On a desk, ship the histograms, not the percentiles | correct | HdrHistogram merge; Tene |
+| l17 | summary.ideas[0..2], formula | Tail first; r = ⌈p n / 100⌉ and integers at a boundary; measure from the intended send | correct | as above |
+| l17 | summary.trap | Quoting the mean, or timing from the late send | correct | Tene |
+| l17 | quiz[0] | p75 of 1 to 10 is rank ⌈7.5⌉ = 8, the value 8 | correct | sim: l17 quiz[0] |
+| l17 | quiz[1].widget.options[0], explain.text | A closed-loop client records almost nothing about the requests due during a stall; the stall appears as one slow request | correct | Tene (2015) |
+| l17 | quiz[1].widget.options[1..3].why | It never timed their wait; none of the waiting is recorded; percentiles are unaffected too | correct | as above |
+| l17 | quiz[2] | Mean (95 × 20 + 5 × 400) / 100 = 39 µs; 210 is the unweighted average of the two values | correct | derivation |
+| l17 | quiz[3].widget.options[0], explain.text | Time a batch of many calls with two reads after a warm-up; the warm-up fills the caches | correct | Paoloni 2010; Agner Fog §16 |
+| l17 | quiz[3].widget.options[1].why | Two reads cost 40 ns, four times the function | imprecise | same two-read model as screens[9]; the ranking of the options is unaffected |
+| l17 | quiz[3].widget.options[2].why | One call includes cold caches and the clock reads | correct | first-touch cache and TLB misses (Drepper §3, §4) |
+| l17 | quiz[3].widget.options[3].why, feedback.byKey.sleep | An idle CPU runs slower; warm it up instead | correct | C-state exit latency and frequency ramp after idle (Intel SDM vol. 3 §14, C-states; the usual "spin before measuring" advice) |
+
+## l18-feed-handler
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l18 | screens[0].widget.answer | Packet in to order out: NIC to a user-space ring, decode, sequence check, book, strategy, encode and send | correct | the standard handler pipeline (kernel bypass with a user-space ring, e.g. DPDK/OpenOnload; sequence check before the book so a stale frame never changes it) |
+| l18 | screens[0].widget.lines[6].why (d1) | A file write is a system call that can take microseconds; log from another thread | correct | `write(2)` is a syscall (hundreds of ns to µs with the page cache; more on a flush); l11-processes |
+| l18 | screens[0].widget.lines[7].why (d2) | An allocation on every message adds cost and a rare slow case | correct | l15; glibc malloc slow path |
+| l18 | screens[0].hints[1], feedback.byKey.s3, explain.text | The sequence is checked before the book changes, so a stale frame never changes it | correct | design rule; matches the solution of screens[8] (`frame()` checks seq first) |
+| l18 | screens[1].canvas | Stages 1,000, 200, 0, 300, 500, 500 ns: total 2,500 (stated budget) | correct | stated figures; sum 2,500 |
+| l18 | screens[1].widget.accept, explain.text | The card-to-ring stage is 40% of the total | correct | 1,000 / 2,500 |
+| l18 | screens[1].explain.text | "The network card to user buffer is the biggest share, which is why handlers bypass the kernel" | imprecise | the 1,000 ns stage is already the kernel-bypass path (stage 1 is "network card to a ring in user space"); through the kernel socket stack the same hop is several microseconds (l12-files-and-sockets; DPDK and OpenOnload figures). The size of the bypassed hop is the reason to bypass, which the sentence inverts |
+| l18 | screens[2].prose | Allocations cost 50 ns each; a stall such as a page fault or a context switch can take 5 µs | correct | a context switch is 1 to 5 µs, a minor page fault about 1 µs, a major one far more (l3-virtual-memory, l11-processes); stated as "can" |
+| l18 | screens[2].widget.rows, explain.text | 2,500; 500 slack; 2,700 with four allocations; 7,500 with a 5 µs stall; the budget must hold for the worst message | correct | sim: l18 screens[2]; Dean and Barroso (2013) on tails |
+| l18 | screens[3].widget.rows, explain.text | 201 levels; 1,608 bytes; 16,384 bytes; 18,032 bytes in all; fits a 32 KiB L1; a cached best price removes the scan | correct | sim: l18 screens[3] and sizeof(Handler) == 18,032 |
+| l18 | screens[4].prose | Policy: apply a frame at or above the expected number, count skipped numbers as a gap, drop a frame below it | correct (stated policy) | one common arbitration policy; others hold frames briefly (the explain says so) |
+| l18 | screens[4].widget.answer, feedback.byKey.c1..c8, explain.text | Applied 1A, 2A, 4A, 5A with a gap of 1; 3B is stale after 4A; a better handler would hold 4A briefly | correct | sim: l18 screens[4] |
+| l18 | screens[5].widget.options[0], explain.text | `std::unordered_map` allocates nodes and rehashes at unpredictable times; both can land on one message | correct | N4659 [unord.req]/9 (node-based, rehash when `size() > max_load_factor() * bucket_count()`) |
+| l18 | screens[5].widget.options[1].why | Its average is fine; the worst case is the problem | correct | amortised O(1) per insert, O(n) on a rehash |
+| l18 | screens[5].widget.options[2].why | An `unordered_map` does not sort | correct | N4659 [unord.req]/1 |
+| l18 | screens[5].widget.options[3].why | One thread can use it | correct | N4659 [res.on.data.races] |
+| l18 | screens[5].explain.text | An array indexed by order id, or a preallocated table, has neither | correct | fixed storage; sim: l18 screens[8] alloc_count 0 |
+| l18 | screens[6].prose | A stream read can end mid-frame and one read can hold several; a gap is judged only on a whole frame | correct | TCP is a byte stream (l13-tcp-and-udp; RFC 793 §1.5) |
+| l18 | screens[6].widget.rows, explain.text | Reads of 50, 40, 80 bytes complete 2, 1, 4 frames with 2 bytes waiting | correct | sim: l18 screens[6] |
+| l18 | screens[7].prose | Pipeline with a budget; keep stages free of allocation; handle loss and partial reads on purpose | correct | the lesson's method |
+| l18 | screens[7].widget.options[0], explain.text | A number above the expected one counts the gap and applies the frame; a smaller number is dropped | correct | policy of screens[4]; sim: l18 quiz[1], quiz[3] |
+| l18 | screens[7].widget.options[1].why, options[2].why | Dropping is for a number below; waiting stalls every later message | correct | policy; latency argument |
+| l18 | screens[8].prose, starter comments | Frames are 24 bytes in the l14 layout, big-endian; 'A' add, 'X' cancel the rest, 'T' trade qty; seq below expected is ignored, above adds the difference to gaps; partial frames wait; after construction no heap | correct | l14-messages-on-the-wire (seq at offsets 4 to 7, MSB first); sim: l18 screens[8] prelude frame layout |
+| l18 | screens[8].widget.solution | Byte-at-a-time assembly into a 24-byte buffer; sequence check first; arrays by price (201 levels) and by id (1,024); cancel and trade subtract from the order's level; out-of-range id or price ignored; no allocation in `feed` | correct | sim: l18 screens[8] Handler passes 15 tests (c++17, c++20); alloc_count 0 |
+| l18 | screens[8].widget.solution `frame()` | `expected_` and `applied_` advance before the id and price range checks, so an out-of-range frame still counts as applied | correct (consistent with tests[6], [11]; a design choice not stated) | sim: tests pass; no test contradicts it |
+| l18 | screens[8].widget.starter | `std::map` book, adds only, ignores sequence numbers: fails | correct | sim: starter fails (alloc test and gap tests) |
+| l18 | screens[8].explain.text | The map allocates a node per price level, so the starter fails the count; a 24-byte buffer carries a partial frame | correct | N4659 [associative.reqmts]; sim: starter alloc_count > 0 |
+| l18 | screens[9].widget.rows, explain.text | 2,000 ns; 2,150 ns; 150,000 × 24 = 3.6 MB a second; 37 frames and 12 bytes | correct | sim: l18 screens[9]; MB as 10^6 bytes |
+| l18 | screens[10].widget.rows, explain.text | 50 × 18,032 = 901,600 bytes, 880.5 KiB, 28 caches of 32 KiB; fits a large L2; each message touches one instrument's slice | correct | 901,600 / 1,024 = 880.47; / 32,768 = 27.5; L2 of 1 to 2 MiB on current cores; working set argument (Drepper §6) |
+| l18 | summary.ideas[0..2], formula, trap | Pipeline with a budget; arrays, no hash map; gaps above, drops below, partial waits; plan for the worst message | correct | as above |
+| l18 | quiz[0] | 600 + 100 + 200 + 300 + 300 = 1,500 ns, 500 ns slack against 2 µs | correct | derivation |
+| l18 | quiz[1] | Expecting 10, a 14 adds 4 to the gap count and expects 15 next | correct | sim: l18 quiz[1] |
+| l18 | quiz[2] | 2,048 × 16 = 32,768 bytes, exactly 32 KiB, a typical L1 | correct | derivation; 32 KiB L1d (48 KiB on Ice Lake and later, still "typical") |
+| l18 | quiz[3].widget.options[0], explain.text | Expecting 9, a 7 is dropped as a duplicate or late arrival | correct | policy; sim: l18 quiz[3] |
+| l18 | quiz[3].widget.options[1..3].why | A gap counts numbers above; nothing is held for a number below; moving back would replay old data | correct | policy |
