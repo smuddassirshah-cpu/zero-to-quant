@@ -93,3 +93,82 @@ Files: `app/content/courses/research-int/` l16 to l20, review-4, homework-4. Scr
 | l17 | quiz[1] | Noise 3.0 doubles the SE to 0.0104 | correct | SE is linear in sigma (W Thm 2.2) |
 | l17 | quiz[2] | groupby.apply with a scalar per group returns a Series indexed by town; transform gives one per row | correct | pd docs GroupBy.apply; sim: concepts:L17 apply returns a Series per group |
 | l17 | quiz[3] | A two-row fit has R^2 = 1 and says nothing about the slope | correct | zero residuals; sim: concepts:L17 two-point R2 is 1 |
+
+## l18-updating-a-fit.json
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l18 | summary.ideas[0] | A straight-line fit needs only five running sums; a row in is addition, out is subtraction | correct | normal equations in sums (W App. 2A); sim: concepts:L18 sums equal polyfit, concepts:L18 running-sum keys |
+| l18 | summary.ideas[1] | With several predictors keep (X'X)^-1; Sherman-Morrison updates it at p^2 a row | correct | Sherman-Morrison identity (H ch. 10, RLS); O(p^2) per rank-one update; sim: concepts:L18 rank-one update equals refit |
+| l18 | summary.ideas[2], trap | Raw sums of squares lose digits on large numbers, so centre x before summing | correct | Hi 1.9 (cancellation) and 4.2; sim: concepts:L18 naive variance 1e9 case is 0.0 |
+| l18 | summary.formula | m = (n sum xy - sum x sum y)/(n sum xx - (sum x)^2); add a row to update, subtract to downdate | correct | W App. 2A; sim: concepts:L18 running-sum keys |
+| l18 | screens[0].explain | Five numbers are all a straight-line fit needs; the points can be thrown away | correct | for the coefficients (the SE would also need sum y^2); W App. 2A |
+| l18 | screens[1].hints, explain, byKey.ratio | Slope 0.8 from (156 - 140)/(120 - 100); intercept 1.5; sum xy / sum xx skips the centring | correct | sim: concepts:L18 running-sum keys; sum xy / sum xx is the through-origin slope |
+| l18 | screens[2].explain, byKey | Adding (5, 8) to each sum gives 1.3, intercept 0.5, at no refit cost; old sums and the point alone are wrong | correct | sim: concepts:L18 running-sum keys, concepts:L18 rank-one update equals refit |
+| l18 | screens[3].explain, byKey.kept | Removal is addition run backwards; slope 1.4, intercept 0.1, equal to refitting the four points | correct | sim: concepts:L18 running-sum keys |
+| l18 | screens[4].prose | Keep P = (X'X)^-1; a new row divides by 1 + x'Px | correct | Sherman-Morrison: (A + xx')^-1 = A^-1 - A^-1 x x' A^-1/(1 + x'A^-1 x) |
+| l18 | screens[4].hints, feedback | Px = (-1, 0.5), x'Px = 1.5, denominator 2.5; new inverse P - Px(Px)'/2.5 | correct | sim: concepts:L18 P and 1 + x'Px = 2.5 |
+| l18 | screens[4].byKey.big | x'x = 26 forgets P in the middle | correct | 1 + 25 = 26 |
+| l18 | screens[4].explain | Innovation 8 - x'beta = 2.5 moves beta to (0.5, 1.3), equal to a full refit | correct | RLS gain K = P_new x, beta += K (y - x'beta) (H ch. 10); sim: concepts:L18 rank-one update equals refit |
+| l18 | screens[5].starter docstring | coef returns [nan, nan] with fewer than 2 rows or when every x is equal | imprecise | the solution tests den == 0, exact only when the sums are exact; for repeated non-integer x about 28% of cases return a number (sim: concepts:L18 OnlineLine 'NaN when every x is equal', EXPECTED_FAIL); Hi 2.2 |
+| l18 | screens[5].solution | Five sums, remove as the reverse of add, slope and intercept from the sums | misleading | harness: solution 8/8, starter 0/8, so it passes; but the class keeps raw sums, which the lesson's own trap and derive then show failing on large x, and nothing ties the class back to the fix (sim: concepts:L18 raw-sum class fails on x near 1e9) |
+| l18 | screens[5].explain | Each call touches five numbers; a rolling fit over 250 days costs no more than one over 25 | correct | O(1) per update |
+| l18 | screens[6].prose, hints | Squares near 1e18 exceed float64's exact range; the two big terms differ by 2, below the rounding step of 512; they round to the same number | correct | Hi 2.1 (ulp at 3e18 is 512); sim: concepts:L18 rounding step, concepts:L18 naive variance 1e9 case is 0.0 |
+| l18 | screens[6].widget.answer, explain | The formula returns exactly 0.0 against a true 1; float64 holds about 16 digits, the squares need 19 | correct | sim: concepts:L18 naive variance 1e9 case is 0.0; 53-bit mantissa is 15.95 decimal digits |
+| l18 | screens[7].options.silent, explain | Sums cannot tell a real row from a made-up one; the sums then describe no dataset | correct | sim: concepts:L18 removing (7, 9) never added |
+| l18 | screens[7].options.raise.why | n goes negative only after many wrong removals | correct | n is a count decremented by one |
+| l18 | screens[7].options.same, refit why | The row does not cancel; there was no such point | correct | reasoning |
+| l18 | screens[8].prose, lines a to c | Subtracting c from x leaves the slope unchanged and shifts the intercept to a' - mc | correct | algebra: cov(x - c, y) = cov(x, y), var(x - c) = var(x) |
+| l18 | screens[8].lines.d | For 1e9 + 1..3 and y = 1, 3, 2 with c = 1e9: m = 0.5, a' = 1, a = -499,999,999 | correct | sim: concepts:L18 centre-first numbers |
+| l18 | screens[8].lines.x.why, byKey.x | "Subtract c from y as well" leaves the huge x^2 sums where the cancellation happens | imprecise | the option says "as well": with x also shifted no large x^2 sum remains and the fit is exact (sim: concepts:L18 derive distractor x, EXPECTED_FAIL); the why describes shifting y instead of x |
+| l18 | screens[8].explain | Fitting on small numbers keeps every sum exact enough | correct | Hi 1.9 |
+| l18 | screens[9].prose, options.cheap | An update costs p^2 a row; a refit about n p^2; for n = 1e6, p = 10 the gap is 1e6 | correct | forming X'X is O(np^2), the solve O(p^3) extra; Sherman-Morrison O(p^2) |
+| l18 | screens[9].options.approx.why, explain | Sherman-Morrison equals the refit, exact up to rounding | correct | identity; sim: concepts:L18 rank-one update equals refit |
+| l18 | screens[9].options.solve, same why | A refit also reads every row | correct | O(np^2) to form the normal equations |
+| l18 | screens[10].hints, explain, byKey.addonly | Add the entering day, subtract the leaving one, n stays 250; beta 1.24; add-only gives 1.2419 | correct | sim: concepts:L18 running-sum keys |
+| l18 | screens[11].options.decay, explain | Old sums are multiplied by lambda before each new row; a row k days old carries weight lambda^k | correct | exponentially weighted RLS (H 10.2); sim: concepts:L18 forgetting factor equals WLS |
+| l18 | screens[11].options.window, newrow, same why | A fixed window is a hard cut; the new row keeps full weight; without decay old rows never fade | correct | H 10.2 |
+| l18 | quiz[0] | Sums 3, 6, 9, 14, 19 give 0.5; sum xy / sum xx is 1.357 | correct | sim: concepts:L18 running-sum keys |
+| l18 | quiz[1] | Adding (4, 8) gives sums 4, 10, 17, 30, 51 and slope 1.7 | correct | sim: concepts:L18 running-sum keys |
+| l18 | quiz[2].options | Centre x first is the cure; float32 loses sooner; rounding discards digits; summation order leaves the cancellation | correct | Hi 1.9 and 4.2 (cancellation between two near-equal totals is order-independent) |
+| l18 | quiz[3] | n p^2 / p^2 = n = 10,000 | correct | sim: concepts:L18 update is n times cheaper |
+
+## l19-timed-data-task.json
+
+| file | JSON path | claim | verdict | basis |
+|---|---|---|---|---|
+| l19 | summary.ideas[0], trap | List the problems, clean in a fixed order (text, repeated ids, bad prices); dropping odd rows first loses good rows | correct | repairs before drops is the stated rule; sim: concepts:L19 15 repeated ids, 12 exact copies before text cleaning |
+| l19 | summary.ideas[1], formula | VWAP = sum pq / sum q; slip = s (p - m)/m x 1e4 with s = +1 buy, -1 sell | correct | definition of VWAP; sign derivation screens[8] |
+| l19 | summary.ideas[2] | Write down every count so a reviewer can check | correct | reproducibility practice (l20) |
+| l19 | screens[0].question, byKey.firstcopy | For the repeated id, drop the later copy (keep the first) | correct | convention stated; pandas drop_duplicates keep='first' (pd docs) |
+| l19 | screens[1].prose, explain | 15 ids repeat; 12 are exact copies; drop_duplicates() before text cleaning misses 3; or drop by order_id alone | correct | sim: concepts:L19 15 repeated ids, 12 exact copies before text cleaning, 15 after; pd docs subset |
+| l19 | screens[2].prose | Clean in a fixed order: text, then repeated ids, then bad prices | imprecise | ids before prices is a convention the main file does not need (570 either way, sim: concepts:L19 600 -> 585 -> 570) and only the tiny test enforces it |
+| l19 | screens[2].how, tests[6] | The first copy of an id must be the one kept, even when its price is bad | misleading | the tiny case keeps order 7's blank-price copy and drops the order although a later copy has a valid price, against the trap's own rule "repair, drop only bad rows" (sim: concepts:L19 load_clean tiny case, EXPECTED_FAIL) |
+| l19 | screens[2].solution | strip and upper the symbol; remove commas and astype(int); drop_duplicates('order_id'); keep notna and > 0 | correct | harness: solution 8/8, starter 0/8; pd docs str.replace (regex False since 2.0) |
+| l19 | screens[2].explain | 600 - 15 repeats = 585; 10 blank and 5 of -999 leave 570; ALPHA 230, BRAVO 206, CHARLIE 134 | correct | sim: concepts:L19 600 -> 585 -> 570; harness test 2 |
+| l19 | screens[3].prose, solution | VWAP weights each price by its quantity: sum(price x qty) / sum(qty) per symbol | correct | definition; harness: solution 4/4, starter 0/4 |
+| l19 | screens[3].explain | VWAPs 50.0152, 120.0146, 8.0005; leaving in -999 and repeats drags ALPHA to 46.3874 | correct | sim: concepts:L19 VWAPs (the 46.3874 is the file with only blanks removed) |
+| l19 | screens[3].tests[3], how | The VWAP is not the simple mean of prices | correct | sim: concepts:L19 VWAP is not the simple mean |
+| l19 | screens[4].prose, starter | A buyer above mid loses, a seller below mid loses; regress the loss on ln(qty/100) | correct | sign derivation screens[8]; dividing qty by 100 only shifts the intercept |
+| l19 | screens[4].solution, hints[2] | polyfit returns slope then intercept; R^2 is the squared correlation | correct | np docs polyfit; R^2 = corr^2 in simple regression with intercept (W 2.3, eq. 2.38 and the note after it); sim: concepts:L19 slope 1.2421 |
+| l19 | screens[4].explain | Slope 1.2421 bp per unit of ln(qty/100), SE 0.0486 against a planted 1.2; R^2 0.5346; mean 3.795 bp | correct | sim: concepts:L19 slope 1.2421, SE 0.0486 (statsmodels); 1.2 is 0.87 SE away |
+| l19 | screens[5].hints, byKey | 3,200 shares: ln 32 = 3.4657, cost 4.642 bp; 32 without the log gives 40.08; ln 3200 gives 10.362 | correct | sim: concepts:L19 predictions |
+| l19 | screens[5].feedback.correct | 4.642 bp is 0.046% of the order's value | correct | 1 bp = 0.01% |
+| l19 | screens[6].options.fix, explain | Repair the text, drop only bad rows, count each step: 600, 585, 570 | correct | sim: concepts:L19 600 -> 585 -> 570 |
+| l19 | screens[6].options.safe.why | A comma in 1,200 is still 1,200, so dropping odd rows loses good orders | correct | reasoning |
+| l19 | screens[6].options.ids, keep why | -999 and blank prices wreck a VWAP; a regression takes impossible prices at face value | correct | sim: concepts:L19 VWAPs (46.39 against 50.02) |
+| l19 | screens[7].options.drop, explain | A zero price is impossible; test price > 0 and report the count | correct | reasoning; a zero price gives slippage of 1e4 bp in size (sim: concepts:L19 sign of slippage) |
+| l19 | screens[7].options.keep.why | Zero gives a slippage of 10,000 bp in size | correct | s(0 - m)/m x 1e4 = -s x 1e4 |
+| l19 | screens[7].options.mean.why | An imputed price has no (real) slippage | correct | the number would measure the imputation, not a trade |
+| l19 | screens[7].options.nan.why | A NaN row still counts in the quantity totals | correct | pandas sum skips NaN in the numerator but the qty denominator keeps the row; sim: concepts:L19 NaN price biases the VWAP down |
+| l19 | screens[8].lines a to d | Buyer cost p - m, seller cost m - p, both s(p - m); divide by m and scale by 1e4 | correct | derivation; sim: concepts:L19 sign of slippage |
+| l19 | screens[8].lines.x.why, explain | p - m for both sides makes a seller below mid look like a gain; a seller at 49.80 against 50 loses 40 bp | correct | sim: concepts:L19 sign of slippage |
+| l19 | screens[9].options | Read, list, clean in order, model, record counts; a plot will not show a comma; no trail cannot be checked | correct | reasoning |
+| l19 | screens[10].hints, explain, byKey | VWAP 31.225 over 4,000 shares; with the repeat 31.2727 (about 4.8p high); mean of prices 31.1333 | correct | sim: concepts:L19 fills VWAP |
+| l19 | screens[11].options.sym, time, side | Split by symbol, time of day and side to test whether one slope fits all | correct | heterogeneity checks; W 7.4 (interactions by group) |
+| l19 | screens[11].options.cubic.why | Adding terms until R^2 passes 0.9 tunes on the same data | correct | in-sample selection (ET ch. 17; LdP ch. 11 backtest overfitting) |
+| l19 | screens[11].options.big.why | Dropping the largest orders drops data for being large, not wrong | correct | reasoning; size is the regressor |
+| l19 | quiz[0] | 900 - 25 - 12 = 863 with no overlap | correct | arithmetic under the stated no-overlap hypothesis |
+| l19 | quiz[1] | (2,000 + 6,240)/800 = 10.30; the mean of prices 10.20 ignores the share counts | correct | sim: concepts:L19 fills VWAP |
+| l19 | quiz[2] | drop_duplicates compares every column by default, finds non-adjacent rows, needs no sort | correct | pd docs DataFrame.drop_duplicates; sim: concepts:L19 drop_duplicates semantics |
+| l19 | quiz[3] | A seller at 49.80 against 50.00: -1 x (49.80 - 50)/50 x 1e4 = +40 bp | correct | sim: concepts:L19 sign of slippage |
