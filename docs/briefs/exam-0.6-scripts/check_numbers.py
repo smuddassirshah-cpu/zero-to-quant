@@ -128,17 +128,23 @@ say('e-witness-solve', 'feedback.correct', -12)
 # ------------------------------------------------------------------ difficulty 3
 # truth table: route B by enumeration, rows in the order T,T / T,F / F,T / F,F
 tw = node(W('e-converse-table'))
-for r, (p, q) in enumerate([(True, True), (True, False), (False, True), (False, False)]):
-    want = ['T' if v else 'F' for v in (imp(p, q), imp(q, p), imp(not q, not p))]
+rows = [(True, True), (True, False), (False, True), (False, False)]
+for r, (p, q) in enumerate(rows):
+    want = ['T' if v else 'F' for v in (imp(p, q), imp(not p, not q), p and not q)]
     got = [tw['rows'][r][2], tw['rows'][r][3]['answer'], tw['rows'][r][4]['answer']]
     ex._rec(got == want, f'e-converse-table row {r}: {got} = {want}', '')
     for c in (3, 4):
         for w in tw['rows'][r][c].get('wrong', []):
             ex._rec(w['text'] != tw['rows'][r][c]['answer'], f'e-converse-table r{r}c{c} wrong {w["id"]} differs from the key', '')
-contra = [imp(not q, not p) for p, q in itertools.product([True, False], repeat=2)]
-conv = [imp(q, p) for p, q in itertools.product([True, False], repeat=2)]
-orig = [imp(p, q) for p, q in itertools.product([True, False], repeat=2)]
-ex._rec(contra == orig and sum(a != b for a, b in zip(conv, orig)) == 2, 'contrapositive matches; converse differs on two rows', '')
+orig = [imp(p, q) for p, q in rows]
+inv = [imp(not p, not q) for p, q in rows]
+conv = [imp(q, p) for p, q in rows]
+neg = [p and not q for p, q in rows]
+ex._rec(inv == conv and inv == [True, True, False, True], 'inverse reads T, T, F, T and equals the converse', '')
+ex._rec(neg == [False, True, False, False] and all(a != b for a, b in zip(neg, orig)), 'P and not Q is the opposite of P => Q on every row', '')
+slip = [imp(p, not q) for p, q in rows]
+ex._rec(slip == [False, True, True, True] and [r for r in range(4) if slip[r] != neg[r]] == [2, 3],
+        'P => not Q differs from P and not Q on the F,T and F,F rows (where the slips sit)', '')
 fbk = node(P('e-converse-table') + '.feedback')['byKey']
 wids = {w['id'] for row in tw['rows'] for c in row if isinstance(c, dict) for w in c.get('wrong', [])}
 ex._rec(set(fbk) == wids, 'table byKey keys are the wrong ids, not cell ids', '')
@@ -183,6 +189,7 @@ ex._rec(True, 'e-odd-direct: identity holds for a, b in -20..20', '')
 ex._rec(all((2 * k + 1) ** 2 + 2 * (2 * k + 1) == 4 * k * k + 8 * k + 3 == 2 * (2 * k * k + 4 * k + 1) + 1
             for k in range(-50, 51)), 'e-odd-direct "same" algebra is right (the flaw is one letter)', '')
 say('e-odd-direct', 'widget.options[2].text', 3 * 5 + 3 + 5)
+say('e-odd-direct', 'widget.options[2].text', 7 * 9 + 7 + 9)
 
 ex._rec(4 * 3 == 12, 'e-quarters: four returns at most 3% sum to at most 12%', '')
 say('e-quarters-contrapositive', 'explain.text', 12)
@@ -199,18 +206,26 @@ ex._rec(all((4 * k) ** 2 == 16 * k * k == 4 * (4 * k * k) for k in range(-30, 31
 say('e-proved-converse', 'widget.options[0].text', 2 ** 2)
 
 # ------------------------------------------------------------------ difficulty 4
-vals = {n: n * n + n + 17 for n in range(1, 40)}
-first = min(n for n, v in vals.items() if not is_prime(v))
+def is_sq(v):
+    return int(math.isqrt(v)) ** 2 == v
+
+
+vals = {n: 10 * n * n + 1 for n in range(1, 40)}
+first = min(n for n, v in vals.items() if is_sq(v))
 key('e-prime-formula', first)
 wrong('e-prime-formula', 'value', vals[first])
+wrong('e-prime-formula', 'root', 19)
 wrong('e-prime-formula', 'early', first - 1)
-ex._rec([vals[n] for n in (1, 2, 3, 4)] == [19, 23, 29, 37], 'e-prime-formula prose values 19, 23, 29, 37', '')
-ex._rec(all(is_prime(vals[n]) for n in range(1, first)) and first - 1 == 15, 'fifteen primes before the failure', '')
-ex._rec(vals[first] == 17 * 17 == first * 17 + 17, '289 = 17^2 = 16 x 17 + 17', '')
+ex._rec([vals[n] for n in (1, 2, 3)] == [11, 41, 91], 'e-prime-formula prose values 11, 41, 91', '')
+ex._rec(not any(is_sq(vals[n]) for n in range(1, first)) and first == 6, 'no square before n = 6', '')
+ex._rec(vals[first] == 361 == 19 ** 2 == 10 * 36 + 1 and 15 ** 2 < vals[5] < 16 ** 2, '361 = 19^2; 251 lies between 225 and 256', '')
 say('e-prime-formula', 'feedback.correct', vals[first])
 say('e-prime-formula', 'feedback.byKey.early', vals[first - 1])
-say('e-prime-formula', 'explain.text', vals[first - 1])
-say('e-prime-formula', 'explain.text', vals[1])
+say('e-prime-formula', 'feedback.byKey.early', 15 ** 2)
+say('e-prime-formula', 'feedback.byKey.early', 16 ** 2)
+say('e-prime-formula', 'explain.text', vals[4])
+say('e-prime-formula', 'explain.text', vals[first])
+say('e-prime-formula', 'explain.text', 10 * 36)
 
 holds = [n for n in range(0, 300) if 2 ** n >= 7 * n]
 n0 = next(m for m in range(0, 300) if all(n in holds for n in range(m, 300)))
@@ -225,7 +240,7 @@ say('e-base-case-seven', 'feedback.correct', 2 ** 5)
 say('e-base-case-seven', 'feedback.byKey.five', 7 * 5)
 
 ex._rec(all(2 ** p != 3 ** q for p in range(1, 40) for q in range(1, 40)), 'e-log-contradiction: 2^p never equals 3^q', '')
-ex._rec(2 ** 1 < 3 ** 1, 'e-log-contradiction "bigger" is false: 2 < 3', '')
+ex._rec(2 ** 1 < 3 ** 1 and 2 ** 2 > 3 ** 1, 'e-log-contradiction "bigger" is false: 2 < 3 but 4 > 3', '')
 
 grid = [k / 100 for k in range(1, 1001)]
 ex._rec(all(x + 1 / x >= 2 - 1e-12 for x in grid), 'e-forwards-proof: x + 1/x >= 2 on a grid', '')

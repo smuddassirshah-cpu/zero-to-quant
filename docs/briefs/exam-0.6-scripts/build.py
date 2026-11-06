@@ -164,27 +164,28 @@ items.append(item(
             "You negated the hypothesis. $\\lnot(P \\Rightarrow Q)$ keeps $P$ and negates $Q$."),
         opt("kept-all", "Every desk that trades FX has some night with no trader on call.",
             "You kept the first \"every\". The negation needs only one desk that fails.")]),
-    fb("$\\lnot \\forall d\\,(F(d) \\Rightarrow \\forall n\\ C(d, n))$ is $\\exists d\\,(F(d) \\land \\exists n\\ \\lnot C(d, n))$.",
+    fb("Some FX desk has a night with no one on call. That one desk breaks the claim.",
        "Flip each quantifier in place, and negate the implication as $P$ and not $Q$."),
     "The outer \"every desk\" becomes \"some desk\", which must still trade FX. "
     "Inside, \"every night\" becomes \"some night\" with no one on call. One such desk breaks the claim."))
 
-# B2 L1 (l3): converse and contrapositive by truth table
+# B2 L1 (l3, l5): the inverse and the negation of an implication, by truth table
 items.append(item(
-    "e-converse-table", 3, ["pv-logic"], ["truth-table", "contrapositive"], 120, "Converse against contrapositive",
-    "The column $P \\Rightarrow Q$ is given. Fill the converse $Q \\Rightarrow P$ and the contrapositive $\\lnot Q \\Rightarrow \\lnot P$.",
+    "e-converse-table", 3, ["pv-logic"], ["truth-table", "negation"], 120, "The inverse and the negation",
+    "The column $P \\Rightarrow Q$ is given. Fill the inverse $\\lnot P \\Rightarrow \\lnot Q$ and the column $P \\land \\lnot Q$.",
     "Fill both columns with T or F.",
-    {"kind": "table", "columns": ["$P$", "$Q$", "$P \\Rightarrow Q$", "$Q \\Rightarrow P$", "$\\lnot Q \\Rightarrow \\lnot P$"],
-     "rows": [["T", "T", "T", tf("T"), tf("T")],
-              ["T", "F", "F", tf("T"), tf("F", "tf-contra")],
-              ["F", "T", "T", tf("F", "ft-converse"), tf("T")],
-              ["F", "F", "T", tf("T"), tf("T")]]},
-    fb("The contrapositive matches $P \\Rightarrow Q$ on every row. The converse differs on two rows.",
-       "Each implication is F only where its own hypothesis is T and its conclusion F.",
-       {"tf-contra": "On the T, F row, $\\lnot Q$ is T and $\\lnot P$ is F, so the contrapositive is F.",
-        "ft-converse": "On the F, T row, the converse has hypothesis $Q$ T and conclusion $P$ F, so it is F."}),
-    "The contrapositive reads T, F, T, T, the same as $P \\Rightarrow Q$. "
-    "The converse reads T, T, F, T. So only the contrapositive says the same thing."))
+    {"kind": "table", "columns": ["$P$", "$Q$", "$P \\Rightarrow Q$", "$\\lnot P \\Rightarrow \\lnot Q$", "$P \\land \\lnot Q$"],
+     "rows": [["T", "T", "T", tf("T"), tf("F")],
+              ["T", "F", "F", tf("T"), tf("T")],
+              ["F", "T", "T", tf("F", "ft-inverse"), tf("F", "imp-not-ft")],
+              ["F", "F", "T", tf("T"), tf("F", "imp-not-ff")]]},
+    fb("$P \\land \\lnot Q$ is the opposite of $P \\Rightarrow Q$ on every row. The inverse matches the converse instead.",
+       "An implication is F only where its hypothesis is T and its conclusion F. An \"and\" is T only where both parts are T.",
+       {"ft-inverse": "On the F, T row, $\\lnot P$ is T and $\\lnot Q$ is F, so the inverse is F.",
+        "imp-not-ft": "You read it as $P \\Rightarrow \\lnot Q$. An \"and\" is T only when both parts are T.",
+        "imp-not-ff": "You read it as $P \\Rightarrow \\lnot Q$. An \"and\" is T only when both parts are T."}),
+    "The inverse reads T, T, F, T, the same as the converse, not as $P \\Rightarrow Q$. "
+    "$P \\land \\lnot Q$ reads F, T, F, F, the opposite of $P \\Rightarrow Q$ on every row. So it is the negation of the implication."))
 
 # B3 L2 (l8): functions between finite sets
 items.append(item(
@@ -195,7 +196,7 @@ items.append(item(
     fb("Each order has 4 choices, so there are $4^3 = 64$ functions.",
        "A function picks one venue for each order. Multiply the choices.",
        {"swapped": "You took $3^4 = 81$. That gives each venue one of 3 orders, which is a function the other way.",
-        "product": "You took $3 \\times 4 = 12$. That counts the pairs in $A \\times B$, not the functions."}),
+        "product": "You took $3 \\times 4 = 12$. That counts the (order, venue) pairs, not the functions."}),
     "A function gives every order exactly one venue. Order 1, order 2 and order 3 each have 4 choices. "
     "So there are $4 \\times 4 \\times 4 = 64$."))
 
@@ -230,7 +231,7 @@ items.append(item(
 # B6 L2 (l9): one-to-one but not onto
 items.append(item(
     "e-exp-onto", 3, ["pv-sets"], ["onto"], 90, "Growth factors",
-    "A price grows by the factor $g(x) = e^x$ for a log return $x$. Take $g : \\mathbb{R} \\to \\mathbb{R}$.",
+    "A price is multiplied by $g(x) = e^x$ when its natural log rises by $x$. Take $g : \\mathbb{R} \\to \\mathbb{R}$.",
     "Which describes $g$?",
     choice([
         opt("inj", "One-to-one but not onto: no $x$ gives $g(x) = -1$.", correct=True),
@@ -239,7 +240,7 @@ items.append(item(
         opt("onto", "Onto but not one-to-one.",
             "You swapped the two tests. $e^a = e^b$ forces $a = b$, so it is one-to-one."),
         opt("neither", "Neither one-to-one nor onto.",
-            "You tested one-to-one by a picture of a curve. Equal outputs force equal inputs here.")]),
+            "You saw that $-1$ is never reached and stopped there. $e^a = e^b$ still forces $a = b$, so $g$ is one-to-one.")]),
     fb("$e^a = e^b$ gives $a = b$, but every output is positive, so $-1$ has no preimage.",
        "Check one-to-one with $g(a) = g(b)$. For onto, find an output of $\\mathbb{R}$ that is never reached."),
     "Taking $\\ln$ of $e^a = e^b$ gives $a = b$, so $g$ is one-to-one. "
@@ -276,12 +277,12 @@ items.append(item(
     "Claim: if $m$ and $n$ are odd, then $mn + m + n$ is odd. Write $m = 2a + 1$ and $n = 2b + 1$ for integers $a$ and $b$.",
     "Which line finishes the proof?",
     choice([
-        opt("right", "$mn + m + n = 4ab + 4a + 4b + 3 = 2(2ab + 2a + 2b + 1) + 1$, and $2ab + 2a + 2b + 1$ is an integer.",
+        opt("right", "$mn + m + n = 4ab + 4a + 4b + 3 = 2(2ab + 2a + 2b + 1) + 1$, twice an integer plus 1.",
             correct=True),
-        opt("same", "Since $m = n = 2k + 1$, $mn + m + n = 4k^2 + 8k + 3 = 2(2k^2 + 4k + 1) + 1$.",
+        opt("same", "Write $m = n = 2k + 1$. Then $mn + m + n = 4k^2 + 8k + 3 = 2(2k^2 + 4k + 1) + 1$, which is odd.",
             "You used one letter for both numbers. That proves only the case $m = n$."),
-        opt("example", "With $m = 3$ and $n = 5$: $15 + 3 + 5 = 23$, which is odd.",
-            "You checked one case. The claim is about every pair of odd numbers."),
+        opt("example", "With $m = 3$ and $n = 5$: $15 + 3 + 5 = 23$. With $m = 7$ and $n = 9$: $63 + 7 + 9 = 79$. Both are odd.",
+            "You checked two cases. The claim is about every pair of odd numbers."),
         opt("gap", "$mn + m + n = 4ab + 4a + 4b + 3$, and 4 is even, so the total is odd.",
             "You stopped before the form $2(\\text{integer}) + 1$. Saying \"4 is even\" does not reach the definition of odd.")]),
     fb("$4ab + 4a + 4b + 3 = 2(2ab + 2a + 2b + 1) + 1$, which is odd by definition.",
@@ -335,8 +336,8 @@ items.append(item(
         opt("nothing", "Nothing. The base case fails, since $1 + 1 < 1$ is false, so the chain never starts.", correct=True),
         opt("true", "The claim is true, since the step works for every $k$.",
             "You skipped the base case. A step only carries truth forward from a case that holds."),
-        opt("bad-step", "The step is wrong, since you cannot add 1 to both sides of an inequality.",
-            "You doubted a valid step. Adding the same number to both sides keeps an inequality."),
+        opt("from-two", "The claim fails at $n = 1$ but holds from $n = 2$, since the step carries it on.",
+            "You let the step carry truth from a false case. At $n = 2$ the claim reads $3 < 2$, also false."),
         opt("large", "The claim holds for every large enough $n$.",
             "You read the step as eventual truth. With no true case to start from, the step proves nothing.")]),
     fb("The step is sound, but there is no true case for it to start from.",
@@ -364,20 +365,25 @@ items.append(item(
     "A reader who checks the first line against the claim sees it at once, and $n = 2$ refutes the claim."))
 
 # ---------------------------------------------------------------- difficulty 4
-# C1 L3 (l14): the first counterexample of a prime formula
-counter = next(n for n in range(1, 200) if any((n * n + n + 17) % d == 0 for d in range(2, n * n + n + 17)))
+# C1 L3 (l14): the first counterexample of a square-free-looking formula
+def _is_sq(v):
+    return math.isqrt(v) ** 2 == v
+
+
+counter = next(n for n in range(1, 200) if _is_sq(10 * n * n + 1))
 items.append(item(
-    "e-prime-formula", 4, ["pv-logic", "pv-direct"], ["counterexample"], 150, "A formula that runs out",
-    "Claim: for every whole number $n \\ge 1$, the number $n^2 + n + 17$ is prime. It gives 19, 23, 29, 37, ... for $n = 1, 2, 3, 4$.",
+    "e-prime-formula", 4, ["pv-logic", "pv-direct"], ["counterexample"], 150, "A value that lands on a square",
+    "Claim: for every whole number $n \\ge 1$, the number $10n^2 + 1$ is not a perfect square. It gives 11, 41, 91 for $n = 1, 2, 3$.",
     "What is the smallest $n$ that refutes the claim?",
-    num(counter, 0, [("value", counter ** 2 + counter + 17, 0), ("early", counter - 1, 0)], placeholder="a whole number",
-        label="Smallest n"),
-    fb("At $n = 16$ the value is $16 \\times 17 + 17 = 289 = 17^2$, not prime. Every $n$ from 1 to 15 gives a prime.",
-       "Try a value of $n$ that makes both $n^2 + n$ and 17 multiples of 17.",
-       {"value": "289 is the value at the counterexample. The question asks for $n$, which is 16.",
-        "early": "At $n = 15$ the value is 257, which is prime. Try one more."}),
-    "At $n = 16$, $n^2 + n = 16 \\times 17$, so the value is $17 \\times 17 = 289$. "
-    "The fifteen values before it, from 19 up to 257, are all prime. One failure refutes the \"for every\"."))
+    num(counter, 0, [("value", 10 * counter ** 2 + 1, 0), ("root", math.isqrt(10 * counter ** 2 + 1), 0),
+                     ("early", counter - 1, 0)], placeholder="a whole number", label="Smallest n"),
+    fb("At $n = 6$ the value is $10 \\times 36 + 1 = 361 = 19^2$, a perfect square. Every $n$ from 1 to 5 gives a non-square.",
+       "Work out $10n^2 + 1$ for $n = 4, 5, 6, \\dots$ and ask whether each value is a square.",
+       {"value": "361 is the value at the counterexample. The question asks for $n$, which is 6.",
+        "root": "19 is the square root of the value. The question asks for $n$, which is 6.",
+        "early": "At $n = 5$ the value is 251, which lies between $15^2 = 225$ and $16^2 = 256$. Try one more."}),
+    "The values for $n = 1$ to 5 are 11, 41, 91, 161 and 251, and none is a square. "
+    "At $n = 6$ the value is $360 + 1 = 361 = 19^2$. One failure refutes the \"for every\"."))
 
 # C2 L3 (l13): where an induction can start
 n0 = next(m for m in range(0, 100) if all(2 ** n >= 7 * n for n in range(m, 400)))
@@ -404,7 +410,7 @@ items.append(item(
         opt("lowest", "$p$ and $q$ then share a factor, against lowest terms.",
             "You copied the $\\sqrt{2}$ template. Nothing here makes $p$ and $q$ share a factor; parity does the work."),
         opt("bigger", "$2^p > 3^q$ for all positive $p$ and $q$.",
-            "You stated a false fact. $2^1 < 3^1$, so the sizes can go either way."),
+            "You compared sizes, as if one side must be bigger. $2^1 < 3^1$ but $2^2 > 3^1$, so size settles nothing."),
         opt("q-zero", "$q$ cannot be 0, so the fraction is undefined.",
             "You named a side condition. $q \\ge 1$ was assumed; it is not the contradiction.")]),
     fb("An even number cannot equal an odd one, so no such $p$ and $q$ exist.",

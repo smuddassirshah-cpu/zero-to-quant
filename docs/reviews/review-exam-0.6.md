@@ -61,3 +61,19 @@ Format: `n. item [index] path | severity | problem | evidence | fix`. Severities
 - Coverage: 3 (findings 1, 2 and 9; 9 needs no change).
 - Voice: 2 (findings 7 and 8). Layout: 0.
 - Author's scripts: `check_numbers.py` 141 of 141, exit 0; `fresh.py` clean in `proof` by keyed number. Validator 0 errors, no topic-0.6 warning. No engine change needed.
+
+## Fix pass
+
+Edits by `docs/briefs/exam-0.6-scripts/build.py`, regenerated into `app/content/exams/topic-0.6.json`; `check_numbers.py` and `fresh.py` updated for each change. Every changed key and slip recomputed by enumeration.
+
+1. fixed: [6] replaced by the inverse and negation table as proposed. Inverse T, T, F, T; $P \land \lnot Q$ F, T, F, F; $P \Rightarrow \lnot Q$ T on the F, T and F, F rows, where the slips sit. Tags now `truth-table`, `negation`.
+2. fixed, with a departure: [17] no longer uses a prime formula at all, since l14 and l12 own that setup. New claim: $10n^2 + 1$ is never a perfect square. Values 11, 41, 91, 161, 251 are non-squares; $n = 6$ gives $361 = 19^2$. Answer 6; slips 361 (value), 19 (root), 5 (early, 251 lies between $15^2$ and $16^2$). No claim of this kind in `proof` (l14 only has "a perfect square is even").
+3. fixed: [10] `neither` why now names the real slip.
+4. fixed: [15] dead distractor replaced by `from-two`.
+5. fixed: [12] key shortened, distractors lengthened (83, 89, 91, 67 visible characters as proposed); `example` now checks two cases (3, 5 and 7, 9: 23 and 79).
+6. fixed: [19] `bigger` why names the comparison ($2^2 > 3^1$ recomputed).
+7. fixed: [10] prose no longer says "log return".
+8. fixed: [7] and [5] feedback no longer use undefined symbols.
+9. no change needed, as the review says.
+
+Gates: validator 0 errors, no warning naming topic-0.6; voice scan on a copy 0 long sentences, 0 long explanations, no `!` or dashes; `check_numbers.py` 150 of 150, exit 0 (`check_wrongs()` then `report()`); `fresh.py` runs, no keyed number or phrase of the new items in `proof`; playthrough `--exam topic-0.6` green (24 of 24) with and without `--mobile`.

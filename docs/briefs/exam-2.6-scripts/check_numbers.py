@@ -201,9 +201,17 @@ say('e-u-from-days', 'feedback.correct', [sum(x > y for y in Yd) for x in Xd][1]
 ex._rec([sum(x > y for y in Yd) for x in Xd] == [4, 5, 1, 5], 'per-day wins 4, 5, 1, 5', '')
 say('e-u-from-days', 'explain.text', float(F(rs - 10, 20)))
 
-key('e-perm-p', float(F(13, 1000)))
-wrong('e-perm-p', 'raw', 12 / 999)
-say('e-perm-p', 'feedback.byKey', round(12 / 999, 4))
+key('e-perm-p', float(F(21, 300)))
+wrong('e-perm-p', 'raw', 20 / 299)
+wrong('e-perm-p', 'top-only', 21 / 299)
+wrong('e-perm-p', 'bottom-only', 20 / 300)
+say('e-perm-p', 'feedback.byKey', round(20 / 299, 4))
+say('e-perm-p', 'feedback.byKey', round(21 / 299, 4))
+say('e-perm-p', 'feedback.byKey', round(20 / 300, 4))
+pw = node(W('e-perm-p'))
+bands = sorted([(pw['answer'] - pw['tol']['abs'], pw['answer'] + pw['tol']['abs'], 'key')] +
+               [(x['value'] - x['tol']['abs'], x['value'] + x['tol']['abs'], x['id']) for x in pw['wrong']])
+ex._rec(all(a[1] < b[0] for a, b in zip(bands, bands[1:])), 'e-perm-p: key and slip bands do not overlap', '')
 
 sp = min(1.6, 1.75 / 1.34)
 h = 0.9 * sp * math.exp(-0.2 * math.log(250))
@@ -254,6 +262,10 @@ wrong('e-ess-sticky', 'over-one-plus', 6000 / 1.75)
 say('e-ess-sticky', 'feedback.correct', round(6000 / tau, 1))
 say('e-ess-sticky', 'explain.text', round(0.25 / 1.75, 4))
 say('e-ess-sticky', 'feedback.byKey', round(6000 / 1.75, 1))
+ew = node(W('e-ess-sticky'))
+ex._rec(all(abs(v - ew['answer']) <= ew['tol']['abs'] for v in (857.1, 6000 * round(0.25 / 1.75, 4))),
+        'e-ess-sticky: 857.1 and the rounded route 6000 x 0.1429 = 857.4 are accepted', '')
+ex._rec(all(abs(x['value'] - ew['answer']) > ew['tol']['abs'] for x in ew['wrong']), 'e-ess-sticky: slips outside the key band', '')
 
 # ------------------------------------------------------------------ difficulty 4
 g = {"A": [2, 3, 3, 4], "B": [4, 5, 5, 6], "C": [5, 7, 8, 8]}
@@ -290,13 +302,22 @@ say('e-takeover-week', 'explain.text', round(float(R5.std(ddof=1)), 4))
 say('e-takeover-week', 'explain.text', round(float(R5.mean()), 4))
 say('e-takeover-week', 'explain.text', round(1.4826 * mad, 4))
 
-dens = lambda l: 7 ** 10 * l ** 9 * math.exp(-7 * l) / math.gamma(10)  # noqa: E731
-pred = simpson(lambda l: math.exp(-l) * dens(l), 0.0, 30.0)
+dens = lambda l: 8 ** 12 * l ** 11 * math.exp(-8 * l) / math.gamma(12)  # noqa: E731
+pred = simpson(lambda l: l * math.exp(-l) * dens(l), 0.0, 30.0)
+pred_nb = math.comb(12, 1) * (8 / 9) ** 12 / 9
+ex._rec(abs(pred - pred_nb) < 1e-6, f'e-no-defaults-next: predictive by quadrature {pred:.6f} = negative binomial {pred_nb:.6f}', '')
+rng = np.random.default_rng(26)
+lam = rng.gamma(12, 1 / 8, 4_000_000)
+mc = float(np.mean(lam * np.exp(-lam)))
+ex._rec(abs(mc - pred_nb) < 1e-3, f'e-no-defaults-next: Monte Carlo {mc:.5f} agrees', '')
 key_round('e-no-defaults-next', pred, 4, part=0)
-wrong('e-no-defaults-next', 'plug-in', math.exp(-10 / 7), part=0)
-say('e-no-defaults-next', 'explain.text', round(math.exp(-10 / 7), 4))
+wrong('e-no-defaults-next', 'plug-in', 1.5 * math.exp(-1.5), part=0)
+wrong('e-no-defaults-next', 'zero', (8 / 9) ** 12, part=0)
+wrong('e-no-defaults-next', 'no-coef', (8 / 9) ** 12 / 9, part=0)
+ex._rec(pred_nb < 1.5 * math.exp(-1.5) and 12 / 8 == 1.5, 'e-no-defaults-next: same mean 12/8, predictive below plug-in at j = 1', '')
+say('e-no-defaults-next', 'explain.text', round(1.5 * math.exp(-1.5), 4))
 say('e-no-defaults-next', 'explain.text', round(pred, 4))
-ex.expect('exam', P('e-no-defaults-next', 1) + '.question', round(math.exp(-10 / 7), 4))
+ex.expect('exam', P('e-no-defaults-next', 1) + '.question', round(1.5 * math.exp(-1.5), 4))
 
 key('e-hit-rate-shrink', float(F(60, 100)), part=0)
 wrong('e-hit-rate-shrink', 'kappa', float(F(40, 100)), part=0)
@@ -319,6 +340,11 @@ wrong('e-rejections-dispersion', 'poisson', 2 * (1 - phi(0.072 / 0.028)), part=2
 say('e-rejections-dispersion', 'explain.text', round(2 * (1 - phi(0.072 / 0.028)), 4))
 ex.expect('exam', P('e-rejections-dispersion', 2) + '.feedback.correct', round(0.072 / se, 3))
 ex.expect('exam', P('e-rejections-dispersion', 2) + '.feedback.byKey.poisson', round(0.072 / 0.028, 3))
+rw = node(W('e-rejections-dispersion', 2))
+ex._rec(all(abs(2 * (1 - phi(z)) - rw['answer']) <= rw['tol']['abs'] for z in (0.072 / se, 1.485, 1.4846)) and
+        all(abs(2 * (1 - phi(z)) - rw['answer']) <= rw['tol']['abs'] for z in (1.48, 1.49)),
+        'e-rejections-dispersion: p from z rounded to 3 or 2 places is accepted', '')
+ex._rec(all(abs(x['value'] - rw['answer']) > rw['tol']['abs'] for x in rw['wrong']), 'e-rejections-dispersion: Poisson slip outside the band', '')
 
 
 # ------------------------------------------------------------------ code items, run in CPython

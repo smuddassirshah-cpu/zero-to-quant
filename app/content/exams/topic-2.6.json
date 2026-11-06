@@ -23,8 +23,8 @@
     "family-link"
    ],
    "pace": 60,
-   "title": "Time to fill",
-   "prose": "A desk models the seconds until a resting limit order fills, against its queue position. Times are positive and right-skewed, and their spread grows with their mean.",
+   "title": "Block trade sizes",
+   "prose": "A desk models the size, in £m, of each block trade against the stock's daily volume. Sizes are positive and right-skewed, and their spread grows with their mean.",
    "question": "Which family and link suit this outcome?",
    "widget": {
     "kind": "choice",
@@ -39,17 +39,17 @@
      {
       "id": "poisson",
       "text": "Poisson with a log link",
-      "why": "You matched \"positive and skewed\" to counts. Poisson is for whole-number counts, not continuous times."
+      "why": "You matched \"positive and skewed\" to counts. Poisson is for whole-number counts, not continuous sizes."
      },
      {
       "id": "normal",
       "text": "Normal with the identity link",
-      "why": "You kept the default. It allows negative times and gives every order the same variance."
+      "why": "You kept the default. It allows negative sizes and gives every order the same variance."
      },
      {
       "id": "binomial",
       "text": "Binomial with a logit link",
-      "why": "You picked the 0/1 family. Whether an order fills is binary, but how long it takes is not."
+      "why": "You picked the 0/1 family. Whether a block trade happens is binary, but its size is not."
      }
     ]
    },
@@ -58,7 +58,7 @@
     "generic": "Match the family to the outcome's values and its variance function."
    },
    "explain": {
-    "text": "A time is continuous and positive. The Gamma family has variance function $\\mu^2$, so spread grows with the mean. The log link keeps every fitted mean positive."
+    "text": "A size is continuous and positive. The Gamma family has variance function $\\mu^2$, so spread grows with the mean. The log link keeps every fitted mean positive."
    }
   },
   {
@@ -83,7 +83,7 @@
     "placeholder": "a number",
     "label": "PD",
     "unit": "%",
-    "accept": "1 / (1 + e^{1.2}) = 23.15%",
+    "accept": "$1/(1 + e^{1.2}) = 23.15\\%$",
     "wrong": [
      {
       "id": "odds",
@@ -401,7 +401,7 @@
     },
     "placeholder": "a number",
     "label": "p-value",
-    "accept": "P(chi-square with 2 df > 7.5) = e^{-3.75} = 0.0235",
+    "accept": "$P(\\chi^2_2 > 7.5) = e^{-3.75} = 0.0235$",
     "wrong": [
      {
       "id": "one-df",
@@ -498,7 +498,7 @@
      },
      {
       "id": "block",
-      "text": "Each stock-day sends one order to A and one to B, with a random choice of which goes first.",
+      "text": "Each stock-day has two orders, and a coin flip picks which one goes to A.",
       "correct": true
      },
      {
@@ -587,11 +587,11 @@
    ],
    "pace": 75,
    "title": "Reporting the shuffles",
-   "prose": "A permutation test of a signal's edge runs $B = 999$ shuffles of the signal days. 12 shuffles give an edge at least as large as the real one.",
+   "prose": "A permutation test of a signal's edge runs $B = 299$ shuffles of the signal days. 20 shuffles give an edge at least as large as the real one.",
    "question": "What $p$-value should be reported? Give 4 decimal places.",
    "widget": {
     "kind": "numeric",
-    "answer": 0.013,
+    "answer": 0.07,
     "tol": {
      "abs": 5e-05
     },
@@ -600,7 +600,21 @@
     "wrong": [
      {
       "id": "raw",
-      "value": 0.012012,
+      "value": 0.06689,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "top-only",
+      "value": 0.070234,
+      "tol": {
+       "abs": 5e-05
+      }
+     },
+     {
+      "id": "bottom-only",
+      "value": 0.066667,
       "tol": {
        "abs": 5e-05
       }
@@ -608,14 +622,16 @@
     ]
    },
    "feedback": {
-    "correct": "$(12 + 1)/(999 + 1) = 0.0130$.",
+    "correct": "$(20 + 1)/(299 + 1) = 0.0700$.",
     "generic": "Count the real labelling as one of the arrangements.",
     "byKey": {
-     "raw": "You divided 12 by 999, giving 0.0120. Add the real data to both counts: $(c + 1)/(B + 1)$."
+     "raw": "You divided 20 by 299, giving 0.0669. Add the real data to both counts: $(c + 1)/(B + 1)$.",
+     "top-only": "You added 1 to the count but not to $B$, giving 0.0702. The real labelling joins both counts.",
+     "bottom-only": "You added 1 to $B$ but not to the count, giving 0.0667. The real labelling is at least as large as itself."
     }
    },
    "explain": {
-    "text": "The observed labelling is one of the possible arrangements, so it joins both counts. That gives $(12 + 1)/(999 + 1) = 0.0130$, never below the floor $1/1000$."
+    "text": "The observed labelling is one of the possible arrangements, so it joins both counts. That gives $(20 + 1)/(299 + 1) = 0.0700$, never below the floor $1/300$."
    }
   },
   {
@@ -790,7 +806,7 @@
     "placeholder": "a number",
     "label": "Posterior mean",
     "unit": "%",
-    "accept": "(8/9) / (4/9 + 1/9) = 1.6%",
+    "accept": "$(8/9)/(4/9 + 1/9) = 1.6\\%$",
     "wrong": [
      {
       "id": "average",
@@ -879,7 +895,7 @@
     "kind": "numeric",
     "answer": 857.14,
     "tol": {
-     "abs": 0.05
+     "abs": 0.5
     },
     "placeholder": "a number",
     "label": "ESS",
@@ -1114,24 +1130,38 @@
     "predictive"
    ],
    "pace": 180,
-   "title": "A year with no defaults",
-   "prose": "A loan book's default rate has posterior Gamma(10, rate 7). Next year's count is Poisson($\\lambda$). Its predictive is negative binomial, with $P(0) = \\left(\\tfrac{7}{8}\\right)^{10}$.",
+   "title": "One outage next month",
+   "prose": "A venue's outage rate, in outages a month, has posterior Gamma(12, rate 8). Next month's count is Poisson($\\lambda$). Its predictive is negative binomial: $P(j) = \\binom{11 + j}{j}\\left(\\tfrac89\\right)^{12}\\left(\\tfrac19\\right)^j$.",
    "question": "Compare the predictive with plugging in the mean.",
    "parts": [
     {
-     "question": "What is the predictive chance of no defaults next year? Give 4 decimal places.",
+     "question": "What is the predictive chance of exactly one outage next month? Give 4 decimal places.",
      "widget": {
       "kind": "numeric",
-      "answer": 0.2631,
+      "answer": 0.3244,
       "tol": {
        "abs": 0.0005
       },
       "placeholder": "a number",
-      "label": "P(no defaults)",
+      "label": "P(one outage)",
       "wrong": [
        {
         "id": "plug-in",
-        "value": 0.2397,
+        "value": 0.3347,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "zero",
+        "value": 0.2433,
+        "tol": {
+         "abs": 0.0005
+        }
+       },
+       {
+        "id": "no-coef",
+        "value": 0.027,
         "tol": {
          "abs": 0.0005
         }
@@ -1139,15 +1169,17 @@
       ]
      },
      "feedback": {
-      "correct": "$(7/8)^{10} = 0.2631$.",
-      "generic": "Raise rate over rate plus 1 to the power of the shape.",
+      "correct": "$12 \\times (8/9)^{12} \\times \\tfrac19 = 0.3244$.",
+      "generic": "Put $j = 1$ into $P(j)$. The coefficient is $\\binom{12}{1} = 12$.",
       "byKey": {
-       "plug-in": "You plugged in $\\lambda = 10/7$, giving $e^{-1.4286} = 0.2397$. That ignores the doubt about $\\lambda$."
+       "plug-in": "You plugged in $\\lambda = 1.5$, giving $1.5e^{-1.5} = 0.3347$. That ignores the doubt about $\\lambda$.",
+       "zero": "That is $P(0) = (8/9)^{12}$. The question asks for exactly one outage.",
+       "no-coef": "You left out $\\binom{12}{1} = 12$, giving 0.0270."
       }
      }
     },
     {
-     "question": "Why is the predictive chance above the plug-in's 0.2397?",
+     "question": "Why is the predictive chance below the plug-in's 0.3347?",
      "widget": {
       "kind": "choice",
       "layout": "stack",
@@ -1155,13 +1187,13 @@
       "options": [
        {
         "id": "doubt",
-        "text": "It averages over $\\lambda$, and low-$\\lambda$ draws make a quiet year more likely.",
+        "text": "Doubt about $\\lambda$ spreads the predictive, moving chance from middle counts to both tails.",
         "correct": true
        },
        {
         "id": "prior",
         "text": "The prior pulls $\\lambda$ down, so the predictive mean is lower.",
-        "why": "You blamed the mean. Both use the same mean, $10/7$; the predictive adds spread."
+        "why": "You blamed the mean. Both use the same mean, $12/8 = 1.5$; the predictive adds spread."
        },
        {
         "id": "bias",
@@ -1171,18 +1203,18 @@
        {
         "id": "rounding",
         "text": "It is rounding: the two agree to 2 decimal places.",
-        "why": "You dismissed the gap. 0.2631 against 0.2397 differ in the second decimal."
+        "why": "You dismissed the gap. 0.3244 against 0.3347 differ in the second decimal."
        }
       ]
      },
      "feedback": {
-      "correct": "Doubt about $\\lambda$ widens the predictive, which puts more weight in both tails, including 0.",
+      "correct": "Same mean, more spread: one outage sits in the middle, so it loses chance to the tails.",
       "generic": "Ask what the predictive averages over that the plug-in fixes."
      }
     }
    ],
    "explain": {
-    "text": "The plug-in fixes $\\lambda = 10/7$ and gives $e^{-1.4286} = 0.2397$. The predictive averages $e^{-\\lambda}$ over the posterior, giving 0.2631. Averaging over doubt fattens the tails, so a quiet year is more likely."
+    "text": "The plug-in fixes $\\lambda = 1.5$ and gives $1.5e^{-1.5} = 0.3347$. The predictive averages $\\lambda e^{-\\lambda}$ over the posterior, giving 0.3244. Doubt about $\\lambda$ moves chance from the middle counts to the tails."
    }
   },
   {
@@ -1450,7 +1482,7 @@
       "kind": "numeric",
       "answer": 0.1376,
       "tol": {
-       "abs": 0.0005
+       "abs": 0.0015
       },
       "placeholder": "a number",
       "label": "p-value",
@@ -1569,7 +1601,7 @@
     "generic": "Compute the ranks first, with tied values sharing the mean of their places, then the sums of squares."
    },
    "explain": {
-    "text": "On ranks the grand mean is $(N + 1)/2$, and $(N - 1)\\,\\text{SSB}/\\text{SST}$ is the Kruskal-Wallis $H$ with its tie correction. A wild order becomes just the top rank, so it cannot swamp SSB. Refer $H$ to $\\chi^2$ with $k - 1$ df."
+    "text": "On ranks the grand mean is $(N + 1)/2$, and $(N - 1)\\,\\text{SSB}/\\text{SST}$ is the Kruskal-Wallis $H$ with its tie correction. A wild order becomes just the top rank, so it cannot swamp SSB. With about five or more orders per group, refer $H$ to $\\chi^2$ with $k - 1$ df."
    }
   }
  ]

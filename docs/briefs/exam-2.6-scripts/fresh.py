@@ -10,7 +10,7 @@ import re
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'app', 'content')
 TOKENS = {
-    'e-fill-time-family': ['until a resting limit order fills', 'queue position'],
+    'e-fill-time-family': ['block trade', 'daily volume'],
     'e-pd-at-leverage': ['-4.2', '23.15%', '0.2315'],
     'e-algo-f': ['SSB = 18', 'SSW = 105'],
     'e-u-share': ['U_X = 99', '99 / 180', '99/180'],
@@ -21,7 +21,7 @@ TOKENS = {
     'e-orders-per-arm': ['\\sigma = 9', '318'],
     'e-design-confound': ['through January', 'large orders'],
     'e-u-from-days': ['0.4, 1.2', '-0.5$, 0.6, 0.2'],
-    'e-perm-p': ['999', '0.0130', '0.013'],
+    'e-perm-p': ['B = 299', '0.0700', '0.0669'],
     'e-silverman-250': ['1.75%', '0.3896', '250 daily returns'],
     'e-sign-test-ties': ['14 of 18', '0.0309', '4,048', '4{,}048'],
     'e-default-rate': ['Gamma(3, rate 2)', 'Gamma(10, 7)', '1.4286'],
@@ -30,7 +30,7 @@ TOKENS = {
     'e-ess-sticky': ['\\phi = 0.75', '857.1'],
     'e-broker-anova': ['2, 3, 3, 4', '5, 7, 8, 8', '14.4'],
     'e-takeover-week': ['7.9 was a takeover', '0.5930', '0.2, $-0.1$, 0.9'],
-    'e-no-defaults-next': ['(7/8)', '0.2631', 'tfrac{7}{8}'],
+    'e-no-defaults-next': ['Gamma(12', '0.3244', '0.3347', 'outage'],
     'e-hit-rate-shrink': ['Beta(18, 22)', '33 of', '0.51'],
     'e-walsh-median': ['walsh', 'Walsh', 'Hodges'],
     'e-rejections-dispersion': ['588', '0.072', '0.028'],
