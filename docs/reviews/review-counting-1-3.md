@@ -124,3 +124,50 @@ Within the course, the L1 to L3 cross-references are right. l6 `screens[5]` poin
 1. Expression grader: `\mathbf{a}` is read as a different symbol from `a`. homework-3 `items[6]` grades `4\mathbf{a}+\mathbf{b}` wrong against `4a+b` (real `grade.js`, Compute Engine 0.30.2). The prompt says "Type a and b for the vectors", so no content change is needed. Stripping `\mathbf{}` and `\boldsymbol{}` around a single letter before parsing would make vector answers safe. Equation-typed answers (the `x = ...` issue under repair) affect no item here: none of the three expression items in L1 to L3 asks for an equation.
 2. Validator `O2-explain-answer` does not read an answer written with thin-space thousands. It gives false hits on l3 `quiz[2]` ("$15\,600$") and review-1 `items[8]` ("$156\,000$").
 3. `app/tools/numbers_lib.py` `_numbers`: a number directly after a braced LaTeX command is not tokenised. `\sqrt{0.0025}` normalises to `\sqrt0.0025`, and the lookbehind rejects the `t`, so `expect` misses it (worked round in `counting-L3-numbers.py` with a string match).
+
+
+## Fix pass
+
+Status per finding (35 fixed, 0 disputed, 0 deferred; engine items 1 to 3 deferred, already in the inbox). Every corrected number was recomputed by brute force before writing (scripts below). Findings 31 to 35 were applied to `counting-chance` l1, l2, l4 and `vectors` l3 on the orchestrator's authority for this pass, with the lesson-number citations replaced by "the counting course" (no lesson is cited by number in new text). Orchestrator item 1 is resolved by finding 19's sentence (no `course.json` edge); item 2 was applied earlier.
+
+1. fixed: l1 `screens[10].explain.text` ("A fourth setting with 5 values", 24 x £0.40 = £9.60, x 5 = £48.00).
+2. fixed: l10 `screens[7]` option b why now says "bottom entry" ((1, -6) + (4, 5) = (5, -1); top entry gives (6, 2)).
+3. fixed: l12 `screens[8]` `price` value 1.0574 (110.50 / 104.50 = 1.05742; 1.06 and 1.057 now inside the band, 1.3333 outside).
+4. fixed: l7 `screens[6].byKey.minus-all` (40 - 22 - 15 = 3).
+5. fixed: homework-3 `items[3].byKey.from-b` (a - 1 = 6 gives a = 7; k = 2 gives a - 1 = 4).
+6. fixed: l1 `screens[6].byKey.added` (2^5 = 32).
+7. fixed: l3 `screens[8].byKey.top` ("Put the multiplying step before it").
+8. fixed: l8 `screens[1]` option `ordered` ("on the bottom of the fraction").
+9. fixed: l11 `screens[9].byKey.signed-abs` (0.03 - 0.04 = -0.01, size 0.01).
+10. fixed: l13 `screens[2].explain.text`. Basis: cos theta = 5 / (sqrt17 sqrt13) = 0.336, so theta = 70.3 degrees, which is under 90 but not "roughly the same way".
+11. fixed: review-3 `items[1]` option d why ((1, -2) - (4, -5) = (-3, 3)).
+12. fixed: homework-1 `items[3]` wrong `self` (n(n+1)/2 = n(n-1)/2 + n) with its byKey line.
+13. fixed: l11 `screens[4]` `tan` and `radians` bands now abs 0.05 (0.70 to 0.80 and 0.59 to 0.69; tan 36.87 = 0.75, 36.87 degrees = 0.6435 rad; no overlap, 36.9 far away).
+14. fixed: review-3 `items[8]` `cos` and `no-mag` bands abs 0.05 (0.0914 to 0.1914 against -0.05 to 0.05; the asked rounding 0.1 hits `cos`).
+15. fixed: l9 `quiz[1]` option a is the bare column; l10 `quiz[1]` options a to d as specified. Validator `key-length` still warns on both: it counts the raw LaTeX of the matrix (36 characters), though the rendered options are similar in size. Advisory only.
+16. fixed: `"shuffle": false` deleted from l2 `quiz[0]`, l3 `screens[7]`, l5 `quiz[3]`, l6 `screens[9]`.
+17. fixed: l8 `screens[9].prose` (multiply along the branches; (1/2)^4 = 1/16, and 2^4 = 16 paths). Basis: product rule for independent events, AQA/Edexcel GCSE probability tree diagrams.
+18. fixed: l11 `screens[4].byKey.radians` (radians first appear in `trig` l6, not in `trig` L1; grep of `trig` confirms).
+19. fixed: l13 `screens[7].prose`. Basis: cos 120 = cos(180 - 60) = -cos 60 = -0.5, and cos is positive below 90 and zero at 90. The other places the finding named (`screens[4]`, `summary.ideas[2]`, `quiz[3].explain`) carry no separate claim that needs changing once this sentence lands, so they are untouched.
+20. fixed: homework-3 `items[2].prose` (magnitude with three components stated before use; sqrt(0.0009) = 0.03).
+21. fixed: l3 `screens[2].prose` and `summary.formula.note`; l4 `screens[2].prose` and `summary.formula.note`. Basis: A level Pure Mathematics, binomial expansion, writes nCr, ^nC_r and "n choose r"; calculators carry nPr and nCr keys; GCSE has no nPr or nCr.
+22. fixed: l7 `screens[7].prose`. Basis: GCSE Venn-diagram notation n(A) for the number of elements of A.
+23. fixed: l11 `screens[4].prose` ("first quadrant": the axes divide the plane into four quadrants).
+24. fixed: all six items rewritten as specified. review-1 `items[0]` (5 x 3 x 2 = 30, wrong 10 and 6, CHF folded child id `c`); `items[1]` (7! = 5040, 49, 28, 720); `items[5]` (C(6,2) = 15, wrong 30, 64, 2); review-2 `items[1]` (4! x 1 = 24, 144, 720, 120); `items[7]` (C(7,5) / 2^7 = 21/128 = 0.1640625, wrong 0.125, 0.0078, 21); homework-2 `items[1]` (5! x 2 x 2 = 480, 240, 120, 5040). Graded answers changed in all six. One tweak: the review-2 `items[1]` prose is split into two sentences to stay under 20 words.
+25. fixed: l6 `screens[2].prose`, worded "as Ben and Cal were earlier" (no lesson number).
+26. fixed: l9 `screens[8].explain.text` (one maths span).
+27. fixed: homework-2 `items[5]`, l12 `screens[3]`, review-2 `items[8]` explanations are three sentences.
+28. fixed: l3 `screens[6]` and `quiz[0]`, l4 `quiz[3]`, l6 `screens[9]` whys (6 x 6 = 36, 10^3 = 1000, 6 x 6 = 36, 5! = 120).
+29. fixed: thin-space thousands in l5 `screens[8]` (lines[3], explain), l7 `screens[4]` (hints[2], feedback.correct, explain), homework-2 `items[0]`, `items[2]`, `items[9]`, review-2 `items[6]`. homework-2 `items[9].prose` uses "10,000" as specified.
+30. fixed: l10 `objectives[0]` now "head to tail" (course.json already matched).
+31. fixed: counting-chance l2 `screens[2].prose` (no longer bolds the term; cites "the counting course").
+32. fixed: counting-chance l4 `screens[2].prose` (same).
+33. fixed: vectors l3 `screens[2].prose` (same).
+34. fixed: vectors l3 `screens[5].prose` (cites "the counting course" for beta m).
+35. fixed: counting-chance l1 `screens[0].prose` ("You met this grid in the counting course.").
+
+Engine 1 to 3: deferred, already in the inbox (grader `\mathbf`, `O2-explain-answer` thin spaces, `_numbers` after braced commands).
+
+Numbers: `counting-L1-numbers.py` 439 of 439, `counting-L2-numbers.py` 488 of 488, `counting-L3-numbers.py` 256 of 256, all exit 0. The old FINDING checks are tightened to the new text and values (the script fails if a fix is reverted), and checks were added for 30, 5040, 15 (and 64, 30, 2), 24 and 144, 21/128, 480, 34650, 50400, 2598960, 1712304, 886656, 333/142/47/428, the l11 and review-3 bands, cos 120, 70.3 degrees, and the homework-1 `self` slip.
+
+Gates: validator 0 errors; voice scan 0 sentences over 35 words and 0 explanations over three sentences in `counting`; all three number scripts exit 0; `playthrough` green with and without `--mobile`, `--local-cdn`, for all 13 counting lessons, `review-1` to `review-3` and `homework-1` to `homework-3` (`--set`), counting-chance l1, l2, l4 and vectors l3 (46 runs, none needed a rerun). There are no code items in these levels.

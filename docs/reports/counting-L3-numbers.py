@@ -95,8 +95,10 @@ lv.claim((1 / 2, -2 / -1) == (0.5, 2.0) and (2 / 2, 1 / -1) == (1.0, -1.0), 'l10
 lv.claim(sub((4, 1), (1, 3)) == (3, -2) and sub((1, 3), (4, 1)) == (-3, 2) and add((4, 1), (1, 3)) == (5, 4), 'l10 s5: u - v = (3, -2); reverse (-3, 2); sum (5, 4)')
 lv.claim(sub((1, 3), (4, 1)) == walk((4, 1), (1, 3)) == (-3, 2), 'l10 s6: D = v - u = (-3, 2)')
 lv.claim(add(mul(2, (1, -3)), (4, 5)) == (6, -1), 'l10 s7: 2(1,-3) + (4,5) = (6, -1)')
-lv.claim_text('l10', 'screens[7].widget.options[1].why', 'doubled only the top entry', add((2 * 1, -3), (4, 5)) == (5, -1),
-              'FINDING l10 s7 option b: doubling only the top entry gives (6, 2); (5, -1) comes from doubling only the bottom')
+lv.claim(add((2 * 1, -3), (4, 5)) == (6, 2) and add((1, 2 * -3), (4, 5)) == (5, -1),
+         'l10 s7 option b: doubling only the top entry gives (6, 2); (5, -1) comes from doubling only the bottom')
+lv.expect('l10', 'screens[7].widget.options[1].why', 'You doubled only the bottom entry.')
+lv.claim('top entry' not in lv.text('l10', 'screens[7].widget.options[1].why'), 'l10 s7 option b: the why no longer says top entry')
 lv.claim(add((1, -6), (4, 5)) == (5, -1), 'l10 s7: doubling only the bottom entry gives (5, -1)')
 lv.claim(mul(2, add((1, -3), (4, 5))) == (10, 4) and add((2, 6), (4, 5)) == (6, 11), 'l10 s7 options c (10, 4) and d (6, 11)')
 port = add(mul(0.6, (1.20, -0.30)), mul(0.4, (0.80, 0.50)))
@@ -156,8 +158,9 @@ lv.claim(abs(qr[0] - float(k) * pq[0]) < 1e-9 and abs(qr[1] - float(k) * pq[1]) 
 E('l12', 'screens[8].widget.answer', round(float(k), 4))
 E('l12', 'screens[8].widget.wrong', 0.75, round(7 / 3, 4))
 price = [w for w in L('l12-proving-with-vectors')['screens'][8]['widget']['wrong'] if w['id'] == 'price'][0]['value']
-lv.claim(abs(price - 110.50 / 104.50) <= 0.0005,
-         f'FINDING l12 s8 wrong "price" {price} equals 110.50 / 104.50 = {110.50 / 104.50:.4f}')
+lv.claim(abs(price - round(110.50 / 104.50, 4)) < 1e-9 and price == 1.0574,
+         f'l12 s8 wrong "price" {price} equals 110.50 / 104.50 = {110.50 / 104.50:.4f}')
+lv.claim(abs(1.06 - price) <= 0.005 and abs(1.057 - price) <= 0.005 and abs(k - price) > 0.005, 'l12 s8: the band catches 1.06 and 1.057, not the answer 1.3333')
 lv.claim(pq[1] / pq[0] == qr[1] / qr[0] == 1.5, 'l12 s8: a steady £1.50 a day')
 lv.claim(sub((7, 11), (1, 2)) == mul(3, sub((3, 5), (1, 2))) and sub((7, 11), (3, 5)) == mul(2, sub((3, 5), (1, 2))), 'l12 quiz[0]: AC = 3AB, BC = 2AB')
 lv.claim((1 + 3 * 3) == 10 and 1 + 9 - 1 == 9 and (4 + 3, 4 + 2) == (7, 6), 'l12 quiz[1]: t = 10; slips 9, and (6, 7)')
@@ -220,14 +223,40 @@ E('homework', 'items[1].widget.wrong', round(0.20 - 0.40 + 0.60, 2), 1.08, round
 two('homework-3 items[2] |r|', round(mag((0.01, -0.02, 0.02)), 10), 0.03)
 lv.claim(sub((5, 7), (1, 1)) == mul(2, sub((3, 4), (1, 1))), 'homework-3 items[3]: a = 5')
 lv.claim(sub((5, 7), (3, 4)) == mul(1, sub((3, 4), (1, 1))), 'homework-3 items[3]: from B, BP = (a - 3, 3) = 1 x AB, still a = 5')
-lv.claim_text('homework', 'items[3].feedback.byKey.from-b', 'You measured the 6 from B', 3 + 1 * 2 == 7,
-              'FINDING homework-3 items[3] byKey.from-b: measuring from B still gives a = 5; the slip that gives 7 is a - 1 = 6')
+lv.claim(6 + 1 == 7 and 6 == 2 * 3 and 2 * 2 == 4 and 4 + 1 == 5, 'homework-3 items[3] byKey.from-b: copying the up change gives a - 1 = 6, so a = 7; the true k = 2 gives a - 1 = 4')
+lv.expect('homework', 'items[3].feedback.byKey.from-b', 'You set $a - 1 = 6$, copying the up change. One k must fit both rows: $6 = 2 \\times 3$, so $a - 1 = 2 \\times 2 = 4$.')
+lv.claim('from B' not in lv.text('homework', 'items[3].feedback.byKey.from-b'), 'homework-3 items[3] byKey.from-b: no longer blames measuring from B')
 lv.claim(300 * 2 + (-200) * 3 == 0 and 3 * 300 / 2 == 450, 'homework-3 items[4]: b = -200; slip 450')
 r3, m3 = (3, -2, 1), (2, -1, 1)
 lv.claim(Fr(dot(r3, m3), dot(m3, m3)) == Fr(3, 2) and round(9 / math.sqrt(6), 3) == 3.674 and round(Fr(6 - 2 + 1, 6).__float__(), 3) == 0.833, 'homework-3 items[5]: beta 1.5; slips 3.674, 0.833')
 lv.claim((3 * 2 - 2, -3 + 4) == (4, 1) and (6 - 2, -3 - 4) == (4, -7) and (6 - 2, -3 + 2) == (4, -1), 'homework-3 items[6]: 4a + b; slips 4a - 7b, 4a - b')
 u, v = (6, 8), (6, -8)
 lv.claim(dot(u, v) == -28 and mag(u) ** 2 + mag(v) ** 2 + 2 * dot(u, v) == 144 == mag(add(u, v)) ** 2, 'homework-3 longform: -28, 144, 12')
+
+# ---- fix pass additions
+rad = round(math.radians(th11 := math.degrees(math.atan2(3, 4))), 2)
+w11 = {w['id']: w for w in L('l11-how-long')['screens'][4]['widget']['wrong']}
+lo_t, hi_t = 0.75 - w11['tan']['tol']['abs'], 0.75 + w11['tan']['tol']['abs']
+lo_r, hi_r = 0.64 - w11['radians']['tol']['abs'], 0.64 + w11['radians']['tol']['abs']
+lv.claim(round(math.tan(math.radians(th11)), 2) == 0.75 and rad == 0.64, 'l11 s4: tan = 0.75 and the angle in radians is 0.64')
+lv.claim(lo_t <= 0.8 <= hi_t and lo_r <= 0.6 <= hi_r and hi_r < lo_t and not (36.8 <= lo_t) and hi_t < th11 - 1, 'l11 s4: one-decimal slips 0.8 and 0.6 land in their bands; bands do not overlap each other or 36.9')
+lv.claim('quadrant' in lv.text('l11', 'screens[4].prose') and 'quarter' not in lv.text('l11', 'screens[4].prose'), 'l11 s4: first quadrant')
+lv.expect('l11', 'screens[4].feedback.byKey.radians', 'another unit for angles')
+lv.expect('l11', 'screens[9].feedback.byKey.signed-abs', '$0.03 - 0.04$')
+lv.claim(abs(abs(0.03 - 0.04) - 0.01) < 1e-12, 'l11 s9: the signed sum 0.03 - 0.04 has size 0.01')
+lv.claim(abs(math.cos(math.radians(120)) + 0.5) < 1e-12, 'l13 s7: cos 120 = -0.5')
+lv.expect('l13', 'screens[7].prose', 'a calculator gives $\\cos 120° = -0.5$')
+ang_uv = math.degrees(math.acos(dot((4, -1), (2, 3)) / (mag((4, -1)) * mag((2, 3)))))
+lv.claim(dot((4, -1), (2, 3)) == 5 and 60 < ang_uv < 90 and round(ang_uv, 1) == 70.3, 'l13 s2: (4,-1).(2,3) = 5, angle 70.3 degrees, under a right angle but not roughly the same way')
+lv.expect('l13', 'screens[2].explain.text', 'less than a right angle apart')
+lv.claim(sub((1, -2), (4, -5)) == (-3, 3), 'review-3 items[1] option d: u - v = (-3, 3)')
+lv.expect('review', 'items[1].widget.options[3].why', '$\\mathbf{u} - \\mathbf{v} = (-3, 3)$')
+w83 = {w['id']: w for w in L('review-3')['items'][8]['widget']['wrong']}
+lc, tc = w83['cos']['value'], w83['cos']['tol']['abs']
+lm, tm = w83['no-mag']['value'], w83['no-mag']['tol']['abs']
+lv.claim(lc - tc <= 0.1 <= lc + tc and lm - tm <= 0.0 <= lm + tm and lm + tm < lc - tc and abs(lc - round(1 / math.sqrt(50), 4)) < 1e-9, 'review-3 items[8]: the asked rounding 0.1 hits the cos band; the no-mag and cos bands do not overlap (0.0914 to 0.1914 against -0.05 to 0.05)')
+lv.claim('three components' in lv.text('homework', 'items[2].prose') and abs(mag((0.01, -0.02, 0.02)) - 0.03) < 1e-12, 'homework-3 items[2]: the three-component magnitude is stated before use, and is 0.03')
+lv.claim(sum(1 for o in L('l9-arrows')['quiz'][1]['widget']['options']) == 4 and '\\begin{pmatrix} 0' in L('l9-arrows')['quiz'][1]['widget']['options'][0]['text'], 'l9 quiz[1] option a is the zero vector column')
 
 lv.check_wrongs()
 lv.report()
