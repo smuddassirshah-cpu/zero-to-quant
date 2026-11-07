@@ -106,3 +106,52 @@ No engine change is needed for these fixes. Three tool limits, also in `docs/BAC
 1. Validator `unit "%"` rule (item 515, `app/tools/validate.mjs` line 532): the "key is above 1" warning runs on `wrong[].value` too and calls the value a key. Its only opt-out, the widget's `over100`, would also relax the key check. All 6 plotting hits are deliberate ×252 slips that must stay above 1 (302.4%, 226.8%, 378%, 201.6%).
 2. Validator `float-example`: 5 plotting hits where exact comparison cannot fail. The example's call rounds (l4 `screens[3]`, l11 `screens[8]`, l13 `screens[4]`) or reads back the input floats unchanged (l1 `screens[3]` `get_ydata()`, homework-1 `items[3]` `get_height()`).
 3. Audit tooling: the session image has no matplotlib. A reader of a plotting course must build a Pyodide-matching venv (Python 3.12, matplotlib 3.8.4, numpy 2.0.2, pandas 2.2.3 with `uv`) to check claims such as findings 3, 7, 8 and 9. None of these show in a playthrough, which answers by key.
+
+
+## Fix pass
+
+Session V, Phase 2. Every finding was applied as a targeted text edit to `app/content/courses/plotting/`; each corrected number was recomputed first. Conceptual findings (1, 3, 7, 8, 9) were also re-run in a scratch venv with the Pyodide 0.27.7 versions (Python 3.12, matplotlib 3.8.4, numpy 2.0.2, pandas 2.2.3). No finding was disputed on its numbers. Findings 14 and 15 were fixed differently from the reader's text, see below.
+
+1. fixed: l5 `screens[3].explain.text`, `byKey.test-3`, `quiz[1].widget.options[3].why` now say two days and two places. Basis: `days` starts at 1, so the first return belongs at x = 2, and a lone list is numbered from 0 (matplotlib `Axes.plot` docs: x defaults to `range(len(y))`); 2 - 0 = 2.
+2. fixed: l6 `screens[0].hints[1]` reads six negative returns, two below −1%. Recount: −0.85, −0.12, −2.47, −0.38, −1.04, −0.57 is six; −2.47 and −1.04 are below −1.
+3. fixed: l10 `screens[7]` code now uses `plt.subplots(2, 2, figsize=(10, 6))` and `axes[1, 0].sharex(axes[0, 0])`; the explanation says so. Basis: simulation in the venv with 250 days: `sharex="col"` gives the heat map x limits (−0.5, 261.475), a collapsed sliver; with the `sharex(...)` call the heat map keeps (−0.5, 11.5) and the two column-0 panels are joined (`get_shared_x_axes().joined` True, heat map False). No `--shots` regression: the screen is prose and code only, with no canvas, so no figure changes.
+4. fixed: l11 `screens[6]` captions read £43 to £53 and £46.25 to £53.75. Recomputed: top slope (144 − 120) / (52.80 − 48.00) = 5 per £, so 95 and 145 map to 43 and 53; bottom slope (138.67 − 106.67) / 4.80 = 6.667, so 46.25 and 53.75.
+5. fixed: l11 `screens[3].explain.text` says 0.94. Recomputed correlation of the 13 price pairs is 0.9445.
+6. fixed: homework-2 `items[1].prose` says 32%. 1 − 412.83 / 610.88 = 0.3243.
+7. fixed: homework-3 `items[8]` model and rubric 3 say the panel comes out empty with a `UserWarning`. Basis: simulation, `ax.plot([0, -0.03, -0.08, -0.05, 0, -0.02]); ax.set_yscale("log")` raised "Data has no positive values, and therefore cannot be log-scaled." twice.
+8. fixed: l9 `screens[3].prose`, option `nplog` why, explain and `summary.ideas[1]`. Basis: simulation, `set_yscale("log")` on £100 to £1,640 gives tick labels `10^0` to `10^5` (only the in-range ones shown) with no £ sign, and `plot(np.log(...))` gives ticks 4.0 to 8.0 by 0.5, so 4.5 to 7.5 in range.
+9. fixed: l9 `screens[4].explain.text`, `quiz[2]` option why and explain, review-3 `items[1].explain.text` now say the values are clipped off the bottom with no warning. Basis: matplotlib 3.8 `LogScale(nonpositive="clip")` is the default; in the venv the mixed-sign plot raised no warning.
+10. fixed: l7 `quiz[2].explain.text` says more than three times. ln 0.7 / ln 0.9 = 0.35667 / 0.10536 = 3.385.
+11. fixed: l3 `screens[0].hints[1]` says the last weekend in the data. d15 and d16 are Friday 22 and Monday 25 March; the data end Thursday 28 March.
+12. fixed: homework-1 `items[7].explain.text` now says each filled bar holds one day here. I avoided the reader's "most bins empty": with 30 returns and no bar above one, exactly 30 of 60 bins are empty, which is half, not most.
+13. fixed: l12 `quiz[1]` option "A few years". 23 March 2020 to 7 November 2026 is 6.6 years.
+14. fixed, differently: the validator requires a longform widget `prompt` (`checkLongform`), so deleting it gives an error. I moved the item's prose into `widget.prompt` and deleted `prose`, as the validator's own advice says ("merge them into one"); the `question` carries the `fig` and `ax` instruction. The prose-and-prompt warning is gone and the prompt now shows.
+15. fixed, as 14, for homework-2 `items[6]`.
+16. fixed: homework-3 `items[8].model` part (c) split into short sentences.
+17. fixed: homework-2 `items[0]`, l12 `screens[4]`, review-2 `items[7]` explanations joined to three sentences, using the reader's text.
+18. fixed: l2 `screens[3]` option `one` why.
+19. fixed: the five keys shortened as given.
+20. fixed: the five explanations now state the answer (l1 key 2, l2 1 entry, l8 19.05%, l10 £9,671.68 on day 33, l13 −10.00% from £60.00 to £54.00). 1.2 × 15.8745 = 19.05; 54 / 60 − 1 = −0.10.
+21. fixed: l4 `screens[1].prose` cites `numpy-pandas` l1 and no longer bolds the term.
+22. fixed: l8 `screens[0].explain.text` cites `numpy-pandas` l10.
+23. fixed: l6 `screens[1].explain.text` cites 'Plotting a price series'.
+24. fixed: l11 `screens[7].prose` cites l4; `quiz[1]` is £320.00 to £296.00, answer 92.5, slips 76 and 0.925, 7.5% fall. 100 × 296 / 320 = 92.5; 100 − 24 = 76.
+25. fixed: l9 `screens[0].prose` points back to l7.
+26. fixed: l10 `screens[3].prose` says `days` counts from 0.
+27. fixed: homework-2 `items[0]` prose rewritten and `exit_figure` renamed `three_panel_figure` in nine places (starter, solution, tests, example, question).
+28. fixed: review-1 `items[5]` reworded; key 105 and slips unchanged (1932 / 1840 = 1.05).
+29. fixed: review-3 `items[0]` reworded; key 3 unchanged.
+30. fixed: review-3 `items[9]` is now sd 1.10%: answer 0.1746 (0.011 × 15.8745 = 0.17462), times-252 slip 2.772, months slip 0.0381 (0.011 × 3.4641 = 0.03811). Graded answer changed.
+31. fixed: homework-1 `items[0]` function renamed `share_chart` in nine places.
+32. fixed: homework-3 `items[1]` and `items[8]` use £120.00 and £117.60 on an axis from £115 to £121. Lengths 5.00 and 2.60; 2.60 / 5.00 − 1 = −48%; 117.60 / 120.00 − 1 = −2%; 48 / 2 = 24 times.
+
+Engine findings 1 to 3: deferred, already in `docs/BACKLOG-INBOX.md`.
+
+Graded answers changed: two. l11 `quiz[1]` (92 to 92.5) and review-3 `items[9]` (0.2381 to 0.1746). Wrong-value slips changed with them. The other numeric keys are unchanged.
+
+Gates:
+- Number scripts: `plotting-L1-numbers.py` 126 of 126, `plotting-L2-numbers.py` 200 of 200, `plotting-L3-numbers.py` 242 of 242, all exit 0. Each rewritten sentence has a positive check, so reverting a fix fails the script; the old either-or checks were removed.
+- Voice scan at 35: 0 sentences over 35 words, 0 explanations over three sentences.
+- Validator: 0 errors.
+- Code items touched (homework-1 `items[0]`, homework-2 `items[0]`, renames only): in CPython the solutions pass 5 of 5 and the starters pass 0 of 5 and 1 of 5.
+- Playthrough: `--lesson` for l1 to l13 and `--set` for review-1 to 3 and homework-1 to 3, each with and without `--mobile`, all with `--local-cdn`: 38 of 38 "All passed", no timeouts, no reruns. Screenshot of l10 `screens[7]`, desktop and mobile, read: the new code block renders, and on a phone its long lines scroll sideways as designed.

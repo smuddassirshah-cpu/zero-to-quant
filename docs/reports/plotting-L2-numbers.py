@@ -262,4 +262,22 @@ lv.expect('homework', 'items[5].explain.text', round(sig, 4))
 lv.claim(sum(c['points'] for c in h['items'][6]['widget']['rubric']) == 10, 'homework items[6]: rubric sums to 10')
 lv.check_wrongs('homework')
 
+# ---------- fix pass: positive checks on every rewritten sentence (fail if a fix is reverted) ----------
+def has(ref, path, phrase):
+    return lv.claim(phrase in lv.text(ref, path), f'{ref} {path} contains {phrase!r}')
+lv.claim(shift == 2, 'l5: plot(rets) puts the first return two days left of x = 2')
+has('l5', 'screens[3].explain.text', 'slide every return two days to the left')
+has('l5', 'screens[3].feedback.byKey.test-3', 'start before day 2')
+has('l5', 'quiz[1].widget.options[3].why', 'each two places to the left')
+lv.claim(len(neg) == 6 and sum(x < -1 for x in neg) == 2, 'l6 screens[0]: six negative returns, two below -1%')
+has('l6', 'screens[0].hints[1].text', 'There are six negative returns. Two of them are below')
+lv.claim(round(100 * crash) == 32 and abs(crash - 0.324) < 0.001, 'homework items[1]: the 2008 fall in the item data is 32.4%')
+has('homework', 'items[1].prose', 'a 32% crash')
+lv.claim('exit_figure' not in str(h['items'][0]) and 'three_panel_figure' in str(h['items'][0]), 'homework items[0]: function renamed to three_panel_figure')
+lv.claim(round(100 * (p[6] / pk[6] - 1), 1) == -6.4 and round(100 * (p[1] / p[0] - 1), 1) == -4.8, 'homework items[0]: 6.4% and 4.8% below the running peak')
+has('homework', 'items[0].explain.text', 'so `np.argmin(prices)` would point at the wrong day')
+lv.expect('l8', 'screens[2].explain.text', round(1.2 * R252, 2))
+lv.claim(round(1.2 * R252, 2) == 19.05, 'l8 screens[2]: 1.2% x 15.87 = 19.05%')
+
+lv.claim('prose' not in h['items'][6] and h['items'][6]['widget'].get('prompt', '').strip() != '', 'homework items[6]: one prompt, no prose hiding it')
 lv.report()

@@ -164,4 +164,22 @@ cnt60, _, _ = hist([0.0, 0.0001] + [0.001 * k for k in range(1, 29)], 60)
 lv.stated('homework', 'items[7].explain.text', 'leaves at most one day per bar', max(cnt60) <= 1)
 lv.check_wrongs('homework')
 
+# ---------- fix pass: positive checks on every rewritten sentence (fail if a fix is reverted) ----------
+def has(ref, path, phrase):
+    return lv.claim(phrase in lv.text(ref, path), f'{ref} {path} contains {phrase!r}')
+has('l3', 'screens[0].hints[1].text', 'over the last weekend in the data')
+lv.claim([dt.date.fromisoformat(d3[i]).strftime('%a') for i in (15, 16)] == ['Fri', 'Mon'] and d3[-1] == '2024-03-28', 'l3 hint 1: d15 and d16 are Friday 22 and Monday 25 March; the data end Thursday 28 March')
+lv.claim(len(week) == 4, 'l3: the week of 25 March holds four trading days, so it is not a full week')
+has('homework', 'items[7].explain.text', 'leave each filled bar with one day here')
+it6 = lv.files['homework-1']['items'][6]
+lv.claim('prose' not in it6 and it6['widget'].get('prompt', '').strip() != '', 'homework items[6]: one prompt, no prose hiding it')
+has('homework', 'items[6].question', 'using `fig` and `ax`')
+lv.claim('closes_chart' not in str(lv.files['homework-1']) and 'share_chart' in str(lv.files['homework-1']), 'homework-1: function renamed share_chart')
+lv.claim(round(1932 / 1840 * 100, 4) == 105.0 and r2(1840 / 1932 * 100) == 95.24, 'review items[5]: 105 and the 95.24 slip are unchanged')
+has('review', 'items[5].question', 'Rebased to 100 at the start')
+has('l1', 'screens[5].explain.text', 'so `len(ax.lines)` is 2')
+has('l2', 'screens[4].explain.text', 'so it shows 1 entry')
+has('l2', 'screens[3].widget.options[3].why', 'read in pounds')
+has('l4', 'screens[1].prose', 'the rebasing you met in `numpy-pandas` l1')
+
 lv.report()
