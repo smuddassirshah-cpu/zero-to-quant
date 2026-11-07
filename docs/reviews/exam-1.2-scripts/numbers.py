@@ -161,10 +161,10 @@ def run_pytest(files, args=(), module=False):
 
 
 # ---------------------------------------------------------------- metadata, shape, coverage
-ex.claim(doc['minutes'] == 60 and doc['pass'] == 0.7, f'minutes {doc["minutes"]} and pass {doc["pass"]} as stored (finding on minutes: sibling paces sum to about 69)')
-ex.claim(20 <= len(doc['items']) <= 30, f'{len(doc["items"])} items, inside 20 to 30')
+ex.claim(doc['minutes'] == 75 and doc['pass'] == 0.7, f'minutes {doc["minutes"]} and pass {doc["pass"]} as stored (fix 18: sibling paces sum to about 71 minutes; AUTHORING section 5 sets minutes per file)')
+ex.claim(len(doc['items']) == 26 and 20 <= len(doc['items']) <= 30, f'{len(doc["items"])} items, inside 20 to 30')
 ramp = {d: sum(1 for it in doc['items'] if it['difficulty'] == d) for d in (2, 3, 4, 5)}
-ex.claim(ramp == {2: 5, 3: 13, 4: 5, 5: 2}, f'ramp {ramp} (20%, 52%, 20%, 8% against 20, 50, 20, 10)')
+ex.claim(ramp == {2: 5, 3: 14, 4: 5, 5: 2}, f'ramp {ramp} of {len(doc["items"])} (19%, 54%, 19%, 8% against 20, 50, 20, 10)')
 union = {}
 for c in ('git', 'sql', 'pytest'):
     with open(os.path.join(COURSES, c, 'course.json'), encoding='utf8') as f:
@@ -179,7 +179,7 @@ ex.claim(not any(it.get('pace') for it in doc['items']), 'no item carries a pace
 PACE = {(2, 'o'): 60, (3, 'o'): 120, (4, 'o'): 195, (4, 'c'): 360, (5, 'o'): 360, (5, 'l'): 600}
 tot = sum(PACE[(it['difficulty'], 'l' if it.get('kind') == 'longform' else 'c' if it.get('widget', {}).get('kind') == 'code' else 'o')]
           for it in doc['items'])
-ex.claim(tot == 4125, f'sibling-median paces sum to {tot} s = {tot / 60:.2f} min (fix: minutes 70)')
+ex.claim(tot == 4245 and doc['minutes'] * 60 >= tot, f'sibling-median paces sum to {tot} s = {tot / 60:.2f} min, inside the stored {doc["minutes"]} minutes')
 
 # ---------------------------------------------------------------- [0] e-status-commit
 L0 = IT['e-status-commit']['canvas']['params']['lines']
@@ -212,6 +212,10 @@ ex.claim(correct_ids('e-approx-fix') == ['a'], 'e-approx-fix key a')
 ex.claim(abs(0.9 - 0.1) < 1, 'e-approx-fix option c why: a return of 0.9 passes abs(r - 0.1) < 1')
 ex.claim(pytest.approx(0.1).tolerance == 1e-7 and math.isclose(pytest.approx(0.1).tolerance / 0.1, 1e-6),
          'e-approx-fix explain: default relative tolerance one in a million (1e-6 of 0.1 = 1e-7)')
+I2 = IT['e-approx-fix']
+ex.claim('0.32000000000000006 == 0.32' in I2['prose'] and '0.10000000000000009' not in json.dumps(I2) and 'total_return([0.10, 0.20])' in I2['prose'],
+         'e-approx-fix now shows the compounding report (0.32000000000000006 == 0.32), not the daily_returns one')
+ex.claim('1.2 would pass' in opt('e-approx-fix', 'c')['why'] and '0.32000000000000006' in I2['explain']['text'], 'e-approx-fix option c why and explain carry the new numbers')
 # fix: fresh float slip, compounding 10% and 20% (sum() is compensated from Python 3.12, so a sum of weights would not do)
 TR = 'def total_return(returns):\n    g = 1.0\n    for r in returns:\n        g *= 1 + r\n    return g - 1\n'
 w2 = 1.1 * 1.2 - 1
@@ -230,11 +234,16 @@ key('e-shell-sells', int(sh('grep SELL trades.csv | wc -l', tmp)))
 wrong('e-shell-sells', 'whole', int(sh('wc -l < trades.csv', tmp)))
 wrong('e-shell-sells', 'qty', sum(int(s.split(',')[3]) for s in L3[2:] if ',SELL,' in s))
 ex.claim(console_ids(L3, lambda s: ',SELL,' in s) == IT['e-shell-sells']['explain']['canvas']['shade']['sell'], 'e-shell-sells explain shades the three SELL lines')
-pipe = ' '.join(l['text'].strip('`') for l in IT['e-shell-order']['widget']['lines'])
+_lines = {l['id']: l for l in IT['e-shell-order']['widget']['lines']}
+pipe = ' '.join(_lines[i]['text'].strip('`') for i in IT['e-shell-order']['widget']['answer'])
 top = sh(pipe, tmp).split()
 ex.claim(len(top) == 2, f'e-shell-order pipeline "{pipe}" prints one line with a count: {top}')
 ex.claim(sh('cut -d, -f2 trades.csv | uniq -c | wc -l', tmp).strip() != sh('cut -d, -f2 trades.csv | sort | uniq -c | wc -l', tmp).strip(),
          'e-shell-order: uniq -c merges only neighbours (unsorted input gives more lines)')
+ex.claim(IT['e-shell-order']['widget']['distractors'] == ['d1', 'd2'] and _lines['d1']['text'] == '`| sort -n`' and _lines['d2']['text'] == '`| wc -l`',
+         'e-shell-order: the two distractors are sort -n and wc -l (both whys checked below)')
+ex.claim(sh(pipe.replace('sort -rn', 'sort -n'), tmp).split() == ['1', 'SHEL'] and sh(pipe.replace('| head -n 1', '| wc -l'), tmp).strip() == '2',
+         'e-shell-order d1 why: sort -n keeps the least sold (1 SHEL); d2 why: wc -l counts 2 sold tickers, not which')
 # fix: the most-sold ticker, with grep first; distractors sort -n and wc -l
 fixpipe = 'grep SELL trades.csv | cut -d, -f2 | sort | uniq -c | sort -rn | head -n 1'
 ex.claim(sh(fixpipe, tmp).split() == ['2', 'VOD'], f'fix e-shell-order: "{fixpipe}" prints "2 VOD"')
@@ -276,43 +285,33 @@ def mdd_pos(p):
     return worst
 
 
-def bug7(p):
-    return (max(p) - min(p)) / max(p)
+def mdd_neg(p):
+    return -mdd_pos(p) if mdd_pos(p) else 0.0
+
+
+def bug7b(p):
+    # the planted bug: the worst one-day return, or 0.0 when no day falls
+    return min([0.0] + [b / a - 1 for a, b in zip(p, p[1:])])
 
 
 def pounds(t):
     return [float(x) for x in re.findall(r'£([\d.]+)', t)]
 
 
-catch = {o['id']: not math.isclose(mdd_pos(pounds(o['text'])), bug7(pounds(o['text'])), abs_tol=1e-12) for o in IT['e-catch-bug']['widget']['options']}
-ex.claim(sorted(k for k, v in catch.items() if v) == correct_ids('e-catch-bug'), f'e-catch-bug key {correct_ids("e-catch-bug")}: the paths where the two versions differ')
-ex.claim(math.isclose(mdd_pos([100, 90, 80]), 0.2) and math.isclose(bug7([100, 90, 80]), 0.2), 'e-catch-bug option b: both 0.2')
-ex.claim(math.isclose(mdd_pos([120, 100, 120]), 1 / 6) and math.isclose(bug7([120, 100, 120]), 1 / 6), 'e-catch-bug option c: both 1/6')
-E('e-catch-bug', 'explain.text', round(40 / 120, 2))
-E('e-catch-bug', 'explain.text', round(21 / 121, 2))
-E('e-catch-bug', 'explain.text', round(mdd_pos([100, 80, 120]), 2))
-# necessary condition in feedback/explain: they differ only when a low comes before a later high (true on every option),
-# but it is not sufficient: option c has a low (100) before a later high (120) and does not catch.
-ex.claim(all((not v) or any(pounds(o['text'])[i] < pounds(o['text'])[j] for i in range(3) for j in range(i + 1, 3))
-             for o, v in zip(IT['e-catch-bug']['widget']['options'], catch.values())), 'e-catch-bug "only when a low comes before a later high" holds as a necessary condition')
-ex.claim_text('exam', f'{P("e-catch-bug")}.prose', 'Both are positive fractions',
-              all(mdd_pos(pounds(o['text'])) > 0 for o in IT['e-catch-bug']['widget']['options']),
-              'e-catch-bug prose "Both are positive fractions" (the right answer is 0 on options d and e)')
-
-
-# fix: the worst one-day return instead of max minus min, in the negative convention of items 10 and 24
-def mdd_neg(p):
-    return -mdd_pos(p) if mdd_pos(p) else 0.0
-
-
-def bug7b(p):
-    return min([0.0] + [b / a - 1 for a, b in zip(p, p[1:])])
+catch = {o['id']: not math.isclose(-mdd_pos(pounds(o['text'])), bug7b(pounds(o['text'])), abs_tol=1e-12) for o in IT['e-catch-bug']['widget']['options']}
+ex.claim(sorted(k for k, v in catch.items() if v) == correct_ids('e-catch-bug') == ['a', 'd'], f'e-catch-bug key {correct_ids("e-catch-bug")}: the paths where the two versions differ (worst one-day return bug)')
+ex.claim('negative fractions' in IT['e-catch-bug']['prose'] and 'positive fraction' not in IT['e-catch-bug']['prose'], 'e-catch-bug prose uses the negative convention of items 10 and 24')
 
 
 FIX7 = {'a': [100, 90, 81], 'b': [100, 80, 120], 'c': [120, 100, 120], 'd': [100, 90, 99, 81], 'e': [100, 100, 100]}
+ex.claim({o['id']: pounds(o['text']) for o in IT['e-catch-bug']['widget']['options']} == {k: [float(x) for x in v] for k, v in FIX7.items()}, 'e-catch-bug options hold the five paths a to e')
 fx = {k: (round(mdd_neg(p), 4), round(bug7b(p), 4)) for k, p in FIX7.items()}
 ex.claim(fx == {'a': (-0.19, -0.1), 'b': (-0.2, -0.2), 'c': (-0.1667, -0.1667), 'd': (-0.19, -0.1818), 'e': (0.0, 0.0)},
          f'fix e-catch-bug (right, worst one-day return) per option {fx}: a and d catch, b, c, e do not')
+E('e-catch-bug', 'explain.text', -0.19)
+E('e-catch-bug', 'explain.text', -0.1)
+E('e-catch-bug', 'explain.text', round(81 / 99 - 1, 2))
+ex.claim(round(81 / 99 - 1, 4) == -0.1818 and round(-mdd_pos([100, 90, 81]), 2) == -0.19, 'e-catch-bug explain: 81/99 - 1 = -0.1818 (shown -0.18), right answer -0.19 (1 - 81/100)')
 
 # ---------------------------------------------------------------- [8] e-push-rejected
 L8 = IT['e-push-rejected']['canvas']['params']['lines']
@@ -322,16 +321,15 @@ ex.claim('[rejected]' in L8[2] and L8[3].startswith('error') and "risk.git'" in 
 ex.claim(correct_ids('e-push-rejected') == ['a'], 'e-push-rejected key a (pull, then push)')
 # Real run, git 2.43.0 with no pull setting: the pull stops with "fatal: Need to specify how to reconcile divergent branches."
 _it8 = IT['e-push-rejected']
-ex.claim_text('exam', f'{P("e-push-rejected")}.explain.text', 'merges it with your two',
-              'pull.rebase' in _it8['prose'] or '--no-rebase' in json.dumps(_it8['widget']),
-              'e-push-rejected explain says pull "merges it with your two", but no pull setting is given (plain pull stops on divergent branches)')
+ex.claim('Your Git is set to merge when it pulls.' in _it8['prose'],
+         'e-push-rejected prose states the pull setting (git 2.43: a plain pull on divergent branches stops; with pull.rebase false it merges and the push then succeeds)')
 
 # ---------------------------------------------------------------- [9] e-inner-join
 cv = IT['e-inner-join']['canvas']
 db = db_from({'securities': cv['left']['params'], 'trades': cv['right']['params']})
-key('e-inner-join', len(db.execute(sql_of('e-inner-join')).fetchall()))
-wrong('e-inner-join', 'all', len(cv['right']['params']['rows']))
-wrong('e-inner-join', 'pairs', db.execute('SELECT COUNT(*) FROM trades, securities').fetchone()[0])
+key('e-inner-join', db.execute(sql_of('e-inner-join')).fetchone()[0])
+wrong('e-inner-join', 'all', sum(cell(r[-1]) for r in cv['right']['params']['rows']))
+wrong('e-inner-join', 'pairs', db.execute('SELECT SUM(t.qty) FROM trades AS t, securities AS s').fetchone()[0])
 unm = [i for i, r in enumerate(cv['right']['params']['rows']) if r[1] not in {s[0] for s in cv['left']['params']['rows']}]
 ex.claim(unm == IT['e-inner-join']['explain']['canvas']['right']['highlight']['rows'], f'e-inner-join explain highlights the unmatched trades {unm}')
 # fix: ask for SUM(t.qty) over the join instead of the row count
@@ -339,6 +337,9 @@ s_join = db.execute('SELECT SUM(t.qty) FROM trades AS t JOIN securities AS s ON 
 s_all = db.execute('SELECT SUM(qty) FROM trades').fetchone()[0]
 s_cross = db.execute('SELECT SUM(t.qty) FROM trades AS t, securities AS s').fetchone()[0]
 ex.claim((s_join, s_all, s_cross) == (600, 800, 4000), f'fix e-inner-join: joined total {s_join}, every trade {s_all}, cross join {s_cross}')
+E('e-inner-join', 'explain.text', 600)
+ex.claim(400 + 200 - 150 + 50 + 100 == 600 and 300 - 100 == 200 and 'BARC 250, SHEL 300 and AZN 50' in IT['e-inner-join']['feedback']['correct'] and 250 + 300 + 50 == 600,
+         'e-inner-join feedback and explain sums: 250 + 300 + 50 = 600 = 400 + 200 - 150 + 50 + 100; the two RR trades are 300 and -100')
 
 # ---------------------------------------------------------------- [10] e-param-table
 paths10 = [[100, 125, 100], [80, 60, 90, 72], [50], [200, 150, 180, 120]]
@@ -395,29 +396,28 @@ ex.claim(_raises(lambda: statistics.stdev([0.01])), 'e-tdd-order: statistics.std
 L14 = IT['e-log-graph']['canvas']['params']['lines'][1:]
 commits = [s for s in L14 if '*' in s]
 first = [s for s in L14 if s.startswith('*')]
-key('e-log-graph', len(commits))
-wrong('e-log-graph', 'first-parent', len(first))
-wrong('e-log-graph', 'no-merge', len(commits) - 1)
-E('e-log-graph', 'explain.text', 6)
+below = L14[L14.index('|/') + 1:]
+lane = [s for s in L14 if s.startswith('| *')]
+key('e-log-graph', len(lane) + len(below))
+wrong('e-log-graph', 'lane', len(lane))
+wrong('e-log-graph', 'main', len(commits))
+E('e-log-graph', 'explain.text', 4)
 ex.claim(console_ids(IT['e-log-graph']['canvas']['params']['lines'], lambda s: s.startswith('| *')) == IT['e-log-graph']['explain']['canvas']['shade']['carry'],
          'e-log-graph explain shades the two carry commits l4, l5')
 # fix: how many commits the branch carry contains = its two lane commits and the two below the split
-below = L14[L14.index('|/') + 1:]
 ex.claim(2 + len(below) == 4, 'fix e-log-graph: carry contains 4 commits (git rev-list --count carry gave 4 on the rebuilt repository)')
 
 # ---------------------------------------------------------------- [15] e-fetchall-shape
 db = sqlite3.connect(':memory:')
 db.execute('CREATE TABLE trades (id, ticker, qty)')
 db.executemany('INSERT INTO trades VALUES (?, ?, ?)', [(1, 'BARC', 400), (2, 'SHEL', 200), (3, 'BARC', -150), (4, 'AZN', 50), (5, 'BARC', 10)])
-rows15 = db.execute('SELECT COUNT(*) FROM trades WHERE ticker = ?', ('BARC',)).fetchall()
-ex.claim(repr(rows15) == opt('e-fetchall-shape', 'a')['text'].strip('`'), f'e-fetchall-shape prints {rows15!r}')
-ex.claim(db.execute('SELECT COUNT(*) FROM trades WHERE ticker = ?', ('BARC',)).fetchone()[0] == 3, 'e-fetchall-shape fetchone()[0] gives 3')
 # fix: fetchone on a many-row query
 db2 = sqlite3.connect(':memory:')
 db2.execute('CREATE TABLE trades (id, ticker, qty)')
 db2.executemany('INSERT INTO trades VALUES (?, ?, ?)', [(1, 'BARC', 400), (2, 'SHEL', 200), (3, 'BARC', -150), (4, 'AZN', 50)])
 cur = db2.execute('SELECT ticker, qty FROM trades ORDER BY qty DESC')
-ex.claim(repr(cur.fetchone()) == "('BARC', 400)", "fix e-fetchall-shape: fetchone() of ORDER BY qty DESC prints ('BARC', 400)")
+ex.claim(repr(cur.fetchone()) == "('BARC', 400)" == opt('e-fetchall-shape', 'a')['text'].strip('`') and correct_ids('e-fetchall-shape') == ['a'], "fix e-fetchall-shape: fetchone() of ORDER BY qty DESC prints ('BARC', 400), option a, the key")
+ex.claim(repr(db2.execute('SELECT ticker, qty FROM trades ORDER BY qty DESC').fetchall()) == opt('e-fetchall-shape', 'd')['text'].strip('`'), 'e-fetchall-shape option d is the whole fetchall() list')
 ex.claim(repr(db2.execute('SELECT ticker, qty FROM trades ORDER BY qty DESC').fetchall()[:1]) == "[('BARC', 400)]", "fix e-fetchall-shape: fetchall()[:1] would be [('BARC', 400)]")
 
 # ---------------------------------------------------------------- [16] e-network-test (option lengths for the key-length fix)
@@ -425,6 +425,7 @@ FIX16 = ['Pass a short hand-made list of closes, with its answer worked out',
          'Retry the download up to three times before the assert runs',
          'Loosen the assert to `vol < 5.0` so a wild month still passes',
          'Skip the test whenever it runs on GitHub after a push']
+ex.claim([o['text'] for o in IT['e-network-test']['widget']['options']] == FIX16, 'e-network-test options are the four texts below')
 ln = [len(s) for s in FIX16]
 ex.claim(ln[0] <= 1.5 * max(ln[1:]) and ln[0] < max(ln[1:]) + 10, f'fix e-network-test option lengths {ln}: no key-length cue')
 
@@ -440,8 +441,9 @@ E('e-reset-hard', 'explain.text', 4)
 ex.claim(console_ids(IT['e-reset-hard']['canvas']['params']['lines'], lambda s: 'lookback' in s) == sorted(IT['e-reset-hard']['explain']['canvas']['tone']),
          'e-reset-hard explain mutes the two lookback lines')
 # "You read HEAD~2 as keeping two commits": with the new commit that reading gives 3, which grades as no-new.
-ex.claim_text('exam', f'{P("e-reset-hard")}.feedback.byKey.two', 'You read `HEAD~2` as keeping two commits', 2 + 1 == 2,
-              'e-reset-hard byKey "two" names one slip, but 2 needs two (keep two and drop the new commit)')
+ex.claim('You kept only two commits and left out the new one' in IT['e-reset-hard']['feedback']['byKey']['two'] and 'leaves three' in IT['e-reset-hard']['feedback']['byKey']['two']
+         and n18 - 2 == 3 and n18 - 2 + 1 == 4,
+         'e-reset-hard byKey "two" names both slips (keep two, drop the new commit); HEAD~2 leaves 3 and the new commit makes 4')
 # Real run, git 2.43.0: five commits, reset --hard HEAD~2, edit, add, commit: git log --oneline lists 4.
 
 # ---------------------------------------------------------------- [19] e-daily-volume (code)
@@ -499,6 +501,8 @@ w19 = IT['e-daily-volume']['widget']
 ex.claim(len(w19['tests']) == 5 and '5 hidden tests' in w19['how'] and 'OR' in w19['tests'][3]['call'], 'e-daily-volume how: 5 hidden tests, test 4 hides SQL')
 ex.claim(dup19 == [], f'e-daily-volume no hidden test repeats an example (tests {dup19} do)')
 NEW19 = {'call': "daily_volume(db, '2026-03-04')[-1]", 'expect': "('AZN', 50)", 'compare': 'equal'}
+ex.claim(w19['tests'][0] == NEW19 and IT['e-daily-volume']['feedback']['byKey']['test-1'].startswith("Test 1 expects `('AZN', 50)` last on 4 March"),
+         'e-daily-volume tests[0] and byKey.test-1 are the new AZN check')
 ex.claim(run_case('', w19['solution'], NEW19)[0] and not run_case('', w19['starter'], NEW19)[0],
          "fix e-daily-volume tests[0]: daily_volume(db, '2026-03-04')[-1] is ('AZN', 50) on the solution; the starter fails it")
 
@@ -518,12 +522,6 @@ ex.claim(f'{0.0004 / 3:.7f}' == '0.0001333', 'e-vol-by-hand explain 0.0004 / 3 =
 
 # ---------------------------------------------------------------- [21] e-anti-join
 cv = IT['e-anti-join']['canvas']
-db = db_from({'securities': cv['left']['params'], 'trades': cv['right']['params']})
-res21 = {o['id']: [r[0] for r in db.execute('SELECT s.ticker FROM securities AS s ' + o['text'].strip('`')).fetchall()] for o in IT['e-anti-join']['widget']['options']}
-ex.claim(res21['a'] == ['HSBA', 'VOD'] and correct_ids('e-anti-join') == ['a'], f'e-anti-join option a returns {res21["a"]}')
-ex.claim(res21['b'] == [] and res21['c'] == [] and len(res21['d']) == 5, f'e-anti-join b {res21["b"]}, c {res21["c"]}, d returns all five ({res21["d"]})')
-ex.claim([i for i, r in enumerate(cv['left']['params']['rows']) if r[0] in res21['a']] == IT['e-anti-join']['explain']['canvas']['left']['highlight']['rows'],
-         'e-anti-join explain highlights HSBA and VOD')
 # fix: dated trades, "no trade on 3 March"
 db3 = sqlite3.connect(':memory:')
 db3.execute('CREATE TABLE securities (ticker, name, sector)')
@@ -538,6 +536,16 @@ F21 = {'a': "LEFT JOIN trades AS t ON s.ticker = t.ticker AND t.date = '2026-03-
        'd': "JOIN trades AS t ON s.ticker = t.ticker AND t.date = '2026-03-03' WHERE t.id IS NULL"}
 fr21 = {k: [r[0] for r in db3.execute('SELECT s.ticker FROM securities AS s ' + q + ' ORDER BY s.ticker').fetchall()] for k, q in F21.items()}
 ex.claim(fr21 == {'a': ['HSBA', 'SHEL', 'VOD'], 'b': ['AZN', 'HSBA', 'VOD'], 'c': ['HSBA', 'VOD'], 'd': []}, f'fix e-anti-join per option {fr21}')
+ex.claim([[cell(v) for v in r] for r in cv['right']['params']['rows']] == [list(r) for r in T21], 'e-anti-join right table holds the seven dated trades')
+ex.claim({o['id']: o['text'].strip('`') for o in IT['e-anti-join']['widget']['options']} == F21 and correct_ids('e-anti-join') == ['a'],
+         'e-anti-join options a to d are the four queries above; a is the key')
+ex.claim([i for i, r in enumerate(cv['left']['params']['rows']) if r[0] in fr21['a']] == IT['e-anti-join']['explain']['canvas']['left']['highlight']['rows'] == [2, 3, 4],
+         'e-anti-join explain highlights HSBA, SHEL and VOD')
+ex.claim('HSBA, SHEL and VOD' in IT['e-anti-join']['feedback']['correct'] and 'HSBA, SHEL and VOD' in IT['e-anti-join']['explain']['text']
+         and 'SHEL traded on 2 and 4 March' in IT['e-anti-join']['explain']['text'] and 'such as AZN' in opt('e-anti-join', 'b')['why'] and 'SHEL is missed' in opt('e-anti-join', 'c')['why'],
+         'e-anti-join feedback, explain and whys name HSBA, SHEL, VOD; AZN (b); SHEL missed (c)')
+_s = {r[0]: [t_[1] for t_ in T21 if t_[2] == r[0]] for r in cv['left']['params']['rows']}
+ex.claim(_s['SHEL'] == ['2026-03-02', '2026-03-04'] and _s['AZN'] == ['2026-03-03'], 'e-anti-join: SHEL traded on 2 and 4 March only; AZN on 3 March only')
 
 # ---------------------------------------------------------------- [22] e-pytest-file (code, real pytest through the postlude)
 
@@ -602,9 +610,8 @@ blocks = re.findall(r'```(\w+)\n(.*?)```', model, re.S)
 py = [b for lang, b in blocks if lang == 'python']
 risk_src, test_src = py[0], py[1]
 code, out = run_pytest({'risk.py': risk_src, 'tests/test_risk.py': test_src})
-ex.claim_text('exam', f'{P("e-tools-exit")}.model', 'the tests in `tests/`', code == 0 or 'pythonpath' in model,
-              f'e-tools-exit model layout: plain `pytest` from the project root collects tests/test_risk.py (exit {code}: '
-              + ('ModuleNotFoundError' if 'ModuleNotFoundError' in out else out.strip().splitlines()[-1] if out.strip() else '') + ')')
+ex.claim(code != 0 and 'ModuleNotFoundError' in out and 'pythonpath = ["."]' in model and '[tool.pytest.ini_options]' in model,
+         f'e-tools-exit model layout: without pyproject.toml plain `pytest` fails (exit {code}, ModuleNotFoundError), and the model now supplies it')
 code_m, _ = run_pytest({'risk.py': risk_src, 'tests/test_risk.py': test_src}, module=True)
 ex.claim(code_m == 0, 'e-tools-exit model layout passes under `python -m pytest`, which adds the folder to the path')
 code_f, _ = run_pytest({'risk.py': risk_src, 'tests/test_risk.py': test_src, 'pyproject.toml': '[tool.pytest.ini_options]\npythonpath = ["."]\n'})
@@ -612,9 +619,33 @@ ex.claim(code_f == 0, 'fix e-tools-exit: with pyproject.toml `pythonpath = ["."]
 ns24 = {}
 exec(risk_src.replace('main(sys.argv)', 'pass'), ns24)
 ex.claim(math.isclose(ns24['max_drawdown']([100.00, 125.00, 100.00]), -0.2), 'e-tools-exit model max_drawdown gives -0.2 for £100, £125, £100')
-ex.claim_text('exam', f'{P("e-tools-exit")}.model', 'git init\ngit add', '-b main' in model or 'branch -M main' in model,
-              'e-tools-exit model: plain `git init`, then `git push -u origin main` (git 2.43.0 names the branch master: "src refspec main does not match any")')
+ex.claim('git init -b main\ngit add' in model and 'git add tests/test_risk.py risk.py pyproject.toml' in model and 'pyproject.toml' in model.split('(c)')[0],
+         'e-tools-exit model: `git init -b main` (git 2.43.0: plain init names the branch master and the push of main fails), pyproject.toml committed')
 E('e-tools-exit', 'rubric[2].text', -0.2)
+
+# ---------------------------------------------------------------- new item e-fixture-calls, distractor items, leaked key, counts
+fx_it = IT['e-fixture-calls']
+ex.claim(idx['e-fixture-calls'] == idx['e-param-table'] + 1 and fx_it['difficulty'] == 3 and fx_it['skills'] == ['pt-tools'], 'e-fixture-calls is a d3 pt-tools item straight after e-param-table')
+key('e-fixture-calls', 4)
+_src = re.search(r'```python\n(.*?)```', fx_it['prose'], re.S).group(1)
+_n_tests = _src.count('def test_') + 2   # three parametrised rows share one function
+ex.claim(_n_tests == 5 and 'closes' in _src.split('def test_no_prices')[0] and 'closes' not in _src.split('def test_no_prices')[1], 'e-fixture-calls: five tests, four name closes, test_no_prices does not')
+for wid, v in (('per-function', 2), ('once', 1), ('every-test', 5)):
+    wrong('e-fixture-calls', wid, v)
+code, out = run_pytest({'test_fx2.py': 'import pytest\nCALLS = []\n\ndef daily_returns(p):\n    return []\n\n'
+                        + _src.replace('def closes():\n', 'def closes():\n    CALLS.append(1)\n')
+                        + '\ndef test_zz_count():\n    assert len(CALLS) == 4, len(CALLS)\n'})
+ex.claim(code == 0 and '6 passed' in out, 'e-fixture-calls: the shown file under real pytest 8.1.1 builds the fixture 4 times (5 tests plus the counter)')
+E('e-fixture-calls', 'explain.text', 4)
+
+ex.claim(IT['e-conflict-order']['widget']['distractors'] == ['d1', 'd2'] and IT['e-conflict-order']['widget']['answer'] == ['m1', 'm2', 'm3', 'm4', 'm5'],
+         'e-conflict-order: answer unchanged, distractors d1 (commit -a) and d2 (merge --abort), both whys run by hand on git 2.43.0')
+ex.claim(IT['e-tdd-order']['widget']['distractors'] == ['d1', 'd2'] and IT['e-tdd-order']['widget']['answer'] == ['t1', 't2', 't3', 't4', 't5'],
+         'e-tdd-order: answer unchanged, distractors d1 and d2')
+ex.claim(correct_ids('e-leaked-key') == ['a', 'b'], 'e-leaked-key key a and b (revoke; new key in an ignored .env)')
+ex.claim('config.py' in IT['e-leaked-key']['prose'] and 'download.py' not in IT['e-leaked-key']['prose'], 'e-leaked-key: new setup (a closed pull request and a deleted branch, config.py)')
+ex.claim(IT['e-pytest-file']['explain']['text'].split('```')[0].count('. ') + 1 <= 3, 'e-pytest-file explain prose is three sentences')
+E('e-sql-having', 'explain.text', 3)
 
 # ---------------------------------------------------------------- wrong values against the answer bands (rule 581)
 ex.check_wrongs()
