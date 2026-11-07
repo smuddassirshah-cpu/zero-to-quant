@@ -72,3 +72,48 @@ Format: `N. item [index] path | severity | what is wrong, with evidence | exact 
 1. `fresh-check.mjs` passed this paper with 0 hits while 15 of its 26 items repeat a contests setup, several with the same key and slips. `e-file-values` has answer 200000 and `wrong` values 2000000000 and 10000 under ids `product` and `tests`, exactly as `l1-reading-statements` `screens[4]`. The prose gate needs a 12-word run covering 60% of the item's words, and reworded statements never reach it. A signature check would catch these. It would flag an exam item when the same widget kind, the same numeric answer and the same set of `wrong` ids, or values, appear on a lesson, review or homework screen of the topic's courses. Tap and order items could match on their answer and wrong-set sizes, or on canvas `state` (the sieve's dim set and the intervals).
 2. `numbers_lib.normalise`: a power written as $4 \cdot 10^{10}$ or $2 \cdot 10^5$ is not read as its value, so `expect` misses it and the script must pass `fmt` (done here with a callable). Reading `a \cdot 10^{b}` and `10^{b}` as numbers would cover the many contest-limit texts.
 3. Already raised in the topic-2.2 review, not repeated in the inbox. The Learn chip prints `examMinutes(hours)`, not the exam's `minutes` (finding 19 needs it). The validator does not flag a hidden test equal to an example (finding 21). The reader brief's script name `numbers.py` shadows Python's `numbers` module; this script strips its own folder from `sys.path`, as 2.2's does.
+
+## Fix pass
+
+Edited only `app/content/exams/topic-2.4.json` and `docs/reviews/exam-2.4-scripts/numbers.py` (the validator also rewrote `content/manifest.json`, `examMinutes` for `topic-2.4` 60 to 90, as it does by design). No id renamed. Every new number was recomputed in the script by a second route, and the script now exits 0 (269 of 269): enumeration of feasible job sets, a scan of 10,000 days, a scan for the tie time, a simulated drain of 14,142 orders, BFS for the fewest updates, a simulated cut of the 47 by 30 floor, and each code item's solution passing every example and hidden test and each starter failing every hidden test. No disagreement with the reviewer's numbers.
+
+### Items
+
+1. e-best-plan `byKey.value`: fixed as given. D, C, B: B at minute 60 scores 988 (loses 208), C at 50 scores 1,280 (gains 64), net 144 = 4,044 - 3,900.
+2. e-file-values: rewritten as given (price grids, key 1,000,000, slips 40,000,000,000, 4,000,000, 10,000). Graded answer changed.
+3. Moot, finding 2 applied (the new explain states 1,000,000).
+4. e-fast-read: rewritten as given (names with spaces), key still b. Checked in CPython: `split(" ")` gives `['North', 'Desk\n15']`.
+5. e-lcm-rebalance: rewritten as given. Key 7 (was 1,260); wrongs 1, 1666, 8, 1260. Graded answer changed.
+6. e-greedy-tap: replaced as given (three days, six jobs). Rule keeps A, D, E for 150, unique over all feasible subsets; slips 120, 140, and the infeasible top three. Graded answer changed.
+7. e-upsolve-pick: rewritten as given; key G and H (was C and D); all four ratings lie within 300 of 1,250. Graded answer changed.
+8. e-next-problem: rewritten as given, key still r3 (D, 75 points a minute, against C 31.25; E needs 60 of the 50 minutes left).
+9. e-pop-front: (a) rewritten as the inverse question, key 14,142 (was 4,999,950,000); 14,142 orders cost 99,991,011 shifts and 14,143 cost 100,005,153. (b) the wrong `half` reason is gone with the slip. Graded answer changed.
+10. e-budget-table: four new rows as given: 9,000,000 yes, 8,000,000,000 no, 89,442,719 yes, 838,860,800 no (tol 3% unchanged; a typed 8.9e7 is inside it). Graded values changed.
+11. e-sieve-tap: (a) and (b) fixed as given. The faded list is 1 and the multiples of 2 and 3 from 4 and 9; composites standing 25, 35, 49, 55. Graded answer changed (one cell to four).
+12. e-fact-order: distractors d1 and d2 added with `distractors`; answer unchanged. Basis: d1 gives the right values at one `pow` each (slow, about 30 squarings, $\log_2(p-2) = 29.9$); d2 run forwards gives wrong inverses (script).
+13. e-submask-tap: (a) and (b) fixed as given (masks disjoint from 1010 = the 4 submasks of 0101). One addition: title now "Masks that avoid a trade set". Graded answer changed.
+14. e-code-quiet: replaced with `fewest_updates(target)` as given; 9 tests. Solution passes all 10 cases in under 0.01 s natively; starter fails 9 of 9; test values 52, 200000 and 33381630011016 confirmed by two routes. Slow versions: splitting at each minimum and peeling one layer both overrun 5 s on test 8, and peeling on test 9. Splitting at minima does not overrun test 9 (random data splits evenly), so the text ties that slip to test 8 only, as the `how` and `byKey` already do. Planted bugs fail tests [1, 5, 6, 7, 9], [1, 2, 4, 5, 6, 7, 9] and [4 to 9]. Graded function changed.
+15. e-stress-gen: replaced as given (read a printed failing case). Key `self` (was `small`); counts 1, 3, 2, 4 by enumeration; not the longest option. Graded answer changed.
+16. e-penalty-order: replaced as given. Key 27 minutes (was 42): $6 t_P = 162$; both orders score 1,870.8 at 27, P first is better below 27. Wrongs 75 and 45. Graded answer changed.
+17. e-moves-back: replaced as given (squares from a 47 by 30 floor). Key 10 (was 9); the squares are 30, 17, 13, 4, 4, 4, 1, 1, 1, 1 and tile 1,410 tiles. Wrongs 5, 9, 1. Graded answer changed.
+18. e-code-pairs `byKey.test-4`, `test-5`: fixed as given. Basis: grouping by absolute value first fails test 4 (script: fails 1, 4, 6); the zero-skipping bug is what test 5 alone catches.
+19. Applied. `minutes` 90 and a `pace` on every item as given (60 on 5, 100 on 11, 360 on 2, 150 on 2, 420 on 3, 540, 300 and 720); they sum to 5,240 s = 87 minutes, inside 90. Rule: AUTHORING section 5 defines item `pace` (seconds, optional on exam items, never graded) and says to set topic-exam `minutes` to the time the exam really needs, so both apply; the Learn chip now reads 90 through the validator's `examMinutes`. The script checks every pace is present, positive and at most 1800 and that the sum fits `minutes`.
+
+### Notes
+
+20. No change (kept, by the reader's own note).
+21. Fixed for all five: e-code-pairs `tests[0]` (stdin `1\n6\n2 2 2 2 -2 2\n`, 10), e-code-geom `growth_sum(7, 4)` = 400, e-code-vans `fewest_vans([5, 3, 3, 5], 8)` = 2, e-code-conflicts the path on six strategies = 3; e-code-quiet is moot (replaced). The script now fails if any hidden test equals an example. Pyodide confirmed by the playthrough.
+22. No change (accepted).
+23. No change (accepted).
+24. Fixed: e-code-pairs `how` and e-round-review `model` (d) as given.
+25. Moot, finding 6 applied.
+26. No change.
+
+### Gates
+
+- Freshness: `node tools/fresh-check.mjs --exam topic-2.4 --min-run 10`: 0 hits; with `--min-run 8 --min-share 0`: 0 hits (was 1). Literal grep of `app/content/courses/contests` for each new item's key nouns (for example "Price grids", "names with spaces", "next 10,000 days", "latest free day", "Upsolving done properly", "replay tool", "447.2", "89,442,719", "do not belong", "fewest_updates", "xs = [2, 5, 2]", "break-even", "Squares from a rectangle", "47 by 30"): 0 hits for 10 of the 15 items (the bare word "tie" was dropped as noise, since it matches "entire"). Incidental hits only: "upsolved" 12 (`l16`) and "booked" 2 (`homework-3`); "points a minute" 18 and "points per minute" 16 (`l14`, `review-4`, `homework-4`, the rate idea the lesson teaches, in other setups); "still standing" 4 (`l6`, an unrelated tap); "1010" 10 and "complement" 1 (`l11`, `review-3`: a binary example and two's complement); "i = j" 2 (`homework-2`, a modular proof); "failing case" 24 and "stress loop" 14 (`l4`, `l15`, `l10`, the topic itself, not this case).
+- Validator: 0 errors; 4,079 warnings repo-wide, none naming `topic-2.4` (the two `O2-explain-answer` warnings are gone).
+- Playthrough `--exam topic-2.4 --local-cdn <pkgs>`: 26 of 26, passed, 1 written answer marked, 8.7 s; `--mobile`: 26 of 26, passed, 8.5 s.
+- Voice: 764 sentences, 0 over 35 words, 0 explanations over three sentences; no em-dash, en-dash or `!` (the one `!=` is code). Five sentences of 21 words remain, under the 35-word gate.
+- Code items touched (e-code-pairs tests and `how`, e-code-quiet, e-code-geom, e-code-vans, e-code-conflicts): solutions pass natively in at most 0.06 s a call, starters fail every hidden test, and each named slow version still overruns 5 s natively.
+- Graded answers changed: e-file-values (200,000 to 1,000,000), e-lcm-rebalance (1,260 to 7), e-greedy-tap (new set A, D, E), e-upsolve-pick (C, D to G, H), e-pop-front (4,999,950,000 to 14,142), e-budget-table (four rows), e-sieve-tap (49 to 25, 35, 49, 55), e-submask-tap (new set), e-code-quiet (new function), e-stress-gen (small to self), e-penalty-order (42 to 27), e-moves-back (9 to 10). Keys unchanged with new content: e-fast-read (b), e-next-problem (r3), e-fact-order, e-best-plan (4,044).
