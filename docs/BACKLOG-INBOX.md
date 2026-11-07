@@ -1657,3 +1657,6 @@ Raised later (ito level 3 perf):
 Raised later (ito level 4 perf):
 - [Should] Longform aloud widget on the homework page: the help line under the clock reads "Say your answer aloud. The paper clock ends the sitting.", the exam text (`longform.js:47`, `ctx.mode === 'exam'`), though a homework has no paper clock and the item sets `lockAtZero` (ito `h-aloud-unknown-drift`, 440 px shot). Wanted: the `lock` line ("The clock stops at zero.") outside a real exam.
 - [Could] An aloud item does not say before the clock that follow-ups will come; they appear only with the model. The prompt has to say "Three follow-up questions come after the clock". Wanted: a line under the clock, "n follow-up questions after the clock", from `followUps.length`.
+
+Raised later (arma level 1 perf):
+- [Should] Homework page: on an `aloud` item the yellow banner still reads "Write your working first. Then mark it against the model answer.", while the box below is labelled "Your notes (optional)" and Mark my answer accepts it empty (arma `h-aloud-two-notes`, desktop shot item 08). Wanted: the aloud wording ("Answer aloud, then mark it against the model answer.") when the item has `seconds`.
