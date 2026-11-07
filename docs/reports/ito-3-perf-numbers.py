@@ -25,7 +25,8 @@ check('no scaffold fields', not any(k in it for k in ('starter', 'steps', 'order
 rub = it['rubric']
 check('rubric 3 to 5 rows', 3 <= len(rub) <= 5)
 check('rubric sums to 10', sum(r['points'] for r in rub) == 10)
-check('exactly one required row', sum(1 for r in rub if r.get('required') is True) == 1)
+# fix pass (review-perf-retrofit-3): required rows follow DECISIONS Session X, one per named part, never every row
+check('4 required rows, not every row', sum(1 for r in rub if r.get('required') is True) == 4 and 4 < len(rub))
 check('homework 6 to 12 items', 6 <= len(items) <= 12)
 check('one performance task in the level', sum(1 for i in items if i.get('performance')) == 1)
 check('a difficulty 5 item', any(i.get('difficulty') == 5 for i in items))

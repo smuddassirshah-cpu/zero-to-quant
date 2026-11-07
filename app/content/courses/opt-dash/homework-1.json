@@ -474,7 +474,7 @@
       ],
       "pace": 900,
       "title": "A forward and a rate from the chain",
-      "prose": "The desk wants a second opinion on its rate input, read from the chain alone. Parity makes $C - P$ a straight line in the strike. Write `parity_fit(df_T, S, T)` for one expiry's quotes, with columns `strike`, `type`, `bid` and `ask`. Fit that line by least squares through every strike that has both a call mid and a put mid. A quote with a zero bid has no mid. Return the floats `(F, r, q)`: the forward, the continuously compounded rate and the dividend yield. With fewer than three pairs, return three NaNs. Do the same when the fit gives no positive discount factor or forward.",
+      "prose": "The desk wants a second opinion on its rate input, read from the chain alone. Parity makes $C - P$ a straight line in the strike. Write `parity_fit(df_T, S, T)` for one expiry's quotes, with columns `strike`, `type`, `bid` and `ask`. Fit that line by least squares through every strike that has both a call mid and a put mid. With $y = C - P$ at the $m$ such strikes $K_i$, the line has slope $b = \\sum_i (K_i - \\bar K)(y_i - \\bar y) / \\sum_i (K_i - \\bar K)^2$ and intercept $a = \\bar y - b\\bar K$, the bars being means over those strikes. A quote with a zero bid has no mid. Return the floats `(F, r, q)`: the forward, the continuously compounded rate and the dividend yield. With fewer than three pairs, return three NaNs. Do the same when the fit gives no positive discount factor or forward.",
       "question": "Write `parity_fit` from a blank start.",
       "widget": {
         "kind": "code",
@@ -576,9 +576,22 @@
             "call": "[type(v).__name__ for v in parity_fit(toy_chain(100, 0.04, 0.01, 0.25, 1.0, range(80, 121, 5)), 100, 1.0)]",
             "expect": "['float', 'float', 'float']",
             "compare": "equal"
+          },
+          {
+           "call": "[v != v for v in parity_fit(without(without(toy_chain(100, 0.04, 0.01, 0.25, 1.0, [90, 95, 100, 105]), 90, 'put'), 105, 'call'), 100, 1.0)]",
+           "expect": "[True, True, True]",
+           "compare": "equal"
+          },
+          {
+           "call": "list(parity_fit(toy_chain(100, -0.01, 0.0, 0.25, 1.0, range(80, 121, 5)), 100, 1.0))",
+           "expect": "[100 * exp(-0.01), -0.01, 0.0]",
+           "compare": "isclose",
+           "tol": {
+            "abs": 1e-09
+           }
           }
         ],
-        "how": "`quotes(rows)` builds a chain from rows of `[T, strike, type, bid, ask, volume, age_min]`, and `toy_chain(S, r, q, sigma, T, strikes)` prices calls and puts at one vol. Check runs 11 hidden tests on hand-made and seeded chains, comparing numbers within absolute 1e-9. The first run loads numpy and pandas."
+        "how": "`quotes(rows)` builds a chain from rows of `[T, strike, type, bid, ask, volume, age_min]`, and `toy_chain(S, r, q, sigma, T, strikes)` prices calls and puts at one vol. Check runs 13 hidden tests on hand-made and seeded chains, comparing numbers within absolute 1e-9. The first run loads numpy and pandas."
       },
       "feedback": {
         "correct": "The slope gives the discount factor and the intercept the discounted forward.",
@@ -588,7 +601,9 @@
           "test-5": "Test 5 has a call with a zero bid. That quote has no mid, so its strike leaves the fit.",
           "test-6": "Test 6 has a strike with only a call and another with only a put. Pair the quotes by strike, not by position.",
           "test-7": "Test 7 has exactly three pairs, which is enough for a fit.",
-          "test-10": "In test 10, $C - P$ rises with the strike, so the fitted discount factor is negative. Return three NaNs."
+          "test-10": "In test 10, $C - P$ rises with the strike, so the fitted discount factor is negative. Return three NaNs.",
+          "test-12": "Test 12 has four strikes but only two with both quotes. Count the pairs, not the strikes.",
+          "test-13": "Test 13 has a negative rate, so the discount factor is above 1. That is still a valid fit."
         }
       },
       "explain": {

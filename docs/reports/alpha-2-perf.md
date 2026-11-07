@@ -14,3 +14,4 @@ Gates:
 Freshness: `fresh-check.mjs --file` 1 hit, on the existing item 1 (`rolling_beta`, momentum-rep), not this item. Grep of momentum_pct, month end, pct=True, jumped, refreshes: l7 has `rank(pct=True)` only as its pooled-rank trap.
 
 Backlog: 0 bullets.
+- Overlapping screens: l5 screen 4 codes daily 12-minus-1 momentum and l7 screen 4 ranks across shares. New: month-end prices, the price-ratio window, listed at both ends, rank over count.
