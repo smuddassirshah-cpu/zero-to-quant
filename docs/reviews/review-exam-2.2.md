@@ -74,3 +74,48 @@ Format: `N. item [index] path | severity | what is wrong, with evidence | exact 
 3. Validator: nothing flags a code item whose hidden test equals an example (same `call` and `setup`). All three code items here have one (finding 15), as did topic-3.1.
 4. `fresh-check.mjs`: a "code names" hit on a helper the item's own starter defines (`garch_variance`, `neg_loglik`) is by design and makes the tool exit 1. Names the starter or prelude defines could be skipped, or reported as advisory.
 5. Reader tooling: the brief's script name `numbers.py` shadows Python's standard `numbers` module, which NumPy imports. The script must strip its own folder from `sys.path` before importing NumPy (done here). A name such as `exam-numbers.py` avoids it.
+
+
+## Fix pass
+
+Edited only `app/content/exams/topic-2.2.json` and `docs/reviews/exam-2.2-scripts/numbers.py`. Ids unchanged (one id added, `e-mixed-window`). Every new number was recomputed in the script, which now exits 0 (255 of 255, including each code item's solution passing every example and hidden test and each starter failing every hidden test in CPython).
+
+### Items
+
+1. e-garch-step byKey.sigma: fixed as proposed. The 1.6 is the variance, enters unsquared ($0.91 \times 1.6 = 1.456$).
+2. e-aic-bic: fixed. Recomputed from the stated recipe: AR(1) AIC 1148.68, AR(2) BIC 1145.90, MA(2) AIC 1113.26 and BIC 1129.22, MA(1) AIC key 1114.50 (tol unchanged). MA(1) trails the ARMA(1,1) by 1.48 on AIC, MA(2) by 0.24. The script now demands exact recipe values (it accepted 0.015 before).
+3. e-ma-identify option b: fixed. Basis: an MA(q) order is read from where the ACF cuts off (Box, Jenkins and Reinsel, identification chapter); here the ACF cuts off after lag 1 (script). Option c's why also tightened (finding 20).
+4. e-breach-days: fixed as proposed. The second series is now the forecast sd (old $-$VaR over 1.644854, checked at all eight marked days), the table shows the sd, and 95% VaR is 1.645 sds. Answer A, B, F unchanged. Added wrong `sd` (all eight dots); recomputed VaRs 0.97, 1.35, 1.69, 1.61, 1.40, 1.38, 1.84, 1.76.
+5. e-breach-days explain margins: superseded by 4. The margins now read 0.22, 0.20 and 0.37, from the table the learner sees.
+6. e-pair-positions: fixed. `y` is [-5, 5] so the stop line draws; day 8 is -4.6. The state machine still gives 0, -1, -1, -1, 0, 0, +1, 0, +1.
+7. e-hedge-flip: fixed. Slope of x on y is $0.85 \times 4.50/3.90 = 0.9808$, inverse 1.0196, so key 1.02 (was 1.07). Wrongs 0.74, 0.98, 1.36, 0.87; bands (tol 0.01) do not overlap. `product` replaced by `sd-ratio`.
+8. e-johansen-rank: fixed. Trace 27.10, 16.20, 4.43 against 29.80, 15.49, 3.84 (`c_sjt`): row one fails to reject, rank 0. Key moved from b to a (graded answer changed). Two rows still lie above their values, so option c's why holds.
+9. e-vol-ahead: fixed. $V_L = 2$, seven steps give 3.745843 (closed form and recursion agree), root 1.935418, key 0.019354 (was 0.0145). Wrongs 0.0141, 0.0212, 0.0191 (eight steps, 1.912734) and 0.0375. A typed 1.94 is 4.6e-5 from the key, inside its band; the bands are disjoint.
+10. e-unit-root-steps: fixed. Distractors d1 and d2 added with `distractors`; answer unchanged. Basis for d1: the difference of white noise has lag-1 autocorrelation -0.5 (simulation of 200,000 draws in the script gives -0.50).
+11. e-spurious-fit: fixed. New question and options; the key is `a` (was `c`), and it is no longer the longest option. Options carry the computed 0.95, 0.67, -32 and 0.0008.
+12. e-lookahead-multi: fixed, 2,000 days, keys a, c, e unchanged. One departure: the proposed explain ended "a next-day fill use only the past", which contradicts option c (a next-day fill leaks). It now says "a trailing z-score and a one-day delay use only the past".
+
+### Coverage, difficulty and time
+
+13. New item `e-mixed-window` (d2, gv-clustering) after `e-band-lags`, as proposed. Recomputed: variance 1.92, root 1.385641, times 15.8745 gives 21.9964%. Wrongs 19.0494%, 1.3856%, 26.4726%. Its explain says "Averaging the 40 daily sds gives 19.05%" (the proposal said "the two sds", which would give a different figure). Ramp is now 5, 11, 5, 2 over 23 items.
+14. `minutes` 75. Rule used: AUTHORING section 5 (topic exam) sets `minutes` per file with no cap, and the validator has no rule on it; topic-2.6 stores 75. No `pace` added. With the new item the review's paces sum to about 80 minutes, so 80 would also fit; left at the proposed 75. The Learn chip still says 45 (engine bullet 1).
+
+### Notes
+
+15. Fixed. `tests[0]` of all three code items now differs from `examples[0]`, with the proposed values recomputed from each reference solution: ar1_fan `[-0.619723, -0.532072, -0.462577, -0.407476]`, garch_report 0.953762, pair_verdict 'tradable'. The script checks no test repeats an example; solutions pass and starters fail in CPython (Pyodide run: playthrough below).
+16. Fixed (`byKey.test-7` and `how`).
+17. Fixed (option d text).
+18. Fixed (4.87e-30).
+19. Fixed (`byKey.two`).
+20. Fixed (`options[2].why`, `byKey.s5`); the validator no longer lists those two lines. Three other advisory 20-word lines remain (items 2, 4 and 10 prose and explain), under the 35-word gate.
+21. No change (near relatives accepted by the reader).
+22. Not applied (optional); the overlap is defensible as the reader said.
+23. No change.
+
+### Gates
+
+- Freshness: `node tools/fresh-check.mjs --exam topic-2.2 --min-run 10` gives 2 hits, both the by-design `garch_variance` and `neg_loglik` on `e-code-garch-report`; none on the seven rewritten items. Literal grep of `app/content/courses` (arma, garch, coint) for each new item's key nouns ("£3.90", "£4.50", "forecast sd", "t+8", "seven days after tomorrow", "lag-1 correlation of 0.95", "difference the returns", "to the closes", "−4.6", "1114.50", "−3.13"): 0 hits. Incidental hits only on generic phrases: "calm days" 7, "storm days" 2, "60 days ending" 1, "MA(4)" 2, "27.10" 2 and "16.20" 1 (unrelated data), "2,000 days" 65 (no same setup).
+- Validator: 0 errors; manifest unchanged.
+- Playthrough `--exam topic-2.2 --local-cdn <pkgs>`: 23 of 23, passed; `--mobile`: 23 of 23, passed.
+- Voice: 669 sentences, 0 over 35 words, 0 explanations over three sentences; no dash or `!`.
+- Graded answers changed: e-hedge-flip (1.07 to 1.02), e-vol-ahead (0.0145 to 0.019354), e-johansen-rank (b to a), e-spurious-fit (c to a, new options), e-aic-bic MA(1) AIC key (1114.49 to 1114.50).

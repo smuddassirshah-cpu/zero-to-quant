@@ -102,12 +102,10 @@ def correct_ids(iid):
 R4 = lambda v: round(v, 4)  # noqa: E731
 
 # ---------------------------------------------------------------- metadata, shape, coverage
-ex.claim(doc['minutes'] == 45 and doc['pass'] == 0.7, 'minutes 45 and pass 0.7 as stored')
-hours = 60  # docs/curriculum.md row 2.2; learn.js examMinutes(60) = 45
-ex.claim((45 if hours <= 60 else 60 if hours <= 150 else 90) == doc['minutes'], 'minutes follow learn.js examMinutes(60 h)')
+ex.claim(doc['minutes'] == 75 and doc['pass'] == 0.7, 'minutes 75 (finding 14; topic-2.6 stores 75 too) and pass 0.7 as stored')
 ex.claim(20 <= len(doc['items']) <= 30, f'{len(doc["items"])} items, inside 20 to 30')
 ramp = {d: sum(1 for it in doc['items'] if it['difficulty'] == d) for d in (2, 3, 4, 5)}
-ex.claim(ramp == {2: 4, 3: 11, 4: 5, 5: 2}, f'ramp {ramp} (18%, 50%, 23%, 9% against 20, 50, 20, 10)')
+ex.claim(ramp == {2: 5, 3: 11, 4: 5, 5: 2}, f'ramp {ramp} (22%, 48%, 22%, 9% against 20, 50, 20, 10)')
 union = {}
 for c in ('arma', 'garch', 'coint'):
     with open(os.path.join(COURSES, c, 'course.json'), encoding='utf8') as f:
@@ -125,6 +123,7 @@ ex.claim(near(p_close, 0.5647, 5e-4), f'e-adf-read MacKinnon p for -1.4365 = {p_
 ex.claim(abs(p_ret / 4.87e-30 - 1) < 0.02, f'e-adf-read MacKinnon p for -17.4129 = {p_ret:.3g}')
 ex.claim(correct_ids('e-adf-read') == ['b'] and p_close > 0.05 > p_ret, 'e-adf-read key: closes keep a unit root, returns reject')
 ex.expect('exam', f'{P("e-adf-read")}.widget.options[0].text', 0.56)
+ex.claim('4.87e-30' in node(f'{P("e-adf-read")}.widget.options[3].text'), 'e-adf-read option d quotes the printed 4.87e-30')
 ex.expect('exam', f'{P("e-adf-read")}.explain.text', 0.56)
 
 # ---------------------------------------------------------------- e-garch-step
@@ -141,6 +140,9 @@ ex.expect('exam', f'{P("e-garch-step")}.feedback.byKey.variance', 1.88)
 # byKey "sigma" tells the learner to "square the 1.6 as given"; the right term is 0.91 x 1.6, unsquared
 ex.claim_text('exam', f'{P("e-garch-step")}.feedback.byKey.sigma', 'square the 1.6 as given',
               near(0.91 * 1.6 ** 2, 0.91 * 1.6, 1e-9), 'e-garch-step byKey sigma: "square the 1.6" matches the recursion')
+_sg = node(f'{P("e-garch-step")}.feedback.byKey.sigma')
+ex.claim('square the 1.6' not in _sg and 'already the variance' in _sg and 'use it as given' in _sg,
+         'e-garch-step byKey sigma reworded: the 1.6 is the variance and enters unsquared')
 
 # ---------------------------------------------------------------- e-spurious-fit (from the shipped series)
 A = np.array(IT['e-spurious-fit']['canvas']['params']['series'][0]['values'])
@@ -155,7 +157,11 @@ ex.claim(near(f.rsquared, 0.67, 0.005), f'e-spurious-fit R2 {f.rsquared:.4f} rea
 ex.claim(near(f.tvalues[1], -32, 0.5), f'e-spurious-fit t {f.tvalues[1]:.2f} reads -32')
 ex.claim(near(r1, 0.95, 0.005), f'e-spurious-fit residual lag-1 correlation {r1:.4f} reads 0.95')
 ex.claim(near(fd.rsquared, 0.0008, 0.00005), f'e-spurious-fit changes R2 {fd.rsquared:.5f} reads 0.0008')
-ex.claim(correct_ids('e-spurious-fit') == ['c'], 'e-spurious-fit key: nothing yet, test the residual')
+ex.claim(correct_ids('e-spurious-fit') == ['a'], 'e-spurious-fit key: the residual lag-1 correlation')
+_so = [node(f'{P("e-spurious-fit")}.widget.options[{k}].text') for k in range(4)]
+ex.claim('0.95' in _so[0] and '0.67' in _so[1] and '-32' in _so[2] and '0.0008' in _so[3],
+         'e-spurious-fit option numbers 0.95, 0.67, -32 and 0.0008 are the ones computed above')
+ex.claim(len(_so[0]) < max(len(t) for t in _so), f'e-spurious-fit the key is not the longest option {[len(t) for t in _so]}')
 
 # ---------------------------------------------------------------- e-band-lags
 band400 = 1.96 / math.sqrt(400)
@@ -223,6 +229,7 @@ a6, c6 = adfuller(r6)[:2], coint(y6, x6)
 ex.claim((R4(a6[0]), R4(a6[1])) == (-3.1241, 0.0248), f'e-eg-critical adfuller(res) {R4(a6[0])}, {R4(a6[1])}')
 ex.claim((R4(c6[0]), R4(c6[1])) == (-3.1282, 0.0828), f'e-eg-critical coint {R4(c6[0])}, {R4(c6[1])}')
 ex.claim([R4(v) for v in c6[2]] == [-3.9241, -3.3515, -3.0551], f'e-eg-critical critical values {[R4(v) for v in c6[2]]}')
+ex.claim('\u22123.13 is above the 5% value, \u22123.35' in node(f'{P("e-eg-critical")}.widget.options[3].text'), 'e-eg-critical key text names -3.13 and the 5% value -3.35')
 ex.claim(correct_ids('e-eg-critical') == ['d'] and c6[2][1] < c6[0] and c6[0] < c6[2][2], 'e-eg-critical key: no rejection at 5%, rejects only at 10%')
 
 # ---------------------------------------------------------------- e-ma-identify (regenerated)
@@ -240,13 +247,19 @@ ex.claim(all(pa7[k] < 0 for k in range(1, 11)), 'e-ma-identify PACF keeps the si
 ex.claim(f'{ac7[1]:.2f}' == '-0.48', f'e-ma-identify explain -0.48 ({ac7[1]:.5f})')
 out_p = [k for k in range(1, 11) if abs(pa7[k]) > b500]
 ex.claim(out_p == [1, 2, 3, 4], f'e-ma-identify option b text: PACF bars outside the band at lags {out_p}')
-# option b's why rules out an AR(4) by "a PACF that stops after lag 4", which the shown PACF also does
+# option b was an AR(4) whose why ("a PACF that stops after lag 4") the shown PACF also satisfies (finding 3b); it is now an MA(4)
 ex.claim_text('exam', f'{P("e-ma-identify")}.widget.options[1].why', 'would have a PACF that stops after lag 4',
-              out_p != [1, 2, 3, 4], 'e-ma-identify why (AR(4)) names a property that separates AR(4) from this plot')
+              out_p != [1, 2, 3, 4], 'e-ma-identify old AR(4) why is gone')
+ex.claim(node(f'{P("e-ma-identify")}.widget.options[1].text').startswith('An MA(4)')
+         and 'ACF, which stops after lag 1' in node(f'{P("e-ma-identify")}.widget.options[1].why'),
+         'e-ma-identify option b is an MA(4) read from the PACF; the ACF stops after lag 1, not 4 (checked above)')
+ex.claim(abs(ac7[1]) > b500 and ac7[1] < 0, 'e-ma-identify option c why: the lag-1 ACF spike is negative')
 
 # ---------------------------------------------------------------- e-breach-days (from the shipped series)
 sr = IT['e-breach-days']['canvas']['params']['series']
-ret, nv = np.array(sr[0]['values']), np.array(sr[1]['values'])
+ret, nsd = np.array(sr[0]['values']), np.array(sr[1]['values'])
+Z95 = stats.norm.ppf(0.95)
+ex.claim(near(Z95, 1.645, 5e-4), f'e-breach-days 95% normal point {Z95:.4f} reads 1.645')
 top8 = sorted(np.argsort(ret)[:8].tolist())
 mk = IT['e-breach-days']['canvas']['state']['markers']
 ex.claim(top8 == [m['i'] for m in mk], f'e-breach-days markers are the eight largest losses {top8}')
@@ -255,48 +268,87 @@ rows = [ln for ln in IT['e-breach-days']['prose'].split('\n') if _re.match(r'\| 
 tab = {}
 for ln in rows:
     c = [s.strip() for s in ln.strip('|').split('|')]
-    tab[c[0]] = (int(c[1]), float(c[2].replace('−', '-').rstrip('%')), float(c[3].replace('−', '-').rstrip('%')))
-ok_tab = all(tab[m['label']][0] == m['i'] + 1 and near(tab[m["label"]][1], 100 * ret[m["i"]], 0.0051)
-             and near(tab[m["label"]][2], 100 * nv[m["i"]], 0.0051) for m in mk)
-ex.claim(ok_tab, 'e-breach-days table rows match the series (day, return, -VaR)')
-br = sorted(m['id'] for m in mk if ret[m['i']] < nv[m['i']])
-ex.claim(br == sorted(IT['e-breach-days']['widget']['answer']), f'e-breach-days answer = breaches {br}')
+    tab[c[0]] = (int(c[1]), float(c[2].replace('\u2212', '-').rstrip('%')), float(c[3].rstrip('%')))
+ex.claim(len(tab) == 8 and IT['e-breach-days']['prose'].count('Forecast sd') == 1, 'e-breach-days table has the Forecast sd column')
+ex.claim(sr[1]['id'] == 'nsd' and sr[1].get('dashed') is True and all(v < 0 for v in sr[1]['values']), 'e-breach-days second series is the -sd line')
+ok_tab = all(tab[m['label']][0] == m['i'] + 1 and near(tab[m['label']][1], 100 * ret[m['i']], 0.0051)
+             and near(tab[m['label']][2], -100 * nsd[m['i']], 0.0051) for m in mk)
+ex.claim(ok_tab, 'e-breach-days table rows match the series (day, return, forecast sd)')
+OLD_NVAR = {16: -0.00977, 20: -0.01351, 36: -0.01699, 41: -0.01614, 47: -0.01398, 50: -0.01377, 57: -0.01849, 59: -0.01754}
+ex.claim(all(near(nsd[i], v / 1.644854, 1e-5) for i, v in OLD_NVAR.items()), 'e-breach-days -sd line at the marked days = the old -VaR / 1.644854')
+br = sorted(m['id'] for m in mk if -ret[m['i']] > Z95 * -nsd[m['i']])
+ex.claim(br == sorted(IT['e-breach-days']['widget']['answer']), f'e-breach-days answer = breaches {br} (loss above 1.645 sds)')
+ex.claim(all(-ret[m['i']] > -nsd[m['i']] for m in mk), 'e-breach-days every one of the eight losses exceeds one sd')
+ex.claim(sorted(IT['e-breach-days']['widget']['wrong'][1]['set']) == sorted(m['id'] for m in mk)
+         and IT['e-breach-days']['widget']['wrong'][1]['id'] == 'sd', 'e-breach-days wrong "sd" set is all eight dots')
+ex.claim(all(-ret[m['i']] < 2.326 * -nsd[m['i']] for m in mk), 'e-breach-days no loss beats 2.326 sds')
 three = sorted(m['id'] for m in mk if m['i'] in np.argsort(ret)[:3])
 ex.claim(three == sorted(IT['e-breach-days']['widget']['wrong'][0]['set']), 'e-breach-days wrong "size" = the three largest losses')
-exact = [round(100 * (nv[m['i']] - ret[m['i']]), 2) for m in mk if m['id'] in br]
-shown = [round(abs(tab[m['label']][1]) - abs(tab[m['label']][2]), 2) for m in mk if m['id'] in br]
-print(f'   e-breach-days margins from the series {exact}, from the table {shown}; breaches in all 60 days: {int((ret < nv).sum())}')
-ex.claim_text('exam', f'{P("e-breach-days")}.explain.text', 'by 0.22, 0.20 and 0.38 points', shown == [0.22, 0.20, 0.38],
-              'e-breach-days explain margins agree with the table the learner reads')
+want_var = {'A': 0.97, 'B': 1.35, 'C': 1.69, 'D': 1.61, 'E': 1.40, 'F': 1.38, 'G': 1.84, 'H': 1.76}
+ex.claim(all(near(round(1.645 * tab[k][2] + 1e-9, 2), v, 1e-9) for k, v in want_var.items()), f'e-breach-days 1.645 x sd = {want_var}')
+for k in 'CDEGH':
+    ex.expect('exam', f'{P("e-breach-days")}.feedback.byKey.m{k}', f'{want_var[k]:.2f}%')
+    ex.expect('exam', f'{P("e-breach-days")}.feedback.byKey.m{k}', f'{-tab[k][1]:.2f}%')
+margins = [round(-tab[k][1] - round(1.645 * tab[k][2], 2), 2) for k in 'ABF']
+print(f'   e-breach-days margins from the table {margins}')
+ex.claim(margins == [0.22, 0.20, 0.37], 'e-breach-days margins 0.22, 0.20, 0.37 agree with the table the learner reads')
+ex.expect('exam', f'{P("e-breach-days")}.explain.text', '0.97%, 1.35% and 1.38%')
+ex.expect('exam', f'{P("e-breach-days")}.explain.text', 'by 0.22, 0.20 and 0.37 points')
+ex.expect('exam', f'{P("e-breach-days")}.feedback.byKey.size', '1.76')
+ex.claim_text('exam', f'{P("e-breach-days")}.explain.text', 'by 0.22, 0.20 and 0.38 points', False, 'e-breach-days old margin 0.38 is gone')
 
 # ---------------------------------------------------------------- e-hedge-flip
-b_xy = 0.8073 / 0.8626
+sy, sx, rho = 3.90, 4.50, 0.85
+b_xy = rho * sx / sy
+b_yx = rho * sy / sx
 key('e-hedge-flip', 1 / b_xy, t=0.002)
-wrong('e-hedge-flip', 'same', 0.8626)
-wrong('e-hedge-flip', 'inverse', 1 / 0.8626)
-wrong('e-hedge-flip', 'uninverted', b_xy)
-wrong('e-hedge-flip', 'product', 0.8626 * 0.8073)
-ex.expect('exam', f'{P("e-hedge-flip")}.explain.text', 0.936)
+inband('e-hedge-flip', 1.02, label='typed 1.02')
+wrong('e-hedge-flip', 'same', b_yx, typed=0.74)
+wrong('e-hedge-flip', 'inverse', 1 / b_yx, typed=1.36)
+wrong('e-hedge-flip', 'uninverted', b_xy, typed=0.98)
+wrong('e-hedge-flip', 'sd-ratio', sy / sx, typed=0.87)
+ex.claim(abs(b_xy * b_yx - rho ** 2) < 1e-12, 'e-hedge-flip the two slopes multiply to rho^2')
+ex.expect('exam', f'{P("e-hedge-flip")}.explain.text', 0.981)
+ex.expect('exam', f'{P("e-hedge-flip")}.explain.text', 0.74)
+ex.expect('exam', f'{P("e-hedge-flip")}.feedback.correct', 0.981)
+ex.expect('exam', f'{P("e-hedge-flip")}.feedback.byKey.uninverted', 0.98)
+ex.expect('exam', f'{P("e-hedge-flip")}.feedback.byKey.inverse', 0.74)
+_hp = IT['e-hedge-flip']['prose']
+ex.claim('300 days' in _hp and '3.90' in _hp and '4.50' in _hp and '0.85' in _hp, 'e-hedge-flip prose carries sds 3.90 and 4.50 and correlation 0.85')
 
 # ---------------------------------------------------------------- e-unit-root-steps
 ex.claim(IT['e-unit-root-steps']['widget']['answer'] == [f's{i}' for i in range(1, 8)], 'e-unit-root-steps model order s1 to s7')
+_w10 = IT['e-unit-root-steps']['widget']
+ex.claim(_w10['distractors'] == ['d1', 'd2'] and sorted(ln['id'] for ln in _w10['lines']) == sorted(_w10['answer'] + _w10['distractors'])
+         and all('why' in ln for ln in _w10['lines'] if ln['id'] in _w10['distractors']), 'e-unit-root-steps two distractors d1, d2, each with a why')
+# over-differencing: the difference of an i.i.d. series has lag-1 autocorrelation -1/2
+_e = np.random.default_rng(5).standard_normal(200000)
+ex.claim(near(acf(np.diff(_e), nlags=1)[1], -0.5, 0.01), 'e-unit-root-steps d1 why: differencing a white-noise series gives lag-1 correlation -0.5')
 
 # ---------------------------------------------------------------- e-vol-ahead
-VL = 0.03 / (1 - 0.97)
-v11 = VL + 0.97 ** 10 * (2.5 - VL)
-key('e-vol-ahead', math.sqrt(v11) / 100, t=2e-5)
-inband('e-vol-ahead', 0.0145, label='typed 1.45%')
-inband('e-vol-ahead', math.sqrt(v11) / 100, label='exact value')
-wrong('e-vol-ahead', 'longrun', math.sqrt(VL) / 100, typed=0.01)
-wrong('e-vol-ahead', 'tomorrow', math.sqrt(2.5) / 100, typed=0.0158)
-wrong('e-vol-ahead', 'off-by-one', math.sqrt(VL + 0.97 ** 11 * 1.5) / 100, typed=0.0144)
-wrong('e-vol-ahead', 'variance', v11 / 100, typed=0.0211)
-v_it = 2.5
-for _ in range(10):
-    v_it = 0.03 + 0.97 * v_it
-ex.claim(near(v_it, v11, 1e-12), 'e-vol-ahead closed form = ten steps of the recursion')
-ex.expect('exam', f'{P("e-vol-ahead")}.explain.text', 1.106)
-ex.expect('exam', f'{P("e-vol-ahead")}.explain.text', 2.106)
+OM, AL, BE, V1 = 0.10, 0.10, 0.85, 4.5
+VL = OM / (1 - AL - BE)
+v8 = VL + (AL + BE) ** 7 * (V1 - VL)
+ex.claim(near(VL, 2.0, 1e-12), f'e-vol-ahead long-run variance {VL}')
+key('e-vol-ahead', math.sqrt(v8) / 100, t=2e-5)
+inband('e-vol-ahead', 0.0194, label='typed 1.94%')
+inband('e-vol-ahead', math.sqrt(v8) / 100, label='exact value')
+wrong('e-vol-ahead', 'longrun', math.sqrt(VL) / 100, typed=0.0141)
+wrong('e-vol-ahead', 'tomorrow', math.sqrt(V1) / 100, typed=0.0212)
+v9 = VL + (AL + BE) ** 8 * (V1 - VL)
+wrong('e-vol-ahead', 'off-by-one', math.sqrt(v9) / 100, typed=0.0191)
+wrong('e-vol-ahead', 'variance', v8 / 100, typed=0.0375)
+v_it = V1
+for _ in range(7):
+    v_it = OM + (AL + BE) * v_it  # E[var(t+k+1)] = omega + (alpha + beta) E[var(t+k)]
+ex.claim(near(v_it, v8, 1e-12), f'e-vol-ahead closed form = seven steps of the recursion ({v_it:.6f})')
+ex.claim(near(v8, 3.745843, 5e-7) and near(math.sqrt(v8), 1.935418, 5e-7) and near(math.sqrt(v9), 1.912734, 5e-7),
+         'e-vol-ahead 3.745843, 1.935418 and the 8-step 1.912734')
+ex.expect('exam', f'{P("e-vol-ahead")}.explain.text', 1.746)
+ex.expect('exam', f'{P("e-vol-ahead")}.explain.text', 3.746)
+ex.expect('exam', f'{P("e-vol-ahead")}.feedback.byKey.tomorrow', 2.12)
+ex.expect('exam', f'{P("e-vol-ahead")}.feedback.byKey.variance', 3.75)
+ex.claim('day $t+8$, seven days after tomorrow' in IT['e-vol-ahead']['question'], 'e-vol-ahead question: day t+8 is seven steps after tomorrow')
 
 # ---------------------------------------------------------------- e-pair-positions
 zs = IT['e-pair-positions']['canvas']['params']['series'][0]['values']
@@ -320,39 +372,42 @@ for r in rows12:
     given.append(c['answer'] if isinstance(c, dict) else int(c.replace('−', '-').replace('+', '')))
 ex.claim(given == out_pos, f'e-pair-positions every position (given and keyed) {out_pos}')
 ex.claim([float(str(r[1]).replace('−', '-')) for r in rows12] == zs, 'e-pair-positions table z equals the chart')
+ex.claim(zs[7] == -4.6 and out_pos == [0, -1, -1, -1, 0, 0, 1, 0, 1], f'e-pair-positions day 8 z = -4.6 stops the long; positions {out_pos}')
+ex.expect('exam', f'{P("e-pair-positions")}.feedback.byKey.r7c2', '\u22124.6')
+ex.expect('exam', f'{P("e-pair-positions")}.explain.text', '\u22124.6')
 yr = IT['e-pair-positions']['canvas']['params']['y']
 hl = IT['e-pair-positions']['canvas']['params']['hlines']
 ex.claim(all(yr[0] <= h['y'] <= yr[1] for h in hl), 'e-pair-positions every reference line inside the y range (series.js skips one outside)',
          f'y range {yr}; lines at {[h["y"] for h in hl]}; the labelled stop line at 4 is not drawn')
 
 # ---------------------------------------------------------------- e-aic-bic
-lnn, lnn_x = 5.99, math.log(400)
+lnn = 5.99
 mods = {'AR(1)': (-571.34, 3), 'AR(2)': (-560.97, 4), 'MA(1)': (-554.25, 3), 'MA(2)': (-552.63, 4), 'ARMA(1,1)': (-552.51, 4)}
 aic = {m: 2 * k - 2 * l for m, (l, k) in mods.items()}
 bic = {m: k * lnn - 2 * l for m, (l, k) in mods.items()}
 w13 = IT['e-aic-bic']['widget']['rows']
 for r, m in [(2, 'MA(1)'), (4, 'ARMA(1,1)')]:
     for c, d in [(1, aic), (2, bic)]:
-        ex.claim(abs(w13[r][c]['answer'] - d[m]) <= w13[r][c]['tol']['abs'], f'e-aic-bic {m} col {c} key {w13[r][c]["answer"]} within tol of hand {d[m]:.2f}')
-        ex.claim(near(w13[r][c]['answer'], (2 * mods[m][1] if c == 1 else mods[m][1] * lnn_x) - 2 * mods[m][0], 0.011),
-                 f'e-aic-bic {m} col {c} key from exact ln 400')
+        ex.claim(near(w13[r][c]['answer'], d[m], 1e-9), f'e-aic-bic {m} col {c} key {w13[r][c]["answer"]} = the stated recipe {d[m]:.2f} exactly')
 for r, m in [(0, 'AR(1)'), (1, 'AR(2)'), (3, 'MA(2)')]:
     for c, d in [(1, aic), (2, bic)]:
         g13 = float(w13[r][c])
-        ex.claim(near(g13, d[m], 0.015), f'e-aic-bic given {m} col {c} {g13} within rounding of hand {d[m]:.2f}')
-        if not near(g13, d[m], 0.005):
-            print(f'   note: e-aic-bic given {m} col {c} shows {g13}, the stated recipe gives {d[m]:.2f}')
+        ex.claim(near(g13, d[m], 1e-9), f'e-aic-bic given {m} col {c} {g13} = the stated recipe {d[m]:.2f}')
 best = sorted(aic, key=aic.get)
 ex.claim(best[0] == 'ARMA(1,1)' and min(bic, key=bic.get) == 'MA(1)', f'e-aic-bic AIC best {best[0]}, BIC best {min(bic, key=bic.get)}')
 gap_mA = aic['MA(1)'] - aic['ARMA(1,1)']
 gap_run = aic[best[1]] - aic[best[0]]
 print(f'   e-aic-bic AIC gap MA(1) - ARMA(1,1) {gap_mA:.2f}; runner-up {best[1]} gap {gap_run:.2f}')
-ex.claim_text('exam', f'{P("e-aic-bic")}.explain.text', 'AIC prefers the ARMA(1,1) by only 1.47', near(gap_run, 1.47, 0.011),
-              'e-aic-bic explain: AIC prefers the ARMA(1,1) by 1.47 (over every other model)')
-ex.claim_text('exam', f'{P("e-aic-bic")}.feedback.correct', 'AIC prefers ARMA(1,1) by 1.47 points', near(gap_run, 1.47, 0.011),
-              'e-aic-bic feedback: AIC prefers ARMA(1,1) by 1.47 points (over every other model)')
+ex.claim(near(gap_mA, 1.48, 1e-9) and best[1] == 'MA(2)' and near(gap_run, 0.24, 1e-9),
+         'e-aic-bic MA(1) is 1.48 behind the ARMA(1,1) on AIC; MA(2) is 0.24 behind')
+ex.claim_text('exam', f'{P("e-aic-bic")}.explain.text', 'AIC prefers the ARMA(1,1) by only 1.47', False, 'e-aic-bic old explain wording is gone')
+ex.claim_text('exam', f'{P("e-aic-bic")}.feedback.correct', 'AIC prefers ARMA(1,1) by 1.47 points', False, 'e-aic-bic old feedback wording is gone')
+ex.expect('exam', f'{P("e-aic-bic")}.explain.text', 'over the MA(1) by only 1.48')
+ex.expect('exam', f'{P("e-aic-bic")}.feedback.correct', 'over the MA(1) by 1.48 points')
+ex.expect('exam', f'{P("e-aic-bic")}.explain.text', '1114.50')
+bic_gap = bic['ARMA(1,1)'] - bic['MA(1)']
 bic_run = sorted(bic.values())[1] - min(bic.values())
-ex.claim(near(1128.98 - 1126.47, 2.51, 1e-9) and near(bic_run, 2.51, 0.011), f'e-aic-bic BIC margin 2.51 over the runner-up ({bic_run:.2f})')
+ex.claim(near(bic_gap, 2.51, 1e-9) and near(bic_run, 2.51, 1e-9), f'e-aic-bic BIC margin 2.51 over the runner-up ({bic_run:.2f})')
 
 # ---------------------------------------------------------------- e-fan-width
 fc = 20 + 0.8 ** 3 * 8
@@ -390,10 +445,14 @@ ex.expect('exam', f'{P("e-kupiec")}.feedback.byKey.z', 2.22)
 # ---------------------------------------------------------------- e-johansen-rank
 cv = [c_sjt(3 - i, 0)[1] for i in range(3)]
 ex.claim([f'{v:.2f}' for v in cv] == ['29.80', '15.49', '3.84'], f'e-johansen-rank 95% trace values {[round(v, 4) for v in cv]}')
-tr = [64.22, 12.91, 4.43]
+tr = [float(r[1]) for r in IT['e-johansen-rank']['canvas']['params']['rows']]
+ex.claim(tr == [27.10, 16.20, 4.43] and tr == sorted(tr, reverse=True), 'e-johansen-rank trace column 27.10, 16.20, 4.43 falls down the rows')
 rank = next((i for i in range(3) if tr[i] < cv[i]), 3)
-ex.claim(rank == 1 and correct_ids('e-johansen-rank') == ['b'], 'e-johansen-rank key rank 1 by the sequential rule')
+ex.claim(rank == 0 and correct_ids('e-johansen-rank') == ['a'], 'e-johansen-rank key rank 0 by the sequential rule (first row fails to reject)')
 ex.claim(sum(t > c for t, c in zip(tr, cv)) == 2, 'e-johansen-rank option c why: two rows above their values')
+ex.claim(tr[0] < cv[0] and '27.10' in node(f'{P("e-johansen-rank")}.widget.options[1].why') and '27.10' in node(f'{P("e-johansen-rank")}.explain.text'),
+         'e-johansen-rank option b why and explain: 27.10 is below 29.80')
+ex.claim(IT['e-johansen-rank']['explain']['canvas']['highlight']['rows'] == ['r0'], 'e-johansen-rank explain highlights row r0 only')
 
 # ---------------------------------------------------------------- e-returns-note (regenerated)
 x21, y21 = make_pair(14, 750)
@@ -425,6 +484,26 @@ chk = [
 for lab, ok in chk:
     ex.claim(ok, f'e-returns-note {lab}')
 
+
+# ---------------------------------------------------------------- e-mixed-window (finding 13)
+dvar = (30 * 0.8 ** 2 + 10 * 2.4 ** 2) / 40
+rv = math.sqrt(dvar) * math.sqrt(252) / 100
+ex.claim(near(dvar, 1.92, 1e-12), f'e-mixed-window daily variance {dvar}')
+key('e-mixed-window', rv)
+inband('e-mixed-window', 0.2200, label='typed 22.00%')
+wrong('e-mixed-window', 'sd-mean', (0.75 * 0.8 + 0.25 * 2.4) * math.sqrt(252) / 100, typed=0.1905)
+wrong('e-mixed-window', 'daily', math.sqrt(dvar) / 100, typed=0.0139)
+wrong('e-mixed-window', 'days-365', math.sqrt(dvar) * math.sqrt(365) / 100, typed=0.2647)
+ex.claim(near(math.sqrt(dvar), 1.385641, 5e-7) and near(math.sqrt(252), 15.8745, 5e-5), 'e-mixed-window 1.386% a day and sqrt(252) = 15.87')
+ex.expect('exam', f'{P("e-mixed-window")}.explain.text', 1.92)
+ex.expect('exam', f'{P("e-mixed-window")}.explain.text', 19.05)
+ex.claim(IT['e-mixed-window']['skills'] == ['gv-clustering'] and IT['e-mixed-window']['difficulty'] == 2, 'e-mixed-window is a d2 item on gv-clustering')
+
+# ---------------------------------------------------------------- e-lookahead-multi (finding 12)
+_lo = IT['e-lookahead-multi']
+ex.claim(correct_ids('e-lookahead-multi') == ['a', 'c', 'e'] and '2,000 days' in _lo['prose'], 'e-lookahead-multi keys a, c, e over 2,000 days')
+ex.claim('2,000' in _lo['widget']['options'][0]['text'] and '2,000' in _lo['widget']['options'][4]['text']
+         and "next day's close" in _lo['widget']['options'][2]['text'], 'e-lookahead-multi options a and e name 2,000 days; c fills from the next day')
 
 # ---------------------------------------------------------------- code items
 def same(got, want, cmp, tol):
@@ -497,8 +576,14 @@ code_item('e-code-pair-verdict', [
 ])
 w15 = IT['e-code-ar-fan']['widget']
 ex.claim(len(w15['tests']) == 8 and '8 hidden tests' in w15['how'], 'e-code-ar-fan how: 8 hidden tests')
+for _iid in ('e-code-ar-fan', 'e-code-garch-report', 'e-code-pair-verdict'):
+    _w = IT[_iid]['widget']
+    ex.claim(all(not any(t['call'] == e['call'] and t.get('setup') == e.get('setup') for e in _w['examples']) for t in _w['tests']),
+             f'{_iid} no hidden test repeats an example (finding 15)')
 w18 = IT['e-code-garch-report']['widget']
 ex.claim(len(w18['tests']) == 9 and '9 hidden tests' in w18['how'], 'e-code-garch-report how: 9 hidden tests')
+ex.claim('Persistence must agree within 0.002' in w18['how'] and 'divided by 100' in IT['e-code-garch-report']['feedback']['byKey']['test-7'],
+         'e-code-garch-report how states 0.002 for persistence; test-7 feedback names the per cent to fraction step')
 w20 = IT['e-code-pair-verdict']['widget']
 ex.claim(len(w20['tests']) == 9 and '9 hidden tests' in w20['how'], 'e-code-pair-verdict how: 9 hidden tests')
 
