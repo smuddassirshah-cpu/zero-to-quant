@@ -63,7 +63,7 @@
         "pt-cases",
         "pt-design"
       ],
-      "prose": "First Python's `max_drawdown` has had three loop bugs in its life: `range(1, len(prices) + 1)` crashed, `range(1, len(prices) - 1)` skipped the last price, and `range(2, len(prices))` skipped the first move. Write one regression test that guards against all three.",
+      "prose": "The `max_drawdown` from First Python Scripts (l10) has had three loop bugs in its life: `range(1, len(prices) + 1)` crashed, `range(1, len(prices) - 1)` skipped the last price, and `range(2, len(prices))` skipped the first move. Write one regression test that guards against all three.",
       "question": "Write `test_max_drawdown_regression()`: it must pass on correct versions and fail on all three loop bugs.",
       "widget": {
         "kind": "code",
@@ -72,37 +72,45 @@
         "solution": "import math\n\nimport pytest\n\n\ndef max_drawdown(prices):\n    peak = prices[0]\n    worst = 0.0\n    for i in range(1, len(prices)):\n        price = prices[i]\n        if price > peak:\n            peak = price\n        drop = (peak - price) / peak\n        if drop > worst:\n            worst = drop\n    return worst\n\n\ndef test_max_drawdown_regression():\n    # peak on day 1, trough on the last day: the action is at both ends\n    assert math.isclose(max_drawdown([100.00, 120.00, 90.00]), 0.25)\n    # a fall on day 1 that is the worst of the path\n    assert math.isclose(max_drawdown([100.00, 80.00, 90.00]), 0.2)\n",
         "tests": [
           {
-            "call": "test_max_drawdown_regression()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "import itertools; _dd = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p, max), p)]); max_drawdown = _dd"
+            "setup": "import itertools; _dd = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p, max), p)])",
+            "call": "outcome(max_drawdown=_dd)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown_regression()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "max_drawdown = lambda p: max([0.0] + [(max(p[:i + 1]) - p[i]) / max(p[:i + 1]) for i in range(len(p))])"
+            "setup": "good = lambda p: max([0.0] + [(max(p[:i + 1]) - p[i]) / max(p[:i + 1]) for i in range(len(p))])",
+            "call": "outcome(max_drawdown=good)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown_regression()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "max_drawdown = lambda p: p[len(p)]"
+            "setup": "planted = lambda p: p[len(p)]",
+            "call": "outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown_regression()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "max_drawdown = lambda p: _dd(p[:-1])"
+            "setup": "planted = lambda p: _dd(p[:-1])",
+            "call": "outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown_regression()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "max_drawdown = lambda p: _dd([p[0]] + p[2:])"
+            "setup": "planted = lambda p: _dd([p[0]] + p[2:])",
+            "call": "outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 5 hidden tests. Your test runs on two correct versions, where it must pass, and on the three loop bugs, where it must fail."
+        "how": "Check runs 5 hidden tests. Pytest runs your test on two correct versions, where it must pass, and on the three loop bugs, where it must fail. `parametrize` and fixtures work. Run examples runs your tests with pytest and prints its report.",
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False, only=None):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\"] + ([\"-k\", only] if only else []) + [\"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(only=None, **swap):\n    code = _zq_pytest(swap, only=only)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ]
       },
       "feedback": {
         "correct": "Your paths put a fall at each end of the loop, so no wrong range survives.",
@@ -132,37 +140,45 @@
         "solution": "def positions(closes, n):\n    # hold on day t if close t - 1 is above the mean of closes t - n to t - 1\n    pos = []\n    for t in range(len(closes)):\n        if t < n:\n            pos.append(0)\n        else:\n            window = closes[t - n:t]\n            pos.append(1 if closes[t - 1] > sum(window) / n else 0)\n    return pos\n\n\ndef test_no_lookahead():\n    closes = [100.00, 102.00, 101.00, 104.00, 103.00, 105.00, 102.00, 106.00]\n    base = positions(closes, 3)\n    for k in range(len(closes)):\n        for new in (1.00, 1000.00):          # a crash and a spike\n            changed = closes[:k] + [new] + closes[k + 1:]\n            assert positions(changed, 3)[:k + 1] == base[:k + 1]\n",
         "tests": [
           {
-            "call": "test_no_lookahead()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "positions = lambda c, n: [0 if t < n else int(c[t - 1] > sum(c[t - n:t]) / n) for t in range(len(c))]"
+            "setup": "good = lambda c, n: [0 if t < n else int(c[t - 1] > sum(c[t - n:t]) / n) for t in range(len(c))]",
+            "call": "outcome(positions=good)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_no_lookahead()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "positions = lambda c, n: [int(t >= n and c[t - 1] * n > sum(c[t - n:t])) for t in range(len(c))]"
+            "setup": "good = lambda c, n: [int(t >= n and c[t - 1] * n > sum(c[t - n:t])) for t in range(len(c))]",
+            "call": "outcome(positions=good)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_no_lookahead()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "positions = lambda c, n: [0 if t < n else int(c[t] > sum(c[t - n + 1:t + 1]) / n) for t in range(len(c))]"
+            "setup": "planted = lambda c, n: [0 if t < n else int(c[t] > sum(c[t - n + 1:t + 1]) / n) for t in range(len(c))]",
+            "call": "outcome(positions=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_no_lookahead()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "positions = lambda c, n: [0 if t < n else int(c[t - 1] > sum(c[t - n + 1:t + 1]) / n) for t in range(len(c))]"
+            "setup": "planted = lambda c, n: [0 if t < n else int(c[t - 1] > sum(c[t - n + 1:t + 1]) / n) for t in range(len(c))]",
+            "call": "outcome(positions=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_no_lookahead()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "positions = lambda c, n: [0 if t < n else int(c[t - 1] > sum(c) / len(c)) for t in range(len(c))]"
+            "setup": "planted = lambda c, n: [0 if t < n else int(c[t - 1] > sum(c) / len(c)) for t in range(len(c))]",
+            "call": "outcome(positions=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 5 hidden tests. Your test runs on two correct versions of `positions`, where it must pass, and on three that see the future, where it must fail."
+        "how": "Check runs 5 hidden tests. Pytest runs your test on two correct versions of `positions`, where it must pass, and on three that see the future, where it must fail. `parametrize` and fixtures work. Run examples runs your tests with pytest and prints its report.",
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False, only=None):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\"] + ([\"-k\", only] if only else []) + [\"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(only=None, **swap):\n    code = _zq_pytest(swap, only=only)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ]
       },
       "feedback": {
         "correct": "Your test changes the future and checks that the past stays put, at every day.",
@@ -191,7 +207,7 @@
         "options": [
           {
             "id": "right",
-            "text": "`rebase` changes the list it is given, so `CLOSES` itself was rewritten by the first test",
+            "text": "`rebase` rewrote `CLOSES`, the list it was given",
             "correct": true
           },
           {
@@ -234,7 +250,7 @@
         "options": [
           {
             "id": "right",
-            "text": "Seeding happens when the file is imported; other tests draw from `random` before `test_paths` runs, so the draws have moved on",
+            "text": "Other tests draw from `random` after the seed is set",
             "correct": true
           },
           {
@@ -321,7 +337,7 @@
       "widget": {
         "kind": "longform",
         "prompt": "(a) Split the script into functions: give each signature, say which are pure, and where the input and output now live. (b) Name what is wrong in the trading logic. (c) Give three tests on hand-made paths, with expected values worked out by hand: a look-ahead test, a cost test and a regression test. (d) List what the repository must contain for the tests to run on every push.",
-        "model": "**(a) Split.** Input, computation and output become separate pieces:\n\n- `load_closes(f)`: reads closes from an open file or `io.StringIO`. The only input; the script passes `open(\"ftse.csv\")`.\n- `positions(closes)`: pure. `pos[t] = 1` if `closes[t - 1] > closes[t - 2]`, else 0, for t ≥ 2. It uses only closes up to day t − 1.\n- `shares_for(cash, price)`: pure. Works in whole pence: `round(cash * 100) // round(price * 100)`, so £2,700.00 at £5.40 gives 500, not 499.\n- `run_backtest(closes, cash, cost)`: pure. Returns the final value, charging `cost` on every change of position.\n- `main()`: three lines, open the file, call `run_backtest`, print. Too thin to need a test.\n\n**(b) What is wrong in the original.** It decides on `closes[t] > closes[t - 1]` and fills at `closes[t]` in the same step: it trades at a close it has only just seen, a look-ahead. It charges no costs. `int(cash / closes[t])` can lose a share to float error.\n\n**(c) Three tests, all on hand-made paths.**\n\n1. *Look-ahead*: `a = [100.00, 101.00, 102.00, 103.00]`, `b = a[:-1] + [95.00]`; assert `positions(a)[-1] == positions(b)[-1]`. The original rule flips from 1 to 0 and fails.\n2. *Costs*: closes £100.00, £102.00, £103.00 with positions 0, 1, 0, 10 shares, £5.00 a trade. By hand: day 1 is 10 × £2.00 − £5.00 = £15.00, day 2 is −£5.00. Assert the P&L is `[0.0, 15.0, -5.0]`.\n3. *Shares*: `assert shares_for(2700.00, 5.40) == 500`, a regression test for the float bug. Watch it fail on `int(cash / price)` first.\n\n**(d) Repository.** `src/backtest.py`, `tests/test_backtest.py` (and `tests/conftest.py` if fixtures are shared), `.github/workflows/tests.yml` with checkout, setup-python, `pip install pytest` and `pytest`. The tests carry their own closes, so `ftse.csv` can stay out of Git without breaking the workflow.",
+        "model": "**(a) Split.** Input, computation and output become separate pieces:\n\n- `load_closes(f)`: reads closes from an open file or `io.StringIO`. The only input; the script passes `open(\"ftse.csv\")`.\n- `positions(closes)`: pure. `pos[t] = 1` if `closes[t - 1] > closes[t - 2]`, else 0, for t ≥ 2. It uses only closes up to day t − 1.\n- `shares_for(cash, price)`: pure. Works in whole pence: `round(cash * 100) // round(price * 100)`, so £2,700.00 at £5.40 gives 500, not 499.\n- `run_backtest(closes, cash, cost)`: pure. Returns the final value, charging `cost` on every change of position.\n- `main()`: three lines, open the file, call `run_backtest`, print. Too thin to need a test.\n\n**(b) What is wrong in the original.** It decides on `closes[t] > closes[t - 1]` and fills at `closes[t]` in the same step: it trades at a close it has only just seen, a look-ahead. It charges no costs. `int(cash / closes[t])` can lose a share to float error.\n\n**(c) Three tests, all on hand-made paths.**\n\n1. *Look-ahead*: `a = [100.00, 101.00, 102.00, 103.00]`, `b = a[:-1] + [95.00]`; assert `positions(a)[-1] == positions(b)[-1]`. The original rule flips from 1 to 0 and fails.\n2. *Costs*: closes £100.00, £102.00, £103.00 with positions 0, 1, 0, 10 shares, £5.00 a trade. By hand: day 1 is 10 × £2.00 − £5.00 = £15.00, day 2 is −£5.00. Assert the P&L is `[0.0, 15.0, -5.0]`.\n3. *Shares*: `assert shares_for(2700.00, 5.40) == 500`, a regression test for the float bug. Watch it fail on `int(cash / price)` first.\n\n**(d) Repository.** `src/backtest.py`, `tests/test_backtest.py` (and `tests/conftest.py` if fixtures are shared), `.github/workflows/tests.yml` with checkout, setup-python, `pip install pytest` and `pytest`. A `pyproject.toml` with `pythonpath = [\"src\"]` under `[tool.pytest.ini_options]` lets the tests import `backtest`. The tests carry their own closes, so `ftse.csv` can stay out of Git without breaking the workflow.",
         "rubric": [
           {
             "points": 2,

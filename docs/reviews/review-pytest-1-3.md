@@ -103,3 +103,51 @@ The course is the whole of topic 1.2, so there are no neighbouring pytest levels
 - Content quotes pytest output, but the app runs pytest 8.1.1, and current pytest prints `approx` and `raises` messages differently (findings 2 and 10). AUTHORING's pytest notes should say "quote pytest output as Pyodide 0.27.7's pytest 8.1.1 prints it". The validator could warn on the pytest 9 spellings `DID NOT RAISE <Name>` without `<class` and `± 0.0...` decimals.
 - Terminal output drawn with a `table` canvas (finding 29): the validator could warn when a table cell starts with `>       ` or `E       `, pointing to `console`.
 - No new engine bullet for the series overlay's negative "Max drawdown" label. It is the py-found L3 L4 inbox bullet, and it applies to l11's positive-convention `drawdown: true` canvases (`screens[0]`, `screens[2]`) too.
+
+## Fix pass
+
+Status per finding (35 fixed, 0 disputed, 1 deferred). Every corrected number was recomputed before writing (15 / 50 = 0.3 and 1 - 35/50 = 0.30000000000000004; 25 / 100 = 0.25; 22/242 = 20/220 = 0.0909; 0.9 x 1.1 x 0.9 = 0.891; (4 x 100 + 60) / 5 = 92 and 19/21 = 90.48%; 3 buys x £2.50 = £7.50 in 5 changes; 1e-6 x 0.3 = 3.0e-07). Every quoted pytest line was run on pytest 8.1.1 (the wheel in the local Pyodide 0.27.7 CDN) in a venv. Conceptual findings carry their basis.
+
+1. fixed: l12 `screens[0].explain.text`, `screens[8].prose`, `summary.ideas[0]` and homework-3 `items[6].widget.model` (d) name `pyproject.toml` with `pythonpath = ["src"]`. Basis: pytest docs, "pythonpath" ini option (Configuration reference); I ran `src/risk.py` plus `tests/vol_test.py` on pytest 8.1.1: `ERROR tests/vol_test.py`, "Interrupted: 1 error during collection" without the file, `1 passed` with it.
+2. fixed: review-1 `items[6].explain.text` quotes `1000000.0 ± 5.0e-03` (8.1.1 prints `± 5.0e-03` in the report, run).
+3. fixed: homework-1 `items[1].explain.text` (zero or less, three sentences, code block kept). `parse_row("2024-03-06,-5.00\n")` returns `("2024-03-06", -5.0)` under the planted version.
+4. fixed: l7 `screens[2].explain.text` (fall, rise, fall leave 0.891 of the peak).
+5. fixed: review-2 `items[4].prose` (worst day, or 0.0 when no day falls). The why is unchanged.
+6. fixed: review-3 `items[5]` wrong id `four` renamed `buys` (value 7.5 unchanged), `byKey.buys` replaces `byKey.four`.
+7. fixed: homework-2 `items[0].explain.text` (three sentences). The first-price version in test-4 is clipped at 0, so the properties pass it on `PATH`; only a hand row such as 100, 120, 90, 120 catches it (checked in the L2 script).
+8. fixed: l9 `screens[8].explain.text` describes the last two lines.
+9. fixed in content, better than the review's stopgap: all eight L3 code items (l9 `screens[8]`, l10 `screens[6]` and `[10]`, l11 `screens[4]` and `[8]`, l12 `screens[9]`, homework-3 `items[1]` and `[2]`) now carry L2's `postlude` (real `pytest.main` on the learner's file, with `outcome(only=None, **swap)` and `run_tests()`), and each hidden test is `outcome(...) == 'passed'` or `'failed'`. A test name can be passed as `only`, so l11 `screens[8]` and l12 `screens[9]` keep per-test attribution. Test numbering and every `byKey` key are unchanged; `run_tests()` was added to each item's examples; the `how` texts no longer say "directly". Probed in CPython on pytest 8.1.1 with a correct parametrised or fixture answer for each of the eight: all tests pass (`PPPPPPP`, `PPPPPP` and so on). Solutions pass every test; starters fail at least one (`FFFPFFF`, `FPPPPPF`, `FFPPPFFF`, `PPFFFF`, `PFPFFF`, `PFPFFPFF`, `PPFFF` twice). No engine change is needed, so the review's Engine bullet on L3 is closed.
+10. fixed: l8 `screens[2].explain.text` quotes `Failed: DID NOT RAISE <class 'ValueError'>`; the two option texts are `FAILED: DID NOT RAISE` (21 characters against 25 in quiz[0]).
+11. fixed: l8 `screens[4].prose` is the real report block (`E       assert -0.19999999999999996 == -0.3 ± 3.0e-07`, run).
+12. fixed: l3 `screens[7].prose` (header, `>`, `E` lines and `where` line as 8.1.1 prints them, run).
+13. fixed: l4 `screens[7].widget.options[1].why`. 8.1.1 raises `AssertionError: approx() is not supported in a boolean context.` (run).
+14. fixed: l12 `screens[6]` prose, `hints[0]`, `explain`, `byKey.s3` and `quiz[3].explain.text`. Basis: GitHub-hosted `ubuntu-latest` images ship a system Python and pip (GitHub Docs, "About GitHub-hosted runners"), and the quiz's own why says so.
+15. fixed: l12 `screens[4].explain.text` (92% against 90.48%).
+16. fixed: l12 `screens[7].prose` quotes the `FAILED ... - FileNotFoundError: [Errno 2] ...` summary line (run).
+17. fixed: l2 `screens[5].widget.options[2].why`.
+18. fixed: l4 `screens[8].explain.text`. `statistics.stdev([0.003] * 3) == 0.0`, and the no-mean version gives about 0.058.
+19. fixed: l5 `screens[4].prose`, l6 `byKey.test-4` and `byKey.test-5`, l11 `screens[0].prose` as written. The sign is stated at each flip.
+20. fixed: l1 `screens[7].prose` and `explain.text` (l1's `(b - a) / a` gives exactly 0.1 on 100, 110, 121; l4 shows where `==` fails, `110.00 / 100.00 - 1` is 0.10000000000000009).
+21. fixed: l12 `screens[1]` prose, hint and generic, and quiz[0] option why, generic and explain now name `test_*.py` or `*_test.py` (`tests/vol_test.py` collected on 8.1.1, run).
+22. fixed: l9 `screens[8].hints[2]` and `byKey.test-4`, l11 `screens[4].byKey.test-1` name `pytest.approx`. `math.isclose(5.551115123125783e-17, 0.0)` is False; the l4 approx check passes.
+23. fixed: l11 `screens[3].prose` and homework-3 `items[1].prose` say "First Python Scripts (l10)".
+24. fixed: review-1 `items[2]` uses £200.00, £220.00, £242.00 (reversed: two falls of 9.09%).
+25. fixed: review-1 `items[3]` (80, 100, 75, 90 gives 0.25) and homework-1 `items[0]` solution and explain (40, 50, 35, 45 gives 0.3; rise 100, 105, 120). All five broken versions still fail at least one path and both correct versions pass (L1 script).
+26. fixed: review-2 `items[5]` is the `FEES` dict. One deviation: the option `copy-in-test` now reads "Delete the change from the first test" (it said "append"), with its why adjusted.
+27. fixed: l6 `screens[2].canvas` drops the prices column.
+28. deferred: `widget.prompt` cannot be deleted. The validator makes `prompt` required on a longform widget (`items[6].prompt: required field missing`, 2 errors), and it also warns when `prose` is present. Both prompts stay; the fix needs a validator or engine change (let a longform item with `prose` omit `prompt`).
+29. fixed: l2 `screens[6]` and l3 `screens[2]`, `[4]`, `[5]` and `[8].right` are `console` canvases with `wrap: true`; highlights moved from `r<n>c0` to `l<n+1>` in the canvas, explain and hints.
+30. fixed: the six option texts as written (key-length warnings for them are gone).
+31. fixed: l12 `screens[9].widget.how` (now two sentences of under 35 words, then one on Run examples).
+32. fixed: homework-1 `items[2].explain.text`.
+33. fixed: homework-2 `items[7].explain.text`.
+34. fixed: l10 `screens[2].explain.text`.
+35. fixed: l6 `screens[7].explain.text`.
+36. fixed: l3 `screens[5].widget.options[3].why`.
+
+Gates:
+- `python3 docs/reports/pytest-L1-numbers.py`: exit 0 (140 of 140). `-L2-`: exit 0 (160 of 160). `-L3-`: exit 0 (149 of 149). Checks for rewritten items were updated to the new values (console line ids, 0.25, 0.3, the £200 path, FEES, 92%), and new checks were added for each new number and for the new pytest output lines; reverting any fix fails a script.
+- `VOICE_BASE=app/content/courses/pytest python3 docs/reviews/voice-scan.py 35`: 0 explanations over three sentences, 0 sentences over 35 words.
+- `cd app && node tools/validate.mjs`: 0 errors. pytest warnings 82 to 73.
+- Code items: solution passes and starter fails for all 33 widgets in CPython on pytest 8.1.1 through the reader's harness emulator (`emu.py`); the eight L3 items also pass a correct parametrised or fixture answer.
+- Playthrough (`--local-cdn`): 12 lessons and 6 sets, desktop and `--mobile`: 36 of 36 passed, no timeouts, no reruns.

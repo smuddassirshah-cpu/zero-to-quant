@@ -112,6 +112,7 @@ lv.claim([round(b / a - 1, 12) for a, b in zip(wk, wk[1:])] == [0.1, -0.1, 0.1, 
 lv.expect('l7', 'screens[2].explain.text', round(dd(wk), 3))
 lv.expect('l7', 'screens[2].feedback.byKey.test-5', round(100 * dd(wk), 1))
 lv.claim(0.9 * 1.1 * 0.9 == F(891, 1000) or abs(0.9 * 1.1 * 0.9 - 0.891) < 1e-12, 'l7: fall, rise, fall compound to 0.891')
+lv.expect('l7', 'screens[2].explain.text', 0.891)
 lv.claim_text('l7', 'screens[2].explain.text', 'Two falls in a row compound', False,
               'l7 screens[2]: the path from the peak is fall, rise, fall, not two falls in a row')
 lv.expect('l7', 'screens[3].widget.answer', sum(1 for asks in [{'prices'}, {'flat'}, {'prices', 'flat'}, set()] if 'prices' in asks))
@@ -125,6 +126,12 @@ lv.expect('l8', 'screens[1].feedback.byKey.r2c0', round(100 * vol([0.01, -0.01])
 v = 40.00 / 50.00 - 1
 lv.claim(repr(v) == '-0.19999999999999996', 'l8 screens[4]: 40/50 - 1 prints -0.19999999999999996')
 lv.expect('l8', 'screens[4].prose', v); lv.expect('l8', 'screens[4].hints[2].text', -0.2)
+# finding 11: pytest 8.1.1 prints the default approx(-0.3) rule as "-0.3 ± 3.0e-07" (rel 1e-6 of 0.3) under the id header
+lv.claim(f'{1e-6 * 0.3:.1e}' == '3.0e-07' and 'E       assert -0.19999999999999996 == -0.3 ± 3.0e-07' in lv.text('l8', 'screens[4].prose')
+         and '_ test_max_drawdown[prices2--0.3] _' in lv.text('l8', 'screens[4].prose') and 'left:' not in lv.text('l8', 'screens[4].prose'),
+         'l8 screens[4]: the failure block is the real pytest 8.1.1 report lines')
+lv.claim('DID NOT RAISE <class' in lv.text('l8', 'screens[2].explain.text') and 'DID NOT RAISE ValueError' not in lv.text('l8', 'screens[2]'),
+         'l8 screens[2]: DID NOT RAISE is quoted as pytest 8.1.1 prints it')
 cl = [100.00, 102.00, 101.00, 103.00, 104.00]
 right = [0] * min(2, len(cl)) + [1 if cl[t - 1] > cl[t - 2] else 0 for t in range(2, len(cl))]
 peek = [0] + [1 if b > a else 0 for a, b in zip(cl, cl[1:])]
@@ -152,7 +159,12 @@ lv.claim(worst_day([100.00, 110.00]) > 0 and worst_day0([100.00, 110.00]) == 0.0
          'review-2 items[4]: the rise row gives +0.1 unless the version floors at 0')
 lv.claim('no day falls' in lv.text('review', 'items[4].prose'), 'review-2 items[4]: the prose says the wrong version gives 0.0 when no day falls',
          'without that, the rise row also catches it: its worst single-day return is +0.1')
-lv.expect('review', 'items[5].widget.options[2].why', 107.81)
+# finding 26: review-2 items[5] is a module-level FEES dict whose sell fee an earlier test sets to 0.00
+FEES = {"buy": 2.50, "sell": 2.50}
+lv.claim(FEES["buy"] + FEES["sell"] == 5.0 and FEES["buy"] + 0.00 == 2.5, 'review-2 items[5]: fee total is 5.00 normally, 2.50 once the sell fee is 0.00')
+lv.expect('review', 'items[5].prose', 2.50); lv.expect('review', 'items[5].prose', 0.00)
+lv.expect('review', 'items[5].widget.options[2].why', 0.00); lv.expect('review', 'items[5].widget.options[2].why', 2.50)
+lv.claim('107.81' not in lv.text('review', 'items[5]') and 'CLOSES' not in lv.text('review', 'items[5]'), 'review-2 items[5]: no trace of l7 screens[5]')
 lv.expect('review', 'items[6].widget.answer', sum(1 for t in [{'prices'}, {'returns'}, {'prices', 'returns'}, set(), {'returns'}, {'prices'}] if t))
 
 # ---------- homework-2 ----------
@@ -164,6 +176,13 @@ PATH = [250.00, 262.50, 210.00, 231.00, 273.00, 245.70, 286.65, 229.32, 240.79, 
 lv.claim(any(d > 0 for d in peak_excl(PATH)), 'homework-2 items[0]: the property on PATH catches the peak-excludes-today version')
 lv.claim_text('homework', 'items[0].explain.text', 'Only hand-worked rows catch a wrong peak', False,
               'homework-2 items[0]: test-7 also has a wrong peak, and the property catches it')
+first_peak = lambda p: [min(x / p[0] - 1, 0.0) for x in p]          # test-4's planted version: clipped, so never positive
+lv.claim(all(d <= 0 for d in first_peak(PATH)) and first_peak([100.00, 120.00, 90.00, 120.00]) != [0.0, 0.0, -0.25, 0.0],
+         'homework-2 items[0]: the properties pass the first-price peak version on PATH; only a hand row (100, 120, 90, 120) catches it')
+lv.claim(abs(dly([100.00, 50.00, 75.00])[2] - (-0.25)) > 0.2 and dd([100.00, 50.00, 75.00]) == -0.5, 'homework-2 items[0]: on 100, 50, 75 day 3 should be -0.25 and the daily-change version gives 0')
+lv.expect('homework', 'items[0].explain.text', -0.25)
+lv.claim(len(PATH) == 12 and len([x for x in peak_excl(PATH) if x > 0]) > 0 and not any(d > 0 for d in [x / max(PATH[:i + 1]) - 1 for i, x in enumerate(PATH)]),
+         'homework-2 items[0]: the never-positive property catches the peak-without-today version (positive on a new high) and not the right one')
 m = [100.00, 108.00, 110.00, 99.00, 104.50]
 lv.expect('homework', 'items[1].explain.text', round(100 * (m[-1] / m[0] - 1), 1)); two(m[-1] / m[0] - 1, F(45, 1000), 'hw2 total')
 lv.expect('homework', 'items[1].explain.text', round(100 * dd(m)))

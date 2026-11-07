@@ -946,38 +946,44 @@
             "compare": "equal"
           },
           {
-            "call": "test_daily_returns()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "daily_returns = lambda c: [b / a - 1 for a, b in zip(c, c[1:])]"
+            "setup": "good = lambda c: [b / a - 1 for a, b in zip(c, c[1:])]",
+            "call": "outcome(daily_returns=good)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_daily_returns()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "daily_returns = lambda c: [b / a for a, b in zip(c, c[1:])]"
+            "setup": "planted = lambda c: [b / a for a, b in zip(c, c[1:])]",
+            "call": "outcome(daily_returns=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_daily_returns()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "daily_returns = lambda c: [(b - a) / b for a, b in zip(c, c[1:])]"
+            "setup": "planted = lambda c: [(b - a) / b for a, b in zip(c, c[1:])]",
+            "call": "outcome(daily_returns=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_daily_returns()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "daily_returns = lambda c: [b / a - 1 for a, b in zip(c[1:], c[2:])]"
+            "setup": "planted = lambda c: [b / a - 1 for a, b in zip(c[1:], c[2:])]",
+            "call": "outcome(daily_returns=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 7 hidden tests. Three compare your `daily_returns`. Then your `test_daily_returns()` runs four times: it must pass on a correct version and fail on three broken ones.",
+        "how": "Check runs 7 hidden tests. Three compare your `daily_returns`. Then pytest runs your test against a correct version and three broken ones: it must pass the first and fail the rest. Run examples runs your tests with pytest and prints its report.",
         "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          },
           {
             "call": "daily_returns([100.00, 104.00])",
             "expect": "[0.04]",
             "compare": "isclose"
           }
-        ]
+        ],
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False, only=None):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\"] + ([\"-k\", only] if only else []) + [\"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(only=None, **swap):\n    code = _zq_pytest(swap, only=only)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n"
       },
       "hints": [
         {
@@ -993,19 +999,19 @@
         },
         {
           "rung": "step",
-          "text": "Assert the length, each return with `math.isclose`, and the edge case: one close gives `[]`. The broken versions forget the `- 1`, divide by the later close, or skip the first day."
+          "text": "Assert the length, each return with `pytest.approx`, and the edge case: one close gives `[]`. The broken versions forget the `- 1`, divide by the later close, or skip the first day."
         }
       ],
       "feedback": {
         "correct": "The function takes closes and returns returns, and your test pins it down with numbers you worked out yourself.",
         "generic": "Not quite right. Look at the first failing test. If it is one of the last four, your test let a broken version through, or failed a correct one.",
         "byKey": {
-          "test-4": "Your test failed the correct version. Compare floats with `math.isclose`, not `==`: 104.00 / 100.00 − 1 is 0.040000000000000036.",
+          "test-4": "Your test failed the correct version. Compare floats with `pytest.approx`, not `==`: 104.00 / 100.00 − 1 is 0.040000000000000036.",
           "test-7": "Your test let through a version that skips the first day. Assert how many returns come back, and check the first one."
         }
       },
       "explain": {
-        "text": "`daily_returns` is now pure: closes in, a list out, no file. Your test catches each broken version because it pins exact values and the length on closes you chose. The script keeps one line that reads the file and one loop that prints."
+        "text": "`daily_returns` is now pure: closes in, a list out, no file. Your test catches each broken version because it pins exact values and the length on closes you chose. The last two lines build the text and print the returns; in the real script the text comes from `prices.csv`."
       }
     }
   ],

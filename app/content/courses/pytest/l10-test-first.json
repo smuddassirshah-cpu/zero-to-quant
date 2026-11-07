@@ -261,7 +261,7 @@
         "options": [
           {
             "id": "right",
-            "text": "One test passes; the new one fails with `assert 2 == 1`",
+            "text": "Only the new one fails",
             "correct": true
           },
           {
@@ -301,7 +301,7 @@
         }
       },
       "explain": {
-        "text": "A new test that fails is **red**. Swapping `round` for `int` makes it pass: **green**. With every test green you can tidy the code safely: **refactor**. Then the next test starts the cycle again.",
+        "text": "A new test that fails is **red**, and swapping `round` for `int` makes it pass: **green**. With every test green you can tidy the code safely: **refactor**. Then the next test starts the cycle again.",
         "canvas": {
           "current": "red",
           "labels": {
@@ -699,26 +699,32 @@
             "compare": "equal"
           },
           {
-            "call": "test_report_2700()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "shares_for = lambda cash, price, fee: max(0, round((cash - fee) * 100) // round(price * 100))"
+            "setup": "good = lambda cash, price, fee: max(0, round((cash - fee) * 100) // round(price * 100))",
+            "call": "outcome('test_report_2700', shares_for=good)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_report_2700()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "shares_for = lambda cash, price, fee: max(0, int((cash - fee) / price))"
+            "setup": "planted = lambda cash, price, fee: max(0, int((cash - fee) / price))",
+            "call": "outcome('test_report_2700', shares_for=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 7 hidden tests. Five compare your `shares_for` with `==`. Then your `test_report_2700()` runs twice: it must pass on the fixed function and fail on the old float one.",
+        "how": "Check runs 7 hidden tests. Five compare your `shares_for` with `==`. Then pytest runs `test_report_2700` on the fixed function and on the old float one: it must pass the first and fail the second. Run examples runs your tests with pytest and prints its report.",
         "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          },
           {
             "call": "shares_for(2700.00, 5.40, 0.00)",
             "expect": "500",
             "compare": "equal"
           }
-        ]
+        ],
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False, only=None):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\"] + ([\"-k\", only] if only else []) + [\"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(only=None, **swap):\n    code = _zq_pytest(swap, only=only)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n"
       },
       "hints": [
         {
@@ -1014,38 +1020,44 @@
             "compare": "equal"
           },
           {
-            "call": "test_random_walk()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "import itertools, random; _good = lambda start, steps, seed, moves=(1.01, 0.99): (lambda rng: list(itertools.accumulate(range(steps), lambda p, _: round(p * rng.choice(moves), 2), initial=start)))(random.Random(seed)); random_walk = _good"
+            "setup": "import itertools, random; _good = lambda start, steps, seed, moves=(1.01, 0.99): (lambda rng: list(itertools.accumulate(range(steps), lambda p, _: round(p * rng.choice(moves), 2), initial=start)))(random.Random(seed))",
+            "call": "outcome(random_walk=_good)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_random_walk()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "_flip = itertools.cycle([(1.01, 0.99), (0.99, 1.01)]); random_walk = lambda start, steps, seed: _good(start, steps, seed, next(_flip))"
+            "setup": "_flip = itertools.cycle([(1.01, 0.99), (0.99, 1.01)]); planted = lambda start, steps, seed: _good(start, steps, seed, next(_flip))",
+            "call": "outcome(random_walk=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_random_walk()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "random_walk = lambda start, steps, seed: _good(start, steps, seed)[1:]"
+            "setup": "planted = lambda start, steps, seed: _good(start, steps, seed)[1:]",
+            "call": "outcome(random_walk=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_random_walk()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "random_walk = lambda start, steps, seed: _good(start, steps + 1, seed)"
+            "setup": "planted = lambda start, steps, seed: _good(start, steps + 1, seed)",
+            "call": "outcome(random_walk=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests. Four check your walk's prices. Then your `test_random_walk()` runs on a correct walk, where it must pass, and on three broken ones, where it must fail: one ignores the seed, one drops the start, one takes an extra step.",
+        "how": "Check runs 8 hidden tests. Four check your walk's prices. Then pytest runs your test on a correct walk, where it must pass, and on three broken ones, where it must fail: one ignores the seed, one drops the start, one takes an extra step. Run examples runs your tests with pytest and prints its report.",
         "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          },
           {
             "call": "random_walk(100.00, 5, 42)",
             "expect": "[100.0, 101.0, 102.01, 100.99, 102.0, 103.02]",
             "compare": "isclose"
           }
-        ]
+        ],
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False, only=None):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\"] + ([\"-k\", only] if only else []) + [\"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(only=None, **swap):\n    code = _zq_pytest(swap, only=only)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n"
       },
       "hints": [
         {
