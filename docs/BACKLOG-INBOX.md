@@ -1657,3 +1657,6 @@ Raised later (ito level 3 perf):
 Raised later (ito level 4 perf):
 - [Should] Longform aloud widget on the homework page: the help line under the clock reads "Say your answer aloud. The paper clock ends the sitting.", the exam text (`longform.js:47`, `ctx.mode === 'exam'`), though a homework has no paper clock and the item sets `lockAtZero` (ito `h-aloud-unknown-drift`, 440 px shot). Wanted: the `lock` line ("The clock stops at zero.") outside a real exam.
 - [Could] An aloud item does not say before the clock that follow-ups will come; they appear only with the model. The prompt has to say "Three follow-up questions come after the clock". Wanted: a line under the clock, "n follow-up questions after the clock", from `followUps.length`.
+
+Raised later (systems level 4 perf, fix pass):
+- [Could] `h4-spsc-ring` now says in `how` that its single-threaded tests cannot grade the memory orders and sends the learner to the explain. A `relaxed` tail published before the slot still passes all 12 tests (review-perf-retrofit-2 SY4-1); the gap stays open until the runtime has threads.

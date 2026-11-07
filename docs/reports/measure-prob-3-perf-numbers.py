@@ -86,7 +86,8 @@ ok(len(it) == 1, 'one h-prove-urn'); it = it[0]
 ok(items.index(it) == 8, 'index 8')
 ok(it['performance'] == 'derivation' and it['kind'] == 'longform', 'kind')
 ok(sum(r['points'] for r in it['rubric']) == 10 and 3 <= len(it['rubric']) <= 5, 'rubric 10 points in 3 to 5 rows')
-ok([bool(r.get('required')) for r in it['rubric']].count(True) == 1 and it['rubric'][2].get('required') is True, 'one required row: the step')
+# fix pass MP3-1: rows 2 (adapted, integrable) and 3 (the step) are required
+ok([k for k, r in enumerate(it['rubric']) if r.get('required')] == [1, 2], 'required rows 2 and 3: the conditions and the step')
 ok(not any(x in it for x in ('starter', 'steps', 'order', 'derive', 'hints', 'parts')), 'no scaffold')
 ok(sum(1 for i in items if i.get('performance')) == 1 and 6 <= len(items) <= 12 and any(i['difficulty'] == 5 for i in items), 'homework limits')
 txt = json.dumps(it, ensure_ascii=False)

@@ -2,9 +2,9 @@
 
 - File: `app/content/courses/measure-prob/homework-3.json`, item `h-prove-urn`, index 8 (item 9 of 9; nothing converted, the homework had 8 items).
 - Kind `derivation` (longform, empty box, no tags), difficulty 5, skill `mt-martingale`.
-- Objective matched: l12 "Prove a process is a martingale with respect to a filtration." l10 (prove the tower property) and l13 (prove optional stopping under bounded times) also match. l13 was not chosen: its proof is laid out line by line in two l13 order screens and is part 1 of this homework's `h-long`, so a blank box would test recall. l12 takes a process no lesson uses.
+- Objective matched: l12 "Prove a process is a martingale with respect to a filtration." l10 (prove the tower property) and l13 (prove optional stopping under bounded times) also match. l13 was not chosen: its proof is laid out line by line in two l13 order screens and is part 1 of this homework's `h-long`, so a blank box would test recall. l12 takes a process the course proves nothing about: markov l17 screens 8 and 9 check the Pólya share on the first draws, but the proof for every $n$ on $\mathcal{F}_n$ is new.
 - Task: the Pólya urn (one red, one blue, add one of the drawn colour). Prove $M_n = R_n/(n+2)$ is a martingale for the draw filtration: adapted, integrable ($0 < M_n < 1$), and the step $E[M_{n+1} \mid \mathcal{F}_n] = M_n$ via the conditional chance of red on each atom (not independence). Then $P(\text{draw } n+1 \text{ red}) = 1/2$ by the tower property, and $R_n$ is not a martingale.
-- Rubric 2, 2, 4, 1, 1. Row 3 (the step) is `required`. Row 2 opens with "Tick only if".
+- Rubric 2, 2, 4, 1, 1. Rows 2 and 3 (the conditions, the step) are `required`. Row 2 opens with "Tick only if".
 - Fresh: the lessons and homework use walks, tosses, the Doob forecaster, gains and stopped walks, all with independent steps. Grep terms: `urn`, `ball`, `Pólya`, `R_n`, `share`, `S_n^3`.
 
 ## Gates
