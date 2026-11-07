@@ -1630,3 +1630,10 @@ Raised later (orchestrator, session W):
 - [Should] Validator: a `longform` widget must carry `widget.prompt`, yet reviews in py-found (finding 17), plotting (14, 15), pytest (28) and sql (16) asked to drop a prompt that repeats the item `prose`. Fixers merged the prose into `prompt` instead. Make the rule "prose or prompt, not both" (or let `prompt` default to `prose`) and warn when both hold the same question.
 - [Should] `fresh-check.mjs` missed nearly every setup repeat that second readers found by literal grep in session W's nine topic exams (for example topic-2.3: 22 of 30 items repeated a setup, fresh-check 0 hits; topic-0.3: 19 of 25, 0 hits). It matches word runs, so a repeat with new constants passes. Needed: a setup fingerprint (key nouns plus function names plus the shape of the numbers), or treat fresh-check as advisory in the briefs and require the literal grep.
 - [Could] Expression grader after 620: `g(f(x)) = ...` and `gf(x) = ...` left sides still get the generic line (exam topic-0.2 item 11); a nested call of single-letter functions should count as a label.
+
+Raised later (coding-int level 3 perf):
+- [Should] Playthrough: no way to prove that a correct but slow solution fails a timing test in Pyodide. `h3-notes-drive` test 10 was checked by swapping a walking `size` into `solution` in a scratch copy (stopped at 5 s). Wanted: an optional widget field, such as `slowSolutions`, that `--set` plays and expects to fail on a named test.
+- [Could] Playthrough: in that scratch run, the timed-out item 9 was reported with "marked 6 of 9 right, 30 of 43 marks" and "scored 5 of 9 right, expected 8", though only item 9 had changed. A timeout in one code item may disturb how later or earlier items are counted. Wanted: a look at the count after a stopped worker.
+
+Raised later (coding-int level 4 perf):
+- [Could] An `aloud` task whose product includes code (`h4-pairs-aloud`: talk while typing `count_pairs`) has only a plain notes box, so the typed code is neither highlighted nor run. Wanted: an optional `codeNotes: "python"` on an aloud longform that shows a code editor with Run examples, still self-marked.
