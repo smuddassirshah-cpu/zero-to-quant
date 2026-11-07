@@ -91,3 +91,49 @@ Kept on purpose (freshness checked, no change proposed): homework-3 `items[6]` e
 3. A "What does it print?" choice item is never run: l11 `quiz[2]` keys `None 0.025` where Python prints `None 0.02499999999999991`, and the playthrough passes it. A validator or tool pass could run the single ```python block in the prose of an item whose question is "What does it print?" in CPython, and compare the output with the key's code text. It should be advisory, since some blocks depend on earlier screens.
 
 All three are appended to `docs/BACKLOG-INBOX.md` under "Raised later (review py-found L3 L4):".
+
+## Fix pass
+
+Applied as targeted JSON edits (load, change the named node, write back; every file round-trips byte-identically, so the diff holds only the fixes). Every corrected number was recomputed in CPython before writing.
+
+1. fixed (l11 `quiz[2]`): `ret(100.00, 125.00)`; `125.00 / 100.00 - 1` is exactly 0.25 (CPython `0.25`, `Fraction` 1/4), so the key reads `None 0.25`. Option d, feedback and explain match.
+2. fixed (review-4 `items[1]`): text max of `'98.40'`, `'101.75'`, `'99.90'` is `'99.90'` (4 March). Both `why` lines reworded as proposed.
+3. fixed (homework-3 `items[7].model`): counted in the prompt's code, lines 21, 22 and 28 (`out.append`, `except:`, `return max`).
+4. fixed (l9 `screens[2]`): $\ln(1+r) \le r$ with equality at $r = 0$ (concavity of $\ln$, tangent at 1); sentence replaced.
+5. fixed (l14 `quiz[0]`): option `len` deleted; three distinct lists remain.
+6. fixed (l15 `screens[9]`): sixth test (at least two `assert` lines in `__learner_source__`), `how` and `byKey.test-6` added. Solution passes 6 of 6; the starter and a solution with an empty test body fail it (the number script checks both).
+7. fixed (l16 `screens[5]`): `r2c1` is `never reached`.
+8. fixed (l10 `screens[0]`): `rows[3]` is 14 March, `rows[2]` is 13 March.
+9. fixed (l10 `screens[1]`): `csv.DictReader` gives `'101.20'` for `"101.20"`; hint reworded.
+10. fixed (l13 `quiz[3]`): `next(iter([1.0]))` is `1.0`; `next(1.0)` raises `TypeError`; reworded.
+11. fixed (homework-4 `items[4]`): $\sqrt{2} = 1.4142$ is the largest factor (n = 2); `sqrt(1000/999)` = 1.0005. The number script checks the bound for n = 2 to 1999.
+12. fixed (l16 `screens[6]`): drawdown relabelled `Worst day` in canvas, starter, solution and `tests[1]` (`'Worst day       -5.32%'`, 22 characters, computed with the same format spec).
+13. fixed (l13 `screens[8]`): 6 March 2026 to 11 March is three trading days; hint says so and dates the trough.
+14. fixed (l16 `screens[9].how`): `__zq_norm` strips trailing spaces only; wording now says the table is compared exactly.
+15. fixed (l16 `screens[7].how`): "prepares a file", since test 4 writes `'stale'` first.
+16. fixed (nine key-length items): all edits applied as listed (two options added in l9, one in l11). Remaining validator `[key-length]` warnings in L3 and L4 are l12 `screens[5]` and `quiz[2]`, judged not giveaways by the reader.
+17. fixed with a deviation (homework-4 `items[6]`): the validator makes `widget.prompt` required on a longform (error `required field missing` when deleted). So `question` carries the proposed text and `widget.prompt` repeats it; the "prose and prompt" warning remains (advisory, not a content defect).
+18. fixed with a deviation (l15 `screens[6]`, `quiz[1]`, review-4 `items[4]`, homework-4 `items[3]`): `tools/validate.mjs` line 532 reads `over100` from the widget, not from a `wrong[]` entry, so `"over100": true` sits on the widget (as in garch `review-2`). The four warnings are gone.
+19. fixed (l16 `screens[6].explain`): "adds a percent sign".
+20. fixed (l15 `screens[3]`): "exactly $\sqrt{5/4}$, about 1.118".
+21. fixed (l9 `screens[5]`, `screens[6]`): mean 101.50, sd 1.2649 so about £1.26, band 98.97 to 104.03, all recomputed; s5 says "gives 100.975".
+22. fixed (review-3 `items[6]`): replaced by the `price_of` `KeyError` item as specified. Solution gives 104.2, `None`, `None`, and a list key raises `TypeError: unhashable type: 'list'`.
+23. fixed (review-3 `items[7]`): now the file-name question (`read_prices.py` key); difficulty 3.
+24. fixed (review-3 `items[0]`): `import math` plus `from math import sqrt` prints `True` (both give 1.5).
+25. fixed (review-4 `items[4]`): returns 3% and 0%: mean 0.015, squared distances 0.00045, sd 0.021213, times $\sqrt{252}$ is 0.33675 (key 0.3367); `pstdev` 0.2381; daily 0.0212; times 252 is 5.346 (all from `statistics`). Tolerances unchanged.
+26. fixed (review-4 `items[9]`): new four-row table; float max is 2026-05-12, text max is 2026-05-13. Starter, solution, test 1, example, `byKey.test-1` and explain updated.
+27. fixed (l13 `screens[8].prose`): `io.StringIO` introduced with the `splitlines()` link.
+
+Engine 1 to 3: deferred, already in `docs/BACKLOG-INBOX.md`.
+
+Counts: 27 fixed (2 with a stated deviation), 0 disputed, 0 deferred except the 3 engine findings.
+
+Graded answers changed: 8 (l11 `quiz[2]` key text, l15 `screens[9]` test 6 added, l16 `screens[6]` test 2, review-3 `items[0]`, `[6]`, `[7]`, review-4 `items[4]`, `items[9]`).
+
+Number scripts: `py-found-L1`, `L2`, `L3` and `L4` all exit 0 (391, 369, 177 and 213 checks). The old `stated` checks became positive checks on the new wording and values (the fixed text must hold the new value and not the old one), plus new checks for the 3% and 0% returns, the `price_of` and file-name items, the new table, the `Worst day` row and the corrected line numbers.
+
+Voice scan (`VOICE_BASE=app/content/courses/py-found ... 35`): 0 sentences over 35 words, 0 explanations over three sentences.
+
+Validator: 0 errors.
+
+Playthrough (`--local-cdn`): all 8 lessons (l9 to l16) and review-3, homework-3, review-4, homework-4, desktop and `--mobile`: 24 of 24 "All passed", no reruns.

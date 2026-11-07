@@ -10,36 +10,41 @@
       "skills": [
         "pf-modules"
       ],
-      "prose": "```python\nfrom math import sqrt\n\nprint(math.sqrt(2.25))\n```",
-      "question": "What happens?",
+      "prose": "```python\nimport math\nfrom math import sqrt\n\nprint(math.sqrt(2.25) == sqrt(2.25))\n```",
+      "question": "What does it print?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "a",
-            "text": "`NameError: name 'math' is not defined`",
+            "text": "`True`",
             "correct": true
           },
           {
             "id": "b",
-            "text": "`1.5`",
-            "why": "You read `from math import sqrt` as importing the module too. It creates only the name `sqrt`, so write `sqrt(2.25)`."
+            "text": "`NameError: name 'math' is not defined`",
+            "why": "`import math` on the first line creates `math`. The second line adds `sqrt` beside it."
           },
           {
             "id": "c",
-            "text": "`ImportError: cannot import name 'sqrt'`",
-            "why": "`math` does have `sqrt`, so the first line works. The last line fails."
+            "text": "`NameError: name 'sqrt' is not defined`",
+            "why": "`from math import sqrt` creates the name `sqrt`. Both lines run, so both names exist."
+          },
+          {
+            "id": "d",
+            "text": "`False`",
+            "why": "Both names reach the same function, so both calls give 1.5."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "Only `sqrt` exists, not `math`.",
-        "generic": "Not quite right. Which name does the import line create?"
+        "correct": "Both import forms ran, so both names exist.",
+        "generic": "Not quite right. List the names each import line creates."
       },
       "explain": {
-        "text": "`from math import sqrt` creates `sqrt` alone. `sqrt(2.25)` would print 1.5; `math.sqrt` needs `import math`."
+        "text": "Each import line creates its own name: `import math` gives `math`, and `from math import sqrt` gives `sqrt`. Both reach the same function, so both calls give 1.5 and the comparison is `True`."
       }
     },
     {
@@ -248,97 +253,102 @@
       "skills": [
         "pf-classes"
       ],
-      "prose": "A return from a price of £0.00 is meaningless. Return `None` for it, but let every other error through.",
-      "question": "Write `safe_return(p0, p1)`: `p1 / p0 - 1`, or `None` when `p0` is zero. Catch only `ZeroDivisionError`.",
+      "prose": "A ticker missing from today's price dict should give `None`, but every other error should still stop the program.",
+      "question": "Write `price_of(prices, ticker)`: the price for `ticker`, or `None` when the dict has no such key. Catch only `KeyError`.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "def safe_return(p0, p1):\n    ...\n",
-        "solution": "def safe_return(p0, p1):\n    try:\n        return p1 / p0 - 1\n    except ZeroDivisionError:\n        return None\n",
+        "starter": "def price_of(prices, ticker):\n    ...\n",
+        "solution": "def price_of(prices, ticker):\n    try:\n        return prices[ticker]\n    except KeyError:\n        return None\n",
         "tests": [
           {
-            "call": "safe_return(100.00, 105.00)",
-            "expect": "0.05",
-            "compare": "isclose"
+            "call": "price_of({\"VOD\": 0.72, \"AZN\": 104.20}, \"AZN\")",
+            "expect": "104.2",
+            "compare": "equal"
           },
           {
-            "call": "safe_return(0.00, 101.20)",
+            "call": "price_of({\"VOD\": 0.72, \"AZN\": 104.20}, \"BARC\")",
             "expect": "None",
             "compare": "equal"
           },
           {
-            "call": "safe_return(250.00, 240.00)",
-            "expect": "-0.04",
-            "compare": "isclose"
+            "call": "price_of({}, \"VOD\")",
+            "expect": "None",
+            "compare": "equal"
           },
           {
-            "call": "exec('try: got = safe_return(\"100\", 105.00)\\nexcept TypeError: got = \"TypeError\"', globals()) or got",
+            "call": "exec('try: got = price_of({\"VOD\": 0.72}, [\"VOD\"])\\nexcept TypeError: got = \"TypeError\"', globals()) or got",
             "expect": "'TypeError'",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 4 hidden tests. Test 4 passes text for `p0`, a bug that must raise `TypeError` rather than return `None`.",
+        "how": "Check runs 4 hidden tests. Test 4 passes a list as the ticker, a bug that must raise `TypeError` rather than return `None`.",
         "examples": [
           {
-            "call": "safe_return(100.00, 105.00)",
-            "expect": "0.05",
-            "compare": "isclose"
+            "call": "price_of({\"VOD\": 0.72, \"AZN\": 104.20}, \"AZN\")",
+            "expect": "104.2",
+            "compare": "equal"
           },
           {
-            "call": "safe_return(0.00, 101.20)",
+            "call": "price_of({\"VOD\": 0.72, \"AZN\": 104.20}, \"BARC\")",
             "expect": "None",
             "compare": "equal"
           }
         ]
       },
       "feedback": {
-        "correct": "Zero gives `None`, and a real bug still raises.",
+        "correct": "A missing ticker gives `None`, and a real bug still raises.",
         "generic": "Not quite right. Check the first failing test.",
         "byKey": {
-          "test-2": "Test 2 passes `p0 = 0.00` and expects `None`. Catch the `ZeroDivisionError` and return `None`.",
-          "test-4": "Test 4 expects `TypeError` for a text price. A bare `except` returned `None` and hid the bug."
+          "test-2": "Test 2 asks for BARC, which is not in the dict, and expects `None`. Catch the `KeyError` and return `None`.",
+          "test-4": "Test 4 expects `TypeError` for a list ticker. A bare `except` returned `None` and hid the bug."
         }
       },
       "explain": {
-        "text": "Only division by zero is expected, so only `ZeroDivisionError` is caught. Text instead of a number is a bug elsewhere, and the `TypeError` makes it visible."
+        "text": "Only a missing key is expected, so only `KeyError` is caught. A list as a key is a bug elsewhere, and its `TypeError` makes it visible."
       }
     },
     {
       "id": "r-csv-shadow",
-      "difficulty": 4,
+      "difficulty": 3,
       "skills": [
         "pf-modules"
       ],
-      "prose": "You save a script as `csv.py`. It contains:\n\n```python\nimport csv\n\nrows = list(csv.DictReader(open(\"prices.csv\")))\n```",
-      "question": "What happens when you run `python csv.py`?",
+      "prose": "You are about to save a new script in your project folder.",
+      "question": "The script imports `csv` and `random`. Which file name is safe for it?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "a",
-            "text": "An `AttributeError` saying the module `csv` has no attribute `DictReader`",
+            "text": "`read_prices.py`",
             "correct": true
           },
           {
             "id": "b",
-            "text": "It reads `prices.csv` as normal",
-            "why": "Python searches the script's folder first, so `import csv` finds your own `csv.py`, not the standard module."
+            "text": "`csv.py`",
+            "why": "Then `import csv` finds your own file, which has no `DictReader`."
           },
           {
             "id": "c",
-            "text": "`ModuleNotFoundError: No module named 'csv'`",
-            "why": "Python does find a module named `csv`: your file. The failure comes when it looks inside for `DictReader`."
+            "text": "`random.py`",
+            "why": "Then `import random` finds your own file, and `random.seed` is missing."
+          },
+          {
+            "id": "d",
+            "text": "Any of these names works",
+            "why": "Python searches the script's folder first, so a clashing name hides the real module."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "`import csv` imported your own file, which has no `DictReader`.",
-        "generic": "Not quite right. Which `csv.py` does Python find first?"
+        "correct": "`read_prices.py` clashes with no module you import.",
+        "generic": "Not quite right. Which names match a module the script imports?"
       },
       "explain": {
-        "text": "The script's folder is searched before the standard library, so `import csv` loads your file. Your file defines no `DictReader`, hence the `AttributeError`. Rename the script, say to `read_prices.py`."
+        "text": "The script's folder is searched before the standard library. A script named `csv.py` or `random.py` would be imported in place of the real module. Pick a name no module uses, such as `read_prices.py`."
       }
     },
     {
