@@ -167,16 +167,18 @@ E('l3', 'screens[2].explain.text', round(T66, 2)); E('l3', 'screens[2].explain.c
 E('l3', 'screens[2].widget.wrong[0].value', round(0.96 / 5.98, 4)); E('l3', 'screens[2].widget.wrong[1].value', round(0.96 / 5.98 / 17, 4))
 lv.claim(abs(round(T66, 2) - 2.73) <= 0.031, 'l3 screens[2] band accepts the unrounded 2.74')
 x1212, x312, x123 = GRID[12, 12], GRID[3, 12], GRID[12, 3]
-for fid, path in (('l3', 'screens[3].prose'), ('l3', 'quiz[3].prose'), ('homework', 'items[4].prose'), ('review', 'items[5].prose')):
+for fid, path in (('l3', 'screens[3].prose'), ('l3', 'quiz[3].prose'), ('homework', 'items[4].prose')):
     E(fid, path, round(100 * x1212.mean(), 2))
 E('l3', 'screens[3].prose', round(tstat(x1212), 2)); E('l3', 'screens[3].prose', round(tstat(x312), 2)); E('l3', 'screens[3].prose', round(100 * x312.mean(), 2))
 E('l3', 'screens[3].canvas.state.points[2].x', round(tstat(x1212), 2)); E('l3', 'screens[3].canvas.state.points[3].x', round(tstat(x312), 2))
 lv.claim(tstat(x312) > 2.58 and tstat(x1212) < 1.96, 'l3 screens[3] hint: 3/12 past 2.58, 12/12 short of 1.96')
 lv.claim(x1212.std(ddof=1) > x312.std(ddof=1), 'l3 screens[3]: 12/12 swings more than 3/12')
 E('l4', 'screens[5].prose', round(100 * x123.mean(), 2)); E('l4', 'screens[5].prose', round(tstat(x123), 2))
-E('review', 'items[5].prose', round(100 * x1212.std(ddof=1), 2)); E('review', 'items[5].prose', len(x1212))
-E('review', 'items[5].explain.text', round(math.sqrt(277), 2)); E('review', 'items[5].explain.text', round(6.21 / math.sqrt(277), 3))
-E('review', 'items[5].widget.answer', round(0.66 / (6.21 / math.sqrt(277)), 2)); E('review', 'items[5].widget.wrong[0].value', round(0.66 / 6.21, 4))
+x912 = GRID[9, 12]
+E('review', 'items[5].prose', round(100 * x912.mean(), 2)); E('review', 'items[5].prose', round(100 * x912.std(ddof=1), 2)); E('review', 'items[5].prose', len(x912))
+E('review', 'items[5].explain.text', round(math.sqrt(280), 2)); E('review', 'items[5].explain.text', round(5.69 / math.sqrt(280), 3))
+E('review', 'items[5].explain.text', round(0.80 / (5.69 / math.sqrt(280)), 2))
+E('review', 'items[5].widget.answer', round(0.80 / (5.69 / math.sqrt(280)), 2)); E('review', 'items[5].widget.wrong[0].value', round(0.80 / 5.69, 4))
 E('homework', 'items[4].prose', round(100 * x1212.std(ddof=1), 2)); E('homework', 'items[4].prose', len(x1212))
 nreq = (1.96 * 6.21 / 0.66) ** 2
 E('homework', 'items[4].widget.accept', round(nreq, 1)); E('homework', 'items[4].explain.text', round(1.96 * 6.21 / 0.66, 2))
@@ -255,9 +257,10 @@ E('l1', 'quiz[1].widget.answer', 0.03 * 2e6 - 0.01 * 2e6); E('l1', 'quiz[1].widg
 E('l1', 'quiz[1].widget.wrong[1].value', 0.03 * 2e6)
 E('l1', 'quiz[3].widget.answer', 0.12 * 5e5); E('l1', 'quiz[3].widget.wrong[0].value', 0.12 * 1e6)
 q7 = lv.text('l1', 'screens[7].question')
-E('l1', 'screens[7].widget.options[0].text', round(1.8 - 0.9, 2)); E('l1', 'screens[7].widget.options[1].text', 1.8 + 0.9)
-lv.claim('losers 0.9%' not in q7, 'l1 screens[7]: the correct spread is not also one of the two inputs',
-         'winners 1.8% and losers 0.9% give a spread of 0.9%, the losers\' own figure')
+E('l1', 'screens[7].widget.options[0].text', round(1.8 - 0.6, 2)); E('l1', 'screens[7].widget.options[1].text', round(1.8 + 0.6, 2))
+E('l1', 'screens[7].widget.options[3].text', 0.6); E('l1', 'screens[7].feedback.correct', round(1.8 - 0.6, 2))
+lv.claim(all(abs(round(1.8 - 0.6, 2) - v) > 1e-9 for v in (1.8, 0.6)) and 'losers 0.6%' in q7,
+         'l1 screens[7]: the correct spread (1.2%) is neither of the two inputs (1.8%, 0.6%)')
 lv.claim_text('l1', 'summary.ideas[1]', 'A testable claim names a universe, a period, a signal, a holding rule and a number', False,
               'l1 summary.ideas[1]: every testable claim names all five (the hook keys the Sharpe and reversal claims testable without them)')
 
@@ -323,7 +326,8 @@ for fid, path in (('l5', 'screens[0].canvas.params.lines[6]'), ('l5', 'screens[5
     E(fid, path, round(100 * b0.mean(), 2)); E(fid, path, round(tstat(b0), 2))
 E('l5', 'screens[0].explain.text', round(100 * b0.mean(), 2))
 E('l5', 'screens[5].canvas.params.lines[3]', round(100 * b1.mean(), 2)); E('l5', 'screens[5].canvas.params.lines[3]', round(tstat(b1), 2))
-E('review', 'items[8].prose', round(100 * b0.mean())); E('review', 'items[8].prose', round(100 * b1.mean()))
+E('review', 'items[8].prose', round(100 * GRID[12, 3].mean(), 2))  # the 1.31% target is the real 12/3 cell; the shuffled 1.28% is made up, and says so
+lv.claim('Both numbers are made up' in lv.text('review', 'items[8].prose'), 'review items[8]: the invented figures are labelled made up')
 pl = wml1(rsh, 6, 1); two('correct 6/1 on the shuffled panel', pl, wml2(rsh, 6, 1), 1e-9)
 E('l5', 'screens[4].canvas.params.lines[1]', round(100 * pl.mean(), 2)); E('l5', 'screens[4].canvas.params.lines[1]', round(tstat(pl), 2))
 E('l5', 'screens[4].canvas.params.lines[3]', round(100 * M66, 2)); E('l5', 'screens[4].canvas.params.lines[3]', round(T66, 2))
@@ -351,7 +355,10 @@ flat = np.tile(0.001 * np.arange(20), (12, 1))
 E('l5', 'screens[8].explain.text', round(100 * placebo(flat, 6, 0).mean(), 1))
 
 # ======================= review =======================
-E('review', 'items[2].widget.answer', len(live(100, 12, 9))); E('review', 'items[3].widget.answer', 50 - 1 - 6)
+E('review', 'items[2].widget.answer', len(live(18, 12, 9, 1))); E('review', 'items[2].widget.wrong[0].value', len(live(18, 12, 9, 0))); E('review', 'items[2].widget.wrong[1].value', 9)
+E('review', 'items[2].explain.text', 9); E('review', 'items[2].explain.text', 21); E('review', 'items[2].explain.text', 12 + 1); E('review', 'items[2].explain.text', len(live(18, 12, 9, 1)))
+E('review', 'items[2].prose', 12)
+E('review', 'items[3].widget.answer', 50 - 1 - 6)
 E('review', 'items[4].widget.answer', round((1.0077) ** 12 - 1, 5)); E('review', 'items[4].widget.wrong[0].value', round(12 * 0.0077, 4))
 E('review', 'items[6].widget.answer', round((1.31 - 0.70) / 0.30, 2))
 E('review', 'items[7].canvas.params.lines[3]', round(50 / 45 - 1, 6)); E('review', 'items[7].canvas.params.lines[3]', round(50 / 45 + 1, 6))
@@ -381,6 +388,7 @@ lv.claim_text('l4', 'screens[8].hints[2].text', 'The first answer', False, 'l4 s
 # the L2-side continuity fix (homework-2 model) quotes the 6/6 placebo on the shuffled base panel
 pl66 = wml1(rsh, 6, 6); two('6/6 placebo, shuffled base panel seed 0', pl66, wml2(rsh, 6, 6), 1e-9)
 lv.claim(round(100 * pl66.mean(), 2) == -0.06 and round(tstat(pl66), 2) == -0.53 and len(pl66) == 289, '6/6 placebo: -0.06% a month, t -0.53, 289 months')
+lv.claim('−0.06% a month, t −0.53' in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'content', 'courses', 'momentum-rep', 'homework-2.json')))['items'][6]['model'], 'homework-2 items[6]: the shuffled 6/6 placebo is stated (-0.06%, t -0.53)')
 E('homework', 'items[5].widget.answer', round((1.0131) ** 12 - 1, 3)); E('homework', 'items[5].explain.text', round(12 * 1.31, 2))
 
 # ======================= values the review's fixes introduce (computed here; no path yet) =======================

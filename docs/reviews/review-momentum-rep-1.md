@@ -83,3 +83,36 @@ All 14 runs pass, with `--local-cdn <scratchpad>/pkgs` and `--shots`, no timeout
 - `--set` homework-1: ok, 8 of 8 right, 37 of 37 marks (both).
 
 Screenshots sampled at 1280 px and 440 px: the l3 layout table, l4 tolerance band, l5 plan graph and l2 grids are clean. The fault found is finding 14: the l2 trap grid hides the joining cohorts.
+
+## Fix pass
+
+Status per finding (22 fixed, 0 disputed, 1 deferred, plus 2 engine items deferred). Every new number was recomputed by the reader's script (two routes) and by hand: 1.8 − 0.6 = 1.2 and 1.8 + 0.6 = 2.4; 2.01 − 1.04 = 0.97; 0.80 / (5.69 / √280) = 0.80 / 0.340 = 2.35 and 0.80 / 5.69 = 0.1406; 12/9 with skip 1 in month 18 lives on cohorts 13 to 18 = 6 (7 without the skip, all 9 from month 21); £3,000,000 − £2,000,000 = £1,000,000; 0.577 × 0.50% = 0.29%, which is 30% of 0.96%. The conceptual findings (1, 2, 3, 4, 5, 10, 23) rest on panel computations in the number script (seed-2 base panel, seed-0 shuffle), which I re-ran: skip raises 8 of 16 cells; the shuffled "next month" ranking gives 0.01%, t 0.09; the K = 3 column rises with J and the other columns do not; ranking on month t alone gives 40.7%, the window t − 5 to t gives 17.06%; the shuffled 6/6 gives −0.06%, t −0.53.
+
+1. fixed: l4 `screens[8]` key and distractors, `screens[0].feedback.byKey.t4`.
+2. fixed: homework-1 `items[6].widget.options[1].text`.
+3. fixed: l3 `screens[1].explain.text` (K = 3 column rises with J; for J of 6 or more it falls with K past 6).
+4. fixed: l1 `summary.ideas[1]`.
+5. fixed: homework-1 `items[3].widget.model`.
+6. fixed: l1 `screens[7]` now 1.8% and 0.6%, answer 1.2% (graded answer changed), new `short` distractor, explanation states 1.2%.
+7. fixed: l3 `screens[5].hints[2]` and `explain.text`.
+8. fixed: l5 `quiz[2].feedback.correct`.
+9. fixed: l4 `screens[8].hints[2]`.
+10. fixed: l5 `summary.trap`.
+11. fixed: review-1 `items[7]` log line (0.20%, t 1.26) and explanation ("stays inside the noise"); homework-1 `items[6].widget.options[2].why`.
+12. fixed: l4 `screens[7].widget.tests[7..9].setup` use 0.0062 for the colleague's 6/6 (solution passes, starter still fails; number script confirms).
+13. fixed: l4 `screens[0].hints[1].highlight` is `["r0", "r1"]`.
+14. fixed: l2 `screens[6]` grid is 3 rows by 8 columns (cohorts 25 to 32), with shade, caption and `hints[1]` as specified.
+15. fixed: l3 `screens[2]` `root` band `abs` 0.005; the review band now sits on the new `sd` 0.1406 with `abs` 0.005 (finding 20).
+16. fixed: key-length distractors in l1 `screens[6]`, l2 `quiz[2]`, l4 `quiz[2]`, l5 `quiz[0]`. l2 `screens[6]`, l4 `screens[5]` and l5 `screens[5]` left as the reader advised.
+17. fixed: l1 `screens[8].prose` says "curriculum".
+18. fixed: l3 `screens[3].explain.text` ("0.03 points"); homework-1 `items[7].explain.text` ("At 50 bp, 30% of the spread is gone.").
+19. fixed: review-1 `items[2]` is now 12/9 with a skip in month 18, answer 6 (graded answer changed), wrongs 7 and 9, new feedback and explanation.
+20. fixed: review-1 `items[5]` is now the 9/12 cell, answer 2.35 (graded answer changed), wrong `sd` 0.1406.
+21. fixed: review-1 `items[8]` rewritten around 1.31% and 1.28% (labelled made up); `items[0]` now £3,000,000 and £2,000,000, answer £1,000,000 (graded answer changed; option `one`, four options).
+22. deferred: advisory, no change asked; homework-1 `items[2]` keeps the reading-order item.
+23. fixed: homework-2 `items[6].model` states the shuffled 6/6 placebo (−0.06% a month, t −0.53).
+Engine (validator `shuffled-position`, `fresh-check` numeric answers): deferred, already in the inbox.
+
+Number script `docs/reports/momentum-rep-L1-numbers.py`: checks updated for review `items[2]`, `items[5]`, `items[8]` and l1 `screens[7]`; added checks for the new `short` option, the homework-2 placebo line and a recall guard on review `items[5]`. Exit 0, 389 of 389.
+
+Gates: voice scan at 35 words reports 0 sentences over and 0 explanations over three sentences. `node tools/validate.mjs`: 0 errors. Playthroughs with `--local-cdn`, desktop and `--mobile`: l1 to l5, review-1, homework-1 and homework-2 all passed (16 of 16, no timeouts). Remaining L1 warnings are the reader's unchanged ones (three plausible-distractor `key-length`, one point-hint, two 20-word sentences).
