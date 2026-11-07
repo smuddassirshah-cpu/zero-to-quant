@@ -1654,3 +1654,31 @@ Status block (engine pass V-B, items 600 to 603):
 - 601: done (warnings only; validator 0 errors; test passes).
 - 602: done (schema; validator 0 errors; test passes). Retire `O2-unshuffled-numeric` (73 warnings) once pass A's default shuffle lands: ordered numeric options no longer need `shuffle: true`.
 - 603: done (test PASS merge-wave).
+
+---
+
+## Session V engine pass 7 (`docs/reports/engine-pass-7.md`), items 604 to 616
+
+604. Done [Must]: `tools/fresh-check.mjs --file content/courses/<c>/<set>.json` works on a course review or homework set. A file inside `content/` keeps its own path (so the scan skips it as a source and no longer matches every item against itself), reads its code items from where it lives (no ENOENT on `content/exams/<set>.json`) and runs in about 13 s (the "over 120 s" reports were the crash path). Test: `tools/test-fresh-check.mjs`. Also lists, as advisory lines that leave exit 0 (a table of critical values is shared on purpose), a set item that shares three or more non-trivial numbers with one lesson screen of its course (`--shared-numbers n`, 0 off; item 614 in the report below).
+605. Done [Must, warning]: `validate.mjs` `[shown-arithmetic]`. A `$...$` span that writes pure arithmetic (`a op b = c`, `\approx c`; `\times`, `/`, `+`, `-`, `^`, brackets, `\frac`) is recomputed with a small parser; it warns when the left side differs from `c` at `c`'s own places (one unit for `\approx`; `6{,}780` counts as three figures). A segment with a letter, `%` or another command is skipped, and a miss over 2% is read as a deliberate wrong claim (a distractor or a slip shown) and skipped. 197 hits in existing content before the 2% rule gave 278; read the arma, garch, coint, alpha, opt-dash ones first. Test: `tools/test-validate-shown-arithmetic.mjs`.
+606. Done [Should]: `numbers_lib.py` reads hyphenated path keys (`feedback.byKey.test-3`), and adds `lv.claim(ok, label, note)`, `lv.claim_text(file, path, phrase, ok, label)` and `lv.stated(file, path, phrase, ok)` (fails only while the false phrase is in the text, so a script exits 0 once the content is fixed). Test: `tools/test-numbers-lib.py`; LEVEL-BRIEF names them.
+607. Done [Should]: a table wider than its column shows a fade on its right edge while more lies to the right (`table` canvas `.cv-tbl-hold`, `table` widget `.wd-tablehold`, the console's cue). Not done: a playthrough check that every editable cell lies inside the viewport at each width (an answer column may still need a scroll; keep it in the first columns).
+608. Done [Should]: lesson control rows (`.lsn-ctl`): the label takes at most 40% of the row and, at 520 px or less, sits above the track.
+609. Done [Should]: `graph` below 440 px caps a `rect` or `pill` node at half the distance to its nearest same-row neighbour less 5 px (never under 20 px), in two passes, so a row of four labelled boxes keeps its edges (alpha l16 `screens[1]` checked at 440 px). Labels wrap or end in an ellipsis inside the box. README-B.
+610. Done [Should]: `[wrong-band]` judges the slip as the learner rounds it: a value whose rounded form lies inside its band is no longer flagged (122 hits to 86).
+611. Done [Could]: `[float-artefact]` also flags a signed zero (`-0.00`, `−0.00`) in prose and in `table` canvas cell text (a table cell was never run through the text checks); a spaced subtraction ("5 - 0.00") is not flagged.
+612. Done [Could]: the start card of a mock whose papers (three or more) each hold one item shows "5 prompts, 11.5 minutes on the clocks" once, with the shared rules, and each paper by its minutes. Test: `test-engine-runtime.mjs`.
+613. Done [Should]: `longform` aloud `think` (seconds of thinking time that run first and start the answer clock by themselves) and `lockAtZero` (the answer clock stops at 0:00 and the button locks); in an exam the help line says "The paper clock ends the sitting" and the maths-in-dollars line is dropped for spoken notes. Test: `test-engine-runtime.mjs`.
+614. Done [Could]: the shared-numbers advisory of 604 (the arma "semantic repeat" bullet).
+615. Done [Should]: `O2-unshuffled-numeric` retired (73 warnings): choice and multi shuffle by default (591), and `[shuffle-false]` judges an explicit `shuffle: false`.
+
+616. Done [Must, protocol 6]: `order` widget `after: { line: [lines it must follow] }` (precedence rules; any topological order is correct, the key is the first line standing before a line it must follow, per-line marks follow the rule). Validator: shape errors, an answer that breaks a rule, a warning when `same` is also set. Tests: `test-engine-runtime.mjs` (2), `test-validate-session-v-b.mjs` (3). The inbox bullet on the review-analysis pass is not in this checkout's inbox (the older bullet on the law of total variance, which asked for the same `after` form, was moved here); the coordinator's copy should drop its bullet.
+
+Closed, landed earlier (the inbox bullet remained after the item landed): Mark my answer for exam longform is 589 and 597; the shuffle default in the runtime is 591; `[shuffled-position]` false positives are 601; `importHint` reading `setup` is 595; per-paper `tracks` is 593; the libc++ hardening mode is 599; code-name comparison in `fresh-check` is 600.
+
+Items 340 to 422 checked against the code and found already done (status only, no change): 343 (AUTHORING now documents `solution`), 347 (README-B: bins are `[lo, hi)`), 348 (number-line prints U+2212), 390 (`compare: "bigO"` on a table cell), 395 and 414 (`__learner_source__` always defined; AUTHORING says so), 399 (see 609), 415 (README-B corrected). All other open items in 340 to 422 and the remaining inbox bullets are deferred (see the report).
+
+Status block (Session V engine pass 7):
+- 616: done.
+- 604: done (test 12 of 12; course sets run in about 13 s). 605: done (warning; test passes). 606: done (test-numbers-lib passes).
+- 607: done (cue only; no viewport check). 608: done. 609: done (screenshot at 440 px). 610: done. 611: done. 612: done. 613: done. 614: done (advisory). 615: done.

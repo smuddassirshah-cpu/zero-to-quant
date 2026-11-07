@@ -69,6 +69,16 @@ put('exams/i.json', { id: 'i', items: [{ id: 'i1', prose: 'Idiom.', widget: code
 r = run(['--exam', 'i']);
 check('a name used in three courses is an idiom, not a hit', r.status === 0, r.stdout);
 
+// Session V pass 7 (604): a course review or homework set inside content/, code items included.
+put('courses/c1/review-1.json', { id: 'review-1', items: [{ id: 'r1', prose: 'A different story about forecasts.', widget: codeW('walk_forward_mse') }, { id: 'r2', prose: setup(14, '0.65'), question: 'What is the expected price change after 9 days?', widget: num(3) }] });
+r = run(['--file', join(root, 'courses/c1/review-1.json')]);
+check('a course review set runs (no ENOENT), reports code name and prose reuse, never itself', r.status === 1 && /code names walk_forward_mse/.test(r.stdout) && /courses\/c1\/review-1\.json:items\[1\]\s+<-\s+courses\/c1\/l1\.json/.test(r.stdout) && !/<-\s+courses\/c1\/review-1/.test(r.stdout), r.stdout + r.stderr);
+put('courses/c1/l7.json', { id: 'l7', screens: [{ type: 'ladder', title: 'Seed', prose: 'A fund starts with 8431.75 pounds, earns 17.32 in fees and pays 905.5 to its manager.', question: 'What remains?', widget: num(1) }] });
+put('courses/c1/review-2.json', { id: 'review-2', items: [{ id: 'q', prose: 'Dealer A quotes 905.5 for a block, a fee of 17.32 applies, and the balance was 8431.75.', question: 'Net?', widget: num(1) }] });
+r = run(['--file', join(root, 'courses/c1/review-2.json'), '--no-code']);
+check('three shared non-trivial numbers with a lesson screen: advisory line, exit 0 (614)', r.status === 0 && /3 shared numbers/.test(r.stdout) && /1 advisory/.test(r.stdout), r.stdout);
+check('--shared-numbers 0 switches it off', !/shared numbers \(/.test(run(['--file', join(root, 'courses/c1/review-2.json'), '--no-code', '--shared-numbers', '0']).stdout));
+
 rmSync(root, { recursive: true, force: true });
 console.log(fails ? `${fails} failed` : 'all passed');
 process.exit(fails ? 1 : 0);

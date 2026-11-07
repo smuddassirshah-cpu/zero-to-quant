@@ -243,7 +243,7 @@ The unit circle.
 
 ## table
 
-An HTML table in the canvas wrapper.
+An HTML table in the canvas wrapper. A table wider than its column (more than six columns, or a phone) scrolls sideways; while more of it lies to the right, a fade on the right edge says so (the `table` widget does the same; ENGINE-BACKLOG 607). Keep the column the question turns on, and every editable cell, in the first columns anyway: a learner may not scroll.
 
 **params**: `columns`, `rows` (2D array; a cell may be text, a number, `{ "text": "..." }`, or `{ "edit": true, "placeholder": "?" }`), `editable: ["r1c1"]` (more editable cells), `align` (`"left" | "right" | "center"` or one per column; default first column left, others right), `rowHeads` (first column as row headers), `tap: "rows"` (tapping any cell selects the whole row, id `r{i}`: "tap the row the query returns first"). `state.dim: [ids]` greys rows, columns or cells (a row a join drops) without blanking them.
 

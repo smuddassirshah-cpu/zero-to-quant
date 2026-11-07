@@ -41,6 +41,18 @@ with contextlib.redirect_stdout(io.StringIO()):
 ok_w = ok_w and any(r[0] for r in real.results)
 if not ok_w:
     sys.exit(1)
+# Session V pass 7 (606): hyphenated keys, public claim, stated.
+with contextlib.redirect_stdout(io.StringIO()):
+    al = Level('alpha', 1)
+    h1 = al.expect('l1', 'screens[6].feedback.byKey.test-1', 60)
+    c1, c2 = al.claim(1 < 2, 'one below two'), al.claim(2 < 1, 'two below one')
+    s_missing = al.stated('l1', 'screens[6].feedback.byKey.test-1', 'a sentence that is not in the text', False)
+    s_false = al.stated('l1', 'screens[6].feedback.byKey.test-1', 'no share has 60 days', False)
+    s_true = al.stated('l1', 'screens[6].feedback.byKey.test-1', 'no share has 60 days', True)
+ok_c = h1 and c1 and not c2 and s_missing and not s_false and s_true
+print(f"{'PASS' if ok_c else 'FAIL'} hyphenated key reads, claim records, stated fails only while the false wording is present")
+if not ok_c:
+    sys.exit(1)
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
     bad = [

@@ -36,8 +36,14 @@
     const groups = Array.isArray(spec.same) && spec.same.length ? (Array.isArray(spec.same[0]) ? spec.same : [spec.same]) : [];
     const gk = (id) => { const k = groups.findIndex(g => g.map(String).includes(String(id))); return k >= 0 ? '\u0000g' + k : id; };
     const sameOrder = (a, b) => a.length === b.length && a.every((id, i) => gk(id) === gk(b[i]));
+    /* ENGINE-BACKLOG 616: after: { "d4": ["d2", "d3"] } is a set of precedence rules: any order in which every listed line comes after the lines it names is
+       correct (a proof whose two independent lemmas may come either way round). The model order in `answer` must satisfy the rules; `same` is ignored when `after` is set. */
+    const after = spec.after && typeof spec.after === 'object' && !Array.isArray(spec.after) ? spec.after : null;
+    const preds = (id) => (after && Array.isArray(after[id]) ? after[id].map(String) : []);
+    const late = (arr, id, i) => preds(id).some(q => { const k = arr.map(String).indexOf(q); return k < 0 || k > i; });   // a named line is missing or comes later
+    const orderOk = (arr) => (after ? arr.length === answer.length && answer.every(id => arr.map(String).includes(String(id))) && !arr.some((id, i) => late(arr, id, i)) : sameOrder(arr, answer));
     let start = Z.widgets.shuffle(dis.size ? lines.map(l => l.id) : answer, ctx.rng || Math.random);
-    if (start.length > 1 && sameOrder(start, answer)) start = start.slice(1).concat(start[0]); // never start solved
+    if (start.length > 1 && orderOk(start)) start = start.slice(1).concat(start[0]); // never start solved
     const el = Z.h(`<div class="wd-order">
       <ol class="wd-lines" role="listbox" aria-label="${Z.esc(spec.label || 'Lines to put in order')}" aria-describedby="">${start.map((id, i) => `
         <li class="wd-line wd-tok" role="option" tabindex="${i === 0 ? 0 : -1}" aria-selected="false" data-id="${Z.esc(id)}">
@@ -189,8 +195,8 @@
       dirty: () => !Z.grade.sameList(ids(), start) || spareItems().length > 0,
       grade() {
         const cur = ids();
-        const ok = sameOrder(cur, answer);
-        let first = cur.find((id, i) => gk(id) !== gk(answer[i])), line;
+        const ok = orderOk(cur);
+        let first = after ? cur.find((id, i) => late(cur, id, i)) : cur.find((id, i) => gk(id) !== gk(answer[i])), line;
         if (!ok && dis.size) {
           const bad = cur.find(id => dis.has(String(id)));
           if (bad != null) { first = bad; line = dline(bad) || 'One of those lines does not belong in the sequence.'; }
@@ -203,7 +209,8 @@
       markGraded(res) {
         strip();
         const mark = (n, ok) => { n.classList.remove('dim'); n.classList.add(ok ? 'ok' : 'bad'); n.querySelector('.wd-line-mark').innerHTML = Z.icon(ok ? 'check' : 'cross'); };
-        items().forEach((n, i) => mark(n, answer[i] != null && !dis.has(n.dataset.id) && gk(n.dataset.id) === gk(answer[i])));
+        const nowIds = items().map(n => n.dataset.id);
+        items().forEach((n, i) => mark(n, after ? answer.map(String).includes(n.dataset.id) && !late(nowIds, n.dataset.id, i) : answer[i] != null && !dis.has(n.dataset.id) && gk(n.dataset.id) === gk(answer[i])));
         spareItems().forEach(n => mark(n, dis.has(n.dataset.id))); // a left-out line is right exactly when it is a distractor
       },
       reveal() { locked = true; strip(); setOrder(answer, true); everyItem().forEach(n => n.classList.add('wd-rev')); list.classList.add('is-locked'); if (spare) spare.classList.add('is-locked'); outBtns(true); },

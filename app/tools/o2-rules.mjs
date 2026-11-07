@@ -1,6 +1,6 @@
 /* PLAN 2c item O2 (ENGINE-BACKLOG 523 to 527): finding classes that recur in docs/reviews/, as validator warnings.
    scanO2(json, emit) walks one parsed content file and calls emit(code, where, msg). Warnings only: they never fail the build. */
-export const O2_CODES = ['O2-long-sentence', 'O2-long-explain', 'O2-unshuffled-numeric', 'O2-no-slip', 'O2-prose-prompt', 'O2-explain-answer'];
+export const O2_CODES = ['O2-long-sentence', 'O2-long-explain', 'O2-no-slip', 'O2-prose-prompt', 'O2-explain-answer'];
 
 const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
 const strip = (s) => String(s).replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ').replace(/\$\$[\s\S]*?\$\$/g, ' ').replace(/\$[^$]*\$/g, ' ');
@@ -74,11 +74,7 @@ export const scanO2 = (json, emit) => {
     }
     if (!w) return;
     const opts = Array.isArray(w.options) ? w.options : [];
-    /* 2: unshuffled interval or ordered numeric choices */
-    if ((w.kind === 'choice' || w.kind === 'multi') && opts.length >= 3 && w.shuffle !== true) {
-      const why = orderedOptionsWhy(opts);
-      if (why) emit('O2-unshuffled-numeric', `${where}.widget`, `${why} without shuffle: true: the key sits at a fixed place`);
-    }
+    /* 2: retired (ENGINE-BACKLOG 615): choice and multi shuffle by default, so ordered numeric options no longer need shuffle: true; [shuffle-false] covers an explicit shuffle: false */
     /* 3: numeric distractors that match no slip */
     const given = [...nums(n.prose), ...nums(n.question), ...nums(n.canvas)];
     if (w.kind === 'choice' && opts.length >= 3) {

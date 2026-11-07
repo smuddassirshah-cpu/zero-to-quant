@@ -42,14 +42,14 @@
     const initLabels = (params.state && params.state.labels) || {};
     const fitR = (list, labels) => Math.round(K.clamp(Math.max(0, ...list.flatMap((n) => String((labels || {})[n.id] ?? n.label ?? n.id).split('\n').map((l) => plainW(l, 14)))) / 2 + 8, 22, 34));
     const r0 = params.nodeRadius || fitR(nodes0, initLabels);
-    let r = r0, padX = r + 26, padY = r + 22, small = false;
+    let r = r0, padX = r + 26, padY = r + 22, small = false, capHw = {};
     /* item 152: a node may carry its own r, and shape: "pill" (a rounded box as wide as its label); edges stop at the rim */
     /* item 117: also shape "rect" (a rounded box sized to the label, multi-line labels too) and "diamond" */
     const widest = (t) => Math.max(...String(t).split('\n').map(l => plainW(l, small ? 12 : 14)));
     const shapeOf = (n, view) => {
-      const rr = n.r || r, lt = labOf(n, view), nl = String(lt).split('\n').length;
-      if (n.shape === 'pill') return { kind: 'pill', pill: true, hw: Math.max(rr, widest(lt) / 2 + 12), hh: Math.max(Math.min(rr, 18), nl * 9 + 4), rr };
-      if (n.shape === 'rect') return { kind: 'rect', pill: true, hw: Math.max(rr, widest(lt) / 2 + 10), hh: Math.max(Math.min(rr, 18), nl * 9 + 6), rr };
+      const rr = n.r || r, lt = labOf(n, view), nl = String(lt).split('\n').length, cap = capHw[n.id] ?? Infinity;
+      if (n.shape === 'pill') return { kind: 'pill', pill: true, hw: Math.min(Math.max(rr, widest(lt) / 2 + 12), cap), hh: Math.max(Math.min(rr, 18), nl * 9 + 4), rr };
+      if (n.shape === 'rect') return { kind: 'rect', pill: true, hw: Math.min(Math.max(rr, widest(lt) / 2 + 10), cap), hh: Math.max(Math.min(rr, 18), nl * 9 + 6), rr };
       if (n.shape === 'diamond') return { kind: 'diamond', pill: false, hw: rr * 1.3, hh: rr * 1.3, rr };
       return { kind: 'circle', pill: false, hw: rr, hh: rr, rr };
     };
@@ -143,7 +143,22 @@
            item 399: below 440px pills and rects size their text at 12px */
         small = W < 440;
         if (!params.nodeRadius) r = Math.max(r0, fitR(view.nodes || [], view.labels));
-        { const ext = (view.nodes || []).filter((n) => !n.gone).map((n) => shapeOf(n, view)); const mw = Math.max(r, ...ext.map((q) => q.hw)), mh = Math.max(14, ...ext.map((q) => q.hh)); padX = mw + 26; padY = mh + 22 + (lat && lat.stepLabels ? 14 : 0); ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY)); }
+        const layoutPad = () => { const ext = (view.nodes || []).filter((n) => !n.gone).map((n) => shapeOf(n, view)); const mw = Math.max(r, ...ext.map((q) => q.hw)), mh = Math.max(14, ...ext.map((q) => q.hh)); padX = mw + 26; padY = mh + 22 + (lat && lat.stepLabels ? 14 : 0); ringR = Math.max(40, Math.min(W / 2 - padX, H / 2 - padY)); };
+        capHw = {}; layoutPad();
+        /* ENGINE-BACKLOG 609: on a phone a row of rect or pill nodes keeps its desktop widths and the boxes touch, so the edges between
+           neighbours vanish. A rect or pill is capped at half the distance to its nearest neighbour in the row, less a 5px gap (never
+           under 20px); its label then wraps or truncates inside the box as it already does. Two passes: the cap moves the padding. */
+        if (small) for (let pass = 0; pass < 2; pass++) {
+          const live0 = (view.nodes || []).filter((n) => !n.gone), sh0 = new Map(live0.map((n) => [n.id, shapeOf(n, view)])), p0 = new Map(live0.map((n) => [n.id, pos(n, view)]));
+          capHw = {};
+          for (const a of live0) {
+            const sa = sh0.get(a.id); if (!sa.pill) continue;
+            let near = Infinity;
+            for (const b of live0) { if (b === a) continue; const [ax, ay] = p0.get(a.id), [bx, by] = p0.get(b.id), sb = sh0.get(b.id); if (Math.abs(ay - by) < sa.hh + sb.hh) near = Math.min(near, Math.abs(ax - bx)); }
+            if (near < Infinity) capHw[a.id] = Math.max(20, near / 2 - 5);
+          }
+          layoutPad();
+        }
         const g = R.F.g, eg = svg('g'), ng = svg('g'), lg = svg('g'); g.append(eg, ng, lg);
         /* lattice step labels along the bottom (t = 0, 1, ...; stepLabels: true or a list) */
         if (lat && lat.stepLabels) { const sl = Array.isArray(lat.stepLabels) ? lat.stepLabels : Array.from({ length: latSteps + 1 }, (_, t) => 't = ' + t); sl.forEach((t, k) => { if (t == null || t === '' || k > latSteps) return; const x = padX + (k / latSteps) * (W - 2 * padX); g.append(String(t).includes('$') ? K.lab(x, H - 12, String(t), { size: 12, cls: 'cvb-muted' }) : K.txt(x, H - 12, String(t), { size: 12, cls: 'cvb-muted' })); }); }
@@ -228,7 +243,7 @@
             o.append(K.txt(vx, vy, K.fmt(p, 3), { size: 12, weight: 600, halo: true, cls: 'cvb-outink', anchor: va }));
           }
           const lt = labOf(n, view);
-          o.append(nodeLabel(x, y, lt, sh.pill ? 2 * hw - 12 : sh.kind === 'diamond' ? hw * 1.1 : 2 * hw - 8));
+          o.append(nodeLabel(x, y, lt, sh.pill ? 2 * hw - (capHw[n.id] != null && hw <= capHw[n.id] ? 6 : 12) : sh.kind === 'diamond' ? hw * 1.1 : 2 * hw - 8));
           /* state.values { id: text }: a value under the node (valueSide moves it), for a lattice's option values */
           if (view.values && view.values[n.id] != null && view.values[n.id] !== '' && !(dist && dist[n.id] != null)) {
             const vs = n.valueSide || (view.valueSide || {})[n.id] || 'below', vt = String(view.values[n.id]);

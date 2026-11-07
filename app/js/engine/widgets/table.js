@@ -29,7 +29,12 @@
         return j === 0 ? `<th scope="row">${t}</th>` : `<td>${t}</td>`;
       }).join('')}</tr>`).join('')}</tbody></table>
       <p class="t-caption wd-accept" hidden></p></div>`);
-    host.append(el);
+    /* ENGINE-BACKLOG 607: a fade on the right edge when the table scrolls sideways at phone width */
+    const hold = document.createElement('div'); hold.className = 'wd-tablehold'; hold.append(el); host.append(hold);
+    const moreCue = () => requestAnimationFrame(() => hold.classList.toggle('has-more', el.scrollWidth > el.clientWidth + 2 && el.scrollLeft + el.clientWidth < el.scrollWidth - 2));
+    el.addEventListener('scroll', moreCue, { passive: true });
+    if (typeof ResizeObserver === 'function') new ResizeObserver(moreCue).observe(el);
+    moreCue();
     const input = (id) => el.querySelector(`[data-cell="${id}"]`);
     const acc = el.querySelector('.wd-accept');
     el.addEventListener('input', () => ctx.change && ctx.change(value()));

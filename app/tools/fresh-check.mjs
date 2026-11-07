@@ -3,10 +3,12 @@
 // copies a lesson screen, quiz, review, homework or other exam item, even with changed numbers.
 // Usage (from app/): node tools/fresh-check.mjs --exam <id> | --drill <id> | --bank <file> | --all-exams
 //                    [--threshold n] [--min-run n] [--min-share x] [--ngram n] [--no-code] [--json] [--content <dir>] [--file <json> [--as exams]]
+//   --file content/courses/<c>/review-1.json (or homework-2.json) checks a course set against everything else, code items included, and
+//   lists as advisory (exit 0) any item sharing three or more non-trivial numbers with one lesson screen of its course (--shared-numbers n, 0 off).
 // Exit 1 on any hit. A hit is a shared word n-gram (default 8 tokens, numbers normalised to "#")
 // or a 5-word shingle Jaccard at or above the threshold (default 0.5).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const argv = process.argv.slice(2);
@@ -70,10 +72,20 @@ const STOP = new Set('what is the of and a an to in on for with that this which 
 const informative = (g) => new Set(g.filter((t) => t !== '#' && !STOP.has(t))).size >= (g.length >= NGRAM ? MIN_WORDS_N : MIN_WORDS);
 function grams(tk, n) { const o = []; for (let i = 0; i + n <= tk.length; i++) { const g = tk.slice(i, i + n); if (!g.includes('|')) o.push(g); } return o; }
 
+// ENGINE-BACKLOG 614: the non-trivial numbers a unit states (a decimal, or an integer over 20 that is not a round stock number), so a set item
+// that reuses a lesson's seed with every sentence reworded still shows. Compared for course sets against lessons of the same course.
+const TRIVIAL = new Set([25, 30, 40, 50, 60, 75, 100, 200, 250, 500, 1000, 10000, 365, 252, 12, 24]);
+function numbersOf(strings) {
+  const s = strings.join(' ').replace(/(?<=\d)(?:,|\{,\})(?=\d{3}(?!\d))/g, '').replace(/```[\s\S]*?```/g, ' ');
+  const out = new Set();
+  for (const m of s.matchAll(/(?<![\w.])\d+(?:\.\d+)?(?![\w])/g)) { const v = Number(m[0]); if (m[0].includes('.') ? true : (v > 20 && !TRIVIAL.has(v))) out.add(String(v)); }
+  return out;
+}
+const SHARED_NUMS = Number(opt('--shared-numbers', 3));
 // Units: one lesson screen / quiz item / review item / homework item / exam item / drill / bank item.
 function unitsOf(file, rel) {
   const d = rd(file), u = [];
-  const add = (path, node) => { const out = []; collect(node, out, false); const tk = tokens(out); if (tk.length) u.push({ file: rel, path, tk }); };
+  const add = (path, node) => { const out = []; collect(node, out, false); const tk = tokens(out); if (tk.length) u.push({ file: rel, path, tk, nums: numbersOf(out) }); };
   if (rel.startsWith('courses/')) {
     (d.screens ?? []).forEach((s, i) => add(`screens[${i}]`, s));
     const qz = Array.isArray(d.quiz) ? d.quiz : d.quiz?.items ?? [];
@@ -160,6 +172,21 @@ function scan(rel, targetUnits, selfId) {
   return hits;
 }
 
+// Shared numbers (614): a course set item with three or more non-trivial numbers in common with one lesson screen of the same course.
+function scanNumbers(rel, targetUnits) {
+  const m = rel.match(/^courses\/([^/]+)\/(?:review|homework)/);
+  if (!m || SHARED_NUMS < 1) return [];
+  const hits = [];
+  for (const t of targetUnits) {
+    if (!t.nums || t.nums.size < SHARED_NUMS) continue;
+    for (const c of corpus) {
+      if (!c.nums || !c.file.startsWith(`courses/${m[1]}/l`)) continue;
+      const shared = [...t.nums].filter((n) => c.nums.has(n));
+      if (shared.length >= SHARED_NUMS) hits.push({ target: `${rel}:${t.path}`, source: `${c.file}:${c.path}`, kind: 'numbers', ngram: shared.slice(0, 6).join(' '), count: shared.length, score: 0 });
+    }
+  }
+  return hits;
+}
 // Code names (ENGINE-BACKLOG 600): function and class names of code widgets in a target (exam, drill or bank
 // item) against every code widget of every lesson, review and homework. A task renamed in prose but with the
 // same function (`walk_forward_mse`, `irls_logistic`, `metropolis`) is a reuse the prose scan cannot see.
@@ -196,8 +223,8 @@ if (!has('--no-code')) {
 }
 // A name used in IDIOM or more courses is a shared helper idiom (daily_returns, run_tests), not a reused task.
 const IDIOM = Number(opt('--idiom', 3));
-function scanCode(rel) {
-  const ws = []; codeWidgets(rd(join(C, rel)), '', ws);
+function scanCode(rel, abs = join(C, rel)) {
+  const ws = []; codeWidgets(rd(abs), '', ws);
   const hits = [];
   for (const w of ws) for (const n of new Set(w.names)) {
     const srcs = (nameIdx.get(n) ?? []).filter((x) => !x.startsWith(rel + ':'));
@@ -211,9 +238,12 @@ function scanCode(rel) {
 const targets = [];
 const direct = opt('--file', null);
 if (direct) {
-  const rel = `${opt('--as', 'exams')}/${direct.split('/').pop()}`;
-  const r = unitsOf(direct, rel);
-  targets.push({ rel, units: r.units, id: r.id });
+  // A file inside the content folder keeps its own path (courses/<c>/review-1.json), so the scan skips it
+  // as a source and reads its code from where it lives. Outside it, --as names the kind (exams, drills, bank).
+  const abs = resolve(direct), inC = relative(resolve(C), abs);
+  const rel = !inC.startsWith('..') && !isAbsolute(inC) ? inC.split(sep).join('/') : `${opt('--as', 'exams')}/${direct.split('/').pop()}`;
+  const r = unitsOf(abs, rel);
+  targets.push({ rel, units: r.units, id: r.id, abs });
 } else if (has('--all-exams')) {
   for (const f of jsonFiles(join(C, 'exams'))) { const rel = `exams/${f}`; targets.push({ rel, units: unitsOf(join(C, rel), rel).units, id: fileIds[rel] }); }
 } else {
@@ -229,14 +259,16 @@ if (direct) {
 }
 // One line per target item and source file: the best hit (an n-gram hit beats a score, then the higher score).
 const best = new Map();
-for (const t of targets) for (const h of [...scan(t.rel, t.units, t.id), ...(has('--no-code') ? [] : scanCode(t.rel))]) {
+for (const t of targets) for (const h of [...scan(t.rel, t.units, t.id), ...scanNumbers(t.rel, t.units), ...(has('--no-code') ? [] : scanCode(t.rel, t.abs))]) {
   const k = `${h.target}|${h.kind === 'code-name' ? 'name:' + h.ngram : h.source.split(':')[0]}`, o = best.get(k);
-  if (!o || (h.kind === 'code-name' && o.kind !== 'code-name') || (h.kind === 'ngram' && o.kind === 'jaccard') || (h.kind === o.kind && (h.run ?? 0) > (o.run ?? 0)) || (h.kind === o.kind && h.run === o.run && h.score > o.score)) best.set(k, h);
+  const RANK = { 'code-name': 4, ngram: 3, jaccard: 2, numbers: 1 };
+  if (!o || RANK[h.kind] > RANK[o.kind] || (h.kind === o.kind && ((h.count ?? 0) > (o.count ?? 0) || (h.run ?? 0) > (o.run ?? 0) || ((h.run ?? 0) === (o.run ?? 0) && h.score > o.score)))) best.set(k, h);
 }
 const all = [...best.values()];
+const hard = all.filter((h) => h.kind !== 'numbers');   // shared numbers are advisory: a table of critical values is shared on purpose
 if (has('--json')) console.log(JSON.stringify(all, null, 1));
 else {
-  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
-  console.log(`${all.length} hit(s) in ${targets.length} target file(s)`);
+  for (const h of all) console.log(`${h.target}  <-  ${h.source}  ${h.kind === 'code-name' ? `code names ${h.ngram}` : h.kind === 'numbers' ? `${h.count} shared numbers (${h.ngram})` : h.kind === 'ngram' ? `ngram "${h.ngram}" run ${h.run}, share ${h.share}, jaccard ${h.score}` : `jaccard ${h.score}`}`);
+  console.log(`${hard.length} hit(s) in ${targets.length} target file(s)${all.length > hard.length ? `, ${all.length - hard.length} advisory (shared numbers: read them, they may be a shared table of constants)` : ''}`);
 }
-process.exitCode = all.length ? 1 : 0;   // not process.exit: piped output must flush
+process.exitCode = hard.length ? 1 : 0;   // not process.exit: piped output must flush

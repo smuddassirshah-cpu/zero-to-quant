@@ -540,6 +540,7 @@ Sampling: each curve starts with 180 to 240 samples, is subdivided where the ima
 
 **Integration pass 7 additions**
 - Edges are undirected unless `directed` is set (the line above used to say otherwise); flowcharts and pipelines need `params.directed: true`.
+- Below 440 px (ENGINE-BACKLOG 609) a `rect` or `pill` node is capped at half the distance to its nearest neighbour in the same row, less 5 px (never under 20 px), so a row of four labelled boxes keeps the edges between them; the label then wraps or ends in an ellipsis inside the box, so keep labels short (about eight characters a node for a row of four).
 - The circle radius follows labels set later (`state.labels`) as well as the opening ones; the frame padding follows the nodes' own sizes, so rect and pill nodes neither waste the frame nor run off it; below 440px pill and rect labels are set at 12px.
 - Edge labels may hold KaTeX (`"label": "$\\lambda$"`).
 - `state.pointers: { "slow": "n2", "fast": { "at": "n4", "side": "below" } }` (or a list of `{ id, at, label, side }`) draws a labelled arrow onto a node; several on one node stack; a patch moves them (linked lists without re-pointing pills).

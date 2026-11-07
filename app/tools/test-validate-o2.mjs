@@ -19,5 +19,12 @@ for (const code of O2_CODES) {
   if (ok.length) problems.push(`ok fixture raised ${ok.map(h => h.code).join(', ')}`);
   if (problems.length) { console.log(`FAIL ${code}: ${problems.join('; ')}`); fail++; } else { console.log(`PASS ${code}`); pass++; }
 }
+/* ENGINE-BACKLOG 615: O2-unshuffled-numeric is retired; ordered numeric options with shuffle: false, absent or true raise no O2 code */
+const retired = path.join(dir, 'O2-unshuffled-numeric.json');
+if (fs.existsSync(retired)) {
+  const fx = JSON.parse(fs.readFileSync(retired, 'utf8'));
+  const raised = [...run(fx.bad), ...run(fx.ok)].filter(h => h.code === 'O2-unshuffled-numeric');
+  if (raised.length) { console.log('FAIL O2-unshuffled-numeric still raised (retired)'); fail++; } else { console.log('PASS O2-unshuffled-numeric retired: ordered numeric options raise nothing'); pass++; }
+}
 console.log(`O2 rules: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

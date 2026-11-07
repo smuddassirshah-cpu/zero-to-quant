@@ -67,6 +67,59 @@ const EMOJI = { test: (s) => EMOJI_RAW.test(String(s).replace(TOKEN_SYMBOLS, '')
 /* ---------- Text helpers ---------- */
 const stripMathsAndCode = (s) => String(s).replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ').replace(/\$\$[\s\S]*?\$\$/g, ' ').replace(/\$[^$]*\$/g, ' ');
 const words = (s) => stripMathsAndCode(s).split(/\s+/).filter(w => /[A-Za-z0-9]/.test(w)).length;
+
+/* Session V pass 7 (item 605): [shown-arithmetic]. A maths span that writes "number op number = number" (op x, /, +, -, ^, brackets, \frac) is
+   recomputed. The stated result must be the left side at the result's own decimal places (for \approx, within one unit of its last digit).
+   Three readers found sums and products worked on rounded inputs that print the unrounded result (coint 0.9956, opt-dash 3.05 against 3.07).
+   Any letter, command or % in a segment skips it, so only pure arithmetic is judged; a miss over 2% is read as a deliberate wrong claim and skipped. Warning only. */
+const arithTokens = (seg) => {
+  let t = seg.replace(/\\left|\\right|\\,|\\;|\\!|\\ /g, ' ').replace(/\{,\}/g, '');
+  t = t.replace(/\\times|\\cdot/g, '*').replace(/\\div/g, '/').replace(/[−–]/g, '-').replace(/×/g, '*');
+  for (let k = 0; k < 4; k++) t = t.replace(/\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/g, '(($1)/($2))');
+  t = t.replace(/\^\s*\{([^{}]*)\}/g, '^($1)').replace(/\{/g, '(').replace(/\}/g, ')');
+  if (/[A-Za-z\\%£$&_]/.test(t)) return null;
+  return t.replace(/\s+/g, '');
+};
+const arithEval = (t) => {
+  let i = 0;
+  const peek = () => t[i];
+  const num = () => { const m = t.slice(i).match(/^\d+(?:\.\d+)?|^\.\d+/); if (!m) throw 0; i += m[0].length; return +m[0]; };
+  const atom = () => {
+    if (peek() === '(') { i++; const v = add(); if (peek() !== ')') throw 0; i++; return v; }
+    if (peek() === '-') { i++; return -pow(); }
+    return num();
+  };
+  const pow = () => { const b = atom(); if (peek() === '^') { i++; const e = peek() === '-' ? (i++, -atom()) : atom(); return Math.pow(b, e); } return b; };
+  const mul = () => { let v = pow(); while (peek() === '*' || peek() === '/') { const o = t[i++]; const r = pow(); v = o === '*' ? v * r : v / r; } return v; };
+  const add = () => { let v = mul(); while (peek() === '+' || peek() === '-') { const o = t[i++]; const r = mul(); v = o === '+' ? v + r : v - r; } return v; };
+  const v = add();
+  if (i !== t.length || !Number.isFinite(v)) throw 0;
+  return v;
+};
+const shownArithmetic = (file, where, noCode) => {
+  for (const m of noCode.match(/\$\$[\s\S]*?\$\$|\$[^$]*\$/g) || []) {
+    const body = m.replace(/^\$+|\$+$/g, '');
+    const parts = body.split(/(=|\\approx|\\simeq)/);
+    for (let k = 0; k + 2 < parts.length; k += 2) {
+      const lt = arithTokens(parts[k]), rt = arithTokens(parts[k + 2]), approx = parts[k + 1] !== '=';
+      if (lt == null || rt == null || !/^-?\d+(?:\.\d+)?$/.test(rt) || !/\d[-+*/^]|\)[-+*/^(]|\)\(/.test(lt) || /^-?\d+(?:\.\d+)?$/.test(lt)) continue;
+      let lv; try { lv = arithEval(lt); } catch { continue; }
+      const dp = (rt.split('.')[1] || '').length, tz = !dp && approx ? (rt.match(/0+$/) || [''])[0].length : 0, unit = Math.pow(10, tz - dp), c = +rt;   // \approx 6{,}780 is three figures
+      if (Math.abs(lv - c) > 0.02 * Math.max(Math.abs(c), unit)) continue;   // a wide miss is a deliberate wrong claim (a distractor, a slip shown), not rounding drift
+      if (Math.abs(lv) >= 1e15 || Math.abs(lv - c) <= unit * (approx ? 1 : 0.5) + 1e-9 * Math.max(1, Math.abs(c))) continue;
+      warn(file, where, `[shown-arithmetic] "${parts[k].trim()} ${approx ? '\\approx' : '='} ${parts[k + 2].trim()}": the left side works out to ${+lv.toPrecision(7)}, not ${rt}; recompute from the numbers as printed, or print the unrounded inputs`);
+      return;
+    }
+  }
+};
+/* Session V: float artefacts (and, ENGINE-BACKLOG 611, a signed zero) in shown text */
+const floatArtefacts = (file, where, noCode) => {
+  const art = noCode.match(/(?<![\d.])\d*\.\d*(?:0{7,}|9{7,})\d{0,3}(?!\d)/);
+  if (art) warn(file, where, `[float-artefact] "${art[0]}" is a floating-point artefact; round it to the digits that mean something`);
+  /* ENGINE-BACKLOG 611: a signed zero ("-0.00", a rounded -0.0042) is a rounding artefact: write 0.00 */
+  const sz = noCode.match(/(?<![\d.])[-\u2212]0\.0+(?!\d)/);
+  if (sz) warn(file, where, `[float-artefact] "${sz[0]}" is a signed zero from rounding a small negative number; write ${sz[0].replace(/^[-\u2212]/, '')} (or say it is slightly negative)`);
+};
 /* Copy rules (rule 8) and KaTeX (rule 9) on one text field */
 const checkText = (file, where, s, { copy = true } = {}) => {
   if (typeof s !== 'string') return;
@@ -85,13 +138,13 @@ const checkText = (file, where, s, { copy = true } = {}) => {
   if (/[\b\f\v\r\t]/.test(s)) err(file, where, 'control character in text: a KaTeX backslash was not escaped in the JSON (write \\\\frac, not \\frac)');
   const maths = noCode.match(/\$[^$]*\$/g) || [];
   /* Session V: float artefacts in shown text, and a thousands comma inside maths (KaTeX spaces it as a list separator: write 10{,}000) */
-  const art = noCode.match(/(?<![\d.])\d*\.\d*(?:0{7,}|9{7,})\d{0,3}(?!\d)/);
-  if (art) warn(file, where, `[float-artefact] "${art[0]}" is a floating-point artefact; round it to the digits that mean something`);
+  floatArtefacts(file, where, noCode);
   for (const m of noCode.match(/\$\$[\s\S]*?\$\$|\$[^$]*\$/g) || []) {
     const c = m.match(/(?<![\d.,{])(?<open>[(\[{]?)\d{1,3}(?:,\d{3})+(?![\d]|,\d)(?!\d)/g) || [];
     const bad = c.find(x => !/^[(\[{]/.test(x) || /,\d{3},\d{3}/.test(x));
     if (bad) { warn(file, where, `[math-thousands-comma] "${bad}" inside maths: KaTeX puts a space after the comma; write ${bad.replace(/,/g, '{,}')} (or no separator)`); break; }
   }
+  shownArithmetic(file, where, noCode);
   if (maths.some(m => /\n[a-z]/.test(m))) err(file, where, 'newline inside maths: write \\\\neq, \\\\nu, \\\\nabla with a doubled backslash in JSON');
 };
 
@@ -154,6 +207,9 @@ const wrongBandNarrow = (file, where, w, ctx) => {
     if (!isObj(x) || typeof x.value !== 'number' || !Number.isFinite(x.value)) return;
     if (decimalsOf(x.value) <= d + (scale === 100 ? 2 : 0)) return;
     const hw = halfWidth(x.value, x.tol ?? { abs: 1e-9 });
+    /* ENGINE-BACKLOG 610: judge the slip as a learner rounds it: the value at the asked places must sit outside the band, else it still fires */
+    const step = Math.pow(10, -d) / scale, rounded = Math.round(x.value / step) * step;
+    if (Math.abs(rounded - x.value) <= hw + 1e-12) return;
     if (hw < half * 0.999) warn(file, `${where}.wrong[${i}]`, `[wrong-band] wrong "${x.id || i}" (${x.value}, band +-${+hw.toPrecision(3)}) is narrower than the rounding the question asks for (${d} decimal place${d === 1 ? '' : 's'}, +-${+half.toPrecision(3)}), so a learner who rounds this slip as asked misses it; widen its tol or give the value at the asked rounding`);
   });
 };
@@ -675,6 +731,20 @@ const checkWidget = (file, where, w, canvas, ctx = {}) => {
       }
       if (!Array.isArray(a) || a.length !== lines.size - dis.length || new Set(a).size !== a.length || a.some(x => !lines.has(x) || dis.includes(x))) err(file, `${where}.answer`, dis.length ? 'answer must be a permutation of the line ids that are not distractors' : 'answer must be a permutation of the line ids');
       (w.lines || []).forEach((l, i) => text(l.text, `${where}.lines[${i}].text`));
+      /* ENGINE-BACKLOG 616: after: { "line": ["earlier lines it must follow"] } */
+      if (w.after != null) {
+        if (!isObj(w.after) || !Object.keys(w.after).length) err(file, `${where}.after`, 'after is an object { lineId: [ids of lines that must come before it] }');
+        else {
+          for (const [k, v] of Object.entries(w.after)) {
+            if (!lines.has(k) || dis.includes(k) || !Array.isArray(v) || !v.length || v.some(x => !lines.has(x) || dis.includes(x) || x === k)) err(file, `${where}.after.${k}`, 'a rule names a line (not a distractor) and a non-empty list of other lines (not distractors) that must come before it');
+          }
+          if (Array.isArray(a) && Object.entries(w.after).every(([k, v]) => Array.isArray(v))) {
+            const bad = Object.entries(w.after).find(([k, v]) => a.indexOf(k) >= 0 && v.some(x => a.indexOf(x) > a.indexOf(k)));
+            if (bad) err(file, `${where}.answer`, `the answer order breaks the after rule for "${bad[0]}": it must follow ${bad[1].join(', ')}`);
+          }
+          if (w.same != null) warn(file, `${where}.same`, 'same is ignored when after is set');
+        }
+      }
       if (w.same != null) { const gs = Array.isArray(w.same) && w.same.length && Array.isArray(w.same[0]) ? w.same : [w.same]; gs.forEach((g, i) => { if (!Array.isArray(g) || g.length < 2 || g.some(x => !lines.has(x))) err(file, `${where}.same[${i}]`, 'each same group lists two or more line ids'); }); }
       break;
     }
@@ -888,6 +958,9 @@ const checkCanvas = (file, where, c) => {
     if (c.active != null && !['left', 'right'].includes(c.active)) err(file, `${where}.active`, 'active is "left" or "right"');
   }
   if (!CANVASES.has(c.kind)) err(file, `${where}.kind`, `unknown canvas kind "${c.kind}"`);
+  if (c.kind === 'table' && isObj(c.params)) {   // ENGINE-BACKLOG 611: shown cells get the artefact checks (a table cell is not run through checkText)
+    (Array.isArray(c.params.rows) ? c.params.rows : []).forEach((r, i) => (Array.isArray(r) ? r : []).forEach((v, j) => { const t = typeof v === 'string' ? v : isObj(v) && typeof v.text === 'string' ? v.text : null; if (t) floatArtefacts(file, `${where}.params.rows[${i}][${j}]`, t); }));
+  }
   if (c.params != null && !isObj(c.params)) err(file, `${where}.params`, 'must be an object');
   if (c.state != null && !isObj(c.state)) err(file, `${where}.state`, 'must be an object');
   /* pass 3 canvas options (items 89 to 107): shapes only, never a crash */
