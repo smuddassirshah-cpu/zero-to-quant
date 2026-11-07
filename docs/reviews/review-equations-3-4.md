@@ -111,3 +111,38 @@ Not-yet-taught check (GCSE-entry learner): negative-number arithmetic, multiplyi
 2. Validator `wrong-band` (homework-3 `items[6]`): false positive when the question asks for an integer and the wrong entry is the unrounded boundary (−1.43), while another wrong entry (`rounded`, −1) already holds the rounded slip. Proposed: skip the rule when another `wrong[]` value equals the flagged value rounded as asked.
 3. Number-line canvas: custom `params.labels` text that starts with "-" prints a hyphen, while the table canvas prints U+2212 for the same text (canvas README, table). Proposed: apply the table's minus conversion to number-line label text. Content is fixed by hand in finding 20 meanwhile.
 4. `numbers_lib`: a `Level` reads only its own level, so a cross-level continuity check (l13 against l9 here) needs raw `json.load`. Proposed: `lv.other("l9-story-to-equation", path)` or a `Level` that accepts "L2:l9" as a file reference.
+
+## Fix pass
+
+Status per finding (27 fixed, 0 disputed, 1 partly deferred). Every new number was recomputed and is checked in `equations-L3-numbers.py` or `-L4-numbers.py`. Graded answers changed: l13 `screens[4]` (400 to 300, with its wrong values 141.18 to 126.32 and 85.71 to 80); review-3 `items[2]`, `[4]`, `[6]`, review-4 `items[3]`, `[6]`, `[7]` (replaced items, new keys and wrong values); no other key moved.
+
+1. fixed: l10 `screens[1]` key now "Every number above 3, too many to list" (38 characters against 27).
+2. fixed: l10 `screens[6].prose`, as specified.
+3. fixed: the three summary formulas use "means" and "rearranges to"; no $\iff$ remains.
+4. fixed: "integer" defined in l10 `screens[4]` and used in l12 `quiz[1]`, review-3 `items[3]`, homework-3 `items[6]` (question, label, feedback, explain). Basis: GCSE papers ask for "integers" (DfE GCSE maths subject content, number, N1).
+5. fixed: l11 `screens[6]` `half` why. -2 / -2 = 1; -2 x -2 = 4.
+6. fixed: l11 `screens[6]` `neg` why. -2 x 2 = -4.
+7. fixed: l11 `quiz[3]` `kept` line; largest integer below 2 is 1.
+8. fixed: l11 `screens[8].prose` now "the P&L must be no worse than".
+9. fixed: l12 `summary.ideas[2]`. Counter-case a = -2.5, b = 3: six integers, b - a = 5.5.
+10. fixed: l12 `screens[8]` hint, explain, accept and `not-whole`; 4200 / 450 = 28/3 = 9 1/3. The wrong value 9.33 is kept.
+11. fixed: l13 `screens[0].explain.text` no longer bolds substituting.
+12. fixed: l13 `screens[4]` rebuilt on p = £9.50: margin £4.00, break-even 1200 / 4 = 300; table -800, -400, 800; wrong 126.32, 218.18, 80. The L3 script now checks the item differs from l9's strategy screen (its index is `screens[7]`, not `[6]` as the review said).
+13. fixed: l13 `quiz[3]` option `d` why.
+14. fixed: l15 `screens[5]` hint and explain. Basis: zero-product property, a product of real numbers is 0 only if a factor is 0 (no zero divisors in the reals).
+15. fixed: l16 `screens[4].feedback.byKey.steep`; 2x + 1 = 4x + 4 gives x = -1.5.
+16. fixed: every "slope" in the course is now "gradient" or "intercept" as listed (grep for "slope" over equations returns none). The optional `course.json` `requires` for equations L4 is for the orchestrator.
+17. fixed: l16 `screens[6]` key now "Every point on the line solves both" (35 characters against 27).
+18. partly fixed: content part applied (l16 `screens[8].question` tells the learner to type only what $n$ equals). No `n=...` accept form added. Engine part deferred: the expression grader (Engine finding 1 of this review).
+19. fixed: l17 `screens[0]` `n3` line.
+20. fixed: l11 `screens[3]` and l12 `screens[7]` label texts use U+2212.
+21. fixed: seven explanations cut to three sentences; sums rechecked (l14 8x = 32, y = 2; l17 14 and 16, x = 100 and y = 200, y = 8; homework-4 y = 130, 108 against 105, x = 1040 and y = 520). Voice scan: 0 and 0.
+22. fixed: the three explanations now state 5, 2.5 and 4.
+23. fixed: review-3 `items[2]`, `[4]`, `[6]` replaced whole (perimeter w = 4 at P = 20, l = 6; rebate v > 2000; bond 2 <= y <= 5).
+24. fixed: review-3 `items[5]` prose and question; 45.60 / 0.95 = 48.
+25. fixed: review-4 `items[2]` question and option texts (ids kept).
+26. fixed: review-4 `items[2].explain.text`; 4x + 2(-2x + 3) = 6 for every x, and -2x + 3 = -2x + 5 gives 3 = 5.
+27. fixed: review-4 `items[3]` (y = 9), `[6]` (d = 15, both £425.00), `[7]` (a = 5.5, b = 2) replaced whole.
+28. fixed: homework-4 `items[4]` prose and question.
+
+Gates: number scripts L1 to L4 exit 0 (242, 368, 244, 220 checks); voice scan 0 sentences over 35 words and 0 explanations over three sentences; validator 0 errors. Playthrough: 24 of 24 "All passed" (l10 to l17, review-3, review-4, homework-3, homework-4; desktop and mobile; local CDN; no reruns).
