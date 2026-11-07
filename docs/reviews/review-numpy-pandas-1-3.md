@@ -103,3 +103,43 @@ The prerequisite `py-found` L2 ends on list aliasing (`l8-who-changes-the-list`)
 - Table canvas: at 440 px, row-head ISO dates wrap at the hyphen once a table has five or more columns (l10 `screens[5]`, l11 `screens[3]` and `screens[8]`), and a sixth column scrolls out of view. `white-space: nowrap` on row-head cells would keep each date whole. Finding 25 is the content-side fix.
 - Version watch: the content asserts pandas 2.2.3 behaviour in the places listed under Version notes. On any Pyodide upgrade, rerun the three numpy-pandas number scripts and the 45 code widgets under the new versions.
 - Verifying printed output: executing each "What does it print" snippet found an option in an impossible format (finding 14) and a distractor that prints the key's output (finding 7), neither of which a playthrough answering by the key can see. The `prints()` helper in `docs/reports/numpy-pandas-L1-numbers.py` could move into `numbers_lib` as `lv.prints(file, path, code)`. This supports the py-found L1 to L2 inbox bullet on `"verify": "stdout"`.
+
+## Fix pass
+
+Status per finding (30 fixed, 0 disputed, 0 deferred). Every corrected number was recomputed in pandas 2.2.3 and by hand before it was written.
+
+1. fixed: l2 `screens[8]` `test-1` now says 180, 210, 210 (column sums 180, 30, 0, then `cumsum`).
+2. fixed: l4 `screens[8]` `test-1` says about 15%: $\sqrt{4/3} - 1 = 0.1547$.
+3. fixed: l5 `screens[10].explain.text` cites 1.05 * 7, whose repr is 7.3500000000000005, but in words, so the validator's `float-artefact` warning stays clear.
+4. fixed: l10 `screens[0]` hint and `why`: on 10 April the mean moves $(12.70 - 12.48)/3 = 0.0733$, the price 0.26.
+5. fixed: homework-3 `items[4]` `mean` slip is 0.0234 ($51.886 / 50.70 - 1 = 0.02339$); `byKey.mean` names 50.70 and 51.886.
+6. fixed: l13 `screens[10]`: closes correlate at 0.6886 (AZN, BARC), returns at 0.6038; explain says 0.60.
+7. fixed: l6 `quiz[2]` closes are now 12.40, 12.25, 12.55, 12.18, 12.31; `first` prints `[12.4, 12.25]` (Python's repr, matching the `largest` option's style), so all four options print different lists (checked).
+8. fixed: l9 `quiz[2]` neg `why`: $-(12.62/12.44 - 1) = -0.014469$, true move $12.44/12.62 - 1 = -0.014263$.
+9. fixed: l11 `screens[4]` `first`: 0.0108 is $12.18/12.05 - 1$, so it stops at 12.18.
+10. fixed: review-3 `items[2]` `three`: $(11+13+14)/3 = 12.6667$.
+11. fixed. Basis: Python data model, sequence repetition accepts only integers; `[1.0] * 'a'` and `* None` raise `TypeError` (run in the L1 script). Wording now "would raise".
+12. fixed: l11 `screens[7]` `test-1`: means are 12.135 and 12.285.
+13. fixed. Basis: pandas user guide, label slices include both ends; l5 `screens[5]` slices text labels the same way (the lesson runs).
+14. fixed: option now `[95 45 -5]`, checked against `print(np.array([95, 45, -5]))`.
+15. fixed. Basis: NumPy `sum` uses pairwise summation, `cumsum` is sequential; `default_rng(0).random(1000)` gives 516.9063382672535 against 516.9063382672537 (run).
+16. fixed: all eight key texts shortened or distractors lengthened; l8 `screens[4]` key is `0`. `key-length` warnings: 0. The l3 `one` distractor is `[False  True  True False  True False  True]`, which is `returns <= 0` (checked, flat day is 0.0).
+17. fixed: l1 `screens[5].explain.text`.
+18. fixed: "per cent".
+19. fixed: "shaded".
+20. fixed: l3 `screens[7]` code now uses `returns`.
+21. fixed: l9 `screens[9].explain.text`; $\ln(54.45/50) = 0.0853$.
+22. fixed: l10 `screens[5].explain.text` is three sentences.
+23. fixed: homework-3 `items[1].explain.text` is three sentences.
+24. fixed: homework-3 `items[0].prose` has no sentence over 35 words.
+25. fixed: l11 `screens[3]` and `screens[8]` row heads are "30 Jan" style (13 cells); replayed at `--mobile`, green.
+26. fixed: review-1 `items[9]` matrix as specified: column counts `[3 2 2]`, key 2, `flat` 3, `row` 1, `total` 7 (all recomputed).
+27. fixed: review-3 `items[0]` uses 20.00, 21.00, 23.10; the four options print four distinct lists (checked).
+28. fixed: review-3 `items[1]` is +20% then −20%: $1.2 \times 0.8 - 1 = -0.04$, `prod` 0.96, `sum` 0.
+29. fixed: homework-3 `items[0]` example is the new 50.10 series: monthly `[0.018072, 0.024655]`, `ann_vol` 0.1558 (solution passes it in CPython; starter fails all 4 tests).
+30. fixed (orchestrator, commit efd1820); course.json not touched.
+
+Version notes: l8 `screens[4]` still says `SettingWithCopyWarning`, which pandas 2.2.3 raises (the L2 script checks it, with the key text now `0`). `"ME"` and `pct_change` behaviour were not changed.
+
+Gates (pandas 2.2.3, NumPy 2.0.2): L1 289 of 289, L2 223 of 223, L3 279 of 279, all exit 0. Voice scan 35: 0 sentences, 0 explanations. Validator: 0 errors.
+Playthrough (--local-cdn): 15 changed files (11 lessons, 4 sets), desktop and --mobile, 30 of 30 runs All passed.

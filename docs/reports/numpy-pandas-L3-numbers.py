@@ -93,6 +93,9 @@ E('l9', 'quiz[1].widget.wrong[0].value', 55 / 50 - 1)
 C(all(math.log(1 + x) < x for x in (0.001, 0.1, 0.5)), 'l9 quiz[1] explain: a log return is below the simple return on a rise')
 # quiz[2] neg why compares the backwards 7 March value with minus 7 March's true return; the sign flip on a newest-first
 # frame should be compared with the true return of the later day, 8 March
+C(round(-(12.62 / 12.44 - 1), 6) == -0.014469 and round(12.44 / 12.62 - 1, 6) == -0.014263, 'l9 quiz[2] neg why: -0.014469 flipped, -0.014263 true')
+E('l9', 'quiz[2].widget.options[3].why', '−0.014469')
+E('l9', 'quiz[2].widget.options[3].why', '12.44 / 12.62 − 1 = −0.014263')
 lv.claim_text('l9', 'quiz[2].widget.options[3].why', '12.62 / 12.44 − 1 is not −(12.62 / 12.48 − 1)', False,
               'l9 quiz[2] neg why: compares two unrelated numbers; the flipped value on 7 March is '
               f'{-(12.62 / 12.44 - 1):.6f}, 8 March\'s true return is {12.44 / 12.62 - 1:.6f}')
@@ -116,6 +119,9 @@ lv.claim_text('l10', 'screens[0].hints[1].text', 'only moves a third as far as t
               f'l10 screens[0] hint: on 9 April the price moves {dp.loc["2024-04-09"]:+.2f} and the mean {dm.loc["2024-04-09"]:+.4f}')
 lv.claim_text('l10', 'screens[0].widget.options[2].why', 'the mean moves by a third of it', abs(dm.loc['2024-04-10'] - dp.loc['2024-04-10'] / 3) < 0.005,
               f'l10 screens[0] same why: on 10 April the price jumps {dp.loc["2024-04-10"]:.2f}, the mean {dm.loc["2024-04-10"]:.4f}, not a third ({dp.loc["2024-04-10"] / 3:.4f})')
+E('l10', 'screens[0].hints[1].text', '(new close − dropped close) / 3')
+C(abs(dm.loc['2024-04-10'] - (12.70 - 12.48) / 3) < 1e-9 and round(float(dm.loc['2024-04-10']), 2) == 0.07 and round(float(dp.loc['2024-04-10']), 2) == 0.26, 'l10 screens[0] why: on 10 April the price jumps 0.26 and the mean moves 0.07')
+E('l10', 'screens[0].widget.options[2].why', 'the price jumps 0.26, but the mean moves only 0.07')
 ma5 = c12.rolling(5).mean()
 E('l10', 'screens[2].widget.answer', int(ma5.isna().sum()))
 can5 = lv.files['l10-rolling']['screens'][2]['canvas']['params']['series'][1]['values']
@@ -182,6 +188,10 @@ fv = lv.files['l11-daily-to-monthly']['screens'][4]['widget']['wrong'][1]['value
 two('first slip value', fv, round(12.18 / 12.05 - 1, 4))
 lv.claim_text('l11', 'screens[4].feedback.byKey.first', 'You started from February\'s first close', abs(fv - (12.25 / 12.18 - 1)) < 6e-5,
               f'l11 screens[4] byKey.first: 0.0108 ends at February\'s first close; starting from it gives {12.25 / 12.18 - 1:.4f}')
+C(round(12.18 / 12.05 - 1, 4) == 0.0108 and round(12.25 / 12.18 - 1, 4) == 0.0057, 'l11 screens[4] byKey first: 0.0108 ends at 12.18; starting from 12.18 gives 0.0057')
+E('l11', 'screens[4].feedback.byKey.first', "You stopped at February's first close, 12.18")
+E('l11', 'screens[7].feedback.byKey.test-1', '12.135 or 12.285 means `mean`')
+C(np.allclose(mm.iloc[:2].to_numpy(), [12.135, 12.285]), 'l11 screens[7] byKey test-1: monthly means 12.135 and 12.285')
 C(c9.resample('ME').last().notna().sum() == 3, 'l11 screens[5] analogue')
 s5 = pd.Series([10.00, 11.00], index=pd.to_datetime(['2024-01-31', '2024-03-28'])).resample('ME').last()
 C(len(s5) == 3 and pd.isna(s5.iloc[1]), 'l11 screens[5]: three rows, NaN for February')
@@ -276,6 +286,10 @@ lv.claim_text('l13', 'screens[10].feedback.byKey.test-1', 'near 0.9 or above for
               f'l13 screens[10] byKey test-1: correlating test 1\'s closes gives {[round(x, 4) for x in offd]}, not near 0.9')
 lv.claim_text('l13', 'screens[10].explain.text', 'prices of almost any two stocks look correlated', all(x >= 0.85 for x in offd),
               'l13 screens[10] explain: on this test the price correlations are 0.69, -0.31 and -0.15')
+E('l13', 'screens[10].feedback.byKey.test-1', 'AZN and BARC at 0.6038')
+E('l13', 'screens[10].feedback.byKey.test-1', '0.6886')
+C(round(float(rc.loc['AZN', 'BARC']), 4) == 0.6038 and round(float(pcor.loc['AZN', 'BARC']), 4) == 0.6886, 'l13 screens[10] byKey test-1: returns 0.6038, closes 0.6886')
+E('l13', 'screens[10].explain.text', 'AZN and BARC move together, 0.60')
 E('l13', 'screens[8].widget.examples[0].expect', 500 * 12.70)
 E('l13', 'screens[8].feedback.byKey.test-2', 100 * 38.70)
 E('l13', 'screens[8].feedback.byKey.test-2', 400 * 12.70)
@@ -286,14 +300,28 @@ C(len(pd.merge(a7, b7, on='date', how='outer')) == 5 and len(pd.merge(a7, b7, on
 C(list(pd.merge(ny, lon, on='date').columns) == ['date', 'close_x', 'close_y'], 'l13 quiz[3]: date, close_x, close_y')
 
 # ---------------------------------------------------------------- review-3
-prints('review', 'items[0].widget.options[0].text', 's = pd.Series([10.00, 11.00, 12.10])\nprint(s.shift(-1).tolist())')
-prints('review', 'items[1].widget.answer', 'r = pd.Series([0.10, -0.10])\nprint(round((1 + r).prod() - 1, 4))', want='-0.01')
+S27 = 's = pd.Series([20.00, 21.00, 23.10])\n'
+E('review', 'items[0].prose', 's = pd.Series([20.00, 21.00, 23.10])')
+prints('review', 'items[0].widget.options[0].text', S27 + 'print(s.shift(-1).tolist())')
+prints('review', 'items[0].widget.options[1].text', S27 + 'print(s.shift(1).tolist())', 'review-3 items[0] down option is shift(1)')
+prints('review', 'items[0].widget.options[2].text', S27 + 'print(s.shift(-1).dropna().tolist())', 'review-3 items[0] short option drops the NaN')
+prints('review', 'items[0].widget.options[3].text', S27 + 'print(s.shift(0).tolist())', 'review-3 items[0] same option is shift(0)')
+prints('review', 'items[1].widget.answer', 'r = pd.Series([0.20, -0.20])\nprint(round((1 + r).prod() - 1, 4))', want='-0.04')
+E('review', 'items[1].prose', 'r = pd.Series([0.20, -0.20])')
+E('review', 'items[1].prose', '+20% then −20%')
+two('1.2 x 0.8 - 1', float((1 + pd.Series([0.20, -0.20])).prod() - 1), 1.2 * 0.8 - 1)
+E('review', 'items[1].widget.wrong[0].value', round(0.20 - 0.20, 4))
+E('review', 'items[1].widget.wrong[1].value', round(1.2 * 0.8, 4))
+E('review', 'items[1].widget.accept', '1.2 × 0.8 − 1')
+E('review', 'items[1].feedback.byKey.prod', '0.96 is the growth factor')
 s4 = pd.Series([10.0, 12.0, 11.0, 13.0, 14.0])
 E('review', 'items[2].widget.answer', float(s4.rolling(4).mean().iloc[-1]))
 E('review', 'items[2].widget.wrong[0].value', float(s4.mean()))
 E('review', 'items[2].widget.wrong[1].value', float(s4.rolling(4).mean().iloc[3]))
 tv = lv.files['review-3']['items'][2]['widget']['wrong'][2]['value']
 two('three slip is the mean of the last three', tv, round(float(s4.iloc[-3:].mean()), 4))
+E('review', 'items[2].feedback.byKey.three', 'the mean of the last three values')
+C(round((11 + 13 + 14) / 3, 4) == tv and round(float(s4.iloc[1:4].mean()), 4) == 12.0, 'review-3 items[2] byKey three: last three average 12.6667, the three before the last average 12')
 lv.claim_text('review', 'items[2].feedback.byKey.three', 'the three before the last', abs(tv - float(s4.iloc[1:4].mean())) < 6e-4,
               f'review-3 items[2] byKey three: {tv} is the mean of the last three (11, 13, 14); the three before the last average {s4.iloc[1:4].mean()}')
 C(int(pd.Series(np.arange(1.0, 253.0)).pct_change().rolling(20).std().isna().sum()) == 20, 'review-3 items[3]: 20 NaN rows')
@@ -314,7 +342,16 @@ C(len(pd.Series([1.0, 2.0], index=pd.to_datetime(['2024-04-30', '2024-06-28'])).
 
 # ---------------------------------------------------------------- homework-3
 cs = c9.sort_index()
-E('homework', 'items[0].widget.examples[0].expect', round(float(cs.pct_change().std() * np.sqrt(252)), 4))
+E('homework', 'items[0].widget.tests[1].expect', round(float(cs.pct_change().std() * np.sqrt(252)), 4))
+cs29 = pd.Series([50.10, 49.80, 50.20, 50.65, 51.00, 50.70, 50.90, 52.10, 51.95], index=cs.index)
+E('homework', 'items[0].widget.examples[0].setup', 'pd.Series([50.10, 49.80, 50.20, 50.65, 51.00, 50.70, 50.90, 52.10, 51.95]')
+m29 = cs29.resample('ME').last().pct_change().dropna().round(6).tolist()
+C(m29 == [0.018072, 0.024655], 'homework-3 items[0] example: monthly [0.018072, 0.024655]')
+C(round(50.70 / 49.80 - 1, 6) == 0.018072 and round(51.95 / 50.70 - 1, 6) == 0.024655, 'homework-3 items[0] example: monthly returns by hand')
+E('homework', 'items[0].widget.examples[0].expect', "{'monthly': [0.018072, 0.024655], 'ann_vol': " + str(round(float(cs29.pct_change().std() * np.sqrt(252)), 4)) + '}')
+C(round(float(cs29.pct_change().std() * np.sqrt(252)), 4) == 0.1558, 'homework-3 items[0] example: ann_vol 0.1558')
+C(round(float(np.std(cs29.pct_change().dropna().to_numpy(), ddof=1) * math.sqrt(252)), 4) == 0.1558, 'homework-3 items[0] example: ann_vol 0.1558 by numpy')
+E('homework', 'items[0].prose', '`monthly`: the monthly returns from month-end closes')
 two('ann vol by numpy', float(np.std(cs.pct_change().dropna().to_numpy(), ddof=1) * math.sqrt(252)), float(cs.pct_change().std() * np.sqrt(252)))
 dates = pd.bdate_range('2024-05-01', periods=6)
 pz = pd.DataFrame({'AZN': [118.40, 120.11, 122.00, 121.53, 121.14, 121.45], 'BARC': [2.15, 2.16, 2.18, 2.17, 2.16, 2.19]}, index=dates)
@@ -339,7 +376,10 @@ E('homework', 'items[4].widget.answer', round(float(wk.resample('W-FRI').last().
 two('Friday to Friday', float(wk.resample('W-FRI').last().pct_change().iloc[1]), 52.53 / 51.20 - 1)
 E('homework', 'items[4].widget.wrong[0].value', round(52.53 / 50.00 - 1, 4))
 wmean = round(float(wk.resample('W-FRI').mean().pct_change().iloc[1]), 4)
-E('homework', 'items[4].widget.wrong[1].value', wmean)      # fails: the content has 0.0262, weekly means give 0.0234
+E('homework', 'items[4].widget.wrong[1].value', wmean)
+C(wmean == 0.0234, 'homework-3 items[4] mean slip is 0.0234 (51.886 / 50.70 - 1)')
+C(np.allclose(wk.resample('W-FRI').mean().iloc[:2].to_numpy(), [50.70, 51.886]), 'homework-3 items[4] byKey mean: weekly means are 50.70 and 51.886')
+E('homework', 'items[4].feedback.byKey.mean', '50.70 and 51.886')      # fails: the content has 0.0262, weekly means give 0.0234
 pr = pd.DataFrame({'date': pd.to_datetime(['2024-03-27', '2024-03-28', '2024-03-28', '2024-04-02']), 'close': [12.70, 12.66, 12.68, 12.80]})
 tr5 = pd.DataFrame({'date': pd.to_datetime(['2024-03-27', '2024-03-28', '2024-04-02']), 'qty': [500, -200, 300]})
 m5 = pd.merge(tr5, pr, on='date')
