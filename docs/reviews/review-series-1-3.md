@@ -146,3 +146,61 @@ B. `series` level 3 `requires`: add one entry, for l10 `screens[8]`, `quiz[3]` a
 - `form: "simplified"` on a rational constant cannot refuse an uncancelled fraction or a decimal retyped from the prompt. For the key $\tfrac{3}{11}$ (homework-2 `items[6]`), `\frac{27}{99}`, `0.\overline{27}` and `0.27\overline{27}` all grade OK, with or without the form. Compute Engine canonicalises at parse. Finding 23 drops the "lowest terms" wording, but retyping the prompt's recurring decimal still scores.
 - Validator key-length measures LaTeX source, so `$\dfrac{1}{1.05}$` (15 characters) against `$1.05$` is flagged although the two render about the same width (l13 `screens[2]`). Measure the text after stripping commands and braces.
 - Validator (advisory): a `bars` canvas with `showValues` on a task screen whose starting state holds a 0 bar prints "0" or "£0.00" on what is usually the asked quantity. There are four series hits (finding 28). Warn unless `showZero` is set.
+
+## Fix pass
+
+Status per finding (36 fixed, 2 fixed (orchestrator), 0 disputed, 0 deferred, plus orchestrator items A and B and the Engine items). Every corrected number was recomputed before writing, by the number scripts (two methods each). Where the finding is conceptual, the basis is given.
+
+1. fixed: l1 `screens[6].widget.options[3].text` is "8, 6, 4, 2, …" ($10 - 2n$ at $n = 1$ to 4 gives 8, 6, 4, 2); the explanation names the sequence 8, 6, 4.
+2. fixed: l3 `screens[5]` `add` is -14 ($-2 - 6 - 6$) with the new line.
+3. fixed: l3 `screens[5]` `times-two` is -8 ($-2 \times (-2) \times (-2)$) with the new line.
+4. fixed: l4 `screens[2]` `order` is -2 (the slip gives 5, 4, 2, -2) with the new line.
+5. fixed: review-2 `items[7]` `plus` is 1.5625 ($2.5 \div 1.6$).
+6. fixed: review-3 `items[8]` `pct` is 5 ($25 - 20$); the explanation states the rise, £500.00, and 25% ($500 / 2000$).
+7. fixed (conceptual; basis: binomial theorem, the coefficient $\binom{n}{k}$ is positive for $0 < k < n$, so mixed terms always appear, while $(1 - 1)^3 = 0 = 1^3 + (-1)^3$ shows their values can cancel; checked for n up to 11 in the L3 script): l11 `screens[6].explain.text` now speaks of terms.
+8. fixed (conceptual; basis: squares 1, 4, 9, 16 curve with ratios 4, 2.25, 1.78, which differ): l3 `screens[2]` explain, `generic` and `correct` reworded as the finding says.
+9. fixed (conceptual; basis: $u_{n+1} = 2u_n - 10$ with $u_1 = 10$ gives 10 for ever, run in the L1 script): l4 `quiz[3].explain.text`.
+10. fixed: l4 `screens[5].prose` bolds **fixed point** with the check $2 \times 10 - 10 = 10$.
+11. fixed: l1 `screens[2].feedback.byKey.sign` ("1, −2, −5").
+12. fixed: l1 `quiz[1].explain.text`.
+13. fixed (conceptual; basis: $48 \times 0.5^n \to 0$ while $48 + 24 + \dots \to 96$, L2 script): l7 `screens[4]` `forever` and `quiz[1]` option `two` `why` now say "total".
+14. fixed: l7 `screens[8].hints[2]` shows $\tfrac{a}{1-r} = \tfrac{500}{0.04} = 12500$ and $12500(1 - 1/1.04^{10}) = 4055.45$ (both methods in the L2 script); `feedback.correct` uses $1/1.04^{10}$, no negative index.
+15. fixed (conceptual; basis: simulation, $S_{10}$ is 1.998 at $r = 0.5$, 0.666 at $-0.5$, 6.51 at 0.9, still rising towards 10): l8 `screens[1].explain.text`.
+16. fixed (conceptual; basis: $\tfrac{a}{1 - r}$ divides by 0 at $r = 1$): l8 `summary.formula.note`.
+17. fixed (conceptual; basis: $0.1\dot{6} = 0.1 + \tfrac{0.06}{0.9}$, so only part of it is geometric): l8 `quiz[1].explain.text` says "This recurring decimal".
+18. fixed: l8 `screens[6].explain.text` names the ratios 0.8 and -0.9, not "the first two".
+19. fixed: l11 `screens[5].feedback.byKey.wrong-k` ($k = 3$ gives $\binom{4}{3} \times 2^3 = 32$, term $32/x^2$; power of $x$ is $4 - 2k$, zero at $k = 2$ only).
+20. fixed: l12 `screens[8].explain.text` ("differ by little more than this term": 166.53 against 160.00).
+21. fixed (orchestrator): course.json item A, `equations/L2`, `equations/l11-one-twist` and `ratio/l4-multipliers` added to level 1; l2 `screens[9]` and review-1 `items[7]` stay inequalities. Not touched here.
+22. fixed (orchestrator): the `ratio/l4-multipliers` entry of item A.
+23. fixed: homework-2 `items[6].question` is "What is it as a fraction?" (`accept` unchanged).
+24. fixed: homework-2 `items[2].explain.text` has no quadratic formula; $\sqrt{500} = 22.36$, $S_{22} = 990$, $S_{23} = 1081$ (L2 script).
+25. fixed (conceptual; basis: multiplication rule for independent events, $P(A \cap B) = P(A)P(B)$, A-level Statistics): homework-3 `items[3].prose` states it, with win, win, loss $= 0.6 \times 0.6 \times 0.4$.
+26. fixed: l2 `screens[4]` "No, it is not a term"; l8 `screens[5]` "It has no finite value"; l12 `screens[4]` "The dropped terms are not small"; l12 `screens[6]` "It falls to a quarter"; review-2 `items[8]` "None". The five key-length warnings are gone; the l13 `screens[2]` one is the false positive (Engine).
+27. fixed (conceptual; basis: derivation, $S_n = \tfrac{a(1 - r^n)}{1 - r}$ and $r^n \to 0$ exactly when $|r| < 1$; A-level wording "converges", "diverges", $|r| < 1$): **converges** is defined at first use in l4 `summary.ideas[1]` (the sequence settles on $L$) and again for a series in l8 `screens[2].explain.text` with **sum to infinity**; l8 `screens[6].prose` defines $|r|$ as $r$ with any minus sign dropped, writes $|r| < 1$ and bolds **diverges**.
+28. fixed: `"showZero": false` added to l5 `screens[1]` and `screens[5]`, l1 `screens[8]` and l4 `screens[0]` canvas params.
+29. fixed: l6 `screens[3]` explain is three sentences and prose is reworded (the explanation's first sentence is 18 words, so the validator's long-sentence advisory is gone); l8 `screens[5].widget.options[0].why` reworded; l13 `screens[6].prose` split. Voice scan: 0 and 0.
+30. fixed: l3 `screens[9].explain.text` states £136.50 (22536.50 - 22400, two ways).
+31. fixed: homework-2 `items[3].explain.text` says "9 losses".
+32. fixed: the five run-on sentences now end with a full stop (l2 `screens[1]`, `screens[6]`; l8 `screens[0].hints[2]`, `screens[1]`; l12 `screens[1]`).
+33. fixed: homework-1 `items[2]` is 2, 4, 8, 14, 22 with answer 32, `wrong` `add-last` 30 and `double` 44 (gaps 2, 4, 6, 8 then 10; $2 + n(n - 1)$ at $n = 6$ is 32).
+34. fixed: review-3 `items[1]` is 4 of 9 shares, answer 126, `wrong` 3024, 36, 6561 ($\binom{9}{4}$ also by listing combinations).
+35. fixed: review-1 `items[7]` (shares held, answer 15, 2,100 and 1,975) and `items[8]` (volume, answer 7, 0.97 and 1.01 million, 0.032 million).
+36. fixed (conceptual; basis: ${}^nC_r$ and nCr are the same quantity as $\binom{n}{r} = \tfrac{n!}{r!(n - r)!}$, the calculator key; $\binom{4}{2} = 6$ by listing pairs): l10 `screens[2].prose` adds "Calculators write it ${}^4C_2$ or nCr."
+37. fixed: l13 `screens[0].explain.text` says discounting was used already; `screens[5].prose` calls it the perpetual bond again, with $C$ and $r$.
+38. fixed (conceptual; basis: index law $a^{-n} = \tfrac{1}{a^n}$, as $10^{-1} = \tfrac{1}{10}$): l13 `screens[3].hints[0]`.
+
+Orchestrator items: A (all three entries, inequality edge kept) and B: fixed (orchestrator); course.json not touched.
+
+Engine items: all four deferred, already in the inbox. The six equation-typed items were re-checked on the real grader (`grade.js` with Compute Engine 0.30.2, the review's harness, after ENGINE-BACKLOG 618 and 619). No accept forms were added.
+- l3 `screens[7]` `u_n=5\cdot3^{n-1}`: fixed by 619 (grades OK).
+- homework-1 `items[0]` `u_n=21-4n`: fixed by 619 (grades OK).
+- homework-1 `items[1]` `u_n=96\cdot0.5^{n-1}`: fixed by 619 (grades OK).
+- l11 `screens[2]` `(x+3)^3=x^3+9x^2+27x+27`: still failing (output `no`, the generic line). The left side is not one symbol, so 619 does not strip it.
+- homework-2 `items[0]` `f(k)=4k+1`: still failing (output `no`). The `SYMBOL` pattern in `grade.js` reads one letter with a subscript, not `f(k)`, so `f(k)` is read as a product and the equation is unequal.
+- homework-3 `items[0]` `(2x-1)^4=16x^4-32x^3+24x^2-8x+1`: still failing (output `no`), as for l11.
+- homework-2 `items[6]`: `\frac{27}{99}` and `0.\overline{27}` still grade OK (Engine, unchanged).
+
+Numbers: the finding-driven checks in `docs/reports/series-L1-numbers.py` (319 of 319), `-L2-` (309 of 309) and `-L3-` (326 of 326) all pass. Where a check accepted old or new text it now needs the new value: for example l3 `add` and `times-two`, l4 `order`, review-2 `plus`, review-3 `pct`, each `stated` check (fails if the old sentence returns), and a positive check for each reworded line. New checks cover homework-1 `items[2]` (32, 30, 44, two ways), review-3 `items[1]` (126, 3024, 36, 6561), review-1 `items[7]` and `items[8]`, l7 12500 and 4055.45, l8 6.51 and the $r = -1$ flip, homework-2 22, 990, 1081, l12 166.53 and 160.00, and l3 £136.50.
+
+Gates: validator 0 errors (series warnings left: the l13 `screens[2]` key-length false positive only). Voice scan `VOICE_BASE=app/content/courses/series python3 docs/reviews/voice-scan.py 35`: 0 sentences over 35 words, 0 explanations over three sentences. All three number scripts exit 0. Playthrough with `--local-cdn`, desktop and `--mobile`: all 36 runs (l1 to l8, l10 to l13, review-1 to review-3, homework-1 to homework-3, each twice) report "All passed"; l9 is unchanged.
