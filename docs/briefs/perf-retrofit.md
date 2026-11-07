@@ -19,7 +19,7 @@ Binding for every retrofit agent. Read `docs/AUTHORING.md` section 5 "Performanc
 1. `cd app && node tools/validate.mjs 2>&1 | tail -5`: 0 errors. The warning "<course>/L<n>: has a performance task, remove from perf-pending" is expected. Never edit `tools/perf-pending.json`, `course.json`, other levels, other courses or engine files. Restore `app/content/manifest.json` (`git checkout app/content/manifest.json`) before you commit.
 2. `VOICE_BASE=app/content/courses/<course> python3 docs/reviews/voice-scan.py 35`: 0 and 0 for the whole course folder.
 3. `docs/reports/<course>-<n>-perf-numbers.py` committed and exiting 0: every number in the item, model and rubric computed twice by independent routes; for a code task it runs the solution and the starter and the planted bugs against every test (for pandas or matplotlib use the venv named in your prompt).
-4. `node tools/playthrough.mjs --set <course>/homework-<n> --local-cdn <pkgs>` (and `review-<n>` if you touched it), green with and without `--mobile`. Look at the shots for a display equation that scrolls sideways at 440 px and split it with `aligned`.
+4. Run the validator first and play through with its regenerated `content/manifest.json` in place (restore the manifest only after the playthrough, just before you commit): with the old manifest the new task shows as "practice only". Then `node tools/playthrough.mjs --set <course>/homework-<n> --local-cdn <pkgs>` (and `review-<n>` if you touched it), green with and without `--mobile`. Look at the shots for a display equation that scrolls sideways at 440 px and split it with `aligned`.
 
 ## Report and hand-back
 
