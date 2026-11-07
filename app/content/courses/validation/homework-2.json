@@ -450,6 +450,139 @@
           "text": "Asks for the joined out-of-sample score, fold scores in time order, and the number of variants tried"
         }
       ]
+    },
+    {
+      "id": "h-label-purge",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "vl-time",
+        "vl-leakage"
+      ],
+      "pace": 1200,
+      "title": "Forward labels and their purge",
+      "prose": "A desk keeps its closes in `px`, dates by shares, one row per trading day. NaN means no close that day: a halt, or a share not yet listed. `desk()` returns three shares over nine days, and `tape(seed)` four shares over 80 days.\n\nThe label on row $t$ is the return from that day's close to the close $h$ rows later. So it uses the daily returns of rows $t + 1$ to $t + h$. It sits on row $t$, the day the prediction is made. If either close is missing, or row $t + h$ is past the end, the label is NaN. Never borrow a close from another day.\n\nA test fold is every row from `test_start` to `test_end`, both included. A training date lies outside the fold, and its labels share no daily return with the fold's labels. At least one share must have a label on it.\n\nThe tests read your results through `grid`, `tally`, `days` and `ends`, which are loaded.",
+      "question": "Build `label_table(px, h)`, a frame shaped like `px` with the same dates and shares, and `train_dates(px, h, test_start, test_end)`, the training dates in order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef desk():\n    \"\"\"Closes of three shares over nine trading days. NaN: no close that day.\"\"\"\n    nan = float(\"nan\")\n    return pd.DataFrame({\n        \"AAA\": [100, 102, 101, 104, 103, 106, 108, 107, 110],\n        \"BBB\": [50, 51, nan, 52, 54, nan, 55, 53, 56],\n        \"CCC\": [nan, nan, 20, 21, 20, 22, 23, 22, 24],\n    }, index=pd.bdate_range(\"2024-03-04\", periods=9), dtype=float)\n\ndef tape(seed, n_days=80):\n    \"\"\"Four shares over n_days trading days: S1 trades every day, S2 has\n    8 halts, S3 lists on the 16th day and S4 delists after the 61st.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = 0.012 * rng.standard_normal((n_days, 4))\n    px = pd.DataFrame(100 * np.cumprod(1 + r, axis=0), columns=[\"S1\", \"S2\", \"S3\", \"S4\"],\n                      index=pd.bdate_range(\"2023-01-02\", periods=n_days))\n    px.iloc[rng.choice(n_days, 8, replace=False), 1] = np.nan\n    px.iloc[:15, 2] = np.nan\n    px.iloc[61:, 3] = np.nan\n    return px\n\ndef grid(labels):\n    \"\"\"Each row as a list, rounded to 6 places, with None for NaN.\"\"\"\n    return [[None if v != v else round(float(v), 6) for v in row] for row in labels.to_numpy()]\n\ndef tally(labels):\n    \"\"\"Labels per share, then the sum of every label, rounded to 6 places.\"\"\"\n    return [int(labels[c].notna().sum()) for c in labels.columns] + [round(float(np.nansum(labels.to_numpy())), 6)]\n\ndef ends(dates):\n    \"\"\"How many dates, then the first and the last, as YYYY-MM-DD.\"\"\"\n    d = [str(x)[:10] for x in dates]\n    return [len(d), d[0], d[-1]] if d else [0]\n\ndef days(dates):\n    \"\"\"Each date as YYYY-MM-DD.\"\"\"\n    return [str(x)[:10] for x in dates]\n",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef label_table(px, h):\n    ...\n\ndef train_dates(px, h, test_start, test_end):\n    ...\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef label_table(px, h):\n    \"\"\"Row t: the close h trading days later over the close on t, minus 1.\"\"\"\n    return px.shift(-h) / px - 1\n\ndef train_dates(px, h, test_start, test_end):\n    s = px.index.get_loc(pd.Timestamp(test_start))\n    e = px.index.get_loc(pd.Timestamp(test_end))\n    pos = np.arange(len(px))\n    clear = (pos <= s - h) | (pos >= e + h)\n    labelled = label_table(px, h).notna().any(axis=1).to_numpy()\n    return list(px.index[clear & labelled])\n",
+        "examples": [
+          {
+            "setup": "px = desk()",
+            "call": "grid(label_table(px, 2)[['AAA']])",
+            "expect": "[[0.01], [0.019608], [0.019802], [0.019231], [0.048544], [0.009434], [0.018519], [None], [None]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "setup": "px = desk()",
+            "call": "grid(label_table(px, 2)[['AAA']])",
+            "expect": "[[0.01], [0.019608], [0.019802], [0.019231], [0.048544], [0.009434], [0.018519], [None], [None]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "px = desk()",
+            "call": "grid(label_table(px, 4)[['AAA']])",
+            "expect": "[[0.03], [0.039216], [0.069307], [0.028846], [0.067961], [None], [None], [None], [None]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "px = desk()",
+            "call": "grid(label_table(px, 2))",
+            "expect": "[[0.01, None, None], [0.019608, 0.019608, None], [0.019802, None, 0.0], [0.019231, None, 0.047619], [0.048544, 0.018519, 0.15], [0.009434, None, 0.0], [0.018519, 0.018182, 0.043478], [None, None, None], [None, None, None]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "px = desk()",
+            "call": "grid(label_table(px, 1))",
+            "expect": "[[0.02, 0.02, None], [-0.009804, None, None], [0.029703, None, 0.05], [-0.009615, 0.038462, -0.047619], [0.029126, None, 0.1], [0.018868, None, 0.045455], [-0.009259, -0.036364, -0.043478], [0.028037, 0.056604, 0.090909], [None, None, None]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "call": "tally(label_table(tape(3), 5))",
+            "expect": "[75, 60, 60, 56, 0.640112]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "call": "tally(label_table(tape(8), 10))",
+            "expect": "[70, 56, 55, 51, 0.415759]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "px = desk()",
+            "call": "days(train_dates(px, 2, '2024-03-07', '2024-03-08'))",
+            "expect": "['2024-03-04', '2024-03-05', '2024-03-12']",
+            "compare": "equal"
+          },
+          {
+            "setup": "px = desk()",
+            "call": "days(train_dates(px, 1, '2024-03-06', '2024-03-07'))",
+            "expect": "['2024-03-04', '2024-03-05', '2024-03-08', '2024-03-11', '2024-03-12', '2024-03-13']",
+            "compare": "equal"
+          },
+          {
+            "setup": "px = desk()",
+            "call": "days(train_dates(px, 3, '2024-03-04', '2024-03-05'))",
+            "expect": "['2024-03-08', '2024-03-11']",
+            "compare": "equal"
+          },
+          {
+            "setup": "px = desk(); px.iloc[5] = np.nan",
+            "call": "days(train_dates(px, 2, '2024-03-06', '2024-03-06'))",
+            "expect": "['2024-03-04', '2024-03-08', '2024-03-12']",
+            "compare": "equal"
+          },
+          {
+            "call": "ends(train_dates(tape(3), 5, '2023-02-01', '2023-02-28'))",
+            "expect": "[47, '2023-01-02', '2023-04-14']",
+            "compare": "equal"
+          },
+          {
+            "call": "ends(train_dates(tape(8), 10, '2023-04-03', '2023-04-21'))",
+            "expect": "[56, '2023-01-02', '2023-03-20']",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 12 hidden tests on `desk()` and on seeded tapes; labels are compared within 0.000002 and dates exactly. The first run loads pandas, which takes 10 to 20 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Each label sits on its own day and names exactly two closes.",
+        "generic": "Some tests failed. Read the first failing test against the rules above.",
+        "byKey": {
+          "test-1": "Test 1 reads AAA with $h = 2$. The label on 4 March is $101/100 - 1 = 0.01$: the close two rows later over that day's close, on that day's row.",
+          "test-3": "Test 3 has halts and a late listing. BBB has no close on 6 March, so its labels on 4 and 6 March are NaN. Filling the gap, or counting $h$ closes instead of $h$ rows, uses a price from another day.",
+          "test-7": "Test 7 is a fold of 7 and 8 March with $h = 2$. On either side, a date whose label returns overlap the fold's label returns goes. Neither 13 nor 14 March has a label.",
+          "test-10": "Test 10 has no close for any share on 11 March. A date where no share has a label is not a training date, wherever it falls."
+        }
+      },
+      "explain": {
+        "text": "A label sits on the prediction day and uses two closes: that day's and the one $h$ rows later. A training label before the fold must end by the fold's first day. One after it must start once the fold's last label ends."
+      }
     }
   ]
 }

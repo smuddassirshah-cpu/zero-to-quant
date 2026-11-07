@@ -1660,3 +1660,6 @@ Raised later (ito level 4 perf):
 
 Raised later (opt-dash level 3 perf):
 - [Could] `code` widget, `isclose` and `equal`: a test still cannot expect NaN (raised before for `exercise_boundary`, `formation_returns` and DataFrames). opt-dash `h-parity-fit` and `h-black-iv` both return NaN by contract and work around it with `[v != v for v in ...]`, `str(v) == 'nan'` or a `-1.0` stand-in. Wanted: NaN equals NaN under `isclose` (as `math.isclose` cannot, `numpy.isclose(..., equal_nan=True)` can), with a note in AUTHORING section 3.
+
+Raised later (validation level 2 perf):
+- [Could] `code` widget, `isclose`: a test still cannot expect NaN (seen before in opt-dash level 3). `h-label-purge` loads a hidden `grid` helper that writes NaN as None so a label frame can be compared; wanted: NaN equal to NaN under `isclose` when `expect` holds `nan`.
