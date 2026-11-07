@@ -1,0 +1,8 @@
+# systems level 4: performance task (PLAN 2a Phase 3)
+
+- File: `app/content/courses/systems/homework-4.json`, item `h4-spsc-ring`, index 6 (item 7 of 7; was 6, nothing converted).
+- Kind `code`, C++. Objective: l16 "Build a fixed-size single-producer, single-consumer ring buffer." Chosen over l18 "Design ... defend aloud" because a graded, runnable product proves the level better than a self mark, and the level already has an aloud handler item (`h4-handler-aloud`).
+- Task: `TickRing<N>` from a stub: compile-time power-of-two check, slots in the object, `try_push`, `try_pop`, `drain(out, max)` (new: not in l16), `size`, public `std::atomic<unsigned>` counters on separate lines that may wrap. `allocCheck` on.
+- Tests: 12 against 2 examples, all single-threaded (KNOWN_ISSUES `l16-s5-d1`). Nine planted bugs, each caught: full one slot early (2, 4, 8, 12), wrap-unsafe full test (8), heap slots (10), shared cache line (9), drain clears `out` (7), drain ignores `max` (6, 12), no `static_assert` (11), empty pop writes `out` (3), slot by modulo N-1 (4, 8, 12). The starter fails 10 of 12.
+- Gates: (1) `cd app && node tools/validate.mjs`: 0 errors (expected perf-pending warning). (2) `VOICE_BASE=app/content/courses/systems python3 docs/reviews/voice-scan.py 35`: 0 and 0. (3) `python3 -I docs/reports/systems-4-perf-numbers.py`: exit 0 (g++ and clang++ at `-std=c++20 -O1 -fno-exceptions`, plus a Python ring model). (4) `node tools/playthrough.mjs --set systems/homework-4 --local-cdn <pkgs>`, with and without `--mobile`: All passed; 440 px shot checked.
+- Freshness grep: TickRing, try_push, drain, static_assert, atomic<unsigned, 4294967. `fresh-check --file`: only the engine helper `alloc_count`.

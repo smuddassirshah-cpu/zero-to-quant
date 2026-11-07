@@ -1637,3 +1637,9 @@ Raised later (coding-int level 3 perf):
 
 Raised later (coding-int level 4 perf):
 - [Could] An `aloud` task whose product includes code (`h4-pairs-aloud`: talk while typing `count_pairs`) has only a plain notes box, so the typed code is neither highlighted nor run. Wanted: an optional `codeNotes: "python"` on an aloud longform that shows a code editor with Run examples, still self-marked.
+Raised later (systems level 1 perf):
+- [Could] C++ code widget: no way to grade the shape of the compiled code, so an objective such as "remove a branch from a hot loop" cannot be a `code` performance task (tests pass a loop that keeps its branch, and at `-O1` timing cannot tell). systems L1 used `aloud`. Wanted, if such tasks matter: a case that greps the `-S` output of the learner's function for a conditional jump.
+
+Raised later (systems level 4 perf):
+- [Could] A homework or review item `question` renders as one bold line, so a markdown list in it runs together ("- N is ... - The slots ..."). systems `h4-spsc-ring` moved its specification list into `prose`. Wanted: render lists in `question`, or a validator warning on a list there.
+- [Could] C++ code widget: no threads in the WebAssembly runtime, so a single-producer, single-consumer task cannot grade its memory orders; a ring with relaxed loads and stores passes every test. Wanted: a note in AUTHORING section 3 that concurrency correctness is ungradable, or a `console` pattern for a desk ThreadSanitizer run.

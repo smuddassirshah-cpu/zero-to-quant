@@ -660,6 +660,188 @@
       "explain": {
         "text": "40 ms is 40,000 µs, and one request is due every 250 µs, so 160 were due. The client sent none of them on time, so its own timing hides all 160."
       }
+    },
+    {
+      "id": "h4-spsc-ring",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "sy-latency",
+        "sy-concurrency"
+      ],
+      "tags": [
+        "ring-buffer"
+      ],
+      "pace": 1500,
+      "title": "A ring for two threads",
+      "prose": "A feed thread hands ticks to a strategy thread. Build the queue between them: a fixed-size, single-producer, single-consumer ring of `long long` ticks. The producer calls only `try_push`; the consumer calls only `try_pop`, `drain` and `size`. The ring must be safe with the two calls on two cores at once, though the tests run on one thread.\n\n- `N` is the capacity. It must be a power of two, and `TickRing<6>` must fail to compile.\n- The slots live inside the object: no heap, ever.\n- `bool try_push(long long v)` returns false when the ring is full.\n- `bool try_pop(long long& out)` returns false when it is empty, and then leaves `out` unchanged.\n- `int drain(std::vector<long long>& out, int max)` pops up to `max` ticks onto the back of `out`, oldest first, and returns how many.\n- `int size() const` returns the number held.\n- Two public members, `std::atomic<unsigned> head_` (pops so far) and `tail_` (pushes so far), only ever grow and may wrap past 4,294,967,295. Each sits on its own 64-byte cache line.",
+      "question": "Write the class template `TickRing<N>` to the specification above.",
+      "widget": {
+        "kind": "code",
+        "language": "cpp",
+        "allocCheck": true,
+        "starter": "#include <array>\n#include <atomic>\n#include <cstddef>\n#include <vector>\n\n// Build the ring here. The tests read head_ and tail_ by these names.\ntemplate <std::size_t N>\nclass TickRing {\npublic:\n    bool try_push(long long v) { (void)v; return false; }\n    bool try_pop(long long& out) { (void)out; return false; }\n    int drain(std::vector<long long>& out, int max) { (void)out; (void)max; return 0; }\n    int size() const { return 0; }\n    std::atomic<unsigned> head_{0};\n    std::atomic<unsigned> tail_{0};\n};\n",
+        "solution": "#include <array>\n#include <atomic>\n#include <cstddef>\n#include <vector>\n\ntemplate <std::size_t N>\nclass TickRing {\n    static_assert(N > 0 && (N & (N - 1)) == 0, \"N must be a power of two\");\npublic:\n    bool try_push(long long v) {\n        unsigned t = tail_.load(std::memory_order_relaxed);   // only the producer writes tail_\n        unsigned h = head_.load(std::memory_order_acquire);   // see the consumer's frees\n        if (t - h == N) return false;                         // full; unsigned difference survives the wrap\n        buf_[t & (N - 1)] = v;\n        tail_.store(t + 1, std::memory_order_release);        // publish the slot\n        return true;\n    }\n    bool try_pop(long long& out) {\n        unsigned h = head_.load(std::memory_order_relaxed);   // only the consumer writes head_\n        unsigned t = tail_.load(std::memory_order_acquire);   // see the producer's writes\n        if (h == t) return false;                             // empty: out unchanged\n        out = buf_[h & (N - 1)];\n        head_.store(h + 1, std::memory_order_release);        // free the slot\n        return true;\n    }\n    int drain(std::vector<long long>& out, int max) {\n        unsigned h = head_.load(std::memory_order_relaxed);\n        unsigned t = tail_.load(std::memory_order_acquire);   // one acquire for the batch\n        unsigned n = t - h;\n        if (max < 0) max = 0;\n        if (n > static_cast<unsigned>(max)) n = static_cast<unsigned>(max);\n        for (unsigned i = 0; i < n; ++i) out.push_back(buf_[(h + i) & (N - 1)]);\n        head_.store(h + n, std::memory_order_release);        // one release frees them all\n        return static_cast<int>(n);\n    }\n    int size() const {\n        return static_cast<int>(tail_.load(std::memory_order_acquire) - head_.load(std::memory_order_acquire));\n    }\n    alignas(64) std::atomic<unsigned> head_{0};\n    alignas(64) std::atomic<unsigned> tail_{0};\nprivate:\n    alignas(64) std::array<long long, N> buf_{};\n};\n",
+        "examples": [
+          {
+            "setup": "TickRing<8> r; std::vector<long long> got; r.try_push(10); r.try_push(20); r.try_push(30); for (int i = 0; i < 3; ++i) { long long x = 0; r.try_pop(x); got.push_back(x); }",
+            "call": "got",
+            "expect": [
+              10,
+              20,
+              30
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "TickRing<4> r; std::vector<long long> got; for (long long v = 1; v <= 5; ++v) got.push_back(r.try_push(v));",
+            "call": "got",
+            "expect": [
+              1,
+              1,
+              1,
+              1,
+              0
+            ],
+            "compare": "equal"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "TickRing<8> r; std::vector<long long> got; r.try_push(10); r.try_push(20); r.try_push(30); for (int i = 0; i < 3; ++i) { long long x = 0; r.try_pop(x); got.push_back(x); }",
+            "call": "got",
+            "expect": [
+              10,
+              20,
+              30
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "TickRing<4> r; std::vector<long long> got; for (long long v = 1; v <= 5; ++v) got.push_back(r.try_push(v));",
+            "call": "got",
+            "expect": [
+              1,
+              1,
+              1,
+              1,
+              0
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "TickRing<8> r; long long x = 77; bool ok = r.try_pop(x); std::vector<long long> got{ok, x};",
+            "call": "got",
+            "expect": [
+              0,
+              77
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "TickRing<4> r; std::vector<long long> got; long long x = 0; for (long long v = 1; v <= 4; ++v) r.try_push(v); r.try_pop(x); r.try_pop(x); got.push_back(r.try_push(5)); got.push_back(r.try_push(6)); got.push_back(r.try_push(7)); while (r.try_pop(x)) got.push_back(x);",
+            "call": "got",
+            "expect": [
+              1,
+              1,
+              0,
+              3,
+              4,
+              5,
+              6
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "TickRing<8> r; long long x = 0; for (long long v = 1; v <= 5; ++v) r.try_push(v); r.try_pop(x); r.try_pop(x);",
+            "call": "r.size()",
+            "expect": 3,
+            "compare": "equal"
+          },
+          {
+            "setup": "TickRing<8> r; std::vector<long long> out; for (long long v = 1; v <= 6; ++v) r.try_push(v); int n = r.drain(out, 4); out.push_back(n); out.push_back(r.size());",
+            "call": "out",
+            "expect": [
+              1,
+              2,
+              3,
+              4,
+              4,
+              2
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "TickRing<8> r; std::vector<long long> out{99}; r.try_push(1); r.try_push(2); int n = r.drain(out, 10); out.push_back(n); out.push_back(r.size()); out.push_back(r.drain(out, 5));",
+            "call": "out",
+            "expect": [
+              99,
+              1,
+              2,
+              2,
+              0,
+              0
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "TickRing<8> r; r.head_.store(4294967291u); r.tail_.store(4294967291u); std::vector<long long> got; for (long long v = 1; v <= 9; ++v) got.push_back(r.try_push(v)); got.push_back(r.size()); long long x = 0; while (r.try_pop(x)) got.push_back(x); got.push_back(r.tail_.load());",
+            "call": "got",
+            "expect": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              0,
+              8,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              3
+            ],
+            "compare": "equal"
+          },
+          {
+            "setup": "TickRing<8> r; long long d = reinterpret_cast<const char*>(&r.tail_) - reinterpret_cast<const char*>(&r.head_); if (d < 0) d = -d;",
+            "call": "d >= 64",
+            "expect": true,
+            "compare": "equal"
+          },
+          {
+            "setup": "reset_alloc_count(); long long sum = 0; { TickRing<256> r; for (int i = 0; i < 1000; ++i) { r.try_push(i); long long x = 0; if (i % 3 != 0 && r.try_pop(x)) sum += x; } } (void)sum;",
+            "call": "alloc_count()",
+            "expect": 0,
+            "compare": "equal"
+          },
+          {
+            "compiles": "TickRing<6> bad; (void)bad;",
+            "expect": false
+          },
+          {
+            "setup": "TickRing<16> r; std::vector<long long> model, out; std::size_t front = 0; unsigned long long s = 12345; long long bad = 0, next = 1; for (int i = 0; i < 100000; ++i) { s = s * 6364136223846793005ULL + 1442695040888963407ULL; int op = static_cast<int>((s >> 33) % 4); if (op < 2) { bool ok = r.try_push(next); bool want = model.size() - front < 16; if (ok != want) ++bad; if (want) model.push_back(next); ++next; } else if (op == 2) { long long x = -1; bool ok = r.try_pop(x); bool want = model.size() > front; if (ok != want) ++bad; if (want) { if (x != model[front]) ++bad; ++front; } } else { out.clear(); int n = r.drain(out, 3); std::size_t want = model.size() - front < 3 ? model.size() - front : 3; if (n != static_cast<int>(want) || out.size() != want) ++bad; for (std::size_t k = 0; k < out.size() && k < want; ++k) if (out[k] != model[front + k]) ++bad; front += want; } if (r.size() != static_cast<int>(model.size() - front)) ++bad; }",
+            "call": "bad",
+            "expect": 0,
+            "compare": "equal"
+          }
+        ],
+        "how": "Twelve hidden tests, run on one thread. One counts heap allocations, one checks that `TickRing<6>` fails to compile, and one plays 100,000 random calls against a simple model."
+      },
+      "feedback": {
+        "correct": "That's it. Growing counters, a mask for the slot, and each counter on its own line.",
+        "generic": "Not quite right. Read the first failing test."
+      },
+      "explain": {
+        "text": "The unsigned difference `tail_ - head_` is the count even after a counter wraps, because $2^{32}$ is a multiple of $N$. The slot is the counter masked with $N - 1$. The producer stores `tail_` with release after writing the slot, and the consumer loads it with acquire before reading, so a tick is never read half-written."
+      }
     }
   ]
 }
