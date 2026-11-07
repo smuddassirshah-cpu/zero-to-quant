@@ -1633,3 +1633,7 @@ Raised later (orchestrator, session W):
 
 Raised later (ito level 3 perf):
 - [Should] `playthrough.mjs --set --shots` shoots the marked longform at the viewport only, so a long model and rubric are never seen below the fold, and nothing measures maths inside the model: a `.katex-display` that scrolls sideways or inline maths past the right edge at 440 px passes (ito `h-derive-black` had an inline equation cut off at 440 px; found with a scratch Playwright script). Wanted: a tall-viewport `-marked` shot and a check that fails on either overflow.
+
+Raised later (ito level 4 perf):
+- [Should] Longform aloud widget on the homework page: the help line under the clock reads "Say your answer aloud. The paper clock ends the sitting.", the exam text (`longform.js:47`, `ctx.mode === 'exam'`), though a homework has no paper clock and the item sets `lockAtZero` (ito `h-aloud-unknown-drift`, 440 px shot). Wanted: the `lock` line ("The clock stops at zero.") outside a real exam.
+- [Could] An aloud item does not say before the clock that follow-ups will come; they appear only with the model. The prompt has to say "Three follow-up questions come after the clock". Wanted: a line under the clock, "n follow-up questions after the clock", from `followUps.length`.
