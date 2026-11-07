@@ -75,3 +75,43 @@ Format: `N. item [index] path | severity | what is wrong, with evidence | exact 
 2. Code widget: the key is the first failing test only. So a `byKey` line on a later test, written for a slip an earlier test also catches, never shows (`e-daily-value` test-4, `e-portfolio-dd` test-5; findings 4 and 17). Wanted: an AUTHORING line saying so, and optionally a reader tool that takes an item's planted bugs and prints the line each would show.
 3. Exam start card: `exam.js` writes `${doc.name} covers every course in the topic`, so every topic exam opens "Python topic exam covers every course in the topic." with no article. Wanted: "The Python topic exam covers ...".
 4. Seen again, already in the inbox from the topic-2.2 review: the Learn chip shows `examMinutes(t.hours)` and not the file's `minutes` (finding 16), and the validator does not flag a hidden test equal to an example (finding 18).
+
+## Fix pass
+
+Edited only `app/content/exams/topic-1.1.json` and `docs/reviews/exam-1.1-scripts/numbers.py`. No item id or paper id renamed; two ids added (`e-gen-once`, `e-assert-catch`). The validator also rewrote `content/manifest.json` (`examMinutes` for `topic-1.1` 60 to 90), as it does by design. Every corrected number was recomputed in the script, which now exits 0 (202 of 202 under NumPy 2.0.2, pandas 2.2.3, matplotlib 3.8.4) and has each check tightened to the new value, so a revert fails it. No finding is disputed.
+
+### Items
+
+1. e-exit-review (c): fixed. `summary` does not sort (newest-first closes give MDD -0.1667, script); the sentence now has the three rows written newest first to a CSV, loaded with `load_closes`, and the script checks the same -0.25 and the same vol come out.
+2. e-rebase-mutate option d: fixed. Belief "b keeps its own copy from the first call" gives `a[1]` 1.5, `b[1]` 150.0, `c is a` True; text now `1.5 150.0 True`, run in the script. Key unchanged.
+3. e-exit-review (b): fixed. Drawdown panel is `100 * dd`, labelled "Drawdown (%)", with an x label "Date"; the script checks the model's wording.
+4. e-daily-value `test-1`: fixed. The no-abs slip first fails test 1 (script: tests 1 to 5), and the line now names `abs()`.
+5. e-pct-change: fixed as given. Prints `[-0.2, 0.15]` (44/55 - 1, 21.85/19 - 1); the three distractors are re-derived by running each belief in pandas. Graded answer changed.
+6. e-sharex: fixed as given, now `sharey`. Data built to the prose (closes 96 to 108, 59 returns within 0.03); both y ranges equal about -5.4 to 113.4. Graded answer changed (new item content, key still option a).
+7. e-loc-iloc: fixed as given. Keys 8.51, 8.37, 8.53 (mean of 8.46 and 8.60), 3; highlight rows [2, 1]. Graded answers changed (all four).
+8. e-truncated-bars: fixed as given. Now a `multi`, a and b correct; key kind changed.
+9. e-imported-name: fixed as given. Run as two files: `tools`, then `__main__ 2.0`. Graded answer changed.
+10. e-fat-tails: fixed as given, now numeric. 30 / (2520 x 0.0027) = 4.4092 and 30 / (2520 x exact 0.0026998) = 4.4095, both inside 4.41 +/- 0.005; wrong values 6.80 and 8.82 (one tail 0.00135). Graded answer changed.
+11. e-join-table: fixed as given. 3, 4, 6, 3, run in pandas. Graded answers changed (all four).
+12. e-rebased-chart: fixed as given (day `start`, `days.index(start)`, 1 example and 7 tests inlined with literal dicts), with one change: the function is `rebased_from_day`, not `rebased_chart`, because the review's own fix kept the name that `fresh-check` flagged (plotting `l11-two-variables` `screens[8]`). Solution passes 8 of 8; starter fails 7 of 7; planted bugs: first share base fails 3, 6; `closes[0]` fails 2, 3, 6, 7; `closes[start]` fails 2, 3, 6, 7; `closes[start - 1]` fails 7; no label fails 4; no y label fails 5.
+13. e-log-axis: fixed as given. 80 x 2^3 = 640 (1.5 cm a doubling); wrongs 170 (£20 a cm) and 480 (80 x 4 x 1.5). Graded answer changed.
+14. e-exit-review volatility: fixed as given. The script's `vol = r.std()` is the daily sd, sqrt(252) = 15.87 times too small; 0.016 x 15.87 = 0.254. Rubric line 2 reworded; still sums to 10.
+15. Coverage: fixed. `e-gen-once` (d2, after `e-pct-change`) prints `2 0`, and `e-assert-catch` (d3, after `e-catch-only`) fails on b and d only; the buggy code gives 0.2, 0.1, 0.0, 0.0 and all four asserts pass on a correct `max_drawdown` (script). py-found L4 now has two more items; ramp is 6, 14, 5, 3 (21%, 50%, 18%, 11%). Both are fresh: `fresh-check` 0 hits; literal greps below.
+16. minutes: fixed. `"minutes": 90`, the review's figure and the spec 8.2 top (the paced estimate with the two added items is about 96 minutes at the sibling paces, so 90 assumes the code items are done at pace; if too long, cut part (b) of `e-exit-review` as the review says). No `pace` fields added. Manifest `examMinutes` is now 90.
+17. e-portfolio-dd: fixed. `test-1` names `prices[0]`; `test-5` deleted; `error` now reads "Your code did not load. Check the lines you added for a typing slip." The `prices[:, 0]` slip loads and first fails test 1 (script).
+18. Examples: fixed. New examples for `e-month-end` (April and May), `e-daily-value` (LLOY: 2000 x 0.52 + 1000 x 0.53 = 1570, 4000 x 0.51 = 2040, mean 1805.0) and `e-portfolio-dd` (values 1, 1.05, 1; 1 - 1/1.05 = 0.04761904761904767); `e-rebased-chart` takes finding 12's. The script checks no hidden test equals an example in any of the four.
+19. e-signal-shift `byKey.all`: fixed as given.
+20. e-annual-vol: fixed. `over100: true`; the validator warning on this file is gone.
+21. Notes: `e-month-end` fixed: `month_end_closes` is `last_close_each_month` in question, starter, solution, examples and tests. The other relatives are accepted as notes; no change.
+22. Coverage note: no change.
+
+Engine findings 1 to 4: deferred, already in the inbox (code-widget `error` key, first-failing-test key, start-card article, hidden test equal to an example). Engine finding 4's Learn chip is now correct for this file through the manifest.
+
+### Gates
+
+- `docs/reviews/exam-1.1-scripts/numbers.py`: exit 0, 202 of 202. All four code solutions pass; starters fail 5 of 6, 7 of 7, 5 of 5 and 6 of 6 hidden tests (the `e-month-end` starter passes test 6, which only checks `rows` is unchanged).
+- Validator: 0 errors, 4,080 warnings (as before); none names this file.
+- `fresh-check.mjs --exam topic-1.1 --min-run 10`: 0 hits (was 2).
+- Literal grep of `app/content/courses`, new or rewritten items: `last_close_each_month` 0, `rebased_from_day` 0, `days.index` 0, `iloc[-2:]` 0, `how="right"` 0, `from tools import` 0, `4.5 cm` 0, `yield b / a` 0, "scatter of the fund" 0, "which asserts fail" 0. Near relatives read: `list(g)` 3 (py-found `l13-one-at-a-time` teaches it; `review-4` takes one `next(g)` first, so the double `list` is new), `sharey` 7 (plotting `l10-panels` and `l13-exit-project` share y between panels in the same units; across units is new), `iloc[2]` 3 (other courses), `morning note` 1 (plotting `l12` is a bar fix, a different task), `assert math.isclose(max_drawdown` 6 (pytest `l11-testing-drawdown` and homeworks write asserts; none asks which fail on a first-close bug), `gains(` 11 (measure-prob, unrelated).
+- Playthrough `--exam topic-1.1 --local-cdn <pkgs>`: 28 of 28, passed, written answer marked, 14.5 s; `--mobile`: 28 of 28, passed, 14.4 s.
+- Voice (exam only): 588 sentences, 0 over 35 words, 0 explanations over three sentences; no em-dash, en-dash or `!`.

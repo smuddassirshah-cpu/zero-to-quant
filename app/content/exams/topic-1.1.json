@@ -2,7 +2,7 @@
   "id": "topic-1.1",
   "topic": "1.1",
   "name": "Python topic exam",
-  "minutes": 60,
+  "minutes": 90,
   "pass": 0.7,
   "skills": {
     "pf-types": "Core types",
@@ -173,8 +173,8 @@
       "skills": [
         "pd-time"
       ],
-      "title": "Returns from three closes",
-      "prose": "```python\ns = pd.Series([50.0, 55.0, 44.0])\nr = s.pct_change().round(2)\nprint(r.tolist())\n```",
+      "title": "Returns for two columns",
+      "prose": "```python\ndf = pd.DataFrame({\"A\": [50.0, 55.0, 44.0],\n                   \"B\": [20.0, 19.0, 21.85]})\nprint(df.pct_change().iloc[2].round(2).tolist())\n```",
       "question": "What does it print?",
       "widget": {
         "kind": "choice",
@@ -182,32 +182,76 @@
         "options": [
           {
             "id": "a",
-            "text": "`[nan, 0.1, -0.2]`",
+            "text": "`[-0.2, 0.15]`",
             "correct": true
           },
           {
             "id": "b",
-            "text": "`[0.1, -0.2]`",
-            "why": "You expected the first day to be dropped. `pct_change` keeps every row and puts NaN where no day comes before."
+            "text": "`[0.1, -0.05]`",
+            "why": "You read `iloc[2]` as the second row. `iloc` counts from 0, so it is the third."
           },
           {
             "id": "c",
-            "text": "`[nan, 5.0, -11.0]`",
-            "why": "You took the changes in pounds. That is `diff()`; `pct_change` also divides by the day before."
+            "text": "`[-0.12, 0.09]`",
+            "why": "You compared day 3 with day 1. `pct_change` compares each row with the row before."
           },
           {
             "id": "d",
-            "text": "`[0.1, -0.2, nan]`",
-            "why": "You compared each day with the next one. That looks ahead; `pct_change` looks back."
+            "text": "`[-0.25, 0.13]`",
+            "why": "You divided by today's close. A return divides by the close before."
           }
         ]
       },
       "feedback": {
-        "correct": "Day 1 has nothing before it, so it is NaN.",
-        "generic": "Each return divides today's close by yesterday's, then subtracts 1."
+        "correct": "Day 3 against day 2, in each column.",
+        "generic": "`pct_change` works down each column. Then find the row that `iloc[2]` picks."
       },
       "explain": {
-        "text": "Day 2 is $55/50 - 1 = 0.1$ and day 3 is $44/55 - 1 = -0.2$. Day 1 has no previous close, so it holds NaN."
+        "text": "`pct_change` divides each row by the one before, column by column. `iloc[2]` is the third row: $44/55 - 1 = -0.2$ and $21.85/19 - 1 = 0.15$."
+      }
+    },
+    {
+      "id": "e-gen-once",
+      "difficulty": 2,
+      "skills": [
+        "pf-idioms",
+        "pf-functions"
+      ],
+      "title": "A generator, asked twice",
+      "prose": "```python\ndef gains(closes):\n    for a, b in zip(closes, closes[1:]):\n        yield b / a - 1\n\ng = gains([100.0, 110.0, 99.0])\nprint(len(list(g)), len(list(g)))\n```",
+      "question": "What does it print?",
+      "widget": {
+        "kind": "choice",
+        "layout": "grid",
+        "options": [
+          {
+            "id": "a",
+            "text": "`2 0`",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "`2 2`",
+            "why": "You expected the generator to start again. Once it has run out, it yields nothing more."
+          },
+          {
+            "id": "c",
+            "text": "`3 0`",
+            "why": "You counted the closes. Three closes make two neighbouring pairs, so two returns."
+          },
+          {
+            "id": "d",
+            "text": "`TypeError`",
+            "why": "You expected `list` to refuse a generator. It asks for values until the generator runs out."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Two returns, then nothing: a generator runs once.",
+        "generic": "Count the pairs of neighbouring closes, then ask what a used-up generator gives."
+      },
+      "explain": {
+        "text": "`gains` yields one return per neighbouring pair, 0.1 and −0.1, so the first `list` holds two. That uses the generator up. The second `list` is empty, so it prints `2 0`."
       }
     },
     {
@@ -302,41 +346,41 @@
       "skills": [
         "pl-figures"
       ],
-      "title": "Two linked panels",
-      "prose": "`days` runs from 1 to 60.\n\n```python\nfig, (top, bottom) = plt.subplots(\n    2, 1, sharex=True)\ntop.plot(days, closes)\nbottom.bar(days[1:], rets)\ntop.set_xlim(1, 30)\n```",
-      "question": "Which days does the bottom panel show?",
+      "title": "One y range for two panels",
+      "prose": "`closes` holds 60 daily closes between £96 and £108. `rets` holds the 59 daily returns, all between −0.03 and 0.03.\n\n```python\nfig, (top, bottom) = plt.subplots(\n    2, 1, sharey=True)\ntop.plot(days, closes)\nbottom.plot(days[1:], rets)\n```",
+      "question": "What does the bottom panel show?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "a",
-            "text": "Days 1 to 30",
+            "text": "A flat line near 0, on the closes' y range of about −5 to 113",
             "correct": true
           },
           {
             "id": "b",
-            "text": "Days 2 to 60, its own bars",
-            "why": "You expected each panel to keep its own x range. `sharex=True` links them, so one limit moves both."
+            "text": "The returns on their own y range, about −0.03 to 0.03",
+            "why": "You expected each panel to keep its own y range. `sharey=True` gives both one range."
           },
           {
             "id": "c",
-            "text": "0 to 1, the default range",
-            "why": "You expected an Axes with no limit set to keep the default. Plotting autoscales, and `sharex` copies the top's limit."
+            "text": "An error, since prices and returns have different units",
+            "why": "You expected matplotlib to check units. It shares the numbers, whatever they mean."
           },
           {
             "id": "d",
-            "text": "None: the code fails, since limits belong to `fig`",
-            "why": "You looked for the limits on the figure. Each Axes owns its limits."
+            "text": "The returns stretched to fill the panel's height",
+            "why": "You expected sharing to rescale the data. It only shares the axis limits."
           }
         ]
       },
       "feedback": {
-        "correct": "Shared x axes move together.",
-        "generic": "Think about what `sharex=True` links between the two panels."
+        "correct": "One y range for both panels, so the returns hug zero.",
+        "generic": "Ask what `sharey=True` makes the two panels share."
       },
       "explain": {
-        "text": "`sharex=True` gives both panels one x axis. Setting the top's limits to 1 and 30 sets the bottom's too, so `bottom.get_xlim()` is `(1.0, 30.0)`. That keeps each return under the day it ends."
+        "text": "`sharey=True` gives both panels one y range, wide enough for the closes. On that range, returns within 0.03 of zero draw as a flat line. Share y only between panels in the same units; here `sharex=True` was wanted."
       }
     },
     {
@@ -346,7 +390,7 @@
         "pd-frames"
       ],
       "title": "By label and by position",
-      "prose": "`df` has dates as its index, oldest first.\n\n```python\ns = df[\"close\"]\nv1 = s.iloc[1]\nv2 = s.loc[\"2024-03-07\"]\nv3 = s.iloc[-2:].mean()\nn = len(s.loc[\"2024-03-05\":\"2024-03-07\"])\n```",
+      "prose": "`df` has dates as its index, oldest first.\n\n```python\ns = df[\"close\"]\nv1 = s.iloc[2]\nv2 = s.loc[\"2025-06-03\"]\nv3 = s.iloc[-2:].mean()\nn = len(s.loc[\"2025-06-04\":])\n```",
       "canvas": {
         "kind": "table",
         "params": {
@@ -357,29 +401,29 @@
           ],
           "rows": [
             [
-              "2024-03-04",
-              "12.55",
-              "18400"
+              "2025-06-02",
+              "8.42",
+              "31200"
             ],
             [
-              "2024-03-05",
-              "12.31",
-              "22100"
+              "2025-06-03",
+              "8.37",
+              "28700"
             ],
             [
-              "2024-03-06",
-              "12.48",
-              "19800"
+              "2025-06-04",
+              "8.51",
+              "33900"
             ],
             [
-              "2024-03-07",
-              "12.62",
-              "25300"
+              "2025-06-05",
+              "8.46",
+              "30100"
             ],
             [
-              "2024-03-08",
-              "12.70",
-              "21700"
+              "2025-06-06",
+              "8.60",
+              "35400"
             ]
           ],
           "align": [
@@ -405,7 +449,7 @@
             "`v1`",
             {
               "edit": true,
-              "answer": 12.31,
+              "answer": 8.51,
               "tol": {
                 "abs": 0.0005
               }
@@ -415,7 +459,7 @@
             "`v2`",
             {
               "edit": true,
-              "answer": 12.62,
+              "answer": 8.37,
               "tol": {
                 "abs": 0.0005
               }
@@ -425,7 +469,7 @@
             "`v3`",
             {
               "edit": true,
-              "answer": 12.66,
+              "answer": 8.53,
               "tol": {
                 "abs": 0.0005
               }
@@ -444,21 +488,21 @@
         ]
       },
       "feedback": {
-        "correct": "12.31, 12.62, 12.66 and 3.",
-        "generic": "`iloc` counts positions from 0. `loc` uses the labels, and a label slice keeps both ends.",
+        "correct": "8.51, 8.37, 8.53 and 3.",
+        "generic": "`iloc` counts positions from 0. `loc` uses the labels, and a label slice keeps its start label.",
         "byKey": {
-          "r0c1": "`iloc` counts from 0, so `iloc[1]` is the second row: 12.31.",
-          "r2c1": "`iloc[-2:]` is the last two rows, 12.62 and 12.70. Their mean is 12.66.",
-          "r3c1": "A `loc` slice with labels includes both ends: 5, 6 and 7 March."
+          "r0c1": "`iloc` counts from 0, so `iloc[2]` is the third row: 8.51.",
+          "r2c1": "`iloc[-2:]` is the last two rows, 8.46 and 8.60. Their mean is 8.53.",
+          "r3c1": "A label slice keeps its start label. With no end, it runs to the last row: 4, 5 and 6 June."
         }
       },
       "explain": {
-        "text": "`iloc[1]` is position 1, the second row, and `loc` finds 7 March by its label. The last two closes average 12.66. A label slice keeps its end label, so it holds three rows.",
+        "text": "`iloc[2]` is position 2, the third row, and `loc` finds 3 June by its label. The last two closes average 8.53. A label slice keeps its start and, with no end, runs to the last row: three rows.",
         "canvas": {
           "highlight": {
             "rows": [
-              1,
-              3
+              2,
+              1
             ]
           }
         }
@@ -471,40 +515,40 @@
         "pl-honest"
       ],
       "title": "Two nearly equal bars",
-      "prose": "A bar chart compares two funds' returns this year, 4.1% and 3.9%. Its y axis starts at 3.8%. So one bar looks three times as tall as the other.",
-      "question": "Which change fixes it?",
+      "prose": "A fund's morning note has four charts.",
+      "question": "Select all that apply: which charts must start their y axis at 0 to be honest?",
       "widget": {
-        "kind": "choice",
+        "kind": "multi",
         "layout": "stack",
         "options": [
           {
             "id": "a",
-            "text": "Start the y axis at 0",
+            "text": "Bars of two funds' returns this year, 4.1% and 3.9%",
             "correct": true
           },
           {
             "id": "b",
-            "text": "Switch to a log y axis",
-            "why": "You reached for a log axis. It does not fix bar lengths, and it cannot show a negative return."
+            "text": "Bars of the fund's traded value on each of five days, in £",
+            "correct": true
           },
           {
             "id": "c",
-            "text": "Add gridlines every 0.1%",
-            "why": "You added gridlines. They help reading values, but the bars still start at 3.8%."
+            "text": "A line of the fund's daily closes, between £98 and £104",
+            "why": "You applied the bar rule to a line. A line is read by its level and slope, so a tight axis is fine."
           },
           {
             "id": "d",
-            "text": "Make the chart wider",
-            "why": "You changed the width. The heights still compare as 3 to 1."
+            "text": "A scatter of the fund's daily returns against the index's",
+            "why": "You applied the bar rule to points. A scatter is read by positions, so its axes can centre on the data."
           }
         ]
       },
       "feedback": {
-        "correct": "Bars are read by length, so they start at 0.",
-        "generic": "Ask what the eye compares when it reads two bars."
+        "correct": "Bars are read by length, so their base is 0. Lines and points are not.",
+        "generic": "Ask what the eye compares on each chart: a length, a level or a position."
       },
       "explain": {
-        "text": "From 3.8% the drawn bars are 0.3 and 0.1 long, a ratio of 3. From 0 they are 4.1 and 3.9, almost equal, which is the truth. A bar's length is read as its size, so bars start at 0."
+        "text": "A bar's length is read as its size, so a bar's axis starts at 0, whatever it counts. From 3.8%, the two return bars would look three to one. A line or a scatter is read by level and position, so its axis can hug the data."
       }
     },
     {
@@ -514,40 +558,40 @@
         "pf-modules"
       ],
       "title": "Who is main?",
-      "prose": "`tools.py` holds:\n\n```python\ndef mean(xs):\n    return sum(xs) / len(xs)\n\nprint(__name__)\n```\n\n`report.py` starts with `import tools`. You run `python report.py`.",
-      "question": "What does the `print` in `tools.py` show?",
+      "prose": "`tools.py` holds:\n\n```python\ndef mean(xs):\n    return sum(xs) / len(xs)\n\nprint(__name__)\n```\n\n`report.py` holds:\n\n```python\nfrom tools import mean\n\nprint(__name__, mean([1, 2, 3]))\n```",
+      "question": "What does `python report.py` print?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "a",
-            "text": "`tools`",
+            "text": "`tools`, then `__main__ 2.0`",
             "correct": true
           },
           {
             "id": "b",
-            "text": "`__main__`",
-            "why": "You ran `report.py`, so only it is `__main__`. An imported module gets its own name."
+            "text": "Only `__main__ 2.0`",
+            "why": "You expected `from tools import mean` to load only `mean`. Python still runs all of `tools.py` once."
           },
           {
             "id": "c",
-            "text": "Nothing, because importing only defines functions",
-            "why": "You expected import to skip the top-level lines. It runs every one of them once."
+            "text": "`__main__`, then `__main__ 2.0`",
+            "why": "You expected the imported file to share the runner's name. Only the file you run is `__main__`."
           },
           {
             "id": "d",
-            "text": "`tools.py`",
+            "text": "`tools.py`, then `__main__ 2.0`",
             "why": "You expected the file name. `__name__` holds the module name, without `.py`."
           }
         ]
       },
       "feedback": {
-        "correct": "An imported module runs once, under its own name.",
-        "generic": "Importing runs the module's top-level code. Ask what `__name__` is inside it then."
+        "correct": "The import runs `tools.py` under its own name, then `report.py` carries on.",
+        "generic": "Importing runs the module's top-level code, even for one name. Ask what `__name__` is in each file."
       },
       "explain": {
-        "text": "Importing runs the whole module once, top to bottom. Inside an imported module, `__name__` is the module's name, `tools`. That is why a script's `main()` call sits under `if __name__ == \"__main__\":`."
+        "text": "`from tools import mean` still runs the whole of `tools.py` once, where `__name__` is `tools`. Back in `report.py`, the file you ran, `__name__` is `__main__`. The mean of 1, 2 and 3 is 2.0."
       }
     },
     {
@@ -570,6 +614,7 @@
         "placeholder": "For example 12.34",
         "label": "Annualised volatility",
         "accept": "20.49%, within 0.06",
+        "over100": true,
         "wrong": [
           {
             "id": "ddof0",
@@ -788,7 +833,7 @@
         "generic": "Find the 3-day mean, compare, then move every signal one day later.",
         "byKey": {
           "noshift": "You counted before the shift. `shift(1)` pushes day 5's signal off the end.",
-          "all": "You counted every day with a number. A comparison with NaN is False, so days 1 and 2 give 0."
+          "all": "You counted the days that hold a number. `sum` adds the signals, and only one of the four is 1."
         }
       },
       "explain": {
@@ -802,40 +847,44 @@
         "pl-risk"
       ],
       "title": "Bars beyond the curve",
-      "prose": "You draw a histogram of 2,520 daily returns with `density=True`. On top you plot a normal curve with the same mean and sd. Beyond 3 sd from the mean, the bars stand well above the curve.",
-      "question": "What does that tell you?",
+      "prose": "You draw a histogram of 2,520 daily returns with `density=True`, and a normal curve with the same mean and sd. Thirty days lie beyond 3 sd from the mean. A normal puts 0.27% of days there.",
+      "question": "How many times as many days as the normal expects is that? Give 2 decimal places.",
       "widget": {
-        "kind": "choice",
-        "layout": "stack",
-        "options": [
+        "kind": "numeric",
+        "answer": 4.41,
+        "tol": {
+          "abs": 0.005
+        },
+        "placeholder": "For example 1.23",
+        "label": "Times the normal's count",
+        "accept": "4.41: 30 against 6.80 days",
+        "wrong": [
           {
-            "id": "a",
-            "text": "Big moves happen more often than a normal model predicts",
-            "correct": true
+            "id": "count",
+            "value": 6.8,
+            "tol": {
+              "abs": 0.005
+            }
           },
           {
-            "id": "b",
-            "text": "The true sd is larger than the one you measured",
-            "why": "You blamed the spread. The curve uses the measured sd; the excess sits in the tails."
-          },
-          {
-            "id": "c",
-            "text": "The bins are too wide",
-            "why": "You blamed the bins. Their width changes the detail, not how many days lie beyond 3 sd."
-          },
-          {
-            "id": "d",
-            "text": "Those days are errors, so drop them",
-            "why": "You treated crashes as bad data. They are real days, and dropping them hides the risk."
+            "id": "one-tail",
+            "value": 8.82,
+            "tol": {
+              "abs": 0.005
+            }
           }
         ]
       },
       "feedback": {
-        "correct": "Fat tails: crashes are more common than the bell curve says.",
-        "generic": "Compare how many days the curve expects out there with how many there are."
+        "correct": "30 days against the normal's 6.80: about 4.41 times.",
+        "generic": "Find the normal's count of days beyond 3 sd, then divide 30 by it.",
+        "byKey": {
+          "count": "That is the normal's count, $2520 \\times 0.0027 = 6.80$ days. Divide the 30 days by it.",
+          "one-tail": "You used one tail, 0.135%. The 0.27% already counts both tails."
+        }
       },
       "explain": {
-        "text": "A normal model puts about 0.27% of days beyond 3 sd, roughly 7 of 2,520. Real returns have fat tails, so many more days land there. A risk number built on the normal curve understates crashes."
+        "text": "The normal expects $2520 \\times 0.0027 = 6.80$ days beyond 3 sd. Thirty days is about 4.41 times that. Fat tails make big moves several times more common than a normal model predicts."
       }
     },
     {
@@ -879,6 +928,50 @@
       },
       "explain": {
         "text": "`\"4.85\" / 2` raises `TypeError`. The `except` names only `ZeroDivisionError`, so the error escapes and stops the program. That is deliberate: bad input should not turn silently into `None`."
+      }
+    },
+    {
+      "id": "e-assert-catch",
+      "difficulty": 3,
+      "skills": [
+        "pf-functions",
+        "pf-modules"
+      ],
+      "title": "Tests that catch a bug",
+      "prose": "This `max_drawdown` should return the worst fall from the running peak, as a positive fraction. It has a bug, and `math` is imported.\n\n```python\ndef max_drawdown(closes):\n    worst = 0.0\n    for c in closes:\n        worst = max(worst, 1 - c / closes[0])\n    return worst\n```",
+      "question": "Select all that apply: which asserts fail on this code?",
+      "widget": {
+        "kind": "multi",
+        "layout": "stack",
+        "options": [
+          {
+            "id": "a",
+            "text": "`assert math.isclose(max_drawdown([100.0, 80.0]), 0.2)`",
+            "why": "You tested a path that falls from day 1. There the first close is the peak, so the bug hides."
+          },
+          {
+            "id": "b",
+            "text": "`assert math.isclose(max_drawdown([100.0, 120.0, 90.0]), 0.25)`",
+            "correct": true
+          },
+          {
+            "id": "c",
+            "text": "`assert max_drawdown([100.0, 110.0, 121.0]) == 0.0`",
+            "why": "You tested a path that never falls. The buggy code also gives 0.0, so the bug hides."
+          },
+          {
+            "id": "d",
+            "text": "`assert math.isclose(max_drawdown([50.0, 100.0, 75.0]), 0.25)`",
+            "correct": true
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Only a path with a new high before its fall shows the bug.",
+        "generic": "Work out what the code returns for each path, then compare it with the true drawdown."
+      },
+      "explain": {
+        "text": "The code measures every fall from the first close, not from the running peak. The two paths that rise first give 0.1 and 0.0 against a true 0.25. A path that falls from day 1, or never falls, hides the bug."
       }
     },
     {
@@ -994,48 +1087,48 @@
       ],
       "title": "Month-end closes",
       "prose": "A vendor sends `(date, close)` tuples in any order, with dates as `YYYY-MM-DD` text. A month's close is the close on its last date in the data. Do not change the list you are given.",
-      "question": "Write `month_end_closes(rows)`: a list of `(month, close)` tuples, oldest month first, with `month` as `YYYY-MM`.",
+      "question": "Write `last_close_each_month(rows)`: a list of `(month, close)` tuples, oldest month first, with `month` as `YYYY-MM`.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "def month_end_closes(rows):\n    # rows: (date, close) tuples in any order,\n    # with dates like \"2026-01-30\"\n    ...\n",
-        "solution": "def month_end_closes(rows):\n    # rows: (date, close) tuples in any order,\n    # with dates like \"2026-01-30\"\n    last = {}\n    for day, close in sorted(rows):\n        last[day[:7]] = close   # a later day overwrites\n    return sorted(last.items())\n",
+        "starter": "def last_close_each_month(rows):\n    # rows: (date, close) tuples in any order,\n    # with dates like \"2026-01-30\"\n    ...\n",
+        "solution": "def last_close_each_month(rows):\n    # rows: (date, close) tuples in any order,\n    # with dates like \"2026-01-30\"\n    last = {}\n    for day, close in sorted(rows):\n        last[day[:7]] = close   # a later day overwrites\n    return sorted(last.items())\n",
         "examples": [
           {
-            "call": "month_end_closes([('2026-01-29', 101.2), ('2026-01-30', 102.5), ('2026-02-02', 101.9), ('2026-02-27', 104.1)])",
-            "expect": "[('2026-01', 102.5), ('2026-02', 104.1)]",
+            "call": "last_close_each_month([('2026-04-01', 88.0), ('2026-04-30', 90.5), ('2026-05-29', 92.25), ('2026-05-01', 91.0)])",
+            "expect": "[('2026-04', 90.5), ('2026-05', 92.25)]",
             "compare": "equal"
           }
         ],
         "tests": [
           {
-            "call": "month_end_closes([('2026-01-29', 101.2), ('2026-01-30', 102.5), ('2026-02-02', 101.9), ('2026-02-27', 104.1)])",
+            "call": "last_close_each_month([('2026-01-29', 101.2), ('2026-01-30', 102.5), ('2026-02-02', 101.9), ('2026-02-27', 104.1)])",
             "expect": "[('2026-01', 102.5), ('2026-02', 104.1)]",
             "compare": "equal"
           },
           {
-            "call": "month_end_closes([('2026-02-27', 104.1), ('2026-01-30', 102.5), ('2026-02-02', 101.9), ('2026-01-29', 101.2)])",
+            "call": "last_close_each_month([('2026-02-27', 104.1), ('2026-01-30', 102.5), ('2026-02-02', 101.9), ('2026-01-29', 101.2)])",
             "expect": "[('2026-01', 102.5), ('2026-02', 104.1)]",
             "compare": "equal"
           },
           {
-            "call": "month_end_closes([])",
+            "call": "last_close_each_month([])",
             "expect": "[]",
             "compare": "equal"
           },
           {
-            "call": "month_end_closes([('2026-01-02', 98.4), ('2025-12-31', 99.1), ('2025-12-30', 97.8)])",
+            "call": "last_close_each_month([('2026-01-02', 98.4), ('2025-12-31', 99.1), ('2025-12-30', 97.8)])",
             "expect": "[('2025-12', 99.1), ('2026-01', 98.4)]",
             "compare": "equal"
           },
           {
-            "call": "month_end_closes([('2026-03-31', 95.0), ('2026-03-02', 110.0)])",
+            "call": "last_close_each_month([('2026-03-31', 95.0), ('2026-03-02', 110.0)])",
             "expect": "[('2026-03', 95.0)]",
             "compare": "equal"
           },
           {
             "setup": "rows = [('2026-02-27', 104.1), ('2026-01-30', 102.5)]",
-            "call": "(month_end_closes(rows), rows)[1]",
+            "call": "(last_close_each_month(rows), rows)[1]",
             "expect": "[('2026-02-27', 104.1), ('2026-01-30', 102.5)]",
             "compare": "equal"
           }
@@ -1065,7 +1158,7 @@
         "pd-time"
       ],
       "title": "Two calendars",
-      "prose": "`a` has closes on 1, 2, 3 and 4 July. `b` has closes on 2, 3 and 5 July. Each is a DataFrame with a `date` and a `close` column. `sa` and `sb` are Series of the same closes, with dates as the index.\n\n```python\nn1 = len(pd.merge(a, b, on=\"date\"))\nn2 = len(pd.merge(a, b, on=\"date\",\n                  how=\"left\"))\nn3 = len(sa / sb)\nn4 = (sa / sb).isna().sum()\n```",
+      "prose": "`a` has closes on 1, 2, 3, 4 and 7 July. `b` has closes on 2, 3, 7 and 8 July. Each is a DataFrame with a `date` and a `close` column. `sa` and `sb` are Series of the same closes, with dates as the index.\n\n```python\nn1 = len(pd.merge(a, b, on=\"date\"))\nn2 = len(pd.merge(a, b, on=\"date\",\n                  how=\"right\"))\nn3 = len(sa / sb)\nn4 = (sa / sb).count()\n```",
       "question": "Fill in the value of each name.",
       "widget": {
         "kind": "table",
@@ -1078,7 +1171,7 @@
             "`n1`",
             {
               "edit": true,
-              "answer": 2,
+              "answer": 3,
               "tol": {
                 "abs": 0
               }
@@ -1098,7 +1191,7 @@
             "`n3`",
             {
               "edit": true,
-              "answer": 5,
+              "answer": 6,
               "tol": {
                 "abs": 0
               }
@@ -1117,17 +1210,17 @@
         ]
       },
       "feedback": {
-        "correct": "2, 4, 5 and 3.",
+        "correct": "3, 4, 6 and 3.",
         "generic": "A merge is inner unless you say otherwise. Series arithmetic keeps every date in either.",
         "byKey": {
-          "r0c1": "The default merge is an inner join: only 2 and 3 July are in both.",
-          "r1c1": "A left join keeps every row of `a`: four dates.",
-          "r2c1": "Series arithmetic aligns on the index and keeps every date in either: 1 to 5 July.",
-          "r3c1": "A date in only one Series gives NaN: 1, 4 and 5 July."
+          "r0c1": "The default merge is an inner join: only 2, 3 and 7 July are in both.",
+          "r1c1": "A right join keeps every row of `b`: four dates.",
+          "r2c1": "Series arithmetic aligns on the index and keeps every date in either: six dates.",
+          "r3c1": "`count` skips NaN. Only the three shared dates give a number."
         }
       },
       "explain": {
-        "text": "`pd.merge` keeps only shared dates unless `how` says otherwise; a left join keeps all of `a`. Dividing Series aligns labels like an outer join, so 1 to 5 July all appear. Three of those dates miss a partner and give NaN."
+        "text": "`pd.merge` keeps only shared dates unless `how` says otherwise; a right join keeps all of `b`. Dividing Series aligns labels like an outer join, so six dates appear. Only the three shared dates give a number, which `count` counts."
       }
     },
     {
@@ -1138,81 +1231,82 @@
         "pl-figures"
       ],
       "title": "Every share from 100",
-      "prose": "A meeting wants to compare shares priced in very different pounds. `prices` maps each share's name to its closes. Rebase each line to 100 on day 1, and name it so the legend lists it. Label the y axis `Value (start = 100)`.",
-      "question": "Complete `rebased_chart(days, prices)` and return the Axes.",
+      "prose": "A meeting compares shares from the day a new chief executive started, day `start`. `prices` maps each share's name to its closes on `days`. Rebase each line to 100 on day `start`, and name it so the legend lists it. Label the y axis `Value (start = 100)`.",
+      "question": "Complete `rebased_from_day(days, prices, start)` and return the Axes.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef rebased_chart(days, prices):\n    # prices maps each share's name to its closes\n    fig, ax = plt.subplots()\n    ...\n    ax.legend()\n    return ax\n",
-        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef rebased_chart(days, prices):\n    # prices maps each share's name to its closes\n    fig, ax = plt.subplots()\n    for name, closes in prices.items():\n        rebased = [c / closes[0] * 100 for c in closes]\n        ax.plot(days, rebased, label=name)\n    ax.set_ylabel(\"Value (start = 100)\")\n    ax.legend()\n    return ax\n",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef rebased_from_day(days, prices, start):\n    # prices maps each share's name to its closes on days\n    fig, ax = plt.subplots()\n    ...\n    ax.legend()\n    return ax\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef rebased_from_day(days, prices, start):\n    # prices maps each share's name to its closes on days\n    fig, ax = plt.subplots()\n    i = days.index(start)\n    for name, closes in prices.items():\n        rebased = [c / closes[i] * 100 for c in closes]\n        ax.plot(days, rebased, label=name)\n    ax.set_ylabel(\"Value (start = 100)\")\n    ax.legend()\n    return ax\n",
         "examples": [
           {
             "setup": "plt.close('all')",
-            "call": "rebased_chart([1, 2, 3], {'Harbour': [412.00, 420.24, 432.60], 'Kestrel': [18.50, 18.13, 19.24]}).lines[0].get_ydata().tolist()",
-            "expect": "[100.0, 102.0, 105.0]",
+            "call": "rebased_from_day([1, 2], {'Wren': [250.00, 200.00]}, 2).lines[0].get_ydata().tolist()",
+            "expect": "[125.0, 100.0]",
             "compare": "isclose"
           }
         ],
         "tests": [
           {
             "setup": "plt.close('all')",
-            "call": "len(rebased_chart([1, 2, 3], {'Harbour': [412.00, 420.24, 432.60], 'Kestrel': [18.50, 18.13, 19.24]}).lines)",
+            "call": "len(rebased_from_day([1, 2, 3], {'Harbour': [380.00, 400.00, 420.00], 'Kestrel': [21.00, 20.00, 20.80]}, 2).lines)",
             "expect": "2",
             "compare": "equal"
           },
           {
             "setup": "plt.close('all')",
-            "call": "rebased_chart([1, 2, 3], {'Harbour': [412.00, 420.24, 432.60], 'Kestrel': [18.50, 18.13, 19.24]}).lines[0].get_ydata().tolist()",
-            "expect": "[100.0, 102.0, 105.0]",
+            "call": "rebased_from_day([1, 2, 3], {'Harbour': [380.00, 400.00, 420.00], 'Kestrel': [21.00, 20.00, 20.80]}, 2).lines[0].get_ydata().tolist()",
+            "expect": "[95.0, 100.0, 105.0]",
             "compare": "isclose"
           },
           {
             "setup": "plt.close('all')",
-            "call": "rebased_chart([1, 2, 3], {'Harbour': [412.00, 420.24, 432.60], 'Kestrel': [18.50, 18.13, 19.24]}).lines[1].get_ydata().tolist()",
-            "expect": "[100.0, 98.0, 104.0]",
+            "call": "rebased_from_day([1, 2, 3], {'Harbour': [380.00, 400.00, 420.00], 'Kestrel': [21.00, 20.00, 20.80]}, 2).lines[1].get_ydata().tolist()",
+            "expect": "[105.0, 100.0, 104.0]",
             "compare": "isclose"
           },
           {
             "setup": "plt.close('all')",
-            "call": "[t.get_text() for t in rebased_chart([1, 2, 3], {'Harbour': [412.00, 420.24, 432.60], 'Kestrel': [18.50, 18.13, 19.24]}).get_legend().get_texts()]",
+            "call": "[t.get_text() for t in rebased_from_day([1, 2, 3], {'Harbour': [380.00, 400.00, 420.00], 'Kestrel': [21.00, 20.00, 20.80]}, 2).get_legend().get_texts()]",
             "expect": "['Harbour', 'Kestrel']",
             "compare": "equal"
           },
           {
             "setup": "plt.close('all')",
-            "call": "rebased_chart([1, 2, 3], {'Harbour': [412.00, 420.24, 432.60], 'Kestrel': [18.50, 18.13, 19.24]}).get_ylabel()",
+            "call": "rebased_from_day([1, 2, 3], {'Harbour': [380.00, 400.00, 420.00], 'Kestrel': [21.00, 20.00, 20.80]}, 2).get_ylabel()",
             "expect": "'Value (start = 100)'",
             "compare": "equal"
           },
           {
             "setup": "plt.close('all')",
-            "call": "rebased_chart([1, 2, 3], {'Harbour': [412.00, 420.24, 432.60], 'Kestrel': [18.50, 18.13, 19.24], 'Wren': [250.00, 255.00, 240.00]}).lines[2].get_ydata().tolist()",
-            "expect": "[100.0, 102.0, 96.0]",
+            "call": "rebased_from_day([1, 2, 3], {'Harbour': [380.00, 400.00, 420.00], 'Kestrel': [21.00, 20.00, 20.80], 'Wren': [240.00, 250.00, 255.00]}, 2).lines[2].get_ydata().tolist()",
+            "expect": "[96.0, 100.0, 102.0]",
             "compare": "isclose"
           },
           {
             "setup": "plt.close('all')",
-            "call": "rebased_chart([1, 2, 3], {'Harbour': [412.00, 420.24, 432.60], 'Kestrel': [18.50, 18.13, 19.24], 'Wren': [250.00, 255.00, 240.00]}).lines[2].get_xdata().tolist()",
-            "expect": "[1, 2, 3]",
+            "call": "rebased_from_day([10, 11, 12, 13], {'Wren': [240.00, 250.00, 200.00, 260.00]}, 12).lines[0].get_ydata().tolist()",
+            "expect": "[120.0, 125.0, 100.0, 130.0]",
             "compare": "isclose"
           }
         ],
         "how": "Check runs 7 hidden tests on the Axes your function returns: the lines, their values, the legend and the y label. The first run loads matplotlib, which is large: allow 10 to 20 seconds. Later runs are quick."
       },
       "feedback": {
-        "correct": "Each share divided by its own first close, named and labelled.",
+        "correct": "Each share divided by its own close on day `start`, named and labelled.",
         "generic": "Some tests failed. Open the first one that failed below the editor.",
         "byKey": {
           "test-1": "Test 1 expects one line per share. Call `ax.plot` once for each name in `prices`.",
-          "test-2": "Test 2 expects Harbour at 100, 102 and 105. Divide by its first close and multiply by 100.",
-          "test-3": "Test 3 expects Kestrel at 100, 98 and 104. Each share divides by its own first close.",
+          "test-2": "Test 2 expects Harbour at 95, 100 and 105. Divide by its close on day `start`, here day 2, and multiply by 100.",
+          "test-3": "Test 3 expects Kestrel at 105, 100 and 104. Each share divides by its own close on day `start`.",
           "test-4": "The legend does not list both names. Give each `ax.plot` a `label=`.",
           "test-5": "The y label should read `Value (start = 100)`.",
+          "test-7": "Test 7's days start at 10, so day 12 is position 2. Find it with `days.index(start)`.",
           "error": "Your code stopped with an error. Replace `...` with a loop over `prices.items()`."
         }
       },
       "explain": {
-        "text": "Each share divides by its own first close, so every line starts at 100 and reads as growth. `label=name` gives the legend its entries. The y label says what 100 means.\n\n```python\nfor name, closes in prices.items():\n    rebased = [c / closes[0] * 100 for c in closes]\n    ax.plot(days, rebased, label=name)\nax.set_ylabel(\"Value (start = 100)\")\n```"
+        "text": "`days.index(start)` finds the position of day `start`. Each share divides by its own close there, so every line passes through 100 on that day. `label=name` gives the legend its entries, and the y label says what 100 means.\n\n```python\ni = days.index(start)\nfor name, closes in prices.items():\n    rebased = [c / closes[i] * 100 for c in closes]\n    ax.plot(days, rebased, label=name)\nax.set_ylabel(\"Value (start = 100)\")\n```"
       }
     },
     {
@@ -1224,44 +1318,44 @@
       ],
       "title": "Heights on a log axis",
       "prose": "On a log price axis, a share's rise from £20 to £80 is drawn 3 cm tall.",
-      "question": "How tall, in cm, is its later fall from £80 to £10?",
+      "question": "The share then rises a further 4.5 cm on the chart. What is its price, in £?",
       "widget": {
         "kind": "numeric",
-        "answer": 4.5,
+        "answer": 640,
         "tol": {
-          "abs": 0.05
+          "abs": 0.5
         },
-        "unit": "cm",
+        "unit": "£",
         "placeholder": "a number",
-        "label": "Height in cm",
-        "accept": "4.5 cm: three halvings at 1.5 cm each",
+        "label": "Price in £",
+        "accept": "£640: three doublings from £80",
         "wrong": [
           {
             "id": "linear",
-            "value": 3.5,
+            "value": 170,
             "tol": {
-              "abs": 0.05
+              "abs": 0.5
             }
           },
           {
             "id": "ratio",
-            "value": 6,
+            "value": 480,
             "tol": {
-              "abs": 0.05
+              "abs": 0.5
             }
           }
         ]
       },
       "feedback": {
-        "correct": "Three halvings at 1.5 cm each.",
-        "generic": "Count the doublings in the rise, then the halvings in the fall.",
+        "correct": "Each 1.5 cm doubles the price: £80 to £640.",
+        "generic": "Find the height of one doubling, then count the doublings in 4.5 cm.",
         "byKey": {
-          "linear": "You measured pounds, as a linear axis would. A log axis gives equal heights to equal ratios.",
-          "ratio": "You scaled by the ratios, 8 against 4. Heights follow the number of doublings: 3 against 2."
+          "linear": "You added £20 a centimetre, as a linear axis would. On a log axis each 1.5 cm doubles the price.",
+          "ratio": "You scaled the rise's ratio of 4 by 1.5. Heights count doublings: 4.5 cm is three of them."
         }
       },
       "explain": {
-        "text": "£20 to £80 is two doublings, so each doubling is 1.5 cm. £80 to £10 is three halvings, $3 \\times 1.5 = 4.5$ cm. On a log axis equal ratios get equal heights, up or down."
+        "text": "£20 to £80 is two doublings in 3 cm, so each doubling is 1.5 cm. A further 4.5 cm is three doublings: $80 \\times 2^3 = 640$. On a log axis, equal heights mean equal ratios."
       }
     },
     {
@@ -1339,9 +1433,9 @@
         "solution": "import pandas as pd\n\ndef average_daily_value(trades):\n    # columns: date, ticker, qty, price\n    value = trades[\"qty\"].abs() * trades[\"price\"]\n    daily = value.groupby([trades[\"date\"], trades[\"ticker\"]]).sum()\n    per_ticker = daily.groupby(level=\"ticker\").mean()\n    return per_ticker.round(2).to_dict()\n",
         "examples": [
           {
-            "setup": "trades = pd.DataFrame({\"date\": ['2026-03-02', '2026-03-02', '2026-03-02', '2026-03-03', '2026-03-03', '2026-03-04'], \"ticker\": ['BARC', 'BARC', 'VOD', 'BARC', 'VOD', 'VOD'], \"qty\": [1000, -400, 5000, 600, -2000, 3000], \"price\": [2.15, 2.16, 0.72, 2.12, 0.71, 0.74]})",
+            "setup": "trades = pd.DataFrame({\"date\": ['2026-03-09', '2026-03-09', '2026-03-10'], \"ticker\": ['LLOY', 'LLOY', 'LLOY'], \"qty\": [2000, -1000, 4000], \"price\": [0.52, 0.53, 0.51]})",
             "call": "average_daily_value(trades)",
-            "expect": "{'BARC': 2143.0, 'VOD': 2413.33}",
+            "expect": "{'LLOY': 1805.0}",
             "compare": "equal"
           }
         ],
@@ -1383,7 +1477,7 @@
         "correct": "Sum each day first, then average the days.",
         "generic": "Some tests failed. Open the first one that failed below the editor.",
         "byKey": {
-          "test-1": "Test 1 expects BARC at £2,143.00: days of £3,014.00 and £1,272.00. Total each day before you take the mean.",
+          "test-1": "Test 1 expects BARC at £2,143.00: days of £3,014.00 and £1,272.00. A sell's value counts as positive, so use `abs()`, and total each day before you take the mean.",
           "test-3": "Test 3 has two SHEL fills on one day. Averaging fills gives the wrong figure; average the daily totals.",
           "test-4": "Test 4 holds only sells. Use `abs()` on `qty`, so a sell adds to the value traded.",
           "error": "Your code stopped with an error. Build a value column, group by date and ticker, then by ticker."
@@ -1424,7 +1518,7 @@
           },
           {
             "id": "d",
-            "text": "`150.0 1.5 False`",
+            "text": "`1.5 150.0 True`",
             "why": "You expected `b` to keep its own copy from the first call. `a`, `b` and `c` are one list."
           }
         ]
@@ -1454,8 +1548,8 @@
         "solution": "import numpy as np\n\ndef portfolio_max_drawdown(prices, weights):\n    prices = np.asarray(prices, dtype=float)\n    weights = np.asarray(weights, dtype=float)\n    value = (prices / prices[0]) @ weights   # each column by its own first price\n    peak = np.maximum.accumulate(value)\n    return float((1 - value / peak).max())\n",
         "examples": [
           {
-            "call": "portfolio_max_drawdown(np.array([[100.0, 200.0], [90.0, 210.0], [80.0, 190.0], [95.0, 230.0], [70.0, 220.0]]), np.array([0.6, 0.4]))",
-            "expect": "0.16504854368932043",
+            "call": "portfolio_max_drawdown(np.array([[10.0, 40.0], [12.0, 36.0], [9.0, 44.0]]), np.array([0.5, 0.5]))",
+            "expect": "0.04761904761904767",
             "compare": "isclose"
           }
         ],
@@ -1497,9 +1591,8 @@
         "correct": "Rebase each column, weight, then track the running peak.",
         "generic": "Some tests failed. Open the first one that failed below the editor.",
         "byKey": {
-          "test-1": "Test 1 expects about 0.1650: the value falls from 1.03 to 0.86. Rebase each share before weighting, and measure from the running peak.",
-          "test-5": "Test 5 has a square table, so a wrong axis does not raise an error. Divide every row by `prices[0]`, the first day's row.",
-          "error": "Your code stopped with an error. `prices[0]` has one price per share, so `prices / prices[0]` lines up by column."
+          "test-1": "Test 1 expects about 0.1650: the value falls from 1.03 to 0.86. Divide by `prices[0]`, the first day's row, then weight, and measure from the running peak.",
+          "error": "Your code did not load. Check the lines you added for a typing slip."
         }
       },
       "explain": {
@@ -1517,8 +1610,8 @@
       ],
       "title": "Review the exit project",
       "kind": "longform",
-      "prompt": "A colleague's version of the 1.1 exit project reports a volatility of about 400%. Its drawdown ignores the fund's worst fall. The vendor file is newest first.\n\n```python\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\ndf = pd.read_csv(\"prices.csv\", index_col=\"date\",\n                 parse_dates=True)\nclose = df[\"close\"].ffill()\nr = close.pct_change()\nvol = r.std() * 252\nmdd = (close / close.iloc[0] - 1).min()\nfig, ax = plt.subplots()\nax.plot(close)\nplt.savefig(\"risk.png\")\nax.set_title(\"Fund\")\nprint(f\"Vol {vol:.1%}  MDD {mdd:.1%}\")\n```\n\n(a) Name each bug and say what it does to the numbers or the chart. (b) Write a corrected script: functions for loading, the summary and the figure, and a main guard. The figure shows the closes and the drawdown, labelled with units. (c) Give a three-day price path whose answers you can work out by hand. Say how you would use it.",
-      "model": "**(a) The bugs.**\n\n1. The file is newest first and is never sorted. So `ffill` copies later prices into earlier gaps, which looks ahead. And `pct_change` divides each day by the *next* day, so every return is reversed.\n2. `r.std() * 252` scales by 252. Volatility grows with the square root of time, so it should be `np.sqrt(252)`. The figure printed is $\\sqrt{252} \\approx 15.9$ times too big, which is why it reads about 400%.\n3. `close / close.iloc[0] - 1` measures every fall from the first row, which here is the newest price. A drawdown is measured from the running peak, `close.cummax()`.\n4. `plt.savefig` runs before `ax.set_title`, so the saved chart has no title. It also has no axis labels or units, and it shows only the price, not the drawdown.\n5. Everything runs at import. A test file that does `from risk import ...` would read the file and save a chart. The work should sit in functions, with the script lines under a main guard.\n\n**(b) A corrected script.**\n\n```python\nimport sys\nimport numpy as np\nimport pandas as pd\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef load_closes(path):\n    df = pd.read_csv(path, index_col=\"date\", parse_dates=True)\n    return df.sort_index()[\"close\"].ffill()\n\ndef summary(close):\n    r = close.pct_change().dropna()\n    vol = r.std() * np.sqrt(252)\n    dd = close / close.cummax() - 1\n    return r, vol, dd\n\ndef figure(close, dd, path):\n    fig, (top, bottom) = plt.subplots(2, 1, sharex=True)\n    top.plot(close.index, close)\n    top.set_ylabel(\"Close (£)\")\n    top.set_title(\"Fund closes and drawdown\")\n    bottom.fill_between(dd.index, dd, 0)\n    bottom.set_ylabel(\"Drawdown\")\n    fig.savefig(path)\n\ndef main(argv):\n    close = load_closes(argv[1])\n    r, vol, dd = summary(close)\n    figure(close, dd, \"risk.png\")\n    print(f\"Vol {vol:.1%}  MDD {dd.min():.1%}\")\n\nif __name__ == \"__main__\":\n    main(sys.argv)\n```\n\n**(c) Checks by hand.** Closes of £100.00, £120.00 and £90.00 give returns of 0.2 and −0.25. The running peak is £120.00, so the maximum drawdown is $90/120 - 1 = -0.25$. A test can feed `summary` these three closes and compare with `pytest.approx`. Sorting is checked by feeding the same three rows newest first and getting the same answers.",
+      "prompt": "A colleague's version of the 1.1 exit project reports a volatility of about 1.6% for a fund that moves about 25% a year. Its drawdown ignores the fund's worst fall. The vendor file is newest first.\n\n```python\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\ndf = pd.read_csv(\"prices.csv\", index_col=\"date\",\n                 parse_dates=True)\nclose = df[\"close\"].ffill()\nr = close.pct_change()\nvol = r.std()\nmdd = (close / close.iloc[0] - 1).min()\nfig, ax = plt.subplots()\nax.plot(close)\nplt.savefig(\"risk.png\")\nax.set_title(\"Fund\")\nprint(f\"Vol {vol:.1%}  MDD {mdd:.1%}\")\n```\n\n(a) Name each bug and say what it does to the numbers or the chart. (b) Write a corrected script: functions for loading, the summary and the figure, and a main guard. The figure shows the closes and the drawdown, labelled with units. (c) Give a three-day price path whose answers you can work out by hand. Say how you would use it.",
+      "model": "**(a) The bugs.**\n\n1. The file is newest first and is never sorted. So `ffill` copies later prices into earlier gaps, which looks ahead. And `pct_change` divides each day by the *next* day, so every return is reversed.\n2. `r.std()` is the daily volatility, never annualised. Volatility grows with the square root of time, so it needs `* np.sqrt(252)`. The figure printed is $\\sqrt{252} \\approx 15.9$ times too small: 1.6% a day is about 25% a year.\n3. `close / close.iloc[0] - 1` measures every fall from the first row, which here is the newest price. A drawdown is measured from the running peak, `close.cummax()`.\n4. `plt.savefig` runs before `ax.set_title`, so the saved chart has no title. It also has no axis labels or units, and it shows only the price, not the drawdown.\n5. Everything runs at import. A test file that does `from risk import ...` would read the file and save a chart. The work should sit in functions, with the script lines under a main guard.\n\n**(b) A corrected script.**\n\n```python\nimport sys\nimport numpy as np\nimport pandas as pd\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\ndef load_closes(path):\n    df = pd.read_csv(path, index_col=\"date\", parse_dates=True)\n    return df.sort_index()[\"close\"].ffill()\n\ndef summary(close):\n    r = close.pct_change().dropna()\n    vol = r.std() * np.sqrt(252)\n    dd = close / close.cummax() - 1\n    return r, vol, dd\n\ndef figure(close, dd, path):\n    fig, (top, bottom) = plt.subplots(2, 1, sharex=True)\n    top.plot(close.index, close)\n    top.set_ylabel(\"Close (£)\")\n    top.set_title(\"Fund closes and drawdown\")\n    bottom.fill_between(dd.index, 100 * dd, 0)\n    bottom.set_ylabel(\"Drawdown (%)\")\n    bottom.set_xlabel(\"Date\")\n    fig.savefig(path)\n\ndef main(argv):\n    close = load_closes(argv[1])\n    r, vol, dd = summary(close)\n    figure(close, dd, \"risk.png\")\n    print(f\"Vol {vol:.1%}  MDD {dd.min():.1%}\")\n\nif __name__ == \"__main__\":\n    main(sys.argv)\n```\n\n**(c) Checks by hand.** Closes of £100.00, £120.00 and £90.00 give returns of 0.2 and −0.25. The running peak is £120.00, so the maximum drawdown is $90/120 - 1 = -0.25$. A test can feed `summary` these three closes and compare with `pytest.approx`. Sorting is checked by writing the same three rows newest first to a CSV file, loading it with `load_closes`, and getting the same answers from `summary`.",
       "rubric": [
         {
           "points": 2,
@@ -1526,7 +1619,7 @@
         },
         {
           "points": 2,
-          "text": "(a) Says volatility scales by $\\sqrt{252}$, not 252, and that 252 makes it about 15.9 times too big."
+          "text": "(a) Says the volatility is daily and must be multiplied by $\\sqrt{252}$, about 15.9 times, to annualise it."
         },
         {
           "points": 2,
