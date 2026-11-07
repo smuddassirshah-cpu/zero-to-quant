@@ -58,3 +58,33 @@ Read at HEAD `0fe3513` on `sx/read-perf-2`. No content file was edited.
 - "The task repeats the lesson's worked product" is seen three times (RI4-2, CI3-3, SY4-3). Raise for the brief: the report names the lesson screens that lay out the objective's product and lists the new parts; the main session rules whether that overlap is allowed.
 
 Totals: Must 1 (SY4-2). Should 7 (SY4-1, SY4-3, SY3-1, SY3-2, SY3-3, MP1-1, MP3-1). Could 10 (SY1-1, SY1-2, SY3-4, SY3-5, SY4-4, PD1-1, PD1-2, MP1-2, MP2-1, MP3-2). pdes L1 and puzzles L4 have no Must or Should.
+
+## Fix pass
+
+- SY4-2: fixed. Basis: l16 screen 8 says unsigned subtraction is exact modulo $2^{32}$ for any $N$ and only the slot needs $N$ to divide $2^{32}$; sentences 1 and 2 of `explain` now say so, sentence 3 unchanged.
+- SY4-1: fixed. `how` now says the single-threaded tests cannot check the memory orders and lists what they do check; `feedback.correct` sends the learner to the explain. Inbox bullet added (the gap stays open).
+- SY4-3: fixed in the report: names l16 screens 5, 8 and 9 and the new parts. The overlap ruling stays with the main session.
+- SY3-1: fixed. Basis: the order's path is the scheduler 1 µs plus the switch back in 2 µs, 3 µs, plus the two calls 0.4 µs, so 3.4 µs of waiting; 5.4 µs of core time unchanged. Numbers script checks it.
+- SY3-2: fixed. Rows 1 and 2 are now `required` with row 3; row 4 stays optional, so a pass is 2 + 2 + 3 and none skips process, call or switch.
+- SY3-3: fixed. Row 4 and the model name memory both sides can see, polled on its own core; "ring" gone from the row and the model (and from `explain`).
+- MP1-1: fixed. Row 2 is `required` with row 3 (5 of 7 points fixed); report line on the l3 and `h-order` overlap added; numbers script updated.
+- MP3-1: fixed. Row 2 is `required` with row 3 (6 of 7 points fixed); numbers script updated.
+- SY1-1: fixed. Rows 1, 3 and 4 open "Tick only if all (both) are given".
+- SY1-2: fixed. The second reason now stands alone: `out` may end where the kept prices end. Split into two sentences for the 35-word gate.
+- SY3-4: fixed in the model (the pipe copies the bytes) and in row 1.
+- SY3-5: fixed. Tagged TLBs may keep entries, so the model says unless tagged they were flushed, and even then the strategy's pages may evict them.
+- SY4-4: fixed. The prose says `head_` and `tail_` sit on different 64-byte cache lines, which is what test 9 checks.
+- PD1-1: fixed. Basis: the third-order terms leave $-(p-q)\Delta x^3 u_{xxx}/6$, over $\Delta t$ that is $-c\,\Delta x^2 u_{xxx}/6$, order $\Delta x^2$ (the reader's script found 4.0 per halving). Row 3 accepts either bound; step 6 notes the sharper order.
+- PD1-2: fixed. Step 2 adds the first-dropped-term route, $\tfrac12\Delta t^2u_{tt}$, and row 3 accepts "a bound, or the first dropped term". Row 3 split into three sentences for the gate.
+- MP1-2: fixed. Basis: if $\mu(A_m) < \infty$ then $A_m \supseteq A_{m+1} \supseteq \cdots$ has the same intersection and the stated result applies; model and row 4 say so.
+- MP2-1: fixed. Row 4 opens "Tick only if all are given".
+- MP3-2: fixed in the report: markov l17 screens 8 and 9 named, the proof for every $n$ on $\mathcal{F}_n$ is new.
+- Fix pass 2 (rubric-passes.mjs): MP1-1 widened. The tool showed minimal passes rows 1, 2, 3 and rows 2, 3, 4, skipping continuity from above or building the space. Rows 1 to 4 are now `required` (9 of 10 points), so the only pass is rows 1 to 4. The other three items checked: measure-prob `h-build-integral` minimal sets 1, 2, 4 / 1, 3, 4 / 2, 3, 4 (the core row 4 is required; the rest are parts of one construction); `h-prove-urn` 1, 2, 3 / 2, 3, 4 / 2, 3, 5 (both conditions and the step required); systems `h3-process-aloud` 1, 2, 3 only. No change to those three.
+- Disputed: none. Deferred: none. Graded answers changed: none (no code test touched; the C++ was not edited).
+
+Gates (worktree `sx/fix-perf-2`):
+- Author scripts `docs/reports/{systems-1,-3,-4,pdes-1,measure-prob-1,-2,-3,puzzles-4}-perf-numbers.py` exit 0 (systems-3, measure-prob-1 and -3 checks updated for the new required rows and the 3.4 µs figure). Reader scripts in `perf-retrofit-2-scripts/` exit 0, `findings_assert.py` included (0 failing).
+- C++ not touched; `sy4_spsc_ring.py` still exits 0.
+- Validator: 0 errors (4,091 warnings; 4,090 before the edits); `content/manifest.json` restored.
+- Voice scan 0 and 0 for systems, pdes, measure-prob and puzzles.
+- Playthrough of the eight homeworks, with and without `--mobile`: All passed (16 runs).

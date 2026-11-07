@@ -60,7 +60,9 @@ check(float(us) / 1e6 == 0.108, 'route B 10.8% of a core')
 for fig in ['20,000', '0.2 µs', '2 µs', '1 µs', '0.4', '5 µs', '5.4 µs', '108,000', '108 ms', '11%', '93', '100%']:
     check(fig in text, 'figure present: ' + fig)
 nums = set(x.rstrip(',.') for x in re.findall(r'\d[\d,]*(?:\.\d+)?', text.replace('{,}', ',')))
-known = {'20,000', '0.2', '2', '1', '0.4', '5', '5.4', '108,000', '108', '11', '100', '93', '3'}
+# fix pass SY3-1: an order's own wait is the scheduler plus the switch back in, plus the two calls
+check(F(1) + 2 == 3 and F(1) + 2 + F(4, 10) * 1 == F(34, 10), 'wait on the order path 3 us, 3.4 us with the calls')
+known = {'3.4', '20,000', '0.2', '2', '1', '0.4', '5', '5.4', '108,000', '108', '11', '100', '93', '3'}
 check(nums <= known, 'no unchecked figure: %s' % sorted(nums - known))
 check(sum(r['points'] for r in W['rubric']) == 10, 'rubric sums to 10')
 check(0 < sum(1 for r in W['rubric'] if r.get('required')) < len(W['rubric']), 'some rows required, not all')

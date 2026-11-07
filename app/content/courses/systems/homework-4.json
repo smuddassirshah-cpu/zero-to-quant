@@ -674,7 +674,7 @@
       ],
       "pace": 1500,
       "title": "A ring for two threads",
-      "prose": "A feed thread hands ticks to a strategy thread. Build the queue between them: a fixed-size, single-producer, single-consumer ring of `long long` ticks. The producer calls only `try_push`; the consumer calls only `try_pop`, `drain` and `size`. The ring must be safe with the two calls on two cores at once, though the tests run on one thread.\n\n- `N` is the capacity. It must be a power of two, and `TickRing<6>` must fail to compile.\n- The slots live inside the object: no heap, ever.\n- `bool try_push(long long v)` returns false when the ring is full.\n- `bool try_pop(long long& out)` returns false when it is empty, and then leaves `out` unchanged.\n- `int drain(std::vector<long long>& out, int max)` pops up to `max` ticks onto the back of `out`, oldest first, and returns how many.\n- `int size() const` returns the number held.\n- Two public members, `std::atomic<unsigned> head_` (pops so far) and `tail_` (pushes so far), only ever grow and may wrap past 4,294,967,295. Each sits on its own 64-byte cache line.",
+      "prose": "A feed thread hands ticks to a strategy thread. Build the queue between them: a fixed-size, single-producer, single-consumer ring of `long long` ticks. The producer calls only `try_push`; the consumer calls only `try_pop`, `drain` and `size`. The ring must be safe with the two calls on two cores at once, though the tests run on one thread.\n\n- `N` is the capacity. It must be a power of two, and `TickRing<6>` must fail to compile.\n- The slots live inside the object: no heap, ever.\n- `bool try_push(long long v)` returns false when the ring is full.\n- `bool try_pop(long long& out)` returns false when it is empty, and then leaves `out` unchanged.\n- `int drain(std::vector<long long>& out, int max)` pops up to `max` ticks onto the back of `out`, oldest first, and returns how many.\n- `int size() const` returns the number held.\n- Two public members, `std::atomic<unsigned> head_` (pops so far) and `tail_` (pushes so far), only ever grow and may wrap past 4,294,967,295. `head_` and `tail_` sit on different 64-byte cache lines.",
       "question": "Write the class template `TickRing<N>` to the specification above.",
       "widget": {
         "kind": "code",
@@ -833,14 +833,14 @@
             "compare": "equal"
           }
         ],
-        "how": "Twelve hidden tests, run on one thread. One counts heap allocations, one checks that `TickRing<6>` fails to compile, and one plays 100,000 random calls against a simple model."
+        "how": "Twelve hidden tests, run on one thread, so they cannot check the memory orders: compare yours with the explain. They do check the order of ticks, full and empty, the wrap, `out` left alone, and that `head_` and `tail_` are 64 bytes apart. One counts heap allocations, one checks that `TickRing<6>` fails to compile, and one plays 100,000 random calls against a simple model."
       },
       "feedback": {
-        "correct": "That's it. Growing counters, a mask for the slot, and each counter on its own line.",
+        "correct": "That's it. Growing counters, a mask for the slot, and each counter on its own line. Check your loads and stores against the explain, which one thread cannot test.",
         "generic": "Not quite right. Read the first failing test."
       },
       "explain": {
-        "text": "The unsigned difference `tail_ - head_` is the count even after a counter wraps, because $2^{32}$ is a multiple of $N$. The slot is the counter masked with $N - 1$. The producer stores `tail_` with release after writing the slot, and the consumer loads it with acquire before reading, so a tick is never read half-written."
+        "text": "The unsigned difference `tail_ - head_` is the count even after a counter wraps, since unsigned subtraction is exact modulo $2^{32}$. The slot is the counter masked with $N - 1$, which stays in order across the wrap because $N$ divides $2^{32}$. The producer stores `tail_` with release after writing the slot, and the consumer loads it with acquire before reading, so a tick is never read half-written."
       }
     }
   ]
