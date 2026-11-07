@@ -672,6 +672,58 @@
       "explain": {
         "text": "A needs 2,560 calls, 512 µs. B needs 32 calls, 6.4 µs. The saving is 512 − 6.4 = 505.6 µs."
       }
+    },
+    {
+      "id": "h3-process-aloud",
+      "performance": "aloud",
+      "difficulty": 5,
+      "skills": [
+        "sy-os"
+      ],
+      "tags": [
+        "context-switch"
+      ],
+      "pace": 300,
+      "title": "Two processes and a pipe, aloud",
+      "question": "Start the clock and answer aloud. Then mark your answer against the model.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "A desk runs its strategy and its order sender as two separate processes on one machine. Each order goes through a pipe. The strategy calls `write`, and the sender sleeps in a blocking `read` until an order arrives. At busy times the desk sends 20,000 orders a second.\n\nAn interviewer asks you to explain a process, a system call and a context switch, using this setup, and to say what each costs per order. Then say how you would cut the cost. Answer aloud in two minutes. Round figures: a system call costs 0.2 µs, a thread switch 2 µs and the scheduler's own work 1 µs.",
+        "seconds": 120,
+        "think": 30,
+        "followUps": [
+          "Would two threads of one process, still passing orders through the pipe, fix it?",
+          "The sender spins on shared memory instead of sleeping. What does that cost, and what does it save?",
+          "Why might the sender's first reads be slow after it is switched back in?"
+        ],
+        "model": "**A process.** A process is a running program with its own address space and its own table of open descriptors. Threads of one process share both, and two processes share neither. So the strategy cannot hand the sender a pointer to an order. The bytes must be copied through the kernel, which is what the pipe does.\n\n**A system call.** A system call asks the kernel to act for the program. The core enters the kernel, does the work and returns to the same thread, for about 0.2 µs. Every order pays two, a `write` in the strategy and a `read` in the sender: $2 \\times 0.2 = 0.4$ µs.\n\n**A context switch.** A context switch changes which thread runs on a core. The sender's `read` finds the pipe empty, so the kernel puts the sender to sleep and runs something else: one switch, 2 µs. The `write` makes it runnable again, the scheduler picks it for 1 µs, and a second switch brings it back for 2 µs. So each order pays a wake of $2 + 1 + 2 = 5$ µs. Between two processes the switch also changes the address space. The TLB entries for the old one are no use, so the first reads after the switch pay page walks.\n\n**Per order.** An order costs $0.4 + 5 = 5.4$ µs of core time, and it waits at least the 5 µs wake. At 20,000 orders a second that is $20{,}000 \\times 5.4 = 108{,}000$ µs. So 108 ms of every second, about 11% of a core, goes on passing orders, and $100 / 108 \\approx 93\\%$ of that is the wake.\n\n**The fix.** Take the kernel off the path. Map one shared memory region into both processes, or run both as threads of one process. Pass orders through a ring in that memory, and let the sender spin on its own core instead of sleeping. Then an order needs no system call and no switch: it crosses as a cache line between two cores. The price is a core kept 100% busy, so measure the gain before paying it.\n\n**The follow-ups.** (1) No. Two threads still make two calls and a wake per order, 5.4 µs; only the change of address space, and its TLB misses, goes away. The cost is the kernel and the sleep, not the process boundary. (2) A spinning sender holds one whole core, busy or not. It saves the wake and the two calls on every order: 108 ms of core time a second, and at least 5 µs of waiting per order. (3) The switch changed the address space, so the sender's TLB entries are gone. Its first reads walk the page table until the entries it uses are loaded again.",
+        "rubric": [
+          {
+            "points": 2,
+            "text": "A process: its own address space and its own descriptor table, which threads of one process share. So the order is copied through the kernel"
+          },
+          {
+            "points": 2,
+            "text": "A system call: the core enters the kernel and returns to the same thread, about 0.2 µs. Two per order, 0.4 µs"
+          },
+          {
+            "points": 3,
+            "required": true,
+            "text": "A context switch: the blocking `read` sleeps the sender and each order wakes it, $2 + 1 + 2 = 5$ µs. Gives 5.4 µs an order, 108 ms a second at 20,000 orders, about 11% of a core"
+          },
+          {
+            "points": 3,
+            "text": "The fix: a ring in shared memory with the sender spinning on its own core, so no call and no switch. Says it costs a busy core and to measure first"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare what you said with the model and tick the rubric.",
+        "generic": "Compare what you said with the model and tick the rubric."
+      },
+      "explain": {
+        "text": "Each order pays two system calls, 0.4 µs, and a wake of two switches and the scheduler, 5 µs. At 20,000 orders a second that is 108 ms of every second. A ring in shared memory with a spinning sender removes both, at the price of a busy core."
+      }
     }
   ]
 }
