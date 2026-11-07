@@ -417,7 +417,7 @@ Plan: programming, algorithms, C++, systems and debugging. Broad stochastic calc
 | `cpp-pricing` | `multivar` | via `trees` > `limits-thm` |
 | `random-vars` | `limits` | L5 needs limits/L5 |
 
-Required courses that need a recommended course: `coding-int` needs `micro`; `pytest` needs `plotting`.
+Required courses that need a recommended course: `coding-int` needs `micro`; `exp-log` needs `functions`; `pytest` needs `plotting`.
 <!-- /generated -->
 
 ## Strats
