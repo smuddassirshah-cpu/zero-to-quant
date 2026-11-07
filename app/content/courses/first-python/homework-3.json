@@ -82,8 +82,8 @@
             "compare": "isclose"
           },
           {
-            "call": "max_drawdown([100.00, 110.00, 99.00, 105.00, 88.00, 95.00])",
-            "expect": "0.2",
+            "call": "max_drawdown([200.00, 250.00, 225.00, 240.00, 175.00, 210.00])",
+            "expect": "0.3",
             "compare": "isclose"
           },
           {
@@ -97,18 +97,18 @@
             "compare": "isclose"
           },
           {
-            "call": "max_drawdown([100.00, 101.00, 102.00])",
+            "call": "max_drawdown([80.00, 80.00, 85.00])",
             "expect": "0.0",
             "compare": "isclose"
           },
           {
-            "call": "max_drawdown([120.00])",
+            "call": "max_drawdown([42.00])",
             "expect": "0.0",
             "compare": "isclose"
           },
           {
-            "call": "max_drawdown([50.00, 40.00, 60.00, 30.00])",
-            "expect": "0.5",
+            "call": "max_drawdown([60.00, 45.00, 90.00, 54.00])",
+            "expect": "0.4",
             "compare": "isclose"
           }
         ],
@@ -126,7 +126,7 @@
         "generic": "Not quite right. Check the first failing test by hand.",
         "byKey": {
           "test-1": "Test 1 expects 0.25 (£120.00 to £90.00). About 0.31 compares the highest and lowest prices in any order; 0.1 means the peak never moved up from the first price.",
-          "test-2": "Test 2 expects 0.2, from £110.00 to £88.00 across several days. About 0.162 measures one-day falls only; the fall must run from the peak."
+          "test-2": "Test 2 expects 0.3, from £250.00 to £175.00 across several days. About 0.271 measures one-day falls only; the fall must run from the peak."
         }
       },
       "explain": {
@@ -147,7 +147,7 @@
         "kind": "code",
         "language": "python",
         "starter": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef best_day(name):\n    pass  # replace this line\n\nprint(best_day(\"prices.csv\"))\n",
-        "solution": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef best_day(name):\n    best = None\n    best_price = 0.0\n    for line in open(name).readlines()[1:]:\n        parts = line.split(\",\")\n        price = float(parts[1])\n        if best is None or price > best_price:\n            best = parts[0]\n            best_price = price\n    return best\n\nprint(best_day(\"prices.csv\"))\n",
+        "solution": "with open(\"prices.csv\", \"w\") as f:\n    f.write(\"Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n\")\n\ndef best_day(name):\n    lines = open(name).readlines()[1:]\n    best = lines[0].split(\",\")[0]\n    best_price = float(lines[0].split(\",\")[1])\n    for line in lines:\n        parts = line.split(\",\")\n        price = float(parts[1])\n        if price > best_price:\n            best = parts[0]\n            best_price = price\n    return best\n\nprint(best_day(\"prices.csv\"))\n",
         "tests": [
           {
             "call": "(open('b1.csv', 'w').write('Day,Close\\nMon,101.20\\nTue,102.50\\nWed,99.80\\nThu,100.40\\nFri,101.10\\n'), best_day('b1.csv'))[1]",
@@ -255,7 +255,7 @@
         "fp-functions",
         "fp-lists"
       ],
-      "prose": "```text\nTraceback (most recent call last):\n  File \"load.py\", line 11, in <module>\n    closes = read_closes(\"prices.csv\")\n  File \"load.py\", line 5, in read_closes\n    closes.append(float(parts[1]))\nIndexError: list index out of range\n```",
+      "prose": "```text\nTraceback (most recent call last):\n  File \"load.py\", line 11, in <module>\n    closes = read_closes(\"prices.csv\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"load.py\", line 5, in read_closes\n    closes.append(float(parts[1]))\n                        ~~~~~^^^\nIndexError: list index out of range\n```",
       "question": "Which line of the file most likely caused this?",
       "widget": {
         "kind": "choice",
@@ -389,8 +389,8 @@
       ],
       "title": "Debugging a returns script",
       "kind": "longform",
-      "prompt": "A colleague's script is meant to read `prices.csv` (a header `Day,Close`, then five `day,price` lines) and print the daily returns. It stops with the traceback below.\n\n```python\ndef read_closes(name):\n    closes = []\n    for line in open(name):\n        closes.append(float(line.split(\",\")[1]))\n\ndef daily_returns(closes):\n    out = []\n    for i in range(len(closes)):\n        out.append((closes[i] - closes[i - 1]) / closes[i - 1])\n    return out\n\ncloses = read_closes(\"prices.csv\")\nprint(daily_returns(closes))\n```\n\n```text\nTraceback (most recent call last):\n  File \"returns.py\", line 12, in <module>\n    closes = read_closes(\"prices.csv\")\n  File \"returns.py\", line 4, in read_closes\n    closes.append(float(line.split(\",\")[1]))\nValueError: could not convert string to float: 'Close\\n'\n```\n\nThe script has three bugs. (a) Explain how you read this traceback and what it tells you. (b) Name all three bugs, saying for each what goes wrong when it runs. (c) Write the corrected script. (d) Say which bug gives no error message at all, and why that makes it the most dangerous.",
-      "model": "**(a) Reading the traceback.** Start at the last line: a `ValueError`, because `float` was given the text `'Close\\n'`. The File line just above it says Python stopped on line 4, inside `read_closes`. The top File line, line 12, is only the call that led there. The text `Close` comes from the header, so the first line of the file is the problem.\n\n**(b) The three bugs.**\n\n1. *The header is not skipped* (line 3). The loop reads `Day,Close` first, and `float(\"Close\\n\")` raises the `ValueError` shown.\n2. *`read_closes` has no `return`*. Once the header is skipped, the function builds the list and then hands back `None`. Line 12 stores `None` in `closes`, and `len(closes)` on line 8 raises `TypeError: object of type 'NoneType' has no len()`. The traceback would point at line 8, but the cause is the missing `return`.\n3. *The loop starts at 0* (line 8). When `i` is 0, `closes[i - 1]` is `closes[-1]`, the last price. The first \"return\" compares Monday with Friday. With five closes it prints five numbers instead of four, and the first is meaningless.\n\n**(c) Corrected script.**\n\n```python\ndef read_closes(name):\n    closes = []\n    for line in open(name).readlines()[1:]:\n        closes.append(float(line.split(\",\")[1]))\n    return closes\n\ndef daily_returns(closes):\n    out = []\n    for i in range(1, len(closes)):\n        out.append((closes[i] - closes[i - 1]) / closes[i - 1])\n    return out\n\ncloses = read_closes(\"prices.csv\")\nprint(daily_returns(closes))\n```\n\n**(d) The silent bug.** Bug 3 never raises an error, because index −1 is legal in Python: it counts from the back. The script runs and prints a plausible list of numbers, one of them wrong. Errors that stop the program get fixed; a wrong number that looks fine can flow into a backtest or a risk report unnoticed. The check is to count: five closes must give four returns.",
+      "prompt": "A colleague's script is meant to read `prices.csv` (a header `Day,Close`, then five `day,price` lines) and print the daily returns. It stops with the traceback below.\n\n```python\ndef read_closes(name):\n    closes = []\n    for line in open(name):\n        closes.append(float(line.split(\",\")[1]))\n\ndef daily_returns(closes):\n    out = []\n    for i in range(len(closes)):\n        out.append((closes[i] - closes[i - 1]) / closes[i - 1])\n    return out\n\ncloses = read_closes(\"prices.csv\")\nprint(daily_returns(closes))\n```\n\n```text\nTraceback (most recent call last):\n  File \"returns.py\", line 12, in <module>\n    closes = read_closes(\"prices.csv\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"returns.py\", line 4, in read_closes\n    closes.append(float(line.split(\",\")[1]))\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: could not convert string to float: 'Close\\n'\n```\n\nThe script has three bugs. (a) Explain how you read this traceback and what it tells you. (b) Name all three bugs, saying for each what goes wrong when it runs. (c) Write the corrected script. (d) Say which bug gives no error message at all, and why that makes it the most dangerous.",
+      "model": "**(a) Reading the traceback.** Start at the last line: a `ValueError`, because `float` was given the text `'Close\\n'`. The File line nearest the bottom says Python stopped on line 4, inside `read_closes`. The top File line, line 12, is only the call that led there. The text `Close` comes from the header, so the first line of the file is the problem.\n\n**(b) The three bugs.**\n\n1. *The header is not skipped* (line 3). The loop reads `Day,Close` first, and `float(\"Close\\n\")` raises the `ValueError` shown.\n2. *`read_closes` has no `return`*. Once the header is skipped, the function builds the list and then hands back `None`. Line 12 stores `None` in `closes`, and `len(closes)` on line 8 raises `TypeError: object of type 'NoneType' has no len()`. The traceback would point at line 8, but the cause is the missing `return`.\n3. *The loop starts at 0* (line 8). When `i` is 0, `closes[i - 1]` is `closes[-1]`, the last price. The first \"return\" compares Monday with Friday. With five closes it prints five numbers instead of four, and the first is meaningless.\n\n**(c) Corrected script.**\n\n```python\ndef read_closes(name):\n    closes = []\n    for line in open(name).readlines()[1:]:\n        closes.append(float(line.split(\",\")[1]))\n    return closes\n\ndef daily_returns(closes):\n    out = []\n    for i in range(1, len(closes)):\n        out.append((closes[i] - closes[i - 1]) / closes[i - 1])\n    return out\n\ncloses = read_closes(\"prices.csv\")\nprint(daily_returns(closes))\n```\n\n**(d) The silent bug.** Bug 3 never raises an error, because index −1 is legal in Python: it counts from the back. The script runs and prints a plausible list of numbers, one of them wrong. Errors that stop the program get fixed; a wrong number that looks fine can flow into a backtest or a risk report unnoticed. The check is to count: five closes must give four returns.",
       "rubric": [
         {
           "points": 2,

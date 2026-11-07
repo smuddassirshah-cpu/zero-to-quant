@@ -48,7 +48,10 @@ two(run("def change(old, new):\n    return new - old\n\nprint(change(105.00, 100
 lv.expect(L, "screens[5].widget.options[1].text", 105.0 - 100.0)
 # the 'swapped' distractor: treating the first argument as new gives new - old = 105.0 - 100.0, not the option's -105.0
 swapped = 105.0 - 100.0
-lv.stated(L, "screens[5].widget.options[2].why", "You treated the first argument as `new`", swapped == -105.0)
+two(swapped == -105.0, False, "no slip gives -105.0")
+two(100.0 - 105.0, -5.0, "the int option is the right value with the decimal dropped")
+lv.expect(L, "screens[5].widget.options[2].text", "-5")
+lv.expect(L, "screens[5].widget.options[2].why", "the float −5.0")
 two(100.00 - 1.50, 98.5, "net(100.00)")
 lv.expect(L, "screens[6].explain.text", 98.5)
 lv.expect(L, "screens[6].explain.text", "NameError: name 'left' is not defined")
@@ -174,8 +177,20 @@ two(len(range(1, 5)), 4, "quiz range(1, 5)")
 R = "review"
 two(round(5000.00 * 0.002, 6), 10.0, "fee 5000")
 two(round(project(1500.00, 0.02, 3), 2), round(1500 * 1.02 ** 3, 2), "review compound")
-lv.expect(R, "items[3].widget.wrong[0].value", 1500 + 3 * 30)
-lv.expect(R, "items[3].widget.wrong[1].value", round(1500 * 1.02 ** 2, 2))
+a_ = project(1500.00, 0.02, 3)
+b_ = project(a_, 0.02, 1)
+two(run("def project(balance, rate, years):\n    for year in range(years):\n        balance = balance * (1 + rate)\n    return balance\n\na = project(1500.00, 0.02, 3)\nb = project(a, 0.02, 1)\nprint(round(b - a, 2))"), "31.84\n", "review-3 items[3] program prints")
+two(round(b_ - a_, 2), round(1500 * 1.02 ** 3 * 0.02, 2), "one more year is 2% of 1591.812")
+two((round(a_, 3), round(b_ - a_, 3)), (1591.812, 31.836), "review-3 items[3] explain figures")
+lv.expect(R, "items[3].widget.answer", 31.84)
+lv.expect(R, "items[3].explain.text", 1591.812)
+lv.expect(R, "items[3].explain.text", 31.836)
+lv.expect(R, "items[3].widget.wrong[0].value", 1500 * 0.02)
+lv.expect(R, "items[3].widget.wrong[1].value", round(b_, 2))
+two(round(b_, 2), 1623.65, "b is the balance after four years")
+lv.expect(R, "items[3].feedback.byKey.simple", 1591.81)
+lv.expect(R, "items[3].feedback.correct", 31.84)
+lv.expect(R, "items[3].feedback.correct", 30.00)
 two(round(sum([101.20, 102.50, 99.80]) / 3, 2), 101.17, "average test 1")
 lv.expect(R, "items[4].feedback.byKey.test-1", (101.20 + 102.50 + 99.80) / 2)
 two(round(101.20 + 102.50, 2), 203.7, "scope sum")
@@ -200,13 +215,17 @@ def mdd2(ps):
     return w
 
 
-for ps, want in [([100.00, 120.00, 90.00, 130.00], 0.25), ([100.00, 110.00, 99.00, 105.00, 88.00, 95.00], 0.2),
-                 ([100.00, 80.00, 120.00, 60.00, 130.00], 0.5), ([100.00, 95.00, 90.00, 85.00], 0.15)]:
+for ps, want in [([100.00, 120.00, 90.00, 130.00], 0.25), ([200.00, 250.00, 225.00, 240.00, 175.00, 210.00], 0.3),
+                 ([100.00, 80.00, 120.00, 60.00, 130.00], 0.5), ([100.00, 95.00, 90.00, 85.00], 0.15),
+                 ([80.00, 80.00, 85.00], 0.0), ([42.00], 0.0), ([60.00, 45.00, 90.00, 54.00], 0.4)]:
     two(round(mdd2(ps), 9), want, f"max_drawdown{ps}")
 two(round((130 - 90) / 130, 2), 0.31, "high-low slip on test 1")
 two((100 - 90) / 100, 0.1, "peak stuck at the first price")
-one_day = max((a - b) / a for a, b in zip([100.0, 110.0, 99.0, 105.0, 88.0, 95.0], [110.0, 99.0, 105.0, 88.0, 95.0]))
-two(round(one_day, 3), round(17 / 105, 3), "one-day falls on test 2")
+one_day = max((a - b) / a for a, b in zip([200.0, 250.0, 225.0, 240.0, 175.0, 210.0], [250.0, 225.0, 240.0, 175.0, 210.0]))
+two(round(one_day, 3), round(65 / 240, 3), "one-day falls on test 2")
+two(round((250 - 175) / 250, 6), 0.3, "test 2 fall from the peak, 75 / 250")
+lv.expect(H, "items[1].feedback.byKey.test-2", "£250.00 to £175.00")
+lv.expect(H, "items[1].feedback.byKey.test-2", 0.3)
 lv.expect(H, "items[1].feedback.byKey.test-2", round(one_day, 3))
 lv.claim("99.80\n" > "102.50\n", "as text '99.80' beats '102.50'")
 two(f"{0.012845849802371512:.2%}", "1.28%", "log_result format")

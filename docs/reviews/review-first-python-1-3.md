@@ -250,3 +250,58 @@ Notation and voice match across the three levels: `int`, `float`, `str`, `bool`,
 3. Validator (advisory): a ```` ```text ```` block that starts `Traceback (most recent call last):` where a code line is followed directly by the error line, or by another `File` line, with no `^` or `~` line between. Python 3.11+ and Pyodide 0.27.7 print one except when the failing expression is the whole line. 15 blocks here (finding 12).
 
 Orchestrator (session W): A, B and D applied. C: first-python L3 now requires terminal/L3 (review-terminal-1-3 item 2: running python3 needs the install and command-finding taught in L3), which covers the cd and cat of terminal L2; not changed to L2. E (four fresh items per review, to 12) is deferred to its own authored task with a second read, recorded in PLAN and KNOWN_ISSUES; not part of this fix pass.
+
+## Fix pass
+
+Edits were made to `app/content/courses/first-python/` only, by loading each file, changing the named paths and writing it back in the same two-space layout (the unchanged parts are byte-identical). I recomputed every corrected number before writing it (Python in CPython 3.13 and 3.12.3, and the three number scripts). Where a fix differs from the proposal, the line says why.
+
+Status: fixed 29, disputed 0, deferred 0 (findings); Engine 1 to 3 deferred (engine, already in the inbox); Orchestrator A, B, D applied by the orchestrator, C resolved differently (see the note at the end of the review), E deferred.
+
+### Findings
+
+1. l1-calculator `//` as rounding down: fixed in all three lines. Basis: Python Language Reference 6.7 (binary arithmetic operations), floor division is the mathematical quotient with the floor function applied; `-7 // 2` is -4 and `int(-7 / 2)` is -3, both run.
+2. l1-calculator ties and powers: fixed in `screens[8].prose` and `summary.formula.note`. Basis: Language Reference 6.5, the power operator binds right to left; `2 ** 3 ** 2` runs as 512.
+3. l3-text `==` across types: fixed in the hint and the option `why`. Basis: Language Reference 6.10.1 (comparisons); `1 == 1.0` and `True == 1` are True, and a str never equals a number, all run.
+4. l3-text quiz[2] explain: fixed. `"3" - 2`, `"3" / 2` and `"3" * 2.0` raise TypeError (run); `"3" * 2` is `"33"`.
+5. homework-1 `items[7].model`: fixed, "It prints 520 and then 51.0." The reassigned `price = 52` is an int; the script prints `520` then `51.0` (run).
+6. review-2 `items[5]`: fixed with the proposed list `[310.50, -120.25, -95.25, 42.00]`. All four values are exact in binary, so the fixed program prints `137.0` and the bug prints `42.0` (both run).
+7. l7-for-each `screens[9]` byKey: fixed, renamed to `test-1`. The `r >= 0` slip returns 4 on test 1 (list holds 0.0), expected 3 (run).
+8. homework-2 `items[3]` byKey: fixed, renamed to `test-4`. The `p <= -limit` slip returns 2 on test 4 where `None` is expected; the running total there is 100 - 150 = -50 (run).
+9. l9-packaging-steps `screens[5]` `swapped` option: fixed, replaced by the `int` option `-5`. `new - old` with `new = 100.0`, `old = 105.0` is -5.0; no slip gives -105.0.
+10. review-1 `items[3]` text option: fixed, replaced by `Cost: £{shares * price:.2f}`. `"12" * "3.5"` raises TypeError, so the old option had no cause.
+11. l3-text `screens[2].prose`: fixed. The last index of `"GBPUSD"` is 5; the stop is 6.
+12. The 15 quoted tracebacks and their sentences: fixed, all 15 blocks and the nine sentences (the review says seven; the l4 objective, l4 explain, l4 summary, l4 quiz explain, three l10 lines, l10 summary and the homework-3 model are the nine). Basis: PEP 657 (fine-grained error locations, Python 3.11). Verified in CPython 3.12.3 (`python3.12`, the same minor version as Pyodide 0.27.7): I rebuilt all 15 programs with the same file names and line numbers and every block matches the interpreter's stderr character for character, carets included. The quiz block with `report(closes)` has no caret, as proposed.
+13. Dead `test-1` clauses: fixed in l10 `screens[6]` (`error` and `test-1`), l11 `screens[2]` (new `error` and `test-1`), l11 `screens[6]` `test-1`, review-3 `items[6]` `test-1` and l10 `screens[8]` `test-1`. Basis: `code.js` line 545 returns the key `error` whenever the load raises, and each script calls the function on its last line, so a raising slip never reaches a `test-N` key.
+14. l1 `screens[9]` and l2 `screens[7]` `test-1` lines: fixed with the proposed wording.
+15. l7-for-each `screens[7]` explain: fixed. `len(range(5, 2))` is 0.
+16. l8-many-values `screens[2]` explain: fixed. `print(100.00)` shows `100.0` and `print(99.80)` shows `99.8` (run).
+17. l3-text `screens[8].question`: fixed, "`s` holds 10 characters."
+18. l8-many-values `screens[9]` and homework-2 `items[4]`: fixed. The item is now `largest_fall` (title, prose, question, starter, solution, tests, examples and explain code); the solution passes all six tests and the starter fails, in CPython. The item id `h-max-drawdown` is unchanged.
+19. The four long-key choices: fixed. Each key is now an "It stops with a ..." line and a second error-type distractor was added in l4 `screens[3]`, l4 `screens[6]`, l9 `quiz[0]` and review-3 `items[5]`.
+20. l5-decisions `screens[0]` explain: fixed, stray comma removed.
+21. Freshness, six items: fixed as proposed. review-3 `items[3]`: 1500 x 1.02^3 = 1591.812, one more year adds 31.836, prints 31.84; wrong values 30 and 1623.65 (b rounded). I also reworded its `generic` line, which still described the old code. homework-3 `items[1]`: tests 2, 5, 6, 7 replaced (0.3, 0.0, 0.0, 0.4; the one-day slip gives 0.271 on test 2). review-2 `items[2]`: 1 + 3 + 5 + 7 = 16, wrongs 25 and 24. homework-2 `items[0]`: five new tests plus the old 0.95 case. homework-1 `items[5]`: 40 shares at £63.50 is £2,540, fee £6.35, total £2,546.35. review-1 `items[2]`: `"2026-10-16"[5:7]` is `10`, wrongs `10-` and `-1`. Each code item: solution passes, starter fails, in CPython.
+22. l3-text `len` before it is taught: fixed in the screen formula, `summary.formula.tex` and its note.
+23. l3-text repetition: fixed in `screens[0].explain.text`.
+24. Five untaught steps: fixed. `sum` in a one-line gloss, `round(x, 2)` glossed in l12, the empty-line fix uses `if line.strip() != "":`, homework-3 `items[2]` solution no longer uses `is None` (passes all five tests, starter fails), and the `"a"` mode is added to l12's explain.
+25. NameError, ZeroDivisionError and two-value `print`: fixed with the proposed lines.
+26. l10 re-teaching and the l4 title: fixed with the proposed lines.
+27. Terms bolded twice: fixed in l5, l8, l11 and l12.
+28. Point hints: l7 fixed (all four cells highlighted). l10 `screens[3].hints[1]` deviates: the proposal changed the rung to `nudge`, but the validator then raises an error (hints must be in rung order nudge, point, step), so I kept `point` and dropped the highlight. This leaves one advisory warning ("a point hint usually highlights the canvas").
+29. Float examples: fixed, `"compare": "isclose"` on both.
+
+Engine 1, 2, 3: deferred, engine-only, already in the inbox.
+
+Orchestrator A, B and D: applied by the orchestrator (course.json untouched by me); C: resolved differently (terminal/L3, see the note above); E: deferred, no review items added.
+
+### Number scripts and gates
+
+I updated the checks the fixes rewrote and tightened each to the new value only: the old "stated" checks that passed once the wording was gone now also `expect` the new wording, so reverting a fix makes the script fail. New checks cover every number written in findings 5, 6, 8, 13 to 16, 18, 21 and the new items.
+
+Gates:
+- `python3 docs/reports/first-python-L1-numbers.py`: exit 0, 161 of 161. L2: exit 0, 195 of 195. L3: exit 0, 157 of 157.
+- `VOICE_BASE=app/content/courses/first-python python3 docs/reviews/voice-scan.py 35`: 0 sentences over 35 words (4787 scanned), 0 explanations over three sentences.
+- `cd app && node tools/validate.mjs`: 0 errors, 4092 warnings (one new advisory in first-python: the l10 point hint without a highlight, finding 28).
+- Traceback blocks: verified in CPython 3.12.3 (all 15 match character for character); Pyodide's own Python 3.12.7 was not re-run for them, as no screen executes them.
+- Code items touched (homework-1 `items[5]`, homework-2 `items[0]`, `items[3]`, `items[4]`, homework-3 `items[1]`, `items[2]`, review-2 `items[6]`, l7 `screens[9]`, l8 `screens[9]`): solution passes every test and the starter fails, in CPython 3.13, and in the app by the playthrough.
+- `node tools/playthrough.mjs --local-cdn <scratchpad>/pkgs`: 34 of 34 green, each of the 11 changed lessons (l1 to l5, l7 to l12) and the 6 sets, desktop and `--mobile`, no timeouts.
+- Graded answers changed: review-3 `items[3]` 1591.81 to 31.84; review-2 `items[2]` 18 to 16; homework-3 `items[1]` tests 2, 5, 6, 7 (expected 0.3, 0.0, 0.0, 0.4); homework-2 `items[0]` tests 1 to 5; homework-1 `items[5]` print and `fee` (6.35); review-1 `items[2]` answer text `10`; l4, l9 and review-3 choice key texts reworded; homework-2 `items[4]` function renamed (answers unchanged).

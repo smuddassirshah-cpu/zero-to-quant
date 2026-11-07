@@ -150,12 +150,15 @@ two(sum(r for r in [1.5, -0.5, 2.0, -1.0] if r < 0), -0.5 + -1.0, "quiz losses")
 lv.expect(L, "quiz[2].widget.wrong[0].value", sum([1.5, -0.5, 2.0, -1.0]))
 lv.expect(L, "quiz[2].widget.wrong[2].value", 1.5 + 2.0)
 # claims
-lv.stated(L, "screens[7].explain.text", "The count is always", len(range(5, 2)) == 5 - 2)
+two(len(range(5, 2)), 0, "len(range(5, 2)) is 0, not -3")
+lv.expect(L, "screens[7].explain.text", "The count is `b − a` whenever `b` is at least `a`: here 13 − 1 = 12 months.")
 up = lambda xs: sum(1 for r in xs if r > 0)
 up_ge = lambda xs: sum(1 for r in xs if r >= 0)
 tests_up = [(([0.8, -1.2, 0.0, 2.1, -0.4, 0.3],), 3), (([],), 0), (([0.0, 0.0],), 0), (([-0.5, -1.1, -0.2],), 0)]
 two(first_fail(up, tests_up), None, "up_days solution passes")
-lv.claim(first_fail(up_ge, tests_up) == 3, f"screens[9] byKey test-3 is the first failing test for r >= 0 (it is test-{first_fail(up_ge, tests_up)})")
+lv.claim(first_fail(up_ge, tests_up) == 1, f"screens[9] byKey test-1 is the first failing test for r >= 0 (it is test-{first_fail(up_ge, tests_up)})")
+two(up_ge([0.8, -1.2, 0.0, 2.1, -0.4, 0.3]), 4, "r >= 0 slip returns 4 on test 1")
+lv.expect(L, "screens[9].feedback.byKey.test-1", "If test 1 got 4, you counted the 0.0 day.")
 
 # ---------- l8-many-values ----------
 L = "l8-many-values"
@@ -193,7 +196,8 @@ for p in [3, -1, 4, -5, 9]:
         break
     c += 1
 two(c, 3, "quiz break count")
-lv.stated(L, "screens[2].explain.text", "Python prints floats without trailing zeros", not str(100.00).endswith("0"))
+two((str(100.00), str(99.80)), ("100.0", "99.8"), "floats print the digits they need, keeping one after the point")
+lv.expect(L, "screens[2].explain.text", "keeping one after the point, so 100.00 shows as `100.0`.")
 
 # ---------- review-2 ----------
 R = "review"
@@ -203,14 +207,22 @@ while n < 100:
 two((c, n), (math.ceil(math.log(100, 3)), 3 ** 5), "triples")
 lv.expect(R, "items[1].widget.wrong[1].value", 243)
 two(sum(range(3, 7)), 3 + 4 + 5 + 6, "range(3, 7) sum")
-lv.expect(R, "items[2].widget.wrong[0].value", sum(range(3, 8)))
-lv.expect(R, "items[2].widget.wrong[1].value", sum(range(7)))
+two(sum(2 * k + 1 for k in range(4)), 16, "review-2 items[2] total")
+two(run("total = 0\nfor k in range(4):\n    total = total + 2 * k + 1\nprint(total)"), "16\n", "review-2 items[2] program prints")
+lv.expect(R, "items[2].widget.answer", 16)
+lv.expect(R, "items[2].widget.wrong[0].value", sum(2 * k + 1 for k in range(5)))
+lv.expect(R, "items[2].widget.wrong[1].value", sum(2 * k + 1 for k in range(1, 5)))
+two((sum(2 * k + 1 for k in range(5)), sum(2 * k + 1 for k in range(1, 5))), (25, 24), "review-2 items[2] wrongs")
 pn = [40.00, -15.50, 22.00, -8.25]
 two(pn[len(pn) - 1], pn[-1], "last P&L")
-fixed = run("pnls = [310.40, -120.15, -95.25, 42.00]\ntotal = 0\nfor p in pnls:\n    total = total + p\nprint(total)")
+fixed = run("pnls = [310.50, -120.25, -95.25, 42.00]\ntotal = 0\nfor p in pnls:\n    total = total + p\nprint(total)")
+buggy = run("pnls = [310.50, -120.25, -95.25, 42.00]\nfor p in pnls:\n    total = 0\n    total = total + p\nprint(total)")
 lv.expect(R, "items[5].explain.text", 137.00)
-lv.stated(R, "items[5].prose", "This should print the day's total P&L, £137.00", fixed.strip() in ("137.0", "137.00"))
-lv.claim(fixed.strip() == "136.99999999999997", f"the fixed review program prints {fixed.strip()}")
+lv.expect(R, "items[5].explain.text", "310.50 − 120.25 − 95.25 + 42.00 = 137.00")
+lv.expect(R, "items[5].prose", "[310.50, -120.25, -95.25, 42.00]")
+lv.expect(R, "items[5].prose", "£137.00")
+lv.claim(fixed.strip() == "137.0", f"the fixed review program prints {fixed.strip()}")
+lv.claim(buggy.strip() == "42.0", f"the buggy review program prints {buggy.strip()}")
 big = sum(1 for p in [120.00, -40.00, 0.00, 75.50, -210.00, 15.00] if p > 50 or p < -100)
 two(big, 3, "big moves")
 
@@ -249,8 +261,24 @@ tests_fb = [(([-100.00, 50.00, -300.00, -200.00], 300.00), 3), (([], 100.00), No
             (([100.00, -150.00, -40.00], 100.00), None), (([20.00, -30.00, -10.00, -5.00, 40.00, -60.00], 40.00), 6),
             (([-50.00, -60.00, 200.00, -400.00], 100.00), 2)]
 two(first_fail(fb_total, tests_fb), None, "first_breach solution passes")
-lv.claim(first_fail(fb_day, tests_fb) == 6, f"items[3] byKey test-6 is the first failing test when the day is compared (it is test-{first_fail(fb_day, tests_fb)})")
-lv.expect(H, "items[3].feedback.byKey.test-6", -50.00 + -60.00)
+lv.claim(first_fail(fb_day, tests_fb) == 4, f"items[3] byKey test-4 is the first failing test when the day is compared (it is test-{first_fail(fb_day, tests_fb)})")
+lv.expect(H, "items[3].feedback.byKey.test-4", -150.00)
+lv.expect(H, "items[3].feedback.byKey.test-4", 100.00 - 150.00)
+_bk = lv._file(H)[1]["items"][3]["feedback"]["byKey"]
+lv.claim(list(_bk) == ["test-4"], f"items[3] byKey keys are {list(_bk)}")
+
+# homework-2 items[0] (decide) and items[4] (largest_fall)
+def decide(price, stop, target):
+    return "sell" if price < stop else ("take profit" if price > target else "hold")
+
+
+for args, want in [((48.90, 50.00, 56.00), "sell"), ((57.25, 50.00, 56.00), "take profit"), ((52.10, 50.00, 56.00), "hold"),
+                   ((50.00, 50.00, 56.00), "hold"), ((56.00, 50.00, 56.00), "hold"), ((0.95, 1.00, 1.20), "sell")]:
+    two(decide(*args), want, f"decide{args}")
+two(round(106.20 - 103.00, 2), 3.20, "largest fall example")
+lv.expect(H, "items[4].title", "Largest fall")
+lv.expect(H, "items[4].question", "largest_fall")
+lv.claim("max_drawdown" not in lv.text(H, "items[4]"), "items[4] no longer uses the name max_drawdown")
 
 
 def mdd(ps):
