@@ -1660,3 +1660,6 @@ Raised later (ito level 4 perf):
 
 Raised later (arma level 1 perf):
 - [Should] Homework page: on an `aloud` item the yellow banner still reads "Write your working first. Then mark it against the model answer.", while the box below is labelled "Your notes (optional)" and Mark my answer accepts it empty (arma `h-aloud-two-notes`, desktop shot item 08). Wanted: the aloud wording ("Answer aloud, then mark it against the model answer.") when the item has `seconds`.
+
+Raised later (arma level 3 perf):
+- [Should] Longform rubric rows render inline maths that cannot wrap, so a formula of about 40 characters in a row runs past the card at 440 px (arma `h-derive-arma-fan` row 3 before it was split; found only by a scratch full-height render). Neither the validator nor the playthrough reports it. Wanted: a warning for a rubric `$...$` span over a set rendered width, or a measured check after Mark my answer.
