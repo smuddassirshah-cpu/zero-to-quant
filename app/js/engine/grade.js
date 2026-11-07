@@ -280,9 +280,9 @@
     if (!want && got) return `The answer is a single value, not ${got.vec ? 'a vector' : 'a matrix'}.`;
     return `Your answer has ${shapeWord(got)}. The answer has ${shapeWord(want)}.`;
   };
-  const scalarEqual = (ce, A, B, counting, cx, ints) => {
+  const scalarEqual = (ce, A, B, counting, cx, ints, prop) => {
     let sym = false;
-    try { sym = !!A.simplify().isEqual(B.simplify()); } catch { sym = false; }
+    if (!prop) { try { sym = !!A.simplify().isEqual(B.simplify()); } catch { sym = false; } }
     let vars = [];
     try { vars = [...new Set([...(A.unknowns || []), ...(B.unknowns || [])])].filter(v => !(cx && v === 'iota')); } catch { vars = []; }
     const num = (E, sub) => { try { const v = (sub ? E.subs(sub) : E).N(); const x = v.re ?? v.valueOf(); return typeof x === 'number' ? x : NaN; } catch { return NaN; } };
@@ -304,14 +304,22 @@
     const orders = {};
     useInts.forEach((v, j) => { let s2 = 1013 + 7919 * (j + 1); const r2 = () => { s2 = (s2 * 1103515245 + 12345) % 2147483648; return s2 / 2147483648; }; const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9]; for (let n = 8; n > 0; n--) { const m = Math.floor(r2() * (n + 1)); [pool[n], pool[m]] = [pool[m], pool[n]]; } orders[v] = pool; });
     const pts = !vars.length ? [null] : counting ? Array.from({ length: 24 }, () => Object.fromEntries(vars.map(v => [v, drawInt()]))) : Array.from({ length: 6 }, (_, i) => Object.fromEntries(vars.map(v => [v, orders[v] ? orders[v][i] : draw()])));
-    let checked = 0, numeric = true;
+    let checked = 0, numeric = true, k = null;
     for (const p of pts) {
       const x = val(A, p), y = val(B, p), fx = fin(x), fy = fin(y);
       if (!fx && !fy) continue;
       if (counting && (!fx || !fy)) continue; // outside a factorial's domain (a negative factorial): not a counting point
+      if (prop) { /* item 618: equal up to one constant multiple k (x * k = y at every point); real values only */
+        if (!fx || !fy || x[1] !== 0 || y[1] !== 0) { numeric = false; break; }
+        const zx = Math.abs(x[0]) < 1e-12, zy = Math.abs(y[0]) < 1e-12;
+        if (zx !== zy) { numeric = false; break; }
+        if (!zx) { if (k == null) k = y[0] / x[0]; else if (!close(x[0] * k, y[0])) { numeric = false; break; } }
+        checked++; continue;
+      }
       if (fx !== fy || !close(x[0], y[0]) || !close(x[1], y[1])) { numeric = false; break; }
       checked++;
     }
+    if (prop) return numeric && checked >= 3 ? { k: k == null ? 1 : k } : false; // both sides zero at every point: the same identity
     if (!checked && numeric) return sym; // nothing numeric to compare: the symbolic answer stands
     if (counting && checked < 4 && numeric) return sym; // too few whole-number points where both sides are defined
     return numeric;
@@ -331,7 +339,45 @@
     if (!ce || a == null || b == null || a === '' || b === '') return false;
     return scoped(ce, () => exprEqualIn(ce, a, b, opts && opts.functions, opts && opts.integers));
   };
+  /* Item 618: equations and inequalities. splitRel(s) -> { l, r, rel } for one top-level relation (rel: eq, lt, le, ne; > and
+     >= are turned round into lt and le), null for no relation, 'many' for a chain. Two relations are compared as equations
+     by lhs - rhs: an equation equals another when one difference is a nonzero constant multiple of the other, an inequality
+     only for the same kind and a positive multiple. Never by truth value at the sample points. */
+  const RELS = /<=|>=|!=|\\(?:leqslant|geqslant|leq|geq|neq|le|ge|ne|lt|gt)(?![A-Za-z])|[<>=\u2264\u2265\u2260]/g;
+  const splitRel = (s) => {
+    const t = String(s); const hits = []; let depth = 0, m;
+    const braces = []; for (let i = 0; i < t.length; i++) { if (t[i] === '{') depth++; else if (t[i] === '}') depth--; braces[i] = depth; }
+    RELS.lastIndex = 0;
+    while ((m = RELS.exec(t))) { if (m.index > 0 && t[m.index - 1] === '\\' && m[0].length === 1) continue; if (!braces[m.index]) hits.push({ i: m.index, tok: m[0] }); }
+    if (!hits.length) return null;
+    if (hits.length > 1) return 'many';
+    const { i, tok } = hits[0], l = t.slice(0, i), r = t.slice(i + tok.length);
+    const kind = { '=': 'eq', '<': 'lt', '\\lt': 'lt', '>': 'gt', '\\gt': 'gt', '<=': 'le', '\u2264': 'le', '\\le': 'le', '\\leq': 'le', '\\leqslant': 'le', '>=': 'ge', '\u2265': 'ge', '\\ge': 'ge', '\\geq': 'ge', '\\geqslant': 'ge', '!=': 'ne', '\u2260': 'ne', '\\ne': 'ne', '\\neq': 'ne' }[tok];
+    if (!kind) return 'many';
+    return kind === 'gt' ? { l: r, r: l, rel: 'lt' } : kind === 'ge' ? { l: r, r: l, rel: 'le' } : { l, r, rel: kind };
+  };
+  const SYMBOL = new RegExp(`^\\s*(?:[A-Za-z]|\\\\(?:${GREEK})|\\\\(?:text|mathrm|operatorname)\\{[^{}]*\\})(?:_(?:[A-Za-z0-9]|\\{[^{}]*\\}))?\\s*$`);
+  const relEqual = (ce, ra, rb, cx, fns, ints) => {
+    if (ra.rel !== rb.rel) return false;
+    const diff = (x) => ce.parse(`\\left(${prep(x.l, cx, fns)}\\right)-\\left(${prep(x.r, cx, fns)}\\right)`);
+    const A = diff(ra), B = diff(rb);
+    if (A.isValid === false || B.isValid === false) return false;
+    const res = scalarEqual(ce, A, B, false, cx, ints, true);
+    if (!res || !(Math.abs(res.k) > 1e-12)) return false;
+    return ra.rel === 'eq' || ra.rel === 'ne' || res.k > 0;
+  };
   const exprEqualIn = (ce, a, b, fns, ints) => {
+    const ra = splitRel(a), rb = splitRel(b);
+    if (ra || rb) {
+      const cx0 = hasImag(a) || hasImag(b);
+      if (ra === 'many' || rb === 'many') return String(a).replace(/\s+/g, '') === String(b).replace(/\s+/g, '');
+      try {
+        if (ra && rb) return relEqual(ce, ra, rb, cx0, fns, ints);
+        /* a lone letter and = before or after the learner's formula: grade the formula (answer has no =) */
+        if (ra && ra.rel === 'eq') { const side = SYMBOL.test(ra.l) ? ra.r : SYMBOL.test(ra.r) ? ra.l : null; if (side != null && side.trim()) return exprEqualIn(ce, side, b, fns, ints); }
+      } catch { return false; }
+      return false;
+    }
     let A, B;
     const counting = /!|\\[dt]?binom|\\choose/.test(String(a) + String(b)); // factorials only evaluate at whole numbers
     const cx = hasImag(a) || hasImag(b);
@@ -350,6 +396,7 @@
     return scoped(ce, () => upToConstantIn(ce, a, b, opts && opts.functions, opts && opts.integers));
   };
   const upToConstantIn = (ce, a, b, fns, ints) => {
+    if (splitRel(a) || splitRel(b)) return false; // item 618: a relation has no "plus a constant"
     let A, B;
     try { A = ce.parse(prep(a, undefined, fns)); B = ce.parse(prep(b, undefined, fns)); } catch { return false; }
     if (A.isValid === false || B.isValid === false) return false;
@@ -555,5 +602,5 @@
   };
 
   window.ZQ = window.ZQ || {};
-  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, exprShape, exprShapeLine, exprEqualUpToConstant, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
+  window.ZQ.grade = { parseNum, within, matchWrong, sameSet, sameList, fmtNum, fmtFrac, fmtAs, normExpr, loadScript, maths, withParsed, exprEqual, splitRel, exprShape, exprShapeLine, exprEqualUpToConstant, correctValue, manipulatePath, balanceMoves, sketchPoints, inline, prose, esc, patchCanvas, LIBS };
 })();
