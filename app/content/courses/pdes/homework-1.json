@@ -386,6 +386,37 @@
      "text": "Says the grid runs backwards from expiry because the equation is parabolic, and that running forwards is ill-posed."
     }
    ]
+  },
+  {
+   "id": "h-derive-lazy-walk",
+   "performance": "derivation",
+   "difficulty": 5,
+   "skills": [
+    "pe-heat"
+   ],
+   "kind": "longform",
+   "title": "Derive the equation of a lazy walk with a drift",
+   "prompt": "A walker sits on sites $\\Delta x$ apart and moves once every $\\Delta t$. Each tick it steps right with probability $p$, left with probability $q$, and stays put with probability $r = 1 - p - q$. Let $u(x, t)$ be the probability that it stands at $x$ at time $t$. Starting from a blank page, derive by Taylor expansion the equation $u$ obeys as the steps shrink. Give its coefficients in terms of $p$, $q$, $\\Delta x$ and $\\Delta t$. Justify each line: say which Taylor terms you keep, which you drop and why they vanish. Say how the step sizes and the probabilities must scale as $\\Delta x \\to 0$ for each coefficient to have a finite, nonzero limit. Then take $\\Delta x = 0.1$, $\\Delta t = 0.004$, $p = 0.45$ and $q = 0.35$. Compare the walk's exact mean and variance at $t = 1$ with those of your equation started at $x = 0$.",
+   "model": "**Hypotheses.** We treat $u$ as a smooth function of $x$ and $t$, with $u_{tt}$ and $u_{xxx}$ bounded near the point. The steps shrink with $r$ fixed and $r < 1$, so the walker moves at all.\n\n**1. The update.** To stand at $x$ at time $t + \\Delta t$, the walker was at $x - \\Delta x$ and stepped right, or at $x + \\Delta x$ and stepped left, or at $x$ and stayed. These three ways in are separate, and each move is independent of where the walker stood. So\n$$\\begin{aligned} u(x, t + \\Delta t) &= p\\,u(x - \\Delta x, t) \\\\ &\\quad + q\\,u(x + \\Delta x, t) \\\\ &\\quad + r\\,u(x, t). \\end{aligned}$$\nThe right step pairs with the left neighbour; swapping them flips the sign of the drift.\n\n**2. Expand in time.** Taylor's theorem in $t$ gives $u(x, t + \\Delta t) = u + \\Delta t\\,u_t + R_t$, with $|R_t| \\le \\tfrac12\\Delta t^2 \\max|u_{tt}|$. We keep first order: step 6 shows that the remainder, divided by $\\Delta t$, vanishes.\n\n**3. Expand in space.** Taylor's theorem in $x$ gives $u(x \\mp \\Delta x, t) = u \\mp \\Delta x\\,u_x + \\tfrac12\\Delta x^2u_{xx} + R_\\mp$, with $|R_\\mp| \\le \\tfrac16\\Delta x^3\\max|u_{xxx}|$. We keep second order, because the spreading lives in the $u_{xx}$ term. Weight by $p$, $q$ and $r$:\n$$\\begin{aligned} &p\\,u(x - \\Delta x) + q\\,u(x + \\Delta x) + r\\,u \\\\ &= (p + q + r)\\,u - (p - q)\\,\\Delta x\\,u_x \\\\ &\\quad + \\tfrac12(p + q)\\,\\Delta x^2u_{xx} + pR_- + qR_+. \\end{aligned}$$\nHere $p + q + r = 1$. The $u_x$ terms cancel only when $p = q$, since the two neighbours carry different weights.\n\n**4. Equate and divide.** Subtract $u$ from both sides and divide by $\\Delta t$:\n$$\\begin{aligned} u_t + \\frac{R_t}{\\Delta t} &= -\\frac{(p - q)\\Delta x}{\\Delta t}\\,u_x \\\\ &\\quad + \\frac{(p + q)\\Delta x^2}{2\\Delta t}\\,u_{xx} \\\\ &\\quad + \\frac{pR_- + qR_+}{\\Delta t}. \\end{aligned}$$\n\n**5. The scaling.** Name the coefficients $c = (p - q)\\Delta x/\\Delta t$ and $D = (p + q)\\Delta x^2/(2\\Delta t) = (1 - r)\\Delta x^2/(2\\Delta t)$. Shrink $\\Delta x$ with $D$ and $c$ held fixed. Then $\\Delta t = (1 - r)\\Delta x^2/(2D)$, so $\\Delta x^2/\\Delta t$ stays fixed and $\\Delta t$ shrinks like $\\Delta x^2$. Also $p - q = c\\Delta t/\\Delta x = c(1 - r)\\Delta x/(2D)$, so the bias shrinks like $\\Delta x$. With a fixed bias, $c$ would grow like $1/\\Delta x$ and there would be no limit. With $\\Delta t$ shrinking like $\\Delta x$, $D$ would go to 0 and nothing would spread.\n\n**6. What vanishes.** The time remainder gives $|R_t/\\Delta t| \\le \\tfrac12\\Delta t\\max|u_{tt}|$, which tends to 0 with $\\Delta t$. The space remainder gives $|pR_- + qR_+| \\le \\tfrac16(p + q)\\Delta x^3\\max|u_{xxx}|$. Divided by $\\Delta t$, that is at most $\\tfrac13 D\\,\\Delta x\\max|u_{xxx}|$, since $(p + q)\\Delta x^2/\\Delta t = 2D$. It tends to 0 because $D$ is fixed.\n\n**7. The limit.** What is left is\n$$\\begin{aligned} u_t + c\\,u_x &= D\\,u_{xx}, \\\\ c &= \\frac{(p - q)\\Delta x}{\\Delta t}, \\\\ D &= \\frac{(1 - r)\\Delta x^2}{2\\Delta t}. \\end{aligned}$$\nStaying put scales $D$ by $1 - r$, because the walker moves on only that share of ticks. The bias gives the first-order term, which carries the mass right at speed $c$. With $r = 0$ and $p = q = \\tfrac12$ it is the fair walk's $u_t = D\\,u_{xx}$ with $D = \\Delta x^2/(2\\Delta t)$.\n\n**8. Check.** Here $r = 0.2$, so $D = 0.8 \\times 0.01/0.008 = 1$ and $c = 0.1 \\times 0.1/0.004 = 2.5$. Started at 0, the equation's solution is the heat kernel moved along by $ct$. The shift $x - ct$ adds $-c\\,u_x$ to $u_t$, which $c\\,u_x$ cancels. So the equation predicts mean $ct = 2.5$ and variance $2Dt = 2$ at $t = 1$.\n\nThe walk takes $n = t/\\Delta t = 250$ independent steps. One step has mean $(p - q)\\Delta x = 0.01$ and mean square $(p + q)\\Delta x^2 = 0.008$, so its variance is $0.008 - 0.0001 = 0.0079$. Means and variances of independent steps add, so after 250 steps the mean is 2.5 and the variance is 1.975. The mean agrees exactly. The variance falls short by $n(p - q)^2\\Delta x^2 = c^2\\Delta t\\,t = 0.025$, which tends to 0 as $\\Delta t \\to 0$ with $c$ fixed.",
+   "rubric": [
+    {
+     "points": 1,
+     "text": "Writes the update $u(x, t + \\Delta t) = p\\,u(x - \\Delta x, t) + q\\,u(x + \\Delta x, t) + r\\,u(x, t)$. Says why: the three ways in are separate, and the right step comes from the left neighbour."
+    },
+    {
+     "points": 3,
+     "required": true,
+     "text": "Tick only if all are given: time to first order and space to second, $p + q + r = 1$ to cancel $u$, and $u_t + c\\,u_x = D\\,u_{xx}$ with $c = (p - q)\\Delta x/\\Delta t$ and $D = (p + q)\\Delta x^2/(2\\Delta t)$."
+    },
+    {
+     "points": 4,
+     "text": "Tick only if both are given. The scaling: $\\Delta t$ shrinks like $\\Delta x^2$ and $p - q$ like $\\Delta x$, so $D$ and $c$ stay fixed. A bound for each dropped term: the time remainder over $\\Delta t$ is of size $\\Delta t$, the space remainder of size $\\Delta x$."
+    },
+    {
+     "points": 2,
+     "text": "Checks the numbers: $D = 1$ and $c = 2.5$. The walk's mean 2.5 equals $ct$, and its variance 1.975 is $c^2\\Delta t\\,t = 0.025$ below $2Dt = 2$, a gap that vanishes as $\\Delta t \\to 0$."
+    }
+   ]
   }
  ]
 }

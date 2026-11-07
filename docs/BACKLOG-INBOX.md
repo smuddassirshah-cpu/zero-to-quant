@@ -1637,3 +1637,6 @@ Raised later (coding-int level 3 perf):
 
 Raised later (coding-int level 4 perf):
 - [Could] An `aloud` task whose product includes code (`h4-pairs-aloud`: talk while typing `count_pairs`) has only a plain notes box, so the typed code is neither highlighted nor run. Wanted: an optional `codeNotes: "python"` on an aloud longform that shows a code editor with Run examples, still self-marked.
+
+Raised later (pdes level 1 perf):
+- [Should] Playthrough: the 440 px `-marked` shot of a longform shows only the top of the model, so a clipped display equation lower down goes unseen. Here it was step 4 of `h-derive-lazy-walk`. A scratch render that compared each `.katex-display` scrollWidth with its clientWidth reported it as fitting (356 in 356); only a full-page screenshot showed the clipping. Wanted: a full-height `-marked` shot, and a check that compares the rendered `.katex-html` box with its card.
