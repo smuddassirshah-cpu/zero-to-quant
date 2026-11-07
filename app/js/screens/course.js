@@ -300,6 +300,7 @@
     const launch = (e) => {
       if (!e || !writtenOf(e)) return;
       Z.sound('tap');
+      if (e.it.kind === 'lesson' && S.lessonPosition && S.lessonPosition.pick) S.lessonPosition.pick(cid, e.it.id);   // a deliberate open: lets a saved place stand in a tested-out course (617)
       window.ZQLaunch = { course: cid, id: e.it.id, kind: e.it.kind, wasDone: isDone(e), qualifiedBefore: !!S.summary().todayQualified, at: Date.now() };
       Z.go(routeFor(e));
     };

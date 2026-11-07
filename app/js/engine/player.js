@@ -784,6 +784,10 @@
       if (phase === 'lesson' && done) { i++; if (i >= N) { phase = 'quiz'; q = 0; } }
       else if (phase === 'quiz' && ['qok', 'qno'].includes(S.st)) q++;
       if (phase === 'lesson' && i === 0) { position.set(course, lessonId, null); return; }
+      /* Leaving a lesson that was only reopened (Back, a link, a reload) saves the same place: leave the record and its time alone, so a
+         lesson in a tested-out course is not revived by a visit with no new answer (ENGINE-BACKLOG 617). */
+      const was = position.get(course, lessonId);
+      if (was && typeof was === 'object' && was.phase === phase && (was.i || 0) === i && (was.q || 0) === q && (was.xp || 0) === S.xp && (was.checks || 0) === S.checks && (was.okChecks || 0) === S.okChecks) return;
       position.set(course, lessonId, { phase, i, q, xp: S.xp, checks: S.checks, okChecks: S.okChecks, anyCheck: S.anyCheck, results: S.results, quiz: S.quiz, spent: Math.round((Date.now() - S.t0) / 1000), at: Date.now() });
     };
     const logHours = () => {
