@@ -577,6 +577,96 @@
         "text": "No saddle, so mix: $p = q = \\tfrac{3}{10}$ from the two indifference equations. The value is +£0.10 a round, so play. The cell average of +£0.50 is the slip to avoid."
       },
       "pace": 180
+    },
+    {
+      "id": "hw1-street-carts",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "gm-normal"
+      ],
+      "title": "Coffee carts on a street",
+      "prose": "Homes stand on a straight street at whole-number positions, listed in `homes`; a position may hold several homes. Ana sets her coffee cart at a position from `ana_spots` and Ben his at one from `ben_spots`, both at once. Each home buys one coffee a day from the nearer cart. A home equally far from both buys half a coffee from each; when the carts share a spot, that is every home. Ana makes £`a` a coffee and Ben £`b`.",
+      "question": "Write `street_table(homes, ana_spots, ben_spots, a, b)`, which returns the payoff table. Row `i` is Ana at `ana_spots[i]` and column `j` is Ben at `ben_spots[j]`. Each cell is (Ana's £ a day, Ben's £ a day). Then write `best_replies(table)` for any table of that form with at least one row and one column. It returns `(ana, ben)`. `ana[j]` lists every row that is a best reply for Ana to column `j`, in increasing order. `ben[i]` lists every column that is a best reply for Ben to row `i`, in the same order.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def street_table(homes, ana_spots, ben_spots, a, b):\n    \"\"\"The payoff table. Row i: Ana at ana_spots[i].\n    Column j: Ben at ben_spots[j]. Each cell: (Ana's £, Ben's £).\"\"\"\n    return []\n\n\ndef best_replies(table):\n    \"\"\"(ana, ben): ana[j] lists Ana's best rows to column j,\n    ben[i] lists Ben's best columns to row i.\"\"\"\n    return [], []\n",
+        "solution": "def street_table(homes, ana_spots, ben_spots, a, b):\n    \"\"\"The payoff table. Row i: Ana at ana_spots[i].\n    Column j: Ben at ben_spots[j]. Each cell: (Ana's £, Ben's £).\"\"\"\n    table = []\n    for x in ana_spots:\n        row = []\n        for y in ben_spots:\n            ana = ben = 0.0  # coffees a day\n            for h in homes:\n                if abs(h - x) < abs(h - y):\n                    ana += 1\n                elif abs(h - y) < abs(h - x):\n                    ben += 1\n                else:  # equally far, or the carts share a spot\n                    ana += 0.5\n                    ben += 0.5\n            row.append((a * ana, b * ben))\n        table.append(row)\n    return table\n\n\ndef best_replies(table):\n    \"\"\"(ana, ben): ana[j] lists Ana's best rows to column j,\n    ben[i] lists Ben's best columns to row i.\"\"\"\n    m, n = len(table), len(table[0])\n    ana = []\n    for j in range(n):  # Ana: first numbers down column j\n        top = max(table[i][j][0] for i in range(m))\n        ana.append([i for i in range(m) if table[i][j][0] == top])\n    ben = []\n    for i in range(m):  # Ben: second numbers along row i\n        top = max(table[i][j][1] for j in range(n))\n        ben.append([j for j in range(n) if table[i][j][1] == top])\n    return ana, ben\n",
+        "examples": [
+          {
+            "call": "[[tuple(c) for c in r] for r in street_table([0, 1, 2, 3, 4], [1, 2], [2, 3], 2, 3)]",
+            "expect": "[[(4.0, 9.0), (5.0, 7.5)], [(5.0, 7.5), (6.0, 6.0)]]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "T = [[(2, 0), (1, 3)], [(4, 1), (0, 2)]]",
+            "call": "[[list(r) for r in side] for side in best_replies(T)]",
+            "compare": "equal",
+            "expect": "[[[1], [0]], [[1], [1]]]"
+          }
+        ],
+        "tests": [
+          {
+            "call": "[[tuple(c) for c in r] for r in street_table([0, 1, 2, 3, 4], [1, 2], [2, 3], 2, 3)]",
+            "expect": "[[(4.0, 9.0), (5.0, 7.5)], [(5.0, 7.5), (6.0, 6.0)]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[[tuple(c) for c in r] for r in street_table([0, 1, 1, 4, 6, 6, 6], [4, 1, 6], [1, 5], 2, 3)]",
+            "expect": "[[(8.0, 9.0), (8.0, 9.0)], [(7.0, 10.5), (6.0, 12.0)], [(8.0, 9.0), (6.0, 12.0)]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[[tuple(c) for c in r] for r in street_table([3, 0, 7, 2, 2, 9], [5, 2], [2, 8, 5], 1, 4)]",
+            "expect": "[[(2.0, 16.0), (4.0, 8.0), (3.0, 12.0)], [(3.0, 12.0), (4.0, 8.0), (4.0, 8.0)]]",
+            "compare": "isclose"
+          },
+          {
+            "setup": "T = [[(2, 0), (1, 3)], [(4, 1), (0, 2)]]",
+            "call": "[[list(r) for r in side] for side in best_replies(T)]",
+            "compare": "equal",
+            "expect": "[[[1], [0]], [[1], [1]]]"
+          },
+          {
+            "setup": "T = [[(3, 1), (0, 4), (2, 4)], [(3, 2), (1, 0), (2, 5)]]",
+            "call": "[[list(r) for r in side] for side in best_replies(T)]",
+            "compare": "equal",
+            "expect": "[[[0, 1], [1], [0, 1]], [[1, 2], [2]]]"
+          },
+          {
+            "setup": "T = [[(-2, -1), (-3, -4)], [(-5, -2), (-1, -2)], [(-2, -6), (-4, -3)]]",
+            "call": "[[list(r) for r in side] for side in best_replies(T)]",
+            "compare": "equal",
+            "expect": "[[[0, 2], [1]], [[0], [0, 1], [1]]]"
+          },
+          {
+            "setup": "T = [[(1, 2), (1, 2), (1, 0)]]",
+            "call": "[[list(r) for r in side] for side in best_replies(T)]",
+            "compare": "equal",
+            "expect": "[[[0], [0], [0]], [[0, 1]]]"
+          },
+          {
+            "call": "[[list(r) for r in side] for side in best_replies(street_table(list(range(11)), [0, 2, 4, 6, 8, 10], [0, 2, 4, 6, 8, 10], 2, 3))]",
+            "expect": "[[[1], [2], [2, 3], [2, 3], [3], [4]], [[1], [2], [2, 3], [2, 3], [3], [4]]]",
+            "compare": "equal"
+          },
+          {
+            "call": "[[list(r) for r in side] for side in best_replies(street_table([0, 0, 0, 1, 5, 9, 10], [8, 0, 5, 3], [9, 1, 5], 3, 2))]",
+            "expect": "[[[0, 2, 3], [0, 1, 2, 3], [1, 3]], [[2], [1], [1], [1]]]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Table cells are compared within rounding (`math.isclose`); reply lists must match exactly, in increasing order."
+      },
+      "feedback": {
+        "correct": "Every table follows the street's rules, and every best reply is found, ties included.",
+        "generic": "Not quite right. Take the first failing case, work it by hand from the rules, and compare your result cell by cell."
+      },
+      "explain": {
+        "text": "Each cell counts the coffees each cart sells, halves included, times that player's own price. Ana's best replies to a column are the rows with the largest first number down it. Ben's to a row are the columns with the largest second number along it, and ties are kept."
+      },
+      "pace": 1200
     }
   ]
 }
