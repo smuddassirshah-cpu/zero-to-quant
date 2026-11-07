@@ -121,3 +121,56 @@ The three levels read in order with no gaps beyond findings 8, 26 and 28: L1's t
 No engine change is needed for any fix above. Two tool limits met in this read, also in `docs/BACKLOG-INBOX.md` under "Raised later (review git L1 to L3):":
 - `tools/fresh-check.mjs --file` reports a code-name hit when two code widgets merely share a function name (homework-2 `items[4]` and `items[5]` against `ds` l15, both define `contains`, with unrelated bodies and tests). A name-only match could need a shared test call or a shared body line too.
 - No tool checks a terminal transcript against the program it shows. In this course every `$ git ...` block and its printed lines had to be replayed by hand in throwaway repositories (findings 3, 5, 6, 14, 27 came from that). An advisory replayer for fenced `sh` blocks that start with `$ git` or a coreutils command, run in a temporary repository, could flag printed lines that differ.
+
+## Fix pass
+
+Status per finding (40 fixed, 0 disputed, 0 deferred). Every new number was recomputed in the number scripts: 15 suspects halve as 15, 8, 4, 2, 1 (4 runs); 4 + 3 = 7; the `risk.yaml` merge is stop_loss 0.08, max_leverage 1.5, target_vol 0.08; a revert on c4 of c1 to c6 gives 7 commits (reset 3, rewrite 6); the looped header script leaves 2 lines. Conceptual bases were run in Git 2.43.0 throwaway repositories (`fix-git-1-3/verify.sh` in the scratchpad) or bash: `git init -b main`, `git rm` refusing on staged changes, an ignored file surviving `git switch`, pruning after `reflog expire` and `gc`, a 41-byte ref then `packed-refs`, the conflict `status` lines, a push with a staged edit, a clone holding C, `.gitignore` not untracking, and `LC_ALL=C sort -r` printing 9 above 10.
+
+1. fixed: l11 `screens[8].explain.text` (basis: `printf '10 X\n9 Y\n' | LC_ALL=C sort -r` prints 9 first).
+2. fixed: l6 `byKey.branch-only` (4 + 3 = 7, 9 - 7 = 2).
+3. fixed: homework-1 `items[4]` row 0 uses `->`.
+4. fixed: l4 hashes renamed as listed (screens 0 to 2, hint, screen 8); the L1 script's one-hash-one-message check passes.
+5. fixed: l2 `screens[0].prose` and `screens[8]` use `git init -b main` (basis: git-init(1) `--initial-branch`; run, it prints `On branch main`).
+6. fixed: l3 `screens[6]` option `rm` why (basis: run, `error: the following file has changes staged in the index`).
+7. fixed: l3 `screens[7]` `byKey.r4c0`.
+8. fixed: l3 `summary.ideas[2]` and `screens[7].explain.text` (basis: run, ` M prices.csv` after ignoring a committed file).
+9. fixed: l4 `screens[3]` and `screens[4]` captions.
+10. fixed: l1 `quiz[0].explain.text`.
+11. fixed: l5 `screens[4].explain.text` (basis: run, an ignored `prices.csv` stays after `git switch main`).
+12. fixed: l5 `screens[5]` option `gone` why (basis: run, `git cat-file -t` fails after expire and `gc --prune=now`).
+13. fixed: l5 `screens[5].explain.text` and `quiz[2].feedback.correct` (basis: run, 41 bytes, then the ref moves to `packed-refs` after `gc`).
+14. fixed: l6 `screens[2].prose` and l8 `screens[1].prose` (basis: git-merge(1) and git-revert(1) `--edit`, the default in an interactive terminal; the reader's pseudo-terminal run).
+15. fixed: l8 `screens[6]` caption.
+16. fixed: l9 `screens[1]` and `screens[2]` explanations.
+17. fixed: l9 `screens[11].explain.text` (basis: GitHub's 13 August 2021 removal of password authentication for Git operations, in the GitHub blog and personal access token docs).
+18. fixed: l9 `quiz[0].prose` (basis: run, `rev-list --count HEAD` is 1 and `--all` is 2 in a clone).
+19. fixed: review-3 `items[8]` prose and option `sendsenv` why.
+20. fixed: homework-2 `items[6].model` section 4 (basis: run, the first merge fast-forwards, so only the second has a merge commit).
+21. fixed: homework-3 `items[6].model` section 5 (basis: GitHub docs, "About push protection", which lists supported secret patterns).
+22. fixed: l1 `screens[1]` option `none`, l4 `screens[5]` option `compare`, l10 `screens[8]` option `vague`; the three `key-length` warnings are gone.
+23. fixed: 72 occurrences of `git` as the program name changed to `Git` in l5, l6, l7, l8, review-2 and homework-2, outside backticks and code, and not before a subcommand.
+24. fixed: l7 `screens[8]` prose, correct and `byKey.c5` use "8 bp"; also l5 `quiz[1].prose` ("Raise cost to 8 bp") for consistency.
+25. fixed: homework-2 `items[5].explain.text` (three sentences).
+26. fixed: l5 `screens[6].prose` explains `-a`.
+27. fixed: l7 `screens[4]` row added and highlight set to row 4 (basis: run, `Unmerged paths:` is followed by the `use "git add <file>..."` line); `screens[7].hints[1]` now quotes it.
+28. fixed: l8 `screens[5]` uses `plot.py` throughout.
+29. fixed: l11 `screens[6].prose`.
+30. fixed: l12 `screens[1].prose`.
+31. fixed: review-1 `items[0]` is now a numeric item (answer 4).
+32. fixed: review-1 `items[5]` (key 45 characters against 38).
+33. fixed: review-1 `items[7]` (answer 2; wrong 3 and 1).
+34. fixed: review-2 `items[4]` (merge of main into slippage; answer 3).
+35. fixed: review-2 `items[6]` (answer: 7 commits, c4 cancelled).
+36. fixed: review-3 `items[0]` (basis: run, origin ends at E and `git status --short` still shows `M  s.py`).
+37. fixed: review-3 `items[5]` (answer 2; wrong 6, 10, 1; basis: bash run, `wc -l` gives 2).
+38. fixed: review-3 `items[7]` (basis: run, the clone's folder lacks the file and `git show HEAD~1:secrets.txt` prints it).
+39. fixed: homework-1 `items[0]` option `tests` replaced by `fix`, explanation updated.
+40. fixed: homework-2 `items[3]` now merges `risk.yaml` (answer order `u`, `sl08`, `lev15`, `tv08`, `reb`).
+
+Not a finding, left unchanged: l10's "volatility 17.6% a year" stays unverified (no SPY series in the repository; the review proposed no change). The two engine items are deferred (already in `docs/BACKLOG-INBOX.md`).
+
+Gates:
+- Number scripts: `git-L1-numbers.py` 74 of 74, `git-L2-numbers.py` 89 of 89, `git-L3-numbers.py` 70 of 70, all exit 0. The absent-or-fixed checks (`HEAD →`, the l6 `branch-only` wording, the l11 "10 before 9" wording) now have a positive check on the new text, so a revert fails.
+- Voice scan at 35: 0 sentences over 35 words, 0 explanations over three sentences.
+- Validator: 0 errors. New advisory `O2-explain-answer` on review-1 `items[7]` and review-3 `items[5]` (the explanation shows the working, not the digit).
+- Playthrough with `--local-cdn`: all 18 files (l1 to l12, review-1 to 3, homework-1 to 3), with and without `--mobile`, 36 of 36 green, no rerun. No code item was touched, so no CPython re-run was needed.

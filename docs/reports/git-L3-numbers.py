@@ -87,10 +87,25 @@ for run in range(2):
     f += ['row'] * 5        # '>>' only appends
 lv.claim(len(f) == 10, "l11 s9: two runs of five appended lines")
 lv.expect("l11", "screens[9].widget.answer", 10)
-for run in range(2):
-    f = ['header'] + ['row'] * 5
-lv.claim(len(f) == 6 and 1 + 10 == 11 and 12 == 2 * 6, "review-3 items[5]: 6; wrong 11 (one header, both runs), 12 (both runs whole)")
-lv.expect("review", "items[5].widget.answer", 6)
+# review-3 items[5] (finding 37): header moved inside the loop; each pass '>' empties the file, then '>>' appends one row
+f = []
+for t in ['SPY', 'QQQ', 'IWM', 'EFA', 'TLT']:
+    f = ['header']         # echo header > results.csv
+    f += [t]               # returns.py >> results.csv
+lv.claim(f == ['header', 'TLT'] and len(f) == 2, "review-3 items[5]: after one run, the last header and TLT's row, 2 lines")
+lv.claim(1 + 5 == 6 and 2 * 5 == 10 and len(f) - 1 == 1, "review-3 items[5]: wrong 6 (header and five rows), 10 (a header and a row per pass), 1 (header only)")
+lv.expect("review", "items[5].widget.answer", 2)
+lv.expect("review", "items[5].widget.wrong[0].value", 6)
+lv.expect("review", "items[5].widget.wrong[1].value", 10)
+lv.expect("review", "items[5].widget.wrong[2].value", 1)
+# finding 1: the explanation states the right direction: as text "9" sorts above "10", so -n is needed
+lv.expect("l11", "screens[8].explain.text", '"9" sorts above "10"')
+# review-3 items[0] (finding 36): both rows at D, commit E, staged edit, push: origin ends at E (D plus one commit), not F
+lv.claim(len(['A', 'B', 'C', 'D']) + 1 == 5 and ['A', 'B', 'C', 'D', 'E'][-1] == 'E' and 'F' not in ['A', 'B', 'C', 'D', 'E'], "review-3 items[0]: origin gains exactly one commit, E; the staged edit is no commit")
+lv.expect("review", "items[0].widget.options[0].text", "E")
+# l9 quiz[0] (finding 18): the clone has 47 commits, all on main
+lv.expect("l9", "quiz[0].prose", 47)
+lv.expect("l9", "quiz[0].prose", "all on main")
 
 # homework-3 items[0], items[4]
 loc = ['A', 'B', 'C', 'D', 'F', 'G']

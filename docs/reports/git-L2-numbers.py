@@ -75,6 +75,7 @@ lv.claim(n - 1 == 8, "l6 s8: wrong 8 leaves out the merge commit")
 lv.claim(4 + 1 + 1 == 6, "l6 s8: wrong 6 counts the branch as one commit")
 lv.claim(4 + 3 == 7 and 9 - 7 == 2, "l6 s8: wrong 7 is 4 + 3, so it leaves out both the fix and the merge commit")
 lv.stated("l6", "screens[8].feedback.byKey.branch-only", "You left out the colleague's fix or the merge commit", False)
+lv.expect("l6", "screens[8].feedback.byKey.branch-only", "main's 4 and your 3")   # finding 2: the line must state the 4 and 3 that make 7
 # l6 quiz[0]: fast-forward adds 2; quiz[3]: two parents
 p = chain(3); p.update({'k1': ['c3'], 'k2': ['k1']})
 lv.claim(merge(p, 'c3', 'k2')[2] == 2, "l6 quiz[0]: a fast-forward gains 2")
@@ -118,6 +119,31 @@ lv.claim(len(['41c09d8', '0be7c55', 'c2a91f4']) == 3, "review-2 items[3]: three 
 lv.expect("review", "items[3].widget.answer", 3)
 lv.claim(3 + 1 == 4 and 6 == len(['7f3e1a2', '41c09d8', '0be7c55', 'c2a91f4', '9d6b310', '5e8a0c1']), "review-2 items[3]: wrong 4 adds the merge, 6 counts every star")
 lv.claim(2 + 3 == 5, "review-2 items[4]: '5, the two added'")
+# review-2 items[4] (finding 34): on slippage, `git merge main`: HEAD half is slippage's 2, the main half is 3
+lv.claim(2 != 3 and 2 + 3 == 5, "review-2 items[4]: HEAD half 2 is slippage, the >>>>>>> main half 3 is main")
+lv.expect("review", "items[4].widget.options[0].text", 3)
+lv.expect("review", "items[4].widget.options[1].text", 2)
+# review-2 items[6] (finding 35): c1 to c6 plus one revert is 7; reset to before c4 leaves 3; a rewrite keeps 6
+lv.claim(6 + 1 == 7 and len(['c1', 'c2', 'c3']) == 3 and 6 == len(['c1', 'c2', 'c3', "c4'", 'c5', 'c6']), "review-2 items[6]: revert gives 7 commits, reset 3, a rewrite 6")
+lv.expect("review", "items[6].explain.text", "c7")
+lv.expect("review", "items[6].widget.options[0].text", 7)
+lv.expect("review", "items[6].widget.options[1].text", 3)
+lv.expect("review", "items[6].widget.options[3].text", 6)
+# homework-2 items[3] (finding 40): risk.yaml, old stop_loss 0.05, leverage 2.0, vol 0.10; main cut leverage to 1.5 and vol to 0.08; you set stop_loss 0.08
+old = {'stop_loss': 0.05, 'max_leverage': 2.0, 'target_vol': 0.10}
+main_ = dict(old, max_leverage=1.5, target_vol=0.08)
+mine = dict(old, stop_loss=0.08)
+merged = {k: (main_[k] if main_[k] != old[k] else mine[k]) for k in old}
+lv.claim(merged == {'stop_loss': 0.08, 'max_leverage': 1.5, 'target_vol': 0.08}, "homework-2 items[3]: merged risk.yaml is 0.08, 1.5, 0.08")
+lv.claim(clash(2, 3), "homework-2 items[3]: stop_loss (line 2) touches max_leverage (line 3), so one conflict")
+lv.expect("homework", "items[3].explain.text", 0.08)
+lv.expect("homework", "items[3].explain.text", 1.5)
+lv.expect("homework", "items[3].prose", 0.05)
+lv.expect("homework", "items[3].prose", 2.0)
+lv.expect("homework", "items[3].prose", 0.10, fmt="0.10")
+lv.expect("homework", "items[3].feedback.byKey.sl05", 0.08)
+lv.expect("homework", "items[3].feedback.byKey.lev20", 1.5)
+lv.expect("homework", "items[3].feedback.byKey.tv10", 0.08)
 # review-2 items[7]: carry at c3, main at c4; ff carry, reset main
 p = chain(4)
 _, tip, _ = merge(p, 'c3', 'c4')

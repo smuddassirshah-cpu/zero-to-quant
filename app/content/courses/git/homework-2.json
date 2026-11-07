@@ -166,12 +166,12 @@
       "skills": [
         "gt-branches"
       ],
-      "prose": "Before the split: lookback 20, cost_bps 5, max_leverage 2.0. On main, risk lowered leverage to 1.5 and raised costs to 8. On vol-signal you set lookback to 60. Merging gives this:",
+      "prose": "Before the split, risk.yaml said stop_loss 0.05, max_leverage 2.0 and target_vol 0.10. On main, the risk team cut leverage to 1.5 and target_vol to 0.08. On wider-stop you set stop_loss to 0.08. Merging gives this:",
       "canvas": {
         "kind": "table",
         "params": {
           "columns": [
-            "config.yaml after the merge"
+            "risk.yaml after the merge"
           ],
           "rows": [
             [
@@ -181,28 +181,28 @@
               "<<<<<<< HEAD"
             ],
             [
-              "lookback: 20"
-            ],
-            [
-              "cost_bps: 8"
+              "stop_loss: 0.05"
             ],
             [
               "max_leverage: 1.5"
             ],
             [
+              "target_vol: 0.08"
+            ],
+            [
               "======="
             ],
             [
-              "lookback: 60"
-            ],
-            [
-              "cost_bps: 5"
+              "stop_loss: 0.08"
             ],
             [
               "max_leverage: 2.0"
             ],
             [
-              ">>>>>>> vol-signal"
+              "target_vol: 0.10"
+            ],
+            [
+              ">>>>>>> wider-stop"
             ],
             [
               "rebalance: monthly"
@@ -228,36 +228,36 @@
             "text": "`<<<<<<< HEAD`"
           },
           {
-            "id": "lb20",
-            "text": "`lookback: 20`"
-          },
-          {
-            "id": "c8",
-            "text": "`cost_bps: 8`"
+            "id": "sl05",
+            "text": "`stop_loss: 0.05`"
           },
           {
             "id": "lev15",
             "text": "`max_leverage: 1.5`"
           },
           {
+            "id": "tv08",
+            "text": "`target_vol: 0.08`"
+          },
+          {
             "id": "sep",
             "text": "`=======`"
           },
           {
-            "id": "lb60",
-            "text": "`lookback: 60`"
-          },
-          {
-            "id": "c5",
-            "text": "`cost_bps: 5`"
+            "id": "sl08",
+            "text": "`stop_loss: 0.08`"
           },
           {
             "id": "lev20",
             "text": "`max_leverage: 2.0`"
           },
           {
+            "id": "tv10",
+            "text": "`target_vol: 0.10`"
+          },
+          {
             "id": "m3",
-            "text": "`>>>>>>> vol-signal`"
+            "text": "`>>>>>>> wider-stop`"
           },
           {
             "id": "reb",
@@ -267,31 +267,31 @@
         "slots": [
           {
             "id": "file",
-            "label": "config.yaml"
+            "label": "risk.yaml"
           }
         ],
         "order": [
           "u",
-          "lb60",
-          "c8",
+          "sl08",
           "lev15",
+          "tv08",
           "reb"
         ]
       },
       "feedback": {
-        "correct": "Your lookback, and main's costs and leverage.",
+        "correct": "Your stop-loss, and the risk team's leverage and volatility target.",
         "generic": "Not quite right. Compare each line with the file before the split.",
         "byKey": {
-          "lb20": "lookback: 20 is the old value. main never changed it; your branch did, to 60.",
-          "c5": "cost_bps: 5 is the old value. Keeping it silently undoes main's rise to 8.",
+          "sl05": "stop_loss: 0.05 is the old value. main never changed it; your branch did, to 0.08.",
           "lev20": "max_leverage: 2.0 is the old value. Keeping it undoes the risk team's cut to 1.5.",
+          "tv10": "target_vol: 0.10 is the old value. Keeping it undoes the cut to 0.08.",
           "m1": "You kept a conflict marker. Delete all three.",
           "sep": "You kept the divider. Delete all three markers.",
           "m3": "You kept a conflict marker. Delete all three."
         }
       },
       "explain": {
-        "text": "Each half repeats lines its side never changed. Against the old file, your branch changed only lookback, and main changed costs and leverage. Taking each real change gives lookback 60, cost_bps 8 and max_leverage 1.5."
+        "text": "Each half repeats lines its side never changed. Against the old file, your branch changed only stop_loss, and main changed leverage and target_vol. Taking each real change gives stop_loss 0.08, max_leverage 1.5 and target_vol 0.08."
       }
     },
     {
@@ -417,11 +417,11 @@
         "how": "Check runs 8 hidden tests, including merging a branch into itself and merging into a merge commit. Each result must equal the expected text exactly."
       },
       "feedback": {
-        "correct": "Your function sorts every merge the way git does.",
+        "correct": "Your function sorts every merge the way Git does.",
         "generic": "Not quite right. Check \"up to date\" first, then \"fast-forward\"."
       },
       "explain": {
-        "text": "Check \"up to date\" first. If current already reaches other, there is nothing to bring in; that covers a branch merged into itself too. If other reaches current, main is directly behind, so git can slide it. Anything else needs a merge commit."
+        "text": "Check \"up to date\" first: if current already reaches other, there is nothing to bring in, even when a branch is merged into itself. If other reaches current, current is directly behind it, so Git can slide it forward. Anything else needs a merge commit."
       }
     },
     {
@@ -433,8 +433,8 @@
       ],
       "kind": "longform",
       "title": "Two signals, one reproducible main",
-      "prompt": "Your backtest repository's main produced `results-2026-09.md` (Sharpe 1.12). You want to test two ideas, a momentum filter and a carry signal, independently. Both will need to change `config.yaml`. Describe your plan, with the git commands and a reason for each.\n1. How you set up and work on the two ideas so that main can always reproduce the note.\n2. How you bring a successful idea back. Which kind of merge do you expect for the first, and for the second?\n3. What happens when both ideas changed the `lookback:` line in config.yaml, and how you resolve it.\n4. A week later a merged idea turns out to have a look-ahead bug, and colleagues have pulled main. How do you undo it, and why not with reset?",
-      "model": "**1. One branch per idea.** From main I run `git switch -c momentum-filter`, and later, from main again, `git switch -c carry`. `-c` moves HEAD onto the new branch, so every commit moves that branch and never main. Before committing I check `git branch` for the star. main stays on the commit that wrote the note, so `git switch main` and a rerun reproduce Sharpe 1.12.\n\n**2. Merging back.** I stand on the receiving branch: `git switch main`, then `git merge momentum-filter`. main has not moved since I branched, so this is a fast-forward. carry split off before those commits, so `git merge carry` then makes a merge commit with two parents. I check with `git log --oneline --graph` and remove the labels with `git branch -d`.\n\n**3. The conflict.** Both branches edited `lookback:`, so the second merge stops with `CONFLICT (content)`. config.yaml shows `<<<<<<< HEAD`, main's version (now momentum's), then `=======`, then carry's, then `>>>>>>> carry`. I compare both halves with the file before the split, keep each real change, choose one lookback deliberately, and delete all three markers. Then I rerun the backtest, `git add config.yaml` and `git commit`.\n\n**4. Undoing a shared mistake.** Colleagues have the commits, so I must not rewrite history. `git revert <commit>` adds a new commit that cancels the bug; for the whole merge, `git revert -m 1 <merge>`. `git reset --hard` would move main back, but colleagues' copies still hold those commits. Their next merge would bring the bug back and the histories would disagree.",
+      "prompt": "Your backtest repository's main produced `results-2026-09.md` (Sharpe 1.12). You want to test two ideas, a momentum filter and a carry signal, independently. Both will need to change `config.yaml`. Describe your plan, with the Git commands and a reason for each.\n1. How you set up and work on the two ideas so that main can always reproduce the note.\n2. How you bring a successful idea back. Which kind of merge do you expect for the first, and for the second?\n3. What happens when both ideas changed the `lookback:` line in config.yaml, and how you resolve it.\n4. A week later a merged idea turns out to have a look-ahead bug, and colleagues have pulled main. How do you undo it, and why not with reset?",
+      "model": "**1. One branch per idea.** From main I run `git switch -c momentum-filter`, and later, from main again, `git switch -c carry`. `-c` moves HEAD onto the new branch, so every commit moves that branch and never main. Before committing I check `git branch` for the star. main stays on the commit that wrote the note, so `git switch main` and a rerun reproduce Sharpe 1.12.\n\n**2. Merging back.** I stand on the receiving branch: `git switch main`, then `git merge momentum-filter`. main has not moved since I branched, so this is a fast-forward. carry split off before those commits, so `git merge carry` then makes a merge commit with two parents. I check with `git log --oneline --graph` and remove the labels with `git branch -d`.\n\n**3. The conflict.** Both branches edited `lookback:`, so the second merge stops with `CONFLICT (content)`. config.yaml shows `<<<<<<< HEAD`, main's version (now momentum's), then `=======`, then carry's, then `>>>>>>> carry`. I compare both halves with the file before the split, keep each real change, choose one lookback deliberately, and delete all three markers. Then I rerun the backtest, `git add config.yaml` and `git commit`.\n\n**4. Undoing a shared mistake.** Colleagues have the commits, so I must not rewrite history. `git revert <commit>` adds a new commit that cancels the bug. carry came in through a merge commit, so `git revert -m 1 <merge>` cancels it whole; momentum was a fast-forward, so revert its commits one by one, newest first. `git reset --hard` would move main back, but colleagues' copies still hold those commits. Their next merge would bring the bug back and the histories would disagree.",
       "rubric": [
         {
           "points": 2,

@@ -10,150 +10,44 @@
       "skills": [
         "gt-commits"
       ],
-      "prose": "Your backtest ran fine on commit 5 and is broken on commit 8. You never ran it on 6 or 7.",
-      "canvas": {
-        "kind": "graph",
-        "params": {
-          "nodes": [
-            {
-              "id": "c1",
-              "label": "1",
-              "x": 0.08,
-              "y": 0.5
-            },
-            {
-              "id": "c2",
-              "label": "2",
-              "x": 0.2,
-              "y": 0.5
-            },
-            {
-              "id": "c3",
-              "label": "3",
-              "x": 0.32,
-              "y": 0.5
-            },
-            {
-              "id": "c4",
-              "label": "4",
-              "x": 0.44,
-              "y": 0.5
-            },
-            {
-              "id": "c5",
-              "label": "5 ✓",
-              "x": 0.56,
-              "y": 0.5
-            },
-            {
-              "id": "c6",
-              "label": "6",
-              "x": 0.68,
-              "y": 0.5
-            },
-            {
-              "id": "c7",
-              "label": "7",
-              "x": 0.8,
-              "y": 0.5
-            },
-            {
-              "id": "c8",
-              "label": "8 ✗",
-              "x": 0.92,
-              "y": 0.5
-            }
-          ],
-          "edges": [
-            {
-              "from": "c2",
-              "to": "c1",
-              "directed": true
-            },
-            {
-              "from": "c3",
-              "to": "c2",
-              "directed": true
-            },
-            {
-              "from": "c4",
-              "to": "c3",
-              "directed": true
-            },
-            {
-              "from": "c5",
-              "to": "c4",
-              "directed": true
-            },
-            {
-              "from": "c6",
-              "to": "c5",
-              "directed": true
-            },
-            {
-              "from": "c7",
-              "to": "c6",
-              "directed": true
-            },
-            {
-              "from": "c8",
-              "to": "c7",
-              "directed": true
-            }
-          ],
-          "height": 150,
-          "label": "A chain of commits, each pointing back to the one before",
-          "nodeRadius": 21
-        },
-        "state": {
-          "caption": "✓ ran fine, ✗ broken"
-        }
-      },
-      "question": "Tap every commit that could have brought in the bug.",
+      "prose": "Your backtest ran fine on commit 1 and is broken on commit 16. You never ran commits 2 to 15. Each run, you test the middle suspect and keep the half that must hold the bug.",
+      "question": "At most how many runs find the commit that brought in the bug?",
       "widget": {
-        "kind": "tap-regions",
-        "answer": [
-          "c6",
-          "c7",
-          "c8"
-        ],
-        "countWord": "selected",
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "label": "Runs at most",
+        "placeholder": "a whole number",
+        "accept": "4: 15 suspects, then 8, 4, 2 and 1.",
         "wrong": [
           {
-            "id": "not-eight",
-            "set": [
-              "c6",
-              "c7"
-            ]
+            "id": "each",
+            "value": 15,
+            "tol": {
+              "abs": 0
+            }
           },
           {
-            "id": "with-five",
-            "set": [
-              "c5",
-              "c6",
-              "c7",
-              "c8"
-            ]
+            "id": "between",
+            "value": 14,
+            "tol": {
+              "abs": 0
+            }
           }
         ]
       },
       "feedback": {
-        "correct": "6, 7 or 8: everything after the last good commit.",
-        "generic": "Not quite right. Keep every commit after the last good one, up to the broken one.",
+        "correct": "Four runs: 15 suspects, then 8, 4, 2 and 1.",
+        "generic": "Not quite right. Count the suspects, then halve until one is left.",
         "byKey": {
-          "not-eight": "You left out commit 8. The bug may have arrived in 8 itself.",
-          "with-five": "Commit 5 ran fine, so the bug was not in it yet."
+          "each": "You ran every suspect in turn. Halving keeps at most half each run: 15, 8, 4, 2, 1.",
+          "between": "You counted the untested commits, 2 to 15. Commit 16 is a suspect too, and halving needs far fewer runs."
         }
       },
       "explain": {
-        "text": "Commit 5 works, so the bug arrived after it: in 6, 7 or 8. Commit 8 is a suspect too. Running commit 7 next would settle it in at most two runs.",
-        "canvas": {
-          "highlight": [
-            "c6",
-            "c7",
-            "c8"
-          ]
-        }
+        "text": "The suspects are commits 2 to 16: fifteen in all. Each run keeps at most half, rounding up: 15, 8, 4, 2, 1. So 4 runs are enough, against 15 one by one."
       }
     },
     {
@@ -464,7 +358,7 @@
       "skills": [
         "gt-commits"
       ],
-      "prose": "You changed the backtest to trade at the next day's open instead of today's close, and staged it.",
+      "prose": "`git diff --staged` shows the change you are about to commit:\n\n```\n--- a/signal.py\n+++ b/signal.py\n@@ -4,3 +4,3 @@\n prices = load(\"SPY\")\n-window = 20\n+window = 60\n signal = prices.rolling(window).mean()\n```",
       "question": "Which commit message is best?",
       "widget": {
         "kind": "choice",
@@ -472,33 +366,33 @@
         "options": [
           {
             "id": "good",
-            "text": "Trade at the next day's open instead of today's close",
+            "text": "Lengthen the signal window from 20 to 60 days",
             "correct": true
           },
           {
             "id": "file",
-            "text": "Edit backtest.py",
-            "why": "Git records the file already. The message should say what changed."
+            "text": "Update signal.py",
+            "why": "Git records the file already. The message should say what changed in it."
+          },
+          {
+            "id": "more",
+            "text": "Change the costs and the signal window",
+            "why": "The diff changes one line, the window. A message must not claim changes the commit lacks."
           },
           {
             "id": "vague",
-            "text": "Improvements",
-            "why": "This could describe any commit. You could not find it in the log."
-          },
-          {
-            "id": "wip",
-            "text": "wip",
-            "why": "Work in progress says nothing about the change."
+            "text": "fix",
+            "why": "You could not find this in the log. It says nothing about the change."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "It says what changed, in a form you can find in the log.",
-        "generic": "Not quite right. Pick the message you could find later."
+        "correct": "It says exactly what the staged diff changes.",
+        "generic": "Not quite right. Read the diff, then pick the message that describes it."
       },
       "explain": {
-        "text": "A message should say what the commit changes, starting with a verb. Scanning `git log --oneline` for open or close finds this one at once."
+        "text": "The staged diff changes one line: the window from 20 to 60. The message says that, starting with a verb, so a scan of `git log --oneline` finds it. Naming the file, or claiming more than the diff shows, misleads the reader."
       }
     },
     {
@@ -545,7 +439,7 @@
       "skills": [
         "gt-commits"
       ],
-      "prose": "In a repository with nothing staged, you run:\n\n```sh\n$ git add a.py\n$ git commit -m \"One\"\n$ # edit a.py and save\n$ git commit -m \"Two\"\n$ git add a.py\n$ git commit -m \"Three\"\n```",
+      "prose": "In a repository with nothing staged, you edit `a.py` and `b.py`, then run:\n\n```sh\n$ git add a.py b.py\n$ git restore --staged b.py\n$ git commit -m \"One\"\n$ git commit -m \"Two\"\n$ git add b.py\n$ git commit -m \"Three\"\n```",
       "question": "How many new commits are in the history?",
       "widget": {
         "kind": "numeric",
@@ -565,8 +459,8 @@
             }
           },
           {
-            "id": "four",
-            "value": 4,
+            "id": "one",
+            "value": 1,
             "tol": {
               "abs": 0
             }
@@ -574,15 +468,15 @@
         ]
       },
       "feedback": {
-        "correct": "Two. The commit \"Two\" found nothing staged.",
+        "correct": "Two: \"One\" took a.py and \"Three\" took b.py.",
         "generic": "Not quite right. Check what is staged before each commit.",
         "byKey": {
-          "three": "You counted \"Two\". The edit was saved but not staged, so that commit was refused.",
-          "four": "You counted the save as a snapshot too. Saves never reach the history."
+          "three": "You counted \"Two\". \"One\" took everything staged, so \"Two\" found nothing and was refused.",
+          "one": "`git restore --staged b.py` only unstaged b.py. \"Three\" recorded it after the second `git add`."
         }
       },
       "explain": {
-        "text": "\"One\" committed the staged a.py. The edit before \"Two\" was never staged, so that commit was refused. After `git add`, \"Three\" recorded the edit."
+        "text": "\"One\" recorded a.py alone, because b.py had been unstaged. \"Two\" had nothing staged, so Git refused it. \"Three\" recorded b.py: two new commits."
       }
     }
   ]
