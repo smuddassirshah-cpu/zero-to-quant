@@ -83,9 +83,9 @@ lv.stated(f, 'screens[1].explain.text', 'counts equal columns, not coins', 6 * 3
 f = 'l10-'
 D(f, 'screens[0].widget', 6, 300 / 4 * 6)
 R2(f, 'screens[0].widget', 'double', 6, 600)
-# byKey add-two: "You added a couple of grams" -- its region is 290 to 330, which holds an unchanged 300 g
+# byKey add-two: "You left the flour at about 300 g" -- its region is 290 to 330, which holds an unchanged 300 g
 reg = [e for e in node(f, 'screens[0].widget')['wrong'] if e['id'] == 'add-two'][0]['region']['y']
-lv.stated(f, 'screens[0].feedback.byKey.add-two', 'You added a couple of grams', not (reg[0] <= 300 <= reg[1]))
+lv.stated(f, 'screens[0].feedback.byKey.add-two', 'You left the flour at about 300 g', (reg[0] <= 300 <= reg[1]))
 K(f, 'screens[1].widget', 300 / 4); W(f, 'screens[1].widget', 'times-four', 1200); W(f, 'screens[1].widget', 'per-six', 300 / 6)
 K(f, 'screens[2].widget', 75 * 10); W(f, 'screens[2].widget', 'eight', 600); W(f, 'screens[2].widget', 'added', 306); W(f, 'screens[2].widget', 'rate', 75)
 D(f, 'screens[3].widget', 2, 3)
@@ -185,7 +185,7 @@ K(f, 'items[5].widget', 3 / 10); W(f, 'items[5].widget', 'as-fraction', 3 / 7, 4
 K(f, 'items[6].widget', 2015 / (930 / 120)); W(f, 'items[6].widget', 'inverse', 120 * 930 / 2015, 2); W(f, 'items[6].widget', 'additive', 120 + 2015 - 930)
 K(f, 'items[7].widget', 430 / 0.86, 2); W(f, 'items[7].widget', 'times', 430 * 0.86, 2); W(f, 'items[7].widget', 'gap', 430 * 1.14, 2)
 T(f, 'items[7].feedback.byKey.gap', round(1 / 0.86, 3))
-K(f, 'items[8].widget', (1005 - 5) / 125); W(f, 'items[8].widget', 'fee-in', 1005 / 125); W(f, 'items[8].widget', 'fee-per-share', 8 - 0.04)
+K(f, 'items[8].widget', 300 * (1005 - 5) / 125 + 5); W(f, 'items[8].widget', 'fee-in', 1005 / 125 * 300, 2); W(f, 'items[8].widget', 'no-fee', 300 * 8)
 
 # ---------- homework-3 ----------
 f = 'homework'
@@ -211,6 +211,16 @@ for v in (16000, 32000, 48000, round(32000 * 1.16, 2), round(1 / 1.16, 4)):
 lv.claim(round(32000 / 0.8621) == 37119, 'homework-3 items[6]: 32,000 / 0.8621 = 37,119')
 K(f, 'items[7].widget', round(9.95 / 0.01)); W(f, 'items[7].widget', 'rate', 0.01); W(f, 'items[7].widget', 'fee', 9.95)
 K(f, 'items[8].widget', 54 / 4.5 * 7.5, 2); W(f, 'items[8].widget', 'additive', 57); W(f, 'items[8].widget', 'inverse', 54 * 4.5 / 7.5, 2)
+
+# ---- fix pass (session V): numbers written by the fixes
+lv.claim(round(1000 / 125, 2) == 8 and 300 * 8 + 5 == 2405 and round(1005 / 125 * 300, 2) == 2412, 'review-3 items[8]: 2405, 2412, 2400')
+lv.claim(round(11600 / 1.16) == 10000 and round(12760 / 1.21, 2) == 10545.45 and round(12760 / 1.21 - 10000, 2) == 545.45 and round(545.45 / 10000 * 100, 1) == 5.5, 'l13 s8 explanation')
+lv.claim(round(4.4 / 5 * 100) == 88 and round(9 / 10 * 100) == 90, 'l12 s5 explanation: 88p and 90p')
+lv.claim(round(500 * 1.12 / 1.12, 6) == 500 and round(500 * 1.21 / 1.21, 6) == 500, 'l13 s3: one rate both ways returns 500')
+lv.claim(0.75 == 3 / 4 and 3 * 4 == 12, 'l10 quiz[1]: the units slip is 3 / 4')
+lv.claim(2 * 150 / 2 == 150 and 1.5 * 300 == 450, 'l10 s0: 150 g more, scale factor 1.5')
+lv.claim(0.6 * 50000 == 30000 and 30000 - 28000 == 2000 and 0.6 * 49000 - 21000 == 8400, 'homework-3 items[4]: slips 2000 and 8400')
+lv.claim(2.5 * 2 == 5 and 3 + 4 == 7 and 3 + 4 * 2 == 11, 'l10 fare explanation')
 
 lv.check_wrongs()
 lv.report()
