@@ -11,6 +11,9 @@ Use from docs/reports/<course>-L<n>-numbers.py:
     lv.expect("l12", "screens[2]", 7)                             # a path that ends on an object or list searches every string below it
     lv.expect("l12", "screens[*].prose", 7)                       # [*] joins every element
     lv.check_wrongs()                                             # every numeric wrong[].value: outside the answer tolerance (ENGINE-BACKLOG 582)
+    lv.claim(abs(a - b) < 0.01, "a and b agree")                  # a claim that is not one number: an inequality, a coverage statement (ENGINE-BACKLOG 606)
+    lv.stated("l7", "screens[2].prose", "is always positive", x > 0)    # tied to its wording: fails while the sentence is in the text and false, passes once reworded
+    lv.claim_text("l7", "screens[2].prose", "phrase", ok, "label")      # the same with your own label
     lv.report()                                                   # prints the count, exits 1 on any failure
 `file` is a lesson id or a unique prefix ("l10"), "review" or "homework". `lv.text(file, path)` returns the string
 (strings below an object or list are joined with newlines) for ad-hoc checks. Without `fmt` a number matches any token
@@ -28,7 +31,7 @@ import re
 import sys
 
 COURSES = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'content', 'courses')
-_PART = re.compile(r'([A-Za-z_][\w]*)|\[(\d+|\*)\]')
+_PART = re.compile(r'([A-Za-z_][\w-]*)|\[(\d+|\*)\]')   # a key may hold a hyphen: feedback.byKey.test-3 (ENGINE-BACKLOG 606)
 
 
 def _strings(x):
@@ -146,6 +149,25 @@ class Level:
         else:
             ok = any(abs(x - value) <= 1e-9 * max(1.0, abs(value)) for x in _numbers(txt))
         return self._rec(ok, label, '' if ok else f'not found in: {txt[:120]!r}')
+
+    def claim(self, ok, label, note=''):
+        """Record a claim that is not a single number (an inequality, a coverage statement, what a chart shows)."""
+        return self._rec(bool(ok), label, '' if ok else (note or 'claim is false'))
+
+    def claim_text(self, ref, path, phrase, ok, label=None):
+        """A claim tied to its wording: while `phrase` is in the text, `ok` must be true; once a fix rewords it away the check passes,
+        so a number script exits 0 after the content is fixed."""
+        label = label or f'{ref} {path} says {phrase!r}'
+        try:
+            txt = self.text(ref, path)
+        except KeyError as e:
+            return self._rec(False, label, str(e))
+        if phrase not in txt and phrase not in normalise(txt):
+            return self._rec(True, label, 'wording no longer in the text')
+        return self._rec(bool(ok), label, '' if ok else f'the sentence is still in the text and is false: {phrase!r}')
+
+    def stated(self, ref, path, phrase, ok):
+        return self.claim_text(ref, path, phrase, ok)
 
     def check_wrongs(self, file=None):
         """Assert no numeric wrong[] value lies inside its answer's tolerance; list byKey texts that state other numbers."""

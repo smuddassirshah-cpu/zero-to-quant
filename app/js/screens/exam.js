@@ -147,6 +147,11 @@
         return [`Pass mark ${Math.round(p.pass * 100)}%`, `That is ${M.signed(Math.ceil(max * p.pass - 1e-9))} of ${M.signed(max)} ${M.scored(p) ? 'marks' : 'correct'}.${M.scored(p) ? ' ' + markLine(p) : ''}`];
       };
       const wayOf = (p) => [fwd(p) ? 'forward only' : null, noSkip(p) ? 'no skipping' : null, M.scored(p) ? 'negative marking' : null].filter(Boolean);
+      /* ENGINE-BACKLOG 612: a mock of one-item papers (recorded prompts) lists each paper by its minutes, and says the shared rules once */
+      const wayLine = (p) => [passOf(p)[0].replace(/^Pass mark/, 'pass'), ...wayOf(p)].join(', ').replace(/^(pass[^,]*), /, '$1 · ');
+      const papersIn = partsIn.filter((p) => p.kind === 'paper');   // self-ticked checks do not count
+      const compactOne = multi && papersIn.length >= 3 && papersIn.every((p) => (p.items || []).length === 1);
+      const sharedWay = compactOne && papersIn.every((p) => wayLine(p) === wayLine(papersIn[0]) && !reqOf(p).length) ? `each one question, ${wayLine(papersIn[0])}` : '';
 
       /* ---------- Start card ---------- */
       const intro = () => {
@@ -179,7 +184,8 @@
               <h1 class="t-lesson-title">${Z.esc(title)}</h1>
               <p class="t-prose exm-lede">${Z.esc(mock ? (doc.description || 'A timed mock assessment. Sit it as often as you like: every attempt is kept.') : stage ? (doc.description || 'The exit test for this stage. Sit it first to skip the stage.') : `${doc.name || 'The topic exam'} covers every course in the topic. Sit it now to test out, or after the last course.`)}</p>
               ${mock && doc.models ? `<p class="t-caption exm-models"><b class="t-label">Models</b> ${Z.esc(doc.models)}</p>` : ''}
-              ${multi ? `<ol class="exm-parts">${partsIn.map((p, i) => `<li><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(p.name)}</b><span class="t-caption">${p.kind === 'paper' ? `${plural((p.items || []).length, 'question', 'questions')} · ${p.minutes} minutes · ${passOf(p)[0].replace(/^Pass mark/, 'pass')}${wayOf(p).length ? ' · ' + wayOf(p).join(', ') : ''}${p.optional ? ' · optional for your track, not counted' : ''}${reqOf(p).length ? ` · ${plural(reqOf(p).length, 'item', 'items')} must be right to pass` : ''}` : 'You tick this yourself at the end'}</span></span></li>`).join('')}</ol>` : ''}
+              ${compactOne ? `<p class="t-caption exm-compact">${plural(papersIn.length, 'prompt', 'prompts')}, ${Math.round(papersIn.reduce((n, p) => n + (+p.minutes || 0), 0) * 10) / 10} minutes on the clocks${sharedWay ? ' · ' + Z.esc(sharedWay) : ''}</p>` : ''}
+              ${multi ? `<ol class="exm-parts${compactOne ? ' is-compact' : ''}">${partsIn.map((p, i) => `<li><span class="exm-ri-n tnum">${i + 1}</span><span class="exm-parts-t"><b class="t-label">${Z.esc(p.name)}</b><span class="t-caption">${p.kind === 'paper' ? (compactOne ? `${p.minutes} minutes${sharedWay ? '' : ' · ' + wayLine(p)}${p.optional ? ' · optional for your track, not counted' : ''}` : `${plural((p.items || []).length, 'question', 'questions')} · ${p.minutes} minutes · ${wayLine(p)}${p.optional ? ' · optional for your track, not counted' : ''}${reqOf(p).length ? ` · ${plural(reqOf(p).length, 'item', 'items')} must be right to pass` : ''}`) : 'You tick this yourself at the end'}</span></span></li>`).join('')}</ol>` : ''}
               <ul class="exm-rules">${rules.map(([ic, h, t]) => `<li><span class="exm-rule-ic">${icon(Z, ic)}</span><div><b class="t-label">${Z.esc(h)}</b><p class="t-caption">${Z.esc(t)}</p></div></li>`).join('')}</ul>
               ${offTrack.length ? `<p class="t-caption exm-tracks">${sitAll ? `Optional for your track: ${Z.esc(listAnd(offTrack.map(p => p.name)))}. They do not count towards your pass.` : `Left out for your track: ${Z.esc(listAnd(offTrack.map(p => `${p.name} (${rolesOf(p)})`)))}. They do not count towards your pass. <a href="#exam/${Z.esc(doc.id)}/all">Sit them as well</a>.`}</p>` : ''}
               ${mix.length ? `<p class="t-caption exm-mix">Difficulty, on a scale of 1 to 5: ${listAnd(mix.map(([d, n]) => `${n} at level ${d}`))}.</p>` : ''}

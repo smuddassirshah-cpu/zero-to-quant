@@ -91,6 +91,7 @@ const paper = (id, name, items, extra = {}) => ({ kind: 'paper', id, name, minut
 const DOCS = {
   'mock-test-req': { id: 'mock-test-req', name: 'Required test', style: 'trader', parts: [paper('p', 'Paper', [choiceItem('q1', { required: true }), choiceItem('q2'), choiceItem('q3')])] },
   'mock-test-tracks': { id: 'mock-test-tracks', name: 'Tracks test', style: 'trader', parts: [paper('p1', 'Core paper', [choiceItem('c1'), choiceItem('c2')]), paper('p2', 'Research prompt', [choiceItem('r1'), choiceItem('r2')], { tracks: ['research'] })] },
+  'mock-test-prompts': { id: 'mock-test-prompts', name: 'Prompts test', style: 'trader', parts: [paper('a', 'Prompt A', [choiceItem('a1')], { minutes: 2.5 }), paper('b', 'Prompt B', [choiceItem('b1')], { minutes: 2.5 }), paper('c', 'Prompt C', [choiceItem('c1')], { minutes: 2 })] },
   'mock-test-skip': { id: 'mock-test-skip', name: 'Skip test', style: 'trader', parts: [paper('p', 'Paper', [choiceItem('s1'), longItem('s2')], { pass: 1 })] },
   'mock-test-parts': { id: 'mock-test-parts', name: 'Parts test', style: 'trader', parts: [paper('p', 'Paper', [{ id: 'm1', difficulty: 3, skills: ['t-skill'], title: 'm1', parts: [{ question: 'Part one.', widget: choiceItem('x').widget }, { question: 'Part two.', widget: { kind: 'longform', prompt: 'Explain it.', model: 'The model.', rubric: longItem('y').rubric } }] }], { pass: 0.5 })] },
 };
@@ -248,6 +249,38 @@ const main = async () => {
     check('seen: a draw sat in another exam counts as seen', seen.own && seen.own.why === 'other' && seen.seen > 0, JSON.stringify(seen));
     check('seen: in its own exam it is a sitting', seen.self && seen.self.why === 'sat', JSON.stringify(seen));
     check('seen: the label names another exam', /another exam/.test(seen.label), seen.label);
+    /* ENGINE-BACKLOG 612: a mock of one-item papers lists them compactly */
+    const pt = await trackStart('exam/mock-test-prompts');
+    check('one-item papers: a summary line and no per-card "1 question"', /3 prompts, 7 minutes on the clocks/.test(pt) && !/1 question/.test(pt), pt.slice(0, 400));
+    /* ENGINE-BACKLOG 616: order with after rules grades any valid order */
+    const ord = await page.evaluate(() => {
+      const host = document.createElement('div'); document.body.append(host);
+      const w = ZQ.widgets.create(host, { kind: 'order', lines: ['a', 'b', 'c', 'd'].map(id => ({ id, text: id })), answer: ['a', 'b', 'c', 'd'], after: { d: ['b', 'c'] } }, {});
+      const g = (o) => { w.set(o); const r = w.grade(); return [r.ok, r.key]; };
+      const out = { fwd: g(['a', 'b', 'c', 'd']), swap: g(['a', 'c', 'b', 'd']), lead: g(['b', 'c', 'a', 'd']), early: g(['a', 'd', 'b', 'c']), same: g(['c', 'a', 'b', 'd']) };
+      host.remove(); return out;
+    });
+    check('order after: the model order and the swapped independent lines are right', ord.fwd[0] && ord.swap[0] && ord.lead[0] && ord.same[0], JSON.stringify(ord));
+    check('order after: a line before the lines it must follow is wrong and keyed by that line', !ord.early[0] && ord.early[1] === 'd', JSON.stringify(ord.early));
+    /* 7. ENGINE-BACKLOG 613: an aloud longform with think and lockAtZero */
+    const clk = await page.evaluate(async () => {
+      const host = document.createElement('div'); document.body.append(host);
+      const w = ZQ.widgets.create(host, { kind: 'longform', seconds: 2, think: 1, lockAtZero: true, model: 'm', rubric: [{ text: 'a', points: 1 }, { text: 'b', points: 1 }, { text: 'c', points: 1 }] }, { mode: 'exam' });
+      const q = (s) => host.querySelector(s), out = [];
+      out.push([q('[data-clock]').textContent, q('[data-clock-go]').textContent, q('[data-phase]').textContent]);
+      q('[data-clock-go]').click();
+      await new Promise(r => setTimeout(r, 1700));
+      out.push([q('[data-clock]').textContent, q('[data-phase]').textContent]);
+      await new Promise(r => setTimeout(r, 2600));
+      out.push([q('[data-clock]').textContent, q('[data-clock-go]').disabled, q('[data-clock-go]').textContent]);
+      const help = host.textContent;
+      w && w.destroy && w.destroy(); host.remove();
+      return { out, help };
+    });
+    check('aloud clock: starts on the thinking time', /^0?0:0?1$/.test(clk.out[0][0].replace(/^0+(?=\d:)/, '0')) && clk.out[0][1] === 'Start thinking' && clk.out[0][2] === 'Thinking time', JSON.stringify(clk.out[0]));
+    check('aloud clock: the answer clock starts by itself after the thinking time', clk.out[1][1] === 'Answer now', JSON.stringify(clk.out[1]));
+    check('aloud clock: lockAtZero stops it at zero and locks the button', /0:00$/.test(clk.out[2][0]) && clk.out[2][1] === true, JSON.stringify(clk.out[2]));
+    check('aloud clock: exam help line names the paper clock, no maths-in-dollars line', /paper clock ends the sitting/.test(clk.help) && !/Wrap maths/.test(clk.help), clk.help.slice(0, 200));
     check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
   } catch (e) {
     check('no exception', false, String(e && e.stack || e).split('\n').slice(0, 12).join(' | '));

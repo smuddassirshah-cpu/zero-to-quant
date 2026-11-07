@@ -73,6 +73,14 @@ num({ abs: 0.006 });
 say(!has(run().out, 'wrong-band', L), 'band 0.006 covers the rounding: no warning');
 sec((s) => { s.widget = { kind: 'numeric', answer: 15, tol: { abs: 0.005 }, wrong: [{ id: 'slip', value: 12.35, tol: { abs: 0 } }] }; s.question = 'What is the total, to 2 decimal places?'; s.feedback = { correct: 'Yes.', generic: 'Not quite.', byKey: { slip: 'You forgot the fee.' } }; });
 say(!has(run().out, 'wrong-band', L), 'wrong value already at 2 d.p.: no warning');
+/* ENGINE-BACKLOG 610: judged at the rounding the learner applies; 611: a signed zero */
+sec((s) => { s.widget = { kind: 'numeric', answer: 15, tol: { abs: 0.005 }, wrong: [{ id: 'slip', value: 12.3504, tol: { abs: 0.0005 } }] }; s.question = 'What is the total, to 2 decimal places?'; s.feedback = { correct: 'Yes.', generic: 'Not quite.', byKey: { slip: 'You forgot the fee.' } }; });
+say(!has(run().out, 'wrong-band', L), 'wrong 12.3504 band 0.0005: the rounded slip 12.35 is inside it, no warning (610)');
+sec((s) => { s.widget = { kind: 'numeric', answer: 15, tol: { abs: 0.005 }, wrong: [{ id: 'slip', value: 12.3449, tol: { abs: 0.003 } }] }; s.question = 'What is the total, to 2 decimal places?'; s.feedback = { correct: 'Yes.', generic: 'Not quite.', byKey: { slip: 'You forgot the fee.' } }; });
+say(has(run().out, 'wrong-band', L), 'wrong 12.3449 band 0.003: the rounded slip 12.34 is outside it, warns (610)');
+num({ abs: 0.006 }, { text: 'The change rounds to -0.00 here, and 5 - 0.00 is 5.' });
+r = run().out;
+say(has(r, 'float-artefact', L) && /"-0\.00"/.test(r), 'a signed zero -0.00: [float-artefact] warns (611)');
 num({ abs: 0.006 }, { text: 'Python shows 0.1 + 0.2 as 0.30000000000000004 and 1.9999999 here.' });
 say(has(run().out, 'float-artefact', L), 'explain with 0.30000000000000004: [float-artefact] warns');
 num({ abs: 0.006 }, { text: 'It costs $10,000$ in total, and $1,2$ is a pair.' });
@@ -82,6 +90,17 @@ num({ abs: 0.006 }, { text: 'It costs $10{,}000$ in total, and the point $(1,000
 say(!has(run().out, 'math-thousands-comma', L), '$10{,}000$ and a bracketed pair: no warning');
 num({ abs: 0.006 }, { text: 'Python shows `0.30000000000000004` for the sum.' });
 say(!has(run().out, 'float-artefact', L), 'artefact inside code: no warning');
+
+/* ENGINE-BACKLOG 616: order widget after rules */
+const ordw = (fn) => edit('lesson', (j) => fn(j.screens[7].widget));
+ordw((w) => { w.after = { add: ['sum', 'back'] }; });
+say(!/algo-think.*\.after/.test(run().out) && run().code === 0, 'order after rule the answer satisfies: no error (616)');
+ordw((w) => { w.after = { sum: ['add'] }; });
+r = run();
+say(r.code !== 0 && /breaks the after rule for "sum"/.test(r.out), 'order after rule the answer breaks: error (616)');
+ordw((w) => { w.after = { add: ['nope'] }; });
+say(run().code !== 0, 'order after rule naming an unknown line: error (616)');
+reset();
 
 /* float example without compare */
 const ex = (compare) => edit('code', (j) => { j.screens.forEach((s) => { const w = s.widget; if (w && w.kind === 'code' && Array.isArray(w.examples)) w.examples.forEach((e) => { if (compare) e.compare = compare; else delete e.compare; }); }); });

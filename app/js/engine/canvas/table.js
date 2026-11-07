@@ -53,7 +53,14 @@
       });
       tbody.append(tr);
     });
-    tbl.append(tbody); scroller.append(tbl); wrap.append(scroller, cap); host.append(wrap);
+    tbl.append(tbody); scroller.append(tbl);
+    /* ENGINE-BACKLOG 607: a table wider than its column scrolls sideways; a fade on the right edge says there is more */
+    const hold = document.createElement('div'); hold.className = 'cv-tbl-hold'; hold.append(scroller);
+    const moreCue = () => requestAnimationFrame(() => hold.classList.toggle('has-more', scroller.scrollWidth > scroller.clientWidth + 2 && scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 2));
+    scroller.addEventListener('scroll', moreCue, { passive: true });
+    wrap.append(hold, cap); host.append(wrap);
+    if (typeof ResizeObserver === 'function') new ResizeObserver(moreCue).observe(scroller);
+    moreCue();
     const fr = { wrap, caption: (t) => { cap.hidden = !t; cap.innerHTML = t ? inl(String(t)) : ''; } };
 
     const q = (sel) => Array.from(tbl.querySelectorAll(sel));
