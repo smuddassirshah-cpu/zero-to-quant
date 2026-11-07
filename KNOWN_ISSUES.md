@@ -12,7 +12,7 @@ Open at migration (27 Oct 2026)
 - `space` canvas: no 3D dragging of points or vectors yet, flat arrowheads, per-piece painter's order (large interpenetrating surfaces can sort wrongly); items 438 to 444.
 - Sandbox CPython lacks SciPy and SymPy; brief-writers installed them (SymPy system-wide, SciPy by `pip --target` in the scratchpad). The `pkgs` local CDN is rebuilt per session (a container restart keeps the scratchpad).
 
-- Item 449: a topic exam passed before new levels joined that topic (markov L5 in 1.5) hides those levels from Today; they stay on Learn. No full `--all` playthrough has run since item 449 (validator 0 errors, `--routes-only`, exam topic-0.1 and number-sense l1 green).
+- Item 449: a topic exam passed before new levels joined that topic (markov L5 in 1.5) hides those levels from Today; they stay on Learn. Full `--all` playthroughs have run since (session W close: four shards green at 9f922cb).
 - The 28 Oct breadth briefs name that session's scratchpad (`.../a8ff8d32-.../scratchpad/pkgs`, `pylib`); give agents the current session's paths. Brief numbers were checked with SciPy 1.18.1, but Pyodide ships SciPy 1.14.1: agents confirm `linprog` (HiGHS) and avoid `res.multipliers` and solver message text.
 
 Engine gotchas

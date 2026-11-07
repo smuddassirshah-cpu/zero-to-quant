@@ -1,15 +1,15 @@
-Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4mx7i` only; work detached at `origin/claude/amazing-wright-d4mx7i`, push `HEAD:claude/amazing-wright-d4mx7i`, rebase on divergence, never reset. Build the local CDN in the background first: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`. Launch long runs with `setsid nohup`.
+Read CLAUDE.md and follow its SESSION PROTOCOL. Branch `claude/amazing-wright-d4mx7i` only; work detached at `origin/claude/amazing-wright-d4mx7i`, push `HEAD:claude/amazing-wright-d4mx7i`, rebase on divergence, never reset. Build the local CDN in the background first: `bash app/tools/fetch-local-cdn.sh <scratchpad>/pkgs`. Launch long runs with `setsid nohup`; run playthrough shards in a separate worktree so merges can continue.
 
-Expected census: lessons 1,214 of 1,214; levels 279 of 279; reviews 279, own pass 279; exams 29 topic, 4 stage, 16 mock; drills 35 (oa 8); bank 200; hours 3,695, gap 0; readiness-sums OK; validator 0 errors.
+Expected census: lessons 1,214 of 1,214; levels 279 of 279; reviews 279, own pass 279; exams 29 topic, 4 stage, 16 mock; drills 35 (oa 8); bank 200; hours 3,695, gap 0; cross-course edges 261, none without why; readiness-sums OK; validator 0 errors.
 
-First, carried from session V: `--all --shard 3/4` and `4/4 --local-cdn`, then `--routes-only --local-cdn` desktop and mobile, at HEAD (shards 1 and 2 green at ca8e737; all `tools/test-*` green). One at a time.
+Session W closed Phase 2: every level and topic exam has a second read on record. Gates green at 9f922cb (four shards) and 8c8edc5 (routes, all `tools/test-*`).
 
-Second, a user bug: Today still shows a half-finished 0.1 lesson after topic-0.1 was passed. ENGINE-BACKLOG 461 skips a tested-out course unless the resume position was saved after the pass (`content.resumeStands`). Reproduce with Playwright (pass topic-0.1 with a lesson part-open, then reopen Today), find why it stands, and fix it so a pass always moves Today on unless the learner reopened that lesson from Learn. One engine agent.
+First, two small PLAN section 5 tasks: one Opus reader for the five fixer-written exam items (topic-1.1 `e-gen-once`, `e-assert-catch`; topic-1.2 `e-fixture-calls`; topic-0.2 `e-gap-table`; topic-0.3 `e-truss-angle`), then a Sonnet fixer; and the review-size count (AUTHORING section 11: 12 or more items for a level others require), reported before any authoring.
 
-Then Phase 2 of `docs/briefs/session-v-plan.md`: second reads and fix passes for the 61 levels in `docs/reports/unread-levels-session-v.txt`, in its order, then the nine unread topic exams. Briefs: `docs/briefs/second-read-reader-brief.md` (Opus, one course, up to three levels) and `second-read-fixer-brief.md` (Sonnet; basis or dispute per conceptual fix; tighten checks to new values). Pipeline, four slots: a fixer starts as soon as its review merges; split four-level courses by level pairs.
+Then Phase 3 of `docs/briefs/session-v-plan.md`: the 108 grandfathered performance tasks in `app/tools/perf-pending.json`, interview courses and Stages 2 and 3 first, one content agent per course (up to three levels), each task second-read; prune with `perf-pending.mjs --prune`. Check `origin/claude/fable-audit` first (conflict rule). Then Phase 4 (drill packs 1 to 8, bank part 2). One engine agent may number the session W inbox bullets (`docs/BACKLOG-INBOX.md`, "Raised later") beside the content work.
 
-Then Phase 3 (108 performance tasks), Phase 4 (drill packs 1 to 8, bank part 2).
+Merge with merge-wave; amend a merge only after it prints OK; a manifest-only conflict is resolved by regenerating with the validator (DECISIONS, session W).
 
-The Fable audit is paused (user, usage): trigger `trig_01FJuNVhosR68kSj3RhYkXrp` stays disabled; do not restart it.
+The Fable audit stays paused: trigger `trig_01FJuNVhosR68kSj3RhYkXrp` disabled.
 
-Acceptance: validator 0 errors; readiness-sums OK; all `tools/test-*` pass; four shards and routes green; state files; NEXT_PROMPT for session X.
+Acceptance: validator 0 errors; readiness-sums OK; all `tools/test-*` pass; four shards and routes green at the final HEAD; state files; NEXT_PROMPT for session Y.
