@@ -1646,3 +1646,5 @@ Raised later (systems level 4 perf):
 
 Raised later (pdes level 1 perf):
 - [Should] Playthrough: the 440 px `-marked` shot of a longform shows only the top of the model, so a clipped display equation lower down goes unseen. Here it was step 4 of `h-derive-lazy-walk`. A scratch render that compared each `.katex-display` scrollWidth with its clientWidth reported it as fitting (356 in 356); only a full-page screenshot showed the clipping. Wanted: a full-height `-marked` shot, and a check that compares the rendered `.katex-html` box with its card.
+Raised later (measure-prob level 3 perf):
+- [Could] `playthrough.mjs --set --shots` shoots a marked longform item (`-marked`) at viewport height only, so the display equations and rubric rows below the fold are never shot. The brief's 440 px "display equation scrolls sideways" check therefore needs a scratch render each time (measure-prob `h-build-integral` and `h-prove-urn`, as for ito `h-derive-ito`). Wanted: a full-height shot of the open model and rubric, plus a printed note for any `.katex-display` whose `scrollWidth` exceeds its width.
