@@ -142,10 +142,10 @@ E("l13", "screens[1].widget.wrong[0].value", 250 / 2000)
 E("l13", "screens[1].widget.wrong[1].value", 250 / 0.05)
 E("l13", "screens[2].explain.text", 2.5)
 lv.claim(240 / 80 == 3, "l13 s3 feedback: 240 km at 80 km/h is 3 hours")
-p, c, Fx = 8.50, 5.50, 1200
+p, c, Fx = 9.50, 5.50, 1200
 E("l13", "screens[4].widget.answer", Fx / (p - c))
-lv.claim(round(Fx / (p - c)) == 400 and 400 * (p - c) - Fx == 0, "l13 s4: break-even 400 (two ways)")
-for q, prof in ((100, -900), (200, -600), (500, 300)):
+lv.claim(round(Fx / (p - c)) == 300 and 300 * (p - c) - Fx == 0, "l13 s4: break-even 300 (two ways)")
+for q, prof in ((100, -800), (200, -400), (500, 800)):
     lv.claim(q * (p - c) - Fx == prof, f"l13 s4 table: {q} mugs give {prof}")
     E("l13", "screens[4].canvas.params.rows", prof)
 E("l13", "screens[4].widget.wrong[0].value", round(Fx / p, 2))
@@ -153,7 +153,7 @@ E("l13", "screens[4].widget.wrong[1].value", round(Fx / c, 2))
 E("l13", "screens[4].widget.wrong[2].value", round(Fx / (p + c), 2))
 # finding 21: l9 screens[6] already found 1200 / (3.40 - 0.40) = 400
 l9 = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'content', 'courses', 'equations', 'l9-story-to-equation.json')))
-lv.claim('1,200.00' in l9['screens'][6]['prose'] and round(1200 / (3.40 - 0.40)) == 400, "l13 s4 repeats l9 s6: both 1200 / 3 = 400")
+lv.claim('1,200.00' in l9['screens'][7]['prose'] and round(1200 / (3.40 - 0.40)) == 400 and round(Fx / (p - c)) != 400, "l13 s4 differs from l9 s7: 300 against 400")
 # proposed l13 s4 numbers: p = 9.50
 p2 = 9.50
 lv.claim(Fx / (p2 - c) == 300 and [q * (p2 - c) - Fx for q in (100, 200, 500)] == [-800, -400, 800], "proposed l13 s4: 300 mugs; table -800, -400, 800")
@@ -183,7 +183,6 @@ lv.claim(all(abs(F(Fv) / q + cv - pv) == 0 for Fv, q, cv, pv in ((1200, 400, F('
 lv.claim(all((6 - 2 * x > 14) == (x < -4) for x in range(-30, 30)), "review-3 [1]: 6 - 2x > 14 is x < -4")
 E("review", "items[1].widget.options[2].text", F(20, -2))
 lv.claim(6 + 10 == 16 and 16 > 14 and not (6 > 14), "review-3 [1]: checks at -5 and 0")
-lv.claim(150 / 50 == 3, "review-3 [2]: 150 km at 50 km/h is 3 hours")
 lv.claim(ints(-1, 3, True, False) == [-1, 0, 1, 2] and all((-2 <= 3 * x + 1 < 10) == (-1 <= x < 3) for x in range(-20, 20)), "review-3 [3]: four integers")
 E("review", "items[3].widget.wrong[0].value", len(ints(-1, 3, True, True)))
 E("review", "items[3].widget.wrong[1].value", len(ints(-1, 3, False, False)))
@@ -191,7 +190,8 @@ lv.claim(F('45.60') / F('0.95') == 48 and 48 * F('0.05') == F('2.40'), "review-3
 E("review", "items[5].widget.wrong[0].value", float(F('45.60') * F('1.05')))
 E("review", "items[5].widget.wrong[1].value", float(F('45.60') * F('0.95')))
 lv.claim(all((-500 <= -150 + n <= 500) == (-350 <= n <= 650) for n in range(-1000, 1000)), "review-3 [6]: -350 <= n <= 650")
-E("review", "items[6].widget.wrong[1].value", 500 - 150)
+E("review", "items[6].widget.wrong[0].value", F(-8, -4))
+E("review", "items[6].widget.wrong[1].value", F(-8, 4))
 lv.claim(min(q for q in range(1000) if 8 * q - 2000 > 0) == 251 and 8 * 250 - 2000 == 0, "review-3 [7]: 251; 250 breaks even")
 # proposed replacements for review-3 items 2, 4, 6 (finding 25)
 lv.claim(F(20 - 2 * 6, 2) == 4 and 2 * (6 + 4) == 20 and F(20, 2) + 6 == 16 and 20 - 2 * 6 == 8 and F(20, 2) - 2 * 6 == -2, "proposed review-3 [2]: P = 20, l = 6 gives w = 4; slips give 16, 8, -2")
@@ -218,6 +218,11 @@ lv.claim(max(x for x in range(-30, 30) if F(2 * x - 1, 3) < F(x + 4, 2)) == 13, 
 lv.claim(all((40 * (75 - p) >= -400) == (p <= 85) for p in range(0, 200)), "homework-3 [7]: p <= 85")
 lv.claim(40 * (75 - 80) == -200 and 40 * (75 - 90) == -600 and 75 + F(400, 40) == 85, "homework-3 [7] model checks and L = 400")
 lv.claim(sum(r['points'] for r in json.loads(json.dumps(lv.files['homework-3']['items'][7]['rubric']))) == 10, "homework-3 [7] rubric sums to 10")
+
+# fix pass: new numbers written in the fixes
+lv.claim(F(4200, 450) == F(28, 3) and 9 * 3 + 1 == 28 and 5000 - 450 * 9 == 950, "l12 s8 fix: 4200/450 = 9 1/3; 9 contracts leave 950")
+lv.claim(len(ints(-1, 4, False, True)) == 5 and len(ints(-1, 3, True, False)) == 4, "l12 s4 fix: five whole numbers 0 to 4; review-3 [3] four integers")
+lv.claim(F(-2) * F(-2) == 4 and F(-2) / F(-2) == 1 and F(-2) * 2 == -4, "l11 s6 fixes: -2 x -2 = 4; -2 / -2 = 1; -2 x 2 = -4")
 
 lv.check_wrongs()
 lv.report()
