@@ -142,14 +142,29 @@ K(f, 'items[5].widget', 3.20 + 0.40 * sin(7 * pi / 6)); W(f, 'items[5].widget', 
 T(f, 'items[5].feedback.byKey.degrees', round(7 * pi / 6, 2))
 lv.claim(all(sin(pi * m / 6) < 0 for m in (6.5, 8, 10, 11.5)), 'homework-2 i5: below average from month 6 to 12')
 K(f, 'items[6].widget', 2 * pi * 3 / 20, 4); W(f, 'items[6].widget', 'days', 3); W(f, 'items[6].widget', 'degrees', 360 * 3 / 20); W(f, 'items[6].widget', 'no-2pi', 0.15)
-K(f, 'items[7].widget', 10000 * (C(200) - C(30)), 2); W(f, 'items[7].widget', 'no-sign', 10000 * (-C(200) - C(30)), 0)   # 736.68 from the rounded positions; tol 1 covers 736.67
-W(f, 'items[7].widget', 'sine', 10000 * (S(200) - S(30)), 1); W(f, 'items[7].widget', 'reversed', 10000 * (C(30) - C(200)))
-T(f, 'items[7].explain.text', round(10000 * C(30), 2)); T(f, 'items[7].explain.text', round(10000 * C(200), 2))
+K(f, 'items[7].widget', 10 * (C(200) - C(30)), 2); W(f, 'items[7].widget', 'no-sign', 10 * (-C(200) - C(30)), 2)
+W(f, 'items[7].widget', 'sine', 10 * (S(200) - S(30)), 2); W(f, 'items[7].widget', 'reversed', 10 * (C(30) - C(200)), 2)
+T(f, 'items[7].explain.text', round(10 * C(30), 2)); T(f, 'items[7].explain.text', round(10 * C(200), 2)); T(f, 'items[7].explain.text', round(10 * (C(200) - C(30)), 2))
+lv.claim(isclose(10 * cos(radians(200)) - 10 * cos(radians(30)), -18.05718, abs_tol=1e-5) and isclose((10 * (C(200) - C(30))), 10 * (-2 * sin(radians(115)) * sin(radians(85)))), 'homework-2 i7: change in east coordinate by the sum-to-product form (method 2)')
 K(f, 'items[8].widget', 4 - 3); W(f, 'items[8].widget', 'peak-month', 4); W(f, 'items[8].widget', 'sign', 4 + 3)
 lv.claim(max(range(12), key=lambda m: sin(pi * (m - 1) / 6)) == 4 and min(range(12), key=lambda m: sin(pi * (m - 1) / 6)) == 10, 'homework-2 i8: peak 4, trough 10 (method 2)')
 R = lambda m: 60000 + 24000 * sin(pi * (m - 2) / 6)
 lv.claim(round(R(5)) == 84000 and round(R(11)) == 36000 and round(R(3)) == 72000, 'homework-2 i9: model hits 84,000, 36,000 and 72,000')
 T(f, 'items[9].model', 72000); T(f, 'items[9].model', round(pi / 6, 4))
+
+# ---------- fix pass (second-reader findings): numbers in new or reworded text ----------
+f = 'l7'
+lv.claim(round(2 * pi, 2) == 6.28 and round(pi, 5) == 3.14159 and round(pi / 2, 2) == 1.57, 'l7 s0: circumference 2 pi r, pi = 3.14159, 2 pi = 6.28, pi/2 = 1.57')
+T(f, 'screens[3].feedback.byKey.quarter', 1.57)
+f = 'l6'
+lv.claim(round(C(135), 4) == -0.7071, 'l6 s10: cos 135 = -0.7071')
+T(f, 'screens[10].feedback.byKey.degrees', -0.7071)
+lv.claim(isclose(S(0), 0, abs_tol=1e-12) and isclose(C(0), 1) and isclose(S(90), 1) and isclose(C(90), 0, abs_tol=1e-12) and isclose(C(180), -1) and isclose(S(270), -1), 'l6 summary: axis values')
+f = 'l9'
+lv.claim(all(isclose(sin(2 * pi / b * b), 0, abs_tol=1e-9) for b in (0.5, 2, 3)), 'l9 s8: x = 2 pi / b closes one wave (bx = 2 pi)')
+f = 'homework'
+T(f, 'items[7].explain.text', round(10 * C(30), 2)); T(f, 'items[7].explain.text', -18.06)
+lv.claim(round(degrees(2.5), 1) == 143.2, 'homework-2 i1: 2.5 rad = 143.2 degrees')
 
 lv.check_wrongs()
 lv.report()
