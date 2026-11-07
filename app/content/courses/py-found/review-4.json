@@ -95,7 +95,7 @@
           {
             "id": "text",
             "text": "`2026-03-02`",
-            "why": "That would be the answer comparing the closes as text, where `'9'` beats `'1'`. The key converts with `float` first."
+            "why": "That row has the lowest close, £98.40. `max` keeps the row whose key is largest."
           },
           {
             "id": "price",
@@ -105,7 +105,7 @@
           {
             "id": "last",
             "text": "`2026-03-04`",
-            "why": "That is the latest date. The key compares closes, not dates."
+            "why": "That is what comparing the text picks: `'99.90'` beats `'101.75'`, as `'9'` beats `'1'`. The key converts with `float` first."
           }
         ]
       },
@@ -257,35 +257,36 @@
         "pf-functions",
         "pf-modules"
       ],
-      "prose": "A new strategy has two daily returns: 2% and 0%.",
+      "prose": "A new strategy has two daily returns: 3% and 0%.",
       "question": "What is its annualised volatility, using `statistics.stdev` and $\\sqrt{252}$?",
       "widget": {
         "kind": "numeric",
-        "answer": 0.2245,
+        "answer": 0.3367,
         "tol": {
           "abs": 0.0005
         },
         "unit": "%",
+        "over100": true,
         "label": "Annualised volatility",
-        "accept": "22.45%: sample sd $\\sqrt{0.0002} \\approx 0.01414$, times $\\sqrt{252}$.",
+        "accept": "33.67%: sample sd $\\sqrt{0.00045} \\approx 0.02121$, times $\\sqrt{252}$.",
         "wrong": [
           {
             "id": "pop",
-            "value": 0.1587,
+            "value": 0.2381,
             "tol": {
               "abs": 0.0005
             }
           },
           {
             "id": "daily",
-            "value": 0.0141,
+            "value": 0.0212,
             "tol": {
               "abs": 0.0001
             }
           },
           {
             "id": "x252",
-            "value": 3.564,
+            "value": 5.346,
             "tol": {
               "abs": 0.005
             }
@@ -293,7 +294,7 @@
         ]
       },
       "feedback": {
-        "correct": "Mean 1%, squared distances 0.0002 over $n - 1 = 1$, root 0.01414, times 15.87.",
+        "correct": "Mean 1.5%, squared distances 0.00045 over $n - 1 = 1$, root 0.02121, times 15.87.",
         "generic": "Not quite right. Work out the sample standard deviation first, then scale.",
         "byKey": {
           "pop": "You divided by $n = 2$, which is `pstdev`. With a sample, divide by $n - 1$.",
@@ -302,7 +303,7 @@
         }
       },
       "explain": {
-        "text": "The mean is 0.01 and each return is 0.01 away, so the squared distances add to 0.0002. Over $n - 1 = 1$ that gives a daily sd of $\\sqrt{0.0002} \\approx 0.01414$. Times $\\sqrt{252} \\approx 15.87$ is about 22.45%."
+        "text": "The mean is 0.015 and each return is 0.015 away, so the squared distances add to 0.00045. Over $n - 1 = 1$ that gives a daily sd of $\\sqrt{0.00045} \\approx 0.02121$. Times $\\sqrt{252} \\approx 15.87$ is about 33.67%."
       }
     },
     {
@@ -482,12 +483,12 @@
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import csv\nimport io\n\nCSV = \"\"\"Date,Close\n2026-03-04,99.90\n2026-03-02,98.40\n2026-03-03,101.75\n\"\"\"\n\ndef best_day(csv_text):\n    rows = csv.DictReader(io.StringIO(csv_text))\n    pass  # replace this line\n\nprint(best_day(CSV))\n",
-        "solution": "import csv\nimport io\n\nCSV = \"\"\"Date,Close\n2026-03-04,99.90\n2026-03-02,98.40\n2026-03-03,101.75\n\"\"\"\n\ndef best_day(csv_text):\n    rows = csv.DictReader(io.StringIO(csv_text))\n    return max(rows, key=lambda row: float(row[\"Close\"]))[\"Date\"]\n\nprint(best_day(CSV))\n",
+        "starter": "import csv\nimport io\n\nCSV = \"\"\"Date,Close\n2026-05-14,98.60\n2026-05-12,102.30\n2026-05-13,99.75\n2026-05-11,101.10\n\"\"\"\n\ndef best_day(csv_text):\n    rows = csv.DictReader(io.StringIO(csv_text))\n    pass  # replace this line\n\nprint(best_day(CSV))\n",
+        "solution": "import csv\nimport io\n\nCSV = \"\"\"Date,Close\n2026-05-14,98.60\n2026-05-12,102.30\n2026-05-13,99.75\n2026-05-11,101.10\n\"\"\"\n\ndef best_day(csv_text):\n    rows = csv.DictReader(io.StringIO(csv_text))\n    return max(rows, key=lambda row: float(row[\"Close\"]))[\"Date\"]\n\nprint(best_day(CSV))\n",
         "tests": [
           {
-            "call": "best_day(\"Date,Close\\n2026-03-04,99.90\\n2026-03-02,98.40\\n2026-03-03,101.75\\n\")",
-            "expect": "'2026-03-03'",
+            "call": "best_day(\"Date,Close\\n2026-05-14,98.60\\n2026-05-12,102.30\\n2026-05-13,99.75\\n2026-05-11,101.10\\n\")",
+            "expect": "'2026-05-12'",
             "compare": "equal"
           },
           {
@@ -505,7 +506,7 @@
         "examples": [
           {
             "call": "best_day(CSV)",
-            "expect": "'2026-03-03'",
+            "expect": "'2026-05-12'",
             "compare": "equal"
           }
         ]
@@ -514,11 +515,11 @@
         "correct": "The key compares the closes as numbers and `max` returns the row.",
         "generic": "Not quite right. Look at the first test that failed.",
         "byKey": {
-          "test-1": "Test 1 expects `'2026-03-03'`. Getting `'2026-03-04'` means you compared the closes as text, where `'99.90'` beats `'101.75'`."
+          "test-1": "Test 1 expects `'2026-05-12'`. Getting `'2026-05-13'` means you compared the closes as text, where `'99.75'` beats `'102.30'`."
         }
       },
       "explain": {
-        "text": "`max(rows, key=lambda row: float(row[\"Close\"]))` returns the whole row with the highest close, and `[\"Date\"]` picks its date. Comparing the text instead would pick `'99.90'` over `'101.75'`, because `'9'` beats `'1'`."
+        "text": "`max(rows, key=lambda row: float(row[\"Close\"]))` returns the whole row with the highest close, and `[\"Date\"]` picks its date. Comparing the text instead would pick `'99.75'` over `'102.30'`, because `'9'` beats `'1'`."
       }
     }
   ]

@@ -46,8 +46,10 @@ E("l9", "screens[2].widget.tests[5].expect", math.log(2))
 E("l9", "screens[2].widget.tests[1].expect", round(240 / 250 - 1, 10))
 # "A log return always sits a little below the simple one": false at an unchanged price (both 0, the screen's own test 5)
 # and not "a little" for test 6 (0.693 against 1.0)
-lv.stated("l9", "screens[2].explain.text", "always sits a little below",
-          all(math.log(b / a) < b / a - 1 and (b / a - 1) - math.log(b / a) < 0.01 for a, b in [(100, 105), (100, 100), (50, 100)]))
+# the true statement: ln(1 + r) <= r, equal only at r = 0 (fix: "never above ... match only when the price is unchanged")
+lv.claim(all(math.log(b / a) <= b / a - 1 for a, b in [(100, 105), (100, 100), (50, 100), (100, 50)]) and math.log(1.0) == 0.0 and math.log(1.05) < 0.05,
+         "l9 log return never above the simple one, equal only at r = 0")
+lv.claim("never above the simple one" in lv.text("l9", "screens[2].explain.text") and "always sits" not in lv.text("l9", "screens[2].explain.text"), "l9 screens[2] explain carries the corrected sentence")
 lv.claim(raises(lambda: run('def simple_return(p0: float, p1: float) -> float:\n    return p1 / p0 - 1\nsimple_return("100", "105")'))
          == "TypeError: unsupported operand type(s) for /: 'str' and 'str'", "l9 screens[3] TypeError text")
 E("l9", "screens[4].widget.options[0].text", round(lr, 4))
@@ -60,7 +62,8 @@ s6b = math.sqrt(sum((x - m6) ** 2 for x in c6) / 5)
 lv.claim(abs(s6 - s6b) < 1e-12, "l9 stdev two ways")
 E("l9", "screens[6].explain.text", m6)
 t6 = lv.text("l9", "screens[6].explain.text")
-lv.claim(f"{s6:.3f}" in t6 or f"{s6:.2f}" in t6, f"l9 screens[6] states the sample sd {s6:.3f} (or {s6:.2f})")
+lv.claim(f"£{s6:.2f}" in t6 and f"£{m6:.2f}" in t6 and "£101.500" not in t6 and "1.265" not in t6, f"l9 screens[6] states £{m6:.2f} and £{s6:.2f}, two places")
+lv.claim("£100.975" not in lv.text("l9", "screens[5].explain.text") and "100.975" in lv.text("l9", "screens[5].explain.text"), "l9 screens[5] no three-place money")
 for v in (round(m6 - 2 * s6, 2), round(m6 + 2 * s6, 2)):
     E("l9", "screens[6].widget.tests[0].expect", v)
     E("l9", "screens[6].feedback.correct", v)
@@ -101,9 +104,12 @@ text = "date,close\n2024-03-11,101.20\n2024-03-12,102.50\n2024-03-13,99.80\n2024
 rows = list(csv.DictReader(text.splitlines()))
 lv.claim(rows[2]["close"] == "99.80" and rows[0] == {'date': '2024-03-11', 'close': '101.20'}, "l10 rows[2] and rows[0]")
 # byKey r3c1 says "You counted from 1"; counting from 1 makes rows[2] the second day (r1c1), not the fourth (r3c1)
-lv.stated("l10", "screens[0].feedback.byKey.r3c1", "You counted from 1", rows[2 - 1]["date"] == "2024-03-14")
+lv.claim(rows[3]["date"] == "2024-03-14" and rows[2]["date"] == "2024-03-13", "l10 rows[3] is 14 March, rows[2] is 13 March")
+E("l10", "screens[0].feedback.byKey.r3c1", "`rows[3]`, the fourth day")
+E("l10", "screens[0].feedback.byKey.r3c1", "13 March")
 # hint "every value is the text from the file, quotes and all": csv strips the quotes of a quoted field
-lv.stated("l10", "screens[1].hints[2].text", "quotes and all", list(csv.DictReader(['date,close', '2024-03-11,"101.20"']))[0]['close'] == '"101.20"')
+lv.claim(list(csv.DictReader(['date,close', '2024-03-11,"101.20"']))[0]['close'] == '101.20', "l10 csv strips the quotes, keeps the trailing zero")
+E("l10", "screens[1].hints[2].text", "trailing zero and all")
 lv.claim(raises(lambda: [r["close"] for r in csv.DictReader("date, close\n2024-03-11, 101.20".splitlines())]) == "KeyError: 'close'", "l10 screens[3] KeyError")
 lv.claim([r["close"] for r in csv.DictReader("date, close\n2024-03-11, 101.20".splitlines(), skipinitialspace=True)] == ['101.20'], "l10 skipinitialspace")
 lv.claim(max(r["close"] for r in rows) == "99.80" and max(float(r["close"]) for r in rows) == 102.5, "l10 screens[4] text max and float max")
@@ -137,9 +143,13 @@ lv.claim(int(" 40 ") == 40 and raises(lambda: int("2.5")).startswith("ValueError
 lv.claim(raises(lambda: run('def clean(raw):\n    out = []\n    for p in raw:\n        try:\n            out.append(flaot(p))\n        except ValueError:\n            pass\n    return out\nclean(["1"])')) == "NameError: name 'flaot' is not defined", "l11 screens[6] NameError with except ValueError")
 lv.claim(raises(lambda: run('def clean(raw):\n    out = []\n    for p in raw:\n        try:\n            out.append(flaot(p))\n        except ValueError:\n            pass\n    return out\nclean(["1"])')) is not None, "l11 screens[6] traceback names line 5")
 lv.claim(raises(lambda: int("12.5")) == "ValueError: invalid literal for int() with base 10: '12.5'", "l11 quiz[0] message")
-q2 = f"{None} {102.50 / 100.00 - 1}"
-lv.stated("l11", "quiz[2].widget.options[0].text", "None 0.025", q2 == "None 0.025")   # prints None 0.02499999999999991
-lv.claim(abs(float(Fraction("102.50") / Fraction("100.00") - 1) - 0.025) < 1e-15, "l11 quiz[2] explain: the exact value is 0.025 (only the printed float differs)")
+q2 = f"{None} {125.00 / 100.00 - 1}"
+lv.claim(q2 == "None 0.25" and float(Fraction("125.00") / Fraction("100.00") - 1) == 0.25, "l11 quiz[2] prints exactly None 0.25 (125.00 / 100.00 - 1 is exact in binary)")
+E("l11", "quiz[2].widget.options[0].text", "None 0.25")
+E("l11", "quiz[2].widget.options[3].text", "0 0.25")
+E("l11", "quiz[2].feedback.correct", 0.25)
+E("l11", "quiz[2].explain.text", 0.25)
+lv.claim("0.025" not in lv.text("l11", "quiz[2].prose") + lv.text("l11", "quiz[2].explain.text") and "125.00" in lv.text("l11", "quiz[2].prose"), "l11 quiz[2] old inexact pair gone")
 E("l11", "screens[8].widget.tests[0].expect", 3)
 
 # ---------------- l12 ----------------
@@ -165,7 +175,22 @@ ns, _ = run('class Order:\n    tags = []\n    def __init__(self, tag):\n        
 lv.claim(ns['first'].tags == ['urgent', 'small'], "l12 quiz[2] shared list")
 
 # ---------------- review-3 ----------------
-lv.claim(raises(lambda: run('from math import sqrt\nprint(math.sqrt(2.25))')) == "NameError: name 'math' is not defined", "review-3 items[0]")
+lv.claim(run('import math\nfrom math import sqrt\nprint(math.sqrt(2.25) == sqrt(2.25))')[1] == "True\n" and math.sqrt(2.25) == 1.5, "review-3 items[0] prints True")
+lv.claim(raises(lambda: run('import math\nprint(sqrt(2.25))')) == "NameError: name 'sqrt' is not defined", "review-3 items[0] option c: import math alone leaves sqrt undefined")
+lv.claim(raises(lambda: run('from math import sqrt\nprint(math.sqrt(2.25))')) == "NameError: name 'math' is not defined", "review-3 items[0] option b: from-import alone leaves math undefined")
+E("review", "items[0].explain.text", 1.5)
+# review-3 items[6]: price_of catches only KeyError
+def price_of(prices, ticker):
+    try:
+        return prices[ticker]
+    except KeyError:
+        return None
+pp = {"VOD": 0.72, "AZN": 104.20}
+lv.claim(price_of(pp, "AZN") == 104.2 and price_of(pp, "BARC") is None and price_of({}, "VOD") is None, "review-3 items[6] price_of three cases")
+lv.claim((raises(lambda: price_of({"VOD": 0.72}, ["VOD"])) or "").startswith("TypeError: unhashable type: 'list'") and raises(lambda: {}.get(["VOD"])) is not None, "review-3 items[6] a list key raises TypeError")
+lv.claim("safe_return" not in json.dumps(lv.files["review-3"]["items"][6]), "review-3 items[6] no longer repeats l11 quiz[2]")
+# review-3 items[7]: only the clashing names hide a module
+lv.claim(lv.text("review", "items[7].widget.options[0].text") == "`read_prices.py`" and "read_prices" not in ("csv", "random"), "review-3 items[7] key read_prices.py clashes with neither csv nor random")
 lv.claim(raises(lambda: sum(x for x in ["101.20"])) == "TypeError: unsupported operand type(s) for +: 'int' and 'str'", "review-3 items[1] message")
 cl = ['101.20', '99.80', '100.40', '98.75', '102.50']
 E("review", "items[3].widget.answer", sum(1 for c in cl if c > "100"))
@@ -221,8 +246,10 @@ code = lv.text("homework", "items[7].prompt").split("```python\n")[1].split("```
 line = {k: next(i for i, l in enumerate(code, 1) if k in l) for k in ("history = []", "out.append(Position", "except:", "return max(")}
 model = lv.text("homework", "items[7].model")
 lv.claim(f"(line {line['history = []']})" in model, f"homework-3 model cites history on line {line['history = []']}")
-for k, old in (("out.append(Position", 18), ("except:", 19), ("return max(", 24)):
-    lv.stated("homework", "items[7].model", f"(line {old})", line[k] == old)
+for k, new in (("out.append(Position", 21), ("except:", 22), ("return max(", 28)):
+    lv.claim(line[k] == new and f"(line {new})" in model, f"homework-3 model cites {k!r} on line {new}")
+for old in (18, 19, 24):
+    lv.claim(f"(line {old})" not in model, f"homework-3 model no longer says line {old}")
 lv.claim(raises(lambda: '150' * 27.00) == "TypeError: can't multiply sequence by non-int of type 'float'", "homework-3 model TypeError text")
 lv.claim("99.80" > "104.20", "homework-3 model text compare")
 

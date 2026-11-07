@@ -172,16 +172,30 @@ for x in (tr, vol, md):
 E("l16", "screens[9].widget.tests[5].expect", 95.0 / 100.0 - 1)
 E("l16", "quiz[1].widget.options[3].text", 104.0 / 100.0 - 1)
 lv.claim(f"[{-0.0532:>8.2%}]" == "[  -5.32%]", "l16 quiz[2]")
+lv.claim(f"{'Worst day':<14}{-0.0532:>8.2%}" == 'Worst day       -5.32%' and len(f"{'Worst day':<14}{-0.0532:>8.2%}") == 22, "l16 screens[6] worst-day row is 22 characters")
+E("l16", "screens[6].widget.tests[1].expect", "Worst day       -5.32%")
+lv.claim("Max drawdown" not in json.dumps(lv.files['l16-returns-from-a-file']['screens'][6]), "l16 screens[6] drawdown is not shown with a minus sign")
 E("l16", "quiz[3].widget.answer", round(1.10 * 0.90 - 1, 6))
 # screens[5]: the import stops at `path = sys.argv[1]`, so print_summary(path) never runs; the explain canvas marks it "yes"
-lv.stated("l16", "screens[5].explain.canvas.values.r2c1", "yes", False)
+E("l16", "screens[5].explain.canvas.values.r2c1", "never reached")
+lv.claim(lv.text("l16", "screens[5].explain.canvas.values.r2c1") == "never reached", "l16 screens[5] r2c1 is exactly 'never reached'")
 
 # ---------------- review-4 ----------------
 g3 = running_peak([5.0, 3.0, 8.0]); next(g3)
 lv.claim(list(g3) == [5.0, 8.0], "review-4 items[0]")
 tab = [{"Date": "2026-03-02", "Close": "98.40"}, {"Date": "2026-03-03", "Close": "101.75"}, {"Date": "2026-03-04", "Close": "99.90"}]
 lv.claim(max(tab, key=lambda x: float(x["Close"]))["Date"] == "2026-03-03", "review-4 items[1] key")
-lv.stated("review", "items[1].widget.options[1].why", "comparing the closes as text", max(tab, key=lambda x: x["Close"])["Date"] == "2026-03-02")
+lv.claim(max(tab, key=lambda x: x["Close"])["Date"] == "2026-03-04" and min(tab, key=lambda x: float(x["Close"]))["Date"] == "2026-03-02", "review-4 items[1] text max is 4 March, lowest close is 2 March")
+E("review", "items[1].widget.options[1].why", "lowest close, £98.40")
+E("review", "items[1].widget.options[3].why", "That is what comparing the text picks")
+# review-4 items[9]: new table, float max 12 May, text max 13 May
+t9 = [("2026-05-14", "98.60"), ("2026-05-12", "102.30"), ("2026-05-13", "99.75"), ("2026-05-11", "101.10")]
+lv.claim(max(t9, key=lambda r: float(r[1]))[0] == "2026-05-12" and max(t9, key=lambda r: r[1])[0] == "2026-05-13", "review-4 items[9] float max 12 May, text max 13 May")
+lv.claim(all(f"{d},{c}" in lv.text("review", "items[9].widget.solution") for d, c in t9) and "2026-03" not in lv.text("review", "items[9].widget.solution"), "review-4 items[9] solution carries the new table")
+E("review", "items[9].widget.tests[0].expect", "2026-05-12")
+E("review", "items[9].feedback.byKey.test-1", "'99.75'")
+E("review", "items[9].feedback.byKey.test-1", "'102.30'")
+E("review", "items[9].explain.text", "'99.75'")
 pv = [200, 220, 187, 230, 207]
 lv.claim(max(dd(pv)) == mdd_brute(pv) == 0.15, "review-4 items[2] two ways")
 E("review", "items[2].widget.wrong[0].value", round((230 - 187) / 230, 3))
@@ -195,6 +209,14 @@ E("review", "items[4].widget.answer", round(statistics.stdev(two) * S252, 4))
 E("review", "items[4].widget.wrong[0].value", round(statistics.pstdev(two) * S252, 4))
 E("review", "items[4].widget.wrong[1].value", round(statistics.stdev(two), 4))
 E("review", "items[4].widget.wrong[2].value", round(statistics.stdev(two) * 252, 3))
+lv.claim(two == [0.03, 0.0], "review-4 items[4] returns are 3% and 0%")
+lv.claim(abs(statistics.stdev(two) - math.sqrt(2 * 0.015 ** 2)) < 1e-15 and round(statistics.stdev(two), 5) == 0.02121, "review-4 items[4] sample sd 0.02121 two ways")
+E("review", "items[4].explain.text", round(statistics.stdev(two), 5))
+E("review", "items[4].explain.text", 0.00045)
+E("review", "items[4].explain.text", round(statistics.stdev(two) * S252 * 100, 2))
+E("review", "items[4].feedback.correct", 0.00045)
+E("review", "items[4].feedback.correct", round(S252, 2))
+lv.claim(round(statistics.stdev(two) * S252, 4) == 0.3367 and round(statistics.pstdev(two) * S252, 4) == 0.2381 and round(statistics.stdev(two) * 252, 3) == 5.346, "review-4 items[4] answer 0.3367, slips 0.2381 and 5.346")
 lv.claim(sorted(["05/01/2026", "31/12/2025", "02/01/2026"], key=to_date)[0] == "31/12/2025" and sorted(["05/01/2026", "31/12/2025", "02/01/2026"])[0] == "02/01/2026", "review-4 items[5]")
 tot = 1.05 * 0.95 * 1.05
 lv.claim(abs(tot - float(Fraction(105, 100) * Fraction(95, 100) * Fraction(105, 100))) < 1e-15, "review-4 items[8] two ways")
