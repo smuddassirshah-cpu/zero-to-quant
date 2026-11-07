@@ -169,7 +169,7 @@
         "options": [
           {
             "id": "right",
-            "text": "prices.csv, trades.csv and notes.txt are deleted; charts survives; rm complains about .csv",
+            "text": "All three files go; charts survives; rm reports .csv missing",
             "correct": true
           },
           {
@@ -203,12 +203,12 @@
       "skills": [
         "tm-shell"
       ],
-      "prose": "`wc -l` does not really count lines. It counts newline characters, the invisible end-of-line marks, written `\"\\n\"` in Python. A last line with no newline after it is not counted. Finish the function so it gives the same number as `wc -l`.",
+      "prose": "`wc -l` does not really count lines. It counts newline characters, the invisible end-of-line marks, written `\"\\n\"` in Python. A last line with no newline after it is not counted. In Python, `text.count(x)` counts how many times `x` appears in `text`. Finish the function so it gives the same number as `wc -l`.",
       "question": "Complete `wc_l(text)`.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "def wc_l(text):\n    count = 0\n    for ch in text:\n        # add 1 to count when ch is a newline, \"\\n\"\n        pass\n    return count\n",
+        "starter": "def wc_l(text):\n    # text.count(x) counts how many times x appears in text.\n    # Change what is inside the quotes so that it counts newlines.\n    return text.count(\"\")\n",
         "examples": [
           {
             "call": "wc_l(\"date,close\\n2024-03-01,179.66\\n\")",
@@ -249,7 +249,7 @@
             "expect": "2516"
           }
         ],
-        "solution": "def wc_l(text):\n    count = 0\n    for ch in text:\n        if ch == \"\\n\":\n            count += 1\n    return count\n",
+        "solution": "def wc_l(text):\n    return text.count(\"\\n\")\n",
         "how": "Check runs 7 hidden tests, including an empty file and a last line with no newline. Each result must equal the expected whole number."
       },
       "feedback": {
@@ -257,7 +257,7 @@
         "generic": "Not quite right. Count only the newline characters."
       },
       "explain": {
-        "text": "Inside the loop, `if ch == \"\\n\": count += 1` adds one per newline. A file whose last line lacks a newline gets one fewer than you might expect. `text.count(\"\\n\")` does the same in one step."
+        "text": "`text.count(\"\\n\")` adds one per newline character. A file whose last line lacks a newline gets one fewer than you might expect. Most editors add a final newline, so this rarely bites."
       }
     },
     {
@@ -266,7 +266,7 @@
       "skills": [
         "tm-shell"
       ],
-      "prose": "The manual for wc includes these lines:\n\n```sh\n-l    count lines\n-w    count words: runs of characters\n      between spaces, tabs or newlines\n-c    count bytes\n```\n\nshort.csv holds two lines, `date,ticker,close` and `2024-03-01,AAPL,179.66`.",
+      "prose": "The manual for wc says, in short:\n\n```sh\n-l    count lines\n-w    count words: runs of characters\n      between spaces, tabs or newlines\n-c    count bytes\n```\n\nshort.csv holds two lines, `date,ticker,close` and `2024-03-01,AAPL,179.66`.",
       "question": "What number does `wc -w short.csv` print?",
       "widget": {
         "kind": "numeric",
@@ -358,7 +358,7 @@
       ],
       "kind": "longform",
       "title": "Set up a dataset, safely",
-      "prompt": "Your terminal has just opened, and you do not know which folder it is in. ~/Downloads holds spx.csv: daily S&P 500 closes, one header line, then one line per day. Dates look like 2023-01-03. Write the commands, one per line, each with a short reason, to do the following.\n1. Make a folder ~/projects/spx.\n2. Copy spx.csv into it, keeping the original.\n3. Find how many trading days the file holds.\n4. Save the header and the 2023 rows into spx_2023.csv inside the project.\n5. Check how many 2023 days you have.\n6. Name one mistake with `>` and one with `rm -r` that would lose data here, and how you would avoid each.",
+      "prompt": "Your terminal has just opened, and you do not know which folder it is in. ~/Downloads holds spx.csv: daily S&P 500 closes, one header line, then one line per day. Dates look like 2023-01-03. Write the commands, one per line, each with a short reason, to do the following.\n1. Make a folder ~/projects/spx. (~/projects already exists.)\n2. Copy spx.csv into it, keeping the original.\n3. Find how many trading days the file holds.\n4. Save the header and the 2023 rows into spx_2023.csv inside the project.\n5. Check how many 2023 days you have.\n6. Name one mistake with `>` and one with `rm -r` that would lose data here, and how you would avoid each.",
       "model": "**Commands.**\n\n```sh\n$ mkdir ~/projects/spx\n$ cd ~/projects/spx\n$ cp ~/Downloads/spx.csv .\n$ wc -l spx.csv\n$ head -n 1 spx.csv > spx_2023.csv\n$ grep 2023- spx.csv >> spx_2023.csv\n$ wc -l spx_2023.csv\n```\n\n**Reasons.** `mkdir` with a `~` path works from any starting folder, so I do not need to know where the terminal opened. `cd` puts me in the project, so later names are short and point where I mean. `cp`, not `mv`, keeps the download; the dot means this folder. `wc -l` counts lines, so the number of trading days is that count minus 1 for the header. `head -n 1 ... >` starts the new file with the header, because grep alone would drop it. `grep 2023-` keeps lines containing 2023-, which only the 2023 dates do. `>>` adds them below the header rather than wiping it. The final `wc -l`, minus 1, is the number of 2023 trading days, about 250.\n\n**Mistake with >.** Writing `grep 2023- spx.csv > spx.csv` empties spx.csv before grep reads it, so the data is gone. Using `>` on the grep line, instead of `>>`, wipes the header I just wrote. I avoid both by writing to a new file name and using `>>` to add.\n\n**Mistake with rm -r.** Tidying up with `rm -r spx` from the wrong folder deletes the wrong thing. There is no Bin and no undo. Before any `rm -r` I run `pwd` and `ls` on the exact name I am about to delete.",
       "rubric": [
         {
