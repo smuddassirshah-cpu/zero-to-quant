@@ -1665,3 +1665,6 @@ Raised later (arma level 1 perf):
 
 Raised later (arma level 3 perf):
 - [Should] Longform rubric rows render inline maths that cannot wrap, so a formula of about 40 characters in a row runs past the card at 440 px (arma `h-derive-arma-fan` row 3 before it was split; found only by a scratch full-height render). Neither the validator nor the playthrough reports it. Wanted: a warning for a rubric `$...$` span over a set rendered width, or a measured check after Mark my answer.
+
+Raised later (garch level 2 perf):
+- [Could] `playthrough.mjs --set` reads `content/manifest.json`, so run after the brief's `git checkout app/content/manifest.json` it shows a new performance task as "Performance task, practice only" (no `gates` row yet), and the shots look wrong. garch `h-garch-nll` was shot that way first. Wanted: the brief says to restore the manifest only after the playthrough, or the playthrough warns when a set holds a `performance` item with no manifest `perf` row.

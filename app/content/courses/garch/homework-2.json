@@ -522,6 +522,109 @@
    "explain": {
     "text": "Matching terms gives $\\omega = 0$, $\\alpha = 0.03$, $\\beta = 0.97$. The persistence is exactly 1, so it is IGARCH: no long-run level and a flat forecast at every horizon."
    }
+  },
+  {
+   "id": "h-garch-nll",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "gv-models"
+   ],
+   "pace": 1200,
+   "title": "A likelihood an optimiser can trust",
+   "prose": "A desk fits GARCH(1,1) with a constant mean, using Nelder-Mead, which takes no bounds. Write the function it minimises. With returns in %, the model is $r_t = \\mu + \\varepsilon_t$ and $\\varepsilon_t = \\sigma_t z_t$. Each $z_t$ is independent N(0, 1), and $\\sigma_t^2$ is the GARCH(1,1) variance of $\\varepsilon$.\n\n- Day 1's variance is the long-run variance the parameters imply.\n- Every day enters the log-likelihood, day 1 included.\n- The model allows $\\omega > 0$, $\\alpha \\ge 0$, $\\beta \\ge 0$ and $\\alpha + \\beta < 1$. Anywhere else, return `math.inf`, so the search steps back.\n\n`rc`, 1,500 days of share C's returns in %, is loaded for you to try it on.",
+   "question": "Write `garch_nll(theta, r)`: minus the log-likelihood of the NumPy array `r` at `theta = (mu, omega, alpha, beta)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import math\nimport numpy as np\n\ndef _share_c(n, seed):\n    # GARCH(1,1) with a constant mean, in %: mu 0.05, omega 0.03, alpha 0.10, beta 0.86\n    z = np.random.default_rng(seed).standard_normal(n)\n    r = np.empty(n)\n    s2 = 0.03 / (1 - 0.10 - 0.86)\n    e = 0.0\n    for t in range(n):\n        if t > 0:\n            s2 = 0.03 + 0.10 * e ** 2 + 0.86 * s2\n        e = math.sqrt(s2) * z[t]\n        r[t] = 0.05 + e\n    return r\n\n# Share C: 1,500 days of daily returns in %, mean 0.05% a day.\nrc = _share_c(1500, 31)\n",
+    "starter": "import math\nimport numpy as np\n\ndef garch_nll(theta, r):\n    \"\"\"Minus the log-likelihood of r (in %) at theta = (mu, omega, alpha, beta).\"\"\"\n    ...\n",
+    "solution": "import math\nimport numpy as np\n\ndef garch_nll(theta, r):\n    \"\"\"Minus the log-likelihood of r (in %) at theta = (mu, omega, alpha, beta).\"\"\"\n    mu, omega, alpha, beta = (float(v) for v in theta)\n    if omega <= 0 or alpha < 0 or beta < 0 or alpha + beta >= 1:\n        return math.inf                      # outside the model: the search steps back\n    eps = np.asarray(r, dtype=float) - mu    # residuals about the model's mean\n    s2 = omega / (1 - alpha - beta)          # day 1: the long-run variance\n    total = 0.0\n    for t in range(len(eps)):\n        if t > 0:                            # yesterday's residual and variance\n            s2 = omega + alpha * eps[t - 1] ** 2 + beta * s2\n        total += math.log(2 * math.pi) + math.log(s2) + eps[t] ** 2 / s2\n    return 0.5 * total\n",
+    "examples": [
+     {
+      "call": "garch_nll((0.0, 0.2, 0.1, 0.7), np.array([1.0, -2.0, 0.5]))",
+      "expect": "5.484151578",
+      "compare": "isclose"
+     }
+    ],
+    "tests": [
+     {
+      "call": "garch_nll((0.0, 0.2, 0.1, 0.7), np.array([1.0, -2.0, 0.5]))",
+      "expect": "5.484151578",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.5, 0.2, 0.1, 0.7), np.array([1.5, -1.0, 2.5, 0.5]))",
+      "expect": "7.30117521174",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.0, 0.5, 0.5, 0.0), np.array([1.0, -3.0, 2.0, 0.5]))",
+      "expect": "10.388618455",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.1, 0.4, 0.2, 0.6), np.array([2.1]))",
+      "expect": "2.26551212348",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.05, 0.03, 0.10, 0.86), rc)",
+      "expect": "1991.56511996",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.0, 0.05, 0.08, 0.88), rc)",
+      "expect": "2010.55198973",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.05, 1.2, 0.0, 0.0), rc[:250])",
+      "expect": "299.723393845",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.0, 0.02, 0.25, 0.75), np.array([1.0, -2.0, 0.5]))",
+      "expect": "float('inf')",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.0, 0.02, 0.15, 0.90), rc)",
+      "expect": "float('inf')",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.0, 0.0, 0.1, 0.8), np.array([1.0, -2.0, 0.5]))",
+      "expect": "float('inf')",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.0, 0.05, -0.02, 0.9), np.array([1.0, -2.0, 0.5]))",
+      "expect": "float('inf')",
+      "compare": "isclose"
+     },
+     {
+      "call": "garch_nll((0.0, 0.05, 0.1, -0.1), np.array([1.0, -2.0, 0.5]))",
+      "expect": "float('inf')",
+      "compare": "isclose"
+     }
+    ],
+    "how": "Check runs 12 hidden tests. A number passes within a relative 1e-9 (`math.isclose`), and an infinity only as an infinity. The first run loads NumPy, which takes a few seconds."
+   },
+   "feedback": {
+    "correct": "Correct. An unbounded search can use it: a step outside the region scores infinity, never `nan`.",
+    "generic": "Not quite right. Read the first failing test against the three rules above.",
+    "byKey": {
+     "test-1": "Test 1 is the example. Work its three days by hand: each day's variance, then its score, then the total.",
+     "test-2": "Test 2 is the first with $\\mu \\ne 0$. The variance and the scores are both built from $r_t - \\mu$.",
+     "test-3": "Test 3 is ARCH(1), with $\\beta = 0$. The model allows it, so the answer is a number.",
+     "test-8": "Test 8 has $\\alpha + \\beta = 1$, outside the region, so the answer is `math.inf`.",
+     "test-10": "Test 10 has $\\omega = 0$, outside the region, so the answer is `math.inf`."
+    }
+   },
+   "explain": {
+    "text": "Each day's variance uses only yesterday's residual and variance, so each score is an honest forecast. The start moves with the parameters, and its effect fades by $\\beta$ a day. Outside the region, infinity keeps an unbounded search safe, where a `nan` would break its comparisons."
+   }
   }
  ]
 }
