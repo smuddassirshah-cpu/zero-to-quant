@@ -1631,6 +1631,9 @@ Raised later (orchestrator, session W):
 - [Should] `fresh-check.mjs` missed nearly every setup repeat that second readers found by literal grep in session W's nine topic exams (for example topic-2.3: 22 of 30 items repeated a setup, fresh-check 0 hits; topic-0.3: 19 of 25, 0 hits). It matches word runs, so a repeat with new constants passes. Needed: a setup fingerprint (key nouns plus function names plus the shape of the numbers), or treat fresh-check as advisory in the briefs and require the literal grep.
 - [Could] Expression grader after 620: `g(f(x)) = ...` and `gf(x) = ...` left sides still get the generic line (exam topic-0.2 item 11); a nested call of single-letter functions should count as a label.
 
+Raised later (systems level 1 perf):
+- [Could] C++ code widget: no way to grade the shape of the compiled code, so an objective such as "remove a branch from a hot loop" cannot be a `code` performance task (tests pass a loop that keeps its branch, and at `-O1` timing cannot tell). systems L1 used `aloud`. Wanted, if such tasks matter: a case that greps the `-S` output of the learner's function for a conditional jump.
+
 Raised later (systems level 4 perf):
 - [Could] A homework or review item `question` renders as one bold line, so a markdown list in it runs together ("- N is ... - The slots ..."). systems `h4-spsc-ring` moved its specification list into `prose`. Wanted: render lists in `question`, or a validator warning on a list there.
 - [Could] C++ code widget: no threads in the WebAssembly runtime, so a single-producer, single-consumer task cannot grade its memory orders; a ring with relaxed loads and stores passes every test. Wanted: a note in AUTHORING section 3 that concurrency correctness is ungradable, or a `console` pattern for a desk ThreadSanitizer run.
