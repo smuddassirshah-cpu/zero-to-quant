@@ -426,6 +426,120 @@
    "explain": {
     "text": "Returns from $L$ to $t - 21$ number $t - 21 - L + 1$. Setting that to 150 gives $t = L + 170$, 50 days sooner than our rule of 200. Until then the share is listed but unranked."
    }
+  },
+  {
+   "id": "h-momentum-pct",
+   "performance": "code",
+   "difficulty": 4,
+   "skills": [
+    "al-signal"
+   ],
+   "pace": 900,
+   "prose": "A fund refreshes its momentum signal at each month end. `px` holds each share's total-return price at month ends, months by shares, NaN while the share is not listed.\n\nOn month $t$ a share's momentum is its return from the month end `lookback` months before $t$ to the month end `skip` months before $t$. A share gets a score only if it has a price at $t$ and at both ends of that window. On each month the scored shares are ranked against each other. The score is the rank divided by the number of scored shares that month, so the strongest scores 1. Tied shares share the average of their ranks.\n\n`months()` returns 14 month ends of prices for five shares.",
+   "question": "Build `momentum_pct(px, lookback=12, skip=1)` from the stub. It returns a frame shaped like `px`, NaN where a share has no score.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "import pandas as pd\n\ndef momentum_pct(px, lookback=12, skip=1):\n    \"\"\"Cross-sectional momentum score on each month end.\"\"\"\n    ...\n",
+    "solution": "import pandas as pd\n\ndef momentum_pct(px, lookback=12, skip=1):\n    mom = px.shift(skip) / px.shift(lookback) - 1      # return from t-lookback to t-skip\n    mom = mom.where(px.notna())                         # listed at t\n    return mom.rank(axis=1, pct=True)                   # across shares, ties averaged\n",
+    "prelude": "import numpy as np\nimport pandas as pd\n\ndef months():\n    \"\"\"Month-end total-return prices for five shares over 14 months.\"\"\"\n    m = pd.date_range(\"2023-01-31\", periods=14, freq=\"ME\")\n    up = [1.00, 1.02, 0.97, 1.05, 1.01, 0.99, 1.04, 1.03, 0.98, 1.06, 1.00, 1.02, 0.96, 1.30]\n    px = pd.DataFrame(index=m, columns=list(\"ABCDE\"), dtype=float)\n    px[\"A\"] = 100 * 1.03 ** np.arange(14)\n    px[\"B\"] = 50 * np.cumprod(up)\n    px[\"C\"] = 80 * 1.05 ** np.arange(14)\n    px.iloc[:5, 2] = np.nan\n    px[\"D\"] = 20 * 1.04 ** np.arange(14)\n    px.iloc[12:, 3] = np.nan\n    px[\"E\"] = 40 * 0.98 ** np.arange(14)\n    return px\n\ndef monthly_panel(seed, n_months=40, n_shares=30):\n    \"\"\"A seeded month-end price panel: late listings, deaths, drifting returns.\"\"\"\n    x = seed\n    def u():\n        nonlocal x\n        x = (6364136223846793005 * x + 1442695040888963407) % 2 ** 64\n        return (x >> 11) / 2 ** 53\n    m = pd.date_range(\"2020-01-31\", periods=n_months, freq=\"ME\")\n    px = pd.DataFrame(index=m, columns=[f\"S{j:02d}\" for j in range(n_shares)], dtype=float)\n    for j in range(n_shares):\n        start = int(u() * 15) if j % 3 == 0 else 0\n        end = n_months - int(u() * 12) if j % 5 == 2 else n_months\n        p, drift = 10 + 90 * u(), 0.02 * (u() - 0.5)\n        for t in range(start, end):\n            p *= 1 + drift + 0.12 * (u() - 0.5)\n            px.iloc[t, j] = round(p, 4)\n    return px\n",
+    "examples": [
+     {
+      "setup": "px = months()",
+      "call": "momentum_pct(px, 3, 1).iloc[9].round(4).tolist()",
+      "expect": "[0.6, 0.4, 1.0, 0.8, 0.2]",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "setup": "px = months()",
+      "call": "momentum_pct(px, 3, 1).iloc[9].round(4).tolist()",
+      "expect": "[0.6, 0.4, 1.0, 0.8, 0.2]",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months()",
+      "call": "momentum_pct(px, 3, 1).round(4).fillna(-1).values.tolist()",
+      "expect": "[[-1.0, -1.0, -1.0, -1.0, -1.0], [-1.0, -1.0, -1.0, -1.0, -1.0], [-1.0, -1.0, -1.0, -1.0, -1.0], [0.75, 0.5, -1.0, 1.0, 0.25], [0.75, 0.5, -1.0, 1.0, 0.25], [0.75, 0.5, -1.0, 1.0, 0.25], [0.75, 0.5, -1.0, 1.0, 0.25], [0.75, 0.5, -1.0, 1.0, 0.25], [0.4, 0.6, 1.0, 0.8, 0.2], [0.6, 0.4, 1.0, 0.8, 0.2], [0.6, 0.4, 1.0, 0.8, 0.2], [0.6, 0.4, 1.0, 0.8, 0.2], [0.75, 0.5, 1.0, -1.0, 0.25], [0.75, 0.5, 1.0, -1.0, 0.25]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months()",
+      "call": "momentum_pct(px).iloc[-2:].round(4).fillna(-1).values.tolist()",
+      "expect": "[[1.0, 0.6667, -1.0, -1.0, 0.3333], [1.0, 0.6667, -1.0, -1.0, 0.3333]]",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months()",
+      "call": "momentum_pct(px, 3, 1).iloc[13].round(4).fillna(-1).tolist()",
+      "expect": "[0.75, 0.5, 1.0, -1.0, 0.25]",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months()",
+      "call": "momentum_pct(px, 3, 1)[\"D\"].iloc[11:].round(4).fillna(-1).tolist()",
+      "expect": "[0.8, -1.0, -1.0]",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months()",
+      "call": "str(momentum_pct(px, 3, 1)[\"C\"].first_valid_index().date())",
+      "expect": "'2023-09-30'",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months(); px2 = px.copy(); px2.iloc[10:, 0] *= 3",
+      "call": "momentum_pct(px2, 3, 1).iloc[:10].equals(momentum_pct(px, 3, 1).iloc[:10])",
+      "expect": "True",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months(); px2 = px.assign(E=px[\"A\"] / 2)",
+      "call": "momentum_pct(px2, 3, 1).iloc[9].round(4).tolist()",
+      "expect": "[0.5, 0.2, 1.0, 0.8, 0.5]",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months()",
+      "call": "float(momentum_pct(px[[\"A\"]], 3, 1)[\"A\"].iloc[-1])",
+      "expect": "1.0",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months()",
+      "call": "momentum_pct(px, 6, 2).iloc[[8, 12]].round(4).fillna(-1).values.tolist()",
+      "expect": "[[0.75, 0.5, -1.0, 1.0, 0.25], [0.75, 0.5, 1.0, -1.0, 0.25]]",
+      "compare": "equal"
+     },
+     {
+      "call": "(lambda r: (int(r.notna().sum().sum()), round(float(r.sum().sum()), 4)))(momentum_pct(monthly_panel(11)))",
+      "expect": "(763, 395.5)",
+      "compare": "equal"
+     },
+     {
+      "setup": "px = months()",
+      "call": "(lambda r: (r.shape, r.index.equals(px.index), list(r.columns)))(momentum_pct(px))",
+      "expect": "((14, 5), True, ['A', 'B', 'C', 'D', 'E'])",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 12 hidden tests on `months()` and on a seeded 30-share panel, compared with ==. The first run loads pandas, which takes 10 to 20 seconds; later runs are quick."
+   },
+   "feedback": {
+    "correct": "Each month's score uses prices up to a month before, ranked across the shares listed that month.",
+    "generic": "Some tests failed. Read the first failing test against the rules above.",
+    "byKey": {
+     "test-4": "Test 4 is the last month, when B jumped 30%. The window ends `skip` months back, so that jump is not in it.",
+     "test-5": "Test 5 follows D after its last price in December. A share with no price at $t$ gets no score.",
+     "test-6": "Test 6 asks when C, listed in June, first scores with `lookback=3`. The window starts at the month end `lookback` months back, not one before it.",
+     "test-7": "Test 7 triples A's prices from November. No score up to October may change.",
+     "test-8": "Test 8 gives A and E the same momentum. Tied shares share the average of their ranks."
+    }
+   },
+   "explain": {
+    "text": "The window ends `skip` months back, so last month's jump in B moves nothing. Each row is ranked on its own, so a score says where a share stands among that month's shares. D has no score once it is no longer listed, though its old prices still exist."
+   }
   }
  ]
 }
