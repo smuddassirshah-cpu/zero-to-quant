@@ -87,3 +87,41 @@ Noted, no change proposed:
 1. `float-artefact` (validator) fires 34 times in L1 on numbers the lessons must print exactly: `0.30000000000000004`, `0.9999999999999999`, `28.999999999999996` and so on. These are the subject of l1 and of review-1 `items[0]` and `items[4]`. Rounding them would destroy the teaching. The rule needs an opt-out, either an ignore file read like `duration-prose-ignore.json`, or skipping a value written as Python output (in backticks, or after "is", "prints" or "stored as") in a course whose `art` is `code`.
 2. The playthrough answers a choice item by its authored key, so a key that contradicts the language (finding 1) passes on desktop and mobile. An opt-in such as `"verify": "stdout"` on a choice item whose prose holds a ```python block could have the playthrough run the block in Pyodide. It would then check that the keyed option's code spans equal the printed lines and that no distractor's do, as `docs/reports/py_found_read12.py` `check_print` does in CPython.
 3. `numbers_lib` has no code runner, so this read wrote one (`check_code` in `docs/reports/py_found_read12.py`). It runs every Python code widget's solution and starter, checks the `how` count, and checks that each `byKey` `test-N` points at a real test. Lifting it into `numbers_lib` as `lv.check_code()` would give every code-course number script the same checks (compare the measure-prob audit bullet on duplicated compare rules).
+
+## Fix pass
+
+1. fixed: l1 `quiz[3]` now `0.2 + 0.4 == 0.6` (CPython: 0.6000000000000001, `False`), key `tf` holds; why and explain rewritten. Graded answer: key unchanged (`tf`), the item's code changed.
+2. fixed: l1 `screens[3]` explain and hint scoped to "here". Basis: `0.1 + 0.4 == 0.5` is `True` in CPython.
+3. fixed: l1 `screens[6]` option why and `byKey.cancel` say each sum is rounded again. Basis: running total ends 0.9999999999999999 while `Decimal(0.1)` is high.
+4. fixed: l1 `screens[1]` explain says "nearest value with 53 binary digits". Basis: `Decimal(0.1)` is 0.1000000000000000055 (rounded up, not truncated).
+5. fixed: l1 `screens[9]` explain: "buys 499 and leaves £1.10 idle" (550.00 - 499 x 1.10 = 1.10, recomputed).
+6. fixed: l2 `screens[2]` option `early` is `[100.4, 103.1]`, `closes[-3:-1]` on the six closes (CPython).
+7. fixed: l2 `screens[3]` `two-on` set `["c1"]` (`closes[1:2]` is index 1 alone), byKey rewritten.
+8. fixed: l2 `j - i` claims limited to ends inside the list (`[101.2, 102.5, 99.8, 100.4][2:10]` has 2 items); three places.
+9. fixed: l2 `screens[4]` prose now "Hidden tests include the smallest allowed `n`".
+10. fixed: l3 `screens[2]` option `rest` why says the star collects a list (`ticker, *rest = ("VOD", 72.5, 100)` gives `[72.5, 100]`).
+11. fixed: l8 `summary.ideas[1]` and `screens[9]` comment; basis `[1, 2].pop()` returns 2.
+12. fixed: homework-1 `items[1]` `no-start`: 20 - 3 = 17 is `closes[3:]`.
+13. fixed: l5 `screens[9]` `byKey.test-7` added and explain sentence replaced; CPython: solution with `.upper()` returns 1.0 for test 7, expected 1.5.
+14. fixed: review-1 `items[6]` option `list` why: `'4.85' * 2` is `'4.854.85'`.
+15. fixed: l4 `screens[9]` key text shortened to "Growing £1,000.00 by each return in turn".
+16. fixed: l6 `quiz[3]` key text "It stops with an `AttributeError`.".
+17. fixed: l5 `screens[5]` key and `last` option texts as proposed.
+18. fixed: homework-1 `items[7]` prompt split into short sentences (voice scan 0 over 35).
+19. fixed: l5 `screens[4]` option `bp` why reworded.
+20. fixed: homework-1 `items[2]` option why uses "slots".
+21. fixed: review-1 `items[0]` now `1.1 + 2.2 == 3.3` (CPython 3.3000000000000003, `False`). Key unchanged (`False`).
+22. fixed: review-1 `items[4]` now `int(-4.35 * 100)`; CPython: `-4.35 * 100` is -434.99999999999994, `int` gives -434, `round` gives -435. Graded answer changed: 114 to -434, wrong `nearest` 115 to -435. Basis: Python docs, built-in `int`: "truncates towards zero".
+23. fixed: review-1 `items[1]` now `closes[-4:-1]` giving `[102.5, 99.8, 100.4]` (CPython). Option `one` id renamed `toend`; no byKey used it. Key unchanged (`right`).
+24. fixed: review-1 `items[7]` renamed `rising_days` throughout (no other use in `app/content`).
+25. fixed: review-2 `items[5]` renamed `top_and_bottom` throughout.
+26. fixed: review-2 `items[8]` now tests `.items()` and `.keys()`; CPython `True True False`. Option ids `tq` to `items`, `vals` to `keys`.
+27. fixed: homework-2 `items[3]` new schedule and tests; every expected value recomputed (30, 15, 2.0, 50, 0.96, 5, 200; all within `isclose`). Graded answers changed: all seven tests. Starter still fails, solution passes in CPython.
+28. fixed: homework-2 `items[4].widget.tests[8]` now `[("AZN", -10), ("BP", 400)]`, expect 755.0 (-1185 + 1940).
+29. fixed: l13 `screens[7]` prose now points to l7's maximum drawdown (l13 is in py-found).
+
+Gates:
+- `py-found-L1-numbers.py` exit 0 (391 of 391), `py-found-L2-numbers.py` exit 0 (369 of 369). Stale "phrase is gone" checks replaced with positive checks on the new text and values, so a revert fails; new numbers added (review-1 items 0, 1, 4; homework-2 items 3, 4; l1 quiz[3]; l2 screens 2 and 3).
+- Voice scan (35): 0 sentences over 35 words, 0 explanations over three sentences.
+- `node tools/validate.mjs`: 0 errors.
+- Playthrough with `--local-cdn`: l1, l2, l3, l4, l5, l6, l8, l13 and review-1, review-2, homework-1, homework-2 all passed, desktop and `--mobile` (24 of 24 runs).

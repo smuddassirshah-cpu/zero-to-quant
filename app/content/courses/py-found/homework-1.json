@@ -82,7 +82,7 @@
         "generic": "Not quite right. Turn `-2` into an ordinary index first.",
         "byKey": {
           "kept-end": "You included index 18. `-2` is index 18, and the slice stops before it.",
-          "no-start": "You dropped only the last two. The slice also skips indices 0, 1 and 2.",
+          "no-start": "You dropped only the first three: that is `closes[3:]`. The end `-2` also drops the last two closes.",
           "abs": "You subtracted the raw numbers, 3 and 2. Turn `-2` into index 18 first, then use $j - i$."
         }
       },
@@ -105,7 +105,7 @@
           {
             "id": "one",
             "text": "`[[99.5, 0.0], [0.0, 0.0], [0.0, 0.0]]`",
-            "why": "You expected three separate levels. `* 3` repeats the reference to one inner list, so all three names share it."
+            "why": "You expected three separate levels. `* 3` repeats the reference to one inner list, so all three slots hold that one list."
           },
           {
             "id": "right",
@@ -348,7 +348,7 @@
         "pf-types"
       ],
       "kind": "longform",
-      "prompt": "A colleague's end-of-day check flags a mismatch on a day with two fills, £0.10 and £0.20, and an expected total of £0.30.\n\n```python\nfills = [0.10, 0.20]\nexpected = 0.30\nif sum(fills) == expected:\n    print(\"ok\")\nelse:\n    print(f\"mismatch: {sum(fills):.2f} vs {expected:.2f}\")\n```\n\nIt prints `mismatch: 0.30 vs 0.30`. Write them a short note: what Python is doing, why the message hides it, two fixes with code, which fix you would use for a ledger and why, and one case where `math.isclose` with its defaults still fails.",
+      "prompt": "A colleague's end-of-day check flags a mismatch on a day with two fills, £0.10 and £0.20, and an expected total of £0.30.\n\n```python\nfills = [0.10, 0.20]\nexpected = 0.30\nif sum(fills) == expected:\n    print(\"ok\")\nelse:\n    print(f\"mismatch: {sum(fills):.2f} vs {expected:.2f}\")\n```\n\nIt prints `mismatch: 0.30 vs 0.30`. Write them a short note. Say what Python is doing and why the message hides it. Give two fixes with code, say which you would use for a ledger and why, and give one case where `math.isclose` with its defaults still fails.",
       "model": "**What happens.** Floats are stored in binary. 0.10 and 0.20 have no exact binary form, so each is stored as the nearest value, both slightly high. Their sum is 0.30000000000000004, while 0.30 is stored as 0.29999999999999998. `==` asks for an exact match, so it is `False`.\n\n**Why the message hides it.** `:.2f` rounds both values to two places for display, so both print as 0.30. The values compared are not the values shown.\n\n**Fix 1: compare with a tolerance.**\n\n```python\nif abs(sum(fills) - expected) < 0.005:   # within half a penny\n    print(\"ok\")\n```\n\n**Fix 2: count whole pence.**\n\n```python\nfills_p = [round(f * 100) for f in fills]   # [10, 20]\nexpected_p = round(expected * 100)          # 30\nif sum(fills_p) == expected_p:\n    print(\"ok\")\n```\n\n**For a ledger** use whole pence. Integers add exactly however many fills there are, so `==` is safe and no drift builds up over thousands of entries. A tolerance only hides drift; pence remove it. Convert with `round`, not `int`, because `int(0.29 * 100)` is 28.\n\n**Where `math.isclose` fails.** Its default tolerance is relative: one billionth of the larger number. Comparing a P&L with zero, `math.isclose(0.1 + 0.2 - 0.3, 0.0)` is `False`, because one billionth of 0.0 is 0. Pass `abs_tol`, for example `math.isclose(x, 0.0, abs_tol=0.005)`.",
       "rubric": [
         {
