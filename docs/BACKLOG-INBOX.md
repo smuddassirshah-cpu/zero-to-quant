@@ -1484,3 +1484,7 @@ Raised later (audit measure-prob):
 
 Raised later (audit pairs-rep, round 2):
 - [Could] Audit tooling: a blind reader needs every string of a lesson with its JSON path (prose, options, why, hints, feedback, explain, test calls) with canvases and number arrays folded, to read a 184 KB lesson file whole without its data; no tool prints that, so this audit wrote a flattener in its scratch folder, as earlier audits did their own harnesses. A `node tools/dump.mjs <course>/<id>` (or `--level n`) printing `path | text` lines would make the blind read repeatable and cut each audit by an hour; it pairs with the shared code-widget harness already raised under "audit measure-prob".
+
+Raised later (review momentum-rep L1):
+- [Should] Validator `[shuffled-position]` (585): `posExcluded` drops a hit when the place word appears anywhere on the screen, hyphenated compounds included. momentum-rep l4 `screens[8].hints[2]` "The first answer names all three" passed because the canvas holds "first-year". Ignore compounds (`\bfirst\b(?!-)`) or require the word near "row", "line", "step" or "column" in the context.
+- [Could] `fresh-check.mjs --file` (set items): flag an item whose graded numeric answer, at its asked rounding, is stated as a fact in a lesson screen of the same course. momentum-rep review-1 `items[5]` asks for the 12/12 t that l3 `screens[3]` and `quiz[3]` print (1.77); the question-side n-gram and shared-numbers checks miss it because the shared number is the answer.
