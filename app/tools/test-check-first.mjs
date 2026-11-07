@@ -43,6 +43,7 @@ const pickEdge = () => {
       const dlv = (readJSON(df).levels || []).find(l => l.n === dn);
       if (!dlv || !dlv.review || !fs.existsSync(path.join(CONTENT, 'courses', dc, dlv.review + '.json'))) continue;
       const gating = reqs.filter(r => typeof r === 'string' || (r && r.gate !== false)).map(r => typeof r === 'string' ? r : r.ref).filter(r => /^[a-z0-9-]+\/L\d+$/.test(r));
+      if (!gating.length) continue;   // check 3 needs a gating edge beside the diagnostic (first-python L1 has diagnostics only, session W)
       return { course: c, n: lv.n, lesson, ref: diag.ref, why: diag.why, review: `review/${dc}/${dlv.review}`, gating, dcourse: dc, dn };
     }
   }
