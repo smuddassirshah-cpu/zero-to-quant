@@ -705,7 +705,7 @@
         }
       },
       "explain": {
-        "text": "Cores exchange whole 64-byte lines, so a store to `tail_` pulls `head_` along. The consumer's next store to `head_` pulls the line back. Neither counter is shared, yet the line ping-pongs: false sharing.",
+        "text": "Cores exchange whole 64-byte lines, so a store to `tail_` pulls `head_` along. The consumer's next store to `head_` pulls the line back. Each counter has one writer, yet every store drags the other counter's word along with it: false sharing.",
         "canvas": {
           "shade": {
             "moves": [
@@ -821,7 +821,7 @@
         }
       },
       "explain": {
-        "text": "Stealing the line costs 600 ms of every second, 60% of a core, for a correct queue. With `alignas(64)` each counter keeps its own line and the cost falls to 10 ms. The test in the next task compares the two addresses."
+        "text": "Stealing the line costs 600 ms of every second, 60% of a core, for a correct queue. With `alignas(64)` a store to one counter no longer evicts the other, which in this model is 10 ms. Each line still moves when the other side reads its counter, so real rings also cache the other counter and re-read it only when the ring looks full or empty."
       }
     },
     {
@@ -831,7 +831,7 @@
       "tags": [
         "spsc-order"
       ],
-      "prose": "Level 2 gave the memory orders. A `release` store publishes everything written before it, and an `acquire` load sees it. The producer owns `tail_` and only reads `head_`. Put the producer's push in order. Leave out the lines that do not belong.",
+      "prose": "Level 2 gave the memory orders. A `release` store publishes everything written before it, and an `acquire` load that reads that store sees it. The producer owns `tail_` and only reads `head_`. Put the producer's push in order. Leave out the lines that do not belong.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -998,7 +998,7 @@
         }
       },
       "explain": {
-        "text": "A race needs two writers of one variable. The producer alone writes `tail_` and its slots, and the consumer alone writes `head_`. A release and acquire pair makes each slot visible before its counter moves."
+        "text": "A data race is two threads touching one non-atomic variable, at least one writing, with nothing ordering them. Here each counter is an atomic with one writer, and the release and acquire pair orders each slot write before the other thread reads it. That is why one producer and one consumer need no lock."
       }
     },
     {
@@ -1126,7 +1126,7 @@
         }
       },
       "explain": {
-        "text": "The mask turns a counter into a slot, and the difference of the counters says how many items wait. Unsigned subtraction stays right across the wrap, because $2^{32}$ is a multiple of $N$."
+        "text": "The mask turns a counter into a slot, and the difference of the counters says how many items wait. Unsigned subtraction is exact modulo $2^{32}$, so `tail - head` stays right across the wrap for any $N$. It is the slot, the counter mod $N$, that needs $N$ to divide $2^{32}$, which is why $N$ is a power of two."
       }
     },
     {
@@ -1137,7 +1137,7 @@
         "ring-buffer",
         "false-sharing"
       ],
-      "prose": "Now the ring of ints. `push` returns false when full and `pop(out)` returns false when empty. Keep `head_` and `tail_` on separate cache lines: a test compares their addresses.",
+      "prose": "Now the ring of ints. `push` returns false when full and `pop(out)` returns false when empty. Keep `head_` and `tail_` on separate cache lines: a test compares their addresses. This version runs on one thread, so its counters are plain `size_t`; the two-thread ring makes them `std::atomic` with the loads and stores of the push screen.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -1652,7 +1652,7 @@
           {
             "id": "even",
             "text": "So the head and tail never meet",
-            "why": "They meet when empty and when full. The size does not change that."
+            "why": "The counters meet only when the ring is empty; the slots coincide when it is full as well. The size does not change that."
           }
         ],
         "shuffle": true

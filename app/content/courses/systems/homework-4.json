@@ -15,7 +15,7 @@
         "alloc-counter"
       ],
       "pace": 900,
-      "prose": "A service records the latency of every request in nanoseconds. Keeping every sample would allocate. A histogram with a bucket for each power of two does not. A sample of `ns` goes in bucket $\\lfloor \\log_2 ns \\rfloor$.",
+      "prose": "A service records the latency of every request in nanoseconds. Keeping every sample in a growing container would allocate. A histogram with a bucket for each power of two does not. A sample of `ns` goes in bucket $\\lfloor \\log_2 ns \\rfloor$.",
       "question": "Write `record` and `percentile_upper` so `record` never touches the heap.",
       "widget": {
         "kind": "code",
@@ -284,7 +284,7 @@
           }
         },
         {
-          "question": "Which of these fits a 32,768-byte L1 and so stays resident?",
+          "question": "Which of these fits a 32,768-byte L1, so it can stay resident?",
           "widget": {
             "kind": "choice",
             "layout": "stack",
@@ -307,7 +307,7 @@
               {
                 "id": "all",
                 "text": "The pool as well, since only the slots in use are touched",
-                "why": "The question is about the whole pool, and it is 27,232 bytes over."
+                "why": "What is touched is what matters, but even the 2,400 live slots are 48,000 bytes, over the limit."
               }
             ],
             "shuffle": true
@@ -318,11 +318,11 @@
             "byKey": {
               "pool": "60,000 is more than 32,768 by 27,232.",
               "both": "12,288 + 60,000 is 72,288, which is 39,520 over.",
-              "all": "The whole pool is larger than L1, so it cannot stay resident."
+              "all": "Even the live slots alone, 48,000 bytes, are larger than L1, so they cannot stay resident."
             }
           },
           "explain": {
-            "text": "The ring is 12,288 bytes and fits. The pool is 27,232 bytes over, and the pair is 39,520 over, so only the ring stays resident."
+            "text": "The ring is 12,288 bytes and fits. The pool is 27,232 bytes over, and the pair is 39,520 over, so only the ring can stay resident."
           }
         }
       ]
@@ -342,7 +342,7 @@
       "kind": "longform",
       "title": "Say it aloud: a handler",
       "prompt": "Say aloud, in three minutes, how you would build a handler for one instrument's feed, defending each choice. Time yourself, and give a figure of your own for each point. Then open the model answer and tick the rubric.",
-      "model": "**1. The pipeline and the budget.** Packets reach a ring in user space, bypassing the kernel. Then decode the 24-byte frame and check its sequence number. Update the book, run the strategy, and encode and send the order. Take a 4 µs target. Give the card to the ring 1,200 ns, decode 250, the book 350 and the strategy 600. The send takes 600. That is 3,000 ns, with 1,000 ns of slack for a stall.\n\n**2. No allocation.** Every allocation is a cost of about 50 ns and a rare slow case. Take all memory before the first message, from fixed arrays and a pool. Prove it with a test. Reset the counter of `new` calls, feed a stream, and assert it is still 0.\n\n**3. Loss and two feeds.** Each frame carries a sequence number. A number below the expected one is a duplicate or a late arrival, so it is dropped. A number above it adds the skipped numbers to a gap count. The gap is repaired from a snapshot. A partial frame waits in a small buffer for its remaining bytes, and one read may hold several frames.\n\n**4. The book.** Use an array of quantities indexed by price tick: a £4 range in pennies is 401 levels a side. Use an array of orders indexed by order id. Both are sized at start, so they fit in L1, and neither can rehash. A `std::unordered_map` allocates and rehashes at unpredictable moments.\n\n**5. Measuring.** Time from the intended send time, never from a late send after a stall, or the tail hides. Quote the p99 and p99.9 first, and the mean after. Time batches, not single calls, after a warm-up.\n\n**6. A trade-off.** Counting a gap and moving on keeps the delay low, but loses frames the other feed may hold. Holding a frame for a short time recovers some at a cost in latency. I would count and snapshot first, then tune the hold with measurements.",
+      "model": "**1. The pipeline and the budget.** Packets reach a ring in user space, bypassing the kernel. Then decode the 24-byte frame and check its sequence number. Update the book, run the strategy, and encode and send the order. Take a 4 µs target. Give the card to the ring 1,200 ns, decode 250, the book 350 and the strategy 600. The send takes 600. That is 3,000 ns, with 1,000 ns of slack for a stall.\n\n**2. No allocation.** Every allocation is a cost of about 50 ns and a rare slow case. Take all memory before the first message, from fixed arrays and a pool. Prove it with a test. Reset the counter of `new` calls, feed a stream, and assert it is still 0.\n\n**3. Loss and two feeds.** Each frame carries a sequence number. A number below the expected one is a duplicate or a late arrival, so it is dropped. A number above it adds the skipped numbers to a gap count. The gap is repaired from a snapshot. A partial frame waits in a small buffer for its remaining bytes, and one read may hold several frames.\n\n**4. The book.** Use an array of quantities indexed by price tick: a £4 range in pennies is 401 levels a side. Use an array of orders indexed by order id. Both are sized at start, so neither can rehash; 401 levels a side at 4 bytes and 1,024 orders of 16 bytes come to about 20 KB, inside a 32 KiB L1. A `std::unordered_map` allocates and rehashes at unpredictable moments.\n\n**5. Measuring.** Time from the intended send time, never from a late send after a stall, or the tail hides. Quote the p99 and p99.9 first, and the mean after. Time batches, not single calls, after a warm-up.\n\n**6. A trade-off.** Counting a gap and moving on keeps the delay low, but loses frames the other feed may hold. Holding a frame for a short time recovers some at a cost in latency. I would count and snapshot first, then tune the hold with measurements.",
       "rubric": [
         {
           "points": 2,
@@ -505,7 +505,7 @@
               {
                 "id": "avg",
                 "text": "Average the hosts' p99 values",
-                "why": "The average is a number no request had, and it moves the wrong way as hosts differ in size."
+                "why": "The average is a number no request had. The same two p99 values gave a pooled 800 and then 20, so no average of them can be right."
               },
               {
                 "id": "max",

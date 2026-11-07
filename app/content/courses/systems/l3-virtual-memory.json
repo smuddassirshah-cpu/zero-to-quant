@@ -237,7 +237,7 @@
           {
             "id": "c",
             "text": "The program crashes at once",
-            "why": "A fault is not a crash. The kernel handles it and the read retries."
+            "why": "A fault inside mapped memory is not a crash. The kernel handles it and the read retries."
           },
           {
             "id": "d",
@@ -269,7 +269,7 @@
         "generic": "Not quite right. Look up page 1 in the table."
       },
       "explain": {
-        "text": "Page 1 has no frame, so the hardware raises a **page fault**. The kernel finds a frame, fills in the table and retries the read. A minor fault costs about 1 µs; one that loads from an SSD costs about 100 µs.",
+        "text": "Page 1 has no frame, so the hardware raises a **page fault**. Inside a region the process has mapped, the kernel finds a frame, fills in the table and retries the read; outside any mapping the fault becomes a segmentation fault. A minor fault costs about 1 µs; one that loads from an SSD costs about 100 µs.",
         "canvas": {
           "points": {
             "v": {
@@ -752,7 +752,7 @@
       "type": "trap",
       "difficulty": 3,
       "title": "When does 1 GiB cost 262 ms",
-      "prose": "A desk program on a Linux server asks for 1 GiB and fills it. It takes about 262 ms longer than the writes alone. This app runs in WebAssembly, which has no page faults to show.",
+      "prose": "A desk program on a Linux server, with 4 KiB pages and transparent huge pages off, asks for 1 GiB and fills it. It takes about 262 ms longer than the writes alone. This app runs in WebAssembly, which has no page faults to show.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -782,7 +782,7 @@
           {
             "id": "c",
             "text": "In `delete[]` at the end",
-            "why": "Freeing touches nothing, so it is cheap."
+            "why": "Freeing unmaps the pages without touching their contents: tens of milliseconds, well below the 262 ms of faults."
           },
           {
             "id": "d",
