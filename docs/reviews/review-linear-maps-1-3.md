@@ -93,3 +93,45 @@ No engine change is needed for any fix above. Three tool limits met in this read
 - `app/tools/numbers_lib.py` `expect` cannot find a number inside a LaTeX command argument: `\sqrt{56}` normalises to `\sqrt56`, and the token rule `(?<![\w.])` then skips 56. The L3 script checks it as a string instead.
 - `fresh-check.mjs --file` does not see a set item that reuses a lesson's matrix, basis or node set with a new target (findings 25 to 28). Its shared-number advisory needs three distinct numbers, and $\begin{pmatrix}2 & 1\\ 1 & 2\end{pmatrix}$ has two.
 - Validator rule 586 (`key-length`) fires 38 times in these levels, and in 32 of those every distractor is a full claim of its own. A refinement could warn only when the key has a reason clause (after a colon or comma, or "since" or "because") and no distractor has one.
+
+## Fix pass
+
+Status per finding (30 fixed, 1 disputed as unverified, 0 deferred; finding 12 is the disputed one: its three numbers are unverified and left unchanged). Every corrected number was recomputed before writing, and each number script check was tightened to the new value (the false-sentence checks now fail if the old text returns).
+
+1. fixed: l3 `screens[4]` Remove e3 refusal now says e3 is not in the span (third entries 0).
+2. fixed: l4 `byKey.std`. Recomputed: $3 + 2(x-1) + (x-1)^2 = x^2 + 2$, while $p - 1 = x^2 + 2x + 2$.
+3. fixed: l5 `quiz[1]` `rows` wrong value is now $(5, 6)$: $(2\cdot4 + 3\cdot(-1),\ 1\cdot4 - 2\cdot(-1)) = (5, 6)$. Feedback line rewritten.
+4. fixed: l11 `screens[7].prose` now says four met, with the integral product added in the quiz.
+5. fixed: l2 `screens[4]` prose and explanation no longer cite a proof in `analysis` l15.
+6. fixed: review-3 `items[2]` wrong `sum` is 5.978 (tolerance 0.001): $\sqrt{14} + \sqrt5 = 5.9777$. Feedback names the slip.
+7. fixed: l1 `screens[11].explain.text` as specified.
+8. fixed: l1 `screens[3]` row label, `feedback.correct` and `byKey.r3c2` now speak of negatives staying in the set (answers unchanged). Basis: an additive inverse is defined against the zero vector, so the inverse axiom cannot be graded yes without an identity; that $-p$ has the degree of $p$ is a plain fact.
+9. fixed: l2 `screens[9].prose`.
+10. fixed: l2 `screens[2].explain.text`. Basis: the subspace test in Axler takes inverses from closure under scaling, since $-\mathbf{u} = (-1)\mathbf{u}$.
+11. fixed: l4 `screens[5].prose`. Basis: $p(1) = a_0 + a_1 + a_2 + a_3$, so $p - p(1) = a_1(x-1) + a_2(x^2-1) + a_3(x^3-1)$.
+12. disputed: unverified. linear.axler.net is blocked by this machine's proxy (403 on CONNECT), so the fourth-edition numbers 2.32, 3.70 and the 3F replacement could not be checked against the text. All 17 citations (Axler 2.31, 3.59, 3.114) are left unchanged.
+13. fixed: l8 `screens[7]` feedback and explanation use $\mathbf{P}$, with the `eigen` l13 letter named once.
+14. fixed: l7 `screens[9].explain.text` uses $\dim N(\mathbf{A}^T)$ (`least-squares` l2 does use that notation).
+15. fixed: l11 `screens[3].prose` cites `eigen` l6 (positive definite is bolded there).
+16. fixed: l5 `screens[2].feedback.correct` uses $2T(1,1) + T(1,-1) = (6,2) + (1,5) = (7,7)$.
+17. fixed: l5 option G and review-2 `items[0]` option 4 compare with twice the image: $2T(1,1) = (2,2)$ and $2T(1,0) = (2,0)$.
+18. fixed: homework-3 `items[2].byKey.trans`. Recomputed: $[T](2,-1)^T = (2-2, -3) = (0,-3)$; $(2,-1)[T] = (2, 1)$.
+19. fixed: the six correct options (l1 `quiz[3]`, l2 `screens[5]`, l3 `quiz[0]`, l11 `screens[4]`, l14 `screens[1]`, review-3 `items[1]`) are now short. The 32 other key-length warnings are left as the reader advised.
+20. fixed: homework-3 `items[6].model`, sentence deleted.
+21. fixed: review-1 `items[7].title` is plain text "Coordinates of x squared".
+22. fixed: l3 `screens[7].explain.text` ("at most a plane").
+23. fixed: l1 `screens[7].prose`.
+24. fixed: l3 `screens[11]` prose and explanation use $\tfrac{1}{252}$.
+25. fixed: review-1 `items[7]`, basis $(1, x+1, (x+1)^2)$. Recomputed: $1 - 2(x+1) + (x+1)^2 = x^2$; $(x+1)^2 = x^2+2x+1$; $1 + 2(x+1) + (x+1)^2 = x^2 + 4x + 4$. Graded answer changed to $(1, -2, 1)$.
+26. fixed: review-3 `items[7]`, $\mathbf{A} = \begin{pmatrix}3&1\\1&2\end{pmatrix}$. Recomputed: $\mathbf{A}(1,-1) = (2,-1)$, norm squared 3; dot 2; diagonal $3 + 2 = 5$; all entries $3+1+1+2 = 7$; trace 5, det 5, so both eigenvalues positive. Graded answer changed from 6 to 3.
+27. fixed: homework-2 `items[7]`. Recomputed: $\mathbf{A}(1,3) = (5,15)$, $\mathbf{A}(3,-1) = (-15,5)$, so $\operatorname{diag}(5,-5)$. Graded answer changed.
+28. fixed: homework-3 `items[1]`, nodes $-1, 0, 1$. Recomputed: $\ell_1 = x(x+1)/2$ is 0, 0, 1 at the nodes, and $\ell_{-1} + \ell_0 + \ell_1 = 1$. Graded answer changed to $0.5x^2 + 0.5x$.
+29. fixed: l9 `quiz[1]`. Recomputed: $2 \times 4 = 8$, add 6, square 16. Graded answer changed from 6 to 8.
+30. fixed: l6 `screens[2].prose` (N from l6, C from l5).
+31. fixed: l8 `screens[0]` answer grid has a "Coefficient of" head column with fixed cells $1$, $x$, $x^2$. Hint highlights name canvas rows, not cell ids, so none moved.
+
+Gates:
+- Number scripts: `linear-maps-L1-numbers.py` 158 of 158, `L2` 218 of 218, `L3` 246 of 246, all exit 0.
+- Voice scan (35): 0 sentences over 35 words, 0 explanations over three sentences.
+- Validator: 0 errors, 4258 warnings; no `table-slip-key` hit; `manifest.json` unchanged.
+- Code items: none touched.
