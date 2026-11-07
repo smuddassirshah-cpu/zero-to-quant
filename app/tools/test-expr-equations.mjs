@@ -56,6 +56,56 @@ if (!audit) {
   /* input first, as the widget calls it: ('n = expr' typed, 'expr' authored) is equal, the reverse is not */
   check('authored n=expr does not accept a bare expr', !eq('\\frac{a}{c-b}', 'n=\\frac{a}{c-b}'));
   check('the same-direction equation accepts itself', eq('1<x<3', '1<x<3'));
+
+  /* ENGINE-BACKLOG 620: a function-call, decorated or subscripted left side, and the item's own expression restated.
+     Written as the widget calls it: eq(input, authored). */
+  const yes620 = [
+    ['4k+1', 'f(k)=4k+1'], ['4k+1', 'f(k) = 4k+1'], ['4k+1', '4k+1=f(k)'], ['4k+1', 'a_k=4k+1'], ['4k+1', 'f(k)=1+4k'],
+    ['5(x-4)', 'f(x)=5(x-4)'], ['5(x-4)', 'f\\left(x\\right)=5x-20'], ['0.5x+4', 'g(x)=0.5x+4'], ['0.5x+4', 'y=0.5x+4'], ['x^2', 'h(t)=x^2'],
+    ['\\frac{1}{1-r}', 'S_\\infty=\\frac{1}{1-r}'], ['\\frac{1}{1-r}', 'S_{\\infty}=\\frac{1}{1-r}'], ['2u_n+1', 'u_{n+1}=2u_n+1'], ['3n', 'a_{n+1}=3n'],
+    ['3n', '\\bar{x}=3n'], ['3n', "x'=3n"], ['3n', 'x_{\\text{max}}=3n'], ['3n', 'f(x,y)=3n'],
+    /* restated expression: both sides the same, the right equals the answer */
+    ['x^3+9x^2+27x+27', '(x+3)^3=x^3+9x^2+27x+27'], ['x^3+9x^2+27x+27', '(x+3)^3 = 27+27x+9x^2+x^3'],
+    ['16x^4-32x^3+24x^2-8x+1', '(2x-1)^4=16x^4-32x^3+24x^2-8x+1'],
+    /* a segment name of two or more letters */
+    ['\\sqrt{2}', 'OB=\\sqrt{2}'], ['\\sqrt{3}', 'TM=\\sqrt{3}'], ['x+1', 'AB=x+1'], ['\\sqrt{2}', '\\sqrt{2}=OB'],
+  ];
+  const no620 = [
+    ['4k+1', 'f(k)=4k+5'], ['4k+1', 'f(k)=4k'], ['4k+1', 'f(k)=k+4'], ['5(x-4)', 'f(x)=5(x+4)'], ['0.5x+4', 'y=5'], ['0.5x+4', 'f(x)=5'],
+    ['4x', 'f(x)=y'], ['\\frac{1}{1-r}', 'S_\\infty=\\frac{1}{r-1}'], ['2u_n+1', 'u_{n+1}=2u_n'], ['4k+1', 'f(k)=g(k)'],
+    /* restated expression with a wrong right side, or two sides that differ */
+    ['x^3+9x^2+27x+27', '(x+3)^3=x^3+27'], ['x^3+9x^2+27x+27', '(x+3)^3=x^3+3x^2+9x+27'], ['x^3+9x^2+27x+27', '(x+2)^3=x^3+9x^2+27x+27'],
+    ['x^3+9x^2+27x+27', 'x^3+27=x^3+9x^2+27x+27'], ['5', 'x+1=5'], ['x+1', 'f(x)=x+1=y'],
+    ['\\sqrt{2}', 'OB=\\sqrt{3}'], ['\\sqrt{2}', 'OB=2'], ['\\sqrt{3}', 'TM=1'], ['x', 'xy=x'], ['xy', 'xy=5'], ['x+1', 'AB=CD'],
+  ];
+  yes620.forEach(([a, b]) => check(`620 equal: ${a}  vs  ${b}`, eq(b, a)));
+  no620.forEach(([a, b]) => check(`620 unequal: ${a}  vs  ${b}`, !eq(b, a)));
+  /* the real items: correct forms pass, the listed slips still route to their own keys */
+  const exprIn = (v, out = []) => { if (Array.isArray(v)) v.forEach(x => exprIn(x, out)); else if (v && typeof v === 'object') { if (v.kind === 'expression' && typeof v.answer === 'string') out.push(v); Object.values(v).forEach(x => exprIn(x, out)); } return out; };
+  for (const [loc, i, L] of [['screens', 2, 'OB='], ['screens', 4, 'TM=']]) {
+    const d = JSON.parse(fs.readFileSync(path.join(APP, 'content/courses/trig/l4-exact-values.json'), 'utf8'));
+    for (const w of exprIn(d[loc][i])) {
+      const o = { functions: w.functions || [], integers: w.integers || [] };
+      [w.answer, ...(w.accept || [])].filter(f => eq(f, w.answer, o)).forEach(f => check(`620 trig l4 ${loc}[${i}] ${L}${f} passes`, eq(L + f, w.answer, o)));
+      for (const x of w.wrong || []) if (x.tex) { check(`620 trig l4 ${loc}[${i}] ${L}${x.id} is not the answer`, !eq(L + x.tex, w.answer, o)); check(`620 trig l4 ${loc}[${i}] ${L}${x.id} routes to its key`, eq(L + x.tex, x.tex, o)); }
+    }
+  }
+  const lefts = ['f(k)=', 'a_k=', 'f(x)=', '(x+3)^3=', '(2x-1)^4='];
+  for (const [file, loc, i] of [['series/homework-2', 'items', 0], ['series/l11-powers-of-a-bracket', 'screens', 2], ['series/homework-3', 'items', 0]]) {
+    const d = JSON.parse(fs.readFileSync(path.join(APP, 'content/courses', file + '.json'), 'utf8'));
+    for (const w of exprIn(d[loc][i])) {
+      const o = { functions: w.functions || [], integers: w.integers || [] }, all = [w.answer, ...(w.accept || [])];
+      const mine = lefts.filter(L => file !== 'series/homework-2' ? L !== 'f(k)=' && L !== 'a_k=' : L === 'f(k)=' || L === 'a_k=');
+      for (const L of mine.filter(L => !L.startsWith('(') || (L === '(x+3)^3=') === (w.answer.startsWith('x^3')) )) {
+        check(`620 item ${file} ${loc}[${i}] ${L}answer passes`, all.every(f => eq(L + f, w.answer, o)));
+        for (const x of w.wrong || []) {
+          if (!x.tex) continue;
+          check(`620 item ${file} ${loc}[${i}] ${L}${x.id} is not the answer`, !eq(L + x.tex, w.answer, o));
+          if (!L.startsWith("(")) check(`620 item ${file} ${loc}[${i}] ${L}${x.id} routes to its key`, eq(L + x.tex, x.tex, o)); // a restated expression with a wrong right side is a false equation: generic line
+        }
+      }
+    }
+  }
 }
 
 /* ---------- Part 2 and 3: content ---------- */
