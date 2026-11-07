@@ -1676,3 +1676,6 @@ Raised later (systems level 4 perf, fix pass):
 Raised later (stat-learning level 2 perf):
 - [Could] Playthrough reads `content/manifest.json`, so run after the brief's `git checkout app/content/manifest.json` it shows a new performance task as "practice only" and checks `state.perf` against the old `perf` rows. Wanted: the playthrough rebuilds the `perf` rows itself, or the retrofit brief orders validate, playthrough, then restore.
 - [Could] Homework page at 440 px: the longform toast "Write your working first. Then mark it against the model answer." from item 8 still covers the header of item 9 (a code item) in the `-440` shot of `stat-learning/homework-2`. Wanted: the toast clears when the learner moves to another item.
+
+Raised later (garch level 2 perf):
+- [Could] `playthrough.mjs --set` reads `content/manifest.json`, so run after the brief's `git checkout app/content/manifest.json` it shows a new performance task as "Performance task, practice only" (no `gates` row yet), and the shots look wrong. garch `h-garch-nll` was shot that way first. Wanted: the brief says to restore the manifest only after the playthrough, or the playthrough warns when a set holds a `performance` item with no manifest `perf` row.
