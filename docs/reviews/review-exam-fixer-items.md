@@ -29,3 +29,14 @@ Format: `N. item [index] path | severity | what is wrong, with evidence | exact 
 
 - Planted bugs: none of the five items is a `code` widget, so there were no hidden tests to probe.
 - The proposed fixes were checked by the script (numbers, grading and pytest behaviour) and by voice, not by the validator or playthrough, since this read edits no exam file. The fix pass must run both after applying them.
+
+## Fix pass
+
+1. e-gen-once: fixed. Basis: gains([80, 84, 82, 86, 85]) gives 0.05, -0.0238, 0.0488, -0.0116; the loop takes two and breaks, so `list` holds 2 (run in the script; l13 teaches the pause at `yield`).
+2. e-assert-catch: fixed. Basis: with the reset bug the four paths give 0.2, 0.1, 0.3, 0.15 against true 0.2, 0.4, 0.3, 0.25, so only b and d fail (two routes in the script); no course plants this bug (grep).
+3. e-fixture-calls prose: fixed, `import pytest` and `from risk import daily_returns` added. Basis: real pytest with a `risk` stub gives 6 passed, 4 fixture builds.
+4. e-fixture-calls whole item: no change asked. Reviewed, key 4 stands.
+5. e-gap-table: fixed. Basis: 3x - 7 fits rows 1, 4, 7 (slope 9/3 = 3 twice), so the 3 at input 3 should be 2; first two rows give 7/2 x - 15/2 (6.5 at input 4); slope 7 gives 7x - 11 (exact fractions in the script). Id, key and `pace` kept.
+6. e-truss-angle prose: fixed, split into three short sentences; no number touched.
+
+Gates: numbers.py exit 0 (83 of 83; the five stale checks that asserted the old items were rewritten to the new ones: buggy values, fixture run clean, table prose). Validator 0 errors, manifest restored. fresh-check 0 hits on all four exams at `--min-run 10`; literal greps of `app/content` for the new nouns and constants find only correct running-peak `max_drawdown` code and unrelated hits. Voice scan 0 and 0 at 35. Playthrough topic-1.1, 1.2, 0.2 and 0.3, desktop and `--mobile`: all passed.

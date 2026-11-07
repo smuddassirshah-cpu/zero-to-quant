@@ -134,15 +134,16 @@ for o in it["widget"]["options"]:
     check(f"e-assert-catch: option {o['id']} passes on a correct max_drawdown", not fails(a, true_mdd))
     if o.get("correct"): correct_ids.append(o["id"])
 check("e-assert-catch: keyed options are exactly the failing asserts", fail_ids == correct_ids == ["b", "d"], f"{fail_ids}")
-# route 2: from-first-close closed form max(0, 1 - min/first)
-ff = lambda cs: max(0.0, 1 - min(cs) / cs[0])
-check("e-assert-catch: buggy values 0.2, 0.1, 0.0, 0.0 (two routes)",
-      [round(buggy(p), 10) for p in ([100.0, 80.0], [100.0, 120.0, 90.0], [100.0, 110.0, 121.0], [50.0, 100.0, 75.0])]
-      == [round(ff(p), 10) for p in ([100.0, 80.0], [100.0, 120.0, 90.0], [100.0, 110.0, 121.0], [50.0, 100.0, 75.0])]
-      == [0.2, 0.1, 0.0, 0.0])
-check("e-assert-catch: explain 'true 0.25' for both rising paths",
-      math.isclose(true_mdd([100.0, 120.0, 90.0]), 0.25) and math.isclose(true_mdd([50.0, 100.0, 75.0]), 0.25)
-      and math.isclose((120 - 90) / 120, 0.25) and math.isclose((100 - 75) / 100, 0.25))
+# route 2: reset-at-new-high closed form, by scanning for the last high and the worst fall since it
+def reset_form(cs):
+    last_hi = max(k for k, c in enumerate(cs) if c == max(cs[:k + 1]))
+    return max(1 - c / cs[last_hi] for c in cs[last_hi:])
+PATHS = ([100.0, 80.0], [100.0, 60.0, 120.0, 108.0], [100.0, 90.0, 110.0, 77.0], [200.0, 150.0, 220.0, 187.0])
+check("e-assert-catch: buggy values 0.2, 0.1, 0.3, 0.15 (two routes)",
+      [round(buggy(p), 10) for p in PATHS] == [round(reset_form(p), 10) for p in PATHS] == [0.2, 0.1, 0.3, 0.15])
+check("e-assert-catch: explain 'true 0.4 and 0.25' for the keyed paths",
+      math.isclose(true_mdd(PATHS[1]), 0.4) and math.isclose(true_mdd(PATHS[3]), 0.25)
+      and math.isclose((100 - 60) / 100, 0.4) and math.isclose((200 - 150) / 200, 0.25))
 pl6 = json.load(open(os.path.join(CO, "pytest", "l6-many-inputs.json")))
 check("e-assert-catch evidence: pytest l6 screens[1] tests the same from-first-price bug",
       "prices[0]" in pl6["screens"][1]["prose"] and "first price" in pl6["screens"][1]["prose"])
@@ -195,13 +196,14 @@ if probe.returncode == 0:
     with tempfile.TemporaryDirectory() as td:
         counted = src.replace("def closes():\n", "def closes():\n    CALLS.append(1)\n", 1)
         body = "import pytest\nCALLS = []\n" + counted + "\ndef test_zz_report():\n    print('CALLS', len(CALLS))\n"
+        open(os.path.join(td, "risk.py"), "w").write("def daily_returns(p):\n    return [b / a - 1 for a, b in zip(p, p[1:])]\n")
         open(os.path.join(td, "test_shown.py"), "w").write(body)
         p = subprocess.run([py, "-m", "pytest", "-q", "-s", "-p", "no:cacheprovider", "test_shown.py"],
                            cwd=td, capture_output=True, text=True)
         m = re.search(r"CALLS (\d+)", p.stdout)
         check("e-fixture-calls: real pytest builds closes() 4 times (route 2)", m and int(m.group(1)) == 4, p.stdout[-200:])
-        check("e-fixture-calls evidence: the shown file raises NameError in test_no_prices",
-              "NameError" in p.stdout and "1 failed, 5 passed" in p.stdout)
+        check("e-fixture-calls: with import pytest and risk, the shown file runs clean (no NameError)",
+              "NameError" not in p.stdout and "6 passed" in p.stdout, p.stdout[-200:])
 else:
     check("e-fixture-calls: real pytest available (set PYTEST_PY)", False)
 check("FIX-3 applied: e-fixture-calls imports pytest and daily_returns",
@@ -211,7 +213,7 @@ check("FIX-3 applied: e-fixture-calls imports pytest and daily_returns",
 i, it = ITEMS["e-gap-table"]
 xs, ys = [1, 3, 4, 7], [-4, 2, 5, 14]
 check("e-gap-table: prose lists inputs 1, 3, 4, 7 and outputs -4, 2, 5, 14",
-      "Inputs 1, 3, 4 and 7 give outputs −4, 2, 5 and 14" in it["prose"])
+      "for inputs 1, 3, 4 and 7" in it["prose"] and "outputs −4, 3, 5 and 14" in it["prose"])
 check("e-gap-table: 3x - 7 fits every row", all(3 * x - 7 == y for x, y in zip(xs, ys)))
 slopes = {F(ys[k + 1] - ys[k], xs[k + 1] - xs[k]) for k in range(3)}
 check("e-gap-table: every step climbs 3 per unit (route 2)", slopes == {3})
