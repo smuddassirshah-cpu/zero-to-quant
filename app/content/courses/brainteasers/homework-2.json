@@ -493,6 +493,87 @@
    "explain": {
     "text": "The interviewer wants the trip count first, then a case split on the two slowest. Ending with the 18-minute plan shows the bound is tight."
    }
+  },
+  {
+   "id": "hw9-circle-hats",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "bz-strategy",
+    "bz-invariant"
+   ],
+   "title": "Hats round a circle",
+   "prose": "People stand in a circle, each in a red or a blue hat, written 0 and 1. Each sees only the two people beside them, never their own hat. Everyone guesses their own colour at the same moment, with no signals, after agreeing a plan. Person $i$ of $n$, counted round the circle from 0, sees `left` and `right`: the hats of persons $i - 1$ and $i + 1$, modulo $n$. Your plan must get at least $\\lfloor n/2 \\rfloor$ guesses right for every colouring, for every $n \\ge 2$. `worst_case(n)` is defined for you: it plays every colouring and returns the fewest right.",
+   "question": "Design the plan and write `guess(i, n, left, right)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "def guess(i, n, left, right):\n    # 0 is red, 1 is blue\n    return 0\n",
+    "solution": "def guess(i, n, left, right):\n    # pairs (0, 1), (2, 3), ...: partners see each other\n    if i % 2 == 0:\n        if i + 1 < n:\n            return right      # bet the hats match\n        return 0              # odd n: the last person has no partner\n    return 1 - left           # bet the hats differ\n",
+    "postlude": "import random as _random\nfrom itertools import product as _product\n\ndef worst_case(n):\n    # every (colouring, person) pair, in a shuffled order\n    jobs = [(h, i) for h in _product((0, 1), repeat=n) for i in range(n)]\n    _random.Random(n).shuffle(jobs)\n    right = {}\n    for h, i in jobs:\n        g = guess(i, n, h[(i - 1) % n], h[(i + 1) % n])\n        right[h] = right.get(h, 0) + (1 if g == h[i] else 0)\n    return min(right.values())\n",
+    "examples": [
+     {
+      "call": "worst_case(6)",
+      "expect": "3",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "worst_case(2)",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "worst_case(3)",
+      "expect": "1",
+      "compare": "equal"
+     },
+     {
+      "call": "worst_case(4)",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "worst_case(5)",
+      "expect": "2",
+      "compare": "equal"
+     },
+     {
+      "call": "worst_case(7)",
+      "expect": "3",
+      "compare": "equal"
+     },
+     {
+      "call": "worst_case(8)",
+      "expect": "4",
+      "compare": "equal"
+     },
+     {
+      "call": "worst_case(9)",
+      "expect": "4",
+      "compare": "equal"
+     },
+     {
+      "call": "worst_case(10)",
+      "expect": "5",
+      "compare": "equal"
+     },
+     {
+      "call": "worst_case(12)",
+      "expect": "6",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 9 hidden tests of `worst_case(n)`, for circles of 2 to 12 people, odd sizes included."
+   },
+   "feedback": {
+    "correct": "Each pair covers both cases, match and differ, so one of every pair is right.",
+    "generic": "Not quite right. Find a colouring where your plan gets fewer than half right, then pair people who see each other."
+   },
+   "explain": {
+    "text": "Pair persons $2m$ and $2m + 1$, who see each other. One bets the hats match and the other bets they differ, so exactly one is right whatever the hats. No plan does better: each guess is right on half the colourings, so the average is $n/2$."
+   }
   }
  ]
 }
