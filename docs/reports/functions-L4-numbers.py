@@ -195,8 +195,9 @@ E("review", "items[6].widget.answer", 6 * 3)
 E("review", "items[7].widget.answer", 2 * (call(110) - 3))
 E("review", "items[7].widget.wrong[1].value", 2 * call(110) - 3)
 E("review", "items[8].feedback.correct", round(200 * 1.05 * 0.95, 2))
-E("review", "items[8].explain.text", round(math.log(1.05 * 0.95), 4))
-E("review", "items[8].explain.text", round(1.05 * 0.95, 4))
+E("review", "items[8].explain.text", round(200 * 1.05 * 0.95, 2))
+E("review", "items[8].explain.text", round((1 - 1.05 * 0.95) * 100, 2))
+lv.claim(math.log(1.05 * 0.95) < 0, "review-4 items[8] log ends lower")
 
 # ---------------- homework-4 ----------------
 lv.claim(same(lambda x: -x * x + 5, lambda x: 5 - x * x), "homework-4 items[0] -x^2 + 5 = 5 - x^2")

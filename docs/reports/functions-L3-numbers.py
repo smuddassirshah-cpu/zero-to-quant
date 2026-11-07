@@ -102,7 +102,8 @@ lv.stated("l11", "screens[6].widget.options[1].why", "You picked where the curve
           max(above) < 2)                      # h > 0 also for every x > 2 on the canvas, so -1 < x < 2 is not "where it sits above"
 k = lambda x: x * x - x - 2
 lv.claim(roots_quad(1, -1, -2) == [-1, 2], "l11 s7 roots -1 and 2")
-E("l11", "screens[7].widget.options[3].why", k(0.5))
+lv.claim(k(1) == -2 and k(-2) == 4, "l11 s7 option d: f(1) = -2, not 0 (and f(-2) = 4)")
+E("l11", "screens[7].widget.options[3].why", k(1))
 E("l11", "screens[7].explain.text", k(0))
 E("l11", "screens[8].widget.options[0].text", (0 - 5) * (0 + 2))
 E("l11", "screens[8].widget.options[3].text", -5 + 2)
@@ -112,9 +113,12 @@ E("l11", "screens[9].widget.answer", 105)
 E("l11", "screens[9].widget.wrong[1].value", sm(105))
 q = lambda x: x * x + 2 * x - 3
 lv.claim(roots_quad(1, 2, -3) == [-3, 1] and q(-1) == -4 and q(0) == -3, "l11 quiz0 roots -3, 1; turning (-1, -4); f(0) = -3")
-q1 = lambda x: x * x - 6 * x + 5
+q1 = lambda x: x * x - 6 * x + 8
 E("l11", "quiz[1].widget.answer", q1(0))
-E("l11", "quiz[1].widget.wrong[1].value", q1(3))
+E("l11", "quiz[1].widget.wrong[0].value", 2)
+E("l11", "quiz[1].widget.wrong[1].value", 4)
+E("l11", "quiz[1].widget.wrong[2].value", q1(3))
+lv.claim(roots_quad(1, -6, 8) == [2, 4], "l11 quiz1 roots 2 and 4")
 lv.claim(q1(0) not in roots_quad(1, -6, 5), "l11 quiz1 the key (y-intercept 5) is not also a root",
          f"roots are {roots_quad(1, -6, 5)}: a learner who answers the root 5 is marked right")
 q3 = lambda x: (x - 2) * (x - 6)
@@ -183,27 +187,36 @@ E("l13", "quiz[3].widget.options[0].text", 50 - 6)
 E("l13", "quiz[3].widget.options[1].text", 50 - 3)
 
 # ---------------- review-3 ----------------
-E("review", "items[0].widget.answer", (-3) ** 3)
-E("review", "items[0].widget.wrong[1].value", -3 * 3)
+E("review", "items[0].widget.answer", (-2) ** 3 + 5)
+E("review", "items[0].widget.wrong[0].value", 2 ** 3 + 5)
+E("review", "items[0].widget.wrong[1].value", -2 * 3 + 5)
+E("review", "items[0].widget.wrong[2].value", (-2) ** 2 + 5)
+E("review", "items[0].feedback.correct", (-2) ** 3)
 lv.claim(roots_quad(1, -4, 0) == [0, 4], "review-3 items[1] roots 0 and 4, turning x = 2")
 E("review", "items[1].explain.text", 2 * 2 - 4 * 2)
 E("review", "items[2].widget.answer", (18 - 3) / 6)
 E("review", "items[2].widget.wrong[0].value", 18 / 6)
-lv.claim(roots_quad(1, -2, -8) == [-2, 4], "review-3 items[3] x^2 = 2x + 8 at -2 and 4")
-E("review", "items[3].widget.wrong[0].value", 4 ** 2)
+lv.claim(roots_quad(1, -3, -4) == [-1, 4], "review-3 items[3] x^2 - 2x = x + 4 at -1 and 4")
+E("review", "items[3].widget.answer", -1)
+E("review", "items[3].widget.wrong[0].value", (-1) ** 2 - 2 * (-1))
+E("review", "items[3].widget.wrong[1].value", 4)
+lv.claim(4 ** 2 - 2 * 4 == 4 + 4, "review-3 items[3] larger crossing (4, 8)")
 E("review", "items[4].widget.options[0].text", 12 / 4)
 E("review", "items[5].widget.answer", (0 + 4) * (0 - 2))
-for x, gr in ((0.5, 5), (3, 0), (5, -4)):
-    E("review", "items[6].explain.text", 6 - 2 * x)
-E("review", "items[6].canvas", sh(0.5))
+sh2 = lambda x: 100 + 8 * x - x * x
+for x in (1, 4, 6):
+    E("review", "items[6].explain.text", 8 - 2 * x)
+    E("review", "items[6].canvas", sh2(x))
+lv.claim(sh2(1) < sh2(6) < sh2(4), "review-3 items[6] A lowest of the three, B highest")
 lv.claim(2 ** 1 == 3 - 1, "review-3 items[7] crossing at x = 1")
 
 # ---------------- homework-3 ----------------
 E("homework", "items[0].widget.answer", 6 / -4)
 E("homework", "items[0].widget.wrong[1].value", round(-4 / 6, 4))
-hf = lambda x: x * x - 8 * x + 12
-lv.claim(roots_quad(1, -8, 12) == [2, 6], "homework-3 items[1] roots 2 and 6")
-E("homework", "items[1].widget.answer", hf(4))
+hf = lambda x: x * x - 10 * x + 16
+lv.claim(roots_quad(1, -10, 16) == [2, 8], "homework-3 items[1] roots 2 and 8")
+E("homework", "items[1].widget.answer", hf(5))
+E("homework", "items[1].widget.wrong[0].value", 5)
 E("homework", "items[1].widget.wrong[1].value", hf(0))
 lv.claim([4 - x * x for x in range(-3, 4)] == [-5, 0, 3, 4, 3, 0, -5], "homework-3 items[2] heights")
 v3 = [0, 200, 150, 380, 300, 180, 260, 410, 350]
@@ -211,8 +224,9 @@ E("homework", "items[3].widget.answer", max_drawdown(v3)[0])
 E("homework", "items[3].widget.wrong[0].value", 380 - 150)
 E("homework", "items[3].widget.wrong[1].value", 410 - 350)
 E("homework", "items[3].widget.wrong[2].value", 200 - 150)
-E("homework", "items[4].widget.answer", 100 + prem + 5)
-E("homework", "items[4].widget.wrong[0].value", 100 + 5)
+E("homework", "items[4].widget.answer", 60 - (3 + 2) - 4)
+E("homework", "items[4].widget.wrong[0].value", 60 - 4)
+E("homework", "items[4].widget.wrong[1].value", 60 - (3 + 2))
 E("homework", "items[5].widget.lines[4].text", 2 ** 3 - 2 - 6)
 lv.claim(2 * 2 - 4 * 3 < 0, "homework-3 items[5] x^2 + 2x + 3 has no real root, so (2, 8) is the only crossing")
 E("homework", "items[6].widget.points[0].target", 4 / 2)
@@ -227,11 +241,11 @@ E("homework", "items[7].model", round(round(P(0.04), 2) - round(P(0.06), 2), 2))
 frac = (82.19 - 80) / (82.19 - 74.73)
 E("homework", "items[7].model", round(frac, 2))
 E("homework", "items[7].model", round(4 + frac * 2, 1))
-E("homework", "items[7].model", round(1.046 ** 5, 3))
+E("homework", "items[7].model", round(1.046 ** 5, 4))
 exact = (100 / 80) ** 0.2 - 1
 E("homework", "items[7].model", round(exact * 100, 2))
 lv.claim(exact < 0.04 + frac * 0.02, "homework-3 items[7] straight-line reading overestimates the yield")
-lv.stated("homework", "items[7].model", "100 \\div 1.252 \\approx 79.86", round(100 / 1.252, 2) == 79.86)
+lv.claim(round(100 / 1.2522, 2) == 79.86 and "100 \\div 1.252 \\approx" not in lv.text("homework", "items[7].model"), "homework items[7] 100 / 1.2522 = 79.86, old 1.252 wording gone")
 
 lv.check_wrongs()
 lv.report()
