@@ -7,7 +7,7 @@ Checks written with lv.stated() fail while a false sentence is still in the text
 (docs/reviews/review-quadratics-1-3.md) and pass once the fix pass rewords them.
 Run: python3 docs/reports/quadratics-L1-numbers.py
 """
-import os, re, sys
+import math, os, re, sys
 from fractions import Fraction as Fr
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'tools'))
 from numbers_lib import Level
@@ -302,17 +302,21 @@ choice_polys('review', 'items[3].widget', '2x^2 - 5x - 3')
 choice_polys('review', 'items[4].widget', '49x^2 - 16')
 choice_polys('review', 'items[5].widget', '5x^2 - 20x + 15')
 same_two_ways('r1 items[5] not-full', '(5x - 5)(x - 3)', '5x^2 - 20x + 15')
-P, r = 5000, 0.03
-lv.expect('review', 'items[6].widget.answer', two('r1 items[6]', round(P * (1 + r) ** 2, 6), P * (1 + 2 * r + r * r)))
-lv.expect('review', 'items[6].widget.wrong[0].value', P * (1 + 2 * r))
-lv.expect('review', 'items[6].widget.wrong[1].value', P * (1 + r * r))
-lv.expect('review', 'items[6].widget.wrong[2].value', P * (1 + r))
-lv.expect('review', 'items[6].feedback.byKey.simple', P * r * r, fmt='£{:.2f}')
+r = 0.03
+lv.expect('review', 'items[6].widget.answer', two('r1 items[6]', round((1 + r) ** 2 - 1, 6), 2 * r + r * r))
+lv.expect('review', 'items[6].widget.wrong[0].value', 2 * r)
+lv.expect('review', 'items[6].widget.wrong[1].value', r * r)
+lv.expect('review', 'items[6].widget.wrong[2].value', r)
+lv.expect('review', 'items[6].feedback.byKey.simple', r * r)
 lv.expect('review', 'items[6].explain.text', round((1 + r) ** 2, 6))
-S, r = 80, 0.05
-lv.expect('review', 'items[7].widget.answer', two('r1 items[7]', S * (1 + r) * (1 - r), S * (1 - r * r)))
-lv.expect('review', 'items[7].widget.wrong[1].value', S * (1 - 2 * r * r))
-lv.expect('review', 'items[7].explain.text', 1 - r * r)
+lv.expect('review', 'items[6].explain.text', 2 * r)
+lv.expect('review', 'items[6].explain.text', 0.0009)
+r = 0.1
+lv.expect('review', 'items[7].widget.answer', two('r1 items[7]', round(math.sqrt(0.01), 6), r))
+lv.claim(abs((1 + r) * (1 - r) - 0.99) < 1e-12, 'r1 items[7]: 1.1 x 0.9 = 0.99')
+lv.expect('review', 'items[7].widget.wrong[0].value', 0.01)
+lv.expect('review', 'items[7].widget.wrong[1].value', 0.01 / 2)
+lv.expect('review', 'items[7].explain.text', r * r)
 lv.claim(fit(-14, 40) == [(-10, -4)], 'r1 items[8]: q^2 - 14q + 40 = (q - 4)(q - 10)')
 lv.expect('review', 'items[8].widget.answer', 10)
 for i, v in enumerate((4, 14, 40)):
@@ -324,9 +328,10 @@ choice_polys('homework', 'items[1].widget', '6x^2 + 7x + 2')
 same_two_ways('h1 items[1] not-full', '(3x + 1)(2x + 2)', '6x^2 + 8x + 2')
 choice_polys('homework', 'items[2].widget', '(2x - 3)^2')
 choice_polys('homework', 'items[3].widget', '18x^2 - 8')
-lv.expect('homework', 'items[4].widget.answer', two('h1 items[4]', 1003 ** 2 - 997 ** 2, 2000 * 6))
-lv.expect('homework', 'items[4].widget.wrong[0].value', 6 ** 2)
-lv.expect('homework', 'items[4].widget.wrong[1].value', 2000)
+lv.expect('homework', 'items[4].widget.answer', two('h1 items[4]', 1003 * 997, 1000 ** 2 - 3 ** 2))
+lv.expect('homework', 'items[4].widget.wrong[0].value', 1000 ** 2 + 3 ** 2)
+lv.expect('homework', 'items[4].widget.wrong[1].value', 1000 ** 2)
+lv.expect('homework', 'items[4].explain.text', 1000 ** 2 - 3 ** 2)
 lv.expect('homework', 'items[5].widget.answer', two('h1 items[5] k', poly('(x + 6)^2')[1], 2 * 6))
 for i, v in enumerate((6, 36, 18)):
     lv.expect('homework', f'items[5].widget.wrong[{i}].value', v)
@@ -345,5 +350,6 @@ same_two_ways('h1 items[8] (b)', '(3x + 5)(3x - 5)', '9x^2 - 25')
 same_two_ways('h1 items[8] (c)', '(x + 7)(x - 1)', '(x + 3)^2 - 16')
 lv.claim(sorted({abs(p + 16 // p) for p in (1, 2, 4, -1, -2, -4)}) == [8, 10, 17], 'h1 items[8] (d): pairs for 16 add to 8, 10, 17')
 
+lv.claim(all(p * q != 9 or p + q != 0 for p in range(-9, 10) if p for q in range(-9, 10)) and all(p * q != 25 or p + q != 0 for p in range(-25, 26) if p for q in range(-25, 26)), 'l4 sums of squares x^2 + 9 and x^2 + 25: no integer pair with product c and sum 0')
 lv.check_wrongs()
 lv.report()
