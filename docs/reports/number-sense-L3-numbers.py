@@ -1,8 +1,7 @@
 """Second-read number checks for number-sense level 3 (l10 to l14, review-3, homework-3).
 
 Every graded key and wrong[] value is recomputed here. Rounding is half up (UK GCSE), done with Decimal.
-Five checks fail on the current content because the content is wrong (review-number-sense-1-3.md findings
-2, 3, 4, 5 and 7): they pass once the fix rewords the text.
+Fix pass (review-number-sense-1-3.md): the checks that failed on the original content now pass on the fixed text.
 """
 import math
 import os
@@ -62,7 +61,7 @@ num('l10', 'screens[5].widget', 3 * 2, 3 + 2, 3 ** 2, 2 ** 6)
 lv.claim(2 ** 3 + 2 ** 3 == 16 == 2 ** 4 and 2 ** 6 == 64 == 4 ** 3 == 4 * 16, 'l10 trap: 16 tiles; 2^6 and 4^3 are 64')
 lv.expect('l10', 'screens[6].widget.options[3].why', 4 ** 6)
 # Finding 2: the dividing law needs a non-zero base.
-lv.stated('l10', 'screens[7].prose', 'For any number $a$', False)
+lv.stated('l10', 'screens[7].prose', 'For any number $a$:', False)
 lv.claim(abs(1.072 ** 10 - 2) < 0.01, 'l10 screens[9]: 7.2% a year roughly doubles in 10 years')
 num('l10', 'screens[9].widget', 1000 * 2 ** 4, 1000 * 2 * 4, 1000 + 4 * 1000, 1000 * 2 ** 5)
 num('l10', 'quiz[0].widget', 3 ** 4, 3 * 4, 4 ** 3, 3 + 4, 3 ** 3)
@@ -220,7 +219,7 @@ lv.expect('review', 'items[8].widget.options[3].text', -(2 ** 4))
 num('homework', 'items[0].widget', 2 ** (10 + 4 - 11), 10 + 4 - 11, 2 ** (10 + 4 + 11), 2 ** 14)
 lv.claim((3 * 4) - 5 == 7, 'homework items[1]: x^7')
 num('homework', 'items[2].widget', hu(math.sqrt(1500), 1), 1500 / 2, hu(math.sqrt(15), 2), hu(math.sqrt(150), 2))
-for v in (D('38.7') ** 2, D('38.8') ** 2, 38 ** 2, 39 ** 2):
+for v in (D('38.75') ** 2, 38 ** 2, 39 ** 2):
     lv.expect('homework', 'items[2].explain.text', float(v))
 lv.claim(D('38.75') ** 2 > 1500, 'homework items[2]: 38.75^2 > 1,500, so the root rounds to 38.7')
 num('homework', 'items[3].widget', round(50000 * 1.27 ** 2), 50000 * (1 + 0.02 * 24), 50000 * 1.27, 50000 * 1.27 * 2)
@@ -238,10 +237,50 @@ m = lv.text('homework', 'items[6].model')
 lv.claim(abs(1.02 ** 36 - 2.04) < 0.01 and abs(240 * 1.02 ** 36 - 490) < 1, 'homework items[6]: 240 x 1.02^36 is about 490')
 for v in (float(D('1.02') ** 2), hu(1.02 ** 4, 4), hu(1.02 ** 8, 4), hu(1.02 ** 12, 3), hu(1.27 ** 2, 3), round(240 * 2.05), round(240 * 1.72)):
     lv.expect('homework', 'items[6].model', v)
-lv.claim(abs(4.9 / 9 - 0.54) < 0.005 and abs(5e-4 / 5.4e-6 - 100) < 10 and 9e13 * 5e-4 == 4.5e10, 'homework items[6] (b): 5.4 x 10^-6, about 100 times, £45 billion')
 lv.expect('homework', 'items[7].explain.text', hu(D('0.0391') * 5870 / D('19.6'), 2))
 lv.expect('homework', 'items[7].widget.options[1].text', 0.04 * 6000 / 20)
 lv.expect('homework', 'items[8].explain.text', 2 ** 30)
+
+# ---- Fix pass checks (new values only; a reverted fix fails these) ----
+def has(f, path, s):
+    lv.claim(s in lv.text(f, path), f'{f} {path} contains "{s}"')
+
+
+has('l10', 'screens[7].prose', 'For any number $a$ other than 0:')
+has('l10', 'screens[6].explain.text', 'multiplying and dividing powers')
+lv.claim(D('0.5') * D(10) ** 21 == 5 * D(10) ** 20 and D('4.5') / D('9') == D('0.5'), 'l14 screens[9]: added indices give 0.5 x 10^21 = 5 x 10^20')
+has('l14', 'screens[9].widget.options[3].text', '5 \\times 10^{20}')
+has('l14', 'screens[9].widget.options[3].why', '$0.5 \\times 10^{21} = 5 \\times 10^{20}$')
+lv.claim(D('0.9') * D(10) ** 7 == 9 * D(10) ** 6 and D('7.2') / D('8') == D('0.9'), 'review items[4]: added indices give 0.9 x 10^7 = 9 x 10^6')
+has('review', 'items[4].widget.options[1].text', '9 \\times 10^6')
+has('review', 'items[4].widget.options[1].why', '$0.9 \\times 10^7 = 9 \\times 10^6$')
+lv.claim(D(6) * D(3) == 18 and D('1e4') * D('1e-2') == 100 and 18 * D(100) == D('6e4') * D('3e-2') * 1, 'l14 quiz[3]: (6 x 10^4)(3 x 10^-2) = 18 x 10^2 is the product of the two whole numbers')
+has('l14', 'quiz[3].widget.options[3].why', 'You multiplied the two numbers')
+lv.claim(D('4.45') ** 2 == D('19.8025') < 20, 'l11 screens[8]: 4.45^2 = 19.8025 < 20, so sqrt(20) rounds to 4.5')
+has('l11', 'screens[8].explain.text', '$4.45^2 = 19.8025$')
+has('l11', 'screens[8].prose', 'one tenth apart')
+lv.claim(20 ** 3 == 8000 and 2 ** 3 == 8 and 10 ** 3 == 1000, 'l11 quiz[4]: 20 x 20 x 20 = 8,000')
+has('l11', 'quiz[4].explain.text', '$20 \\times 20 \\times 20 = 8{,}000$')
+lv.claim(D('1.02') == 1 + D('0.02'), 'l10 quiz[3]: 1 + 0.02 = 1.02')
+has('l10', 'quiz[3].prose', '$1 + 0.02 = 1.02$')
+lv.claim(D('0.6') * D('0.4') == D('0.24') and 6 * 4 == 24, 'l13 screens[7]: 6 tenths of 4 tenths is 24 hundredths = 0.24')
+has('l13', 'screens[7].explain.text', '24 hundredths')
+# homework-3 items[2]: midpoint check
+lv.claim(D('38.75') ** 2 == D('1501.5625') > 1500, 'homework items[2]: 38.75^2 = 1,501.5625 > 1,500')
+has('homework', 'items[2].explain.text', '1{,}501.5625')
+has('homework', 'items[2].feedback.correct', '1{,}501.5625 > 1{,}500')
+wd3 = node('homework', 'items[2].widget')
+b15 = [x for x in wd3['wrong'] if x['id'] == 'root-15'][0]
+lv.claim(abs(3.9 - b15['value']) <= b15['tol']['abs'] and abs(wd3['answer'] - b15['value']) > b15['tol']['abs'] and abs(math.sqrt(15) - 3.9) < 0.05, 'homework items[2]: the root-15 band holds 3.9 and not the key')
+# homework-3 items[6]: part (b) with the £7 trillion index
+lv.claim(D('1.02') ** 36 > D('2.039') and D('1.02') ** 12 > D('1.268') and round(1.02 ** 12, 2) == 1.27, 'homework items[6]: 1.02^36 = 2.0399; 1.02^12 = 1.268 rounds up to 1.27')
+has('homework', 'items[6].model', 'a touch high since 1.268 was rounded up to 1.27')
+lv.claim(D('4.9e8') / D('7e12') == D('7e-5') and D('4.9') / D('7') == D('0.7'), 'homework items[6] (b): 4.9 x 10^8 / 7 x 10^12 = 0.7 x 10^-4 = 7 x 10^-5')
+lv.claim(D('7e-3') / D('7e-5') == 100 and D('7e12') * D('7e-3') == D('4.9e10') and D('4.9e10') / D('4.9e8') == 100, 'homework items[6] (b): the note is 100 times too big; 7 x 10^-3 of £7 trillion is £49 billion')
+for s in ('$4.9 \\times 10^8$', '$7 \\times 10^{12}$', '$0.7 \\times 10^{-4} = 7 \\times 10^{-5}$', '£49 billion', 'seven hundred-thousandths'):
+    has('homework', 'items[6].model', s)
+has('homework', 'items[6].prompt', '$7 \\times 10^{-3}$ of a £7 trillion stock index')
+lv.claim('90 trillion' not in lv.text('homework', 'items[6].model') and '9 \\times 10^{13}' not in lv.text('homework', 'items[6].model'), 'homework items[6]: no trace of the old £90 trillion figures')
 
 lv.check_wrongs()
 lv.report()

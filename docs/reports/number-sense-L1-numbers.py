@@ -202,5 +202,26 @@ lv.stated('homework', 'items[7].model', 'quarter-share', False)
 for v in [F(1, 2), F(3, 5), F(2, 3), F(3, 4)]:
     lv.expect('homework', 'items[8].explain.text', v * 60)
 
+# ---- Fix pass checks (new values only; a reverted fix fails these) ----
+def has(f, path, s):
+    lv.claim(s in lv.text(f, path), f'{f} {path} contains "{s}"')
+
+
+has('homework', 'items[7].model', 'Your three-quarter share of the payout')
+lv.claim(F(3, 4) * 900 == 675, 'homework items[7]: three quarters of £900 is £675')
+ph = lv.text('l3', 'quiz[3].widget.placeholder')
+has('l3', 'quiz[3].widget.placeholder', '1/4')
+wv = [x['value'] for x in doc('l3')['quiz'][3]['widget']['wrong']]
+lv.claim(F(1, 4) != F(2 + 1, 5 + 2) and all(abs(float(F(1, 4)) - v) > 0.01 for v in wv) and abs(float(F(1, 4)) - doc('l3')['quiz'][3]['widget']['answer']) > 0.01,
+         'l3 quiz[3]: the placeholder 1/4 is neither the answer nor any wrong value')
+lv.claim(F(1, 2) * F(3, 5) == F(3, 10), 'l4 screens[2]: 1/2 x 3/5 = 3/10')
+has('l4', 'screens[2].explain.text', '\\tfrac{3}{10}')
+lv.claim(F(5, 4) == 1 + F(1, 4) and F(9, 12) == F(3, 4), 'l3 screens[5]: 5/4 = 1 1/4; l2 quiz[3]: 9/12 = 3/4')
+has('l3', 'screens[5].explain.text', '1\\tfrac{1}{4}')
+has('l2', 'quiz[3].explain.text', 'This $\\tfrac{3}{4}$ is the **simplest form** of $\\tfrac{9}{12}$')
+has('l1', 'screens[8].prose', '**numerator**')
+lv.claim((F(1, 5) - F(1, 4)) * 40 == -2 and F(1, 4) * 40 == 10 and F(1, 5) * (40 + 10) == 10, 'homework items[6]: (1/5 - 1/4) of £40 is -2; the rise is £10 and the fall (a fifth of £50) is £10')
+has('homework', 'items[6].feedback.byKey.loss', '\\tfrac{1}{5} - \\tfrac{1}{4}')
+
 lv.check_wrongs()
 lv.report()
