@@ -38,6 +38,8 @@ lv.expect("l1", "screens[1].widget.answer", two('l1 s1', (2 + 5 * 4) - (2 + 5 * 
 lv.expect("l1", "screens[2].widget.answer", two('l1 s2', gen(10, lambda u: u - 3, 6), arith(10, -3, 6)))
 lv.expect("l1", "screens[2].widget.wrong[0].value", arith(10, -3, 5))
 lv.expect("l1", "screens[2].widget.wrong[3].value", arith(10, -3, 7))
+lv.expect("l1", "screens[2].feedback.byKey.sign", arith(1, -3, 3))      # the list 1, -2, -5 (finding 11)
+lv.expect("l1", "screens[2].feedback.byKey.sign", arith(1, -3, 2))
 lv.expect("l1", "screens[3].widget.answer", two('l1 s3', 4 * 50 + 3, arith(7, 4, 50)))
 lv.expect("l1", "screens[3].widget.wrong[1].value", 7 + 50 * 4)
 lv.expect("l1", "screens[3].widget.wrong[2].value", 50 + 4)
@@ -51,6 +53,8 @@ lv.expect("l1", "screens[6].explain.text", 10 - 2 * 100)
 # the option "10, 8, 6, 4, ..." is offered as "the sequence itself" of term = 10 - 2n, which starts 8, 6, 4, 2
 seq = [10 - 2 * n for n in range(1, 5)]
 lv.stated("l1", "screens[6].widget.options[3].text", "10, 8, 6, 4", seq[:4] == [10, 8, 6, 4])
+lv.claim(lv.text("l1", "screens[6].widget.options[3].text").startswith("8, 6, 4, 2") and seq == [8, 6, 4, 2], 'l1 screens[6]: the listed sequence is 8, 6, 4, 2 (finding 1)')
+lv.expect("l1", "screens[6].explain.text", seq[0])
 lv.expect("l1", "screens[7].widget.answer", two('l1 s7', r2(gen(50.0, lambda u: u - 0.25, 8)), r2(arith(50, -0.25, 8))))
 lv.expect("l1", "screens[7].widget.wrong[0].value", 50 - 8 * 0.25)
 lv.expect("l1", "screens[7].widget.wrong[1].value", 50 + 7 * 0.25)
@@ -119,6 +123,11 @@ lv.expect("l3", "screens[5].widget.answer", two('l3 s5', geom(16, -0.5, 6), gen(
 # wrong[2] "add" (-26) and wrong[3] "times-two" (-32) match no stated slip for u6: the fixed values are below
 lv.expect("l3", "screens[5].widget.wrong[2].value", -2 - 6 - 6)          # subtract the last gap, 6, twice
 lv.expect("l3", "screens[5].widget.wrong[3].value", -2 * (-2) * (-2))     # multiply u4 by -2 twice
+lv.expect("l3", "screens[5].feedback.byKey.add", -2 - 6 - 6)
+lv.expect("l3", "screens[5].feedback.byKey.add", -0.5)
+lv.expect("l3", "screens[5].feedback.byKey.times-two", -2 * (-2))
+lv.expect("l3", "screens[5].feedback.byKey.times-two", -2 * (-2) * (-2))
+lv.expect("l3", "screens[5].feedback.byKey.times-two", -8 / 16)
 lv.expect("l3", "screens[6].widget.options[1].why", (3 * 2) ** 4)
 lv.expect("l3", "screens[6].widget.options[2].why", 3 * 2 ** 5)
 lv.expect("l3", "screens[6].widget.options[3].why", 3 + 4 * 2)
@@ -133,6 +142,8 @@ lv.expect("l3", "screens[8].canvas.params.rows[2][1]", "£1.32")
 B = 20000 * 1.01 ** 12; A = 20000 + 12 * 200
 lv.expect("l3", "screens[9].widget.answer", two('l3 s9', r2(B - A), r2(gen(20000.0, lambda u: u * 1.01, 13) - arith(20000, 200, 13))))
 lv.expect("l3", "screens[9].widget.accept", r2(B))
+lv.expect("l3", "screens[9].explain.text", r2(B - A))                    # B leads by 136.50 (finding 30)
+lv.claim(r2(gen(20000.0, lambda u: u * 1.01, 13) - arith(20000, 200, 13)) == 136.5, 'l3 s9: the lead is 136.50 by both methods')
 lv.expect("l3", "screens[9].widget.wrong[1].value", r2(B - 20000))
 lv.claim(abs(20000 * 0.01 - 200) < 1e-9, 'l3 s9: both plans gain £200.00 in month 1')
 lv.expect("l3", "quiz[0].widget.answer", two('l3 q0', 8000 * 0.5 ** 4, gen(8000, lambda u: u / 2, 5)))
@@ -197,11 +208,34 @@ y = next(n for n in range(1, 50) if 0.80 * 1.04 ** (n - 1) > 1)
 lv.expect("review", "items[8].widget.answer", two('r1 i8', y, math.ceil(math.log(1 / 0.8) / math.log(1.04)) + 1))
 lv.expect("review", "items[8].widget.accept", round(0.80 * 1.04 ** 6, 4))
 lv.expect("review", "items[8].widget.wrong[1].value", next(n for n in range(1, 50) if 0.80 + 0.032 * (n - 1) > 1))
+# review-1 items[7] and [8] reworded for freshness (finding 35): same numbers in shares and volumes
+lv.expect("review", "items[7].feedback.correct", arith(350, 125, 15))
+lv.expect("review", "items[7].feedback.correct", arith(350, 125, 14))
+lv.expect("review", "items[7].explain.text", arith(350, 125, 15))
+lv.expect("review", "items[7].explain.text", (2000 - 350) / 125)
+lv.expect("review", "items[7].widget.accept", arith(350, 125, 15))
+lv.expect("review", "items[8].feedback.correct", round(0.80 * 1.04 ** 5, 2))
+lv.expect("review", "items[8].feedback.correct", round(0.80 * 1.04 ** 6, 2))
+lv.expect("review", "items[8].feedback.byKey.y6", round(0.80 * 1.04 ** 5, 2))
+lv.expect("review", "items[8].feedback.byKey.simple", round(0.80 * 0.04, 3))
+lv.expect("review", "items[8].explain.text", round(0.80 * 1.04 ** 5, 2))
+lv.expect("review", "items[8].explain.text", round(0.80 * 1.04 ** 6, 2))
 
 # ---------------- homework-1 ----------------
 lv.claim(all(21 - 4 * n == arith(17, -4, n) for n in range(1, 9)), 'homework-1 i0: 21 - 4n')
 lv.claim(all(abs(96 * 0.5 ** (n - 1) - 192 / 2 ** n) < 1e-12 for n in range(1, 9)), 'homework-1 i1: 96 x 0.5^(n-1) = 192/2^n')
-lv.expect("homework", "items[2].widget.answer", 11 + 5)
+# homework-1 items[2] (freshness fix, finding 33): 2, 4, 8, 14, 22 has gaps 2, 4, 6, 8 growing by 2
+hs = [2]
+for g in range(2, 12, 2):
+    hs.append(hs[-1] + g)
+lv.claim(hs[:5] == [2, 4, 8, 14, 22] and hs[5] == 32 == 22 + 10, 'homework-1 i2: gaps 2, 4, 6, 8 then 10 give 32 (second method: 2 + 2(0 + 1 + ... + 5) = 32)')
+lv.claim(2 + 2 * sum(range(0, 6)) == 32 == hs[5], 'homework-1 i2: closed form 2 + n(n - 1) at n = 6 is 32')
+lv.expect("homework", "items[2].widget.answer", hs[5])
+lv.expect("homework", "items[2].widget.wrong[0].value", 22 + 8)        # repeats the last gap, 8
+lv.expect("homework", "items[2].widget.wrong[1].value", 22 * 2)        # doubles the last term
+lv.expect("homework", "items[2].feedback.byKey.add-last", 8)
+lv.expect("homework", "items[2].feedback.byKey.double", hs[3])           # the fourth term, 14, rules out doubling
+lv.expect("homework", "items[2].explain.text", hs[5])
 d = (2 - 23) / (11 - 4)
 lv.expect("homework", "items[3].widget.answer", two('h1 i3', 2 + 9 * d, 23 + 16 * d))
 lv.expect("homework", "items[3].widget.wrong[0].value", 2 + 10 * d)

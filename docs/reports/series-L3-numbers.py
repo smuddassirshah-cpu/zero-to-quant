@@ -107,9 +107,15 @@ for i, v in enumerate([108, C(4, 3) * 9, -27, -36]):
 lv.expect("l11", "screens[5].widget.answer", two('l11 s5', coef_paths([(1, 1), (2, -1)], 4, 0), C(4, 2) * 2 ** 2))
 lv.expect("l11", "screens[5].widget.wrong[3].value", C(4, 3) * 2 ** 3)   # k = 3 only; k = 1 gives 8
 lv.stated("l11", "screens[5].feedback.byKey.wrong-k", "$k = 1$ or $k = 3$", C(4, 1) * 2 == C(4, 3) * 2 ** 3)
+lv.expect("l11", "screens[5].feedback.byKey.wrong-k", C(4, 3) * 2 ** 3)          # k = 3 gives 32 x^-2 (finding 19)
+lv.claim(all((k == 2) == (4 - 2 * k == 0) for k in range(5)) and C(4, 3) * 2 ** 3 == 32 and 4 - 2 * 3 == -2, 'l11 s5: the power of x is 4 - 2k, zero only at k = 2; k = 3 leaves x^-2')
+lv.expect("l11", "screens[5].feedback.byKey.wrong-k", next(k for k in range(5) if 4 - 2 * k == 0))   # the powers cancel only at k = 2
 lv.claim((1 + 2) ** 3 == 27 and 1 + 8 == 9 and 6 + 12 == 18, 'l11 s6: 27 against 9, gap 18')
 # "never just a^n + b^n once n >= 2 and both parts are non-zero": a = 1, b = -1, n = 3 gives 0 = 0
 lv.stated("l11", "screens[6].explain.text", "is never just", (1 + -1) ** 3 != 1 ** 3 + (-1) ** 3)
+lv.claim(all(C(n, k) > 0 for n in range(2, 12) for k in range(1, n)) and (1 + -1) ** 3 == 1 ** 3 + (-1) ** 3,
+         'l11 s6: mixed terms always appear in the expansion once n >= 2 (every C(n, k) > 0), though their values can cancel (a = 1, b = -1, n = 3)')
+lv.claim('always has mixed terms once' in lv.text("l11", "screens[6].explain.text") and 'never just' not in lv.text("l11", "screens[6].explain.text"), 'l11 s6: the reworded claim is about terms, not values')
 lv.expect("l11", "screens[7].explain.text", C(7, 3))
 bal = 1000 * 1.04 ** 3
 lv.expect("l11", "screens[9].widget.answer", two('l11 s9', round(bal - 1000 - 120, 3), round(1000 * (3 * 0.04 ** 2 + 0.04 ** 3), 3)))
@@ -146,6 +152,9 @@ lv.expect("l12", "screens[7].explain.text", round(0.98 ** 5, 5))
 lv.expect("l12", "screens[8].widget.answer", two('l12 s8', 10000 * C(5, 2) * 0.04 ** 2, 10000 * 10 * 0.0016))
 exact8 = 10000 * (1.04 ** 5 - 1.2)
 lv.expect("l12", "screens[8].feedback.correct", r2(exact8))
+lv.expect("l12", "screens[8].explain.text", 10000 * C(5, 2) * 0.04 ** 2)
+lv.expect("l12", "screens[8].explain.text", r2(exact8))
+lv.claim(r2(exact8) == 166.53 and 10000 * C(5, 2) * 0.04 ** 2 == 160 and 0 < exact8 - 160 < 10, 'l12 s8: the gap 166.53 is a little more than the x^2 term, 160 (finding 20)')
 lv.claim(abs(exact8 - 160) <= 7, 'l12 s8: the exact gap lies inside the tolerance')
 for i, v in enumerate([16, 400, 320, r2(exact8 + 2000)]):
     lv.expect("l12", f"screens[8].widget.wrong[{i}].value", v)
@@ -197,7 +206,17 @@ lv.expect("l13", "quiz[3].widget.options[3].text", r2(500 / 1.06 ** 5))
 
 # ---------------- review-3 ----------------
 lv.expect("review", "items[0].widget.answer", two('r3 i0', pascal(8)[3], C(8, 3)))
-lv.expect("review", "items[1].widget.answer", two('r3 i1', len(list(itertools.combinations(range(8), 3))), C(8, 3)))
+# review-3 items[1] reworded (finding 34): 4 of 9 shares, 126 baskets (two ways), 3024 ordered picks, 24 orders
+lv.expect("review", "items[1].widget.answer", two('r3 i1', len(list(itertools.combinations(range(9), 4))), C(9, 4)))
+lv.claim(C(9, 4) == 126 == pascal(9)[4] == 3024 // 24 == len(list(itertools.permutations(range(9), 4))) // math.factorial(4), 'review-3 i1: 126 baskets, the fifth number of row 9, 3024 / 24')
+lv.expect("review", "items[1].widget.wrong[0].value", len(list(itertools.permutations(range(9), 4))))
+lv.expect("review", "items[1].widget.wrong[1].value", 9 * 4)
+lv.expect("review", "items[1].widget.wrong[2].value", 9 ** 4)
+lv.expect("review", "items[1].feedback.byKey.ordered", math.factorial(4))
+lv.expect("review", "items[1].explain.text", len(list(itertools.permutations(range(9), 4))))
+lv.expect("review", "items[1].explain.text", math.factorial(4))
+lv.expect("review", "items[1].explain.text", C(9, 4))
+lv.claim('336' not in lv.text("review", "items[1]") and 'teams' not in lv.text("review", "items[1]"), 'review-3 i1: no longer the counting lesson\'s 8 traders and 336 picks')
 lv.expect("review", "items[2].widget.options[0].text", two('r3 i2', ppow([-2, 3], 4)[2], C(4, 2) * 9 * 4))
 lv.expect("review", "items[3].widget.answer", round(1 + 25 * 0.004 + C(25, 2) * 0.004 ** 2, 6))
 lv.expect("review", "items[3].explain.text", round(1.004 ** 25, 5))
@@ -211,12 +230,19 @@ lv.claim(abs(1.001 ** 50 - 1.05) < 0.0013, 'review-3 i7: within 0.0013 of 1.0512
 lv.expect("review", "items[8].widget.answer", two('r3 i8', 100 / 0.04 - 100 / 0.05, pv(100, 0.04, 6000) - pv(100, 0.05, 6000), tol=1e-6))
 # wrong[1] "pct" says "You divided by 4 and by 5": 100/4 - 100/5 = 5, not 25
 lv.expect("review", "items[8].widget.wrong[1].value", 100 / 4 - 100 / 5)
+lv.expect("review", "items[8].feedback.byKey.pct", 100 / 4 - 100 / 5)
+lv.expect("review", "items[8].explain.text", 100 / 0.05)
+lv.expect("review", "items[8].explain.text", 100 / 0.04)
+lv.expect("review", "items[8].explain.text", 100 / 0.04 - 100 / 0.05)             # the answer, 500.00 (finding 6)
+lv.claim(abs((100 / 0.04 - 100 / 0.05) / (100 / 0.05) - 0.25) < 1e-12, 'review-3 i8: the rise is 25% of 2,000')
 
 # ---------------- homework-3 ----------------
 lv.claim(ppow([-1, 2], 4) == [1, -8, 24, -32, 16], 'homework-3 i0: (2x - 1)^4')
 lv.expect("homework", "items[1].widget.answer", two('h3 i1', ppow([1, 2], 8)[5], C(8, 5) * 32))
 lv.expect("homework", "items[2].widget.answer", two('h3 i2', coef_paths([(1, 2), (-2, -1)], 6, 0), C(6, 4) * 16))
 lv.expect("homework", "items[2].widget.wrong[2].value", C(6, 3) * (-2) ** 3)
+lv.expect("homework", "items[3].prose", 0.6)
+lv.claim(abs(0.6 * 0.6 * 0.4 - 0.144) < 1e-12 and abs(sum(0.6 ** sum(s) * 0.4 ** (3 - sum(s)) for s in itertools.product([0, 1], repeat=3) if s == (1, 1, 0)) - 0.144) < 1e-12, 'homework-3 i3: win, win, loss has chance 0.144 (the rule the item now states)')
 lv.expect("homework", "items[3].widget.answer", two('h3 i3', round(C(5, 3) * 0.6 ** 3 * 0.4 ** 2, 6), round(sum(0.6 ** sum(s) * 0.4 ** (5 - sum(s)) for s in itertools.product([0, 1], repeat=5) if sum(s) == 3), 6)))
 lv.expect("homework", "items[4].widget.answer", round(80 * (1 + 0.021 + C(21, 2) * 1e-6), 6))
 lv.claim(r2(80 * 1.001 ** 21) == 81.70, 'homework-3 i4: the exact price is £81.70 to the penny')
