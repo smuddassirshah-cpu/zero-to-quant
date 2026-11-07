@@ -4,12 +4,11 @@ Goal: a single-user, Brilliant-style interactive teaching app (vanilla JS, stati
 
 Design documents live in `docs/` (`PLAN.md` there is the product design, not this checklist). Briefs for every unwritten level are in `docs/briefs/`. Conventions are in `CLAUDE.md`.
 
-## State at HEAD (census, 2026-11-05, `node app/tools/census.mjs | tail -20`)
+## State at HEAD (census, 2026-11-07, `node app/tools/census.mjs | tail -20`)
 Figures in this file, PROGRESS.md and KNOWN_ISSUES.md come from the census, not memory; dates come from `git log` (UTC).
-- Lessons 1054 of 1214 (Stage 0 193/193, Stage 1 507/560, Stage 2 150/202, Stage 3 204/259); 79 course maps, 9 with no lesson; 243 of 279 levels fully written.
-- Reviews 243 (none sets `pass`), homework 243. Exams: 22 topic (0.1 to 0.5, 0.7, 1.1 to 1.9, 2.1 to 2.4, 3.2, 3.3, 3.5; all pass at 0.7), 1 stage (stage-0), 11 mocks with versions; 7 samples. No topic exam for 0.6, 1.10, 1.11, 2.5, 2.6, 3.1, 3.4.
-- Drills 35 non-sample (ci 10, rq 6, sy 3, oa 8, untagged 8); bank 20 files, 200 items; prep paths 23, naming 5 mocks with no file.
-- Hours: stored stage total 3,265, summed topic total 3,695.
+- Lessons 1,214 of 1,214 (Stage 0 193, Stage 1 560, Stage 2 202, Stage 3 259); 79 course maps; 279 of 279 levels fully written; reviews 279 (own pass 279), homework 279.
+- Exams: 29 topic, 4 stage, 16 mocks with versions; 7 samples. Drills 35 non-sample (oa 8); bank 20 files, 200 items; prep paths 23, no mock without a file. Hours 3,695, gap 0.
+- Second reads under the current standard: 218 of 279 levels read and fixed; 61 unread (`docs/reports/unread-levels-session-u.txt` minus the session V courses). Fable concept audit: 39 levels closed, paused (DECISIONS 7 Nov).
 
 ## Tasks (one per session; tick when committed)
 
@@ -253,10 +252,10 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 - [x] Fix pass 1.9 (`docs/reviews/review-1.9.md`; 64 of 68 fixed, 2 disputed after recompiling, 2 deferred to a cpp level 3 lesson; voice pass cpp and cpp-pricing 0 and 0)
 - [x] Second reader 2.1 then fix pass (`docs/reviews/review-2.1.md`; 38 of 42 fixed, 3 engine bullets; voice passes)
 - [x] Second reader 0.5 then fix pass (`docs/reviews/review-0.5.md`; 21 of 23 fixed, 2 engine bullets)
-- [ ] Second reader 2.2 then fix pass
-- [ ] Second reader 2.3 and 2.4 then fix pass
+- [x] Second reader 2.2 then fix pass (session V: arma, garch, coint L1 to L3; topic exam 2.2 still unread)
+- [x] Second reader 2.3 and 2.4 then fix pass (session V: alpha, backtest, opt-dash, contests L1 to L4; topic exams 2.3 and 2.4 still unread)
 - [ ] Second reader 3.1 to 3.3 then fix pass (3.3 done 3 Nov: `docs/reviews/review-<course>.md` for its five courses; 3.2 done 4 Nov: `review-ito.md`, `review-measure-prob.md`, `review-pdes.md`, `review-exam-3.2.md`; 3.1 open)
-- [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (3.2 additions done 4 Nov)
+- [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (3.2 additions done 4 Nov; session V: analysis L1 to L4 done; open: linear-maps L1 to L3, proof L1 to L3)
 - [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
 
 ### 5b. Concept audit by Fable, after all content is finished (user, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
@@ -269,7 +268,7 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 - [ ] Every course closed under the convergence rule (at most one new `wrong` per three levels)
 
 ### 6. Engine
-- [ ] Engine pass 7: backlog items 340 to 422 plus `docs/BACKLOG-INBOX.md` (was in flight; status block "Seventh pass" may be partial). Number inbox bullets from 424, clear the inbox, document in AUTHORING.md and canvas READMEs
+- [ ] Engine pass 7 (session V: items 591 to 616 done in passes A, B and 7; open: the rest of 340 to 422 and the deferred list in `docs/reports/engine-pass-7.md`): backlog items 340 to 422 plus `docs/BACKLOG-INBOX.md` (was in flight; status block "Seventh pass" may be partial). Number inbox bullets from 424, clear the inbox, document in AUTHORING.md and canvas READMEs
 - [ ] Engine pass 8: whatever the inbox holds after Stage 2 and 3 content lands
 - [ ] Full `playthrough.mjs --all --local-cdn <pkgs>` green; `validate.mjs` 0 errors; System gallery renders in both themes
 
