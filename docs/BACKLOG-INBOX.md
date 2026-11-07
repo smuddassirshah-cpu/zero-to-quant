@@ -1643,3 +1643,7 @@ Raised later (systems level 1 perf):
 Raised later (systems level 4 perf):
 - [Could] A homework or review item `question` renders as one bold line, so a markdown list in it runs together ("- N is ... - The slots ..."). systems `h4-spsc-ring` moved its specification list into `prose`. Wanted: render lists in `question`, or a validator warning on a list there.
 - [Could] C++ code widget: no threads in the WebAssembly runtime, so a single-producer, single-consumer task cannot grade its memory orders; a ring with relaxed loads and stores passes every test. Wanted: a note in AUTHORING section 3 that concurrency correctness is ungradable, or a `console` pattern for a desk ThreadSanitizer run.
+
+Raised later (puzzles level 4 perf):
+- [Should] Longform rubric row at 440 px: the points label of a `required` row is cut at the card edge ("3 points, requ"), so a phone learner cannot read that the row is required. Seen on `puzzles/homework-4` `hw4-kelly-draw` row 2 after Mark my answer. Wanted: let the label wrap under the points, or shorten it to a "Required" chip.
+- [Could] Playthrough `--set --shots`: the `-marked` shot covers one viewport, so the display equations lower in a long model answer are never seen or measured. Retrofits use a scratch Playwright script for this. Wanted: `--set` reports any `.katex-display` with scrollWidth > clientWidth after marking, or shoots the marked item at full height.
