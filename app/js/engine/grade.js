@@ -356,7 +356,18 @@
     if (!kind) return 'many';
     return kind === 'gt' ? { l: r, r: l, rel: 'lt' } : kind === 'ge' ? { l: r, r: l, rel: 'le' } : { l, r, rel: kind };
   };
-  const SYMBOL = new RegExp(`^\\s*(?:[A-Za-z]|\\\\(?:${GREEK})|\\\\(?:text|mathrm|operatorname)\\{[^{}]*\\})(?:_(?:[A-Za-z0-9]|\\{[^{}]*\\}))?\\s*$`);
+  /* Item 620: what may stand beside the "=" and be dropped: a symbol (letter, Greek letter, \text{...}), optionally decorated
+     (\hat, \bar, a prime), subscripted (S_\infty, u_{n+1}, x_{\text{max}}); or a call of such a head on symbols (f(x), g(t), f(x,y)). */
+  const BRACED = '\\{(?:[^{}]|\\{[^{}]*\\})*\\}';
+  const SYM0 = `(?:[A-Za-z]|\\\\(?:${GREEK})|\\\\(?:text|mathrm|operatorname)${BRACED})`;
+  const SYM1 = `(?:(?:\\\\(?:hat|bar|tilde|vec|dot|overline)\\s*\\{\\s*${SYM0}\\s*\\})|${SYM0})`;
+  const SUB = `(?:_(?:[A-Za-z0-9]|\\\\infty|\\\\(?:${GREEK})|${BRACED}))`;
+  const SYM = `${SYM1}${SUB}?(?:'+|\\^\\*|\\^\\{\\\\prime\\}|\\^\\{\\*\\})?`;
+  const SYMBOL = new RegExp(`^\\s*${SYM}\\s*$`);
+  const CALLSYM = new RegExp(`^\\s*${SYM}\\s*(?:\\\\left\\s*)?\\(\\s*${SYM}(?:\\s*,\\s*${SYM})*\\s*(?:\\\\right\\s*)?\\)\\s*$`);
+  /* a name of two or more letters (OB, TM, AB: a segment) is a label too, unless one of its letters is a symbol of the authored answer */
+  const nameFree = (t, b) => /^\s*[A-Za-z]{2,}\s*$/.test(t) && !String(b).replace(/\\[A-Za-z]+/g, '').split('').some(c => /[A-Za-z]/.test(c) && t.includes(c));
+  const isLabel = (t, b) => SYMBOL.test(t) || CALLSYM.test(t) || nameFree(t, b);
   const relEqual = (ce, ra, rb, cx, fns, ints) => {
     if (ra.rel !== rb.rel) return false;
     const diff = (x) => ce.parse(`\\left(${prep(x.l, cx, fns)}\\right)-\\left(${prep(x.r, cx, fns)}\\right)`);
@@ -374,7 +385,13 @@
       try {
         if (ra && rb) return relEqual(ce, ra, rb, cx0, fns, ints);
         /* a lone letter and = before or after the learner's formula: grade the formula (answer has no =) */
-        if (ra && ra.rel === 'eq') { const side = SYMBOL.test(ra.l) ? ra.r : SYMBOL.test(ra.r) ? ra.l : null; if (side != null && side.trim()) return exprEqualIn(ce, side, b, fns, ints); }
+        if (ra && ra.rel === 'eq') {
+          const side = isLabel(ra.l, b) ? ra.r : isLabel(ra.r, b) ? ra.l : null;
+          if (side != null && side.trim()) return exprEqualIn(ce, side, b, fns, ints);
+          /* item 620: the learner restated the item's own expression ("(x+3)^3 = x^3+9x^2+27x+27"): both sides must be the same
+             expression, and the side that is not the learner's own restatement must equal the answer */
+          if (ra.l.trim() && ra.r.trim() && exprEqualIn(ce, ra.l, ra.r, fns, ints)) return exprEqualIn(ce, ra.r, b, fns, ints);
+        }
       } catch { return false; }
       return false;
     }
