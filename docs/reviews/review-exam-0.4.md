@@ -75,3 +75,49 @@ Format: `N. item [index] path | severity | what is wrong, with evidence | exact 
 4. No check that an exam item needs only what its courses teach. Seven constructs here (`range` with a step, `+=`, `or`, `abs`, `is None`, a slice with no start, `int` of a float) appear in no lesson, review or homework of the topic. A reader or validator tool could list the Python operators, builtins and syntax in an item's prose code, solution and `explain`, then report those no file of the topic's courses contains. That matters most for Stage 0.
 5. Tracebacks quoted in content: 3.12 (Pyodide 0.27.7) prints a caret line under a call frame that 3.13 leaves out. An author who generates output in 3.13 drops it (`e-tap-cause`). AUTHORING section 3 or 6 could say to produce quoted tracebacks with python3.12.
 6. Reader tooling: `numbers_lib.py` has no code-item helper, so each exam reader writes a harness. This one runs the cases, finds the first failing test and plants slips. A shared `run_code_item(widget, slips)` there would remove the duplicated work.
+
+## Fix pass
+
+Edited only `app/content/exams/topic-0.4.json` and `docs/reviews/exam-0.4-scripts/numbers.py` (the validator also rewrote `manifest.json`: `topic-0.4` 45 to 60). No id renamed. Every new number was recomputed in the script, which now exits 0 under python3.12.3 (167 of 167). The script now asserts the interpreter is 3.12, checks that no hidden test repeats an example, that every `byKey` line is reached by a planted slip (a syntax-error slip for `error`), and that no item needs the seven untaught constructs.
+
+### Items
+
+1. e-typing-speed: fixed as proposed (900, wrongs 300, 180, 36; 60 x 5 x 3 = 900). Graded answer changed (70 to 900).
+2. e-three-operators: fixed (`11 / 4, 11 // 4, 3 ** 3` prints `2.75 2 27`; `3 * 3` is 9). Key text changed, key still option a.
+3. e-header-line: fixed (`head -n 30` copies 30 lines, 29 trades; wrongs 30, 40, 11). Ran in bash 5.2: 41 lines, early.csv 30. Graded answer changed (40 to 29).
+4. e-rename-pdf: fixed (plain text renamed to `.txt`; key still a; four options, lengths 39, 41, 29, 13; the `[key-length]` warning is gone).
+5. e-curly-quotes: fixed, now "Two Pythons" (version check; key a, a full path). Basis: versions compare by (major, minor), (3, 13) above (3, 10) above (3, 9); as decimals 3.13 < 3.9 (script). Graded answer's text changed, key still a.
+6. e-up-two: fixed. Path `../../research/../fx/eurusd.csv` from `notebooks` resolves by posixpath to `/home/sam/fx/eurusd.csv` (`r-h-s-f-e`, key unchanged); the ignored-`..` slip is `r-h-s-d-f-e`.
+7. e-wrong-folder: fixed as a `multi` (keys a and c; graded answer changed from one key to two). Four real runs in a throwaway tree: a and c print ok, b and d raise the quoted `FileNotFoundError: ... '../inputs/closes.csv'`.
+8. e-range-step: fixed (a `while` loop; passes give total 2, 7, 15, 26 and k 5, 8, 11, 14; prints 14; wrongs 26, 11, 17). Graded answer changed (21 to 14). No `range` step and no `+=` left.
+9. e-slice-format: fixed (`code[4:8]` of `LSE:BARC` is `BARC`, `[3:7]` is `:BAR`; 1.876 gives 1.88, cut gives 1.87). Key text changed, key still a.
+10. e-list-update option b why: fixed, "You left out `closes[1] = 100`". Recomputed: skipping the assignment gives 98 - 99 = -1; a from-1 counter gets -2, the key.
+11. e-print-or-return: fixed (prints `fee on 2500`, `fee on 1000`, `35.0`; 25.0 + 10.0 exact). Key text changed, key still a.
+12. e-code-band: fixed. Solution uses `if` and `elif` with `count = count + 1`; tests[0] is `[106.0, 100.0, 107.5, 104.9]`, band 98 to 105, expect 2 (two above). Slips: edges fail test 2, above-only test 4, below-only test 1, syntax error reaches `error`. Solution passes 8 of 8, starter fails 6 of 8. `test-1` line added.
+13. e-text-number: fixed (`25.0 12.512.5 12.50`, repetition as taught in first-python `l4`). Key text changed, key still a.
+14. e-tap-cause: fixed. The 12-space, 33-caret line inserted; the whole quoted traceback equals python3.12 output line for line (3.13 differs, so the script checks 3.12 only).
+15. e-code-biggest-move: fixed as proposed (tests[0] gives 1.95 from 1.10 and 1.95; `test-1` added; `error` reworded; the syntax-error slip reaches it). One addition beyond the review: the solution's `continue` is not taught (the script's taught check found no hit), so the solution now reads `if line.strip() != "":` around the split. `abs` is the one remaining construct from the seven: the review defines it in the prose in one line, so it is kept that way. Solution passes 8 of 8, starter fails 5 of 8.
+16. e-code-daily-returns: fixed as proposed (start from day 1's return with `if day == 1:` then `elif r > best:`, no `None`, no `or`). tests[0] `3 / 120 / 123 / 119.31` gives 2.50% and -3.00%, best day 1. Slips: best from 0 fails test 6, `>=` test 5, missing none test 3, extra read test 1 (EOFError), syntax error reaches `error`. Solution passes 7 of 7, starter fails 7 of 7.
+
+### Coverage, difficulty and time
+
+17. minutes 60 with a `pace` on every item, paces as the review lists them (sum 3,315 s, 55.3 minutes). Rule: AUTHORING section 5 says set `minutes` to the time the exam really needs, with no cap; 60 matches topic-0.6 (60 stored for 52.5 minutes of paces).
+18. No change (coverage note).
+
+### Notes
+
+19. Fixed (column-first `ls` layout; the script checks the exact spacing).
+20. Applied (optional): `fills.csv` renamed `blotter.csv` in `e-redirect-trace` prose (4) and `byKey.all-sells` (1); the script reads the prose, so no number changed.
+21. No change.
+22. No change (optional, reader's own note).
+
+Engine findings 1 to 6: deferred, already in the inbox.
+
+### Gates
+
+- Freshness: `fresh-check.mjs --exam topic-0.4 --min-run 10`: 0 hits. Literal grep of `first-python` and `terminal` (hit counts): 0 for "60 words per minute", "900 characters", `11 / 4`, `11 // 4`, `3 ** 3`, `head -n 30`, `early.csv`, `prices.txt`, `3.13.1`, `research/..`, `closes.csv`, `~/desk`, `k = k + 3`, `while total < 20`, `LSE:BARC`, `code[4:8]`, `1.876`, `fee(1000)`, `12.512.5`, `float(text) * 2`, `days_outside`, `107.5`, `biggest_move`, `64.20`, `65.05`, `119.31`, `blotter`. Incidental: `3.9.6` 10 hits in terminal `l9`, `l11`, `review-3` and `homework-3` (the same idea of reading versions part by part, other questions), `3 minutes` 1, `fee on` 0, `trades.csv` 38 (a file name only).
+- Shell items run in bash: `head -n 30` gives 30 lines (29 trades); the wildcard folder leaves 4 names; `ls -C` prints the corrected layout. Mac notes unchanged.
+- Validator: 0 errors; no warning names `topic-0.4` (both `[key-length]` warnings are gone). Manifest change: `topic-0.4` 45 to 60 only.
+- Voice (exam alone): 0 sentences over 35 words, 0 over 20, 0 explanations over three sentences (381 sentences); no em-dash, en-dash or exclamation mark.
+- Playthrough `--exam topic-0.4 --local-cdn <pkgs>`: 20 of 20, passed; `--mobile`: 20 of 20, passed.
+- `python3.12 docs/reviews/exam-0.4-scripts/numbers.py`: exit 0, 167 of 167.
