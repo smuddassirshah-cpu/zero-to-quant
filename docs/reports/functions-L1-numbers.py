@@ -95,10 +95,20 @@ W("l2", "screens", 5, 0, 3 * 31 + 1)                         # forward
 W("l2", "screens", 5, 1, round(31 / 3 - 1, 4))               # wrong-order
 W("l2", "screens", 5, 2, round((31 + 1) / 3, 4))             # add-back
 lv.claim(3 * 2 + 1 == 7 and 3 * 5 + 1 == 16, "l2 screens[5] rows 2 -> 7, 5 -> 16")
-# FINDING (misleading): three rows 2, 4, 8 do not fix f(4). x^2 - x + 2 also fits (climbs 2, 4, then 6, the l2 quiz[2] method) and gives 14.
+# four rows 2, 4, 8, 16 then f(5): doubling, 32. The climbs 2, 4, 8 are not constant, so the quiz[2] method gives no rival answer.
+t6 = [2 ** x for x in range(1, 6)]
+lv.claim(t6 == [2, 4, 8, 16, 32] and [t6[i + 1] - t6[i] for i in range(3)] == [2, 4, 8] and 2 * 5 == 10 and t6[3] + 8 == 24, "l2 screens[6] rows 2, 4, 8, 16 double; f(5) = 32; slips 10 and 24")
 q = lambda x: x * x - x + 2
-lv.claim([q(1), q(2), q(3)] == [2, 4, 8] and q(4) == 14, "l2 screens[6] x^2 - x + 2 fits rows 1 to 3 and gives f(4) = 14")
-lv.stated("l2", "screens[6].question", "What is $f(4)$?", False)
+lv.claim([q(1), q(2), q(3), q(4)] == [2, 4, 8, 14] and q(4) != 16, "l2 screens[6] the rival x^2 - x + 2 fails the fourth row (14, not 16)")
+lv.claim(lv.files['l2-table-to-rule']['screens'][6]['canvas']['params']['rows'] == [["1", "2"], ["2", "4"], ["3", "8"], ["4", "16"], ["5", "?"]], "l2 screens[6] table has four known rows and asks f(5)")
+E("l2", "screens[6].question", "What is $f(5)$?")
+E("l2", "screens[6].widget.options[1].text", "$32$")
+E("l2", "screens[6].widget.options[0].text", "$10$")
+E("l2", "screens[6].widget.options[2].text", "$24$")
+E("l2", "screens[6].hints[2].text", "so the next is 32")
+E("l2", "screens[6].feedback.correct", "$f(5) = 32$")
+E("l2", "screens[6].explain.text", "$f(5) = 32$")
+lv.claim(lv.files['l2-table-to-rule']['screens'][6]['explain']['canvas']['values'] == {"r4c1": "32"}, "l2 screens[6] explain puts 32 in the fifth row")
 lv.claim(2 * 3 == 6, "l2 screens[6] 2x gives f(3) = 6")
 E("l2", "screens[7].widget.answer", 3)
 W("l2", "screens", 7, 0, 6)
@@ -155,8 +165,9 @@ E("l4", "screens[8].widget.answer", 8)
 W("l4", "screens", 8, 0, 12)
 W("l4", "screens", 8, 1, 10)
 lv.claim(2 ** 2 == 4, "l4 quiz[1] input 4 gives 2 and -2")
-# FINDING (misleading): quiz[3] says "Three graphs are drawn on the plane" but the item has no canvas
-lv.stated("l4", "quiz[3].prose", "drawn on the plane", 'canvas' in lv.files['l4-one-output']['quiz'][3])
+# quiz[3] has no canvas, so its prose must not say the graphs are drawn on one
+E("l4", "quiz[3].prose", "Picture three graphs drawn on one pair of axes.")
+lv.claim('canvas' not in lv.files['l4-one-output']['quiz'][3], "l4 quiz[3] has no canvas, so the prose asks the learner to picture the graphs")
 
 # ---------- review-1 ----------
 r0 = lambda x: 5 - 2 * x

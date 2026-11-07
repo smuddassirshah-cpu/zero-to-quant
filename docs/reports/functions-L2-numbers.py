@@ -33,7 +33,8 @@ lv.claim(3 - (-1) == 4 and 3 - 4 == -1 and 3 - 1 == 2 and 4 - 3 == 1, "l5 screen
 E("l5", "screens[5].widget.answer", (4 + 1) / 2)
 W("l5", "screens", 5, 0, 2 * 4 - 1)        # in-as-x
 W("l5", "screens", 5, 1, (4 - 1) / 2)      # minus
-# FINDING (misleading): the placeholder "For example 1.5" is the `minus` slip's value
+# the placeholder must be neither the key (2.5) nor a slip (7, 1.5)
+E("l5", "screens[5].widget.placeholder", "For example 0.5")
 _w = lv.files['l5-plotting']['screens'][5]['widget']
 _ph = [float(x) for x in re.findall(r'-?\d+(?:\.\d+)?', _w.get('placeholder', ''))]
 lv.claim(not any(abs(p - w['value']) <= 0.01 for p in _ph for w in _w['wrong']) and not any(abs(p - _w['answer']) <= 0.01 for p in _ph),
@@ -87,9 +88,11 @@ lv.claim(-2 * 0 + 3 == 3 and -2 * 1 + 3 == 1, "l7 screens[2] (0, 3), (1, 1) on -
 E("l7", "screens[3].widget.answer", 1 - 0.5 * 4)
 lv.claim(0.5 * 4 + 1 == 3, "l7 screens[3] slip c = 1 lands at 3 above T; slip added gives c = 3")
 lv.claim(all(5 - 2 * x == -2 * x + 5 for x in range(-3, 6)), "l7 screens[5] 5 - 2x = -2x + 5")
-# FINDING (misleading): fb.first asks the learner to set m = 5, but the m slider stops at 3
+# fb.first must not ask for m = 5: the m slider stops at 3
 _c = lv.files['l7-slope-and-start']['screens'][5]['canvas']['controls']
-lv.stated("l7", "screens[5].feedback.byKey.first", "Set $m = 5$ on the slider", any(c['bind'] == 'm' and c['max'] >= 5 for c in _c))
+lv.claim(any(c['bind'] == 'm' and c['max'] == 3 for c in _c), "l7 screens[5] the m slider stops at 3")
+E("l7", "screens[5].feedback.byKey.first", "With $m = 5$ the line would climb steeply instead of falling.")
+lv.stated("l7", "screens[5].feedback.byKey.first", "on the slider", False)
 m8, c8 = line((200, F("6.95")), (800, F("12.95")))
 E("l7", "screens[8].widget.answer", float(c8))
 W("l7", "screens", 8, 0, 6.95)
@@ -136,8 +139,12 @@ ang = lambda m: math.degrees(math.atan(m))
 lv.claim(abs((180 - (ang(2) - ang(-2))) - 53.13) < 0.01, "l9 screens[3] y = 2x and y = -2x meet at about 53 degrees (the acute angle)")
 lv.claim(2 * F(-1, 2) == -1, "l9 screens[3] 2 x (-0.5) = -1")
 lv.claim(F(2, 3) * F(-3, 1) / 2 == -1 and grad((-2, 3), (F(8, 3), -4)) == F(-3, 2), "l9 screens[4] OB gradient -3/2; explain segment has gradient -1.5")
-# FINDING (misleading): "the one perpendicular pair" - every horizontal line with every vertical line is such a pair
-lv.stated("l9", "screens[5].explain.text", "This is the one perpendicular pair the rule does not cover.", False)
+# every horizontal line with every vertical line is a perpendicular pair, so the text says "kind of pair", not "the one pair"
+E("l9", "screens[5].explain.text", "This is the one kind of perpendicular pair the rule does not cover.")
+lv.stated("l9", "screens[5].explain.text", "the one perpendicular pair", False)
+lv.claim(-0.5 * 6 + 5 == 2, "l9 screens[6] point (6, 2) lies on y = -0.5x + 5")
+_p = lv.files['l9-parallel-perpendicular']['screens'][6]['canvas']
+lv.claim(_p['state']['points'][0]['x'] == 6 and _p['state']['points'][0]['y'] == 2 and 'label' not in _p['params']['functions'][1], "l9 screens[6] the label is a point at (6, 2), not a line label")
 lv.claim(2 * F(-1, 2) == -1, "l9 screens[6] product -1")
 E("l9", "screens[7].widget.answer", 0.25)
 W("l9", "screens", 7, 0, 4)
@@ -164,9 +171,15 @@ lv.claim(line((-2, 1), (2, 9)) == (2, 5) and 1 + 2 * -2 == -3, "review items[3] 
 E("review", "items[4].widget.answer", -1 / 0.2)
 W("review", "items", 4, 0, 5)
 W("review", "items", 4, 1, -0.2)
-lv.claim(F(101 - 100, 10) == F("0.1"), "review items[5] £0.10 per day")
-E("review", "items[6].widget.answer", float(F("0.015") * 400 + F("3.50")))
-W("review", "items", 6, 0, float(F("0.015") * 400))
+lv.claim(F(101 - 100, 10) == F("0.1") and F(10, 1) == 10 / F(1), "review items[5] £0.10 per month; slips 10 and 1")
+E("review", "items[5].widget.options[0].text", "£0.10 per month")
+E("review", "items[5].widget.options[2].text", "£10.00 per month")
+E("review", "items[5].widget.options[3].text", "£1.00 per month")
+E("review", "items[5].explain.text", "$1 \\div 10 = 0.10$ pounds per month")
+E("review", "items[6].widget.answer", float(F("1.50") * 4 + F("3.50")))
+W("review", "items", 6, 0, float(F("1.50") * 4))
+E("review", "items[6].explain.text", "$1.50 \\times 4 = 6.00$")
+E("review", "items[6].feedback.correct", "$1.50 \\times 4 + 3.50 = 9.50$.")
 lv.claim(1 - 3 * 2 == -5 and 3 * 2 + 1 == 7 and F(-1, 3) * 2 + F(5, 3) == 1 and 3 * 2 - 1 == 5, "review items[7] c = -5; distractor checks 7, 1, 5")
 x28 = be(50, F("0.30"), 42, F("0.80"))
 E("review", "items[8].widget.answer", float(x28))
@@ -190,8 +203,9 @@ W("homework", "items", 4, 1, 3 - (-2) * 4)
 W("homework", "items", 4, 2, float(3 + F(-1, 2) * 4))
 E("homework", "items[5].widget.answer", float((30 - F("24.60")) / F("0.18")))
 W("homework", "items", 5, 0, round(30 / 0.18, 4))
-# FINDING (wrong): "If b1 = b2 the fee lines are parallel and there is no break-even" fails when a1 = a2 as well: the lines coincide and every x breaks even
-lv.stated("homework", "items[6].widget.lines[4].text", "the fee lines are parallel and there is no break-even", False)
+# With b1 = b2 the lines are parallel only if a1 != a2 (a1 = a2 makes one line and every x breaks even)
+lv.claim(all(a1 + 2 * x != a2 + 2 * x for a1, a2 in [(1, 3), (4, 0)] for x in range(-3, 4)) and all(a + 2 * x == a + 2 * x for a in (1, 3) for x in range(-3, 4)), "homework items[6] b1 = b2: no break-even if a1 != a2, every x if a1 = a2")
+E("homework", "items[6].widget.lines[4].text", "If $b_1 = b_2$ and $a_1 \\neq a_2$, the fee lines are parallel and there is no break-even")
 mA, cA = line((200, F("5.40")), (600, F("7.80")))
 x27 = be(cA, mA, 9, F("0.002"))
 E("homework", "items[7].widget.answer", float(x27))
