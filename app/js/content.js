@@ -14,6 +14,7 @@
   const cache = new Map();        // path -> Promise<object|null>
   const known = new Map();        // path -> true (found) | false (missing)
   let drillIndex = null;
+  let examMins = null;            // manifest.examMinutes: exam id -> minutes the exam screen runs (ENGINE-BACKLOG 621); null without it
   let selfExams = null;           // manifest.selfExams: exam ids holding a longform item or a check part; null without a manifest
   let perfTasks = {};             // manifest.perf: "course/L<n>" -> { file, item, kind, how }, the levels that carry a performance task (ENGINE-BACKLOG 529)
   let drillMeta = {};             // manifest.drills: id -> { language, pattern, pace, tags, sample } read from each drill file (engine pass C, item 472)
@@ -169,6 +170,8 @@
   /* true or false from the manifest; null when there is no manifest */
   const examWritten = (id) => (manifest ? manifest.has(`exams/${id}.json`) : null);
   const exam = (id) => load(`exams/${id}.json`);
+  /* Minutes the exam screen runs for an exam id (the one value every screen shows), or null when the manifest does not say */
+  const examMinutes = (id) => (examMins && typeof examMins[id] === 'number' ? examMins[id] : null);
   /* The mock assessments written (exams/mock-*.json in the manifest), sorted by id; empty while there is no manifest */
   const mocks = () => (manifest ? [...manifest].filter(f => /^exams\/mock-[^/]+\.json$/.test(f) && !samples.has(f)).map(f => f.slice(6, -5)).sort() : []);
   /* The interview question bank (content/bank/<family>.json, ENGINE-BACKLOG 456): file ids from the manifest, sorted; none without one */
@@ -324,6 +327,7 @@
     const HRS = window.ZQ && window.ZQ.hours;
     if (HRS) (cur.stages || []).forEach(s => { s.hours = HRS.stageHours(s); });
     if (man && Array.isArray(man.files)) { manifest = new Set(man.files); manifest.forEach(f => known.set(f, true)); (Array.isArray(man.samples) ? man.samples : []).forEach(f => samples.add(f)); }
+    if (man && man.examMinutes && typeof man.examMinutes === 'object') examMins = man.examMinutes;
     if (man && Array.isArray(man.selfExams)) selfExams = new Set(man.selfExams);
     if (man && man.perf && typeof man.perf === 'object') perfTasks = man.perf;
     if (man && man.sessions && typeof man.sessions === 'object') sessions = man.sessions;
@@ -349,7 +353,7 @@
     get curriculum() { return curriculum; },
     get tracks() { return (curriculum && curriculum.tracks) || {}; },
     stages, allStages, stage, topic, topicPassed, perfOf, _setPerf: setPerf, _setReadiness: (d) => { readinessDoc = d && d.roles ? d : null; }, _setCapstones: (a) => { capstoneDoc = Array.isArray(a) ? a : []; }, _setDrillMeta: (m) => { drillMeta = m && typeof m === 'object' ? m : {}; }, perfDrillsFor, examPassedAuto, examAutoAttempts, essentialSkills, loadEssentials, examPassedAt, courseTestedOut, resumeStands, course, courses, allCourses, topicStrand, strandNoteOf, strandBadge, quantOnly, courseLessons, next, exists,
-    lesson, review, homework, exam, examWritten, mocks, bankIds, bank, drill, drills, dataFiles, drillSessionIds, drillSession, isSample, fileList,
+    lesson, review, homework, exam, examMinutes, examWritten, mocks, bankIds, bank, drill, drills, dataFiles, drillSessionIds, drillSession, isSample, fileList,
     sessionOf, courseSessionLabel, get hours() { return hoursModel; },
     readiness, prep, prepPaths, prepPath, prepRefLessons, prepSteps, prepFor, prepForCourse, prepDetail, prepChip, prepMonth, prepStageLabel: (s) => STAGE_LABEL[s] || s,
     /* Resolves when every lesson, review and homework file of a course is known to exist or not */

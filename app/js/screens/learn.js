@@ -36,7 +36,7 @@
     '2.4': ['target', 'Target rating 1,400'],
     '3.1': ['clipboard', 'Closed by a replication'],
   };
-  const examMinutes = (h) => (h <= 60 ? 45 : h <= 150 ? 60 : 90); // spec 8.2: topic exams run 45 to 90 min
+  const examMinutes = (h) => (h <= 60 ? 45 : h <= 150 ? 60 : 90); // fallback only (no manifest): spec 8.2, topic exams run 45 to 90 min; the chip reads C.examMinutes
 
   /* Stage 2 tracks, from the curriculum's track table. Steps are in study order. */
   const PATHS = [
@@ -289,7 +289,7 @@
 
       /* ---------- Topic sections ---------- */
       const examChip = (t) => {
-        const ex = exam('topic-' + t.id), min = examMinutes(t.hours);
+        const ex = exam('topic-' + t.id), min = C.examMinutes('topic-' + t.id) ?? examMinutes(t.hours);
         const sb = C.strandBadge(C.topicStrand(t), C.strandNoteOf(t.courses), 'is-sm');
         if (C.examWritten('topic-' + t.id) === false) return `<span class="zl-exam-chip is-unwritten" aria-label="${esc(`Topic exam for ${t.id} ${t.name}: not written yet.`)}">${Z.icon('shield', 'xs')}<span>Topic exam</span><span class="zl-sub">Not written yet</span>${sb}</span>`;
         const best = ex.sat ? Math.max(...ex.attempts.map(pctOf)) : 0;

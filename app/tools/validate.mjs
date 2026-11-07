@@ -1905,6 +1905,7 @@ const KINDS_OK = (it) => ['code', 'derivation', 'aloud', 'data'].includes(it.per
 
 /* Courses */
 const manifest = [];
+const examMinutesManifest = {};   // ENGINE-BACKLOG 621: exam id -> minutes the exam screen runs, read by js/content.js examMinutes
 const sessionManifest = {};   // item 10: "course/lesson" -> { session, minutes } for workshop and project lessons, read by js/content.js and js/hours.js
 const selfExams = [];   // exam ids that hold a self-marked item or a check part (same test as ZQ.state.provenance); js/content.js reads it to split old exam passes
 const holdsSelf = (d) => { const L = (w) => !!w && w.kind === 'longform'; const it = (x) => !!x && (x.kind === 'longform' || L(x.widget) || (Array.isArray(x.parts) && x.parts.some(q => q && L(q.widget)))); return (Array.isArray(d.items) && d.items.some(it)) || (Array.isArray(d.parts) && d.parts.some(p => p && (p.kind === 'check' || (Array.isArray(p.items) && p.items.some(it))))); };
@@ -2020,6 +2021,8 @@ listJSON(examDir).forEach(f => {
   const r = readJSON(file); if (!r.data) return;
   manifest.push(`exams/${f}`); noteSample(file, `exams/${f}`, r.data);
   if (holdsSelf(r.data)) selfExams.push(id);
+  /* ENGINE-BACKLOG 621: the minutes the exam screen runs (a paper's minutes or 60, summed over the papers), for the Learn chip */
+  { const d = r.data, ps = Array.isArray(d.parts) ? d.parts.filter(p => p && p.kind === 'paper') : [d]; examMinutesManifest[id] = ps.reduce((a, p) => a + (+p.minutes || 60), 0); }
   examDocs.set(id, { file, versionOf: r.data && r.data.versionOf });
   guard(file, () => checkExam(file, id, r.data, cur));
 });
@@ -2421,7 +2424,7 @@ if (SUMMARY) {
 
 if (!errors.length && WRITE_MANIFEST) {
   const mf = path.join(CONTENT, 'manifest.json');
-  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. sessions lists the workshop and project lessons with their true minutes. perf lists the levels that carry a performance task. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), sessions: Object.fromEntries(Object.keys(sessionManifest).sort().map(k => [k, sessionManifest[k]])), perf: Object.fromEntries(Object.keys(perfManifest).sort().map(k => [k, perfManifest[k]])), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
+  const body = JSON.stringify({ note: 'Written by tools/validate.mjs: every authored lesson, review, homework, exam, bank and drill file. js/content.js reads it so it never requests a file that does not exist. Run the validator after adding content. selfExams lists the exams that hold a self-marked item or a check part. examMinutes gives the minutes each exam runs. sessions lists the workshop and project lessons with their true minutes. perf lists the levels that carry a performance task. samples lists the engine sample files (sample: true), which every learner-facing list leaves out.', files: manifest.sort(), samples: samples.slice().sort(), selfExams: selfExams.slice().sort(), examMinutes: Object.fromEntries(Object.keys(examMinutesManifest).sort().map(k => [k, examMinutesManifest[k]])), sessions: Object.fromEntries(Object.keys(sessionManifest).sort().map(k => [k, sessionManifest[k]])), perf: Object.fromEntries(Object.keys(perfManifest).sort().map(k => [k, perfManifest[k]])), drills: Object.fromEntries(Object.keys(drillMeta).sort().map(k => [k, drillMeta[k]])) }, null, 2) + '\n';
   let old = ''; try { old = fs.readFileSync(mf, 'utf8'); } catch { /* first run */ }
   if (old !== body) { fs.writeFileSync(mf, body); console.log(`manifest: wrote content/manifest.json (${manifest.length} files)`); }
 }
