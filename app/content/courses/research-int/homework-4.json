@@ -638,6 +638,101 @@
       "explain": {
         "text": "$\\sqrt{10{,}412.5} = 102.04$, so the standard error is $2.0 / 102.04 = 0.0196$."
       }
+    },
+    {
+      "id": "h4-quote-at",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "rq-data"
+      ],
+      "tags": [
+        "interpolation",
+        "stale-quotes"
+      ],
+      "pace": 1200,
+      "prose": "Dealers send quotes for a bond as `(second, price)` pairs in the order they arrive, so the seconds are unsorted. A cancelled quote has price `None`, and a second may hold more than one quote. A quote can be trusted for `max_gap` seconds and no longer.\n\nThe rules for each asked second `t`:\n- Ignore cancelled quotes, and replace the prices that share a second by their mean.\n- At a quoted second, return its price.\n- Between two neighbouring quoted seconds, interpolate linearly in time. If they are more than `max_gap` apart, return `None`.\n- Before the first quoted second or after the last, hold that end price while `t` is at most `max_gap` away. Further out, return `None`.\n- With no usable quote, every answer is `None`.\n\nA desk asks for tens of thousands of seconds at a time. Each asked second must cost time in proportion to the log of the quote count.",
+      "question": "Write `quote_at(quotes, times, max_gap)`, returning a list with one price or `None` for each second in `times`, in the order given.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def quote_at(quotes, times, max_gap):\n    \"\"\"One price, or None, for each second in times, in the\n    order given. quotes is a list of (second, price) pairs in\n    any order; a price may be None. Rules are in the brief.\"\"\"\n    # Your code here\n    return []\n",
+        "solution": "import bisect\n\ndef quote_at(quotes, times, max_gap):\n    sums, counts = {}, {}\n    for t, p in quotes:\n        if p is None:\n            continue\n        sums[t] = sums.get(t, 0.0) + p\n        counts[t] = counts.get(t, 0) + 1\n    xs = sorted(sums)\n    ys = [sums[x] / counts[x] for x in xs]\n    out = []\n    for t in times:\n        if not xs:\n            out.append(None)\n            continue\n        i = bisect.bisect_left(xs, t)\n        if i < len(xs) and xs[i] == t:\n            out.append(ys[i])\n        elif i == 0:\n            out.append(ys[0] if xs[0] - t <= max_gap else None)\n        elif i == len(xs):\n            out.append(ys[-1] if t - xs[-1] <= max_gap else None)\n        elif xs[i] - xs[i - 1] > max_gap:\n            out.append(None)\n        else:\n            x0, x1, y0, y1 = xs[i - 1], xs[i], ys[i - 1], ys[i]\n            out.append(y0 + (y1 - y0) * (t - x0) / (x1 - x0))\n    return out\n",
+        "postlude": "def big_case(n=40000):\n    state = [2026]\n    def rnd(m):\n        state[0] = (state[0] * 6364136223846793005 + 1442695040888963407) % 2**64\n        return (state[0] >> 33) % m\n    quotes = []\n    for _ in range(n):\n        sec = rnd(1600000)\n        quotes.append((sec, None if rnd(20) == 0 else (9000 + rnd(2001)) / 100))\n    times = [rnd(1600400) - 200 for _ in range(n)]\n    got = quote_at(quotes, times, 120)\n    vals = [g for g in got if g is not None]\n    return [len(got) - len(vals), sum(vals)]\n",
+        "examples": [
+          {
+            "call": "quote_at([(0, 100.0), (10, 101.0)], [4], 60)",
+            "expect": "[100.4]",
+            "compare": "isclose"
+          },
+          {
+            "call": "quote_at([(10, 101.0), (0, 100.0)], [5, 20], 60)",
+            "expect": "[100.5, 101.0]",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "quote_at([(0, 100.0), (10, 101.0), (30, 99.0)], [5, 20, 10], 60)",
+            "expect": "[100.5, 100.0, 101.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "quote_at([(30, 99.0), (0, 100.0), (10, 101.0)], [25, 0, 12], 60)",
+            "expect": "[99.5, 100.0, 100.8]",
+            "compare": "isclose"
+          },
+          {
+            "call": "quote_at([(0, 100.0), (10, None), (20, 102.0), (40, None)], [10, 30], 60)",
+            "expect": "[101.0, 102.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "quote_at([(0, 100.0), (10, 101.0), (20, 100.0), (10, 103.0)], [10, 15, 5], 60)",
+            "expect": "[102.0, 101.0, 101.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "quote_at([(0, 100.0), (100, 110.0), (130, 113.0)], [50, 100, 115], 60)",
+            "expect": "[None, 110.0, 111.5]",
+            "compare": "isclose"
+          },
+          {
+            "call": "quote_at([(0, 100.0), (60, 106.0), (121, 112.1)], [30, 90, 60], 60)",
+            "expect": "[103.0, None, 106.0]",
+            "compare": "isclose"
+          },
+          {
+            "call": "quote_at([(100, 50.0), (200, 60.0)], [70, 69, 230, 231], 30)",
+            "expect": "[50.0, None, 60.0, None]",
+            "compare": "isclose"
+          },
+          {
+            "call": "[quote_at([], [1, 2], 10), quote_at([(5, None)], [5], 10), quote_at([(5, 42.0)], [5, 25, 26], 20)]",
+            "expect": "[[None, None], [None], [42.0, 42.0, None]]",
+            "compare": "isclose"
+          },
+          {
+            "call": "big_case()",
+            "expect": "[9080, 3091996.9543693475]",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 9 hidden tests. Each list is compared element by element with math.isclose (relative 1e-9), and `None` must be `None`. Test 9, `big_case()`, asks 40,000 seconds of 40,000 quotes and must finish within 5 s."
+      },
+      "feedback": {
+        "correct": "Every asked second gets the right price or `None`, in the order asked.",
+        "generic": "Not quite right. Check the first failing test against the rules.",
+        "byKey": {
+          "test-3": "Test 3 has cancelled quotes. Drop them before you look for neighbours; a cancelled price is not 0.",
+          "test-4": "Test 4 has two quotes at second 10. Their mean, 102, stands for that second.",
+          "test-6": "Test 6 has neighbours exactly `max_gap` apart, which still interpolate, and 61 apart, which do not.",
+          "test-9": "Test 9 timed out. Scanning every quote for each asked second is too slow; sort once and find each bracket by bisection."
+        }
+      },
+      "explain": {
+        "text": "Cleaning first (drop `None`, average repeats, sort) leaves sorted seconds that `bisect` can search, so each asked second costs $O(\\log n)$. The bracket decides the answer: an exact hit, an end held for at most `max_gap`, or a gap over `max_gap` that returns `None`. Answers go back in the order asked, not in sorted order."
+      }
     }
   ]
 }

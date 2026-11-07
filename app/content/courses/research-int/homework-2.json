@@ -634,6 +634,57 @@
       "explain": {
         "text": "There are 999 log returns, so lag $k$ has $999 - k$ pairs. Lag 1 gives $t = 3.93$, lag 2 gives 0.57 and lag 5 gives 0.19."
       }
+    },
+    {
+      "id": "h2-pca-aloud",
+      "performance": "aloud",
+      "difficulty": 5,
+      "skills": [
+        "rq-ml",
+        "rq-linalg"
+      ],
+      "tags": [
+        "pca-how-many"
+      ],
+      "pace": 420,
+      "question": "Start the clock and answer aloud. Then mark your answer against the model.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "An analyst ran PCA on the correlation matrix of daily returns for 50 stocks over 500 days. The eigenvalues start 20.6, 3.1 and 2.4. The other 47 fall steadily from 0.85 to about 0.17. The analyst keeps the 23 components that explain 80% and feeds them to a return forecast.\n\nA portfolio manager asks you three things. What are these components? How many would you keep? When can they mislead? Answer aloud in two minutes, using this case as your example.",
+        "seconds": 120,
+        "followUps": [
+          "The first component explains 41% of the variance. Will it explain 41% of tomorrow's returns?",
+          "Would you rather run the PCA on the covariance matrix?",
+          "In a sell-off every pair of stocks correlates at about 0.6. What happens to the first component?"
+        ],
+        "model": "**What they are.** Each component is a basket of the 50 stocks, weighted by an eigenvector of the correlation matrix. The baskets are uncorrelated, and each eigenvalue is the variance its basket carries. On correlations the eigenvalues add up to 50, one per stock, so a share is the eigenvalue over 50. The first takes $20.6/50 = 41\\%$. Nearly every stock sits in it with the same sign, so it is the market moving together. The next two, 6% and 5%, are usually one group of stocks against another.\n\n**How many.** It depends on the job. To describe the data, compare each eigenvalue with what noise alone would give. With 50 stocks and 500 days, pure noise tops out near $(1 + \\sqrt{50/500})^2 = 1.73$. The first three clear it and the fourth, 0.85, does not. The noise left after three is smaller, about 0.51 a stock, so a fairer bar is $0.51 \\times 1.73 = 0.88$. The fourth still misses it. So three components are structure, and the 80% rule adds 20 that are noise. For the forecast, choose the number by its error on later data, held out in time order.\n\n**When they mislead.** PCA ranks directions by how much the stocks move, never by how well they predict. A component with a tiny eigenvalue can carry the whole forecast, and the market component may carry none. On a covariance matrix the most volatile stocks would take over the first components; correlations treat every stock alike. The loadings also drift: in a sell-off correlations rise and the market component grows. Each component's sign is arbitrary, so fix a convention before you compare two fits.\n\n**Said aloud.** \"Each component is a basket of the stocks, ranked by how much it moves. The first is the market, at 41%. Noise alone reaches 1.73 here, so three are real, not 23. PCA ranks movement, not prediction, so I would pick the number for the forecast on held-out data.\"\n\n**The follow-ups.** (1) No. The 41% describes how the stocks move together on the same day. It says nothing about tomorrow, so any forecast from it must be tested out of sample. (2) Only if the stocks had similar volatilities. Otherwise the most volatile names take over the first components, so correlations are the safer default for returns. (3) When every pair correlates at $\\rho$, the first eigenvalue is $1 + 49\\rho$, and today's 20.6 matches $\\rho = 0.4$. At 0.6 it becomes $1 + 49 \\times 0.6 = 30.4$, a 61% share against 41% now. Baskets fitted in calm markets then describe a stressed market badly, so refit on a rolling window.",
+        "rubric": [
+          {
+            "points": 3,
+            "text": "What they are: uncorrelated baskets weighted by the eigenvectors, each share its eigenvalue over 50. Names the first, 41%, as the market"
+          },
+          {
+            "points": 3,
+            "text": "How many: noise alone reaches about 1.73 here, so three are structure and the 80% rule adds 20 of noise. For the forecast, chooses the number on held-out data in time order",
+            "required": true
+          },
+          {
+            "points": 3,
+            "text": "When they mislead: PCA ranks variance, not relevance, so a small component can carry the forecast. Adds one more: units, drifting loadings or arbitrary signs. Tick only if both are given"
+          },
+          {
+            "points": 1,
+            "text": "Plain words, with each term such as eigenvalue said in words, and finished inside two minutes"
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare what you said with the model and tick the rubric.",
+        "generic": "Compare what you said with the model and tick the rubric."
+      },
+      "explain": {
+        "text": "Each component is an uncorrelated basket ranked by variance, and the first carries $20.6/50 = 41\\%$. Noise alone reaches $(1 + \\sqrt{0.1})^2 = 1.73$, so three components are structure and the 80% rule adds 20 of noise. PCA ranks movement, not prediction, so the forecast's number comes from held-out error."
+      }
     }
   ]
 }
