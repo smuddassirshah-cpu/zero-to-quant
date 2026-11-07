@@ -55,6 +55,7 @@ lv.expect('l9', 'quiz[1].widget.answer', 82.00 / 80.00 - 1); two(82 / 80 - 1, F(
 lv.expect('l9', 'quiz[1].widget.wrong[0].value', round(82.00 / 84.00 - 1, 4))
 lv.expect('l9', 'quiz[1].widget.wrong[1].value', 84.00 / 80.00 - 1)
 lv.claim(f"Return: {0.0375:.2%}" == 'Return: 3.75%', 'l9 quiz[3]: format_return(0.0375)')
+lv.claim('prices.csv' in lv.text('l9', 'screens[8].explain.text') and 'build the text and print the returns' in lv.text('l9', 'screens[8].explain.text'), 'l9 screens[8]: the explanation describes the last two lines of the code')
 lv.claim_text('l9', 'screens[8].explain.text', 'one line that reads the file and one loop that prints', False,
               'l9 screens[8]: the script shown builds a text literal and prints once; no file, no loop')
 
@@ -144,6 +145,9 @@ st, ms = [4, 2, 3, 7, 5], [0, 0, 3, 0, 2]
 lv.claim(sum(st) == 21 and sum(ms) == 5 and round(100 * (21 - 5) / 21) == 76 and round(100 * 3 / 5) == 60, 'l12 screens[3]: TOTAL 21, 5, 76%')
 lv.expect('l12', 'screens[4].widget.answer', round(19 / 21, 4)); two(19 / 21, F(19, 21), 'l12 19/21')
 avg = statistics.mean([1, 1, 1, 1, 0.6])
+two(avg, F(4 * 100 + 60, 5 * 100), 'l12 average of five coverages')
+lv.claim(avg == 0.92 and round(100 * 19 / 21, 2) == 90.48 and (4 * 100 + 60) / 5 == 92.0, 'l12 screens[4]: 19/21 is 90.48% and the plain average of five percentages is 92%')
+lv.expect('l12', 'screens[4].explain.text', 92); lv.expect('l12', 'screens[4].explain.text', round(100 * 19 / 21, 2))
 lv.expect('l12', 'screens[4].widget.wrong[0].value', avg); lv.expect('l12', 'screens[4].widget.wrong[2].value', round(2 / 21, 4))
 lv.expect('l12', 'screens[9].canvas.params.rows[2][1]', 5)
 lv.expect('l12', 'quiz[1].widget.answer', (40 - 6) / 40); two((40 - 6) / 40, F(17, 20), 'l12 34/40')
@@ -167,6 +171,11 @@ lv.expect('review', 'items[5].widget.wrong[0].value', sum(p5) * 2.50)
 lv.expect('review', 'items[5].widget.wrong[1].value', 2 * 2.50)
 buys = sum(1 for a, b in zip(p5, p5[1:]) if b > a)
 lv.claim(buys * 2.50 == 7.5 and (ch5 - 1) * 2.50 == 10.0, 'review-3 items[5]: 7.5 is three buys; four changes cost 10.0')
+bk = lv.text('review', 'items[5].feedback.byKey')
+lv.claim('only the three buys' in bk and 'five changes' in bk and ch5 == 5 and buys == 3 and 'You missed the last change' not in bk,
+         'review-3 items[5]: byKey.buys says three buys and five changes in all (3 buys + 2 sells)')
+lv.claim([w['id'] for w in lv._file('review')[1]['items'][5]['widget']['wrong']] == ['held', 'trips', 'buys'] and 3 * 2.50 == 7.5,
+         'review-3 items[5]: the 7.5 wrong value is id buys (three trades), not four')
 lv.claim_text('review', 'items[5].feedback.byKey', 'You missed the last change', False,
               'review-3 items[5]: missing the last change gives £10.00, not £7.50; £7.50 is the three buys alone')
 lv.expect('review', 'items[6].widget.answer', (25 - 8) / 25); two((25 - 8) / 25, F(17, 25), 'r3 cover')

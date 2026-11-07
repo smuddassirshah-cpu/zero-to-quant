@@ -16,7 +16,7 @@
     {
       "type": "problem",
       "difficulty": 1,
-      "prose": "A hand-made price path: five closes we chose ourselves. **Maximum drawdown** is the worst fall from a running peak, as a fraction of that peak.",
+      "prose": "A hand-made price path: five closes we chose ourselves. **Maximum drawdown** is the worst fall from a running peak, as a fraction of that peak. Here it is a positive fraction, 0.25 for a 25% fall, as in l3; l5 to l8 wrote the same fall as −0.25.",
       "canvas": {
         "kind": "series",
         "params": {
@@ -343,7 +343,7 @@
     {
       "type": "ladder",
       "difficulty": 2,
-      "prose": "In First Python, `max_drawdown` crashed with `range(1, len(prices) + 1)`. A rushed fix stopped the crash:\n\n```python\nfor i in range(1, len(prices) - 1):\n```\nOn the hook path it still gives 0.25.",
+      "prose": "In First Python Scripts (l10), `max_drawdown` crashed with `range(1, len(prices) + 1)`. A rushed fix stopped the crash:\n\n```python\nfor i in range(1, len(prices) - 1):\n```\nOn the hook path it still gives 0.25.",
       "canvas": {
         "kind": "array",
         "params": {
@@ -484,43 +484,51 @@
         "solution": "import math\n\nimport pytest\n\n\ndef max_drawdown(prices):\n    peak = prices[0]\n    worst = 0.0\n    for price in prices[1:]:\n        peak = max(peak, price)\n        worst = max(worst, (peak - price) / peak)\n    return worst\n\n\ndef test_max_drawdown():\n    # trough on the last day: 120.00 falls to 90.00\n    assert math.isclose(max_drawdown([100.00, 120.00, 90.00]), 0.25)\n    # a path that only rises never draws down\n    assert max_drawdown([80.00, 100.00, 120.00]) == 0.0\n    # edge case: one price\n    assert max_drawdown([120.00]) == 0.0\n",
         "tests": [
           {
-            "call": "test_max_drawdown()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "import itertools; max_drawdown = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p, max), p)])"
+            "setup": "import itertools; good = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p, max), p)])",
+            "call": "outcome(max_drawdown=good)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "max_drawdown = lambda p: max([0.0] + [(max(p[:i + 1]) - p[i]) / max(p[:i + 1]) for i in range(len(p))])"
+            "setup": "good = lambda p: max([0.0] + [(max(p[:i + 1]) - p[i]) / max(p[:i + 1]) for i in range(len(p))])",
+            "call": "outcome(max_drawdown=good)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "max_drawdown = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p[:-1], max), p[:-1])])"
+            "setup": "planted = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p[:-1], max), p[:-1])])",
+            "call": "outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "max_drawdown = lambda p: max([0.0] + [(p[0] - x) / p[0] for x in p])"
+            "setup": "planted = lambda p: max([0.0] + [(p[0] - x) / p[0] for x in p])",
+            "call": "outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "max_drawdown = lambda p: (max(p) - min(p)) / max(p)"
+            "setup": "planted = lambda p: (max(p) - min(p)) / max(p)",
+            "call": "outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "max_drawdown = lambda p: max([0.0] + [m - x for m, x in zip(itertools.accumulate(p, max), p)])"
+            "setup": "planted = lambda p: max([0.0] + [m - x for m, x in zip(itertools.accumulate(p, max), p)])",
+            "call": "outcome(max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 6 hidden tests. Each swaps in one version of `max_drawdown` and runs your test: it must pass on the two correct versions and fail on the four broken ones."
+        "how": "Check runs 6 hidden tests. Each runs your test with pytest on one version of `max_drawdown`: it must pass on the two correct versions and fail on the four broken ones. `parametrize` and fixtures work. Run examples runs your tests with pytest and prints its report.",
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False, only=None):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\"] + ([\"-k\", only] if only else []) + [\"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(only=None, **swap):\n    code = _zq_pytest(swap, only=only)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ]
       },
       "hints": [
         {
@@ -543,7 +551,7 @@
         "correct": "Your paths tell every broken version from the right one.",
         "generic": "Not quite right. The first failing test shows which version your test let through, or which correct one it failed.",
         "byKey": {
-          "test-1": "Your test failed a correct version. Check your hand-worked answers, and compare floats with `math.isclose`.",
+          "test-1": "Your test failed a correct version. Check your hand-worked answers, and compare floats with `pytest.approx`.",
           "test-3": "Your test let `skip last` through. Add a path whose worst fall ends on the last day.",
           "test-4": "Your test let `from first` through. Add a path that peaks above its first price before falling.",
           "test-5": "Your test let max − min through. Add a path that only rises: the answer is 0.",
@@ -811,43 +819,50 @@
         "solution": "def positions(closes):\n    # hold (1) on day t if the close rose from day t - 2 to day t - 1\n    return [0] + [1 if t >= 2 and closes[t - 1] > closes[t - 2] else 0\n                  for t in range(1, len(closes))]\n\n\ndef daily_pnl(closes, pos, shares, cost):\n    pnl = [0.0]\n    for t in range(1, len(closes)):\n        move = shares * pos[t] * (closes[t] - closes[t - 1])\n        trade = cost * abs(pos[t] - pos[t - 1])  # cost when the position changes\n        pnl.append(move - trade)\n    return pnl\n\n\ndef test_no_lookahead():\n    a = [100.00, 101.00, 102.00, 103.00]\n    b = [100.00, 101.00, 102.00, 95.00]   # only today's close differs\n    assert positions(a)[-1] == positions(b)[-1]\n\n\ndef test_costs():\n    # buy for day 1 (+£20.00, pay £5.00), sell for day 2 (pay £5.00)\n    pnl = daily_pnl([100.00, 102.00, 103.00], [0, 1, 0], 10, 5.00)\n    assert pnl == [0.0, 15.0, -5.0]\n",
         "tests": [
           {
-            "call": "test_no_lookahead()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "positions = lambda c: [0] + [1 if t >= 2 and c[t - 1] > c[t - 2] else 0 for t in range(1, len(c))]; daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * abs(p[t] - p[t - 1]) for t in range(1, len(c))]"
+            "setup": "good_pos = lambda c: [0] + [1 if t >= 2 and c[t - 1] > c[t - 2] else 0 for t in range(1, len(c))]; good_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * abs(p[t] - p[t - 1]) for t in range(1, len(c))]",
+            "call": "outcome('test_no_lookahead', positions=good_pos, daily_pnl=good_pnl)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_no_lookahead()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "positions = lambda c: [0] + [1 if c[t] > c[t - 1] else 0 for t in range(1, len(c))]"
+            "setup": "planted = lambda c: [0] + [1 if c[t] > c[t - 1] else 0 for t in range(1, len(c))]",
+            "call": "outcome('test_no_lookahead', positions=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_costs()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "positions = lambda c: [0] + [1 if t >= 2 and c[t - 1] > c[t - 2] else 0 for t in range(1, len(c))]; daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * abs(p[t] - p[t - 1]) for t in range(1, len(c))]"
+            "call": "outcome('test_costs', positions=good_pos, daily_pnl=good_pnl)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_costs()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) for t in range(1, len(c))]"
+            "setup": "planted = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) for t in range(1, len(c))]",
+            "call": "outcome('test_costs', daily_pnl=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_costs()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * p[t] for t in range(1, len(c))]"
+            "setup": "planted = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * p[t] for t in range(1, len(c))]",
+            "call": "outcome('test_costs', daily_pnl=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_costs()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "daily_pnl = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * s * abs(p[t] - p[t - 1]) for t in range(1, len(c))]"
+            "setup": "planted = lambda c, p, s, k: [0.0] + [s * p[t] * (c[t] - c[t - 1]) - k * s * abs(p[t] - p[t - 1]) for t in range(1, len(c))]",
+            "call": "outcome('test_costs', daily_pnl=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 6 hidden tests. `test_no_lookahead()` runs on a correct `positions` and on one that peeks at today's close. `test_costs()` runs on a correct `daily_pnl` and on three that charge costs wrongly. Each must pass on the correct one and fail on the broken ones."
+        "how": "Check runs 6 hidden tests. `test_no_lookahead` runs on a correct `positions` and on one that peeks at today's close. `test_costs` runs on a correct `daily_pnl` and on three that charge costs wrongly. Each must pass on the correct one and fail on the broken ones. Run examples runs your tests with pytest and prints its report.",
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False, only=None):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\"] + ([\"-k\", only] if only else []) + [\"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(only=None, **swap):\n    code = _zq_pytest(swap, only=only)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ]
       },
       "hints": [
         {

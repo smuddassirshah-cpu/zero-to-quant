@@ -114,7 +114,7 @@
         }
       },
       "explain": {
-        "text": "`src/` holds the code; `tests/` holds the tests and their shared fixtures. The tests import from `src/`, and nothing in `src/` imports a test.",
+        "text": "`src/` holds the code; `tests/` holds the tests and their shared fixtures. A `pyproject.toml` in the top folder with `pythonpath = [\"src\"]` under `[tool.pytest.ini_options]` lets the tests `import risk`. Nothing in `src/` imports a test.",
         "canvas": {
           "move": {
             "rk": "src",
@@ -128,7 +128,7 @@
     {
       "type": "explore",
       "difficulty": 1,
-      "prose": "Here is the project as a tree, with a `data/` folder and a workflow file under `.github/`. You type `pytest` in the top folder. pytest searches every folder for files named `test_*.py`.",
+      "prose": "Here is the project as a tree, with a `data/` folder and a workflow file under `.github/`. You type `pytest` in the top folder. pytest searches every folder for files named `test_*.py` or `*_test.py`.",
       "canvas": {
         "kind": "tree",
         "params": {
@@ -230,12 +230,12 @@
       "hints": [
         {
           "rung": "nudge",
-          "text": "Check each file name against the pattern `test_*.py`."
+          "text": "Check each file name against the patterns `test_*.py` and `*_test.py`."
         }
       ],
       "feedback": {
         "correct": "Two files match `test_*.py`.",
-        "generic": "Not quite right. Only names that start with `test_` and end in `.py` are collected.",
+        "generic": "Not quite right. Only names that match `test_*.py` or `*_test.py` are collected.",
         "byKey": {
           "with-conf": "You included `conftest.py`. pytest reads it for fixtures, but it holds no tests: its name does not start with `test_`.",
           "with-src": "You included `risk.py`. It is the code under test, imported by the tests, not a test file.",
@@ -640,7 +640,7 @@
         }
       },
       "explain": {
-        "text": "Two statements are still missed, so $19/21 \\approx 90.48\\%$ run. Averaging the percentages gives 92% because it counts the 2-line function as much as the 7-line one.",
+        "text": "Two statements are still missed, so $19/21 \\approx 90.48\\%$ run. Averaging the five percentages gives 92%, because it gives `format_report` a fifth of the weight, not its 5 of 21 statements.",
         "canvas": {
           "values": {
             "r5c2": "2",
@@ -751,7 +751,7 @@
     {
       "type": "ladder",
       "difficulty": 2,
-      "prose": "Now make GitHub run the suite. A workflow file in `.github/workflows/` runs after every push, on a fresh machine with nothing installed. Its steps run in order.",
+      "prose": "Now make GitHub run the suite. A workflow file in `.github/workflows/` runs after every push, on a fresh machine with none of your files or packages. Its steps run in order.",
       "canvas": {
         "kind": "tree",
         "params": {
@@ -857,7 +857,7 @@
       "hints": [
         {
           "rung": "nudge",
-          "text": "The machine starts empty. What must exist before pytest can run?"
+          "text": "The machine has none of your files or packages. What must exist before pytest can run?"
         },
         {
           "rung": "point",
@@ -875,19 +875,19 @@
         "correct": "Code, Python, pytest, run.",
         "generic": "Not quite right. Each step needs the ones before it.",
         "byKey": {
-          "s3": "`pip` comes with Python, so Python must be installed before `pip install pytest`.",
+          "s3": "`pip install pytest` installs into the Python that `setup-python` set up, so that step comes first.",
           "s4": "Running pytest needs the code checked out, Python and pytest all in place first.",
           "s2": "Check out the repository first: the rest of the job works on its files."
         }
       },
       "explain": {
-        "text": "Without the checkout there are no files; without Python there is no `pip`; without `pip install pytest` the last step fails with `command not found`. Order is everything on an empty machine."
+        "text": "Without the checkout there are no files, and `setup-python` installs the Python version the project uses. Without `pip install pytest`, the last step fails with `command not found`. Each step needs the ones before it."
       }
     },
     {
       "type": "problem",
       "difficulty": 3,
-      "prose": "The suite passes on your laptop. On GitHub, after a push:\n\n```text\nFAILED tests/test_risk.py::test_real_prices\nFileNotFoundError: 'data/prices.csv'\n```\nYour `.gitignore` contains the line `data/`.",
+      "prose": "The suite passes on your laptop. On GitHub, after a push:\n\n```text\nFAILED tests/test_risk.py::test_real_prices - FileNotFoundError: [Errno 2] No such file or directory: 'data/prices.csv'\n```\nYour `.gitignore` contains the line `data/`.",
       "canvas": {
         "kind": "tree",
         "params": {
@@ -1027,7 +1027,7 @@
     {
       "type": "generalise",
       "difficulty": 2,
-      "prose": "The whole setup, in one file:\n\n```yaml\n# .github/workflows/tests.yml\non: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n      - run: pip install pytest\n      - run: pytest\n```\nGitHub marks each commit with a tick or a cross.",
+      "prose": "The whole setup, in one file:\n\n```yaml\n# .github/workflows/tests.yml\non: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n      - run: pip install pytest\n      - run: pytest\n```\nBeside it, `pyproject.toml` holds `[tool.pytest.ini_options]` and `pythonpath = [\"src\"]`, so the tests can import the code. GitHub marks each commit with a tick or a cross.",
       "question": "When does this workflow run?",
       "widget": {
         "kind": "choice",
@@ -1108,55 +1108,61 @@
         "solution": "import math\nimport statistics\n\nimport pytest\n\n\n# src/risk.py\ndef simple_returns(closes):\n    return [b / a - 1 for a, b in zip(closes, closes[1:])]\n\n\ndef annualised_vol(returns):\n    return statistics.stdev(returns) * math.sqrt(252)\n\n\ndef max_drawdown(closes):\n    peak, worst = closes[0], 0.0\n    for c in closes:\n        peak = max(peak, c)\n        worst = max(worst, (peak - c) / peak)\n    return worst\n\n\n# tests/test_risk.py\ndef test_simple_returns():\n    r = simple_returns([100.00, 104.00, 101.92])\n    assert len(r) == 2\n    assert math.isclose(r[0], 0.04) and math.isclose(r[1], -0.02)\n\n\ndef test_annualised_vol():\n    # mean 0, squared distances 0.0002 over n - 1 = 1, times 252\n    assert math.isclose(annualised_vol([0.01, -0.01]), math.sqrt(0.0002 * 252))\n\n\ndef test_max_drawdown():\n    assert math.isclose(max_drawdown([100.00, 120.00, 90.00]), 0.25)  # trough last\n    assert max_drawdown([80.00, 100.00, 120.00]) == 0.0               # only rises\n",
         "tests": [
           {
-            "call": "test_simple_returns()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "import itertools, math, statistics; _ret = lambda c: [b / a - 1 for a, b in zip(c, c[1:])]; _vol = lambda r: statistics.stdev(r) * math.sqrt(252); _dd = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p, max), p)]); simple_returns, annualised_vol, max_drawdown = _ret, _vol, _dd"
+            "setup": "import itertools, math, statistics; _ret = lambda c: [b / a - 1 for a, b in zip(c, c[1:])]; _vol = lambda r: statistics.stdev(r) * math.sqrt(252); _dd = lambda p: max([0.0] + [(m - x) / m for m, x in zip(itertools.accumulate(p, max), p)])",
+            "call": "outcome('test_simple_returns', simple_returns=_ret, annualised_vol=_vol, max_drawdown=_dd)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_simple_returns()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "simple_returns = lambda c: [b / a for a, b in zip(c, c[1:])]"
+            "setup": "planted = lambda c: [b / a for a, b in zip(c, c[1:])]",
+            "call": "outcome('test_simple_returns', simple_returns=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_annualised_vol()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "simple_returns, annualised_vol = _ret, _vol"
+            "call": "outcome('test_annualised_vol', simple_returns=_ret, annualised_vol=_vol, max_drawdown=_dd)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_annualised_vol()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "annualised_vol = lambda r: statistics.pstdev(r) * math.sqrt(252)"
+            "setup": "planted = lambda r: statistics.pstdev(r) * math.sqrt(252)",
+            "call": "outcome('test_annualised_vol', annualised_vol=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_annualised_vol()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "annualised_vol = lambda r: statistics.stdev(r) * 252"
+            "setup": "planted = lambda r: statistics.stdev(r) * 252",
+            "call": "outcome('test_annualised_vol', annualised_vol=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown()",
-            "expect": "None",
-            "compare": "equal",
-            "setup": "simple_returns, annualised_vol, max_drawdown = _ret, _vol, _dd"
+            "call": "outcome('test_max_drawdown', simple_returns=_ret, annualised_vol=_vol, max_drawdown=_dd)",
+            "expect": "'passed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "max_drawdown = lambda p: (max(p) - min(p)) / max(p)"
+            "setup": "planted = lambda p: (max(p) - min(p)) / max(p)",
+            "call": "outcome('test_max_drawdown', max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           },
           {
-            "call": "test_max_drawdown()",
-            "expect": "Exception",
-            "compare": "raises",
-            "setup": "max_drawdown = lambda p: _dd(p[:-1])"
+            "setup": "planted = lambda p: _dd(p[:-1])",
+            "call": "outcome('test_max_drawdown', max_drawdown=planted)",
+            "expect": "'failed'",
+            "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests. Each of your tests runs on a correct version, where it must pass, and on broken ones, where it must fail: returns without the `- 1`, volatility with `pstdev` or times 252, drawdown as max − min or skipping the last day."
+        "how": "Check runs 8 hidden tests. Each of your tests must pass on a correct version and fail on broken ones. The broken ones drop the `- 1` from returns, use `pstdev` or 252 for volatility, and take max − min or skip the last day for drawdown. Run examples runs your tests with pytest and prints its report.",
+        "postlude": "import contextlib as _zc, inspect as _zi, io as _zio, sys as _zs\nimport pytest as _zpt\n\n\ndef _zq_pytest(swap=None, collect=False, show=False, only=None):\n    # write the learner's code to test_mine.py and run real pytest on it, with any functions swapped in\n    open(\"test_mine.py\", \"w\").write(__learner_source__)\n    _zs.modules.pop(\"test_mine\", None)\n    seen = []\n\n    class _Swap:\n        def pytest_collection_modifyitems(self, items):\n            seen.extend(items)\n            for m in {id(i.module): i.module for i in items}.values():\n                for k, v in (swap or {}).items():\n                    setattr(m, k, v)\n\n    args = [\"-q\", \"-p\", \"no:cacheprovider\"] + ([\"-k\", only] if only else []) + [\"test_mine.py\"] + ([\"--collect-only\"] if collect else [])\n    if show:\n        code = _zpt.main(args, plugins=[_Swap()])\n    else:\n        with _zc.redirect_stdout(_zio.StringIO()), _zc.redirect_stderr(_zio.StringIO()):\n            code = _zpt.main(args, plugins=[_Swap()])\n    return int(code), seen\n\n\ndef run_tests():\n    return _zq_pytest(show=True)[0]\n\n\ndef outcome(only=None, **swap):\n    code = _zq_pytest(swap, only=only)[0]\n    return {0: \"passed\", 1: \"failed\", 5: \"no tests\"}.get(code, \"error\")\n\n\ndef count(test=None, fixture=None):\n    items = _zq_pytest(collect=True)[1]\n    return sum(1 for i in items if test in (None, getattr(i, \"originalname\", i.name))\n               and (fixture is None or fixture in _zi.signature(i.function).parameters))\n\n\ndef is_fixture(f):\n    return hasattr(f, \"_pytestfixturefunction\") or type(f).__name__ == \"FixtureFunctionDefinition\"\n",
+        "examples": [
+          {
+            "call": "run_tests()",
+            "expect": "0",
+            "compare": "equal"
+          }
+        ]
       },
       "hints": [
         {
@@ -1202,7 +1208,7 @@
   ],
   "summary": {
     "ideas": [
-      "Code in `src/`, tests in `tests/`, shared fixtures in `tests/conftest.py`. `pytest` in the top folder runs the whole suite.",
+      "Code in `src/`, tests in `tests/`, shared fixtures in `tests/conftest.py`, and `pythonpath = [\"src\"]` in `pyproject.toml`. `pytest` in the top folder runs the whole suite.",
       "Coverage counts the lines the tests run. A function at 0% has no test; 100% can still be wrong if nothing asserts.",
       "A workflow in `.github/workflows/` runs `pytest` on a fresh machine after every push. Anything a test needs must be in the repository."
     ],
@@ -1241,16 +1247,16 @@
           {
             "id": "check",
             "text": "`tests/check_vol.py`",
-            "why": "pytest looks for names starting `test_`. A file named `check_` is skipped."
+            "why": "pytest looks for `test_*.py` or `*_test.py`. A file named `check_vol.py` matches neither."
           }
         ]
       },
       "feedback": {
         "correct": "`test_` at the start of the name.",
-        "generic": "Not quite right. pytest collects files named `test_*.py`."
+        "generic": "Not quite right. pytest collects files named `test_*.py` or `*_test.py`."
       },
       "explain": {
-        "text": "pytest collects files whose names start with `test_`. `conftest.py` is loaded for its fixtures, and code files are imported by the tests that need them."
+        "text": "pytest collects files named `test_*.py` or `*_test.py`. `conftest.py` is loaded for its fixtures, and code files are imported by the tests that need them."
       }
     },
     {
@@ -1366,7 +1372,7 @@
         "generic": "Not quite right. Read the error: which command is missing?"
       },
       "explain": {
-        "text": "Every run starts on an empty machine, so anything your tests need is installed by a step. `pip install pytest` puts the `pytest` command there."
+        "text": "Every run starts on a fresh machine, so anything your tests need is installed by a step. `pip install pytest` puts the `pytest` command there."
       }
     }
   ]

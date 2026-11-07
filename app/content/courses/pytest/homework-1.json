@@ -18,7 +18,7 @@
         "kind": "code",
         "language": "python",
         "starter": "import pytest\n\n\ndef max_drawdown(prices):\n    # largest fall from a running peak, as a fraction\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\n\ndef test_one_dip():\n    # a rise, a fall, a partial recovery\n    pass\n\n\ndef test_flat():\n    pass\n\n\ndef test_steady_rise():\n    pass\n",
-        "solution": "import pytest\n\n\ndef max_drawdown(prices):\n    # largest fall from a running peak, as a fraction\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\n\ndef test_one_dip():\n    # a rise, a fall, a partial recovery\n    # peak £125.00, low after it £100.00: 25 / 125\n    dd = max_drawdown([100.00, 125.00, 100.00, 110.00])\n    assert dd == pytest.approx(0.2)\n\n\ndef test_flat():\n    dd = max_drawdown([100.00, 100.00, 100.00])\n    assert dd == pytest.approx(0.0)\n\n\ndef test_steady_rise():\n    dd = max_drawdown([100.00, 110.00, 121.00])\n    assert dd == pytest.approx(0.0)\n",
+        "solution": "import pytest\n\n\ndef max_drawdown(prices):\n    # largest fall from a running peak, as a fraction\n    peak, worst = prices[0], 0.0\n    for p in prices:\n        peak = max(peak, p)\n        worst = max(worst, (peak - p) / peak)\n    return worst\n\n\ndef test_one_dip():\n    # a rise, a fall, a partial recovery\n    # peak £50.00, low after it £35.00: 15 / 50\n    dd = max_drawdown([40.00, 50.00, 35.00, 45.00])\n    assert dd == pytest.approx(0.3)\n\n\ndef test_flat():\n    dd = max_drawdown([100.00, 100.00, 100.00])\n    assert dd == pytest.approx(0.0)\n\n\ndef test_steady_rise():\n    dd = max_drawdown([100.00, 105.00, 120.00])\n    assert dd == pytest.approx(0.0)\n",
         "examples": [
           {
             "call": "run_tests()",
@@ -116,7 +116,7 @@
         }
       },
       "explain": {
-        "text": "From a £125.00 peak to £100.00 is 25 / 125 = 0.2. One correct version computes `1 - p / peak`, which gives 0.19999999999999996, so `==` would fail it. The steady rise catches the range bug, and a peak after the first price catches the first-price bug.\n\n```python\ndef test_one_dip():\n    assert max_drawdown([100.00, 125.00, 100.00, 110.00]) == pytest.approx(0.2)\n\ndef test_flat():\n    assert max_drawdown([100.00, 100.00, 100.00]) == pytest.approx(0.0)\n\ndef test_steady_rise():\n    assert max_drawdown([100.00, 110.00, 121.00]) == pytest.approx(0.0)\n```"
+        "text": "From a £50.00 peak to £35.00 is 15 / 50 = 0.3. One correct version computes `1 - p / peak`, which gives 0.30000000000000004, so `==` would fail it. The steady rise catches the range bug, and a peak after the first price catches the first-price bug.\n\n```python\ndef test_one_dip():\n    assert max_drawdown([40.00, 50.00, 35.00, 45.00]) == pytest.approx(0.3)\n\ndef test_flat():\n    assert max_drawdown([100.00, 100.00, 100.00]) == pytest.approx(0.0)\n\ndef test_steady_rise():\n    assert max_drawdown([100.00, 105.00, 120.00]) == pytest.approx(0.0)\n```"
       }
     },
     {
@@ -209,7 +209,7 @@
         }
       },
       "explain": {
-        "text": "The good row pins down both parts of the tuple, which catches the text and the divide-by-100 bugs. The raises test needs a price of exactly zero. A row of text such as `abc` raises even in the broken version. `pytest.raises` fails the test with `DID NOT RAISE` when nothing is raised.\n\n```python\ndef test_good_row():\n    assert parse_row(\"2024-03-05,101.25\\n\") == (\"2024-03-05\", 101.25)\n\ndef test_zero_price_raises():\n    with pytest.raises(ValueError):\n        parse_row(\"2024-03-06,0.00\\n\")\n```"
+        "text": "The good row pins down both parts of the tuple, which catches the text, divide-by-100 and swap bugs. The raises test needs a real price of zero or less: text such as `abc` raises even in the broken version. When nothing is raised, `pytest.raises` fails the test with `DID NOT RAISE`.\n\n```python\ndef test_good_row():\n    assert parse_row(\"2024-03-05,101.25\\n\") == (\"2024-03-05\", 101.25)\n\ndef test_zero_price_raises():\n    with pytest.raises(ValueError):\n        parse_row(\"2024-03-06,0.00\\n\")\n```"
       }
     },
     {
@@ -251,7 +251,7 @@
         "generic": "Not quite right. Check the file name against both patterns, then the function name."
       },
       "explain": {
-        "text": "A test runs only if its file matches `test_*.py` or `*_test.py`, in any folder below. Its function must also start with `test`. `drawdown_test.py` in `tests` passes both checks. `signal_tests.py` fails the file check, and `long_test` the function check."
+        "text": "A test runs only if its file matches `test_*.py` or `*_test.py`, in any folder below, and its function starts with `test`. `tests/drawdown_test.py::test_flat` passes both checks. `signal_tests.py` fails the file check, and `long_test` the function check."
       }
     },
     {
