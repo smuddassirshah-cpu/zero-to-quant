@@ -494,6 +494,101 @@
    "explain": {
     "text": "An engine can pad a short frame so the cut run happens to match. Replacing the future with noise changes what it reads, so a leak shows whichever way the engine handles missing rows."
    }
+  },
+  {
+   "id": "h2-never-peeks",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "bt-bias",
+    "bt-execution"
+   ],
+   "pace": 1500,
+   "title": "A test that catches every peek",
+   "prose": "Our engine decides at each close and fills at the next open. Costs are worked out from the fill price. `engine(bars)` returns one row per bar, with columns `target`, `shares`, `cash` and `equity`. The contract: a row may depend only on its own bar and earlier ones. Within bar $t$, `target` and `equity` are set at the close. `shares` and `cash` are settled at its open. So nothing in bar $t$ after its open may move them.\n\nWrite the test from nothing. It must pass for any engine that keeps the contract. It must fail, by raising, for one that breaks it at any bar. `daily_bars(n, seed)` makes $n$ seeded bars. `clean_engine` keeps the contract and `leaky_engine` breaks it. `verdict(engine)` runs your test on one engine and returns `'passed'` or `'failed'`.",
+   "question": "Write `test_never_peeks(engine)`.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "prelude": "import numpy as np\nimport pandas as pd\n\ndef daily_bars(n=250, seed=5):\n    \"\"\"n seeded daily bars with open, high, low, close and volume.\"\"\"\n    rng = np.random.default_rng(seed)\n    r = 0.012 * rng.standard_normal(n)\n    close = 100 * np.exp(np.cumsum(r))\n    prev = np.r_[100.0, close[:-1]]\n    open_ = prev * np.exp(0.5 * r + 0.002 * rng.standard_normal(n))\n    high = np.maximum(open_, close) * (1 + 0.004 * rng.random(n))\n    low = np.minimum(open_, close) * (1 - 0.004 * rng.random(n))\n    volume = np.round(rng.lognormal(np.log(1e6), 0.3, n))\n    idx = pd.bdate_range(\"2024-01-02\", periods=n)\n    return pd.DataFrame({\"open\": open_, \"high\": high, \"low\": low,\n                         \"close\": close, \"volume\": volume}, index=idx)\n\ndef _make_engine(lookback, units, scale, sign=1.0, per_share=0.005, half_bp=2.0, leak=None):\n    def engine(bars):\n        o = bars[\"open\"].to_numpy(float)\n        c = bars[\"close\"].to_numpy(float)\n        n = len(c)\n        size = units\n        if leak == \"vol\" and n > 2:\n            size = units * 0.012 / np.std(np.diff(np.log(c)))\n        out = np.zeros((n, 4))\n        shares, cash, order = 0.0, 1_000_000.0, 0.0\n        for t in range(n):\n            if order != 0:\n                px = o[t]\n                ref = c[t] if leak == \"cost\" else px\n                cash -= order * px + abs(order) * (per_share + ref * half_bp / 1e4)\n                shares += order\n            p, j = c[t], t\n            if leak == \"shift\" or (leak == \"rare\" and t % 25 == 13):\n                j = min(t + 1, n - 1)\n                p = c[j]\n            if leak == \"gap\":\n                p = o[t + 1] if t + 1 < n else c[t]\n            target = 0.0\n            if t >= lookback:\n                target = float(np.round(size * np.tanh(sign * (p / c[j - lookback] - 1) / scale)))\n            order = target - shares\n            if leak == \"same-close\" and order != 0:\n                cash -= order * c[t] + abs(order) * (per_share + c[t] * half_bp / 1e4)\n                shares += order\n                order = 0.0\n            out[t] = (target, shares, cash, cash + shares * c[t])\n        return pd.DataFrame(out, columns=[\"target\", \"shares\", \"cash\", \"equity\"], index=bars.index)\n    return engine\n\nclean_engine = _make_engine(10, 1000, 0.05)\nleaky_engine = _make_engine(10, 1000, 0.05, leak=\"shift\")\n_fade = _make_engine(3, 600, 0.03, -1.0, 0.01, 5.0)\n_slow = _make_engine(20, 2000, 0.08, 1.0, 0.0, 0.0)\n_rare = _make_engine(3, 600, 0.03, -1.0, 0.01, 5.0, leak=\"rare\")\n_vol = _make_engine(3, 600, 0.03, -1.0, 0.01, 5.0, leak=\"vol\")\n_same = _make_engine(3, 600, 0.03, -1.0, 0.01, 5.0, leak=\"same-close\")\n_cost = _make_engine(10, 1000, 0.05, leak=\"cost\")\n_gap = _make_engine(20, 2000, 0.08, 1.0, 0.0, 0.0, leak=\"gap\")\n\ndef verdict(engine):\n    \"\"\"Run your test on one engine: 'passed', or 'failed' if it raised.\"\"\"\n    try:\n        test_never_peeks(engine)\n    except Exception:\n        return \"failed\"\n    return \"passed\"\n",
+    "starter": "import numpy as np\nimport pandas as pd\n\n\ndef test_never_peeks(engine):\n    \"\"\"Fails (raises AssertionError) if engine breaks the contract at any bar.\"\"\"\n    ...\n",
+    "solution": "import numpy as np\nimport pandas as pd\n\n\ndef test_never_peeks(engine):\n    \"\"\"Fails (raises AssertionError) if engine breaks the contract at any bar.\"\"\"\n    bars = daily_bars(200)\n    full = engine(bars)\n    rng = np.random.default_rng(0)\n    settled = [\"shares\", \"cash\"]\n    for cut in range(1, len(bars)):\n        # 1. the rows before the cut, from the data before the cut alone\n        part = engine(bars.iloc[:cut])\n        assert np.allclose(part.to_numpy(), full.iloc[:cut].to_numpy(),\n                           rtol=0, atol=1e-9), f\"rows before {cut} moved\"\n        # 2. bar cut after its open, and every later bar, replaced by noise\n        alt = bars.copy()\n        alt.iloc[cut:] = bars.iloc[cut:].to_numpy() * np.exp(\n            0.05 * rng.standard_normal((len(bars) - cut, bars.shape[1])))\n        alt.iloc[cut, bars.columns.get_loc(\"open\")] = bars[\"open\"].iloc[cut]\n        run = engine(alt)\n        assert np.allclose(run.iloc[:cut].to_numpy(), full.iloc[:cut].to_numpy(),\n                           rtol=0, atol=1e-9), f\"rows before {cut} read later prices\"\n        assert np.allclose(run[settled].iloc[cut].to_numpy(),\n                           full[settled].iloc[cut].to_numpy(),\n                           rtol=0, atol=1e-9), f\"row {cut} settled after its open\"\n",
+    "examples": [
+     {
+      "call": "verdict(clean_engine)",
+      "expect": "'passed'",
+      "compare": "equal"
+     },
+     {
+      "call": "verdict(leaky_engine)",
+      "expect": "'failed'",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "verdict(clean_engine)",
+      "expect": "'passed'",
+      "compare": "equal"
+     },
+     {
+      "call": "verdict(leaky_engine)",
+      "expect": "'failed'",
+      "compare": "equal"
+     },
+     {
+      "call": "verdict(_fade)",
+      "expect": "'passed'",
+      "compare": "equal"
+     },
+     {
+      "call": "verdict(_slow)",
+      "expect": "'passed'",
+      "compare": "equal"
+     },
+     {
+      "call": "verdict(_rare)",
+      "expect": "'failed'",
+      "compare": "equal"
+     },
+     {
+      "call": "verdict(_vol)",
+      "expect": "'failed'",
+      "compare": "equal"
+     },
+     {
+      "call": "verdict(_gap)",
+      "expect": "'failed'",
+      "compare": "equal"
+     },
+     {
+      "call": "verdict(_same)",
+      "expect": "'failed'",
+      "compare": "equal"
+     },
+     {
+      "call": "verdict(_cost)",
+      "expect": "'failed'",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 9 hidden tests. Each calls `verdict` on one engine: three keep the contract and must pass, six break it and must fail. Each test may take up to 25 s. NumPy and pandas load on the first run.",
+    "budget": 30000,
+    "caseBudget": 20000
+   },
+   "feedback": {
+    "correct": "Your test passes every honest engine and fails every leak, including the ones that read no later row.",
+    "generic": "Not quite right. Check the first failing test.",
+    "byKey": {
+     "test-3": "Test 3 is an honest engine with other settings. A test that compares with `clean_engine` itself fails it.",
+     "test-5": "Test 5 peeks on a few bars only. A test that tries a handful of cuts misses it; try every cut.",
+     "test-8": "Test 8 fills at the close it decided on. It reads no later row, so only a check on bar $t$'s own shares and cash catches it.",
+     "test-9": "Test 9 prices each fill's cost from that bar's close. Change the close and the cash on the fill's row moves."
+    }
+   },
+   "explain": {
+    "text": "Cutting the data, or replacing what follows a cut, protects the rows before it. A same-close fill leaves those rows alone, so the test also changes bar $t$ after its open. It tries every cut, since a leak may touch only a few bars."
+   }
   }
  ]
 }
