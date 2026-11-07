@@ -401,6 +401,51 @@
       "explain": {
         "text": "Costs are 0.577 × 0.50% = 0.29% a month, so 0.96% becomes 0.67%. From the unrounded 0.9639% the result is 0.68% a month. At 50 bp, 30% of the spread is gone."
       }
+    },
+    {
+      "id": "h-ivol-plan",
+      "performance": "derivation",
+      "difficulty": 5,
+      "skills": [
+        "rm-paper",
+        "rm-data"
+      ],
+      "pace": 1800,
+      "title": "A plan for another paper",
+      "question": "Write the replication plan for this paper.",
+      "widget": {
+        "kind": "longform",
+        "prompt": "Your next replication is Ang, Hodrick, Xing and Zhang (2006), \"The Cross-Section of Volatility and Expected Returns\". A colleague's summary follows. The sample is common shares on NYSE, AMEX and Nasdaq, July 1963 to December 2000. At each month end, each share's daily excess returns that month are regressed on the three Fama and French factors. The residuals' standard deviation is the share's idiosyncratic volatility. Shares are sorted on it into five value-weighted portfolios, held for the next month. The highest-volatility portfolio earned 1.06% a month less than the lowest. The three factors do not explain the gap.\n\nWrite the PLAN.md you would commit before any code, in about a page. Give the data and its point-in-time traps, the steps in order, and the checks that would catch each trap. Say why each line is there.",
+        "model": "**Target and tolerance.** We reproduce one number: the high minus low gap, −1.06% a month. Ours matches when it lies within two standard errors of it, with the standard error from our own series. Both are fixed now, so the result cannot choose them. Rankings at the ends of July 1963 to November 2000 give 449 holding months. If our series has sd 6.0% a month, its standard error is $6.0/\\sqrt{449} = 0.28\\%$. A match is then anything from −1.63% to −0.49% a month.\n\n**Data, and the trap in each.**\n- Daily and monthly returns from a source that keeps every share ever listed, with delisting returns. High-volatility shares are small and distressed, so they die most often. A list of today's survivors drops them, and missing delisting returns hide their last loss. Either way the high quintile looks better and the gap shrinks.\n- Share codes, exchange codes and prices as recorded on each date, not as they are today. A share is judged by what was known at the month end.\n- Nasdaq's daily data in the standard database start in December 1972. Before then the universe is NYSE and AMEX only, so the share count jumps once. The plan states the jump before the code finds it.\n- The daily three-factor file and the daily risk-free rate. The file is revised when its source data change, so we keep the copy we use with its download date.\n- Market caps at the end of each formation month, for the weights. A cap from the holding month already contains the holding return.\n\n**Rules the summary leaves open.** It gives no minimum number of days for a regression and no breakpoint rule. We fix both now: at least 15 of the month's trading days, and breakpoints from every scored share. The note will say these are our choices.\n\n**Steps, in order.** Each uses only what the steps before it made.\n1. Universe at each month end $t$: common shares listed on the three exchanges on that date. Nothing listed later may enter.\n2. Daily excess returns in month $t$ for those shares, and the factors for the same days. The regression needs both on matching days.\n3. For each share with at least 15 days, regress its excess returns on the three factors. Its score is the residual standard deviation, as the summary defines it.\n4. Quintile breakpoints at $t$ from the scores, so each share sits in one quintile. Only scores known at $t$ set the cuts.\n5. Weights in each quintile: the share's cap at $t$ over the quintile's total cap. The weights need the quintiles, so they come after.\n6. Returns in month $t + 1$, with the delisting return for a share that dies, giving each quintile's return. This is the first use of $t + 1$.\n7. The high minus low series: its mean, standard error and $t$ statistic. The standard error sets the tolerance band.\n8. Its three-factor alpha, from a regression of the series on the monthly factors. That tests the summary's second claim.\n9. The comparison with the target, under the rule above. Robustness comes only after, so it cannot choose the headline: equal weights, NYSE breakpoints, market-model residuals.\n\n**Checks, one for each trap.**\n- Dead shares: each year, some shares in the universe have no returns after their holding month, and the count of delisting returns used is above 0. A count of 0 means the source dropped them.\n- Codes as recorded: pick a share known to have moved exchange. It sits under its old exchange before the move and its new one after.\n- Nasdaq: the count of shares by exchange is 0 for Nasdaq before December 1972, then jumps. No other month jumps.\n- The window: for every $t$, the last day in the regression is in month $t$ and the first holding day is in $t + 1$. The code asserts it.\n- Minimum days: every scored share has 15 days or more, and the number dropped each month is printed.\n- Quintiles: each holds about a fifth of the scored shares every month.\n- Weights: they sum to 1 in each quintile, and every cap carries the date $t$.\n- Factor file: the saved copy and its checksum sit in the repository, and every rerun compares the checksum.\n- Placebo: shuffle the scores across shares within each month. The gap should then be near 0, with a $t$ statistic near 0. A gap that survives the shuffle comes from the code, not from volatility.",
+        "rubric": [
+          {
+            "points": 3,
+            "required": true,
+            "text": "The data. Tick only if all are given: a source that keeps dead shares and their delisting returns, daily returns with the daily factors and risk-free rate, and caps at the formation month end. At least three point-in-time traps are named, each with what it would do to the result."
+          },
+          {
+            "points": 3,
+            "required": true,
+            "text": "The steps. Tick only if each uses only what came before. The order: the universe at $t$, the month-$t$ regression and residual sd, quintiles, and weights from caps at $t$. Then returns in $t + 1$ with delisting returns, and the gap's mean, standard error and alpha."
+          },
+          {
+            "points": 3,
+            "required": true,
+            "text": "The checks. Tick only if each trap named under the data has a check, a fact that must hold if its step worked. There must also be a placebo, such as shuffled scores giving a gap near 0."
+          },
+          {
+            "points": 1,
+            "text": "Tick only if both are fixed before any code. One is the target, −1.06% a month, with a tolerance such as two standard errors. The other is a rule the summary leaves open, such as a minimum number of days."
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Compare your plan with the model and mark it against the rubric.",
+        "generic": "Compare your plan with the model and mark it against the rubric."
+      },
+      "explain": {
+        "text": "A plan names each data source and its trap, then steps that use only what came before. Each trap gets a check that fails at the step that made it. Fixing the target and tolerance first stops the result choosing them."
+      }
     }
   ]
 }
