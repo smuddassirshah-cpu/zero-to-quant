@@ -36,8 +36,10 @@ E("l1", "screens[1].hints[2].text", 18)
 E("l1", "screens[1].explain.text", 22)
 # screens[2]: 2 envelopes and 5 coins -> 2n + 5; slips 7n, 2 + 5n, n + 7
 lv.claim(lin(2, 5)(3) != lin(7, 0)(3) and lin(2, 5)(3) != (2 + 5 * 3), "l1 screens[2] 2n + 5 differs from 7n and 2 + 5n")
-# FINDING (misleading): option one-each n + 7 is n + 2 + 5, one n plus the count; "counted the 2 envelopes as £2" gives 2 + 5 = 7, no n.
+# Fixed (finding 5): option one-each n + 7 is n + 2 + 5, one n plus the count of envelopes plus the coins.
 lv.stated("l1", "screens[2].widget.options[3].why", "You counted the 2 envelopes as £2.", False)
+lv.stated("l1", "screens[2].widget.options[3].why", "$n + 2 + 5$", all(n + 2 + 5 == n + 7 for n in range(-5, 6)))
+E("l1", "screens[2].widget.options[3].why", 2 * 1)
 # screens[3] and [6]: broker 3 + 2n
 cost = lin(2, 3)
 E("l1", "screens[4].widget.answer", cost(50))
@@ -112,8 +114,9 @@ lv.claim(long2(1) == 16 * 1, "l2 screens[5]: both give 16 at n = 1")
 lv.claim(all(long2(n) == 6 * n + 10 for n in range(-5, 6)), "l2 screens[5]: right answer 6n + 10")
 E("l2", "screens[6].hints[2].text", lin(3, 2)(10))
 E("l2", "screens[6].hints[2].text", 5 * 10)
-# FINDING (misleading): different letters need not stand for different amounts (n = m is allowed).
+# Fixed (finding 3): different letters need not stand for different amounts (n = m is allowed).
 lv.stated("l2", "screens[7].widget.options[3].why", "so they stand for different amounts", False)
+lv.claim(not any(all(3 * n + 3 * m == k * n for n in range(1, 4) for m in range(1, 4)) for k in range(-50, 50)), "l2 screens[7]: 3n + 3m is not k n for any k, so it does not simplify to one term")
 E("l2", "screens[7].hints[1].text", 7 - 2)
 profit = lambda n: F(1310, 100) * n - F(1250, 100) * n - 8
 E("l2", "screens[9].widget.options[0].text", 0.60)
@@ -210,18 +213,24 @@ lv.claim(abs(90 / 6.75 - 13.33) < 0.01, "review items[8] added-cost 90 / 6.75 = 
 
 # ---------- homework-1 ----------
 E("homework", "items[0].explain.text", float(F(320, 100) * 100 + 5))
-E("homework", "items[1].widget.answer", float(F(150, 100) + F(2, 100) * 1250))
-E("homework", "items[1].widget.wrong[0].value", float(F(152, 100) * 1250))
-E("homework", "items[1].widget.wrong[1].value", float(F(150, 100) + 2 * 1250))
-E("homework", "items[1].widget.wrong[2].value", float(F(2, 100) * 1250))
+E("homework", "items[1].widget.answer", float(F(225, 100) + F(3, 100) * 1250))
+E("homework", "items[1].widget.wrong[0].value", float(F(228, 100) * 1250))
+E("homework", "items[1].widget.wrong[1].value", float(F(225, 100) + 3 * 1250))
+E("homework", "items[1].widget.wrong[2].value", float(F(3, 100) * 1250))
+E("homework", "items[1].feedback.correct", float(F(3, 100) * 1250))
+E("homework", "items[1].explain.text", float(F(3, 100) * 1250))
+E("homework", "items[1].explain.text", float(F(225, 100) + F(3, 100) * 1250))
 h2 = lambda n: 3 * (2 * n - 1) - 2 * (n - 4)
 lv.claim(all(h2(n) == 4 * n + 5 for n in range(-5, 6)), "homework items[2]: 4n + 5")
 E("homework", "items[2].explain.text", h2(1))
 lv.claim(all(6 * n - 3 - 2 * n - 8 == 4 * n - 11 for n in range(3)), "homework items[2] neg-neg gives 4n - 11")
 lv.claim(all(6 * n - 3 + 2 * n + 8 == 8 * n + 5 for n in range(3)), "homework items[2] added gives 8n + 5")
-# FINDING (misleading): "multiplied only the n by -2" gives 6n - 3 - 2n - 4 = 4n - 7, not the option's 4n + 1.
+# Fixed (finding 4): 4n + 1 comes from -2(n - 4) written as -2n + 4: sign changed, 4 not doubled. "Only the n" would give 4n - 7.
 only_n = [6 * n - 3 - 2 * n - 4 for n in range(3)]
 lv.stated("homework", "items[2].widget.options[2].why", "You multiplied only the $n$ by $-2$", only_n == [4 * n + 1 for n in range(3)])
+lv.claim(all(6 * n - 3 - 2 * n + 4 == 4 * n + 1 for n in range(-5, 6)), "homework items[2] first-only: 6n - 3 - 2n + 4 = 4n + 1")
+E("homework", "items[2].widget.options[2].why", (-2) * (-4))
+E("homework", "items[2].widget.options[2].why", -3 + 8)
 E("homework", "items[4].explain.text", 7 + 8 + 9)
 lv.claim(7 + 8 + 9 == 3 * 8, "homework items[4]: 24 = 3 x 8")
 E("homework", "items[5].widget.answer", int(120 / F(4, 100)))
@@ -229,19 +238,23 @@ E("homework", "items[5].widget.wrong[0].value", 120 // 4)
 E("homework", "items[5].widget.wrong[1].value", int(120 / F(4, 10)))
 E("homework", "items[5].widget.wrong[2].value", float(120 * F(4, 100)))
 E("homework", "items[5].explain.text", float(F(4, 100) * 1000))
+lv.claim(all(F(4, 100) * n - 120 == F(4, 100) * (n - 3000) for n in range(0, 5000, 250)), "homework items[5]: 0.04n - 120 = 0.04(n - 3000)")
 E("homework", "items[6].widget.options[3].why", 27)
 net = F(12, 100) - F(2, 100)
 E("homework", "items[7].widget.answer", int(F(250, 100) / net))
 E("homework", "items[7].widget.wrong[0].value", round(float(F(250, 100) / F(12, 100)), 2))
 E("homework", "items[7].widget.wrong[1].value", round(float(F(250, 100) / F(14, 100)), 2))
 E("homework", "items[7].widget.wrong[2].value", int(F(250, 100) / F(2, 100)))
-lhs = lambda n: 3 * (n + 2)
-rhs = lambda n: 3 * n + 2
+lhs = lambda n: 4 * (n + 3)
+rhs = lambda n: 4 * n + 3
 for n in (0, 1, 10):
     E("homework", "items[8].model", lhs(n))
     E("homework", "items[8].model", rhs(n))
-lv.claim(all(lhs(n) - rhs(n) == 4 for n in range(-10, 11)), "homework items[8]: the gap is 4 for every n")
-E("homework", "items[8].model", 4000)
+lv.claim(all(lhs(n) - rhs(n) == 9 for n in range(-10, 11)), "homework items[8]: the gap is 9 for every n")
+E("homework", "items[8].model", 9000)
+E("homework", "items[8].model", 4 * 3)
+lv.claim(4 * 3 == 4 * 3 * 1 and 12 - 3 == 9 and 3 * 3 == 9, "homework items[8]: four 1 by 3 pieces area 12, three missing pieces area 9")
+lv.claim(all(4 * n + 12 - (4 * n + 3) == 9 for n in range(-10, 11)), "homework items[8]: true 4n + 12 against student 4n + 3")
 
 lv.check_wrongs()
 lv.report()

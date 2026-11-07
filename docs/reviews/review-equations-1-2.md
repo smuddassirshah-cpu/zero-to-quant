@@ -84,3 +84,44 @@ GCSE conventions otherwise match: "expression", "substitute", "simplify", "colle
 1. Expression grader: a correct formula typed with a lone letter on one side (`C = 3 + 2n`, `\text{cost} = 3 + 2n`) is graded wrong with the generic line when the authored answer has no `=`. GCSE learners write formulas this way. Wanted: when the answer has no `=` and the input is `<one symbol or \text{...}> = <expr>` (either side), grade `<expr>` and, if it is equal, return a key `formula` with the line "That is right as a formula. Type only the expression, without the letter and =." Content workaround: finding 8 asks for "an expression".
 2. Validator: no rule checks the lesson shape of AUTHORING section 2. Five equations lessons (l5 to l9) have no `explore`, l5 no `derive`, l8 no `ladder` and l9 no `generalise`, with 0 warnings. Wanted: an advisory warning for a lesson with no `explore`, or with no `generalise` or `derive`.
 3. Audit tooling: readers check expression keys by hand-rolling a node harness that loads `grade.js` and the local Compute Engine. The scratch `expr-check.mjs` used here took about 50 lines. A `tools/expr-forms.mjs <file> <path> --ok "<latex>"... --bad "<latex>=<key>"...` that grades listed forms with the real grader would make the check routine.
+
+## Fix pass
+
+Status per finding (26 fixed, 0 disputed, 0 deferred; one sub-point of 26 left to the author as the reader advised). Every number recomputed with exact fractions before writing (scratch `/tmp/claude-0/-home-user-zero-to-quant/47bf784c-fd6d-5d6b-a7a9-41b966e742b5/scratchpad/fix-equations-1-2/`).
+
+1. fixed: l6 `summary.ideas[1]`. Basis: 6x + 11 = 50 gives 6x = 39, x = 13/2, so "stays whole" was false.
+2. fixed: l7 `screens[6].explain.text`. Basis: 4x + 7 = 4x + 3 has equal x coefficients and 7 != 3 (no solution); 3x + 5 = 3x + 5 holds for all x. Checked over x = -20 to 20.
+3. fixed: l2 `screens[7]` option `letters` why. Basis: n = m = 2 is a legal assignment, so different letters need not differ in value; 3n + 3m is not k n for any k.
+4. fixed: homework-1 `items[2]` option `first-only` why. 6n - 3 - 2n + 4 = 4n + 1; with +8, -3 + 8 = 5.
+5. fixed: l1 `screens[2]` option `one-each` why. n + 2 + 5 = n + 7.
+6. fixed: l9 `summary.ideas[1]`. Basis: twice p first, then take 5 away, is 2p - 5 (15 at p = 10), while word order gives 5 - 2p (-15).
+7. fixed: l8 `summary.ideas[2]`. Basis: 0.125 = 125/1000, needs 1000.
+8. fixed: l1 `screens[3]`, `screens[8]`, `quiz[2]` and homework-1 `items[0]` questions now ask for "an expression". No `expression` key changed, so the reader's 56-form grader results stand. Basis: GCSE "write an expression" versus "write a formula" wording (the grader marks `C = ...` wrong, Engine bullet 1).
+9. fixed: l4 `screens[1].question`.
+10. fixed: homework-1 `items[1]`: 2.25 + 0.03 x 1250 = 39.75; fee-each 2.28 x 1250 = 2850; pence 2.25 + 3750 = 3752.25; no-fee 37.5. GRADED ANSWER CHANGED (26.5 to 39.75).
+11. fixed: homework-1 `items[5]`: rewritten setup, keys unchanged (120 / 0.04 = 3000; 30, 300, 4.8). 0.04n - 120 = 0.04(n - 3000).
+12. fixed: homework-1 `items[8]` moved to 4(n + 3) against 4n + 3 (12 v 3, 16 v 7, 52 v 43, gap 9, £9,000); title has no maths.
+13. fixed: review-2 `items[8]` now two brokers: 4.50 / 0.015 = 300, both charge 9.00; slips 4.5 / 0.035 = 128.57, 4.5 / 0.025 = 180, 4.5 / 1.5 = 3. GRADED ANSWER CHANGED (24.28 to 300).
+14. fixed: homework-2 `items[4]`: 16 x 0.9975 = 15.96; 5007.95 / 15.96 = 313.78; 313 raises 4987.53; 314 raises 5003.49; slip 0.25 as whole gives 418. GRADED ANSWER CHANGED (186 to 314). The `unrounded` band is widened to +-0.2 (holds 313.6 to 313.9, excludes 313 and 314); the validator `wrong-band` warning for it remains, because +-0.5 would swallow the correct 314.
+15. fixed: homework-2 `items[8]` (Kai, 2(x + 3)). x = 5 gives 16 both sides, x = 3 gives 12. Basis for the identity sign: AQA GCSE Mathematics specification A2 ("identity"), and the sign is not reachable otherwise in L2.
+16. fixed: homework-2 `items[3].feedback.correct`: 1932 / 500 = 3.864; 1,926 = 500 x 3.84 + 6.
+17. fixed: l9 `screens[6].prose` ("as in l4").
+18. fixed (orchestrator, commit 2526a2d); `course.json` untouched here.
+19. fixed: l1 `quiz[1].explain.text`; l2 `screens[2].prose` defines terms.
+20. fixed: l8 `screens[5].prose`, `screens[5].question`, `screens[6].prose`, `quiz[0].explain.text`; review-2 `items[4].explain.text`; l4 `screens[1].explain.text`. Basis: DfE GCSE Mathematics subject content (June 2013) N4 lists "lowest common multiple" and "highest common factor"; LCD is US usage.
+21. fixed: l9 `screens[4].feedback.byKey.percent-as-whole` "per cent" (homework-2 line replaced under 14).
+22. fixed: l2 `screens[6]` option texts.
+23. fixed: l5 `quiz[3]` option 0 text.
+24. fixed: l2 `quiz[3]` option `one-n` why.
+25. fixed: l9 band 185.94 +-0.05 (holds 185.9 and 185.945; 185 and 186 outside); review-2 band 78.125 +-0.03 (holds 78.1 and 78.13; 78, 79 outside).
+26. fixed (a) l5 `screens[1]`, l6 `screens[0]`, l7 `screens[0]` are `explore`; (b) l8 `screens[1]` is `ladder`; (c) l5 gets a `derive` at `screens[8]` (6.5 + 2.5 = 9); (d) l9 gets a `generalise` at `screens[4]` (30 + 12 x 13 = 186), with the formula written in words (`once + rate x units = total`) so the letter matches the question. l8 and l9 keep no `explore`, as the reader advised: left to the author. Screen indices after the inserts shift by one in l5 (from 8) and l9 (from 4); both number scripts updated.
+
+Engine bullets 1 to 3: deferred, already in the inbox.
+
+Gates:
+- Number scripts: `equations-L1-numbers.py` exit 0 (242 of 242), `equations-L2-numbers.py` exit 0 (368 of 368). Checks for fixed claims now test the new value only; new checks added for every new number.
+- Voice scan (`VOICE_BASE=app/content/courses/equations ... 35`): 0 sentences over 35 words. 7 explanations over three sentences remain, all in L4 (homework-4 `items[3]`, `[5]`, `[7]`; l14 `screens[4]`; l17 `screens[4]`, `[9]`, `quiz[3]`), left for the L3 to L4 fix pass.
+- Validator: 0 errors (4194 warnings app-wide); L1 and L2 warnings: one, homework-2 `items[4].wrong[1]` `wrong-band` (see 14).
+- Fresh-check on homework-1, homework-2, review-2: 0 hits.
+- Playthroughs with `--local-cdn`, desktop and `--mobile`: l1, l2, l4, l5, l6, l7, l8, l9, review-2, homework-1, homework-2, all 22 green, no timeouts or reruns.
+- Code items: none in these files.
