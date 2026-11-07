@@ -143,7 +143,7 @@ lv.expect('l12', 'quiz[0].widget.options[0].text', str(q("SELECT COUNT(*) FROM p
 
 # ---- review-3
 lv.expect('review', 'items[1].widget.answer', 12 * 5)
-lv.expect('review', 'items[2].widget.answer', q("SELECT COUNT(*) FROM securities AS s LEFT JOIN trades AS t ON s.ticker = t.ticker")[0][0])
+lv.expect('review', 'items[2].widget.answer', q("SELECT COUNT(*) FROM securities AS s LEFT JOIN trades AS t ON s.ticker = t.ticker AND t.qty > 0")[0][0])
 lv.expect('review', 'items[4].widget.answer', q("SELECT COUNT(*) FROM trades WHERE ticker IN (SELECT ticker FROM securities WHERE sector = 'Energy')")[0][0])
 mtm = [v for _, v in q("SELECT t.id, ROUND(t.qty * (now.close - p.close), 2) FROM trades AS t JOIN prices AS p ON p.ticker = t.ticker AND p.date = t.date JOIN prices AS now ON now.ticker = t.ticker AND now.date = '2026-03-04' ORDER BY t.id")]
 lv.claim(mtm == [round(t[3] * (close[(t[2], '2026-03-04')] - close[(t[2], t[1])]), 2) + 0.0 for t in TR], 'review-3 items[5] marks, two ways')
@@ -158,50 +158,56 @@ try:
 except RuntimeError:
     pass
 lv.expect('review', 'items[7].widget.answer', rb.execute("SELECT COUNT(*) FROM runs").fetchone()[0])
-# proposed replacement for review-3 items[2] (freshness): COUNT(*) after a left join with t.qty > 0 in ON
+# review-3 items[2] (freshness fix): COUNT(*) after a left join with t.qty > 0 in ON
 p_star, p_col = q("SELECT COUNT(*), COUNT(t.id) FROM securities AS s LEFT JOIN trades AS t ON s.ticker = t.ticker AND t.qty > 0")[0]
-lv.claim((p_star, p_col) == (6, 5), 'proposed review-3 items[2]: COUNT(*) 6, COUNT(t.id) 5')
-lv.claim(q("SELECT COUNT(*) FROM securities AS s LEFT JOIN trades AS t ON s.ticker = t.ticker")[0][0] == 8, 'proposed review-3 items[2]: 8 without the qty test')
+lv.claim((p_star, p_col) == (6, 5), 'review-3 items[2]: COUNT(*) 6, COUNT(t.id) 5')
+r32 = node('review-3', 'items[2]')['widget']
+lv.claim([w['value'] for w in r32['wrong']] == [p_col, 8, len(TR)] and [i for i, t in enumerate(TR) if t[3] < 0] == [3, 6] and 'qty > 0' in lv.text('review', 'items[2].prose'),
+         'review-3 items[2]: wrong values 5 (COUNT(t.id)), 8 (no qty test), 7 (all trades); trades 4 and 7 are sales')
+lv.claim(q("SELECT COUNT(*) FROM securities AS s LEFT JOIN trades AS t ON s.ticker = t.ticker")[0][0] == 8, 'review-3 items[2]: 8 without the qty test')
 # proposed replacement for review-3 items[3] (freshness): placeholders feeding IN
 sql = "SELECT ticker, close FROM prices WHERE date = ? AND ticker IN (?, ?) ORDER BY ticker"
-lv.claim(q(sql, ("2026-03-04", "BP", "SHEL")) == [('BP', 4.35), ('SHEL', 27.4)], 'proposed review-3 items[3]: right call')
-lv.claim(q(sql, ("BP", "SHEL", "2026-03-04")) == [], 'proposed review-3 items[3]: values out of order find nothing')
+lv.claim(q(sql, ("2026-03-04", "BP", "SHEL")) == [('BP', 4.35), ('SHEL', 27.4)], 'review-3 items[3]: right call')
+lv.claim(q(sql, ("BP", "SHEL", "2026-03-04")) == [], 'review-3 items[3]: values out of order find nothing')
 try:
     q(sql, ("2026-03-04", "BP, SHEL")); err = ''
 except sqlite3.ProgrammingError as e:
     err = str(e)
-lv.claim(err.startswith('Incorrect number of bindings supplied'), 'proposed review-3 items[3]: one text for two ? raises the bindings error')
+lv.claim(err.startswith('Incorrect number of bindings supplied'), 'review-3 items[3]: one text for two ? raises the bindings error')
 
 # ---- homework-3
 h0 = node('homework-3', 'items[0]')['widget']
 lv.claim(all(run_tests(h0['solution'], h0['tests'])), 'homework-3 items[0]: the content solution passes its tests here')
-fixed = h0['solution'].replace('GROUP BY p.ticker\n', 'GROUP BY p.ticker, p.close\n')
-lv.claim(fixed != h0['solution'] and all(run_tests(fixed, h0['tests'])), 'homework-3 items[0] proposed: GROUP BY p.ticker, p.close passes every test')
-lv.claim_text('homework', 'items[0].widget.solution', 'GROUP BY p.ticker\n        ORDER BY p.ticker', False,
-              'homework-3 items[0]: the model solution selects a bare p.close, which l6 forbids (finding 5)')
+lv.claim('GROUP BY p.ticker, p.close\n' in h0['solution'] and 'GROUP BY p.ticker\n' not in h0['solution'] and not any(run_tests(h0['starter'], h0['tests'])),
+         'homework-3 items[0]: the solution groups by p.close (no bare column), passes every test incl. the tie; starter fails (finding 5)')
 lv.expect('homework', 'items[0].explain.text', 111.50)
 ex = make_db_from('homework-3', 'items[1]')()
 qx = lambda s: ex.execute(s).fetchall()
 full = qx("SELECT s.sector, ROUND(COALESCE(SUM(t.qty * p.close), 0), 2) FROM securities AS s LEFT JOIN trades AS t ON t.ticker = s.ticker LEFT JOIN prices AS p ON p.ticker = s.ticker AND p.date = '2026-03-04' GROUP BY s.sector ORDER BY s.sector")
 lv.claim(full == [('Banks', 6720.0), ('Energy', 9265.0), ('Health', 5490.0), ('Telecoms', 0.0)], 'homework-3 items[1] exposures')
 where = qx("SELECT s.sector FROM securities AS s LEFT JOIN trades AS t ON t.ticker = s.ticker LEFT JOIN prices AS p ON p.ticker = s.ticker WHERE p.date = '2026-03-04' GROUP BY s.sector")
-lv.claim_text('homework', 'items[1].explain.text', 'in `WHERE` it would drop Telecoms again', ('Telecoms',) not in where,
-              'homework-3 items[1]: a WHERE date test drops Telecoms (finding 4)')
-lv.expect('homework', 'items[4].widget.answer', len(q("SELECT t.id FROM trades AS t JOIN prices AS p ON t.date = p.date")))
-lv.expect('homework', 'items[4].widget.wrong[2].value', len(TR) * len(PX))
-# proposed replacement for homework-3 items[4] (freshness): a range condition in ON
+ex2 = make_db_from('homework-3', 'items[1]')(); ex2.execute("INSERT INTO securities VALUES ('LLOY', 'Lloyds', 'Retail')")
+where2 = ex2.execute("SELECT s.sector FROM securities AS s LEFT JOIN trades AS t ON t.ticker = s.ticker LEFT JOIN prices AS p ON p.ticker = s.ticker WHERE p.date = '2026-03-04' GROUP BY s.sector").fetchall()
+lv.claim(('Telecoms',) in where and ('Retail',) not in where2 and 'drop a sector with no close that day, such as test 3' in lv.text('homework', 'items[1].explain.text') and 'drop Telecoms' not in lv.text('homework', 'items[1].explain.text'),
+         'homework-3 items[1]: a WHERE date test keeps Telecoms but drops test 3 Retail (finding 4)')
+# homework-3 items[4] (freshness fix): a range condition in ON
 rng = len(q("SELECT t.id FROM trades AS t JOIN prices AS p ON t.ticker = p.ticker AND p.date <= t.date"))
-lv.claim(rng == sum(sum(1 for p in PX if p[0] == t[2] and p[1] <= t[1]) for t in TR) == 15 == 1 + 1 + 2 + 2 + 3 + 3 + 3, 'proposed homework-3 items[4]: 15, two ways')
+lv.claim(rng == sum(sum(1 for p in PX if p[0] == t[2] and p[1] <= t[1]) for t in TR) == 15 == 1 + 1 + 2 + 2 + 3 + 3 + 3, 'homework-3 items[4]: 15, two ways')
+lv.expect('homework', 'items[4].widget.answer', rng)
+h34 = node('homework-3', 'items[4]')['widget']
+lv.claim([w['value'] for w in h34['wrong']] == [len(TR), len(q("SELECT t.id FROM trades AS t JOIN prices AS p ON t.date = p.date")) // 2] == [7, 21] and set(node('homework-3', 'items[4]')['feedback']['byKey']) == {'seven', 'half'},
+         'homework-3 items[4]: wrong values 7 (one per trade) and 21 (half of the date-only 42); byKey matches')
 h5 = node('homework-3', 'items[5]')['widget']
 lv.claim(all(run_tests(h5['solution'], h5['tests'])), 'homework-3 items[5]: solution passes')
 nx = sqlite3.connect(':memory:')
 nx.executescript("CREATE TABLE prices (ticker TEXT, date TEXT, close REAL); CREATE TABLE trades (id INTEGER PRIMARY KEY, date TEXT, ticker TEXT, qty INTEGER);")
 jplan = [r[-1] for r in nx.execute("EXPLAIN QUERY PLAN SELECT * FROM trades AS t JOIN prices AS p ON p.ticker = t.ticker AND p.date = t.date")]
-lv.claim_text('homework', 'items[7].prose', 'The plan shows `SCAN t` and then `SCAN p`', jplan == ['SCAN t', 'SCAN p'],
-              f'homework-3 items[7]: SQLite plans {jplan} for an unindexed join (finding 6)')
+jplan = [x for x in jplan if not x.startswith('BLOOM')]   # 3.53 adds a bloom-filter step; 3.39.0 does not
+lv.claim(jplan == ['SCAN t', 'SEARCH p USING AUTOMATIC COVERING INDEX (ticker=? AND date=?)'] and 'SEARCH p USING AUTOMATIC COVERING INDEX' in lv.text('homework', 'items[7].prose') and 'SCAN p' not in lv.text('homework', 'items[7].prose'),
+         f'homework-3 items[7]: SQLite plans {jplan} for an unindexed join (finding 6)')
 lv.expect('homework', 'items[7].prose', 2520000)
 nx.execute("CREATE INDEX idx_px ON prices (ticker, date)")
-lv.claim([r[-1] for r in nx.execute("EXPLAIN QUERY PLAN SELECT * FROM trades AS t JOIN prices AS p ON p.ticker = t.ticker AND p.date = t.date")] == ['SCAN t', 'SEARCH p USING INDEX idx_px (ticker=? AND date=?)'], 'homework-3 items[7] proposed: idx_px turns it into a stored-index SEARCH')
+lv.claim([r[-1] for r in nx.execute("EXPLAIN QUERY PLAN SELECT * FROM trades AS t JOIN prices AS p ON p.ticker = t.ticker AND p.date = t.date")] == ['SCAN t', 'SEARCH p USING INDEX idx_px (ticker=? AND date=?)'], 'homework-3 items[7]: idx_px turns it into a stored-index SEARCH')
 
 lv.check_wrongs()
 lv.report()

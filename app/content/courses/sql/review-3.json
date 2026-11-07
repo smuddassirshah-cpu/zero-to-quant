@@ -126,46 +126,46 @@
     },
     {
       "id": "r3-left-count",
-      "difficulty": 2,
+      "difficulty": 3,
       "skills": [
         "sql-join"
       ],
-      "prose": "With the level's tables, 6 companies and 7 trades, where Vodafone has no trades:\n\n```sql\nSELECT COUNT(*)\nFROM securities AS s\nLEFT JOIN trades AS t\n  ON s.ticker = t.ticker;\n```",
+      "prose": "With the level's tables, 6 companies and 7 trades, where trades 4 and 7 are sales:\n\n```sql\nSELECT COUNT(*)\nFROM securities AS s\nLEFT JOIN trades AS t\n  ON s.ticker = t.ticker\n AND t.qty > 0;\n```",
       "question": "What number does it return?",
       "widget": {
         "kind": "numeric",
-        "answer": 8,
+        "answer": 6,
         "tol": {
           "abs": 0
         },
         "label": "Count",
-        "accept": "8: seven matched trades plus one row for Vodafone.",
+        "accept": "6: five companies with a buy, plus Vodafone's padded row.",
         "wrong": [
           {
-            "id": "seven",
+            "id": "count-col",
+            "value": 5
+          },
+          {
+            "id": "no-qty",
+            "value": 8
+          },
+          {
+            "id": "trades",
             "value": 7
-          },
-          {
-            "id": "six",
-            "value": 6
-          },
-          {
-            "id": "thirteen",
-            "value": 13
           }
         ]
       },
       "feedback": {
-        "correct": "Seven matches plus the unmatched Vodafone.",
-        "generic": "Not quite right. Count the matched rows, then the unmatched companies.",
+        "correct": "Five companies matched a buy, and Vodafone keeps one padded row.",
+        "generic": "Not quite right. Decide which trades may match, then add the companies with no match.",
         "byKey": {
-          "seven": "That is the inner join. The left join also keeps Vodafone once, with `NULL`s.",
-          "six": "Barclays and Shell have two trades each, and each match is a row.",
-          "thirteen": "You added the two tables. The join keeps 7 matched rows and 1 unmatched."
+          "count-col": "That is `COUNT(t.id)`, or an inner join. The left join also keeps Vodafone once, with `NULL`s.",
+          "no-qty": "You ignored `t.qty > 0`. In `ON` it stops the two sales matching, so BARC and SHEL keep one row each.",
+          "trades": "That is every trade. The sales do not match, and Vodafone adds a padded row."
         }
       },
       "explain": {
-        "text": "Seven trades match their companies, and the left join adds one row for Vodafone: 8. `COUNT(*)` counts that padded row too."
+        "text": "`t.qty > 0` in `ON` lets only the five buys match, one per company except Vodafone. The left join keeps Vodafone once with `NULL`s, so `COUNT(*)` is 6. `COUNT(t.id)` would give 5."
       }
     },
     {
@@ -174,40 +174,40 @@
       "skills": [
         "sql-python"
       ],
-      "prose": "```python\nsql = (\"SELECT close FROM prices \"\n       \"WHERE ticker = ? AND date = ?\")\n```",
-      "question": "Which call returns BP's close on 4 March?",
+      "prose": "```python\nsql = (\"SELECT ticker, close FROM prices \"\n       \"WHERE date = ? AND ticker IN (?, ?)\")\n```",
+      "question": "Which call returns BP's and Shell's closes on 4 March?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "right",
-            "text": "`db.execute(sql, (\"BP\", \"2026-03-04\"))`",
+            "text": "`db.execute(sql, (\"2026-03-04\", \"BP\", \"SHEL\"))`",
             "correct": true
           },
           {
+            "id": "order",
+            "text": "`db.execute(sql, (\"BP\", \"SHEL\", \"2026-03-04\"))`",
+            "why": "Values fill the `?` in order. This asks for the date BP, and finds nothing."
+          },
+          {
+            "id": "joined",
+            "text": "`db.execute(sql, (\"2026-03-04\", \"BP, SHEL\"))`",
+            "why": "That is 2 values for 3 `?`, so SQLite raises `Incorrect number of bindings supplied`. Each `?` takes one value."
+          },
+          {
             "id": "one",
-            "text": "`db.execute(sql, (\"BP\",))`",
-            "why": "Two `?` need two values. SQLite raises `Incorrect number of bindings supplied`."
-          },
-          {
-            "id": "swap",
-            "text": "`db.execute(sql, (\"2026-03-04\", \"BP\"))`",
-            "why": "Values fill the `?` in order. This asks for ticker 2026-03-04 on date BP, and finds nothing."
-          },
-          {
-            "id": "fstr",
-            "text": "`db.execute(f\"{sql} BP 2026-03-04\")`",
-            "why": "Pasting text onto the SQL does not fill placeholders. SQLite sees two `?` with no values and a broken query."
+            "text": "`db.execute(sql, (\"2026-03-04\",))`",
+            "why": "One value for three `?`. SQLite raises `Incorrect number of bindings supplied`."
           }
         ]
       },
       "feedback": {
         "correct": "One value per `?`, in order.",
-        "generic": "Not quite right. Match each `?` with a value, in order."
+        "generic": "Not quite right. Match each `?` with one value, in order."
       },
       "explain": {
-        "text": "SQLite fills the placeholders left to right from the tuple: the first `?` gets BP and the second the date. The tuple must hold exactly two values."
+        "text": "SQLite fills the placeholders left to right: the date first, then one ticker for each `?` inside `IN`. The tuple must hold exactly three values."
       }
     },
     {
@@ -543,7 +543,7 @@
         "options": [
           {
             "id": "scan",
-            "text": "SQLite will read every row, because no index fits the query",
+            "text": "SQLite will read every row",
             "correct": true
           },
           {
