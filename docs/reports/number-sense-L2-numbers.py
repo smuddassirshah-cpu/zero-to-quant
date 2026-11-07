@@ -204,5 +204,24 @@ for t in (200 * D('20.13'), 100 * D('20.21'), cost):
 lv.expect('homework', 'items[8].model', -40 - (-15))
 lv.expect('homework', 'items[8].model', float(-100 * D('-0.60')))
 
+# ---- Fix pass checks (new values only; a reverted fix fails these) ----
+def has(f, path, s):
+    lv.claim(s in lv.text(f, path), f'{f} {path} contains "{s}"')
+
+
+lv.claim(hu(F(3, 8), 2) == 0.38 and F(3, 8) == F(375, 1000), 'l7 screens[4]: 3/8 = 0.375 rounds to 0.38')
+has('l7', 'screens[4].feedback.byKey.point-three-eight', '0.38 is 0.375 rounded to two places')
+has('l7', 'screens[4].feedback.byKey.point-three-eight', '375 thousandths')
+lv.claim(-6 + -4 == -10 and 6 - 4 == 2, 'l9 screens[7]: two losses of 6 and 4 pile up to -10; 6 - 4 is 2, not -2')
+has('l9', 'screens[7].widget.options[3].why', 'You took 4 from 6 and kept a minus sign.')
+has('l9', 'screens[7].widget.options[3].why', '$-10$')
+lv.claim(hu(D('3.96'), 1) == 4.0, 'l6 quiz[2]: 3.96 to one decimal place is 4.0')
+has('l6', 'quiz[2].widget.accept', '4.0. Keep the zero')
+has('l6', 'quiz[2].feedback.correct', 'Write the 0')
+has('l8', 'quiz[0].widget.options[2].why', 'You picked the second coldest.')
+has('l8', 'screens[9].prose', 'short for profit and loss')
+lv.claim(-15 < -12 and -15 - -12 == -3, 'l8 quiz[0]: -15 is 3 degrees lower than -12')
+has('l9', 'screens[10].prose', '**long** position')
+
 lv.check_wrongs()
 lv.report()

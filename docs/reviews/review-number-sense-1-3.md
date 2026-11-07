@@ -103,3 +103,43 @@ Downstream `requires` "why" lines, checked against the content: equations (L2: s
 3. The validator could warn on authoring jargon in learner-facing text ("edge case", "distractor", "misconception", "trap screen"). There were four "edge case" hits in number-sense alone (finding 15).
 
 These three are appended to `docs/BACKLOG-INBOX.md` under "Raised later (review number-sense L1 to L3):".
+
+## Fix pass
+
+Status per finding (29 fixed, 0 disputed, 0 deferred, 1 fixed by the orchestrator; 3 engine items deferred). Recomputed before writing: 0.5 x 10^21 = 5 x 10^20; 0.9 x 10^7 = 9 x 10^6; 6 x 3 = 18 and (6 x 10^4)(3 x 10^-2) = 18 x 10^2; -6 + -4 = -10; 4.45^2 = 19.8025; 3/8 = 0.375 rounds to 0.38; 38.75^2 = 1,501.5625; sqrt 15 = 3.873, so 3.9 lies in 3.87 +- 0.05; 1.02^36 = 2.0399; 4.9e8 / 7e12 = 7e-5; 7e-3 x 7e12 = 4.9e10 and 4.9e10 / 4.9e8 = 100; 1/2 x 3/5 = 3/10; 5/4 = 1 1/4; 20^3 = 8,000; 3.96 to one decimal place is 4.0.
+
+1. fixed: homework-1 `items[7].model` says "Your three-quarter share of the payout".
+2. fixed: l10 `screens[7].prose` says "other than 0". Basis: a^m / a^n = a^(m-n) divides by a^n, which is 0 when a = 0 (and 0^0 is undefined).
+3. fixed: l14 `screens[9]` option text 5 x 10^20 with the new why.
+4. fixed: review-3 `items[4]` option 9 x 10^6 with the new why.
+5. fixed: l14 `quiz[3]` option `front` why.
+6. fixed: l9 `screens[7]` option `difference` why.
+7. fixed: l11 `screens[8]` prose and explain (the explain stays at three sentences).
+8. fixed: l7 `screens[4]` byKey `point-three-eight`.
+9. fixed: l3 `quiz[3]` placeholder "For example 1/4" (not the answer, not any wrong[] value).
+10. fixed: homework-3 `items[2]` explain and feedback.correct use the midpoint 38.75. Basis: sqrt(1,500) < 38.75 exactly when 1,500 < 38.75^2 = 1,501.5625.
+11. fixed: homework-3 `items[2]` `root-15` `tol.abs` 0.05 (band 3.82 to 3.92; the key 38.7 is outside it).
+12. fixed: homework-3 `items[6].model` step 4 wording.
+13. fixed: l6 `quiz[2]` accept and feedback.correct keep the trailing zero. Basis: GCSE mark schemes ask for the stated number of decimal places (4.0, not 4); the widget cannot enforce it (Engine item 1).
+14. fixed: l10 `screens[6].explain.text`.
+15. fixed: four "edge case" phrases (l11 `quiz[3]`, l12 `screens[6]` and `quiz[2]`, l13 `quiz[3]`).
+16. fixed: l8 `quiz[0]` option `twelve` why.
+17. fixed: homework-1 `items[6]` byKey `loss`.
+18. fixed: l4 `screens[2].explain.text` states 3/10.
+19. fixed: l4 `screens[3]` option texts (ids unchanged); the `key-length` warning is gone.
+20. fixed: l11 `screens[9].widget` has `"over100": true`; the `unit "%"` warnings are gone.
+21. fixed: l8 `screens[9].prose` (two sentences, "short for profit and loss").
+22. fixed: l9 `screens[10].prose` defines **long**.
+23. fixed with one correction: l1 `screens[8].prose` and l3 `screens[5].explain.text` as given. For l2 `quiz[3].explain.text` the review's "This is 9/12 in its simplest form" is wrong (9/12 reduces to 3/4); the text now reads "This 3/4 is the **simplest form** of 9/12, also called lowest terms."
+24. fixed: l10 `quiz[3].prose` writes $1 + 0.02 = 1.02$.
+25. fixed: l11 `quiz[4].explain.text` uses 20 x 20 x 20 = 8,000.
+26. fixed: l13 `screens[7]` explain, hint 1 and the two option whys use tenths and hundredths.
+27. fixed: review-1 `items[8]` reworded to a ribbon (canvas and key unchanged).
+28. fixed: homework-3 `items[6]` part (b) now uses a £7 trillion index: prompt, model steps 6 to 10, `rubric[4]` and `rubric[6]`; the L3 number script checks the new figures.
+29. fixed: review-1 `items[0].prose`, review-3 `items[2]` prose and question, review-3 `items[4].prose`; `fresh-check --min-run 10` reports 0 hits on both sets.
+30. fixed (orchestrator, commit 4a2a41d): quadratics and trig `course.json` `requires` lines. Not touched here.
+Engine items 1 to 3: deferred, already in `docs/BACKLOG-INBOX.md`.
+
+Numbers: `docs/reports/number-sense-L1-numbers.py`, `-L2-` and `-L3-` exit 0 (337 of 337, 337 of 337, 393 of 393). The old "stated" checks still fail if a fix is reverted (the false phrase returns), and each fix has a new check for its new wording and value. The finding 28 (b) claim was replaced by the £7 trillion figures. Graded answers changed: 0 (the `root-15` band widened; distractor texts changed, no key).
+
+Gates: validator 0 errors, no new number-sense warnings (the remaining ones are those the review left unchanged); voice scan at 35 words: 0 sentences, 0 explanations over three; playthrough "All passed" for 34 of 34 runs, with and without `--mobile` and with `--local-cdn`: l1, l2, l3, l4, l6, l7, l8, l9, l10, l11, l12, l13, l14 (`--lesson`) and review-1, review-3, homework-1, homework-3 (`--set`); no timeouts.
