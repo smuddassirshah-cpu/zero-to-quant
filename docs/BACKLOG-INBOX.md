@@ -1682,3 +1682,6 @@ Raised later (garch level 2 perf):
 
 Raised later (validation level 2 perf):
 - [Could] `code` widget, `isclose`: a test still cannot expect NaN (seen before in opt-dash level 3). `h-label-purge` loads a hidden `grid` helper that writes NaN as None so a label frame can be compared; wanted: NaN equal to NaN under `isclose` when `expect` holds `nan`.
+
+Raised later (coint level 1 perf):
+- [Could] Seen again (ENGINE-BACKLOG 536, deferred): an aloud item's follow-ups show only together with the model answer, so a rubric row that grades a follow-up answer cannot be honest. coint `h-spurious-aloud` dropped its follow-up row for a plain-words row. Wanted: the follow-ups step after the clock, before Mark my answer.
