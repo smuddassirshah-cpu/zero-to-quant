@@ -2,7 +2,7 @@
   "id": "topic-1.2",
   "topic": "1.2",
   "name": "Tools topic exam",
-  "minutes": 60,
+  "minutes": 75,
   "pass": 0.7,
   "skills": {
     "gt-commits": "Commits",
@@ -223,7 +223,7 @@
         "pt-basics"
       ],
       "title": "A test that fails on correct code",
-      "prose": "`daily_returns` is correct, but this test fails:\n\n```text\n    r = daily_returns([50.00, 55.00])\n>   assert r == [0.1]\nE   assert [0.10000000000000009] == [0.1]\n```",
+      "prose": "`total_return` compounds daily returns and is correct, but this test fails:\n\n```text\n    r = total_return([0.10, 0.20])\n>   assert r == 0.32\nE   assert 0.32000000000000006 == 0.32\n```",
       "question": "What is the best fix?",
       "widget": {
         "kind": "choice",
@@ -231,18 +231,18 @@
         "options": [
           {
             "id": "a",
-            "text": "`assert r == pytest.approx([0.1])`",
+            "text": "`assert r == pytest.approx(0.32)`",
             "correct": true
           },
           {
             "id": "b",
-            "text": "Round inside `daily_returns` so it returns exactly `0.1`",
+            "text": "Round inside `total_return` so it returns exactly `0.32`",
             "why": "You changed working code to suit the test. Rounding there also loses precision for every caller."
           },
           {
             "id": "c",
-            "text": "`assert abs(r[0] - 0.1) < 1`",
-            "why": "You picked a tolerance of 1. A return of 0.9 would pass, so the test checks almost nothing."
+            "text": "`assert abs(r - 0.32) < 1`",
+            "why": "You picked a tolerance of 1. A return of 1.2 would pass, so the test checks almost nothing."
           },
           {
             "id": "d",
@@ -256,7 +256,7 @@
         "generic": "The code is right and the float is a hair off. Choose a comparison with a small tolerance."
       },
       "explain": {
-        "text": "$55/50 - 1$ is 0.1 on paper but 0.10000000000000009 in floats. `pytest.approx` accepts a relative error of about one in a million. It also works on a whole list."
+        "text": "$1.1 \\times 1.2 - 1$ is 0.32 on paper but 0.32000000000000006 in floats. `pytest.approx` accepts a relative error of about one in a million."
       }
     },
     {
@@ -382,8 +382,8 @@
         "gt-branches"
       ],
       "title": "Finishing a conflicted merge",
-      "prose": "On `main` you merge `vol-signal`, and git stops with a conflict in `params.py`. You want both branches' changes kept, then to see the result.",
-      "question": "Put the steps in order.",
+      "prose": "On `main` you merge `vol-signal`, and git stops with a conflict in `params.py`. You want both branches' changes kept, then to see the result. Two of these steps do not belong.",
+      "question": "Put the steps in order and leave out the two that do not belong.",
       "widget": {
         "kind": "order",
         "lines": [
@@ -406,6 +406,16 @@
           {
             "id": "m5",
             "text": "`git log --oneline --graph`"
+          },
+          {
+            "id": "d1",
+            "text": "`git commit -a` straight away",
+            "why": "You committed with the markers still in. `-a` stages `params.py` as it is, so the merge commit holds the broken file."
+          },
+          {
+            "id": "d2",
+            "text": "`git merge --abort`",
+            "why": "You gave up the merge. It puts `main` back as it was, so `vol-signal`'s change never reaches it."
           }
         ],
         "answer": [
@@ -414,6 +424,10 @@
           "m3",
           "m4",
           "m5"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
         ]
       },
       "feedback": {
@@ -538,7 +552,7 @@
         }
       },
       "explain": {
-        "text": "The groups total BARC $400 + 300 - 200 = 500$, VOD $1500 - 600 = 900$, SHEL 450 and AZN 50. `HAVING` keeps the three above 400."
+        "text": "The groups total BARC $400 + 300 - 200 = 500$, VOD $1500 - 600 = 900$, SHEL 450 and AZN 50. `HAVING` keeps the three above 400, so 3 rows come back."
       }
     },
     {
@@ -548,7 +562,7 @@
         "pt-cases"
       ],
       "title": "A path that exposes the bug",
-      "prose": "A broken `max_drawdown` returns `(max(prices) - min(prices)) / max(prices)`, whatever the order of the prices. The right answer is the largest fall from a running peak. Both are positive fractions.",
+      "prose": "A broken `max_drawdown` returns the worst one-day return, or 0.0 when no day falls. The right answer is the largest fall from a running peak. Both are negative fractions, or 0.0.",
       "question": "Select all that apply: which hand-made paths catch the bug?",
       "widget": {
         "kind": "multi",
@@ -556,37 +570,37 @@
         "options": [
           {
             "id": "a",
-            "text": "£100.00, £80.00, £120.00",
+            "text": "£100.00, £90.00, £81.00",
             "correct": true
           },
           {
             "id": "b",
-            "text": "£100.00, £90.00, £80.00",
-            "why": "Here the high comes first and the low last, so both versions give 0.2."
+            "text": "£100.00, £80.00, £120.00",
+            "why": "The whole fall takes one day, so both versions give −0.2."
           },
           {
             "id": "c",
             "text": "£120.00, £100.00, £120.00",
-            "why": "The high comes before the low, so both versions give 1/6."
+            "why": "The fall takes one day, so both versions give −1/6."
           },
           {
             "id": "d",
-            "text": "£100.00, £110.00, £121.00",
+            "text": "£100.00, £90.00, £99.00, £81.00",
             "correct": true
           },
           {
             "id": "e",
             "text": "£100.00, £100.00, £100.00",
-            "why": "A flat path gives 0 either way, so it cannot tell them apart."
+            "why": "A flat path gives 0.0 either way, so it cannot tell them apart."
           }
         ]
       },
       "feedback": {
-        "correct": "Only a low before a later high tells them apart.",
+        "correct": "Only a fall spread over more than one day tells them apart.",
         "generic": "Work out both answers for each path. A path catches the bug only when they differ."
       },
       "explain": {
-        "text": "The bug differs only when a low comes before a later high. For £100.00, £80.00, £120.00 the right answer is 0.2, but the bug gives $40/120 = 0.33$. A steady rise has no drawdown, yet the bug reports $21/121 = 0.17$."
+        "text": "The bug looks at one day at a time. For £100.00, £90.00, £81.00 the right answer is −0.19, but the worst day is −0.1. On the four-day path the bug gives $81/99 - 1 = -0.18$, not −0.19."
       }
     },
     {
@@ -596,7 +610,7 @@
         "gt-remote"
       ],
       "title": "A rejected push",
-      "prose": "You have two new commits on `main`. A colleague pushed to `main` since you last pulled.",
+      "prose": "You have two new commits on `main`. A colleague pushed to `main` since you last pulled. Your Git is set to merge when it pulls.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -663,7 +677,7 @@
         "sql-join"
       ],
       "title": "Trades with a company",
-      "prose": "```sql\nSELECT t.id, s.name\nFROM trades AS t\nJOIN securities AS s\n  ON t.ticker = s.ticker;\n```",
+      "prose": "```sql\nSELECT SUM(t.qty)\nFROM securities AS s\nJOIN trades AS t\n  ON s.ticker = t.ticker;\n```",
       "canvas": {
         "kind": "pair",
         "stack": true,
@@ -768,27 +782,27 @@
           }
         }
       },
-      "question": "How many rows does it return?",
+      "question": "What number does it return?",
       "widget": {
         "kind": "numeric",
-        "answer": 5,
+        "answer": 600,
         "tol": {
           "abs": 0
         },
         "placeholder": "a whole number",
-        "label": "Rows",
-        "accept": "5",
+        "label": "Total qty",
+        "accept": "600",
         "wrong": [
           {
             "id": "all",
-            "value": 7,
+            "value": 800,
             "tol": {
               "abs": 0
             }
           },
           {
             "id": "pairs",
-            "value": 35,
+            "value": 4000,
             "tol": {
               "abs": 0
             }
@@ -796,15 +810,15 @@
         ]
       },
       "feedback": {
-        "correct": "Five trades have a company; the two RR trades do not.",
-        "generic": "An inner join keeps a trade only when its ticker is in `securities`.",
+        "correct": "BARC 250, SHEL 300 and AZN 50: the two RR trades have no company.",
+        "generic": "An inner join keeps a trade only when its ticker is in `securities`. Add the kept quantities.",
         "byKey": {
-          "all": "You kept every trade. An inner join drops the two RR trades, which have no company.",
-          "pairs": "You counted every pairing of the two tables. `ON` keeps only pairs with the same ticker."
+          "all": "You added every trade. The inner join drops the two RR trades, 300 and −100.",
+          "pairs": "You added over every pairing of the two tables. `ON` keeps only pairs with the same ticker."
         }
       },
       "explain": {
-        "text": "Each trade pairs with the one company of its ticker, if there is one. RR is not in `securities`, so trades 4 and 7 drop out. That leaves 5 rows.",
+        "text": "Each trade pairs with the one company of its ticker, if there is one. RR is not in `securities`, so trades 4 and 7 drop out. The rest add to $400 + 200 - 150 + 50 + 100 = 600$.",
         "canvas": {
           "right": {
             "highlight": {
@@ -902,36 +916,105 @@
       }
     },
     {
+      "id": "e-fixture-calls",
+      "difficulty": 3,
+      "skills": [
+        "pt-tools"
+      ],
+      "title": "A fixture and a table of rows",
+      "prose": "```python\n@pytest.fixture\ndef closes():\n    return [100.00, 104.00, 101.00]\n\ndef test_first(closes):\n    assert closes[0] == 100.00\n\n@pytest.mark.parametrize(\"n\", [1, 2, 3])\ndef test_head(closes, n):\n    assert len(closes[:n]) == n\n\ndef test_no_prices():\n    assert daily_returns([]) == []\n```",
+      "question": "In one run of this file, how many lists does `closes()` build?",
+      "widget": {
+        "kind": "numeric",
+        "answer": 4,
+        "tol": {
+          "abs": 0
+        },
+        "placeholder": "a whole number",
+        "label": "Calls",
+        "accept": "4",
+        "wrong": [
+          {
+            "id": "per-function",
+            "value": 2,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "once",
+            "value": 1,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "every-test",
+            "value": 5,
+            "tol": {
+              "abs": 0
+            }
+          }
+        ]
+      },
+      "feedback": {
+        "correct": "Once for `test_first` and once for each of the three rows.",
+        "generic": "A fixture runs again for every test that asks for it. Count the tests that name it.",
+        "byKey": {
+          "per-function": "You counted test functions. Each parametrised row is its own test and gets a fresh `closes`.",
+          "once": "You ran the fixture once for the file. By default it runs again for every test that asks.",
+          "every-test": "You counted `test_no_prices` too. It does not name `closes`, so pytest never builds it there."
+        }
+      },
+      "explain": {
+        "text": "pytest reports five tests: `test_first`, three rows of `test_head` and `test_no_prices`. The four that name `closes` each get a fresh list. So `closes()` runs 4 times."
+      }
+    },
+    {
       "id": "e-shell-order",
       "difficulty": 3,
       "skills": [
         "gt-shell"
       ],
       "title": "The busiest ticker",
-      "prose": "`trades.csv` has the columns `date,ticker,side,qty`. You want one line: the ticker with the most trades, with its count.",
-      "question": "Put the pieces of the pipeline in order.",
+      "prose": "`trades.csv` has the columns `date,ticker,side,qty`. You want one line: the ticker with the most SELL trades, with its count. Two of the pieces do not belong.",
+      "question": "Put the pieces of the pipeline in order and leave out the two that do not belong.",
       "widget": {
         "kind": "order",
         "lines": [
           {
             "id": "p1",
-            "text": "`cut -d, -f2 trades.csv`"
+            "text": "`grep SELL trades.csv`"
           },
           {
             "id": "p2",
-            "text": "`| sort`"
+            "text": "`| cut -d, -f2`"
           },
           {
             "id": "p3",
-            "text": "`| uniq -c`"
+            "text": "`| sort`"
           },
           {
             "id": "p4",
-            "text": "`| sort -rn`"
+            "text": "`| uniq -c`"
           },
           {
             "id": "p5",
+            "text": "`| sort -rn`"
+          },
+          {
+            "id": "p6",
             "text": "`| head -n 1`"
+          },
+          {
+            "id": "d1",
+            "text": "`| sort -n`",
+            "why": "You sorted smallest first. `head -n 1` would then keep the least sold ticker."
+          },
+          {
+            "id": "d2",
+            "text": "`| wc -l`",
+            "why": "You counted lines. That says how many tickers were sold, not which one."
           }
         ],
         "answer": [
@@ -939,15 +1022,20 @@
           "p2",
           "p3",
           "p4",
-          "p5"
+          "p5",
+          "p6"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
         ]
       },
       "feedback": {
-        "correct": "Column, sort, count, rank, keep the top.",
+        "correct": "Filter, column, sort, count, rank, keep the top.",
         "generic": "`uniq -c` merges only neighbours, so sort before it. Rank the counts after it."
       },
       "explain": {
-        "text": "`cut` takes the ticker column, and `sort` puts equal tickers next to each other. `uniq -c` counts each run. `sort -rn` puts the biggest count first, and `head -n 1` keeps it."
+        "text": "`grep SELL` keeps the sells, and `cut` takes their tickers. `sort` puts equal tickers together, so `uniq -c` counts each run. `sort -rn` puts the biggest count first, and `head -n 1` keeps it."
       }
     },
     {
@@ -1005,8 +1093,8 @@
         "pt-design"
       ],
       "title": "Fixing a bug test first",
-      "prose": "A user reports that `annualised_vol([0.01])` returns 0.0. It should raise `ValueError`. You fix it test first.",
-      "question": "Put the steps in order.",
+      "prose": "A user reports that `annualised_vol([0.01])` returns 0.0. It should raise `ValueError`. You fix it test first. Two of these steps do not belong.",
+      "question": "Put the steps in order and leave out the two that do not belong.",
       "widget": {
         "kind": "order",
         "lines": [
@@ -1029,6 +1117,16 @@
           {
             "id": "t5",
             "text": "Tidy the code, then run pytest again"
+          },
+          {
+            "id": "d1",
+            "text": "Change the test to expect 0.0, so the suite stays green",
+            "why": "You made the test agree with the bug. The report says one return must raise."
+          },
+          {
+            "id": "d2",
+            "text": "Add the length check first, then write the test",
+            "why": "You fixed before testing. A test that never failed cannot show it catches the bug."
           }
         ],
         "answer": [
@@ -1037,6 +1135,10 @@
           "t3",
           "t4",
           "t5"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
         ]
       },
       "feedback": {
@@ -1054,7 +1156,7 @@
         "gt-branches"
       ],
       "title": "Reading a merge",
-      "prose": "The top of `main`'s history after merging `carry`.",
+      "prose": "The top of `main`'s history after merging `carry`. The branch `carry` still exists.",
       "canvas": {
         "kind": "console",
         "params": {
@@ -1073,27 +1175,27 @@
         },
         "state": {}
       },
-      "question": "How many commits does `main` contain now, counting the merge commit?",
+      "question": "How many commits does the branch `carry` contain?",
       "widget": {
         "kind": "numeric",
-        "answer": 6,
+        "answer": 4,
         "tol": {
           "abs": 0
         },
         "placeholder": "a whole number",
         "label": "Commits",
-        "accept": "6",
+        "accept": "4",
         "wrong": [
           {
-            "id": "first-parent",
-            "value": 4,
+            "id": "lane",
+            "value": 2,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "no-merge",
-            "value": 5,
+            "id": "main",
+            "value": 6,
             "tol": {
               "abs": 0
             }
@@ -1101,15 +1203,15 @@
         ]
       },
       "feedback": {
-        "correct": "Six: the merge brought the two carry commits into `main`.",
-        "generic": "Count every commit reachable from the top line, along both lines of the graph.",
+        "correct": "Four: its own two commits and the two below the split.",
+        "generic": "Follow the arrows back from `carry`'s last commit, 8b0c3e1.",
         "byKey": {
-          "first-parent": "You followed only the left line. The merge commit's second parent brings in the two carry commits.",
-          "no-merge": "You left out the merge commit itself. It is a commit on `main` too."
+          "lane": "You counted only the right-hand lane. `carry` also holds the two commits below the split.",
+          "main": "You counted `main`. The merge commit and the cost fix are not on `carry`."
         }
       },
       "explain": {
-        "text": "From the merge commit you can reach both parents: the cost fix on `main` and the two carry commits. Then the two shared commits below the split. That is $1 + 1 + 2 + 2 = 6$.",
+        "text": "`carry` still points at 8b0c3e1. From there the arrows reach 5e7d9a4, then a90e3b5 and 17c4d22 below the split. The cost fix and the merge commit are on `main` only, so `carry` holds 4.",
         "canvas": {
           "shade": {
             "carry": [
@@ -1126,8 +1228,8 @@
       "skills": [
         "sql-python"
       ],
-      "title": "What Python gets back",
-      "prose": "`trades` holds three BARC trades.\n\n```python\nsql = (\"SELECT COUNT(*) FROM trades \"\n       \"WHERE ticker = ?\")\nrows = db.execute(sql, (\"BARC\",)).fetchall()\nprint(rows)\n```",
+      "title": "One row back",
+      "prose": "`trades` holds four trades: BARC 400, SHEL 200, BARC −150 and AZN 50.\n\n```python\nsql = \"SELECT ticker, qty FROM trades ORDER BY qty DESC\"\nrow = db.execute(sql).fetchone()\nprint(row)\n```",
       "question": "What does it print?",
       "widget": {
         "kind": "choice",
@@ -1135,32 +1237,32 @@
         "options": [
           {
             "id": "a",
-            "text": "`[(3,)]`",
+            "text": "`('BARC', 400)`",
             "correct": true
           },
           {
             "id": "b",
-            "text": "`3`",
-            "why": "You expected the bare number. `fetchall()` returns a list of rows; `fetchone()[0]` gives the number."
+            "text": "`[('BARC', 400)]`",
+            "why": "You wrapped it in a list, as `fetchall()` would. `fetchone()` returns the row itself."
           },
           {
             "id": "c",
-            "text": "`(3,)`",
-            "why": "That is one row, as `fetchone()` returns. `fetchall()` wraps the rows in a list."
+            "text": "`400`",
+            "why": "You expected a bare number. A row is a tuple of every column you selected."
           },
           {
             "id": "d",
-            "text": "`[3]`",
-            "why": "You dropped the row's tuple. Every row comes back as a tuple, even with one column."
+            "text": "`[('BARC', 400), ('SHEL', 200), ('AZN', 50), ('BARC', -150)]`",
+            "why": "You printed every row. `fetchone()` takes only the first."
           }
         ]
       },
       "feedback": {
-        "correct": "A list of one row, and the row is a one-item tuple.",
-        "generic": "`fetchall()` returns a list of rows, and each row is a tuple."
+        "correct": "One row, as a tuple of its two columns.",
+        "generic": "`fetchone()` returns the next row, and each row is a tuple."
       },
       "explain": {
-        "text": "A `COUNT(*)` query returns one row with one column. `fetchall()` gives a list of rows, each a tuple: `[(3,)]`. `fetchone()[0]` would give the number 3."
+        "text": "The query sorts by `qty`, biggest first, so the first row is BARC's 400. `fetchone()` returns that row as a tuple, `('BARC', 400)`. `fetchall()` would give a list of all four."
       }
     },
     {
@@ -1178,22 +1280,22 @@
         "options": [
           {
             "id": "a",
-            "text": "Test `annualised_vol` on a short, hand-made list of closes with a worked answer",
+            "text": "Pass a short hand-made list of closes, with its answer worked out",
             "correct": true
           },
           {
             "id": "b",
-            "text": "Retry the download three times",
+            "text": "Retry the download up to three times before the assert runs",
             "why": "You made the network failures rarer, not gone. The answer still changes with the market."
           },
           {
             "id": "c",
-            "text": "Loosen the assert to `< 5.0`",
+            "text": "Loosen the assert to `vol < 5.0` so a wild month still passes",
             "why": "You loosened the assert until it checks almost nothing."
           },
           {
             "id": "d",
-            "text": "Skip the test when it runs on GitHub",
+            "text": "Skip the test whenever it runs on GitHub after a push",
             "why": "You switched the check off where it matters most, on every push."
           }
         ]
@@ -1213,8 +1315,8 @@
         "gt-remote"
       ],
       "title": "A key on GitHub",
-      "prose": "Yesterday you pushed a commit that put your live data API key in `download.py`. The repository is public.",
-      "question": "Select all that apply: which steps actually protect you?",
+      "prose": "On a branch `fetch-data` you pushed a commit with your live data API key in `config.py`, and opened a pull request. An hour later you closed it and deleted the branch on GitHub. The repository is public.",
+      "question": "Select all that apply: which steps still matter?",
       "widget": {
         "kind": "multi",
         "layout": "stack",
@@ -1231,27 +1333,27 @@
           },
           {
             "id": "c",
-            "text": "Delete the line, commit and push, which removes the key from GitHub",
-            "why": "You expected a new commit to erase the old one. The key is still in the history."
+            "text": "Nothing more, since deleting the branch removed its commits",
+            "why": "You trusted the deletion. Anyone could have fetched the branch during that hour."
           },
           {
             "id": "d",
             "text": "Make the repository private now",
-            "why": "You hid it after the fact. Anyone could have copied it while it was public."
+            "why": "You hid it after the fact. Anyone could have copied the key while it was public."
           },
           {
             "id": "e",
-            "text": "Rename `download.py`",
-            "why": "You renamed the file. The old commit still holds the key under the old name."
+            "text": "Delete the key line on `main`",
+            "why": "`main` never held the key. The leak is the commit on `fetch-data`."
           }
         ]
       },
       "feedback": {
         "correct": "A revoked key is useless, and the new one never reaches Git.",
-        "generic": "Assume the key is already copied. Ask which steps still help then."
+        "generic": "Assume the key was copied while the branch was up. Which steps still help?"
       },
       "explain": {
-        "text": "Once pushed, the key sits in the history for anyone who cloned or browsed it. Revoking it makes every copy worthless. The new key lives in an ignored `.env`, so it is never committed."
+        "text": "For an hour the commit was public, so the key may already be copied. Revoking it makes every copy worthless. The new key lives in an ignored `.env`, so it is never committed."
       }
     },
     {
@@ -1317,7 +1419,7 @@
         "byKey": {
           "kept": "You kept the two lookback commits. `reset --hard HEAD~2` moves `main` back past them.",
           "no-new": "You stopped after the reset. The new commit adds one more.",
-          "two": "You read `HEAD~2` as keeping two commits. It means two back from the top."
+          "two": "You kept only two commits and left out the new one. `HEAD~2` leaves three, and the new commit makes 4."
         }
       },
       "explain": {
@@ -1354,8 +1456,8 @@
         ],
         "tests": [
           {
-            "call": "daily_volume(db, '2026-03-03')",
-            "expect": "[('VOD', 4000), ('BARC', 2500), ('SHEL', 300)]",
+            "call": "daily_volume(db, '2026-03-04')[-1]",
+            "expect": "('AZN', 50)",
             "compare": "equal"
           },
           {
@@ -1386,7 +1488,7 @@
         "correct": "Grouped, ranked, and the day passed as a parameter.",
         "generic": "Some tests failed. Open the first one that failed below the editor.",
         "byKey": {
-          "test-1": "Test 1 expects VOD 4000, BARC 2500 and SHEL 300. Group by ticker, sum `qty`, and sort biggest first. Pass the day in a tuple, `(day,)`.",
+          "test-1": "Test 1 expects `('AZN', 50)` last on 4 March. Group by ticker, sum `qty`, and sort biggest first. Pass the day in a tuple, `(day,)`.",
           "test-2": "Test 2 has a tie at 2500. Add `ticker` as a second sort key.",
           "test-4": "Test 4 passes text with a quote in it, and your query ran it as SQL. Use a `?` placeholder and pass `(day,)`.",
           "error": "Your code stopped with an error. Check the SQL text and that the parameters are a tuple, `(day,)`."
@@ -1458,7 +1560,7 @@
         "sql-join"
       ],
       "title": "Companies nobody traded",
-      "prose": "You want every company in `securities` that has no row in `trades`. Each query starts `SELECT s.ticker FROM securities AS s`.",
+      "prose": "You want every company in `securities` with no trade on 3 March. Each query starts `SELECT s.ticker FROM securities AS s`.",
       "canvas": {
         "kind": "pair",
         "stack": true,
@@ -1512,48 +1614,57 @@
           "params": {
             "columns": [
               "id",
+              "date",
               "ticker",
               "qty"
             ],
             "rows": [
               [
                 "1",
+                "2026-03-02",
                 "BARC",
                 "400"
               ],
               [
                 "2",
+                "2026-03-02",
                 "SHEL",
                 "200"
               ],
               [
                 "3",
+                "2026-03-03",
                 "BARC",
                 "-150"
               ],
               [
                 "4",
+                "2026-03-03",
                 "RR",
                 "300"
               ],
               [
                 "5",
+                "2026-03-03",
                 "AZN",
                 "50"
               ],
               [
                 "6",
+                "2026-03-04",
                 "SHEL",
                 "100"
               ],
               [
                 "7",
+                "2026-03-04",
                 "RR",
                 "-100"
               ]
             ],
             "align": [
               "right",
+              "left",
               "left",
               "right"
             ]
@@ -1570,37 +1681,38 @@
         "options": [
           {
             "id": "a",
-            "text": "`LEFT JOIN trades AS t ON s.ticker = t.ticker WHERE t.id IS NULL`",
+            "text": "`LEFT JOIN trades AS t ON s.ticker = t.ticker AND t.date = '2026-03-03' WHERE t.id IS NULL`",
             "correct": true
           },
           {
             "id": "b",
-            "text": "`JOIN trades AS t ON s.ticker = t.ticker WHERE t.id IS NULL`",
-            "why": "You used an inner join. It drops the companies with no trades, so none are left to find."
+            "text": "`LEFT JOIN trades AS t ON s.ticker = t.ticker AND t.date <> '2026-03-03' WHERE t.id IS NULL`",
+            "why": "You flipped the date test. This finds companies with no trade on any other day, such as AZN."
           },
           {
             "id": "c",
-            "text": "`LEFT JOIN trades AS t ON s.ticker = t.ticker WHERE t.id = NULL`",
-            "why": "You compared with `= NULL`, which is never true, so no row comes back."
+            "text": "`LEFT JOIN trades AS t ON s.ticker = t.ticker WHERE t.id IS NULL`",
+            "why": "You left out the date. This finds companies that never traded, so SHEL is missed."
           },
           {
             "id": "d",
-            "text": "`LEFT JOIN trades AS t ON s.ticker = t.ticker AND t.id IS NULL`",
-            "why": "You put the test in `ON`. A left join keeps every company anyway, so all five come back."
+            "text": "`JOIN trades AS t ON s.ticker = t.ticker AND t.date = '2026-03-03' WHERE t.id IS NULL`",
+            "why": "You used an inner join. It drops the companies with no match, so none are left to find."
           }
         ]
       },
       "feedback": {
-        "correct": "HSBA and VOD: kept by the left join, found by `IS NULL`.",
-        "generic": "Keep every company, then look for the ones whose trade columns are NULL."
+        "correct": "HSBA, SHEL and VOD: the date sits in `ON`, so every company survives the join.",
+        "generic": "Keep every company, matching only 3 March trades. Then look for the NULLs."
       },
       "explain": {
-        "text": "A left join keeps every company, with NULL trade columns where nothing matches. `WHERE t.id IS NULL` then keeps only those: HSBA and VOD. The test must sit in `WHERE`, after the join.",
+        "text": "With the date in `ON`, only 3 March trades can match, and every company survives the left join. `WHERE t.id IS NULL` then keeps HSBA, SHEL and VOD. SHEL traded on 2 and 4 March, but not on 3 March.",
         "canvas": {
           "left": {
             "highlight": {
               "rows": [
                 2,
+                3,
                 4
               ]
             }
@@ -1691,7 +1803,7 @@
         }
       },
       "explain": {
-        "text": "Each row is a path whose returns you can see by eye. One price gives no returns at all. The zero test needs `pytest.raises(ValueError)` around the call. A check that only rejects negatives lets zero through to a division.\n\n```python\n@pytest.mark.parametrize(\"prices, expected\", [\n    ([100.00, 110.00, 99.00], [0.1, -0.1]),\n    ([50.00, 50.00], [0.0]),\n    ([80.00], []),\n])\ndef test_returns_by_hand(prices, expected):\n    assert daily_returns(prices) == pytest.approx(expected)\n```"
+        "text": "Each row is a path whose returns you can see by eye, and one price gives none. The zero test wraps the call in `pytest.raises(ValueError)`. A check that only rejects negatives lets zero through to a division.\n\n```python\n@pytest.mark.parametrize(\"prices, expected\", [\n    ([100.00, 110.00, 99.00], [0.1, -0.1]),\n    ([50.00, 50.00], [0.0]),\n    ([80.00], []),\n])\ndef test_returns_by_hand(prices, expected):\n    assert daily_returns(prices) == pytest.approx(expected)\n```"
       }
     },
     {
@@ -1912,7 +2024,7 @@
       "title": "The Tools exit",
       "kind": "longform",
       "prompt": "Your 1.1 exit project is one folder. `risk.py` reads `prices.csv`, prints volatility and drawdown, and saves `risk.png`. `prices.csv` is 40 MB and downloaded daily. `.env` holds your data API key, and there is a `__pycache__/` folder. The Tools exit asks for the project on GitHub, in a Git repository with at least one test.\n\n(a) Which files go into the repository? What does your `.gitignore` hold, and why? (b) How do you change `risk.py` so a test can import it? Write one test with a hand-worked answer. (c) List the git commands in order, from `git init` to a pull request. The pull request adds the test on its own branch. (d) A week later you find `.env` was in your first commit, and it was pushed. What do you do, and why is deleting the file not enough?",
-      "model": "**(a) What goes in.** Commit `risk.py`, the tests in `tests/`, a `.gitignore` and a short `README.md`. Leave out the rest, with this `.gitignore`:\n\n```text\nprices.csv\n.env\n__pycache__/\nrisk.png\n```\n\n`prices.csv` is large and is downloaded again every day, so the README says how to fetch it. `.env` holds a secret key, which must never reach GitHub. `__pycache__/` and `risk.png` are made by running the code, so they would only clutter every diff.\n\n**(b) Making it testable.** Move the work into functions that take values and return values. Put the script lines under a main guard:\n\n```python\ndef max_drawdown(closes):\n    peak, worst = closes[0], 0.0\n    for c in closes:\n        peak = max(peak, c)\n        worst = min(worst, c / peak - 1)\n    return worst\n\nif __name__ == \"__main__\":\n    main(sys.argv)\n```\n\nNow `from risk import max_drawdown` runs nothing. One test with a hand answer:\n\n```python\nimport pytest\nfrom risk import max_drawdown\n\ndef test_one_dip():\n    # peak £125.00, then £100.00: 100 / 125 - 1 = -0.2\n    assert max_drawdown([100.00, 125.00, 100.00]) == pytest.approx(-0.2)\n```\n\n**(c) The commands.**\n\n```sh\ngit init\ngit add risk.py .gitignore README.md\ngit commit -m \"Add risk summary script\"\ngit remote add origin git@github.com:you/risk.git\ngit push -u origin main\ngit switch -c add-tests\ngit add tests/test_risk.py risk.py\ngit commit -m \"Test max_drawdown on a hand-made path\"\ngit push -u origin add-tests\n```\n\nThen open a pull request from `add-tests` into `main` on GitHub, and merge it once the tests pass.\n\n**(d) The key in the history.** Revoke the key with the provider at once and make a new one. Deleting `.env` and committing does not help: the first commit still holds the key, and anyone could have copied it. Then `git rm --cached .env`, list it in `.gitignore`, commit, and keep the new key only in the ignored file.",
+      "model": "**(a) What goes in.** Commit `risk.py`, the tests in `tests/`, a `pyproject.toml`, a `.gitignore` and a short `README.md`. Leave out the rest, with this `.gitignore`:\n\n```text\nprices.csv\n.env\n__pycache__/\nrisk.png\n```\n\n`prices.csv` is large and is downloaded again every day, so the README says how to fetch it. `.env` holds a secret key, which must never reach GitHub. `__pycache__/` and `risk.png` are made by running the code, so they would only clutter every diff.\n\n**(b) Making it testable.** Move the work into functions that take values and return values. Put the script lines under a main guard:\n\n```python\ndef max_drawdown(closes):\n    peak, worst = closes[0], 0.0\n    for c in closes:\n        peak = max(peak, c)\n        worst = min(worst, c / peak - 1)\n    return worst\n\nif __name__ == \"__main__\":\n    main(sys.argv)\n```\n\nNow `from risk import max_drawdown` runs nothing. A `pyproject.toml` beside `risk.py` lets pytest import it from `tests/`:\n\n```toml\n[tool.pytest.ini_options]\npythonpath = [\".\"]\n```\n\nOne test with a hand answer:\n\n```python\nimport pytest\nfrom risk import max_drawdown\n\ndef test_one_dip():\n    # peak £125.00, then £100.00: 100 / 125 - 1 = -0.2\n    assert max_drawdown([100.00, 125.00, 100.00]) == pytest.approx(-0.2)\n```\n\n**(c) The commands.**\n\n```sh\ngit init -b main\ngit add risk.py .gitignore README.md\ngit commit -m \"Add risk summary script\"\ngit remote add origin git@github.com:you/risk.git\ngit push -u origin main\ngit switch -c add-tests\ngit add tests/test_risk.py risk.py pyproject.toml\ngit commit -m \"Test max_drawdown on a hand-made path\"\ngit push -u origin add-tests\n```\n\nThen open a pull request from `add-tests` into `main` on GitHub, and merge it once the tests pass.\n\n**(d) The key in the history.** Revoke the key with the provider at once and make a new one. Deleting `.env` and committing does not help: the first commit still holds the key, and anyone could have copied it. Then `git rm --cached .env`, list it in `.gitignore`, commit, and keep the new key only in the ignored file.",
       "rubric": [
         {
           "points": 2,
@@ -1928,7 +2040,7 @@
         },
         {
           "points": 3,
-          "text": "(c) Gives the commands in a working order: init, add, commit, remote, push, a new branch, commit the test, push the branch, open a pull request."
+          "text": "(c) Gives the commands in a working order: init on `main`, add, commit, remote, push, a new branch, commit the test, push the branch, open a pull request."
         },
         {
           "points": 2,

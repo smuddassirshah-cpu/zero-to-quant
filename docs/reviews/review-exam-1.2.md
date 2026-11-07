@@ -130,3 +130,53 @@ Format: `N. item [index] path | severity | what is wrong, with evidence | exact 
 3. Authoring note: from Python 3.12, `sum()` of floats is compensated. Pyodide 0.27.7 runs 3.12.7, so `sum([0.7, 0.2, 0.1]) == 1.0` there, while `0.7 + 0.2 + 0.1` is 0.9999999999999999. A float-slip item or a hidden test built on `sum()` would silently pass. Wanted: one line in AUTHORING section 3 (`code`) or section 6.
 4. Already open (inbox, "Raised later (review exam topic-2.2)", first bullet): the Learn chip shows `examMinutes(t.hours)`. For topic 1.2 (40 h) that is 45, while the file stores 60 and finding 18 asks for 75. Not added again.
 5. Already open (same list, last bullet): the brief's script name `numbers.py` shadows the standard `numbers` module. Here `statistics` imports it too, not only NumPy; the script strips its own folder from `sys.path` first, as the 2.2 script does. Not added again.
+
+## Fix pass
+
+Edited only `app/content/exams/topic-1.2.json` and `docs/reviews/exam-1.2-scripts/numbers.py` (the validator also rewrote `content/manifest.json`, one line: `topic-1.2` 60 to 75). Ids unchanged (one id added, `e-fixture-calls`). The script now exits 0 (202 of 202, pytest 8.1.1 venv, CPython 3.13, SQLite 3.53.1); every check that accepted the old text was replaced by one that demands the new value.
+
+### Items
+
+1. e-push-rejected: fixed as proposed (prose states "Your Git is set to merge when it pulls."). Basis: git 2.43.0 in a throwaway repository, a plain `git pull` on divergent branches prints the "divergent branches" hint and stops; with `pull.rebase false` it merges and the push then succeeds.
+2. e-tools-exit `git init -b main`: fixed. Basis: git 2.43.0 plain `git init` names the branch `master` and `git push -u origin main` fails ("failed to push some refs"); `git init -b main` names it `main`. The whole model sequence ran against a bare origin with no error. Rubric (c) now says "init on `main`".
+3. e-tools-exit `pyproject.toml`: fixed in (a), (b) and (c). Basis: pytest 8.1.1 run on the model layout: without the file collection fails with ModuleNotFoundError; with `[tool.pytest.ini_options] pythonpath = ["."]`, plain `pytest` gives 1 passed (throwaway repository and script).
+4. e-shell-order: fixed as proposed (grep SELL first, distractors `sort -n` and `wc -l`; answer p1 to p6). Recomputed in `/bin/sh`: the pipeline prints `2 VOD`; with `sort -n` it prints `1 SHEL`; with `wc -l` it prints 2 (tickers sold, not which).
+5. e-fetchall-shape: fixed as proposed. SQLite: `fetchone()` gives `('BARC', 400)`; option d is the whole `fetchall()` list, checked in the script.
+6. e-inner-join: fixed as proposed. SQLite: joined sum 600, every trade 800, cross join 4000 (graded key stays a number, 600 now).
+7. e-catch-bug: fixed as proposed (worst one-day return bug, negative convention). Recomputed (right, bug): a (-0.19, -0.10), b (-0.2, -0.2), c (-1/6, -1/6), d (-0.19, -0.1818), e (0, 0); the key stays a and d. The explain's "81/99 - 1 = -0.18" is -0.1818 rounded.
+8. e-conflict-order: fixed as proposed (distractors d1, d2). Basis: git 2.43.0 by hand, `git commit -a` straight after the conflict commits the markers; `git merge --abort` restores main's `vol=3` and `vol-signal`'s change never reaches it; commit before add is refused.
+9. e-tdd-order: fixed as proposed (distractors d1, d2; answer unchanged). Basis: the red-green-refactor cycle, Beck, Test-Driven Development by Example, part I; a test never seen to fail proves nothing, and editing the test to match the bug hides it.
+10. e-approx-fix: fixed as proposed. Real pytest 8.1.1 prints `E       assert 0.32000000000000006 == 0.32` for the loop-product `total_return`; `approx(0.32)` passes; `abs(r - 0.32) < 1` passes on 1.2.
+11. e-leaked-key: fixed as proposed. Basis: GitHub Docs, "Removing sensitive data from a repository" says to treat a pushed credential as compromised and revoke it; a pull request keeps the commits reachable after the branch is deleted. Not run here (no GitHub access); the option logic needs no more than that. Key stays a and b.
+12. e-log-graph: fixed as proposed, key 4 (was 6; graded answer changed). Rebuilt in git 2.43.0: `rev-list --count carry` 4, `main` 6, `--first-parent main` 4. Wrongs `lane` 2 and `main` 6.
+13. e-anti-join: fixed as proposed. SQLite on the dated trades: a HSBA, SHEL, VOD; b AZN, HSBA, VOD; c HSBA, VOD; d none. Highlight rows [2, 3, 4]. Key stays a.
+14. e-network-test option texts: fixed as proposed (lengths 65, 59, 61, 53; script checks the cue is gone).
+15. e-reset-hard `byKey.two`: fixed. `HEAD~2` leaves 3 of the 5 commits, the new commit makes 4; a typed 2 means two kept and the new one forgotten.
+16. e-catch-bug prose: superseded by 7 ("negative fractions, or 0.0").
+
+### Coverage, difficulty and time
+
+17. e-fixture-calls: added after `e-param-table` as proposed (d3, key 4, wrongs 2, 1, 5). Real pytest 8.1.1 builds `closes()` 4 times for the shown file (counter test, 6 passed). Ramp is now 5, 14, 5, 2 of 26.
+18. `minutes` 75. Rule: AUTHORING section 5 sets topic-exam `minutes` per file, with no cap and no validator rule; the median paces now sum to 4,245 s (70.75 minutes), and the distractors add reading. No `pace` added. The Learn chip still says 45 (engine bullet 4).
+
+### Notes
+
+19. e-daily-volume `tests[0]`: fixed. Now `daily_volume(db, '2026-03-04')[-1]` expecting `('AZN', 50)`; the solution passes, the starter fails it with IndexError; `byKey.test-1` reworded; no hidden test repeats an example.
+20. e-pytest-file explain: fixed (three sentences); the validator no longer lists `O2-long-explain` for this file.
+21. No change (near relatives accepted by the reader).
+22. No change (optional).
+23. e-sql-having explain: fixed ("so 3 rows come back"); the `O2-explain-answer` warning is gone.
+24. No change.
+25. No change.
+26. No change.
+
+Engine findings 1 to 3: deferred, in the inbox or raised for engine; 4 and 5 already open.
+
+### Gates
+
+- Freshness: `node tools/fresh-check.mjs --exam topic-1.2 --min-run 10` gives 0 hits (was 1). Literal grep of `app/content/courses` for each new item's key nouns ("0.32000000000000006", "total_return([0.10", "grep SELL", "SELECT SUM(t.qty)", "ORDER BY qty DESC", "test_no_prices", "fetch-data", "no trade on 3 March", "8b0c3e1", "Scale carry", "Retry the download", "vol < 5.0", "worst one-day return", "81 / 99"): 0 hits each. Incidental hits only on generic phrases from the same lessons: "fetchone()" 6 (sql l12), "config.py" 3 (git l12), "closes()" 2 (pytest l7 and homework-2), "merge --abort" 3, "commit -a" 5, "git init -b main" 2, "pythonpath" 4, "sort -rn" 3. None is the same setup.
+- Validator: 0 errors; the exam's one warning left is the deliberate `float-artefact` on `e-approx-fix` (engine bullet 2).
+- Voice (scratch copy holding only this exam): 0 sentences over 35 words, 0 explanations over three sentences, 734 sentences; no dash and no `!` except git's own `! [rejected]`.
+- Code items: `e-daily-volume` solution passes 6 of 6, starter fails; `e-pytest-file` unchanged apart from its explain (solution 8 of 8, starter fails 6 of 7).
+- Playthrough `--exam topic-1.2 --local-cdn <pkgs>`: 26 of 26, passed; `--mobile`: 26 of 26, passed.
+- Graded answers changed: e-log-graph key 6 to 4; e-inner-join key 5 to 600; e-fetchall-shape key now `('BARC', 400)` (was `[(3,)]`); e-anti-join key unchanged option, set now HSBA, SHEL, VOD; e-catch-bug options new (keys a, d).
