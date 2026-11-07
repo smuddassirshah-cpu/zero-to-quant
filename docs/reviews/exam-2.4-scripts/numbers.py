@@ -76,9 +76,9 @@ def say(iid, path, value, fmt=None):
 
 
 # ---------------------------------------------------------------- metadata, shape, coverage
-ex.claim(doc['minutes'] == 60 and doc['pass'] == 0.7, 'minutes 60 and pass 0.7 as stored')
-hours = 140  # docs/curriculum.md row 2.4; learn.js examMinutes(140) = 60
-ex.claim((45 if hours <= 60 else 60 if hours <= 150 else 90) == doc['minutes'], 'minutes follow learn.js examMinutes(140 h)')
+ex.claim(doc['minutes'] == 90 and doc['pass'] == 0.7, 'minutes 90 and pass 0.7 as stored')
+# Rule: AUTHORING section 5 sets topic-exam `minutes` per file ("set it to the time the exam really needs") and defines
+# item `pace` (seconds) for exams. The paces below sum to the minutes stored; learn.js examMinutes(140 h) = 60 is only the Learn chip.
 ex.claim(20 <= len(doc['items']) <= 30, f'{len(doc["items"])} items, inside 20 to 30')
 ramp = {d: sum(1 for it in doc['items'] if it['difficulty'] == d) for d in (2, 3, 4, 5)}
 ex.claim(ramp == {2: 5, 3: 13, 4: 5, 5: 3}, f'ramp {ramp} (19%, 50%, 19%, 12% against 20, 50, 20, 10)')
@@ -90,114 +90,148 @@ ex.claim(used == set(course['skills']), 'every skill is tested by at least one i
 rub = sum(r['points'] for r in IT['e-round-review']['rubric'])
 ex.claim(rub == 10, f'longform rubric sums to {rub}')
 nopace = [it['id'] for it in doc['items'] if 'pace' not in it]
-print(f'   items without pace: {len(nopace)} of {len(doc["items"])}')
-# Time at the sibling exams' paces (d2 60 s, d3 120 s, d4 150 s, code d3 420 s, code d4 480 s, code d5 600 s,
-# d5 numeric 300 s, longform 900 s). Information for the review, not a check.
-sec = 0
+ex.claim(not nopace, f'every item has a pace ({len(nopace)} without)')
+paces = sum(it['pace'] for it in doc['items'])
+ex.claim(all(isinstance(it['pace'], (int, float)) and 0 < it['pace'] <= 1800 for it in doc['items']), 'every pace is a positive number up to 1800')
+ex.claim(paces == 5240 and 85 * 60 <= paces <= doc['minutes'] * 60, f'paces sum to {paces} s = {paces / 60:.1f} min, inside the {doc["minutes"]} minutes stored')
+bylevel = {}
 for it in doc['items']:
-    k, d = it.get('kind') or it['widget']['kind'], it['difficulty']
-    sec += 900 if k == 'longform' else {3: 420, 4: 480, 5: 600}[d] if k == 'code' else {2: 60, 3: 120, 4: 150, 5: 300}[d]
-print(f'   estimated time at sibling paces: {sec} s = {sec / 60:.0f} min against {doc["minutes"]}')
+    bylevel.setdefault(it['difficulty'], []).append(it['pace'])
+print(f'   paces by difficulty: { {d: sorted(set(v)) for d, v in sorted(bylevel.items())} }')
 
 # ---------------------------------------------------------------- e-file-values
-t_max, n_max, sum_n = 10 ** 4, 2 * 10 ** 5, 2 * 10 ** 5
-key('e-file-values', min(sum_n, t_max * n_max))
-wrong('e-file-values', 'product', t_max * n_max)
+nm_max, sum_nm, t_max = 2000, 10 ** 6, 10 ** 4
+key('e-file-values', sum_nm)
+wrong('e-file-values', 'product', t_max * nm_max * nm_max)
+wrong('e-file-values', 'grid', nm_max * nm_max)
 wrong('e-file-values', 'tests', t_max)
-say('e-file-values', 'explain.text', 4 * 10 ** 10, fmt=lambda v: '4 \\cdot 10^{10}')
-ex.claim((2 * 10 ** 5) ** 2 == 4 * 10 ** 10, 'e-file-values (2e5)^2 = 4e10')
+ex.claim(nm_max * nm_max > sum_nm, 'e-file-values one 2,000 by 2,000 grid (4e6 cells) is forbidden by the cap of 1e6')
+say('e-file-values', 'explain.text', 4 * 10 ** 6, fmt=lambda v: '4 \\cdot 10^6')
+say('e-file-values', 'explain.text', 1000000, fmt=lambda v: '1,000,000')
+ex.claim(any('10⁶' in ln for ln in IT['e-file-values']['canvas']['params']['lines']), 'e-file-values the Input section states the cap 10^6')
 
-# ---------------------------------------------------------------- e-fast-read (tokens are layout-free; line readers break)
-lay1 = '2\n3\n1 2 3\n2\n4 5\n'
-lay2 = '2\n\n3\n1 2\n3\n2\n4\n5'
-ex.claim(lay1.split() == lay2.split(), 'e-fast-read read().split() gives the same tokens for wrapped, blank and unterminated input')
-ex.claim(lay1.split('\n') != lay2.split('\n'), 'e-fast-read split("\\n") keeps the layout, so positions shift')
-try:
-    int('1 2')
-    bad = False
-except ValueError:
-    bad = True
-ex.claim(bad, 'e-fast-read option c: int() of a line holding two values raises ValueError')
+# ---------------------------------------------------------------- e-fast-read (names with spaces: tokens tear a name, lines keep it)
+txt = '2\nNorth Desk\n15\nEast\n-3\n'
+ex.claim(txt.splitlines() == ['2', 'North Desk', '15', 'East', '-3'], 'e-fast-read splitlines keeps each name whole')
+ex.claim(txt.split() == ['2', 'North', 'Desk', '15', 'East', '-3'], 'e-fast-read split() tears North Desk into two tokens')
+ex.claim('North Desk\n15'.split(' ') == ['North', 'Desk\n15'], 'e-fast-read split(" ") glues the newline to the next token')
+ex.claim('North Desk'.split()[0] == 'North', 'e-fast-read option a keeps only the first word')
 ex.claim(correct_ids('e-fast-read') == ['b'], 'e-fast-read key b')
 
 # ---------------------------------------------------------------- e-lcm-rebalance
-key('e-lcm-rebalance', math.lcm(84, 90))
+L = math.lcm(84, 90)
+shared = [d for d in range(1, 10001) if d % 84 == 0 and d % 90 == 0]
+key('e-lcm-rebalance', 10000 // L)
+ex.claim(len(shared) == 7 and shared[0] == 1260 and shared[-1] == 8820, f'e-lcm-rebalance brute force over 10,000 days: {len(shared)} shared days, {shared[0]} to {shared[-1]}')
 ex.claim(84 * 90 // math.gcd(84, 90) == 1260 and math.gcd(84, 90) == 6, 'e-lcm-rebalance lcm by 84*90/gcd')
-wrong('e-lcm-rebalance', 'product', 84 * 90)
-wrong('e-lcm-rebalance', 'gcd', math.gcd(84, 90))
-ex.claim(90 == 84 + 6 and 84 == 14 * 6 and math.gcd(84, 6) == 6, 'e-lcm-rebalance explain Euclid steps')
-say('e-lcm-rebalance', 'feedback.correct', 1260)
+wrong('e-lcm-rebalance', 'product', 10000 // (84 * 90))
+wrong('e-lcm-rebalance', 'gcd', 10000 // math.gcd(84, 90))
+wrong('e-lcm-rebalance', 'today', len(shared) + 1)
+wrong('e-lcm-rebalance', 'first', L)
+ex.claim(90 == 84 + 6 and 84 == 14 * 6 and math.gcd(84, 6) == 6 and 7 * 1260 == 8820 and 8 * 1260 == 10080, 'e-lcm-rebalance explain Euclid steps and multiples')
+ex.claim(84 * 90 == 7560, 'e-lcm-rebalance byKey product 7,560')
 
-# ---------------------------------------------------------------- e-greedy-tap (all subsets as the second method)
-iv = {x['id']: (x['from'], x['to']) for x in IT['e-greedy-tap']['canvas']['state']['intervals']}
+# ---------------------------------------------------------------- e-greedy-tap (deadline jobs; every feasible subset as the second method)
+jobs = {r[0]: (int(r[1]), int(r[2])) for r in IT['e-greedy-tap']['canvas']['params']['rows']}
+names = [r[0] for r in IT['e-greedy-tap']['canvas']['params']['rows']]
+tap = {f'r{i}': nm for i, nm in enumerate(names)}
 
 
-def overlap(a, b):
-    return iv[a][0] < iv[b][1] and iv[b][0] < iv[a][1]
+def feasible(sub):
+    """Every job can take its own day <= its deadline in 1..3 (Hall's condition by sorted deadlines)."""
+    ds = sorted(jobs[j][0] for j in sub)
+    return all(dl >= k + 1 for k, dl in enumerate(ds)) and len(ds) <= 3
 
 
-def greedy(order):
-    kept = []
-    for m in order:
-        if all(not overlap(m, k) for k in kept):
-            kept.append(m)
+def latest_free(order):
+    free, kept = {1, 2, 3}, []
+    for j in order:
+        days = [x for x in free if x <= jobs[j][0]]
+        if days:
+            free.remove(max(days))
+            kept.append(j)
     return sorted(kept)
 
 
-ef = greedy(sorted(iv, key=lambda m: iv[m][1]))
-es = greedy(sorted(iv, key=lambda m: iv[m][0]))
-sh = greedy(sorted(iv, key=lambda m: iv[m][1] - iv[m][0]))
-ex.claim(ef == sorted(W('e-greedy-tap')['answer']), f'e-greedy-tap earliest finish keeps {ef}')
-best = [s for r in range(8) for s in itertools.combinations(sorted(iv), r) if all(not overlap(a, b) for a, b in itertools.combinations(s, 2))]
-top = max(len(s) for s in best)
-ex.claim(top == 3 and [list(s) for s in best if len(s) == top] == [ef], 'e-greedy-tap optimum 3, unique: B, D, G')
-wr = {x['id']: sorted(x['set']) for x in W('e-greedy-tap')['wrong']}
-ex.claim(wr['start'] == es and wr['short'] == sh, f'e-greedy-tap slips: earliest start {es}, shortest first {sh}')
-for m, says in [('mA', ['mB', 'mC', 'mD']), ('mE', ['mD', 'mF', 'mG']), ('mF', ['mD', 'mG'])]:
-    ex.claim(all(overlap(m, o) for o in says), f'e-greedy-tap byKey {m}: overlaps {says}')
-ex.claim(overlap('mC', 'mB') and overlap('mC', 'mD'), 'e-greedy-tap byKey mC: C overlaps B and D (and A)')
+def earliest_free(order):
+    free, kept = {1, 2, 3}, []
+    for j in order:
+        days = [x for x in sorted(free) if x <= jobs[j][0]]
+        if days:
+            free.remove(days[0])
+            kept.append(j)
+    return sorted(kept)
+
+
+by_pay = sorted(jobs, key=lambda j: -jobs[j][1])
+rule = latest_free(by_pay)
+ex.claim(sorted(tap[c] for c in W('e-greedy-tap')['answer']) == rule == ['A', 'D', 'E'], f'e-greedy-tap the rule keeps {rule}')
+subs_ok = [s for r_ in range(7) for s in itertools.combinations(names, r_) if feasible(s)]
+pay = lambda s: sum(jobs[j][1] for j in s)  # noqa: E731
+top_pay = max(pay(s) for s in subs_ok)
+ex.claim(top_pay == 150 and [s for s in subs_ok if pay(s) == top_pay] == [('A', 'D', 'E')], 'e-greedy-tap the optimum over every feasible subset is A, D, E at 150, unique')
+wr = {x['id']: sorted(tap[c] for c in x['set']) for x in W('e-greedy-tap')['wrong']}
+ex.claim(wr['earliest'] == earliest_free(by_pay) == ['D', 'E', 'F'] and pay(wr['earliest']) == 120, 'e-greedy-tap slip earliest free day keeps D, E, F for 120')
+by_dl = sorted(jobs, key=lambda j: (jobs[j][0], names.index(j)))
+ex.claim(wr['deadline'] == earliest_free(by_dl) == ['A', 'C', 'D'] and pay(wr['deadline']) == 140, 'e-greedy-tap slip by deadline keeps A, C, D for 140')
+ex.claim(wr['top'] == sorted(by_pay[:3]) and not feasible(wr['top']), 'e-greedy-tap slip top three (D, A, B) is infeasible')
+ex.claim(feasible(('A', 'B')) is False and jobs['A'][0] == jobs['B'][0] == 1, 'e-greedy-tap byKey top and r1: A and B both need day 1')
+ex.claim(40 in [jobs[j][1] for j in jobs] and jobs['E'][1] == 40, "e-greedy-tap byKey deadline: E's 40 is missed")
+ex.claim(len(rule) == 3 and not feasible(('A', 'D', 'E', 'C')), 'e-greedy-tap byKey r2 and r5: days are full when C and F come up')
 
 # ---------------------------------------------------------------- e-upsolve-pick
 r = 1250
-ex.claim(correct_ids('e-upsolve-pick') == ['c', 'd'] and 1300 - r <= 300 and 1500 - r <= 300 < 1950 - r,
-         'e-upsolve-pick keys C and D inside 300; E 700 above')
-say('e-upsolve-pick', 'explain.text', 1300 - r)
-say('e-upsolve-pick', 'explain.text', 1500 - r)
-say('e-upsolve-pick', 'explain.text', 1950 - r)
+ex.claim(correct_ids('e-upsolve-pick') == ['g', 'h'], 'e-upsolve-pick key G and H')
+ex.claim(all(abs(v - r) <= 300 for v in (1400, 1350, 1500, 1450)), 'e-upsolve-pick all four ratings lie within 300 of 1,250, so the window does not decide')
 
 # ---------------------------------------------------------------- e-next-problem
 rows = IT['e-next-problem']['canvas']['params']['rows']
-open_rows = {f'r{i}': int(x[1].replace(',', '')) for i, x in enumerate(rows) if x[2] == 'open'}
-ex.claim(max(open_rows, key=open_rows.get) == W('e-next-problem')['answer'][0], f'e-next-problem most-solved open problem {open_rows}')
+left = 120 - 70
+cand = {f'r{i}': (int(x[1].replace(',', '')), int(x[2].split()[0])) for i, x in enumerate(rows) if x[2] != 'solved'}
+fit = {k: v[0] / v[1] for k, v in cand.items() if v[1] <= left}
+ex.claim(max(fit, key=fit.get) == W('e-next-problem')['answer'][0] == 'r3' and 'r4' not in fit, f'e-next-problem best fitting rate {fit}, E needs 60 > {left}')
+ex.claim(1500 / 20 == 75 and round(1250 / 40, 2) == 31.25 and left == 50, 'e-next-problem rates 75 and 31.25, 50 minutes left')
+wr = {x['id']: x['set'] for x in W('e-next-problem')['wrong']}
+ex.claim(wr == {'letter': ['r2'], 'points': ['r4']}, 'e-next-problem slips: the next letter C, the most points E')
+ex.claim(max(cand, key=lambda k: cand[k][0]) == 'r4', 'e-next-problem E has the most points')
+say('e-next-problem', 'explain.text', 75, fmt=lambda v: '75')
 
-# ---------------------------------------------------------------- e-pop-front
-n = 100_000
-key('e-pop-front', n * (n - 1) // 2)
-ex.claim(sum(m - 1 for m in range(1, n + 1)) == 4_999_950_000, 'e-pop-front sum of (m - 1) by loop')
+# ---------------------------------------------------------------- e-pop-front (largest n with n(n-1)/2 <= 1e8)
+budget = 10 ** 8
+n_best = max(m for m in range(1, 20000) if m * (m - 1) // 2 <= budget)
+key('e-pop-front', n_best)
+ex.claim(math.isqrt(2 * budget) == 14142 and n_best == 14142, 'e-pop-front by isqrt(2e8) and a scan')
+ex.claim(14142 * 14141 // 2 == 99_991_011 and 14143 * 14142 // 2 == 100_005_153, 'e-pop-front 99,991,011 fits and 100,005,153 does not')
 for small in (1, 2, 5, 10):
     lst, shifts = list(range(small)), 0
     while lst:
         shifts += len(lst) - 1
         lst.pop(0)
     ex.claim(shifts == small * (small - 1) // 2, f'e-pop-front simulated shifts for n = {small}')
-wrong('e-pop-front', 'square', n * n)
-wrong('e-pop-front', 'half', n * n // 2)
-wrong('e-pop-front', 'pops', n)
-# byKey "half" says the gap between n^2/2 and the exact total is the last pop; the gap is n/2 = 50,000 shifts
-ex.claim_text('exam', f'{P("e-pop-front")}.feedback.byKey.half', 'The last pop shifts nothing, so',
-              n * n // 2 - n * (n - 1) // 2 == 1, 'e-pop-front byKey half: the gap to n^2/2 is the last pop')
+lst, shifts = list(range(14142)), 0
+while lst:
+    shifts += len(lst) - 1
+    lst.pop(0)
+ex.claim(shifts == 99_991_011, 'e-pop-front simulated drain of 14,142 orders makes 99,991,011 shifts')
+wrong('e-pop-front', 'square', math.isqrt(budget))
+wrong('e-pop-front', 'pops', budget)
+say('e-pop-front', 'feedback.correct', 99991011, fmt=lambda v: '99{,}991{,}011')
+say('e-pop-front', 'feedback.correct', 100005153, fmt=lambda v: '100,005,153')
 
 # ---------------------------------------------------------------- e-budget-table
 rows = W('e-budget-table')['rows']
-want = [5000 ** 2, 100000 ** 2, 10 ** 6 * math.log2(10 ** 6), 2 ** 30]
+want = [3000 ** 2, 2000 ** 3, 2 * 10 ** 5 * math.sqrt(2 * 10 ** 5), 25 * 2 ** 25]
 for i, v in enumerate(want):
     a = rows[i][1]['answer']
     ex.claim(abs(a - v) <= abs(v) * rows[i][1]['tol']['rel'], f'e-budget-table row {i} steps {a} = {v:.6g}')
     ex.claim(rows[i][2]['answer'] == ('yes' if v <= 2e8 else 'no'), f'e-budget-table row {i} fits = {rows[i][2]["answer"]}')
-ex.claim(abs(math.log2(1e6) - 19.93) < 0.005, 'e-budget-table log2(1e6) = 19.93')
-ex.claim(abs(2e7 - 10 ** 6 * 19.93) <= 2e7 * 0.03, 'e-budget-table a typed 2.0e7 is graded right')
-ex.claim(100000 ** 2 / 2e8 == 50, 'e-budget-table r1c1 "fifty times the budget"')
-say('e-budget-table', 'feedback.byKey.r3c1', 2 ** 30)
+ex.claim(rows[2][1]['answer'] == 89442719 and rows[3][1]['answer'] == 838860800, 'e-budget-table exact keys 89,442,719 and 838,860,800')
+ex.claim(abs(math.sqrt(2e5) - 447.2) < 0.05, 'e-budget-table sqrt(2e5) = 447.2')
+ex.claim(abs(8.9e7 - 2e5 * 447.2) <= 8.9e7 * 0.03 and abs(8.9e7 - want[2]) <= want[2] * 0.03, 'e-budget-table a typed 8.9e7 is graded right')
+ex.claim(2000 ** 3 / 2e8 == 40, 'e-budget-table r1c1 "forty times the budget"')
+ex.claim(round(838860800 / 2e8, 1) == 4.2, 'e-budget-table explain: four times over (4.2)')
+say('e-budget-table', 'feedback.byKey.r3c1', 838860800, fmt=lambda v: '838{,}860{,}800')
+say('e-budget-table', 'feedback.byKey.r0c1', 9000000, fmt=lambda v: '9{,}000{,}000')
 
 # ---------------------------------------------------------------- e-inverse-solve
 inv5 = pow(5, -1, 17)
@@ -214,15 +248,16 @@ ex.claim(5 * 15 % 17 == 7, 'e-inverse-solve byKey times: 5 * 15 = 75 = 7 (mod 17
 cells = IT['e-sieve-tap']['canvas']['params']['cells']
 num = {f'r{i + 1}c{j + 1}': int(cells[i][j]) for i in range(6) for j in range(10)}
 dim = {num[c] for c in IT['e-sieve-tap']['canvas']['state']['dim']}
-crossed = {v for p in (2, 3, 5) for v in range(p * p, 61, p)}
-ex.claim(dim - {1} == crossed, 'e-sieve-tap faded cells other than 1 are exactly the crossed multiples of 2, 3 and 5')
-# prose: "Crossed-out numbers are faded." 1 is faded but is no multiple of 2, 3 or 5
-ex.claim_text('exam', f'{P("e-sieve-tap")}.prose', 'Crossed-out numbers are faded.', dim == crossed,
-              'e-sieve-tap prose: the faded cells are the crossed-out numbers')
+crossed = {v for p in (2, 3) for v in range(p * p, 61, p)}
+ex.claim(dim == crossed | {1}, 'e-sieve-tap faded cells are exactly 1 and the crossed multiples of 2 and 3 (from 4 and 9)')
 standing = [v for v in range(2, 61) if v not in dim and any(v % d == 0 for d in range(2, v))]
-ex.claim(standing == [49] and num[W('e-sieve-tap')['answer'][0]] == 49, f'e-sieve-tap composites standing {standing}')
+ex.claim(standing == [25, 35, 49, 55] and sorted(num[c] for c in W('e-sieve-tap')['answer']) == standing, f'e-sieve-tap composites standing {standing}')
+wr = {x['id']: sorted(num[c] for c in x['set']) for x in W('e-sieve-tap')['wrong']}
+ex.claim(wr == {'one': [1], 'fives': [25, 35, 55]}, f'e-sieve-tap slips {wr}')
 ex.claim(all(47 % d for d in range(2, 7)) and 51 % 3 == 0 and 51 in dim, 'e-sieve-tap byKey 47 prime, 51 crossed')
-ex.claim(math.sqrt(60) < 8 and [v for v in range(49, 61, 7) if v not in crossed] == [49], 'e-sieve-tap explain: sqrt 60 < 8, only 49 of 7s')
+ex.claim(math.sqrt(60) < 8 and [v for v in range(25, 61, 5) if v not in crossed] == [25, 35, 55] and [v for v in range(49, 61, 7) if v not in crossed] == [49],
+         'e-sieve-tap explain: sqrt 60 < 8, multiples of 5 from 25 and of 7 from 49')
+ex.claim(min(p for p in range(2, 60) if standing[0] % p == 0) == 5 and min(p for p in range(2, 60) if standing[2] % p == 0) == 7, 'e-sieve-tap smallest prime factors 5 and 7')
 
 # ---------------------------------------------------------------- e-coin-parity (every reachable state)
 start = (0,) * 7  # 0 heads, 1 tails
@@ -247,7 +282,7 @@ inv = {
 ex.claim(sorted(k for k, v in inv.items() if v) == correct_ids('e-coin-parity'), f'e-coin-parity invariants {inv}')
 ex.claim((1,) * 7 not in seen, 'e-coin-parity all tails unreachable')
 
-# ---------------------------------------------------------------- e-fact-order (the stated order computes C(n, k))
+# ---------------------------------------------------------------- e-fact-order (the stated order computes C(n, k); two lines are distractors)
 p, N = 10 ** 9 + 7, 200
 fact = [1] * (N + 1)
 for i in range(1, N + 1):
@@ -258,7 +293,17 @@ for i in range(N, 0, -1):
     ifact[i - 1] = ifact[i] * i % p
 ex.claim(all(fact[n_] * ifact[k_] % p * ifact[n_ - k_] % p == math.comb(n_, k_) % p for n_ in range(N + 1) for k_ in range(n_ + 1)),
          'e-fact-order s1, s2, s3, s4 give C(n, k) mod p for every n <= 200')
-ex.claim(W('e-fact-order')['answer'] == ['s1', 's2', 's3', 's4'], 'e-fact-order key s1 to s4')
+ex.claim(W('e-fact-order')['answer'] == ['s1', 's2', 's3', 's4'] and W('e-fact-order')['distractors'] == ['d1', 'd2'], 'e-fact-order key s1 to s4, distractors d1 and d2')
+ex.claim({ln['id'] for ln in W('e-fact-order')['lines']} == {'s1', 's2', 's3', 's4', 'd1', 'd2'} and all('why' in ln for ln in W('e-fact-order')['lines'] if ln['id'].startswith('d')),
+         'e-fact-order six lines, each distractor has a why')
+# d1 is correct but slow (one pow per entry); d2 run forwards gives wrong inverses
+ex.claim(all(pow(fact[i], p - 2, p) == ifact[i] for i in range(0, N + 1, 7)), 'e-fact-order d1 gives the right values at one pow each (slow, not wrong)')
+fwd = [0] * (N + 1)
+fwd[0] = 1
+for i in range(0, N):
+    fwd[i + 1] = fwd[i] * (i + 1) % p
+ex.claim(fwd[1:] != ifact[1:], 'e-fact-order d2 run forwards gives wrong inverses')
+ex.claim(29.5 < math.log2(p - 2) < 30, 'e-fact-order about 30 squarings per pow')
 
 # ---------------------------------------------------------------- e-swap-cost
 def completion_total(ts):
@@ -275,56 +320,59 @@ wrong('e-swap-cost', 'sum', 9 + 2)
 ex.claim(list(itertools.accumulate([4, 9, 2, 7])) == [4, 13, 15, 22] and list(itertools.accumulate([4, 2, 9, 7])) == [4, 6, 15, 22],
          'e-swap-cost completion times 4, 13, 15, 22 and 4, 6, 15, 22')
 
-# ---------------------------------------------------------------- e-submask-tap
+# ---------------------------------------------------------------- e-submask-tap (masks disjoint from 1010)
 g = IT['e-submask-tap']['canvas']['params']['cells']
 mval = {f'r{i + 1}c{j + 1}': int(g[i][j], 2) for i in range(4) for j in range(4)}
-subs = sorted(c for c, v in mval.items() if v & 11 == v)
-ex.claim(subs == sorted(W('e-submask-tap')['answer']) and len(subs) == 2 ** 3, f'e-submask-tap submasks of 1011: {sorted(mval[c] for c in subs)}')
+disj = sorted(c for c, v in mval.items() if v & 0b1010 == 0)
+ex.claim(disj == sorted(W('e-submask-tap')['answer']) and len(disj) == 2 ** 2, f'e-submask-tap masks disjoint from 1010: {sorted(mval[c] for c in disj)}')
+ex.claim(sorted(mval[c] for c in disj) == sorted(s for s in range(16) if s & 0b0101 == s), 'e-submask-tap disjoint masks are the submasks of the complement 0101')
 wr = {x['id']: sorted(x['set']) for x in W('e-submask-tap')['wrong']}
-ex.claim(wr['super'] == sorted(c for c, v in mval.items() if v & 11 == 11), 'e-submask-tap slip super = masks containing 1011')
-ex.claim(wr['smaller'] == sorted(c for c, v in mval.items() if v <= 11), 'e-submask-tap slip smaller = masks 0 to 11')
-# byKey "smaller" says "every mask below 11"; the set holds 11 itself
-ex.claim_text('exam', f'{P("e-submask-tap")}.feedback.byKey.smaller', 'every mask below 11',
-              wr['smaller'] == sorted(c for c, v in mval.items() if v < 11), 'e-submask-tap byKey smaller: the set is the masks below 11')
-ex.claim(sum(2 ** bin(m).count('1') for m in range(16)) == 3 ** 4, 'e-submask-tap explain: sum of 2^popcount = 3^n')
-ex.claim(mval['r2c1'] == 4 and mval['r4c4'] == 15, 'e-submask-tap byKey r2c1 is 0100, r4c4 is 1111')
+ex.claim(wr['sub'] == sorted(c for c, v in mval.items() if v & 0b1010 == v), 'e-submask-tap slip sub = submasks of 1010')
+ex.claim(wr['nonzero'] == sorted(c for c in disj if mval[c] != 0), 'e-submask-tap slip nonzero = the disjoint masks without 0000')
+ex.claim(mval['r1c3'] == 2 and mval['r1c3'] & 0b1010 == 2 and mval['r4c4'] == 15 and mval['r4c4'] & 0b1010 == 0b1010, 'e-submask-tap byKey r1c3 is 0010 (bit 1), r4c4 is 1111 (bits 1 and 3)')
+ex.claim(0b1010 == 10, 'e-submask-tap 1010 is 10')
 
-# ---------------------------------------------------------------- e-stress-gen
-pairs_mean = F(sum(k * (k - 1) // 2 for k in range(1, 7)), 6)
-per_pair = F(10 ** 18, 10 ** 18 * 2 * 10 ** 9)   # every x + y lies in [2, 2e9], k uniform on 1..2e9
-per_trial = float(pairs_mean * per_pair)
-ex.claim(pairs_mean == F(35, 6) and 2.5e-9 < per_trial < 3.5e-9, f'e-stress-gen exact-sum rate {per_trial:.3g} a trial: "about 3 per billion"')
-ex.claim(1e7 * per_trial < 0.05, f'e-stress-gen 10 million trials expect {1e7 * per_trial:.3f} hits: "almost never"')
-rng = random.Random(5)
-hits = []
-for rep in range(2000):
-    for trial in itertools.count(1):
-        m = rng.randint(1, 6)
-        xs = [rng.randint(1, 5) for _ in range(m)]
-        k = rng.randint(2, 10)
-        if any(a + b == k for a, b in itertools.combinations(xs, 2)):
-            hits.append(trial)
-            break
-ex.claim(sum(hits) / len(hits) < 5, f'e-stress-gen small values find an exact sum in {sum(hits) / len(hits):.2f} trials on average: "a few tries"')
-ex.claim(correct_ids('e-stress-gen') == ['small'], 'e-stress-gen key small')
+# ---------------------------------------------------------------- e-stress-gen (read the printed case)
+xs, k = [2, 5, 2], 4
+cnt = {
+    'strict pairs i<j': sum(1 for i, j in itertools.combinations(range(3), 2) if xs[i] + xs[j] == k),
+    'i<=j': sum(1 for i in range(3) for j in range(i, 3) if xs[i] + xs[j] == k),
+    'ordered i!=j': sum(1 for i in range(3) for j in range(3) if i != j and xs[i] + xs[j] == k),
+    'all ordered': sum(1 for i in range(3) for j in range(3) if xs[i] + xs[j] == k),
+}
+ex.claim(cnt == {'strict pairs i<j': 1, 'i<=j': 3, 'ordered i!=j': 2, 'all ordered': 4}, f'e-stress-gen counts {cnt}')
+ex.claim(IT['e-stress-gen']['canvas']['params']['lines'][1:] == ['xs = [2, 5, 2], k = 4', 'brute force: 1', 'fast:        3'], 'e-stress-gen console shows xs, k, brute 1, fast 3')
+ex.claim(correct_ids('e-stress-gen') == ['self'], 'e-stress-gen key self')
+ex.claim(cnt['ordered i!=j'] == 2 and cnt['i<=j'] == 3, 'e-stress-gen: twice gives 2, self gives 3')
+L_ = {o['id']: len(o['text']) for o in W('e-stress-gen')['options']}
+ex.claim(not (L_['self'] >= 12 and all(L_['self'] > 1.5 * v for k_, v in L_.items() if k_ != 'self')), f'e-stress-gen key is not much longer than every distractor {L_}')
 
-# ---------------------------------------------------------------- e-penalty-order and e-best-plan (decay v/250 a minute)
+# ---------------------------------------------------------------- e-penalty-order (break-even solving time of P) and e-best-plan (decay v/250 a minute)
 def score(v, t):
     return F(v) - F(v, 250) * t
 
 
-pq = score(900, 20) + score(1500, 65)
-qp = score(1500, 45) + score(900, 65)
-ex.claim((score(900, 20), score(1500, 65), score(1500, 45), score(900, 65)) == (828, 1110, 1230, 666), 'e-penalty-order part scores')
-ex.claim((pq, qp) == (1938, 1896), f'e-penalty-order totals {pq} and {qp}')
-key('e-penalty-order', int(pq - qp))
-ex.claim(F(900, 250) * 45 - F(1500, 250) * 20 == 42, 'e-penalty-order gap by the exchange formula r_P t_Q - r_Q t_P')
-wrong('e-penalty-order', 'lost-p', int(2400 - pq))
-wrong('e-penalty-order', 'lost-q', int(2400 - qp))
-wrong('e-penalty-order', 'total', int(pq))
-ex.claim(F(900, 250) * 20 == 72 and F(1500, 250) * 65 == 390 and F(1500, 250) * 45 == 270 and F(900, 250) * 65 == 234, 'e-penalty-order losses 72, 390, 270, 234')
-ex.claim(666 / 900 > 0.3 and 1110 / 1500 > 0.3, 'e-penalty-order no problem reaches a 30% floor')
-say('e-penalty-order', 'explain.text', 33.3)
+def tie_gap(tp):
+    """Score of P then Q minus Q then P, for P taking tp minutes and Q 45."""
+    pq_ = score(900, tp) + score(1500, tp + 45)
+    qp_ = score(1500, 45) + score(900, 45 + tp)
+    return pq_ - qp_
+
+
+ties = [tp for tp in range(1, 200) if tie_gap(tp) == 0]
+key('e-penalty-order', ties[0])
+ex.claim(ties == [27], f'e-penalty-order the orders tie only at tP = {ties} (scan 1 to 199)')
+ex.claim(tie_gap(26) > 0 and tie_gap(28) < 0 and tie_gap(F(27)) == 0, 'e-penalty-order P first is better below 27 minutes and worse above')
+ex.claim(F(900, 27) == F(1500, 45) * 1 and round(float(F(900, 27)), 1) == 33.3, 'e-penalty-order 900/27 = 1500/45 = 33.3 points a minute')
+ex.claim(F(900 * 45, 1500) == 27, 'e-penalty-order tP = v_P t_Q / v_Q = 27')
+wrong('e-penalty-order', 'inverted', int(F(1500 * 45, 900)))
+wrong('e-penalty-order', 'same', 45)
+sp, sq = score(900, 27) + score(1500, 72), score(1500, 45) + score(900, 72)
+ex.claim(sp == sq == F(18708, 10), f'e-penalty-order both orders score {float(sp)} at tP = 27')
+ex.claim(F(900, 250) * 45 - F(1500, 250) * 0 == F(162), 'e-penalty-order Q first costs P 3.6 * 45 = 162')
+ex.claim(F(1500, 250) == 6 and F(900, 250) == F(18, 5) and 6 * 27 == 162, 'e-penalty-order 6 tP = 162 at 27')
+ex.claim(min(score(900, 72) / 900, score(1500, 72) / 1500) > F(3, 10), 'e-penalty-order no problem reaches a 30% floor')
+say('e-penalty-order', 'feedback.correct', 33.3)
 
 prob = {'A': (1000, 10), 'B': (1300, 10), 'C': (1600, 40), 'D': (1700, 10)}
 
@@ -351,36 +399,43 @@ wrong('e-best-plan', 'value', int(plans[('D', 'C', 'B')]))
 wrong('e-best-plan', 'letters', int(plans[('A', 'B', 'C')]))
 ex.claim([v // d for v, d in (prob['D'], prob['B'], prob['A'], prob['C'])] == [170, 130, 100, 40], 'e-best-plan rates 170, 130, 100, 40')
 ex.claim(min(score(v, 60) / v for v, d in prob.values()) > F(3, 10), 'e-best-plan no problem reaches a 30% floor by minute 60')
-# byKey "value": "Doing the 40-minute problem second pushes B and C late." In D, C, B, C ends at 50, earlier than in D, B, C (60).
-ex.claim_text('exam', f'{P("e-best-plan")}.feedback.byKey.value', 'pushes B and C late', 10 + 40 > 10 + 10 + 40,
-              'e-best-plan byKey value: D, C, B finishes C later than the best plan')
-ex.claim(score(1300, 60) == 988 and score(1600, 50) == 1280, 'e-best-plan D, C, B: C scores 1,280 at 50 and B 988 at 60')
+# byKey "value": in D, C, B only B is pushed late (to minute 60, scoring 988); C ends at 50, earlier than in the best plan
+dcb = [('D', 10), ('C', 50), ('B', 60)]
+ex.claim(score(1300, 60) == 988 and score(1600, 50) == 1280 and score(1300, 20) - score(1300, 60) == 208 and score(1600, 50) - score(1600, 60) == 64,
+         'e-best-plan D, C, B: B scores 988 at 60 (loses 208), C 1,280 at 50 (gains 64)')
+ex.claim(int(plans[('D', 'B', 'C')] - plans[('D', 'C', 'B')]) == 144 == 208 - 64, 'e-best-plan the net 144 is 4,044 - 3,900')
+ex.claim('B and C late' not in IT['e-best-plan']['feedback']['byKey']['value'] and 'minute 60' in IT['e-best-plan']['feedback']['byKey']['value'], 'e-best-plan byKey value now says only B is pushed, to minute 60')
+say('e-best-plan', 'feedback.byKey.value', 988)
 
-# ---------------------------------------------------------------- e-moves-back (BFS as the second method)
-target = (47, 30)
-dist, q = {(1, 1): 0}, deque([(1, 1)])
-while q:
-    a, b = q.popleft()
-    if (a, b) == target:
-        break
-    for nx in ((a + b, b), (a, a + b)):
-        if nx[0] <= 47 and nx[1] <= 47 and nx not in dist:
-            dist[nx] = dist[(a, b)] + 1
-            q.append(nx)
-key('e-moves-back', dist[target])
-walk, (a, b) = [target], target
-while (a, b) != (1, 1):
-    a, b = (a - b, b) if a > b else (a, b - a)
-    walk.append((a, b))
-ex.claim(len(walk) - 1 == 9 and walk == [(47, 30), (17, 30), (17, 13), (4, 13), (4, 9), (4, 5), (4, 1), (3, 1), (2, 1), (1, 1)], 'e-moves-back walk back as in the explain')
+# ---------------------------------------------------------------- e-moves-back (squares cut from a 47 by 30 rectangle; simulation as the second method)
+def cut_squares(a, b):
+    count, sides = 0, []
+    while a and b:
+        s = min(a, b)
+        sides.append(s)
+        if a >= b:
+            a -= b
+        else:
+            b -= a
+        count += 1
+    return count, sides
+
+
+cnt_sq, sides = cut_squares(47, 30)
+key('e-moves-back', cnt_sq)
+ex.claim(sides == [30, 17, 13, 4, 4, 4, 1, 1, 1, 1], f'e-moves-back squares cut {sides}')
 qs, (a, b) = [], (47, 30)
 while b:
     qs.append(a // b)
     a, b = b, a % b
-ex.claim(qs == [1, 1, 1, 3, 4] and sum(qs) - 1 == 9, f'e-moves-back Euclid quotients {qs}, sum - 1 = 9')
+ex.claim(qs == [1, 1, 1, 3, 4] and sum(qs) == 10, f'e-moves-back Euclid quotients {qs}, sum 10')
+ex.claim(math.gcd(47, 30) == 1 and sides[-1] == 1, 'e-moves-back the last side is the gcd 1')
+ex.claim(47 == 1 * 30 + 17 and 30 == 1 * 17 + 13 and 17 == 1 * 13 + 4 and 13 == 3 * 4 + 1 and 4 == 4 * 1, 'e-moves-back explain division chain')
 wrong('e-moves-back', 'steps', len(qs))
-wrong('e-moves-back', 'quotients', sum(qs))
-wrong('e-moves-back', 'sub', 47 - 30)
+wrong('e-moves-back', 'moves', sum(qs) - 1)
+wrong('e-moves-back', 'gcd', math.gcd(47, 30))
+# area check: the squares tile 47 * 30
+ex.claim(sum(s * s for s in sides) == 47 * 30, 'e-moves-back the squares tile the 47 by 30 floor (1410 tiles)')
 
 # ---------------------------------------------------------------- e-hand-cases (run the console code)
 src = '\n'.join(IT['e-hand-cases']['canvas']['params']['lines'])
@@ -475,7 +530,7 @@ def code_item(iid, mutants=()):
         run = lambda code, c: run_case(w.get('prelude', ''), code, c)  # noqa: E731
     dup = [i + 1 for i, t in enumerate(w['tests']) if any(t.get('call') == e.get('call') and t.get('setup') == e.get('setup')
                                                           and t.get('stdin') == e.get('stdin') for e in w['examples'])]
-    ex.claim(True, f'{iid}: hidden tests identical to an example: {dup}')
+    ex.claim(not dup, f'{iid}: no hidden test is identical to an example (identical: {dup})')
     for name, old, new in mutants:
         assert old in w['solution'], (iid, name)
         bad = w['solution'].replace(old, new)
@@ -515,23 +570,107 @@ big = W('e-code-pairs')['tests'][6]['stdin'].split()
 ex.claim(int(big[1]) == 32000 and (32000 * 31999 // 2) > 5 * 10 ** 8, 'e-code-pairs how: 32,000 values, at least 5e8 comparisons pairwise')
 
 code_item('e-code-quiet', [
-    ('no spare cell', 'diff = [0] * (n + 2)', 'diff = [0] * (n + 1)'),
-    ('>= cap', 'if total > cap:', 'if total >= cap:'),
-    ('no -v', 'diff[r + 1] -= v', 'pass'),
+    ('no positive filter', 'if t > prev:', 'if t != prev:'),
+    ('one per rise', 'count += t - prev   # a rise needs new updates', 'count += 1'),
+    ('prev not carried', '        prev = t\n', ''),
 ])
-quiet_loop = '''def days_over(n, updates, cap):
-    h = [0] * (n + 1)
-    for l, r, v in updates:
-        for d in range(l, r + 1):
-            h[d] += v
-    return sum(1 for d in range(1, n + 1) if h[d] > cap)
-'''
-slow('e-code-quiet', 'range loop', quiet_loop, 7)
-ns_q = {}
-exec(W('e-code-quiet')['prelude'], ns_q)
-ups = ns_q['_updates'](200000, 200000, 25)
-adds = sum(r_ - l_ + 1 for l_, r_, _ in ups)
-ex.claim(5e9 < adds < 2e10, f'e-code-quiet how: the range loop makes {adds:.3g} additions, "about 10^10"')
+nsq = {}
+exec(W('e-code-quiet')['prelude'] + '\n' + W('e-code-quiet')['solution'], nsq)
+
+
+def rises(t):
+    return sum(max(0, b - a) for a, b in zip([0] + list(t), t))
+
+
+def split_min_count(t):
+    """Independent route: split at each minimum (recursion on a stack)."""
+    total, stack = 0, [(list(t), 0)]
+    while stack:
+        seg, base = stack.pop()
+        if not seg:
+            continue
+        m = min(seg)
+        total += m - base
+        cur = []
+        for v in seg:
+            if v == m:
+                stack.append((cur, m))
+                cur = []
+            else:
+                cur.append(v)
+        stack.append((cur, m))
+    return total
+
+
+def bfs_fewest(t):
+    """Independent route: BFS over holdings, one range update a step, never above the target."""
+    n_ = len(t)
+    start, goal = (0,) * n_, tuple(t)
+    seen, q = {start}, deque([(start, 0)])
+    while q:
+        s, dd = q.popleft()
+        if s == goal:
+            return dd
+        for l_ in range(n_):
+            for r_ in range(l_, n_):
+                nx = tuple(s[i] + (l_ <= i <= r_) for i in range(n_))
+                if all(nx[i] <= goal[i] for i in range(n_)) and nx not in seen:
+                    seen.add(nx)
+                    q.append((nx, dd + 1))
+    return None
+
+
+for c in W('e-code-quiet')['examples'] + W('e-code-quiet')['tests'][:6]:
+    arr = eval(c['call'][len('fewest_updates('):-1])
+    ex.claim(bfs_fewest(arr) == int(c['expect']) == split_min_count(arr) == rises(arr), f'e-code-quiet {c["call"]} = {c["expect"]} by BFS, splitting at minima and the rise sum')
+nsq_t = {}
+exec(W('e-code-quiet')['prelude'], nsq_t)
+t7 = nsq_t['_target'](30, 9, 26)
+ex.claim(split_min_count(t7) == rises(t7) == int(W('e-code-quiet')['tests'][6]['expect']) == 52, 'e-code-quiet test 7 = 52 by splitting at minima and the rise sum')
+t8 = list(range(1, 200001))
+ex.claim(rises(t8) == int(W('e-code-quiet')['tests'][7]['expect']) == 200000, 'e-code-quiet test 8 = 200,000')
+t9 = nsq_t['_target'](200000, 10 ** 9, 25)
+ex.claim(rises(t9) == int(W('e-code-quiet')['tests'][8]['expect']) == sum(max(0, t9[i] - (t9[i - 1] if i else 0)) for i in range(len(t9))), f'e-code-quiet test 9 = {rises(t9)} by two routes')
+quiet_split = """def fewest_updates(target):
+    total, stack = 0, [(0, len(target), 0)]
+    while stack:
+        lo, hi, base = stack.pop()
+        if lo >= hi:
+            continue
+        seg = target[lo:hi]
+        m = min(seg)
+        total += m - base
+        start = lo
+        for i in range(lo, hi):
+            if target[i] == m:
+                stack.append((start, i, m))
+                start = i + 1
+        stack.append((start, hi, m))
+    return total
+"""
+quiet_peel = """def fewest_updates(target):
+    t = list(target)
+    count = 0
+    while any(t):
+        i = 0
+        while i < len(t):
+            if t[i] > 0:
+                while i < len(t) and t[i] > 0:
+                    t[i] -= 1
+                    i += 1
+                count += 1
+            else:
+                i += 1
+    return count
+"""
+for t_ in ([2, 0, 2], [4, 1, 4], [1, 3, 2, 4, 0], [1, 2, 1, 2]):
+    nsa, nsb = {}, {}
+    exec(quiet_split, nsa)
+    exec(quiet_peel, nsb)
+    ex.claim(nsa['fewest_updates'](t_) == nsb['fewest_updates'](t_) == rises(t_), f'e-code-quiet slow versions are correct, only slow, on {t_}')
+slow('e-code-quiet', 'split at each minimum', quiet_split, 8)
+slow('e-code-quiet', 'peel one layer at a time', quiet_peel, 8)
+slow('e-code-quiet', 'peel one layer at a time', quiet_peel, 9)
 
 code_item('e-code-geom', [
     ('no g = 1 case', '    if g % MOD == 1:\n        return n % MOD            # every term is 1\n', ''),

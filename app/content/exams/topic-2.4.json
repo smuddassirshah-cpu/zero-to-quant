@@ -2,7 +2,7 @@
   "id": "topic-2.4",
   "topic": "2.4",
   "name": "Contest practice topic exam",
-  "minutes": 60,
+  "minutes": 90,
   "pass": 0.7,
   "skills": {
     "cn-reading": "Reading problems",
@@ -18,46 +18,54 @@
       "skills": [
         "cn-reading"
       ],
-      "title": "How many sizes in a file",
+      "pace": 60,
+      "title": "How many prices in a file",
       "prose": "Hidden tests obey every limit in the Input section. Read it before you read the story.",
       "canvas": {
         "kind": "console",
         "params": {
           "lines": [
-            "C. Order flow",
+            "C. Price grids",
             "time limit per test: 2 seconds",
             "memory limit per test: 256 megabytes",
             "",
-            "A desk logs order sizes in batches. Each test",
-            "case is one batch. Report its largest size.",
+            "A desk logs prices on a grid of n rows and",
+            "m columns. Each test case is one grid. Report",
+            "its largest price.",
             "",
             "Input",
-            "The first line contains t (1 ≤ t ≤ 10⁴), the",
-            "number of test cases. Each test case has a line",
-            "with n (1 ≤ n ≤ 2·10⁵), then a line with n",
-            "integers. The sum of n over all test cases",
-            "does not exceed 2·10⁵.",
+            "The first line contains t (1 ≤ t ≤ 10⁴). Each",
+            "test case starts with n and m (1 ≤ n, m ≤ 2000),",
+            "then n lines of m integers. The sum of n·m over",
+            "all test cases does not exceed 10⁶.",
             "",
             "Output",
-            "For each test case, print the largest size."
+            "For each test case, print the largest price."
           ],
           "title": "Problem C"
         },
         "state": {}
       },
-      "question": "What is the most order sizes a single input file can hold in total?",
+      "question": "What is the most prices a single input file can hold in total?",
       "widget": {
         "kind": "numeric",
-        "answer": 200000,
+        "answer": 1000000,
         "tol": {
           "abs": 0
         },
         "placeholder": "whole number",
-        "accept": "200,000: the sum of n is capped",
+        "accept": "1,000,000: the sum of n·m is capped",
         "wrong": [
           {
             "id": "product",
-            "value": 2000000000,
+            "value": 40000000000,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "grid",
+            "value": 4000000,
             "tol": {
               "abs": 0
             }
@@ -72,15 +80,16 @@
         ]
       },
       "feedback": {
-        "correct": "The sum of $n$ is capped at $2 \\cdot 10^5$, so one file holds at most 200,000 sizes.",
+        "correct": "The sum of $n \\cdot m$ is capped at $10^6$, so one file holds at most 1,000,000 prices.",
         "generic": "Find the sentence that bounds all the test cases together, not each one.",
         "byKey": {
-          "product": "You multiplied $t$ by $n$. The last sentence of Input caps the total across tests.",
-          "tests": "That is $t$, the number of test cases, not the number of sizes."
+          "product": "You multiplied $t$ by the largest grid. The last sentence of Input caps the total across tests.",
+          "grid": "That is one 2,000 by 2,000 grid. The cap on the sum of $n \\cdot m$ forbids even one such grid.",
+          "tests": "That is $t$, the number of test cases, not the number of prices."
         }
       },
       "explain": {
-        "text": "The cap on the sum of $n$ governs the whole file. A quadratic solution costs at most $(2 \\cdot 10^5)^2 = 4 \\cdot 10^{10}$ steps, once, in the worst file. That is far too slow, so aim for $O(n \\log n)$ or better."
+        "text": "The cap on the sum of $n \\cdot m$ governs the whole file, so it holds at most 1,000,000 prices. It also limits each test: a 2,000 by 2,000 grid has $4 \\cdot 10^6$ cells and can never appear. So plan for $10^6$ cells in all, not for $n$ and $m$ at their own limits."
       }
     },
     {
@@ -89,41 +98,42 @@
       "skills": [
         "cn-impl"
       ],
-      "title": "A reader for wrapped input",
-      "prose": "Each test case is a line with $n$, then $n$ integers. The integers may wrap over several lines, blank lines may appear, and the last line may have no newline.",
-      "question": "Which reader is safe for every such input?",
+      "pace": 60,
+      "title": "A reader for names with spaces",
+      "prose": "The first line holds $t$. Each test case is two lines: a desk name, which may contain spaces, then that desk's P&L as one integer. There are no blank lines.",
+      "question": "Which reader keeps every desk name whole?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "a",
-            "text": "```python\nn = int(input())\na = list(map(int, input().split()))\n```",
-            "why": "You read one line per test case. A wrapped list leaves values behind, and the next read starts in the middle of it."
+            "text": "```python\nname = input().split()[0]\npnl = int(input())\n```",
+            "why": "You kept the first word of the name. A name such as North Desk loses its second word."
           },
           {
             "id": "b",
-            "text": "```python\nimport sys\ndata = sys.stdin.read().split()\n```",
+            "text": "```python\nimport sys\nlines = sys.stdin.read().splitlines()\n```",
             "correct": true
           },
           {
             "id": "c",
-            "text": "```python\nn = int(input())\na = [int(input()) for _ in range(n)]\n```",
-            "why": "You expected one value per line. A line that holds several values makes `int` fail."
+            "text": "```python\nimport sys\ndata = sys.stdin.read().split()\n```",
+            "why": "You split on every space. North Desk becomes two tokens, and each later position shifts by one."
           },
           {
             "id": "d",
-            "text": "```python\nimport sys\nlines = sys.stdin.read().split(\"\\n\")\n```",
-            "why": "You kept the line structure. A blank line or a missing final newline then shifts every position."
+            "text": "```python\nimport sys\ndata = sys.stdin.read().split(\" \")\n```",
+            "why": "You split on single spaces. Names still break, and the newlines stay glued to the tokens."
           }
         ]
       },
       "feedback": {
-        "correct": "Everything becomes a token, so layout cannot matter.",
-        "generic": "Ask what each reader does when the values of one test case sit on two lines."
+        "correct": "Each line is one field, so a name keeps its spaces.",
+        "generic": "Ask what each reader does with a name that holds a space."
       },
       "explain": {
-        "text": "`sys.stdin.read().split()` ignores line breaks, blank lines and a missing final newline. A position then walks the tokens. Reading by lines breaks as soon as the layout differs from the sample."
+        "text": "`split()` with no argument breaks on every space, which tears a name apart. `splitlines()` keeps each line whole, and `int` reads the P&L line. Use tokens for numbers and lines for text that holds spaces."
       }
     },
     {
@@ -132,12 +142,13 @@
       "skills": [
         "cn-maths"
       ],
+      "pace": 60,
       "title": "Two rebalancing cycles",
       "prose": "A fund rebalances every 84 days and a hedge book every 90 days. Both rebalanced today.",
-      "question": "After how many days do they next rebalance on the same day?",
+      "question": "On how many of the next 10,000 days do both rebalance?",
       "widget": {
         "kind": "numeric",
-        "answer": 1260,
+        "answer": 7,
         "tol": {
           "abs": 0
         },
@@ -145,30 +156,47 @@
         "wrong": [
           {
             "id": "product",
-            "value": 7560,
+            "value": 1,
             "tol": {
               "abs": 0
             }
           },
           {
             "id": "gcd",
-            "value": 6,
+            "value": 1666,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "today",
+            "value": 8,
+            "tol": {
+              "abs": 0
+            }
+          },
+          {
+            "id": "first",
+            "value": 1260,
             "tol": {
               "abs": 0
             }
           }
-        ]
+        ],
+        "accept": "7: multiples of 1,260 up to 10,000"
       },
       "feedback": {
-        "correct": "The lcm is 1,260 days: $84 \\cdot 90 / 6$.",
-        "generic": "The next shared day is the least common multiple. Find the gcd first.",
+        "correct": "Shared days are multiples of 1,260: days 1,260 to 8,820, seven in all.",
+        "generic": "Shared days fall every $\\operatorname{lcm}(84, 90)$ days. Find the lcm, then count its multiples.",
         "byKey": {
-          "product": "You multiplied the periods. They share a factor of 6, so they meet earlier than 7,560 days.",
-          "gcd": "6 is the greatest common divisor. The meeting day is the least common multiple."
+          "product": "You used $84 \\cdot 90 = 7{,}560$ as the cycle. They share a factor of 6, so they meet every 1,260 days.",
+          "gcd": "You counted multiples of 6, the gcd. A shared day is a multiple of both periods.",
+          "today": "You counted today. The question asks about the next 10,000 days.",
+          "first": "1,260 is the first shared day. Count every multiple of 1,260 up to 10,000."
         }
       },
       "explain": {
-        "text": "Euclid gives $\\gcd(84, 90) = \\gcd(84, 6) = 6$, since $90 = 84 + 6$ and $84 = 14 \\cdot 6$. The lcm divides out the shared factor once: $84 \\cdot 90 / 6 = 1260$."
+        "text": "Euclid gives $\\gcd(84, 90) = \\gcd(84, 6) = 6$, so the lcm is $84 \\cdot 90 / 6 = 1260$. Shared days are 1,260, 2,520 and so on. $\\lfloor 10000 / 1260 \\rfloor = 7$, since $7 \\cdot 1260 = 8820$ and $8 \\cdot 1260 = 10080$."
       }
     },
     {
@@ -177,125 +205,108 @@
       "skills": [
         "cn-patterns"
       ],
-      "title": "One room, seven meetings",
-      "prose": "Seven meetings want one room. Keep as many as you can with no two overlapping. No two meetings share a start or an end time.",
+      "pace": 60,
+      "title": "Three days, six jobs",
+      "prose": "Six jobs each take one whole day, and three days are free. A job pays only if it is done on or before its deadline day. The rule: take jobs from the best-paid down, and put each on the latest free day on or before its deadline. Skip a job with no such day.",
       "canvas": {
-        "kind": "number-line",
+        "kind": "table",
         "params": {
-          "min": 0,
-          "max": 16,
-          "step": 1,
-          "labels": 2,
-          "tapIntervals": true
-        },
-        "state": {
-          "intervals": [
-            {
-              "id": "mA",
-              "from": 1,
-              "to": 6,
-              "label": "A",
-              "labelPos": "left",
-              "row": 1,
-              "colour": 2
-            },
-            {
-              "id": "mB",
-              "from": 2,
-              "to": 4,
-              "label": "B",
-              "labelPos": "left",
-              "row": 2,
-              "colour": 2
-            },
-            {
-              "id": "mC",
-              "from": 3,
-              "to": 7,
-              "label": "C",
-              "labelPos": "left",
-              "row": 3,
-              "colour": 2
-            },
-            {
-              "id": "mD",
-              "from": 5,
-              "to": 10,
-              "label": "D",
-              "labelPos": "left",
-              "row": 4,
-              "colour": 2
-            },
-            {
-              "id": "mE",
-              "from": 8,
-              "to": 13,
-              "label": "E",
-              "labelPos": "left",
-              "row": 5,
-              "colour": 2
-            },
-            {
-              "id": "mF",
-              "from": 9,
-              "to": 12,
-              "label": "F",
-              "labelPos": "left",
-              "row": 6,
-              "colour": 2
-            },
-            {
-              "id": "mG",
-              "from": 11,
-              "to": 15,
-              "label": "G",
-              "labelPos": "left",
-              "row": 7,
-              "colour": 2
-            }
+          "columns": [
+            "Job",
+            "Deadline (day)",
+            "Pays (£k)"
+          ],
+          "rows": [
+            [
+              "A",
+              "1",
+              "50"
+            ],
+            [
+              "B",
+              "1",
+              "45"
+            ],
+            [
+              "C",
+              "2",
+              "30"
+            ],
+            [
+              "D",
+              "3",
+              "60"
+            ],
+            [
+              "E",
+              "2",
+              "40"
+            ],
+            [
+              "F",
+              "3",
+              "20"
+            ]
+          ],
+          "tap": "rows",
+          "align": [
+            "left",
+            "right",
+            "right"
           ]
-        }
+        },
+        "state": {}
       },
-      "question": "Tap the meetings the earliest-finish rule keeps.",
+      "question": "Tap the jobs the rule keeps.",
       "widget": {
         "kind": "tap-regions",
         "answer": [
-          "mB",
-          "mD",
-          "mG"
+          "r0",
+          "r3",
+          "r4"
         ],
         "countWord": "kept",
         "wrong": [
           {
-            "id": "start",
+            "id": "earliest",
             "set": [
-              "mA",
-              "mE"
+              "r3",
+              "r4",
+              "r5"
             ]
           },
           {
-            "id": "short",
+            "id": "deadline",
             "set": [
-              "mB",
-              "mF"
+              "r0",
+              "r2",
+              "r3"
+            ]
+          },
+          {
+            "id": "top",
+            "set": [
+              "r0",
+              "r1",
+              "r3"
             ]
           }
         ]
       },
       "feedback": {
-        "correct": "B, D and G: each is the first meeting to end among those that still fit.",
-        "generic": "Sort by end time. Keep a meeting when it starts after the last kept one ends.",
+        "correct": "A, D and E, paying £150k: D on day 3, A on day 1 and E on day 2.",
+        "generic": "Work down from £60k. Put each job on the latest free day it allows.",
         "byKey": {
-          "start": "You kept the earliest start. A runs to 6 and blocks B, C and D, so only E fits after it: 2 meetings.",
-          "short": "You kept the shortest first. F blocks D and G, which fit beside B together: 2 meetings.",
-          "mA": "A runs from 1 to 6 and overlaps B, C and D. Dropping A leaves room for more.",
-          "mC": "C runs from 3 to 7 and overlaps B and D. B ends first, so B is kept instead.",
-          "mE": "E runs from 8 to 13 and overlaps D, F and G. G ends later but leaves room for D.",
-          "mF": "F runs from 9 to 12 and overlaps D and G, so keeping it costs a meeting."
+          "earliest": "You put each job on the earliest free day. D then takes day 1 and blocks A, so the plan pays only £120k.",
+          "deadline": "You took jobs by deadline, not pay. That keeps A, C and D for £140k and misses E's £40k.",
+          "top": "You kept the three best-paid jobs. A and B both need day 1, so they cannot both be done.",
+          "r1": "B also needs day 1, which A, paying more, already holds.",
+          "r2": "When C comes up, days 1 and 2 are taken.",
+          "r5": "F comes last, and days 1 to 3 are all taken."
         }
       },
       "explain": {
-        "text": "B ends first, at 4. The next meeting to end that starts after 4 is D, at 10, and then G. Sorting by end time is the rule the exchange argument supports."
+        "text": "D goes on day 3, A on day 1 and E on day 2, which fills the days. Taking the latest free day keeps early days for jobs with early deadlines. An exchange argument shows that no plan beats £150k."
       }
     },
     {
@@ -304,41 +315,42 @@
       "skills": [
         "cn-strategy"
       ],
-      "title": "What to upsolve",
-      "prose": "Your rating is 1,250. In this round you solved B in 9 minutes, and you failed C and D. You upsolve up to about 300 rating points above your own.",
-      "question": "Select all that apply: which of these do you upsolve this week?",
+      "pace": 60,
+      "title": "Upsolving done properly",
+      "prose": "Your rating is 1,250. Your upsolving log for this week has four entries.",
+      "question": "Select all that apply: which entries count as upsolved?",
       "widget": {
         "kind": "multi",
         "layout": "stack",
         "options": [
           {
-            "id": "c",
-            "text": "C, rated 1,300, not accepted",
+            "id": "g",
+            "text": "G (1,400): took the idea from the editorial, closed it, coded it from scratch, accepted. Redo booked for next week.",
             "correct": true
           },
           {
-            "id": "d",
-            "text": "D, rated 1,500, not accepted",
+            "id": "h",
+            "text": "H (1,350): solved alone after two days of thought, with a size test of $2 \\cdot 10^5$ values. Redo booked for next week.",
             "correct": true
           },
           {
-            "id": "e",
-            "text": "E, rated 1,950, never opened",
-            "why": "E is 700 above your rating. You chose the problem you could not yet learn from. Save it for later."
+            "id": "j",
+            "text": "J (1,500): copied the editorial's code and got it accepted.",
+            "why": "Copied code proves nothing you can repeat in a round. Write it from scratch once the editorial is closed."
           },
           {
-            "id": "b",
-            "text": "B, rated 900, accepted in 9 minutes",
-            "why": "You picked a problem you already solved. Upsolve what you failed, not what you finished."
+            "id": "k",
+            "text": "K (1,450): read the editorial, agreed with it and marked it solved.",
+            "why": "Agreeing with an editorial is not solving. Code it until it is accepted, then redo it a week later."
           }
         ]
       },
       "feedback": {
-        "correct": "C and D are within 300 of 1,250 and were not accepted.",
-        "generic": "Upsolve failed problems that sit within about 300 points of your rating."
+        "correct": "G and H were coded from scratch, accepted and booked for a redo.",
+        "generic": "An upsolve counts when you wrote the accepted code yourself and booked a redo."
       },
       "explain": {
-        "text": "C is 50 above your rating and D is 250 above, so both are inside the window. E is 700 above, too far to learn from. B is accepted, so there is nothing to upsolve."
+        "text": "Upsolving means writing an accepted solution without the editorial open. G and H do that and book a cold redo. J and K only read or copied, so the idea is not yet yours."
       }
     },
     {
@@ -347,48 +359,56 @@
       "skills": [
         "cn-strategy"
       ],
+      "pace": 100,
       "title": "Next problem from the scoreboard",
-      "prose": "It is minute 31 of a 120-minute round. You have solved A and B. The table shows how many contestants have solved each problem so far.",
+      "prose": "It is minute 70 of a 120-minute round, and you have solved A and B. You read C, D and E at the start and noted how long each would take you. The scoreboard shows solves so far.",
       "canvas": {
         "kind": "table",
         "params": {
           "columns": [
             "Problem",
-            "Solved by",
-            "You"
+            "Points",
+            "Your estimate",
+            "Solved by"
           ],
           "rows": [
             [
               "A",
-              "3,120",
-              "solved"
+              "500",
+              "solved",
+              "3,120"
             ],
             [
               "B",
-              "2,480",
-              "solved"
+              "1,000",
+              "solved",
+              "2,480"
             ],
             [
               "C",
-              "140",
-              "open"
+              "1,250",
+              "40 min",
+              "140"
             ],
             [
               "D",
-              "1,060",
-              "open"
+              "1,500",
+              "20 min",
+              "1,060"
             ],
             [
               "E",
-              "35",
-              "open"
+              "2,000",
+              "60 min",
+              "35"
             ]
           ],
           "tap": "rows",
           "align": [
             "left",
             "right",
-            "left"
+            "right",
+            "right"
           ]
         },
         "state": {
@@ -398,7 +418,7 @@
           ]
         }
       },
-      "question": "Tap the problem you read next.",
+      "question": "Tap the problem you start next.",
       "widget": {
         "kind": "tap-regions",
         "answer": [
@@ -412,21 +432,27 @@
             "set": [
               "r2"
             ]
+          },
+          {
+            "id": "points",
+            "set": [
+              "r4"
+            ]
           }
         ]
       },
       "feedback": {
-        "correct": "D: 1,060 solves says it is far easier than its letter suggests.",
-        "generic": "Among the problems you have not solved, which has the most solves?",
+        "correct": "D: about 75 points a minute, and 1,060 solves agree it is easier than its letter.",
+        "generic": "Among the open problems, which can you finish in the 50 minutes left at the most points per minute?",
         "byKey": {
-          "letter": "You took the next letter. Only 140 contestants solved C, against 1,060 for D.",
-          "r4": "Only 35 contestants solved E. It is the hardest on the board.",
+          "letter": "You took the next letter. C earns about 31 points a minute, against 75 for D.",
+          "points": "You took the most points. E needs about 60 minutes, and only 50 are left.",
           "r0": "You already solved A.",
           "r1": "You already solved B."
         }
       },
       "explain": {
-        "text": "The scoreboard beats the letters. D has been solved by 1,060 contestants and C by 140, so D is likely the easier problem. Read D next and come back to C if time is left."
+        "text": "E needs 60 minutes and only 50 are left. D earns $1500 / 20 = 75$ points a minute and C $1250 / 40 \\approx 31$, and 1,060 solves against 140 agree. So D is next."
       }
     },
     {
@@ -435,35 +461,29 @@
       "skills": [
         "cn-reading"
       ],
+      "pace": 100,
       "title": "Emptying a list from the front",
-      "prose": "A replay tool drains 100,000 queued orders like this.\n\n```python\nwhile orders:\n    orders.pop(0)\n```\n\nEach `pop(0)` shifts every entry behind the removed one a place to the left.",
-      "question": "How many entry shifts happen in total, from 100,000 orders down to an empty list?",
+      "prose": "A replay tool drains its queued orders like this.\n\n```python\nwhile orders:\n    orders.pop(0)\n```\n\nEach `pop(0)` shifts every entry behind the removed one a place to the left. The tool may spend at most $10^8$ shifts.",
+      "question": "What is the largest number of queued orders it can drain within that budget?",
       "widget": {
         "kind": "numeric",
-        "answer": 4999950000,
+        "answer": 14142,
         "tol": {
           "abs": 0
         },
         "placeholder": "whole number",
-        "accept": "4,999,950,000, which is n(n-1)/2",
+        "accept": "14,142, since n(n-1)/2 must stay within 10^8",
         "wrong": [
           {
             "id": "square",
-            "value": 10000000000,
-            "tol": {
-              "abs": 0
-            }
-          },
-          {
-            "id": "half",
-            "value": 5000000000,
+            "value": 10000,
             "tol": {
               "abs": 0
             }
           },
           {
             "id": "pops",
-            "value": 100000,
+            "value": 100000000,
             "tol": {
               "abs": 0
             }
@@ -471,16 +491,15 @@
         ]
       },
       "feedback": {
-        "correct": "$99{,}999 + 99{,}998 + \\dots + 0 = 4{,}999{,}950{,}000$ shifts.",
-        "generic": "A list of $m$ entries shifts $m - 1$ of them. Add that up as $m$ falls from 100,000 to 1.",
+        "correct": "$14{,}142 \\cdot 14{,}141 / 2 = 99{,}991{,}011$ shifts fits, and one more order needs 100,005,153.",
+        "generic": "Draining $n$ orders costs $n(n-1)/2$ shifts. Find the largest $n$ that keeps this within $10^8$.",
         "byKey": {
-          "square": "You took $n^2$. The sum is about half of that, since the list shrinks as it drains.",
-          "half": "Close: $n^2/2$ is the usual estimate. The last pop shifts nothing, so the exact total is $n(n-1)/2$.",
-          "pops": "That counts the pops. Each pop also shifts all the entries behind it."
+          "square": "You solved $n^2 \\le 10^8$. Each pop shifts only the entries left, so the total is about half that.",
+          "pops": "That allows $10^8$ pops. Each pop also shifts all the entries behind it."
         }
       },
       "explain": {
-        "text": "With $m$ entries left, `pop(0)` shifts $m - 1$ of them. The total is $n(n-1)/2 = 4{,}999{,}950{,}000$ shifts, so the loop is quadratic. `collections.deque` with `popleft` does the same job in $O(n)$."
+        "text": "With $m$ entries left, `pop(0)` shifts $m - 1$, so $n$ orders cost $n(n-1)/2$ shifts. That stays within $10^8$ up to $n = 14{,}142$, near $\\sqrt{2 \\cdot 10^8}$. `collections.deque` with `popleft` drains a million orders in $10^6$ steps."
       }
     },
     {
@@ -489,8 +508,9 @@
       "skills": [
         "cn-reading"
       ],
+      "pace": 100,
       "title": "Which plans fit the budget",
-      "prose": "A C++ solution runs about $10^8$ simple steps a second, and the limit is 2 seconds. The budget is $2 \\cdot 10^8$ steps. Use $\\log_2 10^6 \\approx 19.93$.",
+      "prose": "A C++ solution runs about $10^8$ simple steps a second, and the limit is 2 seconds. The budget is $2 \\cdot 10^8$ steps. Use $\\sqrt{2 \\cdot 10^5} \\approx 447.2$.",
       "question": "Fill in each plan's step count, then answer yes or no for fits.",
       "widget": {
         "kind": "table",
@@ -501,10 +521,10 @@
         ],
         "rows": [
           [
-            "$n = 5{,}000$ with $n^2$",
+            "$n = 3{,}000$ with $n^2$",
             {
               "edit": true,
-              "answer": 25000000,
+              "answer": 9000000,
               "tol": {
                 "rel": 0.03
               }
@@ -519,10 +539,10 @@
             }
           ],
           [
-            "$n = 100{,}000$ with $n^2$",
+            "$n = 2{,}000$ with $n^3$",
             {
               "edit": true,
-              "answer": 10000000000,
+              "answer": 8000000000,
               "tol": {
                 "rel": 0.03
               }
@@ -538,10 +558,10 @@
             }
           ],
           [
-            "$n = 10^6$ with $n \\log_2 n$",
+            "$n = 2 \\cdot 10^5$ with $n \\sqrt{n}$",
             {
               "edit": true,
-              "answer": 19931568,
+              "answer": 89442719,
               "tol": {
                 "rel": 0.03
               }
@@ -556,10 +576,10 @@
             }
           ],
           [
-            "$n = 30$ with $2^n$",
+            "$n = 25$ with $n \\cdot 2^n$",
             {
               "edit": true,
-              "answer": 1073741824,
+              "answer": 838860800,
               "tol": {
                 "rel": 0.03
               }
@@ -577,20 +597,20 @@
         ]
       },
       "feedback": {
-        "correct": "Two plans fit: $2.5 \\cdot 10^7$ and $2.0 \\cdot 10^7$. The other two need $10^{10}$ and $1.07 \\cdot 10^9$.",
+        "correct": "Two plans fit: $9 \\cdot 10^6$ and $8.9 \\cdot 10^7$. The other two need $8 \\cdot 10^9$ and $8.4 \\cdot 10^8$.",
         "generic": "Compute each step count at the largest input, then compare it with $2 \\cdot 10^8$.",
         "byKey": {
-          "r0c1": "$5000^2 = 25{,}000{,}000$.",
-          "r1c1": "$100000^2 = 10^{10}$, fifty times the budget.",
-          "r2c1": "$10^6 \\cdot 19.93 \\approx 2.0 \\cdot 10^7$.",
-          "r3c1": "$2^{30} = 1{,}073{,}741{,}824$.",
-          "r0c2": "$2.5 \\cdot 10^7$ is under $2 \\cdot 10^8$.",
-          "r2c2": "$2.0 \\cdot 10^7$ is under $2 \\cdot 10^8$.",
-          "r3c2": "$1.07 \\cdot 10^9$ is over $2 \\cdot 10^8$."
+          "r0c1": "$3000^2 = 9{,}000{,}000$.",
+          "r1c1": "$2000^3 = 8 \\cdot 10^9$, forty times the budget.",
+          "r2c1": "$2 \\cdot 10^5 \\cdot 447.2 \\approx 8.9 \\cdot 10^7$.",
+          "r3c1": "$25 \\cdot 2^{25} = 838{,}860{,}800$.",
+          "r0c2": "$9 \\cdot 10^6$ is under $2 \\cdot 10^8$.",
+          "r2c2": "$8.9 \\cdot 10^7$ is under $2 \\cdot 10^8$.",
+          "r3c2": "$8.4 \\cdot 10^8$ is over $2 \\cdot 10^8$."
         }
       },
       "explain": {
-        "text": "Count the steps at the largest input, then compare with the budget. $n^2$ fits at 5,000 but not at 100,000. $n \\log n$ is comfortable at a million, and $2^n$ is out at $n = 30$."
+        "text": "Count the steps at the largest input, then compare with the budget. $n^3$ is out at 2,000, while $n \\sqrt{n}$ fits at $2 \\cdot 10^5$ with room to spare. $n \\cdot 2^n$ at $n = 25$ is four times over, so it needs a better idea."
       }
     },
     {
@@ -600,6 +620,7 @@
         "cn-impl",
         "cn-reading"
       ],
+      "pace": 360,
       "title": "Pairs of equal P&L days",
       "prose": "**Problem.** The first number is $t$, the number of test cases ($1 \\le t \\le 10^4$). Each test case gives $n$, then $n$ daily P&L values in whole pounds, each from $-10^9$ to $10^9$. The sum of $n$ is at most $2 \\cdot 10^5$.\n\nFor each test case, print the number of pairs of days $i < j$ with equal P&L. Values may wrap over several lines, blank lines may appear, and the last line may have no newline.",
       "question": "Write a program that reads all of standard input and prints one answer per test case.",
@@ -618,8 +639,8 @@
         "tests": [
           {
             "compare": "stdout",
-            "stdin": "2\n5\n3 1 3 3 1\n3\n7 8 9\n",
-            "expect": "4\n0\n"
+            "stdin": "1\n6\n2 2 2 2 -2 2\n",
+            "expect": "10"
           },
           {
             "compare": "stdout",
@@ -652,15 +673,15 @@
             "expect": "5119707\n"
           }
         ],
-        "how": "Check runs your program 7 times, each with its own input. Test 3 wraps values over lines. Test 4 has blank lines and no final newline. Test 6 has 2,000 small cases. Test 7 has one case of 32,000 values: comparing every pair, even with `list.count`, needs at least $5 \\cdot 10^8$ comparisons and is stopped at the 5 s limit."
+        "how": "Check runs your program 7 times, each with its own input. Test 3 wraps values over lines. Test 4 has blank lines and no final newline. Test 6 has 2,000 small cases. Test 7 has one case of 32,000 values. Comparing every pair, even with `list.count`, needs over $5 \\cdot 10^8$ comparisons. It is stopped at the 5 s limit."
       },
       "feedback": {
         "correct": "Read once, count with a dict, print once.",
         "generic": "Not quite right. Look at the first failing test's input.",
         "byKey": {
           "test-3": "Test 3 wraps one test case's values over two lines. Read tokens, not lines.",
-          "test-4": "Test 4 has blank lines and no final newline. Splitting the whole input into tokens handles both.",
-          "test-5": "Test 5 has negative values and zeros. Count each value by itself, not by its sign.",
+          "test-4": "Test 4 has blank lines, no final newline, and 7 next to −7. Split into tokens, and keep 7 and −7 apart.",
+          "test-5": "Test 5 has three zeros. Count every value, zero included.",
           "test-6": "Test 6 has 2,000 small cases. Check that your position moves past every value of a case.",
           "test-7": "Test 7 has 32,000 values in one case. Comparing every pair is too slow; count equal values with a dict.",
           "error": "Your program stopped with an error. Read the last line of the message under the editor."
@@ -676,6 +697,7 @@
       "skills": [
         "cn-maths"
       ],
+      "pace": 100,
       "title": "Dividing under a prime modulus",
       "prose": "Work modulo the prime 17. A check needs the whole number $x$ from 0 to 16 with $5x \\equiv 3 \\pmod{17}$.",
       "question": "What is $x$?",
@@ -730,8 +752,9 @@
       "skills": [
         "cn-maths"
       ],
+      "pace": 100,
       "title": "What the sieve has not crossed out",
-      "prose": "A sieve lists the primes up to 60. It has crossed out the multiples of 2, 3 and 5, starting at each prime's square. Crossed-out numbers are faded.",
+      "prose": "A sieve lists the primes up to 60. So far it has crossed out the multiples of 2 and 3, starting at each prime's square. 1 and the crossed-out numbers are faded.",
       "canvas": {
         "kind": "grid",
         "params": {
@@ -832,7 +855,6 @@
             "r3c1",
             "r3c2",
             "r3c4",
-            "r3c5",
             "r3c6",
             "r3c7",
             "r3c8",
@@ -840,7 +862,6 @@
             "r4c2",
             "r4c3",
             "r4c4",
-            "r4c5",
             "r4c6",
             "r4c8",
             "r4c9",
@@ -854,7 +875,6 @@
             "r6c1",
             "r6c2",
             "r6c4",
-            "r6c5",
             "r6c6",
             "r6c7",
             "r6c8",
@@ -862,13 +882,15 @@
           ]
         }
       },
-      "question": "Tap the one composite number that is still standing.",
+      "question": "Tap every composite number still standing.",
       "widget": {
         "kind": "tap-regions",
         "answer": [
-          "r5c9"
+          "r3c5",
+          "r4c5",
+          "r5c9",
+          "r6c5"
         ],
-        "max": 1,
         "countWord": "tapped",
         "wrong": [
           {
@@ -876,21 +898,30 @@
             "set": [
               "r1c1"
             ]
+          },
+          {
+            "id": "fives",
+            "set": [
+              "r3c5",
+              "r4c5",
+              "r6c5"
+            ]
           }
         ]
       },
       "feedback": {
-        "correct": "49 is $7 \\cdot 7$. Its smallest prime factor is 7, which the sieve has not processed yet.",
+        "correct": "25, 35, 49 and 55: each has 5 or 7 as its smallest prime factor.",
         "generic": "A composite left over has a prime factor that has not been crossed out yet. Test each standing number.",
         "byKey": {
           "one": "1 is not prime, but it is not composite either. Look for a product of two primes.",
           "r5c7": "47 is prime: nothing below $\\sqrt{47}$ divides it.",
           "r6c1": "51 is divisible by 3, so it is crossed out.",
-          "r2c1": "11 is prime."
+          "r2c1": "11 is prime.",
+          "fives": "You found the multiples of 5. 49 is $7 \\cdot 7$ and is still standing too."
         }
       },
       "explain": {
-        "text": "Every composite up to 60 has a prime factor at most $\\sqrt{60} < 8$. After 2, 3 and 5 only the multiples of 7 from $7^2 = 49$ remain. So the sieve must also process 7, and no prime above 7 is needed."
+        "text": "Every composite up to 60 has a prime factor at most $\\sqrt{60} < 8$. After 2 and 3, the multiples of 5 from 25 and of 7 from 49 remain: 25, 35, 55 and 49. So the sieve must still process 5 and 7, and no prime above 7 is needed."
       }
     },
     {
@@ -899,6 +930,7 @@
       "skills": [
         "cn-maths"
       ],
+      "pace": 100,
       "title": "Flipping neighbouring coins",
       "prose": "Seven coins lie in a row, all heads. A move flips two neighbouring coins. You may make any number of moves.",
       "question": "Select all that apply: which quantities can no move change?",
@@ -947,9 +979,10 @@
       "skills": [
         "cn-maths"
       ],
+      "pace": 100,
       "title": "Factorial tables in order",
-      "prose": "We answer many queries $\\binom{n}{k} \\bmod p$ with $p = 10^9 + 7$ and $n \\le N = 10^6$. We build two tables once, then answer in $O(1)$ each.",
-      "question": "Put the steps in the order that works.",
+      "prose": "We answer many queries $\\binom{n}{k} \\bmod p$ with $p = 10^9 + 7$ and $n \\le N = 10^6$. We build two tables once, then answer in $O(1)$ each. Two of the six lines do not belong.",
+      "question": "Put the four steps in the order that works, and leave out the two that do not belong.",
       "widget": {
         "kind": "order",
         "lines": [
@@ -968,6 +1001,16 @@
           {
             "id": "s4",
             "text": "Answer each query as `fact[n] * ifact[k] % p * ifact[n - k] % p`"
+          },
+          {
+            "id": "d1",
+            "text": "Fill `ifact[i] = pow(fact[i], p - 2, p)` for every `i` from 0 to `N`",
+            "why": "That is one `pow` per entry, about 30 squarings each. The backward loop needs one `pow` in all."
+          },
+          {
+            "id": "d2",
+            "text": "Fill `ifact[i + 1] = ifact[i] * (i + 1) % p` for `i` from 0 up to `N - 1`",
+            "why": "You ran the inverse loop forwards. Multiplying by $i + 1$ undoes a factor, so it only works downwards from `ifact[N]`."
           }
         ],
         "answer": [
@@ -975,6 +1018,10 @@
           "s2",
           "s3",
           "s4"
+        ],
+        "distractors": [
+          "d1",
+          "d2"
         ]
       },
       "feedback": {
@@ -983,7 +1030,8 @@
         "byKey": {
           "s2": "The single `pow` needs `fact[N]`, so the forward table comes first.",
           "s3": "The backward loop starts from `ifact[N]`, so the `pow` line must come before it.",
-          "s4": "A query reads both tables, so it comes last."
+          "s4": "A query reads both tables, so it comes last.",
+          "left-out": "Two lines do not belong: one `pow` per entry is slow, and the inverse loop cannot run forwards."
         }
       },
       "explain": {
@@ -996,6 +1044,7 @@
       "skills": [
         "cn-patterns"
       ],
+      "pace": 100,
       "title": "Swapping two neighbouring jobs",
       "prose": "A desk runs four jobs one after another. Their times in minutes, in order, are 4, 9, 2, 7. A job's completion time is the minute it finishes. The desk wants the smallest total of completion times. We swap the middle two jobs, giving the order 4, 2, 9, 7.",
       "question": "By how much does the total of completion times fall?",
@@ -1049,8 +1098,9 @@
       "skills": [
         "cn-patterns"
       ],
-      "title": "Submasks of a trade set",
-      "prose": "Four trades are bits 0 to 3 of a mask. The set holding trades 0, 1 and 3 is the mask 1011, which is 11. A submask of 1011 has a 1 only where 1011 has a 1.",
+      "pace": 100,
+      "title": "Masks that avoid a trade set",
+      "prose": "Four trades are bits 0 to 3 of a mask. The set holding trades 1 and 3 is the mask 1010, which is 10. A mask is disjoint from 1010 when the two share no trade.",
       "canvas": {
         "kind": "grid",
         "params": {
@@ -1088,59 +1138,48 @@
         },
         "state": {}
       },
-      "question": "Tap every submask of 1011.",
+      "question": "Tap every mask disjoint from 1010.",
       "widget": {
         "kind": "tap-regions",
         "answer": [
           "r1c1",
           "r1c2",
-          "r1c3",
-          "r1c4",
-          "r3c1",
-          "r3c2",
-          "r3c3",
-          "r3c4"
+          "r2c1",
+          "r2c2"
         ],
         "countWord": "tapped",
         "wrong": [
           {
-            "id": "smaller",
+            "id": "sub",
             "set": [
               "r1c1",
-              "r1c2",
               "r1c3",
-              "r1c4",
-              "r2c1",
-              "r2c2",
-              "r2c3",
-              "r2c4",
               "r3c1",
-              "r3c2",
-              "r3c3",
-              "r3c4"
+              "r3c3"
             ]
           },
           {
-            "id": "super",
+            "id": "nonzero",
             "set": [
-              "r3c4",
-              "r4c4"
+              "r1c2",
+              "r2c1",
+              "r2c2"
             ]
           }
         ]
       },
       "feedback": {
-        "correct": "Eight masks: every choice of which of the three set bits to keep.",
-        "generic": "Check each mask bit by bit: it may not have a 1 where 1011 has a 0.",
+        "correct": "Four masks: 0000, 0001, 0100 and 0101, the submasks of 0101.",
+        "generic": "Check each mask bit by bit: it may not have a 1 where 1010 has a 1.",
         "byKey": {
-          "smaller": "You tapped every mask below 11. Mask 0100 is smaller but uses trade 2, which 1011 lacks.",
-          "super": "You tapped the masks that contain 1011. A submask sits inside it, not around it.",
-          "r2c1": "0100 has a 1 at bit 2, where 1011 has a 0.",
-          "r4c4": "1111 has a 1 at bit 2, where 1011 has a 0."
+          "sub": "You tapped the submasks of 1010. Those share trades with it; disjoint masks avoid bits 1 and 3.",
+          "nonzero": "You left out 0000. The empty set shares no trade with anything.",
+          "r1c3": "0010 has a 1 at bit 1, which 1010 also uses.",
+          "r4c4": "1111 shares bits 1 and 3 with 1010."
         }
       },
       "explain": {
-        "text": "1011 has three set bits, and each can be kept or dropped: $2^3 = 8$ submasks. The masks that use bit 2 are not submasks. Summing $2^{\\text{popcount}}$ over all masks gives $3^n$ pairs."
+        "text": "A mask $m$ is disjoint from 1010 exactly when `m & 0b1010 == 0`. That makes $m$ a submask of the complement 0101, so there are $2^2 = 4$. Enumerating the submasks of the complement skips every clashing mask."
       }
     },
     {
@@ -1149,83 +1188,88 @@
       "skills": [
         "cn-patterns"
       ],
-      "title": "Days over the cap",
-      "prose": "**Problem.** A fund logs position changes. Update $(l, r, v)$ adds $v$ shares to the holding on every day from $l$ to $r$ inclusive. Days are numbered $1$ to $n$. Both $n$ and the number of updates are at most $2 \\cdot 10^5$, and $-10^9 \\le v \\le 10^9$.\n\nAfter all updates, count the days whose holding is strictly more than `cap`.",
-      "question": "Complete `days_over(n, updates, cap)`. Use standard-library Python only.",
+      "pace": 360,
+      "title": "Fewest updates",
+      "prose": "**Problem.** A fund wants its holding on days 1 to $n$ to end at `target[i]` shares, with $1 \\le n \\le 2 \\cdot 10^5$ and $0 \\le$ `target[i]` $\\le 10^9$. Every day starts at 0. One update adds 1 share to every day of a range $l$ to $r$. Find the fewest updates that reach the target exactly.",
+      "question": "Complete `fewest_updates(target)`.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "prelude": "import random as _rnd\n\n\ndef _updates(n, q, seed):\n    g = _rnd.Random(seed)\n    ups = []\n    for _ in range(q):\n        l = g.randint(1, n)\n        r = g.randint(l, n)\n        ups.append((l, r, g.randint(-3, 8)))\n    return ups\n",
-        "starter": "def days_over(n, updates, cap):\n    \"\"\"Days 1..n. Update (l, r, v) adds v to days l..r.\n    Return how many days end strictly above cap.\"\"\"\n    ...\n",
-        "solution": "def days_over(n, updates, cap):\n    \"\"\"Days 1..n. Update (l, r, v) adds v to days l..r.\n    Return how many days end strictly above cap.\"\"\"\n    diff = [0] * (n + 2)          # spare cell for r = n\n    for l, r, v in updates:\n        diff[l] += v\n        diff[r + 1] -= v\n    total = 0\n    count = 0\n    for day in range(1, n + 1):\n        total += diff[day]\n        if total > cap:\n            count += 1\n    return count\n",
+        "prelude": "import random as _rnd\n\n\ndef _target(n, hi, seed):\n    g = _rnd.Random(seed)\n    return [g.randint(0, hi) for _ in range(n)]\n",
+        "starter": "def fewest_updates(target):\n    \"\"\"Each update adds 1 to a range of days.\n    Return the fewest updates that build target.\"\"\"\n    ...\n",
+        "solution": "def fewest_updates(target):\n    \"\"\"Each update adds 1 to a range of days.\n    Return the fewest updates that build target.\"\"\"\n    prev = 0\n    count = 0\n    for t in target:\n        if t > prev:\n            count += t - prev   # a rise needs new updates\n        prev = t\n    return count\n",
         "examples": [
           {
-            "call": "days_over(7, [(2, 5, 4), (4, 7, -1), (1, 3, 2)], 3)",
-            "expect": "2",
+            "call": "fewest_updates([1, 2, 1, 2])",
+            "expect": "3",
             "compare": "equal"
           }
         ],
         "tests": [
           {
-            "call": "days_over(7, [(2, 5, 4), (4, 7, -1), (1, 3, 2)], 3)",
-            "expect": "2",
+            "call": "fewest_updates([2, 0, 2])",
+            "expect": "4",
             "compare": "equal"
           },
           {
-            "call": "days_over(1, [(1, 1, 5)], 4)",
-            "expect": "1",
+            "call": "fewest_updates([5])",
+            "expect": "5",
             "compare": "equal"
           },
           {
-            "call": "days_over(5, [(3, 5, 2)], 1)",
-            "expect": "3",
-            "compare": "equal"
-          },
-          {
-            "call": "days_over(4, [(1, 3, -5)], -3)",
-            "expect": "1",
-            "compare": "equal"
-          },
-          {
-            "call": "days_over(6, [(1, 6, 3), (1, 6, -3)], 0)",
+            "call": "fewest_updates([0, 0, 0])",
             "expect": "0",
             "compare": "equal"
           },
           {
-            "setup": "ups = _updates(30, 40, 26)",
-            "call": "days_over(30, ups, 5)",
-            "expect": "25",
+            "call": "fewest_updates([3, 3, 3])",
+            "expect": "3",
             "compare": "equal"
           },
           {
-            "setup": "ups = _updates(200000, 200000, 25)",
-            "call": "days_over(200000, ups, 120000)",
-            "expect": "122059",
+            "call": "fewest_updates([4, 1, 4])",
+            "expect": "7",
             "compare": "equal"
           },
           {
-            "setup": "ups = _updates(200000, 200000, 25)",
-            "call": "days_over(200000, ups, 150000) == 89481 and 'numpy' not in __learner_source__",
-            "expect": "True",
+            "call": "fewest_updates([1, 3, 2, 4, 0])",
+            "expect": "5",
+            "compare": "equal"
+          },
+          {
+            "setup": "t = _target(30, 9, 26)",
+            "call": "fewest_updates(t)",
+            "expect": "52",
+            "compare": "equal"
+          },
+          {
+            "setup": "t = list(range(1, 200001))",
+            "call": "fewest_updates(t)",
+            "expect": "200000",
+            "compare": "equal"
+          },
+          {
+            "setup": "t = _target(200000, 10**9, 25)",
+            "call": "fewest_updates(t)",
+            "expect": "33381630011016",
             "compare": "equal"
           }
         ],
-        "how": "Check runs 8 hidden tests. Tests 1 and 2 are a hand example and one day. Tests 3 to 5 have an update ending on the last day, a negative holding and cancelling updates. Test 6 is random. Tests 7 and 8 have 200,000 updates over 200,000 days: looping over each range is about $10^{10}$ additions. Test 8 also needs standard-library Python only."
+        "how": "Check runs 9 hidden tests. Tests 1 to 6 are hand cases: a gap, one day, all zeros, a flat run, a dip and a peak. Test 7 is random. Tests 8 and 9 have 200,000 days. Splitting at each minimum or peeling one layer at a time is stopped at the 5 s limit."
       },
       "feedback": {
-        "correct": "Two writes per update, then one running total.",
+        "correct": "Each rise from one day to the next needs that many new updates; a fall needs none.",
         "generic": "Not quite right. Look at the first failing test.",
         "byKey": {
-          "test-3": "Test 3 ends on the last day. Allocate $n + 2$ cells so index $r + 1$ exists.",
-          "test-4": "Test 4 has a negative holding. Days outside every update hold 0, which is above $-3$.",
-          "test-5": "Test 5 cancels exactly. Every day holds 0, which is not above 0.",
-          "test-7": "Test 7 has 200,000 updates. Adding $v$ to every day of each range is far too slow; write only the two ends.",
-          "test-8": "Test 8 has 200,000 updates again, and bans `numpy`. Write the two ends of each update and take one running total.",
+          "test-1": "Test 1 has a 0 between two 2s. No update can jump the gap, so it needs 4.",
+          "test-5": "Test 5 dips to 1. The rise from 1 back to 4 needs 3 new updates.",
+          "test-8": "Test 8 rises on all 200,000 days. Add up the rises in one pass instead of splitting at each minimum.",
+          "test-9": "Test 9 has values up to $10^9$. Peeling one layer at a time cannot finish; add up the positive differences.",
           "error": "Your code stopped with an error. Read the last line of the message under the editor."
         }
       },
       "explain": {
-        "text": "An update writes $+v$ at $l$ and $-v$ at $r + 1$. One running total over the days rebuilds every holding in $O(n + q)$. The spare cell keeps an update that ends on day $n$ from running off the array."
+        "text": "An update adds 1 to the difference array at day $l$ and takes 1 off after day $r$. So each positive difference of the target counts update starts, and none can be shared. The answer is the sum of $\\max(0, t_i - t_{i-1})$ with $t_0 = 0$, in $O(n)$."
       }
     },
     {
@@ -1234,41 +1278,55 @@
       "skills": [
         "cn-impl"
       ],
-      "title": "A generator that finds the bug",
-      "prose": "Your fast solution counts pairs $i < j$ with $x_i + x_j \\le k$. It wrongly uses `<` when a pair sums to exactly $k$. Your stress test draws $n$ from 1 to 6 and each value from 1 to $10^9$. It draws $k$ from 1 to $2 \\cdot 10^9$. It finds no difference from the brute force in 100,000 trials.",
-      "question": "Which change makes the stress test find the bug?",
+      "pace": 100,
+      "title": "Reading a failing case",
+      "prose": "Problem: count the pairs $i < j$ with $x_i + x_j = k$. Your stress loop stops at its first difference and prints it.",
+      "question": "Which bug explains this case?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
-            "id": "more",
-            "text": "Run 10 million trials with the same ranges.",
-            "why": "You added trials but kept the ranges. A pair summing to exactly $k$ is almost never drawn from values up to $10^9$."
-          },
-          {
-            "id": "big",
-            "text": "Use values up to $10^{18}$ and $k$ up to $2 \\cdot 10^{18}$.",
-            "why": "You made the values larger. An exact sum is then even rarer, and you lose small cases you can trace by hand."
-          },
-          {
-            "id": "small",
-            "text": "Draw each value from 1 to 5 and $k$ from 2 to 10.",
+            "id": "self",
+            "text": "The fast code also pairs each value with itself, $i = j$",
             "correct": true
           },
           {
-            "id": "seed",
-            "text": "Drop the seed so every run draws different cases.",
-            "why": "You changed the seed, not the ranges. Fresh cases still draw values up to $10^9$, so the boundary stays rare."
+            "id": "twice",
+            "text": "The fast code counts each pair twice, as $(i, j)$ and $(j, i)$",
+            "why": "Counting both orders gives 2 here, not 3. Only the two 2s sum to 4."
+          },
+          {
+            "id": "strict",
+            "text": "The fast code uses `<` where it needs `<=`",
+            "why": "This problem asks for an exact sum, so no `<` against $k$ is involved. That bug cannot add pairs."
+          },
+          {
+            "id": "brute",
+            "text": "The brute force is wrong and misses pairs",
+            "why": "The brute force says 1, and the two 2s are the only pair summing to 4. It is right."
           }
         ]
       },
       "feedback": {
-        "correct": "Small values make equal sums common, so the boundary case appears within a few trials.",
-        "generic": "The bug lives at the boundary. Ask how often a random case reaches it."
+        "correct": "With $i = j$ allowed, each 2 also pairs with itself, so 1 becomes 3.",
+        "generic": "List every pair the fast count could have found, and see which rule gives 3."
       },
       "explain": {
-        "text": "The bug shows only when a pair sums to exactly $k$. With values up to $10^9$ that is about 3 trials per billion. Values from 1 to 5 reach it in a few tries, and a small case is easy to trace."
+        "text": "The true pairs are only the two 2s, so 1 is right. Allowing $i = j$ also counts each 2 with itself, since $2 + 2 = 4$: 3 in all. A small failing case like this names the bug in seconds."
+      },
+      "canvas": {
+        "kind": "console",
+        "params": {
+          "title": "stress",
+          "lines": [
+            "trial 37",
+            "xs = [2, 5, 2], k = 4",
+            "brute force: 1",
+            "fast:        3"
+          ]
+        },
+        "state": {}
       }
     },
     {
@@ -1277,34 +1335,28 @@
       "skills": [
         "cn-strategy"
       ],
+      "pace": 100,
       "title": "Which of two problems first",
-      "prose": "A problem worth $v$ points loses $v/250$ points every minute until you solve it. This is the course's illustration, and neither problem reaches its floor. P is worth 900 and takes you 20 minutes. Q is worth 1,500 and takes 45 minutes. You solve both, one after the other, starting at minute 0.",
-      "question": "How many more points does the better order score than the other?",
+      "prose": "A problem worth $v$ points loses $v/250$ points every minute until you solve it, and neither problem here reaches its floor. P is worth 900. Q is worth 1,500 and takes you 45 minutes. You solve both, one after the other, starting at minute 0.",
+      "question": "For what solving time of P, in minutes, do the two orders score the same?",
       "widget": {
         "kind": "numeric",
-        "answer": 42,
+        "answer": 27,
         "tol": {
           "abs": 0
         },
-        "placeholder": "points",
+        "placeholder": "minutes",
         "wrong": [
           {
-            "id": "lost-p",
-            "value": 462,
+            "id": "inverted",
+            "value": 75,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "lost-q",
-            "value": 504,
-            "tol": {
-              "abs": 0
-            }
-          },
-          {
-            "id": "total",
-            "value": 1938,
+            "id": "same",
+            "value": 45,
             "tol": {
               "abs": 0
             }
@@ -1312,16 +1364,15 @@
         ]
       },
       "feedback": {
-        "correct": "P then Q scores 828 + 1,110 = 1,938. Q then P scores 1,230 + 666 = 1,896. The gap is 42.",
-        "generic": "Score each order: finish times are cumulative, and each problem loses $v/250$ per minute.",
+        "correct": "At 27 minutes P earns $900 / 27 = 33.3$ points a minute, the same as Q's $1500 / 45$.",
+        "generic": "Swapping the two moves a loss of $v_Q t_P / 250$ against $v_P t_Q / 250$. Set them equal.",
         "byKey": {
-          "lost-p": "462 is what P then Q loses in total, not the gap between the two orders.",
-          "lost-q": "504 is what Q then P loses in total, not the gap between the two orders.",
-          "total": "1,938 is the score of the better order, not the gap between the two."
+          "inverted": "You inverted the ratio. The orders tie when $900 / t_P$ equals $1500 / 45$.",
+          "same": "Equal times are not the break-even. Q is worth more, so P must be quicker to tie."
         }
       },
       "explain": {
-        "text": "P first loses $72 + 390 = 462$ points. Q first loses $270 + 234 = 504$. P is worth 45 points per minute of work and Q 33.3, so the higher rate goes first."
+        "text": "P first costs Q $6 t_P$ points, and Q first costs P $3.6 \\cdot 45 = 162$. They tie when $6 t_P = 162$, at $t_P = 27$ minutes. Both orders then score 1,870.8, and if P takes less than 27 minutes it goes first."
       }
     },
     {
@@ -1330,6 +1381,7 @@
       "skills": [
         "cn-maths"
       ],
+      "pace": 420,
       "title": "A compounding sum modulo a prime",
       "prose": "**Problem.** A position grows by a factor $g$ each day. The total of the first $n$ daily factors is $1 + g + g^2 + \\dots + g^{n-1}$. Print it modulo $p = 10^9 + 7$.\n\nHere $1 \\le n \\le 10^{18}$ and $0 \\le g < p$. A term $g^0$ counts as 1, even when $g = 0$.",
       "question": "Complete `growth_sum(g, n)`.",
@@ -1347,8 +1399,8 @@
         ],
         "tests": [
           {
-            "call": "growth_sum(2, 5)",
-            "expect": "31",
+            "call": "growth_sum(7, 4)",
+            "expect": "400",
             "compare": "equal"
           },
           {
@@ -1427,6 +1479,7 @@
       "skills": [
         "cn-patterns"
       ],
+      "pace": 420,
       "title": "Fewest delivery vans",
       "prose": "**Problem.** A courier has $n$ orders with weights $w_i$ ($1 \\le n \\le 2 \\cdot 10^5$, $1 \\le w_i \\le 10^9$). A van carries one or two orders, and their total weight may not exceed `cap`. Every order alone weighs at most `cap`.\n\nFind the fewest vans that carry every order.",
       "question": "Complete `fewest_vans(weights, cap)`.",
@@ -1450,8 +1503,8 @@
             "compare": "equal"
           },
           {
-            "call": "fewest_vans([4, 7, 5, 4, 3], 8)",
-            "expect": "3",
+            "call": "fewest_vans([5, 3, 3, 5], 8)",
+            "expect": "2",
             "compare": "equal"
           },
           {
@@ -1511,6 +1564,7 @@
       "skills": [
         "cn-patterns"
       ],
+      "pace": 420,
       "title": "Largest set of compatible strategies",
       "prose": "**Problem.** A desk has $n$ strategies ($1 \\le n \\le 16$). Some pairs conflict and cannot run together. The conflicts are given as pairs of strategy numbers from 0 to $n - 1$.\n\nFind the size of the largest set of strategies that contains no conflicting pair.",
       "question": "Complete `largest_clear_set(n, conflicts)`.",
@@ -1529,8 +1583,8 @@
         ],
         "tests": [
           {
-            "call": "largest_clear_set(4, [(0, 1), (1, 2), (2, 3)])",
-            "expect": "2",
+            "call": "largest_clear_set(6, [(0, 1), (1, 2), (2, 3), (3, 4), (4, 5)])",
+            "expect": "3",
             "compare": "equal"
           },
           {
@@ -1605,16 +1659,17 @@
       "skills": [
         "cn-maths"
       ],
-      "title": "Fewest rebalancing moves",
-      "prose": "Two position sizes start at $(1, 1)$. A move replaces one size by the sum of both: $(x, y) \\to (x + y, y)$ or $(x, x + y)$. Sizes are whole numbers of lots.",
-      "question": "What is the fewest number of moves that reaches $(47, 30)$?",
+      "pace": 150,
+      "title": "Squares from a rectangle",
+      "prose": "A trading floor of 47 by 30 tiles is split into square desks. Each cut removes the largest square that fits at one end of what is left, until nothing is left.",
+      "question": "How many squares does it make?",
       "widget": {
         "kind": "numeric",
-        "answer": 9,
+        "answer": 10,
         "tol": {
           "abs": 0
         },
-        "placeholder": "moves",
+        "placeholder": "squares",
         "wrong": [
           {
             "id": "steps",
@@ -1624,15 +1679,15 @@
             }
           },
           {
-            "id": "quotients",
-            "value": 10,
+            "id": "moves",
+            "value": 9,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "sub",
-            "value": 17,
+            "id": "gcd",
+            "value": 1,
             "tol": {
               "abs": 0
             }
@@ -1640,16 +1695,16 @@
         ]
       },
       "feedback": {
-        "correct": "Walk back: always subtract the smaller from the larger. That takes 9 moves to reach $(1, 1)$.",
-        "generic": "Undo the last move. The larger size must be the one that was just replaced.",
+        "correct": "Squares of side 30, 17 and 13, then three of 4 and four of 1: 10 in all.",
+        "generic": "Each cut is one subtraction in Euclid's algorithm. Count how many times each side fits.",
         "byKey": {
-          "steps": "5 is the number of division steps in Euclid's algorithm. A quotient of 3 or 4 stands for several moves.",
-          "quotients": "10 adds all the quotients 1, 1, 1, 3, 4. The last one stops at $(1, 1)$ one move sooner, so subtract 1.",
-          "sub": "17 is $47 - 30$, one subtraction. The walk back needs many more."
+          "steps": "5 is the number of division steps in Euclid's algorithm. A quotient of 3 or 4 stands for several squares.",
+          "moves": "You subtracted 1 from the sum of the quotients. The last 1 by 1 piece is a square too.",
+          "gcd": "1 is the side of the smallest square, the gcd. The question asks how many squares."
         }
       },
       "explain": {
-        "text": "Walking back, the larger size was the last one changed, so subtract the smaller from it: $(47, 30), (17, 30), (17, 13), (4, 13), (4, 9), (4, 5), (4, 1), (3, 1), (2, 1), (1, 1)$. That is 9 moves. The gcd 1 never changes, so $(1, 1)$ is reachable at all."
+        "text": "$47 = 1 \\cdot 30 + 17$, $30 = 1 \\cdot 17 + 13$, $17 = 1 \\cdot 13 + 4$, $13 = 3 \\cdot 4 + 1$ and $4 = 4 \\cdot 1$. Each quotient counts the squares of one size, so there are $1 + 1 + 1 + 3 + 4 = 10$. The last side is 1, the gcd."
       }
     },
     {
@@ -1659,6 +1714,7 @@
         "cn-impl",
         "cn-reading"
       ],
+      "pace": 150,
       "title": "Hand cases that expose the bug",
       "prose": "The function should return the length of the longest strictly rising run of consecutive days. It passes the example `[5, 3, 1, 4, 6, 8, 2]`, which has the answer 4, and fails on submission.",
       "canvas": {
@@ -1731,6 +1787,7 @@
       "skills": [
         "cn-patterns"
       ],
+      "pace": 540,
       "title": "A delta-neutral book",
       "prose": "**Problem.** A desk wants a book of $n$ positions ($1 \\le n \\le 2 \\cdot 10^5$). The sizes must be $n$ different non-zero whole numbers of lots. Each lies between $-n$ and $n$, and they sum to 0.\n\nPrint any such book. If none exists, print nothing (return `None`).",
       "question": "Complete `neutral_book(n)`. Any valid book is accepted.",
@@ -1814,6 +1871,7 @@
       "skills": [
         "cn-strategy"
       ],
+      "pace": 300,
       "title": "The best plan for 60 minutes",
       "prose": "You have 60 minutes and four problems, solved one at a time with no rejections. A problem worth $v$ points loses $v/250$ points every minute until you solve it. No problem reaches its floor. A problem you do not finish scores 0.",
       "canvas": {
@@ -1891,7 +1949,7 @@
         "generic": "Try the subsets that fit in 60 minutes. Within a subset, higher points per minute goes first.",
         "byKey": {
           "rate": "3,708 is the plan by points per minute: D, B, A. After 30 minutes C no longer fits, so it wastes 30 minutes.",
-          "value": "3,900 is D, C, B. Doing the 40-minute problem second pushes B and C late.",
+          "value": "3,900 is D, C, B, by points. The 40-minute problem second pushes B to minute 60, where it scores only 988.",
           "letters": "3,372 is A, B, C in letter order. D, worth most per minute, is never solved."
         }
       },
@@ -1907,10 +1965,11 @@
         "cn-reading",
         "cn-impl"
       ],
+      "pace": 720,
       "title": "Reviewing a round",
       "kind": "longform",
       "prompt": "Your rating is 1,250. In a 120-minute round your log reads:\n\n- A (rated 800): accepted at minute 8.\n- B (rated 1,100): accepted at minute 33, after two wrong answers on test 2.\n- C (rated 1,300, with $n \\le 2 \\cdot 10^5$): opened at minute 41. You wrote a double loop, got \"time limit exceeded on test 9\" and patched it until the end. No accept.\n- D: never opened. The final scoreboard showed 2,300 solves for D and 600 for C.\n\nAfterwards you read C's editorial, agreed with it and closed the tab.\n\n(a) Name three mistakes in the round, each with a rule that would have prevented it.\n\n(b) What did C's constraints tell you before you wrote any code?\n\n(c) Describe how you upsolve C, and when you redo it.\n\n(d) What goes in your mistakes log, and how does it feed the next round?",
-      "model": "**(a)** Three mistakes, each with a rule.\n\n- *No time cap on C.* You spent 79 minutes there, from minute 41 to 120. Rule: with no new idea after about 15 to 20 minutes, switch problems. The minutes already spent are gone.\n- *D was never read.* The scoreboard showed 2,300 solves for D and 600 for C. Rule: read every statement first, then order by solves and by points per minute.\n- *Resubmitting B without a hand case.* Two wrong answers on test 2 cost two penalties. Rule: after a wrong answer, reread the statement against the code and run a small hand-made case before submitting again.\n\n**(b)** With $n \\le 2 \\cdot 10^5$, a double loop does about $(2 \\cdot 10^5)^2 / 2 = 2 \\cdot 10^{10}$ steps. That is far over about $10^8$ for the time limit. The constraints said to aim for $O(n \\log n)$ or $O(n)$: a sort, a two-pointer pass or a dict. The verdict on test 9 was the large test saying the same thing. Patching a quadratic loop could not fix it.\n\n**(c)** C is rated 1,300, only 50 above your 1,250. That is well inside the window of about 300 above your rating. Take the idea from the editorial, then close it. Write the code from scratch until it is accepted, with a size test of 200,000 values. Redo the problem cold a week later. Reading the editorial and nodding does not count as solving it.\n\n**(d)** One line per mistake: the problem, the category and the rule. Here: C, \"no time cap\", switch after 20 minutes; D, \"statements unread\", read all and check the scoreboard; B, \"no hand case\", test before resubmitting. Read the log before the next round and in the first minutes of it. A 1,400 rating is a fair first-year target. Cutting these three mistakes is worth more than learning a new trick.",
+      "model": "**(a)** Three mistakes, each with a rule.\n\n- *No time cap on C.* You spent 79 minutes there, from minute 41 to 120. Rule: with no new idea after about 15 to 20 minutes, switch problems. The minutes already spent are gone.\n- *D was never read.* The scoreboard showed 2,300 solves for D and 600 for C. Rule: read every statement first, then order by solves and by points per minute.\n- *Resubmitting B without a hand case.* Two wrong answers on test 2 cost two penalties. Rule: after a wrong answer, reread the statement against the code and run a small hand-made case before submitting again.\n\n**(b)** With $n \\le 2 \\cdot 10^5$, a double loop does about $(2 \\cdot 10^5)^2 / 2 = 2 \\cdot 10^{10}$ steps. That is far over about $10^8$ for the time limit. The constraints said to aim for $O(n \\log n)$ or $O(n)$: a sort, a two-pointer pass or a dict. The verdict on test 9 was the large test saying the same thing. Patching a quadratic loop could not fix it.\n\n**(c)** C is rated 1,300, only 50 above your 1,250. That is well inside the window of about 300 above your rating. Take the idea from the editorial, then close it. Write the code from scratch until it is accepted, with a size test of 200,000 values. Redo the problem cold a week later. Reading the editorial and nodding does not count as solving it.\n\n**(d)** One line per mistake: the problem, the category and the rule. Here: C, \"no time cap\", switch after 20 minutes. D, \"statements unread\", read all and check the scoreboard. B, \"no hand case\", test before resubmitting. Read the log before the next round and in the first minutes of it. A 1,400 rating is a fair first-year target. Cutting these three mistakes is worth more than learning a new trick.",
       "rubric": [
         {
           "points": 2,
