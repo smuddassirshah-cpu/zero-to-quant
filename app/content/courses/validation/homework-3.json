@@ -494,6 +494,111 @@
       "explain": {
         "text": "A feature reads the label's month, two transforms see the whole panel, and the universe is today's index. The Sharpe is the best of 30, and selection alone can give about 0.7 to 0.9 over 8 years. Most of the 1.4 is likely not skill."
       }
+    },
+    {
+      "id": "h-dead-firms",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "vl-leakage"
+      ],
+      "pace": 1200,
+      "title": "A universe that keeps its dead",
+      "prose": "A data vendor sends `rets`, monthly returns by firm, with months as `'YYYY-MM'` strings. The vendor built the file today, so it back-fills history for firms that listed late. `listings` holds one `(firm, first, last)` record per firm: the first and last month it was listed. `last` is None for a firm still listed. A firm whose `last` is set died that month, and `delist[firm]` is its delisting return.\n\nEach month, hold in equal weights every firm listed that month. A dead firm is held in its last month. Its return then is its regular return and its delisting return, compounded. If it has no regular return that month, its delisting return alone is its return. Every listed firm has a regular return in each of its other listed months.\n\n`market()` returns `rets, listings, delist` for five firms over eight months. `exchange(seed)` does the same for 30 firms over 60 months. The tests read your results through `rows` and `grown`, which are loaded.",
+      "question": "Build `survivor_free_returns(rets, listings, delist)`, a frame indexed by the months of `rets` with columns `held`, the number of firms held, and `ret`, the portfolio's return.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "prelude": "import numpy as np\nimport pandas as pd\n\ndef market():\n    \"\"\"Five firms over eight months: rets, listings, delist.\"\"\"\n    nan = float(\"nan\")\n    rets = pd.DataFrame({\n        \"AAA\": [0.02, -0.01, 0.03, 0.01, 0.00, 0.02, -0.02, 0.01],\n        \"BBB\": [0.01, -0.05, -0.08, -0.10, -0.20, nan, nan, nan],\n        \"CCC\": [0.00, 0.01, 0.02, -0.01, 0.03, 0.01, 0.02, 0.00],\n        \"DDD\": [0.06, 0.05, 0.07, 0.04, 0.03, -0.02, 0.05, 0.02],\n        \"EEE\": [-0.03, -0.04, -0.06, -0.05, -0.07, -0.09, nan, nan],\n    }, index=[f\"2023-{m:02d}\" for m in range(1, 9)])\n    listings = [(\"AAA\", \"2023-01\", None), (\"BBB\", \"2023-01\", \"2023-05\"),\n                (\"CCC\", \"2023-01\", None), (\"DDD\", \"2023-04\", None),\n                (\"EEE\", \"2023-01\", \"2023-07\")]\n    delist = {\"BBB\": -0.40, \"EEE\": -0.30}\n    return rets, listings, delist\n\ndef exchange(seed, n_firms=30, n_months=60):\n    \"\"\"A seeded market. Some firms list late, with 12 months back-filled\n    before listing; a firm below 40% of its listing price dies the next month.\"\"\"\n    rng = np.random.default_rng(seed)\n    months = [f\"{2015 + k // 12}-{k % 12 + 1:02d}\" for k in range(n_months)]\n    R = np.full((n_months, n_firms), np.nan)\n    listings, delist = [], {}\n    for j in range(n_firms):\n        start = 0 if j % 3 else int(rng.integers(1, 40))\n        mu, sd = rng.normal(0.004, 0.006), 0.11\n        R[max(0, start - 12):start, j] = rng.normal(0.02, sd, start - max(0, start - 12))\n        p, last = 1.0, None\n        for t in range(start, n_months):\n            R[t, j] = mu + sd * rng.standard_normal()\n            p *= 1 + R[t, j]\n            if p < 0.4 and t + 1 < n_months:\n                last = months[t + 1]\n                R[t + 1, j] = rng.normal(-0.1, 0.05) if rng.random() < 0.5 else np.nan\n                delist[f\"X{j:02d}\"] = float(rng.choice([-0.3, -0.5, -0.9]))\n                break\n        listings.append((f\"X{j:02d}\", months[start], last))\n    rets = pd.DataFrame(R, index=months, columns=[f\"X{j:02d}\" for j in range(n_firms)])\n    return rets, listings, delist\n\ndef rows(out):\n    \"\"\"Each month as [held, ret], ret rounded to 6 places.\"\"\"\n    return [[int(n), round(float(r), 6)] for n, r in zip(out[\"held\"], out[\"ret\"])]\n\ndef grown(out):\n    \"\"\"Firm-months held, then £100 grown at ret, rounded to 4 places.\"\"\"\n    return [int(out[\"held\"].sum()), round(100 * float(np.prod(1 + out[\"ret\"].to_numpy())), 4)]\n",
+        "starter": "import numpy as np\nimport pandas as pd\n\ndef survivor_free_returns(rets, listings, delist):\n    ...\n",
+        "solution": "import numpy as np\nimport pandas as pd\n\ndef survivor_free_returns(rets, listings, delist):\n    months = rets.index\n    held = pd.DataFrame(False, index=months, columns=rets.columns)\n    r = rets.copy()\n    for firm, first, last in listings:\n        alive = (months >= first) & ((months <= last) if last else True)\n        held[firm] = alive\n        if last in months:\n            base = r.loc[last, firm]\n            base = 0.0 if np.isnan(base) else base\n            r.loc[last, firm] = (1 + base) * (1 + delist[firm]) - 1\n    return pd.DataFrame({\"held\": held.sum(axis=1), \"ret\": r.where(held).mean(axis=1)})\n",
+        "examples": [
+          {
+            "call": "rows(survivor_free_returns(*market()).iloc[:2])",
+            "expect": "[[4, 0.0], [4, -0.0225]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          }
+        ],
+        "tests": [
+          {
+            "call": "rows(survivor_free_returns(*market()).iloc[:2])",
+            "expect": "[[4, 0.0], [4, -0.0225]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "call": "[int(n) for n in survivor_free_returns(*market())['held']]",
+            "expect": "[4, 4, 4, 5, 5, 4, 4, 3]",
+            "compare": "equal"
+          },
+          {
+            "call": "rows(survivor_free_returns(*market()))",
+            "expect": "[[4, 0.0], [4, -0.0225], [4, -0.0225], [5, -0.022], [5, -0.106], [4, -0.02], [4, -0.0625], [3, 0.01]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "r, l, d = market(); d['BBB'] = -1.0; d['EEE'] = -0.5",
+            "call": "rows(survivor_free_returns(r, list(reversed(l)), d))",
+            "expect": "[[4, 0.0], [4, -0.0225], [4, -0.0225], [5, -0.022], [5, -0.202], [4, -0.02], [4, -0.1125], [3, 0.01]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "setup": "r, l, d = market(); r['ZZZ'] = 0.01; r['YYY'] = 0.04; l = l + [('ZZZ', '2022-03', '2022-11'), ('YYY', '2023-08', None)]; d['ZZZ'] = -0.5",
+            "call": "rows(survivor_free_returns(r, l, d))",
+            "expect": "[[4, 0.0], [4, -0.0225], [4, -0.0225], [5, -0.022], [5, -0.106], [4, -0.02], [4, -0.0625], [4, 0.0175]]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 2e-06
+            }
+          },
+          {
+            "call": "grown(survivor_free_returns(*exchange(2)))",
+            "expect": "[1414, 69.1808]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "call": "grown(survivor_free_returns(*exchange(5)))",
+            "expect": "[1393, 128.0685]",
+            "compare": "isclose",
+            "tol": {
+              "abs": 0.0002
+            }
+          },
+          {
+            "call": "[int(n) for n in survivor_free_returns(*exchange(7))['held']][::6]",
+            "expect": "[20, 21, 20, 20, 20, 24, 25, 25, 25, 23]",
+            "compare": "equal"
+          }
+        ],
+        "how": "Check runs 8 hidden tests on `market()`, changed copies of it and seeded exchanges. Counts are compared exactly, monthly returns within 0.000002 and £100 grown within 0.0002. The first run loads pandas, which takes 10 to 20 seconds; later runs are quick."
+      },
+      "feedback": {
+        "correct": "Each month holds what was listed then, and the dead leave with their losses.",
+        "generic": "Some tests failed. Read the first failing test against the rules above.",
+        "byKey": {
+          "test-1": "Test 1 reads January and February. Four firms were listed then: AAA, BBB, CCC and EEE. Take each month's firms from the listing records, not from today's list or from which firms have returns.",
+          "test-2": "Test 2 counts the firms held each month. DDD lists in April, BBB dies in May and EEE in July. A dead firm is held in its last month.",
+          "test-3": "Test 3 reads each month's return. In May BBB earns $(1 - 0.20)(1 - 0.40) - 1 = -0.52$. In July EEE has no regular return, so it earns its delisting return, $-0.30$.",
+          "test-5": "Test 5 adds a firm that died before the file starts and one that lists in August. The vendor's returns for them outside their listings could never have been earned."
+        }
+      },
+      "explain": {
+        "text": "A backtest can hold only what was listed then, so each month's firms come from the listing records. A dead firm stays in through its last month, and its delisting return is the loss its holders took. Leaving out either keeps the failures out and lifts the return."
+      }
     }
   ]
 }

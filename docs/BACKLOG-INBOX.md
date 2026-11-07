@@ -1679,3 +1679,6 @@ Raised later (stat-learning level 2 perf):
 
 Raised later (garch level 2 perf):
 - [Could] `playthrough.mjs --set` reads `content/manifest.json`, so run after the brief's `git checkout app/content/manifest.json` it shows a new performance task as "Performance task, practice only" (no `gates` row yet), and the shots look wrong. garch `h-garch-nll` was shot that way first. Wanted: the brief says to restore the manifest only after the playthrough, or the playthrough warns when a set holds a `performance` item with no manifest `perf` row.
+
+Raised later (validation level 2 perf):
+- [Could] `code` widget, `isclose`: a test still cannot expect NaN (seen before in opt-dash level 3). `h-label-purge` loads a hidden `grid` helper that writes NaN as None so a label frame can be compared; wanted: NaN equal to NaN under `isclose` when `expect` holds `nan`.
