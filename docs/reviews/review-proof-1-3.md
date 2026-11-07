@@ -100,3 +100,33 @@ Every in-course citation was checked against its target. Correct: l2 "Level 2 pr
 - Homework page: on homework-3 `items[8]` after Mark my answer (`proof_homework-3-item-08-marked-440.png`), the first-visit coach tip "Write your working first. Then mark it against the model answer." still sits over the item header and progress dots at 440 px. The tip should close once the item is marked.
 
 Playthroughs: `node tools/playthrough.mjs --lesson proof/<id>` for l1 to l15 and `--set proof/review-<n>`, `--set proof/homework-<n>` for n = 1 to 3, each desktop and `--mobile`, all with `--local-cdn` and `--shots`: 42 of 42 "All passed". Screenshots seen at 440 px: l2 `screens[6]`, l3 `screens[5]` (five-column truth table fits), l4 `screens[9]`, l5 `screens[7]`, l7 `screens[10]` (three-set venn with both empty regions labelled), l8 `screens[5]`, review-2 `items[4]` (the `lanes` graph the author worried about reads cleanly), homework-3 `items[8]` marked (model fits; coach tip above). No layout fault beyond findings 14 and the coach tip.
+
+## Fix pass
+
+Status per finding (16 fixed, 0 disputed, 0 deferred; the four Engine bullets and the coach tip are deferred, already engine work). Graded answers changed: 0 (review-1 `items[6]` has new option wording, but the ids and the correct id `or` are unchanged). Every conceptual fix has a basis below; every new text was checked step by step (quantifier order, direction of implication, the induction hypothesis used only for the arbitrary $k$).
+
+1. fixed: l1 `screens[2].prose`. Basis: Hardy and Wright §1.2 and Rosen §4.3 require $p > 1$; 91 is above 1 and $91 = 7 \times 13$, so the row is unaffected.
+2. fixed: l12 `screens[10]` lines 0, 1, 2, 4 as given. Basis, derivation: let $a < b$ be arbitrary prices of two bonds paying £100 in a year. Buying the cheaper and selling the dearer gives $b - a > 0$ now and $100 - 100 = 0$ in a year, which is an arbitrage, contradicting the supposition. Prices are letters and the supposition is in the conclusion, so the claim is "no arbitrage implies equal prices" for all pairs (the case $b < a$ swaps the roles). Brute-forced over $1 \le a < b \le 100$ in `proof-L3-numbers.py`.
+3. fixed: all 12 lines (l13 prose, `screens[2]`, `screens[9]`, quiz[3] option why; homework-3 `items[0]`, `items[3]`, `items[8]` model, `items[9]` model; l9 `screens[4]`; homework-2 `items[7]`, `items[8]`). Basis: Rosen §5.1 states the step as "$P(k) \to P(k+1)$ is true for all positive integers $k$"; Velleman §6.1 likewise says "let $k$ be arbitrary" for the step. The hypothesis is used only for that arbitrary $k$. The $\exists k$ in the definitions of even, odd and divides is a true existence and stays. The perf task rubric (homework-3 `items[8].rubric[1]`) now reads "the step from an arbitrary $k$ to $k + 1$"; the task and its model answer are otherwise unchanged (re-run `proof-3-perf-numbers.py`: exit 0).
+4. fixed: l15 `screens[1].prose` and `hints[0].text`. Basis: the canvas rows of write-up A hold four lines, none stating the claim or method (read from the JSON).
+5. fixed: l12 `screens[6].widget.lines[3].text`. Basis, derivation: let $d$ be the smallest divisor of $N$ above 1. A divisor $e$ of $d$ with $1 < e < d$ would divide $N$ and be smaller, so $d$ is prime. Checked for 2 to 1999 in `proof-L3-numbers.py`.
+6. fixed: l9 `screens[7].explain.text`. Check: $f(x) = 3x + 2$, $f(1) = 5$ so $f^{-1}(5) = 1$; $f^{-1}(11) = 3$ and $f(3) = 11$.
+7. fixed: l3 `screens[9].widget.options[3].why`. Basis: negating an implication is taught in the Saying the opposite lesson, which is in this level (Rosen §1.3).
+8. fixed: l5 `quiz[0].widget.options[2].why`. Basis: negation of "every stock, on every day, rose" is "some stock, on some day, did not rise"; the option keeps "every day" and writes "fell" for "did not rise" (Rosen §1.4, Table 2).
+9. fixed: review-1 `items[6]` prose, four options (ids unchanged), explain. Basis: De Morgan, Rosen §1.3 Table 6; $\lnot(P \land Q)$ is $\lnot P \lor \lnot Q$, and "matching the benchmark" does not beat it, so "lagged" is not "did not beat".
+10. fixed: l9 `screens[3].hints[1].text`; l7 `screens[9].explain.text` last sentence.
+11. fixed: homework-2 `items[6].explain.text`. Check: onto functions from 4 to 3 number 36 of 81, brute-forced in `proof-L2-numbers.py`.
+12. fixed: review-3 `items[5].feedback.byKey.exp`. Check: $3^k \cdot 3^k = 3^{2k}$ adds the exponents; $3^k + 2 \cdot 3^k = 3^{k+1}$ for $k = 1$ to 59.
+13. fixed: all five lines (l1 `screens[4]` and `quiz[0]`, review-1 `items[0]`, homework-1 `items[3]`, l14 `quiz[2]`). The l14 claims were rechecked: 9 refutes "every odd number above 1 is prime" and "every perfect square is even", and agrees with the other two.
+14. fixed: l4 `screens[3].hints[1]` highlight removed; l7 `screens[8].hints[1].highlight` is `["r1", "r4"]` (table rows are 0-indexed in the engine, `table.js` line 34, so lines 3 and 6 are `r1` and `r4`); l13 `screens[0].hints[1]` now lights the 16 cells of the 4 by 4 block; l14 `screens[0].hints[1]` lights `r1c4` (grid ids are 1-indexed, $n = 3$ is the fourth column); l14 `screens[7].explain.text` as given. Basis for the last: $P \Rightarrow Q$ fails only where $P$ holds and $Q$ fails, that is prime and not odd, and only 2 is.
+15. fixed: all ten lines (review-3 `items[1]`, l2 `quiz[0]`, l1 `quiz[3]` with backticks, l5 `screens[9]` option 1, homework-1 `items[5]` explanation and line 3, l7 `screens[11]`, review-2 `items[3]`). Basis for homework-1: the negation of $\forall \varepsilon\ \exists N\ \forall n > N\ |u_n - L| < \varepsilon$ is $\exists \varepsilon\ \forall N\ \exists n > N\ |u_n - L| \ge \varepsilon$, which the new sentence states in words (Rosen §1.4, Table 2).
+16. fixed: all five option texts and the homework-3 `items[5].explain.text`, which now carries the two expansions: $(3m + 1)^2 = 3(3m^2 + 2m) + 1$ and $(3m + 2)^2 = 3(3m^2 + 4m + 1) + 1$ for $m = 0$ to 499 in `proof-L3-numbers.py`.
+
+Engine bullets and the coach tip: deferred, engine-only, already in the inbox.
+
+Gates:
+- `proof-L1-numbers.py` 107 of 107, exit 0; `proof-L2-numbers.py` 137 of 137, exit 0; `proof-L3-numbers.py` 171 of 171, exit 0; `proof-3-perf-numbers.py` exit 0. Each script gained a `has(...)` check for every new wording and number, so a revert fails it.
+- Voice scan at 35 words: 0 sentences, 0 explanations over three sentences.
+- Validator: 0 errors, 4090 warnings (was 4102).
+- Code items: none touched.
+- Playthroughs (desktop and `--mobile`, `--local-cdn`): 34 of 34 "All passed" (lessons l1, l2, l3, l4, l5, l7, l9, l12, l13, l14, l15; sets review-1 to review-3 and homework-1 to homework-3; each desktop and mobile).

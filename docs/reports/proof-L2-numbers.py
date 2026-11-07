@@ -155,5 +155,25 @@ lv.claim(ex_b, 'g o f one-to-one with g not one-to-one occurs (model counterexam
 lv.claim(inj({1: 1}) and not inj({1: 1, 2: 1}), 'homework-2 model (b): g o f on {1} one-to-one, g(1) = g(2) = 1')
 
 
+
+# ---------- fix pass: the new wording must be present (a revert fails these) ----------
+def has(ref, path, phrase, present=True):
+    t = lv.text(ref, path)
+    lv.claim((phrase in t) == present, f'{ref} {path} {"has" if present else "lacks"} {phrase!r}')
+
+has('l9', 'screens[7].explain.text', r'Likewise $f^{-1}(5) = 1$, since $f(1) = 5$.')
+has('l9', 'screens[7].explain.text', '-4', present=False)
+lv.claim(finv(5) == 1 and f(1) == 5 and finv(11) == 3 and f(3) == 11, 'fix pass l9 explain: f^-1(5) = 1, f^-1(11) = 3')
+has('l9', 'screens[4].widget.lines[0].text', 'be arbitrary, and suppose $f(a) = f(b)$')
+has('l9', 'screens[3].hints[1].text', 'A proof of an implication starts by assuming its hypothesis.')
+has('l7', 'screens[9].explain.text', 'A two-set Venn diagram also checks every case')
+has('l7', 'screens[11].prose', '$M$')
+has('homework', 'items[6].explain.text', r'$6 \times 6 = 36$ of the $3^4 = 81$ functions')
+lv.claim(6 * 6 == 36 and 3 ** 4 == 81 and sum(1 for g in __import__('itertools').product(range(3), repeat=4) if len(set(g)) == 3) == 36, 'fix pass homework-2: 36 onto functions of the 81 from 4 to 3 (brute force)')
+has('homework', 'items[7].widget.lines[0].text', 'be arbitrary, and suppose $f(a) = f(b)$')
+has('homework', 'items[8].model', 'Let $a_1, a_2 \\in A$ be arbitrary, and suppose')
+has('review', 'items[3].prose', '(set $R$)')
+lv.claim(18 + 15 - 7 == 26 and 30 - 26 == 4, 'review-2 item 3: 18 + 15 - 7 = 26 trade, 4 do neither')
+
 lv.check_wrongs()
 lv.report()

@@ -176,5 +176,34 @@ lv.claim([f11(n) for n in range(11)] == [11, 11, 13, 17, 23, 31, 41, 53, 67, 83,
 # Induction steps assume P(k) "for some k" (review finding): pass once reworded to an arbitrary k.
 lv.stated('l13', 'screens[2].widget.lines[1].text', 'for some $k \\ge 1$', False)
 
+
+# ---------- fix pass: the new wording must be present (a revert fails these) ----------
+def has(ref, path, phrase, present=True):
+    t = lv.text(ref, path)
+    lv.claim((phrase in t) == present, f'{ref} {path} {"has" if present else "lacks"} {phrase!r}')
+
+has('l12', 'screens[10].widget.lines[0].text', 'trade at prices $a < b$')
+has('l12', 'screens[10].widget.lines[1].text', 'we receive $b - a > 0$ now')
+has('l12', 'screens[10].widget.lines[4].text', 'So with no arbitrage, two bonds with the same payments have the same price.')
+lv.claim(all(b - a > 0 and (100 - 100) == 0 for a in range(1, 100) for b in range(a + 1, 101)), 'fix pass l12: for every a < b the cash now is b - a > 0 and the cash in a year is 0')
+has('l12', 'screens[6].widget.lines[3].text', 'its smallest divisor above 1 is a prime factor, and by the line above it is not in the list')
+has('l13', 'screens[2].prose', 'for every $k \\ge 1$, if it holds for $k$ then it holds for $k + 1$')
+for ref, path in [('l13', 'screens[2].widget.lines[1].text'), ('l13', 'screens[9].widget.lines[1].text'), ('homework', 'items[0].widget.lines[1].text'), ('homework', 'items[3].widget.lines[1].text')]:
+    has(ref, path, 'be arbitrary, and assume')
+    has(ref, path, 'for some $k', present=False)
+has('l13', 'quiz[3].widget.options[3].why', 'one arbitrary $k$, not for every $n$ at once')
+has('homework', 'items[8].model', 'Step: let $k \\ge 1$ be an arbitrary whole number, and assume $k^3 - k = 3a$ for an integer $a$.')
+has('homework', 'items[8].model', 'for some whole number $k$', present=False)
+has('homework', 'items[8].rubric', 'the step from an arbitrary $k$ to $k + 1$')
+has('homework', 'items[9].model', 'Step: let $k \\ge 1$ be arbitrary, and assume $1 + 2 + \\dots + 2^{k-1} = 2^k - 1$.')
+has('homework', 'items[9].model', 'for some $k \\ge 1$', present=False)
+has('l14', 'quiz[2].explain.text', '“every odd number greater than 1 is prime”')
+has('l14', 'screens[7].explain.text', 'inside “P: prime” and outside “Q: odd”')
+has('review', 'items[1].explain.text', 'so it proves only that an odd number squared is odd')
+has('review', 'items[5].feedback.byKey.exp', 'You added the exponents, as if multiplying $3^k$ by $3^k$.')
+lv.claim(all(3 ** k + 2 * 3 ** k == 3 * 3 ** k == 3 ** (k + 1) and 3 ** k * 3 ** k == 3 ** (2 * k) for k in range(1, 60)), 'fix pass review-3: 3^k + 2 x 3^k = 3^(k+1); 3^k x 3^k = 3^(2k)')
+lv.claim(all((3 * m + 1) ** 2 == 3 * (3 * m * m + 2 * m) + 1 and (3 * m + 2) ** 2 == 3 * (3 * m * m + 4 * m + 1) + 1 for m in range(0, 500)), 'fix pass homework-3 item 5: remainder-1 squares')
+has('homework', 'items[5].widget.options[0].text', 'Contrapositive, by the remainders 1 and 2 on division by 3')
+
 lv.check_wrongs()
 lv.report()
