@@ -57,7 +57,7 @@
       "skills": [
         "pl-honest"
       ],
-      "prose": "Four versions of a bar chart of two closes, £98.00 and £96.04.",
+      "prose": "Four versions of a bar chart of two closes, £120.00 and £117.60.",
       "question": "Which one is honest and gives the exact values?",
       "widget": {
         "kind": "choice",
@@ -70,7 +70,7 @@
           },
           {
             "id": "trunc",
-            "text": "`ax.bar(days, closes)`, then `ax.set_ylim(95, 99)` and value labels",
+            "text": "`ax.bar(days, closes)`, then `ax.set_ylim(115, 121)` and value labels",
             "why": "Labels do not repair a truncated axis. The eye still reads the cut-off lengths."
           },
           {
@@ -90,7 +90,7 @@
         "generic": "Not quite right. Bars must start at zero on one axis."
       },
       "explain": {
-        "text": "matplotlib starts bars at zero by default, so plain `ax.bar` is honest. `bar_label` prints £98.00 and £96.04 on the bars, so the small move is still readable."
+        "text": "matplotlib starts bars at zero by default, so plain `ax.bar` is honest. `bar_label` prints £120.00 and £117.60 on the bars, so the small move is still readable."
       }
     },
     {
@@ -545,12 +545,12 @@
       ],
       "title": "Review a fund factsheet",
       "kind": "longform",
-      "prompt": "A fund's one-page factsheet has four charts.\n\n1. A bar chart of the unit price on 1 January (£98.00) and 31 December (£96.04). Its y axis runs from £95 to £99.\n2. A line chart titled “Performance since 23 March 2020”, the low of the pandemic sell-off.\n3. The fund and its benchmark on one chart with two y axes. The caption says the fund “overtook the benchmark in June”.\n4. The fund's drawdown, drawn with `ax.set_yscale(\"log\")` so that “small dips stay visible”.\n\nFor each chart, (a) say how it misleads, with a number where you can. Then (b) give the matplotlib change that fixes it. Then (c) say which one chart you would add to give an honest picture, and why.",
-      "model": "**Chart 1.** (a) Bars are read by length. From £95 the bars are 3.00 and 1.04 long, so the eye sees $1.04 / 3.00 - 1 = -65\\%$. The real change is $96.04 / 98.00 - 1 = -2\\%$, exaggerated about 33 times. (b) Start the axis at zero: delete `ax.set_ylim(95, 99)` or use `ax.set_ylim(0, max(closes) * 1.1)`. Print the values with `ax.bar_label(bars, fmt=\"£%.2f\")` so the 2% move stays readable.\n\n**Chart 2.** (a) The window starts at the market low, so the whole market rebound is shown as the fund's gain. It is a cherry-picked window: almost any fund looks good from that date. (b) Plot the full history, or a standard period such as five years, with `ax.plot(dates, nav)` over all dates; if a window is needed, shade it with `ax.axvspan` and say why it starts there.\n\n**Chart 3.** (a) With two y axes (`ax.twinx()`), where the lines cross depends on the two axis ranges the designer chose. Changing the right axis moves the crossing to any month, so “overtook in June” means nothing. (b) Rebase both series to 100 on one axis, `100 * p / p[0]`, plot them with `ax.plot`, and name each line at its end with `ax.text`. Then a crossing is a real change in relative growth.\n\n**Chart 4.** (a) A drawdown is 0 at every peak and negative below it. A log axis holds only positive numbers, so matplotlib drops every value silently: the chart shows nothing, or only noise from rounding, while looking fine. (b) Use an ordinary axis, `ax.set_yscale(\"linear\")`, and plot the drawdown as a filled area under zero with `ax.fill_between(dates, dd, 0)`. Annotate the worst point with its size and dates, for example `ax.annotate(\"Max drawdown −18.4%, Feb to Jun 2022\", xy=(t, mdd))`.\n\n**(c)** Add a four-panel results figure on the full history: equity on a log axis (so early and late percentage moves compare fairly), drawdown below it with `sharex=True`, a monthly returns heat map with a symmetric `RdBu` scale, and a rolling Sharpe ratio. It shows growth, the depth and length of losses, and how steady returns were, without any choice of window or axis doing the persuading.",
+      "prompt": "A fund's one-page factsheet has four charts.\n\n1. A bar chart of the unit price on 1 January (£120.00) and 31 December (£117.60). Its y axis runs from £115 to £121.\n2. A line chart titled “Performance since 23 March 2020”, the low of the pandemic sell-off.\n3. The fund and its benchmark on one chart with two y axes. The caption says the fund “overtook the benchmark in June”.\n4. The fund's drawdown, drawn with `ax.set_yscale(\"log\")` so that “small dips stay visible”.\n\nFor each chart, (a) say how it misleads, with a number where you can. Then (b) give the matplotlib change that fixes it. Then (c) say which one chart you would add to give an honest picture, and why.",
+      "model": "**Chart 1.** (a) Bars are read by length. From £115 the bars are 5.00 and 2.60 long, so the eye sees $2.60 / 5.00 - 1 = -48\\%$. The real change is $117.60 / 120.00 - 1 = -2\\%$, exaggerated about 24 times. (b) Start the axis at zero: delete `ax.set_ylim(115, 121)` or use `ax.set_ylim(0, max(closes) * 1.1)`. Print the values with `ax.bar_label(bars, fmt=\"£%.2f\")` so the 2% move stays readable.\n\n**Chart 2.** (a) The window starts at the market low, so the whole market rebound is shown as the fund's gain. It is a cherry-picked window: almost any fund looks good from that date. (b) Plot the full history, or a standard period such as five years, with `ax.plot(dates, nav)` over all dates; if a window is needed, shade it with `ax.axvspan` and say why it starts there.\n\n**Chart 3.** (a) With two y axes (`ax.twinx()`), where the lines cross depends on the two axis ranges the designer chose. Changing the right axis moves the crossing to any month, so “overtook in June” means nothing. (b) Rebase both series to 100 on one axis, `100 * p / p[0]`, plot them with `ax.plot`, and name each line at its end with `ax.text`. Then a crossing is a real change in relative growth.\n\n**Chart 4.** (a) A drawdown is 0 at every peak and negative below it. A log axis holds only positive numbers, so none of it can be drawn: the panel comes out empty, with only a `UserWarning` that is easy to miss. (b) Use an ordinary axis, `ax.set_yscale(\"linear\")`, and plot the drawdown as a filled area under zero with `ax.fill_between(dates, dd, 0)`. Annotate the worst point with its size and dates, for example `ax.annotate(\"Max drawdown −18.4%, Feb to Jun 2022\", xy=(t, mdd))`.\n\n**(c)** Add a four-panel results figure on the full history. Put equity on a log axis, so early and late percentage moves compare fairly, with the drawdown below it on `sharex=True`. Add a monthly returns heat map with a symmetric `RdBu` scale, and a rolling Sharpe ratio. It shows growth, the depth and length of losses, and how steady returns were, without any choice of window or axis doing the persuading.",
       "rubric": [
         {
           "points": 2,
-          "text": "Chart 1: says bars are read by length; gives the apparent −65% against the real −2% (or the drawn lengths 3.00 and 1.04); fixes with a zero baseline."
+          "text": "Chart 1: says bars are read by length; gives the apparent −48% against the real −2% (or the drawn lengths 5.00 and 2.60); fixes with a zero baseline."
         },
         {
           "points": 2,
@@ -562,7 +562,7 @@
         },
         {
           "points": 2,
-          "text": "Chart 4: says a log axis cannot show zero or negative drawdowns and drops them silently; fixes with an ordinary axis."
+          "text": "Chart 4: says a log axis cannot show zero or negative drawdowns, so the panel is empty; fixes with an ordinary axis."
         },
         {
           "points": 2,
@@ -585,7 +585,7 @@
         "options": [
           {
             "id": "right",
-            "text": "Use the same `figsize`, so a given move has the same slope in both",
+            "text": "Use the same `figsize` for both",
             "correct": true
           },
           {

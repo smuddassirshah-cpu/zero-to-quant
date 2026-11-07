@@ -12,39 +12,39 @@
         "pl-honest"
       ],
       "prose": "Write the standard closes chart for a share. Title it with the share's name followed by ` closes`, label the axes `Day` and `Close (£)`, and format the ticks as pounds and pence, like £1,250.00.",
-      "question": "Complete `closes_chart`.",
+      "question": "Complete `share_chart`.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nfrom matplotlib.ticker import StrMethodFormatter\n\ndef closes_chart(days, closes, name):\n    fig, ax = plt.subplots()\n    ax.plot(days, closes)\n    ...\n    return ax\n",
-        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nfrom matplotlib.ticker import StrMethodFormatter\n\ndef closes_chart(days, closes, name):\n    fig, ax = plt.subplots()\n    ax.plot(days, closes)\n    ax.set_title(name + \" closes\")\n    ax.set_xlabel(\"Day\")\n    ax.set_ylabel(\"Close (£)\")\n    ax.yaxis.set_major_formatter(StrMethodFormatter(\"£{x:,.2f}\"))\n    return ax\n",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nfrom matplotlib.ticker import StrMethodFormatter\n\ndef share_chart(days, closes, name):\n    fig, ax = plt.subplots()\n    ax.plot(days, closes)\n    ...\n    return ax\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nfrom matplotlib.ticker import StrMethodFormatter\n\ndef share_chart(days, closes, name):\n    fig, ax = plt.subplots()\n    ax.plot(days, closes)\n    ax.set_title(name + \" closes\")\n    ax.set_xlabel(\"Day\")\n    ax.set_ylabel(\"Close (£)\")\n    ax.yaxis.set_major_formatter(StrMethodFormatter(\"£{x:,.2f}\"))\n    return ax\n",
         "tests": [
           {
             "setup": "plt.close('all')",
-            "call": "closes_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').get_title()",
+            "call": "share_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').get_title()",
             "expect": "'Harbour closes'"
           },
           {
-            "call": "closes_chart([1, 2], [18.50, 18.72], 'Kestrel').get_title()",
+            "call": "share_chart([1, 2], [18.50, 18.72], 'Kestrel').get_title()",
             "expect": "'Kestrel closes'"
           },
           {
-            "call": "closes_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').get_ylabel()",
+            "call": "share_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').get_ylabel()",
             "expect": "'Close (£)'"
           },
           {
-            "call": "closes_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').yaxis.get_major_formatter()(412.3, 0)",
+            "call": "share_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').yaxis.get_major_formatter()(412.3, 0)",
             "expect": "'£412.30'"
           },
           {
-            "call": "closes_chart([1, 2], [1238.40, 1261.80], 'Fenwick').yaxis.get_major_formatter()(1250, 0)",
+            "call": "share_chart([1, 2], [1238.40, 1261.80], 'Fenwick').yaxis.get_major_formatter()(1250, 0)",
             "expect": "'£1,250.00'"
           }
         ],
         "examples": [
           {
             "setup": "plt.close('all')",
-            "call": "closes_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').get_title()",
+            "call": "share_chart([1, 2, 3], [412.30, 415.10, 409.80], 'Harbour').get_title()",
             "expect": "'Harbour closes'"
           }
         ],
@@ -396,11 +396,10 @@
         "pl-figures",
         "pl-market"
       ],
-      "prose": "A colleague's script for the risk meeting:\n\n```python\nplt.savefig(\"pair.png\")\nax.plot(days, harbour, label=\"Harbour\")\nax.plot(days, kestrel)\nax.legend()\n```\n\n`days` holds 250 strings such as `\"2024-01-02\"`. Harbour trades near £420 and Kestrel near £19. The chart has no y label.",
-      "question": "List what is wrong and why, then write corrected code that lets the meeting compare the two shares.",
+      "question": "Name each fault and its effect on the reader. Then write corrected code, using `fig` and `ax`, that lets the meeting compare the two shares.",
       "widget": {
         "kind": "longform",
-        "prompt": "Name each problem and its effect on the reader, then give corrected matplotlib code using `fig` and `ax`.",
+        "prompt": "A colleague's script for the risk meeting:\n\n```python\nplt.savefig(\"pair.png\")\nax.plot(days, harbour, label=\"Harbour\")\nax.plot(days, kestrel)\nax.legend()\n```\n\n`days` holds 250 strings such as `\"2024-01-02\"`. Harbour trades near £420 and Kestrel near £19. The chart has no y label.",
         "model": "**What is wrong**\n\n1. **Two prices on one pound axis.** Harbour (about £420) flattens Kestrel (about £19), so the meeting cannot compare their moves. Rebase each to 100 on the same start day.\n2. **Dates as strings.** All 250 dates become categories, so 250 labels pile up and the weekend gaps vanish. Convert with `date.fromisoformat`.\n3. **No y label.** The reader cannot tell pounds from pence. After rebasing, the label is `Rebased (2 Jan = 100)`, which also names the start day.\n4. **A line missing from the legend.** Kestrel has no `label=`, so `ax.legend()` lists Harbour alone.\n5. **Saved too early.** `plt.savefig` runs before plotting, so the file holds an empty chart. Save from `fig`, last.\n\n**Corrected code**\n\n```python\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nfrom datetime import date\n\ndates = [date.fromisoformat(d) for d in days]\nfig, ax = plt.subplots()\nfor prices, name in [(harbour, \"Harbour\"), (kestrel, \"Kestrel\")]:\n    ax.plot(dates, [p / prices[0] * 100 for p in prices], label=name)\nax.set_title(\"Harbour and Kestrel, rebased\")\nax.set_xlabel(\"Date\")\nax.set_ylabel(\"Rebased (2 Jan = 100)\")\nax.legend()\nfig.autofmt_xdate()\nfig.savefig(\"pair.png\")\n```\n\n**Why rebasing, not a second y axis.** Two y axes let the author slide either scale, so any pair of lines can be made to cross. Rebasing puts both on one honest scale: growth since the same day.",
         "rubric": [
           {
@@ -480,7 +479,7 @@
         "generic": "Not quite right. How many returns can 60 bins share between them?"
       },
       "explain": {
-        "text": "Sixty bins for 30 returns leaves at most one day per bar, so no shape can appear. Six to ten bins give each several days and show the hump."
+        "text": "Sixty bins for 30 returns leave each filled bar with one day here, so no shape can appear. Six to ten bins give each several days and show the hump."
       }
     }
   ]

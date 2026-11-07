@@ -12,40 +12,40 @@
         "pl-market",
         "pl-risk"
       ],
-      "prose": "This is the figure the 1.1 exit project asks for: from daily prices, the price, the returns and the drawdown, stacked on one shared day axis.",
-      "question": "Complete `exit_figure(prices)`.",
+      "prose": "This figure is a first draft of the 1.1 exit project: from daily prices, the price, the returns and the drawdown, stacked on one shared day axis.",
+      "question": "Complete `three_panel_figure(prices)`.",
       "widget": {
         "kind": "code",
         "language": "python",
-        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef exit_figure(prices):\n    prices = np.array(prices, dtype=float)\n    days = np.arange(1, len(prices) + 1)\n    fig, axes = plt.subplots(3, 1, sharex=True)\n    # axes[0]: prices\n    # axes[1]: daily returns, each under the day it ends, with a zero line\n    # axes[2]: drawdown filled below zero, trough annotated as f\"{dd[i]:.1%}\"\n    return fig, axes\n",
-        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef exit_figure(prices):\n    prices = np.array(prices, dtype=float)\n    days = np.arange(1, len(prices) + 1)\n    fig, axes = plt.subplots(3, 1, sharex=True)\n    rets = prices[1:] / prices[:-1] - 1\n    peak = np.maximum.accumulate(prices)\n    dd = prices / peak - 1\n    axes[0].plot(days, prices)\n    axes[1].plot(days[1:], rets)\n    axes[1].axhline(0, color=\"grey\", linewidth=0.8)\n    axes[2].fill_between(days, dd, 0, alpha=0.4)\n    i = np.argmin(dd)\n    axes[2].annotate(f\"{dd[i]:.1%}\", xy=(days[i], dd[i]), xytext=(days[i] + 1, dd[i] - 0.02),\n                     arrowprops=dict(arrowstyle=\"->\"))\n    return fig, axes\n",
+        "starter": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef three_panel_figure(prices):\n    prices = np.array(prices, dtype=float)\n    days = np.arange(1, len(prices) + 1)\n    fig, axes = plt.subplots(3, 1, sharex=True)\n    # axes[0]: prices\n    # axes[1]: daily returns, each under the day it ends, with a zero line\n    # axes[2]: drawdown filled below zero, trough annotated as f\"{dd[i]:.1%}\"\n    return fig, axes\n",
+        "solution": "import matplotlib\nmatplotlib.use(\"Agg\")  # draw off-screen: the tests read the Axes\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ndef three_panel_figure(prices):\n    prices = np.array(prices, dtype=float)\n    days = np.arange(1, len(prices) + 1)\n    fig, axes = plt.subplots(3, 1, sharex=True)\n    rets = prices[1:] / prices[:-1] - 1\n    peak = np.maximum.accumulate(prices)\n    dd = prices / peak - 1\n    axes[0].plot(days, prices)\n    axes[1].plot(days[1:], rets)\n    axes[1].axhline(0, color=\"grey\", linewidth=0.8)\n    axes[2].fill_between(days, dd, 0, alpha=0.4)\n    i = np.argmin(dd)\n    axes[2].annotate(f\"{dd[i]:.1%}\", xy=(days[i], dd[i]), xytext=(days[i] + 1, dd[i] - 0.02),\n                     arrowprops=dict(arrowstyle=\"->\"))\n    return fig, axes\n",
         "tests": [
           {
-            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "setup": "plt.close('all'); fig, axes = three_panel_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
             "call": "[len(axes), axes[0].get_shared_x_axes().joined(axes[0], axes[2])]",
             "expect": "[3, True]",
             "compare": "equal"
           },
           {
-            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "setup": "plt.close('all'); fig, axes = three_panel_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
             "call": "[round(float(y), 4) for y in axes[1].lines[0].get_ydata()]",
             "expect": "[-0.048, 0.0393, 0.02, 0.0309, -0.04, -0.025, 0.031, 0.0311, 0.0294]",
             "compare": "equal"
           },
           {
-            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "setup": "plt.close('all'); fig, axes = three_panel_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
             "call": "[float(x) for x in axes[1].lines[0].get_xdata()][:2]",
             "expect": "[2.0, 3.0]",
             "compare": "equal"
           },
           {
-            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "setup": "plt.close('all'); fig, axes = three_panel_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
             "call": "[len(axes[2].collections), round(float(axes[2].collections[0].get_paths()[0].vertices[:, 1].min()), 4)]",
             "expect": "[1, -0.064]",
             "compare": "equal"
           },
           {
-            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "setup": "plt.close('all'); fig, axes = three_panel_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
             "call": "axes[2].texts[0].get_text()",
             "expect": "'-6.4%'",
             "compare": "equal"
@@ -53,7 +53,7 @@
         ],
         "examples": [
           {
-            "setup": "plt.close('all'); fig, axes = exit_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
+            "setup": "plt.close('all'); fig, axes = three_panel_figure([250.0, 238.0, 247.35, 252.3, 260.1, 249.7, 243.45, 251.0, 258.8, 266.4])",
             "call": "[len(axes), axes[0].get_shared_x_axes().joined(axes[0], axes[2])]",
             "expect": "[3, True]",
             "compare": "equal"
@@ -73,7 +73,7 @@
         }
       },
       "explain": {
-        "text": "The running peak is £260.10 on day 5, and day 7's £243.45 is 6.4% below it. The lowest close, £238.00 on day 2, is only 4.8% below its peak. `np.argmin(prices)` would point at the wrong day. Sharing x keeps each return and each drawdown under its price."
+        "text": "The running peak is £260.10 on day 5, and day 7's £243.45 is 6.4% below it. The lowest close, £238.00 on day 2, is only 4.8% below its peak, so `np.argmin(prices)` would point at the wrong day. Sharing x keeps each return and each drawdown under its price."
       }
     },
     {
@@ -82,7 +82,7 @@
       "skills": [
         "pl-honest"
       ],
-      "prose": "An index's yearly closes from 1986 to 2025 rose from £100 to over £2,800, with a 38% crash in 2008.",
+      "prose": "An index's yearly closes from 1986 to 2025 rose from £100 to over £2,800, with a 32% crash in 2008.",
       "question": "Complete `long_history(years, prices)` so equal % moves look equal, and label the axis to say so.",
       "widget": {
         "kind": "code",
@@ -346,11 +346,10 @@
         "pl-honest",
         "pl-risk"
       ],
-      "prose": "A junior analyst sends a one-page risk pack for a fund over 15 years. Panel (a) is a linear price chart. Panel (b) charts daily £ changes. Panel (c) is a count histogram of returns, with a normal pdf lying flat along the bottom. Panel (d) is a 20-day rolling volatility line with no reference and an unlabelled y axis.",
       "question": "Write a review: for each panel, what misleads and the matplotlib fix. Then say what single figure you would send instead.",
       "widget": {
         "kind": "longform",
-        "prompt": "For each of panels (a) to (d), say what misleads a reader and how to fix it in matplotlib. Then describe the one figure you would send instead.",
+        "prompt": "A junior analyst sends a one-page risk pack for a fund over 15 years. Panel (a) is a linear price chart. Panel (b) charts daily £ changes. Panel (c) is a count histogram of returns, with a normal pdf lying flat along the bottom. Panel (d) is a 20-day rolling volatility line with no reference and an unlabelled y axis.",
         "model": "**Panel (a), linear price chart.** Over 15 years the price rose several times over, so a linear axis makes late moves look large and early crashes look small. Fix: `ax.set_yscale(\"log\")` and say so in the y label, so equal % moves have equal heights. (Or keep it linear and add the drawdown panel below.)\n\n**Panel (b), daily £ changes.** A £ change grows with the price, so the chart shows rising \"risk\" that is only a rising price. Fix: plot returns, `prices[1:] / prices[:-1] - 1` against `days[1:]`, with `ax.axhline(0)` and `PercentFormatter(1.0)`.\n\n**Panel (c), the flat normal curve.** The bars are counts and the curve is a density, so the curve sits about $N \\times \\text{width}$ times too low. Fix: `ax.hist(rets, bins=50, density=True)`, then the pdf with the returns' own $\\mu$ and $\\sigma$. Check the bin edges cover `rets.min()` to `rets.max()`, or the worst days vanish.\n\n**Panel (d), rolling vol with no reference.** Without a long-run line the reader cannot tell a high regime from a normal one, and the axis is unlabelled. Fix: annualise with $\\sqrt{252}$, add `ax.axhline(rets.std() * np.sqrt(252), linestyle=\"--\")`, label the window (\"20-day\") and use % ticks. Warn that drops exactly 20 days after a shock are echoes.\n\n**What I would send.** One figure from `plt.subplots(3, 1, sharex=True)`: prices on a log axis, daily returns with a zero line, and the drawdown filled below zero with `fill_between`, its trough annotated with `ax.annotate` at `np.argmin(dd)`. The histogram and the rolling vol chart go on a second page, each fixed as above.",
         "rubric": [
           {
