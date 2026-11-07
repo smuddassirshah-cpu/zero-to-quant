@@ -1660,3 +1660,8 @@ Raised later (ito level 4 perf):
 
 Raised later (opt-dash level 3 perf):
 - [Could] `code` widget, `isclose` and `equal`: a test still cannot expect NaN (raised before for `exercise_boundary`, `formation_returns` and DataFrames). opt-dash `h-parity-fit` and `h-black-iv` both return NaN by contract and work around it with `[v != v for v in ...]`, `str(v) == 'nan'` or a `-1.0` stand-in. Wanted: NaN equals NaN under `isclose` (as `math.isclose` cannot, `numpy.isclose(..., equal_nan=True)` can), with a note in AUTHORING section 3.
+Raised later (arma level 1 perf):
+- [Should] Homework page: on an `aloud` item the yellow banner still reads "Write your working first. Then mark it against the model answer.", while the box below is labelled "Your notes (optional)" and Mark my answer accepts it empty (arma `h-aloud-two-notes`, desktop shot item 08). Wanted: the aloud wording ("Answer aloud, then mark it against the model answer.") when the item has `seconds`.
+
+Raised later (arma level 3 perf):
+- [Should] Longform rubric rows render inline maths that cannot wrap, so a formula of about 40 characters in a row runs past the card at 440 px (arma `h-derive-arma-fan` row 3 before it was split; found only by a scratch full-height render). Neither the validator nor the playthrough reports it. Wanted: a warning for a rubric `$...$` span over a set rendered width, or a measured check after Mark my answer.

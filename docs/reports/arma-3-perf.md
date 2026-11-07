@@ -1,0 +1,10 @@
+# arma level 3: performance task (perf retrofit)
+
+- File `app/content/courses/arma/homework-3.json`, item `h-derive-arma-fan`, index 8 (9 of 9), appended; nothing converted (8 items, cap 12).
+- Kind `derivation` (longform, empty box, no steps or hints), difficulty 5, skills `ts-forecast`, `ts-models`, pace 900, no tags.
+- Objective: l11 "Derive the AR(1) forecast error variance and its limit", set in an ARMA(1, 1) ($\phi = 0.8$, $\theta = -0.4$, $\sigma = 2$ bp), which no lesson derives and which holds the AR(1) as $\theta = 0$. Chosen over l9 (MA(1) autocorrelation): an MA(2) ACF is narrower, and `h-overlap5` already asks an MA(q) ACF. The lessons teach every tool: substitution (l11 screen 10), known $\varepsilon_n$ (l11 screen 8), ARMA(1, 1) (l10).
+- Model: assumptions (white noise, $|\phi| < 1$, invertibility only to recover $\varepsilon_n$), split of $y_{n+h}$ proved by induction, error, variance, limit, the series' variance derived separately, $\theta = 0$ check, numbers 3.92, 4.59, 4.71 bp (AR(1) 6.53).
+- Rubric 1 (assumptions), 3 (weights justified, `required`), 4 (variance and limit), 2 (series check and numbers). Without the variance row the most is 6.
+- Gates: (1) `cd app && node tools/validate.mjs`: 0 errors (expected "arma/L3: ... remove from perf-pending"). (2) `VOICE_BASE=app/content/courses/arma python3 docs/reviews/voice-scan.py 35`: 0 and 0. (3) `venv/bin/python docs/reports/arma-3-perf-numbers.py`: exit 0, 74 checks (sympy induction, closed form, limit, series variance; statsmodels `arma2ma`, `acovf`, fixed-parameter ARIMA forecast variances; seeded 400,000-path simulation). It caught one slip, 2.3118 for 2.3117, fixed. (4) `node tools/playthrough.mjs --set arma/homework-3 --local-cdn <pkgs>`, with and without `--mobile`: All passed. Scratch full-height render at 440 px: one rubric formula overflowed and was split; now none.
+- Freshness: grep for ARMA forecast variance, psi, basis, futures, $\theta = -0.4$; `fresh-check --file`: one pre-existing hit (item 4, `coverage`); loose mode adds a stock 8-word phrase shared with l11 screen 10 (share 0.08).
+- Backlog: 1 bullet.

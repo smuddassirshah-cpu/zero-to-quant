@@ -1,0 +1,10 @@
+# arma level 1: performance task (perf retrofit)
+
+- File `app/content/courses/arma/homework-1.json`, item `h-aloud-two-notes`, index 8 (9 of 9), appended; nothing converted (8 items, cap 12).
+- Kind `aloud`: `seconds` 180, `think` 30, `lockAtZero`, three `followUps`, pace 480. Difficulty 5, skill `ts-stationary`, no tags.
+- Objective: l3 "Explain why the test uses its own critical values and why a non-rejection is weak evidence." Chosen over l1 (returns, not prices) because its answer is the one most often wrong in interviews: candidates compare with −1.645 and read p = 0.35 as "unit root confirmed". The l1 answer ("returns are stationary") is usually right if thin.
+- Fresh setting: two notes on 120-day spreads with a ten-day half-life; new numbers (−2.89, 46%, p 0.24, power 23%, hourly 24%, 270 days). Follow-ups: why not t, hourly sampling (span, not count), history for 80% power.
+- Rubric 4 (note A, `required`), 4 (note B), 1 (assumptions), 1 (action, time). Without the note B row the most is 6, so a pass needs both halves of the objective. A first draft said "skewed left"; the script showed the statistic is shifted, not skewed, and the text now says so.
+- Gates: (1) `cd app && node tools/validate.mjs`: 0 errors (expected "arma/L1: has a performance task, remove from perf-pending"). (2) `VOICE_BASE=app/content/courses/arma python3 docs/reviews/voice-scan.py 35`: 0 and 0 (pre-existing count 0 and 0). (3) `venv/bin/python docs/reports/arma-1-perf-numbers.py`: exit 0, 50 checks (MacKinnon surfaces and `adfuller` against seeded NumPy simulation; local-to-unity route for 270 days). (4) `node tools/playthrough.mjs --set arma/homework-1 --local-cdn <pkgs>`, with and without `--mobile`: All passed. Scratch full-height render at 440 px: no maths overflow.
+- Freshness: grep of the arma folder for hourly, intraday, 120, −2.10, 0.35, ten-day, junior, skewed, half-life of about; `fresh-check.mjs --file`: 0 hits.
+- Backlog: 1 bullet.

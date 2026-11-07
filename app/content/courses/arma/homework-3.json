@@ -459,6 +459,39 @@
      "text": "Concludes the trade does not suit a 10-day hold, with a concrete next step"
     }
    ]
+  },
+  {
+   "id": "h-derive-arma-fan",
+   "performance": "derivation",
+   "difficulty": 5,
+   "skills": [
+    "ts-forecast",
+    "ts-models"
+   ],
+   "kind": "longform",
+   "title": "The forecast fan of an ARMA(1, 1)",
+   "pace": 900,
+   "prompt": "The daily basis of a futures contract over its index, in basis points, follows an ARMA(1, 1):\n$$x_t - \\mu = \\phi(x_{t-1} - \\mu) + \\varepsilon_t + \\theta\\varepsilon_{t-1},$$\nwith $\\phi = 0.8$, $\\theta = -0.4$ and shocks of sd $\\sigma = 2$ bp. Treat the parameters as known. Today is day $n$: you know $x_n$, and today's shock $\\varepsilon_n$ has been recovered from the data.\n\nStarting from a blank page, derive the variance of the $h$-step forecast error for every $h \\ge 1$, in closed form, and its limit as $h \\to \\infty$. Justify each line, and state what you assume about $\\phi$, $\\theta$ and the shocks. Then check the limit against the variance of the series itself. Give the 95% half-widths at $h = 1$, at $h = 5$ and in the limit.",
+   "model": "**Assumptions.** The shocks are white noise: independent, mean 0, with the same variance $\\sigma^2$ every day. $|\\phi| < 1$, so the series is stationary and each shock's effect dies away. $|\\theta| < 1$ makes the model invertible, which is what lets us recover $\\varepsilon_n$ from past values; the variance itself does not use it. Write $y_t = x_t - \\mu$ for the gap from the mean.\n\n**1. One step.** At $t = n + 1$ the model reads $y_{n+1} = \\phi y_n + \\theta\\varepsilon_n + \\varepsilon_{n+1}$. We know $y_n$ and $\\varepsilon_n$ today, so the only unknown is $\\varepsilon_{n+1}$.\n\n**2. Any step.** Claim: for every $h \\ge 1$,\n$$\\begin{aligned} y_{n+h} &= \\phi^{h-1}(\\phi y_n + \\theta\\varepsilon_n) \\\\ &\\quad + \\sum_{j=0}^{h-1}\\psi_j\\,\\varepsilon_{n+h-j}, \\end{aligned}$$\nwith $\\psi_0 = 1$ and $\\psi_j = (\\phi + \\theta)\\phi^{j-1}$ for $j \\ge 1$. Step 1 is the case $h = 1$. Suppose the claim holds at $h$, and substitute it into $y_{n+h+1} = \\phi y_{n+h} + \\varepsilon_{n+h+1} + \\theta\\varepsilon_{n+h}$. The known part gains one factor of $\\phi$. The new shock $\\varepsilon_{n+h+1}$ has weight $1 = \\psi_0$. The shock $\\varepsilon_{n+h}$ collects $\\phi\\psi_0 + \\theta = \\psi_1$. Every older shock's weight is multiplied by $\\phi$, and $\\phi\\psi_j = \\psi_{j+1}$. So the claim holds at $h + 1$, and by induction at every $h$.\n\n**3. Forecast and error.** The future shocks have mean 0 and are independent of everything known today. So the forecast with the smallest mean squared error keeps only the known part, $\\hat x_{n+h} = \\mu + \\phi^{h-1}(\\phi y_n + \\theta\\varepsilon_n)$. The error is what is left:\n$$e_h = x_{n+h} - \\hat x_{n+h} = \\sum_{j=0}^{h-1}\\psi_j\\,\\varepsilon_{n+h-j}.$$\n\n**4. Its variance.** The shocks are independent, so the variances add, each scaled by $\\psi_j^2$:\n$$\\begin{aligned} Var(e_h) &= \\sigma^2\\Big(1 + (\\phi + \\theta)^2 \\\\ &\\qquad \\times \\sum_{j=1}^{h-1}\\phi^{2(j-1)}\\Big). \\end{aligned}$$\nThe sum is geometric, with $h - 1$ terms and ratio $\\phi^2 < 1$:\n$$\\begin{aligned} Var(e_h) &= \\sigma^2\\Big(1 + (\\phi + \\theta)^2 \\\\ &\\qquad \\times \\frac{1 - \\phi^{2(h-1)}}{1 - \\phi^2}\\Big). \\end{aligned}$$\nAt $h = 1$ the sum is empty and $Var(e_1) = \\sigma^2$. Each extra day adds a term that is at least 0, so the variance never falls as $h$ grows.\n\n**5. The limit.** $|\\phi| < 1$, so $\\phi^{2(h-1)} \\to 0$. Over one denominator, $1 - \\phi^2 + (\\phi + \\theta)^2 = 1 + 2\\phi\\theta + \\theta^2$, so\n$$\\lim_{h \\to \\infty} Var(e_h) = \\sigma^2\\,\\frac{1 + 2\\phi\\theta + \\theta^2}{1 - \\phi^2}.$$\n\n**6. Check against the series.** Take variances in $y_t = \\phi y_{t-1} + \\varepsilon_t + \\theta\\varepsilon_{t-1}$, and call the series' variance $\\gamma_0$. Stationarity gives $Var(y_t) = Var(y_{t-1}) = \\gamma_0$. The shock $\\varepsilon_t$ is independent of $y_{t-1}$ and $\\varepsilon_{t-1}$, so it adds $\\sigma^2$ with no cross term. The cross term of the other two is $2\\phi\\theta\\,Cov(y_{t-1}, \\varepsilon_{t-1}) = 2\\phi\\theta\\sigma^2$. That holds because $y_{t-1}$ contains $\\varepsilon_{t-1}$ with weight 1, and the rest of $y_{t-1}$ is built from older shocks. So\n$$\\gamma_0 = \\phi^2\\gamma_0 + \\sigma^2 + \\theta^2\\sigma^2 + 2\\phi\\theta\\sigma^2,$$\nwhich gives $\\gamma_0 = \\sigma^2(1 + 2\\phi\\theta + \\theta^2)/(1 - \\phi^2)$, the limit. Far ahead, today tells us nothing, so the interval fills the series' own band. As a second check, $\\theta = 0$ turns step 4 into the AR(1) result $\\sigma^2(1 - \\phi^{2h})/(1 - \\phi^2)$.\n\n**7. The numbers.** Here $\\phi + \\theta = 0.4$, $\\phi^2 = 0.64$ and $\\sigma^2 = 4$.\n- $h = 1$: the variance is 4, so the half-width is $1.96 \\times 2 = 3.92$ bp.\n- $h = 5$: the sum is $(1 - 0.8^8)/0.36 = 2.3117$, so $Var(e_5) = 5.4795$ and the half-width is $1.96\\sqrt{5.4795} = 4.59$ bp.\n- The limit: $4 \\times 0.52/0.36 = 5.7778$, so the half-width is $1.96 \\times 2.4037 = 4.71$ bp.\n\nThe negative $\\theta$ cancels part of each shock's echo, as $\\phi + \\theta = 0.4$ shows. So the interval grows only from 3.92 to 4.71 bp. An AR(1) with the same $\\phi$ and $\\sigma$ would level off at $1.96 \\times 2/0.6 = 6.53$ bp.",
+   "rubric": [
+    {
+     "points": 1,
+     "text": "States the assumptions and where each is used: white-noise shocks (independent, mean 0, one variance) for the forecast and for adding the variances, and $|\\phi| < 1$ for the limit."
+    },
+    {
+     "points": 3,
+     "required": true,
+     "text": "Tick only if the weights are justified by substitution or induction, not asserted. The future part of $y_{n+h}$ has weights $1, \\phi + \\theta, (\\phi + \\theta)\\phi, \\dots, (\\phi + \\theta)\\phi^{h-2}$, so $e_h = \\sum_{j=0}^{h-1}\\psi_j\\varepsilon_{n+h-j}$."
+    },
+    {
+     "points": 4,
+     "text": "Tick only if both are given with their reasons. $Var(e_h) = \\sigma^2\\big(1 + (\\phi + \\theta)^2 S_h\\big)$ with $S_h = (1 - \\phi^{2(h-1)})/(1 - \\phi^2)$, from independent shocks and a geometric sum. Its limit is $\\sigma^2(1 + 2\\phi\\theta + \\theta^2)/(1 - \\phi^2)$, because $|\\phi| < 1$."
+    },
+    {
+     "points": 2,
+     "text": "Tick only if both are given: the series' own variance, derived separately, equals the limit; and the half-widths are 3.92, 4.59 and 4.71 bp."
+    }
+   ]
   }
  ]
 }
