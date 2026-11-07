@@ -1651,3 +1651,5 @@ Raised later (measure-prob level 3 perf):
 Raised later (puzzles level 4 perf):
 - [Should] Longform rubric row at 440 px: the points label of a `required` row is cut at the card edge ("3 points, requ"), so a phone learner cannot read that the row is required. Seen on `puzzles/homework-4` `hw4-kelly-draw` row 2 after Mark my answer. Wanted: let the label wrap under the points, or shorten it to a "Required" chip.
 - [Could] Playthrough `--set --shots`: the `-marked` shot covers one viewport, so the display equations lower in a long model answer are never seen or measured. Retrofits use a scratch Playwright script for this. Wanted: `--set` reports any `.katex-display` with scrollWidth > clientWidth after marking, or shoots the marked item at full height.
+Raised later (backtest level 1 perf):
+- [Could] Python code widget: "no Python loop" is checked by an AST scan of `__learner_source__` written into each item's prelude (`h-breakout-twice` `_no_loop`). Wanted: a shared widget option such as `"noLoop": ["fn"]` that runs one tested scan and reports the line of the loop it found.
