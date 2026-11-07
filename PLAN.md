@@ -8,7 +8,7 @@ Design documents live in `docs/` (`PLAN.md` there is the product design, not thi
 Figures in this file, PROGRESS.md and KNOWN_ISSUES.md come from the census, not memory; dates come from `git log` (UTC).
 - Lessons 1,214 of 1,214 (Stage 0 193, Stage 1 560, Stage 2 202, Stage 3 259); 79 course maps; 279 of 279 levels fully written; reviews 279 (own pass 279), homework 279.
 - Exams: 29 topic, 4 stage, 16 mocks with versions; 7 samples. Drills 35 non-sample (oa 8); bank 20 files, 200 items; prep paths 23, no mock without a file. Hours 3,695, gap 0.
-- Second reads under the current standard: 218 of 279 levels read and fixed; 61 unread (`docs/reports/unread-levels-session-u.txt` minus the session V courses). Fable concept audit: 39 levels closed, paused (DECISIONS 7 Nov).
+- Second reads under the current standard: 279 of 279 levels read and fixed (session W closed the last 61); every topic exam has a second-read file (session W read 0.1 to 0.4, 1.1, 1.2, 2.2 to 2.4). Cross-course requires edges 261, all with why. Fable concept audit: 39 levels closed, paused (DECISIONS 7 Nov).
 
 ## Tasks (one per session; tick when committed)
 
@@ -254,8 +254,11 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 - [x] Second reader 0.5 then fix pass (`docs/reviews/review-0.5.md`; 21 of 23 fixed, 2 engine bullets)
 - [x] Second reader 2.2 then fix pass (session V: arma, garch, coint L1 to L3; topic exam 2.2 still unread)
 - [x] Second reader 2.3 and 2.4 then fix pass (session V: alpha, backtest, opt-dash, contests L1 to L4; topic exams 2.3 and 2.4 still unread)
-- [ ] Second reader 3.1 to 3.3 then fix pass (3.3 done 3 Nov: `docs/reviews/review-<course>.md` for its five courses; 3.2 done 4 Nov: `review-ito.md`, `review-measure-prob.md`, `review-pdes.md`, `review-exam-3.2.md`; 3.1 open)
-- [ ] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (3.2 additions done 4 Nov; session V: analysis L1 to L4 done; open: linear-maps L1 to L3, proof L1 to L3)
+- [x] Second reader 3.1 to 3.3 then fix pass (3.3 done 3 Nov: `docs/reviews/review-<course>.md` for its five courses; 3.2 done 4 Nov: `review-ito.md`, `review-measure-prob.md`, `review-pdes.md`, `review-exam-3.2.md`; 3.1 open); session W: momentum-rep L1 (`review-momentum-rep-1.md`), so 3.1 closed
+- [x] Second readers and fix passes for the breadth topics 0.6, 1.10, 1.11, 2.5, 2.6, 3.4 (3.2 additions done 4 Nov; session V: analysis L1 to L4 done; open: linear-maps L1 to L3, proof L1 to L3); session W: linear-maps L1 to L3, proof L1 to L3 closed
+- [x] Session W (7 Nov): second reads and fix passes for the 61 unread levels (`docs/reports/unread-levels-session-v.txt`, 20 courses, reviews `docs/reviews/review-<course>[-n-m].md`, number scripts `docs/reports/<course>-L<n>-numbers.py`, all exit 0, voice 0 and 0 per course) and the nine unread topic exams (`docs/reviews/review-exam-<topic>.md`, scripts `docs/reviews/exam-<topic>-scripts/numbers.py`, all exit 0)
+- [ ] Second read the five exam items written by session W fixers, never read independently: topic-1.1 `e-gen-once`, `e-assert-catch`; topic-1.2 `e-fixture-calls`; topic-0.2 `e-gap-table`; topic-0.3 `e-truss-angle` (one Opus reader, pattern `review-exam-2.2.md`)
+- [ ] Review size audit (review-first-python-1-3 item E): AUTHORING section 11 asks 12 or more items in a review whose level others require; first-python reviews hold 8. Count every gating level's review, then author the missing items with a second read (content agents per course)
 - [ ] Fix the seven homework items with both prose and a hidden longform prompt (list in `docs/ENGINE-BACKLOG.md`, pass 6 content note)
 
 ### 5b. Concept audit by Fable, after all content is finished (user, 6 Nov: correctness first; brief `docs/briefs/concept-audit.md`; log `docs/reports/concept-audit-log.md`)
@@ -269,6 +272,7 @@ Superseded 5 Nov: the topic-3.2 and topic-3.3 lines duplicated 2a Phase 3 "Exams
 
 ### 6. Engine
 - [ ] Engine pass 7 (session V: items 591 to 616 done in passes A, B and 7; open: the rest of 340 to 422 and the deferred list in `docs/reports/engine-pass-7.md`): backlog items 340 to 422 plus `docs/BACKLOG-INBOX.md` (was in flight; status block "Seventh pass" may be partial). Number inbox bullets from 424, clear the inbox, document in AUTHORING.md and canvas READMEs
+- [x] Session W engine items: 617 (Today: a pass moves Today on unless the lesson is reopened from Learn or the map; `test-today-tested-out.mjs`), 618 to 620 (expression grader compares equations as equations and strips labelled left sides; `test-expr-equations.mjs` 129 of 129), 621 (Learn exam chip shows the minutes the exam runs; `test-exam-minutes.mjs`)
 - [ ] Engine pass 8: whatever the inbox holds after Stage 2 and 3 content lands
 - [ ] Full `playthrough.mjs --all --local-cdn <pkgs>` green; `validate.mjs` 0 errors; System gallery renders in both themes
 
