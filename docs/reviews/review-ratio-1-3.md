@@ -121,3 +121,51 @@ GCSE conventions checked and matching UK usage: percentage of an amount, reverse
 
 1. Audit tooling: `numbers_lib.check_wrongs` prints a "check by hand" line whenever a `byKey` text states numbers and none equals the stored wrong value. On a `unit: "%"` widget the value is a fraction while the line states the per cent figure, so ratio L1 to L3 produce 228 such lines, all false alarms, and the one real typed-slip mismatch (finding 3: line says £2,000, value is typed 2) sat among them. For `unit: "%"` widgets, compare the typed figure (value × 100) as well as the value. Appended to `docs/BACKLOG-INBOX.md`.
 2. Validator `unit "%"` above-1 rule: 12 of ratio's 17 hits are deliberate wrong values that must exceed 100% (flipped fractions such as 25 ÷ 7 = 357%, and finding 3's 2,000%). This confirms the earlier inbox bullets from the py-found and plotting reviews; ratio adds the counts. Appended to `docs/BACKLOG-INBOX.md`.
+
+## Fix pass
+
+1. fixed: l2 `screens[5]` `seven-tens` value 168 (7 x £24).
+2. fixed: l2 `screens[7]` option £1.20 why (4 x 30p = £1.20).
+3. fixed: l7 `screens[9]` `pounds` value 20, tol 0.0005 (typed 2000 stored as 20; the validator "above 1" warning is Engine 2).
+4. fixed: l10 `quiz[1]` `byKey.units` (3 / 4 = 0.75).
+5. fixed: homework-3 `items[4]` `old-total` 2000 (30,000 - 28,000).
+6. fixed: homework-3 `items[4]` `swapped` 8400 (0.6 x 49,000 = 29,400, less 21,000).
+7. fixed: l11 `screens[4]` `byKey.halve`. Basis: inverse proportion, 2 machines 15 h so 1 machine 30 h, 6 machines 5 h; 3 machines 10 h halved is 5 h.
+8. fixed: l13 `screens[3]` `one-rate` and its byKey deleted; `byKey.same` reworded (500 x 1.12 / 1.12 = 500 exactly).
+9. fixed: l9 `screens[1].explain.text`. Basis: 6 x 3 = 9 x 2, so 6 : 9 = 2 : 3.
+10. fixed: l10 `screens[0]` `byKey.add-two` (region y 290 to 330 holds 300 g; 2 x 75 g = 150 g).
+11. fixed: l10 `quiz[2].explain.text` (no option named by place; 5, 10, 15 over x gives 2.5 each).
+12. fixed: l7 `screens[8].explain.text`. Basis: p = 0 gives p^2 = 0, so "any swing other than 0".
+13. fixed: l3 `quiz[1]` `relative` tol abs 0.5 (28.07 to 29.07; key 1 +- 0.0001 far off).
+14. fixed: l3 `quiz[2].question` states 1 decimal place (100 / 3.5 = 28.57; accept 28.6%).
+15. fixed: l12 `screens[8]` `fee-in` tol abs 0.006 (7.705 rounds to 7.71 or 7.70; key band 7.675 to 7.685 is clear).
+16. fixed: l13 `quiz[1]` `pounds` tol abs 0.005 (1 / 190 = 0.00526, 0.01 at 2 dp; key band clear).
+17. fixed: l7 `quiz[3]` option text "Back at the start".
+18. fixed: l12 `screens[5].explain.text` (three sentences).
+19. fixed: l4 `screens[7]`, l7 `screens[5]`, l13 `screens[8]` explanations (80 x 1.05 = 84; 1.5 x 0.5 = 0.75; 12,760 / 1.21 = 10,545.45, profit 545.45).
+20. fixed: l1 `quiz[2]` 59% why names the action.
+21. fixed: `over100: true` on the five named widgets (l1 quiz[3], l3 s5, l5 s5, l5 quiz[3], homework-2 items[2]).
+22. fixed: l3 objectives[2], summary.ideas[2], homework-1 `items[8].title` ("per cent").
+23. fixed: l12 screens 0 to 2 point B `labelPos` "ne"; checked `--shots` at desktop and 440 px (screen 0): A and B labels now separate.
+24. fixed: l13 `screens[2].question` and `quiz[1].question` use "Give your answer to N decimal places".
+25. fixed (orchestrator): course.json `requires` applied in commit acc3b3c; not touched here.
+26. fixed: review-2 `items[8].prose` now sets up 20 x m x m = 45 (1.5 x 1.5 = 2.25 = 45 / 20).
+27. fixed: l7 `screens[8].hints[1]` shows the term-by-term expansion. Basis: (1 + p)(1 - p) = 1 - p + p - p^2 by distribution.
+28. fixed: l4 `screens[9].widget.lines[2]` without "factorising" wording. Basis: A + 0.15A = 1A + 0.15A = (1 + 0.15)A by counting lots of A.
+29. fixed: homework-2 `items[5].widget.lines[3]` with numeric twin. Basis: 1/0.8 - 1 = 0.25 = 0.2/0.8.
+30. fixed: l10 `screens[6].explain.text` (no y = 2x + 3; 3 + 4 = 7, 3 + 8 = 11).
+31. fixed: l4 s10, l5 s9 explanations, l10 `screens[8]` (prose, question, widget label, yLabel, explain, "sell" for "short") and `quiz[3].prose`; homework-2 `items[3]` via finding 36. Basis: wording only; 800 / 1,000 = 0.8, 45,000 x 0.8 = 36,000, 24,000 / 2 x 3 = 36,000.
+32. fixed: review-1 `items[6]` is 12% to 16% (4 points, 4/12 = 33.3%, 4/16 = 25%, 0.04 x 12 = 0.48).
+33. fixed: review-2 `items[4]` peak £160 low £120 (40/160 = 25%, 40/120 = 33.3%); series [140, 152, 160, 148, 131, 120, 126].
+34. fixed: review-2 `items[5]` 30% fall to £56 (56 / 0.7 = 80; 24/56 = 0.4286).
+35. fixed: review-2 `items[7]` VAT 5% on £63 (63 / 1.05 = 60, VAT 3, wrong 3.15 and 60).
+36. fixed: homework-2 `items[3]` peak £150 low £90 (60/90 = 0.6667; 60/150 = 0.4); series [130, 142, 150, 128, 104, 90, 101, 112].
+37. fixed: review-3 `items[8]` 300 shares (1,000 / 125 = 8; 300 x 8 + 5 = 2,405; fee-in 2,412; no-fee 2,400).
+38. fixed: l5 `screens[7].prose`, `summary.formula.tex` and note with x 100%. Basis: AQA/Edexcel GCSE percentage change = change / original x 100.
+39. fixed: l10 `screens[0].explain.text` names the scale factor (1.5).
+
+Also: a first edit pass wrote one byKey under "add" and not "add-two" (l10 s0); the validator caught it and it is corrected.
+
+Numbers: the three scripts gain checks for every new figure and l10's `add-two` check now requires the new sentence true; all exit 0 (327 of 327, 262 of 262, 361 of 361).
+
+Gates: validator 0 errors; voice scan 0 sentences over 35 words, 0 explanations over three sentences; playthrough All passed with and without `--mobile` for l1, l2, l3, l4, l5, l7, l9, l10, l11, l12, l13 (`--lesson`) and review-1 to 3, homework-1 to 3 (`--set`), with `--local-cdn`. Graded answers changed: review-2 items[4] (0.2 to 0.25), items[5] (0.25 to 0.4286), items[7] (9 to 3); homework-2 items[3] (0.25 to 0.6667); review-3 items[8] (8 to 2405).

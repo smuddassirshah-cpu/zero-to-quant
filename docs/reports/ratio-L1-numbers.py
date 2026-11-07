@@ -187,8 +187,8 @@ W(f, 'items[3].widget', 'pounds', 81)
 D(f, 'items[4].widget', 5 / 8); R(f, 'items[4].widget', 'small', 0.0625)
 K(f, 'items[5].widget', 2350 * 1.02, 2); W(f, 'items[5].widget', 'fee-only', 47); W(f, 'items[5].widget', 'tenths', 2350 * 1.2, 2)
 W(f, 'items[5].widget', 'pounds', 2352)
-T(f, 'items[6].explain.text', 15 - 12); T(f, 'items[6].widget.options[2].text', 3 / 15 * 100)
-T(f, 'items[6].widget.options[3].why', round(0.03 * 12, 2))
+T(f, 'items[6].explain.text', 16 - 12); T(f, 'items[6].widget.options[2].text', 4 / 16 * 100)
+T(f, 'items[6].widget.options[3].why', round(0.04 * 12, 2))
 K(f, 'items[7].widget', 0.0045); W(f, 'items[7].widget', 'one-place', 0.045); W(f, 'items[7].widget', 'three', 0.45)
 T(f, 'items[8].explain.text', 54 / 90 * 100); T(f, 'items[8].explain.text', 66 / 120 * 100)
 T(f, 'items[8].widget.options[2].text', 66 - 54)
@@ -221,6 +221,9 @@ for v in (fee, cash, tot, round(sh / tot * 100, 2), round(bo / tot * 100, 2), ro
     T(f, 'items[7].model', round(v, 2))
 lv.claim(round(sh / tot * 100, 2) + round(bo / tot * 100, 2) + round(cash / tot * 100, 2) == 100.00, 'homework-1 items[7]: rounded weights sum to 100.00%')
 D(f, 'items[8].widget', 0.005)
+
+# ---- fix pass (session V): numbers written by the review-1 freshness fix
+lv.claim(round(4 / 12 * 100) == 33 and round(4 / 16 * 100) == 25 and round(0.04 * 12, 2) == 0.48, 'review-1 items[6]: 4 points, 33%, 25%, 0.48')
 
 lv.check_wrongs()
 lv.report()
