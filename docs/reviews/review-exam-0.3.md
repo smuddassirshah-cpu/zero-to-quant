@@ -84,3 +84,61 @@ AUTHORING section 5 (exam freshness, ENGINE-BACKLOG 588, 600): an exam item must
 1. `fresh-check.mjs` (another vote for the signature check of the topic-2.3 and topic-2.4 bullets): 0 hits at `--min-run 10` while 19 of 25 items repeat a setup. Three kinds slip past the prose gate here. One-line items whose setup is the question, with "Work without a calculator." as the whole prose, have too few words for a 10-token run (`e-log-thousandth` against exp-log `l7` `quiz[0]`, `e-fraction-powers`, `e-sigma-odd`). Names swapped in an otherwise identical seating count (`e-desk-block`: Kai and Lee to Priya and Tom). And repeats of another exam's item in new words (`e-tech-pick` against `mock-oa-trader-2` `b09-committee`, the same 10, 4, 3 and 2). Wanted: for items under 25 words, compare the masked question alone at a 5-token run; and compare the multiset of an item's numbers (prose, answer and `wrong` values) against every other item, flagging an overlap of three or more.
 2. vectors canvas: there is no `axes: false` (only `grid`), so a vector-geometry item written in $\mathbf{a}$ and $\mathbf{b}$ shows numbered axes from which the coordinates can be read, and the O label sits on the 0 tick (topic-0.3 `e-vector-ratio`, 440 px). Wanted: `axes: false`, or `ticks: false`.
 3. Validator (advisory): a numeric item whose question says "two decimal places" or "nearest penny" and whose stored answer is rounded, with `tol.abs` equal to one unit of the last place, accepts the wrong rounding on either side (topic-0.3 `e-accounts-meet` accepts 9.11 for 9.116). Wanted: an `O2` warning suggesting the unrounded answer with half that tolerance.
+
+## Fix pass
+
+Edited only `app/content/exams/topic-0.3.json` and `docs/reviews/exam-0.3-scripts/numbers.py` (the validator also rewrote `app/content/manifest.json`: `examMinutes` for `topic-0.3` 90 to 60, as the validator copies `minutes`). Item ids unchanged; one id added, `e-truss-angle`. Every new number was recomputed in the script, which now exits 0 (365 of 365). Checks that accepted old or new values were tightened to the new value only, and each new number has its own check (enumeration or loop, plus closed form or exact fractions).
+
+### Items
+
+1. e-arc-length byKey.divide: fixed as proposed, in the form finding 14 gives. The stored slip is radius over angle ($6/1.8 = 3.3333$); the script fails if "divided the angle by the radius" returns.
+
+### Freshness (19 rewrites applied as given)
+
+2. e-years-to-target: applied. Loop and logs agree (10.0203, so year 11); balances £5,013.02 and £4,411.46; a fixed £2,160 a year first goes below £5,000 in year 7. Graded answer changed 9 to 11. Uses log, as exp-log L2 does. The repeat of exp-log `review-2` is gone (no "8,000").
+3. e-desk-block: applied, difficulty 4. Enumerated all 720 seatings: 240 together, 96 of those with Sam at an end (48 per end), 144 left, 192 with only the left end removed, 72 with Priya on Tom's left. Graded answer 240 to 144.
+4. e-tech-pick: applied. Enumerated 495 sets: 210 with two tech, 210/495 = 14/33 = 0.424242; slips 0.0202, 0.3545 ($6(5/12)^2(7/12)^2 = 0.35446$) and 0.0707 (permutations of 12; six orders give 0.4242). Typed 0.424 grades right, 0.425 wrong. Answer 0.3 to 0.424242. `mock-oa-trader-2` has no 12 shares, 5 tech or pick of 4 (its `b09-committee` is 10, 4, 3).
+5. e-double-angle-solve: applied. Basis: $\cos u = \tfrac12$ for $u = \pm 60^\circ + 360^\circ k$ (unit circle, trig L2); a scan of every whole degree on 0 to 179 gives 20, 100, 140. Option whys recomputed ($\cos 120^\circ = \cos 480^\circ = -\tfrac12$, $\cos 180^\circ = -1$). Seven options become six; the keyed set changes from 30, 150, 210, 330 to 20, 100, 140.
+6. e-geom-eighth: applied. $r^3 = 8$, $r = 2$, first term 3; iterated to $u_{10} = 1536$ ($96 \times 2^4$ and $3 \times 2^9$). Slips 3072, 6144, 208. `mock-oa-trader-2` `a02-geometric` shares no term. Answer 896 to 1536.
+7. e-code-repeat: applied. Enumerated all 65,536 codes: 38,640 with four different characters and a letter; 43,680 distinct, 5,040 digits only, 55,536 $= 16^4 - 10^4$, 60,496 $= 16^4 - 5040$. Answer 21,856 to 38,640.
+8. e-loan-payment: applied. Basis: the present value of an annuity-due is the ordinary annuity's times $(1 + i)$, so $P = 10000 \times 0.05 / (1.05(1 - 1.05^{-10}))$. The sum of ten values today gives 1233.3769; paying £1,233.38 leaves −£0.04 after the tenth payment; $1295.0457 / 1.05 = 1233.377$. Key 1233.38 with `tol.abs` 0.005 (1233.37 grades wrong). Slip `end` 1295.05 added. Answer 1295.05 to 1233.38.
+9. e-tan-third-quadrant: applied. Exact fractions give $\tfrac{7}{17} = 0.411765$ and the angle 241.93° agrees; slips $-\tfrac{7}{17}$, $-\tfrac{23}{17}$ and $+\tfrac{23}{17}$ (each tol 5e-5); typed 0.4118 grades right, 0.4117 wrong. Basis: in the third quadrant sine and cosine are both negative (unit circle, trig L2). Answer 1.875 to 0.411765.
+10. e-cosine-rule: applied. Basis: the cosine rule with $\cos 120^\circ = -\tfrac12$ ($\cos(180^\circ - \theta) = -\cos\theta$): $c^2 = 9 + 25 + 15 = 49$. Canvas coordinates give legs 3.000 and 4.9999 at 120.00° and $|PQ| = 6.9999$; slips $\sqrt{34} = 5.83$, $\sqrt{19} = 4.36$. Skills now `tr-triangles`, `tr-circle`. The 440 px shot lays out cleanly (labels, arc and Depot clear). Answer 7 unchanged.
+11. e-continuous-four: applied. Basis: $e^a e^b = e^{a+b}$, so $e^{0.10}e^{0.09} = e^{0.19}$; $2000e^{0.19} = 2418.4992$ (power series and product agree); slips 2442.81, 2409.46, 2380. Key 2418.5, tol 0.005 (£2,418.49 grades wrong). Answer 2442.81 to 2418.5.
+12. e-log-returns: applied. Basis: log returns add, so Tuesday's is −0.05, and a simple return is $e^r - 1 = -0.048771$; slips −0.05 and −0.0513. Typed −0.0488 right, −0.0487 wrong. Answer −0.0198 to −0.048771.
+13. e-fraction-powers: applied. $125^{2/3} = 25$ and $625^{-1/4} = \tfrac15$ checked by cube and fourth powers; product 5; slips −125 and 125. Answer 4.5 to 5.
+14. e-arc-length: applied. $6 \times 1.8 = 10.8$; slips 3.3333, 7.8, 0.1885. Answer 10 to 10.8.
+15. e-log-thousandth: applied. $0.0625 = \tfrac{1}{16} = 4^{-2}$ exactly; slips 2 and −4 ($\log_2 0.0625$). Answer −3 to −2.
+16. e-four-falls: applied. A loop of eight days gives $(0.97 \times 1.03)^4 = 0.996405$; $0.9991^8 = 0.99282$ and $0.97^4 \times 1.03 = 0.91185$. The key text changes; it is still option a.
+17. e-weekly-savings: applied. Gauss backwards, $(2 \times 2775 / 30 - 40) / 29 = 5$, and only $d = 5$ among whole pounds gives 2775 by loop; slips 4.83, 2.5, 72.5. Answer 2775 to 5.
+18. e-binomial-cube: applied. Basis: the general term $\binom{n}{k}a^k x^k$; $(1 + 3x)^6$ multiplied out has $x^2$ coefficient 135, and only $a = \pm 3$ give it, so $a > 0$ gives 3; slips 9 and 4.74. Answer −160 to 3.
+19. e-wave-fit: applied. Basis: $y = a\sin(bx) + c$ with $a < 0$ leaves the midline going down. Sampled curve: range 2 to 8, troughs at 3 and 15, peaks at 9 and 21; of the four options only a matches the drawn curve at every sampled point. 440 px shot clean. Key still a.
+20. e-sigma-odd: applied. 16 terms from 17 to 62 added term by term: 632 $= 8 \times 79$; slips 592.5 and 670; $670 - 38 = 632$. Answer 216 to 632.
+21. Applied through 2 to 20; the six unchanged items stay.
+
+### Coverage, difficulty and time
+
+22. minutes and paces: applied. Rule used: AUTHORING section 5 shows `minutes` as written, so it is the paced need, the sum of the items' `pace` (Stage 0 paces of topic-0.6) rounded up to the next 5 minutes: 3,525 s is 58.75 minutes, so 60 (topic-0.6 stores 60 for 3,150 s of paces). Paces added exactly as listed, 26 items. The script checks that every item has one, the sum, and the rounding.
+23. Superseded by 9 (the item now asks for four places).
+24. e-accounts-meet: applied (answer 9.1161, tol 0.005; 9.12 right, 9.11 and 9.13 wrong). The other two are covered by findings 8 and 11 (keys 1233.38 and 2418.5, tol 0.005, truncated forms graded wrong in the script).
+25. e-truss-angle: added as given, after `e-cosine-rule`. Recomputed by the cosine rule at the base ($\cos = 5/7$, 44.4153°) and at the apex (91.1694°), with $2 \times 44.4153 + 91.1694 = 180$; slips 91.17, 45.58, 0.7752. One departure: the `radians` slip has `tol.abs` 0.05, not 0.001, because the validator warns that 0.001 misses a learner who rounds 0.7752 to the one place asked (0.8). Typed 44.4 right, 44.3 and 44.5 wrong. Ramp is now 5, 13, 6, 2 of 26 (19%, 50%, 23%, 8%).
+
+### Notes
+
+26. Not applicable: finding 2 was applied (the new item uses log and has no add-£300 slip).
+27. Applied: every `\vec{..}` in `e-vector-ratio` is `\overrightarrow{..}`; the script fails if a `\vec{` returns.
+28. Applied: "Its sum to infinity is".
+29. Applied: accept line "7.21, which is √52 = 2√13" ($52 = 4 \times 13$).
+30. No change.
+31. No change in content (engine bullet 2).
+32. No change.
+
+### Gates
+
+- Script: `python3 docs/reviews/exam-0.3-scripts/numbers.py` exits 0, 365 of 365.
+- Freshness: `node tools/fresh-check.mjs --exam topic-0.3 --min-run 10` gives 0 hits. Loosened (`--min-run 8 --min-share 0`): 4 hits, all generic stems (exp-log `review-2` "after how many whole years is it first worth", run 9; counting homework-2 and series l10 "at random, every set equally likely, what is the chance", runs 11 and 8; alpha l6 "what is # give a decimal to four places", run 8), none a repeated setup.
+- Literal grep of `app/content` (courses and exams, JSON strings): 0 hits for "pulley", "radius 6 cm", "1.8 radians", "3rd term 12", "6th term 96", "125^{2/3}", "625^{-1/4}", "loses 12%", "3k + 2", "(1 + ax)", "back to Monday", "\cos\theta - \sin\theta", "1,233.38", "2,418.50", "38,640", "truss", "5 of them tech", "Sam must not", "four different characters", "first payment is today", "\sum_{k=5}^{20}", "4,411.46", "5,013.02", "3 km", "£2,000 grows", "e^{0.19}", "-3*sin". Incidental hits only on partial strings, each read: "\cos 3x" 2 (stage-1 limit of $1 - \cos 3x$), "-3\sin" 4 (vector-calc parametrisations; trig l9 "$y = -3\sin x + 1$", a different wave), "log_4" 4 ($\log_4 2$ and $\log_4 20$), "at least one letter" 1 (envelope derangements), "opening price" 3, "12 shares" 4, "120^\circ" 28 (trig lessons, none the two-roads setup), "£18,000" 16, "1,536" 15 and "1536" 17 (other contexts). `mock-oa-trader-2` checked for the two copied items: no overlap with the new e-tech-pick or e-geom-eighth.
+- Validator: 0 errors, 4,081 warnings (as before); the manifest changed only in `examMinutes` for `topic-0.3`.
+- Playthrough `--exam topic-0.3 --local-cdn <pkgs>`: 26 of 26, passed; `--mobile`: 26 of 26, passed. No server left running.
+- Voice: 491 sentences, 0 over 35 words, 0 explanations over three sentences; no dash or `!` (the only `!` is factorial).
+- Graded answers changed: e-log-thousandth (−3 to −2), e-arc-length (10 to 10.8), e-geom-eighth (896 to 1536), e-fraction-powers (4.5 to 5), e-weekly-savings (2775 to 5), e-years-to-target (9 to 11), e-continuous-four (2442.81 to 2418.5), e-sigma-odd (216 to 632), e-desk-block (240 to 144), e-double-angle-solve (30, 150, 210, 330 to 20, 100, 140), e-binomial-cube (−160 to 3), e-tech-pick (0.3 to 0.424242), e-log-returns (−0.0198 to −0.048771), e-tan-third-quadrant (1.875 to 0.411765), e-code-repeat (21,856 to 38,640), e-accounts-meet (9.12 to 9.1161, tol 0.005), e-loan-payment (1295.05 to 1233.38). Key text changed, option a still correct: e-four-falls, e-wave-fit. Unchanged key: e-cosine-rule (7). Added: e-truss-angle.
