@@ -1665,3 +1665,9 @@ Raised later (arma level 1 perf):
 
 Raised later (arma level 3 perf):
 - [Should] Longform rubric rows render inline maths that cannot wrap, so a formula of about 40 characters in a row runs past the card at 440 px (arma `h-derive-arma-fan` row 3 before it was split; found only by a scratch full-height render). Neither the validator nor the playthrough reports it. Wanted: a warning for a rubric `$...$` span over a set rendered width, or a measured check after Mark my answer.
+Raised later (backtest level 1 perf):
+- [Could] Python code widget: "no Python loop" is checked by an AST scan of `__learner_source__` written into each item's prelude (`h-breakout-twice` `_no_loop`). Wanted: a shared widget option such as `"noLoop": ["fn"]` that runs one tested scan and reports the line of the loop it found.
+Raised later (backtest level 4 perf):
+- [Should] A `data` performance task needs its file under `app/content/data/<course>/`, but content agents may edit only their course folder, so a retrofit cannot add one. backtest L4 (`h-reversal-note`, a results note read from a run) fell back to `derivation` with the results in a `table` canvas. Wanted: allow a `data` path inside the course folder, or let content agents add files under `content/data/<course>/`.
+- [Should] `grade.prose` has no headings, so a longform model written as a document shows `# Title` and `## Question` literally. `backtest/homework-4` `h-note` does this today. `h-reversal-note` uses bold lines instead. Wanted: render `#` to `###` lines as headings, or a validator warning on a line that starts with `#` in prose, a model or a prompt.
+- [Could] A longform item cannot carry both `prose` and `prompt` (a warning: prose replaces prompt), and `prompt` is required. So a long brief with a canvas must sit in `prompt`, which shows above the canvas. Wanted: a note in AUTHORING section 5 saying so.
