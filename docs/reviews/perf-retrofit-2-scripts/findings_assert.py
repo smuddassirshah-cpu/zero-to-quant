@@ -35,7 +35,7 @@ ITEMS = {
     'MP2': ('measure-prob/homework-2.json', 'h-build-integral'), 'MP3': ('measure-prob/homework-3.json', 'h-prove-urn'),
     'PZ4': ('puzzles/homework-4.json', 'hw4-kelly-draw')}
 # rows the matched objective (or the prompt's "check each condition") names
-CORE = {'SY1': [1, 3], 'SY3': [1, 2, 3], 'PD1': [2, 3], 'MP1': [2, 3], 'MP2': [4], 'MP3': [2, 3], 'PZ4': [2]}
+CORE = {'SY1': [1, 3], 'SY3': [1, 2, 3], 'PD1': [2, 3], 'MP1': [1, 2, 3, 4], 'MP2': [4], 'MP3': [2, 3], 'PZ4': [2]}
 for key, (f, i) in ITEMS.items():
     rub = rubric(item(f, i))
     req = [k + 1 for k, r in enumerate(rub) if r.get('required')]

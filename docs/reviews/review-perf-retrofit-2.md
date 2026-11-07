@@ -79,6 +79,7 @@ Totals: Must 1 (SY4-2). Should 7 (SY4-1, SY4-3, SY3-1, SY3-2, SY3-3, MP1-1, MP3-
 - MP1-2: fixed. Basis: if $\mu(A_m) < \infty$ then $A_m \supseteq A_{m+1} \supseteq \cdots$ has the same intersection and the stated result applies; model and row 4 say so.
 - MP2-1: fixed. Row 4 opens "Tick only if all are given".
 - MP3-2: fixed in the report: markov l17 screens 8 and 9 named, the proof for every $n$ on $\mathcal{F}_n$ is new.
+- Fix pass 2 (rubric-passes.mjs): MP1-1 widened. The tool showed minimal passes rows 1, 2, 3 and rows 2, 3, 4, skipping continuity from above or building the space. Rows 1 to 4 are now `required` (9 of 10 points), so the only pass is rows 1 to 4. The other three items checked: measure-prob `h-build-integral` minimal sets 1, 2, 4 / 1, 3, 4 / 2, 3, 4 (the core row 4 is required; the rest are parts of one construction); `h-prove-urn` 1, 2, 3 / 2, 3, 4 / 2, 3, 5 (both conditions and the step required); systems `h3-process-aloud` 1, 2, 3 only. No change to those three.
 - Disputed: none. Deferred: none. Graded answers changed: none (no code test touched; the C++ was not edited).
 
 Gates (worktree `sx/fix-perf-2`):
