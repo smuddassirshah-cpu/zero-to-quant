@@ -10,7 +10,7 @@
       "skills": [
         "gt-remote"
       ],
-      "prose": "Both rows end at commit D. You edit `signal.py`, save it, and run `git push`.",
+      "prose": "Both rows end at D. You commit E, then edit `signal.py`, run `git add signal.py`, and push.",
       "canvas": {
         "kind": "graph",
         "params": {
@@ -118,35 +118,40 @@
           "caption": "Laptop on top, GitHub below"
         }
       },
-      "question": "What does Git print?",
+      "question": "Where does origin's main end after the push?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
-            "id": "utd",
-            "text": "`Everything up-to-date`",
+            "id": "e",
+            "text": "At E: the staged edit stays on your laptop",
             "correct": true
           },
           {
-            "id": "sent",
-            "text": "`1 file changed`, and the edit is on GitHub",
-            "why": "You expected push to send saved files. It sends commits, and you made none."
+            "id": "staged",
+            "text": "At E, with the staged edit added to it",
+            "why": "You expected push to send what you staged. Push sends commits, and a commit never changes once made."
           },
           {
-            "id": "err",
-            "text": "An error: commit your changes first",
-            "why": "Push does not look at your folder. It compares commits and finds nothing to send."
+            "id": "f",
+            "text": "At F, a new commit holding the edit",
+            "why": "Only `git commit` makes a commit. Staging only chooses what the next one holds."
+          },
+          {
+            "id": "d",
+            "text": "At D: push refuses while a file is staged",
+            "why": "Push never looks at the staging area. It sent E, the commit origin lacked."
           }
         ],
         "shuffle": true
       },
       "feedback": {
-        "correct": "No new commits, nothing to send.",
+        "correct": "Push sent E. The staged edit is in no commit yet.",
         "generic": "Not quite right. Push compares commits only."
       },
       "explain": {
-        "text": "Your laptop and origin both end at D. The edit is a saved change, not a commit. Commit it, then push."
+        "text": "Push sent E, the one commit origin lacked. The staged edit is not in any commit, so it stayed behind. Commit it, then push again."
       }
     },
     {
@@ -469,35 +474,35 @@
       "skills": [
         "gt-shell"
       ],
-      "prose": "You run this script twice:\n\n```sh\necho \"ticker,vol,mdd\" > results.csv\nfor T in SPY QQQ IWM EFA TLT; do\n  python3 returns.py \"data/$T.csv\" >> results.csv\ndone\n```",
-      "question": "How many lines does `results.csv` hold after the second run?",
+      "prose": "A colleague moved the header line inside the loop:\n\n```sh\nfor T in SPY QQQ IWM EFA TLT; do\n  echo \"ticker,vol,mdd\" > results.csv\n  python3 returns.py \"data/$T.csv\" >> results.csv\ndone\n```",
+      "question": "How many lines does `results.csv` hold after one run?",
       "widget": {
         "kind": "numeric",
-        "answer": 6,
+        "answer": 2,
         "tol": {
           "abs": 0
         },
         "placeholder": "a whole number",
         "label": "Lines in results.csv",
-        "accept": "6: the header and five rows.",
+        "accept": "2: the last header and TLT's row.",
         "wrong": [
           {
-            "id": "twelve",
-            "value": 12,
+            "id": "six",
+            "value": 6,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "eleven",
-            "value": 11,
+            "id": "ten",
+            "value": 10,
             "tol": {
               "abs": 0
             }
           },
           {
-            "id": "five",
-            "value": 5,
+            "id": "one",
+            "value": 1,
             "tol": {
               "abs": 0
             }
@@ -505,16 +510,16 @@
         ]
       },
       "feedback": {
-        "correct": "One header and five rows, however many runs.",
-        "generic": "Not quite right. Ask what the first line of the script does to the file.",
+        "correct": "Two lines: the header and TLT's row.",
+        "generic": "Not quite right. Follow what `>` does on each pass.",
         "byKey": {
-          "twelve": "You expected both runs to pile up. The `>` on the first line empties the file at the start of each run.",
-          "eleven": "You kept one header and both runs' rows. The `>` line clears the old rows too.",
-          "five": "You forgot the header line. echo writes it before the loop."
+          "six": "You expected one header and five rows. The `>` runs on every pass, so each pass wipes the rows before it.",
+          "ten": "You kept a header per pass. `>` empties the file each time, so only the last pass survives.",
+          "one": "The `>>` line runs after the header on every pass, so TLT's row follows the last header."
         }
       },
       "explain": {
-        "text": "The first line empties results.csv and writes the header. The loop then appends five rows. Each run starts afresh, so the file always ends with 6 lines."
+        "text": "Each pass empties results.csv, writes the header, then appends one row. Only the last pass survives: the header and TLT's row. Clear the file once, before the loop."
       }
     },
     {
@@ -566,7 +571,7 @@
       "skills": [
         "gt-remote"
       ],
-      "prose": "Commit C added your key to `settings.py`. Commit D removed it. Both were pushed.",
+      "prose": "Commit C added `secrets.txt` with your key. Commit D ran `git rm secrets.txt`. Both were pushed, and a stranger then clones the repository.",
       "canvas": {
         "kind": "graph",
         "params": {
@@ -671,37 +676,37 @@
           "aria": "Commit graph: each circle is a commit, each arrow points to the commit before it"
         },
         "state": {
-          "caption": "C added the key, D removed it",
+          "caption": "C added secrets.txt, D removed it",
           "highlight": [
             "LC",
             "OC"
           ]
         }
       },
-      "question": "Which command still shows the key?",
+      "question": "Can the stranger read the key?",
       "widget": {
         "kind": "choice",
         "layout": "stack",
         "options": [
           {
             "id": "show",
-            "text": "`git show C:settings.py`",
+            "text": "Yes: `git show C:secrets.txt` prints it",
             "correct": true
           },
           {
-            "id": "cat",
-            "text": "`cat settings.py`",
-            "why": "That prints the file as it is now, after D removed the key."
+            "id": "folder",
+            "text": "No: the file is not in their folder",
+            "why": "Their folder matches D, but every commit came with the clone. C still holds the file."
           },
           {
-            "id": "status",
-            "text": "`git status`",
-            "why": "Status compares your folder with the last commit. It shows no old contents."
+            "id": "rm",
+            "text": "No: `git rm` deleted it from every commit",
+            "why": "`git rm` stages a deletion for the next commit. Earlier commits never change."
           },
           {
-            "id": "none",
-            "text": "None: D removed it for good",
-            "why": "D made a new snapshot. C's snapshot, with the key, is unchanged."
+            "id": "checkout",
+            "text": "Only if they check out D",
+            "why": "D is the commit without the file. The key is in C."
           }
         ],
         "shuffle": true
@@ -711,7 +716,7 @@
         "generic": "Not quite right. Old commits never change."
       },
       "explain": {
-        "text": "`git show C:settings.py` prints the file as commit C saved it, key included. Anyone who clones can do the same. So the key must be revoked."
+        "text": "`git rm` made D, a snapshot without the file. C is unchanged and came with the clone, so `git show C:secrets.txt` prints the key. The key must be revoked."
       }
     },
     {
@@ -721,7 +726,7 @@
         "gt-remote",
         "gt-shell"
       ],
-      "prose": "Your `.gitignore` lists `data/` and `.env`. You have committed twice since your last push, and edited `returns.py` since.",
+      "prose": "Your `.gitignore` lists `data/` and `.env`, and neither was ever committed. You have committed twice since your last push, and edited `returns.py` since.",
       "question": "Select all that apply to your next `git push`.",
       "widget": {
         "kind": "multi",
@@ -746,7 +751,7 @@
           {
             "id": "sendsenv",
             "text": "It sends .env, because the key is needed",
-            "why": "Ignored files are never committed, so push has nothing of theirs to send."
+            "why": "They were never committed, so push has nothing of theirs to send."
           },
           {
             "id": "always",

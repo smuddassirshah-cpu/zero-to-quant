@@ -88,10 +88,26 @@ lv.expect("l4", "quiz[1].widget.answer", hunk(q1)[1])
 lv.claim(len(q1) == 5, "l4 quiz[1]: wrong 5 counts every line, the minus line included")
 lv.expect("l4", "quiz[1].explain.text", "2 + 2 = 4")
 
-# review-1 items[0]: suspects 6, 7, 8; bisection needs at most ceil(log2(3)) = 2 runs
-sus = [6, 7, 8]
-lv.claim(math.ceil(math.log2(len(sus))) == 2, "review-1 items[0]: at most two runs")
-lv.expect("review", "items[0].explain.text", "at most two runs")
+# review-1 items[0] (finding 31): good on 1, broken on 16: suspects 2..16 (15). Each run keeps at most ceil(n/2).
+n, steps_, seq = 15, 0, [15]
+while n > 1:
+    n, steps_ = math.ceil(n / 2), steps_ + 1
+    seq.append(n)
+lv.claim(len(range(2, 16 + 1)) == 15, "review-1 items[0]: 15 suspects, commits 2 to 16")
+lv.claim(seq == [15, 8, 4, 2, 1] and steps_ == 4 == math.ceil(math.log2(15)), "review-1 items[0]: 15, 8, 4, 2, 1 is four runs")
+lv.expect("review", "items[0].widget.answer", 4)
+lv.expect("review", "items[0].explain.text", "15, 8, 4, 2, 1")
+lv.expect("review", "items[0].widget.wrong[0].value", 15)
+lv.claim(len(range(2, 15 + 1)) == 14, "review-1 items[0]: wrong 'between' counts commits 2 to 15, 14")
+lv.expect("review", "items[0].widget.wrong[1].value", 14)
+
+# review-1 items[5] (finding 32): the staged hunk has 3 old and 3 new lines, and the key is not the longest option
+r5 = [(' ', 'prices'), ('-', 'w20'), ('+', 'w60'), (' ', 'signal')]
+lv.claim(hunk(r5) == (3, 3), "review-1 items[5]: @@ -4,3 +4,3 @@")
+lv.expect("review", "items[5].prose", "@@ -4,3 +4,3 @@")
+opts5 = get_opts = json.load(open(os.path.join(COURSES, 'git', 'review-1.json')))['items'][5]['widget']['options']
+lens5 = {o['id']: len(o['text']) for o in opts5}
+lv.claim(lens5['good'] == 45 and lens5['more'] == 38 and lens5['good'] > lens5['more'], "review-1 items[5]: key 45 characters against 38", note=str(lens5))
 
 # review-1 items[3]: the hunk and the cost
 r3 = [(' ', 'pnl'), ('-', 'old'), ('+', 'cost'), ('+', 'pnl2'), (' ', 'equity')]
@@ -99,8 +115,27 @@ lv.claim(hunk(r3) == (3, 4), "review-1 items[3]: @@ -20,3 +20,4 @@")
 lv.claim(round(0.0005 * 1e4) == 5 and round(0.0010 * 1e4) == 10, "review-1 items[3]: 0.0005 is 5 bp, 0.0010 is 10 bp")
 lv.expect("review", "items[3].explain.text", "5 bp to 10 bp")
 
-# review-1 items[7]: add, commit, save, commit, add, commit
-lv.claim(commits_made(['add', 'commit', 'save', 'commit', 'add', 'commit']) == 2, "review-1 items[7]: two new commits")
+# review-1 items[7] (finding 33): add a b, restore --staged b, commit One, commit Two, add b, commit Three
+def commits_sets(steps):
+    staged, made, log = set(), 0, []
+    for op, arg in steps:
+        if op == 'add':
+            staged |= set(arg)
+        elif op == 'unstage':
+            staged -= set(arg)
+        elif op == 'commit':
+            if staged:
+                made += 1
+                log.append((arg, sorted(staged)))
+                staged = set()
+            else:
+                log.append((arg, None))
+    return made, log
+
+
+made7, log7 = commits_sets([('add', 'ab'), ('unstage', 'b'), ('commit', 'One'), ('commit', 'Two'), ('add', 'b'), ('commit', 'Three')])
+lv.claim(made7 == 2, "review-1 items[7]: two new commits")
+lv.claim(log7 == [('One', ['a']), ('Two', None), ('Three', ['b'])], "review-1 items[7]: One takes a.py, Two is refused, Three takes b.py")
 lv.expect("review", "items[7].widget.answer", 2)
 
 # homework-1 items[2]: init, add, A, save, B, add, C, checkout A -- file (stages it), D
@@ -114,7 +149,8 @@ first = next(h for h, s in up if s == 2.40)
 lv.claim(first == "41f0e8a", "homework-1 items[4]: 41f0e8a is the first 2.40 in time order")
 lv.expect("homework", "items[4].explain.text", 0.85)
 lv.expect("homework", "items[4].explain.text", 0.70, fmt="0.70")
-lv.stated("homework", "items[4].canvas.params.rows[0][0]", "HEAD →", False)   # git prints "HEAD -> main" (finding)
+lv.stated("homework", "items[4].canvas.params.rows[0][0]", "HEAD →", False)   # git prints "HEAD -> main" (finding 3, fixed)
+lv.claim_text("homework", "items[4].canvas.params.rows[0][0]", "(HEAD -> main)", "(HEAD -> main)" in lv.text("homework", "items[4].canvas.params.rows[0][0]"), "homework-1 items[4]: HEAD -> main with an ASCII arrow")
 
 # homework-1 items[6]: the code item's stated test count
 hw = json.load(open(os.path.join(COURSES, 'git', 'homework-1.json')))
