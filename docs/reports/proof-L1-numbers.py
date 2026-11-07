@@ -164,5 +164,27 @@ lv.stated('l1', 'quiz[0].explain.text', 'Only the first sentence', False)
 lv.stated('review', 'items[0].explain.text', 'Only the first line', False)
 lv.stated('homework', 'items[3].feedback.correct', 'The first and third are true', False)
 
+
+# ---------- fix pass: the new wording must be present (a revert fails these) ----------
+def has(ref, path, phrase, present=True):
+    t = lv.text(ref, path)
+    lv.claim((phrase in t) == present, f'{ref} {path} {"has" if present else "lacks"} {phrase!r}')
+
+has('l1', 'screens[2].prose', 'A prime is a whole number above 1 whose only whole-number divisors are 1 and itself')
+lv.claim(91 > 1 and 91 % 7 == 0 and 91 // 7 == 13, 'fix pass: 91 is above 1 and has the divisor 7, so it is not prime')
+has('l1', 'quiz[0].explain.text', 'the sentence about the median trade')
+has('l1', 'screens[4].explain.text', "yesterday's loss was large")
+has('l1', 'quiz[3].explain.text', '`0.30000000000000004`')
+has('review', 'items[0].explain.text', 'giving the spread as 12 basis points')
+has('review', 'items[6].prose', 'the fund beat its benchmark and stayed within its risk limit')
+has('homework', 'items[3].feedback.correct', r'$\forall k\ \exists d\ \forall t$ and $\forall k\ \forall d\ \exists t$ are true')
+has('l3', 'screens[9].widget.options[3].why', 'which this level comes back to')
+has('l5', 'quiz[0].widget.options[2].why', 'turned “did not rise” into “fell”')
+has('l5', 'screens[9].widget.options[1].why', 'You kept “every day”. The negation needs only some day.')
+has('homework', 'items[5].explain.text', r'for some $\varepsilon$, however late we start, a later term lies at least $\varepsilon$ from $L$')
+has('l3', 'quiz[2].widget.options[0].text', 'T, T and F, F')
+lv.claim(all(imp(P, Q) == ((not P) or Q) for P, Q in ROWS) and [not (P and Q) for P, Q in ROWS] == [False, True, True, True], 'review-1 De Morgan item: not (P and Q) is true on three rows, as "not P or not Q"')
+lv.claim(all((not (P and Q)) == ((not P) or (not Q)) and (not (P and Q)) != ((not P) and (not Q)) for P, Q in [(True, False), (False, True)]), 'review-1 distractor "and" differs from "or" on the middle rows')
+
 lv.check_wrongs()
 lv.report()
