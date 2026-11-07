@@ -68,3 +68,38 @@ Format: `N. item [index] path | severity | what is wrong, with evidence | exact 
 2. Numeric widget: "Give a fraction" cannot be required. `e-mixed-subtract` grades 1.583 and 38/24 as right. GCSE questions also ask for simplest form or a mixed number. A widget option such as `"form": "fraction"` would help: accept only a/b or a mixed number, optionally only in lowest terms, with a slip line for a decimal. It is a sibling of the `places` request in `review-number-sense-1-3.md` Engine 1.
 3. Validator: warn when a numeric widget or table cell is asked "to N decimal places" and its `tol.abs` exceeds half a unit in that place. `e-inverse-square` asks for 2 decimal places with `tol.abs` 0.01, so 1.34 is graded right for 4/3 (finding 5).
 4. Reader tooling: `numbers_lib.py` has no exam entry point, so each exam reader re-implements an `Exam(Level)` class (exam-2.2 and this script). The brief's name `numbers.py` also breaks a standard-library-only script: `fractions` imports `numbers`, as NumPy does. Wanted: `numbers_lib.Exam(path)` and a script name such as `exam-numbers.py` in the brief.
+
+## Fix pass
+
+Edited only `app/content/exams/topic-0.1.json` and `docs/reviews/exam-0.1-scripts/numbers.py`. No item id or paper id changed. Every corrected number was recomputed with exact fractions in the script (297 of 297 checks pass, exit 0). Scratch: `<scratchpad>/fix-exam-0.1/` (`apply.py`, `nums.py`, `typed.mjs`).
+
+### Findings
+
+1. e-recurring-proof: fixed as proposed (order item over 30, distractors d1 and d2, `same` dropped). Basis: $\tfrac{5}{6} + \tfrac{7}{15} = \tfrac{25}{30} + \tfrac{14}{30} = \tfrac{39}{30} = \tfrac{13}{10}$ with HCF 3; the 2s-and-5s rule is taught in the fractions-to-decimals lesson; $\tfrac{12}{21} = \tfrac{4}{7}$. Graded answer changed (new order).
+2. e-fraction-power: fixed as proposed. Cube roots are taught (number-sense l11 "undoing a square", $\sqrt[3]{27} = 3$). Cube root of 8/27 is 2/3 (cubed 8/27), square 4/9. Slips 4/27, 4/3, 64/729. Graded answer changed (2.25 to 4/9).
+3. e-minus-eight: fixed as proposed. Option c is now $(-4)^2 \div (-2) = -8$ (key), option d $-4^2 \div (-2) = 8$. Keys stay a, b, c.
+4. e-inverse-square: fixed as proposed (inverse-proportion table). $xy = 24$: 8, 4.8, 0.6. Direct slips 18, 30, 6.666667. Graded answers changed. The slip ids and the cell ids are both byKey keys; the validator raises no `[table-slip-key]` warning.
+5. e-inverse-square tolerance: superseded by 4 (the 4/3 cell is gone). Check on the real `grade.js` for the new cells (all `tol.abs` 0.005): 8.01, 4.81, 4.79, 0.61 and 0.59 grade generic; 8, 4.8, 24/5, 0.6 and 3/5 grade right. The script asserts 0.005 on every typed cell.
+6. e-ratio-gap: fixed as proposed. One part $960 \div 4 = 240$, 11 parts £2,640, shares 1,440, 720, 480. Slips 3,520, 1,760, 960, 1,920. Graded answer changed (3,520 to 2,640).
+7. e-before-fall: fixed as proposed, with one departure: the question now reads "before the two moves" (the proposal left "before the fall", which would mislead). $0.85 \times 1.2 = 1.02$, $306 \div 1.02 = 300$; slips 291.428571, 360, 290.7, 312.12. Graded answer changed (360 to 300).
+8. e-three-moves: fixed as proposed. $0.7 \times 1.2 = 0.84$, $\times 1.25 = 1.05$, a 5% rise. Slips 15% and the typed 105 (`multiplier`); 110 now grades generic by design. Added `over100: true` (validator advisory on the 1.05 slip). Graded answer changed (10% to 5%).
+9. e-terminating: fixed as proposed. 13/80 = 0.1625 (80 = $2^4 \times 5$), 7/24 = 0.291666... recurs, both in lowest terms; "terminating decimal" is defined in the question. Key ids unchanged (a, b, c).
+10. e-estimate: fixed as proposed. $10 \times 0.05 \div 0.002 = 250$; exact 219.95 so "about 220". Slips 225, 2500, 0.001. Graded answer changed (key text 250).
+11. e-percent-build: fixed as proposed. 39% of £360 = 140.40 (144 less 3.60). Slips 14.04, 144, 147.6. Graded answer changed.
+12. e-ratio-units: fixed as proposed. 120 : 45 : 15 = 8 : 3 : 1 (HCF 15). Option b is 24 : 900 : 300 = 2 : 75 : 25.
+13. e-tranches: fixed as proposed. $\tfrac{9}{2} \div \tfrac{5}{8} = 7\tfrac{1}{5}$, 7 full tranches use $\tfrac{35}{8}$, leaving $\tfrac{1}{8}$ (0.125, £125,000); cross-check $\tfrac{1}{5} \times \tfrac{5}{8}$. Slips 0.2, 7, 7.2, 2.8125. Graded answer changed (12 to 1/8).
+14. e-mixed-subtract: fixed ("single fraction" wording in `generic` and `explain.text`).
+15. e-two-currencies: fixed (€ wording in prose, `rows[1][0]` and `byKey.r1c1`).
+16. e-loss-share: fixed ("about two thirds"; 85/125 = 0.68).
+17, 18, 19: no change, as the reader said.
+20. minutes and pace: `minutes` 50 and `pace` on all 23 items. Rule: AUTHORING section 5 says set `minutes` to the time the exam really needs. Paces follow the topic-0.6 bands (d2 45 to 60 s, d3 75 to 150 s, d4 150 to 210 s, d5 300 s), and the reader's table with +20 s each for the three reworked items (ratio-units 80, tranches 110, before-fall 95) sums to 2,730 s, 45.5 minutes, so 50 leaves about 4 minutes to check. `manifest.json` `examMinutes` now reads 50 (the validator rewrites it).
+
+### Gates
+
+- Number script: `python3 docs/reviews/exam-0.1-scripts/numbers.py` exit 0, 297 of 297 (was 188 of 204, exit 1). The "taught" and "fresh" checks now pass because the markers are gone, and each rewritten item also asserts its old marker is absent and its new key, slips, say-values and typed forms. Reverting any fix fails a check. The advisory "check by hand" lines remain, as in the review.
+- Validator: 0 errors, 4,078 warnings, none naming `topic-0.1`; manifest changed only in `examMinutes`.
+- Freshness: `node tools/fresh-check.mjs --exam topic-0.1 --min-run 10`: 0 hits. Literal grep of `number-sense` and `ratio` for each new key noun and number ("39%", "140.4", "stamp duty", "exchange fee", "8 : 3 : 1", "tranche", "13}{80}", "7}{24}", "0.1625", "9.62", "0.00213", "falls 15%", "6 : 3 : 2", "2640", "xy = 24", "40x", "7}{15}", "13}{10}", "39}{30}", "-4^2", "(-4)^2", "€1,840"): 0 hits each. Incidental: "falls 30%" 1 (a 30% rise then fall quiz, different task), "inversely proportional" 1 (the lesson's own 18 and 4 item, different numbers), "€1.15" 3 (the known review-3 rate), "cube root" 9 (taught).
+- Playthrough `--exam topic-0.1 --local-cdn <pkgs>`: 23 of 23, passed. `--mobile`: 23 of 23, passed.
+- Real grader (`typed.mjs`): every key passes in its typed forms (fractions, mixed numbers, decimals, £ and commas); every slip routes to its id.
+- Voice: 432 sentences, 0 over 35 words, 0 explanations over three sentences; no dash or `!`.
+- Deferred (engine, already in the review's Engine section): fresh-check blind to repeated setups, `"form": "fraction"` option (items 2 and 13 ask for a fraction but accept decimals), `places` validator rule, `numbers_lib.Exam`.
