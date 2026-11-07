@@ -217,8 +217,8 @@
         "pf-idioms",
         "pf-functions"
       ],
-      "title": "A generator, asked twice",
-      "prose": "```python\ndef gains(closes):\n    for a, b in zip(closes, closes[1:]):\n        yield b / a - 1\n\ng = gains([100.0, 110.0, 99.0])\nprint(len(list(g)), len(list(g)))\n```",
+      "title": "A generator after `break`",
+      "prose": "```python\ndef gains(closes):\n    for a, b in zip(closes, closes[1:]):\n        yield b / a - 1\n\ng = gains([80.0, 84.0, 82.0, 86.0, 85.0])\nfor r in g:\n    if r < 0:\n        break\nprint(len(list(g)))\n```",
       "question": "What does it print?",
       "widget": {
         "kind": "choice",
@@ -226,32 +226,32 @@
         "options": [
           {
             "id": "a",
-            "text": "`2 0`",
+            "text": "`2`",
             "correct": true
           },
           {
             "id": "b",
-            "text": "`2 2`",
-            "why": "You expected the generator to start again. Once it has run out, it yields nothing more."
+            "text": "`4`",
+            "why": "You expected `list` to start the generator again. It carries on from where the loop left it."
           },
           {
             "id": "c",
-            "text": "`3 0`",
-            "why": "You counted the closes. Three closes make two neighbouring pairs, so two returns."
+            "text": "`0`",
+            "why": "You expected the loop to use the generator up. `break` left it paused after the second return."
           },
           {
             "id": "d",
-            "text": "`TypeError`",
-            "why": "You expected `list` to refuse a generator. It asks for values until the generator runs out."
+            "text": "`3`",
+            "why": "You expected the return that triggered `break` to come round again. Once yielded, a value is gone."
           }
         ]
       },
       "feedback": {
-        "correct": "Two returns, then nothing: a generator runs once.",
-        "generic": "Count the pairs of neighbouring closes, then ask what a used-up generator gives."
+        "correct": "The loop took two returns, so `list` collects the last two.",
+        "generic": "Count the returns, then count how many the loop takes before `break`."
       },
       "explain": {
-        "text": "`gains` yields one return per neighbouring pair, 0.1 and −0.1, so the first `list` holds two. That uses the generator up. The second `list` is empty, so it prints `2 0`."
+        "text": "Five closes give four returns, and the second, 82 / 84 − 1, is the first below 0. The loop takes those two, and `break` leaves the generator paused. `list(g)` collects the last two, so it prints `2`."
       }
     },
     {
@@ -938,7 +938,7 @@
         "pf-modules"
       ],
       "title": "Tests that catch a bug",
-      "prose": "This `max_drawdown` should return the worst fall from the running peak, as a positive fraction. It has a bug, and `math` is imported.\n\n```python\ndef max_drawdown(closes):\n    worst = 0.0\n    for c in closes:\n        worst = max(worst, 1 - c / closes[0])\n    return worst\n```",
+      "prose": "This `max_drawdown` should return the worst fall from the running peak, as a positive fraction. It has a bug. `math` is imported.\n\n```python\ndef max_drawdown(closes):\n    peak, worst = closes[0], 0.0\n    for c in closes:\n        if c > peak:\n            peak, worst = c, 0.0\n        worst = max(worst, 1 - c / peak)\n    return worst\n```",
       "question": "Select all that apply: which asserts fail on this code?",
       "widget": {
         "kind": "multi",
@@ -947,31 +947,31 @@
           {
             "id": "a",
             "text": "`assert math.isclose(max_drawdown([100.0, 80.0]), 0.2)`",
-            "why": "You tested a path that falls from day 1. There the first close is the peak, so the bug hides."
+            "why": "You expected a single fall to fail. With no new high after day 1, nothing is reset, so the code gives 0.2."
           },
           {
             "id": "b",
-            "text": "`assert math.isclose(max_drawdown([100.0, 120.0, 90.0]), 0.25)`",
+            "text": "`assert math.isclose(max_drawdown([100.0, 60.0, 120.0, 108.0]), 0.4)`",
             "correct": true
           },
           {
             "id": "c",
-            "text": "`assert max_drawdown([100.0, 110.0, 121.0]) == 0.0`",
-            "why": "You tested a path that never falls. The buggy code also gives 0.0, so the bug hides."
+            "text": "`assert math.isclose(max_drawdown([100.0, 90.0, 110.0, 77.0]), 0.3)`",
+            "why": "You expected any later high to show the bug. Here the deepest fall comes after the last high, so the reset loses only the 0.1."
           },
           {
             "id": "d",
-            "text": "`assert math.isclose(max_drawdown([50.0, 100.0, 75.0]), 0.25)`",
+            "text": "`assert math.isclose(max_drawdown([200.0, 150.0, 220.0, 187.0]), 0.25)`",
             "correct": true
           }
         ]
       },
       "feedback": {
-        "correct": "Only a path with a new high before its fall shows the bug.",
-        "generic": "Work out what the code returns for each path, then compare it with the true drawdown."
+        "correct": "Only a path whose deepest fall comes before a later new high shows the bug.",
+        "generic": "Run the code on each path, resetting `worst` where it does, then compare with the true drawdown."
       },
       "explain": {
-        "text": "The code measures every fall from the first close, not from the running peak. The two paths that rise first give 0.1 and 0.0 against a true 0.25. A path that falls from day 1, or never falls, hides the bug."
+        "text": "The code sets `worst` back to 0 at every new high, so it keeps only the worst fall since the last high. The paths through 60.0 and 150.0 fall deepest before a later high, and the code gives 0.1 and 0.15 against a true 0.4 and 0.25. A single fall, or a deepest fall after the last high, hides the bug."
       }
     },
     {
