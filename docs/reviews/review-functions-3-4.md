@@ -155,3 +155,5 @@ From review-functions-1-2 finding 28: fixed, l17 s1 prose now "Earlier you undid
 From review-functions-1-2 finding 29: fixed, the same $gf(x)$ line as finding 14 in l16 s8.
 
 Gates: `functions-L3-numbers.py` exit 0 (222 of 222); `functions-L4-numbers.py` exit 0 (259 of 259); voice scan 0 sentences over 35 words and 0 over three sentences in L3 and L4 (3 hits remain in L1 and L2); validator 0 errors (remaining L3 and L4 warnings: l15 s7 `key-length`, which the reader judged not a giveaway, and a few O2 length notes); playthrough of 9 lessons and 4 sets, with and without `--mobile`, all passed.
+
+Orchestrator (session W): the engine part deferred above (answers typed as `y = ...`, `f(x) = ...`, `u_n = ...`, `n = ...` or a segment name) is fixed by ENGINE-BACKLOG 619 and 620; `test-expr-equations.mjs` covers it (all 20 functions and series expression widgets pass with those forms).

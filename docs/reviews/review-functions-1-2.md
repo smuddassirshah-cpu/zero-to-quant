@@ -152,3 +152,5 @@ Gates:
 - Voice scan (35): 0 sentences over 35 words and 0 explanations over three sentences, whole course. Nothing left in L3 or L4.
 - Validator: 0 errors (4165 warnings app-wide); the remaining L1 and L2 warnings are the five 20-to-35-word sentences and l9 `quiz[2]` `key-length` (judged not a giveaway).
 - Playthrough with `--local-cdn`: l1 to l9, review-1, review-2, homework-1, homework-2, desktop and `--mobile`: 26 of 26 All passed, no reruns. No code items in these levels.
+
+Orchestrator (session W): the engine part deferred above (answers typed as `y = ...`, `f(x) = ...`, `u_n = ...`, `n = ...` or a segment name) is fixed by ENGINE-BACKLOG 619 and 620; `test-expr-equations.mjs` covers it (all 20 functions and series expression widgets pass with those forms).

@@ -170,3 +170,5 @@ Gates:
 - `VOICE_BASE=app/content/courses/trig python3 docs/reviews/voice-scan.py 35`: 0 sentences over 35 words, 0 explanations over three sentences.
 - `cd app && node tools/validate.mjs`: 0 errors.
 - Playthrough with `--local-cdn`, desktop and `--mobile`: l1, l2, l4 to l12 lessons and review-1 to 3, homework-1 to 3 (17 files each), all passed in both modes. l3 and l13 are unchanged. No code items in the course.
+
+Orchestrator (session W): the engine part deferred above (answers typed as `y = ...`, `f(x) = ...`, `u_n = ...`, `n = ...` or a segment name) is fixed by ENGINE-BACKLOG 619 and 620; `test-expr-equations.mjs` covers it (all 20 functions and series expression widgets pass with those forms).

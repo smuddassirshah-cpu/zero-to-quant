@@ -125,3 +125,5 @@ Gates:
 - Fresh-check on homework-1, homework-2, review-2: 0 hits.
 - Playthroughs with `--local-cdn`, desktop and `--mobile`: l1, l2, l4, l5, l6, l7, l8, l9, review-2, homework-1, homework-2, all 22 green, no timeouts or reruns.
 - Code items: none in these files.
+
+Orchestrator (session W): the engine part deferred above (answers typed as `y = ...`, `f(x) = ...`, `u_n = ...`, `n = ...` or a segment name) is fixed by ENGINE-BACKLOG 619 and 620; `test-expr-equations.mjs` covers it (all 20 functions and series expression widgets pass with those forms).

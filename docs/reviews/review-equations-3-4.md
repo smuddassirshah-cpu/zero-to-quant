@@ -148,3 +148,5 @@ Status per finding (27 fixed, 0 disputed, 1 partly deferred). Every new number w
 Gates: number scripts L1 to L4 exit 0 (242, 368, 244, 220 checks); voice scan 0 sentences over 35 words and 0 explanations over three sentences; validator 0 errors. Playthrough: 24 of 24 "All passed" (l10 to l17, review-3, review-4, homework-3, homework-4; desktop and mobile; local CDN; no reruns).
 
 Orchestrator (session W): the optional `requires` on functions/L2 for equations L4 is not added; l16 `screens[4]` now defines gradient at first use, so the edge would only gate.
+
+Orchestrator (session W): the engine part deferred above (answers typed as `y = ...`, `f(x) = ...`, `u_n = ...`, `n = ...` or a segment name) is fixed by ENGINE-BACKLOG 619 and 620; `test-expr-equations.mjs` covers it (all 20 functions and series expression widgets pass with those forms).
