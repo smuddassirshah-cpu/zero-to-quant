@@ -74,13 +74,13 @@ print('proposed RI4 test:', got)
 ns = {}
 exec(S, ns)
 exec(w['postlude'], ns)
-print('proposed CI3 test 3:', ns['run_fs']([('write', '/r/a', 'abcdef'), ('write', '/r/a', 'xy'), ('size', '/r/a'), ('size', '/r'), ('size', '/'), ('write', '/r/a', ''), ('size', '/r'), ('read', '/r/a')]))
-print('proposed CI3 test 5:', ns['run_fs']([('ls', '/nope'), ('read', '/nope'), ('size', '/nope'), ('mkdir', '/m'), ('read', '/m'), ('size', '/m'), ('ls', '/'), ('mv', '/nope', '/x'), ('ls', '/'), ('write', '/m/k', 'abc'), ('mkdir', '/m'), ('ls', '/m'), ('size', '/m')]))
+print('proposed CI3 test 3:', ns['run_drive']([('write', '/r/a', 'abcdef'), ('write', '/r/a', 'xy'), ('size', '/r/a'), ('size', '/r'), ('size', '/'), ('write', '/r/a', ''), ('size', '/r'), ('read', '/r/a')]))
+print('proposed CI3 test 5:', ns['run_drive']([('ls', '/nope'), ('read', '/nope'), ('size', '/nope'), ('mkdir', '/m'), ('read', '/m'), ('size', '/m'), ('ls', '/'), ('mv', '/nope', '/x'), ('ls', '/'), ('write', '/m/k', 'abc'), ('mkdir', '/m'), ('ls', '/m'), ('size', '/m')]))
 for tag, code in (('size of a file', size_file), ('mkdir replaces', mk)):
     n2 = {}
     exec(code, n2); exec(w['postlude'], n2)
-    a = n2['run_fs']([('write', '/r/a', 'abcdef'), ('write', '/r/a', 'xy'), ('size', '/r/a'), ('size', '/r'), ('size', '/'), ('write', '/r/a', ''), ('size', '/r'), ('read', '/r/a')])
-    b = n2['run_fs']([('ls', '/nope'), ('read', '/nope'), ('size', '/nope'), ('mkdir', '/m'), ('read', '/m'), ('size', '/m'), ('ls', '/'), ('mv', '/nope', '/x'), ('ls', '/'), ('write', '/m/k', 'abc'), ('mkdir', '/m'), ('ls', '/m'), ('size', '/m')])
+    a = n2['run_drive']([('write', '/r/a', 'abcdef'), ('write', '/r/a', 'xy'), ('size', '/r/a'), ('size', '/r'), ('size', '/'), ('write', '/r/a', ''), ('size', '/r'), ('read', '/r/a')])
+    b = n2['run_drive']([('ls', '/nope'), ('read', '/nope'), ('size', '/nope'), ('mkdir', '/m'), ('read', '/m'), ('size', '/m'), ('ls', '/'), ('mv', '/nope', '/x'), ('ls', '/'), ('write', '/m/k', 'abc'), ('mkdir', '/m'), ('ls', '/m'), ('size', '/m')])
     print(f'  slip "{tag}" on proposed tests 3 and 5:', a, b)
 for tag, code in (('dedupe', dedupe), ('first-last', firstlast)):
     n3 = {}

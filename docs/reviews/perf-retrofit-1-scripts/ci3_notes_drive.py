@@ -19,7 +19,7 @@ class Entry:
 def _parts(path):
     return tuple(p for p in path.split('/') if p)
 
-class FileSystem:
+class NotesDrive:
     def __init__(self):
         self.top = Entry()
         self.top.kids = {}

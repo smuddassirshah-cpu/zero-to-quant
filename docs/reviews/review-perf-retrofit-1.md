@@ -56,3 +56,31 @@ Read at HEAD `5517c1c` on `sx/read-perf-1`. No content file was edited.
 - Voice: all six items are clean (method above).
 
 Totals: Must 0. Should 13 (BZ1-1, BZ1-2, BZ2-1, RI2-1, RI2-2, RI2-3, RI4-1, RI4-2, CI3-1, CI3-2, CI3-3, CI4-1, CI4-2). Could 8 (BZ1-3, BZ2-2, BZ2-3, RI2-4, RI2-5, RI2-6, RI4-3, CI4-3).
+
+## Fix pass
+
+Counts: 21 findings, 21 fixed, 0 disputed, 0 deferred. Every number was recomputed before it was written (author scripts and `findings_assert.py`). Ids unchanged; no other item, `course.json`, `perf-pending.json` or engine file touched.
+
+1. BZ1-1: fixed, prompt and the across-three case now say the extra square is at right angles to the line. Basis: with a horizontal I piece the extra square is in line, so it could not be in column c or c + 2; a right-angled square sits above or below an end, in column c or c + 2.
+2. BZ1-2: fixed, points 1, 2, 4, 3 with row 4 still required. Basis: without row 3 the best is 1 + 2 + 3 = 6 < 7 (`findings_assert.py`, tick-set search).
+3. BZ1-3: fixed, row 3 reads "along one stripe and across three stripes".
+4. BZ2-1: fixed, generic feedback no longer names the pairing.
+5. BZ2-2: fixed, the explain gives the reason: a guess never depends on one's own hat, so it is right on half the colourings. Basis: the total over colourings is n 2^(n-1) (`brainteasers-2-perf-numbers.py`).
+6. BZ2-3: fixed, sentence added that with two people `left` and `right` are the same hat.
+7. RI2-1: fixed, rows 1 to 3 required, row 4 optional (so the all-required warning stays quiet). Basis: no tick set reaching 7 omits any of rows 1 to 3; the author script now asserts the pattern.
+8. RI2-2: fixed, baskets are of standardised returns. Basis: only for unit-variance returns is the correlation matrix the covariance, so eigenvectors give uncorrelated baskets with the eigenvalues as variances (`aloud_numbers.py`, covariance 0.041 on raw returns).
+9. RI2-3: fixed, follow-up 1 asks about predicting tomorrow, and the model separates same-day share from forecast. Basis: if correlations hold, the same-day share of the market component stays about 41%; it gives no direction.
+10. RI2-4: fixed, 50 - 26.1 = 23.9, 23.9 / 47 = 0.5085 (0.51), 0.51 x 1.7325 = 0.88. Checked in the author script.
+11. RI2-5: fixed, "components also drift ... the smaller loadings reshuffle". Basis: the equicorrelation case keeps equal loadings, only the eigenvalue 1 + 49 x 0.6 = 30.4 grows, so the claim is now about drift in general.
+12. RI2-6: fixed, rows 1 and 2 start "Tick only if all are stated" and "Tick only if both are given".
+13. RI4-1: fixed, new hidden test 9 `quote_at([(0, 100.0), (0, 101.0), (0, 105.0), (10, 110.0)], [5, 0, 5], 60)` expecting [106.0, 102.0, 106.0]. Basis: mean at 0 is 306/3 = 102, at 5 it is 102 + (110 - 102) x 0.5 = 106; the dedupe slip gives [106, 102], first-last gives [106.25, 102.5, 106.25]. `big_case` is test 10, byKey and `how` updated, a byKey for test 9 added; author script has the two slips as planted bugs failing test 9.
+14. RI4-2: fixed by the first option (main session may still choose the second). The report now says the objective is l16's own product (screen 10) and names the three new rules as the fresh part: `max_gap` window inside and at the ends, asked seconds in order, log cost.
+15. RI4-3: fixed, report records the `fresh-check` hit `big_case`.
+16. CI3-1: fixed, test 3 gains `('size', '/r/a')`, expect [2, 2, 2, 0, '']. Basis: a file has its own length, 'xy' is 2; the size-of-file slip gives [0, 2, 2, 0, ''] and fails test 3 first.
+17. CI3-2: fixed, test 5 gains write `/m/k`, `mkdir /m`, `ls`, `size`, expect ['k'] and 3 (the replacing slip gives [] and 0, first fails test 5). byKey test 10 rewritten as a neutral "if it timed out" line.
+18. CI3-3: fixed, `FileSystem` is `NotesDrive` and `run_fs` is `run_drive` throughout the item, scripts and report; the report states which behaviours repeat l12 on purpose and which are new.
+19. CI4-1: fixed, Plan B, row 3, trade-off and explain say "$O(1)$ memory beyond the sort" with the `std::sort` log n and Python n/2 caveat. Basis: CPython `listsort.txt` merge buffer up to n/2; `std::sort` introsort recursion about log n.
+20. CI4-2: fixed, points 1, 1, 3, 4, 1; row 4 (4 points) grades the typed code (5 on the example) and the look-up order. Basis: without row 4 the best is 6.
+21. CI4-3: fixed, "So each target costs $O(d)$, not $O(n)$." appended to follow-up 2 (d distinct values walked per target).
+
+Gates (venv Python): the six `docs/reports/<course>-<n>-perf-numbers.py` exit 0; the five reader scripts and `findings_assert.py` exit 0 (`run_fs` and `FileSystem` renamed in `findings_assert.py` and `ci3_notes_drive.py`). Code items: solutions pass, starters fail, every planted bug fails a non-timing test (CI3 now 12 mutants, RI4 now 10 bugs). Validator 0 errors (4082 warnings, +3 long-sentence and similar, all under the 35-word gate), manifest restored. Voice scan 0 and 0 for brainteasers, research-int and coding-int. Playthrough of all six homeworks, with and without `--mobile`: All passed.
