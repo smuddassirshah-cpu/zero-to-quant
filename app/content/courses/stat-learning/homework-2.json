@@ -416,6 +416,78 @@
           "text": "Expects an honest test $R^2$ near 0% to 2%, possibly negative, and calls that normal for returns"
         }
       ]
+    },
+    {
+      "id": "h-ridge-formula",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "sl-regularise",
+        "sl-linear"
+      ],
+      "title": "A ridge in the desk's units",
+      "prose": "Each row of `X` is a share-month in month order, with features in mixed units such as % and £m. `y` is the next month's return in %. The first `n_train` rows are training rows and the rest are test rows.\n\nStandardise the features as `StandardScaler` does, then fit ridge with penalty `alpha`: minimise the sum of squared errors plus `alpha` times the sum of squared coefficients, leaving the intercept unpenalised. Fit everything on the training rows only.\n\nThe desk wants the fitted model as a formula in the raw units of `X`: an intercept and one coefficient per feature, so that `intercept + X @ coefs` gives the model's forecasts.",
+      "question": "Write `ridge_formula(X, y, n_train, alpha)`, returning `(intercept, coefs, test_mse)`, with `coefs` a list and `test_mse` the mean squared error on the test rows.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def ridge_formula(X, y, n_train, alpha):\n    \"\"\"(intercept, coefs, test_mse):\n    a scaled ridge fitted on the first\n    n_train rows, in the raw units of X.\"\"\"\n    # Your code here\n    return None\n",
+        "solution": "import numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.linear_model import Ridge\n\ndef ridge_formula(X, y, n_train, alpha):\n    X = np.asarray(X, dtype=float)\n    y = np.asarray(y, dtype=float)\n    pipe = Pipeline([('scale', StandardScaler()), ('model', Ridge(alpha=alpha))])\n    pipe.fit(X[:n_train], y[:n_train])\n    scale, model = pipe.named_steps['scale'], pipe.named_steps['model']\n    coefs = model.coef_ / scale.scale_\n    intercept = model.intercept_ - coefs @ scale.mean_\n    test_mse = np.mean((y[n_train:] - pipe.predict(X[n_train:])) ** 2)\n    return float(intercept), [float(c) for c in coefs], float(test_mse)\n",
+        "examples": [
+          {
+            "setup": "X = [[0], [2], [4], [6], [8]]; y = [1, 2, 4, 5, 6]",
+            "call": "ridge_formula(X, y, 4, 4.0)",
+            "expect": "(1.95, [0.35], 1.5625)",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "setup": "X = [[0], [2], [4], [6], [8]]; y = [1, 2, 4, 5, 6]",
+            "call": "ridge_formula(X, y, 4, 4.0)",
+            "expect": "(1.95, [0.35], 1.5625)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X = [[2.8, 3070, 0.0051], [6.6, 5150, 0.0115], [2.6, 1430, 0.0045], [-10.4, 2530, 0.0059], [7.2, 1840, 0.0047], [3.6, 5430, 0.002], [-4.3, 3100, 0.017], [4.6, 2230, 0.008], [2.9, 1360, 0.0011], [2.4, 2300, 0.0055]]; y = [-0.6, 0.1, -1.1, -0.3, 1.3, 1.3, -2.1, 1.7, 3.0, 1.3]",
+            "call": "ridge_formula(X, y, 7, 2.0)",
+            "expect": "(-0.07322499745045957, [0.04983860125192189, 0.00020331768432021806, -115.89608420923605], 4.6079695596372625)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X = [[2.8, 3070, 0.0051], [6.6, 5150, 0.0115], [2.6, 1430, 0.0045], [-10.4, 2530, 0.0059], [7.2, 1840, 0.0047], [3.6, 5430, 0.002], [-4.3, 3100, 0.017], [4.6, 2230, 0.008], [2.9, 1360, 0.0011], [2.4, 2300, 0.0055]]; y = [-0.6, 0.1, -1.1, -0.3, 1.3, 1.3, -2.1, 1.7, 3.0, 1.3]",
+            "call": "ridge_formula(X, y, 8, 20.0)",
+            "expect": "(0.16755309958825987, [0.031148683110741558, 3.789124486754887e-05, -40.45925247070456], 4.452058726311819)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X = [[16.3, 3740, 0.0052], [-20.4, 2100, 0.0074], [3.3, 2250, 0.0045], [-4.5, 1530, 0.0161], [-3.6, 1040, 0.0043], [-1.7, 2020, 0.0025], [-16.2, 4830, 0.0091], [-1.9, 2350, 0.0055], [-6.9, 7770, 0.0023], [26.6, 2440, 0.0062]]; y = [0.7, -3.0, 0.9, -1.1, 3.3, 2.3, -0.5, 2.7, 0.1, 0.2]",
+            "call": "ridge_formula(X, y, 7, 5.0)",
+            "expect": "(2.116726939369702, [0.04476533597338405, -0.0002299559487184215, -142.37981485624567], 2.3000521152090077)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X = [[-5.2, 3770, 0.0031, 0], [-1.4, 14410, 0.0066, 0], [13.3, 4090, 0.0128, 0], [5.3, 4970, 0.0051, 0], [-13.1, 670, 0.0085, 0], [0, 28360, 0.0039, 0], [-5, 440, 0.0014, 0], [1.2, 8970, 0.0058, 0], [-12.9, 2140, 0.0095, 0], [1.9, 1240, 0.0027, 1]]; y = [2.4, -0.1, 2.0, 2.6, -2.0, -0.5, -0.8, -0.6, -1.2, 0.7]",
+            "call": "ridge_formula(X, y, 7, 1.0)",
+            "expect": "(1.6842685945891103, [0.15441781340972027, -4.652991331531835e-05, -111.33381923219262, 0.0], 0.9645228675211799)",
+            "compare": "isclose"
+          },
+          {
+            "setup": "X = [[-6.4, 3920, 0.0029], [-10.6, 870, 0.0049], [-2, 1140, 0.0068], [3.4, 14770, 0.0011], [9.1, 3650, 0.0023], [0.9, 530, 0.0017], [-4.4, 2740, 0.005], [-6.3, 930, 0.0021], [6, 1590, 0.002], [13.1, 1830, 0.006]]; y = [2.8, 1.4, -3.7, 1.8, -0.7, 1.1, 0.4, -3.4, 0.9, 0.8]",
+            "call": "ridge_formula(X, y, 9, 3.0)",
+            "expect": "(0.6279851604339352, [-0.05038679204913201, 0.00011599809627915236, -314.82753555087254], 6.293929484510339)",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on small data sets of up to 10 rows. Each returned tuple is compared element by element with math.isclose (relative 1e-9). The first run loads scikit-learn and NumPy if your code imports them, which takes 10 to 30 seconds."
+      },
+      "feedback": {
+        "correct": "The formula forecasts exactly as the pipeline does, and every statistic in it came from the training rows.",
+        "generic": "Not quite right. Check that the formula's forecasts on the test rows match a pipeline fitted on the training rows alone."
+      },
+      "explain": {
+        "text": "A scaled coefficient $b_j$ is worth $b_j / s_j$ per raw unit, where $m_j$ and $s_j$ are feature $j$'s training mean and sd, and the intercept absorbs $-\\sum_j b_j m_j / s_j$. A scaler or a fit that sees the test rows, or a penalty on unscaled features, gives a different formula. With $\\alpha > 0$, a training column that never varies gets a zero coefficient."
+      }
     }
   ]
 }
