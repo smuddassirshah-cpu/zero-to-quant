@@ -477,6 +477,148 @@
    "explain": {
     "text": "The ratio is a change of units; the negative forward variance is a data problem the dashboard must catch, log and report."
    }
+  },
+  {
+   "id": "h-black-iv",
+   "performance": "code",
+   "difficulty": 5,
+   "skills": [
+    "od-iv"
+   ],
+   "pace": 1200,
+   "title": "A solver in forward terms",
+   "prose": "The dashboard keeps each expiry's forward $F$ and discount factor $D$ from put-call parity, so its solver needs no $S$, $r$ or $q$. Write `black_iv(price, F, K, D, T, kind=\"call\")`: the volatility at which Black-Scholes, written in $F$ and $D$, matches `price` to within $10^{-8}$. Return NaN when no volatility fits: a price at or outside the no-arbitrage bounds, or a NaN price. Far out-of-the-money quotes worth pennies, and vols up to 300%, must still solve. Raise `ValueError` for a `kind` other than `\"call\"` or `\"put\"`. No pricer is loaded, so write that too.",
+   "question": "Write `black_iv` from a blank start.",
+   "widget": {
+    "kind": "code",
+    "language": "python",
+    "starter": "from math import erf, exp, log, sqrt, pi, nan\n\n\ndef black_iv(price, F, K, D, T, kind=\"call\"):\n    \"\"\"Implied vol from the forward F and discount factor D; NaN if none fits.\"\"\"\n    ...\n",
+    "solution": "from math import erf, exp, log, sqrt, pi, nan\n\n\ndef norm_cdf(z):\n    return 0.5 * (1 + erf(z / sqrt(2)))\n\n\ndef black_price(F, K, D, sigma, T, kind):\n    \"\"\"Black-Scholes in forward terms: S e^(-qT) = D F and K e^(-rT) = D K.\"\"\"\n    v = sigma * sqrt(T)\n    d1 = (log(F / K) + v * v / 2) / v\n    d2 = d1 - v\n    if kind == \"call\":\n        return D * (F * norm_cdf(d1) - K * norm_cdf(d2))\n    return D * (K * norm_cdf(-d2) - F * norm_cdf(-d1))\n\n\ndef black_vega(F, K, D, sigma, T):\n    v = sigma * sqrt(T)\n    d1 = (log(F / K) + v * v / 2) / v\n    return D * F * sqrt(T) * exp(-d1 * d1 / 2) / sqrt(2 * pi)\n\n\ndef black_iv(price, F, K, D, T, kind=\"call\"):\n    \"\"\"Implied vol from the forward F and discount factor D; NaN if none fits.\"\"\"\n    if kind == \"call\":\n        lower, upper = D * max(F - K, 0.0), D * F\n    elif kind == \"put\":\n        lower, upper = D * max(K - F, 0.0), D * K\n    else:\n        raise ValueError(\"kind must be 'call' or 'put'\")\n    if not lower < price < upper:          # also False for a NaN price\n        return nan\n    lo, hi = 1e-6, 1.0\n    while black_price(F, K, D, hi, T, kind) < price:   # widen until hi is above\n        lo, hi = hi, 2 * hi\n        if hi > 1000:\n            return nan\n    sigma = min(max(0.2, lo), hi)\n    for _ in range(200):\n        diff = black_price(F, K, D, sigma, T, kind) - price\n        if abs(diff) < 1e-13:\n            return sigma\n        if diff > 0:\n            hi = sigma                     # too dear: the answer is lower\n        else:\n            lo = sigma\n        v = black_vega(F, K, D, sigma, T)\n        new = sigma - diff / v if v > 0 else lo - 1.0\n        if not lo < new < hi:\n            new = (lo + hi) / 2            # Newton left the bracket: bisect\n        if hi - lo < 1e-15:\n            return new\n        sigma = new\n    return sigma\n",
+    "prelude": "from math import exp, log, nan, sqrt\n",
+    "examples": [
+     {
+      "call": "black_iv(7.57708214642728, 100, 100, exp(-0.05), 1.0)",
+      "expect": "0.2",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "str(black_iv(9.0, 110, 100, exp(-0.02), 0.5))",
+      "expect": "'nan'",
+      "compare": "equal"
+     }
+    ],
+    "tests": [
+     {
+      "call": "black_iv(7.57708214642728, 100, 100, exp(-0.05), 1.0)",
+      "expect": "0.2",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "str(black_iv(9.0, 110, 100, exp(-0.02), 0.5))",
+      "expect": "'nan'",
+      "compare": "equal"
+     },
+     {
+      "call": "black_iv(3.3063149801614897, 101, 95, exp(-0.04 * 0.25), 0.25, 'put')",
+      "expect": "0.3",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "black_iv(0.09, 100.4, 72, exp(-0.045 / 12), 1 / 12, 'put')",
+      "expect": "0.5516696055970569",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "black_iv(14.948869556654268, 105, 100, exp(-0.3), 3.0)",
+      "expect": "0.25",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "black_iv(1.9958040165332438, 20, 22, exp(-0.04 / 52), 1 / 52)",
+      "expect": "2.5",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "black_iv(0.24, 100.4, 130, exp(-0.045 / 12), 1 / 12)",
+      "expect": "0.5000077957045741",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "[str(black_iv(p, 100, 100, exp(-0.05), 1.0, k)) for p, k in [(96.0, 'call'), (95.2, 'put'), (0.0, 'call'), (-0.5, 'put')]]",
+      "expect": "['nan', 'nan', 'nan', 'nan']",
+      "compare": "equal"
+     },
+     {
+      "call": "[str(black_iv(exp(-0.03) * 10 - 0.01, 100, 110, exp(-0.03), 1.0, 'put')), str(black_iv(nan, 100, 100, exp(-0.05), 1.0))]",
+      "expect": "['nan', 'nan']",
+      "compare": "equal"
+     },
+     {
+      "call": "[v if v == v else -1.0 for v in (black_iv(p, 101.2, K, exp(-0.045 * 0.25), 0.25, k) for K, k, p in [(80, 'put', 0.31), (90, 'put', 1.12), (100, 'put', 3.55), (110, 'call', 1.42), (120, 'call', 0.26), (130, 'call', 0.0)])]",
+      "expect": "[0.2952123429663765, 0.25144773927147124, 0.20753596195982849, 0.21592123885575257, 0.21141370268777743, -1.0]",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "black_iv(9.9, 110, 100, exp(-0.02), 0.5)",
+      "expect": "0.07818851672125646",
+      "compare": "isclose",
+      "tol": {
+       "abs": 1e-08
+      }
+     },
+     {
+      "call": "black_iv(5.0, 100, 100, exp(-0.05), 1.0, 'straddle')",
+      "expect": "ValueError",
+      "compare": "raises"
+     },
+     {
+      "call": "isinstance(black_iv(7.57708214642728, 100, 100, exp(-0.05), 1.0), float)",
+      "expect": "True",
+      "compare": "equal"
+     }
+    ],
+    "how": "Check runs 13 hidden tests, comparing vols within absolute 1e-8. Pure Python: nothing to load."
+   },
+   "feedback": {
+    "correct": "Bounds first, then a bracket that every Newton step must respect.",
+    "generic": "Some tests failed. Start from the first failing row.",
+    "byKey": {
+     "test-2": "Test 2 is a call priced under its discounted intrinsic value. No vol fits, so return NaN.",
+     "test-3": "Test 3 is a put. Check its formula against parity, $C - P = D(F - K)$.",
+     "test-4": "Test 4 is a 9p put far out of the money. A Newton step from 0.2 leaves the chart, so keep a bracket and bisect when a step leaves it.",
+     "test-6": "Test 6 needs a vol of 2.5. Your search must reach above it.",
+     "test-8": "Test 8 gives prices at or beyond the bounds. Return NaN, not a vol at the edge of your search.",
+     "test-9": "Test 9 gives a put just under its discounted intrinsic value, then a NaN price. Neither has a vol.",
+     "test-11": "Test 11 lies between $D(F - K)$ and $F - K$. The lower bound is discounted, so a vol fits."
+    }
+   },
+   "explain": {
+    "text": "A call lies between $D\\max(F - K, 0)$ and $DF$, and a put between $D\\max(K - F, 0)$ and $DK$. From 0.2, one plain Newton step sends the 9p put to a vol near 146,935, where vega is 0. The bracket keeps every guess around the answer, and Newton steps make the end quick."
+   }
   }
  ]
 }

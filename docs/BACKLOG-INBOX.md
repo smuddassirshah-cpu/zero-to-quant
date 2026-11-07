@@ -1657,3 +1657,6 @@ Raised later (ito level 3 perf):
 Raised later (ito level 4 perf):
 - [Should] Longform aloud widget on the homework page: the help line under the clock reads "Say your answer aloud. The paper clock ends the sitting.", the exam text (`longform.js:47`, `ctx.mode === 'exam'`), though a homework has no paper clock and the item sets `lockAtZero` (ito `h-aloud-unknown-drift`, 440 px shot). Wanted: the `lock` line ("The clock stops at zero.") outside a real exam.
 - [Could] An aloud item does not say before the clock that follow-ups will come; they appear only with the model. The prompt has to say "Three follow-up questions come after the clock". Wanted: a line under the clock, "n follow-up questions after the clock", from `followUps.length`.
+
+Raised later (opt-dash level 3 perf):
+- [Could] `code` widget, `isclose` and `equal`: a test still cannot expect NaN (raised before for `exercise_boundary`, `formation_returns` and DataFrames). opt-dash `h-parity-fit` and `h-black-iv` both return NaN by contract and work around it with `[v != v for v in ...]`, `str(v) == 'nan'` or a `-1.0` stand-in. Wanted: NaN equals NaN under `isclose` (as `math.isclose` cannot, `numpy.isclose(..., equal_nan=True)` can), with a note in AUTHORING section 3.
