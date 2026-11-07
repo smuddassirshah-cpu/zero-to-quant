@@ -137,7 +137,10 @@ lv.claim(abs(bp - 35) < 1e-9 and abs(500 * 0.05 - 25) < 1e-9 and abs(-200 * -0.0
 lv.claim(abs(1000 * (0.72 - 0.70) - 20) < 1e-9, 'homework-2 items[2] VOD 1,000 x 0.02 = 20')
 for v in (35.00, 25.00, 10.00, 20.00):
     lv.expect('homework', 'items[2].explain.text', v)
-lv.claim(abs(0.001 * 500 - 0.50) < 1e-12, 'homework-2 items[3] test-3: 0.001 x 500 = £0.50')
+lv.claim(abs(0.0012 * 800 - 0.96) < 1e-12 and 0.96 < 2.00, 'homework-2 items[3] test-3: 0.0012 x 800 = £0.96, below the £2.00 minimum')
+lv.expect('homework', 'items[3].feedback.byKey.test-3', '0.0012 × 800 = £0.96')
+lv.claim([round(float(t['expect']), 2) for t in node('homework', 'items[3].widget.tests')] == [30.0, 15.0, 2.0, 50.0, 0.96, 5.0, 200.0], 'homework-2 items[3] test expectations 30, 15, 2, 50, 0.96, 5, 200')
+lv.claim(abs(-10 * 118.50 + 400 * 4.85 - 755.0) < 1e-9 and node('homework', 'items[4].widget.tests[8].expect') == '755.0', 'homework-2 items[4] tests[8] is 755.0')
 lv.claim(abs(300 * 4.85 + 1000 * 0.72 - 2175) < 1e-9 and abs(10 * 4.85 - 48.5) < 1e-9, 'homework-2 items[4] 2175, 48.5')
 # items[5] longform model: run the colleague's code and the model fix
 bad = block('homework', 'items[5].prompt')

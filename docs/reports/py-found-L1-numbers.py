@@ -109,7 +109,10 @@ lv.expect('l1', 'quiz[0].explain.text', '2.6749999999999998223643160599749535322
 check_print(lv, 'l1', 'quiz[1]')
 lv.claim(repr(0.57 * 100) == '56.99999999999999' and int(0.57 * 100) == node('l1', 'quiz[2].widget.answer'), 'l1 quiz[2] 56')
 lv.claim(round(0.57 * 100) == 57, 'l1 quiz[2] round gives 57')
-check_print(lv, 'l1', 'quiz[3]')       # FAILS on current content: 0.6 + 0.1 == 0.7 is True in CPython
+check_print(lv, 'l1', 'quiz[3]')
+lv.expect('l1', 'quiz[3].prose', '0.2 + 0.4 == 0.6')
+lv.claim(repr(0.2 + 0.4) == '0.6000000000000001', 'l1 quiz[3] 0.2 + 0.4 is 0.6000000000000001')
+lv.expect('l1', 'quiz[3].explain.text', '0.6000000000000001')
 
 # ---------- l2: slicing ----------
 closes6 = [101.20, 102.50, 99.80, 100.40, 103.10, 104.00]
@@ -185,6 +188,10 @@ lv.claim(int(out) == node('l4', 'quiz[3].widget.answer') == 4, 'l4 quiz[3] print
 r6 = [0.004, 0.0, -0.011, 0.0, -0.002, 0.007]
 lv.claim(len([r for r in r6 if r < 0]) == 2 and len(r6) == 6, 'l4 quiz[3] wrongs: strict 2, all 6')
 
+lv.claim(node('l2', 'screens[3].widget.wrong[1].set') == ['c1'] and ['x', 'y', 'z'][1:2] == ['y'], 'l2 screens[3] two-on is index 1 alone')
+lv.expect('l2', 'screens[2].widget.options[1].text', '[100.4, 103.1]')
+lv.claim([101.2, 102.5, 99.8, 100.4, 103.1, 104.0][-3:-1] == [100.4, 103.1], 'l2 screens[2] early is closes[-3:-1]')
+
 # ---------- review-1 ----------
 for p in ('items[0]', 'items[1]', 'items[2]', 'items[3]', 'items[5]', 'items[6]'):
     check_print(lv, 'review', p)
@@ -194,8 +201,15 @@ inner = expr[4:-1]
 lv.claim(eval(expr) == node('review', 'items[4].widget.answer'), f'review-1 items[4] {expr} is the key')
 lv.expect('review', 'items[4].prose', repr(eval(inner)))
 lv.claim(round(eval(inner)) == node('review', 'items[4].widget.wrong[0].value'), 'review-1 items[4] wrong "nearest" is round()')
-lv.stated('review', 'items[4].explain.text', 'a price stored a hair below 1.15', D(1.15) < D('1.15'))
-lv.stated('review', 'items[6].widget.options[3].why', 'repeats its characters', '4.85' * 2 == ''.join(c * 2 for c in '4.85'))
+lv.claim(expr == 'int(-4.35 * 100)' and node('review', 'items[4].widget.answer') == -434, 'review-1 items[4] is int(-4.35 * 100) = -434 (revert-proof)')
+lv.claim(node('review', 'items[4].widget.wrong[0].value') == -435 and round(-4.35 * 100) == -435, 'review-1 items[4] wrong "nearest" -435')
+lv.claim(repr(-4.35 * 100) == '-434.99999999999994', 'review-1 items[4] -4.35 * 100 is -434.99999999999994')
+lv.expect('review', 'items[4].explain.text', '−434.99999999999994')
+lv.expect('review', 'items[0].prose', '1.1 + 2.2 == 3.3')
+lv.expect('review', 'items[1].prose', 'closes[-4:-1]')
+lv.claim(repr(1.1 + 2.2) == '3.3000000000000003', 'review-1 items[0] 1.1 + 2.2 is 3.3000000000000003')
+lv.expect('review', 'items[6].widget.options[3].why', 'repeats the whole string')
+lv.claim('4.85' * 2 == '4.854.85', 'review-1 items[6] * 2 repeats the whole string')
 c6 = [101.2, 102.5, 99.8, 100.4, 103.1, 104.0]
 lv.claim([i for i, (a, b) in enumerate(zip(c6, c6[1:]), start=1) if b > a] == [1, 3, 4, 5], 'review-1 items[7] test 5')
 
@@ -209,7 +223,8 @@ c20 = list(range(20))
 lv.claim(len(c20[3:-2]) == node('homework', 'items[1].widget.answer') == 15, 'homework-1 items[1] closes[3:-2] holds 15')
 wr = {w['id']: w['value'] for w in node('homework', 'items[1].widget.wrong')}
 lv.claim(wr['kept-end'] == len(c20[3:19]) and wr['abs'] == 3 - 2, 'homework-1 items[1] wrongs kept-end 16, abs 1')
-lv.stated('homework', 'items[1].feedback.byKey.no-start', 'You dropped only the last two', wr['no-start'] == len(c20[:-2]))
+lv.expect('homework', 'items[1].feedback.byKey.no-start', 'You dropped only the first three')
+lv.claim(wr['no-start'] == len(c20[3:]) == 17, 'homework-1 items[1] no-start 17 is closes[3:]')
 lv.claim(abs((99.75 - 102) / 102 - (-0.022058823529411766)) < 1e-15, 'homework-1 items[4] test 2 value')
 lv.claim((102 - 100) / 100 == 0.02, 'homework-1 items[4] test-1 slip 0.02')
 out, err = run_snippet('import math\nprint(math.isclose(0.1 + 0.2 - 0.3, 0.0))')
