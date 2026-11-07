@@ -462,6 +462,70 @@
       "explain": {
         "text": "At the calibrated stake capital grows 1.29% per bet; at 0.40 it shrinks 1.94%. The edge is real and the overconfidence destroys it."
       }
+    },
+    {
+      "id": "h-lag-split",
+      "performance": "code",
+      "difficulty": 5,
+      "skills": [
+        "sl-classify"
+      ],
+      "title": "Lags, labels and a clean split",
+      "prose": "`prices` holds one closing price a day, day 0 first. Day $t$'s return is $r_t = p_t / p_{t-1} - 1$, for $t \\ge 1$. Each $k$ in `lags` is a whole number, 0 or more. The row for day $t$ has the features $r_{t-k}$ for each $k$ in `lags`, in the order given. Its label is 1 if $p_{t+h} > p_t$, else 0, where $h$ is `horizon`. Make a row for every day that has all its features and its label.\n\nThe test period starts on day `split`. A test row is a day $t \\ge$ `split`, and its features may reach back before `split`. A training row may use no price from day `split` or later, its label included. Drop the rows that are neither, and keep both sets in day order.",
+      "question": "Write `lag_split(prices, lags, horizon, split)`, returning `(X_train, y_train, X_test, y_test)` as lists.",
+      "widget": {
+        "kind": "code",
+        "language": "python",
+        "starter": "def lag_split(prices, lags, horizon, split):\n    \"\"\"(X_train, y_train, X_test, y_test):\n    lagged returns and h-day direction,\n    split in time order at day split.\"\"\"\n    # Your code here\n    return None\n",
+        "solution": "def lag_split(prices, lags, horizon, split):\n    n = len(prices)\n    r = [None] + [prices[t] / prices[t - 1] - 1 for t in range(1, n)]\n    X_train, y_train, X_test, y_test = [], [], [], []\n    for t in range(1 + max(lags), n - horizon):\n        row = [r[t - k] for k in lags]\n        label = 1 if prices[t + horizon] > prices[t] else 0\n        if t + horizon < split:\n            X_train.append(row)\n            y_train.append(label)\n        elif t >= split:\n            X_test.append(row)\n            y_test.append(label)\n    return X_train, y_train, X_test, y_test\n",
+        "examples": [
+          {
+            "call": "lag_split([100, 101, 99, 99, 102, 104, 103, 103, 105, 102, 101, 104], [0, 1], 1, 7)",
+            "expect": "([[-0.019801980198, 0.01], [0.0, -0.019801980198], [0.030303030303, 0.0], [0.0196078431373, 0.030303030303]], [0, 1, 1, 0], [[0.0, -0.00961538461538], [0.0194174757282, 0.0], [-0.0285714285714, 0.0194174757282], [-0.00980392156863, -0.0285714285714]], [1, 0, 0, 1])",
+            "compare": "isclose"
+          }
+        ],
+        "tests": [
+          {
+            "call": "lag_split([100, 101, 99, 99, 102, 104, 103, 103, 105, 102, 101, 104], [0, 1], 1, 7)",
+            "expect": "([[-0.019801980198, 0.01], [0.0, -0.019801980198], [0.030303030303, 0.0], [0.0196078431373, 0.030303030303]], [0, 1, 1, 0], [[0.0, -0.00961538461538], [0.0194174757282, 0.0], [-0.0285714285714, 0.0194174757282], [-0.00980392156863, -0.0285714285714]], [1, 0, 0, 1])",
+            "compare": "isclose"
+          },
+          {
+            "call": "lag_split([100, 101, 99, 99, 102, 104, 103, 103, 105, 102, 101, 104], [0, 2], 2, 7)",
+            "expect": "([[0.0, 0.01], [0.030303030303, -0.019801980198]], [1, 1], [[0.0, 0.0196078431373], [0.0194174757282, -0.00961538461538], [-0.0285714285714, 0.0]], [0, 0, 1])",
+            "compare": "isclose"
+          },
+          {
+            "call": "lag_split([50, 51, 51, 50, 52, 53, 52, 52, 54, 55, 53, 53, 56], [3, 0], 1, 8)",
+            "expect": "([[0.02, 0.04], [0.0, 0.0192307692308], [-0.0196078431373, -0.0188679245283]], [1, 0, 0], [[0.0192307692308, 0.0384615384615], [-0.0188679245283, 0.0185185185185], [0.0, -0.0363636363636], [0.0384615384615, 0.0]], [1, 0, 0, 1])",
+            "compare": "isclose"
+          },
+          {
+            "call": "lag_split([50, 51, 51, 50, 52, 53, 52, 52, 54, 55, 53, 53, 56], [1], 3, 9)",
+            "expect": "([[0.02], [0.0], [-0.0196078431373], [0.04]], [1, 1, 0, 1], [[0.0384615384615]], [1])",
+            "compare": "isclose"
+          },
+          {
+            "call": "lag_split([20, 20.5, 20.2, 20.2, 20.8, 21, 20.6, 20.9, 21.4, 21.1, 21.1, 21.5, 21.3, 21.8, 21.6, 22], [0, 1, 5], 2, 10)",
+            "expect": "([[-0.0190476190476, 0.00961538461538, 0.025], [0.0145631067961, -0.0190476190476, -0.0146341463415]], [1, 1], [[0.0, -0.0140186915888, 0.00961538461538], [0.0189573459716, 0.0, -0.0190476190476], [-0.0093023255814, 0.0189573459716, 0.0145631067961], [0.0234741784038, -0.0093023255814, 0.0239234449761]], [1, 1, 1, 1])",
+            "compare": "isclose"
+          },
+          {
+            "call": "lag_split([100, 101, 99, 99, 102, 104, 103, 103, 105, 102, 101, 104], [0], 1, 2)",
+            "expect": "([], [], [[-0.019801980198], [0.0], [0.030303030303], [0.0196078431373], [-0.00961538461538], [0.0], [0.0194174757282], [-0.0285714285714], [-0.00980392156863]], [0, 1, 1, 0, 0, 1, 0, 0, 1])",
+            "compare": "isclose"
+          }
+        ],
+        "how": "Check runs 6 hidden tests on short price lists. Each returned tuple is compared element by element with math.isclose (relative 1e-9)."
+      },
+      "feedback": {
+        "correct": "Lags look back, labels look forward, and no training label reaches into the test period.",
+        "generic": "Not quite right. For each row, list the days whose prices it reads, and check them against the rules."
+      },
+      "explain": {
+        "text": "The row for day $t$ reads back to $r_{t-k}$ and forward to $p_{t+h}$. Training ends at day `split` $- h - 1$, so the last $h$ days before `split` are dropped. A test row may still read training-period prices, which are known by then."
+      }
     }
   ]
 }
