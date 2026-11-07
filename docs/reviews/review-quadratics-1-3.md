@@ -179,3 +179,36 @@ homework-1 `items[7]` uses $\tfrac{1}{n}\sum_i$ and $\overline{x^2}$ but defines
 3. Plane canvas: a y-axis tick label's white halo hides the curve where the curve passes behind it. In homework-3 `items[6]`, the "−5.0" label cuts the expiry-P&L line near $x = -1$ (desktop screenshot `quadratics_homework-3-item-06.png`).
 
 These three are also appended to `docs/BACKLOG-INBOX.md` under "Raised later (review quadratics L1 to L3)". Finding 10 is an orchestrator item (`course.json`).
+
+## Fix pass
+
+1. fixed: l1 quiz[2] option `each-squared` why now describes keeping the minus (squaring each term gives $r^2 + m^2$, the other option).
+2. fixed: l2 quiz[1] and review-1 items[2] now say "further from zero". Basis: for $x^2 + bx + c$ with $c < 0$ the roots' sum is $b$, so the larger magnitude takes the sign of $b$.
+3. fixed: l4 trap, ideas[2], screens[6] feedback, quiz[3] option d, homework-1 items[8] model. Basis: $4x^2 + 36 = 4(x^2 + 9)$, and $x^2 + 9$ has no integer pair with product 9 and sum 0 (checked by script).
+4. fixed: l5 screens[2] unbolds root; l11 screens[2] bolds y-intercept; l11 screens[5] cites the repeated root of lesson 5.
+5. fixed: l6 screens[4] explain and feedback define ± at first use and drop the stray `\;`. Basis: $x + 3 = \pm 2$ is shorthand for the two cases 2 and $-2$.
+6. fixed: l6 screens[5] `whole` renamed `flip`, text rewritten. Recomputed: $x^2 + 3x - 4$ has roots 1 and $-4$; $-1$ is the root 1 with its sign flipped.
+7. fixed: l6 quiz[2] `sign` now "You flipped the sign". Recomputed: $(x - 5)^2 = 4$ gives 3 and 7.
+8. fixed: l7 screens[0] `noroot` why. Recomputed: $(x + 2)^2 = 5$.
+9. fixed at smallest scope: surd defined at l7 screens[0] explain; squaring checks added to l7 quiz[0] and quiz[3] prose, review-2 items[5] (why, correct feedback, explain) and homework-2 items[5] explain. No screens or levels added. Basis: $(2\sqrt{3})^2 = 12$, $(2\sqrt{2})^2 = 8$, $(2\sqrt{13})^2 = 52$ (script). Surd is the standard term (Edexcel GCSE 9-1 Maths, Number, surds).
+10. fixed (orchestrator): `course.json` L2 `requires` equations/L3; not touched here.
+11. fixed: l8 summary formula note defines $\Delta$.
+12. fixed: homework-2 items[4] o3 feedback.
+13. fixed: l11 screens[2] `sum` feedback ($-2 + 4$).
+14. fixed: homework-3 items[4] `signs` wrong value and feedback deleted (the slip counts 6, the same as the key).
+15. fixed: homework-3 items[6] prose defines $|x|$.
+16. fixed: homework-3 items[8] prose names $\sigma_A = 0.1$, $\sigma_B = 0.2$, $\rho = 0.25$.
+17. fixed: l13 screens[7] `bracket` wrong (`\frac{A}{2}B`) and its byKey line.
+18. fixed: l4 screens[6], l5 screens[7], l8 screens[6], l12 screens[1], homework-3 items[5] correct options shortened as listed.
+19. fixed: l9 screens[9] and homework-3 items[6] explanations state £101.20 and £4.50. Recomputed: $P(2) = 87.20$, $P(-2) = 115.20$, mean 101.20; $\tfrac{45}{6} - 3 = 4.50$.
+20. fixed: review-2 items[7] prose and question reworded.
+21. fixed: review-2 items[8] is now the two-year loss. Recomputed: $20000 \times 0.9^2 = 16200$; root $-0.9$ gives 190%. Graded answer changed (0.2 to 0.1).
+22. fixed: review-3 items[1] prose and question reworded.
+23. fixed: review-1 items[6] (photo area, answer 0.0609) and items[7] (r = 0.1). Recomputed: $1.03^2 = 1.0609$; $1.1 \times 0.9 = 0.99$. Graded answers changed. Explanation of items[6] also states 6.09% (validator O2).
+24. fixed: homework-1 items[4] is $1003 \times 997 = 999991$ (graded answer changed from 12000). Recomputed: $10^6 - 9$.
+25. fixed: homework-3 items[0] asks for the vertex 7.5 (graded answer changed from 100.9). Recomputed: $6 / 0.8 = 7.5$, $P = 100 - 45 + 22.5 = 77.50$; scan confirms the minimum.
+26. fixed: l13 screens[9] (B at 30%, drag target (0.9, 0.009), start point y updated to 0.08125) and homework-3 items[7] last sentence. Recomputed: $V = 0.1w^2 - 0.18w + 0.09$, $V(0.9) = 0.009$, $V(0.5) = 0.025$, $\sqrt{0.009} = 9.5\%$. Graded answer changed.
+Engine 1, 2, 3: deferred, engine-only, already in the inbox.
+From review-functions-3-4 finding 34: fixed. l9 screens[0] prose now starts from the curve ("You plotted $y = x^2$ from its table in the functions course"), with no lesson number.
+
+Gates: number scripts L1, L2, L3 exit 0 (408, 381 and 279 checks; the old-or-new checks were replaced by new-value-only checks). Voice scan 35: 0 sentences, 0 explanations. Validator: 0 errors. Playthrough with `--local-cdn`: 11 lessons and 6 sets, 17 of 17 desktop and 17 of 17 `--mobile`, All passed. No code items touched.
