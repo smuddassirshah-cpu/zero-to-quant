@@ -112,3 +112,43 @@ If gating functions L1 behind equations L3 is not wanted, the content alternativ
 1. `drag-point` (`app/js/engine/widgets/drag-point.js` line 86): a `wrong[]` region is tested against every point, so with two or more points a region can fire for a point that is correct (functions l3 `screens[4]`, finding 4). An optional `point: "<id>"` on a wrong entry, and a validator warning when a region without `point` holds any point's target, would let authors keep such slips. Inbox bullet.
 2. `exprEqual` (`app/js/engine/grade.js` line 330) on two equations gives false positives: with Compute Engine 0.30.2, `y=5` is equal to `y=0.5x+4`, and `y=5x-20` to `f(x)=5(x-4)`, while `y=2x+1` is not. No live `expression` key holds `=` today, but a fixer adding `y=...` forms to `accept` would open a hole. The validator should reject `=` in an expression `answer`, `accept` or `wrong[].tex` until left-hand-side stripping (open bullet from review equations L1 to L2) lands. Inbox bullet.
 3. Plane canvas: a function label on a falling line can be placed on the line itself (functions l9 `screens[6]`, finding 27). Inbox bullet.
+
+## Fix pass
+
+Status per finding (27 fixed, 0 disputed, 2 deferred in part; findings 28 and 29 belong to the L3 and L4 fix pass). One graded answer changed: l2 `screens[6]` key 16 to 32. Basis lines are my own derivations or the named GCSE source (DfE GCSE Mathematics subject content, algebra strand A, and the Edexcel and AQA specifications' wording).
+
+1. fixed: l2 `screens[6]` now has rows 2, 4, 8, 16 and asks $f(5)$, key $32$ (outputs $2^x$; climbs 2, 4, 8 are not constant, so the quiz[2] method gives no rival). Slips 10 ($2 \times 5$) and 24 ($16 + 8$) recomputed; $x^2 - x + 2$ gives 14 at 4, not 16, so it fails the fourth row.
+2. fixed: homework-1 `items[4].prose` defines the call payoff and the premium.
+3. fixed: l3 `screens[8]` `no-top` why no longer uses "call".
+4. fixed: `reversed` region and its `byKey` line removed (x 6.7 to 7.3 held the target of `hi`, 7); `lo` and `hi` lines cover a reversed pair.
+5. fixed in content, deferred in engine: the seven questions say "Type only what comes after the $=$ sign". No `y = ...` or `f(x) = ...` accept form added; left-hand-side stripping is the engine agent's fix, after which the sentence can go.
+6. fixed: homework-2 `items[6]` line o5 reads "$b_1 = b_2$ and $a_1 \neq a_2$". Basis: equal rates with equal fixed charges give one line, so every $x$ breaks even.
+7. fixed: l7 `screens[5]` `first` no longer asks for $m = 5$ (slider stops at 3).
+8. fixed: l9 `screens[5].explain.text` says "the one kind of perpendicular pair".
+9. fixed: l5 `screens[5]` placeholder is "For example 0.5" (key 2.5, slips 7 and 1.5).
+10. fixed: l4 `quiz[3].prose` is "Picture three graphs drawn on one pair of axes."
+11. fixed: l8 `quiz[2]` `rise` why; $8 \times 4 + 1 = 33 \ne 1$ and the rise of $(4,1)$ to $(4,9)$ is 8.
+12. fixed: review-1 `items[8]` `is-function` why.
+13. fixed: four "edge case" sentences reworded; l2 `screens[4].explain.text` is three sentences ($f(6) = 36$ rechecked).
+14. fixed: homework-1 `items[6].explain.text` is three sentences ($0.004 \times 4000 = 16$; $3 + 7.5 + 16 = 26.5$).
+15. fixed: the five option sets shortened as listed (l3 `none`, l4 `screens[0]`, l7 `slide`, l9 `never`, review-1 `right`); the `key-length` warnings are gone.
+16. fixed: l1 `screens[1].explain.text` states 23 ($2 \times 10 + 3$).
+17. fixed: l4 `screens[2]` and `screens[6]` say "horizontal line". Basis: GCSE wording for lines parallel to the x-axis.
+18. fixed: l4 "parabola" replaced by "U-shaped curve" in `screens[2]`, `screens[7]` options and explain. Basis: l10 `screens[3]` introduces **parabola** as new.
+19. fixed: l5 `screens[2].prose` names the **x-axis** and **y-axis** (DfE GCSE content, coordinates strand).
+20. fixed: l7 `screens[2].prose` names the **y-intercept**.
+21. fixed: l9 `screens[7].prose` names the **negative reciprocal**; $-1/m_1$ is it by definition.
+22. fixed: l5 `screens[1]` and homework-2 `items[0]` say quadrant.
+23. fixed: l2 `screens[7].prose` ties "climb" to **difference** (the GCSE nth-term word).
+24. fixed: review-1 `items[7]` is now umbrellas with the same numbers ($23.85 - 24.60 = -0.75$; $-90 - 4.5 = -94.5$). Answer and wrong values unchanged.
+25. fixed: review-2 `items[5]` is now a savings pot in months, same numbers (1 over 10 is 0.10; slips 10 and 1.00).
+26. fixed: review-2 `items[6]` is now a taxi fare ($1.50 \times 4 + 3.50 = 9.50$; per-mile part 6.00). Answer 9.5 and wrong 6.0 unchanged; explanation is three sentences.
+27. fixed: l9 `screens[6]` label is now a point label at $(6, 2)$ (on $y = -0.5x + 5$: $-3 + 5 = 2$). Playthrough green; not re-screenshotted.
+Orchestrator: fixed (orchestrator), `requires` on `equations/l10-ranges-of-answers` applied in d15d051 and 59fc047; `course.json` untouched.
+Engine 1 to 3: deferred, already in the inbox.
+
+Gates:
+- Number scripts: `functions-L1-numbers.py` exit 0 (238 of 238), `functions-L2-numbers.py` exit 0 (208 of 208). Checks for fixed findings 1, 6, 7, 8, 9, 10 and 27 now require the new text or value, so a revert fails them; check for l2 `screens[6]` replaced with the new table.
+- Voice scan (35): 0 sentences over 35 words and 0 explanations over three sentences, whole course. Nothing left in L3 or L4.
+- Validator: 0 errors (4165 warnings app-wide); the remaining L1 and L2 warnings are the five 20-to-35-word sentences and l9 `quiz[2]` `key-length` (judged not a giveaway).
+- Playthrough with `--local-cdn`: l1 to l9, review-1, review-2, homework-1, homework-2, desktop and `--mobile`: 26 of 26 All passed, no reruns. No code items in these levels.
