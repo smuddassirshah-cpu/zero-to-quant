@@ -206,16 +206,32 @@ eq = [t / 100 for t in range(0, 1200) if abs(A(t / 100) - B(t / 100)) < 1e-9]
 lv.claim(eq == [5.0, 11.0], f'homework-3 i5: A = B at {eq}')
 K(f, 'items[5].widget', 11); W(f, 'items[5].widget', 'first', 5); W(f, 'items[5].widget', 'twelve', 17); W(f, 'items[5].widget', 'half', 8)
 lv.claim(round(A(8), 1) == -2.6 and round(B(8), 1) == 2.6, 'homework-3 i5: at t = 8, -2.6 and 2.6')
-G = lambda t: 220 * sin(pi / 6 * (t - 10)) + 600
-lv.claim(round(G(1)) == 820 and round(G(7)) == 380 and round(G(4)) == 600, 'homework-3 i6: D(1), D(7), D(4)')
+G = lambda t: 220 * sin(pi / 6 * (t - 11)) + 600
+lv.claim(round(G(2)) == 820 and round(G(8)) == 380 and round(G(5)) == 600, 'homework-3 i6: D(2), D(8), D(5)')
+lv.claim(all(isclose(220 * sin(pi / 6 * (t + 1)) + 600, G(t)) for t in (0, 3.3, 8)), 'homework-3 i6: c = -1 and c = 11 give one model')
 g6 = [t / 100 for t in range(1000, 1700) if abs(G(t / 100) - 710) < 1e-9]
-lv.claim(g6 == [11.0, 15.0], f'homework-3 i6: D = 710 at {g6}')
-lv.claim(all(isclose(220 * sin(pi / 6 * (t - 4)) + 600, 1200 - G(t)) for t in (1, 3.3, 8)), 'homework-3 i6: c = 4 gives 1200 - D')
+lv.claim(g6 == [12.0, 16.0], f'homework-3 i6: D = 710 at {g6}')
+lv.claim(all(G(t / 10) > 710 for t in range(121, 160)) and G(11.9) < 710 and G(16.1) < 710, 'homework-3 i6: above 710 only between t = 12 and t = 16 (4 months)')
+lv.claim(all(isclose(220 * sin(pi / 6 * (t - 5)) + 600, 1200 - G(t)) for t in (1, 3.3, 8)), 'homework-3 i6: c = 5 gives 1200 - D')
+lv.claim(max(range(1, 13), key=lambda t: 220 * sin(pi / 6 * (t - 5)) + 600) == 8, 'homework-3 i6: the c = 5 curve peaks in August')
+lv.claim(G(5.01) < G(4.99), 'homework-3 i6: demand is falling through May')
+T(f, 'items[6].model', 'D(2) = 220'); T(f, 'items[6].model', 'D(5) = 220'); T(f, 'items[6].model', 't = 12$ or $t = 16'); T(f, 'items[6].model', 'peaking in August')
 K(f, 'items[7].widget', 63 / 65, 4); W(f, 'items[7].widget', 'split', 3 / 5 + 12 / 13, 4); W(f, 'items[7].widget', 'cos', (20 - 36) / 65, 4); W(f, 'items[7].widget', 'minus', (15 - 48) / 65, 4)
 lv.claim(isclose(S(degrees(asin(0.6)) + degrees(acos(5 / 13))), 63 / 65), 'homework-3 i7: by the angles (method 2)')
-K(f, 'items[8].widget', 10000 * 2 / sqrt(5), 2); W(f, 'items[8].widget', 'linear', 10000 * 2 / 3); W(f, 'items[8].widget', 'b', 10000 / sqrt(5)); W(f, 'items[8].widget', 'tan', 5000)
-lv.claim(isclose(10000 * C(degrees(atan(0.5))), 10000 * 2 / sqrt(5)) and round(degrees(atan(0.5)), 2) == 26.57, 'homework-3 i8: by the angle (method 2)')
+K(f, 'items[8].widget', 10 * 2 / sqrt(5), 2); W(f, 'items[8].widget', 'linear', 10 * 2 / 3); W(f, 'items[8].widget', 'b', 10 / sqrt(5)); W(f, 'items[8].widget', 'tan', 5)
+lv.claim(isclose(10 * C(degrees(atan(0.5))), 10 * 2 / sqrt(5)) and isclose(10 * S(degrees(atan(0.5))), 10 / sqrt(5)) and round(degrees(atan(0.5)), 2) == 26.57, 'homework-3 i8: by the angle (method 2)')
 lv.claim(sum(r['points'] for r in node(f, 'items[6].rubric')) == 10, 'homework-3 i6: rubric sums to 10')
+
+# ---------- fix pass (second-reader findings): numbers in new or reworded text ----------
+f = 'l12'
+lv.claim(isclose(0.61237 + 0.35355, 0.96592, abs_tol=1e-9) and round(C(45) * C(30), 5) == 0.61237 and round(S(45) * S(30), 5) == 0.35355 and round(C(15), 4) == 0.9659, 'l12 s2 and s3: 0.61237 + 0.35355 = 0.96592 as printed, and cos 15 = 0.9659')
+T(f, 'screens[2].explain.text', '0.61237 + 0.35355 = 0.96592'); T(f, 'screens[3].explain.text', '0.61237 + 0.35355 = 0.96592')
+lv.claim(isclose(0.35777 + 0.53666, 0.89443, abs_tol=1e-9) and round(0.4472136 * 0.8, 5) == 0.35777 and round(0.8944272 * 0.6, 5) == 0.53666 and round(0.89443, 4) == 0.8944, 'l12 q: 0.35777 + 0.53666 = 0.89443, which rounds to 0.8944')
+T(f, 'screens[9].hints[2].text', '0.35777 + 0.53666 = 0.89443')
+lv.claim(isclose(C(300 - 10), C(70)) and 360 - 290 == 70, 'l12 s8: a - b = 290 gives the triangle angle 70 with the same cosine')
+f = 'homework'
+lv.claim(3 * 5 + 4 * -12 == -33 and 5 * 13 == 65 and round(degrees(acos(-33 / 65)), 2) == 120.51, 'homework-3 i4: dot -33, lengths 5 and 13, angle 120.51')
+T(f, 'items[4].prose', '|\\mathbf{u}| = 5')
 
 lv.check_wrongs()
 lv.report()

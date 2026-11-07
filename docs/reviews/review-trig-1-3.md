@@ -116,3 +116,57 @@ GCSE and A-level conventions checked: SOHCAHTOA (finding 25), degrees before rad
 3. Validator `key-length` measures LaTeX source, not what the learner sees: l4 `screens[6]` (`$\dfrac{1}{\sqrt{2}}$` against `$\dfrac{1}{2}$`), l8 `screens[1]` (`$x = \tfrac{3\pi}{2} \approx 4.71$` against `$x = \pi \approx 3.14$`) and l9 `screens[6]` (`$\dfrac{2\pi}{3}$` against `$3$`) are flagged with no visible length difference. Strip LaTeX commands, braces and `$` before measuring.
 4. Plane canvas: a point label with `labelPos: "n"` is drawn south of the point, on a segment, when two lines meet the point from below and the frame has room above (l4 `screens[3]` to `[8]`, T at $y = 2.73$ in a frame to 3.1; desktop screenshots). Label placement should honour an explicit `labelPos` unless the label would leave the frame.
 5. Expression `form: "simplified"` cannot refuse an uncancelled constant such as `\frac{210\pi}{180}` for homework-2 `items[2]`, because Compute Engine cancels it at parse. This is the quadratics review's Engine 2, already in the inbox; no new bullet. Accepting the uncancelled form is acceptable here.
+
+## Fix pass
+
+Status per finding (39 fixed, 0 disputed, 5 engine findings deferred). Every changed number was recomputed in the three number scripts, which now check the new values only (an `lv.stated` line fails if the old wording returns). Graded answers changed: review-1 `items[6]` (53.1 to 67.4), homework-2 `items[7]` (−18057.18 to −18.06) and homework-3 `items[8]` (8944.27 to 8.94).
+
+1. fixed: l2 `screens[9].explain.text` as given (0.25 a day, £2.50, equal-scale condition stated). Basis: gradient is dy/dx in axis units; it equals tan of the drawn angle only when both axes use one unit length (standard coordinate geometry).
+2. fixed with a correction: the reader's replacement text printed "0.61237 + 0.35355 = 0.96593", which does not add (0.61237 + 0.35355 = 0.96592). The text now prints 0.96592 and says "so $\cos 15^\circ \approx 0.9659$" (exact 0.965926 rounds to 0.9659). l12 `screens[3]` likewise. `screens[9].hints[2]` as given: 0.35777 + 0.53666 = 0.89443 (checked).
+3. fixed: l5 `quiz[0].feedback.byKey.plus` (2 × 6 × 8 × cos 60° = 48; 36 + 64 − 48 = 52).
+4. fixed: all 16 l11 strings (and the three further l11 lines that used the same names) now say "sine's mirror" and "cosine's mirror"; no "rule" remains. Basis: the name is only a label; l5 owns "sine rule" and "cosine rule".
+5. fixed: l12 `screens[8].prose` adds $a - b \le 180^\circ$; the explanation's last sentence now states the $360^\circ - (a - b)$ case. Basis: cos(360° − x) = cos x (script checks a − b = 290°, angle 70°).
+6. fixed: l5 `screens[4]` `wrong[2]` and `byKey.plus` deleted; generic line as given (cos C = 110/60 > 1, script check).
+7. fixed: l10 `screens[6].explain.text` ("does not split").
+8. fixed: l8 `screens[7].explain.text` ("comes round again").
+9. fixed: l2 `screens[5].widget.options[3].why`.
+10. fixed: l9 `screens[8]` `degrees` wrong tex `\frac{360}{b}` and its `byKey` line. Real grader returns `wrong:degrees` for it (expr-test harness).
+11. fixed: generic lines for l4 `screens[4]`, review-1 `items[7]`, homework-1 `items[4]`.
+12. fixed: l2 `quiz[3]` options 1 and 2 now carry reason clauses (key no longer the longest).
+13. fixed: l4 `screens[2].prose` defines **surd** in one line (review's own definition; trig does not require quadratics). Basis: GCSE maths specification (DfE, Number): a surd is an irrational root left unevaluated, such as $\sqrt{2}$.
+14. fixed: l4 `quiz[2].explain.text` shows multiplying top and bottom by $\sqrt{2}$ (10√2/2 = 5√2 = 7.0711, script check).
+15. fixed: homework-1 `items[7]` explanation and `feedback.correct` use the decimal (20 / 0.7321 = 27.32); no rationalising.
+16. fixed: l7 `screens[0].prose` states circumference $2\pi r$ and $\pi \approx 3.14159$ at first use.
+17. fixed: l6 `screens[3].prose` states the anticlockwise-from-the-horizontal convention against bearings.
+18. fixed: l6 `screens[10].feedback.byKey.degrees` (no lesson number cited; "a unit met in the next lesson").
+19. fixed: l12 `screens[5].prose` derives area $\tfrac{1}{2}ab\sin C$ from half base times height in place.
+20. fixed: l9 `screens[7].prose` and `summary.formula.note` (|a| defined as the size of $a$ without its sign; $b > 0$ stated).
+21. fixed: l10 `screens[4].prose`.
+22. fixed: homework-3 `items[4].prose` gives the cosine formula (dot −33, |u| = 5, |v| = 13, 120.51°, script check).
+23. fixed: l1 `screens[10]` prose, question, `yLabel`; both `tol.abs` 0.004. I also reworded the last explanation sentence ("more measurements per day") to drop "features".
+24. fixed: l2 `screens[4].prose` (hypotenuse no longer bold).
+25. fixed: l2 `summary.formula.note` (SOH CAH TOA).
+26. fixed: l6 `summary.formula.note`.
+27. fixed: l5 `summary.formula.note`.
+28. fixed: review-1 `items[6]` rebuilt on (1, 2) to (6, 14): atan(12/5) = 67.38 so 67.4; atan(5/12) = 22.62 so 22.6; gradient 2.4; length 13 (atan2 and complementary-angle checks added).
+29. fixed: homework-1 `items[8]` prompt, model and rubric (σ² = 0.1525, σ = 0.3905; 90° gives 0.3202; 30% needs cos C = 0.125, C = 82.82°, arrows 97.18° apart; checked by vector addition in the script).
+30. fixed: homework-2 `items[7]` crane (−18.057 so −18.06; slips 0.74, −8.42, 18.06, all `tol.abs` 0.006).
+31. fixed: homework-3 `items[6]` moved to a February peak (D(2) = 820, D(8) = 380, D(5) = 600, 710 at t = 12 and 16, c = 5 gives 1200 − D, peaking in August; all scanned in the L3 script). Prompt, model and rubric edited together.
+32. fixed: homework-3 `items[8]` drone (10 × 2/√5 = 8.944; slips 6.67, 4.47, 5).
+33. fixed: review-1 `items[0]`, `[1]`, `[4]`, `[7]` (the `opp` byKey line reworded to "the distance along the ground"), review-2 `items[0]`, review-3 `items[1]`, homework-2 `items[1]` question sides rewritten; keys and wrong values unchanged.
+34. fixed: l4 `screens[6].widget.options[1].why`.
+35. fixed: l4 `screens[8].explain.text` (complement defined as 90° − θ).
+36. fixed: l7 `screens[3].feedback.byKey.quarter` (1.57).
+37. fixed: `params.y` [0.6, 3.3] on l4 `screens[3]`, `[4]`, `[5]`, `[7]`, `[8]`. Screenshot of `screens[3]` shows T above its vertex.
+38. fixed: l5 `screens[7]` `labelAt` 10.3 on the "?" line and on the explanation canvas's "10.82 km" line. Screenshot shows both clear of the axis labels.
+39. fixed: both l11 plane labels now use U+2212.
+
+Orchestrator item (trig L1 `requires` functions/L2): fixed (orchestrator); `course.json` not touched.
+
+Engine items 1 to 5: deferred, already in the inbox. Engine 1 re-checked on the real grader (expr-test harness, Compute Engine 0.30.2) after 619: `x=\frac{2\pi}{b}` (l9 `screens[8]`) and `P=15+5\sqrt{3}` (homework-1 `items[4]`) now grade OK, fixed by 619. `OB=\sqrt{2}` (l4 `screens[2]`) and `TM=\sqrt{3}` (l4 `screens[4]`) still return the generic line, because `OB` and `TM` are two letters; 619 covers a single symbol only. No workaround accept forms added.
+
+Gates:
+- `python3 docs/reports/trig-L1-numbers.py`: exit 0 (414 of 414). L2: exit 0 (261 of 261). L3: exit 0 (328 of 328).
+- `VOICE_BASE=app/content/courses/trig python3 docs/reviews/voice-scan.py 35`: 0 sentences over 35 words, 0 explanations over three sentences.
+- `cd app && node tools/validate.mjs`: 0 errors.
+- Playthrough with `--local-cdn`, desktop and `--mobile`: l1, l2, l4 to l12 lessons and review-1 to 3, homework-1 to 3 (17 files each), all passed in both modes. l3 and l13 are unchanged. No code items in the course.

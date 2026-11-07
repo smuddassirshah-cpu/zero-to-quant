@@ -173,7 +173,10 @@ K(f, 'items[3].widget', 40 * Tn(28), 2); W(f, 'items[3].widget', 'sine', 40 * S(
 K(f, 'items[5].widget', aC(32 / 112), 1); W(f, 'items[5].widget', 'opp8', aC((49 + 81 - 64) / 126), 1); W(f, 'items[5].widget', 'opp7', aC((64 + 81 - 49) / 144), 1)
 W(f, 'items[5].widget', 'ratio', 32 / 112)
 lv.claim(isclose(aC(32 / 112) + aC(66 / 126) + aC(96 / 144), 180), 'review-1 i5: three angles add to 180 (method 2)')
-K(f, 'items[6].widget', aT(8 / 6), 1); W(f, 'items[6].widget', 'flipped', aT(6 / 8), 1); W(f, 'items[6].widget', 'gradient', 8 / 6); W(f, 'items[6].widget', 'length', 10)
+K(f, 'items[6].widget', aT(12 / 5), 1); W(f, 'items[6].widget', 'flipped', aT(5 / 12), 1); W(f, 'items[6].widget', 'gradient', 12 / 5, 1); W(f, 'items[6].widget', 'length', hypot(5, 12))
+lv.claim(isclose(hypot(5, 12), 13) and round(aT(12 / 5), 1) == 67.4 and round(aT(5 / 12) + aT(12 / 5), 6) == 90, 'review-1 i6: 5, 12, 13 and the angles 67.4 and 22.6 (method 2: complementary)')
+T(f, 'items[6].explain.text', 67.4); T(f, 'items[6].feedback.correct', 67.4)
+lv.claim(round(degrees(atan2(14 - 2, 6 - 1)), 1) == 67.4, 'review-1 i6: angle by atan2 on the coordinates (1, 2) to (6, 14)')
 lv.claim(isclose(6 * C(30), 3 * sqrt(3)) and isclose(6 * S(30), 3) and isclose(6 * C(30) * 2, 6 * sqrt(3)), 'review-1 i7: key 3 sqrt 3 and slips 3, 6 sqrt 3')
 T(f, 'items[7].explain.text', round(3 * sqrt(3), 2))
 K(f, 'items[8].widget', 10 * S(50) / S(70), 2); W(f, 'items[8].widget', 'pairing', 10 * S(60) / S(70)); W(f, 'items[8].widget', 'pyth', 10)
@@ -200,11 +203,32 @@ hh = 20 / (sqrt(3) - 1)
 K(f, 'items[7].widget', hh, 2); lv.claim(isclose(hh, 10 * (sqrt(3) + 1)), 'homework-1 i7: 20/(sqrt3 - 1) = 10(sqrt3 + 1)')
 lv.claim(isclose(Tn(30), hh / (hh + 20)) and isclose(Tn(45), hh / hh), 'homework-1 i7: both elevation angles hold (method 2)')
 W(f, 'items[7].widget', 'one-triangle', 20); W(f, 'items[7].widget', 'tan30', 20 * Tn(30)); W(f, 'items[7].widget', 'sixty', 20 * sqrt(3))
-s60 = 0.0625 + 0.04 - 2 * 0.25 * 0.2 * 0.5
-T(f, 'items[8].model', round(s60, 4)); T(f, 'items[8].model', round(sqrt(s60), 4)); T(f, 'items[8].model', round(sqrt(0.1025), 4))
-T(f, 'items[8].model', round(0.0625 / 0.1, 3)); T(f, 'items[8].model', round(aC(0.625), 2))
-lv.claim(isclose(0.0625 + 0.04 - 0.1 * 0.625, 0.04), 'homework-1 i8: check at 51.32 degrees gives 0.20')
+s120 = 0.0625 + 0.04 - 2 * 0.25 * 0.2 * C(120)
+T(f, 'items[8].model', round(s120, 4)); T(f, 'items[8].model', round(sqrt(s120), 4)); T(f, 'items[8].model', round(sqrt(0.1025), 4))
+T(f, 'items[8].model', round((0.0625 + 0.04 - 0.09) / 0.1, 3)); T(f, 'items[8].model', round(180 - aC(0.125), 2)); T(f, 'items[8].model', round(aC(0.125), 2))
+lv.claim(isclose(0.0625 + 0.04 - 0.1 * 0.125, 0.09) and isclose(sqrt(0.09), 0.3), 'homework-1 i8: check at 30% gives 0.09')
+# method 2: vector addition, arrows 60 degrees apart, then 97.18 apart gives 0.30
+vadd = lambda ang: hypot(0.25 + 0.2 * C(ang), 0.2 * S(ang))
+lv.claim(isclose(vadd(60), sqrt(s120)) and isclose(vadd(90), sqrt(0.1025)) and isclose(vadd(180 - aC(0.125)), 0.30), 'homework-1 i8: vector sum of the arrows gives 39.05%, 32.02% and 30% (method 2)')
+lv.claim(vadd(90) < vadd(60), 'homework-1 i8: the portfolio is smaller at 90 degrees than at 60 (c)')
 lv.claim(sum(r['points'] for r in node(f, 'items[8].rubric')) == 10, 'homework-1 i8: rubric sums to 10')
+
+# ---------- fix pass (second-reader findings): numbers in new or reworded text ----------
+f = 'l2'
+T(f, 'screens[9].explain.text', 0.25); T(f, 'screens[9].explain.text', 2.5)
+lv.claim(isclose(1.00 / 4, 0.25) and isclose(0.25 * 10, 2.5), 'l2 s9: 0.25 a day and 2.50 over 10 days')
+lv.claim(isclose(6 / 8, 0.75) and isclose(Tn(aT(6 / 8)), 0.75), 'l2 s5: the 0.75 option is 6/8, the tangent of the angle at O (method 2: inverse)')
+f = 'l5'
+lv.claim(isclose(2 * 6 * 8 * C(60), 48) and isclose(36 + 64 - 48, 52), 'l5 q0: take away 2ab cos C = 48, leaving 52')
+lv.claim((25 + 36 + 49) / 60 > 1 and isclose((25 + 36 + 49) / (2 * 5 * 6), 110 / 60), 'l5 s4: adding c^2 gives a cosine above 1, so no learner types 0 for that slip (finding 6)')
+lv.claim('plus' not in node(f, 'screens[4].feedback.byKey') and all(x['id'] != 'plus' for x in node(f, 'screens[4].widget.wrong')), 'l5 s4: the plus slip is removed')
+f = 'l4'
+lv.claim(isclose(10 * sqrt(2) / 2, 5 * sqrt(2)) and round(5 * sqrt(2), 2) == 7.07 and isclose(10 * S(45), 5 * sqrt(2)) and 50 + 50 == 100, 'l4 q2: 10/sqrt2 = 10 sqrt2 / 2 = 5 sqrt2 = 7.07; 50 + 50 = 100')
+T(f, 'quiz[2].explain.text', 7.07); T(f, 'quiz[2].explain.text', '5\\sqrt{2}')
+T(f, 'screens[2].prose', '**surd**')
+f = 'homework'
+lv.claim(round(sqrt(3) - 1, 4) == 0.7321 and round(20 / 0.7321, 2) == 27.32 and round(hh, 2) == 27.32, 'homework-1 i7: 20 / 0.7321 = 27.32')
+T(f, 'items[7].explain.text', 0.7321); T(f, 'items[7].explain.text', 27.32)
 
 lv.check_wrongs()
 lv.report()
