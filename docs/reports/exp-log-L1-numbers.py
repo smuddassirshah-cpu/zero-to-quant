@@ -6,10 +6,15 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'app', 'tools'))
-from numbers_lib import Level
+from numbers_lib import Level, _walk
 
 lv = Level("exp-log", 1)
 E = lv.expect
+
+
+def N(ref, path):
+    return _walk(lv._file(ref)[1], path)[0]
+
 
 # ---- l1 doubling
 E("l1", "screens[0].feedback.correct", 2 ** 10)
@@ -48,8 +53,14 @@ E("l1", "quiz[2].feedback.correct", 2 ** 20)
 E("l1", "quiz[2].explain.text", 100 * 20)
 first_b = next(n for n in range(1, 40) if 2 ** n > 100 * n)
 lv.claim(first_b == 10, "l1 quiz[2]: plan B first beats plan A at step 10 (1,024 > 1,000)")
-lv.stated("l1", "quiz[2].explain.text", "Doubling passed A at step 11", first_b == 11)          # content wrong (finding 1)
-lv.stated("l1", "quiz[3].prose", "A pot of £7.00 is left for zero days of doubling", 7 * 2 ** 0 == 7 ** 0)  # content wrong (finding 2)
+t_q2 = lv.text("l1", "quiz[2].explain.text")
+lv.claim("passed A at step 10, when $2^{10} = 1024$ beat 1,000" in t_q2 and "step 11" not in t_q2 and first_b == 10 and 2 ** 10 == 1024 and 2 ** 9 < 100 * 9,
+         "l1 quiz[2] explain says B passed A at step 10 (1,024 > 1,000; at step 9 it is 512 < 900) (finding 1)")
+E("l1", "quiz[2].explain.text", 2 ** 10)
+E("l1", "quiz[2].explain.text", 1000)
+t_q3 = lv.text("l1", "quiz[3].prose")
+lv.claim("multiplied by 7 zero times, starting from 1" in t_q3 and "£7.00" not in t_q3 and 7 ** 0 == 1,
+         "l1 quiz[3] story: 7 zero times from 1 gives 7^0 = 1, so the key and the story agree (finding 2)")
 
 # ---- l2 growth factors
 E("l2", "screens[0].widget.answer", round(100 * 1.1 * 0.9, 2))
@@ -85,7 +96,17 @@ E("l2", "quiz[1].widget.answer", round(20000 * 0.85 ** 2, 2))
 E("l2", "quiz[1].widget.wrong[0].value", 14000)
 E("l2", "quiz[1].widget.wrong[1].value", 17000)
 E("l2", "quiz[1].explain.text", round(17000 * 0.15, 2))
-E("l2", "quiz[2].feedback.correct", round(1.2 * 0.8, 2))
+lv.claim(1.25 * 0.8 == 1.0, "l2 quiz[2]: +25% then -20% multiply to exactly 1 (finding 6)")
+E("l2", "quiz[2].feedback.correct", 1.25)
+E("l2", "quiz[2].feedback.correct", 0.8)
+E("l2", "quiz[2].feedback.correct", 1)
+E("l2", "quiz[2].widget.options[1].why", 1.25 * 0.8)
+E("l2", "quiz[2].widget.options[2].why", 1.25 * 0.8)
+E("l2", "quiz[2].explain.text", 1.25 * 0.8)
+E("l2", "quiz[2].prose", 25)
+E("l2", "quiz[2].prose", 20)
+lv.claim(next(o for o in N("l2", "quiz[2].widget.options") if o.get("correct"))["id"] == "flat",
+         "l2 quiz[2]: the correct option is 'back where it started'")
 
 # ---- l3 strange powers
 E("l3", "screens[0].widget.answer", 0.5)
@@ -112,7 +133,9 @@ E("l3", "screens[9].widget.answer", round(math.sqrt(12100 / 10000), 4))
 E("l3", "screens[9].widget.wrong[1].value", 1.21 / 2)
 E("l3", "screens[9].feedback.byKey.halved", round(1.105 ** 2, 3))
 E("l3", "screens[9].explain.text", 11000)
-lv.stated("l3", "screens[8].explain.text", "Nothing was assumed beyond the law", False)      # content wrong (finding 7): b > 0 is assumed
+t_s8 = lv.text("l3", "screens[8].explain.text")
+lv.claim("Nothing was assumed" not in t_s8 and "not $-\\sqrt{a}$" in t_s8 and (-3) ** 2 == 3 ** 2,
+         "l3 s8 explain admits the positive-root step: (-3)^2 = 3^2, so the law alone gives only b^2 = a (finding 7)")
 E("l3", "quiz[0].widget.answer", 0.01)
 E("l3", "quiz[1].widget.answer", 5)
 E("l3", "quiz[2].explain.text", 2)
@@ -149,13 +172,21 @@ E("l4", "screens[9].feedback.byKey.yearly", round(1.01 ** 12, 4))
 E("l4", "screens[9].hints[2].text", round(1.01 ** 60, 4))
 E("l4", "screens[9].explain.text", round(a60 - 16000, 2))
 lv.claim(10000 * 1.01 ** 120 - (10000 + 100 * 120) > 11000, "l4 s9: A leads by over £11,000 after 10 years")
-lv.claim_text("l4", "screens[9].widget.wrong[2].value", "16060", abs(10000 + 1.01 * 60 - 16060) < 1 or abs(10000 * 1.01 * 60 - 16060) < 1,
-              "l4 s9 wrong times: 16060 matches 'multiplied 1.01 by 60 and added it on'")    # content wrong (finding 9)
+E("l4", "screens[9].widget.wrong[2].value", round(10000 * 1.01 * 60))
+E("l4", "screens[9].feedback.byKey.times", round(10000 * 1.01 * 60))
+lv.claim(N("l4", "screens[9].widget.wrong[2].value") == 606000 == round(10000 * 1.01 * 60) and "added it on" not in lv.text("l4", "screens[9].feedback.byKey.times"),
+         "l4 s9 wrong times: 606000 is 10000 x 1.01 x 60, the slip the line names (finding 9)")
 E("l4", "screens[10].prose", round(1.08 ** 9, 3))
 E("l4", "screens[10].widget.answer", round(1000 * 1.06 ** 12, 1))
 E("l4", "screens[10].widget.wrong[0].value", 1000 + 60 * 12)
 E("l4", "screens[10].feedback.byKey.simple", round(100 / 6, 1))
 E("l4", "screens[10].hints[2].text", round(1.06 ** 12, 4))
+E("l4", "screens[10].explain.text", round(1000 * 1.06 ** 12, 2))
+E("l4", "screens[10].explain.text", round(1.06 ** 12, 3))
+lv.claim(abs(1000 * 1.06 ** 12 - 2012.20) < 0.005 and 2.0115 < 1.06 ** 12 < 2.0125, "l4 s10: £1,000.00 at 6% is £2,012.20 after 12 years (finding 10)")
+lv.claim(next(d for d in range(1, 30) if 0.9 ** d < 0.5) == 7 and abs(math.log(0.5) / math.log(0.9) - 6.58) < 0.005,
+         "l4 s5: half-life 6.58 days, so day 7 is the first whole day under half (finding 11)")
+E("l4", "screens[5].explain.text", 7)
 g = lambda x: x * math.log(1.01) - math.log(1000 * x)
 lv.claim(next(n for n in range(2, 5000) if 1.01 ** n > 1000 * n) == 1424, "l4 quiz[3]: 1.01^x first beats 1000x at x = 1,424")
 E("l4", "quiz[3].explain.text", 1424)
@@ -171,11 +202,17 @@ E("review", "items[1].widget.answer", 0.93)
 E("review", "items[2].widget.answer", 0.25)
 E("review", "items[3].widget.answer", 0.25 ** -1)
 b3 = 5000 * 1.04 ** 3
-E("review", "items[4].widget.answer", round(b3, 2))
-E("review", "items[4].widget.wrong[0].value", 5000 + 3 * 200)
-E("review", "items[4].widget.wrong[2].value", round(5000 * 1.04 ** 2, 2))
+E("review", "items[4].widget.answer", round(b3 - 5000, 2))
+E("review", "items[4].widget.wrong[1].value", round(b3, 2))
+E("review", "items[4].feedback.byKey.simple", 200)
+E("review", "items[4].feedback.byKey.two", round(b3, 2))
+lv.claim(abs((b3 - 5000) - 624.32) < 0.005, "review-1 items[4]: interest after 3 years is £624.32 (finding 14)")
+E("review", "items[4].widget.wrong[0].value", 3 * 200)
+E("review", "items[4].widget.wrong[2].value", round(5000 * 1.04 ** 2 - 5000, 2))
 E("review", "items[4].explain.text", round(1.04 ** 3, 6))
 E("review", "items[4].explain.text", round(b3 - 5600, 2))
+E("review", "items[4].explain.text", round(b3 - 5000, 2))
+E("review", "items[4].explain.text", 600)
 E("review", "items[5].widget.answer", round(32 ** 0.6))
 E("review", "items[5].widget.wrong[0].value", 32 * 3 / 5)
 E("review", "items[6].widget.wrong[0].value", 6 * 60 / 20)
@@ -188,8 +225,10 @@ E("review", "items[8].widget.wrong[0].value", 25)
 E("review", "items[9].widget.answer", round(27 * 1.5 ** -3, 2))
 E("review", "items[9].widget.wrong[0].value", 27 / (1.5 * 3))
 E("review", "items[9].widget.wrong[1].value", math.floor(27 * 1.5 ** 3 * 100 + 0.5) / 100)   # 91.125 rounds half up
-lv.claim_text("review", "items[9].widget.wrong[2].value", "13.5", False,
-              "review-1 items[9] wrong subtract 13.5 matches 'took off half of £27.00 each year in a line'")  # content wrong (finding 13)
+E("review", "items[9].widget.wrong[2].value", 27 * 0.5 ** 3)
+E("review", "items[9].feedback.byKey.subtract", 27 * 0.5 ** 3)
+lv.claim(N("review", "items[9].widget.wrong[2].value") == 3.375 == 27 * 0.5 ** 3 and abs((1 - 1 / 1.5) - 1 / 3) < 1e-12,
+         "review-1 items[9] wrong subtract 3.375: three 50% falls (finding 13)")
 
 # ---- homework-1
 E("homework", "items[0].explain.text", 2500 * 1.06)
@@ -216,10 +255,12 @@ E("homework", "items[7].model", round(5000 * 1.05 ** 20, 2))
 E("homework", "items[7].model", round(5000 * 1.05 ** 14, 2))
 E("homework", "items[7].model", round(5000 * 1.05 ** 15, 2))
 E("homework", "items[7].model", round(5000 * 1.05 ** 20 - 10000, 2))
-lv.claim_text("homework", "items[7].model", "5000 \\times 2.65330 = 13266.49", abs(5000 * 2.65330 - 13266.49) < 0.005,
-              "homework-1 items[7] model: printed factor 2.65330 gives 13266.49")     # content wrong (finding 15)
-lv.claim_text("homework", "items[7].model", "5000 \\times 1.62889 = 8144.47", abs(5000 * 1.62889 - 8144.47) < 0.005,
-              "homework-1 items[7] model: printed factor 1.62889 gives 8144.47")      # content wrong (finding 15)
+t_m = lv.text("homework", "items[7].model")
+lv.claim("5000 \\times 2.6532977 = 13266.49" in t_m and abs(5000 * 2.6532977 - 13266.49) < 0.005 and abs(1.05 ** 20 - 2.6532977) < 5e-8,
+         "homework-1 items[7] model: printed factor 2.6532977 gives 13266.49 (finding 15)")
+lv.claim("5000 \\times 1.6288946 = 8144.47" in t_m and abs(5000 * 1.6288946 - 8144.47) < 0.005 and abs(1.05 ** 10 - 1.6288946) < 5e-8,
+         "homework-1 items[7] model: printed factor 1.6288946 gives 8144.47 (finding 15)")
+lv.claim("multiplying law" not in t_m and "index laws" in t_m, "homework-1 items[7] model (e) says index laws (finding 8)")
 
 lv.check_wrongs()
 lv.report()
