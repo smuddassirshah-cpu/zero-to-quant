@@ -543,6 +543,8 @@
     rec.position = position; rec.positionAt = position == null ? null : now();
     changed('position');
   };
+  /* A lesson opened on purpose from Learn or the course map (ENGINE-BACKLOG 617): only this lets a saved position in a tested-out course stand after the pass. */
+  const positionPick = (course, lesson) => { const rec = lessonRec(course, lesson); rec.pickedAt = now(); changed('position'); };
   const positionGet = (course, lesson) => { const r = doc.lessons[lessonId(course, lesson)]; return r ? r.position : null; };
 
   const profileSet = (patch = {}) => {
@@ -612,8 +614,8 @@
     const skillMastery = {};
     Object.entries(doc.skills).forEach(([k, v]) => { skillMastery[k] = v.seen ? Math.min(1, Math.max(0, (v.elo - 1000) / 600)) : 0; });
     const due = redoDue();
-    const open = lessons.filter(([, r]) => !r.done && r.position != null).sort((a, b) => (b[1].positionAt || 0) - (a[1].positionAt || 0));
-    const resume = open.length ? (() => { const [id, r] = open[0]; const [course, lesson] = id.split('/'); return { course, lesson, position: r.position, at: r.positionAt }; })() : null;
+    const open = lessons.filter(([, r]) => !r.done && r.position != null).sort((a, b) => Math.max(b[1].positionAt || 0, b[1].pickedAt || 0) - Math.max(a[1].positionAt || 0, a[1].pickedAt || 0));
+    const resume = open.length ? (() => { const [id, r] = open[0]; const [course, lesson] = id.split('/'); return { course, lesson, position: r.position, at: r.positionAt, pickedAt: r.pickedAt || null }; })() : null;
     const homeworkOpen = Object.entries(doc.homework).filter(([, h]) => !h.submitted).map(([id, h]) => ({ id, course: id.split('/')[0], due: h.due, overdue: h.due < now() })).sort((a, b) => a.due - b.due);
     const goal = doc.profile.weeklyGoalH || 15;
     return {
@@ -662,7 +664,7 @@
     drills: ns('drills', { verified: drillVerified, draft: drillDraft, time: drillTime, session: drillSessionRecord, sessions: () => (Array.isArray(doc.drillSessions) ? doc.drillSessions.slice() : []), get: (id) => (id == null ? doc.drills : doc.drills[id] || null) }),
     warmup: ns('warmup', { record: warmupRecord, list: () => doc.warmup.history.slice() }),
     hours: ns('hours', { log: logHours, list: () => doc.hours.slice() }),
-    lessonPosition: { set: positionSet, get: positionGet },
+    lessonPosition: { set: positionSet, get: positionGet, pick: positionPick },
     lesson: (course, lesson) => doc.lessons[lessonId(course, lesson)] || null,
     prereq: ns('prereq', { mark: prereqMet, testout: prereqTestout, open: prereqOpened, start: prereqStarted, grandfather: prereqGrandfathered, get: () => prq() }),
     screenGraded, lessonFinished, lessonCounts, revealShare, floorGaps, quizFinished, reviewFinished, homeworkAssigned, homeworkSubmitted, examFinished, practiceResult, bankResult, provenance, howOf,

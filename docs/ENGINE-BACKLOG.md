@@ -1673,6 +1673,7 @@ Status block (engine pass V-B, items 600 to 603):
 615. Done [Should]: `O2-unshuffled-numeric` retired (73 warnings): choice and multi shuffle by default (591), and `[shuffle-false]` judges an explicit `shuffle: false`.
 
 616. Done [Must, protocol 6]: `order` widget `after: { line: [lines it must follow] }` (precedence rules; any topological order is correct, the key is the first line standing before a line it must follow, per-line marks follow the rule). Validator: shape errors, an answer that breaks a rule, a warning when `same` is also set. Tests: `test-engine-runtime.mjs` (2), `test-validate-session-v-b.mjs` (3). The inbox bullet on the review-analysis pass is not in this checkout's inbox (the older bullet on the law of total variance, which asked for the same `after` form, was moved here); the coordinator's copy should drop its bullet.
+617. Done [Must, user bug 7 Nov]: a pass of topic 0.1 now moves Today on for good. Cause: the lesson player's `savePosition` (run on leaving a lesson by the route, the close button, Back or a reload on a lesson route) always wrote a fresh `positionAt`, so merely reopening a part-open lesson after the pass made `ZQ.content.resumeStands` (461) read the resume as saved after the pass; the user's stored resume already carries such a time. Fix: the rule now follows the learner's intent. `state.lessonPosition.pick(course, lesson)` stamps `pickedAt`, called only by the course map `launch` for a lesson (the Learn path); `summary().resume` carries `pickedAt`; `resumeStands` compares `pickedAt`, not the save time, with the pass time. Old records have no `pickedAt`, so a stale resume is skipped with no migration. Today, Back, a direct link and a reload never stamp it. `savePosition` also no longer rewrites an unchanged place (`app/js/engine/player.js`). Test: `app/tools/test-today-tested-out.mjs` (12 checks; the stale-resume check and the others failed before).
 
 Closed, landed earlier (the inbox bullet remained after the item landed): Mark my answer for exam longform is 589 and 597; the shuffle default in the runtime is 591; `[shuffled-position]` false positives are 601; `importHint` reading `setup` is 595; per-paper `tracks` is 593; the libc++ hardening mode is 599; code-name comparison in `fresh-check` is 600.
 
@@ -1680,5 +1681,6 @@ Items 340 to 422 checked against the code and found already done (status only, n
 
 Status block (Session V engine pass 7):
 - 616: done.
+- 617: done (test-today-tested-out 12 of 12; failed before the fix).
 - 604: done (test 12 of 12; course sets run in about 13 s). 605: done (warning; test passes). 606: done (test-numbers-lib passes).
 - 607: done (cue only; no viewport check). 608: done. 609: done (screenshot at 440 px). 610: done. 611: done. 612: done. 613: done. 614: done (advisory). 615: done.

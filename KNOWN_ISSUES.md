@@ -213,4 +213,4 @@ Session U (6 Nov):
 - (session V) backtest l7 teaches that its engine has no fill cap (`capped_qty` never wired in); a screen that wires the cap in is a content item (inbox).
 - (session V) The scheduled Fable audit task `trig_01FJuNVhosR68kSj3RhYkXrp` is disabled, not deleted (user pause, usage).
 - (session V close) Shards 3 and 4 of `--all --local-cdn` and `--routes-only` were not run at the final HEAD; they open session W.
-- (user bug, 7 Nov) Today still shows a half-finished 0.1 lesson after topic-0.1 was passed, although 461 should skip a tested-out course; cause not yet reproduced (resume position saved after the pass, or the pass not counted in that browser). Engine item for session W.
+- (user bug, 7 Nov) Today still shows a half-finished 0.1 lesson after topic-0.1 was passed, although 461 should skip a tested-out course; FIXED, ENGINE-BACKLOG 617: leaving a reopened lesson re-stamped its resume time after the pass; a tested-out course's resume now stands only if the lesson was opened from the course map or Learn after the pass (`pickedAt`), so the stale record in an existing browser is skipped. Test `app/tools/test-today-tested-out.mjs`.

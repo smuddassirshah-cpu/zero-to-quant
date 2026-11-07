@@ -107,13 +107,14 @@
   const setPerf = (m) => { perfTasks = m && typeof m === 'object' ? m : {}; };   // test hook, like state._setClock
   const topicPassed = (tid) => examPassedAuto('topic-' + tid);
   const courseTestedOut = (cid) => { const w = topicOfCourse(cid); return !!w && topicPassed(w.t.id); };
-  /* A saved lesson position in a tested-out course pins "where you are" only if it was set after the passing attempt
-     (the learner chose to revisit). The resume record is state.summary().resume: { course, lesson, at }. */
+  /* A saved lesson position in a tested-out course pins "where you are" only if the learner opened that lesson on purpose from Learn or the
+     course map after the passing attempt (pickedAt, ENGINE-BACKLOG 617). The save time does not count: leaving a lesson, Back or a reload
+     re-saves it, and a record from before pickedAt existed has none, so it is skipped. Record: state.summary().resume: { course, lesson, at, pickedAt }. */
   const resumeStands = (r) => {
     if (!r || !courseTestedOut(r.course)) return !!r;
     try {
       const w = topicOfCourse(r.course), at = examPassedAt('topic-' + w.t.id);
-      return (Number(r.at) || 0) > at;
+      return (Number(r.pickedAt) || 0) > at;
     } catch { return false; }
   };
   const course = (id) => {
