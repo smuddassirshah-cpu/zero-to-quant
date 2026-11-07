@@ -50,18 +50,18 @@ Stage hours are the sum of topic hours; nothing stores them. Quant path leaves o
 | 1.7 | Finance basics | 100 | 55 | 55 |
 | 1.8 | Data structures and algorithms | 250 | 49 | 49 |
 | 1.9 | C++ | 140 | 35 | 35 |
-| 1.10 | Analysis and proof-based linear algebra | 130 | 43 | 33 |
-| 1.11 | Complex numbers, vector calculus and differential equations | 120 | 43 | 0 |
+| 1.10 | Analysis and proof-based linear algebra | 130 | 43 | 43 |
+| 1.11 | Complex numbers, vector calculus and differential equations | 120 | 43 | 43 |
 | 2.1 | Machine learning | 200 | 50 | 50 |
 | 2.2 | Time series | 60 | 36 | 36 |
 | 2.3 | Projects | 400 | 48 | 48 |
 | 2.4 | Contests | 140 | 16 | 16 |
-| 2.5 | Numerical methods and optimisation | 90 | 34 | 0 |
-| 2.6 | Statistical modelling | 50 | 18 | 0 |
-| 3.1 | Research papers | 150 | 30 | 5 |
+| 2.5 | Numerical methods and optimisation | 90 | 34 | 34 |
+| 2.6 | Statistical modelling | 50 | 18 | 18 |
+| 3.1 | Research papers | 150 | 30 | 30 |
 | 3.2 | Stochastic calculus | 0 (stores 0; its lesson minutes would give about 11 h) | 46 | 46 |
 | 3.3 | Interview preparation | 250 | 96 | 96 |
-| 3.4 | Pure mathematics | 0 (stores 0; its lesson minutes would give about 7 h) | 30 | 0 |
+| 3.4 | Pure mathematics | 0 (stores 0; its lesson minutes would give about 7 h) | 30 | 30 |
 | 3.5 | Interviews by role | 150 | 57 | 57 |
 <!-- /generated -->
 
