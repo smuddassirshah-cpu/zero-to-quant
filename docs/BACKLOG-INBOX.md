@@ -1685,3 +1685,6 @@ Raised later (validation level 2 perf):
 
 Raised later (coint level 1 perf):
 - [Could] Seen again (ENGINE-BACKLOG 536, deferred): an aloud item's follow-ups show only together with the model answer, so a rubric row that grades a follow-up answer cannot be honest. coint `h-spurious-aloud` dropped its follow-up row for a plain-words row. Wanted: the follow-ups step after the clock, before Mark my answer.
+Raised later (mm-games level 3 perf):
+- [Should] An `aloud` prompt shows the whole script at once, so a market-making round that reveals trades and cards one at a time (`h-coin-dice-aloud`, six steps) can only ask the learner not to read ahead. Wanted: an optional `reveal` list on an aloud widget, each step shown on a tap once the answer clock runs.
+- [Could] Third sighting (stat-learning L2, garch L2, now mm-games L3): `playthrough.mjs --set` run after the brief's manifest restore shows a new task as "practice only". Worked round it by running the validator, then the playthrough, then restoring the manifest. Protocol 6: raise as an engine item.
