@@ -273,6 +273,9 @@ lv.expect("review", "items[2].widget.wrong[1].value", dot(ur, ur) * dot(vr, vr))
 lv.expect("review", "items[2].explain.text", round(5 / prod, 3))
 # Misleading: wrong "sum" = 6 names no slip; adding the norms gives 5.978, outside its band
 lv.stated("review", "items[2].feedback.byKey.sum", "type terms wrongly", abs(math.sqrt(14) + math.sqrt(5) - 6) <= 0.01)
+lv.expect("review", "items[2].widget.wrong[2].value", round(math.sqrt(14) + math.sqrt(5), 3))
+lv.expect("review", "items[2].feedback.byKey.sum", round(math.sqrt(14) + math.sqrt(5), 3))
+lv.claim(abs(math.sqrt(14) + math.sqrt(5) - 5.978) < 0.001, "review items[2]: the added-norms slip gives 5.978, inside the wrong band")
 lv.expect("review", "items[3].widget.answer", 2 * 3)
 lv.expect("review", "items[3].widget.wrong[0].value", 2 + 3)
 lv.expect("review", "items[3].widget.wrong[1].value", 4 + 9)
@@ -284,8 +287,15 @@ lv.claim(pr == (2, 2, 2), "review items[5]: P_U v = (2, 2, 2)")
 lv.expect("review", "items[5].widget.answer", round(math.sqrt(dot(add((1, 2, 3), sc(-1, pr)), add((1, 2, 3), sc(-1, pr)))), 3))
 lv.expect("review", "items[5].widget.wrong[1].value", round(math.sqrt(12), 3))
 lv.expect("review", "items[5].widget.wrong[2].value", round(math.sqrt(14), 3))
-lv.expect("review", "items[7].widget.answer", dot((1, 1), mv(A, (1, 1))))
-lv.expect("review", "items[7].widget.wrong[2].value", A[0][0] + A[1][1])
+A8 = [[3, 1], [1, 2]]; x8 = (1, -1)
+ev8 = [(5 - math.sqrt(5)) / 2, (5 + math.sqrt(5)) / 2]
+lv.claim(all(e > 0 for e in ev8) and 3 + 2 == 5 and 3 * 2 - 1 * 1 == 5, "review items[7]: A = [[3,1],[1,2]] has trace 5, det 5, both eigenvalues positive")
+lv.claim(mv(A8, x8) == (2, -1), "review items[7]: A(1,-1) = (2,-1)")
+lv.expect("review", "items[7].widget.answer", dot(x8, mv(A8, x8)))
+lv.expect("review", "items[7].widget.wrong[0].value", dot(x8, x8))
+lv.expect("review", "items[7].widget.wrong[1].value", A8[0][0] + A8[1][1])
+lv.expect("review", "items[7].widget.wrong[2].value", sum(sum(r) for r in A8))
+lv.claim(dot(x8, mv(A8, x8)) == 3, "review items[7]: ||(1,-1)||_A^2 = 3")
 pp = [1, 3, 5]
 dp = [3, 10]
 lv.expect("review", "items[8].widget.answer", pev(dp, 0))
@@ -294,9 +304,15 @@ lv.expect("review", "items[8].widget.wrong[1].value", pev(dp, 1))
 lv.expect("review", "items[8].widget.wrong[2].value", pev(pp, 1))
 
 # ---------------- homework-3 ----------------
-l2p = [0, F(-1, 2), F(1, 2)]
-lv.claim([pev(l2p, k) for k in (0, 1, 2)] == [0, 0, 1], "homework items[1]: l2 = x(x - 1)/2 is 0, 0, 1 at 0, 1, 2")
-lv.claim([a + b + cc for a, b, cc in zip(l0p, l1p + [0], l2p)] == [1, 0, 0], "homework items[1]: l0 + l1 + l2 = 1")
+# nodes -1, 0, 1: l1 = x(x + 1)/2 = 0.5x^2 + 0.5x
+lm1n = [0, F(-1, 2), F(1, 2)]; l0n = [1, 0, -1]; l1n = [0, F(1, 2), F(1, 2)]
+lv.claim([pev(l1n, k) for k in (-1, 0, 1)] == [0, 0, 1], "homework items[1]: l1 = x(x + 1)/2 is 0, 0, 1 at -1, 0, 1")
+lv.claim([pev(lm1n, k) for k in (-1, 0, 1)] == [1, 0, 0] and [pev(l0n, k) for k in (-1, 0, 1)] == [0, 1, 0], "homework items[1]: l_-1 and l0 on the nodes")
+lv.claim([a + b + cc for a, b, cc in zip(lm1n, l0n, l1n)] == [1, 0, 0], "homework items[1]: l_-1 + l0 + l1 = 1")
+lv.claim(pev([0, 1, 1], 1) == 2 and 2 * F(1, 2) == 1, "homework items[1]: x^2 + x is 2 at x = 1, so divide by 2")
+lv.expect("homework", "items[1].widget.answer", "0.5x^2+0.5x")
+lv.expect("homework", "items[1].widget.wrong[0].tex", "x^2+x")
+lv.expect("homework", "items[1].widget.wrong[1].tex", "0.5x^2-0.5x")
 Tm = [[1, 2], [0, 3]]
 lv.claim(mm([[2, -1]], Tm) == [[2, 1]], "homework items[2]: psi o T = 2x + y")
 lv.claim(mv(Tm, (2, -1)) == (0, -3), "homework items[2]: [T] on the column (2, -1) gives (0, -3), the -3y wrong")
@@ -317,7 +333,7 @@ lv.claim(sing == (F(1, 3), F(3, 4)), "homework items[4]: single projections give
 lv.expect("homework", "items[5].widget.examples[0].expect", round(1 / math.sqrt(2.5), 6))
 n = 20
 lv.expect("homework", "items[6].model", round(1.03 * (n - 1) / n, 4))
-lv.expect("homework", "items[6].model", round(0.98 * n / (n - 1), 4))
+lv.stated("homework", "items[6].model", "A true 0.98 would read", False)
 lv.expect("homework", "items[6].model", round(n / (n - 1), 4))
 try:
     import numpy as np

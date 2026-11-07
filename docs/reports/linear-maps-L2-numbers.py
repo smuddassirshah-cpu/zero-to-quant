@@ -108,6 +108,9 @@ lv.expect("l5", "quiz[1].widget.wrong[0].tex", tup(*add(sc(4, (2, 3)), (1, -2)))
 # Misleading: the "rows" slip, A = [[2, 3], [1, -2]] applied to (4, -1), gives (5, 6), not (5, 14)
 rows_slip = mv([[2, 3], [1, -2]], (4, -1))
 lv.stated("l5", "quiz[1].widget.wrong[1].tex", "(5, 14)", rows_slip == (5, 14))
+lv.expect("l5", "quiz[1].widget.wrong[1].tex", tup(*rows_slip))
+lv.expect("l5", "quiz[1].feedback.byKey.rows", tup(*rows_slip))
+lv.claim(rows_slip == (5, 6), "l5 quiz[1]: the rows slip gives (5, 6)")
 # shift S p(x) = p(x + 1) on 3 + 2x + x^2
 Sm = [[1, 1, 1], [0, 1, 2], [0, 0, 1]]
 lv.expect("l5", "quiz[2].widget.answer", "6 + 4x + x^2")
@@ -171,7 +174,9 @@ lv.expect("l7", "quiz[3].widget.answer", 3)
 lv.claim(Dm == [[0, 1, 0, 0], [0, 0, 2, 0], [0, 0, 0, 3]], "l8 s0: [D] columns (0,0,0), (1,0,0), (0,2,0), (0,0,3)")
 for i in range(3):
     for j in range(4):
-        lv.expect("l8", f"screens[0].widget.rows[{i}][{j}].answer", Dm[i][j])
+        lv.expect("l8", f"screens[0].widget.rows[{i}][{j + 1}].answer", Dm[i][j])
+for i, h in enumerate(["$1$", "$x$", "$x^2$"]):
+    lv.expect("l8", f"screens[0].widget.rows[{i}][0]", h)
 lv.expect("l8", "screens[2].widget.answer", pm(Sm))
 lv.expect("l8", "screens[2].widget.wrong[0].tex", pm(tr(Sm)))
 lv.expect("l8", "screens[3].widget.answer", tup(*mv(Sm, (3, 2, 1))))
@@ -234,9 +239,10 @@ Ci = [[F(1, 105), 0, 0], [F(-5, 105 ** 2), F(1, 105), 0], [F(-500, 105 ** 3), F(
 lv.claim(mm(C, Ci) == [[1, 0, 0], [0, 1, 0], [0, 0, 1]], "l9 code test 1: the inverse of C")
 lv.expect("l9", "screens[10].widget.examples[0].expect", "[[1, -1], [-1, 2]]")
 lv.claim(inv2([[2, 1], [1, 1]]) == [[1, -1], [-1, 2]], "l9 s10 example: inverse of [[2,1],[1,1]]")
-lv.expect("l9", "quiz[1].widget.answer", 2 * 3)
-lv.expect("l9", "quiz[1].widget.wrong[0].value", 2 + 3)
-lv.expect("l9", "quiz[1].widget.wrong[1].value", 3 * 3)
+lv.expect("l9", "quiz[1].widget.answer", 2 * 4)
+lv.expect("l9", "quiz[1].widget.wrong[0].value", 2 + 4)
+lv.expect("l9", "quiz[1].widget.wrong[1].value", 4 * 4)
+lv.expect("l9", "quiz[1].explain.text", 2 * 4)
 lv.expect("l9", "screens[7].prose", 6)
 
 # ---------------- review-2 ----------------
@@ -278,9 +284,12 @@ lv.expect("homework", "items[2].widget.examples[0].expect", "[4, 2]")
 lv.expect("homework", "items[5].widget.answer", 4 - 1)
 lv.expect("homework", "items[6].widget.answer", 6 - 2)
 lv.expect("homework", "items[6].widget.wrong[2].value", 6 - 1)
-A7 = [[1, 2], [2, 1]]; P7 = [[1, 1], [1, -1]]
+A7 = [[-4, 3], [3, 4]]; P7 = [[1, 3], [3, -1]]
 lv.expect("homework", "items[7].widget.answer", pm(mm(inv2(P7), mm(A7, P7))))
-lv.claim(mv(A7, (1, 1)) == (3, 3) and mv(A7, (1, -1)) == (-1, 1), "homework items[7]: A(1,1) = (3,3), A(1,-1) = (-1,1)")
+lv.expect("homework", "items[7].widget.wrong[0].tex", pm([[-5, 0], [0, 5]]))
+lv.expect("homework", "items[7].widget.wrong[1].tex", pm(A7))
+lv.claim(mm(inv2(P7), mm(A7, P7)) == [[5, 0], [0, -5]], "homework items[7]: P^-1 A P = diag(5, -5)")
+lv.claim(mv(A7, (1, 3)) == (5, 15) and mv(A7, (3, -1)) == (-15, 5), "homework items[7]: A(1,3) = (5,15) = 5(1,3), A(3,-1) = (-15,5) = -5(3,-1)")
 lv.claim(1 + 3 == 4, "homework items[8]: D on P3 has 4 = 1 + 3")
 
 lv.check_wrongs()
